@@ -162,6 +162,7 @@ authenticated maintainer status.
 - [Template API](Sources/MartyGraphics/MGTemplates.swift) · [Pack API](Sources/MartyGraphics/MGPack.swift)
 - [Source provenance](docs/EXPORT.json) · [Third-party inventory](docs/THIRD-PARTY.md)
 - [Public sync ownership and review process](docs/PUBLIC-SYNC.md)
+- [Versioned installation and discovery gates](docs/DISTRIBUTION.md)
 - [Apache-2.0 license](LICENSE) · [Notice](NOTICE)
 - [Contributing and DCO](CONTRIBUTING.md) · [Code of conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md)
 
