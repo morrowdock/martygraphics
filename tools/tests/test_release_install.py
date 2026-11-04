@@ -140,6 +140,39 @@ class ReleaseInstallTests(unittest.TestCase):
             self.assertFalse(any(call.args[0][:2] == ["swift", "build"] for call in command.call_args_list))
             self.assertEqual(json.loads((output / "receipt.json").read_text())["status"], "FAIL")
 
+    def test_synthetic_flow_locks_resolution_and_excludes_publishing_credentials(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "new"
+            def simulated(argv, **kwargs):
+                self.assertNotIn("GITHUB_TOKEN", kwargs["env"])
+                self.assertNotIn("GH_TOKEN", kwargs["env"])
+                stdout = "synthetic toolchain/output"
+                if "ls-remote" in argv:
+                    stdout = SYNTHETIC_SHA + "\trefs/tags/v" + SYNTHETIC_TAG + "\n"
+                elif "resolve" in argv:
+                    pin = {"identity": "martygraphics", "kind": "remoteSourceControl", "location": SMOKE.PUBLIC_URL,
+                           "state": {"version": SYNTHETIC_TAG, "revision": SYNTHETIC_SHA}}
+                    (output / "Package.resolved").write_text(json.dumps({"version": 3, "pins": [pin]}))
+                elif "rev-parse" in argv:
+                    stdout = SYNTHETIC_SHA
+                return subprocess.CompletedProcess(argv, 0, stdout, "")
+            with patch.object(SMOKE.platform, "system", return_value="Darwin"), \
+                    patch.dict(SMOKE.os.environ, {"GH_TOKEN": "synthetic", "GITHUB_TOKEN": "synthetic"}), \
+                    patch.object(SMOKE.subprocess, "run", side_effect=simulated) as command, redirect_stdout(io.StringIO()):
+                code = SMOKE.main(["--tag", "v" + SYNTHETIC_TAG, "--commit", SYNTHETIC_SHA, "--output", str(output)])
+            self.assertEqual(code, 0)  # Simulated commands only; this is not remote/native acceptance.
+            receipt = json.loads((output / "receipt.json").read_text())
+            self.assertEqual(receipt["status"], "PASS")
+            commands = [call.args[0] for call in command.call_args_list]
+            build = next(argv for argv in commands if argv[:2] == ["swift", "build"])
+            run = next(argv for argv in commands if argv[:2] == ["swift", "run"])
+            self.assertIn("--force-resolved-versions", build)
+            self.assertIn("--force-resolved-versions", run)
+            self.assertIn("--skip-build", run)
+            self.assertEqual(len([argv for argv in commands if "ls-remote" in argv]), 2)
+            self.assertIn('exact: "' + SYNTHETIC_TAG + '"', (output / "Package.swift").read_text())
+            self.assertEqual(set(receipt["consumerFiles"]), {"Package.swift", "Package.resolved", "Sources/MGRemoteSmoke/main.swift"})
+
 
 if __name__ == "__main__":
     unittest.main()

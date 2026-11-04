@@ -279,7 +279,7 @@
     },
     {
       "path": "tools/tests/test_release_install.py",
-      "sha256": "767583f4b61db70382a8dab3f73eec367d8f83cf87b11553336894ba7447eda9"
+      "sha256": "9bb4dce33a288533e0d88f91e22d8acf6d0c34341a732030b6b739ea93e02893"
     },
     {
       "path": "tools/validate_local.py",
