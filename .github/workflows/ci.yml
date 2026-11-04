@@ -1,5 +1,14 @@
-name: repository checks
-on: [push, pull_request, workflow_dispatch]
+name: optional hosted checks
+# Maintainers may opt in to hosted Ubuntu execution. No automatic PR/fork jobs.
+on:
+  workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Full PR base commit SHA
+        required: true
+      head_sha:
+        description: Full actual PR head commit SHA (not the synthetic merge)
+        required: true
 permissions:
   contents: read
 jobs:
@@ -10,12 +19,12 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.head_sha }}
       - run: git show --format= --check HEAD
       - run: python3 -m unittest discover -s tools/tests -v
-      - if: github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      - env:
+          BASE_SHA: ${{ inputs.base_sha }}
+          HEAD_SHA: ${{ inputs.head_sha }}
         run: python3 tools/check_dco.py "$BASE_SHA" "$HEAD_SHA"
   # SwiftUI/SceneKit cannot build on ubuntu-latest. Required Mac commands:
   # swift build && swift test (see docs/VERIFY-ON-MAC.md).

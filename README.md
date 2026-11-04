@@ -150,8 +150,10 @@ not a complete learning app or a collection of courses.
 See the [public versus app matrix](docs/CAPABILITIES.md),
 [quality and measurement plan](docs/QUALITY.md), and
 [portable-core proposal](docs/PORTABILITY-PROPOSAL.md).
-The Ubuntu workflow checks hygiene and DCO; use the [Mac verification steps](docs/VERIFY-ON-MAC.md)
-for Apple-framework builds.
+Use [local maintainer validation](docs/LOCAL-VALIDATION.md) for hygiene and DCO;
+hosted Ubuntu checks are manual opt-in. The [Mac verification steps](docs/VERIFY-ON-MAC.md)
+cover Apple-framework builds. Each candidate needs reviewed evidence and its own
+authenticated maintainer status.
 
 ## Read, build, contribute
 
