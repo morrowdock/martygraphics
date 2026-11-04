@@ -1,0 +1,145 @@
+{
+  "scope": "tracked candidate files; FILES.json excludes itself to avoid a circular digest",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "d60f352d0db1404c70afb4bb8b2ca3fd1c610572aa40720e8a0b7baa7885418c"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "sha256": "66b1903e2b621be33b6656733d7805e2a2b7601fb9735478cb6050fed6508149"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "f6867c0a819a6672341d968217e6bcebba80b15de84c45ad8e25a1a97e456134"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "98f276d1503b9e2b5b3213d298e24146d314d0010f91d4f84e1430c5f9aba08a"
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "sha256": "1d8cb2b326b5ab30d2393a52ee67dbb8ce703c604bc038cfe5b6e94a9d26230c"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "sha256": "af74627f237bb9f35e45ebb1123dd422d0563c844d4517fd1abd509caa52efb3"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "NOTICE",
+      "sha256": "460dcde9189d9bb75d2a25f0f9f116ddbbc990a3594fc24149f1d0db3034e0a7"
+    },
+    {
+      "path": "Package.swift",
+      "sha256": "958fda07b5c5b56efd56cb63650da4781bb81c3529ee73a83b57c58b85996211"
+    },
+    {
+      "path": "README.md",
+      "sha256": "173e28d47af905973bfc72d5204173914bcaec8321a964b67a1eb3d7277f309e"
+    },
+    {
+      "path": "SECURITY.md",
+      "sha256": "b2e2e63af593d03c4d577ecc26b5ba2a0567d742b4e3984e109c2b5dac9453f9"
+    },
+    {
+      "path": "Sources/MartyGraphics/MG3DView.swift",
+      "sha256": "e4a3117ad1564989c7332d445d30d8a0222cac295b878e7e4aaaefce73d0b90a"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
+      "sha256": "9b91557e37086523ee8a4f4401bb9281830f2a6b087921e91bf7cac866894775"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGFixtures.swift",
+      "sha256": "1d17dd89fcefcc304fec88c1ac8caef4b9b695394276b01df9058d5eb4306a91"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGGrammar.swift",
+      "sha256": "810938fc1d7f99ecf5a0c7cf7029207caf69665a13271340f1af55c950b715e7"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGLayout.swift",
+      "sha256": "c1a3641339349e10e9e0faced7f4e58e0a5d97aa992306a81b68970c11aef6ca"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGModel.swift",
+      "sha256": "b11556e668477eaef8a829b0e33e055327a5abe95b2b449df9287172b3a1133c"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGPack.swift",
+      "sha256": "c4e0421dd427c4d172d1b5fb001740afd1a5f8285aab7cbf584e8071999287b3"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGParser.swift",
+      "sha256": "ca4a04a43820f120bff5c97966b0c247ee8b3718a5be421a45f3c97af281b6c6"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGPatch.swift",
+      "sha256": "1c68bf17ddd2dd2f63e0d35b036d700f41de46b74f77ca98ab5f881bf44641dc"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGPhysics.swift",
+      "sha256": "aa34cc3c370af27112759a5dc1cd439ce7afb3ed2d4997fa2b68c367816316b7"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGRenderPolicy.swift",
+      "sha256": "5ef4ebaff7b3c4c46761e4a576732729a206af04ec38837c1459a30b938183e2"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGStream.swift",
+      "sha256": "b8b7cf3a50e606aeb15107bb8c4e2a41df13a21fa1ab7c5bdd8d1cb0f302e0e4"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGTemplates.swift",
+      "sha256": "10fb32da29adcf349efe8d91755b7aec7713c308039a8bd55417b4859cc2f54d"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGTheme.swift",
+      "sha256": "44fd167a885971014697fc12cb56f627076cce18ca17630cc93f12c08edaaa42"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGTimeline.swift",
+      "sha256": "7caa1be1e9af0c88bb782cf93e1a854f0ef36fd3631666cbf8ed9dd1c674c547"
+    },
+    {
+      "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
+      "sha256": "6d276ff30e85d3d0ce14d95cec7dd1077e99a98c777975e8775941ee137ffdf3"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/HighlightReferenceTests.swift",
+      "sha256": "155fa8b3077f6300920cd3e4777a3657e7cf3d2c95701386bdec0a2096eb0342"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/MGPackTests.swift",
+      "sha256": "c5eff08b996cb6115afac54c57a3d2c0d8ba81a75fc88d3893fe908888e670c7"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/PublicEngineTests.swift",
+      "sha256": "b8d877801e6e60dc7b9446ff07058c756ff4b2cda4e44f72608bedfa05212411"
+    },
+    {
+      "path": "docs/EXPORT.json",
+      "sha256": "8efe42a137682990cba3a0b0192eb112f70f628c98f3d29e61f6b8191e306073"
+    },
+    {
+      "path": "docs/PROTOCOL.md",
+      "sha256": "315ba3293fb06904aeaa21363155b002ef60b52f12e2de1b243f00c4bc90d05b"
+    },
+    {
+      "path": "docs/THIRD-PARTY.md",
+      "sha256": "e7f80fdcf9a0da065cba940dead936682cf0a3834ef6a281eb6f76eaed71b0a3"
+    },
+    {
+      "path": "docs/VERIFY-ON-MAC.md",
+      "sha256": "7b798784ffc85a8f282bc8acc52633dfe22b1e93e6764340207d0ca9749efe83"
+    },
+    {
+      "path": "tools/check_dco.py",
+      "sha256": "9f0d8507c11b37a0b56d1da36042d0ea43a330287aaf8f27f3b9f3229b33b660"
+    }
+  ]
+}
