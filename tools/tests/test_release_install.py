@@ -32,6 +32,11 @@ class ReleaseInstallTests(unittest.TestCase):
         resolver = patch.object(SMOKE, "resolve_apple_tools", return_value=self.tools)
         resolver.start()
         self.addCleanup(resolver.stop)
+        # Keep host metadata probes outside the mocked release-command boundary.
+        # Cold macOS platform.platform() itself can invoke uname and file.
+        metadata = patch.object(SMOKE.platform, "platform", return_value="synthetic-offline-host")
+        metadata.start()
+        self.addCleanup(metadata.stop)
 
     def test_poisoned_environment_is_not_inherited(self):
         with tempfile.TemporaryDirectory() as directory:
