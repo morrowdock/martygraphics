@@ -1,0 +1,25 @@
+name: repository checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: git show --format= --check HEAD
+      - if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 tools/check_dco.py "$BASE_SHA"
+  # SwiftUI/SceneKit cannot build on ubuntu-latest. Required Mac commands:
+  # swift build && swift test (see docs/VERIFY-ON-MAC.md).
+  # This job stays explicitly skipped; hygiene success is not build validation.
+  apple-build:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Mac verification required; Apple frameworks unavailable on Linux"

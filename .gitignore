@@ -1,0 +1,16 @@
+# Local build and test outputs
+.DS_Store
+.build/
+.swiftpm/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+.coverage
+coverage.xml
+.env
+.env.*

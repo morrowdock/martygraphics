@@ -1,0 +1,162 @@
+{
+  "status": "corrected public subset; Mac execution and independent re-review pending",
+  "source_commit": "72b19ac4e208012c9ed090936a93ec4bef6d4b6a",
+  "files": [
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MG3DView.swift",
+      "destination": "Sources/MartyGraphics/MG3DView.swift",
+      "source_sha256": "b9c010c4f17bb174daca02a3c693c4a098de90c328d708fe4620047c4fba0dff",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Removed internal work-item identifier from comments",
+        "Removed internal work-item identifier from comment"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGCanvasRenderer.swift",
+      "destination": "Sources/MartyGraphics/MGCanvasRenderer.swift",
+      "source_sha256": "f2a07df9373067ff3dcfb8d42ed3e2aba6984c0f216128376b30f4300cebfd04",
+      "adaptations": [
+        "Apache-2.0 SPDX header"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGLayout.swift",
+      "destination": "Sources/MartyGraphics/MGLayout.swift",
+      "source_sha256": "4cbbf2cc760887cf5c5c1bb3d0acbf19d19c5fdd3e485dfc2b58bf0d8ee36f9a",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Resolve highlight bounds iteratively with a visited set; cycles and missing targets return no bounds"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGModel.swift",
+      "destination": "Sources/MartyGraphics/MGModel.swift",
+      "source_sha256": "89f4eb5bfa7d4d95575196ff6e964ce21dd5f394a1690f75325616876efb591e",
+      "adaptations": [
+        "Apache-2.0 SPDX header"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGParser.swift",
+      "destination": "Sources/MartyGraphics/MGParser.swift",
+      "source_sha256": "8adccb06ee0337a4b92256f0282586bb5040e72b27fc23f933e051a74f3b0e72",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Detect highlight cycles and revalidate item references after every cumulative step edit"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGPatch.swift",
+      "destination": "Sources/MartyGraphics/MGPatch.swift",
+      "source_sha256": "e890cb4101050a49ebff9bf19ea204b7a92d553a82fb2ab9041b7d9813d5c813",
+      "adaptations": [
+        "Apache-2.0 SPDX header"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGPhysics.swift",
+      "destination": "Sources/MartyGraphics/MGPhysics.swift",
+      "source_sha256": "5ab2953e66ce40c3066de3d22a87606ce580c48480b97499be5d8bb9851b7680",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Removed course and private app cross-check commentary; general mechanics formulas retained"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGRenderPolicy.swift",
+      "destination": "Sources/MartyGraphics/MGRenderPolicy.swift",
+      "source_sha256": "cc02d59a0d950261e4bdbecca989137aa971e4d4c224deef93fe31bec2b9dc2d",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Removed internal work-item identifier from comments"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGStream.swift",
+      "destination": "Sources/MartyGraphics/MGStream.swift",
+      "source_sha256": "36f97fcbf044d84b2dfc45de9dbd8e9f54e8f7439353043090097783d7058b44",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Describe recommended streaming field order directly without referring to private generation instructions"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGTemplates.swift",
+      "destination": "Sources/MartyGraphics/MGTemplates.swift",
+      "source_sha256": "7a320df4f0018a336a164bdd13d7c2c84414e195249df31c11097d3a33b29a45",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Remove all six mechanics walkthrough implementations and registry entries; retain the generic API, helpers, tree and array templates"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGTheme.swift",
+      "destination": "Sources/MartyGraphics/MGTheme.swift",
+      "source_sha256": "f4971eb604703ed355296fe6d0fe32bb3f3757d3e9e991f523edfe3ec5a0a0a7",
+      "adaptations": [
+        "Apache-2.0 SPDX header"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGTimeline.swift",
+      "destination": "Sources/MartyGraphics/MGTimeline.swift",
+      "source_sha256": "59f9bda4352e6ab82bb2dfb37104af04ec9fddc7b17a6e714719127c54c597de",
+      "adaptations": [
+        "Apache-2.0 SPDX header"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MartyGraphicsView.swift",
+      "destination": "Sources/MartyGraphics/MartyGraphicsView.swift",
+      "source_sha256": "8d5cac1e0abb7c2b71bf3d79a4f7fbe61adbed35e6464941cd59459d6e24bef8",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Removed internal work-item identifier from comments"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Package.swift",
+      "destination": "Package.swift",
+      "source_sha256": "7e0618aa1251ab893c793f0797c2efeca7a0ee65751c931664f7e55b807844e9",
+      "adaptations": [
+        "Apache-2.0 SPDX header after required Swift tools directive",
+        "Replaced private app build commentary with standalone package description"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGPack.swift",
+      "destination": "Sources/MartyGraphics/MGPack.swift",
+      "source_sha256": "cc0e3192e0e30eb8afb7a8719a6950c5c0af12520897690c72f56676ddfec4c8",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Core pack references original synthetic fixtures with no built-in generation examples",
+        "Removed private generation/cache/evaluation commentary; example-reference metadata API remains generic",
+        "Built-in pack covers tree and array templates with five synthetic fixtures; no mechanics walkthroughs or private generation examples"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Tests/MartyGraphicsTests/MGPackTests.swift",
+      "destination": "Tests/MartyGraphicsTests/MGPackTests.swift",
+      "source_sha256": "d013a28b340e723d333b448ad5b3190d04263611a3949c6c85fe8bfd8efb767a",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Excluded generation-prompt assertions and generation-prompt sampling test",
+        "Removed private work-item identifier from comments"
+      ]
+    }
+  ],
+  "new_public_files": [
+    "Sources/MartyGraphics/MGGrammar.swift: structural grammar and minimal transport examples",
+    "Sources/MartyGraphics/MGFixtures.swift: five synthetic geometry/tree/array fixtures; no mechanics-template fixtures",
+    "Tests/MartyGraphicsTests/PublicEngineTests.swift: generic behavioral coverage",
+    "Tests/MartyGraphicsTests/HighlightReferenceTests.swift: original cycle, chain, edit and patch regressions"
+  ],
+  "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
+  "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",
+  "excluded_content": [
+    "All six mechanics walkthrough implementations and registry entries from the private template source, including every narration call",
+    "All six mechanics-template fixtures and dependent template-invocation tests",
+    "Original course fixtures, teaching/gallery/source-card content, private prompt generation, token budgeting, routing/evaluation recipes and application adapters"
+  ]
+}
