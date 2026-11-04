@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/DISTRIBUTION.md",
-      "sha256": "975a9194888d7f9db723ea2552b716fda7992d46c043eac1b793799d156634ed"
+      "sha256": "d969d80938427f44f7c0822521cbeedac335294d742645d46644fbd05bb97374"
     },
     {
       "path": "docs/EXPORT.json",
@@ -279,7 +279,7 @@
     },
     {
       "path": "tools/tests/test_release_install.py",
-      "sha256": "9bb4dce33a288533e0d88f91e22d8acf6d0c34341a732030b6b739ea93e02893"
+      "sha256": "b2f73a30e8f3dbeedb3a2d767f8ec3aa1040153ec4c2a42f1ef1e9039a40ffe5"
     },
     {
       "path": "tools/validate_local.py",
@@ -287,7 +287,7 @@
     },
     {
       "path": "tools/verify_release_install.py",
-      "sha256": "d0bac9ee0ff25bd87ca59d8e8617940a7622be77a6657cf51e246719c23f77dc"
+      "sha256": "3d87164ec0d1a6de154d86957970d91645c36f4d63b411f0d5a597fb0629777a"
     }
   ]
 }

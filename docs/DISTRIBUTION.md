@@ -64,24 +64,49 @@ the evidence. This is the checklist, not an announcement of a release.
 
 ### Copyable remote-SPM smoke command — pending a real tag
 
-On an approved **Mac**, with Git, Python 3.9+ and Swift 6, obtain these three
+On an approved **Mac**, with Git, Python 3.9+ and Swift 6, obtain these four
 values from the coordinator: `MG_RELEASE_TAG` (existing reviewed tag),
 `MG_RELEASE_SHA` (full reviewed commit), and `MG_INSTALL_EVIDENCE` (a new private
-directory outside the checkout). Set them in the operator shell, then run:
+directory outside the checkout), plus `MG_DEVELOPER_DIR` (the canonical approved
+Apple developer directory). Supported installation roots are
+`/Applications/Xcode.app/Contents/Developer` and `/Library/Developer/CommandLineTools`;
+custom roots or symlinks escaping the selected root fail closed. Set the values
+in the operator shell, then run:
 
 ```sh
 python3 tools/verify_release_install.py \
   --tag "${MG_RELEASE_TAG:?Set the actual coordinator-approved existing tag}" \
   --commit "${MG_RELEASE_SHA:?Set its full reviewed commit SHA}" \
-  --output "${MG_INSTALL_EVIDENCE:?Choose a new private evidence directory}"
+  --output "${MG_INSTALL_EVIDENCE:?Choose a new private evidence directory}" \
+  --developer-dir "${MG_DEVELOPER_DIR:?Select the canonical approved Apple developer directory}"
 ```
 
 The [runner source](../tools/verify_release_install.py) contains the complete
 generated `Package.swift` and Swift client. It accepts a semantic tag (optional
 `v` prefix) and full commit; it cannot establish approval by itself. It checks the
-public tag before and after the test, pins an exact package version, isolates
-cache/config/security directories, and disables credential loading for this
-public fetch. No local dependency, branch fallback, extra dependency, status
+public tag before and after the test and pins an exact package version. Every
+child receives an explicit minimal environment: no parent HOME, PATH, tracing,
+proxy, agent, token or toolchain overrides are inherited. It creates an empty
+private HOME (including empty `.netrc`/Git/curl config and SSH directory), XDG,
+temporary and SwiftPM cache/config/security directories; no real-home files are copied.
+
+Direct Git uses `/usr/bin/git`; Swift and its SDK come only from the selected
+validated Apple installation. Child PATH contains fixed system directories and
+that toolchain's bin directory, with system Git first. An explicit validated
+Git helper directory and Git environment configuration apply to both direct
+Git and Git spawned by Swift: no system/user configuration, reset credential
+helpers/extra headers/cookies, no interactive prompts, and HTTPS-only transport.
+Swift's `--disable-netrc`/`--disable-keychain` are additional SwiftPM controls;
+**they do not disable Git/libcurl's own netrc lookup**. The separate empty HOME
+addresses that configuration path; it is not a blanket credential-isolation guarantee.
+
+This is configuration isolation under the same operating-system account, not a
+filesystem/network sandbox. Approved build code can still access account files
+or OS services. The coordinator must trust the selected Apple installation.
+Native Git/libcurl/Swift and SDK behavior under this environment has not been
+executed by the offline regressions; compatible-host verification remains gated.
+Missing tools/SDKs fail closed rather than inheriting extra environment settings.
+No local dependency, branch fallback, extra dependency, status
 publisher, tag creation or release command is included.
 
 The runner checks `Package.resolved` and the fetched dependency's actual commit
@@ -99,7 +124,9 @@ contain local paths; do not publish it.
 The runner is read-only toward GitHub and does not request publishing credentials.
 
 Offline Python regressions check input bounds, missing/mismatched tags, bad
-resolved pins and refusal to overwrite/use an unsupported host. They are
+resolved pins, refusal to overwrite/use an unsupported host, poisoned HOME/netrc/
+config/helper/tracing/PATH, trusted-path rejection and the environment contract
+through Python stand-ins for a Swift process and its Git child. They are
 **synthetic guard tests, not remote installation acceptance**. As of this
 checkpoint, no real tag exists and the real command remains unexecuted.
 
