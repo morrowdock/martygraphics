@@ -1,0 +1,328 @@
+// SPDX-License-Identifier: Apache-2.0
+import SwiftUI
+import Combine
+
+/// Owns the current scene. Patches and streams go through here so every change is validated and blended, never torn.
+@MainActor
+public final class MGSceneController: ObservableObject {
+    @Published public private(set) var scene: MGScene?
+    @Published public private(set) var isStreaming = false
+    /// Bumps on every accepted change (new scene, patch, stream preview) so views can blend from what was on screen.
+    @Published public private(set) var revision = 0
+    /// True when the last patch or stream was refused and the previous scene stayed.
+    @Published public private(set) var lastUpdateFailed = false
+    private var stream: MGStreamParser?
+    private var beforeStream: MGScene?
+    /// Scene revisions handed out by this controller only ever increase, so a replacement scene never reuses the
+    /// revision of the scene it replaced and an old patch can never match it.
+    public private(set) var nextSceneRevision = 0
+
+    public init(scene: MGScene? = nil) { self.scene = scene.map(stamped) }
+
+    private func stamped(_ s: MGScene) -> MGScene { var s = s; s.revision = nextSceneRevision; nextSceneRevision += 1; return s }
+
+    public func show(_ scene: MGScene?) { self.scene = scene.map(stamped); lastUpdateFailed = false; revision &+= 1 }
+
+    /// Applies a follow-up patch to the current scene. Returns false and keeps the scene if it doesn't validate.
+    /// `requireRevision`: refuse patches that don't name the revision they were written against (model-sent patches).
+    @discardableResult public func apply(patch: MGPatch, requireRevision: Bool = false) -> Bool {
+        guard let scene, !requireRevision || patch.baseRevision != nil,
+              case .success(let next) = scene.applying(patch) else { lastUpdateFailed = true; return false }
+        self.scene = stamped(next); lastUpdateFailed = false; revision &+= 1; return true
+    }
+    @discardableResult public func apply(patchObject: Any) -> Bool {
+        guard case .success(let p) = MGPatch.parse(object: patchObject) else { lastUpdateFailed = true; return false }
+        return apply(patch: p)
+    }
+
+    // MARK: streaming
+
+    public func beginStream() { stream = MGStreamParser(); beforeStream = scene; isStreaming = true }
+    public func feed(_ chunk: String) {
+        guard var s = stream else { return }
+        if let preview = s.feed(chunk) { scene = stamped(preview); revision &+= 1 }
+        stream = s
+    }
+    /// Strict final parse. On failure the scene from before the stream comes back (fail safe).
+    @discardableResult public func endStream() -> Bool {
+        defer { stream = nil; beforeStream = nil; isStreaming = false }
+        guard let s = stream else { return false }
+        switch s.finish() {
+        case .success(let final): scene = stamped(final); lastUpdateFailed = false; revision &+= 1; return true
+        case .failure: scene = beforeStream; lastUpdateFailed = true; revision &+= 1; return false
+        }
+    }
+}
+
+/// Public entry point: `MartyGraphicsView(scene:)` or `MartyGraphicsView(controller:)` for live patches/streams.
+public struct MartyGraphicsView: View {
+    @StateObject private var own: MGSceneController
+    private let external: MGSceneController?
+    private let initial: MGScene?
+    private let showsControls: Bool
+    private let readOnly: Bool
+    private var teaching = MGBoardTeaching()
+
+    /// `readOnly`: presentation only (e.g. submitted exam work). The finished walkthrough is shown with no step,
+    /// play or replay controls and no element interaction. Animation still plays unless Reduce Motion is on.
+    public init(scene: MGScene, showsControls: Bool = true, readOnly: Bool = false) {
+        _own = StateObject(wrappedValue: MGSceneController(scene: scene)); external = nil; initial = scene
+        self.showsControls = showsControls; self.readOnly = readOnly
+    }
+    public init(controller: MGSceneController, showsControls: Bool = true, readOnly: Bool = false) {
+        _own = StateObject(wrappedValue: MGSceneController()); external = controller; initial = nil
+        self.showsControls = showsControls; self.readOnly = readOnly
+    }
+    /// Tap the board to select a semantic object (only ids in `markers`, when markers are set). Ignored when read-only.
+    public func selection(_ id: Binding<String?>) -> Self { var v = self; v.teaching.selection = id; return v }
+    /// Items to point at with a glow ring (the selection is always included).
+    public func emphasis(_ ids: Set<String>) -> Self { var v = self; v.teaching.emphasis = ids; return v }
+    /// Numbered markers (item id → n) that match an object list beside the board.
+    public func markers(_ markers: [String: Int]) -> Self { var v = self; v.teaching.markers = markers; return v }
+    /// Finite motion: play `loops` cycles, then rest on the last frame (Replay plays again). nil keeps looping.
+    public func motionLoops(_ loops: Int?) -> Self { var v = self; v.teaching.loops = loops.map { max(1, $0) }; return v }
+    /// VoiceOver value for the board (e.g. a teaching summary); defaults to the current step's narration.
+    public func boardAccessibility(_ summary: String?) -> Self { var v = self; v.teaching.summary = summary; return v }
+    /// Items not drawn and not tappable (values hidden until the host reveals them, e.g. during independent practice).
+    public func concealed(_ ids: Set<String>) -> Self { var v = self; v.teaching.concealed = ids; return v }
+
+    public var body: some View {
+        MGSceneHost(controller: external ?? own, showsControls: showsControls, readOnly: readOnly, teaching: teaching)
+            .onChange(of: initial) { _, next in if external == nil, let next { own.show(next) } }
+    }
+}
+
+/// Teaching hooks carried from MartyGraphicsView into the host.
+struct MGBoardTeaching {
+    var selection: Binding<String?>?
+    var emphasis: Set<String> = []
+    var markers: [String: Int] = [:]
+    var loops: Int?
+    var summary: String?
+    var concealed: Set<String> = []
+    /// Motion stays on its first frame while anything is concealed (it can show the answer), then plays from the start.
+    var holdsMotion: Bool { !concealed.isEmpty }
+}
+
+struct MGSceneHost: View {
+    @ObservedObject var controller: MGSceneController
+    let showsControls: Bool
+    var readOnly = false
+    var teaching = MGBoardTeaching()
+    @Environment(\.mgTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    @State private var step = 0
+    @State private var playing = true
+    @State private var epoch = Date()
+    @State private var pausedAt: Double = 0
+    @State private var appearStart: [String: Date] = [:]
+    @State private var blendFrom: [MGItem]?
+    @State private var blendStart = Date.distantPast
+    @State private var cameraFrom: MGCamera?
+    @State private var cameraStart = Date.distantPast
+    @State private var shownScene: MGScene?
+    // Render gating: the frame loop runs only for real motion or a short transition on a visible board.
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var visible = false
+    @State private var transientUntil = Date.distantPast
+    @State private var transientToken = 0
+
+    private func renderState(_ scene: MGScene) -> MGRenderPolicy.State {
+        .init(motionPlaying: playing && scene.animates && !teaching.holdsMotion, transientActive: Date() < transientUntil,
+              visible: visible, sceneActive: scenePhase == .active, reduceMotion: reduceMotion)
+    }
+    /// Keep the 2D loop alive just long enough for a transition, then settle on a final static frame.
+    private func bumpTransient() {
+        transientUntil = Date().addingTimeInterval(MGRenderPolicy.transientSeconds); transientToken &+= 1
+    }
+
+    var body: some View {
+        if let scene = controller.scene {
+            VStack(alignment: .leading, spacing: 12) {
+                header(scene)
+                board(scene)
+                if showsControls, !scene.steps.isEmpty { caption(scene) }
+            }
+            .padding(14)
+            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(theme.backgroundBottom))
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            .onAppear { visible = true; adopt(scene, animated: false) }
+            .onDisappear { visible = false }
+            .task(id: transientToken) {
+                try? await Task.sleep(nanoseconds: UInt64(MGRenderPolicy.transientSeconds * 1_000_000_000))
+                if !Task.isCancelled { transientUntil = .distantPast }   // state change → one settled redraw, loop paused
+            }
+            .onChange(of: controller.revision) { _, _ in if let s = controller.scene { adopt(s, animated: true) } }
+            .onChange(of: teaching.holdsMotion) { _, held in
+                if !held { epoch = Date(); pausedAt = 0; playing = true }   // revealed: play the motion from its start
+                bumpTransient()
+            }
+            .onChange(of: teaching.emphasis.union(teaching.selection?.wrappedValue.map { [$0] } ?? [])) { _, _ in bumpTransient() }
+            .task(id: LoopKey(epoch: epoch, playing: playing && !teaching.holdsMotion, loops: teaching.loops, revision: controller.revision)) { await finishLoops(scene) }
+        }
+    }
+
+    // MARK: pieces
+
+    private func header(_ scene: MGScene) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: scene.is3D ? "cube.transparent" : "sparkles").foregroundStyle(theme.color(.accent))
+            Text(scene.title.isEmpty ? "Marty's sketch" : scene.title).font(.headline).foregroundStyle(theme.ink)
+            Spacer(minLength: 0)
+            if controller.isStreaming { ProgressView().controlSize(.small).tint(theme.ink) }
+        }
+    }
+
+    private func board(_ scene: MGScene) -> some View {
+        Group {
+            if scene.is3D && teaching.concealed.isEmpty {
+                MG3DView(scene: scene, items: MGTimeline.items(scene, step: step), playing: MGRenderPolicy.sceneKitPlaying(renderState(scene)))
+                    .overlay(alignment: .bottomTrailing) {
+                        Label("Drag to turn", systemImage: "hand.draw").font(.caption2).foregroundStyle(theme.subtleInk).padding(8)
+                    }
+            } else {
+                let running = MGRenderPolicy.continuous(renderState(scene))
+                GeometryReader { geo in
+                    TimelineView(.animation(minimumInterval: MGRenderPolicy.frameInterval, paused: !running)) { tl in
+                        Canvas(rendersAsynchronously: false) { ctx, size in
+                            MGCanvasRenderer.draw(input(scene, now: running ? tl.date : Date(), size: size), in: ctx)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .gesture(SpatialTapGesture().onEnded { value in select(scene, at: value.location, size: geo.size) },
+                             including: teaching.selection != nil && !readOnly ? .all : .none)
+                }
+            }
+        }
+        .aspectRatio(scene.width / scene.height, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .accessibilityElement()
+        .accessibilityLabel(scene.title.isEmpty ? "Marty's sketch" : scene.title)
+        .accessibilityValue(teaching.summary ?? (scene.steps.indices.contains(step) ? scene.steps[step].say : ""))
+    }
+
+    // MARK: teaching hooks
+
+    /// Tap → the smallest selectable footprint under the finger (12 pt slop); empty space clears the selection.
+    private func select(_ scene: MGScene, at point: CGPoint, size: CGSize) {
+        guard let binding = teaching.selection else { return }
+        // Use the drawing's frame calculation, including in-flight item and camera blends.
+        let frame = input(scene, now: Date(), size: size)
+        let selectable = teaching.markers.isEmpty ? nil : Set(teaching.markers.keys)
+        binding.wrappedValue = frame.hit(point, among: selectable)?.id
+    }
+
+    struct LoopKey: Hashable { let epoch: Date; let playing: Bool; let loops: Int?; let revision: Int }
+
+    /// Finite motion: after `loops` cycles, rest on the end of the last cycle (not snapped back to the start).
+    private func finishLoops(_ scene: MGScene) async {
+        guard let loops = teaching.loops, playing, !teaching.holdsMotion, scene.animates, let cycle = MGTimeline.cycle(scene) else { return }
+        let end = cycle * Double(loops)
+        let remaining = end - Date().timeIntervalSince(epoch)
+        if remaining > 0 { try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000)) }
+        guard !Task.isCancelled, playing else { return }
+        pausedAt = MGTimeline.restTime(scene, loops: loops) ?? end; playing = false; bumpTransient()
+    }
+
+    private func caption(_ scene: MGScene) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(scene.steps[min(step, scene.steps.count - 1)].say)
+                .font(.body).foregroundStyle(theme.ink).fixedSize(horizontal: false, vertical: true)
+                .id(step).transition(.opacity.combined(with: .move(edge: .bottom)))
+            HStack(spacing: 6) {
+                ForEach(scene.steps.indices, id: \.self) { i in
+                    Capsule().fill(i == step ? theme.color(.accent) : theme.subtleInk.opacity(0.35))
+                        .frame(width: i == step ? 22 : 8, height: 8)
+                }
+                Spacer(minLength: 8)
+                if !readOnly {
+                control("chevron.left", "Previous step", enabled: step > 0) { go(scene, step - 1) }
+                if scene.animates && !reduceMotion && !teaching.holdsMotion {
+                    control(playing ? "pause.fill" : "play.fill", playing ? "Pause" : "Play", enabled: true) { togglePlay() }
+                    control("arrow.counterclockwise", "Replay", enabled: true) { epoch = Date(); pausedAt = 0; playing = true; bumpTransient() }
+                }
+                control("chevron.right", "Next step", enabled: step < scene.steps.count - 1) { go(scene, step + 1) }
+                }
+            }
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: step)
+    }
+
+    private func control(_ icon: String, _ label: String, enabled: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon).font(.body.weight(.semibold)).frame(width: 44, height: 44)
+                .background(Circle().fill(Color.white.opacity(enabled ? 0.10 : 0.04)))
+                .foregroundStyle(enabled ? theme.ink : theme.subtleInk.opacity(0.5))
+        }
+        .buttonStyle(.plain).disabled(!enabled).accessibilityLabel(label)
+    }
+
+    // MARK: state
+
+    private func time(_ now: Date) -> Double { teaching.holdsMotion ? 0 : (playing ? now.timeIntervalSince(epoch) : pausedAt) }
+
+    private func togglePlay() {
+        if playing { pausedAt = Date().timeIntervalSince(epoch) } else { epoch = Date().addingTimeInterval(-pausedAt) }
+        playing.toggle(); bumpTransient()
+    }
+
+    private func go(_ scene: MGScene, _ next: Int) {
+        guard scene.steps.indices.contains(next) else { return }
+        let before = Set(MGTimeline.items(scene, step: step).map(\.id))
+        cameraFrom = scene.steps[step].camera ?? scene.camera; cameraStart = Date()
+        blendFrom = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: time(Date())); blendStart = Date()
+        step = next; bumpTransient()
+        let now = Date()
+        for id in MGTimeline.items(scene, step: next).map(\.id) where !before.contains(id) { appearStart[id] = now }
+    }
+
+    /// New scene or patched scene: blend from what is on screen now; new items draw on.
+    private func adopt(_ scene: MGScene, animated: Bool) {
+        let now = Date()
+        let previous = shownScene
+        if animated, let previous {
+            blendFrom = MGTimeline.frame(previous, items: MGTimeline.items(previous, step: step), time: time(now)); blendStart = now
+            let old = Set(previous.items.map(\.id))
+            for i in scene.items where !old.contains(i.id) { appearStart[i.id] = now }
+        } else {
+            blendFrom = nil
+            for i in scene.items { appearStart[i.id] = now.addingTimeInterval(Double(drawOrder(i)) * 0.05) }
+        }
+        let sameScene = previous.map { $0.template == scene.template && $0.title == scene.title } ?? false
+        if !sameScene { step = 0; epoch = now; pausedAt = 0 }
+        // Finite (teaching) motion: a changed parameter replays the new motion from the start for its loops, so the
+        // learner sees the consequence of their change; it never resumes mid-way through a different motion.
+        else if teaching.loops != nil, previous != scene { epoch = now; pausedAt = 0; playing = scene.animates }
+        step = min(scene.startStep > 0 ? scene.startStep : step, max(0, scene.steps.count - 1))
+        if readOnly { step = max(0, scene.steps.count - 1) }
+        if scene.startStep > 0, let previous { cameraFrom = previous.steps.indices.contains(step) ? previous.steps[step].camera : previous.camera; cameraStart = now }
+        shownScene = scene; bumpTransient()
+    }
+
+    private func drawOrder(_ i: MGItem) -> Int {
+        switch i.kind { case .vector, .highlight: return 6; case .text: return 8; case .body, .node, .array: return 3; default: return 0 }
+    }
+
+    private func input(_ scene: MGScene, now: Date, size: CGSize) -> MGRenderInput {
+        let t = reduceMotion ? 0 : time(now)
+        var items = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: t)
+        if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
+        let blendT = now.timeIntervalSince(blendStart)
+        if let from = blendFrom, blendT < 1.2, !reduceMotion { items = MGTimeline.blend(from: from, to: items, t: MGTimeline.spring(blendT)) }
+        let camera = scene.steps.indices.contains(step) ? (scene.steps[step].camera ?? scene.camera) : scene.camera
+        var vp = MGViewport(size: size, width: scene.width, height: scene.height, camera: camera)
+        let camT = now.timeIntervalSince(cameraStart)
+        if camT < 1.0, !reduceMotion {
+            let from = MGViewport(size: size, width: scene.width, height: scene.height, camera: cameraFrom)
+            vp = from.lerp(vp, CGFloat(MGTimeline.spring(camT)))
+        }
+        var appear: [String: Double] = [:]
+        if !reduceMotion { for (id, start) in appearStart { let p = now.timeIntervalSince(start) / 0.55; if p < 1 { appear[id] = max(0, p) } } }
+        let focus = scene.steps.indices.contains(step) ? scene.steps[step].focus : nil
+        var out = MGRenderInput(scene: scene, items: items, viewport: vp, theme: theme, appear: appear, focus: focus, time: t)
+        out.emphasis = teaching.emphasis.union(teaching.selection?.wrappedValue.map { [$0] } ?? [])
+        out.markers = teaching.markers
+        return out
+    }
+}
