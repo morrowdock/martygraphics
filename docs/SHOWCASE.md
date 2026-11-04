@@ -48,7 +48,7 @@ renderer scale 1. Later documentation/CI changes do not change the captured Swif
 | [Two pointers](assets/native/two-pointers.gif) | 840 × 662 | 53 KiB | 4 distinct frames × 1.2 s = 4.8 s |
 | [Motion](assets/native/motion.gif) | 840 × 662 | 124 KiB | 32 distinct frames × stored 0.13 s = 4.16 s (about 7.69 fps) |
 
-All nine images total about **1.42 MiB**. The README keeps one small animated hero
+All nine images total **1,391,833 bytes (about 1.33 MiB)**. The README keeps one small animated hero
 and puts the second animation in a disclosure. Stills are single-column and can
 be opened at full resolution. GitHub controls GIF playback; choose the static
 gallery below to avoid the animations. Descriptions and values remain available
