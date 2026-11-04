@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "title": "Find a pair totaling 14",
+  "template": "two_pointers",
+  "params": {
+    "vals": [
+      2,
+      5,
+      9,
+      14
+    ],
+    "target": 14
+  }
+}

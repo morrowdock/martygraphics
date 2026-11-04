@@ -1,0 +1,39 @@
+# Public engine versus a host application
+
+This table describes source in this repository. An app demonstration, private
+pack, proposed screen or browser recreation does not expand the public API.
+
+| Capability | Public here | Host/app responsibility or gap |
+| --- | --- | --- |
+| Scene model, structural grammar, closed-key parsing | `MGModel`, `MGGrammar`, `MGParser` | Produce content; handle errors; provide appropriate text alternatives. |
+| Atomic patches and revisions | `MGPatch`, `MGSceneController` | Track current revisions and require them for untrusted updates. |
+| Progressive JSON | `MGStreamParser`, controller stream methods | Transport chunks; treat previews as provisional; check final success. |
+| Layout and deterministic motion | `MGLayout`, `MGViewport`, `MGTimeline` | Choose viewport, time and step; measure readability and frame cost. |
+| Native 2D | `MGCanvasRenderer`, SwiftUI view | Apple SDKs; application lifecycle and interaction. |
+| Native 3D | SceneKit renderer for the documented primitive subset | A real interactive/device capture and broader 3D quality/performance receipt remain separate work. |
+| Templates and packs | Public constructors, validated registry, BST and two pointers | No downloadable catalog, premium/course pack, package signing or trust service. |
+| Model-assisted generation | No model/provider integration or prompts bundled | Optional host choice; scene validation still applies to every provider. |
+| Learning workflows and content | Synthetic examples only | Curriculum, learner state, study scheduling, private sources and app adapters are outside this package. |
+| Desktop overlays or computer control | Not implemented by this library | Not implied by the scene renderer or any other product's overlay demo. |
+| Web/Windows/Linux rendering | Not implemented in this package | [Portable-core/browser proposal](PORTABILITY-PROPOSAL.md); no rewrite or delivery promise. |
+
+The current **renderers** use SwiftUI, CoreGraphics, SceneKit and related Apple
+frameworks. Native iPad support does not require an Apple-only core architecture;
+the present package simply has not separated a portable core from its adapters.
+
+## Bounds are part of the contract
+
+Current limits include 8 KiB canonical scene JSON, 4 KiB patches, 24 wire items,
+10 template extras, 40 resolved items, 8 wire-authored steps and 48 template-built
+steps. They bound validation, drawing, text and transition work. Input-size
+headroom before canonicalization is not permission to exceed canonical limits.
+
+Do not silently remove limits to fit a larger demo. A proposed expansion needs:
+
+1. A concrete public use case and a scene that hits the existing limit.
+2. Rejection/boundary tests, including references, cycles, edits and patches.
+3. Measurements at the old and proposed maxima on named platform/toolchain
+   configurations, including frame cost, memory and text/layout quality.
+4. Independent integration review and an explicit format/version compatibility decision.
+
+This showcase changes **no engine limit or renderer behavior**.

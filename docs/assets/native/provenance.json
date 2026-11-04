@@ -1,0 +1,148 @@
+{
+  "source": {
+    "repository": "https://github.com/morrowdock/martygraphics",
+    "commit": "7c7c280e2bde85f504a292bf09b1b8c285d295dc",
+    "tool": "Examples/Showcase/Sources/MartyShowcase/Showcase.swift",
+    "package": "Examples/Showcase/Package.swift",
+    "inputs": [
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/function.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json"
+    ],
+    "license": "Apache-2.0; original synthetic scenes from this public source"
+  },
+  "capture": {
+    "kind": "Native SwiftUI ImageRenderer wrapper using public MGCanvasRenderer and MGTimeline; not a full-app screenshot or browser recreation",
+    "configuration": "SwiftPM debug; Swift language mode5; renderer scale1",
+    "platform": "macOS26.6.2",
+    "swift": "Apple Swift6.3.3",
+    "hardware": "Apple silicon (arm64)",
+    "output": "<NEW_OUTPUT_DIRECTORY>",
+    "commands": [
+      "swift build",
+      "swift test",
+      "swift run --package-path Examples/Showcase marty-showcase --verify",
+      "swift run --package-path Examples/Showcase marty-showcase --export <NEW_OUTPUT_DIRECTORY>"
+    ],
+    "commandExits": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "packageTests": 23,
+    "packageTestFailures": 0
+  },
+  "artifacts": {
+    "counts.png": {
+      "bytes": 161630,
+      "sha256": "8b3aca115485c91aa6dfea39c808ddfa50572a2ac56c60bebbf1b1745ab81a88",
+      "width": 840,
+      "height": 662
+    },
+    "function.png": {
+      "bytes": 141568,
+      "sha256": "648098004a49aab097c77097b153885d63bd3707549eec1a3c7601f2664f4817",
+      "width": 840,
+      "height": 662
+    },
+    "handoff.png": {
+      "bytes": 129933,
+      "sha256": "e3c91e9d48a1e264ae6e6135fa9aca71dfde7e4ece674c14ef6782e2ad82428e",
+      "width": 840,
+      "height": 662
+    },
+    "motion.gif": {
+      "bytes": 127273,
+      "sha256": "b142ee15fb63e84c6c02b806120994339cf80ef74d650ef671c5796098c84e2d",
+      "width": 840,
+      "height": 662,
+      "frames": 32,
+      "delaysSeconds": [
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13,
+        0.13
+      ],
+      "totalSeconds": 4.16,
+      "distinctCompressedFrames": 32
+    },
+    "motion.png": {
+      "bytes": 92743,
+      "sha256": "66e26f7121f28aaaf149cb5f8a673312684f2239273f6108c8ca84bbfb849acf",
+      "width": 840,
+      "height": 662
+    },
+    "overview.png": {
+      "bytes": 464795,
+      "sha256": "03e3cd55ca080a2e44565c6ba244a6a9e32a6826e26188b5fb39feeff6ae42ed",
+      "width": 1172,
+      "height": 1640
+    },
+    "tree.png": {
+      "bytes": 127378,
+      "sha256": "0bc9b95b114d7e25ec39daf98f977b25f55f09dcf77c2a372fb9581fe42e7009",
+      "width": 840,
+      "height": 662
+    },
+    "two-pointers.gif": {
+      "bytes": 54379,
+      "sha256": "3399c1fe64efada1fd0dfc10d596dbe1e6c541a6602d5df097204d58ed3ec0c9",
+      "width": 840,
+      "height": 662,
+      "frames": 4,
+      "delaysSeconds": [
+        1.2,
+        1.2,
+        1.2,
+        1.2
+      ],
+      "totalSeconds": 4.8,
+      "distinctCompressedFrames": 4
+    },
+    "two-pointers.png": {
+      "bytes": 92134,
+      "sha256": "3801cfb1d45ba2136fec32c5b2e86edc15d20c65879aa680f0b7884e187deab3",
+      "width": 840,
+      "height": 662
+    }
+  },
+  "review": {
+    "staticVisual": "Overview and six individual PNGs inspected: readable labels/captions, complete boards, no clipped captions or blank output observed. Pointer labels are small in overview; individual view is clearer.",
+    "animation": "GIF structure/delays/frame counts and distinct compressed frames inspected; no live interactive playback, AX, performance or adopter evaluation.",
+    "timingNote": "Motion source requests 0.125s; stored GIF delay is0.13s for each of32frames (4.16s total, about7.69fps). Two-pointers stores4frames at1.2s (4.8s total).",
+    "privacy": "Image metadata audited; no absolute user paths, machine hostname/serial or private repository/thread/log URLs detected. Raw logs and local capture paths excluded.",
+    "claims": "PNG/GIF native wrapper renders only; no video, full-app capture, accessibility or performance claim."
+  }
+}

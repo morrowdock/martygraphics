@@ -1,12 +1,14 @@
 # Third-party inventory
 
 This source package declares **no external package dependencies** and vendors
-no third-party source, fonts, images, model weights, or binary assets.
+no third-party source, fonts, images, model weights, or binary assets. The committed
+PNG/GIF showcase assets are original synthetic renders of this package, under
+Apache-2.0; their source and hashes are in [the capture receipt](assets/native/provenance.json).
 
 | Component | Use | License / source |
 | --- | --- | --- |
 | Swift 6 standard library / toolchain | Build and runtime platform | Apache-2.0 with Swift Runtime Library Exception; https://github.com/swiftlang/swift/blob/main/LICENSE.txt |
-| Foundation, SwiftUI, Combine, SceneKit, CoreGraphics, simd | Installed Apple platform SDKs | Platform frameworks, not redistributed by this repository; macOS/iOS SDK terms apply |
+| Foundation, SwiftUI, Combine, SceneKit, CoreGraphics, simd; AppKit, ImageIO, UniformTypeIdentifiers in the macOS showcase | Installed Apple platform SDKs | Platform frameworks, not redistributed by this repository; macOS/iOS SDK terms apply |
 | XCTest | Platform test framework | Toolchain/SDK component; not vendored |
 | Python 3 standard library | Optional DCO workflow helper | PSF-2.0; https://docs.python.org/3/license.html |
 | actions/checkout | CI only | MIT; https://github.com/actions/checkout/blob/main/LICENSE |
