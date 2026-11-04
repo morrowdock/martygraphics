@@ -11,10 +11,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - run: git show --format= --check HEAD
+      - run: python3 -m unittest discover -s tools/tests -v
       - if: github.event_name == 'pull_request'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 tools/check_dco.py "$BASE_SHA"
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 tools/check_dco.py "$BASE_SHA" "$HEAD_SHA"
   # SwiftUI/SceneKit cannot build on ubuntu-latest. Required Mac commands:
   # swift build && swift test (see docs/VERIFY-ON-MAC.md).
   # This job stays explicitly skipped; hygiene success is not build validation.

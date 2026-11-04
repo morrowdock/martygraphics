@@ -5,7 +5,12 @@ Status: measurement plan and scoped evidence inventory; unrecorded acceptance is
 The release baseline `73f9e13bbe1bb72c2cceaff577c93756da83cd6d` passed a Mac build
 and 23 tests before publication. That is a functional release receipt, not proof
 of renderer performance, accessibility acceptance or independent adoption.
-New showcase code requires its own exact-revision execution evidence.
+The [native capture receipt](assets/native/provenance.json) records a clean
+checkout of showcase source `7c7c280e2bde85f504a292bf09b1b8c285d295dc`: build,
+23 tests (zero failures), six-scene verification and native export all passed.
+The seven stills were visually inspected and both GIFs checked for dimensions,
+distinct frames, stored delays and metadata. These are scoped export results;
+interactive playback, accessibility, performance and adopter acceptance remain pending.
 
 ## What a capture proves
 

@@ -31,7 +31,9 @@ Expected output:
 - `tree.png`, `two-pointers.png`, `handoff.png`, `function.png`, `counts.png`, `motion.png`:
   each scene's final step; motion sampled at one second.
 - `two-pointers.gif`: each actual engine walkthrough step held for 1.2 seconds.
-- `motion.gif`: 32 engine timeline frames at eight frames per second; a four-second loop.
+- `motion.gif`: 32 engine timeline frames, requesting 0.125 seconds per frame.
+  The accepted GIF stores 0.13 seconds per frame: **4.16 seconds per loop**,
+  about 7.69 fps. GIF timing is quantized; do not describe this as an exact four-second video.
 
 These are **offscreen native engine captures**, made by SwiftUI `ImageRenderer`
 and `MGCanvasRenderer`. They are not operating-system screenshots, recordings of
@@ -52,3 +54,10 @@ installed Apple SDK; no font files or third-party artwork are redistributed.
 See [the showcase](../../docs/SHOWCASE.md) for the published asset inventory and
 reproduction receipt. A successful `--verify` validates scenes; export and visual
 quality must be checked separately.
+
+The [committed capture receipt](../../docs/assets/native/provenance.json) records
+source `7c7c280e2bde85f504a292bf09b1b8c285d295dc`, macOS 26.6.2 / Apple Swift 6.3.3
+on arm64, four successful build/test/verify/export commands, 23 tests with no
+failures, artifact hashes and actual stored timings. The preview window was not
+launched for this receipt. Keyboard, VoiceOver, Reduce Motion, performance and
+independent adopter acceptance remain pending. No video was captured.

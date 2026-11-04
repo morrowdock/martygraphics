@@ -11,7 +11,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "f6867c0a819a6672341d968217e6bcebba80b15de84c45ad8e25a1a97e456134"
+      "sha256": "0308800834cd740c6cbe707b2fe8281b0b69ad176a703447237ade3f848df65c"
     },
     {
       "path": ".gitignore",
@@ -35,7 +35,7 @@
     },
     {
       "path": "Examples/Showcase/README.md",
-      "sha256": "1ebff516f192031f3fff3d54b4ab4ee9a5de51ca68a88e1e78e42f22cb1d86ac"
+      "sha256": "a2ca22bb1309342348218bf227795054fef8b30afbda529ac0f67878cfb703a0"
     },
     {
       "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json",
@@ -79,7 +79,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "a695befafae40ac51393a7aa1b1d0223f77c922f7d1cc9772ec55518973e987b"
+      "sha256": "b17bf8adfa54f35173f930b3f5fb8e09626e737a1a084a4e07c3955619ee84ad"
     },
     {
       "path": "SECURITY.md",
@@ -187,23 +187,67 @@
     },
     {
       "path": "docs/QUALITY.md",
-      "sha256": "2b43d355b6ec6dff129110becd95074480c43948416db435fac37820f31faf45"
+      "sha256": "bd4701617857282f2821be8117ea58ad6d78d5a661d13c09f2a37d7708de1d26"
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "856b0741ed0b9d21e6d23f84b61561807a73e3a3478ed3157c8ded90f31d6d88"
+      "sha256": "2c8503cb738df506f10c68f2e173ccac280a472ae3f64057a754a3075101d11b"
     },
     {
       "path": "docs/THIRD-PARTY.md",
-      "sha256": "e7f80fdcf9a0da065cba940dead936682cf0a3834ef6a281eb6f76eaed71b0a3"
+      "sha256": "c68a27c24e921d98483bcdbe63ee2d127355f1c1183e98a649d33b870f6459a7"
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
       "sha256": "7b798784ffc85a8f282bc8acc52633dfe22b1e93e6764340207d0ca9749efe83"
     },
     {
+      "path": "docs/assets/native/counts.png",
+      "sha256": "8b3aca115485c91aa6dfea39c808ddfa50572a2ac56c60bebbf1b1745ab81a88"
+    },
+    {
+      "path": "docs/assets/native/function.png",
+      "sha256": "648098004a49aab097c77097b153885d63bd3707549eec1a3c7601f2664f4817"
+    },
+    {
+      "path": "docs/assets/native/handoff.png",
+      "sha256": "e3c91e9d48a1e264ae6e6135fa9aca71dfde7e4ece674c14ef6782e2ad82428e"
+    },
+    {
+      "path": "docs/assets/native/motion.gif",
+      "sha256": "b142ee15fb63e84c6c02b806120994339cf80ef74d650ef671c5796098c84e2d"
+    },
+    {
+      "path": "docs/assets/native/motion.png",
+      "sha256": "66e26f7121f28aaaf149cb5f8a673312684f2239273f6108c8ca84bbfb849acf"
+    },
+    {
+      "path": "docs/assets/native/overview.png",
+      "sha256": "03e3cd55ca080a2e44565c6ba244a6a9e32a6826e26188b5fb39feeff6ae42ed"
+    },
+    {
+      "path": "docs/assets/native/provenance.json",
+      "sha256": "a086373c4d48219e7bff92858964d9efba27134cdcd1a59ed8a48ea9d905a1a5"
+    },
+    {
+      "path": "docs/assets/native/tree.png",
+      "sha256": "0bc9b95b114d7e25ec39daf98f977b25f55f09dcf77c2a372fb9581fe42e7009"
+    },
+    {
+      "path": "docs/assets/native/two-pointers.gif",
+      "sha256": "3399c1fe64efada1fd0dfc10d596dbe1e6c541a6602d5df097204d58ed3ec0c9"
+    },
+    {
+      "path": "docs/assets/native/two-pointers.png",
+      "sha256": "3801cfb1d45ba2136fec32c5b2e86edc15d20c65879aa680f0b7884e187deab3"
+    },
+    {
       "path": "tools/check_dco.py",
-      "sha256": "9f0d8507c11b37a0b56d1da36042d0ea43a330287aaf8f27f3b9f3229b33b660"
+      "sha256": "d6f3693eebbc82a50402b89e4cbab9c3f8c73deae45fc30109cb4b10cfe1141f"
+    },
+    {
+      "path": "tools/tests/test_check_dco.py",
+      "sha256": "9a9e61b22fb6a6dc1284bc17aa1ca2eef662be7625a23ba72e1b1daca6e82cf3"
     }
   ]
 }
