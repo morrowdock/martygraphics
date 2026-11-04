@@ -10,7 +10,7 @@ Apache-2.0; their source and hashes are in [the capture receipt](assets/native/p
 | Swift 6 standard library / toolchain | Build and runtime platform | Apache-2.0 with Swift Runtime Library Exception; https://github.com/swiftlang/swift/blob/main/LICENSE.txt |
 | Foundation, SwiftUI, Combine, SceneKit, CoreGraphics, simd; AppKit, ImageIO, UniformTypeIdentifiers in the macOS showcase | Installed Apple platform SDKs | Platform frameworks, not redistributed by this repository; macOS/iOS SDK terms apply |
 | XCTest | Platform test framework | Toolchain/SDK component; not vendored |
-| Python 3 standard library | Optional DCO workflow helper | PSF-2.0; https://docs.python.org/3/license.html |
+| Python 3 standard library | DCO, local validation and optional post-release install verification | PSF-2.0; https://docs.python.org/3/license.html |
 | actions/checkout | CI only | MIT; https://github.com/actions/checkout/blob/main/LICENSE |
 | Contributor Covenant 2.1 | CODE_OF_CONDUCT.md | CC-BY-4.0; https://github.com/ContributorCovenant/contributor_covenant/blob/91532d80ea5f39b6685aff4892bc6854bf2f6d6f/LICENSE.md ; attribution retained in the document |
 

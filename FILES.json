@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f54e315f63a3162c403667e2381497a41672bd1994f959598ed65efed1582c42"
+      "sha256": "fa8edc3fd11a29ad1fecd13a7f9f3963c715e8676774feea60d99489b6f50cc7"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/DISTRIBUTION.md",
-      "sha256": "800ec2f697d44c3f622d3381eeb56f981b8df7da95b217fecc5ba185831de09a"
+      "sha256": "975a9194888d7f9db723ea2552b716fda7992d46c043eac1b793799d156634ed"
     },
     {
       "path": "docs/EXPORT.json",
@@ -183,7 +183,7 @@
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
-      "sha256": "1ec9fe6f9f5e2e9acf0e833e6200c253eb73b8b1603ffbb3f945ad6163974bb3"
+      "sha256": "b9dba72473f8f4fbb9ea463ecdc939cba3eff2229dc0ab6214a7691e52d027a1"
     },
     {
       "path": "docs/PORTABILITY-PROPOSAL.md",
@@ -191,7 +191,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "922308fa595b0f670d26f0535f9538a6e805adef317b65a93fb27ee3cfc94972"
+      "sha256": "26c710eea0fa3890ad3044d2c8564e6ebf816e4f44917971389107b9a665ee57"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -207,7 +207,7 @@
     },
     {
       "path": "docs/THIRD-PARTY.md",
-      "sha256": "c68a27c24e921d98483bcdbe63ee2d127355f1c1183e98a649d33b870f6459a7"
+      "sha256": "e65494b65911beeaf480951eda320c6d424b1ee8bd58af1269eb0e4f88f34c1b"
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
@@ -278,8 +278,16 @@
       "sha256": "9a9e61b22fb6a6dc1284bc17aa1ca2eef662be7625a23ba72e1b1daca6e82cf3"
     },
     {
+      "path": "tools/tests/test_release_install.py",
+      "sha256": "767583f4b61db70382a8dab3f73eec367d8f83cf87b11553336894ba7447eda9"
+    },
+    {
       "path": "tools/validate_local.py",
-      "sha256": "6a120dfdd2d03486d3f65198d7da63bb8cf74c2cc674483a96595402daebd59e"
+      "sha256": "98c6db45f1202e029c0e418de26812edd673db3df8dcd8a6c90dc74e045d887b"
+    },
+    {
+      "path": "tools/verify_release_install.py",
+      "sha256": "70986008a2ae4b4d0989431637b09cf0533d8cf628c6c0ab83c2020dab09988f"
     }
   ]
 }

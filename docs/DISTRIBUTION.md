@@ -18,6 +18,22 @@ The publication maintainer prepares the evidence and scoped PR. The release
 coordinator owns the reviewed tag/release and authenticated status; independent
 review applies to each candidate. No tag/release is created by this document.
 
+### Reviewed-release checklist
+
+Complete these rows in the coordinator's private release receipt, with exact
+SHAs/links and command results. A checked declaration is not a substitute for
+the evidence. This is the checklist, not an announcement of a release.
+
+| Gate / owner | Required evidence before proceeding |
+| --- | --- |
+| Candidate scope — publication maintainer | Exact head and changed-file list; versioned protocol/API, public synthetic fixtures, limits and platform claims match source. No private imports or unapproved public forward-port. |
+| Local validation — maintainer/native lane | Exact-head hygiene, sign-offs and privacy/history/asset review; root manifest JSON, Mac build/tests and any changed example execution. Confirm GitHub noreply author/committer metadata as well as DCO trailers. |
+| Review/merge — coordinator | Independent final-head review and authenticated `maintainer/local-validation`; normal protected PR merge. No quota waiver or protection bypass. |
+| Version decision — coordinator | Actual merged release commit, approved semantic version, changelog, API/protocol compatibility and license/dependency inventory. No version is assigned by this checklist. |
+| Tag/release — coordinator | Explicit authorization and an actual immutable tag resolving to the reviewed commit; record both tag-object and peeled commit when annotated. No tag creation command is provided here. |
+| Remote consumer — approved native lane | The command below resolves/builds/runs a new remote-only client; tag, resolved pin and dependency checkout all match the reviewed commit. Preserve the private receipt; a local path build does not satisfy this row. |
+| DocC/SPI — publication maintainer | After the reviewed versioned release: scoped configuration proposal, verified Apple documentation build and archive review, then owner review of the actual submission packet. No external submission yet. |
+
 1. **Validate the exact candidate on Mac.** Run `swift package dump-package`,
    parse its output as JSON, then `swift build && swift test`. Run showcase
    `--verify`; existing capture evidence can be reused only for unchanged source.
@@ -36,7 +52,7 @@ review applies to each candidate. No tag/release is created by this document.
    "martygraphics")`. No local override, path dependency or branch fallback.
 4. **Resolve, compile and run.** In that client run `swift package resolve`,
    `swift build`, and `swift run`. Verify the resolved pin's version and revision
-   against the tag/approved commit. The program below parses and applies the
+   against the tag/approved commit. The generated program parses and applies the
    public grammar examples; it must exit successfully. A cached checkout alone
    is not evidence of a working integration. This small smoke test is also not
    independent adopter or accessibility acceptance.
@@ -46,26 +62,55 @@ review applies to each candidate. No tag/release is created by this document.
    A new candidate/version needs its own evidence. Until this receipt exists,
    versioned remote installation remains pending.
 
-Remote client's `Sources/<executable>/main.swift` (for the post-tag smoke test;
-not a claim that it has run):
+### Copyable remote-SPM smoke command — pending a real tag
 
-```swift
-import Foundation
-import MartyGraphics
+On an approved **Mac**, with Git, Python 3.9+ and Swift 6, obtain these three
+values from the coordinator: `MG_RELEASE_TAG` (existing reviewed tag),
+`MG_RELEASE_SHA` (full reviewed commit), and `MG_INSTALL_EVIDENCE` (a new private
+directory outside the checkout). Set them in the operator shell, then run:
 
-let envelope = try JSONSerialization.jsonObject(
-    with: Data(MGGrammar.sceneExample.utf8)) as! [String: Any]
-let patchEnvelope = try JSONSerialization.jsonObject(
-    with: Data(MGGrammar.patchExample.utf8)) as! [String: Any]
-let scene = try MGParser.scene(object: envelope["scene"]!).get()
-let patch = try MGPatch.parse(object: patchEnvelope["patch"]!).get()
-let updated = try scene.applying(patch).get()
-precondition(updated.title == "Synthetic dot" && updated.revision == 1)
-print("MartyGraphics remote scene/patch smoke passed")
+```sh
+python3 tools/verify_release_install.py \
+  --tag "${MG_RELEASE_TAG:?Set the actual coordinator-approved existing tag}" \
+  --commit "${MG_RELEASE_SHA:?Set its full reviewed commit SHA}" \
+  --output "${MG_INSTALL_EVIDENCE:?Choose a new private evidence directory}"
 ```
+
+The [runner source](../tools/verify_release_install.py) contains the complete
+generated `Package.swift` and Swift client. It accepts a semantic tag (optional
+`v` prefix) and full commit; it cannot establish approval by itself. It checks the
+public tag before and after the test, pins an exact package version, isolates
+cache/config/security directories, and disables credential loading for this
+public fetch. No local dependency, branch fallback, extra dependency, status
+publisher, tag creation or release command is included.
+
+The runner checks `Package.resolved` and the fetched dependency's actual commit
+before building, uses `--force-resolved-versions`, then runs the built smoke
+client with `--skip-build`. Its only client operation is the original synthetic
+scene/title-patch flow from `MGGrammar`, asserting the changed title/revision.
+[SwiftPM's documented options](https://docs.swift.org/latest/documentation/packagemanagerdocs/swiftrun/)
+describe the resolved-file and private configuration flags.
+
+Output stays outside this repository: generated client source/manifest,
+`Package.resolved`, per-command stdout/stderr and SHA-256 hashes, toolchain,
+actual host/platform, runner hash, exits and `receipt.json`. Failed stages retain
+a failure receipt (including a 600-second per-command timeout). Raw evidence may
+contain local paths; do not publish it.
+The runner is read-only toward GitHub and does not request publishing credentials.
+
+Offline Python regressions check input bounds, missing/mismatched tags, bad
+resolved pins and refusal to overwrite/use an unsupported host. They are
+**synthetic guard tests, not remote installation acceptance**. As of this
+checkpoint, no real tag exists and the real command remains unexecuted.
 
 The local protocol fixture test checks the corresponding JSON and selected
 failure reasons. It does not replace the remote client's resolution/build/run.
+
+The actual Mac package receipt at `e1367c946171584044bacf5649ec7f816ecb72ae`
+(2026-11-04T03:37:50Z) records valid dump-package JSON, build and 24 tests/zero
+failures, all exit 0, on macOS 26.6.2 arm64 / Apple Swift 6.3.3, debug, language
+mode 5. This is local package validation only. Documentation/Python follow-ups
+reuse it only after proving Swift/package/test/fixture bytes unchanged.
 
 ## Swift Package Index and DocC — after the release
 
@@ -83,6 +128,52 @@ Verify the package product/target, supported Apple documentation build target,
 public symbol coverage, tutorial/example links, licensing and generated output.
 Keep private paths and app symbols out. Do not add an unneeded plugin/dependency
 or promise Linux documentation compilation for this Apple-framework renderer.
+
+Preparation decisions for that later configuration PR:
+
+| Item | Concrete candidate / acceptance gate |
+| --- | --- |
+| Package/repository | `MartyGraphics`; public HTTPS `.git` URL above; actual reviewed semantic tag and commit from the release receipt. |
+| Documentation target | Public library target/product `MartyGraphics`; exclude test/executable targets and private app symbols. Verify the available scheme and symbol graph at the actual tag. |
+| Builder | Apple-compatible macOS destination and a Swift/Xcode version supporting the tools-6.0 manifest. No Linux-build or iOS-device claim follows from this choice. |
+| Content | Public parser/grammar/patch/stream/layout/timeline/pack/view APIs; reuse the v1 guide and original JSON fixtures. Check signatures, main-actor requirements, error boundaries and all cross-links. |
+| SPI configuration | Plan one root `.spi.yml` using the then-current official schema and `MartyGraphics` documentation target after the release gate. Review the actual file before adding it; none is installed by this preparation. |
+| Generated archive | A real `.doccarchive`, readable API navigation, valid source/example links, no local/private symbols/URLs, no claimed platform coverage beyond tested output. |
+| Submission packet | Actual repository/tag/commit, compile/dump-package/remote-consumer results, license/notice/conduct links, proposed configuration and archive review. Owner reviews before the official add-package flow. |
+
+After release approval, in a clean checkout of the **actual reviewed tag**, the
+following is the local DocC verification candidate. It has not been executed by
+this preparation; confirm `MartyGraphics` appears in the scheme inventory first.
+Apple documents this [archive-generation approach](https://developer.apple.com/documentation/xcode/distributing-documentation-to-other-developers).
+
+```sh
+(
+  set -eu
+  : "${MG_DOCC_EVIDENCE:?Choose a new private directory outside the checkout}"
+  mkdir "$MG_DOCC_EVIDENCE"
+  xcodebuild -version > "$MG_DOCC_EVIDENCE/xcode-version.txt"
+  xcodebuild -list -json > "$MG_DOCC_EVIDENCE/schemes.json"
+  python3 - "$MG_DOCC_EVIDENCE/schemes.json" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    inventory = json.load(stream)
+schemes = [name for value in inventory.values() if isinstance(value, dict)
+           for name in value.get("schemes", [])]
+if "MartyGraphics" not in schemes:
+    raise SystemExit("Expected public library scheme missing; inspect inventory")
+PY
+  xcodebuild docbuild -scheme MartyGraphics \
+    -destination 'generic/platform=macOS' \
+    -derivedDataPath "$MG_DOCC_EVIDENCE/DerivedData" \
+    > "$MG_DOCC_EVIDENCE/docbuild.log" 2>&1
+  find "$MG_DOCC_EVIDENCE/DerivedData" -type d -name '*.doccarchive' -print
+)
+```
+
+Review the scheme inventory before the docbuild step, and record command exits
+and archive digest in the private receipt. A successful command or found archive
+does not establish complete symbol coverage or valid rendered links. No hosted
+DocC URL or package badge may be advertised until it actually exists and is reviewed.
 
 The owner reviews the actual release/install/configuration evidence and proposed
 submission before anyone uses the official add-package flow. No submission,

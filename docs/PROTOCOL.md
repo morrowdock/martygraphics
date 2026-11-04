@@ -126,8 +126,12 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 
 The [protocol fixture test](../Tests/MartyGraphicsTests/ProtocolFixtureTests.swift)
 checks the linked JSON, exact selected error reasons, successful title edit and
-stale-patch rejection. Its candidate execution receipt must accompany review;
-the original release's tests alone do not clear newly added fixtures.
+stale-patch rejection. It passed in the actual 24-test Mac run at
+`e1367c946171584044bacf5649ec7f816ecb72ae` (2026-11-04, macOS 26.6.2 arm64,
+Apple Swift 6.3.3; dump-package/valid JSON, build and test all exit 0).
+That local-package result is not remote-install, release or device acceptance.
+Later documentation-only changes can reuse it only with unchanged Swift/package/
+test/fixture bytes; retain the original execution SHA rather than relabeling a build.
 
 ## Bounds and platforms
 
@@ -149,7 +153,7 @@ tests and measurements; see the [limits rationale](CAPABILITIES.md#bounds-are-pa
 
 | Target | Declaration / evidence |
 | --- | --- |
-| macOS | Declared macOS 14+, Swift tools 6.0, Swift language mode 5. Public native receipt: macOS 26.6.2 arm64, Apple Swift 6.3.3, build + 23 tests + showcase verify/export at pinned capture source. New tests need a new receipt. |
+| macOS | Declared macOS 14+, Swift tools 6.0, Swift language mode 5. The capture receipt records 23 tests plus showcase export at its original source; the separate local-package run at `e1367c9` passed 24 tests, including the new protocol fixtures. Neither establishes interactive or device acceptance. |
 | iOS / iPadOS | Package declares iOS 17+; SwiftUI/SceneKit renderer. No physical iOS-device or accessibility acceptance is established by the Mac export receipt. |
 | Windows / Linux / browser | This Apple-framework package is unsupported there. Portable-core/browser implementation is planned-not-started; no architecture rewrite or cross-platform delivery is selected. |
 

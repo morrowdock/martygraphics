@@ -89,7 +89,7 @@ def main():
     if args.native_source:
         commands.append(["git", "diff", "--exit-code", args.native_source, args.head, "--",
                          "Sources", "Tests", "Package.swift", "Examples/Showcase/Package.swift",
-                         "Examples/Showcase/Sources"])
+                         "Examples/Showcase/Sources", "docs/fixtures"])
     receipt = {"head": args.head, "base": args.base, "capturedUTC": datetime.now(timezone.utc).isoformat(),
                "host": socket.gethostname(), "platform": platform.platform(), "python": sys.version,
                "nativeSource": args.native_source, "nativeEvidence": "Separate Mac build/test/export receipt required",

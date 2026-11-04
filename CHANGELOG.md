@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add a guarded post-approval remote-SPM smoke command and offline guard tests,
+  with exact tag/commit/pin checks and private evidence. Remote-install acceptance
+  remains pending a real reviewed release; add DocC/SPI preparation gates only.
 - Expand the v1 Markdown protocol/API reference with developer error reasons,
   limits/platform tables and synthetic JSON fixtures; document reviewed release,
   remote-install and package-discovery gates without inventing a release tag.
