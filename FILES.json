@@ -18,12 +18,52 @@
       "sha256": "98f276d1503b9e2b5b3213d298e24146d314d0010f91d4f84e1430c5f9aba08a"
     },
     {
+      "path": "CHANGELOG.md",
+      "sha256": "e8d753752e698d233b5ad1054b915b8eba68e56b1a76fac84b8cb7d4f6a48eec"
+    },
+    {
       "path": "CODE_OF_CONDUCT.md",
       "sha256": "1d8cb2b326b5ab30d2393a52ee67dbb8ce703c604bc038cfe5b6e94a9d26230c"
     },
     {
       "path": "CONTRIBUTING.md",
       "sha256": "af74627f237bb9f35e45ebb1123dd422d0563c844d4517fd1abd509caa52efb3"
+    },
+    {
+      "path": "Examples/Showcase/Package.swift",
+      "sha256": "15a3f0726e953acb8b97f8a3441a3bc4550854c7349a4deeb1964dad2a6c845d"
+    },
+    {
+      "path": "Examples/Showcase/README.md",
+      "sha256": "1ebff516f192031f3fff3d54b4ab4ee9a5de51ca68a88e1e78e42f22cb1d86ac"
+    },
+    {
+      "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json",
+      "sha256": "a6a1b0e131c283cacf32065912503d4b7f89df224566613781623f7558b83044"
+    },
+    {
+      "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/function.json",
+      "sha256": "5780c901a82094acf5493bc2eada710a3291d42cecb8612a9addde4a2f021adf"
+    },
+    {
+      "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json",
+      "sha256": "371331217d608cba703574eced35b13deb754904fcbb63bcdfd96acfdb1f41e4"
+    },
+    {
+      "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json",
+      "sha256": "6c33055288b7f9c1bf0ced961e9e5e88489f71666df889abdc00a38e5fd5483b"
+    },
+    {
+      "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json",
+      "sha256": "3287602d73813243f78f92a952385d4bef952821249bc46a5465102b244c9f0a"
+    },
+    {
+      "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json",
+      "sha256": "99eef56a6ad9f2149ec2df6b37e9f41b248c8ef102519e70d63b81ab9ae71a31"
+    },
+    {
+      "path": "Examples/Showcase/Sources/MartyShowcase/Showcase.swift",
+      "sha256": "5278540271f1f9e9e2938ba7fd85693f4cd58c153f0bbf73af10b8468f515845"
     },
     {
       "path": "LICENSE",
@@ -39,7 +79,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "173e28d47af905973bfc72d5204173914bcaec8321a964b67a1eb3d7277f309e"
+      "sha256": "a695befafae40ac51393a7aa1b1d0223f77c922f7d1cc9772ec55518973e987b"
     },
     {
       "path": "SECURITY.md",
@@ -122,12 +162,36 @@
       "sha256": "b8d877801e6e60dc7b9446ff07058c756ff4b2cda4e44f72608bedfa05212411"
     },
     {
+      "path": "docs/CAPABILITIES.md",
+      "sha256": "734795ab7d34ffc24e9100596a90ec2b72c3c68ee3ab8bc4c5b79599798cbca9"
+    },
+    {
       "path": "docs/EXPORT.json",
       "sha256": "8efe42a137682990cba3a0b0192eb112f70f628c98f3d29e61f6b8191e306073"
     },
     {
+      "path": "docs/GETTING-STARTED.md",
+      "sha256": "aaee910eb4a14437297abecac5f84ca487db0c12b92c6f13847d34e7ab6b7f51"
+    },
+    {
+      "path": "docs/PORTABILITY-PROPOSAL.md",
+      "sha256": "cf6aa4e7a281943f57885b21a3719c281d726730dc4e192f1832cb80cc750acf"
+    },
+    {
       "path": "docs/PROTOCOL.md",
       "sha256": "315ba3293fb06904aeaa21363155b002ef60b52f12e2de1b243f00c4bc90d05b"
+    },
+    {
+      "path": "docs/PUBLIC-SYNC.md",
+      "sha256": "1767ce34139a6ee26dda3892e66700d9271af110875715882a46e8012f714238"
+    },
+    {
+      "path": "docs/QUALITY.md",
+      "sha256": "2b43d355b6ec6dff129110becd95074480c43948416db435fac37820f31faf45"
+    },
+    {
+      "path": "docs/SHOWCASE.md",
+      "sha256": "856b0741ed0b9d21e6d23f84b61561807a73e3a3478ed3157c8ded90f31d6d88"
     },
     {
       "path": "docs/THIRD-PARTY.md",

@@ -1,0 +1,70 @@
+{
+  "v": 1,
+  "title": "A moving geometric marker",
+  "world": {
+    "w": 12,
+    "h": 8
+  },
+  "items": [
+    {
+      "id": "route",
+      "k": "path",
+      "pts": [
+        [
+          2.5,
+          4
+        ],
+        [
+          9.5,
+          4
+        ]
+      ],
+      "dashed": true,
+      "color": "muted"
+    },
+    {
+      "id": "dot",
+      "k": "body",
+      "at": [
+        2.5,
+        4
+      ],
+      "shape": "ball",
+      "size": 0.8,
+      "color": "teal",
+      "move": {
+        "to": [
+          9.5,
+          4
+        ],
+        "t": 2
+      }
+    },
+    {
+      "id": "start",
+      "k": "text",
+      "at": [
+        2.5,
+        2.5
+      ],
+      "text": "A",
+      "color": "blue"
+    },
+    {
+      "id": "end",
+      "k": "text",
+      "at": [
+        9.5,
+        2.5
+      ],
+      "text": "B",
+      "color": "purple"
+    }
+  ],
+  "steps": [
+    {
+      "say": "The marker travels from A to B in two seconds, then returns. This is a geometric animation, not a physics simulation.",
+      "focus": "dot"
+    }
+  ]
+}

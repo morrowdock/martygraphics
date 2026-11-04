@@ -1,0 +1,95 @@
+{
+  "v": 1,
+  "title": "A message handoff",
+  "world": {
+    "w": 16,
+    "h": 8
+  },
+  "items": [
+    {
+      "id": "source",
+      "k": "node",
+      "at": [
+        2.5,
+        4
+      ],
+      "text": "Source",
+      "r": 0.8,
+      "color": "blue"
+    },
+    {
+      "id": "queue",
+      "k": "node",
+      "at": [
+        8,
+        4
+      ],
+      "text": "Queue",
+      "r": 0.8,
+      "color": "purple"
+    },
+    {
+      "id": "worker",
+      "k": "node",
+      "at": [
+        13.5,
+        4
+      ],
+      "text": "Worker",
+      "r": 0.8,
+      "color": "teal"
+    },
+    {
+      "id": "enqueue",
+      "k": "edge",
+      "a": "source",
+      "b": "queue",
+      "dir": true,
+      "label": "send",
+      "color": "blue"
+    },
+    {
+      "id": "dequeue",
+      "k": "edge",
+      "a": "queue",
+      "b": "worker",
+      "dir": true,
+      "label": "take",
+      "color": "teal"
+    },
+    {
+      "id": "marker",
+      "k": "highlight",
+      "target": "source",
+      "color": "yellow"
+    }
+  ],
+  "steps": [
+    {
+      "say": "The source creates one message. This diagram illustrates a flow; it does not run a queue.",
+      "focus": "source"
+    },
+    {
+      "say": "The message is handed to a queue.",
+      "focus": "queue",
+      "do": [
+        {
+          "id": "marker",
+          "key": "target",
+          "value": "queue"
+        }
+      ]
+    },
+    {
+      "say": "A worker takes the message from the queue.",
+      "focus": "worker",
+      "do": [
+        {
+          "id": "marker",
+          "key": "target",
+          "value": "worker"
+        }
+      ]
+    }
+  ]
+}

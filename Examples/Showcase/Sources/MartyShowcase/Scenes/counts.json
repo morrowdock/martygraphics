@@ -1,0 +1,44 @@
+{
+  "v": 1,
+  "title": "Three synthetic counts",
+  "world": {
+    "w": 12,
+    "h": 8
+  },
+  "items": [
+    {
+      "id": "counts",
+      "k": "bars",
+      "at": [
+        1.5,
+        1.6
+      ],
+      "w": 9,
+      "h": 4.8,
+      "unit": "items",
+      "bars": [
+        {
+          "label": "Alpha",
+          "value": 18,
+          "color": "blue"
+        },
+        {
+          "label": "Beta",
+          "value": 30,
+          "color": "purple"
+        },
+        {
+          "label": "Gamma",
+          "value": 24,
+          "color": "teal"
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "say": "Beta is the largest of these invented counts: 30 items. No real user or business data is shown.",
+      "focus": "counts"
+    }
+  ]
+}

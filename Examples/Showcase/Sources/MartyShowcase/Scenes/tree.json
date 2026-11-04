@@ -1,0 +1,15 @@
+{
+  "v": 1,
+  "title": "Search for 8",
+  "template": "bst",
+  "params": {
+    "values": [
+      12,
+      5,
+      19,
+      2,
+      8
+    ],
+    "find": 8
+  }
+}
