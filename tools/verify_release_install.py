@@ -156,7 +156,7 @@ def main(args=None):
         receipt["status"] = "FAIL"
         receipt["failure"] = str(error)
     receipt["finishedUTC"] = datetime.now(timezone.utc).isoformat()
-    receipt["consumerFiles"] = {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
+    receipt["consumerFiles"] = {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
                                 for path in (root / "Package.swift", root / "Package.resolved",
                                              root / "Sources/MGRemoteSmoke/main.swift") if path.exists()}
     save()
