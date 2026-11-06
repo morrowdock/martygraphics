@@ -146,7 +146,7 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | World | Width and height each 2…100; default 12 × 8 |
 | Text lengths | Title 60, label 40, text 120, narration 200 |
 | Geometry | Plot/path points up to 64; rope points up to 6 |
-| Collections | Array 16 cells / 4 pointers / string cells up to 6 characters; 6 bars / 16-character bar labels; 8-character node text |
+| Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text |
 
 Preserve bounds and rollback. Expansions need an actual use case, boundary/failure
 tests and measurements; see the [limits rationale](CAPABILITIES.md#bounds-are-part-of-the-contract).

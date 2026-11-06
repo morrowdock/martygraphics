@@ -410,7 +410,13 @@ public enum MGParser {
             guard case .array(let list)? = o["vals"], (1...MGLimits.cells).contains(list.count) else { throw MGError("array.vals") }
             it.list = try list.map { v in
                 switch v {
-                case .number(let d): guard abs(d) < 1e6 else { throw MGError("array.val") }; return MGPhysics.format(d, unit: "")
+                case .number(let d):
+                    // A number is stored as its displayed text, so that text obeys the string-cell limit too; otherwise a
+                    // value like -123456 would parse once and then fail every step edit or patch of the array.
+                    guard abs(d) < 1e6 else { throw MGError("array.val") }
+                    let shown = MGPhysics.format(d, unit: "")
+                    guard shown.unicodeScalars.count <= MGLimits.cellText else { throw MGError("array.val") }
+                    return shown
                 case .string: return try text(v, MGLimits.cellText, ctx, "array.val")
                 default: throw MGError("array.val")
                 }
