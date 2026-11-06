@@ -10,7 +10,7 @@ pack, proposed screen or browser recreation does not expand the public API.
 | Progressive JSON | `MGStreamParser`, controller stream methods | Transport chunks; treat previews as provisional; check final success. |
 | Layout and deterministic motion | `MGLayout`, `MGViewport`, `MGTimeline` | Choose viewport, time and step; measure readability and frame cost. |
 | Native 2D | `MGCanvasRenderer`, SwiftUI view | Apple SDKs; application lifecycle and interaction. |
-| Native 3D | SceneKit renderer for the documented primitive subset | A real interactive/device capture and broader 3D quality/performance receipt remain separate work. |
+| Native 3D | SceneKit renderer for the documented primitive subset; opt-in tap selection, emphasis glow/dimming (`inspects3D`) and camera keep/reset (`preserves3DCamera`) | Click-select, drag-orbit and reset were checked on screen on macOS in the KeySwitch3D example. iOS touch, VoiceOver and frame cost are not accepted. No 3D groups, collision or physics. |
 | Templates and packs | Public constructors, validated registry, BST and two pointers; record-list parameters and an opt-in `shortest_path` graph pack | No downloadable catalog, premium/course pack, package signing or trust service. The graph pack is unregistered by default and not visually or accessibility accepted. |
 | Model-assisted generation | No model/provider integration or prompts bundled | Optional host choice; scene validation still applies to every provider. |
 | Learning workflows and content | Synthetic examples only | Curriculum, learner state, study scheduling, private sources and app adapters are outside this package. |

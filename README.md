@@ -35,6 +35,7 @@ steps, and motion. Your application supplies the content and decides what happen
 | **Math** | Draw a function from supplied points, with labeled axes. The engine plots the data; it does not solve equations. | [Sampled function](Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
 | **Data** | Compare explicit quantities with labeled bars. These counts are invented. | [Synthetic counts](Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
 | **Motion** | Animate a geometric marker using the engine timeline. | [Moving marker](Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
+| **3D inspection** | Click a part of a 3D model to select it, dim the rest, orbit, and reset the view. Opt-in per board; checked on macOS. | [Key switch example](Examples/KeySwitch3D/README.md) |
 | **Graphs** | Compute the cheapest route through a weighted network, one Dijkstra step at a time. Opt-in graph pack. | [Router latency](Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
 [Open the showcase and its capture recipe →](docs/SHOWCASE.md)
@@ -163,7 +164,7 @@ not a complete learning app or a collection of courses.
 | SwiftUI Canvas and a SceneKit renderer for supported 3D primitives | Current renderers require Apple frameworks; Windows/Linux builds and native Swift browser execution are unsupported. This is a current implementation choice, not a requirement imposed by iPad. |
 | Parser, grammar, patches, streams, layout, timeline, steps, template/pack API | The host supplies JSON and interaction. No model, hosted generation API, screen overlay agent, equation solver, or arbitrary code executor is bundled. |
 | BST and two-pointer built-ins; opt-in `shortest_path` graph pack; generic primitives for custom scenes | No course catalog, premium pack, private app adapter, or removed mechanics walkthrough is included. |
-| Seven synthetic 2D examples and a local native showcase | A flow diagram does not run a queue; sample plots/counts are supplied data. The gallery is not evidence of a complete app or measured 3D performance. |
+| Seven synthetic 2D examples, a local native showcase and a schematic 3D key-switch example | A flow diagram does not run a queue; sample plots/counts are supplied data. The gallery is not evidence of a complete app or measured 3D performance. |
 
 See the [public versus app matrix](docs/CAPABILITIES.md),
 [quality and measurement plan](docs/QUALITY.md), and
@@ -178,9 +179,9 @@ authenticated maintainer status.
 These are **plans, not shipped features**. Each one lands only after tests, review and
 real evidence:
 
-- **Interactive 3D inspection.** Select a part, emphasize or dim others, orbit, and
-  reset the camera, opt-in per board. This is not in the repository yet; it lands
-  after on-screen interaction checks.
+- **Solid 3D models.** Shaded parts with realistic materials, generated gears and
+  lathe-turned shapes, assemblies that move at correct ratios, exploded views and
+  rendered turntable videos.
 - **Accessible graph states.** Show edge status with more than colour.
 - **More teaching packs.** Reusable assemblies and linked plots with narration.
 

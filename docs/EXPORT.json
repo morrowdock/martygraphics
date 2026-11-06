@@ -9,7 +9,8 @@
       "adaptations": [
         "Apache-2.0 SPDX header",
         "Removed internal work-item identifier from comments",
-        "Removed internal work-item identifier from comment"
+        "Removed internal work-item identifier from comment",
+        "Public adaptation, not compared with the private source: opt-in 3D selection, emphasis/dimming styles and camera keep/reset via MG3DInteraction"
       ]
     },
     {
@@ -118,7 +119,8 @@
       "source_sha256": "8d5cac1e0abb7c2b71bf3d79a4f7fbe61adbed35e6464941cd59459d6e24bef8",
       "adaptations": [
         "Apache-2.0 SPDX header",
-        "Removed internal work-item identifier from comments"
+        "Removed internal work-item identifier from comments",
+        "Public adaptation, not compared with the private source: inspects3D(_:) and preserves3DCamera(resetKey:) modifiers wired to the 3D board"
       ]
     },
     {
@@ -163,7 +165,10 @@
     "Tests/MartyGraphicsTests/RoundtripFixTests.swift: regressions for the public parser-default, transitive-visibility and stream-version fixes",
     "Sources/MartyGraphics/MGGraphPack.swift: opt-in graphs pack (shortest_path) with an original synthetic router fixture",
     "Tests/MartyGraphicsTests/RecordParamsShortestPathTests.swift, RecordParamsGuardTests.swift: record-parameter and shortest_path coverage",
-    "docs/fixtures/v1/shortest-path*.json: synthetic shortest_path scene and patch fixtures"
+    "docs/fixtures/v1/shortest-path*.json: synthetic shortest_path scene and patch fixtures",
+    "Sources/MartyGraphics/MG3DInteraction.swift: opt-in 3D hit targets, selection and look derivation",
+    "Tests/MartyGraphicsTests/MG3DInteractionTests.swift: 3D selection, look and camera policy coverage",
+    "Examples/KeySwitch3D: schematic key-switch host example with its own model tests"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",
