@@ -103,7 +103,8 @@ more blades.
 
 Measured on an M1 Mac mini: the real-time renderer takes about 0.04 s per 1280×800 frame
 (2× supersampled). The 12-second loop (360 frames) exports in under 20 seconds. The
-1920×1080 path-traced still takes about 4.5 minutes at 768 samples per pixel. The model
+1920×1080 path-traced still takes about 4.3 minutes at 768 samples per pixel. The checked-in
+renders and their receipt are in [`docs/assets/turbofan`](../../docs/assets/turbofan/provenance.json). The model
 has about 433,000 triangles.
 
 ## Run

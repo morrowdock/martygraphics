@@ -92,6 +92,24 @@
       "height": 1080,
       "samplesPerPixel": 512,
       "renderSecondsM1": 55.4
+    },
+    "gearbox-loop-640.gif": {
+      "bytes": 6517579,
+      "sha256": "496535c76af68e331a8a29127ba6fea1eb7f8b928036dceca716dc868df65a6a",
+      "width": 640,
+      "height": 360,
+      "frames": 120,
+      "delayHundredths": {
+        "8": 80,
+        "9": 40
+      },
+      "loopSeconds": 10.0,
+      "loopCount": 0,
+      "derivedFrom": {
+        "file": "gearbox-loop.mp4 (website only)",
+        "sha256": "05cab375a01db941e21dde4bcbc66a4e9744c83c17e476ebc6acf48409056b8c",
+        "note": "Downscaled from the receipt-recorded 1280x720, 24 fps, 240-frame, 10.0 s loop (capture.loopVideo) to 640x360 with 120 frames; 80 delays of 8 and 40 of 9 hundredths, so the 120 stored delays sum to exactly 10.00 s. The derivation was made in a separate hero-GIF pass; this entry's size, frame count and delays were read back from the file."
+      }
     }
   },
   "review": {

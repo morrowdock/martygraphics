@@ -175,7 +175,12 @@
     "Sources/MartyGraphics/Solid: solid 3D geometry kernel, assemblies, JSON format and studio renderer (public-only)",
     "Tests/MartyGraphicsTests/SolidEngineTests.swift: kernel, kinematics and format tests",
     "Examples/Solid3D: planetary gear set from JSON and slider-crank cutaway",
-    "docs/SOLID-3D.md: solid assembly format"
+    "docs/SOLID-3D.md: solid assembly format",
+    "Sources/MartyGraphics/Solid/MGSolidTurbo.swift: blade rows, capped partial revolves and their validation and mesh estimates (public-only)",
+    "Tests/MartyGraphicsTests/SolidTurboTests.swift: blade-row, partial-revolve, format and material coverage",
+    "Examples/Turbofan: schematic two-spool turbofan cutaway from JSON, its checks and tests, and the MartySolidRT snapshot-to-path-tracer adapter",
+    "docs/assets/turbofan: turbofan renders (path-traced still, labelled cutaway, exploded step, 12 s loop GIF) and provenance.json",
+    "docs/assets/pathtrace/gearbox-loop-640.gif: 640x360, 10 s loop GIF derived from the recorded gearbox loop video"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

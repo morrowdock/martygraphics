@@ -13,13 +13,37 @@ Validated JSON → native diagrams, walkthroughs, and animation in SwiftUI.
 </div>
 
 <p align="center">
-  <a href="docs/assets/pathtrace/gearbox-loop.gif"><img src="docs/assets/pathtrace/hero.png" width="840" alt="Path-traced two-stage gearbox: polished steel and brass gears with involute teeth, a spur pair above a planetary set inside a steel ring gear, on a dark studio floor."></a>
+  <a href="docs/assets/turbofan/pathtraced-hero.png"><img src="docs/assets/turbofan/turbofan-loop.gif" width="840" alt="Cutaway two-spool turbofan turning slowly: titanium fan blades in front of a half-cut white nacelle, the compressor, combustor and turbines exposed in the core, a blue LP shaft inside an orange HP shaft."></a>
+</p>
+
+**A turbofan, cut away, from 38 lines of JSON.** The solid engine builds every blade row,
+casing and shaft of this schematic two-spool turbofan from
+[`turbofan.json`](Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json) and renders
+the 12-second loop with its real-time renderer, about 0.04 seconds per frame (shown as a
+640×400 GIF). The fan and LP spool turn once
+while the HP spool turns three times (N2 = 3 × N1). The cut faces are real capped solids,
+so the same model path traces too: [path-traced still](docs/assets/turbofan/pathtraced-hero.png)
+(1920×1080, 768 samples per pixel, about 4.3 minutes on an M1). A teaching model, not a real
+engine design; no images, models or stock assets.
+[Labelled cutaway](docs/assets/turbofan/labelled.png) · [Exploded](docs/assets/turbofan/exploded.png) ·
+[Run it](Examples/Turbofan/README.md) · [Render receipt](docs/assets/turbofan/provenance.json)
+
+**How a turbofan works.** The big fan at the front pulls in a huge flow of air. A small part of
+it goes into the core, where rows of spinning blades and fixed vanes squeeze it to many times its
+intake pressure. Fuel burns steadily in the ring-shaped combustor, and the hot gas rushes through
+the turbines and spins them. The HP turbine drives the HP compressor, and the LP turbine drives
+the fan through a shaft that runs inside the HP shaft. Most of the fan's air goes around the
+core, and in a high-bypass engine like this it gives most of the thrust.
+
+<p align="center">
+  <a href="docs/assets/pathtrace/hero.png"><img src="docs/assets/pathtrace/gearbox-loop-640.gif" width="840" alt="Path-traced two-stage gearbox turning: polished steel and brass gears with involute teeth, a spur pair above a planetary set inside a steel ring gear, on a dark studio floor."></a>
 </p>
 
 **Path traced on an M1 GPU by MartyGraphics.** A procedurally generated gearbox
-(15:30 spur, then a 24/18×3/60 planetary stage, 7:1 overall), rendered with the new
-Metal path tracer at 1920×1080 and 768 samples per pixel in about 2.5 minutes.
-No images, models or stock assets. [Watch the loop](docs/assets/pathtrace/gearbox-loop.gif) ·
+(15:30 spur, then a 24/18×3/60 planetary stage, 7:1 overall), rendered with the
+Metal path tracer. The loop above is a 640×360, 10-second GIF of the 1280×720,
+112 samples per pixel render. The [still](docs/assets/pathtrace/hero.png) is 1920×1080
+at 768 samples per pixel, about 2.5 minutes on an M1. No images, models or stock assets.
 [Exploded view](docs/assets/pathtrace/exploded.png) ·
 [Code beside the render](docs/assets/pathtrace/side-by-side.png) ·
 [Run it](Examples/PathTrace/README.md) · [Render receipt](docs/assets/pathtrace/provenance.json)
@@ -77,7 +101,7 @@ steps, and motion. Your application supplies the content and decides what happen
 | **Math** | Draw a function from supplied points, with labeled axes. The engine plots the data; it does not solve equations. | [Sampled function](Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
 | **Data** | Compare explicit quantities with labeled bars. These counts are invented. | [Synthetic counts](Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
 | **Motion** | Animate a geometric marker using the engine timeline. | [Moving marker](Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
-| **Solid 3D** | Build closed 3D parts (gears, ring gears, blades, lathe-turned shapes), connect them with joints and gear meshes in validated JSON, explode them, cut them open and render them in real time. | [Planetary gear set](Examples/Solid3D/README.md) |
+| **Solid 3D** | Build closed 3D parts (gears, ring gears, blades, blade rows, lathe-turned shapes and capped cutaway casings), connect them with joints and gear meshes in validated JSON, explode them, cut them open and render them in real time or path trace them. | [Turbofan cutaway](Examples/Turbofan/README.md) · [Planetary gear set](Examples/Solid3D/README.md) |
 | **Path tracing** | Render generated 3D models with film-style lighting on the GPU: brushed metals, glass, soft shadows, depth of field. Separate `MartyGraphicsPathTracer` library. | [Gearbox example](Examples/PathTrace/README.md) |
 | **3D inspection** | Click a part of a 3D model to select it, dim the rest, orbit, and reset the view. Opt-in per board; checked on macOS. | [Key switch example](Examples/KeySwitch3D/README.md) |
 | **Graphs** | Compute the cheapest route through a weighted network, one Dijkstra step at a time. Opt-in graph pack. | [Router latency](Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
