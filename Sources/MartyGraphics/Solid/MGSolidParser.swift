@@ -14,6 +14,14 @@ public enum MGSolidLimits {
     public static let module: ClosedRange<Double> = 0.2...20
     /// Lengths and coordinates in millimetres.
     public static let length: ClosedRange<Double> = 0.05...4000, coordinate: ClosedRange<Double> = -4000...4000
+    /// Total mesh size over every resolved part (after `repeat`), counted before any mesh is built. At the limit the
+    /// kernel meshes (about 36 MB), the render meshes built while loading (about 90 MB) and the SceneKit buffers
+    /// (about 80 MB) take roughly 200 MB, which recent iPhones and iPads can hold; the planetary example uses under 4%.
+    public static let triangles = 1_500_000, vertices = 1_000_000
+    /// Largest solved joint ratio (joint radians or mm per input radian).
+    public static let ratio = 1000.0
+    /// Largest tooth overlap, in modules, that an internal gear pair may show over its mesh sweep.
+    public static let toothOverlap = 0.01
 }
 
 /// A rejection with a stable machine reason (for example `part.gear.teeth`) and the part it concerns, if any.
@@ -89,17 +97,17 @@ public enum MGSolidParser {
         guard case .object(let p) = patch else { return .failure(.init("patch.object")) }
         let allowed: Set<String> = ["params", "parts", "constraints", "steps", "title"]
         guard Set(p.keys).isSubset(of: allowed), !p.isEmpty else {
-            return .failure(.init("patch.unknown.\(Set(p.keys).subtracting(allowed).sorted().joined(separator: ","))"))
+            return .failure(.init("patch.unknown.\(Set(p.keys).subtracting(allowed).map(token).sorted().joined(separator: ","))"))
         }
         guard case .object(var src) = doc.source else { return .failure(.init("patch.source")) }
         for key in ["params", "constraints", "steps", "title"] { if let v = p[key] { src[key] = v } }
         if let parts = p["parts"] {
             guard case .object(let edits) = parts, case .array(var list)? = src["parts"] else { return .failure(.init("patch.parts")) }
-            for (id, edit) in edits {
-                guard case .object(let fields) = edit else { return .failure(.init("patch.parts.object", part: id)) }
-                guard fields["id"] == nil else { return .failure(.init("patch.parts.id", part: id)) }
+            for (id, edit) in edits.sorted(by: { $0.key < $1.key }) {
+                guard case .object(let fields) = edit else { return .failure(.init("patch.parts.object", part: token(id))) }
+                guard fields["id"] == nil else { return .failure(.init("patch.parts.id", part: token(id))) }
                 guard let k = list.firstIndex(where: { $0["id"] == .string(id) }), case .object(var o) = list[k] else {
-                    return .failure(.init("ref.unknown.\(id)"))
+                    return .failure(.init("ref.unknown.\(token(id))"))
                 }
                 for (key, value) in fields { if value == .null { o.removeValue(forKey: key) } else { o[key] = value } }
                 list[k] = .object(o)
@@ -150,6 +158,10 @@ public enum MGSolidParser {
             parts += expanded
         }
         guard parts.count <= MGSolidLimits.resolvedParts else { throw MGSolidIssue("parts.resolved") }
+        // Mesh budget over every resolved part, counted from the validated fields before any mesh is built.
+        var triangles = 0, vertices = 0
+        for p in parts { for s in p.shapes { let e = s.meshEstimate; triangles += e.triangles; vertices += e.vertices } }
+        guard triangles <= MGSolidLimits.triangles, vertices <= MGSolidLimits.vertices else { throw MGSolidIssue("assembly.budget") }
         var ids = Set<String>()
         for p in parts { guard ids.insert(p.id).inserted else { throw MGSolidIssue("id.duplicate.\(p.id)", part: p.id) } }
         // Resolve parents (a repeated child of a repeated parent pairs by instance).
@@ -159,15 +171,31 @@ public enum MGSolidParser {
                 guard let k = parts[i].instance, repeated[parts[i].base] == count else { throw MGSolidIssue("part.parent.repeat", part: parts[i].id) }
                 parts[i].parent = parent + "\(k)"
             } else if !ids.contains(parent) || parent == parts[i].id {
-                throw MGSolidIssue("ref.unknown.\(parent)", part: parts[i].id)
+                throw MGSolidIssue("ref.unknown.\(token(parent))", part: parts[i].id)
             }
         }
         func expand(_ id: String, _ what: String) throws -> [String] {
             if let c = repeated[id] { return (1...c).map { id + "\($0)" } }
-            guard ids.contains(id) else { throw MGSolidIssue("ref.unknown.\(id)", part: nil) }
+            guard ids.contains(id) else { throw MGSolidIssue("ref.unknown.\(token(id))", part: nil) }
             return [id]
         }
         let byID = Dictionary(parts.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        // Parent cycles, rejected here so every chain walk below ends.
+        for p in parts {
+            var seen: Set<String> = [p.id]
+            var cur = p.parent
+            while let c = cur {
+                guard seen.insert(c).inserted else { throw MGSolidIssue("part.parent.cycle", part: p.id) }
+                cur = byID[c]?.parent
+            }
+        }
+        /// Parent chain of a part, nearest first.
+        func ancestors(_ id: String) -> [String] {
+            var out: [String] = []
+            var cur = byID[id]?.parent
+            while let c = cur { out.append(c); cur = byID[c]?.parent }
+            return out
+        }
 
         // Gears.
         var gears: [String: MGSolidGear] = [:]
@@ -204,7 +232,7 @@ public enum MGSolidParser {
                     else if lb.count == 1 { pairs = la.map { ($0, lb[0]) } }
                     else { throw MGSolidIssue("constraint.gearMesh.repeat") }
                     for (x, y) in pairs { meshes.append(Mesh(a: x, b: y, carrier: carrier)) }
-                default: throw MGSolidIssue("constraint.unknown.\(kind)")
+                default: throw MGSolidIssue("constraint.unknown.\(token(kind))")
                 }
             }
         }
@@ -233,12 +261,14 @@ public enum MGSolidParser {
             case "follow":
                 guard case .object(let f) = body else { throw MGSolidIssue("part.drive.follow", part: p.id) }
                 try closed(f, ["source", "ratio"], ["source", "ratio"], "part.drive.follow")
-                guard case .string(let s)? = f["source"], byID[s] != nil, s != p.id else { throw MGSolidIssue("ref.unknown.\(f["source"].map { "\($0)" } ?? "")", part: p.id) }
+                guard case .string(let s)? = f["source"], s != p.id else { throw MGSolidIssue("part.drive.follow.source", part: p.id) }
+                guard byID[s] != nil else { throw MGSolidIssue("ref.unknown.\(token(s))", part: p.id) }
                 drives[p.id] = .follow(source: s, ratio: try num(f["ratio"], -1000...1000, "part.drive.follow.ratio"), offset: 0)
             case "crankSlider", "crankRod":
                 guard case .object(let f) = body else { throw MGSolidIssue("part.drive.\(kind)", part: p.id) }
                 try closed(f, ["crank", "radius", "rod"], ["crank", "radius", "rod"], "part.drive.\(kind)")
-                guard case .string(let s)? = f["crank"], byID[s] != nil, s != p.id else { throw MGSolidIssue("ref.unknown.crank", part: p.id) }
+                guard case .string(let s)? = f["crank"], s != p.id else { throw MGSolidIssue("part.drive.\(kind).crank", part: p.id) }
+                guard byID[s] != nil else { throw MGSolidIssue("ref.unknown.\(token(s))", part: p.id) }
                 let r = try num(f["radius"], MGSolidLimits.length, "part.drive.\(kind).radius")
                 let l = try num(f["rod"], MGSolidLimits.length, "part.drive.\(kind).rod")
                 guard l > r else { throw MGSolidIssue("part.drive.\(kind).rod", part: p.id) }
@@ -248,19 +278,43 @@ public enum MGSolidParser {
                 } else {
                     drives[p.id] = .crankRod(crank: s, crankRadius: r, rodLength: l)
                 }
-            default: throw MGSolidIssue("part.drive.unknown.\(kind)", part: p.id)
+            default: throw MGSolidIssue("part.drive.unknown.\(token(kind))", part: p.id)
             }
         }
 
-        // Gear-mesh geometry checks and automatic tooth phasing.
+        // Gear-mesh geometry checks.
+        func axisLine(_ id: String) -> (point: MGVec3, dir: MGVec3)? {
+            guard let dir = jointAxisWorld(id) else { return nil }
+            return ((rest.world[id] ?? .identity).translation, dir)
+        }
+        /// Signed joint terms that turn `id` about `n`, from `id` up its parent chain to (not including) `stop`.
+        /// Every moving joint on the way must be a revolute parallel to `n` whose axis passes through `centre`,
+        /// so the gear only spins: its centre stays put relative to `stop`.
+        func turning(_ id: String, centre: MGVec3, n: MGVec3, stop: String?, own: String, owner: String) throws -> [(String, Double)] {
+            var terms: [(String, Double)] = []
+            for p in [id] + ancestors(id) {
+                if p == stop { break }
+                guard byID[p]?.joint != .fixed, !fixed.contains(p) else { continue }
+                guard let line = axisLine(p) else { throw MGSolidIssue(p == id ? own : "constraint.gearMesh.parentMoves", part: owner) }
+                let d = centre - line.point
+                guard line.dir.cross(n).length < 1e-6, (d - line.dir * line.dir.dot(d)).length < 1e-6 else {
+                    throw MGSolidIssue(p == id ? own : "constraint.gearMesh.parentRotates", part: owner)
+                }
+                if p != id, drives[p] != nil { throw MGSolidIssue("constraint.gearMesh.parentDrive", part: owner) }
+                terms.append((p, line.dir.dot(n) >= 0 ? 1 : -1))
+            }
+            return terms
+        }
         var meshAxis: [Int: MGVec3] = [:]
+        var meshTerms: [Int: (a: [(String, Double)], b: [(String, Double)])] = [:]
+        var interference: [String: Double] = [:]
         for (k, m) in meshes.enumerated() {
             guard let ga = gears[m.a], let gb = gears[m.b] else { throw MGSolidIssue("constraint.gearMesh.gear", part: gears[m.a] == nil ? m.a : m.b) }
             guard m.a != m.b else { throw MGSolidIssue("constraint.gearMesh.self", part: m.a) }
             guard abs(ga.module - gb.module) < 1e-9 else { throw MGSolidIssue("constraint.gearMesh.module", part: m.b) }
-            guard gb.spur != nil else { throw MGSolidIssue("constraint.gearMesh.kind", part: m.b) }
-            guard jointAxisWorld(m.a) != nil || fixed.contains(m.a) || byID[m.a]?.joint == .fixed,
-                  jointAxisWorld(m.b) != nil else { throw MGSolidIssue("constraint.gearMesh.joint", part: m.b) }
+            guard let sb = gb.spur else { throw MGSolidIssue("constraint.gearMesh.kind", part: m.b) }
+            let paA = ga.spur?.pressureAngle ?? ga.ring!.pressureAngle
+            guard abs(paA - sb.pressureAngle) < 1e-9 else { throw MGSolidIssue("constraint.gearMesh.pressureAngle", part: m.b) }
             for id in [m.a, m.b] {
                 // A driven or phased gear turns about its own axis: the joint axis must pass through the gear centre.
                 let g = gears[id]!.local
@@ -276,61 +330,109 @@ public enum MGSolidParser {
             let planar = delta - n * n.dot(delta)
             let expected = ga.ring != nil ? Double(ga.teeth - gb.teeth) * ga.module / 2 : Double(ga.teeth + gb.teeth) * ga.module / 2
             guard abs(planar.length - expected) <= 0.02 * ga.module else { throw MGSolidIssue("constraint.gearMesh.distance", part: m.b) }
+            // How each gear turns: its own joint plus coaxial parents, relative to the carrier when there is one.
+            let own = "constraint.gearMesh.joint"
+            var ta: [(String, Double)], tb: [(String, Double)], bTurns: Bool
             if let c = m.carrier {
-                guard let ca = jointAxisWorld(c) ?? Optional(gearFrame(c).c2) , abs(abs(ca.dot(n)) - 1) < 1e-6 else { throw MGSolidIssue("constraint.gearMesh.carrier", part: c) }
-                guard byID[m.b]?.parent == c || byID[m.a]?.parent == c else { throw MGSolidIssue("constraint.gearMesh.carrier", part: c) }
+                let ca = jointAxisWorld(c) ?? gearFrame(c).c2.normalized
+                guard abs(abs(ca.dot(n)) - 1) < 1e-6 else { throw MGSolidIssue("constraint.gearMesh.carrier", part: c) }
+                let aUnder = ancestors(m.a).contains(c), bUnder = ancestors(m.b).contains(c)
+                guard aUnder || bUnder else { throw MGSolidIssue("constraint.gearMesh.carrier", part: c) }
+                let origin = (rest.world[c] ?? .identity).translation
+                let tc = try turning(c, centre: origin, n: n, stop: nil, own: "constraint.gearMesh.carrier", owner: c)
+                func relative(_ id: String, _ centre: MGVec3, _ under: Bool) throws -> (own: [(String, Double)], total: [(String, Double)]) {
+                    if under { let t = try turning(id, centre: centre, n: n, stop: c, own: own, owner: id); return (t, t) }
+                    // A gear outside a turning carrier must sit on the carrier axis, or its centre moves in the carrier frame.
+                    let d = centre - origin
+                    guard tc.isEmpty || (d - n * n.dot(d)).length < 1e-6 else { throw MGSolidIssue("constraint.gearMesh.carrier", part: id) }
+                    let t = try turning(id, centre: centre, n: n, stop: nil, own: own, owner: id)
+                    return (t, t + tc.map { ($0.0, -$0.1) })
+                }
+                let ra = try relative(m.a, fa.translation, aUnder), rb = try relative(m.b, fb.translation, bUnder)
+                ta = ra.total; tb = rb.total; bTurns = !rb.own.isEmpty
+            } else {
+                ta = try turning(m.a, centre: fa.translation, n: n, stop: nil, own: own, owner: m.a)
+                tb = try turning(m.b, centre: fb.translation, n: n, stop: nil, own: own, owner: m.b)
+                bTurns = !tb.isEmpty
+            }
+            guard jointAxisWorld(m.b) != nil || bTurns else { throw MGSolidIssue(own, part: m.b) }
+            if ga.ring != nil {
+                // Internal pairs interfere when the ring has too few more teeth than the planet; sweep the real outlines.
+                let key = "\(ga.teeth),\(gb.teeth),\(ga.module),\(paA),\(ga.ring!.backlash),\(sb.backlash)"
+                let worst = interference[key] ?? MGSolidChecks.pairInterference(ga, gb)
+                interference[key] = worst
+                guard worst <= MGSolidLimits.toothOverlap * ga.module else { throw MGSolidIssue("constraint.gearMesh.interference", part: m.b) }
             }
             meshAxis[k] = n
+            meshTerms[k] = (ta, tb)
         }
-        // Tooth phase propagation over the mesh graph, starting from gears with an authored phase (default 0).
-        var q0: [String: Double] = [:]
-        func worldPhase(_ id: String, _ n: MGVec3, _ e1: MGVec3, _ e2: MGVec3) -> (phase: Double, sign: Double) {
-            let f = gearFrame(id)
-            let sign: Double = (jointAxisWorld(id) ?? f.c2).dot(n) >= 0 ? 1 : -1
-            let x = f.c0
-            return (atan2(x.dot(e2), x.dot(e1)) + sign * (q0[id] ?? 0), sign)
+
+        // Tooth phasing over the mesh graph, starting from gears with an authored phase (default 0). Every meshed gear
+        // has a phase knob: an offset on its own revolute joint (which also turns its children, so phased descendants
+        // are compensated), or for a gear without a joint a turn of its gear shape (children stay put).
+        var knob: [String: Double] = [:]
+        func knobAxis(_ id: String) -> MGVec3 { jointAxisWorld(id) ?? gearFrame(id).c2.normalized }
+        func worldPhase(_ id: String, _ n: MGVec3, _ e1: MGVec3, _ e2: MGVec3) -> Double {
+            let x = gearFrame(id).c0
+            var a = atan2(x.dot(e2), x.dot(e1))
+            for p in [id] + ancestors(id) where p == id || jointAxisWorld(p) != nil {
+                if let v = knob[p] { a += (knobAxis(p).dot(n) >= 0 ? 1 : -1) * v }
+            }
+            return a
+        }
+        var visited = Set<String>()
+        func turnKnob(_ id: String, by d: Double) {
+            knob[id, default: 0] += d
+            guard jointAxisWorld(id) != nil else { return }
+            for y in visited.sorted() where y != id {
+                let chain = ancestors(y)
+                guard let k = chain.firstIndex(of: id), !chain[..<k].contains(where: visited.contains) else { continue }
+                knob[y, default: 0] -= (knobAxis(id).dot(knobAxis(y)) >= 0 ? 1 : -1) * d
+            }
+        }
+        /// World tooth phase `b` needs to mesh with `a` (both in the basis e1, e2 about n).
+        func requiredPhase(_ m: Mesh, from cur: String, _ phaseOf: (String) -> Double, _ e1: MGVec3, _ e2: MGVec3,
+                           centres: (MGVec3, MGVec3)) -> Double {
+            let d = centres.1 - centres.0
+            let beta = atan2(d.dot(e2), d.dot(e1))
+            let ga = gears[m.a]!, gb = gears[m.b]!
+            if ga.ring != nil {
+                if cur == m.a { return beta + Double(ga.teeth) * (phaseOf(m.a) - beta) / Double(gb.teeth) }
+                return MGGearPhase.ringSpaces(zRing: ga.teeth, zPlanet: gb.teeth, phasePlanet: phaseOf(m.b), beta: beta)
+            }
+            if cur == m.a { return MGGearPhase.external(zA: ga.teeth, phaseA: phaseOf(m.a), zB: gb.teeth, beta: beta) }
+            return MGGearPhase.external(zA: gb.teeth, phaseA: phaseOf(m.b), zB: ga.teeth, beta: beta + .pi)
+        }
+        func basis(_ n: MGVec3) -> (MGVec3, MGVec3) {
+            let helper = abs(n.x) < 0.9 ? MGVec3.unitX : MGVec3.unitY
+            let e1 = (helper - n * n.dot(helper)).normalized
+            return (e1, n.cross(e1))
+        }
+        func pitchOffset(_ required: Double, _ current: Double, _ teeth: Int) -> Double {
+            let pitch = 2 * Double.pi / Double(teeth)
+            var diff = (required - current).truncatingRemainder(dividingBy: pitch)
+            if diff < 0 { diff += pitch }
+            return min(diff, pitch - diff) / pitch
         }
         var order: [String] = []
         for m in meshes { for id in [m.a, m.b] where !order.contains(id) { order.append(id) } }
-        var visited = Set<String>()
         for start in order where !visited.contains(start) {
-            q0[start] = (byID[start]?.phase ?? 0)
+            turnKnob(start, by: byID[start]?.phase ?? 0)
             visited.insert(start)
             var queue = [start]
-            while let cur = queue.first {
-                queue.removeFirst()
+            while !queue.isEmpty {
+                let cur = queue.removeFirst()
                 for (k, m) in meshes.enumerated() where m.a == cur || m.b == cur {
                     let other = m.a == cur ? m.b : m.a
                     let n = meshAxis[k]!
-                    let helper = abs(n.x) < 0.9 ? MGVec3.unitX : MGVec3.unitY
-                    let e1 = (helper - n * n.dot(helper)).normalized, e2 = n.cross(e1)
-                    let ca = gearFrame(m.a).translation, cb = gearFrame(m.b).translation
-                    let d = cb - ca
-                    let beta = atan2(d.dot(e2), d.dot(e1))
-                    let ga = gears[m.a]!, gb = gears[m.b]!
-                    // Required world phase of `other`, given `cur`.
-                    let required: Double
-                    if ga.ring != nil {
-                        if cur == m.a {
-                            let pr = worldPhase(m.a, n, e1, e2).phase
-                            required = beta + Double(ga.teeth) * (pr - beta) / Double(gb.teeth)
-                        } else {
-                            let pp = worldPhase(m.b, n, e1, e2).phase
-                            required = MGGearPhase.ringSpaces(zRing: ga.teeth, zPlanet: gb.teeth, phasePlanet: pp, beta: beta)
-                        }
-                    } else if cur == m.a {
-                        required = MGGearPhase.external(zA: ga.teeth, phaseA: worldPhase(m.a, n, e1, e2).phase, zB: gb.teeth, beta: beta)
-                    } else {
-                        required = MGGearPhase.external(zA: gb.teeth, phaseA: worldPhase(m.b, n, e1, e2).phase, zB: ga.teeth, beta: beta + .pi)
-                    }
-                    let pitch = 2 * Double.pi / Double(gears[other]!.teeth)
-                    let (current, sign) = worldPhase(other, n, e1, e2)
+                    let (e1, e2) = basis(n)
+                    let required = requiredPhase(m, from: cur, { worldPhase($0, n, e1, e2) }, e1, e2,
+                                                 centres: (gearFrame(m.a).translation, gearFrame(m.b).translation))
+                    let current = worldPhase(other, n, e1, e2)
                     if visited.contains(other) {
-                        var diff = (required - current).truncatingRemainder(dividingBy: pitch)
-                        if diff < 0 { diff += pitch }
-                        guard min(diff, pitch - diff) < 1e-6 * pitch + 1e-9 else { throw MGSolidIssue("constraint.gearMesh.phase", part: other) }
+                        guard pitchOffset(required, current, gears[other]!.teeth) < 1e-6 else { throw MGSolidIssue("constraint.gearMesh.phase", part: other) }
                     } else {
-                        q0[other] = (q0[other] ?? 0) + sign * (required - current)
+                        turnKnob(other, by: (knobAxis(other).dot(n) >= 0 ? 1 : -1) * (required - current))
                         visited.insert(other); queue.append(other)
                     }
                 }
@@ -350,18 +452,11 @@ public enum MGSolidParser {
             rows.append(([col(id): 1], 0))
         }
         for (k, m) in meshes.enumerated() {
-            let n = meshAxis[k]!
             let ga = gears[m.a]!, gb = gears[m.b]!
-            var row: [Int: Double] = [:]
-            func addRel(_ id: String, _ coef: Double) {
-                // Rotation about n relative to the carrier.
-                if let s = jointAxisWorld(id).map({ $0.dot(n) >= 0 ? 1.0 : -1.0 }) { row[col(id), default: 0] += coef * s }
-                if let c = m.carrier, byID[id]?.parent != c, let cs = jointAxisWorld(c).map({ $0.dot(n) >= 0 ? 1.0 : -1.0 }) {
-                    row[col(c), default: 0] -= coef * cs
-                }
-            }
             let sign: Double = ga.ring != nil ? -1 : 1
-            addRel(m.a, Double(ga.teeth)); addRel(m.b, sign * Double(gb.teeth))
+            var row: [Int: Double] = [:]
+            for (id, s) in meshTerms[k]!.a { row[col(id), default: 0] += Double(ga.teeth) * s }
+            for (id, s) in meshTerms[k]!.b { row[col(id), default: 0] += sign * Double(gb.teeth) * s }
             rows.append((row, 0))
         }
         var ratios: [String: Double] = [:]
@@ -369,15 +464,15 @@ public enum MGSolidParser {
             let solved = try solve(rows, columns: unknown.count)
             for (i, id) in unknown.enumerated() {
                 guard let v = solved[i] else { throw MGSolidIssue("constraint.underdetermined", part: id) }
+                guard abs(v) <= MGSolidLimits.ratio else { throw MGSolidIssue("constraint.ratio", part: id) }
                 ratios[id] = v
             }
         }
-        for (id, r) in ratios {
+        for id in unknown {
             guard drives[id] == nil else { throw MGSolidIssue("constraint.conflict.drive", part: id) }
-            drives[id] = .input(scale: r, offset: q0[id] ?? 0)
+            drives[id] = .input(scale: ratios[id]!, offset: knob[id] ?? 0)
         }
-        for (id, phase) in q0 where drives[id] == nil && phase != 0 {
-            // Fixed gears keep their phase as a constant joint value.
+        for (id, phase) in knob.sorted(by: { $0.key < $1.key }) where drives[id] == nil && phase != 0 && jointAxisWorld(id) != nil {
             drives[id] = .input(scale: 0, offset: phase)
         }
 
@@ -388,27 +483,65 @@ public enum MGSolidParser {
             for entry in list { steps.append(try step(entry, expand)) }
         }
 
-        // Meshes (reused when the shape list is unchanged).
+        // Meshes (reused when the shape list is unchanged). A gear without a joint keeps its tooth phase in its shape.
         var assemblyParts: [MGPart] = []
         var shapes: [String: [MGShapeSpec]] = [:]
         for p in parts {
-            shapes[p.id] = p.shapes
-            let mesh: MGMesh
-            if let prev = previous, prev.shapes[p.id] == p.shapes, let old = prev.assembly.part(p.id) { mesh = old.mesh }
-            else { mesh = MGMesh.merged(p.shapes.map { $0.mesh() }) }
-            var joint = p.joint, drive = drives[p.id]
-            if joint == .fixed, let d = drive, case .input(0, let offset) = d {
-                // A fixed gear's phase becomes a placement rotation about its gear axis.
-                joint = .revolute(axis: gears[p.id]?.local.c2 ?? .unitZ); drive = .input(scale: 0, offset: offset)
+            var list = p.shapes
+            if p.joint == .fixed, let phase = knob[p.id], phase != 0,
+               let i = list.firstIndex(where: { $0.kind == "gear" || $0.kind == "ringGear" }) {
+                let s = list[i]
+                list[i] = MGShapeSpec(kind: s.kind, fields: s.fields, offset: s.offset * .rotation(axis: .unitZ, angle: phase))
+                gears[p.id]?.local = list[i].offset
             }
+            shapes[p.id] = list
+            let mesh: MGMesh
+            if let prev = previous, prev.shapes[p.id] == list, let old = prev.assembly.part(p.id) { mesh = old.mesh }
+            else { mesh = MGMesh.merged(list.map { $0.mesh() }) }
             assemblyParts.append(MGPart(id: p.id, name: p.name, mesh: mesh, material: p.material, placement: p.placement, parent: p.parent,
-                                        joint: joint, drive: drive, explode: p.explode, explodeWindow: p.window, creaseAngle: p.crease))
+                                        joint: p.joint, drive: drives[p.id], explode: p.explode, explodeWindow: p.window, creaseAngle: p.crease))
         }
-        let pairs = meshes.map { m in
-            MGGearPair(a: m.a, b: m.b, teethA: gears[m.a]!.teeth, teethB: gears[m.b]!.teeth, isInternal: gears[m.a]!.ring != nil, carrier: m.carrier)
+        let pairs = meshes.enumerated().map { k, m in
+            MGGearPair(a: m.a, b: m.b, teethA: gears[m.a]!.teeth, teethB: gears[m.b]!.teeth, isInternal: gears[m.a]!.ring != nil,
+                       carrier: m.carrier, axis: meshAxis[k])
         }
         let assembly = MGAssembly(name: title, parts: assemblyParts, gearPairs: pairs)
-        if let issue = assembly.validate().first { throw MGSolidIssue("assembly.\(issue)") }
+        if let issue = assembly.validate().first { throw MGSolidIssue(issue == "drive cycle" ? "part.drive.cycle" : "assembly.invalid") }
+
+        // The compiled motion must match what the solver assumed: replay the posed assembly and check every mesh keeps
+        // its axis, centre distance, tooth phase and tooth ratio.
+        let scale = max(1, ratios.values.map(abs).max() ?? 1, inputs.values.map(abs).max() ?? 1)
+        let delta = 0.05 / scale
+        let samples = [0, delta, 7.3 * delta, 29 * delta, 1.7]
+        let worlds = samples.map { assembly.pose(MGPoseParameters(input: $0)).world }
+        for (k, m) in meshes.enumerated() {
+            let ga = gears[m.a]!, gb = gears[m.b]!
+            let n0 = meshAxis[k]!
+            func frame(_ w: [String: MGTransform], _ id: String) -> MGTransform { (w[id] ?? .identity) * gears[id]!.local }
+            for w in worlds {
+                let fa = frame(w, m.a), fb = frame(w, m.b)
+                let n = fa.c2.normalized
+                let d = fb.translation - fa.translation
+                let expected = ga.ring != nil ? Double(ga.teeth - gb.teeth) * ga.module / 2 : Double(ga.teeth + gb.teeth) * ga.module / 2
+                guard abs(abs(n.dot(fb.c2.normalized)) - 1) < 1e-6, abs((d - n * n.dot(d)).length - expected) <= 0.02 * ga.module else {
+                    throw MGSolidIssue("constraint.gearMesh.motion", part: m.b)
+                }
+                let (e1, e2) = basis(n)
+                func phase(_ id: String) -> Double { let x = frame(w, id).c0; return atan2(x.dot(e2), x.dot(e1)) }
+                let required = requiredPhase(m, from: m.a, phase, e1, e2, centres: (fa.translation, fb.translation))
+                guard pitchOffset(required, phase(m.b), gb.teeth) < 1e-6 else { throw MGSolidIssue("constraint.gearMesh.motion", part: m.b) }
+            }
+            // Tooth ratio over a small input step, measured relative to the carrier frame.
+            func turn(_ id: String) -> Double {
+                let c0 = m.carrier.map { worlds[0][$0] ?? .identity } ?? .identity, c1 = m.carrier.map { worlds[1][$0] ?? .identity } ?? .identity
+                let nc = c0.inverse.applyVector(n0)
+                let x0 = c0.inverse.applyVector(frame(worlds[0], id).c0), x1 = c1.inverse.applyVector(frame(worlds[1], id).c0)
+                return atan2(nc.dot(x0.cross(x1)), x0.dot(x1))
+            }
+            let sign: Double = ga.ring != nil ? -1 : 1
+            let ta = Double(ga.teeth) * turn(m.a), tb = sign * Double(gb.teeth) * turn(m.b)
+            guard abs(ta + tb) <= 1e-6 * (abs(ta) + abs(tb)) + 1e-9 else { throw MGSolidIssue("constraint.gearMesh.motion", part: m.b) }
+        }
         return MGSolidDocument(title: title, assembly: assembly, steps: steps, defaults: defaults, gears: gears, shapes: shapes,
                                ratios: ratios, source: json)
     }
@@ -475,7 +608,7 @@ public enum MGSolidParser {
                 switch k {
                 case "revolute": joint = .revolute(axis: axis.normalized)
                 case "prismatic": joint = .prismatic(axis: axis.normalized)
-                default: throw MGSolidIssue("part.joint.unknown.\(k)")
+                default: throw MGSolidIssue("part.joint.unknown.\(token(k))")
                 }
             }
             let explode = try o["explode"].map { try vector($0, "part.explode") } ?? .zero
@@ -529,7 +662,7 @@ public enum MGSolidParser {
 
     static func shape(_ entry: MGJSON) throws -> MGShapeSpec {
         guard case .object(let wrapper) = entry, wrapper.count == 1, let (kind, body) = wrapper.first else { throw MGSolidIssue("part.shape") }
-        guard let keys = shapeKeys[kind] else { throw MGSolidIssue("part.shape.unknown.\(kind)") }
+        guard let keys = shapeKeys[kind] else { throw MGSolidIssue("part.shape.unknown.\(token(kind))") }
         guard case .object(var f) = body else { throw MGSolidIssue("part.\(kind)") }
         let w = "part.\(kind)"
         try closed(f, keys.required, keys.optional.union(["at", "rot"]), w)
@@ -552,26 +685,38 @@ public enum MGSolidParser {
             let z = try integer("teeth", MGSolidLimits.teeth)
             let m = try n("module", MGSolidLimits.module)
             let width = try n("width")
-            _ = try opt("pressureAngle", 14.5...25); _ = try opt("backlash", 0...0.3)
-            let g = MGSpurGear(teeth: z, module: m)
+            let pa = try opt("pressureAngle", 14.5...25) ?? 20, backlash = try opt("backlash", 0...0.3) ?? 0.06
+            let g = MGSpurGear(teeth: z, module: m, pressureAngle: pa * .pi / 180, backlash: backlash)
+            // The tooth needs a real tip land, and the sampled outline must stay star-shaped (no crossing flanks).
+            guard g.halfThicknessAngle(at: g.tipRadius) > 0.01 / Double(z) else { throw MGSolidIssue("\(w).tip") }
+            guard MGProfile.isPolarMonotonic(g.outline()) else { throw MGSolidIssue("\(w).profile") }
             let bore = try opt("bore", 0...4000) ?? 0
             guard bore < g.rootRadius - 0.5 * m else { throw MGSolidIssue("\(w).bore") }
+            var key: (width: Double, depth: Double)?
             if let k = f["keyway"] {
                 guard case .array(let a) = k, a.count == 2 else { throw MGSolidIssue("\(w).keyway") }
                 let kw = try num(a[0], 0.1...1000, "\(w).keyway"), kd = try num(a[1], 0.1...1000, "\(w).keyway")
                 guard bore > 0, kw < bore, bore + kd < g.rootRadius - 0.3 * m else { throw MGSolidIssue("\(w).keyway") }
+                key = (kw, kd)
             }
-            if let c = try opt("chamfer", 0...50) { guard c < min(width / 2, 0.45 * m) else { throw MGSolidIssue("\(w).chamfer") } }
+            let profile = g.profile(bore: bore, keyway: key)
+            // The bore (with its keyway corners) must stay inside the root circle.
+            guard profileCapsSeparate(profile, inset: 0) else { throw MGSolidIssue(key == nil ? "\(w).bore" : "\(w).keyway") }
+            f["chamfer"] = .number(try capChamfer(profile, width: width, explicit: opt("chamfer", 0...50), fallback: 0.28 * m, w))
         case "ringGear":
             let z = try integer("teeth", MGSolidLimits.ringTeeth)
             let m = try n("module", MGSolidLimits.module)
             let width = try n("width")
-            _ = try opt("pressureAngle", 14.5...25); _ = try opt("backlash", 0...0.3)
-            let g = MGRingGear(teeth: z, module: m, outerRadius: 0)
+            let pa = try opt("pressureAngle", 14.5...25) ?? 20, backlash = try opt("backlash", 0...0.3) ?? 0.06
             let outer = try n("outer")
+            let g = MGRingGear(teeth: z, module: m, outerRadius: outer, pressureAngle: pa * .pi / 180, backlash: backlash)
             guard outer >= g.rootRadius + m else { throw MGSolidIssue("\(w).outer") }
             guard g.tipRadius > g.baseRadius else { throw MGSolidIssue("\(w).teeth") }
-            if let c = try opt("chamfer", 0...50) { guard c < min(width / 2, 0.45 * m) else { throw MGSolidIssue("\(w).chamfer") } }
+            // Ring teeth need a tip land at the bore, and tooth spaces must stay open at the root.
+            guard Double.pi / Double(z) - g.halfSpaceAngle(at: g.tipRadius) > 0.01 / Double(z) else { throw MGSolidIssue("\(w).tip") }
+            guard g.halfSpaceAngle(at: g.rootRadius) > 0.01 / Double(z), MGProfile.isPolarMonotonic(g.outline()) else { throw MGSolidIssue("\(w).profile") }
+            f["chamfer"] = .number(try capChamfer(g.profile(outerSegments: 240), width: width, explicit: opt("chamfer", 0...50),
+                                                 fallback: 0.28 * m, w))
         case "shaft":
             let r = try n("radius"), len = try n("length")
             if let c = try opt("chamfer", 0...50) { guard c < min(r, len / 2) else { throw MGSolidIssue("\(w).chamfer") } }
@@ -664,6 +809,36 @@ public enum MGSolidParser {
         }
     }
 
+    /// True when the cap loops of a gear-like profile (one star-shaped outer loop, at most one star-shaped hole),
+    /// inset by `inset` as the chamfered extrusion does, stay star-shaped about the axis and the hole stays strictly
+    /// inside the outer loop. That is what keeps the zipper-triangulated caps and chamfer bands from crossing.
+    static func profileCapsSeparate(_ p: MGProfile, inset c: Double) -> Bool {
+        let outer = c > 0 ? MGProfile.inset(p.outer, by: c) : p.outer
+        guard MGProfile.isPolarMonotonic(outer) else { return false }
+        guard let h = p.holes.first else { return true }
+        let hole = Array((c > 0 ? MGProfile.inset(h, by: c) : h).reversed())
+        guard MGProfile.isPolarMonotonic(hole) else { return false }
+        let inner = hole.map(\.length).max() ?? 0, rim = outer.map(\.length).min() ?? 0
+        guard inner < rim - 1e-6 * max(1, rim) else { return false }
+        // The cap strip is built exactly as the extrusion builds it: every triangle must wind counter-clockwise, which
+        // (with the strip's boundary being the two loops) means the cap covers the region once, without overlap.
+        // Requiring the strip itself (not the ear-clipping fallback) also keeps large gears fast to build.
+        let pts = outer + hole
+        let tris = MGTriangulator.zipper(points: pts, outer: Array(0..<outer.count), innerCCW: Array(outer.count..<pts.count))
+        return tris.allSatisfy { a, b, c in (pts[b] - pts[a]).cross(pts[c] - pts[a]) > 0 }
+    }
+
+    /// The cap chamfer of a gear or ring: an authored value must be below half the width and keep the inset caps
+    /// valid; without one, the default (at most a quarter of the width) is used when valid, else half of it, else none.
+    static func capChamfer(_ p: MGProfile, width: Double, explicit: Double?, fallback: Double, _ w: String) throws -> Double {
+        if let c = explicit {
+            guard c < width / 2, c == 0 || profileCapsSeparate(p, inset: c) else { throw MGSolidIssue("\(w).chamfer") }
+            return c
+        }
+        let c = min(fallback, width / 4)
+        return [c, c / 2].first { profileCapsSeparate(p, inset: $0) } ?? 0
+    }
+
     static func segmentsCross(_ a: MGVec2, _ b: MGVec2, _ c: MGVec2, _ d: MGVec2) -> Bool {
         let d1 = (b - a).cross(c - a), d2 = (b - a).cross(d - a), d3 = (d - c).cross(a - c), d4 = (d - c).cross(b - c)
         return d1 * d2 < 0 && d3 * d4 < 0
@@ -731,7 +906,18 @@ public enum MGSolidParser {
     // MARK: Helpers
 
     static func closed(_ o: [String: MGJSON], _ required: Set<String>, _ optional: Set<String>, _ what: String) throws {
-        do { try MGParser.closed(o, required: required, optional: optional, what) } catch let e as MGError { throw MGSolidIssue(e.reason) }
+        let keys = Set(o.keys)
+        guard required.isSubset(of: keys) else { throw MGSolidIssue("\(what).missing") }
+        let extra = keys.subtracting(required.union(optional))
+        guard extra.isEmpty else { throw MGSolidIssue("\(what).unknown.\(extra.map(token).sorted().joined(separator: ","))") }
+    }
+    /// An author-supplied name as it appears inside a reason: ASCII letters, digits and `_` (anything else becomes
+    /// `_`), at most 32 characters, so reasons stay single tokens without spaces or JSON text.
+    static func token(_ s: String) -> String {
+        let t = String(s.unicodeScalars.prefix(32).map { u -> Character in
+            u.isASCII && (CharacterSet.alphanumerics.contains(u) || u == "_") ? Character(u) : "_"
+        })
+        return t.isEmpty ? "_" : t
     }
     static func num(_ v: MGJSON?, _ range: ClosedRange<Double>, _ what: String) throws -> Double {
         guard case .number(let d)? = v, d.isFinite, range.contains(d) else { throw MGSolidIssue(what) }

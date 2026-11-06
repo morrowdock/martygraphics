@@ -159,7 +159,9 @@ public enum MGTriangulator {
         if holes.count == 1 {
             let o = outer.map { points[$0] }, h = Array(holes[0].reversed()).map { points[$0] }
             if MGProfile.isPolarMonotonic(o), MGProfile.isPolarMonotonic(h) {
-                return zipper(points: points, outer: outer, innerCCW: Array(holes[0].reversed()))
+                let strip = zipper(points: points, outer: outer, innerCCW: Array(holes[0].reversed()))
+                // Keep the strip only when every triangle winds counter-clockwise (then it covers the region once).
+                if strip.allSatisfy({ a, b, c in (points[b] - points[a]).cross(points[c] - points[a]) > 0 }) { return strip }
             }
         }
         return earClip(points: points, outer: outer, holes: holes)
@@ -180,19 +182,37 @@ public enum MGTriangulator {
         }
         let a0 = points[outer[0]].angle
         let ao = unwrap(outer, from: a0) + [a0 + 2 * .pi]
-        // Rotate the inner loop so it starts at the first vertex at or after a0.
+        // Rotate the inner loop so it starts at the last vertex at or before a0: the strip then opens with the inner
+        // chain behind the outer one, never ahead of it (an inner apex ahead of a falling flank winds backwards).
         let raw = innerCCW.map { (points[$0].angle - a0).truncatingRemainder(dividingBy: 2 * .pi) }
-        let norm = raw.map { $0 < -1e-12 ? $0 + 2 * .pi : $0 }
-        let start = norm.indices.min { norm[$0] < norm[$1] } ?? 0
+        let norm = raw.map { $0 > 1e-12 ? $0 - 2 * .pi : $0 }   // in (-2 pi, 0]
+        let start = norm.indices.max { norm[$0] < norm[$1] } ?? 0
         let inner = Array(innerCCW[start...] + innerCCW[..<start])
-        let ai0 = unwrap(inner, from: a0)
+        var ai0: [Double] = [a0 + norm[start]]
+        for k in inner.indices.dropFirst() {
+            var t = points[inner[k]].angle
+            let prev = ai0[k - 1]
+            while t < prev - 1e-12 { t += 2 * .pi }
+            while t - 2 * .pi >= prev - 1e-12 { t -= 2 * .pi }
+            ai0.append(t)
+        }
         let ai = ai0 + [ai0[0] + 2 * .pi]
         let n = outer.count, m = inner.count
         var i = 0, j = 0
         var tris: [(Int, Int, Int)] = []
         tris.reserveCapacity(n + m)
         while i < n || j < m {
-            let advanceOuter = j >= m || (i < n && ao[i + 1] <= ai[j + 1])
+            var advanceOuter = j >= m || (i < n && ao[i + 1] <= ai[j + 1])
+            if i < n && j < m {
+                // Angle order alone can wind a triangle backwards next to steep (near-radial) edges such as tooth
+                // flanks. When only the other candidate is counter-clockwise, take it, but never let a chain run
+                // more than one step ahead of the angle order (that would leave long overlapping slivers).
+                let o0 = points[outer[i % n]], o1 = points[outer[(i + 1) % n]]
+                let q0 = points[inner[j % m]], q1 = points[inner[(j + 1) % m]]
+                let outerOK = (o1 - o0).cross(q0 - o0) > 0, innerOK = (q1 - o0).cross(q0 - o0) > 0
+                if advanceOuter, !outerOK, innerOK, ai[j] <= ao[i + 1] { advanceOuter = false }
+                else if !advanceOuter, !innerOK, outerOK, ao[i] <= ai[j + 1] { advanceOuter = true }
+            }
             if advanceOuter {
                 tris.append((outer[i % n], outer[(i + 1) % n], inner[j % m])); i += 1
             } else {

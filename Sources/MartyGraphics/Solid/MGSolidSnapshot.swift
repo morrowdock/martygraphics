@@ -25,7 +25,9 @@ public struct MGSolidCamera: Codable, Equatable, Sendable {
     public var up: MGVec3 { MGVec3(0, 1, 0) }
 
     /// Frames a bounding sphere so it fits both the vertical and horizontal field of view with `margin` (>1 adds room).
+    /// Empty bounds frame a unit cube at the origin.
     public static func framing(_ bounds: MGBounds, yaw: Double, pitch: Double, aspect: Double, fieldOfView: Double = 30, margin: Double = 1.12) -> MGSolidCamera {
+        let bounds = bounds.isEmpty ? MGBounds(min: MGVec3(-0.5, -0.5, -0.5), max: MGVec3(0.5, 0.5, 0.5)) : bounds
         let r = max(1e-6, bounds.radius)
         let v = fieldOfView * .pi / 180 / 2
         let h = atan(tan(v) * aspect)
@@ -157,9 +159,11 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
             triMat += [UInt16](repeating: UInt16(mid), count: rm.indices.count / 3)
         }
         let cam = camera ?? MGSolidCamera.framing(bounds, yaw: 32, pitch: 28, aspect: aspect)
+        // An empty assembly exports zero bounds (JSON has no infinities).
+        if bounds.isEmpty { bounds = MGBounds(min: .zero, max: .zero) }
         return MGSolidSnapshot(title: assembly.name, positions: pos, normals: nor, indices: idx, triangleMaterials: triMat,
                                materials: materials, parts: ranges, camera: cam, aspect: aspect, lighting: lighting,
-                               groundY: bounds.isEmpty ? 0 : bounds.min.y,
+                               groundY: bounds.min.y,
                                boundsMin: [bounds.min.x, bounds.min.y, bounds.min.z], boundsMax: [bounds.max.x, bounds.max.y, bounds.max.z])
     }
 
@@ -167,5 +171,103 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
     public func jsonData() throws -> Data {
         let e = JSONEncoder(); e.outputFormatting = [.sortedKeys]
         return try e.encode(self)
+    }
+}
+
+// MARK: Validating decoders
+
+/// Decoding checks the fixed-size slots that renderers index directly, so malformed input fails to decode
+/// instead of trapping later.
+extension KeyedDecodingContainer {
+    func numbers(_ key: Key, count: Int) throws -> [Double] {
+        let v = try decode([Double].self, forKey: key)
+        guard v.count == count, v.allSatisfy(\.isFinite) else {
+            throw DecodingError.dataCorruptedError(forKey: key, in: self, debugDescription: "expected \(count) finite numbers")
+        }
+        return v
+    }
+    func finite(_ key: Key) throws -> Double {
+        let v = try decode(Double.self, forKey: key)
+        guard v.isFinite else { throw DecodingError.dataCorruptedError(forKey: key, in: self, debugDescription: "expected a finite number") }
+        return v
+    }
+}
+
+extension MGSolidCamera {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        target = try c.numbers(.target, count: 3)
+        yaw = try c.finite(.yaw); pitch = try c.finite(.pitch); distance = try c.finite(.distance)
+        fieldOfView = try c.finite(.fieldOfView)
+        guard distance > 0, fieldOfView > 0, fieldOfView < 180 else {
+            throw DecodingError.dataCorruptedError(forKey: .distance, in: c, debugDescription: "camera distance and field of view must be positive")
+        }
+    }
+}
+
+extension MGStudioLighting.Light {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decode(String.self, forKey: .name)
+        direction = try c.numbers(.direction, count: 3)
+        color = try c.numbers(.color, count: 3)
+        intensity = try c.finite(.intensity)
+        castsShadow = try c.decode(Bool.self, forKey: .castsShadow)
+        softness = try c.finite(.softness)
+    }
+}
+
+extension MGStudioLighting.Environment {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        zenith = try c.numbers(.zenith, count: 3)
+        horizon = try c.numbers(.horizon, count: 3)
+        floor = try c.numbers(.floor, count: 3)
+        softboxes = try c.decode([[Double]].self, forKey: .softboxes)
+        guard softboxes.allSatisfy({ $0.count == 8 && $0.allSatisfy(\.isFinite) }) else {
+            throw DecodingError.dataCorruptedError(forKey: .softboxes, in: c, debugDescription: "each soft box has 8 finite numbers")
+        }
+        intensity = try c.finite(.intensity)
+    }
+}
+
+extension MGStudioLighting {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        lights = try c.decode([Light].self, forKey: .lights)
+        environment = try c.decode(Environment.self, forKey: .environment)
+        background = try c.numbers(.background, count: 3)
+        exposure = try c.finite(.exposure)
+    }
+}
+
+extension MGSolidSnapshot {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func bad(_ key: CodingKeys, _ why: String) -> DecodingError { .dataCorruptedError(forKey: key, in: c, debugDescription: why) }
+        format = try c.decode(String.self, forKey: .format)
+        guard format == "martygraphics.solid.snapshot/1" else { throw bad(.format, "unknown snapshot format") }
+        title = try c.decode(String.self, forKey: .title)
+        positions = try c.decode([Float].self, forKey: .positions)
+        normals = try c.decode([Float].self, forKey: .normals)
+        indices = try c.decode([UInt32].self, forKey: .indices)
+        triangleMaterials = try c.decode([UInt16].self, forKey: .triangleMaterials)
+        materials = try c.decode([Material].self, forKey: .materials)
+        parts = try c.decode([PartRange].self, forKey: .parts)
+        camera = try c.decode(MGSolidCamera.self, forKey: .camera)
+        aspect = try c.finite(.aspect)
+        lighting = try c.decode(MGStudioLighting.self, forKey: .lighting)
+        groundY = try c.finite(.groundY)
+        boundsMin = try c.numbers(.boundsMin, count: 3)
+        boundsMax = try c.numbers(.boundsMax, count: 3)
+        guard positions.count % 3 == 0, positions.allSatisfy(\.isFinite) else { throw bad(.positions, "three finite numbers per vertex") }
+        guard normals.count == positions.count, normals.allSatisfy(\.isFinite) else { throw bad(.normals, "one finite normal per vertex") }
+        guard indices.count % 3 == 0, indices.allSatisfy({ Int($0) < positions.count / 3 }) else { throw bad(.indices, "three vertex indices per triangle") }
+        guard triangleMaterials.count == indices.count / 3, triangleMaterials.allSatisfy({ Int($0) < materials.count }) else {
+            throw bad(.triangleMaterials, "one material index per triangle")
+        }
+        guard parts.allSatisfy({ $0.firstTriangle >= 0 && $0.triangleCount >= 0 && $0.firstTriangle <= indices.count / 3 - $0.triangleCount
+                                 && $0.material >= 0 && $0.material < materials.count }) else { throw bad(.parts, "part ranges must lie inside the triangles") }
+        guard aspect > 0 else { throw bad(.aspect, "aspect must be positive") }
     }
 }

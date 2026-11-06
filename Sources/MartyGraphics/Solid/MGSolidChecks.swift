@@ -37,6 +37,31 @@ public enum MGSolidChecks {
         return MeshReport(maxPenetration: pen, minClearance: gap, samples: samples, pairs: doc.assembly.gearPairs.count)
     }
 
+    /// Deepest tooth overlap (mm) of one meshing pair at standard centre distance, swept over one tooth pitch in the
+    /// frame where both centres are fixed. `a` is a spur gear or a ring; `b` is a spur gear. The gears are phased
+    /// with `MGGearPhase` and turned at the tooth ratio, so any overlap is interference of the tooth shapes
+    /// themselves (for example a ring with too few more teeth than its planet).
+    public static func pairInterference(_ a: MGSolidGear, _ b: MGSolidGear, samples: Int = 16) -> Double {
+        guard let sb = b.spur, a.spur != nil || a.ring != nil else { return .infinity }
+        let za = Double(a.teeth), zb = Double(sb.teeth), m = a.module
+        let isRing = a.ring != nil
+        let outlineA = a.spur?.outline() ?? a.ring!.outline()
+        let d = (isRing ? za - zb : za + zb) * m / 2
+        // Phases at input 0 with b's centre on +X (beta = 0).
+        let phaseB = isRing ? 0 : MGGearPhase.external(zA: a.teeth, phaseA: 0, zB: sb.teeth, beta: 0)
+        let outlineB = sb.outline(phase: phaseB)
+        var worst = -Double.infinity
+        for k in 0..<max(1, samples) {
+            let t = 2 * Double.pi / za * Double(k) / Double(max(1, samples))
+            // External gears counter-rotate; a planet turns the same way as its ring (zA tA = +/- zB tB).
+            let tb = (isRing ? 1 : -1) * t * za / zb
+            let fa = MGTransform.rotation(axis: .unitZ, angle: t)
+            let fb = MGTransform.translation(MGVec3(d, 0, 0)) * .rotation(axis: .unitZ, angle: tb)
+            worst = max(worst, contact(outlineA, fa, ring: isRing, outlineB, fb).penetration)
+        }
+        return worst
+    }
+
     /// Radial overlap of outline `b` with gear `a` (a spur gear, or a ring when `ring` is true) and vice versa.
     public static func contact(_ a: [MGVec2], _ fa: MGTransform, ring: Bool, _ b: [MGVec2], _ fb: MGTransform) -> (penetration: Double, gap: Double) {
         guard a.count > 2, b.count > 2 else { return (-.infinity, .infinity) }

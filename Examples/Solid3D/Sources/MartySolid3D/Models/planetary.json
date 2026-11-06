@@ -14,7 +14,7 @@
                {"shaft": {"radius": 2.5, "length": 8.1, "z0": -9.5, "chamfer": 0.3}}],
      "explode": [0, 0, 16], "explodeWindow": [0, 0.35]},
     {"id": "ring", "name": "Ring gear (60T, fixed)", "material": "darkSteel",
-     "shape": {"ringGear": {"teeth": 60, "module": 2, "width": 15.5, "outer": 68.9, "z0": -1.5, "chamfer": 0.56}},
+     "shape": {"ringGear": {"teeth": 60, "module": 2, "width": 15.5, "outer": 68.9, "z0": -1.5, "chamfer": 0.4}},
      "explode": [0, 0, 20], "explodeWindow": [0.3, 0.85]},
     {"id": "sun", "name": "Sun gear (24T, input)", "material": "brass",
      "shape": {"gear": {"teeth": 24, "module": 2, "width": 14, "bore": 6, "chamfer": 0.56}},

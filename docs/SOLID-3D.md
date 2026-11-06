@@ -14,7 +14,10 @@ manufacturability.
 The example renders come from
 [`planetary.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json)
 through `marty-solid3d --export`. See [the example README](../Examples/Solid3D/README.md).
-No rendered images are checked in yet.
+Four of them are checked in under [`assets/solid/`](assets/solid/) (hero, labelled
+exploded view, slider-crank section, loop GIF), with a render receipt in
+[`assets/solid/provenance.json`](assets/solid/provenance.json): capture commit, source
+file hashes, artifact hashes and the measured render time per frame.
 
 ## Layers
 
@@ -37,7 +40,9 @@ and the snapshot are **Y-up** (`MGSolidStage.zUpToYUp`).
   edges, so involute flanks shade smoothly and chamfers stay crisp.
 * `MGProfile`: an outer loop and holes, orientation normalised. Caps are
   triangulated by a zipper merge for star-shaped annuli (gears, rings) and by ear
-  clipping with hole bridging otherwise.
+  clipping with hole bridging otherwise. The zipper keeps every triangle
+  counter-clockwise (it never runs more than one step out of angle order to do
+  so); if it cannot, the cap falls back to ear clipping.
 * Builders: `extrude` (optional 45-degree chamfer on every cap edge), `revolve`
   (closed loops or open profiles with poles), `cylinder`, `tube`,
   `chamferedBox`, `hexPrism`, `blade` (NACA 4-digit style section, linear twist
@@ -54,6 +59,10 @@ whole document with a stable reason, for example `part.gear.teeth`,
 `ref.unknown.<id>`, `part.unknown.<key>`, `constraint.underdetermined`,
 `constraint.conflict` or `constraint.gearMesh.phase`. `MGSolidIssue.part` names
 the part when there is one, so a generator can repair from the reason alone.
+A reason is always one token without spaces: author-supplied names inside it keep
+ASCII letters, digits and `_` (other characters become `_`, at most 32), so
+`"source": "x y"` reports `ref.unknown.x_y`. Checks run in document order (patch
+part ids in sorted order), so the same input always reports the same first error.
 
 ```json
 {"v": 1, "kind": "assembly", "title": "…", "units": "mm",
@@ -77,29 +86,77 @@ the part when there is one, so a generator can repair from the reason alone.
 * **Joints**: `revolute` or `prismatic` about an axis in the part frame.
 * **Drives**: `input` (scale on the input parameter; use a negative scale for
   counter-rotation), `follow`, `crankSlider`, `crankRod`.
-* **Constraints**: `gearMesh` and `fixed`. The compiler checks modules, axes,
-  centre distances and that each driven gear turns about its own centre. It
-  phases every tooth so meshing gears interleave, then solves the linear
-  velocity system. One input plus enough meshes and fixed parts must give a
-  unique ratio for every gear joint.
+* **Constraints**: `gearMesh` and `fixed`. The compiler checks modules,
+  pressure angles, axes, centre distances and that each driven gear turns about
+  its own centre. It phases every tooth so meshing gears interleave, then solves
+  the linear velocity system. One input plus enough meshes and fixed parts must
+  give a unique ratio for every gear joint, with `|ratio| <= 1000`
+  (`constraint.ratio`).
+* **Supported gear motion.** A gear's turn is its own revolute joint plus the
+  joints of its parents, so these patterns work:
+  * a gear on its own joint, or a gear without a joint on a turning parent whose
+    axis passes through the gear centre (a pinion keyed to a driven shaft, or a
+    compound gear riding on another gear);
+  * a planet whose carrier is named in the mesh (`carrier`): the carrier must be
+    a parent of at least one of the two gears; a gear outside a turning carrier
+    must sit on the carrier axis; motion is measured relative to the carrier.
+
+  Anything else is refused rather than solved wrongly:
+  `constraint.gearMesh.parentRotates` (a turning parent whose axis misses the
+  gear centre, for example a planet without its carrier named),
+  `constraint.gearMesh.parentMoves` (a prismatic parent),
+  `constraint.gearMesh.parentDrive` (a turning parent driven by `follow` or a
+  crank, which is outside the linear solve) and `constraint.gearMesh.carrier`.
+  After compiling, the compiler replays the posed assembly at five inputs and
+  checks that every mesh keeps its axis, centre distance, tooth phase and tooth
+  ratio (`constraint.gearMesh.motion`), so a compiled document always moves the
+  way the solver assumed.
+* **Gear shapes** are checked on the real sampled outline: a tooth needs a tip
+  land (`part.gear.tip`, for example 8 teeth at 25 degrees with backlash 0.3),
+  the outline must stay star-shaped (`part.gear.profile`), the bore and keyway
+  corners must stay inside the root circle (`part.gear.bore`,
+  `part.gear.keyway`), and the chamfer must be below half the width and leave
+  inset cap loops that are star-shaped, separate and triangulate without
+  overlap (`part.gear.chamfer`). A ring uses its own pressure angle for the
+  same checks (`part.ringGear.teeth`, `.tip`, `.profile`, `.chamfer`). Without a
+  `chamfer`, gears use 0.28 module (at most a quarter of the width) when that
+  is valid, else half of it, else none.
+* **Internal meshes** are swept over one tooth pitch with the real outlines; a
+  ring with too few more teeth than its planet, or a planet too small for its
+  ring (involute interference), is refused when teeth overlap by more than
+  0.01 module (`constraint.gearMesh.interference`).
 * **`repeat`** copies a part N times around an axis (`planet` → `planet1…3`).
   References to the base id expand to every copy; a repeated child of a repeated
   parent pairs by index.
 * **Bounds** (`MGSolidLimits`): 64 KiB, 48 wire parts, 96 resolved parts,
   8 shapes per part, 256 profile points, 128 constraints, 16 steps, teeth
   8–200 (ring 20–400), module 0.2–20 mm, lengths up to 4 m.
+* **Mesh budget**: at most 1,500,000 triangles and 1,000,000 vertices over all
+  resolved parts (copies from `repeat` count), computed from the validated
+  fields before any mesh is built (`MGShapeSpec.meshEstimate` gives the exact
+  counts `mesh()` will produce); otherwise `assembly.budget`. At the limit the
+  kernel meshes, the render meshes built while loading and the SceneKit buffers
+  take roughly 200 MB, which recent iPhones and iPads hold. The planetary
+  example uses 55,960 triangles (under 4%). A 256-point revolve (96 segments),
+  8 per part, repeated 12 times (about 4.7 M triangles) is refused at once.
 
 **Patches.** `MGSolidParser.applying(_:to:)` accepts `params`, `parts` (merge
 fields by id; `null` removes a field), `constraints`, `steps` and `title`. Part
 ids stay stable and unchanged shapes keep their meshes, so a what-if (hold the
 carrier, free the ring) recompiles the kinematics without rebuilding geometry.
-`MGSolidRenderer.setAssembly(_:)` likewise keeps nodes whose mesh did not change.
+`MGSolidRenderer.setAssembly(_:)` likewise keeps nodes whose mesh did not change;
+a material-only change restyles the node in place. A section cut gives each cut
+part a private material copy, so parts that share a preset are never cut with it.
 
 ## Checks
 
 `MGSolidChecks.gearMeshes` sweeps every gear pair over input angles and measures
 2D tooth overlap in the gears' plane (`maxPenetration`) and engagement
-(`minClearance`). `MGAssembly.gearResiduals` checks the tooth-ratio equations.
+(`minClearance`). `MGSolidChecks.pairInterference` sweeps one pair over a tooth
+pitch at its standard centre distance. `MGAssembly.gearResiduals` checks the
+tooth-ratio equations; each gear's turn is composed from its own joint and its
+revolute parents, signed by joint axis direction against the pair axis
+(`MGGearPair.axis`), relative to the carrier.
 
 ## Snapshot for other renderers
 
@@ -116,7 +173,12 @@ carrier, free the ring) recompiles the kinematics without rebuilding geometry.
 | `lighting` | directional lights (direction toward the scene, colour, intensity, shadow softness) and the procedural studio environment (gradient plus soft boxes) |
 | `groundY`, `boundsMin`, `boundsMax`, `aspect` | framing and contact ground |
 
-`format` is `martygraphics.solid.snapshot/1`; encode with `jsonData()`.
+`format` is `martygraphics.solid.snapshot/1`; encode with `jsonData()` (an empty
+assembly exports zero bounds and a unit framing camera, so the JSON stays finite).
+Decoding checks every fixed-size slot (three numbers for colours, directions,
+targets and bounds, eight per soft box, three floats per vertex, one normal per
+vertex, indices inside the vertex list, one material per triangle, part ranges
+inside the triangles) and fails instead of trapping later.
 
 ## Limits
 

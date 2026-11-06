@@ -54,7 +54,9 @@ public struct MGPart: Equatable, Sendable {
 }
 
 /// A gear mesh that `MGAssembly.gearResiduals` checks: `zA * relA + sign * zB * relB` stays constant, where
-/// `rel` is the angle relative to `carrier` (sign +1 external, -1 internal). For internal meshes `a` is the ring.
+/// `rel` is the angle about `axis` relative to `carrier` (sign +1 external, -1 internal). For internal meshes `a` is
+/// the ring. A gear's angle is the sum of the revolute joints from the gear up through its parents, each signed by
+/// its axis direction against `axis`.
 public struct MGGearPair: Equatable, Sendable {
     public var a: String
     public var b: String
@@ -62,8 +64,11 @@ public struct MGGearPair: Equatable, Sendable {
     public var teethB: Int
     public var isInternal: Bool
     public var carrier: String?
-    public init(a: String, b: String, teethA: Int, teethB: Int, isInternal: Bool = false, carrier: String? = nil) {
+    /// Common gear axis in world space at input 0 (nil means +Z).
+    public var axis: MGVec3?
+    public init(a: String, b: String, teethA: Int, teethB: Int, isInternal: Bool = false, carrier: String? = nil, axis: MGVec3? = nil) {
         self.a = a; self.b = b; self.teethA = teethA; self.teethB = teethB; self.isInternal = isInternal; self.carrier = carrier
+        self.axis = axis
     }
 }
 
@@ -209,17 +214,29 @@ public struct MGAssembly: Equatable, Sendable {
     }
 
     /// Mesh-constraint residuals in tooth-arc units (radians times teeth), minus their value at input 0.
-    /// Zero for every pair means the driven gears turn at the tooth ratio for this pose.
+    /// Zero for every pair means the driven gears turn at the tooth ratio for this pose. Each gear's turn is composed
+    /// from its own joint and every revolute parent (signed by joint axis direction), relative to the pair's carrier.
     public func gearResiduals(_ params: MGPoseParameters) -> [Double] {
         let v = jointValues(params), v0 = jointValues(MGPoseParameters(input: 0, explode: params.explode))
-        func rel(_ values: [String: Double], _ id: String, _ carrier: String?) -> Double {
-            guard let c = carrier else { return values[id] ?? 0 }
-            return part(id)?.parent == c ? (values[id] ?? 0) : (values[id] ?? 0) - (values[c] ?? 0)
+        let byID = Dictionary(parts.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let world0 = pose(MGPoseParameters()).world
+        func turn(_ values: [String: Double], _ id: String, _ n: MGVec3) -> Double {
+            var total = 0.0, cur: String? = id, seen = Set<String>()
+            while let c = cur, seen.insert(c).inserted, let p = byID[c] {
+                if case .revolute(let axis) = p.joint {
+                    let w = (world0[c] ?? .identity).applyVector(axis)
+                    total += (w.dot(n) >= 0 ? 1 : -1) * (values[c] ?? 0)
+                }
+                cur = p.parent
+            }
+            return total
         }
         return gearPairs.map { g in
+            let n = (g.axis ?? .unitZ).normalized
             let sign: Double = g.isInternal ? -1 : 1
             func f(_ values: [String: Double]) -> Double {
-                Double(g.teethA) * rel(values, g.a, g.carrier) + sign * Double(g.teethB) * rel(values, g.b, g.carrier)
+                let c = g.carrier.map { turn(values, $0, n) } ?? 0
+                return Double(g.teethA) * (turn(values, g.a, n) - c) + sign * Double(g.teethB) * (turn(values, g.b, n) - c)
             }
             return f(v) - f(v0)
         }

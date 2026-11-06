@@ -25,6 +25,17 @@ public struct MGMaterialParameters: Codable, Equatable, Sendable {
     }
 }
 
+extension MGMaterialParameters {
+    /// Decoding requires an sRGB triple and finite factors (renderers index `baseColor[0...2]`).
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        baseColor = try c.numbers(.baseColor, count: 3)
+        metallic = try c.finite(.metallic); roughness = try c.finite(.roughness)
+        clearcoat = try c.finite(.clearcoat); clearcoatRoughness = try c.finite(.clearcoatRoughness)
+        transmission = try c.finite(.transmission); ior = try c.finite(.ior); opacity = try c.finite(.opacity)
+    }
+}
+
 /// Material presets for mechanical teaching models.
 public enum MGMaterialPreset: Hashable, Sendable {
     case brushedSteel, polishedSteel, darkSteel, blackOxide, brass, bronze, aluminum

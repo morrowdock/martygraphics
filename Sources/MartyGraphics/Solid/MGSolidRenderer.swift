@@ -45,13 +45,15 @@ public final class MGSolidRenderer {
     public let cameraNode = SCNNode()
     private let stageNode = SCNNode()
     private var partNodes: [String: SCNNode] = [:]
-    private var partMaterials: [String: MGMaterialPreset] = [:]
+    /// Current preset of every part node (kept in step with `assembly`).
+    private(set) var partMaterials: [String: MGMaterialPreset] = [:]
     private var materialCache: [String: SCNMaterial] = [:]
     private var keyLight: SCNNode?
     private var groundNodes: [SCNNode] = []
     private var renderer: SCNRenderer?
     public private(set) var camera: MGSolidCamera
     private var highlighted: Set<String> = []
+    private var dimOthers = true
 
     public init(assembly: MGAssembly, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
         self.assembly = assembly; self.lighting = lighting; self.options = options
@@ -93,14 +95,15 @@ public final class MGSolidRenderer {
         let ids = Set(new.parts.map(\.id))
         for (id, node) in partNodes where !ids.contains(id) { node.removeFromParentNode(); partNodes[id] = nil }
         for p in new.parts {
-            if let o = old[p.id], o.mesh == p.mesh, o.creaseAngle == p.creaseAngle, partNodes[p.id] != nil {
-                if o.material != p.material { partNodes[p.id]?.geometry?.materials = [material(for: p.id, preset: p.material)] }
+            if let o = old[p.id], o.mesh == p.mesh, o.creaseAngle == p.creaseAngle, let node = partNodes[p.id] {
+                if partMaterials[p.id] != p.material { style(node, p) }
                 continue
             }
             partNodes[p.id]?.removeFromParentNode()
             partNodes[p.id] = makeNode(p)
         }
-        applySection()
+        partMaterials = partMaterials.filter { ids.contains($0.key) }
+        if highlighted.isEmpty { applySection() } else { highlight(highlighted, dimOthers: dimOthers) }
     }
 
     private func rebuildParts() {
@@ -113,12 +116,17 @@ public final class MGSolidRenderer {
     private func makeNode(_ p: MGPart) -> SCNNode {
         let node = SCNNode(geometry: MGSolidRenderer.geometry(p.mesh.renderMesh(creaseAngle: p.creaseAngle)))
         node.name = p.id
+        style(node, p)
+        stageNode.addChildNode(node)
+        return node
+    }
+
+    /// Gives a part node its preset's shared material and records the preset.
+    private func style(_ node: SCNNode, _ p: MGPart) {
         node.geometry?.materials = [material(for: p.id, preset: p.material)]
         node.castsShadow = p.material != .glass
-        if p.material == .glass { node.renderingOrder = 10 }
-        stageNode.addChildNode(node)
+        node.renderingOrder = p.material == .glass ? 10 : 0
         partMaterials[p.id] = p.material
-        return node
     }
 
     /// Moves every part to the pose for `params` (pure kinematics, no geometry rebuild).
@@ -131,7 +139,7 @@ public final class MGSolidRenderer {
 
     /// Emphasises some parts: the others are dimmed (still opaque, so depth and shadows stay readable).
     public func highlight(_ ids: Set<String>, dimOthers: Bool = true) {
-        highlighted = ids
+        highlighted = ids; self.dimOthers = dimOthers
         for (id, node) in partNodes {
             let base = material(for: id, preset: partMaterials[id] ?? .brushedSteel)
             let m = base.copy() as! SCNMaterial
@@ -289,9 +297,10 @@ public final class MGSolidRenderer {
     // MARK: Section plane
 
     private func applySection() {
+        let shared = Set(materialCache.values.map(ObjectIdentifier.init))
         for (id, node) in partNodes {
-            // Cut parts get a private material copy so parts sharing a preset are not cut with them.
-            if sectionApplies(id), let m = node.geometry?.firstMaterial, m === materialCache[partMaterials[id]?.id ?? ""] {
+            // Cut parts get a private material copy so parts sharing a cached preset material are not cut with them.
+            if sectionApplies(id), let m = node.geometry?.firstMaterial, shared.contains(ObjectIdentifier(m)) {
                 node.geometry?.materials = [m.copy() as! SCNMaterial]
             }
             node.geometry?.materials.forEach { applySection(to: $0, id: id) }
@@ -304,7 +313,10 @@ public final class MGSolidRenderer {
 
     private func applySection(to m: SCNMaterial, id: String) {
         guard let s = options.section, sectionApplies(id) else {
-            if m.shaderModifiers != nil { m.shaderModifiers = nil }
+            if m.shaderModifiers != nil {
+                m.shaderModifiers = nil
+                m.isDoubleSided = (partMaterials[id]?.parameters.transmission ?? 0) > 0
+            }
             return
         }
         m.shaderModifiers = [.fragment: """

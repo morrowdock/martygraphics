@@ -93,6 +93,72 @@ public struct MGShapeSpec: Equatable, Sendable {
     }
 
     func segments(_ r: Double) -> Int { max(24, min(128, Int(r * 4))) }
+
+    /// Vertex and triangle counts of `mesh()`, computed from the fields without building the mesh (for budgets).
+    public var meshEstimate: (vertices: Int, triangles: Int) {
+        // `extrude`: every loop at 2 (or 4 with a chamfer) levels; walls between levels; two caps triangulated with
+        // one bridge per hole (V + 2H - 2 triangles each).
+        func extrude(_ loops: [Int], height: Double, chamfer: Double) -> (vertices: Int, triangles: Int) {
+            let levels = max(0, min(chamfer, height / 2 - 1e-9)) > 0 ? 4 : 2
+            let n = loops.reduce(0, +)
+            return (n * levels, n * (levels - 1) * 2 + 2 * (n + 2 * (loops.count - 1) - 2))
+        }
+        // `revolve`: one ring per off-axis point, one vertex per pole.
+        func revolve(_ points: Int, poles: Int, segments: Int, closed: Bool) -> (vertices: Int, triangles: Int) {
+            ((points - poles) * segments + poles, 2 * segments * (closed ? points : points - 2))
+        }
+        switch kind {
+        case "gear":
+            let g = spurGear!
+            let bore = n("bore")
+            var loops = [g.outline().count]
+            if bore > 0 {
+                let key = vec("keyway").map { (width: $0[0], depth: $0[1]) }
+                loops.append(MGSpurGear.boreLoop(radius: bore, segments: 72, keyway: key).count)
+            }
+            return extrude(loops, height: n("width"), chamfer: n("chamfer", 0.28 * g.module))
+        case "ringGear":
+            let g = ringGear!
+            return extrude([240, g.outline().count], height: n("width"), chamfer: n("chamfer", 0.28 * g.module))
+        case "shaft":
+            let r = n("radius"), len = n("length")
+            let c = max(0, min(n("chamfer"), r / 2, len / 2 - 1e-9))
+            return revolve(c > 0 ? 6 : 4, poles: 2, segments: segments(r), closed: false)
+        case "tube":
+            let c = max(0, min(n("chamfer"), (n("outer") - n("inner")) / 3, n("length") / 2 - 1e-9))
+            return revolve(c > 0 ? 8 : 4, poles: 0, segments: segments(n("outer")), closed: true)
+        case "box":
+            let s = vec("size") ?? [1, 1, 1]
+            let c = max(0, min(n("chamfer"), min(s[0], s[1], s[2]) / 2 - 1e-6))
+            return extrude([c > 0 ? 8 : 4], height: s[2], chamfer: c * 0.999)
+        case "hex":
+            return extrude([6], height: n("length"), chamfer: n("chamfer"))
+        case "plate":
+            var loops = [max(3, segments(n("radius")) * 2)]
+            if case .array(let list)? = fields["holes"] {
+                for h in list {
+                    if case .array(let v) = h, v.count == 3, case .number(let r) = v[2] { loops.append(max(16, min(64, Int(r * 6)))) }
+                }
+            }
+            return extrude(loops, height: n("thickness"), chamfer: n("chamfer"))
+        case "carrier":
+            return extrude([720], height: n("thickness"), chamfer: n("chamfer"))
+        case "extrudedProfile":
+            var loops = [points(fields["points"]).count]
+            if case .array(let list)? = fields["holes"] { loops += list.map { points($0).count } }
+            return extrude(loops, height: n("depth"), chamfer: n("chamfer"))
+        case "revolvedProfile":
+            let pts = points(fields["points"])
+            var closed = false
+            if case .bool(let b)? = fields["closed"] { closed = b }
+            return revolve(pts.count, poles: pts.filter { $0.x < 1e-9 }.count, segments: 96, closed: closed)
+        case "blade":
+            // 15 sections of a 56-point loop, side quads between sections and two caps.
+            return (15 * 56, 14 * 56 * 2 + 2 * (56 - 2))
+        default:
+            return (0, 0)
+        }
+    }
 }
 
 extension MGMesh {

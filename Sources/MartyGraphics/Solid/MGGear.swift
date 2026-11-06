@@ -84,18 +84,25 @@ public struct MGSpurGear: Equatable, Sendable {
         MGProfile(outer: outline(phase: phase), holes: bore > 0 ? [MGSpurGear.boreLoop(radius: bore, segments: boreSegments, keyway: keyway)] : [])
     }
 
-    /// Round bore, counter-clockwise, optionally with a rectangular keyway centred on +X.
+    /// Round bore, counter-clockwise, optionally with a rectangular keyway centred on +X. Keyway edges are split to
+    /// about the bore's arc spacing so cap triangulation always finds a well-placed vertex near each tooth.
     public static func boreLoop(radius: Double, segments: Int, keyway: (width: Double, depth: Double)?) -> [MGVec2] {
         guard let key = keyway, key.width > 0, key.width < radius else { return MGProfile.circleLoop(radius: radius, segments: segments) }
         let half = asin(key.width / 2 / radius)
+        let outerX = radius + key.depth, y = key.width / 2, inner = radius * cos(half)
+        let spacing = 2 * Double.pi * radius / Double(max(3, segments))
+        func pieces(_ length: Double) -> Int { max(1, Int((length / spacing).rounded(.up))) }
+        let side = pieces(outerX - inner), bottom = pieces(key.width)
         var pts: [MGVec2] = []
-        let outerX = radius + key.depth
-        pts.append(MGVec2(outerX, key.width / 2))
+        // Upper side, from the keyway corner in toward the bore (interior points only after the corner).
+        for k in 0..<side { pts.append(MGVec2(outerX - (outerX - inner) * Double(k) / Double(side), y)) }
         for s in 0...segments {
             let a = half + (2 * .pi - 2 * half) * Double(s) / Double(segments)
             pts.append(.polar(radius, a))
         }
-        pts.append(MGVec2(outerX, -key.width / 2))
+        // Lower side out to the corner, then the keyway bottom back up to the first point.
+        for k in 1...side { pts.append(MGVec2(inner + (outerX - inner) * Double(k) / Double(side), -y)) }
+        for k in 1..<bottom { pts.append(MGVec2(outerX, -y + key.width * Double(k) / Double(bottom))) }
         return pts
     }
 }
