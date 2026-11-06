@@ -13,10 +13,22 @@ Validated JSON → native diagrams, walkthroughs, and animation in SwiftUI.
 </div>
 
 <p align="center">
-  <a href="docs/SHOWCASE.md"><img src="docs/assets/native/two-pointers.gif" width="840" alt="Native two-pointer walkthrough over 2, 5, 9, 14: L starts at 2 and R at 14, then they move inward until 5 + 9 = 14, in four steps."></a>
+  <a href="docs/assets/pathtrace/gearbox-loop.gif"><img src="docs/assets/pathtrace/hero.png" width="840" alt="Path-traced two-stage gearbox: polished steel and brass gears with involute teeth, a spur pair above a planetary set inside a steel ring gear, on a dark studio floor."></a>
 </p>
 
-**An array walkthrough, rendered by the public Swift engine.** Four native frames,
+**Path traced on an M1 GPU by MartyGraphics.** A procedurally generated gearbox
+(15:30 spur, then a 24/18×3/60 planetary stage, 7:1 overall), rendered with the new
+Metal path tracer at 1920×1080 and 768 samples per pixel in about 2.5 minutes.
+No images, models or stock assets. [Watch the 10-second loop](docs/assets/pathtrace/gearbox-loop.gif) ·
+[Exploded view](docs/assets/pathtrace/exploded.png) ·
+[Code beside the render](docs/assets/pathtrace/side-by-side.png) ·
+[Run it](Examples/PathTrace/README.md) · [Render receipt](docs/assets/pathtrace/provenance.json)
+
+<p align="center">
+  <a href="docs/SHOWCASE.md"><img src="docs/assets/native/two-pointers.gif" width="640" alt="Native two-pointer walkthrough over 2, 5, 9, 14: L starts at 2 and R at 14, then they move inward until 5 + 9 = 14, in four steps."></a>
+</p>
+
+**An array walkthrough, rendered by the 2D engine.** Four native frames,
 1.2 seconds each (4.8-second loop; 53 KiB).
 [Still alternative](docs/assets/native/two-pointers.png) ·
 [Scene source](Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json) ·
@@ -35,6 +47,7 @@ steps, and motion. Your application supplies the content and decides what happen
 | **Math** | Draw a function from supplied points, with labeled axes. The engine plots the data; it does not solve equations. | [Sampled function](Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
 | **Data** | Compare explicit quantities with labeled bars. These counts are invented. | [Synthetic counts](Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
 | **Motion** | Animate a geometric marker using the engine timeline. | [Moving marker](Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
+| **Path tracing** | Render generated 3D models with film-style lighting on the GPU: brushed metals, glass, soft shadows, depth of field. Separate `MartyGraphicsPathTracer` library. | [Gearbox example](Examples/PathTrace/README.md) |
 | **3D inspection** | Click a part of a 3D model to select it, dim the rest, orbit, and reset the view. Opt-in per board; checked on macOS. | [Key switch example](Examples/KeySwitch3D/README.md) |
 | **Graphs** | Compute the cheapest route through a weighted network, one Dijkstra step at a time. Opt-in graph pack. | [Router latency](Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
@@ -181,7 +194,9 @@ real evidence:
 
 - **Solid 3D models.** Shaded parts with realistic materials, generated gears and
   lathe-turned shapes, assemblies that move at correct ratios, exploded views and
-  rendered turntable videos.
+  rendered turntable videos, written as validated JSON so an AI model can generate them.
+- **One scene, two renderers.** Render the same solid model interactively and with the
+  path tracer.
 - **Accessible graph states.** Show edge status with more than colour.
 - **More teaching packs.** Reusable assemblies and linked plots with narration.
 

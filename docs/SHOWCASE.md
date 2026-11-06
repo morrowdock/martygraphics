@@ -14,6 +14,18 @@ service, or AI model.
 | Geometric motion | Move through a scene | A marker takes two seconds from A to B, then returns. No force model is implied. | [motion.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
 | Shortest path | Find the cheapest route | Dijkstra settles six routers one at a time; the cheapest route 0→2→1→3→4→5 costs 13. Opt-in graph pack. | [shortest-path.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
+## Path-traced gearbox
+
+The newest capture. A procedurally generated two-stage gearbox, path traced on an
+Apple M1 GPU by `MartyGraphicsPathTracer`: 1920×1080, 768 samples per pixel, about
+2.5 minutes per still. No images, models or stock assets.
+
+[![Path-traced steel and brass gearbox with involute teeth on a dark studio floor.](assets/pathtrace/hero.png)](assets/pathtrace/hero.png)
+
+[Exploded view](assets/pathtrace/exploded.png) · [Code beside the render](assets/pathtrace/side-by-side.png) ·
+[10-second loop (GIF, 480×270)](assets/pathtrace/gearbox-loop.gif) ·
+[Run it](../Examples/PathTrace/README.md) · [Render receipt](assets/pathtrace/provenance.json)
+
 ## Run or reproduce
 
 Follow the [native showcase instructions](../Examples/Showcase/README.md).

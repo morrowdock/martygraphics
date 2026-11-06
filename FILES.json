@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "5eea08aa6b5066918207e0fc3024c874f6527fbb13540b83da4146fff1480933"
+      "sha256": "1b355389ce234c34a756a31ebcfe8ebc4218eb40607bcd1b1b68fc6d34effa66"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -56,6 +56,10 @@
     {
       "path": "Examples/PathTrace/Package.swift",
       "sha256": "f587f8d9f03fad0a4960e4bc669f100c1c6f78c5a2e7a47c714e3271d8d5fc63"
+    },
+    {
+      "path": "Examples/PathTrace/README.md",
+      "sha256": "80d144f43caa9f564a7036f6ce103c27bf52fb8771138b0f284c3dde083e383e"
     },
     {
       "path": "Examples/PathTrace/Sources/MartyPathTrace/Export.swift",
@@ -127,7 +131,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "35bd2bf41a82680a41af46ad1d8838dcbdad8a4d00dc23677d33e5f95b27e1e0"
+      "sha256": "fbf675f4ea5fbd12ae69640b53c71d0dd2929393012441c2d584215ed7ffa345"
     },
     {
       "path": "SECURITY.md",
@@ -291,7 +295,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "64517e1a3f57bcf4b0c06b28ca8a9a2a511036c78030de4abd43becf6a01a4f3"
+      "sha256": "3d44b1985411dc7f0f05310f2db2cfb1dedb332264c5f13899b247ae5390cce6"
     },
     {
       "path": "docs/DISTRIBUTION.md",
@@ -299,7 +303,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "7473e0d6b7ff8f64a6e66f42795dc39738105540dbedf5c9ec7ee5afed4e5baf"
+      "sha256": "1b587ae30ee6ce31970944e6cd50e5f26af976e0450a7fcad42420d5133aedb8"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -327,7 +331,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "8b7e32450e5f2a1d7906d712550460930497024a169c745f522e8a0f65378bab"
+      "sha256": "783d1f7f791f08fbc60872369c0fead0693b0aa70322d7ea72d8b97a0dc9b0ae"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -384,6 +388,26 @@
     {
       "path": "docs/assets/native/two-pointers.png",
       "sha256": "fd49b98adca443f687057bd7d1a21e2a69059ec1f8f3c0801d843b5c286a753f"
+    },
+    {
+      "path": "docs/assets/pathtrace/exploded.png",
+      "sha256": "8f0676ed5251106e92aa60f71b1b9a0271ba1ba35818f3ad1689235993b6559a"
+    },
+    {
+      "path": "docs/assets/pathtrace/gearbox-loop.gif",
+      "sha256": "a3a94423b60020085b6d34e88c93dbf421b426d0082f00f42b878abd7e11a371"
+    },
+    {
+      "path": "docs/assets/pathtrace/hero.png",
+      "sha256": "39b5e21ab0eeda9c3149de431c9573597dc5584c012c28920b42035b81e67898"
+    },
+    {
+      "path": "docs/assets/pathtrace/provenance.json",
+      "sha256": "aa944ed0bfcffa40cd5c3f68da70cf7f8dae01c79172bca5a78772629015e808"
+    },
+    {
+      "path": "docs/assets/pathtrace/side-by-side.png",
+      "sha256": "fbad0cdda453e5e54ac42fbd22a138c32142cb507f1cbbceab1051b8bc1075aa"
     },
     {
       "path": "docs/fixtures/v1/highlight-cycle.scene.json",

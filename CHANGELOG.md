@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add `MartyGraphicsPathTracer`, a separate library that path traces triangle meshes with
+  Metal ray tracing in a compute kernel (runs on Apple silicon without ray-tracing hardware):
+  next-event estimation with MIS, anisotropic GGX metals, plastic, clear coat, rough and
+  smooth glass, a procedural importance-sampled studio environment, area lights, thin-lens
+  depth of field, an edge-aware à-trous denoiser and an ACES tonemap. The core
+  `MartyGraphics` library does not depend on it. Add `Examples/PathTrace`, a procedurally
+  generated 7:1 gearbox rendered as stills, an exploded view, a code side-by-side and a
+  seamless 10-second loop, with a render receipt in `docs/assets/pathtrace`.
 - Add opt-in 3D inspection hooks. `inspects3D(_:)` with `MG3DInspection` (`.selection`,
   `.emphasis`, `.dimming`) lets the existing `selection`, `markers` and `emphasis`
   modifiers act on a 3D board; as in 2D, highlights, axes and ground lines are never

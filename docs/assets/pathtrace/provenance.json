@@ -1,0 +1,101 @@
+{
+  "source": {
+    "repository": "https://github.com/morrowdock/martygraphics",
+    "commit": "4987386449be77f02fe43e8041191a43c7dcb1fa",
+    "note": "Renders were made from these exact source bytes; verify after a squash merge with sourceFiles.",
+    "tool": "Examples/PathTrace (marty-pathtrace)",
+    "license": "Apache-2.0; procedural geometry and lighting, no images, models or stock assets",
+    "sourceFiles": {
+      "Examples/PathTrace/Package.swift": "f587f8d9f03fad0a4960e4bc669f100c1c6f78c5a2e7a47c714e3271d8d5fc63",
+      "Examples/PathTrace/Sources/MartyPathTrace/Export.swift": "ef41c2b21889506b7bda5a2b3bf6b5d0081b8924e20af63a808f0ecb6ff1ea77",
+      "Examples/PathTrace/Sources/MartyPathTrace/GearGeometry.swift": "f4267ef2a56f33f7d77980ee9790bc730bcb5654630c9af82437d4cc2c0b8571",
+      "Examples/PathTrace/Sources/MartyPathTrace/Gearbox.swift": "49a2b42a231e59bf203793779a948709149ffbf85428b3faf404cd61f1903de1",
+      "Examples/PathTrace/Sources/MartyPathTrace/PathTraceCLI.swift": "27707b8f12bedbc030a879b21a1b205027fe8fa10e99e88f3775b1ade78906d7",
+      "Sources/MartyGraphicsPathTracer/MGRTEnvironment.swift": "4fd9157d8837c74d57c7e16704c9ead4b93c48ac03e6282d18e6805bf5588acd",
+      "Sources/MartyGraphicsPathTracer/MGRTRenderer.swift": "130624af561ea6ded47e2b471031209c89e9f95fc05e4700ab2689537548570a",
+      "Sources/MartyGraphicsPathTracer/MGRTSampling.swift": "a2d48d92ce8f094d848eae3aad9f55753fdb6440c9e100282bf1e39c4038655d",
+      "Sources/MartyGraphicsPathTracer/MGRTScene.swift": "9699416f41684e3a49305bfcec269d110c16e720bc0f0bce634b78ffa20d360d",
+      "Sources/MartyGraphicsPathTracer/MGRTShaderSource.swift": "8c86d1cf4c17107a202c41e8d9a7b639816cc52089d95cf0509c9302d3b2c40d",
+      "Tests/MartyGraphicsPathTracerTests/MGRTGPUSmokeTests.swift": "e3a590d5b4c828b4fe8551ba73020c5567c19d03a4745256cce8e661b6284ad5",
+      "Tests/MartyGraphicsPathTracerTests/MGRTSamplingTests.swift": "9e2966b3ea737af541c5e81c227f3cc8796d794a69dd066412411f5d6c8e7f9b",
+      "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f"
+    }
+  },
+  "capture": {
+    "kind": "GPU path tracing with Metal ray tracing in a compute kernel (MartyGraphicsPathTracer); edge-aware a-trous denoise; ACES tonemap. Not a screenshot, not hand-edited, not AI-generated.",
+    "hardware": "Apple M1 (no ray-tracing hardware), 8 GB",
+    "platform": "macOS 27.2",
+    "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
+    "configuration": "release build of Examples/PathTrace",
+    "commands": [
+      "swift build -c release --package-path Examples/PathTrace",
+      "marty-pathtrace --verify",
+      "marty-pathtrace --still <NEW_DIR> --size 1920x1080 --spp 768",
+      "marty-pathtrace --sidebyside <NEW_DIR> --size 1920x1080 --spp 512",
+      "marty-pathtrace --loop <NEW_DIR> --size 1280x720 --spp 112 --fps 24"
+    ],
+    "commandExits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "packageTests": 112,
+    "packageTestFailures": 0,
+    "loopVideo": {
+      "file": "gearbox-loop.mp4 (website only)",
+      "bytes": 13108848,
+      "sha256": "05cab375a01db941e21dde4bcbc66a4e9744c83c17e476ebc6acf48409056b8c",
+      "width": 1280,
+      "height": 720,
+      "fps": 24,
+      "frames": 240,
+      "seconds": 10.0,
+      "samplesPerPixel": 112,
+      "meanSecondsPerFrameM1": 8.36,
+      "seam": "frame at t=10 s differs from frame 0 in 0.0085% of channel values (float rounding)"
+    }
+  },
+  "artifacts": {
+    "exploded.png": {
+      "bytes": 1929101,
+      "sha256": "8f0676ed5251106e92aa60f71b1b9a0271ba1ba35818f3ad1689235993b6559a",
+      "width": 1920,
+      "height": 1080,
+      "samplesPerPixel": 768,
+      "renderSecondsM1": 114.9
+    },
+    "gearbox-loop.gif": {
+      "bytes": 4071035,
+      "sha256": "a3a94423b60020085b6d34e88c93dbf421b426d0082f00f42b878abd7e11a371",
+      "width": 480,
+      "height": 270,
+      "frames": 120,
+      "fps": 12,
+      "loopSeconds": 10.0,
+      "note": "downscaled from the 1280x720, 24 fps, 112 spp loop (not in the repository)"
+    },
+    "hero.png": {
+      "bytes": 2007851,
+      "sha256": "39b5e21ab0eeda9c3149de431c9573597dc5584c012c28920b42035b81e67898",
+      "width": 1920,
+      "height": 1080,
+      "samplesPerPixel": 768,
+      "renderSecondsM1": 146.5
+    },
+    "side-by-side.png": {
+      "bytes": 1344278,
+      "sha256": "fbad0cdda453e5e54ac42fbd22a138c32142cb507f1cbbceab1051b8bc1075aa",
+      "width": 1920,
+      "height": 1080,
+      "samplesPerPixel": 512,
+      "renderSecondsM1": 55.4
+    }
+  },
+  "review": {
+    "visual": "Hero, exploded, macro and side-by-side stills and five loop frames inspected: no fireflies, shadow acne or clipping; metal reflections plausible.",
+    "limits": "No motion blur. Per-frame denoise; consecutive-frame difference in largely static regions measured at about 1/255 mean per channel. Four of five studio lights are hidden from the camera but appear in reflections. Glass blocks shadow rays. Schematic teaching model, not validated mechanics.",
+    "sideBySide": "Left panel quotes Examples/PathTrace/Sources/MartyPathTrace/Gearbox.swift lines 12-15 verbatim; the program refuses to render if they differ from the built values."
+  }
+}
