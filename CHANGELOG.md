@@ -9,7 +9,7 @@
   `titanium`, `nickelAlloy`, `composite` and `ceramic` material presets. Add
   `Examples/Turbofan`: a schematic two-spool, high-bypass turbofan from 38 lines of JSON (LP
   spool at N1, HP spool at N2 = 3 × N1, eight teaching steps), `--verify` checks for closed
-  meshes, coaxial spools, the authored speed ratio and swept clearance, real-time stills and a
+  meshes, coaxial spools, the authored speed ratio and a lower bound on swept clearance, real-time stills and a
   seamless 12-second loop, and `MartySolidRT`, which maps an `MGSolidSnapshot` to an
   `MGRTScene` so the same model is path traced. Render receipt in `docs/assets/turbofan`.
   The README now leads with the turbofan loop and shows the path-traced gearbox as a

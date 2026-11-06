@@ -2,8 +2,8 @@
   "source": {
     "repository": "https://github.com/morrowdock/martygraphics",
     "captureCommit": "d6b461dd2c365511e1e66d34d1f9976d7ac1a225",
-    "note": "Rendered from a clean working tree (git status empty) at commit d6b461dd2c365511e1e66d34d1f9976d7ac1a225 on branch feat/turbofan-cutaway, after rebasing onto public main 3ad3b123f2ca53e40c036a2fb776209f66c28f88. If the branch is later rebased or squashed, verify with the sourceFiles hashes. The next commit changed only documentation and assets (README files, docs, FILES.json); among the files listed here only Examples/Turbofan/README.md differs from its render-time hash (a link to these assets and the measured path-trace time).",
-    "model": "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json (38 lines, 15581 bytes, 23 parts, 8 steps), sha256 f669f81f848bb9ef186fe5571c2fb45284b2c04f925b2e20b019d02deb8b7db3",
+    "note": "captureCommit d6b461dd2c365511e1e66d34d1f9976d7ac1a225 is a local commit made before the branch was rebased onto public main (it is not on the remote; its rebased equivalent is c25687a). The sourceFiles hashes, not the commit id, are the link between these renders and the source: the pathtraced-hero.png, labelled.png and turbofan-loop.gif bytes were rendered from exactly those files. exploded.png was re-rendered later; see artifacts.exploded.png.",
+    "model": "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json (38 lines, 23 parts, 8 steps); sha256 at the main capture f669f81f848bb9ef186fe5571c2fb45284b2c04f925b2e20b019d02deb8b7db3; the exploded step text was corrected afterwards (see artifacts.exploded.png)",
     "authoring": "The JSON was written for this example in the documented solid assembly format; a small scratch script (not in the repository) computed the wall offsets and blade-row radii. It is not the output of a prompt run.",
     "license": "Apache-2.0; procedural geometry and lighting, no images, models or stock assets",
     "sourceFiles": {
@@ -72,17 +72,19 @@
       0,
       0
     ],
-    "verify": "23 closed parts, 432776 triangles; LP parts turn at N1, HP parts at N2 = 3 x N1 (measured equals authored); coaxial over 24 sampled angles (max 3.4e-13 mm); every rotor gap >= 4 mm on a 1 mm grid; no interference",
+    "verify": "23 closed parts, 432776 triangles; LP parts turn at N1, HP parts at N2 = 3 x N1 (measured equals authored); coaxial over 24 sampled angles (max 3.4e-13 mm); no interference. Clearance re-checked at f75f540b165a49edbafa82b136958a9ebaddc1b2 with the lower-bound check: smallest lower bound 4.52 mm (fan to nacelle: 5 mm minus the 0.48 mm dip of a nacelle facet); every rotor's lower bound is at least 4.52 mm.",
     "tests": {
       "rootSwiftTest": {
         "command": "swift test --jobs 2",
-        "tests": 167,
+        "commit": "f75f540b165a49edbafa82b136958a9ebaddc1b2",
+        "tests": 168,
         "failures": 0,
-        "detail": "150 MartyGraphics + 17 path tracer"
+        "detail": "151 MartyGraphics + 17 path tracer"
       },
       "turbofanExample": {
         "command": "swift test --jobs 2 --package-path Examples/Turbofan",
-        "tests": 11,
+        "commit": "f75f540b165a49edbafa82b136958a9ebaddc1b2",
+        "tests": 14,
         "failures": 0,
         "detail": "GPU smoke test ran on the M1"
       }
@@ -125,11 +127,24 @@
       "note": "solid engine cutaway; 11 labels projected from points on the named parts"
     },
     "exploded.png": {
-      "bytes": 957006,
-      "sha256": "b9ff84ff17510ab153996feb7e63bcadc946b6dc85edfb43f22cd8bd8dc6e4db",
+      "bytes": 953242,
+      "sha256": "8d4d8fbb78198e2d69696390ae0c7e5a3ba41eb09f9cc2cb19a8af65c9be4506",
       "width": 1280,
       "height": 800,
-      "note": "step 8 of the authored steps (step-8.png): exploded view with caption and labels"
+      "captureCommit": "f75f540b165a49edbafa82b136958a9ebaddc1b2",
+      "note": "step 8 of the authored steps (step-8.png), re-rendered from a clean tree at f75f540b165a49edbafa82b136958a9ebaddc1b2 after its caption was corrected to say the spinning parts stay below beside the fixed exhaust cone",
+      "sourceFilesChangedSinceMainCapture": {
+        "Examples/Turbofan/README.md": "0a58cfb329f0848a535c29abd81c48b25dbff9492a82bff561be443f745ea402",
+        "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift": "2e351af484c0bebce2a202f9b2ea9ae68f0e2de3c6583189a6cc70891f44c1ed",
+        "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json": "14db9715f7a80e3fdc431cd7e1a38c79cfa6e88bd6f3fdc875bbce14ccfb4112",
+        "Examples/Turbofan/Sources/TurbofanKit/TurbofanChecks.swift": "ecabd815312be94ec7230bf5a8baead2333aabc1ab2a21a2c41b023492eeef53",
+        "Examples/Turbofan/Tests/TurbofanTests/TurbofanTests.swift": "912a0447d7a6bbdc80384c130bdd5226ea058f139b49e3a51f0e99cef07a5a43",
+        "Sources/MartyGraphics/Solid/MGSolidShapes.swift": "918086d8ddc6868a73eb054f546114974a9f25f6c1536b0f3087d81b6052e014",
+        "Sources/MartyGraphics/Solid/MGSolidTurbo.swift": "510fb6fdcc2f5a8f9a19f997a7e463ee9666df40b03d1c015129ce45e1aa245d",
+        "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "8f9d0053f2527d69e05d6c328b3ab687edecbf38a6fd1132846d414864e5cdce",
+        "Tests/MartyGraphicsTests/SolidTurboTests.swift": "dc7e09bedc2fb69ec560b55994adb0562d8e57a24dd7a91839b87ae68cf27025"
+      },
+      "command": "marty-turbofan --export <NEW_DIR> (exit 0)"
     },
     "turbofan-loop.gif": {
       "bytes": 5422629,
@@ -147,6 +162,7 @@
   },
   "review": {
     "visual": "Every artifact inspected: capped cut faces with no holes or z-fighting, clean silhouettes, labels on their parts, title clear of the model.",
-    "limits": "Schematic teaching model, not a real or validated engine design and not based on any manufacturer's engine. No air flow, pressure, temperature or thrust is simulated. Clearance is a 1 mm grid estimate. Shafts are colour coded (anodised blue LP, orange HP) for teaching."
+    "limits": "Schematic teaching model, not a real or validated engine design and not based on any manufacturer's engine. No air flow, pressure, temperature or thrust is simulated. Clearance is a 1 mm grid estimate. Shafts are colour coded (anodised blue LP, orange HP) for teaching.",
+    "rerenderCheck": "At f75f540b165a49edbafa82b136958a9ebaddc1b2 the exporter's hero-snapshot.json (posed geometry, camera and materials) is byte-identical to the main capture's, so the geometry is unchanged and the path-traced hero is unaffected (the path tracer is seeded and unchanged). Re-rendered labelled and hero stills differ from the main capture only by SceneKit run-to-run noise (at most 5 to 6 of 255 levels on under 1% of pixels, none above 8), so the committed labelled.png and turbofan-loop.gif were kept."
   }
 }

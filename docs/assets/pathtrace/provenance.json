@@ -108,7 +108,8 @@
       "derivedFrom": {
         "file": "gearbox-loop.mp4 (website only)",
         "sha256": "05cab375a01db941e21dde4bcbc66a4e9744c83c17e476ebc6acf48409056b8c",
-        "note": "Downscaled from the receipt-recorded 1280x720, 24 fps, 240-frame, 10.0 s loop (capture.loopVideo) to 640x360 with 120 frames; 80 delays of 8 and 40 of 9 hundredths, so the 120 stored delays sum to exactly 10.00 s. The derivation was made in a separate hero-GIF pass; this entry's size, frame count and delays were read back from the file."
+        "note": "Downscaled from the receipt-recorded 1280x720, 24 fps, 240-frame, 10.0 s loop (capture.loopVideo) to 640x360 with 120 frames; 80 delays of 8 and 40 of 9 hundredths, so the 120 stored delays sum to exactly 10.00 s. The conversion was run by the coordinator; this entry's size, frame count and delays were read back from the file.",
+        "command": "mp4togif (the coordinator's conversion tool): AVAssetImageGenerator frames from the receipt MP4 (sha256 05cab375a01db941e21dde4bcbc66a4e9744c83c17e476ebc6acf48409056b8c), scaled to 640 px wide, 120 frames, centisecond delays chosen to sum to 1000 (10.00 s)"
       }
     }
   },
