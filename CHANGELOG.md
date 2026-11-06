@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Fix three engine round-trip bugs. Default node radius and array cell size
+  are now capped to the range their own keys accept, so a defaulted item's
+  wire form re-parses in worlds smaller than 3 (node) or 4 (array) units;
+  in those tiny worlds such items draw slightly smaller than before, and
+  larger worlds are unchanged. Highlights, vectors and edges anchored to a
+  hidden item are now hidden transitively. Streaming previews are refused for
+  any complete scene version other than 1, matching `finish()`.
+- Add synthetic regression suites for parser limits, streaming previews,
+  timeline visibility, patch atomicity and controller rollback.
 - Add `marty-scene-validate` in `tools/SceneValidator`, a macOS-only command that
   checks named scene JSON files with the engine parser and reports text or JSON
   results with documented exit codes. It does not render scenes or judge visual

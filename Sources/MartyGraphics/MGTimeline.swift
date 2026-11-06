@@ -20,15 +20,20 @@ public enum MGTimeline {
             let first = firstShown(scene)
             items = items.filter { (first[$0.id] ?? 0) <= last }
         }
-        // A vector, highlight or edge whose anchor is hidden is hidden too.
-        let ids = Set(items.map(\.id))
-        return items.filter { i in
-            switch i.kind {
-            case .vector: return i.ref.map(ids.contains) ?? true
-            case .highlight: return ids.contains(i.ref ?? "")
-            case .edge: return ids.contains(i.ref ?? "") && ids.contains(i.ref2 ?? "")
-            default: return true
+        // A vector, highlight or edge whose anchor is hidden is hidden too, transitively (a highlight of a hidden
+        // highlight is hidden). Repeat until nothing more is removed; each pass shrinks the list, so this terminates.
+        while true {
+            let ids = Set(items.map(\.id))
+            let kept = items.filter { i in
+                switch i.kind {
+                case .vector: return i.ref.map(ids.contains) ?? true
+                case .highlight: return ids.contains(i.ref ?? "")
+                case .edge: return ids.contains(i.ref ?? "") && ids.contains(i.ref2 ?? "")
+                default: return true
+                }
             }
+            if kept.count == items.count { return kept }
+            items = kept
         }
     }
 
