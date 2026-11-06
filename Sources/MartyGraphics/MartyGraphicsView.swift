@@ -14,6 +14,9 @@ public final class MGSceneController: ObservableObject {
     /// How the board moves to the current scene. `.blend` for every existing entry point; `.direct` (follow a finger)
     /// and `.keyframes` (engine in-betweens) only when a caller asks for them.
     @Published public private(set) var transition: MGTransition = .blend
+    /// True while transitions are held (a paused lesson): an in-flight keyframe animation stops where it is and
+    /// continues from there on resume. Default false; only callers of `pauseTransitions()` change it.
+    @Published public private(set) var transitionsPaused = false
     private var stream: MGStreamParser?
     private var beforeStream: MGScene?
     /// Scene revisions handed out by this controller only ever increase, so a replacement scene never reuses the
@@ -46,6 +49,10 @@ public final class MGSceneController: ObservableObject {
         guard case .success(let p) = MGPatch.parse(object: patchObject) else { lastUpdateFailed = true; return false }
         return apply(patch: p)
     }
+
+    /// Hold the current keyframe animation (lesson pause). `resumeTransitions()` continues it from the same frame.
+    public func pauseTransitions() { if !transitionsPaused { transitionsPaused = true } }
+    public func resumeTransitions() { if transitionsPaused { transitionsPaused = false } }
 
     // MARK: streaming
 
@@ -167,10 +174,11 @@ struct MGSceneHost: View {
     @State private var cameraFrom: MGCamera?
     @State private var cameraStart = Date.distantPast
     @State private var shownScene: MGScene?
-    /// Engine keyframes (item lists) being played, with their start and length.
-    @State private var keyframes: [[MGItem]] = []
-    @State private var keyframeStart = Date.distantPast
+    /// Engine keyframe segments being played, on a clock that a lesson pause can hold.
+    @State private var keyframes: [MGAdoption.Segment] = []
+    @State private var keyframeClock = MGTransitionClock(start: .distantPast)
     @State private var keyframeDuration: Double = 0
+    @State private var heldAt: Date?
     // Render gating: the frame loop runs only for real motion or a short transition on a visible board.
     @Environment(\.scenePhase) private var scenePhase
     @State private var visible = false
@@ -204,6 +212,7 @@ struct MGSceneHost: View {
                 if !Task.isCancelled { transientUntil = .distantPast }   // state change → one settled redraw, loop paused
             }
             .onChange(of: controller.revision) { _, _ in if let s = controller.scene { adopt(s, animated: true, transition: controller.transition) } }
+            .onChange(of: controller.transitionsPaused) { _, paused in holdTransitions(paused) }
             .onChange(of: teaching.holdsMotion) { _, held in
                 if !held { epoch = Date(); pausedAt = 0; playing = true }   // revealed: play the motion from its start
                 bumpTransient()
@@ -340,7 +349,8 @@ struct MGSceneHost: View {
         } else {
             blendFrom = nil
         }
-        keyframes = plan.keyframes; keyframeStart = now; keyframeDuration = plan.duration
+        keyframes = plan.segments; keyframeClock = MGTransitionClock(start: now); keyframeDuration = plan.duration
+        if controller.transitionsPaused { keyframeClock.pause(at: now); heldAt = now }
         for (id, delay) in plan.appear { appearStart[id] = now.addingTimeInterval(delay) }
         let sameScene = previous.map { $0.template == scene.template && $0.title == scene.title } ?? false
         if !sameScene { step = 0; epoch = now; pausedAt = 0 }
@@ -355,11 +365,28 @@ struct MGSceneHost: View {
         else { bumpTransient(max(MGRenderPolicy.transientSeconds, max(plan.duration, plan.appear.values.max() ?? 0) + 0.8)) }   // + draw-on 0.55 s
     }
 
+    /// Lesson pause: freeze keyframe time (and pending draw-on starts); resume continues from the same frame.
+    private func holdTransitions(_ paused: Bool) {
+        let now = Date()
+        if paused {
+            keyframeClock.pause(at: now); heldAt = now
+        } else {
+            keyframeClock.resume(at: now)
+            if let held = heldAt {
+                let gap = now.timeIntervalSince(held)
+                for (id, start) in appearStart where start > held { appearStart[id] = start.addingTimeInterval(gap) }
+            }
+            heldAt = nil
+            let left = max(0, keyframeDuration - keyframeClock.elapsed(at: now))
+            if left > 0 { bumpTransient(left + 0.8) }
+        }
+    }
+
     private func input(_ scene: MGScene, now: Date, size: CGSize) -> MGRenderInput {
         let t = reduceMotion ? 0 : time(now)
-        let keyT = now.timeIntervalSince(keyframeStart)
+        let keyT = keyframeClock.elapsed(at: now)
         let playsKeyframes = !keyframes.isEmpty && keyT < keyframeDuration && !reduceMotion
-        var items = MGTimeline.frame(scene, items: playsKeyframes ? MGTween.sample(keyframes, at: keyT / keyframeDuration)
+        var items = MGTimeline.frame(scene, items: playsKeyframes ? MGTween.sample(keyframes, at: keyT)
                                                                   : MGTimeline.items(scene, step: step), time: t)
         if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
         let blendT = now.timeIntervalSince(blendStart)

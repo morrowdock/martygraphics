@@ -38,6 +38,10 @@ Rules:
 - Top-level keys: `v` (must be 1), `kind` (must be `lesson`), `title` (optional), `scene` (a v1 scene), `beats` (1–24).
 - Beat keys: `say` (required), `ops` (0–12 commands), `check` (0–8 checks).
 - The scene may not have `steps` (`lesson.scene.steps`). A lesson has one beat system.
+- A template's own walkthrough is dropped in a lesson: every resolved item is on the board from the start and no
+  template step edit applies, so the lesson state and the board always hold the same items (for example `bst` with
+  `find` shows all its path highlights at once). The scene `source` is unchanged, and the same scene outside a lesson
+  keeps its v1 walkthrough.
 - `MGLessonSession.load` is all-or-nothing. The engine validates the document statement by statement in a fresh session.
   The first problem refuses the whole document, with its location. The current lesson stays as it was.
 - Fixtures: [`rotation.lesson.json`](fixtures/v1/rotation.lesson.json) and the same lesson as statements,
@@ -64,6 +68,7 @@ Streaming rules:
   `{…}` or `[…]` value. Braces, escaped quotes and `\n` inside strings do not end a statement (test S1).
 - Each statement is validated as soon as it is complete, against the projected state (the state after every accepted statement).
 - A refused statement changes nothing. Earlier marks stay. Later statements continue (test S2).
+  A refused `say` does not close the open beat: later commands keep attaching to it.
   A later statement that names a refused id is refused with its own reason, for example `highlight.target`.
 - Text between statements that is not whitespace is skipped up to the next `{` or `[`. It is reported once (`stmt.json`).
 - The scene is presented at once. That is the first visible result (`firstPresented`).
@@ -98,6 +103,8 @@ Streaming rules:
 
 - `param` names a numeric template parameter (`control.param`). `min` < `max`, both inside the parameter range (`control.range`).
 - `0 < step ≤ max − min` (`control.step`). `step` is a UI hint. The engine accepts any value in `min…max`.
+- `label` is fixed text. A placeholder is refused (`control.label.placeholder`): a number filled in once would go
+  stale when the value changes. The slider shows the current value next to the label.
 - At most 4 controls (`control.count`). Control ids use the item id grammar in their own namespace (`control.duplicate.<id>`).
 - `k` is `slider` only (`control.kind`).
 
@@ -106,12 +113,18 @@ Streaming rules:
 - `value` names an engine value. An unknown name is `check.unknown.<name>`.
 - `eq` without `tol` compares what the learner sees: `MGPhysics.format(value) == MGPhysics.format(eq)`.
 - `eq` with `tol`: `|value − eq| ≤ tol`. `lt` and `gt` compare numbers.
-- A false claim refuses the whole beat (`check.<name>`). The projected state goes back to the start of the beat.
-  The beat's later statements are refused as cascades (`beat.refused`).
+- A check is a claim about what the learner sees at the end of the beat:
+  - A check that is false when it arrives refuses the whole beat (`check.<name>`). The projected state goes back to
+    the start of the beat. The beat's later statements are refused as cascades (`beat.refused`).
+  - A later command in the same beat that would make an accepted check false is refused alone, with that check's
+    reason (`check.<name>`). The beat and its proven claims stay.
+  - Every check is evaluated again on the beat's final state before its line is queued, and on the exact state
+    that is about to be presented (a learner change can make it false; the beat is then refused).
 
 ### Text rule (owner decision D3)
 
-Lesson text may not contain a decimal number literal such as `1.23` (`text.literal`). This applies to `say`, labels, titles
+Lesson text may not contain a decimal number literal such as `1.23`, `.5`, `-.5` or exponent notation such as
+`2e3` / `2E-3` (`text.literal`). This applies to `say`, labels, titles
 and every string in a command or scene statement. Integers such as "90°" stay allowed. Decimals come from `{name}`.
 Engine-filled text (for example the label "A (0.71, 2.12)") is not affected.
 
@@ -138,6 +151,7 @@ Slider ──value v──► MGLessonController.control("angle", v)      (snaps
 
 - A learner value is refused, never clamped.
 - `apply(_:origin: .learner)` accepts only `params` changes of bound parameters (`control.op`, `control.unknown.<param>`).
+  Several parameters are checked in sorted name order, so the reported reason never depends on dictionary order.
 - Owner decision D2: after the learner moves a slider, a later beat keeps the learner's value unless the beat sets it.
   At a beat's due time the engine applies its commands again to the presented state. A command that no longer validates is
   refused alone. A check that no longer holds refuses the beat. Beats that make value claims should set the value
@@ -187,11 +201,16 @@ The event history and the command log start empty after a restore.
   The existing `show(_:)` and `apply(patch:)` keep `.blend`. Existing boards behave as before.
 - `.direct` adopts without blend and without draw-on for ids that were already on the board. Before this change every
   update blended with a spring, so a board followed a finger late, with overshoot.
-- `.keyframes` plays engine keyframes and blends only between neighbours (at most 5° apart). The old linear point blend put a
+- `.keyframes` plays one timed segment per `animate`, each over its own `dur`, and blends only between neighbouring
+  frames of one segment (at most 5° apart). Between two segments the board cuts: a change between two `animate`
+  commands in one beat is not tweened, so no chord is drawn across it. The old linear point blend put a
   turning vertex on the chord: at the middle of a 90° turn it was at 71 % of its distance to the pivot (guard test in U10).
   Labels show the number of the nearer keyframe, so a label never shows a number that no frame computed.
   Ids that the beat adds after the turn draw on when the turn ends.
-- `MGAdoption.plan` is the pure decision (blend, draw-on ids, keyframes). The SwiftUI host and the tests use it (R1–R3).
+- `MGAdoption.plan` is the pure decision (blend, draw-on ids, keyframe segments). The SwiftUI host and the tests use it (R1–R3).
+- `MGSceneController.pauseTransitions()` / `resumeTransitions()` hold an in-flight keyframe animation on its current
+  frame (`MGTransitionClock`). `MGLessonController.pause()` calls it, and the session's settle time continues after
+  `resume()` from where it stopped.
 
 ## Limits and reasons
 
@@ -204,9 +223,15 @@ Limits (owner decision D5; scene limits in `MGLimits` do not change):
 | Checks per beat | 8 | `beat.checks.count` |
 | Statement size | 4 KiB | `stmt.bytes` |
 | Lesson or stream size | 32 KiB | `lesson.bytes` |
+| Statements per stream (accepted or refused) | 256 | `lesson.statements.count` |
 | Bound controls | 4 | `control.count` |
 | `animate` duration | 0.2–6 s | `animate.dur` |
 | Keyframes per `animate` | 72 (360°) | `animate.to` |
+
+Stream budget: every received byte counts toward the 32 KiB, including whitespace, garbage, oversized and
+unfinished text. Past the byte or statement limit the session emits one terminal refusal and ignores the rest of the
+stream until `endStream()`. A document's size is the size of the statement stream it becomes (`MGLesson.statementStream`).
+Input over 64 KiB is `lesson.bytes` without parsing.
 
 New reasons (closed list). Inner engine reasons (`patch.set.ref`, `id.duplicate.<id>`, `highlight.target`,
 `template.<param>`, `item.kind`, `patch.op.<name>`, …) pass through unchanged. The location is in separate fields:
@@ -218,10 +243,14 @@ New reasons (closed list). Inner engine reasons (`patch.set.ref`, `id.duplicate.
 `beat.checks.count`, `beat.refused`, `stmt.json`, `stmt.bytes`, `stmt.kind`, `stmt.order`, `stmt.say`,
 `stmt.say.placeholder.<name>`, `stmt.say.brace`, `line.order`, `control.object`, `control.missing`, `control.unknown.<keys|id|param>`,
 `control.id`, `control.kind`, `control.param`, `control.range`, `control.step`, `control.label`, `control.count`,
-`control.duplicate.<id>`, `control.value`, `control.op`, `unbind.id`, `animate.missing`, `animate.unknown.<keys>`,
+`control.duplicate.<id>`, `control.value`, `control.op`, `control.label.placeholder`, `lesson.statements.count`, `unbind.id`, `animate.missing`, `animate.unknown.<keys>`,
 `animate.param`, `animate.to`, `animate.dur`, `animate.frame`, `check.object`, `check.missing`, `check.unknown.<keys|name>`,
 `check.value`, `check.comparison`, `check.eq`, `check.lt`, `check.gt`, `check.tol`, `check.<name>`, `text.literal`,
 `snapshot.<field>`.
+
+Every reason is one token: ASCII letters, digits, `_`, `.` and `,`, at most 96 characters. Author text inside a reason
+(an id or a key) becomes a segment of letters, digits and `_` only (other characters become `_`), at most 32 characters.
+Only `animate.frame` carries an inner reason, in `detail`.
 
 Reasons are developer tokens. Do not show them to the learner.
 

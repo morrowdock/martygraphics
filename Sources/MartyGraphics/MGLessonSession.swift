@@ -141,13 +141,19 @@ public struct MGLessonSession {
     var lineEndsAt: Duration?
     var lineRemaining: Duration?
     var settleUntil: Duration = .zero
+    var settleRemaining: Duration?
     var fastForward = false
     var changeSerial = 0
     var outbox: [MGLessonEvent] = []
 
     struct StreamStatus: Equatable {
-        var started = false, hasScene = false, keep = false, ended = false, blocked = false
-        var beats = 0, bytes = 0
+        var started = false, hasScene = false, keep = false, ended = false, header = false
+        /// Statements completed in this stream (accepted or refused).
+        var beats = 0, statements = 0
+        /// Bytes received for this stream, counted at ingress (whitespace, garbage and oversized text included).
+        var bytes = 0
+        /// The stream hit its byte or statement budget: input is counted but no longer scanned until the stream ends.
+        var exhausted = false
     }
 
     struct PendingBeat {
@@ -175,19 +181,40 @@ public struct MGLessonSession {
     // MARK: input
 
     /// Feed raw text of a statement stream. Returns the events this chunk caused.
+    ///
+    /// Budget: every received byte counts toward the stream's 32 KiB (whitespace, garbage, oversized and unfinished text
+    /// included), and a stream holds at most `MGLessonLimits.statements` statements. Past either limit the session emits
+    /// one terminal refusal (`lesson.bytes` or `lesson.statements.count`) and ignores the rest of the stream until
+    /// `endStream()`, so the work and the events one stream can cause are bounded.
     @discardableResult public mutating func feed(_ chunk: String) -> [MGLessonEvent] {
         outbox = []
         for byte in chunk.utf8 {
+            if stream.ended, !Self.isSpace(byte) { startStream() }
+            stream.bytes += 1
+            if stream.exhausted { continue }
+            if stream.bytes > MGLessonLimits.lessonBytes { exhaust("lesson.bytes"); continue }
             for output in scanner.push(byte) { handle(output) }
         }
         advance()
         return outbox
     }
 
+    static func isSpace(_ b: UInt8) -> Bool { b == 0x20 || b == 0x0A || b == 0x0D || b == 0x09 }
+
+    /// The next statement after an ended stream starts a new stream with fresh budgets.
+    mutating func startStream() { stream = StreamStatus(); isComplete = false; fastForward = false }
+
+    /// Stop scanning this stream with one terminal refusal. Text received before the limit keeps its effect.
+    mutating func exhaust(_ reason: String) {
+        stream.exhausted = true
+        scanner = MGStatementScanner()
+        refuse(MGLessonIssue(reason, statement: nextStatement))
+    }
+
     /// The stream closed (same as an `{"end":true}` statement). Unfinished text is refused (`stmt.json`).
     @discardableResult public mutating func endStream() -> [MGLessonEvent] {
         outbox = []
-        for output in scanner.flush() { handle(output) }
+        if !stream.exhausted { for output in scanner.flush() { handle(output) } } else { scanner = MGStatementScanner() }
         if !stream.ended { closeOpenBeat(); stream.ended = true; emit(.streamEnded) }
         advance()
         return outbox
@@ -243,7 +270,7 @@ public struct MGLessonSession {
     /// clamped. Emits no event on success (cheap enough for every drag tick).
     @discardableResult public mutating func control(_ id: String, _ value: Double) -> Result<MGLessonState, MGLessonIssue> {
         outbox = []
-        guard let c = state?.control(id) else { return refuseDirect(MGLessonIssue("control.unknown.\(id)", origin: .learner)) }
+        guard let c = state?.control(id) else { return refuseDirect(MGLessonIssue("control.unknown.\(MGLessonIssue.segment(id))", origin: .learner)) }
         guard value.isFinite, c.min <= value, value <= c.max else { return refuseDirect(MGLessonIssue("control.value", origin: .learner)) }
         return apply([MGLessonEngine.paramsCommand(c.param, value)], origin: .learner)
     }
@@ -279,14 +306,19 @@ public struct MGLessonSession {
     public mutating func pause() {
         guard !isPaused else { return }
         isPaused = true
-        if let end = lineEndsAt { lineRemaining = max(.zero, end - clock.now); lineEndsAt = nil }
+        let now = clock.now
+        if let end = lineEndsAt { lineRemaining = max(.zero, end - now); lineEndsAt = nil }
+        settleRemaining = max(.zero, settleUntil - now)
     }
 
     @discardableResult public mutating func resume() -> [MGLessonEvent] {
         outbox = []
         guard isPaused else { return outbox }
         isPaused = false
-        if let remaining = lineRemaining { lineEndsAt = clock.now + remaining; lineRemaining = nil }
+        let now = clock.now
+        if let remaining = lineRemaining { lineEndsAt = now + remaining; lineRemaining = nil }
+        // The board held its transition while paused, so the settle time continues from where it stopped.
+        if let left = settleRemaining { settleUntil = now + left; settleRemaining = nil }
         advance()
         return outbox
     }
@@ -324,14 +356,14 @@ public struct MGLessonSession {
     // MARK: statements
 
     mutating func handle(_ output: MGStatementScanner.Output) {
+        if stream.ended { startStream() }
+        guard stream.statements < MGLessonLimits.statements else { return exhaust("lesson.statements.count") }
         let index = nextStatement; nextStatement += 1
-        if stream.ended { stream = StreamStatus(); isComplete = false; fastForward = false }
+        stream.statements += 1
         switch output {
         case .garbage: refuse("stmt.json", index)
         case .tooLong: refuse("stmt.bytes", index)
         case .statement(let raw):
-            stream.bytes += raw.count
-            guard stream.bytes <= MGLessonLimits.lessonBytes else { return refuse("lesson.bytes", index) }
             guard let object = try? JSONSerialization.jsonObject(with: Data(raw)), let json = MGJSON(any: object) else { return refuse("stmt.json", index) }
             statement(json, index)
         }
@@ -362,7 +394,7 @@ public struct MGLessonSession {
     }
 
     mutating func header(_ value: MGJSON, _ index: Int) {
-        guard !stream.started else { return refuse("stmt.order", index) }
+        guard !stream.started, !stream.header else { return refuse("stmt.order", index) }
         do {
             guard let o = value.objectValue else { throw MGError("lesson.object") }
             try MGParser.closed(o, required: ["v"], optional: ["title"], "lesson")
@@ -371,6 +403,7 @@ public struct MGLessonSession {
             let empty = MGContext(width: 12, height: 8, is3D: false, values: [:])
             let t = try o["title"].map { try MGParser.text($0, MGLimits.title, empty, "lesson.title") }
             if let t { title = t }
+            stream.header = true
             emit(.accepted(statement: index))
         } catch { refuse(Self.issue(error, statement: index)) }
     }
@@ -382,7 +415,8 @@ public struct MGLessonSession {
         if MGLessonEngine.hasDecimalLiteral(value) { return refuse("text.literal", index) }
         switch MGParser.scene(json: value) {
         case .failure(let e): refuse(e.reason, index)
-        case .success(let scene):
+        case .success(let parsed):
+            let scene = MGLessonEngine.lessonScene(parsed)
             let before = state?.scene.items ?? []
             let fresh = MGLessonState(scene: scene)
             state = fresh; projected = fresh
@@ -395,16 +429,20 @@ public struct MGLessonSession {
     }
 
     mutating func say(_ value: MGJSON, _ index: Int) {
-        guard stream.hasScene || stream.keep, let p = projected else { return refuse("stmt.order", index) }
+        guard stream.hasScene || stream.keep, projected != nil else { return refuse("stmt.order", index) }
         stream.started = true
-        closeOpenBeat()
-        stream.blocked = true   // until this say is accepted, later commands have no beat
+        // Validate everything first. A refused `say` changes nothing: the open beat stays open, so later commands keep
+        // attaching to it, and no beat is closed or presented because of malformed input.
         guard case .string(let raw) = value else { return refuse("stmt.say", index) }
-        let ctx = MGContext(width: p.scene.width, height: p.scene.height, is3D: p.scene.is3D, values: p.scene.values)
-        do { _ = try MGParser.text(value, MGLimits.say, ctx, "stmt.say") } catch { return refuse(Self.issue(error, statement: index)) }
         if MGLessonEngine.hasDecimalLiteral(value) { return refuse("text.literal", index) }
         guard stream.beats < MGLessonLimits.beats else { return refuse("lesson.beats.count", index) }
-        stream.blocked = false; stream.beats += 1
+        // Placeholder names are checked against the values at the end of the beat before (the new beat's start).
+        let base = projectedIfClosed
+        let ctx = MGContext(width: base.scene.width, height: base.scene.height, is3D: base.scene.is3D, values: base.scene.values)
+        do { _ = try MGParser.text(value, MGLimits.say, ctx, "stmt.say") } catch { return refuse(Self.issue(error, statement: index)) }
+        closeOpenBeat()
+        guard let p = projected else { return refuse("stmt.order", index) }
+        stream.beats += 1
         var end = p; end.beat = nextBeat
         pending.append(PendingBeat(index: nextBeat, say: raw, sayStatement: index, start: p, end: end))
         projected = end
@@ -415,16 +453,24 @@ public struct MGLessonSession {
     /// The beat that statements currently attach to (the last pending beat if it is still open).
     var openBeat: Int? { pending.indices.last.flatMap { pending[$0].complete ? nil : $0 } }
 
+    /// The projected state that closing the open beat would leave (without closing it).
+    var projectedIfClosed: MGLessonState {
+        if let b = openBeat { return pending[b].refused ? pending[b].start : pending[b].end }
+        return projected!
+    }
+
     mutating func command(_ json: MGJSON, _ index: Int) {
         guard stream.hasScene || stream.keep, let p = projected else { return refuse("stmt.order", index) }
         stream.started = true
-        if stream.blocked { return refuse(MGLessonIssue("beat.refused", statement: index)) }
         if let b = openBeat {
             let k = pending[b].index
             guard !pending[b].refused else { return refuse(MGLessonIssue("beat.refused", beat: k, statement: index)) }
             guard pending[b].commands.count < MGLessonLimits.commandsPerBeat else { return refuse(MGLessonIssue("beat.ops.count", beat: k, statement: index)) }
             do {
                 let r = try MGLessonEngine.run(json, on: pending[b].end, origin: .script, beat: k)
+                // Checks are claims about what the learner sees at the end of the beat: a later command may not make an
+                // accepted check false. Such a command is refused alone; the beat and its proven claims stay.
+                if let broken = pending[b].checks.lazy.compactMap({ $0.check.failure(in: r.state.scene) }).first { throw MGError(broken) }
                 pending[b].end = r.state; pending[b].commands.append((index, json)); pending[b].transitions.append(r.transition)
                 projected = r.state
                 emit(.accepted(statement: index))
@@ -450,7 +496,6 @@ public struct MGLessonSession {
     mutating func check(_ value: MGJSON, _ index: Int) {
         guard stream.hasScene || stream.keep else { return refuse("stmt.order", index) }
         stream.started = true
-        if stream.blocked { return refuse(MGLessonIssue("beat.refused", statement: index)) }
         guard let b = openBeat else { return refuse("stmt.order", index) }
         let k = pending[b].index
         guard !pending[b].refused else { return refuse(MGLessonIssue("beat.refused", beat: k, statement: index)) }
@@ -475,6 +520,11 @@ public struct MGLessonSession {
         guard let b = openBeat else { return }
         pending[b].complete = true
         guard !pending[b].refused else { return }
+        // Every check must hold on the beat's final state before its line is queued.
+        if let c = pending[b].checks.first(where: { $0.check.failure(in: pending[b].end.scene) != nil }) {
+            pending[b].refused = true; projected = pending[b].start
+            return refuse(MGLessonIssue(c.check.failure(in: pending[b].end.scene)!, beat: pending[b].index, statement: c.statement))
+        }
         do {
             let text = try MGParser.fill(pending[b].say, pending[b].end.scene.values, "stmt.say")
             pending[b].queuedText = text
@@ -526,10 +576,11 @@ public struct MGLessonSession {
                     refuse(issue)
                 }
             }
-            for c in beat.checks {
-                if let why = c.check.failure(in: s.scene) { return refuse(MGLessonIssue(why, beat: k, statement: c.statement)) }
-            }
             s.beat = k
+        }
+        // Both paths: every check must hold on the exact state that is about to be shown, or the beat is refused.
+        for c in beat.checks {
+            if let why = c.check.failure(in: s.scene) { return refuse(MGLessonIssue(why, beat: k, statement: c.statement)) }
         }
         let text: String
         do { text = try MGParser.fill(beat.say, s.scene.values, "stmt.say") } catch {
@@ -561,14 +612,15 @@ public struct MGLessonSession {
 
     /// Seconds until a transition settles on screen: keyframes their duration, a blend 1.2 s (`MGTimeline.spring`).
     static func settle(_ t: MGTransition) -> Double {
-        switch t { case .direct: return 0; case .blend: return 1.2; case .keyframes(_, let d): return d }
+        switch t { case .direct: return 0; case .blend: return 1.2; case .keyframes: return t.keyframeDuration }
     }
 
-    /// One transition for several commands: their keyframes in order (durations add up), else a blend.
+    /// One transition for several commands: every `animate` keeps its own timed segment (in order, each with its own
+    /// duration); other commands between them are cuts, not tweens. Without keyframes: a blend.
     static func combine(_ list: [MGTransition]) -> MGTransition {
-        var frames: [MGScene] = [], duration = 0.0
-        for t in list { if case .keyframes(let f, let d) = t { frames += f; duration += d } }
-        if !frames.isEmpty { return .keyframes(frames, duration: duration) }
+        var segments: [MGKeyframeSegment] = []
+        for t in list { if case .keyframes(let s) = t { segments += s } }
+        if !segments.isEmpty { return .keyframes(segments) }
         return list.contains(.blend) || list.isEmpty ? .blend : .direct
     }
 
@@ -598,8 +650,9 @@ public struct MGLessonSession {
     /// An engine error as an issue. `animate.frame:<inner>` becomes reason `animate.frame` with `detail` = inner.
     static func issue(_ error: Error, statement: Int? = nil, origin: MGOrigin = .script) -> MGLessonIssue {
         let reason = (error as? MGError)?.reason ?? "unknown"
-        if let colon = reason.firstIndex(of: ":") {
-            return MGLessonIssue(String(reason[..<colon]), statement: statement, origin: origin, detail: String(reason[reason.index(after: colon)...]))
+        let wrapper = "animate.frame:"
+        if reason.hasPrefix(wrapper) {
+            return MGLessonIssue("animate.frame", statement: statement, origin: origin, detail: String(reason.dropFirst(wrapper.count)))
         }
         return MGLessonIssue(reason, statement: statement, origin: origin)
     }

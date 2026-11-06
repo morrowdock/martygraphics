@@ -66,6 +66,7 @@ public final class MGLessonController: ObservableObject {
         timing = MGLessonTiming(requestAt: session.clock.now)
         lastIssue = nil; shownSerial = 0; selection = nil
         firstFrame.arm()
+        board.resumeTransitions()
         board.show(nil)
     }
 
@@ -83,8 +84,14 @@ public final class MGLessonController: ObservableObject {
     /// Load a whole lesson document (all-or-nothing). Returns false and keeps the current lesson on refusal.
     @discardableResult public func load(_ lesson: MGLesson) -> Bool {
         if timing.requestAt == nil { begin() }
+        let started = clock.now
         switch session.load(lesson) {
-        case .success(let events): sync(events); return true
+        case .success(let events):
+            // A new session counts its changes from zero: always show its scene, and time this run on its own.
+            shownSerial = -1
+            board.resumeTransitions()
+            if timing.firstPresentedAt != nil { timing = MGLessonTiming(requestAt: started); firstFrame.arm() }
+            sync(events); return true
         case .failure(let issue): lastIssue = issue; return false
         }
     }
@@ -114,9 +121,10 @@ public final class MGLessonController: ObservableObject {
 
     public func lineStarted(_ k: Int) { sync(session.lineStarted(k)) }
     public func lineEnded(_ k: Int) { sync(session.lineEnded(k)) }
-    public func finishNow() { sync(session.finishNow()) }
-    public func pause() { session.pause(); sync([]) }
-    public func resume() { sync(session.resume()) }
+    public func finishNow() { board.resumeTransitions(); sync(session.finishNow()) }
+    /// Pause the beat clock and hold an in-flight keyframe animation on the board.
+    public func pause() { session.pause(); board.pauseTransitions(); sync([]) }
+    public func resume() { board.resumeTransitions(); sync(session.resume()) }
     /// "Play beats" control: resume when paused, otherwise end the line being shown so the next beat comes.
     public func next() {
         if session.isPaused { resume(); return }
@@ -215,7 +223,7 @@ public struct MartyGraphicsLessonView: View {
                 MartyGraphicsView(controller: board, showsControls: false)
                     .selection($controller.selection)
                     .boardAccessibility(controller.caption)
-                    .background(MGFrameProbe(controller: controller))
+                    .background(MGFrameProbe(controller: controller, revision: board.revision))
             } else {
                 RoundedRectangle(cornerRadius: 22, style: .continuous).fill(theme.backgroundTop)
                     .aspectRatio(1.4, contentMode: .fit)
@@ -283,8 +291,11 @@ public struct MartyGraphicsLessonView: View {
 /// draws in the same render pass).
 private struct MGFrameProbe: View {
     let controller: MGLessonController
+    /// Redraws on every board change, so a later run's first frame is also marked.
+    let revision: Int
     var body: some View {
         let clock = controller.clock
+        let _ = revision
         Canvas { _, _ in controller.markFrame(clock) }
             .allowsHitTesting(false).accessibilityHidden(true)
     }

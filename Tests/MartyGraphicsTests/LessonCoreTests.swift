@@ -150,8 +150,9 @@ final class LessonCoreTests: LessonTestCase {
         XCTAssertEqual(a.log.last?.origin, .learner)
         XCTAssertEqual(b.log.last?.origin, .script)
         XCTAssertEqual(a.log.last?.command, b.log.last?.command, "the slider sends the same params command as the script")
-        guard case .keyframes(let frames, _)? = c.lastChange?.transition else { return XCTFail("animate must carry keyframes") }
-        XCTAssertEqual(frames.last, c.state?.scene)
+        guard case .keyframes(let segments)? = c.lastChange?.transition else { return XCTFail("animate must carry keyframes") }
+        XCTAssertEqual(segments.count, 1)
+        XCTAssertEqual(segments.last?.frames.last, c.state?.scene)
         // A learner command through the generic entry point is gated the same way.
         var d = try F.through(beat: 3)
         _ = try d.apply(F.json(#"{"op":"params","params":{"angle":90}}"#), origin: .learner).get()

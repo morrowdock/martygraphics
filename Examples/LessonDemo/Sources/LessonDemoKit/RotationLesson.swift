@@ -75,7 +75,7 @@ public enum RotationLesson {
             check("beat 1 caption", s.caption == "This is triangle ABC. Each label shows a corner's coordinates.")
             check("beat 1 labels A (2, 1), B (4, 1), C (2, 3)", labels(s) == expected(0))
             s.lineEnded(0)
-            check("beat 2 turns to 90° with 18 engine keyframes", { if case .keyframes(let f, _)? = s.lastChange?.transition { return f.count == 19 }; return false }())
+            check("beat 2 turns to 90° with 18 engine keyframes", { if case .keyframes(let seg)? = s.lastChange?.transition { return seg.count == 1 && seg[0].frames.count == 19 }; return false }())
             check("beat 2 caption says 90°", s.caption == "Now we turn the triangle about the origin O by 90°.")
             s.lineEnded(1)
             check("beat 3 caption from engine values", s.caption == "A moved from (2, 1) to (-1, 2). Its distance to O is still 2.24.")

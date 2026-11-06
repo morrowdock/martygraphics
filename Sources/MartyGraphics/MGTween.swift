@@ -59,6 +59,18 @@ public enum MGTween {
         return spec.defaultValue.flatMap { $0.isFinite ? $0 : nil } ?? spec.range.lowerBound
     }
 
+    /// Items `seconds` into a sequence of timed segments: segment k plays over its own duration; at a segment boundary
+    /// the next segment starts from its own first frame (a cut, never a blend across segments). After the end: the
+    /// last frame of the last segment.
+    public static func sample(_ segments: [MGAdoption.Segment], at seconds: Double) -> [MGItem] {
+        var t = max(0, seconds)
+        for segment in segments {
+            if t < segment.duration { return sample(segment.items, at: t / segment.duration) }
+            t -= segment.duration
+        }
+        return segments.last?.items.last ?? []
+    }
+
     /// Items at `fraction` (0…1) of a keyframe sequence: geometry is blended linearly between the two neighbouring
     /// keyframes; text and labels come from the nearer keyframe, so a label never shows a number no frame computed.
     public static func sample(_ frames: [[MGItem]], at fraction: Double) -> [MGItem] {

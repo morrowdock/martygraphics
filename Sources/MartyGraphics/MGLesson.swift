@@ -12,6 +12,8 @@ import Foundation
 public enum MGLessonLimits {
     public static let beats = 24, commandsPerBeat = 12, checksPerBeat = 8, controls = 4
     public static let statementBytes = 4 * 1024, lessonBytes = 32 * 1024
+    /// Statements per stream, accepted or refused (bounds the work and the events of one stream).
+    public static let statements = 256
     /// Size of the session's event history; older records are dropped first.
     public static let history = 4096
     public static let animateDuration: ClosedRange<Double> = 0.2...6
@@ -38,8 +40,27 @@ public struct MGLessonIssue: Error, Equatable, Sendable, CustomStringConvertible
     public var origin: MGOrigin = .script
     /// The inner reason for wrapper reasons (`animate.frame`, `beat.refused`), else nil.
     public var detail: String?
+    /// `reason` and `detail` are normalised to one token: ASCII letters, digits, `_`, `.` and `,` only (anything else
+    /// becomes `_`), at most 96 characters. Author text inside a reason can never add spaces, newlines or separators.
     public init(_ reason: String, beat: Int? = nil, statement: Int? = nil, command: Int? = nil, origin: MGOrigin = .script, detail: String? = nil) {
-        self.reason = reason; self.beat = beat; self.statement = statement; self.command = command; self.origin = origin; self.detail = detail
+        self.reason = Self.token(reason); self.beat = beat; self.statement = statement; self.command = command; self.origin = origin
+        self.detail = detail.map(Self.token)
+    }
+
+    static func token(_ s: String) -> String {
+        let t = String(s.unicodeScalars.prefix(96).map { u -> Character in
+            u.isASCII && (CharacterSet.alphanumerics.contains(u) || u == "_" || u == "." || u == ",") ? Character(u) : "_"
+        })
+        return t.isEmpty ? "_" : t
+    }
+
+    /// One author-supplied reason segment (an id or key): like `token`, but `.` also becomes `_`, so it cannot fake
+    /// extra reason segments; at most 32 characters.
+    static func segment(_ s: String) -> String {
+        let t = String(s.unicodeScalars.prefix(32).map { u -> Character in
+            u.isASCII && (CharacterSet.alphanumerics.contains(u) || u == "_") ? Character(u) : "_"
+        })
+        return t.isEmpty ? "_" : t
     }
     public var description: String {
         var parts = [reason]
@@ -161,8 +182,8 @@ public struct MGLesson: Equatable, Sendable {
     static let beatKeys: Set<String> = ["say", "ops", "check"]
 
     public static func parse(data: Data) -> Result<MGLesson, MGLessonIssue> {
-        guard data.count <= MGLessonLimits.lessonBytes * 2, let object = try? JSONSerialization.jsonObject(with: data),
-              let json = MGJSON(any: object) else { return .failure(.init("lesson.json")) }
+        guard data.count <= MGLessonLimits.lessonBytes * 2 else { return .failure(.init("lesson.bytes")) }
+        guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else { return .failure(.init("lesson.json")) }
         return parse(json: json)
     }
 
@@ -201,7 +222,10 @@ public struct MGLesson: Equatable, Sendable {
                 }
                 return Beat(say: say, ops: ops, checks: checks)
             }
-            return .success(MGLesson(title: title, scene: scene, beats: beats))
+            let lesson = MGLesson(title: title, scene: scene, beats: beats)
+            // A document's size is the size of the statement stream it becomes (the stream budget is what `load` feeds).
+            guard lesson.statementStream.utf8.count <= MGLessonLimits.lessonBytes else { throw MGError("lesson.bytes") }
+            return .success(lesson)
         } catch let e as MGError { return .failure(.init(e.reason)) } catch { return .failure(.init("lesson")) }
     }
 
@@ -248,10 +272,18 @@ enum MGLessonEngine {
     static func hasDecimalLiteral(_ json: MGJSON) -> Bool {
         switch json {
         case .string(let s):
+            // Refused forms: `1.5`, `.5` / `-.5` (a dot before a digit, not after a letter or digit), and exponent
+            // notation `2e3` / `2E-3` (a digit run not glued to a letter, then e, an optional sign and a digit).
             let u = Array(s.unicodeScalars)
-            guard u.count >= 3 else { return false }
-            for i in 1..<(u.count - 1) where u[i] == "." && CharacterSet.decimalDigits.contains(u[i - 1]) && CharacterSet.decimalDigits.contains(u[i + 1]) {
-                return true
+            func digit(_ i: Int) -> Bool { u.indices.contains(i) && CharacterSet.decimalDigits.contains(u[i]) }
+            func word(_ i: Int) -> Bool { u.indices.contains(i) && (CharacterSet.letters.contains(u[i]) || CharacterSet.decimalDigits.contains(u[i])) }
+            for i in u.indices {
+                if u[i] == "." && digit(i + 1) && (digit(i - 1) || !word(i - 1)) { return true }
+                if (u[i] == "e" || u[i] == "E") && digit(i - 1) && (digit(i + 1) || ((u.indices.contains(i + 1) && (u[i + 1] == "-" || u[i + 1] == "+")) && digit(i + 2))) {
+                    var j = i - 1
+                    while digit(j) { j -= 1 }
+                    if !(u.indices.contains(j) && CharacterSet.letters.contains(u[j])) { return true }
+                }
             }
             return false
         case .array(let a): return a.contains(where: hasDecimalLiteral)
@@ -272,7 +304,7 @@ enum MGLessonEngine {
         case "unbind":
             try MGParser.closed(o, required: ["op", "id"], optional: [], "unbind")
             guard case .string(let id)? = o["id"] else { throw MGError("unbind.id") }
-            guard state.control(id) != nil else { throw MGError("control.unknown.\(id)") }
+            guard state.control(id) != nil else { throw MGError("control.unknown.\(MGLessonIssue.segment(id))") }
             var next = state; next.controls.removeAll { $0.id == id }
             return MGCommandResult(state: next, transition: .blend)
         default:
@@ -280,10 +312,10 @@ enum MGLessonEngine {
             if name == "add", let item = o["item"]?.objectValue, case .string(let id)? = item["id"],
                case .string(let k)? = item["k"], let kind = MGKind(rawValue: k),
                state.scene.item(id) == nil, let previous = state.kinds[id], previous != kind {
-                throw MGError("lesson.id.kind.\(id)")
+                throw MGError("lesson.id.kind.\(MGLessonIssue.segment(id))")
             }
             let patch = try MGPatch.parse(json: .object(["v": .number(1), "ops": .array([command])])).get()
-            let scene = try state.scene.applying(patch).get()
+            let scene = lessonScene(try state.scene.applying(patch).get())
             var next = state
             next.scene = scene
             for item in scene.items where next.kinds[item.id] == nil {
@@ -297,9 +329,9 @@ enum MGLessonEngine {
     /// Learner commands: only `params` on bound parameters, each value inside its control's range. Refused, never clamped.
     static func learnerGate(_ o: [String: MGJSON], _ name: String, _ state: MGLessonState) throws {
         guard name == "params", let params = o["params"]?.objectValue, !params.isEmpty else { throw MGError("control.op") }
-        for (param, value) in params {
+        for (param, value) in params.sorted(by: { $0.key < $1.key }) {
             let bound = state.controls.filter { $0.param == param }
-            guard !bound.isEmpty else { throw MGError("control.unknown.\(param)") }
+            guard !bound.isEmpty else { throw MGError("control.unknown.\(MGLessonIssue.segment(param))") }
             guard case .number(let v) = value, v.isFinite, bound.contains(where: { $0.min <= v && v <= $0.max }) else { throw MGError("control.value") }
         }
     }
@@ -313,9 +345,10 @@ enum MGLessonEngine {
         switch MGTween.keyframes(state.scene, param: param, to: to) {
         case .failure(let e): throw e
         case .success(let frames):
-            guard let last = frames.last else { throw MGError("animate.frame") }
+            let lessonFrames = frames.map(lessonScene)
+            guard let last = lessonFrames.last else { throw MGError("animate.frame") }
             var next = state; next.scene = last
-            return MGCommandResult(state: next, transition: .keyframes([state.scene] + frames, duration: duration))
+            return MGCommandResult(state: next, transition: .keyframes([MGKeyframeSegment(frames: [state.scene] + lessonFrames, duration: duration)]))
         }
     }
 
@@ -331,12 +364,27 @@ enum MGLessonEngine {
         let step = try MGParser.num(c["step"], 1e-6...(hi - lo), "control.step")
         if spec.integer { guard lo.rounded() == lo, hi.rounded() == hi, step.rounded() == step else { throw MGError("control.step") } }
         let ctx = MGContext(width: state.scene.width, height: state.scene.height, is3D: state.scene.is3D, values: state.scene.values)
+        // A control label is fixed text: an engine number filled in once would go stale when the value changes.
+        if case .string(let raw)? = c["label"], raw.contains("{") || raw.contains("}") { throw MGError("control.label.placeholder") }
         let label = try MGParser.text(c["label"], MGLimits.label, ctx, "control.label")
         guard state.control(id) == nil else { throw MGError("control.duplicate.\(id)") }
         guard state.controls.count < MGLessonLimits.controls else { throw MGError("control.count") }
         var next = state
         next.controls.append(MGLessonControl(id: id, kind: "slider", param: param, min: lo, max: hi, step: step, label: label, unit: spec.unit))
         return MGCommandResult(state: next, transition: .direct)
+    }
+
+    /// Lesson policy for template walkthroughs: a lesson has one beat system, so a resolved scene's own `steps`
+    /// (a template's built-in walkthrough) are dropped. Every resolved item is on the board from the start, and no step
+    /// edit applies, so the lesson state and the drawn board always hold the same items. Scenes outside lessons keep v1
+    /// behaviour; the scene `source` is unchanged.
+    static func lessonScene(_ scene: MGScene) -> MGScene {
+        guard !scene.steps.isEmpty || scene.startStep != 0 else { return scene }
+        var out = MGScene(source: scene.source, template: scene.template, title: scene.title, is3D: scene.is3D, width: scene.width,
+                          height: scene.height, items: scene.items, steps: [], camera: scene.camera, values: scene.values,
+                          motion: scene.motion, attachments: scene.attachments)
+        out.revision = scene.revision
+        return out
     }
 
     /// `{"op":"params","params":{param: value}}`: the one command a learner control sends.

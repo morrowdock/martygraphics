@@ -23,7 +23,7 @@ final class LessonRendererTests: LessonTestCase {
         let plan = MGAdoption.plan(previous: shown, next: s.state!.scene.items, transition: change.transition)
         XCTAssertFalse(plan.blends)
         XCTAssertTrue(plan.appear.isEmpty, "no draw-on replay for ids already shown")
-        XCTAssertTrue(plan.keyframes.isEmpty)
+        XCTAssertTrue(plan.segments.isEmpty)
         // With no blend the first frame already shows the committed vertex.
         let v = try XCTUnwrap(s.state!.scene.item("vA")?.pts.first)
         let ref = F.rotate(F.triangle[0], 30)
@@ -66,11 +66,12 @@ final class LessonRendererTests: LessonTestCase {
         let shown = s.state!.scene.items
         _ = try s.apply(F.json(#"{"op":"animate","param":"angle","to":90,"dur":1.5}"#)).get()
         let plan = MGAdoption.plan(previous: shown, next: s.state!.scene.items, transition: s.lastChange!.transition)
-        XCTAssertEqual(plan.keyframes.count, 19)
+        XCTAssertEqual(plan.segments.count, 1)
+        XCTAssertEqual(plan.segments.first?.items.count, 19)
         XCTAssertEqual(plan.duration, 1.5)
         let o = viewport.point(MGGeometryPack.origin)
         for fraction in [0.25, 0.5, 0.75] {
-            let items = MGTween.sample(plan.keyframes, at: fraction)
+            let items = MGTween.sample(plan.segments, at: fraction * plan.duration)
             for (k, letter) in ["A", "B", "C"].enumerated() {
                 let p = viewport.point(try XCTUnwrap(items.first { $0.id == "v\(letter)" }?.pts.first))
                 let r = viewport.length(hypot(F.triangle[k].0, F.triangle[k].1))

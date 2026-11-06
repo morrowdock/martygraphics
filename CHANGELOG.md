@@ -13,6 +13,13 @@
   draw-on replay; `.keyframes` for `animate`: true rotations instead of the chord-cutting point blend); existing calls
   keep the blend. Add `Examples/LessonDemo` (rotation lesson with `--verify`, `--timing`, `--render`, `--preview`) and
   `docs/LESSONS.md`. Scene and patch formats stay at v1; the default grammar document is unchanged.
+  After independent review: a refused `say` no longer closes or presents the open beat; a command that would make an
+  accepted `check` false is refused, and checks are evaluated again on the final and on the presented state; the
+  stream budget counts every received byte and at most 256 statements, then stops with one refusal; reasons are
+  bounded single tokens; learner refusals have a fixed order; each `animate` keeps its own timed keyframe segment
+  (cuts, not chords, between them); control labels may not hold placeholders; snapshots keep the projection of queued
+  beats; a second `load` always reaches the board; pause holds an in-flight animation and its settle time; template
+  walkthroughs are flattened in lessons; leading-dot decimals and exponents count as decimal literals; one header per stream.
 - Add a maintainer-dispatched hosted `macos` CI job (standard `macos-26` runner) that builds and tests the root package, examples and SceneValidator; GPU tests skip themselves on hosted VMs.
 - Add reusable solid components. A component is a closed-key JSON definition with
   numeric parameters (`default`, `min`, `max`, `integer`), parts and constraints whose

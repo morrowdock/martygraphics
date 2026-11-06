@@ -12,21 +12,19 @@ extension MGLessonSession {
         var o: [String: MGJSON] = ["v": .number(1), "kind": .string("lessonSnapshot")]
         if let title { o["title"] = .string(title) }
         if let caption { o["caption"] = .string(caption) }
-        if let s = state {
-            o["scene"] = s.scene.source
-            o["rev"] = .number(Double(s.scene.revision))
-            o["beat"] = .number(Double(s.beat))
-            o["controls"] = .array(s.controls.map(\.wire))
-            o["kinds"] = .object(s.kinds.mapValues { .string($0.rawValue) })
-            o["introduced"] = .object(s.introduced.mapValues { .number(Double($0)) })
-        }
+        if let s = state { for (k, v) in Self.wire(s) { o[k] = v } }
+        // Queued beats were validated on the script's projection, not on what the learner did since. Keep that
+        // baseline, so restoring rebuilds the same projection, queued text and checks.
+        if let first = pending.first { o["baseline"] = .object(Self.wire(first.start)) }
         o["next"] = .object(["statement": .number(Double(nextStatement)), "beat": .number(Double(nextBeat))])
         o["stream"] = .object(["started": .bool(stream.started), "scene": .bool(stream.hasScene), "keep": .bool(stream.keep),
-                               "ended": .bool(stream.ended), "blocked": .bool(stream.blocked),
-                               "beats": .number(Double(stream.beats)), "bytes": .number(Double(stream.bytes))])
+                               "ended": .bool(stream.ended), "header": .bool(stream.header), "exhausted": .bool(stream.exhausted),
+                               "beats": .number(Double(stream.beats)), "statements": .number(Double(stream.statements)),
+                               "bytes": .number(Double(stream.bytes))])
         o["pending"] = .array(pending.map { b in
             var p: [String: MGJSON] = ["beat": .number(Double(b.index)), "say": .string(b.say), "sayAt": .number(Double(b.sayStatement)),
                                        "complete": .bool(b.complete), "refused": .bool(b.refused)]
+            if let q = b.queuedText { p["queued"] = .string(q) }
             if !b.refused {
                 p["commands"] = .array(b.commands.map { .object(["i": .number(Double($0.statement)), "s": $0.json]) })
                 p["checks"] = .array(b.checks.map { .object(["i": .number(Double($0.statement)), "s": $0.json]) })
@@ -36,7 +34,7 @@ extension MGLessonSession {
         if let openLine { o["line"] = .number(Double(openLine)) }
         let now = clock.now
         if let end = lineEndsAt { o["lineLeft"] = seconds(max(.zero, end - now)) } else if let r = lineRemaining { o["lineLeft"] = seconds(r) }
-        o["settleLeft"] = seconds(max(.zero, settleUntil - now))
+        o["settleLeft"] = seconds(settleRemaining ?? max(.zero, settleUntil - now))
         o["paused"] = .bool(isPaused); o["fast"] = .bool(fastForward); o["complete"] = .bool(isComplete)
         return .object(o)
     }
@@ -45,6 +43,34 @@ extension MGLessonSession {
     /// whole snapshot (`snapshot.<field>` or the engine's own reason). Event history and the command log start empty.
     public static func restore(_ snapshot: MGJSON, pacing: MGPacing, clock: MGLessonClock = MGSystemClock()) -> Result<MGLessonSession, MGLessonIssue> {
         do { return .success(try restoring(snapshot, pacing: pacing, clock: clock)) } catch { return .failure(issue(error)) }
+    }
+
+    /// Engine fields of a lesson state (scene source, revision, beat, controls, id history).
+    static func wire(_ s: MGLessonState) -> [String: MGJSON] {
+        ["scene": s.scene.source, "rev": .number(Double(s.scene.revision)), "beat": .number(Double(s.beat)),
+         "controls": .array(s.controls.map(\.wire)), "kinds": .object(s.kinds.mapValues { .string($0.rawValue) }),
+         "introduced": .object(s.introduced.mapValues { .number(Double($0)) })]
+    }
+
+    /// Rebuilds a state from `wire`, validating every part with the engine.
+    static func state(_ o: [String: MGJSON]) throws -> MGLessonState {
+        func int(_ v: MGJSON?, _ what: String) throws -> Int {
+            let d = try MGParser.num(v, -1...1e9, what); guard d.rounded() == d else { throw MGError(what) }; return Int(d)
+        }
+        guard let source = o["scene"] else { throw MGError("snapshot.scene") }
+        var scene = MGLessonEngine.lessonScene(try MGParser.scene(json: source).get())
+        scene.revision = try int(o["rev"], "snapshot.rev")
+        var s = MGLessonState(scene: scene)
+        s.beat = try int(o["beat"], "snapshot.beat")
+        guard let kinds = o["kinds"]?.objectValue, let introduced = o["introduced"]?.objectValue else { throw MGError("snapshot.kinds") }
+        s.kinds = try kinds.mapValues { guard case .string(let k) = $0, let kind = MGKind(rawValue: k) else { throw MGError("snapshot.kinds") }; return kind }
+        s.introduced = try introduced.mapValues { try int($0, "snapshot.introduced") }
+        guard case .array(let controls)? = o["controls"] else { throw MGError("snapshot.controls") }
+        for c in controls {
+            // Re-bind through the engine so a control that no longer fits its template is refused.
+            s = try MGLessonEngine.bind(["op": .string("bind"), "control": c], s).state
+        }
+        return s
     }
 
     static func restoring(_ snapshot: MGJSON, pacing: MGPacing, clock: MGLessonClock) throws -> MGLessonSession {
@@ -60,28 +86,22 @@ extension MGLessonSession {
         var session = MGLessonSession(pacing: pacing, clock: clock)
         if let t = o["title"] { session.title = try string(t, "snapshot.title") }
         if let c = o["caption"] { session.caption = try string(c, "snapshot.caption") }
-        if let source = o["scene"] {
-            var scene = try MGParser.scene(json: source).get()
-            scene.revision = try int(o["rev"], "snapshot.rev")
-            var s = MGLessonState(scene: scene)
-            s.beat = try int(o["beat"], "snapshot.beat")
-            guard let kinds = o["kinds"]?.objectValue, let introduced = o["introduced"]?.objectValue else { throw MGError("snapshot.kinds") }
-            s.kinds = try kinds.mapValues { guard case .string(let k) = $0, let kind = MGKind(rawValue: k) else { throw MGError("snapshot.kinds") }; return kind }
-            s.introduced = try introduced.mapValues { try int($0, "snapshot.introduced") }
-            guard case .array(let controls)? = o["controls"] else { throw MGError("snapshot.controls") }
-            for c in controls {
-                // Re-bind through the engine so a control that no longer fits its template is refused.
-                s = try MGLessonEngine.bind(["op": .string("bind"), "control": c], s).state
-            }
-            session.state = s; session.projected = s
+        if o["scene"] != nil {
+            let s = try state(o)
+            session.state = s
+            session.projected = try o["baseline"].map { b -> MGLessonState in
+                guard let bo = b.objectValue else { throw MGError("snapshot.baseline") }
+                return try state(bo)
+            } ?? s
         }
         guard let next = o["next"]?.objectValue, let st = o["stream"]?.objectValue else { throw MGError("snapshot.stream") }
         session.nextStatement = try int(next["statement"], "snapshot.next")
         session.nextBeat = try int(next["beat"], "snapshot.next")
         session.stream = StreamStatus(started: try flag(st["started"], "snapshot.stream"), hasScene: try flag(st["scene"], "snapshot.stream"),
                                       keep: try flag(st["keep"], "snapshot.stream"), ended: try flag(st["ended"], "snapshot.stream"),
-                                      blocked: try flag(st["blocked"], "snapshot.stream"),
-                                      beats: try int(st["beats"], "snapshot.stream"), bytes: try int(st["bytes"], "snapshot.stream"))
+                                      header: try flag(st["header"], "snapshot.stream"),
+                                      beats: try int(st["beats"], "snapshot.stream"), statements: try int(st["statements"], "snapshot.stream"),
+                                      bytes: try int(st["bytes"], "snapshot.stream"), exhausted: try flag(st["exhausted"], "snapshot.stream"))
         guard case .array(let pending)? = o["pending"] else { throw MGError("snapshot.pending") }
         for entry in pending {
             guard let p = entry.objectValue, let start = session.projected else { throw MGError("snapshot.pending") }
@@ -102,7 +122,11 @@ extension MGLessonSession {
                     if let why = check.failure(in: beat.end.scene) { throw MGError(why) }
                     beat.checks.append((try int(c["i"], "snapshot.pending"), check, c["s"]!))
                 }
-                if beat.complete { beat.queuedText = try MGParser.fill(beat.say, beat.end.scene.values, "stmt.say") }
+                if beat.complete {
+                    let text = try MGParser.fill(beat.say, beat.end.scene.values, "stmt.say")
+                    guard p["queued"] == .string(text) else { throw MGError("snapshot.queued") }
+                    beat.queuedText = text
+                }
                 session.projected = beat.end
             }
             session.pending.append(beat)
@@ -115,7 +139,7 @@ extension MGLessonSession {
         if let left = o["lineLeft"] {
             if session.isPaused { session.lineRemaining = try duration(left) } else if case .estimate = pacing { session.lineEndsAt = now + (try duration(left)) }
         }
-        session.settleUntil = now + (try duration(o["settleLeft"]))
+        if session.isPaused { session.settleRemaining = try duration(o["settleLeft"]) } else { session.settleUntil = now + (try duration(o["settleLeft"])) }
         return session
     }
 }
