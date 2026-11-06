@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "8cf588a615d4a90be94954a9917a79c0fdfc2d0a4f63430b2c82bb0ce7b81fcf"
+      "sha256": "fa8edc3fd11a29ad1fecd13a7f9f3963c715e8676774feea60d99489b6f50cc7"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -79,7 +79,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "6915f020acc00ae40ce77f86999a0eddd49344fb77c58ff5aba284da34630b53"
+      "sha256": "5f5bc38a88d3ccb61d9bfa6592314ce67200058fdcccd8e78da0101b27d6599b"
     },
     {
       "path": "SECURITY.md",
@@ -158,12 +158,20 @@
       "sha256": "c5eff08b996cb6115afac54c57a3d2c0d8ba81a75fc88d3893fe908888e670c7"
     },
     {
+      "path": "Tests/MartyGraphicsTests/ProtocolFixtureTests.swift",
+      "sha256": "d420e4b5b9b94a43df4c9cd40d9acd219140e631c633b15b3015ee6d028aa157"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/PublicEngineTests.swift",
       "sha256": "b8d877801e6e60dc7b9446ff07058c756ff4b2cda4e44f72608bedfa05212411"
     },
     {
       "path": "docs/CAPABILITIES.md",
       "sha256": "734795ab7d34ffc24e9100596a90ec2b72c3c68ee3ab8bc4c5b79599798cbca9"
+    },
+    {
+      "path": "docs/DISTRIBUTION.md",
+      "sha256": "d969d80938427f44f7c0822521cbeedac335294d742645d46644fbd05bb97374"
     },
     {
       "path": "docs/EXPORT.json",
@@ -175,7 +183,7 @@
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
-      "sha256": "1ec9fe6f9f5e2e9acf0e833e6200c253eb73b8b1603ffbb3f945ad6163974bb3"
+      "sha256": "b9dba72473f8f4fbb9ea463ecdc939cba3eff2229dc0ab6214a7691e52d027a1"
     },
     {
       "path": "docs/PORTABILITY-PROPOSAL.md",
@@ -183,7 +191,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "315ba3293fb06904aeaa21363155b002ef60b52f12e2de1b243f00c4bc90d05b"
+      "sha256": "26c710eea0fa3890ad3044d2c8564e6ebf816e4f44917971389107b9a665ee57"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -199,7 +207,7 @@
     },
     {
       "path": "docs/THIRD-PARTY.md",
-      "sha256": "c68a27c24e921d98483bcdbe63ee2d127355f1c1183e98a649d33b870f6459a7"
+      "sha256": "e65494b65911beeaf480951eda320c6d424b1ee8bd58af1269eb0e4f88f34c1b"
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
@@ -246,6 +254,22 @@
       "sha256": "3801cfb1d45ba2136fec32c5b2e86edc15d20c65879aa680f0b7884e187deab3"
     },
     {
+      "path": "docs/fixtures/v1/highlight-cycle.scene.json",
+      "sha256": "8e8b086b31bc47dd77e85239472b59b7cbe814ff9cd045c5a3673c5eb7b57475"
+    },
+    {
+      "path": "docs/fixtures/v1/scene.json",
+      "sha256": "e8c2066276a8528e05366051d93cc0b749decdf9282adde7aff6120fb48abe36"
+    },
+    {
+      "path": "docs/fixtures/v1/title.patch.json",
+      "sha256": "f19ae491cd2b583b0add3513062f4837b5d2ca87e2e9e7bd53ed57e647e99d7d"
+    },
+    {
+      "path": "docs/fixtures/v1/unknown-key.scene.json",
+      "sha256": "b721cc2f2562268e8fc65c84d60c1bb594eaa416a4c1f39ccc99c47030244c8e"
+    },
+    {
       "path": "tools/check_dco.py",
       "sha256": "d6f3693eebbc82a50402b89e4cbab9c3f8c73deae45fc30109cb4b10cfe1141f"
     },
@@ -254,8 +278,16 @@
       "sha256": "9a9e61b22fb6a6dc1284bc17aa1ca2eef662be7625a23ba72e1b1daca6e82cf3"
     },
     {
+      "path": "tools/tests/test_release_install.py",
+      "sha256": "da3d93c0ab00c48a0e0e041bba0b44fae085c70c75e1a656510de1704bfa392d"
+    },
+    {
       "path": "tools/validate_local.py",
-      "sha256": "6a120dfdd2d03486d3f65198d7da63bb8cf74c2cc674483a96595402daebd59e"
+      "sha256": "98c6db45f1202e029c0e418de26812edd673db3df8dcd8a6c90dc74e045d887b"
+    },
+    {
+      "path": "tools/verify_release_install.py",
+      "sha256": "3d87164ec0d1a6de154d86957970d91645c36f4d63b411f0d5a597fb0629777a"
     }
   ]
 }
