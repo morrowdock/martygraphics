@@ -130,7 +130,10 @@ final class SolidHardeningTests: XCTestCase {
                                   {"revolvedProfile": {"sweep": 90, "points": [[0, 0], [10, 0], [12, 4], [10, 8], [0, 8]]}},
                                   {"revolvedProfile": {"closed": true, "sweep": 1, "points": [[40, 0], [44, 0], [44, 5], [40, 5]]}},
                                   {"revolvedProfile": {"closed": true, "sweep": 359.5, "points": [[50, 0], [54, 0], [54, 5]]}},
-                                  {"revolvedProfile": {"closed": true, "sweep": 360, "points": [[60, 0], [64, 0], [64, 5]]}}]}
+                                  {"revolvedProfile": {"closed": true, "sweep": 360, "points": [[60, 0], [64, 0], [64, 5]]}}]},
+            {"id": "u", "shape": [{"revolvedProfile": {"closed": true, "sweep": 359.99999999, "points": [[70, 0], [74, 0], [74, 5]]}},
+                                  {"revolvedProfile": {"sweep": 359.99999999, "start": 45, "points": [[0, 0], [10, 0], [10, 8], [0, 8]]}},
+                                  {"revolvedProfile": {"closed": true, "sweep": 359.9999, "points": [[80, 0], [84, 0], [84, 5]]}}]}
             """)
         let turbofan = SolidAssemblyFormatTests.planetaryURL.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent()

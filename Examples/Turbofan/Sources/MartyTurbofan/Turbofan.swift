@@ -37,9 +37,11 @@ func verify(_ m: TurbofanModel, cell: Double = 1.0) throws -> TurbofanChecks.Rep
     check(r.axisError < 1e-9, "shafts and rotors spin about the engine axis (largest axis offset \(String(format: "%.1e", r.axisError)))")
     check(r.coaxialError < 1e-6, "coaxial: over \(r.sampledAngles) sampled input angles no rotating vertex changes radius or axial position (max \(String(format: "%.1e", r.coaxialError)) mm)")
     for c in r.clearances where ["fan", "lpc", "hpc", "hpt", "lpt", "spinner", "fanDisk", "lpShaft", "hpShaft"].contains(c.part) {
-        check(c.gap >= 2, String(format: "%@ clears everything that does not turn with it: gap >= %.0f mm (nearest: %@)", c.part, c.gap, c.nearest))
+        check(c.gap >= 2, String(format: "%@ clears everything that does not turn with it: gap >= %.2f mm, a lower bound (nearest: %@)",
+                                 c.part, c.gap, c.nearest))
     }
-    check(r.interferences.isEmpty, "no blade, vane, casing or shaft interference at any angle (swept shadows on a \(fmt(cell)) mm grid)")
+    check(r.interferences.isEmpty, String(format: "no blade, vane, casing or shaft interference at any angle (smallest lower-bound gap %.2f mm)",
+                                          r.minimumGap))
     // Stage counts as authored.
     func rows(_ id: String) -> Int { doc.shapes[id]?.filter { $0.kind == "bladeRow" }.count ?? 0 }
     check(rows("fan") == 1 && rows("lpc") == 3 && rows("hpc") == 6 && rows("hpt") == 2 && rows("lpt") == 4,

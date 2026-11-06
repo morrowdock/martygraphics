@@ -84,6 +84,29 @@ final class SolidTurboTests: XCTestCase {
                                                                           "closed": .bool(true), "sweep": .number(400)])]))),
                        "part.revolvedProfile.sweep")
         XCTAssertEqual(reason(doc(row([:]), material: "unobtainium")), "part.material")
+        // A section that wraps more than a radian round its cylinder.
+        XCTAssertEqual(reason(doc(row(["count": .number(2), "root": .number(10), "chord": .number(200), "stagger": .number(60), "twist": .number(0)]))),
+                       "part.bladeRow.chord")
+        XCTAssertEqual(reason(doc(.object(["revolvedProfile": .object(["points": .array([.array([.number(10), .number(0)]),
+                                                                                         .array([.number(20), .number(0)]),
+                                                                                         .array([.number(20), .number(10)])]),
+                                                                          "closed": .bool(true), "sweep": .number(90), "start": .number(400)])]))),
+                       "part.revolvedProfile.start")
+    }
+
+    func testFullTurnDecisionIsSharedByBuilderAndEstimate() throws {
+        XCTAssertTrue(MGMesh.isFullTurn(359.99999999 * .pi / 180))
+        XCTAssertFalse(MGMesh.isFullTurn(359.9999 * .pi / 180))
+        let wall: [MGVec2] = [MGVec2(10, 0), MGVec2(12, 0), MGVec2(12, 3)]
+        XCTAssertEqual(MGMesh.revolve(wall, closed: true, sweep: 359.99999999 * .pi / 180), MGMesh.revolve(wall, closed: true))
+        for degrees in [359.99999999, 359.9999, 360.0, 200.0] {
+            let d = try doc(.object(["revolvedProfile": .object(["closed": .bool(true), "sweep": .number(degrees),
+                                                                 "points": .array(wall.map { .array([.number($0.x), .number($0.y)]) })])])).get()
+            let spec = d.shapes["row"]![0], mesh = spec.mesh()
+            XCTAssertEqual(spec.meshEstimate.triangles, mesh.triangleCount, "\(degrees)")
+            XCTAssertEqual(spec.meshEstimate.vertices, mesh.positions.count, "\(degrees)")
+            XCTAssertTrue(mesh.edgeReport.isClosed, "\(degrees)")
+        }
     }
 
     func testSweepSegmentsAreExactForWholeFractions() {

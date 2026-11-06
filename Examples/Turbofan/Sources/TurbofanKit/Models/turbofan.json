@@ -33,6 +33,6 @@
     {"say": "Blow: the hot gas rushes through the turbines and spins them. The turbines take energy from the gas to drive the compressors and the fan.", "highlight": ["hpt", "lpt", "hptVanes", "lptVanes"], "focus": ["hpt", "lpt", "plug"], "camera": "hero", "orbit": -52, "spin": 0.5},
     {"say": "Two shafts, one inside the other. The HP turbine drives the HP compressor. The LP turbine drives the fan and LP compressor. Here N2 is 3 times N1.", "highlight": ["lpShaft", "hpShaft"], "explode": 1, "focus": ["lpShaft", "hpShaft", "lpc", "hpc", "hpt", "lpt"], "camera": "front", "orbit": -24, "spin": 1},
     {"say": "Bypass: most of the fan's air never enters the core. It flows down the bypass duct and out the back, and in an engine like this it gives most of the thrust.", "highlight": ["fan", "ogv", "nacelle", "coreCowl"], "camera": "hero", "orbit": -70, "spin": 0.25},
-    {"say": "Exploded: the casings lift away. The spinning parts stay on their shafts below; the fixed vanes, combustor and frames float above.", "explode": 1, "focus": ["fan", "lpc", "hpc", "hpt", "lpt", "lpcVanes", "hpcVanes", "combustor", "hptVanes", "lptVanes", "plug", "rearFrame"], "camera": "front", "orbit": -18}
+    {"say": "Exploded: the casings lift away. The spinning parts stay on their shafts below, beside the fixed exhaust cone; the fixed vanes, combustor and frames float above.", "explode": 1, "focus": ["fan", "lpc", "hpc", "hpt", "lpt", "lpcVanes", "hpcVanes", "combustor", "hptVanes", "lptVanes", "plug", "rearFrame"], "camera": "front", "orbit": -18}
   ]
 }

@@ -144,14 +144,14 @@ final class TurbofanCheckTests: XCTestCase {
         XCTAssertEqual(d[g.index(8, 9)], 3 * 1.41421356 + 1, accuracy: 1e-4)   // (3, 4): chamfer 5.24 vs true 5
     }
 
-    /// A rotor blade row inside a casing: clear with a 6 mm tip gap, overlapping when the casing shrinks.
-    func rig(casingInner: Double) throws -> MGSolidDocument {
+    /// A rotor blade row (tip radius `tip`) inside a 270-degree cutaway casing wall (inner radius `casingInner`).
+    func rig(casingInner: Double, tip: Double = 112) throws -> MGSolidDocument {
         func num(_ a: [Double]) -> MGJSON { .array(a.map { .number($0) }) }
         let rot = num([0, 1, 0, 90])
         let json: MGJSON = .object(["v": .number(1), "kind": .string("assembly"), "parts": .array([
             .object(["id": .string("rotor"), "rot": rot, "joint": .object(["revolute": num([0, 0, 1])]), "drive": .object(["input": .number(2)]),
                      "shape": .array([.object(["shaft": .object(["radius": .number(60), "length": .number(80), "z0": .number(-40)])]),
-                                      .object(["bladeRow": .object(["count": .number(16), "span": .number(54), "chord": .number(30), "root": .number(58),
+                                      .object(["bladeRow": .object(["count": .number(16), "span": .number(tip - 58), "chord": .number(30), "root": .number(58),
                                                                     "stagger": .number(30), "sections": .number(4), "chordSamples": .number(8)])])])]),
             .object(["id": .string("casing"), "rot": rot, "material": .string("darkSteel"),
                      "shape": .object(["revolvedProfile": .object(["points": .array([num([casingInner, -50]), num([casingInner + 8, -50]),
@@ -161,7 +161,16 @@ final class TurbofanCheckTests: XCTestCase {
         return try MGSolidParser.document(json: json).get()
     }
 
-    func testClearanceFindsTipGapAndInterference() throws {
+    /// The true swept gap of the rig: the blade tips reach radius `tip` (their vertices lie on that cylinder; every
+    /// other blade point is inside it), and the flat facets of the casing wall (270 degrees in 72 segments) come in to
+    /// `casingInner * cos(1.875 degrees)` at their middles. The blade and wall overlap axially, and the rotor sweeps
+    /// every angle, so the smallest gap at some angle is exactly the difference.
+    func trueGap(casingInner: Double, tip: Double) -> Double {
+        XCTAssertEqual(MGMesh.sweepSegments(96, sweep: 270 * .pi / 180), 72)
+        return casingInner * cos(3.75 / 2 * .pi / 180) - tip
+    }
+
+    func testClearanceIsALowerBoundOnTheTrueGap() throws {
         let ok = TurbofanChecks.run(try rig(casingInner: 118), samples: 6, cell: 1)
         XCTAssertTrue(ok.openParts.isEmpty)
         XCTAssertEqual(ok.rates["rotor"]!, 2, accuracy: 1e-9)
@@ -169,12 +178,49 @@ final class TurbofanCheckTests: XCTestCase {
         XCTAssertLessThan(ok.coaxialError, 1e-9)
         let gap = try XCTUnwrap(ok.clearances.first { $0.part == "rotor" })
         XCTAssertEqual(gap.nearest, "casing")
-        // True gap 118 - 112 = 6 mm; the grid estimate is conservative by up to about 1.5 cells.
-        XCTAssertGreaterThanOrEqual(gap.gap, 4)
-        XCTAssertLessThanOrEqual(gap.gap, 6.01)
+        // The reported gap is never above the true gap; here it is the true gap less the 1e-5 mm merge margin.
+        let truth = trueGap(casingInner: 118, tip: 112)
+        XCTAssertLessThanOrEqual(gap.gap, truth)
+        XCTAssertGreaterThan(gap.gap, truth - 0.001)
         XCTAssertTrue(ok.interferences.isEmpty)
         let bad = TurbofanChecks.run(try rig(casingInner: 110), samples: 6, cell: 1)
         XCTAssertEqual(bad.interferences.map(\.part), ["rotor"])
+    }
+
+    /// A near miss that is not aligned with the 1 mm grid: the grid alone can over-report it, the bound cannot.
+    func testNearMissOffTheGridIsNotOverReported() throws {
+        let r = TurbofanChecks.run(try rig(casingInner: 114.21, tip: 112.79), samples: 4, cell: 1)
+        let gap = try XCTUnwrap(r.clearances.first { $0.part == "rotor" })
+        let truth = trueGap(casingInner: 114.21, tip: 112.79)   // 1.359 mm
+        XCTAssertEqual(truth, 1.359, accuracy: 0.001)
+        XCTAssertLessThanOrEqual(gap.gap, truth)
+        XCTAssertGreaterThan(gap.gap, truth - 0.001)
+        XCTAssertGreaterThan(gap.gridGap, 0)
+        XCTAssertTrue(r.interferences.isEmpty)
+        // Touching within a few hundredths of a millimetre still counts as clear only when it is.
+        let touching = TurbofanChecks.run(try rig(casingInner: 112.79 / cos(3.75 / 2 * .pi / 180) - 0.02, tip: 112.79), samples: 2, cell: 1)
+        XCTAssertEqual(touching.interferences.map(\.part), ["rotor"])
+    }
+
+    func testFacetBulgeIsTheSagitta() {
+        // One facet of a radius-900 wall with a 3.75-degree step dips 900 (1 - cos 1.875 degrees) = 0.48 mm.
+        let a = 3.75 * .pi / 180
+        let mesh = MGMesh(positions: [MGVec3(0, 900, 0), MGVec3(0, 900 * cos(a), 900 * sin(a)), MGVec3(10, 900, 0)], indices: [0, 1, 2])
+        let t = TurbofanChecks.projectedTriangles(mesh, .identity)
+        XCTAssertEqual(t.count, 1)
+        XCTAssertEqual(t[0].bulge, 900 * (1 - cos(a / 2)), accuracy: 1e-9)
+        XCTAssertEqual(t[0].bulge, 0.482, accuracy: 0.001)
+        // The region reaches in to the facet's middle radius, 900 cos 1.875 degrees, and no further.
+        XCTAssertEqual(t[0].lo.x, 900 * cos(a / 2), accuracy: 1e-9)
+        XCTAssertEqual(t[0].hi.x, 900, accuracy: 1e-9)
+    }
+
+    func testPolygonDistance() {
+        let sq = [MGVec2(0, 0), MGVec2(2, 0), MGVec2(2, 2), MGVec2(0, 2)]
+        XCTAssertEqual(TurbofanChecks.polygonDistance(sq, sq.map { MGVec2($0.x + 5, $0.y + 1) }), 3, accuracy: 1e-12)
+        XCTAssertEqual(TurbofanChecks.polygonDistance(sq, [MGVec2(1, 1)]), 0)
+        XCTAssertEqual(TurbofanChecks.polygonDistance(sq, [MGVec2(3, -1), MGVec2(3, 5)]), 1, accuracy: 1e-12)
+        XCTAssertEqual(TurbofanChecks.polygonDistance(sq, [MGVec2(1, -1), MGVec2(1, 5)]), 0)
     }
 
     func testBundledTurbofanPassesItsChecks() throws {
@@ -183,13 +229,14 @@ final class TurbofanCheckTests: XCTestCase {
         XCTAssertEqual(m.document.steps.count, 8)
         XCTAssertEqual(m.authoredInputScale("lpShaft"), 1)
         XCTAssertEqual(m.authoredInputScale("hpShaft"), 3)
-        // A coarser grid and vertex stride keep the debug-build test quick; the CLI runs the full 1 mm check.
+        // A coarser grid (it only bounds the exact search) and a vertex stride keep the debug-build test quick.
         let r = TurbofanChecks.run(m.document, samples: 4, cell: 2, vertexStride: 7)
         XCTAssertTrue(r.openParts.isEmpty, "\(r.openParts)")
         XCTAssertEqual(r.spoolRates, [1, 3])
         XCTAssertLessThan(r.axisError, 1e-9)
         XCTAssertLessThan(r.coaxialError, 1e-6)
         XCTAssertTrue(r.interferences.isEmpty, "\(r.interferences)")
+        XCTAssertGreaterThan(r.minimumGap, 2)
         XCTAssertLessThan(r.triangles, 1_000_000)
         for s in m.document.steps { XCTAssertLessThanOrEqual(s.say.count, MGSolidLimits.say) }
     }

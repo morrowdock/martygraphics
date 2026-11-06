@@ -97,6 +97,10 @@ extension MGMesh {
         for t in 0..<triangleCount { indices.swapAt(3 * t + 1, 3 * t + 2) }
     }
 
+    /// True when a sweep (radians) is a full turn within 1e-9 rad. The one place that decides full versus partial
+    /// revolves, used by the builder, `MGShapeSpec.meshEstimate` and the JSON shape (`MGSolidTurbo.partialSweep`).
+    public static func isFullTurn(_ sweep: Double) -> Bool { sweep >= 2 * .pi - 1e-9 }
+
     /// Segments of a partial revolve: the full-turn count scaled by the swept fraction, rounded up (a tolerance keeps
     /// exact fractions such as 210/360 of 96 = 56 from rounding up to 57), at least 2.
     public static func sweepSegments(_ segments: Int, sweep: Double) -> Int {
@@ -108,7 +112,7 @@ extension MGMesh {
     /// Same profile rules as `revolve(_:segments:closed:)`; a sweep of a full turn gives that result. Used for
     /// cutaway casings: the caps are real solid faces, so any renderer shows the wall section.
     public static func revolve(_ points: [MGVec2], segments: Int = 96, closed: Bool, sweep: Double, start: Double = 0) -> MGMesh {
-        guard sweep < 2 * .pi - 1e-9 else { return revolve(points, segments: segments, closed: closed) }
+        guard !isFullTurn(sweep) else { return revolve(points, segments: segments, closed: closed) }
         precondition(points.count >= 2 && sweep > 0, "revolve needs a profile and a positive sweep")
         var prof = points
         if MGProfile.signedArea(prof) < 0 { prof.reverse() }
@@ -158,6 +162,16 @@ enum MGSolidTurbo {
     static func bladeRowEstimate(count: Int, sections: Int, chordSamples: Int) -> (vertices: Int, triangles: Int) {
         let n = 2 * max(4, chordSamples), s = max(1, sections), c = max(1, count)
         return (c * (s + 1) * n, c * (s * n * 2 + 2 * (n - 2)))
+    }
+
+    /// The sweep and start (radians) of a `revolvedProfile` that is a partial revolve, or nil for a full turn.
+    static func partialSweep(_ f: [String: MGJSON]) -> (sweep: Double, start: Double)? {
+        guard case .number(let degrees)? = f["sweep"] else { return nil }
+        let sweep = degrees * .pi / 180
+        guard !MGMesh.isFullTurn(sweep) else { return nil }
+        var start = 0.0
+        if case .number(let s)? = f["start"] { start = s * .pi / 180 }
+        return (sweep, start)
     }
 
     /// Exact counts of `MGMesh.revolve(_:segments:closed:sweep:start:)` for a partial sweep: one ring of

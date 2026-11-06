@@ -82,9 +82,11 @@ public struct MGShapeSpec: Equatable, Sendable {
         case "revolvedProfile":
             var closed = false
             if case .bool(let b)? = fields["closed"] { closed = b }
-            let sweep = n("sweep", 360)
-            m = sweep < 360 ? .revolve(points(fields["points"]), segments: 96, closed: closed, sweep: sweep * .pi / 180, start: n("start") * .pi / 180)
-                : .revolve(points(fields["points"]), segments: 96, closed: closed)
+            if let partial = MGSolidTurbo.partialSweep(fields) {
+                m = .revolve(points(fields["points"]), segments: 96, closed: closed, sweep: partial.sweep, start: partial.start)
+            } else {
+                m = .revolve(points(fields["points"]), segments: 96, closed: closed)
+            }
         case "blade":
             m = .blade(span: n("span"), chord: n("chord"), thickness: n("thickness", 0.12), twist: n("twist") * .pi / 180,
                        root: n("root"), tipChord: n("tipChord", n("chord")), camber: n("camber"), camberPosition: n("camberPosition", 0.4))
@@ -158,8 +160,9 @@ public struct MGShapeSpec: Equatable, Sendable {
             let pts = points(fields["points"])
             var closed = false
             if case .bool(let b)? = fields["closed"] { closed = b }
-            let sweep = n("sweep", 360)
-            if sweep < 360 { return MGSolidTurbo.sweptRevolveEstimate(pts, closed: closed, segments: 96, sweep: sweep * .pi / 180) }
+            if let partial = MGSolidTurbo.partialSweep(fields) {
+                return MGSolidTurbo.sweptRevolveEstimate(pts, closed: closed, segments: 96, sweep: partial.sweep)
+            }
             return revolve(pts.count, poles: pts.filter { $0.x < 1e-9 }.count, segments: 96, closed: closed)
         case "bladeRow":
             return MGSolidTurbo.bladeRowEstimate(count: Int(n("count")), sections: Int(n("sections", 8)), chordSamples: Int(n("chordSamples", 16)))

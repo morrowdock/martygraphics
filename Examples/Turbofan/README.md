@@ -91,9 +91,12 @@ more blades.
 
   Because the rotors are coaxial, a rotating part sweeps exactly the solid of revolution of
   its (radius, axial) "shadow". So two parts that turn at different speeds can only touch if
-  their shadows overlap. The check draws every part's shadow on a 1 mm grid and reports each
-  rotor's smallest gap to anything that does not turn with it. In this model every gap is at
-  least 4 mm.
+  their shadows overlap. A flat triangle can sit slightly closer to the axis than its corners
+  (a casing facet at radius 900 mm with 3.75° steps dips 0.48 mm in the middle), so the check
+  grows each projected triangle inward by that dip and measures exact distances between these
+  regions. The result is a lower bound on each rotor's smallest gap, at any angle, to anything
+  that does not turn with it (a 1 mm grid only decides where to look). In this model the
+  smallest lower bound is 4.52 mm, between the fan tips and the nacelle.
 * **Path tracing.** [`MartySolidRT`](Sources/MartySolidRT/MGSolidRT.swift) turns an
   `MGSolidSnapshot` (plain world-space arrays) into an `MGRTScene`, one mesh per part. It
   maps colours from sRGB to linear, metallic presets to GGX metals and the rest to plastic
@@ -135,8 +138,8 @@ scene is built once. Both need a Metal ray-tracing GPU (any Apple silicon Mac).
 
 * Air is not simulated. Nothing here computes flow, pressure, temperature or thrust; the
   numbers in "How a turbofan works" describe real engines in general, not this model.
-* The clearance check uses a 1 mm grid, so gaps are estimates to about 1.5 mm, and it covers
-  only parts that turn relative to each other. Fixed parts may touch each other (vanes are
+* The clearance check gives lower bounds, not exact gaps (it can under-report, never
+  over-report), and it covers only parts that turn relative to each other. Fixed parts may touch each other (vanes are
   set into the casing walls on purpose).
 * Blade rows have straight radial stacking lines and flat tip caps; real blades are swept,
   leaned and have shaped tips and platforms.
