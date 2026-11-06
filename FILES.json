@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f317c1765208ebf5868edb319baea38427dffac66230ca98a9c48dbbee7962f7"
+      "sha256": "626a007bbfc88eb4730de57281b1b09c30fe159709f9d0d1ddc6993a90baa9c2"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -183,7 +183,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/RoundtripFixTests.swift",
-      "sha256": "e2d2aa6e63c2f84904929eb7d262ae87587c5720450b1d1116a503bc4328cc07"
+      "sha256": "f19f7212caf202a706432c891d2384c10c9840f0fe4b76837b1486be8be96ad8"
     },
     {
       "path": "Tests/MartyGraphicsTests/StreamRegressionTests.swift",

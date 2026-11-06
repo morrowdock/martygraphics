@@ -49,6 +49,10 @@ final class RoundtripFixTests: XCTestCase {
                 let again = try MGParser.item(.object(item.wire()), context(scene))
                 XCTAssertEqual(again, item, "span \(span) \(item.id)")
             }
+            // The same round trip through JSON text: the capped default must survive number formatting.
+            let text = scene.items.map { MGJSON.object($0.wire()).canonicalString }.joined(separator: ",")
+            let reparsed = try R.scene(#"{"v":1,"world":{"w":\#(span),"h":2},"items":["# + text + "]}")
+            XCTAssertEqual(reparsed.items, scene.items, "span \(span) text")
         }
     }
 
@@ -103,8 +107,12 @@ final class RoundtripFixTests: XCTestCase {
         // `v` may stream after the template; the preview starts as soon as template and params close.
         var templated = MGStreamParser()
         XCTAssertNotNil(templated.feed(#"{"template":"two_pointers","params":{"vals":[1,2,4,7],"target":9}"#))
-        // A version that is still streaming in (incomplete member) does not block or fake a preview.
+        // A version that is still streaming in (no delimiter yet) does not block the template preview, but the same
+        // member once complete as anything other than 1 gives no preview.
+        let prefix = #"{"template":"two_pointers","params":{"vals":[1,2,4,7],"target":9},"v":2"#
         var partial = MGStreamParser()
-        XCTAssertNil(partial.feed(#"{"v":"#))
+        XCTAssertNotNil(partial.feed(prefix))
+        var complete = MGStreamParser()
+        XCTAssertNil(complete.feed(prefix + ","))
     }
 }
