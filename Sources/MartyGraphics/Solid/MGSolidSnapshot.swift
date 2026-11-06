@@ -103,6 +103,13 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
     public struct Material: Codable, Equatable, Sendable {
         public var id: String
         public var parameters: MGMaterialParameters
+        /// v2: the part's own light, nil for none.
+        public var emission: Emission?
+    }
+    /// v2: emitted light as an sRGB colour and an intensity (0...4); renderers scale it into their own units.
+    public struct Emission: Codable, Equatable, Sendable {
+        public var color: [Double]
+        public var intensity: Double
     }
     public struct PartRange: Codable, Equatable, Sendable {
         public var id: String
@@ -110,8 +117,21 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
         public var firstTriangle: Int
         public var triangleCount: Int
         public var material: Int
+        /// v2: coverage 0.1...1 that renderers multiply with the material's opacity (always present in v2).
+        public var opacity: Double?
+        /// v2: the cap triangles of a section cut (`firstTriangle ≤ capFirstTriangle`, inside the part's range).
+        public var capFirstTriangle: Int?
+        public var capTriangleCount: Int?
     }
-    public var format = "martygraphics.solid.snapshot/1"
+    /// v2: the section of the exported step, in the snapshot's world frame (Y up, mm). The plane is placed at the
+    /// document's default input; a cut part carries its cut as it moves. Points with `normal · p > offset` are cut away.
+    public struct Section: Codable, Equatable, Sendable {
+        public var normal: [Double]
+        public var offset: Double
+        public var parts: [String]
+    }
+    public static let formatV1 = "martygraphics.solid.snapshot/1", formatV2 = "martygraphics.solid.snapshot/2"
+    public var format = MGSolidSnapshot.formatV1
     public var title: String
     /// x, y, z per vertex.
     public var positions: [Float]
@@ -130,23 +150,43 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
     public var groundY: Double
     public var boundsMin: [Double]
     public var boundsMax: [Double]
+    /// v2: the step's section, nil when nothing is cut.
+    public var section: Section?
 
     public var vertexCount: Int { positions.count / 3 }
     public var triangleCount: Int { indices.count / 3 }
 
+    /// Format v1: the plain posed assembly (byte-identical to earlier releases).
     public static func make(_ assembly: MGAssembly, params: MGPoseParameters, camera: MGSolidCamera? = nil, aspect: Double = 16.0 / 10,
                             lighting: MGStudioLighting = .studio, stage: MGTransform = MGSolidStage.zUpToYUp) -> MGSolidSnapshot {
+        build(assembly, view: nil, params: params, camera: camera, aspect: aspect, lighting: lighting, stage: stage)
+    }
+
+    /// Format v2: one step of a compiled document (`step` 0-based; nil for the plain scene) with its section cuts and
+    /// cap ranges, part opacity (ghosts included) and material emission.
+    public static func make(_ document: MGSolidDocument, step: Int?, params: MGPoseParameters, camera: MGSolidCamera? = nil,
+                            aspect: Double = 16.0 / 10, lighting: MGStudioLighting = .studio,
+                            stage: MGTransform = MGSolidStage.zUpToYUp) -> MGSolidSnapshot {
+        build(document.assembly, view: document.view(step: step), params: params, camera: camera, aspect: aspect, lighting: lighting, stage: stage)
+    }
+
+    static func build(_ assembly: MGAssembly, view: MGSolidView?, params: MGPoseParameters, camera: MGSolidCamera?, aspect: Double,
+                      lighting: MGStudioLighting, stage: MGTransform) -> MGSolidSnapshot {
         let pose = assembly.pose(params)
         var pos: [Float] = [], nor: [Float] = [], idx: [UInt32] = [], triMat: [UInt16] = []
         var materials: [Material] = [], materialIndex: [String: Int] = [:], ranges: [PartRange] = []
         var bounds = MGBounds.empty
         for part in assembly.parts {
             let t = stage * (pose.world[part.id] ?? .identity)
-            let rm = part.mesh.renderMesh(creaseAngle: part.creaseAngle)
+            let pv = view?.part(part.id)
+            let rm = pv?.cut?.renderMesh(creaseAngle: part.creaseAngle) ?? part.mesh.renderMesh(creaseAngle: part.creaseAngle)
             let mid: Int
-            if let m = materialIndex[part.material.id] { mid = m } else {
-                mid = materials.count; materialIndex[part.material.id] = mid
-                materials.append(Material(id: part.material.id, parameters: part.material.parameters))
+            let emission = pv?.emission.flatMap { $0.intensity > 0 ? $0 : nil }
+            let key = part.material.id + (emission.map { "+" + $0.id } ?? "")
+            if let m = materialIndex[key] { mid = m } else {
+                mid = materials.count; materialIndex[key] = mid
+                materials.append(Material(id: key, parameters: part.material.parameters,
+                                          emission: emission.map { Emission(color: $0.color, intensity: $0.intensity) }))
             }
             let base = UInt32(pos.count / 3)
             for p in rm.positions {
@@ -154,17 +194,31 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
                 pos += [Float(w.x), Float(w.y), Float(w.z)]
             }
             for n in rm.normals { let w = t.applyVector(n); nor += [Float(w.x), Float(w.y), Float(w.z)] }
-            ranges.append(PartRange(id: part.id, name: part.name, firstTriangle: idx.count / 3, triangleCount: rm.indices.count / 3, material: mid))
+            var range = PartRange(id: part.id, name: part.name, firstTriangle: idx.count / 3, triangleCount: rm.indices.count / 3, material: mid)
+            if let pv {
+                range.opacity = pv.opacity
+                if let cut = pv.cut { range.capFirstTriangle = range.firstTriangle + cut.capFirstTriangle; range.capTriangleCount = cut.capTriangleCount }
+            }
+            ranges.append(range)
             idx += rm.indices.map { $0 + base }
             triMat += [UInt16](repeating: UInt16(mid), count: rm.indices.count / 3)
         }
         let cam = camera ?? MGSolidCamera.framing(bounds, yaw: 32, pitch: 28, aspect: aspect)
         // An empty assembly exports zero bounds (JSON has no infinities).
         if bounds.isEmpty { bounds = MGBounds(min: .zero, max: .zero) }
-        return MGSolidSnapshot(title: assembly.name, positions: pos, normals: nor, indices: idx, triangleMaterials: triMat,
-                               materials: materials, parts: ranges, camera: cam, aspect: aspect, lighting: lighting,
-                               groundY: bounds.min.y,
-                               boundsMin: [bounds.min.x, bounds.min.y, bounds.min.z], boundsMax: [bounds.max.x, bounds.max.y, bounds.max.z])
+        var snap = MGSolidSnapshot(title: assembly.name, positions: pos, normals: nor, indices: idx, triangleMaterials: triMat,
+                                   materials: materials, parts: ranges, camera: cam, aspect: aspect, lighting: lighting,
+                                   groundY: bounds.min.y,
+                                   boundsMin: [bounds.min.x, bounds.min.y, bounds.min.z], boundsMax: [bounds.max.x, bounds.max.y, bounds.max.z])
+        if let view {
+            snap.format = formatV2
+            if let sec = view.section {
+                let n = stage.applyVector(sec.plane.normal)
+                // Stage transforms may translate: offset is measured along the normal from the stage origin.
+                snap.section = Section(normal: [n.x, n.y, n.z], offset: sec.plane.offset + n.dot(stage.translation), parts: sec.parts)
+            }
+        }
+        return snap
     }
 
     /// JSON encoding (sorted keys) for interchange.
@@ -246,7 +300,7 @@ extension MGSolidSnapshot {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         func bad(_ key: CodingKeys, _ why: String) -> DecodingError { .dataCorruptedError(forKey: key, in: c, debugDescription: why) }
         format = try c.decode(String.self, forKey: .format)
-        guard format == "martygraphics.solid.snapshot/1" else { throw bad(.format, "unknown snapshot format") }
+        guard format == MGSolidSnapshot.formatV1 || format == MGSolidSnapshot.formatV2 else { throw bad(.format, "unknown snapshot format") }
         title = try c.decode(String.self, forKey: .title)
         positions = try c.decode([Float].self, forKey: .positions)
         normals = try c.decode([Float].self, forKey: .normals)
@@ -269,5 +323,32 @@ extension MGSolidSnapshot {
         guard parts.allSatisfy({ $0.firstTriangle >= 0 && $0.triangleCount >= 0 && $0.firstTriangle <= indices.count / 3 - $0.triangleCount
                                  && $0.material >= 0 && $0.material < materials.count }) else { throw bad(.parts, "part ranges must lie inside the triangles") }
         guard aspect > 0 else { throw bad(.aspect, "aspect must be positive") }
+        section = try c.decodeIfPresent(Section.self, forKey: .section)
+        // v2 fields are legal only in v2; a v1 file keeps exactly its v1 meaning.
+        let v2Fields = section != nil || materials.contains { $0.emission != nil }
+            || parts.contains { $0.opacity != nil || $0.capFirstTriangle != nil || $0.capTriangleCount != nil }
+        if format == MGSolidSnapshot.formatV1 {
+            guard !v2Fields else { throw bad(.format, "snapshot/1 has no section, opacity, cap or emission fields") }
+            return
+        }
+        guard parts.allSatisfy({ ($0.opacity.map { MGSolidView.opacityRange.contains($0) } ?? false) }) else {
+            throw bad(.parts, "every v2 part has an opacity in 0.1...1")
+        }
+        for p in parts {
+            switch (p.capFirstTriangle, p.capTriangleCount) {
+            case (nil, nil): continue
+            case (let f?, let n?):
+                guard f >= p.firstTriangle, n >= 0, f <= p.firstTriangle + p.triangleCount - n else { throw bad(.parts, "cap ranges must lie inside their part") }
+            default: throw bad(.parts, "a cap range needs its first triangle and its count")
+            }
+        }
+        guard materials.allSatisfy({ m in m.emission.map { $0.color.count == 3 && $0.color.allSatisfy(\.isFinite) && MGEmission.intensityRange.contains($0.intensity) } ?? true }) else {
+            throw bad(.materials, "emission needs three finite colour numbers and an intensity in 0...4")
+        }
+        if let s = section {
+            guard s.normal.count == 3, s.normal.allSatisfy(\.isFinite), s.offset.isFinite,
+                  (s.normal[0] * s.normal[0] + s.normal[1] * s.normal[1] + s.normal[2] * s.normal[2] - 1).magnitude < 1e-6,
+                  s.parts.allSatisfy({ id in parts.contains { $0.id == id } }) else { throw bad(.section, "section needs a unit normal, a finite offset and known parts") }
+        }
     }
 }

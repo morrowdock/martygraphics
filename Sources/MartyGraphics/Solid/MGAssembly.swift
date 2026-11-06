@@ -43,13 +43,17 @@ public struct MGPart: Equatable, Sendable {
     public var explodeWindow: ClosedRange<Double>
     /// Faces meeting at more than this angle (radians) render with a hard edge.
     public var creaseAngle: Double
+    /// Coverage (0.1...1; 1 = opaque) that renderers multiply with the material's own opacity (assembly v2 `opacity`).
+    public var opacity: Double = 1
+    /// The part's own light (assembly v2 `emissive`), nil for none.
+    public var emission: MGEmission?
 
     public init(id: String, name: String, mesh: MGMesh, material: MGMaterialPreset, placement: MGTransform = .identity,
                 parent: String? = nil, joint: MGJoint = .fixed, drive: MGDrive? = nil, explode: MGVec3 = .zero,
-                explodeWindow: ClosedRange<Double> = 0...1, creaseAngle: Double = 0.6) {
+                explodeWindow: ClosedRange<Double> = 0...1, creaseAngle: Double = 0.6, opacity: Double = 1, emission: MGEmission? = nil) {
         self.id = id; self.name = name; self.mesh = mesh; self.material = material; self.placement = placement
         self.parent = parent; self.joint = joint; self.drive = drive; self.explode = explode
-        self.explodeWindow = explodeWindow; self.creaseAngle = creaseAngle
+        self.explodeWindow = explodeWindow; self.creaseAngle = creaseAngle; self.opacity = opacity; self.emission = emission
     }
 }
 
