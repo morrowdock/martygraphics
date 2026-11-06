@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Document the solid format's text limits (title 80, part name 60, step text 240) and
+  that `at` / `rot` go inside each shape entry, and add worked example models for crank
+  drives (`slider-crank.json`) and repeated blades (`propeller.json`), kept valid by a
+  test. Found in the first prompt-to-3D trial, where most repairs were text-length
+  refusals and models skipped drives the docs described without an example.
 - Add `marty-solid`, a command in `Examples/Solid3D` that checks or renders any solid
   assembly JSON file. `check` prints a JSON report with the exact refusal reason or the
   solved ratios and engine checks. `render` writes stills, captioned step images, a loop

@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "8581bc90694495ed959e3108b13b60e9d93130d9d3d7fd6f5760d72c20ec9752"
+      "sha256": "09056580d7f7377738c55448f3c715e4db027eecece47ed75dea009edb514481"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -128,6 +128,14 @@
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json",
       "sha256": "2658695a2b221af1078982934b3893c236ea944101ff1c00fde7ef06cbba8755"
+    },
+    {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/propeller.json",
+      "sha256": "312427a7637777b9e612a1e80373137ff40ef8b3ea7d4dbfc89ab4f0f947bb9a"
+    },
+    {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/slider-crank.json",
+      "sha256": "17c3e8ac5f45ce1be7776d2df291fc6042fd82cb5497decf4a00f4954c9d8491"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Solid3D.swift",
@@ -362,6 +370,10 @@
       "sha256": "77db900201f8172922acb1636ad36758ab5eef25226d1e4330af4a63e6ee7ae8"
     },
     {
+      "path": "Tests/MartyGraphicsTests/SolidExampleModelsTests.swift",
+      "sha256": "86eec5c379d36eeafdc98241920f69c674a9874e452a6c18852d237498b97dac"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/SolidHardeningTests.swift",
       "sha256": "555474e7323f13b426385d1729c178c171ecb456260d339370709b82a679279d"
     },
@@ -415,7 +427,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "809ad5acb13c808bac0885d5f98abd2419abd4865e81ad8fc6a4f02af28566b5"
+      "sha256": "128f31d58529a4d93872ba62843b9bb2d7a659b8a4f4691e70ca9b43e171bf9b"
     },
     {
       "path": "docs/THIRD-PARTY.md",
