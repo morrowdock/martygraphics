@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add a maintainer-dispatched hosted `macos` CI job (standard `macos-26` runner) that builds and tests the root package, examples and SceneValidator; GPU tests skip themselves on hosted VMs.
 - Add reusable solid components. A component is a closed-key JSON definition with
   numeric parameters (`default`, `min`, `max`, `integer`), parts and constraints whose
   numbers may be small expressions (`param`, `add`, `sub`, `mul`, `div`, `min`, `max`,

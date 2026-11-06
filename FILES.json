@@ -11,7 +11,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "e3fd2423cde12949e52f66f4396c900a616f6e931000c5bd176b91ce2a621280"
+      "sha256": "af24cf13b21d1f88dc7367acb59419246303d6bea2d047644fe36b8e2b221637"
     },
     {
       "path": ".gitignore",
@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "306447c84c6644eaabbb3259fefcff0096b84771cb536dca532b81a8a5f5d0d4"
+      "sha256": "73c96be6aea3cddc6c596a80a27851b756b7f978d301fd51e500ce9369a6a872"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -507,7 +507,7 @@
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
-      "sha256": "d664c0f826f65f8ec26bfb1bd2b15dfbbc345a194cca9866b90be676adc920a5"
+      "sha256": "6c3ad467a16a2d356f07193ebffa270b788340911ec078010a7a0293692aa0d3"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",

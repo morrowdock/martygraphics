@@ -48,7 +48,30 @@ acyclic chains, deep public-API chains, and cycles introduced by step edits
 or patches. The standard mechanics math helpers have numerical checks;
 there are no built-in mechanics walkthrough templates.
 
-The Ubuntu workflow checks repository hygiene and DCO. It does not execute
-these Apple-framework build/tests. Record a successful Mac run at the exact
+The Ubuntu `hygiene` job checks repository hygiene and DCO. The `macos` job
+(see below) runs the build and tests on a hosted Mac. Record a successful Mac run at the exact
 release commit before publication. These tests do not establish visual
 quality on a physical iPhone/iPad or cover every possible scene.
+
+## Hosted macOS run (maintainer dispatch)
+
+`.github/workflows/ci.yml` is dispatch-only: no PR, fork, or push triggers, no
+secrets, read-only token, exact head-SHA checkout, no caches. A maintainer runs it:
+
+```sh
+gh workflow run ci.yml --repo morrowdock/martygraphics --ref main \
+  -f base_sha=<full base sha> -f head_sha=<full PR head sha>
+gh run watch
+```
+
+Use the actual PR head SHA, not the synthetic merge. The `macos` job runs on the
+free standard `macos-26` image (Xcode 26.6) and does `swift build --jobs 2`,
+`swift test --jobs 2` for the root package, tests for Examples/Solid3D,
+Examples/Turbofan, Examples/KeySwitch3D and tools/SceneValidator, and builds for
+Examples/Showcase and Examples/PathTrace. Logs upload as the `macos-test-logs`
+artifact. Several dispatches run in parallel, so they do not queue on one Mac.
+
+Hosted VMs have no real Metal GPU. Tests that need one already `XCTSkip`
+themselves (`MGRTRenderer.isSupported`); no test was weakened. A hosted pass
+therefore does NOT replace local native receipts: GPU path-tracer checks and
+iOS-simulator checks still require a local Mac receipt.

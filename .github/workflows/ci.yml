@@ -26,11 +26,54 @@ jobs:
           BASE_SHA: ${{ inputs.base_sha }}
           HEAD_SHA: ${{ inputs.head_sha }}
         run: python3 tools/check_dco.py "$BASE_SHA" "$HEAD_SHA"
-  # SwiftUI/SceneKit cannot build on ubuntu-latest. Required Mac commands:
-  # swift build && swift test (see docs/VERIFY-ON-MAC.md).
-  # This job stays explicitly skipped; hygiene success is not build validation.
-  apple-build:
-    if: ${{ false }}
-    runs-on: ubuntu-latest
+  # Hosted macOS build/tests on GitHub's free standard runner (not a larger,
+  # paid runner). Dispatch only; no secrets; no caches (a cache shared across
+  # PRs could be poisoned, and the build is small enough to run clean).
+  # GPU-dependent tests already XCTSkip when no Metal ray-tracing device exists
+  # (hosted VMs have no real GPU). Local native receipts stay required for GPU
+  # and iOS-simulator checks (docs/VERIFY-ON-MAC.md).
+  macos:
+    runs-on: macos-26
+    timeout-minutes: 60
     steps:
-      - run: echo "Mac verification required; Apple frameworks unavailable on Linux"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.head_sha }}
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          swift --version
+          xcodebuild -version
+          sw_vers
+      - name: Run packages
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          fail=0
+          run() { # name, command...
+            local name=$1; shift
+            echo "::group::$name"
+            local t=$SECONDS
+            if "$@" 2>&1 | tee "logs/$name.log"; then echo "PASS $name $((SECONDS-t))s" | tee -a logs/summary.txt
+            else echo "FAIL $name $((SECONDS-t))s" | tee -a logs/summary.txt; fail=1; fi
+            echo "::endgroup::"
+          }
+          run root-build swift build --jobs 2
+          run root-test swift test --jobs 2
+          for p in Examples/Solid3D Examples/Turbofan Examples/KeySwitch3D tools/SceneValidator; do
+            n=$(echo "$p" | tr / -)
+            run "$n-test" swift test --jobs 2 --package-path "$p"
+          done
+          for p in Examples/Showcase Examples/PathTrace; do
+            run "$(echo "$p" | tr / -)-build" swift build --jobs 2 --package-path "$p"
+          done
+          exit $fail
+      - name: Upload logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: macos-test-logs
+          path: logs/
+          if-no-files-found: warn
