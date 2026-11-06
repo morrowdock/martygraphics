@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "c88e60d6aa7c1a48786a4954367297c8fdf4bbf982449447a75f8dc220fc059d"
+      "sha256": "b7f5cd008819f3c4cb13f13703af7d158e7a010f0f3d9e81102cc3cdbcb25ca5"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -195,7 +195,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "d0cb75a36eb0c5e28b4b84ce22a724a40927b2f5d9d7da32ebf335f0848bef33"
+      "sha256": "a2f1c34acd0dc3c19fb4ea3ea3c80aa78ae366749154b6dd56b298b6cc5c4371"
     },
     {
       "path": "SECURITY.md",
@@ -439,7 +439,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "c3c8be90b305430a9523184c8cb04b5fdee94f6ff39eefa21bf4783346014cac"
+      "sha256": "32122ececad0678b0e848a632b12fbafb9e22bc5352c4e7ff991a73214d9acf9"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -467,7 +467,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "f4f4e2146a178639c401734a671ecdc9485eb49d53344e70f0be4bd56b92f84c"
+      "sha256": "65baea7cd0fa5bb1b28dcf2cb6ecca07588afb272283842d6dd8fca27fcec3fb"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -480,6 +480,42 @@
     {
       "path": "docs/VERIFY-ON-MAC.md",
       "sha256": "d664c0f826f65f8ec26bfb1bd2b15dfbbc345a194cca9866b90be676adc920a5"
+    },
+    {
+      "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",
+      "sha256": "2e367658920b20bf7d1e0f77612f7a1b379eff928a75a1cf324d22181aa83607"
+    },
+    {
+      "path": "docs/assets/from-a-prompt/robot-joint/attempt-2-accepted.json",
+      "sha256": "fa1d9197bda06f92bdf5673c16d56814f3c9018192f879a5fe29ed1dd1e64505"
+    },
+    {
+      "path": "docs/assets/from-a-prompt/robot-joint/exploded.png",
+      "sha256": "271415abcd5eeafecfd3db61ea2d1d7a28179aa69c27d51f0fb6d7c58a6c07c5"
+    },
+    {
+      "path": "docs/assets/from-a-prompt/robot-joint/hero.png",
+      "sha256": "adcdf503bfd406c85752d0fbaf9f2615a147d376a5cd41982c82e048ce269f6d"
+    },
+    {
+      "path": "docs/assets/from-a-prompt/robot-joint/loop.gif",
+      "sha256": "4ac7f1ebed15ea8bfa8dc8c32938c5af0ff850ea7988d2dad8a86a979bbed698"
+    },
+    {
+      "path": "docs/assets/from-a-prompt/robot-joint/provenance.json",
+      "sha256": "4424651ec530f1fe5bfaff2aa1b53713e0c51fc3f6432246de99b497457ddaae"
+    },
+    {
+      "path": "docs/assets/from-a-prompt/robot-joint/robot-joint-gearbox.json",
+      "sha256": "6811dc65bdfba3ad9b21fda1139c89bde04357ef704f5245abdf68cc8060fdca"
+    },
+    {
+      "path": "docs/assets/from-a-prompt/robot-joint/step-3.png",
+      "sha256": "0c4feee9a48e6c72347e245d3432d7a752e460f883e51641ae4d5df11f94f542"
+    },
+    {
+      "path": "docs/assets/from-a-prompt/robot-joint/step-5.png",
+      "sha256": "a99f4f3c535b332670358f53846cc58e88e45174e390ac7770ccfbba8cdaf978"
     },
     {
       "path": "docs/assets/native/counts.png",

@@ -1,0 +1,35 @@
+{
+ "v": 1,
+ "kind": "assembly",
+ "title": "Two-stage planetary reducer, robot joint (schematic, 12.25:1)",
+ "units": "mm",
+ "parts": [
+  {"id": "base", "name": "Housing base", "material": "aluminum", "shape": {"plate": {"radius": 84, "thickness": 7.5, "z0": -9, "chamfer": 1.2}}, "explode": [0, 0, -24], "explodeWindow": [0, 0.4]},
+  {"id": "ring1", "name": "Ring gear 1 (60T, fixed)", "material": "darkSteel", "shape": {"ringGear": {"teeth": 60, "module": 2, "width": 15.5, "outer": 68.9, "z0": -1.5, "chamfer": 0.4}}, "explode": [0, 0, -8], "explodeWindow": [0.1, 0.5]},
+  {"id": "sun1", "name": "Sun gear 1 (24T, input)", "material": "brass", "shape": {"gear": {"teeth": 24, "module": 2, "width": 14, "bore": 6, "chamfer": 0.56}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "explode": [0, 0, -30], "explodeWindow": [0.2, 0.7]},
+  {"id": "carrier1", "name": "Stage 1 carrier", "material": "anodized.blue", "shape": [{"carrier": {"arms": 3, "radius": 42, "hub": 15, "boss": 9.5, "armWidth": 13, "thickness": 6, "z0": 17, "chamfer": 0.9, "blend": 5}}, {"shaft": {"radius": 6, "length": 16, "z0": 20, "chamfer": 0.5}}], "joint": {"revolute": [0, 0, 1]}, "explode": [0, 0, 14], "explodeWindow": [0.3, 0.8]},
+  {"id": "pin1", "name": "Stage 1 planet pin", "parent": "carrier1", "material": "polishedSteel", "at": [42, 0, 0], "repeat": {"count": 3, "axis": [0, 0, 1]}, "shape": {"shaft": {"radius": 4, "length": 25.2, "z0": -0.8, "chamfer": 0.5}}},
+  {"id": "planet1", "name": "Stage 1 planet (18T)", "parent": "carrier1", "material": "brushedSteel", "at": [42, 0, 0], "repeat": {"count": 3, "axis": [0, 0, 1]}, "shape": {"gear": {"teeth": 18, "module": 2, "width": 13.2, "z0": 0.4, "bore": 4.3, "chamfer": 0.56}}, "joint": {"revolute": [0, 0, 1]}},
+  {"id": "sun2", "name": "Sun gear 2 (24T, on carrier 1)", "parent": "carrier1", "material": "brass", "shape": {"gear": {"teeth": 24, "module": 2, "width": 14, "z0": 30, "chamfer": 0.56}}},
+  {"id": "ring2", "name": "Ring gear 2 (60T, fixed)", "material": "darkSteel", "shape": {"ringGear": {"teeth": 60, "module": 2, "width": 15.5, "outer": 68.9, "z0": 28.5, "chamfer": 0.4}}, "explode": [0, 0, 10], "explodeWindow": [0.3, 0.9]},
+  {"id": "carrier2", "name": "Stage 2 carrier (output)", "material": "anodized.orange", "shape": [{"carrier": {"arms": 3, "radius": 42, "hub": 15, "boss": 9.5, "armWidth": 13, "thickness": 6, "z0": 46, "chamfer": 0.9, "blend": 5}}, {"shaft": {"radius": 9, "length": 33, "z0": 46, "chamfer": 0.9}}], "joint": {"revolute": [0, 0, 1]}, "explode": [0, 0, 40], "explodeWindow": [0.5, 1]},
+  {"id": "pin2", "name": "Stage 2 planet pin", "parent": "carrier2", "material": "polishedSteel", "at": [42, 0, 0], "repeat": {"count": 3, "axis": [0, 0, 1]}, "shape": {"shaft": {"radius": 4, "length": 25.2, "z0": 29.2, "chamfer": 0.5}}},
+  {"id": "planet2", "name": "Stage 2 planet (18T)", "parent": "carrier2", "material": "brushedSteel", "at": [42, 0, 0], "repeat": {"count": 3, "axis": [0, 0, 1]}, "shape": {"gear": {"teeth": 18, "module": 2, "width": 13.2, "z0": 30.4, "bore": 4.3, "chamfer": 0.56}}, "joint": {"revolute": [0, 0, 1]}}
+ ],
+ "constraints": [
+  {"gearMesh": {"a": "sun1", "b": "planet1", "carrier": "carrier1"}},
+  {"gearMesh": {"a": "ring1", "b": "planet1", "carrier": "carrier1"}},
+  {"fixed": "ring1"},
+  {"gearMesh": {"a": "sun2", "b": "planet2", "carrier": "carrier2"}},
+  {"gearMesh": {"a": "ring2", "b": "planet2", "carrier": "carrier2"}},
+  {"fixed": "ring2"}
+ ],
+ "steps": [
+  {"say": "A robot joint needs a big speed reduction in a small space. Two planetary stages in series give about 12:1.", "camera": "hero"},
+  {"say": "Input: the motor (not modelled) turns brass sun gear 1, which has 24 teeth.", "highlight": ["sun1"], "spin": 1},
+  {"say": "Planets (18 teeth) roll between the sun and the fixed ring (60 teeth). Carrier 1 turns at 24 / (24 + 60) = 2/7 of input speed.", "highlight": ["planet1", "ring1"], "spin": 1},
+  {"say": "Carrier 1 carries sun gear 2, so sun 2 turns at the same speed. The same 2/7 reduction repeats in stage 2.", "highlight": ["carrier1", "sun2"], "spin": 1},
+  {"say": "Output: carrier 2 turns (2/7) squared = 4/49 of input speed, about one turn per 12.25 input turns, in the same direction.", "highlight": ["carrier2"], "spin": 1},
+  {"say": "Exploded view. Schematic: bearings, seals, housing walls and the motor are not modelled. No strength or torque check is made.", "explode": 1, "camera": "iso"}
+ ]
+}
