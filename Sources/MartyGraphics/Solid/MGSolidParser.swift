@@ -94,6 +94,9 @@ public struct MGSolidDocument: Equatable, Sendable {
     public var copies: [String: String] = [:]
     /// What moves each driven part: `input`, `follow`, `crankSlider`, `crankRod`, `gearMesh`, `fixed` or `phase`.
     public var motionSources: [String: String] = [:]
+    /// Engine tier of each driven part's own motion through its drive chain (`input` at ±1, crank closed forms and
+    /// mesh solves from them are Solved; other `input` scales and `follow` ratios are author behaviour, Built).
+    public var driveTiers: [String: MGSolidTier] = [:]
     /// Base ids of parts marked `"offAxis": true` (v2).
     public var offAxis: Set<String> = []
     /// Engine-computed title tier (v2, when the title shows facts).
@@ -152,7 +155,9 @@ public enum MGSolidParser {
     /// fields into existing parts by id; `"constraints"` and `"steps"` replace those arrays. Part ids are stable, and
     /// parts whose shapes did not change keep their meshes. An id inside a component instance (`stage1.pinion`) merges
     /// into that `use` entry's `set`; the instance id itself (`stage1`) edits the `use` entry (`with`, `at`, …).
-    public static func applying(_ patch: MGJSON, to doc: MGSolidDocument) -> Result<MGSolidDocument, MGSolidIssue> {
+    /// `profile: .strict` refuses a patch whose result the strict profile would refuse (an idle joint, a frame error).
+    public static func applying(_ patch: MGJSON, to doc: MGSolidDocument,
+                                profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
         guard case .object(let p) = patch else { return .failure(.init("patch.object")) }
         let allowed: Set<String> = ["params", "parts", "constraints", "steps", "title"]
         guard Set(p.keys).isSubset(of: allowed), !p.isEmpty else {
@@ -186,7 +191,7 @@ public enum MGSolidParser {
             }
             src["parts"] = .array(list)
         }
-        return document(json: .object(src), reusing: doc, library: doc.library)
+        return document(json: .object(src), reusing: doc, library: doc.library, profile: profile)
     }
 
     // MARK: Compile
@@ -219,10 +224,11 @@ public enum MGSolidParser {
         guard json.canonicalByteCount <= MGSolidLimits.bytes else { throw MGSolidIssue("assembly.bytes") }
         // The key set follows the declared version; anything but 2 checks the v1 keys first, exactly as before.
         let format: MGSolidFormat = o["v"] == .number(2) ? .v2 : .v1
+        // In v2 a `tier` key anywhere (top level included) is refused before any other key check.
+        if format.isV2, hasTierKey(json) { throw MGSolidIssue("tier.key") }
         try closed(o, ["v", "kind", "parts"], format.topKeys, "assembly")
         guard o["v"] == .number(1) || format.isV2 else { throw MGSolidIssue("assembly.version") }
         guard o["kind"] == .string("assembly") else { throw MGSolidIssue("assembly.kind") }
-        if format.isV2, hasTierKey(json) { throw MGSolidIssue("tier.key") }
         if let u = o["units"], u != .string("mm") { throw MGSolidIssue("assembly.units") }
         let title = try o["title"].map { try text($0, MGSolidLimits.title, "assembly.title") } ?? "Assembly"
         var defaults = MGPoseParameters()
@@ -577,6 +583,20 @@ public enum MGSolidParser {
         for p in parts { if case .object(let d)? = p.drive, let k = d.keys.first { sources[p.id] = k } }
         for id in unknown where sources[id] == nil { sources[id] = fixed.contains(id) ? "fixed" : "gearMesh" }
         for id in drives.keys where sources[id] == nil { sources[id] = "phase" }
+        // Tier of each part's own drive. An `input` scale is the reference speed only at ±1 (or 0, held); any other
+        // scale, and every `follow` ratio, is behaviour the author set (Built). A gear-mesh solve takes the lowest
+        // tier of the inputs in its connected part of the velocity system.
+        var ownTiers: [String: MGSolidTier] = [:]
+        for (id, s) in inputs { ownTiers[id] = s == 0 || abs(abs(s) - 1) < 1e-12 ? .solved : .built }
+        for p in parts where sources[p.id] == "follow" { ownTiers[p.id] = .built }
+        var root = Array(0..<unknown.count)
+        func find(_ i: Int) -> Int { var i = i; while root[i] != i { root[i] = root[root[i]]; i = root[i] }; return i }
+        for (row, _) in rows { let cols = row.keys.sorted(); for c in cols.dropFirst() { root[find(c)] = find(cols[0]) } }
+        var componentTier: [Int: MGSolidTier] = [:]
+        for (i, id) in unknown.enumerated() where inputs[id] != nil {
+            componentTier[find(i)] = min(componentTier[find(i)] ?? .solved, ownTiers[id] ?? .solved)
+        }
+        for (i, id) in unknown.enumerated() where inputs[id] == nil { ownTiers[id] = componentTier[find(i)] ?? .solved }
 
         // Steps.
         var steps: [MGSolidStep] = []
@@ -653,42 +673,50 @@ public enum MGSolidParser {
         doc.aliases = expansion.aliases
         doc.motionSources = sources
         doc.offAxis = Set(parts.filter(\.offAxis).map(\.base))
-        doc.facts = MGSolidFacts.table(assembly, gears: gears, sources: sources, copies: copies, aliases: expansion.aliases)
+        (doc.facts, doc.driveTiers) = MGSolidFacts.table(assembly, gears: gears, sources: sources, ownTiers: ownTiers,
+                                                         copies: copies, aliases: expansion.aliases)
         if format.isV2 {
             var expects: [String: (axis: MGVec3?, up: MGVec3?)] = [:]
             for p in parts where p.expectAxis != nil || p.expectUp != nil { expects[p.base] = (p.expectAxis, p.expectUp) }
             try MGSolidFrames.checkExpectations(assembly, expects, copies: copies)
             try fillText(&doc)
         } else {
-            // v1 text is never filled. A caption with a number in it makes a claim the engine did not check.
-            for i in doc.steps.indices where doc.steps[i].say.contains(where: \.isNumber) { doc.steps[i].tier = .described }
+            // v1 text is never filled. A caption or title with a number in it makes a claim the engine did not check.
+            for i in doc.steps.indices where doc.steps[i].say.contains(where: MGSolidFacts.isNumber) { doc.steps[i].tier = .described }
+            if doc.title.contains(where: MGSolidFacts.isNumber) { doc.titleTier = .described }
         }
         doc.warnings = MGSolidFrames.lints(doc)
         return doc
     }
 
     /// v2 text: fills the title and every step from the facts table, applies rule N1 to captions (no number character
-    /// outside a placeholder unless the step is `unchecked`), proves step `check` claims and sets text tiers.
+    /// outside a placeholder unless the step is `unchecked`), proves step `check` claims and sets text tiers. A title
+    /// may type numbers, but then it is Described. `abs` hides a sign, so it needs a check in the same step that
+    /// proves the sign of that fact (`text.sign.<name>`); a title cannot use it.
     static func fillText(_ doc: inout MGSolidDocument) throws {
         let title = try MGSolidFacts.fill(doc.title, where: "title", n1: false, doc.facts, doc.aliases)
         guard title.text.unicodeScalars.count <= MGSolidLimits.title else { throw MGSolidIssue("assembly.title") }
+        for (name, mods) in zip(title.facts, title.modifiers) where mods.contains("abs") { throw MGSolidIssue("text.sign.\(token(name))") }
         doc.title = title.text
         doc.assembly.name = title.text
-        doc.titleTier = MGSolidTiers.text(facts: title.facts.compactMap { doc.facts[$0] }, unchecked: false)
+        doc.titleTier = MGSolidTiers.text(facts: title.facts.compactMap { doc.facts[$0] }, unchecked: false, typedNumbers: title.typedNumbers)
         for i in doc.steps.indices {
             var s = doc.steps[i]
             let filled = try MGSolidFacts.fill(s.template, where: "step.\(i + 1)", n1: s.unchecked == nil, doc.facts, doc.aliases)
             guard !filled.text.isEmpty, filled.text.unicodeScalars.count <= MGSolidLimits.say else { throw MGSolidIssue("step.say") }
-            var shown = filled.facts
+            var signed = Set<String>()
             for c in s.checks {
                 let t = token(c.value)
-                guard let (name, fact) = MGSolidFacts.lookup(c.value, doc.facts, doc.aliases) else { throw MGSolidIssue("check.unknown.\(t)") }
+                guard let (name, fact) = MGSolidFacts.lookup(c.value, doc.facts, doc.aliases) else { throw MGSolidIssue("check.fact.\(t)") }
                 guard c.holds(fact.value) else { throw MGSolidIssue("check.\(t)") }
-                shown.append(name)
+                if c.provesSign { signed.insert(name) }
+            }
+            for (name, mods) in zip(filled.facts, filled.modifiers) where mods.contains("abs") && !signed.contains(name) {
+                throw MGSolidIssue("text.sign.\(token(name))")
             }
             s.say = filled.text
             s.facts = filled.facts
-            s.tier = MGSolidTiers.text(facts: shown.compactMap { doc.facts[$0] }, unchecked: s.unchecked != nil)
+            s.tier = MGSolidTiers.text(facts: filled.facts.compactMap { doc.facts[$0] }, unchecked: s.unchecked != nil)
             doc.steps[i] = s
         }
     }

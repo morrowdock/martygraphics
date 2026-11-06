@@ -66,7 +66,7 @@ final class SolidHonestyTests: XCTestCase {
         for c in cases {
             let body = #""kind": "assembly", "parts": [\#(c.part)], "steps": [\#(c.step)]}"#
             XCTAssertEqual(reason(#"{"v": 1, \#(body)"#), c.v1)                       // V2
-            if c.step.contains(#""check""#) { XCTAssertEqual(reason(#"{"v": 2, \#(body)"#), "check.unknown.a.teeth") }
+            if c.step.contains(#""check""#) { XCTAssertEqual(reason(#"{"v": 2, \#(body)"#), "check.fact.a.teeth") }
             else { XCTAssertNil(reason(#"{"v": 2, \#(body)"#), c.v1) }                 // V3
         }
         XCTAssertEqual(reason(#"{"v": 3, "kind": "assembly", "parts": [{"id": "a", \#(box)}]}"#), "assembly.version")
@@ -100,7 +100,7 @@ final class SolidHonestyTests: XCTestCase {
         XCTAssertEqual(d.fact("stage.output.speed")!.value, 24.0 / 84, accuracy: 1e-12)
         let h2 = try doc(stage(#"{"say": "{stage.output.speed} or {stage.output.speed|inv}; {stage.output.speed|pct}, {stage.output.speed|deg}."}"#))
         XCTAssertEqual(h2.steps[0].say, "0.29 or 3.5; 28.6%, 103°.")                                       // H2
-        let more = try doc(stage(#"{"say": "Sun {stage.sun.teeth}, planets {count.stage.planet} of {stage.planet.teeth}, ring {stage.ring.teeth}, module {stage.sun.module}, ratio {stage.ratio|frac}, planet {stage.planet.speed|abs|frac}."}"#))
+        let more = try doc(stage(#"{"say": "Sun {stage.sun.teeth}, planets {count.stage.planet} of {stage.planet.teeth}, ring {stage.ring.teeth}, module {stage.sun.module}, ratio {stage.ratio|frac}, planet {stage.planet.speed|abs|frac}.", "check": [{"value": "stage.planet.speed", "lt": 0}]}"#))
         XCTAssertEqual(more.steps[0].say, "Sun 24, planets 3 of 18, ring 60, module 2 mm, ratio 2/7, planet 20/21.")
         XCTAssertEqual(more.fact("count.stage.planet")?.source, "repeat")
     }
@@ -165,16 +165,20 @@ final class SolidHonestyTests: XCTestCase {
         XCTAssertEqual(check(#"{"value": "stage.output.speed", "eq": 0.28}"#), "check.stage.output.speed")
         XCTAssertNil(check(#"{"value": "stage.output.speed", "lt": 1}"#))
         XCTAssertEqual(check(#"{"value": "stage.output.speed", "gt": 1}"#), "check.stage.output.speed")
-        XCTAssertEqual(check(#"{"value": "stage.nope", "eq": 1}"#), "check.unknown.stage.nope")
+        XCTAssertEqual(check(#"{"value": "stage.nope", "eq": 1}"#), "check.fact.stage.nope")
         XCTAssertEqual(check(#"{"value": "stage.output.speed"}"#), "check.comparison")
         XCTAssertEqual(check(#"{"value": "stage.output.speed", "lt": 1, "tol": 0.1}"#), "check.tol")
         XCTAssertEqual(check(#"{"value": "a b", "eq": 1}"#), "check.value")
-        XCTAssertEqual(check(#"{"eq": 1}"#), "check.missing.value")
+        XCTAssertEqual(check(#"{"eq": 1}"#), "step.check.missing.value")
         XCTAssertEqual(reason(stage(#"{"say": "Hi.", "check": []}"#)), "step.check")
-        // A passing check gives a prose caption the Solved tier.
+        // A passing check is its own claim; it does not give prose a tier.
         let d = try doc(stage(#"{"say": "The carrier turns slower than the sun.", "check": [{"value": "stage.output.speed", "lt": 1}]}"#))
-        XCTAssertEqual(d.steps[0].tier, .solved)
+        XCTAssertNil(d.steps[0].tier)
         XCTAssertEqual(d.steps[0].checks, [MGSolidClaimCheck(value: "stage.output.speed", comparison: .lt, target: 1, tolerance: nil)])
+        let claim = d.claims.first { $0.kind == .check }
+        XCTAssertEqual(claim?.id, "step.1.check.1")
+        XCTAssertEqual(claim?.badge, "Checked")
+        XCTAssertEqual(claim?.why, "Checked: stage.output.speed < 1")
     }
 
     func testTierKeyIsRefused() {
@@ -202,13 +206,15 @@ final class SolidHonestyTests: XCTestCase {
         XCTAssertNil(MGSolidTiers.text(facts: [], unchecked: false))
         XCTAssertEqual(MGSolidTier.built.badge(.caption), "Schematic")
         XCTAssertEqual(MGSolidTier.built.badge(.motion), "Schematic motion")
+        XCTAssertEqual(MGSolidTier.solved.badge(.caption), "Numbers solved")
+        XCTAssertEqual(MGSolidTier.solved.badge(.motion), "Solved")
         XCTAssertLessThan(MGSolidTier.described, MGSolidTier.built)
         // Hand count on the v2 worked example: pinion and wheel motion, three filled captions, one unchecked caption.
         let d = try doc(String(decoding: try model("horizontal-reduction"), as: UTF8.self))
         let legend = d.legend
-        XCTAssertEqual(legend.claims.map(\.id), ["pinion", "wheel", "step.2", "step.3", "step.4", "step.5"])
-        XCTAssertEqual([legend.solved, legend.built, legend.described], [5, 0, 1])
-        XCTAssertEqual(legend.text, "Solved 5 · Not checked 1")
+        XCTAssertEqual(legend.claims.map(\.id), ["pinion", "wheel", "step.2", "step.3", "step.3.check.1", "step.4", "step.4.check.1", "step.5"])
+        XCTAssertEqual([legend.solved, legend.built, legend.described], [7, 0, 1])
+        XCTAssertEqual(legend.text, "Solved 7 · Not checked 1")
         XCTAssertNil(legend.note)
         XCTAssertEqual(legend.shapes, "Shapes as authored")
         XCTAssertEqual(Array(d.steps.map(\.say)[1...3]), ["The pinion has 15 teeth; the wheel has 40.",
@@ -232,7 +238,7 @@ final class SolidHonestyTests: XCTestCase {
         XCTAssertEqual(o["motion"], .string("Solved by gearMesh (0.29 turns per input turn)"))
         XCTAssertEqual(o["tier"], .string("solved"))
         guard case .object(let facts)? = o["facts"], case .array(let nc)? = o["notChecked"] else { return XCTFail() }
-        XCTAssertEqual(facts.keys.sorted(), ["stage.carrier.speed"])
+        XCTAssertEqual(facts.keys.sorted(), ["stage.carrier.speed", "stage.carrier.worldSpeed"])
         XCTAssertTrue(nc.contains(.string("3D tooth contact")))
         guard case .object(let planet)? = d.describe("stage.planet"), case .object(let pf)? = planet["facts"] else { return XCTFail() }
         XCTAssertTrue(pf.keys.contains("count.stage.planet") && pf.keys.contains("stage.planet.teeth"))
@@ -339,9 +345,9 @@ final class SolidHonestyTests: XCTestCase {
         let d = try doc(one(2, [tower, rotor(rot: #", "rot": [0, 1, 0, 90]"#), blade]))                     // H18
         XCTAssertEqual(d.warnings, [])
         XCTAssertEqual(d.readBack, [
-            "tower: world centre (0, 0, 45) mm, size 8 x 8 x 90 mm; static; root (at [0, 0, 0] in the world frame); up (local +Z) is +Z",
-            "rotor: world centre (0, 0, 92) mm, size 20 x 10 x 10 mm; turns about a horizontal axis (+X) through (0, 0, 92); 1 turn per input turn (Solved, input); child of tower (at [0, 0, 92] in the tower frame); up (local +Z) is +X",
-            "blade: world centre (0, 30, 92) mm, size 2 x 60 x 4 mm; fixed to its parent, moves with rotor; child of rotor (at [0, 30, 0] in the rotor frame); its origin is 30 mm from the rotor axis; up (local +Z) is +X",
+            "tower: world centre (0, 0, 45) mm, size 8 x 8 x 90 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+            "rotor: world centre (0, 0, 92) mm, size 20 x 10 x 10 mm; turns about a horizontal axis (+X) through (0, 0, 92); 1 turn per input turn (Solved, input); child of tower (at [0, 0, 92] in the tower frame); local +Z points +X",
+            "blade: world centre (0, 30, 92) mm, size 2 x 60 x 4 mm; fixed to its parent, moves with rotor; child of rotor (at [0, 30, 0] in the rotor frame); its origin is 30 mm from the rotor axis; local +Z points +X",
         ])
         XCTAssertEqual(MGSolidFrames.axisWords(MGVec3(0, 0, -1)), "a vertical axis (-Z)")
         XCTAssertEqual(MGSolidFrames.axisWords(MGVec3(1, 1, 0)), "a horizontal axis along (0.71, 0.71, 0)")
@@ -356,5 +362,153 @@ final class SolidHonestyTests: XCTestCase {
         XCTAssertEqual(d.fact("wheel.speed")!.value, -0.375, accuracy: 1e-12)
         XCTAssertTrue(d.readBack.contains { $0.hasPrefix("pinion:") && $0.contains("turns about a horizontal axis (+X)") })
         XCTAssertTrue(d.readBack.contains { $0.hasPrefix("collar:") && $0.contains("child of wheel (at [0, 0, 26] in the wheel frame)") })
+    }
+}
+
+/// Regressions from the independent review of PR #21 (one test per finding, fixtures from the review).
+final class SolidHonestyReviewTests: XCTestCase {
+    func parse(_ text: String, profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
+        MGSolidParser.document(data: Data(text.utf8), profile: profile)
+    }
+    func doc(_ text: String, file: StaticString = #filePath, line: UInt = #line) throws -> MGSolidDocument {
+        switch parse(text) {
+        case .success(let d): return d
+        case .failure(let e): XCTFail("refused: \(e)", file: file, line: line); throw e
+        }
+    }
+    func reason(_ text: String, profile: MGSolidProfile = .standard) -> String? {
+        if case .failure(let e) = parse(text, profile: profile) { return e.reason }
+        return nil
+    }
+    func stage(_ step: String, title: String = "") -> String {
+        #"{"v": 2, "kind": "assembly", \#(title)"parts": [{"id": "stage", "use": "planetaryStage", "with": {"sunTeeth": 24, "planetTeeth": 18, "planets": 3}}], "steps": [\#(step)]}"#
+    }
+
+    /// B1: a typed number in a title makes it Described, even beside a placeholder.
+    func testB1TitleWithTypedNumberIsDescribed() throws {
+        let d = try doc(stage(#"{"say": "Hi."}"#, title: #""title": "A 3:1 reduction with a {stage.sun.teeth}-tooth sun", "#))
+        XCTAssertEqual(d.title, "A 3:1 reduction with a 24-tooth sun")
+        XCTAssertEqual(d.titleTier, .described)
+        let claim = d.claims.first { $0.kind == .title }
+        XCTAssertEqual(claim?.badge, "Not checked")
+        XCTAssertEqual(claim?.why, "Title has typed numbers")
+        XCTAssertEqual(try doc(stage(#"{"say": "Hi."}"#, title: #""title": "A {stage.sun.teeth}-tooth sun", "#)).titleTier, .solved)
+        // The same rule in v1, where titles are never filled.
+        let v1 = try doc(#"{"v": 1, "kind": "assembly", "title": "Reducer, 12.25:1", "parts": [{"id": "a", "shape": {"box": {"size": [4, 4, 4]}}}]}"#)
+        XCTAssertEqual(v1.titleTier, .described)
+    }
+
+    /// B2: children that touch their parent as placed are correct, even when `at` equals the parent's `at`.
+    func testB2EqualStepsAreNotDoubleOffsets() throws {
+        let fixtures = [
+            #"{"v": 2, "kind": "assembly", "parts": [{"id": "base", "shape": {"shaft": {"radius": 15, "length": 40}}}, {"id": "upper", "parent": "base", "at": [0, 0, 40], "shape": [{"shaft": {"radius": 5, "length": 10, "z0": -5, "rot": [1, 0, 0, 90]}}, {"box": {"size": [8, 8, 40], "at": [0, 0, 20]}}], "joint": {"revolute": [0, 1, 0]}, "drive": {"input": 0.1}}, {"id": "fore", "parent": "upper", "at": [0, 0, 40], "shape": [{"shaft": {"radius": 4, "length": 10, "z0": -5, "rot": [1, 0, 0, 90]}}, {"box": {"size": [6, 6, 40], "at": [0, 0, 20]}}], "joint": {"revolute": [0, 1, 0]}, "drive": {"input": -0.2}}]}"#,
+            #"{"v": 2, "kind": "assembly", "parts": [{"id": "link1", "at": [50, 0, 0], "shape": {"box": {"size": [50, 8, 4], "at": [25, 0, 0]}}}, {"id": "link2", "parent": "link1", "at": [50, 0, 0], "shape": {"box": {"size": [50, 8, 4], "at": [25, 0, 0]}}}, {"id": "link3", "parent": "link2", "at": [50, 0, 0], "shape": {"box": {"size": [50, 8, 4], "at": [25, 0, 0]}}}]}"#,
+            #"{"v": 2, "kind": "assembly", "parts": [{"id": "p1", "at": [0, 0, 10], "shape": {"box": {"size": [40, 40, 10]}}}, {"id": "p2", "parent": "p1", "at": [0, 0, 10], "shape": {"box": {"size": [40, 40, 10]}}}]}"#,
+        ]
+        // A child of a parent at the world origin that only rotates (the shipped turbofan's spinner on its shaft).
+        let spinner = #"{"v": 2, "kind": "assembly", "parts": [{"id": "shaft", "rot": [0, 1, 0, 90], "shape": {"tube": {"inner": 28, "outer": 45, "length": 1000, "z0": 150}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}, {"id": "spinner", "parent": "shaft", "shape": {"revolvedProfile": {"points": [[0, -320], [262, -10], [0, -10]]}}}]}"#
+        for f in fixtures + [spinner] {
+            XCTAssertEqual(try doc(f).warnings, [], f)
+            XCTAssertNil(reason(f, profile: .strict), f)
+        }
+    }
+
+    /// S2: the double offset is found by geometry, not only by exact matches.
+    func testS2DoubleOffsetFoundByGeometry() {
+        let cases: [(String, String)] = [
+            (#"{"v": 2, "kind": "assembly", "parts": [{"id": "hub", "at": [50, 0, 0], "shape": {"shaft": {"radius": 10, "length": 20}}}, {"id": "blade", "parent": "hub", "at": [50, 30, 0], "shape": {"box": {"size": [40, 8, 4]}}}]}"#, "frame.child.absolute.blade"),
+            (#"{"v": 2, "kind": "assembly", "parts": [{"id": "hub", "at": [50, 0, 0], "rot": [0, 0, 1, 90], "shape": {"shaft": {"radius": 10, "length": 20}}}, {"id": "blade", "parent": "hub", "at": [70, 0, 0], "shape": {"box": {"size": [40, 8, 4]}}}]}"#, "frame.child.absolute.blade"),
+            (#"{"v": 2, "kind": "assembly", "parts": [{"id": "tower", "shape": {"shaft": {"radius": 4, "length": 90}}}, {"id": "nacelle", "parent": "tower", "at": [0, 0, 92], "shape": {"box": {"size": [30, 12, 12]}}}, {"id": "rotor", "parent": "nacelle", "at": [16, 0, 92], "rot": [0, 1, 0, 90], "shape": {"shaft": {"radius": 5, "length": 8}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}]}"#, "frame.child.absolute.rotor"),
+        ]
+        for (f, r) in cases { XCTAssertEqual(reason(f, profile: .strict), r, f) }
+    }
+
+    /// S1: author behaviour is Built: a `follow` ratio, an `input` scale other than ±1, and what they feed.
+    func testS1AuthorRatesAreBuilt() throws {
+        let follow = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "a", "shape": {"shaft": {"radius": 10, "length": 4}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}, {"id": "b", "at": [60, 0, 0], "shape": {"shaft": {"radius": 20, "length": 4}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"follow": {"source": "a", "ratio": 0.37}}}], "steps": [{"say": "The belt makes the big pulley turn {b.speed|frac} of a turn."}]}"#)
+        XCTAssertEqual(follow.fact("b.speed")?.tier, .built)
+        XCTAssertEqual(follow.fact("a.speed")?.tier, .solved)
+        XCTAssertEqual(follow.steps[0].tier, .built)
+        XCTAssertEqual(follow.motionTier("b"), .built)
+        XCTAssertEqual(follow.legend.text, "Solved 1 · Schematic 2")
+        XCTAssertEqual(follow.legend.note, "Some motion is schematic")
+        XCTAssertEqual(follow.claims.first { $0.id == "b" }?.badge, "Schematic motion")
+        let scaled = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "d", "shape": {"shaft": {"radius": 10, "length": 4}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 0.333}}], "steps": [{"say": "It turns {d.speed|frac} of a turn."}]}"#)
+        XCTAssertEqual(scaled.steps[0].tier, .built)
+        // A gear mesh fed by an author speed carries it; the reference speed (±1) stays Solved.
+        func pair(_ scale: Double) throws -> MGSolidDocument {
+            try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "p", "use": "spurPair", "set": {"pinion": {"drive": {"input": \#(scale)}}}}]}"#)
+        }
+        XCTAssertEqual(try pair(2).fact("p.wheel.speed")?.tier, .built)
+        XCTAssertEqual(try pair(-1).fact("p.wheel.speed")?.tier, .solved)
+        XCTAssertEqual(try pair(1).fact("p.ratio")?.tier, .solved)
+        // The shipped turbofan's HP spool runs at an authored 3 x N1.
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        guard case .success(let fan) = MGSolidParser.document(data: try Data(contentsOf: root.appendingPathComponent("Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json"))) else { return XCTFail() }
+        XCTAssertEqual(fan.legend.text, "Solved 1 · Schematic 1 · Not checked 1")
+    }
+
+    /// S3: a check does not make prose Solved; it is its own claim with its expression.
+    func testS3CheckOnUnrelatedFactLeavesProseUntiered() throws {
+        let d = try doc(stage(#"{"say": "The carrier turns faster than the sun.", "check": [{"value": "stage.sun.teeth", "gt": 0}]}"#))
+        XCTAssertNil(d.steps[0].tier)
+        XCTAssertEqual(d.claims.map(\.why).last, "Checked: stage.sun.teeth > 0")
+    }
+
+    /// S4: a non-zero value never shows as "0", and `eq 0` without `tol` needs exactly 0.
+    func testS4RoundingToZero() {
+        let dial = { (step: String) in #"{"v": 2, "kind": "assembly", "parts": [{"id": "dial", "shape": {"shaft": {"radius": 10, "length": 4}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 0.004}}], "steps": [\#(step)]}"# }
+        XCTAssertEqual(reason(dial(#"{"say": "The dial turns {dial.speed} turns per input turn."}"#)), "text.rounding.dial.speed")
+        XCTAssertEqual(reason(dial(#"{"say": "Slow: {dial.speed|pct} of a turn."}"#)), nil)   // 0.4% is honest
+        XCTAssertNil(reason(dial(#"{"say": "The dial turns {dial.speed|frac} of a turn."}"#)))
+        XCTAssertEqual(reason(dial(#"{"say": "It hardly turns.", "check": [{"value": "dial.speed", "eq": 0}]}"#)), "check.dial.speed")
+        XCTAssertNil(reason(dial(#"{"say": "It turns slowly.", "check": [{"value": "dial.speed", "eq": 0, "tol": 0.01}]}"#)))
+    }
+
+    /// S5: world speed beside the parent-relative speed; `abs` needs a check that proves the sign.
+    func testS5WorldSpeedAndSign() throws {
+        XCTAssertEqual(reason(stage(#"{"say": "Each planet spins {stage.planet.speed|abs|frac} of a turn per sun turn."}"#)), "text.sign.stage.planet.speed")
+        XCTAssertEqual(reason(stage(#"{"say": "The planets spin the same way as the sun at {stage.planet.speed|abs|frac} of a turn."}"#)), "text.sign.stage.planet.speed")
+        XCTAssertEqual(reason(stage(#"{"say": "{stage.planet.speed|abs|frac}", "check": [{"value": "stage.planet.speed", "lt": 1}]}"#)), "text.sign.stage.planet.speed")
+        XCTAssertNil(reason(stage(#"{"say": "{stage.planet.speed|abs|frac}, the other way", "check": [{"value": "stage.planet.speed", "lt": 0}]}"#)))
+        XCTAssertEqual(reason(stage(#"{"say": "Hi."}"#, title: #""title": "Planet {stage.planet.speed|abs}", "#)), "text.sign.stage.planet.speed")
+        let d = try doc(stage(#"{"say": "Seen from the ground a planet turns {stage.planet.worldSpeed|frac} of a turn."}"#))
+        XCTAssertEqual(d.steps[0].say, "Seen from the ground a planet turns -2/3 of a turn.")   // 2/7 - 20/21
+        guard case .object(let o)? = d.describe("stage.planet") else { return XCTFail() }
+        XCTAssertEqual(o["motion"], .string("Solved by gearMesh (-0.95 turns per input turn relative to stage.carrier; -0.67 in the world frame)"))
+    }
+
+    /// S6: a digit inside a grapheme cluster that starts with a prepended letter still counts.
+    func testS6PrependedDigitsAreNumbers() {
+        XCTAssertEqual(reason(stage(#"{"say": "The sun has ൎ5 teeth."}"#)), "text.number.step.1")
+        XCTAssertEqual(reason(stage(#"{"say": "The sun has 𑇂7 teeth."}"#)), "text.number.step.1")
+    }
+
+    /// S7: one meaning per reason: an unknown key in a check and an unknown fact differ.
+    func testS7CheckReasonsHaveOneMeaning() {
+        XCTAssertEqual(reason(stage(#"{"say": "Hi.", "check": [{"value": "stage.output.speed", "eq": 0.2857, "tolerance": 0.001}]}"#)), "step.check.unknown.tolerance")
+        XCTAssertEqual(reason(stage(#"{"say": "Hi.", "check": [{"value": "stage.speed", "eq": 1}]}"#)), "check.fact.stage.speed")
+    }
+
+    /// S8: the document records which fact filled each placeholder (N1 does not catch the wrong fact).
+    func testS8StepRecordsItsFacts() throws {
+        let d = try doc(stage(#"{"say": "The carrier turns {count.stage.planet} times slower than the sun."}"#))
+        XCTAssertEqual(d.steps[0].facts, ["count.stage.planet"])
+        // Number words are prose: N1 covers number characters only.
+        XCTAssertNil(try doc(stage(#"{"say": "The carrier turns two sevenths of a turn."}"#)).steps[0].tier)
+    }
+
+    /// NITs: `deg`/`pct` only on speeds and ratios (N1); a top-level `tier` (N2); strict patches (N3); a dotted
+    /// modifier (N7).
+    func testReviewNits() throws {
+        XCTAssertEqual(reason(stage(#"{"say": "{stage.sun.teeth|deg}"}"#)), "text.modifier.deg.stage.sun.teeth")
+        XCTAssertEqual(reason(stage(#"{"say": "{stage.sun.teeth|pct}"}"#)), "text.modifier.pct.stage.sun.teeth")
+        XCTAssertEqual(reason(#"{"v": 2, "kind": "assembly", "tier": "solved", "parts": [{"id": "a", "shape": {"box": {"size": [4, 4, 4]}}}]}"#), "tier.key")
+        XCTAssertEqual(reason(stage(#"{"say": "{stage.sun.teeth|inv.y}"}"#)), "text.placeholder")
+        // A patch that removes the only drive leaves an idle joint: the strict profile refuses the patched result.
+        let d = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "disc", "shape": {"shaft": {"radius": 20, "length": 5}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}]}"#)
+        let patch: MGJSON = .object(["parts": .object(["disc": .object(["drive": .null])])])
+        XCTAssertEqual(try MGSolidParser.applying(patch, to: d).get().warnings.map(\.reason), ["joint.idle.disc"])
+        XCTAssertEqual(MGSolidParser.applying(patch, to: d, profile: .strict).map(\.title), .failure(MGSolidIssue("joint.idle.disc", part: "disc")))
     }
 }

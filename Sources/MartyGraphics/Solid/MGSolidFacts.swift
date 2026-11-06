@@ -42,7 +42,8 @@ public struct MGSolidFact: Equatable, Sendable {
 
 /// A step claim the engine proves before the learner sees it: `{"value": "<fact>", "eq" | "lt" | "gt": x, "tol"?: t}`.
 /// Same shape and meaning as the lesson `check`: without `tol`, `eq` compares what the learner sees
-/// (`MGPhysics.format` text of both numbers).
+/// (`MGPhysics.format` text of both numbers), except that a target of 0 then needs exactly 0 (a small speed such as
+/// 0.004 prints "0" but is not 0).
 public struct MGSolidClaimCheck: Equatable, Sendable {
     public enum Comparison: String, Equatable, Sendable { case eq, lt, gt }
     public let value: String
@@ -52,7 +53,7 @@ public struct MGSolidClaimCheck: Equatable, Sendable {
 
     static func parse(_ json: MGJSON) throws -> MGSolidClaimCheck {
         guard case .object(let o) = json else { throw MGSolidIssue("check.object") }
-        try MGSolidParser.closed(o, ["value"], ["eq", "lt", "gt", "tol"], "check")
+        try MGSolidParser.closed(o, ["value"], ["eq", "lt", "gt", "tol"], "step.check")
         guard case .string(let name)? = o["value"], MGSolidFacts.isName(name) else { throw MGSolidIssue("check.value") }
         let present = [Comparison.eq, .lt, .gt].filter { o[$0.rawValue] != nil }
         guard present.count == 1, let comparison = present.first else { throw MGSolidIssue("check.comparison") }
@@ -68,17 +69,42 @@ public struct MGSolidClaimCheck: Equatable, Sendable {
     /// True when the claim holds for this fact value.
     public func holds(_ v: Double) -> Bool {
         switch comparison {
-        case .eq: return tolerance.map { abs(v - target) <= $0 } ?? (MGPhysics.format(v, unit: "") == MGPhysics.format(target, unit: ""))
+        case .eq:
+            if let t = tolerance { return abs(v - target) <= t }
+            if target == 0 { return v == 0 }
+            return MGPhysics.format(v, unit: "") == MGPhysics.format(target, unit: "")
         case .lt: return v < target
         case .gt: return v > target
         }
     }
+
+    /// True when every value that passes this check has the sign of `target` (so the check proves the sign).
+    var provesSign: Bool {
+        switch comparison {
+        case .eq: return target != 0 && (tolerance ?? 0) < abs(target)
+        case .lt: return target <= 0
+        case .gt: return target >= 0
+        }
+    }
+
+    /// The claim as text, for example "stage.sun.teeth > 0".
+    public var text: String {
+        let x = MGPhysics.format(target, unit: "")
+        switch comparison {
+        case .eq: return tolerance.map { "\(value) = \(x) ± \(MGPhysics.format($0, unit: ""))" } ?? "\(value) shows as \(x)"
+        case .lt: return "\(value) < \(x)"
+        case .gt: return "\(value) > \(x)"
+        }
+    }
 }
 
-/// A filled text: what the learner sees and the canonical facts it used, in order.
+/// A filled text: what the learner sees, the canonical facts it used (in order) with their modifiers, and whether it
+/// has a number character outside the placeholders.
 struct MGSolidFilledText {
     var text: String
     var facts: [String]
+    var modifiers: [[String]] = []
+    var typedNumbers = false
 }
 
 /// Facts table, placeholder grammar and modifiers.
@@ -93,7 +119,8 @@ public enum MGSolidFacts {
     public static let fractionTolerance = 1e-12
     /// Input samples over one input turn for `<part>.travel`.
     public static let travelSamples = 720
-    /// Closed modifier set. `pct`, `deg` and `frac` end a chain; `inv`, `pct`, `deg` and `frac` need a pure number.
+    /// Closed modifier set. `pct`, `deg` and `frac` end a chain; `inv`, `pct`, `deg` and `frac` need a pure number;
+    /// `pct` and `deg` apply to speeds and ratios only; `abs` needs a check in the same step that proves the sign.
     public static let modifierNames: Set<String> = ["abs", "inv", "pct", "deg", "frac"]
 
     static func isName(_ s: String) -> Bool {
@@ -101,23 +128,48 @@ public enum MGSolidFacts {
             && s.unicodeScalars.allSatisfy { $0.isASCII && (CharacterSet.alphanumerics.contains($0) || $0 == "_" || $0 == ".") }
     }
 
+    /// True for a character with any number scalar in it (digits, "½", "²", and a digit inside a grapheme cluster
+    /// that starts with a letter, such as an Indic prepended sign followed by "5").
+    static func isNumber(_ ch: Character) -> Bool {
+        ch.isNumber || ch.unicodeScalars.contains { $0.properties.numericType != nil }
+    }
+
     // MARK: Table
 
-    /// Builds the facts table from a compiled assembly. `sources`: what moves each driven part; `copies`: `repeat`
-    /// copy id → base id; `aliases`: component anchor → part id.
+    /// Builds the facts table from a compiled assembly and the tier of every drive. `sources`: what moves each driven
+    /// part; `ownTiers`: the tier of each part's own drive before propagation (an `input` scale other than ±1 and a
+    /// `follow` ratio are author behaviour, so Built; gear-mesh solves take the lowest input tier they depend on);
+    /// `copies`: `repeat` copy id → base id; `aliases`: component anchor → part id.
     static func table(_ assembly: MGAssembly, gears: [String: MGSolidGear], sources: [String: String],
-                      copies: [String: String], aliases: [String: String]) -> [String: MGSolidFact] {
+                      ownTiers: [String: MGSolidTier], copies: [String: String],
+                      aliases: [String: String]) -> (facts: [String: MGSolidFact], driveTiers: [String: MGSolidTier]) {
         let byID = Dictionary(assembly.parts.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         var facts: [String: MGSolidFact] = [:]
-        func put(_ name: String, _ v: Double, _ unit: String, _ source: String) {
+        func put(_ name: String, _ v: Double, _ unit: String, _ tier: MGSolidTier, _ source: String) {
             guard v.isFinite, facts[name] == nil else { return }
-            facts[name] = MGSolidFact(value: v, unit: unit, tier: .solved, source: source)
+            facts[name] = MGSolidFact(value: v, unit: unit, tier: tier, source: source)
+        }
+        // Tier of each drive: its own tier and every drive it reads (drive cycles are refused before this runs).
+        var tierMemo: [String: MGSolidTier] = [:], visiting = Set<String>()
+        func driveTier(_ id: String) -> MGSolidTier {
+            if let t = tierMemo[id] { return t }
+            guard visiting.insert(id).inserted else { return .solved }
+            defer { visiting.remove(id) }
+            var t = ownTiers[id] ?? .solved
+            switch byID[id]?.drive {
+            case .follow(let src, _, _)?: t = min(t, driveTier(src))
+            case .gear(let d, _, let c, _)?: t = min(t, driveTier(d), c.map(driveTier) ?? .solved)
+            case .crankSlider(let c, _, _, _)?, .crankRod(let c, _, _)?: t = min(t, driveTier(c))
+            default: break
+            }
+            tierMemo[id] = t
+            return t
         }
         // Joint rate per input radian for linear drives (radians or mm); nil for the crank closed forms.
         var memo: [String: Double?] = [:]
         func rate(_ id: String) -> Double? {
             if let m = memo[id] { return m }
-            memo[id] = .some(nil)  // drive cycles are refused before this runs; this only guards the recursion
+            memo[id] = .some(nil)
             var r: Double?
             switch byID[id]?.drive {
             case .input(let s, _)?: r = s
@@ -128,6 +180,32 @@ public enum MGSolidFacts {
             }
             memo[id] = .some(r)
             return r
+        }
+        var driveTiers: [String: MGSolidTier] = [:]
+        for p in assembly.parts where p.drive != nil { driveTiers[p.id] = driveTier(p.id) }
+        let rest = MGSolidFrames.restWorld(assembly)
+        func axisWorld(_ id: String) -> MGVec3? {
+            guard case .revolute(let a)? = byID[id]?.joint else { return nil }
+            return (rest[id] ?? .identity).applyVector(a).normalized
+        }
+        /// World turn rate about the part's own axis: its joint rate plus every turning revolute ancestor, when all
+        /// of their axes are parallel to its own (prismatic ancestors do not change a turn rate). nil otherwise.
+        func worldSpeed(_ id: String) -> (Double, MGSolidTier)? {
+            guard let n = axisWorld(id), var total = rate(id) else { return nil }
+            var tier = driveTier(id)
+            var cur = byID[id]?.parent, seen: Set<String> = [id]
+            while let c = cur, seen.insert(c).inserted, let pp = byID[c] {
+                if case .revolute = pp.joint, pp.drive != nil {
+                    guard let r = rate(c) else { return nil }
+                    if r != 0 {
+                        guard let a = axisWorld(c), abs(abs(a.dot(n)) - 1) < 1e-9 else { return nil }
+                        total += (a.dot(n) >= 0 ? 1 : -1) * r
+                        tier = min(tier, driveTier(c))
+                    }
+                }
+                cur = pp.parent
+            }
+            return (total, tier)
         }
         // Travel of every driven prismatic joint over one input turn (sampled, endpoints included).
         let sliders = assembly.parts.filter { if case .prismatic = $0.joint, $0.drive != nil { return true }; return false }.map(\.id)
@@ -140,45 +218,48 @@ public enum MGSolidFacts {
         }
         for p in assembly.parts {
             if let g = gears[p.id] {
-                put(p.id + ".teeth", Double(g.teeth), "", "shape")
-                put(p.id + ".module", g.module, "mm", "shape")
+                put(p.id + ".teeth", Double(g.teeth), "", .solved, "shape")
+                put(p.id + ".module", g.module, "mm", .solved, "shape")
             }
             let source = sources[p.id] ?? "input"
             switch p.joint {
             case .revolute:
-                if p.drive != nil, let r = rate(p.id) { put(p.id + ".speed", r, "", source) }
+                if p.drive != nil, let r = rate(p.id) {
+                    put(p.id + ".speed", r, "", driveTier(p.id), source)
+                    if let (w, t) = worldSpeed(p.id) { put(p.id + ".worldSpeed", w, "", t, source) }
+                }
             case .prismatic:
-                if let a = lo[p.id], let b = hi[p.id] { put(p.id + ".travel", b - a, "mm", source) }
+                if let a = lo[p.id], let b = hi[p.id] { put(p.id + ".travel", b - a, "mm", driveTier(p.id), source) }
             case .fixed: break
             }
             if case .crankSlider(_, let r, let l, _)? = p.drive {
-                put(p.id + ".crankRadius", r, "mm", "crankSlider")
-                put(p.id + ".rodLength", l, "mm", "crankSlider")
+                put(p.id + ".crankRadius", r, "mm", .solved, "crankSlider")
+                put(p.id + ".rodLength", l, "mm", .solved, "crankSlider")
             }
         }
         // `repeat`: the copy count, and every fact all copies share, under the base id.
         var groups: [String: [String]] = [:]
         for p in assembly.parts { if let b = copies[p.id] { groups[b, default: []].append(p.id) } }
         for (base, ids) in groups.sorted(by: { $0.key < $1.key }) {
-            put("count." + base, Double(ids.count), "", "repeat")
+            put("count." + base, Double(ids.count), "", .solved, "repeat")
             let first = ids[0]
             for (name, f) in facts.sorted(by: { $0.key < $1.key }) where name.hasPrefix(first + ".") {
                 let suffix = String(name.dropFirst(first.count))
                 let same = ids.allSatisfy { id in
                     guard let o = facts[id + suffix] else { return false }
-                    return o.unit == f.unit && abs(o.value - f.value) <= 1e-9 * max(1, abs(f.value))
+                    return o.unit == f.unit && o.tier == f.tier && abs(o.value - f.value) <= 1e-9 * max(1, abs(f.value))
                 }
-                if same { put(base + suffix, f.value, f.unit, f.source) }
+                if same { put(base + suffix, f.value, f.unit, f.tier, f.source) }
             }
         }
-        // `<instance>.ratio`: output anchor speed over input anchor speed.
+        // `<instance>.ratio`: output anchor speed over input anchor speed (the lower tier of the two).
         for (key, inTarget) in aliases.sorted(by: { $0.key < $1.key }) where key.hasSuffix(".input") {
             let inst = String(key.dropLast(".input".count))
             guard let outTarget = aliases[inst + ".output"],
                   let a = facts[inTarget + ".speed"], let b = facts[outTarget + ".speed"], a.value != 0 else { continue }
-            put(inst + ".ratio", b.value / a.value, "", "anchors")
+            put(inst + ".ratio", b.value / a.value, "", min(a.tier, b.tier), "anchors")
         }
-        return facts
+        return (facts, driveTiers)
     }
 
     /// Finds a fact by name. Component anchors resolve (`stage.output.speed` → `stage.carrier.speed`).
@@ -197,19 +278,20 @@ public enum MGSolidFacts {
 
     // MARK: Text
 
-    /// Fills `{name}` / `{name|mod|…}` placeholders. With `n1`, every digit or number character outside a
-    /// placeholder is refused (`text.number.<where>`). Reasons: `text.brace`, `text.placeholder` (bad grammar),
-    /// `text.placeholder.<name>` (unknown fact), `text.modifier.<mod>` (unknown modifier) and
-    /// `text.modifier.<mod>.<name>` (a modifier that does not apply to this fact).
+    /// Fills `{name}` / `{name|mod|…}` placeholders. With `n1`, every number character outside a placeholder is
+    /// refused (`text.number.<where>`); without it, `typedNumbers` reports one. Reasons: `text.brace`,
+    /// `text.placeholder` (bad grammar), `text.placeholder.<name>` (unknown fact), `text.modifier.<mod>` (unknown
+    /// modifier), `text.modifier.<mod>.<name>` (a modifier that does not apply to this fact) and
+    /// `text.rounding.<name>` (a non-zero value that would print as "0").
     static func fill(_ s: String, where w: String, n1: Bool, _ facts: [String: MGSolidFact],
                      _ aliases: [String: String]) throws -> MGSolidFilledText {
-        var out = "", body = "", inside = false
-        var used: [String] = []
+        var out = MGSolidFilledText(text: "", facts: [])
+        var body = "", inside = false
         for ch in s {
             if inside {
                 if ch == "}" {
-                    let (text, name) = try placeholder(body, facts, aliases)
-                    out += text; used.append(name); body = ""; inside = false
+                    let (text, name, mods) = try placeholder(body, facts, aliases)
+                    out.text += text; out.facts.append(name); out.modifiers.append(mods); body = ""; inside = false
                 } else {
                     guard ch != "{", body.count < nameLength + 8 * modifiers else { throw MGSolidIssue(ch == "{" ? "text.brace" : "text.placeholder") }
                     body.append(ch)
@@ -217,27 +299,35 @@ public enum MGSolidFacts {
             } else if ch == "{" { inside = true }
             else if ch == "}" { throw MGSolidIssue("text.brace") }
             else {
-                if n1, ch.isNumber { throw MGSolidIssue("text.number.\(w)") }
-                out.append(ch)
+                if isNumber(ch) {
+                    if n1 { throw MGSolidIssue("text.number.\(w)") }
+                    out.typedNumbers = true
+                }
+                out.text.append(ch)
             }
         }
         guard !inside else { throw MGSolidIssue("text.brace") }
-        return MGSolidFilledText(text: out, facts: used)
+        return out
     }
 
-    static func placeholder(_ body: String, _ facts: [String: MGSolidFact], _ aliases: [String: String]) throws -> (String, String) {
+    static func placeholder(_ body: String, _ facts: [String: MGSolidFact], _ aliases: [String: String]) throws -> (String, String, [String]) {
         let pieces = body.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
         guard let name = pieces.first, isName(name), pieces.count - 1 <= modifiers else { throw MGSolidIssue("text.placeholder") }
         let t = MGSolidParser.token(name)
         let mods = Array(pieces.dropFirst())
-        for m in mods where !modifierNames.contains(m) { throw MGSolidIssue("text.modifier.\(MGSolidParser.token(m))") }
+        for m in mods where !modifierNames.contains(m) {
+            // A dot would make `text.modifier.<mod>` read like `text.modifier.<mod>.<name>`.
+            throw MGSolidIssue(m.contains(".") ? "text.placeholder" : "text.modifier.\(MGSolidParser.token(m))")
+        }
         guard let (canonical, fact) = lookup(name, facts, aliases) else { throw MGSolidIssue("text.placeholder.\(t)") }
+        let turnRate = canonical.hasSuffix(".speed") || canonical.hasSuffix(".worldSpeed") || canonical.hasSuffix(".ratio")
         var v = fact.value
         var terminal: String?
         for m in mods {
             func bad() -> MGSolidIssue { MGSolidIssue("text.modifier.\(m).\(t)") }
             guard terminal == nil else { throw bad() }
             if m != "abs" { guard fact.unit.isEmpty else { throw bad() } }
+            if m == "pct" || m == "deg" { guard turnRate else { throw bad() } }
             switch m {
             case "abs": v = abs(v)
             case "inv": guard v != 0 else { throw bad() }; v = 1 / v
@@ -248,7 +338,14 @@ public enum MGSolidFacts {
                 terminal = f
             }
         }
-        return (terminal ?? MGPhysics.format(v, unit: fact.unit), canonical)
+        let text = terminal ?? MGPhysics.format(v, unit: fact.unit)
+        // A non-zero number shown as "0" (for example a 1:300 reduction, 0.0033) is a false number; `frac` or `inv`
+        // shows it honestly.
+        let digits = text.filter(\.isNumber)
+        if v != 0, !digits.isEmpty, digits.allSatisfy({ $0 == "0" }) {
+            throw MGSolidIssue("text.rounding.\(t)")
+        }
+        return (text, canonical, mods)
     }
 
     /// The exact fraction p/q (q ≤ 100 000) within 1e-12 × max(1, |x|) of `x`, as "p/q" ("2/7", "-1/3"); whole

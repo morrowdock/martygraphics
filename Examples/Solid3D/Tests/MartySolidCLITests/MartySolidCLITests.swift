@@ -90,7 +90,11 @@ final class MartySolidCLITests: XCTestCase {
         let example = try run(["check", "--strict", models.appendingPathComponent("horizontal-reduction.json").path])
         XCTAssertEqual(example.status, 0)
         XCTAssertEqual(example.json?["version"] as? Int, 2)
-        XCTAssertEqual((example.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 5 · Not checked 1")
+        XCTAssertEqual((example.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 7 · Not checked 1")
+        // Which fact filled each placeholder, and what each check proved.
+        let stepFacts = example.json?["stepFacts"] as? [[String: Any]]
+        XCTAssertEqual(stepFacts?[1]["facts"] as? [String], ["pinion.teeth", "wheel.teeth"])
+        XCTAssertEqual(stepFacts?[3]["checks"] as? [String], ["wheel.speed < 0"])
         XCTAssertEqual((example.json?["facts"] as? [String: Any]).flatMap { ($0["wheel.speed"] as? [String: Any])?["tier"] as? String }, "solved")
         XCTAssertEqual(try run(["check", "--strict", idle, idle]).status, 2)
         XCTAssertEqual(try run(["check", "--strict", "--strict", idle]).status, 2)

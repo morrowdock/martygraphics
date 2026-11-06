@@ -7,12 +7,14 @@ import Foundation
 
 /// One visible claim with its engine-computed tier and the chip text a renderer shows.
 public struct MGSolidClaim: Equatable, Sendable {
-    public enum Kind: String, Equatable, Sendable { case motion, caption, title }
+    public enum Kind: String, Equatable, Sendable { case motion, caption, title, check }
     public var kind: Kind
-    /// Part id (motion; the base id for `repeat` copies), `step.<n>` (caption, 1-based) or `title`.
+    /// Part id (motion; the base id for `repeat` copies), `step.<n>` (caption, 1-based), `title`, or
+    /// `step.<n>.check.<k>` (a claim check, 1-based).
     public var id: String
     public var tier: MGSolidTier
-    /// Chip text: "Solved", "Schematic motion", "Schematic" or "Not checked".
+    /// Chip text: "Solved" (motion), "Numbers solved" (caption, title), "Checked" (check), "Schematic motion",
+    /// "Schematic" or "Not checked".
     public var badge: String
     /// Engine text that says why the claim has this tier.
     public var why: String
@@ -47,7 +49,8 @@ extension MGSolidTier {
     /// Chip text for a claim of this tier and kind.
     func badge(_ kind: MGSolidClaim.Kind) -> String {
         switch self {
-        case .solved: return "Solved"
+        // A caption's tier covers its numbers, not its words; the chip says so.
+        case .solved: return kind == .motion ? "Solved" : kind == .check ? "Checked" : "Numbers solved"
         case .built: return kind == .motion ? "Schematic motion" : "Schematic"
         case .described: return "Not checked"
         }
@@ -55,15 +58,12 @@ extension MGSolidTier {
 }
 
 enum MGSolidTiers {
-    /// Tier of an engine motion source. Every PR-1 source is a solver or a closed-form drive; scripted tracks and
-    /// author-set states (later PRs) will map to `built` here.
-    static func tier(ofSource s: String) -> MGSolidTier { .solved }
-
-    /// Caption or title tier: `described` when marked `unchecked`; otherwise the lowest tier of the facts it shows
-    /// or checks; nil when it shows and checks no engine number (prose the engine neither proves nor flags).
-    /// In v1 documents (no placeholders) a text with a number character is `described`.
-    static func text(facts: [MGSolidFact], unchecked: Bool) -> MGSolidTier? {
-        if unchecked { return .described }
+    /// Caption or title tier: `described` when marked `unchecked` or when it has a typed number (a number character
+    /// outside a placeholder: v1 text, a title); otherwise the lowest tier of the facts it shows; nil when it shows no
+    /// engine number. Claim checks never give a caption a tier: the engine cannot tell what the prose claims, so
+    /// each check is its own claim.
+    static func text(facts: [MGSolidFact], unchecked: Bool, typedNumbers: Bool = false) -> MGSolidTier? {
+        if unchecked || typedNumbers { return .described }
         return facts.map(\.tier).min()
     }
 }
@@ -84,11 +84,11 @@ extension MGSolidDocument {
     /// nil when the part's own joint does not move (it is static, idle, or only rides on a moving parent).
     public func motionTier(_ id: String) -> MGSolidTier? {
         let id = canonicalPart(id) ?? id
-        guard ownMotion(id), let s = motionSources[id] else { return nil }
-        var tier = MGSolidTiers.tier(ofSource: s)
+        guard ownMotion(id) else { return nil }
+        var tier = driveTiers[id] ?? .solved
         var cur = assembly.part(id)?.parent, seen: Set<String> = [id]
         while let c = cur, seen.insert(c).inserted {
-            if ownMotion(c), let cs = motionSources[c] { tier = min(tier, MGSolidTiers.tier(ofSource: cs)) }
+            if ownMotion(c) { tier = min(tier, driveTiers[c] ?? .solved) }
             cur = assembly.part(c)?.parent
         }
         return tier
@@ -103,19 +103,27 @@ extension MGSolidDocument {
             let base = copies[p.id] ?? p.id
             guard let t = motionTier(p.id), seen.insert(base).inserted else { continue }
             let s = motionSources[p.id] ?? "input"
-            out.append(MGSolidClaim(kind: .motion, id: base, tier: t, badge: t.badge(.motion), why: "Moved by \(s)"))
+            let why = t == .solved ? "Moved by \(s)" : (driveTiers[p.id] ?? .solved) < .solved
+                ? "Moved by \(s), from a speed or ratio the author set" : "Rides on a part whose motion the author set"
+            out.append(MGSolidClaim(kind: .motion, id: base, tier: t, badge: t.badge(.motion), why: why))
         }
         if let t = titleTier {
-            out.append(MGSolidClaim(kind: .title, id: "title", tier: t, badge: t.badge(.title), why: "Every number in it is an engine fact"))
+            let why = t == .solved ? "Its numbers are engine facts" : t == .described ? "Title has typed numbers" : "It shows a fact below Solved"
+            out.append(MGSolidClaim(kind: .title, id: "title", tier: t, badge: t.badge(.title), why: why))
         }
         for (i, s) in steps.enumerated() {
-            guard let t = s.tier else { continue }
-            let why: String
-            if let u = s.unchecked { why = "Marked unchecked: \(u)" }
-            else if version < 2 { why = "Assembly v1 text: its numbers are not checked" }
-            else if t == .solved { why = s.checks.isEmpty ? "Every number in it is an engine fact" : "Its numbers are engine facts and its checks passed" }
-            else { why = "It shows a fact below Solved" }
-            out.append(MGSolidClaim(kind: .caption, id: "step.\(i + 1)", tier: t, badge: t.badge(.caption), why: why))
+            if let t = s.tier {
+                let why: String
+                if let u = s.unchecked { why = "Marked unchecked: \(u)" }
+                else if version < 2 { why = "Assembly v1 text: its numbers are not checked" }
+                else if t == .solved { why = "Its numbers are engine facts; its words are not checked" }
+                else { why = "It shows a fact below Solved" }
+                out.append(MGSolidClaim(kind: .caption, id: "step.\(i + 1)", tier: t, badge: t.badge(.caption), why: why))
+            }
+            for (k, c) in s.checks.enumerated() {
+                let t = fact(c.value)?.tier ?? .solved
+                out.append(MGSolidClaim(kind: .check, id: "step.\(i + 1).check.\(k + 1)", tier: t, badge: t.badge(.check), why: "Checked: \(c.text)"))
+            }
         }
         return out
     }
@@ -154,8 +162,14 @@ extension MGSolidDocument {
         let source = motionSources[pid]
         let motion: String
         if let t = motionTier(pid), let s = source {
-            let speed = facts[pid + ".speed"].map { " (\($0.text) turns per input turn)" } ?? facts[pid + ".travel"].map { " (travel \($0.text) per input turn)" } ?? ""
-            motion = t == .solved ? "Solved by \(s)\(speed)" : "Schematic (\(s))"
+            var speed = ""
+            if let f = facts[pid + ".speed"] {
+                let frame = movingAncestor(pid) != nil ? " relative to \(p.parent ?? "its parent")" : ""
+                speed = " (\(f.text) turns per input turn\(frame)"
+                if !frame.isEmpty { speed += facts[pid + ".worldSpeed"].map { "; \($0.text) in the world frame" } ?? "; no world speed: the axes are not parallel" }
+                speed += ")"
+            } else if let f = facts[pid + ".travel"] { speed = " (travel \(f.text) per input turn)" }
+            motion = t == .solved ? "Solved by \(s)\(speed)" : "Schematic: \(s)\(speed), from numbers the author set"
         } else if p.joint != .fixed && p.drive == nil {
             motion = "Idle: the joint has no drive or constraint, so it never moves"
         } else if let mover = movingAncestor(pid) {

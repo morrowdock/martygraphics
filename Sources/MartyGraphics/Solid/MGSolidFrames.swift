@@ -33,6 +33,21 @@ enum MGSolidFrames {
         return b
     }
 
+    /// World bounds of a mesh's vertices under a transform (exact for the read-back; slower than `worldBounds`).
+    static func vertexBounds(_ mesh: MGMesh, _ t: MGTransform) -> MGBounds {
+        var b = MGBounds.empty
+        for p in mesh.positions { b.include(t.apply(p)) }
+        return b
+    }
+
+    /// Distance between two boxes (0 when they touch or overlap).
+    static func gap(_ a: MGBounds, _ b: MGBounds) -> Double {
+        let dx = max(0, a.min.x - b.max.x, b.min.x - a.max.x)
+        let dy = max(0, a.min.y - b.max.y, b.min.y - a.max.y)
+        let dz = max(0, a.min.z - b.max.z, b.min.z - a.max.z)
+        return (dx * dx + dy * dy + dz * dz).squareRoot()
+    }
+
     static func intersects(_ a: MGBounds, _ b: MGBounds) -> Bool {
         a.min.x <= b.max.x && b.min.x <= a.max.x && a.min.y <= b.max.y && b.min.y <= a.max.y && a.min.z <= b.max.z && b.min.z <= a.max.z
     }
@@ -78,15 +93,19 @@ enum MGSolidFrames {
             let base = doc.copies[p.id] ?? p.id
             // A joint that nothing drives never moves; the learner would see a still part that looks jointed.
             if p.joint != .fixed && p.drive == nil { report("joint.idle", base) }
-            if let parent = p.parent, let pp = byID[parent] {
-                // World coordinates written into a parent-relative `at` place the child at twice the offset. Only
-                // the first copy of a `repeat` carries the authored offset unturned.
-                let isFirstCopy = doc.copies[p.id] == nil || p.id == base + "1"
-                let at = p.placement.translation
-                let parentWorld = (rest[parent] ?? .identity).translation, parentAt = pp.placement.translation
-                func same(_ x: MGVec3, _ y: MGVec3) -> Bool { (x - y).length <= 1e-6 * max(1, y.length) }
-                if isFirstCopy, at.length > 1e-6,
-                   (parentWorld.length > 1e-6 && same(at, parentWorld)) || (parentAt.length > 1e-6 && same(at, parentAt)) {
+            if let parent = p.parent, byID[parent] != nil {
+                // World coordinates written into a parent-relative `at` / `rot` move the child by the parent's
+                // placement again (the double offset). Confirmed by geometry, with every joint at 0: the child misses
+                // its parent as placed, but read as world values its `at` / `rot` put it nearer, within one parent
+                // size. A child that touches its parent as placed (an arm link, a chain, a stack) never warns, and
+                // neither does a child of a parent at the world origin: only rotation differs there (a turbofan
+                // spinner on a shaft laid along X), so there is no offset to double.
+                let pr = worldBounds(localBounds[parent] ?? .empty, rest[parent] ?? .identity)
+                let lb = localBounds[p.id] ?? .empty
+                let placed = gap(pr, worldBounds(lb, rest[p.id] ?? .identity)), asWorld = gap(pr, worldBounds(lb, p.placement))
+                let touch = max(0.01, 1e-6 * max(pr.size.x, pr.size.y, pr.size.z))
+                if !pr.isEmpty, !lb.isEmpty, (rest[parent] ?? .identity).translation.length > touch, placed > touch, asWorld < placed,
+                   asWorld <= max(pr.size.x, pr.size.y, pr.size.z) {
                     report("frame.child.absolute", base)
                 }
                 let pb = world(parent), cb = world(p.id)
@@ -166,7 +185,7 @@ enum MGSolidFrames {
         let w = a.pose(MGPoseParameters()).world
         return a.parts.map { p in
             let t = w[p.id] ?? .identity
-            let b = worldBounds(p.mesh.bounds, t)
+            let b = vertexBounds(p.mesh, t)
             var s = "\(p.id): world centre \(point(b.center)) mm, size \(num(b.size.x)) x \(num(b.size.y)) x \(num(b.size.z)) mm"
             switch p.joint {
             case .revolute(let axis):
@@ -204,7 +223,7 @@ enum MGSolidFrames {
             } else {
                 s += "; root (at \(list(p.placement.translation)) in the world frame)"
             }
-            s += "; up (local +Z) is \(direction(t.applyVector(.unitZ)))"
+            s += "; local +Z points \(direction(t.applyVector(.unitZ)))"
             return s
         }
     }
