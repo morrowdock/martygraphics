@@ -123,7 +123,7 @@
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "b707b74b5e52c6016af9a887cb9ae22e39659994b116448feba93f6e64f8965b"
+      "sha256": "ccc5772314ebaef330da583053423a6f3ade8e8688666174e6a05c55b4653ae9"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json",
@@ -135,7 +135,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "0e5a8ba9f85a5971f065339d60d6bcb6f11f342ea94d3e2596e0b20d9fd34e96"
+      "sha256": "d0fd495224d98bf54ba1276388279743871d963c336fad275d394ea61f0cb876"
     },
     {
       "path": "LICENSE",

@@ -20,15 +20,42 @@ enum CLIError: Error, CustomStringConvertible {
 
 struct Loaded { let data: Data; let lines: Int; let sha256: String }
 
+/// A file larger than the format allows is refused like the parser would refuse it (`assembly.bytes`).
+struct TooLarge: Error {}
+
 func load(_ path: String) throws -> Loaded {
-    let data = try Data(contentsOf: URL(fileURLWithPath: path))
+    // Never read more than the format allows: refuse non-regular files (FIFOs, devices) and oversized files first.
+    let attrs = try FileManager.default.attributesOfItem(atPath: path)
+    guard (attrs[.type] as? FileAttributeType) == .typeRegular else { throw CLIError.invalid("Not a regular file: \(path)") }
+    guard ((attrs[.size] as? NSNumber)?.intValue ?? 0) <= MGSolidLimits.bytes else { throw TooLarge() }
+    let handle = try FileHandle(forReadingFrom: URL(fileURLWithPath: path))
+    defer { try? handle.close() }
+    let data = try handle.read(upToCount: MGSolidLimits.bytes + 1) ?? Data()
+    guard data.count <= MGSolidLimits.bytes else { throw TooLarge() }
     let text = String(decoding: data, as: UTF8.self)
     let lines = text.split(separator: "\n", omittingEmptySubsequences: false).count - (text.hasSuffix("\n") ? 1 : 0)
     return Loaded(data: data, lines: lines, sha256: SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined())
 }
 
+/// Replace values JSON cannot carry (nil, NaN, infinities) with null, recursively.
+func sanitized(_ v: Any?) -> Any {
+    switch v {
+    case nil: return NSNull()
+    case let d as Double: return d.isFinite ? d : NSNull()
+    case let a as [Any]: return a.map { sanitized($0) }
+    case let a as [String]: return a
+    case let m as [String: Any]: return m.mapValues { sanitized($0) }
+    case let m as [String: Double]: return m.mapValues { sanitized($0) }
+    case let o?: return o
+    }
+}
+
 func json(_ object: Any) -> String {
-    let d = (try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys])) ?? Data()
+    let clean = sanitized(object)
+    guard JSONSerialization.isValidJSONObject(clean),
+          let d = try? JSONSerialization.data(withJSONObject: clean, options: [.prettyPrinted, .sortedKeys]) else {
+        return #"{"ok": false, "reason": "report.encoding"}"#
+    }
     return String(decoding: d, as: UTF8.self)
 }
 
@@ -39,15 +66,22 @@ func checks(_ doc: MGSolidDocument) -> [String: Any] {
     let report = MGSolidChecks.gearMeshes(doc, samples: 96, inputRange: 0...(2 * .pi))
     out["gearPairs"] = report.pairs
     if report.pairs > 0 {
+        // Same tolerance the compiler uses for interference: 0.01 of the smallest module in the model.
+        let module = doc.gears.values.compactMap { $0.spur?.module ?? $0.ring?.module }.min() ?? 1
+        let tolerance = MGSolidLimits.toothOverlap * module
         out["maxPenetrationMM"] = report.maxPenetration
         out["minClearanceMM"] = report.minClearance
-        out["gearsEngage"] = report.maxPenetration < 1e-6
+        out["toleranceMM"] = tolerance
+        out["gearsEngage"] = report.maxPenetration <= tolerance
     }
     return out
 }
 
 func check(_ path: String) throws -> Int32 {
-    let src = try load(path)
+    let src: Loaded
+    do { src = try load(path) } catch is TooLarge {
+        print(json(["ok": false, "reason": "assembly.bytes", "part": NSNull()])); return 1
+    }
     switch MGSolidParser.document(data: src.data) {
     case .failure(let issue):
         print(json(["ok": false, "reason": issue.reason, "part": issue.part as Any, "file": ["lines": src.lines, "sha256": src.sha256]]))
@@ -55,9 +89,11 @@ func check(_ path: String) throws -> Int32 {
     case .success(let doc):
         let c = checks(doc)
         let tris = doc.assembly.parts.reduce(0) { $0 + $1.mesh.triangleCount }
-        var ok = (c["meshesClosed"] as? Bool) ?? false
-        if let engage = c["gearsEngage"] as? Bool { ok = ok && engage }
-        print(json(["ok": ok, "title": doc.title, "parts": doc.assembly.parts.count, "triangles": tris, "steps": doc.steps.map(\.say),
+        var reason: String? = nil
+        if (c["meshesClosed"] as? Bool) != true { reason = "check.meshOpen" }
+        else if (c["gearsEngage"] as? Bool) == false { reason = "check.gearsInterpenetrate" }
+        let ok = reason == nil
+        print(json(["ok": ok, "reason": reason as Any, "title": doc.title, "parts": doc.assembly.parts.count, "triangles": tris, "steps": doc.steps.map(\.say),
                     "ratios": doc.ratios, "checks": c, "file": ["lines": src.lines, "sha256": src.sha256]]))
         return ok ? 0 : 1
     }
@@ -82,7 +118,15 @@ func caption(_ image: CGImage, title: String, text: String?, footer: String) -> 
         }
     }
     let s = CGFloat(w) / 1280
-    draw(title, 28 * s, .semibold, x: 40 * s, y: CGFloat(h) - 64 * s, alpha: 1)
+    // Titles stay on one line; a long title is truncated with an ellipsis instead of running off the edge.
+    do {
+        let font = NSFont.systemFont(ofSize: 28 * s, weight: .semibold) as CTFont
+        let attr = NSAttributedString(string: title, attributes: [.font: font, .foregroundColor: NSColor.white.cgColor])
+        let line = CTLineCreateWithAttributedString(attr)
+        let dots = CTLineCreateWithAttributedString(NSAttributedString(string: "…", attributes: [.font: font, .foregroundColor: NSColor.white.cgColor]))
+        let fitted = CTLineCreateTruncatedLine(line, Double(CGFloat(w) - 80 * s), .end, dots) ?? line
+        ctx.textPosition = CGPoint(x: 40 * s, y: CGFloat(h) - 64 * s); CTLineDraw(fitted, ctx)
+    }
     if let t = text {
         ctx.setFillColor(CGColor(gray: 0, alpha: 0.55)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: Int(120 * s)))
         draw(t, 20 * s, .regular, x: 40 * s, y: 30 * s, alpha: 0.95, maxWidth: CGFloat(w) - 80 * s)
@@ -108,15 +152,21 @@ func scaled(_ image: CGImage, width: Int) -> CGImage {
 func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined() }
 
 @MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool) throws -> Int32 {
-    let src = try load(path)
+    let src: Loaded
+    do { src = try load(path) } catch is TooLarge {
+        print(json(["ok": false, "reason": "assembly.bytes", "part": NSNull()])); return 1
+    }
     let doc: MGSolidDocument
     switch MGSolidParser.document(data: src.data) {
     case .failure(let issue): print(json(["ok": false, "reason": issue.reason, "part": issue.part as Any])); return 1
     case .success(let d): doc = d
     }
     let out = URL(fileURLWithPath: outPath, isDirectory: true)
-    guard !FileManager.default.fileExists(atPath: out.path) else { throw CLIError.invalid("Output directory exists; choose a new one") }
-    try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+    // Atomic "must not exist": creation fails if the directory appears in the meantime. The parent must exist.
+    do { try FileManager.default.createDirectory(at: out, withIntermediateDirectories: false) }
+    catch { throw CLIError.invalid("Cannot create a NEW output directory at \(out.path) (it exists, or its parent is missing)") }
+    var finished = false
+    defer { if !finished { try? FileManager.default.removeItem(at: out) } }  // never leave a half-written result
     _ = NSApplication.shared
     let r = MGSolidRenderer(assembly: doc.assembly)
     let aspect = Double(width) / Double(height)
@@ -142,7 +192,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     try save(caption(try shot(MGPoseParameters(input: doc.defaults.input, explode: 1), preset: "hero", margin: 0.92),
                      title: doc.title + " · exploded", text: nil, footer: footer), "exploded.png")
     for (i, step) in doc.steps.enumerated() {
-        let params = MGPoseParameters(input: doc.defaults.input + step.spin * 0.5 * .pi, explode: step.explode ?? doc.defaults.explode)
+        let params = MGPoseParameters(input: doc.defaults.input + step.spin * 2 * .pi, explode: step.explode ?? doc.defaults.explode)
         let img = try shot(params, preset: step.camera ?? "hero", orbit: step.orbit, highlight: step.highlight)
         try save(caption(img, title: doc.title, text: "\(i + 1). \(step.say)", footer: footer), "step-\(i + 1).png")
     }
@@ -168,6 +218,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                                    "title": doc.title, "parts": doc.assembly.parts.count, "steps": doc.steps.count, "checks": checks(doc),
                                    "framesRendered": frames, "renderSecondsPerFrame": frames > 0 ? seconds / Double(frames) : 0, "outputs": files]
     try Data(json(manifest).utf8).write(to: out.appendingPathComponent("manifest.json"))
+    finished = true
     print(json(["ok": true, "output": out.path, "files": files.map { $0["file"]! }]))
     return 0
 }
@@ -178,14 +229,23 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         do {
             switch a.first {
             case "check"? where a.count == 2: exit(try check(a[1]))
-            case "render"? where a.count >= 3:
-                var w = 1280, h = 800
-                if let i = a.firstIndex(of: "--size"), i + 1 < a.count {
-                    let p = a[i + 1].split(separator: "x").compactMap { Int($0) }
-                    guard p.count == 2, (320...3840).contains(p[0]), (200...2160).contains(p[1]) else { throw CLIError.usage }
-                    w = p[0]; h = p[1]
+            case "render"? where a.count >= 3 && !a[1].hasPrefix("--") && !a[2].hasPrefix("--"):
+                var w = 1280, h = 800, loop = true
+                var rest = Array(a.dropFirst(3))
+                while let flag = rest.first {
+                    rest.removeFirst()
+                    switch flag {
+                    case "--no-loop": loop = false
+                    case "--size":
+                        guard let v = rest.first else { throw CLIError.usage }
+                        rest.removeFirst()
+                        let p = v.split(separator: "x").compactMap { Int($0) }
+                        guard p.count == 2, (320...3840).contains(p[0]), (200...2160).contains(p[1]) else { throw CLIError.usage }
+                        w = p[0]; h = p[1]
+                    default: throw CLIError.usage
+                    }
                 }
-                exit(try render(a[1], a[2], width: w, height: h, loop: !a.contains("--no-loop")))
+                exit(try render(a[1], a[2], width: w, height: h, loop: loop))
             default: throw CLIError.usage
             }
         } catch {
