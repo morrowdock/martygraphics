@@ -185,7 +185,9 @@
     "Sources/MartyGraphics/Solid/MGSolidComponents.swift: reusable solid component definitions, bounded expressions, use expansion, library and catalog (public-only)",
     "Sources/MartyGraphics/Solid/MGSolidBuiltInComponents.swift: built-in component definitions as JSON text (public-only)",
     "Tests/MartyGraphicsTests/SolidComponentTests.swift: component definition, expansion, refusal, library and starter-component tests",
-    "Examples/Solid3D/Sources/MartySolid3D/Models/planetary-components.json and slider-crank-component.json: worked examples built from components"
+    "Examples/Solid3D/Sources/MartySolid3D/Models/planetary-components.json and slider-crank-component.json: worked examples built from components",
+    "Tests/MartyGraphicsTests/SolidComponentNamespaceTests.swift: component namespace, authored-id, repeat-copy, id-length, refusal-order and blade-pitch regressions",
+    "Examples/Solid3D/Tests/MartySolidCLITests: fresh-process marty-solid tests (exit codes, JSON reports, refusal order)"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

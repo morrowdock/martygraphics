@@ -105,4 +105,7 @@ $B/marty-solid check my-model.json --component my-part.json # use a new componen
 To add a component to the built-in library, open a pull request that adds its JSON
 to `MGSolidBuiltInComponents.sources`; the tests compile every built-in.
 
+`swift test --package-path Examples/Solid3D` runs `marty-solid` in fresh processes and
+checks its exit codes, JSON reports and that refusals are the same in every process.
+
 The format is documented in [docs/SOLID-3D.md](../../docs/SOLID-3D.md).

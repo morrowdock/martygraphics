@@ -129,12 +129,13 @@ public enum MGSolidBuiltInComponents {
 
     static let propeller = #"""
     {"v": 1, "kind": "component", "id": "propeller", "title": "Propeller",
-     "about": "Driven hub (input) with N twisted, tapered airfoil blades copied around +Z.",
+     "about": "Hub (input) with N airfoil blades, steep at the hub and flatter at the tip; turns leading edge first, thrust toward +Z.",
      "params": {
       "blades": {"default": 3, "min": 2, "max": 8, "integer": true},
       "span": {"default": 110, "min": 20, "max": 1000, "about": "blade length in mm"},
       "chord": {"default": 34, "min": 5, "max": 400, "about": "blade width at the root in mm"},
-      "twist": {"default": 30, "min": -60, "max": 60, "about": "root-to-tip twist in degrees"},
+      "pitch": {"default": -40, "min": -80, "max": 80, "about": "root blade angle, degrees (negative = thrust +Z)"},
+      "twist": {"default": 28, "min": -60, "max": 60, "about": "extra angle at the tip, degrees"},
       "hub": {"default": 12, "min": 4, "max": 200, "about": "hub radius in mm"}
      },
      "parts": [
@@ -142,11 +143,11 @@ public enum MGSolidBuiltInComponents {
        "shape": [{"shaft": {"radius": {"param": "hub"}, "length": {"mul": [2.5, {"param": "hub"}]}, "z0": {"mul": [-1.25, {"param": "hub"}]}}},
                  {"shaft": {"radius": {"mul": [0.42, {"param": "hub"}]}, "length": {"mul": [3.4, {"param": "hub"}]},
                             "z0": {"mul": [-4.6, {"param": "hub"}]}}}],
-       "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}},
+       "joint": {"revolute": [0, 0, -1]}, "drive": {"input": 1}},
       {"id": "blade", "name": "Blade", "parent": "hub", "material": "aluminum",
        "repeat": {"count": {"param": "blades"}, "axis": [0, 0, 1]},
        "shape": {"blade": {"span": {"param": "span"}, "chord": {"param": "chord"}, "tipChord": {"mul": [0.47, {"param": "chord"}]},
-                           "twist": {"param": "twist"}, "root": {"mul": [0.83, {"param": "hub"}]}, "camber": 0.04}},
+                           "pitch": {"param": "pitch"}, "twist": {"param": "twist"}, "root": {"mul": [0.83, {"param": "hub"}]}, "camber": 0.04}},
        "explode": [0, 0, 30]}
      ],
      "anchors": {"input": "hub"}}

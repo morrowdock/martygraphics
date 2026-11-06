@@ -17,6 +17,19 @@
   `component check FILE.json [--with NAME=VALUE]` and `--component FILE`. The
   planetary example drops from 53 lines (3,721 bytes) to 12 lines (927 bytes) and the
   slider-crank from 21 lines to 8. Reasons now keep `.` in author names
+  (`ref.unknown.stage.ghost`). Part ids, `repeat` copy ids, instance ids and anchors
+  share one namespace (a collision is refused, never resolved silently); references may
+  name single copies (`p.blade1`); resolved ids, repeat suffix included, are at most
+  64 characters.
+- Add `pitch` to the `blade` primitive: the section angle is `pitch + twist × t`. Document
+  the angle convention (chord along +Y, leading edge toward −Y, positive turns +Y toward
+  +Z). The propeller example and the `propeller` component now turn about −Z (leading
+  edge first) with pitch −40° and twist +28°, so the blades are steep at the hub and
+  flatter at the tip, as the example text says. Before, the root was flat and the tip
+  steep, and the blades moved trailing edge first.
+- `marty-solid render` describes a one-line (minified) source by its size, for example
+  "812 bytes on one line", instead of "1 lines". `Examples/Solid3D` gains CLI tests that
+  run `marty-solid` in fresh processes.
   (`ref.unknown.stage.ghost`).
 - Lead the README and the showcase with the first AI-written result: a two-stage planetary
   gearbox written by Claude Haiku 5.5 from one prompt, refused once with an exact reason and

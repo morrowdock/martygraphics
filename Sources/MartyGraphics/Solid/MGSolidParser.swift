@@ -179,7 +179,7 @@ public enum MGSolidParser {
                 // An instance placed with `at` / `rot` carries its root parts (outside any `repeat` turn).
                 for k in expanded.indices { expanded[k].placement = frame * expanded[k].placement }
             }
-            guard wireIDs.insert(expanded[0].base).inserted else { throw MGSolidIssue("id.duplicate.\(expanded[0].base)", part: expanded[0].base) }
+            guard wireIDs.insert(expanded[0].base).inserted else { throw MGSolidIssue("id.duplicate.\(token(expanded[0].base))", part: expanded[0].base) }
             if expanded.count > 1 || expanded[0].instance != nil { repeated[expanded[0].base] = expanded.count }
             parts += expanded
         }
@@ -189,7 +189,7 @@ public enum MGSolidParser {
         for p in parts { for s in p.shapes { let e = s.meshEstimate; triangles += e.triangles; vertices += e.vertices } }
         guard triangles <= MGSolidLimits.triangles, vertices <= MGSolidLimits.vertices else { throw MGSolidIssue("assembly.budget") }
         var ids = Set<String>()
-        for p in parts { guard ids.insert(p.id).inserted else { throw MGSolidIssue("id.duplicate.\(p.id)", part: p.id) } }
+        for p in parts { guard ids.insert(p.id).inserted else { throw MGSolidIssue("id.duplicate.\(token(p.id))", part: p.id) } }
         // Resolve parents (a repeated child of a repeated parent pairs by instance).
         for i in parts.indices {
             guard let parent = parts[i].parent else { continue }
@@ -690,7 +690,7 @@ public enum MGSolidParser {
         "carrier": (["arms", "radius", "hub", "boss", "armWidth", "thickness"], ["z0", "chamfer", "blend"]),
         "extrudedProfile": (["points", "depth"], ["holes", "z0", "chamfer"]),
         "revolvedProfile": (["points"], ["closed", "sweep", "start"]),
-        "blade": (["span", "chord"], ["thickness", "twist", "root", "tipChord", "camber", "camberPosition"]),
+        "blade": (["span", "chord"], ["thickness", "twist", "pitch", "root", "tipChord", "camber", "camberPosition"]),
         "bladeRow": MGSolidTurbo.bladeRowKeys,
     ]
 
@@ -827,7 +827,10 @@ public enum MGSolidParser {
             }
         case "blade":
             _ = try n("span"); let chord = try n("chord")
-            _ = try opt("thickness", 0.02...0.4); _ = try opt("twist", -80...80); _ = try opt("root", 0...4000)
+            _ = try opt("thickness", 0.02...0.4); _ = try opt("root", 0...4000)
+            // Section angle pitch + twist × t, so the tip angle stays below 85 degrees as for blade rows.
+            let twist = try opt("twist", -80...80) ?? 0, pitch = try opt("pitch", -80...80) ?? 0
+            guard abs(pitch + twist) <= 85 else { throw MGSolidIssue("\(w).twist") }
             _ = try opt("tipChord", 0.05...4000)
             _ = try opt("camber", 0...0.09); _ = try opt("camberPosition", 0.1...0.9)
             _ = chord

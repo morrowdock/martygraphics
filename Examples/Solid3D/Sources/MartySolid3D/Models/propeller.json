@@ -2,10 +2,10 @@
  "parts": [
   {"id": "hub", "name": "Hub and shaft (input)", "material": "darkSteel",
    "shape": [{"shaft": {"radius": 12, "length": 30, "z0": -15}}, {"shaft": {"radius": 5, "length": 40, "z0": -55}}],
-   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}},
+   "joint": {"revolute": [0, 0, -1]}, "drive": {"input": 1}},
   {"id": "blade", "name": "Blade", "parent": "hub", "material": "aluminum",
    "repeat": {"count": 3, "axis": [0, 0, 1]},
-   "shape": {"blade": {"span": 110, "chord": 34, "tipChord": 16, "twist": 30, "root": 10, "camber": 0.04}},
+   "shape": {"blade": {"span": 110, "chord": 34, "tipChord": 16, "pitch": -40, "twist": 28, "root": 10, "camber": 0.04}},
    "explode": [0, 0, 30], "explodeWindow": [0, 1]}
  ],
  "steps": [

@@ -25,6 +25,11 @@ enum CLIError: Error, CustomStringConvertible {
 
 struct Loaded { let data: Data; let lines: Int; let sha256: String }
 
+/// "53 lines"; a minified document on one line is described by its size instead ("812 bytes on one line").
+func sourceSize(_ src: Loaded) -> String {
+    src.lines > 1 ? "\(src.lines) lines" : "\(src.data.count) bytes on one line"
+}
+
 /// A file larger than the format allows is refused like the parser would refuse it (`assembly.bytes`).
 struct TooLarge: Error {}
 
@@ -235,7 +240,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     _ = NSApplication.shared
     let r = MGSolidRenderer(assembly: doc.assembly)
     let aspect = Double(width) / Double(height)
-    let footer = "Rendered by the MartyGraphics solid engine from \(URL(fileURLWithPath: path).lastPathComponent) (\(src.lines) lines)"
+    let footer = "Rendered by the MartyGraphics solid engine from \(URL(fileURLWithPath: path).lastPathComponent) (\(sourceSize(src)))"
     var files: [[String: Any]] = []
     var seconds = 0.0, frames = 0
     func shot(_ params: MGPoseParameters, preset: String, orbit: Double = 0, highlight: [String] = [], margin: Double = 0.8) throws -> CGImage {

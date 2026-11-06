@@ -13,7 +13,9 @@ let package = Package(
                           dependencies: [.product(name: "MartyGraphics", package: "MartyGraphics")],
                           resources: [.copy("Models")]),
         .executableTarget(name: "MartySolidCLI",
-                          dependencies: [.product(name: "MartyGraphics", package: "MartyGraphics")])
+                          dependencies: [.product(name: "MartyGraphics", package: "MartyGraphics")]),
+        // Runs the built `marty-solid` in fresh processes: exit codes, JSON output and refusal order across hash seeds.
+        .testTarget(name: "MartySolidCLITests", dependencies: ["MartySolidCLI"])
     ],
     swiftLanguageModes: [.v5]
 )

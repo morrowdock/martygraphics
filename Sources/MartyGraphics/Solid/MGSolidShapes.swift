@@ -89,7 +89,8 @@ public struct MGShapeSpec: Equatable, Sendable {
             }
         case "blade":
             m = .blade(span: n("span"), chord: n("chord"), thickness: n("thickness", 0.12), twist: n("twist") * .pi / 180,
-                       root: n("root"), tipChord: n("tipChord", n("chord")), camber: n("camber"), camberPosition: n("camberPosition", 0.4))
+                       root: n("root"), tipChord: n("tipChord", n("chord")), camber: n("camber"), camberPosition: n("camberPosition", 0.4),
+                       pitch: n("pitch") * .pi / 180)
         case "bladeRow":
             m = .bladeRow(count: Int(n("count")), span: n("span"), chord: n("chord"), root: n("root"), z: n("z"),
                           thickness: n("thickness", 0.1), stagger: n("stagger") * .pi / 180, twist: n("twist") * .pi / 180,
@@ -177,11 +178,15 @@ public struct MGShapeSpec: Equatable, Sendable {
 
 extension MGMesh {
     /// Twisted, tapered blade with a symmetric NACA 00xx section: span along +X from `root`, chord along Y,
-    /// thickness along Z. `twist` (radians) rotates the tip section about the span axis relative to the root.
+    /// thickness along Z. The section at span fraction t is turned by `pitch + twist * t` (radians) about the span
+    /// axis: `pitch` sets the root section, `twist` the extra turn at the tip. Angle 0 puts the chord along +Y with the
+    /// leading edge toward -Y; a positive angle turns +Y toward +Z. So a blade on +X moves leading edge first when it
+    /// turns about -Z, and with camber (+Z) it pushes air toward -Z for a negative angle (thrust toward +Z).
     /// `camber` (max camber as a chord fraction, NACA 4-digit "m") and `camberPosition` ("p") give a cambered section;
     /// the camber line offset is applied vertically (no thickness rotation), which is a schematic simplification.
     public static func blade(span: Double, chord: Double, thickness: Double, twist: Double, root: Double = 0, tipChord: Double? = nil,
-                             camber: Double = 0, camberPosition: Double = 0.4, sections: Int = 14, chordSamples: Int = 28) -> MGMesh {
+                             camber: Double = 0, camberPosition: Double = 0.4, sections: Int = 14, chordSamples: Int = 28,
+                             pitch: Double = 0) -> MGMesh {
         func thick(_ x: Double) -> Double {
             5 * thickness * (0.2969 * x.squareRoot() - 0.1260 * x - 0.3516 * x * x + 0.2843 * x * x * x - 0.1036 * x * x * x * x)
         }
@@ -206,9 +211,11 @@ extension MGMesh {
         let c1 = tipChord ?? chord
         for s in 0...sections {
             let t = Double(s) / Double(sections)
-            let c = chord + (c1 - chord) * t, a = twist * t, x = root + span * t
+            let c = chord + (c1 - chord) * t, a = pitch + twist * t, x = root + span * t
             for p in loop {
-                // Section in (chord -> Y, thickness -> Z), quarter-chord pitch axis.
+                // Section in (chord -> Y, thickness -> Z), quarter-chord pitch axis. At angle 0 the chord lies along +Y
+                // with the leading edge (chord x = 0) at Y = -0.25 c and the camber toward +Z; a positive angle turns
+                // +Y toward +Z (right-handed about +X, the span axis).
                 let local = MGVec2((p.x - 0.25) * c, p.y * c).rotated(by: a)
                 mesh.positions.append(MGVec3(x, local.x, local.y))
             }

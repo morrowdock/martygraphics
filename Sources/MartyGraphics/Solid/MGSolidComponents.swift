@@ -19,7 +19,7 @@ public enum MGSolidComponentLimits {
     public static let exprArgs = 8
     /// Largest magnitude a parameter or an expression result may have.
     public static let value = 1e6
-    /// Expanded part ids (`stage1.gears.pinion`), before a `repeat` suffix.
+    /// Resolved part ids (`stage1.gears.pinion`, `stage.planet12`), including a `repeat` suffix.
     public static let idLength = 64
     public static let about = 160
 }
@@ -219,7 +219,8 @@ enum MGSolidComponents {
         var anchors: [String: String] = [:]
         if let a = o["anchors"] {
             guard case .object(let ao) = a, ao.count <= MGSolidComponentLimits.anchors else { throw MGSolidIssue("component.anchors") }
-            for (name, target) in ao {
+            // Sorted, so the same bytes always give the same first refusal.
+            for (name, target) in ao.sorted(by: { $0.key < $1.key }) {
                 guard (try? MGParser.identifier(.string(name), "")) != nil, !ids.contains(name), case .string(let t) = target else {
                     throw MGSolidIssue("component.anchor.\(MGSolidParser.token(name))")
                 }
@@ -228,7 +229,7 @@ enum MGSolidComponents {
         }
         if let c = o["checks"] {
             guard case .object(let co) = c, co.count <= MGSolidComponentLimits.checks else { throw MGSolidIssue("component.checks") }
-            for name in co.keys where (try? MGParser.identifier(.string(name), "")) == nil {
+            for name in co.keys.sorted() where (try? MGParser.identifier(.string(name), "")) == nil {
                 throw MGSolidIssue("component.check.name.\(MGSolidParser.token(name))")
             }
         }
@@ -362,6 +363,8 @@ enum MGSolidComponents {
     struct Expanded {
         /// Wire parts with full ids, in document order.
         var parts: [[String: MGJSON]] = []
+        /// `repeat` copies the compiler will make (`stage.planet2` → `stage.planet`).
+        var copies: [String: String] = [:]
         var constraints: [MGJSON] = []
         /// Instance frames of parts that were roots of an instance placed with `at` / `rot`.
         var frames: [String: MGTransform] = [:]
@@ -369,6 +372,28 @@ enum MGSolidComponents {
         var aliases: [String: String] = [:]
         /// Instance ids to every wire part id inside them.
         var groups: [String: [String]] = [:]
+
+        /// Every name a reference can use (wire ids, copy ids, instance ids, anchors); expansion keeps them unique.
+        var names: [String] { parts.compactMap { $0["id"]?.stringValue } + copies.keys.sorted() + groups.keys.sorted() + aliases.keys.sorted() }
+        /// Ids the expansion made: wire parts and their copies. Only these may contain a dot.
+        var generated: Set<String> { Set(parts.compactMap { $0["id"]?.stringValue }).union(copies.keys) }
+    }
+
+    /// One reference namespace: wire part ids, resolved `repeat` copy ids, instance (group) ids and anchors. A name used
+    /// twice would make a reference ambiguous (an anchor `pin1` beside the copy `pin1`), so it is refused.
+    struct Namespace {
+        var names = Set<String>()
+        mutating func claim(_ name: String, part: String? = nil) throws {
+            guard names.insert(name).inserted else { throw MGSolidIssue("id.duplicate.\(MGSolidParser.token(name))", part: part ?? name) }
+        }
+    }
+
+    /// The copy ids `repeat` will give a part (`pin` → `pin1`, `pin2`) when its count is a valid whole number; none
+    /// otherwise (the assembly compiler then refuses the count).
+    static func copyIDs(_ p: [String: MGJSON], _ id: String) -> [String] {
+        guard case .object(let r)? = p["repeat"], case .number(let c)? = r["count"], c.rounded() == c,
+              (2...Double(MGSolidLimits.repeatCount)).contains(c) else { return [] }
+        return (1...Int(c)).map { id + "\($0)" }
     }
 
     /// Expands one component instance whose parts get ids `prefix.<inner id>`.
@@ -390,7 +415,11 @@ enum MGSolidComponents {
             }
             enum Item { case plain([String: MGJSON]), nested(String, [String: MGJSON], Expanded) }
             var items: [Item] = []
-            var known = Set<String>()
+            // Names relative to this instance, after `repeat` (so `pin1` is a name when `pin` repeats).
+            var ns = Namespace()
+            var groupNames = Set<String>()
+            var copies: [String: String] = [:]
+            func relative(_ full: String) -> String { String(full.dropFirst(prefix.count + 1)) }
             for entry in entries {
                 guard case .object(let o) = try substitute(entry, env, &ctx), case .string(let rid)? = o["id"] else { throw MGSolidIssue("component.part") }
                 let full = prefix + "." + rid
@@ -402,22 +431,42 @@ enum MGSolidComponents {
                     }
                     let child = try instance(inner, with: try withValues(o, full), prefix: full, depth: depth + 1,
                                              stack: stack + [c.id], &ctx)
-                    for p in child.parts { if case .string(let s)? = p["id"] { known.insert(String(s.dropFirst(prefix.count + 1))) } }
-                    for a in child.aliases.keys { known.insert(String(a.dropFirst(prefix.count + 1))) }
+                    for name in child.names { try ns.claim(relative(name), part: name) }
+                    for g in child.groups.keys { groupNames.insert(relative(g)) }
                     items.append(.nested(rid, o, child))
                 } else {
                     ctx.parts += 1
                     guard ctx.parts <= MGSolidLimits.parts else { throw MGSolidIssue("parts.count") }
-                    known.insert(rid)
+                    try ns.claim(rid, part: full)
+                    for copy in copyIDs(o, rid) {
+                        // The 64-character cap holds for the ids the compiler makes, repeat suffix included.
+                        guard prefix.count + 1 + copy.count <= MGSolidComponentLimits.idLength else {
+                            throw MGSolidIssue("component.id.length", part: prefix + "." + copy)
+                        }
+                        try ns.claim(copy, part: prefix + "." + copy)
+                        copies[prefix + "." + copy] = full
+                    }
                     items.append(.plain(o))
                 }
             }
-            // Inner references name inner parts only (or a nested instance's parts and anchors).
+            // Anchors take names from the same namespace and name a part, a copy or a nested anchor (not a group).
+            var anchors: [(String, String)] = []
+            if case .object(let list)? = def["anchors"] {
+                for (name, target) in list.sorted(by: { $0.key < $1.key }) {
+                    guard case .string(let t) = target, ns.names.contains(t), !groupNames.contains(t),
+                          !ns.names.contains(name) else { throw MGSolidIssue("component.anchor.\(MGSolidParser.token(name))") }
+                    anchors.append((name, t))
+                }
+                for (name, _) in anchors { try ns.claim(name) }
+            }
+            // Inner references name inner parts only (or a nested instance's parts, copies and anchors).
+            let known = ns.names
             let map: (String) throws -> String = { r in
                 guard known.contains(r) else { throw MGSolidIssue("component.ref.unknown.\(MGSolidParser.token(r))") }
                 return prefix + "." + r
             }
             var out = Expanded()
+            out.copies = copies
             for item in items {
                 switch item {
                 case .plain(let o):
@@ -433,12 +482,7 @@ enum MGSolidComponents {
             if case .array(let list)? = def["constraints"] {
                 for entry in list { out.constraints.append(try mapConstraintRefs(try substitute(entry, env, &ctx), map)) }
             }
-            if case .object(let anchors)? = def["anchors"] {
-                for (name, target) in anchors.sorted(by: { $0.key < $1.key }) {
-                    guard case .string(let t) = target, known.contains(t) else { throw MGSolidIssue("component.anchor.\(MGSolidParser.token(name))") }
-                    out.aliases[prefix + "." + name] = prefix + "." + t
-                }
-            }
+            for (name, t) in anchors { out.aliases[prefix + "." + name] = prefix + "." + t }
             out.groups[prefix] = out.parts.compactMap { $0["id"]?.stringValue }
             return out
         } catch let e as MGSolidIssue {
@@ -466,19 +510,31 @@ enum MGSolidComponents {
     }
 
     /// Applies a `use` entry's `set`, `parent`, `at` and `rot` to an expanded instance. `map` resolves ids written in
-    /// the context of the `use` entry (the outer document's ids).
+    /// the context of the `use` entry (the outer document's ids). `set` edits wire parts: a repeated part is edited
+    /// through its base id (every copy), never one copy (`component.set.repeat.<id>`).
     static func applyUse(_ o: [String: MGJSON], _ child: inout Expanded, instance: String, map: (String) throws -> String) throws {
         if let s = o["set"] {
             guard case .object(let edits) = s else { throw MGSolidIssue("component.set", part: instance) }
             for (key, value) in edits.sorted(by: { $0.key < $1.key }) {
                 let target = instance + "." + key
                 guard let k = child.parts.firstIndex(where: { $0["id"] == .string(target) }) else {
-                    throw MGSolidIssue("component.set.unknown.\(MGSolidParser.token(key))", part: instance)
+                    let what = child.copies[target] != nil ? "repeat" : "unknown"
+                    throw MGSolidIssue("component.set.\(what).\(MGSolidParser.token(key))", part: instance)
                 }
                 guard case .object(let fields) = value, fields["id"] == nil, fields["use"] == nil else { throw MGSolidIssue("component.set.id", part: target) }
                 let mapped = try mapPartRefs(fields, map)
                 for (f, v) in mapped { if v == .null { child.parts[k].removeValue(forKey: f) } else { child.parts[k][f] = v } }
+                // `set` may change a repeat count: keep the copy list in step with the edited part.
+                child.copies = child.copies.filter { $0.value != target }
+                for copy in copyIDs(child.parts[k], key) {
+                    let full = instance + "." + copy
+                    guard full.count <= MGSolidComponentLimits.idLength else { throw MGSolidIssue("component.id.length", part: full) }
+                    child.copies[full] = target
+                }
             }
+            // The edited counts must keep the namespace unique.
+            var ns = Namespace()
+            for name in child.names { try ns.claim(name) }
         }
         let frame = try MGSolidParser.transform(o["at"], o["rot"], "component.use")
         var parent: String?
@@ -500,16 +556,30 @@ enum MGSolidComponents {
     }
 
     /// Expands every `use` entry of an assembly. Returns the plain assembly object, the instance frames and the ids
-    /// the expansion generated. An assembly without `use` entries is returned unchanged.
+    /// the expansion generated (only those may contain a dot). An assembly without `use` entries is returned unchanged.
     static func expand(_ o: [String: MGJSON], _ library: MGSolidLibrary) throws -> (object: [String: MGJSON], frames: [String: MGTransform], generated: Set<String>) {
         guard case .array(let entries)? = o["parts"], (1...MGSolidLimits.parts).contains(entries.count),
               entries.contains(where: { $0["use"] != nil }) else { return (o, [:], []) }
-        var plainIDs = Set<String>()
-        for e in entries where e["use"] == nil { if case .string(let s)? = e["id"] { plainIDs.insert(s) } }
+        // Authored step lists keep their own limit, before groups are expanded or duplicates merged.
+        if case .array(let steps)? = o["steps"] {
+            for s in steps {
+                for key in ["focus", "highlight"] {
+                    if case .array(let ids)? = s[key], ids.count > MGSolidLimits.idsPerStep { throw MGSolidIssue("step.\(key)") }
+                }
+            }
+        }
+        // One namespace over the whole document. Authored ids must be plain identifiers here, so an authored part can
+        // never take a dotted id the expansion makes (`p.hub`); provenance is never inferred from a dot.
+        var ns = Namespace()
+        for e in entries where e["use"] == nil {
+            guard case .object(let eo) = e, let idValue = eo["id"] else { continue }
+            guard let id = try? MGParser.identifier(idValue, "") else { throw MGSolidIssue("part.id") }
+            try ns.claim(id)
+            for copy in copyIDs(eo, id) { try ns.claim(copy) }
+        }
         var ctx = Context(library: library)
         var out = Expanded()
         var parts: [MGJSON] = []
-        var instances = Set<String>()
         for e in entries {
             guard case .object(let eo) = e, let u = eo["use"] else {
                 ctx.parts += 1
@@ -519,7 +589,7 @@ enum MGSolidComponents {
             }
             let id: String
             do { id = try MGParser.identifier(eo["id"] ?? .null, "part.id") } catch { throw MGSolidIssue("part.id") }
-            guard !plainIDs.contains(id), instances.insert(id).inserted else { throw MGSolidIssue("id.duplicate.\(id)", part: id) }
+            guard !ns.names.contains(id) else { throw MGSolidIssue("id.duplicate.\(id)", part: id) }
             do {
                 try MGSolidParser.closed(eo, ["id", "use"], useKeys, "component.use")
                 guard case .string(let cid) = u, let c = library.components[cid] else {
@@ -527,6 +597,7 @@ enum MGSolidComponents {
                 }
                 var child = try instance(c, with: try withValues(eo, id), prefix: id, depth: 1, stack: [], &ctx)
                 try applyUse(eo, &child, instance: id, map: { $0 })
+                for name in child.names { try ns.claim(name) }
                 parts += child.parts.map { .object($0) }
                 out.merge(child)
             } catch let e as MGSolidIssue {
@@ -535,8 +606,6 @@ enum MGSolidComponents {
                 throw MGSolidIssue(e.reason, part: id)
             }
         }
-        var generated = Set<String>()
-        for p in parts { if case .string(let s)? = p["id"], s.contains(".") { generated.insert(s) } }
         // Anchors resolve to their parts everywhere; an instance id names a group, which only steps may highlight.
         func resolve(_ r: String) throws -> String {
             var cur = r
@@ -575,13 +644,14 @@ enum MGSolidComponents {
                 return .object(so)
             })
         }
-        return (result, out.frames, generated)
+        return (result, out.frames, out.generated)
     }
 }
 
 extension MGSolidComponents.Expanded {
     mutating func merge(_ o: MGSolidComponents.Expanded) {
         parts += o.parts
+        copies.merge(o.copies) { a, _ in a }
         constraints += o.constraints
         frames.merge(o.frames) { a, _ in a }
         aliases.merge(o.aliases) { a, _ in a }

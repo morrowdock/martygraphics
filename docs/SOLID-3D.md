@@ -49,7 +49,7 @@ and the snapshot are **Y-up** (`MGSolidStage.zUpToYUp`).
   so); if it cannot, the cap falls back to ear clipping.
 * Builders: `extrude` (optional 45-degree chamfer on every cap edge), `revolve`
   (closed loops or open profiles with poles), `cylinder`, `tube`,
-  `chamferedBox`, `hexPrism`, `blade` (NACA 4-digit style section, linear twist
+  `chamferedBox`, `hexPrism`, `blade` (NACA 4-digit style section, root pitch, linear twist
   and taper).
 * Turbomachinery (`MGSolidTurbo.swift`): `bladeRow` repeats one airfoil blade
   N times around the Z axis. Each section lies on a cylinder of constant radius
@@ -96,6 +96,18 @@ part ids in sorted order), so the same input always reports the same first error
   for walls such as casings and nozzles; optional `sweep` and `start` in
   degrees give a capped partial revolve for cutaways, with
   ceil(96 × sweep / 360) segments, at least 2), `blade`, `bladeRow`.
+* **`blade`**: one airfoil along +X from `root` to `root + span`, with `chord`,
+  optional `tipChord` (linear taper), `thickness` (chord fraction), `camber` (0–0.09,
+  toward local +Z), `camberPosition`, `pitch` and `twist` (degrees, −80 to 80 each). The
+  section at span fraction t is turned by **pitch + twist × t** about the span axis.
+  At angle 0 the chord lies along +Y with the leading edge toward −Y; a positive angle
+  turns +Y toward +Z. So a blade on +X moves leading edge first when its part turns
+  about **−Z** (`"revolute": [0, 0, -1]` with a positive drive). For a propeller that
+  pushes air toward −Z (thrust toward +Z), use a **negative `pitch`** (leading edge
+  raised) and a positive `twist` that brings the tip angle toward zero: steep at the
+  hub, flatter at the tip, for example `"pitch": -40, "twist": 28` (−40° at the root,
+  −12° at the tip). |pitch + twist| ≤ 85 (`part.blade.twist`). The mesh is always
+  15 sections of 56 points.
 * **`bladeRow`**: `count` (2–128), `span`, `chord`, `root` (hub radius), and
   optional `z` (axial position of mid-chord), `thickness` (chord fraction),
   `stagger` (chord angle from the axis at the root, degrees; positive puts the
@@ -196,8 +208,9 @@ Small, complete models that `marty-solid check` accepts; a test keeps them valid
   36 mm stroke), and a connecting rod parented to the piston and driven by
   `crankRod`, so it stays between the wrist pin and the crank pin.
 * [`propeller.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/propeller.json)
-  (14 lines): a driven hub and one `blade` (span, chord, taper, twist, camber)
-  copied three times with `repeat`, so the copies turn with the hub.
+  (14 lines): a driven hub turning about −Z and one `blade` (span, chord, taper,
+  pitch −40°, twist +28°, camber) copied three times with `repeat`, so the copies turn
+  with the hub, leading edge first, steep at the hub and flatter at the tip.
 * [`planetary.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json)
   (53 lines): gear meshes, a fixed ring, a named carrier, explode windows and steps.
 * [`planetary-components.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/planetary-components.json)
@@ -234,23 +247,34 @@ parts, the parts without a `parent`, in the frame of their parent), `parent` (an
 part that the root parts are attached to) and `set`.
 
 * **Ids.** Inner parts get the id `<instance>.<inner id>`, for example `stage.sun`,
-  and `repeat` copies `stage.planet1…3`. Constraints, drives, parents and steps refer
-  to them by these ids. An anchor (`stage.input`, `stage.output`) names an inner part.
-  The instance id alone (`stage`) means all its parts in a step `focus` or
-  `highlight`; anywhere else it is refused (`ref.component.stage`). Authored ids never
-  contain a dot.
+  and `repeat` copies `stage.planet1…3`. Constraints, drives, parents, anchors and
+  steps refer to them by these ids: the base id (`stage.planet`) means every copy, a
+  copy id (`stage.planet2`) one copy. An anchor (`stage.input`, `stage.output`) names an
+  inner part. The instance id alone (`stage`) means all its parts in a step `focus` or
+  `highlight`; anywhere else it is refused (`ref.component.stage`). Authored ids are
+  plain identifiers (no dot, at most 24 characters, `part.id`).
+* **One namespace.** Part ids, `repeat` copy ids, instance ids and anchor names share
+  one namespace, inside each component and over the whole document, checked again for
+  the actual parameter values. A name used twice is refused: `id.duplicate.<id>` (for
+  example a part `p` repeated twice beside an instance `p1`) or
+  `component.anchor.<name>` (an anchor `pin1` beside the copy `pin1`).
 * **`set`** changes fields of inner parts as if the component had written them, for
   example `{"set": {"pinion": {"drive": null, "material": "bronze"}}}` (`null`
   removes a field). Ids inside `set` are the outer document's ids. A compound train
   keys the second pinion to the first wheel this way:
   `{"id": "s2", "use": "spurPair", "at": [48, 0, 14], "set": {"pinion": {"parent": "s1.output", "at": [0, 0, 14], "joint": null, "drive": null}}}`.
-  `at` / `rot` apply to the parts that are roots after `set`.
+  `at` / `rot` apply to the parts that are roots after `set`. `set` edits a repeated
+  part through its base id, which changes every copy; one copy cannot be edited
+  (`component.set.repeat.<id>`).
 * **Patches.** `{"parts": {"stage": {"with": {"planets": 4}}}}` edits the `use` entry;
-  `{"parts": {"stage.ring": {"material": "bronze"}}}` merges into its `set`.
+  `{"parts": {"stage.ring": {"material": "bronze"}}}` merges into its `set` (so a
+  repeated part is patched through its base id, `stage.planet`).
 * **Limits.** Nesting at most 3 levels (`component.depth`), cycles refused
-  (`component.cycle.<id>`), expanded ids at most 64 characters
-  (`component.id.length`). The part, constraint and step limits and the mesh budget
-  count the expanded assembly (`parts.count`, `assembly.budget`).
+  (`component.cycle.<id>`), resolved ids at most 64 characters including the `repeat`
+  suffix (`component.id.length`). The part, constraint and step limits and the mesh
+  budget count the expanded assembly (`parts.count`, `assembly.budget`). A step's
+  authored `focus` and `highlight` lists keep their 16-entry limit before groups expand,
+  and again after.
 
 ### Definitions
 
@@ -310,7 +334,7 @@ ids, anchors), about 3.8 KB for the built-ins, so a model can discover them chea
 | `spurPair` | pinion, wheel | pinionTeeth 12, wheelTeeth 36, module 2, width 10 | input pinion, output wheel |
 | `planetaryStage` | sun, ring, carrier, planet × N | sunTeeth 24, planetTeeth 18, planets 3, module 2, width 12 | input sun, output carrier |
 | `sliderCrank` | frame, crank, piston, rod | radius 18, rod 62, piston 14 (stroke = 2 × radius) | input crank, output piston |
-| `propeller` | hub, blade × N | blades 3, span 110, chord 34, twist 30, hub 12 | input hub |
+| `propeller` | hub, blade × N | blades 3, span 110, chord 34, pitch −40, twist 28, hub 12 | input hub |
 | `housingBase` | base, bolt × N | radius 84, thickness 7.5, bore 8, bolts 6 (top face at z = 0) | frame base |
 | `shaftWithBearing` | shaft, lowerBearing, upperBearing | radius 6, length 80, bearingWidth 12 | input shaft |
 | `fanStage` | hub, rotor (blade row), casing | blades 18, root 60, span 90, chord 40, stagger 35, twist 15 | input hub |
