@@ -64,9 +64,10 @@ and reset. It checks state, narration and validation only, not what the board lo
 - Colour is not the only state cue (the panel and narration say open/closed), but colour
   choices have not been reviewed for colour-vision deficiency.
 - On macOS, a click on the board selected a part, a drag orbited the camera while keeping
-  the selection, and **Reset view and parts** restored the starting camera and cleared the
-  selection. This was checked on screen with real mouse input on 2026-11-06. Slider dragging,
-  keyboard use, iOS touch and VoiceOver were not checked. The unit tests call the selection
+  the selection, dragging the Press and Explode sliders moved the parts and updated the
+  narration and contact state, and **Reset view and parts** restored the starting camera and
+  cleared the selection. This was checked on screen with real mouse input on 2026-11-06.
+  Keyboard use, iOS touch and VoiceOver were not checked. The unit tests call the selection
   code directly.
 - The leg-in-front layout is a drawing choice that keeps the parts from crossing; it is not
   a claim about how any real switch is built. The tube clearance is checked on the example's
