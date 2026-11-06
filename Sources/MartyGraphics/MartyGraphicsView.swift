@@ -11,6 +11,9 @@ public final class MGSceneController: ObservableObject {
     @Published public private(set) var revision = 0
     /// True when the last patch or stream was refused and the previous scene stayed.
     @Published public private(set) var lastUpdateFailed = false
+    /// How the board moves to the current scene. `.blend` for every existing entry point; `.direct` (follow a finger)
+    /// and `.keyframes` (engine in-betweens) only when a caller asks for them.
+    @Published public private(set) var transition: MGTransition = .blend
     private var stream: MGStreamParser?
     private var beforeStream: MGScene?
     /// Scene revisions handed out by this controller only ever increase, so a replacement scene never reuses the
@@ -21,14 +24,23 @@ public final class MGSceneController: ObservableObject {
 
     private func stamped(_ s: MGScene) -> MGScene { var s = s; s.revision = nextSceneRevision; nextSceneRevision += 1; return s }
 
-    public func show(_ scene: MGScene?) { self.scene = scene.map(stamped); lastUpdateFailed = false; revision &+= 1 }
+    public func show(_ scene: MGScene?) { show(scene, transition: .blend) }
+    /// Show a scene with an explicit transition (lesson sessions: `.direct` for learner controls, `.keyframes` for
+    /// `animate`). `show(_:)` is `show(_:transition: .blend)`.
+    public func show(_ scene: MGScene?, transition: MGTransition) {
+        self.transition = transition; self.scene = scene.map(stamped); lastUpdateFailed = false; revision &+= 1
+    }
 
     /// Applies a follow-up patch to the current scene. Returns false and keeps the scene if it doesn't validate.
     /// `requireRevision`: refuse patches that don't name the revision they were written against (model-sent patches).
     @discardableResult public func apply(patch: MGPatch, requireRevision: Bool = false) -> Bool {
+        apply(patch: patch, requireRevision: requireRevision, transition: .blend)
+    }
+    /// `apply(patch:requireRevision:)` with an explicit transition; `.direct` adopts without blend or draw-on replay.
+    @discardableResult public func apply(patch: MGPatch, requireRevision: Bool = false, transition: MGTransition) -> Bool {
         guard let scene, !requireRevision || patch.baseRevision != nil,
               case .success(let next) = scene.applying(patch) else { lastUpdateFailed = true; return false }
-        self.scene = stamped(next); lastUpdateFailed = false; revision &+= 1; return true
+        self.transition = transition; self.scene = stamped(next); lastUpdateFailed = false; revision &+= 1; return true
     }
     @discardableResult public func apply(patchObject: Any) -> Bool {
         guard case .success(let p) = MGPatch.parse(object: patchObject) else { lastUpdateFailed = true; return false }
@@ -40,7 +52,7 @@ public final class MGSceneController: ObservableObject {
     public func beginStream() { stream = MGStreamParser(); beforeStream = scene; isStreaming = true }
     public func feed(_ chunk: String) {
         guard var s = stream else { return }
-        if let preview = s.feed(chunk) { scene = stamped(preview); revision &+= 1 }
+        if let preview = s.feed(chunk) { transition = .blend; scene = stamped(preview); revision &+= 1 }
         stream = s
     }
     /// Strict final parse. On failure the scene from before the stream comes back (fail safe).
@@ -48,8 +60,8 @@ public final class MGSceneController: ObservableObject {
         defer { stream = nil; beforeStream = nil; isStreaming = false }
         guard let s = stream else { return false }
         switch s.finish() {
-        case .success(let final): scene = stamped(final); lastUpdateFailed = false; revision &+= 1; return true
-        case .failure: scene = beforeStream; lastUpdateFailed = true; revision &+= 1; return false
+        case .success(let final): transition = .blend; scene = stamped(final); lastUpdateFailed = false; revision &+= 1; return true
+        case .failure: transition = .blend; scene = beforeStream; lastUpdateFailed = true; revision &+= 1; return false
         }
     }
 }
@@ -155,6 +167,10 @@ struct MGSceneHost: View {
     @State private var cameraFrom: MGCamera?
     @State private var cameraStart = Date.distantPast
     @State private var shownScene: MGScene?
+    /// Engine keyframes (item lists) being played, with their start and length.
+    @State private var keyframes: [[MGItem]] = []
+    @State private var keyframeStart = Date.distantPast
+    @State private var keyframeDuration: Double = 0
     // Render gating: the frame loop runs only for real motion or a short transition on a visible board.
     @Environment(\.scenePhase) private var scenePhase
     @State private var visible = false
@@ -166,8 +182,8 @@ struct MGSceneHost: View {
               visible: visible, sceneActive: scenePhase == .active, reduceMotion: reduceMotion)
     }
     /// Keep the 2D loop alive just long enough for a transition, then settle on a final static frame.
-    private func bumpTransient() {
-        transientUntil = Date().addingTimeInterval(MGRenderPolicy.transientSeconds); transientToken &+= 1
+    private func bumpTransient(_ seconds: Double = MGRenderPolicy.transientSeconds) {
+        transientUntil = max(transientUntil, Date().addingTimeInterval(seconds)); transientToken &+= 1
     }
 
     var body: some View {
@@ -183,10 +199,11 @@ struct MGSceneHost: View {
             .onAppear { visible = true; adopt(scene, animated: false) }
             .onDisappear { visible = false }
             .task(id: transientToken) {
-                try? await Task.sleep(nanoseconds: UInt64(MGRenderPolicy.transientSeconds * 1_000_000_000))
+                let wait = max(0, transientUntil.timeIntervalSinceNow)
+                try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
                 if !Task.isCancelled { transientUntil = .distantPast }   // state change → one settled redraw, loop paused
             }
-            .onChange(of: controller.revision) { _, _ in if let s = controller.scene { adopt(s, animated: true) } }
+            .onChange(of: controller.revision) { _, _ in if let s = controller.scene { adopt(s, animated: true, transition: controller.transition) } }
             .onChange(of: teaching.holdsMotion) { _, held in
                 if !held { epoch = Date(); pausedAt = 0; playing = true }   // revealed: play the motion from its start
                 bumpTransient()
@@ -311,18 +328,20 @@ struct MGSceneHost: View {
         for id in MGTimeline.items(scene, step: next).map(\.id) where !before.contains(id) { appearStart[id] = now }
     }
 
-    /// New scene or patched scene: blend from what is on screen now; new items draw on.
-    private func adopt(_ scene: MGScene, animated: Bool) {
+    /// New scene or patched scene. `.blend`: blend from what is on screen now; new items draw on. `.direct`: no blend
+    /// and no draw-on replay for ids already shown (a finger update). `.keyframes`: play engine in-betweens.
+    /// A first appearance (not animated) draws everything on. The decision is `MGAdoption.plan` (pure, tested).
+    private func adopt(_ scene: MGScene, animated: Bool, transition: MGTransition = .blend) {
         let now = Date()
         let previous = shownScene
-        if animated, let previous {
+        let plan = MGAdoption.plan(previous: animated ? previous?.items : nil, next: scene.items, transition: transition, step: step)
+        if plan.blends, let previous {
             blendFrom = MGTimeline.frame(previous, items: MGTimeline.items(previous, step: step), time: time(now)); blendStart = now
-            let old = Set(previous.items.map(\.id))
-            for i in scene.items where !old.contains(i.id) { appearStart[i.id] = now }
         } else {
             blendFrom = nil
-            for i in scene.items { appearStart[i.id] = now.addingTimeInterval(Double(drawOrder(i)) * 0.05) }
         }
+        keyframes = plan.keyframes; keyframeStart = now; keyframeDuration = plan.duration
+        for (id, delay) in plan.appear { appearStart[id] = now.addingTimeInterval(delay) }
         let sameScene = previous.map { $0.template == scene.template && $0.title == scene.title } ?? false
         if !sameScene { step = 0; epoch = now; pausedAt = 0 }
         // Finite (teaching) motion: a changed parameter replays the new motion from the start for its loops, so the
@@ -331,16 +350,17 @@ struct MGSceneHost: View {
         step = min(scene.startStep > 0 ? scene.startStep : step, max(0, scene.steps.count - 1))
         if readOnly { step = max(0, scene.steps.count - 1) }
         if scene.startStep > 0, let previous { cameraFrom = previous.steps.indices.contains(step) ? previous.steps[step].camera : previous.camera; cameraStart = now }
-        shownScene = scene; bumpTransient()
-    }
-
-    private func drawOrder(_ i: MGItem) -> Int {
-        switch i.kind { case .vector, .highlight: return 6; case .text: return 8; case .body, .node, .array: return 3; default: return 0 }
+        shownScene = scene
+        if case .direct = transition, animated, plan.appear.isEmpty { bumpTransient(0.1) }   // one settled redraw, no replay
+        else { bumpTransient(max(MGRenderPolicy.transientSeconds, max(plan.duration, plan.appear.values.max() ?? 0) + 0.8)) }   // + draw-on 0.55 s
     }
 
     private func input(_ scene: MGScene, now: Date, size: CGSize) -> MGRenderInput {
         let t = reduceMotion ? 0 : time(now)
-        var items = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: t)
+        let keyT = now.timeIntervalSince(keyframeStart)
+        let playsKeyframes = !keyframes.isEmpty && keyT < keyframeDuration && !reduceMotion
+        var items = MGTimeline.frame(scene, items: playsKeyframes ? MGTween.sample(keyframes, at: keyT / keyframeDuration)
+                                                                  : MGTimeline.items(scene, step: step), time: t)
         if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
         let blendT = now.timeIntervalSince(blendStart)
         if let from = blendFrom, blendT < 1.2, !reduceMotion { items = MGTimeline.blend(from: from, to: items, t: MGTimeline.spring(blendT)) }

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Add beat-by-beat lessons (phase 1). A lesson document or a streamed statement lane (one JSON object per statement)
+  drives a Foundation-only `MGLessonSession`: beats with spoken lines, the existing patch ops plus `animate`, `bind`,
+  `unbind` and `check`, a persistent `MGLessonState` with stable ids, engine-filled narration and labels, refusals
+  with stable reasons and locations that leave the state unchanged, `.speech` / `.estimate` / `.immediate` pacing with
+  ordered timing events, `snapshot()` / `restore`, and separate time-to-first-visible and time-to-complete marks. Add
+  the opt-in `MGGeometryPack` (`rotate2d`: every rotated coordinate computed in Swift), `MGSceneDiff`, `MGTween`
+  keyframes and the SwiftUI `MGLessonController` / `MartyGraphicsLessonView`, where a slider sends the same `params`
+  command as a scripted beat. `MGSceneController` gains opt-in transitions (`.direct` for a finger: no blend and no
+  draw-on replay; `.keyframes` for `animate`: true rotations instead of the chord-cutting point blend); existing calls
+  keep the blend. Add `Examples/LessonDemo` (rotation lesson with `--verify`, `--timing`, `--render`, `--preview`) and
+  `docs/LESSONS.md`. Scene and patch formats stay at v1; the default grammar document is unchanged.
 - Add a maintainer-dispatched hosted `macos` CI job (standard `macos-26` runner) that builds and tests the root package, examples and SceneValidator; GPU tests skip themselves on hosted VMs.
 - Add reusable solid components. A component is a closed-key JSON definition with
   numeric parameters (`default`, `min`, `max`, `integer`), parts and constraints whose

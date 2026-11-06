@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "73c96be6aea3cddc6c596a80a27851b756b7f978d301fd51e500ce9369a6a872"
+      "sha256": "17a4600f6318810402c9eff60487098d3ad6ed7bcdbfee8673be9267fd8e80c1"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -52,6 +52,34 @@
     {
       "path": "Examples/KeySwitch3D/Tests/KeySwitchModelTests/KeySwitchModelTests.swift",
       "sha256": "6b1158d34a7c2aa2d1948910d532785da19c569c4cb228f42fd4ed0d7654733f"
+    },
+    {
+      "path": "Examples/LessonDemo/Package.swift",
+      "sha256": "9fe128f93346a38d7ac08c57adb51fc193827fb260811aabb05d02dedca77e84"
+    },
+    {
+      "path": "Examples/LessonDemo/README.md",
+      "sha256": "cc825da49d3e157e9f4bfa86b3ba63069ad8dc9d5c9e22f8f919fa01edfc059c"
+    },
+    {
+      "path": "Examples/LessonDemo/Sources/LessonDemo/main.swift",
+      "sha256": "532abd37c0dba29372c1cb518ab73d13fd2f171ed3f74cd248d2422ed7ec820b"
+    },
+    {
+      "path": "Examples/LessonDemo/Sources/LessonDemoKit/LessonDemoView.swift",
+      "sha256": "74c45ff2a309564099801fe169e2db680e36f5296bfc0c872094605199b720d8"
+    },
+    {
+      "path": "Examples/LessonDemo/Sources/LessonDemoKit/RotationLesson.swift",
+      "sha256": "d48fdbda85228cbb1b819478d6bb61cd5be567fe4f10cea1c07735c8da62e9d2"
+    },
+    {
+      "path": "Examples/LessonDemo/Sources/LessonDemoKit/Timing.swift",
+      "sha256": "f3bc12287e9da2e7a1e813dafec4325c4cdd8b2b86233dfbfe4260b43d7537e9"
+    },
+    {
+      "path": "Examples/LessonDemo/Tests/LessonDemoKitTests/LessonDemoKitTests.swift",
+      "sha256": "13c86f43a93527a91b4772e3a1403f92e5013946a774120c091cf1769a7fa467"
     },
     {
       "path": "Examples/PathTrace/Package.swift",
@@ -207,7 +235,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "a2f1c34acd0dc3c19fb4ea3ea3c80aa78ae366749154b6dd56b298b6cc5c4371"
+      "sha256": "ebe7b777d0ade4530a7df00eafd947141ed98d642bc2a2862dc94c29412b94dc"
     },
     {
       "path": "SECURITY.md",
@@ -230,6 +258,10 @@
       "sha256": "1d17dd89fcefcc304fec88c1ac8caef4b9b695394276b01df9058d5eb4306a91"
     },
     {
+      "path": "Sources/MartyGraphics/MGGeometryPack.swift",
+      "sha256": "c6c002049cc6babb06594cecbfdbaadabc3af452164c0f48bfb3c33359acb567"
+    },
+    {
       "path": "Sources/MartyGraphics/MGGrammar.swift",
       "sha256": "2f18903fb3eb1aed92e6829edb20a20dda4b9bb8b4adcb1b674847c58d4910ec"
     },
@@ -240,6 +272,18 @@
     {
       "path": "Sources/MartyGraphics/MGLayout.swift",
       "sha256": "c1a3641339349e10e9e0faced7f4e58e0a5d97aa992306a81b68970c11aef6ca"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGLesson.swift",
+      "sha256": "20984e5602bc4c99db30d58956943c5e35deb2b7257c60aace2fc1c35009ed48"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGLessonSession.swift",
+      "sha256": "dcf5531c0c653abd3a4b49f833b21a9940d31a1f14082864036d2ba9dbde9b74"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGLessonSnapshot.swift",
+      "sha256": "cc10a88436ed4731d7bb7e659b5dd25b9dcee6febbc54bd76e2fd683028c7ea5"
     },
     {
       "path": "Sources/MartyGraphics/MGModel.swift",
@@ -266,6 +310,10 @@
       "sha256": "5ef4ebaff7b3c4c46761e4a576732729a206af04ec38837c1459a30b938183e2"
     },
     {
+      "path": "Sources/MartyGraphics/MGSceneDiff.swift",
+      "sha256": "79477c4a880ed69c9e42063724d7dbe3b29974b92661122fa8764555cc91cc27"
+    },
+    {
       "path": "Sources/MartyGraphics/MGStream.swift",
       "sha256": "bbcaaaed0f905e558932dd8430e077efb75a4bc0f5baa6ccf061c955c939f205"
     },
@@ -282,8 +330,16 @@
       "sha256": "ad32fce5474a9b5b41b1ca35ebee324e0b4f318c99824b149a1fdd6523c49634"
     },
     {
+      "path": "Sources/MartyGraphics/MGTween.swift",
+      "sha256": "a8752d2293ed9c4a7b40281cad311a564577b4599c5aca4f114c54cae09206bd"
+    },
+    {
+      "path": "Sources/MartyGraphics/MartyGraphicsLessonView.swift",
+      "sha256": "f2771e9f021ec25c2f47215eb652254cf7beedf31750970f0f921a23ad934bf3"
+    },
+    {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "67b4fa9c02ce50030470930e31826f168727977f998f3754e6c301fea6e632e7"
+      "sha256": "c0a44f2a6a7f860cecdbdfd97eecbe6ef83c2def2753ec71d26c05755c03ed50"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAssembly.swift",
@@ -386,6 +442,26 @@
       "sha256": "155fa8b3077f6300920cd3e4777a3657e7cf3d2c95701386bdec0a2096eb0342"
     },
     {
+      "path": "Tests/MartyGraphicsTests/LessonCoreTests.swift",
+      "sha256": "733d973f617217c01dc4b65449bde3ffae1324fdbdadf59e90cbaaf48a9e559f"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/LessonRendererTests.swift",
+      "sha256": "d069bb537c64538c6e00c44850a99eabb8218e388e8f556e72451f7dcc06d611"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/LessonStreamTests.swift",
+      "sha256": "114c39feae397c4681b140433c1ea5c38e2b8f273c448bc8a4289807e98d4fbc"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/LessonTestSupport.swift",
+      "sha256": "8e0d1d649f9992a1fc02035ba842e6de329030dccb63b29a85253e5611c1a9db"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/LessonTimingTests.swift",
+      "sha256": "68b142b6a807c5bbd0d6fc0658b90ad373600c055bd43a9179ffcc72fcd00f77"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/MG3DInteractionTests.swift",
       "sha256": "521a969dd8e4749183d5f83fc88034ad97e78fc7acc393f8dbc7b38fa7ea1396"
     },
@@ -467,11 +543,15 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "eb3c6dacbe75be786d725caee477b1def223f070ecea10c80aed5306edc0b08b"
+      "sha256": "b37aa80cb651bb51fe6e63a2ce2e8f824e2eb272a50df2ecc7084104e93c1ab7"
     },
     {
       "path": "docs/GETTING-STARTED.md",
       "sha256": "3df018e9a1c8cb61ed47048ba156f5bb8b985f1a5a79e20d17b0852e4755330a"
+    },
+    {
+      "path": "docs/LESSONS.md",
+      "sha256": "0922ba075d4fa227a986dd71139a26333d3610ffffd4f8035a1f2d7382b0ff09"
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
@@ -660,6 +740,14 @@
     {
       "path": "docs/fixtures/v1/highlight-cycle.scene.json",
       "sha256": "8e8b086b31bc47dd77e85239472b59b7cbe814ff9cd045c5a3673c5eb7b57475"
+    },
+    {
+      "path": "docs/fixtures/v1/rotation.lesson.json",
+      "sha256": "940987b5820a1e5dcf0a841eff0b3d2db624d1b2242131c2335ac9f7e653f0e5"
+    },
+    {
+      "path": "docs/fixtures/v1/rotation.statements.ndjson",
+      "sha256": "e1a3e696af39e207c920ce1a53566b02d2c54fce60eb6a187649519862a34b26"
     },
     {
       "path": "docs/fixtures/v1/scene.json",

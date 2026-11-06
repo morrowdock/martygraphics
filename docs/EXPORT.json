@@ -120,7 +120,8 @@
       "adaptations": [
         "Apache-2.0 SPDX header",
         "Removed internal work-item identifier from comments",
-        "Public adaptation, not compared with the private source: inspects3D(_:) and preserves3DCamera(resetKey:) modifiers wired to the 3D board"
+        "Public adaptation, not compared with the private source: inspects3D(_:) and preserves3DCamera(resetKey:) modifiers wired to the 3D board",
+        "Public adaptation, not compared with the private source: opt-in board transitions (MGTransition: blend, direct, keyframes) via show(_:transition:) and apply(patch:requireRevision:transition:); existing entry points keep the blend"
       ]
     },
     {
@@ -187,7 +188,14 @@
     "Tests/MartyGraphicsTests/SolidComponentTests.swift: component definition, expansion, refusal, library and starter-component tests",
     "Examples/Solid3D/Sources/MartySolid3D/Models/planetary-components.json and slider-crank-component.json: worked examples built from components",
     "Tests/MartyGraphicsTests/SolidComponentNamespaceTests.swift: component namespace, authored-id, repeat-copy, id-length, refusal-order and blade-pitch regressions",
-    "Examples/Solid3D/Tests/MartySolidCLITests: fresh-process marty-solid tests (exit codes, JSON reports, refusal order)"
+    "Examples/Solid3D/Tests/MartySolidCLITests: fresh-process marty-solid tests (exit codes, JSON reports, refusal order)",
+    "Sources/MartyGraphics/MGLesson.swift, MGLessonSession.swift, MGLessonSnapshot.swift: Foundation-only beat-by-beat lesson core (document, statement stream, commands, checks, pacing, events, snapshot) (public-only)",
+    "Sources/MartyGraphics/MGSceneDiff.swift, MGTween.swift: item diff, adoption plan and engine keyframes (public-only)",
+    "Sources/MartyGraphics/MGGeometryPack.swift: opt-in geometry pack (rotate2d) with an original synthetic triangle fixture (public-only)",
+    "Sources/MartyGraphics/MartyGraphicsLessonView.swift: SwiftUI lesson controller and view (public-only); MartyGraphicsView.swift gains opt-in board transitions",
+    "Tests/MartyGraphicsTests/Lesson*.swift: lesson acceptance tests (core, stream, renderer, timing)",
+    "docs/LESSONS.md and docs/fixtures/v1/rotation.lesson.json, rotation.statements.ndjson: lesson contract and synthetic rotation lesson fixtures",
+    "Examples/LessonDemo: rotation lesson host example with verify, timing, render and simulator-run tests"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",
