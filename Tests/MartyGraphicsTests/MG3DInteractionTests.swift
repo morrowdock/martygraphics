@@ -218,7 +218,7 @@ final class MG3DInteractionTests: XCTestCase {
     private func onScreen(_ view: SCNView) {
         view.frame = CGRect(x: 0, y: 0, width: 600, height: 600)
         // A windowless view has no projection until the implicit SceneKit transaction commits (the run loop does
-        // this on screen); without the flush every hit test is empty (observed while writing the first revision).
+        // this on screen); without the flush every hit test is empty.
         SCNTransaction.flush()
     }
 

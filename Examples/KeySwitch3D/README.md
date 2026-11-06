@@ -55,7 +55,7 @@ and reset. It checks state, narration and validation only, not what the board lo
 ## Known limits
 
 - Parts are drawn with existing 3D kinds only: wireframe `path` boxes, a `path` helix and
-  `path` contact leaves. There are no solid custom shapes, per-part materials, transparency,
+  `path` contact leaves. There are no solid custom shapes, per-part materials, authored transparency,
   hierarchy/groups, rotations other than the body z-angle, or animated part transitions in 3D.
 - Every parameter change rebuilds the whole 3D node tree. Its frame cost is not measured.
 - Numbered marker badges are not drawn in 3D; the parts list carries the numbers.

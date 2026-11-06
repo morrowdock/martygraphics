@@ -35,7 +35,7 @@
     },
     {
       "path": "Examples/KeySwitch3D/README.md",
-      "sha256": "828461c641dc5900abb6d08f45abc5345bb6d3c71a0e57a17504bc8b3dfa060f"
+      "sha256": "9bcbdc2c0594d06c417839c183e873f5ca66f9e8ed1a6d30f8f083e660afa53c"
     },
     {
       "path": "Examples/KeySwitch3D/Sources/KeySwitch3D/main.swift",
@@ -107,7 +107,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "dcf380f0a7c363ba07c485e8e9815070d66efb1fac0485b9b2a119d9cf3a82b5"
+      "sha256": "35bd2bf41a82680a41af46ad1d8838dcbdad8a4d00dc23677d33e5f95b27e1e0"
     },
     {
       "path": "SECURITY.md",
@@ -183,7 +183,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "1ab8a267c83908e77ad5bc9582b6ba80060ae246ece088235eeb676b235a4d9b"
+      "sha256": "67b4fa9c02ce50030470930e31826f168727977f998f3754e6c301fea6e632e7"
     },
     {
       "path": "Tests/MartyGraphicsTests/ControllerRollbackTests.swift",
@@ -195,7 +195,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/MG3DInteractionTests.swift",
-      "sha256": "994d687e7a119915419a9ed691c577d2eeae18f320f56833b347542fd8f44051"
+      "sha256": "521a969dd8e4749183d5f83fc88034ad97e78fc7acc393f8dbc7b38fa7ea1396"
     },
     {
       "path": "Tests/MartyGraphicsTests/MGPackTests.swift",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "897fc0a562aeb2acb00fb408fbe70dcd8ffff363fe9ef8a98b541528e6193bcb"
+      "sha256": "64517e1a3f57bcf4b0c06b28ca8a9a2a511036c78030de4abd43becf6a01a4f3"
     },
     {
       "path": "docs/DISTRIBUTION.md",

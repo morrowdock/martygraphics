@@ -116,7 +116,7 @@ public struct MG3DInspection: OptionSet, Hashable, Sendable {
     /// `emphasis` items (and the current selection) glow brighter; nothing else changes. A highlight halo glows
     /// with its target.
     public static let emphasis = MG3DInspection(rawValue: 1 << 1)
-    /// While something drawn is emphasised, every other item is dimmed (a highlight dims with its target).
+    /// While something drawn is emphasised, every other item except the axes is dimmed (a highlight dims with its target).
     /// 3D only: 2D emphasis never dims.
     public static let dimming = MG3DInspection(rawValue: 1 << 2)
 }
