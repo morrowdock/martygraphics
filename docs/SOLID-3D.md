@@ -73,6 +73,9 @@ A missing required key is named, for example `part.drive.crankSlider.missing.rad
 ASCII letters, digits, `_` and `.` (other characters become `_`, at most 32), so
 `"source": "x y"` reports `ref.unknown.x_y`. Checks run in document order (patch
 part ids in sorted order), so the same input always reports the same first error.
+A `parent` that contains a dot but names no part reports `ref.unknown.<id>` (for
+example `ref.unknown.a.b`), also in documents without components; before components it
+reported `part.parent`.
 
 ```json
 {"v": 1, "kind": "assembly", "title": "…", "units": "mm",
@@ -272,9 +275,13 @@ part that the root parts are attached to) and `set`.
 * **Limits.** Nesting at most 3 levels (`component.depth`), cycles refused
   (`component.cycle.<id>`), resolved ids at most 64 characters including the `repeat`
   suffix (`component.id.length`). The part, constraint and step limits and the mesh
-  budget count the expanded assembly (`parts.count`, `assembly.budget`). A step's
-  authored `focus` and `highlight` lists keep their 16-entry limit before groups expand,
-  and again after.
+  budget count the expanded assembly (`parts.count`, `assembly.budget`).
+* **Step lists.** A step's `focus` and `highlight` hold at most 16 entries as authored
+  (`step.focus`, `step.highlight`). Then anchors resolve, instance ids expand to their
+  wire part ids and duplicates merge; that list of wire names must also hold at most
+  16 entries. A repeated part's base id then expands to all its copies, as in any
+  document, and the copies are not counted: two instances with repeats can give more
+  than 16 resolved parts.
 
 ### Definitions
 

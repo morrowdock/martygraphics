@@ -431,8 +431,13 @@ enum MGSolidComponents {
                     }
                     let child = try instance(inner, with: try withValues(o, full), prefix: full, depth: depth + 1,
                                              stack: stack + [c.id], &ctx)
-                    for name in child.names { try ns.claim(relative(name), part: name) }
-                    for g in child.groups.keys { groupNames.insert(relative(g)) }
+                    // Name discovery: the child's names after its `set` (which may change repeat counts), so this
+                    // component can reference the copies the set makes. The ids inside `set` are mapped to this
+                    // context later, in the reference phase; names do not depend on them.
+                    var edited = child
+                    try applySet(o, &edited, instance: full, map: { $0 })
+                    for name in edited.names { try ns.claim(relative(name), part: name) }
+                    for g in edited.groups.keys { groupNames.insert(relative(g)) }
                     items.append(.nested(rid, o, child))
                 } else {
                     ctx.parts += 1
@@ -513,6 +518,13 @@ enum MGSolidComponents {
     /// the context of the `use` entry (the outer document's ids). `set` edits wire parts: a repeated part is edited
     /// through its base id (every copy), never one copy (`component.set.repeat.<id>`).
     static func applyUse(_ o: [String: MGJSON], _ child: inout Expanded, instance: String, map: (String) throws -> String) throws {
+        try applySet(o, &child, instance: instance, map: map)
+        try place(o, &child, instance: instance, map: map)
+    }
+
+    /// A `use` entry's `set`: merges fields into wire parts (refs mapped with `map`), keeps the copy list in step with
+    /// edited repeat counts and checks that the instance's names stay unique.
+    static func applySet(_ o: [String: MGJSON], _ child: inout Expanded, instance: String, map: (String) throws -> String) throws {
         if let s = o["set"] {
             guard case .object(let edits) = s else { throw MGSolidIssue("component.set", part: instance) }
             for (key, value) in edits.sorted(by: { $0.key < $1.key }) {
@@ -536,6 +548,10 @@ enum MGSolidComponents {
             var ns = Namespace()
             for name in child.names { try ns.claim(name) }
         }
+    }
+
+    /// A `use` entry's `parent`, `at` and `rot`, applied to the instance's root parts.
+    static func place(_ o: [String: MGJSON], _ child: inout Expanded, instance: String, map: (String) throws -> String) throws {
         let frame = try MGSolidParser.transform(o["at"], o["rot"], "component.use")
         var parent: String?
         if let p = o["parent"] {

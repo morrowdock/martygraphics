@@ -20,7 +20,8 @@
   (`ref.unknown.stage.ghost`). Part ids, `repeat` copy ids, instance ids and anchors
   share one namespace (a collision is refused, never resolved silently); references may
   name single copies (`p.blade1`); resolved ids, repeat suffix included, are at most
-  64 characters.
+  64 characters. A dotted `parent` that names no part now reports `ref.unknown.<id>`
+  instead of `part.parent`, also in documents without components.
 - Add `pitch` to the `blade` primitive: the section angle is `pitch + twist × t`. Document
   the angle convention (chord along +Y, leading edge toward −Y, positive turns +Y toward
   +Z). The propeller example and the `propeller` component now turn about −Z (leading

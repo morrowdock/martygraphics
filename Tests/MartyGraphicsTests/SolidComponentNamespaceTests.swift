@@ -107,6 +107,39 @@ final class SolidComponentNamespaceTests: XCTestCase {
         XCTAssertEqual(brass.assembly.parts.filter { $0.id.hasPrefix("p.blade") }.map(\.material), [.brass, .brass, .brass])
     }
 
+    /// A nested `set` that changes a repeat count makes or removes copies; the containing component sees the edited
+    /// names (parent, anchor, fixed constraint, drive source, nested `use` parent), growing and shrinking.
+    func testNestedSetCopiesCanBeReferenced() throws {
+        var l = MGSolidLibrary.builtIn
+        for leaf in [component("editLeaf", #"{"id":"pin","shape":\#(Self.box),"repeat":{"count":2}}"#),
+                     component("editLeaf3", #"{"id":"pin","shape":\#(Self.box),"repeat":{"count":3}}"#),
+                     component("cube", #"{"id":"c","shape":\#(Self.box)}"#)] {
+            _ = try l.register(Data(leaf.utf8)).get()
+        }
+        let tipJoint = #""joint":{"revolute":[0,0,1]}"#
+        let users: [(String, String, String)] = [
+            ("newParent", #"{"id":"tip","shape":\#(Self.box),"parent":"inner.pin3"}"#, ""),
+            ("newAnchor", #"{"id":"tip","shape":\#(Self.box)}"#, #","anchors":{"out":"inner.pin3"}"#),
+            ("newFixed", #"{"id":"tip","shape":\#(Self.box)}"#, #","constraints":[{"fixed":"inner.pin3"}]"#),
+            ("newDrive", #"{"id":"tip","shape":\#(Self.box),\#(tipJoint),"drive":{"follow":{"source":"inner.pin3","ratio":1}}}"#, ""),
+            ("newUse", #"{"id":"cap","use":"cube","parent":"inner.pin3"}"#, ""),
+        ]
+        for (id, part, extra) in users {
+            // Growing: editLeaf has copies pin1, pin2; the set makes pin3.
+            let grow = component(id, #"{"id":"inner","use":"editLeaf","set":{"pin":{"repeat":{"count":3}}}},\#(part)"#, extra)
+            var g = l
+            XCTAssertNoThrow(try g.register(Data(grow.utf8)).get(), id)
+            let d = try compile(#"{"v":1,"kind":"assembly","parts":[{"id":"s","use":"\#(id)"}],"steps":[{"say":"Pin.","highlight":["s.inner.pin3"]}]}"#, g).get()
+            XCTAssertNotNil(d.assembly.part("s.inner.pin3"), id)
+            // Shrinking: editLeaf3 has pin3; the set leaves only pin1, pin2, so pin3 is refused.
+            let shrink = component(id, #"{"id":"inner","use":"editLeaf3","set":{"pin":{"repeat":{"count":2}}}},\#(part)"#, extra)
+            XCTAssertEqual(registerReason(shrink, into: l), id == "newAnchor" ? "component.anchor.out" : "component.ref.unknown.inner.pin3", id)
+        }
+        let parented = try compile(#"{"v":1,"kind":"assembly","parts":[{"id":"s","use":"newParent"}]}"#,
+                                   try register(component("newParent", #"{"id":"inner","use":"editLeaf","set":{"pin":{"repeat":{"count":3}}}},{"id":"tip","shape":\#(Self.box),"parent":"inner.pin3"}"#), into: l).get()).get()
+        XCTAssertEqual(parented.assembly.part("s.tip")?.parent, "s.inner.pin3")
+    }
+
     // MARK: S3: resolved id length
 
     func testResolvedIdLengthIncludesTheRepeatSuffix() throws {
