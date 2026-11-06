@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Refuse numeric array cells whose displayed text is longer than the
+  6-character cell limit (for example `-123456` or `999999.5`) with
+  `array.val` at first parse. Such scenes used to parse and then fail every
+  later step edit or patch of that array. Values are never altered.
 - Fix three engine round-trip bugs. Default node radius and array cell size
   are now capped to the maximum their own keys accept, so a defaulted item's
   wire form re-parses when the world's larger side is under 3 (node) or 4

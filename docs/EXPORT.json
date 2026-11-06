@@ -44,7 +44,8 @@
       "adaptations": [
         "Apache-2.0 SPDX header",
         "Detect highlight cycles and revalidate item references after every cumulative step edit",
-        "Public fix: default node radius and array cell size are capped to the range their own keys accept, so defaulted items re-parse in worlds smaller than 3 (node) or 4 (array) units"
+        "Public fix: default node radius and array cell size are capped to the range their own keys accept, so defaulted items re-parse in worlds smaller than 3 (node) or 4 (array) units",
+        "Public fix: numeric array cells whose displayed text exceeds MGLimits.cellText are refused at first parse"
       ]
     },
     {

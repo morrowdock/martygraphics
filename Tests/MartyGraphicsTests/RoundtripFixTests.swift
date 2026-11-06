@@ -3,10 +3,9 @@ import Foundation
 import XCTest
 @testable import MartyGraphics
 
-/// Regression tests for three fixed engine issues: world-sized node/array defaults, transitive anchor
-/// visibility and version-1-only stream previews. Synthetic data only.
-/// Numeric array cells whose formatted text exceeds the 6-scalar string-cell limit are deliberately NOT covered:
-/// that needs a protocol decision first.
+/// Regression tests for fixed engine round-trip issues: world-sized node/array defaults, transitive anchor
+/// visibility, version-1-only stream previews and the displayed-text limit for numeric array cells.
+/// Synthetic data only.
 final class RoundtripFixTests: XCTestCase {
     private typealias R = MGRegression
 
@@ -114,5 +113,24 @@ final class RoundtripFixTests: XCTestCase {
         XCTAssertNotNil(partial.feed(prefix))
         var complete = MGStreamParser()
         XCTAssertNil(complete.feed(prefix + ","))
+    }
+
+    // MARK: numeric cells obey the displayed-text limit
+
+    func testNumericCellsWhoseTextIsTooLongAreRefusedAtFirstParse() {
+        for value in ["-123456", "-100000", "-99999.5", "999999.5", "999999.9"] {
+            XCTAssertEqual(R.reason(R.items(#"{"id":"a","k":"array","at":[6,4],"vals":[1,\#(value)]}"#)), "array.val", value)
+        }
+    }
+
+    func testNumericCellsThatFitStillParseAndRoundTrip() throws {
+        let marked = #"[{"say":"Mark.","do":[{"id":"a","key":"marked","value":[0]}]}]"#
+        for (value, shown) in [("-99999", "-99999"), ("999999", "999999"), ("99999.5", "100000"), ("12.345", "12.3"), ("-0.001", "0")] {
+            let json = #"{"v":1,"items":[{"id":"a","k":"array","at":[6,4],"vals":[\#(value)]}],"steps":"# + marked + "}"
+            let scene = try R.scene(json)
+            XCTAssertEqual(scene.items[0].list, [shown], value)
+            let again = try MGParser.item(.object(scene.items[0].wire()), context(scene))
+            XCTAssertEqual(again, scene.items[0], value)
+        }
     }
 }
