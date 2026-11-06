@@ -34,6 +34,27 @@ used where a big reduction must fit in a small space, such as in car automatic
 transmissions, power drills and helicopter rotor gearboxes.
 
 <p align="center">
+  <a href="docs/assets/solid/planetary-loop.gif"><img src="docs/assets/solid/exploded-labelled.png" width="840" alt="Solid 3D planetary gear set exploded along its shaft, with labels: output shaft, planet carrier (output), planet gears 18 teeth times three, sun gear 24 teeth input, ring gear 60 teeth fixed, housing base."></a>
+</p>
+
+**Real-time solid 3D from 53 lines of JSON.** The new solid engine builds every part
+(involute gears, the ring, the carrier, the housing) from
+[`planetary.json`](Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json), solves how
+the gears turn from the gear meshes, and renders the scene with SceneKit studio lighting in
+about 0.04 seconds per frame. Because the model is validated JSON with exact error reasons,
+an AI model can write a new one for a new question.
+[Watch it turn and explode](docs/assets/solid/planetary-loop.gif) ·
+[Assembled](docs/assets/solid/hero.png) · [Slider-crank cutaway](docs/assets/solid/slider-crank-section.png) ·
+[Format](docs/SOLID-3D.md) · [Run it](Examples/Solid3D/README.md) · [Render receipt](docs/assets/solid/provenance.json)
+
+**How a planetary gear set works.** The sun gear (24 teeth) sits in the middle and is the
+input. Three planet gears (18 teeth) mesh with it and with the ring gear (60 teeth) around
+them. The ring is held still, so when the sun turns, the planets are pushed around inside
+the ring. Their pins sit on the blue carrier, and the carrier is the output. It turns once
+for every (24 + 60) ÷ 24 = 3.5 turns of the sun: slower, but with 3.5 times the torque.
+The labelled exploded view shows each part, in the order they stack on the shaft.
+
+<p align="center">
   <a href="docs/SHOWCASE.md"><img src="docs/assets/native/two-pointers.gif" width="640" alt="Native two-pointer walkthrough over 2, 5, 9, 14: L starts at 2 and R at 14, then they move inward until 5 + 9 = 14, in four steps."></a>
 </p>
 
@@ -56,6 +77,7 @@ steps, and motion. Your application supplies the content and decides what happen
 | **Math** | Draw a function from supplied points, with labeled axes. The engine plots the data; it does not solve equations. | [Sampled function](Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
 | **Data** | Compare explicit quantities with labeled bars. These counts are invented. | [Synthetic counts](Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
 | **Motion** | Animate a geometric marker using the engine timeline. | [Moving marker](Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
+| **Solid 3D** | Build closed 3D parts (gears, ring gears, blades, lathe-turned shapes), connect them with joints and gear meshes in validated JSON, explode them, cut them open and render them in real time. | [Planetary gear set](Examples/Solid3D/README.md) |
 | **Path tracing** | Render generated 3D models with film-style lighting on the GPU: brushed metals, glass, soft shadows, depth of field. Separate `MartyGraphicsPathTracer` library. | [Gearbox example](Examples/PathTrace/README.md) |
 | **3D inspection** | Click a part of a 3D model to select it, dim the rest, orbit, and reset the view. Opt-in per board; checked on macOS. | [Key switch example](Examples/KeySwitch3D/README.md) |
 | **Graphs** | Compute the cheapest route through a weighted network, one Dijkstra step at a time. Opt-in graph pack. | [Router latency](Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
@@ -186,7 +208,7 @@ not a complete learning app or a collection of courses.
 | SwiftUI Canvas and a SceneKit renderer for supported 3D primitives | Current renderers require Apple frameworks; Windows/Linux builds and native Swift browser execution are unsupported. This is a current implementation choice, not a requirement imposed by iPad. |
 | Parser, grammar, patches, streams, layout, timeline, steps, template/pack API | The host supplies JSON and interaction. No model, hosted generation API, screen overlay agent, equation solver, or arbitrary code executor is bundled. |
 | BST and two-pointer built-ins; opt-in `shortest_path` graph pack; generic primitives for custom scenes | No course catalog, premium pack, private app adapter, or removed mechanics walkthrough is included. |
-| Seven synthetic 2D examples, a local native showcase, a schematic 3D key-switch example and a path-traced gearbox example | A flow diagram does not run a queue; sample plots/counts are supplied data. The gallery is not evidence of a complete app or measured 3D performance. |
+| Seven synthetic 2D examples, a local native showcase, a schematic 3D key-switch example, a solid 3D planetary gear set and a path-traced gearbox example | A flow diagram does not run a queue; sample plots/counts are supplied data. The gallery is not evidence of a complete app or measured 3D performance. |
 
 See the [public versus app matrix](docs/CAPABILITIES.md),
 [quality and measurement plan](docs/QUALITY.md), and
@@ -201,11 +223,12 @@ authenticated maintainer status.
 These are **plans, not shipped features**. Each one lands only after tests, review and
 real evidence:
 
-- **Solid 3D models from JSON.** Parts, joints and gear meshes written as validated JSON,
-  so an AI model can generate a new 3D explainer for a question, with exploded views,
-  cutaways and step-by-step narration.
-- **One scene, two renderers.** Render the same solid model interactively and with the
+- **One scene, two renderers.** Render the same JSON model interactively and with the
   path tracer.
+- **Questions to 3D explainers.** An AI model writes the JSON for a new question, the engine
+  validates it, and the explainer adapts to follow-up questions.
+- **Aerospace and drone models.** A jet-engine cutaway and a quadcopter built from the
+  existing blade, casing and rotor parts.
 - **Accessible graph states.** Show edge status with more than colour.
 - **More teaching packs.** Reusable assemblies and linked plots with narration.
 

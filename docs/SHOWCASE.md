@@ -14,6 +14,24 @@ service, or AI model.
 | Geometric motion | Move through a scene | A marker takes two seconds from A to B, then returns. No force model is implied. | [motion.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
 | Shortest path | Find the cheapest route | Dijkstra settles six routers one at a time; the cheapest route 0→2→1→3→4→5 costs 13. Opt-in graph pack. | [shortest-path.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
+## Solid 3D from JSON
+
+A planetary gear set built and rendered in real time by the solid engine from
+[53 lines of JSON](../Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json).
+
+[![Solid 3D planetary gear set exploded along its shaft with part labels.](assets/solid/exploded-labelled.png)](assets/solid/exploded-labelled.png)
+
+[Assembled](assets/solid/hero.png) · [Slider-crank cutaway](assets/solid/slider-crank-section.png) ·
+[Loop (GIF, 480×300, 12 s)](assets/solid/planetary-loop.gif) · [Run it](../Examples/Solid3D/README.md) ·
+[Render receipt](assets/solid/provenance.json)
+
+**How a planetary gear set works.** The sun gear (24 teeth) sits in the middle and is the
+input. Three planet gears (18 teeth) mesh with it and with the ring gear (60 teeth) around
+them. The ring is held still, so when the sun turns, the planets are pushed around inside
+the ring. Their pins sit on the blue carrier, and the carrier is the output. It turns once
+for every (24 + 60) ÷ 24 = 3.5 turns of the sun: slower, but with 3.5 times the torque.
+The labelled exploded view shows each part, in the order they stack on the shaft.
+
 ## Path-traced gearbox
 
 A procedurally generated two-stage gearbox, path traced on an
