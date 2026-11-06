@@ -46,4 +46,27 @@ while the carrier turns exactly once and the camera orbits 360 degrees.
 `--preview` opens a window with SceneKit orbit controls, an explode slider and
 play/pause. It needs a logged-in desktop session.
 
+## Check or render any model
+
+`marty-solid` works on any solid assembly JSON file, written by a person or by an AI model:
+
+```sh
+swift build -c release --package-path Examples/Solid3D
+B=$(swift build -c release --package-path Examples/Solid3D --show-bin-path)
+$B/marty-solid check my-model.json             # JSON report; exit 0 accepted, 1 refused
+$B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF, snapshot
+```
+
+- `check` prints a JSON report. A refused model gives the exact reason and part,
+  for example `{"ok": false, "reason": "constraint.gearMesh.distance", "part": "planet1"}`,
+  so an author or a model can fix it. An accepted model lists its parts, triangles,
+  steps, the gear ratios the engine solved, and its checks: closed meshes and a tooth
+  sweep with the smallest clearance.
+- `render` writes `hero.png`, `exploded.png`, one captioned `step-N.png` per authored
+  step (with its highlight, explode amount and camera), a 12-second `loop.gif`
+  (120 frames at 0.10 s: one orbit, one input turn and an explode beat; `--no-loop`
+  skips it), `snapshot.json` for other renderers such as the path tracer, and a
+  `manifest.json` with SHA-256 digests and the measured render time. `--size WxH`
+  sets the still size (default 1280x800). The output directory must not exist.
+
 The format is documented in [docs/SOLID-3D.md](../../docs/SOLID-3D.md).

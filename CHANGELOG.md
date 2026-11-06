@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add `marty-solid`, a command in `Examples/Solid3D` that checks or renders any solid
+  assembly JSON file. `check` prints a JSON report with the exact refusal reason or the
+  solved ratios and engine checks. `render` writes stills, captioned step images, a loop
+  GIF, a snapshot for other renderers and a manifest with digests and render time.
 - Add a solid 3D engine to `MartyGraphics`: a Foundation-only geometry kernel (closed
   meshes; extrude, revolve, tube, involute spur and internal ring gears, twisted and tapered
   blades), assemblies with revolute and prismatic joints and gear-mesh constraints solved

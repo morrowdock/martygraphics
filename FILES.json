@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "82e2a883d672e5acdfbc83ff19621fc916858c607cd3b081643026e34eb2fa46"
+      "sha256": "8581bc90694495ed959e3108b13b60e9d93130d9d3d7fd6f5760d72c20ec9752"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -119,11 +119,11 @@
     },
     {
       "path": "Examples/Solid3D/Package.swift",
-      "sha256": "5dacd6d181b89d6f002e31020f4150f67ff68757f175d0430243fa8d70909cfd"
+      "sha256": "9f95b37c131d9b045410419852a3d29d0b71fea64c6bfb20025e05ad3edad745"
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "f6bdb5bbf70b1cd4a9c5e89ca6a0f7e99b6e853f30499cefcb98e167e188fb53"
+      "sha256": "b707b74b5e52c6016af9a887cb9ae22e39659994b116448feba93f6e64f8965b"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json",
@@ -132,6 +132,10 @@
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Solid3D.swift",
       "sha256": "190f7bdcd539f888061f506039c8c2b66c9b478d0eb8c024dd60c932ab62c958"
+    },
+    {
+      "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
+      "sha256": "0e5a8ba9f85a5971f065339d60d6bcb6f11f342ea94d3e2596e0b20d9fd34e96"
     },
     {
       "path": "LICENSE",
