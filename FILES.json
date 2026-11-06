@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "9aaf1557fd80d12984f0ab30963ae8a45db942b3c175bc22b7f0a2b948c21b05"
+      "sha256": "0153d56d1f165e9ff53bcb36d8b3a30cecaee6ee1c595be90281ed203949513a"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -99,7 +99,11 @@
     },
     {
       "path": "Sources/MartyGraphics/MGGrammar.swift",
-      "sha256": "810938fc1d7f99ecf5a0c7cf7029207caf69665a13271340f1af55c950b715e7"
+      "sha256": "2f18903fb3eb1aed92e6829edb20a20dda4b9bb8b4adcb1b674847c58d4910ec"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGGraphPack.swift",
+      "sha256": "fa3ec67e4631e13a682ec0bdd0eb76cc1afa75146edbff78c000d8f2d0560ebe"
     },
     {
       "path": "Sources/MartyGraphics/MGLayout.swift",
@@ -111,11 +115,11 @@
     },
     {
       "path": "Sources/MartyGraphics/MGPack.swift",
-      "sha256": "c4e0421dd427c4d172d1b5fb001740afd1a5f8285aab7cbf584e8071999287b3"
+      "sha256": "f6af770877d9de4c005eef037592b9883e39b20e5e72bd01462b6fa7fdc4e381"
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "61bcdf12b87a5a449cec74d87eb3339905ee0731146231a0a74b16dc389c4944"
+      "sha256": "898571b7274a9a88a27238da062c890e6168947ae4a6585003fa8d8686afb5dc"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -135,7 +139,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTemplates.swift",
-      "sha256": "10fb32da29adcf349efe8d91755b7aec7713c308039a8bd55417b4859cc2f54d"
+      "sha256": "d68eb2570f539883ffc9702dfebd45da834376fba08cc907adc2b702689b5c34"
     },
     {
       "path": "Sources/MartyGraphics/MGTheme.swift",
@@ -178,6 +182,14 @@
       "sha256": "b8d877801e6e60dc7b9446ff07058c756ff4b2cda4e44f72608bedfa05212411"
     },
     {
+      "path": "Tests/MartyGraphicsTests/RecordParamsGuardTests.swift",
+      "sha256": "b34afc463f4d6f45bf284597931374ffe074a0f6c1d1d0b74970875371e9df11"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/RecordParamsShortestPathTests.swift",
+      "sha256": "ede145b61e93bde0e5051446f057ca4d96609dea0fe19973d08ea8e30d630f80"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/RegressionFixtures.swift",
       "sha256": "3aba5fd2bba87458a514c58f52ffdb24ef8ea30af8f2643c495a758c98266bb7"
     },
@@ -195,7 +207,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "734795ab7d34ffc24e9100596a90ec2b72c3c68ee3ab8bc4c5b79599798cbca9"
+      "sha256": "7cb72d65a15c282d02a631b60785266e9c1249a887184b511898daa6dd105dda"
     },
     {
       "path": "docs/DISTRIBUTION.md",
@@ -203,11 +215,11 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "e4a98a813b60a534581523d4d4c2424ed0b8d19a27181eff3e67321f96a2edc5"
+      "sha256": "065ce447f53a970f384cc884cba8b7e4203228190f80ef7ed99a0a2fdd75929d"
     },
     {
       "path": "docs/GETTING-STARTED.md",
-      "sha256": "41cdbf12a68bca7898e377fd5238b9b255975bb5e130dddc57e20f6ce5aaa840"
+      "sha256": "50be27671af2cd6ba4ca058177da0a9a9daa4ca570addcd687d4d0b3b7a22946"
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
@@ -219,7 +231,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "ab91916e2b0818141de1991c3a1096cbabdfcac9c05e40850671bd6920b49b1f"
+      "sha256": "9f9453c5348d925a69e81aa6c07cf5fe3c76b2c5bae8f01712b892d7d4037dad"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -288,6 +300,18 @@
     {
       "path": "docs/fixtures/v1/scene.json",
       "sha256": "e8c2066276a8528e05366051d93cc0b749decdf9282adde7aff6120fb48abe36"
+    },
+    {
+      "path": "docs/fixtures/v1/shortest-path-edges.patch.json",
+      "sha256": "adcc7e7b737488cfcf14bb06eb0d2e68fcde68056732ba7fcdf00d23c65b424d"
+    },
+    {
+      "path": "docs/fixtures/v1/shortest-path-null.patch.json",
+      "sha256": "9314f5a3b73bb94d307959eaeae2e25b6ce701e97def40778578c4476fde77e2"
+    },
+    {
+      "path": "docs/fixtures/v1/shortest-path.scene.json",
+      "sha256": "fb93122e400a3fc9d78d664c8b80d83f397e89ef9758975c1c3771afb05ec472"
     },
     {
       "path": "docs/fixtures/v1/title.patch.json",

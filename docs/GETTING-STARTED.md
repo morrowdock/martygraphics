@@ -138,6 +138,9 @@ Register templates with `MGPacks.register`. Every template needs a valid
 fixture, unique identifiers and public-use provenance. Built output is checked
 again by the parser. See the synthetic dot template in
 [MGPackTests](../Tests/MartyGraphicsTests/MGPackTests.swift).
+Structured inputs such as weighted edges use record-list parameters; their
+declarations are checked at registration and their patch semantics are in
+[template parameters](PROTOCOL.md#template-parameters-and-what-if-patches).
 
 Prefer a full scene for a one-off explanation; do not publish a course-derived
 walkthrough just to fill a template slot. The [public sync process](PUBLIC-SYNC.md)

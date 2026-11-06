@@ -41,6 +41,8 @@ public enum MGPackError: Error, Equatable, CustomStringConvertible {
     case templateWithoutFixture(String)
     case fewShotUnknown(String)
     case tooManyFewShots(String)
+    /// A template's record-list parameter declaration is out of contract (template name, `"<param>: <why>"`).
+    case badParamSpec(String, String)
 
     public var description: String {
         switch self {
@@ -53,6 +55,7 @@ public enum MGPackError: Error, Equatable, CustomStringConvertible {
         case .templateWithoutFixture(let s): return "template '\(s)' has no fixture"
         case .fewShotUnknown(let s): return "few-shot fixture '\(s)' is not in the pack"
         case .tooManyFewShots(let s): return "pack '\(s)' has more than 3 few-shots"
+        case .badParamSpec(let t, let why): return "template '\(t)' parameter \(why)"
         }
     }
 }
@@ -123,6 +126,8 @@ public enum MGPacks {
         for t in pack.templates {
             if !ok(t.name) { out.append(.badTemplateName(t.name)) }
             if otherTemplates.contains(t.name) || !names.insert(t.name).inserted { out.append(.duplicateTemplate(t.name)) }
+            // Record-list declarations are checked here, before any scene is parsed, so `register` refuses them up front.
+            for why in t.declarationProblems { out.append(.badParamSpec(t.name, why)) }
         }
         // Fixtures parse with this pack's templates visible (they may not be registered yet).
         var used = Set<String>()

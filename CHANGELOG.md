@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Source-compatibility change: the new `MGPackError.badParamSpec` case
+  requires external exhaustive switches to be updated. `MGTemplate` also gains
+  an optional `reject:` initializer argument.
+- Add record-list template parameters (`MGParamSpec.records`), checked at
+  pack registration, with specific cross-field rejection reasons and record
+  shapes in the grammar for templates that use them; plus an opt-in
+  `MGGraphPack` with a locally computed `shortest_path` (Dijkstra) walkthrough
+  with semantic edge ids. Narration notes equal-cost relaxations into unsettled
+  nodes, and the summary counts tied shortest simple paths. New bounds apply to
+  the new shape only; no existing limit or wire format changes. Known limits:
+  edge status is shown by colour only, dense automatic layouts are not
+  visually accepted, and visual, accessibility and frame-cost acceptance
+  have not been done.
 - Refuse numeric array cells whose displayed text is longer than the
   6-character cell limit (for example `-123456` or `999999.5`) with
   `array.val` at first parse. Such scenes used to parse and then fail every

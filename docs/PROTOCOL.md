@@ -74,6 +74,119 @@ The built-in templates are `bst` and `two_pointers`. Mechanics drawing
 primitives and standard math helpers remain available; mechanics walkthrough
 templates are not included.
 
+## Template parameters and what-if patches
+
+Record-list parameters and the opt-in `shortest_path` template are unreleased
+additions to the unversioned preview. Wire `v: 1` is unchanged: every shape
+below is ordinary JSON inside the existing `params` object.
+
+| Shape | Declaration | Wire form | Absent key |
+| --- | --- | --- | --- |
+| Number | `MGParamSpec(name:unit:range:integer:)` | finite number in range | `template.<p>.missing` |
+| Optional number | same, with `defaultValue` (`.infinity` = optional) | finite number in range | default used |
+| Number list | same, with `count` | array of numbers | `template.<p>` |
+| Record list | `MGParamSpec.records(_:count:fields:)` | array of arrays, one number per field, in field order | empty when `count` starts at 0, otherwise `template.<p>.missing` |
+
+Numbers must be JSON numbers: a JSON boolean or string is rejected, never
+coerced, so a 0/1 flag such as `shortest_path`'s `directed` must be `0` or `1`
+(`true` gives `template.directed`). Values are range-checked inclusively and
+rejected, never clamped. A record list reports `template.<p>.count`,
+`.arity`, `.<field>` (type or range) or `.<field>.integer`. Number lists keep
+their existing absent-key rule; only record lists treat absence as empty.
+`MGParamSpec.isRecordList` distinguishes the two list shapes, because record
+specs also set `count`.
+
+Record-list declarations are checked when a pack is validated or registered
+(`MGPackError.badParamSpec`): `count` within 0…`MGLimits.records` (32),
+1…`MGLimits.recordFields` (6) fields with unique lowercase identifier
+names that are not reason suffixes (`arity`, `count`, `integer`, `missing`,
+`spec`), finite ranges, and a parameter name used once. A template parsed
+without registration checks individual record declarations lazily as
+`template.<p>.spec`; duplicate parameter names are checked only at registration.
+`MGGrammar.document()` lists a `records` shape (`name`, `count`, per-field
+`name`/`range`/`integer`) only for templates that declare record lists, so the
+default document is unchanged. Cross-field rules are not in the grammar.
+
+A template may give a specific cross-field rejection: its `reject` closure
+returns a suffix such as `edges.loop`, reported as `template.edges.loop`
+(lowercase dotted words, at most 48 characters; anything else becomes
+`template.check`). `check` still reports the generic `template.check`.
+
+The `params` patch operation merges **shallowly**, one top-level key at a time:
+
+- A key that is not sent keeps its previous value.
+- A sent list or record list **replaces the whole list**; there is no
+  per-element edit. To change one link's weight, send every link.
+- `null` is not a deletion. It is rejected (`template.<p>`) like any other
+  wrong type, and the previous scene stays.
+- A key cannot be removed once set. An optional record list is cleared by
+  sending `[]` when its count allows 0. An optional number (for example
+  `target`) cannot be cleared by a patch; send a fresh scene.
+- The whole scene is rebuilt and revalidated, including author `title`, `over`,
+  `hide` and wire `steps`. If any of them no longer fits the recomputed scene,
+  the patch is refused whole.
+
+### Opt-in graph pack: `shortest_path`
+
+`MGGraphPack` is not built in. A host that wants it calls
+`try MGPacks.register(MGGraphPack.pack)` once per process (a second call throws
+`duplicatePack`); until then the template is `template.unknown`.
+
+```json
+{"v":1,"template":"shortest_path","params":{"n":3,"edges":[[0,1,2],[1,2,2],[0,2,4]],"target":2}}
+```
+
+[Copy the scene JSON](fixtures/v1/shortest-path.scene.json). After registration
+it narrates "A shortest path 0→2 costs 4. 2 routes tie at 4; the one found first
+is shown." The [whole-list edges patch](fixtures/v1/shortest-path-edges.patch.json)
+makes 0→1→2 the only route at 3; the [null patch](fixtures/v1/shortest-path-null.patch.json)
+is refused with `template.target`.
+
+The standalone `marty-scene-validate` CLI does not register this opt-in pack,
+so it rejects these scenes. Validate them in a host that explicitly registers
+`MGGraphPack.pack`; the examples are not CLI-supported fixtures.
+
+- `n` 2–8 nodes; `edges` 1–16 records `[a, b, w]` with integer `w` 0–99;
+  optional `source` (default 0), `target`, `directed` (0/1) and `at`
+  (none, or exactly one `[x, y]` per node, x 0.5–11.5, y 2–7.5).
+- One edge per unordered node pair, also when directed, so anti-parallel arcs
+  (a→b 3 and b→a 7) are not expressible. This is bounded directed shortest
+  paths, not general directed-graph support.
+- Specific rejections: `template.edges.node` (index ≥ `n`), `.edges.loop`,
+  `.edges.duplicate`, `.source.range`, `.target.range`, `.target.integer`,
+  `.at.count`, `.at.gap` (authored nodes closer than 1.2), `.at.crossing` (an
+  edge within 0.6 of a node that is not one of its endpoints, so it would read
+  as two links). Geometry comparisons allow 1e-9 for decimal representation.
+  3D scenes are refused (`template.build`).
+- Item ids are semantic: node `n<i>`, the distance array `dist`, an undirected
+  link `e<min>_<max>` and a directed arc `d<tail>_<head>`. Reordering records
+  (or swapping an undirected link's endpoints) keeps ids, `over`/`hide`
+  entries and step references on the same link. Removing a link, reversing an
+  arc or toggling `directed` changes the id, so an `over`/`hide` entry naming
+  the old link is refused (`over.ref` / `hide.ref`), never moved. There is no
+  patch operation to clear these entries: load a fresh scene to remove them
+  before changing that link's identity.
+- Hiding a template item that the walkthrough edits is refused by the existing
+  step-edit reference check; this pre-existing engine behavior is unchanged
+  here. Prefer a `params` what-if to hiding links.
+- Computed placeholders: `{n}`, `{m}`, `{reached}` always; `{cost}` and
+  `{routes}` (number of shortest simple paths, with no repeated node) only
+  when a target is set and reachable. Author text that uses `{cost}` or
+  `{routes}` makes a disconnecting what-if fail with `title.placeholder.cost`
+  (or the field that quotes it), and the previous scene stays.
+- Narration discloses equal-cost relaxations into unsettled nodes as "ties …,
+  earlier route kept". It does not enumerate ties into already-settled nodes.
+  Summaries separately count shortest simple paths, including alternatives
+  through zero-weight arcs into settled nodes. When several paths share the
+  shortest cost the summary says "A shortest path … N routes tie" instead of
+  "The shortest path". A target equal to the source is narrated as a
+  zero-cost path to itself. A tree-only summary also discloses alternative
+  shortest simple paths, without treating zero-weight cyclic walks as
+  additional paths.
+- Not accepted: dense automatic layouts (with an even `n`, diameter chords
+  share one midpoint, so weight labels can overlap; pass `at`), colour-only edge
+  state, accessibility, and frame cost of per-frame step-edit replay.
+
 ## Swift API at a glance
 
 | Task | Public entry point | Contract |
@@ -119,6 +232,8 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `scene.unknown.<keys>` | Closed root object has unsupported keys | Remove unsupported fields; [negative fixture](fixtures/v1/unknown-key.scene.json). |
 | `scene.bytes`, `patch.object`, `items.count`, `steps` | Canonical object or collection violates bounds | Reduce authored content; `patch.object` also covers a non-object patch. |
 | `template.unknown`, `template.params` | Missing/unregistered template or invalid parameter object | Use the registered public templates and their declared parameters. |
+| `template.<p>`, `template.<p>.missing` / `.count` / `.arity` / `.<field>` / `.integer` | A parameter has the wrong type (including `null`), is absent, or a value or record is out of its declared shape | Send the declared shape; see [template parameters](#template-parameters-and-what-if-patches). |
+| `template.<p>.spec`, `template.check`, `template.<rule>` | Out-of-contract record declaration, generic cross-field failure, or a template's specific cross-field reason | Fix the pack declaration, or correct the named parameters. |
 | `vector.on`, `edge.nodes`, `highlight.target` | Reference is absent, has the wrong kind, or highlights itself | Fix references before applying the scene. |
 | `highlight.cycle` | An indirect highlight chain loops | Make the chain terminate; [negative fixture](fixtures/v1/highlight-cycle.scene.json). |
 | `patch.stale`, `patch.rev` | Revision mismatches or is invalid | Rebase the intended change on the current scene revision; do not retry stale content blindly. |
