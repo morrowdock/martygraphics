@@ -5,6 +5,20 @@ A planetary gear set described in
 (sun 24 teeth, three planets of 18, fixed ring of 60, carrier output) and a
 Swift-built slider-crank. Both are original synthetic schematic teaching models.
 
+## How the models work
+
+The sun gear (24 teeth) sits in the middle and is the
+input. Three planet gears (18 teeth) mesh with it and with the ring gear (60 teeth) around
+them. The ring is held still, so when the sun turns, the planets are pushed around inside
+the ring. Their pins sit on the blue carrier, and the carrier is the output. It turns once
+for every (24 + 60) ÷ 24 = 3.5 turns of the sun: slower, but with 3.5 times the torque.
+The labelled exploded view shows each part, in the order they stack on the shaft.
+
+The slider-crank turns spinning motion into back-and-forth motion, as in an engine or a pump.
+The crank (radius 18 mm) turns, and the connecting rod (62 mm) pushes and pulls the piston
+along the cylinder. The piston travels twice the crank radius, 36 mm, per turn. The
+cylinder is drawn as a section cut, so you can see the piston inside.
+
 From the repository root, with Swift 6 on macOS 14 or later:
 
 ```sh

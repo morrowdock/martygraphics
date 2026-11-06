@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "1b355389ce234c34a756a31ebcfe8ebc4218eb40607bcd1b1b68fc6d34effa66"
+      "sha256": "82e2a883d672e5acdfbc83ff19621fc916858c607cd3b081643026e34eb2fa46"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -123,7 +123,7 @@
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "4a57fa24a76357ff0283f652496956100c981d3286f35168d409f87c6bf7b7d1"
+      "sha256": "f6bdb5bbf70b1cd4a9c5e89ca6a0f7e99b6e853f30499cefcb98e167e188fb53"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json",
@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "a3050b522c01bbcb87debe030e99f7ede4a53d4f29617f6b5b2d099c7e5aad2c"
+      "sha256": "fb6ae059f4a9ef19903314e35ab35562c466b3f524ad97053be064df1218e93d"
     },
     {
       "path": "SECURITY.md",
@@ -367,7 +367,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "3d44b1985411dc7f0f05310f2db2cfb1dedb332264c5f13899b247ae5390cce6"
+      "sha256": "a90f34dab02b4e0e85bbf830c65e02b28e5acc3869b6d23321d5f6f828b011e1"
     },
     {
       "path": "docs/DISTRIBUTION.md",
@@ -375,7 +375,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "1b587ae30ee6ce31970944e6cd50e5f26af976e0450a7fcad42420d5133aedb8"
+      "sha256": "ca46212560afa8bda0f2ebdfe7170a2f4b137f5c646394c34c65c02f4010b006"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -403,7 +403,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "c36830491de2d421b73eff6dede7e038505446210d2a847ca45ceeb97ad6a3a2"
+      "sha256": "7d49af075254a4e74a5d7039945dab77f76696d970a4eda1e1187d6a354dfa0a"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -484,6 +484,26 @@
     {
       "path": "docs/assets/pathtrace/side-by-side.png",
       "sha256": "fbad0cdda453e5e54ac42fbd22a138c32142cb507f1cbbceab1051b8bc1075aa"
+    },
+    {
+      "path": "docs/assets/solid/exploded-labelled.png",
+      "sha256": "1f72154f9814c72a3562b6bd44c3a01ed5e8787726b0276d15f4d1118ebc9c54"
+    },
+    {
+      "path": "docs/assets/solid/hero.png",
+      "sha256": "d293f86119eb88bbcbd854eef3bbba82832dc0f6a726e3ad24e8fbd355800d3b"
+    },
+    {
+      "path": "docs/assets/solid/planetary-loop.gif",
+      "sha256": "1c49f3867f04fb69fcaa6507605f9affc2245ad7d025eac8a10051a6e4e39909"
+    },
+    {
+      "path": "docs/assets/solid/provenance.json",
+      "sha256": "ee736ec8dac78a8e6c4c1001416c57dc6dcf89a261fc2b0262036f85ccc08b04"
+    },
+    {
+      "path": "docs/assets/solid/slider-crank-section.png",
+      "sha256": "27680b1d80a0695df6e05b6beedf73ef15cc30cb35122990c368752f1789bc33"
     },
     {
       "path": "docs/fixtures/v1/highlight-cycle.scene.json",

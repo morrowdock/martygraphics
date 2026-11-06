@@ -171,7 +171,11 @@
     "Examples/KeySwitch3D: schematic key-switch host example with its own model tests",
     "Sources/MartyGraphicsPathTracer: Metal GPU path tracer library (public-only)",
     "Tests/MartyGraphicsPathTracerTests: sampling math and GPU smoke tests",
-    "Examples/PathTrace: procedurally generated gearbox renders"
+    "Examples/PathTrace: procedurally generated gearbox renders",
+    "Sources/MartyGraphics/Solid: solid 3D geometry kernel, assemblies, JSON format and studio renderer (public-only)",
+    "Tests/MartyGraphicsTests/SolidEngineTests.swift: kernel, kinematics and format tests",
+    "Examples/Solid3D: planetary gear set from JSON and slider-crank cutaway",
+    "docs/SOLID-3D.md: solid assembly format"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

@@ -1,0 +1,124 @@
+{
+  "source": {
+    "repository": "https://github.com/morrowdock/martygraphics",
+    "captureCommit": "e055fb04a01c826bc1b2707553bd2c0f5a811fd4",
+    "note": "Captured from a clean checkout of local capture commit e055fb04a01c826bc1b2707553bd2c0f5a811fd4 (not published). The pull-request commit was rebased onto later main without changing any file listed in sourceFiles; verify with these hashes.",
+    "model": "Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json (53 lines) for the planetary renders; the slider-crank is built in Swift by MGSolidModels.sliderCrank()",
+    "license": "Apache-2.0; procedural geometry and lighting, no images, models or stock assets",
+    "sourceFiles": {
+      "Examples/Solid3D/Package.swift": "5dacd6d181b89d6f002e31020f4150f67ff68757f175d0430243fa8d70909cfd",
+      "Examples/Solid3D/README.md": "4a57fa24a76357ff0283f652496956100c981d3286f35168d409f87c6bf7b7d1",
+      "Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json": "7719e1f1fc6a03aa4a92d29f98ff2d6a97ab6d33e8fe3ed6b402cc35b81cd987",
+      "Examples/Solid3D/Sources/MartySolid3D/Solid3D.swift": "190f7bdcd539f888061f506039c8c2b66c9b478d0eb8c024dd60c932ab62c958",
+      "Sources/MartyGraphics/MG3DInteraction.swift": "bcd0df232ebfa1b1f49f85e73a1a3a73bf47a7f4040a8c5b7bde014547aa5913",
+      "Sources/MartyGraphics/MG3DView.swift": "d23e599917e92caec76cc08f925ff66ae5bbc0a7e876f30daeff32de10183053",
+      "Sources/MartyGraphics/MGCanvasRenderer.swift": "9b91557e37086523ee8a4f4401bb9281830f2a6b087921e91bf7cac866894775",
+      "Sources/MartyGraphics/MGFixtures.swift": "1d17dd89fcefcc304fec88c1ac8caef4b9b695394276b01df9058d5eb4306a91",
+      "Sources/MartyGraphics/MGGrammar.swift": "2f18903fb3eb1aed92e6829edb20a20dda4b9bb8b4adcb1b674847c58d4910ec",
+      "Sources/MartyGraphics/MGGraphPack.swift": "fa3ec67e4631e13a682ec0bdd0eb76cc1afa75146edbff78c000d8f2d0560ebe",
+      "Sources/MartyGraphics/MGLayout.swift": "c1a3641339349e10e9e0faced7f4e58e0a5d97aa992306a81b68970c11aef6ca",
+      "Sources/MartyGraphics/MGModel.swift": "b11556e668477eaef8a829b0e33e055327a5abe95b2b449df9287172b3a1133c",
+      "Sources/MartyGraphics/MGPack.swift": "f6af770877d9de4c005eef037592b9883e39b20e5e72bd01462b6fa7fdc4e381",
+      "Sources/MartyGraphics/MGParser.swift": "898571b7274a9a88a27238da062c890e6168947ae4a6585003fa8d8686afb5dc",
+      "Sources/MartyGraphics/MGPatch.swift": "1c68bf17ddd2dd2f63e0d35b036d700f41de46b74f77ca98ab5f881bf44641dc",
+      "Sources/MartyGraphics/MGPhysics.swift": "aa34cc3c370af27112759a5dc1cd439ce7afb3ed2d4997fa2b68c367816316b7",
+      "Sources/MartyGraphics/MGRenderPolicy.swift": "5ef4ebaff7b3c4c46761e4a576732729a206af04ec38837c1459a30b938183e2",
+      "Sources/MartyGraphics/MGStream.swift": "bbcaaaed0f905e558932dd8430e077efb75a4bc0f5baa6ccf061c955c939f205",
+      "Sources/MartyGraphics/MGTemplates.swift": "d68eb2570f539883ffc9702dfebd45da834376fba08cc907adc2b702689b5c34",
+      "Sources/MartyGraphics/MGTheme.swift": "44fd167a885971014697fc12cb56f627076cce18ca17630cc93f12c08edaaa42",
+      "Sources/MartyGraphics/MGTimeline.swift": "ad32fce5474a9b5b41b1ca35ebee324e0b4f318c99824b149a1fdd6523c49634",
+      "Sources/MartyGraphics/MartyGraphicsView.swift": "67b4fa9c02ce50030470930e31826f168727977f998f3754e6c301fea6e632e7",
+      "Sources/MartyGraphics/Solid/MGAssembly.swift": "c287bcf8c8905561b17930af011f619d0d70bdc84e27a6bc0c07abdf42537077",
+      "Sources/MartyGraphics/Solid/MGGear.swift": "47c693059e4cbc22d0acfa1e237cc60d43a36201c77eedb68462968945d04af7",
+      "Sources/MartyGraphics/Solid/MGMaterial.swift": "d423754cf5599afa8e36d58d3415bad7503c735e822cfe33866545b351581799",
+      "Sources/MartyGraphics/Solid/MGMesh.swift": "e0309df39ac0060ece627981cf98d8a3ff908af7ed33cfeffcd19e56452f8b2e",
+      "Sources/MartyGraphics/Solid/MGProfile.swift": "8af814dd07c8ca7b1cb662eb4e8be5eb0f0ae463d1f1eac19b3d49be24205a1e",
+      "Sources/MartyGraphics/Solid/MGSolidBuilders.swift": "ac5dc0d2fdf8dd5407f775067b43e874bb3da188b121d073127d148d3c56cac7",
+      "Sources/MartyGraphics/Solid/MGSolidChecks.swift": "ba12d4b70b0b7c2bcf9a766b3577b8f1fbd2ee249f5086aa5491676a2e723f15",
+      "Sources/MartyGraphics/Solid/MGSolidMath.swift": "72d5568e2ced5bb8ecf47f1b7a303559511e11c118b9a97df9d762f01cd20367",
+      "Sources/MartyGraphics/Solid/MGSolidModels.swift": "6ca692f1647295b893bc8c876fb75496b0a3b8b47f332e188b1995d9b8946b74",
+      "Sources/MartyGraphics/Solid/MGSolidParser.swift": "9a26b71ef2b8ab35cba7bacde893ca522ddef749a78f7287fe6a6722673dc644",
+      "Sources/MartyGraphics/Solid/MGSolidRenderer.swift": "0bea1ce89a529062134c16c88bf4668c5a2ed91e210de0d121643d13abad0944",
+      "Sources/MartyGraphics/Solid/MGSolidShapes.swift": "3763e2f66ea3bfde4d2b1ccd5b7bdb71920a39419b574042888ac708889de3c1",
+      "Sources/MartyGraphics/Solid/MGSolidSnapshot.swift": "7b8d8b3726df4a8653e374121ddce70a2fc77a531f58211ff637f4bd5ed4bc2f",
+      "Tests/MartyGraphicsTests/SolidEngineTests.swift": "77db900201f8172922acb1636ad36758ab5eef25226d1e4330af4a63e6ee7ae8"
+    }
+  },
+  "capture": {
+    "kind": "Offscreen SceneKit render by the MartyGraphics solid engine (MGSolidRenderer), 2x supersampled; not a screenshot or browser recreation",
+    "platform": "macOS 27.2",
+    "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
+    "hardware": "Apple M1, 8 GB",
+    "commands": [
+      "swift build --jobs 2",
+      "swift test --jobs 2",
+      "swift build -c release --jobs 2 --package-path Examples/Solid3D",
+      "marty-solid3d --verify",
+      "marty-solid3d --export <NEW_DIR>"
+    ],
+    "commandExits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "packageTests": 130,
+    "packageTestFailures": 0,
+    "verify": "carrier ratio 24/84 from gear-mesh constraints; tooth sweep 6 pairs x 240 sun angles, min clearance 0.219 mm, no penetration; slider-crank loop closure max error 4.6e-14 mm; all meshes closed",
+    "videos": {
+      "planetary-loop.mp4": {
+        "bytes": 7214697,
+        "sha256": "14ad049ff41a6ad6ead1afc18956c5646c83f0d4ab92f60ec89de74033855040",
+        "width": 1280,
+        "height": 800,
+        "fps": 30,
+        "frames": 360,
+        "seconds": 12
+      },
+      "planetary-explode.mp4": {
+        "bytes": 3518509,
+        "sha256": "93ff92ee57a4bb931455c48070bc00282852b0ce4f447aa47c06a763590386d7",
+        "width": 1280,
+        "height": 800,
+        "fps": 30,
+        "frames": 180,
+        "seconds": 6
+      }
+    }
+  },
+  "artifacts": {
+    "exploded-labelled.png": {
+      "bytes": 918226,
+      "sha256": "1f72154f9814c72a3562b6bd44c3a01ed5e8787726b0276d15f4d1118ebc9c54",
+      "width": 1280,
+      "height": 800
+    },
+    "hero.png": {
+      "bytes": 949464,
+      "sha256": "d293f86119eb88bbcbd854eef3bbba82832dc0f6a726e3ad24e8fbd355800d3b",
+      "width": 1280,
+      "height": 800
+    },
+    "planetary-loop.gif": {
+      "bytes": 2643581,
+      "sha256": "1c49f3867f04fb69fcaa6507605f9affc2245ad7d025eac8a10051a6e4e39909",
+      "width": 480,
+      "height": 300,
+      "frames": 120,
+      "storedDelaySeconds": 0.1,
+      "loopSeconds": 12.0,
+      "note": "downscaled companion of the 1280x800, 30 fps, 360-frame planetary-loop.mp4 (not in the repository)"
+    },
+    "slider-crank-section.png": {
+      "bytes": 801463,
+      "sha256": "27680b1d80a0695df6e05b6beedf73ef15cc30cb35122990c368752f1789bc33",
+      "width": 1280,
+      "height": 800
+    }
+  },
+  "review": {
+    "visual": "Hero, labelled exploded view and slider-crank section inspected: clean silhouettes, no z-fighting, readable callouts.",
+    "limits": "Schematic teaching models, not validated mechanics. Tooth checks are 2D at sampled angles. Section cut faces are not capped. Built and rendered on macOS only."
+  }
+}

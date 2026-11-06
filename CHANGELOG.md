@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add a solid 3D engine to `MartyGraphics`: a Foundation-only geometry kernel (closed
+  meshes; extrude, revolve, tube, involute spur and internal ring gears, twisted and tapered
+  blades), assemblies with revolute and prismatic joints and gear-mesh constraints solved
+  from one input, a closed-key JSON assembly format with exact refusal reasons, and a
+  SceneKit studio renderer with physically based presets, soft shadows, section planes and
+  part highlights. `MGSolidSnapshot` exports a posed frame as plain arrays. Add
+  `Examples/Solid3D`: a planetary gear set rendered from 53 lines of JSON and a slider-crank
+  cutaway, with a render receipt in `docs/assets/solid`. Schematic teaching models.
 - Add `MartyGraphicsPathTracer`, a separate library that path traces triangle meshes with
   Metal ray tracing in a compute kernel (runs on Apple silicon without ray-tracing hardware):
   next-event estimation with MIS, anisotropic GGX metals, plastic, clear coat, rough and
