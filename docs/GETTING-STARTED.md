@@ -3,6 +3,13 @@
 Start with the [runnable showcase](../Examples/Showcase/README.md). It has no remote
 dependency or credential requirement. The steps below explain the APIs it uses.
 
+No versioned package release exists yet. To try the engine in your own app now,
+depend on a local checkout the way the showcase does:
+`.package(name: "MartyGraphics", path: "PATH_TO_CHECKOUT")` and
+`.product(name: "MartyGraphics", package: "MartyGraphics")`. In Xcode, add the
+checkout as a local package. This is an unversioned early preview, not a
+release install; see [scope and status](../README.md#scope-and-status).
+
 ## 1. Choose a scene
 
 ```json
@@ -46,6 +53,56 @@ Use the **current controller scene revision**, not a permanently hard-coded 0.
 A replacement scene also receives a fresh revision. Unknown references, cycles,
 bad limits and stale revisions refuse the update. `accepted == false` leaves
 the prior controller scene in place.
+
+Read that value from `controller.scene?.revision`. `controller.revision` is a
+different counter. It tells SwiftUI that something changed, and it also advances
+on `show(_:)` and when a refused stream restores the earlier scene. A patch built
+from `controller.revision` can be refused as stale, even the first time.
+
+A complete host that shows one scene and changes its visible title:
+
+```swift
+import Foundation
+import SwiftUI
+import MartyGraphics
+
+struct FirstBoard: View {
+    @StateObject private var controller = MGSceneController()
+    @State private var status = ""
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            MartyGraphicsView(controller: controller)
+            Button("Rename the board", action: rename)
+            Text(status)
+        }
+        .onAppear(perform: load)
+    }
+
+    private func load() {
+        guard controller.scene == nil else { return }
+        let json = #"{"v":1,"items":[{"id":"dot","k":"body","at":[3,4],"shape":"ball","size":1}]}"#
+        switch MGParser.scene(data: Data(json.utf8)) {
+        case .success(let scene): controller.show(scene)
+        case .failure(let error): status = "Scene refused: \(error.reason)"
+        }
+    }
+
+    private func rename() {
+        guard let current = controller.scene?.revision else { return }
+        let edit: [String: Any] = ["v": 1, "rev": current,
+                                   "ops": [["op": "title", "title": "A labeled marker"]]]
+        guard case .success(let patch) = MGPatch.parse(object: edit) else { return }
+        let accepted = controller.apply(patch: patch, requireRevision: true)
+        status = accepted ? "Title updated" : "Refused; the previous board stays"
+    }
+}
+```
+
+The untitled scene first shows a generic heading. After the button, the heading
+reads "A labeled marker". The view draws nothing until a scene is shown, so
+keep a visible message for a refused scene. `error.reason` is a developer
+diagnostic; show your own wording to learners.
 
 ## 4. Stream, then finish strictly
 

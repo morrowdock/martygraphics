@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "fa8edc3fd11a29ad1fecd13a7f9f3963c715e8676774feea60d99489b6f50cc7"
+      "sha256": "7cbf453e049cfaacf1b18cd3d8510486453f8257eec954151df1567c703838ed"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -35,7 +35,7 @@
     },
     {
       "path": "Examples/Showcase/README.md",
-      "sha256": "a2ca22bb1309342348218bf227795054fef8b30afbda529ac0f67878cfb703a0"
+      "sha256": "f8c12629cdfe979c8f2c89b7c3569ef311b5ba53b34040eed867e371b9b1f8cb"
     },
     {
       "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json",
@@ -79,7 +79,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "5f5bc38a88d3ccb61d9bfa6592314ce67200058fdcccd8e78da0101b27d6599b"
+      "sha256": "f3a7a0df3ded980d3b14a93e8bf4dd9ec7b603d2b0f784bcf92b43048abcc8ad"
     },
     {
       "path": "SECURITY.md",
@@ -179,11 +179,11 @@
     },
     {
       "path": "docs/GETTING-STARTED.md",
-      "sha256": "aaee910eb4a14437297abecac5f84ca487db0c12b92c6f13847d34e7ab6b7f51"
+      "sha256": "41cdbf12a68bca7898e377fd5238b9b255975bb5e130dddc57e20f6ce5aaa840"
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
-      "sha256": "b9dba72473f8f4fbb9ea463ecdc939cba3eff2229dc0ab6214a7691e52d027a1"
+      "sha256": "ab1bb7b17d73df3e30b0e4de9b49cd2ff5dd874db1866e5e989f2c4592571ed1"
     },
     {
       "path": "docs/PORTABILITY-PROPOSAL.md",
@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "ca2de0b4fd93ad5dad25684233de99b57440b45fe81285afc9ecefdcc874da9b"
+      "sha256": "cf375702371d701ecce809652c23bb04bab9cf383fc0ca9f8c9ce7bb8ff2bd2e"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -211,7 +211,7 @@
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
-      "sha256": "7b798784ffc85a8f282bc8acc52633dfe22b1e93e6764340207d0ca9749efe83"
+      "sha256": "d664c0f826f65f8ec26bfb1bd2b15dfbbc345a194cca9866b90be676adc920a5"
     },
     {
       "path": "docs/assets/native/counts.png",
@@ -270,12 +270,32 @@
       "sha256": "b721cc2f2562268e8fc65c84d60c1bb594eaa416a4c1f39ccc99c47030244c8e"
     },
     {
+      "path": "tools/SceneValidator/Package.swift",
+      "sha256": "7592208fa0b82b5a6c016d6ca15aebf6738f689ed863abb2eb84b1ab21c6d30d"
+    },
+    {
+      "path": "tools/SceneValidator/README.md",
+      "sha256": "340e3c087600b51256f420c13edd845ec1ca6099dd6b75ff49c76606eafc9553"
+    },
+    {
+      "path": "tools/SceneValidator/Sources/MartySceneValidate/main.swift",
+      "sha256": "a758bd1ee049395e6a7772cedc60ea6f80eb0888c81977c9278dd0bdf900b4bb"
+    },
+    {
+      "path": "tools/SceneValidator/Sources/SceneValidatorCore/SceneValidator.swift",
+      "sha256": "b0ae47ad9138e8985723c2d62e8bde08b3309ccdc872070c806a31107ff1cf61"
+    },
+    {
+      "path": "tools/SceneValidator/Tests/SceneValidatorCoreTests/SceneValidatorTests.swift",
+      "sha256": "e6d8b89d2509af0de159a0bfb21960dc0570763e0c754b28570ad25d4e9dcc50"
+    },
+    {
       "path": "tools/check_dco.py",
       "sha256": "d6f3693eebbc82a50402b89e4cbab9c3f8c73deae45fc30109cb4b10cfe1141f"
     },
     {
       "path": "tools/tests/test_check_dco.py",
-      "sha256": "9a9e61b22fb6a6dc1284bc17aa1ca2eef662be7625a23ba72e1b1daca6e82cf3"
+      "sha256": "4f4e9c953e0f8b7c1733ef90e4f92588072aac8fde3581d33fe498663c8e1378"
     },
     {
       "path": "tools/tests/test_release_install.py",
@@ -283,7 +303,7 @@
     },
     {
       "path": "tools/validate_local.py",
-      "sha256": "98c6db45f1202e029c0e418de26812edd673db3df8dcd8a6c90dc74e045d887b"
+      "sha256": "ea4458636cc8e34ecc048833d3c4bc4874aa819f010d29fc1f8a8b8e622a9109"
     },
     {
       "path": "tools/verify_release_install.py",

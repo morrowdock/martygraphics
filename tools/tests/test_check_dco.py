@@ -2,11 +2,14 @@
 """Exercise the checker against actual contributor and synthetic merge histories."""
 
 import os
+import importlib.util
+import json
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 CHECKER = Path(__file__).resolve().parents[1] / "check_dco.py"
@@ -75,6 +78,61 @@ class DCOTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertEqual(self.check(self.base, value).returncode, 2)
                 self.assertEqual(self.check(value, self.base).returncode, 2)
+
+
+class LocalValidationCoverageTests(unittest.TestCase):
+    def check_native_change(self, changed_path):
+        checker_path = CHECKER.with_name("validate_local.py")
+        spec = importlib.util.spec_from_file_location("local_validation_under_test", checker_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        head = "a" * 40
+        commands = []
+
+        def fake_git(*arguments):
+            return head.encode() if arguments == ("rev-parse", "HEAD") else b""
+
+        def fake_run(command, **kwargs):
+            commands.append(command)
+            native_diff = command[:3] == ["git", "diff", "--exit-code"]
+            covered = native_diff and any(changed_path == path or changed_path.startswith(path + "/")
+                                          for path in command[6:])
+            return subprocess.CompletedProcess(command, 1 if covered else 0)
+
+        with tempfile.TemporaryDirectory() as directory:
+            receipt = Path(directory) / "receipt.json"
+            arguments = [str(checker_path), "--base", "b" * 40, "--head", head,
+                         "--native-source", "c" * 40, "--gitleaks", "unused-test-scanner",
+                         "--receipt", str(receipt)]
+            with mock.patch.object(sys, "argv", arguments), mock.patch.object(module, "git", side_effect=fake_git), \
+                    mock.patch.object(module.subprocess, "run", side_effect=fake_run), \
+                    mock.patch.object(module.platform, "platform", return_value="synthetic-test-platform"), \
+                    mock.patch.object(module.socket, "gethostname", return_value="synthetic-test-host"), \
+                    mock.patch("builtins.print"):
+                status = module.main()
+            report = json.loads(receipt.read_text())
+        native = [command for command in commands if command[:3] == ["git", "diff", "--exit-code"]]
+        self.assertEqual(len(native), 1)
+        self.assertEqual(native[0][3:6], ["c" * 40, head, "--"])
+        return status, report
+
+    def test_each_native_package_is_in_reuse_guard(self):
+        for path in ["Sources/MartyGraphics/MGParser.swift", "Tests/EngineTests.swift", "Package.swift",
+                     "Examples/Showcase/Package.swift", "Examples/Showcase/Sources/scene.json", "docs/fixtures/scene.json",
+                     "Examples/UnitCircle/Package.swift", "Examples/UnitCircle/Sources/scene.json",
+                     "tools/SceneValidator/Package.swift", "tools/SceneValidator/Sources/main.swift",
+                     "tools/SceneValidator/Tests/ValidatorTests.swift"]:
+            with self.subTest(path=path):
+                status, receipt = self.check_native_change(path)
+                self.assertEqual(status, 1)
+                self.assertEqual(receipt["status"], "FAIL")
+
+    def test_documentation_does_not_require_new_native_run(self):
+        for path in ["README.md", "Examples/UnitCircle/README.md", "tools/SceneValidator/README.md"]:
+            with self.subTest(path=path):
+                status, receipt = self.check_native_change(path)
+                self.assertEqual(status, 0)
+                self.assertEqual(receipt["status"], "PASS")
 
 
 if __name__ == "__main__":

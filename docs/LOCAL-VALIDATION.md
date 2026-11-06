@@ -54,7 +54,7 @@ python3 -m unittest discover -s tools/tests -v
 python3 tools/check_dco.py BASE_SHA HEAD_SHA
 python3 tools/validate_local.py --check-files
 gitleaks git . --log-opts=--all --redact --report-format json --report-path PRIVATE_NEW_REPORT
-git diff --exit-code TESTED_NATIVE_SOURCE_SHA HEAD_SHA -- Sources Tests Package.swift Examples/Showcase/Package.swift Examples/Showcase/Sources docs/fixtures
+git diff --exit-code TESTED_NATIVE_SOURCE_SHA HEAD_SHA -- Sources Tests Package.swift Examples/Showcase/Package.swift Examples/Showcase/Sources docs/fixtures Examples/UnitCircle/Package.swift Examples/UnitCircle/Sources tools/SceneValidator/Package.swift tools/SceneValidator/Sources tools/SceneValidator/Tests
 ```
 
 The DCO checker validates full SHA arguments, checks **every** commit in
@@ -73,7 +73,12 @@ their metadata separately; retain that evidence beside the receipt.
 Run the [Mac commands](VERIFY-ON-MAC.md) plus showcase `--verify` and `--export`
 on an approved native execution lane. A prior exact-source receipt can be reused
 only when the final command above proves the engine, package definitions, tests,
-showcase tool, scene and documentation-fixture bytes unchanged. Preserve that original source SHA and
+showcase tool, scene and documentation-fixture bytes, UnitCircle package and scenes, and scene-validator
+package, sources and tests unchanged. These checks include additions and removals,
+so a receipt from before a package existed cannot vouch for its addition. A reused
+receipt must actually cover every present package; byte equality alone cannot
+establish that its tests were run. README-only changes remain hygiene/review work.
+Preserve that original source SHA and
 asset digests; do not relabel an old execution as a new build. A documentation/CI
 change still needs its own local hygiene and independent scoped review.
 

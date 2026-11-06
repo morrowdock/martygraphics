@@ -16,6 +16,26 @@ The preview opens a native window. Choose a scene, then use the engine's step/pl
 controls. The host respects the engine's Reduce Motion handling; static exports
 do not establish screen-reader or physical-device accessibility.
 
+## Make a first change
+
+Edit one of the six files in
+[`Sources/MartyShowcase/Scenes`](Sources/MartyShowcase/Scenes) in place, then run
+`--verify` and `--preview` again. For example, in `counts.json` change Gamma's
+`"value"` from 24 to 36. The engine redraws the bar from the new value, but
+it does not rewrite authored text. The step's `say` still says Beta is largest,
+so update that sentence as well. Values, labels and narration are all authored data.
+
+To see validation work, add a seventh bar or misspell a key such as `"colour"`.
+`--verify` should then stop with a reason like `bars.bars` or
+`bars.bar.unknown.colour` instead of drawing a partial board. The reason names
+the rule, not the file, so undo your last edit to find it.
+
+The showcase loads exactly the six scene IDs listed in
+[`Showcase.swift`](Sources/MartyShowcase/Showcase.swift) and checks that six
+loaded. A new JSON file in `Scenes` is not picked up automatically. Try a new
+scene in your own host instead; the [tutorial](../../docs/GETTING-STARTED.md)
+shows a small one.
+
 To export images without opening the preview window:
 
 ```sh
