@@ -45,7 +45,8 @@
         "Apache-2.0 SPDX header",
         "Detect highlight cycles and revalidate item references after every cumulative step edit",
         "Public fix: default node radius and array cell size are capped to the range their own keys accept, so defaulted items re-parse in worlds smaller than 3 (node) or 4 (array) units",
-        "Public fix: numeric array cells whose displayed text exceeds MGLimits.cellText are refused at first parse"
+        "Public fix: numeric array cells whose displayed text exceeds MGLimits.cellText are refused at first parse",
+        "Public-only adaptation, not compared with the private source: proposed MGLimits.records = 32 and MGLimits.recordFields = 6 for record-list declarations (new shape only)"
       ]
     },
     {
@@ -90,7 +91,8 @@
       "source_sha256": "7a320df4f0018a336a164bdd13d7c2c84414e195249df31c11097d3a33b29a45",
       "adaptations": [
         "Apache-2.0 SPDX header",
-        "Remove all six mechanics walkthrough implementations and registry entries; retain the generic API, helpers, tree and array templates"
+        "Remove all six mechanics walkthrough implementations and registry entries; retain the generic API, helpers, tree and array templates",
+        "Public-only adaptation, not compared with the private source: record-list template parameters (MGParamField, MGParamSpec.records/fields/isRecordList, MGParams.records), record-declaration checks and MGTemplate `reject` for specific `template.<reason>` rejections"
       ]
     },
     {
@@ -136,7 +138,8 @@
         "Apache-2.0 SPDX header",
         "Core pack references original synthetic fixtures with no built-in generation examples",
         "Removed private generation/cache/evaluation commentary; example-reference metadata API remains generic",
-        "Built-in pack covers tree and array templates with five synthetic fixtures; no mechanics walkthroughs or private generation examples"
+        "Built-in pack covers tree and array templates with five synthetic fixtures; no mechanics walkthroughs or private generation examples",
+        "Public-only adaptation, not compared with the private source: MGPackError.badParamSpec; record-list declarations validated in MGPacks.problems before fixtures parse"
       ]
     },
     {
@@ -157,7 +160,10 @@
     "Tests/MartyGraphicsTests/HighlightReferenceTests.swift: original cycle, chain, edit and patch regressions",
     "Tests/MartyGraphicsTests/RegressionFixtures.swift: synthetic helpers for the regression suites",
     "Tests/MartyGraphicsTests/ParserRegressionTests.swift, StreamRegressionTests.swift, TimelineRegressionTests.swift, PatchAtomicityTests.swift, ControllerRollbackTests.swift: behavioral regression coverage",
-    "Tests/MartyGraphicsTests/RoundtripFixTests.swift: regressions for the public parser-default, transitive-visibility and stream-version fixes"
+    "Tests/MartyGraphicsTests/RoundtripFixTests.swift: regressions for the public parser-default, transitive-visibility and stream-version fixes",
+    "Sources/MartyGraphics/MGGraphPack.swift: opt-in graphs pack (shortest_path) with an original synthetic router fixture",
+    "Tests/MartyGraphicsTests/RecordParamsShortestPathTests.swift, RecordParamsGuardTests.swift: record-parameter and shortest_path coverage",
+    "docs/fixtures/v1/shortest-path*.json: synthetic shortest_path scene and patch fixtures"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

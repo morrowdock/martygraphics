@@ -19,7 +19,15 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "9aaf1557fd80d12984f0ab30963ae8a45db942b3c175bc22b7f0a2b948c21b05"
+      "sha256": "e6d2270dba24e2fe4dce61d7fafb4110d20118c9d6171ee3b024bc3849bc7b12"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "e6d2270dba24e2fe4dce61d7fafb4110d20118c9d6171ee3b024bc3849bc7b12"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "e6d2270dba24e2fe4dce61d7fafb4110d20118c9d6171ee3b024bc3849bc7b12"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -99,7 +107,11 @@
     },
     {
       "path": "Sources/MartyGraphics/MGGrammar.swift",
-      "sha256": "810938fc1d7f99ecf5a0c7cf7029207caf69665a13271340f1af55c950b715e7"
+      "sha256": "2f18903fb3eb1aed92e6829edb20a20dda4b9bb8b4adcb1b674847c58d4910ec"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGGraphPack.swift",
+      "sha256": "65f60437bf37538d32e9fea5ca6000f7337b6f98602a0eb2ec90fb2a57bd89f4"
     },
     {
       "path": "Sources/MartyGraphics/MGLayout.swift",
@@ -111,11 +123,11 @@
     },
     {
       "path": "Sources/MartyGraphics/MGPack.swift",
-      "sha256": "c4e0421dd427c4d172d1b5fb001740afd1a5f8285aab7cbf584e8071999287b3"
+      "sha256": "f6af770877d9de4c005eef037592b9883e39b20e5e72bd01462b6fa7fdc4e381"
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "61bcdf12b87a5a449cec74d87eb3339905ee0731146231a0a74b16dc389c4944"
+      "sha256": "839bf5944185e536de5922aa532be40f75c8abbe5af4e772f2e88b4d31e76f88"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -135,7 +147,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTemplates.swift",
-      "sha256": "10fb32da29adcf349efe8d91755b7aec7713c308039a8bd55417b4859cc2f54d"
+      "sha256": "d68eb2570f539883ffc9702dfebd45da834376fba08cc907adc2b702689b5c34"
     },
     {
       "path": "Sources/MartyGraphics/MGTheme.swift",
@@ -178,6 +190,14 @@
       "sha256": "b8d877801e6e60dc7b9446ff07058c756ff4b2cda4e44f72608bedfa05212411"
     },
     {
+      "path": "Tests/MartyGraphicsTests/RecordParamsGuardTests.swift",
+      "sha256": "b34afc463f4d6f45bf284597931374ffe074a0f6c1d1d0b74970875371e9df11"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/RecordParamsShortestPathTests.swift",
+      "sha256": "048b9b8ef674002c9affb1c0ee6999657753ffe8ecf022ff62cc2922ca288daf"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/RegressionFixtures.swift",
       "sha256": "3aba5fd2bba87458a514c58f52ffdb24ef8ea30af8f2643c495a758c98266bb7"
     },
@@ -195,7 +215,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "734795ab7d34ffc24e9100596a90ec2b72c3c68ee3ab8bc4c5b79599798cbca9"
+      "sha256": "4c1d4b72532c713aff021988af3ac3f1575ec30cbd1f5f211fdc412bc824d357"
     },
     {
       "path": "docs/DISTRIBUTION.md",
@@ -203,11 +223,19 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "e4a98a813b60a534581523d4d4c2424ed0b8d19a27181eff3e67321f96a2edc5"
+      "sha256": "e14e7e4a25022d75779399a3bba14188a9b551664c212e45c947806aa94167ef"
+    },
+    {
+      "path": "docs/EXPORT.json",
+      "sha256": "e14e7e4a25022d75779399a3bba14188a9b551664c212e45c947806aa94167ef"
+    },
+    {
+      "path": "docs/EXPORT.json",
+      "sha256": "e14e7e4a25022d75779399a3bba14188a9b551664c212e45c947806aa94167ef"
     },
     {
       "path": "docs/GETTING-STARTED.md",
-      "sha256": "41cdbf12a68bca7898e377fd5238b9b255975bb5e130dddc57e20f6ce5aaa840"
+      "sha256": "50be27671af2cd6ba4ca058177da0a9a9daa4ca570addcd687d4d0b3b7a22946"
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
@@ -219,7 +247,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "ab91916e2b0818141de1991c3a1096cbabdfcac9c05e40850671bd6920b49b1f"
+      "sha256": "d16e80f695631c6ca7353c505cc0f8a1758486654f3993b3447e551ffb9d8ab7"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -288,6 +316,18 @@
     {
       "path": "docs/fixtures/v1/scene.json",
       "sha256": "e8c2066276a8528e05366051d93cc0b749decdf9282adde7aff6120fb48abe36"
+    },
+    {
+      "path": "docs/fixtures/v1/shortest-path-edges.patch.json",
+      "sha256": "adcc7e7b737488cfcf14bb06eb0d2e68fcde68056732ba7fcdf00d23c65b424d"
+    },
+    {
+      "path": "docs/fixtures/v1/shortest-path-null.patch.json",
+      "sha256": "9314f5a3b73bb94d307959eaeae2e25b6ce701e97def40778578c4476fde77e2"
+    },
+    {
+      "path": "docs/fixtures/v1/shortest-path.scene.json",
+      "sha256": "fb93122e400a3fc9d78d664c8b80d83f397e89ef9758975c1c3771afb05ec472"
     },
     {
       "path": "docs/fixtures/v1/title.patch.json",
