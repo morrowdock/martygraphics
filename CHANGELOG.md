@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Say in the README and the showcase that the loops are GIF previews (at most 256 colours,
+  10 to 12 frames per second, 480 to 640 pixels wide), and link the 1280-wide, 24 to 30 frames
+  per second source videos.
 - Add turbomachinery primitives to the solid engine: `bladeRow` (a NACA-style airfoil with
   stagger, twist and signed camber, wrapped on cylinders and repeated around the axis) and
   capped partial revolves (`revolvedProfile` `sweep` and `start`) for cutaway casings, with

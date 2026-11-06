@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "ba3a9de2488f92ea808f8b62d58a2d0faa241d45deaf0a5fd2f46e90002ff346"
+      "sha256": "c88e60d6aa7c1a48786a4954367297c8fdf4bbf982449447a75f8dc220fc059d"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -195,7 +195,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "c72919c89a7493bc9f77500a737b4351eb25a5b6ce2e27ea33e06305d3362af7"
+      "sha256": "d0cb75a36eb0c5e28b4b84ce22a724a40927b2f5d9d7da32ebf335f0848bef33"
     },
     {
       "path": "SECURITY.md",
@@ -467,7 +467,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "25926e1aeb4dd6970b930209d20d65d785ebecc5c5b10e39f70f30f86d73ecb5"
+      "sha256": "f4f4e2146a178639c401734a671ecdc9485eb49d53344e70f0be4bd56b92f84c"
     },
     {
       "path": "docs/SOLID-3D.md",

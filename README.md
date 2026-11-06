@@ -16,11 +16,17 @@ Validated JSON → native diagrams, walkthroughs, and animation in SwiftUI.
   <a href="docs/assets/turbofan/pathtraced-hero.png"><img src="docs/assets/turbofan/turbofan-loop.gif" width="840" alt="Cutaway two-spool turbofan turning slowly: titanium fan blades in front of a half-cut white nacelle, the compressor, combustor and turbines exposed in the core, a blue LP shaft inside an orange HP shaft."></a>
 </p>
 
+<p align="center"><sub><b>About the 3D loops on this page.</b> GitHub shows them as GIF images, not video. A GIF
+has at most 256 colours, and these previews are 480 to 640 pixels wide at 10 to 12 frames per
+second, so they look rougher and less smooth than the real output. The turbofan and gearbox source videos are
+1280 pixels wide at 30 and 24 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a> ·
+<a href="https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4">path-traced gearbox (MP4)</a>. Run an example to see the engine live.</sub></p>
+
 **A turbofan, cut away, from 38 lines of JSON.** The solid engine builds every blade row,
 casing and shaft of this schematic two-spool turbofan from
 [`turbofan.json`](Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json) and renders
-the 12-second loop with its real-time renderer, about 0.04 seconds per frame (shown as a
-640×400 GIF). The fan and LP spool turn once
+the 12-second loop with its real-time renderer, about 0.04 seconds per frame (shown here as a
+640×400 GIF at 10 frames per second; the [source video](https://morrowdock.app/mg/turbofan/turbofan-loop.mp4) is 1280×800 at 30). The fan and LP spool turn once
 while the HP spool turns three times (N2 = 3 × N1). The cut faces are real capped solids,
 so the same model path traces too: [path-traced still](docs/assets/turbofan/pathtraced-hero.png)
 (1920×1080, 768 samples per pixel, about 4.3 minutes on an M1). A teaching model, not a real
@@ -41,8 +47,8 @@ core, and in a high-bypass engine like this it gives most of the thrust.
 
 **Path traced on an M1 GPU by MartyGraphics.** A procedurally generated gearbox
 (15:30 spur, then a 24/18×3/60 planetary stage, 7:1 overall), rendered with the
-Metal path tracer. The loop above is a 640×360, 10-second GIF of the 1280×720,
-112 samples per pixel render. The [still](docs/assets/pathtrace/hero.png) is 1920×1080
+Metal path tracer. The loop above is a 640×360, 10-second GIF at 12 frames per second, cut down
+from the [1280×720, 24 frames per second video](https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4) (112 samples per pixel). The [still](docs/assets/pathtrace/hero.png) is 1920×1080
 at 768 samples per pixel, about 2.5 minutes on an M1. No images, models or stock assets.
 [Exploded view](docs/assets/pathtrace/exploded.png) ·
 [Code beside the render](docs/assets/pathtrace/side-by-side.png) ·

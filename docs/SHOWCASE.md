@@ -4,6 +4,12 @@ These examples use the public format and drawing primitives. They show different
 uses of the engine without implying a curriculum, solver, running infrastructure
 service, or AI model.
 
+> **About the 3D loops on this page.** GitHub shows them as GIF images, not video. A GIF
+> has at most 256 colours, and these previews are 480 to 640 pixels wide at 10 to 12 frames per
+> second, so they look rougher and less smooth than the real output. The turbofan and gearbox source videos are
+> 1280 pixels wide at 30 and 24 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a> ·
+> <a href="https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4">path-traced gearbox (MP4)</a>. Run an example to see the engine live.
+
 ## Turbofan cutaway
 
 A schematic two-spool, high-bypass turbofan built and rendered by the solid engine from
@@ -16,7 +22,8 @@ engine design.
 [![Turbofan cutaway turning: fan, compressors, combustor and turbines exposed inside a half-cut nacelle.](assets/turbofan/turbofan-loop.gif)](assets/turbofan/pathtraced-hero.png)
 
 [Path-traced still](assets/turbofan/pathtraced-hero.png) · [Labelled cutaway](assets/turbofan/labelled.png) ·
-[Exploded](assets/turbofan/exploded.png) · [Loop (GIF, 640×400, 12 s)](assets/turbofan/turbofan-loop.gif) ·
+[Exploded](assets/turbofan/exploded.png) · [Loop (GIF, 640×400, 10 fps, 12 s)](assets/turbofan/turbofan-loop.gif) ·
+[Video (MP4, 1280×800, 30 fps)](https://morrowdock.app/mg/turbofan/turbofan-loop.mp4) ·
 [Run it](../Examples/Turbofan/README.md) · [Render receipt](assets/turbofan/provenance.json)
 
 **How a turbofan works.** The big fan at the front pulls in a huge flow of air (suck). A small
@@ -48,7 +55,7 @@ A planetary gear set built and rendered in real time by the solid engine from
 [![Solid 3D planetary gear set exploded along its shaft with part labels.](assets/solid/exploded-labelled.png)](assets/solid/exploded-labelled.png)
 
 [Assembled](assets/solid/hero.png) · [Slider-crank cutaway](assets/solid/slider-crank-section.png) ·
-[Loop (GIF, 480×300, 12 s)](assets/solid/planetary-loop.gif) · [Run it](../Examples/Solid3D/README.md) ·
+[Loop (GIF, 480×300, 10 fps, 12 s)](assets/solid/planetary-loop.gif) · [Run it](../Examples/Solid3D/README.md) ·
 [Render receipt](assets/solid/provenance.json)
 
 **How a planetary gear set works.** The sun gear (24 teeth) sits in the middle and is the
@@ -67,7 +74,8 @@ Apple M1 GPU by `MartyGraphicsPathTracer`: 1920×1080, 768 samples per pixel, ab
 [![Path-traced steel and brass gearbox with involute teeth on a dark studio floor.](assets/pathtrace/hero.png)](assets/pathtrace/hero.png)
 
 [Exploded view](assets/pathtrace/exploded.png) · [Code beside the render](assets/pathtrace/side-by-side.png) ·
-[Loop (GIF, 480×270, 9.6 s)](assets/pathtrace/gearbox-loop.gif) ·
+[Loop (GIF, 480×270, 12.5 fps, 9.6 s)](assets/pathtrace/gearbox-loop.gif) ·
+[Video (MP4, 1280×720, 24 fps)](https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4) ·
 [Run it](../Examples/PathTrace/README.md) · [Render receipt](assets/pathtrace/provenance.json)
 
 **How it works.** The input shaft turns the small 15-tooth pinion. It drives a 30-tooth gear,
