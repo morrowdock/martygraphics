@@ -74,4 +74,38 @@ $B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF,
   parent must; a failed render removes the partial directory. A step's `spin` is played
   as that many input turns.
 
+## Components
+
+A model can use reusable components instead of describing every part again, for
+example `{"id": "stage", "use": "planetaryStage", "with": {"planets": 3}}`.
+[`planetary-components.json`](Sources/MartySolid3D/Models/planetary-components.json)
+(12 lines) and
+[`slider-crank-component.json`](Sources/MartySolid3D/Models/slider-crank-component.json)
+(8 lines) are the two models above built this way.
+
+```sh
+$B/marty-solid components                                   # one-line JSON catalog of the built-in components
+$B/marty-solid component check my-part.json                 # validate a new component definition
+$B/marty-solid component check my-part.json --with teeth=18 # ... and instantiate it with other values
+$B/marty-solid check my-model.json --component my-part.json # use a new component before it is built in
+```
+
+- `components` prints every component's id, one-line description, parameters
+  (default, min, max, integer), inner part ids and anchors. `--component FILE` adds
+  more definitions first.
+- `component check` validates the definition (closed keys, parameters, expressions,
+  references), compiles the component on its own at its defaults, then instantiates it
+  with the `--with` values and runs the same mesh and gear checks as `check`. It prints
+  the catalog entry, a ready `use` entry, the parts, triangles and solved ratios. A
+  refusal gives the reason and part, for example
+  `{"ok": false, "reason": "component.param.range.idlerTeeth", "part": "idlerTrain"}`.
+- `check` and `render` accept `--component FILE` (repeatable; a later file may use an
+  earlier one). A refused component file is reported with `"component": FILE`.
+
+To add a component to the built-in library, open a pull request that adds its JSON
+to `MGSolidBuiltInComponents.sources`; the tests compile every built-in.
+
+`swift test --package-path Examples/Solid3D` runs `marty-solid` in fresh processes and
+checks its exit codes, JSON reports and that refusals are the same in every process.
+
 The format is documented in [docs/SOLID-3D.md](../../docs/SOLID-3D.md).

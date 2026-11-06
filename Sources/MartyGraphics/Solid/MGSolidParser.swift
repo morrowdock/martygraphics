@@ -67,24 +67,29 @@ public struct MGSolidDocument: Equatable, Sendable {
     public var shapes: [String: [MGShapeSpec]]
     /// Input-to-joint ratios the constraint solver found (joint radians or mm per input radian).
     public var ratios: [String: Double]
-    /// The source JSON this document was compiled from.
+    /// The source JSON this document was compiled from (with its `use` entries, before component expansion).
     public var source: MGJSON
+    /// The components `use` entries were resolved against; patches recompile with the same library.
+    public var library: MGSolidLibrary = .builtIn
 
     public func pose(_ params: MGPoseParameters) -> MGPose { assembly.pose(params) }
 }
 
 /// Strict decoder and compiler for the solid assembly JSON format (closed keys, bounded values, resolved references).
 public enum MGSolidParser {
-    public static func document(data: Data, reusing previous: MGSolidDocument? = nil) -> Result<MGSolidDocument, MGSolidIssue> {
+    public static func document(data: Data, reusing previous: MGSolidDocument? = nil,
+                                library: MGSolidLibrary = .builtIn) -> Result<MGSolidDocument, MGSolidIssue> {
         guard data.count <= MGSolidLimits.bytes else { return .failure(.init("assembly.bytes")) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
             return .failure(.init("json"))
         }
-        return document(json: json, reusing: previous)
+        return document(json: json, reusing: previous, library: library)
     }
 
-    public static func document(json: MGJSON, reusing previous: MGSolidDocument? = nil) -> Result<MGSolidDocument, MGSolidIssue> {
-        do { return .success(try compile(json, previous)) }
+    /// `library` resolves `use` entries (components); see docs/SOLID-3D.md, Components.
+    public static func document(json: MGJSON, reusing previous: MGSolidDocument? = nil,
+                                library: MGSolidLibrary = .builtIn) -> Result<MGSolidDocument, MGSolidIssue> {
+        do { return .success(try compile(json, previous, library)) }
         catch let e as MGSolidIssue { return .failure(e) }
         catch let e as MGError { return .failure(.init(e.reason)) }
         catch { return .failure(.init("unknown")) }
@@ -92,7 +97,8 @@ public enum MGSolidParser {
 
     /// Applies a patch and recompiles. `{"params": {...}}` only changes the defaults; `{"parts": {"id": {...}}}` merges
     /// fields into existing parts by id; `"constraints"` and `"steps"` replace those arrays. Part ids are stable, and
-    /// parts whose shapes did not change keep their meshes.
+    /// parts whose shapes did not change keep their meshes. An id inside a component instance (`stage1.pinion`) merges
+    /// into that `use` entry's `set`; the instance id itself (`stage1`) edits the `use` entry (`with`, `at`, …).
     public static func applying(_ patch: MGJSON, to doc: MGSolidDocument) -> Result<MGSolidDocument, MGSolidIssue> {
         guard case .object(let p) = patch else { return .failure(.init("patch.object")) }
         let allowed: Set<String> = ["params", "parts", "constraints", "steps", "title"]
@@ -106,15 +112,28 @@ public enum MGSolidParser {
             for (id, edit) in edits.sorted(by: { $0.key < $1.key }) {
                 guard case .object(let fields) = edit else { return .failure(.init("patch.parts.object", part: token(id))) }
                 guard fields["id"] == nil else { return .failure(.init("patch.parts.id", part: token(id))) }
-                guard let k = list.firstIndex(where: { $0["id"] == .string(id) }), case .object(var o) = list[k] else {
+                if let k = list.firstIndex(where: { $0["id"] == .string(id) }), case .object(var o) = list[k] {
+                    for (key, value) in fields { if value == .null { o.removeValue(forKey: key) } else { o[key] = value } }
+                    list[k] = .object(o)
+                    continue
+                }
+                // `stage1.pinion` (or `stage1.gears.pinion`): merge into the `set` of the `use` entry `stage1`.
+                let head = id.split(separator: ".", maxSplits: 1).map(String.init)
+                guard head.count == 2, let k = list.firstIndex(where: { $0["id"] == .string(head[0]) && $0["use"] != nil }),
+                      case .object(var o) = list[k] else {
                     return .failure(.init("ref.unknown.\(token(id))"))
                 }
-                for (key, value) in fields { if value == .null { o.removeValue(forKey: key) } else { o[key] = value } }
+                guard case .object(var set) = o["set"] ?? .object([:]), case .object(var inner) = set[head[1]] ?? .object([:]) else {
+                    return .failure(.init("patch.parts.set", part: token(id)))
+                }
+                for (key, value) in fields { inner[key] = value }
+                set[head[1]] = .object(inner)
+                o["set"] = .object(set)
                 list[k] = .object(o)
             }
             src["parts"] = .array(list)
         }
-        return document(json: .object(src), reusing: doc)
+        return document(json: .object(src), reusing: doc, library: doc.library)
     }
 
     // MARK: Compile
@@ -130,8 +149,8 @@ public enum MGSolidParser {
         var base: String, instance: Int?
     }
 
-    static func compile(_ json: MGJSON, _ previous: MGSolidDocument?) throws -> MGSolidDocument {
-        guard case .object(let o) = json else { throw MGSolidIssue("assembly.object") }
+    static func compile(_ json: MGJSON, _ previous: MGSolidDocument?, _ library: MGSolidLibrary = .builtIn) throws -> MGSolidDocument {
+        guard case .object(var o) = json else { throw MGSolidIssue("assembly.object") }
         guard json.canonicalData.count <= MGSolidLimits.bytes else { throw MGSolidIssue("assembly.bytes") }
         try closed(o, ["v", "kind", "parts"], topKeys, "assembly")
         guard o["v"] == .number(1) else { throw MGSolidIssue("assembly.version") }
@@ -145,6 +164,9 @@ public enum MGSolidParser {
             if let v = po["input"] { defaults.input = try num(v, -1e6...1e6, "params.input") }
             if let v = po["explode"] { defaults.explode = try num(v, 0...1, "params.explode") }
         }
+        // Component instances (`use`) expand into plain parts first; every check below applies to the expanded parts.
+        let expansion = try MGSolidComponents.expand(o, library)
+        o = expansion.object
         guard case .array(let rawParts)? = o["parts"], (1...MGSolidLimits.parts).contains(rawParts.count) else { throw MGSolidIssue("parts.count") }
 
         // Parts, with `repeat` expansion.
@@ -152,8 +174,12 @@ public enum MGSolidParser {
         var repeated: [String: Int] = [:]
         var wireIDs = Set<String>()
         for entry in rawParts {
-            let expanded = try part(entry)
-            guard wireIDs.insert(expanded[0].base).inserted else { throw MGSolidIssue("id.duplicate.\(expanded[0].base)", part: expanded[0].base) }
+            var expanded = try part(entry, generated: expansion.generated)
+            if let frame = expansion.frames[expanded[0].base] {
+                // An instance placed with `at` / `rot` carries its root parts (outside any `repeat` turn).
+                for k in expanded.indices { expanded[k].placement = frame * expanded[k].placement }
+            }
+            guard wireIDs.insert(expanded[0].base).inserted else { throw MGSolidIssue("id.duplicate.\(token(expanded[0].base))", part: expanded[0].base) }
             if expanded.count > 1 || expanded[0].instance != nil { repeated[expanded[0].base] = expanded.count }
             parts += expanded
         }
@@ -163,7 +189,7 @@ public enum MGSolidParser {
         for p in parts { for s in p.shapes { let e = s.meshEstimate; triangles += e.triangles; vertices += e.vertices } }
         guard triangles <= MGSolidLimits.triangles, vertices <= MGSolidLimits.vertices else { throw MGSolidIssue("assembly.budget") }
         var ids = Set<String>()
-        for p in parts { guard ids.insert(p.id).inserted else { throw MGSolidIssue("id.duplicate.\(p.id)", part: p.id) } }
+        for p in parts { guard ids.insert(p.id).inserted else { throw MGSolidIssue("id.duplicate.\(token(p.id))", part: p.id) } }
         // Resolve parents (a repeated child of a repeated parent pairs by instance).
         for i in parts.indices {
             guard let parent = parts[i].parent else { continue }
@@ -546,7 +572,7 @@ public enum MGSolidParser {
             guard abs(ta + tb) <= 1e-6 * (abs(ta) + abs(tb)) + 1e-9 else { throw MGSolidIssue("constraint.gearMesh.motion", part: m.b) }
         }
         return MGSolidDocument(title: title, assembly: assembly, steps: steps, defaults: defaults, gears: gears, shapes: shapes,
-                               ratios: ratios, source: json)
+                               ratios: ratios, source: json, library: library)
     }
 
     /// Gauss-Jordan elimination with partial pivoting on a (possibly redundant) linear system. Returns nil entries for
@@ -582,10 +608,12 @@ public enum MGSolidParser {
 
     // MARK: Parts
 
-    static func part(_ entry: MGJSON) throws -> [RawPart] {
+    /// `generated`: dotted ids made by component expansion (`stage1.pinion`); authored ids stay plain identifiers.
+    static func part(_ entry: MGJSON, generated: Set<String> = []) throws -> [RawPart] {
         guard case .object(let o) = entry else { throw MGSolidIssue("part.object") }
         let pid: String
-        do { pid = try MGParser.identifier(o["id"] ?? .null, "part.id") } catch { throw MGSolidIssue("part.id") }
+        if case .string(let s)? = o["id"], generated.contains(s) { pid = s }
+        else { do { pid = try MGParser.identifier(o["id"] ?? .null, "part.id") } catch { throw MGSolidIssue("part.id") } }
         func fail(_ r: String) -> MGSolidIssue { MGSolidIssue(r, part: pid) }
         do {
             try closed(o, ["id", "shape"], partKeys, "part")
@@ -601,7 +629,9 @@ public enum MGSolidParser {
             guard shapes.filter({ $0.kind == "gear" || $0.kind == "ringGear" }).count <= 1 else { throw MGSolidIssue("part.shape.gears") }
             let material = try materialPreset(o["material"] ?? .string("brushedSteel"))
             var parent: String?
-            if let p = o["parent"] { parent = try MGParser.identifier(p, "part.parent") }
+            if case .string(let s)? = o["parent"], generated.contains(s) { parent = s }
+            else if case .string(let s)? = o["parent"], s.contains(".") { throw MGSolidIssue("ref.unknown.\(token(s))") }
+            else if let p = o["parent"] { parent = try MGParser.identifier(p, "part.parent") }
             let placement = try transform(o["at"], o["rot"], "part")
             var joint = MGJoint.fixed
             if let j = o["joint"] {
@@ -660,7 +690,7 @@ public enum MGSolidParser {
         "carrier": (["arms", "radius", "hub", "boss", "armWidth", "thickness"], ["z0", "chamfer", "blend"]),
         "extrudedProfile": (["points", "depth"], ["holes", "z0", "chamfer"]),
         "revolvedProfile": (["points"], ["closed", "sweep", "start"]),
-        "blade": (["span", "chord"], ["thickness", "twist", "root", "tipChord", "camber", "camberPosition"]),
+        "blade": (["span", "chord"], ["thickness", "twist", "pitch", "root", "tipChord", "camber", "camberPosition"]),
         "bladeRow": MGSolidTurbo.bladeRowKeys,
     ]
 
@@ -797,7 +827,10 @@ public enum MGSolidParser {
             }
         case "blade":
             _ = try n("span"); let chord = try n("chord")
-            _ = try opt("thickness", 0.02...0.4); _ = try opt("twist", -80...80); _ = try opt("root", 0...4000)
+            _ = try opt("thickness", 0.02...0.4); _ = try opt("root", 0...4000)
+            // Section angle pitch + twist × t, so the tip angle stays below 85 degrees as for blade rows.
+            let twist = try opt("twist", -80...80) ?? 0, pitch = try opt("pitch", -80...80) ?? 0
+            guard abs(pitch + twist) <= 85 else { throw MGSolidIssue("\(w).twist") }
             _ = try opt("tipChord", 0.05...4000)
             _ = try opt("camber", 0...0.09); _ = try opt("camberPosition", 0.1...0.9)
             _ = chord
@@ -921,11 +954,12 @@ public enum MGSolidParser {
         let extra = keys.subtracting(required.union(optional))
         guard extra.isEmpty else { throw MGSolidIssue("\(what).unknown.\(extra.map(token).sorted().joined(separator: ","))") }
     }
-    /// An author-supplied name as it appears inside a reason: ASCII letters, digits and `_` (anything else becomes
-    /// `_`), at most 32 characters, so reasons stay single tokens without spaces or JSON text.
+    /// An author-supplied name as it appears inside a reason: ASCII letters, digits, `_` and `.` (anything else
+    /// becomes `_`), at most 32 characters, so reasons stay single tokens without spaces or JSON text. The dot keeps
+    /// component part ids (`stage1.pinion`) readable.
     static func token(_ s: String) -> String {
         let t = String(s.unicodeScalars.prefix(32).map { u -> Character in
-            u.isASCII && (CharacterSet.alphanumerics.contains(u) || u == "_") ? Character(u) : "_"
+            u.isASCII && (CharacterSet.alphanumerics.contains(u) || u == "_" || u == ".") ? Character(u) : "_"
         })
         return t.isEmpty ? "_" : t
     }
