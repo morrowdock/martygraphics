@@ -910,7 +910,9 @@ public enum MGSolidParser {
 
     static func closed(_ o: [String: MGJSON], _ required: Set<String>, _ optional: Set<String>, _ what: String) throws {
         let keys = Set(o.keys)
-        guard required.isSubset(of: keys) else { throw MGSolidIssue("\(what).missing") }
+        // Name the missing keys (sorted), so an author or a model can repair from the reason alone.
+        let missing = required.subtracting(keys)
+        guard missing.isEmpty else { throw MGSolidIssue("\(what).missing.\(missing.map(token).sorted().joined(separator: ","))") }
         let extra = keys.subtracting(required.union(optional))
         guard extra.isEmpty else { throw MGSolidIssue("\(what).unknown.\(extra.map(token).sorted().joined(separator: ","))") }
     }

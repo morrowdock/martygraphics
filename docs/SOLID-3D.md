@@ -59,7 +59,7 @@ whole document with a stable reason, for example `part.gear.teeth`,
 `ref.unknown.<id>`, `part.unknown.<key>`, `constraint.underdetermined`,
 `constraint.conflict` or `constraint.gearMesh.phase`. `MGSolidIssue.part` names
 the part when there is one, so a generator can repair from the reason alone.
-A reason is always one token without spaces: author-supplied names inside it keep
+A missing required key is named, for example `part.drive.crankSlider.missing.radius,rod`, and unknown keys likewise (`….unknown.crankRadius`). A reason is always one token without spaces: author-supplied names inside it keep
 ASCII letters, digits and `_` (other characters become `_`, at most 32), so
 `"source": "x y"` reports `ref.unknown.x_y`. Checks run in document order (patch
 part ids in sorted order), so the same input always reports the same first error.
