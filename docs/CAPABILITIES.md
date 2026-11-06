@@ -11,7 +11,7 @@ pack, proposed screen or browser recreation does not expand the public API.
 | Layout and deterministic motion | `MGLayout`, `MGViewport`, `MGTimeline` | Choose viewport, time and step; measure readability and frame cost. |
 | Native 2D | `MGCanvasRenderer`, SwiftUI view | Apple SDKs; application lifecycle and interaction. |
 | Native 3D | SceneKit renderer for the documented primitive subset | A real interactive/device capture and broader 3D quality/performance receipt remain separate work. |
-| Templates and packs | Public constructors, validated registry, BST and two pointers; proposed record-list parameters and an opt-in `shortest_path` graph pack | No downloadable catalog, premium/course pack, package signing or trust service. The graph pack is unregistered by default and not visually or accessibility accepted. |
+| Templates and packs | Public constructors, validated registry, BST and two pointers; record-list parameters and an opt-in `shortest_path` graph pack | No downloadable catalog, premium/course pack, package signing or trust service. The graph pack is unregistered by default and not visually or accessibility accepted. |
 | Model-assisted generation | No model/provider integration or prompts bundled | Optional host choice; scene validation still applies to every provider. |
 | Learning workflows and content | Synthetic examples only | Curriculum, learner state, study scheduling, private sources and app adapters are outside this package. |
 | Desktop overlays or computer control | Not implemented by this library | Not implied by the scene renderer or any other product's overlay demo. |
@@ -36,6 +36,6 @@ Do not silently remove limits to fit a larger demo. A proposed expansion needs:
    configurations, including frame cost, memory and text/layout quality.
 4. Independent integration review and an explicit format/version compatibility decision.
 
-This showcase changes **no engine limit or renderer behavior**. The proposed
+This showcase changes **no engine limit or renderer behavior**. The
 record-list parameters add new bounds for the new shape only (`MGLimits.records`,
 `MGLimits.recordFields`); no existing limit changes.

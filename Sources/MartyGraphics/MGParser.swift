@@ -11,8 +11,8 @@ public enum MGLimits {
     public static let label = 40, text = 120, say = 200, title = 60
     public static let points = 64, ropePoints = 6, cells = 16, cellText = 6, pointers = 4, bars = 6, barLabel = 16, nodeText = 8
     public static let worldRange: ClosedRange<Double> = 2...100
-    /// Template record-list parameters: at most this many records of at most this many numeric fields. PROPOSED bounds
-    /// for the new shape only; no existing limit changes.
+    /// Template record-list parameters: at most this many records of at most this many numeric fields. These bounds
+    /// apply to the record-list shape only; no existing limit changes.
     public static let records = 32, recordFields = 6
 }
 

@@ -14,7 +14,7 @@ import Foundation
 /// id, `over`/`hide` entry and step reference on the same link. Reversing an arc or toggling `directed` changes the id, so
 /// persisted `over`/`hide` entries naming the old link are refused (`over.ref`/`hide.ref`), never moved to another link.
 ///
-/// Bounds (rejected, never clamped; PROPOSED, not accepted): 2–8 nodes, 1–16 edges, integer weights 0–99 (Dijkstra needs
+/// Bounds (rejected, never clamped): 2–8 nodes, 1–16 edges, integer weights 0–99 (Dijkstra needs
 /// non-negative weights), no self-loops and at most one edge per node pair even when directed (so anti-parallel arcs
 /// such as a→b 3 and b→a 7 are not expressible). Optional node positions: none (automatic circle) or exactly one per
 /// node, at least 1.2 world units apart, with every edge at least 0.6 from every node that is not one of its endpoints

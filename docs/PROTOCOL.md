@@ -76,10 +76,9 @@ templates are not included.
 
 ## Template parameters and what-if patches
 
-**Status: PROPOSED.** Record-list parameters, their bounds and the opt-in
-`shortest_path` template are a candidate addition, not an accepted or released
-contract. Wire `v: 1` is unchanged: every shape below is ordinary JSON inside
-the existing `params` object.
+Record-list parameters and the opt-in `shortest_path` template are unreleased
+additions to the unversioned preview. Wire `v: 1` is unchanged: every shape
+below is ordinary JSON inside the existing `params` object.
 
 | Shape | Declaration | Wire form | Absent key |
 | --- | --- | --- | --- |
@@ -98,8 +97,8 @@ their existing absent-key rule; only record lists treat absence as empty.
 specs also set `count`.
 
 Record-list declarations are checked when a pack is validated or registered
-(`MGPackError.badParamSpec`): `count` within 0…`MGLimits.records` (proposed 32),
-1…`MGLimits.recordFields` (proposed 6) fields with unique lowercase identifier
+(`MGPackError.badParamSpec`): `count` within 0…`MGLimits.records` (32),
+1…`MGLimits.recordFields` (6) fields with unique lowercase identifier
 names that are not reason suffixes (`arity`, `count`, `integer`, `missing`,
 `spec`), finite ranges, and a parameter name used once. A template parsed
 without registration checks individual record declarations lazily as
@@ -149,8 +148,7 @@ so it rejects these scenes. Validate them in a host that explicitly registers
 
 - `n` 2–8 nodes; `edges` 1–16 records `[a, b, w]` with integer `w` 0–99;
   optional `source` (default 0), `target`, `directed` (0/1) and `at`
-  (none, or exactly one `[x, y]` per node, x 0.5–11.5, y 2–7.5). These are
-  proposed bounds.
+  (none, or exactly one `[x, y]` per node, x 0.5–11.5, y 2–7.5).
 - One edge per unordered node pair, also when directed, so anti-parallel arcs
   (a→b 3 and b→a 7) are not expressible. This is bounded directed shortest
   paths, not general directed-graph support.

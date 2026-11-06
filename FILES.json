@@ -19,15 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "e6d2270dba24e2fe4dce61d7fafb4110d20118c9d6171ee3b024bc3849bc7b12"
-    },
-    {
-      "path": "CHANGELOG.md",
-      "sha256": "e6d2270dba24e2fe4dce61d7fafb4110d20118c9d6171ee3b024bc3849bc7b12"
-    },
-    {
-      "path": "CHANGELOG.md",
-      "sha256": "e6d2270dba24e2fe4dce61d7fafb4110d20118c9d6171ee3b024bc3849bc7b12"
+      "sha256": "0153d56d1f165e9ff53bcb36d8b3a30cecaee6ee1c595be90281ed203949513a"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -111,7 +103,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGGraphPack.swift",
-      "sha256": "65f60437bf37538d32e9fea5ca6000f7337b6f98602a0eb2ec90fb2a57bd89f4"
+      "sha256": "fa3ec67e4631e13a682ec0bdd0eb76cc1afa75146edbff78c000d8f2d0560ebe"
     },
     {
       "path": "Sources/MartyGraphics/MGLayout.swift",
@@ -127,7 +119,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "839bf5944185e536de5922aa532be40f75c8abbe5af4e772f2e88b4d31e76f88"
+      "sha256": "898571b7274a9a88a27238da062c890e6168947ae4a6585003fa8d8686afb5dc"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -215,7 +207,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "4c1d4b72532c713aff021988af3ac3f1575ec30cbd1f5f211fdc412bc824d357"
+      "sha256": "7cb72d65a15c282d02a631b60785266e9c1249a887184b511898daa6dd105dda"
     },
     {
       "path": "docs/DISTRIBUTION.md",
@@ -223,15 +215,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "e14e7e4a25022d75779399a3bba14188a9b551664c212e45c947806aa94167ef"
-    },
-    {
-      "path": "docs/EXPORT.json",
-      "sha256": "e14e7e4a25022d75779399a3bba14188a9b551664c212e45c947806aa94167ef"
-    },
-    {
-      "path": "docs/EXPORT.json",
-      "sha256": "e14e7e4a25022d75779399a3bba14188a9b551664c212e45c947806aa94167ef"
+      "sha256": "065ce447f53a970f384cc884cba8b7e4203228190f80ef7ed99a0a2fdd75929d"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -247,7 +231,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "d16e80f695631c6ca7353c505cc0f8a1758486654f3993b3447e551ffb9d8ab7"
+      "sha256": "9f9453c5348d925a69e81aa6c07cf5fe3c76b2c5bae8f01712b892d7d4037dad"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
