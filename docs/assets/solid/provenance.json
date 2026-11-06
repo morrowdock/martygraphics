@@ -43,6 +43,14 @@
       "Sources/MartyGraphics/Solid/MGSolidSnapshot.swift": "9344f2878ec6ae560122999ff11b99b80139d6b9b504342e04bce1e31f848135",
       "Tests/MartyGraphicsTests/SolidEngineTests.swift": "77db900201f8172922acb1636ad36758ab5eef25226d1e4330af4a63e6ee7ae8",
       "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "1c5a24e5442d9d170462b62f87c4fb81f7a62c00f74f3cc4a17a411bc7260d6a"
+    },
+    "laterChanges": {
+      "commit": "ba73d0cc99458c84df3711c65f209eee21274951",
+      "files": {
+        "Sources/MartyGraphics/Solid/MGSolidParser.swift": "b85bbf441a5b2c4a13ee93a703c4e850594cfbb877cfdd4d620ec33666e55238",
+        "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "555474e7323f13b426385d1729c178c171ecb456260d339370709b82a679279d"
+      },
+      "note": "After the capture, only validation changed: every gear mesh (not just ring pairs) is swept for tooth interference, and phase compensation skips only jointed ancestors. Geometry, kinematics of accepted models and rendering are unchanged; planetary.json still passes. sourceFiles keeps the capture-time hashes."
     }
   },
   "capture": {
