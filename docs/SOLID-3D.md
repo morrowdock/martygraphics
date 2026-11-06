@@ -93,7 +93,8 @@ part ids in sorted order), so the same input always reports the same first error
   `plate` (disc with round holes), `carrier` (hub, arms and bosses with a smooth
   union), `extrudedProfile`, `revolvedProfile` (open with poles, or `closed`
   for walls such as casings and nozzles; optional `sweep` and `start` in
-  degrees give a capped partial revolve for cutaways), `blade`, `bladeRow`.
+  degrees give a capped partial revolve for cutaways, with
+  ceil(96 × sweep / 360) segments, at least 2), `blade`, `bladeRow`.
 * **`bladeRow`**: `count` (2–128), `span`, `chord`, `root` (hub radius), and
   optional `z` (axial position of mid-chord), `thickness` (chord fraction),
   `stagger` (chord angle from the axis at the root, degrees; positive puts the
@@ -104,7 +105,8 @@ part ids in sorted order), so the same input always reports the same first error
   Rejections: `part.bladeRow.count` (also when neighbouring blades would touch),
   `part.bladeRow.chord` (a section wraps too far round its cylinder),
   `part.bladeRow.twist`, `part.bladeRow.triangles` (over 250 000 per row) and
-  one reason per out-of-range field.
+  one reason per out-of-range field. Blade rows and partial revolves count toward
+  the mesh budget exactly (`MGShapeSpec.meshEstimate`).
 * **Materials**: `brushedSteel`, `polishedSteel`, `darkSteel`, `blackOxide`,
   `brass`, `bronze`, `aluminum`, `rubber`, `glass`, `titanium`, `nickelAlloy`
   (warm, heat-tinted hot-section metal), `composite` (dark carbon fibre with a

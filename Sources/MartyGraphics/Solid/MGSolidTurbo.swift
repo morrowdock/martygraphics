@@ -97,6 +97,12 @@ extension MGMesh {
         for t in 0..<triangleCount { indices.swapAt(3 * t + 1, 3 * t + 2) }
     }
 
+    /// Segments of a partial revolve: the full-turn count scaled by the swept fraction, rounded up (a tolerance keeps
+    /// exact fractions such as 210/360 of 96 = 56 from rounding up to 57), at least 2.
+    public static func sweepSegments(_ segments: Int, sweep: Double) -> Int {
+        max(2, Int((Double(max(3, segments)) * sweep / (2 * .pi) - 1e-9).rounded(.up)))
+    }
+
     /// Revolves a profile through `sweep` radians starting at angle `start`, closing both cut faces with flat caps.
     ///
     /// Same profile rules as `revolve(_:segments:closed:)`; a sweep of a full turn gives that result. Used for
@@ -107,7 +113,7 @@ extension MGMesh {
         var prof = points
         if MGProfile.signedArea(prof) < 0 { prof.reverse() }
         if !closed { precondition(prof.first!.x < 1e-9 && prof.last!.x < 1e-9, "open revolve profiles must end on the axis") }
-        let n = max(2, Int((Double(max(3, segments)) * sweep / (2 * .pi)).rounded(.up)))
+        let n = sweepSegments(segments, sweep: sweep)
         var mesh = MGMesh()
         var first: [Int] = [], isPole: [Bool] = []
         for p in prof {
@@ -144,8 +150,33 @@ extension MGMesh {
     }
 }
 
-/// Validation for the turbomachinery shape fields (used by `MGSolidParser`). Reasons are stable strings.
+/// Validation and mesh budgets for the turbomachinery shape fields (used by `MGSolidParser` and
+/// `MGShapeSpec.meshEstimate`). Reasons are fixed tokens; no author text is copied into them.
 enum MGSolidTurbo {
+    /// Exact vertex and triangle counts of `MGMesh.bladeRow`: (sections + 1) rings of a 2 x chordSamples loop per
+    /// blade, side quads between rings and two ear-clipped caps.
+    static func bladeRowEstimate(count: Int, sections: Int, chordSamples: Int) -> (vertices: Int, triangles: Int) {
+        let n = 2 * max(4, chordSamples), s = max(1, sections), c = max(1, count)
+        return (c * (s + 1) * n, c * (s * n * 2 + 2 * (n - 2)))
+    }
+
+    /// Exact counts of `MGMesh.revolve(_:segments:closed:sweep:start:)` for a partial sweep: one ring of
+    /// `sweepSegments + 1` vertices per off-axis point, one vertex per pole, side triangles as in the full revolve
+    /// (none between two poles) and two caps of `points - 2` triangles.
+    static func sweptRevolveEstimate(_ points: [MGVec2], closed: Bool, segments: Int, sweep: Double) -> (vertices: Int, triangles: Int) {
+        let n = MGMesh.sweepSegments(segments, sweep: sweep)
+        let pole = points.map { $0.x < 1e-9 }
+        let count = points.count, spans = closed ? count : count - 1
+        var sideTriangles = 0
+        for k in 0..<max(0, spans) {
+            let k1 = (k + 1) % count
+            if pole[k] && pole[k1] { continue }
+            sideTriangles += n * ((pole[k] ? 0 : 1) + (pole[k1] ? 0 : 1))
+        }
+        let poles = pole.filter { $0 }.count
+        return ((count - poles) * (n + 1) + poles, sideTriangles + 2 * max(0, count - 2))
+    }
+
     static let bladeRowKeys: (required: Set<String>, optional: Set<String>) =
         (["count", "span", "chord", "root"],
          ["z", "thickness", "stagger", "twist", "tipChord", "camber", "camberPosition", "phase", "sections", "chordSamples"])

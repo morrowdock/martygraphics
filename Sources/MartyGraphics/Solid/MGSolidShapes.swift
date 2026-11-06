@@ -158,7 +158,11 @@ public struct MGShapeSpec: Equatable, Sendable {
             let pts = points(fields["points"])
             var closed = false
             if case .bool(let b)? = fields["closed"] { closed = b }
+            let sweep = n("sweep", 360)
+            if sweep < 360 { return MGSolidTurbo.sweptRevolveEstimate(pts, closed: closed, segments: 96, sweep: sweep * .pi / 180) }
             return revolve(pts.count, poles: pts.filter { $0.x < 1e-9 }.count, segments: 96, closed: closed)
+        case "bladeRow":
+            return MGSolidTurbo.bladeRowEstimate(count: Int(n("count")), sections: Int(n("sections", 8)), chordSamples: Int(n("chordSamples", 16)))
         case "blade":
             // 15 sections of a 56-point loop, side quads between sections and two caps.
             return (15 * 56, 14 * 56 * 2 + 2 * (56 - 2))

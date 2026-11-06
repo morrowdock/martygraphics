@@ -86,6 +86,25 @@ final class SolidTurboTests: XCTestCase {
         XCTAssertEqual(reason(doc(row([:]), material: "unobtainium")), "part.material")
     }
 
+    func testSweepSegmentsAreExactForWholeFractions() {
+        XCTAssertEqual(MGMesh.sweepSegments(96, sweep: 210 * .pi / 180), 56)
+        XCTAssertEqual(MGMesh.sweepSegments(96, sweep: 270 * .pi / 180), 72)
+        XCTAssertEqual(MGMesh.sweepSegments(96, sweep: 100 * .pi / 180), 27)
+        XCTAssertEqual(MGMesh.sweepSegments(96, sweep: 1 * .pi / 180), 2)
+    }
+
+    func testSnapshotWithTurboMaterialsRoundTripsThroughTheDecoder() throws {
+        let parts: [MGJSON] = ["titanium", "nickelAlloy", "composite", "ceramic"].enumerated().map { k, m in
+            .object(["id": .string("p\(k)"), "material": .string(m), "at": .array([.number(Double(k) * 30), .number(0), .number(0)]),
+                     "shape": .object(["shaft": .object(["radius": .number(10), "length": .number(20)])])])
+        }
+        let d = try MGSolidParser.document(json: .object(["v": .number(1), "kind": .string("assembly"), "parts": .array(parts)])).get()
+        let snap = MGSolidSnapshot.make(d.assembly, params: MGPoseParameters())
+        let back = try JSONDecoder().decode(MGSolidSnapshot.self, from: snap.jsonData())
+        XCTAssertEqual(back, snap)
+        XCTAssertEqual(back.materials.map(\.id), ["titanium", "nickelAlloy", "composite", "ceramic"])
+    }
+
     func testTurboMaterialPresetsHaveStableIDs() {
         for (preset, id) in [(MGMaterialPreset.titanium, "titanium"), (.nickelAlloy, "nickelAlloy"), (.composite, "composite"), (.ceramic, "ceramic")] {
             XCTAssertEqual(preset.id, id)
