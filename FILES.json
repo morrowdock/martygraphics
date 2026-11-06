@@ -59,7 +59,7 @@
     },
     {
       "path": "Examples/PathTrace/README.md",
-      "sha256": "f43e673263fe5dc5accaed207fea94b5a139f82a17f5abd02b88d34f1daa89ef"
+      "sha256": "87008320f5e5fdfdc2b1f0a318f3583793a109dfd924e8c059b6e9ef89f22b7c"
     },
     {
       "path": "Examples/PathTrace/Sources/MartyPathTrace/Export.swift",
@@ -131,7 +131,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "2a938fe0a63cbe34971063d408e074a2cf2f3f2a0afa5b4c959a23ad56e95bb9"
+      "sha256": "a3050b522c01bbcb87debe030e99f7ede4a53d4f29617f6b5b2d099c7e5aad2c"
     },
     {
       "path": "SECURITY.md",
@@ -331,7 +331,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "9f0e16ec8df3089b28f288c8c31d2707c3d5c5a99f07155040a83b97a91b1565"
+      "sha256": "c36830491de2d421b73eff6dede7e038505446210d2a847ca45ceeb97ad6a3a2"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -403,7 +403,7 @@
     },
     {
       "path": "docs/assets/pathtrace/provenance.json",
-      "sha256": "a29a2ddaa36d2cf4ead5fc1836d98026992e8c10c4b5d8e02fbde0f57675ead9"
+      "sha256": "0a1cc32a59cf0dfb76b3ac0e8b4cb170edf889d6f6a9106c85aa202ba8e7f0f9"
     },
     {
       "path": "docs/assets/pathtrace/side-by-side.png",

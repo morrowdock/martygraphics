@@ -17,8 +17,8 @@ This is a schematic teaching model, not a validated mechanical design.
 The input shaft turns the small 15-tooth pinion. It drives a 30-tooth gear,
 which turns half as fast (30 ÷ 15 = 2:1). That gear spins the 24-tooth sun gear in the middle
 of a planetary set. Three 18-tooth planet gears mesh with the sun and with the 60-tooth ring
-around them. The ring is fixed, so the planets roll around inside it and carry their
-carrier along, slowly. The carrier turns once for every 1 + 60 ÷ 24 = 3.5 turns of the sun.
+around them. The ring is fixed, so the planets roll around inside it and turn the carrier that holds
+them, slowly. The carrier turns once for every 1 + 60 ÷ 24 = 3.5 turns of the sun.
 Together: 2 × 3.5 = 7 turns of the input for one turn of the output. Planetary sets are
 used where a big reduction must fit in a small space, such as in car automatic
 transmissions, power drills and helicopter rotor gearboxes.

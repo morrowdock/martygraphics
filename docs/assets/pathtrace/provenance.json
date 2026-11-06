@@ -2,7 +2,7 @@
   "source": {
     "repository": "https://github.com/morrowdock/martygraphics",
     "commit": "4987386449be77f02fe43e8041191a43c7dcb1fa",
-    "note": "Renders were made from the exact bytes listed in sourceFiles (code commit 4987386449be77f02fe43e8041191a43c7dcb1fa). A later commit changed only Examples/PathTrace/Sources/MartyPathTrace/PathTraceCLI.swift (input checks and the side-by-side GPU caption), not the renderer or geometry.",
+    "note": "Renders were made from the exact bytes listed in sourceFiles (code commit 4987386449be77f02fe43e8041191a43c7dcb1fa). A later commit changed only Examples/PathTrace/Sources/MartyPathTrace/PathTraceCLI.swift (input checks and the side-by-side GPU caption), not the renderer or geometry. To check PathTraceCLI.swift against its render-time hash, use code commit 4987386449be77f02fe43e8041191a43c7dcb1fa, not the head.",
     "tool": "Examples/PathTrace (marty-pathtrace)",
     "license": "Apache-2.0; procedural geometry and lighting, no images, models or stock assets",
     "sourceFiles": {
