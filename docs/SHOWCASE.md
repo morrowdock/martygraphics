@@ -4,10 +4,10 @@ These examples use the public format and drawing primitives. They show different
 uses of the engine without implying a curriculum, solver, running infrastructure
 service, or AI model.
 
-> **About the loops on this page.** GitHub shows them as GIF images, not video. A GIF
+> **About the 3D loops on this page.** GitHub shows them as GIF images, not video. A GIF
 > has at most 256 colours, and these previews are 480 to 640 pixels wide at 10 to 12 frames per
-> second, so they look rougher and less smooth than the real output. The source videos are
-> 1280 pixels wide at 24 to 30 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a> ·
+> second, so they look rougher and less smooth than the real output. The turbofan and gearbox source videos are
+> 1280 pixels wide at 30 and 24 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a> ·
 > <a href="https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4">path-traced gearbox (MP4)</a>. Run an example to see the engine live.
 
 ## Turbofan cutaway
