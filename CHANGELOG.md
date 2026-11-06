@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Lead the README and the showcase with the first AI-written result: a two-stage planetary
+  gearbox written by Claude Haiku 5.5 from one prompt, refused once with an exact reason and
+  fixed by the model. Both attempts, the renders and a run receipt are in
+  `docs/assets/from-a-prompt/robot-joint`.
 - Say in the README and the showcase that the loops are GIF previews (at most 256 colours,
   10 to 12 frames per second, 480 to 640 pixels wide), and link the 1280-wide, 24 to 30 frames
   per second source videos.

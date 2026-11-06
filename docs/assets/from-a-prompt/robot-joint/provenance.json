@@ -1,0 +1,115 @@
+{
+  "kind": "martygraphics.prompt-run/1",
+  "authoring": "Written by an AI model from the prompt below, not by hand. The model saw only the public docs listed here: no tools, no files, no web.",
+  "prompt": "Show a two-stage planetary gearbox like in a robot joint.",
+  "model": "claude-haiku-5-5",
+  "harness": {
+    "command": "claude -p --model claude-haiku-5-5 --tools \"\" --no-session-persistence --output-format json --system-prompt-file SYSTEM_PROMPT PROMPT (fresh process, empty working directory)",
+    "systemPromptSha256": "4eecfa3a4032d5e08de9ebf7457cde028c8d6322262ba9083db2cbfecf7945fd",
+    "systemPromptPreamble": "You are an AI assistant using MartyGraphics, a graphics engine for AI built for learning. A user asked you to explain something with an interactive 3D model. Write ONE solid assembly JSON document in the format documented below (v1, kind assembly), with teaching steps whose `say` text explains how the subject works in plain, accurate words. Build from the documented parts and primitives. If the engine cannot validate some motion or physics, still build the best schematic you can and say so visibly in the title or a step (for example 'schematic: ... not modelled'); never present an unvalidated fake as real. Reply with the JSON document only: no prose, no code fences.",
+    "context": {
+      "repository": "https://github.com/morrowdock/martygraphics",
+      "commit": "17396a2fbc000dc30c71716f0f54e74827369706",
+      "files": [
+        "docs/SOLID-3D.md",
+        "Examples/Solid3D/README.md",
+        "Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json",
+        "Examples/Solid3D/Sources/MartySolid3D/Models/propeller.json",
+        "Examples/Solid3D/Sources/MartySolid3D/Models/slider-crank.json"
+      ]
+    },
+    "repairMessage": "PROMPT, then: Your previous JSON was refused by MartyGraphics with reason `REASON` on part `PART`. Previous JSON: ... Return a corrected JSON document only.",
+    "maxRepairs": 3
+  },
+  "attempts": [
+    {
+      "file": "attempt-1-refused.json",
+      "sha256": "2e367658920b20bf7d1e0f77612f7a1b379eff928a75a1cf324d22181aa83607",
+      "seconds": 72.2,
+      "accepted": false,
+      "reason": "constraint.gearMesh.phase",
+      "part": "ring1",
+      "note": "Sun 20, planets 18, ring 56: 20 + 56 = 76 is not divisible by 3, so three equally spaced planets cannot mesh with both the sun and the ring. The engine refused it when it phased the ring teeth."
+    },
+    {
+      "file": "attempt-2-accepted.json",
+      "sha256": "fa1d9197bda06f92bdf5673c16d56814f3c9018192f879a5fe29ed1dd1e64505",
+      "seconds": 48.7,
+      "accepted": true,
+      "note": "The model changed to sun 24, planets 18, ring 60 ((24 + 60) / 3 = 28) and moved the planets to the new centre distance."
+    }
+  ],
+  "totalSeconds": 120.9,
+  "check": {
+    "checker": "marty-solid check, built from commit 17396a2fbc000dc30c71716f0f54e74827369706",
+    "checkerSha256": "07e4272658f93b9c45ff24f39dfd600fb45c5f698f95b54eefd6d3b378ce6774",
+    "ratios": {
+      "carrier1": 0.2857142857142857,
+      "carrier2": 0.08163265306122448
+    },
+    "gearPairs": 12,
+    "gearsEngage": true,
+    "meshesClosed": true,
+    "triangles": 102352
+  },
+  "readableCopy": {
+    "file": "robot-joint-gearbox.json",
+    "sha256": "6811dc65bdfba3ad9b21fda1139c89bde04357ef704f5245abdf68cc8060fdca",
+    "note": "attempt-2-accepted.json re-wrapped one part per line. It parses to the identical JSON value and gives the identical check report."
+  },
+  "render": {
+    "command": "marty-solid render robot-joint-gearbox.json OUT (same checker binary)",
+    "artifacts": {
+      "hero.png": {
+        "bytes": 977242,
+        "height": 800,
+        "sha256": "adcdf503bfd406c85752d0fbaf9f2615a147d376a5cd41982c82e048ce269f6d",
+        "width": 1280
+      },
+      "exploded.png": {
+        "bytes": 975497,
+        "height": 800,
+        "sha256": "271415abcd5eeafecfd3db61ea2d1d7a28179aa69c27d51f0fb6d7c58a6c07c5",
+        "width": 1280
+      },
+      "loop.gif": {
+        "bytes": 3662895,
+        "delaySeconds": 0.1,
+        "frames": 120,
+        "loopSeconds": 12,
+        "sha256": "4ac7f1ebed15ea8bfa8dc8c32938c5af0ff850ea7988d2dad8a86a979bbed698",
+        "width": 640
+      },
+      "step-3.png": {
+        "bytes": 867008,
+        "height": 800,
+        "sha256": "0c4feee9a48e6c72347e245d3432d7a752e460f883e51641ae4d5df11f94f542",
+        "width": 1280
+      },
+      "step-5.png": {
+        "bytes": 866315,
+        "height": 800,
+        "sha256": "a99f4f3c535b332670358f53846cc58e88e45174e390ac7770ccfbba8cdaf978",
+        "width": 1280
+      }
+    }
+  },
+  "grading": {
+    "by": "independent grader model (Claude Opus 5.5), read-only, against the pre-registered machine checks",
+    "mechanics": "PASS: two planetary stages, sun 2 on carrier 1; (2/7)^2 = 4/49; solved carrier2 = 0.08163",
+    "explanation": "PASS",
+    "honesty": "PASS: motor, bearings, seals and housing walls are labelled as not modelled",
+    "reuse": "Each stage follows the worked example planetary.json (24/18/60), which was in the model's context."
+  },
+  "evaluation": {
+    "name": "prompt-to-3d-eval-v1 (pre-registered, 50 questions). This prompt is now published and leaves the held-out set.",
+    "haikuFullRun": {
+      "inScopeAcceptedWithin3Repairs": "40/40",
+      "mechanicallyCorrectInScope": "29/40",
+      "explanationsWithoutCriticalError": "46/50 (target 0.95: not met)",
+      "medianSeconds": 25.2,
+      "outOfScopeHonest": "9/10"
+    }
+  },
+  "license": "Apache-2.0, as the rest of the repository"
+}

@@ -180,7 +180,8 @@
     "Tests/MartyGraphicsTests/SolidTurboTests.swift: blade-row, partial-revolve, format and material coverage",
     "Examples/Turbofan: schematic two-spool turbofan cutaway from JSON, its checks and tests, and the MartySolidRT snapshot-to-path-tracer adapter",
     "docs/assets/turbofan: turbofan renders (path-traced still, labelled cutaway, exploded step, 12 s loop GIF) and provenance.json",
-    "docs/assets/pathtrace/gearbox-loop-640.gif: 640x360, 10 s loop GIF derived from the recorded gearbox loop video"
+    "docs/assets/pathtrace/gearbox-loop-640.gif: 640x360, 10 s loop GIF derived from the recorded gearbox loop video",
+    "docs/assets/from-a-prompt/robot-joint: first AI-written result (prompt, refused and accepted JSON, readable copy, renders, run receipt)"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

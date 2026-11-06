@@ -1,14 +1,39 @@
 # A small native scene gallery
 
 These examples use the public format and drawing primitives. They show different
-uses of the engine without implying a curriculum, solver, running infrastructure
-service, or AI model.
+uses of the engine without implying a curriculum or a running service.
 
 > **About the 3D loops on this page.** GitHub shows them as GIF images, not video. A GIF
 > has at most 256 colours, and these previews are 480 to 640 pixels wide at 10 to 12 frames per
 > second, so they look rougher and less smooth than the real output. The turbofan and gearbox source videos are
 > 1280 pixels wide at 30 and 24 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a> ·
 > <a href="https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4">path-traced gearbox (MP4)</a>. Run an example to see the engine live.
+
+## From a prompt
+
+The first example on this page was written by an AI model from one question. The others are
+hand-built (each says so).
+
+[![AI-written two-stage planetary gearbox, exploded: brass suns, steel planets, blue and orange carriers, two ring gears.](assets/from-a-prompt/robot-joint/exploded.png)](assets/from-a-prompt/robot-joint/loop.gif)
+
+| | |
+| --- | --- |
+| Prompt | "Show a two-stage planetary gearbox like in a robot joint." |
+| Model | Claude Haiku 5.5, fresh process, no tools, only the public docs at commit `17396a2f` |
+| Attempt 1 | Refused: `constraint.gearMesh.phase` on `ring1` (sun 20, ring 56: 76 ÷ 3 is not whole) |
+| Attempt 2 | Accepted: sun 24, planets 18, ring 60; 19 parts, 12 meshes, output 4/49 (12.25:1) |
+| Time | 121 s for both attempts |
+| Grader | Independent model, against pre-registered checks: mechanics, explanation and labels pass |
+
+[Loop](assets/from-a-prompt/robot-joint/loop.gif) · [JSON](assets/from-a-prompt/robot-joint/robot-joint-gearbox.json) ·
+[Refused first try](assets/from-a-prompt/robot-joint/attempt-1-refused.json) · [Run receipt](assets/from-a-prompt/robot-joint/provenance.json)
+
+**What the full test found.** Haiku answered 50 pre-registered questions. All 40 buildable ones
+were accepted within three repairs (median 25 s), but only 29 of 40 were fully correct in
+mechanics, and 4 of 50 explanations had a critical error. The main failures: the model quietly
+swapped bevel, worm or crown gears for flat spur gears; its text sometimes gave a number the solved
+model did not have; and it skipped features the docs did not show by example. We change the engine
+only from failures like these.
 
 ## Turbofan cutaway
 
