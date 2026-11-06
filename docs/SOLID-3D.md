@@ -121,10 +121,14 @@ part ids in sorted order), so the same input always reports the same first error
   same checks (`part.ringGear.teeth`, `.tip`, `.profile`, `.chamfer`). Without a
   `chamfer`, gears use 0.28 module (at most a quarter of the width) when that
   is valid, else half of it, else none.
-* **Internal meshes** are swept over one tooth pitch with the real outlines; a
-  ring with too few more teeth than its planet, or a planet too small for its
-  ring (involute interference), is refused when teeth overlap by more than
-  0.01 module (`constraint.gearMesh.interference`).
+* **Every gear mesh** is swept over one tooth pitch with the real outlines and
+  refused when teeth overlap by more than 0.01 module
+  (`constraint.gearMesh.interference`). This catches a ring with too few more
+  teeth than its planet, a planet too small for its ring, and external pinions
+  that undercut their wheel (small tooth counts or low pressure angles, for
+  example 10 teeth against 36 at 14.5 degrees).
+* **Known cost:** rings above about 300 teeth use a slower cap triangulation and
+  may load in seconds; their chamfer falls back to none.
 * **`repeat`** copies a part N times around an axis (`planet` → `planet1…3`).
   References to the base id expand to every copy; a repeated child of a repeated
   parent pairs by index.
@@ -136,7 +140,8 @@ part ids in sorted order), so the same input always reports the same first error
   fields before any mesh is built (`MGShapeSpec.meshEstimate` gives the exact
   counts `mesh()` will produce); otherwise `assembly.budget`. At the limit the
   kernel meshes, the render meshes built while loading and the SceneKit buffers
-  take roughly 200 MB, which recent iPhones and iPads hold. The planetary
+  typically take about 200 MB (peaks can reach about twice that while
+  normals are built), which recent iPhones and iPads hold. The planetary
   example uses 55,960 triangles (under 4%). A 256-point revolve (96 segments),
   8 per part, repeated 12 times (about 4.7 M triangles) is refused at once.
 

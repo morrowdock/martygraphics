@@ -228,6 +228,18 @@ final class SolidHardeningTests: XCTestCase {
         XCTAssertEqual(pair(60, 18, planetAngle: 25), "constraint.gearMesh.pressureAngle")
     }
 
+    func testExternalPairsWhoseTeethOverlapAreRefused() {
+        func spur(_ za: Int, _ zb: Int, _ pa: Double) -> String? {
+            reason(doc("""
+                {"id": "a", "shape": {"gear": {"teeth": \(za), "module": 2, "width": 8, "pressureAngle": \(pa)}}, \(spin), "drive": {"input": 1}},
+                {"id": "b", "at": [\(Double(za + zb)), 0, 0], "shape": {"gear": {"teeth": \(zb), "module": 2, "width": 8, "pressureAngle": \(pa)}}, \(spin)}
+                """, "{\"gearMesh\": {\"a\": \"a\", \"b\": \"b\"}}"))
+        }
+        XCTAssertNil(spur(12, 36, 20))                                         // a normal pair still compiles
+        XCTAssertEqual(spur(10, 36, 14.5), "constraint.gearMesh.interference")  // undercut pinion at a low pressure angle
+        XCTAssertEqual(spur(8, 80, 20), "constraint.gearMesh.interference")     // tiny pinion against a large wheel
+    }
+
     // MARK: Reasons
 
     func testReasonsAreStableTokensInADeterministicOrder() throws {

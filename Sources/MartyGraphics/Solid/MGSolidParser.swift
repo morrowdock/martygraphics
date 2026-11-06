@@ -16,7 +16,7 @@ public enum MGSolidLimits {
     public static let length: ClosedRange<Double> = 0.05...4000, coordinate: ClosedRange<Double> = -4000...4000
     /// Total mesh size over every resolved part (after `repeat`), counted before any mesh is built. At the limit the
     /// kernel meshes (about 36 MB), the render meshes built while loading (about 90 MB) and the SceneKit buffers
-    /// (about 80 MB) take roughly 200 MB, which recent iPhones and iPads can hold; the planetary example uses under 4%.
+    /// (about 80 MB) typically take about 200 MB (peaks can reach about twice that while normals are built), which recent iPhones and iPads can hold; the planetary example uses under 4%.
     public static let triangles = 1_500_000, vertices = 1_000_000
     /// Largest solved joint ratio (joint radians or mm per input radian).
     public static let ratio = 1000.0
@@ -356,9 +356,10 @@ public enum MGSolidParser {
                 bTurns = !tb.isEmpty
             }
             guard jointAxisWorld(m.b) != nil || bTurns else { throw MGSolidIssue(own, part: m.b) }
-            if ga.ring != nil {
-                // Internal pairs interfere when the ring has too few more teeth than the planet; sweep the real outlines.
-                let key = "\(ga.teeth),\(gb.teeth),\(ga.module),\(paA),\(ga.ring!.backlash),\(sb.backlash)"
+            do {
+                // Sweep the real outlines over one pitch: internal pairs interfere when the ring has too few more teeth
+                // than the planet, and external pairs with small pinions or low pressure angles undercut each other.
+                let key = "\(ga.ring != nil ? "R" : "S"),\(ga.teeth),\(gb.teeth),\(ga.module),\(paA),\(ga.ring?.backlash ?? ga.spur?.backlash ?? 0),\(sb.backlash)"
                 let worst = interference[key] ?? MGSolidChecks.pairInterference(ga, gb)
                 interference[key] = worst
                 guard worst <= MGSolidLimits.toothOverlap * ga.module else { throw MGSolidIssue("constraint.gearMesh.interference", part: m.b) }
@@ -386,7 +387,9 @@ public enum MGSolidParser {
             guard jointAxisWorld(id) != nil else { return }
             for y in visited.sorted() where y != id {
                 let chain = ancestors(y)
-                guard let k = chain.firstIndex(of: id), !chain[..<k].contains(where: visited.contains) else { continue }
+                // Only a visited part with its own joint shields y; a jointless gear stores its phase in its shape.
+                guard let k = chain.firstIndex(of: id),
+                      !chain[..<k].contains(where: { visited.contains($0) && jointAxisWorld($0) != nil }) else { continue }
                 knob[y, default: 0] -= (knobAxis(id).dot(knobAxis(y)) >= 0 ? 1 : -1) * d
             }
         }
