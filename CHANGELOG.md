@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Add reusable solid components. A component is a closed-key JSON definition with
+  numeric parameters (`default`, `min`, `max`, `integer`), parts and constraints whose
+  numbers may be small expressions (`param`, `add`, `sub`, `mul`, `div`, `min`, `max`,
+  `neg`, `pi`, `sin`, `cos`; deterministic and bounded), named checks, and anchors. An
+  assembly uses one with `{"id": "stage", "use": "planetaryStage", "with": {…}}`; it
+  expands before compiling into parts with ids such as `stage.sun`, so every existing
+  check, limit and the mesh budget apply to the expanded parts. `set` edits inner
+  parts, `at` / `rot` / `parent` place the instance, components can nest three levels,
+  and patches reach inner parts. `MGSolidLibrary.builtIn` ships `spurPair`,
+  `planetaryStage`, `sliderCrank`, `propeller`, `housingBase`, `shaftWithBearing` and
+  `fanStage`; hosts register more at runtime (validated and compiled on registration)
+  and `catalog()` lists them compactly. `marty-solid` gains `components`,
+  `component check FILE.json [--with NAME=VALUE]` and `--component FILE`. The
+  planetary example drops from 53 lines (3,721 bytes) to 12 lines (927 bytes) and the
+  slider-crank from 21 lines to 8. Reasons now keep `.` in author names
+  (`ref.unknown.stage.ghost`).
 - Lead the README and the showcase with the first AI-written result: a two-stage planetary
   gearbox written by Claude Haiku 5.5 from one prompt, refused once with an exact reason and
   fixed by the model. Both attempts, the renders and a run receipt are in

@@ -12,7 +12,12 @@ enum CLIError: Error, CustomStringConvertible {
     case usage, invalid(String)
     var description: String {
         switch self {
-        case .usage: return "Usage: marty-solid check FILE.json | marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop]"
+        case .usage: return """
+            Usage: marty-solid check FILE.json [--component C.json ...]
+                   marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--component C.json ...]
+                   marty-solid components [--component C.json ...]
+                   marty-solid component check C.json [--component OTHER.json ...] [--with NAME=VALUE ...]
+            """
         case .invalid(let s): return s
         }
     }
@@ -77,12 +82,30 @@ func checks(_ doc: MGSolidDocument) -> [String: Any] {
     return out
 }
 
-func check(_ path: String) throws -> Int32 {
+/// The built-in components plus extra definitions from `--component` files (each validated and compiled on its own,
+/// in order, so a later file may use an earlier one). A refused file is reported like a refused model.
+struct LibraryRefused: Error { let report: [String: Any] }
+
+func library(_ files: [String]) throws -> MGSolidLibrary {
+    var lib = MGSolidLibrary.builtIn
+    for path in files {
+        let src: Loaded
+        do { src = try load(path) } catch is TooLarge {
+            throw LibraryRefused(report: ["ok": false, "reason": "component.bytes", "part": NSNull(), "component": path])
+        }
+        if case .failure(let issue) = lib.register(src.data) {
+            throw LibraryRefused(report: ["ok": false, "reason": issue.reason, "part": issue.part as Any, "component": path])
+        }
+    }
+    return lib
+}
+
+func check(_ path: String, _ lib: MGSolidLibrary) throws -> Int32 {
     let src: Loaded
     do { src = try load(path) } catch is TooLarge {
         print(json(["ok": false, "reason": "assembly.bytes", "part": NSNull()])); return 1
     }
-    switch MGSolidParser.document(data: src.data) {
+    switch MGSolidParser.document(data: src.data, library: lib) {
     case .failure(let issue):
         print(json(["ok": false, "reason": issue.reason, "part": issue.part as Any, "file": ["lines": src.lines, "sha256": src.sha256]]))
         return 1
@@ -96,6 +119,48 @@ func check(_ path: String) throws -> Int32 {
         print(json(["ok": ok, "reason": reason as Any, "title": doc.title, "parts": doc.assembly.parts.count, "triangles": tris, "steps": doc.steps.map(\.say),
                     "ratios": doc.ratios, "checks": c, "file": ["lines": src.lines, "sha256": src.sha256]]))
         return ok ? 0 : 1
+    }
+}
+
+/// The catalog as one line of JSON: ids, one-line descriptions, parameters with defaults and ranges, inner parts, anchors.
+func components(_ lib: MGSolidLibrary) -> Int32 {
+    print(lib.catalog().canonicalString)
+    return 0
+}
+
+/// Validates a component definition (closed keys, parameters, expressions, references, and a compile of the component
+/// on its own at its defaults), then instantiates it with `--with` values and runs the same engine checks as `check`.
+func componentCheck(_ path: String, _ base: MGSolidLibrary, with values: [String: Double]) throws -> Int32 {
+    let src: Loaded
+    do { src = try load(path) } catch is TooLarge {
+        print(json(["ok": false, "reason": "component.bytes", "part": NSNull()])); return 1
+    }
+    var lib = base
+    let component: MGSolidComponent
+    switch lib.register(src.data) {
+    case .failure(let issue):
+        print(json(["ok": false, "reason": issue.reason, "part": issue.part as Any, "file": ["lines": src.lines, "sha256": src.sha256]]))
+        return 1
+    case .success(let c): component = c
+    }
+    switch lib.instantiate(component.id, with: values) {
+    case .failure(let issue):
+        print(json(["ok": false, "reason": issue.reason, "part": issue.part as Any, "id": component.id, "with": values,
+                    "file": ["lines": src.lines, "sha256": src.sha256]]))
+        return 1
+    case .success(let doc):
+        let c = checks(doc)
+        let tris = doc.assembly.parts.reduce(0) { $0 + $1.mesh.triangleCount }
+        var reason: String? = nil
+        if (c["meshesClosed"] as? Bool) != true { reason = "check.meshOpen" }
+        else if (c["gearsEngage"] as? Bool) == false { reason = "check.gearsInterpenetrate" }
+        let defaults = Dictionary(uniqueKeysWithValues: component.params.map { ($0.name, values[$0.name] ?? $0.defaultValue) })
+        print(json(["ok": reason == nil, "reason": reason as Any, "id": component.id, "with": defaults,
+                    "catalogEntry": component.catalogEntry.any,
+                    "use": ["id": "a", "use": component.id, "with": defaults],
+                    "instance": ["parts": doc.assembly.parts.count, "triangles": tris, "ratios": doc.ratios, "checks": c],
+                    "file": ["lines": src.lines, "bytes": src.data.count, "sha256": src.sha256]]))
+        return reason == nil ? 0 : 1
     }
 }
 
@@ -151,13 +216,13 @@ func scaled(_ image: CGImage, width: Int) -> CGImage {
 
 func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined() }
 
-@MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool) throws -> Int32 {
+@MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool, library lib: MGSolidLibrary) throws -> Int32 {
     let src: Loaded
     do { src = try load(path) } catch is TooLarge {
         print(json(["ok": false, "reason": "assembly.bytes", "part": NSNull()])); return 1
     }
     let doc: MGSolidDocument
-    switch MGSolidParser.document(data: src.data) {
+    switch MGSolidParser.document(data: src.data, library: lib) {
     case .failure(let issue): print(json(["ok": false, "reason": issue.reason, "part": issue.part as Any])); return 1
     case .success(let d): doc = d
     }
@@ -223,12 +288,40 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     return 0
 }
 
+/// Splits `--component FILE` pairs (repeatable) out of an argument list.
+func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]) {
+    var files: [String] = [], rest: [String] = []
+    var i = 0
+    while i < args.count {
+        if args[i] == "--component" {
+            guard i + 1 < args.count else { throw CLIError.usage }
+            files.append(args[i + 1]); i += 2
+        } else { rest.append(args[i]); i += 1 }
+    }
+    return (files, rest)
+}
+
 @main struct MartySolidCLI {
     @MainActor static func main() {
-        let a = Array(CommandLine.arguments.dropFirst())
         do {
+            let (files, a) = try componentFiles(Array(CommandLine.arguments.dropFirst()))
+            let lib: MGSolidLibrary
+            do { lib = try library(files) } catch let e as LibraryRefused { print(json(e.report)); exit(1) }
             switch a.first {
-            case "check"? where a.count == 2: exit(try check(a[1]))
+            case "check"? where a.count == 2: exit(try check(a[1], lib))
+            case "components"? where a.count == 1: exit(components(lib))
+            case "component"? where a.count >= 3 && a[1] == "check" && !a[2].hasPrefix("--"):
+                var values: [String: Double] = [:]
+                var rest = Array(a.dropFirst(3))
+                while let flag = rest.first {
+                    rest.removeFirst()
+                    guard flag == "--with", let v = rest.first else { throw CLIError.usage }
+                    rest.removeFirst()
+                    let kv = v.split(separator: "=", maxSplits: 1).map(String.init)
+                    guard kv.count == 2, let d = Double(kv[1]), d.isFinite else { throw CLIError.usage }
+                    values[kv[0]] = d
+                }
+                exit(try componentCheck(a[2], lib, with: values))
             case "render"? where a.count >= 3 && !a[1].hasPrefix("--") && !a[2].hasPrefix("--"):
                 var w = 1280, h = 800, loop = true
                 var rest = Array(a.dropFirst(3))
@@ -245,7 +338,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                     default: throw CLIError.usage
                     }
                 }
-                exit(try render(a[1], a[2], width: w, height: h, loop: loop))
+                exit(try render(a[1], a[2], width: w, height: h, loop: loop, library: lib))
             default: throw CLIError.usage
             }
         } catch {
