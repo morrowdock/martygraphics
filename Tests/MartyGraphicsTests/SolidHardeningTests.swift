@@ -121,9 +121,25 @@ final class SolidHardeningTests: XCTestCase {
                                                        "holes": [[[5, 5], [10, 5], [10, 10], [5, 10]], [[20, 5], [30, 5], [25, 20]]]}},
                                   {"revolvedProfile": {"points": [[0, 0], [10, 0], [10, 5], [0, 5]]}},
                                   {"revolvedProfile": {"closed": true, "points": [[20, 0], [24, 0], [24, 5], [20, 5]]}},
-                                  {"blade": {"span": 60, "chord": 14, "twist": -18, "root": 8, "camber": 0.04}}]}
+                                  {"blade": {"span": 60, "chord": 14, "twist": -18, "root": 8, "camber": 0.04}}]},
+            {"id": "t", "shape": [{"bladeRow": {"count": 24, "span": 80, "chord": 40, "root": 200}},
+                                  {"bladeRow": {"count": 9, "span": 30, "chord": 12, "root": 60, "z": 50, "stagger": -35, "twist": 10,
+                                                "camber": -0.06, "thickness": 0.2, "sections": 3, "chordSamples": 7}},
+                                  {"revolvedProfile": {"closed": true, "sweep": 210, "start": -30, "points": [[20, 0], [24, 0], [24, 5], [20, 5]]}},
+                                  {"revolvedProfile": {"closed": true, "sweep": 270, "start": 270, "points": [[30, 0], [36, 2], [33, 9]]}},
+                                  {"revolvedProfile": {"sweep": 90, "points": [[0, 0], [10, 0], [12, 4], [10, 8], [0, 8]]}},
+                                  {"revolvedProfile": {"closed": true, "sweep": 1, "points": [[40, 0], [44, 0], [44, 5], [40, 5]]}},
+                                  {"revolvedProfile": {"closed": true, "sweep": 359.5, "points": [[50, 0], [54, 0], [54, 5]]}},
+                                  {"revolvedProfile": {"closed": true, "sweep": 360, "points": [[60, 0], [64, 0], [64, 5]]}}]},
+            {"id": "u", "shape": [{"revolvedProfile": {"closed": true, "sweep": 359.99999999, "points": [[70, 0], [74, 0], [74, 5]]}},
+                                  {"revolvedProfile": {"sweep": 359.99999999, "start": 45, "points": [[0, 0], [10, 0], [10, 8], [0, 8]]}},
+                                  {"revolvedProfile": {"closed": true, "sweep": 359.9999, "points": [[80, 0], [84, 0], [84, 5]]}}]}
             """)
-        for json in [kitchen, String(decoding: try Data(contentsOf: SolidAssemblyFormatTests.planetaryURL), as: UTF8.self)] {
+        let turbofan = SolidAssemblyFormatTests.planetaryURL.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Turbofan/Sources/TurbofanKit/Models/turbofan.json")
+        for json in [kitchen, String(decoding: try Data(contentsOf: SolidAssemblyFormatTests.planetaryURL), as: UTF8.self),
+                     String(decoding: try Data(contentsOf: turbofan), as: UTF8.self)] {
             let d = try compile(json).get()
             for p in d.assembly.parts { for s in d.shapes[p.id]! {
                 let m = s.mesh(), e = s.meshEstimate

@@ -4,6 +4,32 @@ These examples use the public format and drawing primitives. They show different
 uses of the engine without implying a curriculum, solver, running infrastructure
 service, or AI model.
 
+## Turbofan cutaway
+
+A schematic two-spool, high-bypass turbofan built and rendered by the solid engine from
+[38 lines of JSON](../Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json): a 20-blade
+fan, 3 LP and 6 HP compressor stages, an annular combustor, 2 HP and 4 LP turbine stages, and
+an LP shaft (blue) inside the HP shaft (orange). The model is JSON written for this example in
+the documented format, not the output of a prompt run. It is a teaching model, not a real
+engine design.
+
+[![Turbofan cutaway turning: fan, compressors, combustor and turbines exposed inside a half-cut nacelle.](assets/turbofan/turbofan-loop.gif)](assets/turbofan/pathtraced-hero.png)
+
+[Path-traced still](assets/turbofan/pathtraced-hero.png) · [Labelled cutaway](assets/turbofan/labelled.png) ·
+[Exploded](assets/turbofan/exploded.png) · [Loop (GIF, 640×400, 12 s)](assets/turbofan/turbofan-loop.gif) ·
+[Run it](../Examples/Turbofan/README.md) · [Render receipt](assets/turbofan/provenance.json)
+
+**How a turbofan works.** The big fan at the front pulls in a huge flow of air (suck). A small
+part of it goes into the core, where rows of spinning blades and fixed vanes squeeze it to many
+times its intake pressure (squeeze). Fuel burns steadily in the ring-shaped combustor, so the air
+gets very hot and expands (bang). The hot gas rushes through the turbines and spins them (blow):
+the HP turbine drives the HP compressor, and the LP turbine drives the fan through a shaft that
+runs inside the HP shaft. Here the HP shaft turns three times as fast as the LP shaft. Most of the
+fan's air goes around the core through the bypass duct, and in a high-bypass engine like this it
+gives most of the thrust.
+
+## Native scenes
+
 | Example | In `--preview` | What to notice | Source |
 | --- | --- | --- | --- |
 | Tree search | Follow a search | Follow comparisons through a binary search tree. | [tree.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json) |

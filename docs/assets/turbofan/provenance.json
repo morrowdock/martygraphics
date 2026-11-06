@@ -1,0 +1,192 @@
+{
+  "source": {
+    "repository": "https://github.com/morrowdock/martygraphics",
+    "captureCommit": "d6b461dd2c365511e1e66d34d1f9976d7ac1a225",
+    "note": "captureCommit d6b461dd2c365511e1e66d34d1f9976d7ac1a225 is a local commit made before the branch was rebased onto public main (it is not on the remote; its rebased equivalent is c25687a). The sourceFiles hashes, not the commit id, are the link between these renders and the source: the pathtraced-hero.png, labelled.png and turbofan-loop.gif bytes were rendered from exactly those files. exploded.png was re-rendered later; see artifacts.exploded.png.",
+    "model": "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json (38 lines, 23 parts, 8 steps); sha256 at the main capture f669f81f848bb9ef186fe5571c2fb45284b2c04f925b2e20b019d02deb8b7db3; the exploded step text was corrected afterwards (see artifacts.exploded.png)",
+    "authoring": "The JSON was written for this example in the documented solid assembly format; a small scratch script (not in the repository) computed the wall offsets and blade-row radii. It is not the output of a prompt run.",
+    "license": "Apache-2.0; procedural geometry and lighting, no images, models or stock assets",
+    "sourceFiles": {
+      "Examples/Turbofan/Package.swift": "a0aebee38f1d4f526aa14d578929b797a20bc82deef1c0cc7647075c3060ddeb",
+      "Examples/Turbofan/README.md": "bffe443312128bfee1b7270f6893292a5534bcc3a7dc5d3f35a3d151af18807e",
+      "Examples/Turbofan/Sources/MartySolidRT/MGSolidRT.swift": "ce35593191b4032d05bbdde9227959df16f13568df5135b8997b67407ef84471",
+      "Examples/Turbofan/Sources/MartyTurbofan/Media.swift": "f69bc55192df31ac43ac392c1cb88ed889bd2bcbf5eaa7e1523c523198e5d45a",
+      "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift": "8fa15b9dbadb541884ebc1241382db10f2dbaa797a3866faf4c261d6c4990333",
+      "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json": "f669f81f848bb9ef186fe5571c2fb45284b2c04f925b2e20b019d02deb8b7db3",
+      "Examples/Turbofan/Sources/TurbofanKit/TurbofanChecks.swift": "2cef9c9d93bba363b0698088e49b7f2e67914d90f63d76df418e4f4289aaae1d",
+      "Examples/Turbofan/Sources/TurbofanKit/TurbofanModel.swift": "f37241ca0086a4044efc7069a1e2b9adf5f256451cb71ed4a2ebddc4bd5a44ef",
+      "Examples/Turbofan/Tests/TurbofanTests/TurbofanTests.swift": "0e088c31a438e3fb662974d02d20ca11b8a6541191ad1059d0a0aa78fa2f2722",
+      "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f",
+      "Sources/MartyGraphics/MG3DInteraction.swift": "bcd0df232ebfa1b1f49f85e73a1a3a73bf47a7f4040a8c5b7bde014547aa5913",
+      "Sources/MartyGraphics/MG3DView.swift": "d23e599917e92caec76cc08f925ff66ae5bbc0a7e876f30daeff32de10183053",
+      "Sources/MartyGraphics/MGCanvasRenderer.swift": "9b91557e37086523ee8a4f4401bb9281830f2a6b087921e91bf7cac866894775",
+      "Sources/MartyGraphics/MGFixtures.swift": "1d17dd89fcefcc304fec88c1ac8caef4b9b695394276b01df9058d5eb4306a91",
+      "Sources/MartyGraphics/MGGrammar.swift": "2f18903fb3eb1aed92e6829edb20a20dda4b9bb8b4adcb1b674847c58d4910ec",
+      "Sources/MartyGraphics/MGGraphPack.swift": "fa3ec67e4631e13a682ec0bdd0eb76cc1afa75146edbff78c000d8f2d0560ebe",
+      "Sources/MartyGraphics/MGLayout.swift": "c1a3641339349e10e9e0faced7f4e58e0a5d97aa992306a81b68970c11aef6ca",
+      "Sources/MartyGraphics/MGModel.swift": "b11556e668477eaef8a829b0e33e055327a5abe95b2b449df9287172b3a1133c",
+      "Sources/MartyGraphics/MGPack.swift": "f6af770877d9de4c005eef037592b9883e39b20e5e72bd01462b6fa7fdc4e381",
+      "Sources/MartyGraphics/MGParser.swift": "898571b7274a9a88a27238da062c890e6168947ae4a6585003fa8d8686afb5dc",
+      "Sources/MartyGraphics/MGPatch.swift": "1c68bf17ddd2dd2f63e0d35b036d700f41de46b74f77ca98ab5f881bf44641dc",
+      "Sources/MartyGraphics/MGPhysics.swift": "aa34cc3c370af27112759a5dc1cd439ce7afb3ed2d4997fa2b68c367816316b7",
+      "Sources/MartyGraphics/MGRenderPolicy.swift": "5ef4ebaff7b3c4c46761e4a576732729a206af04ec38837c1459a30b938183e2",
+      "Sources/MartyGraphics/MGStream.swift": "bbcaaaed0f905e558932dd8430e077efb75a4bc0f5baa6ccf061c955c939f205",
+      "Sources/MartyGraphics/MGTemplates.swift": "d68eb2570f539883ffc9702dfebd45da834376fba08cc907adc2b702689b5c34",
+      "Sources/MartyGraphics/MGTheme.swift": "44fd167a885971014697fc12cb56f627076cce18ca17630cc93f12c08edaaa42",
+      "Sources/MartyGraphics/MGTimeline.swift": "ad32fce5474a9b5b41b1ca35ebee324e0b4f318c99824b149a1fdd6523c49634",
+      "Sources/MartyGraphics/MartyGraphicsView.swift": "67b4fa9c02ce50030470930e31826f168727977f998f3754e6c301fea6e632e7",
+      "Sources/MartyGraphics/Solid/MGAssembly.swift": "c041902a71623dcd3fc0ba872c7578286610c9bd226b9365552b3e3cd857ebc4",
+      "Sources/MartyGraphics/Solid/MGGear.swift": "06f0818a89ae0c4040823beeed75a663123d780e25ce8804fc042f8bf5e0199d",
+      "Sources/MartyGraphics/Solid/MGMaterial.swift": "e9c53e035553c86154578c3bd252573199559c9bcb40316c1af0db2e08960b5d",
+      "Sources/MartyGraphics/Solid/MGMesh.swift": "e0309df39ac0060ece627981cf98d8a3ff908af7ed33cfeffcd19e56452f8b2e",
+      "Sources/MartyGraphics/Solid/MGProfile.swift": "ba57fcbfe9d29ee5a0ca03cc766d37f91b3eef8a13d15ebf0bb8be3659cba132",
+      "Sources/MartyGraphics/Solid/MGSolidBuilders.swift": "ac5dc0d2fdf8dd5407f775067b43e874bb3da188b121d073127d148d3c56cac7",
+      "Sources/MartyGraphics/Solid/MGSolidChecks.swift": "b277c5b1f4a327fa9e33e10414965f259cf59da825e32f6436ba0472e00bd612",
+      "Sources/MartyGraphics/Solid/MGSolidMath.swift": "72d5568e2ced5bb8ecf47f1b7a303559511e11c118b9a97df9d762f01cd20367",
+      "Sources/MartyGraphics/Solid/MGSolidModels.swift": "6ca692f1647295b893bc8c876fb75496b0a3b8b47f332e188b1995d9b8946b74",
+      "Sources/MartyGraphics/Solid/MGSolidParser.swift": "935b51fd783751c149deb961dbd5d58bb2599e1a3ffb6ca3a0bd518279f766ab",
+      "Sources/MartyGraphics/Solid/MGSolidRenderer.swift": "c2d59518eb8a42621191923c1dd3ca22fd4626286e758f0150bb5010a8c5604d",
+      "Sources/MartyGraphics/Solid/MGSolidShapes.swift": "3a416940764d8a2466e9c4fe3d44a7fc59a447c6a00c596bf6809a3368b56f45",
+      "Sources/MartyGraphics/Solid/MGSolidSnapshot.swift": "9344f2878ec6ae560122999ff11b99b80139d6b9b504342e04bce1e31f848135",
+      "Sources/MartyGraphics/Solid/MGSolidTurbo.swift": "c76b35d3da29155a6885e31f297053b85cd95d4b4a1c1d5a2c8390a5746a793c",
+      "Tests/MartyGraphicsTests/SolidEngineTests.swift": "77db900201f8172922acb1636ad36758ab5eef25226d1e4330af4a63e6ee7ae8",
+      "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "bffc337914c1d85656531e6eb922bce319e64f70471e8ae5aaa13a21eaefdc92",
+      "Tests/MartyGraphicsTests/SolidTurboTests.swift": "cf50fae34deb9531a5c16c531375ca68161c14b2a41b93026ef5512ef19d1bdd"
+    },
+    "laterChanges": {
+      "headFiles": {
+        "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift": "2e351af484c0bebce2a202f9b2ea9ae68f0e2de3c6583189a6cc70891f44c1ed",
+        "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json": "14db9715f7a80e3fdc431cd7e1a38c79cfa6e88bd6f3fdc875bbce14ccfb4112",
+        "Examples/Turbofan/Sources/TurbofanKit/TurbofanChecks.swift": "ecabd815312be94ec7230bf5a8baead2333aabc1ab2a21a2c41b023492eeef53",
+        "Examples/Turbofan/Tests/TurbofanTests/TurbofanTests.swift": "912a0447d7a6bbdc80384c130bdd5226ea058f139b49e3a51f0e99cef07a5a43",
+        "Sources/MartyGraphics/Solid/MGSolidParser.swift": "e298432b6583c9cc3db8a9779d928da3146bbefa370ef8e5e299f1dada5bc8e8",
+        "Sources/MartyGraphics/Solid/MGSolidShapes.swift": "918086d8ddc6868a73eb054f546114974a9f25f6c1536b0f3087d81b6052e014",
+        "Sources/MartyGraphics/Solid/MGSolidTurbo.swift": "510fb6fdcc2f5a8f9a19f997a7e463ee9666df40b03d1c015129ce45e1aa245d",
+        "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "55ec216a5b9c77218df8c957035e760b0ce6e4cd9a0d717947c6eefda4e9148f",
+        "Tests/MartyGraphicsTests/SolidTurboTests.swift": "dc7e09bedc2fb69ec560b55994adb0562d8e57a24dd7a91839b87ae68cf27025",
+        "Examples/Turbofan/README.md": "0a58cfb329f0848a535c29abd81c48b25dbff9492a82bff561be443f745ea402"
+      },
+      "base": "17396a2fbc000dc30c71716f0f54e74827369706",
+      "note": "Files whose bytes differ from sourceFiles at this head, and why: (0) Examples/Turbofan/README.md (asset links and the lower-bound wording, added after the capture); (1) review fixes on this branch: TurbofanChecks.swift, Turbofan.swift and TurbofanTests.swift (clearance reported as a true lower bound, 4.52 mm), MGSolidShapes.swift and MGSolidTurbo.swift (one shared full-turn decision for build and mesh estimate; posed geometry snapshot unchanged), turbofan.json (exploded-step text only; exploded.png re-rendered), SolidTurboTests.swift and SolidHardeningTests.swift (new tests); (2) rebase onto public main: MGSolidParser.swift (PR #16 names missing keys in refusal reasons). pathtraced-hero.png, labelled.png and turbofan-loop.gif are unaffected: the geometry snapshot is byte-identical and a fresh studio export differed only by SceneKit shadow noise (at most 6/255 on under 1% of pixels).",
+      "testsAtHead": {
+        "commit": "dd2d9e76cf585e80d7a90d2c1dc5bb3275a13cbc",
+        "rootCore": 155,
+        "pathTracer": 17,
+        "turbofanExample": 14,
+        "failures": 0
+      }
+    }
+  },
+  "capture": {
+    "kind": "Stills and loop: SceneKit studio renderer of the MartyGraphics solid engine (2x supersampling, bloom off, exposure -0.3). Hero: GPU path tracing with Metal ray tracing (MartyGraphicsPathTracer) through the MartySolidRT snapshot adapter. Not screenshots, not hand-edited, not AI-generated images.",
+    "hardware": "Apple M1 (no ray-tracing hardware), 8 GB",
+    "platform": "macOS 27.2",
+    "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
+    "configuration": "release build of Examples/Turbofan",
+    "commands": [
+      "swift build -c release --package-path Examples/Turbofan",
+      "marty-turbofan --verify",
+      "marty-turbofan --export <NEW_DIR>",
+      "marty-turbofan --pathtrace <NEW_DIR> --size 1920x1080 --spp 768 --label d6b461dd2c365511e1e66d34d1f9976d7ac1a225"
+    ],
+    "commandExits": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "verify": "23 closed parts, 432776 triangles; LP parts turn at N1, HP parts at N2 = 3 x N1 (measured equals authored); coaxial over 24 sampled angles (max 3.4e-13 mm); no interference. Clearance re-checked at f75f540b165a49edbafa82b136958a9ebaddc1b2 with the lower-bound check: smallest lower bound 4.52 mm (fan to nacelle: 5 mm minus the 0.48 mm dip of a nacelle facet); every rotor's lower bound is at least 4.52 mm.",
+    "tests": {
+      "rootSwiftTest": {
+        "command": "swift test --jobs 2",
+        "commit": "f75f540b165a49edbafa82b136958a9ebaddc1b2",
+        "tests": 168,
+        "failures": 0,
+        "detail": "151 MartyGraphics + 17 path tracer"
+      },
+      "turbofanExample": {
+        "command": "swift test --jobs 2 --package-path Examples/Turbofan",
+        "commit": "f75f540b165a49edbafa82b136958a9ebaddc1b2",
+        "tests": 14,
+        "failures": 0,
+        "detail": "GPU smoke test ran on the M1"
+      }
+    },
+    "studio": {
+      "secondsPerFrameM1": 0.0388,
+      "framesRendered": 370,
+      "exportSeconds": 18.8
+    },
+    "loopVideo": {
+      "file": "turbofan-loop.mp4 (not in the repository)",
+      "bytes": 12484871,
+      "sha256": "15bef3f416ce4f68c048b3d70c0e1e1efeb0cfc989534f29016701d84e04ad9c",
+      "width": 1280,
+      "height": 800,
+      "fps": 30,
+      "frames": 360,
+      "seconds": 12.0,
+      "seam": "LP spool one turn, HP spool three turns and a periodic camera, so the frame after the last equals frame 0"
+    }
+  },
+  "artifacts": {
+    "pathtraced-hero.png": {
+      "bytes": 2403807,
+      "sha256": "6642b9b04f9af7dfbef7b4e16399be7e22ada2fd2e528b47ddfdd5195b53ea92",
+      "width": 1920,
+      "height": 1080,
+      "samplesPerPixel": 768,
+      "maxBounces": 7,
+      "seed": 1,
+      "renderSecondsM1": 255.1,
+      "triangles": 432778,
+      "note": "title and footer drawn over the render by the exporter"
+    },
+    "labelled.png": {
+      "bytes": 993843,
+      "sha256": "c12d119f2ed6165eee636ceaf642143bd01ed6c390a38c0c6b911e40fbd13b9e",
+      "width": 1280,
+      "height": 800,
+      "note": "solid engine cutaway; 11 labels projected from points on the named parts"
+    },
+    "exploded.png": {
+      "bytes": 953242,
+      "sha256": "8d4d8fbb78198e2d69696390ae0c7e5a3ba41eb09f9cc2cb19a8af65c9be4506",
+      "width": 1280,
+      "height": 800,
+      "captureCommit": "f75f540b165a49edbafa82b136958a9ebaddc1b2",
+      "note": "step 8 of the authored steps (step-8.png), re-rendered from a clean tree at f75f540b165a49edbafa82b136958a9ebaddc1b2 after its caption was corrected to say the spinning parts stay below beside the fixed exhaust cone",
+      "sourceFilesChangedSinceMainCapture": {
+        "Examples/Turbofan/README.md": "0a58cfb329f0848a535c29abd81c48b25dbff9492a82bff561be443f745ea402",
+        "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift": "2e351af484c0bebce2a202f9b2ea9ae68f0e2de3c6583189a6cc70891f44c1ed",
+        "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json": "14db9715f7a80e3fdc431cd7e1a38c79cfa6e88bd6f3fdc875bbce14ccfb4112",
+        "Examples/Turbofan/Sources/TurbofanKit/TurbofanChecks.swift": "ecabd815312be94ec7230bf5a8baead2333aabc1ab2a21a2c41b023492eeef53",
+        "Examples/Turbofan/Tests/TurbofanTests/TurbofanTests.swift": "912a0447d7a6bbdc80384c130bdd5226ea058f139b49e3a51f0e99cef07a5a43",
+        "Sources/MartyGraphics/Solid/MGSolidShapes.swift": "918086d8ddc6868a73eb054f546114974a9f25f6c1536b0f3087d81b6052e014",
+        "Sources/MartyGraphics/Solid/MGSolidTurbo.swift": "510fb6fdcc2f5a8f9a19f997a7e463ee9666df40b03d1c015129ce45e1aa245d",
+        "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "8f9d0053f2527d69e05d6c328b3ab687edecbf38a6fd1132846d414864e5cdce",
+        "Tests/MartyGraphicsTests/SolidTurboTests.swift": "dc7e09bedc2fb69ec560b55994adb0562d8e57a24dd7a91839b87ae68cf27025"
+      },
+      "command": "marty-turbofan --export <NEW_DIR> (exit 0)",
+      "sourceFilesChangedSinceMainCaptureAtCommit": "f75f540b (re-render commit, before the rebase onto main); hashes describe that commit, not the head"
+    },
+    "turbofan-loop.gif": {
+      "bytes": 5422629,
+      "sha256": "12d9f93fec8cd20a950ff3a5e4b91b9a81a82ca60fe7de45914d28674aa7c994",
+      "width": 640,
+      "height": 400,
+      "frames": 120,
+      "delayHundredths": [
+        10
+      ],
+      "loopSeconds": 12.0,
+      "loopCount": 0,
+      "note": "every 3rd frame of the 1280x800, 30 fps, 12.0 s loop, downscaled; 120 delays of 10 hundredths sum to 12.00 s"
+    }
+  },
+  "review": {
+    "visual": "Every artifact inspected: capped cut faces with no holes or z-fighting, clean silhouettes, labels on their parts, title clear of the model.",
+    "limits": "Schematic teaching model, not a real or validated engine design and not based on any manufacturer's engine. No air flow, pressure, temperature or thrust is simulated. Clearance is a true lower bound (4.52 mm at the fan tips): the 1 mm grid only decides where to look; exact distances between inward-grown projected triangles give the bound. Shafts are colour coded (anodised blue LP, orange HP) for teaching.",
+    "rerenderCheck": "At f75f540b165a49edbafa82b136958a9ebaddc1b2 the exporter's hero-snapshot.json (posed geometry, camera and materials) is byte-identical to the main capture's, so the geometry is unchanged and the path-traced hero is unaffected (the path tracer is seeded and unchanged). Re-rendered labelled and hero stills differ from the main capture only by SceneKit run-to-run noise (at most 5 to 6 of 255 levels on under 1% of pixels, none above 8), so the committed labelled.png and turbofan-loop.gif were kept."
+  }
+}

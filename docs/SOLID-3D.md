@@ -18,12 +18,15 @@ Four of them are checked in under [`assets/solid/`](assets/solid/) (hero, labell
 exploded view, slider-crank section, loop GIF), with a render receipt in
 [`assets/solid/provenance.json`](assets/solid/provenance.json): capture commit, source
 file hashes, artifact hashes and the measured render time per frame.
+A two-spool turbofan cutaway built with blade rows and capped partial revolves is in
+[`Examples/Turbofan`](../Examples/Turbofan/README.md); it also shows the snapshot
+path traced through a small adapter.
 
 ## Layers
 
 | Layer | Files | Platform |
 | --- | --- | --- |
-| Geometry kernel | `Solid/MGSolidMath.swift`, `MGMesh.swift`, `MGProfile.swift`, `MGSolidBuilders.swift`, `MGGear.swift`, `MGSolidShapes.swift` | Foundation only |
+| Geometry kernel | `Solid/MGSolidMath.swift`, `MGMesh.swift`, `MGProfile.swift`, `MGSolidBuilders.swift`, `MGGear.swift`, `MGSolidShapes.swift`, `MGSolidTurbo.swift` | Foundation only |
 | Assembly and kinematics | `Solid/MGAssembly.swift`, `MGSolidModels.swift`, `MGSolidChecks.swift` | Foundation only |
 | JSON format | `Solid/MGSolidParser.swift` | Foundation only |
 | Snapshot export | `Solid/MGSolidSnapshot.swift`, `MGMaterial.swift` | Foundation only |
@@ -47,6 +50,12 @@ and the snapshot are **Y-up** (`MGSolidStage.zUpToYUp`).
   (closed loops or open profiles with poles), `cylinder`, `tube`,
   `chamferedBox`, `hexPrism`, `blade` (NACA 4-digit style section, linear twist
   and taper).
+* Turbomachinery (`MGSolidTurbo.swift`): `bladeRow` repeats one airfoil blade
+  N times around the Z axis. Each section lies on a cylinder of constant radius
+  (as real blade sections lie on stream surfaces), so the tip radius is exact at
+  every angle. `revolve(_:segments:closed:sweep:start:)` revolves a profile
+  through part of a turn and caps both cut faces, so a cutaway casing shows a
+  real solid wall section in any renderer.
 * Gears: `MGSpurGear` (external involute, 20-degree default pressure angle,
   addendum 1 m, dedendum 1.25 m, elliptical root fillet) and `MGRingGear`
   (internal). `MGGearPhase` gives the tooth phase that makes two gears mesh.
@@ -83,9 +92,25 @@ part ids in sorted order), so the same input always reports the same first error
   `rot` sit next to `shape`. Primitives: `gear`, `ringGear`, `shaft`, `tube`, `box`, `hex`,
   `plate` (disc with round holes), `carrier` (hub, arms and bosses with a smooth
   union), `extrudedProfile`, `revolvedProfile` (open with poles, or `closed`
-  for walls such as casings and nozzles), `blade`.
+  for walls such as casings and nozzles; optional `sweep` and `start` in
+  degrees give a capped partial revolve for cutaways, with
+  ceil(96 × sweep / 360) segments, at least 2), `blade`, `bladeRow`.
+* **`bladeRow`**: `count` (2–128), `span`, `chord`, `root` (hub radius), and
+  optional `z` (axial position of mid-chord), `thickness` (chord fraction),
+  `stagger` (chord angle from the axis at the root, degrees; positive puts the
+  trailing edge behind the leading edge for rotation toward +θ, as on a fan or
+  compressor rotor), `twist` (extra stagger at the tip), `tipChord`, `camber`
+  (signed; positive bows the blade toward +θ), `camberPosition`, `phase`,
+  `sections` (2–24) and `chordSamples` (6–32). The leading edge points to -Z.
+  Rejections: `part.bladeRow.count` (also when neighbouring blades would touch),
+  `part.bladeRow.chord` (a section wraps too far round its cylinder),
+  `part.bladeRow.twist`, `part.bladeRow.triangles` (over 250 000 per row) and
+  one reason per out-of-range field. Blade rows and partial revolves count toward
+  the mesh budget exactly (`MGShapeSpec.meshEstimate`).
 * **Materials**: `brushedSteel`, `polishedSteel`, `darkSteel`, `blackOxide`,
-  `brass`, `bronze`, `aluminum`, `rubber`, `glass`, `anodized.<role>`,
+  `brass`, `bronze`, `aluminum`, `rubber`, `glass`, `titanium`, `nickelAlloy`
+  (warm, heat-tinted hot-section metal), `composite` (dark carbon fibre with a
+  clear coat), `ceramic` (matte thermal-barrier coating), `anodized.<role>`,
   `plastic.<role>` (engine colour roles).
 * **Joints**: `revolute` or `prismatic` about an axis in the part frame.
 * **Drives**: `input` (scale on the input parameter; use a negative scale for
@@ -206,6 +231,13 @@ Decoding checks every fixed-size slot (three numbers for colours, directions,
 targets and bounds, eight per soft box, three floats per vertex, one normal per
 vertex, indices inside the vertex list, one material per triangle, part ranges
 inside the triangles) and fails instead of trapping later.
+
+`Examples/Turbofan/Sources/MartySolidRT` maps a snapshot to an `MGRTScene` for
+`MartyGraphicsPathTracer`: one mesh and instance per part, sRGB colours to linear,
+metallic presets to GGX metals (base colour as F0), the rest to plastic, transmissive
+presets to glass, clear coat carried over, the studio environment and soft boxes to an
+environment map, and directional lights to hidden area lights. It sits in the example
+so the two libraries stay independent.
 
 ## Limits
 

@@ -82,10 +82,19 @@ public struct MGShapeSpec: Equatable, Sendable {
         case "revolvedProfile":
             var closed = false
             if case .bool(let b)? = fields["closed"] { closed = b }
-            m = .revolve(points(fields["points"]), segments: 96, closed: closed)
+            if let partial = MGSolidTurbo.partialSweep(fields) {
+                m = .revolve(points(fields["points"]), segments: 96, closed: closed, sweep: partial.sweep, start: partial.start)
+            } else {
+                m = .revolve(points(fields["points"]), segments: 96, closed: closed)
+            }
         case "blade":
             m = .blade(span: n("span"), chord: n("chord"), thickness: n("thickness", 0.12), twist: n("twist") * .pi / 180,
                        root: n("root"), tipChord: n("tipChord", n("chord")), camber: n("camber"), camberPosition: n("camberPosition", 0.4))
+        case "bladeRow":
+            m = .bladeRow(count: Int(n("count")), span: n("span"), chord: n("chord"), root: n("root"), z: n("z"),
+                          thickness: n("thickness", 0.1), stagger: n("stagger") * .pi / 180, twist: n("twist") * .pi / 180,
+                          tipChord: n("tipChord", n("chord")), camber: n("camber"), camberPosition: n("camberPosition", 0.4),
+                          phase: n("phase") * .pi / 180, sections: Int(n("sections", 8)), chordSamples: Int(n("chordSamples", 16)))
         default:
             m = MGMesh()
         }
@@ -151,7 +160,12 @@ public struct MGShapeSpec: Equatable, Sendable {
             let pts = points(fields["points"])
             var closed = false
             if case .bool(let b)? = fields["closed"] { closed = b }
+            if let partial = MGSolidTurbo.partialSweep(fields) {
+                return MGSolidTurbo.sweptRevolveEstimate(pts, closed: closed, segments: 96, sweep: partial.sweep)
+            }
             return revolve(pts.count, poles: pts.filter { $0.x < 1e-9 }.count, segments: 96, closed: closed)
+        case "bladeRow":
+            return MGSolidTurbo.bladeRowEstimate(count: Int(n("count")), sections: Int(n("sections", 8)), chordSamples: Int(n("chordSamples", 16)))
         case "blade":
             // 15 sections of a 56-point loop, side quads between sections and two caps.
             return (15 * 56, 14 * 56 * 2 + 2 * (56 - 2))

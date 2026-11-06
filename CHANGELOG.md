@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Add turbomachinery primitives to the solid engine: `bladeRow` (a NACA-style airfoil with
+  stagger, twist and signed camber, wrapped on cylinders and repeated around the axis) and
+  capped partial revolves (`revolvedProfile` `sweep` and `start`) for cutaway casings, with
+  stable refusal reasons and exact `meshEstimate` counts for the mesh budget. Add the
+  `titanium`, `nickelAlloy`, `composite` and `ceramic` material presets. Add
+  `Examples/Turbofan`: a schematic two-spool, high-bypass turbofan from 38 lines of JSON (LP
+  spool at N1, HP spool at N2 = 3 × N1, eight teaching steps), `--verify` checks for closed
+  meshes, coaxial spools, the authored speed ratio and a lower bound on swept clearance, real-time stills and a
+  seamless 12-second loop, and `MartySolidRT`, which maps an `MGSolidSnapshot` to an
+  `MGRTScene` so the same model is path traced. Render receipt in `docs/assets/turbofan`.
+  The README now leads with the turbofan loop and shows the path-traced gearbox as a
+  640×360 loop GIF.
 - Name missing keys in solid-format refusals (`part.drive.crankSlider.missing.radius,rod`
   instead of `….missing`). In a recorded prompt-to-3D trial a model wrote `crankRadius`
   and `rodLength`, received only `missing` three times and never found the right keys.
