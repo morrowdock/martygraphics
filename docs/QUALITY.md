@@ -6,10 +6,10 @@ The release baseline `73f9e13bbe1bb72c2cceaff577c93756da83cd6d` passed a Mac bui
 and 23 tests before publication. That is a functional release receipt, not proof
 of renderer performance, accessibility acceptance or independent adoption.
 The [native capture receipt](assets/native/provenance.json) records a clean
-checkout of showcase source `7c7c280e2bde85f504a292bf09b1b8c285d295dc`: build,
-23 tests (zero failures), six-scene verification and native export all passed.
-The seven stills were visually inspected and both GIFs checked for dimensions,
-distinct frames, stored delays and metadata. These are scoped export results;
+checkout of showcase source `9b4ba89780af54d7de7f7e4fd209625a2db24f33`: build,
+95 tests (zero failures), seven-scene verification and native export all passed.
+The eight stills were visually inspected and all three GIFs checked for dimensions,
+frame counts, stored delays and metadata. These are scoped export results;
 interactive playback, accessibility, performance and adopter acceptance remain pending.
 
 ## What a capture proves

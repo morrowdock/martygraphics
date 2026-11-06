@@ -12,6 +12,7 @@ service, or AI model.
 | Sampled function | See the samples | Seven supplied points sketch y = x²; the engine does not derive them. | [function.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
 | Synthetic counts | Compare quantities | Compare Alpha 18, Beta 30, Gamma 24. Every value is invented. | [counts.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
 | Geometric motion | Move through a scene | A marker takes two seconds from A to B, then returns. No force model is implied. | [motion.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
+| Shortest path | Find the cheapest route | Dijkstra settles six routers one at a time; the cheapest route 0→2→1→3→4→5 costs 13. Opt-in graph pack. | [shortest-path.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
 ## Run or reproduce
 
@@ -31,25 +32,28 @@ artwork belongs to this set.
 - [Morrowdock's website](https://morrowdock.app) can demonstrate related ideas
   using browser code. A browser recreation is separate from Swift execution.
 - A concept or private/unmerged pack is not evidence of a public capability.
-  This gallery uses the two current built-ins and generic primitives only.
+  This gallery uses the two current built-ins, the public opt-in graph pack and
+  generic primitives only.
 
 ## Accepted capture inventory
 
-The [machine-readable receipt](assets/native/provenance.json) pins source/tool
-revision `7c7c280e2bde85f504a292bf09b1b8c285d295dc`, commands, platform, dimensions,
-stored timing and SHA-256 digests. Build, 23 tests (zero failures), scene verification
-and native export passed on macOS 26.6.2 / Apple Swift 6.3.3, arm64, SwiftPM debug,
+The [machine-readable receipt](assets/native/provenance.json) pins the capture commit
+`9b4ba89780af54d7de7f7e4fd209625a2db24f33` and the SHA-256 of every scene, tool and engine source
+file, so it stays checkable after a squash merge. It also records commands, platform,
+dimensions, stored timing and artifact digests. Build, 95 tests (zero failures), scene
+verification and native export passed on macOS 27.2 / Apple Swift 6.4.2, arm64, SwiftPM debug,
 renderer scale 1. Later documentation/CI changes do not change the captured Swift source.
 
 | Asset | Pixels | Size | Timing |
 | --- | --- | --- | --- |
-| [Overview](assets/native/overview.png) | 1172 × 1640 | 454 KiB | Still; individual views have clearer small labels |
-| [Tree](assets/native/tree.png), [array](assets/native/two-pointers.png), [handoff](assets/native/handoff.png), [function](assets/native/function.png), [counts](assets/native/counts.png), [motion](assets/native/motion.png) | 840 × 662 each | 90–158 KiB each | Stills; motion sampled at one second |
-| [Two pointers](assets/native/two-pointers.gif) | 840 × 662 | 53 KiB | 4 distinct frames × 1.2 s = 4.8 s |
-| [Motion](assets/native/motion.gif) | 840 × 662 | 124 KiB | 32 distinct frames × stored 0.13 s = 4.16 s (about 7.69 fps) |
+| [Overview](assets/native/overview.png) | 1172 × 2116 | 570 KiB | Still; individual views have clearer small labels |
+| [Tree](assets/native/tree.png), [array](assets/native/two-pointers.png), [handoff](assets/native/handoff.png), [function](assets/native/function.png), [counts](assets/native/counts.png), [motion](assets/native/motion.png), [shortest path](assets/native/shortest-path.png) | 840 × 662 each | 90–159 KiB each | Stills; motion sampled at one second |
+| [Two pointers](assets/native/two-pointers.gif) | 840 × 662 | 53 KiB | 4 frames × 1.2 s = 4.8 s |
+| [Shortest path](assets/native/shortest-path.gif) | 840 × 662 | 125 KiB | 8 frames × 1.2 s = 9.6 s |
+| [Motion](assets/native/motion.gif) | 840 × 662 | 124 KiB | 32 frames × stored 0.13 s = 4.16 s (about 7.69 fps) |
 
-All nine images total **1,391,833 bytes (about 1.33 MiB)**. The README keeps one small animated hero
-and puts the second animation in a disclosure. Stills are single-column and can
+All eleven images total **1,807,710 bytes (about 1.72 MiB)**. The README shows two small animations
+and puts the third in a disclosure. Stills are single-column and can
 be opened at full resolution. GitHub controls GIF playback; choose the static
 gallery below to avoid the animations. Descriptions and values remain available
 as text rather than relying on small image labels alone.
@@ -108,4 +112,12 @@ it does not simulate forces.
 
 [![Native geometric marker midway between A and B.](assets/native/motion.png)](assets/native/motion.png)
 
-[Six-scene overview](assets/native/overview.png) · [Asset license](../LICENSE) · [Exact provenance](assets/native/provenance.json)
+### Shortest path
+
+Dijkstra over six routers with link latencies in milliseconds. The final step
+highlights 0→2→1→3→4→5 at cost 13, the only route at that cost.
+[Source](../Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) · [Run](../Examples/Showcase/README.md)
+
+[![Native weighted graph with the route zero, two, one, three, four, five highlighted and a distance table below.](assets/native/shortest-path.png)](assets/native/shortest-path.png)
+
+[Seven-scene overview](assets/native/overview.png) · [Asset license](../LICENSE) · [Exact provenance](assets/native/provenance.json)

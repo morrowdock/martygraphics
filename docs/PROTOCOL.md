@@ -268,7 +268,7 @@ tests and measurements; see the [limits rationale](CAPABILITIES.md#bounds-are-pa
 
 | Target | Declaration / evidence |
 | --- | --- |
-| macOS | Declared macOS 14+, Swift tools 6.0, Swift language mode 5. The capture receipt records 23 tests plus showcase export at its original source; the separate local-package run at `e1367c9` passed 24 tests, including the new protocol fixtures. Neither establishes interactive or device acceptance. |
+| macOS | Declared macOS 14+, Swift tools 6.0, Swift language mode 5. The capture receipt records 95 tests plus showcase export at its capture source; the separate local-package run at `e1367c9` passed 24 tests, including the new protocol fixtures. Neither establishes interactive or device acceptance. |
 | iOS / iPadOS | Package declares iOS 17+; SwiftUI/SceneKit renderer. No physical iOS-device or accessibility acceptance is established by the Mac export receipt. |
 | Windows / Linux / browser | This Apple-framework package is unsupported there. Portable-core/browser implementation is planned-not-started; no architecture rewrite or cross-platform delivery is selected. |
 

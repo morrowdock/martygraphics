@@ -35,10 +35,22 @@ steps, and motion. Your application supplies the content and decides what happen
 | **Math** | Draw a function from supplied points, with labeled axes. The engine plots the data; it does not solve equations. | [Sampled function](Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
 | **Data** | Compare explicit quantities with labeled bars. These counts are invented. | [Synthetic counts](Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
 | **Motion** | Animate a geometric marker using the engine timeline. | [Moving marker](Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
+| **Graphs** | Compute the cheapest route through a weighted network, one Dijkstra step at a time. Opt-in graph pack. | [Router latency](Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
 [Open the showcase and its capture recipe →](docs/SHOWCASE.md)
 
 ### A few different ways to explain
+
+**Find the cheapest route.** The opt-in graph pack computes shortest paths locally.
+Each step settles the closest node, relaxes its links and updates the distance table.
+Change one link weight with a `params` patch, and the engine recomputes the whole
+walkthrough and its narration. Here, the direct-looking routes lose: 0→2→1→3→4→5 costs 13.
+
+![Native shortest-path walkthrough over six routers: nodes settle one at a time and the distance table fills in until the route 0, 2, 1, 3, 4, 5 at cost 13 is highlighted.](docs/assets/native/shortest-path.gif)
+
+8 native frames, 1.2 seconds each (9.6-second loop; 125 KiB).
+[Still alternative](docs/assets/native/shortest-path.png) ·
+[Scene source](Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) · [Run](Examples/Showcase/README.md)
 
 **Trace a handoff.** Nodes, directed edges and step-controlled highlights illustrate
 Source → Queue → Worker; the diagram does not execute a queue.
@@ -81,7 +93,7 @@ timeline. This is animation, with no force simulation.
 
 </details>
 
-[Six-scene overview](docs/assets/native/overview.png) · [Full static gallery](docs/SHOWCASE.md#static-gallery)
+[Seven-scene overview](docs/assets/native/overview.png) · [Full static gallery](docs/SHOWCASE.md#static-gallery)
 
 These are **native SwiftUI ImageRenderer exports** of `MGCanvasRenderer` /
 `MGTimeline`, with a small SwiftUI caption wrapper. They are not full-app
@@ -99,7 +111,8 @@ are available for every animated example.
 - **Keep the host in control.** Use `MartyGraphicsView` for a native board or
   `MGCanvasRenderer` / `MGTimeline` for deterministic frame generation.
 - **Extend the format.** Register templates through the validated pack API.
-  The built-in templates are `bst` and `two_pointers`.
+  The built-in templates are `bst` and `two_pointers`. The opt-in graph pack adds
+  `shortest_path`, with record-list parameters such as weighted edges.
 
 ## Quick start
 
@@ -114,8 +127,8 @@ swift build && swift test
 swift run --package-path Examples/Showcase marty-showcase --verify
 ```
 
-`--verify` validates six bundled synthetic scenes and the core pack. Build, 23
-tests, verification and native export passed at the [capture source revision](docs/assets/native/provenance.json).
+`--verify` validates seven bundled synthetic scenes, the core pack and the graph pack.
+Build, 95 tests, verification and native export passed at the [capture source revision](docs/assets/native/provenance.json).
 To open the interactive gallery, run
 `swift run --package-path Examples/Showcase marty-showcase --preview`.
 Interactive control/accessibility testing remains pending; the capture receipt
@@ -148,8 +161,8 @@ not a complete learning app or a collection of courses.
 | --- | --- |
 | SwiftUI Canvas and a SceneKit renderer for supported 3D primitives | Current renderers require Apple frameworks; Windows/Linux builds and native Swift browser execution are unsupported. This is a current implementation choice, not a requirement imposed by iPad. |
 | Parser, grammar, patches, streams, layout, timeline, steps, template/pack API | The host supplies JSON and interaction. No model, hosted generation API, screen overlay agent, equation solver, or arbitrary code executor is bundled. |
-| BST and two-pointer built-ins; generic primitives for custom scenes | No course catalog, premium pack, private app adapter, or removed mechanics walkthrough is included. |
-| Six synthetic 2D examples and a local native showcase | A flow diagram does not run a queue; sample plots/counts are supplied data. The gallery is not evidence of a complete app or measured 3D performance. |
+| BST and two-pointer built-ins; opt-in `shortest_path` graph pack; generic primitives for custom scenes | No course catalog, premium pack, private app adapter, or removed mechanics walkthrough is included. |
+| Seven synthetic 2D examples and a local native showcase | A flow diagram does not run a queue; sample plots/counts are supplied data. The gallery is not evidence of a complete app or measured 3D performance. |
 
 See the [public versus app matrix](docs/CAPABILITIES.md),
 [quality and measurement plan](docs/QUALITY.md), and
@@ -158,6 +171,19 @@ Use [local maintainer validation](docs/LOCAL-VALIDATION.md) for hygiene and DCO;
 hosted Ubuntu checks are manual opt-in. The [Mac verification steps](docs/VERIFY-ON-MAC.md)
 cover Apple-framework builds. Each candidate needs reviewed evidence and its own
 authenticated maintainer status.
+
+## What's next
+
+These are **plans, not shipped features**. Each one lands only after tests, review and
+real evidence:
+
+- **Interactive 3D inspection.** Select a part, emphasize or dim others, orbit, and
+  reset the camera, opt-in per board. A working prototype passes its tests; on-screen
+  interaction checks are next.
+- **Accessible graph states.** Show edge status with more than colour.
+- **More teaching packs.** Reusable assemblies and linked plots with narration.
+
+See the [quality and measurement plan](docs/QUALITY.md) for what is still unverified.
 
 ## Read, build, contribute
 
