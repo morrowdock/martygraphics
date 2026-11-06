@@ -20,7 +20,8 @@ private let descriptions: [(String, String, String, String)] = [
     ("handoff", "SYSTEMS", "Trace a handoff", "Nodes and edges · an illustrative message flow"),
     ("function", "MATH", "See the samples", "Plot supplied points · y = x²"),
     ("counts", "DATA", "Compare quantities", "Bars · three explicitly synthetic counts"),
-    ("motion", "MOTION", "Move through a scene", "Timeline · a geometric back-and-forth loop")
+    ("motion", "MOTION", "Move through a scene", "Timeline · a geometric back-and-forth loop"),
+    ("shortest-path", "GRAPHS", "Find the cheapest route", "Opt-in graph pack · Dijkstra over six routers")
 ]
 
 private enum ShowcaseError: Error, CustomStringConvertible {
@@ -104,13 +105,13 @@ private struct Overview: View {
                     .font(.system(size: 12, weight: .bold, design: .monospaced)).tracking(2)
                     .foregroundStyle(Color(red: 0.55, green: 0.70, blue: 1))
                 Text("Make the idea visible.").font(.system(size: 42, weight: .bold, design: .rounded))
-                Text("Six small scenes. One validated format. Actual engine output.")
+                Text("Seven small scenes. One validated format. Actual engine output.")
                     .font(.system(size: 17)).foregroundStyle(Color(white: 0.68))
             }
-            ForEach(0..<3) { row in
+            ForEach(0..<(examples.count + 1) / 2, id: \.self) { row in
                 HStack(alignment: .top, spacing: 20) {
-                    ForEach(0..<2) { column in
-                        let example = examples[row * 2 + column]
+                    ForEach(row * 2..<min(row * 2 + 2, examples.count), id: \.self) { index in
+                        let example = examples[index]
                         Card(example: example, step: max(0, example.scene.steps.count - 1), time: 1,
                              width: 500, boardHeight: 270)
                     }
@@ -194,8 +195,10 @@ private func writePNG(_ image: CGImage, to url: URL) throws {
         guard arguments == ["--verify"] || arguments == ["--preview"] || (arguments.count == 2 && arguments[0] == "--export") else {
             throw ShowcaseError.invalid("Usage: marty-showcase --verify | --preview | --export NEW_OUTPUT_DIRECTORY")
         }
+        // The graph pack is opt-in: a host registers it once before parsing scenes that use `shortest_path`.
+        try MGPacks.register(MGGraphPack.pack)
         let examples = try loadExamples()
-        guard examples.count == 6, MGPacks.validate(MGPacks.core).isEmpty else {
+        guard examples.count == 7, MGPacks.validate(MGPacks.core).isEmpty, MGPacks.validate(MGGraphPack.pack).isEmpty else {
             throw ShowcaseError.invalid("Example or core pack validation failed")
         }
         print("Validated \(examples.count) original synthetic examples against MartyGraphics.")
@@ -235,6 +238,8 @@ private func writePNG(_ image: CGImage, to url: URL) throws {
         let motion = examples.first { $0.id == "motion" }!
         try writeGIF(pointers, to: output.appendingPathComponent("two-pointers.gif"), animatedMotion: false)
         try writeGIF(motion, to: output.appendingPathComponent("motion.gif"), animatedMotion: true)
+        let route = examples.first { $0.id == "shortest-path" }!
+        try writeGIF(route, to: output.appendingPathComponent("shortest-path.gif"), animatedMotion: false)
         print("Exported native PNG and GIF captures to the requested directory.")
     }
 }

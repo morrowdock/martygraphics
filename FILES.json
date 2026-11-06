@@ -35,7 +35,7 @@
     },
     {
       "path": "Examples/Showcase/README.md",
-      "sha256": "f8c12629cdfe979c8f2c89b7c3569ef311b5ba53b34040eed867e371b9b1f8cb"
+      "sha256": "4fe19b4875c36c2157e9ec31118385f7a2dce77804ef78be5b8d353c81585deb"
     },
     {
       "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json",
@@ -54,6 +54,10 @@
       "sha256": "6c33055288b7f9c1bf0ced961e9e5e88489f71666df889abdc00a38e5fd5483b"
     },
     {
+      "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json",
+      "sha256": "7416462045dcbbc444dec94a687384c3cd9ebce973ab81ae9009e4765f05e421"
+    },
+    {
       "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json",
       "sha256": "3287602d73813243f78f92a952385d4bef952821249bc46a5465102b244c9f0a"
     },
@@ -63,7 +67,7 @@
     },
     {
       "path": "Examples/Showcase/Sources/MartyShowcase/Showcase.swift",
-      "sha256": "5278540271f1f9e9e2938ba7fd85693f4cd58c153f0bbf73af10b8468f515845"
+      "sha256": "1e010626fcc2a3e6cf428f38eee4f55bd5a0efa009da2f4d2cfd7e910375ad40"
     },
     {
       "path": "LICENSE",
