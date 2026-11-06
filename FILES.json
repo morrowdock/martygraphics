@@ -127,7 +127,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json",
-      "sha256": "7719e1f1fc6a03aa4a92d29f98ff2d6a97ab6d33e8fe3ed6b402cc35b81cd987"
+      "sha256": "2658695a2b221af1078982934b3893c236ea944101ff1c00fde7ef06cbba8755"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Solid3D.swift",
@@ -227,15 +227,15 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAssembly.swift",
-      "sha256": "c287bcf8c8905561b17930af011f619d0d70bdc84e27a6bc0c07abdf42537077"
+      "sha256": "c041902a71623dcd3fc0ba872c7578286610c9bd226b9365552b3e3cd857ebc4"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGGear.swift",
-      "sha256": "47c693059e4cbc22d0acfa1e237cc60d43a36201c77eedb68462968945d04af7"
+      "sha256": "06f0818a89ae0c4040823beeed75a663123d780e25ce8804fc042f8bf5e0199d"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGMaterial.swift",
-      "sha256": "d423754cf5599afa8e36d58d3415bad7503c735e822cfe33866545b351581799"
+      "sha256": "e84dc65832a313af9c71dca50674942d8f395ffcd471647640c593452177b66d"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGMesh.swift",
@@ -243,7 +243,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGProfile.swift",
-      "sha256": "8af814dd07c8ca7b1cb662eb4e8be5eb0f0ae463d1f1eac19b3d49be24205a1e"
+      "sha256": "ba57fcbfe9d29ee5a0ca03cc766d37f91b3eef8a13d15ebf0bb8be3659cba132"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidBuilders.swift",
@@ -251,7 +251,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidChecks.swift",
-      "sha256": "ba12d4b70b0b7c2bcf9a766b3577b8f1fbd2ee249f5086aa5491676a2e723f15"
+      "sha256": "b277c5b1f4a327fa9e33e10414965f259cf59da825e32f6436ba0472e00bd612"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidMath.swift",
@@ -263,19 +263,19 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidParser.swift",
-      "sha256": "9a26b71ef2b8ab35cba7bacde893ca522ddef749a78f7287fe6a6722673dc644"
+      "sha256": "7350a9e6d1b4dee080cae445437b5a8bb453079eee305986053df78f982d0a88"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
-      "sha256": "0bea1ce89a529062134c16c88bf4668c5a2ed91e210de0d121643d13abad0944"
+      "sha256": "c2d59518eb8a42621191923c1dd3ca22fd4626286e758f0150bb5010a8c5604d"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidShapes.swift",
-      "sha256": "3763e2f66ea3bfde4d2b1ccd5b7bdb71920a39419b574042888ac708889de3c1"
+      "sha256": "7d5dc853699561e20f2ff8b43e022a89753987550eb48964d2d0e464c3a7bebe"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSnapshot.swift",
-      "sha256": "7b8d8b3726df4a8653e374121ddce70a2fc77a531f58211ff637f4bd5ed4bc2f"
+      "sha256": "9344f2878ec6ae560122999ff11b99b80139d6b9b504342e04bce1e31f848135"
     },
     {
       "path": "Sources/MartyGraphicsPathTracer/MGRTEnvironment.swift",
@@ -358,6 +358,10 @@
       "sha256": "77db900201f8172922acb1636ad36758ab5eef25226d1e4330af4a63e6ee7ae8"
     },
     {
+      "path": "Tests/MartyGraphicsTests/SolidHardeningTests.swift",
+      "sha256": "1c5a24e5442d9d170462b62f87c4fb81f7a62c00f74f3cc4a17a411bc7260d6a"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/StreamRegressionTests.swift",
       "sha256": "28919e07cdd0db92814bcc3769e3146113974e92f89f1d886ea6ebee2a1e0544"
     },
@@ -407,7 +411,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "4936a3ee14c3478202f38a20ef1bd91117f0d349a34a69c49293ae2dc6426b4b"
+      "sha256": "e92213ca5f69f190788f7b31473cfc7f3e4f82ab44fdfaa58e554e6ab37d0105"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -487,23 +491,23 @@
     },
     {
       "path": "docs/assets/solid/exploded-labelled.png",
-      "sha256": "1f72154f9814c72a3562b6bd44c3a01ed5e8787726b0276d15f4d1118ebc9c54"
+      "sha256": "a3f02275fa20512ccc3f592666670287fda8dddf52c9c4d1627010bfced44109"
     },
     {
       "path": "docs/assets/solid/hero.png",
-      "sha256": "d293f86119eb88bbcbd854eef3bbba82832dc0f6a726e3ad24e8fbd355800d3b"
+      "sha256": "fd521558fd1825038249a76ebfed7044e5d752e2f9c3d873557bc69f1eb64467"
     },
     {
       "path": "docs/assets/solid/planetary-loop.gif",
-      "sha256": "1c49f3867f04fb69fcaa6507605f9affc2245ad7d025eac8a10051a6e4e39909"
+      "sha256": "89eeab02e5cb0cdaa4ded8cafcd7010ae3d780b0fd497d3e67d78b8b6a0a6a96"
     },
     {
       "path": "docs/assets/solid/provenance.json",
-      "sha256": "ee736ec8dac78a8e6c4c1001416c57dc6dcf89a261fc2b0262036f85ccc08b04"
+      "sha256": "e002b2dd45c5bf4f5e54bf9ce110337aa948cd1ed7519b214b42f249cfc0603d"
     },
     {
       "path": "docs/assets/solid/slider-crank-section.png",
-      "sha256": "27680b1d80a0695df6e05b6beedf73ef15cc30cb35122990c368752f1789bc33"
+      "sha256": "87926b2fa7bbcea44343a72143c1ac061ff623ef870204dd7f2d8913d079f7d8"
     },
     {
       "path": "docs/fixtures/v1/highlight-cycle.scene.json",
