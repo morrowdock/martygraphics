@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Name missing keys in solid-format refusals (`part.drive.crankSlider.missing.radius,rod`
+  instead of `….missing`). In a recorded prompt-to-3D trial a model wrote `crankRadius`
+  and `rodLength`, received only `missing` three times and never found the right keys.
 - Document the solid format's text limits (title 80, part name 60, step text 240) and
   that `at` / `rot` go inside each shape entry, and add worked example models for crank
   drives (`slider-crank.json`) and repeated blades (`propeller.json`), kept valid by a

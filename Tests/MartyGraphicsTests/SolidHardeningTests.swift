@@ -242,6 +242,15 @@ final class SolidHardeningTests: XCTestCase {
 
     // MARK: Reasons
 
+    func testMissingKeysAreNamedInTheReason() throws {
+        // A model that writes crankRadius/rodLength instead of radius/rod must learn which keys are missing.
+        let crank = "{\"id\": \"crank\", \"shape\": \(gear(12)), \(spin), \"drive\": {\"input\": 1}}"
+        let piston = "{\"id\": \"piston\", \"shape\": {\"box\": {\"size\": [10, 10, 10]}}, \"joint\": {\"prismatic\": [1, 0, 0]}, "
+            + "\"drive\": {\"crankSlider\": {\"crank\": \"crank\", \"crankRadius\": 18, \"rodLength\": 62}}}"
+        XCTAssertEqual(reason(doc("\(crank), \(piston)")), "part.drive.crankSlider.missing.radius,rod")
+        XCTAssertEqual(reason(doc("{\"id\": \"b\", \"shape\": {\"shaft\": {\"radius\": 4}}}")), "part.shaft.missing.length")
+    }
+
     func testReasonsAreStableTokensInADeterministicOrder() throws {
         let sun = "{\"id\": \"sun\", \"shape\": \(gear(24)), \(spin), \"drive\": {\"input\": 1}}"
         let cases: [(String, String)] = [
