@@ -14,6 +14,27 @@ swift build && swift test
 git status --porcelain
 ```
 
+When the checkout includes `Examples/UnitCircle`, also build it and run its
+geometry verification:
+
+```sh
+swift build --jobs 2 --package-path Examples/UnitCircle
+swift run --skip-build --package-path Examples/UnitCircle unit-circle --verify
+```
+
+When it includes `tools/SceneValidator`, also run:
+
+```sh
+swift test --jobs 2 --package-path tools/SceneValidator
+swift build -c release --jobs 2 --package-path tools/SceneValidator
+```
+
+Record each present package's results separately in the exact-source receipt.
+The root package test run does not build or test these subpackages. A missing
+command or failed check cannot be replaced by an older receipt that only covered
+the engine. UnitCircle's geometry verification is not a visual or interaction
+check; those still require an approved native preview.
+
 Record the commit, macOS / Xcode / Swift versions, complete output, and exit
 codes with the release evidence. All tests must pass; do not replace failures
 with skips. No private fixture file, environment variable, app adapter,

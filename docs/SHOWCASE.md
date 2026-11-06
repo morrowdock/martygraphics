@@ -4,14 +4,14 @@ These examples use the public format and drawing primitives. They show different
 uses of the engine without implying a curriculum, solver, running infrastructure
 service, or AI model.
 
-| Example | What to notice | Source |
-| --- | --- | --- |
-| Tree search | Follow comparisons through a binary search tree. | [tree.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json) |
-| Two pointers | Move through an array to find two numbers totaling 14. | [two-pointers.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json) |
-| Message handoff | A step changes the highlighted node in a directed diagram; no queue is executed. | [handoff.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json) |
-| Sampled function | Seven supplied points sketch y = x²; the engine does not derive them. | [function.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
-| Synthetic counts | Compare Alpha 18, Beta 30, Gamma 24. Every value is invented. | [counts.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
-| Geometric motion | A marker takes two seconds from A to B, then returns. No force model is implied. | [motion.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
+| Example | In `--preview` | What to notice | Source |
+| --- | --- | --- | --- |
+| Tree search | Follow a search | Follow comparisons through a binary search tree. | [tree.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json) |
+| Two pointers | Walk an array | Move through an array to find two numbers totaling 14. | [two-pointers.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json) |
+| Message handoff | Trace a handoff | A step changes the highlighted node in a directed diagram; no queue is executed. | [handoff.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json) |
+| Sampled function | See the samples | Seven supplied points sketch y = x²; the engine does not derive them. | [function.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
+| Synthetic counts | Compare quantities | Compare Alpha 18, Beta 30, Gamma 24. Every value is invented. | [counts.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
+| Geometric motion | Move through a scene | A marker takes two seconds from A to B, then returns. No force model is implied. | [motion.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
 
 ## Run or reproduce
 
@@ -44,7 +44,7 @@ renderer scale 1. Later documentation/CI changes do not change the captured Swif
 | Asset | Pixels | Size | Timing |
 | --- | --- | --- | --- |
 | [Overview](assets/native/overview.png) | 1172 × 1640 | 454 KiB | Still; individual views have clearer small labels |
-| [Tree](assets/native/tree.png), [array](assets/native/two-pointers.png), [handoff](assets/native/handoff.png), [function](assets/native/function.png), [counts](assets/native/counts.png), [motion](assets/native/motion.png) | 840 × 662 each | 91–158 KiB each | Stills; motion sampled at one second |
+| [Tree](assets/native/tree.png), [array](assets/native/two-pointers.png), [handoff](assets/native/handoff.png), [function](assets/native/function.png), [counts](assets/native/counts.png), [motion](assets/native/motion.png) | 840 × 662 each | 90–158 KiB each | Stills; motion sampled at one second |
 | [Two pointers](assets/native/two-pointers.gif) | 840 × 662 | 53 KiB | 4 distinct frames × 1.2 s = 4.8 s |
 | [Motion](assets/native/motion.gif) | 840 × 662 | 124 KiB | 32 distinct frames × stored 0.13 s = 4.16 s (about 7.69 fps) |
 
@@ -61,7 +61,8 @@ claimed. See the [remaining quality work](QUALITY.md).
 ## Static gallery
 
 Each source link above is runnable in the [same local showcase](../Examples/Showcase/README.md):
-choose the named scene in `--preview`, or export the complete set with `--export`.
+pick a scene by its preview title from the table above in `--preview`, or export
+the complete set with `--export`.
 The accepted receipt covers export; interactive controls still need validation.
 
 ### Tree search

@@ -6,12 +6,14 @@
 
 Validated JSON → native diagrams, walkthroughs, and animation in SwiftUI.
 
+**Early preview** · macOS 14+ and iOS 17+ · No external packages · [Apache-2.0](LICENSE)
+
 [Examples](docs/SHOWCASE.md) · [Quick start](#quick-start) · [Tutorial](docs/GETTING-STARTED.md) · [Contribute](CONTRIBUTING.md)
 
 </div>
 
 <p align="center">
-  <a href="docs/SHOWCASE.md"><img src="docs/assets/native/two-pointers.gif" width="840" alt="Native two-pointer walkthrough: pointers move through 2, 5, 9, 14 and find 5 + 9 = 14 in four steps."></a>
+  <a href="docs/SHOWCASE.md"><img src="docs/assets/native/two-pointers.gif" width="840" alt="Native two-pointer walkthrough over 2, 5, 9, 14: L starts at 2 and R at 14, then they move inward until 5 + 9 = 14, in four steps."></a>
 </p>
 
 **An array walkthrough, rendered by the public Swift engine.** Four native frames,
@@ -120,7 +122,9 @@ Interactive control/accessibility testing remains pending; the capture receipt
 covers offscreen export. See [the runnable example](Examples/Showcase/README.md)
 for the export command and platform details.
 
-For an existing app, add the `MartyGraphics` Swift package product, then parse a scene:
+For an existing app, there is no tagged release yet: add a local checkout as a path
+dependency, as the [showcase package](Examples/Showcase/Package.swift) does. Then use the
+`MartyGraphics` product and parse a scene:
 
 ```swift
 import Foundation
@@ -160,6 +164,8 @@ authenticated maintainer status.
 - [Showcase and original example sources](docs/SHOWCASE.md)
 - [Tutorial](docs/GETTING-STARTED.md) · [Protocol](docs/PROTOCOL.md) · [Structural grammar](Sources/MartyGraphics/MGGrammar.swift)
 - [Template API](Sources/MartyGraphics/MGTemplates.swift) · [Pack API](Sources/MartyGraphics/MGPack.swift)
+- [Scene file validator](tools/SceneValidator/README.md): a macOS-only command-line parser
+  check for scene JSON files; it does not render scenes or review visual quality
 - [Source provenance](docs/EXPORT.json) · [Third-party inventory](docs/THIRD-PARTY.md)
 - [Public sync ownership and review process](docs/PUBLIC-SYNC.md)
 - [Versioned installation and discovery gates](docs/DISTRIBUTION.md)
