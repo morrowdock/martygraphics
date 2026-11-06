@@ -54,6 +54,26 @@
       "sha256": "6b1158d34a7c2aa2d1948910d532785da19c569c4cb228f42fd4ed0d7654733f"
     },
     {
+      "path": "Examples/PathTrace/Package.swift",
+      "sha256": "f587f8d9f03fad0a4960e4bc669f100c1c6f78c5a2e7a47c714e3271d8d5fc63"
+    },
+    {
+      "path": "Examples/PathTrace/Sources/MartyPathTrace/Export.swift",
+      "sha256": "ef41c2b21889506b7bda5a2b3bf6b5d0081b8924e20af63a808f0ecb6ff1ea77"
+    },
+    {
+      "path": "Examples/PathTrace/Sources/MartyPathTrace/GearGeometry.swift",
+      "sha256": "f4267ef2a56f33f7d77980ee9790bc730bcb5654630c9af82437d4cc2c0b8571"
+    },
+    {
+      "path": "Examples/PathTrace/Sources/MartyPathTrace/Gearbox.swift",
+      "sha256": "49a2b42a231e59bf203793779a948709149ffbf85428b3faf404cd61f1903de1"
+    },
+    {
+      "path": "Examples/PathTrace/Sources/MartyPathTrace/PathTraceCLI.swift",
+      "sha256": "27707b8f12bedbc030a879b21a1b205027fe8fa10e99e88f3775b1ade78906d7"
+    },
+    {
       "path": "Examples/Showcase/Package.swift",
       "sha256": "15a3f0726e953acb8b97f8a3441a3bc4550854c7349a4deeb1964dad2a6c845d"
     },
@@ -103,7 +123,7 @@
     },
     {
       "path": "Package.swift",
-      "sha256": "958fda07b5c5b56efd56cb63650da4781bb81c3529ee73a83b57c58b85996211"
+      "sha256": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f"
     },
     {
       "path": "README.md",
@@ -184,6 +204,34 @@
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
       "sha256": "67b4fa9c02ce50030470930e31826f168727977f998f3754e6c301fea6e632e7"
+    },
+    {
+      "path": "Sources/MartyGraphicsPathTracer/MGRTEnvironment.swift",
+      "sha256": "4fd9157d8837c74d57c7e16704c9ead4b93c48ac03e6282d18e6805bf5588acd"
+    },
+    {
+      "path": "Sources/MartyGraphicsPathTracer/MGRTRenderer.swift",
+      "sha256": "130624af561ea6ded47e2b471031209c89e9f95fc05e4700ab2689537548570a"
+    },
+    {
+      "path": "Sources/MartyGraphicsPathTracer/MGRTSampling.swift",
+      "sha256": "a2d48d92ce8f094d848eae3aad9f55753fdb6440c9e100282bf1e39c4038655d"
+    },
+    {
+      "path": "Sources/MartyGraphicsPathTracer/MGRTScene.swift",
+      "sha256": "9699416f41684e3a49305bfcec269d110c16e720bc0f0bce634b78ffa20d360d"
+    },
+    {
+      "path": "Sources/MartyGraphicsPathTracer/MGRTShaderSource.swift",
+      "sha256": "8c86d1cf4c17107a202c41e8d9a7b639816cc52089d95cf0509c9302d3b2c40d"
+    },
+    {
+      "path": "Tests/MartyGraphicsPathTracerTests/MGRTGPUSmokeTests.swift",
+      "sha256": "e3a590d5b4c828b4fe8551ba73020c5567c19d03a4745256cce8e661b6284ad5"
+    },
+    {
+      "path": "Tests/MartyGraphicsPathTracerTests/MGRTSamplingTests.swift",
+      "sha256": "9e2966b3ea737af541c5e81c227f3cc8796d794a69dd066412411f5d6c8e7f9b"
     },
     {
       "path": "Tests/MartyGraphicsTests/ControllerRollbackTests.swift",
