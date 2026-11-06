@@ -44,7 +44,8 @@ steps, and motion. Your application supplies the content and decides what happen
 **Find the cheapest route.** The opt-in graph pack computes shortest paths locally.
 Each step settles the closest node, relaxes its links and updates the distance table.
 Change one link weight with a `params` patch, and the engine recomputes the whole
-walkthrough and its narration. Here, the direct-looking routes lose: 0→2→1→3→4→5 costs 13.
+walkthrough and its narration. Here the cheapest route is 0→2→1→3→4→5 at cost 13,
+not the shorter-looking 0→1→3→5 at cost 15.
 
 ![Native shortest-path walkthrough over six routers: nodes settle one at a time and the distance table fills in until the route 0, 2, 1, 3, 4, 5 at cost 13 is highlighted.](docs/assets/native/shortest-path.gif)
 
@@ -178,8 +179,8 @@ These are **plans, not shipped features**. Each one lands only after tests, revi
 real evidence:
 
 - **Interactive 3D inspection.** Select a part, emphasize or dim others, orbit, and
-  reset the camera, opt-in per board. A working prototype passes its tests; on-screen
-  interaction checks are next.
+  reset the camera, opt-in per board. This is not in the repository yet; it lands
+  after on-screen interaction checks.
 - **Accessible graph states.** Show edge status with more than colour.
 - **More teaching packs.** Reusable assemblies and linked plots with narration.
 
