@@ -54,21 +54,19 @@
       "Tests/MartyGraphicsTests/SolidTurboTests.swift": "cf50fae34deb9531a5c16c531375ca68161c14b2a41b93026ef5512ef19d1bdd"
     },
     "laterChanges": {
-      "mainRebase": {
-        "base": "17396a2fbc000dc30c71716f0f54e74827369706",
-        "files": {
-          "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift": "2e351af484c0bebce2a202f9b2ea9ae68f0e2de3c6583189a6cc70891f44c1ed",
-          "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json": "14db9715f7a80e3fdc431cd7e1a38c79cfa6e88bd6f3fdc875bbce14ccfb4112",
-          "Examples/Turbofan/Sources/TurbofanKit/TurbofanChecks.swift": "ecabd815312be94ec7230bf5a8baead2333aabc1ab2a21a2c41b023492eeef53",
-          "Examples/Turbofan/Tests/TurbofanTests/TurbofanTests.swift": "912a0447d7a6bbdc80384c130bdd5226ea058f139b49e3a51f0e99cef07a5a43",
-          "Sources/MartyGraphics/Solid/MGSolidParser.swift": "e298432b6583c9cc3db8a9779d928da3146bbefa370ef8e5e299f1dada5bc8e8",
-          "Sources/MartyGraphics/Solid/MGSolidShapes.swift": "918086d8ddc6868a73eb054f546114974a9f25f6c1536b0f3087d81b6052e014",
-          "Sources/MartyGraphics/Solid/MGSolidTurbo.swift": "510fb6fdcc2f5a8f9a19f997a7e463ee9666df40b03d1c015129ce45e1aa245d",
-          "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "55ec216a5b9c77218df8c957035e760b0ce6e4cd9a0d717947c6eefda4e9148f",
-          "Tests/MartyGraphicsTests/SolidTurboTests.swift": "dc7e09bedc2fb69ec560b55994adb0562d8e57a24dd7a91839b87ae68cf27025"
-        },
-        "note": "Rebased onto main after the capture. Public PR #16 changed only refusal wording in MGSolidParser.swift (missing keys are named); PR #15 added docs and example models. Geometry, kinematics of accepted models and rendering are unchanged. sourceFiles keeps the capture-time hashes."
-      }
+      "headFiles": {
+        "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift": "2e351af484c0bebce2a202f9b2ea9ae68f0e2de3c6583189a6cc70891f44c1ed",
+        "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json": "14db9715f7a80e3fdc431cd7e1a38c79cfa6e88bd6f3fdc875bbce14ccfb4112",
+        "Examples/Turbofan/Sources/TurbofanKit/TurbofanChecks.swift": "ecabd815312be94ec7230bf5a8baead2333aabc1ab2a21a2c41b023492eeef53",
+        "Examples/Turbofan/Tests/TurbofanTests/TurbofanTests.swift": "912a0447d7a6bbdc80384c130bdd5226ea058f139b49e3a51f0e99cef07a5a43",
+        "Sources/MartyGraphics/Solid/MGSolidParser.swift": "e298432b6583c9cc3db8a9779d928da3146bbefa370ef8e5e299f1dada5bc8e8",
+        "Sources/MartyGraphics/Solid/MGSolidShapes.swift": "918086d8ddc6868a73eb054f546114974a9f25f6c1536b0f3087d81b6052e014",
+        "Sources/MartyGraphics/Solid/MGSolidTurbo.swift": "510fb6fdcc2f5a8f9a19f997a7e463ee9666df40b03d1c015129ce45e1aa245d",
+        "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "55ec216a5b9c77218df8c957035e760b0ce6e4cd9a0d717947c6eefda4e9148f",
+        "Tests/MartyGraphicsTests/SolidTurboTests.swift": "dc7e09bedc2fb69ec560b55994adb0562d8e57a24dd7a91839b87ae68cf27025"
+      },
+      "base": "17396a2fbc000dc30c71716f0f54e74827369706",
+      "note": "Files whose bytes differ from sourceFiles at this head, and why: (1) review fixes on this branch: TurbofanChecks.swift, Turbofan.swift and TurbofanTests.swift (clearance reported as a true lower bound, 4.52 mm), MGSolidShapes.swift and MGSolidTurbo.swift (one shared full-turn decision for build and mesh estimate; posed geometry snapshot unchanged), turbofan.json (exploded-step text only; exploded.png re-rendered), SolidTurboTests.swift and SolidHardeningTests.swift (new tests); (2) rebase onto public main: MGSolidParser.swift (PR #16 names missing keys in refusal reasons). pathtraced-hero.png, labelled.png and turbofan-loop.gif are unaffected: the geometry snapshot is byte-identical and a fresh studio export differed only by SceneKit shadow noise (at most 6/255 on under 1% of pixels)."
     }
   },
   "capture": {
