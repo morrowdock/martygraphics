@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "ae6d4674076e3f36c6dfb7e5eb56d74b7d9afdd96d80a52c680963b655183aee"
+      "sha256": "ba3a9de2488f92ea808f8b62d58a2d0faa241d45deaf0a5fd2f46e90002ff346"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -146,6 +146,42 @@
       "sha256": "d0fd495224d98bf54ba1276388279743871d963c336fad275d394ea61f0cb876"
     },
     {
+      "path": "Examples/Turbofan/Package.swift",
+      "sha256": "a0aebee38f1d4f526aa14d578929b797a20bc82deef1c0cc7647075c3060ddeb"
+    },
+    {
+      "path": "Examples/Turbofan/README.md",
+      "sha256": "0a58cfb329f0848a535c29abd81c48b25dbff9492a82bff561be443f745ea402"
+    },
+    {
+      "path": "Examples/Turbofan/Sources/MartySolidRT/MGSolidRT.swift",
+      "sha256": "ce35593191b4032d05bbdde9227959df16f13568df5135b8997b67407ef84471"
+    },
+    {
+      "path": "Examples/Turbofan/Sources/MartyTurbofan/Media.swift",
+      "sha256": "f69bc55192df31ac43ac392c1cb88ed889bd2bcbf5eaa7e1523c523198e5d45a"
+    },
+    {
+      "path": "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift",
+      "sha256": "2e351af484c0bebce2a202f9b2ea9ae68f0e2de3c6583189a6cc70891f44c1ed"
+    },
+    {
+      "path": "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json",
+      "sha256": "14db9715f7a80e3fdc431cd7e1a38c79cfa6e88bd6f3fdc875bbce14ccfb4112"
+    },
+    {
+      "path": "Examples/Turbofan/Sources/TurbofanKit/TurbofanChecks.swift",
+      "sha256": "ecabd815312be94ec7230bf5a8baead2333aabc1ab2a21a2c41b023492eeef53"
+    },
+    {
+      "path": "Examples/Turbofan/Sources/TurbofanKit/TurbofanModel.swift",
+      "sha256": "f37241ca0086a4044efc7069a1e2b9adf5f256451cb71ed4a2ebddc4bd5a44ef"
+    },
+    {
+      "path": "Examples/Turbofan/Tests/TurbofanTests/TurbofanTests.swift",
+      "sha256": "912a0447d7a6bbdc80384c130bdd5226ea058f139b49e3a51f0e99cef07a5a43"
+    },
+    {
       "path": "LICENSE",
       "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
     },
@@ -159,7 +195,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "fb6ae059f4a9ef19903314e35ab35562c466b3f524ad97053be064df1218e93d"
+      "sha256": "c72919c89a7493bc9f77500a737b4351eb25a5b6ce2e27ea33e06305d3362af7"
     },
     {
       "path": "SECURITY.md",
@@ -247,7 +283,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGMaterial.swift",
-      "sha256": "e84dc65832a313af9c71dca50674942d8f395ffcd471647640c593452177b66d"
+      "sha256": "e9c53e035553c86154578c3bd252573199559c9bcb40316c1af0db2e08960b5d"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGMesh.swift",
@@ -275,7 +311,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidParser.swift",
-      "sha256": "6b93d01c989e2d415313ebe54a945287b255f0c97e529c094cea5136b2cc5cd2"
+      "sha256": "e298432b6583c9cc3db8a9779d928da3146bbefa370ef8e5e299f1dada5bc8e8"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
@@ -283,11 +319,15 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidShapes.swift",
-      "sha256": "7d5dc853699561e20f2ff8b43e022a89753987550eb48964d2d0e464c3a7bebe"
+      "sha256": "918086d8ddc6868a73eb054f546114974a9f25f6c1536b0f3087d81b6052e014"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSnapshot.swift",
       "sha256": "9344f2878ec6ae560122999ff11b99b80139d6b9b504342e04bce1e31f848135"
+    },
+    {
+      "path": "Sources/MartyGraphics/Solid/MGSolidTurbo.swift",
+      "sha256": "510fb6fdcc2f5a8f9a19f997a7e463ee9666df40b03d1c015129ce45e1aa245d"
     },
     {
       "path": "Sources/MartyGraphicsPathTracer/MGRTEnvironment.swift",
@@ -375,7 +415,11 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidHardeningTests.swift",
-      "sha256": "7ac143da15f92b3f14b44a265bff7b63a21bf7d7c9ce8c7dd60b9af4f5d06269"
+      "sha256": "55ec216a5b9c77218df8c957035e760b0ce6e4cd9a0d717947c6eefda4e9148f"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/SolidTurboTests.swift",
+      "sha256": "dc7e09bedc2fb69ec560b55994adb0562d8e57a24dd7a91839b87ae68cf27025"
     },
     {
       "path": "Tests/MartyGraphicsTests/StreamRegressionTests.swift",
@@ -387,7 +431,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "a90f34dab02b4e0e85bbf830c65e02b28e5acc3869b6d23321d5f6f828b011e1"
+      "sha256": "77512286a905dce6925c7f878ea114717eb8dbe7cf50a77077749918c4b89110"
     },
     {
       "path": "docs/DISTRIBUTION.md",
@@ -395,7 +439,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "ca46212560afa8bda0f2ebdfe7170a2f4b137f5c646394c34c65c02f4010b006"
+      "sha256": "c3c8be90b305430a9523184c8cb04b5fdee94f6ff39eefa21bf4783346014cac"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -423,11 +467,11 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "7d49af075254a4e74a5d7039945dab77f76696d970a4eda1e1187d6a354dfa0a"
+      "sha256": "25926e1aeb4dd6970b930209d20d65d785ebecc5c5b10e39f70f30f86d73ecb5"
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "bb1a623373ca29f8d3176093978f0c148f35bc4501c631396f22edaa8fe6167c"
+      "sha256": "903b52db0b35d17f4bf2a1c891d8d5cc16a63abeb7a5828eedb65c16abc79fe8"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -490,6 +534,10 @@
       "sha256": "8f0676ed5251106e92aa60f71b1b9a0271ba1ba35818f3ad1689235993b6559a"
     },
     {
+      "path": "docs/assets/pathtrace/gearbox-loop-640.gif",
+      "sha256": "496535c76af68e331a8a29127ba6fea1eb7f8b928036dceca716dc868df65a6a"
+    },
+    {
       "path": "docs/assets/pathtrace/gearbox-loop.gif",
       "sha256": "a3a94423b60020085b6d34e88c93dbf421b426d0082f00f42b878abd7e11a371"
     },
@@ -499,7 +547,7 @@
     },
     {
       "path": "docs/assets/pathtrace/provenance.json",
-      "sha256": "0a1cc32a59cf0dfb76b3ac0e8b4cb170edf889d6f6a9106c85aa202ba8e7f0f9"
+      "sha256": "17552655c9f0a151b555f773045b725290b11f95f2886ca7d52a73e53d9b1b7f"
     },
     {
       "path": "docs/assets/pathtrace/side-by-side.png",
@@ -524,6 +572,26 @@
     {
       "path": "docs/assets/solid/slider-crank-section.png",
       "sha256": "87926b2fa7bbcea44343a72143c1ac061ff623ef870204dd7f2d8913d079f7d8"
+    },
+    {
+      "path": "docs/assets/turbofan/exploded.png",
+      "sha256": "8d4d8fbb78198e2d69696390ae0c7e5a3ba41eb09f9cc2cb19a8af65c9be4506"
+    },
+    {
+      "path": "docs/assets/turbofan/labelled.png",
+      "sha256": "c12d119f2ed6165eee636ceaf642143bd01ed6c390a38c0c6b911e40fbd13b9e"
+    },
+    {
+      "path": "docs/assets/turbofan/pathtraced-hero.png",
+      "sha256": "6642b9b04f9af7dfbef7b4e16399be7e22ada2fd2e528b47ddfdd5195b53ea92"
+    },
+    {
+      "path": "docs/assets/turbofan/provenance.json",
+      "sha256": "fa9f37c70b135a76e44d916124d6263dd20e1584c241d7a4cae92ad26b0c766e"
+    },
+    {
+      "path": "docs/assets/turbofan/turbofan-loop.gif",
+      "sha256": "12d9f93fec8cd20a950ff3a5e4b91b9a81a82ca60fe7de45914d28674aa7c994"
     },
     {
       "path": "docs/fixtures/v1/highlight-cycle.scene.json",
