@@ -4,8 +4,7 @@ import XCTest
 
 /// Record-list template parameters and the opt-in `shortest_path` template. Graph results are checked against
 /// independent oracles written here (Bellman–Ford distances; route counts by enumerating node sequences), not against the
-/// template's own Dijkstra code. Exact narration goldens were derived from a line-by-line Python transcription of the
-/// template; they still need a compiled Swift run.
+/// template's own Dijkstra code. Exact narration strings are pinned golden values.
 final class RecordParamsShortestPathTests: XCTestCase {
     override func tearDown() { MGPacks.resetRegistered() }
 
@@ -380,7 +379,7 @@ final class RecordParamsShortestPathTests: XCTestCase {
             XCTAssertTrue(s.steps.allSatisfy { $0.say.unicodeScalars.count < MGLimits.say })   // summary truncation never needed
             checked += 1
         }
-        // Exact counts replayed from the same generator in the Python transcription (probes/lcg_property.out).
+        // Exact counts are pinned values for this fixed generator and seed.
         XCTAssertEqual(checked, 389); XCTAssertEqual(unreachableSeen, 226); XCTAssertEqual(reachableTargets, 106)
         XCTAssertEqual(tiedTargets, 5); XCTAssertEqual(sourceIsTarget, 62); XCTAssertEqual(narratedTies, 21)
     }
@@ -478,7 +477,6 @@ final class RecordParamsShortestPathTests: XCTestCase {
         XCTAssertNil(reason(#"{"v":1,"template":"shortest_path","params":\#(params),"items":[\#(extras(10))]}"#))
         XCTAssertEqual(reason(#"{"v":1,"template":"shortest_path","params":\#(params),"items":[\#(extras(11))]}"#), "items.count")
         let edits = s.steps.reduce(0) { $0 + $1.edits.count }
-        print("MG-METRIC largest-graph steps=\(s.steps.count) cumulativeEdits=\(edits) maxStepEdits=\(s.steps.map(\.edits.count).max() ?? 0) canonicalBytes=\(s.source.canonicalData.count)")
         XCTAssertEqual(edits, 53)                                  // indicative only; frame cost is unmeasured
         XCTAssertLessThanOrEqual(edits, 120, "edit replay per frame stays bounded")
     }

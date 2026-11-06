@@ -187,7 +187,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/RecordParamsShortestPathTests.swift",
-      "sha256": "048b9b8ef674002c9affb1c0ee6999657753ffe8ecf022ff62cc2922ca288daf"
+      "sha256": "ede145b61e93bde0e5051446f057ca4d96609dea0fe19973d08ea8e30d630f80"
     },
     {
       "path": "Tests/MartyGraphicsTests/RegressionFixtures.swift",
