@@ -76,6 +76,7 @@ extension MGLessonSession {
     }
 
     static func restoring(_ snapshot: MGJSON, pacing: MGPacing, clock: MGLessonClock) throws -> MGLessonSession {
+        guard snapshot.isEncodable else { throw MGError("snapshot.number") }   // NaN or an infinity built in code
         guard let o = snapshot.objectValue, o["kind"] == .string("lessonSnapshot") else { throw MGError("snapshot.kind") }
         guard o["v"] == .number(1) else { throw MGError("snapshot.version") }
         func int(_ v: MGJSON?, _ what: String) throws -> Int {

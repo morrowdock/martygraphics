@@ -458,13 +458,14 @@ final class LessonCoreTests: LessonTestCase {
         MGPacks.resetRegistered()
         let data = try JSONSerialization.data(withJSONObject: MGGrammar.document(), options: [.sortedKeys, .withoutEscapingSlashes])
         // FNV-1a 64 of the canonical default grammar document. Its inputs (MGGrammar, MGParser key tables, MGKind,
-        // MGColorRole, core templates, MGLimits) are byte-identical to origin/main 6211345.
+        // MGColorRole, core templates, MGLimits) match origin/main 6211345 except for the additive `table` and `region`
+        // kinds (two more `kinds` entries); lessons add nothing to the default document.
         var hash: UInt64 = 0xcbf29ce484222325
         for b in data { hash = (hash ^ UInt64(b)) &* 0x100000001b3 }
         XCTAssertEqual(String(hash, radix: 16), Self.grammarHash, "byte count \(data.count)")
         XCTAssertEqual(data.count, Self.grammarBytes)
         XCTAssertFalse(MGTemplates.library.keys.contains("rotate2d"), "the geometry pack is opt-in")
     }
-    static let grammarHash = "726ea7a239793ed7"
-    static let grammarBytes = 2456
+    static let grammarHash = "96001c839d70324d"
+    static let grammarBytes = 2700
 }

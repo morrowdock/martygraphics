@@ -30,7 +30,7 @@ enum MGRegression {
     static func scene(_ json: String) throws -> MGScene { try MGParser.scene(data: Data(json.utf8)).get() }
     static func patch(_ json: String) throws -> MGPatch { try MGPatch.parse(data: Data(json.utf8)).get() }
 
-    /// All 17 item kinds, each valid in the default 12 x 8 world, with optional keys exercised.
+    /// All 19 item kinds, each valid in the default 12 x 8 world, with optional keys exercised (plus a `code` text line).
     static let allKinds = #"""
     {"v":1,"title":"Every kind","items":[
      {"id":"b","k":"body","at":[2,2],"shape":"ball","size":1.5,"angle":30,"label":"Body","move":{"to":[4,2],"t":1.5}},
@@ -51,7 +51,10 @@ enum MGRegression {
      {"id":"arr","k":"array","at":[6,3],"vals":[1,2.5,"x"],"cell":0.8,"ptrs":[{"i":0,"label":"L"},{"i":2,"label":"R"}],"marked":[1],"label":"Cells"},
      {"id":"na","k":"node","at":[4,5],"text":"A","r":0.4},
      {"id":"nb","k":"node","at":[5,6],"text":"B"},
-     {"id":"ed","k":"edge","a":"na","b":"nb","dir":true,"label":"next"}
+     {"id":"ed","k":"edge","a":"na","b":"nb","dir":true,"label":"next"},
+     {"id":"tb","k":"table","at":[9,6],"cells":[["k","v"],["a",1]],"header":true,"cw":1.2,"rh":0.5,"marked":[[1,1]],"label":"Cells"},
+     {"id":"rg","k":"region","pts":[[0.5,0.5],[2,0.5],[1.2,1.5]],"dashed":true,"label":"Zone"},
+     {"id":"cd","k":"text","at":[0.5,6.5],"text":"  i < n","style":"code"}
     ]}
     """#
 

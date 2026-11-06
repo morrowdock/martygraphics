@@ -14,6 +14,10 @@ public enum MGLimits {
     /// Template record-list parameters: at most this many records of at most this many numeric fields. These bounds
     /// apply to the record-list shape only; no existing limit changes.
     public static let records = 32, recordFields = 6
+    /// Raw (free-form JSON) template parameters: the canonical `params` object may be at most this many bytes.
+    public static let rawParamsBytes = 4 * 1024
+    /// `table` items: at most this many rows and columns, and this many characters per cell.
+    public static let tableRows = 8, tableCols = 6, tableCellText = 12
 }
 
 public struct MGError: Error, Equatable, CustomStringConvertible {
@@ -46,13 +50,25 @@ public enum MGParser {
         guard let json = MGJSON(any: object) else { return .failure(.init("json")) }
         return scene(json: json)
     }
-    public static func scene(json: MGJSON) -> Result<MGScene, MGError> {
-        do { return .success(try parseScene(json)) } catch let e as MGError { return .failure(e) } catch { return .failure(.init("unknown")) }
+    public static func scene(json: MGJSON) -> Result<MGScene, MGError> { scene(json: json, extraTemplates: []) }
+
+    /// Parse with templates that are not registered yet, for example to check a pack before `MGPacks.register`.
+    /// A registered template with the same name wins over an extra one. Extras are used for this call only; they are
+    /// never registered. A scene that names an extra template keeps the template name, so a later patch on it must
+    /// also go through `applying(_:extraTemplates:)` with the same extras (or the template must be registered).
+    public static func scene(data: Data, extraTemplates: [MGTemplate]) -> Result<MGScene, MGError> {
+        guard data.count <= MGLimits.sceneBytes * 2, let object = try? JSONSerialization.jsonObject(with: data) else {
+            return .failure(.init("json"))
+        }
+        return scene(object: object, extraTemplates: extraTemplates)
     }
-    /// Parse with templates that are not registered yet (pack validation).
-    static func scene(data: Data, extraTemplates: [MGTemplate]) -> Result<MGScene, MGError> {
-        guard data.count <= MGLimits.sceneBytes * 2, let object = try? JSONSerialization.jsonObject(with: data),
-              let json = MGJSON(any: object) else { return .failure(.init("json")) }
+    /// See `scene(data:extraTemplates:)`.
+    public static func scene(object: Any, extraTemplates: [MGTemplate]) -> Result<MGScene, MGError> {
+        guard let json = MGJSON(any: object) else { return .failure(.init("json")) }
+        return scene(json: json, extraTemplates: extraTemplates)
+    }
+    /// See `scene(data:extraTemplates:)`.
+    public static func scene(json: MGJSON, extraTemplates: [MGTemplate]) -> Result<MGScene, MGError> {
         do { return .success(try parseScene(json, extra: extraTemplates)) } catch let e as MGError { return .failure(e) } catch { return .failure(.init("unknown")) }
     }
 
@@ -60,7 +76,9 @@ public enum MGParser {
 
     static func parseScene(_ json: MGJSON, extra: [MGTemplate] = []) throws -> MGScene {
         guard case .object(let o) = json else { throw MGError("scene.object") }
-        guard json.canonicalData.count <= MGLimits.sceneBytes else { throw MGError("scene.bytes") }
+        // A value built in code may hold NaN or an infinity, which has no JSON form; refuse it before measuring.
+        guard json.isEncodable else { throw MGError("scene.number") }
+        guard json.canonicalByteCount <= MGLimits.sceneBytes else { throw MGError("scene.bytes") }
         try closed(o, required: ["v"], optional: topKeys, "scene")
         guard o["v"] == .number(1) else { throw MGError("scene.version") }
         let is3D: Bool
@@ -72,7 +90,9 @@ public enum MGParser {
             guard o["world"] == nil else { throw MGError("template.world") }
             guard let p = o["params"]?.objectValue else { throw MGError("template.params") }
             let params = try template.validate(p)
-            guard let built = template.build(params, is3D) else { throw MGError("template.build") }
+            // A template may throw; `build` keeps a well-formed `template.<suffix>` reason and reports anything else
+            // as `template.build`.
+            guard let built = try template.build(params, is3D) else { throw MGError("template.build") }
             build = built
         } else {
             for key in ["params", "hide", "over"] where o[key] != nil { throw MGError("scene.\(key).without.template") }
@@ -275,6 +295,8 @@ public enum MGParser {
         case .array: extra = ["at", "vals", "cell", "ptrs", "marked", "label"]
         case .node: extra = ["at", "text", "r"]
         case .edge: extra = ["a", "b", "dir", "label"]
+        case .table: extra = ["at", "cells", "header", "cw", "rh", "marked", "label"]
+        case .region: extra = ["pts", "dashed", "label"]
         }
         return common.union(extra)
     }
@@ -294,6 +316,8 @@ public enum MGParser {
         case .array: return ["at", "vals"]
         case .node: return ["at", "text"]
         case .edge: return ["a", "b"]
+        case .table: return ["at", "cells"]
+        case .region: return ["pts"]
         }
     }
     static func defaultColor(_ kind: MGKind) -> MGColorRole {
@@ -308,6 +332,7 @@ public enum MGParser {
         case .bars: return .energy
         case .incline: return .muted
         case .array, .node: return .blue
+        case .table, .region: return .accent
         }
     }
 
@@ -388,11 +413,19 @@ public enum MGParser {
         case .orbit:
             it.pts = [try p("at")]; it.num["r"] = try n("r", 0.1...(span / 2))
         case .text:
-            it.pts = [try p("at")]; it.text = try text(o["text"], MGLimits.text, ctx, "text.text")
+            it.pts = [try p("at")]
+            // Text is checked before style, as before `code` existed, so older invalid documents keep their reason.
+            // `code` keeps leading spaces and allows comparison signs; markup-like tags stay refused.
+            let isCode = o["style"] == .string("code")
+            it.text = try text(o["text"], MGLimits.text, ctx, "text.text", code: isCode)
             switch o["style"] {
             case nil, .string("label"): break
             case .string("callout"): it.flags.insert("callout")
             case .string("title"): it.flags.insert("title")
+            case .string("code"):
+                // The 3D view draws text centred and proportional, so it cannot show a code listing faithfully.
+                guard !ctx.is3D else { throw MGError("3d.text.code") }
+                it.flags.insert("code")
             default: throw MGError("text.style")
             }
         case .highlight:
@@ -450,6 +483,47 @@ public enum MGParser {
             it.ref = try identifier(o["a"]!, "edge.a"); it.ref2 = try identifier(o["b"]!, "edge.b")
             guard it.ref != it.ref2 else { throw MGError("edge.self") }
             if try flag("dir") { it.flags.insert("dir") }
+        case .table:
+            it.pts = [try p("at")]
+            guard case .array(let rows)? = o["cells"], (1...MGLimits.tableRows).contains(rows.count) else { throw MGError("table.cells") }
+            var cols = 0
+            for row in rows {
+                guard case .array(let cells) = row, (1...MGLimits.tableCols).contains(cells.count), cols == 0 || cells.count == cols else {
+                    throw MGError("table.cells")
+                }
+                cols = cells.count
+                for v in cells {
+                    switch v {
+                    case .number(let d):
+                        // A number is stored as its displayed text, so that text obeys the string-cell limit too.
+                        guard abs(d) < 1e6 else { throw MGError("table.cell") }
+                        let shown = MGPhysics.format(d, unit: "")
+                        guard shown.unicodeScalars.count <= MGLimits.tableCellText else { throw MGError("table.cell") }
+                        it.list.append(shown)
+                    case .string(let s) where s.isEmpty: it.list.append("")
+                    case .string: it.list.append(try text(v, MGLimits.tableCellText, ctx, "table.cell"))
+                    default: throw MGError("table.cell")
+                    }
+                }
+            }
+            it.num["rows"] = Double(rows.count); it.num["cols"] = Double(cols)
+            // Defaults are capped to the accepted range so the wire form of a defaulted table re-parses in small worlds.
+            it.num["cw"] = try opt("cw", 0.3...(span / 3)) ?? min(1.6, span / 3)
+            it.num["rh"] = try opt("rh", 0.3...(span / 6)) ?? min(0.7, span / 6)
+            if try flag("header") { it.flags.insert("header") }
+            if let raw = o["marked"] {
+                guard case .array(let ms) = raw, ms.count <= rows.count * cols else { throw MGError("table.marked") }
+                it.marked = try ms.map { m in
+                    guard case .array(let rc) = m, rc.count == 2 else { throw MGError("table.marked") }
+                    let r = try num(rc[0], 0...Double(rows.count - 1), "table.marked"), c = try num(rc[1], 0...Double(cols - 1), "table.marked")
+                    guard r.rounded() == r, c.rounded() == c else { throw MGError("table.marked") }
+                    return Int(r) * cols + Int(c)
+                }
+            }
+        case .region:
+            guard case .array(let points)? = o["pts"], (3...MGLimits.points).contains(points.count) else { throw MGError("region.pts") }
+            it.pts = try points.map { try point($0, ctx, "region.pts") }
+            if try flag("dashed") { it.flags.insert("dashed") }
         }
         return it
     }
@@ -496,14 +570,27 @@ public enum MGParser {
     }
 
     /// Short plain text with `{name}` placeholders filled from locally computed values. Rejects markup, code fences,
-    /// URLs, control characters and unknown placeholders.
-    static func text(_ v: MGJSON?, _ max: Int, _ ctx: MGContext, _ what: String) throws -> String {
+    /// URLs, control characters and unknown placeholders. `code` text (text style `code`) keeps leading spaces and may
+    /// hold `<` and `>` as long as nothing looks like a markup tag; every other rule is the same.
+    static func text(_ v: MGJSON?, _ max: Int, _ ctx: MGContext, _ what: String, code: Bool = false) throws -> String {
         guard case .string(let s)? = v else { throw MGError(what) }
-        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty, s.unicodeScalars.count <= max, !s.contains("<"), !s.contains(">"), !s.contains("```"), !s.contains("://"),
+        let t = s.trimmingCharacters(in: code ? .newlines : .whitespacesAndNewlines)
+        guard !t.isEmpty, !(code && t.allSatisfy(\.isWhitespace)), s.unicodeScalars.count <= max,
+              code ? !looksLikeMarkup(s) : (!s.contains("<") && !s.contains(">")), !s.contains("```"), !s.contains("://"),
               !s.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) && $0 != "\n" }) else { throw MGError(what) }
         return try fill(t, ctx.values, what)
     }
+    /// True when `<` is directly followed by a letter, `/`, `!` or `?` and a `>` comes later (a tag, comment or
+    /// processing instruction). Comparisons such as `i < n` or `a > b` are not tags.
+    static func looksLikeMarkup(_ s: String) -> Bool {
+        let c = Array(s)
+        for (i, ch) in c.enumerated() where ch == "<" && i + 1 < c.count {
+            let n = c[i + 1]
+            if n.isLetter || n == "/" || n == "!" || n == "?", c[(i + 1)...].contains(">") { return true }
+        }
+        return false
+    }
+
     static func fill(_ s: String, _ values: [String: MGValue], _ what: String) throws -> String {
         guard s.contains("{") || s.contains("}") else { return s }
         var out = "", name = "", inside = false
@@ -558,6 +645,7 @@ extension MGItem {
         case .text:
             o["at"] = pt(at(0)); o["text"] = .string(text ?? "")
             if has("callout") { o["style"] = .string("callout") }; if has("title") { o["style"] = .string("title") }
+            if has("code") { o["style"] = .string("code") }
         case .highlight: o["target"] = .string(ref ?? "")
         case .bars:
             o["at"] = pt(at(0)); put("w"); put("h"); if let text { o["unit"] = .string(text) }
@@ -568,6 +656,18 @@ extension MGItem {
             if !marked.isEmpty { o["marked"] = .array(marked.map { .number(Double($0)) }) }
         case .node: o["at"] = pt(at(0)); o["text"] = .string(text ?? ""); put("r")
         case .edge: o["a"] = .string(ref ?? ""); o["b"] = .string(ref2 ?? ""); if has("dir") { o["dir"] = .bool(true) }
+        case .table:
+            o["at"] = pt(at(0)); put("cw"); put("rh")
+            // Never trap on a malformed (public-API) table: an inconsistent shape serialises as null and is refused.
+            let rawCols = n("cols", 1), rawRows = n("rows", 1)
+            guard rawCols.isFinite, rawRows.isFinite, rawCols.rounded() == rawCols, rawRows.rounded() == rawRows,
+                  (1...Double(MGLimits.tableCols)).contains(rawCols), (1...Double(MGLimits.tableRows)).contains(rawRows),
+                  list.count == Int(rawCols) * Int(rawRows) else { o["cells"] = .null; break }
+            let cols = Int(rawCols)
+            o["cells"] = .array(stride(from: 0, to: list.count, by: cols).map { r in .array(list[r..<(r + cols)].map { .string($0) }) })
+            if has("header") { o["header"] = .bool(true) }
+            if !marked.isEmpty { o["marked"] = .array(marked.map { .array([.number(Double($0 / cols)), .number(Double($0 % cols))]) }) }
+        case .region: o["pts"] = .array(pts.map { pt($0) }); if has("dashed") { o["dashed"] = .bool(true) }
         }
         return o
     }

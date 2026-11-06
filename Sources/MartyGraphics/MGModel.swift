@@ -29,6 +29,8 @@ public enum MGColorRole: String, CaseIterable, Sendable {
 public enum MGKind: String, CaseIterable, Sendable {
     case body, incline, line, vector, axes, plot, spring, pulley, rope, orbit, text, highlight, bars, path
     case array, node, edge
+    /// Additive 2D kinds: a small grid of short text cells and a filled closed polygon. Both are 2D only.
+    case table, region
     /// Kinds the 3D renderer draws. Others make a 3D scene invalid (fail safe instead of silently missing parts).
     public static let in3D: Set<MGKind> = [.body, .incline, .line, .vector, .axes, .orbit, .text, .highlight, .path]
 }
@@ -182,9 +184,29 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
         case .object(let o): return o.mapValues(\.any)
         }
     }
-    /// Sorted-key JSON: stable cache keys and byte limits.
-    public var canonicalData: Data {
-        (try? JSONSerialization.data(withJSONObject: any, options: [.sortedKeys, .withoutEscapingSlashes, .fragmentsAllowed])) ?? Data()
+    /// True when every number in the value is finite. A value built in code can hold NaN or an infinity, which JSON
+    /// cannot encode (the system encoder raises an exception that Swift cannot catch), so check before encoding.
+    public var isEncodable: Bool {
+        var pending: [MGJSON] = [self]
+        while let next = pending.popLast() {
+            switch next {
+            case .number(let d): if !d.isFinite { return false }
+            case .array(let a): pending.append(contentsOf: a)
+            case .object(let o): pending.append(contentsOf: o.values)
+            case .null, .bool, .string: break
+            }
+        }
+        return true
+    }
+    /// Sorted-key JSON: stable cache keys and byte limits. Empty when the value is not encodable; use
+    /// `canonicalByteCount` for limits, so such a value never counts as small.
+    public var canonicalData: Data { encoded ?? Data() }
+    /// Canonical size in bytes for limit checks. `Int.max` when the value cannot be encoded (a non-finite number), so a
+    /// bound check refuses it as over the limit.
+    public var canonicalByteCount: Int { encoded?.count ?? Int.max }
+    private var encoded: Data? {
+        guard isEncodable else { return nil }
+        return try? JSONSerialization.data(withJSONObject: any, options: [.sortedKeys, .withoutEscapingSlashes, .fragmentsAllowed])
     }
     public var canonicalString: String { String(decoding: canonicalData, as: UTF8.self) }
     public subscript(key: String) -> MGJSON? { if case .object(let o) = self { return o[key] }; return nil }

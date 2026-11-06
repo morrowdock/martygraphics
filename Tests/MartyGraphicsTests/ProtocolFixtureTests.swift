@@ -29,4 +29,12 @@ final class ProtocolFixtureTests: XCTestCase {
             XCTAssertEqual(error.reason, reason, file)
         }
     }
+
+    func testTableRegionAndCodeDocumentationFixture() throws {
+        let scene = try MGParser.scene(data: fixture("table-region-code.scene.json")).get()
+        XCTAssertEqual(scene.items.map(\.kind), [.region, .table, .text, .text])
+        XCTAssertEqual(scene.item("line2")?.text, "    i += 1")
+        let same = MGFixtures.all.first { $0.id == "cells" }?.scene
+        XCTAssertEqual(scene, same, "the documentation fixture equals the built-in `cells` fixture")
+    }
 }

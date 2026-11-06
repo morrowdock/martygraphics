@@ -121,6 +121,8 @@ public enum MGTimeline {
             var i = target
             if prev.pts.count == target.pts.count { i.pts = zip(prev.pts, target.pts).map { $0.lerp($1, t) } }
             for (k, v) in target.num {
+                // A table's row and column counts are structure, not geometry: never draw a fractional grid.
+                if target.kind == .table, k == "rows" || k == "cols" { continue }
                 guard let p = prev.num[k] else { continue }
                 if k == "angle" {
                     var d = (v - p).truncatingRemainder(dividingBy: 360); if d > 180 { d -= 360 }; if d < -180 { d += 360 }

@@ -151,7 +151,7 @@ public enum MGSolidParser {
 
     static func compile(_ json: MGJSON, _ previous: MGSolidDocument?, _ library: MGSolidLibrary = .builtIn) throws -> MGSolidDocument {
         guard case .object(var o) = json else { throw MGSolidIssue("assembly.object") }
-        guard json.canonicalData.count <= MGSolidLimits.bytes else { throw MGSolidIssue("assembly.bytes") }
+        guard json.canonicalByteCount <= MGSolidLimits.bytes else { throw MGSolidIssue("assembly.bytes") }
         try closed(o, ["v", "kind", "parts"], topKeys, "assembly")
         guard o["v"] == .number(1) else { throw MGSolidIssue("assembly.version") }
         guard o["kind"] == .string("assembly") else { throw MGSolidIssue("assembly.kind") }

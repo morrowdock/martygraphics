@@ -23,6 +23,10 @@ public enum MGGrammar {
                 // Only templates with record-list parameters gain this key, so the default document is unchanged.
                 let records = template.params.filter(\.isRecordList)
                 if !records.isEmpty { entry["records"] = records.map(recordShape) }
+                // Likewise only raw templates gain `rawParams`, and only declared list defaults gain `listDefaults`.
+                if let doc = template.paramsDoc { entry["rawParams"] = ["doc": doc, "maxBytes": MGLimits.rawParamsBytes] as [String: Any] }
+                let defaults = template.params.filter { $0.listDefault != nil && !$0.isRecordList && $0.count != nil }
+                if !defaults.isEmpty { entry["listDefaults"] = Dictionary(defaults.map { ($0.name, $0.listDefault ?? []) }, uniquingKeysWith: { first, _ in first }) }
                 return entry
             },
             "limits": ["sceneBytes": MGLimits.sceneBytes, "patchBytes": MGLimits.patchBytes,

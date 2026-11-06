@@ -16,47 +16,63 @@
     {
       "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGCanvasRenderer.swift",
       "destination": "Sources/MartyGraphics/MGCanvasRenderer.swift",
-      "source_sha256": "f2a07df9373067ff3dcfb8d42ed3e2aba6984c0f216128376b30f4300cebfd04",
+      "source_sha256": "d5367a34b5b135c73dc5cb4613ce6ef5f5779ed6b92fcde90c04923ba5c18b93",
       "adaptations": [
-        "Apache-2.0 SPDX header"
-      ]
+        "Apache-2.0 SPDX header",
+        "Forward port: table grid renderer, filled region renderer and monospaced left-aligned code text",
+        "Public adaptation: the table renderer refuses unchecked row/column counts instead of converting them; a region label is placed like other labels"
+      ],
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e"
     },
     {
       "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGLayout.swift",
       "destination": "Sources/MartyGraphics/MGLayout.swift",
-      "source_sha256": "4cbbf2cc760887cf5c5c1bb3d0acbf19d19c5fdd3e485dfc2b58bf0d8ee36f9a",
+      "source_sha256": "1ecf85c9c504b66f2d6466790cb53f7d23af5c02c50b7a35a68c67558f1424b3",
       "adaptations": [
         "Apache-2.0 SPDX header",
-        "Resolve highlight bounds iteratively with a visited set; cycles and missing targets return no bounds"
-      ]
+        "Resolve highlight bounds iteratively with a visited set; cycles and missing targets return no bounds",
+        "Forward port: table bounds, left-aligned code text bounds and region bounds; the public iterative highlight resolution is kept"
+      ],
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e"
     },
     {
       "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGModel.swift",
       "destination": "Sources/MartyGraphics/MGModel.swift",
-      "source_sha256": "89f4eb5bfa7d4d95575196ff6e964ce21dd5f394a1690f75325616876efb591e",
+      "source_sha256": "18bd9438f1a6a085ebe5f39432cfb7f38eac77913b253b1ab13bae1bfff99ff7",
       "adaptations": [
-        "Apache-2.0 SPDX header"
-      ]
+        "Apache-2.0 SPDX header",
+        "Forward port: MGKind.table and MGKind.region (2D only; not in MGKind.in3D)",
+        "Public fix: MGJSON.isEncodable and canonicalByteCount; canonicalData no longer encodes a value with a non-finite number (the system encoder raised an uncatchable exception) and byte bounds count such a value as Int.max"
+      ],
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e"
     },
     {
       "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGParser.swift",
       "destination": "Sources/MartyGraphics/MGParser.swift",
-      "source_sha256": "8adccb06ee0337a4b92256f0282586bb5040e72b27fc23f933e051a74f3b0e72",
+      "source_sha256": "69628076b091f3dd74b0008b2405bbca138e6959d8d7fa19ddd080b9d89a4556",
       "adaptations": [
         "Apache-2.0 SPDX header",
         "Detect highlight cycles and revalidate item references after every cumulative step edit",
         "Public fix: default node radius and array cell size are capped to the range their own keys accept, so defaulted items re-parse in worlds smaller than 3 (node) or 4 (array) units",
         "Public fix: numeric array cells whose displayed text exceeds MGLimits.cellText are refused at first parse",
-        "Public-only adaptation, not compared with the private source: MGLimits.records = 32 and MGLimits.recordFields = 6 for record-list declarations (new shape only)"
-      ]
+        "Public-only adaptation, not compared with the private source: MGLimits.records = 32 and MGLimits.recordFields = 6 for record-list declarations (new shape only)",
+        "Forward port: table and region item parsing, key tables, default colour and wire form; text style `code` with looksLikeMarkup; MGLimits.rawParamsBytes, tableRows, tableCols and tableCellText; throwing template build",
+        "Forward port adapted: public scene(data:|object:|json:extraTemplates:) overloads; a thrown reason is kept only as template.<suffix> with the reject suffix rule, anything else is template.build",
+        "Public fix kept on the forward port: table cw/rh defaults are capped to their accepted range and numeric table cells must fit tableCellText as displayed text, so defaulted and numeric tables re-parse",
+        "Public adaptation: whitespace-only code text and code text in 3D (3d.text.code) are refused; text is checked before style as before; a code-built scene with a non-finite number is refused (scene.number); all existing public highlight, array and node fixes are kept"
+      ],
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e"
     },
     {
       "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGPatch.swift",
       "destination": "Sources/MartyGraphics/MGPatch.swift",
-      "source_sha256": "e890cb4101050a49ebff9bf19ea204b7a92d553a82fb2ab9041b7d9813d5c813",
+      "source_sha256": "69098bc248f2be85b4a40933b6d7032bee02db8274b256b120878629c1f65f18",
       "adaptations": [
-        "Apache-2.0 SPDX header"
-      ]
+        "Apache-2.0 SPDX header",
+        "Forward port adapted: public applying(_:extraTemplates:) and public init(ops:baseRevision:)",
+        "Public fix: applying checks the parse rules (1-12 operations, finite numbers as patch.number, operation keys, patch byte bound) and no longer force-unwraps an add operation's item; parse(json:) also refuses non-finite numbers"
+      ],
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e"
     },
     {
       "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGPhysics.swift",
@@ -89,12 +105,15 @@
     {
       "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGTemplates.swift",
       "destination": "Sources/MartyGraphics/MGTemplates.swift",
-      "source_sha256": "7a320df4f0018a336a164bdd13d7c2c84414e195249df31c11097d3a33b29a45",
+      "source_sha256": "3d7fa629438b030d75de2b4b799a43b83539c2040842794452bed6831cb8a62d",
       "adaptations": [
         "Apache-2.0 SPDX header",
         "Remove all six mechanics walkthrough implementations and registry entries; retain the generic API, helpers, tree and array templates",
-        "Public-only adaptation, not compared with the private source: record-list template parameters (MGParamField, MGParamSpec.records/fields/isRecordList, MGParams.records), record-declaration checks and MGTemplate `reject` for specific `template.<reason>` rejections"
-      ]
+        "Public-only adaptation, not compared with the private source: record-list template parameters (MGParamField, MGParamSpec.records/fields/isRecordList, MGParams.records), record-declaration checks and MGTemplate `reject` for specific `template.<reason>` rejections",
+        "Forward port: raw templates (paramsDoc, sample, isRaw, raw init, MGParams.raw, byte-bounded validate), MGParamSpec.listDefault with its doc form, and throwing make",
+        "Forward port adapted: validate is public and a new public compile(_:is3D:) validates before building; build stays internal; raw templates keep the public reject closure as a no-op; list defaults are also checked at pack validation (badParamSpec); mechanics walkthroughs stay excluded"
+      ],
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e"
     },
     {
       "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGTheme.swift",
@@ -110,7 +129,8 @@
       "source_sha256": "59f9bda4352e6ab82bb2dfb37104af04ec9fddc7b17a6e714719127c54c597de",
       "adaptations": [
         "Apache-2.0 SPDX header",
-        "Public fix: items anchored to hidden items are hidden transitively (repeat the anchor filter until it stops changing)"
+        "Public fix: items anchored to hidden items are hidden transitively (repeat the anchor filter until it stops changing)",
+        "Public-only adaptation: patch blending keeps a table's row and column counts whole (the private source interpolates them)"
       ]
     },
     {
@@ -136,14 +156,17 @@
     {
       "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGPack.swift",
       "destination": "Sources/MartyGraphics/MGPack.swift",
-      "source_sha256": "cc0e3192e0e30eb8afb7a8719a6950c5c0af12520897690c72f56676ddfec4c8",
+      "source_sha256": "b6c3e021529fe89de89641079cc2b29b2ef5a3c72238d16ce7193aa8cf987cb2",
       "adaptations": [
         "Apache-2.0 SPDX header",
         "Core pack references original synthetic fixtures with no built-in generation examples",
         "Removed private generation/cache/evaluation commentary; example-reference metadata API remains generic",
-        "Built-in pack covers tree and array templates with five synthetic fixtures; no mechanics walkthroughs or private generation examples",
-        "Public-only adaptation, not compared with the private source: MGPackError.badParamSpec; record-list declarations validated in MGPacks.problems before fixtures parse"
-      ]
+        "Built-in pack covers tree and array templates with synthetic fixtures (five at the earlier export, six after the forward port); no mechanics walkthroughs or private generation examples",
+        "Public-only adaptation, not compared with the private source: MGPackError.badParamSpec; record-list declarations validated in MGPacks.problems before fixtures parse",
+        "Forward port: MGPack.patches and invalid, MGPackError.patchInvalid and invalidAccepted, and their validation in MGPacks.problems",
+        "Forward port adapted: MGPacks.builtIn is public; the built-in list stays the core pack only; the core pack uses patches and fail-safe cases written new for this package; no private packs, few-shots or prompt commentary"
+      ],
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e"
     },
     {
       "source": "native-study/MartyGraphics/Tests/MartyGraphicsTests/MGPackTests.swift",
@@ -154,11 +177,64 @@
         "Excluded generation-prompt assertions and generation-prompt sampling test",
         "Removed private work-item identifier from comments"
       ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Sources/MartyGraphics/MGFixtures.swift",
+      "destination": "Sources/MartyGraphics/MGFixtures.swift",
+      "source_sha256": "0df93dd65e3b9856887300019a1736d3d119c4e258e399a8d41e2c89c615550d",
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Only the PatchDemo type is ported, with a public initializer; every private fixture, patch and invalid case is excluded",
+        "Public patches, fail-safe cases and the cells fixture are written new for this package: no fail-safe case reuses a private case name or JSON text"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Tests/MartyGraphicsTests/MGPackTests.swift",
+      "destination": "Tests/MartyGraphicsTests/TableRegionCodeTests.swift",
+      "source_sha256": "26ab2e57030b4beb2225e5f28b5e648f5c44d90bf6f96914850c59cdc957fab4",
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Rewrote only the generic code-text checks; excluded every domain pack assertion"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Tests/MartyGraphicsTests/MGPackTests.swift",
+      "destination": "Tests/MartyGraphicsTests/TemplateExtensionTests.swift",
+      "source_sha256": "26ab2e57030b4beb2225e5f28b5e648f5c44d90bf6f96914850c59cdc957fab4",
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Rewrote only the generic pack patch and fail-safe validation checks on a synthetic pack; excluded domain packs, export and prompt assertions and private work-item references"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Tests/MartyGraphicsTests/",
+      "destination": "Tests/MartyGraphicsTests/TemplateExtensionTests.swift",
+      "source_sha256": "1d6952a5c50b16e65ceae2ed84eb481d6f6785bd7086cd1fca0555f0db038bc3",
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Source file name withheld because it contains an internal work-item identifier; identify the file by source_sha256 at source_commit",
+        "Rewrote only the generic raw-params byte guard and list-default guard; excluded every domain template, export and query test and private work-item references"
+      ]
+    },
+    {
+      "source": "native-study/MartyGraphics/Tests/MartyGraphicsTests/",
+      "destination": "Tests/MartyGraphicsTests/TableRegionCodeTests.swift",
+      "source_sha256": "1d6952a5c50b16e65ceae2ed84eb481d6f6785bd7086cd1fca0555f0db038bc3",
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e",
+      "adaptations": [
+        "Apache-2.0 SPDX header",
+        "Source file name withheld because it contains an internal work-item identifier; identify the file by source_sha256 at source_commit",
+        "Rewrote only the generic table wire-validation checks; excluded loops over private pack fixtures"
+      ]
     }
   ],
   "new_public_files": [
     "Sources/MartyGraphics/MGGrammar.swift: structural grammar and minimal transport examples",
-    "Sources/MartyGraphics/MGFixtures.swift: five synthetic geometry/tree/array fixtures; no mechanics-template fixtures",
+    "Sources/MartyGraphics/MGFixtures.swift: six synthetic geometry/tree/array/table fixtures, six synthetic patches and 24 synthetic fail-safe cases written for this package; no mechanics-template fixtures",
     "Tests/MartyGraphicsTests/PublicEngineTests.swift: generic behavioral coverage",
     "Tests/MartyGraphicsTests/HighlightReferenceTests.swift: original cycle, chain, edit and patch regressions",
     "Tests/MartyGraphicsTests/RegressionFixtures.swift: synthetic helpers for the regression suites",
@@ -195,7 +271,10 @@
     "Sources/MartyGraphics/MartyGraphicsLessonView.swift: SwiftUI lesson controller and view (public-only); MartyGraphicsView.swift gains opt-in board transitions",
     "Tests/MartyGraphicsTests/Lesson*.swift: lesson acceptance tests (core, stream, renderer, timing)",
     "docs/LESSONS.md and docs/fixtures/v1/rotation.lesson.json, rotation.statements.ndjson: lesson contract and synthetic rotation lesson fixtures",
-    "Examples/LessonDemo: rotation lesson host example with verify, timing, render and simulator-run tests"
+    "Examples/LessonDemo: rotation lesson host example with verify, timing, render and simulator-run tests",
+    "Tests/MartyGraphicsTests/PublicTemplateAccessTests.swift: public-API-only coverage of pack lists, template validate/compile/sample/paramsDoc, extra templates and code-built patches",
+    "docs/fixtures/v1/table-region-code.scene.json: synthetic table, region and code-text scene (equals the built-in cells fixture)",
+    "Tests/MartyGraphicsTests/LessonNumericTests.swift: lesson regressions for non-finite values built in code (lesson.number, snapshot.number, atomic load and apply, hidden oversized payload)"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",
@@ -203,5 +282,12 @@
     "All six mechanics walkthrough implementations and registry entries from the private template source, including every narration call",
     "All six mechanics-template fixtures and dependent template-invocation tests",
     "Original course fixtures, teaching/gallery/source-card content, private prompt generation, token budgeting, routing/evaluation recipes and application adapters"
+  ],
+  "forward_ports": [
+    {
+      "source_commit": "73488859ec8892815f8f6807588aba36073b018e",
+      "date": "2026-11-06",
+      "scope": "Generic 2D engine features only: table and region kinds, code text style, raw templates, list defaults, throwing make, pack patches and fail-safe cases, public extra templates, public template/pack read access and a public patch initializer. Private domain packs, private content, prompt generation and app adapters stay excluded."
+    }
   ]
 }

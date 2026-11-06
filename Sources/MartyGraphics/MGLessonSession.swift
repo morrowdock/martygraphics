@@ -241,7 +241,9 @@ public struct MGLessonSession {
     public mutating func load(_ lesson: MGLesson) -> Result<[MGLessonEvent], MGLessonIssue> {
         var trial = MGLessonSession(pacing: pacing, clock: clock)
         var all: [MGLessonEvent] = []
-        for statement in lesson.statements {
+        for (index, statement) in lesson.statements.enumerated() {
+            // An unencodable statement would serialise to an empty line, which the scanner skips; refuse it instead.
+            guard statement.isEncodable else { return .failure(MGLessonIssue("lesson.number", statement: index)) }
             let events = trial.feed(statement.canonicalString + "\n")
             all += events
             if let issue = events.lazy.compactMap({ if case .refused(let i) = $0 { return i } else { return nil } }).first { return .failure(issue) }
