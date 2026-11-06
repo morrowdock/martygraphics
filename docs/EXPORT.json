@@ -168,7 +168,10 @@
     "docs/fixtures/v1/shortest-path*.json: synthetic shortest_path scene and patch fixtures",
     "Sources/MartyGraphics/MG3DInteraction.swift: opt-in 3D hit targets, selection and look derivation",
     "Tests/MartyGraphicsTests/MG3DInteractionTests.swift: 3D selection, look and camera policy coverage",
-    "Examples/KeySwitch3D: schematic key-switch host example with its own model tests"
+    "Examples/KeySwitch3D: schematic key-switch host example with its own model tests",
+    "Sources/MartyGraphicsPathTracer: Metal GPU path tracer library (public-only)",
+    "Tests/MartyGraphicsPathTracerTests: sampling math and GPU smoke tests",
+    "Examples/PathTrace: procedurally generated gearbox renders"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

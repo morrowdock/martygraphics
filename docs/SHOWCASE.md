@@ -14,6 +14,27 @@ service, or AI model.
 | Geometric motion | Move through a scene | A marker takes two seconds from A to B, then returns. No force model is implied. | [motion.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
 | Shortest path | Find the cheapest route | Dijkstra settles six routers one at a time; the cheapest route 0→2→1→3→4→5 costs 13. Opt-in graph pack. | [shortest-path.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
+## Path-traced gearbox
+
+A procedurally generated two-stage gearbox, path traced on an
+Apple M1 GPU by `MartyGraphicsPathTracer`: 1920×1080, 768 samples per pixel, about
+2.5 minutes per still. No images, models or stock assets.
+
+[![Path-traced steel and brass gearbox with involute teeth on a dark studio floor.](assets/pathtrace/hero.png)](assets/pathtrace/hero.png)
+
+[Exploded view](assets/pathtrace/exploded.png) · [Code beside the render](assets/pathtrace/side-by-side.png) ·
+[Loop (GIF, 480×270, 9.6 s)](assets/pathtrace/gearbox-loop.gif) ·
+[Run it](../Examples/PathTrace/README.md) · [Render receipt](assets/pathtrace/provenance.json)
+
+**How it works.** The input shaft turns the small 15-tooth pinion. It drives a 30-tooth gear,
+which turns half as fast (30 ÷ 15 = 2:1). That gear spins the 24-tooth sun gear in the middle
+of a planetary set. Three 18-tooth planet gears mesh with the sun and with the 60-tooth ring
+around them. The ring is fixed, so the planets roll around inside it and turn the carrier that holds
+them, slowly. The carrier turns once for every 1 + 60 ÷ 24 = 3.5 turns of the sun.
+Together: 2 × 3.5 = 7 turns of the input for one turn of the output. Planetary sets are
+used where a big reduction must fit in a small space, such as in car automatic
+transmissions, power drills and helicopter rotor gearboxes.
+
 ## Run or reproduce
 
 Follow the [native showcase instructions](../Examples/Showcase/README.md).
