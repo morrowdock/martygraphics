@@ -195,7 +195,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "da31b9c1bfdfa57c728881672433041ae27933536beaf510d895d2cce7a5bca9"
+      "sha256": "a2f1c34acd0dc3c19fb4ea3ea3c80aa78ae366749154b6dd56b298b6cc5c4371"
     },
     {
       "path": "SECURITY.md",
@@ -467,7 +467,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "950c04cffa90e33e555739fb70bb798453a123965e03ed796d0b794d6431bf94"
+      "sha256": "65baea7cd0fa5bb1b28dcf2cb6ecca07588afb272283842d6dd8fca27fcec3fb"
     },
     {
       "path": "docs/SOLID-3D.md",

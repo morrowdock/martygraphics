@@ -17,13 +17,14 @@ Validated JSON → native diagrams, walkthroughs, and animation in SwiftUI.
 </p>
 
 **From a prompt, written by an AI.** We asked Claude Haiku 5.5 one question:
-*"Show a two-stage planetary gearbox like in a robot joint."* It saw only the public docs, no
-tools. Its first JSON used a 20-tooth sun, 18-tooth planets and a 56-tooth ring. MartyGraphics
+*"Show a two-stage planetary gearbox like in a robot joint."* It saw only the public docs and
+worked example models, no tools. Its first JSON used a 20-tooth sun, 18-tooth planets and a 56-tooth ring. MartyGraphics
 refused it with one reason, `constraint.gearMesh.phase` on `ring1`: 20 + 56 = 76 does not divide
 by 3, so three equally spaced planets cannot mesh with both gears. The model read that reason,
-changed to 24 / 18 / 60 ((24 + 60) ÷ 3 = 28) and the engine accepted it: 19 parts, 12 gear meshes,
-solved output 4/49 of the input (12.25:1). Two attempts, 121 seconds. Every frame is the engine;
-nothing was edited by hand.
+changed to 24 / 18 / 60 ((24 + 60) ÷ 3 = 28), the same gear set as the worked planetary example
+in its docs, and the engine accepted it: 19 parts, 12 gear meshes,
+solved output 4/49 of the input (12.25:1). Two attempts, 121 seconds. The engine rendered every frame from the model's JSON, unedited.
+We picked this example after grading, from the runs that passed.
 [Exploded](docs/assets/from-a-prompt/robot-joint/exploded.png) · [Its JSON](docs/assets/from-a-prompt/robot-joint/robot-joint-gearbox.json) ·
 [Refused first try](docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json) · [Run receipt](docs/assets/from-a-prompt/robot-joint/provenance.json)
 
@@ -31,8 +32,8 @@ nothing was edited by hand.
 space. The motor turns sun gear 1. The planets roll between the sun and the fixed ring, so carrier 1
 turns at 24 ÷ (24 + 60) = 2/7 of the input speed. Carrier 1 carries sun gear 2, and the same 2/7
 repeats in stage 2: (2/7)² = 4/49. The model labels the motor, bearings and housing walls as not
-modelled. An independent grader checked the ratio, the text and the labels against the solved
-model: all pass. In the same 50-question test, Haiku got 40 of 40 buildable questions accepted
+modelled. An independent grader model (Claude Opus 5.5) checked the ratio, the text and the labels against the solved
+model: all pass. In the same 50-question test, Haiku got all 40 in-scope questions accepted
 within three repairs, but only 29 of 40 fully correct in mechanics and 46 of 50 explanations
 without a critical error (our target is 95%), so it is not reliable yet.
 [What the test found](docs/SHOWCASE.md#from-a-prompt)

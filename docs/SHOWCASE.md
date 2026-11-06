@@ -12,28 +12,29 @@ uses of the engine without implying a curriculum or a running service.
 ## From a prompt
 
 The first example on this page was written by an AI model from one question. The others are
-hand-built (each says so).
+hand-built: people and coding agents wrote their JSON or code for these examples, not a
+model answering a prompt.
 
 [![AI-written two-stage planetary gearbox, exploded: brass suns, steel planets, blue and orange carriers, two ring gears.](assets/from-a-prompt/robot-joint/exploded.png)](assets/from-a-prompt/robot-joint/loop.gif)
 
 | | |
 | --- | --- |
 | Prompt | "Show a two-stage planetary gearbox like in a robot joint." |
-| Model | Claude Haiku 5.5, fresh process, no tools, only the public docs at commit `17396a2f` |
+| Model | Claude Haiku 5.5, fresh process, no tools, only the public docs and worked example models at commit `17396a2f` |
 | Attempt 1 | Refused: `constraint.gearMesh.phase` on `ring1` (sun 20, ring 56: 76 ÷ 3 is not whole) |
-| Attempt 2 | Accepted: sun 24, planets 18, ring 60; 19 parts, 12 meshes, output 4/49 (12.25:1) |
+| Attempt 2 | Accepted: sun 24, planets 18, ring 60 (the gear set of the worked example in its docs); 19 parts, 12 meshes, output 4/49 (12.25:1) |
 | Time | 121 s for both attempts |
 | Grader | Independent model, against pre-registered checks: mechanics, explanation and labels pass |
 
 [Loop](assets/from-a-prompt/robot-joint/loop.gif) · [JSON](assets/from-a-prompt/robot-joint/robot-joint-gearbox.json) ·
 [Refused first try](assets/from-a-prompt/robot-joint/attempt-1-refused.json) · [Run receipt](assets/from-a-prompt/robot-joint/provenance.json)
 
-**What the full test found.** Haiku answered 50 pre-registered questions. All 40 buildable ones
-were accepted within three repairs (median 25 s), but only 29 of 40 were fully correct in
+**What the full test found.** Haiku answered 50 pre-registered questions. All 40 in-scope ones
+were accepted within three repairs (median 25 s over all 50), but only 29 of 40 were fully correct in
 mechanics, and 4 of 50 explanations had a critical error. The main failures: the model quietly
 swapped bevel, worm or crown gears for flat spur gears; its text sometimes gave a number the solved
-model did not have; and it skipped features the docs did not show by example. We change the engine
-only from failures like these.
+model did not have; and it skipped or misused features whose conventions the docs did not show clearly. Our plan is
+to change the engine and docs from recorded failures like these.
 
 ## Turbofan cutaway
 
