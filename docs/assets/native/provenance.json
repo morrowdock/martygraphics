@@ -1,29 +1,60 @@
 {
   "source": {
     "repository": "https://github.com/morrowdock/martygraphics",
-    "commit": "7c7c280e2bde85f504a292bf09b1b8c285d295dc",
+    "commit": "9b4ba89780af54d7de7f7e4fd209625a2db24f33",
+    "note": "Capture commit on the pull-request branch; after a squash merge verify with sourceFiles hashes.",
     "tool": "Examples/Showcase/Sources/MartyShowcase/Showcase.swift",
     "package": "Examples/Showcase/Package.swift",
     "inputs": [
-      "Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json",
-      "Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json",
-      "Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json",
-      "Examples/Showcase/Sources/MartyShowcase/Scenes/function.json",
       "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json",
-      "Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json"
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/function.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json"
     ],
-    "license": "Apache-2.0; original synthetic scenes from this public source"
+    "license": "Apache-2.0; original synthetic scenes from this public source",
+    "sourceFiles": {
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json": "a6a1b0e131c283cacf32065912503d4b7f89df224566613781623f7558b83044",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/function.json": "5780c901a82094acf5493bc2eada710a3291d42cecb8612a9addde4a2f021adf",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json": "371331217d608cba703574eced35b13deb754904fcbb63bcdfd96acfdb1f41e4",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json": "6c33055288b7f9c1bf0ced961e9e5e88489f71666df889abdc00a38e5fd5483b",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json": "7416462045dcbbc444dec94a687384c3cd9ebce973ab81ae9009e4765f05e421",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json": "3287602d73813243f78f92a952385d4bef952821249bc46a5465102b244c9f0a",
+      "Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json": "99eef56a6ad9f2149ec2df6b37e9f41b248c8ef102519e70d63b81ab9ae71a31",
+      "Examples/Showcase/Sources/MartyShowcase/Showcase.swift": "1e010626fcc2a3e6cf428f38eee4f55bd5a0efa009da2f4d2cfd7e910375ad40",
+      "Examples/Showcase/Package.swift": "15a3f0726e953acb8b97f8a3441a3bc4550854c7349a4deeb1964dad2a6c845d",
+      "Sources/MartyGraphics/MG3DView.swift": "e4a3117ad1564989c7332d445d30d8a0222cac295b878e7e4aaaefce73d0b90a",
+      "Sources/MartyGraphics/MGCanvasRenderer.swift": "9b91557e37086523ee8a4f4401bb9281830f2a6b087921e91bf7cac866894775",
+      "Sources/MartyGraphics/MGFixtures.swift": "1d17dd89fcefcc304fec88c1ac8caef4b9b695394276b01df9058d5eb4306a91",
+      "Sources/MartyGraphics/MGGrammar.swift": "2f18903fb3eb1aed92e6829edb20a20dda4b9bb8b4adcb1b674847c58d4910ec",
+      "Sources/MartyGraphics/MGGraphPack.swift": "fa3ec67e4631e13a682ec0bdd0eb76cc1afa75146edbff78c000d8f2d0560ebe",
+      "Sources/MartyGraphics/MGLayout.swift": "c1a3641339349e10e9e0faced7f4e58e0a5d97aa992306a81b68970c11aef6ca",
+      "Sources/MartyGraphics/MGModel.swift": "b11556e668477eaef8a829b0e33e055327a5abe95b2b449df9287172b3a1133c",
+      "Sources/MartyGraphics/MGPack.swift": "f6af770877d9de4c005eef037592b9883e39b20e5e72bd01462b6fa7fdc4e381",
+      "Sources/MartyGraphics/MGParser.swift": "898571b7274a9a88a27238da062c890e6168947ae4a6585003fa8d8686afb5dc",
+      "Sources/MartyGraphics/MGPatch.swift": "1c68bf17ddd2dd2f63e0d35b036d700f41de46b74f77ca98ab5f881bf44641dc",
+      "Sources/MartyGraphics/MGPhysics.swift": "aa34cc3c370af27112759a5dc1cd439ce7afb3ed2d4997fa2b68c367816316b7",
+      "Sources/MartyGraphics/MGRenderPolicy.swift": "5ef4ebaff7b3c4c46761e4a576732729a206af04ec38837c1459a30b938183e2",
+      "Sources/MartyGraphics/MGStream.swift": "bbcaaaed0f905e558932dd8430e077efb75a4bc0f5baa6ccf061c955c939f205",
+      "Sources/MartyGraphics/MGTemplates.swift": "d68eb2570f539883ffc9702dfebd45da834376fba08cc907adc2b702689b5c34",
+      "Sources/MartyGraphics/MGTheme.swift": "44fd167a885971014697fc12cb56f627076cce18ca17630cc93f12c08edaaa42",
+      "Sources/MartyGraphics/MGTimeline.swift": "ad32fce5474a9b5b41b1ca35ebee324e0b4f318c99824b149a1fdd6523c49634",
+      "Sources/MartyGraphics/MartyGraphicsView.swift": "6d276ff30e85d3d0ce14d95cec7dd1077e99a98c777975e8775941ee137ffdf3"
+    }
   },
   "capture": {
     "kind": "Native SwiftUI ImageRenderer wrapper using public MGCanvasRenderer and MGTimeline; not a full-app screenshot or browser recreation",
-    "configuration": "SwiftPM debug; Swift language mode5; renderer scale1",
-    "platform": "macOS26.6.2",
-    "swift": "Apple Swift6.3.3",
+    "configuration": "SwiftPM debug; Swift language mode 5; renderer scale 1",
+    "platform": "macOS 27.2",
+    "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
     "hardware": "Apple silicon (arm64)",
+    "capturedUTC": "2026-11-06T15:02:10Z",
     "output": "<NEW_OUTPUT_DIRECTORY>",
     "commands": [
-      "swift build",
-      "swift test",
+      "swift build --jobs 2",
+      "swift test --jobs 2",
       "swift run --package-path Examples/Showcase marty-showcase --verify",
       "swift run --package-path Examples/Showcase marty-showcase --export <NEW_OUTPUT_DIRECTORY>"
     ],
@@ -33,116 +64,97 @@
       0,
       0
     ],
-    "packageTests": 23,
+    "packageTests": 95,
     "packageTestFailures": 0
   },
   "artifacts": {
     "counts.png": {
-      "bytes": 161630,
-      "sha256": "8b3aca115485c91aa6dfea39c808ddfa50572a2ac56c60bebbf1b1745ab81a88",
+      "bytes": 162335,
+      "sha256": "038c36f4dac36b1ec706ac444ed7f2ca8e33e65b7fc5b673fc9d5338e10af760",
       "width": 840,
       "height": 662
     },
     "function.png": {
-      "bytes": 141568,
-      "sha256": "648098004a49aab097c77097b153885d63bd3707549eec1a3c7601f2664f4817",
+      "bytes": 141485,
+      "sha256": "15cc6704e165d5ec87957779a1344c2c1996a205dacb36425df56392a0512193",
       "width": 840,
       "height": 662
     },
     "handoff.png": {
-      "bytes": 129933,
-      "sha256": "e3c91e9d48a1e264ae6e6135fa9aca71dfde7e4ece674c14ef6782e2ad82428e",
+      "bytes": 131814,
+      "sha256": "5dff5608cb0cb5d6c484a7c936b7ff3d2dc14ced7338a07e2d9d28972380c505",
       "width": 840,
       "height": 662
     },
     "motion.gif": {
-      "bytes": 127273,
-      "sha256": "b142ee15fb63e84c6c02b806120994339cf80ef74d650ef671c5796098c84e2d",
+      "bytes": 127363,
+      "sha256": "7a49236530702ad0f1c8362412f40270e0b1a1aa7e584e371527d8c9dcd45407",
       "width": 840,
       "height": 662,
       "frames": 32,
-      "delaysSeconds": [
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
-        0.13,
+      "storedDelaySeconds": [
         0.13
       ],
-      "totalSeconds": 4.16,
-      "distinctCompressedFrames": 32
+      "loopSeconds": 4.16
     },
     "motion.png": {
-      "bytes": 92743,
-      "sha256": "66e26f7121f28aaaf149cb5f8a673312684f2239273f6108c8ca84bbfb849acf",
+      "bytes": 92876,
+      "sha256": "6003e2f39fa331dda333fbddb250bbbf52dbdef7865da6167fde05e270841587",
       "width": 840,
       "height": 662
     },
     "overview.png": {
-      "bytes": 464795,
-      "sha256": "03e3cd55ca080a2e44565c6ba244a6a9e32a6826e26188b5fb39feeff6ae42ed",
+      "bytes": 583413,
+      "sha256": "7037a0ba3e669451aca8eaba3d2f7ea425a78dff6f34cba74b7de78f3e0cbd61",
       "width": 1172,
-      "height": 1640
+      "height": 2116
+    },
+    "shortest-path.gif": {
+      "bytes": 128337,
+      "sha256": "f75f28eaee115f11e9af01434de5aa808d8a050b9e8fa5cbaa349e955a009d78",
+      "width": 840,
+      "height": 662,
+      "frames": 8,
+      "storedDelaySeconds": [
+        1.2
+      ],
+      "loopSeconds": 9.6
+    },
+    "shortest-path.png": {
+      "bytes": 161702,
+      "sha256": "391e908f13862437c686f5df2de3d14b618e077f18fd704b32248cf1c14aa5c0",
+      "width": 840,
+      "height": 662
     },
     "tree.png": {
-      "bytes": 127378,
-      "sha256": "0bc9b95b114d7e25ec39daf98f977b25f55f09dcf77c2a372fb9581fe42e7009",
+      "bytes": 131718,
+      "sha256": "bef0e77981a93703cf2a858c9a6d094d3ad369a459d686c658477abb425642a0",
       "width": 840,
       "height": 662
     },
     "two-pointers.gif": {
-      "bytes": 54379,
-      "sha256": "3399c1fe64efada1fd0dfc10d596dbe1e6c541a6602d5df097204d58ed3ec0c9",
+      "bytes": 54402,
+      "sha256": "6656030fdc95a84315d91335295da64be4b5db9f549efae1b16be4ceb93eec40",
       "width": 840,
       "height": 662,
       "frames": 4,
-      "delaysSeconds": [
-        1.2,
-        1.2,
-        1.2,
+      "storedDelaySeconds": [
         1.2
       ],
-      "totalSeconds": 4.8,
-      "distinctCompressedFrames": 4
+      "loopSeconds": 4.8
     },
     "two-pointers.png": {
-      "bytes": 92134,
-      "sha256": "3801cfb1d45ba2136fec32c5b2e86edc15d20c65879aa680f0b7884e187deab3",
+      "bytes": 92265,
+      "sha256": "fd49b98adca443f687057bd7d1a21e2a69059ec1f8f3c0801d843b5c286a753f",
       "width": 840,
       "height": 662
     }
   },
   "review": {
-    "staticVisual": "Overview and six individual PNGs inspected: readable labels/captions, complete boards, no clipped captions or blank output observed. Pointer labels are small in overview; individual view is clearer.",
-    "animation": "GIF structure/delays/frame counts and distinct compressed frames inspected; no live interactive playback, AX, performance or adopter evaluation.",
-    "timingNote": "Motion source requests 0.125s; stored GIF delay is0.13s for each of32frames (4.16s total, about7.69fps). Two-pointers stores4frames at1.2s (4.8s total).",
-    "privacy": "Image metadata audited; no absolute user paths, machine hostname/serial or private repository/thread/log URLs detected. Raw logs and local capture paths excluded.",
+    "staticVisual": "Overview and seven individual PNGs inspected: readable labels and captions, complete boards, no clipped captions or blank output. Shortest-path node positions were raised so the distance-table label does not overlap the graph in the smaller overview card.",
+    "animation": "GIF frame counts and stored delays read back with ImageIO; two shortest-path walkthrough frames inspected (narration fits on one line). No live interactive playback, accessibility, performance or adopter evaluation.",
+    "timingNote": "Two-pointers stores 4 frames at 1.2 s (4.8 s). Shortest-path stores 8 frames at 1.2 s (9.6 s). Motion requests 0.125 s and stores 0.13 s for each of 32 frames (4.16 s, about 7.69 fps).",
+    "privacy": "Image bytes scanned for user paths and host names; none found. Raw logs and local capture paths are excluded.",
     "claims": "PNG/GIF native wrapper renders only; no video, full-app capture, accessibility or performance claim."
   }
 }

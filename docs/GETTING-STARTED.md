@@ -18,8 +18,8 @@ release install; see [scope and status](../README.md#scope-and-status).
 
 World coordinates point right/up. The default world is 12 by 8. `id` is the
 stable reference used by highlights, edits and patches. `k` selects a primitive.
-The [six example files](../Examples/Showcase/Sources/MartyShowcase/Scenes) show
-full scenes and the compact tree/array template form.
+The [seven example files](../Examples/Showcase/Sources/MartyShowcase/Scenes) show
+full scenes, the compact tree/array template form and an opt-in graph-pack scene.
 
 ## 2. Parse before presenting
 

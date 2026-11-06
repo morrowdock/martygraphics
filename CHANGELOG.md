@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add a shortest-path walkthrough to the native showcase. The showcase registers
+  the opt-in graph pack, the README and gallery show the new capture, and every
+  native capture is re-exported at one recorded commit. The capture receipt now
+  also pins the SHA-256 of each scene, tool and engine source file. The README
+  gains a short, labelled plans section.
 - Source-compatibility change: the new `MGPackError.badParamSpec` case
   requires external exhaustive switches to be updated. `MGTemplate` also gains
   an optional `reject:` initializer argument.
