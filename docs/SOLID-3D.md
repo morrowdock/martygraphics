@@ -75,8 +75,12 @@ part ids in sorted order), so the same input always reports the same first error
  "steps": [{"say": "…", "highlight": ["sun"], "explode": 0, "camera": "hero", "orbit": 0, "spin": 1}]}
 ```
 
-* **Part library** (`shape` is one primitive or an array of up to 8, each with
-  optional `at` / `rot`): `gear`, `ringGear`, `shaft`, `tube`, `box`, `hex`,
+* **Part library** (`shape` is one primitive or an array of up to 8). Each entry is
+  an object with exactly one key, the primitive name, whose value holds that
+  primitive's fields plus an optional `at` (offset) and `rot` (axis-angle
+  `[x, y, z, degrees]`) inside it, for example
+  `{"shaft": {"radius": 4, "length": 10, "at": [18, 0, 0]}}`; a part's own `at` /
+  `rot` sit next to `shape`. Primitives: `gear`, `ringGear`, `shaft`, `tube`, `box`, `hex`,
   `plate` (disc with round holes), `carrier` (hub, arms and bosses with a smooth
   union), `extrudedProfile`, `revolvedProfile` (open with poles, or `closed`
   for walls such as casings and nozzles), `blade`.
@@ -135,6 +139,9 @@ part ids in sorted order), so the same input always reports the same first error
 * **Bounds** (`MGSolidLimits`): 64 KiB, 48 wire parts, 96 resolved parts,
   8 shapes per part, 256 profile points, 128 constraints, 16 steps, teeth
   8–200 (ring 20–400), module 0.2–20 mm, lengths up to 4 m.
+* **Text limits**: `title` at most 80 characters (`assembly.title`), part `name`
+  at most 60 (`part.name`), step `say` at most 240 (`step.say`). Keep a step to one
+  or two short sentences.
 * **Mesh budget**: at most 1,500,000 triangles and 1,000,000 vertices over all
   resolved parts (copies from `repeat` count), computed from the validated
   fields before any mesh is built (`MGShapeSpec.meshEstimate` gives the exact
@@ -152,6 +159,21 @@ carrier, free the ring) recompiles the kinematics without rebuilding geometry.
 `MGSolidRenderer.setAssembly(_:)` likewise keeps nodes whose mesh did not change;
 a material-only change restyles the node in place. A section cut gives each cut
 part a private material copy, so parts that share a preset are never cut with it.
+
+## Worked examples
+
+Small, complete models that `marty-solid check` accepts; a test keeps them valid.
+
+* [`slider-crank.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/slider-crank.json)
+  (21 lines): a crank on a `revolute` joint with an `input` drive, a piston on a
+  `prismatic` joint driven by `crankSlider` (crank radius 18 mm, rod 62 mm, so a
+  36 mm stroke), and a connecting rod parented to the piston and driven by
+  `crankRod`, so it stays between the wrist pin and the crank pin.
+* [`propeller.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/propeller.json)
+  (14 lines): a driven hub and one `blade` (span, chord, taper, twist, camber)
+  copied three times with `repeat`, so the copies turn with the hub.
+* [`planetary.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json)
+  (53 lines): gear meshes, a fixed ring, a named carrier, explode windows and steps.
 
 ## Checks
 
