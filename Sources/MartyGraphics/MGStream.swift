@@ -31,6 +31,8 @@ public struct MGStreamParser {
             root[m.key] = j
         }
         guard root["v"] != nil || root["template"] != nil else { return nil }
+        // Only version 1 previews; any other complete version is refused by `finish()`, so never preview it.
+        if let v = root["v"], v != .number(1) { return nil }
         root["v"] = .number(1)
         if let itemsRaw {
             let elements = Self.elements(itemsRaw)

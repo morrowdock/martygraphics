@@ -43,7 +43,8 @@
       "source_sha256": "8adccb06ee0337a4b92256f0282586bb5040e72b27fc23f933e051a74f3b0e72",
       "adaptations": [
         "Apache-2.0 SPDX header",
-        "Detect highlight cycles and revalidate item references after every cumulative step edit"
+        "Detect highlight cycles and revalidate item references after every cumulative step edit",
+        "Public fix: default node radius and array cell size are capped to the range their own keys accept, so defaulted items re-parse in worlds smaller than 3 (node) or 4 (array) units"
       ]
     },
     {
@@ -78,7 +79,8 @@
       "source_sha256": "36f97fcbf044d84b2dfc45de9dbd8e9f54e8f7439353043090097783d7058b44",
       "adaptations": [
         "Apache-2.0 SPDX header",
-        "Describe recommended streaming field order directly without referring to private generation instructions"
+        "Describe recommended streaming field order directly without referring to private generation instructions",
+        "Public fix: a complete scene version other than 1 produces no streaming preview, matching finish()"
       ]
     },
     {
@@ -103,7 +105,8 @@
       "destination": "Sources/MartyGraphics/MGTimeline.swift",
       "source_sha256": "59f9bda4352e6ab82bb2dfb37104af04ec9fddc7b17a6e714719127c54c597de",
       "adaptations": [
-        "Apache-2.0 SPDX header"
+        "Apache-2.0 SPDX header",
+        "Public fix: items anchored to hidden items are hidden transitively (repeat the anchor filter until it stops changing)"
       ]
     },
     {
@@ -150,7 +153,10 @@
     "Sources/MartyGraphics/MGGrammar.swift: structural grammar and minimal transport examples",
     "Sources/MartyGraphics/MGFixtures.swift: five synthetic geometry/tree/array fixtures; no mechanics-template fixtures",
     "Tests/MartyGraphicsTests/PublicEngineTests.swift: generic behavioral coverage",
-    "Tests/MartyGraphicsTests/HighlightReferenceTests.swift: original cycle, chain, edit and patch regressions"
+    "Tests/MartyGraphicsTests/HighlightReferenceTests.swift: original cycle, chain, edit and patch regressions",
+    "Tests/MartyGraphicsTests/RegressionFixtures.swift: synthetic helpers for the regression suites",
+    "Tests/MartyGraphicsTests/ParserRegressionTests.swift, StreamRegressionTests.swift, TimelineRegressionTests.swift, PatchAtomicityTests.swift, ControllerRollbackTests.swift: behavioral regression coverage",
+    "Tests/MartyGraphicsTests/RoundtripFixTests.swift: regressions for the public parser-default, transitive-visibility and stream-version fixes"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

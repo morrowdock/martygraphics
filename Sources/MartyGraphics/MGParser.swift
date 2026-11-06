@@ -415,7 +415,8 @@ public enum MGParser {
                 default: throw MGError("array.val")
                 }
             }
-            it.num["cell"] = try opt("cell", 0.3...(span / 4)) ?? 1
+            // The default is capped to the accepted range so the wire form of a defaulted cell re-parses in small worlds.
+            it.num["cell"] = try opt("cell", 0.3...(span / 4)) ?? min(1, span / 4)
             if let raw = o["ptrs"] {
                 guard case .array(let ps) = raw, ps.count <= MGLimits.pointers else { throw MGError("array.ptrs") }
                 it.pointers = try ps.map { pv in
@@ -434,7 +435,8 @@ public enum MGParser {
             }
         case .node:
             it.pts = [try p("at")]; it.text = try text(o["text"], MGLimits.nodeText, ctx, "node.text")
-            it.num["r"] = try opt("r", 0.2...(span / 6)) ?? 0.5
+            // The default is capped to the accepted range so the wire form of a defaulted node re-parses in small worlds.
+            it.num["r"] = try opt("r", 0.2...(span / 6)) ?? min(0.5, span / 6)
         case .edge:
             it.ref = try identifier(o["a"]!, "edge.a"); it.ref2 = try identifier(o["b"]!, "edge.b")
             guard it.ref != it.ref2 else { throw MGError("edge.self") }
