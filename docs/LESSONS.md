@@ -69,6 +69,8 @@ Streaming rules:
 - Each statement is validated as soon as it is complete, against the projected state (the state after every accepted statement).
 - A refused statement changes nothing. Earlier marks stay. Later statements continue (test S2).
   A refused `say` does not close the open beat: later commands keep attaching to it.
+- Input after a finished lesson starts a candidate stream with its own budget. Playback (`isComplete`) reopens only
+  when that stream's `keep` or `scene` is accepted, so refused input after the end changes nothing.
   A later statement that names a refused id is refused with its own reason, for example `highlight.target`.
 - Text between statements that is not whitespace is skipped up to the next `{` or `[`. It is reported once (`stmt.json`).
 - The scene is presented at once. That is the first visible result (`firstPresented`).
@@ -172,7 +174,7 @@ Events come in order. `MGLessonSession.history` keeps each event with a time fro
 | `lineStarted(beat)`, `lineEnded(beat)` | The host reported speech start and end (or `.estimate` pacing ended the line). |
 | `beatPresented(beat)` | The beat's commands are in the presented state. |
 | `streamEnded` | Every statement was received and validated. |
-| `lessonComplete` | The last line ended and the last transition settled (keyframes: their duration; blend: 1.2 s), or `finishNow()`. |
+| `lessonComplete` | The last line ended and the last transition settled (keyframes: their duration; blend: 1.2 s), or `finishNow()`. Set-up and host `apply` transitions count too; a new scene starts with no pending settle time. |
 
 Pacing (`MGPacing`):
 
@@ -194,6 +196,9 @@ The view also writes `OSSignposter` intervals (subsystem `MartyGraphics`, catego
 but not presented, and the pacing position. `restore(_:pacing:clock:)` validates everything again with the engine.
 A snapshot that does not validate is refused with a reason (for example `template.unknown`). It is never loaded in part.
 The event history and the command log start empty after a restore.
+A snapshot covers complete statements only. A statement that has started but not finished is not stored; replay
+`unfinishedInput` into the restored session (`feed(_: Data)`) before the rest of the stream. Those bytes are not in the
+snapshot's byte count, so the budget is the same after the replay.
 
 ## Renderer behaviour
 
@@ -234,7 +239,7 @@ stream until `endStream()`. A document's size is the size of the statement strea
 Input over 64 KiB is `lesson.bytes` without parsing.
 
 New reasons (closed list). Inner engine reasons (`patch.set.ref`, `id.duplicate.<id>`, `highlight.target`,
-`template.<param>`, `item.kind`, `patch.op.<name>`, …) pass through unchanged. The location is in separate fields:
+`template.<param>`, `item.kind`, `patch.op.<name>`, …) pass through with their wording unchanged (token-normalised). The location is in separate fields:
 `MGLessonIssue.beat`, `.statement`, `.command`, `.origin`, `.detail`.
 
 `lesson.json`, `lesson.object`, `lesson.version`, `lesson.kind`, `lesson.title`, `lesson.unknown.<keys>`, `lesson.scene`,
@@ -244,13 +249,16 @@ New reasons (closed list). Inner engine reasons (`patch.set.ref`, `id.duplicate.
 `stmt.say.placeholder.<name>`, `stmt.say.brace`, `line.order`, `control.object`, `control.missing`, `control.unknown.<keys|id|param>`,
 `control.id`, `control.kind`, `control.param`, `control.range`, `control.step`, `control.label`, `control.count`,
 `control.duplicate.<id>`, `control.value`, `control.op`, `control.label.placeholder`, `lesson.statements.count`, `unbind.id`, `animate.missing`, `animate.unknown.<keys>`,
-`animate.param`, `animate.to`, `animate.dur`, `animate.frame`, `check.object`, `check.missing`, `check.unknown.<keys|name>`,
+`animate.param`, `animate.to`, `animate.dur`, `animate.step`, `animate.frame`, `check.object`, `check.missing`, `check.unknown.<keys|name>`,
 `check.value`, `check.comparison`, `check.eq`, `check.lt`, `check.gt`, `check.tol`, `check.<name>`, `text.literal`,
 `snapshot.<field>`.
 
-Every reason is one token: ASCII letters, digits, `_`, `.` and `,`, at most 96 characters. Author text inside a reason
-(an id or a key) becomes a segment of letters, digits and `_` only (other characters become `_`), at most 32 characters.
-Only `animate.frame` carries an inner reason, in `detail`.
+Every reason is one token: ASCII letters, digits, `_`, `.` and `,`, at most 96 characters. In lesson-owned reasons
+(lesson, beat, check, control, `animate` and `unbind` keys and ids), author text becomes a segment of letters, digits
+and `_` only (other characters become `_`), at most 32 characters. Inner engine reasons (scene, item and patch
+parsing) keep their own wording and are only token-normalised, so an author key there can still contain `.`.
+Only `animate.frame` carries an inner reason, in `detail`. `MGTween.keyframes` refuses a `maxStep` that is not
+finite and positive (`animate.step`).
 
 Reasons are developer tokens. Do not show them to the learner.
 

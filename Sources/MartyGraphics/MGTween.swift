@@ -18,12 +18,13 @@ public enum MGTween {
     /// patch `{"op":"params","params":{param: to}}` gives (same canonical source, items, values and revision).
     /// `maxStep`: largest parameter change between neighbours when the parameter's unit is degrees.
     /// Fails with `animate.param` (not a numeric template parameter), `animate.to` (outside the parameter's range, or
-    /// more than `maxFrames × maxStep` away) or `animate.frame` (an intermediate value does not validate; the issue's
+    /// more than `maxFrames × maxStep` away), `animate.step` (`maxStep` not finite and positive) or `animate.frame` (an intermediate value does not validate; the issue's
     /// reason carries the inner reason after a colon: `animate.frame:template.pts.radius`).
     public static func keyframes(_ scene: MGScene, param: String, to: Double, maxStep: Double = 5) -> Result<[MGScene], MGError> {
         guard let spec = numericSpec(scene, param), spec.defaultValue?.isFinite != false || scene.source["params"]?[param] != nil,
               !spec.integer else { return .failure(.init("animate.param")) }
         guard to.isFinite, spec.range.contains(to) else { return .failure(.init("animate.to")) }
+        guard maxStep.isFinite, maxStep > 0 else { return .failure(.init("animate.step")) }
         let from = current(scene, param, spec)
         let delta = to - from
         let frames: Int

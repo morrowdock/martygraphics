@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "2086c1ec2e601e5a2484694d5d8c3ebde3d02f1f57426316e56f53c1025c6de6"
+      "sha256": "58c2ac8bd20a30cc1650fbee785ad0e514290ca75af1febfbf14c3f7ca357cd1"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -275,15 +275,15 @@
     },
     {
       "path": "Sources/MartyGraphics/MGLesson.swift",
-      "sha256": "e99fd866171dc54105d1adec61c79f35a5a23ae4a56da673d159a3839a2a8813"
+      "sha256": "9c7e93c6cde2c211a8eba04819d924f03ef6816c3a1ce6013332001ad61fbe70"
     },
     {
       "path": "Sources/MartyGraphics/MGLessonSession.swift",
-      "sha256": "52b0ae0517c92c53f6cf21bb5f538ea5301c59ba68a43703e8938c211653fba4"
+      "sha256": "383916883427f2b5f7ce31b5da7df741b272d32cd5a3cf4dfaeee692ef91557a"
     },
     {
       "path": "Sources/MartyGraphics/MGLessonSnapshot.swift",
-      "sha256": "31cf0a3a45ec5670595ac3772ee404c98eda9956a18e4cdfa9b5c15885fdc3a2"
+      "sha256": "8635c145466d379a9453b1c77edaa1170e42e28e5ba9c0d52a5dba5f888495a4"
     },
     {
       "path": "Sources/MartyGraphics/MGModel.swift",
@@ -331,11 +331,11 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTween.swift",
-      "sha256": "cbb0a62aefed475366c073a56065d58d77f91aa522d27354fcc3624ab6bfae0e"
+      "sha256": "6381529e57c2476c58650baaeac81882f85ff7c81407e1d437d7c666d23dae57"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsLessonView.swift",
-      "sha256": "370a04f3fb9648214d2aa1df16a2a4fca54827ac197c1394144ce63614a2c2a8"
+      "sha256": "953be00c0791d0165fbed3a1b452e45fa3159c7fb482ef3b324feeb2f403126a"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
@@ -450,6 +450,10 @@
       "sha256": "a3c2dae650d234efa6c3dfbc12237b9d7fb1e12f44e1e59750b62a4e02b05b49"
     },
     {
+      "path": "Tests/MartyGraphicsTests/LessonReviewRecheckTests.swift",
+      "sha256": "1622f716d36f90a65749cca75f65e9dcc683a87461d1be87f5fbf8b97df776b7"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/LessonReviewRegressionTests.swift",
       "sha256": "8ab0ae5e5ee2af89a7638bf4a36e3a60627e0ac6d1bdfc760ebf59152628babd"
     },
@@ -555,7 +559,7 @@
     },
     {
       "path": "docs/LESSONS.md",
-      "sha256": "32d52d3f608a0f0371fbf54dd7815b9c23d81421265866ecb55dabddb64d6d2a"
+      "sha256": "882f5a15427c26678181b031289978f13493c6adde1540e441946b90313a0e70"
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",

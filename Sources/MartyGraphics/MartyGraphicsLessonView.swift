@@ -82,15 +82,19 @@ public final class MGLessonController: ObservableObject {
     public func endStream() { sync(session.endStream()) }
 
     /// Load a whole lesson document (all-or-nothing). Returns false and keeps the current lesson on refusal.
+    /// Nothing is reset before the document validates: a refused document leaves the session, the board, the caption
+    /// and the timing marks exactly as they were (only `lastIssue` changes).
     @discardableResult public func load(_ lesson: MGLesson) -> Bool {
-        if timing.requestAt == nil { begin() }
         let started = clock.now
         switch session.load(lesson) {
         case .success(let events):
-            // A new session counts its changes from zero: always show its scene, and time this run on its own.
-            shownSerial = -1
+            // A new session counts its changes from zero: always show its scene, and time this run on its own
+            // (keep the request mark of a `begin()` made just before this load).
+            ticker?.cancel()
+            shownSerial = -1; lastIssue = nil; selection = nil
             board.resumeTransitions()
-            if timing.firstPresentedAt != nil { timing = MGLessonTiming(requestAt: started); firstFrame.arm() }
+            if timing.requestAt == nil || timing.firstPresentedAt != nil { timing = MGLessonTiming(requestAt: started) }
+            firstFrame.arm()
             sync(events); return true
         case .failure(let issue): lastIssue = issue; return false
         }

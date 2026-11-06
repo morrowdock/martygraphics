@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import Foundation
 
+// Boundary: a snapshot covers complete statements only. A statement that has started but not finished is not stored;
+// the host replays `unfinishedInput` into the restored session before the rest of the stream.
 // Persistence for a lesson session: engine data only (scene source, beat cursor, controls, id history, beats that were
 // received but not presented yet, pacing position). No learner identity, no audio, no model text beyond accepted
 // statements. `restore` re-validates everything strictly and refuses a snapshot that no longer validates (for example
@@ -20,7 +22,7 @@ extension MGLessonSession {
         o["stream"] = .object(["started": .bool(stream.started), "scene": .bool(stream.hasScene), "keep": .bool(stream.keep),
                                "ended": .bool(stream.ended), "header": .bool(stream.header), "exhausted": .bool(stream.exhausted),
                                "beats": .number(Double(stream.beats)), "statements": .number(Double(stream.statements)),
-                               "bytes": .number(Double(stream.bytes))])
+                               "bytes": .number(Double(stream.bytes - unfinishedInput.count))])
         o["pending"] = .array(pending.map { b in
             var p: [String: MGJSON] = ["beat": .number(Double(b.index)), "say": .string(b.say), "sayAt": .number(Double(b.sayStatement)),
                                        "complete": .bool(b.complete), "refused": .bool(b.refused)]

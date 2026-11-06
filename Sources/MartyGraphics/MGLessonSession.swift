@@ -186,9 +186,20 @@ public struct MGLessonSession {
     /// included), and a stream holds at most `MGLessonLimits.statements` statements. Past either limit the session emits
     /// one terminal refusal (`lesson.bytes` or `lesson.statements.count`) and ignores the rest of the stream until
     /// `endStream()`, so the work and the events one stream can cause are bounded.
-    @discardableResult public mutating func feed(_ chunk: String) -> [MGLessonEvent] {
+    @discardableResult public mutating func feed(_ chunk: String) -> [MGLessonEvent] { feed(bytes: chunk.utf8) }
+
+    /// Feed raw bytes (for example `unfinishedInput` replayed after a restore).
+    @discardableResult public mutating func feed(_ data: Data) -> [MGLessonEvent] { feed(bytes: data) }
+
+    /// Bytes of a statement that has started but not completed. Snapshots cover complete statements only: after
+    /// `restore`, feed this tail again before the rest of the stream (it is not counted in the snapshot's byte budget).
+    public var unfinishedInput: Data {
+        scanner.depth > 0 && !scanner.overflow && !stream.exhausted ? Data(scanner.buffer) : Data()
+    }
+
+    mutating func feed<S: Sequence>(bytes chunk: S) -> [MGLessonEvent] where S.Element == UInt8 {
         outbox = []
-        for byte in chunk.utf8 {
+        for byte in chunk {
             if stream.ended, !Self.isSpace(byte) { startStream() }
             stream.bytes += 1
             if stream.exhausted { continue }
@@ -201,8 +212,13 @@ public struct MGLessonSession {
 
     static func isSpace(_ b: UInt8) -> Bool { b == 0x20 || b == 0x0A || b == 0x0D || b == 0x09 }
 
-    /// The next statement after an ended stream starts a new stream with fresh budgets.
-    mutating func startStream() { stream = StreamStatus(); isComplete = false; fastForward = false }
+    /// Input after an ended stream starts a candidate stream with fresh budgets. Playback status (`isComplete`,
+    /// `fastForward`) changes only when that stream's first accepted `scene` or `keep` reopens the lesson, so refused
+    /// input after a finished lesson changes nothing.
+    mutating func startStream() { stream = StreamStatus() }
+
+    /// A follow-up (`keep`) or a new lesson (`scene`) was accepted: playback is live again.
+    mutating func reopenPlayback() { isComplete = false; fastForward = false }
 
     /// Stop scanning this stream with one terminal refusal. Text received before the limit keeps its effect.
     mutating func exhaust(_ reason: String) {
@@ -261,7 +277,9 @@ public struct MGLessonSession {
         state = s
         for c in commands { appendLog(MGLessonLogEntry(command: c, origin: origin, beat: nil, statement: nil)) }
         if pending.isEmpty { projected = s }
-        publish(origin == .learner ? .direct : Self.combine(transitions), from: before)
+        let transition = origin == .learner ? MGTransition.direct : Self.combine(transitions)
+        publish(transition, from: before)
+        extendSettle(transition)
         return .success(s)
     }
 
@@ -381,6 +399,7 @@ public struct MGLessonSession {
             guard value == .bool(true) else { return refuse("stmt.kind", index) }
             guard !stream.started, state != nil else { return refuse("stmt.order", index) }
             stream.started = true; stream.keep = true
+            reopenPlayback()
             if pending.isEmpty { projected = state }
             emit(.accepted(statement: index))
         case "say": say(value, index)
@@ -397,7 +416,7 @@ public struct MGLessonSession {
         guard !stream.started, !stream.header else { return refuse("stmt.order", index) }
         do {
             guard let o = value.objectValue else { throw MGError("lesson.object") }
-            try MGParser.closed(o, required: ["v"], optional: ["title"], "lesson")
+            try MGLessonEngine.closed(o, required: ["v"], optional: ["title"], "lesson")
             guard o["v"] == .number(1) else { throw MGError("lesson.version") }
             if MGLessonEngine.hasDecimalLiteral(value) { throw MGError("text.literal") }
             let empty = MGContext(width: 12, height: 8, is3D: false, values: [:])
@@ -421,6 +440,8 @@ public struct MGLessonSession {
             let fresh = MGLessonState(scene: scene)
             state = fresh; projected = fresh
             pending = []; nextBeat = 0; openLine = nil; lineEndsAt = nil; lineRemaining = nil; caption = nil
+            settleUntil = clock.now; settleRemaining = isPaused ? .zero : nil   // a new lesson inherits no deadline
+            reopenPlayback()
             stream.started = true; stream.hasScene = true
             emit(.accepted(statement: index))
             publish(.blend, from: before)
@@ -487,6 +508,7 @@ public struct MGLessonSession {
                 appendLog(MGLessonLogEntry(command: json, origin: .script, beat: nil, statement: index))
                 emit(.accepted(statement: index))
                 publish(r.transition, from: before)
+                extendSettle(r.transition)   // a set-up animation must settle before the lesson can complete
             } catch { refuse(Self.issue(error, statement: index)) }
         } else {
             refuse("stmt.order", index)
@@ -549,6 +571,8 @@ public struct MGLessonSession {
             pending.removeFirst()
             present(first, at: now)
         }
+        // No beat waits: the script's projection is what is shown (also after a beat was refused at due time).
+        if pending.isEmpty, let s = state, projected != s { projected = s }
         if stream.ended, pending.isEmpty, !isComplete, !isPaused,
            fastForward || pacing == .immediate || (openLine == nil && now >= settleUntil) {
             isComplete = true; emit(.lessonComplete)
@@ -596,11 +620,17 @@ public struct MGLessonSession {
         emit(.beatPresented(beat: k))
         let transition = Self.combine(transitions)
         publish(transition, from: before)
-        settleUntil = now + .milliseconds(Int64((Self.settle(transition) * 1000).rounded()))
+        extendSettle(transition)
         if !(fastForward || pacing == .immediate) {
             openLine = k
             if case .estimate(let rate) = pacing { lineEndsAt = now + Self.lineDuration(text, wordsPerSecond: rate) }
         }
+    }
+
+    /// Keep the settle deadline at least `transition`'s length from now (paused: from where the clock stopped).
+    mutating func extendSettle(_ transition: MGTransition) {
+        let length = Duration.milliseconds(Int64((Self.settle(transition) * 1000).rounded()))
+        if isPaused { settleRemaining = max(settleRemaining ?? .zero, length) } else { settleUntil = max(settleUntil, clock.now + length) }
     }
 
     /// `.estimate` line length: words / rate, clamped to 1–12 s.

@@ -138,7 +138,7 @@ public struct MGCheck: Equatable, Sendable {
 
     static func parse(_ json: MGJSON) throws -> MGCheck {
         guard let o = json.objectValue else { throw MGError("check.object") }
-        try MGParser.closed(o, required: ["value"], optional: ["eq", "lt", "gt", "tol"], "check")
+        try MGLessonEngine.closed(o, required: ["value"], optional: ["eq", "lt", "gt", "tol"], "check")
         guard case .string(let name)? = o["value"], (1...16).contains(name.count),
               name.unicodeScalars.allSatisfy({ $0.isASCII && CharacterSet.alphanumerics.contains($0) }) else { throw MGError("check.value") }
         let present = [Comparison.eq, .lt, .gt].filter { o[$0.rawValue] != nil }
@@ -192,7 +192,7 @@ public struct MGLesson: Equatable, Sendable {
             guard let o = json.objectValue else { throw MGError("lesson.object") }
             guard json.canonicalData.count <= MGLessonLimits.lessonBytes else { throw MGError("lesson.bytes") }
             let extra = Set(o.keys).subtracting(keys)
-            guard extra.isEmpty else { throw MGError("lesson.unknown.\(extra.sorted().joined(separator: ","))") }
+            guard extra.isEmpty else { throw MGError("lesson.unknown.\(MGLessonEngine.segments(extra))") }
             guard o["v"] == .number(1) else { throw MGError("lesson.version") }
             guard o["kind"] == .string("lesson") else { throw MGError("lesson.kind") }
             var title: String?
@@ -206,7 +206,7 @@ public struct MGLesson: Equatable, Sendable {
             guard list.count <= MGLessonLimits.beats else { throw MGError("lesson.beats.count") }
             let beats = try list.map { entry -> Beat in
                 guard let b = entry.objectValue else { throw MGError("beat.object") }
-                try MGParser.closed(b, required: ["say"], optional: beatKeys, "beat")
+                try MGLessonEngine.closed(b, required: ["say"], optional: beatKeys, "beat")
                 guard case .string(let say)? = b["say"] else { throw MGError("stmt.say") }
                 var ops: [MGJSON] = [], checks: [MGJSON] = []
                 if let raw = b["ops"] {
@@ -263,6 +263,16 @@ enum MGLessonEngine {
     /// Scene-walkthrough ops have no meaning in a lesson: a lesson has one beat system.
     static let forbidden: Set<String> = ["steps", "step", "dim"]
 
+    /// Closed keys for lesson-owned objects. Like `MGParser.closed`, but every unknown key becomes an author segment
+    /// (letters, digits and `_`, at most 32 characters), so `<what>.unknown.<keys>` never gains fake segments.
+    static func closed(_ o: [String: MGJSON], required: Set<String>, optional: Set<String>, _ what: String) throws {
+        let keys = Set(o.keys)
+        guard required.isSubset(of: keys) else { throw MGError("\(what).missing") }
+        let extra = keys.subtracting(required.union(optional))
+        guard extra.isEmpty else { throw MGError("\(what).unknown.\(segments(extra))") }
+    }
+    static func segments(_ keys: Set<String>) -> String { keys.map(MGLessonIssue.segment).sorted().joined(separator: ",") }
+
     static func refuseForbidden(_ op: MGJSON) throws {
         if case .string(let name)? = op["op"], forbidden.contains(name) { throw MGError("lesson.op.\(name)") }
     }
@@ -273,14 +283,17 @@ enum MGLessonEngine {
         switch json {
         case .string(let s):
             // Refused forms: `1.5`, `.5` / `-.5` (a dot before a digit, not after a letter or digit), and exponent
-            // notation `2e3` / `2E-3` (a digit run not glued to a letter, then e, an optional sign and a digit).
+            // notation `2e3` / `2E-3` / `2.e3` (a digit run not glued to a letter, an optional point, then e, an
+            // optional sign and a digit). A sentence-ending integer ("Step 3.") stays allowed.
             let u = Array(s.unicodeScalars)
             func digit(_ i: Int) -> Bool { u.indices.contains(i) && CharacterSet.decimalDigits.contains(u[i]) }
             func word(_ i: Int) -> Bool { u.indices.contains(i) && (CharacterSet.letters.contains(u[i]) || CharacterSet.decimalDigits.contains(u[i])) }
             for i in u.indices {
                 if u[i] == "." && digit(i + 1) && (digit(i - 1) || !word(i - 1)) { return true }
-                if (u[i] == "e" || u[i] == "E") && digit(i - 1) && (digit(i + 1) || ((u.indices.contains(i + 1) && (u[i + 1] == "-" || u[i + 1] == "+")) && digit(i + 2))) {
-                    var j = i - 1
+                // The mantissa may end in a point (`2.e3`); the digit run before it must not be glued to a letter.
+                let m = u.indices.contains(i - 1) && u[i - 1] == "." ? i - 2 : i - 1
+                if (u[i] == "e" || u[i] == "E") && digit(m) && (digit(i + 1) || ((u.indices.contains(i + 1) && (u[i + 1] == "-" || u[i + 1] == "+")) && digit(i + 2))) {
+                    var j = m
                     while digit(j) { j -= 1 }
                     if !(u.indices.contains(j) && CharacterSet.letters.contains(u[j])) { return true }
                 }
@@ -302,7 +315,7 @@ enum MGLessonEngine {
         case "animate": return try animate(o, state)
         case "bind": return try bind(o, state)
         case "unbind":
-            try MGParser.closed(o, required: ["op", "id"], optional: [], "unbind")
+            try closed(o, required: ["op", "id"], optional: [], "unbind")
             guard case .string(let id)? = o["id"] else { throw MGError("unbind.id") }
             guard state.control(id) != nil else { throw MGError("control.unknown.\(MGLessonIssue.segment(id))") }
             var next = state; next.controls.removeAll { $0.id == id }
@@ -337,7 +350,7 @@ enum MGLessonEngine {
     }
 
     static func animate(_ o: [String: MGJSON], _ state: MGLessonState) throws -> MGCommandResult {
-        try MGParser.closed(o, required: ["op", "param", "to"], optional: ["dur"], "animate")
+        try closed(o, required: ["op", "param", "to"], optional: ["dur"], "animate")
         guard case .string(let param)? = o["param"] else { throw MGError("animate.param") }
         guard case .number(let to)? = o["to"] else { throw MGError("animate.to") }
         var duration = MGLessonLimits.defaultAnimateDuration
@@ -353,9 +366,9 @@ enum MGLessonEngine {
     }
 
     static func bind(_ o: [String: MGJSON], _ state: MGLessonState) throws -> MGCommandResult {
-        try MGParser.closed(o, required: ["op", "control"], optional: [], "bind")
+        try closed(o, required: ["op", "control"], optional: [], "bind")
         guard let c = o["control"]?.objectValue else { throw MGError("control.object") }
-        try MGParser.closed(c, required: ["id", "k", "param", "min", "max", "step", "label"], optional: [], "control")
+        try closed(c, required: ["id", "k", "param", "min", "max", "step", "label"], optional: [], "control")
         let id = try MGParser.identifier(c["id"]!, "control.id")
         guard c["k"] == .string("slider") else { throw MGError("control.kind") }
         guard case .string(let param)? = c["param"], let spec = MGTween.numericSpec(state.scene, param) else { throw MGError("control.param") }

@@ -20,6 +20,11 @@
   (cuts, not chords, between them); control labels may not hold placeholders; snapshots keep the projection of queued
   beats; a second `load` always reaches the board; pause holds an in-flight animation and its settle time; template
   walkthroughs are flattened in lessons; leading-dot decimals and exponents count as decimal literals; one header per stream.
+  After a second review: refused input after a finished lesson no longer reopens playback; a beat refused at due time
+  leaves the projection on the shown state; set-up animations settle before `lessonComplete`; `2.e3` counts as a
+  decimal literal; `MGTween.keyframes` refuses a bad `maxStep` (`animate.step`); a refused controller `load` keeps the
+  current lesson; lesson-owned unknown keys become author segments; `unfinishedInput` lets a host replay a partial
+  statement after `restore`.
 - Add a maintainer-dispatched hosted `macos` CI job (standard `macos-26` runner) that builds and tests the root package, examples and SceneValidator; GPU tests skip themselves on hosted VMs.
 - Add reusable solid components. A component is a closed-key JSON definition with
   numeric parameters (`default`, `min`, `max`, `integer`), parts and constraints whose
