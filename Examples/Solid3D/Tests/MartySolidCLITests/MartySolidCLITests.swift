@@ -71,4 +71,28 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual(try run(["bogus"]).status, 2)
         XCTAssertEqual(try run(["component", "check", "/nonexistent.json"]).status, 2)
     }
+
+    func testStrictRefusesWhatTheNormalCheckOnlyWarns() throws {
+        let idle = try write(#"{"v":2,"kind":"assembly","parts":[{"id":"disc","shape":{"shaft":{"radius":20,"length":5}},"joint":{"revolute":[0,0,1]}}],"steps":[{"say":"A disc on a joint."}]}"#, "idle.json")
+        let normal = try run(["check", idle])
+        XCTAssertEqual(normal.status, 0)
+        XCTAssertEqual(normal.json?["ok"] as? Bool, true)
+        XCTAssertEqual((normal.json?["warnings"] as? [[String: Any]])?.first?["reason"] as? String, "joint.idle.disc")
+        for args in [["check", "--strict", idle], ["check", idle, "--strict"]] {
+            let strict = try run(args)
+            XCTAssertEqual(strict.status, 1)
+            XCTAssertEqual(strict.json?["ok"] as? Bool, false)
+            XCTAssertEqual(strict.json?["reason"] as? String, "joint.idle.disc")
+            XCTAssertEqual(strict.json?["part"] as? String, "disc")
+            XCTAssertEqual(strict.json?["strict"] as? Bool, true)
+            XCTAssertNotNil(strict.json?["readBack"] as? [String])   // the full report is still printed
+        }
+        let example = try run(["check", "--strict", models.appendingPathComponent("horizontal-reduction.json").path])
+        XCTAssertEqual(example.status, 0)
+        XCTAssertEqual(example.json?["version"] as? Int, 2)
+        XCTAssertEqual((example.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 5 · Not checked 1")
+        XCTAssertEqual((example.json?["facts"] as? [String: Any]).flatMap { ($0["wheel.speed"] as? [String: Any])?["tier"] as? String }, "solved")
+        XCTAssertEqual(try run(["check", "--strict", idle, idle]).status, 2)
+        XCTAssertEqual(try run(["check", "--strict", "--strict", idle]).status, 2)
+    }
 }

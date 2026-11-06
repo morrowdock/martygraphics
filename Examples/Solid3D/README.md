@@ -54,6 +54,7 @@ play/pause. It needs a logged-in desktop session.
 swift build -c release --package-path Examples/Solid3D
 B=$(swift build -c release --package-path Examples/Solid3D --show-bin-path)
 $B/marty-solid check my-model.json             # JSON report; exit 0 accepted, 1 refused
+$B/marty-solid check --strict my-model.json    # model-harness profile: also refuses idle joints and frame errors
 $B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF, snapshot
 ```
 
@@ -64,7 +65,13 @@ $B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF,
   steps, the gear ratios the engine solved, and its checks: closed meshes and a tooth
   sweep with the smallest clearance. If a model parses but fails a check (an open mesh,
   or teeth overlapping by more than 0.01 module), `ok` is false with `check.meshOpen` or
-  `check.gearsInterpenetrate`.
+  `check.gearsInterpenetrate`. The report also lists `warnings` (`joint.idle.<id>`,
+  `frame.child.absolute.<id>`, `frame.child.far.<id>`, `frame.axis.off.<id>`), the engine
+  `facts` with their tiers, the tier `legend`, `notChecked` per motion source and a
+  plain-words `readBack` of every part (world position, turn axis such as "a horizontal
+  axis (+X)", parent frame, up). With `--strict` the warnings except `frame.child.far` make
+  `ok` false (exit 1) with that reason, and the full report is still printed. See
+  [docs/SOLID-3D.md](../../docs/SOLID-3D.md#warnings-strict-mode-and-the-check-report).
 - `render` writes `hero.png`, `exploded.png`, one captioned `step-N.png` per authored
   step (with its highlight, explode amount and camera), a 12-second `loop.gif`
   (120 frames at 0.10 s: one orbit, one input turn and an explode beat; `--no-loop`
