@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Add opt-in 3D inspection hooks. `inspects3D(_:)` with `MG3DInspection` (`.selection`,
+  `.emphasis`, `.dimming`) lets the existing `selection`, `markers` and `emphasis`
+  modifiers act on a 3D board; as in 2D, highlights, axes and ground lines are never
+  selected, and a highlight follows its target's look. `preserves3DCamera(resetKey:)`
+  keeps orbit and zoom across updates of the same scene and re-frames on a reset key,
+  scene camera, world size or scene identity change. Without these modifiers 3D boards
+  behave exactly as before. 3D picks the nearest hit of the earliest probe, whereas 2D
+  picks the smallest footprint; `.dimming` has no 2D counterpart.
+- Add `Examples/KeySwitch3D`, a schematic key-switch teaching model (not physically
+  validated) with a parts list, press/explode/actuation sliders and reset. Click-select,
+  drag-orbit and reset were checked on screen on macOS.
 - Add a shortest-path walkthrough to the native showcase. The showcase registers
   the opt-in graph pack, the README and gallery show the new capture, and every
   native capture is re-exported at one recorded commit. The capture receipt now

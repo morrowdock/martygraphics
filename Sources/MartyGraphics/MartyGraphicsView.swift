@@ -74,8 +74,10 @@ public struct MartyGraphicsView: View {
         self.showsControls = showsControls; self.readOnly = readOnly
     }
     /// Tap the board to select a semantic object (only ids in `markers`, when markers are set). Ignored when read-only.
+    /// 2D only unless the host opts in with `inspects3D([.selection])`.
     public func selection(_ id: Binding<String?>) -> Self { var v = self; v.teaching.selection = id; return v }
     /// Items to point at with a glow ring (the selection is always included).
+    /// 2D only unless the host opts in with `inspects3D([.emphasis])` and/or `[.dimming]`.
     public func emphasis(_ ids: Set<String>) -> Self { var v = self; v.teaching.emphasis = ids; return v }
     /// Numbered markers (item id → n) that match an object list beside the board.
     public func markers(_ markers: [String: Int]) -> Self { var v = self; v.teaching.markers = markers; return v }
@@ -85,11 +87,38 @@ public struct MartyGraphicsView: View {
     public func boardAccessibility(_ summary: String?) -> Self { var v = self; v.teaching.summary = summary; return v }
     /// Items not drawn and not tappable (values hidden until the host reveals them, e.g. during independent practice).
     public func concealed(_ ids: Set<String>) -> Self { var v = self; v.teaching.concealed = ids; return v }
+    /// 3D only: keep the learner's orbit and zoom across updates of the same scene (patches, parameter changes,
+    /// streams). The scene camera is applied when the board first appears; when the scene's own camera, world size or
+    /// identity (template and title) changes; and whenever `resetKey` changes (e.g. a Reset button increments it).
+    /// Applying it also re-centres the built-in camera controller's orbit pivot and stops its inertia.
+    /// Without this modifier every 3D rebuild returns to the scene camera, as before.
+    public func preserves3DCamera(resetKey: Int) -> Self { var v = self; v.teaching.cameraReset = resetKey; return v }
+    /// 3D only, opt-in: let the existing `selection`, `markers` and `emphasis` modifiers act on a 3D board.
+    /// Without this modifier a 3D board ignores them exactly as before. See `MG3DInspection` for each option.
+    public func inspects3D(_ options: MG3DInspection) -> Self { var v = self; v.teaching.inspection3D = options; return v }
 
     public var body: some View {
         MGSceneHost(controller: external ?? own, showsControls: showsControls, readOnly: readOnly, teaching: teaching)
             .onChange(of: initial) { _, next in if external == nil, let next { own.show(next) } }
     }
+}
+
+/// Opt-in 3D teaching hooks for `MartyGraphicsView.inspects3D(_:)`. Each option reuses an existing modifier;
+/// none of them changes 2D boards.
+public struct MG3DInspection: OptionSet, Hashable, Sendable {
+    public let rawValue: Int
+    public init(rawValue: Int) { self.rawValue = rawValue }
+    /// Board taps go to the `selection` binding (ignored when read-only). SceneKit hit tests probe the tap point and
+    /// two rings within the same 12-pt slop as 2D; the nearest hit of the earliest probe wins (2D instead picks the
+    /// smallest footprint). Only `markers` ids are selectable when markers are set. As in 2D, highlights, axes and
+    /// ground lines are never selected. Numbered marker badges are not drawn in 3D.
+    public static let selection = MG3DInspection(rawValue: 1 << 0)
+    /// `emphasis` items (and the current selection) glow brighter; nothing else changes. A highlight halo glows
+    /// with its target.
+    public static let emphasis = MG3DInspection(rawValue: 1 << 1)
+    /// While something drawn is emphasised, every other item is dimmed (a highlight dims with its target).
+    /// 3D only: 2D emphasis never dims.
+    public static let dimming = MG3DInspection(rawValue: 1 << 2)
 }
 
 /// Teaching hooks carried from MartyGraphicsView into the host.
@@ -100,6 +129,10 @@ struct MGBoardTeaching {
     var loops: Int?
     var summary: String?
     var concealed: Set<String> = []
+    /// Non-nil: 3D camera keep/reset key (`preserves3DCamera`).
+    var cameraReset: Int?
+    /// Opt-in 3D hooks (`inspects3D`); empty keeps the original 3D behaviour.
+    var inspection3D: MG3DInspection = []
     /// Motion stays on its first frame while anything is concealed (it can show the answer), then plays from the start.
     var holdsMotion: Bool { !concealed.isEmpty }
 }
@@ -177,7 +210,8 @@ struct MGSceneHost: View {
     private func board(_ scene: MGScene) -> some View {
         Group {
             if scene.is3D && teaching.concealed.isEmpty {
-                MG3DView(scene: scene, items: MGTimeline.items(scene, step: step), playing: MGRenderPolicy.sceneKitPlaying(renderState(scene)))
+                MG3DView(scene: scene, items: MGTimeline.items(scene, step: step), playing: MGRenderPolicy.sceneKitPlaying(renderState(scene)),
+                         teaching: teaching, readOnly: readOnly)
                     .overlay(alignment: .bottomTrailing) {
                         Label("Drag to turn", systemImage: "hand.draw").font(.caption2).foregroundStyle(theme.subtleInk).padding(8)
                     }
@@ -324,5 +358,18 @@ struct MGSceneHost: View {
         out.emphasis = teaching.emphasis.union(teaching.selection?.wrappedValue.map { [$0] } ?? [])
         out.markers = teaching.markers
         return out
+    }
+}
+
+extension MG3DView {
+    /// The host board's 3D wiring: derives the hooks from the teaching modifiers (`MG3DInteraction.Hooks.derive`)
+    /// and writes taps to the current selection binding. Kept out of `MGSceneHost.body` so tests can build it.
+    init(scene: MGScene, items: [MGItem], playing: Bool, teaching: MGBoardTeaching, readOnly: Bool) {
+        let hooks = MG3DInteraction.Hooks.derive(hasSelection: teaching.selection != nil, selected: teaching.selection?.wrappedValue,
+                                                 emphasis: teaching.emphasis, markers: teaching.markers,
+                                                 inspection: teaching.inspection3D, cameraReset: teaching.cameraReset, readOnly: readOnly)
+        self.init(scene: scene, items: items, playing: playing, selectable: hooks.selectable,
+                  onSelect: hooks.selects ? { [selection = teaching.selection] in selection?.wrappedValue = $0 } : nil,
+                  emphasis: hooks.emphasis, glowsEmphasis: hooks.glows, dimsOthers: hooks.dims, cameraReset: hooks.cameraReset)
     }
 }

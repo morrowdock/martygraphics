@@ -6,19 +6,37 @@ import simd
 import UIKit
 typealias MGPlatformColor = UIColor
 typealias MGBezier = UIBezierPath
+typealias MGTapRecognizer = UITapGestureRecognizer
 #else
 import AppKit
 typealias MGPlatformColor = NSColor
 typealias MGBezier = NSBezierPath
+typealias MGTapRecognizer = NSClickGestureRecognizer
 #endif
 
 /// SceneKit renderer for 3D scenes (body, incline, line, vector, axes, orbit, text, highlight, path).
 /// Drag to orbit, pinch to zoom. Motion runs on SceneKit's render loop with the same `MGTimeline.frame` as 2D.
+/// Optional teaching hooks (selection, emphasis, dimming, camera keep/reset) default to off, which keeps the original
+/// behaviour; hosts opt in explicitly (`MartyGraphicsView.inspects3D`, `preserves3DCamera`).
 struct MG3DView {
     let scene: MGScene
     let items: [MGItem]
     /// Real motion is playing on a visible board in an active app (MGRenderPolicy.sceneKitPlaying).
     let playing: Bool
+    /// Ids a tap may select (nil = every drawn item). Used only when `onSelect` is set.
+    var selectable: Set<String>? = nil
+    /// Receives the tapped item id, or nil for empty space. nil installs no tap handling at all.
+    var onSelect: ((String?) -> Void)? = nil
+    /// Items drawn emphasised. Has no effect unless `glowsEmphasis` or `dimsOthers` is set.
+    var emphasis: Set<String> = []
+    /// Emphasised items glow brighter (the 3D counterpart of the 2D glow ring).
+    var glowsEmphasis = false
+    /// While any drawn item is emphasised, the others are dimmed (3D only; 2D emphasis never dims).
+    var dimsOthers = false
+    /// nil: every geometry rebuild returns to the scene camera (original behaviour). Non-nil: keep the learner's
+    /// orbit and zoom across rebuilds; a new value (or a changed scene camera, world size or scene identity) returns
+    /// to the scene camera and settles the built-in camera controller.
+    var cameraReset: Int? = nil
 
     /// Never render continuously. SceneKit advances only while motion plays; otherwise it redraws on
     /// demand, which still includes camera gestures (allowsCameraControl), so orbiting a static scene stays live.
@@ -37,6 +55,45 @@ struct MG3DView {
         var nodes: [String: SCNNode] = [:]
         var builtSignature = ""
         let root = SCNNode()
+        // Teaching hooks (main thread only).
+        weak var view: SCNView?
+        var onSelect: ((String?) -> Void)?
+        var selectable: Set<String>?
+        var tap: MGTapRecognizer?
+        /// Look currently applied to `nodes` (fresh nodes are plain).
+        var appliedLook = Look.plain
+        var placedCamera: MG3DInteraction.CameraKey?
+
+        struct Look: Equatable {
+            var emphasis: Set<String>
+            var glows: Bool
+            var dims: Bool
+            static let plain = Look(emphasis: [], glows: false, dims: false)
+        }
+
+        /// One tap at `point` in view coordinates: probe `MG3DInteraction.tapSamples` with SceneKit hit tests and
+        /// report the resolved item (nil = empty space). Gesture recognisers call this; tests can call it directly.
+        func select(at point: CGPoint) {
+            guard let onSelect, let view else { return }
+            lock.lock(); let targets = MG3DInteraction.targets(items); lock.unlock()
+            // Highlights, axes and ground lines are not registered as roots, so their hits fall through to what is behind.
+            let roots = Dictionary(nodes.filter { targets.contains($0.key) }.map { (ObjectIdentifier($0.value), $0.key) },
+                                   uniquingKeysWith: { a, _ in a })
+            let options: [SCNHitTestOption: Any] = [.searchMode: SCNHitTestSearchMode.all.rawValue, .ignoreHiddenNodes: true]
+            let samples = MG3DInteraction.tapSamples().map { o -> [[ObjectIdentifier]] in
+                view.hitTest(CGPoint(x: point.x + o.x, y: point.y + o.y), options: options).map { hit in
+                    var chain: [ObjectIdentifier] = [], node: SCNNode? = hit.node
+                    while let n = node { chain.append(ObjectIdentifier(n)); node = n.parent }
+                    return chain
+                }
+            }
+            onSelect(MG3DInteraction.pick(samples, roots: roots, selectable: selectable))
+        }
+
+        @objc func tapped(_ g: MGTapRecognizer) {
+            guard let v = g.view else { return }
+            select(at: g.location(in: v))
+        }
 
         func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
             lock.lock(); let scene = self.scene, items = self.items, playing = self.playing; lock.unlock()
@@ -61,6 +118,7 @@ struct MG3DView {
         view.antialiasingMode = .multisampling4X
         view.backgroundColor = MGPlatformColor(red: 0.04, green: 0.06, blue: 0.12, alpha: 1)
         view.delegate = c
+        c.view = view
         MG3DView.configure(view, playing: playing, animates: scene.animates)
         let ambient = SCNNode(); ambient.light = SCNLight(); ambient.light!.type = .ambient; ambient.light!.intensity = 350
         s.rootNode.addChildNode(ambient)
@@ -76,18 +134,59 @@ struct MG3DView {
     func update(_ view: SCNView, _ c: Coordinator) {
         MG3DView.configure(view, playing: playing, animates: scene.animates)
         c.lock.lock(); c.scene = scene; c.items = items; c.playing = playing; c.lock.unlock()
+        c.onSelect = onSelect; c.selectable = selectable
+        MG3DView.installTap(view, c, enabled: onSelect != nil)
         let signature = scene.source.canonicalString + "|" + items.map(\.id).joined(separator: ",")
-        guard signature != c.builtSignature else { return }
-        c.builtSignature = signature
-        c.root.childNodes.forEach { $0.removeFromParentNode() }
-        c.nodes = MG3DBuilder.build(items, scene: scene, into: c.root)
-        if let camera = view.scene?.rootNode.childNode(withName: "camera", recursively: false) {
+        let rebuilt = signature != c.builtSignature
+        if rebuilt {
+            c.builtSignature = signature
+            c.root.childNodes.forEach { $0.removeFromParentNode() }
+            c.nodes = MG3DBuilder.build(items, scene: scene, into: c.root)
+            c.appliedLook = .plain
+        }
+        let key = MG3DInteraction.CameraKey(scene: scene, reset: cameraReset ?? 0)
+        if MG3DInteraction.placesCamera(preserving: cameraReset != nil, rebuilt: rebuilt, last: c.placedCamera, next: key),
+           let camera = view.scene?.rootNode.childNode(withName: "camera", recursively: false) {
             let cam = scene.camera ?? MGCamera()
             let distance = Float(max(scene.width, scene.height) * 1.25 / cam.zoom)
             let yaw = Float(cam.yaw * .pi / 180), pitch = Float(cam.pitch * .pi / 180)
             camera.position = SCNVector3(distance * cos(pitch) * sin(yaw), distance * sin(pitch), distance * cos(pitch) * cos(yaw))
             camera.look(at: SCNVector3(0, 0, 0))
+            // A reset must also undo a camera the built-in controller may have switched the view to while orbiting,
+            // and the controller's own pivot and coasting (legacy mode leaves the controller alone, as before).
+            if cameraReset != nil {
+                view.pointOfView = camera
+                MG3DView.settle(view.defaultCameraController)
+            }
+            c.placedCamera = key
         }
+        let look = glowsEmphasis || dimsOthers ? Coordinator.Look(emphasis: emphasis, glows: glowsEmphasis, dims: dimsOthers) : .plain
+        if c.appliedLook != look {
+            MG3DBuilder.style(MG3DInteraction.styles(items: items, drawn: Set(c.nodes.keys), emphasis: look.emphasis,
+                                                     glow: look.glows, dim: look.dims), nodes: c.nodes)
+            c.appliedLook = look
+        }
+    }
+
+    /// After a camera reset the built-in controller orbits the scene centre again (the point the scene camera looks
+    /// at) and stops coasting from the learner's last drag. Roll is already undone by `look(at:)` on the camera node.
+    static func settle(_ controller: SCNCameraController) {
+        controller.stopInertia()
+        controller.target = SCNVector3(0, 0, 0)
+    }
+
+    /// Tap selection exists only while a host asks for it; the recogniser never delays the camera's own mouse/touch input.
+    static func installTap(_ view: SCNView, _ c: Coordinator, enabled: Bool) {
+        if enabled, c.tap == nil {
+            let g = MGTapRecognizer(target: c, action: #selector(Coordinator.tapped(_:)))
+            #if canImport(UIKit)
+            g.cancelsTouchesInView = false
+            #else
+            g.delaysPrimaryMouseButtonEvents = false
+            #endif
+            view.addGestureRecognizer(g); c.tap = g
+        }
+        c.tap?.isEnabled = enabled
     }
 }
 
@@ -238,6 +337,15 @@ enum MG3DBuilder {
         node.simdOrientation = simd_quatf(from: simd_float3(0, 1, 0), to: d / len)
         node.scale = SCNVector3(1, len, 1)
     }
+    /// Emphasis looks on item root nodes: opacity and emission intensity only (geometry and transforms are untouched).
+    static func style(_ styles: [String: MG3DInteraction.Style], nodes: [String: SCNNode]) {
+        for (id, node) in nodes {
+            let s = styles[id] ?? .plain
+            node.opacity = CGFloat(s.opacity)
+            let intensity = CGFloat(s.highlighted ? MG3DInteraction.highlightEmission : 1)
+            node.enumerateHierarchy { n, _ in n.geometry?.materials.forEach { $0.emission.intensity = intensity } }
+        }
+    }
     static func text(_ s: String, at p: SCNVector3, role: MGColorRole, size: CGFloat = 0.3) -> SCNNode {
         let t = SCNText(string: s, extrusionDepth: 0.01)
         t.font = .systemFont(ofSize: 1, weight: .semibold); t.flatness = 0.05
@@ -253,5 +361,11 @@ enum MG3DBuilder {
 }
 
 extension MG3DView: Equatable {
-    static func == (a: MG3DView, b: MG3DView) -> Bool { a.scene == b.scene && a.items == b.items && a.playing == b.playing }
+    static func == (a: MG3DView, b: MG3DView) -> Bool {
+        // Closures cannot be compared. A board that selects is never equal to another one, so SwiftUI always runs
+        // `update` and the coordinator always holds the current closure (a host may swap its selection binding).
+        a.scene == b.scene && a.items == b.items && a.playing == b.playing && a.selectable == b.selectable
+            && a.emphasis == b.emphasis && a.glowsEmphasis == b.glowsEmphasis && a.dimsOthers == b.dimsOthers
+            && a.cameraReset == b.cameraReset && a.onSelect == nil && b.onSelect == nil
+    }
 }

@@ -35,6 +35,7 @@ steps, and motion. Your application supplies the content and decides what happen
 | **Math** | Draw a function from supplied points, with labeled axes. The engine plots the data; it does not solve equations. | [Sampled function](Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
 | **Data** | Compare explicit quantities with labeled bars. These counts are invented. | [Synthetic counts](Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
 | **Motion** | Animate a geometric marker using the engine timeline. | [Moving marker](Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
+| **3D inspection** | Click a part of a 3D model to select it, dim the rest, orbit, and reset the view. Opt-in per board. | [Key switch example](Examples/KeySwitch3D/README.md) |
 | **Graphs** | Compute the cheapest route through a weighted network, one Dijkstra step at a time. Opt-in graph pack. | [Router latency](Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
 [Open the showcase and its capture recipe →](docs/SHOWCASE.md)
@@ -178,9 +179,9 @@ authenticated maintainer status.
 These are **plans, not shipped features**. Each one lands only after tests, review and
 real evidence:
 
-- **Interactive 3D inspection.** Select a part, emphasize or dim others, orbit, and
-  reset the camera, opt-in per board. This is not in the repository yet; it lands
-  after on-screen interaction checks.
+- **Solid 3D models.** Shaded parts with realistic materials, generated gears and
+  lathe-turned shapes, assemblies that move at correct ratios, exploded views and
+  rendered turntable videos.
 - **Accessible graph states.** Show edge status with more than colour.
 - **More teaching packs.** Reusable assemblies and linked plots with narration.
 
