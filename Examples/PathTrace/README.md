@@ -12,6 +12,17 @@ from this code: there are no images, models or stock assets.
 
 This is a schematic teaching model, not a validated mechanical design.
 
+## How the gearbox works
+
+The input shaft turns the small 15-tooth pinion. It drives a 30-tooth gear,
+which turns half as fast (30 ÷ 15 = 2:1). That gear spins the 24-tooth sun gear in the middle
+of a planetary set. Three 18-tooth planet gears mesh with the sun and with the 60-tooth ring
+around them. The ring is fixed, so the planets roll around inside it and carry their
+carrier along, slowly. The carrier turns once for every 1 + 60 ÷ 24 = 3.5 turns of the sun.
+Together: 2 × 3.5 = 7 turns of the input for one turn of the output. Planetary sets are
+used where a big reduction must fit in a small space, such as in car automatic
+transmissions, power drills and helicopter rotor gearboxes.
+
 ## Run
 
 From the repository root, on a Mac with Apple silicon (Metal ray tracing):
@@ -26,10 +37,13 @@ Examples/PathTrace/.build/release/marty-pathtrace --sidebyside /tmp/gearbox-sbs
 
 Each command writes to a **new** directory, with a JSON file that records settings,
 samples per pixel, GPU time and SHA-256 digests. `--frames DIR --times 0,5,8.3` renders
-single moments of the animation.
+single moments of the animation. `--sidebyside` needs a width above 844 pixels, because
+the code panel is 780 pixels wide.
 
 On an M1 Mac mini, a 1920x1080 still at 768 samples per pixel took about 2.5 minutes. The
-published 10-second 1280x720 loop took about 33 minutes (112 samples per pixel per frame).
+10-second 1280x720 loop took about 33 minutes (112 samples per pixel per frame). The published
+GIF is a 480x270 downscale; GIF delays are stored in hundredths of a second, so its 120 frames
+play for 9.6 seconds.
 
 ## What the renderer does
 
@@ -40,7 +54,7 @@ published 10-second 1280x720 loop took about 33 minutes (112 samples per pixel p
 - A procedural, importance-sampled studio environment and area lights. Four of the five studio
   lights are hidden from the camera but still appear in reflections.
 - Thin-lens depth of field, an edge-aware à-trous denoiser, and an ACES filmic tonemap.
-- Deterministic renders for a given seed.
+- Deterministic renders for a given seed on the same GPU and toolchain.
 
 Limits: no motion blur; the denoiser works on one frame at a time; glass blocks shadow rays.
 

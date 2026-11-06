@@ -2,6 +2,7 @@
 import CoreGraphics
 import CoreText
 import Foundation
+import Metal
 import simd
 import MartyGraphicsPathTracer
 
@@ -317,14 +318,25 @@ struct Options {
         }
         let lines = Array(all[(b + 1)..<e])
         // Guard the claim: the quoted lines must be exactly the values this binary uses.
-        let joined = lines.joined(separator: "\n")
-        for needle in ["pinionTeeth = \(Gearbox.pinionTeeth)", "spurTeeth = \(Gearbox.spurTeeth)", "sunTeeth = \(Gearbox.sunTeeth)",
-                       "planetTeeth = \(Gearbox.planetTeeth)", "ringTeeth = \(Gearbox.ringTeeth)",
-                       "spurModule = \(Gearbox.spurModule)", "planetModule = \(Gearbox.planetModule)", "planets = \(Gearbox.planets)"]
-        where !joined.contains(needle) {
-            throw ExportError.failed("Source on disk differs from the built binary (\(needle)); rebuild first")
+        // Whole-token match, so `pinionTeeth = 150` on disk cannot pass for a built value of 15.
+        let tokens = lines.joined(separator: " ").replacingOccurrences(of: ",", with: " ").split(separator: " ").map(String.init)
+        func quoted(_ name: String, _ value: String) -> Bool {
+            tokens.indices.contains { i in tokens[i] == name && i + 2 < tokens.count && tokens[i + 1] == "=" && tokens[i + 2] == value }
+        }
+        let expected: [(String, String)] = [("pinionTeeth", "\(Gearbox.pinionTeeth)"), ("spurTeeth", "\(Gearbox.spurTeeth)"),
+                                            ("sunTeeth", "\(Gearbox.sunTeeth)"), ("planetTeeth", "\(Gearbox.planetTeeth)"),
+                                            ("ringTeeth", "\(Gearbox.ringTeeth)"), ("spurModule", "\(Gearbox.spurModule)"),
+                                            ("planetModule", "\(Gearbox.planetModule)"), ("planets", "\(Gearbox.planets)")]
+        for (name, value) in expected where !quoted(name, value) {
+            throw ExportError.failed("Source on disk differs from the built binary (\(name) = \(value)); rebuild first")
         }
         return (lines, b + 2, e)  // 1-based line numbers
+    }
+
+    /// The GPU this render actually ran on, for the caption (never a hard-coded model name).
+    static func gpuName() -> String {
+        guard let name = MTLCreateSystemDefaultDevice()?.name, !name.isEmpty else { return "this Mac's GPU" }
+        return "the " + name + " GPU"
     }
 
     static func drawText(_ ctx: CGContext, _ text: String, x: CGFloat, y: CGFloat, size: CGFloat, font: String,
@@ -344,6 +356,10 @@ struct Options {
     }
 
     static func sideBySide(_ o: Options) throws {
+        // The left panel is 780 px wide; the render needs some width of its own.
+        guard o.width > 780 + 64, o.height > 64 else {
+            throw ExportError.failed("--sidebyside needs a size wider than 844 pixels (the code panel is 780 wide)")
+        }
         let dir = try newDirectory(o.output)
         let source = try gearTrainSource()
         let box = Gearbox()
@@ -405,7 +421,7 @@ struct Options {
         }
         let minutes = out.stats.wallMilliseconds / 60000
         let caption = [
-            "Right: path traced by MartyGraphicsPathTracer on an Apple M1 GPU.",
+            "Right: path traced by MartyGraphicsPathTracer on \(gpuName()).",
             String(format: "%dx%d, %d samples per pixel, %.1f min; %d triangles (%d unique).", renderW, renderH,
                    out.stats.samplesPerPixel, minutes, box.triangleCount, out.stats.triangles),
             "Procedural geometry and studio lighting; no images, models or stock assets.",

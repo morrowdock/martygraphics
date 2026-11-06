@@ -19,10 +19,19 @@ Validated JSON → native diagrams, walkthroughs, and animation in SwiftUI.
 **Path traced on an M1 GPU by MartyGraphics.** A procedurally generated gearbox
 (15:30 spur, then a 24/18×3/60 planetary stage, 7:1 overall), rendered with the new
 Metal path tracer at 1920×1080 and 768 samples per pixel in about 2.5 minutes.
-No images, models or stock assets. [Watch the 10-second loop](docs/assets/pathtrace/gearbox-loop.gif) ·
+No images, models or stock assets. [Watch the loop](docs/assets/pathtrace/gearbox-loop.gif) ·
 [Exploded view](docs/assets/pathtrace/exploded.png) ·
 [Code beside the render](docs/assets/pathtrace/side-by-side.png) ·
 [Run it](Examples/PathTrace/README.md) · [Render receipt](docs/assets/pathtrace/provenance.json)
+
+**How it works.** The input shaft turns the small 15-tooth pinion. It drives a 30-tooth gear,
+which turns half as fast (30 ÷ 15 = 2:1). That gear spins the 24-tooth sun gear in the middle
+of a planetary set. Three 18-tooth planet gears mesh with the sun and with the 60-tooth ring
+around them. The ring is fixed, so the planets roll around inside it and carry their
+carrier along, slowly. The carrier turns once for every 1 + 60 ÷ 24 = 3.5 turns of the sun.
+Together: 2 × 3.5 = 7 turns of the input for one turn of the output. Planetary sets are
+used where a big reduction must fit in a small space, such as in car automatic
+transmissions, power drills and helicopter rotor gearboxes.
 
 <p align="center">
   <a href="docs/SHOWCASE.md"><img src="docs/assets/native/two-pointers.gif" width="640" alt="Native two-pointer walkthrough over 2, 5, 9, 14: L starts at 2 and R at 14, then they move inward until 5 + 9 = 14, in four steps."></a>
@@ -177,7 +186,7 @@ not a complete learning app or a collection of courses.
 | SwiftUI Canvas and a SceneKit renderer for supported 3D primitives | Current renderers require Apple frameworks; Windows/Linux builds and native Swift browser execution are unsupported. This is a current implementation choice, not a requirement imposed by iPad. |
 | Parser, grammar, patches, streams, layout, timeline, steps, template/pack API | The host supplies JSON and interaction. No model, hosted generation API, screen overlay agent, equation solver, or arbitrary code executor is bundled. |
 | BST and two-pointer built-ins; opt-in `shortest_path` graph pack; generic primitives for custom scenes | No course catalog, premium pack, private app adapter, or removed mechanics walkthrough is included. |
-| Seven synthetic 2D examples, a local native showcase and a schematic 3D key-switch example | A flow diagram does not run a queue; sample plots/counts are supplied data. The gallery is not evidence of a complete app or measured 3D performance. |
+| Seven synthetic 2D examples, a local native showcase, a schematic 3D key-switch example and a path-traced gearbox example | A flow diagram does not run a queue; sample plots/counts are supplied data. The gallery is not evidence of a complete app or measured 3D performance. |
 
 See the [public versus app matrix](docs/CAPABILITIES.md),
 [quality and measurement plan](docs/QUALITY.md), and
@@ -192,9 +201,9 @@ authenticated maintainer status.
 These are **plans, not shipped features**. Each one lands only after tests, review and
 real evidence:
 
-- **Solid 3D models.** Shaded parts with realistic materials, generated gears and
-  lathe-turned shapes, assemblies that move at correct ratios, exploded views and
-  rendered turntable videos, written as validated JSON so an AI model can generate them.
+- **Solid 3D models from JSON.** Parts, joints and gear meshes written as validated JSON,
+  so an AI model can generate a new 3D explainer for a question, with exploded views,
+  cutaways and step-by-step narration.
 - **One scene, two renderers.** Render the same solid model interactively and with the
   path tracer.
 - **Accessible graph states.** Show edge status with more than colour.

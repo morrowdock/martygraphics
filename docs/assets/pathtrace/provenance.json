@@ -2,7 +2,7 @@
   "source": {
     "repository": "https://github.com/morrowdock/martygraphics",
     "commit": "4987386449be77f02fe43e8041191a43c7dcb1fa",
-    "note": "Renders were made from these exact source bytes; verify after a squash merge with sourceFiles.",
+    "note": "Renders were made from the exact bytes listed in sourceFiles (code commit 4987386449be77f02fe43e8041191a43c7dcb1fa). A later commit changed only Examples/PathTrace/Sources/MartyPathTrace/PathTraceCLI.swift (input checks and the side-by-side GPU caption), not the renderer or geometry.",
     "tool": "Examples/PathTrace (marty-pathtrace)",
     "license": "Apache-2.0; procedural geometry and lighting, no images, models or stock assets",
     "sourceFiles": {
@@ -41,7 +41,7 @@
       0,
       0
     ],
-    "packageTests": 112,
+    "packageTests": 126,
     "packageTestFailures": 0,
     "loopVideo": {
       "file": "gearbox-loop.mp4 (website only)",
@@ -55,7 +55,8 @@
       "samplesPerPixel": 112,
       "meanSecondsPerFrameM1": 8.36,
       "seam": "frame at t=10 s differs from frame 0 in 0.0085% of channel values (float rounding)"
-    }
+    },
+    "packageTestsNote": "109 core + 17 path tracer tests, 0 failures, at the pull-request head (GPU tests ran on an Apple M1). The renders themselves come from the source bytes in sourceFiles."
   },
   "artifacts": {
     "exploded.png": {
@@ -72,9 +73,9 @@
       "width": 480,
       "height": 270,
       "frames": 120,
-      "fps": 12,
-      "loopSeconds": 10.0,
-      "note": "downscaled from the 1280x720, 24 fps, 112 spp loop (not in the repository)"
+      "fps": 12.5,
+      "loopSeconds": 9.6,
+      "note": "120 frames at a stored delay of 0.08 s (GIF delays are in hundredths of a second), downscaled from the 1280x720, 24 fps, 10.0 s, 112 spp loop (not in the repository)"
     },
     "hero.png": {
       "bytes": 2007851,

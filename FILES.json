@@ -59,7 +59,7 @@
     },
     {
       "path": "Examples/PathTrace/README.md",
-      "sha256": "80d144f43caa9f564a7036f6ce103c27bf52fb8771138b0f284c3dde083e383e"
+      "sha256": "f43e673263fe5dc5accaed207fea94b5a139f82a17f5abd02b88d34f1daa89ef"
     },
     {
       "path": "Examples/PathTrace/Sources/MartyPathTrace/Export.swift",
@@ -75,7 +75,7 @@
     },
     {
       "path": "Examples/PathTrace/Sources/MartyPathTrace/PathTraceCLI.swift",
-      "sha256": "27707b8f12bedbc030a879b21a1b205027fe8fa10e99e88f3775b1ade78906d7"
+      "sha256": "82093fd4586ef6cb90859651b0b8736ffdc4ecfb3a795bbafbcf563f21d09d23"
     },
     {
       "path": "Examples/Showcase/Package.swift",
@@ -131,7 +131,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "fbf675f4ea5fbd12ae69640b53c71d0dd2929393012441c2d584215ed7ffa345"
+      "sha256": "2a938fe0a63cbe34971063d408e074a2cf2f3f2a0afa5b4c959a23ad56e95bb9"
     },
     {
       "path": "SECURITY.md",
@@ -331,7 +331,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "783d1f7f791f08fbc60872369c0fead0693b0aa70322d7ea72d8b97a0dc9b0ae"
+      "sha256": "9f0e16ec8df3089b28f288c8c31d2707c3d5c5a99f07155040a83b97a91b1565"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -403,7 +403,7 @@
     },
     {
       "path": "docs/assets/pathtrace/provenance.json",
-      "sha256": "aa944ed0bfcffa40cd5c3f68da70cf7f8dae01c79172bca5a78772629015e808"
+      "sha256": "a29a2ddaa36d2cf4ead5fc1836d98026992e8c10c4b5d8e02fbde0f57675ead9"
     },
     {
       "path": "docs/assets/pathtrace/side-by-side.png",

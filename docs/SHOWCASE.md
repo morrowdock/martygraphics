@@ -16,15 +16,24 @@ service, or AI model.
 
 ## Path-traced gearbox
 
-The newest capture. A procedurally generated two-stage gearbox, path traced on an
+A procedurally generated two-stage gearbox, path traced on an
 Apple M1 GPU by `MartyGraphicsPathTracer`: 1920×1080, 768 samples per pixel, about
 2.5 minutes per still. No images, models or stock assets.
 
 [![Path-traced steel and brass gearbox with involute teeth on a dark studio floor.](assets/pathtrace/hero.png)](assets/pathtrace/hero.png)
 
 [Exploded view](assets/pathtrace/exploded.png) · [Code beside the render](assets/pathtrace/side-by-side.png) ·
-[10-second loop (GIF, 480×270)](assets/pathtrace/gearbox-loop.gif) ·
+[Loop (GIF, 480×270, 9.6 s)](assets/pathtrace/gearbox-loop.gif) ·
 [Run it](../Examples/PathTrace/README.md) · [Render receipt](assets/pathtrace/provenance.json)
+
+**How it works.** The input shaft turns the small 15-tooth pinion. It drives a 30-tooth gear,
+which turns half as fast (30 ÷ 15 = 2:1). That gear spins the 24-tooth sun gear in the middle
+of a planetary set. Three 18-tooth planet gears mesh with the sun and with the 60-tooth ring
+around them. The ring is fixed, so the planets roll around inside it and carry their
+carrier along, slowly. The carrier turns once for every 1 + 60 ÷ 24 = 3.5 turns of the sun.
+Together: 2 × 3.5 = 7 turns of the input for one turn of the output. Planetary sets are
+used where a big reduction must fit in a small space, such as in car automatic
+transmissions, power drills and helicopter rotor gearboxes.
 
 ## Run or reproduce
 
