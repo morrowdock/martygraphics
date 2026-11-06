@@ -82,10 +82,17 @@ public struct MGShapeSpec: Equatable, Sendable {
         case "revolvedProfile":
             var closed = false
             if case .bool(let b)? = fields["closed"] { closed = b }
-            m = .revolve(points(fields["points"]), segments: 96, closed: closed)
+            let sweep = n("sweep", 360)
+            m = sweep < 360 ? .revolve(points(fields["points"]), segments: 96, closed: closed, sweep: sweep * .pi / 180, start: n("start") * .pi / 180)
+                : .revolve(points(fields["points"]), segments: 96, closed: closed)
         case "blade":
             m = .blade(span: n("span"), chord: n("chord"), thickness: n("thickness", 0.12), twist: n("twist") * .pi / 180,
                        root: n("root"), tipChord: n("tipChord", n("chord")), camber: n("camber"), camberPosition: n("camberPosition", 0.4))
+        case "bladeRow":
+            m = .bladeRow(count: Int(n("count")), span: n("span"), chord: n("chord"), root: n("root"), z: n("z"),
+                          thickness: n("thickness", 0.1), stagger: n("stagger") * .pi / 180, twist: n("twist") * .pi / 180,
+                          tipChord: n("tipChord", n("chord")), camber: n("camber"), camberPosition: n("camberPosition", 0.4),
+                          phase: n("phase") * .pi / 180, sections: Int(n("sections", 8)), chordSamples: Int(n("chordSamples", 16)))
         default:
             m = MGMesh()
         }

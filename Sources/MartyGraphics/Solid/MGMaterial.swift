@@ -44,6 +44,9 @@ public enum MGMaterialPreset: Hashable, Sendable {
     /// Matte injection-moulded plastic in an engine colour role.
     case plastic(MGColorRole)
     case rubber, glass
+    /// Turbomachinery metals and finishes: titanium (fan and compressor blades), heat-tinted nickel alloy (hot
+    /// section), carbon-fibre composite (fan case, spinner) and a matte thermal-barrier ceramic coating.
+    case titanium, nickelAlloy, composite, ceramic
 
     /// Stable identifier (used by snapshots and renderers to share materials).
     public var id: String {
@@ -59,6 +62,10 @@ public enum MGMaterialPreset: Hashable, Sendable {
         case .plastic(let r): return "plastic." + r.rawValue
         case .rubber: return "rubber"
         case .glass: return "glass"
+        case .titanium: return "titanium"
+        case .nickelAlloy: return "nickelAlloy"
+        case .composite: return "composite"
+        case .ceramic: return "ceramic"
         }
     }
 
@@ -78,6 +85,10 @@ public enum MGMaterialPreset: Hashable, Sendable {
             return MGMaterialParameters(baseColor: MGSolidPalette.srgb(r), metallic: 0, roughness: 0.48, clearcoat: 0.15, clearcoatRoughness: 0.35)
         case .rubber: return MGMaterialParameters(baseColor: [0.06, 0.06, 0.07], metallic: 0, roughness: 0.88)
         case .glass: return MGMaterialParameters(baseColor: [0.92, 0.96, 1.0], metallic: 0, roughness: 0.03, transmission: 0.95, ior: 1.5, opacity: 0.22)
+        case .titanium: return MGMaterialParameters(baseColor: [0.76, 0.73, 0.69], metallic: 1, roughness: 0.27)
+        case .nickelAlloy: return MGMaterialParameters(baseColor: [0.72, 0.62, 0.50], metallic: 1, roughness: 0.40)
+        case .composite: return MGMaterialParameters(baseColor: [0.055, 0.058, 0.065], metallic: 0, roughness: 0.42, clearcoat: 0.8, clearcoatRoughness: 0.12)
+        case .ceramic: return MGMaterialParameters(baseColor: [0.86, 0.83, 0.76], metallic: 0, roughness: 0.72)
         }
     }
 }

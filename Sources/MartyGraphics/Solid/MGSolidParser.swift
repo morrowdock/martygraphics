@@ -659,8 +659,9 @@ public enum MGSolidParser {
         "plate": (["radius", "thickness"], ["z0", "chamfer", "holes"]),
         "carrier": (["arms", "radius", "hub", "boss", "armWidth", "thickness"], ["z0", "chamfer", "blend"]),
         "extrudedProfile": (["points", "depth"], ["holes", "z0", "chamfer"]),
-        "revolvedProfile": (["points"], ["closed"]),
+        "revolvedProfile": (["points"], ["closed", "sweep", "start"]),
         "blade": (["span", "chord"], ["thickness", "twist", "root", "tipChord", "camber", "camberPosition"]),
+        "bladeRow": MGSolidTurbo.bladeRowKeys,
     ]
 
     static func shape(_ entry: MGJSON) throws -> MGShapeSpec {
@@ -787,6 +788,7 @@ public enum MGSolidParser {
             guard pts.allSatisfy({ $0.x >= 0 }) else { throw MGSolidIssue("\(w).points.radius") }
             var closedLoop = false
             if let c = f["closed"] { guard case .bool(let b) = c else { throw MGSolidIssue("\(w).closed") }; closedLoop = b }
+            try MGSolidTurbo.validateSweep(f)
             if closedLoop {
                 guard pts.count >= 3, pts.allSatisfy({ $0.x > 1e-6 }), abs(MGProfile.signedArea(pts)) > 1e-6, !selfIntersects(pts) else { throw MGSolidIssue("\(w).points") }
             } else {
@@ -799,6 +801,8 @@ public enum MGSolidParser {
             _ = try opt("tipChord", 0.05...4000)
             _ = try opt("camber", 0...0.09); _ = try opt("camberPosition", 0.1...0.9)
             _ = chord
+        case "bladeRow":
+            try MGSolidTurbo.validateBladeRow(f)
         default: break
         }
         return MGShapeSpec(kind: kind, fields: f, offset: offset)
@@ -874,7 +878,8 @@ public enum MGSolidParser {
         guard case .string(let s) = v else { throw MGSolidIssue("part.material") }
         let simple: [String: MGMaterialPreset] = ["brushedSteel": .brushedSteel, "polishedSteel": .polishedSteel, "darkSteel": .darkSteel,
                                                   "blackOxide": .blackOxide, "brass": .brass, "bronze": .bronze, "aluminum": .aluminum,
-                                                  "rubber": .rubber, "glass": .glass]
+                                                  "rubber": .rubber, "glass": .glass, "titanium": .titanium, "nickelAlloy": .nickelAlloy,
+                                                  "composite": .composite, "ceramic": .ceramic]
         if let m = simple[s] { return m }
         let parts = s.split(separator: ".", maxSplits: 1).map(String.init)
         if parts.count == 2, let role = MGColorRole(rawValue: parts[1]) {
