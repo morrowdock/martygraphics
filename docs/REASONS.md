@@ -40,7 +40,8 @@ contain `.missing.` or `.unknown.`) and checks that each resolves to its own pat
 Closed objects (`<object>.missing.<keys>`, `<object>.unknown.<keys>`): `assembly`,
 `params`, `part`, `part.<shape>` (a shape body), `part.emissive`, `part.expect`,
 `part.repeat`, `part.drive.follow`, `part.drive.<crank>`, `constraint.gearMesh`, `step`,
-`step.check`, `step.section`, `component`, `component.param.<ident>`, `component.use`.
+`step.check`, `step.section`, `component`, `component.param.<ident>`, `component.use`,
+`annotations`, `label`, `arrow`, `dimension`.
 
 ### One string, two causes
 
@@ -112,7 +113,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `assembly.version` | assembly | `v` is not 1 or 2. |
 | `assembly.units` | assembly | `units` is present and is not "mm". |
 | `assembly.title` | assembly | The title is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 80 characters, also after placeholders are filled. |
-| `assembly.budget` | assembly | Part meshes plus step cuts would exceed 1,500,000 triangles or 1,000,000 vertices (counted before any mesh is built). |
+| `assembly.budget` | assembly | Part meshes plus step cuts and annotation pieces would exceed 1,500,000 triangles or 1,000,000 vertices (counted before any mesh is built). |
 | `assembly.invalid` | assembly | The compiled assembly failed its structural validation (a parent, drive source or explode window the earlier checks did not refuse). |
 | `<object>.missing.<keys>` | assembly, component | Required keys are missing from an object. `<object>` names the object (see `closedObjects`); `<keys>` lists the missing keys. |
 | `<object>.unknown.<keys>` | assembly, component | An object has keys it does not allow (in a v1 document this includes every v2 key). `<object>` names the object (see `closedObjects`; a component definition's own unknown keys give `component.unknown.<keys>`); `<keys>` lists the keys. |
@@ -138,7 +139,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | --- | --- | --- |
 | `parts.count` | assembly, component | `parts` is not an array of 1–48 entries, or component expansion makes more than 48 wire parts. |
 | `parts.resolved` | assembly | More than 96 parts after `repeat` expansion. |
-| `id.duplicate.<id>` | assembly, component | Two parts, `repeat` copies, component instances or anchors share an id (they share one namespace). |
+| `id.duplicate.<id>` | assembly, component | Two parts, `repeat` copies, component instances or anchors share an id, or an annotation id is taken (they share one namespace). |
 | `ref.unknown.<id>` | assembly, patch | A reference names no part: a `parent`, a drive `source` or `crank`, a constraint, a step id list, a section part, or a patch part id. |
 | `part.object` | assembly | A part entry is not an object. |
 | `part.id` | assembly, component | A part id is not an identifier (an ASCII letter, then up to 23 ASCII letters, digits or `_`). |
@@ -315,6 +316,66 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `frame.axis.off.<id>` | assembly | (warning; strict refuses) A revolute part's axis line misses its own mesh bounds (mark an intended outside axis with `"offAxis": true`, v2). |
 | `frame.child.absolute.<id>` | assembly | (warning) A child placed as if its `at` / `rot` were world values (the double offset), confirmed by bounds. |
 | `frame.child.far.<id>` | assembly | (warning) A child's bounds miss its parent's bounds grown by 1.5 parent sizes. |
+| `annotation.unused.<id>` | assembly | (warning; strict refuses) Some step uses `annotate`, but no step shows this annotation. |
+| `annotation.cut.<id>` | assembly | (warning) A part anchor of an annotation that a step shows lies in the half that the step's `section` removes from that part. |
+
+### Annotations (v2)
+
+| Reason | Formats | Meaning |
+| --- | --- | --- |
+| `annotations.object` | assembly | `annotations` is not an object (v2). |
+| `labels.count` | assembly | `labels` is not an array of at most 32 labels. |
+| `arrows.count` | assembly | `arrows` is not an array of at most 32 arrows. |
+| `dimensions.count` | assembly | `dimensions` is not an array of at most 16 dimensions. |
+| `annotations.visible` | assembly | No step uses `annotate`, so every annotation shows at once, and there are more than 12. |
+| `label.object` | assembly | A label is not an object. |
+| `arrow.object` | assembly | An arrow is not an object. |
+| `dimension.object` | assembly | A dimension is not an object. |
+| `label.id` | assembly | A label id is not an identifier. |
+| `arrow.id` | assembly | An arrow id is not an identifier. |
+| `dimension.id` | assembly | A dimension id is not an identifier. |
+| `anchor.form` | assembly | An anchor is not a part id, `{"part", "offset"}`, `{"part", "point"}` or `{"world"}`. |
+| `anchor.offset` | assembly | An anchor `offset` is not three coordinates in -4000...4000 mm. |
+| `anchor.point` | assembly | An anchor `point` is not "centre". |
+| `anchor.world` | assembly | An anchor `world` point is not three coordinates in -4000...4000 mm. |
+| `anchor.ref.<id>` | assembly | An annotation anchor or turn arrow `on` names no part, copy or component anchor. |
+| `anchor.ambiguous.<id>` | assembly | An annotation anchor names a `repeat` base with copies or a component instance (more than one part). |
+| `label.text.<id>` | assembly | A label's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 160 characters, or of 1–40 characters after placeholders are filled. |
+| `label.unchecked.<id>` | assembly | A label's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters. |
+| `text.number.label.<id>` | assembly | A label has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
+| `arrow.meaning.<id>` | assembly | An arrow's `meaning` is not force, flow, motion or pointer. |
+| `arrow.style.<id>` | assembly | A motion arrow's `style` is not line or turn. |
+| `arrow.key.<field>.<id>` | assembly | An arrow has a key that its meaning (and style) does not take. |
+| `arrow.on.<id>` | assembly | A turn arrow's `on` is not a string. |
+| `arrow.from.<id>` | assembly | A motion line arrow starts at a world point; it needs a part anchor. |
+| `arrow.sense.form.<id>` | assembly | A turn arrow's `sense` is not "cw" or "ccw". |
+| `arrow.expect.form.<id>` | assembly | A motion arrow's `expect` is not a non-zero direction of three coordinates. |
+| `arrow.length.form.<id>` | assembly | A motion arrow's `length` is not a number in 10...4000 mm or `{"fact", "scale"}` with a fact name and a scale in 0.001...1000. |
+| `arrow.cause.<id>` | assembly | A force arrow's `cause` is not "gravity". |
+| `arrow.text.<id>` | assembly | An arrow's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 160 characters, or of 1–40 characters after placeholders are filled. |
+| `arrow.unchecked.<id>` | assembly | An arrow's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters, or the arrow has no `text` for it to mark. |
+| `text.number.arrow.<id>` | assembly | An arrow's text has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
+| `arrow.turn.joint.<id>` | assembly | A turn arrow's part has no revolute joint. |
+| `arrow.turn.steady.<id>` | assembly | A turn arrow's part has no steady speed (a crank rod swings back and forth), so no single turn sense holds; use a motion line arrow. |
+| `arrow.still.<id>` | assembly | A motion arrow's part (or anchor) never moves over one input turn. |
+| `arrow.sense.<id>` | assembly | A turn arrow's stated `sense` is the opposite of the engine's (seen from the tip of the joint axis). |
+| `arrow.expect.<id>` | assembly | A motion arrow's stated `expect` is more than 30° from the engine's direction, sign included. |
+| `arrow.length.fact.<id>` | assembly | A motion arrow's `length` names no fact. |
+| `arrow.length.<id>` | assembly | A force, flow or pointer arrow is shorter than 0.5 mm at the default input. |
+| `arrow.gravity.<id>` | assembly | A force arrow with `"cause": "gravity"` points more than 10° away from world -Z at the default input. |
+| `dimension.kind.<id>` | assembly | A dimension's `kind` is not distance or angle. |
+| `dimension.along.<id>` | assembly | A dimension's `along` is not x, y or z, or the dimension is an angle. |
+| `dimension.over.form.<id>` | assembly | A dimension's `over` is not "input". |
+| `dimension.vertex.<id>` | assembly | An angle dimension has no `vertex`, or a distance dimension has one. |
+| `dimension.text.form.<id>` | assembly | A dimension's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 160 characters, or of 1–40 characters after placeholders are filled. |
+| `dimension.zero.<id>` | assembly | A distance below 0.01 mm (or its range with `over`), or an angle arm below 0.01 mm. |
+| `dimension.over.<id>` | assembly | A dimension has `over` but no anchor that moves. |
+| `dimension.fact.<id>` | assembly | The fact name `dim.<id>` already exists (for example a part named `dim`). |
+| `dimension.text.<id>` | assembly | A dimension's text does not show its own value `{dim.<id>}`. |
+| `text.number.dimension.<id>` | assembly | A dimension's text has a number character outside a placeholder (rule N1; no `unchecked`). |
+| `step.annotate` | assembly | A step's `annotate` is not an array of strings (v2). |
+| `step.annotate.count` | assembly | A step's `annotate` lists more than 12 annotations. |
+| `step.annotate.ref.<id>` | assembly | A step's `annotate` names no annotation. |
 
 ### Patches
 

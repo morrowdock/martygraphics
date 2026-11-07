@@ -60,6 +60,8 @@ public struct MGSolidStep: Equatable, Sendable {
     public var section: MGSolidStepSection?
     /// v2: parts shown see-through during this step (opacity `MGSolidView.ghostOpacity`), in part order.
     public var ghost: [String] = []
+    /// v2: the annotations this step shows (0–12 ids, authored order); nil when the step has no `annotate`.
+    public var annotate: [String]?
 }
 
 /// Meshing data the compiler derived for one gear part.
@@ -105,9 +107,11 @@ public struct MGSolidDocument: Equatable, Sendable {
     public var offAxis: Set<String> = []
     /// Engine-computed title tier (v2, when the title shows facts).
     public var titleTier: MGSolidTier?
-    /// Honesty warnings (idle joints and frame lints), in part order. The plain API only warns; the strict profile
-    /// (`MGSolidProfile.strict`, the model harness) refuses some of them.
+    /// Honesty warnings (idle joints and frame lints in part order, then annotation warnings in authored order). The
+    /// plain API only warns; the strict profile (`MGSolidProfile.strict`, the model harness) refuses some of them.
     public var warnings: [MGSolidIssue] = []
+    /// v2: labels, arrows and dimensions (empty for v1 and for documents without `annotations`).
+    public var annotations = MGSolidAnnotations()
 
     public func pose(_ params: MGPoseParameters) -> MGPose { assembly.pose(params) }
 
@@ -121,9 +125,9 @@ public struct MGSolidDocument: Equatable, Sendable {
 struct MGSolidFormat: Equatable {
     let version: Int
     static let v1 = MGSolidFormat(version: 1), v2 = MGSolidFormat(version: 2)
-    static let topKeysV2: Set<String> = []
+    static let topKeysV2: Set<String> = ["annotations"]
     static let partKeysV2: Set<String> = ["expect", "offAxis", "opacity", "emissive"]
-    static let stepKeysV2: Set<String> = ["check", "unchecked", "section", "ghost"]
+    static let stepKeysV2: Set<String> = ["check", "unchecked", "section", "ghost", "annotate"]
     var isV2: Bool { version >= 2 }
     var topKeys: Set<String> { isV2 ? MGSolidParser.topKeys.union(Self.topKeysV2) : MGSolidParser.topKeys }
     var partKeys: Set<String> { isV2 ? MGSolidParser.partKeys.union(Self.partKeysV2) : MGSolidParser.partKeys }
@@ -631,6 +635,18 @@ public enum MGSolidParser {
             guard case .array(let list) = s, list.count <= MGSolidLimits.steps else { throw MGSolidIssue("steps.count") }
             for entry in list { steps.append(try step(entry, expand, format)) }
         }
+        // v2 annotations: parsed and resolved before any mesh is built; their arrow and dimension pieces join the mesh
+        // budget with exact counts.
+        var annotations = MGSolidAnnotations()
+        if format.isV2 {
+            if let a = o["annotations"] {
+                annotations = try MGSolidAnnotations.parse(a, .init(ids: ids, repeated: repeated, aliases: expansion.aliases))
+            }
+            try MGSolidAnnotationEngine.checkVisibility(&annotations, steps)
+            let e = annotations.meshEstimate
+            triangles += e.triangles; vertices += e.vertices
+            guard triangles <= MGSolidLimits.triangles, vertices <= MGSolidLimits.vertices else { throw MGSolidIssue("assembly.budget") }
+        }
 
         // Meshes (reused when the shape list is unchanged). A gear without a joint keeps its tooth phase in its shape.
         var assemblyParts: [MGPart] = []
@@ -702,19 +718,22 @@ public enum MGSolidParser {
         doc.aliases = expansion.aliases
         doc.motionSources = sources
         doc.offAxis = Set(parts.filter(\.offAxis).map(\.base))
+        doc.annotations = annotations
         (doc.facts, doc.driveTiers) = MGSolidFacts.table(assembly, gears: gears, sources: sources, ownTiers: ownTiers,
                                                          copies: copies, aliases: expansion.aliases)
         if format.isV2 {
             var expects: [String: (axis: MGVec3?, up: MGVec3?)] = [:]
             for p in parts where p.expectAxis != nil || p.expectUp != nil { expects[p.base] = (p.expectAxis, p.expectUp) }
             try MGSolidFrames.checkExpectations(assembly, expects, copies: copies)
+            try MGSolidAnnotationEngine.prepare(&doc)
             try fillText(&doc)
+            try MGSolidAnnotationEngine.finish(&doc)
         } else {
             // v1 text is never filled. A caption or title with a number in it makes a claim the engine did not check.
             for i in doc.steps.indices where doc.steps[i].say.contains(where: MGSolidFacts.isNumber) { doc.steps[i].tier = .described }
             if doc.title.contains(where: MGSolidFacts.isNumber) { doc.titleTier = .described }
         }
-        doc.warnings = MGSolidFrames.lints(doc)
+        doc.warnings = MGSolidFrames.lints(doc) + MGSolidAnnotationEngine.warnings(doc)
         return doc
     }
 
@@ -1163,6 +1182,14 @@ public enum MGSolidParser {
                 return try expand(id, "step.section.parts")
             }
             step.section = MGSolidStepSection(plane: MGSectionPlane(normal: normal, offset: offset), parts: unique(parts))
+        }
+        if let a = o["annotate"] {
+            guard case .array(let list) = a else { throw MGSolidIssue("step.annotate") }
+            guard list.count <= MGSolidAnnotationLimits.visible else { throw MGSolidIssue("step.annotate.count") }
+            step.annotate = unique(try list.map { e -> String in
+                guard case .string(let id) = e else { throw MGSolidIssue("step.annotate") }
+                return id
+            })
         }
         return step
     }

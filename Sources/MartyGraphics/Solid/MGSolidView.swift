@@ -37,6 +37,9 @@ public struct MGSolidView: Equatable, Sendable {
     public var parts: [String: MGSolidPartView]
     /// The step's section, if any.
     public var section: MGSolidStepSection?
+    /// v2: ids of the annotations this view shows (`MGSolidDocument.visibleAnnotations(step:)`), in authored or
+    /// `annotate` order. Empty for a plain assembly.
+    public var annotations: [String] = []
 
     /// The view of a plain assembly: every part with its own opacity and light, nothing cut.
     public init(_ assembly: MGAssembly) {
@@ -64,6 +67,7 @@ extension MGSolidDocument {
     /// an index outside the steps) gives the plain scene.
     public func view(step: Int?) -> MGSolidView {
         var v = MGSolidView(assembly)
+        v.annotations = visibleAnnotations(step: step)
         guard let i = step, steps.indices.contains(i) else { return v }
         let s = steps[i]
         for id in s.ghost {

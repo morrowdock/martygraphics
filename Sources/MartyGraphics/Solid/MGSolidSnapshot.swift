@@ -130,6 +130,66 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
         public var offset: Double
         public var parts: [String]
     }
+    /// v2: the annotations a step shows. Arrow and dimension triangles come after every part triangle (so part ranges
+    /// never move), in authored order: arrows, then dimensions. Labels are anchor points and filled text; `placement`
+    /// is the layout of every text for this snapshot's camera and aspect (`MGSolidAnnotations.frame`).
+    public struct Annotations: Codable, Equatable, Sendable {
+        public struct Arrow: Codable, Equatable, Sendable {
+            public var id: String
+            /// `force`, `flow`, `motion` or `pointer`; `style` is `line` or `turn`.
+            public var meaning: String
+            public var style: String
+            /// World (Y-up, mm): a line arrow's tail and tip; a turn arrow's arc start and tip.
+            public var from: [Double]
+            public var to: [Double]
+            /// Unit vector: a line arrow points along it; a turn arrow turns counter-clockwise about it.
+            public var direction: [Double]
+            /// `warn`, `accent`, `good` or `ink`.
+            public var colorRole: String
+            public var tier: String?
+            public var text: String?
+            public var firstTriangle: Int
+            public var triangleCount: Int
+            public func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encode(id, forKey: .id); try c.encode(meaning, forKey: .meaning); try c.encode(style, forKey: .style)
+                try c.encode(from, forKey: .from); try c.encode(to, forKey: .to); try c.encode(direction, forKey: .direction)
+                try c.encode(colorRole, forKey: .colorRole); try c.encode(tier, forKey: .tier); try c.encode(text, forKey: .text)
+                try c.encode(firstTriangle, forKey: .firstTriangle); try c.encode(triangleCount, forKey: .triangleCount)
+            }
+        }
+        public struct Dimension: Codable, Equatable, Sendable {
+            public var id: String
+            /// `distance` or `angle`.
+            public var kind: String
+            /// World (Y-up, mm): a, b (distance) or a, vertex, b (angle), posed.
+            public var points: [[Double]]
+            /// The fact `dim.<id>` (measured at the default input, or the range with `over`).
+            public var value: Double
+            public var unit: String
+            public var text: String
+            public var tier: String
+            public var firstTriangle: Int
+            public var triangleCount: Int
+        }
+        public struct Label: Codable, Equatable, Sendable {
+            public var id: String
+            public var anchor: [Double]
+            public var text: String
+            public var tier: String?
+            /// The tier chip text, nil when the label makes no claim.
+            public var chip: String?
+            public func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encode(id, forKey: .id); try c.encode(anchor, forKey: .anchor); try c.encode(text, forKey: .text)
+                try c.encode(tier, forKey: .tier); try c.encode(chip, forKey: .chip)
+            }
+        }
+        public var arrows: [Arrow]
+        public var dimensions: [Dimension]
+        public var labels: [Label]
+        public var placement: [MGAnnotationPlacement]
+    }
     public static let formatV1 = "martygraphics.solid.snapshot/1", formatV2 = "martygraphics.solid.snapshot/2"
     public var format = MGSolidSnapshot.formatV1
     public var title: String
@@ -152,6 +212,10 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
     public var boundsMax: [Double]
     /// v2: the step's section, nil when nothing is cut.
     public var section: Section?
+    /// v2: the step's annotations, nil when it shows none.
+    public var annotations: Annotations?
+    /// v2: highlighted part ids, nil when none.
+    public var highlight: [String]?
 
     public var vertexCount: Int { positions.count / 3 }
     public var triangleCount: Int { indices.count / 3 }
@@ -167,7 +231,81 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
     public static func make(_ document: MGSolidDocument, step: Int?, params: MGPoseParameters, camera: MGSolidCamera? = nil,
                             aspect: Double = 16.0 / 10, lighting: MGStudioLighting = .studio,
                             stage: MGTransform = MGSolidStage.zUpToYUp) -> MGSolidSnapshot {
-        build(document.assembly, view: document.view(step: step), params: params, camera: camera, aspect: aspect, lighting: lighting, stage: stage)
+        make(document, step: step, params: params, highlight: [], camera: camera, aspect: aspect, lighting: lighting, stage: stage)
+    }
+
+    /// Format v2 with highlighted parts (recorded in `highlight`; placements avoid covering them). The step's
+    /// annotations are exported with their triangles and a placement for this camera and aspect; a step snapshot
+    /// assumes a caption band shows (`step` non-nil). Annotation geometry does not change the bounds or the framing.
+    public static func make(_ document: MGSolidDocument, step: Int?, params: MGPoseParameters, highlight: [String],
+                            camera: MGSolidCamera? = nil, aspect: Double = 16.0 / 10, lighting: MGStudioLighting = .studio,
+                            stage: MGTransform = MGSolidStage.zUpToYUp) -> MGSolidSnapshot {
+        let view = document.view(step: step)
+        var snap = build(document.assembly, view: view, params: params, camera: camera, aspect: aspect, lighting: lighting, stage: stage)
+        if !view.annotations.isEmpty { addAnnotations(&snap, document, view: view, step: step, params: params, highlight: highlight, stage: stage) }
+        let known = Set(document.assembly.parts.map(\.id))
+        let lit = MGSolidParser.unique(highlight.filter { known.contains($0) })
+        if !lit.isEmpty { snap.highlight = lit }
+        return snap
+    }
+
+    static func addAnnotations(_ snap: inout MGSolidSnapshot, _ doc: MGSolidDocument, view: MGSolidView, step: Int?,
+                               params: MGPoseParameters, highlight: [String], stage: MGTransform) {
+        let a = doc.annotations
+        let pose = doc.assembly.pose(params)
+        let visible = Set(view.annotations)
+        func xyz(_ p: MGVec3) -> [Double] { let q = stage.apply(p); return [q.x, q.y, q.z] }
+        func unit(_ v: MGVec3) -> [Double] { let q = stage.applyVector(v).normalized; return [q.x, q.y, q.z] }
+        var materialIndex: [String: Int] = [:]
+        for (i, m) in snap.materials.enumerated() { materialIndex[m.id] = i }
+        func append(_ prims: [MGAnnotationPrimitive], role: String) -> (Int, Int) {
+            let key = "annotation." + role
+            let mid: Int
+            if let m = materialIndex[key] { mid = m } else {
+                mid = snap.materials.count; materialIndex[key] = mid
+                let color = MGSolidAnnotations.srgb(role)
+                snap.materials.append(Material(id: key, parameters: MGMaterialParameters(baseColor: color, metallic: 0, roughness: 0.45),
+                                               emission: Emission(color: color, intensity: 0.6)))
+            }
+            let first = snap.indices.count / 3
+            for p in prims {
+                let rm = p.renderMesh
+                let base = UInt32(snap.positions.count / 3)
+                for v in rm.positions { let w = stage.apply(v); snap.positions += [Float(w.x), Float(w.y), Float(w.z)] }
+                for n in rm.normals { let w = stage.applyVector(n); snap.normals += [Float(w.x), Float(w.y), Float(w.z)] }
+                snap.indices += rm.indices.map { $0 + base }
+                snap.triangleMaterials += [UInt16](repeating: UInt16(mid), count: rm.indices.count / 3)
+            }
+            return (first, snap.indices.count / 3 - first)
+        }
+        var out = Annotations(arrows: [], dimensions: [], labels: [], placement: [])
+        for r in a.arrows where visible.contains(r.id) {
+            let prims = MGSolidAnnotations.primitives(doc, r.id, params: params)
+            let (first, count) = append(prims, role: r.colorRole)
+            let from = prims[0].start
+            var to = prims[1].end, dir = to - from
+            if r.style == .turn, let on = r.on, case .revolute(let axis)? = doc.assembly.part(on)?.joint {
+                to = prims[MGSolidAnnotations.arcChords].end
+                dir = MGSolidAnnotations.jointFrame(doc, on, pose).applyVector(axis) * (r.turnSign ?? 1)
+            } else if dir.length < 1e-12 { dir = r.direction ?? .unitZ }
+            out.arrows.append(Annotations.Arrow(id: r.id, meaning: r.meaning.rawValue, style: r.style.rawValue, from: xyz(from), to: xyz(to),
+                                                direction: unit(dir), colorRole: r.colorRole, tier: r.tier?.name, text: r.text,
+                                                firstTriangle: first, triangleCount: count))
+        }
+        for d in a.dimensions where visible.contains(d.id) {
+            let (first, count) = append(MGSolidAnnotations.primitives(doc, d.id, params: params), role: MGSolidAnnotations.dimensionRole)
+            out.dimensions.append(Annotations.Dimension(id: d.id, kind: d.kind.rawValue,
+                                                        points: [d.a, d.vertex, d.b].compactMap { $0 }.map { xyz($0.world(pose)) },
+                                                        value: d.value, unit: d.unit, text: d.text, tier: d.tier.name,
+                                                        firstTriangle: first, triangleCount: count))
+        }
+        for l in a.labels where visible.contains(l.id) {
+            out.labels.append(Annotations.Label(id: l.id, anchor: xyz(l.at.world(pose)), text: l.text, tier: l.tier?.name,
+                                                chip: l.tier?.badge(.annotation)))
+        }
+        out.placement = MGSolidAnnotations.frame(document: doc, view: view, params: params, camera: snap.camera, aspect: snap.aspect,
+                                                 highlight: highlight, caption: step != nil, stage: stage).placement
+        snap.annotations = out
     }
 
     static func build(_ assembly: MGAssembly, view: MGSolidView?, params: MGPoseParameters, camera: MGSolidCamera?, aspect: Double,
@@ -375,11 +513,13 @@ extension MGSolidSnapshot {
                                  && $0.material >= 0 && $0.material < materials.count }) else { throw bad(.parts, "part ranges must lie inside the triangles") }
         guard aspect > 0 else { throw bad(.aspect, "aspect must be positive") }
         section = try c.decodeIfPresent(Section.self, forKey: .section)
+        annotations = try c.decodeIfPresent(Annotations.self, forKey: .annotations)
+        highlight = try c.decodeIfPresent([String].self, forKey: .highlight)
         // v2 fields are legal only in v2; a v1 file keeps exactly its v1 meaning.
-        let v2Fields = section != nil || materials.contains { $0.emission != nil }
+        let v2Fields = section != nil || annotations != nil || highlight != nil || materials.contains { $0.emission != nil }
             || parts.contains { $0.opacity != nil || $0.capFirstTriangle != nil || $0.capTriangleCount != nil }
         if format == MGSolidSnapshot.formatV1 {
-            guard !v2Fields else { throw bad(.format, "snapshot/1 has no section, opacity, cap or emission fields") }
+            guard !v2Fields else { throw bad(.format, "snapshot/1 has no section, opacity, cap, emission, annotation or highlight fields") }
             return
         }
         guard parts.allSatisfy({ ($0.opacity.map { MGSolidView.opacityRange.contains($0) } ?? false) }) else {
@@ -401,5 +541,51 @@ extension MGSolidSnapshot {
                   (s.normal[0] * s.normal[0] + s.normal[1] * s.normal[1] + s.normal[2] * s.normal[2] - 1).magnitude < 1e-6,
                   s.parts.allSatisfy({ id in parts.contains { $0.id == id } }) else { throw bad(.section, "section needs a unit normal, a finite offset and known parts") }
         }
+        if let h = highlight {
+            guard h.allSatisfy({ id in parts.contains { $0.id == id } }) else { throw bad(.highlight, "highlight names known parts") }
+        }
+        if let a = annotations, let why = MGSolidSnapshot.annotationProblem(a, partsEnd: parts.map { $0.firstTriangle + $0.triangleCount }.max() ?? 0,
+                                                                           triangles: indices.count / 3) {
+            throw bad(.annotations, why)
+        }
+    }
+
+    /// Why an annotations record is malformed, or nil: finite points, unit directions, known roles and tiers, triangle
+    /// ranges after every part triangle, in order and inside the list, unique ids, placements of known ids.
+    static func annotationProblem(_ a: Annotations, partsEnd: Int, triangles: Int) -> String? {
+        func point(_ p: [Double], _ n: Int = 3) -> Bool { p.count == n && p.allSatisfy(\.isFinite) }
+        let tiers: Set<String> = ["solved", "built", "described"]
+        var cursor = partsEnd
+        func range(_ first: Int, _ count: Int) -> Bool {
+            guard first >= cursor, count >= 0, first <= triangles - count else { return false }
+            cursor = first + count
+            return true
+        }
+        var ids = Set<String>()
+        for r in a.arrows {
+            guard ids.insert(r.id).inserted, MGSolidArrow.Meaning(rawValue: r.meaning) != nil, MGSolidArrow.Style(rawValue: r.style) != nil,
+                  point(r.from), point(r.to), point(r.direction), ["warn", "accent", "good", "ink"].contains(r.colorRole),
+                  r.tier.map(tiers.contains) ?? true else { return "arrow fields" }
+            let len = (r.direction[0] * r.direction[0] + r.direction[1] * r.direction[1] + r.direction[2] * r.direction[2]).squareRoot()
+            guard abs(len - 1) < 1e-6 else { return "arrow direction must be a unit vector" }
+            guard range(r.firstTriangle, r.triangleCount) else { return "arrow triangles must follow the parts, in order" }
+        }
+        for d in a.dimensions {
+            guard ids.insert(d.id).inserted, MGSolidDimension.Kind(rawValue: d.kind) != nil, d.points.count == (d.kind == "angle" ? 3 : 2),
+                  d.points.allSatisfy({ point($0) }), d.value.isFinite, tiers.contains(d.tier), d.unit == (d.kind == "angle" ? "°" : "mm") else {
+                return "dimension fields"
+            }
+            guard range(d.firstTriangle, d.triangleCount) else { return "dimension triangles must follow the parts, in order" }
+        }
+        for l in a.labels {
+            guard ids.insert(l.id).inserted, point(l.anchor), l.tier.map(tiers.contains) ?? true else { return "label fields" }
+        }
+        var placed = Set<String>()
+        for p in a.placement {
+            guard ids.contains(p.id), placed.insert(p.id).inserted, point(p.box, 4), p.box[2] >= 0, p.box[3] >= 0,
+                  p.leader.map({ point($0, 2) }) ?? true, p.anchor.map({ point($0, 2) }) ?? true, (p.callout ?? 0) >= 0,
+                  (p.candidate ?? 0) >= 0, (p.callout == nil) != (p.candidate == nil) else { return "placement fields" }
+        }
+        return nil
     }
 }

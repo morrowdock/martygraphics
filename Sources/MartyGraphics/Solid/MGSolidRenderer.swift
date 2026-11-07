@@ -63,6 +63,16 @@ public final class MGSolidRenderer {
     /// Keyed by part id and local plane. A hit must hold an equal cut (full content); arrays compare by storage first,
     /// so showing the same cut again (the steps of one document share it) costs O(1), and a different cut is rebuilt.
     private var cutGeometry: [String: (cut: MGSectionCut, geometry: SCNGeometry)] = [:]
+    /// Arrow and dimension pieces (`setAnnotations(_:)`): one node per piece under one `annotations` node, built once.
+    /// Pose changes set node transforms only; geometry is never rebuilt.
+    private let annotationsNode = SCNNode()
+    private var annotationDocument: MGSolidDocument?
+    private var annotationNodes: [String: [SCNNode]] = [:]
+    private var annotationMaterials: [String: SCNMaterial] = [:]
+    private var emphasisedAnnotations: Set<String> = []
+    private var posed = MGPoseParameters()
+    private lazy var unitCylinder = MGSolidRenderer.geometry(MGAnnotationPrimitive(shape: .cylinder, start: .zero, end: .unitZ, radius: 1, hidden: false).renderMesh)
+    private lazy var unitCone = MGSolidRenderer.geometry(MGAnnotationPrimitive(shape: .cone, start: .zero, end: .unitZ, radius: 1, hidden: false).renderMesh)
 
     public init(assembly: MGAssembly, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
         self.assembly = assembly; self.lighting = lighting; self.options = options
@@ -70,6 +80,8 @@ public final class MGSolidRenderer {
         camera = MGSolidCamera(target: .zero, yaw: 30, pitch: 25, distance: 300)
         scene.rootNode.addChildNode(stageNode)
         stageNode.simdTransform = MGSolidRenderer.matrix(MGSolidStage.zUpToYUp)
+        annotationsNode.name = "annotations"
+        stageNode.addChildNode(annotationsNode)
         buildEnvironment()
         buildLights()
         let cam = SCNCamera()
@@ -101,6 +113,8 @@ public final class MGSolidRenderer {
     /// changes kinematics or one part's material does not rebuild the others).
     /// The view resets to the new assembly's plain view (parts' own opacity and light, nothing cut).
     public func setAssembly(_ new: MGAssembly) {
+        // Annotations belong to the old document; the host sets them again for the new one.
+        setAnnotations(nil)
         let old = Dictionary(assembly.parts.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         assembly = new
         view = MGSolidView(new)
@@ -153,6 +167,7 @@ public final class MGSolidRenderer {
         self.view = view
         applyGeometry()
         restyleAll()
+        updateAnnotations()
     }
 
     private func applyGeometry() {
@@ -178,6 +193,78 @@ public final class MGSolidRenderer {
         SCNTransaction.begin(); SCNTransaction.disableActions = true
         for (id, node) in partNodes { node.simdTransform = MGSolidRenderer.matrix(pose.world[id] ?? .identity) }
         SCNTransaction.commit()
+        posed = params
+        updateAnnotations()
+    }
+
+    // MARK: Annotations
+
+    /// Builds the arrow and dimension pieces of a compiled document (nil removes them). Which ones show follows the
+    /// view (`show(_:)` with `document.view(step:)`); where they are follows the pose (`apply(_:)`). Labels are drawn
+    /// by the overlay (`MGSolidOverlayView`), not in the scene. Pieces are not cut, not ghosted and cast no shadow.
+    public func setAnnotations(_ document: MGSolidDocument?) {
+        annotationsNode.childNodes.forEach { $0.removeFromParentNode() }
+        annotationNodes = [:]; annotationMaterials = [:]; emphasisedAnnotations = []
+        annotationDocument = document
+        guard let doc = document, !doc.annotations.isEmpty else { return }
+        for id in doc.annotations.ids where doc.annotations.kind(id) != "label" {
+            let role = doc.annotations.arrow(id)?.colorRole ?? MGSolidAnnotations.dimensionRole
+            let m = SCNMaterial()
+            m.lightingModel = .physicallyBased
+            let c = MGSolidAnnotations.srgb(role)
+            m.diffuse.contents = CGColor(srgbRed: c[0], green: c[1], blue: c[2], alpha: 1)
+            m.emission.contents = CGColor(srgbRed: c[0], green: c[1], blue: c[2], alpha: 1)
+            m.emission.intensity = 0.6
+            m.metalness.contents = NSNumber(value: 0.0)
+            m.roughness.contents = NSNumber(value: 0.45)
+            annotationMaterials[id] = m
+            let cylinder = unitCylinder.copy() as! SCNGeometry, cone = unitCone.copy() as! SCNGeometry
+            cylinder.materials = [m]; cone.materials = [m]
+            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed)
+            annotationNodes[id] = pieces.map { p in
+                let node = SCNNode(geometry: p.shape == .cone ? cone : cylinder)
+                node.name = "annotation.\(id)"
+                node.castsShadow = false
+                annotationsNode.addChildNode(node)
+                return node
+            }
+        }
+        updateAnnotations()
+    }
+
+    /// Brightens some annotations (a beat or step emphasis).
+    public func highlightAnnotations(_ ids: Set<String>) {
+        emphasisedAnnotations = ids
+        for (id, m) in annotationMaterials { m.emission.intensity = ids.contains(id) ? 1.6 : 0.6 }
+    }
+
+    /// Visibility from the view, transforms from the pose: no geometry is built here.
+    private func updateAnnotations() {
+        guard let doc = annotationDocument else { return }
+        let visible = Set(view.annotations)
+        SCNTransaction.begin(); SCNTransaction.disableActions = true
+        for (id, nodes) in annotationNodes {
+            guard visible.contains(id) else { nodes.forEach { $0.isHidden = true }; continue }
+            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed)
+            for (node, p) in zip(nodes, pieces) {
+                let d = p.end - p.start
+                node.isHidden = p.hidden || d.length < 1e-9
+                guard !node.isHidden else { continue }
+                node.simdTransform = MGSolidRenderer.pieceMatrix(p)
+            }
+        }
+        SCNTransaction.commit()
+    }
+
+    /// Maps the unit piece (radius 1, from z = 0 to z = 1) onto a piece: a scaled, non-rigid transform.
+    static func pieceMatrix(_ p: MGAnnotationPrimitive) -> simd_float4x4 {
+        let d = p.end - p.start
+        let w = d.normalized
+        let (u, v) = MGSolidAnnotations.basis(w)
+        let a = u * p.radius, b = v * p.radius
+        return simd_float4x4(columns: (simd_float4(Float(a.x), Float(a.y), Float(a.z), 0), simd_float4(Float(b.x), Float(b.y), Float(b.z), 0),
+                                       simd_float4(Float(d.x), Float(d.y), Float(d.z), 0),
+                                       simd_float4(Float(p.start.x), Float(p.start.y), Float(p.start.z), 1)))
     }
 
     /// Emphasises some parts: the others are dimmed (still opaque, so depth and shadows stay readable).

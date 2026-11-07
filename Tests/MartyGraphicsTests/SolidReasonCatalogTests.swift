@@ -14,6 +14,8 @@ final class SolidReasonCatalogTests: XCTestCase {
     static let notReasons: Set<String> = [
         "anodized.", "plastic.",                      // material name prefixes
         "count.",                                      // fact name prefix (`count.<id>`)
+        "dim.",                                        // fact name prefix (`dim.<id>`)
+        "annotation.",                                 // snapshot material id prefix (`annotation.<role>`)
         "hero.png", "exploded.png", "loop.gif", "manifest.json", "snapshot.json",   // render output files
         "constraint.gearMesh.a", "constraint.gearMesh.b",                           // unused `what` of `expand` (it throws `ref.unknown.<id>`)
     ]

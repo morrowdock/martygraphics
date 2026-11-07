@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+- Add 3D annotations to assembly v2 (open vocabulary 3a): a top-level `annotations` object with `labels`, `arrows`
+  and `dimensions`, and a step key `annotate`. Both are refused in v1 documents with the usual reasons
+  (`assembly.unknown.annotations`, `step.unknown.annotate`). Anchors name a part (its origin, an `offset` in its frame
+  or its mesh `centre`) or a world point; a `repeat` base with copies or an instance id is `anchor.ambiguous.<id>`.
+  Annotation ids join the document's one namespace. Text fills placeholders and follows rule N1
+  (`text.number.label.<id>`, `text.number.arrow.<id>`, `text.number.dimension.<id>`, or `unchecked`); `abs` is refused.
+  Arrows mean `force`, `flow`, `motion` or `pointer`. The engine computes every motion direction: a turn arrow's sense
+  from the part's turn (a stated `sense` that is wrong is `arrow.sense.<id>`), a line arrow's direction from the
+  anchor's velocity, looking ahead at a dead centre (a stated `expect` more than 30° off is `arrow.expect.<id>`); a
+  gravity force must point within 10° of −Z (`arrow.gravity.<id>`). A dimension measures a distance (optionally along
+  one axis) or an angle between anchors at the default input, or its range over one input turn with
+  `"over": "input"`; its value is the Solved fact `dim.<id>` and is never typed. Limits: 32 labels, 32 arrows,
+  16 dimensions, 12 visible at once (`annotations.visible`, `step.annotate.count`). Arrow and dimension pieces join
+  the mesh budget with exact counts before any mesh is built. Annotation claims (kind `annotation`) join the legend,
+  which gains `notes` ("Arrow lengths are not to scale"). New warnings `annotation.unused.<id>` (refused by the
+  strict profile) and `annotation.cut.<id>`. One deterministic placement function (`MGAnnotationLayout.place`,
+  through `MGSolidAnnotations.frame`) places text boxes at 24 candidates by hard rules and a score, keeps places
+  between frames, and moves text it cannot place into a numbered callout list; nothing is dropped. An occlusion ray
+  test (2,000,000 triangle tests per frame) gives hollow dots and dashed leaders. `MGSolidRenderer.setAnnotations(_:)`
+  draws arrows and dimension lines in SceneKit without rebuilding geometry while the pose changes;
+  `MGSolidOverlayView` (SwiftUI) and `MGSolidOverlay.draw` (CoreGraphics) draw labels, leaders, callouts and the
+  legend from the same records. Snapshot `/2` gains optional `annotations` (arrow and dimension triangles after every
+  part triangle, labels, placements) and `highlight`; a `/2` export without them keeps its bytes, and a `/1` file with
+  them is refused. `marty-solid check` reports `annotations` and `placements` (only for annotated documents) and
+  `marty-solid render` draws the overlay on every still and GIF frame. New v2 worked example `annotated-winch.json`
+  (a hand winch with labels, two turn arrows, a gravity force arrow, a checked motion arrow and a measured centre
+  distance). See [docs/SOLID-3D.md](docs/SOLID-3D.md#annotations-v2).
 - Add the solid check report as a library API, an engine identity, patch checks, a reason catalog, per-part tiers
   and a guarded snapshot decoder (Foundation only).
   - `MGSolidReport` builds the `marty-solid check` report in the library: `check(data:library:profile:engine:)`,

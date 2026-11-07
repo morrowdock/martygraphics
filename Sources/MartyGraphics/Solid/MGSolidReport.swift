@@ -157,6 +157,7 @@ extension MGSolidReport {
     static let sections: [Section] = [
         Section(name: "honesty", fields: honesty),
         Section(name: "tiers", fields: tiers),
+        Section(name: "annotations", fields: annotations),
     ]
 
     /// The report of a compiled document. `profile: .strict` adds the strict refusals (the document should be compiled
@@ -275,12 +276,15 @@ extension MGSolidReport {
         }
         var notChecked: [String: MGJSON] = [:]
         for s in Set(doc.motionSources.values) { if let list = MGSolidNotChecked.bySource[s] { notChecked[s] = .array(list.map { MGJSON.string($0) }) } }
+        var legendFields: [String: MGJSON] = ["text": .string(legend.text), "solved": num(legend.solved), "built": num(legend.built),
+                                              "described": num(legend.described), "note": str(legend.note), "shapes": .string(legend.shapes),
+                                              "claims": .array(claims)]
+        // Documents with annotations also list every legend note; other reports keep their exact keys.
+        if !doc.annotations.isEmpty { legendFields["notes"] = .array(legend.notes.map { MGJSON.string($0) }) }
         return ["version": num(doc.version),
                 "warnings": .array(doc.warnings.map { w -> MGJSON in .object(["reason": .string(w.reason), "part": str(w.part)]) }),
                 "facts": .object(facts),
-                "legend": .object(["text": .string(legend.text), "solved": num(legend.solved), "built": num(legend.built),
-                                   "described": num(legend.described), "note": str(legend.note), "shapes": .string(legend.shapes),
-                                   "claims": .array(claims)]),
+                "legend": .object(legendFields),
                 "stepTiers": .array(doc.steps.map { s -> MGJSON in str(s.tier?.name) }),
                 // Which fact filled each placeholder, in order, and what each step's checks proved.
                 "stepFacts": .array(doc.steps.map { s -> MGJSON in
@@ -317,6 +321,13 @@ extension MGSolidReport {
                                     "source": str(doc.motionSources[pid])]))
         }
         return ["partTiers": .array(parts), "motionTiers": .array(motions)]
+    }
+
+    /// Assembly v2 annotations (docs/SOLID-3D.md, Annotations): `annotations` (`MGSolidDocument.annotationReport`) and
+    /// `placements` (`MGSolidDocument.annotationPlacements`). Both are absent for a document without annotations.
+    static func annotations(_ doc: MGSolidDocument) -> [String: MGJSON] {
+        guard !doc.annotations.isEmpty else { return [:] }
+        return ["annotations": doc.annotationReport, "placements": doc.annotationPlacements]
     }
 
     // MARK: Patch fields

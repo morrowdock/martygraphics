@@ -72,11 +72,14 @@ $B/marty-solid version                         # engine name, version and this b
   `frame.child.absolute.<id>`, `frame.child.far.<id>`, `frame.axis.off.<id>`), the engine
   `facts` with their tiers, the tier `legend`, `notChecked` per motion source and a
   plain-words `readBack` of every part (world position, turn axis such as "a horizontal
-  axis (+X)", parent frame, up). With `--strict`, `joint.idle` and `frame.axis.off` make
-  `ok` false (exit 1) with that reason, and the full report is still printed; the
-  child-frame warnings are heuristics and never refuse. `partTiers` and `motionTiers`
+  axis (+X)", parent frame, up). With `--strict`, `joint.idle`, `frame.axis.off` and
+  `annotation.unused` make `ok` false (exit 1) with that reason, and the full report is still
+  printed; the child-frame warnings are heuristics and never refuse. `partTiers` and `motionTiers`
   give the engine tier (Solved, Built) of every part's motion and every motion claim.
-  `engine` names the engine version and the SHA-256 of the binary. The report is built
+  `engine` names the engine version and the SHA-256 of the binary. A document with
+  annotations also gets `annotations` (each one's tier, text, measured value, world anchors and
+  whether its anchor is hidden at the default camera) and `placements` (where each text goes,
+  and which texts fell into the callout list). The report is built
   by the library (`MGSolidReport`), so a host that calls it gets the same JSON. See
   [docs/SOLID-3D.md](../../docs/SOLID-3D.md#warnings-strict-mode-and-the-check-report).
 - `check BASE --patch PATCH` applies the patch (`MGSolidParser.applying`) and prints
@@ -91,7 +94,10 @@ $B/marty-solid version                         # engine name, version and this b
   `manifest.json` with SHA-256 digests and the measured render time. `--size WxH`
   sets the still size (default 1280x800). The output directory must not exist and its
   parent must; a failed render removes the partial directory. A step's `spin` is played
-  as that many input turns.
+  as that many input turns. Each image also shows the annotations its step shows (labels,
+  arrows, dimensions, the callout list and the legend), placed by the same function as the
+  snapshot; try
+  [`annotated-winch.json`](Sources/MartySolid3D/Models/annotated-winch.json).
 
 ## Components
 

@@ -194,6 +194,16 @@ func writePNG(_ image: CGImage, _ url: URL) throws {
     guard CGImageDestinationFinalize(d) else { throw CLIError.invalid("png finalize") }
 }
 
+/// The annotation overlay (labels, leaders, value texts, callouts, legend) drawn over a rendered frame.
+func overlaid(_ image: CGImage, _ frame: MGAnnotationFrame, _ doc: MGSolidDocument) -> CGImage {
+    let w = image.width, h = image.height
+    let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+    MGSolidOverlay.draw(frame, document: doc, legend: true, in: ctx, width: w, height: h)
+    return ctx.makeImage()!
+}
+
 func scaled(_ image: CGImage, width: Int) -> CGImage {
     let h = Int((Double(image.height) * Double(width) / Double(image.width)).rounded())
     let ctx = CGContext(data: nil, width: width, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
@@ -223,16 +233,19 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     defer { if !finished { try? FileManager.default.removeItem(at: out) } }  // never leave a half-written result
     _ = NSApplication.shared
     let r = MGSolidRenderer(assembly: doc.assembly)
+    r.setAnnotations(doc)
     let aspect = Double(width) / Double(height)
     let sourceName = URL(fileURLWithPath: path).lastPathComponent
     let plan = MGSolidRenderPlan(doc, sourceName: sourceName, source: src.source, loop: loop)
     var files: [MGJSON] = []
     var names: [String] = []
     var seconds = 0.0, frames = 0
+    var previousFrame: MGAnnotationFrame?
     func shot(_ s: MGSolidShot) throws -> CGImage {
         let p = MGSolidCamera.presets[s.preset] ?? MGSolidCamera.presets["hero"]!
-        // Each step shows its own section cuts and ghosts; other shots show the plain scene.
-        r.show(doc.view(step: s.step))
+        // Each step shows its own section cuts, ghosts and annotations; other shots show the plain scene.
+        let view = doc.view(step: s.step)
+        r.show(view)
         r.highlight(Set(s.highlight), dimOthers: !s.highlight.isEmpty)
         r.apply(s.params)
         // Bounding spheres are loose around flat or long assemblies; a margin below 1 fills the frame.
@@ -240,7 +253,13 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         let t0 = Date()
         guard let img = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
         seconds += Date().timeIntervalSince(t0); frames += 1
-        return img
+        guard !view.annotations.isEmpty else { return img }
+        // The same placement function as the snapshot and the SwiftUI overlay; frames of one loop keep their places.
+        let frame = MGSolidAnnotations.frame(document: doc, view: view, params: s.params, camera: r.camera, width: Double(width),
+                                             height: Double(height), previous: previousFrame, highlight: s.highlight,
+                                             caption: s.caption != nil, title: true)
+        previousFrame = frame
+        return overlaid(img, frame, doc)
     }
     func record(_ name: String, _ fields: [String: MGJSON]) throws {
         let u = out.appendingPathComponent(name)
@@ -251,11 +270,13 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         files.append(.object(o)); names.append(name)
     }
     for s in plan.stills {
+        previousFrame = nil
         let img = caption(try shot(s), title: s.title ?? doc.title, text: s.caption, footer: plan.footer)
         try writePNG(img, out.appendingPathComponent(s.file))
         try record(s.file, ["width": .number(Double(img.width)), "height": .number(Double(img.height))])
     }
     if !plan.loop.isEmpty {
+        previousFrame = nil
         let n = plan.loop.count, gifURL = out.appendingPathComponent("loop.gif")
         let delay = MGSolidRenderPlan.loopDelaySeconds
         guard let gif = CGImageDestinationCreateWithURL(gifURL as CFURL, UTType.gif.identifier as CFString, n, nil) else { throw CLIError.invalid("gif") }
