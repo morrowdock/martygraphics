@@ -1,0 +1,837 @@
+{
+  "endHoldSeconds" : 2,
+  "frames" : [
+    {
+      "at" : 0,
+      "beat" : 1,
+      "caption" : "This is triangle ABC. Each label shows a corner's coordinates.",
+      "file" : "frames\/000-beat1-beat.png",
+      "gifDelayCentiseconds" : 400,
+      "kind" : "beat",
+      "labels" : [
+        "A (2, 1)",
+        "B (4, 1)",
+        "C (2, 3)"
+      ],
+      "theta" : 0
+    },
+    {
+      "at" : 4,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/001-beat2-keyframe-1-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-1-of-19",
+      "labels" : [
+        "A (2, 1)",
+        "B (4, 1)",
+        "C (2, 3)"
+      ],
+      "theta" : 0
+    },
+    {
+      "at" : 4.0830000000000002,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/002-beat2-keyframe-2-of-19.png",
+      "gifDelayCentiseconds" : 9,
+      "kind" : "keyframe-2-of-19",
+      "labels" : [
+        "A (1.91, 1.17)",
+        "B (3.9, 1.34)",
+        "C (1.73, 3.16)"
+      ],
+      "theta" : 5
+    },
+    {
+      "at" : 4.1669999999999998,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/003-beat2-keyframe-3-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-3-of-19",
+      "labels" : [
+        "A (1.8, 1.33)",
+        "B (3.77, 1.68)",
+        "C (1.45, 3.3)"
+      ],
+      "theta" : 10
+    },
+    {
+      "at" : 4.25,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/004-beat2-keyframe-4-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-4-of-19",
+      "labels" : [
+        "A (1.67, 1.48)",
+        "B (3.6, 2)",
+        "C (1.16, 3.42)"
+      ],
+      "theta" : 15
+    },
+    {
+      "at" : 4.3330000000000002,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/005-beat2-keyframe-5-of-19.png",
+      "gifDelayCentiseconds" : 9,
+      "kind" : "keyframe-5-of-19",
+      "labels" : [
+        "A (1.54, 1.62)",
+        "B (3.42, 2.31)",
+        "C (0.85, 3.5)"
+      ],
+      "theta" : 20
+    },
+    {
+      "at" : 4.4169999999999998,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/006-beat2-keyframe-6-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-6-of-19",
+      "labels" : [
+        "A (1.39, 1.75)",
+        "B (3.2, 2.6)",
+        "C (0.54, 3.56)"
+      ],
+      "theta" : 25
+    },
+    {
+      "at" : 4.5,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/007-beat2-keyframe-7-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-7-of-19",
+      "labels" : [
+        "A (1.23, 1.87)",
+        "B (2.96, 2.87)",
+        "C (0.23, 3.6)"
+      ],
+      "theta" : 30
+    },
+    {
+      "at" : 4.5830000000000002,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/008-beat2-keyframe-8-of-19.png",
+      "gifDelayCentiseconds" : 9,
+      "kind" : "keyframe-8-of-19",
+      "labels" : [
+        "A (1.06, 1.97)",
+        "B (2.7, 3.11)",
+        "C (-0.08, 3.6)"
+      ],
+      "theta" : 35
+    },
+    {
+      "at" : 4.6669999999999998,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/009-beat2-keyframe-9-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-9-of-19",
+      "labels" : [
+        "A (0.89, 2.05)",
+        "B (2.42, 3.34)",
+        "C (-0.4, 3.58)"
+      ],
+      "theta" : 40
+    },
+    {
+      "at" : 4.75,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/010-beat2-keyframe-10-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-10-of-19",
+      "labels" : [
+        "A (0.71, 2.12)",
+        "B (2.12, 3.54)",
+        "C (-0.71, 3.54)"
+      ],
+      "theta" : 45
+    },
+    {
+      "at" : 4.8330000000000002,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/011-beat2-keyframe-11-of-19.png",
+      "gifDelayCentiseconds" : 9,
+      "kind" : "keyframe-11-of-19",
+      "labels" : [
+        "A (0.52, 2.17)",
+        "B (1.81, 3.71)",
+        "C (-1.01, 3.46)"
+      ],
+      "theta" : 50
+    },
+    {
+      "at" : 4.9169999999999998,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/012-beat2-keyframe-12-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-12-of-19",
+      "labels" : [
+        "A (0.33, 2.21)",
+        "B (1.48, 3.85)",
+        "C (-1.31, 3.36)"
+      ],
+      "theta" : 55
+    },
+    {
+      "at" : 5,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/013-beat2-keyframe-13-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-13-of-19",
+      "labels" : [
+        "A (0.13, 2.23)",
+        "B (1.13, 3.96)",
+        "C (-1.6, 3.23)"
+      ],
+      "theta" : 60
+    },
+    {
+      "at" : 5.0830000000000002,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/014-beat2-keyframe-14-of-19.png",
+      "gifDelayCentiseconds" : 9,
+      "kind" : "keyframe-14-of-19",
+      "labels" : [
+        "A (-0.06, 2.24)",
+        "B (0.78, 4.05)",
+        "C (-1.87, 3.08)"
+      ],
+      "theta" : 65
+    },
+    {
+      "at" : 5.1669999999999998,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/015-beat2-keyframe-15-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-15-of-19",
+      "labels" : [
+        "A (-0.26, 2.22)",
+        "B (0.43, 4.1)",
+        "C (-2.14, 2.91)"
+      ],
+      "theta" : 70
+    },
+    {
+      "at" : 5.25,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/016-beat2-keyframe-16-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-16-of-19",
+      "labels" : [
+        "A (-0.45, 2.19)",
+        "B (0.07, 4.12)",
+        "C (-2.38, 2.71)"
+      ],
+      "theta" : 75
+    },
+    {
+      "at" : 5.3330000000000002,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/017-beat2-keyframe-17-of-19.png",
+      "gifDelayCentiseconds" : 9,
+      "kind" : "keyframe-17-of-19",
+      "labels" : [
+        "A (-0.64, 2.14)",
+        "B (-0.29, 4.11)",
+        "C (-2.61, 2.49)"
+      ],
+      "theta" : 80
+    },
+    {
+      "at" : 5.4169999999999998,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/018-beat2-keyframe-18-of-19.png",
+      "gifDelayCentiseconds" : 8,
+      "kind" : "keyframe-18-of-19",
+      "labels" : [
+        "A (-0.82, 2.08)",
+        "B (-0.65, 4.07)",
+        "C (-2.81, 2.25)"
+      ],
+      "theta" : 85
+    },
+    {
+      "at" : 5.5,
+      "beat" : 2,
+      "caption" : "Now we turn the triangle about the origin O by 90°.",
+      "file" : "frames\/019-beat2-settled.png",
+      "gifDelayCentiseconds" : 290,
+      "kind" : "settled",
+      "labels" : [
+        "A (-1, 2)",
+        "B (-1, 4)",
+        "C (-3, 2)"
+      ],
+      "theta" : 90
+    },
+    {
+      "at" : 8.4000000000000004,
+      "beat" : 3,
+      "caption" : "A moved from (2, 1) to (-1, 2). Its distance to O is still 2.24.",
+      "file" : "frames\/020-beat3-beat.png",
+      "gifDelayCentiseconds" : 600,
+      "kind" : "beat",
+      "labels" : [
+        "A (-1, 2)",
+        "B (-1, 4)",
+        "C (-3, 2)"
+      ],
+      "theta" : 90
+    },
+    {
+      "at" : 14.4,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/021-beat4-beat.png",
+      "gifDelayCentiseconds" : 100,
+      "kind" : "beat",
+      "labels" : [
+        "A (-1, 2)",
+        "B (-1, 4)",
+        "C (-3, 2)"
+      ],
+      "theta" : 90
+    },
+    {
+      "at" : 15.4,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/022-beat4-learner-85.png",
+      "gifDelayCentiseconds" : 10,
+      "kind" : "learner-85",
+      "labels" : [
+        "A (-0.82, 2.08)",
+        "B (-0.65, 4.07)",
+        "C (-2.81, 2.25)"
+      ],
+      "theta" : 85
+    },
+    {
+      "at" : 15.5,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/023-beat4-learner-80.png",
+      "gifDelayCentiseconds" : 10,
+      "kind" : "learner-80",
+      "labels" : [
+        "A (-0.64, 2.14)",
+        "B (-0.29, 4.11)",
+        "C (-2.61, 2.49)"
+      ],
+      "theta" : 80
+    },
+    {
+      "at" : 15.6,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/024-beat4-learner-75.png",
+      "gifDelayCentiseconds" : 10,
+      "kind" : "learner-75",
+      "labels" : [
+        "A (-0.45, 2.19)",
+        "B (0.07, 4.12)",
+        "C (-2.38, 2.71)"
+      ],
+      "theta" : 75
+    },
+    {
+      "at" : 15.699999999999999,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/025-beat4-learner-70.png",
+      "gifDelayCentiseconds" : 10,
+      "kind" : "learner-70",
+      "labels" : [
+        "A (-0.26, 2.22)",
+        "B (0.43, 4.1)",
+        "C (-2.14, 2.91)"
+      ],
+      "theta" : 70
+    },
+    {
+      "at" : 15.800000000000001,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/026-beat4-learner-65.png",
+      "gifDelayCentiseconds" : 10,
+      "kind" : "learner-65",
+      "labels" : [
+        "A (-0.06, 2.24)",
+        "B (0.78, 4.05)",
+        "C (-1.87, 3.08)"
+      ],
+      "theta" : 65
+    },
+    {
+      "at" : 15.9,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/027-beat4-learner-60.png",
+      "gifDelayCentiseconds" : 10,
+      "kind" : "learner-60",
+      "labels" : [
+        "A (0.13, 2.23)",
+        "B (1.13, 3.96)",
+        "C (-1.6, 3.23)"
+      ],
+      "theta" : 60
+    },
+    {
+      "at" : 16,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/028-beat4-learner-55.png",
+      "gifDelayCentiseconds" : 10,
+      "kind" : "learner-55",
+      "labels" : [
+        "A (0.33, 2.21)",
+        "B (1.48, 3.85)",
+        "C (-1.31, 3.36)"
+      ],
+      "theta" : 55
+    },
+    {
+      "at" : 16.100000000000001,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/029-beat4-learner-50.png",
+      "gifDelayCentiseconds" : 10,
+      "kind" : "learner-50",
+      "labels" : [
+        "A (0.52, 2.17)",
+        "B (1.81, 3.71)",
+        "C (-1.01, 3.46)"
+      ],
+      "theta" : 50
+    },
+    {
+      "at" : 16.199999999999999,
+      "beat" : 4,
+      "caption" : "Your turn. Drag the slider. The engine moves the triangle and updates every label.",
+      "file" : "frames\/030-beat4-learner-45.png",
+      "gifDelayCentiseconds" : 380,
+      "kind" : "learner-45",
+      "labels" : [
+        "A (0.71, 2.12)",
+        "B (2.12, 3.54)",
+        "C (-0.71, 3.54)"
+      ],
+      "theta" : 45
+    },
+    {
+      "at" : 20.001000000000001,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/031-beat5-keyframe-1-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-1-of-28",
+      "labels" : [
+        "A (0.71, 2.12)",
+        "B (2.12, 3.54)",
+        "C (-0.71, 3.54)"
+      ],
+      "theta" : 45
+    },
+    {
+      "at" : 20.056999999999999,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/032-beat5-keyframe-2-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-2-of-28",
+      "labels" : [
+        "A (0.52, 2.17)",
+        "B (1.81, 3.71)",
+        "C (-1.01, 3.46)"
+      ],
+      "theta" : 50
+    },
+    {
+      "at" : 20.111999999999998,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/033-beat5-keyframe-3-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-3-of-28",
+      "labels" : [
+        "A (0.33, 2.21)",
+        "B (1.48, 3.85)",
+        "C (-1.31, 3.36)"
+      ],
+      "theta" : 55
+    },
+    {
+      "at" : 20.167999999999999,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/034-beat5-keyframe-4-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-4-of-28",
+      "labels" : [
+        "A (0.13, 2.23)",
+        "B (1.13, 3.96)",
+        "C (-1.6, 3.23)"
+      ],
+      "theta" : 60
+    },
+    {
+      "at" : 20.222999999999999,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/035-beat5-keyframe-5-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-5-of-28",
+      "labels" : [
+        "A (-0.06, 2.24)",
+        "B (0.78, 4.05)",
+        "C (-1.87, 3.08)"
+      ],
+      "theta" : 65
+    },
+    {
+      "at" : 20.279,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/036-beat5-keyframe-6-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-6-of-28",
+      "labels" : [
+        "A (-0.26, 2.22)",
+        "B (0.43, 4.1)",
+        "C (-2.14, 2.91)"
+      ],
+      "theta" : 70
+    },
+    {
+      "at" : 20.334,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/037-beat5-keyframe-7-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-7-of-28",
+      "labels" : [
+        "A (-0.45, 2.19)",
+        "B (0.07, 4.12)",
+        "C (-2.38, 2.71)"
+      ],
+      "theta" : 75
+    },
+    {
+      "at" : 20.390000000000001,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/038-beat5-keyframe-8-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-8-of-28",
+      "labels" : [
+        "A (-0.64, 2.14)",
+        "B (-0.29, 4.11)",
+        "C (-2.61, 2.49)"
+      ],
+      "theta" : 80
+    },
+    {
+      "at" : 20.445,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/039-beat5-keyframe-9-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-9-of-28",
+      "labels" : [
+        "A (-0.82, 2.08)",
+        "B (-0.65, 4.07)",
+        "C (-2.81, 2.25)"
+      ],
+      "theta" : 85
+    },
+    {
+      "at" : 20.501000000000001,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/040-beat5-keyframe-10-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-10-of-28",
+      "labels" : [
+        "A (-1, 2)",
+        "B (-1, 4)",
+        "C (-3, 2)"
+      ],
+      "theta" : 90
+    },
+    {
+      "at" : 20.556999999999999,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/041-beat5-keyframe-11-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-11-of-28",
+      "labels" : [
+        "A (-1.17, 1.91)",
+        "B (-1.34, 3.9)",
+        "C (-3.16, 1.73)"
+      ],
+      "theta" : 95
+    },
+    {
+      "at" : 20.611999999999998,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/042-beat5-keyframe-12-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-12-of-28",
+      "labels" : [
+        "A (-1.33, 1.8)",
+        "B (-1.68, 3.77)",
+        "C (-3.3, 1.45)"
+      ],
+      "theta" : 100
+    },
+    {
+      "at" : 20.667999999999999,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/043-beat5-keyframe-13-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-13-of-28",
+      "labels" : [
+        "A (-1.48, 1.67)",
+        "B (-2, 3.6)",
+        "C (-3.42, 1.16)"
+      ],
+      "theta" : 105
+    },
+    {
+      "at" : 20.722999999999999,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/044-beat5-keyframe-14-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-14-of-28",
+      "labels" : [
+        "A (-1.62, 1.54)",
+        "B (-2.31, 3.42)",
+        "C (-3.5, 0.85)"
+      ],
+      "theta" : 110
+    },
+    {
+      "at" : 20.779,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/045-beat5-keyframe-15-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-15-of-28",
+      "labels" : [
+        "A (-1.75, 1.39)",
+        "B (-2.6, 3.2)",
+        "C (-3.56, 0.54)"
+      ],
+      "theta" : 115
+    },
+    {
+      "at" : 20.834,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/046-beat5-keyframe-16-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-16-of-28",
+      "labels" : [
+        "A (-1.87, 1.23)",
+        "B (-2.87, 2.96)",
+        "C (-3.6, 0.23)"
+      ],
+      "theta" : 120
+    },
+    {
+      "at" : 20.890000000000001,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/047-beat5-keyframe-17-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-17-of-28",
+      "labels" : [
+        "A (-1.97, 1.06)",
+        "B (-3.11, 2.7)",
+        "C (-3.6, -0.08)"
+      ],
+      "theta" : 125
+    },
+    {
+      "at" : 20.945,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/048-beat5-keyframe-18-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-18-of-28",
+      "labels" : [
+        "A (-2.05, 0.89)",
+        "B (-3.34, 2.42)",
+        "C (-3.58, -0.4)"
+      ],
+      "theta" : 130
+    },
+    {
+      "at" : 21.001000000000001,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/049-beat5-keyframe-19-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-19-of-28",
+      "labels" : [
+        "A (-2.12, 0.71)",
+        "B (-3.54, 2.12)",
+        "C (-3.54, -0.71)"
+      ],
+      "theta" : 135
+    },
+    {
+      "at" : 21.056999999999999,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/050-beat5-keyframe-20-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-20-of-28",
+      "labels" : [
+        "A (-2.17, 0.52)",
+        "B (-3.71, 1.81)",
+        "C (-3.46, -1.01)"
+      ],
+      "theta" : 140
+    },
+    {
+      "at" : 21.111999999999998,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/051-beat5-keyframe-21-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-21-of-28",
+      "labels" : [
+        "A (-2.21, 0.33)",
+        "B (-3.85, 1.48)",
+        "C (-3.36, -1.31)"
+      ],
+      "theta" : 145
+    },
+    {
+      "at" : 21.167999999999999,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/052-beat5-keyframe-22-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-22-of-28",
+      "labels" : [
+        "A (-2.23, 0.13)",
+        "B (-3.96, 1.13)",
+        "C (-3.23, -1.6)"
+      ],
+      "theta" : 150
+    },
+    {
+      "at" : 21.222999999999999,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/053-beat5-keyframe-23-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-23-of-28",
+      "labels" : [
+        "A (-2.24, -0.06)",
+        "B (-4.05, 0.78)",
+        "C (-3.08, -1.87)"
+      ],
+      "theta" : 155
+    },
+    {
+      "at" : 21.279,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/054-beat5-keyframe-24-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-24-of-28",
+      "labels" : [
+        "A (-2.22, -0.26)",
+        "B (-4.1, 0.43)",
+        "C (-2.91, -2.14)"
+      ],
+      "theta" : 160
+    },
+    {
+      "at" : 21.334,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/055-beat5-keyframe-25-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-25-of-28",
+      "labels" : [
+        "A (-2.19, -0.45)",
+        "B (-4.12, 0.07)",
+        "C (-2.71, -2.38)"
+      ],
+      "theta" : 165
+    },
+    {
+      "at" : 21.390000000000001,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/056-beat5-keyframe-26-of-28.png",
+      "gifDelayCentiseconds" : 6,
+      "kind" : "keyframe-26-of-28",
+      "labels" : [
+        "A (-2.14, -0.64)",
+        "B (-4.11, -0.29)",
+        "C (-2.49, -2.61)"
+      ],
+      "theta" : 170
+    },
+    {
+      "at" : 21.445,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/057-beat5-keyframe-27-of-28.png",
+      "gifDelayCentiseconds" : 5,
+      "kind" : "keyframe-27-of-28",
+      "labels" : [
+        "A (-2.08, -0.82)",
+        "B (-4.07, -0.65)",
+        "C (-2.25, -2.81)"
+      ],
+      "theta" : 175
+    },
+    {
+      "at" : 21.501000000000001,
+      "beat" : 5,
+      "caption" : "At 180° every coordinate changes sign. A is now at (-2, -1).",
+      "file" : "frames\/058-beat5-settled.png",
+      "gifDelayCentiseconds" : 530,
+      "kind" : "settled",
+      "labels" : [
+        "A (-2, -1)",
+        "B (-4, -1)",
+        "C (-2, -3)"
+      ],
+      "theta" : 180
+    }
+  ],
+  "gif" : "640x400",
+  "gifTotalCentiseconds" : 2680,
+  "lessonCompleteSeconds" : 24.800999999999998,
+  "lineDueToCompleteSeconds" : 24.800999999999998,
+  "pixels" : "2048x1280",
+  "window" : "1024x640 points"
+}
