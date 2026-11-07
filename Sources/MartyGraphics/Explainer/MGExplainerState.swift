@@ -38,15 +38,56 @@ extension MGExplainerSession {
                                         badge: built ? "Data as given" : "Solved",
                                         why: built ? "The \(name) template shows some data as given" : "Computed by the \(name) template"))
         }
-        for id in itemOrder {
+        out += itemClaims
+        for b in keptBeats {
+            let n = b.index + 1
+            let t: MGTier? = b.unchecked != nil ? .described : MGExplainerHonesty.placeholders(b.say).map { tier(ofPlaceholder: $0) }.min()
+            if let t {
+                let why: String
+                if let u = b.unchecked { why = "Marked unchecked: \(u)" }
+                else if t == .solved { why = "Its numbers are engine values or facts; its words are not checked" }
+                else { why = "It shows a value below Solved" }
+                out.append(MGExplainerClaim(kind: .caption, id: "beat.\(n)", tier: t, badge: t.badge(.caption), why: why))
+            }
+            var threeD = b.checks3D.makeIterator()
+            for (j, name) in b.checkNames.enumerated() {
+                // A 2D check of the presented beat that the state shown now breaks (a learner or host change) is not
+                // current: it is left out, never kept as "Checked" (`notCurrent`).
+                if !name.contains("."), b.index == presented.beat, notCurrent.contains("beat.\(n).check.\(j + 1)") { continue }
+                let t = tier(ofPlaceholder: name)
+                let text: String
+                if name.contains("."), let c = threeD.next() { text = c.check.text } else { text = name }
+                out.append(MGExplainerClaim(kind: .check, id: "beat.\(n).check.\(j + 1)", tier: t, badge: t.badge(.check), why: "Checked: \(text)"))
+            }
+        }
+        return out
+    }
+
+    /// The 2D items' claims, from the scenes themselves (the projected state, then items only the presented state has),
+    /// so a refused beat or a removed item leaves no claim, and a restored scene is the claim source. A noted item
+    /// (wire or template-built) is a `data` claim; an author item whose numbers all come from placeholders (its wire
+    /// item and `over` values) takes their lowest tier; a template item without a note is covered by `board.template`.
+    var itemClaims: [MGExplainerClaim] {
+        guard board != nil else { return [] }
+        var ids: [String] = [], seen = Set<String>(), sources: [MGJSON] = []
+        for st in [lesson.projected, lesson.state].compactMap({ $0 }) {
+            for i in st.scene.items where seen.insert(i.id).inserted { ids.append(i.id) }
+            sources.append(st.scene.source)
+        }
+        var out: [MGExplainerClaim] = []
+        for id in ids {
             if let note = notes[id] {
                 let t: MGTier = note.kind == .basis ? .built : .described
                 out.append(MGExplainerClaim(kind: .data, id: "item.\(id)", tier: t, badge: note.kind == .basis ? "Data as given" : "Not checked",
                                             why: note.kind == .basis ? "Data as given: \(note.text)" : "Marked unchecked: \(note.text)"))
                 continue
             }
+            var stack: [MGJSON] = []
+            for src in sources {
+                if case .array(let items)? = src["items"] { stack += items.filter { $0["id"] == .string(id) } }
+                if case .array(let over)? = src["over"] { stack += over.filter { $0["id"] == .string(id) }.compactMap { $0["value"] } }
+            }
             var tiers: [MGTier] = []
-            var stack = itemWires[id] ?? []
             while let v = stack.popLast() {
                 switch v {
                 case .string(let s): tiers += MGExplainerHonesty.placeholders(s).map { tier(ofPlaceholder: $0) }
@@ -60,23 +101,17 @@ extension MGExplainerSession {
                                             why: t == .solved ? "Its numbers are engine values or facts" : "It shows a value below Solved"))
             }
         }
-        for b in keptBeats {
-            let n = b.index + 1
-            let t: MGTier? = b.unchecked != nil ? .described : MGExplainerHonesty.placeholders(b.say).map { tier(ofPlaceholder: $0) }.min()
-            if let t {
-                let why: String
-                if let u = b.unchecked { why = "Marked unchecked: \(u)" }
-                else if t == .solved { why = "Its numbers are engine values or facts; its words are not checked" }
-                else { why = "It shows a value below Solved" }
-                out.append(MGExplainerClaim(kind: .caption, id: "beat.\(n)", tier: t, badge: t.badge(.caption), why: why))
-            }
-            var threeD = b.checks3D.makeIterator()
-            for (j, name) in b.checkNames.enumerated() {
-                let t = tier(ofPlaceholder: name)
-                let text: String
-                if name.contains("."), let c = threeD.next() { text = c.check.text } else { text = name }
-                out.append(MGExplainerClaim(kind: .check, id: "beat.\(n).check.\(j + 1)", tier: t, badge: t.badge(.check), why: "Checked: \(text)"))
-            }
+        return out
+    }
+
+    /// Check claims of the presented beat that no longer hold on the state shown now (after a learner or host change),
+    /// by claim id. Such a claim is left out of `claims` and the legend; the caption shows the live values.
+    public var notCurrent: [String] {
+        guard let k = presented.beat, let b = beats[k], let scene = lesson.state?.scene else { return [] }
+        var out: [String] = []
+        for (j, spec) in b.checkSpecs.enumerated() {
+            guard case .string(let name)? = spec["value"], !name.contains(".") else { continue }
+            if (try? MGCheck.parse(spec))?.failure(in: scene) != nil { out.append("beat.\(k + 1).check.\(j + 1)") }
         }
         return out
     }
@@ -117,9 +152,11 @@ extension MGExplainerSession {
 // MARK: persistence
 
 extension MGExplainerSession {
-    /// Engine data only: the header, the views as authored, the beats' 3D parts, the lesson snapshot (as JSON text, so
-    /// its nesting never adds to this one) and the stream position. `restore` validates everything again.
+    /// Engine data only: the header, the views as authored, the set-up commands, each beat's caption, commands, checks,
+    /// view and highlight, the lesson snapshot (as JSON text, so its nesting never adds to this one) and the stream
+    /// position. Captions and claims are not stored: `restore` derives them again.
     public func snapshot() -> MGJSON {
+        func text(_ v: MGJSON) -> MGJSON { .string(v.canonicalString) }
         var o: [String: MGJSON] = ["v": .number(1), "kind": .string("explainerSnapshot"), "frozen": .bool(frozen),
                                    "beatCount": .number(Double(beatCount)), "next": .number(Double(nextStatement))]
         var h: [String: MGJSON] = ["v": .number(1)]
@@ -127,22 +164,21 @@ extension MGExplainerSession {
         if let p = primary { h["primary"] = .string(p) }
         if !notes.isEmpty { h["notes"] = .object(notes.mapValues(\.json)) }
         o["header"] = .object(h)
-        if let board { o["board"] = .string(board.canonicalString) }
-        if let solidSource { o["solid"] = .string(solidSource.canonicalString) }
+        if let board { o["board"] = text(board) }
+        if let solidSource { o["solid"] = text(solidSource) }
+        o["setup"] = .array(setupOps.map(text))
         o["beats"] = .array(beats.keys.sorted().map { k -> MGJSON in
             let b = beats[k]!
             var e: [String: MGJSON] = ["beat": .number(Double(k)), "sayAt": .number(Double(b.sayStatement)), "say": .string(b.say),
-                                       "dropped": .bool(b.dropped), "checkSpecs": .array(b.checkSpecs.map { .string($0.canonicalString) }),
-                                       "checks": .array(b.checks3D.map { .object(["i": .number(Double($0.statement)), "s": .string($0.json.canonicalString)]) })]
+                                       "dropped": .bool(b.dropped), "checkSpecs": .array(b.checkSpecs.map(text)), "ops": .array(b.ops.map(text)),
+                                       "checks": .array(b.checks3D.map { .object(["i": .number(Double($0.statement)), "s": text($0.json)]) })]
             if let u = b.unchecked { e["unchecked"] = .string(u) }
-            if let v = b.view { e["view"] = .string(v.canonicalString) }
+            if let v = b.view { e["view"] = text(v) }
             if let hl = b.highlight { e["highlight"] = .array(hl.map { .string($0) }) }
             return .object(e)
         })
         o["presented"] = .array(presentedBeats.sorted().map { .number(Double($0)) })
-        o["captions"] = .array(captions.keys.sorted().map { .object(["beat": .number(Double($0)), "text": .string(captions[$0]!)]) })
         if let k = presented.beat { o["beat"] = .number(Double(k)) }
-        o["items"] = .array(itemOrder.map { id in .object(["id": .string(id), "wires": .string(MGJSON.array(itemWires[id] ?? []).canonicalString)]) })
         o["stream"] = .object(["started": .bool(stream.started), "header": .bool(stream.header), "keep": .bool(stream.keep),
                                "ended": .bool(stream.ended), "exhausted": .bool(stream.exhausted),
                                "bytes": .number(Double(stream.bytes - unfinishedInput.count)), "statements": .number(Double(stream.statements))])
@@ -150,9 +186,25 @@ extension MGExplainerSession {
         return .object(o)
     }
 
-    /// Rebuild a session from `snapshot()`. The solid compiles again (with the kept beats' views), the lesson restores
-    /// with the explainer environment, and every 3D check is proved again; the first problem refuses the whole snapshot
-    /// with its reason (for example the solid's own reason when it no longer compiles). Never loaded in part.
+    /// `restore` for snapshot JSON text: over `MGExplainerLimits.snapshotBytes` is `snapshot.bytes`; text that is not
+    /// UTF-8 JSON is `snapshot.json` and nesting over 64 levels `snapshot.depth`, both before the system parser.
+    public static func restore(data: Data, pacing: MGPacing, clock: MGLessonClock = MGSystemClock(),
+                               library: MGSolidLibrary = .builtIn) -> Result<MGExplainerSession, MGExplainerIssue> {
+        guard data.count <= MGExplainerLimits.snapshotBytes else { return .failure(MGExplainerIssue("snapshot.bytes", view: .stream)) }
+        if let r = MGJSON.dataRefusal(data, json: "snapshot.json", depth: "snapshot.depth") { return .failure(MGExplainerIssue(r, view: .stream)) }
+        guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
+            return .failure(MGExplainerIssue("snapshot.json", view: .stream))
+        }
+        return restore(json, pacing: pacing, clock: clock, library: library)
+    }
+
+    /// Rebuild a session from `snapshot()`. Nothing in it is trusted as proof. The views are checked and compiled again
+    /// (the solid with the kept beats' views); the script is replayed from the board with the explainer's rules (rule
+    /// N1, one namespace, every set-up and beat command, every 2D and 3D check, every caption), which also gives each
+    /// beat's caption again; the lesson restores with the explainer's environment; then every scene it holds (state and
+    /// baseline) passes rule N1 and the namespace again, and every queued command the explainer's command rules. All of
+    /// it runs in beat order, then statement order. The first problem refuses the whole snapshot with its reason (for
+    /// example the solid's own reason when it no longer compiles); it is never loaded in part.
     public static func restore(_ snapshot: MGJSON, pacing: MGPacing, clock: MGLessonClock = MGSystemClock(),
                                library: MGSolidLibrary = .builtIn) -> Result<MGExplainerSession, MGExplainerIssue> {
         var view = MGExplainerIssue.View.stream
@@ -173,6 +225,10 @@ extension MGExplainerSession {
                       let any = try? JSONSerialization.jsonObject(with: d, options: [.fragmentsAllowed]), let j = MGJSON(any: any) else { throw MGError(what) }
                 return j
             }
+            func commands(_ v: MGJSON?, _ what: String) throws -> [MGJSON] {
+                guard case .array(let list)? = v, list.count <= MGLessonLimits.statements else { throw MGError(what) }
+                return try list.map { try text($0, what) }
+            }
             var s = MGExplainerSession(pacing: pacing, clock: clock, library: library)
             view = .header
             guard let ho = o["header"]?.objectValue else { throw MGError("snapshot.header") }
@@ -190,13 +246,15 @@ extension MGExplainerSession {
                 try MGExplainerHonesty.checkBoard(b.objectValue!, notes: s.notes)
                 s.board = b
             }
+            s.setupOps = try commands(o["setup"], "snapshot.setup")
             view = .beat
             guard case .array(let entries)? = o["beats"], entries.count <= MGExplainerLimits.beats else { throw MGError("snapshot.beats") }
             for e in entries {
-                guard let eo = e.objectValue, case .string(let say)? = eo["say"], case .array(let names)? = eo["checkSpecs"],
+                guard let eo = e.objectValue, case .string(let say)? = eo["say"], case .array(let specs)? = eo["checkSpecs"],
                       case .array(let checks)? = eo["checks"], checks.count <= MGExplainerLimits.checksPerBeat,
-                      names.count <= MGExplainerLimits.checksPerBeat else { throw MGError("snapshot.beats") }
+                      specs.count <= MGExplainerLimits.checksPerBeat else { throw MGError("snapshot.beats") }
                 let k = try int(eo["beat"], "snapshot.beats")
+                guard (0..<MGExplainerLimits.beats).contains(k), s.beats[k] == nil else { throw MGError("snapshot.beats") }
                 var info = BeatInfo(index: k, sayStatement: try int(eo["sayAt"], "snapshot.beats"), say: say)
                 info.dropped = try flag(eo["dropped"], "snapshot.beats")
                 if case .string(let u)? = eo["unchecked"] { info.unchecked = u }
@@ -204,13 +262,19 @@ extension MGExplainerSession {
                 if case .array(let hl)? = eo["highlight"] {
                     info.highlight = try hl.map { guard case .string(let x) = $0 else { throw MGError("snapshot.beats") }; return x }
                 }
-                info.checkSpecs = try names.map { try text($0, "snapshot.beats") }
+                info.checkSpecs = try specs.map { try text($0, "snapshot.beats") }
+                info.ops = try commands(eo["ops"], "snapshot.beats")
+                guard info.ops.count <= MGExplainerLimits.commandsPerBeat else { throw MGError("snapshot.beats") }
                 for c in checks {
                     let json = try text(c["s"], "snapshot.beats")
                     info.checks3D.append((try int(c["i"], "snapshot.beats"), try MGSolidClaimCheck.parse(json), json))
                 }
+                // The 3D checks are exactly the dotted check specs, in the same order.
+                guard info.checks3D.map(\.json) == info.checkSpecs.filter({ if case .string(let n)? = $0["value"] { return n.contains(".") }; return false })
+                else { throw MGError("snapshot.beats") }
                 s.beats[k] = info
             }
+            let order = s.beats.keys.sorted()
             if o["solid"] != nil {
                 view = .solid
                 let src = try text(o["solid"], "snapshot.solid")
@@ -219,14 +283,16 @@ extension MGExplainerSession {
                 let (doc, map) = try s.compileSolid().get()
                 s.solid = doc; s.stepOf = map
                 s.ids3D = MGExplainerHonesty.ids3D(doc); s.set3D = Set(s.ids3D)
-                for b in s.beats.values {
-                    for c in b.checks3D {
+                if let key = s.notes.keys.sorted().first(where: { s.set3D.contains($0) }) { throw MGError("notes.view.\(MGLessonIssue.segment(key))") }
+                // Every 3D check again, in beat order, then statement order.
+                for k in order where !s.beats[k]!.dropped {
+                    for c in s.beats[k]!.checks3D.sorted(by: { $0.statement < $1.statement }) {
                         let t = MGSolidParser.token(c.check.value)
                         guard let (_, f) = MGSolidFacts.lookup(c.check.value, doc.facts, doc.aliases) else { throw MGError("check.fact.\(t)") }
                         guard c.check.holds(f.value) else { throw MGError("check.failed.\(t)") }
                     }
                 }
-                for k in s.beats.keys.sorted() {
+                for k in order {
                     // `abs` placeholders and their sign proofs, from the caption.
                     var abs: [String] = []
                     for body in MGExplainerHonesty.placeholders(s.beats[k]!.say) {
@@ -236,47 +302,57 @@ extension MGExplainerSession {
                     }
                     s.beats[k]!.absNames = abs
                 }
-                let notesClash = s.notes.keys.sorted().first { s.set3D.contains($0) }
-                if let key = notesClash { throw MGError("notes.view.\(MGLessonIssue.segment(key))") }
             } else if s.beats.values.contains(where: { $0.view != nil || !$0.checks3D.isEmpty }) {
                 throw MGError("snapshot.solid")
             }
+            let env = MGParseEnvironment(facts: s.solid?.facts ?? [:], aliases: s.solid?.aliases ?? [:], reserved: s.set3D)
+            // The script again, from the board, with the explainer's rules: proves every kept beat's 2D checks and
+            // captions, and gives the captions.
+            view = .beat
+            try s.replayScript(env: env)
             view = .stream
             let lessonJSON = try text(o["lesson"], "snapshot.lesson")
-            let env = MGParseEnvironment(facts: s.solid?.facts ?? [:], aliases: s.solid?.aliases ?? [:], reserved: s.set3D)
             switch MGLessonSession.restore(lessonJSON, pacing: pacing, clock: clock, env: env, boardless: s.frozen && s.board == nil) {
             case .failure(let issue): throw MGError(issue.reason)
             case .success(let l): s.lesson = l
             }
-            if let st = s.lesson.state, s.board != nil || !s.frozen {
-                let twoD = Set(st.scene.items.map(\.id)).union(st.controls.map(\.id))
-                if let clash = s.ids3D.first(where: { twoD.contains($0) }) { throw MGError("explainer.id.duplicate.\(MGLessonIssue.segment(clash))") }
-            }
             if s.board == nil, s.frozen != s.lesson.boardless { throw MGError("snapshot.board") }
-            if case .array(let items)? = o["items"] {
-                for i in items {
-                    guard case .string(let id)? = i["id"], (try? MGParser.identifier(.string(id), "")) != nil else { throw MGError("snapshot.items") }
-                    guard case .array(let wires) = try text(i["wires"], "snapshot.items") else { throw MGError("snapshot.items") }
-                    s.itemOrder.append(id); s.itemWires[id] = wires
-                }
+            // Every scene the lesson holds (shown and baseline), and every queued command, with the explainer's rules.
+            view = .board
+            for st in [s.lesson.state, s.lesson.projected].compactMap({ $0 }) where !s.lesson.boardless {
+                if let src = st.scene.source.objectValue { try MGExplainerHonesty.checkBoard(src, notes: s.notes) }
+                try MGLessonEngine.guardIDs(st, env)
+            }
+            view = .beat
+            for p in s.lesson.pending {
+                guard let info = s.beats[p.index], info.say == p.say else { throw MGError("snapshot.pending") }
+                for c in p.commands { if let r = s.commandRefusal(c.json) { throw MGError(r) } }
+                if p.refused { s.beats[p.index]!.dropped = true }
             }
             guard case .array(let presented)? = o["presented"] else { throw MGError("snapshot.presented") }
             s.presentedBeats = Set(try presented.map { try int($0, "snapshot.presented") })
-            if case .array(let caps)? = o["captions"] {
-                guard caps.count <= MGExplainerLimits.beats else { throw MGError("snapshot.presented") }
-                for c in caps {
-                    guard case .string(let t)? = c["text"], MGJSON.string(t).canonicalByteCount <= MGLessonLimits.lineBytes else { throw MGError("snapshot.presented") }
-                    s.captions[try int(c["beat"], "snapshot.presented")] = t
-                }
+            let shown = s.lesson.state?.beat ?? -1
+            for k in order where !s.beats[k]!.dropped {
+                // A kept beat is shown (at or before the lesson's beat) or queued in the lesson; nothing else.
+                let queued = s.lesson.pending.contains { $0.index == k && !$0.refused }
+                guard queued != (s.presentedBeats.contains(k) && k <= shown) else { throw MGError("snapshot.beats") }
             }
-            for k in s.beats.keys.sorted() where !s.beats[k]!.dropped { s.updateSignRefusal(k) }
+            for k in order where !s.beats[k]!.dropped {
+                s.updateSignRefusal(k)
+                // A closed beat (shown, or queued and complete) needs its sign proofs now, not at a later close.
+                let closed = s.presentedBeats.contains(k) || s.lesson.pending.contains { $0.index == k && $0.complete }
+                if closed, let issue = s.lesson.closeRefusals[k] { throw MGError(issue.reason) }
+            }
             if o["beat"] != nil {
                 let k = try int(o["beat"], "snapshot.beat")
-                guard s.beats[k] != nil else { throw MGError("snapshot.beat") }
+                guard s.beats[k] != nil, !s.beats[k]!.dropped, k == shown else { throw MGError("snapshot.beat") }
                 s.presented = s.beatView(k, recordStale: true)
             } else if let doc = s.solid {
+                guard shown < 0 else { throw MGError("snapshot.beat") }
                 s.presented.solid = doc.view(step: nil)
             }
+            // The lesson's caption is the presented beat's line on the restored state, never the saved text.
+            s.lesson.caption = s.caption
             if s.frozen, let (t, tier) = try s.filledTitle() { s.title = t; s.titleTier = tier }
             guard let st = o["stream"]?.objectValue else { throw MGError("snapshot.stream") }
             s.stream = StreamStatus(started: try flag(st["started"], "snapshot.stream"), header: try flag(st["header"], "snapshot.stream"),
@@ -286,6 +362,38 @@ extension MGExplainerSession {
             return .success(s)
         } catch {
             return .failure(MGExplainerIssue(reason(error), view: view))
+        }
+    }
+
+    /// The script from the board: the set-up commands, then each kept beat's commands, its 2D checks on the beat's end
+    /// state and its caption, with the explainer's rules (rule N1, one namespace) and the lesson engine. Sets `captions`.
+    mutating func replayScript(env: MGParseEnvironment) throws {
+        var st: MGLessonState
+        if let b = board {
+            st = MGLessonState(scene: MGLessonEngine.lessonScene(try MGParser.scene(json: b, extraTemplates: [], env: env).get()))
+            try MGLessonEngine.guardIDs(st, env)
+        } else {
+            guard setupOps.isEmpty, beats.values.allSatisfy({ $0.ops.isEmpty }) else { throw MGError("explainer.board.missing") }
+            st = MGLessonState(scene: MGScene(source: MGLessonSession.boardlessSource, template: nil, title: "", is3D: false, width: 12, height: 8,
+                                              items: [], steps: [], camera: nil, values: [:], motion: .none, attachments: [:]))
+        }
+        func run(_ op: MGJSON, _ beat: Int?) throws {
+            if let r = commandRefusal(op) { throw MGError(r) }
+            st = try MGLessonEngine.run(op, on: st, origin: .script, beat: beat, env: env).state
+        }
+        for op in setupOps { try run(op, nil) }
+        captions = [:]
+        for k in beats.keys.sorted() where !beats[k]!.dropped {
+            let info = beats[k]!
+            guard (1...MGExplainerLimits.say).contains(info.say.unicodeScalars.count) else { throw MGError("stmt.say") }
+            if let u = info.unchecked, (try? MGSolidParser.text(.string(u), MGExplainerLimits.unchecked, "")) == nil { throw MGError("beat.unchecked.\(k + 1)") }
+            if info.unchecked == nil, MGExplainerHonesty.typedNumber(info.say) { throw MGError("text.number.beat.\(k + 1)") }
+            for op in info.ops { try run(op, k) }
+            for spec in info.checkSpecs {
+                guard case .string(let name)? = spec["value"], !name.contains(".") else { continue }
+                if let why = try MGCheck.parse(spec).failure(in: st.scene) { throw MGError(why) }
+            }
+            captions[k] = try MGLessonSession.fillLine(info.say, st.scene.values, env: env)
         }
     }
 }
