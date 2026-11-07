@@ -357,8 +357,9 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `arrow.unchecked.text.<id>` | assembly | An arrow has `unchecked` but no `text` for it to mark. |
 | `text.number.arrow.<id>` | assembly | An arrow's text has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
 | `arrow.turn.joint.<id>` | assembly | A turn arrow's part has no revolute joint. |
-| `arrow.turn.steady.<id>` | assembly | A turn arrow's part has no steady speed (a crank rod swings back and forth), so no single turn sense holds; use a motion line arrow. |
-| `arrow.still.<id>` | assembly | A turn arrow's part has no own turning joint (it may still ride a turning parent), or a motion line arrow's anchor has no velocity at the default input (other than a crank-slider dead centre). |
+| `arrow.turn.steady.<id>` | assembly | A turn arrow's part has no single world turn rate: a turning joint above it turns about an axis that is not parallel to its own. |
+| `annotation.motion.nonlinear.<id>` | assembly | A motion arrow, a turn arrow or a dimension shown in a moving step sits on a motion chain that is not linear in the input: some moving joint above it has a crank-slider or crank-rod drive (or follows one), so the motion reverses or changes speed. Show it in a still step, or use a turn arrow on a steady part. |
+| `arrow.still.<id>` | assembly | A turn arrow's part has no own turning joint (it may still ride a turning parent), or a motion line arrow's anchor has no velocity at the default input. |
 | `arrow.sense.<id>` | assembly | A turn arrow's stated `sense` is the opposite of the engine's (seen from the tip of the joint axis). |
 | `arrow.expect.<id>` | assembly | A motion arrow's stated `expect` is more than 30° from the engine's direction, sign included. |
 | `arrow.length.fact.<id>` | assembly | A motion arrow's `length` names no fact. |

@@ -43,10 +43,11 @@ public struct MGSolidView: Equatable, Sendable {
     /// +1, or −1 for a step with a negative `spin` (it plays the input backwards): motion arrows draw the motion the
     /// view shows.
     public var motionSense: Double = 1
-    /// The step this view shows (nil: the plain view), and whether it came from `MGSolidDocument.view(step:)`: only such
-    /// a view has poses the engine checked (`MGSolidDocument.checkedAnnotations(_:params:)`).
+    /// The step this view shows (nil: the plain view). Only a view from `MGSolidDocument.view(step:)` has poses the
+    /// engine checked (`MGSolidDocument.checkedAnnotations(_:params:)`).
     public internal(set) var step: Int?
-    public internal(set) var checked = false
+    /// The fingerprint of the compiled document this view came from (nil for a view built by a host).
+    public internal(set) var fingerprint: String?
 
     /// The view of a plain assembly: every part with its own opacity and light, nothing cut.
     public init(_ assembly: MGAssembly) {
@@ -75,7 +76,7 @@ extension MGSolidDocument {
     public func view(step: Int?) -> MGSolidView {
         var v = MGSolidView(assembly)
         v.annotations = visibleAnnotations(step: step)
-        v.checked = true
+        v.fingerprint = checkedFingerprint
         guard let i = step, steps.indices.contains(i) else { return v }
         v.step = i
         let s = steps[i]

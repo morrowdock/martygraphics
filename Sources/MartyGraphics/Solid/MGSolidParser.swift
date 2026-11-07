@@ -114,6 +114,8 @@ public struct MGSolidDocument: Equatable, Sendable {
     public var annotations = MGSolidAnnotations()
     /// v2: canonical names of the facts the title shows, in order.
     public internal(set) var titleFacts: [String] = []
+    /// The annotation fingerprint the compiler checked (`checkedAnnotations` refuses a changed document or a foreign view).
+    public internal(set) var checkedFingerprint: String?
 
     public func pose(_ params: MGPoseParameters) -> MGPose { assembly.pose(params) }
 
@@ -737,6 +739,8 @@ public enum MGSolidParser {
             if doc.title.contains(where: MGSolidFacts.isNumber) { doc.titleTier = .described }
         }
         doc.warnings = MGSolidFrames.lints(doc) + MGSolidAnnotationEngine.warnings(doc)
+        // Binds views and annotation output to this compiled document (`checkedAnnotations`).
+        doc.checkedFingerprint = doc.annotationFingerprint
         return doc
     }
 

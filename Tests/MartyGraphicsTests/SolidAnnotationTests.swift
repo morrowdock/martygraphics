@@ -77,20 +77,27 @@ final class SolidAnnotationTests: XCTestCase {
 
     // MARK: Arrows
 
+    /// A linear slide (1 mm per input radian along +X) and a turning disc, for arrows on linear chains.
+    static let linearParts = #"{"id": "base", "shape": {"box": {"size": [4, 4, 4]}}}, {"id": "s", "at": [10, 0, 0], "shape": {"box": {"size": [4, 4, 4]}}, "joint": {"prismatic": [1, 0, 0]}, "drive": {"input": 1}}, {"id": "disc", "at": [0, 40, 0], "shape": {"shaft": {"radius": 8, "length": 2}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}"#
+    func linear(_ annotations: String, steps: String = #"[{"say": "Linear."}]"#) -> String {
+        #"{"v": 2, "kind": "assembly", "parts": [\#(Self.linearParts)], "annotations": \#(annotations), "steps": \#(steps)}"#
+    }
+
     func testA2MotionArrowLengthShowsAFact() throws {
-        let d = try doc(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "piston", "point": "centre"}, "length": {"fact": "piston.travel", "scale": 2}}]}"#))
-        let travel = try XCTUnwrap(d.fact("piston.travel"))
-        XCTAssertEqual(travel.value, 36, accuracy: 1e-9)
-        let r = try XCTUnwrap(d.annotations.arrow("aRod"))
+        let d = try doc(linear(#"{"arrows": [{"id": "aS", "meaning": "motion", "from": {"part": "s", "point": "centre"}, "length": {"fact": "s.travel", "scale": 2}}]}"#))
+        let travel = try XCTUnwrap(d.fact("s.travel"))
+        XCTAssertEqual(travel.value, 2 * .pi, accuracy: 1e-9)
+        let r = try XCTUnwrap(d.annotations.arrow("aS"))
         XCTAssertEqual(try XCTUnwrap(r.length), 2 * travel.value, accuracy: 1e-9)
-        let prims = MGSolidAnnotations.primitives(d, "aRod", params: d.defaults)
+        let prims = MGSolidAnnotations.primitives(d, "aS", params: d.defaults)
         XCTAssertEqual((prims[1].end - prims[0].start).length, 2 * travel.value, accuracy: 1e-9)
         XCTAssertEqual(r.tier, travel.tier)
         XCTAssertTrue(r.scaled)
         XCTAssertFalse(d.legend.notes.contains("Arrow lengths are not to scale"), "the only arrow shows a fact length")
-        XCTAssertEqual(reason(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": "piston", "length": {"fact": "nope.travel", "scale": 2}}]}"#)),
-                       "arrow.length.fact.aRod")
+        XCTAssertEqual(reason(linear(#"{"arrows": [{"id": "aS", "meaning": "motion", "from": "s", "length": {"fact": "nope.travel", "scale": 2}}]}"#)),
+                       "arrow.length.fact.aS")
     }
+
 
     func testA3TypedForceArrowIsDescribedAndArrowsAreNotToScale() throws {
         let d = try doc(gears(#"{"arrows": [{"id": "aPush", "meaning": "force", "from": {"world": [0, -40, 0]}, "to": "p", "text": "Push"}]}"#))
@@ -129,33 +136,34 @@ final class SolidAnnotationTests: XCTestCase {
         XCTAssertEqual(reason(gears(#"{"arrows": [{"id": "a1", "meaning": "motion", "style": "turn", "on": "idle"}]}"#, extraParts: idle)), "arrow.still.a1")
         XCTAssertEqual(reason(slider(#"{"arrows": [{"id": "a1", "meaning": "motion", "style": "turn", "on": "piston"}]}"#)), "arrow.turn.joint.a1")
         XCTAssertEqual(reason(slider(#"{"arrows": [{"id": "a1", "meaning": "motion", "style": "turn", "on": "frame"}]}"#)), "arrow.turn.joint.a1")
-        // A crank rod swings back and forth, so no single turn sense holds for a whole view.
-        XCTAssertEqual(reason(slider(#"{"arrows": [{"id": "a1", "meaning": "motion", "style": "turn", "on": "rod"}]}"#)), "arrow.turn.steady.a1")
+        // A crank rod swings back and forth: its chain is not linear.
+        XCTAssertEqual(reason(slider(#"{"arrows": [{"id": "a1", "meaning": "motion", "style": "turn", "on": "rod"}]}"#)), "annotation.motion.nonlinear.a1")
         XCTAssertNoThrow(try doc(slider(#"{"arrows": [{"id": "a1", "meaning": "motion", "style": "turn", "on": "crank"}]}"#)))
     }
 
-    func testA13MotionArrowAtDeadCentreLooksAhead() throws {
-        let d = try doc(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "piston", "point": "centre"}}]}"#))
-        let r = try XCTUnwrap(d.annotations.arrow("aRod"))
-        let dir = try XCTUnwrap(r.direction)
-        // From top dead centre (input 0, piston at its largest x) the piston first moves toward -X.
-        XCTAssertEqual(dir.x, -1, accuracy: 1e-6)
-        XCTAssertEqual(r.tier, .solved)
-        // While a view plays, the arrow follows the velocity and never hides at a dead centre.
-        let quarter = MGSolidAnnotations.primitives(d, "aRod", params: MGPoseParameters(input: .pi / 2))
-        XCTAssertFalse(quarter[1].hidden)
-        XCTAssertEqual((quarter[1].end - quarter[0].start).normalized.x, -1, accuracy: 1e-6)
-        let back = MGSolidAnnotations.primitives(d, "aRod", params: MGPoseParameters(input: 3 * .pi / 2))
-        XCTAssertEqual((back[1].end - back[0].start).normalized.x, 1, accuracy: 1e-6)
+
+    /// A13 under the linear-motion rule (third review): a crank-slider chain is refused, also at a dead centre; a linear
+    /// chain gives the exact velocity at every pose.
+    func testA13MotionArrowsNeedALinearChain() throws {
+        XCTAssertEqual(reason(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "piston", "point": "centre"}}]}"#)),
+                       "annotation.motion.nonlinear.aRod")
+        let d = try doc(linear(#"{"arrows": [{"id": "aS", "meaning": "motion", "from": "s"}, {"id": "aD", "meaning": "motion", "from": {"part": "disc", "offset": [8, 0, 0]}}]}"#))
+        XCTAssertEqual(d.annotations.arrow("aS")?.direction?.x ?? 0, 1, accuracy: 1e-12)
+        XCTAssertEqual(d.annotations.arrow("aD")?.direction?.y ?? 0, 1, accuracy: 1e-12, "a rim point at +X on a disc turning about +Z moves +Y")
+        for u in [0.0, 1, 2.5, 5] {
+            let prims = MGSolidAnnotations.primitives(d, "aS", params: MGPoseParameters(input: u))
+            XCTAssertEqual((prims[1].end - prims[0].start).normalized.x, 1, accuracy: 1e-12)
+        }
     }
 
+
     func testA14StatedDirectionIsChecked() {
-        XCTAssertEqual(reason(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "piston", "point": "centre"}, "expect": [1, 0, 0]}]}"#)),
-                       "arrow.expect.aRod")
-        XCTAssertNil(reason(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "piston", "point": "centre"}, "expect": [-1, 0.2, 0]}]}"#)))
-        XCTAssertEqual(reason(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": {"world": [0, 0, 0]}}]}"#)), "arrow.from.aRod")
-        XCTAssertEqual(reason(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": "frame"}]}"#)), "arrow.still.aRod")
+        XCTAssertEqual(reason(linear(#"{"arrows": [{"id": "aS", "meaning": "motion", "from": "s", "expect": [-1, 0, 0]}]}"#)), "arrow.expect.aS")
+        XCTAssertNil(reason(linear(#"{"arrows": [{"id": "aS", "meaning": "motion", "from": "s", "expect": [1, 0.2, 0]}]}"#)))
+        XCTAssertEqual(reason(linear(#"{"arrows": [{"id": "aS", "meaning": "motion", "from": {"world": [0, 0, 0]}}]}"#)), "arrow.from.aS")
+        XCTAssertEqual(reason(linear(#"{"arrows": [{"id": "aS", "meaning": "motion", "from": "base"}]}"#)), "arrow.still.aS")
     }
+
 
     func testA15GravityForceIsCheckedAgainstMinusZ() throws {
         let up = #"{"arrows": [{"id": "aG", "meaning": "force", "cause": "gravity", "from": "p", "to": {"part": "p", "offset": [0, 0, 30]}}]}"#
@@ -471,10 +479,9 @@ final class SolidAnnotationTests: XCTestCase {
         let snap = MGSolidSnapshot.make(d, step: 0, params: d.defaults)
         XCTAssertGreaterThan(snap.annotations?.arrows.first?.direction[1] ?? 0, 0, "turns counter-clockwise about kernel +Z (world +Y)")
         // A line arrow played backwards points the other way.
-        let s = try doc(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "piston", "point": "centre"}}]}"#,
-                               steps: #"[{"say": "Back.", "spin": -1}]"#))
-        let back = MGSolidAnnotations.primitives(s, "aRod", params: MGPoseParameters(input: .pi / 2), sense: -1)
-        XCTAssertEqual((back[1].end - back[0].start).normalized.x, 1, accuracy: 1e-6)
+        let s = try doc(linear(#"{"arrows": [{"id": "aS", "meaning": "motion", "from": "s"}]}"#, steps: #"[{"say": "Back.", "spin": -1}]"#))
+        let back = MGSolidAnnotations.primitives(s, "aS", params: MGPoseParameters(input: -1), sense: -1)
+        XCTAssertEqual((back[1].end - back[0].start).normalized.x, -1, accuracy: 1e-12)
     }
 
     /// S2: one meaning per reason for `over` dimensions that do not change; `over` needs a motion with an exact range.
@@ -534,18 +541,38 @@ final class SolidAnnotationTests: XCTestCase {
         XCTAssertNil(reason(one(#"{"dimensions": [{"id": "gap", "a": {"world": [10, 0, 0]}, "b": {"part": "p", "offset": [0, 0, 5]}}]}"#)))
     }
 
-    /// Review 2, R2 (a16): a crank-slider at a high rate, away from dead centre.
-    func testCrankSliderReversalInsideAStepIsRefused() {
-        let fast = Self.slider.replacingOccurrences(of: #""drive": {"input": 1}"#, with: #""drive": {"input": 720}"#)
-        func text(_ annotations: String, input: Double = 0.001, spin: Double = 1) -> String {
-            #"{"v": 2, "kind": "assembly", "params": {"input": \#(input)}, "parts": [\#(fast)], "annotations": \#(annotations), "steps": [{"say": "Motion.", "spin": \#(spin)}]}"#
+    /// Third review (C1–C3): every crank chain is refused for direction-bearing annotations, whatever the step: a
+    /// follow of a slider, a prismatic joint on a crank rod, a dead centre at a step's end, a turn under a crank rod.
+    func testCrankChainsAreRefused() {
+        let followSlider = #", {"id": "f", "at": [0, 60, 0], "shape": {"box": {"size": [4, 4, 4]}}, "joint": {"prismatic": [1, 0, 0]}, "drive": {"follow": {"source": "piston", "ratio": 1}}}"#
+        func crank(_ extra: String, _ annotations: String, input: Double = 0.5, spin: Double = 1) -> String {
+            #"{"v": 2, "kind": "assembly", "params": {"input": \#(input)}, "parts": [\#(Self.slider)\#(extra)], "annotations": \#(annotations), "steps": [{"say": "Motion.", "spin": \#(spin)}]}"#
         }
-        XCTAssertEqual(reason(text(#"{"arrows": [{"id": "m", "meaning": "motion", "from": "piston", "expect": [-1, 0, 0]}]}"#)), "annotation.pose.m")
-        XCTAssertEqual(reason(text(#"{"dimensions": [{"id": "gap", "a": "piston", "b": {"world": [0, 0, 0]}, "along": "x"}]}"#)), "annotation.pose.gap")
-        // A step that stays between dead centres keeps the direction (crank rate 1: half a turn after input 0.001).
-        let slow = #"{"v": 2, "kind": "assembly", "params": {"input": 0.001}, "parts": [\#(Self.slider)], "annotations": {"arrows": [{"id": "m", "meaning": "motion", "from": "piston", "expect": [-1, 0, 0]}]}, "steps": [{"say": "Motion.", "spin": 0.45}]}"#
-        XCTAssertNil(reason(slow))
-        XCTAssertEqual(reason(slow.replacingOccurrences(of: #""spin": 0.45"#, with: #""spin": 0.55"#)), "annotation.pose.m")
+        XCTAssertEqual(reason(crank(followSlider, #"{"arrows": [{"id": "m", "meaning": "motion", "from": "f", "expect": [-1, 0, 0]}]}"#)), "annotation.motion.nonlinear.m")
+        let rodSlider = #", {"id": "q", "at": [0, 60, 0], "shape": {"box": {"size": [4, 4, 4]}}, "joint": {"prismatic": [1, 0, 0]}, "drive": {"crankRod": {"crank": "crank", "radius": 18, "rod": 62}}}"#
+        XCTAssertEqual(reason(crank(rodSlider, #"{"arrows": [{"id": "m", "meaning": "motion", "from": "q"}]}"#)), "annotation.motion.nonlinear.m")
+        XCTAssertEqual(reason(crank("", #"{"arrows": [{"id": "m", "meaning": "motion", "from": "piston", "expect": [-1, 0, 0]}]}"#, input: 0, spin: 0.5)),
+                       "annotation.motion.nonlinear.m")
+        let child = #", {"id": "c", "parent": "rod", "shape": {"shaft": {"radius": 2, "length": 2}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 0.1}}"#
+        XCTAssertEqual(reason(crank(child, #"{"arrows": [{"id": "t", "meaning": "motion", "style": "turn", "on": "c", "sense": "ccw"}]}"#)), "annotation.motion.nonlinear.t")
+        // A dimension in a moving step on a crank chain; the same dimension in a still step stays.
+        let gap = #"{"dimensions": [{"id": "gap", "a": {"part": "piston", "offset": [0, 0, 0]}, "b": {"part": "piston", "offset": [0, 10, 0]}}]}"#
+        XCTAssertEqual(reason(crank("", gap)), "annotation.motion.nonlinear.gap")
+        XCTAssertNil(reason(crank("", gap, spin: 0)))
+    }
+
+    /// A constant-ratio follow of a linear joint is linear; a planet on a turning carrier has one world rate; a turn
+    /// under a non-parallel turning parent has none.
+    func testLinearChainsAndWorldTurnSense() throws {
+        let follow = #", {"id": "f", "at": [0, 0, 20], "shape": {"box": {"size": [4, 4, 4]}}, "joint": {"prismatic": [0, 1, 0]}, "drive": {"follow": {"source": "s", "ratio": -2}}}"#
+        let t = #"{"v": 2, "kind": "assembly", "parts": [\#(Self.linearParts)\#(follow)], "annotations": {"arrows": [{"id": "m", "meaning": "motion", "from": "f", "expect": [0, -1, 0]}]}, "steps": [{"say": "Moves.", "spin": 2}]}"#
+        XCTAssertNil(reason(t))
+        let planets = try doc(stage(#"{"arrows": [{"id": "tp", "meaning": "motion", "style": "turn", "on": "stage.planet1", "sense": "cw"}, {"id": "tc", "meaning": "motion", "style": "turn", "on": "stage.carrier", "sense": "ccw"}]}"#,
+                                    steps: #"[{"say": "Turn.", "spin": 1}]"#))
+        XCTAssertEqual(planets.fact("stage.planet1.worldSpeed")?.value ?? 0, -2.0 / 3, accuracy: 1e-12)
+        XCTAssertEqual(planets.annotations.arrow("tp")?.turnSign, -1)
+        let tilted = #"{"v": 2, "kind": "assembly", "parts": [{"id": "arm", "shape": {"box": {"size": [40, 4, 4]}}, "joint": {"revolute": [1, 0, 0]}, "drive": {"input": 1}}, {"id": "w", "parent": "arm", "shape": {"shaft": {"radius": 5, "length": 2}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}], "annotations": {"arrows": [{"id": "t", "meaning": "motion", "style": "turn", "on": "w"}]}, "steps": [{"say": "Turn."}]}"#
+        XCTAssertEqual(reason(tilted), "arrow.turn.steady.t")
     }
 
     /// Review 2, R4: a dimension along one axis draws that component, parallel to the axis.

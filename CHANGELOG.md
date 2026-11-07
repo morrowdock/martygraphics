@@ -34,11 +34,15 @@
     sampling: dimensions, and `dim.<id>` facts in any shown text, must be constant in the view; gravity arrows must
     not turn; motion line arrows must not ride a turning joint in a moving step; `over` ranges come from the joint
     closed forms (`annotation.pose.<id>`, `text.pose.step.<n>`, `text.pose.title`, `dimension.over.motion.<id>`).
-    One gate, `MGSolidDocument.checkedAnnotations(_:params:)`, decides what a view may show at a pose; frames,
+    Motion arrows, turn arrows, `expect` and dimensions in moving steps need a linear motion chain (constant-rate input,
+    follow and gear drives); a crank chain is `annotation.motion.nonlinear.<id>`. A turn arrow shows the sign of its
+    composed world rate (`arrow.turn.steady.<id>` when there is none). One gate,
+    `MGSolidDocument.checkedAnnotations(_:params:)`, decides what a view may show at a pose; a view is bound to the
+    fingerprint of the document it came from (`checkedFingerprint`) and to its step's playback sense; frames,
     SceneKit and snapshots all use it. `marty-solid render` draws annotations on `hero.png` and the step stills only.
   - Source-compatibility change: `MGSolidClaim.Kind` gains `annotation`; an exhaustive `switch` over it outside
     the package needs the new case.
-  - `MGSolidView` gains `annotations`, `motionSense`, `step` and `checked`; `MGSolidLegend` gains `notes`;
+  - `MGSolidView` gains `annotations`, `motionSense`, `step` and `fingerprint`; `MGSolidLegend` gains `notes`;
     `MGAnnotationFrame.refusal` (`unchecked`, `viewSize`) says why a frame laid out nothing.
 - Add the solid check report as a library API, an engine identity, patch checks, a reason catalog, per-part tiers
   and a guarded snapshot decoder (Foundation only).

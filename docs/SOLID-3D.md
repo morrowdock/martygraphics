@@ -533,8 +533,8 @@ An arrow's text lowers its claim to the text's tier (an `unchecked` text makes i
 
 | Meaning | Keys | Direction | Checks |
 | --- | --- | --- | --- |
-| `motion`, `"style": "turn"` | `on` (a part id string, `arrow.on.<id>`), `sense` (`cw` or `ccw`, optional) | The engine: the sign of the part's turn (its world speed when that fact exists, else its own speed). Drawn as a 270° arc around the joint axis. | `arrow.turn.joint.<id>` (not a revolute part), `arrow.still.<id>` (its own joint never turns; a part that only rides a turning parent counts as still), `arrow.turn.steady.<id>` (it has no steady speed, such as a crank rod that swings back and forth; use a motion line arrow), `arrow.sense.<id>` (the stated sense is wrong; "cw" and "ccw" as seen from the tip of the joint axis), `arrow.sense.form.<id>` |
-| `motion`, `"style": "line"` (the default) | `from` (a part anchor), `expect` (a world direction, optional), `length` (optional) | The engine: the anchor's exact velocity at the default input, from the drive closed forms (input, follow, gear mesh, crank-slider, crank-rod); at a crank-slider dead centre (velocity 0), the way the slider moves next (away from that end of its stroke). | `arrow.from.<id>` (a world anchor), `arrow.still.<id>` (no velocity at the default input), `arrow.expect.<id>` (more than 30° from the engine direction, sign included), `arrow.expect.form.<id>`, `arrow.style.<id>` |
+| `motion`, `"style": "turn"` | `on` (a part id string, `arrow.on.<id>`), `sense` (`cw` or `ccw`, optional) | The engine: the sign of the part's composed world turn rate (`<part>.worldSpeed`). Drawn as a 270° arc around the joint axis. | `arrow.turn.joint.<id>` (not a revolute part), `arrow.still.<id>` (its own joint never turns; a part that only rides a turning parent counts as still), `annotation.motion.nonlinear.<id>` (a crank drive in its chain), `arrow.turn.steady.<id>` (a turning joint above it with a non-parallel axis, so there is no single world rate), `arrow.sense.<id>` (the stated sense is wrong; "cw" and "ccw" as seen from the tip of the joint axis), `arrow.sense.form.<id>` |
+| `motion`, `"style": "line"` (the default) | `from` (a part anchor), `expect` (a world direction, optional), `length` (optional) | The engine: the anchor's exact velocity at the default input, from its linear motion chain. | `arrow.from.<id>` (a world anchor), `annotation.motion.nonlinear.<id>` (a crank drive in its chain), `arrow.still.<id>` (no velocity at the default input), `arrow.expect.<id>` (more than 30° from the engine direction, sign included), `arrow.expect.form.<id>`, `arrow.style.<id>` |
 | `force` | `from`, `to`, `cause` (`"gravity"`, optional) | As authored. With `cause`, it must be within 10° of world −Z at the default input. | `arrow.gravity.<id>`, `arrow.cause.<id>` |
 | `flow`, `pointer` | `from`, `to` | As authored. | — |
 
@@ -544,8 +544,8 @@ unit, 0.001–1000): its length is then |fact| × s, clamped to 5–4000 mm, and
 magnitude (`arrow.length.form.<id>`, `arrow.length.fact.<id>` for an unknown fact). The default length
 is 15 % of the model's bounding diagonal at the default input.
 
-While a view plays, a motion line arrow follows the exact velocity at each pose (the next direction at a
-crank-slider dead centre); it hides while its anchor has no velocity. A turn arrow rides
+While a view plays, a motion line arrow follows the exact velocity at each pose; it hides while its anchor has no
+velocity. A turn arrow rides
 the frame its part turns in (the parent frame), so it does not spin with the part.
 
 Appearance (the same in every renderer): shaft radius 0.6 % of the bounding diagonal, head 4 shaft
@@ -588,7 +588,15 @@ The checks above run at the default input (`params.input`) with explode 0. Then 
 view, whether each claim it shows holds at every pose the view can show. A step shows its `spin` range (the
 default input to the default input + `spin` turns) at its explode value (the step's `explode`, else
 `params.explode`). The plain view shows the default pose at `params.explode`. The rules are exact; nothing is
-sampled. They use which joints move during the view:
+sampled. They use which joints move during the view.
+
+**The linear-motion rule.** A motion line arrow, a turn arrow, an `expect`, and any dimension shown in a step with
+`spin` are allowed only where every moving joint above the annotated point is linear in the input with a constant
+rate: `input` drives, `follow` with a constant ratio of such a joint, gear meshes and planetary carriers. A chain with
+a crank-slider or crank-rod drive, or a `follow` of one, reverses or changes speed, so it is refused with one
+reason, `annotation.motion.nonlinear.<id>`. Show such motion in a step without `spin` (labels, still dimensions and
+`over` ranges work there), or put a turn arrow on a steady part. A turn arrow's sense is the sign of the composed
+world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear chain with parallel axes.
 
 * An anchor is **world-fixed** when every moving joint above it is a revolute whose axis passes through it (a
   point on a turning shaft's axis), or when nothing above it moves.
@@ -600,9 +608,8 @@ sampled. They use which joints move during the view:
   only when that dimension meets the same rule in the view (also when the dimension itself is not shown).
 * A **gravity arrow** must not turn: in a step with `spin`, both its anchors are world-fixed or translate together.
   It must point within 10° of −Z at the view's first pose.
-* A **motion line arrow** must not ride a turning joint in a step with `spin` (use a turn arrow there). A stated
-  `expect` must hold at the view's first pose; in a step with `spin`, the velocity is constant (linear drives), or
-  the anchor's only moving joint is a crank-slider that does not pass a dead centre inside the step.
+* A **motion line arrow** must not ride a turning joint in a step with `spin` (use a turn arrow there); its linear
+  chain then moves it at one constant velocity. A stated `expect` must hold at the view's first pose.
 * A **turn arrow** with a stated `sense` must not be in a step with a negative `spin`: turn senses are exactly
   constant for the steady parts a turn arrow allows.
 
@@ -611,9 +618,12 @@ negative `spin` plays the input backwards (`MGSolidView.motionSense` is −1): t
 motion that the view shows. Labels and the other arrows ride their parts and claim no direction.
 
 **One gate for every output.** `MGSolidDocument.checkedAnnotations(_:params:)` gives the annotations a renderer may
-draw for a view at a pose, or nil. The view must come from `view(step:)` of the same document and list only
-annotations its step shows (a host may remove some, never add), and the pose must be one the view shows (its
-explode value, and an input inside its spin range). `MGSolidAnnotations.frame` (then `refusal: .unchecked`, no
+draw for a view at a pose, or nil. The view must come from `view(step:)` of this exact compiled document: the view
+carries the document's fingerprint (SHA-256 of the default pose, every part's placement, joint and drive, the steps,
+the annotations and the facts), and a document changed after it compiled no longer matches its own. The view keeps
+its step's playback sense, lists each annotation at most once and only annotations its step shows (a host may remove
+some, never add), and the pose must be one the view shows (its explode value, and an input inside its spin range).
+The raw piece builder is internal. `MGSolidAnnotations.frame` (then `refusal: .unchecked`, no
 placements), `MGSolidRenderer` (pieces hidden) and `MGSolidSnapshot.make` (no `annotations`) all use it, so a
 view or pose that the engine did not check shows no annotations. `marty-solid render` also draws annotations on
 `hero.png` and the step stills only (`MGSolidShot.showsAnnotations`), not on `exploded.png` or the loop frames.

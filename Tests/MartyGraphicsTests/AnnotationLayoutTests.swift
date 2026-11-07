@@ -314,7 +314,8 @@ final class AnnotationLayoutTests: XCTestCase {
     }
 
     func testP15SceneKitSpinMovesNodesWithoutRebuildingGeometry() throws {
-        let text = #"{"v": 2, "kind": "assembly", "parts": [\#(SolidAnnotationTests.slider)], "annotations": {"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "piston", "point": "centre"}}, {"id": "aCrank", "meaning": "motion", "style": "turn", "on": "crank"}]}, "steps": [{"say": "Spin.", "spin": 1}]}"#
+        // A linear slide (its motion arrow) and a turning disc (its turn arrow): linear chains, as the rules require.
+        let text = #"{"v": 2, "kind": "assembly", "parts": [\#(SolidAnnotationTests.linearParts), {"id": "crank", "at": [0, -40, 0], "shape": {"shaft": {"radius": 6, "length": 4}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}], "annotations": {"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "s", "point": "centre"}}, {"id": "aCrank", "meaning": "motion", "style": "turn", "on": "crank"}]}, "steps": [{"say": "Spin.", "spin": 1}]}"#
         let d = try doc(text)
         let r = MGSolidRenderer(assembly: d.assembly)
         r.setAnnotations(d)
@@ -324,7 +325,7 @@ final class AnnotationLayoutTests: XCTestCase {
         XCTAssertEqual(rod.count, 2)
         XCTAssertEqual(crank.count, MGSolidAnnotations.arcChords + 1)
         let geometries = (rod + crank).map { ObjectIdentifier($0.geometry!) }
-        var tips: [Float] = []
+        var starts: [Double] = []
         for k in 0...24 {
             let params = MGPoseParameters(input: 2 * .pi * Double(k) / 24)
             r.apply(params)
@@ -332,12 +333,13 @@ final class AnnotationLayoutTests: XCTestCase {
             let prims = MGSolidAnnotations.primitives(d, "aRod", params: params)
             let m = rod[0].simdTransform
             XCTAssertEqual(Double(m.columns.3.x), prims[0].start.x, accuracy: 1e-3, "the shaft follows the pose")
-            tips.append(m.columns.2.x)
+            XCTAssertGreaterThan(m.columns.2.x, 0, "the slide moves +X at every pose")
+            starts.append(Double(m.columns.3.x))
             // The turn arc rides the crank's parent frame (the world): it does not spin with the crank.
             let still = MGSolidRenderer.pieceMatrix(MGSolidAnnotations.primitives(d, "aCrank", params: MGPoseParameters())[0])
             for c in 0..<4 { for e in 0..<4 { XCTAssertEqual(crank[0].simdTransform[c][e], still[c][e], accuracy: 1e-3) } }
         }
-        XCTAssertTrue(tips.contains { $0 < 0 } && tips.contains { $0 > 0 }, "the motion arrow turns round as the piston returns")
+        XCTAssertEqual(starts.last! - starts.first!, 2 * .pi, accuracy: 1e-3, "the arrow rides the slide one turn's travel")
         r.show(MGSolidView(d.assembly))
         XCTAssertTrue((rod + crank).allSatisfy(\.isHidden), "a view without annotations hides them")
         XCTAssertTrue((rod + crank).allSatisfy { !$0.castsShadow })
@@ -378,6 +380,19 @@ final class AnnotationLayoutTests: XCTestCase {
         XCTAssertEqual(d.checkedAnnotations(fewer, params: d.defaults), ["g"])
         var more = d.view(step: 0); more.annotations += ["nobody"]
         XCTAssertNil(d.checkedAnnotations(more, params: d.defaults))
+        // Third review (C4): a view is bound to its document's fingerprint and its step's playback sense.
+        var flipped = good; flipped.motionSense = -1
+        XCTAssertNil(d.checkedAnnotations(flipped, params: d.defaults), "a changed playback sense")
+        var twice = good; twice.annotations = ["g", "g"]
+        XCTAssertNil(d.checkedAnnotations(twice, params: d.defaults), "an id listed twice")
+        let other = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "p", "shape": {"shaft": {"radius": 1, "length": 2}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}], "annotations": {"dimensions": [{"id": "gap", "a": {"world": [12, 0, 0]}, "b": {"part": "p", "offset": [20, 0, 0]}}], "arrows": [{"id": "g", "meaning": "force", "cause": "gravity", "from": "p", "to": {"part": "p", "offset": [0, 0, -10]}}]}, "steps": [{"say": "Still."}]}"#)
+        XCTAssertNil(d.checkedAnnotations(other.view(step: nil), params: d.defaults), "a view of another document")
+        XCTAssertNotNil(other.checkedAnnotations(other.view(step: nil), params: other.defaults))
+        var mutated = d
+        mutated.defaults.input = .pi
+        XCTAssertNil(mutated.checkedAnnotations(mutated.view(step: nil), params: mutated.defaults), "a document changed after it compiled")
+        XCTAssertNil(MGSolidSnapshot.make(mutated, step: nil, params: mutated.defaults).annotations)
+        XCTAssertEqual(MGSolidAnnotations.frame(document: mutated, view: mutated.view(step: nil), params: mutated.defaults, camera: cam, width: 1280, height: 800).refusal, .unchecked)
         // R5: a bad view size has its own refusal.
         XCTAssertEqual(MGSolidAnnotations.frame(document: d, view: good, params: d.defaults, camera: cam, width: 0, height: 700).refusal, .viewSize)
     }

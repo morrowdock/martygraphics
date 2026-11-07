@@ -600,17 +600,19 @@ enum MGSolidAnnotationEngine {
             guard let id = r.on, let part = doc.assembly.part(id) else { throw MGSolidIssue("arrow.turn.joint.\(r.id)") }
             guard case .revolute = part.joint else { throw MGSolidIssue("arrow.turn.joint.\(r.id)") }
             guard doc.ownMotion(id) else { throw MGSolidIssue("arrow.still.\(r.id)") }
-            // A turn arrow claims one sense for the whole view, so the part must turn at a steady rate: a linear drive
-            // with a speed fact. A crank rod swings back and forth (`arrow.turn.steady.<id>`; use a motion line arrow).
-            guard let s = doc.facts[id + ".worldSpeed"]?.value ?? doc.facts[id + ".speed"]?.value else {
-                throw MGSolidIssue("arrow.turn.steady.\(r.id)")
-            }
+            // A turn arrow claims one world sense for every view, so every moving joint above the part must be linear
+            // (`annotation.motion.nonlinear.<id>`: a crank rod, or a part on one, swings back and forth), and their
+            // axes parallel, so the composed world rate is one constant (`<part>.worldSpeed`; `arrow.turn.steady.<id>`).
+            guard MGSolidAnnotationMotion.linearChain(doc, id) else { throw MGSolidIssue("annotation.motion.nonlinear.\(r.id)") }
+            guard let s = doc.facts[id + ".worldSpeed"]?.value else { throw MGSolidIssue("arrow.turn.steady.\(r.id)") }
             guard s != 0, s.isFinite else { throw MGSolidIssue("arrow.still.\(r.id)") }
             r.turnSign = s > 0 ? 1 : -1
             if let stated = r.sense, (stated == "ccw") != (s > 0) { throw MGSolidIssue("arrow.sense.\(r.id)") }
             base = doc.motionTier(id)
         case (.motion, .line):
             guard let from = r.from, let part = from.part else { throw MGSolidIssue("arrow.from.\(r.id)") }
+            // Only linear chains: a crank closed form reverses, so its direction is not one claim for a view.
+            guard MGSolidAnnotationMotion.linearChain(doc, part) else { throw MGSolidIssue("annotation.motion.nonlinear.\(r.id)") }
             guard let dir = MGSolidAnnotationMotion.direction(doc, from, rest) else { throw MGSolidIssue("arrow.still.\(r.id)") }
             r.direction = dir
             if let e = r.expect, angle(e, dir) > L.expectDegrees { throw MGSolidIssue("arrow.expect.\(r.id)") }
@@ -748,10 +750,10 @@ extension MGSolidAnnotations {
     }
 
     /// The pieces of one arrow or dimension in the posed kernel world. Their number never changes with the pose.
-    /// A motion line arrow follows the exact velocity at the pose (at a crank-slider dead centre, the way the slider
-    /// moves next) and hides while its anchor is still; a turn arrow rides its part's joint frame, so it does not spin with the part.
+    /// Internal: renderers get pieces only through the checked paths (`MGSolidRenderer`, `MGSolidSnapshot.make`). A
+    /// motion line arrow follows the exact velocity at the pose and hides while its anchor is still; a turn arrow rides its part's joint frame, so it does not spin with the part.
     /// `sense` −1 draws the motion of a view that plays the input backwards (`MGSolidView.motionSense`).
-    public static func primitives(_ doc: MGSolidDocument, _ id: String, params: MGPoseParameters, sense: Double = 1) -> [MGAnnotationPrimitive] {
+    static func primitives(_ doc: MGSolidDocument, _ id: String, params: MGPoseParameters, sense: Double = 1) -> [MGAnnotationPrimitive] {
         let a = doc.annotations
         let pose = doc.assembly.pose(params)
         let sr = a.diagonal * MGSolidAnnotationLimits.shaftRadius, lr = a.diagonal * MGSolidAnnotationLimits.lineRadius

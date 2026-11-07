@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import Foundation
 
-// Exact motion facts for annotations, and the one check of what a view may show. No sampling: joint rates come from
-// the drive closed forms (input, follow, gear mesh, crank-slider, crank-rod), point velocities from the joint chain,
-// and every pose rule is decided by the structure of the motion (which joints move during a view), so a claim that
-// passes holds at every pose the view can show. Foundation only, deterministic.
+// Exact motion facts for annotations, and the one check of what a view may show. No sampling: every pose rule is
+// decided by the structure of the motion. Direction-bearing annotations (motion arrows, turn arrows, `expect`, and
+// any dimension in a moving view) need a linear motion chain: every moving joint above the point is linear in the
+// input with a constant rate (input drives, constant-ratio follows, gear meshes, planetary carriers). Crank closed
+// forms are used only for exact `over` ranges. Foundation only, deterministic.
 
 enum MGSolidAnnotationMotion {
     /// Parts whose own joint moves, from `part` up its parent chain (nearest first); empty for a world point.
@@ -41,6 +42,12 @@ enum MGSolidAnnotationMotion {
             return (k * (a.rate - cb.rate), o + k * (a.offset - cb.offset))
         case .crankSlider?, .crankRod?: return nil
         }
+    }
+
+    /// True when every moving joint above the point (its own joint included) is linear in the input with a constant
+    /// rate, so the motion never reverses or changes speed.
+    static func linearChain(_ doc: MGSolidDocument, _ part: String?) -> Bool {
+        movers(doc, part).allSatisfy { linear(doc, $0) != nil }
     }
 
     /// The slider displacement of a crank-slider and its derivative by the crank angle.
@@ -87,17 +94,12 @@ enum MGSolidAnnotationMotion {
         return v
     }
 
-    /// The motion direction a view shows at a pose (`sense` −1 plays the input backwards): the velocity direction; at a
-    /// crank-slider dead centre (the point's only moving joint is the slider and the velocity is 0), the direction the
-    /// slider moves next, which is exact: away from either end of its stroke. Nil when the point does not move.
+    /// The motion direction a view shows at a pose (`sense` −1 plays the input backwards); nil when the point does not
+    /// move.
     static func direction(_ doc: MGSolidDocument, _ p: MGAnnotationPoint, _ pose: MGPose, sense: Double = 1) -> MGVec3? {
         let v = velocity(doc, p, pose) * (sense < 0 ? -1 : 1)
-        if v.length > 1e-9 * max(1, doc.annotations.diagonal), v.x.isFinite, v.y.isFinite, v.z.isFinite { return v.normalized }
-        let m = movers(doc, p.part)
-        guard m.count == 1, let part = doc.assembly.part(m[0]), case .prismatic(let axis) = part.joint,
-              case .crankSlider(let c, _, _, _)? = part.drive else { return nil }
-        let t = pose.values[c] ?? 0
-        return (pose.world[m[0]] ?? .identity).applyVector(axis).normalized * (-cos(t) >= 0 ? 1 : -1)
+        guard v.length > 1e-9 * max(1, doc.annotations.diagonal), v.x.isFinite, v.y.isFinite, v.z.isFinite else { return nil }
+        return v.normalized
     }
 
     /// True when every moving joint of the point's chain is a revolute whose axis passes through the point: the point
@@ -184,7 +186,8 @@ extension MGSolidAnnotationEngine {
         let pose = doc.assembly.pose(MGPoseParameters(input: u0, explode: e))
         if spin != 0 {
             let pts = [d.a, d.b, d.vertex].compactMap { $0 }
-            guard MGSolidAnnotationMotion.rigid(doc, pts, pose, translationOnly: d.along != nil) else { return false }
+            guard pts.allSatisfy({ MGSolidAnnotationMotion.linearChain(doc, $0.part) }),
+                  MGSolidAnnotationMotion.rigid(doc, pts, pose, translationOnly: d.along != nil) else { return false }
         }
         guard let v = dimensionValue(d, pose) else { return false }
         return abs(v - d.value) <= tol
@@ -194,8 +197,9 @@ extension MGSolidAnnotationEngine {
     /// - a shown dimension, and every `dim.<id>` fact that shown text (a label, an arrow or dimension text, the step's
     ///   caption, the title) displays, holds over the view (`dimensionHolds`);
     /// - a gravity force arrow does not turn during the view and points within 10° of −Z at the view's pose;
-    /// - a motion line arrow does not ride a turning joint during a moving view; a stated `expect` holds at every pose
-    ///   (a constant velocity, or a crank-slider that does not reverse inside the view);
+    /// - a motion line arrow does not ride a turning joint during a moving view (its linear chain then gives one
+    ///   constant velocity); a stated `expect` holds at the view's pose;
+    /// - a dimension shown in a moving view has linear chains above its anchors (`annotation.motion.nonlinear.<id>`);
     /// - a turn arrow's stated `sense` matches the way the view plays.
     /// Failures: `annotation.pose.<id>`, `text.pose.step.<n>` (a caption), `text.pose.title`.
     static func checkViews(_ doc: MGSolidDocument) throws {
@@ -213,6 +217,9 @@ extension MGSolidAnnotationEngine {
                     if !dims(l.facts).allSatisfy({ dimensionHolds($0, doc, step: step) }) { throw fail(id) }
                 }
                 if let d = a.dimension(id) {
+                    if spin != 0, ![d.a, d.b, d.vertex].compactMap({ $0 }).allSatisfy({ MGSolidAnnotationMotion.linearChain(doc, $0.part) }) {
+                        throw MGSolidIssue("annotation.motion.nonlinear.\(id)", part: id)
+                    }
                     if !dimensionHolds(d, doc, step: step) || !dims(d.facts).allSatisfy({ dimensionHolds($0, doc, step: step) }) { throw fail(id) }
                 }
                 guard let r = a.arrow(id) else { continue }
@@ -221,25 +228,13 @@ extension MGSolidAnnotationEngine {
                 case (.motion, .turn):
                     if let stated = r.sense, ((r.turnSign ?? 1) * sense > 0) != (stated == "ccw") { throw fail(id) }
                 case (.motion, .line):
+                    // The chain is linear (checked when the document compiled): a moving step may not turn the anchor,
+                    // so its velocity is constant; a still step shows one pose.
                     guard let from = r.from else { continue }
                     let m = MGSolidAnnotationMotion.movers(doc, from.part)
                     if spin != 0, m.contains(where: { MGSolidAnnotationMotion.isRevolute(doc, $0) }) { throw fail(id) }
                     guard let expect = r.expect else { continue }
                     guard let dir = MGSolidAnnotationMotion.direction(doc, from, pose, sense: sense), angle(expect, dir) <= L.expectDegrees else { throw fail(id) }
-                    guard spin != 0 else { continue }
-                    // Only translations move the anchor: linear drives give one constant velocity; a crank-slider must
-                    // not pass a dead centre inside the view.
-                    let crank = m.contains { id in
-                        if case .crankSlider? = doc.assembly.part(id)?.drive { return true }
-                        return false
-                    }
-                    if !crank { continue }
-                    guard m.count == 1, case .crankSlider(let c, _, _, _)? = doc.assembly.part(m[0])?.drive,
-                          let lc = MGSolidAnnotationMotion.linear(doc, c) else { throw fail(id) }
-                    let t0 = lc.offset + lc.rate * u0, t1 = t0 + lc.rate * 2 * .pi * spin
-                    let lo = min(t0, t1), hi = max(t0, t1)
-                    let k = (lo / .pi).rounded(.down) + 1
-                    if k * .pi < hi { throw fail(id) }
                 case (.force, _) where r.cause == "gravity":
                     guard let from = r.from, let to = r.to else { continue }
                     if spin != 0, !MGSolidAnnotationMotion.rigid(doc, [from, to], pose, translationOnly: true) { throw fail(id) }
@@ -260,22 +255,42 @@ extension MGSolidAnnotationEngine {
 
 extension MGSolidDocument {
     /// The annotations a renderer may draw for `view` at `params`, or nil when the view or the pose is not one the
-    /// engine checked; then a renderer draws none. A view checks only when it came from `view(step:)` of this document,
-    /// lists only annotations that step shows (a host may remove some, never add), and `params` lies in the view's
-    /// poses: the step's explode value and an input between the default input and the default input + `spin` turns
-    /// (the plain view: the default pose). An empty list is `[]`. `MGSolidAnnotations.frame`, `MGSolidRenderer` and
-    /// `MGSolidSnapshot.make` all call this.
+    /// engine checked; then a renderer draws none. A view checks only when it came from `view(step:)` of this exact
+    /// compiled document (the view carries the document's fingerprint, and the document must be unchanged since it
+    /// compiled), keeps its step's playback sense, lists each annotation at most once and only annotations that step
+    /// shows (a host may remove some, never add), and `params` lies in the view's poses: the step's explode value and
+    /// an input between the default input and the default input + `spin` turns (the plain view: the default pose). An
+    /// empty list is `[]`. `MGSolidAnnotations.frame`, `MGSolidRenderer` and `MGSolidSnapshot.make` all call this.
     public func checkedAnnotations(_ view: MGSolidView, params: MGPoseParameters) -> [String]? {
         if view.annotations.isEmpty { return [] }
-        guard view.checked else { return nil }
-        let allowed = Set(visibleAnnotations(step: view.step))
-        guard view.annotations.allSatisfy({ allowed.contains($0) }) else { return nil }
+        // The view is bound to this compiled document, unchanged since it was checked, and to its step's playback sense.
+        guard let checked = checkedFingerprint, view.fingerprint == checked, annotationFingerprint == checked else { return nil }
         let (u0, spin, e) = MGSolidAnnotationEngine.domain(self, step: view.step)
+        guard view.motionSense == (spin < 0 ? -1 : 1) else { return nil }
+        let allowed = visibleAnnotations(step: view.step)
+        guard Set(view.annotations).count == view.annotations.count, view.annotations.allSatisfy(allowed.contains) else { return nil }
         guard params.explode == e, params.input.isFinite else { return nil }
         let tol = 1e-9 * max(1, abs(u0), abs(params.input))
         let u1 = u0 + 2 * .pi * spin
         guard params.input >= min(u0, u1) - tol, params.input <= max(u0, u1) + tol else { return nil }
         return view.annotations
+    }
+
+    /// SHA-256 of everything an annotation claim depends on: the default pose, every part's placement, joint and drive,
+    /// the steps' spin, explode and annotate lists, the annotations and the facts. Meshes are left out (they do not move
+    /// anything). A document changed after it compiled no longer matches `checkedFingerprint`.
+    var annotationFingerprint: String {
+        var t = "defaults \(defaults.input) \(defaults.explode)\n"
+        for p in assembly.parts {
+            t += "part \(p.id) \(p.parent ?? "-") \(p.placement) \(p.joint) \(String(describing: p.drive)) \(p.explode) \(p.explodeWindow)\n"
+        }
+        for s in steps { t += "step \(s.spin) \(String(describing: s.explode)) \(String(describing: s.annotate)) \(s.say)\n" }
+        t += "annotations \(annotations)\n"
+        for name in facts.keys.sorted() { let f = facts[name]!; t += "fact \(name) \(f.value) \(f.unit) \(f.tier)\n" }
+        for k in aliases.keys.sorted() { t += "alias \(k) \(aliases[k]!)\n" }
+        for k in copies.keys.sorted() { t += "copy \(k) \(copies[k]!)\n" }
+        t += "title \(title) \(titleFacts)\n"
+        return MGSHA256.hex(Data(t.utf8))
     }
 }
 
