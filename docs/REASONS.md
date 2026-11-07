@@ -68,10 +68,12 @@ read like another reason (`component.param.unknown.missing.x` is also a `with` k
 | snapshot | `MGSolidSnapshot.decode(data:)`. |
 | section | `MGSolidSection.cut` and `estimate` called directly; an assembly reports the same problems with `.<id>`. |
 | cli | The `marty-solid` tool. |
+| explainer | Explainer documents and streams (`MGExplainer`, `MGExplainerSession`, `MGExplainerReport`): the explainer's own reasons, and the lesson and solid reasons it names itself ([EXPLAINER.md](EXPLAINER.md)). |
 
 Warnings are not refusals in the plain API: they are listed in the check report's
 `warnings`. The strict profile (`MGSolidProfile.strict`, `marty-solid check --strict`)
-refuses the two marked "strict refuses".
+refuses the two marked "strict refuses". An explainer's strict check (`marty-solid check --strict` on an explainer)
+also refuses `notes.unused.<id>` (`MGSolidReasons.explainerStrictPrefixes`).
 
 ## Order
 
@@ -86,10 +88,11 @@ document compiles, the check report refuses `check.meshOpen`, then
 
 ## What the catalog test checks
 
-`SolidReasonCatalogTests` scans the Solid sources and the `marty-solid` tool. Every
+`SolidReasonCatalogTests` scans the Solid sources, the explainer sources (`Sources/MartyGraphics/Explainer`) and
+the `marty-solid` tool. Every
 reason-shaped string literal (a dotted token, with `\(…)` interpolations as wildcards),
 every single-word reason passed to `MGSolidIssue`, and every reason that the key and
-frame helpers compose (`closed` gives `.missing.` and `.unknown.`, `transform` gives
+frame helpers compose (`closed` gives `.missing.` and `.unknown.`, the explainer's `closedKeys` gives `.missing` and `.unknown.`, `transform` gives
 `.at` and `.rot`) must match a pattern here. Every pattern must match something in
 the sources; a literal made only of interpolations (`\(a).\(b)`) matches broadly, so this
 direction finds only entries that nothing could produce. A short list in the test names
@@ -122,7 +125,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `part.<shape>.rot` | assembly | A shape's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360. |
 | `component.use.at` | assembly, component | A `use` entry's `at` is not three coordinates in -4000...4000 mm. |
 | `component.use.rot` | assembly, component | A `use` entry's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360. |
-| `tier.key` | assembly | A v2 document has a key named `tier` somewhere (tiers are computed by the engine, never authored). |
+| `tier.key` | assembly, explainer | A v2 document has a key named `tier` somewhere (tiers are computed by the engine, never authored). |
 
 ### Parameters
 
@@ -276,17 +279,17 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `check.lt` | assembly | The `lt` target is not a number in -1e6...1e6. |
 | `check.gt` | assembly | The `gt` target is not a number in -1e6...1e6. |
 | `check.tol` | assembly | `tol` is given without `eq`, or it is not in 0...1e6. |
-| `check.fact.<name>` | assembly | A claim check names a fact that does not exist. |
-| `check.failed.<name>` | assembly | A claim check is false for the engine's value. |
+| `check.fact.<name>` | assembly, explainer | A claim check names a fact that does not exist. |
+| `check.failed.<name>` | assembly, explainer | A claim check is false for the engine's value. |
 | `text.brace` | assembly | A `{` or `}` in the title or a caption is unbalanced or nested. |
 | `text.placeholder` | assembly | A placeholder is malformed: no valid fact name, too many modifiers, too long, or a modifier with a dot. |
 | `text.placeholder.<name>` | assembly | A placeholder names no fact. |
-| `text.modifier.<modifier>` | assembly | Unknown placeholder modifier (abs, inv, pct, deg, frac). |
-| `text.modifier.<modifier>.<name>` | assembly | A modifier cannot apply to this fact: a value with a unit, `pct` or `deg` on a fact that is not a turn rate, a modifier after a terminal one, `inv` of 0, or no exact fraction. |
+| `text.modifier.<modifier>` | assembly, explainer | Unknown placeholder modifier (abs, inv, pct, deg, frac). |
+| `text.modifier.<modifier>.<name>` | assembly, explainer | A modifier cannot apply to this fact: a value with a unit, `pct` or `deg` on a fact that is not a turn rate, a modifier after a terminal one, `inv` of 0, or no exact fraction. |
 | `text.range.<name>` | assembly | A placeholder value overflows or underflows, or would print as 0 although it is not 0. |
 | `text.rounding.<name>` | assembly | A placeholder would show a non-zero value as "0"; use `frac` or `inv`. |
 | `text.number.step.<n>` | assembly | A v2 caption has a number character outside a placeholder and the step is not marked `unchecked` (rule N1). |
-| `text.sign.<name>` | assembly | `abs` hides a sign that no strict-inequality check in the same step proves (the title can never use `abs`). |
+| `text.sign.<name>` | assembly, explainer | `abs` hides a sign that no strict-inequality check in the same step proves (the title can never use `abs`). |
 | `expect.axis.<id>` | assembly | The part's world turn axis differs from `expect.axisWorld` by more than 1 degree (v2). |
 | `expect.up.<id>` | assembly | The part's local +Z in the world differs from `expect.upWorld` by more than 1 degree (v2). |
 
@@ -401,9 +404,99 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `solidSnapshot.number` | snapshot | A number literal is longer than 64 characters or does not read as a finite number (for example `1e999`). |
 | `solidSnapshot.invalid` | snapshot | The JSON decoder or a validating initialiser refused the snapshot (format, slot sizes, ranges, v2 fields in /1). |
 
+### Explainer documents
+
+See [EXPLAINER.md](EXPLAINER.md). These come from explainer documents and streams; the explainer also gives
+`tier.key`, `check.fact.<name>`, `check.failed.<name>`, `text.sign.<name>` and the `text.modifier` reasons above, and
+passes inner scene, lesson and assembly reasons through unchanged.
+
+| Reason | Formats | Meaning |
+| --- | --- | --- |
+| `explainer.json` | explainer | The document bytes are not UTF-8 JSON text. |
+| `explainer.object` | explainer | The document, or a header statement's value, is not a JSON object. |
+| `explainer.number` | explainer | A document or statement built in code holds NaN or an infinity. |
+| `explainer.depth` | explainer | The document nests deeper than 63 levels, or a stream statement deeper than 64. |
+| `explainer.bytes` | explainer | The raw document is over 128 KiB, its flattened statement stream is over 64 KiB, or a stream received more than 64 KiB. |
+| `explainer.version` | explainer | `v` is not 1 (the explainer format version). |
+| `explainer.kind` | explainer | `kind` is not "explainer". |
+| `explainer.missing` | explainer | A header statement has no `v`. |
+| `explainer.unknown.<keys>` | explainer | The document or a header statement has keys it does not allow (`<keys>`: sorted author segments). |
+| `explainer.title` | explainer | The title is not plain text of 1–80 characters after 3D facts fill it, or it names a 2D value. |
+| `explainer.primary` | explainer | `primary` is not "board" or "solid", or it names a view the explainer does not have. |
+| `explainer.empty` | explainer | The explainer has neither a `board` nor a `solid`. |
+| `explainer.header` | explainer | A new stream does not start with an explainer header (or `keep`). |
+| `explainer.statements.count` | explainer | A stream holds more than 256 statements (terminal). |
+| `explainer.board` | explainer | `board` is not an object. |
+| `explainer.board.steps` | explainer | The board has `steps` (beats replace them). |
+| `explainer.board.title` | explainer | The board has a `title` (the explainer has one title). |
+| `explainer.board.dim` | explainer | The board is `"dim": "3d"` (3D belongs in `solid`). |
+| `explainer.board.missing` | explainer | A beat command needs a board, and the explainer has none. |
+| `explainer.solid` | explainer | `solid` is not an object. |
+| `explainer.solid.version` | explainer | The solid is not an assembly v2. |
+| `explainer.solid.steps` | explainer | The solid has `steps` (beats replace them). |
+| `explainer.solid.title` | explainer | The solid has a `title` (the explainer has one title). |
+| `explainer.solid.missing` | explainer | A beat `view` needs a solid, and the explainer has none. |
+| `explainer.beats` | explainer | `beats` is missing, not an array, or empty. |
+| `explainer.beats.count` | explainer | More than 16 beats in one explainer, over all its streams. |
+| `explainer.op.title` | explainer | A beat command is `title` (the explainer has one title). |
+| `explainer.id.duplicate.<id>` | explainer | A 2D item or control id equals a 3D part, copy, `repeat` base, instance or anchor id, or a control id equals a 2D item id (one namespace). |
+| `explainer.id.view.<id>` | explainer | A 2D command (`set`, `remove`) names a 3D id. |
+| `notes.object` | explainer | `notes` is not an object. |
+| `notes.count` | explainer | `notes` has no entry or more than 24. |
+| `notes.entry.<id>` | explainer | A note key is not an item id, or its value is not exactly one of `basis` and `unchecked`. |
+| `notes.text.<id>` | explainer | A note's text is not plain text of 1–60 characters. |
+| `notes.view.<id>` | explainer | A note key names a 3D id (notes mark 2D items only). |
+| `notes.unused.<id>` | explainer | (warning; the explainer strict check refuses) A note names no 2D item the board ever has. |
+| `beat.object` | explainer | A beat is not an object. |
+| `beat.missing` | explainer | A beat has no `say`. |
+| `beat.unknown.<keys>` | explainer | A beat or a `say` statement has keys it does not allow. |
+| `beat.unchecked.<n>` | explainer | Beat `<n>`'s `unchecked` is not plain text of 1–60 characters. |
+| `beat.ops` | explainer | A beat's `ops` is not an array. |
+| `beat.ops.count` | explainer | A beat has more than 12 commands. |
+| `beat.check` | explainer | A beat's `check` is not an array. |
+| `beat.checks.count` | explainer | A beat has more than 8 checks, 2D and 3D together. |
+| `beat.refused` | explainer | A statement belongs to a beat that a failed check already refused (a cascade). |
+| `beat.highlight` | explainer | A `highlight` is not an array of strings. |
+| `beat.highlight.count` | explainer | A `highlight` has no id or more than 16. |
+| `beat.highlight.ref.<id>` | explainer | A highlight id names no 2D item, control, 3D member or table row or cell of the board at that beat. |
+| `beat.highlight.stale.<id>` | explainer | (warning) At presentation a highlight id no longer resolves; it is dropped and recorded in `hostIssues` (nothing is refused). |
+| `stmt.json` | explainer | A stream statement is not UTF-8 JSON text, or non-whitespace text between statements was skipped. |
+| `stmt.kind` | explainer | A stream statement is not one of the explainer statement kinds. |
+| `stmt.order` | explainer | A statement comes out of order (a view after the first beat or twice, a beat statement with no open beat, a header mid-stream). |
+| `stmt.bytes` | explainer | A statement other than `solid` is over 4 KiB. |
+| `stmt.say` | explainer | A caption is not a string of 1–200 characters. |
+| `stmt.view.twice` | explainer | A beat has a second `view` statement. |
+| `stmt.highlight.twice` | explainer | A beat has a second `highlight` statement. |
+| `lesson.depth` | explainer | A statement other than `solid` nests deeper than 59 levels (the lesson statement cap). |
+| `view.object` | explainer | A beat `view` is not an object. |
+| `view.unknown.<keys>` | explainer | A beat `view` has keys that are not view keys (focus, explode, camera, orbit, spin, section, ghost). |
+| `text.number.beat.<n>` | explainer | Beat `<n>`'s caption types a number character outside a placeholder and has no `unchecked` (rule N1). |
+| `text.number.item.<id>` | explainer | A 2D item without a note shows a typed number: in its text, a table or array cell, a bar value or a plot range (rule N1). |
+| `text.number.control.<id>` | explainer | A control label types a number character (rule N1; a label takes no placeholder). |
+| `text.number.template` | explainer | A raw template's params carry a string with a typed number (rule N1). |
+| `snapshot.bytes` | explainer | An explainer snapshot is over its size cap. |
+| `snapshot.number` | explainer | An explainer snapshot holds NaN or an infinity. |
+| `snapshot.depth` | explainer | An explainer snapshot nests deeper than 64 levels. |
+| `snapshot.kind` | explainer | The value is not an explainer snapshot. |
+| `snapshot.version` | explainer | The explainer snapshot version is not 1. |
+| `snapshot.header` | explainer | The explainer snapshot has no header object. |
+| `snapshot.header.missing` | explainer | The explainer snapshot header has no `v`. |
+| `snapshot.header.unknown.<keys>` | explainer | The explainer snapshot header has keys it does not allow. |
+| `snapshot.frozen` | explainer | The explainer snapshot's `frozen` flag is not a boolean. |
+| `snapshot.beats` | explainer | The explainer snapshot's beat records are not valid. |
+| `snapshot.next` | explainer | The explainer snapshot's statement position is not valid. |
+| `snapshot.board` | explainer | The explainer snapshot's board is not valid, or the board and the boardless lesson disagree. |
+| `snapshot.solid` | explainer | The explainer snapshot's solid is not valid JSON text, or 3D beat data has no solid. |
+| `snapshot.lesson` | explainer | The explainer snapshot's lesson snapshot is not JSON text. |
+| `snapshot.items` | explainer | The explainer snapshot's item records are not valid. |
+| `snapshot.presented` | explainer | The explainer snapshot's presented beats are not valid. |
+| `snapshot.beat` | explainer | The explainer snapshot's presented beat names no beat. |
+| `snapshot.stream` | explainer | The explainer snapshot's stream status is not valid. |
+
 ### Tool
 
 | Reason | Formats | Meaning |
 | --- | --- | --- |
 | `report.encoding` | check, cli | A value given to `MGSolidReport.text` or as render manifest outputs is not finite or nests too deep, so it is not encoded (reports the engine builds never are). |
-| `report.engine` | check | The host's `engine` value is not finite, nests deeper than 8 levels or is larger than 4,096 bytes (`MGSolidReport.engineDepth`, `engineBytes`). |
+| `report.engine` | check, explainer | The host's `engine` value is not finite, nests deeper than 8 levels or is larger than 4,096 bytes (`MGSolidReport.engineDepth`, `engineBytes`). |
+| `kind.unsupported` | cli | `marty-solid check` or `render` got a lesson document (`"kind": "lesson"`), a format the tool does not take. |

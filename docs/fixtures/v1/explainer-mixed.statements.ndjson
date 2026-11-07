@@ -1,0 +1,10 @@
+{"explainer":{"title":"Tooth counts set the speed","v":1}}
+{"solid":{"constraints":[{"gearMesh":{"a":"p","b":"w"}}],"parts":[{"drive":{"input":1},"id":"p","joint":{"revolute":[0,0,1]},"shape":{"gear":{"module":2,"teeth":15,"width":8}}},{"at":[45,0,0],"id":"w","joint":{"revolute":[0,0,1]},"shape":{"gear":{"module":2,"teeth":30,"width":8}}}],"v":2}}
+{"board":{"items":[{"at":[6,4],"cells":[["gear","teeth","turns"],["small","{p.teeth}","{p.speed}"],["big","{w.teeth}","{w.speed}"]],"header":true,"id":"t","k":"table"}],"v":1}}
+{"say":"Count the teeth: {p.teeth} and {w.teeth}."}
+{"highlight":["t.r1","t.r2","p","w"]}
+{"say":"So the big gear turns {w.speed|abs|frac} of a turn."}
+{"check":{"lt":0,"value":"w.speed"}}
+{"view":{"spin":1}}
+{"highlight":["t.r2","w"]}
+{"end":true}

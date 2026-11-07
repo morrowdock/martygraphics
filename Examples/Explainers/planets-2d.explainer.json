@@ -1,0 +1,4 @@
+{"v":1,"kind":"explainer","title":"Inner planets by width","notes":{"t":{"basis":"NASA fact sheet"}},
+ "board":{"v":1,"items":[{"id":"t","k":"table","at":[6,4],"header":true,
+  "cells":[["Planet","km"],["Mercury",4879],["Venus",12104],["Earth",12756],["Mars",6792]]}]},
+ "beats":[{"say":"Venus and Earth are almost the same width.","highlight":["t.r2","t.r3"]}]}

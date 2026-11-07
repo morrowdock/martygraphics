@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// marty-solid: check or render ANY solid assembly JSON file (for authors and for AI models that write them). The check
-// report, the render plan and the reason catalog live in the MartyGraphics library; this tool adds files and pixels.
+// marty-solid: check or render ANY solid assembly JSON file or explainer document (for authors and for AI models that
+// write them). The check reports, the render plan and the reason catalog live in the MartyGraphics library; this tool
+// adds files and pixels.
 import AppKit
+import SwiftUI
 import CoreText
 import CryptoKit
 import Foundation
@@ -15,7 +17,7 @@ enum CLIError: Error, CustomStringConvertible {
         switch self {
         case .usage: return """
             Usage: marty-solid check FILE.json [--strict] [--patch PATCH.json] [--component C.json ...]
-                   marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--component C.json ...]
+                   marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--snapshots] [--component C.json ...]
                    marty-solid components [--component C.json ...]
                    marty-solid component check C.json [--component OTHER.json ...] [--with NAME=VALUE ...]
                    marty-solid reasons
@@ -42,6 +44,37 @@ func load(_ path: String) throws -> Loaded {
     let data = try handle.read(upToCount: MGSolidLimits.bytes + 1) ?? Data()
     guard data.count <= MGSolidLimits.bytes else { throw TooLarge() }
     return Loaded(data: data, source: MGSolidSource(data: data))
+}
+
+/// A document file as read for `check` and `render`: at most 128 KiB plus one byte (the explainer limit), regular files
+/// only. The top-level `kind` picks the path: `explainer` is an explainer; `lesson` (an engine format this tool does not
+/// take) is `kind.unsupported`; anything else (no `kind`, `assembly`, another value) keeps the assembly path and its
+/// reasons, unchanged.
+struct Document { let data: Data; let kind: String? }
+
+func loadDocument(_ path: String) throws -> Document {
+    let attrs = try FileManager.default.attributesOfItem(atPath: path)
+    guard (attrs[.type] as? FileAttributeType) == .typeRegular else { throw CLIError.invalid("Not a regular file: \(path)") }
+    let handle = try FileHandle(forReadingFrom: URL(fileURLWithPath: path))
+    defer { try? handle.close() }
+    let data = try handle.read(upToCount: MGExplainerLimits.rawBytes + 1) ?? Data()
+    guard data.count <= MGExplainerLimits.rawBytes else {
+        // Too large to parse: name the explainer limit when the text says it is one, else the assembly limit.
+        return Document(data: data, kind: data.range(of: Data(#""explainer""#.utf8)) != nil ? "explainer" : nil)
+    }
+    var kind: String?
+    switch MGExplainer.topLevelKind(data) {
+    case .string(let k)?: kind = k
+    case nil: kind = nil
+    default: kind = "assembly"   // a `kind` that is not a string: the assembly path refuses it as before
+    }
+    return Document(data: data, kind: kind)
+}
+
+/// `{"ok": false, "reason": "kind.unsupported", "engine"}`.
+func unsupportedKind() -> Int32 {
+    print(json(stamped(["ok": .bool(false), "reason": .string("kind.unsupported")])))
+    return 1
 }
 
 /// The engine identity plus the SHA-256 of this executable, so a caller can name the exact build without git.
@@ -89,6 +122,17 @@ func library(_ files: [String]) throws -> MGSolidLibrary {
 /// the full report so the author can repair from it. `--patch` reports on the base with the patch applied.
 func check(_ path: String, patch patchPath: String?, _ lib: MGSolidLibrary, strict: Bool = false) throws -> Int32 {
     let profile: MGSolidProfile = strict ? .strict : .standard
+    let doc = try loadDocument(path)
+    switch doc.kind {
+    case "explainer"?:
+        guard patchPath == nil else { throw CLIError.usage }
+        // ONE report for both views (`MGExplainerReport`); `--strict` adds the strict set, and the report is printed in full.
+        let report = MGExplainerReport.check(data: doc.data, library: lib, profile: profile, engine: engine)
+        print(report.text)
+        return report.exitCode
+    case "lesson"?: return unsupportedKind()
+    default: break
+    }
     let src: Loaded
     do { src = try load(path) } catch is TooLarge {
         var r = MGSolidReport.refused(MGSolidIssue("assembly.bytes"), engine: engine).json.objectValue ?? [:]
@@ -205,7 +249,14 @@ func scaled(_ image: CGImage, width: Int) -> CGImage {
 func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined() }
 
 /// Renders the library's render plan (`MGSolidRenderPlan`): captioned stills, the loop GIF, the snapshot and the manifest.
-@MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool, library lib: MGSolidLibrary) throws -> Int32 {
+@MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool, snapshots: Bool = false,
+                       library lib: MGSolidLibrary) throws -> Int32 {
+    let document = try loadDocument(path)
+    switch document.kind {
+    case "explainer"?: return try renderExplainer(path, document.data, outPath, width: width, height: height, loop: loop, snapshots: snapshots, library: lib)
+    case "lesson"?: return unsupportedKind()
+    default: break
+    }
     let src: Loaded
     do { src = try load(path) } catch is TooLarge {
         print(json(MGSolidReport.refused(MGSolidIssue("assembly.bytes"), engine: engine).json)); return 1
@@ -278,6 +329,174 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     return 0
 }
 
+// MARK: explainer render
+
+/// The board pane at `size` pixels: the presented 2D state with the beat's emphasis and table rows (the same input the
+/// SwiftUI explainer view draws).
+@MainActor func boardImage(_ scene: MGScene, _ view: MGExplainerBeatView, width: Int, height: Int) -> CGImage? {
+    let size = CGSize(width: width, height: height)
+    let r = ImageRenderer(content: Canvas { ctx, sz in MGCanvasRenderer.draw(MGExplainerBoard.input(scene, view: view, size: sz), in: ctx) }
+        .frame(width: size.width, height: size.height))
+    r.scale = 1
+    return r.cgImage
+}
+
+/// The panes of one composite frame: the `primary` view gets 55 % (side by side when wider than tall, else stacked).
+func paneRects(width w: Int, height h: Int, board: Bool, solid: Bool, primarySolid: Bool) -> (board: CGRect?, solid: CGRect?) {
+    let s = CGFloat(w) / 1280, gap = 16 * s
+    let area = CGRect(x: 24 * s, y: 132 * s, width: CGFloat(w) - 48 * s, height: CGFloat(h) - 132 * s - 112 * s)
+    guard board && solid else { return (board ? area : nil, solid ? area : nil) }
+    var first = area, second = area
+    if w >= h {
+        let a = (area.width - gap) * 0.55, b = area.width - gap - a
+        first.size.width = primarySolid ? b : a
+        second.origin.x = first.maxX + gap; second.size.width = primarySolid ? a : b
+    } else {
+        let a = (area.height - gap) * 0.55, b = area.height - gap - a
+        // CoreGraphics y grows upward: the first pane is the top one.
+        second.size.height = primarySolid ? a : b
+        first.origin.y = second.maxY + gap; first.size.height = primarySolid ? b : a
+    }
+    return (first, second)
+}
+
+/// One composite: the panes on a dark board, then the title, the caption band and the legend line (`caption`).
+func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, rects: (board: CGRect?, solid: CGRect?),
+               title: String, caption text: String?, footer: String) -> CGImage {
+    let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    ctx.setFillColor(CGColor(red: 0.05, green: 0.07, blue: 0.10, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
+    for (img, rect) in [(board, rects.board), (solid, rects.solid)] {
+        guard let img, let rect else { continue }
+        ctx.saveGState()
+        ctx.addPath(CGPath(roundedRect: rect, cornerWidth: 14, cornerHeight: 14, transform: nil)); ctx.clip()
+        ctx.draw(img, in: rect)
+        ctx.restoreGState()
+    }
+    return caption(ctx.makeImage()!, title: title, text: text, footer: footer)
+}
+
+/// `render` for an explainer: `beat-<n>.png` (one composite per beat), `board-0.png` and `solid-0.png` (the views before
+/// the first beat), `loop.gif` (the solid's loop), `snapshot-beat-<n>.json` with `--snapshots`, and `manifest.json`.
+@MainActor func renderExplainer(_ path: String, _ data: Data, _ outPath: String, width: Int, height: Int, loop: Bool, snapshots: Bool,
+                                library lib: MGSolidLibrary) throws -> Int32 {
+    let source = MGSolidSource(data: data)
+    let doc: MGExplainer
+    switch MGExplainer.parse(data: data) {
+    case .failure(let issue): print(json(MGExplainerReport.refused(issue, profile: nil, source: nil, engine: engine).json)); return 1
+    case .success(let d): doc = d
+    }
+    var session = MGExplainerSession(pacing: .speech, clock: MGManualClock(), library: lib)
+    if case .failure(let issue) = session.load(doc) {
+        print(json(MGExplainerReport.refused(issue, profile: nil, source: nil, engine: engine).json)); return 1
+    }
+    // The views before the first beat: every statement up to the first `say`.
+    var before = MGExplainerSession(pacing: .speech, clock: MGManualClock(), library: lib)
+    for st in doc.statements { if st["say"] != nil { break }; _ = before.feed(st.canonicalString + "\n") }
+    let out = URL(fileURLWithPath: outPath, isDirectory: true)
+    do { try FileManager.default.createDirectory(at: out, withIntermediateDirectories: false) }
+    catch { throw CLIError.invalid("Cannot create a NEW output directory at \(out.path) (it exists, or its parent is missing)") }
+    var finished = false
+    defer { if !finished { try? FileManager.default.removeItem(at: out) } }
+    _ = NSApplication.shared
+    let sourceName = URL(fileURLWithPath: path).lastPathComponent
+    let legend = session.legend
+    let footer = "\(legend.text) · Rendered by the MartyGraphics engine from \(sourceName) (\(source.sizeText))"
+    let title = session.title ?? ""
+    let solidDoc = session.solid
+    let renderer = solidDoc.map { MGSolidRenderer(assembly: $0.assembly) }
+    let primarySolid = (session.primary ?? (solidDoc != nil ? "solid" : "board")) == "solid"
+    let rects = paneRects(width: width, height: height, board: doc.board != nil, solid: solidDoc != nil, primarySolid: primarySolid)
+    var files: [MGJSON] = [], names: [String] = []
+    var seconds = 0.0, frames = 0
+    func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Bool = true) throws -> CGImage? {
+        guard let r = renderer, let d = solidDoc else { return nil }
+        let step = view.step
+        r.show(view.solid ?? d.view(step: nil))
+        r.highlight(Set(view.solidHighlight), dimOthers: !view.solidHighlight.isEmpty)
+        let params = MGPoseParameters(input: d.defaults.input + (spin ? (step?.spin ?? 0) : 0) * 2 * .pi, explode: step?.explode ?? d.defaults.explode)
+        r.apply(params)
+        let p = MGSolidCamera.presets[step?.camera ?? "hero"] ?? MGSolidCamera.presets["hero"]!
+        r.frame(params, explodeRange: [0, params.explode], yaw: p.yaw + (step?.orbit ?? 0), pitch: p.pitch,
+                aspect: Double(rect.width / rect.height), margin: 0.8)
+        let t0 = Date()
+        guard let img = r.render(width: Int(rect.width), height: Int(rect.height)) else { throw CLIError.invalid("render failed (no Metal device?)") }
+        seconds += Date().timeIntervalSince(t0); frames += 1
+        return img
+    }
+    func record(_ name: String, _ fields: [String: MGJSON]) throws {
+        let u = out.appendingPathComponent(name)
+        var o = fields
+        o["file"] = .string(name)
+        o["bytes"] = .number(Double((try Data(contentsOf: u)).count))
+        o["sha256"] = .string(try sha(u))
+        files.append(.object(o)); names.append(name)
+    }
+    func write(_ img: CGImage, _ name: String) throws {
+        try writePNG(img, out.appendingPathComponent(name))
+        try record(name, ["width": .number(Double(img.width)), "height": .number(Double(img.height))])
+    }
+    if doc.board != nil, let scene = before.state?.scene {
+        let alone = paneRects(width: width, height: height, board: true, solid: false, primarySolid: false)
+        let r = alone.board!
+        try write(composite(width: width, height: height, board: boardImage(scene, MGExplainerBeatView(), width: Int(r.width), height: Int(r.height)),
+                            solid: nil, rects: alone, title: title, caption: nil, footer: footer), "board-0.png")
+    }
+    if solidDoc != nil {
+        let alone = paneRects(width: width, height: height, board: false, solid: true, primarySolid: true)
+        try write(composite(width: width, height: height, board: nil, solid: try solidImage(MGExplainerBeatView(), alone.solid!, spin: false),
+                            rects: alone, title: title, caption: nil, footer: footer), "solid-0.png")
+    }
+    var captions: [MGJSON] = []
+    var k = 0
+    while let beat = session.presented.beat, beat == k {
+        let view = session.presented
+        let caption = session.caption ?? ""
+        captions.append(.string(caption))
+        let b = rects.board.flatMap { r in session.state.map { boardImage($0.scene, view, width: Int(r.width), height: Int(r.height)) } } ?? nil
+        let sImg = try rects.solid.flatMap { try solidImage(view, $0) }
+        try write(composite(width: width, height: height, board: b, solid: sImg, rects: rects, title: title, caption: "\(k + 1). \(caption)", footer: footer),
+                  "beat-\(k + 1).png")
+        if snapshots, let d = solidDoc {
+            let params = MGPoseParameters(input: d.defaults.input + (view.step?.spin ?? 0) * 2 * .pi, explode: view.step?.explode ?? d.defaults.explode)
+            let name = "snapshot-beat-\(k + 1).json"
+            try MGSolidSnapshot.make(d, step: session.solidStep(forBeat: k), params: params).jsonData().write(to: out.appendingPathComponent(name))
+            try record(name, [:])
+        }
+        _ = session.lineEnded(k)
+        k += 1
+    }
+    if loop, let d = solidDoc, let r = renderer {
+        let plan = MGSolidRenderPlan(d, sourceName: sourceName, source: source, loop: true)
+        let n = plan.loop.count, gifURL = out.appendingPathComponent("loop.gif")
+        let delay = MGSolidRenderPlan.loopDelaySeconds
+        guard let gif = CGImageDestinationCreateWithURL(gifURL as CFURL, UTType.gif.identifier as CFString, n, nil) else { throw CLIError.invalid("gif") }
+        CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        r.show(d.view(step: nil)); r.highlight([], dimOthers: false)
+        for shot in plan.loop {
+            let p = MGSolidCamera.presets[shot.preset] ?? MGSolidCamera.presets["hero"]!
+            r.apply(shot.params)
+            r.frame(shot.params, explodeRange: [0, shot.params.explode], yaw: p.yaw + shot.orbit, pitch: p.pitch, aspect: Double(width) / Double(height), margin: shot.margin)
+            let t0 = Date()
+            guard let img = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
+            seconds += Date().timeIntervalSince(t0); frames += 1
+            CGImageDestinationAddImage(gif, scaled(img, width: MGSolidRenderPlan.loopWidth),
+                                       [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: delay, kCGImagePropertyGIFUnclampedDelayTime: delay]] as CFDictionary)
+        }
+        guard CGImageDestinationFinalize(gif) else { throw CLIError.invalid("gif finalize") }
+        try record("loop.gif", ["width": .number(Double(MGSolidRenderPlan.loopWidth)), "frames": .number(Double(n)), "delaySeconds": .number(delay)])
+    }
+    let manifest: MGJSON = .object([
+        "source": .object(["file": .string(sourceName), "lines": .number(Double(source.lines)), "sha256": .string(source.sha256)]),
+        "kind": .string("explainer"), "title": .string(title), "legend": .string(legend.text), "captions": .array(captions),
+        "framesRendered": .number(Double(frames)), "renderSecondsPerFrame": frames > 0 ? .number(seconds / Double(frames)) : .number(0),
+        "outputs": .array(files), "engine": engine])
+    try Data(json(manifest).utf8).write(to: out.appendingPathComponent("manifest.json"))
+    finished = true
+    print(json(stamped(["ok": .bool(true), "output": .string(out.path), "files": .array(names.map { .string($0) })])))
+    return 0
+}
+
 /// Splits `--component FILE` pairs (repeatable) out of an argument list.
 func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]) {
     var files: [String] = [], rest: [String] = []
@@ -326,12 +545,13 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                 }
                 exit(try componentCheck(a[2], lib, with: values))
             case "render"? where a.count >= 3 && !a[1].hasPrefix("--") && !a[2].hasPrefix("--"):
-                var w = 1280, h = 800, loop = true
+                var w = 1280, h = 800, loop = true, snapshots = false
                 var rest = Array(a.dropFirst(3))
                 while let flag = rest.first {
                     rest.removeFirst()
                     switch flag {
                     case "--no-loop": loop = false
+                    case "--snapshots": snapshots = true
                     case "--size":
                         guard let v = rest.first else { throw CLIError.usage }
                         rest.removeFirst()
@@ -341,7 +561,7 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                     default: throw CLIError.usage
                     }
                 }
-                exit(try render(a[1], a[2], width: w, height: h, loop: loop, library: lib))
+                exit(try render(a[1], a[2], width: w, height: h, loop: loop, snapshots: snapshots, library: lib))
             default: throw CLIError.usage
             }
         } catch {
