@@ -463,6 +463,8 @@ final class SolidAnnotationTests: XCTestCase {
         let d = try doc(text)
         let view = d.view(step: 0)
         XCTAssertEqual(view.motionSense, -1)
+        XCTAssertEqual(d.checkedAnnotations(view, params: MGPoseParameters(input: -1)), ["aw"], "inside the backwards spin range")
+        XCTAssertNil(d.checkedAnnotations(view, params: MGPoseParameters(input: 1)), "outside it")
         let prims = MGSolidAnnotations.primitives(d, "aw", params: d.defaults, sense: view.motionSense)
         let c = MGVec3(45, 0, prims[0].start.z)
         XCTAssertGreaterThan((prims[0].start - c).cross(prims[0].end - c).z, 0, "played backwards, the wheel turns counter-clockwise")
@@ -475,25 +477,93 @@ final class SolidAnnotationTests: XCTestCase {
         XCTAssertEqual((back[1].end - back[0].start).normalized.x, 1, accuracy: 1e-6)
     }
 
-    /// S2: one meaning per reason for `over` dimensions that do not change.
-    func testOverWithNoChangeHasItsOwnReason() {
-        let still = #"{"dimensions": [{"id": "same", "a": {"part": "w", "offset": [10, 0, 0]}, "b": {"part": "w", "offset": [-10, 0, 0]}, "over": "input"}]}"#
-        XCTAssertEqual(reason(gears(still)), "dimension.over.still.same")
+    /// S2: one meaning per reason for `over` dimensions that do not change; `over` needs a motion with an exact range.
+    func testOverRangesAreExactOrRefused() {
+        XCTAssertEqual(reason(slide(#"{"id": "gap", "a": "base", "b": "s", "along": "y", "over": "input"}"#)), "dimension.over.still.gap")
+        let turning = #"{"dimensions": [{"id": "same", "a": {"part": "w", "offset": [10, 0, 0]}, "b": {"world": [0, 0, 0]}, "over": "input"}]}"#
+        XCTAssertEqual(reason(gears(turning)), "dimension.over.motion.same")
         let angle = #"{"dimensions": [{"id": "ang", "kind": "angle", "a": {"part": "w", "offset": [10, 0, 0]}, "vertex": "w", "b": {"part": "w", "offset": [0, 10, 0]}, "over": "input"}]}"#
-        XCTAssertEqual(reason(gears(angle)), "dimension.over.still.ang")
+        XCTAssertEqual(reason(gears(angle)), "dimension.over.motion.ang")
     }
 
-    /// S3: a host view with more than 12 annotations is refused visibly, never laid out with texts missing.
-    func testFrameRefusesTooManyAnnotations() throws {
-        let labels = (0..<13).map { #"{"id": "l\#($0)", "at": "p", "text": "Label"}"# }.joined(separator: ",")
-        let d = try doc(gears(#"{"labels": [\#(labels)]}"#, steps: #"[{"say": "Some.", "annotate": ["l0"]}, {"say": "Rest.", "annotate": ["l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "l10", "l11", "l12"]}]"#))
-        var view = d.view(step: 0)
-        let cam = MGSolidAnnotations.defaultCamera(d, params: d.defaults)
-        XCTAssertNil(MGSolidAnnotations.frame(document: d, view: view, params: d.defaults, camera: cam, aspect: 1.6).refusal)
-        view.annotations = d.annotations.ids
-        let f = MGSolidAnnotations.frame(document: d, view: view, params: d.defaults, camera: cam, aspect: 1.6)
-        XCTAssertEqual(f.refusal, "annotations.visible")
-        XCTAssertEqual(f.placement, [])
+    /// Review 2, R1: text that shows a `dim.<id>` fact must hold in its view, even when the dimension is hidden.
+    func testTextThatShowsAMovingDimensionIsRefused() throws {
+        func doc(_ text: String, _ steps: String, extra: String = "") -> String {
+            #"{"v": 2, "kind": "assembly", "params": {"input": 0}, "parts": [{"id": "p", "shape": {"shaft": {"radius": 1, "length": 2}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}\#(extra)], "annotations": {"dimensions": [{"id": "gap", "a": {"world": [10, 0, 0]}, "b": {"part": "p", "offset": [20, 0, 0]}, "text": "Gap {dim.gap}"}], \#(text)}, "steps": \#(steps)}"#
+        }
+        let label = #""labels": [{"id": "l", "at": "p", "text": "Gap {dim.gap}"}]"#
+        let pointer = #""arrows": [{"id": "ptr", "meaning": "pointer", "from": {"world": [0, 0, 30]}, "to": "p", "text": "Gap {dim.gap}"}]"#
+        XCTAssertEqual(reason(doc(label, #"[{"say": "Turn.", "spin": 0.5, "annotate": ["l"]}, {"say": "Measure.", "annotate": ["gap"]}]"#)), "annotation.pose.l")
+        XCTAssertEqual(reason(doc(pointer, #"[{"say": "Turn.", "spin": 0.5, "annotate": ["ptr"]}, {"say": "Measure.", "annotate": ["gap"]}]"#)), "annotation.pose.ptr")
+        XCTAssertEqual(reason(doc(label, #"[{"say": "Apart.", "explode": 1, "annotate": ["l"]}, {"say": "Measure.", "annotate": ["gap"]}]"#,
+                                  extra: #", {"id": "q", "shape": {"box": {"size": [2, 2, 2]}}}"#).replacingOccurrences(of: #""drive": {"input": 1}}"#, with: #""drive": {"input": 1}, "explode": [0, 0, 30]}"#)),
+                       "annotation.pose.l")
+        XCTAssertEqual(reason(doc(label, #"[{"say": "Gap {dim.gap} turns.", "spin": 0.5, "annotate": []}, {"say": "Measure.", "annotate": ["gap", "l"]}]"#)),
+                       "text.pose.step.1")
+        // Still steps keep the claim.
+        XCTAssertNil(reason(doc(label, #"[{"say": "Still.", "annotate": ["l"]}, {"say": "Measure.", "annotate": ["gap"]}]"#)))
+        // Patch a still document into a turning step: refused; the document stays.
+        let base = try self.doc(doc(label, #"[{"say": "Still.", "annotate": ["l"]}, {"say": "Measure.", "annotate": ["gap"]}]"#))
+        let before = base
+        let patch = try XCTUnwrap(MGJSON(any: ["steps": [["say": "Turn.", "spin": 0.5, "annotate": ["l"]], ["say": "Measure.", "annotate": ["gap"]]]] as [String: Any]))
+        XCTAssertEqual(MGSolidParser.applying(patch, to: base).failureReason, "annotation.pose.l")
+        XCTAssertEqual(base, before)
+        // A patch that moves the anchor recomputes the value everywhere it shows (no stale text).
+        let move = try XCTUnwrap(MGJSON(any: ["parts": ["p": ["at": [5, 0, 0]]]] as [String: Any]))
+        guard case .success(let moved) = MGSolidParser.applying(move, to: base) else { return XCTFail("move") }
+        XCTAssertEqual(moved.annotations.label("l")?.text, "Gap 15 mm")
+        XCTAssertEqual(moved.annotations.dimension("gap")?.text, "Gap 15 mm")
+        XCTAssertEqual(moved.describe("gap")?["value"], .number(15))
+        guard case .array(let entries)? = MGSolidReport.make(moved).json["annotations"] else { return XCTFail("report") }
+        XCTAssertEqual(entries.first { $0["id"] == .string("l") }?["text"], .string("Gap 15 mm"))
+    }
+
+    /// Review 2, R2: aliasing at high rates cannot pass any more: the rules are structural.
+    func testHighRatesCannotHideMotion() {
+        func one(_ annotations: String, rate: Int = 720, axis: String = "[0, 0, 1]") -> String {
+            #"{"v": 2, "kind": "assembly", "parts": [{"id": "p", "shape": {"shaft": {"radius": 1, "length": 2}}, "joint": {"revolute": \#(axis)}, "drive": {"input": \#(rate)}}], "annotations": \#(annotations), "steps": [{"say": "Motion.", "spin": 1}]}"#
+        }
+        XCTAssertEqual(reason(one(#"{"dimensions": [{"id": "gap", "a": {"world": [10, 0, 0]}, "b": {"part": "p", "offset": [20, 0, 0]}, "text": "Gap {dim.gap}"}]}"#)), "annotation.pose.gap")
+        XCTAssertEqual(reason(one(#"{"arrows": [{"id": "g", "meaning": "force", "cause": "gravity", "from": "p", "to": {"part": "p", "offset": [0, 0, -10]}}]}"#, axis: "[0, 1, 0]")),
+                       "annotation.pose.g")
+        XCTAssertEqual(reason(one(#"{"arrows": [{"id": "m", "meaning": "motion", "from": {"part": "p", "offset": [20, 0, 0]}, "expect": [0, 1, 0]}]}"#)), "annotation.pose.m")
+        // The same rules at rate 1, and a turn arrow instead (its sense is exactly constant).
+        XCTAssertEqual(reason(one(#"{"arrows": [{"id": "m", "meaning": "motion", "from": {"part": "p", "offset": [20, 0, 0]}}]}"#, rate: 1)), "annotation.pose.m")
+        XCTAssertNil(reason(one(#"{"arrows": [{"id": "t", "meaning": "motion", "style": "turn", "on": "p", "sense": "ccw"}]}"#)))
+        // A point on the turning axis stays put: a dimension to it is constant.
+        XCTAssertNil(reason(one(#"{"dimensions": [{"id": "gap", "a": {"world": [10, 0, 0]}, "b": {"part": "p", "offset": [0, 0, 5]}}]}"#)))
+    }
+
+    /// Review 2, R2 (a16): a crank-slider at a high rate, away from dead centre.
+    func testCrankSliderReversalInsideAStepIsRefused() {
+        let fast = Self.slider.replacingOccurrences(of: #""drive": {"input": 1}"#, with: #""drive": {"input": 720}"#)
+        func text(_ annotations: String, input: Double = 0.001, spin: Double = 1) -> String {
+            #"{"v": 2, "kind": "assembly", "params": {"input": \#(input)}, "parts": [\#(fast)], "annotations": \#(annotations), "steps": [{"say": "Motion.", "spin": \#(spin)}]}"#
+        }
+        XCTAssertEqual(reason(text(#"{"arrows": [{"id": "m", "meaning": "motion", "from": "piston", "expect": [-1, 0, 0]}]}"#)), "annotation.pose.m")
+        XCTAssertEqual(reason(text(#"{"dimensions": [{"id": "gap", "a": "piston", "b": {"world": [0, 0, 0]}, "along": "x"}]}"#)), "annotation.pose.gap")
+        // A step that stays between dead centres keeps the direction (crank rate 1: half a turn after input 0.001).
+        let slow = #"{"v": 2, "kind": "assembly", "params": {"input": 0.001}, "parts": [\#(Self.slider)], "annotations": {"arrows": [{"id": "m", "meaning": "motion", "from": "piston", "expect": [-1, 0, 0]}]}, "steps": [{"say": "Motion.", "spin": 0.45}]}"#
+        XCTAssertNil(reason(slow))
+        XCTAssertEqual(reason(slow.replacingOccurrences(of: #""spin": 0.45"#, with: #""spin": 0.55"#)), "annotation.pose.m")
+    }
+
+    /// Review 2, R4: a dimension along one axis draws that component, parallel to the axis.
+    func testAlongDimensionDrawsTheComponent() throws {
+        let d = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "p", "shape": {"box": {"size": [2, 2, 2]}}}], "annotations": {"dimensions": [{"id": "dx", "a": {"world": [0, 0, 0]}, "b": {"world": [3, 4, 0]}, "along": "x"}]}}"#)
+        XCTAssertEqual(d.fact("dim.dx")?.value ?? 0, 3, accuracy: 1e-12)
+        let line = MGSolidAnnotations.primitives(d, "dx", params: d.defaults)[2]
+        let v = line.end - line.start
+        XCTAssertEqual(v.length, 3, accuracy: 1e-12)
+        XCTAssertEqual(v.normalized.x, 1, accuracy: 1e-12)
+        XCTAssertEqual(MGSolidAnnotations.primitives(d, "dx", params: d.defaults)[1].start.x, 3, accuracy: 1e-12, "the second extension line starts at b")
+    }
+
+    /// The title may show a dimension only when it holds in every view.
+    func testTitleWithAMovingDimension() {
+        let t = #"{"v": 2, "kind": "assembly", "title": "Gap {dim.gap}", "parts": [{"id": "p", "shape": {"shaft": {"radius": 1, "length": 2}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}], "annotations": {"dimensions": [{"id": "gap", "a": {"world": [10, 0, 0]}, "b": {"part": "p", "offset": [20, 0, 0]}}]}, "steps": [{"say": "Turn.", "spin": 0.5, "annotate": []}, {"say": "Measure.", "annotate": ["gap"]}]}"#
+        XCTAssertEqual(reason(t), "text.pose.title")
+        XCTAssertNil(reason(t.replacingOccurrences(of: #""spin": 0.5, "#, with: "")))
     }
 
     func testRefusedPoseLeavesTheDocumentUnchanged() throws {

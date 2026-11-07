@@ -112,6 +112,8 @@ public struct MGSolidDocument: Equatable, Sendable {
     public var warnings: [MGSolidIssue] = []
     /// v2: labels, arrows and dimensions (empty for v1 and for documents without `annotations`).
     public var annotations = MGSolidAnnotations()
+    /// v2: canonical names of the facts the title shows, in order.
+    public internal(set) var titleFacts: [String] = []
 
     public func pose(_ params: MGPoseParameters) -> MGPose { assembly.pose(params) }
 
@@ -728,7 +730,7 @@ public enum MGSolidParser {
             try MGSolidAnnotationEngine.prepare(&doc)
             try fillText(&doc)
             try MGSolidAnnotationEngine.finish(&doc)
-            try MGSolidAnnotationEngine.checkPoses(doc)
+            try MGSolidAnnotationEngine.checkViews(doc)
         } else {
             // v1 text is never filled. A caption or title with a number in it makes a claim the engine did not check.
             for i in doc.steps.indices where doc.steps[i].say.contains(where: MGSolidFacts.isNumber) { doc.steps[i].tier = .described }
@@ -747,6 +749,7 @@ public enum MGSolidParser {
         guard title.text.unicodeScalars.count <= MGSolidLimits.title else { throw MGSolidIssue("assembly.title") }
         for (name, mods) in zip(title.facts, title.modifiers) where mods.contains("abs") { throw MGSolidIssue("text.sign.\(token(name))") }
         doc.title = title.text
+        doc.titleFacts = title.facts
         doc.assembly.name = title.text
         doc.titleTier = MGSolidTiers.text(facts: title.facts.compactMap { doc.facts[$0] }, unchecked: false, typedNumbers: title.typedNumbers)
         for i in doc.steps.indices {

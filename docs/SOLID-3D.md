@@ -534,7 +534,7 @@ An arrow's text lowers its claim to the text's tier (an `unchecked` text makes i
 | Meaning | Keys | Direction | Checks |
 | --- | --- | --- | --- |
 | `motion`, `"style": "turn"` | `on` (a part id string, `arrow.on.<id>`), `sense` (`cw` or `ccw`, optional) | The engine: the sign of the part's turn (its world speed when that fact exists, else its own speed). Drawn as a 270° arc around the joint axis. | `arrow.turn.joint.<id>` (not a revolute part), `arrow.still.<id>` (its own joint never turns; a part that only rides a turning parent counts as still), `arrow.turn.steady.<id>` (it has no steady speed, such as a crank rod that swings back and forth; use a motion line arrow), `arrow.sense.<id>` (the stated sense is wrong; "cw" and "ccw" as seen from the tip of the joint axis), `arrow.sense.form.<id>` |
-| `motion`, `"style": "line"` (the default) | `from` (a part anchor), `expect` (a world direction, optional), `length` (optional) | The engine: the anchor's velocity as the input grows from the default input; at a dead centre (velocity 0), the first non-zero velocity in the next input turn, sampled every 1/720 turn. | `arrow.from.<id>` (a world anchor), `arrow.still.<id>` (no motion in a full turn), `arrow.expect.<id>` (more than 30° from the engine direction, sign included), `arrow.expect.form.<id>`, `arrow.style.<id>` |
+| `motion`, `"style": "line"` (the default) | `from` (a part anchor), `expect` (a world direction, optional), `length` (optional) | The engine: the anchor's exact velocity at the default input, from the drive closed forms (input, follow, gear mesh, crank-slider, crank-rod); at a crank-slider dead centre (velocity 0), the way the slider moves next (away from that end of its stroke). | `arrow.from.<id>` (a world anchor), `arrow.still.<id>` (no velocity at the default input), `arrow.expect.<id>` (more than 30° from the engine direction, sign included), `arrow.expect.form.<id>`, `arrow.style.<id>` |
 | `force` | `from`, `to`, `cause` (`"gravity"`, optional) | As authored. With `cause`, it must be within 10° of world −Z at the default input. | `arrow.gravity.<id>`, `arrow.cause.<id>` |
 | `flow`, `pointer` | `from`, `to` | As authored. | — |
 
@@ -544,8 +544,8 @@ unit, 0.001–1000): its length is then |fact| × s, clamped to 5–4000 mm, and
 magnitude (`arrow.length.form.<id>`, `arrow.length.fact.<id>` for an unknown fact). The default length
 is 15 % of the model's bounding diagonal at the default input.
 
-While a view plays, a motion line arrow follows the velocity at each pose. At a dead centre it looks
-up to 1/8 turn ahead; it hides only while its anchor stays still longer than that. A turn arrow rides
+While a view plays, a motion line arrow follows the exact velocity at each pose (the next direction at a
+crank-slider dead centre); it hides while its anchor has no velocity. A turn arrow rides
 the frame its part turns in (the parent frame), so it does not spin with the part.
 
 Appearance (the same in every renderer): shaft radius 0.6 % of the bounding diagonal, head 4 shaft
@@ -564,12 +564,14 @@ cut, not ghosted and cast no shadow.
 * An angle is the angle at `vertex` between `a` and `b`, 0–180°. `vertex` is required for an angle and
   refused for a distance (`dimension.vertex.<id>`).
 * The value is measured at the default input (`params.input`) with explode 0. With `"over": "input"` it is
-  the largest minus the smallest value over one input turn (720 samples, ends included, as for
-  `<part>.travel`). `over` needs an anchor that moves (`dimension.over.<id>`; any other value is
-  `dimension.over.form.<id>`).
-* A distance below 0.01 mm at the default input, or an angle arm below 0.01 mm (at the default input, or at
-  any sample with `over`), is `dimension.zero.<id>`. With `over`, a range below 0.01 mm (or 0.01°) is
-  `dimension.over.still.<id>`.
+  the largest minus the smallest value over one input turn (input 0 to 2π), computed exactly from the joint's
+  closed form, not sampled. `over` needs an anchor that moves (`dimension.over.<id>`; any other value is
+  `dimension.over.form.<id>`). The engine has the exact range only for a distance (optionally `along` an axis)
+  whose one moving anchor moves by one prismatic joint with a linear drive or a crank-slider, while the other
+  anchor stays where it is (a world point, or a point on a turning axis); anything else is
+  `dimension.over.motion.<id>`. The stroke of a slider-crank is such a range.
+* A distance below 0.01 mm at the default input, or an angle arm below 0.01 mm, is `dimension.zero.<id>`. With
+  `over`, a range below 0.01 mm is `dimension.over.still.<id>`.
 * The value is the fact `dim.<id>` (unit `mm` or `°`, source `dimension`). Captions, labels, arrow text and
   checks can show and check it. A fact with that name already (a part named `dim`) is
   `dimension.fact.<id>`. No key sets the value.
@@ -582,25 +584,39 @@ its two arms and an arc at the vertex.
 
 ### Poses: every claim holds at every pose its view can show
 
-The checks above run at the default input (`params.input`) with explode 0. Then the engine checks every
-pose-dependent claim again at every pose that a view showing it can show. A step shows its `spin` range,
-from the default input to the default input + `spin` turns (720 samples per input turn, ends included),
-at its explode value (the step's `explode`, else `params.explode`). The plain view shows the default pose
-at `params.explode`. A claim that fails at one of these poses is `annotation.pose.<id>`:
+The checks above run at the default input (`params.input`) with explode 0. Then the engine decides, for every
+view, whether each claim it shows holds at every pose the view can show. A step shows its `spin` range (the
+default input to the default input + `spin` turns) at its explode value (the step's `explode`, else
+`params.explode`). The plain view shows the default pose at `params.explode`. The rules are exact; nothing is
+sampled. They use which joints move during the view:
 
-* a dimension without `over` whose value differs by more than 0.01 mm (0.01°) from its fact, for example
-  a point off a turning part's axis, or an exploded step that moves its anchors apart; a dimension with
-  `over` whose range differs at the step's explode value;
-* a gravity force arrow more than 10° from −Z (or shorter than 0.5 mm) at a shown pose;
-* a motion line arrow with `expect` whose shown direction is more than 30° from it at a shown pose (an anchor
-  that rides a turning part changes direction; show such an arrow in a step without `spin`);
-* a turn arrow with a stated `sense` in a step with a negative `spin`.
+* An anchor is **world-fixed** when every moving joint above it is a revolute whose axis passes through it (a
+  point on a turning shaft's axis), or when nothing above it moves.
+* A **shown dimension** without `over` must be constant: the step has no `spin`, or all its anchors are
+  world-fixed, or all of them ride the same moving joints (a rigid body; with `along`, those joints must not
+  turn, because a turn changes the world components). Its value at the view's first pose must equal its
+  fact. With `over`, its exact range at the view's explode value must equal its fact.
+* **Shown text** (a label, an arrow or dimension text, the step caption, the title) may display a `dim.<id>` fact
+  only when that dimension meets the same rule in the view (also when the dimension itself is not shown).
+* A **gravity arrow** must not turn: in a step with `spin`, both its anchors are world-fixed or translate together.
+  It must point within 10° of −Z at the view's first pose.
+* A **motion line arrow** must not ride a turning joint in a step with `spin` (use a turn arrow there). A stated
+  `expect` must hold at the view's first pose; in a step with `spin`, the velocity is constant (linear drives), or
+  the anchor's only moving joint is a crank-slider that does not pass a dead centre inside the step.
+* A **turn arrow** with a stated `sense` must not be in a step with a negative `spin`: turn senses are exactly
+  constant for the steady parts a turn arrow allows.
 
-A step with a negative `spin` plays the input backwards (`MGSolidView.motionSense` is −1): turn arcs and
-motion arrows draw the motion that the view shows. Labels and the other arrows ride their parts and claim no
-direction, so they need no pose check. A host shows a view's annotations only at those poses: `marty-solid
-render` draws them on `hero.png` and on the step stills (the end of each step's spin range), not on
-`exploded.png` or the loop frames.
+A failure is `annotation.pose.<id>`; a caption is `text.pose.step.<n>`, the title `text.pose.title`. A step with a
+negative `spin` plays the input backwards (`MGSolidView.motionSense` is −1): turn arcs and motion arrows draw the
+motion that the view shows. Labels and the other arrows ride their parts and claim no direction.
+
+**One gate for every output.** `MGSolidDocument.checkedAnnotations(_:params:)` gives the annotations a renderer may
+draw for a view at a pose, or nil. The view must come from `view(step:)` of the same document and list only
+annotations its step shows (a host may remove some, never add), and the pose must be one the view shows (its
+explode value, and an input inside its spin range). `MGSolidAnnotations.frame` (then `refusal: .unchecked`, no
+placements), `MGSolidRenderer` (pieces hidden) and `MGSolidSnapshot.make` (no `annotations`) all use it, so a
+view or pose that the engine did not check shows no annotations. `marty-solid render` also draws annotations on
+`hero.png` and the step stills only (`MGSolidShot.showsAnnotations`), not on `exploded.png` or the loop frames.
 
 ### Visibility
 
@@ -618,7 +634,6 @@ render` draws them on `hero.png` and on the step stills (the end of each step's 
 | Labels, arrows, dimensions per document | 32, 32, 16 (`MGSolidAnnotationLimits`) | `labels.count`, `arrows.count`, `dimensions.count` |
 | Visible at once | 12 | `annotations.visible`, `step.annotate.count` |
 | Text | 1–40 scalars filled, 160 authored; `unchecked` 1–60 | as above |
-| Velocity and `over` samples | 720 per turn | — |
 | Occlusion ray tests | 2,000,000 triangle tests per frame | over it, `occluded` is null and the anchor is drawn as visible |
 
 Arrow and dimension pieces join the mesh budget with exact counts before any mesh is built: a line
@@ -655,11 +670,11 @@ coordinates, origin top left), `occluded` (true, false or null), `callout`, `can
 `MGAnnotationFrame` adds the view size, the font size and the posed anchor points; a clip export will
 carry one per frame. `marty-solid check` reports `annotations` (id, kind, meaning, tier, text, value,
 `anchorsWorld`, `occludedAtDefaultCamera`) and `placements` (the placement of the plain view and of each
-step that shows annotations, at the default input with explode 0 and the snapshot's default camera, aspect
-16:10), so a model can see which texts fell into the callout list. `placements` is not the layout of the
+step that shows annotations, at the view's first pose (the default input at the view's explode value) and the
+snapshot's default camera, aspect 16:10), so a model can see which texts fell into the callout list. `placements` is not the layout of the
 rendered stills: those use the end of each step's spin range, the step's explode value and its camera
-preset. A view that lists more than 12 annotations (a host can set `MGSolidView.annotations`) gets a frame
-with no placements and `refusal: "annotations.visible"`; nothing is dropped silently.
+preset. A frame lays out nothing, and says why in `refusal`, for a view or pose the engine did not check
+(`.unchecked`) or a view size that is not finite and positive (`.viewSize`); nothing is dropped silently.
 
 ### Occlusion and renderers
 
@@ -679,8 +694,8 @@ with no placements and `refusal: "annotations.visible"`; nothing is dropped sile
 
 * Words: annotation text is checked for numbers only, not for meaning.
 * Force and flow arrows other than the gravity direction; every arrow length without a fact.
-* Motion between the 720 samples (velocity, `over` and the pose checks).
-* A pose the host shows outside its view's poses (an explode slider in a step, an orbit is fine).
+* The rules are conservative: some constant claims are refused (two anchors on different parts that happen to
+  keep their distance). Move such a claim to a step without `spin`.
 * Occlusion along leader lines (only the anchor point is tested).
 * Placement uses an estimated text width; very long words get small.
 

@@ -195,8 +195,10 @@ final class AnnotationLayoutTests: XCTestCase {
 
     func testP9SnapshotCarriesAnnotationsAfterThePartTriangles() throws {
         let d = try winchStep()
-        let params = MGPoseParameters(input: 0.3)
+        let params = d.defaults
         let snap = MGSolidSnapshot.make(d, step: 0, params: params, highlight: d.steps[0].highlight)
+        // The gate: a pose this still step does not show exports no annotations.
+        XCTAssertNil(MGSolidSnapshot.make(d, step: 0, params: MGPoseParameters(input: 0.3), highlight: []).annotations)
         let plain = MGSolidSnapshot.make(try withoutAnnotations(d), step: 0, params: params)
         XCTAssertEqual(snap.parts, plain.parts, "part ranges unchanged")
         XCTAssertEqual(snap.camera, plain.camera, "annotation geometry does not change the framing")
@@ -274,7 +276,7 @@ final class AnnotationLayoutTests: XCTestCase {
 
     func testP13FrameRecordEqualsSnapshotPlacement() throws {
         let d = try winchStep()
-        let params = MGPoseParameters(input: 1.1)
+        let params = d.defaults
         let snap = MGSolidSnapshot.make(d, step: 0, params: params, highlight: d.steps[0].highlight)
         let frame = MGSolidAnnotations.frame(document: d, view: d.view(step: 0), params: params, camera: snap.camera, aspect: snap.aspect,
                                              highlight: d.steps[0].highlight, caption: true)
@@ -344,6 +346,51 @@ final class AnnotationLayoutTests: XCTestCase {
         XCTAssertEqual(Double(crank[0].geometry?.firstMaterial?.emission.intensity ?? 0), 0.6, accuracy: 1e-6)
     }
 
+    // MARK: The one gate (review 2, R3, R5, R6)
+
+    /// A host view or pose that the engine did not check shows no annotations in any output path.
+    func testUncheckedViewsAndPosesShowNothingAnywhere() throws {
+        let d = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "p", "shape": {"shaft": {"radius": 1, "length": 2}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}], "annotations": {"dimensions": [{"id": "gap", "a": {"world": [10, 0, 0]}, "b": {"part": "p", "offset": [20, 0, 0]}}], "arrows": [{"id": "g", "meaning": "force", "cause": "gravity", "from": "p", "to": {"part": "p", "offset": [0, 0, -10]}}]}, "steps": [{"say": "Still."}]}"#)
+        let cam = MGSolidAnnotations.defaultCamera(d, params: d.defaults)
+        let good = d.view(step: nil)
+        XCTAssertEqual(d.checkedAnnotations(good, params: d.defaults), ["g", "gap"], "authored order: arrows, then dimensions")
+        var host = MGSolidView(d.assembly)
+        host.annotations = ["gap", "g"]
+        let away = MGPoseParameters(input: .pi)
+        for (view, params) in [(host, d.defaults), (good, away), (good, MGPoseParameters(input: 0, explode: 0.5))] {
+            XCTAssertNil(d.checkedAnnotations(view, params: params))
+            let f = MGSolidAnnotations.frame(document: d, view: view, params: params, camera: cam, width: 1280, height: 800)
+            XCTAssertEqual(f.refusal, .unchecked); XCTAssertEqual(f.placement, []); XCTAssertEqual(f.anchors.count, 0)
+        }
+        XCTAssertNil(MGSolidSnapshot.make(d, step: nil, params: away).annotations)
+        XCTAssertNotNil(MGSolidSnapshot.make(d, step: nil, params: d.defaults).annotations)
+        let r = MGSolidRenderer(assembly: d.assembly)
+        r.setAnnotations(d)
+        func shown() -> Int { r.scene.rootNode.childNodes(passingTest: { n, _ in n.name?.hasPrefix("annotation.") == true && !n.isHidden }).count }
+        r.show(good); r.apply(d.defaults)
+        XCTAssertGreaterThan(shown(), 0)
+        r.apply(away)
+        XCTAssertEqual(shown(), 0, "a pose outside the view hides every piece")
+        r.show(host); r.apply(d.defaults)
+        XCTAssertEqual(shown(), 0, "a host-built view hides every piece")
+        // A host may hide some annotations, never add one.
+        var fewer = good; fewer.annotations = ["g"]
+        XCTAssertEqual(d.checkedAnnotations(fewer, params: d.defaults), ["g"])
+        var more = d.view(step: 0); more.annotations += ["nobody"]
+        XCTAssertNil(d.checkedAnnotations(more, params: d.defaults))
+        // R5: a bad view size has its own refusal.
+        XCTAssertEqual(MGSolidAnnotations.frame(document: d, view: good, params: d.defaults, camera: cam, width: 0, height: 700).refusal, .viewSize)
+    }
+
+    /// R6: `marty-solid render` draws annotations on hero.png and the step stills only, never on exploded.png or a loop
+    /// frame, whatever their pose.
+    func testRenderPlanShowsAnnotationsOnHeroAndStepsOnly() throws {
+        let d = try model("annotated-winch")
+        let plan = MGSolidRenderPlan(d, sourceName: "w.json", source: MGSolidSource(data: Data("{}".utf8)))
+        XCTAssertEqual(plan.stills.filter(\.showsAnnotations).map(\.file), ["hero.png"] + d.steps.indices.map { "step-\($0 + 1).png" })
+        XCTAssertTrue(plan.loop.allSatisfy { !$0.showsAnnotations })
+    }
+
     // MARK: Shipped example
 
     /// Review of PR #31, B1: every step of the example, sampled over its whole spin range at its explode value, keeps
@@ -353,9 +400,12 @@ final class AnnotationLayoutTests: XCTestCase {
         let d = try model("annotated-winch")
         for i in d.steps.indices {
             let view = d.view(step: i)
-            let (inputs, explode) = MGSolidAnnotationEngine.shownPoses(d, step: i)
-            XCTAssertEqual(inputs.count, d.steps[i].spin == 0 ? 1 : Int((abs(d.steps[i].spin) * 720).rounded(.up)) + 1)
+            // The engine proves this without sampling; the test samples the range densely as an outside check.
+            let (u0, spin, explode) = MGSolidAnnotationEngine.domain(d, step: i)
+            let n = spin == 0 ? 0 : Int((abs(spin) * 1440).rounded(.up))
+            let inputs = (0...n).map { u0 + (n == 0 ? 0 : 2 * .pi * spin * Double($0) / Double(n)) }
             for u in inputs {
+                XCTAssertEqual(d.checkedAnnotations(view, params: MGPoseParameters(input: u, explode: explode)), view.annotations)
                 let params = MGPoseParameters(input: u, explode: explode)
                 for id in view.annotations {
                     let prims = MGSolidAnnotations.primitives(d, id, params: params, sense: view.motionSense)

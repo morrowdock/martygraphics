@@ -301,7 +301,9 @@ final class SolidSectionTests: XCTestCase {
         let c = try XCTUnwrap(v.part("casing").cut)                                                       // X3
         assertSound(c, "casing")
         XCTAssertNil(v.part("gear").cut)
-        XCTAssertEqual(d.view(step: 0), d.view(step: nil))
+        // A step without a section draws the plain scene (the view also records which step it is, for annotations).
+        XCTAssertEqual(d.view(step: 0).parts, d.view(step: nil).parts)
+        XCTAssertNil(d.view(step: 0).section)
         let params = MGPoseParameters(input: 0.7)
         let snap = MGSolidSnapshot.make(d, step: 1, params: params)
         XCTAssertEqual(snap.format, "martygraphics.solid.snapshot/2")

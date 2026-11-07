@@ -16,10 +16,6 @@ public enum MGSolidAnnotationLimits {
     /// Filled text and `unchecked` text, in Unicode scalars. Authored text before filling may be up to
     /// `rawTextFactor` times `text`.
     public static let text = 40, unchecked = 60, rawTextFactor = 4
-    /// Input samples per turn for motion arrow directions and dimension `over` ranges.
-    public static let samples = 720
-    /// A motion arrow on a still anchor looks this many samples ahead (1/8 turn) while a view plays.
-    public static let lookAhead = 90
     /// Triangle tests per frame for the occlusion ray test; over it, `occluded` is unknown (null).
     public static let occlusionTests = 2_000_000
     /// Motion line arrow `length` in mm, and `{"fact", "scale"}` scale (mm per unit) with the clamped result.
@@ -508,9 +504,8 @@ enum MGSolidAnnotationEngine {
         }
     }
 
-    /// One dimension value: |b − a| (or one world component with `along`) or the angle at the vertex, at the default
-    /// input with explode 0; with `over`, largest minus smallest over one input turn (720 samples, ends included).
-    /// A dimension's value at one pose; nil when an angle arm is shorter than `minDimension`.
+    /// A dimension's value at one pose: |b − a| (or one world component with `along`) or the angle at the vertex; nil
+    /// when an angle arm is shorter than `minDimension`.
     static func dimensionValue(_ d: MGSolidDimension, _ pose: MGPose) -> Double? {
         let pa = d.a.world(pose), pb = d.b.world(pose)
         if d.kind == .angle, let v = d.vertex?.world(pose) {
@@ -524,19 +519,6 @@ enum MGSolidAnnotationEngine {
         return delta.length
     }
 
-    /// Largest minus smallest value over one input turn (720 samples, ends included) at an explode value; nil when an
-    /// angle arm vanishes at some sample.
-    static func dimensionRange(_ d: MGSolidDimension, _ doc: MGSolidDocument, explode: Double) -> Double? {
-        var lo = Double.infinity, hi = -Double.infinity
-        for k in 0...L.samples {
-            guard let v = dimensionValue(d, doc.assembly.pose(MGPoseParameters(input: 2 * .pi * Double(k) / Double(L.samples), explode: explode))) else {
-                return nil
-            }
-            lo = min(lo, v); hi = max(hi, v)
-        }
-        return hi - lo
-    }
-
     static func measure(_ d: inout MGSolidDimension, _ doc: MGSolidDocument) throws {
         func value(_ pose: MGPose) throws -> Double {
             guard let v = dimensionValue(d, pose) else { throw MGSolidIssue("dimension.zero.\(d.id)", part: d.id) }
@@ -547,8 +529,8 @@ enum MGSolidAnnotationEngine {
         let chain = parts.compactMap(doc.chainTier).min()
         if d.over {
             guard chain != nil else { throw MGSolidIssue("dimension.over.\(d.id)", part: d.id) }
-            guard let range = dimensionRange(d, doc, explode: 0) else { throw MGSolidIssue("dimension.zero.\(d.id)", part: d.id) }
-            d.value = range
+            // The exact range over one input turn from the joint's closed form (`dimension.over.motion.<id>` otherwise).
+            d.value = try MGSolidAnnotationMotion.range(d, doc, explode: 0)
             // A range below 0.01 mm (or 0.01°) means nothing changes over the turn.
             if d.value < L.minDimension { throw MGSolidIssue("dimension.over.still.\(d.id)", part: d.id) }
             d.tier = chain ?? .solved
@@ -558,25 +540,6 @@ enum MGSolidAnnotationEngine {
             // At input 0 no drive speed affects the pose; at another default input the pose depends on the drive chain.
             d.tier = doc.defaults.input == 0 ? .solved : (chain ?? .solved)
         }
-    }
-
-    /// The motion direction of a part anchor at input `u` (unit, kernel world), or nil while it is still: the velocity
-    /// (central difference); when that is zero (a piston at dead centre), the first non-zero velocity within
-    /// `ahead` samples of 1/720 turn.
-    /// `sense` −1 is a view that plays the input backwards (a step with a negative `spin`): the motion, and the
-    /// look-ahead, run toward smaller inputs.
-    static func velocityDirection(_ doc: MGSolidDocument, _ p: MGAnnotationPoint, input u: Double, explode: Double, ahead: Int,
-                                  sense: Double = 1) -> MGVec3? {
-        let h = 1e-4
-        let still = 1e-9 * max(1, doc.annotations.diagonal)
-        let s: Double = sense < 0 ? -1 : 1
-        for k in 0...max(0, ahead) {
-            let x = u + s * 2 * .pi * Double(k) / Double(L.samples)
-            let d = p.world(doc.assembly.pose(MGPoseParameters(input: x + s * h, explode: explode)))
-                - p.world(doc.assembly.pose(MGPoseParameters(input: x - s * h, explode: explode)))
-            if d.length > still, d.x.isFinite, d.y.isFinite, d.z.isFinite { return d.normalized }
-        }
-        return nil
     }
 
     static func angle(_ a: MGVec3, _ b: MGVec3) -> Double {
@@ -648,9 +611,7 @@ enum MGSolidAnnotationEngine {
             base = doc.motionTier(id)
         case (.motion, .line):
             guard let from = r.from, let part = from.part else { throw MGSolidIssue("arrow.from.\(r.id)") }
-            guard let dir = velocityDirection(doc, from, input: doc.defaults.input, explode: 0, ahead: L.samples) else {
-                throw MGSolidIssue("arrow.still.\(r.id)")
-            }
+            guard let dir = MGSolidAnnotationMotion.direction(doc, from, rest) else { throw MGSolidIssue("arrow.still.\(r.id)") }
             r.direction = dir
             if let e = r.expect, angle(e, dir) > L.expectDegrees { throw MGSolidIssue("arrow.expect.\(r.id)") }
             base = doc.chainTier(part) ?? .solved
@@ -674,68 +635,6 @@ enum MGSolidAnnotationEngine {
             }
         }
         if let b = base { r.tier = min(b, textTier ?? .solved) } else { r.tier = textTier }
-    }
-
-    /// The poses a view can show: a step plays its `spin` from the default input (720 samples per input turn, ends
-    /// included) at its explode value; the plain view shows the default pose.
-    static func shownPoses(_ doc: MGSolidDocument, step: Int?) -> (inputs: [Double], explode: Double) {
-        let u0 = doc.defaults.input
-        guard let i = step, doc.steps.indices.contains(i) else { return ([u0], doc.defaults.explode) }
-        let s = doc.steps[i]
-        let n = max(1, Int((abs(s.spin) * Double(L.samples)).rounded(.up)))
-        let inputs = s.spin == 0 ? [u0] : (0...n).map { u0 + 2 * .pi * s.spin * Double($0) / Double(n) }
-        return (inputs, s.explode ?? doc.defaults.explode)
-    }
-
-    /// Every pose-dependent annotation claim holds at every pose the views that show it can show (the plain view, and
-    /// each step over its `spin` range at its explode value), in the direction the view plays (a negative `spin`
-    /// plays backwards). Otherwise `annotation.pose.<id>`:
-    /// - a dimension without `over` whose value changes by more than 0.01 mm (0.01°), or a dimension with `over`
-    ///   whose range differs at the view's explode value;
-    /// - a gravity force arrow more than 10° from −Z (or shorter than 0.5 mm);
-    /// - a motion line arrow with `expect` whose shown direction is more than 30° from it;
-    /// - a turn arrow with a stated `sense` that the view plays the other way.
-    /// Labels and other arrows ride their parts, and their shown direction is the engine's, so they need no check.
-    static func checkPoses(_ doc: MGSolidDocument) throws {
-        let a = doc.annotations
-        guard !a.isEmpty else { return }
-        for step in [nil] + doc.steps.indices.map({ Optional($0) }) {
-            let shown = Set(doc.visibleAnnotations(step: step))
-            guard !shown.isEmpty else { continue }
-            let (inputs, explode) = shownPoses(doc, step: step)
-            let sense = doc.view(step: step).motionSense
-            let poses = inputs.map { doc.assembly.pose(MGPoseParameters(input: $0, explode: explode)) }
-            func fail(_ id: String) -> MGSolidIssue { MGSolidIssue("annotation.pose.\(id)", part: id) }
-            for r in a.arrows where shown.contains(r.id) {
-                switch (r.meaning, r.style) {
-                case (.motion, .turn):
-                    if let stated = r.sense, ((r.turnSign ?? 1) * sense > 0) != (stated == "ccw") { throw fail(r.id) }
-                case (.motion, .line):
-                    guard let e = r.expect, let from = r.from else { continue }
-                    for u in inputs {
-                        guard let dir = velocityDirection(doc, from, input: u, explode: explode, ahead: L.lookAhead, sense: sense) else { continue }
-                        if angle(e, dir) > L.expectDegrees { throw fail(r.id) }
-                    }
-                case (.force, _) where r.cause == "gravity":
-                    guard let from = r.from, let to = r.to else { continue }
-                    for pose in poses {
-                        let d = to.world(pose) - from.world(pose)
-                        if d.length < L.minAuthorLength || angle(d, MGVec3(0, 0, -1)) > L.gravityDegrees { throw fail(r.id) }
-                    }
-                default: continue
-                }
-            }
-            for d in a.dimensions where shown.contains(d.id) {
-                if d.over {
-                    guard explode != 0 else { continue }
-                    guard let range = dimensionRange(d, doc, explode: explode), abs(range - d.value) <= L.minDimension else { throw fail(d.id) }
-                } else {
-                    for pose in poses {
-                        guard let v = dimensionValue(d, pose), abs(v - d.value) <= L.minDimension else { throw fail(d.id) }
-                    }
-                }
-            }
-        }
     }
 
     /// `annotation.unused.<id>` (some step uses `annotate`, no step shows it; strict refuses) and
@@ -849,8 +748,8 @@ extension MGSolidAnnotations {
     }
 
     /// The pieces of one arrow or dimension in the posed kernel world. Their number never changes with the pose.
-    /// A motion line arrow follows the engine velocity at the pose (looking 1/8 turn ahead at a dead centre) and
-    /// hides while its anchor is still; a turn arrow rides its part's joint frame, so it does not spin with the part.
+    /// A motion line arrow follows the exact velocity at the pose (at a crank-slider dead centre, the way the slider
+    /// moves next) and hides while its anchor is still; a turn arrow rides its part's joint frame, so it does not spin with the part.
     /// `sense` −1 draws the motion of a view that plays the input backwards (`MGSolidView.motionSense`).
     public static func primitives(_ doc: MGSolidDocument, _ id: String, params: MGPoseParameters, sense: Double = 1) -> [MGAnnotationPrimitive] {
         let a = doc.annotations
@@ -868,8 +767,7 @@ extension MGSolidAnnotations {
             case (.motion, .line):
                 guard let from = r.from else { return lineArrow(.zero, .zero, radius: sr) }
                 let p = from.world(pose)
-                let dir = MGSolidAnnotationEngine.velocityDirection(doc, from, input: params.input, explode: params.explode,
-                                                                    ahead: MGSolidAnnotationLimits.lookAhead, sense: sense)
+                let dir = MGSolidAnnotationMotion.direction(doc, from, pose, sense: sense)
                 return lineArrow(p, p + (dir ?? .zero) * (r.length ?? 0), radius: sr, hidden: dir == nil)
             default:
                 return lineArrow(r.from?.world(pose) ?? .zero, r.to?.world(pose) ?? .zero, radius: sr)
@@ -908,7 +806,8 @@ extension MGSolidAnnotations {
         var n = pb - c
         if n.length < 1e-6 { n = k == 2 ? .unitX : .unitZ }
         let o = n.normalized * (0.05 * diag)
-        let a1 = pa + o, c1 = c + o + (pb - c)
+        // The line runs from a + o to c + o, parallel to the axis and as long as the measured component.
+        let a1 = pa + o, c1 = c + o
         return (a1, c1, [(pa, a1), (pb, c1)])
     }
 

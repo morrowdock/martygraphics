@@ -300,6 +300,7 @@
     "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift: assembly v2 labels, arrows and dimensions: anchors, engine motion directions and checks, dimension facts, tiers, visibility, warnings, piece meshes (public-only)",
     "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift: deterministic annotation text placement, core projection, callout list, hysteresis, occlusion ray test, frame records and check report data (public-only)",
     "Sources/MartyGraphics/Solid/MGSolidOverlayView.swift: SwiftUI and CoreGraphics annotation overlay drawn from placement records (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift: exact annotation motion (closed-form joint rates, point velocities, world-fixed anchors, exact over ranges), the per-view claim rules and the one display gate (public-only)",
     "Tests/MartyGraphicsTests/SolidAnnotationTests.swift: annotation parsing, anchors, arrows, dimensions, visibility, budget and hostile-input coverage",
     "Tests/MartyGraphicsTests/AnnotationLayoutTests.swift: placement, occlusion, snapshot v2 annotation fields, overlay and SceneKit annotation coverage",
     "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json: assembly v2 worked example (hand winch with labels, turn, force and motion arrows and a measured dimension)"

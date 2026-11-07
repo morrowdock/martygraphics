@@ -241,7 +241,8 @@ public final class MGSolidRenderer {
     /// Visibility from the view, transforms from the pose: no geometry is built here.
     private func updateAnnotations() {
         guard let doc = annotationDocument else { return }
-        let visible = Set(view.annotations)
+        // The one gate: annotations only for a view and pose the engine checked.
+        let visible = Set(doc.checkedAnnotations(view, params: posed) ?? [])
         SCNTransaction.begin(); SCNTransaction.disableActions = true
         for (id, nodes) in annotationNodes {
             guard visible.contains(id) else { nodes.forEach { $0.isHidden = true }; continue }

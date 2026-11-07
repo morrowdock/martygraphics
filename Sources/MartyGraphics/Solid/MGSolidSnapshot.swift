@@ -242,7 +242,10 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
                             stage: MGTransform = MGSolidStage.zUpToYUp) -> MGSolidSnapshot {
         let view = document.view(step: step)
         var snap = build(document.assembly, view: view, params: params, camera: camera, aspect: aspect, lighting: lighting, stage: stage)
-        if !view.annotations.isEmpty { addAnnotations(&snap, document, view: view, step: step, params: params, highlight: highlight, stage: stage) }
+        // The one gate: annotations only for a view and pose the engine checked.
+        if let shown = document.checkedAnnotations(view, params: params), !shown.isEmpty {
+            addAnnotations(&snap, document, view: view, step: step, params: params, highlight: highlight, stage: stage)
+        }
         let known = Set(document.assembly.parts.map(\.id))
         let lit = MGSolidParser.unique(highlight.filter { known.contains($0) })
         if !lit.isEmpty { snap.highlight = lit }
