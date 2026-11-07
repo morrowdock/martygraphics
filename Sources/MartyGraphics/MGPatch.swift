@@ -84,6 +84,11 @@ extension MGScene {
     /// Same, with templates that are not registered (for example a pack under validation). Use the same extras that
     /// parsed this scene; a registered template with the same name wins.
     public func applying(_ patch: MGPatch, extraTemplates: [MGTemplate]) -> Result<MGScene, MGError> {
+        applying(patch, extraTemplates: extraTemplates, env: nil)
+    }
+
+    /// Internal: the same inside an explainer, so the re-parse fills placeholders exactly as the first parse did.
+    func applying(_ patch: MGPatch, extraTemplates: [MGTemplate], env: MGParseEnvironment?) -> Result<MGScene, MGError> {
         guard var root = source.objectValue else { return .failure(.init("patch.source")) }
         if let base = patch.baseRevision, base != revision { return .failure(.init("patch.stale")) }
         var jump: Int?
@@ -133,7 +138,7 @@ extension MGScene {
                 }
             }
         } catch let e as MGError { return .failure(e) } catch { return .failure(.init("patch")) }
-        switch MGParser.scene(json: .object(root), extraTemplates: extraTemplates) {
+        switch MGParser.scene(json: .object(root), extraTemplates: extraTemplates, env: env) {
         case .success(var next):
             next.revision = revision + 1
             if let jump {
