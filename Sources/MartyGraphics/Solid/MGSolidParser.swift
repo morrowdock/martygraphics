@@ -132,7 +132,7 @@ public enum MGSolidParser {
     public static func document(data: Data, reusing previous: MGSolidDocument? = nil,
                                 library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
         guard data.count <= MGSolidLimits.bytes else { return .failure(.init("assembly.bytes")) }
-        guard MGJSON.textNesting(data) <= MGLimits.depth else { return .failure(.init("assembly.depth")) }
+        if let r = MGJSON.dataRefusal(data, json: "json", depth: "assembly.depth") { return .failure(.init(r)) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
             return .failure(.init("json"))
         }

@@ -99,7 +99,7 @@ public struct MGSolidLibrary: Equatable, Sendable {
 
     mutating func add(_ data: Data, compile: Bool) -> Result<MGSolidComponent, MGSolidIssue> {
         guard data.count <= MGSolidComponentLimits.bytes else { return .failure(.init("component.bytes")) }
-        guard MGJSON.textNesting(data) <= MGLimits.depth else { return .failure(.init("component.nesting")) }
+        if let r = MGJSON.dataRefusal(data, json: "json", depth: "component.nesting") { return .failure(.init(r)) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
             return .failure(.init("json"))
         }

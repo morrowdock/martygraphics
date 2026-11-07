@@ -233,8 +233,10 @@ The snapshot caps come from these bounds:
   scene, 1024 ids at 80 bytes each, 4 controls), the queue budget, one caption, the title and 2 KiB of fixed fields.
 - Depth: `MGLessonLimits.snapshotDepth` = 64 levels, the engine-wide cap `MGLimits.depth` (see
   [the protocol](PROTOCOL.md)). Nesting counts the arrays and objects on one path (`[[1]]` is 2). At 64 levels the
-  recursive steps (the system JSON parser and encoder, `MGJSON(any:)`, `==`, hashing, freeing) stay far inside a
-  512 KiB thread stack, and a snapshot stored as JSON text always reads back. Real lessons nest 6 to 15 levels.
+  recursive steps (the system JSON parser and encoder, `MGJSON(any:)`, `==`, hashing, freeing) use less than half of
+  a 512 KiB thread stack, and a snapshot stored as JSON text always reads back. Real lessons nest 6 to 15 levels.
+  JSON `Data` must be UTF-8: `MGLesson.parse(data:)` refuses other bytes (a raw NUL byte, as in UTF-16 or UTF-32
+  text, or invalid UTF-8) with `lesson.json`, and a stream statement with `stmt.json`, before the system parser.
   - The deepest part of a snapshot is a queued command, which 5 containers hold (the snapshot, `pending`, the entry,
     `commands`, the command record). So every statement and every command may nest at most
     `MGLessonLimits.statementDepth` = 59 levels (`lesson.depth`). This holds for stream statements (counted on the

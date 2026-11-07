@@ -10,9 +10,15 @@
   a value built in code before anything reads, compares or encodes it.
   - Newly refused: a scene, patch or raw template `params` that nests deeper than 64 levels (`scene.depth`,
     `patch.depth`, `template.params.depth`). This affects a raw template whose free-form `params` nest more than
-    about 60 levels, which was accepted before. The shipped templates, packs, fixtures and models nest at most 8.
+    about 60 levels, which was accepted before. The shipped templates, packs, fixtures, models and built-in components
+    nest at most 12.
   - Newly refused in Solid 3D: an assembly (`assembly.depth`), a patch (`patch.depth`) or a component definition
     (`component.nesting`) deeper than 64 levels.
+  - JSON `Data` must be UTF-8. Every `Data` entry point (`MGParser.scene(data:)`, `MGPatch.parse(data:)`,
+    `MGLesson.parse(data:)`, lesson stream statements, `MGSolidParser.document(data:)`, `MGSolidLibrary.validate` and
+    `register`) newly refuses bytes that are not valid UTF-8 or that hold a raw NUL byte, with its `json` reason
+    (`json`, `patch.json`, `lesson.json`, `stmt.json`), before the system parser. Before, UTF-16 and UTF-32 text was
+    accepted; the nesting counter cannot read it, so a deep UTF-16 document could still crash a 512 KiB thread.
   - `MGJSON(any:)` returns nil for nesting deeper than 64; `canonicalData` and `canonicalByteCount` never encode a
     deeper value (`Int.max`).
   - For a value built in code the order is `.number`, `.depth`, then the byte bound. A value built in code that is

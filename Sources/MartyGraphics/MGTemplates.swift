@@ -155,7 +155,8 @@ public struct MGTemplate {
 
     /// Declares a template whose `params` value is arbitrary JSON (strings, nested arrays, objects) instead of declared
     /// numeric parameters. The engine only bounds the size (`MGLimits.rawParamsBytes` of canonical JSON, refused as
-    /// `template.params.bytes`) and requires finite numbers (`template.params.number`); the `compile` closure receives the object unchanged and
+    /// `template.params.bytes`) and the nesting (`MGLimits.depth`, 64 levels, refused as `template.params.depth`), and
+    /// requires finite numbers (`template.params.number`); the `compile` closure receives the object unchanged and
     /// owns all further checks. To refuse, return nil (`template.build`) or throw `MGError("template.<suffix>")`
     /// (suffix rule as for `reject`; other reasons become `template.build`). The parser checks the built scene like any
     /// wire scene. `paramsDoc` might read `words:[1–3 short strings]`. A `params` patch replaces top-level keys of the

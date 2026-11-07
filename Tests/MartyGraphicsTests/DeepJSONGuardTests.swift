@@ -289,6 +289,55 @@ final class DeepJSONGuardTests: LessonTestCase {
         })
     }
 
+    // MARK: JSON Data must be UTF-8
+
+    /// Re-check B1: the system parser also reads UTF-16 and UTF-32 (no BOM needed), which the byte counter cannot read.
+    /// Every `Data` entry point refuses such text with its `json` reason before the parser runs, so nothing deep reaches
+    /// the parser on a small stack.
+    func testNonUTF8DataIsRefusedBeforeTheParserOnASmallStack() throws {
+        try Deep.register()
+        verify(onSmallStack { () -> [DeepCheck] in
+            var out: [DeepCheck] = []
+            let encodings: [(String, String.Encoding)] = [("utf16le", .utf16LittleEndian), ("utf16be", .utf16BigEndian),
+                                                          ("utf32le", .utf32LittleEndian)]
+            // The probe text: an escaped quote first (the byte counter would lose track of strings), then deep objects.
+            func text(_ head: String, _ key: String, _ levels: Int) -> String {
+                "{" + head + #""t":"\"","# + #"""# + key + #"":"# + Deep.text(levels, .objects) + "}"
+            }
+            for levels in [70, 500] {
+                for (name, encoding) in encodings {
+                    func data(_ t: String) -> Data { t.data(using: encoding)! }
+                    let s = "\(name) \(levels)"
+                    let scene = data(text(#""v":1,"#, "world", levels))
+                    out.append(DeepCheck(label: "counter \(s)", got: MGJSON.utf8Nesting(scene) == nil ? nil : "counted", want: nil))
+                    out.append(DeepCheck(label: "scene \(s)", got: Deep.reason(MGParser.scene(data: scene)), want: "json"))
+                    out.append(DeepCheck(label: "scene extras \(s)", got: Deep.reason(MGParser.scene(data: scene, extraTemplates: [Deep.template()])), want: "json"))
+                    out.append(DeepCheck(label: "patch \(s)", got: Deep.reason(MGPatch.parse(data: data(text(#""v":1,"#, "ops", levels)))), want: "patch.json"))
+                    out.append(DeepCheck(label: "lesson \(s)", got: Deep.reason(MGLesson.parse(data: data(text(#""v":1,"kind":"lesson","#, "scene", levels)))),
+                                         want: "lesson.json"))
+                    out.append(DeepCheck(label: "solid \(s)", got: Deep.reason(MGSolidParser.document(data: data(text(#""v":1,"kind":"assembly","#, "parts", levels)))),
+                                         want: "json"))
+                    let component = data(text(#""v":1,"kind":"component","#, "parts", levels))
+                    out.append(DeepCheck(label: "component validate \(s)", got: Deep.reason(MGSolidLibrary().validate(component)), want: "json"))
+                    var library = MGSolidLibrary()
+                    out.append(DeepCheck(label: "component register \(s)", got: Deep.reason(library.register(component)), want: "json"))
+                    // The lesson stream takes `Data` too: whatever the scanner cuts out is refused, nothing is accepted.
+                    var session = MGLessonSession(pacing: .immediate, clock: MGManualClock())
+                    let events = session.feed(data(text("", "title", levels))) + session.endStream()
+                    let refused = Set(events.compactMap { if case .refused(let i) = $0 { return i.reason } else { return nil } })
+                    let accepted = events.contains { if case .accepted = $0 { return true } else { return false } }
+                    out.append(DeepCheck(label: "stream \(s)", got: accepted || refused.isEmpty || !refused.isSubset(of: ["stmt.json", "stmt.bytes"]) ? "\(refused.sorted())" : nil,
+                                         want: nil))
+                }
+            }
+            // UTF-8 text is still counted exactly, and a raw NUL byte is never UTF-8 JSON.
+            out.append(DeepCheck(label: "utf8", got: MGJSON.utf8Nesting(Data(text("", "a", 70).utf8)).map { "\($0)" }, want: "71"))
+            out.append(DeepCheck(label: "nul", got: MGJSON.utf8Nesting(Data([0x7B, 0x00, 0x7D])) == nil ? nil : "counted", want: nil))
+            out.append(DeepCheck(label: "invalid utf8", got: MGJSON.utf8Nesting(Data([0x5B, 0xFF, 0x5D])) == nil ? nil : "counted", want: nil))
+            return out
+        })
+    }
+
     // MARK: 100,000 levels
 
     func testHostileValuesAreRefusedEverywhereOnASmallStack() throws {

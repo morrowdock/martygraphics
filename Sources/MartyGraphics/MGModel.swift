@@ -158,7 +158,7 @@ public struct MGScene: Equatable, Sendable {
 /// `MGScene.applying`, `MGTemplate.validate`, `MGLesson.parse(json:)`, lesson `apply`, `restore`, the Solid parsers)
 /// first runs one walk that does not recurse (`measure`) and refuses a value that nests deeper than `MGLimits.depth`
 /// (64) before it reads, compares, hashes or encodes it. Entry points that take JSON text count its nesting
-/// (`textNesting`) before the system parser runs. `canonicalData` and `canonicalByteCount` never encode a deeper value.
+/// (`utf8Nesting`) before the system parser runs; JSON `Data` must be UTF-8. `canonicalData` and `canonicalByteCount` never encode a deeper value.
 /// Swift itself compares, hashes and frees nested enum values recursively, and so does `any`: a host that builds a much
 /// deeper value in code should give it to an entry point (which refuses it) and not compare, hash or convert it itself.
 public indirect enum MGJSON: Equatable, Hashable, Sendable {
@@ -202,8 +202,24 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
     /// True when every number in the value is finite. A value built in code can hold NaN or an infinity, which JSON
     /// cannot encode (the system encoder raises an exception that Swift cannot catch), so check before encoding.
     public var isEncodable: Bool { measure().finite }
-    /// Nesting of JSON text (arrays and objects on one path), counted in one pass without parsing; brackets inside
-    /// strings do not count. Entry points run it before the system parser, which recurses once per level.
+    /// Nesting of UTF-8 JSON `Data`, or nil when the bytes are not UTF-8 JSON text: they are not valid UTF-8, or they
+    /// hold a raw NUL byte (valid UTF-8 JSON never does, and UTF-16 or UTF-32 text with any bracket or quote always
+    /// does). The system parser also reads UTF-16 and UTF-32, which the byte counter cannot read, so every `Data` entry
+    /// point refuses such text (with its `json` reason) before the parser runs.
+    static func utf8Nesting(_ data: Data) -> Int? {
+        guard !data.contains(0), String(data: data, encoding: .utf8) != nil else { return nil }
+        return textNesting(data)
+    }
+
+    /// The first check of a `Data` entry point, before the system parser: `json` when the bytes are not UTF-8 JSON
+    /// text (`utf8Nesting`), `depth` when the text nests deeper than `maxDepth`, else nil.
+    static func dataRefusal(_ data: Data, maxDepth: Int = MGLimits.depth, json: String, depth: String) -> String? {
+        guard let nesting = utf8Nesting(data) else { return json }
+        return nesting <= maxDepth ? nil : depth
+    }
+
+    /// Nesting of UTF-8 JSON text (arrays and objects on one path), counted in one pass without parsing; brackets
+    /// inside strings do not count. Use `utf8Nesting` for `Data` from a host: this counter reads UTF-8 only.
     static func textNesting<S: Sequence>(_ bytes: S) -> Int where S.Element == UInt8 {
         var depth = 0, deepest = 0, inString = false, escape = false
         for b in bytes {

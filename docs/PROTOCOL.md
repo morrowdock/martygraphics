@@ -215,12 +215,19 @@ JSON nests at most `MGLimits.depth` = 64 levels (arrays and objects on one
 path; `[[1]]` is 2) at every entry point. Real scenes and patches nest 6 to 15
 levels. The system JSON parser and encoder, `MGJSON(any:)`, and Swift's `==`,
 hashing and freeing of nested values all recurse once per level. At 64 levels
-they stay far inside a 512 KiB thread stack (iOS secondary threads) and the
+the deepest of them (a sorted-key encode of nested objects) uses less than half
+of a 512 KiB thread stack (iOS secondary threads) and about a fifth of the
 1 MiB iOS main-thread stack; a few hundred nested objects can overflow them.
-So every entry point counts the nesting first, without recursion: on JSON text
-before the system parser (`scene(data:)`, `MGPatch.parse(data:)`, the stream
-parser), and on a value built in code before anything reads, compares or
-encodes it. A deeper value is `scene.depth`, `patch.depth` or
+So every entry point counts the nesting first, without recursion: on JSON
+`Data` before the system parser (`scene(data:)`, `MGPatch.parse(data:)`, the
+stream parser), and on a value built in code before anything reads, compares or
+encodes it.
+
+JSON `Data` must be UTF-8. The system parser also reads UTF-16 and UTF-32
+(without a byte order mark), which the nesting counter cannot read. So every
+`Data` entry point refuses bytes that are not valid UTF-8, or that hold a raw
+NUL byte (valid UTF-8 JSON never does; UTF-16 and UTF-32 JSON always does),
+with its `json` reason (`json`, `patch.json`) before the parser runs. A deeper value is `scene.depth`, `patch.depth` or
 `template.params.depth`. For a value built in code the reasons come in this
 order: `.number`, `.depth`, then the byte bound. `canonicalData` and
 `canonicalByteCount` never encode a deeper value (`Int.max`), and
@@ -346,7 +353,7 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 
 | Reason / family | Trigger | Recovery |
 | --- | --- | --- |
-| `json`, `patch.json` | Input decoding, malformed JSON or raw input headroom exceeded | Send a complete, bounded inner object; do not feed a transport envelope to the parser. |
+| `json`, `patch.json` | Input decoding, malformed JSON, `Data` that is not UTF-8 (for example UTF-16), or raw input headroom exceeded | Send a complete, bounded inner object; do not feed a transport envelope to the parser. |
 | `scene.version` | `v` differs from 1 | Negotiate/support the protocol version before sending scenes. |
 | `scene.unknown.<keys>` | Closed root object has unsupported keys | Remove unsupported fields; [negative fixture](fixtures/v1/unknown-key.scene.json). |
 | `scene.bytes`, `patch.object`, `items.count`, `steps` | Canonical object or collection violates bounds | Reduce authored content; `patch.object` also covers a non-object patch. |

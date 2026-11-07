@@ -389,7 +389,9 @@ public struct MGLessonSession {
         case .statement(let raw):
             // Counted on the text, before the system parser (which recurses once per level) and before a snapshot
             // could hold it (`statementDepth`).
-            guard MGJSON.textNesting(raw) <= MGLessonLimits.statementDepth else { return refuse("lesson.depth", index) }
+            if let r = MGJSON.dataRefusal(Data(raw), maxDepth: MGLessonLimits.statementDepth, json: "stmt.json", depth: "lesson.depth") {
+                return refuse(r, index)   // UTF-8 only
+            }
             guard let object = try? JSONSerialization.jsonObject(with: Data(raw)), let json = MGJSON(any: object) else { return refuse("stmt.json", index) }
             statement(json, index)
         }

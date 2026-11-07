@@ -223,7 +223,9 @@ public struct MGLesson: Equatable, Sendable {
 
     public static func parse(data: Data) -> Result<MGLesson, MGLessonIssue> {
         guard data.count <= MGLessonLimits.lessonBytes * 2 else { return .failure(.init("lesson.bytes")) }
-        guard MGJSON.textNesting(data) <= MGLessonLimits.documentDepth else { return .failure(.init("lesson.depth")) }
+        if let r = MGJSON.dataRefusal(data, maxDepth: MGLessonLimits.documentDepth, json: "lesson.json", depth: "lesson.depth") {
+            return .failure(.init(r))   // UTF-8 only, nesting counted before the system parser
+        }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else { return .failure(.init("lesson.json")) }
         return parse(json: json)
     }

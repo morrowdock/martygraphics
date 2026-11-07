@@ -219,9 +219,11 @@ reported `part.parent`.
   8 shapes per part, 256 profile points, 128 constraints, 16 steps, teeth
   8–200 (ring 20–400), module 0.2–20 mm, lengths up to 4 m. JSON nests at most
   64 levels (`MGLimits.depth`, arrays and objects on one path; the shipped models
-  use at most 8): a deeper document is `assembly.depth`, a deeper patch
-  `patch.depth`, a deeper component definition `component.nesting`. The check runs
-  first, without recursion (on text, before the system parser).
+  and built-in components use at most 12): a deeper document is `assembly.depth`, a
+  deeper patch `patch.depth`, a deeper component definition `component.nesting`. The
+  check runs first, without recursion (on `Data`, before the system parser). JSON
+  `Data` must be UTF-8; other bytes (a raw NUL byte, as in UTF-16 or UTF-32 text, or
+  invalid UTF-8) are refused as `json`.
 * **Text limits**: `title` at most 80 characters (`assembly.title`), part `name`
   at most 60 (`part.name`), step `say` at most 240 (`step.say`). Keep a step to one
   or two short sentences.
