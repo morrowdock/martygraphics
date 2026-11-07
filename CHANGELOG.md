@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Show the beat-by-beat rotation lesson in the README and `docs/SHOWCASE.md`: a 640×400 loop, beat stills and a
+  learner-slider still in `docs/assets/lessons/` with a capture receipt. Add `lesson-demo --capture <new directory>
+  [WIDTHxHEIGHT]` to `Examples/LessonDemo`: it plans one run headless on the demo's default pacing (beat states, the
+  start scene and engine keyframes of each `animate`, a scripted learner's slider ticks), shows each planned frame on
+  the live demo view offscreen, and writes the frames, `frames.json` and a GIF whose delays are the planned times
+  (ImageIO, no external tools). The plan and the GIF writer are example code (`LessonDemoKit/Capture.swift`) with tests.
 - Add the 2D item kinds `table` (a grid of up to 8 × 6 short cells with an optional
   header row and marked cells) and `region` (a filled closed polygon of 3 to 64
   points), and the text style `code` (monospaced, left-aligned, keeps leading spaces,

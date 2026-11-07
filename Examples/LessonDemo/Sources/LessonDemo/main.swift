@@ -42,6 +42,71 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+/// Timed frames of one lesson run on the demo's default pacing (see `LessonCapture`): the live demo view in an
+/// offscreen window shows each planned frame (beat states, the engine's keyframe scenes of each `animate`, a scripted
+/// learner's slider ticks) and is recorded after it settles. Writes `frames/*.png` at the window's pixel size,
+/// `frames.json` (planned time, beat, kind, angle, caption, labels) and `loop.gif` (640 px wide, delays = planned times).
+@MainActor private func capture(to directory: URL, width w: Int, height h: Int) throws {
+    let frameDir = directory.appendingPathComponent("frames")
+    if FileManager.default.fileExists(atPath: directory.path) { throw CocoaError(.fileWriteFileExists) }
+    try FileManager.default.createDirectory(at: frameDir, withIntermediateDirectories: true)
+    let plan = try LessonCapture.plan()
+    let model = LessonDemoModel(pacing: .speech)
+    let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: w, height: h), styleMask: [.borderless], backing: .buffered, defer: false)
+    window.isReleasedWhenClosed = false
+    let host = NSHostingView(rootView: LessonDemoView(model: model))
+    host.frame = NSRect(x: 0, y: 0, width: w, height: h)
+    window.contentView = host
+    window.orderFrontRegardless()
+    model.play()
+    let c = model.controller
+    var beat = 0
+    var images: [CGImage] = []
+    var rows: [[String: Any]] = []
+    for (i, f) in plan.frames.enumerated() {
+        while beat < f.beat { c.lineEnded(beat); beat += 1 }
+        var wait = 3.0   // past blends (1.2 s) and draw-on (0.55 s); an offscreen window captures settled frames only
+        switch f.kind {
+        case .keyframe:
+            // The live session must have planned the same keyframe scene; then the board shows exactly that scene.
+            guard let scene = f.scene, case .keyframes(let segments)? = c.session.lastChange?.transition,
+                  segments.flatMap(\.frames).filter({ $0.source == scene.source }).count == 1
+            else { throw CocoaError(.validationMultipleErrors) }
+            c.board.show(scene, transition: .direct)
+            wait = 0.6
+        case .settled:
+            if let scene = c.state?.scene { c.board.show(scene, transition: .direct) }
+        case .learner(let angle):
+            guard c.control("angle", angle) else { throw CocoaError(.validationMultipleErrors) }   // the slider's own call
+            wait = 0.6
+        case .beat:
+            break
+        }
+        RunLoop.main.run(until: Date().addingTimeInterval(wait))
+        guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { throw CocoaError(.fileWriteUnknown) }
+        host.cacheDisplay(in: host.bounds, to: rep)
+        guard let image = rep.cgImage else { throw CocoaError(.fileWriteUnknown) }
+        let name = String(format: "%03d-beat%d-%@.png", i, f.beat + 1, f.kind.name)
+        try LessonCapture.writePNG(image, to: frameDir.appendingPathComponent(name))
+        images.append(image)
+        let shown = f.scene ?? c.state?.scene
+        rows.append(["file": "frames/" + name, "at": (f.at * 1000).rounded() / 1000, "beat": f.beat + 1, "kind": f.kind.name,
+                     "theta": shown?.values["theta"]?.value ?? -1, "caption": c.caption ?? "",
+                     "labels": ["lA", "lB", "lC"].compactMap { shown?.item($0)?.text }])
+    }
+    window.close()
+    let delays = LessonCapture.gifDelays(plan.frames.map(\.at), end: plan.complete + LessonCapture.endHold)
+    let small = images.compactMap { LessonCapture.scaled($0, width: 640) }
+    try LessonCapture.writeGIF(small, delays: delays, to: directory.appendingPathComponent("loop.gif"))
+    for k in rows.indices { rows[k]["gifDelayCentiseconds"] = delays[k] }
+    let summary: [String: Any] = ["window": "\(w)x\(h) points", "pixels": "\(images[0].width)x\(images[0].height)",
+                                  "gif": "\(small[0].width)x\(small[0].height)", "lessonCompleteSeconds": plan.complete,
+                                  "lineDueToCompleteSeconds": plan.lineDueToComplete, "endHoldSeconds": LessonCapture.endHold,
+                                  "gifTotalCentiseconds": delays.reduce(0, +), "frames": rows]
+    try JSONSerialization.data(withJSONObject: summary, options: [.prettyPrinted, .sortedKeys]).write(to: directory.appendingPathComponent("frames.json"))
+    print("wrote \(images.count) frames, loop.gif (\(delays.reduce(0, +)) cs) and frames.json to \(directory.path)")
+}
+
 @MainActor private func run() throws {
     let arguments = Array(CommandLine.arguments.dropFirst())
     switch arguments.first {
@@ -52,6 +117,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         if !result.ok { exit(1) }
     case "--timing":
         print(LessonTiming.report(LessonTiming.run()))
+    case "--capture" where arguments.count == 2 || arguments.count == 3:
+        let size = arguments.count == 3 ? arguments[2].split(separator: "x").compactMap { Int($0) } : [1366, 1024]
+        guard size.count == 2, (320...4096).contains(size[0]), (320...4096).contains(size[1]) else {
+            print("usage: lesson-demo --capture <new directory> [WIDTHxHEIGHT]"); exit(2)
+        }
+        try capture(to: URL(fileURLWithPath: arguments[1]), width: size[0], height: size[1])
     case "--render" where arguments.count == 2:
         try render(to: URL(fileURLWithPath: arguments[1]))
     case "--preview":
@@ -71,7 +142,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         application.activate(ignoringOtherApps: true)
         application.run()
     default:
-        print("usage: lesson-demo --verify | --timing | --render <directory> | --preview")
+        print("usage: lesson-demo --verify | --timing | --render <directory> | --capture <new directory> [WIDTHxHEIGHT] | --preview")
         exit(2)
     }
 }

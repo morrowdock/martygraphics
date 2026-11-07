@@ -61,6 +61,48 @@ runs inside the HP shaft. Here the HP shaft turns three times as fast as the LP 
 fan's air goes around the core through the bypass duct, and in a high-bypass engine like this it
 gives most of the thrust.
 
+## Beat-by-beat lessons
+
+A short rotation lesson on the lesson layer: triangle ABC turns about the origin O in five beats, with one angle
+slider. The lesson was written by hand as part of the [example](../Examples/LessonDemo/README.md), like the other
+hand-built examples on this page; it is not the output of a prompt run. The lesson JSON is [`rotation.lesson.json`](fixtures/v1/rotation.lesson.json); the format is in
+[LESSONS.md](LESSONS.md).
+
+[![Rotation lesson playing: the triangle turns 90 degrees, the learner moves the slider to 45 degrees, the lesson turns it to 180 degrees.](assets/lessons/rotation-loop.gif)](assets/lessons/rotation-loop.gif)
+
+| Beat | Line (numbers filled by the engine) | Still |
+| --- | --- | --- |
+| 1 | This is triangle ABC. Each label shows a corner's coordinates. | [beat-1.png](assets/lessons/beat-1.png) |
+| 2 | Now we turn the triangle about the origin O by 90°. | [beat-2-turning.png](assets/lessons/beat-2-turning.png) (engine keyframe at 45°, in the turn) |
+| 3 | A moved from (2, 1) to (-1, 2). Its distance to O is still 2.24. | [beat-3.png](assets/lessons/beat-3.png) |
+| 4 | Your turn. Drag the slider. The engine moves the triangle and updates every label. | [beat-4.png](assets/lessons/beat-4.png) (slider bound at 90°), [learner-slider-45.png](assets/lessons/learner-slider-45.png) (slider moved to 45°) |
+| 5 | At 180° every coordinate changes sign. A is now at (-2, -1). | [beat-5.png](assets/lessons/beat-5.png) |
+
+[![Beat 3: the triangle after the 90 degree turn, with engine-computed labels A (-1, 2), B (-1, 4), C (-3, 2) and the caption.](assets/lessons/beat-3.png)](assets/lessons/beat-3.png)
+
+[![Beat 4 after the learner moved the slider to 45 degrees: labels A (0.71, 2.12), B (2.12, 3.54), C (-0.71, 3.54).](assets/lessons/learner-slider-45.png)](assets/lessons/learner-slider-45.png)
+
+**How it teaches rotation.** The engine computes each rotated corner in Swift. The coordinate labels and the numbers
+in the lines are engine values, not typed text. The 90° turn plays as 18 engine keyframes at most 5° apart, and each
+keyframe is a true rotation with its own labels. In beat 4 the learner drags the slider. A slider move sends the same
+`params` command a scripted beat sends, so both go through the same checks and state path. In beat 5 the lesson
+turns the triangle from the learner's angle to 180°, and the beat's checks (A = (-2, -1)) must hold on the engine
+values before its line is shown.
+
+**How the images were made.** The stills are 1366×1024-point offscreen captures of the live demo view
+(`lesson-demo --render` for beats 1, 3, 4 and 5; `lesson-demo --capture` for the in-turn frame and the learner
+frame). The loop comes from `lesson-demo --capture` at 1024×640 points, scaled to 640×400 so that labels stay
+readable. It shows each beat state, the start scene and engine keyframes of each turn, and a scripted learner's
+slider ticks, each for the time the demo's default pacing (2.5 words per second) schedules it: 26.8 s in all,
+including a 2 s hold at the end. The live view also blends between neighbouring keyframes and draws new items on;
+the capture shows only settled frames. Labels can touch a dot, an edge or the highlight ring in some frames
+([a known limit](LESSONS.md#what-is-not-checked)).
+[Capture receipt](assets/lessons/provenance.json)
+
+Timing on an Apple M1 Mac (not an iPad), release build: scene statement → first offscreen frame 0.52 ms median;
+slider tick → state committed 0.14 ms median; the first figure needs 136 bytes of stream.
+See [measured timing](LESSONS.md#measured-timing-this-mac-only).
+
 ## Native scenes
 
 | Example | In `--preview` | What to notice | Source |

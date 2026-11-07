@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "4f5bff42df8eee8c7763ad3ac35c6d2231c8414d0aef95b50d0c791c7431947b"
+      "sha256": "1a2ce281ae737d2e72d07eb3a20bfc502911da16ac40592f6d290520b07b8ae7"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -59,11 +59,15 @@
     },
     {
       "path": "Examples/LessonDemo/README.md",
-      "sha256": "cc825da49d3e157e9f4bfa86b3ba63069ad8dc9d5c9e22f8f919fa01edfc059c"
+      "sha256": "d24e7b7778dd66c563665d890538e450370969f84128efcb2951ece577d741b5"
     },
     {
       "path": "Examples/LessonDemo/Sources/LessonDemo/main.swift",
-      "sha256": "532abd37c0dba29372c1cb518ab73d13fd2f171ed3f74cd248d2422ed7ec820b"
+      "sha256": "28873e6c0e6e3136845bf751811514d2ba56f8509f4d8b35c4351d4e234bf1c9"
+    },
+    {
+      "path": "Examples/LessonDemo/Sources/LessonDemoKit/Capture.swift",
+      "sha256": "24b2524d20fbe46ec804dbc8559a17811f00fc0d7e5dd7dcdbb7d1b3437b154d"
     },
     {
       "path": "Examples/LessonDemo/Sources/LessonDemoKit/LessonDemoView.swift",
@@ -79,7 +83,7 @@
     },
     {
       "path": "Examples/LessonDemo/Tests/LessonDemoKitTests/LessonDemoKitTests.swift",
-      "sha256": "13c86f43a93527a91b4772e3a1403f92e5013946a774120c091cf1769a7fa467"
+      "sha256": "8202d1d143300f4084c6fe95b4b205f2a8c56d1ae430b1212baee119bd150343"
     },
     {
       "path": "Examples/PathTrace/Package.swift",
@@ -235,7 +239,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "ebe7b777d0ade4530a7df00eafd947141ed98d642bc2a2862dc94c29412b94dc"
+      "sha256": "07a38844f9cb01e0e6f656cb7f93fe660337be4febdb73b42c2c8872d824f80d"
     },
     {
       "path": "SECURITY.md",
@@ -567,7 +571,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "96c30f0b2ea966fbe7b14e5881d8cb15a4de63bedf625838de418c86e30fc192"
+      "sha256": "ba8d750124ccb279f52067734b53d59808c26e67d50599f9f04d05695be6c290"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -599,7 +603,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "65baea7cd0fa5bb1b28dcf2cb6ecca07588afb272283842d6dd8fca27fcec3fb"
+      "sha256": "ce4c896d279b9da3f745d21b37b6523208490fa4d71f2f38b586599284bd0163"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -648,6 +652,42 @@
     {
       "path": "docs/assets/from-a-prompt/robot-joint/step-5.png",
       "sha256": "a99f4f3c535b332670358f53846cc58e88e45174e390ac7770ccfbba8cdaf978"
+    },
+    {
+      "path": "docs/assets/lessons/beat-1.png",
+      "sha256": "3ec322647e7127255d1bcb9049f1674f8d4a8e2bcce9889b72fb9c84f20996ed"
+    },
+    {
+      "path": "docs/assets/lessons/beat-2-turning.png",
+      "sha256": "a00f16bd08042d0dd4f08c6231a655f1bf342f4889763654300b7fa354dffbc7"
+    },
+    {
+      "path": "docs/assets/lessons/beat-3.png",
+      "sha256": "215e014f937f9e857467c8650b0206928ace49a009676889badb5cdbb3362be7"
+    },
+    {
+      "path": "docs/assets/lessons/beat-4.png",
+      "sha256": "2542a3cd91040d4208c7aa0908ef022a59ec4c6037d0fbc2031efbd3e2d415f2"
+    },
+    {
+      "path": "docs/assets/lessons/beat-5.png",
+      "sha256": "7222a91a8ede1ac932fca2e1c2f568730e41353b3923b1b4dee0ef43dd18a5d7"
+    },
+    {
+      "path": "docs/assets/lessons/learner-slider-45.png",
+      "sha256": "0c7d0d9f5607120c18312ab3da30c4a64d5ff7bd986835bc148f3fc7d4257fc2"
+    },
+    {
+      "path": "docs/assets/lessons/provenance.json",
+      "sha256": "f5d65477ccf6896293b8f3005134bec94a619adfaa370e092c92547ba3957e1d"
+    },
+    {
+      "path": "docs/assets/lessons/rotation-loop-frames.json",
+      "sha256": "198789774ae852096b760614a875b589e209b399b46cd9a7e5e9ff2d5f24b1e1"
+    },
+    {
+      "path": "docs/assets/lessons/rotation-loop.gif",
+      "sha256": "43f7bb4a3eff3bf9e67a151eb3b213e1d95cd05bb2f91cc01ad44290cdc5e10a"
     },
     {
       "path": "docs/assets/native/counts.png",

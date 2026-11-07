@@ -1,0 +1,142 @@
+{
+  "source": {
+    "repository": "https://github.com/morrowdock/martygraphics",
+    "base": "31a47ba1",
+    "captureCommit": "working tree of branch docs/lesson-showcase on base 31a47ba (PR #20 merged) with the lesson-demo --capture change; captured before the commit. The sourceFiles hashes, not a commit id, link these artifacts to the source; the committed files have these bytes.",
+    "lesson": "Examples/LessonDemo/Sources/LessonDemoKit/RotationLesson.swift (embedded copy of docs/fixtures/v1/rotation.lesson.json; a test keeps them equal)",
+    "authoring": "The rotation lesson was written by hand for the example (synthetic content). It is not the output of an AI model answering a prompt.",
+    "license": "Apache-2.0; procedural 2D drawing, no images, models or stock assets",
+    "sourceFiles": {
+      "Examples/LessonDemo/Package.swift": "9fe128f93346a38d7ac08c57adb51fc193827fb260811aabb05d02dedca77e84",
+      "Examples/LessonDemo/README.md": "d24e7b7778dd66c563665d890538e450370969f84128efcb2951ece577d741b5",
+      "Examples/LessonDemo/Sources/LessonDemo/main.swift": "28873e6c0e6e3136845bf751811514d2ba56f8509f4d8b35c4351d4e234bf1c9",
+      "Examples/LessonDemo/Sources/LessonDemoKit/Capture.swift": "24b2524d20fbe46ec804dbc8559a17811f00fc0d7e5dd7dcdbb7d1b3437b154d",
+      "Examples/LessonDemo/Sources/LessonDemoKit/LessonDemoView.swift": "74c45ff2a309564099801fe169e2db680e36f5296bfc0c872094605199b720d8",
+      "Examples/LessonDemo/Sources/LessonDemoKit/RotationLesson.swift": "3a0bfd61d1fe7a915ba051954b34a8ef6e060b74a07ebae6af63f5d7fa418dc5",
+      "Examples/LessonDemo/Sources/LessonDemoKit/Timing.swift": "f3bc12287e9da2e7a1e813dafec4325c4cdd8b2b86233dfbfe4260b43d7537e9",
+      "Examples/LessonDemo/Tests/LessonDemoKitTests/LessonDemoKitTests.swift": "8202d1d143300f4084c6fe95b4b205f2a8c56d1ae430b1212baee119bd150343",
+      "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f",
+      "Sources/MartyGraphics/MG3DInteraction.swift": "bcd0df232ebfa1b1f49f85e73a1a3a73bf47a7f4040a8c5b7bde014547aa5913",
+      "Sources/MartyGraphics/MG3DView.swift": "d23e599917e92caec76cc08f925ff66ae5bbc0a7e876f30daeff32de10183053",
+      "Sources/MartyGraphics/MGCanvasRenderer.swift": "9b91557e37086523ee8a4f4401bb9281830f2a6b087921e91bf7cac866894775",
+      "Sources/MartyGraphics/MGFixtures.swift": "1d17dd89fcefcc304fec88c1ac8caef4b9b695394276b01df9058d5eb4306a91",
+      "Sources/MartyGraphics/MGGeometryPack.swift": "c6c002049cc6babb06594cecbfdbaadabc3af452164c0f48bfb3c33359acb567",
+      "Sources/MartyGraphics/MGGrammar.swift": "2f18903fb3eb1aed92e6829edb20a20dda4b9bb8b4adcb1b674847c58d4910ec",
+      "Sources/MartyGraphics/MGGraphPack.swift": "fa3ec67e4631e13a682ec0bdd0eb76cc1afa75146edbff78c000d8f2d0560ebe",
+      "Sources/MartyGraphics/MGLayout.swift": "c1a3641339349e10e9e0faced7f4e58e0a5d97aa992306a81b68970c11aef6ca",
+      "Sources/MartyGraphics/MGLesson.swift": "9c7e93c6cde2c211a8eba04819d924f03ef6816c3a1ce6013332001ad61fbe70",
+      "Sources/MartyGraphics/MGLessonSession.swift": "383916883427f2b5f7ce31b5da7df741b272d32cd5a3cf4dfaeee692ef91557a",
+      "Sources/MartyGraphics/MGLessonSnapshot.swift": "8635c145466d379a9453b1c77edaa1170e42e28e5ba9c0d52a5dba5f888495a4",
+      "Sources/MartyGraphics/MGModel.swift": "b11556e668477eaef8a829b0e33e055327a5abe95b2b449df9287172b3a1133c",
+      "Sources/MartyGraphics/MGPack.swift": "f6af770877d9de4c005eef037592b9883e39b20e5e72bd01462b6fa7fdc4e381",
+      "Sources/MartyGraphics/MGParser.swift": "898571b7274a9a88a27238da062c890e6168947ae4a6585003fa8d8686afb5dc",
+      "Sources/MartyGraphics/MGPatch.swift": "1c68bf17ddd2dd2f63e0d35b036d700f41de46b74f77ca98ab5f881bf44641dc",
+      "Sources/MartyGraphics/MGPhysics.swift": "aa34cc3c370af27112759a5dc1cd439ce7afb3ed2d4997fa2b68c367816316b7",
+      "Sources/MartyGraphics/MGRenderPolicy.swift": "5ef4ebaff7b3c4c46761e4a576732729a206af04ec38837c1459a30b938183e2",
+      "Sources/MartyGraphics/MGSceneDiff.swift": "19b60e84aa1c23de9a1e718e411b190c57cb1523067a02bbcf64401876f052da",
+      "Sources/MartyGraphics/MGStream.swift": "bbcaaaed0f905e558932dd8430e077efb75a4bc0f5baa6ccf061c955c939f205",
+      "Sources/MartyGraphics/MGTemplates.swift": "d68eb2570f539883ffc9702dfebd45da834376fba08cc907adc2b702689b5c34",
+      "Sources/MartyGraphics/MGTheme.swift": "44fd167a885971014697fc12cb56f627076cce18ca17630cc93f12c08edaaa42",
+      "Sources/MartyGraphics/MGTimeline.swift": "ad32fce5474a9b5b41b1ca35ebee324e0b4f318c99824b149a1fdd6523c49634",
+      "Sources/MartyGraphics/MGTween.swift": "6381529e57c2476c58650baaeac81882f85ff7c81407e1d437d7c666d23dae57",
+      "Sources/MartyGraphics/MartyGraphicsLessonView.swift": "953be00c0791d0165fbed3a1b452e45fa3159c7fb482ef3b324feeb2f403126a",
+      "Sources/MartyGraphics/MartyGraphicsView.swift": "8d928fe840ecddd7bc73c51eb4fa8380ac91740363c9c3db68fd9bdb54c9a9ab",
+      "docs/fixtures/v1/rotation.lesson.json": "940987b5820a1e5dcf0a841eff0b3d2db624d1b2242131c2335ac9f7e653f0e5",
+      "docs/fixtures/v1/rotation.statements.ndjson": "e1a3e696af39e207c920ce1a53566b02d2c54fce60eb6a187649519862a34b26"
+    }
+  },
+  "capture": {
+    "machine": "Apple M1 Mac mini (Macmini9,1), 8 cores, arm64; not an iPad",
+    "os": "macOS 27.2 (26B123)",
+    "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
+    "xcode": "Xcode 27.2 (27B52)",
+    "configuration": "SwiftPM release build; Swift language mode 5",
+    "capturedUTC": "2026-11-07 between 02:20Z and 02:37Z (captures, render and timing in one heavy-build slot each)",
+    "commands": [
+      "swift test --package-path Examples/LessonDemo",
+      "swift run --package-path Examples/LessonDemo lesson-demo --verify",
+      "swift run -c release --package-path Examples/LessonDemo lesson-demo --timing",
+      "swift run -c release --package-path Examples/LessonDemo lesson-demo --render <NEW_DIR>",
+      "swift run -c release --package-path Examples/LessonDemo lesson-demo --capture <NEW_DIR> 1024x640",
+      "swift run -c release --package-path Examples/LessonDemo lesson-demo --capture <NEW_DIR>"
+    ],
+    "method": [
+      "Every image is the live demo view (LessonDemoKit.LessonDemoView around the engine's MartyGraphicsLessonView) hosted in an offscreen NSWindow and captured with cacheDisplay after it settles. Offscreen windows have no display link, so the view's own in-between animation frames are never captured.",
+      "In-between frames are engine keyframes rendered offscreen at their scheduled times: lesson-demo --capture plans one run headless on the demo's default pacing (.estimate(wordsPerSecond: 2.5)) on an injected clock (LessonDemoKit/Capture.swift). Each animate's keyframe segment (MGKeyframeSegment.frames: the start scene, then validated engine keyframes at most 5° apart) is scheduled frame j of n at duration × j / (n − 1), as MGTween.sample plays it; the settled state replaces the last frame at the end of the segment. The tool checks that the live session produced the same keyframe scene, puts it on the board with the .direct transition and captures it.",
+      "Beat holds come from the narration timing: each beat state is shown from the time the pacing presents the beat until the next planned frame.",
+      "Learner: a scripted learner moves the slider during beat 4 from 85° to 45° in 5° steps, 0.1 s apart, starting 1 s after the beat is presented, through MGLessonController.control (the call the slider's binding makes). A slider move sends the same params command a scripted beat sends, so both go through the same checks and state path. No identical-fingerprint claim is made: the state revision counts the changes.",
+      "GIF: 640 px wide (scaled from 2048x1280 with Core Graphics high-quality interpolation), written with ImageIO, loops forever. Frame i lasts until frame i + 1's planned time, rounded cumulatively to centiseconds; the last frame is held 2 s after lessonComplete. The live view also blends linearly between neighbouring keyframes and draws new items on over 0.55 s; these frames show settled states at the planned times only.",
+      "Stills: 1366x1024-point window, 2x backing (2732x2048 pixels), not cropped (--render has no size option; the empty band below the board is part of the demo layout)."
+    ],
+    "plan": {
+      "frames": 59,
+      "lessonCompleteSeconds": 24.801,
+      "lineDueToCompleteSeconds": 24.801,
+      "endHoldSeconds": 2,
+      "beat2Keyframes": "18 engine keyframes 5° apart (0 → 90°) over 1.5 s",
+      "beat5Keyframes": "27 engine keyframes 5° apart (45 → 180°) over 1.5 s"
+    },
+    "timing": {
+      "machine line": "machine arm64, Version 27.2 (Build 26B123), release build, 8 cores",
+      "T1b scene statement → firstPresented (core)": "median 0.144 ms, p95 0.158 ms (200 runs)",
+      "T1 scene statement → first offscreen frame 1024×768": "median 0.516 ms, p95 1.644 ms (30 runs)",
+      "T2 learner control tick → committed": "median 0.139 ms, p95 0.148 ms (500 runs)",
+      "T3 animate 0→180 (36 keyframes) → ready": "median 4.030 ms, p95 4.124 ms (100 runs)",
+      "T4a full lesson fed → streamEnded": "median 5.364 ms, p95 5.668 ms (100 runs)",
+      "T4b lineDue(0) → lessonComplete at estimate(2.5), injected clock": "median 24800.000 ms, p95 24800.000 ms (1 runs)"
+    },
+    "timingNote": "lesson-demo --timing on this Mac, release build. Not iPad numbers; a physical-device receipt is pending (docs/LESSONS.md). The first figure is visible after the second statement, 136 bytes of stream (lesson-demo --verify).",
+    "visualReview": "Checked by eye: labels are readable in the stills and in the 640 px GIF. In some frames a label touches a dot, an edge or the highlight ring (docs/LESSONS.md lists label-to-edge overlap as not checked)."
+  },
+  "artifacts": {
+    "rotation-loop.gif": {
+      "sha256": "43f7bb4a3eff3bf9e67a151eb3b213e1d95cd05bb2f91cc01ad44290cdc5e10a",
+      "bytes": 1366675,
+      "pixels": "640x400",
+      "frames": 59,
+      "durationSeconds": 26.8,
+      "from": "lesson-demo --capture <NEW_DIR> 1024x640 (loop.gif)"
+    },
+    "rotation-loop-frames.json": {
+      "sha256": "198789774ae852096b760614a875b589e209b399b46cd9a7e5e9ff2d5f24b1e1",
+      "bytes": 23252,
+      "from": "lesson-demo --capture <NEW_DIR> 1024x640 (frames.json; the frames/*.png it lists are not committed)"
+    },
+    "beat-1.png": {
+      "sha256": "3ec322647e7127255d1bcb9049f1674f8d4a8e2bcce9889b72fb9c84f20996ed",
+      "bytes": 778928,
+      "pixels": "2732x2048",
+      "from": "lesson-demo --render <NEW_DIR> (beat1-1366x1024.png)"
+    },
+    "beat-2-turning.png": {
+      "sha256": "a00f16bd08042d0dd4f08c6231a655f1bf342f4889763654300b7fa354dffbc7",
+      "bytes": 832757,
+      "pixels": "2732x2048",
+      "from": "lesson-demo --capture <NEW_DIR> (default 1366x1024; frames/010-beat2-keyframe-10-of-19.png: the engine keyframe at 45° in beat 2's 0 → 90° turn)"
+    },
+    "beat-3.png": {
+      "sha256": "215e014f937f9e857467c8650b0206928ace49a009676889badb5cdbb3362be7",
+      "bytes": 837503,
+      "pixels": "2732x2048",
+      "from": "lesson-demo --render <NEW_DIR> (beat3-1366x1024.png)"
+    },
+    "beat-4.png": {
+      "sha256": "2542a3cd91040d4208c7aa0908ef022a59ec4c6037d0fbc2031efbd3e2d415f2",
+      "bytes": 837873,
+      "pixels": "2732x2048",
+      "from": "lesson-demo --render <NEW_DIR> (beat4-1366x1024.png)"
+    },
+    "beat-5.png": {
+      "sha256": "7222a91a8ede1ac932fca2e1c2f568730e41353b3923b1b4dee0ef43dd18a5d7",
+      "bytes": 907351,
+      "pixels": "2732x2048",
+      "from": "lesson-demo --render <NEW_DIR> (beat5-1366x1024.png)"
+    },
+    "learner-slider-45.png": {
+      "sha256": "0c7d0d9f5607120c18312ab3da30c4a64d5ff7bd986835bc148f3fc7d4257fc2",
+      "bytes": 839617,
+      "pixels": "2732x2048",
+      "from": "lesson-demo --capture <NEW_DIR> (default 1366x1024; frames/030-beat4-learner-45.png: the scripted learner's last slider tick)"
+    }
+  }
+}

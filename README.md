@@ -68,6 +68,33 @@ the fan through a shaft that runs inside the HP shaft. Most of the fan's air goe
 core, and in a high-bypass engine like this it gives most of the thrust.
 
 <p align="center">
+  <a href="docs/assets/lessons/beat-5.png"><img src="docs/assets/lessons/rotation-loop.gif" width="840" alt="Rotation lesson playing beat by beat: triangle ABC turns 90 degrees about the origin O while its corner labels change, the caption explains the move, a learner drags the angle slider back to 45 degrees, then the lesson turns the triangle to 180 degrees."></a>
+</p>
+
+**Beat-by-beat lessons.** A lesson is a list of beats. Each beat has one line of narration and the board changes for that
+line. The host can load the whole lesson, or it can stream it one statement at a time, as a model reply arrives.
+The engine checks each statement when it arrives, and the figure appears as soon as the scene statement is valid.
+A refused statement changes nothing. When a beat binds a slider, the
+learner can move it. A slider move sends the same `params` command that a scripted beat sends, so both go through
+the same checks and the same state path.
+
+**How it teaches rotation.** Triangle ABC turns about the origin O. The engine computes each rotated corner in
+Swift, so a 90° turn takes A from (2, 1) to (-1, 2) and its distance to O stays 2.24. The coordinate labels and the
+numbers in the spoken lines come from these engine values. They are not typed text. The turn plays as engine
+keyframes at most 5° apart. Each keyframe is a true rotation with its own labels. Then the learner drags the
+slider. In the last beat the lesson turns the triangle to 180°, where every coordinate changes sign. That beat
+checks A = (-2, -1) on the engine values before its line is shown.
+
+The loop above is one 26.8-second run on the demo's default pacing (2.5 words per second). Each frame is the live
+demo view, recorded offscreen and shown for the time the pacing schedules it. The learner's slider moves are
+scripted by the capture tool (640×400 GIF; the [stills](docs/SHOWCASE.md#beat-by-beat-lessons) are full size).
+Measured on an Apple M1 Mac, not an iPad: a scene statement reaches a first offscreen frame in 0.52 ms (median), a
+slider tick commits new state in 0.14 ms, and the first figure needs 136 bytes of stream.
+**This lesson was written by hand for the demo.** It is not the output of an AI model from a prompt.
+[Lesson format](docs/LESSONS.md) · [Run it](Examples/LessonDemo/README.md) ·
+[Capture receipt](docs/assets/lessons/provenance.json)
+
+<p align="center">
   <a href="docs/assets/pathtrace/hero.png"><img src="docs/assets/pathtrace/gearbox-loop-640.gif" width="840" alt="Path-traced two-stage gearbox turning: polished steel and brass gears with involute teeth, a spur pair above a planetary set inside a steel ring gear, on a dark studio floor."></a>
 </p>
 
