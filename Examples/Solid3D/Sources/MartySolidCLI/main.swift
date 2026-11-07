@@ -18,6 +18,7 @@ enum CLIError: Error, CustomStringConvertible {
         case .usage: return """
             Usage: marty-solid check FILE.json [--strict] [--patch PATCH.json] [--component C.json ...]
                    marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--snapshots] [--component C.json ...]
+                   marty-solid snapshot check SNAPSHOT.json [--component C.json ...]
                    marty-solid components [--component C.json ...]
                    marty-solid component check C.json [--component OTHER.json ...] [--with NAME=VALUE ...]
                    marty-solid reasons
@@ -404,7 +405,11 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     let footer = "\(legend.text) · Rendered by the MartyGraphics engine from \(sourceName) (\(source.sizeText))"
     let title = session.title ?? ""
     let solidDoc = session.solid
-    let renderer = solidDoc.map { MGSolidRenderer(assembly: $0.assembly) }
+    let renderer = solidDoc.map { d -> MGSolidRenderer in
+        let r = MGSolidRenderer(assembly: d.assembly)
+        r.emphasis = .strong   // a highlight must read at a glance in a still, as on the 2D board
+        return r
+    }
     let primarySolid = (session.primary ?? (solidDoc != nil ? "solid" : "board")) == "solid"
     let rects = paneRects(width: width, height: height, board: doc.board != nil, solid: solidDoc != nil, primarySolid: primarySolid)
     var files: [MGJSON] = [], names: [String] = []
@@ -497,6 +502,23 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     return 0
 }
 
+/// `snapshot check`: restores an explainer snapshot (`MGExplainerSession.snapshot()` as JSON text) with every check
+/// of `MGExplainerSession.restore` and prints `{"ok", "reason", "location", "legend"?, "caption"?, "engine"}`.
+func snapshotCheck(_ path: String, _ lib: MGSolidLibrary) throws -> Int32 {
+    let attrs = try FileManager.default.attributesOfItem(atPath: path)
+    guard (attrs[.type] as? FileAttributeType) == .typeRegular else { throw CLIError.invalid("Not a regular file: \(path)") }
+    let handle = try FileHandle(forReadingFrom: URL(fileURLWithPath: path))
+    defer { try? handle.close() }
+    let data = try handle.read(upToCount: MGExplainerLimits.snapshotBytes + 1) ?? Data()
+    switch MGExplainerSession.restore(data: data, pacing: .speech, clock: MGManualClock(), library: lib) {
+    case .failure(let issue):
+        print(json(stamped(["ok": .bool(false), "reason": .string(issue.reason), "location": issue.location]))); return 1
+    case .success(let s):
+        print(json(stamped(["ok": .bool(true), "reason": .null, "location": .null, "legend": .string(s.legend.text),
+                            "caption": s.caption.map(MGJSON.string) ?? .null]))); return 0
+    }
+}
+
 /// Splits `--component FILE` pairs (repeatable) out of an argument list.
 func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]) {
     var files: [String] = [], rest: [String] = []
@@ -530,6 +552,7 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                 guard paths.count == 1, !paths[0].hasPrefix("--"), rest.count - paths.count <= 1 else { throw CLIError.usage }
                 exit(try check(paths[0], patch: patch, lib, strict: rest.contains("--strict")))
             case "components"? where a.count == 1: exit(components(lib))
+            case "snapshot"? where a.count == 3 && a[1] == "check" && !a[2].hasPrefix("--"): exit(try snapshotCheck(a[2], lib))
             case "reasons"? where a.count == 1 && files.isEmpty: print(json(MGSolidReasons.json)); exit(0)
             case "version"? where a.count == 1 && files.isEmpty: print(json(engine)); exit(0)
             case "component"? where a.count >= 3 && a[1] == "check" && !a[2].hasPrefix("--"):

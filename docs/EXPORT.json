@@ -307,7 +307,9 @@
     "Examples/Explainers/*: three synthetic explainer examples (2D, 3D, mixed) and their README",
     "docs/EXPLAINER.md: explainer format, authoring card, namespace, tiers and N1, stream, limits, reasons and check report",
     "docs/fixtures/v1/explainer-mixed.statements.ndjson: the mixed example as a statement stream",
-    "docs/assets/explainer/*: one marty-solid render still of the mixed example and its receipt"
+    "docs/assets/explainer/*: one marty-solid render still of the mixed example and its receipt",
+    "Tests/MartyGraphicsTests/ExplainerReviewFixTests.swift: regression tests for the PR #32 review (restore revalidation, live captions and claims after learner changes, spin over time and pause, host camera and controls, notes on template items, refused-beat claims, restore order, renamed reasons, strong 3D highlight)",
+    "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/*.snapshot.json: explainer snapshots of the mixed example (clean, and with two false 3D checks) for marty-solid snapshot check in fresh processes"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

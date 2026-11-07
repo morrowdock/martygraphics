@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "359c20b259038bc043ad5eea154de7e1e3f6bf5b65053b34cd31d082777dcfb9"
+      "sha256": "334a847a94cc6df851d55a6df41bb8d20099afcebf276f9820050752611ec5a9"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -171,7 +171,7 @@
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "5db7c2544482e3731db258e559603c749c36c35caf7dff3a9edb06185c389990"
+      "sha256": "cc46c361162b6c5d8c1061e8d369d4bb412deb086a583eba53400f7f6d3369de"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json",
@@ -207,7 +207,15 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "4445b0422f17c99cc15e59677690e697f34fae4eb7a70628b92e21fa8e9c3e7f"
+      "sha256": "cca6384aa4f9ef595ae59d06b8d67994600d7031cc158816a7f01c53b1eaedaa"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
+      "sha256": "6c067da1ff2ec78e8506cd56ed131c3df11d0ec7117bbbdaa0a39d64e3f061a5"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-two-false-checks.snapshot.json",
+      "sha256": "eda078ce0a84548c3cb86698237cbb5b5994dac2890e2c8d6461e223b209dd77"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-check-strict.check.json",
@@ -227,11 +235,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.check.json",
-      "sha256": "21f0c8798514fd8dc3a9285882b088e97c90da5edfab743d1a4053da813e960f"
+      "sha256": "ca381227fdf920a7be291d98858f0c9bc8f122f681e65449fcf475f386a0e064"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.strict.json",
-      "sha256": "acd5419aaef46c90fc1ae56ea2a4f7adbf65f5244874986640c6d723879cdd47"
+      "sha256": "c28cf9f3e5bd09d00564b3582bdc0c4e3a9f1cef895dd10ae04b0e20e9700ce1"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-1-refused.check.json",
@@ -387,7 +395,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "0de76fedb3e8072a8dd42ad0bb9724b7d246e6ca8fc4dafdfb661bbd4bbcc6ea"
+      "sha256": "b98de790616fb0b278b26c70a80b889f12fa0686ea0ed0a2a6947631f0e0c9bd"
     },
     {
       "path": "Examples/Turbofan/Package.swift",
@@ -459,11 +467,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
-      "sha256": "7e6077de7c8bac552505d473f1a7f2a0b6e3409878a3d1620e518c12a0d14021"
+      "sha256": "27335d87c50db4017fdac90791df926e7c0c814985e0b00da43e7749dfe612a4"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerState.swift",
-      "sha256": "67ff4e7ed7ca2fa9df267b3aef5e4f95abae1be470572b156333113d75a8722e"
+      "sha256": "45cd05f2382ec2e0d7d0585029b4361494d1f3c024dcb7549a57096b47e0b854"
     },
     {
       "path": "Sources/MartyGraphics/MG3DInteraction.swift",
@@ -563,7 +571,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsExplainerView.swift",
-      "sha256": "6d79e13b9921ded5793bc9ca7f5e718d0a1eb855430c978de65d754001dcef76"
+      "sha256": "48e4330d3f78fd107d44ba54f8b157778a7dde753996a7384f49253279f71dcd"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsLessonView.swift",
@@ -571,7 +579,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "ddf2813782df8b7a4165da542e86df35daed3e6762a5d5fc4fc260d8746b4972"
+      "sha256": "4f793968abb88b4be2f065b6488d6d73d871f422f12bb8ba43133fc07ef7b322"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAssembly.swift",
@@ -635,7 +643,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "860e8fb7b8e1288d99ae367d34fecd9fa8bb4df8102f3799f2fd0ce40c0cbf9b"
+      "sha256": "47918ed2d6ff7a2ecf72f719998604bf3aaf3b7a0db354d97a9e5efe6a29dddf"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
@@ -643,7 +651,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
-      "sha256": "69c6b0ead86b6308e529d3e76bbf6eca40e8fb31475755b1e3086c8db7e130c8"
+      "sha256": "9eb5a9e4c03a1b8f04ae59135c6f35172a2708b39fbc030fadc7668150d446b4"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
@@ -728,6 +736,10 @@
     {
       "path": "Tests/MartyGraphicsTests/ExplainerNamespaceTests.swift",
       "sha256": "71a1b63fb4c0e67512bc58ed8a6d00d3b190b95b0dace8237866d3ddad99558d"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/ExplainerReviewFixTests.swift",
+      "sha256": "b4ede532301d2ca74b11b9c3ffc8bc00aa35557bed1a574f00696c13174acb59"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerStreamTests.swift",
@@ -847,7 +859,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReasonCatalogTests.swift",
-      "sha256": "4ed9c07b934b204f07651a60954293c02cacd37d5f4410e3669ab6a56fd5615a"
+      "sha256": "b53676269a32dd5087f051d3b0b4a6b4eb642807a491b076d229e9ff4767472d"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReportTests.swift",
@@ -891,11 +903,11 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "2d3a0bc5847c2a6988c85b4792ea2b604dde5bab67ea36b347b49057b85c6905"
+      "sha256": "b2723942bbf6955fd18423fa116b3f658a521bda722dde3b618b2fbd44bf00d2"
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "9a4f741625642e5a6bcd055e34d72efd071f14752a4fb590434f9a89b1638e84"
+      "sha256": "ed7dfc11749ef23e7d0c5114fc32ad4c12656b75e07f18bf99c53c6d89325bf9"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -927,7 +939,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "93fa1ce337b5ce30da3d0f026983369b62453013e405f20b8d0b0ad2eed2ef82"
+      "sha256": "796a614b81922a2dd549b105c3534ec90ef3cb777ffa5a35ad9d7c69856d64b0"
     },
     {
       "path": "docs/SHOWCASE.md",
@@ -967,11 +979,11 @@
     },
     {
       "path": "docs/assets/explainer/gears-mixed-beat-1.png",
-      "sha256": "910a9ac4d2d45f5f05c1a940873039286db2d7f8b403a26e909e669545b3c114"
+      "sha256": "719994caa0d4ff42e938f76ea57e1626e0fc3dac62728340dddfeac40a1a2076"
     },
     {
       "path": "docs/assets/explainer/provenance.json",
-      "sha256": "50676e180fd7338d24d5c9ae8cf0e2bd19c459f93fd5d2671be009fc96a7f8e1"
+      "sha256": "58ac65fbfb22377daeb8b5a26db61b654d2f7f84ff750143e6d84feec7550c32"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",

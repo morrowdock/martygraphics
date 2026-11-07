@@ -272,13 +272,13 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 
 | Reason | Formats | Meaning |
 | --- | --- | --- |
-| `check.object` | assembly | A claim check is not an object. |
-| `check.value` | assembly | A claim check's `value` is not a fact name. |
-| `check.comparison` | assembly | A claim check does not have exactly one of `eq`, `lt`, `gt`. |
-| `check.eq` | assembly | The `eq` target is not a number in -1e6...1e6. |
-| `check.lt` | assembly | The `lt` target is not a number in -1e6...1e6. |
-| `check.gt` | assembly | The `gt` target is not a number in -1e6...1e6. |
-| `check.tol` | assembly | `tol` is given without `eq`, or it is not in 0...1e6. |
+| `check.object` | assembly, explainer | A claim check is not an object. |
+| `check.value` | assembly, explainer | A claim check's `value` is not a fact name. |
+| `check.comparison` | assembly, explainer | A claim check does not have exactly one of `eq`, `lt`, `gt`. |
+| `check.eq` | assembly, explainer | The `eq` target is not a number in -1e6...1e6. |
+| `check.lt` | assembly, explainer | The `lt` target is not a number in -1e6...1e6. |
+| `check.gt` | assembly, explainer | The `gt` target is not a number in -1e6...1e6. |
+| `check.tol` | assembly, explainer | `tol` is given without `eq`, or it is not in 0...1e6. |
 | `check.fact.<name>` | assembly, explainer | A claim check names a fact that does not exist. |
 | `check.failed.<name>` | assembly, explainer | A claim check is false for the engine's value. |
 | `text.brace` | assembly | A `{` or `}` in the title or a caption is unbalanced or nested. |
@@ -470,12 +470,27 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `lesson.depth` | explainer | A statement other than `solid` nests deeper than 59 levels (the lesson statement cap). |
 | `view.object` | explainer | A beat `view` is not an object. |
 | `view.unknown.<keys>` | explainer | A beat `view` has keys that are not view keys (focus, explode, camera, orbit, spin, section, ghost). |
+| `view.focus` | explainer | A beat view's `focus` is not an array of at most 16 strings. |
+| `view.camera` | explainer | A beat view's `camera` is not a camera preset name. |
+| `view.explode` | explainer | A beat view's `explode` is not a number in 0...1. |
+| `view.orbit` | explainer | A beat view's `orbit` is not a number of degrees in -360...360. |
+| `view.spin` | explainer | A beat view's `spin` is not a number of input turns in -20...20. |
+| `view.ghost` | explainer | A beat view's `ghost` is not a non-empty array, or it has more than 16 entries or a non-string entry. |
+| `view.section` | explainer | A beat view's `section` is not an object. |
+| `view.section.normal` | explainer | A beat view's section normal is not three coordinates, or it is zero. |
+| `view.section.offset` | explainer | A beat view's section offset is not in -4000...4000 mm. |
+| `view.section.parts` | explainer | A beat view's section `parts` is not an array of 1–16 strings. |
+| `view.section.missing.<keys>` | explainer | A beat view's `section` has no `normal` or no `parts`. |
+| `view.section.unknown.<keys>` | explainer | A beat view's `section` has keys it does not allow. |
+| `check.unknown.<keys>` | explainer | A 3D check (dotted `value`) has keys it does not allow (the assembly's `step.check.unknown.<keys>`). |
 | `text.number.beat.<n>` | explainer | Beat `<n>`'s caption types a number character outside a placeholder and has no `unchecked` (rule N1). |
 | `text.number.item.<id>` | explainer | A 2D item without a note shows a typed number: in its text, a table or array cell, a bar value or a plot range (rule N1). |
 | `text.number.control.<id>` | explainer | A control label types a number character (rule N1; a label takes no placeholder). |
 | `text.number.template` | explainer | A raw template's params carry a string with a typed number (rule N1). |
 | `snapshot.bytes` | explainer | An explainer snapshot is over its size cap. |
 | `snapshot.number` | explainer | An explainer snapshot holds NaN or an infinity. |
+| `snapshot.json` | explainer | Explainer snapshot text is not UTF-8 JSON. |
+| `snapshot.setup` | explainer | The explainer snapshot's set-up commands are not valid. |
 | `snapshot.depth` | explainer | An explainer snapshot nests deeper than 64 levels. |
 | `snapshot.kind` | explainer | The value is not an explainer snapshot. |
 | `snapshot.version` | explainer | The explainer snapshot version is not 1. |
@@ -483,14 +498,14 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `snapshot.header.missing` | explainer | The explainer snapshot header has no `v`. |
 | `snapshot.header.unknown.<keys>` | explainer | The explainer snapshot header has keys it does not allow. |
 | `snapshot.frozen` | explainer | The explainer snapshot's `frozen` flag is not a boolean. |
-| `snapshot.beats` | explainer | The explainer snapshot's beat records are not valid. |
+| `snapshot.beats` | explainer | The explainer snapshot's beat records are not valid, or a kept beat is neither shown nor queued in the lesson. |
 | `snapshot.next` | explainer | The explainer snapshot's statement position is not valid. |
 | `snapshot.board` | explainer | The explainer snapshot's board is not valid, or the board and the boardless lesson disagree. |
 | `snapshot.solid` | explainer | The explainer snapshot's solid is not valid JSON text, or 3D beat data has no solid. |
 | `snapshot.lesson` | explainer | The explainer snapshot's lesson snapshot is not JSON text. |
-| `snapshot.items` | explainer | The explainer snapshot's item records are not valid. |
+| `snapshot.pending` | explainer | A beat the restored lesson still queues does not match the explainer's beat, or a queued command breaks the explainer's command rules. |
 | `snapshot.presented` | explainer | The explainer snapshot's presented beats are not valid. |
-| `snapshot.beat` | explainer | The explainer snapshot's presented beat names no beat. |
+| `snapshot.beat` | explainer | The explainer snapshot's presented beat names no kept beat, or not the lesson's presented beat. |
 | `snapshot.stream` | explainer | The explainer snapshot's stream status is not valid. |
 
 ### Tool

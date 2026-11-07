@@ -135,9 +135,15 @@ in an explainer.
 6. A failing check, 2D or 3D, refuses the whole beat: the 2D state goes back to the beat's start, the beat's view,
    highlight and 3D checks are dropped (a dropped view releases its cut budget), and its later statements are
    cascades (`beat.refused`). A refused `view`, `highlight` or command is refused alone; the beat keeps the rest.
-7. A refused statement changes nothing: 2D state, 3D views, cut cache, budget counters, legend, timers.
+7. A refused statement changes nothing: 2D state, 3D views, cut cache, budget counters, legend, timers. A refused
+   beat leaves no claim: the 2D item claims are read from the scenes themselves (the projected state, then items only
+   the shown state has), so an item that a refused beat added or changed is not counted.
 8. A beat's `view.section` is cut when its statement is accepted. The cut counts toward the document's mesh budget
    (`assembly.budget`) and section work budget (`section.budget`) with every other kept view.
+9. A claim holds at every state its beat can show. After a learner change (a slider) or a host `apply`, `caption` is
+   the presented beat's line filled again from the state shown now (live engine values, never a stale number), and a
+   2D check of the presented beat that no longer holds is not current (`notCurrent`): it leaves `claims` and the
+   legend until the state makes it true again. It is never kept as "Checked" on a false state.
 
 ## One id namespace
 
@@ -242,18 +248,43 @@ injected `MGLessonClock` (`history`).
 | TE6 | complete | request → `explainerComplete` | `MGExplainerRunTiming.complete` |
 
 `MGExplainerController` (SwiftUI) records TE1–TE6 and writes signposts (subsystem `MartyGraphics`, category
-`explainer`: `statement`, `beat`, `solidCompile`). `MartyGraphicsExplainerView` shows the two panes (the `primary` one
-larger; side by side when wide, stacked when tall), the caption and the legend. No device budget is claimed: a
+`explainer`: `statement`, `beat`, `solidCompile`). TE4 is the first frame SceneKit renders in the solid pane (a scene
+renderer delegate). `MartyGraphicsExplainerView` shows the two panes (the `primary` one larger; side by side when wide,
+stacked when tall), the caption, a slider for every bound control and the legend with its notes.
+
+- The board pane is `MartyGraphicsView` on the controller's `MGSceneController`: it plays the lesson's blends and
+  keyframes and holds them while paused. Highlighted items and table rows and cells glow (`emphasis`,
+  `tableEmphasis(rows:cells:)`).
+- The solid pane plays each beat's `spin` over time from the beat's start (`MGExplainerLimits.spinSecondsPerTurn` per
+  input turn; `solidPose(at:)`, `spinProgress(at:)`). `pause()` freezes the pose it shows; `resume()` continues from
+  there. `.immediate` pacing and `finishNow()` show the end pose. Each beat's `camera` preset and `orbit` frame the
+  camera, as `marty-solid render` does.
+- Highlighted 3D parts use the renderer's `.strong` emphasis (`MGSolidRenderer.emphasis`): the 2D emphasis colour as a
+  glow, other parts dimmed. The default `.subtle` style of plain assemblies is unchanged. No device budget is claimed: a
 physical-device receipt is pending. Authoring advice: write the view the learner needs first, keep the board small,
 and put a large solid after a small board.
 
 ### Persistence
 
-`snapshot()` holds engine data only: the header, the views as authored (as JSON text), each beat's caption, view,
-highlight and checks, the lesson snapshot (as JSON text, so its nesting never adds to the explainer's) and the stream
-position. `restore(_:pacing:clock:library:)` compiles the solid again, restores the lesson with the explainer's
-environment and proves every 3D check again. The first problem refuses the whole snapshot with its reason (the
-solid's own reason when it no longer compiles, `snapshot.<field>` otherwise); it is never loaded in part.
+`snapshot()` holds engine data only: the header, the views as authored (as JSON text), the set-up commands, each
+beat's caption template, commands, checks, view and highlight, the lesson snapshot (as JSON text, so its nesting never
+adds to the explainer's) and the stream position. Captions and claims are not stored. `restore(_:pacing:clock:library:)`
+and `restore(data:…)` trust nothing in it as proof:
+
+1. the board and the solid are checked and compiled again (the solid with the kept beats' views), and every 3D check
+   is proved again;
+2. the script is replayed from the board with the explainer's rules (rule N1, one namespace, every set-up and beat
+   command, every 2D check on its beat's end state, every caption), which also gives each beat's caption again;
+3. the lesson restores with the explainer's environment; every scene it holds (shown and baseline) passes rule N1 and
+   the namespace again, every queued command the explainer's command rules, and each queued beat must be the
+   explainer's beat; every kept beat is either shown or queued;
+4. the caption is the presented beat's line on the restored state, never the saved text.
+
+All of it runs in beat order, then statement order, so the first reason does not depend on dictionary order. The first
+problem refuses the whole snapshot with its reason (the solid's own reason when it no longer compiles, a rule's own
+reason such as `text.number.item.<id>` or `check.<name>`, `snapshot.<field>` otherwise); it is never loaded in part.
+`marty-solid snapshot check SNAPSHOT.json` runs the same restore and prints `{"ok", "reason", "location", "legend",
+"caption"}`.
 
 ## Limits
 
@@ -297,15 +328,23 @@ Explainer reasons: `explainer.json`, `explainer.object`, `explainer.number`, `ex
 `beat.unchecked.<n>`, `beat.ops`, `beat.ops.count`, `beat.check`, `beat.checks.count`, `beat.refused`,
 `beat.highlight`, `beat.highlight.count`, `beat.highlight.ref.<id>`, `beat.highlight.stale.<id>` (in `hostIssues`
 only), `stmt.json`, `stmt.kind`, `stmt.order`, `stmt.bytes`, `stmt.say`, `stmt.view.twice`, `stmt.highlight.twice`,
-`lesson.depth`, `view.object`, `view.unknown.<keys>`, `text.number.beat.<n>`, `text.number.item.<id>`,
+`lesson.depth`, `view.object`, `view.unknown.<keys>`, the step reasons renamed for a beat view (`view.focus`,
+`view.camera`, `view.explode`, `view.orbit`, `view.spin`, `view.ghost`, `view.section`, `view.section.normal`,
+`view.section.offset`, `view.section.parts`, `view.section.missing.<keys>`, `view.section.unknown.<keys>`) and for a 3D
+check (`check.unknown.<keys>`), `text.number.beat.<n>`, `text.number.item.<id>`,
 `text.number.control.<id>`, `text.number.template`, and for snapshots `snapshot.bytes`, `snapshot.number`,
 `snapshot.depth`, `snapshot.kind`, `snapshot.version`, `snapshot.header`, `snapshot.header.missing`,
 `snapshot.header.unknown.<keys>`, `snapshot.frozen`, `snapshot.beats`, `snapshot.next`, `snapshot.board`,
-`snapshot.solid`, `snapshot.lesson`, `snapshot.items`, `snapshot.presented`, `snapshot.beat`, `snapshot.stream`.
-Solid reasons an explainer gives itself: `tier.key`, `check.fact.<name>`, `check.failed.<name>`, `text.sign.<name>`,
+`snapshot.solid`, `snapshot.lesson`, `snapshot.setup`, `snapshot.pending`, `snapshot.json`, `snapshot.presented`, `snapshot.beat`, `snapshot.stream`.
+Solid reasons an explainer gives itself: `tier.key`, `check.object`, `check.value`, `check.comparison`, `check.eq`,
+`check.lt`, `check.gt`, `check.tol`, `check.fact.<name>`, `check.failed.<name>`, `text.sign.<name>`,
 `text.modifier.<modifier>`, `text.modifier.<modifier>.<name>`, `report.engine`. The tool: `kind.unsupported`.
 
 Reasons are developer tokens. Do not show them to the learner.
+
+A 2D (plain-name) check and every other lesson command keep the lesson's own reasons (`check.<name>`,
+`check.missing`, `check.unknown.<name>`, `control.*`, `animate.*`, …; see [LESSONS.md](LESSONS.md)); like scene and
+patch reasons, they are not in the Solid catalog.
 
 ## The check report
 

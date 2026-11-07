@@ -2,27 +2,28 @@
   "source": {
     "repository": "https://github.com/morrowdock/martygraphics",
     "base": "d5f42c2e",
-    "captureCommit": "working tree of branch feat/ov-explainer on base d5f42c2 (PR #30 merged), captured before the first commit. The sourceFiles hashes, not a commit id, link this artifact to the source.",
+    "captureCommit": "working tree of branch feat/ov-explainer on base d5f42c2 (PR #30 merged) after the PR #32 review fixes (head 3b47f40 plus the fix commit), captured before that commit. The sourceFiles hashes, not a commit id, link this artifact to the source.",
     "document": "Examples/Explainers/gears-mixed.explainer.json (the authoring card's mixed example in docs/EXPLAINER.md; a test keeps them equal)",
     "authoring": "Written by hand for the example (synthetic content). It is not the output of an AI model answering a prompt.",
     "license": "Apache-2.0; procedural 2D drawing and procedural meshes, no images, models or stock assets",
     "sourceFiles": {
       "Examples/Explainers/gears-mixed.explainer.json": "4e50e1861827b37999b535454cfb63625dec0d749c7f0cc2fb899d19152b6506",
-      "Examples/Solid3D/Sources/MartySolidCLI/main.swift": "4445b0422f17c99cc15e59677690e697f34fae4eb7a70628b92e21fa8e9c3e7f",
       "Examples/Solid3D/Package.swift": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b",
+      "Examples/Solid3D/Sources/MartySolidCLI/main.swift": "cca6384aa4f9ef595ae59d06b8d67994600d7031cc158816a7f01c53b1eaedaa",
       "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f",
-      "Sources/MartyGraphics/MGCanvasRenderer.swift": "3bbb276ac5d3b5c90dafb40b3eb240f3e6c540f0770b1231be97fd72f3f2d9ec",
-      "Sources/MartyGraphics/MGParser.swift": "a008143eedc8f00cd63a89d1746bedd7cc9a8f264ba65a02ba2f0c1bc6b2fff1",
-      "Sources/MartyGraphics/MGLesson.swift": "d775b5dcae64d8f935450cc7b9c7216375ae2210daa4fe859db526d55a77b913",
-      "Sources/MartyGraphics/MGLessonSession.swift": "c848a1deb8da6bc5c524f3a676dbaeffd4ef954e5b2c3bac0400c416636910f3",
-      "Sources/MartyGraphics/MartyGraphicsExplainerView.swift": "6d79e13b9921ded5793bc9ca7f5e718d0a1eb855430c978de65d754001dcef76",
-      "Sources/MartyGraphics/Solid/MGSolidRenderer.swift": "69c6b0ead86b6308e529d3e76bbf6eca40e8fb31475755b1e3086c8db7e130c8",
-      "Sources/MartyGraphics/Solid/MGSolidParser.swift": "036a501897b6017765d1c059935be4372464a87de6347349e5a6b92d7de4715d",
       "Sources/MartyGraphics/Explainer/MGExplainer.swift": "3e7f022cc4f53b76905237ed2e306bc8bc3f928b53d54fb7b90584dbeba3d6c0",
       "Sources/MartyGraphics/Explainer/MGExplainerHonesty.swift": "17704fff3cc761d65a012e542eeca931810e9968731d60e27400079eaf183c4e",
       "Sources/MartyGraphics/Explainer/MGExplainerReport.swift": "fc3da39c5c9d2733752aeb76459511c0224ba4568c19090a9e7eefe7fffd0cb0",
-      "Sources/MartyGraphics/Explainer/MGExplainerSession.swift": "7e6077de7c8bac552505d473f1a7f2a0b6e3409878a3d1620e518c12a0d14021",
-      "Sources/MartyGraphics/Explainer/MGExplainerState.swift": "67ff4e7ed7ca2fa9df267b3aef5e4f95abae1be470572b156333113d75a8722e"
+      "Sources/MartyGraphics/Explainer/MGExplainerSession.swift": "27335d87c50db4017fdac90791df926e7c0c814985e0b00da43e7749dfe612a4",
+      "Sources/MartyGraphics/Explainer/MGExplainerState.swift": "45cd05f2382ec2e0d7d0585029b4361494d1f3c024dcb7549a57096b47e0b854",
+      "Sources/MartyGraphics/MGCanvasRenderer.swift": "3bbb276ac5d3b5c90dafb40b3eb240f3e6c540f0770b1231be97fd72f3f2d9ec",
+      "Sources/MartyGraphics/MGLesson.swift": "d775b5dcae64d8f935450cc7b9c7216375ae2210daa4fe859db526d55a77b913",
+      "Sources/MartyGraphics/MGLessonSession.swift": "c848a1deb8da6bc5c524f3a676dbaeffd4ef954e5b2c3bac0400c416636910f3",
+      "Sources/MartyGraphics/MGParser.swift": "a008143eedc8f00cd63a89d1746bedd7cc9a8f264ba65a02ba2f0c1bc6b2fff1",
+      "Sources/MartyGraphics/MartyGraphicsExplainerView.swift": "48e4330d3f78fd107d44ba54f8b157778a7dde753996a7384f49253279f71dcd",
+      "Sources/MartyGraphics/MartyGraphicsView.swift": "4f793968abb88b4be2f065b6488d6d73d871f422f12bb8ba43133fc07ef7b322",
+      "Sources/MartyGraphics/Solid/MGSolidParser.swift": "036a501897b6017765d1c059935be4372464a87de6347349e5a6b92d7de4715d",
+      "Sources/MartyGraphics/Solid/MGSolidRenderer.swift": "9eb5a9e4c03a1b8f04ae59135c6f35172a2708b39fbc030fadc7668150d446b4"
     }
   },
   "command": "swift build --package-path Examples/Solid3D && Examples/Solid3D/.build/debug/marty-solid render Examples/Explainers/gears-mixed.explainer.json NEW_DIR",
@@ -35,7 +36,7 @@
   "artifacts": {
     "docs/assets/explainer/gears-mixed-beat-1.png": {
       "renderedAs": "beat-1.png",
-      "sha256": "910a9ac4d2d45f5f05c1a940873039286db2d7f8b403a26e909e669545b3c114",
+      "sha256": "719994caa0d4ff42e938f76ea57e1626e0fc3dac62728340dddfeac40a1a2076",
       "size": [
         1280,
         800
@@ -44,12 +45,13 @@
   },
   "render": {
     "framesRendered": 123,
-    "renderSecondsPerFrame": 0.0341,
+    "renderSecondsPerFrame": 0.0407,
     "legend": "Solved 6",
     "captions": [
       "Count the teeth: 15 and 30.",
       "So the big gear turns 1/2 of a turn."
-    ]
+    ],
+    "highlight": "3D parts highlighted with MGSolidRenderer.emphasis = .strong (the 2D emphasis colour as a glow; other parts dimmed)"
   },
   "notChecked": "Pixel output is not deterministic across runs (soft shadows); the engine numbers, captions and legend are. No device timing."
 }

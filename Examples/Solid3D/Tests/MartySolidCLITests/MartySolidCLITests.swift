@@ -341,4 +341,21 @@ final class MartySolidCLITests: XCTestCase {
         }
     }
 
+
+    // Review P2-7: restore revalidates beats in beat order, then statement order: the same first reason in 20 fresh
+    // processes (each with its own hash seed). `snapshot check` restores an explainer snapshot with every check.
+    func testSnapshotCheckOrderIsTheSameInEveryProcess() throws {
+        let fixtures = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Fixtures")
+        let clean = try run(["snapshot", "check", fixtures.appendingPathComponent("explainer-mixed.snapshot.json").path])
+        XCTAssertEqual(clean.status, 0, clean.text)
+        XCTAssertEqual(clean.json?["legend"] as? String, "Solved 6")
+        XCTAssertEqual(clean.json?["caption"] as? String, "Count the teeth: 15 and 30.")
+        for _ in 0..<20 {
+            let r = try run(["snapshot", "check", fixtures.appendingPathComponent("explainer-two-false-checks.snapshot.json").path])
+            XCTAssertEqual(r.status, 1)
+            XCTAssertEqual(r.json?["reason"] as? String, "check.failed.p.speed")
+        }
+        XCTAssertEqual(try run(["snapshot", "check", try write("[", "bad-snapshot.json")]).json?["reason"] as? String, "snapshot.json")
+    }
+
 }
