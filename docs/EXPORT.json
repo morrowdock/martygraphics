@@ -316,7 +316,8 @@
     "docs/fixtures/v1/explainer-mixed.statements.ndjson: the mixed example as a statement stream",
     "docs/assets/explainer/*: one marty-solid render still of the mixed example and its receipt",
     "Tests/MartyGraphicsTests/ExplainerReviewFixTests.swift: regression tests for the PR #32 review (restore revalidation, live captions and claims after learner changes, spin over time and pause, host camera and controls, notes on template items, refused-beat claims, restore order, renamed reasons, strong 3D highlight)",
-    "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/*.snapshot.json: explainer snapshots of the mixed example (clean, and with two false 3D checks) for marty-solid snapshot check in fresh processes"
+    "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/*.snapshot.json: explainer snapshots of the mixed example (clean, and with two false 3D checks) for marty-solid snapshot check in fresh processes",
+    "Tests/MartyGraphicsTests/ExplainerRecheckTests.swift: regression tests for the PR #32 re-check (captions and checks wait for the animated board, saved control labels and saved checks on restore, restored legend equals a fresh run)"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

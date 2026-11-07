@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "9a44785c55e4d90e230b95ef49aaa9eb4954475bd117b72810768244bd82d5eb"
+      "sha256": "906a9bb8ea9dadf512039300f729f7c7bb713862207a1baef25ccf27b0e6f72f"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -211,15 +211,15 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "524b9ba0173dde1cc852349d870581687e6dc39e4feecf022c5188a1940d6690"
+      "sha256": "7a5f560d32650f5eb37009530ff90aab145018f4beff240227735ac0d0ad0668"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
-      "sha256": "6c067da1ff2ec78e8506cd56ed131c3df11d0ec7117bbbdaa0a39d64e3f061a5"
+      "sha256": "95c9871f5a43f6aaccdd78921993fa4e382f7868799854f428e86c5a4cf7591f"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-two-false-checks.snapshot.json",
-      "sha256": "eda078ce0a84548c3cb86698237cbb5b5994dac2890e2c8d6461e223b209dd77"
+      "sha256": "8f982f6d217c5e7d9734529dcf1b1a7c59354329456ddaa87ce805f320668834"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-check-strict.check.json",
@@ -239,11 +239,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.check.json",
-      "sha256": "ca381227fdf920a7be291d98858f0c9bc8f122f681e65449fcf475f386a0e064"
+      "sha256": "9db8d39d97bbbc97b6cd5ef2b60b186c6b283709f9314231a541f34f073cc2c5"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.strict.json",
-      "sha256": "c28cf9f3e5bd09d00564b3582bdc0c4e3a9f1cef895dd10ae04b0e20e9700ce1"
+      "sha256": "64da4e1024133546db4f67a2037834017d177e4da16bf12f37312b1d0ae68b16"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-1-refused.check.json",
@@ -479,11 +479,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
-      "sha256": "27335d87c50db4017fdac90791df926e7c0c814985e0b00da43e7749dfe612a4"
+      "sha256": "e592636c43717c6e858c653f70723f26b6e86542d4ad5cee1b48a8c4ce235fa3"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerState.swift",
-      "sha256": "45cd05f2382ec2e0d7d0585029b4361494d1f3c024dcb7549a57096b47e0b854"
+      "sha256": "e5602dc18027fee167d0325ea917aaf432dabb8527d6e8c47e717f2ad41ed112"
     },
     {
       "path": "Sources/MartyGraphics/MG3DInteraction.swift",
@@ -671,7 +671,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "8160dd4c22c62853e2cfd48ce15a9fa4aae7dbdfba37090e746c67c2566289b0"
+      "sha256": "0bebb101061398d3d14c961f0e3a30287e4a91960fb170844d4ef04067b4628d"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
@@ -770,8 +770,12 @@
       "sha256": "71a1b63fb4c0e67512bc58ed8a6d00d3b190b95b0dace8237866d3ddad99558d"
     },
     {
+      "path": "Tests/MartyGraphicsTests/ExplainerRecheckTests.swift",
+      "sha256": "8a07dcc30edd6dddf7d39ec4b11c988145f247bded03e1a4b950cc1541e4244c"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/ExplainerReviewFixTests.swift",
-      "sha256": "b4ede532301d2ca74b11b9c3ffc8bc00aa35557bed1a574f00696c13174acb59"
+      "sha256": "31b5a422714525b67ffb9e6356661bf167e41f4ffa6d254022f63d8a36eaf1c1"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerStreamTests.swift",
@@ -939,11 +943,11 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "b2723942bbf6955fd18423fa116b3f658a521bda722dde3b618b2fbd44bf00d2"
+      "sha256": "5f3fd58d1647e9c462757a27676246deedbcb43e04e50b16780e9eec0d284481"
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "f805ac5b26979af7ee513894fdd3d66c4f672aa969e2e314db588d6bd0487b61"
+      "sha256": "232ab96fbb7610c733d8e43d73a16d4e984a41e389d7c1922462518c77114719"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -975,7 +979,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "34efa32090042658c3305ee5b005173634b739d64b32b61ee914765b29f9fe3a"
+      "sha256": "37cab6fc3d3248777b52a7000c460b34716fa97c9295f69febbee1428cd6d957"
     },
     {
       "path": "docs/SHOWCASE.md",
@@ -1019,7 +1023,7 @@
     },
     {
       "path": "docs/assets/explainer/provenance.json",
-      "sha256": "58ac65fbfb22377daeb8b5a26db61b654d2f7f84ff750143e6d84feec7550c32"
+      "sha256": "b8fde602b5daf4499ea71a750397e9f445714b71dab29abb1568ccbe810d8505"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",

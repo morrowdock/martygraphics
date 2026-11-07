@@ -39,9 +39,10 @@ extension MGExplainerSession {
                                         why: built ? "The \(name) template shows some data as given" : "Computed by the \(name) template"))
         }
         out += itemClaims
+        let pending = Set(pendingClaims)
         for b in keptBeats {
             let n = b.index + 1
-            let t: MGTier? = b.unchecked != nil ? .described : MGExplainerHonesty.placeholders(b.say).map { tier(ofPlaceholder: $0) }.min()
+            let t: MGTier? = pending.contains("beat.\(n)") ? nil : b.unchecked != nil ? .described : MGExplainerHonesty.placeholders(b.say).map { tier(ofPlaceholder: $0) }.min()
             if let t {
                 let why: String
                 if let u = b.unchecked { why = "Marked unchecked: \(u)" }
@@ -54,6 +55,8 @@ extension MGExplainerSession {
                 // A 2D check of the presented beat that the state shown now breaks (a learner or host change) is not
                 // current: it is left out, never kept as "Checked" (`notCurrent`).
                 if !name.contains("."), b.index == presented.beat, notCurrent.contains("beat.\(n).check.\(j + 1)") { continue }
+                // While the board still moves to the beat's state, its 2D checks are pending, not "Checked".
+                if pending.contains("beat.\(n).check.\(j + 1)") { continue }
                 let t = tier(ofPlaceholder: name)
                 let text: String
                 if name.contains("."), let c = threeD.next() { text = c.check.text } else { text = name }
@@ -101,6 +104,18 @@ extension MGExplainerSession {
                                             why: t == .solved ? "Its numbers are engine values or facts" : "It shows a value below Solved"))
             }
         }
+        return out
+    }
+
+    /// Claims of the presented beat that wait for the board to settle (`boardSettled`): its caption when it shows a 2D
+    /// value, and its 2D checks. They are left out of `claims` and the legend until the board shows the beat's state.
+    public var pendingClaims: [String] {
+        guard !boardSettled, let k = presented.beat, let b = beats[k] else { return [] }
+        var out: [String] = []
+        if b.unchecked == nil, MGExplainerHonesty.placeholders(b.say).contains(where: { !($0.split(separator: "|").first ?? "").contains(".") }) {
+            out.append("beat.\(k + 1)")
+        }
+        for (j, name) in b.checkNames.enumerated() where !name.contains(".") { out.append("beat.\(k + 1).check.\(j + 1)") }
         return out
     }
 
@@ -167,6 +182,7 @@ extension MGExplainerSession {
         if let board { o["board"] = text(board) }
         if let solidSource { o["solid"] = text(solidSource) }
         o["setup"] = .array(setupOps.map(text))
+        o["hostBinds"] = .array(hostBinds.map(text))
         o["beats"] = .array(beats.keys.sorted().map { k -> MGJSON in
             let b = beats[k]!
             var e: [String: MGJSON] = ["beat": .number(Double(k)), "sayAt": .number(Double(b.sayStatement)), "say": .string(b.say),
@@ -247,6 +263,8 @@ extension MGExplainerSession {
                 s.board = b
             }
             s.setupOps = try commands(o["setup"], "snapshot.setup")
+            s.hostBinds = try commands(o["hostBinds"], "snapshot.controls")
+            guard s.hostBinds.allSatisfy({ $0["op"] == .string("bind") }) else { throw MGError("snapshot.controls") }
             view = .beat
             guard case .array(let entries)? = o["beats"], entries.count <= MGExplainerLimits.beats else { throw MGError("snapshot.beats") }
             for e in entries {
@@ -260,9 +278,22 @@ extension MGExplainerSession {
                 if case .string(let u)? = eo["unchecked"] { info.unchecked = u }
                 if eo["view"] != nil { info.view = try text(eo["view"], "snapshot.beats") }
                 if case .array(let hl)? = eo["highlight"] {
+                    guard (1...MGExplainerLimits.highlightIDs).contains(hl.count) else { throw MGError("beat.highlight.count") }
                     info.highlight = try hl.map { guard case .string(let x) = $0 else { throw MGError("snapshot.beats") }; return x }
                 }
                 info.checkSpecs = try specs.map { try text($0, "snapshot.beats") }
+                // Every saved check with the authored check rules (closed keys, a name, one comparison): a spec that
+                // is not a check can never become a claim.
+                for spec in info.checkSpecs {
+                    if case .string(let name)? = spec["value"], name.contains(".") {
+                        do { _ = try MGSolidClaimCheck.parse(spec) } catch {
+                            let r = reason(error)
+                            throw MGError(r.hasPrefix("step.check.") ? "check.\(r.dropFirst(11))" : r)
+                        }
+                    } else {
+                        _ = try MGCheck.parse(spec)
+                    }
+                }
                 info.ops = try commands(eo["ops"], "snapshot.beats")
                 guard info.ops.count <= MGExplainerLimits.commandsPerBeat else { throw MGError("snapshot.beats") }
                 for c in checks {
@@ -319,9 +350,13 @@ extension MGExplainerSession {
             if s.board == nil, s.frozen != s.lesson.boardless { throw MGError("snapshot.board") }
             // Every scene the lesson holds (shown and baseline), and every queued command, with the explainer's rules.
             view = .board
-            for st in [s.lesson.state, s.lesson.projected].compactMap({ $0 }) where !s.lesson.boardless {
+            var held = [s.lesson.state, s.lesson.projected].compactMap { $0 }
+            held += s.lesson.pending.flatMap { [$0.start, $0.end] }
+            for st in held where !s.lesson.boardless {
                 if let src = st.scene.source.objectValue { try MGExplainerHonesty.checkBoard(src, notes: s.notes) }
                 try MGLessonEngine.guardIDs(st, env)
+                // A saved control (its label is text the learner reads) must be one a checked `bind` made.
+                for c in st.controls where !s.scriptControls.contains(c.wire) { throw MGError("snapshot.controls") }
             }
             view = .beat
             for p in s.lesson.pending {
@@ -355,6 +390,10 @@ extension MGExplainerSession {
             s.lesson.caption = s.caption
             if s.frozen, let (t, tier) = try s.filledTitle() { s.title = t; s.titleTier = tier }
             guard let st = o["stream"]?.objectValue else { throw MGError("snapshot.stream") }
+            for key in ["bytes", "statements"] {
+                let v = try int(o["stream"]?[key], "snapshot.stream")
+                guard v >= 0, v <= (key == "bytes" ? MGExplainerLimits.bytes : MGExplainerLimits.statements) else { throw MGError("snapshot.stream") }
+            }
             s.stream = StreamStatus(started: try flag(st["started"], "snapshot.stream"), header: try flag(st["header"], "snapshot.stream"),
                                     keep: try flag(st["keep"], "snapshot.stream"), ended: try flag(st["ended"], "snapshot.stream"),
                                     exhausted: try flag(st["exhausted"], "snapshot.stream"),
@@ -377,10 +416,13 @@ extension MGExplainerSession {
             st = MGLessonState(scene: MGScene(source: MGLessonSession.boardlessSource, template: nil, title: "", is3D: false, width: 12, height: 8,
                                               items: [], steps: [], camera: nil, values: [:], motion: .none, attachments: [:]))
         }
+        var made = Set<MGJSON>()
         func run(_ op: MGJSON, _ beat: Int?) throws {
             if let r = commandRefusal(op) { throw MGError(r) }
             st = try MGLessonEngine.run(op, on: st, origin: .script, beat: beat, env: env).state
+            for c in st.controls { made.insert(c.wire) }
         }
+        let initial = st
         for op in setupOps { try run(op, nil) }
         captions = [:]
         for k in beats.keys.sorted() where !beats[k]!.dropped {
@@ -395,5 +437,12 @@ extension MGExplainerSession {
             }
             captions[k] = try MGLessonSession.fillLine(info.say, st.scene.values, env: env)
         }
+        // Host binds, each checked with the explainer's command rules on the board.
+        for c in hostBinds {
+            if let r = commandRefusal(c) { throw MGError(r) }
+            let r = try MGLessonEngine.run(c, on: initial, origin: .script, beat: nil, env: env).state
+            for control in r.controls { made.insert(control.wire) }
+        }
+        scriptControls = made
     }
 }
