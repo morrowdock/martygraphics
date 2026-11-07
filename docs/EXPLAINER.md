@@ -148,10 +148,17 @@ in an explainer.
     still moves to it (the beat's `animate` keyframes play, or a blend changes drawn items; `boardSettled`,
     `motionRemaining`), the caption shows each 2D number as "…", and the caption claim and the beat's 2D checks are
     pending (`pendingClaims`): out of `claims` and the legend. They appear when the motion has played; paused time
-    does not count, and `nextWake` wakes the host then. `.immediate` pacing and `finishNow()` play no motion. 3D facts
-    in this version are rates per input turn, tooth counts and travel over a full turn, so they hold at every pose of
-    a `spin` and show at once. (PR 3a: a fact measured at one pose waits for its pose the same way.) The `lineDue`
-    event keeps the full line (for speech); hosts show `caption`.
+    does not count, and `nextWake` wakes the host then. `.immediate` pacing and `finishNow()` play no motion: the board
+    gets the end state as a direct change in the same step (`finishNow` publishes a new direct change if a motion was
+    still playing), so state and text match at once. 3D facts in this version are rates per input turn, tooth counts
+    and travel over a full turn, so they hold at every pose of a `spin` and show at once. (PR 3a: a fact measured at
+    one pose waits for its pose the same way.)
+11. Speech is learner-visible. A beat's `lineDue` (the line a host speaks) never carries a 2D engine number before
+    the board shows the state it describes: when such a line is due while the board still moves, `lineDue` waits and
+    fires when the motion settles, filled from the state shown then (the simpler of the two options; there is no
+    number-free first version). A line without a 2D engine number fires as before. With `.estimate` pacing the
+    line's time starts when it is due; a line the host ends before it is due is dropped, never spoken late;
+    `finishNow()` makes a waiting line due at once. `lineQueued` is for prefetch only: do not speak it.
 
 ## One id namespace
 
@@ -285,7 +292,8 @@ and `restore(data:…)` trust nothing in it as proof:
 2. the script is replayed from the board with the explainer's rules (rule N1, one namespace, every set-up and beat
    command, every 2D check on its beat's end state, every caption), which also gives each beat's caption again;
 3. the lesson restores with the explainer's environment; every scene it holds (shown, baseline, each queued beat's
-   start and end) passes rule N1 and the namespace again, and every saved control must be one that a checked `bind`
+   start and end) passes the board rules (no wire `title` heading, `steps` or 3D dimension), rule N1 and the
+   namespace again, and the lesson keeps no title of its own, and every saved control must be one that a checked `bind`
    made (of the replayed script, or a recorded host `bind`; `snapshot.controls`), so a control label is never taken
    from saved data; every queued command passes the explainer's command rules, each queued beat must be the
    explainer's beat, and every kept beat is either shown or queued;
