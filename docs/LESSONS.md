@@ -222,8 +222,8 @@ The snapshot caps come from these bounds:
 - Depth: `MGLessonLimits.snapshotDepth` = 2,056 levels. The only free-form JSON in a lesson is a raw template's
   `params` (at most 4 KiB) in a scene source, or a queued command (one 4 KiB statement). A level of nesting takes at
   least two bytes, so such a value nests at most 2,048 levels. The snapshot adds at most 8 levels above it. (The
-  system JSON parser can have a lower nesting limit for streamed text. A host `apply` with a value built in code
-  can reach the full depth.)
+  system JSON parser can have a lower nesting limit for streamed text. A host `apply` takes a value built in code, with
+  no parser; its 4 KiB patch size bounds the depth.)
 
 `restore` keeps a first check as defence in depth: one bounded walk, before it reads any field or encodes anything.
 The walk keeps a lower bound of the canonical JSON size and stops when it passes the cap, so its work is bounded.

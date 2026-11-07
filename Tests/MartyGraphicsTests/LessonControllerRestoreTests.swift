@@ -601,22 +601,22 @@ final class LessonControllerRestoreTests: LessonTestCase {
         let r = try MGLessonSession.restore(snapshot, pacing: .speech, clock: clock).get()
         XCTAssertEqual(r.snapshot(), snapshot)
 
-        // `apply` has no statement size: the deepest tree is bounded by the raw params limit (4 KiB).
+        // `apply` takes a value built in code (no JSON parser): the deepest tree is bounded by the patch size (4 KiB).
         var a = MGLessonSession(pacing: .immediate, clock: clock)
         a.feed(lines([#"{"scene":{"v":1,"template":"host_nested","params":{"tree":0}}}"#, #"{"end":true}"#]))
-        var k = 1
-        while MGJSON.object(["tree": deep(k + 1)]).canonicalByteCount <= MGLimits.rawParamsBytes { k += 1 }
         func params(_ levels: Int) -> MGJSON { .object(["op": .string("params"), "params": .object(["tree": deep(levels)])]) }
+        var k = 1
+        while MGJSON.object(["v": .number(1), "ops": .array([params(k + 1)])]).canonicalByteCount <= MGLimits.patchBytes { k += 1 }
         XCTAssertGreaterThan(k, 2000)
         XCTAssertNoThrow(try a.apply(params(k)).get())
-        XCTAssertNotNil(a.apply(params(k + 1)).failureReason, "over the raw params limit")
+        XCTAssertEqual(a.apply(params(k + 1)).failureReason, "patch.object", "over the patch size")
         let applied = a.snapshot()
         XCTAssertEqual(try MGLessonSession.restore(applied, pacing: .immediate, clock: clock).get().snapshot(), applied)
     }
 
     /// Review 2 S3: a control is bounded on every path, including public `apply` and `restore`.
     func testControlsAreBoundedOnEveryPath() throws {
-        let long = String(repeating: "p", count: 900), fine = String(repeating: "q", count: 100)
+        let long = String(repeating: "p", count: 1000), fine = String(repeating: "q", count: 100)
         let t = MGTemplate(name: "long_param", summary: "long parameter names",
                            params: [MGParamSpec(name: long, unit: "", range: 0...1, defaultValue: 0),
                                     MGParamSpec(name: fine, unit: "", range: 0...1, defaultValue: 0)]) { _, _ in

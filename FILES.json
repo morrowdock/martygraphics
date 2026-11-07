@@ -447,7 +447,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonControllerRestoreTests.swift",
-      "sha256": "ef6ff70fbb28235cbc4767cd4313d39cd86e75c6abc4a4b4942e88731ff85122"
+      "sha256": "874264e4e9315a1a7303e67be3b255aacf24b214280a3e807183736605f1a592"
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonCoreTests.swift",
@@ -587,7 +587,7 @@
     },
     {
       "path": "docs/LESSONS.md",
-      "sha256": "f3c58602eac4d536371413d9451ed8f7a708906ec31f8f8a55c29d482e3c1b20"
+      "sha256": "9d95d67b4f2aacec2b2ced2448c1136fc62d9a2bd550cffe9743ddfb36295a5b"
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
