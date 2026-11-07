@@ -144,6 +144,50 @@ and the reason says "Its numbers are engine facts; its words are not checked". T
 [`check-strict.json`](assets/cutaway/check-strict.json), the strict check output for this model.
 [Capture receipt](assets/cutaway/provenance.json)
 
+## Labels, arrows and measured dimensions
+
+A model can put labels, arrows and dimension lines on its parts. This example is a hand winch:
+[`annotated-winch.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json), 40 lines. **It was written
+by hand for these docs. It is not the output of an AI model from a prompt.** The stills are unedited output of
+`marty-solid render`, and the check output is from `marty-solid check --strict`.
+
+[![Step 5: the big drum gear has a green turn arrow. A second green arrow on the drum is labelled "Rope side moves up". A short orange arrow under the blue weight is labelled "Weight". The corner note reads "Arrow lengths are not to scale".](assets/annotations/winch-lift.png)](assets/annotations/winch-lift.png)
+
+[![Step 3: the front view with the labels "Pinion: 14 teeth" and "Drum gear: 42 teeth" and a measured line labelled "Centres 56 mm" between the two gear centres. The labels overlap a little.](assets/annotations/winch-dimension.png)](assets/annotations/winch-dimension.png)
+
+Step 5 is the first still. Step 3 is the second still. The pinion's turn arrow shows in step 1 (not kept here).
+[Check output](assets/annotations/check-strict.json) · [Capture receipt](assets/annotations/provenance.json)
+
+**How a hand winch works.** You turn the crank, and the small pinion (14 teeth) turns with it. The pinion meshes with the
+larger drum gear (42 teeth), so the drum turns slower and the other way: `pinion.speed` is 1 (source `input`) and
+`wheel.speed` is -0.3333333333333333 (source `gearMesh`). The minus sign is the direction. The step 2 caption says
+"1/3 of a turn, the other way". The rope is on the drum, on the side that moves up (the arrow "Rope side moves up"), so
+the turning drum winds the rope in and lifts the weight. The two gear centres are 56 mm apart (`dim.centres` = 56,
+unit `mm`, source `dimension`). That is half the sum of the tooth counts, (14 + 42) / 2 = 28, times the module 2 mm
+(`pinion.module` and `wheel.module` are both 2 mm).
+
+**What the engine guarantees here.**
+
+* The dimension is measured by the engine. The model does not contain the number 56: the label text is
+  `Centres {dim.centres}` and the engine fills in "Centres 56 mm".
+* A turn arrow takes its direction from the engine: the sign of the part's turn rate (`wheel.worldSpeed` is
+  -0.3333333333333333). The model states `cw` for the drum and `ccw` for the pinion, and the engine refuses a stated
+  sense that is wrong. The motion arrow "Rope side moves up" takes its direction from the engine's exact velocity at
+  its anchor, and the model's expected direction (up) is refused if it is more than 30 degrees off.
+* A motion arrow or a turn arrow is allowed only where the motion has a constant rate, so that its direction is true for the
+  whole step. A chain with a crank-slider or crank-rod drive is refused with the reason
+  `annotation.motion.nonlinear.<id>`.
+* A gravity arrow (`"cause": "gravity"`) is refused unless it points within 10 degrees of straight down. In a step with
+  `spin`, it is also refused if the part it sits on turns (both its anchors must be world-fixed or move together). Here
+  it sits on the weight, which does not move (`partTiers`: `static`).
+* Arrow lengths are not to scale. The legend says so, and the engine prints this note: "Arrow lengths are not to scale"
+  (`legend.notes`). It is drawn in the top right corner of each still.
+
+The legend line for the whole model reads "Solved 12" (`legend.text`): two motions, two labels, five arrows, one dimension
+and two captions with engine numbers, plus one check. Its Built count is 0. Label and caption words are not checked, only their
+numbers. The engine does not check the gears' 3D tooth contact, load, strength, wear, friction or efficiency, or what
+drives the input (`notChecked`).
+
 ## Native scenes
 
 | Example | In `--preview` | What to notice | Source |
