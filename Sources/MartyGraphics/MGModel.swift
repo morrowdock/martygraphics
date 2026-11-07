@@ -147,6 +147,9 @@ public struct MGScene: Equatable, Sendable {
     public var startStep: Int = 0
     /// Number of patches applied. A patch may name `"rev"`; a stale one (made against an older revision) is refused.
     public var revision: Int = 0
+    /// Engine values the template marks as data the author gave (`MGTemplateBuild.builtValues`): tier Built ("Data as
+    /// given") instead of Solved in an explainer legend. Empty for every built-in template.
+    public internal(set) var builtValues: Set<String> = []
 
     public func item(_ id: String) -> MGItem? { items.first { $0.id == id } }
     public var animates: Bool { motion != .none || items.contains { $0.num["moveT"] != nil } }

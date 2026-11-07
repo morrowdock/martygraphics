@@ -15,6 +15,10 @@ public struct MGRenderInput {
     /// Numbered markers (item id → n) matching an object list, so list and picture correspond.
     public var markers: [String: Int] = [:]
     public var time: Double = 0
+    /// Emphasised table rows (0-based, header included) and cells (row × columns + column), by table id: an
+    /// explainer beat's `highlight` of `t.r2` or `t.r1c0`. Presentation only; empty by default.
+    public var tableRows: [String: Set<Int>] = [:]
+    public var tableCells: [String: Set<Int>] = [:]
     /// Selection uses the same resolved positions and viewport that are handed to the renderer.
     func hit(_ point: CGPoint, among selectable: Set<String>? = nil) -> MGItem? {
         MGLayout.hit(point, items: items, viewport: viewport, among: selectable)
@@ -223,7 +227,7 @@ public enum MGCanvasRenderer {
                 layer.stroke(shape, with: .color(color.opacity(0.85)), style: StrokeStyle(lineWidth: 1.8, dash: item.has("dashed") ? [6, 5] : []))
                 if let r = MGLayout.bounds(item, in: input.items, vp) { label(item.label, at: CGPoint(x: r.midX, y: r.minY), dir: CGVector(dx: 0, dy: -1)) }
             case .table:
-                table(ctx, item, vp, theme, color, p)
+                table(ctx, item, vp, theme, color, p, rows: input.tableRows[item.id] ?? [], cells: input.tableCells[item.id] ?? [])
                 if let r = MGLayout.bounds(item, in: input.items, vp) {
                     obstacles.append(r)
                     if let l = item.label {
@@ -433,7 +437,8 @@ public enum MGCanvasRenderer {
 
     /// Draws a table item: equal-size cells laid out from the top-left corner, each row fading in after the one above.
     /// Row 0 gets a stronger fill when `header` is set, and marked cell indices use the `.good` colour.
-    static func table(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double) {
+    static func table(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double,
+                      rows emphasisRows: Set<Int> = [], cells emphasisCells: Set<Int> = []) {
         guard let c = item.pts.first else { return }
         // Items built directly through the public API skip the parser, so never convert an unchecked count.
         let rawRows = item.n("rows", 1), rawCols = item.n("cols", 1)
@@ -460,6 +465,20 @@ public enum MGCanvasRenderer {
         // One rounded border around the whole grid, faded with the draw-on progress.
         ctx.stroke(Path(roundedRect: CGRect(x: topLeft.x, y: topLeft.y, width: w * CGFloat(cols), height: h * CGFloat(rows)), cornerRadius: 4),
                    with: .color(color.opacity(0.8 * p)), lineWidth: 1.5)
+        // Emphasised rows and cells: a glowing ring in the emphasis colour (the same colour as item emphasis).
+        let glow = theme.color(.yellow)
+        var boxes: [CGRect] = emphasisRows.sorted().filter { $0 < rows }.map {
+            CGRect(x: topLeft.x, y: topLeft.y + h * CGFloat($0), width: w * CGFloat(cols), height: h)
+        }
+        boxes += emphasisCells.sorted().filter { $0 < rows * cols }.map {
+            CGRect(x: topLeft.x + w * CGFloat($0 % cols), y: topLeft.y + h * CGFloat($0 / cols), width: w, height: h)
+        }
+        for box in boxes {
+            ctx.drawLayer { l in
+                l.addFilter(.shadow(color: glow.opacity(0.9), radius: 8))
+                l.stroke(Path(roundedRect: box.insetBy(dx: -2, dy: -2), cornerRadius: 5), with: .color(glow.opacity(0.95 * p)), lineWidth: 2.5)
+            }
+        }
     }
 
     static func array(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double) {

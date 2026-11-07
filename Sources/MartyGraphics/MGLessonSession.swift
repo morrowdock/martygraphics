@@ -146,6 +146,16 @@ public struct MGLessonSession {
     var changeSerial = 0
     var outbox: [MGLessonEvent] = []
 
+    // Explainer mode (internal; all off by default, so a lesson behaves exactly as before).
+    /// The explainer's parse environment: dotted placeholders fill from 3D facts, the D3 decimal rule is off (the
+    /// explainer applies number rule N1 instead) and 2D ids may not take a 3D id.
+    var env: MGParseEnvironment?
+    /// A 3D-only explainer: the 2D state is an empty scene built in code (no wire statement can make it).
+    var boardless = false
+    /// Refusals the explainer attaches to an open beat, applied when the beat closes (for example `text.sign.<name>`:
+    /// an `abs` that no check of the same beat proves). Keyed by beat index.
+    var closeRefusals: [Int: MGLessonIssue] = [:]
+
     struct StreamStatus: Equatable {
         var started = false, hasScene = false, keep = false, ended = false, header = false
         /// Statements completed in this stream (accepted or refused).
@@ -271,7 +281,7 @@ public struct MGLessonSession {
         var transitions: [MGTransition] = []
         for (i, command) in commands.enumerated() {
             do {
-                let r = try MGLessonEngine.run(command, on: s, origin: origin, beat: s.beat >= 0 ? s.beat : nil)
+                let r = try MGLessonEngine.run(command, on: s, origin: origin, beat: s.beat >= 0 ? s.beat : nil, env: env)
                 s = r.state; transitions.append(r.transition)
             } catch {
                 var issue = Self.issue(error, origin: origin); issue.command = i
@@ -428,7 +438,7 @@ public struct MGLessonSession {
             guard let o = value.objectValue else { throw MGError("lesson.object") }
             try MGLessonEngine.closed(o, required: ["v"], optional: ["title"], "lesson")
             guard o["v"] == .number(1) else { throw MGError("lesson.version") }
-            if MGLessonEngine.hasDecimalLiteral(value) { throw MGError("text.literal") }
+            if env == nil, MGLessonEngine.hasDecimalLiteral(value) { throw MGError("text.literal") }
             let empty = MGContext(width: 12, height: 8, is3D: false, values: [:])
             let t = try o["title"].map { try MGParser.text($0, MGLimits.title, empty, "lesson.title") }
             if let t { title = t }
@@ -441,8 +451,8 @@ public struct MGLessonSession {
         guard !stream.keep, !stream.hasScene else { return refuse("stmt.order", index) }
         guard value.objectValue != nil else { return refuse("scene.object", index) }
         if value["steps"] != nil { return refuse("lesson.scene.steps", index) }
-        if MGLessonEngine.hasDecimalLiteral(value) { return refuse("text.literal", index) }
-        switch MGParser.scene(json: value) {
+        if env == nil, MGLessonEngine.hasDecimalLiteral(value) { return refuse("text.literal", index) }
+        switch MGParser.scene(json: value, extraTemplates: [], env: env) {
         case .failure(let e): refuse(e.reason, index)
         case .success(let parsed):
             let scene = MGLessonEngine.lessonScene(parsed)
@@ -465,11 +475,11 @@ public struct MGLessonSession {
         // Validate everything first. A refused `say` changes nothing: the open beat stays open, so later commands keep
         // attaching to it, and no beat is closed or presented because of malformed input.
         guard case .string(let raw) = value else { return refuse("stmt.say", index) }
-        if MGLessonEngine.hasDecimalLiteral(value) { return refuse("text.literal", index) }
+        if env == nil, MGLessonEngine.hasDecimalLiteral(value) { return refuse("text.literal", index) }
         guard stream.beats < MGLessonLimits.beats else { return refuse("lesson.beats.count", index) }
         // Placeholder names are checked against the values at the end of the beat before (the new beat's start).
         let base = projectedIfClosed
-        let ctx = MGContext(width: base.scene.width, height: base.scene.height, is3D: base.scene.is3D, values: base.scene.values)
+        let ctx = MGContext(width: base.scene.width, height: base.scene.height, is3D: base.scene.is3D, values: base.scene.values, env: env)
         do { _ = try MGParser.text(value, MGLimits.say, ctx, "stmt.say") } catch { return refuse(Self.issue(error, statement: index)) }
         // The queue budget is checked on what closing the open beat would leave, before anything changes.
         var usage = queueUsage
@@ -504,7 +514,7 @@ public struct MGLessonSession {
             guard !pending[b].refused else { return refuse(MGLessonIssue("beat.refused", beat: k, statement: index)) }
             guard pending[b].commands.count < MGLessonLimits.commandsPerBeat else { return refuse(MGLessonIssue("beat.ops.count", beat: k, statement: index)) }
             do {
-                let r = try MGLessonEngine.run(json, on: pending[b].end, origin: .script, beat: k)
+                let r = try MGLessonEngine.run(json, on: pending[b].end, origin: .script, beat: k, env: env)
                 // Checks are claims about what the learner sees at the end of the beat: a later command may not make an
                 // accepted check false. Such a command is refused alone; the beat and its proven claims stay.
                 if let broken = pending[b].checks.lazy.compactMap({ $0.check.failure(in: r.state.scene) }).first { throw MGError(broken) }
@@ -523,7 +533,7 @@ public struct MGLessonSession {
             // Setup commands between the scene and the first `say` are presented with the scene.
             do {
                 let before = p.scene.items
-                let r = try MGLessonEngine.run(json, on: p, origin: .script, beat: nil)
+                let r = try MGLessonEngine.run(json, on: p, origin: .script, beat: nil, env: env)
                 state = r.state; projected = r.state
                 appendLog(MGLessonLogEntry(command: json, origin: .script, beat: nil, statement: index))
                 emit(.accepted(statement: index))
@@ -578,6 +588,55 @@ public struct MGLessonSession {
         }
     }
 
+    // MARK: explainer hooks (internal)
+
+    /// One complete statement from an explainer, validated with the explainer's own statement index (so every issue
+    /// names the explainer statement). The explainer counts bytes, statements and nesting itself.
+    mutating func forward(_ json: MGJSON, index: Int) -> [MGLessonEvent] {
+        outbox = []
+        if stream.ended { startStream() }
+        nextStatement = max(nextStatement, index + 1)
+        statement(json, index)
+        advance()
+        return outbox
+    }
+
+    /// The empty 2D state of a 3D-only explainer. It is built in code: no wire scene can be empty, so no statement can
+    /// make or replace it. Emits no `firstPresented` (the explainer reports its own view events).
+    mutating func startBoardless() {
+        let scene = MGScene(source: Self.boardlessSource, template: nil, title: "", is3D: false, width: 12, height: 8, items: [], steps: [],
+                            camera: nil, values: [:], motion: .none, attachments: [:])
+        let fresh = MGLessonState(scene: scene)
+        state = fresh; projected = fresh
+        pending = []; nextBeat = 0; openLine = nil; lineEndsAt = nil; lineRemaining = nil; caption = nil
+        settleUntil = clock.now; settleRemaining = isPaused ? .zero : nil
+        reopenPlayback()
+        boardless = true
+        stream.started = true; stream.hasScene = true
+    }
+    static let boardlessSource: MGJSON = .object(["v": .number(1), "items": .array([]), "boardless": .bool(true)])
+
+    /// Refuse the open beat for a reason the lesson does not see (a failed 3D check): the #20 rollback path. The beat
+    /// is marked refused, the projected state goes back to the beat's start and later statements of the beat are
+    /// cascades (`beat.refused`).
+    mutating func refuseOpenBeat(_ issue: MGLessonIssue) -> [MGLessonEvent] {
+        outbox = []
+        guard let b = openBeat, !pending[b].refused else { return outbox }
+        pending[b].refused = true
+        pending[b] = Self.measured(pending[b])
+        projected = pending[b].start
+        refuse(issue)
+        advance()
+        return outbox
+    }
+
+    /// Keep the settle deadline at least `seconds` from now (an explainer beat's 3D `spin`).
+    mutating func extendSettle(seconds: Double) {
+        guard seconds.isFinite, seconds > 0 else { return }
+        let length = Duration.milliseconds(Int64((seconds * 1000).rounded()))
+        if isPaused { settleRemaining = max(settleRemaining ?? .zero, length) } else { settleUntil = max(settleUntil, clock.now + length) }
+    }
+
     /// The open beat `beat`, closed (pure). Every check must hold on its final state, its line must fill, and the
     /// closed entry must fit the queue budget (`rest` = the queue without this beat); otherwise it is refused with the
     /// returned issue (a refused entry keeps no commands, so it is never larger).
@@ -591,8 +650,9 @@ public struct MGLessonSession {
         if let c = b.checks.first(where: { $0.check.failure(in: b.end.scene) != nil }) {
             return refused(MGLessonIssue(c.check.failure(in: b.end.scene)!, beat: b.index, statement: c.statement))
         }
+        if let issue = closeRefusals[b.index] { return refused(issue) }
         do {
-            b.queuedText = try Self.fillLine(b.say, b.end.scene.values)
+            b.queuedText = try Self.fillLine(b.say, b.end.scene.values, env: env)
         } catch {
             var issue = Self.issue(error, statement: b.sayStatement); issue.beat = b.index
             return refused(issue)
@@ -626,8 +686,8 @@ public struct MGLessonSession {
 
     /// A beat's line filled from engine values, at most `MGLessonLimits.lineBytes` of canonical JSON (`stmt.say.bytes`),
     /// so a caption and a queued line are bounded whatever the values are.
-    static func fillLine(_ say: String, _ values: [String: MGValue]) throws -> String {
-        let text = try MGParser.fill(say, values, "stmt.say")
+    static func fillLine(_ say: String, _ values: [String: MGValue], env: MGParseEnvironment? = nil) throws -> String {
+        let text = try MGParser.fill(say, values, "stmt.say", env: env)
         guard MGJSON.string(text).canonicalByteCount <= MGLessonLimits.lineBytes else { throw MGError("stmt.say.bytes") }
         return text
     }
@@ -666,7 +726,7 @@ public struct MGLessonSession {
             // A command that no longer validates is refused alone; a check that no longer holds refuses the beat.
             for (i, c) in beat.commands.enumerated() {
                 do {
-                    let r = try MGLessonEngine.run(c.json, on: s, origin: .script, beat: k)
+                    let r = try MGLessonEngine.run(c.json, on: s, origin: .script, beat: k, env: env)
                     s = r.state; transitions.append(r.transition)
                     applied.append(MGLessonLogEntry(command: c.json, origin: .script, beat: k, statement: c.statement))
                 } catch {
@@ -681,7 +741,7 @@ public struct MGLessonSession {
             if let why = c.check.failure(in: s.scene) { return refuse(MGLessonIssue(why, beat: k, statement: c.statement)) }
         }
         let text: String
-        do { text = try Self.fillLine(beat.say, s.scene.values) } catch {
+        do { text = try Self.fillLine(beat.say, s.scene.values, env: env) } catch {
             var issue = Self.issue(error, statement: beat.sayStatement); issue.beat = k
             return refuse(issue)
         }
@@ -775,6 +835,9 @@ struct MGStatementScanner: Equatable {
     enum Output: Equatable { case statement([UInt8]), garbage, tooLong }
     var buffer: [UInt8] = []
     var depth = 0, inString = false, escape = false, inGarbage = false, overflow = false
+    /// Largest statement kept, in bytes (a lesson: `MGLessonLimits.statementBytes`; an explainer: its stream size, so a
+    /// solid statement fits and the explainer applies its own per-statement limits).
+    var cap = MGLessonLimits.statementBytes
 
     mutating func push(_ b: UInt8) -> [Output] {
         if depth == 0 {
@@ -790,7 +853,7 @@ struct MGStatementScanner: Equatable {
             }
         }
         if !overflow {
-            if buffer.count < MGLessonLimits.statementBytes { buffer.append(b) } else { overflow = true; buffer = [] }
+            if buffer.count < cap { buffer.append(b) } else { overflow = true; buffer = [] }
         }
         if inString {
             if escape { escape = false } else if b == UInt8(ascii: "\\") { escape = true } else if b == UInt8(ascii: "\"") { inString = false }
@@ -813,7 +876,8 @@ struct MGStatementScanner: Equatable {
 
     /// End of input: an unfinished statement or trailing garbage is reported once.
     mutating func flush() -> [Output] {
-        defer { self = MGStatementScanner() }
+        let keep = cap
+        defer { self = MGStatementScanner(); cap = keep }
         if depth > 0 { return [overflow ? .tooLong : .garbage] }
         return inGarbage ? [.garbage] : []
     }
