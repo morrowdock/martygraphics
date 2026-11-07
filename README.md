@@ -96,6 +96,16 @@ commits new state in 0.14 ms, median of 500 runs. The first figure needs 136 byt
 [Capture receipt](docs/assets/lessons/provenance.json)
 
 <p align="center">
+  <a href="docs/SHOWCASE.md#cutaways-and-honest-numbers"><img src="docs/assets/cutaway/cut.png" width="640" alt="A gearbox with the front half of its casing cut away: a brass 16-tooth, a bronze 23-tooth and a steel 28-tooth gear mesh inside, and the cut faces of the casing are solid walls."></a>
+</p>
+
+**Cutaways and honest numbers.** A model can cut a part open at a plane (the cut faces are capped, so walls look solid)
+or draw it as a see-through ghost. The idler-gearbox example does both. Its captions hold placeholders, and the engine
+fills them in: step 4 says the idler turns the other way "at 16/23 of the input speed", a number the engine solved from the
+gear mesh. The model was written by hand for the docs; it is not an AI prompt run.
+[The three steps and the numbers](docs/SHOWCASE.md#cutaways-and-honest-numbers)
+
+<p align="center">
   <a href="docs/assets/pathtrace/hero.png"><img src="docs/assets/pathtrace/gearbox-loop-640.gif" width="840" alt="Path-traced two-stage gearbox turning: polished steel and brass gears with involute teeth, a spur pair above a planetary set inside a steel ring gear, on a dark studio floor."></a>
 </p>
 

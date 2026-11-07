@@ -105,6 +105,45 @@ iPad): a scene statement reaches the first offscreen frame (1024×768) in 0.52 m
 commits new state in 0.14 ms, median of 500 runs. The first figure needs 136 bytes of stream.
 See [measured timing](LESSONS.md#measured-timing-this-mac-only).
 
+## Cutaways and honest numbers
+
+A closed gearbox hides its gears. This example opens it in three steps: the closed casing, a cut that removes the
+front half of the casing, and a ghost step that makes the casing see-through. The model is
+[`idler-gearbox.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json). **It was written by hand for
+these docs. It is not the output of an AI model from a prompt.** The stills are unedited output of
+`marty-solid render`.
+
+[![Step 1: a closed aluminium gearbox casing. The caption reads: A closed gearbox, the casing hides every gear inside it.](assets/cutaway/closed.png)](assets/cutaway/closed.png)
+
+[![Step 2: the front half of the casing is cut away. The cut faces are solid walls. A brass 16-tooth gear, a bronze 23-tooth gear and a steel 28-tooth gear mesh in a row inside.](assets/cutaway/cut.png)](assets/cutaway/cut.png)
+
+[![Step 6: the casing is a ghost, drawn see-through, with the three gears visible inside it.](assets/cutaway/ghost.png)](assets/cutaway/ghost.png)
+
+In step 2 the engine cuts the casing at a plane and caps the cut, so the walls look solid and not hollow. For this
+model `marty-solid check --strict` reports the capped casing with `closed: true`, 3 cap loops and 34 cap triangles
+(step 2 to 5). In step 6 the same casing is a ghost: it stays in the scene but is drawn see-through.
+
+**How an idler works.** The input gear has 16 teeth, the idler has 23 and the output has 28. The idler meshes with both.
+It turns the other way, at 16/23 of the input speed (`idler.speed` = -0.6956521739130435, the minus sign is the
+direction). The output meshes with the idler, so it turns the same way as the input, at 16/28 = 4/7 of the input speed
+(`output.speed` = 0.5714285714285714). The idler does not change that overall ratio: its 23 teeth cancel, because
+16/23 × 23/28 = 16/28. (The cancelling is arithmetic. The engine solves each gear's speed from its mesh; the words of
+step 6 say the cancelling, and the engine does not check those words.)
+
+**Honest numbers.** The captions do not hold typed numbers. Step 4 is written in the model as
+
+`The idler turns the other way, at {idler.speed|abs|frac} of the input speed.`
+
+and the engine fills it in as **"The idler turns the other way, at 16/23 of the input speed."** The placeholder reads
+the fact `idler.speed` (source `gearMesh`, tier `solved`). A check in the same step, `idler.speed < 0`, proves the
+sign that `abs` drops; the check output lists it as `Checked`. The check report gives the step tier `solved` (`stepTiers`)
+and lists the facts the step used (`stepFacts`). The legend line for the whole model reads **"Solved 9"**: three
+motions, four captions with engine numbers and two checks. Its Built count is 0. A caption badge says "Numbers solved"
+and the reason says "Its numbers are engine facts; its words are not checked". The engine does not check the gears'
+3D tooth contact, load, strength, wear, friction or efficiency (`notChecked`). All of this is in
+[`check-strict.json`](assets/cutaway/check-strict.json), the strict check output for this model.
+[Capture receipt](assets/cutaway/provenance.json)
+
 ## Native scenes
 
 | Example | In `--preview` | What to notice | Source |

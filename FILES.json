@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "ae6c8c3ef123269e6d5eaec9f524192c8e34b47f4de30815ed708602e990ab9a"
+      "sha256": "59d52cfbfd160e6ec85c5232999a3fa375330df07166160837b5feba51cd46fa"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -247,7 +247,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "b8c1e3898c523bf72656d11cc1f378c90283b1ca3fa12be5ab30c3d5ebdaccca"
+      "sha256": "f397d5ffd0d14df120c0837cb3a58704d52f4d68c0d2b8b67ec5fc1109a60905"
     },
     {
       "path": "SECURITY.md",
@@ -623,7 +623,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "8c0584f86182f2d1a915ef47375be9ea2d8e529d5859da3b233d9739f7eb82f1"
+      "sha256": "956cca9121feed363413e8283616a3054713dede69ee7778cbc320ec47de87d4"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -655,7 +655,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "13a9e99e51dec7228a17d07d116b02b6bff173b215d1866d14deffb4deaf452d"
+      "sha256": "51fd12517334730cd45181797ce4b49c8f56f3ea8c9a7d8093d8dd5aa9205633"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -668,6 +668,26 @@
     {
       "path": "docs/VERIFY-ON-MAC.md",
       "sha256": "6c3ad467a16a2d356f07193ebffa270b788340911ec078010a7a0293692aa0d3"
+    },
+    {
+      "path": "docs/assets/cutaway/check-strict.json",
+      "sha256": "ec3242f6391faf85f4c2a361d91b494cb38c366e0c27aa1887ef38cdc3b879d8"
+    },
+    {
+      "path": "docs/assets/cutaway/closed.png",
+      "sha256": "7b4bec33e31a6512290c0d9ca5852cf962901b9805232bf8cdd7b8324bf894c5"
+    },
+    {
+      "path": "docs/assets/cutaway/cut.png",
+      "sha256": "96dabfcb37877242b3330344375c086c36b52afe2d575f212fd8a22d59dd6a26"
+    },
+    {
+      "path": "docs/assets/cutaway/ghost.png",
+      "sha256": "c15d924592e38a30ffaebe42e7ba8eaf518a3f7b90430e51399f9d4b38d5ceab"
+    },
+    {
+      "path": "docs/assets/cutaway/provenance.json",
+      "sha256": "8e93869ae6f7dc27fec69502acf88f0a33de0e7522919678867482a0166072cf"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",

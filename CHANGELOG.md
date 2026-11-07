@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Docs: a showcase section, "Cutaways and honest numbers", for the hand-built `idler-gearbox.json` example (capped section cut, ghost step, engine-filled caption with its truth tier), with three stills and a capture receipt in `docs/assets/cutaway/`. No code change.
 - Compatibility change: JSON nests at most 64 levels (arrays and objects on one path) at every public entry point
   (`MGLimits.depth`). Before, nested input could overflow the stack and crash the process: about 100,000 levels on a
   macOS main thread, and a few hundred nested objects on a 512 KiB thread stack (iOS secondary threads) or the 1 MiB
