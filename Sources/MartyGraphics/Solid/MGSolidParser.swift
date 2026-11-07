@@ -37,81 +37,81 @@ public struct MGSolidIssue: Error, Equatable, CustomStringConvertible, Sendable 
 /// One authored step of an explainer.
 public struct MGSolidStep: Equatable, Sendable {
     /// What the learner sees: in assembly v2 with every `{placeholder}` filled from engine facts.
-    public var say: String
-    public var focus: [String]
-    public var highlight: [String]
-    public var explode: Double?
-    public var camera: String?
+    public internal(set) var say: String
+    public internal(set) var focus: [String]
+    public internal(set) var highlight: [String]
+    public internal(set) var explode: Double?
+    public internal(set) var camera: String?
     /// Extra yaw in degrees added to the camera preset.
-    public var orbit: Double
+    public internal(set) var orbit: Double
     /// Input turns played during the step (for example to show the gears running).
-    public var spin: Double
+    public internal(set) var spin: Double
     /// The authored text before placeholders are filled (equal to `say` in v1).
-    public var template: String = ""
+    public internal(set) var template: String = ""
     /// v2: the author's reason when the caption's numbers are not engine facts (`"unchecked": "…"`).
-    public var unchecked: String?
+    public internal(set) var unchecked: String?
     /// v2: claims the engine proved before accepting the document.
-    public var checks: [MGSolidClaimCheck] = []
+    public internal(set) var checks: [MGSolidClaimCheck] = []
     /// v2: canonical names of the facts the caption shows, in order.
-    public var facts: [String] = []
+    public internal(set) var facts: [String] = []
     /// Engine-computed caption tier; nil when the caption shows and checks no engine number (see docs/SOLID-3D.md).
-    public var tier: MGSolidTier?
+    public internal(set) var tier: MGSolidTier?
     /// v2: a capped plane cut of some parts, shown during this step.
-    public var section: MGSolidStepSection?
+    public internal(set) var section: MGSolidStepSection?
     /// v2: parts shown see-through during this step (opacity `MGSolidView.ghostOpacity`), in part order.
-    public var ghost: [String] = []
+    public internal(set) var ghost: [String] = []
     /// v2: the annotations this step shows (0–12 ids, authored order); nil when the step has no `annotate`.
-    public var annotate: [String]?
+    public internal(set) var annotate: [String]?
 }
 
 /// Meshing data the compiler derived for one gear part.
 public struct MGSolidGear: Equatable, Sendable {
-    public var part: String
-    public var spur: MGSpurGear?
-    public var ring: MGRingGear?
+    public internal(set) var part: String
+    public internal(set) var spur: MGSpurGear?
+    public internal(set) var ring: MGRingGear?
     /// Gear frame in the part frame (the primitive's offset).
-    public var local: MGTransform
+    public internal(set) var local: MGTransform
     public var teeth: Int { spur?.teeth ?? ring?.teeth ?? 0 }
     public var module: Double { spur?.module ?? ring?.module ?? 0 }
 }
 
 /// A parsed, validated, compiled assembly document.
 public struct MGSolidDocument: Equatable, Sendable {
-    public var title: String
-    public var assembly: MGAssembly
-    public var steps: [MGSolidStep]
-    public var defaults: MGPoseParameters
-    public var gears: [String: MGSolidGear]
+    public internal(set) var title: String
+    public internal(set) var assembly: MGAssembly
+    public internal(set) var steps: [MGSolidStep]
+    public internal(set) var defaults: MGPoseParameters
+    public internal(set) var gears: [String: MGSolidGear]
     /// Per-part validated shapes (stable identity: unchanged shapes keep their meshes across patches).
-    public var shapes: [String: [MGShapeSpec]]
+    public internal(set) var shapes: [String: [MGShapeSpec]]
     /// Input-to-joint ratios the constraint solver found (joint radians or mm per input radian).
-    public var ratios: [String: Double]
+    public internal(set) var ratios: [String: Double]
     /// The source JSON this document was compiled from (with its `use` entries, before component expansion).
-    public var source: MGJSON
+    public internal(set) var source: MGJSON
     /// The components `use` entries were resolved against; patches recompile with the same library.
-    public var library: MGSolidLibrary = .builtIn
+    public internal(set) var library: MGSolidLibrary = .builtIn
     /// Assembly format version (1 or 2). New keys are legal only in v2; v1 keeps its exact meaning.
-    public var version: Int = 1
+    public internal(set) var version: Int = 1
     /// Engine facts by canonical name (`stage.carrier.speed`, `count.stage.planet`); look names up with `fact(_:)`.
-    public var facts: [String: MGSolidFact] = [:]
+    public internal(set) var facts: [String: MGSolidFact] = [:]
     /// Component anchors to the part (or `repeat` base) ids they name (`stage.output` → `stage.carrier`).
-    public var aliases: [String: String] = [:]
+    public internal(set) var aliases: [String: String] = [:]
     /// `repeat` copy ids to their base id (`planet2` → `planet`).
-    public var copies: [String: String] = [:]
+    public internal(set) var copies: [String: String] = [:]
     /// What moves each driven part: `input`, `follow`, `crankSlider`, `crankRod`, `gearMesh`, `fixed` or `phase`.
-    public var motionSources: [String: String] = [:]
+    public internal(set) var motionSources: [String: String] = [:]
     /// Engine tier of each driven part's own motion through its drive chain (`input` at ±1, crank closed forms and
     /// mesh solves from them are Solved; other `input` scales and `follow` ratios are author behaviour, Built).
-    public var driveTiers: [String: MGSolidTier] = [:]
+    public internal(set) var driveTiers: [String: MGSolidTier] = [:]
     /// Base ids of parts marked `"offAxis": true` (v2).
-    public var offAxis: Set<String> = []
+    public internal(set) var offAxis: Set<String> = []
     /// Engine-computed title tier (v2, when the title shows facts).
-    public var titleTier: MGSolidTier?
+    public internal(set) var titleTier: MGSolidTier?
     /// Honesty warnings (idle joints and frame lints in part order, then annotation warnings in authored order). The
     /// plain API only warns; the strict profile (`MGSolidProfile.strict`, the model harness) refuses some of them.
-    public var warnings: [MGSolidIssue] = []
+    public internal(set) var warnings: [MGSolidIssue] = []
     /// v2: labels, arrows and dimensions (empty for v1 and for documents without `annotations`).
-    public var annotations = MGSolidAnnotations()
+    public internal(set) var annotations = MGSolidAnnotations()
     /// v2: canonical names of the facts the title shows, in order.
     public internal(set) var titleFacts: [String] = []
     /// The annotation fingerprint the compiler checked (`checkedAnnotations` refuses a changed document or a foreign view).
@@ -647,6 +647,8 @@ public enum MGSolidParser {
                 annotations = try MGSolidAnnotations.parse(a, .init(ids: ids, repeated: repeated, aliases: expansion.aliases))
             }
             try MGSolidAnnotationEngine.checkVisibility(&annotations, steps)
+            // Poses stay exact enough: a document with annotations keeps its default input within 10,000 turns.
+            if !annotations.isEmpty, abs(defaults.input) > MGSolidAnnotationLimits.input { throw MGSolidIssue("annotations.input") }
             let e = annotations.meshEstimate
             triangles += e.triangles; vertices += e.vertices
             guard triangles <= MGSolidLimits.triangles, vertices <= MGSolidLimits.vertices else { throw MGSolidIssue("assembly.budget") }

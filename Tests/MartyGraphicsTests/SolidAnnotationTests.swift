@@ -593,6 +593,36 @@ final class SolidAnnotationTests: XCTestCase {
         XCTAssertNil(reason(t.replacingOccurrences(of: #""spin": 0.5, "#, with: "")))
     }
 
+    /// Fourth review (D1): a compiled document is read-only to hosts. Every stored property of the compiled types has an
+    /// internal setter, so no host can change motion sources, meshes, steps, facts or defaults after the checks ran.
+    func testCompiledTypesAreReadOnlyToHosts() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Sources/MartyGraphics/Solid")
+        func body(_ file: String, _ type: String) throws -> String {
+            let text = try String(contentsOf: root.appendingPathComponent(file), encoding: .utf8)
+            let start = try XCTUnwrap(text.range(of: "public struct \(type):"))
+            let end = text.range(of: "\n}\n", range: start.upperBound..<text.endIndex)?.lowerBound ?? text.endIndex
+            return String(text[start.lowerBound..<end])
+        }
+        for (file, type) in [("MGSolidParser.swift", "MGSolidDocument"), ("MGSolidParser.swift", "MGSolidStep"), ("MGSolidParser.swift", "MGSolidGear"),
+                             ("MGSolidFacts.swift", "MGSolidFact"), ("MGSolidView.swift", "MGSolidStepSection")] {
+            let stored = try body(file, type).split(separator: "\n").filter { $0.hasPrefix("    public var ") && !$0.contains("{") }
+            XCTAssertEqual(stored, [], "\(type) has a public setter")
+        }
+        let view = try body("MGSolidView.swift", "MGSolidView")
+        XCTAssertTrue(view.contains("public internal(set) var motionSense"))
+        XCTAssertTrue(view.contains("public internal(set) var fingerprint"))
+    }
+
+    /// Fourth review (D2): a document with annotations keeps its default input within 10,000 turns.
+    func testDefaultInputIsBounded() {
+        let far = gears(#"{"labels": [{"id": "l", "at": "p", "text": "Pinion"}]}"#).replacingOccurrences(of: #""v": 2, "kind": "assembly","#, with: #""v": 2, "kind": "assembly", "params": {"input": 1000000},"#)
+        XCTAssertEqual(reason(far), "annotations.input")
+        XCTAssertNil(reason(far.replacingOccurrences(of: "1000000", with: "62000")))
+        XCTAssertNil(reason(gears("{}").replacingOccurrences(of: #""v": 2, "kind": "assembly","#, with: #""v": 2, "kind": "assembly", "params": {"input": 1000000},"#)),
+                     "a document without annotations keeps the old range")
+    }
+
     func testRefusedPoseLeavesTheDocumentUnchanged() throws {
         let d = try doc(try winch())
         let before = d

@@ -9,11 +9,11 @@ import Foundation
 public struct MGSolidStepSection: Equatable, Sendable {
     /// Plane in assembly coordinates (kernel frame: Z up, mm) at the document's default input with explode 0.
     /// Points with `normal · p > offset` are cut away.
-    public var plane: MGSectionPlane
+    public internal(set) var plane: MGSectionPlane
     /// Cut parts (resolved ids: a `repeat` base lists every copy), in the authored order.
-    public var parts: [String]
+    public internal(set) var parts: [String]
     /// Each part's capped cut, in its own frame. The cut moves with its part, like a physical cutaway model.
-    public var cuts: [String: MGSectionCut] = [:]
+    public internal(set) var cuts: [String: MGSectionCut] = [:]
 
     public init(plane: MGSectionPlane, parts: [String]) { self.plane = plane; self.parts = parts }
 }
@@ -42,7 +42,7 @@ public struct MGSolidView: Equatable, Sendable {
     public var annotations: [String] = []
     /// +1, or −1 for a step with a negative `spin` (it plays the input backwards): motion arrows draw the motion the
     /// view shows.
-    public var motionSense: Double = 1
+    public internal(set) var motionSense: Double = 1
     /// The step this view shows (nil: the plain view). Only a view from `MGSolidDocument.view(step:)` has poses the
     /// engine checked (`MGSolidDocument.checkedAnnotations(_:params:)`).
     public internal(set) var step: Int?

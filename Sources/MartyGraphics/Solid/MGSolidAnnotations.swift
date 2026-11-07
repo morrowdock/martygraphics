@@ -13,6 +13,8 @@ public enum MGSolidAnnotationLimits {
     public static let labels = 32, arrows = 32, dimensions = 16
     /// Annotations visible at once (`annotations.visible`, `step.annotate.count`).
     public static let visible = 12
+    /// Largest default input (radians) of a document with annotations: 10,000 turns (`annotations.input`).
+    public static let input = 2 * Double.pi * 10_000
     /// Filled text and `unchecked` text, in Unicode scalars. Authored text before filling may be up to
     /// `rawTextFactor` times `text`.
     public static let text = 40, unchecked = 60, rawTextFactor = 4

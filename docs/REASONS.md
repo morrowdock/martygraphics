@@ -327,6 +327,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `labels.count` | assembly | `labels` is not an array of at most 32 labels. |
 | `arrows.count` | assembly | `arrows` is not an array of at most 32 arrows. |
 | `dimensions.count` | assembly | `dimensions` is not an array of at most 16 dimensions. |
+| `annotations.input` | assembly | A document with annotations has a default input beyond 10,000 turns (`MGSolidAnnotationLimits.input`), so its poses would lose precision. |
 | `annotations.visible` | assembly | No step uses `annotate`, so every annotation shows at once, and there are more than 12. |
 | `label.object` | assembly | A label is not an object. |
 | `arrow.object` | assembly | An arrow is not an object. |

@@ -263,24 +263,30 @@ extension MGSolidDocument {
     /// empty list is `[]`. `MGSolidAnnotations.frame`, `MGSolidRenderer` and `MGSolidSnapshot.make` all call this.
     public func checkedAnnotations(_ view: MGSolidView, params: MGPoseParameters) -> [String]? {
         if view.annotations.isEmpty { return [] }
-        // The view is bound to this compiled document, unchanged since it was checked, and to its step's playback sense.
-        guard let checked = checkedFingerprint, view.fingerprint == checked, annotationFingerprint == checked else { return nil }
+        // The view is bound to this compiled document (hosts cannot change a compiled document) and to its step's
+        // playback sense.
+        guard let checked = checkedFingerprint, view.fingerprint == checked else { return nil }
         let (u0, spin, e) = MGSolidAnnotationEngine.domain(self, step: view.step)
         guard view.motionSense == (spin < 0 ? -1 : 1) else { return nil }
         let allowed = visibleAnnotations(step: view.step)
         guard Set(view.annotations).count == view.annotations.count, view.annotations.allSatisfy(allowed.contains) else { return nil }
+        // Exact poses, no tolerance: the step's explode value, and the default input (a still step) or an input from
+        // the default input to its end, `defaults.input + spin * 2 * .pi` (the same expression as the render plan).
         guard params.explode == e, params.input.isFinite else { return nil }
-        let tol = 1e-9 * max(1, abs(u0), abs(params.input))
-        let u1 = u0 + 2 * .pi * spin
-        guard params.input >= min(u0, u1) - tol, params.input <= max(u0, u1) + tol else { return nil }
+        if spin == 0 { return params.input == u0 ? view.annotations : nil }
+        let u1 = u0 + spin * 2 * .pi
+        guard params.input >= min(u0, u1), params.input <= max(u0, u1) else { return nil }
         return view.annotations
     }
 
-    /// SHA-256 of everything an annotation claim depends on: the default pose, every part's placement, joint and drive,
-    /// the steps' spin, explode and annotate lists, the annotations and the facts. Meshes are left out (they do not move
-    /// anything). A document changed after it compiled no longer matches `checkedFingerprint`.
+    /// The identity of a compiled document for its views: SHA-256 of its source (canonical JSON), the library's
+    /// component ids, the default pose, the compiled motion (placements, joints, drives, motion sources), the steps,
+    /// the annotations and the facts. Computed once when the document compiles; a compiled document is read-only to
+    /// hosts, so the gate only compares a view's fingerprint with its document's.
     var annotationFingerprint: String {
-        var t = "defaults \(defaults.input) \(defaults.explode)\n"
+        var t = "source \(source.canonicalString)\nlibrary \(library.components.keys.sorted())\n"
+        t += "defaults \(defaults.input) \(defaults.explode)\n"
+        for k in motionSources.keys.sorted() { t += "motion \(k) \(motionSources[k]!)\n" }
         for p in assembly.parts {
             t += "part \(p.id) \(p.parent ?? "-") \(p.placement) \(p.joint) \(String(describing: p.drive)) \(p.explode) \(p.explodeWindow)\n"
         }

@@ -42,7 +42,11 @@
     SceneKit and snapshots all use it. `marty-solid render` draws annotations on `hero.png` and the step stills only.
   - Source-compatibility change: `MGSolidClaim.Kind` gains `annotation`; an exhaustive `switch` over it outside
     the package needs the new case.
-  - `MGSolidView` gains `annotations`, `motionSense`, `step` and `fingerprint`; `MGSolidLegend` gains `notes`;
+  - Source-compatibility change: a compiled document is read-only to hosts. Every stored property of
+    `MGSolidDocument`, `MGSolidStep`, `MGSolidGear`, `MGSolidFact` and `MGSolidStepSection` now has an internal
+    setter (`public internal(set) var`); change a document through `MGSolidParser.applying`, which recompiles and
+    re-checks it. A document with annotations keeps `params.input` within 10,000 turns (`annotations.input`).
+  - `MGSolidView` gains `annotations`, `motionSense` (read-only), `step` and `fingerprint`; `MGSolidLegend` gains `notes`;
     `MGAnnotationFrame.refusal` (`unchecked`, `viewSize`) says why a frame laid out nothing.
 - Add the solid check report as a library API, an engine identity, patch checks, a reason catalog, per-part tiers
   and a guarded snapshot decoder (Foundation only).

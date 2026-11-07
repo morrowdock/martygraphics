@@ -347,6 +347,7 @@ public enum MGSolidReasons {
         r("labels.count", [.assembly], "`labels` is not an array of at most 32 labels."),
         r("arrows.count", [.assembly], "`arrows` is not an array of at most 32 arrows."),
         r("dimensions.count", [.assembly], "`dimensions` is not an array of at most 16 dimensions."),
+        r("annotations.input", [.assembly], "A document with annotations has a default input beyond 10,000 turns (`MGSolidAnnotationLimits.input`), so its poses would lose precision."),
         r("annotations.visible", [.assembly], "No step uses `annotate`, so every annotation shows at once, and there are more than 12."),
         r("label.object", [.assembly], "A label is not an object."),
         r("arrow.object", [.assembly], "An arrow is not an object."),

@@ -327,7 +327,8 @@ final class AnnotationLayoutTests: XCTestCase {
         let geometries = (rod + crank).map { ObjectIdentifier($0.geometry!) }
         var starts: [Double] = []
         for k in 0...24 {
-            let params = MGPoseParameters(input: 2 * .pi * Double(k) / 24)
+            // Inside the step exactly: k / 24 × (spin × 2π), the last equal to the step end.
+            let params = MGPoseParameters(input: Double(k) / 24 * 2 * .pi)
             r.apply(params)
             XCTAssertEqual((rod + crank).map { ObjectIdentifier($0.geometry!) }, geometries, "no geometry rebuild")
             let prims = MGSolidAnnotations.primitives(d, "aRod", params: params)
@@ -388,11 +389,9 @@ final class AnnotationLayoutTests: XCTestCase {
         let other = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "p", "shape": {"shaft": {"radius": 1, "length": 2}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}], "annotations": {"dimensions": [{"id": "gap", "a": {"world": [12, 0, 0]}, "b": {"part": "p", "offset": [20, 0, 0]}}], "arrows": [{"id": "g", "meaning": "force", "cause": "gravity", "from": "p", "to": {"part": "p", "offset": [0, 0, -10]}}]}, "steps": [{"say": "Still."}]}"#)
         XCTAssertNil(d.checkedAnnotations(other.view(step: nil), params: d.defaults), "a view of another document")
         XCTAssertNotNil(other.checkedAnnotations(other.view(step: nil), params: other.defaults))
-        var mutated = d
-        mutated.defaults.input = .pi
-        XCTAssertNil(mutated.checkedAnnotations(mutated.view(step: nil), params: mutated.defaults), "a document changed after it compiled")
-        XCTAssertNil(MGSolidSnapshot.make(mutated, step: nil, params: mutated.defaults).annotations)
-        XCTAssertEqual(MGSolidAnnotations.frame(document: mutated, view: mutated.view(step: nil), params: mutated.defaults, camera: cam, width: 1280, height: 800).refusal, .unchecked)
+        // Fourth review (D2): exact poses only. A still step accepts exactly the default input, not the next Double.
+        XCTAssertNil(d.checkedAnnotations(good, params: MGPoseParameters(input: d.defaults.input.nextUp)))
+        XCTAssertNil(d.checkedAnnotations(good, params: MGPoseParameters(input: d.defaults.input, explode: 1e-300)))
         // R5: a bad view size has its own refusal.
         XCTAssertEqual(MGSolidAnnotations.frame(document: d, view: good, params: d.defaults, camera: cam, width: 0, height: 700).refusal, .viewSize)
     }
@@ -418,7 +417,8 @@ final class AnnotationLayoutTests: XCTestCase {
             // The engine proves this without sampling; the test samples the range densely as an outside check.
             let (u0, spin, explode) = MGSolidAnnotationEngine.domain(d, step: i)
             let n = spin == 0 ? 0 : Int((abs(spin) * 1440).rounded(.up))
-            let inputs = (0...n).map { u0 + (n == 0 ? 0 : 2 * .pi * spin * Double($0) / Double(n)) }
+            let u1 = u0 + spin * 2 * .pi
+            let inputs = (0...n).map { k in k == n ? u1 : u0 + 2 * .pi * spin * Double(k) / Double(n) }.filter { $0 >= min(u0, u1) && $0 <= max(u0, u1) }
             for u in inputs {
                 XCTAssertEqual(d.checkedAnnotations(view, params: MGPoseParameters(input: u, explode: explode)), view.annotations)
                 let params = MGPoseParameters(input: u, explode: explode)

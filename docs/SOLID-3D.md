@@ -618,12 +618,16 @@ negative `spin` plays the input backwards (`MGSolidView.motionSense` is −1): t
 motion that the view shows. Labels and the other arrows ride their parts and claim no direction.
 
 **One gate for every output.** `MGSolidDocument.checkedAnnotations(_:params:)` gives the annotations a renderer may
-draw for a view at a pose, or nil. The view must come from `view(step:)` of this exact compiled document: the view
-carries the document's fingerprint (SHA-256 of the default pose, every part's placement, joint and drive, the steps,
-the annotations and the facts), and a document changed after it compiled no longer matches its own. The view keeps
-its step's playback sense, lists each annotation at most once and only annotations its step shows (a host may remove
-some, never add), and the pose must be one the view shows (its explode value, and an input inside its spin range).
-The raw piece builder is internal. `MGSolidAnnotations.frame` (then `refusal: .unchecked`, no
+draw for a view at a pose, or nil. A compiled document is read-only to hosts: every stored property of
+`MGSolidDocument`, `MGSolidStep`, `MGSolidGear`, `MGSolidFact` and `MGSolidStepSection` has an internal setter, so
+the only way to change a document is the parser or a patch, which compiles and checks it again. The view must come
+from `view(step:)` of this document (it carries the document's fingerprint, a SHA-256 identity computed when the
+document compiles), keep its step's playback sense (`motionSense` is read-only), and list each annotation at most
+once and only annotations its step shows (a host may remove some, never add). The pose must be exactly one the view
+shows, with no tolerance: the step's explode value, and for a still step exactly the default input; for a step with
+`spin`, an input from the default input to `defaults.input + spin * 2 * .pi` (the render plan uses the same
+expression). A document with annotations keeps its default input within 10,000 turns (`annotations.input`), so pose
+arithmetic stays precise. The raw piece builder is internal. `MGSolidAnnotations.frame` (then `refusal: .unchecked`, no
 placements), `MGSolidRenderer` (pieces hidden) and `MGSolidSnapshot.make` (no `annotations`) all use it, so a
 view or pose that the engine did not check shows no annotations. `marty-solid render` also draws annotations on
 `hero.png` and the step stills only (`MGSolidShot.showsAnnotations`), not on `exploded.png` or the loop frames.
