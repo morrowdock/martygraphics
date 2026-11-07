@@ -56,6 +56,9 @@ B=$(swift build -c release --package-path Examples/Solid3D --show-bin-path)
 $B/marty-solid check my-model.json             # JSON report; exit 0 accepted, 1 refused
 $B/marty-solid check --strict my-model.json    # model-harness profile: also refuses idle joints and off-axis turns
 $B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF, snapshot
+$B/marty-solid check base.json --patch fix.json # report on base.json with the patch applied
+$B/marty-solid reasons                         # JSON catalog of every stable reason
+$B/marty-solid version                         # engine name, version and this binary's SHA-256
 ```
 
 - `check` reads at most 64 KiB (the format limit) and refuses larger or non-regular
@@ -71,8 +74,16 @@ $B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF,
   plain-words `readBack` of every part (world position, turn axis such as "a horizontal
   axis (+X)", parent frame, up). With `--strict`, `joint.idle` and `frame.axis.off` make
   `ok` false (exit 1) with that reason, and the full report is still printed; the
-  child-frame warnings are heuristics and never refuse. See
+  child-frame warnings are heuristics and never refuse. `partTiers` and `motionTiers`
+  give the engine tier (Solved, Built) of every part's motion and every motion claim.
+  `engine` names the engine version and the SHA-256 of the binary. The report is built
+  by the library (`MGSolidReport`), so a host that calls it gets the same JSON. See
   [docs/SOLID-3D.md](../../docs/SOLID-3D.md#warnings-strict-mode-and-the-check-report).
+- `check BASE --patch PATCH` applies the patch (`MGSolidParser.applying`) and prints
+  the same report for the result, plus `patch` with the fields the patch sets and the
+  ones it changed, or `refusedAt` (`base` or `patch`) with the reason.
+- `reasons` prints the catalog of every stable reason: pattern, one-line meaning and
+  where it applies ([docs/REASONS.md](../../docs/REASONS.md)).
 - `render` writes `hero.png`, `exploded.png`, one captioned `step-N.png` per authored
   step (with its highlight, explode amount and camera), a 12-second `loop.gif`
   (120 frames at 0.10 s: one orbit, one input turn and an explode beat; `--no-loop`
@@ -114,6 +125,10 @@ To add a component to the built-in library, open a pull request that adds its JS
 to `MGSolidBuiltInComponents.sources`; the tests compile every built-in.
 
 `swift test --package-path Examples/Solid3D` runs `marty-solid` in fresh processes and
-checks its exit codes, JSON reports and that refusals are the same in every process.
+checks its exit codes, JSON reports and that refusals are the same in every process. Its
+golden test runs `check` and `check --strict` on every shipped example and every JSON
+file under `docs/assets`; without the fields this release added (`engine`, `partTiers`,
+`motionTiers`), the output is byte-identical to the files in
+`Tests/MartySolidCLITests/Golden`, written by the release before.
 
 The format is documented in [docs/SOLID-3D.md](../../docs/SOLID-3D.md).

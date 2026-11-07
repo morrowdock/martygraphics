@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "59d52cfbfd160e6ec85c5232999a3fa375330df07166160837b5feba51cd46fa"
+      "sha256": "20c4f712a2d6f8f8e736b4de35b2e0582af2a4bc429eabcbc8f8fe2cbf9158fe"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -155,7 +155,7 @@
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "c2617e9b5ec54bb8e6240076fea951cf4e900a98062230151def2d469b2fdc10"
+      "sha256": "de1bbfeb4491950901ec7ecdb9a194f8ca99fea2e4608d4341b90c6cafe3e154"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json",
@@ -191,11 +191,179 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "898c03ff75376ca7926b72cd98e5dc1f2d057a2557dbea94d77120165d39d98b"
+      "sha256": "7204de1c841f0b3c300551088eb213d7c8e0b2d3bd10bcf572952ebfcfdf92e8"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-check-strict.check.json",
+      "sha256": "34d8990d57253f94b790d7c0e738950d6e3b769e37ba9190579ba81d1a200334"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-check-strict.strict.json",
+      "sha256": "241b0cae45c6a13ee54a8d7f314e925c81b6a2f42259281a64f22d925d005fb3"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-provenance.check.json",
+      "sha256": "96aedb172d679723620bbbcd9e1d866d4685bef75d1d57ff37251048e992b25e"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-provenance.strict.json",
+      "sha256": "3804517d1e95b90af1c09a89a026c0f53b461f3d0ca85065215a33904d69cf77"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-1-refused.check.json",
+      "sha256": "d3e752d12b45bfc3ee8762f42e31ba8dceb60b8b0a57eea32f2dfaeb029ecfa9"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-1-refused.strict.json",
+      "sha256": "b30ab57608a6852f7f5e9b08b9d0c95db36d9e75415eb08651c959f635403c02"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-2-accepted.check.json",
+      "sha256": "59f7bc7717fd3884bc849bd0ba7838c3434143d242fcd3066c355689216e7012"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-2-accepted.strict.json",
+      "sha256": "754928a49ceb28c304908a2ee156cd85fedc4dc012cab408351f12f5a55f01bb"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-provenance.check.json",
+      "sha256": "5d666a70cf3db4e3ea3ede74fa637a79196f2110722ebf92ebbcfdf4326df77b"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-provenance.strict.json",
+      "sha256": "85a122889f8aefe1ddf403f5c9b84ffa455a388bfa8dad84fe9a40c195f908b2"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-robot-joint-gearbox.check.json",
+      "sha256": "4c0cf1fdc2b9b96bc8bce956376c07bed26d3bc107b208ab221cf3d8146e438f"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-robot-joint-gearbox.strict.json",
+      "sha256": "753ded1779aac9d765bcddf6ae78e2a6626c70c9e702daaaa4e6e9144cde565e"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-lessons-provenance.check.json",
+      "sha256": "de27aba2e1e2bdc8c8b8c6784bb3f96cbec12d0988477aeba6aefb56f2d77a47"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-lessons-provenance.strict.json",
+      "sha256": "afd8965951fe006ce061ba2f44a280af1cac0315d30353aa95ff05d29aceafc8"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-lessons-rotation-loop-frames.check.json",
+      "sha256": "f1e998f2f5a68a0c3283f9d9c9147095cd3361442c89ec9bb6fb5bf81b7f9ccc"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-lessons-rotation-loop-frames.strict.json",
+      "sha256": "df29e41288d38b71f766d46f5645065ee72e54d6adc7d4d250386c5ac22813cf"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-native-provenance.check.json",
+      "sha256": "8fcc49b679a2220e751019640dd29dd4e19a112c4064354b1d28614c2a9ed6e5"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-native-provenance.strict.json",
+      "sha256": "0fdc9f7c07e58bd04f211eb7e6db9002f21c560133edb58fe3239bb6e162795a"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-pathtrace-provenance.check.json",
+      "sha256": "465fdfa0a675176ab58c27ca07bce49253228e6ebf536db03e6bd70b1610f38a"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-pathtrace-provenance.strict.json",
+      "sha256": "27b6a9d1cede08e82a26283a6bc126b3f41083bfa5c235ef5f288ed8c0c4c2fe"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-solid-provenance.check.json",
+      "sha256": "73e729072921c5b62f8dedf1181894fa6e8b293888ca730d8f014679bd8c1042"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-solid-provenance.strict.json",
+      "sha256": "c268cc57a3537bc8afee2f796decd06b730210fbe9b6ff6117fc83cce382a6b9"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-turbofan-provenance.check.json",
+      "sha256": "4c286f3b50589474a01efda95d0b062d0d358517f412b63b117f51ebed701078"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-turbofan-provenance.strict.json",
+      "sha256": "a042512ed57ca233b469338f3074e4fe6b6769ef9ac3d19a06d725ef62300bfc"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-horizontal-reduction.check.json",
+      "sha256": "5b36aa5880b673743c255f6f2355a2ed62a3e4c726acbe9247aa4ac87d5bfb24"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-horizontal-reduction.strict.json",
+      "sha256": "645678dcf0b59f33fb582c9de4275b172b3968b995ee3c74c6d8ddcacd50abe7"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-idler-gearbox.check.json",
+      "sha256": "8e41c5186d7a9f6a10d22664efcdacfbc8763dc69b936cf6061e9c06aa8785cd"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-idler-gearbox.strict.json",
+      "sha256": "000a8d546a3f765bb5ed226b2c58a18247d07f972ece71504266b199f9d18557"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-planetary-components.check.json",
+      "sha256": "2d44f6536a6fdf383611b34827825b91b0842593d5a6b5d63628f1e7f85620e9"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-planetary-components.strict.json",
+      "sha256": "3e88d4597fd5497e5bb5027038dae4437f8b0a0720d42a19f7e631dbcb9ee690"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-planetary.check.json",
+      "sha256": "eb433986b48d924087cc1c912f54b4a571885f76e7ceeb6e2bc36aa20ef7b636"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-planetary.strict.json",
+      "sha256": "96a20a439d72c700ffb4efa7aeba9e120edb57e74c871b02ff595f7319e66fff"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-propeller.check.json",
+      "sha256": "4bde7c198da67005c489e388b931d1ff48ae788fd62ad18042ad72488a006a78"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-propeller.strict.json",
+      "sha256": "0bf9cdabec8993f83c83349fe6ec267d7b9508c7a29ac97f2a8e2f77f92530bf"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-slider-crank-component.check.json",
+      "sha256": "f212f9631d1c84c0f41ea9cad4be1e2cca2e0f1006e1923f1c0646c47b3010be"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-slider-crank-component.strict.json",
+      "sha256": "05c2d2dec972580daf13036be5b4c32b347d2e900a1fbb5e3f7a844c307bca36"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-slider-crank.check.json",
+      "sha256": "b4a3b7cda69b200d6c1a72b1ad5a7a196791a7ed0e3bdd6f848216d6034afa7c"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-slider-crank.strict.json",
+      "sha256": "80ead89b10efa7f43da8f9fe03ca10a37f692f1d5d3f31654d4e553311f494b2"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/synthetic-idle.check.json",
+      "sha256": "d8fd7ff1d8353400816094690062f1471873c0ac1ee7557bebdacac823c51c23"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/synthetic-idle.strict.json",
+      "sha256": "1c4e8ba765965c1560c40a20971e849e361a9de1ebf2fad4e3ac6bfdebb03412"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/synthetic-oversize.check.json",
+      "sha256": "0b94b4c24d1288d41638ddd5fffad707267d97d00848f91ab78f80a320f56a9a"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/synthetic-oversize.strict.json",
+      "sha256": "0b94b4c24d1288d41638ddd5fffad707267d97d00848f91ab78f80a320f56a9a"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "b2ca20aad2360db4412ec788a57a533b485182eea5840b35fe3c7ceebf7d8566"
+      "sha256": "c41da4ebe1e5dbdde68b8dc4b3c17edecff60facb8061adb0f592793dfb96e81"
     },
     {
       "path": "Examples/Turbofan/Package.swift",
@@ -264,6 +432,10 @@
     {
       "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
       "sha256": "f8e8c208cd49513ceae6ebf6a517a0a31f09db6c40004ec40fbff29987be7bb1"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGEngine.swift",
+      "sha256": "893f0ccdbdfe7f8c02c6375753d611e4be1c3a169be6add1c684dd63aa8009f1"
     },
     {
       "path": "Sources/MartyGraphics/MGFixtures.swift",
@@ -411,11 +583,23 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidParser.swift",
-      "sha256": "4ab576fa68b72b1f9d35c52cda670913492cc22e207bdce7c1560064271e1e18"
+      "sha256": "036a501897b6017765d1c059935be4372464a87de6347349e5a6b92d7de4715d"
+    },
+    {
+      "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
+      "sha256": "68acd37c357803bf49afe3be423c80c928fa0d4206816601327bb7cd6eed6c18"
+    },
+    {
+      "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
+      "sha256": "0ea821e4a7371154ee9fd31f0325d84b6fd9f343d1782a8119b97cfc6c169f4e"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
       "sha256": "69c6b0ead86b6308e529d3e76bbf6eca40e8fb31475755b1e3086c8db7e130c8"
+    },
+    {
+      "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
+      "sha256": "313e2203ab136fb202ba61464e63d759f2ceaf97c3dd1d3f11a491bbcbf06750"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSection.swift",
@@ -427,7 +611,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSnapshot.swift",
-      "sha256": "fe12bea26f6ea69e310c260c936041b60d9e477cbd057c2d272b22500a8b55ad"
+      "sha256": "0c2b1ce690f39c63c396c29cf5eda2540ad1875c1ed369837b9208ab1d353553"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidTiers.swift",
@@ -571,7 +755,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidEngineTests.swift",
-      "sha256": "a91a216fd5005de3acfdda5f926729f3da8896e844ce4b3be14efb163292fedb"
+      "sha256": "cced0d4ea0fe2d815ac3c50a94a46aa37ae1cfb16e472c27d5af5de8f4a1e367"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidExampleModelsTests.swift",
@@ -579,19 +763,27 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidHardeningTests.swift",
-      "sha256": "55ec216a5b9c77218df8c957035e760b0ce6e4cd9a0d717947c6eefda4e9148f"
+      "sha256": "d8bac27b0c0ebf6cec14107cd8bec8a7562c2f532b50858a77c7a2f8758d6205"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidHonestyTests.swift",
       "sha256": "2d3044012310975488e891c77e0a9bdec69362970100ddab14db6936409b1d5e"
     },
     {
+      "path": "Tests/MartyGraphicsTests/SolidReasonCatalogTests.swift",
+      "sha256": "04095cdb8fd03b7a2af829a04f24ef8ac3a12e6b5b7b60270b1ef70297f3d4bd"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/SolidReportTests.swift",
+      "sha256": "a4a9cf0a9cbe302df043dd462b93af96735041f39f2c424a1d3645f67341f0f5"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/SolidSectionTests.swift",
-      "sha256": "903bfc8be28f4f1fc4c16525f3e935ed53193f406ecfec45f148629247ee9287"
+      "sha256": "83b0fe9b84f43d9b2371b65ac53a6131b8d1c16de240aa81548aafa69297f9b9"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidTurboTests.swift",
-      "sha256": "dc7e09bedc2fb69ec560b55994adb0562d8e57a24dd7a91839b87ae68cf27025"
+      "sha256": "505bb2193ac0cf56ff9e2756a78b7a6954d9a971d5dc5683e4e633d003b37009"
     },
     {
       "path": "Tests/MartyGraphicsTests/StreamRegressionTests.swift",
@@ -623,7 +815,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "956cca9121feed363413e8283616a3054713dede69ee7778cbc320ec47de87d4"
+      "sha256": "9a685e4898292e9e1a41053ecd38c4d58bdc58a2c0149ed9344d32e205f91f43"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -654,12 +846,16 @@
       "sha256": "1a19380302b881f17f5ee088bdba6079602800b374ede286eae43dc63f9fba3d"
     },
     {
+      "path": "docs/REASONS.md",
+      "sha256": "b5ca620b844288271e144bf51119887a5c6e622481af16e8bedf9c08d8b8418a"
+    },
+    {
       "path": "docs/SHOWCASE.md",
       "sha256": "51fd12517334730cd45181797ce4b49c8f56f3ea8c9a7d8093d8dd5aa9205633"
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "0b8224d683cf77504086175632f934f66ab99a3cf13cb09ce991afeebb8227c1"
+      "sha256": "6ab882d79a8b4e908618ff6dce9d256f22344373db89cd5caa1c02e1dde0d57b"
     },
     {
       "path": "docs/THIRD-PARTY.md",

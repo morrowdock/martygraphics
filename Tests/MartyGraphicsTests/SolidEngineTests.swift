@@ -427,7 +427,7 @@ final class SolidAssemblyFormatTests: XCTestCase {
         XCTAssertTrue(snap.materials.contains { $0.id == "brass" && $0.parameters.metallic == 1 })
         // Y-up: the carrier sits above the base.
         XCTAssertGreaterThan(snap.boundsMax[1], 50)
-        let decoded = try JSONDecoder().decode(MGSolidSnapshot.self, from: snap.jsonData())
+        let decoded = try MGSolidSnapshot.decode(data: snap.jsonData())
         XCTAssertEqual(decoded, snap)
     }
 }

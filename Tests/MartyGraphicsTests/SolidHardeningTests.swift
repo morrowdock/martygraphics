@@ -332,7 +332,7 @@ final class SolidHardeningTests: XCTestCase {
     func testEmptySnapshotEncodesFiniteJSON() throws {
         let snap = MGSolidSnapshot.make(MGAssembly(name: "empty", parts: []), params: MGPoseParameters())
         let data = try snap.jsonData()
-        XCTAssertEqual(try JSONDecoder().decode(MGSolidSnapshot.self, from: data), snap)
+        XCTAssertEqual(try MGSolidSnapshot.decode(data: data), snap)
         XCTAssertEqual(snap.boundsMin, [0, 0, 0])
         XCTAssertTrue(snap.camera.distance.isFinite && snap.camera.target.allSatisfy(\.isFinite))
     }
@@ -345,7 +345,7 @@ final class SolidHardeningTests: XCTestCase {
             var o = good
             edit(&o)
             let data = try! JSONSerialization.data(withJSONObject: o)
-            return (try? JSONDecoder().decode(MGSolidSnapshot.self, from: data)) != nil
+            return (try? MGSolidSnapshot.decode(data: data)) != nil
         }
         XCTAssertTrue(decodes { _ in })
         XCTAssertFalse(decodes { o in var c = o["camera"] as! [String: Any]; c["target"] = [1, 2]; o["camera"] = c })

@@ -1,0 +1,257 @@
+{
+  "checks" : {
+    "gearPairs" : 1,
+    "gearsEngage" : true,
+    "maxPenetrationMM" : -0.20538097442688397,
+    "meshesClosed" : true,
+    "minClearanceMM" : 0.20538097442688397,
+    "openMeshes" : [
+
+    ],
+    "toleranceMM" : 0.02
+  },
+  "facts" : {
+    "pinion.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "pinion.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "pinion.teeth" : {
+      "source" : "shape",
+      "text" : "15",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 15
+    },
+    "pinion.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "wheel.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "wheel.speed" : {
+      "source" : "gearMesh",
+      "text" : "-0.38",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.375
+    },
+    "wheel.teeth" : {
+      "source" : "shape",
+      "text" : "40",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 40
+    },
+    "wheel.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "-0.38",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.375
+    }
+  },
+  "file" : {
+    "lines" : 24,
+    "sha256" : "48a12b366a5a45e343bcea3bf6b5ec27f4a286114f543ae14b2c70ae5427b172"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "pinion",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "wheel",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.2",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.3",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.3.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: wheel.speed = -0.375 ± 1e-09"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.3.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: wheel.speed < 0"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.4",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.4.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: wheel.speed < 0"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "step.5",
+        "kind" : "caption",
+        "tier" : "described",
+        "why" : "Marked unchecked: general fact, not modelled"
+      }
+    ],
+    "described" : 1,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 8,
+    "text" : "Solved 8 · Not checked 1"
+  },
+  "notChecked" : {
+    "gearMesh" : [
+      "3D tooth contact",
+      "load, strength and wear",
+      "friction and efficiency"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 5,
+  "ratios" : {
+    "pinion" : 1,
+    "wheel" : -0.375
+  },
+  "readBack" : [
+    "base: world centre (6, 27.5, 4) mm, size 60 x 130 x 8 mm; static; root (at [6, 27.5, 4] in the world frame); local +Z points +Z",
+    "support: world centre (-14, 27.5, 43) mm, size 8 x 120 x 70 mm; static; child of base (at [-20, 0, 39] in the base frame); local +Z points +Z",
+    "pinion: world centre (6, 0, 59.9) mm, size 40 x 33.9 x 33.7 mm; turns about a horizontal axis (+X) through (0, 0, 60); 1 turn per input turn (Solved, input); root (at [0, 0, 60] in the world frame); local +Z points +X",
+    "wheel: world centre (11, 55, 60) mm, size 50 x 84 x 84 mm; turns about a horizontal axis (+X) through (0, 55, 60); -0.38 turns per input turn (Solved, gearMesh); root (at [0, 55, 60] in the world frame); local +Z points +X",
+    "collar: world centre (29, 55, 60) mm, size 6 x 18 x 18 mm; fixed to its parent, moves with wheel; child of wheel (at [0, 0, 26] in the wheel frame); its origin is 0 mm from the wheel axis; local +Z points +X"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+        "pinion.teeth",
+        "wheel.teeth"
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : -0.375,
+          "text" : "wheel.speed = -0.375 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "wheel.speed"
+        },
+        {
+          "comparison" : "lt",
+          "target" : 0,
+          "text" : "wheel.speed < 0",
+          "tolerance" : null,
+          "value" : "wheel.speed"
+        }
+      ],
+      "facts" : [
+        "wheel.speed"
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "lt",
+          "target" : 0,
+          "text" : "wheel.speed < 0",
+          "tolerance" : null,
+          "value" : "wheel.speed"
+        }
+      ],
+      "facts" : [
+        "wheel.speed"
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "A small gear drives a larger one. Both shafts lie flat, along X.",
+    "The pinion has 15 teeth; the wheel has 40.",
+    "Each pinion turn moves the wheel 3\/8 of a turn, the other way.",
+    "So the output collar turns 2.67 times slower than the input.",
+    "Real gears also lose some power to friction."
+  ],
+  "stepTiers" : [
+    null,
+    "solved",
+    "solved",
+    "solved",
+    "described"
+  ],
+  "strict" : false,
+  "title" : "Gear reduction on horizontal shafts",
+  "triangles" : 20232,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

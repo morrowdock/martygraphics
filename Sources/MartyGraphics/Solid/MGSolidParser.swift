@@ -201,6 +201,24 @@ public enum MGSolidParser {
         return document(json: .object(src), reusing: doc, library: doc.library, profile: profile)
     }
 
+    /// `applying` for patch JSON text. Before the system parser runs, a patch over `MGSolidLimits.bytes` is refused
+    /// (`patch.bytes`), and so are bytes that are not UTF-8 JSON text (`patch.json`) or that nest deeper than
+    /// `MGLimits.depth` (`patch.depth`). Text the parser rejects is `patch.json` too.
+    public static func applying(data: Data, to doc: MGSolidDocument,
+                                profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
+        patchJSON(data).flatMap { applying($0, to: doc, profile: profile) }
+    }
+
+    /// Patch text to a value, with the guards of `applying(data:to:)`.
+    static func patchJSON(_ data: Data) -> Result<MGJSON, MGSolidIssue> {
+        guard data.count <= MGSolidLimits.bytes else { return .failure(.init("patch.bytes")) }
+        if let r = MGJSON.dataRefusal(data, json: "patch.json", depth: "patch.depth") { return .failure(.init(r)) }
+        guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
+            return .failure(.init("patch.json"))
+        }
+        return .success(json)
+    }
+
     // MARK: Compile
 
     static let topKeys: Set<String> = ["v", "kind", "title", "units", "params", "parts", "constraints", "steps"]
