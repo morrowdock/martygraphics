@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "a739e85a63be71d1259918f79b918fbedd7d1aee8934f0f76f93384e6fed7d40"
+      "sha256": "f8ae1bb15aabc7d925e01830eb05b5eb8af890478e08938f2f19c7ae77da787d"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -195,7 +195,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "f663966c5be28d1ef7b0cb780a4fa89cfc952670c58a2d972765394138bbd535"
+      "sha256": "d6422d4a7cf586c0ca65f8b522a1d67edb4e76b7765199cfb0b16ba3d9a79f7d"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-check-strict.check.json",
@@ -563,7 +563,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
-      "sha256": "65a41aab2b7967f5c75fbf3e9cfa4eb0586b24363e521ec5c420a88f7aeb1544"
+      "sha256": "10499936b99e80521d87c9605cdbdc98cf4765ba356f84fc3cfad5dad0cec6ad"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift",
@@ -623,7 +623,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
-      "sha256": "5ee519bf8e6a99cd20f1f1c6a084e7d0c4cb84d0bb8ba838d923f6cf54f657bc"
+      "sha256": "8f858d24e6d0d8f190647edabf3817562472af88f961528bdf40e60d37856850"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
@@ -651,7 +651,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidView.swift",
-      "sha256": "1c4834cb2c9e9de85f2062b070536a909bcc2ab0cfdd1f54f5ca513f96dbcc31"
+      "sha256": "7a88a5c6b4afc692e26ff10caab8fd28a3f313cec6979261d75831fb77a0f77d"
     },
     {
       "path": "Sources/MartyGraphicsPathTracer/MGRTEnvironment.swift",
@@ -683,7 +683,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/AnnotationLayoutTests.swift",
-      "sha256": "5b823045fdff8fbcb586c89bf3b4ed73b814884fffc8558c6c5be65a002cc9bc"
+      "sha256": "4ebbd8b777d1b5ffd545d4e8178788af497544314f5fc5eecb53e9684995d5b3"
     },
     {
       "path": "Tests/MartyGraphicsTests/ControllerRollbackTests.swift",
@@ -779,7 +779,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidAnnotationTests.swift",
-      "sha256": "a84b4d2bf169405fcc1cecc7fb22e3eef22d2c8e916e1a1ededd846423aab69e"
+      "sha256": "088afd7b37b0d78fa03fb833c3efa33f436bb4b0db1f43137ae9a483c1721a72"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidComponentNamespaceTests.swift",
@@ -891,7 +891,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "195474afff39b322f976fe657a3cd2f93c5b40fc4badcdd58d41120a5e220116"
+      "sha256": "382b6badfd42f77ca95dd3ea9ef110934af2b8e5abe932499d7cef141812cbf1"
     },
     {
       "path": "docs/THIRD-PARTY.md",

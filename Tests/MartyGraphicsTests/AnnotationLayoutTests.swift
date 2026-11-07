@@ -317,9 +317,8 @@ final class AnnotationLayoutTests: XCTestCase {
         // A linear slide (its motion arrow) and a turning disc (its turn arrow): linear chains, as the rules require.
         let text = #"{"v": 2, "kind": "assembly", "parts": [\#(SolidAnnotationTests.linearParts), {"id": "crank", "at": [0, -40, 0], "shape": {"shaft": {"radius": 6, "length": 4}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}], "annotations": {"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "s", "point": "centre"}}, {"id": "aCrank", "meaning": "motion", "style": "turn", "on": "crank"}]}, "steps": [{"say": "Spin.", "spin": 1}]}"#
         let d = try doc(text)
-        let r = MGSolidRenderer(assembly: d.assembly)
-        r.setAnnotations(d)
-        r.show(d.view(step: 0))
+        let r = MGSolidRenderer(document: d)
+        r.show(document: d, view: d.view(step: 0))
         func nodes(_ id: String) -> [SCNNode] { r.scene.rootNode.childNodes(passingTest: { n, _ in n.name == "annotation.\(id)" }) }
         let rod = nodes("aRod"), crank = nodes("aCrank")
         XCTAssertEqual(rod.count, 2)
@@ -367,18 +366,23 @@ final class AnnotationLayoutTests: XCTestCase {
         }
         XCTAssertNil(MGSolidSnapshot.make(d, step: nil, params: away).annotations)
         XCTAssertNotNil(MGSolidSnapshot.make(d, step: nil, params: d.defaults).annotations)
-        let r = MGSolidRenderer(assembly: d.assembly)
-        r.setAnnotations(d)
+        let r = MGSolidRenderer(document: d)
         func shown() -> Int { r.scene.rootNode.childNodes(passingTest: { n, _ in n.name?.hasPrefix("annotation.") == true && !n.isHidden }).count }
-        r.show(good); r.apply(d.defaults)
+        r.show(document: d, view: good); r.apply(d.defaults)
+        XCTAssertGreaterThan(shown(), 0)
+        r.annotationsHidden = true
+        XCTAssertEqual(shown(), 0, "the renderer switch hides pieces")
+        r.annotationsHidden = false
         XCTAssertGreaterThan(shown(), 0)
         r.apply(away)
         XCTAssertEqual(shown(), 0, "a pose outside the view hides every piece")
-        r.show(host); r.apply(d.defaults)
+        r.show(document: d, view: host); r.apply(d.defaults)
         XCTAssertEqual(shown(), 0, "a host-built view hides every piece")
-        // A host may hide some annotations, never add one.
+        r.show(good)
+        XCTAssertEqual(shown(), 0, "show(_:) without the document shows no annotations")
+        // A view lists exactly what its step shows (a host hides annotations with the renderer switch instead).
         var fewer = good; fewer.annotations = ["g"]
-        XCTAssertEqual(d.checkedAnnotations(fewer, params: d.defaults), ["g"])
+        XCTAssertNil(d.checkedAnnotations(fewer, params: d.defaults))
         var more = d.view(step: 0); more.annotations += ["nobody"]
         XCTAssertNil(d.checkedAnnotations(more, params: d.defaults))
         // Third review (C4): a view is bound to its document's fingerprint and its step's playback sense.
@@ -394,6 +398,30 @@ final class AnnotationLayoutTests: XCTestCase {
         XCTAssertNil(d.checkedAnnotations(good, params: MGPoseParameters(input: d.defaults.input, explode: 1e-300)))
         // R5: a bad view size has its own refusal.
         XCTAssertEqual(MGSolidAnnotations.frame(document: d, view: good, params: d.defaults, camera: cam, width: 0, height: 700).refusal, .viewSize)
+    }
+
+    /// Fifth review (E2): the renderer draws annotations only against the assembly of the document they belong to.
+    func testRendererDrawsAnnotationsOnlyForItsOwnDocument() throws {
+        let text = #"{"v": 2, "kind": "assembly", "parts": [{"id": "s", "shape": {"box": {"size": [4, 4, 4]}}, "joint": {"prismatic": [1, 0, 0]}, "drive": {"input": 1}}], "annotations": {"arrows": [{"id": "m", "meaning": "motion", "from": "s", "expect": [1, 0, 0]}]}, "steps": [{"say": "Moves.", "spin": 1}]}"#
+        let d = try doc(text)
+        func shown(_ r: MGSolidRenderer) -> Int { r.scene.rootNode.childNodes(passingTest: { n, _ in n.name?.hasPrefix("annotation.") == true && !n.isHidden }).count }
+        var displayed = d.assembly
+        displayed.parts[0].drive = .input(scale: -1, offset: 0)
+        let foreign = MGSolidRenderer(assembly: displayed)
+        foreign.show(document: d, view: d.view(step: 0)); foreign.apply(MGPoseParameters(input: 1))
+        XCTAssertEqual(shown(foreign), 0, "an assembly given on its own never shows a document's annotations")
+        let r = MGSolidRenderer(document: d)
+        r.show(document: d, view: d.view(step: 0)); r.apply(MGPoseParameters(input: 1))
+        XCTAssertEqual(shown(r), 2)
+        r.setAssembly(displayed)
+        r.show(document: d, view: d.view(step: 0)); r.apply(MGPoseParameters(input: 1))
+        XCTAssertEqual(shown(r), 0, "after setAssembly the old document's annotations do not come back")
+        let other = try doc(text.replacingOccurrences(of: #""say": "Moves.""#, with: #""say": "Slides.""#))
+        r.setDocument(other)
+        r.show(document: d, view: d.view(step: 0)); r.apply(MGPoseParameters(input: 1))
+        XCTAssertEqual(shown(r), 0, "a document the renderer was not loaded with")
+        r.show(document: other, view: other.view(step: 0)); r.apply(MGPoseParameters(input: 1))
+        XCTAssertEqual(shown(r), 2)
     }
 
     /// R6: `marty-solid render` draws annotations on hero.png and the step stills only, never on exploded.png or a loop

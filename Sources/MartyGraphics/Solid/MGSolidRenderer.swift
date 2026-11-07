@@ -63,10 +63,18 @@ public final class MGSolidRenderer {
     /// Keyed by part id and local plane. A hit must hold an equal cut (full content); arrays compare by storage first,
     /// so showing the same cut again (the steps of one document share it) costs O(1), and a different cut is rebuilt.
     private var cutGeometry: [String: (cut: MGSectionCut, geometry: SCNGeometry)] = [:]
-    /// Arrow and dimension pieces (`setAnnotations(_:)`): one node per piece under one `annotations` node, built once.
-    /// Pose changes set node transforms only; geometry is never rebuilt.
+    /// Arrow and dimension pieces: one node per piece under one `annotations` node, built once per document. Pose
+    /// changes set node transforms only; geometry is never rebuilt. They show only through `show(document:view:)`, and
+    /// only when this renderer was loaded from that same compiled document (`init(document:)`, `setDocument(_:)`).
     private let annotationsNode = SCNNode()
     private var annotationDocument: MGSolidDocument?
+    /// The fingerprint of the compiled document whose assembly this renderer shows; nil after `init(assembly:)` or
+    /// `setAssembly(_:)`, so annotations never show against an assembly that did not come from their document.
+    private var loadedFingerprint: String?
+    /// True after a `show(document:view:)` that passed; any other `show(_:)` turns annotations off.
+    private var annotationsOn = false
+    /// A renderer-level switch that hides annotation pieces without changing what the engine checked.
+    public var annotationsHidden = false { didSet { updateAnnotations() } }
     private var annotationNodes: [String: [SCNNode]] = [:]
     private var annotationMaterials: [String: SCNMaterial] = [:]
     private var emphasisedAnnotations: Set<String> = []
@@ -113,8 +121,10 @@ public final class MGSolidRenderer {
     /// changes kinematics or one part's material does not rebuild the others).
     /// The view resets to the new assembly's plain view (parts' own opacity and light, nothing cut).
     public func setAssembly(_ new: MGAssembly) {
-        // Annotations belong to the old document; the host sets them again for the new one.
-        setAnnotations(nil)
+        // Annotations belong to a document; an assembly set on its own has none.
+        buildAnnotations(nil)
+        loadedFingerprint = nil
+        annotationsOn = false
         let old = Dictionary(assembly.parts.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         assembly = new
         view = MGSolidView(new)
@@ -163,10 +173,37 @@ public final class MGSolidRenderer {
 
     /// Shows a view: each cut part swaps in its capped cut geometry (built once per cut and kept), and every part
     /// takes its opacity and light. Pass `document.view(step:)` for an authored step, `MGSolidView(assembly)` for none.
+    /// This shows no annotations; use `show(document:view:)` for them.
     public func show(_ view: MGSolidView) {
+        self.view = view
+        annotationsOn = false
+        applyGeometry()
+        restyleAll()
+        updateAnnotations()
+    }
+
+    /// The renderer shows a document: its assembly, with no step view (`setAssembly`), and it remembers the document's
+    /// fingerprint so `show(document:view:)` can draw its annotations.
+    public convenience init(document: MGSolidDocument, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
+        self.init(assembly: document.assembly, lighting: lighting, options: options)
+        loadedFingerprint = document.checkedFingerprint
+    }
+
+    /// Replaces the assembly with a document's and remembers the document, as `init(document:)` does.
+    public func setDocument(_ document: MGSolidDocument) {
+        setAssembly(document.assembly)
+        loadedFingerprint = document.checkedFingerprint
+    }
+
+    /// Shows a document's view with its annotations. They draw only when this renderer was loaded from the same
+    /// compiled document (`init(document:)` or `setDocument(_:)`), and only for poses the engine checked
+    /// (`MGSolidDocument.checkedAnnotations`); otherwise the view shows without annotations.
+    public func show(document: MGSolidDocument, view: MGSolidView) {
         self.view = view
         applyGeometry()
         restyleAll()
+        annotationsOn = loadedFingerprint != nil && loadedFingerprint == document.checkedFingerprint
+        if annotationsOn, annotationDocument?.checkedFingerprint != document.checkedFingerprint { buildAnnotations(document) }
         updateAnnotations()
     }
 
@@ -200,9 +237,9 @@ public final class MGSolidRenderer {
     // MARK: Annotations
 
     /// Builds the arrow and dimension pieces of a compiled document (nil removes them). Which ones show follows the
-    /// view (`show(_:)` with `document.view(step:)`); where they are follows the pose (`apply(_:)`). Labels are drawn
-    /// by the overlay (`MGSolidOverlayView`), not in the scene. Pieces are not cut, not ghosted and cast no shadow.
-    public func setAnnotations(_ document: MGSolidDocument?) {
+    /// view (`show(document:view:)`); where they are follows the pose (`apply(_:)`). Labels are drawn by the overlay
+    /// (`MGSolidOverlayView`), not in the scene. Pieces are not cut, not ghosted and cast no shadow.
+    private func buildAnnotations(_ document: MGSolidDocument?) {
         annotationsNode.childNodes.forEach { $0.removeFromParentNode() }
         annotationNodes = [:]; annotationMaterials = [:]; emphasisedAnnotations = []
         annotationDocument = document
@@ -241,8 +278,9 @@ public final class MGSolidRenderer {
     /// Visibility from the view, transforms from the pose: no geometry is built here.
     private func updateAnnotations() {
         guard let doc = annotationDocument else { return }
-        // The one gate: annotations only for a view and pose the engine checked.
-        let visible = Set(doc.checkedAnnotations(view, params: posed) ?? [])
+        // The one gate: annotations only for the loaded document, a view and a pose the engine checked.
+        let bound = annotationsOn && !annotationsHidden && loadedFingerprint == doc.checkedFingerprint
+        let visible = bound ? Set(doc.checkedAnnotations(view, params: posed) ?? []) : []
         SCNTransaction.begin(); SCNTransaction.disableActions = true
         for (id, nodes) in annotationNodes {
             guard visible.contains(id) else { nodes.forEach { $0.isHidden = true }; continue }

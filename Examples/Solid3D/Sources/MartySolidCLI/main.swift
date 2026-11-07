@@ -232,8 +232,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     var finished = false
     defer { if !finished { try? FileManager.default.removeItem(at: out) } }  // never leave a half-written result
     _ = NSApplication.shared
-    let r = MGSolidRenderer(assembly: doc.assembly)
-    r.setAnnotations(doc)
+    let r = MGSolidRenderer(document: doc)
     let aspect = Double(width) / Double(height)
     let sourceName = URL(fileURLWithPath: path).lastPathComponent
     let plan = MGSolidRenderPlan(doc, sourceName: sourceName, source: src.source, loop: loop)
@@ -246,9 +245,8 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         // Each step shows its own section cuts, ghosts and annotations; other shots show the plain scene. Annotations
         // show on hero.png and the step stills only (`MGSolidShot.showsAnnotations`), and only where the engine
         // checked the pose (`checkedAnnotations`, inside the renderer and the frame).
-        var view = doc.view(step: s.step)
-        if !s.showsAnnotations { view.annotations = [] }
-        r.show(view)
+        let view = doc.view(step: s.step)
+        if s.showsAnnotations { r.show(document: doc, view: view) } else { r.show(view) }
         r.highlight(Set(s.highlight), dimOthers: !s.highlight.isEmpty)
         r.apply(s.params)
         // Bounding spheres are loose around flat or long assemblies; a margin below 1 fills the frame.
@@ -256,7 +254,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         let t0 = Date()
         guard let img = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
         seconds += Date().timeIntervalSince(t0); frames += 1
-        guard !view.annotations.isEmpty else { return img }
+        guard s.showsAnnotations, !view.annotations.isEmpty else { return img }
         // The same placement function as the snapshot and the SwiftUI overlay; frames of one loop keep their places.
         let frame = MGSolidAnnotations.frame(document: doc, view: view, params: s.params, camera: r.camera, width: Double(width),
                                              height: Double(height), previous: previousFrame, highlight: s.highlight,

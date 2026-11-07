@@ -604,14 +604,16 @@ final class SolidAnnotationTests: XCTestCase {
             let end = text.range(of: "\n}\n", range: start.upperBound..<text.endIndex)?.lowerBound ?? text.endIndex
             return String(text[start.lowerBound..<end])
         }
+        // Fifth review (E1): views too, so a host cannot swap in other cut geometry or another annotation list.
         for (file, type) in [("MGSolidParser.swift", "MGSolidDocument"), ("MGSolidParser.swift", "MGSolidStep"), ("MGSolidParser.swift", "MGSolidGear"),
-                             ("MGSolidFacts.swift", "MGSolidFact"), ("MGSolidView.swift", "MGSolidStepSection")] {
+                             ("MGSolidFacts.swift", "MGSolidFact"), ("MGSolidView.swift", "MGSolidStepSection"), ("MGSolidView.swift", "MGSolidView")] {
             let stored = try body(file, type).split(separator: "\n").filter { $0.hasPrefix("    public var ") && !$0.contains("{") }
             XCTAssertEqual(stored, [], "\(type) has a public setter")
         }
         let view = try body("MGSolidView.swift", "MGSolidView")
-        XCTAssertTrue(view.contains("public internal(set) var motionSense"))
-        XCTAssertTrue(view.contains("public internal(set) var fingerprint"))
+        for name in ["parts", "section", "annotations", "motionSense", "step", "fingerprint"] {
+            XCTAssertTrue(view.contains("public internal(set) var \(name)"), name)
+        }
     }
 
     /// Fourth review (D2): a document with annotations keeps its default input within 10,000 turns.

@@ -268,8 +268,8 @@ extension MGSolidDocument {
         guard let checked = checkedFingerprint, view.fingerprint == checked else { return nil }
         let (u0, spin, e) = MGSolidAnnotationEngine.domain(self, step: view.step)
         guard view.motionSense == (spin < 0 ? -1 : 1) else { return nil }
-        let allowed = visibleAnnotations(step: view.step)
-        guard Set(view.annotations).count == view.annotations.count, view.annotations.allSatisfy(allowed.contains) else { return nil }
+        // Exactly the list the engine checked for that step (a view is read-only to hosts).
+        guard view.annotations == visibleAnnotations(step: view.step) else { return nil }
         // Exact poses, no tolerance: the step's explode value, and the default input (a still step) or an input from
         // the default input to its end, `defaults.input + spin * 2 * .pi` (the same expression as the render plan).
         guard params.explode == e, params.input.isFinite else { return nil }

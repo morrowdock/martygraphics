@@ -20,8 +20,8 @@
   strict profile) and `annotation.cut.<id>`. One deterministic placement function (`MGAnnotationLayout.place`,
   through `MGSolidAnnotations.frame`) places text boxes at 24 candidates by hard rules and a score, keeps places
   between frames, and moves text it cannot place into a numbered callout list; nothing is dropped. An occlusion ray
-  test (2,000,000 triangle tests per frame) gives hollow dots and dashed leaders. `MGSolidRenderer.setAnnotations(_:)`
-  draws arrows and dimension lines in SceneKit without rebuilding geometry while the pose changes;
+  test (2,000,000 triangle tests per frame) gives hollow dots and dashed leaders. `MGSolidRenderer` (loaded with
+  `init(document:)` or `setDocument(_:)`, shown with `show(document:view:)`) draws arrows and dimension lines in SceneKit without rebuilding geometry while the pose changes;
   `MGSolidOverlayView` (SwiftUI) and `MGSolidOverlay.draw` (CoreGraphics) draw labels, leaders, callouts and the
   legend from the same records. Snapshot `/2` gains optional `annotations` (arrow and dimension triangles after every
   part triangle, labels, placements) and `highlight`; a `/2` export without them keeps its bytes, and a `/1` file with
@@ -43,10 +43,11 @@
   - Source-compatibility change: `MGSolidClaim.Kind` gains `annotation`; an exhaustive `switch` over it outside
     the package needs the new case.
   - Source-compatibility change: a compiled document is read-only to hosts. Every stored property of
-    `MGSolidDocument`, `MGSolidStep`, `MGSolidGear`, `MGSolidFact` and `MGSolidStepSection` now has an internal
-    setter (`public internal(set) var`); change a document through `MGSolidParser.applying`, which recompiles and
-    re-checks it. A document with annotations keeps `params.input` within 10,000 turns (`annotations.input`).
-  - `MGSolidView` gains `annotations`, `motionSense` (read-only), `step` and `fingerprint`; `MGSolidLegend` gains `notes`;
+    `MGSolidDocument`, `MGSolidStep`, `MGSolidGear`, `MGSolidFact`, `MGSolidStepSection` and `MGSolidView` now has
+    an internal setter (`public internal(set) var`); change a document through `MGSolidParser.applying`, which
+    recompiles and re-checks it, and get views from `view(step:)`. `MGSolidView.parts` and `section` were settable
+    before (#22); a host now changes a part's appearance through the document (`opacity`, `ghost`, `section`). A document with annotations keeps `params.input` within 10,000 turns (`annotations.input`).
+  - `MGSolidView` gains `annotations`, `motionSense`, `step` and `fingerprint` (all read-only); `MGSolidLegend` gains `notes`;
     `MGAnnotationFrame.refusal` (`unchecked`, `viewSize`) says why a frame laid out nothing.
 - Add the solid check report as a library API, an engine identity, patch checks, a reason catalog, per-part tiers
   and a guarded snapshot decoder (Foundation only).

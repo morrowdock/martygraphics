@@ -34,12 +34,12 @@ public struct MGSolidView: Equatable, Sendable {
     /// Allowed part `opacity`. Below 0.1 a part would be invisible but still claim to be there.
     public static let opacityRange: ClosedRange<Double> = 0.1...1
 
-    public var parts: [String: MGSolidPartView]
+    public internal(set) var parts: [String: MGSolidPartView]
     /// The step's section, if any.
-    public var section: MGSolidStepSection?
+    public internal(set) var section: MGSolidStepSection?
     /// v2: ids of the annotations this view shows (`MGSolidDocument.visibleAnnotations(step:)`), in authored or
     /// `annotate` order. Empty for a plain assembly.
-    public var annotations: [String] = []
+    public internal(set) var annotations: [String] = []
     /// +1, or −1 for a step with a negative `spin` (it plays the input backwards): motion arrows draw the motion the
     /// view shows.
     public internal(set) var motionSense: Double = 1

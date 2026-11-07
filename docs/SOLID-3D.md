@@ -618,12 +618,13 @@ negative `spin` plays the input backwards (`MGSolidView.motionSense` is −1): t
 motion that the view shows. Labels and the other arrows ride their parts and claim no direction.
 
 **One gate for every output.** `MGSolidDocument.checkedAnnotations(_:params:)` gives the annotations a renderer may
-draw for a view at a pose, or nil. A compiled document is read-only to hosts: every stored property of
-`MGSolidDocument`, `MGSolidStep`, `MGSolidGear`, `MGSolidFact` and `MGSolidStepSection` has an internal setter, so
-the only way to change a document is the parser or a patch, which compiles and checks it again. The view must come
-from `view(step:)` of this document (it carries the document's fingerprint, a SHA-256 identity computed when the
-document compiles), keep its step's playback sense (`motionSense` is read-only), and list each annotation at most
-once and only annotations its step shows (a host may remove some, never add). The pose must be exactly one the view
+draw for a view at a pose, or nil. A compiled document and its views are read-only to hosts: every stored property
+of `MGSolidDocument`, `MGSolidStep`, `MGSolidGear`, `MGSolidFact`, `MGSolidStepSection` and `MGSolidView` (its parts
+and cuts, section, annotation list, playback sense, step and fingerprint) has an internal setter, so the only way to
+change a document is the parser or a patch, which compiles and checks it again, and the only way to get a view is
+`view(step:)`. The view must carry this document's fingerprint (a SHA-256 identity computed when the document
+compiles) and list exactly the annotations its step shows; a host hides annotations with the renderer switch
+`MGSolidRenderer.annotationsHidden`, which never changes what the engine checked. The pose must be exactly one the view
 shows, with no tolerance: the step's explode value, and for a still step exactly the default input; for a step with
 `spin`, an input from the default input to `defaults.input + spin * 2 * .pi` (the render plan uses the same
 expression). A document with annotations keeps its default input within 10,000 turns (`annotations.input`), so pose
@@ -695,9 +696,12 @@ preset. A frame lays out nothing, and says why in `refusal`, for a view or pose 
 * The core casts a ray from the camera to each text anchor against the posed meshes (cut meshes for cut
   parts). Parts shown below opacity 0.5 (ghosts, faint parts) do not block it. Part bounds are tested
   first. A blocked anchor draws a hollow dot and a dashed leader; its text still shows.
-* `MGSolidRenderer.setAnnotations(_:)` builds one node per arrow or dimension piece (one unit cylinder and
-  one unit cone, scaled). `show(_:)` sets which show; `apply(_:)` moves them; geometry is never rebuilt.
-  `highlightAnnotations(_:)` brightens some.
+* `MGSolidRenderer` draws annotations only for the document it was loaded with (`init(document:)` or
+  `setDocument(_:)`; the renderer keeps that document's fingerprint) and only through `show(document:view:)`. An
+  assembly given on its own (`init(assembly:)`, `setAssembly(_:)`) and `show(_:)` show none, so a renderer can never
+  draw one document's annotations beside another assembly's motion. It builds one node per arrow or dimension piece
+  (one unit cylinder and one unit cone, scaled); `apply(_:)` moves them and geometry is never rebuilt.
+  `highlightAnnotations(_:)` brightens some; `annotationsHidden` hides them all.
 * `MGSolidOverlayView` (SwiftUI) and `MGSolidOverlay.draw` (CoreGraphics, used by `marty-solid render`) draw
   labels, leaders, dots, chips (a bar in the tier colour: good, warn, muted), callouts and the legend from
   one frame record.
