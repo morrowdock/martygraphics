@@ -28,6 +28,48 @@
   snapshot whose title holds a decimal literal (`1.5`, `.5`, `2e3`) is refused with `snapshot.title`.
 - Document in `docs/LESSONS.md` that a beat refused at close for the queue budget (`lesson.queue.bytes`) retracts the
   commands and checks already accepted for it.
+- Add assembly v2 and an honesty layer to the solid engine (open-vocabulary phase 1,
+  first part). `"v": 2` is a strict superset of v1; v1 documents keep their exact
+  meaning, and a v1 document with a v2 key is refused with the usual
+  `….unknown.<key>` reason. The engine now keeps a facts table
+  (`MGSolidDocument.facts`: tooth counts, modules, joint speeds per input turn relative to
+  the parent and in the world frame, prismatic travel over one input turn, crank radius
+  and rod length, `repeat` counts and `<instance>.ratio`; component anchors resolve, so
+  `stage.output.speed` works). In v2 the title and step text fill `{name}` placeholders
+  with closed modifiers (`abs` only with a strict-inequality check that proves the sign,
+  `inv`, `pct`, `deg`, `frac`, so `{stage.output.speed|frac}` prints "2/7"; no fact text
+  shows a non-zero value as "0", a placeholder value that would
+  print "0" is refused, and so is a modifier step that overflows or underflows,
+  `text.range.<name>`), and rule N1 refuses a caption with a number character (by the
+  toolchain's Unicode data and a pinned Unicode 18.0.0 Numeric_Type table) that does not
+  come from a placeholder (`text.number.step.<n>`) unless the step is marked
+  `"unchecked": "<why>"`. Steps can state `check` claims
+  (`{"value", "eq" | "lt" | "gt", "tol"?}`, as in lessons) that the engine proves before
+  it accepts the document (`check.failed.<name>` when false, `check.fact.<name>` when the
+  fact does not exist); each check is its own claim, shown with its exact target. Truth tiers (Solved, Built,
+  Described) are computed by the engine for every motion, caption, title and check
+  (`claims`, `legend` with chip texts, `motionTier`, `describe(id)` with a "not checked"
+  list per motion source): an `input` scale other than ±1, a `follow` ratio and what they
+  feed are Built, and a title with a typed number is Described. A `tier` key anywhere in
+  a v2 document is refused (`tier.key`). Every document, v1 or v2, is linted after it
+  compiles (`warnings`): `joint.idle.<id>` (a jointed part that nothing moves),
+  `frame.child.absolute.<id>` (the double offset, confirmed by geometry: the child misses
+  its parent as placed but would sit near it if its `at` were read as world
+  coordinates), `frame.child.far.<id>` and
+  `frame.axis.off.<id>` (a turn axis that misses its own part; v2 `"offAxis": true`
+  marks it intended). v2 parts can state `"expect": {"axisWorld": …, "upWorld": …}`,
+  refused when the model does not match (`expect.axis.<id>`, `expect.up.<id>`).
+  `readBack` describes every part in plain words (world position, "turns about a
+  horizontal axis (+X)", parent frame, up). `MGSolidProfile.strict` and
+  `marty-solid check --strict` (the model-harness profile) refuse idle joints and turn
+  axes that miss their own part, which the plain API only warns about (`applying` takes
+  the profile too); the child-frame heuristics stay warnings in every profile; `check`
+  also prints warnings, facts, legend, `stepFacts` (which fact filled each placeholder),
+  `notChecked` and the read-back. `docs/SOLID-3D.md` gains a frames and "up"
+  conventions section (child `at` / `rot` are relative to the parent; lay a shaft down
+  with `rot`, keep the joint `[0, 0, 1]`), the most common silent error in recorded
+  model runs. New v2 worked example `horizontal-reduction.json` (15/40 teeth on shafts
+  along X). Every shipped v1 example passes `--strict` with no warnings.
 - Fix the `two_pointers` template stopping after 8 steps, so a 12-value walk never reached its pair. It and `bst` now use the template step limit (`MGLimits.templateSteps`, 48) instead of the wire limit (`MGLimits.steps`, 8). Output of walks that fit in 8 steps is unchanged.
 - Show the beat-by-beat rotation lesson in the README and `docs/SHOWCASE.md`: a 640×400 loop, beat stills and a
   learner-slider still in `docs/assets/lessons/` with a capture receipt. Add `lesson-demo --capture <new directory>

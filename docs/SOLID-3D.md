@@ -30,11 +30,48 @@ path traced through a small adapter.
 | Assembly and kinematics | `Solid/MGAssembly.swift`, `MGSolidModels.swift`, `MGSolidChecks.swift` | Foundation only |
 | JSON format | `Solid/MGSolidParser.swift` | Foundation only |
 | Components | `Solid/MGSolidComponents.swift`, `MGSolidBuiltInComponents.swift` | Foundation only |
+| Honesty (facts, tiers, lints, read-back) | `Solid/MGSolidFacts.swift`, `MGSolidTiers.swift`, `MGSolidFrames.swift` | Foundation only |
 | Snapshot export | `Solid/MGSolidSnapshot.swift`, `MGMaterial.swift` | Foundation only |
 | Studio renderer | `Solid/MGSolidRenderer.swift` | SceneKit, CoreGraphics, Metal |
 
 Kernel space is millimetres with **+Z up** (gear axes along Z). The render world
-and the snapshot are **Y-up** (`MGSolidStage.zUpToYUp`).
+and the snapshot are **Y-up** (`MGSolidStage.zUpToYUp`). Read
+[Frames and the up convention](#frames-and-the-up-convention) before you place parts:
+in recorded model runs, a child placed in world coordinates and a horizontal shaft
+left vertical were the most common errors that the checker did not report.
+
+## Frames and the up convention
+
+| Item | Convention |
+| --- | --- |
+| Units and axes | Millimetres, right-handed, **+Z is up**. |
+| Up | A joint axis `[0, 0, 1]` is **vertical** (a turntable, a helicopter rotor, a quadcopter prop). A **horizontal** shaft is `[1, 0, 0]` or `[0, 1, 0]` in world terms (a wind turbine, a car axle, an aircraft propeller, a gearbox on its side). |
+| Built-in axes | `gear`, `ringGear`, `shaft`, `tube`, `hex`, `plate`, `carrier`, `extrudedProfile` (its depth) and `revolvedProfile` are built along their part's local **+Z**; `bladeRow` repeats around local +Z; `blade` spans local +X. To lay a part down, turn the **part** with `rot`: `"rot": [0, 1, 0, 90]` takes local +Z to world **+X**, `"rot": [1, 0, 0, -90]` takes it to world **+Y**. Keep the joint axis `[0, 0, 1]`: a joint axis is written in the part's own frame, so after that `rot` it is the world X axis, and gear checks need the joint along the gear's own axis (`constraint.gearMesh.joint`). |
+| Frames | A part's `at` and `rot` are **relative to its parent's frame** (after the parent's own joint). A part without a `parent` is placed in the world frame. A shape's own `at` / `rot` (inside the shape entry) are relative to its part. A component `use` entry's `at` / `rot` place the component's root parts in the frame of its `parent`. **Never repeat the parent's position in a child.** |
+| Positive rotation | Right-hand rule about the joint axis: seen from the tip of the axis vector looking back toward the origin, a positive drive turns counter-clockwise. "CW" and "CCW" in text mean as seen from that side. |
+| Blades | Span +X, chord +Y at angle 0 with the leading edge toward −Y, angle = pitch + twist × t (see `blade` below). |
+| Render and snapshot | Y-up (`MGSolidStage.zUpToYUp`); the kernel and the JSON stay Z-up. |
+
+The double-offset error: the author knows the blade should sit at the hub, 50 mm out
+along X, and writes that world position into the child.
+
+```json
+{"id": "hub", "at": [50, 0, 0], "shape": {"shaft": {"radius": 10, "length": 20}}},
+{"id": "blade", "parent": "hub", "at": [50, 0, 0], "shape": {"box": {"size": [40, 8, 4]}}}
+```
+
+The blade lands at x = 100 mm (twice the offset). `marty-solid check` warns
+`frame.child.absolute.blade`. The child's `at` is relative to the hub, so the fix is
+`"at": [0, 0, 0]`. That warning is a guess from bounding boxes, and correct layouts can
+trigger it (two plates with a gap, a plate on posts), so even `--strict` never refuses it.
+The real defence is the read-back in the check report: it says, for each part, where it is
+in the world and which way it turns, for example
+`rotor: … turns about a horizontal axis (+X) …; child of tower (at [0, 0, 92] in the tower frame)`.
+Compare it with what you meant before you answer. A v2 part can also state its intended
+orientation, and the engine refuses the document when the model does not match:
+`"expect": {"axisWorld": [1, 0, 0]}` (the joint axis in world space at input 0) or
+`"expect": {"upWorld": [0, 0, 1]}` (the part's local +Z in world space); within 1°, sign
+included (`expect.axis.<id>`, `expect.up.<id>`).
 
 ## Kernel
 
@@ -93,7 +130,8 @@ reported `part.parent`.
   primitive's fields plus an optional `at` (offset) and `rot` (axis-angle
   `[x, y, z, degrees]`) inside it, for example
   `{"shaft": {"radius": 4, "length": 10, "at": [18, 0, 0]}}`; a part's own `at` /
-  `rot` sit next to `shape`. Primitives: `gear`, `ringGear`, `shaft`, `tube`, `box`, `hex`,
+  `rot` sit next to `shape` and are relative to its parent's frame (see
+  [Frames](#frames-and-the-up-convention)). Primitives: `gear`, `ringGear`, `shaft`, `tube`, `box`, `hex`,
   `plate` (disc with round holes), `carrier` (hub, arms and bosses with a smooth
   union), `extrudedProfile`, `revolvedProfile` (open with poles, or `closed`
   for walls such as casings and nozzles; optional `sweep` and `start` in
@@ -205,9 +243,177 @@ carrier, free the ring) recompiles the kinematics without rebuilding geometry.
 a material-only change restyles the node in place. A section cut gives each cut
 part a private material copy, so parts that share a preset are never cut with it.
 
+## Assembly v2: facts, placeholders and truth tiers
+
+`"v": 2` is a strict superset of v1. A v1 document keeps its exact meaning: the same
+input gives the same document, the same refusals, and its text is never filled. The new
+keys are legal only in v2; in a v1 document they are refused with the usual reason
+(`part.unknown.expect`, `step.unknown.check`). Keys in v2 so far: part `expect` and
+`offAxis`; step `check` and `unchecked`. Later features add their keys to the v2 sets in
+`MGSolidFormat`.
+
+### Facts
+
+The engine keeps every number it can stand behind in a facts table
+(`MGSolidDocument.facts`; `fact(_:)` looks a name up and resolves anchors). Each fact has a
+value, a unit, a tier and a source.
+
+| Name | Value | Unit |
+| --- | --- | --- |
+| `<part>.teeth`, `<part>.module` | gear and ring parts | –, mm |
+| `<part>.speed` | revolute part with a linear drive (`input`, `follow` or a gear-mesh solve): joint turns per input turn, **relative to its parent**, signed about its own joint axis | – |
+| `<part>.worldSpeed` | the same part's turns per input turn **in the world frame**: its own rate plus every turning revolute ancestor, when all their axes are parallel to its own (otherwise there is no such fact). A planet on a carrier: `speed` −20/21 relative to the carrier, `worldSpeed` 2/7 − 20/21 = −2/3. | – |
+| `<part>.travel` | driven prismatic part: largest minus smallest displacement over one input turn (720 samples, ends included); the stroke of a slider-crank | mm |
+| `<part>.crankRadius`, `<part>.rodLength` | part with a `crankSlider` drive | mm |
+| `count.<base>` | copies made by `repeat` (`count.stage.planet`) | – |
+| `<base>.<name>` | a fact every copy shares (`stage.planet.teeth`) | as the copies |
+| `<instance>.ratio` | component output anchor speed / input anchor speed (`stage.ratio`) | – |
+
+Component anchors resolve: `stage.output.speed` is `stage.carrier.speed`. A fact's text never
+shows a non-zero value as "0" (a 1:1000 train shows "-0.001"). Tooth counts,
+modules, crank sizes and counts are Solved. A speed or travel takes the tier of its drive
+chain (see tiers below): the input at ±1 turn per input turn and everything the engine
+solves from it are Solved; an `input` scale other than ±1 or 0 and every `follow` ratio
+are numbers the author set, so they and every speed computed from them are Built.
+
+### Placeholders
+
+In v2, the `title` and every step `say` may hold `{name}` or `{name|mod|…}` (up to three
+modifiers). The engine fills them with `MGPhysics.format` (about three significant figures)
+and keeps the authored text in `MGSolidStep.template`. Modifiers:
+
+* `abs` drops the sign. It needs a `check` in the same step that proves the sign of that
+  fact with a strict inequality (`lt` t with t ≤ 0, or `gt` t with t ≥ 0; an `eq` never
+  proves a sign, because −0.001 and +0.001 both show as "0"), otherwise
+  `text.sign.<name>`; a title cannot use it. So "the other way" in the caption is
+  proved, not typed.
+* `inv` (1/x) and `frac` (the exact fraction p/q with q ≤ 100 000 within a relative
+  10⁻¹², for example "2/7"; π has none) need a pure number (no unit).
+* `pct` (× 100, "%") and `deg` (turns × 360, "°") apply to speeds and ratios only.
+* `pct`, `deg` and `frac` end a chain.
+
+```json
+{"say": "The carrier turns {stage.output.speed|frac} of a turn.", "check": [{"value": "stage.output.speed", "lt": 1}]}
+```
+
+gives "The carrier turns 2/7 of a turn." for a 24-tooth sun and a 60-tooth ring
+(`{stage.output.speed}` gives "0.29", `{stage.output.speed|inv}` "3.5"). Refusals:
+`text.placeholder.<name>` (no such fact), `text.placeholder` (bad grammar: names are ASCII
+letters, digits, `_` and `.`, at most 64 characters; modifiers are one of the five words),
+`text.brace`, `text.modifier.<mod>` (unknown), `text.modifier.<mod>.<name>` (does not
+apply, for example `inv` of a value in mm, `deg` of a tooth count, or `frac` of π),
+`text.sign.<name>`, `text.rounding.<name>`: a non-zero value that would print as "0"
+(a 1:300 reduction is 0.0033); use `frac` or `inv` for it, and `text.range.<name>`: a
+modifier step whose result is not a finite, normal number (`inv` of 1e-309 overflows; it
+is refused there, so a second `inv` cannot turn it into a false "0").
+
+**Rule N1 (numbers).** In a v2 caption, every number character must come from a
+placeholder; otherwise `text.number.step.<n>` (1-based). Every Unicode scalar counts, by
+the toolchain's Unicode properties and a pinned Unicode 18.0.0 Numeric_Type table (2,348
+scalars, `MGSolidNumericScalars`), so a number newer than the runtime's data counts too: ASCII
+and other digits, "½", superscripts ("mm²", "CO₂") and a digit joined to a letter. The
+exception is a step marked `"unchecked": "<why>"` (1–60 characters): it may type numbers,
+and it shows the "Not checked" chip. For units and formulas write "square mm" or mark the
+step `unchecked`. So "Its stroke is 36 mm." is refused; "Its stroke is
+{engine.piston.travel}." shows "Its stroke is 36 mm." with its numbers Solved.
+N1 covers number characters only. It does not see number words ("three times slower"),
+and it cannot tell whether a placeholder names the right fact: "{count.stage.planet}
+times slower" prints "3 times slower" from the planet count. A `check` is the only proof of
+a relation, and the check report lists which fact filled each placeholder (`stepFacts`).
+Titles and part names may type digits ("V8 engine"), but a title with a typed number is
+Described.
+
+**Claim checks.** A step may state up to 8 claims that the engine proves before it accepts
+the document: `{"value": "<fact>", "eq" | "lt" | "gt": x, "tol"?: t}`, the same shape and
+meaning as the lesson `check`. Without `tol`, `eq` compares what the learner sees
+(`MGPhysics.format` of both numbers), except that a target of 0 needs exactly 0; with
+`tol`, |value − x| ≤ t. Refusals: `check.failed.<name>` (the claim is false),
+`check.fact.<name>` (no such fact; the two prefixes never collide, even for a part named
+`fact` or `failed`), `check.comparison`, `check.tol` (only with `eq`),
+`check.value`, `check.object`, `step.check` (not a list of 1–8), and the key reasons
+`step.check.missing.value` and `step.check.unknown.<key>`.
+
+### Truth tiers
+
+The engine computes a tier for every visible claim. An author never sets one: a key named
+`tier` anywhere in a v2 document is refused (`tier.key`), at the top level and inside
+`with` too (so a component parameter cannot be called `tier` in a v2 document).
+
+| Tier | Chip | Meaning |
+| --- | --- | --- |
+| Solved | "Solved" (motion), "Numbers solved" (caption, title), "Checked" (check) | The engine computed it from the reference input (±1) and every check passed: a gear speed from the mesh solve, a crank drive, a measured travel, a tooth count. |
+| Built | "Schematic motion" / "Schematic" | Exact geometry from the author's numbers, behaviour from the author: an `input` scale other than ±1, a `follow` ratio, and everything computed from them (scripted motion, stand-ins and cited sizes come in later releases). |
+| Described | "Not checked" | Text the engine does not check: a caption marked `unchecked`, a title with a typed number, or a v1 caption or title with a number in it. |
+
+* **Motion** of a part with its own moving joint: the lowest tier over its drive chain
+  (a `follow` source, a crank, the inputs of its gear-mesh solve) and every moving
+  ancestor. A static part, an idle joint and a part that only rides on a moving parent
+  make no motion claim.
+* **Captions and the title**: Described when `unchecked` or when they type a number;
+  otherwise the lowest tier of the facts they show. A caption that shows no engine number
+  gets **no tier** and no check mark, even with checks: the engine cannot tell what its
+  words claim. The tier covers the numbers, not the words ("Numbers solved").
+* **Checks** are claims of their own (`step.<n>.check.<k>`, chip "Checked"), with the
+  expression as text, for example "Checked: stage.sun.teeth > 0".
+* `MGSolidDocument.claims` lists the claims (motion once per authored part, then the
+  title, then each caption and its checks), each with its chip text and a reason;
+  `legend` gives the counts and one line ("Solved 8 · Not checked 1", always shown),
+  "Some motion is schematic" when a motion claim is below Solved, and "Shapes as
+  authored". `describe(id)` returns one part's motion, tier, facts and what its motion
+  source does not check, for example
+  `{"id": "stage.carrier", "motion": "Solved by gearMesh (0.29 turns per input turn)", "notChecked": ["3D tooth contact", …]}`;
+  a part on a turning parent says "relative to <parent>" and gives its world speed.
+
+## Warnings, strict mode and the check report
+
+The compiler lints every document, v1 and v2, after it compiles
+(`MGSolidDocument.warnings`, in part order; a `repeat` copy reports its base id once).
+The plain API only warns. The strict profile (`MGSolidParser.document(…, profile: .strict)`,
+`MGSolidParser.applying(…, profile: .strict)`, `marty-solid check --strict`; the default for
+model harnesses) refuses only what the document itself shows to be wrong: a jointed part that
+nothing moves, and a turn axis that misses its own jointed part. The child-frame warnings
+are heuristics and stay warnings in every profile; the read-back below is how an author
+checks frames.
+
+| Warning | When | Strict |
+| --- | --- | --- |
+| `joint.idle.<id>` | A part has a `revolute` or `prismatic` joint but no drive and no constraint moves it, so it never moves. Add a drive (`{"input": 1}`), a mesh or a `fixed` constraint, or remove the joint. | refused |
+| `frame.child.absolute.<id>` | The double offset, confirmed by geometry with every joint at 0: the child's bounds miss its parent's bounds as placed, but if its `at` / `rot` are read as world values it lies nearer, within one parent size. A child that touches its parent as placed (arm links, equal-link chains, stacked plates) never warns, and neither does a child of a parent at the world origin (only rotation differs there). Correct layouts can still warn (spaced plates, a plate on posts). | warning |
+| `frame.axis.off.<id>` | A revolute part's axis line misses its own mesh bounds. Mark a part that turns about an outside axis on purpose with `"offAxis": true`; this key needs v2, so a v1 document with such a part fails strict mode until it moves to v2. | refused |
+| `frame.child.far.<id>` | A child's bounds miss its parent's bounds grown by 1.5 times the parent's largest size. Often the same error; sometimes intended. | warning |
+
+`expect` mismatches (`expect.axis.<id>`, `expect.up.<id>`) are refusals in every profile.
+
+`marty-solid check [--strict] FILE.json` prints, besides `ok`, `reason`, meshes and gear
+checks: `version`, `warnings`, `facts` (value, unit, text, tier, source), `legend`
+(counts, text, claims), `stepTiers`, `stepFacts` (for each step, the fact behind each
+placeholder in order, and each check with its `value`, `comparison`, exact `target`,
+`tolerance` and text), `notChecked` per motion source, and a
+plain-words `readBack` of every part at input 0. One line per part gives its world centre
+and size (from its vertices), how it moves (axis words such as "a horizontal axis (+X)",
+speed, tier and source), its parent and its `at` in the parent frame, how far its origin is
+from a turning parent's axis, and where its local +Z points:
+
+```
+tower: world centre (0, 0, 45) mm, size 8 x 8 x 90 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z
+rotor: world centre (0, 0, 92) mm, size 20 x 10 x 10 mm; turns about a horizontal axis (+X) through (0, 0, 92); 1 turn per input turn (Solved, input); child of tower (at [0, 0, 92] in the tower frame); local +Z points +X
+blade: world centre (0, 30, 92) mm, size 2 x 60 x 4 mm; fixed to its parent, moves with rotor; child of rotor (at [0, 30, 0] in the rotor frame); its origin is 30 mm from the rotor axis; local +Z points +X
+```
+
+A model cannot see the render, so this is its repair loop: compare the read-back with the
+intent, fix, check again.
+
 ## Worked examples
 
-Small, complete models that `marty-solid check` accepts; a test keeps them valid.
+Small, complete models that `marty-solid check` accepts; a test keeps them valid. All of
+them also pass `check --strict` with no warnings.
+
+* [`horizontal-reduction.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json)
+  (v2, 24 lines): a 15-tooth pinion driving a 40-tooth wheel on shafts laid along X
+  (`rot` `[0, 1, 0, 90]` with joint `[0, 0, 1]`, both confirmed by `expect.axisWorld`), a
+  support placed relative to its base and a collar relative to the wheel, captions filled
+  from facts (`{wheel.speed|abs|frac}` gives "3/8", with a check that proves the sign),
+  three claim checks and one `unchecked` caption. Legend: "Solved 8 · Not checked 1".
 
 * [`slider-crank.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/slider-crank.json)
   (21 lines): a crank on a `revolute` joint with an `input` drive, a piston on a
@@ -409,5 +615,11 @@ so the two libraries stay independent.
   image-based lighting from a generated environment; no ray-traced reflections.
 * The section plane is a fragment discard; cut faces are not capped.
 * Gear contact is checked in 2D at sampled angles, not as continuous 3D contact.
+* Frame lints compare bounding boxes, not meshes; a child that the box test calls near
+  can still float. Parts are not checked against each other for collisions.
+* Placeholders fill the title and step text only (not part names). `<part>.worldSpeed`
+  exists only when every turning ancestor's axis is parallel to the part's own.
+* `frame.axis.off` checks only that the axis line meets the part's bounds; it does not
+  also compare the axis with the bounds centre.
 * No helical or bevel gears, belts, cams or general constraint solving beyond
   linear gear ratios and the slider-crank closed form.

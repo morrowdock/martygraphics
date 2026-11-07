@@ -573,11 +573,13 @@ enum MGSolidComponents {
         }
     }
 
-    /// Expands every `use` entry of an assembly. Returns the plain assembly object, the instance frames and the ids
-    /// the expansion generated (only those may contain a dot). An assembly without `use` entries is returned unchanged.
-    static func expand(_ o: [String: MGJSON], _ library: MGSolidLibrary) throws -> (object: [String: MGJSON], frames: [String: MGTransform], generated: Set<String>) {
+    /// Expands every `use` entry of an assembly. Returns the plain assembly object, the instance frames, the ids
+    /// the expansion generated (only those may contain a dot) and every anchor resolved to the part (or `repeat`
+    /// base) id it names. An assembly without `use` entries is returned unchanged.
+    static func expand(_ o: [String: MGJSON], _ library: MGSolidLibrary) throws
+        -> (object: [String: MGJSON], frames: [String: MGTransform], generated: Set<String>, aliases: [String: String]) {
         guard case .array(let entries)? = o["parts"], (1...MGSolidLimits.parts).contains(entries.count),
-              entries.contains(where: { $0["use"] != nil }) else { return (o, [:], []) }
+              entries.contains(where: { $0["use"] != nil }) else { return (o, [:], [], [:]) }
         // Authored step lists keep their own limit, before groups are expanded or duplicates merged.
         if case .array(let steps)? = o["steps"] {
             for s in steps {
@@ -662,7 +664,9 @@ enum MGSolidComponents {
                 return .object(so)
             })
         }
-        return (result, out.frames, out.generated)
+        var aliases: [String: String] = [:]
+        for key in out.aliases.keys.sorted() { aliases[key] = try resolve(key) }
+        return (result, out.frames, out.generated, aliases)
     }
 }
 

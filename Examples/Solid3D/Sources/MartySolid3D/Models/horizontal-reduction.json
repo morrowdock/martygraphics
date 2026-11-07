@@ -1,0 +1,24 @@
+{"v": 2, "kind": "assembly", "title": "Gear reduction on horizontal shafts", "units": "mm",
+ "parts": [
+  {"id": "base", "name": "Base plate", "material": "darkSteel", "at": [6, 27.5, 4], "shape": {"box": {"size": [60, 130, 8], "chamfer": 1}}},
+  {"id": "support", "name": "Bearing support", "parent": "base", "material": "aluminum", "at": [-20, 0, 39],
+   "shape": {"box": {"size": [8, 120, 70], "chamfer": 1}}},
+  {"id": "pinion", "name": "Pinion (input)", "material": "brass", "at": [0, 0, 60], "rot": [0, 1, 0, 90],
+   "shape": [{"gear": {"teeth": 15, "module": 2, "width": 12, "bore": 3}}, {"shaft": {"radius": 3, "length": 40, "z0": -14}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "expect": {"axisWorld": [1, 0, 0]}},
+  {"id": "wheel", "name": "Wheel (output)", "material": "brushedSteel", "at": [0, 55, 60], "rot": [0, 1, 0, 90],
+   "shape": [{"gear": {"teeth": 40, "module": 2, "width": 12, "bore": 4}}, {"shaft": {"radius": 4, "length": 50, "z0": -14}}],
+   "joint": {"revolute": [0, 0, 1]}, "expect": {"axisWorld": [1, 0, 0]}},
+  {"id": "collar", "name": "Output collar", "parent": "wheel", "material": "anodized.orange", "at": [0, 0, 26],
+   "shape": {"tube": {"inner": 4, "outer": 9, "length": 6}}}
+ ],
+ "constraints": [{"gearMesh": {"a": "pinion", "b": "wheel"}}],
+ "steps": [
+  {"say": "A small gear drives a larger one. Both shafts lie flat, along X.", "camera": "hero"},
+  {"say": "The pinion has {pinion.teeth} teeth; the wheel has {wheel.teeth}.", "highlight": ["pinion", "wheel"]},
+  {"say": "Each pinion turn moves the wheel {wheel.speed|abs|frac} of a turn, the other way.", "highlight": ["wheel"], "spin": 1,
+   "check": [{"value": "wheel.speed", "eq": -0.375, "tol": 1e-9}, {"value": "wheel.speed", "lt": 0}]},
+  {"say": "So the output collar turns {wheel.speed|abs|inv} times slower than the input.", "highlight": ["collar"], "spin": 1,
+   "check": [{"value": "wheel.speed", "lt": 0}]},
+  {"say": "Real gears also lose some power to friction.", "unchecked": "general fact, not modelled"}
+ ]}
