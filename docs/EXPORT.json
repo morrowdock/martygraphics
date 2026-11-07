@@ -277,6 +277,7 @@
     "docs/fixtures/v1/table-region-code.scene.json: synthetic table, region and code-text scene (equals the built-in cells fixture)",
     "Tests/MartyGraphicsTests/LessonNumericTests.swift: lesson regressions for non-finite values built in code (lesson.number, snapshot.number, atomic load and apply, hidden oversized payload)",
     "docs/assets/lessons: rotation lesson loop, beat stills, learner-slider still, frame timing and capture receipt (captured from Examples/LessonDemo)",
+    "docs/assets/cutaway: idler-gearbox stills (closed, cut, ghost), strict check output and capture receipt (rendered from Examples/Solid3D; docs only)",
     "Examples/LessonDemo/Sources/LessonDemoKit/Capture.swift: lesson-demo --capture frame plan and ImageIO GIF writer (public-only example code)",
     "Sources/MartyGraphics/Solid/MGSolidFacts.swift: assembly v2 facts table, {placeholder} fill with closed modifiers, rule N1 and step claim checks (public-only)",
     "Sources/MartyGraphics/Solid/MGSolidTiers.swift: engine-computed truth tiers, claims, legend and chip texts, describe(id) (public-only)",

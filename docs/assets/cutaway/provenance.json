@@ -1,0 +1,51 @@
+{
+  "source": {
+    "repository": "https://github.com/morrowdock/martygraphics",
+    "commit": "bf6c32c66fa3264e6fb74300a20d9e1820a5bb46",
+    "commitNote": "origin/main after PR #21 (truth tiers) and PR #22 (capped section cuts, ghost steps); the renders were made from this clean checkout",
+    "model": "Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json",
+    "authoring": "The model was written by hand for the docs. It is not the output of an AI model answering a prompt.",
+    "license": "Apache-2.0; procedural geometry, no images, models or stock assets",
+    "sourceFiles": {
+      "Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json": "edc650a25a1e6ab0e22f865d39449388b10b985769c32a7e2d3f1649853ba957",
+      "Examples/Solid3D/Package.swift": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b",
+      "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f"
+    }
+  },
+  "capture": {
+    "machine": "Apple M1 Mac mini (Macmini9,1), arm64; macOS 27.2",
+    "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
+    "configuration": "SwiftPM release build",
+    "capturedUTC": "2026-11-07",
+    "commands": [
+      "swift run -c release --package-path Examples/Solid3D marty-solid render Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json <NEW_DIR>",
+      "swift run -c release --package-path Examples/Solid3D marty-solid check --strict Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json"
+    ],
+    "note": "Both commands ran at the commit above; check exited 0 with ok true, strict true, no warnings. Stills are 1280x800 PNGs written by render, not edited."
+  },
+  "artifacts": {
+    "closed.png": {
+      "sha256": "7b4bec33e31a6512290c0d9ca5852cf962901b9805232bf8cdd7b8324bf894c5",
+      "bytes": 1064758,
+      "from": "render step-1 (step-1.png)",
+      "pixels": "1280x800"
+    },
+    "cut.png": {
+      "sha256": "96dabfcb37877242b3330344375c086c36b52afe2d575f212fd8a22d59dd6a26",
+      "bytes": 1090443,
+      "from": "render step-2 (step-2.png)",
+      "pixels": "1280x800"
+    },
+    "ghost.png": {
+      "sha256": "c15d924592e38a30ffaebe42e7ba8eaf518a3f7b90430e51399f9d4b38d5ceab",
+      "bytes": 947217,
+      "from": "render step-6 (step-6.png)",
+      "pixels": "1280x800"
+    },
+    "check-strict.json": {
+      "sha256": "ec3242f6391faf85f4c2a361d91b494cb38c366e0c27aa1887ef38cdc3b879d8",
+      "bytes": 8041,
+      "from": "marty-solid check --strict (stdout re-serialised with sorted keys and 2-space indent; same content)"
+    }
+  }
+}
