@@ -62,8 +62,18 @@ public enum MGLayout {
             guard let c = item.pts.first else { return nil }
             let w = item.n("cell", 1) * Double(item.list.count)
             return box([c - MGPoint(w / 2, item.n("cell", 1) / 2), c + MGPoint(w / 2, item.n("cell", 1) / 2)])?.insetBy(dx: 0, dy: -vp.length(0.5))
+        case .table:
+            guard let c = item.pts.first else { return nil }
+            let w = item.n("cw", 1.6) * item.n("cols", 1), h = item.n("rh", 0.7) * item.n("rows", 1)
+            return box([c - MGPoint(w / 2, h / 2), c + MGPoint(w / 2, h / 2)])
         case .text:
             guard let p = item.pts.first else { return nil }
+            if item.has("code") {
+                // Code text is drawn left-aligned at `at` in a monospaced font.
+                let c = vp.point(p), text = item.text ?? ""
+                let s = CGSize(width: CGFloat(text.count) * 14 * 0.6 + 4, height: 14 * 1.35 + 4)
+                return CGRect(x: c.x, y: c.y - s.height / 2, width: s.width, height: s.height)
+            }
             let s = textSize(item.text ?? "", font: item.has("title") ? 20 : 14)
             let c = vp.point(p); return CGRect(x: c.x - s.width / 2, y: c.y - s.height / 2, width: s.width, height: s.height)
         case .highlight:
@@ -71,7 +81,7 @@ public enum MGLayout {
         case .edge:
             let a = items.first { $0.id == item.ref }?.pts.first, b = items.first { $0.id == item.ref2 }?.pts.first
             guard let a, let b else { return nil }; return box([a, b])
-        case .line, .spring, .rope, .path: return box(item.pts)
+        case .line, .spring, .rope, .path, .region: return box(item.pts)
         }
     }
 

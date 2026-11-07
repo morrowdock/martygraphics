@@ -19,13 +19,16 @@ public struct MGTemplateBuild {
 }
 
 public struct MGParams {
-    public init(numbers: [String: Double] = [:], lists: [String: [Double]] = [:], records: [String: [[Double]]] = [:]) {
-        self.numbers = numbers; self.lists = lists; self.records = records
+    public init(numbers: [String: Double] = [:], lists: [String: [Double]] = [:], records: [String: [[Double]]] = [:], raw: MGJSON? = nil) {
+        self.numbers = numbers; self.lists = lists; self.records = records; self.raw = raw
     }
     public var numbers: [String: Double] = [:]
     public var lists: [String: [Double]] = [:]
     /// Record-list parameters: each record has exactly one value per declared field, in field order.
     public var records: [String: [[Double]]] = [:]
+    /// Raw (free-form JSON) templates only: the whole `params` object, at most `MGLimits.rawParamsBytes` canonical
+    /// bytes. The template validates it. Nil for declared-parameter templates.
+    public var raw: MGJSON?
     public subscript(_ key: String) -> Double { numbers[key] ?? 0 }
 }
 
@@ -57,9 +60,16 @@ public struct MGParamSpec {
     /// validated against that field's own range. `range`/`integer` are unused for records. A count starting at 0 makes
     /// the parameter optional (absent = no records); number lists keep their existing rule (absent is rejected).
     public var fields: [MGParamField]? = nil
-    /// A number (optionally integer, optionally defaulted; `.infinity` default = optional) or, with `count`, a number list.
-    public init(name: String, unit: String, range: ClosedRange<Double>, defaultValue: Double? = nil, integer: Bool = false, count: ClosedRange<Int>? = nil) {
+    /// Number lists only: the value used when the key is absent. It must satisfy `count`, `range` and `integer`;
+    /// pack validation refuses a default that does not (`MGPackError.badParamSpec`). Without it an absent number list
+    /// is still rejected (`template.<p>`), so existing declarations keep their meaning.
+    public var listDefault: [Double]? = nil
+    /// A number (optionally integer, optionally defaulted; `.infinity` default = optional) or, with `count`, a number list
+    /// (optionally with a `listDefault` for an absent key).
+    public init(name: String, unit: String, range: ClosedRange<Double>, defaultValue: Double? = nil, integer: Bool = false, count: ClosedRange<Int>? = nil,
+                listDefault: [Double]? = nil) {
         self.name = name; self.unit = unit; self.range = range; self.defaultValue = defaultValue; self.integer = integer; self.count = count
+        self.listDefault = listDefault
     }
     /// A record-list parameter, e.g. weighted edges `[[a, b, w], ...]`. Bounded by `MGLimits.records`/`recordFields`.
     /// An out-of-contract declaration fails pack validation/registration (`MGPackError.badParamSpec`) and, if the
@@ -72,9 +82,21 @@ public struct MGParamSpec {
     public var doc: String {
         let r = "\(MGPhysics.format(range.lowerBound, unit: ""))–\(MGPhysics.format(range.upperBound, unit: ""))"
         if let fields, let count { return "\(name):[\(count.lowerBound)–\(count.upperBound) × (\(fields.map(\.doc).joined(separator: ", ")))]" }
-        if let count { return "\(name):[\(count.lowerBound)–\(count.upperBound) ints \(r)]" }
+        if let count {
+            return "\(name):[\(count.lowerBound)–\(count.upperBound) \(integer ? "ints" : "numbers") \(r)]"
+                + (listDefault.map { "=[\($0.map { MGPhysics.format($0, unit: "") }.joined(separator: ","))]" } ?? "")
+        }
         return "\(name) \(unit.isEmpty ? "" : unit + " ")\(r)" + (defaultValue.flatMap { $0.isFinite ? "=\(MGPhysics.format($0, unit: ""))" : " optional" } ?? "")
     }
+
+    /// Why a list default is out of contract, or nil (also nil when no default is declared).
+    var listDefaultProblem: String? {
+        guard let d = listDefault else { return nil }
+        guard let count, fields == nil else { return "a list default needs a number-list parameter" }
+        guard count.contains(d.count), listValueOK(d) else { return "list default must fit its count, range and integer rule" }
+        return nil
+    }
+    func listValueOK(_ d: [Double]) -> Bool { d.allSatisfy { $0.isFinite && range.contains($0) && (!integer || $0.rounded() == $0) } }
 
     /// Why a record-list declaration is out of contract, or nil (also nil for scalar and number-list parameters, whose
     /// declarations keep their existing lazy behaviour).
@@ -110,40 +132,84 @@ public struct MGTemplate {
     let check: (MGParams) -> Bool
     /// Specific cross-parameter diagnosis: nil accepts, otherwise a reason suffix such as `"edges.loop"`.
     let reject: (MGParams) -> String?
-    let make: (MGParams, Bool) -> MGTemplateBuild?
+    let make: (MGParams, Bool) throws -> MGTemplateBuild?
+    /// Raw templates only: a short human-readable outline of the accepted `params` object (for host documentation or
+    /// tooling) and an example `params` object that is expected to build. Both are nil for declared-parameter templates.
+    public let paramsDoc: String?
+    public let sample: MGJSON?
+    /// True for raw (free-form JSON params) templates.
+    public var isRaw: Bool { paramsDoc != nil }
 
     /// `check`: cross-parameter rules (false rejects with `template.check`). `reject`: optional specific diagnosis that
     /// runs first; a returned suffix `s` rejects with `template.<s>` (lowercase ASCII words joined by dots, at most 48
     /// characters; anything else is reported as `template.check`). `make`: build from validated params (is3D); nil
-    /// rejects. Everything `make` produces is re-validated by the parser with the wire rules.
+    /// rejects. `make` may also throw: an `MGError` whose reason is `template.<suffix>` (same suffix rule as `reject`) is
+    /// reported as is; any other thrown error is reported as `template.build`. Everything `make` produces is
+    /// re-validated by the parser with the wire rules.
     public init(name: String, summary: String, params: [MGParamSpec], check: @escaping (MGParams) -> Bool = { _ in true },
                 reject: @escaping (MGParams) -> String? = { _ in nil },
-                make: @escaping (MGParams, Bool) -> MGTemplateBuild?) {
+                make: @escaping (MGParams, Bool) throws -> MGTemplateBuild?) {
         self.name = name; self.summary = summary; self.params = params; self.check = check; self.reject = reject; self.make = make
+        paramsDoc = nil; sample = nil
     }
 
-    public var doc: String { "\(name){\(params.map(\.doc).joined(separator: ", "))}: \(summary)" }
+    /// Declares a template whose `params` value is arbitrary JSON (strings, nested arrays, objects) instead of declared
+    /// numeric parameters. The engine only bounds the size (`MGLimits.rawParamsBytes` of canonical JSON, refused as
+    /// `template.params.bytes`) and requires finite numbers (`template.params.number`); the `compile` closure receives the object unchanged and
+    /// owns all further checks. To refuse, return nil (`template.build`) or throw `MGError("template.<suffix>")`
+    /// (suffix rule as for `reject`; other reasons become `template.build`). The parser checks the built scene like any
+    /// wire scene. `paramsDoc` might read `words:[1–3 short strings]`. A `params` patch replaces top-level keys of the
+    /// stored object one by one, as for declared parameters.
+    public init(name: String, summary: String, paramsDoc: String, sample: MGJSON, compile: @escaping (MGJSON, Bool) throws -> MGTemplateBuild?) {
+        self.name = name; self.summary = summary; self.params = []; self.check = { _ in true }; self.reject = { _ in nil }
+        self.paramsDoc = paramsDoc; self.sample = sample
+        self.make = { p, is3D in guard let raw = p.raw else { return nil }; return try compile(raw, is3D) }
+    }
 
-    /// Declaration problems that can be found without parsing a scene. Only record-list declarations are checked, so
-    /// existing scalar/number-list templates keep their current registration behaviour.
+    public var doc: String { "\(name){\(paramsDoc ?? params.map(\.doc).joined(separator: ", "))}: \(summary)" }
+
+    /// Declaration problems that can be found without parsing a scene. Only record-list declarations and list defaults
+    /// are checked, so existing scalar/number-list templates keep their current registration behaviour.
     var declarationProblems: [String] {
-        params.filter(\.isRecordList).compactMap { spec -> String? in
-            if params.filter({ $0.name == spec.name }).count > 1 { return "\(spec.name): parameter name declared twice" }
-            return spec.recordDeclarationProblem.map { "\(spec.name): \($0)" }
+        params.compactMap { spec -> String? in
+            if spec.isRecordList {
+                if params.filter({ $0.name == spec.name }).count > 1 { return "\(spec.name): parameter name declared twice" }
+                if let why = spec.recordDeclarationProblem { return "\(spec.name): \(why)" }
+            }
+            return spec.listDefaultProblem.map { "\(spec.name): \($0)" }
         }
     }
 
     /// `template.<suffix>` for a well-formed suffix, otherwise the generic `template.check`.
-    static func rejection(_ suffix: String) -> String {
+    static func rejection(_ suffix: String) -> String { suffixOK(suffix) ? "template.\(suffix)" : "template.check" }
+
+    /// A reason suffix is lowercase ASCII words (letter first, then letters, digits or `_`) joined by dots, at most 48
+    /// characters in total.
+    static func suffixOK(_ suffix: String) -> Bool {
         let parts = suffix.split(separator: ".", omittingEmptySubsequences: false)
-        let ok = suffix.count <= 48 && !parts.isEmpty && parts.allSatisfy { part in
+        return suffix.unicodeScalars.count <= 48 && !parts.isEmpty && parts.allSatisfy { part in
             guard let f = part.unicodeScalars.first, f.isASCII, CharacterSet.lowercaseLetters.contains(f) else { return false }
             return part.unicodeScalars.allSatisfy { $0.isASCII && (CharacterSet.lowercaseLetters.contains($0) || CharacterSet.decimalDigits.contains($0) || $0 == "_") }
         }
-        return ok ? "template.\(suffix)" : "template.check"
     }
 
-    func validate(_ raw: [String: MGJSON]) throws -> MGParams {
+    /// The reason reported for an `MGError` thrown by `make` or a raw `compile` closure: `template.<suffix>` with a
+    /// well-formed suffix is kept; anything else (other prefixes, long or free text) becomes `template.build`.
+    static func thrownReason(_ reason: String) -> String {
+        guard reason.hasPrefix("template.") else { return "template.build" }
+        return suffixOK(String(reason.dropFirst("template.".count))) ? reason : "template.build"
+    }
+
+    /// Checks a `params` object exactly as the parser does (ranges, counts, records, `reject`, `check`; or, for a raw
+    /// template, only the byte bound and finite numbers: `template.params.number`). Throws an `MGError` with the
+    /// parser's reason. Hosts may call it, for example to check a sample before quoting it.
+    public func validate(_ raw: [String: MGJSON]) throws -> MGParams {
+        if isRaw {
+            let object = MGJSON.object(raw)
+            guard object.isEncodable else { throw MGError("template.params.number") }
+            guard object.canonicalByteCount <= MGLimits.rawParamsBytes else { throw MGError("template.params.bytes") }
+            return MGParams(raw: object)
+        }
         let names = Set(params.map(\.name))
         guard Set(raw.keys).isSubset(of: names) else { throw MGError("template.params.unknown") }
         var out = MGParams()
@@ -151,6 +217,10 @@ public struct MGTemplate {
             if let fields = spec.fields {
                 out.records[spec.name] = try Self.records(spec, fields, raw[spec.name])
             } else if let count = spec.count {
+                if raw[spec.name] == nil, let d = spec.listDefault {
+                    guard count.contains(d.count), spec.listValueOK(d) else { throw MGError("template.\(spec.name).default") }
+                    out.lists[spec.name] = d; continue
+                }
                 guard case .array(let list)? = raw[spec.name], count.contains(list.count) else { throw MGError("template.\(spec.name)") }
                 out.lists[spec.name] = try list.map { v in
                     let d = try MGParser.num(v, spec.range, "template.\(spec.name)")
@@ -191,8 +261,18 @@ public struct MGTemplate {
         }
     }
 
-    /// Build after validation. Fills placeholders in template text with the computed values.
-    func build(_ p: MGParams, _ is3D: Bool) -> MGTemplateBuild? { make(p, is3D) }
+    /// Runs `make` on params that passed `validate` (internal: `MGParams` built by hand may break the template's
+    /// assumptions). Thrown reasons are normalised with `thrownReason`; a non-`MGError` error is `template.build`.
+    func build(_ p: MGParams, _ is3D: Bool) throws -> MGTemplateBuild? {
+        do { return try make(p, is3D) } catch let e as MGError { throw MGError(Self.thrownReason(e.reason)) } catch { throw MGError("template.build") }
+    }
+
+    /// Validates a `params` object (`validate`) and then builds it, with the parser's reasons. Hosts may call it, for
+    /// example to check a sample. The result is NOT yet checked against the wire rules: the parser re-validates every
+    /// item, step, title, world and camera, so use `MGParser.scene` to get a usable scene.
+    public func compile(_ params: [String: MGJSON], is3D: Bool = false) throws -> MGTemplateBuild? {
+        try build(validate(params), is3D)
+    }
 }
 
 // MARK: - Item helpers (template code only; the parser re-validates every item produced here)

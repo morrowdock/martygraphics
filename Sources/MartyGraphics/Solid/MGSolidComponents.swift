@@ -165,7 +165,7 @@ enum MGSolidComponents {
 
     static func definition(_ json: MGJSON, _ library: MGSolidLibrary) throws -> MGSolidComponent {
         guard case .object(let o) = json else { throw MGSolidIssue("component.object") }
-        guard json.canonicalData.count <= MGSolidComponentLimits.bytes else { throw MGSolidIssue("component.bytes") }
+        guard json.canonicalByteCount <= MGSolidComponentLimits.bytes else { throw MGSolidIssue("component.bytes") }
         try MGSolidParser.closed(o, ["v", "kind", "id", "title", "about", "parts"], topKeys, "component")
         guard o["v"] == .number(1) else { throw MGSolidIssue("component.version") }
         guard o["kind"] == .string("component") else { throw MGSolidIssue("component.kind") }

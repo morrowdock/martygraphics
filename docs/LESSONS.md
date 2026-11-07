@@ -251,7 +251,12 @@ New reasons (closed list). Inner engine reasons (`patch.set.ref`, `id.duplicate.
 `control.duplicate.<id>`, `control.value`, `control.op`, `control.label.placeholder`, `lesson.statements.count`, `unbind.id`, `animate.missing`, `animate.unknown.<keys>`,
 `animate.param`, `animate.to`, `animate.dur`, `animate.step`, `animate.frame`, `check.object`, `check.missing`, `check.unknown.<keys|name>`,
 `check.value`, `check.comparison`, `check.eq`, `check.lt`, `check.gt`, `check.tol`, `check.<name>`, `text.literal`,
-`snapshot.<field>`.
+`snapshot.<field>`, `lesson.number`, `snapshot.number`.
+
+`lesson.number` and `snapshot.number` refuse an `MGJSON` value built in code that holds NaN or an infinity (JSON has
+no form for them): a lesson document in `MGLesson.parse(json:)`, any statement in `load` (with its index in
+`.statement`), and a command in `apply`. A snapshot with such a value is refused whole by `restore`. Parsed text and
+streamed bytes cannot hold them.
 
 Every reason is one token: ASCII letters, digits, `_`, `.` and `,`, at most 96 characters. In lesson-owned reasons
 (lesson, beat, check, control, `animate` and `unbind` keys and ids), author text becomes a segment of letters, digits

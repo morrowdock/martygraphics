@@ -25,9 +25,15 @@ public struct MGPack {
     public let fixtures: [MGFixtures.Demo]
     /// At most 3 example references per pack.
     public let fewShots: [MGFewShot]
+    /// Follow-up patches, each on one of this pack's fixtures. Validation applies every one and requires success.
+    public let patches: [MGFixtures.PatchDemo]
+    /// Fail-safe cases (name, wire scene JSON) that must be refused. Validation parses every one and requires failure.
+    public let invalid: [(String, String)]
 
-    public init(id: String, title: String, summary: String, templates: [MGTemplate], fixtures: [MGFixtures.Demo], fewShots: [MGFewShot] = []) {
+    public init(id: String, title: String, summary: String, templates: [MGTemplate], fixtures: [MGFixtures.Demo], fewShots: [MGFewShot] = [],
+                patches: [MGFixtures.PatchDemo] = [], invalid: [(String, String)] = []) {
         self.id = id; self.title = title; self.summary = summary; self.templates = templates; self.fixtures = fixtures; self.fewShots = fewShots
+        self.patches = patches; self.invalid = invalid
     }
 }
 
@@ -41,8 +47,12 @@ public enum MGPackError: Error, Equatable, CustomStringConvertible {
     case templateWithoutFixture(String)
     case fewShotUnknown(String)
     case tooManyFewShots(String)
-    /// A template's record-list parameter declaration is out of contract (template name, `"<param>: <why>"`).
+    /// A template's record-list declaration or list default is out of contract (template name, `"<param>: <why>"`).
     case badParamSpec(String, String)
+    /// A pack patch does not apply to the fixture it names (patch id, reason; `fixture.unknown` for a missing fixture).
+    case patchInvalid(String, String)
+    /// A pack fail-safe case parsed successfully (case name).
+    case invalidAccepted(String)
 
     public var description: String {
         switch self {
@@ -56,6 +66,8 @@ public enum MGPackError: Error, Equatable, CustomStringConvertible {
         case .fewShotUnknown(let s): return "few-shot fixture '\(s)' is not in the pack"
         case .tooManyFewShots(let s): return "pack '\(s)' has more than 3 few-shots"
         case .badParamSpec(let t, let why): return "template '\(t)' parameter \(why)"
+        case .patchInvalid(let id, let why): return "patch '\(id)' does not apply to its fixture: \(why)"
+        case .invalidAccepted(let s): return "invalid case '\(s)' was accepted"
         }
     }
 }
@@ -64,10 +76,10 @@ public enum MGPacks {
     /// Generic built-in templates with original synthetic validation fixtures.
     public static let core = MGPack(
         id: "core", title: "Core: generic scenes", summary: "trees and arrays",
-        templates: MGTemplates.all, fixtures: MGFixtures.all)
+        templates: MGTemplates.all, fixtures: MGFixtures.all, patches: MGFixtures.patches, invalid: MGFixtures.invalid)
 
-    /// Compiled-in packs in stable registration order.
-    static let builtIn: [MGPack] = [core]
+    /// Compiled-in packs in stable registration order. `all` adds runtime registrations after these.
+    public static let builtIn: [MGPack] = [core]
 
     private static let lock = NSLock()
     /// Serialises whole registrations (validate + append) so two concurrent registrations can't both pass validation
@@ -140,6 +152,20 @@ public enum MGPacks {
         }
         for t in pack.templates where !used.contains(t.name) { out.append(.templateWithoutFixture(t.name)) }
         if pack.fewShots.count > 3 { out.append(.tooManyFewShots(pack.id)) }
+        // Patches apply to the fixture they name (a fixture that does not parse is already reported above);
+        // fail-safe cases are refused. Both see this pack's templates, which may not be registered yet.
+        for pd in pack.patches {
+            guard let f = pack.fixtures.first(where: { $0.id == pd.scene }) else { out.append(.patchInvalid(pd.id, "fixture.unknown")); continue }
+            guard case .success(let base) = MGParser.scene(data: Data(f.json.utf8), extraTemplates: pack.templates) else { continue }
+            switch MGPatch.parse(data: Data(pd.json.utf8)) {
+            case .failure(let e): out.append(.patchInvalid(pd.id, e.reason))
+            case .success(let patch):
+                if case .failure(let e) = base.applying(patch, extraTemplates: pack.templates) { out.append(.patchInvalid(pd.id, e.reason)) }
+            }
+        }
+        for (name, json) in pack.invalid {
+            if case .success = MGParser.scene(data: Data(json.utf8), extraTemplates: pack.templates) { out.append(.invalidAccepted(name)) }
+        }
         for s in pack.fewShots where !fixtureIds.contains(s.fixture) { out.append(.fewShotUnknown(s.fixture)) }
         return out
     }

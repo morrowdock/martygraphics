@@ -28,7 +28,7 @@ public struct MGRenderInput {
 /// collision-free labels, pulsing focus. No state; `MartyGraphicsView` owns time and steps.
 public enum MGCanvasRenderer {
     static let layer: [MGKind: Int] = [.axes: 0, .plot: 0, .bars: 0, .incline: 1, .line: 1, .orbit: 1, .path: 2, .rope: 2, .spring: 3,
-                                       .pulley: 3, .edge: 3, .body: 4, .node: 4, .array: 4, .vector: 5, .highlight: 6, .text: 7]
+                                       .pulley: 3, .edge: 3, .body: 4, .node: 4, .array: 4, .vector: 5, .highlight: 6, .text: 7, .table: 4, .region: 0]
 
     public static func draw(_ input: MGRenderInput, in ctx: GraphicsContext) {
         let vp = input.viewport, theme = input.theme, size = vp.size
@@ -182,6 +182,12 @@ public enum MGCanvasRenderer {
                     c.fill(Path(CGRect(x: box.minX + 6, y: box.minY + 7, width: 3, height: box.height - 14)), with: .color(color))
                     c.draw(t, in: CGRect(x: at.x - m.width / 2 + 2, y: at.y - m.height / 2, width: m.width + 2, height: m.height))
                     obstacles.append(box)
+                } else if item.has("code") {
+                    // Monospaced and left-aligned at `at`, so indented lines stack into a readable listing.
+                    let t = ctx.resolve(Text(s).font(.system(size: 14, weight: .medium, design: .monospaced)).foregroundColor(color))
+                    var c = ctx; c.opacity = opacity; c.draw(t, at: at, anchor: .leading)
+                    let m = t.measure(in: CGSize(width: 600, height: 100))
+                    obstacles.append(CGRect(x: at.x, y: at.y - m.height / 2, width: m.width, height: m.height))
                 } else {
                     let t = ctx.resolve(Text(s).font(.system(size: item.has("title") ? 20 : 14, weight: item.has("title") ? .bold : .medium)).foregroundColor(color))
                     var c = ctx; c.opacity = opacity; c.draw(t, at: at)
@@ -208,6 +214,23 @@ public enum MGCanvasRenderer {
                 obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
                 if let l = item.label, let c = item.pts.first {
                     label(l, at: vp.point(c + MGPoint(0, item.n("cell", 1) / 2)), dir: CGVector(dx: 0, dy: -1))
+                }
+            case .region:
+                guard item.pts.count >= 3 else { continue }
+                var shape = Path(); shape.addLines(item.pts.map(vp.point)); shape.closeSubpath()
+                var layer = ctx; layer.opacity = p
+                layer.fill(shape, with: .color(color.opacity(0.20)))
+                layer.stroke(shape, with: .color(color.opacity(0.85)), style: StrokeStyle(lineWidth: 1.8, dash: item.has("dashed") ? [6, 5] : []))
+                if let r = MGLayout.bounds(item, in: input.items, vp) { label(item.label, at: CGPoint(x: r.midX, y: r.minY), dir: CGVector(dx: 0, dy: -1)) }
+            case .table:
+                table(ctx, item, vp, theme, color, p)
+                if let r = MGLayout.bounds(item, in: input.items, vp) {
+                    obstacles.append(r)
+                    if let l = item.label {
+                        // The caption fades in with the grid instead of appearing before any row.
+                        var caption = ctx; caption.opacity = p
+                        caption.draw(Text(l).font(.system(size: 13, weight: .bold)).foregroundColor(theme.ink), at: CGPoint(x: r.minX + 2, y: r.minY - 12), anchor: .leading)
+                    }
                 }
             case .node:
                 guard let c = item.pts.first.map(vp.point) else { continue }
@@ -406,6 +429,37 @@ public enum MGCanvasRenderer {
         if let l = item.label {
             ctx.draw(Text(l).font(.system(size: 13, weight: .bold)).foregroundColor(theme.ink), at: CGPoint(x: frame.minX + 2, y: frame.minY + 6), anchor: .leading)
         }
+    }
+
+    /// Draws a table item: equal-size cells laid out from the top-left corner, each row fading in after the one above.
+    /// Row 0 gets a stronger fill when `header` is set, and marked cell indices use the `.good` colour.
+    static func table(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double) {
+        guard let c = item.pts.first else { return }
+        // Items built directly through the public API skip the parser, so never convert an unchecked count.
+        let rawRows = item.n("rows", 1), rawCols = item.n("cols", 1)
+        guard (1...Double(MGLimits.tableRows)).contains(rawRows), (1...Double(MGLimits.tableCols)).contains(rawCols) else { return }
+        let rows = Int(rawRows), cols = Int(rawCols)
+        let cw = item.n("cw", 1.6), rh = item.n("rh", 0.7)
+        let topLeft = vp.point(c + MGPoint(-cw * Double(cols) / 2, rh * Double(rows) / 2))
+        let w = vp.length(cw), h = vp.length(rh), marked = Set(item.marked)
+        for r in 0..<rows {
+            let appear = min(1, max(0, p * Double(rows) - Double(r) * 0.6)); guard appear > 0 else { continue }
+            var l = ctx; l.opacity = appear
+            let header = r == 0 && item.has("header")
+            for k in 0..<cols {
+                let i = r * cols + k; guard i < item.list.count else { continue }
+                let cell = CGRect(x: topLeft.x + w * CGFloat(k), y: topLeft.y + h * CGFloat(r), width: w, height: h)
+                let fill = marked.contains(i) ? theme.color(.good).opacity(0.40) : header ? color.opacity(0.28) : color.opacity(0.07)
+                l.fill(Path(cell.insetBy(dx: 1, dy: 1)), with: .color(fill))
+                l.stroke(Path(cell), with: .color(theme.subtleInk.opacity(0.45)), lineWidth: 1)
+                let size = max(10, min(16, h * 0.42))
+                l.draw(Text(item.list[i]).font(.system(size: size, weight: header ? .bold : .medium, design: .rounded)).foregroundColor(theme.ink),
+                       at: CGPoint(x: cell.midX, y: cell.midY))
+            }
+        }
+        // One rounded border around the whole grid, faded with the draw-on progress.
+        ctx.stroke(Path(roundedRect: CGRect(x: topLeft.x, y: topLeft.y, width: w * CGFloat(cols), height: h * CGFloat(rows)), cornerRadius: 4),
+                   with: .color(color.opacity(0.8 * p)), lineWidth: 1.5)
     }
 
     static func array(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double) {

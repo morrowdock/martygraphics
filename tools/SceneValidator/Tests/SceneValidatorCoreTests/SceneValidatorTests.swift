@@ -97,6 +97,29 @@ final class SceneValidatorTests: XCTestCase {
                        + "app-registered packs are not loaded by this tool)")
     }
 
+    /// The additive kinds `table` and `region` and the text style `code` need no tool change: the tool calls the parser.
+    func testTableRegionAndCodeScenesUseTheParserRules() throws {
+        let valid = #"{"v":1,"items":[{"id":"t","k":"table","at":[6,4],"cells":[["a","b"],["c",1]],"header":true},"#
+            + #"{"id":"r","k":"region","pts":[[1,1],[3,1],[2,3]]},{"id":"c","k":"text","at":[1,7],"text":"  i < n","style":"code"}]}"#
+        try write("cells.json", valid)
+        XCTAssertEqual(run("cells.json").stdout, """
+            cells.json: valid (2d, 3 items, 0 steps)
+            Checked 1 file: 1 valid, 0 invalid, 0 unreadable.
+
+            """)
+        let cases = [
+            ("ragged.json", #"{"v":1,"items":[{"id":"t","k":"table","at":[6,4],"cells":[["a"],["b","c"]]}]}"#, "table.cells"),
+            ("region.json", #"{"v":1,"items":[{"id":"r","k":"region","pts":[[1,1],[2,2]]}]}"#, "region.pts"),
+            ("table3d.json", #"{"v":1,"dim":"3d","items":[{"id":"t","k":"table","at":[1,1],"cells":[["a"]]}]}"#, "3d.kind.table"),
+            ("markup.json", #"{"v":1,"items":[{"id":"c","k":"text","at":[1,1],"text":"<b>x</b>","style":"code"}]}"#, "text.text")
+        ]
+        for (name, text, expected) in cases {
+            try write(name, text)
+            guard case .invalid(let reason, _) = SceneValidator.check(path: name) else { return XCTFail("tool accepted \(name)") }
+            XCTAssertEqual(reason, expected, name)
+        }
+    }
+
     func testByteLimitMatchesParser() throws {
         let limit = SceneValidator.maximumInputBytes
         XCTAssertEqual(limit, MGLimits.sceneBytes * 2)

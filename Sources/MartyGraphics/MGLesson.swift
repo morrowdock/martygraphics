@@ -190,7 +190,10 @@ public struct MGLesson: Equatable, Sendable {
     public static func parse(json: MGJSON) -> Result<MGLesson, MGLessonIssue> {
         do {
             guard let o = json.objectValue else { throw MGError("lesson.object") }
-            guard json.canonicalData.count <= MGLessonLimits.lessonBytes else { throw MGError("lesson.bytes") }
+            // A value built in code may hold NaN or an infinity. It has no JSON form, so it could neither be measured
+            // nor become a statement; refuse it before either.
+            guard json.isEncodable else { throw MGError("lesson.number") }
+            guard json.canonicalByteCount <= MGLessonLimits.lessonBytes else { throw MGError("lesson.bytes") }
             let extra = Set(o.keys).subtracting(keys)
             guard extra.isEmpty else { throw MGError("lesson.unknown.\(MGLessonEngine.segments(extra))") }
             guard o["v"] == .number(1) else { throw MGError("lesson.version") }
@@ -307,6 +310,7 @@ enum MGLessonEngine {
 
     /// Validates and applies one command. Throws an `MGError` with the stable reason; `state` is never modified.
     static func run(_ command: MGJSON, on state: MGLessonState, origin: MGOrigin, beat: Int?) throws -> MGCommandResult {
+        guard command.isEncodable else { throw MGError("lesson.number") }   // NaN or an infinity built in code
         guard let o = command.objectValue, case .string(let name)? = o["op"] else { throw MGError("patch.op") }
         if forbidden.contains(name) { throw MGError("lesson.op.\(name)") }
         if origin == .learner { try learnerGate(o, name, state) }

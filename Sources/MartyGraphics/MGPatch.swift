@@ -15,6 +15,21 @@ public struct MGPatch: Equatable, Sendable {
     /// Optional `"rev"`: the scene revision this patch was written against.
     public var baseRevision: Int? = nil
 
+    /// A patch built in code, for example by a host slider that changes one template parameter. Nothing is checked
+    /// here: `MGScene.applying` checks the operation count (1–12), finite numbers (`patch.number`), each operation's
+    /// shape and the patch byte bound with the same rules and reasons as `parse`, then re-validates the whole scene.
+    public init(ops: [MGJSON], baseRevision: Int? = nil) {
+        self.ops = ops; self.baseRevision = baseRevision
+    }
+
+    /// The `parse` rules for a patch that did not come through `parse`.
+    func checkShape() throws {
+        guard (1...12).contains(ops.count) else { throw MGError("patch.ops") }
+        guard MGJSON.array(ops).isEncodable else { throw MGError("patch.number") }
+        guard MGJSON.object(["v": .number(1), "ops": .array(ops)]).canonicalByteCount <= MGLimits.patchBytes else { throw MGError("patch.object") }
+        for op in ops { try Self.shape(op) }
+    }
+
     public static func parse(data: Data) -> Result<MGPatch, MGError> {
         guard data.count <= MGLimits.patchBytes * 2, let o = try? JSONSerialization.jsonObject(with: data), let j = MGJSON(any: o) else { return .failure(.init("patch.json")) }
         return parse(json: j)
@@ -25,7 +40,8 @@ public struct MGPatch: Equatable, Sendable {
     }
     public static func parse(json: MGJSON) -> Result<MGPatch, MGError> {
         do {
-            guard let o = json.objectValue, json.canonicalData.count <= MGLimits.patchBytes else { throw MGError("patch.object") }
+            guard json.isEncodable else { throw MGError("patch.number") }
+            guard let o = json.objectValue, json.canonicalByteCount <= MGLimits.patchBytes else { throw MGError("patch.object") }
             try MGParser.closed(o, required: ["v", "ops"], optional: ["rev"], "patch")
             guard o["v"] == .number(1), case .array(let ops)? = o["ops"], (1...12).contains(ops.count) else { throw MGError("patch.ops") }
             for op in ops { try shape(op) }
@@ -60,11 +76,16 @@ public struct MGPatch: Equatable, Sendable {
 
 extension MGScene {
     /// Returns the updated scene, or a failure and the caller keeps showing `self` (fail safe).
-    public func applying(_ patch: MGPatch) -> Result<MGScene, MGError> {
+    public func applying(_ patch: MGPatch) -> Result<MGScene, MGError> { applying(patch, extraTemplates: []) }
+
+    /// Same, with templates that are not registered (for example a pack under validation). Use the same extras that
+    /// parsed this scene; a registered template with the same name wins.
+    public func applying(_ patch: MGPatch, extraTemplates: [MGTemplate]) -> Result<MGScene, MGError> {
         guard var root = source.objectValue else { return .failure(.init("patch.source")) }
         if let base = patch.baseRevision, base != revision { return .failure(.init("patch.stale")) }
         var jump: Int?
         do {
+            try patch.checkShape()
             for op in patch.ops {
                 guard let o = op.objectValue, case .string(let name)? = o["op"] else { throw MGError("patch.op") }
                 switch name {
@@ -73,8 +94,9 @@ extension MGScene {
                     for (k, v) in add { params[k] = v }
                     root["params"] = .object(params)
                 case "add":
+                    guard let added = o["item"] else { throw MGError("patch.add") }
                     var list = Self.array(root["items"])
-                    list.append(o["item"]!); root["items"] = .array(list)
+                    list.append(added); root["items"] = .array(list)
                 case "remove":
                     guard case .string(let id)? = o["id"] else { throw MGError("patch.remove") }
                     var list = Self.array(root["items"])
@@ -108,7 +130,7 @@ extension MGScene {
                 }
             }
         } catch let e as MGError { return .failure(e) } catch { return .failure(.init("patch")) }
-        switch MGParser.scene(json: .object(root)) {
+        switch MGParser.scene(json: .object(root), extraTemplates: extraTemplates) {
         case .success(var next):
             next.revision = revision + 1
             if let jump {

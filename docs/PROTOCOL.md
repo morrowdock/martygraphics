@@ -28,9 +28,11 @@ World coordinates point right/up, with the origin at bottom-left; 3D adds z
 toward the viewer. The default world is 12 by 8.
 
 Kinds: body, incline, line, vector, axes, plot, spring, pulley, rope, orbit,
-text, highlight, bars, path, array, node, edge. The model types expose their
-geometry. In 3D the supported subset is body, incline, line, vector, axes,
-orbit, text, highlight, path.
+text, highlight, bars, path, array, node, edge, table, region. The model types
+expose their geometry. In 3D the supported subset is body, incline, line,
+vector, axes, orbit, text, highlight, path. Text styles are `label` (default),
+`callout`, `title` and `code`. See [tables, regions and code text](#tables-regions-and-code-text)
+for the newest additions.
 
 The engine rejects unknown keys, broken references, invalid parameter ranges,
 invalid text, duplicate identifiers, and unsupported kinds. Limits include
@@ -57,9 +59,12 @@ when performing a trusted local edit. Failed patches preserve the old value.
 `finish()` performs strict final validation. `MGSceneController` restores the
 previous scene if final validation fails.
 
-Packs use `MGPack`, `MGTemplate`, `MGTemplateBuild`, and `MGFixtures.Demo`.
+Packs use `MGPack`, `MGTemplate`, `MGTemplateBuild`, `MGFixtures.Demo` and,
+optionally, `MGFixtures.PatchDemo` follow-up patches and fail-safe cases.
 `MGPacks.validate` reports invalid identifiers, duplicate names, missing template
-fixtures, invalid fixture scenes, and broken example references. `register` is
+fixtures, invalid fixture scenes, broken example references, patches that do not
+apply to their fixture (`patchInvalid`) and fail-safe cases that parse
+(`invalidAccepted`). `register` is
 atomic and serializes concurrent registrations. Every template-built item,
 world, title, step, and camera is revalidated with the wire rules. Optional
 `MGFewShot` records are reference metadata; the built-in public pack provides
@@ -74,6 +79,43 @@ The built-in templates are `bst` and `two_pointers`. Mechanics drawing
 primitives and standard math helpers remain available; mechanics walkthrough
 templates are not included.
 
+## Tables, regions and code text
+
+These are additive, unreleased changes to the unversioned preview. Wire `v: 1`
+is unchanged and every scene that parsed before parses to the same result. All
+three are 2D only: in a 3D scene `table` and `region` fail with
+`3d.kind.table` / `3d.kind.region`, and `code` text fails with `3d.text.code`
+(also when a `dim` patch or a step edit would bring it into 3D). Plain 3D text
+is unchanged.
+
+```json
+{"id":"grid","k":"table","at":[8.5,5.5],"cells":[["key","value"],["a",1]],"header":true,"marked":[[1,1]]}
+```
+
+- `table`: required `at` (centre) and `cells`, 1–8 rows (`MGLimits.tableRows`)
+  of 1–6 cells (`tableCols`), every row the same length. A cell is a string of
+  at most 12 characters (`tableCellText`) with the plain-text rules, an empty
+  string, or a number below 10⁶ in magnitude whose displayed text also fits 12
+  characters. Optional `header` (bool: the first row is tinted), `cw` cell width
+  0.3 to world span / 3 (default 1.6, capped to that range), `rh` row height 0.3 to
+  span / 6 (default 0.7, capped), `marked` (a list of `[row, column]` integer
+  pairs, at most rows × columns entries), `label`, `color` (default `accent`). Reasons:
+  `table.cells` (shape or count), `table.cell` (a cell value), `table.marked`,
+  `table.cw`, `table.rh`, `table.header`. Rows draw on in order.
+- `region`: required `pts`, 3–64 points (`MGLimits.points`), drawn as a filled,
+  closed polygon. Optional `dashed`, `label`, `color` (default `accent`).
+  Reason: `region.pts`.
+- Text style `code`: drawn monospaced and left-aligned at `at`, so stacked lines
+  read as a listing. Leading spaces are kept (only surrounding newlines are
+  trimmed) and `<` / `>` are allowed unless the text looks like a markup tag
+  (`<` followed by a letter, `/`, `!` or `?` with a later `>`). Code fences,
+  URLs, control characters and whitespace-only text are refused (`text.text`).
+  Braces are still placeholders, as in all text. Other styles keep the strict
+  rule: no `<` or `>` at all.
+
+[Copy the scene JSON](fixtures/v1/table-region-code.scene.json); it equals the
+built-in `cells` fixture.
+
 ## Template parameters and what-if patches
 
 Record-list parameters and the opt-in `shortest_path` template are unreleased
@@ -85,6 +127,7 @@ below is ordinary JSON inside the existing `params` object.
 | Number | `MGParamSpec(name:unit:range:integer:)` | finite number in range | `template.<p>.missing` |
 | Optional number | same, with `defaultValue` (`.infinity` = optional) | finite number in range | default used |
 | Number list | same, with `count` | array of numbers | `template.<p>` |
+| Number list with default | same, with `count` and `listDefault` | array of numbers | default used |
 | Record list | `MGParamSpec.records(_:count:fields:)` | array of arrays, one number per field, in field order | empty when `count` starts at 0, otherwise `template.<p>.missing` |
 
 Numbers must be JSON numbers: a JSON boolean or string is rejected, never
@@ -95,6 +138,12 @@ rejected, never clamped. A record list reports `template.<p>.count`,
 their existing absent-key rule; only record lists treat absence as empty.
 `MGParamSpec.isRecordList` distinguishes the two list shapes, because record
 specs also set `count`.
+
+A `listDefault` must fit the list's `count`, `range` and `integer` rule and is
+only allowed on a number list; pack validation refuses any other default
+(`MGPackError.badParamSpec`), and a template parsed without registration rejects
+it lazily as `template.<p>.default`. `MGParamSpec.doc` shows a default as
+`=[1,2]` and says `numbers` for a non-integer list.
 
 Record-list declarations are checked when a pack is validated or registered
 (`MGPackError.badParamSpec`): `count` within 0…`MGLimits.records` (32),
@@ -111,6 +160,55 @@ A template may give a specific cross-field rejection: its `reject` closure
 returns a suffix such as `edges.loop`, reported as `template.edges.loop`
 (lowercase dotted words, at most 48 characters; anything else becomes
 `template.check`). `check` still reports the generic `template.check`.
+
+A template's `make` may also throw. A thrown `MGError` whose reason is
+`template.<suffix>`, with a suffix that follows the `reject` rule (lowercase
+dotted words, at most 48 characters), is reported as is. Any other thrown
+reason (another prefix, free or long text) and any other error, like a nil
+result, is reported as `template.build`, so a template cannot report a reason
+of another family such as `scene.version`.
+
+### Raw templates (free-form params)
+
+`MGTemplate(name:summary:paramsDoc:sample:compile:)` declares a template whose
+`params` object is free-form JSON: strings, nested lists and objects that the
+numeric shapes above cannot express. The engine checks only that every number
+is finite (`template.params.number`) and the size (at most
+`MGLimits.rawParamsBytes`, 4 KiB canonical, else `template.params.bytes`) and
+passes the whole object to `compile`, which validates it and throws an
+`MGError("template.<suffix>")` or returns nil to reject (same thrown-reason
+rule as above). Everything it builds gets the wire checks.
+Prefer declared parameters (including record lists) when the values are
+numbers: they are validated before your code runs and appear in the grammar.
+`paramsDoc` is a one-line schema for host documentation; `sample` is a params
+object that should compile; `isRaw` tells the two template forms apart, and
+`MGGrammar.document()` adds `rawParams` (`doc`, `maxBytes`) only for raw
+templates, and `listDefaults` (parameter name → default list) only for
+templates that declare a number-list default. A `params` patch merges top-level keys of a raw template's object
+shallowly, exactly as below.
+
+### Host access and unregistered templates
+
+`MGPacks.builtIn` and `MGPacks.all` list the compiled-in and the registered
+packs. `MGTemplate.validate(_:)`, `compile(_:is3D:)`, `paramsDoc` and `sample`
+are public so a host can check example parameters (for example, before quoting
+a sample in its own documentation). `compile` runs `validate` first, so it never
+runs template code on unchecked params; its output is unchecked until the
+parser re-validates it. `MGParser.scene(data:extraTemplates:)` (and the `object:` and
+`json:` forms) and `MGScene.applying(_:extraTemplates:)` parse and patch with
+templates that are not registered, for example to check a pack before
+`MGPacks.register`. A registered template with the same name wins; extras are
+never registered. `MGPatch(ops:baseRevision:)` builds a patch in code (for
+example, a host slider); `applying` checks it with the `parse` rules (1–12
+operations, finite numbers, each operation's keys, the 4 KiB bound) before it
+re-validates the whole scene.
+
+JSON has no NaN or infinity, so an `MGJSON` value built in code that holds one
+is refused before it is measured or encoded: `scene.number` from
+`MGParser.scene(json:)`, `patch.number` from `MGPatch.parse(json:)` and from
+`applying` a code-built patch, and `template.params.number` from a raw
+template. `MGJSON.isEncodable` reports this; `canonicalByteCount` is `Int.max`
+for such a value, so no byte bound treats it as small.
 
 The `params` patch operation merges **shallowly**, one top-level key at a time:
 
@@ -198,7 +296,9 @@ so it rejects these scenes. Validate them in a host that explicitly registers
 | Receive chunks | `MGStreamParser.feed(_:)` / `finish()`; controller stream methods | Previews are provisional; final strict validation decides acceptance. |
 | Present native UI | `MartyGraphicsView(scene:)` / `(controller:)` | SwiftUI host supplies lifecycle, controls and text alternatives. |
 | Draw deterministic frames | `MGTimeline.items` / `frame`, `MGViewport`, `MGCanvasRenderer` | See the complete [native exporter](../Examples/Showcase/Sources/MartyShowcase/Showcase.swift). |
-| Extend templates | `MGTemplate`, `MGPack`, `MGPacks.validate` / `register` | Validate bounded output and fixtures; registration is atomic. |
+| Extend templates | `MGTemplate`, `MGPack`, `MGPacks.validate` / `register` | Validate bounded output, fixtures, patches and fail-safe cases; registration is atomic. |
+| Check a pack before registering | `MGParser.scene(data:extraTemplates:)`, `scene.applying(_:extraTemplates:)` | Extras are used for one call only; a registered name wins. |
+| Build a patch in code | `MGPatch(ops:baseRevision:)` | `applying` checks it with the `parse` rules, then re-validates the whole scene. |
 
 Copyable parse/patch flow (in a host that imports Foundation and MartyGraphics):
 
@@ -233,11 +333,15 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `scene.bytes`, `patch.object`, `items.count`, `steps` | Canonical object or collection violates bounds | Reduce authored content; `patch.object` also covers a non-object patch. |
 | `template.unknown`, `template.params` | Missing/unregistered template or invalid parameter object | Use the registered public templates and their declared parameters. |
 | `template.<p>`, `template.<p>.missing` / `.count` / `.arity` / `.<field>` / `.integer` | A parameter has the wrong type (including `null`), is absent, or a value or record is out of its declared shape | Send the declared shape; see [template parameters](#template-parameters-and-what-if-patches). |
-| `template.<p>.spec`, `template.check`, `template.<rule>` | Out-of-contract record declaration, generic cross-field failure, or a template's specific cross-field reason | Fix the pack declaration, or correct the named parameters. |
+| `template.<p>.spec`, `template.<p>.default`, `template.check`, `template.<rule>` | Out-of-contract record declaration or list default, generic cross-field failure, or a template's specific cross-field reason | Fix the pack declaration, or correct the named parameters. |
+| `template.params.bytes`, `template.build` | A raw template's params object is over 4 KiB, or a template returned nil, threw a non-`MGError` error or threw a reason outside `template.<suffix>` | Send a smaller object; check the template's own documentation. |
+| `scene.number`, `patch.number`, `template.params.number` | A value built in code holds NaN or an infinity | Send finite numbers. |
+| `3d.text.code` | `code` text in a 3D scene | Use plain text in 3D, or keep the scene 2D. |
+| `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `vector.on`, `edge.nodes`, `highlight.target` | Reference is absent, has the wrong kind, or highlights itself | Fix references before applying the scene. |
 | `highlight.cycle` | An indirect highlight chain loops | Make the chain terminate; [negative fixture](fixtures/v1/highlight-cycle.scene.json). |
 | `patch.stale`, `patch.rev` | Revision mismatches or is invalid | Rebase the intended change on the current scene revision; do not retry stale content blindly. |
-| `patch.op.<name>`, `patch.set.ref`, `patch.step.range` | Unsupported operation, missing set target or absent scene step | Correct the operation/target/index, then validate the entire patch again. |
+| `patch.op.<name>`, `patch.<op>.missing`, `patch.set.ref`, `patch.step.range` | Unsupported operation, missing operation key, missing set target or absent scene step | Correct the operation/target/index, then validate the entire patch again. |
 
 The [protocol fixture test](../Tests/MartyGraphicsTests/ProtocolFixtureTests.swift)
 checks the linked JSON, exact selected error reasons, successful title edit and
@@ -261,7 +365,8 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | World | Width and height each 2…100; default 12 × 8 |
 | Text lengths | Title 60, label 40, text 120, narration 200 |
 | Geometry | Plot/path points up to 64; rope points up to 6 |
-| Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text |
+| Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text; table 8 rows × 6 columns / cells up to 12 characters; region 3–64 points |
+| Raw template params | 4 KiB canonical `params` object |
 
 Preserve bounds and rollback. Expansions need an actual use case, boundary/failure
 tests and measurements; see the [limits rationale](CAPABILITIES.md#bounds-are-part-of-the-contract).

@@ -2,6 +2,47 @@
 
 ## Unreleased
 
+- Add the 2D item kinds `table` (a grid of up to 8 × 6 short cells with an optional
+  header row and marked cells) and `region` (a filled closed polygon of 3 to 64
+  points), and the text style `code` (monospaced, left-aligned, keeps leading spaces,
+  allows `<` and `>` but not markup tags). They are additive: every scene that parsed
+  before parses to the same result. All three are refused in 3D. New reasons:
+  `table.cells`, `table.cell`, `table.marked`, `region.pts`, `3d.text.code`. The core pack gains a
+  synthetic `cells` fixture and `docs/fixtures/v1/table-region-code.scene.json`.
+- Add raw templates, `MGTemplate(name:summary:paramsDoc:sample:compile:)`, whose
+  `params` object is free-form JSON of at most 4 KiB (`MGLimits.rawParamsBytes`,
+  `template.params.bytes`); the template validates it. `MGParams.raw` carries it,
+  `isRaw`, `paramsDoc` and `sample` describe it, and `MGGrammar.document()` lists a
+  `rawParams` shape only for raw templates. Template `make` may now throw: a
+  `template.<suffix>` reason that follows the `reject` suffix rule is kept, any
+  other thrown reason or error is `template.build`.
+- Add `MGParamSpec.listDefault` for number lists (absent key uses the default; pack
+  validation refuses a default that does not fit, `template.<p>.default` when parsed
+  without registration). `MGGrammar.document()` lists `listDefaults` only for templates
+  that declare one. `MGParamSpec.doc` now says `numbers` instead of `ints` for a
+  non-integer list and shows a list default.
+- Packs may carry follow-up patches (`MGFixtures.PatchDemo`) and fail-safe cases;
+  `MGPacks.validate` applies every patch to its fixture and requires every fail-safe
+  case to be refused (`MGPackError.patchInvalid`, `.invalidAccepted`). The core pack
+  ships six new patches and 24 new fail-safe cases.
+- Make these public for hosts: `MGParser.scene(data:|object:|json:extraTemplates:)`,
+  `MGScene.applying(_:extraTemplates:)`, `MGTemplate.validate(_:)` and
+  `compile(_:is3D:)` (validate, then build), `MGPacks.builtIn`, and
+  `MGPatch(ops:baseRevision:)`. `applying` now checks every patch with the `parse`
+  rules (operation count, finite numbers, operation keys, byte bound), so a patch built
+  in code fails safe instead of trapping on a missing `item`.
+- Refuse NaN and infinities in `MGJSON` values built in code before encoding them
+  (the system encoder raised an uncatchable exception): `scene.number`,
+  `patch.number`, `template.params.number`, and for lessons `lesson.number` (document,
+  `load` statement, `apply` command; before, such a statement became an empty line and
+  was skipped) and `snapshot.number`. New `MGJSON.isEncodable` and
+  `canonicalByteCount` (`Int.max` when not encodable); every byte bound, including the
+  solid assembly, component and lesson document bounds, now uses it, so an unencodable value never
+  counts as 0 bytes.
+- Source-compatibility change: `MGKind` gains `table` and `region`, and `MGPackError`
+  gains `patchInvalid` and `invalidAccepted`. External exhaustive switches over these
+  enums must be updated; `MGKind.allCases` and the grammar `kinds` list grow by two.
+- Patch blending no longer interpolates a table's row and column counts.
 - Add beat-by-beat lessons (phase 1). A lesson document or a streamed statement lane (one JSON object per statement)
   drives a Foundation-only `MGLessonSession`: beats with spoken lines, the existing patch ops plus `animate`, `bind`,
   `unbind` and `check`, a persistent `MGLessonState` with stable ids, engine-filled narration and labels, refusals
