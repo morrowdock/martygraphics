@@ -154,6 +154,8 @@ public struct MGExplainerSession {
     var motionStart: Duration?
     var motionLength: Duration = .zero
     var motionHeld: Duration?
+    /// A due line that waits for the board to settle: (beat, changed).
+    var heldLine: (beat: Int, changed: Bool)?
     /// Bound controls the script and the host made (`bind` commands), as the lesson stores them: restore accepts a
     /// saved control only when one of these made it.
     var hostBinds: [MGJSON] = []
@@ -250,7 +252,11 @@ public struct MGExplainerSession {
         case .blend: seconds = c.diff.changed.isEmpty ? 0 : MGLessonSession.settle(.blend)
         case .direct: seconds = 0
         }
-        if pacing == .immediate || lesson.fastForward { seconds = 0 }
+        if pacing == .immediate || lesson.fastForward {
+            // No motion is played: the board adopts the end state at once, so state and text match at once.
+            seconds = 0
+            if c.transition != .direct { lesson.lastChange = MGLessonChange(serial: c.serial, transition: .direct, diff: c.diff) }
+        }
         motionStart = clock.now
         motionLength = .milliseconds(Int64((seconds * 1000).rounded()))
         motionHeld = lesson.isPaused ? .zero : nil
@@ -328,9 +334,23 @@ public struct MGExplainerSession {
     @discardableResult public mutating func lineStarted(_ k: Int) -> [MGExplainerEvent] { host { $0.lineStarted(k) } }
     @discardableResult public mutating func lineEnded(_ k: Int) -> [MGExplainerEvent] { host { $0.lineEnded(k) } }
     @discardableResult public mutating func finishNow() -> [MGExplainerEvent] {
-        let events = host { $0.finishNow() }
+        outbox = []
+        // A board motion still playing ends now: a new direct change makes every host adopt the end state at once.
+        if motionRemaining > .zero, let s = lesson.state {
+            lesson.changeSerial += 1
+            lesson.lastChange = MGLessonChange(serial: lesson.changeSerial, transition: .direct, diff: MGSceneDiff(from: s.scene.items, to: s.scene.items))
+            motionSerial = lesson.changeSerial
+        }
         motionLength = .zero
-        return events
+        // A line that waited for the board is due now, before `finishNow` ends it.
+        releaseHeldLine()
+        let before = lesson.hostIssues.count
+        let events = lesson.finishNow()
+        for i in lesson.hostIssues.dropFirst(before) { hostIssues.append(MGExplainerIssue(i, view: .beat)) }
+        current = .beat
+        absorb(events)
+        releaseHeldLine()
+        return outbox
     }
     @discardableResult public mutating func tick() -> [MGExplainerEvent] { host { $0.tick() } }
     @discardableResult public mutating func resume() -> [MGExplainerEvent] {
@@ -452,7 +472,7 @@ public struct MGExplainerSession {
             board = nil; solidSource = nil; solid = nil; ids3D = []; set3D = []
             beats = [:]; stepOf = [:]; presentedBeats = []; presented = MGExplainerBeatView(); frozen = false; beatCount = 0
             setupOps = []; timing = MGExplainerTiming(); captions = [:]
-            motionSerial = 0; motionStart = nil; motionLength = .zero; motionHeld = nil; hostBinds = []
+            motionSerial = 0; motionStart = nil; motionLength = .zero; motionHeld = nil; hostBinds = []; heldLine = nil
             stream.started = true; stream.header = true
             emit(.accepted(statement: index))
         } catch { refuse(Self.reason(error), index) }
@@ -732,15 +752,27 @@ public struct MGExplainerSession {
     // MARK: lesson events
 
     mutating func absorb(_ events: [MGLessonEvent]) {
+        syncMotion()
         for e in events {
             switch e {
             case .accepted(let i): emit(.accepted(statement: i))
             case .refused(let issue): emit(.refused(MGExplainerIssue(issue, view: current)))
             case .firstPresented: timing.boardPresentedAt = clock.now; emit(.boardPresented)
             case .lineQueued(let k, let t): emit(.lineQueued(beat: k, text: t))
-            case .lineDue(let k, let t, let c): captions[k] = t; emit(.lineDue(beat: k, text: t, changed: c))
+            case .lineDue(let k, let t, let c):
+                // Speech is learner-visible: a line with a 2D engine number is due only when the board shows the
+                // state it describes. While the board still moves, the line waits (`heldLine`); see `releaseHeldLine`.
+                if !boardSettled, let info = beats[k], info.unchecked == nil, Self.hasPlainPlaceholder(info.say) {
+                    heldLine = (k, c)
+                    if case .estimate = pacing, let end = lesson.lineEndsAt { lesson.lineEndsAt = end + motionRemaining }
+                } else {
+                    heldLine = nil
+                    captions[k] = t; emit(.lineDue(beat: k, text: t, changed: c))
+                }
             case .lineStarted(let k): emit(.lineStarted(beat: k))
-            case .lineEnded(let k): emit(.lineEnded(beat: k))
+            case .lineEnded(let k):
+                if heldLine?.beat == k { heldLine = nil }   // the host ended a line it never got: nothing is spoken
+                emit(.lineEnded(beat: k))
             case .beatPresented(let k):
                 presentedBeats.insert(k)
                 presented = beatView(k, recordStale: true)
@@ -756,6 +788,20 @@ public struct MGExplainerSession {
         }
         syncDrops()
         syncMotion()
+        releaseHeldLine()
+    }
+
+    /// The held line of the presented beat, once the board has settled: filled from the state shown now.
+    mutating func releaseHeldLine() {
+        guard let (k, changed) = heldLine, boardSettled else { return }
+        heldLine = nil
+        guard presented.beat == k, let text = caption else { return }
+        captions[k] = text
+        emit(.lineDue(beat: k, text: text, changed: changed))
+    }
+
+    static func hasPlainPlaceholder(_ say: String) -> Bool {
+        MGExplainerHonesty.placeholders(say).contains { !(($0.split(separator: "|", omittingEmptySubsequences: false).first ?? "").contains(".")) }
     }
 
     /// Beats the lesson refused (a failed 2D check, the queue budget, a check that fails at presentation) lose their 3D

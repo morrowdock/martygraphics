@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "906a9bb8ea9dadf512039300f729f7c7bb713862207a1baef25ccf27b0e6f72f"
+      "sha256": "8836f4e38ab27303eed07dad105a2f1340a49e22ffe9ee016b24df755efa60c1"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -239,11 +239,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.check.json",
-      "sha256": "9db8d39d97bbbc97b6cd5ef2b60b186c6b283709f9314231a541f34f073cc2c5"
+      "sha256": "001d161c7b6721840df2bb2d186b6e5a5d090ac7844916de148dbc13a53d3c47"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.strict.json",
-      "sha256": "64da4e1024133546db4f67a2037834017d177e4da16bf12f37312b1d0ae68b16"
+      "sha256": "ab67e1816c023adecb682578e1a9fbe0d343f2965aaf04cb873e779d1c407297"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-1-refused.check.json",
@@ -479,11 +479,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
-      "sha256": "e592636c43717c6e858c653f70723f26b6e86542d4ad5cee1b48a8c4ce235fa3"
+      "sha256": "a79f6afd75a97827323ba0d65ee36dc1d4f0a917c4157687ae3325ceb9a826e8"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerState.swift",
-      "sha256": "e5602dc18027fee167d0325ea917aaf432dabb8527d6e8c47e717f2ad41ed112"
+      "sha256": "26bc8fdf4095f804d4a0e57a34da5b557955d400de69e4110a0e89f0e8c529be"
     },
     {
       "path": "Sources/MartyGraphics/MG3DInteraction.swift",
@@ -786,6 +786,10 @@
       "sha256": "91d887d8e831ad0af7e69f276211a7d2ecbdc15efa5db79e4186c65c65c6c94b"
     },
     {
+      "path": "Tests/MartyGraphicsTests/ExplainerThirdCheckTests.swift",
+      "sha256": "84be03c181a5744415abba432e7a4560f0cfb792e36a8a0af02eaa9057b67d91"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/HighlightReferenceTests.swift",
       "sha256": "155fa8b3077f6300920cd3e4777a3657e7cf3d2c95701386bdec0a2096eb0342"
     },
@@ -943,11 +947,11 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "5f3fd58d1647e9c462757a27676246deedbcb43e04e50b16780e9eec0d284481"
+      "sha256": "f3ad63511e97d34e9882c032e5e4dd9f454b742f734934c9510783f65c0cd113"
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "232ab96fbb7610c733d8e43d73a16d4e984a41e389d7c1922462518c77114719"
+      "sha256": "75428ff9cad478a5b34bb8f46065c792ed43e6555bd1cc5a7425465ac2d0f0f0"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -1023,7 +1027,7 @@
     },
     {
       "path": "docs/assets/explainer/provenance.json",
-      "sha256": "b8fde602b5daf4499ea71a750397e9f445714b71dab29abb1568ccbe810d8505"
+      "sha256": "45266aa27aca3f4e51c3f685fb103ea68d47700f5b3ef04cc871b252d6328083"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",
