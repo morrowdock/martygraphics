@@ -295,6 +295,7 @@ See the [quality and measurement plan](docs/QUALITY.md) for what is still unveri
 - [Showcase and original example sources](docs/SHOWCASE.md)
 - [Tutorial](docs/GETTING-STARTED.md) · [Protocol](docs/PROTOCOL.md) · [Structural grammar](Sources/MartyGraphics/MGGrammar.swift)
 - [Template API](Sources/MartyGraphics/MGTemplates.swift) · [Pack API](Sources/MartyGraphics/MGPack.swift)
+- [Beat-by-beat lessons](docs/LESSONS.md): lesson format, commands, streaming lane and timing events · [Rotation lesson example](Examples/LessonDemo/README.md)
 - [Scene file validator](tools/SceneValidator/README.md): a macOS-only command-line parser
   check for scene JSON files; it does not render scenes or review visual quality
 - [Source provenance](docs/EXPORT.json) · [Third-party inventory](docs/THIRD-PARTY.md)
