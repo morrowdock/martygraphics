@@ -168,6 +168,8 @@ public struct MGLessonSession {
         var complete = false
         var refused = false
         var queuedText: String?
+        /// Canonical bytes of this beat's snapshot entry (`MGLessonSession.wire(_:)`), kept up to date by `measured`.
+        var bytes = 0
     }
 
     public init(pacing: MGPacing = .immediate, clock: MGLessonClock = MGSystemClock()) {
@@ -353,7 +355,8 @@ public struct MGLessonSession {
     /// The next clock time at which `tick()` can change something, or nil.
     public var nextWake: Duration? {
         guard !isPaused else { return nil }
-        if let end = lineEndsAt { return end }
+        // Only `.estimate` ends a line by time, and only an open one.
+        if case .estimate = pacing, openLine != nil, let end = lineEndsAt { return end }
         if stream.ended, pending.isEmpty, !isComplete, openLine == nil { return settleUntil }
         return nil
     }
@@ -463,11 +466,17 @@ public struct MGLessonSession {
         let base = projectedIfClosed
         let ctx = MGContext(width: base.scene.width, height: base.scene.height, is3D: base.scene.is3D, values: base.scene.values)
         do { _ = try MGParser.text(value, MGLimits.say, ctx, "stmt.say") } catch { return refuse(Self.issue(error, statement: index)) }
+        // The queue budget is checked on what closing the open beat would leave, before anything changes.
+        var usage = queueUsage
+        if let b = openBeat { usage += closing(pending[b], rest: usage - pending[b].bytes).beat.bytes - pending[b].bytes }
+        let candidate = Self.measured(PendingBeat(index: nextBeat, say: raw, sayStatement: index, start: base, end: base))
+        let after = (pending.isEmpty ? 1 : usage) + candidate.bytes + 1
+        guard after <= MGLessonLimits.queueBytes else { return refuse("lesson.queue.bytes", index) }
         closeOpenBeat()
         guard let p = projected else { return refuse("stmt.order", index) }
         stream.beats += 1
         var end = p; end.beat = nextBeat
-        pending.append(PendingBeat(index: nextBeat, say: raw, sayStatement: index, start: p, end: end))
+        pending.append(Self.measured(PendingBeat(index: nextBeat, say: raw, sayStatement: index, start: p, end: end)))
         projected = end
         nextBeat += 1
         emit(.accepted(statement: index))
@@ -494,7 +503,11 @@ public struct MGLessonSession {
                 // Checks are claims about what the learner sees at the end of the beat: a later command may not make an
                 // accepted check false. Such a command is refused alone; the beat and its proven claims stay.
                 if let broken = pending[b].checks.lazy.compactMap({ $0.check.failure(in: r.state.scene) }).first { throw MGError(broken) }
-                pending[b].end = r.state; pending[b].commands.append((index, json)); pending[b].transitions.append(r.transition)
+                var next = pending[b]
+                next.end = r.state; next.commands.append((index, json)); next.transitions.append(r.transition)
+                next = Self.measured(next)
+                guard queueUsage - pending[b].bytes + next.bytes <= MGLessonLimits.queueBytes else { throw MGError("lesson.queue.bytes") }
+                pending[b] = next
                 projected = r.state
                 emit(.accepted(statement: index))
             } catch {
@@ -529,10 +542,17 @@ public struct MGLessonSession {
             if let why = c.failure(in: pending[b].end.scene) {
                 // The claim is false: the whole beat is refused and the projected state returns to the beat's start.
                 pending[b].refused = true
+                pending[b] = Self.measured(pending[b])
                 projected = pending[b].start
                 return refuse(MGLessonIssue(why, beat: k, statement: index))
             }
-            pending[b].checks.append((index, c, value))
+            var next = pending[b]
+            next.checks.append((index, c, value))
+            next = Self.measured(next)
+            guard queueUsage - pending[b].bytes + next.bytes <= MGLessonLimits.queueBytes else {
+                return refuse(MGLessonIssue("lesson.queue.bytes", beat: k, statement: index))
+            }
+            pending[b] = next
             emit(.accepted(statement: index))
         } catch {
             var issue = Self.issue(error, statement: index); issue.beat = k
@@ -542,22 +562,69 @@ public struct MGLessonSession {
 
     mutating func closeOpenBeat() {
         guard let b = openBeat else { return }
-        pending[b].complete = true
-        guard !pending[b].refused else { return }
-        // Every check must hold on the beat's final state before its line is queued.
-        if let c = pending[b].checks.first(where: { $0.check.failure(in: pending[b].end.scene) != nil }) {
-            pending[b].refused = true; projected = pending[b].start
-            return refuse(MGLessonIssue(c.check.failure(in: pending[b].end.scene)!, beat: pending[b].index, statement: c.statement))
+        let before = pending[b]
+        let (closed, issue) = closing(before, rest: queueUsage - before.bytes)
+        pending[b] = closed
+        if let issue {
+            projected = before.start
+            refuse(issue)
+        } else if !closed.refused, let text = closed.queuedText {
+            emit(.lineQueued(beat: closed.index, text: text))
+        }
+    }
+
+    /// The open beat `beat`, closed (pure). Every check must hold on its final state, its line must fill, and the
+    /// closed entry must fit the queue budget (`rest` = the queue without this beat); otherwise it is refused with the
+    /// returned issue (a refused entry keeps no commands, so it is never larger).
+    func closing(_ beat: PendingBeat, rest: Int) -> (beat: PendingBeat, issue: MGLessonIssue?) {
+        var b = beat; b.complete = true
+        guard !b.refused else { return (Self.measured(b), nil) }
+        func refused(_ issue: MGLessonIssue) -> (beat: PendingBeat, issue: MGLessonIssue?) {
+            var r = b; r.refused = true; r.queuedText = nil
+            return (Self.measured(r), issue)
+        }
+        if let c = b.checks.first(where: { $0.check.failure(in: b.end.scene) != nil }) {
+            return refused(MGLessonIssue(c.check.failure(in: b.end.scene)!, beat: b.index, statement: c.statement))
         }
         do {
-            let text = try MGParser.fill(pending[b].say, pending[b].end.scene.values, "stmt.say")
-            pending[b].queuedText = text
-            emit(.lineQueued(beat: pending[b].index, text: text))
+            b.queuedText = try Self.fillLine(b.say, b.end.scene.values)
         } catch {
-            pending[b].refused = true; projected = pending[b].start
-            var issue = Self.issue(error, statement: pending[b].sayStatement); issue.beat = pending[b].index
-            refuse(issue)
+            var issue = Self.issue(error, statement: b.sayStatement); issue.beat = b.index
+            return refused(issue)
         }
+        b = Self.measured(b)
+        guard rest + b.bytes <= MGLessonLimits.queueBytes else {
+            return refused(MGLessonIssue("lesson.queue.bytes", beat: b.index, statement: b.sayStatement))
+        }
+        return (b, nil)
+    }
+
+    /// Canonical bytes of the `pending` array in a snapshot: `[`, the entries with commas between them, `]`.
+    var queueUsage: Int { pending.isEmpty ? 2 : pending.reduce(1) { $0 + $1.bytes + 1 } }
+
+    /// `beat` with `bytes` set to the canonical size of its snapshot entry.
+    static func measured(_ beat: PendingBeat) -> PendingBeat {
+        var b = beat; b.bytes = wire(b).canonicalByteCount; return b
+    }
+
+    /// A beat's snapshot entry (the same object `snapshot()` writes).
+    static func wire(_ b: PendingBeat) -> MGJSON {
+        var p: [String: MGJSON] = ["beat": .number(Double(b.index)), "say": .string(b.say), "sayAt": .number(Double(b.sayStatement)),
+                                   "complete": .bool(b.complete), "refused": .bool(b.refused)]
+        if let q = b.queuedText { p["queued"] = .string(q) }
+        if !b.refused {
+            p["commands"] = .array(b.commands.map { .object(["i": .number(Double($0.statement)), "s": $0.json]) })
+            p["checks"] = .array(b.checks.map { .object(["i": .number(Double($0.statement)), "s": $0.json]) })
+        }
+        return .object(p)
+    }
+
+    /// A beat's line filled from engine values, at most `MGLessonLimits.lineBytes` of canonical JSON (`stmt.say.bytes`),
+    /// so a caption and a queued line are bounded whatever the values are.
+    static func fillLine(_ say: String, _ values: [String: MGValue]) throws -> String {
+        let text = try MGParser.fill(say, values, "stmt.say")
+        guard MGJSON.string(text).canonicalByteCount <= MGLessonLimits.lineBytes else { throw MGError("stmt.say.bytes") }
+        return text
     }
 
     // MARK: presentation
@@ -609,7 +676,7 @@ public struct MGLessonSession {
             if let why = c.check.failure(in: s.scene) { return refuse(MGLessonIssue(why, beat: k, statement: c.statement)) }
         }
         let text: String
-        do { text = try MGParser.fill(beat.say, s.scene.values, "stmt.say") } catch {
+        do { text = try Self.fillLine(beat.say, s.scene.values) } catch {
             var issue = Self.issue(error, statement: beat.sayStatement); issue.beat = k
             return refuse(issue)
         }
@@ -627,6 +694,12 @@ public struct MGLessonSession {
             openLine = k
             if case .estimate(let rate) = pacing { lineEndsAt = now + Self.lineDuration(text, wordsPerSecond: rate) }
         }
+    }
+
+    /// Nothing is left to settle (a host showed the presented state directly, for example after a restore): a finished
+    /// lesson can complete at once instead of waiting for a transition that is not on screen.
+    mutating func dropSettle() {
+        if isPaused { settleRemaining = .zero } else { settleUntil = clock.now }
     }
 
     /// Keep the settle deadline at least `transition`'s length from now (paused: from where the clock stopped).

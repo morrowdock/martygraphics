@@ -9,6 +9,33 @@
   start scene and engine keyframes of each `animate`, a scripted learner's slider ticks), shows each planned frame on
   the live demo view offscreen, and writes the frames, `frames.json` and a GIF whose delays are the planned times
   (ImageIO, no external tools). The plan and the GIF writer are example code (`LessonDemoKit/Capture.swift`) with tests.
+- Add `MGLessonController.restore(_:)` to adopt a saved lesson state (`MGLessonSession.snapshot()`) on a live
+  controller. The snapshot is validated first; a refused snapshot changes nothing but `lastIssue`. On success the board
+  shows the restored state with no blend, keyframes or draw-on (new `MGSceneController.show(_:transition:drawsOn:)` and
+  `MGAdoption.plan(…, drawsOn:)`), also for a beat that the restore makes due at once; selection is cleared, timing
+  marks are reset with no first-visible time, a restore never starts playback, and the remaining settle time of an
+  interrupted animation is dropped. Add `MGLessonController.feed(_: Data)` to replay `unfinishedInput`.
+- Compatibility change for every lesson host: bound lesson sessions so that every snapshot a session makes restores.
+  Each path that changes a session (stream statements and `load`, host `apply`, learner values, `restore`) keeps each
+  snapshot part inside its bound and refuses a change that would pass it, with the state unchanged:
+  - Beats received but not shown yet may take at most 96 KiB of snapshot JSON across all streams
+    (`lesson.queue.bytes`). A `.speech` or paused host that streams faster than it shows must apply backpressure.
+  - The id history holds at most 1024 ids, removed ids included, until a new scene (`lesson.ids.count`).
+  - A filled line is at most 2 KiB (`stmt.say.bytes`), checked when its beat closes and when it is presented.
+  - One bound control is at most 1 KiB (`control.bytes`).
+
+  `MGLessonSession.restore` enforces the same bounds:
+  - title rule: `snapshot.title`
+  - caption size: `snapshot.caption`
+  - id history keys and count: `snapshot.kinds`, `snapshot.introduced`
+  - queue: `snapshot.pending`
+  - controls: `control.bytes`
+
+  Before it reads any field, restore runs one bounded walk as defence in depth. Over the derived 291,570-byte cap is
+  `snapshot.bytes`, a NaN or infinite number is `snapshot.number`, and deeper than the derived 2,056 levels is
+  `snapshot.depth` (the depth fits the deepest legal raw-template `params`). Line timing on restore follows the
+  restoring pacing (`.estimate` keeps or re-estimates an open line, `.speech` waits, `.immediate` holds no line), so a
+  paused snapshot restored under another pacing no longer leaves a stale line timer.
 - Add the 2D item kinds `table` (a grid of up to 8 × 6 short cells with an optional
   header row and marked cells) and `region` (a filled closed polygon of 3 to 64
   points), and the text style `code` (monospaced, left-aligned, keeps leading spaces,

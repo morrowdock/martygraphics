@@ -141,7 +141,8 @@
         "Apache-2.0 SPDX header",
         "Removed internal work-item identifier from comments",
         "Public adaptation, not compared with the private source: inspects3D(_:) and preserves3DCamera(resetKey:) modifiers wired to the 3D board",
-        "Public adaptation, not compared with the private source: opt-in board transitions (MGTransition: blend, direct, keyframes) via show(_:transition:) and apply(patch:requireRevision:transition:); existing entry points keep the blend"
+        "Public adaptation, not compared with the private source: opt-in board transitions (MGTransition: blend, direct, keyframes) via show(_:transition:) and apply(patch:requireRevision:transition:); existing entry points keep the blend",
+        "Public adaptation, not compared with the private source: show(_:transition:drawsOn:) and the drawsOn flag (a restored lesson appears with no draw-on); every existing entry point keeps draw-on"
       ]
     },
     {

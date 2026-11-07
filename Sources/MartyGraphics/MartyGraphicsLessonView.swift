@@ -25,6 +25,8 @@ final class MGFirstFrameMark: @unchecked Sendable {
     private var armed = false
     private var at: Duration?
     func arm() { lock.lock(); armed = true; at = nil; lock.unlock() }
+    /// No first frame is expected (a restored lesson was already visible before): clear the mark and do not record one.
+    func disarm() { lock.lock(); armed = false; at = nil; lock.unlock() }
     func hit(_ clock: MGLessonClock) { lock.lock(); if armed, at == nil { at = clock.now; armed = false }; lock.unlock() }
     var value: Duration? { lock.lock(); defer { lock.unlock() }; return at }
 }
@@ -79,6 +81,16 @@ public final class MGLessonController: ObservableObject {
         sync(events)
     }
 
+    /// Feed raw bytes, for example the previous session's `unfinishedInput` after `restore(_:)` (bytes, not a String,
+    /// because a partial statement can end inside a UTF-8 sequence).
+    public func feed(_ data: Data) {
+        let id = signposter.makeSignpostID()
+        let interval = signposter.beginInterval("statement", id: id)
+        let events = session.feed(data)
+        signposter.endInterval("statement", interval)
+        sync(events)
+    }
+
     public func endStream() { sync(session.endStream()) }
 
     /// Load a whole lesson document (all-or-nothing). Returns false and keeps the current lesson on refusal.
@@ -98,6 +110,57 @@ public final class MGLessonController: ObservableObject {
             sync(events); return true
         case .failure(let issue): lastIssue = issue; return false
         }
+    }
+
+    /// Adopt a saved lesson state (`MGLessonSession.snapshot()`), built with this controller's pacing and clock.
+    ///
+    /// Validate first: the snapshot is restored and re-validated by `MGLessonSession.restore` before anything here
+    /// changes. A refused snapshot changes nothing (session, board, caption, timing marks, selection, pause state);
+    /// only `lastIssue` is set, and the issue is returned.
+    ///
+    /// On success:
+    /// - The restored session replaces the current one. The board shows its state directly: `.direct` with no draw-on,
+    ///   so there is no blend, no keyframe replay and no draw-on replay, and an in-flight animation of the old lesson stops.
+    ///   The restored session has nothing left to settle (`lessonComplete` does not wait for a transition that is not shown).
+    /// - `selection` and `lastIssue` are cleared.
+    /// - Timing marks are reset to empty and no first frame is recorded: the restored lesson was visible before it was
+    ///   saved, so this run has no request mark and no time to first visible. Marks of later events in this run
+    ///   (`firstPresentedAt` of a new scene, `streamEndedAt`, `lessonCompleteAt`) are recorded; their `timeTo…`
+    ///   durations stay nil until `begin()` or `load(_:)` starts a timed run.
+    /// - Pause: a restore never starts playback. The result is paused when the snapshot was paused or this controller
+    ///   was paused; the board holds its transitions to match. Call `resume()` to continue.
+    /// - Events: none for the restore itself (no `firstPresented`, no `lineDue` again). The controller then ticks the
+    ///   restored session, so what is due at once comes through `onEvent` like any tick, for example `lessonComplete`
+    ///   when the saved lesson only waited for its last transition to settle, or the `lineDue` of a queued beat that is
+    ///   due now (that beat is also shown directly, with no blend or draw-on).
+    /// - Line timing follows this controller's pacing (see `MGLessonSession.restore`). With `.speech` and an open line
+    ///   (`session.openLine`), speak `caption` again or call `lineEnded(_:)`. With `.estimate` an open line keeps its
+    ///   saved remaining time, or gets a new estimate when the snapshot came from another pacing.
+    /// - A statement that was partly received when the snapshot was taken is not in it: feed the old session's
+    ///   `unfinishedInput` with `feed(_: Data)` before the rest of the stream.
+    @discardableResult public func restore(_ snapshot: MGJSON) -> Result<Void, MGLessonIssue> {
+        var restored: MGLessonSession
+        switch MGLessonSession.restore(snapshot, pacing: session.pacing, clock: clock) {
+        case .failure(let issue): lastIssue = issue; return .failure(issue)
+        case .success(let s): restored = s
+        }
+        if session.isPaused { restored.pause() }
+        restored.dropSettle()
+        // What is due at once runs now. A beat that this presents is shown directly as well (one board update, no
+        // blend or draw-on from the old lesson), so it has nothing to settle either; the second tick can then complete.
+        var events = restored.tick()
+        restored.dropSettle()
+        events += restored.tick()
+        ticker?.cancel()
+        if let b = beatInterval { signposter.endInterval("beat", b); beatInterval = nil }
+        session = restored
+        lastIssue = nil; selection = nil
+        timing = MGLessonTiming(); firstFrame.disarm()
+        shownSerial = restored.lastChange?.serial ?? 0
+        if restored.isPaused { board.pauseTransitions() } else { board.resumeTransitions() }
+        board.show(restored.state?.scene, transition: .direct, drawsOn: false)
+        sync(events)
+        return .success(())
     }
 
     /// A learner moved a bound control. The value is snapped to the control's step (UI quantisation only) and sent
