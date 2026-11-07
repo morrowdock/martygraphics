@@ -32,7 +32,9 @@ public struct MGPatch: Equatable, Sendable {
     }
 
     public static func parse(data: Data) -> Result<MGPatch, MGError> {
-        guard data.count <= MGLimits.patchBytes * 2, let o = try? JSONSerialization.jsonObject(with: data), let j = MGJSON(any: o) else { return .failure(.init("patch.json")) }
+        guard data.count <= MGLimits.patchBytes * 2 else { return .failure(.init("patch.json")) }
+        guard MGJSON.textNesting(data) <= MGLimits.depth else { return .failure(.init("patch.depth")) }
+        guard let o = try? JSONSerialization.jsonObject(with: data), let j = MGJSON(any: o) else { return .failure(.init("patch.json")) }
         return parse(json: j)
     }
     public static func parse(object: Any) -> Result<MGPatch, MGError> {

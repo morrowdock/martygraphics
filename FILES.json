@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "480fe4b791df24de8214564aab50224f83dae4609165b7f4b3788153b8b794ed"
+      "sha256": "40f3bff82301b82d2ebbeb253b6e25895cb32a73e0f408876bf29b994d637396"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -279,19 +279,19 @@
     },
     {
       "path": "Sources/MartyGraphics/MGLesson.swift",
-      "sha256": "658f2930097f81e1111c6fac4f7992414fe264f1ce9b0588ae429c7709c99dd1"
+      "sha256": "4319027f69909bcb016ee9ec4084352652d5539eab004a0385e2620bb3aa87a7"
     },
     {
       "path": "Sources/MartyGraphics/MGLessonSession.swift",
-      "sha256": "dd315f40b2804bcfd39fcf655ba7ca9bd76ada82871af15a69dd9264e7fff0b7"
+      "sha256": "dd471f1a7b03fb74f59155beaebf3d75d8702be52435e58031635ac4932cbce2"
     },
     {
       "path": "Sources/MartyGraphics/MGLessonSnapshot.swift",
-      "sha256": "5ad35befb612e63c2a34b983356589a2bbc3dfe72866797bd7b5e91c9b1765bd"
+      "sha256": "7621ecf928416ae5b916c6db0f6f628a1f5c3203c3400ac681816a09afd4d525"
     },
     {
       "path": "Sources/MartyGraphics/MGModel.swift",
-      "sha256": "25a400d5efedc4504b1e891517592bc69d28d4ec8b38fc5fabd0c7655145f1a7"
+      "sha256": "fa30964ed64870ab6e1340586ee9c7fcad3ca0998cacd99441bfdc81c52e58d5"
     },
     {
       "path": "Sources/MartyGraphics/MGPack.swift",
@@ -299,11 +299,11 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "e932b694f2a4d732f1494dcff85a20d1a6be3a9e66023050b2e9dce0c0ae3988"
+      "sha256": "8ec8c7d0554c9f264076371a2ff064787f045f28a8ce1f6d18d60b86c79e8f27"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
-      "sha256": "fef846ffe6d719858414b0e5b7d05e3c4f5a78b4f69c568dd90f0ae05e75ada6"
+      "sha256": "6e07dd07e6201bf00a5c86a667aa88dea3207e87baa13a47b8ad580680f0822b"
     },
     {
       "path": "Sources/MartyGraphics/MGPhysics.swift",
@@ -319,7 +319,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGStream.swift",
-      "sha256": "bbcaaaed0f905e558932dd8430e077efb75a4bc0f5baa6ccf061c955c939f205"
+      "sha256": "a42a0420d61baa97e0f5492ed75c404383dd302b3e13640668167c4d96024198"
     },
     {
       "path": "Sources/MartyGraphics/MGTemplates.swift",
@@ -379,7 +379,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidComponents.swift",
-      "sha256": "8f6aabe86eaf1a1fbc204f0477183cb180e7d3f5437a2dff9c89925212c17e49"
+      "sha256": "bb018f2e2d1fbbf4defd9ba206eae1bfcf1acef003451c3b7509067026ceaecc"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidMath.swift",
@@ -391,7 +391,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidParser.swift",
-      "sha256": "4f9f827e48d7bc7e4846147ba942e24ec48160870c1a807e93e1bf6231ae0f12"
+      "sha256": "af70329f6dfff5dead790b9ca2f3decc6fb2111f37687a763bc756adefa104a6"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
@@ -443,7 +443,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/DeepJSONGuardTests.swift",
-      "sha256": "90d8fcc6648f30a3d5936896b47b49c0a268c7b2f8d1dceb33a2c78d5aba91ea"
+      "sha256": "00f981dde72554dfe823d756c2812f17f1a9339b54c56a26675889162aed0038"
     },
     {
       "path": "Tests/MartyGraphicsTests/HighlightReferenceTests.swift",
@@ -451,7 +451,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonControllerRestoreTests.swift",
-      "sha256": "54fd7f3d25280efdfd1b51680a545adf640911eb6a1c8f51ed958cead167efcc"
+      "sha256": "9083b83d25232c6256e5ccb104b563b692c553b2bd4bc71de5b02d8e3f398c2e"
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonCoreTests.swift",
@@ -591,7 +591,7 @@
     },
     {
       "path": "docs/LESSONS.md",
-      "sha256": "f1582814f076276c764bbcb0b2173a60ad54715f16f61b7e18000f1ebc3552c8"
+      "sha256": "54243b49d1a0f4da1bdfcebacf03b2fe041588f08f176cc5ff82dfa0bcd1fb63"
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
@@ -603,7 +603,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "e974e49e8dc1448e6554f8e28b5cf76ef8a95e778323c13e9c064d3f6f8023b1"
+      "sha256": "7bfde21b3d07c9760d3dee72600837602c9b2f1b95c5671f09519200841ce977"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -619,7 +619,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "e89ef27d57813a75305773dcc9f33fcf761af31820a5a9df8d2ce6ac0a04069f"
+      "sha256": "fd9352c837ec87cd7682d4e4dc33906e6d6e84823263a3b4899f5290b74b8358"
     },
     {
       "path": "docs/THIRD-PARTY.md",

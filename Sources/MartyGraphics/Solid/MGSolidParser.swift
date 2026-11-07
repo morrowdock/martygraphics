@@ -80,6 +80,7 @@ public enum MGSolidParser {
     public static func document(data: Data, reusing previous: MGSolidDocument? = nil,
                                 library: MGSolidLibrary = .builtIn) -> Result<MGSolidDocument, MGSolidIssue> {
         guard data.count <= MGSolidLimits.bytes else { return .failure(.init("assembly.bytes")) }
+        guard MGJSON.textNesting(data) <= MGLimits.depth else { return .failure(.init("assembly.depth")) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
             return .failure(.init("json"))
         }
@@ -89,6 +90,7 @@ public enum MGSolidParser {
     /// `library` resolves `use` entries (components); see docs/SOLID-3D.md, Components.
     public static func document(json: MGJSON, reusing previous: MGSolidDocument? = nil,
                                 library: MGSolidLibrary = .builtIn) -> Result<MGSolidDocument, MGSolidIssue> {
+        if json.nestsTooDeep { return .failure(.init("assembly.depth")) }
         do { return .success(try compile(json, previous, library)) }
         catch let e as MGSolidIssue { return .failure(e) }
         catch let e as MGError { return .failure(.init(e.reason)) }
@@ -100,6 +102,7 @@ public enum MGSolidParser {
     /// parts whose shapes did not change keep their meshes. An id inside a component instance (`stage1.pinion`) merges
     /// into that `use` entry's `set`; the instance id itself (`stage1`) edits the `use` entry (`with`, `at`, …).
     public static func applying(_ patch: MGJSON, to doc: MGSolidDocument) -> Result<MGSolidDocument, MGSolidIssue> {
+        if patch.nestsTooDeep { return .failure(.init("patch.depth")) }
         guard case .object(let p) = patch else { return .failure(.init("patch.object")) }
         let allowed: Set<String> = ["params", "parts", "constraints", "steps", "title"]
         guard Set(p.keys).isSubset(of: allowed), !p.isEmpty else {

@@ -179,7 +179,11 @@ reported `part.parent`.
   parent pairs by index.
 * **Bounds** (`MGSolidLimits`): 64 KiB, 48 wire parts, 96 resolved parts,
   8 shapes per part, 256 profile points, 128 constraints, 16 steps, teeth
-  8–200 (ring 20–400), module 0.2–20 mm, lengths up to 4 m.
+  8–200 (ring 20–400), module 0.2–20 mm, lengths up to 4 m. JSON nests at most
+  64 levels (`MGLimits.depth`, arrays and objects on one path; the shipped models
+  use at most 8): a deeper document is `assembly.depth`, a deeper patch
+  `patch.depth`, a deeper component definition `component.nesting`. The check runs
+  first, without recursion (on text, before the system parser).
 * **Text limits**: `title` at most 80 characters (`assembly.title`), part `name`
   at most 60 (`part.name`), step `say` at most 240 (`step.say`). Keep a step to one
   or two short sentences.

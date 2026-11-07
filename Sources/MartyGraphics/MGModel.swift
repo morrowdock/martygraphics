@@ -155,11 +155,12 @@ public struct MGScene: Equatable, Sendable {
 /// Minimal immutable JSON value so scenes stay Equatable/Sendable and canonical-encodable.
 ///
 /// Nesting: every public entry point that takes a value built in code (`MGParser.scene(json:)`, `MGPatch.parse(json:)`,
-/// `MGScene.applying`, `MGTemplate.validate`, `MGLesson.parse(json:)`, lesson `apply`, `restore`) first runs one
-/// iterative walk (`measure`) and refuses a value that nests deeper than its limit, before it reads, compares or encodes
-/// it. `canonicalData` and `canonicalByteCount` never encode a value deeper than `MGLimits.depth`. Swift itself
-/// compares, hashes and frees nested enum values recursively, and so does `any`: a host that builds a much deeper value
-/// in code should give it to an entry point (which refuses it) and not compare, hash or convert it itself.
+/// `MGScene.applying`, `MGTemplate.validate`, `MGLesson.parse(json:)`, lesson `apply`, `restore`, the Solid parsers)
+/// first runs one walk that does not recurse (`measure`) and refuses a value that nests deeper than `MGLimits.depth`
+/// (64) before it reads, compares, hashes or encodes it. Entry points that take JSON text count its nesting
+/// (`textNesting`) before the system parser runs. `canonicalData` and `canonicalByteCount` never encode a deeper value.
+/// Swift itself compares, hashes and frees nested enum values recursively, and so does `any`: a host that builds a much
+/// deeper value in code should give it to an entry point (which refuses it) and not compare, hash or convert it itself.
 public indirect enum MGJSON: Equatable, Hashable, Sendable {
     case null, bool(Bool), number(Double), string(String), array([MGJSON]), object([String: MGJSON])
 
@@ -201,6 +202,24 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
     /// True when every number in the value is finite. A value built in code can hold NaN or an infinity, which JSON
     /// cannot encode (the system encoder raises an exception that Swift cannot catch), so check before encoding.
     public var isEncodable: Bool { measure().finite }
+    /// Nesting of JSON text (arrays and objects on one path), counted in one pass without parsing; brackets inside
+    /// strings do not count. Entry points run it before the system parser, which recurses once per level.
+    static func textNesting<S: Sequence>(_ bytes: S) -> Int where S.Element == UInt8 {
+        var depth = 0, deepest = 0, inString = false, escape = false
+        for b in bytes {
+            if inString {
+                if escape { escape = false } else if b == UInt8(ascii: "\\") { escape = true } else if b == UInt8(ascii: "\"") { inString = false }
+                continue
+            }
+            switch b {
+            case UInt8(ascii: "\""): inString = true
+            case UInt8(ascii: "{"), UInt8(ascii: "["): depth += 1; deepest = max(deepest, depth)
+            case UInt8(ascii: "}"), UInt8(ascii: "]"): depth -= 1
+            default: break
+            }
+        }
+        return deepest
+    }
     /// Sorted-key JSON: stable cache keys and byte limits. Empty when the value is not encodable (a non-finite number,
     /// or nesting deeper than `MGLimits.depth`); use `canonicalByteCount` for limits, so such a value never counts as small.
     public var canonicalData: Data { encoded ?? Data() }
@@ -229,8 +248,8 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
         var stopped = false
     }
 
-    /// One walk with an explicit stack, so no nesting can exhaust the call stack. Without `stopAbove` it visits every
-    /// node, so the result does not depend on dictionary order.
+    /// One walk with an explicit stack, so no nesting can exhaust the call stack. Its time and memory are linear in the
+    /// value's size. Without `stopAbove` it visits every node, so the result does not depend on dictionary order.
     func measure(stopAbove limit: Int = .max) -> Measure {
         var m = Measure()
         var stack: [(value: MGJSON, level: Int)] = [(self, 0)]
@@ -259,7 +278,11 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
 
     /// The first check of a public entry point, before it reads, compares or encodes a value built in code. Reasons, in
     /// this order: `number` (a NaN or infinite number), `depth` (nesting over `maxDepth`), `bytes` (canonical size over
-    /// `maxBytes`; the lower bound is checked first, so a huge value is never encoded).
+    /// `maxBytes`; the lower bound is checked first, so a huge value is never encoded). Only a value at most
+    /// `maxDepth` deep reaches the (recursive) encoder.
+    /// True when the value nests deeper than `MGLimits.depth` (one walk that does not recurse).
+    var nestsTooDeep: Bool { measure().depth > MGLimits.depth }
+
     func checkEntry(maxDepth: Int, maxBytes: Int, number: String, depth: String, bytes: String) throws {
         let m = measure()
         guard m.finite else { throw MGError(number) }

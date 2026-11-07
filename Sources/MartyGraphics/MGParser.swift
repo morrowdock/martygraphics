@@ -16,12 +16,14 @@ public enum MGLimits {
     public static let records = 32, recordFields = 6
     /// Raw (free-form JSON) template parameters: the canonical `params` object may be at most this many bytes.
     public static let rawParamsBytes = 4 * 1024
-    /// Nesting limit (arrays and objects on one path) of any `MGJSON` value that a public entry point accepts:
-    /// `scene.depth`, `patch.depth`, `template.params.depth`. The only free-form JSON in a scene or patch is a raw
-    /// template's `params` object (at most `rawParamsBytes`). Each level takes at least two bytes, so it nests at most
-    /// 2,048 levels; up to 8 levels of wrapping (scene, patch, lesson and snapshot objects) are allowed above it.
-    /// Lessons have a lower limit (`MGLessonLimits.statementDepth`). `canonicalData` never encodes a deeper value.
-    public static let depth = rawParamsBytes / 2 + 8
+    /// Nesting limit (arrays and objects on one path; `[[1]]` is 2) of every JSON value a public entry point accepts:
+    /// scenes (`scene.depth`), patches (`patch.depth`), raw template params (`template.params.depth`), lessons and
+    /// snapshots (`MGLessonLimits`), Solid assemblies and components, and `MGJSON(any:)`. Real documents nest 6 to 15
+    /// levels. The system JSON parser and encoder, Swift's `==`, hashing and freeing of nested values, and
+    /// `MGJSON(any:)` all recurse once per level; at 64 levels they stay far inside a 512 KiB thread stack (iOS
+    /// secondary threads) and a 1 MiB main-thread stack (iOS). The check is one walk that does not recurse, and it runs
+    /// before any of them (on JSON text: before the system parser).
+    public static let depth = 64
     /// `table` items: at most this many rows and columns, and this many characters per cell.
     public static let tableRows = 8, tableCols = 6, tableCellText = 12
 }
@@ -47,9 +49,9 @@ public enum MGParser {
     static let topKeys: Set<String> = ["v", "template", "params", "title", "dim", "world", "items", "steps", "camera", "hide", "over"]
 
     public static func scene(data: Data) -> Result<MGScene, MGError> {
-        guard data.count <= MGLimits.sceneBytes * 2, let object = try? JSONSerialization.jsonObject(with: data) else {
-            return .failure(.init("json"))
-        }
+        guard data.count <= MGLimits.sceneBytes * 2 else { return .failure(.init("json")) }
+        guard MGJSON.textNesting(data) <= MGLimits.depth else { return .failure(.init("scene.depth")) }
+        guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(.init("json")) }
         return scene(object: object)
     }
     public static func scene(object: Any) -> Result<MGScene, MGError> {
@@ -63,9 +65,9 @@ public enum MGParser {
     /// never registered. A scene that names an extra template keeps the template name, so a later patch on it must
     /// also go through `applying(_:extraTemplates:)` with the same extras (or the template must be registered).
     public static func scene(data: Data, extraTemplates: [MGTemplate]) -> Result<MGScene, MGError> {
-        guard data.count <= MGLimits.sceneBytes * 2, let object = try? JSONSerialization.jsonObject(with: data) else {
-            return .failure(.init("json"))
-        }
+        guard data.count <= MGLimits.sceneBytes * 2 else { return .failure(.init("json")) }
+        guard MGJSON.textNesting(data) <= MGLimits.depth else { return .failure(.init("scene.depth")) }
+        guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(.init("json")) }
         return scene(object: object, extraTemplates: extraTemplates)
     }
     /// See `scene(data:extraTemplates:)`.

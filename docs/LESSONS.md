@@ -200,7 +200,7 @@ A snapshot covers complete statements only. A statement that has started but not
 `unfinishedInput` into the restored session (`feed(_: Data)`) before the rest of the stream. Those bytes are not in the
 snapshot's byte count, so the budget is the same after the replay.
 Invariant: every snapshot that a session makes restores, also after it is stored as JSON text and read back with the
-system JSON parser (`JSONSerialization`). Each part of a snapshot has a bound, and every path that
+system JSON parser (`JSONSerialization`) and `MGJSON(any:)`. Each part of a snapshot has a bound, and every path that
 changes a session keeps each part inside its bound: stream statements (also through `load`), host `apply`, learner
 values and `restore` itself. A change that would pass a bound is refused with a stable reason, and the state stays as
 it was.
@@ -210,8 +210,9 @@ gets its filled line (`queued`) and its `complete` flag when it closes: at the n
 `endStream()`. If the closed beat would put the queue over 96 KiB, the whole beat is refused with
 `lesson.queue.bytes` (with the beat and its `say` statement). The commands and checks already accepted for that beat
 are retracted, as when a check fails at close: the beat's line is never queued or shown, none of its commands reach
-the board, and the projected state goes back to the beat's start. The refused entry keeps no commands, so the queue gets smaller and the snapshot stays inside its bound.
-A `say` that closes such a beat is still accepted.
+the board, and the projected state goes back to the beat's start. The refused entry keeps no commands, so the queue
+gets smaller and the snapshot stays inside its bound. A `say` that closes such a beat is still accepted if its own new
+beat fits the queue; otherwise that `say` is refused with `lesson.queue.bytes` first and the open beat stays open.
 
 | Part | Bound | Enforced by | Reason (live / restore) |
 | --- | --- | --- | --- |
@@ -223,22 +224,29 @@ A `say` that closes such a beat is still accepted.
 | Caption and every filled line | 2 KiB canonical JSON | beat close and presentation | `stmt.say.bytes` / `snapshot.caption` |
 | Title | 60 Unicode scalars, the header text rule (also no decimal literal) | header | `lesson.title`, `text.literal` / `snapshot.title` |
 | Free-form JSON (a raw template's `params`) | 4 KiB (`MGLimits.rawParamsBytes`); a queued command is one 4 KiB statement | template, scanner | `template.params.bytes`, `stmt.bytes` / the same |
-| Nesting of one statement or command | 507 levels (`MGLessonLimits.statementDepth`) | every stream statement (also through `load`), every command (also `apply`) | `lesson.depth` / `snapshot.depth` |
+| Nesting of one statement or command | 59 levels (`MGLessonLimits.statementDepth`) | every stream statement (also through `load`), every command (also `apply`) | `lesson.depth` / `snapshot.depth` |
+| Nesting of the scene source | 61 levels (the deepest a live session makes) | statements and commands above | the same / `snapshot.depth` |
 
 The snapshot caps come from these bounds:
 
 - Size: `MGLessonLimits.snapshotBytes` = 291,570 bytes. This is two states (the state and the queue baseline: the
   scene, 1024 ids at 80 bytes each, 4 controls), the queue budget, one caption, the title and 2 KiB of fixed fields.
-- Depth: `MGLessonLimits.snapshotDepth` = 512 levels. Nesting counts the arrays and objects on one path (`[[1]]` is
-  2). 512 is the nesting that the system JSON parser reads, so a snapshot stored as JSON text always reads back. The
-  deepest part of a snapshot is a queued command, which 5 containers hold (the snapshot, `pending`, the entry,
-  `commands`, the command record). So every statement and every command may nest at most
-  `MGLessonLimits.statementDepth` = 507 levels (`lesson.depth`). This holds for stream statements, the statements of
-  `load` and commands given to `apply`, which are values built in code with no parser. A scene source has 1 or 2
-  containers above it in a snapshot, and its statement adds 1, so it stays inside the cap. A lesson document may nest
-  at most 511 levels (`MGLesson.parse(json:)`, `lesson.depth`), because 4 containers hold its commands (the document,
-  `beats`, the beat, `ops`). `load` then checks each statement against the 507 levels. The stream parser reads up to
-  512 levels, so a statement of 508 to 512 levels is parsed and then refused with `lesson.depth`.
+- Depth: `MGLessonLimits.snapshotDepth` = 64 levels, the engine-wide cap `MGLimits.depth` (see
+  [the protocol](PROTOCOL.md)). Nesting counts the arrays and objects on one path (`[[1]]` is 2). At 64 levels the
+  recursive steps (the system JSON parser and encoder, `MGJSON(any:)`, `==`, hashing, freeing) stay far inside a
+  512 KiB thread stack, and a snapshot stored as JSON text always reads back. Real lessons nest 6 to 15 levels.
+  - The deepest part of a snapshot is a queued command, which 5 containers hold (the snapshot, `pending`, the entry,
+    `commands`, the command record). So every statement and every command may nest at most
+    `MGLessonLimits.statementDepth` = 59 levels (`lesson.depth`). This holds for stream statements (counted on the
+    text, before the system parser), the statements of `load`, and commands given to `apply`, which are values built
+    in code.
+  - A scene source is at most 61 levels deep: a scene statement holds its scene 1 level down, a `params` command
+    moves a value from 2 levels down in the command to 2 levels down in the source, and a `set` or `add` command
+    moves a value from 1 or 2 levels down to 3 levels down (`over` or `items`, the entry, the key). The `baseline`
+    copy is 2 levels down in the snapshot, so it reaches at most 63. `restore` refuses a deeper scene source with
+    `snapshot.depth`, so a restored session also makes only snapshots that fit.
+  - A lesson document may nest at most 63 levels (`MGLesson.parse`, `lesson.depth`), because 4 containers hold its
+    commands (the document, `beats`, the beat, `ops`). `load` then checks each statement against the 59 levels.
 
 `restore` keeps a first check as defence in depth: one bounded walk, before it reads any field or encodes anything.
 The walk keeps a lower bound of the canonical JSON size and stops when it passes the cap, so its work is bounded.
@@ -265,11 +273,11 @@ Compatibility (behaviour change for every lesson host, with or without `restore`
   placeholders.
 - A control over 1 KiB is refused (`control.bytes`). This affects only a registered template with a very long
   parameter name.
-- A statement or command that nests deeper than 507 levels is refused (`lesson.depth`). This affects only a raw
-  template's `params` nested more than about 500 levels. Before, a stream statement of 508 to 512 levels was accepted,
-  and a host `apply` took up to about 2,000 levels; such a session could make a snapshot that the system JSON parser
-  cannot read back. `restore` refuses a snapshot deeper than 512 levels (`snapshot.depth`; was 2,056 before this
-  release).
+- A statement or command that nests deeper than 59 levels is refused (`lesson.depth`), and a lesson document deeper
+  than 63 levels. This newly refuses a raw template's `params` nested more than about 55 levels in a lesson, which
+  was accepted before (a stream statement up to 512 levels, a host `apply` up to the patch size). Such a session
+  could crash on a small thread stack or make a snapshot that does not read back. `restore` refuses a snapshot deeper
+  than 64 levels, or a scene source deeper than 61 (`snapshot.depth`; the unreleased cap was 2,056).
 
 Work bound: `restore` runs every pending command through the engine again. The queue budget limits that to the
 commands of 96 KiB of JSON (a few thousand short commands). `MGLessonController.restore` does this on the main actor.
@@ -358,8 +366,8 @@ Limits (owner decision D5; scene limits in `MGLimits` do not change):
 | Id history (removed ids included) | 1024 | `lesson.ids.count` |
 | Filled line (queued text, due text, caption) | 2 KiB | `stmt.say.bytes` |
 | One bound control (canonical JSON) | 1 KiB | `control.bytes` |
-| Snapshot size (canonical JSON) / nesting | 291,570 bytes (derived) / 512 levels (the system JSON parser) | `snapshot.bytes` / `snapshot.depth` |
-| Nesting of one statement or command / of a lesson document | 507 / 511 levels (derived from the snapshot nesting) | `lesson.depth` |
+| Snapshot size (canonical JSON) / nesting | 291,570 bytes (derived) / 64 levels (`MGLimits.depth`) | `snapshot.bytes` / `snapshot.depth` |
+| Nesting of one statement or command / of a lesson document | 59 / 63 levels (derived from the snapshot nesting) | `lesson.depth` |
 
 Stream budget: every received byte counts toward the 32 KiB, including whitespace, garbage, oversized and
 unfinished text. Past the byte or statement limit the session emits one terminal refusal and ignores the rest of the
@@ -387,10 +395,10 @@ no form for them): a lesson document in `MGLesson.parse(json:)`, any statement i
 `.statement`), and a command in `apply`. A snapshot with such a value is refused whole by `restore`. Parsed text and
 streamed bytes cannot hold them.
 
-`lesson.depth` refuses a statement or command that nests deeper than 507 levels, and a lesson document deeper than 511
-levels. It is checked before anything else reads or walks the value (after `lesson.number` for a value built in code),
-with one walk that does not recurse, so a value of any depth built in code cannot exhaust the call stack. `restore`
-checks `snapshot.depth` the same way.
+`lesson.depth` refuses a statement or command that nests deeper than 59 levels, and a lesson document deeper than 63
+levels. It is checked before anything else reads, parses or walks the value: on text before the system parser, and on
+a value built in code (after `lesson.number`) with one walk that does not recurse. Its time is linear in the value's
+size, and no recursive step ever sees more than the cap. `restore` checks `snapshot.depth` the same way.
 
 Every reason is one token: ASCII letters, digits, `_`, `.` and `,`, at most 96 characters. In lesson-owned reasons
 (lesson, beat, check, control, `animate` and `unbind` keys and ids), author text becomes a segment of letters, digits

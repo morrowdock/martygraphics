@@ -174,7 +174,7 @@ of another family such as `scene.version`.
 `params` object is free-form JSON: strings, nested lists and objects that the
 numeric shapes above cannot express. The engine checks only that every number
 is finite (`template.params.number`), the nesting (at most `MGLimits.depth`,
-else `template.params.depth`) and the size (at most
+64 levels, else `template.params.depth`) and the size (at most
 `MGLimits.rawParamsBytes`, 4 KiB canonical, else `template.params.bytes`) and
 passes the whole object to `compile`, which validates it and throws an
 `MGError("template.<suffix>")` or returns nil to reject (same thrown-reason
@@ -211,22 +211,23 @@ is refused before it is measured or encoded: `scene.number` from
 template. `MGJSON.isEncodable` reports this; `canonicalByteCount` is `Int.max`
 for such a value, so no byte bound treats it as small.
 
-A value built in code can also nest deeper than any legal input, deep enough
-to exhaust the call stack of a recursive walk (the system encoder recurses once
-per level). Every entry point above first walks the value once without
-recursion and refuses nesting deeper than `MGLimits.depth` = 2,056 levels
-(arrays and objects on one path): `scene.depth`, `patch.depth` and
-`template.params.depth`. The reasons come in this order: `.number`, `.depth`,
-then the byte bound. The limit comes from the only free-form JSON in a scene
-or patch, a raw template's `params` of at most 4 KiB: a level takes at least two
-bytes, so it nests at most 2,048 levels, and up to 8 levels of wrapping are
-allowed above it. `canonicalData` and `canonicalByteCount` never encode a
-deeper value (`Int.max`), so other byte bounds refuse it too (for example
-`assembly.bytes` and `component.bytes` in [Solid 3D](SOLID-3D.md)), and
-`MGJSON(any:)` returns nil for one. Swift compares, hashes and frees nested
-values recursively, and so does `MGJSON.any`: give a deep value to an entry
-point, which refuses it; do not compare or convert it yourself. Lessons have a
-lower limit (507 levels, `lesson.depth`; see [lessons](LESSONS.md)).
+JSON nests at most `MGLimits.depth` = 64 levels (arrays and objects on one
+path; `[[1]]` is 2) at every entry point. Real scenes and patches nest 6 to 15
+levels. The system JSON parser and encoder, `MGJSON(any:)`, and Swift's `==`,
+hashing and freeing of nested values all recurse once per level. At 64 levels
+they stay far inside a 512 KiB thread stack (iOS secondary threads) and the
+1 MiB iOS main-thread stack; a few hundred nested objects can overflow them.
+So every entry point counts the nesting first, without recursion: on JSON text
+before the system parser (`scene(data:)`, `MGPatch.parse(data:)`, the stream
+parser), and on a value built in code before anything reads, compares or
+encodes it. A deeper value is `scene.depth`, `patch.depth` or
+`template.params.depth`. For a value built in code the reasons come in this
+order: `.number`, `.depth`, then the byte bound. `canonicalData` and
+`canonicalByteCount` never encode a deeper value (`Int.max`), and
+`MGJSON(any:)` returns nil for one. Do not compare, hash or convert
+(`MGJSON.any`) a deeper value yourself; give it to an entry point, which
+refuses it. Lessons and [Solid 3D](SOLID-3D.md) use the same cap (see
+[lessons](LESSONS.md)).
 
 The `params` patch operation merges **shallowly**, one top-level key at a time:
 
@@ -354,7 +355,7 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `template.<p>.spec`, `template.<p>.default`, `template.check`, `template.<rule>` | Out-of-contract record declaration or list default, generic cross-field failure, or a template's specific cross-field reason | Fix the pack declaration, or correct the named parameters. |
 | `template.params.bytes`, `template.build` | A raw template's params object is over 4 KiB, or a template returned nil, threw a non-`MGError` error or threw a reason outside `template.<suffix>` | Send a smaller object; check the template's own documentation. |
 | `scene.number`, `patch.number`, `template.params.number` | A value built in code holds NaN or an infinity | Send finite numbers. |
-| `scene.depth`, `patch.depth`, `template.params.depth` | A value built in code nests deeper than `MGLimits.depth` (2,056 levels) | Send a flatter value; no legal scene or patch nests that deep. |
+| `scene.depth`, `patch.depth`, `template.params.depth` | JSON text or a value built in code nests deeper than `MGLimits.depth` (64 levels) | Send a flatter value; real scenes and patches nest 6 to 15 levels. |
 | `3d.text.code` | `code` text in a 3D scene | Use plain text in 3D, or keep the scene 2D. |
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `vector.on`, `edge.nodes`, `highlight.target` | Reference is absent, has the wrong kind, or highlights itself | Fix references before applying the scene. |
@@ -386,7 +387,7 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | Geometry | Plot/path points up to 64; rope points up to 6 |
 | Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text; table 8 rows × 6 columns / cells up to 12 characters; region 3–64 points |
 | Raw template params | 4 KiB canonical `params` object |
-| Nesting of a value built in code | 2,056 levels (`MGLimits.depth`); lessons 507 per statement |
+| Nesting (arrays and objects on one path) | 64 levels (`MGLimits.depth`); lessons 59 per statement |
 
 Preserve bounds and rollback. Expansions need an actual use case, boundary/failure
 tests and measurements; see the [limits rationale](CAPABILITIES.md#bounds-are-part-of-the-contract).

@@ -54,6 +54,8 @@ extension MGLessonSession {
             let d = try MGParser.num(v, -1...1e9, what); guard d.rounded() == d else { throw MGError(what) }; return Int(d)
         }
         guard let source = o["scene"] else { throw MGError("snapshot.scene") }
+        // No deeper than a live session makes, so the next snapshot (with a `baseline` copy) still fits the cap.
+        guard source.measure().depth <= MGLessonLimits.sceneDepth else { throw MGError("snapshot.depth") }
         var scene = MGLessonEngine.lessonScene(try MGParser.scene(json: source).get())
         scene.revision = try int(o["rev"], "snapshot.rev")
         var s = MGLessonState(scene: scene)

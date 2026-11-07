@@ -54,6 +54,7 @@ public struct MGSolidComponent: Equatable, Sendable {
     /// Parses and structurally validates a definition. Nested components must already be in `library`.
     /// This expands the component at its defaults but does not compile it; `MGSolidLibrary.validate` also compiles.
     public static func parse(_ json: MGJSON, library: MGSolidLibrary) -> Result<MGSolidComponent, MGSolidIssue> {
+        if json.nestsTooDeep { return .failure(.init("component.nesting")) }
         do { return .success(try MGSolidComponents.definition(json, library)) }
         catch let e as MGSolidIssue { return .failure(e) }
         catch let e as MGError { return .failure(.init(e.reason)) }
@@ -98,6 +99,7 @@ public struct MGSolidLibrary: Equatable, Sendable {
 
     mutating func add(_ data: Data, compile: Bool) -> Result<MGSolidComponent, MGSolidIssue> {
         guard data.count <= MGSolidComponentLimits.bytes else { return .failure(.init("component.bytes")) }
+        guard MGJSON.textNesting(data) <= MGLimits.depth else { return .failure(.init("component.nesting")) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
             return .failure(.init("json"))
         }

@@ -163,9 +163,9 @@ final class LessonControllerRestoreTests: LessonTestCase {
         XCTAssertEqual(MGLessonLimits.snapshotBytes,
                        2 * (MGLimits.sceneBytes + MGLessonLimits.ids * 80 + MGLessonLimits.controls * MGLessonLimits.controlBytes + 256)
                        + MGLessonLimits.queueBytes + MGLessonLimits.lineBytes + (MGLimits.title * 4 + 2) + 2048)
-        XCTAssertEqual(MGLessonLimits.snapshotDepth, 512, "docs/LESSONS.md says 512 levels")
-        XCTAssertEqual(MGLessonLimits.statementDepth, 507, "docs/LESSONS.md says 507 levels")
-        XCTAssertEqual(MGLessonLimits.documentDepth, 511, "docs/LESSONS.md says 511 levels")
+        XCTAssertEqual(MGLessonLimits.snapshotDepth, 64, "docs/LESSONS.md says 64 levels")
+        XCTAssertEqual(MGLessonLimits.statementDepth, 59, "docs/LESSONS.md says 59 levels")
+        XCTAssertEqual(MGLessonLimits.documentDepth, 63, "docs/LESSONS.md says 63 levels")
         // The id history entry bound: the longest id with the longest kind and a 10-digit beat.
         let id = String(repeating: "h", count: 24)
         let longestKind = MGKind.allCases.map(\.rawValue).max { $0.utf8.count < $1.utf8.count }!
@@ -568,88 +568,7 @@ final class LessonControllerRestoreTests: LessonTestCase {
         XCTAssertNoThrow(try MGLessonSession.restore(with(valid, "caption", .string(atBound)), pacing: .speech, clock: clock).get())
     }
 
-    /// A raw template that takes any nested `tree` and draws one body.
-    static let nested = MGTemplate(name: "host_nested", summary: "nested tree", paramsDoc: "tree: any JSON", sample: .object(["tree": .number(0)])) { raw, _ in
-        guard raw["tree"] != nil else { throw MGError("template.tree") }
-        return MGTemplateBuild(title: "Tree", items: [MGMake.body("A", MGPoint(2, 2))])
-    }
-    func registerNested() throws {
-        try MGPacks.register(MGPack(id: "host_nested_pack", title: "Nested", summary: "nested raw params", templates: [Self.nested],
-                                    fixtures: [MGFixtures.Demo(id: "host_nested_demo", title: "Tree", json: #"{"v":1,"template":"host_nested","params":{"tree":[[0]]}}"#)]))
-    }
-    /// `levels` arrays around 0, as JSON text.
-    func tree(_ levels: Int) -> String { String(repeating: "[", count: levels) + "0" + String(repeating: "]", count: levels) }
-
-    /// Review 2 S2 and review 3 N2: the deepest legal raw-template scene, queued command, document and host `apply`
-    /// give snapshots that restore and also read back through the system JSON parser. One level deeper is refused on
-    /// each path (`lesson.depth`), and the session is unchanged.
-    func testDeepestLegalRawTemplateSnapshotRoundTripsAsJSONText() throws {
-        try registerNested()
-        let clock = MGManualClock()
-        func parses(_ text: String) -> Bool { (try? JSONSerialization.jsonObject(with: Data(text.utf8))) != nil }
-        // The snapshot cap is the nesting the system parser reads.
-        XCTAssertTrue(parses(tree(MGLessonLimits.snapshotDepth)))
-        /// Restores `snapshot`, and also its JSON text read back by the system parser.
-        func roundTrips(_ snapshot: MGJSON, _ pacing: MGPacing, _ what: String) throws {
-            XCTAssertLessThanOrEqual(snapshot.measure().depth, MGLessonLimits.snapshotDepth, what)
-            XCTAssertEqual(try MGLessonSession.restore(snapshot, pacing: pacing, clock: clock).get().snapshot(), snapshot, what)
-            let object = try JSONSerialization.jsonObject(with: snapshot.canonicalData)
-            let back = try XCTUnwrap(MGJSON(any: object), what)
-            XCTAssertEqual(back.canonicalData, snapshot.canonicalData, what)
-            XCTAssertNoThrow(try MGLessonSession.restore(back, pacing: pacing, clock: clock).get(), what)
-        }
-        // `tree(k)` nests k levels. The scene statement adds 3 (statement, scene, params), a params command adds 2.
-        let d = MGLessonLimits.statementDepth
-        func sceneStatement(_ k: Int) -> String { #"{"scene":{"v":1,"template":"host_nested","params":{"tree":"# + tree(k) + "}}}" }
-        func command(_ k: Int) -> String { #"{"op":"params","params":{"tree":"# + tree(k) + "}}" }
-        XCTAssertEqual(F.json(sceneStatement(d - 3)).measure().depth, d)
-        XCTAssertEqual(F.json(command(d - 2)).measure().depth, d)
-
-        var s = MGLessonSession(pacing: .speech, clock: clock)
-        let events = s.feed(lines([sceneStatement(d - 3), #"{"say":"One."}"#, #"{"say":"Two."}"#, command(d - 2), #"{"end":true}"#]))
-        XCTAssertEqual(F.refusals(events), [])
-        XCTAssertEqual(s.waitingBeats, 1)
-        let snapshot = s.snapshot()
-        XCTAssertEqual(snapshot.measure().depth, MGLessonLimits.snapshotDepth, "a queued command at the cap fills the snapshot cap exactly")
-        try roundTrips(snapshot, .speech, "stream")
-
-        // One level deeper: the system parser still reads the statement, the session refuses it and changes nothing.
-        XCTAssertTrue(parses(sceneStatement(d - 2)))
-        var t = MGLessonSession(pacing: .speech, clock: clock)
-        XCTAssertEqual(F.refusals(t.feed(lines([sceneStatement(d - 2)]))).map(\.reason), ["lesson.depth"])
-        XCTAssertNil(t.state)
-        t.feed(lines([sceneStatement(0), #"{"say":"One."}"#, #"{"say":"Two."}"#]))
-        let open = t.snapshot()
-        XCTAssertEqual(F.refusals(t.feed(lines([command(d - 1)]))).map(\.reason), ["lesson.depth"])
-        XCTAssertEqual(t.snapshot()["pending"], open["pending"])
-
-        // Host `apply` takes a value built in code (no parser): the same cap.
-        var a = MGLessonSession(pacing: .immediate, clock: clock)
-        a.feed(lines([sceneStatement(0), #"{"end":true}"#]))
-        func params(_ levels: Int) -> MGJSON { .object(["op": .string("params"), "params": .object(["tree": deep(levels)])]) }
-        XCTAssertNoThrow(try a.apply(params(d - 2)).get())
-        let applied = a.snapshot()
-        XCTAssertEqual(a.apply(params(d - 1)).failureReason, "lesson.depth")
-        XCTAssertEqual(a.snapshot(), applied, "a refused apply changes nothing")
-        try roundTrips(applied, .immediate, "apply")
-
-        // A lesson document: the deepest legal scene loads; a deeper scene is refused by `load` at its statement, and a
-        // document over its own cap by `parse`.
-        func document(sceneTree k: Int, opsTree: Int? = nil) -> MGJSON {
-            var beat: [String: MGJSON] = ["say": .string("One.")]
-            if let opsTree { beat["ops"] = .array([params(opsTree)]) }
-            return .object(["v": .number(1), "kind": .string("lesson"),
-                            "scene": .object(["v": .number(1), "template": .string("host_nested"), "params": .object(["tree": deep(k)])]),
-                            "beats": .array([.object(beat)])])
-        }
-        var l = MGLessonSession(pacing: .speech, clock: clock)
-        XCTAssertNoThrow(try l.load(MGLesson.parse(json: document(sceneTree: d - 3, opsTree: d - 2)).get()).get())
-        try roundTrips(l.snapshot(), .speech, "load")
-        let deeper = try MGLesson.parse(json: document(sceneTree: d - 2)).get()
-        XCTAssertEqual(l.load(deeper).map { _ in () }.failureReason, "lesson.depth")
-        XCTAssertEqual(document(sceneTree: 0, opsTree: d - 2).measure().depth, MGLessonLimits.documentDepth)
-        XCTAssertEqual(MGLesson.parse(json: document(sceneTree: 0, opsTree: d - 1)).map { _ in () }.failureReason, "lesson.depth")
-    }
+    // The deepest legal snapshot round trip (review 2 S2, review 3 N2) is in DeepJSONGuardTests, on a 512 KiB stack.
 
     /// Review 3 N4: a restored title follows the live header rule, including the decimal-literal rule.
     func testRestoredTitleFollowsTheDecimalLiteralRule() throws {

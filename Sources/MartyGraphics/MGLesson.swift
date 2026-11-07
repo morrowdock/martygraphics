@@ -44,20 +44,22 @@ public enum MGLessonLimits {
     /// Snapshot size cap: the state and the queue baseline, the queued beats, the caption, the title and the fixed
     /// fields. `restore` refuses a larger snapshot (`snapshot.bytes`) before it reads any field.
     public static let snapshotBytes = 2 * stateWireBytes + queueBytes + lineBytes + titleBytes + 2 * 1024
-    /// Nesting cap of a snapshot (`snapshot.depth`): the most arrays and objects on one path. It is the nesting that the
-    /// system JSON parser (`JSONSerialization`) reads, so a snapshot that is stored as JSON text always reads back.
-    public static let snapshotDepth = 512
-    /// Nesting cap of one statement or command (`lesson.depth`): a stream statement, a statement of `load`, and a
-    /// command given to `apply` (a value built in code, with no parser). A queued command is the deepest part of a
-    /// snapshot: 5 containers hold it (the snapshot, `pending`, the entry, `commands`, the command record). A scene
-    /// source has 1 or 2 above it (state or `baseline`) and comes from a statement that adds 1; a queued check has 5
-    /// above it and comes from a statement that adds 1. So with this cap every snapshot a session makes fits
-    /// `snapshotDepth`.
+    /// Nesting cap of a snapshot (`snapshot.depth`): the most arrays and objects on one path. It is the engine-wide cap
+    /// `MGLimits.depth` (64), so a snapshot that is stored as JSON text reads back through `MGJSON(any:)` too.
+    public static let snapshotDepth = MGLimits.depth
+    /// Nesting cap of one statement or command (`lesson.depth`): a stream statement (counted on its text, before the
+    /// system parser), a statement of `load`, and a command given to `apply` (a value built in code). A queued command
+    /// is the deepest part of a snapshot: 5 containers hold it (the snapshot, `pending`, the entry, `commands`, the
+    /// command record). So every snapshot a session makes fits `snapshotDepth`.
     public static let statementDepth = snapshotDepth - 5
-    /// Nesting cap of a lesson document (`MGLesson.parse(json:)`, `lesson.depth`): its deepest statements are commands,
-    /// which 4 containers hold (the document, `beats`, the beat, `ops`). `load` then checks each statement against
-    /// `statementDepth`.
+    /// Nesting cap of a lesson document (`MGLesson.parse`, `lesson.depth`): its deepest statements are commands, which
+    /// 4 containers hold (the document, `beats`, the beat, `ops`). `load` then checks each statement.
     static let documentDepth = statementDepth + 4
+    /// Deepest scene source a live session makes: a scene statement holds its scene 1 level down; a `params` command
+    /// puts a value 2 levels down in the source (`params`, the key) from 2 levels down in the command, and a `set` or
+    /// `add` command 3 levels down (`over` or `items`, the entry, the key) from 1 or 2 levels down. `restore` refuses a
+    /// deeper scene source (`snapshot.depth`), so the `baseline` copy (2 levels down) still fits `snapshotDepth`.
+    static let sceneDepth = statementDepth + 2
 }
 
 /// Who sent a command. A learner command is gated (bound control, value in range) and then takes the SAME path as a
@@ -221,6 +223,7 @@ public struct MGLesson: Equatable, Sendable {
 
     public static func parse(data: Data) -> Result<MGLesson, MGLessonIssue> {
         guard data.count <= MGLessonLimits.lessonBytes * 2 else { return .failure(.init("lesson.bytes")) }
+        guard MGJSON.textNesting(data) <= MGLessonLimits.documentDepth else { return .failure(.init("lesson.depth")) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else { return .failure(.init("lesson.json")) }
         return parse(json: json)
     }

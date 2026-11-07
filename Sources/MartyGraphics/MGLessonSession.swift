@@ -387,6 +387,9 @@ public struct MGLessonSession {
         case .garbage: refuse("stmt.json", index)
         case .tooLong: refuse("stmt.bytes", index)
         case .statement(let raw):
+            // Counted on the text, before the system parser (which recurses once per level) and before a snapshot
+            // could hold it (`statementDepth`).
+            guard MGJSON.textNesting(raw) <= MGLessonLimits.statementDepth else { return refuse("lesson.depth", index) }
             guard let object = try? JSONSerialization.jsonObject(with: Data(raw)), let json = MGJSON(any: object) else { return refuse("stmt.json", index) }
             statement(json, index)
         }
@@ -394,8 +397,6 @@ public struct MGLessonSession {
     }
 
     mutating func statement(_ json: MGJSON, _ index: Int) {
-        // The system parser reads a little deeper than a snapshot can hold above a queued statement (`statementDepth`).
-        guard json.measure().depth <= MGLessonLimits.statementDepth else { return refuse("lesson.depth", index) }
         guard let o = json.objectValue else { return refuse("stmt.kind", index) }
         if o["op"] != nil { return command(json, index) }
         guard o.count == 1, let (key, value) = o.first else { return refuse("stmt.kind", index) }
