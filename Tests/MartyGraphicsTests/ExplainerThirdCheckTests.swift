@@ -128,3 +128,45 @@ final class ExplainerThirdCheckTests: ExplainerTestCase {
         XCTAssertTrue(dueLines(g.tick()).isEmpty)
     }
 }
+
+/// The board's frames and the session's settle time use ONE clock (the coordinator's follow-up to the third check).
+final class ExplainerBoardClockTests: ExplainerTestCase {
+    /// θ label of the frame a board draws `elapsed` seconds into its adopted transition (the board's own sampling path:
+    /// `MGAdoption.plan`, then `MGTween.sample` of its keyframe segments).
+    @MainActor func drawnTheta(_ board: MGSceneController, previous: [MGItem], elapsed: Double) -> String? {
+        guard let scene = board.scene else { return nil }
+        let plan = MGAdoption.plan(previous: previous, next: scene.items, transition: board.transition, step: 0, drawsOn: true)
+        let items = plan.segments.isEmpty || elapsed >= plan.duration ? scene.items : MGTween.sample(plan.segments, at: max(0, elapsed))
+        return items.first { $0.id == "ltheta" }?.text
+    }
+
+    @MainActor func testWallClockJumpCannotShowAnEarlierFrame() {
+        let clock = MGManualClock()
+        let c = MGExplainerController(pacing: .speech, clock: clock)
+        XCTAssertTrue(c.board.presentationClock === clock, "the host draws the board on the session's clock")
+        c.begin()
+        c.feed(ExplainerThirdCheckTests.animatedLines.joined(separator: "\n") + "\n"); c.endStream()
+        let before = c.board.scene?.items ?? []
+        c.lineEnded(0)
+        // The view starts its transition clock on the board's time base when it adopts the change.
+        let transition = MGTransitionClock(start: c.board.presentationDate())
+        // The wall clock jumps back one hour; the session's monotonic clock moves on 6 s.
+        c.board.wallClock = { Date().addingTimeInterval(-3600) }
+        clock.advance(by: .seconds(6)); c.next()
+        XCTAssertTrue(c.session.boardSettled)
+        XCTAssertEqual(c.session.caption, "The angle is 90°.")
+        let elapsed = transition.elapsed(at: c.board.presentationDate())
+        XCTAssertEqual(elapsed, 6, accuracy: 1e-6, "the board's time follows the session's clock, not the wall clock")
+        XCTAssertEqual(drawnTheta(c.board, previous: before, elapsed: elapsed), "θ = 90°", "the drawn frame says what the caption says")
+        // Without one clock (the wall clock as the time base), the same jump would draw the first frame again.
+        let wall = MGSceneController()
+        wall.wallClock = { Date() }
+        wall.show(c.board.scene, transition: c.board.transition)
+        let wallStart = MGTransitionClock(start: wall.presentationDate())
+        wall.wallClock = { Date().addingTimeInterval(-3600) }
+        XCTAssertEqual(drawnTheta(wall, previous: before, elapsed: wallStart.elapsed(at: wall.presentationDate())), "θ = 0°")
+        // A lesson host uses its clock the same way.
+        let lessonClock = MGManualClock()
+        XCTAssertTrue(MGLessonController(pacing: .speech, clock: lessonClock).board.presentationClock === lessonClock)
+    }
+}
