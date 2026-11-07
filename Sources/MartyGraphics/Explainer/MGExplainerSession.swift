@@ -290,6 +290,15 @@ public struct MGExplainerSession {
             for output in scanner.push(byte) { handle(output) }
         }
         absorb(lesson.tick())
+        return deliverable()
+    }
+
+    /// The events of one host call. A host adopts the board once per call, so when the call presented several beats,
+    /// only the line of the last one (the beat the board then shows) is due; the skipped beats' lines are dropped from
+    /// what the call returns (the history keeps them).
+    mutating func deliverable() -> [MGExplainerEvent] {
+        let shownLast = outbox.compactMap { e -> Int? in if case .beatPresented(let k) = e { return k }; return nil }.last
+        if let last = shownLast { outbox.removeAll { if case .lineDue(let k, _, _) = $0 { return k != last }; return false } }
         return outbox
     }
 
@@ -302,7 +311,7 @@ public struct MGExplainerSession {
             absorb(lesson.endStream())
             stream.ended = true
         }
-        return outbox
+        return deliverable()
     }
 
     /// Load a whole document. All-or-nothing: the document is validated statement by statement in a fresh session and
@@ -317,6 +326,9 @@ public struct MGExplainerSession {
             if let issue = events.lazy.compactMap({ if case .refused(let i) = $0 { return i } else { return nil } }).first { return .failure(issue) }
         }
         self = trial
+        // A host adopts the board once, after the whole document: only the line of the beat it then shows is due.
+        let shownLast = all.compactMap { e -> Int? in if case .beatPresented(let k) = e { return k }; return nil }.last
+        all.removeAll { if case .lineDue(let k, _, _) = $0 { return k != shownLast }; return false }
         return .success(all)
     }
 
@@ -342,15 +354,22 @@ public struct MGExplainerSession {
             motionSerial = lesson.changeSerial
         }
         motionLength = .zero
-        // A line that waited for the board is due now, before `finishNow` ends it.
-        releaseHeldLine()
+        let held = heldLine
+        heldLine = nil
         let before = lesson.hostIssues.count
         let events = lesson.finishNow()
         for i in lesson.hostIssues.dropFirst(before) { hostIssues.append(MGExplainerIssue(i, view: .beat)) }
         current = .beat
+        // A line that waited for the board is due now, before `finishNow` ends it, but only when its beat is still the
+        // one shown: when `finishNow` presents later beats, the board shows the last of them, so the waiting line is
+        // dropped (never spoken against another state).
+        if let h = held, !events.contains(where: { if case .beatPresented = $0 { return true }; return false }) {
+            heldLine = h
+            releaseHeldLine()
+        }
         absorb(events)
         releaseHeldLine()
-        return outbox
+        return deliverable()
     }
     @discardableResult public mutating func tick() -> [MGExplainerEvent] { host { $0.tick() } }
     @discardableResult public mutating func resume() -> [MGExplainerEvent] {
@@ -370,7 +389,7 @@ public struct MGExplainerSession {
         let events = call(&lesson)
         for i in lesson.hostIssues.dropFirst(before) { hostIssues.append(MGExplainerIssue(i, view: .beat)) }
         absorb(events)
-        return outbox
+        return deliverable()
     }
 
     /// A learner moved control `id` to `value` (the lesson path: refused, never clamped).
@@ -761,6 +780,11 @@ public struct MGExplainerSession {
 
     mutating func absorb(_ events: [MGLessonEvent]) {
         syncMotion()
+        // Several beats presented in one call (`finishNow`, `.immediate` over a whole document): the board adopts only
+        // the last one, so only its line may be spoken; the lines of the beats it skipped are not due (their captions
+        // are kept for the report).
+        let shownLast = events.compactMap { e -> Int? in if case .beatPresented(let k) = e { return k }; return nil }.last
+        if shownLast != nil, let held = heldLine, held.beat != shownLast { heldLine = nil }
         for e in events {
             switch e {
             case .accepted(let i): emit(.accepted(statement: i))
@@ -768,9 +792,11 @@ public struct MGExplainerSession {
             case .firstPresented: timing.boardPresentedAt = clock.now; emit(.boardPresented)
             case .lineQueued(let k, let t): emit(.lineQueued(beat: k, text: t))
             case .lineDue(let k, let t, let c):
+                guard shownLast == nil || k == shownLast else { captions[k] = t; continue }
                 // Speech is learner-visible: a line with a 2D engine number is due only when the board shows the
-                // state it describes. While the board still moves, the line waits (`heldLine`); see `releaseHeldLine`.
-                if !boardSettled, let info = beats[k], info.unchecked == nil, Self.hasPlainPlaceholder(info.say) {
+                // state it describes, whatever the beat's word tier (`unchecked` too). While the board still moves,
+                // the line waits (`heldLine`); see `releaseHeldLine`.
+                if !boardSettled, let info = beats[k], Self.hasPlainPlaceholder(info.say) {
                     heldLine = (k, c)
                     if case .estimate = pacing, let end = lesson.lineEndsAt { lesson.lineEndsAt = end + motionRemaining }
                 } else {

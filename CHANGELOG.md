@@ -50,6 +50,8 @@
     (speech is learner-visible); `finishNow` and `.immediate` pacing give the board the end state as a direct change
     in the same step; restore applies the board rules to every held scene (a forged heading is
     `explainer.board.title`) and keeps no inner lesson title.
+  - Fourth-check fixes (PR #32): when one call presents several beats (`finishNow`, `.immediate`), only the shown
+    beat's line is due; the speech wait applies to every 2D engine placeholder, also in an `unchecked` line.
   - The board view draws its transitions on `MGSceneController.presentationClock` when set (default nil: the wall
     clock, as before). `MGLessonController` and `MGExplainerController` set their session's monotonic clock, so a
     wall-clock jump cannot show an earlier frame while the session says the board has settled.
@@ -59,10 +61,6 @@
     through `checkedAnnotations` (`MGSolidRenderer(document:)`, `show(document:view:)`, the frame overlay). A
     caption, the title or board text may show a `dim.<id>` fact only when it holds at every pose of its views
     (`text.pose.beat.<n>`, `text.pose.title`, `text.pose.board`).
-  - Not in this PR: 3D annotations (labels, arrows, dimensions; open-vocabulary PR 3a, still in review). Their ids
-    join the namespace, the claims and the report at marked seams once it merges; until then `annotations` in a
-    solid is refused with `assembly.unknown.annotations`. The card's 3D example shows its facts in captions instead
-    of an arrow and a dimension.
 - Docs: showcase 3D annotations with the hand-built winch example (two stills, its strict check output and a capture receipt in `docs/assets/annotations`, a SHOWCASE section and a README paragraph). No code change.
 - Add 3D annotations to assembly v2 (open vocabulary 3a): a top-level `annotations` object with `labels`, `arrows`
   and `dimensions`, and a step key `annotate`. Both are refused in v1 documents with the usual reasons
