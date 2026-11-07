@@ -37,11 +37,10 @@ final class ExplainerNamespaceTests: ExplainerTestCase {
         XCTAssertNil(XFix.refusal(XFix.doc(board: Self.board("output"), solid: Self.stage, beats: #"[{"say":"Hi.","highlight":["output","stage.output"]}]"#)))
     }
 
-    // N5 (SEAM, PR 3a): annotation ids join the namespace once `annotations` merges. Until then the key is an unknown
-    // v2 key inside the solid, refused with the assembly's own reason.
-    func testN5AnnotationsSeam() {
+    // N5: a 2D item equal to a 3D annotation id (PR 3a) collides, in both statement orders.
+    func testN5AnnotationIDCollision() {
         let solid = String(Self.solid("box").dropLast()) + #","annotations":{"labels":[{"id":"lab","at":"box","text":"Box"}]}}"#
-        XCTAssertEqual(XFix.refusal(XFix.doc(board: Self.board("lab"), solid: solid, beats: #"[{"say":"Hi."}]"#))?.reason, "assembly.unknown.annotations")
+        assertCollision(board: Self.board("lab"), solid: solid, "explainer.id.duplicate.lab")
     }
 
     // N6: an `add` op that introduces a 3D id is refused; the state is unchanged.

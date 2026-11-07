@@ -26,8 +26,11 @@ extension MGExplainerSession {
             for c in doc.claims where c.kind == .motion {
                 out.append(MGExplainerClaim(kind: .motion, id: c.id, tier: c.tier, badge: c.badge, why: c.why))
             }
+            // 3D annotation claims (PR 3a), in authored order: labels, arrows, dimensions.
+            for c in doc.claims where c.kind == .annotation {
+                out.append(MGExplainerClaim(kind: .annotation, id: c.id, tier: c.tier, badge: c.badge, why: c.why))
+            }
         }
-        // SEAM (PR 3a): annotation claims (labels, arrows, dimensions in authored order) go here.
         if let t = titleTier {
             let why = t == .solved ? "Its numbers are engine facts" : t == .described ? "Title has typed numbers" : "It shows a fact below Solved"
             out.append(MGExplainerClaim(kind: .title, id: "title", tier: t, badge: t.badge(.title), why: why))
@@ -132,7 +135,7 @@ extension MGExplainerSession {
     }
 
     /// The one legend (owner D4).
-    public var legend: MGExplainerLegend { MGExplainerLegend(claims) }
+    public var legend: MGExplainerLegend { MGExplainerLegend(claims, solidNotes: solid?.legend.notes ?? []) }
 
     /// Note keys that name no 2D item that was ever on the board (`notes.unused.<id>`), sorted.
     public var unusedNotes: [String] {
@@ -348,6 +351,7 @@ extension MGExplainerSession {
             case .success(let l): s.lesson = l
             }
             if s.board == nil, s.frozen != s.lesson.boardless { throw MGError("snapshot.board") }
+            if let doc = s.solid, let r = s.poseRefusal(doc, stepOf: s.stepOf) { throw MGError(r) }
             // Every scene the lesson holds (shown and baseline), and every queued command, with the explainer's rules.
             view = .board
             var held = [s.lesson.state, s.lesson.projected].compactMap { $0 }

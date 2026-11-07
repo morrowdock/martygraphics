@@ -59,11 +59,11 @@ public struct MGExplainerLegend: Equatable, Sendable {
     public var claims: [MGExplainerClaim]
     public var solved: Int, schematic: Int, given: Int, described: Int
     public var text: String
-    /// Engine notes, one line each: "Some motion is schematic" (a motion claim below Solved) and "Shapes and drawings as
-    /// authored" (always).
+    /// Engine notes, one line each: "Some motion is schematic" (a motion claim below Solved), the solid's own notes
+    /// ("Arrow lengths are not to scale") and "Shapes and drawings as authored" (always).
     public var notes: [String]
 
-    init(_ claims: [MGExplainerClaim]) {
+    init(_ claims: [MGExplainerClaim], solidNotes: [String] = []) {
         self.claims = claims
         solved = claims.filter { $0.tier == .solved }.count
         schematic = claims.filter { $0.tier == .built && $0.kind != .data }.count
@@ -77,6 +77,8 @@ public struct MGExplainerLegend: Equatable, Sendable {
         text = groups.isEmpty ? "No engine-checked claims" : groups.joined(separator: " · ")
         var notes: [String] = []
         if claims.contains(where: { $0.kind == .motion && $0.tier < .solved }) { notes.append("Some motion is schematic") }
+        // The solid's own notes (for example "Arrow lengths are not to scale"), once each.
+        for n in solidNotes where !notes.contains(n) && n != "Some motion is schematic" { notes.append(n) }
         notes.append("Shapes and drawings as authored")
         self.notes = notes
     }
@@ -218,7 +220,7 @@ enum MGExplainerHonesty {
     // MARK: Namespace
 
     /// The 3D namespace in canonical order: for each resolved part, its component instance ids (outermost first), its
-    /// `repeat` base id and its own id; then anchor names, sorted. Later (3a): annotation ids in authored order.
+    /// `repeat` base id and its own id; then anchor names, sorted; then annotation ids in authored order.
     static func ids3D(_ doc: MGSolidDocument) -> [String] {
         var out: [String] = [], seen = Set<String>()
         func add(_ s: String) { if seen.insert(s).inserted { out.append(s) } }
@@ -229,7 +231,8 @@ enum MGExplainerHonesty {
             add(p.id)
         }
         for a in doc.aliases.keys.sorted() { add(a) }
-        // SEAM (PR 3a): annotation ids (labels, arrows, dimensions in authored order) join here once `annotations` merges.
+        // 3D annotation ids (PR 3a): labels, arrows, dimensions, in authored order.
+        for a in doc.annotations.ids { add(a) }
         return out
     }
 

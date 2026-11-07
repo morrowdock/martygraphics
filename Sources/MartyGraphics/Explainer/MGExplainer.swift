@@ -118,8 +118,8 @@ public struct MGExplainer: Equatable, Sendable {
 
     static let keys: Set<String> = ["v", "kind", "title", "primary", "notes", "board", "solid", "beats"]
     static let beatKeys: Set<String> = ["say", "unchecked", "ops", "check", "highlight", "view"]
-    /// Keys of a beat `view`: the v2 step view keys. (PR 3a adds `annotate`.)
-    static let viewKeys: Set<String> = ["focus", "explode", "camera", "orbit", "spin", "section", "ghost"]
+    /// Keys of a beat `view`: the v2 step view keys, `annotate` included (PR 3a).
+    static let viewKeys: Set<String> = ["focus", "explode", "camera", "orbit", "spin", "section", "ghost", "annotate"]
 
     /// The top-level `kind` value of a JSON document, for a tool that dispatches between formats. Read with the engine's
     /// guards first (at most `MGExplainerLimits.rawBytes`, UTF-8 only, nesting at most `MGLimits.depth`); nil when the

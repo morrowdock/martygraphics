@@ -22,5 +22,6 @@ $B/marty-solid render Examples/Explainers/gears-mixed.explainer.json /tmp/gears-
 The still above is `beat-1.png` of `marty-solid render` on `gears-mixed.explainer.json` (receipt:
 [`docs/assets/explainer/provenance.json`](../../docs/assets/explainer/provenance.json)).
 
-The 3D example in the open-vocabulary spec also shows a motion arrow and a centre-distance dimension. Those need 3D
-annotations (open-vocabulary PR 3a), which are not merged yet; this example shows the same facts in captions.
+The 3D example in the open-vocabulary spec also shows a motion arrow and a centre-distance dimension. 3D annotations
+(open-vocabulary PR 3a) now work in explainers; this card example keeps its facts in captions so the card stays small
+(tests cover an explainer with a label and a dimension).

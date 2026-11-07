@@ -429,7 +429,7 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     let title = session.title ?? ""
     let solidDoc = session.solid
     let renderer = solidDoc.map { d -> MGSolidRenderer in
-        let r = MGSolidRenderer(assembly: d.assembly)
+        let r = MGSolidRenderer(document: d)   // annotations draw only for this document, through the one gate
         r.emphasis = .strong   // a highlight must read at a glance in a still, as on the 2D board
         return r
     }
@@ -440,17 +440,27 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Bool = true) throws -> CGImage? {
         guard let r = renderer, let d = solidDoc else { return nil }
         let step = view.step
-        r.show(view.solid ?? d.view(step: nil))
-        r.highlight(Set(view.solidHighlight), dimOthers: !view.solidHighlight.isEmpty)
+        let shown = view.solid ?? d.view(step: nil)
         let params = MGPoseParameters(input: d.defaults.input + (spin ? (step?.spin ?? 0) : 0) * 2 * .pi, explode: step?.explode ?? d.defaults.explode)
         r.apply(params)
+        r.show(document: d, view: shown)
+        r.highlight(Set(view.solidHighlight), dimOthers: !view.solidHighlight.isEmpty)
+        r.highlightAnnotations(Set(view.annotations))
         let p = MGSolidCamera.presets[step?.camera ?? "hero"] ?? MGSolidCamera.presets["hero"]!
         r.frame(params, explodeRange: [0, params.explode], yaw: p.yaw + (step?.orbit ?? 0), pitch: p.pitch,
                 aspect: Double(rect.width / rect.height), margin: 0.8)
         let t0 = Date()
         guard let img = r.render(width: Int(rect.width), height: Int(rect.height)) else { throw CLIError.invalid("render failed (no Metal device?)") }
         seconds += Date().timeIntervalSince(t0); frames += 1
-        return img
+        guard !shown.annotations.isEmpty else { return img }
+        // Labels, value texts and callouts from the same placement function as the snapshot and the SwiftUI overlay.
+        let frame = MGSolidAnnotations.frame(document: d, view: shown, params: params, camera: r.camera, width: Double(img.width),
+                                             height: Double(img.height), highlight: view.solidHighlight)
+        let ctx = CGContext(data: nil, width: img.width, height: img.height, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
+        MGSolidOverlay.draw(frame, document: d, legend: false, in: ctx, width: img.width, height: img.height)
+        return ctx.makeImage()!
     }
     func record(_ name: String, _ fields: [String: MGJSON]) throws {
         let u = out.appendingPathComponent(name)

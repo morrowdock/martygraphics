@@ -53,10 +53,12 @@
   - The board view draws its transitions on `MGSceneController.presentationClock` when set (default nil: the wall
     clock, as before). `MGLessonController` and `MGExplainerController` set their session's monotonic clock, so a
     wall-clock jump cannot show an earlier frame while the session says the board has settled.
-  - Not in this PR: 3D annotations (labels, arrows, dimensions; open-vocabulary PR 3a, still in review). Their ids
-    join the namespace, the claims and the report at marked seams once it merges; until then `annotations` in a
-    solid is refused with `assembly.unknown.annotations`. The card's 3D example shows its facts in captions instead
-    of an arrow and a dimension.
+  - 3D annotations (PR 3a, merged before this PR) inside explainers: annotation ids join the one namespace,
+    annotation claims and the solid's legend notes join the one legend, beat views take `annotate`
+    (`view.annotate…`), the check report carries the assembly's `annotations`, and hosts draw annotations only
+    through `checkedAnnotations` (`MGSolidRenderer(document:)`, `show(document:view:)`, the frame overlay). A
+    caption, the title or board text may show a `dim.<id>` fact only when it holds at every pose of its views
+    (`text.pose.beat.<n>`, `text.pose.title`, `text.pose.board`).
 - Add 3D annotations to assembly v2 (open vocabulary 3a): a top-level `annotations` object with `labels`, `arrows`
   and `dimensions`, and a step key `annotate`. Both are refused in v1 documents with the usual reasons
   (`assembly.unknown.annotations`, `step.unknown.annotate`). Anchors name a part (its origin, an `offset` in its frame

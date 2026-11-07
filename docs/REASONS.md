@@ -379,7 +379,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `annotation.pose.<id>` | assembly | A shown annotation's claim does not hold at every pose its view can show (a step's `spin` range at its explode value, or the plain view's default pose), decided exactly: a shown dimension, or a `dim.<id>` fact its text shows, that changes during the view or differs at the view's pose; a gravity arrow that turns or does not point down; a motion line arrow that rides a turning joint in a moving step, or whose `expect` fails at some pose; a stated `sense` that a backwards step reverses. |
 | `dimension.over.motion.<id>` | assembly | A dimension with `over` is not one whose exact range the engine has: a distance (optionally along an axis) with exactly one anchor that moves, by one prismatic joint with a linear drive or a crank-slider, the other anchor staying where it is. |
 | `text.pose.step.<n>` | assembly | A step caption shows a `dim.<id>` fact that does not hold at every pose the step can show. |
-| `text.pose.title` | assembly | The title shows a `dim.<id>` fact that does not hold at every pose of every view. |
+| `text.pose.title` | assembly, explainer | The title shows a `dim.<id>` fact that does not hold at every pose of every view. |
 | `dimension.over.<id>` | assembly | A dimension has `over` but no anchor that moves. |
 | `dimension.fact.<id>` | assembly | The fact name `dim.<id>` already exists (for example a part named `dim`). |
 | `dimension.text.<id>` | assembly | A dimension's text does not show its own value `{dim.<id>}`. |
@@ -551,6 +551,11 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `view.section.parts` | explainer | A beat view's section `parts` is not an array of 1–16 strings. |
 | `view.section.missing.<keys>` | explainer | A beat view's `section` has no `normal` or no `parts`. |
 | `view.section.unknown.<keys>` | explainer | A beat view's `section` has keys it does not allow. |
+| `view.annotate` | explainer | A beat view's `annotate` is not an array of strings (the assembly's `step.annotate`). |
+| `view.annotate.count` | explainer | A beat view's `annotate` lists more than 12 annotations. |
+| `view.annotate.ref.<id>` | explainer | A beat view's `annotate` names no annotation. |
+| `text.pose.beat.<n>` | explainer | Beat `<n>`'s caption shows a `dim.<id>` fact that does not hold at every pose its view can show (the assembly's `text.pose.step.<n>` rule). |
+| `text.pose.board` | explainer | 2D board text shows a `dim.<id>` fact that does not hold at every pose of every view (the rule for shown text). |
 | `check.unknown.<keys>` | explainer | A 3D check (dotted `value`) has keys it does not allow (the assembly's `step.check.unknown.<keys>`). |
 | `text.number.beat.<n>` | explainer | Beat `<n>`'s caption types a number character outside a placeholder and has no `unchecked` (rule N1). |
 | `text.number.item.<id>` | explainer | A 2D item without a note shows a typed number: in its text, a table or array cell, a bar value or a plot range (rule N1). |

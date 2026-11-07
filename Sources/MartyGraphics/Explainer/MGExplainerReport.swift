@@ -121,10 +121,11 @@ public struct MGExplainerReport: Equatable, Sendable {
             "title": s.title.map(MGJSON.string) ?? .null, "primary": .string(s.primary ?? (s.solid != nil ? "solid" : "board")),
             "views": .object(["board": boardJSON, "solid": solidJSON]),
             "ids": .object(["board": .array(ids.board.map { .string($0) }), "controls": .array(ids.controls.map { .string($0) }),
-                            "solid": .array(ids.solid.map { .string($0) }), "annotations": .array([])]),
+                            "solid": .array(ids.solid.filter { !(s.solid?.annotations.ids.contains($0) ?? false) }.map { .string($0) }),
+                            "annotations": .array((s.solid?.annotations.ids ?? []).map { .string($0) })]),
             "beats": .array(beats),
-            // SEAM (PR 3a): one entry per annotation once `annotations` merges.
-            "annotations": .array([]),
+            // One entry per 3D annotation (the assembly report's `annotations`, PR 3a).
+            "annotations": s.solid?.annotationReport ?? .array([]),
             "legend": .object(["text": .string(legend.text),
                                "groups": .object(["solved": num(legend.solved), "schematic": num(legend.schematic),
                                                   "given": num(legend.given), "described": num(legend.described)]),
