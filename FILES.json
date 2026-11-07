@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "1a2ce281ae737d2e72d07eb3a20bfc502911da16ac40592f6d290520b07b8ae7"
+      "sha256": "a6db3cea8499cedcb1a52035a2bb8e378b159c7849a3678ad6e8d38ad504b99e"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -323,7 +323,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTemplates.swift",
-      "sha256": "fe4065cd69fdcdef548698e6dae12f107bf8bbe74fbb2385d05c227d4d08bbcb"
+      "sha256": "0728206b7fab68ebdab5f80e216e179838fcbe54836688d80e9649f915105ed7"
     },
     {
       "path": "Sources/MartyGraphics/MGTheme.swift",
@@ -560,6 +560,10 @@
     {
       "path": "Tests/MartyGraphicsTests/TimelineRegressionTests.swift",
       "sha256": "bfe38bf0c31b8825d87aab8eb4a01d5317441007ac8e21311a6fe63623ae401d"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/TwoPointersStepLimitTests.swift",
+      "sha256": "248e4474fc3a7c82180c2a48445b578bc55605129d00cd421e2ba13353074090"
     },
     {
       "path": "docs/CAPABILITIES.md",

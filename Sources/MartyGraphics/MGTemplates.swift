@@ -361,7 +361,7 @@ public enum MGTemplates {
                     if at == nil { steps.append(MGStep(say: "Nothing there: \(a) isn't in the tree.")); break }
                 }
             }
-            return MGTemplateBuild(title: "Binary search tree", items: items, steps: Array(steps.prefix(MGLimits.steps)), values: v)
+            return MGTemplateBuild(title: "Binary search tree", items: items, steps: Array(steps.prefix(MGLimits.templateSteps)), values: v)
         })
 
     // MARK: Two pointers on a sorted array
@@ -379,7 +379,7 @@ public enum MGTemplates {
             let f = { (d: Double) in MGPhysics.format(d, unit: "") }
             var steps = [MGStep(say: "Find two numbers that add to \(f(target)). Start L at the smallest, R at the largest.", focus: "arr")]
             var l = 0, r = a.count - 1
-            while l < r, steps.count < MGLimits.steps {
+            while l < r, steps.count < MGLimits.templateSteps - 1 {   // keep one step for the closing line
                 let sum = a[l] + a[r]
                 if sum == target {
                     steps.append(MGStep(say: "\(f(a[l])) + \(f(a[r])) = \(f(sum)). Found the pair.", focus: "arr",
@@ -391,7 +391,7 @@ public enum MGTemplates {
                 steps.append(MGStep(say: "\(f(a[small ? l - 1 : l])) + \(f(a[small ? r : r + 1])) = \(f(sum)) is too \(small ? "small, so move L right" : "big, so move R left").",
                                     focus: "arr", edits: [MGEdit(id: "arr", key: "ptrs", value: ptrs(l, r))]))
             }
-            if l >= r, steps.count < MGLimits.steps { steps.append(MGStep(say: "The pointers met: no pair adds to \(f(target)).")) }
+            if l >= r, steps.count < MGLimits.templateSteps { steps.append(MGStep(say: "The pointers met: no pair adds to \(f(target)).")) }
             let v: [String: MGValue] = ["target": .init(value: target, unit: "")]
             return MGTemplateBuild(title: "Two pointers", items: [arr, MGMake.text("goal", MGPoint(6, 6.6), "target \(f(target))", style: "callout", color: .warn)],
                                    steps: steps, values: v)
