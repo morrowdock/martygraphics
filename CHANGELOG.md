@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- Compatibility change: refuse an `MGJSON` value built in code that nests deeper than any legal input, before any
+  recursive walk can exhaust the call stack. Before, a value nested about 100,000 levels deep crashed the process in
+  the encoder or a validator. Every public entry point first walks the value once without recursion: `MGParser.scene`
+  (`scene.depth`), `MGPatch.parse` and `MGScene.applying` with `MGPatch(ops:)` (`patch.depth`), and
+  `MGTemplate.validate` / `compile` for a raw template (`template.params.depth`). The limit is `MGLimits.depth` =
+  2,056 levels (arrays and objects on one path): a raw template's 4 KiB `params` nests at most 2,048 levels, plus 8
+  levels of wrapping. The order is `.number`, `.depth`, then the byte bound. `canonicalData` and `canonicalByteCount`
+  never encode a deeper value (`Int.max`), so Solid 3D refuses one with `assembly.bytes` or `component.bytes`, and
+  `MGJSON(any:)` returns nil for one. No legal scene, patch, template, lesson or solid input changes. An input that
+  was already refused for its size and is also over the depth limit now reports `.depth`.
+- Compatibility change for lesson hosts: every snapshot a session makes now also reads back through the system JSON
+  parser, which reads 512 levels. A statement or command that nests deeper than `MGLessonLimits.statementDepth` = 507
+  levels is refused with the new reason `lesson.depth` (stream statements, `load`, host `apply` and
+  `MGLessonController.apply`); a lesson document deeper than 511 levels is refused by `MGLesson.parse(json:)`.
+  `MGLessonLimits.snapshotDepth` is now 512 (was 2,056 in the unreleased entry below), so `restore` refuses a deeper
+  snapshot (`snapshot.depth`). Only a raw template's `params` nested more than about 500 levels is affected.
+- Compatibility change: `MGLessonSession.restore` applies the live header's decimal-literal rule to the title, so a
+  snapshot whose title holds a decimal literal (`1.5`, `.5`, `2e3`) is refused with `snapshot.title`.
+- Document in `docs/LESSONS.md` that a beat refused at close for the queue budget (`lesson.queue.bytes`) retracts the
+  commands and checks already accepted for it.
 - Fix the `two_pointers` template stopping after 8 steps, so a 12-value walk never reached its pair. It and `bst` now use the template step limit (`MGLimits.templateSteps`, 48) instead of the wire limit (`MGLimits.steps`, 8). Output of walks that fit in 8 steps is unchanged.
 - Show the beat-by-beat rotation lesson in the README and `docs/SHOWCASE.md`: a 640×400 loop, beat stills and a
   learner-slider still in `docs/assets/lessons/` with a capture receipt. Add `lesson-demo --capture <new directory>
@@ -32,8 +52,8 @@
   - controls: `control.bytes`
 
   Before it reads any field, restore runs one bounded walk as defence in depth. Over the derived 291,570-byte cap is
-  `snapshot.bytes`, a NaN or infinite number is `snapshot.number`, and deeper than the derived 2,056 levels is
-  `snapshot.depth` (the depth fits the deepest legal raw-template `params`). Line timing on restore follows the
+  `snapshot.bytes`, a NaN or infinite number is `snapshot.number`, and deeper than 512 levels (the nesting the
+  system JSON parser reads) is `snapshot.depth`. Line timing on restore follows the
   restoring pacing (`.estimate` keeps or re-estimates an open line, `.speech` waits, `.immediate` holds no line), so a
   paused snapshot restored under another pacing no longer leaves a stale line timer.
 - Add the 2D item kinds `table` (a grid of up to 8 × 6 short cells with an optional

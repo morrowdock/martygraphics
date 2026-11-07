@@ -394,6 +394,8 @@ public struct MGLessonSession {
     }
 
     mutating func statement(_ json: MGJSON, _ index: Int) {
+        // The system parser reads a little deeper than a snapshot can hold above a queued statement (`statementDepth`).
+        guard json.measure().depth <= MGLessonLimits.statementDepth else { return refuse("lesson.depth", index) }
         guard let o = json.objectValue else { return refuse("stmt.kind", index) }
         if o["op"] != nil { return command(json, index) }
         guard o.count == 1, let (key, value) = o.first else { return refuse("stmt.kind", index) }

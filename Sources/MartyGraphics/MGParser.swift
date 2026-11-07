@@ -16,6 +16,12 @@ public enum MGLimits {
     public static let records = 32, recordFields = 6
     /// Raw (free-form JSON) template parameters: the canonical `params` object may be at most this many bytes.
     public static let rawParamsBytes = 4 * 1024
+    /// Nesting limit (arrays and objects on one path) of any `MGJSON` value that a public entry point accepts:
+    /// `scene.depth`, `patch.depth`, `template.params.depth`. The only free-form JSON in a scene or patch is a raw
+    /// template's `params` object (at most `rawParamsBytes`). Each level takes at least two bytes, so it nests at most
+    /// 2,048 levels; up to 8 levels of wrapping (scene, patch, lesson and snapshot objects) are allowed above it.
+    /// Lessons have a lower limit (`MGLessonLimits.statementDepth`). `canonicalData` never encodes a deeper value.
+    public static let depth = rawParamsBytes / 2 + 8
     /// `table` items: at most this many rows and columns, and this many characters per cell.
     public static let tableRows = 8, tableCols = 6, tableCellText = 12
 }
@@ -76,9 +82,9 @@ public enum MGParser {
 
     static func parseScene(_ json: MGJSON, extra: [MGTemplate] = []) throws -> MGScene {
         guard case .object(let o) = json else { throw MGError("scene.object") }
-        // A value built in code may hold NaN or an infinity, which has no JSON form; refuse it before measuring.
-        guard json.isEncodable else { throw MGError("scene.number") }
-        guard json.canonicalByteCount <= MGLimits.sceneBytes else { throw MGError("scene.bytes") }
+        // A value built in code may hold NaN or an infinity, which has no JSON form, or nest deep enough to exhaust the
+        // stack of a recursive walk; refuse both before measuring.
+        try json.checkEntry(maxDepth: MGLimits.depth, maxBytes: MGLimits.sceneBytes, number: "scene.number", depth: "scene.depth", bytes: "scene.bytes")
         try closed(o, required: ["v"], optional: topKeys, "scene")
         guard o["v"] == .number(1) else { throw MGError("scene.version") }
         let is3D: Bool

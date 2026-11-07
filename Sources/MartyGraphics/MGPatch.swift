@@ -16,8 +16,9 @@ public struct MGPatch: Equatable, Sendable {
     public var baseRevision: Int? = nil
 
     /// A patch built in code, for example by a host slider that changes one template parameter. Nothing is checked
-    /// here: `MGScene.applying` checks the operation count (1–12), finite numbers (`patch.number`), each operation's
-    /// shape and the patch byte bound with the same rules and reasons as `parse`, then re-validates the whole scene.
+    /// here: `MGScene.applying` checks the operation count (1–12), finite numbers (`patch.number`), nesting
+    /// (`patch.depth`), the patch byte bound and each operation's shape with the same rules and reasons as `parse`,
+    /// then re-validates the whole scene.
     public init(ops: [MGJSON], baseRevision: Int? = nil) {
         self.ops = ops; self.baseRevision = baseRevision
     }
@@ -25,8 +26,8 @@ public struct MGPatch: Equatable, Sendable {
     /// The `parse` rules for a patch that did not come through `parse`.
     func checkShape() throws {
         guard (1...12).contains(ops.count) else { throw MGError("patch.ops") }
-        guard MGJSON.array(ops).isEncodable else { throw MGError("patch.number") }
-        guard MGJSON.object(["v": .number(1), "ops": .array(ops)]).canonicalByteCount <= MGLimits.patchBytes else { throw MGError("patch.object") }
+        try MGJSON.object(["v": .number(1), "ops": .array(ops)])
+            .checkEntry(maxDepth: MGLimits.depth, maxBytes: MGLimits.patchBytes, number: "patch.number", depth: "patch.depth", bytes: "patch.object")
         for op in ops { try Self.shape(op) }
     }
 
@@ -40,8 +41,8 @@ public struct MGPatch: Equatable, Sendable {
     }
     public static func parse(json: MGJSON) -> Result<MGPatch, MGError> {
         do {
-            guard json.isEncodable else { throw MGError("patch.number") }
-            guard let o = json.objectValue, json.canonicalByteCount <= MGLimits.patchBytes else { throw MGError("patch.object") }
+            try json.checkEntry(maxDepth: MGLimits.depth, maxBytes: MGLimits.patchBytes, number: "patch.number", depth: "patch.depth", bytes: "patch.object")
+            guard let o = json.objectValue else { throw MGError("patch.object") }
             try MGParser.closed(o, required: ["v", "ops"], optional: ["rev"], "patch")
             guard o["v"] == .number(1), case .array(let ops)? = o["ops"], (1...12).contains(ops.count) else { throw MGError("patch.ops") }
             for op in ops { try shape(op) }

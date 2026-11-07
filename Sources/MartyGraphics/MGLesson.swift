@@ -44,11 +44,20 @@ public enum MGLessonLimits {
     /// Snapshot size cap: the state and the queue baseline, the queued beats, the caption, the title and the fixed
     /// fields. `restore` refuses a larger snapshot (`snapshot.bytes`) before it reads any field.
     public static let snapshotBytes = 2 * stateWireBytes + queueBytes + lineBytes + titleBytes + 2 * 1024
-    /// Nesting depth cap of a snapshot (`snapshot.depth`). The only free-form JSON in a lesson is a raw template's
-    /// `params` (at most `MGLimits.rawParamsBytes`), in a scene source or in a queued command (one statement, at most
-    /// `statementBytes`). Each level of nesting takes at least two bytes, so it nests at most half its size; the
-    /// snapshot itself adds at most 8 levels above it.
-    public static let snapshotDepth = max(MGLimits.rawParamsBytes, statementBytes) / 2 + 8
+    /// Nesting cap of a snapshot (`snapshot.depth`): the most arrays and objects on one path. It is the nesting that the
+    /// system JSON parser (`JSONSerialization`) reads, so a snapshot that is stored as JSON text always reads back.
+    public static let snapshotDepth = 512
+    /// Nesting cap of one statement or command (`lesson.depth`): a stream statement, a statement of `load`, and a
+    /// command given to `apply` (a value built in code, with no parser). A queued command is the deepest part of a
+    /// snapshot: 5 containers hold it (the snapshot, `pending`, the entry, `commands`, the command record). A scene
+    /// source has 1 or 2 above it (state or `baseline`) and comes from a statement that adds 1; a queued check has 5
+    /// above it and comes from a statement that adds 1. So with this cap every snapshot a session makes fits
+    /// `snapshotDepth`.
+    public static let statementDepth = snapshotDepth - 5
+    /// Nesting cap of a lesson document (`MGLesson.parse(json:)`, `lesson.depth`): its deepest statements are commands,
+    /// which 4 containers hold (the document, `beats`, the beat, `ops`). `load` then checks each statement against
+    /// `statementDepth`.
+    static let documentDepth = statementDepth + 4
 }
 
 /// Who sent a command. A learner command is gated (bound control, value in range) and then takes the SAME path as a
@@ -220,9 +229,9 @@ public struct MGLesson: Equatable, Sendable {
         do {
             guard let o = json.objectValue else { throw MGError("lesson.object") }
             // A value built in code may hold NaN or an infinity. It has no JSON form, so it could neither be measured
-            // nor become a statement; refuse it before either.
-            guard json.isEncodable else { throw MGError("lesson.number") }
-            guard json.canonicalByteCount <= MGLessonLimits.lessonBytes else { throw MGError("lesson.bytes") }
+            // nor become a statement; refuse it before either. Nesting is checked before anything else walks it.
+            try json.checkEntry(maxDepth: MGLessonLimits.documentDepth, maxBytes: MGLessonLimits.lessonBytes,
+                                number: "lesson.number", depth: "lesson.depth", bytes: "lesson.bytes")
             let extra = Set(o.keys).subtracting(keys)
             guard extra.isEmpty else { throw MGError("lesson.unknown.\(MGLessonEngine.segments(extra))") }
             guard o["v"] == .number(1) else { throw MGError("lesson.version") }
@@ -339,7 +348,11 @@ enum MGLessonEngine {
 
     /// Validates and applies one command. Throws an `MGError` with the stable reason; `state` is never modified.
     static func run(_ command: MGJSON, on state: MGLessonState, origin: MGOrigin, beat: Int?) throws -> MGCommandResult {
-        guard command.isEncodable else { throw MGError("lesson.number") }   // NaN or an infinity built in code
+        // NaN or an infinity built in code, and nesting that a snapshot could not store as readable JSON text, are
+        // refused before anything reads or walks the command.
+        let m = command.measure()
+        guard m.finite else { throw MGError("lesson.number") }
+        guard m.depth <= MGLessonLimits.statementDepth else { throw MGError("lesson.depth") }
         guard let o = command.objectValue, case .string(let name)? = o["op"] else { throw MGError("patch.op") }
         if forbidden.contains(name) { throw MGError("lesson.op.\(name)") }
         if origin == .learner { try learnerGate(o, name, state) }

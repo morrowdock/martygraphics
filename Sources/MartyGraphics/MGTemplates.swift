@@ -201,13 +201,14 @@ public struct MGTemplate {
     }
 
     /// Checks a `params` object exactly as the parser does (ranges, counts, records, `reject`, `check`; or, for a raw
-    /// template, only the byte bound and finite numbers: `template.params.number`). Throws an `MGError` with the
+    /// template, only finite numbers, nesting and the byte bound: `template.params.number`, `template.params.depth`,
+    /// `template.params.bytes`). Throws an `MGError` with the
     /// parser's reason. Hosts may call it, for example to check a sample before quoting it.
     public func validate(_ raw: [String: MGJSON]) throws -> MGParams {
         if isRaw {
             let object = MGJSON.object(raw)
-            guard object.isEncodable else { throw MGError("template.params.number") }
-            guard object.canonicalByteCount <= MGLimits.rawParamsBytes else { throw MGError("template.params.bytes") }
+            try object.checkEntry(maxDepth: MGLimits.depth, maxBytes: MGLimits.rawParamsBytes, number: "template.params.number",
+                                  depth: "template.params.depth", bytes: "template.params.bytes")
             return MGParams(raw: object)
         }
         let names = Set(params.map(\.name))
