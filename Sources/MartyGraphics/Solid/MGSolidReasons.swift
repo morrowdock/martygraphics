@@ -503,6 +503,7 @@ public enum MGSolidReasons {
         x("snapshot.number", "An explainer snapshot holds NaN or an infinity."),
         x("snapshot.json", "Explainer snapshot text is not UTF-8 JSON."),
         x("snapshot.setup", "The explainer snapshot's set-up commands are not valid."),
+        x("snapshot.controls", "A saved control is not one that a checked `bind` of the script or the host made (its label is learner-visible text)."),
         x("snapshot.depth", "An explainer snapshot nests deeper than 64 levels."),
         x("snapshot.kind", "The value is not an explainer snapshot."),
         x("snapshot.version", "The explainer snapshot version is not 1."),

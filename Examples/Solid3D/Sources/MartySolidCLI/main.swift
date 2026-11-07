@@ -387,7 +387,8 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     case .failure(let issue): print(json(MGExplainerReport.refused(issue, profile: nil, source: nil, engine: engine).json)); return 1
     case .success(let d): doc = d
     }
-    var session = MGExplainerSession(pacing: .speech, clock: MGManualClock(), library: lib)
+    let clock = MGManualClock()
+    var session = MGExplainerSession(pacing: .speech, clock: clock, library: lib)
     if case .failure(let issue) = session.load(doc) {
         print(json(MGExplainerReport.refused(issue, profile: nil, source: nil, engine: engine).json)); return 1
     }
@@ -455,6 +456,9 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     var captions: [MGJSON] = []
     var k = 0
     while let beat = session.presented.beat, beat == k {
+        // Each still shows the beat's settled state: the caption's 2D numbers appear once the board's motion has played.
+        clock.advance(by: session.motionRemaining)
+        _ = session.tick()
         let view = session.presented
         let caption = session.caption ?? ""
         captions.append(.string(caption))

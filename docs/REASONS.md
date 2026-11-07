@@ -491,6 +491,7 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `snapshot.number` | explainer | An explainer snapshot holds NaN or an infinity. |
 | `snapshot.json` | explainer | Explainer snapshot text is not UTF-8 JSON. |
 | `snapshot.setup` | explainer | The explainer snapshot's set-up commands are not valid. |
+| `snapshot.controls` | explainer | A saved control is not one that a checked `bind` of the script or the host made (its label is learner-visible text). |
 | `snapshot.depth` | explainer | An explainer snapshot nests deeper than 64 levels. |
 | `snapshot.kind` | explainer | The value is not an explainer snapshot. |
 | `snapshot.version` | explainer | The explainer snapshot version is not 1. |

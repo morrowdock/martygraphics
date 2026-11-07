@@ -144,6 +144,14 @@ in an explainer.
    the presented beat's line filled again from the state shown now (live engine values, never a stale number), and a
    2D check of the presented beat that no longer holds is not current (`notCurrent`): it leaves `claims` and the
    legend until the state makes it true again. It is never kept as "Checked" on a false state.
+10. A number-bearing caption and its checks show only when the board shows the state they describe. While the board
+    still moves to it (the beat's `animate` keyframes play, or a blend changes drawn items; `boardSettled`,
+    `motionRemaining`), the caption shows each 2D number as "…", and the caption claim and the beat's 2D checks are
+    pending (`pendingClaims`): out of `claims` and the legend. They appear when the motion has played; paused time
+    does not count, and `nextWake` wakes the host then. `.immediate` pacing and `finishNow()` play no motion. 3D facts
+    in this version are rates per input turn, tooth counts and travel over a full turn, so they hold at every pose of
+    a `spin` and show at once. (PR 3a: a fact measured at one pose waits for its pose the same way.) The `lineDue`
+    event keeps the full line (for speech); hosts show `caption`.
 
 ## One id namespace
 
@@ -271,14 +279,18 @@ beat's caption template, commands, checks, view and highlight, the lesson snapsh
 adds to the explainer's) and the stream position. Captions and claims are not stored. `restore(_:pacing:clock:library:)`
 and `restore(data:…)` trust nothing in it as proof:
 
-1. the board and the solid are checked and compiled again (the solid with the kept beats' views), and every 3D check
-   is proved again;
+1. the board and the solid are checked and compiled again (the solid with the kept beats' views); every saved check is
+   parsed with the authored check rules (a value that is not a check is refused, for example `check.object`), and
+   every 3D check is proved again;
 2. the script is replayed from the board with the explainer's rules (rule N1, one namespace, every set-up and beat
    command, every 2D check on its beat's end state, every caption), which also gives each beat's caption again;
-3. the lesson restores with the explainer's environment; every scene it holds (shown and baseline) passes rule N1 and
-   the namespace again, every queued command the explainer's command rules, and each queued beat must be the
-   explainer's beat; every kept beat is either shown or queued;
-4. the caption is the presented beat's line on the restored state, never the saved text.
+3. the lesson restores with the explainer's environment; every scene it holds (shown, baseline, each queued beat's
+   start and end) passes rule N1 and the namespace again, and every saved control must be one that a checked `bind`
+   made (of the replayed script, or a recorded host `bind`; `snapshot.controls`), so a control label is never taken
+   from saved data; every queued command passes the explainer's command rules, each queued beat must be the
+   explainer's beat, and every kept beat is either shown or queued;
+4. the caption is the presented beat's line on the restored state, never the saved text; the claims and the legend
+   come only from what steps 1–3 evaluated, so a restored legend equals the legend of a fresh run of the same script.
 
 All of it runs in beat order, then statement order, so the first reason does not depend on dictionary order. The first
 problem refuses the whole snapshot with its reason (the solid's own reason when it no longer compiles, a rule's own
@@ -335,7 +347,7 @@ check (`check.unknown.<keys>`), `text.number.beat.<n>`, `text.number.item.<id>`,
 `text.number.control.<id>`, `text.number.template`, and for snapshots `snapshot.bytes`, `snapshot.number`,
 `snapshot.depth`, `snapshot.kind`, `snapshot.version`, `snapshot.header`, `snapshot.header.missing`,
 `snapshot.header.unknown.<keys>`, `snapshot.frozen`, `snapshot.beats`, `snapshot.next`, `snapshot.board`,
-`snapshot.solid`, `snapshot.lesson`, `snapshot.setup`, `snapshot.pending`, `snapshot.json`, `snapshot.presented`, `snapshot.beat`, `snapshot.stream`.
+`snapshot.solid`, `snapshot.lesson`, `snapshot.setup`, `snapshot.controls`, `snapshot.pending`, `snapshot.json`, `snapshot.presented`, `snapshot.beat`, `snapshot.stream`.
 Solid reasons an explainer gives itself: `tier.key`, `check.object`, `check.value`, `check.comparison`, `check.eq`,
 `check.lt`, `check.gt`, `check.tol`, `check.fact.<name>`, `check.failed.<name>`, `text.sign.<name>`,
 `text.modifier.<modifier>`, `text.modifier.<modifier>.<name>`, `report.engine`. The tool: `kind.unsupported`.

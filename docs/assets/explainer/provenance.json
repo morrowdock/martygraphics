@@ -2,20 +2,20 @@
   "source": {
     "repository": "https://github.com/morrowdock/martygraphics",
     "base": "d5f42c2e",
-    "captureCommit": "working tree of branch feat/ov-explainer on base d5f42c2 (PR #30 merged) after the PR #32 review fixes (head 3b47f40 plus the fix commit), captured before that commit. The sourceFiles hashes, not a commit id, link this artifact to the source.",
+    "captureCommit": "working tree of branch feat/ov-explainer on base d5f42c2 (PR #30 merged) after the PR #32 review and re-check fixes (head 694a94e plus the re-check fix commit), captured before that commit. The sourceFiles hashes, not a commit id, link this artifact to the source.",
     "document": "Examples/Explainers/gears-mixed.explainer.json (the authoring card's mixed example in docs/EXPLAINER.md; a test keeps them equal)",
     "authoring": "Written by hand for the example (synthetic content). It is not the output of an AI model answering a prompt.",
     "license": "Apache-2.0; procedural 2D drawing and procedural meshes, no images, models or stock assets",
     "sourceFiles": {
       "Examples/Explainers/gears-mixed.explainer.json": "4e50e1861827b37999b535454cfb63625dec0d749c7f0cc2fb899d19152b6506",
       "Examples/Solid3D/Package.swift": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b",
-      "Examples/Solid3D/Sources/MartySolidCLI/main.swift": "cca6384aa4f9ef595ae59d06b8d67994600d7031cc158816a7f01c53b1eaedaa",
+      "Examples/Solid3D/Sources/MartySolidCLI/main.swift": "697357f97db0499f911642878233c11e833d5d843377b3c2e53a4a3efea331b4",
       "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f",
       "Sources/MartyGraphics/Explainer/MGExplainer.swift": "3e7f022cc4f53b76905237ed2e306bc8bc3f928b53d54fb7b90584dbeba3d6c0",
       "Sources/MartyGraphics/Explainer/MGExplainerHonesty.swift": "17704fff3cc761d65a012e542eeca931810e9968731d60e27400079eaf183c4e",
       "Sources/MartyGraphics/Explainer/MGExplainerReport.swift": "fc3da39c5c9d2733752aeb76459511c0224ba4568c19090a9e7eefe7fffd0cb0",
-      "Sources/MartyGraphics/Explainer/MGExplainerSession.swift": "27335d87c50db4017fdac90791df926e7c0c814985e0b00da43e7749dfe612a4",
-      "Sources/MartyGraphics/Explainer/MGExplainerState.swift": "45cd05f2382ec2e0d7d0585029b4361494d1f3c024dcb7549a57096b47e0b854",
+      "Sources/MartyGraphics/Explainer/MGExplainerSession.swift": "e592636c43717c6e858c653f70723f26b6e86542d4ad5cee1b48a8c4ce235fa3",
+      "Sources/MartyGraphics/Explainer/MGExplainerState.swift": "e5602dc18027fee167d0325ea917aaf432dabb8527d6e8c47e717f2ad41ed112",
       "Sources/MartyGraphics/MGCanvasRenderer.swift": "3bbb276ac5d3b5c90dafb40b3eb240f3e6c540f0770b1231be97fd72f3f2d9ec",
       "Sources/MartyGraphics/MGLesson.swift": "d775b5dcae64d8f935450cc7b9c7216375ae2210daa4fe859db526d55a77b913",
       "Sources/MartyGraphics/MGLessonSession.swift": "c848a1deb8da6bc5c524f3a676dbaeffd4ef954e5b2c3bac0400c416636910f3",
@@ -45,7 +45,7 @@
   },
   "render": {
     "framesRendered": 123,
-    "renderSecondsPerFrame": 0.0407,
+    "renderSecondsPerFrame": 0.0355,
     "legend": "Solved 6",
     "captions": [
       "Count the teeth: 15 and 30.",

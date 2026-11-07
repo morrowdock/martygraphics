@@ -63,8 +63,8 @@ final class ExplainerReviewFixTests: ExplainerTestCase {
         XCTAssertEqual(MGExplainerSession.restore(.object(o), pacing: .speech).failureIssue?.reason, "text.number.beat.1")
     }
 
-    func learnerSession() -> MGExplainerSession {
-        var s = MGExplainerSession(pacing: .speech, clock: MGManualClock())
+    func learnerSession(clock: MGManualClock = MGManualClock()) -> MGExplainerSession {
+        var s = MGExplainerSession(pacing: .speech, clock: clock)
         _ = s.feed([XFix.header(), #"{"board":\#(XFix.rotate)}"#, Self.rotateBind, #"{"say":"Angle {theta}."}"#,
                     #"{"check":{"value":"theta","eq":0}}"#].joined(separator: "\n") + "\n")
         _ = s.endStream()
@@ -73,7 +73,8 @@ final class ExplainerReviewFixTests: ExplainerTestCase {
 
     // P1-2: after a learner or host change the caption shows the live value and a check that no longer holds is not a claim.
     func testP1LearnerChangeUpdatesCaptionAndClaims() throws {
-        var s = learnerSession()
+        let clock = MGManualClock()
+        var s = learnerSession(clock: clock)
         XCTAssertEqual(s.caption, "Angle 0°.")
         XCTAssertEqual(s.legend.text, "Solved 3")
         XCTAssertNotNil(try? s.control("slider", 30).get())
@@ -84,8 +85,10 @@ final class ExplainerReviewFixTests: ExplainerTestCase {
         XCTAssertNotNil(try? s.control("slider", 0).get())
         XCTAssertTrue(s.notCurrent.isEmpty)
         XCTAssertEqual(s.legend.text, "Solved 3")
-        // A host change takes the same path.
+        // A host change takes the same path. It blends the board, so its 2D number shows once the blend has played.
         XCTAssertNotNil(try? s.apply([XFix.json(#"{"op":"params","params":{"angle":45}}"#)]).get())
+        XCTAssertEqual(s.caption, "Angle ….")
+        clock.advance(by: .milliseconds(1200))
         XCTAssertEqual(s.caption, "Angle 45°.")
         XCTAssertEqual(s.notCurrent, ["beat.1.check.1"])
     }
