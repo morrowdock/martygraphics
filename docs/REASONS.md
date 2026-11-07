@@ -26,7 +26,7 @@ a test fails when a pattern is missing here.
 
 Closed objects (`<object>.missing.<keys>`, `<object>.unknown.<keys>`): `assembly`,
 `params`, `part`, `part.<kind>` (a shape body), `part.emissive`, `part.expect`,
-`part.repeat`, `part.drive.follow`, `part.drive.crankSlider`, `part.drive.crankRod`,
+`part.repeat`, `part.drive.follow`, `part.drive.<kind>` (`crankSlider`, `crankRod`),
 `constraint.gearMesh`, `step`, `step.check`, `step.section`, `component`,
 `component.param.<name>`, `component.use`.
 
@@ -379,4 +379,3 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | Reason | Formats | Meaning |
 | --- | --- | --- |
 | `report.encoding` | cli | The report could not be encoded as JSON (never expected: reports hold only finite numbers and shallow nesting). |
-

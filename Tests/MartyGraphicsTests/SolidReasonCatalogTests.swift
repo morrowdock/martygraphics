@@ -95,6 +95,23 @@ final class SolidReasonCatalogTests: XCTestCase {
         return f(0, 0)
     }
 
+    /// The last argument of each call to `helper` (`closed`, `transform`), with `*` for interpolations. A variable
+    /// argument resolves to its `let <name> = "…"` in the same file, which must be unique.
+    static func helperArguments(_ helper: String, _ text: String) -> [String] {
+        var out: [String] = []
+        for m in matches(helper + #"\([^\n]*?, ("[^"]+"|\w+)\)"#, text) {
+            var arg = m[0]
+            if !arg.hasPrefix("\"") {
+                let defs = matches(#"let "# + arg + #" = ("[^"\n]+")\n"#, text)
+                XCTAssertEqual(defs.count, 1, "\(helper) argument \(arg) needs one literal definition")
+                guard let d = defs.first else { continue }
+                arg = d[0]
+            }
+            out.append(String(arg.dropFirst().dropLast()).replacingOccurrences(of: #"\\\((?:[^()]|\([^()]*\))*\)"#, with: "*", options: .regularExpression))
+        }
+        return out
+    }
+
     /// Every reason the sources can name: (literal with `*` for interpolations, where it came from).
     static func sourceReasons() throws -> [(String, String)] {
         var found: [(String, String)] = []
@@ -104,12 +121,11 @@ final class SolidReasonCatalogTests: XCTestCase {
                 if dotted.firstMatch(in: lit, range: NSRange(lit.startIndex..., in: lit)) != nil { found.append((lit, name)) }
             }
             for m in matches(#"(?:MGSolidIssue|\.init|MGError)\("([a-z][A-Za-z]*)""#, text) { found.append((m[0], name)) }
-            for m in matches(#"closed\([^\n]*?, "([^"]+)"\)"#, text) {
-                let what = m[0].replacingOccurrences(of: #"\\\([^)]*\)"#, with: "*", options: .regularExpression)
+            for what in helperArguments("closed", text) {
                 found.append((what + ".missing.*", "\(name) closed")); found.append((what + ".unknown.*", "\(name) closed"))
             }
-            for m in matches(#"transform\([^\n]*?, "([^"]+)"\)"#, text) {
-                found.append((m[0] + ".at", "\(name) transform")); found.append((m[0] + ".rot", "\(name) transform"))
+            for what in helperArguments("transform", text) {
+                found.append((what + ".at", "\(name) transform")); found.append((what + ".rot", "\(name) transform"))
             }
         }
         for p in prefixes { found.append((p + ".*", "MGSolidFrames.swift lints")) }
@@ -139,11 +155,7 @@ final class SolidReasonCatalogTests: XCTestCase {
 
     func testClosedObjectsAreTheClosedCallSites() throws {
         var sites = Set<String>()
-        for (_, text) in try Self.sources() {
-            for m in Self.matches(#"closed\([^\n]*?, "([^"]+)"\)"#, text) {
-                sites.insert(m[0].replacingOccurrences(of: #"\\\([^)]*\)"#, with: "*", options: .regularExpression))
-            }
-        }
+        for (_, text) in try Self.sources() { sites.formUnion(Self.helperArguments("closed", text)) }
         let listed = Set(MGSolidReasons.closedObjects.map { $0.replacingOccurrences(of: #"<[^>]*>"#, with: "*", options: .regularExpression) })
         XCTAssertEqual(sites, listed)
     }
@@ -180,7 +192,7 @@ final class SolidReasonCatalogTests: XCTestCase {
             (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":{"shaft":{"radius":-1,"length":5}}}]}"#, "part.<kind>.<field>"),
             (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box),"parent":"zz"}]}"#, "ref.unknown.<id>"),
             (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box)},{"id":"a","shape":\#(box)}]}"#, "id.duplicate.<id>"),
-            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box),"at":[1,2]}]}"#, "<object>.at"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box),"at":[1,2]}]}"#, "part.at"),
             (#"{"v":2,"kind":"assembly","parts":[{"id":"a","shape":\#(box),"tier":"solved"}]}"#, "tier.key"),
             (#"{"v":2,"kind":"assembly","parts":[{"id":"a","shape":\#(box)}],"steps":[{"say":"Two 2 parts."}]}"#, "text.number.step.<n>"),
             (#"{"v":2,"kind":"assembly","parts":[{"id":"a","shape":\#(box)}],"steps":[{"say":"{nope.speed}"}]}"#, "text.placeholder.<name>"),
@@ -199,6 +211,8 @@ final class SolidReasonCatalogTests: XCTestCase {
         XCTAssertEqual(MGSolidReasons.lookup("check.meshOpen")?.formats, [.check])
         XCTAssertEqual(MGSolidReasons.lookup("patch.unknown.")?.pattern, "patch.unknown.")
         XCTAssertEqual(MGSolidReasons.lookup("patch.unknown.a,b")?.pattern, "patch.unknown.<keys>")
+        // Matching is linear in the reason's length (no backtracking), also for a long, repetitive reason.
+        XCTAssertEqual(MGSolidReasons.lookup(String(repeating: "a.missing.", count: 6_500))?.pattern, "<object>.missing.<keys>")
         XCTAssertNil(MGSolidReasons.lookup("no.such.reason here"))
         XCTAssertNil(MGSolidReasons.lookup(""))
     }

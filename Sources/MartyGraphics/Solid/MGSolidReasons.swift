@@ -40,7 +40,7 @@ public struct MGSolidReason: Equatable, Sendable {
     public var strict: Bool
 
     /// True when `reason` fits the pattern (each `<…>` matches one or more characters of its class, see the type).
-    public func matches(_ reason: String) -> Bool { MGSolidReasons.match(Array(pattern.utf8), 0, Array(reason.utf8), 0) }
+    public func matches(_ reason: String) -> Bool { MGSolidReasons.match(Array(pattern.utf8), Array(reason.utf8)) }
 
     /// `{"pattern", "meaning", "formats", "kind", "strict"}`.
     public var json: MGJSON {
@@ -50,9 +50,10 @@ public struct MGSolidReason: Equatable, Sendable {
 }
 
 public enum MGSolidReasons {
-    /// The objects whose keys are closed (`<object>.missing.<keys>`, `<object>.unknown.<keys>`).
+    /// The objects whose keys are closed (`<object>.missing.<keys>`, `<object>.unknown.<keys>`). `part.<kind>` is a shape
+    /// body; `part.drive.<kind>` is a `crankSlider` or `crankRod` drive.
     public static let closedObjects = ["assembly", "params", "part", "part.<kind>", "part.emissive", "part.expect", "part.repeat",
-                                       "part.drive.follow", "part.drive.crankSlider", "part.drive.crankRod", "constraint.gearMesh",
+                                       "part.drive.follow", "part.drive.<kind>", "constraint.gearMesh",
                                        "step", "step.check", "step.section", "component", "component.param.<name>", "component.use"]
 
     /// The entry for a reason: the matching pattern with the most fixed characters (so `part.gear.bore` finds its own
@@ -90,24 +91,33 @@ public enum MGSolidReasons {
                         "formats": .object(formats), "reasons": .array(catalog.map(\.json))])
     }
 
-    /// Glob match: `<…>` in the pattern matches one or more placeholder characters.
-    static func match(_ p: [UInt8], _ i: Int, _ s: [UInt8], _ j: Int) -> Bool {
-        var i = i, j = j
+    /// Glob match: `<…>` in the pattern matches one or more characters of its class. One pass over the reason with a
+    /// set of pattern positions, so the time is linear in the reason's length for every pattern (no backtracking).
+    static func match(_ p: [UInt8], _ s: [UInt8]) -> Bool {
+        // Tokens: a literal byte, or a placeholder class name.
+        var tokens: [(byte: UInt8, name: String?)] = []
+        var i = 0
         while i < p.count {
-            if p[i] == UInt8(ascii: "<") {
-                guard let close = p[i...].firstIndex(of: UInt8(ascii: ">")) else { return false }
-                let name = String(decoding: p[(i + 1)..<close], as: UTF8.self)
-                var k = j
-                while k < s.count, isPlaceholder(s[k], name) {
-                    k += 1
-                    if match(p, close + 1, s, k) { return true }
-                }
-                return false
-            }
-            guard j < s.count, p[i] == s[j] else { return false }
-            i += 1; j += 1
+            if p[i] == UInt8(ascii: "<"), let close = p[i...].firstIndex(of: UInt8(ascii: ">")) {
+                tokens.append((0, String(decoding: p[(i + 1)..<close], as: UTF8.self))); i = close + 1
+            } else { tokens.append((p[i], nil)); i += 1 }
         }
-        return j == s.count
+        let n = tokens.count
+        // `before[t]`: the next token to match is t. `inside[t]`: placeholder t has matched at least one character.
+        var before = [Bool](repeating: false, count: n + 1), inside = [Bool](repeating: false, count: n + 1)
+        before[0] = true
+        for c in s {
+            var nb = [Bool](repeating: false, count: n + 1), ni = [Bool](repeating: false, count: n + 1)
+            var any = false
+            for t in 0..<n {
+                if let name = tokens[t].name {
+                    if (before[t] || inside[t]) && isPlaceholder(c, name) { ni[t] = true; nb[t + 1] = true; any = true }
+                } else if before[t] && tokens[t].byte == c { nb[t + 1] = true; any = true }
+            }
+            guard any else { return false }
+            before = nb; inside = ni
+        }
+        return before[n]
     }
     /// Names whose placeholder is one name without dots.
     static let singleNames: Set<String> = ["kind", "field", "key", "op", "modifier"]

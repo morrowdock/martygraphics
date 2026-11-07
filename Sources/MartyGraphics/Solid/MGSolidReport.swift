@@ -169,7 +169,7 @@ extension MGSolidReport {
     }
 
     /// Parses and checks a document, as `marty-solid check` does. Bytes over `MGSolidLimits.bytes` are refused
-    /// (`assembly.bytes`) before they are read or hashed, with the short refusal (no `strict`, no `file`).
+    /// (`assembly.bytes`) before they are parsed or hashed, with the short refusal (no `strict`, no `file`).
     public static func check(data: Data, library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard,
                              engine: MGJSON? = MGEngine.identity) -> MGSolidReport {
         guard data.count <= MGSolidLimits.bytes else { return refused(MGSolidIssue("assembly.bytes"), engine: engine) }

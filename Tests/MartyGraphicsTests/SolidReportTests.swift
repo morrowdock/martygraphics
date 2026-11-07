@@ -185,6 +185,10 @@ final class SolidSnapshotDecodeTests: XCTestCase {
         XCTAssertNil(Self.reason(data))
         let text = String(decoding: data, as: UTF8.self)
         XCTAssertTrue(text.contains(#""aspect":1.6"#), "the replacements below need this field")
+        // The encoder may escape the slash in the format name; replace either spelling.
+        let unknownFormat = text.replacingOccurrences(of: #"snapshot\/1""#, with: #"snapshot\/9""#)
+            .replacingOccurrences(of: #"snapshot/1""#, with: #"snapshot/9""#)
+        XCTAssertNotEqual(unknownFormat, text)
         let cases: [(Data, String)] = [
             (Data(text.utf16.flatMap { [UInt8($0 & 0xff), UInt8($0 >> 8)] }), "solidSnapshot.json"),
             (Data([0xff]) + data, "solidSnapshot.json"),
@@ -194,10 +198,10 @@ final class SolidSnapshotDecodeTests: XCTestCase {
             (Data(text.replacingOccurrences(of: #""aspect":1.6"#, with: #""aspect":1."# + String(repeating: "6", count: 70)).utf8), "solidSnapshot.number"),
             (Data(text.replacingOccurrences(of: #""aspect":1.6"#, with: #""aspect":NaN"#).utf8), "solidSnapshot.invalid"),
             (Data(text.replacingOccurrences(of: #""aspect":1.6"#, with: #""aspect":-2"#).utf8), "solidSnapshot.invalid"),
-            (Data(text.replacingOccurrences(of: MGSolidSnapshot.formatV1, with: "martygraphics.solid.snapshot/9").utf8), "solidSnapshot.invalid"),
+            (Data(unknownFormat.utf8), "solidSnapshot.invalid"),
             (Data("[]".utf8), "solidSnapshot.invalid"),
         ]
-        for (d, want) in cases { XCTAssertEqual(Self.reason(d), want) }
+        for (k, (d, want)) in cases.enumerated() { XCTAssertEqual(Self.reason(d), want, "case \(k)") }
         // Numbers inside strings, and `true` / `false` / `null`, are not number literals.
         XCTAssertNil(MGSolidSnapshot.guardRefusal(Data(#"{"a":"1e999","b":true,"c":false,"d":null,"e":-0.5e-3}"#.utf8)))
         for r in ["solidSnapshot.json", "solidSnapshot.depth", "solidSnapshot.number", "solidSnapshot.invalid", "solidSnapshot.bytes"] {
