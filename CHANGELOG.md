@@ -46,6 +46,10 @@
     "…" and the beat's 2D checks are pending (`boardSettled`, `motionRemaining`, `pendingClaims`); restore refuses a
     saved control that no checked `bind` made (`snapshot.controls`) and a saved check that is not a check, so a
     restored legend equals a fresh run's.
+  - Third-check fixes (PR #32): a beat's `lineDue` with a 2D engine number waits until the board shows its state
+    (speech is learner-visible); `finishNow` and `.immediate` pacing give the board the end state as a direct change
+    in the same step; restore applies the board rules to every held scene (a forged heading is
+    `explainer.board.title`) and keeps no inner lesson title.
   - Not in this PR: 3D annotations (labels, arrows, dimensions; open-vocabulary PR 3a, still in review). Their ids
     join the namespace, the claims and the report at marked seams once it merges; until then `annotations` in a
     solid is refused with `assembly.unknown.annotations`. The card's 3D example shows its facts in captions instead

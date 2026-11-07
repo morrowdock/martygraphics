@@ -353,6 +353,9 @@ extension MGExplainerSession {
             var held = [s.lesson.state, s.lesson.projected].compactMap { $0 }
             held += s.lesson.pending.flatMap { [$0.start, $0.end] }
             for st in held where !s.lesson.boardless {
+                // The board rules too: a held scene has no wire `title` (a heading), `steps` or 3D dimension; a
+                // template's own computed title stays.
+                try MGExplainer.checkBoardShape(st.scene.source)
                 if let src = st.scene.source.objectValue { try MGExplainerHonesty.checkBoard(src, notes: s.notes) }
                 try MGLessonEngine.guardIDs(st, env)
                 // A saved control (its label is text the learner reads) must be one a checked `bind` made.
@@ -386,8 +389,10 @@ extension MGExplainerSession {
                 guard shown < 0 else { throw MGError("snapshot.beat") }
                 s.presented.solid = doc.view(step: nil)
             }
-            // The lesson's caption is the presented beat's line on the restored state, never the saved text.
+            // The lesson's caption is the presented beat's line on the restored state, never the saved text; an
+            // explainer's lesson has no title of its own (the explainer's title is filled from its header below).
             s.lesson.caption = s.caption
+            s.lesson.title = nil
             if s.frozen, let (t, tier) = try s.filledTitle() { s.title = t; s.titleTier = tier }
             guard let st = o["stream"]?.objectValue else { throw MGError("snapshot.stream") }
             for key in ["bytes", "statements"] {
