@@ -358,6 +358,13 @@ public enum MGSolidFacts {
         let turnRate = canonical.hasSuffix(".speed") || canonical.hasSuffix(".worldSpeed") || canonical.hasSuffix(".ratio")
         var v = fact.value
         var terminal: String?
+        /// Every modifier result must be a finite, normal number (or exactly 0 from exactly 0): `inv` of 1e-309
+        /// overflows to infinity, and a second `inv` would turn that into a false 0 (`text.range.<name>`).
+        func inRange(_ x: Double) throws -> Double {
+            guard x.isFinite, !x.isSubnormal, x != 0 || fact.value == 0 else { throw MGSolidIssue("text.range.\(t)") }
+            return x
+        }
+        guard fact.value.isFinite else { throw MGSolidIssue("text.range.\(t)") }
         for m in mods {
             func bad() -> MGSolidIssue { MGSolidIssue("text.modifier.\(m).\(t)") }
             guard terminal == nil else { throw bad() }
@@ -365,9 +372,9 @@ public enum MGSolidFacts {
             if m == "pct" || m == "deg" { guard turnRate else { throw bad() } }
             switch m {
             case "abs": v = abs(v)
-            case "inv": guard v != 0 else { throw bad() }; v = 1 / v
-            case "pct": terminal = MGPhysics.format(v * 100, unit: "") + "%"
-            case "deg": terminal = MGPhysics.format(v * 360, unit: "°")
+            case "inv": guard v != 0 else { throw bad() }; v = try inRange(1 / v)
+            case "pct": v = try inRange(v * 100); terminal = MGPhysics.format(v, unit: "") + "%"
+            case "deg": v = try inRange(v * 360); terminal = MGPhysics.format(v, unit: "°")
             default:
                 guard let f = fraction(v) else { throw bad() }
                 terminal = f
@@ -377,7 +384,7 @@ public enum MGSolidFacts {
         // A non-zero number shown as "0" (for example a 1:300 reduction, 0.0033) is a false number; `frac` or `inv`
         // shows it honestly.
         let digits = text.filter(\.isNumber)
-        if v != 0, !digits.isEmpty, digits.allSatisfy({ $0 == "0" }) {
+        if v != 0 || fact.value != 0, !digits.isEmpty, digits.allSatisfy({ $0 == "0" }) {
             throw MGSolidIssue("text.rounding.\(t)")
         }
         return (text, canonical, mods)

@@ -630,3 +630,39 @@ final class SolidHonestyReview2Tests: XCTestCase {
         XCTAssertFalse(MGSolidFacts.isNumber(" "))
     }
 }
+
+/// Regression from the third independent review of PR #21 (R8): modifier arithmetic that overflows or underflows is
+/// refused at the step where it happens, so `inv|inv` can never turn infinity back into a false "0".
+final class SolidHonestyReview3Tests: XCTestCase {
+    func reason(_ text: String) -> String? {
+        if case .failure(let e) = MGSolidParser.document(data: Data(text.utf8), profile: .strict) { return e.reason }
+        return nil
+    }
+    func dial(_ rate: String, say: String? = nil, title: String? = nil, check: String = #"{"value": "dial.speed", "gt": 0}"#) -> String {
+        let t = title.map { #""title": "\#($0)", "# } ?? ""
+        let s = say.map { #", "steps": [{"say": "\#($0)", "check": [\#(check)]}]"# } ?? ""
+        return #"{"v": 2, "kind": "assembly", \#(t)"parts": [{"id": "dial", "shape": {"box": {"size": [2, 2, 2]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": \#(rate)}}]\#(s)}"#
+    }
+
+    func testR8ModifierOverflowIsRefused() throws {
+        XCTAssertEqual(reason(dial("1e-309", say: "Rate {dial.speed|inv|inv}.")), "text.range.dial.speed")
+        XCTAssertEqual(reason(dial("-1e-309", say: "Rate {dial.speed|inv|inv}.", check: #"{"value": "dial.speed", "lt": 0}"#)), "text.range.dial.speed")
+        XCTAssertEqual(reason(dial("-1e-309", say: "Rate {dial.speed|abs|inv|inv}.", check: #"{"value": "dial.speed", "lt": 0}"#)), "text.range.dial.speed")
+        XCTAssertEqual(reason(dial("1e-309", title: "Rate {dial.speed|inv|inv}")), "text.range.dial.speed")
+        XCTAssertEqual(reason(dial("1e-309", say: "Rate {dial.speed|inv}.")), "text.range.dial.speed")          // not "—"
+        XCTAssertEqual(reason(dial("1e-307", say: "Rate {dial.speed|inv|pct}.")), "text.range.dial.speed")      // finite, then x 100
+        XCTAssertEqual(reason(dial("1e-307", say: "Rate {dial.speed|inv|deg}.")), "text.range.dial.speed")
+        XCTAssertEqual(reason(dial("1e-309", say: "Rate {dial.speed|frac}.")), "text.rounding.dial.speed")      // "0" from a non-zero fact
+        XCTAssertEqual(reason(dial("1e-300", say: "Rate {dial.speed|inv|inv}.")), "text.rounding.dial.speed")   // in range, shows "0"
+        // inv|inv on 1e308 (no document can author it; drive scales are at most 1000): 1e-308 is subnormal.
+        let huge = ["x": MGSolidFact(value: 1e308, unit: "", tier: .solved, source: "input")]
+        XCTAssertThrowsError(try MGSolidFacts.placeholder("x|inv|inv", huge, [:])) { XCTAssertEqual(($0 as? MGSolidIssue)?.reason, "text.range.x") }
+        XCTAssertThrowsError(try MGSolidFacts.placeholder("x|pct", huge, [:])) { XCTAssertEqual(($0 as? MGSolidIssue)?.reason, "text.modifier.pct.x") }   // not a speed
+        let speed = ["x.speed": MGSolidFact(value: 1e308, unit: "", tier: .solved, source: "input")]
+        XCTAssertThrowsError(try MGSolidFacts.placeholder("x.speed|pct", speed, [:])) { XCTAssertEqual(($0 as? MGSolidIssue)?.reason, "text.range.x.speed") }
+        XCTAssertThrowsError(try MGSolidFacts.placeholder("x.speed|deg", speed, [:])) { XCTAssertEqual(($0 as? MGSolidIssue)?.reason, "text.range.x.speed") }
+        // Finite controls.
+        let d = try MGSolidParser.document(data: Data(dial("0.25", say: "Rate {dial.speed|inv|inv}, {dial.speed|inv}, {dial.speed|pct}.").utf8)).get()
+        XCTAssertEqual(d.steps[0].say, "Rate 0.25, 4, 25%.")
+    }
+}

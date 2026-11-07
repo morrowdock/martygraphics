@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "22d69fb0f39f3567e3d901c13def078d6e876f55c8e4d0e77801619c5f57359c"
+      "sha256": "ecf176a89ad46ab9f2938d76c9d4193439a243da8a96b39bb5a1e4bf11e97814"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -387,7 +387,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidFacts.swift",
-      "sha256": "284f99fc247808de6ce9064c16f6f6b95d307ecdb3d123adaf822d3d4b9a2854"
+      "sha256": "254e65a31253bfe40e8a9f540e848bfc429527b74f1026d030d34817bd9636e0"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidFrames.swift",
@@ -567,7 +567,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidHonestyTests.swift",
-      "sha256": "478006af3aeeb57febd742cfb00ad095bad32331161dd8c366afeda2ed255baa"
+      "sha256": "2b10487e9356a546a4aae05fc4fa1f71eb5d90783bb083ec5b144338e3775772"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidTurboTests.swift",
@@ -639,7 +639,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "1d672bad0ea6d729afef0728da76ce9a5b61d04850b246ceb91a57adc7ff504d"
+      "sha256": "9770ef0fbf55d1e1eedba46ea2275837aaacac0edff94268cd9604261a9b8e6f"
     },
     {
       "path": "docs/THIRD-PARTY.md",

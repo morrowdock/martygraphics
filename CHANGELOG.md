@@ -12,8 +12,9 @@
   `stage.output.speed` works). In v2 the title and step text fill `{name}` placeholders
   with closed modifiers (`abs` only with a strict-inequality check that proves the sign,
   `inv`, `pct`, `deg`, `frac`, so `{stage.output.speed|frac}` prints "2/7"; no fact text
-  shows a non-zero value as "0", and a placeholder value that would
-  print "0" is refused), and rule N1 refuses a caption with a number character (by the
+  shows a non-zero value as "0", a placeholder value that would
+  print "0" is refused, and so is a modifier step that overflows or underflows,
+  `text.range.<name>`), and rule N1 refuses a caption with a number character (by the
   toolchain's Unicode data and a pinned Unicode 18.0.0 Numeric_Type table) that does not
   come from a placeholder (`text.number.step.<n>`) unless the step is marked
   `"unchecked": "<why>"`. Steps can state `check` claims

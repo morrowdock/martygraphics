@@ -298,8 +298,10 @@ gives "The carrier turns 2/7 of a turn." for a 24-tooth sun and a 60-tooth ring
 letters, digits, `_` and `.`, at most 64 characters; modifiers are one of the five words),
 `text.brace`, `text.modifier.<mod>` (unknown), `text.modifier.<mod>.<name>` (does not
 apply, for example `inv` of a value in mm, `deg` of a tooth count, or `frac` of π),
-`text.sign.<name>` and `text.rounding.<name>`: a non-zero value that would print as "0"
-(a 1:300 reduction is 0.0033); use `frac` or `inv` for it.
+`text.sign.<name>`, `text.rounding.<name>`: a non-zero value that would print as "0"
+(a 1:300 reduction is 0.0033); use `frac` or `inv` for it, and `text.range.<name>`: a
+modifier step whose result is not a finite, normal number (`inv` of 1e-309 overflows; it
+is refused there, so a second `inv` cannot turn it into a false "0").
 
 **Rule N1 (numbers).** In a v2 caption, every number character must come from a
 placeholder; otherwise `text.number.step.<n>` (1-based). Every Unicode scalar counts, by
