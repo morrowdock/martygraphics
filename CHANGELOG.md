@@ -32,6 +32,16 @@
   - Compatibility: plain scenes, patches, lessons and assemblies are unchanged. The new parser environment, the
     lesson hooks (boardless mode, external fill, N1 instead of the D3 decimal rule, close-time refusals, `forward`)
     and the scanner's statement cap are internal and off by default; tests B1–B7 and the existing suites pin this.
+  - Review fixes (PR #32): restore trusts nothing in a snapshot as proof (it replays the script from the board with
+    the explainer's rules, checks every scene and queued command the lesson holds, derives captions again, in beat
+    order then statement order); after a learner or host change the caption shows live values and a 2D check that
+    no longer holds leaves the claims (`notCurrent`); 2D item claims come from the scenes, so refused beats and
+    notes on template-built items are counted correctly; the SwiftUI host plays a beat's spin over time, freezes it
+    on pause, applies the beat's camera and orbit, plays the board's transitions, shows bound sliders and the legend
+    notes, and draws 3D highlights with the new `.strong` emphasis (`MGSolidRenderer.emphasis`, default `.subtle`
+    unchanged); the renamed view and 3D check reasons (`view.camera`, `view.section.parts`, `check.unknown.<keys>`,
+    …) are in the catalog; `marty-solid snapshot check` restores an explainer snapshot;
+    `MartyGraphicsView.tableEmphasis(rows:cells:)`.
   - Not in this PR: 3D annotations (labels, arrows, dimensions; open-vocabulary PR 3a, still in review). Their ids
     join the namespace, the claims and the report at marked seams once it merges; until then `annotations` in a
     solid is refused with `assembly.unknown.annotations`. The card's 3D example shows its facts in captions instead

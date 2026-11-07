@@ -19,7 +19,7 @@ final class SolidReasonCatalogTests: XCTestCase {
         "hero.png", "exploded.png", "loop.gif", "manifest.json", "snapshot.json",   // render output files
         "constraint.gearMesh.a", "constraint.gearMesh.b",                           // unused `what` of `expand` (it throws `ref.unknown.<id>`)
         "beat.*", "beat.*.check.*", "item.*", "board.template",                    // explainer claim ids
-        "check.", "step.", "step.check.", "view.",                                 // reason prefixes the explainer renames
+        "step.", "step.check.",                                                    // prefixes the explainer renames (to `view.*`, `check.*`)
     ]
     /// Literals that are reason prefixes: the code appends `.<id>` (`MGSolidFrames.lints`).
     static let prefixes = ["frame.axis.off", "frame.child.absolute", "frame.child.far", "joint.idle"]

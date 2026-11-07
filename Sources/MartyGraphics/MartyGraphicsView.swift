@@ -104,6 +104,10 @@ public struct MartyGraphicsView: View {
     /// Items to point at with a glow ring (the selection is always included).
     /// 2D only unless the host opts in with `inspects3D([.emphasis])` and/or `[.dimming]`.
     public func emphasis(_ ids: Set<String>) -> Self { var v = self; v.teaching.emphasis = ids; return v }
+    /// 2D: emphasise table rows (0-based, header included) and cells (row × columns + column), by table id.
+    public func tableEmphasis(rows: [String: Set<Int>], cells: [String: Set<Int>] = [:]) -> Self {
+        var v = self; v.teaching.tableRows = rows; v.teaching.tableCells = cells; return v
+    }
     /// Numbered markers (item id → n) that match an object list beside the board.
     public func markers(_ markers: [String: Int]) -> Self { var v = self; v.teaching.markers = markers; return v }
     /// Finite motion: play `loops` cycles, then rest on the last frame (Replay plays again). nil keeps looping.
@@ -150,6 +154,9 @@ public struct MG3DInspection: OptionSet, Hashable, Sendable {
 struct MGBoardTeaching {
     var selection: Binding<String?>?
     var emphasis: Set<String> = []
+    /// Emphasised table rows and cells by table id (`MGRenderInput.tableRows` / `tableCells`).
+    var tableRows: [String: Set<Int>] = [:]
+    var tableCells: [String: Set<Int>] = [:]
     var markers: [String: Int] = [:]
     var loops: Int?
     var summary: String?
@@ -224,6 +231,8 @@ struct MGSceneHost: View {
                 bumpTransient()
             }
             .onChange(of: teaching.emphasis.union(teaching.selection?.wrappedValue.map { [$0] } ?? [])) { _, _ in bumpTransient() }
+            .onChange(of: teaching.tableRows) { _, _ in bumpTransient() }
+            .onChange(of: teaching.tableCells) { _, _ in bumpTransient() }
             .task(id: LoopKey(epoch: epoch, playing: playing && !teaching.holdsMotion, loops: teaching.loops, revision: controller.revision)) { await finishLoops(scene) }
         }
     }
@@ -411,6 +420,8 @@ struct MGSceneHost: View {
         var out = MGRenderInput(scene: scene, items: items, viewport: vp, theme: theme, appear: appear, focus: focus, time: t)
         out.emphasis = teaching.emphasis.union(teaching.selection?.wrappedValue.map { [$0] } ?? [])
         out.markers = teaching.markers
+        out.tableRows = teaching.tableRows
+        out.tableCells = teaching.tableCells
         return out
     }
 }

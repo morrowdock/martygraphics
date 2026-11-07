@@ -114,7 +114,8 @@ $B/marty-solid render ../Explainers/gears-mixed.explainer.json /tmp/mixed --snap
 `legend`, `warnings`, `budget`); `--strict` also refuses an unused note (`notes.unused.<id>`). `render` writes
 `board-0.png`, `solid-0.png`, one composite `beat-<n>.png` per beat, `loop.gif`, `snapshot-beat-<n>.json` with
 `--snapshots`, and `manifest.json`. A lesson document gives `kind.unsupported`; any other `kind` keeps the assembly
-path and its reasons.
+path and its reasons. `marty-solid snapshot check SNAPSHOT.json` restores an explainer snapshot
+(`MGExplainerSession.snapshot()` as JSON text) with every check and prints the first reason.
 
 ## Components
 

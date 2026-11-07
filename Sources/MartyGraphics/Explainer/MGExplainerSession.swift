@@ -130,11 +130,13 @@ public struct MGExplainerSession {
         var checkNames: [String] { checkSpecs.map { if case .string(let s)? = $0["value"] { return s }; return "" } }
         /// Canonical 3D fact names shown with `abs` (each needs a sign-proving check of this beat).
         var absNames: [String] = []
+        /// The beat's accepted 2D commands, in statement order (restore replays them to prove the beat again).
+        var ops: [MGJSON] = []
         var dropped = false
         static func == (a: BeatInfo, b: BeatInfo) -> Bool {
             a.index == b.index && a.sayStatement == b.sayStatement && a.say == b.say && a.unchecked == b.unchecked && a.view == b.view
                 && a.highlight == b.highlight && a.checks3D.map(\.json) == b.checks3D.map(\.json) && a.checkSpecs == b.checkSpecs
-                && a.absNames == b.absNames && a.dropped == b.dropped
+                && a.absNames == b.absNames && a.ops == b.ops && a.dropped == b.dropped
         }
     }
     struct StreamStatus: Equatable {
@@ -161,9 +163,8 @@ public struct MGExplainerSession {
     /// Where a refusal of the statement being handled belongs.
     var current = MGExplainerIssue.View.stream
     var completedAt: Duration = .zero
-    /// Author item wires (board items, then `add` items) and values `set` on them: the input of 2D item claims.
-    var itemOrder: [String] = []
-    var itemWires: [String: [MGJSON]] = [:]
+    /// Accepted set-up commands (between the board and the first beat), in order.
+    var setupOps: [MGJSON] = []
 
     public init(pacing: MGPacing = .immediate, clock: MGLessonClock = MGSystemClock(), library: MGSolidLibrary = .builtIn) {
         self.pacing = pacing; self.clock = clock; self.library = library
@@ -182,7 +183,12 @@ public struct MGExplainerSession {
     public var events: [MGExplainerEvent] { history.map(\.event) }
     /// The presented 2D state (an empty scene in a 3D-only explainer), nil before the board.
     public var state: MGLessonState? { lesson.state }
-    public var caption: String? { lesson.caption }
+    /// The caption of the presented beat, filled from the 2D state the learner sees NOW and the 3D facts. After a
+    /// learner or host change it shows the live engine values (never a stale number); nil before the first beat.
+    public var caption: String? {
+        guard let k = presented.beat, let info = beats[k], let st = lesson.state else { return nil }
+        return try? MGLessonSession.fillLine(info.say, st.scene.values, env: lesson.env)
+    }
     public var isPaused: Bool { lesson.isPaused }
     public var isComplete: Bool { lesson.isComplete }
     public var openLine: Int? { lesson.openLine }
@@ -281,6 +287,7 @@ public struct MGExplainerSession {
         current = .board
         let r = lesson.control(id, value)
         absorb(lesson.outbox)
+        if case .success = r { refreshPresented() }
         return r.mapError { MGExplainerIssue($0, view: .board) }
     }
 
@@ -298,7 +305,7 @@ public struct MGExplainerSession {
         }
         let r = lesson.apply(commands, origin: origin)
         absorb(lesson.outbox)
-        if case .success = r { for c in commands { recordWire(c) } }
+        if case .success = r { refreshPresented() }
         return r.mapError { MGExplainerIssue($0, view: .board) }
     }
 
@@ -368,7 +375,7 @@ public struct MGExplainerSession {
             title = nil; titleTier = nil; titleTemplate = h.title; primary = h.primary; notes = h.notes
             board = nil; solidSource = nil; solid = nil; ids3D = []; set3D = []
             beats = [:]; stepOf = [:]; presentedBeats = []; presented = MGExplainerBeatView(); frozen = false; beatCount = 0
-            itemOrder = []; itemWires = [:]; timing = MGExplainerTiming(); captions = [:]
+            setupOps = []; timing = MGExplainerTiming(); captions = [:]
             stream.started = true; stream.header = true
             emit(.accepted(statement: index))
         } catch { refuse(Self.reason(error), index) }
@@ -402,8 +409,6 @@ public struct MGExplainerSession {
         if ok {
             board = value
             timing.boardStatementAt = completedAt
-            if case .array(let items)? = value["items"] { for i in items { recordItem(i) } }
-            if case .array(let over)? = value["over"] { for e in over { if case .string(let id)? = e["id"], let v = e["value"] { recordSet(id, v) } } }
         }
         absorb(events)
     }
@@ -538,8 +543,11 @@ public struct MGExplainerSession {
             if let b = lesson.openBeat { issue.beat = lesson.pending[b].index; issue.command = lesson.pending[b].commands.count }
             return refuse(issue)
         }
+        let open = lesson.openBeat.map { lesson.pending[$0].index }
         let events = lesson.forward(json, index: index)
-        if events.contains(.accepted(statement: index)) { recordWire(json) }
+        if events.contains(.accepted(statement: index)) {
+            if let k = open { beats[k]?.ops.append(json) } else { setupOps.append(json) }
+        }
         absorb(events)
     }
 
@@ -564,7 +572,7 @@ public struct MGExplainerSession {
         let c: MGSolidClaimCheck
         do { c = try MGSolidClaimCheck.parse(value) } catch {
             let r = Self.reason(error)
-            return fail(r.hasPrefix("step.check.") ? "check." + r.dropFirst("step.check.".count) : r)
+            return fail(r.hasPrefix("step.check.") ? "check.\(r.dropFirst(11))" : r)
         }
         let t = MGSolidParser.token(c.value)
         guard let doc = solid, let (_, fact) = MGSolidFacts.lookup(c.value, doc.facts, doc.aliases) else { return fail("check.fact.\(t)") }
@@ -597,7 +605,7 @@ public struct MGExplainerSession {
         guard extra.isEmpty else { return fail("view.unknown.\(MGLessonEngine.segments(extra))") }
         switch compileSolid(adding: (k, value)) {
         case .failure(let issue):
-            let r = issue.reason.hasPrefix("step.") ? "view." + issue.reason.dropFirst("step.".count) : issue.reason
+            let r = issue.reason.hasPrefix("step.") ? "view.\(issue.reason.dropFirst(5))" : issue.reason
             fail(r, issue.part)
         case .success(let (doc, map)):
             solid = doc; stepOf = map
@@ -709,7 +717,9 @@ public struct MGExplainerSession {
                 if let c = sub.column { v.tableCells[sub.table, default: []].insert(sub.row * Int(scene.item(sub.table)!.n("cols", 1)) + c) }
                 else { v.tableRows[sub.table, default: []].insert(sub.row) }
             } else if !controls.contains(id), recordStale {
-                hostIssues.append(MGExplainerIssue("beat.highlight.stale.\(MGLessonIssue.segment(id))", view: .beat, beat: k))
+                // Recorded once per beat and id, so learner changes cannot grow the list.
+                let issue = MGExplainerIssue("beat.highlight.stale.\(MGLessonIssue.segment(id))", view: .beat, beat: k)
+                if !hostIssues.contains(issue) { hostIssues.append(issue) }
             }
         }
         return v
@@ -717,21 +727,11 @@ public struct MGExplainerSession {
 
     // MARK: helpers
 
-    mutating func recordItem(_ item: MGJSON) {
-        guard case .string(let id)? = item["id"] else { return }
-        if itemWires[id] == nil { itemOrder.append(id) }
-        itemWires[id, default: []].append(item)
-    }
-    mutating func recordSet(_ id: String, _ value: MGJSON) {
-        guard itemWires[id] != nil else { return }
-        itemWires[id]!.append(value)
-    }
-    mutating func recordWire(_ command: MGJSON) {
-        switch command["op"] {
-        case .string("add")?: if let item = command["item"] { recordItem(item) }
-        case .string("set")?: if case .string(let id)? = command["id"], let v = command["value"] { recordSet(id, v) }
-        default: break
-        }
+    /// A learner or host change: the presented beat's highlights resolve again against the state now shown (its caption
+    /// and checks are evaluated live: `caption`, `claims`).
+    mutating func refreshPresented() {
+        guard let k = presented.beat else { return }
+        presented = beatView(k, recordStale: true)
     }
 
     mutating func emit(_ event: MGExplainerEvent) {
