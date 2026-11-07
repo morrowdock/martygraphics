@@ -20,8 +20,14 @@
     patches) or deeper than 64 levels (`patch.depth`); the report adds `patch` (`fields`, `changed`, `applied`,
     `refusedAt`).
   - `MGSolidReasons` and `marty-solid reasons`: one table of every stable Solid 3D reason (pattern, meaning,
-    formats, warning or refusal), `lookup(_:)`, and `docs/REASONS.md`. A test scans the Solid sources and the
-    tool and fails when a reason-shaped string is not in the catalog.
+    formats, warning or refusal) with typed slots, `matches(_:)`, `lookup(_:)`, and `docs/REASONS.md`. A test
+    scans the Solid sources and the tool and fails when a reason-shaped string is not in the catalog; another
+    resolves sample reasons of every pattern (author names with `.missing.` or `.unknown.` included) to that
+    pattern. Three strings that the engine already gives for two causes are documented (`component.unknown.<keys>`,
+    `component.expr.div`, `step.ghost`).
+  - Report entry points refuse an unusable host `engine` value first (`report.engine`: non-finite, deeper than 8
+    levels or larger than 4,096 bytes), and `MGSolidReport.text` measures a value before it converts or encodes it
+    (`report.encoding`), so no recursive step sees a deep value; tested on a 512 KiB thread.
   - `MGSolidRenderPlan`: the render sequence as data (hero, exploded, one still per step, the 120 loop frames,
     captions, footer, snapshot choice and manifest). `marty-solid render` draws it; its output is unchanged apart
     from `engine` in the printed JSON and the manifest.

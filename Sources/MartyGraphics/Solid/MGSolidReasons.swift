@@ -6,10 +6,9 @@ import Foundation
 // sources and the `marty-solid` tool and fails when a reason-shaped string is not in it, or when an entry matches
 // nothing in the sources. Foundation only.
 
-/// One stable reason pattern. `<…>` marks one variable part. `<n>` is a 1-based number; `<kind>`, `<field>`, `<key>`,
-/// `<op>` and `<modifier>` are one name (ASCII letters, digits, `_`); `<id>`, `<name>` and `<object>` may hold dots
-/// (author names pass through `MGSolidParser.token`: ASCII letters, digits, `_` and `.`, at most 32 characters);
-/// `<keys>` is a sorted, comma-separated list of key tokens.
+/// One stable reason pattern. `<…>` is a typed slot (see `MGSolidReasons.slots` and docs/REASONS.md): a slot matches
+/// only values of its own domain, so a reason the engine gives fits exactly one pattern, or a specific pattern and the
+/// general one it refines (`part.gear.bore` and `part.<shape>.<field>`; `lookup` picks the specific one).
 public struct MGSolidReason: Equatable, Sendable {
     /// Where a reason comes from.
     public enum Format: String, CaseIterable, Sendable {
@@ -39,8 +38,8 @@ public struct MGSolidReason: Equatable, Sendable {
     /// True for a warning the strict profile (`MGSolidProfile.strict`, `marty-solid check --strict`) refuses.
     public var strict: Bool
 
-    /// True when `reason` fits the pattern (each `<…>` matches one or more characters of its class, see the type).
-    public func matches(_ reason: String) -> Bool { MGSolidReasons.match(Array(pattern.utf8), Array(reason.utf8)) }
+    /// True when `reason` fits the pattern, every slot holding a value of its domain.
+    public func matches(_ reason: String) -> Bool { MGSolidReasons.slotCharacters(pattern, reason) != nil }
 
     /// `{"pattern", "meaning", "formats", "kind", "strict"}`.
     public var json: MGJSON {
@@ -50,33 +49,94 @@ public struct MGSolidReason: Equatable, Sendable {
 }
 
 public enum MGSolidReasons {
-    /// The objects whose keys are closed (`<object>.missing.<keys>`, `<object>.unknown.<keys>`). `part.<kind>` is a shape
-    /// body; `part.drive.<kind>` is a `crankSlider` or `crankRod` drive.
-    public static let closedObjects = ["assembly", "params", "part", "part.<kind>", "part.emissive", "part.expect", "part.repeat",
-                                       "part.drive.follow", "part.drive.<kind>", "constraint.gearMesh",
-                                       "step", "step.check", "step.section", "component", "component.param.<name>", "component.use"]
+    /// The objects whose keys are closed (`<object>.missing.<keys>`, `<object>.unknown.<keys>`). `part.<shape>` is a
+    /// shape body; `part.drive.<crank>` is a `crankSlider` or `crankRod` drive. For `.unknown.` the object `component`
+    /// is left out: a component definition's unknown top-level keys give the same string as an unknown component in
+    /// `use` (`component.unknown.<keys>`, which describes both).
+    public static let closedObjects = ["assembly", "params", "part", "part.<shape>", "part.emissive", "part.expect", "part.repeat",
+                                       "part.drive.follow", "part.drive.<crank>", "constraint.gearMesh",
+                                       "step", "step.check", "step.section", "component", "component.param.<ident>", "component.use"]
 
-    /// The entry for a reason: the matching pattern with the most fixed characters (so `part.gear.bore` finds its own
-    /// entry, not `part.<kind>.<field>`); nil when no pattern matches.
+    /// Each slot and the values it holds (a regular expression over the reason's characters).
+    public static let slots: [String: String] = [
+        "n": "[1-9][0-9]*",
+        "id": token, "name": token,
+        "ident": "[A-Za-z][A-Za-z0-9_]{0,23}",
+        "shape": MGSolidParser.shapeKeys.keys.sorted().joined(separator: "|"),
+        "crank": "crankSlider|crankRod",
+        "field": "[A-Za-z][A-Za-z0-9]*",
+        "list": "focus|highlight",
+        "direction": "axisWorld|upWorld",
+        "modifier": "[A-Za-z0-9_]{1,32}",
+        // `div` and `param` have their own entries (`component.expr.div` also covers a `div` with the wrong operands).
+        "op": MGSolidComponents.ops.subtracting(["div", "param"]).sorted().joined(separator: "|"),
+        "keys": "\(token)(?:,\(token))*",
+    ]
+    /// An author name after `MGSolidParser.token`.
+    static let token = "[A-Za-z0-9_.]{1,32}"
+    /// Longest reason `lookup` and `matches` read (a `<keys>` list is bounded by the document size).
+    public static let maxReasonBytes = 2 * MGSolidLimits.bytes
+
+    /// The entry for a reason, nil when no pattern matches. When a specific pattern and the general one it refines both
+    /// match (`part.gear.bore`, `part.<shape>.<field>`), the one whose slots hold the fewest characters wins; a test
+    /// checks that every pattern's own sample reasons resolve to it.
     public static func lookup(_ reason: String) -> MGSolidReason? {
-        var best: MGSolidReason?, bestFixed = -1
-        for e in catalog where e.matches(reason) {
-            let f = fixedCount(e.pattern)
-            if f > bestFixed || (f == bestFixed && e.pattern < (best?.pattern ?? "")) { best = e; bestFixed = f }
+        var best: MGSolidReason?, bestSlots = Int.max
+        for (k, e) in catalog.enumerated() {
+            guard let n = slotCharacters(compiled[k], reason), n < bestSlots else { continue }
+            best = e; bestSlots = n
         }
         return best
     }
 
-    /// Characters of a pattern outside `<…>`.
-    static func fixedCount(_ pattern: String) -> Int {
-        var n = 0, inside = false
-        for ch in pattern {
-            if ch == "<" { inside = true } else if ch == ">" { inside = false } else if !inside { n += 1 }
-        }
-        return n
+    /// The entries whose pattern matches a reason, in catalog order.
+    public static func matches(_ reason: String) -> [MGSolidReason] {
+        catalog.indices.filter { slotCharacters(compiled[$0], reason) != nil }.map { catalog[$0] }
     }
 
-    /// `{"catalog": "martygraphics.solid.reasons/1", "placeholder": …, "formats": {…}, "reasons": [entries]}`.
+    /// Characters the slots of `pattern` hold in `reason`, or nil when it does not match.
+    static func slotCharacters(_ pattern: String, _ reason: String) -> Int? {
+        guard let re = compiledByPattern[pattern] ?? regex(pattern) else { return nil }
+        return slotCharacters(re, reason)
+    }
+
+    static func slotCharacters(_ re: NSRegularExpression, _ reason: String) -> Int? {
+        guard reason.utf8.count <= maxReasonBytes, reason.utf8.allSatisfy({ $0 < 0x80 }) else { return nil }
+        let full = NSRange(reason.startIndex..., in: reason)
+        guard let m = re.firstMatch(in: reason, options: [.anchored], range: full), m.range == full else { return nil }
+        return (1..<m.numberOfRanges).reduce(0) { $0 + (m.range(at: $1).location == NSNotFound ? 0 : m.range(at: $1).length) }
+    }
+
+    /// The anchored expression of a pattern: literal characters escaped, each slot a capture group of its domain,
+    /// `<object>` one of `closedObjects` (with their own slots).
+    static func regex(_ pattern: String) -> NSRegularExpression? {
+        func body(_ p: String) -> String {
+            var out = "", i = p.startIndex
+            while i < p.endIndex {
+                if p[i] == "<", let close = p[i...].firstIndex(of: ">") {
+                    let name = String(p[p.index(after: i)..<close])
+                    if name == "object" {
+                        let unknown = p[close...].hasPrefix(">.unknown.")
+                        let objects = closedObjects.filter { !(unknown && $0 == "component") }
+                        out += "(?:" + objects.map { body($0) }.joined(separator: "|") + ")"
+                    } else {
+                        out += "(" + (slots[name] ?? "(?!)") + ")"
+                    }
+                    i = p.index(after: close)
+                } else {
+                    out += NSRegularExpression.escapedPattern(for: String(p[i])); i = p.index(after: i)
+                }
+            }
+            return out
+        }
+        return try? NSRegularExpression(pattern: "^" + body(pattern) + "$")
+    }
+
+    /// One compiled expression per catalog entry, in catalog order, and the same by pattern.
+    static let compiled: [NSRegularExpression] = catalog.map { regex($0.pattern)! }
+    static let compiledByPattern: [String: NSRegularExpression] = Dictionary(uniqueKeysWithValues: zip(catalog.map(\.pattern), compiled))
+
+    /// `{"catalog": "martygraphics.solid.reasons/1", "slots", "closedObjects", "formats", "reasons": [entries]}`.
     public static var json: MGJSON {
         let formats: [String: MGJSON] = [
             "assembly": "Assembly documents, and every compile of one: a patch recompiles the document; a component compiles on its own.",
@@ -86,47 +146,9 @@ public enum MGSolidReasons {
             "cli": "The marty-solid tool.",
         ].mapValues { .string($0) }
         return .object(["catalog": .string("martygraphics.solid.reasons/1"),
-                        "placeholder": .string("<...> is one variable part. <n> is a 1-based number; <kind>, <field>, <key>, <op> and <modifier> are one name (ASCII letters, digits, '_'); <id>, <name> and <object> may hold dots (author names are tokens of at most 32 characters); <keys> is a sorted, comma-separated list of key tokens."),
+                        "slots": .object(slots.mapValues { MGJSON.string($0) }),
                         "closedObjects": .array(closedObjects.map { MGJSON.string($0) }),
                         "formats": .object(formats), "reasons": .array(catalog.map(\.json))])
-    }
-
-    /// Glob match: `<…>` in the pattern matches one or more characters of its class. One pass over the reason with a
-    /// set of pattern positions, so the time is linear in the reason's length for every pattern (no backtracking).
-    static func match(_ p: [UInt8], _ s: [UInt8]) -> Bool {
-        // Tokens: a literal byte, or a placeholder class name.
-        var tokens: [(byte: UInt8, name: String?)] = []
-        var i = 0
-        while i < p.count {
-            if p[i] == UInt8(ascii: "<"), let close = p[i...].firstIndex(of: UInt8(ascii: ">")) {
-                tokens.append((0, String(decoding: p[(i + 1)..<close], as: UTF8.self))); i = close + 1
-            } else { tokens.append((p[i], nil)); i += 1 }
-        }
-        let n = tokens.count
-        // `before[t]`: the next token to match is t. `inside[t]`: placeholder t has matched at least one character.
-        var before = [Bool](repeating: false, count: n + 1), inside = [Bool](repeating: false, count: n + 1)
-        before[0] = true
-        for c in s {
-            var nb = [Bool](repeating: false, count: n + 1), ni = [Bool](repeating: false, count: n + 1)
-            var any = false
-            for t in 0..<n {
-                if let name = tokens[t].name {
-                    if (before[t] || inside[t]) && isPlaceholder(c, name) { ni[t] = true; nb[t + 1] = true; any = true }
-                } else if before[t] && tokens[t].byte == c { nb[t + 1] = true; any = true }
-            }
-            guard any else { return false }
-            before = nb; inside = ni
-        }
-        return before[n]
-    }
-    /// Names whose placeholder is one name without dots.
-    static let singleNames: Set<String> = ["kind", "field", "key", "op", "modifier"]
-    static func isPlaceholder(_ b: UInt8, _ name: String) -> Bool {
-        let digit = b >= 0x30 && b <= 0x39
-        if name == "n" { return digit }
-        let word = digit || (b >= 0x41 && b <= 0x5a) || (b >= 0x61 && b <= 0x7a) || b == UInt8(ascii: "_")
-        if singleNames.contains(name) { return word }
-        return word || b == UInt8(ascii: ".") || b == UInt8(ascii: ",")
     }
 
     private static func r(_ pattern: String, _ formats: [MGSolidReason.Format], _ meaning: String) -> MGSolidReason {
@@ -153,11 +175,11 @@ public enum MGSolidReasons {
         r("assembly.budget", [.assembly], "Part meshes plus step cuts would exceed 1,500,000 triangles or 1,000,000 vertices (counted before any mesh is built)."),
         r("assembly.invalid", [.assembly], "The compiled assembly failed its structural validation (a parent, drive source or explode window the earlier checks did not refuse)."),
         r("<object>.missing.<keys>", [.assembly, .component], "Required keys are missing from an object. `<object>` names the object (see `closedObjects`); `<keys>` lists the missing keys."),
-        r("<object>.unknown.<keys>", [.assembly, .component], "An object has keys it does not allow (in a v1 document this includes every v2 key). `<object>` names the object (see `closedObjects`); `<keys>` lists the keys."),
+        r("<object>.unknown.<keys>", [.assembly, .component], "An object has keys it does not allow (in a v1 document this includes every v2 key). `<object>` names the object (see `closedObjects`; a component definition's own unknown keys give `component.unknown.<keys>`); `<keys>` lists the keys."),
         r("part.at", [.assembly], "A part's `at` is not three coordinates in -4000...4000 mm."),
         r("part.rot", [.assembly], "A part's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis (each value in -1000...1000) and an angle in -360...360."),
-        r("part.<kind>.at", [.assembly], "A shape's `at` is not three coordinates in -4000...4000 mm."),
-        r("part.<kind>.rot", [.assembly], "A shape's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360."),
+        r("part.<shape>.at", [.assembly], "A shape's `at` is not three coordinates in -4000...4000 mm."),
+        r("part.<shape>.rot", [.assembly], "A shape's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360."),
         r("component.use.at", [.assembly, .component], "A `use` entry's `at` is not three coordinates in -4000...4000 mm."),
         r("component.use.rot", [.assembly, .component], "A `use` entry's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360."),
         r("tier.key", [.assembly], "A v2 document has a key named `tier` somewhere (tiers are computed by the engine, never authored)."),
@@ -193,25 +215,25 @@ public enum MGSolidReasons {
         r("part.emissive", [.assembly], "`emissive` is not an object, or its `intensity` is not in 0...4 (v2)."),
         r("part.emissive.role", [.assembly], "`emissive.role` is not a colour role (v2)."),
         r("part.expect", [.assembly], "`expect` is not a non-empty object (v2)."),
-        r("part.expect.<key>", [.assembly], "`expect.axisWorld` or `expect.upWorld` is not a non-zero direction of three coordinates (v2)."),
+        r("part.expect.<direction>", [.assembly], "`expect.axisWorld` or `expect.upWorld` is not a non-zero direction of three coordinates (v2)."),
         r("part.repeat", [.assembly], "`repeat` is not an object."),
         r("part.repeat.count", [.assembly], "`repeat.count` is not a whole number in 2...12."),
         r("part.repeat.axis", [.assembly], "`repeat.axis` is not a non-zero direction of three coordinates."),
         r("part.repeat.angle", [.assembly], "`repeat.angle` is not in -360...360 degrees."),
         // Shapes.
-        r("part.<kind>", [.assembly], "A shape's body is not an object (`<kind>` is the shape kind)."),
-        r("part.<kind>.<field>", [.assembly], "A shape field is missing, not a number, out of its range, or not a whole number where one is needed (teeth, arms, counts), or a size derived from it fails (a ring gear's teeth: tip radius not above base radius; a box `size`)."),
-        r("part.<kind>.chamfer", [.assembly], "The chamfer is too large for the shape (for example half the width or more), or the chamfered cap outlines would cross."),
-        r("part.<kind>.tip", [.assembly], "A gear or ring gear tooth has no real tip land (too few teeth for the pressure angle and backlash)."),
-        r("part.<kind>.profile", [.assembly], "The sampled tooth outline of a gear or ring gear crosses itself, or a ring's tooth spaces close at the root."),
-        r("part.<kind>.outer", [.assembly], "A ring gear's `outer` radius is less than one module beyond its root circle, or a tube's `outer` is not larger than its `inner`."),
+        r("part.<shape>", [.assembly], "A shape's body is not an object."),
+        r("part.<shape>.<field>", [.assembly], "A shape field is missing, not a number, out of its range, or not a whole number where one is needed (teeth, arms, counts), or a size derived from it fails (a ring gear's teeth: tip radius not above base radius; a box `size`)."),
+        r("part.<shape>.chamfer", [.assembly], "The chamfer is too large for the shape (for example half the width or more), or the chamfered cap outlines would cross."),
+        r("part.<shape>.tip", [.assembly], "A gear or ring gear tooth has no real tip land (too few teeth for the pressure angle and backlash)."),
+        r("part.<shape>.profile", [.assembly], "The sampled tooth outline of a gear or ring gear crosses itself, or a ring's tooth spaces close at the root."),
+        r("part.<shape>.outer", [.assembly], "A ring gear's `outer` radius is less than one module beyond its root circle, or a tube's `outer` is not larger than its `inner`."),
         r("part.gear.bore", [.assembly], "The bore reaches the tooth root (it must stay half a module inside the root circle)."),
         r("part.gear.keyway", [.assembly], "`keyway` is not [width, depth] in 0.1...1000, has no bore, is not narrower than the bore, or reaches the root."),
-        r("part.<kind>.holes", [.assembly], "Holes are not a list of valid entries: a plate takes at most 32 [x, y, radius]; an extruded profile at most 16 simple loops inside its outline."),
+        r("part.<shape>.holes", [.assembly], "Holes are not a list of valid entries: a plate takes at most 32 [x, y, radius]; an extruded profile at most 16 simple loops inside its outline."),
         r("part.plate.holes.outside", [.assembly], "A plate hole (grown by the chamfers) leaves less than 0.5 mm of rim."),
-        r("part.<kind>.holes.overlap", [.assembly], "Two plate holes are closer than 0.5 mm (after chamfers), or two profile holes cross or nest."),
+        r("part.<shape>.holes.overlap", [.assembly], "Two plate holes are closer than 0.5 mm (after chamfers), or two profile holes cross or nest."),
         r("part.carrier.armWidth", [.assembly], "Carrier arms are wider than twice the boss radius, or the hub reaches beyond radius + boss."),
-        r("part.<kind>.points", [.assembly], "Profile points are not 3–256 [x, y] pairs (2–256 for a revolved profile), enclose no area, or cross themselves."),
+        r("part.<shape>.points", [.assembly], "Profile points are not 3–256 [x, y] pairs (2–256 for a revolved profile), enclose no area, or cross themselves."),
         r("part.revolvedProfile.points.radius", [.assembly], "A revolved profile point has x < 0 (x is the radius)."),
         r("part.revolvedProfile.axis", [.assembly], "An open revolved profile has fewer than 3 points, or it does not start and end on the axis (x = 0)."),
         r("part.revolvedProfile.sweep", [.assembly], "`sweep` is not in 1...360 degrees."),
@@ -228,10 +250,10 @@ public enum MGSolidReasons {
         r("part.drive.follow", [.assembly], "`drive.follow` is not an object."),
         r("part.drive.follow.source", [.assembly], "`follow.source` is not a string, or it names the part itself."),
         r("part.drive.follow.ratio", [.assembly], "`follow.ratio` is not a number in -1000...1000."),
-        r("part.drive.<kind>", [.assembly], "A `crankSlider` or `crankRod` body is not an object."),
-        r("part.drive.<kind>.crank", [.assembly], "A crank drive's `crank` is not a string, or it names the part itself."),
-        r("part.drive.<kind>.radius", [.assembly], "A crank drive's `radius` is not a length in 0.05...4000 mm."),
-        r("part.drive.<kind>.rod", [.assembly], "A crank drive's `rod` is not a length in 0.05...4000 mm, or it is not longer than the crank radius."),
+        r("part.drive.<crank>", [.assembly], "A `crankSlider` or `crankRod` body is not an object."),
+        r("part.drive.<crank>.crank", [.assembly], "A crank drive's `crank` is not a string, or it names the part itself."),
+        r("part.drive.<crank>.radius", [.assembly], "A crank drive's `radius` is not a length in 0.05...4000 mm."),
+        r("part.drive.<crank>.rod", [.assembly], "A crank drive's `rod` is not a length in 0.05...4000 mm, or it is not longer than the crank radius."),
         r("part.drive.crankSlider.joint", [.assembly], "A `crankSlider` part does not have a prismatic joint."),
         r("part.drive.unknown.<name>", [.assembly], "Unknown drive kind (input, follow, crankSlider, crankRod)."),
         r("part.drive.cycle", [.assembly], "Drives depend on each other in a cycle."),
@@ -266,14 +288,14 @@ public enum MGSolidReasons {
         r("steps.count", [.assembly], "`steps` is not an array of at most 16 entries."),
         r("step.object", [.assembly], "A step is not an object."),
         r("step.say", [.assembly], "A step's `say` is not \(text) of at most 240 characters, also after placeholders are filled."),
-        r("step.<key>", [.assembly, .component], "A step id list (`focus`, `highlight`, `ghost`) is not an array of at most 16 strings."),
+        r("step.<list>", [.assembly, .component], "A step id list (`focus`, `highlight`) is not an array of at most 16 strings."),
         r("step.camera", [.assembly], "`camera` is not a camera preset name."),
         r("step.explode", [.assembly], "`explode` is not a number in 0...1."),
         r("step.orbit", [.assembly], "`orbit` is not in -360...360 degrees."),
         r("step.spin", [.assembly], "`spin` is not in -20...20 input turns."),
         r("step.unchecked", [.assembly], "`unchecked` is not \(text) of at most 60 characters (v2)."),
         r("step.check", [.assembly], "`check` is not an array of 1–8 claim checks (v2)."),
-        r("step.ghost", [.assembly], "`ghost` is not a non-empty array (v2)."),
+        r("step.ghost", [.assembly], "`ghost` is not a non-empty array of at most 16 part id strings (v2)."),
         r("step.section", [.assembly], "`section` is not an object (v2)."),
         r("step.section.normal", [.assembly], "`section.normal` is not a non-zero direction of three coordinates."),
         r("step.section.offset", [.assembly], "`section.offset` is not in -4000...4000 mm."),
@@ -340,13 +362,13 @@ public enum MGSolidReasons {
         r("component.about", [.component], "`about` is not \(text) of at most 160 characters."),
         r("component.params", [.component], "`params` is not an object of at most 16 parameters."),
         r("component.param.name.<name>", [.component], "A parameter name is not an identifier, or it is an expression operator name."),
-        r("component.param.<name>", [.component], "A parameter is not an object with numbers min ≤ default ≤ max in ±1e6, a boolean `integer` (whole bounds and default when true) and an `about` of valid text."),
+        r("component.param.<ident>", [.component], "A parameter is not an object with numbers min ≤ default ≤ max in ±1e6, a boolean `integer` (whole bounds and default when true) and an `about` of valid text."),
         r("component.parts.count", [.component], "`parts` is not an array of 1–24 entries."),
         r("component.part", [.component], "A part entry is not an object with a string id (after parameters are substituted)."),
         r("component.use", [.component], "A nested `use` is not a string."),
         r("component.use.parent", [.component], "A `use` entry's `parent` is not a string."),
         r("component.cycle.<id>", [.component], "A component uses itself, directly or through other components."),
-        r("component.unknown.<id>", [.assembly, .component], "`use` names a component that is not in the library."),
+        r("component.unknown.<keys>", [.assembly, .component], "`use` names a component that is not in the library (`<keys>` is then its id). The same string also answers a component definition with unknown top-level keys: one string, two causes."),
         r("component.depth", [.assembly, .component], "`use` nests more than 3 levels deep."),
         r("component.constraints", [.component], "`constraints` is not an array of at most 32 entries."),
         r("component.anchors", [.component], "`anchors` is not an object of at most 8 anchors."),
@@ -354,19 +376,19 @@ public enum MGSolidReasons {
         r("component.checks", [.component], "`checks` is not an object of at most 8 checks."),
         r("component.check.name.<name>", [.component], "A check name is not an identifier."),
         r("component.check", [.component], "A check is not `{\"lt\": [a, b]}`, `{\"le\": [a, b]}` or `{\"int\": a}`."),
-        r("component.check.<name>", [.assembly, .component], "A component check is false for the parameters of an instance."),
+        r("component.check.<ident>", [.assembly, .component], "A component check is false for the parameters of an instance."),
         r("component.expr", [.component], "An expression has an unknown operator or is not a number or an expression."),
-        r("component.expr.<op>", [.component], "An expression operator has the wrong number of operands (`<op>` names it)."),
+        r("component.expr.<op>", [.component], "An expression operator (add, mul, min, max, sub, neg, pi, sin, cos) has the wrong operands (`<op>` names it)."),
         r("component.expr.depth", [.component], "An expression nests deeper than 8 levels."),
         r("component.expr.size", [.component], "An instance evaluates more than 4,096 expression nodes."),
         r("component.expr.param", [.component], "`param` does not take a string."),
         r("component.expr.param.<name>", [.component], "`param` names no parameter."),
-        r("component.expr.div", [.component], "Division by zero."),
+        r("component.expr.div", [.component], "Division by zero, or `div` without exactly two operands (one string, two causes)."),
         r("component.expr.range", [.component], "An expression result is not finite or exceeds ±1e6."),
         r("component.param.unknown.<name>", [.assembly, .component], "`with` names no parameter of the component."),
-        r("component.param.value.<name>", [.assembly, .component], "A `with` value is not a finite number."),
-        r("component.param.range.<name>", [.assembly, .component], "A `with` value is outside the parameter's min...max."),
-        r("component.param.integer.<name>", [.assembly, .component], "A `with` value is not whole for an integer parameter."),
+        r("component.param.value.<ident>", [.assembly, .component], "A `with` value is not a finite number."),
+        r("component.param.range.<ident>", [.assembly, .component], "A `with` value is outside the parameter's min...max."),
+        r("component.param.integer.<ident>", [.assembly, .component], "A `with` value is not whole for an integer parameter."),
         r("component.with", [.assembly, .component], "`with` is not an object."),
         r("component.set", [.assembly, .component], "`set` is not an object."),
         r("component.set.repeat.<id>", [.assembly, .component], "`set` names one copy of a repeated part; edit the base id (every copy)."),
@@ -387,6 +409,7 @@ public enum MGSolidReasons {
         r("solidSnapshot.number", [.snapshot], "A number literal is longer than 64 characters or does not read as a finite number (for example `1e999`)."),
         r("solidSnapshot.invalid", [.snapshot], "The JSON decoder or a validating initialiser refused the snapshot (format, slot sizes, ranges, v2 fields in /1)."),
         // Tool.
-        r("report.encoding", [.cli], "The report could not be encoded as JSON (never expected: reports hold only finite numbers and shallow nesting)."),
+        r("report.encoding", [.check, .cli], "A value given to `MGSolidReport.text` or as render manifest outputs is not finite or nests too deep, so it is not encoded (reports the engine builds never are)."),
+        r("report.engine", [.check], "The host's `engine` value is not finite, nests deeper than 8 levels or is larger than 4,096 bytes (`MGSolidReport.engineDepth`, `engineBytes`)."),
     ]
 }

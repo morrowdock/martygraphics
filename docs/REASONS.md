@@ -4,31 +4,58 @@ Every stable reason the Solid 3D formats give, in one table. A reason is one tok
 (ASCII letters, digits, `_`, `.` and `,`) with one meaning; hosts and model harnesses can
 branch on it. The machine-readable catalog is the same table:
 
-* `marty-solid reasons` prints it as JSON (`{"catalog": "martygraphics.solid.reasons/1", "placeholder", "closedObjects", "formats", "reasons": [{"pattern", "meaning", "formats", "kind", "strict"}]}`).
-* In Swift: `MGSolidReasons.catalog` (typed entries), `MGSolidReasons.json`, and
-  `MGSolidReasons.lookup(_:)`, which returns the entry for a concrete reason such as
-  `part.gear.bore` (the matching pattern with the most fixed characters).
+* `marty-solid reasons` prints it as JSON (`{"catalog": "martygraphics.solid.reasons/1", "slots", "closedObjects", "formats", "reasons": [{"pattern", "meaning", "formats", "kind", "strict"}]}`).
+* In Swift: `MGSolidReasons.catalog` (typed entries), `MGSolidReasons.json`,
+  `MGSolidReasons.matches(_:)` (every matching entry) and `MGSolidReasons.lookup(_:)`,
+  which returns the entry for a concrete reason such as `part.gear.bore`. Reasons longer
+  than 128 KiB or with non-ASCII characters match nothing.
 
 The table in this page is generated from `Sources/MartyGraphics/Solid/MGSolidReasons.swift`;
 a test fails when a pattern is missing here.
 
 ## Patterns
 
-`<…>` marks one variable part of a reason:
+`<…>` is a typed slot: it matches only values of its own domain (`MGSolidReasons.slots`
+gives each as a regular expression). So a reason the engine gives fits exactly one
+pattern, or a specific pattern and the general one it refines (`part.gear.bore` and
+`part.<shape>.<field>`); `lookup` then picks the pattern whose slots hold the fewest
+characters. A test builds sample reasons for every pattern (author names included that
+contain `.missing.` or `.unknown.`) and checks that each resolves to its own pattern.
 
-| Placeholder | Holds |
+| Slot | Holds |
 | --- | --- |
-| `<n>` | A 1-based number (a step). |
-| `<kind>`, `<field>`, `<key>`, `<op>`, `<modifier>` | One name without dots (ASCII letters, digits, `_`): a shape kind, a field, a step list key, an expression operator, a placeholder modifier. |
-| `<id>`, `<name>` | An author name passed through `MGSolidParser.token`: ASCII letters, digits, `_` and `.` (anything else becomes `_`), at most 32 characters. Component part ids keep their dots (`stage1.pinion`). |
-| `<object>` | One of the closed objects listed below. |
-| `<keys>` | The missing or unknown keys as tokens, sorted and joined with commas (`assembly.missing.kind,parts,v`). |
+| `<n>` | A step number from 1. |
+| `<id>`, `<name>` | An author name passed through `MGSolidParser.token`: 1–32 ASCII letters, digits, `_` and `.` (anything else becomes `_`). Component part ids keep their dots (`stage1.pinion`). |
+| `<ident>` | An identifier: an ASCII letter, then up to 23 letters, digits or `_` (component parameter and check names). |
+| `<shape>` | A shape kind: gear, ringGear, shaft, tube, box, hex, plate, carrier, extrudedProfile, revolvedProfile, blade, bladeRow. |
+| `<crank>` | `crankSlider` or `crankRod`. |
+| `<field>` | A field name: an ASCII letter, then letters or digits. |
+| `<list>` | `focus` or `highlight`. |
+| `<direction>` | `axisWorld` or `upWorld`. |
+| `<modifier>` | A placeholder modifier token: 1–32 ASCII letters, digits or `_`. |
+| `<op>` | An expression operator other than `div` and `param` (they have their own entries). |
+| `<keys>` | Key tokens, sorted and joined with commas (`assembly.missing.kind,parts,v`). |
+| `<object>` | One of the closed objects below. |
 
 Closed objects (`<object>.missing.<keys>`, `<object>.unknown.<keys>`): `assembly`,
-`params`, `part`, `part.<kind>` (a shape body), `part.emissive`, `part.expect`,
-`part.repeat`, `part.drive.follow`, `part.drive.<kind>` (`crankSlider`, `crankRod`),
-`constraint.gearMesh`, `step`, `step.check`, `step.section`, `component`,
-`component.param.<name>`, `component.use`.
+`params`, `part`, `part.<shape>` (a shape body), `part.emissive`, `part.expect`,
+`part.repeat`, `part.drive.follow`, `part.drive.<crank>`, `constraint.gearMesh`, `step`,
+`step.check`, `step.section`, `component`, `component.param.<ident>`, `component.use`.
+
+### One string, two causes
+
+The engine gives the same string for two causes in three places. The catalog has one
+entry for each, and its meaning names both causes:
+
+* `component.unknown.<keys>`: a `use` names a component that is not in the library, or a
+  component definition has unknown top-level keys.
+* `component.expr.div`: division by zero, or `div` without exactly two operands.
+* `step.ghost`: `ghost` is not a non-empty array, or it has more than 16 entries or a
+  non-string entry.
+
+A component parameter named `unknown` or `name` can also make a parameter-spec reason
+read like another reason (`component.param.unknown.missing.x` is also a `with` key
+`missing.x` that names no parameter); `lookup` then picks the parameter-spec reason.
 
 ## Formats
 
@@ -88,11 +115,11 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `assembly.budget` | assembly | Part meshes plus step cuts would exceed 1,500,000 triangles or 1,000,000 vertices (counted before any mesh is built). |
 | `assembly.invalid` | assembly | The compiled assembly failed its structural validation (a parent, drive source or explode window the earlier checks did not refuse). |
 | `<object>.missing.<keys>` | assembly, component | Required keys are missing from an object. `<object>` names the object (see `closedObjects`); `<keys>` lists the missing keys. |
-| `<object>.unknown.<keys>` | assembly, component | An object has keys it does not allow (in a v1 document this includes every v2 key). `<object>` names the object (see `closedObjects`); `<keys>` lists the keys. |
+| `<object>.unknown.<keys>` | assembly, component | An object has keys it does not allow (in a v1 document this includes every v2 key). `<object>` names the object (see `closedObjects`; a component definition's own unknown keys give `component.unknown.<keys>`); `<keys>` lists the keys. |
 | `part.at` | assembly | A part's `at` is not three coordinates in -4000...4000 mm. |
 | `part.rot` | assembly | A part's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis (each value in -1000...1000) and an angle in -360...360. |
-| `part.<kind>.at` | assembly | A shape's `at` is not three coordinates in -4000...4000 mm. |
-| `part.<kind>.rot` | assembly | A shape's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360. |
+| `part.<shape>.at` | assembly | A shape's `at` is not three coordinates in -4000...4000 mm. |
+| `part.<shape>.rot` | assembly | A shape's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360. |
 | `component.use.at` | assembly, component | A `use` entry's `at` is not three coordinates in -4000...4000 mm. |
 | `component.use.rot` | assembly, component | A `use` entry's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360. |
 | `tier.key` | assembly | A v2 document has a key named `tier` somewhere (tiers are computed by the engine, never authored). |
@@ -136,7 +163,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `part.emissive` | assembly | `emissive` is not an object, or its `intensity` is not in 0...4 (v2). |
 | `part.emissive.role` | assembly | `emissive.role` is not a colour role (v2). |
 | `part.expect` | assembly | `expect` is not a non-empty object (v2). |
-| `part.expect.<key>` | assembly | `expect.axisWorld` or `expect.upWorld` is not a non-zero direction of three coordinates (v2). |
+| `part.expect.<direction>` | assembly | `expect.axisWorld` or `expect.upWorld` is not a non-zero direction of three coordinates (v2). |
 | `part.repeat` | assembly | `repeat` is not an object. |
 | `part.repeat.count` | assembly | `repeat.count` is not a whole number in 2...12. |
 | `part.repeat.axis` | assembly | `repeat.axis` is not a non-zero direction of three coordinates. |
@@ -146,19 +173,19 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 
 | Reason | Formats | Meaning |
 | --- | --- | --- |
-| `part.<kind>` | assembly | A shape's body is not an object (`<kind>` is the shape kind). |
-| `part.<kind>.<field>` | assembly | A shape field is missing, not a number, out of its range, or not a whole number where one is needed (teeth, arms, counts), or a size derived from it fails (a ring gear's teeth: tip radius not above base radius; a box `size`). |
-| `part.<kind>.chamfer` | assembly | The chamfer is too large for the shape (for example half the width or more), or the chamfered cap outlines would cross. |
-| `part.<kind>.tip` | assembly | A gear or ring gear tooth has no real tip land (too few teeth for the pressure angle and backlash). |
-| `part.<kind>.profile` | assembly | The sampled tooth outline of a gear or ring gear crosses itself, or a ring's tooth spaces close at the root. |
-| `part.<kind>.outer` | assembly | A ring gear's `outer` radius is less than one module beyond its root circle, or a tube's `outer` is not larger than its `inner`. |
+| `part.<shape>` | assembly | A shape's body is not an object. |
+| `part.<shape>.<field>` | assembly | A shape field is missing, not a number, out of its range, or not a whole number where one is needed (teeth, arms, counts), or a size derived from it fails (a ring gear's teeth: tip radius not above base radius; a box `size`). |
+| `part.<shape>.chamfer` | assembly | The chamfer is too large for the shape (for example half the width or more), or the chamfered cap outlines would cross. |
+| `part.<shape>.tip` | assembly | A gear or ring gear tooth has no real tip land (too few teeth for the pressure angle and backlash). |
+| `part.<shape>.profile` | assembly | The sampled tooth outline of a gear or ring gear crosses itself, or a ring's tooth spaces close at the root. |
+| `part.<shape>.outer` | assembly | A ring gear's `outer` radius is less than one module beyond its root circle, or a tube's `outer` is not larger than its `inner`. |
 | `part.gear.bore` | assembly | The bore reaches the tooth root (it must stay half a module inside the root circle). |
 | `part.gear.keyway` | assembly | `keyway` is not [width, depth] in 0.1...1000, has no bore, is not narrower than the bore, or reaches the root. |
-| `part.<kind>.holes` | assembly | Holes are not a list of valid entries: a plate takes at most 32 [x, y, radius]; an extruded profile at most 16 simple loops inside its outline. |
+| `part.<shape>.holes` | assembly | Holes are not a list of valid entries: a plate takes at most 32 [x, y, radius]; an extruded profile at most 16 simple loops inside its outline. |
 | `part.plate.holes.outside` | assembly | A plate hole (grown by the chamfers) leaves less than 0.5 mm of rim. |
-| `part.<kind>.holes.overlap` | assembly | Two plate holes are closer than 0.5 mm (after chamfers), or two profile holes cross or nest. |
+| `part.<shape>.holes.overlap` | assembly | Two plate holes are closer than 0.5 mm (after chamfers), or two profile holes cross or nest. |
 | `part.carrier.armWidth` | assembly | Carrier arms are wider than twice the boss radius, or the hub reaches beyond radius + boss. |
-| `part.<kind>.points` | assembly | Profile points are not 3–256 [x, y] pairs (2–256 for a revolved profile), enclose no area, or cross themselves. |
+| `part.<shape>.points` | assembly | Profile points are not 3–256 [x, y] pairs (2–256 for a revolved profile), enclose no area, or cross themselves. |
 | `part.revolvedProfile.points.radius` | assembly | A revolved profile point has x < 0 (x is the radius). |
 | `part.revolvedProfile.axis` | assembly | An open revolved profile has fewer than 3 points, or it does not start and end on the axis (x = 0). |
 | `part.revolvedProfile.sweep` | assembly | `sweep` is not in 1...360 degrees. |
@@ -179,10 +206,10 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `part.drive.follow` | assembly | `drive.follow` is not an object. |
 | `part.drive.follow.source` | assembly | `follow.source` is not a string, or it names the part itself. |
 | `part.drive.follow.ratio` | assembly | `follow.ratio` is not a number in -1000...1000. |
-| `part.drive.<kind>` | assembly | A `crankSlider` or `crankRod` body is not an object. |
-| `part.drive.<kind>.crank` | assembly | A crank drive's `crank` is not a string, or it names the part itself. |
-| `part.drive.<kind>.radius` | assembly | A crank drive's `radius` is not a length in 0.05...4000 mm. |
-| `part.drive.<kind>.rod` | assembly | A crank drive's `rod` is not a length in 0.05...4000 mm, or it is not longer than the crank radius. |
+| `part.drive.<crank>` | assembly | A `crankSlider` or `crankRod` body is not an object. |
+| `part.drive.<crank>.crank` | assembly | A crank drive's `crank` is not a string, or it names the part itself. |
+| `part.drive.<crank>.radius` | assembly | A crank drive's `radius` is not a length in 0.05...4000 mm. |
+| `part.drive.<crank>.rod` | assembly | A crank drive's `rod` is not a length in 0.05...4000 mm, or it is not longer than the crank radius. |
 | `part.drive.crankSlider.joint` | assembly | A `crankSlider` part does not have a prismatic joint. |
 | `part.drive.unknown.<name>` | assembly | Unknown drive kind (input, follow, crankSlider, crankRod). |
 | `part.drive.cycle` | assembly | Drives depend on each other in a cycle. |
@@ -225,14 +252,14 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `steps.count` | assembly | `steps` is not an array of at most 16 entries. |
 | `step.object` | assembly | A step is not an object. |
 | `step.say` | assembly | A step's `say` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 240 characters, also after placeholders are filled. |
-| `step.<key>` | assembly, component | A step id list (`focus`, `highlight`, `ghost`) is not an array of at most 16 strings. |
+| `step.<list>` | assembly, component | A step id list (`focus`, `highlight`) is not an array of at most 16 strings. |
 | `step.camera` | assembly | `camera` is not a camera preset name. |
 | `step.explode` | assembly | `explode` is not a number in 0...1. |
 | `step.orbit` | assembly | `orbit` is not in -360...360 degrees. |
 | `step.spin` | assembly | `spin` is not in -20...20 input turns. |
 | `step.unchecked` | assembly | `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters (v2). |
 | `step.check` | assembly | `check` is not an array of 1–8 claim checks (v2). |
-| `step.ghost` | assembly | `ghost` is not a non-empty array (v2). |
+| `step.ghost` | assembly | `ghost` is not a non-empty array of at most 16 part id strings (v2). |
 | `step.section` | assembly | `section` is not an object (v2). |
 | `step.section.normal` | assembly | `section.normal` is not a non-zero direction of three coordinates. |
 | `step.section.offset` | assembly | `section.offset` is not in -4000...4000 mm. |
@@ -319,13 +346,13 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `component.about` | component | `about` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 160 characters. |
 | `component.params` | component | `params` is not an object of at most 16 parameters. |
 | `component.param.name.<name>` | component | A parameter name is not an identifier, or it is an expression operator name. |
-| `component.param.<name>` | component | A parameter is not an object with numbers min ≤ default ≤ max in ±1e6, a boolean `integer` (whole bounds and default when true) and an `about` of valid text. |
+| `component.param.<ident>` | component | A parameter is not an object with numbers min ≤ default ≤ max in ±1e6, a boolean `integer` (whole bounds and default when true) and an `about` of valid text. |
 | `component.parts.count` | component | `parts` is not an array of 1–24 entries. |
 | `component.part` | component | A part entry is not an object with a string id (after parameters are substituted). |
 | `component.use` | component | A nested `use` is not a string. |
 | `component.use.parent` | component | A `use` entry's `parent` is not a string. |
 | `component.cycle.<id>` | component | A component uses itself, directly or through other components. |
-| `component.unknown.<id>` | assembly, component | `use` names a component that is not in the library. |
+| `component.unknown.<keys>` | assembly, component | `use` names a component that is not in the library (`<keys>` is then its id). The same string also answers a component definition with unknown top-level keys: one string, two causes. |
 | `component.depth` | assembly, component | `use` nests more than 3 levels deep. |
 | `component.constraints` | component | `constraints` is not an array of at most 32 entries. |
 | `component.anchors` | component | `anchors` is not an object of at most 8 anchors. |
@@ -333,19 +360,19 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `component.checks` | component | `checks` is not an object of at most 8 checks. |
 | `component.check.name.<name>` | component | A check name is not an identifier. |
 | `component.check` | component | A check is not `{"lt": [a, b]}`, `{"le": [a, b]}` or `{"int": a}`. |
-| `component.check.<name>` | assembly, component | A component check is false for the parameters of an instance. |
+| `component.check.<ident>` | assembly, component | A component check is false for the parameters of an instance. |
 | `component.expr` | component | An expression has an unknown operator or is not a number or an expression. |
-| `component.expr.<op>` | component | An expression operator has the wrong number of operands (`<op>` names it). |
+| `component.expr.<op>` | component | An expression operator (add, mul, min, max, sub, neg, pi, sin, cos) has the wrong operands (`<op>` names it). |
 | `component.expr.depth` | component | An expression nests deeper than 8 levels. |
 | `component.expr.size` | component | An instance evaluates more than 4,096 expression nodes. |
 | `component.expr.param` | component | `param` does not take a string. |
 | `component.expr.param.<name>` | component | `param` names no parameter. |
-| `component.expr.div` | component | Division by zero. |
+| `component.expr.div` | component | Division by zero, or `div` without exactly two operands (one string, two causes). |
 | `component.expr.range` | component | An expression result is not finite or exceeds ±1e6. |
 | `component.param.unknown.<name>` | assembly, component | `with` names no parameter of the component. |
-| `component.param.value.<name>` | assembly, component | A `with` value is not a finite number. |
-| `component.param.range.<name>` | assembly, component | A `with` value is outside the parameter's min...max. |
-| `component.param.integer.<name>` | assembly, component | A `with` value is not whole for an integer parameter. |
+| `component.param.value.<ident>` | assembly, component | A `with` value is not a finite number. |
+| `component.param.range.<ident>` | assembly, component | A `with` value is outside the parameter's min...max. |
+| `component.param.integer.<ident>` | assembly, component | A `with` value is not whole for an integer parameter. |
 | `component.with` | assembly, component | `with` is not an object. |
 | `component.set` | assembly, component | `set` is not an object. |
 | `component.set.repeat.<id>` | assembly, component | `set` names one copy of a repeated part; edit the base id (every copy). |
@@ -378,4 +405,5 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 
 | Reason | Formats | Meaning |
 | --- | --- | --- |
-| `report.encoding` | cli | The report could not be encoded as JSON (never expected: reports hold only finite numbers and shallow nesting). |
+| `report.encoding` | check, cli | A value given to `MGSolidReport.text` or as render manifest outputs is not finite or nests too deep, so it is not encoded (reports the engine builds never are). |
+| `report.engine` | check | The host's `engine` value is not finite, nests deeper than 8 levels or is larger than 4,096 bytes (`MGSolidReport.engineDepth`, `engineBytes`). |

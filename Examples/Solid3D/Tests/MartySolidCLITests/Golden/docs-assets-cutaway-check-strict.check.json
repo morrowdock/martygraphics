@@ -1,0 +1,10 @@
+{
+  "file" : {
+    "lines" : 348,
+    "sha256" : "ec3242f6391faf85f4c2a361d91b494cb38c366e0c27aa1887ef38cdc3b879d8"
+  },
+  "ok" : false,
+  "part" : null,
+  "reason" : "assembly.missing.kind,v",
+  "strict" : false
+}

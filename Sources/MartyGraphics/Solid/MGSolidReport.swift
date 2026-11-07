@@ -30,13 +30,14 @@ public struct MGSolidSource: Equatable, Sendable {
 /// `check.gearsInterpenetrate` (the tooth sweep overlaps more than the tolerance), then the profile's refusal (strict:
 /// `joint.idle.<id>`, `frame.axis.off.<id>`). A refused report still holds every field, so the author can repair from it.
 public struct MGSolidReport: Equatable, Sendable {
-    public var ok: Bool
+    public internal(set) var ok: Bool
     /// The first refusal reason, nil when `ok`.
-    public var reason: String?
+    public internal(set) var reason: String?
     /// The part the reason concerns, if any.
-    public var part: String?
-    /// The full report object (see docs/SOLID-3D.md, "The check report").
-    public var json: MGJSON
+    public internal(set) var part: String?
+    /// The full report object (see docs/SOLID-3D.md, "The check report"). It nests at most 6 levels, plus the `engine`
+    /// object one level down (at most `engineDepth`), so it stays far inside `MGLimits.depth`.
+    public internal(set) var json: MGJSON
 
     /// 0 when accepted, 1 when refused (the `marty-solid` exit code).
     public var exitCode: Int32 { ok ? 0 : 1 }
@@ -46,13 +47,32 @@ public struct MGSolidReport: Equatable, Sendable {
     /// Pretty-printed JSON with sorted keys, or `{"ok": false, "reason": "report.encoding"}` when the value cannot be
     /// encoded (a non-finite number or nesting deeper than `MGLimits.depth`; reports never hold either).
     public static func text(_ json: MGJSON) -> String {
+        let refusal = #"{"ok": false, "reason": "report.encoding"}"#
+        // The walk does not recurse; only a finite value at most `MGLimits.depth` deep reaches the recursive
+        // conversion (`any`) and the system encoder.
         let m = json.measure()
+        guard m.finite, m.depth <= MGLimits.depth else { return refusal }
         let object = json.any
-        guard m.finite, m.depth <= MGLimits.depth, JSONSerialization.isValidJSONObject(object),
-              let d = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys]) else {
-            return #"{"ok": false, "reason": "report.encoding"}"#
-        }
+        guard JSONSerialization.isValidJSONObject(object),
+              let d = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys]) else { return refusal }
         return String(decoding: d, as: UTF8.self)
+    }
+
+    /// Deepest `engine` value a report carries, and its largest canonical size.
+    public static let engineDepth = 8, engineBytes = 4096
+
+    /// True when a host's `engine` value is not usable: a non-finite number, deeper than `engineDepth`, or larger than
+    /// `engineBytes`. One walk that does not recurse and stops early, so a hostile value is never converted or compared.
+    static func badEngine(_ engine: MGJSON?) -> Bool {
+        guard let engine else { return false }
+        let m = engine.measure(stopAbove: engineBytes)
+        return m.stopped || !m.finite || m.depth > engineDepth || m.bytes > engineBytes
+    }
+
+    /// The refusal for an unusable `engine` value (`report.engine`); it carries no engine.
+    static var engineRefusal: MGSolidReport {
+        MGSolidReport(ok: false, reason: "report.engine", part: nil,
+                      json: .object(["ok": .bool(false), "reason": .string("report.engine"), "part": .null]))
     }
 }
 
@@ -141,9 +161,11 @@ extension MGSolidReport {
 
     /// The report of a compiled document. `profile: .strict` adds the strict refusals (the document should be compiled
     /// with the standard profile so the report can show what strict refuses). `source` adds the `file` object;
-    /// `engine` adds the `engine` object (nil leaves it out).
+    /// `engine` adds the `engine` object (nil leaves it out). Every entry point first refuses an unusable `engine`
+    /// (`report.engine`: non-finite, deeper than `engineDepth` or larger than `engineBytes`).
     public static func make(_ doc: MGSolidDocument, profile: MGSolidProfile = .standard, source: MGSolidSource? = nil,
                             engine: MGJSON? = MGEngine.identity) -> MGSolidReport {
+        if badEngine(engine) { return engineRefusal }
         let checks = Checks(doc)
         var reason = checks.refusal, part: String? = nil
         if reason == nil, let r = profile.refusal(doc) { reason = r.reason; part = r.part }
@@ -161,6 +183,7 @@ extension MGSolidReport {
     /// `file` when a source is given and `engine`.
     public static func refused(_ issue: MGSolidIssue, profile: MGSolidProfile? = nil, source: MGSolidSource? = nil,
                                engine: MGJSON? = MGEngine.identity) -> MGSolidReport {
+        if badEngine(engine) { return engineRefusal }
         var o: [String: MGJSON] = ["ok": .bool(false), "reason": .string(issue.reason), "part": str(issue.part)]
         if let profile { o["strict"] = .bool(profile == .strict) }
         if let source { o["file"] = source.json }
@@ -172,6 +195,7 @@ extension MGSolidReport {
     /// (`assembly.bytes`) before they are parsed or hashed, with the short refusal (no `strict`, no `file`).
     public static func check(data: Data, library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard,
                              engine: MGJSON? = MGEngine.identity) -> MGSolidReport {
+        if badEngine(engine) { return engineRefusal }
         guard data.count <= MGSolidLimits.bytes else { return refused(MGSolidIssue("assembly.bytes"), engine: engine) }
         let source = MGSolidSource(data: data)
         switch MGSolidParser.document(data: data, library: library) {
@@ -188,6 +212,7 @@ extension MGSolidReport {
     /// a patched document that compiles but fails a report check has `applied: true`.
     public static func check(data: Data, patch: Data, library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard,
                              engine: MGJSON? = MGEngine.identity) -> MGSolidReport {
+        if badEngine(engine) { return engineRefusal }
         var info: [String: MGJSON] = ["applied": .bool(false), "fields": .array([])]
         if patch.count <= MGSolidLimits.bytes { info["file"] = MGSolidSource(data: patch).json }
         func with(_ r: MGSolidReport, _ info: [String: MGJSON]) -> MGSolidReport {

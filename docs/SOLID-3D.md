@@ -501,6 +501,14 @@ pipeline) print the same JSON from one implementation:
 * `MGSolidReport.make(_:profile:source:engine:)` reports on a compiled document (compile it
   with the standard profile, so the report can show what `.strict` refuses).
 * `MGSolidReport.refused(_:profile:source:engine:)` gives the refusal shape.
+* Every entry point first checks the host's `engine` value, with one walk that does not
+  recurse: a non-finite number, more than 8 levels (`engineDepth`) or more than 4,096
+  bytes (`engineBytes`) gives the refusal `report.engine`, which carries no engine.
+  `MGSolidReport.text(_:)` measures a value before it converts or encodes it, and gives
+  `{"ok": false, "reason": "report.encoding"}` for a non-finite value or one deeper than
+  64 levels. A report nests at most 6 levels, plus the `engine` object one level down.
+  `MGSolidRenderPlan.manifest` throws the same two reasons. Tests run every entry point
+  on a 512 KiB thread with values 100,000 levels deep.
 * The result has `ok`, `reason`, `part`, `exitCode`, the report as `json` (`MGJSON`) and
   `text`: pretty-printed JSON with sorted keys, byte for byte what the tool prints.
   `MGSolidReport.Checks(doc)` gives the mesh and gear checks alone; `MGSolidSource(data:)`
@@ -558,7 +566,9 @@ system parser runs: over 64 KiB `patch.bytes`, not UTF-8 JSON text or not parsed
 ### Reasons and version
 
 `marty-solid reasons` prints the catalog of every stable reason (pattern, meaning,
-formats, warning or refusal) as JSON; see [REASONS.md](REASONS.md).
+formats, warning or refusal) as JSON; see [REASONS.md](REASONS.md). Slots are typed
+(`<shape>`, `<ident>`, `<id>`, …), so `MGSolidReasons.lookup` resolves an emitted reason
+to its own entry, also when an author name holds `.missing.` or `.unknown.`.
 `marty-solid version` prints the `engine` object.
 
 ## Worked examples

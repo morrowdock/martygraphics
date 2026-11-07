@@ -142,6 +142,13 @@ final class SolidReasonCatalogTests: XCTestCase {
         for p in patterns {
             XCTAssertTrue(found.contains { Self.intersects($0.0, p) }, "catalog entry \(p) matches nothing in the sources")
         }
+        // A reason the sources spell out in full resolves, and to its own entry when the catalog lists it verbatim.
+        // (Literals that end in `.` are prefixes such as `MGSolidProfile.strictPrefixes`.)
+        for (lit, from) in found where !lit.contains("*") && !lit.hasSuffix(".") {
+            let got = MGSolidReasons.lookup(lit)?.pattern
+            XCTAssertNotNil(got, "\(lit) (\(from)) resolves to no entry")
+            if patterns.contains(lit) { XCTAssertEqual(got, lit, "\(lit) (\(from))") }
+        }
     }
 
     func testTheDocsPageListsEveryPattern() throws {
@@ -150,7 +157,7 @@ final class SolidReasonCatalogTests: XCTestCase {
         for e in MGSolidReasons.catalog {
             XCTAssertTrue(page.contains("| `\(e.pattern)` | \(e.formats.map(\.rawValue).joined(separator: ", ")) |"), "docs/REASONS.md: \(e.pattern)")
         }
-        XCTAssertEqual(rows.count, MGSolidReasons.catalog.count + 5, "one row per pattern, plus the five placeholder rows")
+        XCTAssertEqual(rows.count, MGSolidReasons.catalog.count + 12, "one row per pattern, plus the twelve slot rows")
     }
 
     func testClosedObjectsAreTheClosedCallSites() throws {
@@ -176,6 +183,58 @@ final class SolidReasonCatalogTests: XCTestCase {
         XCTAssertTrue(MGSolidReasons.json.isEncodable)
     }
 
+    /// Sample values for each slot, including author names that contain `.missing.` and `.unknown.`.
+    static let samples: [String: [String]] = [
+        "n": ["1", "12"], "id": ["a", "x.missing.y", "x.unknown.y", "stage1.pinion", String(repeating: "A", count: 32)],
+        "name": ["a", "x.missing.y", "nope.speed"], "ident": ["foo", "b2"], "shape": MGSolidParser.shapeKeys.keys.sorted(),
+        "crank": ["crankSlider", "crankRod"], "field": ["radius", "width"], "list": ["focus", "highlight"],
+        "direction": ["axisWorld", "upWorld"], "modifier": ["abs", "zz"],
+        "op": MGSolidComponents.ops.subtracting(["div", "param"]).sorted(), "keys": ["a", "a,b", "x.missing.y,z", "x.unknown.y"],
+    ]
+
+    /// Reasons a pattern stands for: every slot at its first sample, then one slot at a time over all its samples
+    /// (`<object>` over every closed object).
+    static func sampleReasons(_ pattern: String) -> [String] {
+        var parts: [String] = [], rest = Substring(pattern)
+        while let open = rest.firstIndex(of: "<"), let close = rest[open...].firstIndex(of: ">") {
+            parts.append(String(rest[..<open])); parts.append(String(rest[open...close])); rest = rest[rest.index(after: close)...]
+        }
+        parts.append(String(rest))
+        func fill(_ choice: [Int: String]) -> String {
+            parts.enumerated().map { i, x in
+                guard x.hasPrefix("<") else { return x }
+                let name = String(x.dropFirst().dropLast())
+                return choice[i] ?? (name == "object" ? "assembly" : samples[name]![0])
+            }.joined()
+        }
+        var out = [fill([:])]
+        for (i, x) in parts.enumerated() where x.hasPrefix("<") {
+            let name = String(x.dropFirst().dropLast())
+            if name == "object" {
+                let unknown = parts[i + 1].hasPrefix(".unknown.")
+                for o in MGSolidReasons.closedObjects where !(unknown && o == "component") {
+                    for v in sampleReasons(o) { out.append(fill([i: v])) }
+                }
+            } else {
+                for v in samples[name]! { out.append(fill([i: v])) }
+            }
+        }
+        return out
+    }
+
+    /// Every pattern's sample reasons resolve to that pattern and to no other: typed slots keep emitted reasons apart.
+    func testEverySampleReasonResolvesToItsOwnPattern() {
+        XCTAssertEqual(Set(Self.samples.keys), Set(MGSolidReasons.slots.keys))
+        var checked = 0
+        for e in MGSolidReasons.catalog {
+            for reason in Self.sampleReasons(e.pattern) {
+                XCTAssertEqual(MGSolidReasons.lookup(reason)?.pattern, e.pattern, reason)
+                checked += 1
+            }
+        }
+        XCTAssertGreaterThan(checked, 1_000)
+    }
+
     /// Reasons the engine gives at run time resolve to their own entry.
     func testLookupOfReasonsTheEngineGives() throws {
         let box = #"{"box":{"size":[4,4,4]}}"#
@@ -183,7 +242,7 @@ final class SolidReasonCatalogTests: XCTestCase {
             guard case .failure(let e) = MGSolidParser.document(data: Data(json.utf8)) else { return nil }
             return e.reason
         }
-        let cases: [(String, String)] = [
+        var cases: [(String, String)] = [
             (#"{"v":1,"kind":"assembly"}"#, "<object>.missing.<keys>"),
             (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box)}],"extra":1}"#, "<object>.unknown.<keys>"),
             (#"{"v":3,"kind":"assembly","parts":[{"id":"a","shape":\#(box)}]}"#, "assembly.version"),
@@ -200,19 +259,38 @@ final class SolidReasonCatalogTests: XCTestCase {
             (#"{"v":1,"kind":"assembly","parts":[{"id":"s","use":"nothing"}]}"#, "component.unknown.<id>"),
             ("not json", "json"),
         ]
+        // Author keys that contain `.missing.` or `.unknown.` (independent review of PR #30).
+        cases += [
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box)}],"x.missing.y":1}"#, "<object>.unknown.<keys>"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box),"drive":{"follow":{"source":"a","ratio":1,"x":1}},"joint":{"revolute":[0,0,1]}}]}"#, "<object>.unknown.<keys>"),
+        ]
         for (json, pattern) in cases {
             let r = reason(json)
             XCTAssertNotNil(r, json)
             XCTAssertEqual(r.flatMap { MGSolidReasons.lookup($0)?.pattern }, pattern, "\(json) -> \(r ?? "accepted")")
         }
+        // A component parameter spec without `default`, and one with an unknown key.
+        var lib = MGSolidLibrary.builtIn
+        for (spec, want, pattern) in [(#"{"min":1,"max":2}"#, "component.param.foo.missing.default", "<object>.missing.<keys>"),
+                                      (#"{"min":1,"max":2,"default":1,"extra":0}"#, "component.param.foo.unknown.extra", "<object>.unknown.<keys>")] {
+            let def = #"{"v":1,"kind":"component","id":"probe","title":"P","about":"A.","params":{"foo":\#(spec)},"parts":[{"id":"c","shape":\#(box)}]}"#
+            guard case .failure(let e) = lib.register(Data(def.utf8)) else { XCTFail(want); continue }
+            XCTAssertEqual(e.reason, want)
+            XCTAssertEqual(MGSolidReasons.lookup(e.reason)?.pattern, pattern, e.reason)
+        }
+        XCTAssertEqual(MGSolidReasons.matches("component.param.foo.missing.default").map(\.pattern), ["<object>.missing.<keys>"])
         XCTAssertEqual(MGSolidReasons.lookup("joint.idle.disc")?.kind, .warning)
         XCTAssertEqual(MGSolidReasons.lookup("joint.idle.disc")?.strict, true)
         XCTAssertEqual(MGSolidReasons.lookup("frame.child.far.x")?.strict, false)
         XCTAssertEqual(MGSolidReasons.lookup("check.meshOpen")?.formats, [.check])
         XCTAssertEqual(MGSolidReasons.lookup("patch.unknown.")?.pattern, "patch.unknown.")
         XCTAssertEqual(MGSolidReasons.lookup("patch.unknown.a,b")?.pattern, "patch.unknown.<keys>")
-        // Matching is linear in the reason's length (no backtracking), also for a long, repetitive reason.
-        XCTAssertEqual(MGSolidReasons.lookup(String(repeating: "a.missing.", count: 6_500))?.pattern, "<object>.missing.<keys>")
+        XCTAssertNil(MGSolidReasons.lookup("joint.idle.a,b"), "an id holds no comma")
+        XCTAssertNil(MGSolidReasons.lookup("text.number.step.0"), "steps count from 1")
+        XCTAssertNil(MGSolidReasons.lookup(String(repeating: "a", count: MGSolidReasons.maxReasonBytes + 1)))
+        // A long key list (as from a document with thousands of unknown keys) still resolves.
+        let longKeys = (0..<6_000).map { "k\($0)" }.joined(separator: ",")
+        XCTAssertEqual(MGSolidReasons.lookup("assembly.unknown." + longKeys)?.pattern, "<object>.unknown.<keys>")
         XCTAssertNil(MGSolidReasons.lookup("no.such.reason here"))
         XCTAssertNil(MGSolidReasons.lookup(""))
     }

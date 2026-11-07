@@ -163,10 +163,69 @@ final class SolidReportTests: XCTestCase {
         XCTAssertEqual(plan.loop[60].orbit, 180)
         XCTAssertTrue(MGSolidRenderPlan(doc, sourceName: "x", source: MGSolidSource(data: data), loop: false).loop.isEmpty)
         XCTAssertEqual(MGSolidRenderPlan.snapshot(doc).format, MGSolidSnapshot.formatV2)
-        let manifest = MGSolidRenderPlan.manifest(doc, sourceName: "idler-gearbox.json", source: MGSolidSource(data: data), framesRendered: 2,
+        let manifest = try MGSolidRenderPlan.manifest(doc, sourceName: "idler-gearbox.json", source: MGSolidSource(data: data), framesRendered: 2,
                                                   secondsPerFrame: 0.5, outputs: [])
         XCTAssertEqual(manifest["checks"], MGSolidReport.Checks(doc).json)
         XCTAssertEqual(manifest["engine"], MGEngine.identity)
+    }
+}
+
+/// Every public `MGSolidReport` and `MGSolidRenderPlan` entry point on a 512 KiB stack (an iOS secondary thread), with
+/// hostile values retained in static storage (`Deep`), so Swift's recursive destruction is not what is tested.
+final class SolidReportSmallStackTests: XCTestCase {
+    static let deepEngine = Deep.value(MGSolidReport.engineDepth + 1, .objects)
+
+    func testEntryPointsRefuseHostileValuesFirst() throws {
+        let base = Data(SolidReportTests.disc.utf8)
+        let doc = try MGSolidParser.document(data: base).get()
+        let deepText = Data(Deep.text(30_000, .arrays).utf8)   // 60,001 bytes: under the size cap, far over the depth cap
+        let results = onSmallStack { () -> [String?] in
+            var out: [String?] = []
+            for engine in [Deep.hostile, Deep.hostileObject, SolidReportSmallStackTests.deepEngine, MGJSON.number(.infinity)] {
+                out.append(MGSolidReport.text(engine).hasPrefix(#"{"ok": false, "reason": "report.encoding"}"#) ? "refused" : "encoded")
+                out.append(MGSolidReport.check(data: base, engine: engine).reason)
+                out.append(MGSolidReport.check(data: base, patch: Data("{}".utf8), engine: engine).reason)
+                out.append(MGSolidReport.make(doc, engine: engine).reason)
+                out.append(MGSolidReport.refused(MGSolidIssue("json"), engine: engine).text)
+                do { _ = try MGSolidRenderPlan.manifest(doc, sourceName: "x", source: MGSolidSource(data: base), framesRendered: 0,
+                                                        secondsPerFrame: 0, outputs: [], engine: engine); out.append(nil) }
+                catch { out.append((error as? MGSolidIssue)?.reason) }
+            }
+            do { _ = try MGSolidRenderPlan.manifest(doc, sourceName: "x", source: MGSolidSource(data: base), framesRendered: 0,
+                                                    secondsPerFrame: 0, outputs: [Deep.hostile]); out.append(nil) }
+            catch { out.append((error as? MGSolidIssue)?.reason) }
+            // Deep document and patch text are refused by the parsers' own guards; the reports encode.
+            let deepDoc = MGSolidReport.check(data: deepText)
+            out.append(deepDoc.reason); out.append(deepDoc.text.contains("assembly.depth") ? "encoded" : deepDoc.text)
+            let deepPatch = MGSolidReport.check(data: base, patch: deepText)
+            out.append(deepPatch.reason); out.append(deepPatch.text.contains("patch.depth") ? "encoded" : deepPatch.text)
+            let ok = MGSolidReport.check(data: base)
+            out.append(ok.text.hasPrefix("{\n") ? "encoded" : ok.text)
+            return out
+        }
+        let engineRefused = MGSolidReport.engineRefusal.text
+        var want: [String?] = []
+        // `text` encodes any finite value up to `MGLimits.depth`; the 9-level engine is refused only as an engine.
+        for textResult in ["refused", "refused", "encoded", "refused"] {
+            want += [textResult, "report.engine", "report.engine", "report.engine", engineRefused, "report.engine"]
+        }
+        want += ["report.encoding", "assembly.depth", "encoded", "patch.depth", "encoded", "encoded"]
+        XCTAssertEqual(results, want)
+        XCTAssertEqual(MGSolidReport.engineRefusal.json["engine"], nil)
+    }
+
+    /// The report's own nesting: author ids and strings cannot add levels.
+    func testReportDepthIsBounded() throws {
+        for name in SolidReportTests.models {
+            let data = try SolidReportTests.data(name)
+            XCTAssertLessThanOrEqual(MGSolidReport.check(data: data, engine: nil).json.measure().depth, 6, name)
+            XCTAssertLessThanOrEqual(MGSolidReport.check(data: data, patch: Data(#"{"title":"T"}"#.utf8), engine: nil).json.measure().depth, 6, name)
+            XCTAssertLessThanOrEqual(MGSolidReport.check(data: data).json.measure().depth, max(6, 1 + MGEngine.identity.measure().depth), name)
+        }
+        let maxEngine = Deep.value(MGSolidReport.engineDepth, .arrays)
+        let r = MGSolidReport.check(data: Data(SolidReportTests.disc.utf8), engine: maxEngine)
+        XCTAssertTrue(r.ok)
+        XCTAssertEqual(r.json.measure().depth, 1 + MGSolidReport.engineDepth)
     }
 }
 

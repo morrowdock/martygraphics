@@ -270,7 +270,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     }
     try MGSolidRenderPlan.snapshot(doc).jsonData().write(to: out.appendingPathComponent("snapshot.json"))
     try record("snapshot.json", [:])
-    let manifest = MGSolidRenderPlan.manifest(doc, sourceName: sourceName, source: src.source, framesRendered: frames,
+    let manifest = try MGSolidRenderPlan.manifest(doc, sourceName: sourceName, source: src.source, framesRendered: frames,
                                               secondsPerFrame: frames > 0 ? seconds / Double(frames) : 0, outputs: files, engine: engine)
     try Data(json(manifest).utf8).write(to: out.appendingPathComponent("manifest.json"))
     finished = true

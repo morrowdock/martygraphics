@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "84968cfaacb3dac6fb302efc7a00b87928baba0d7c6265ea0ab48689985c311a"
+      "sha256": "20c4f712a2d6f8f8e736b4de35b2e0582af2a4bc429eabcbc8f8fe2cbf9158fe"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -191,7 +191,23 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "5bf2f1199b48611d4f1bfebe8d4c325dae05a99a29c4634000311beed4eb69cc"
+      "sha256": "7204de1c841f0b3c300551088eb213d7c8e0b2d3bd10bcf572952ebfcfdf92e8"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-check-strict.check.json",
+      "sha256": "34d8990d57253f94b790d7c0e738950d6e3b769e37ba9190579ba81d1a200334"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-check-strict.strict.json",
+      "sha256": "241b0cae45c6a13ee54a8d7f314e925c81b6a2f42259281a64f22d925d005fb3"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-provenance.check.json",
+      "sha256": "96aedb172d679723620bbbcd9e1d866d4685bef75d1d57ff37251048e992b25e"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-provenance.strict.json",
+      "sha256": "3804517d1e95b90af1c09a89a026c0f53b461f3d0ca85065215a33904d69cf77"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-1-refused.check.json",
@@ -399,7 +415,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "b8c1e3898c523bf72656d11cc1f378c90283b1ca3fa12be5ab30c3d5ebdaccca"
+      "sha256": "f397d5ffd0d14df120c0837cb3a58704d52f4d68c0d2b8b67ec5fc1109a60905"
     },
     {
       "path": "SECURITY.md",
@@ -571,11 +587,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "eb72138407235a0bdcc0534ccd86058c504f2e407b1147f2fe148d44b84b338e"
+      "sha256": "68acd37c357803bf49afe3be423c80c928fa0d4206816601327bb7cd6eed6c18"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
-      "sha256": "e5261100f4f14ed2ef3d46dedda616a8ffcc0afb70073b50d7ed32d69979d427"
+      "sha256": "0ea821e4a7371154ee9fd31f0325d84b6fd9f343d1782a8119b97cfc6c169f4e"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
@@ -583,7 +599,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
-      "sha256": "8bb292d3436f65b9a31228370d941f957f5ca878e2cf594733af4c0e13830d06"
+      "sha256": "313e2203ab136fb202ba61464e63d759f2ceaf97c3dd1d3f11a491bbcbf06750"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSection.swift",
@@ -755,11 +771,11 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReasonCatalogTests.swift",
-      "sha256": "c87c7384bdfb712e5dcb8f17b23cfa9c4146e25b8780f572b7dd6d87a226f86d"
+      "sha256": "1faa1e3cdc500047bb6354ac34f48c9c6a7e1204a8c0c3a94f3fe5ef3f93346f"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReportTests.swift",
-      "sha256": "cf464b8eab1dde76a93d93e3f4c1fabbd127036a2a9a2013bfe4f013aff14492"
+      "sha256": "a4a9cf0a9cbe302df043dd462b93af96735041f39f2c424a1d3645f67341f0f5"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidSectionTests.swift",
@@ -799,7 +815,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "cc44e6430965ad086790c5407106e6f3d751639350ada5f717970fe57ce480af"
+      "sha256": "9a685e4898292e9e1a41053ecd38c4d58bdc58a2c0149ed9344d32e205f91f43"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -831,15 +847,15 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "98687f126ab50baee6e628948857b43a899d8b2471f78a93bc49a252d78a84c3"
+      "sha256": "b5ca620b844288271e144bf51119887a5c6e622481af16e8bedf9c08d8b8418a"
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "13a9e99e51dec7228a17d07d116b02b6bff173b215d1866d14deffb4deaf452d"
+      "sha256": "51fd12517334730cd45181797ce4b49c8f56f3ea8c9a7d8093d8dd5aa9205633"
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "c198d73405131268d260df454a5b2aac462959f3a6adac46642152724311a51d"
+      "sha256": "6ab882d79a8b4e908618ff6dce9d256f22344373db89cd5caa1c02e1dde0d57b"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -848,6 +864,26 @@
     {
       "path": "docs/VERIFY-ON-MAC.md",
       "sha256": "6c3ad467a16a2d356f07193ebffa270b788340911ec078010a7a0293692aa0d3"
+    },
+    {
+      "path": "docs/assets/cutaway/check-strict.json",
+      "sha256": "ec3242f6391faf85f4c2a361d91b494cb38c366e0c27aa1887ef38cdc3b879d8"
+    },
+    {
+      "path": "docs/assets/cutaway/closed.png",
+      "sha256": "7b4bec33e31a6512290c0d9ca5852cf962901b9805232bf8cdd7b8324bf894c5"
+    },
+    {
+      "path": "docs/assets/cutaway/cut.png",
+      "sha256": "96dabfcb37877242b3330344375c086c36b52afe2d575f212fd8a22d59dd6a26"
+    },
+    {
+      "path": "docs/assets/cutaway/ghost.png",
+      "sha256": "c15d924592e38a30ffaebe42e7ba8eaf518a3f7b90430e51399f9d4b38d5ceab"
+    },
+    {
+      "path": "docs/assets/cutaway/provenance.json",
+      "sha256": "8e93869ae6f7dc27fec69502acf88f0a33de0e7522919678867482a0166072cf"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",

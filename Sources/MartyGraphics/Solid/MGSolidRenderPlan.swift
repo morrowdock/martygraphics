@@ -69,9 +69,16 @@ public struct MGSolidRenderPlan: Equatable, Sendable {
     }
 
     /// `manifest.json`: `{"source": {"file", "lines", "sha256"}, "title", "parts", "steps", "checks", "framesRendered",
-    /// "renderSecondsPerFrame", "outputs", "engine"?}`. `outputs` are the host's file records.
+    /// "renderSecondsPerFrame", "outputs", "engine"?}`. `outputs` are the host's file records. Throws `report.engine`
+    /// for an unusable `engine` and `report.encoding` for outputs that are not finite or nest deeper than 8 levels,
+    /// before it reads them.
     public static func manifest(_ doc: MGSolidDocument, sourceName: String, source: MGSolidSource, framesRendered: Int,
-                                secondsPerFrame: Double, outputs: [MGJSON], engine: MGJSON? = MGEngine.identity) -> MGJSON {
+                                secondsPerFrame: Double, outputs: [MGJSON], engine: MGJSON? = MGEngine.identity) throws -> MGJSON {
+        if MGSolidReport.badEngine(engine) { throw MGSolidIssue("report.engine") }
+        for o in outputs {
+            let m = o.measure(stopAbove: MGSolidLimits.bytes)
+            guard !m.stopped, m.finite, m.depth <= 8 else { throw MGSolidIssue("report.encoding") }
+        }
         var o: [String: MGJSON] = ["source": .object(["file": .string(sourceName), "lines": .number(Double(source.lines)),
                                                       "sha256": .string(source.sha256)]),
                                    "title": .string(doc.title), "parts": .number(Double(doc.assembly.parts.count)),
