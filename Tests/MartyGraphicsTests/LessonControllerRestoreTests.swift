@@ -16,7 +16,7 @@ final class LessonControllerRestoreTests: LessonTestCase {
     func with(_ j: MGJSON, _ key: String, _ value: MGJSON?) -> MGJSON {
         var o = j.objectValue!; o[key] = value; return .object(o)
     }
-    func deep(_ levels: Int) -> MGJSON { var v = MGJSON.number(0); for _ in 0..<levels { v = .array([v]) }; return v }
+    func deep(_ levels: Int, holding leaf: MGJSON = .number(0)) -> MGJSON { var v = leaf; for _ in 0..<levels { v = .array([v]) }; return v }
 
     /// Everything a refused restore must leave alone.
     struct Observed: Equatable {
@@ -106,6 +106,13 @@ final class LessonControllerRestoreTests: LessonTestCase {
             (with(valid, "junk", deep(2_000)), "snapshot.depth"),
             // Over the size and too deep at once: always the size reason, whatever the dictionary order.
             (with(with(valid, "junk", deep(64)), "zjunk", .string(huge)), "snapshot.bytes"),
+            // Large data below the depth limit still counts toward the size (review N1).
+            (with(valid, "junk", deep(40, holding: .string(huge))), "snapshot.bytes"),
+            // Non-finite numbers are refused without being encoded (review S1), wherever they are.
+            (with(valid, "x", .number(.nan)), "snapshot.number"),
+            (with(valid, "rev", .number(.infinity)), "snapshot.number"),
+            (with(valid, "junk", deep(40, holding: .number(-.infinity))), "snapshot.number"),
+            (with(with(valid, "x", .number(.nan)), "zjunk", .string(huge)), "snapshot.bytes"),
         ]
 
         let c = MGLessonController(pacing: .speech, clock: clock)
@@ -142,6 +149,193 @@ final class LessonControllerRestoreTests: LessonTestCase {
         XCTAssertEqual(MGLessonSession.restore(.array(Array(repeating: .number(1), count: 200_000)), pacing: .immediate).failureReason, "snapshot.bytes")
         XCTAssertEqual(MGLessonSession.restore(deep(40), pacing: .immediate).failureReason, "snapshot.depth")
         XCTAssertEqual(MGLessonSession.restore(.number(1), pacing: .immediate).failureReason, "snapshot.kind")
+        // The review's S1 input: before the fix this terminated the process inside the JSON encoder.
+        let nan = MGJSON.object(["kind": .string("lessonSnapshot"), "v": .number(1), "x": .number(.nan)])
+        XCTAssertEqual(MGLessonSession.restore(nan, pacing: .immediate).failureReason, "snapshot.number")
+        XCTAssertEqual(MGLessonSession.restore(.array([.number(.nan), deep(40)]), pacing: .immediate).failureReason, "snapshot.number")
+    }
+
+    // MARK: session budgets: every snapshot of a session fits the cap (review S2)
+
+    func testSnapshotCapIsDerivedFromTheSessionLimits() {
+        XCTAssertEqual(MGLessonLimits.snapshotBytes, 207_360, "docs/LESSONS.md says 202.5 KiB")
+        XCTAssertEqual(MGLessonLimits.snapshotBytes,
+                       2 * (MGLimits.sceneBytes + MGLessonLimits.ids * 96 + MGLessonLimits.controls * (MGLessonLimits.statementBytes + 256) + 256)
+                       + MGLessonLimits.queueBytes + MGLessonLimits.lineBytes + MGLessonLimits.statementBytes + 2048)
+    }
+
+    /// One beat stream of about `kib` KiB: 24 beats of a long line and nine 60-character title commands.
+    func fullStream(first: Bool, tag: String) -> [String] {
+        var out = first ? [scene] : [#"{"keep":true}"#]
+        let line = String(repeating: "word ", count: 37) + tag
+        let title = String(repeating: "t", count: 59 - tag.count) + tag
+        for k in 0..<MGLessonLimits.beats {
+            out.append(#"{"say":"\#(k) \#(line)"}"#)
+            for _ in 0..<9 { out.append(#"{"op":"title","title":"\#(title)"}"#) }
+        }
+        out.append(#"{"end":true}"#)
+        return out
+    }
+
+    func testOneFullStreamFitsTheQueue() throws {
+        var s = MGLessonSession(pacing: .speech, clock: MGManualClock())
+        let stream = lines(fullStream(first: true, tag: "a"))
+        XCTAssertGreaterThan(stream.utf8.count, 20 * 1024)
+        XCTAssertEqual(F.refusals(s.feed(stream)), [])
+        XCTAssertEqual(s.waitingBeats, MGLessonLimits.beats - 1)
+        XCTAssertLessThan(s.queueUsage, MGLessonLimits.queueBytes / 2)
+        XCTAssertEqual(s.queueUsage, (s.snapshot()["pending"] ?? .null).canonicalByteCount, "the budget measures the snapshot entry exactly")
+    }
+
+    func testQueueBudgetAcrossFollowUpStreamsKeepsEverySnapshotRestorable() throws {
+        let clock = MGManualClock()
+        var s = MGLessonSession(pacing: .speech, clock: clock)
+        var refusedAt: Int?
+        for n in 0..<8 {
+            for statement in fullStream(first: n == 0, tag: "s\(n)") {
+                let before = (pending: s.waitingBeats, projected: s.projected, usage: s.queueUsage, open: s.openBeat)
+                let index = s.nextStatement
+                let refusals = F.refusals(s.feed(statement + "\n")).filter { $0.reason == "lesson.queue.bytes" }
+                // A beat whose filled line does not fit is refused when it closes (its own `say` statement index);
+                // that refusal shrinks the queue. Here: the statement itself was refused, so nothing changed.
+                if refusals.contains(where: { $0.statement == index }) {
+                    refusedAt = refusedAt ?? n
+                    XCTAssertEqual(s.waitingBeats, before.pending, "a refused statement queues nothing")
+                    XCTAssertEqual(s.projected, before.projected)
+                    XCTAssertEqual(s.queueUsage, before.usage)
+                    XCTAssertEqual(s.openBeat, before.open, "a refused say keeps the open beat")
+                }
+                for r in refusals where r.statement != index { XCTAssertLessThan(r.statement ?? .max, index, "a closing refusal names its say") }
+                XCTAssertLessThanOrEqual(s.queueUsage, MGLessonLimits.queueBytes)
+            }
+        }
+        XCTAssertNotNil(refusedAt, "follow-up streams fill the queue")
+        let snapshot = s.snapshot()
+        XCTAssertLessThanOrEqual(snapshot.canonicalByteCount, MGLessonLimits.snapshotBytes)
+        let r = try MGLessonSession.restore(snapshot, pacing: .speech, clock: clock).get()
+        XCTAssertEqual(r.snapshot(), snapshot)
+        XCTAssertEqual(r.queueUsage, s.queueUsage)
+        // Showing beats frees the budget: a new beat is accepted again.
+        for _ in 0..<30 { if let k = s.openLine { s.lineEnded(k) } }
+        XCTAssertEqual(F.refusals(s.feed(lines([#"{"keep":true}"#, #"{"say":"Again."}"#, #"{"end":true}"#]))), [])
+    }
+
+    func testRestoreRefusesAQueueOverTheBudget() throws {
+        let clock = MGManualClock()
+        var s = MGLessonSession(pacing: .speech, clock: clock)
+        s.feed(lines(fullStream(first: true, tag: "a")))
+        let snapshot = s.snapshot()
+        guard case .array(let pending)? = snapshot["pending"] else { return XCTFail("no queue") }
+        let doubled = with(snapshot, "pending", .array(pending + pending + pending + pending))
+        XCTAssertLessThanOrEqual(doubled.canonicalByteCount, MGLessonLimits.snapshotBytes)
+        XCTAssertEqual(MGLessonSession.restore(doubled, pacing: .speech, clock: clock).failureReason, "snapshot.pending")
+    }
+
+    func testIdHistoryIsBounded() throws {
+        var s = MGLessonSession(pacing: .immediate, clock: MGManualClock())
+        var reasons: [String] = []
+        var id = 0
+        for n in 0..<4 {
+            var stream = [n == 0 ? scene : #"{"keep":true}"#]
+            for _ in 0..<22 {
+                stream.append(#"{"say":"More marks."}"#)
+                let ids = (0..<5).map { _ -> String in id += 1; return "h\(id)" }
+                for h in ids { stream.append(#"{"op":"add","item":{"id":"\#(h)","k":"highlight","target":"vA"}}"#) }
+                for h in ids { stream.append(#"{"op":"remove","id":"\#(h)"}"#) }
+            }
+            stream.append(#"{"end":true}"#)
+            reasons += F.refusals(s.feed(lines(stream))).map(\.reason)
+            XCTAssertLessThanOrEqual(s.state!.kinds.count, MGLessonLimits.ids)
+        }
+        XCTAssertTrue(reasons.contains("lesson.ids.count"))
+        XCTAssertEqual(s.state!.kinds.count, MGLessonLimits.ids)
+        let snapshot = s.snapshot()
+        XCTAssertLessThanOrEqual(snapshot.canonicalByteCount, MGLessonLimits.snapshotBytes)
+        XCTAssertNoThrow(try MGLessonSession.restore(snapshot, pacing: .immediate).get())
+        var kinds = snapshot["kinds"]!.objectValue!
+        kinds["zz1"] = .string("highlight")
+        XCTAssertEqual(MGLessonSession.restore(with(snapshot, "kinds", .object(kinds)), pacing: .immediate).failureReason, "snapshot.kinds")
+    }
+
+    func testFilledLinesAreBounded() throws {
+        var s = MGLessonSession(pacing: .immediate, clock: MGManualClock())
+        let many = String(repeating: "{ax0}", count: 39)   // 195 characters, each placeholder fills to "2"
+        XCTAssertEqual(F.refusals(s.feed(lines([scene, #"{"say":"\#(many)"}"#, #"{"end":true}"#]))), [])
+        XCTAssertNotNil(s.caption)
+        XCTAssertThrowsError(try MGLessonSession.fillLine(String(repeating: "{x}", count: 60), ["x": MGValue(value: 1e300, unit: "")])) {
+            XCTAssertEqual(($0 as? MGError)?.reason, "stmt.say.bytes")
+        }
+    }
+
+    // MARK: line timing follows the restoring pacing (review S3)
+
+    func testPausedEstimateSnapshotDoesNotSpinOnAnotherPacing() throws {
+        let clock = MGManualClock()
+        var source = MGLessonSession(pacing: .estimate(wordsPerSecond: 2.5), clock: clock)
+        source.feed(lines([scene, #"{"say":"One line here."}"#, #"{"say":"Two."}"#, #"{"end":true}"#]))
+        XCTAssertEqual(source.openLine, 0)
+        source.pause()
+        let saved = source.snapshot()
+        XCTAssertNotNil(saved["lineLeft"])
+
+        let speech = MGLessonController(pacing: .speech, clock: clock)
+        XCTAssertNoThrow(try speech.restore(saved).get())
+        speech.resume()
+        XCTAssertNil(speech.session.nextWake, "a speech line waits for lineEnded; no timer")
+        XCTAssertEqual(speech.session.openLine, 0)
+        speech.lineEnded(0)
+        XCTAssertEqual(speech.caption, "Two.")
+
+        let immediate = MGLessonController(pacing: .immediate, clock: clock)
+        XCTAssertNoThrow(try immediate.restore(saved).get())
+        XCTAssertNil(immediate.session.openLine)
+        immediate.resume()
+        XCTAssertNil(immediate.session.nextWake)
+        XCTAssertEqual(immediate.caption, "Two.")
+        XCTAssertTrue(immediate.session.isComplete)
+
+        // A hand-built paused snapshot with a line time but no open line keeps no timer either.
+        let r = try MGLessonSession.restore(with(saved, "line", nil), pacing: .estimate(wordsPerSecond: 2.5), clock: clock).get()
+        XCTAssertNil(r.lineRemaining); XCTAssertNil(r.lineEndsAt)
+    }
+
+    func testSpeechSnapshotOnAnEstimateControllerEndsItsLine() throws {
+        let clock = MGManualClock()
+        var source = MGLessonSession(pacing: .speech, clock: clock)
+        source.feed(lines([scene, #"{"say":"One."}"#, #"{"say":"Two."}"#, #"{"end":true}"#]))
+        XCTAssertEqual(source.openLine, 0)
+        let saved = source.snapshot()
+        XCTAssertNil(saved["lineLeft"])
+        let rate = 2.5
+        var r = try MGLessonSession.restore(saved, pacing: .estimate(wordsPerSecond: rate), clock: clock).get()
+        XCTAssertEqual(r.nextWake, clock.now + MGLessonSession.lineDuration("One.", wordsPerSecond: rate))
+        clock.advance(by: MGLessonSession.lineDuration("One.", wordsPerSecond: rate))
+        let events = r.tick()
+        XCTAssertTrue(events.contains(.lineEnded(beat: 0)))
+        XCTAssertEqual(r.caption, "Two.")
+    }
+
+    // MARK: a beat presented by the restore tick is shown directly too (review N3)
+
+    func testABeatDueAtRestoreIsShownDirectly() throws {
+        let clock = MGManualClock()
+        var source = MGLessonSession(pacing: .speech, clock: clock)
+        source.feed(lines([scene, #"{"say":"One."}"#, #"{"say":"Two."}"#, #"{"op":"params","params":{"angle":90}}"#, #"{"end":true}"#]))
+        XCTAssertEqual(source.waitingBeats, 1)
+        let c = MGLessonController(pacing: .immediate, clock: clock)
+        c.feed(lines([scene, #"{"say":"Old."}"#, #"{"end":true}"#]))
+        var events: [MGLessonEvent] = []
+        c.onEvent = { events.append($0) }
+        let revision = c.board.revision
+        XCTAssertNoThrow(try c.restore(source.snapshot()).get())
+        XCTAssertEqual(c.board.revision, revision + 1, "one board update")
+        XCTAssertTrue(events.contains(.lineDue(beat: 1, text: "Two.", changed: false)))
+        XCTAssertEqual(events.last, .lessonComplete)
+        XCTAssertEqual(c.caption, "Two.")
+        XCTAssertEqual(c.state?.value("theta"), 90)
+        XCTAssertEqual(c.board.scene?.items, c.state?.scene.items)
+        XCTAssertEqual(c.board.transition, .direct)
+        XCTAssertFalse(c.board.drawsOn)
     }
 
     /// No false refusal: a stream that queues its full beat budget (speech pacing, no line ended) still restores.

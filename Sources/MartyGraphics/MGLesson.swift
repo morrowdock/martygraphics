@@ -20,8 +20,24 @@ public enum MGLessonLimits {
     public static let defaultAnimateDuration = 1.5
     /// Estimated line length for `.estimate` pacing, in seconds.
     public static let lineSeconds: ClosedRange<Double> = 1...12
-    /// Canonical JSON size of a snapshot that `restore` accepts (`snapshot.bytes`), and its nesting depth (`snapshot.depth`).
-    public static let snapshotBytes = 256 * 1024, snapshotDepth = 32
+    /// Canonical JSON bytes that beats received but not shown yet may take in a snapshot (`pending`), across every
+    /// stream of the session. A statement that would pass it is refused (`lesson.queue.bytes`). Bounds memory and snapshots.
+    public static let queueBytes = 96 * 1024
+    /// Ids in the id history (`MGLessonState.kinds`, removed ids included). A command that would pass it is refused
+    /// (`lesson.ids.count`).
+    public static let ids = 256
+    /// Canonical JSON bytes of one filled line (`lineQueued` / `lineDue` text and the caption): `stmt.say.bytes`.
+    public static let lineBytes = 2 * 1024
+    /// Upper bound of one state in a snapshot: the scene source (`MGLimits.sceneBytes`), the id history (an id is at most
+    /// 24 ASCII characters: at most 96 bytes for its kind and beat entries), the controls (each from one statement) and
+    /// the scalar fields.
+    static let stateWireBytes = MGLimits.sceneBytes + ids * 96 + controls * (statementBytes + 256) + 256
+    /// Snapshot size cap, derived from the limits above so that every snapshot of a session fits: the state and the
+    /// queue baseline, the queued beats, the caption, the title (one statement) and the fixed fields. `restore` refuses
+    /// a larger snapshot (`snapshot.bytes`) before it reads any field.
+    public static let snapshotBytes = 2 * stateWireBytes + queueBytes + lineBytes + statementBytes + 2 * 1024
+    /// Nesting depth of a snapshot that `restore` accepts (`snapshot.depth`). A real snapshot nests about 10 levels.
+    public static let snapshotDepth = 32
 }
 
 /// Who sent a command. A learner command is gated (bound control, value in range) and then takes the SAME path as a
@@ -341,6 +357,8 @@ enum MGLessonEngine {
                 next.kinds[item.id] = item.kind
                 if let beat { next.introduced[item.id] = beat }
             }
+            // The id history keeps removed ids, so it is bounded on its own (memory and snapshot size).
+            guard next.kinds.count <= MGLessonLimits.ids else { throw MGError("lesson.ids.count") }
             return MGCommandResult(state: next, transition: origin == .learner ? .direct : .blend)
         }
     }

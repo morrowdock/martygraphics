@@ -199,10 +199,38 @@ The event history and the command log start empty after a restore.
 A snapshot covers complete statements only. A statement that has started but not finished is not stored; replay
 `unfinishedInput` into the restored session (`feed(_: Data)`) before the rest of the stream. Those bytes are not in the
 snapshot's byte count, so the budget is the same after the replay.
-`restore` checks the size first: a snapshot whose canonical JSON is over 256 KiB is `snapshot.bytes`, and one that
-nests deeper than 32 levels is `snapshot.depth` (the size reason wins when both apply). This holds two scenes and the
-queued beats of several full streams. A session that has queued more beats than that, without presenting them, cannot
-be restored. A pending beat with more than 12 commands or 8 checks is `snapshot.pending`.
+`restore` checks the snapshot with one bounded walk before it reads any field or encodes anything. The walk keeps a
+lower bound of the canonical JSON size and stops when it passes the cap, so its work is bounded. The reasons come in
+this order:
+
+1. The lower bound of the size is over `MGLessonLimits.snapshotBytes` (202.5 KiB): `snapshot.bytes`. This includes
+   data below the depth limit.
+2. A number is NaN or infinite: `snapshot.number`. Such a value is never encoded.
+3. The value nests deeper than 32 levels: `snapshot.depth`.
+4. The exact canonical size is over the cap: `snapshot.bytes`.
+
+The cap is derived from the session limits, so every snapshot of a session fits. It is the sum of: two states (the
+state and the queue baseline: a scene of at most 8 KiB, an id history of at most 256 ids, 4 controls), the queue
+budget (96 KiB), one caption (2 KiB), the title and the fixed fields. The session enforces each part:
+
+- Queue budget: beats received but not shown yet (in every stream, also follow-up `keep` streams) may take at most
+  96 KiB of canonical JSON in the snapshot. A `say`, command or check that would pass it is refused
+  (`lesson.queue.bytes`). A beat whose filled line would pass it is refused when it closes. The budget frees as beats
+  are shown. A whole stream fits: a 23 KiB stream of 24 queued beats uses less than half of the budget
+  (test `testOneFullStreamFitsTheQueue`). Follow-up streams that queue more are refused at the budget.
+- Id history: at most 256 ids, removed ids included (`lesson.ids.count`).
+- A filled line (queued text, due text and the caption) is at most 2 KiB of canonical JSON (`stmt.say.bytes`).
+
+On restore, a pending beat with more than 12 commands or 8 checks, or a pending queue over the budget, is
+`snapshot.pending`. An id history over 256 ids is `snapshot.kinds`. These checks run while the fields are read, after
+the walk above.
+
+Work bound: `restore` runs every pending command through the engine again. The queue budget limits that to the
+commands of 96 KiB of JSON (a few thousand short commands). `MGLessonController.restore` does this on the main actor.
+
+Line timing follows the restoring pacing, not the saved one. With `.estimate`, an open line keeps its saved remaining
+time. A snapshot from another pacing gets a new estimate from its caption. With `.speech`, an open line waits for
+`lineEnded(k)`. With `.immediate`, no line is held open.
 
 ### Restoring a live lesson (`MGLessonController.restore`)
 
@@ -226,9 +254,12 @@ session use one clock. (An `adopt(session:)` call could take a session with anot
 - A restore never starts playback. The result is paused when the snapshot was paused or the controller was paused.
   The board holds its transitions to match. Call `resume()` to continue.
 - Events: none for the restore itself (no `firstPresented`, no second `lineDue`). The controller then ticks the restored
-  session once. What is due at once comes through `onEvent`, for example `lessonComplete` when the saved lesson only
-  waited for its last transition to settle. With `.speech` pacing and an open line (`session.openLine`), speak `caption`
-  again or call `lineEnded(_:)`. With `.estimate` pacing the open line keeps its remaining time.
+  session. What is due at once comes through `onEvent`. Examples: `lessonComplete` when the saved lesson only waited
+  for its last transition to settle, or `lineDue` for a queued beat that is due now (for example a `.speech` snapshot
+  restored on an `.immediate` controller). That beat is also shown directly, with no blend and no draw-on.
+- Line timing follows the controller's pacing (see above). With `.speech` pacing and an open line (`session.openLine`),
+  speak `caption` again or call `lineEnded(_:)`. With `.estimate` pacing, an open line keeps its saved remaining time,
+  or gets a new estimate when the snapshot came from another pacing.
 - Partial input: save the old session's `unfinishedInput` with the snapshot. After `restore`, feed it with
   `feed(_: Data)` before the rest of the stream. The bytes form is necessary because a partial statement can end inside
   a UTF-8 sequence.
@@ -277,7 +308,10 @@ Limits (owner decision D5; scene limits in `MGLimits` do not change):
 | Bound controls | 4 | `control.count` |
 | `animate` duration | 0.2–6 s | `animate.dur` |
 | Keyframes per `animate` | 72 (360°) | `animate.to` |
-| Snapshot size (canonical JSON) / nesting | 256 KiB / 32 levels | `snapshot.bytes` / `snapshot.depth` |
+| Queued beats not shown yet (canonical JSON, all streams) | 96 KiB | `lesson.queue.bytes` |
+| Id history (removed ids included) | 256 | `lesson.ids.count` |
+| Filled line (queued text, due text, caption) | 2 KiB | `stmt.say.bytes` |
+| Snapshot size (canonical JSON) / nesting | 202.5 KiB (derived) / 32 levels | `snapshot.bytes` / `snapshot.depth` |
 
 Stream budget: every received byte counts toward the 32 KiB, including whitespace, garbage, oversized and
 unfinished text. Past the byte or statement limit the session emits one terminal refusal and ignores the rest of the
@@ -297,7 +331,8 @@ New reasons (closed list). Inner engine reasons (`patch.set.ref`, `id.duplicate.
 `control.duplicate.<id>`, `control.value`, `control.op`, `control.label.placeholder`, `lesson.statements.count`, `unbind.id`, `animate.missing`, `animate.unknown.<keys>`,
 `animate.param`, `animate.to`, `animate.dur`, `animate.step`, `animate.frame`, `check.object`, `check.missing`, `check.unknown.<keys|name>`,
 `check.value`, `check.comparison`, `check.eq`, `check.lt`, `check.gt`, `check.tol`, `check.<name>`, `text.literal`,
-`snapshot.<field>` (including `snapshot.bytes` and `snapshot.depth`), `lesson.number`, `snapshot.number`.
+`snapshot.<field>` (including `snapshot.bytes` and `snapshot.depth`), `lesson.number`, `snapshot.number`,
+`lesson.queue.bytes`, `lesson.ids.count`, `stmt.say.bytes`.
 
 `lesson.number` and `snapshot.number` refuse an `MGJSON` value built in code that holds NaN or an infinity (JSON has
 no form for them): a lesson document in `MGLesson.parse(json:)`, any statement in `load` (with its index in

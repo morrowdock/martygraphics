@@ -130,10 +130,12 @@ public final class MGLessonController: ObservableObject {
     /// - Pause: a restore never starts playback. The result is paused when the snapshot was paused or this controller
     ///   was paused; the board holds its transitions to match. Call `resume()` to continue.
     /// - Events: none for the restore itself (no `firstPresented`, no `lineDue` again). The controller then ticks the
-    ///   restored session once, so what is due at once comes through `onEvent` like any tick, for example
-    ///   `lessonComplete` when the saved lesson only waited for its last transition to settle. With `.speech` pacing and
-    ///   an open line (`session.openLine`), speak `caption` again or call `lineEnded(_:)`. With `.estimate` the open
-    ///   line keeps its remaining time.
+    ///   restored session, so what is due at once comes through `onEvent` like any tick, for example `lessonComplete`
+    ///   when the saved lesson only waited for its last transition to settle, or the `lineDue` of a queued beat that is
+    ///   due now (that beat is also shown directly, with no blend or draw-on).
+    /// - Line timing follows this controller's pacing (see `MGLessonSession.restore`). With `.speech` and an open line
+    ///   (`session.openLine`), speak `caption` again or call `lineEnded(_:)`. With `.estimate` an open line keeps its
+    ///   saved remaining time, or gets a new estimate when the snapshot came from another pacing.
     /// - A statement that was partly received when the snapshot was taken is not in it: feed the old session's
     ///   `unfinishedInput` with `feed(_: Data)` before the rest of the stream.
     @discardableResult public func restore(_ snapshot: MGJSON) -> Result<Void, MGLessonIssue> {
@@ -144,6 +146,11 @@ public final class MGLessonController: ObservableObject {
         }
         if session.isPaused { restored.pause() }
         restored.dropSettle()
+        // What is due at once runs now. A beat that this presents is shown directly as well (one board update, no
+        // blend or draw-on from the old lesson), so it has nothing to settle either; the second tick can then complete.
+        var events = restored.tick()
+        restored.dropSettle()
+        events += restored.tick()
         ticker?.cancel()
         if let b = beatInterval { signposter.endInterval("beat", b); beatInterval = nil }
         session = restored
@@ -152,7 +159,7 @@ public final class MGLessonController: ObservableObject {
         shownSerial = restored.lastChange?.serial ?? 0
         if restored.isPaused { board.pauseTransitions() } else { board.resumeTransitions() }
         board.show(restored.state?.scene, transition: .direct, drawsOn: false)
-        sync(session.tick())
+        sync(events)
         return .success(())
     }
 
