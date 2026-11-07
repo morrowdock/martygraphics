@@ -207,7 +207,8 @@ final class LessonReviewRecheckTests: LessonTestCase {
         XCTAssertEqual(reasons(tiny).last, "lesson.statements.count")
         var deep = MGLessonSession()
         let nested = deep.feed(String(repeating: "[", count: 1900) + String(repeating: "]", count: 1900) + "\n" + scene + "\n" + #"{"end":true}"# + "\n")
-        XCTAssertTrue(["stmt.json", "stmt.kind"].contains(reasons(nested).first ?? ""), "\(reasons(nested))")
+        // Counted on the text before the system parser: deeper than the statement cap is `lesson.depth`.
+        XCTAssertEqual(reasons(nested).first, "lesson.depth", "\(reasons(nested))")
         XCTAssertEqual(reasons(nested).count, 1)
         XCTAssertNotNil(deep.state, "the scene after the nested value is still scanned")
     }

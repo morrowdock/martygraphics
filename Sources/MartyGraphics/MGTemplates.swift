@@ -155,7 +155,8 @@ public struct MGTemplate {
 
     /// Declares a template whose `params` value is arbitrary JSON (strings, nested arrays, objects) instead of declared
     /// numeric parameters. The engine only bounds the size (`MGLimits.rawParamsBytes` of canonical JSON, refused as
-    /// `template.params.bytes`) and requires finite numbers (`template.params.number`); the `compile` closure receives the object unchanged and
+    /// `template.params.bytes`) and the nesting (`MGLimits.depth`, 64 levels, refused as `template.params.depth`), and
+    /// requires finite numbers (`template.params.number`); the `compile` closure receives the object unchanged and
     /// owns all further checks. To refuse, return nil (`template.build`) or throw `MGError("template.<suffix>")`
     /// (suffix rule as for `reject`; other reasons become `template.build`). The parser checks the built scene like any
     /// wire scene. `paramsDoc` might read `words:[1–3 short strings]`. A `params` patch replaces top-level keys of the
@@ -201,13 +202,14 @@ public struct MGTemplate {
     }
 
     /// Checks a `params` object exactly as the parser does (ranges, counts, records, `reject`, `check`; or, for a raw
-    /// template, only the byte bound and finite numbers: `template.params.number`). Throws an `MGError` with the
+    /// template, only finite numbers, nesting and the byte bound: `template.params.number`, `template.params.depth`,
+    /// `template.params.bytes`). Throws an `MGError` with the
     /// parser's reason. Hosts may call it, for example to check a sample before quoting it.
     public func validate(_ raw: [String: MGJSON]) throws -> MGParams {
         if isRaw {
             let object = MGJSON.object(raw)
-            guard object.isEncodable else { throw MGError("template.params.number") }
-            guard object.canonicalByteCount <= MGLimits.rawParamsBytes else { throw MGError("template.params.bytes") }
+            try object.checkEntry(maxDepth: MGLimits.depth, maxBytes: MGLimits.rawParamsBytes, number: "template.params.number",
+                                  depth: "template.params.depth", bytes: "template.params.bytes")
             return MGParams(raw: object)
         }
         let names = Set(params.map(\.name))

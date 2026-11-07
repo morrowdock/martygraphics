@@ -54,6 +54,8 @@ extension MGLessonSession {
             let d = try MGParser.num(v, -1...1e9, what); guard d.rounded() == d else { throw MGError(what) }; return Int(d)
         }
         guard let source = o["scene"] else { throw MGError("snapshot.scene") }
+        // No deeper than a live session makes, so the next snapshot (with a `baseline` copy) still fits the cap.
+        guard source.measure().depth <= MGLessonLimits.sceneDepth else { throw MGError("snapshot.depth") }
         var scene = MGLessonEngine.lessonScene(try MGParser.scene(json: source).get())
         scene.revision = try int(o["rev"], "snapshot.rev")
         var s = MGLessonState(scene: scene)
@@ -75,38 +77,19 @@ extension MGLessonSession {
         return s
     }
 
-    /// Size, numbers and depth, checked by one bounded walk before any field is read and before anything is encoded.
-    /// The walk keeps a lower bound of the canonical JSON size (strings, keys, brackets, commas; every other value
-    /// counts at least one byte) and stops once it passes the cap, so its work is bounded. It uses an explicit stack, so
-    /// no input depth can exhaust the call stack. Reasons, in this order: the lower bound is over
+    /// Size, numbers and depth, checked by one bounded walk (`MGJSON.measure`) before any field is read and before
+    /// anything is encoded. The walk keeps a lower bound of the canonical JSON size (strings, keys, brackets, commas;
+    /// every other value counts at least one byte) and stops once it passes the cap, so its work is bounded. It uses an
+    /// explicit stack, so no input depth can exhaust the call stack. Reasons, in this order: the lower bound is over
     /// `MGLessonLimits.snapshotBytes` (`snapshot.bytes`); a number is NaN or infinite (`snapshot.number`); the value nests
     /// deeper than `MGLessonLimits.snapshotDepth` (`snapshot.depth`); the exact canonical size is over the cap
     /// (`snapshot.bytes`). The first test does not depend on dictionary order: the full walk visits every node.
     static func checkBounds(_ snapshot: MGJSON) throws {
         let limit = MGLessonLimits.snapshotBytes
-        var total = 0, deep = false, nonFinite = false
-        var stack: [(value: MGJSON, depth: Int)] = [(snapshot, 0)]
-        while total <= limit, let item = stack.popLast() {
-            let depth = item.depth
-            if depth > MGLessonLimits.snapshotDepth { deep = true }
-            switch item.value {
-            case .null, .bool: total += 4
-            case .number(let d): total += 1; if !d.isFinite { nonFinite = true }
-            case .string(let s): total += s.utf8.count + 2
-            case .array(let a):
-                total += 1 + max(1, a.count)   // brackets and commas
-                if total <= limit { for v in a { stack.append((v, depth + 1)) } }
-            case .object(let o):
-                total += 1 + max(1, o.count)
-                for (k, v) in o {
-                    if total > limit { break }
-                    total += k.utf8.count + 3; stack.append((v, depth + 1))
-                }
-            }
-        }
-        guard total <= limit else { throw MGError("snapshot.bytes") }
-        guard !nonFinite else { throw MGError("snapshot.number") }
-        guard !deep else { throw MGError("snapshot.depth") }
+        let m = snapshot.measure(stopAbove: limit)
+        guard !m.stopped else { throw MGError("snapshot.bytes") }
+        guard m.finite else { throw MGError("snapshot.number") }
+        guard m.depth <= MGLessonLimits.snapshotDepth else { throw MGError("snapshot.depth") }
         // Encodable (finite) and at most `snapshotDepth` deep here, so encoding is safe and bounded.
         guard snapshot.canonicalByteCount <= limit else { throw MGError("snapshot.bytes") }
     }
@@ -124,8 +107,10 @@ extension MGLessonSession {
         func string(_ v: MGJSON?, _ what: String) throws -> String { guard case .string(let s)? = v else { throw MGError(what) }; return s }
 
         var session = MGLessonSession(pacing: pacing, clock: clock)
-        // Title and caption keep the bounds of a live session: the header's title rule and the filled-line size.
+        // Title and caption keep the bounds of a live session: the header's title rule (also no decimal literal) and
+        // the filled-line size.
         if let t = o["title"] {
+            if MGLessonEngine.hasDecimalLiteral(t) { throw MGError("snapshot.title") }
             let empty = MGContext(width: 12, height: 8, is3D: false, values: [:])
             let title = try MGParser.text(t, MGLimits.title, empty, "snapshot.title")
             guard .string(title) == t else { throw MGError("snapshot.title") }

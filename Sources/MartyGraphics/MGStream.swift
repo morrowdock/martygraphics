@@ -133,6 +133,7 @@ public struct MGStreamParser {
     }
 
     static func json(_ raw: [UInt8]) -> MGJSON? {
+        guard MGJSON.textNesting(raw) <= MGLimits.depth else { return nil }   // before the recursive system parser
         guard let o = try? JSONSerialization.jsonObject(with: Data(raw), options: [.fragmentsAllowed]) else { return nil }
         return MGJSON(any: o)
     }

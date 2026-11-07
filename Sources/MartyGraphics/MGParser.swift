@@ -16,6 +16,15 @@ public enum MGLimits {
     public static let records = 32, recordFields = 6
     /// Raw (free-form JSON) template parameters: the canonical `params` object may be at most this many bytes.
     public static let rawParamsBytes = 4 * 1024
+    /// Nesting limit (arrays and objects on one path; `[[1]]` is 2) of every JSON value a public entry point accepts:
+    /// scenes (`scene.depth`), patches (`patch.depth`), raw template params (`template.params.depth`), lessons and
+    /// snapshots (`MGLessonLimits`), Solid assemblies and components, and `MGJSON(any:)`. Real documents nest 6 to 15
+    /// levels. The system JSON parser and encoder, Swift's `==`, hashing and freeing of nested values, and
+    /// `MGJSON(any:)` all recurse once per level; at 64 levels the deepest of them (a sorted-key encode of nested
+    /// objects) uses less than half of a 512 KiB thread stack (iOS secondary threads) and about a fifth of the 1 MiB iOS
+    /// main-thread stack. The check is one walk that does not recurse, and it runs before any of them (on JSON `Data`:
+    /// before the system parser; the `Data` must be UTF-8).
+    public static let depth = 64
     /// `table` items: at most this many rows and columns, and this many characters per cell.
     public static let tableRows = 8, tableCols = 6, tableCellText = 12
 }
@@ -41,9 +50,10 @@ public enum MGParser {
     static let topKeys: Set<String> = ["v", "template", "params", "title", "dim", "world", "items", "steps", "camera", "hide", "over"]
 
     public static func scene(data: Data) -> Result<MGScene, MGError> {
-        guard data.count <= MGLimits.sceneBytes * 2, let object = try? JSONSerialization.jsonObject(with: data) else {
-            return .failure(.init("json"))
-        }
+        guard data.count <= MGLimits.sceneBytes * 2 else { return .failure(.init("json")) }
+        // UTF-8 only, and the nesting counted before the recursive system parser.
+        if let r = MGJSON.dataRefusal(data, json: "json", depth: "scene.depth") { return .failure(.init(r)) }
+        guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(.init("json")) }
         return scene(object: object)
     }
     public static func scene(object: Any) -> Result<MGScene, MGError> {
@@ -57,9 +67,10 @@ public enum MGParser {
     /// never registered. A scene that names an extra template keeps the template name, so a later patch on it must
     /// also go through `applying(_:extraTemplates:)` with the same extras (or the template must be registered).
     public static func scene(data: Data, extraTemplates: [MGTemplate]) -> Result<MGScene, MGError> {
-        guard data.count <= MGLimits.sceneBytes * 2, let object = try? JSONSerialization.jsonObject(with: data) else {
-            return .failure(.init("json"))
-        }
+        guard data.count <= MGLimits.sceneBytes * 2 else { return .failure(.init("json")) }
+        // UTF-8 only, and the nesting counted before the recursive system parser.
+        if let r = MGJSON.dataRefusal(data, json: "json", depth: "scene.depth") { return .failure(.init(r)) }
+        guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(.init("json")) }
         return scene(object: object, extraTemplates: extraTemplates)
     }
     /// See `scene(data:extraTemplates:)`.
@@ -76,9 +87,9 @@ public enum MGParser {
 
     static func parseScene(_ json: MGJSON, extra: [MGTemplate] = []) throws -> MGScene {
         guard case .object(let o) = json else { throw MGError("scene.object") }
-        // A value built in code may hold NaN or an infinity, which has no JSON form; refuse it before measuring.
-        guard json.isEncodable else { throw MGError("scene.number") }
-        guard json.canonicalByteCount <= MGLimits.sceneBytes else { throw MGError("scene.bytes") }
+        // A value built in code may hold NaN or an infinity, which has no JSON form, or nest deep enough to exhaust the
+        // stack of a recursive walk; refuse both before measuring.
+        try json.checkEntry(maxDepth: MGLimits.depth, maxBytes: MGLimits.sceneBytes, number: "scene.number", depth: "scene.depth", bytes: "scene.bytes")
         try closed(o, required: ["v"], optional: topKeys, "scene")
         guard o["v"] == .number(1) else { throw MGError("scene.version") }
         let is3D: Bool

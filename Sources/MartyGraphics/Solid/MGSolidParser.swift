@@ -132,6 +132,7 @@ public enum MGSolidParser {
     public static func document(data: Data, reusing previous: MGSolidDocument? = nil,
                                 library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
         guard data.count <= MGSolidLimits.bytes else { return .failure(.init("assembly.bytes")) }
+        if let r = MGJSON.dataRefusal(data, json: "json", depth: "assembly.depth") { return .failure(.init(r)) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
             return .failure(.init("json"))
         }
@@ -141,6 +142,7 @@ public enum MGSolidParser {
     /// `library` resolves `use` entries (components); see docs/SOLID-3D.md, Components.
     public static func document(json: MGJSON, reusing previous: MGSolidDocument? = nil,
                                 library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
+        if json.nestsTooDeep { return .failure(.init("assembly.depth")) }
         do {
             let doc = try compile(json, previous, library)
             if let refusal = profile.refusal(doc) { return .failure(refusal) }
@@ -158,6 +160,7 @@ public enum MGSolidParser {
     /// `profile: .strict` refuses a patch whose result the strict profile would refuse (an idle joint, a frame error).
     public static func applying(_ patch: MGJSON, to doc: MGSolidDocument,
                                 profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
+        if patch.nestsTooDeep { return .failure(.init("patch.depth")) }
         guard case .object(let p) = patch else { return .failure(.init("patch.object")) }
         let allowed: Set<String> = ["params", "parts", "constraints", "steps", "title"]
         guard Set(p.keys).isSubset(of: allowed), !p.isEmpty else {

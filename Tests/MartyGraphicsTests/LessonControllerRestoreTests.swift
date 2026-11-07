@@ -163,7 +163,9 @@ final class LessonControllerRestoreTests: LessonTestCase {
         XCTAssertEqual(MGLessonLimits.snapshotBytes,
                        2 * (MGLimits.sceneBytes + MGLessonLimits.ids * 80 + MGLessonLimits.controls * MGLessonLimits.controlBytes + 256)
                        + MGLessonLimits.queueBytes + MGLessonLimits.lineBytes + (MGLimits.title * 4 + 2) + 2048)
-        XCTAssertEqual(MGLessonLimits.snapshotDepth, 2056, "docs/LESSONS.md says 2,056 levels")
+        XCTAssertEqual(MGLessonLimits.snapshotDepth, 64, "docs/LESSONS.md says 64 levels")
+        XCTAssertEqual(MGLessonLimits.statementDepth, 59, "docs/LESSONS.md says 59 levels")
+        XCTAssertEqual(MGLessonLimits.documentDepth, 63, "docs/LESSONS.md says 63 levels")
         // The id history entry bound: the longest id with the longest kind and a 10-digit beat.
         let id = String(repeating: "h", count: 24)
         let longestKind = MGKind.allCases.map(\.rawValue).max { $0.utf8.count < $1.utf8.count }!
@@ -566,52 +568,24 @@ final class LessonControllerRestoreTests: LessonTestCase {
         XCTAssertNoThrow(try MGLessonSession.restore(with(valid, "caption", .string(atBound)), pacing: .speech, clock: clock).get())
     }
 
-    /// A raw template that takes any nested `tree` and draws one body.
-    static let nested = MGTemplate(name: "host_nested", summary: "nested tree", paramsDoc: "tree: any JSON", sample: .object(["tree": .number(0)])) { raw, _ in
-        guard raw["tree"] != nil else { throw MGError("template.tree") }
-        return MGTemplateBuild(title: "Tree", items: [MGMake.body("A", MGPoint(2, 2))])
-    }
-    func registerNested() throws {
-        try MGPacks.register(MGPack(id: "host_nested_pack", title: "Nested", summary: "nested raw params", templates: [Self.nested],
-                                    fixtures: [MGFixtures.Demo(id: "host_nested_demo", title: "Tree", json: #"{"v":1,"template":"host_nested","params":{"tree":[[0]]}}"#)]))
-    }
-    /// `levels` arrays around 0, as JSON text.
-    func tree(_ levels: Int) -> String { String(repeating: "[", count: levels) + "0" + String(repeating: "]", count: levels) }
+    // The deepest legal snapshot round trip (review 2 S2, review 3 N2) is in DeepJSONGuardTests, on a 512 KiB stack.
 
-    /// Review 2 S2: the deepest legal raw-template scene and queued command restore.
-    func testDeepestLegalRawTemplateSnapshotRestores() throws {
-        try registerNested()
+    /// Review 3 N4: a restored title follows the live header rule, including the decimal-literal rule.
+    func testRestoredTitleFollowsTheDecimalLiteralRule() throws {
         let clock = MGManualClock()
-        // The deepest tree that a stream admits, in the scene and in a queued `params` command: it fits one statement
-        // (the scanner's 4 KiB) and the system JSON parser reads it (the parser may have its own nesting limit).
-        func parses(_ text: String) -> Bool { (try? JSONSerialization.jsonObject(with: Data(text.utf8))) != nil }
-        func deepest(_ wrap: (String) -> String) -> String {
-            var k = 1
-            while wrap(tree(k + 1)).utf8.count <= MGLessonLimits.statementBytes, parses(wrap(tree(k + 1))) { k += 1 }
-            return wrap(tree(k))
+        var live = MGLessonSession(pacing: .immediate, clock: clock)
+        XCTAssertEqual(F.refusals(live.feed(lines([#"{"lesson":{"v":1,"title":"Turn by 1.5 degrees"}}"#]))).map(\.reason), ["text.literal"])
+        live.feed(lines([#"{"lesson":{"v":1,"title":"Turn 90 degrees."}}"#, scene, #"{"say":"Look."}"#, #"{"end":true}"#]))
+        let valid = live.snapshot()
+        XCTAssertEqual(valid["title"], .string("Turn 90 degrees."))
+        XCTAssertNoThrow(try MGLessonSession.restore(valid, pacing: .immediate, clock: clock).get())
+        for title in ["Turn by 1.5 degrees", "Scale by .5", "About 2e3 steps", "Turn by 2.e3"] {
+            XCTAssertEqual(MGLessonSession.restore(with(valid, "title", .string(title)), pacing: .immediate, clock: clock).failureReason,
+                           "snapshot.title", title)
+            var header = MGLessonSession(pacing: .immediate, clock: clock)
+            XCTAssertEqual(F.refusals(header.feed(lines([#"{"lesson":{"v":1,"title":"\#(title)"}}"#]))).map(\.reason), ["text.literal"],
+                           "the live header refuses it too")
         }
-        let sceneStatement = deepest { #"{"scene":{"v":1,"template":"host_nested","params":{"tree":"# + $0 + "}}}" }
-        let command = deepest { #"{"op":"params","params":{"tree":"# + $0 + "}}" }
-        XCTAssertGreaterThan(sceneStatement.utf8.count, 400, "deeper than any closed scene")
-        var s = MGLessonSession(pacing: .speech, clock: clock)
-        let events = s.feed(lines([sceneStatement, #"{"say":"One."}"#, #"{"say":"Two."}"#, command, #"{"end":true}"#]))
-        XCTAssertEqual(F.refusals(events), [])
-        XCTAssertEqual(s.waitingBeats, 1)
-        let snapshot = s.snapshot()
-        let r = try MGLessonSession.restore(snapshot, pacing: .speech, clock: clock).get()
-        XCTAssertEqual(r.snapshot(), snapshot)
-
-        // `apply` takes a value built in code (no JSON parser): the deepest tree is bounded by the patch size (4 KiB).
-        var a = MGLessonSession(pacing: .immediate, clock: clock)
-        a.feed(lines([#"{"scene":{"v":1,"template":"host_nested","params":{"tree":0}}}"#, #"{"end":true}"#]))
-        func params(_ levels: Int) -> MGJSON { .object(["op": .string("params"), "params": .object(["tree": deep(levels)])]) }
-        var k = 1
-        while MGJSON.object(["v": .number(1), "ops": .array([params(k + 1)])]).canonicalByteCount <= MGLimits.patchBytes { k += 1 }
-        XCTAssertGreaterThan(k, 2000)
-        XCTAssertNoThrow(try a.apply(params(k)).get())
-        XCTAssertEqual(a.apply(params(k + 1)).failureReason, "patch.object", "over the patch size")
-        let applied = a.snapshot()
-        XCTAssertEqual(try MGLessonSession.restore(applied, pacing: .immediate, clock: clock).get().snapshot(), applied)
     }
 
     /// Review 2 S3: a control is bounded on every path, including public `apply` and `restore`.

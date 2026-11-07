@@ -153,10 +153,22 @@ public struct MGScene: Equatable, Sendable {
 }
 
 /// Minimal immutable JSON value so scenes stay Equatable/Sendable and canonical-encodable.
+///
+/// Nesting: every public entry point that takes a value built in code (`MGParser.scene(json:)`, `MGPatch.parse(json:)`,
+/// `MGScene.applying`, `MGTemplate.validate`, `MGLesson.parse(json:)`, lesson `apply`, `restore`, the Solid parsers)
+/// first runs one walk that does not recurse (`measure`) and refuses a value that nests deeper than `MGLimits.depth`
+/// (64) before it reads, compares, hashes or encodes it. Entry points that take JSON text count its nesting
+/// (`utf8Nesting`) before the system parser runs; JSON `Data` must be UTF-8. `canonicalData` and `canonicalByteCount` never encode a deeper value.
+/// Swift itself compares, hashes and frees nested enum values recursively, and so does `any`: a host that builds a much
+/// deeper value in code should give it to an entry point (which refuses it) and not compare, hash or convert it itself.
 public indirect enum MGJSON: Equatable, Hashable, Sendable {
     case null, bool(Bool), number(Double), string(String), array([MGJSON]), object([String: MGJSON])
 
-    public init?(any value: Any?) {
+    /// Converts a Foundation value (for example `JSONSerialization` output). Nil for any other type, a non-finite
+    /// number, or nesting deeper than `MGLimits.depth`, so the conversion itself is bounded.
+    public init?(any value: Any?) { self.init(any: value, level: 0) }
+
+    private init?(any value: Any?, level: Int) {
         switch value {
         case nil, is NSNull: self = .null
         case let n as NSNumber:
@@ -164,16 +176,19 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
             else { guard n.doubleValue.isFinite else { return nil }; self = .number(n.doubleValue) }
         case let s as String: self = .string(s)
         case let a as [Any]:
+            guard level < MGLimits.depth else { return nil }
             var out: [MGJSON] = []; out.reserveCapacity(a.count)
-            for v in a { guard let j = MGJSON(any: v) else { return nil }; out.append(j) }
+            for v in a { guard let j = MGJSON(any: v, level: level + 1) else { return nil }; out.append(j) }
             self = .array(out)
         case let o as [String: Any]:
+            guard level < MGLimits.depth else { return nil }
             var out: [String: MGJSON] = [:]
-            for (k, v) in o { guard let j = MGJSON(any: v) else { return nil }; out[k] = j }
+            for (k, v) in o { guard let j = MGJSON(any: v, level: level + 1) else { return nil }; out[k] = j }
             self = .object(out)
         default: return nil
         }
     }
+    /// The Foundation form (for `JSONSerialization`). It recurses once per level of nesting (see the type's note).
     public var any: Any {
         switch self {
         case .null: return NSNull()
@@ -186,27 +201,109 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
     }
     /// True when every number in the value is finite. A value built in code can hold NaN or an infinity, which JSON
     /// cannot encode (the system encoder raises an exception that Swift cannot catch), so check before encoding.
-    public var isEncodable: Bool {
-        var pending: [MGJSON] = [self]
-        while let next = pending.popLast() {
-            switch next {
-            case .number(let d): if !d.isFinite { return false }
-            case .array(let a): pending.append(contentsOf: a)
-            case .object(let o): pending.append(contentsOf: o.values)
-            case .null, .bool, .string: break
+    public var isEncodable: Bool { measure().finite }
+    /// Nesting of UTF-8 JSON `Data`, or nil when the bytes are not UTF-8 JSON text: they are not valid UTF-8, or they
+    /// hold a raw NUL byte (valid UTF-8 JSON never does, and UTF-16 or UTF-32 text with any bracket or quote always
+    /// does). The system parser also reads UTF-16 and UTF-32, which the byte counter cannot read, so every `Data` entry
+    /// point refuses such text (with its `json` reason) before the parser runs.
+    static func utf8Nesting(_ data: Data) -> Int? {
+        guard !data.contains(0), String(data: data, encoding: .utf8) != nil else { return nil }
+        return textNesting(data)
+    }
+
+    /// The first check of a `Data` entry point, before the system parser: `json` when the bytes are not UTF-8 JSON
+    /// text (`utf8Nesting`), `depth` when the text nests deeper than `maxDepth`, else nil.
+    static func dataRefusal(_ data: Data, maxDepth: Int = MGLimits.depth, json: String, depth: String) -> String? {
+        guard let nesting = utf8Nesting(data) else { return json }
+        return nesting <= maxDepth ? nil : depth
+    }
+
+    /// Nesting of UTF-8 JSON text (arrays and objects on one path), counted in one pass without parsing; brackets
+    /// inside strings do not count. Use `utf8Nesting` for `Data` from a host: this counter reads UTF-8 only.
+    static func textNesting<S: Sequence>(_ bytes: S) -> Int where S.Element == UInt8 {
+        var depth = 0, deepest = 0, inString = false, escape = false
+        for b in bytes {
+            if inString {
+                if escape { escape = false } else if b == UInt8(ascii: "\\") { escape = true } else if b == UInt8(ascii: "\"") { inString = false }
+                continue
+            }
+            switch b {
+            case UInt8(ascii: "\""): inString = true
+            case UInt8(ascii: "{"), UInt8(ascii: "["): depth += 1; deepest = max(deepest, depth)
+            case UInt8(ascii: "}"), UInt8(ascii: "]"): depth -= 1
+            default: break
             }
         }
-        return true
+        return deepest
     }
-    /// Sorted-key JSON: stable cache keys and byte limits. Empty when the value is not encodable; use
-    /// `canonicalByteCount` for limits, so such a value never counts as small.
+    /// Sorted-key JSON: stable cache keys and byte limits. Empty when the value is not encodable (a non-finite number,
+    /// or nesting deeper than `MGLimits.depth`); use `canonicalByteCount` for limits, so such a value never counts as small.
     public var canonicalData: Data { encoded ?? Data() }
-    /// Canonical size in bytes for limit checks. `Int.max` when the value cannot be encoded (a non-finite number), so a
-    /// bound check refuses it as over the limit.
+    /// Canonical size in bytes for limit checks. `Int.max` when the value is not encoded (a non-finite number, or
+    /// nesting deeper than `MGLimits.depth`), so a bound check refuses it as over the limit.
     public var canonicalByteCount: Int { encoded?.count ?? Int.max }
     private var encoded: Data? {
-        guard isEncodable else { return nil }
+        // The encoder recurses once per level: check the nesting first, with a walk that does not recurse.
+        let m = measure()
+        guard m.finite, m.depth <= MGLimits.depth else { return nil }
         return try? JSONSerialization.data(withJSONObject: any, options: [.sortedKeys, .withoutEscapingSlashes, .fragmentsAllowed])
+    }
+
+    /// What one walk over a value found (`measure`).
+    struct Measure: Equatable {
+        /// Lower bound of the canonical JSON size: strings, keys, brackets and commas; every other value counts at least
+        /// one byte.
+        var bytes = 0
+        /// Nesting: the most arrays and objects on one path from the root. A scalar is 0; `[]`, `[1]` and `{"a":1}` are
+        /// 1; `[[1]]` is 2. The system JSON parser limits this number.
+        var depth = 0
+        /// False when a number is NaN or infinite.
+        var finite = true
+        /// True when the walk stopped because `bytes` passed `stopAbove`. Then `depth` and `finite` cover only the
+        /// nodes visited, so check the size first.
+        var stopped = false
+    }
+
+    /// One walk with an explicit stack, so no nesting can exhaust the call stack. Its time and memory are linear in the
+    /// value's size. Without `stopAbove` it visits every node, so the result does not depend on dictionary order.
+    func measure(stopAbove limit: Int = .max) -> Measure {
+        var m = Measure()
+        var stack: [(value: MGJSON, level: Int)] = [(self, 0)]
+        while let item = stack.popLast() {
+            if m.bytes > limit { m.stopped = true; break }
+            switch item.value {
+            case .null, .bool: m.bytes += 4
+            case .number(let d): m.bytes += 1; if !d.isFinite { m.finite = false }
+            case .string(let s): m.bytes += s.utf8.count + 2
+            case .array(let a):
+                m.depth = max(m.depth, item.level + 1)
+                m.bytes += 1 + max(1, a.count)   // brackets and commas
+                if m.bytes <= limit { for v in a { stack.append((v, item.level + 1)) } }
+            case .object(let o):
+                m.depth = max(m.depth, item.level + 1)
+                m.bytes += 1 + max(1, o.count)
+                for (k, v) in o {
+                    if m.bytes > limit { break }
+                    m.bytes += k.utf8.count + 3; stack.append((v, item.level + 1))
+                }
+            }
+        }
+        if m.bytes > limit { m.stopped = true }
+        return m
+    }
+
+    /// The first check of a public entry point, before it reads, compares or encodes a value built in code. Reasons, in
+    /// this order: `number` (a NaN or infinite number), `depth` (nesting over `maxDepth`), `bytes` (canonical size over
+    /// `maxBytes`; the lower bound is checked first, so a huge value is never encoded). Only a value at most
+    /// `maxDepth` deep reaches the (recursive) encoder.
+    /// True when the value nests deeper than `MGLimits.depth` (one walk that does not recurse).
+    var nestsTooDeep: Bool { measure().depth > MGLimits.depth }
+
+    func checkEntry(maxDepth: Int, maxBytes: Int, number: String, depth: String, bytes: String) throws {
+        let m = measure()
+        guard m.finite else { throw MGError(number) }
+        guard m.depth <= maxDepth else { throw MGError(depth) }
+        guard m.bytes <= maxBytes, canonicalByteCount <= maxBytes else { throw MGError(bytes) }
     }
     public var canonicalString: String { String(decoding: canonicalData, as: UTF8.self) }
     public subscript(key: String) -> MGJSON? { if case .object(let o) = self { return o[key] }; return nil }

@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+- Compatibility change: JSON nests at most 64 levels (arrays and objects on one path) at every public entry point
+  (`MGLimits.depth`). Before, nested input could overflow the stack and crash the process: about 100,000 levels on a
+  macOS main thread, and a few hundred nested objects on a 512 KiB thread stack (iOS secondary threads) or the 1 MiB
+  iOS main thread. The encoder, the system parser, `MGJSON(any:)`, `==`, hashing and freeing all recurse once per
+  level. Each entry point now counts the nesting first, without recursion: on JSON text before the system parser, on
+  a value built in code before anything reads, compares or encodes it.
+  - Newly refused: a scene, patch or raw template `params` that nests deeper than 64 levels (`scene.depth`,
+    `patch.depth`, `template.params.depth`). This affects a raw template whose free-form `params` nest more than
+    about 60 levels, which was accepted before. The shipped templates, packs, fixtures, models and built-in components
+    nest at most 12.
+  - Newly refused in Solid 3D: an assembly (`assembly.depth`), a patch (`patch.depth`) or a component definition
+    (`component.nesting`) deeper than 64 levels.
+  - JSON `Data` must be UTF-8. Every `Data` entry point (`MGParser.scene(data:)`, `MGPatch.parse(data:)`,
+    `MGLesson.parse(data:)`, lesson stream statements, `MGSolidParser.document(data:)`, `MGSolidLibrary.validate` and
+    `register`) newly refuses bytes that are not valid UTF-8 or that hold a raw NUL byte, with its `json` reason
+    (`json`, `patch.json`, `lesson.json`, `stmt.json`), before the system parser. Before, UTF-16 and UTF-32 text was
+    accepted; the nesting counter cannot read it, so a deep UTF-16 document could still crash a 512 KiB thread.
+  - `MGJSON(any:)` returns nil for nesting deeper than 64; `canonicalData` and `canonicalByteCount` never encode a
+    deeper value (`Int.max`).
+  - For a value built in code the order is `.number`, `.depth`, then the byte bound. A value built in code that is
+    over 64 levels and was refused before for its size or shape now reports `.depth`.
+- Compatibility change for lesson hosts: a statement or command that nests deeper than 59 levels
+  (`MGLessonLimits.statementDepth`) is newly refused with the new reason `lesson.depth`: stream statements (counted on
+  the text), `load`, host `apply` and `MGLessonController.apply`. A lesson document deeper than 63 levels is refused
+  by `MGLesson.parse`. Before, a stream statement could nest up to 512 levels and a host `apply` up to the patch size.
+  `MGLessonLimits.snapshotDepth` is now 64 (was 2,056 in the unreleased entry below); `restore` also refuses a scene
+  source deeper than 61 levels, the deepest a live session makes (`snapshot.depth`). So every snapshot a session makes,
+  also a restored one, restores and reads back from JSON text.
+- Compatibility change: `MGLessonSession.restore` applies the live header's decimal-literal rule to the title, so a
+  snapshot whose title holds a decimal literal (`1.5`, `.5`, `2e3`) is refused with `snapshot.title`.
+- Document in `docs/LESSONS.md` that a beat refused at close for the queue budget (`lesson.queue.bytes`) retracts the
+  commands and checks already accepted for it.
 - Add assembly v2 and an honesty layer to the solid engine (open-vocabulary phase 1,
   first part). `"v": 2` is a strict superset of v1; v1 documents keep their exact
   meaning, and a v1 document with a v2 key is refused with the usual
@@ -74,8 +106,8 @@
   - controls: `control.bytes`
 
   Before it reads any field, restore runs one bounded walk as defence in depth. Over the derived 291,570-byte cap is
-  `snapshot.bytes`, a NaN or infinite number is `snapshot.number`, and deeper than the derived 2,056 levels is
-  `snapshot.depth` (the depth fits the deepest legal raw-template `params`). Line timing on restore follows the
+  `snapshot.bytes`, a NaN or infinite number is `snapshot.number`, and deeper than 64 levels (`MGLimits.depth`, see
+  above) is `snapshot.depth`. Line timing on restore follows the
   restoring pacing (`.estimate` keeps or re-estimates an open line, `.speech` waits, `.immediate` holds no line), so a
   paused snapshot restored under another pacing no longer leaves a stale line timer.
 - Add the 2D item kinds `table` (a grid of up to 8 × 6 short cells with an optional
