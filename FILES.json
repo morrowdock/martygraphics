@@ -487,7 +487,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonReviewRecheckTests.swift",
-      "sha256": "1622f716d36f90a65749cca75f65e9dcc683a87461d1be87f5fbf8b97df776b7"
+      "sha256": "45db07f83948c6a52b57fc1172dc3672a9cbb7c75cddc7a2d3d23633a75115e7"
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonReviewRegressionTests.swift",
