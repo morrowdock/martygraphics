@@ -60,7 +60,9 @@ public final class MGSolidRenderer {
     public private(set) var view: MGSolidView
     /// Uncut geometry of every part, and the geometry of each capped cut shown so far (keyed by part and local plane).
     private var plainGeometry: [String: SCNGeometry] = [:]
-    private var cutGeometry: [String: (cut: MGSectionCut, geometry: SCNGeometry)] = [:]
+    /// Keyed by part id and local plane; a part whose mesh changes drops its entries, so a hit needs only a cheap
+    /// fingerprint check (triangle and vertex counts, cap area).
+    private var cutGeometry: [String: (fingerprint: [Double], geometry: SCNGeometry)] = [:]
 
     public init(assembly: MGAssembly, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
         self.assembly = assembly; self.lighting = lighting; self.options = options
@@ -103,7 +105,10 @@ public final class MGSolidRenderer {
         assembly = new
         view = MGSolidView(new)
         let ids = Set(new.parts.map(\.id))
-        for (id, node) in partNodes where !ids.contains(id) { node.removeFromParentNode(); partNodes[id] = nil; plainGeometry[id] = nil }
+        for (id, node) in partNodes where !ids.contains(id) {
+            node.removeFromParentNode(); partNodes[id] = nil; plainGeometry[id] = nil
+            cutGeometry = cutGeometry.filter { !$0.key.hasPrefix(id + "|") }
+        }
         for p in new.parts {
             if let o = old[p.id], o.mesh == p.mesh, o.creaseAngle == p.creaseAngle, let node = partNodes[p.id] {
                 if partMaterials[p.id] != p.material { style(node, p) }
@@ -155,9 +160,10 @@ public final class MGSolidRenderer {
             let g: SCNGeometry?
             if let cut = view.part(id).cut, let p = assembly.part(id) {
                 let key = "\(id)|\(cut.plane.normal.x),\(cut.plane.normal.y),\(cut.plane.normal.z),\(cut.plane.offset)"
-                if let hit = cutGeometry[key], hit.cut == cut { g = hit.geometry } else {
+                let print = [Double(cut.mesh.triangleCount), Double(cut.mesh.positions.count), Double(cut.capTriangleCount), cut.capArea]
+                if let hit = cutGeometry[key], hit.fingerprint == print { g = hit.geometry } else {
                     let made = MGSolidRenderer.geometry(cut.renderMesh(creaseAngle: p.creaseAngle))
-                    cutGeometry[key] = (cut, made); g = made
+                    cutGeometry[key] = (print, made); g = made
                 }
             } else { g = plainGeometry[id] }
             guard let geometry = g, node.geometry !== geometry else { continue }
@@ -204,7 +210,10 @@ public final class MGSolidRenderer {
         }
         if seeThrough {
             // A ghost lets the parts behind it show: blend, sort after opaque parts, and keep its own faces from
-            // hiding each other.
+            // hiding each other. A rough, non-metal finish keeps its highlights from blooming into a glowing slab.
+            m.metalness.contents = NSNumber(value: 0.0)
+            m.roughness.contents = NSNumber(value: 0.85)
+            m.clearCoat.contents = NSNumber(value: 0.0)
             m.blendMode = .alpha
             m.transparencyMode = .dualLayer
             m.writesToDepthBuffer = false

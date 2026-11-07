@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "28b3eeb27afc36a4bb2758d6966e32af892035ae3a76739ac583baee38c360a5"
+      "sha256": "f3481713fcba5fde507ecae143418a7de47a048bde881cd7e1211f2afac059e3"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -191,7 +191,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "8c1b59a348a2c0455b7321dacf082ad7191e4ffad45db5e350559bb176c3851b"
+      "sha256": "898c03ff75376ca7926b72cd98e5dc1f2d057a2557dbea94d77120165d39d98b"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
@@ -363,7 +363,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGMaterial.swift",
-      "sha256": "1ef45501870edb0fbfd02d1e3f6b6cac77c365a2150a367cb0dfd417902e4bd8"
+      "sha256": "cb355ad277950c1c94c00817402cf81de522b8347418785090ececff13199c27"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGMesh.swift",
@@ -415,11 +415,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
-      "sha256": "18c7cf439826a4791e1b17602596715da4155f4f0c21c280ee34b8ce464489af"
+      "sha256": "29140da2b456d8b17d8a7d9c3bf65ca8cd1eff4ded4209086d61d13d313af260"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSection.swift",
-      "sha256": "fa1ea4568f9046806c9968ddb8b474fa574ddee64693ccef2583514e4c5d7410"
+      "sha256": "cf5a70542b1a28ed0332e0d509ed21ee55219acf7ef6d28310cde21db57d02a3"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidShapes.swift",
@@ -439,7 +439,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidView.swift",
-      "sha256": "7ba0da535867c385517d4d134bbf8f2ef05992a5293d628c907ed0678256892f"
+      "sha256": "945e13027aba1b55f05fb474d2c7562c03326b20b7979004e177423ab8db118c"
     },
     {
       "path": "Sources/MartyGraphicsPathTracer/MGRTEnvironment.swift",
@@ -587,7 +587,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidSectionTests.swift",
-      "sha256": "b449c825b5ef946d5e3ccc7df9db70fa243e5b8eff8d818fe66d615aa28aa287"
+      "sha256": "e594a484c28cbcc3ed13312a9f0dcc35d3de26cf69974b3518122fc12736fba5"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidTurboTests.swift",
@@ -659,7 +659,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "4ad3b7593fac470b7c28c37ac9da3526119358d65affdbd4e77c4c3cd4a9a140"
+      "sha256": "01b83c0bb5142dbbc93b62696a3dd8323cc99d61cd7b3e104315d71c1cc38d1c"
     },
     {
       "path": "docs/THIRD-PARTY.md",

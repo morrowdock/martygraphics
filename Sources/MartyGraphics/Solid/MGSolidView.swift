@@ -45,7 +45,18 @@ public struct MGSolidView: Equatable, Sendable {
         section = nil
     }
 
-    public func part(_ id: String) -> MGSolidPartView { parts[id] ?? MGSolidPartView(cut: nil, opacity: 1, emission: nil) }
+    /// One part's view with its numbers limited to the allowed ranges (opacity 0.1...1, NaN gives 1; light 0...4), so
+    /// values set in code always give a valid snapshot and render. The parser refuses out-of-range authored values.
+    public func part(_ id: String) -> MGSolidPartView {
+        guard var v = parts[id] else { return MGSolidPartView(cut: nil, opacity: 1, emission: nil) }
+        v.opacity = MGSolidView.clamp(opacity: v.opacity)
+        v.emission = v.emission?.clamped
+        return v
+    }
+
+    public static func clamp(opacity x: Double) -> Double {
+        x.isNaN ? 1 : min(max(x, opacityRange.lowerBound), opacityRange.upperBound)
+    }
 }
 
 extension MGSolidDocument {
@@ -69,8 +80,9 @@ extension MGSolidDocument {
 
 enum MGSolidSections {
     /// Most part triangles that all distinct cuts of one document may read (each distinct part and plane reads its
-    /// part's mesh once). This bounds the compile time of many cuts of large parts; `section.budget`.
-    static let work = 3_000_000
+    /// part's mesh once). This bounds the compile time of many cuts of large parts (`section.budget`): the worst
+    /// accepted document, seven face cuts of a 200-tooth gear, checks in about 0.7 s on an Apple M1 (release).
+    static let work = 400_000
 
     /// Cuts every step section. Each listed part must be crossed by the plane: `section.miss.<id>` when nothing of it
     /// would be removed, `section.empty.<id>` when all of it would. The exact counts of every distinct cut join the
@@ -116,8 +128,12 @@ enum MGSolidSections {
         var cuts: [Key: MGSectionCut] = [:]
         for key in planned {
             if let reused = old[key] { cuts[key] = reused; continue }
-            do { cuts[key] = try MGSolidSection.cut(assembly.part(key.part)!.mesh, key.plane) }
+            let cut: MGSectionCut
+            do { cut = try MGSolidSection.cut(assembly.part(key.part)!.mesh, key.plane) }
             catch let e as MGSolidIssue { throw MGSolidIssue("\(e.reason).\(MGSolidParser.token(key.part))", part: key.part) }
+            // Safety net: a cut that is not closed, outward and overlap-free is refused, never shown.
+            guard cut.isSound else { throw MGSolidIssue("section.open.\(MGSolidParser.token(key.part))", part: key.part) }
+            cuts[key] = cut
         }
         for i in steps.indices {
             guard let sec = steps[i].section else { continue }

@@ -384,7 +384,13 @@ see-through, and a part can be faint or give off light.
   removed half: to open the side that the default cameras look at, use `[0, -1, 0]`.
   The cut is a true section: the engine cuts each closed shell of the part, chains the
   open edges into loops and fills them with flat cap faces (`MGSolidSection.cut`), so a
-  cut part is still a closed, outward mesh with solid cut walls. Other parts are not
+  cut part is still a closed, outward mesh with solid cut walls. Each hole goes to the
+  smallest outer loop that contains it (a pulley rim and its hub, a double-wall cup); a
+  loop that touches itself or a hole that touches its outer wall at one vertex (a plane
+  through a tube's inner rim) is split or joined at that vertex; a cavity (an inverted
+  inner shell) is a hole of the shell around it. The compiler checks every cut it builds
+  (`MGSectionCut.isSound`: closed, outward, cap areas that add up without overlap) and
+  refuses one that fails (`section.open.<id>`), so a faulty cut is never shown. Other parts are not
   touched. The plane is placed at the document's default input (`params.input`) with
   explode 0; a cut part then keeps its cut as it moves and explodes, like a physical
   cutaway model. Use sections on still parts (casings, housings, walls) for the
@@ -394,13 +400,19 @@ see-through, and a part can be faint or give off light.
   `step.section.offset`, `step.section.parts`, `ref.unknown.<id>`, and per part
   `section.miss.<id>` (the plane removes nothing of it) and `section.empty.<id>` (the
   plane removes all of it). `section.loops.<id>` and `section.nesting.<id>` mean the
-  part's mesh is not a clean closed solid; built-in primitives never give them
-  (`section.mesh` is the same for a mesh built in code with bad indices or numbers).
+  part's mesh is not a clean closed solid (open, or self-intersecting); `section.mesh` is
+  the same for a mesh built in code with bad indices or numbers. Called directly,
+  `MGSolidSection.cut` and `estimate` also refuse a plane that removes nothing or
+  everything (`section.miss`, `section.empty`; `crossing` tells first).
 * **Cost**: a pre-pass counts every distinct cut exactly (`MGSolidSection.estimate`)
   before any cut triangle is built, and the cuts count toward the document's mesh
   budget with the parts (`assembly.budget`). Each distinct part and plane reads its
-  part's mesh once, and all distinct cuts of one document may read at most 3,000,000 part
-  triangles (`section.budget`), which bounds the compile time. Steps that share a plane
+  part's mesh once, and all distinct cuts of one document may read at most 400,000 part
+  triangles (`section.budget`, checked before each cut is classified). Caps use the zipper
+  strip or a near-linear ear clipper, so the cost grows with the triangles read. Measured
+  with `marty-solid check` (release build, Apple M1): the worst accepted document, seven
+  face cuts of a 200-tooth gear (358,372 cut triangles), takes 0.68 s (best of three; 1.0 s
+  cold); a document over the budget is refused in under 0.2 s. Steps that share a plane
   share one cut; a patch that keeps a part's shape and place reuses its cut.
 * **`ghost`** lists parts (1–16 ids) that the step shows see-through, at opacity
   `MGSolidView.ghostOpacity` (0.2), so the parts behind them show. Ghosts cast no

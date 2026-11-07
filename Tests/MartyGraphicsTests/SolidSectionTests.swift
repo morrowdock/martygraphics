@@ -42,6 +42,7 @@ final class SolidSectionTests: XCTestCase {
     }
     func assertSound(_ c: MGSectionCut, _ what: String, file: StaticString = #filePath, line: UInt = #line) {
         let report = c.mesh.edgeReport
+        XCTAssertTrue(c.isSound, what, file: file, line: line)
         XCTAssertTrue(report.isClosed, "\(what): \(report)", file: file, line: line)
         XCTAssertGreaterThan(c.mesh.signedVolume, 0, what, file: file, line: line)
         XCTAssertEqual(capTriangleArea(c), c.capArea, accuracy: 1e-6 * max(1, c.capArea), "\(what): caps overlap", file: file, line: line)
@@ -120,6 +121,66 @@ final class SolidSectionTests: XCTestCase {
         }
     }
 
+    /// Review B1: two outer loops and two holes in one shell (a thin-rim pulley, a double-wall cup). Each hole goes to
+    /// the smallest containing outer loop by its own area, whatever the order of the profile points.
+    func testNestedLoopsInOneShellForEveryPointOrder() throws {
+        let profiles: [(String, [[Double]], Double)] = [
+            ("pulley", [[8, 0], [42, 0], [42, 20], [40, 20], [40, 2], [15, 2], [15, 20], [8, 20]],
+             Double.pi * (42 * 42 - 40 * 40 + 15 * 15 - 8 * 8)),
+            ("cup", [[4, 0], [10, 0], [10, 20], [9, 20], [9, 2], [5, 2], [5, 20], [4, 20]],
+             Double.pi * (10 * 10 - 9 * 9 + 5 * 5 - 4 * 4)),
+        ]
+        for (name, points, circleArea) in profiles {
+            for r in 0..<points.count {
+                let rotated = Array(points[r...] + points[..<r])
+                let json = #"{"v": 2, "kind": "assembly", "parts": [{"id": "p", "shape": {"revolvedProfile": {"points": \#(rotated), "closed": true}}}], "steps": [{"say": "a", "section": {"normal": [0, 0, 1], "offset": 10, "parts": ["p"]}}]}"#
+                let d = try doc(json)
+                let c = try XCTUnwrap(d.steps[0].section?.cuts["p"])
+                assertSound(c, "\(name) rotation \(r)")
+                XCTAssertEqual(c.loops, 4, "\(name) rotation \(r)")
+                // Two annuli of 96-gons: the polygon factor of the 96-segment revolve.
+                XCTAssertEqual(c.capArea, circleArea * 96 / (2 * .pi) * sin(2 * .pi / 96), accuracy: 1e-6 * circleArea, "\(name) rotation \(r)")
+            }
+        }
+    }
+
+    /// Review S1: a plane through an inner-rim vertex of a tube makes the bore loop touch the outer loop; it is split
+    /// and spliced, not refused. A cavity (an inverted inner shell) is capped as a hole of the outer shell.
+    func testPinchedLoopsAndCavities() throws {
+        for (normal, offset) in [("[-1, 0, 1]", 15.0), ("[1, 0, -1]", -15.0), ("[-1, 0, 1]", 15.001), ("[0, -1, 1]", 15.0)] {
+            let d = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "t", "shape": {"tube": {"inner": 10, "outer": 20, "length": 50, "z0": -25}}}], "steps": [{"say": "a", "section": {"normal": \#(normal), "offset": \#(offset), "parts": ["t"]}}]}"#)
+            let c = try XCTUnwrap(d.steps[0].section?.cuts["t"])
+            assertSound(c, "tube \(normal) \(offset)")
+            let e = try MGSolidSection.estimate(d.assembly.part("t")!.mesh, c.plane)
+            XCTAssertEqual(e.triangles, c.mesh.triangleCount)
+            XCTAssertEqual(e.vertices, c.mesh.positions.count)
+        }
+        var shell = MGMesh.chamferedBox(size: MGVec3(6, 6, 6), chamfer: 0)
+        var cavity = MGMesh.chamferedBox(size: MGVec3(4, 4, 4), chamfer: 0)
+        for t in 0..<cavity.triangleCount { cavity.indices.swapAt(3 * t + 1, 3 * t + 2) }
+        shell.append(cavity)
+        shell.append(MGMesh.chamferedBox(size: MGVec3(2, 2, 2), chamfer: 0))
+        let c = try MGSolidSection.cut(shell, MGSectionPlane(normal: .unitX, offset: 0))
+        assertSound(c, "cavity")
+        XCTAssertEqual(c.capArea, 36 - 16 + 4, accuracy: 1e-9)
+        XCTAssertEqual(c.mesh.signedVolume, (216 - 64 + 8) / 2.0, accuracy: 1e-9)
+    }
+
+    /// Review S2: large caps (a 200-tooth gear without a bore, cut across its face and obliquely) are triangulated by
+    /// the near-linear cap clipper with exact counts.
+    func testLargeCapsAreExactAndSound() throws {
+        let d = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "g", "shape": {"gear": {"teeth": 200, "module": 1, "width": 10, "z0": -5}}}], "steps": [{"say": "a", "section": {"normal": [0, 0, 1], "offset": 0, "parts": ["g"]}}, {"say": "b", "section": {"normal": [0.02, 0.01, 1], "offset": 0.5, "parts": ["g"]}}, {"say": "c", "section": {"normal": [1, 0.2, 0], "offset": 30, "parts": ["g"]}}]}"#)
+        let mesh = d.assembly.part("g")!.mesh
+        for (i, s) in d.steps.enumerated() {
+            let c = try XCTUnwrap(s.section?.cuts["g"])
+            assertSound(c, "step \(i + 1)")
+            let e = try MGSolidSection.estimate(mesh, c.plane)
+            XCTAssertEqual(e.triangles, c.mesh.triangleCount)
+        }
+        let face = try XCTUnwrap(d.steps[0].section?.cuts["g"])
+        XCTAssertGreaterThan(face.capTriangleCount, 10_000)
+    }
+
     func testPlanesOnFacesEdgesAndVertices() throws {
         let box = MGMesh.chamferedBox(size: MGVec3(10, 10, 10), chamfer: 0)
         // A face lying in the plane: nothing beyond it (misses), or nothing kept (removes all).
@@ -166,6 +227,30 @@ final class SolidSectionTests: XCTestCase {
             c.capFirstTriangle = first
             XCTAssertEqual(c.renderMesh(creaseAngle: 0.6).indices.count, c.mesh.indices.count)
         }
+        // A bad cap index (review S3) renders nothing instead of trapping, and the cut is not sound.
+        c.mesh.indices[c.mesh.indices.count - 1] = 9_999
+        XCTAssertEqual(c.renderMesh(creaseAngle: 0.6).indices.count, 0)
+        XCTAssertFalse(c.isSound)
+        // `cut` refuses a plane that removes nothing or everything itself (review N7), even for tiny meshes.
+        let tiny = MGMesh.chamferedBox(size: MGVec3(4e-10, 4e-10, 4e-10), chamfer: 0)
+        XCTAssertThrowsError(try MGSolidSection.cut(tiny, MGSectionPlane(normal: .unitX, offset: 1))) {
+            XCTAssertEqual(($0 as? MGSolidIssue)?.reason, "section.miss")
+        }
+        XCTAssertThrowsError(try MGSolidSection.cut(tiny, MGSectionPlane(normal: .unitX, offset: -1))) {
+            XCTAssertEqual(($0 as? MGSolidIssue)?.reason, "section.empty")
+        }
+        // Opacity and light set in code are limited to their ranges, so the snapshot always decodes (review N2).
+        let mesh = MGMesh.chamferedBox(size: MGVec3(4, 4, 4), chamfer: 0)
+        let a = MGAssembly(name: "code", parts: [
+            MGPart(id: "a", name: "a", mesh: mesh, material: .brass, opacity: .nan, emission: MGEmission(role: .red, intensity: 10)),
+            MGPart(id: "b", name: "b", mesh: mesh, material: .brass, opacity: 0, emission: MGEmission(role: .red, intensity: -3)),
+            MGPart(id: "c", name: "c", mesh: mesh, material: .brass, opacity: 5)])
+        let view = MGSolidView(a)
+        XCTAssertEqual([view.part("a").opacity, view.part("b").opacity, view.part("c").opacity], [1, 0.1, 1])
+        XCTAssertEqual(view.part("a").emission?.intensity, 4)
+        let snap = MGSolidSnapshot.build(a, view: view, params: MGPoseParameters(), camera: nil, aspect: 1.6, lighting: .studio,
+                                         stage: MGSolidStage.zUpToYUp)
+        XCTAssertEqual(try JSONDecoder().decode(MGSolidSnapshot.self, from: snap.jsonData()), snap)
     }
 
     // MARK: X3, X4: step section and ghost
@@ -210,6 +295,9 @@ final class SolidSectionTests: XCTestCase {
         XCTAssertEqual(plain.parts.first { $0.id == "casing" }?.opacity, 1)
         let lit = try XCTUnwrap(plain.materials.first { $0.emission != nil })
         XCTAssertEqual(lit.id, "aluminum+emissive.orange.2")
+        // Material ids carry the exact intensity (review N1): close intensities never share a material.
+        XCTAssertEqual(MGEmission(role: .red, intensity: 1.231).id, "emissive.red.1.231")
+        XCTAssertNotEqual(MGEmission(role: .red, intensity: 1.231).id, MGEmission(role: .red, intensity: 1.234).id)
         XCTAssertEqual(lit.emission, MGSolidSnapshot.Emission(color: MGSolidPalette.srgb(.orange), intensity: 2))
         XCTAssertEqual(d.assembly.part("casing")?.emission, MGEmission(role: .orange, intensity: 2))
         // A part's own opacity; a ghost never makes a part more opaque than it is.

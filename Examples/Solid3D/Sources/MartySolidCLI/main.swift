@@ -79,7 +79,8 @@ func checks(_ doc: MGSolidDocument) -> [String: Any] {
         var parts: [[String: Any]] = []
         for id in sec.parts {
             guard let cut = sec.cuts[id] else { continue }
-            let closed = cut.mesh.edgeReport.isClosed && cut.mesh.signedVolume > 0
+            // Closed, outward and with caps that do not overlap (`MGSectionCut.isSound`).
+            let closed = cut.isSound
             if !closed { open.append("step.\(i + 1).\(id)") }
             parts.append(["part": id, "closed": closed, "triangles": cut.mesh.triangleCount, "capTriangles": cut.capTriangleCount,
                           "capLoops": cut.loops])
@@ -163,13 +164,20 @@ func check(_ path: String, _ lib: MGSolidLibrary, strict: Bool = false) throws -
         return 1
     case .success(let doc):
         let c = checks(doc)
-        let tris = doc.assembly.parts.reduce(0) { $0 + $1.mesh.triangleCount }
+        // Part meshes plus every distinct step cut: the same total the mesh budget counts.
+        var cutTriangles = 0, seenCuts = Set<String>()
+        for s in doc.steps { for (id, cut) in (s.section?.cuts ?? [:]).sorted(by: { $0.key < $1.key }) {
+            let key = "\(id)|\(cut.plane.normal.x),\(cut.plane.normal.y),\(cut.plane.normal.z),\(cut.plane.offset)"
+            if seenCuts.insert(key).inserted { cutTriangles += cut.mesh.triangleCount }
+        } }
+        let tris = doc.assembly.parts.reduce(0) { $0 + $1.mesh.triangleCount } + cutTriangles
         var reason: String? = nil, part: String? = nil
         if (c["meshesClosed"] as? Bool) != true { reason = "check.meshOpen" }
         else if (c["gearsEngage"] as? Bool) == false { reason = "check.gearsInterpenetrate" }
         else if let refusal = (strict ? MGSolidProfile.strict : .standard).refusal(doc) { reason = refusal.reason; part = refusal.part }
         let ok = reason == nil
         var report: [String: Any] = ["ok": ok, "reason": reason as Any, "title": doc.title, "parts": doc.assembly.parts.count, "triangles": tris,
+                                     "sectionTriangles": cutTriangles,
                                      "steps": doc.steps.map(\.say), "ratios": doc.ratios, "checks": c, "strict": strict,
                                      "file": ["lines": src.lines, "sha256": src.sha256]]
         if part != nil { report["part"] = part as Any }
