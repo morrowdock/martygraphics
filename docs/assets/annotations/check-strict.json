@@ -1,0 +1,664 @@
+{
+  "annotations": [
+    {
+      "anchorsWorld": [
+        [
+          0,
+          -26,
+          120
+        ]
+      ],
+      "id": "lPinion",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": false,
+      "text": "Pinion: 14 teeth",
+      "tier": "solved",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          56,
+          -46,
+          120
+        ]
+      ],
+      "id": "lWheel",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": false,
+      "text": "Drum gear: 42 teeth",
+      "tier": "solved",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          0,
+          120
+        ]
+      ],
+      "id": "aPinion",
+      "kind": "arrow",
+      "meaning": "motion",
+      "occludedAtDefaultCamera": false,
+      "text": null,
+      "tier": "solved",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          56,
+          0,
+          120
+        ]
+      ],
+      "id": "aWheel",
+      "kind": "arrow",
+      "meaning": "motion",
+      "occludedAtDefaultCamera": false,
+      "text": null,
+      "tier": "solved",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          72,
+          -23,
+          44
+        ],
+        [
+          72,
+          -23,
+          17
+        ]
+      ],
+      "id": "aWeight",
+      "kind": "arrow",
+      "meaning": "force",
+      "occludedAtDefaultCamera": false,
+      "text": "Weight",
+      "tier": "solved",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          71.95526075489889,
+          -23,
+          118.80431850261722
+        ]
+      ],
+      "id": "aLift",
+      "kind": "arrow",
+      "length": 40.01267288961782,
+      "meaning": "motion",
+      "occludedAtDefaultCamera": false,
+      "text": "Rope side moves up",
+      "tier": "solved",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          -46,
+          120
+        ],
+        [
+          56,
+          -46,
+          120
+        ]
+      ],
+      "id": "centres",
+      "kind": "dimension",
+      "meaning": "distance",
+      "occludedAtDefaultCamera": false,
+      "text": "Centres 56 mm",
+      "tier": "solved",
+      "unit": "mm",
+      "value": 56
+    }
+  ],
+  "checks": {
+    "gearPairs": 1,
+    "gearsEngage": true,
+    "maxPenetrationMM": -0.20807584561129744,
+    "meshesClosed": true,
+    "minClearanceMM": 0.20807584561129744,
+    "openMeshes": [],
+    "toleranceMM": 0.02
+  },
+  "engine": {
+    "assemblyVersions": [
+      1,
+      2
+    ],
+    "executableSHA256": "f593fbbddd931bd84f17fbfdf2edb852492cc5a4a069d82d359c5f1333a99f3e",
+    "name": "MartyGraphics",
+    "reportFormat": 1,
+    "snapshotFormats": [
+      "martygraphics.solid.snapshot/1",
+      "martygraphics.solid.snapshot/2"
+    ],
+    "version": "unreleased"
+  },
+  "facts": {
+    "dim.centres": {
+      "source": "dimension",
+      "text": "56 mm",
+      "tier": "solved",
+      "unit": "mm",
+      "value": 56
+    },
+    "pinion.module": {
+      "source": "shape",
+      "text": "2 mm",
+      "tier": "solved",
+      "unit": "mm",
+      "value": 2
+    },
+    "pinion.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "pinion.teeth": {
+      "source": "shape",
+      "text": "14",
+      "tier": "solved",
+      "unit": "",
+      "value": 14
+    },
+    "pinion.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "wheel.module": {
+      "source": "shape",
+      "text": "2 mm",
+      "tier": "solved",
+      "unit": "mm",
+      "value": 2
+    },
+    "wheel.speed": {
+      "source": "gearMesh",
+      "text": "-0.33",
+      "tier": "solved",
+      "unit": "",
+      "value": -0.3333333333333333
+    },
+    "wheel.teeth": {
+      "source": "shape",
+      "text": "42",
+      "tier": "solved",
+      "unit": "",
+      "value": 42
+    },
+    "wheel.worldSpeed": {
+      "source": "gearMesh",
+      "text": "-0.33",
+      "tier": "solved",
+      "unit": "",
+      "value": -0.3333333333333333
+    }
+  },
+  "file": {
+    "lines": 40,
+    "sha256": "aa3e8c5f7419b4f50ff1af88661a3431d124466a74b871b4a740b1e532966f74"
+  },
+  "legend": {
+    "built": 0,
+    "claims": [
+      {
+        "badge": "Solved",
+        "id": "pinion",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "wheel",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by gearMesh"
+      },
+      {
+        "badge": "Solved",
+        "id": "lPinion",
+        "kind": "annotation",
+        "tier": "solved",
+        "why": "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge": "Solved",
+        "id": "lWheel",
+        "kind": "annotation",
+        "tier": "solved",
+        "why": "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge": "Solved",
+        "id": "aPinion",
+        "kind": "annotation",
+        "tier": "solved",
+        "why": "Turn sense from the engine (motion of pinion)"
+      },
+      {
+        "badge": "Solved",
+        "id": "aWheel",
+        "kind": "annotation",
+        "tier": "solved",
+        "why": "Turn sense from the engine (motion of wheel)"
+      },
+      {
+        "badge": "Solved",
+        "id": "aWeight",
+        "kind": "annotation",
+        "tier": "solved",
+        "why": "Direction checked against gravity; length not to scale"
+      },
+      {
+        "badge": "Solved",
+        "id": "aLift",
+        "kind": "annotation",
+        "tier": "solved",
+        "why": "Direction from the engine; length not to scale"
+      },
+      {
+        "badge": "Solved",
+        "id": "centres",
+        "kind": "annotation",
+        "tier": "solved",
+        "why": "Measured by the engine at the default input"
+      },
+      {
+        "badge": "Numbers solved",
+        "id": "step.2",
+        "kind": "caption",
+        "tier": "solved",
+        "why": "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge": "Checked",
+        "id": "step.2.check.1",
+        "kind": "check",
+        "tier": "solved",
+        "why": "Checked: wheel.speed < 0"
+      },
+      {
+        "badge": "Numbers solved",
+        "id": "step.3",
+        "kind": "caption",
+        "tier": "solved",
+        "why": "Its numbers are engine facts; its words are not checked"
+      }
+    ],
+    "described": 0,
+    "note": null,
+    "notes": [
+      "Arrow lengths are not to scale"
+    ],
+    "shapes": "Shapes as authored",
+    "solved": 12,
+    "text": "Solved 12"
+  },
+  "motionTiers": [
+    {
+      "badge": "Solved",
+      "id": "pinion",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "wheel",
+      "source": "gearMesh",
+      "tier": "solved"
+    }
+  ],
+  "notChecked": {
+    "gearMesh": [
+      "3D tooth contact",
+      "load, strength and wear",
+      "friction and efficiency"
+    ],
+    "input": [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok": true,
+  "partTiers": [
+    {
+      "base": "frame",
+      "motion": "static",
+      "part": "frame",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pinion",
+      "motion": "own",
+      "part": "pinion",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "wheel",
+      "motion": "own",
+      "part": "wheel",
+      "ridesOn": null,
+      "source": "gearMesh",
+      "tier": "solved"
+    },
+    {
+      "base": "rope",
+      "motion": "static",
+      "part": "rope",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "mass",
+      "motion": "static",
+      "part": "mass",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    }
+  ],
+  "parts": 5,
+  "placements": [
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.45037629376024757,
+            0.3616877897108209
+          ],
+          "box": [
+            0.2586323926990375,
+            0.3134272547596413,
+            0.139875,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 23,
+          "id": "lPinion",
+          "kind": "label",
+          "leader": [
+            0.3985073926990375,
+            0.3526772547596413
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Pinion: 14 teeth"
+        }
+      ],
+      "step": 1
+    },
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.5277982063531971,
+            0.42811014774773004
+          ],
+          "box": [
+            0.3108924328888013,
+            0.43362160948508793,
+            0.16434374999999998,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 21,
+          "id": "lWheel",
+          "kind": "label",
+          "leader": [
+            0.4752361828888013,
+            0.43362160948508793
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Drum gear: 42 teeth"
+        }
+      ],
+      "step": 2
+    },
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.45037629376024757,
+            0.3616877897108209
+          ],
+          "box": [
+            0.30352343858030867,
+            0.366768640555537,
+            0.139875,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 6,
+          "id": "lPinion",
+          "kind": "label",
+          "leader": [
+            0.4433984385803087,
+            0.366768640555537
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Pinion: 14 teeth"
+        },
+        {
+          "anchor": [
+            0.5277982063531971,
+            0.42811014774773004
+          ],
+          "box": [
+            0.531450632417954,
+            0.434594413012179,
+            0.16434374999999998,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 2,
+          "id": "lWheel",
+          "kind": "label",
+          "leader": [
+            0.531450632417954,
+            0.434594413012179
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Drum gear: 42 teeth"
+        },
+        {
+          "anchor": [
+            0.47607397461300327,
+            0.4058835501567535
+          ],
+          "box": [
+            0.48460335723355996,
+            0.36147097947051443,
+            0.11540625,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 1,
+          "id": "centres",
+          "kind": "dimension",
+          "leader": [
+            0.48460335723355996,
+            0.4007209794705144
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Centres 56 mm"
+        }
+      ],
+      "step": 3
+    },
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.5770166894821347,
+            0.6716514867202662
+          ],
+          "box": [
+            0.5127589204700395,
+            0.6857981883340564,
+            0.0583125,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 3,
+          "id": "aWeight",
+          "kind": "arrow",
+          "leader": [
+            0.5710714204700394,
+            0.6857981883340564
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Weight"
+        }
+      ],
+      "step": 4
+    },
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.5872148244173111,
+            0.35282926656687363
+          ],
+          "box": [
+            0.6426296826404916,
+            0.3454087662753313,
+            0.15618749999999998,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 16,
+          "id": "aLift",
+          "kind": "arrow",
+          "leader": [
+            0.6426296826404916,
+            0.35282926656687363
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Rope side moves up"
+        },
+        {
+          "anchor": [
+            0.5770166894821347,
+            0.6716514867202662
+          ],
+          "box": [
+            0.5127589204700395,
+            0.6857981883340564,
+            0.0583125,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 3,
+          "id": "aWeight",
+          "kind": "arrow",
+          "leader": [
+            0.5710714204700394,
+            0.6857981883340564
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Weight"
+        }
+      ],
+      "step": 5
+    }
+  ],
+  "ratios": {
+    "pinion": 1,
+    "wheel": -0.3333333333333333
+  },
+  "readBack": [
+    "frame: world centre (28, -25, 76) mm, size 180 x 90 x 168 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "pinion: world centre (5.25, -16, 120) mm, size 42.5 x 40 x 31.4 mm; turns about a horizontal axis (+Y) through (0, 0, 120); 1 turn per input turn (Solved, input); root (at [0, 0, 120] in the world frame); local +Z points +Y",
+    "wheel: world centre (56, -14, 120) mm, size 87.8 x 60 x 88 mm; turns about a horizontal axis (+Y) through (56, 0, 120); -0.33 turns per input turn (Solved, gearMesh); root (at [56, 0, 120] in the world frame); local +Z points +Y",
+    "rope: world centre (72, -23, 95) mm, size 2 x 2 x 50 mm; static; root (at [72, -23, 95] in the world frame); local +Z points +Z",
+    "mass: world centre (72, -23, 57) mm, size 26 x 26 x 26 mm; static; root (at [72, -23, 57] in the world frame); local +Z points +Z"
+  ],
+  "reason": null,
+  "sectionTriangles": 0,
+  "stepFacts": [
+    {
+      "checks": [],
+      "facts": []
+    },
+    {
+      "checks": [
+        {
+          "comparison": "lt",
+          "target": 0,
+          "text": "wheel.speed < 0",
+          "tolerance": null,
+          "value": "wheel.speed"
+        }
+      ],
+      "facts": [
+        "wheel.teeth",
+        "wheel.speed"
+      ]
+    },
+    {
+      "checks": [],
+      "facts": [
+        "dim.centres"
+      ]
+    },
+    {
+      "checks": [],
+      "facts": []
+    },
+    {
+      "checks": [],
+      "facts": []
+    }
+  ],
+  "stepTiers": [
+    null,
+    "solved",
+    "solved",
+    null,
+    null
+  ],
+  "steps": [
+    "Turn the crank and the small pinion turns with it.",
+    "The drum gear has 42 teeth, so it turns 1/3 of a turn, the other way.",
+    "The gear centres are 56 mm apart: half the sum of the tooth counts, times the module.",
+    "The weight pulls the rope straight down.",
+    "As the drum turns, the rope side moves up and winds the weight in."
+  ],
+  "strict": true,
+  "title": "Hand winch: a gear pair lifts a weight",
+  "triangles": 17404,
+  "version": 2,
+  "warnings": []
+}

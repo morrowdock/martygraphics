@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f8ae1bb15aabc7d925e01830eb05b5eb8af890478e08938f2f19c7ae77da787d"
+      "sha256": "7aeaafaea17faa5418a04cbdf5764646b2a6baeaa8b141e9fcc3e762a9292bd3"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -196,6 +196,22 @@
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
       "sha256": "d6422d4a7cf586c0ca65f8b522a1d67edb4e76b7765199cfb0b16ba3d9a79f7d"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-annotations-check-strict.check.json",
+      "sha256": "d4e4b3423dd676c57fd82e799f11675b78d1fe8558aa8dbf081a283f23641802"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-annotations-check-strict.strict.json",
+      "sha256": "ba6b918fdc7e582ad1bf0c39ae21a40bf3e3ae60881581c91fd59db2a6a1e67a"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-annotations-provenance.check.json",
+      "sha256": "29531d63f8e8f02d2dbe304292cc0fb0d07bcbe9a8485b63c3b76f5a288e7b7a"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-annotations-provenance.strict.json",
+      "sha256": "dff9d1477bf0f7f41b9e2c7bed8fa8dd66529bffacd8cd8f2dace757511d8531"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-check-strict.check.json",
@@ -427,7 +443,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "f397d5ffd0d14df120c0837cb3a58704d52f4d68c0d2b8b67ec5fc1109a60905"
+      "sha256": "2285b81de124fbca4d5cfe8caf3b9d4930b9cbb8c4f15398eab49c7599a20a76"
     },
     {
       "path": "SECURITY.md",
@@ -851,7 +867,7 @@
     },
     {
       "path": "docs/EXPORT.json",
-      "sha256": "5bfb81b391df20d70a4352192ad1e32e93bd9101737da264bfdaad7cedf4194d"
+      "sha256": "b8515412d95b20e4704847c8f8a25610ee18a175a7dc8181a96c549061d38bf2"
     },
     {
       "path": "docs/GETTING-STARTED.md",
@@ -887,7 +903,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "51fd12517334730cd45181797ce4b49c8f56f3ea8c9a7d8093d8dd5aa9205633"
+      "sha256": "c6f8f89222eb14e4d682b4d5d452bb2164dfce5f5cb40eb14e31df0e1702536f"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -900,6 +916,22 @@
     {
       "path": "docs/VERIFY-ON-MAC.md",
       "sha256": "6c3ad467a16a2d356f07193ebffa270b788340911ec078010a7a0293692aa0d3"
+    },
+    {
+      "path": "docs/assets/annotations/check-strict.json",
+      "sha256": "c36577ad05f6ff280c0529ded54b63eacf6e4f89c86173f9ee957eacf705e720"
+    },
+    {
+      "path": "docs/assets/annotations/provenance.json",
+      "sha256": "306aa9b76f098bd7b3ec60edbfa22da6e64d0a11c3ecd283ecfe0556d4559547"
+    },
+    {
+      "path": "docs/assets/annotations/winch-dimension.png",
+      "sha256": "c268f068cb84568032e0e855610a58bf2601ec1b54b6ff8c1308d18d6e83f8aa"
+    },
+    {
+      "path": "docs/assets/annotations/winch-lift.png",
+      "sha256": "d3a2181ef34927b247879c135fcf319e6227e5a02939c9fed815dc0887fb411c"
     },
     {
       "path": "docs/assets/cutaway/check-strict.json",

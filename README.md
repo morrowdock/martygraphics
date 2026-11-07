@@ -106,6 +106,16 @@ gear mesh. The model was written by hand for the docs; it is not an AI prompt ru
 [The three steps and the numbers](docs/SHOWCASE.md#cutaways-and-honest-numbers)
 
 <p align="center">
+  <a href="docs/SHOWCASE.md#labels-arrows-and-measured-dimensions"><img src="docs/assets/annotations/winch-lift.png" width="640" alt="A hand winch: a green turn arrow on the big drum gear, a green arrow labelled Rope side moves up, and a short orange arrow labelled Weight under the blue weight."></a>
+</p>
+
+**Labels, arrows and measured dimensions.** A model can label parts, draw arrows and show measured distances. The engine
+works out the direction of each motion arrow from the motion, and it measures each dimension: the winch example says "Centres
+56 mm" without that number in the model. The legend says "Arrow lengths are not to scale". The model was written by hand
+for the docs; it is not an AI prompt run.
+[How the winch works and what the engine checks](docs/SHOWCASE.md#labels-arrows-and-measured-dimensions)
+
+<p align="center">
   <a href="docs/assets/pathtrace/hero.png"><img src="docs/assets/pathtrace/gearbox-loop-640.gif" width="840" alt="Path-traced two-stage gearbox turning: polished steel and brass gears with involute teeth, a spur pair above a planetary set inside a steel ring gear, on a dark studio floor."></a>
 </p>
 

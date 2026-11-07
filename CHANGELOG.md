@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Docs: showcase 3D annotations with the hand-built winch example (two stills, its strict check output and a capture receipt in `docs/assets/annotations`, a SHOWCASE section and a README paragraph). No code change.
 - Add 3D annotations to assembly v2 (open vocabulary 3a): a top-level `annotations` object with `labels`, `arrows`
   and `dimensions`, and a step key `annotate`. Both are refused in v1 documents with the usual reasons
   (`assembly.unknown.annotations`, `step.unknown.annotate`). Anchors name a part (its origin, an `offset` in its frame

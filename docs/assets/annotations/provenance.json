@@ -1,0 +1,46 @@
+{
+  "source": {
+    "repository": "https://github.com/morrowdock/martygraphics",
+    "commit": "35b9e0acb9230168d0c2f0b5b8228695bc32c60b",
+    "commitNote": "origin/main after PR #31 (3D annotations); the renders were made from a clean checkout of this commit",
+    "model": "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json",
+    "authoring": "The model was written by hand for the docs. It is not the output of an AI model answering a prompt.",
+    "license": "Apache-2.0; procedural geometry, no images, models or stock assets",
+    "sourceFiles": {
+      "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json": "aa3e8c5f7419b4f50ff1af88661a3431d124466a74b871b4a740b1e532966f74",
+      "Examples/Solid3D/Package.swift": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b",
+      "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f"
+    }
+  },
+  "capture": {
+    "machine": "Apple M1 Mac mini (Macmini9,1), arm64; macOS 27.2",
+    "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
+    "configuration": "SwiftPM release build",
+    "capturedUTC": "2026-11-07",
+    "engineExecutableSHA256": "f593fbbddd931bd84f17fbfdf2edb852492cc5a4a069d82d359c5f1333a99f3e",
+    "commands": [
+      "swift run -c release --package-path Examples/Solid3D marty-solid render Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json <NEW_DIR>",
+      "swift run -c release --package-path Examples/Solid3D marty-solid check --strict Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json"
+    ],
+    "note": "Both commands ran at the commit above; check exited 0 with ok true, strict true, no warnings. Stills are 1280x800 PNGs written by render, not edited. Only two of the five step stills are kept here."
+  },
+  "artifacts": {
+    "winch-lift.png": {
+      "sha256": "d3a2181ef34927b247879c135fcf319e6227e5a02939c9fed815dc0887fb411c",
+      "bytes": 994486,
+      "from": "render step 5 (step-5.png)",
+      "pixels": "1280x800"
+    },
+    "winch-dimension.png": {
+      "sha256": "c268f068cb84568032e0e855610a58bf2601ec1b54b6ff8c1308d18d6e83f8aa",
+      "bytes": 818595,
+      "from": "render step 3 (step-3.png)",
+      "pixels": "1280x800"
+    },
+    "check-strict.json": {
+      "sha256": "c36577ad05f6ff280c0529ded54b63eacf6e4f89c86173f9ee957eacf705e720",
+      "bytes": 14885,
+      "from": "marty-solid check --strict (stdout re-serialised with sorted keys and 2-space indent; same content)"
+    }
+  }
+}
