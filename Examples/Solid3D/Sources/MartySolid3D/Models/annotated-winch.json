@@ -18,7 +18,7 @@
  "annotations": {
   "labels": [
    {"id": "lPinion", "at": {"part": "pinion", "offset": [0, 0, -26]}, "text": "Pinion: {pinion.teeth} teeth"},
-   {"id": "lWheel", "at": {"part": "wheel", "offset": [0, 0, -40]}, "text": "Drum gear: {wheel.teeth} teeth"}],
+   {"id": "lWheel", "at": {"part": "wheel", "offset": [0, 0, -46]}, "text": "Drum gear: {wheel.teeth} teeth"}],
   "arrows": [
    {"id": "aPinion", "meaning": "motion", "style": "turn", "on": "pinion", "sense": "ccw"},
    {"id": "aWheel", "meaning": "motion", "style": "turn", "on": "wheel", "sense": "cw"},
@@ -35,6 +35,6 @@
   {"say": "The gear centres are {dim.centres} apart: half the sum of the tooth counts, times the module.", "camera": "front",
    "annotate": ["lPinion", "lWheel", "centres"]},
   {"say": "The weight pulls the rope straight down.", "camera": "hero", "highlight": ["mass"], "annotate": ["aWeight"]},
-  {"say": "As the drum turns, the rope side moves up and winds the weight in.", "camera": "hero", "highlight": ["wheel"], "spin": 3,
+  {"say": "As the drum turns, the rope side moves up and winds the weight in.", "camera": "hero", "highlight": ["wheel"],
    "annotate": ["aWheel", "aLift", "aWeight"]}
  ]}

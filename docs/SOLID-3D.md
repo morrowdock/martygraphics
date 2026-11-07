@@ -501,7 +501,8 @@ Label, arrow and dimension text follows the v2 caption rules: placeholders with 
 `text.number.dimension.<id>`). `abs` is refused (`text.sign.<name>`): no step proves a sign for an
 annotation. Filled text is 1–40 Unicode scalars, authored text at most 160 (`label.text.<id>`,
 `arrow.text.<id>`, `dimension.text.form.<id>`). A label or arrow may carry `"unchecked": "<why>"`
-(1–60, `label.unchecked.<id>`, `arrow.unchecked.<id>`; an arrow needs `text` for it): its text may
+(1–60, `label.unchecked.<id>`, `arrow.unchecked.<id>`; an arrow needs `text` for it,
+`arrow.unchecked.text.<id>`): its text may
 then type numbers and its claim is Described.
 
 Annotation claims (kind `annotation`, id = the annotation id) come after the motion claims, in
@@ -532,7 +533,7 @@ An arrow's text lowers its claim to the text's tier (an `unchecked` text makes i
 
 | Meaning | Keys | Direction | Checks |
 | --- | --- | --- | --- |
-| `motion`, `"style": "turn"` | `on` (a part), `sense` (`cw` or `ccw`, optional) | The engine: the sign of the part's turn (its world speed when that fact exists, else its own speed). Drawn as a 270° arc around the joint axis. | `arrow.turn.joint.<id>` (not a revolute part), `arrow.still.<id>` (it never turns), `arrow.turn.steady.<id>` (it has no steady speed, such as a crank rod that swings back and forth; use a motion line arrow), `arrow.sense.<id>` (the stated sense is wrong; "cw" and "ccw" as seen from the tip of the joint axis), `arrow.sense.form.<id>` |
+| `motion`, `"style": "turn"` | `on` (a part id string, `arrow.on.<id>`), `sense` (`cw` or `ccw`, optional) | The engine: the sign of the part's turn (its world speed when that fact exists, else its own speed). Drawn as a 270° arc around the joint axis. | `arrow.turn.joint.<id>` (not a revolute part), `arrow.still.<id>` (its own joint never turns; a part that only rides a turning parent counts as still), `arrow.turn.steady.<id>` (it has no steady speed, such as a crank rod that swings back and forth; use a motion line arrow), `arrow.sense.<id>` (the stated sense is wrong; "cw" and "ccw" as seen from the tip of the joint axis), `arrow.sense.form.<id>` |
 | `motion`, `"style": "line"` (the default) | `from` (a part anchor), `expect` (a world direction, optional), `length` (optional) | The engine: the anchor's velocity as the input grows from the default input; at a dead centre (velocity 0), the first non-zero velocity in the next input turn, sampled every 1/720 turn. | `arrow.from.<id>` (a world anchor), `arrow.still.<id>` (no motion in a full turn), `arrow.expect.<id>` (more than 30° from the engine direction, sign included), `arrow.expect.form.<id>`, `arrow.style.<id>` |
 | `force` | `from`, `to`, `cause` (`"gravity"`, optional) | As authored. With `cause`, it must be within 10° of world −Z at the default input. | `arrow.gravity.<id>`, `arrow.cause.<id>` |
 | `flow`, `pointer` | `from`, `to` | As authored. | — |
@@ -566,7 +567,9 @@ cut, not ghosted and cast no shadow.
   the largest minus the smallest value over one input turn (720 samples, ends included, as for
   `<part>.travel`). `over` needs an anchor that moves (`dimension.over.<id>`; any other value is
   `dimension.over.form.<id>`).
-* A distance below 0.01 mm, or an angle arm below 0.01 mm, is `dimension.zero.<id>`.
+* A distance below 0.01 mm at the default input, or an angle arm below 0.01 mm (at the default input, or at
+  any sample with `over`), is `dimension.zero.<id>`. With `over`, a range below 0.01 mm (or 0.01°) is
+  `dimension.over.still.<id>`.
 * The value is the fact `dim.<id>` (unit `mm` or `°`, source `dimension`). Captions, labels, arrow text and
   checks can show and check it. A fact with that name already (a part named `dim`) is
   `dimension.fact.<id>`. No key sets the value.
@@ -576,6 +579,28 @@ cut, not ghosted and cast no shadow.
 Drawing: a line between the posed anchors with an end tick at each end; with `along`, the line runs
 parallel to the axis, offset by 5 % of the bounding diagonal, with two extension lines; an angle draws
 its two arms and an arc at the vertex.
+
+### Poses: every claim holds at every pose its view can show
+
+The checks above run at the default input (`params.input`) with explode 0. Then the engine checks every
+pose-dependent claim again at every pose that a view showing it can show. A step shows its `spin` range,
+from the default input to the default input + `spin` turns (720 samples per input turn, ends included),
+at its explode value (the step's `explode`, else `params.explode`). The plain view shows the default pose
+at `params.explode`. A claim that fails at one of these poses is `annotation.pose.<id>`:
+
+* a dimension without `over` whose value differs by more than 0.01 mm (0.01°) from its fact, for example
+  a point off a turning part's axis, or an exploded step that moves its anchors apart; a dimension with
+  `over` whose range differs at the step's explode value;
+* a gravity force arrow more than 10° from −Z (or shorter than 0.5 mm) at a shown pose;
+* a motion line arrow with `expect` whose shown direction is more than 30° from it at a shown pose (an anchor
+  that rides a turning part changes direction; show such an arrow in a step without `spin`);
+* a turn arrow with a stated `sense` in a step with a negative `spin`.
+
+A step with a negative `spin` plays the input backwards (`MGSolidView.motionSense` is −1): turn arcs and
+motion arrows draw the motion that the view shows. Labels and the other arrows ride their parts and claim no
+direction, so they need no pose check. A host shows a view's annotations only at those poses: `marty-solid
+render` draws them on `hero.png` and on the step stills (the end of each step's spin range), not on
+`exploded.png` or the loop frames.
 
 ### Visibility
 
@@ -630,8 +655,11 @@ coordinates, origin top left), `occluded` (true, false or null), `callout`, `can
 `MGAnnotationFrame` adds the view size, the font size and the posed anchor points; a clip export will
 carry one per frame. `marty-solid check` reports `annotations` (id, kind, meaning, tier, text, value,
 `anchorsWorld`, `occludedAtDefaultCamera`) and `placements` (the placement of the plain view and of each
-step that shows annotations, at the snapshot's default camera), so a model can see which texts fell into
-the callout list.
+step that shows annotations, at the default input with explode 0 and the snapshot's default camera, aspect
+16:10), so a model can see which texts fell into the callout list. `placements` is not the layout of the
+rendered stills: those use the end of each step's spin range, the step's explode value and its camera
+preset. A view that lists more than 12 annotations (a host can set `MGSolidView.annotations`) gets a frame
+with no placements and `refusal: "annotations.visible"`; nothing is dropped silently.
 
 ### Occlusion and renderers
 
@@ -651,7 +679,8 @@ the callout list.
 
 * Words: annotation text is checked for numbers only, not for meaning.
 * Force and flow arrows other than the gravity direction; every arrow length without a fact.
-* Motion between the 720 samples (velocity and `over`).
+* Motion between the 720 samples (velocity, `over` and the pose checks).
+* A pose the host shows outside its view's poses (an explode slider in a step, an orbit is fine).
 * Occlusion along leader lines (only the anchor point is tested).
 * Placement uses an estimated text width; very long words get small.
 
@@ -805,8 +834,8 @@ them also pass `check --strict` with no warnings.
   the engine checks (`"sense": "ccw"` on the pinion, `"cw"` on the drum), a gravity force arrow
   under the weight, a motion arrow on the drum's rope side whose stated direction (`"expect": [0, 0, 1]`)
   the engine checks, and a measured centre distance (`{dim.centres}`, "56 mm"). Each step lists its
-  annotations with `annotate`; the last step spins three input turns, one drum turn, so the drum's
-  rope-side anchor ends where it started. Legend: "Solved 12" (two motions, seven annotations, two
+  annotations with `annotate`. The rope-side arrow shows in a step without `spin`: its anchor rides the
+  drum, so while the drum turns it would leave the rope side (`annotation.pose.<id>`). Legend: "Solved 12" (two motions, seven annotations, two
   captions, one check) with the note "Arrow lengths are not to scale".
 
 * [`horizontal-reduction.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json)

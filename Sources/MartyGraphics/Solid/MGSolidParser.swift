@@ -728,6 +728,7 @@ public enum MGSolidParser {
             try MGSolidAnnotationEngine.prepare(&doc)
             try fillText(&doc)
             try MGSolidAnnotationEngine.finish(&doc)
+            try MGSolidAnnotationEngine.checkPoses(doc)
         } else {
             // v1 text is never filled. A caption or title with a number in it makes a claim the engine did not check.
             for i in doc.steps.indices where doc.steps[i].say.contains(where: MGSolidFacts.isNumber) { doc.steps[i].tier = .described }

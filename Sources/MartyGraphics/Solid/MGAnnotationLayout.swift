@@ -107,6 +107,10 @@ public struct MGAnnotationFrame: Codable, Equatable, Sendable {
     public var fontSize: Double
     public var placement: [MGAnnotationPlacement]
     public var anchors: [Anchors]
+    /// `annotations.visible` when the view lists more than `MGSolidAnnotationLimits.visible` known annotations: nothing
+    /// is laid out, so a host must not show the frame as complete. Nil otherwise (the parser never makes such a view;
+    /// a host can, because `MGSolidView.annotations` is public).
+    public var refusal: String?
 }
 
 /// Deterministic text placement (docs/SOLID-3D.md, Annotations, Placement).
@@ -422,21 +426,23 @@ extension MGSolidAnnotations {
                              occlusionBudget: Int = MGSolidAnnotationLimits.occlusionTests) -> MGAnnotationFrame {
         let input = layoutInput(document: doc, view: view, params: params, camera: camera, width: width, height: height, previous: previous,
                                 highlight: highlight, caption: caption, title: title, stage: stage, occlusionBudget: occlusionBudget)
-        let placement = MGAnnotationLayout.place(input) ?? []
+        let known = Set(doc.annotations.ids)
+        let tooMany = view.annotations.filter { known.contains($0) }.count > MGSolidAnnotationLimits.visible
+        let placement = tooMany ? nil : MGAnnotationLayout.place(input)
         let a = doc.annotations, pose = doc.assembly.pose(params)
-        let known = Set(a.ids)
         func xyz(_ p: MGVec3) -> [Double] { let q = stage.apply(p); return [q.x, q.y, q.z] }
         let anchors = view.annotations.filter { known.contains($0) }.map { id -> MGAnnotationFrame.Anchors in
             var pts: [MGVec3]
             if let r = a.arrow(id) {
-                let prims = primitives(doc, id, params: params)
+                let prims = primitives(doc, id, params: params, sense: view.motionSense)
                 pts = r.style == .turn ? [prims[0].start, prims[arcChords].end] : [prims[0].start, prims[1].end]
             } else {
                 pts = MGSolidAnnotationEngine.anchors(a, id).map { $0.world(pose) }
             }
             return .init(id: id, points: pts.map(xyz))
         }
-        return MGAnnotationFrame(width: width, height: height, fontSize: MGAnnotationLayout.fontSize(height: height), placement: placement, anchors: anchors)
+        return MGAnnotationFrame(width: width, height: height, fontSize: MGAnnotationLayout.fontSize(height: height), placement: placement ?? [],
+                                 anchors: anchors, refusal: placement == nil ? "annotations.visible" : nil)
     }
 
     /// The layout input `frame` places: projected text anchors with occlusion, highlight boxes and the model centre.
@@ -451,7 +457,7 @@ extension MGSolidAnnotations {
         // Placement order: labels (view order), then arrow texts, then dimension texts.
         let ordered = visible.filter { a.kind($0) == "label" } + visible.filter { a.arrow($0)?.text != nil } + visible.filter { a.kind($0) == "dimension" }
         var points: [(id: String, point: MGVec3, line: (MGVec3, MGVec3)?)] = []
-        for id in ordered { if let t = attach(doc, id, pose, params) { points.append((id, t.point, t.line)) } }
+        for id in ordered { if let t = attach(doc, id, pose, params, sense: view.motionSense) { points.append((id, t.point, t.line)) } }
         let eye = stage.inverse.apply(camera.position)
         let occluded = MGAnnotationOcclusion.test(points.map(\.point), eye: eye, document: doc, view: view, pose: pose, budget: occlusionBudget)
         var items: [MGAnnotationLayout.Item] = []
@@ -501,7 +507,7 @@ extension MGSolidAnnotations {
                                  budget: Int = MGSolidAnnotationLimits.occlusionTests) -> [(id: String, occluded: Bool?)] {
         let pose = doc.assembly.pose(params)
         let ids = view.annotations.filter { doc.annotations.kind($0) != nil }
-        let points = ids.map { attach(doc, $0, pose, params)?.point ?? .zero }
+        let points = ids.map { attach(doc, $0, pose, params, sense: view.motionSense)?.point ?? .zero }
         let result = MGAnnotationOcclusion.test(points, eye: stage.inverse.apply(camera.position), document: doc, view: view, pose: pose, budget: budget)
         return Array(zip(ids, result)).map { (id: $0.0, occluded: $0.1) }
     }

@@ -172,7 +172,8 @@ final class SolidAnnotationTests: XCTestCase {
         XCTAssertEqual(reason(gears(#"{"arrows": [{"id": "a1", "meaning": "force", "from": "p"}]}"#)), "arrow.missing.to")
         XCTAssertEqual(reason(gears(#"{"arrows": [{"id": "a1", "meaning": "push", "from": "p", "to": "w"}]}"#)), "arrow.meaning.a1")
         XCTAssertEqual(reason(gears(#"{"arrows": [{"id": "a1", "meaning": "motion", "style": "spiral", "on": "w"}]}"#)), "arrow.style.a1")
-        XCTAssertEqual(reason(gears(#"{"arrows": [{"id": "a1", "meaning": "flow", "from": "p", "to": "w", "unchecked": "why"}]}"#)), "arrow.unchecked.a1")
+        XCTAssertEqual(reason(gears(#"{"arrows": [{"id": "a1", "meaning": "flow", "from": "p", "to": "w", "unchecked": "why"}]}"#)), "arrow.unchecked.text.a1")
+        XCTAssertEqual(reason(gears(#"{"arrows": [{"id": "a1", "meaning": "flow", "from": "p", "to": "w", "text": "Air", "unchecked": ""}]}"#)), "arrow.unchecked.a1")
         XCTAssertEqual(reason(gears(#"{"arrows": [{"meaning": "flow", "from": "p", "to": "w"}]}"#)), "arrow.missing.id")
         XCTAssertEqual(reason(gears(#"{"arrows": [{"id": "a1", "meaning": "flow", "from": "p", "to": "w", "size": 3}]}"#)), "arrow.unknown.size")
     }
@@ -400,6 +401,107 @@ final class SolidAnnotationTests: XCTestCase {
         XCTAssertEqual(MGAnnotationPrimitive(shape: .cone, start: MGVec3(.nan, 0, 0), end: .zero, radius: .infinity, hidden: false).renderMesh.indices.count,
                        3 * MGSolidAnnotations.coneCounts.triangles)
         XCTAssertGreaterThanOrEqual(MGSolidOverlay.fit(String(repeating: "W", count: 10_000), width: .nan, fontSize: .infinity).size, MGSolidOverlay.minimumFont)
+    }
+
+    // MARK: Poses (review of PR #31: B1, S1, S2, S3)
+
+    func winch() throws -> String {
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json")
+        return String(decoding: try Data(contentsOf: url), as: UTF8.self)
+    }
+    /// The winch with its steps replaced and extra annotations.
+    func winch(steps: String, arrows: String = "", dimensions: String = "") throws -> String {
+        var t = try winch()
+        let s0 = try XCTUnwrap(t.range(of: #""steps": ["#)), end = try XCTUnwrap(t.range(of: "]}", options: .backwards))
+        t.replaceSubrange(s0.lowerBound..<end.upperBound, with: #""steps": \#(steps)}"#)
+        if !arrows.isEmpty { t = t.replacingOccurrences(of: #""arrows": ["#, with: #""arrows": [\#(arrows), "#) }
+        if !dimensions.isEmpty { t = t.replacingOccurrences(of: #""dimensions": ["#, with: #""dimensions": [\#(dimensions), "#) }
+        return t
+    }
+    let allShown = #""annotate": ["lPinion", "lWheel", "aPinion", "aWheel", "aWeight", "aLift", "centres"]"#
+
+    /// B1: a claim checked at the default pose must also hold over every pose a step that shows it plays.
+    func testClaimsMustHoldOverTheStepSpinRange() throws {
+        // The rope-side arrow rides the drum: with a spin it leaves the rope side and stops pointing up.
+        XCTAssertEqual(reason(try winch(steps: #"[{"say": "Wind.", "spin": 1, \#(allShown)}]"#)), "annotation.pose.aLift")
+        XCTAssertEqual(reason(try winch(steps: #"[{"say": "Wind.", "spin": 1.5, \#(allShown)}]"#)), "annotation.pose.aLift")
+        // The same step without the spin, or without the arrow, holds.
+        XCTAssertNil(reason(try winch(steps: #"[{"say": "Still.", \#(allShown)}]"#)))
+        let noLift = #""annotate": ["lPinion", "lWheel", "aPinion", "aWheel", "aWeight", "centres"]"#
+        XCTAssertNil(reason(try winch(steps: #"[{"say": "Wind.", "spin": 3, \#(noLift)}, {"say": "Rope.", "annotate": ["aLift"]}]"#)))
+        // A gravity arrow on the turning drum.
+        let drumG = #"{"id": "aDrumG", "meaning": "force", "cause": "gravity", "from": {"part": "wheel", "offset": [20, 0, -23]}, "to": {"part": "wheel", "offset": [20, 30, -23]}}"#
+        XCTAssertNil(reason(try winch(steps: #"[{"say": "Still.", "annotate": ["aDrumG"]}, {"say": "Rest.", \#(allShown)}]"#, arrows: drumG)))
+        XCTAssertEqual(reason(try winch(steps: #"[{"say": "Wind.", "spin": 1, "annotate": ["aDrumG"]}, {"say": "Rest.", \#(allShown)}]"#, arrows: drumG)),
+                       "annotation.pose.aDrumG")
+        // A dimension to a point off the drum axis changes as the drum turns; one on the axes does not.
+        let gap = #"{"id": "gap", "a": {"part": "pinion", "offset": [0, 0, -46]}, "b": {"part": "wheel", "offset": [16, 0, -46]}, "text": "Gap {dim.gap}"}"#
+        XCTAssertEqual(reason(try winch(steps: #"[{"say": "Wind.", "spin": 1, "annotate": ["gap", "centres"]}, {"say": "Rest.", \#(allShown)}]"#, dimensions: gap)),
+                       "annotation.pose.gap")
+        XCTAssertNil(reason(try winch(steps: #"[{"say": "Wind.", "spin": 1, "annotate": ["centres", "aWheel", "aPinion", "lWheel"]}, {"say": "Rest.", \#(allShown)}]"#)))
+    }
+
+    /// B1 (probe p7): an exploded step moves dimension anchors apart.
+    func testExplodedStepMustKeepItsDimension() throws {
+        var t = try winch(steps: #"[{"say": "Apart.", "explode": 1, "annotate": ["centres"]}, {"say": "Rest.", \#(allShown)}]"#)
+        t = t.replacingOccurrences(of: #""expect": {"axisWorld": [0, 1, 0]}},"#, with: #""expect": {"axisWorld": [0, 1, 0]}, "explode": [40, 0, 0]},"#)
+        XCTAssertEqual(t.components(separatedBy: #""explode": [40, 0, 0]"#).count, 3, "both gears explode")
+        // Only the drum explodes: the centres move apart.
+        let one = t.replacingOccurrences(of: #""joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "expect": {"axisWorld": [0, 1, 0]}, "explode": [40, 0, 0]}"#,
+                                         with: #""joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "expect": {"axisWorld": [0, 1, 0]}}"#)
+        XCTAssertEqual(reason(one), "annotation.pose.centres")
+        // Both explode together: the distance holds.
+        XCTAssertNil(reason(t))
+    }
+
+    /// S1: a negative spin plays backwards; arrows draw the shown motion and a stated sense must match it.
+    func testNegativeSpinReversesTheShownMotion() throws {
+        XCTAssertEqual(reason(try winch(steps: #"[{"say": "Back.", "spin": -1, "annotate": ["aPinion"]}, {"say": "Rest.", \#(allShown)}]"#)),
+                       "annotation.pose.aPinion")
+        let text = gears(#"{"arrows": [{"id": "aw", "meaning": "motion", "style": "turn", "on": "w"}]}"#, steps: #"[{"say": "Back.", "spin": -1}]"#)
+        let d = try doc(text)
+        let view = d.view(step: 0)
+        XCTAssertEqual(view.motionSense, -1)
+        let prims = MGSolidAnnotations.primitives(d, "aw", params: d.defaults, sense: view.motionSense)
+        let c = MGVec3(45, 0, prims[0].start.z)
+        XCTAssertGreaterThan((prims[0].start - c).cross(prims[0].end - c).z, 0, "played backwards, the wheel turns counter-clockwise")
+        let snap = MGSolidSnapshot.make(d, step: 0, params: d.defaults)
+        XCTAssertGreaterThan(snap.annotations?.arrows.first?.direction[1] ?? 0, 0, "turns counter-clockwise about kernel +Z (world +Y)")
+        // A line arrow played backwards points the other way.
+        let s = try doc(slider(#"{"arrows": [{"id": "aRod", "meaning": "motion", "from": {"part": "piston", "point": "centre"}}]}"#,
+                               steps: #"[{"say": "Back.", "spin": -1}]"#))
+        let back = MGSolidAnnotations.primitives(s, "aRod", params: MGPoseParameters(input: .pi / 2), sense: -1)
+        XCTAssertEqual((back[1].end - back[0].start).normalized.x, 1, accuracy: 1e-6)
+    }
+
+    /// S2: one meaning per reason for `over` dimensions that do not change.
+    func testOverWithNoChangeHasItsOwnReason() {
+        let still = #"{"dimensions": [{"id": "same", "a": {"part": "w", "offset": [10, 0, 0]}, "b": {"part": "w", "offset": [-10, 0, 0]}, "over": "input"}]}"#
+        XCTAssertEqual(reason(gears(still)), "dimension.over.still.same")
+        let angle = #"{"dimensions": [{"id": "ang", "kind": "angle", "a": {"part": "w", "offset": [10, 0, 0]}, "vertex": "w", "b": {"part": "w", "offset": [0, 10, 0]}, "over": "input"}]}"#
+        XCTAssertEqual(reason(gears(angle)), "dimension.over.still.ang")
+    }
+
+    /// S3: a host view with more than 12 annotations is refused visibly, never laid out with texts missing.
+    func testFrameRefusesTooManyAnnotations() throws {
+        let labels = (0..<13).map { #"{"id": "l\#($0)", "at": "p", "text": "Label"}"# }.joined(separator: ",")
+        let d = try doc(gears(#"{"labels": [\#(labels)]}"#, steps: #"[{"say": "Some.", "annotate": ["l0"]}, {"say": "Rest.", "annotate": ["l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "l10", "l11", "l12"]}]"#))
+        var view = d.view(step: 0)
+        let cam = MGSolidAnnotations.defaultCamera(d, params: d.defaults)
+        XCTAssertNil(MGSolidAnnotations.frame(document: d, view: view, params: d.defaults, camera: cam, aspect: 1.6).refusal)
+        view.annotations = d.annotations.ids
+        let f = MGSolidAnnotations.frame(document: d, view: view, params: d.defaults, camera: cam, aspect: 1.6)
+        XCTAssertEqual(f.refusal, "annotations.visible")
+        XCTAssertEqual(f.placement, [])
+    }
+
+    func testRefusedPoseLeavesTheDocumentUnchanged() throws {
+        let d = try doc(try winch())
+        let before = d
+        let patch = try XCTUnwrap(MGJSON(any: ["steps": [["say": "Wind.", "spin": 1, "annotate": ["aLift"]]]] as [String: Any]))
+        XCTAssertEqual(MGSolidParser.applying(patch, to: d).failureReason, "annotation.pose.aLift")
+        XCTAssertEqual(d, before)
     }
 
     // MARK: Compatibility, patches, determinism

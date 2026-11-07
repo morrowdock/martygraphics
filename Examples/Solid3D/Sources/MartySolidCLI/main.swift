@@ -243,8 +243,11 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     var previousFrame: MGAnnotationFrame?
     func shot(_ s: MGSolidShot) throws -> CGImage {
         let p = MGSolidCamera.presets[s.preset] ?? MGSolidCamera.presets["hero"]!
-        // Each step shows its own section cuts, ghosts and annotations; other shots show the plain scene.
-        let view = doc.view(step: s.step)
+        // Each step shows its own section cuts, ghosts and annotations; other shots show the plain scene. Annotation
+        // claims are checked at the poses their view can show (a step's spin range at its explode, the plain view's
+        // default pose), so the exploded still and the loop frames show none.
+        var view = doc.view(step: s.step)
+        if s.step == nil, s.params != doc.defaults { view.annotations = [] }
         r.show(view)
         r.highlight(Set(s.highlight), dimOthers: !s.highlight.isEmpty)
         r.apply(s.params)

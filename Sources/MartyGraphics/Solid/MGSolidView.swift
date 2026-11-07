@@ -40,6 +40,9 @@ public struct MGSolidView: Equatable, Sendable {
     /// v2: ids of the annotations this view shows (`MGSolidDocument.visibleAnnotations(step:)`), in authored or
     /// `annotate` order. Empty for a plain assembly.
     public var annotations: [String] = []
+    /// +1, or −1 for a step with a negative `spin` (it plays the input backwards): motion arrows draw the motion the
+    /// view shows.
+    public var motionSense: Double = 1
 
     /// The view of a plain assembly: every part with its own opacity and light, nothing cut.
     public init(_ assembly: MGAssembly) {
@@ -70,6 +73,7 @@ extension MGSolidDocument {
         v.annotations = visibleAnnotations(step: step)
         guard let i = step, steps.indices.contains(i) else { return v }
         let s = steps[i]
+        if s.spin < 0 { v.motionSense = -1 }
         for id in s.ghost {
             let faint = min(v.part(id).opacity, MGSolidView.ghostOpacity)
             v.parts[id]?.opacity = faint

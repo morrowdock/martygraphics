@@ -220,7 +220,7 @@ public final class MGSolidRenderer {
             annotationMaterials[id] = m
             let cylinder = unitCylinder.copy() as! SCNGeometry, cone = unitCone.copy() as! SCNGeometry
             cylinder.materials = [m]; cone.materials = [m]
-            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed)
+            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed, sense: view.motionSense)
             annotationNodes[id] = pieces.map { p in
                 let node = SCNNode(geometry: p.shape == .cone ? cone : cylinder)
                 node.name = "annotation.\(id)"
@@ -245,7 +245,7 @@ public final class MGSolidRenderer {
         SCNTransaction.begin(); SCNTransaction.disableActions = true
         for (id, nodes) in annotationNodes {
             guard visible.contains(id) else { nodes.forEach { $0.isHidden = true }; continue }
-            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed)
+            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed, sense: view.motionSense)
             for (node, p) in zip(nodes, pieces) {
                 let d = p.end - p.start
                 node.isHidden = p.hidden || d.length < 1e-9

@@ -280,20 +280,20 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
         }
         var out = Annotations(arrows: [], dimensions: [], labels: [], placement: [])
         for r in a.arrows where visible.contains(r.id) {
-            let prims = MGSolidAnnotations.primitives(doc, r.id, params: params)
+            let prims = MGSolidAnnotations.primitives(doc, r.id, params: params, sense: view.motionSense)
             let (first, count) = append(prims, role: r.colorRole)
             let from = prims[0].start
             var to = prims[1].end, dir = to - from
             if r.style == .turn, let on = r.on, case .revolute(let axis)? = doc.assembly.part(on)?.joint {
                 to = prims[MGSolidAnnotations.arcChords].end
-                dir = MGSolidAnnotations.jointFrame(doc, on, pose).applyVector(axis) * (r.turnSign ?? 1)
-            } else if dir.length < 1e-12 { dir = r.direction ?? .unitZ }
+                dir = MGSolidAnnotations.jointFrame(doc, on, pose).applyVector(axis) * (r.turnSign ?? 1) * view.motionSense
+            } else if dir.length < 1e-12 { dir = (r.direction ?? .unitZ) * view.motionSense }
             out.arrows.append(Annotations.Arrow(id: r.id, meaning: r.meaning.rawValue, style: r.style.rawValue, from: xyz(from), to: xyz(to),
                                                 direction: unit(dir), colorRole: r.colorRole, tier: r.tier?.name, text: r.text,
                                                 firstTriangle: first, triangleCount: count))
         }
         for d in a.dimensions where visible.contains(d.id) {
-            let (first, count) = append(MGSolidAnnotations.primitives(doc, d.id, params: params), role: MGSolidAnnotations.dimensionRole)
+            let (first, count) = append(MGSolidAnnotations.primitives(doc, d.id, params: params, sense: view.motionSense), role: MGSolidAnnotations.dimensionRole)
             out.dimensions.append(Annotations.Dimension(id: d.id, kind: d.kind.rawValue,
                                                         points: [d.a, d.vertex, d.b].compactMap { $0 }.map { xyz($0.world(pose)) },
                                                         value: d.value, unit: d.unit, text: d.text, tier: d.tier.name,

@@ -29,6 +29,14 @@
   `marty-solid render` draws the overlay on every still and GIF frame. New v2 worked example `annotated-winch.json`
   (a hand winch with labels, two turn arrows, a gravity force arrow, a checked motion arrow and a measured centre
   distance). See [docs/SOLID-3D.md](docs/SOLID-3D.md#annotations-v2).
+  - Every pose-dependent annotation claim (a dimension value, a gravity direction, a stated `expect` or `sense`)
+    must hold at every pose a view that shows it can show: a step's `spin` range at its explode value, played
+    backwards for a negative `spin`, and the plain view's default pose (`annotation.pose.<id>`). `marty-solid
+    render` draws annotations on `hero.png` and the step stills only.
+  - Source-compatibility change: `MGSolidClaim.Kind` gains `annotation`; an exhaustive `switch` over it outside
+    the package needs the new case.
+  - `MGSolidView` gains `annotations` and `motionSense`; `MGSolidLegend` gains `notes`; `MGAnnotationFrame.refusal`
+    is `annotations.visible` when a host's view lists more than 12 annotations.
 - Add the solid check report as a library API, an engine identity, patch checks, a reason catalog, per-part tiers
   and a guarded snapshot decoder (Foundation only).
   - `MGSolidReport` builds the `marty-solid check` report in the library: `check(data:library:profile:engine:)`,

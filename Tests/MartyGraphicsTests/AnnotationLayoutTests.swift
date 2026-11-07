@@ -346,6 +346,30 @@ final class AnnotationLayoutTests: XCTestCase {
 
     // MARK: Shipped example
 
+    /// Review of PR #31, B1: every step of the example, sampled over its whole spin range at its explode value, keeps
+    /// each shown claim: the dimension line length equals its text, the gravity arrow points down, the rope-side arrow
+    /// points up, and turn arcs keep the engine's sense.
+    func testEveryStepRangeOfTheExampleKeepsItsClaims() throws {
+        let d = try model("annotated-winch")
+        for i in d.steps.indices {
+            let view = d.view(step: i)
+            let (inputs, explode) = MGSolidAnnotationEngine.shownPoses(d, step: i)
+            XCTAssertEqual(inputs.count, d.steps[i].spin == 0 ? 1 : Int((abs(d.steps[i].spin) * 720).rounded(.up)) + 1)
+            for u in inputs {
+                let params = MGPoseParameters(input: u, explode: explode)
+                for id in view.annotations {
+                    let prims = MGSolidAnnotations.primitives(d, id, params: params, sense: view.motionSense)
+                    if let dim = d.annotations.dimension(id) {
+                        XCTAssertEqual((prims[0].end - prims[0].start).length, dim.value, accuracy: 0.01, "step \(i + 1) \(id) at \(u)")
+                    }
+                    if id == "aWeight" { XCTAssertLessThan(MGSolidAnnotationEngine.angle(prims[1].end - prims[0].start, MGVec3(0, 0, -1)), 1e-6) }
+                    if id == "aLift" { XCTAssertLessThan(MGSolidAnnotationEngine.angle(prims[1].end - prims[0].start, MGVec3(0, 0, 1)), 30) }
+                }
+            }
+        }
+        XCTAssertEqual(d.steps.last?.spin, 0, "the rope-side arrow shows in a still step")
+    }
+
     /// The annotated winch: every step's texts are placed (no callouts) without collisions at the CLI render size and
     /// camera, and it passes the strict profile with no warnings.
     func testAnnotatedWinchExample() throws {

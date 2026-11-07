@@ -353,11 +353,12 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `arrow.length.form.<id>` | assembly | A motion arrow's `length` is not a number in 10...4000 mm or `{"fact", "scale"}` with a fact name and a scale in 0.001...1000. |
 | `arrow.cause.<id>` | assembly | A force arrow's `cause` is not "gravity". |
 | `arrow.text.<id>` | assembly | An arrow's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 160 characters, or of 1–40 characters after placeholders are filled. |
-| `arrow.unchecked.<id>` | assembly | An arrow's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters, or the arrow has no `text` for it to mark. |
+| `arrow.unchecked.<id>` | assembly | An arrow's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters. |
+| `arrow.unchecked.text.<id>` | assembly | An arrow has `unchecked` but no `text` for it to mark. |
 | `text.number.arrow.<id>` | assembly | An arrow's text has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
 | `arrow.turn.joint.<id>` | assembly | A turn arrow's part has no revolute joint. |
 | `arrow.turn.steady.<id>` | assembly | A turn arrow's part has no steady speed (a crank rod swings back and forth), so no single turn sense holds; use a motion line arrow. |
-| `arrow.still.<id>` | assembly | A motion arrow's part (or anchor) never moves over one input turn. |
+| `arrow.still.<id>` | assembly | A turn arrow's part has no own turning joint (it may still ride a turning parent), or a motion line arrow's anchor never moves over one input turn. |
 | `arrow.sense.<id>` | assembly | A turn arrow's stated `sense` is the opposite of the engine's (seen from the tip of the joint axis). |
 | `arrow.expect.<id>` | assembly | A motion arrow's stated `expect` is more than 30° from the engine's direction, sign included. |
 | `arrow.length.fact.<id>` | assembly | A motion arrow's `length` names no fact. |
@@ -368,7 +369,9 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `dimension.over.form.<id>` | assembly | A dimension's `over` is not "input". |
 | `dimension.vertex.<id>` | assembly | An angle dimension has no `vertex`, or a distance dimension has one. |
 | `dimension.text.form.<id>` | assembly | A dimension's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 160 characters, or of 1–40 characters after placeholders are filled. |
-| `dimension.zero.<id>` | assembly | A distance below 0.01 mm (or its range with `over`), or an angle arm below 0.01 mm. |
+| `dimension.zero.<id>` | assembly | A distance below 0.01 mm at the default input, or an angle arm below 0.01 mm (at the default input, or at any sample with `over`). |
+| `dimension.over.still.<id>` | assembly | A dimension with `over` changes by less than 0.01 mm (or 0.01°) over one input turn. |
+| `annotation.pose.<id>` | assembly | A pose-dependent annotation claim (a dimension value, a gravity direction, a stated `expect` or `sense`) does not hold at every pose a view that shows it can show: a step's `spin` range at its explode value, played backwards for a negative `spin`, or the plain view's default pose. |
 | `dimension.over.<id>` | assembly | A dimension has `over` but no anchor that moves. |
 | `dimension.fact.<id>` | assembly | The fact name `dim.<id>` already exists (for example a part named `dim`). |
 | `dimension.text.<id>` | assembly | A dimension's text does not show its own value `{dim.<id>}`. |
