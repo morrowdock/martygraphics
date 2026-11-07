@@ -247,7 +247,7 @@ final class DeepJSONGuardTests: LessonTestCase {
                 var s = MGLessonSession(pacing: .speech, clock: clock)
                 let events = s.feed(Deep.lines([#"{"scene":{"v":1,"template":"deep_tree","params":{"tree":"# + Deep.text(d - 3, shape) + "}}}",
                                                 #"{"say":"One."}"#, #"{"say":"Two."}"#,
-                                                #"{"op":"params","params":{"tree":"# + Deep.text(d - 2, shape) + "}}"#, #"{"end":true}"#]))
+                                                #"{"op":"params","params":{"tree":"# + Deep.text(d - 2, shape) + "}}", #"{"end":true}"#]))
                 out.append(DeepCheck(label: "stream \(shape)", got: MGLessonFixtureReasons.first(events), want: nil))
                 let snapshot = s.snapshot()
                 out.append(DeepCheck(label: "depth \(shape)", got: "\(snapshot.measure().depth)", want: "\(MGLessonSlots.snapshot)"))

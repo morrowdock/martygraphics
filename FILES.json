@@ -443,7 +443,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/DeepJSONGuardTests.swift",
-      "sha256": "00f981dde72554dfe823d756c2812f17f1a9339b54c56a26675889162aed0038"
+      "sha256": "fedec168c80ad4847f7d3e7485ef3223e117476288e56e41a889a6dc3e2a628a"
     },
     {
       "path": "Tests/MartyGraphicsTests/HighlightReferenceTests.swift",
