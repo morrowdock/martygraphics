@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "8836f4e38ab27303eed07dad105a2f1340a49e22ffe9ee016b24df755efa60c1"
+      "sha256": "0ec72d433f6f3e5ce0bbbefa60724456f2a75c63c21e5a5b145a8b065bfde619"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -239,11 +239,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.check.json",
-      "sha256": "001d161c7b6721840df2bb2d186b6e5a5d090ac7844916de148dbc13a53d3c47"
+      "sha256": "9cd6bb96e3d0798fed616c0b1b23744bcc564d4c14230ff30f81ac0a74a250af"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.strict.json",
-      "sha256": "ab67e1816c023adecb682578e1a9fbe0d343f2965aaf04cb873e779d1c407297"
+      "sha256": "e8bad49cfbb99df35c4a651c6fc4f413127fbe520e04bc062e70c680e61d15ee"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-1-refused.check.json",
@@ -583,15 +583,15 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsExplainerView.swift",
-      "sha256": "48e4330d3f78fd107d44ba54f8b157778a7dde753996a7384f49253279f71dcd"
+      "sha256": "6123d2df4d58dd91ae09aaf66aac39d379c527917ca8deaab80876e767ee6f3f"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsLessonView.swift",
-      "sha256": "d1a7126ea3f48b990da065138be9f5912ed59c7bfec894cdd154370c2e302afe"
+      "sha256": "2687bdd79b907d26d748b76ed87fff8bfbd789b4b0591c4ef3dca23cfddf78b5"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "4f793968abb88b4be2f065b6488d6d73d871f422f12bb8ba43133fc07ef7b322"
+      "sha256": "ee1a23e41952ab9fff62b8d2a6476982e3d45a7c620c697efce4ee325da137a4"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -787,7 +787,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerThirdCheckTests.swift",
-      "sha256": "84be03c181a5744415abba432e7a4560f0cfb792e36a8a0af02eaa9057b67d91"
+      "sha256": "56ade9b7b2b87e671a2e62e95aa5cabaab3fed4c2761fbba0def9c3af90ccce7"
     },
     {
       "path": "Tests/MartyGraphicsTests/HighlightReferenceTests.swift",
@@ -947,7 +947,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "f3ad63511e97d34e9882c032e5e4dd9f454b742f734934c9510783f65c0cd113"
+      "sha256": "32a84074f202b65b5d8db86a244b3aff70102f12ce53e7dadda11854ab7a36d3"
     },
     {
       "path": "docs/EXPORT.json",
@@ -959,7 +959,7 @@
     },
     {
       "path": "docs/LESSONS.md",
-      "sha256": "728e3e4ecdda7ab893c27ab8d1f4b923c7eb234a30e039ec5eb9da701977b377"
+      "sha256": "e518d366ddab98acfe00b2431395b2410953ec241c7ace87f264983151c51a51"
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
@@ -1027,7 +1027,7 @@
     },
     {
       "path": "docs/assets/explainer/provenance.json",
-      "sha256": "45266aa27aca3f4e51c3f685fb103ea68d47700f5b3ef04cc871b252d6328083"
+      "sha256": "434500d73d2664a20944d219036b070940aeff9b2d98308e3a9aa5b3f47fcfed"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",

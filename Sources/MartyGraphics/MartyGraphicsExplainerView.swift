@@ -79,6 +79,9 @@ public final class MGExplainerController: ObservableObject {
 
     public init(pacing: MGPacing = .estimate(wordsPerSecond: 2.5), clock: MGLessonClock = MGSystemClock(), library: MGSolidLibrary = .builtIn) {
         session = MGExplainerSession(pacing: pacing, clock: clock, library: library); self.clock = clock
+        // One clock: the board draws its frames on the session's clock, so a wall-clock jump cannot show an earlier
+        // frame while the session says the board has settled.
+        board.presentationClock = clock
     }
 
     /// The learner controls the explainer bound (`bind`), in order.

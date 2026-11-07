@@ -50,6 +50,9 @@
     (speech is learner-visible); `finishNow` and `.immediate` pacing give the board the end state as a direct change
     in the same step; restore applies the board rules to every held scene (a forged heading is
     `explainer.board.title`) and keeps no inner lesson title.
+  - The board view draws its transitions on `MGSceneController.presentationClock` when set (default nil: the wall
+    clock, as before). `MGLessonController` and `MGExplainerController` set their session's monotonic clock, so a
+    wall-clock jump cannot show an earlier frame while the session says the board has settled.
   - Not in this PR: 3D annotations (labels, arrows, dimensions; open-vocabulary PR 3a, still in review). Their ids
     join the namespace, the claims and the report at marked seams once it merges; until then `annotations` in a
     solid is refused with `assembly.unknown.annotations`. The card's 3D example shows its facts in captions instead

@@ -268,7 +268,9 @@ renderer delegate). `MartyGraphicsExplainerView` shows the two panes (the `prima
 stacked when tall), the caption, a slider for every bound control and the legend with its notes.
 
 - The board pane is `MartyGraphicsView` on the controller's `MGSceneController`: it plays the lesson's blends and
-  keyframes and holds them while paused. Highlighted items and table rows and cells glow (`emphasis`,
+  keyframes and holds them while paused. It draws its frames on the session's clock
+  (`MGSceneController.presentationClock`), so the drawn frame and the session's `motionRemaining` come from one
+  monotonic clock: a wall-clock jump can never show an earlier frame while the session says the board has settled. Highlighted items and table rows and cells glow (`emphasis`,
   `tableEmphasis(rows:cells:)`).
 - The solid pane plays each beat's `spin` over time from the beat's start (`MGExplainerLimits.spinSecondsPerTurn` per
   input turn; `solidPose(at:)`, `spinProgress(at:)`). `pause()` freezes the pose it shows; `resume()` continues from
