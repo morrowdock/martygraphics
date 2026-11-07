@@ -112,6 +112,7 @@ public final class MGSolidRenderer {
         cameraNode.camera = cam
         scene.rootNode.addChildNode(cameraNode)
         rebuildParts()
+        poseNodes()
         frame(MGPoseParameters(), yaw: 32, pitch: 28, aspect: 1.6)
     }
 
@@ -145,6 +146,10 @@ public final class MGSolidRenderer {
         partMaterials = partMaterials.filter { ids.contains($0.key) }
         applyGeometry()
         restyleAll()
+        // Kept and new nodes take the new assembly's placements at the current pose.
+        SCNTransaction.begin(); SCNTransaction.disableActions = true
+        poseNodes()
+        SCNTransaction.commit()
     }
 
     private func rebuildParts() {
@@ -184,27 +189,36 @@ public final class MGSolidRenderer {
 
     /// The renderer shows a document: its assembly, with no step view (`setAssembly`), and it remembers the document's
     /// fingerprint so `show(document:view:)` can draw its annotations.
+    /// The parts start at the document's default pose.
     public convenience init(document: MGSolidDocument, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
         self.init(assembly: document.assembly, lighting: lighting, options: options)
         loadedFingerprint = document.checkedFingerprint
+        apply(document.defaults)
     }
 
-    /// Replaces the assembly with a document's and remembers the document, as `init(document:)` does.
+    /// Replaces the assembly with a document's and remembers the document, as `init(document:)` does; the parts move to
+    /// the document's default pose.
     public func setDocument(_ document: MGSolidDocument) {
         setAssembly(document.assembly)
         loadedFingerprint = document.checkedFingerprint
+        apply(document.defaults)
     }
 
     /// Shows a document's view with its annotations. They draw only when this renderer was loaded from the same
     /// compiled document (`init(document:)` or `setDocument(_:)`), and only for poses the engine checked
     /// (`MGSolidDocument.checkedAnnotations`); otherwise the view shows without annotations.
+    /// Part nodes are posed at the current pose first, and the annotations attach after them, in one SceneKit
+    /// transaction.
     public func show(document: MGSolidDocument, view: MGSolidView) {
+        SCNTransaction.begin(); SCNTransaction.disableActions = true
         self.view = view
         applyGeometry()
         restyleAll()
+        poseNodes()
         annotationsOn = loadedFingerprint != nil && loadedFingerprint == document.checkedFingerprint
         if annotationsOn, annotationDocument?.checkedFingerprint != document.checkedFingerprint { buildAnnotations(document) }
         updateAnnotations()
+        SCNTransaction.commit()
     }
 
     private func applyGeometry() {
@@ -226,12 +240,18 @@ public final class MGSolidRenderer {
 
     /// Moves every part to the pose for `params` (pure kinematics, no geometry rebuild).
     public func apply(_ params: MGPoseParameters) {
-        let pose = assembly.pose(params)
-        SCNTransaction.begin(); SCNTransaction.disableActions = true
-        for (id, node) in partNodes { node.simdTransform = MGSolidRenderer.matrix(pose.world[id] ?? .identity) }
-        SCNTransaction.commit()
         posed = params
+        SCNTransaction.begin(); SCNTransaction.disableActions = true
+        poseNodes()
         updateAnnotations()
+        SCNTransaction.commit()
+    }
+
+    /// Moves every part node to the current pose (`posed`). Every path that loads geometry or shows annotations calls
+    /// it first, so annotation pieces never show beside part nodes in another pose.
+    private func poseNodes() {
+        let pose = assembly.pose(posed)
+        for (id, node) in partNodes { node.simdTransform = MGSolidRenderer.matrix(pose.world[id] ?? .identity) }
     }
 
     // MARK: Annotations

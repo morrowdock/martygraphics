@@ -700,7 +700,9 @@ preset. A frame lays out nothing, and says why in `refusal`, for a view or pose 
   `setDocument(_:)`; the renderer keeps that document's fingerprint) and only through `show(document:view:)`. An
   assembly given on its own (`init(assembly:)`, `setAssembly(_:)`) and `show(_:)` show none, so a renderer can never
   draw one document's annotations beside another assembly's motion. It builds one node per arrow or dimension piece
-  (one unit cylinder and one unit cone, scaled); `apply(_:)` moves them and geometry is never rebuilt.
+  (one unit cylinder and one unit cone, scaled); `apply(_:)` moves them and geometry is never rebuilt. Loading a
+  document moves the parts to its default pose, and `show(document:view:)` poses every part before the annotations
+  attach, in one SceneKit transaction, so they never show beside parts in another pose.
   `highlightAnnotations(_:)` brightens some; `annotationsHidden` hides them all.
 * `MGSolidOverlayView` (SwiftUI) and `MGSolidOverlay.draw` (CoreGraphics, used by `marty-solid render`) draw
   labels, leaders, dots, chips (a bar in the tier colour: good, warn, muted), callouts and the legend from

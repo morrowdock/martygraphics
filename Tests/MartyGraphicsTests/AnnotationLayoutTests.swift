@@ -424,6 +424,36 @@ final class AnnotationLayoutTests: XCTestCase {
         XCTAssertEqual(shown(r), 2)
     }
 
+    /// Sixth review (F1): loading a document and showing its view poses the parts before the annotations attach, with no
+    /// `apply` in between, so the part and its checked dimension agree.
+    func testShowAfterLoadingPosesThePartsFirst() throws {
+        func text(_ x: Int) -> String {
+            #"{"v": 2, "kind": "assembly", "parts": [{"id": "p", "at": [\#(x), 0, 0], "shape": {"box": {"size": [10, 10, 10]}}}], "annotations": {"dimensions": [{"id": "gap", "a": {"world": [0, 0, 0]}, "b": {"part": "p", "point": "centre"}, "text": "Centre {dim.gap}"}]}, "steps": [{"say": "Measure."}]}"#
+        }
+        let previous = try doc(text(10)), next = try doc(text(110))
+        XCTAssertEqual(next.fact("dim.gap")?.value ?? 0, 110, accuracy: 1e-12)
+        func check(_ r: MGSolidRenderer, file: StaticString = #filePath, line: UInt = #line) {
+            let part = r.scene.rootNode.childNode(withName: "p", recursively: true)!
+            let pieces = r.scene.rootNode.childNodes(passingTest: { n, _ in n.name == "annotation.gap" })
+            XCTAssertEqual(Double(part.simdTransform.columns.3.x), 110, accuracy: 1e-3, "the part sits where the document puts it", file: file, line: line)
+            XCTAssertFalse(pieces[0].isHidden, file: file, line: line)
+            // The dimension line runs from the origin to the part's centre.
+            let lineEnd = pieces[0].simdTransform.columns.3 + pieces[0].simdTransform.columns.2
+            XCTAssertEqual(Double(lineEnd.x), Double(part.simdTransform.columns.3.x), accuracy: 1e-3, file: file, line: line)
+            let image = r.render(width: 320, height: 200)
+            if image == nil { print("F1: no Metal device; the node check above still ran") }
+        }
+        let r = MGSolidRenderer(document: previous)
+        r.show(document: previous, view: previous.view(step: 0))
+        r.apply(previous.defaults)
+        r.setDocument(next)
+        r.show(document: next, view: next.view(step: 0))   // no apply
+        check(r)
+        let fresh = MGSolidRenderer(document: next)
+        fresh.show(document: next, view: next.view(step: 0))   // no apply
+        check(fresh)
+    }
+
     /// R6: `marty-solid render` draws annotations on hero.png and the step stills only, never on exploded.png or a loop
     /// frame, whatever their pose.
     func testRenderPlanShowsAnnotationsOnHeroAndStepsOnly() throws {
