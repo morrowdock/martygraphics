@@ -389,8 +389,11 @@ see-through, and a part can be faint or give off light.
   loop that touches itself or a hole that touches its outer wall at one vertex (a plane
   through a tube's inner rim) is split or joined at that vertex; a cavity (an inverted
   inner shell) is a hole of the shell around it. The compiler checks every cut it builds
-  (`MGSectionCut.isSound`: closed, outward, cap areas that add up without overlap) and
-  refuses one that fails (`section.open.<id>`), so a faulty cut is never shown. Other parts are not
+  (`MGSectionCut.isSound`: a valid cap range, closed, outward, cap triangle areas that add
+  up to the cap area within 1e-6 × max(1, area)) and refuses one that fails
+  (`section.open.<id>`). This is a consistency check, not a proof: it does not test that
+  cap vertices lie on the plane or that every shell is outward, and far below 1 mm² its
+  tolerance can miss a folded cap. Other parts are not
   touched. The plane is placed at the document's default input (`params.input`) with
   explode 0; a cut part then keeps its cut as it moves and explodes, like a physical
   cutaway model. Use sections on still parts (casings, housings, walls) for the
@@ -408,11 +411,22 @@ see-through, and a part can be faint or give off light.
   before any cut triangle is built, and the cuts count toward the document's mesh
   budget with the parts (`assembly.budget`). Each distinct part and plane reads its
   part's mesh once, and all distinct cuts of one document may read at most 400,000 part
-  triangles (`section.budget`, checked before each cut is classified). Caps use the zipper
-  strip or a near-linear ear clipper, so the cost grows with the triangles read. Measured
-  with `marty-solid check` (release build, Apple M1): the worst accepted document, seven
-  face cuts of a 200-tooth gear (358,372 cut triangles), takes 0.68 s (best of three; 1.0 s
-  cold); a document over the budget is refused in under 0.2 s. Steps that share a plane
+  triangles (`section.budget`, checked before each cut is classified). The cap work is
+  budgeted too: grouping loop points, the hole-to-outer search (outer loops walked by area
+  with a box test and one point-in-polygon test per candidate), hole bridges and splices
+  may charge at most 4,000,000 units over all cuts (`section.budget`), before any cap is
+  built. Caps use the zipper strip or an ear clipper that tests only reflex vertices
+  through a grid; that is fast on gear, ring, comb and spiral loops but has no proven
+  linear bound. These are **measured benchmarks**, not a proven worst case
+  (`marty-solid check`, release build, Apple M1, best of three): seven face cuts of a
+  200-tooth gear 0.65 s; one cut of eight 63-fin concentric "labyrinth" revolves in one
+  part (391,680 triangles read, 585,216 cut triangles) 1.08 s, of which 0.17 s builds the
+  part; the full turbofan casings cut by one plane 0.13 s; the idler example 0.03 s. On
+  these the cut cost grows linearly, about 2.3 µs per part triangle read. Over-budget
+  documents in these sets are refused in 0.08–0.17 s. **Deliberate limit**: the budget
+  allows about 13 distinct planes on a 120-tooth ring (28,800 triangles each; 14 are
+  refused), 8 on a 200-tooth ring and 7 on a 200-tooth gear; one plane shared by many
+  steps is charged once. Steps that share a plane
   share one cut; a patch that keeps a part's shape and place reuses its cut.
 * **`ghost`** lists parts (1–16 ids) that the step shows see-through, at opacity
   `MGSolidView.ghostOpacity` (0.2), so the parts behind them show. Ghosts cast no

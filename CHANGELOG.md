@@ -42,8 +42,9 @@
   loops and fills them with cap faces through `MGTriangulator`, so a cut part stays a
   closed, outward mesh with solid cut walls. A pre-pass counts every cut exactly before
   any cut triangle is built, and cuts count toward the mesh budget (all distinct cuts
-  of a document read at most 400,000 part triangles, `section.budget`, so the worst accepted
-  document checks in about 0.7 s on an Apple M1). A listed part that
+  of a document read at most 400,000 part triangles, and the cap work, including the
+  hole-to-outer search, is budgeted too, both `section.budget`; measured benchmarks on an
+  Apple M1 check in 0.03–1.1 s, and a 120-tooth ring allows 13 distinct planes). A listed part that
   the plane misses or removes completely is refused (`section.miss.<id>`,
   `section.empty.<id>`). A step's `ghost` list shows parts at opacity 0.2. Parts take
   `opacity` (0.1–1, `part.opacity`) and `emissive` (`{"role", "intensity" 0–4}`,
@@ -57,7 +58,7 @@
   Each hole goes to the smallest outer loop that contains it, and loops that touch at a
   vertex are split or joined there. Every built cut is checked (closed, outward, caps
   without overlap) and refused as `section.open.<id>` if it fails. Caps are triangulated by
-  a near-linear ear clipper (reflex vertices on a grid) or the zipper strip.
+  an ear clipper that tests reflex vertices through a grid, or the zipper strip.
   `marty-solid check` reports each step section (sound, cap triangles, cap loops) and
   counts cut triangles in `triangles`, and `marty-solid render` shows each step's cuts and
   ghosts. `render` now writes snapshot `/2` for every v2 document (v1 documents keep `/1`). New v2 worked example

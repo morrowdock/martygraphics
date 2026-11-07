@@ -167,7 +167,7 @@ final class SolidSectionTests: XCTestCase {
     }
 
     /// Review S2: large caps (a 200-tooth gear without a bore, cut across its face and obliquely) are triangulated by
-    /// the near-linear cap clipper with exact counts.
+    /// the grid ear clipper with exact counts.
     func testLargeCapsAreExactAndSound() throws {
         let d = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "g", "shape": {"gear": {"teeth": 200, "module": 1, "width": 10, "z0": -5}}}], "steps": [{"say": "a", "section": {"normal": [0, 0, 1], "offset": 0, "parts": ["g"]}}, {"say": "b", "section": {"normal": [0.02, 0.01, 1], "offset": 0.5, "parts": ["g"]}}, {"say": "c", "section": {"normal": [1, 0.2, 0], "offset": 30, "parts": ["g"]}}]}"#)
         let mesh = d.assembly.part("g")!.mesh
@@ -179,6 +179,35 @@ final class SolidSectionTests: XCTestCase {
         }
         let face = try XCTUnwrap(d.steps[0].section?.cuts["g"])
         XCTAssertGreaterThan(face.capTriangleCount, 10_000)
+    }
+
+    /// Second review R1: a "labyrinth" revolve (many concentric fins in one shell) caps every annulus correctly, and the
+    /// hole-to-outer search charges work proportional to the loop points here and is budgeted (`section.budget`).
+    func testConcentricLabyrinthIsSoundAndCapWorkIsBudgeted() throws {
+        var points: [[Double]] = [[1, -2]]
+        var x = 2.0
+        for _ in 0..<40 { points += [[x, -2], [x, 2], [x + 1, 2], [x + 1, -2]]; x += 3 }
+        points += [[x, -3], [1, -3]]
+        let json = #"{"v": 2, "kind": "assembly", "parts": [{"id": "lab", "shape": {"revolvedProfile": {"points": \#(points), "closed": true}}}], "steps": [{"say": "a", "section": {"normal": [0, 0, 1], "offset": 0, "parts": ["lab"]}}]}"#
+        let d = try doc(json)
+        let c = try XCTUnwrap(d.steps[0].section?.cuts["lab"])
+        assertSound(c, "labyrinth")
+        XCTAssertEqual(c.loops, 80)                       // 40 fins, each an annulus: an outer loop and its hole
+        let mesh = d.assembly.part("lab")!.mesh, plane = c.plane
+        let e = try MGSolidSection.estimate(mesh, plane, workLimit: .max)
+        XCTAssertEqual(e.triangles, c.mesh.triangleCount)
+        // The charged work is a small multiple of the loop points (80 loops of 96 points).
+        XCTAssertLessThan(e.work, 30 * 80 * 96)
+        XCTAssertThrowsError(try MGSolidSection.estimate(mesh, plane, workLimit: e.work - 1)) {
+            XCTAssertEqual(($0 as? MGSolidIssue)?.reason, "section.budget")
+        }
+        var steps = d.steps
+        steps[0].section?.cuts = [:]
+        XCTAssertThrowsError(try MGSolidSections.compile(&steps, d.assembly, defaults: d.defaults, budget: (0, 0), shapes: d.shapes,
+                                                         previous: nil, capWork: e.work - 1)) {
+            XCTAssertEqual(($0 as? MGSolidIssue)?.reason, "section.budget")
+        }
+        XCTAssertTrue(steps[0].section!.cuts.isEmpty, "nothing is cut when the cap work budget refuses")
     }
 
     func testPlanesOnFacesEdgesAndVertices() throws {
@@ -226,6 +255,16 @@ final class SolidSectionTests: XCTestCase {
         for first in [-5, 1_000_000] {
             c.capFirstTriangle = first
             XCTAssertEqual(c.renderMesh(creaseAngle: 0.6).indices.count, c.mesh.indices.count)
+        }
+        // Second review R3: a cap range that would overflow, or does not end at the last triangle, is not sound (no trap).
+        let good = try MGSolidSection.cut(MGMesh.chamferedBox(size: MGVec3(4, 4, 4), chamfer: 0), plane)
+        XCTAssertTrue(good.isSound)
+        for (first, count) in [(good.capFirstTriangle, Int.max), (Int.max, Int.max), (-1, good.capTriangleCount + 1),
+                               (good.capFirstTriangle + 1, good.capTriangleCount - 1), (good.mesh.triangleCount, 0)] {
+            var bad = good
+            bad.capFirstTriangle = first; bad.capTriangleCount = count
+            XCTAssertFalse(bad.isSound, "\(first) \(count)")
+            _ = bad.renderMesh(creaseAngle: 0.6)
         }
         // A bad cap index (review S3) renders nothing instead of trapping, and the cut is not sound.
         c.mesh.indices[c.mesh.indices.count - 1] = 9_999
@@ -414,6 +453,15 @@ final class SolidSectionTests: XCTestCase {
         // The cut geometry is built once and reused.
         r.show(d.view(step: 0))
         XCTAssertTrue(node("casing").geometry === cutGeometry)
+        // Second review R2: a different cut with the same counts and cap area (moved within its plane, x = 0) is
+        // rebuilt, not reused.
+        var moved = cutMesh
+        moved.mesh.positions = moved.mesh.positions.map { $0 + MGVec3(0, 100, 0) }
+        var other = d.view(step: 0)
+        other.parts["casing"]?.cut = moved
+        r.show(other)
+        XCTAssertFalse(node("casing").geometry === cutGeometry)
+        XCTAssertEqual(Double(node("casing").geometry!.boundingBox.min.y), moved.mesh.bounds.min.y, accuracy: 1e-3)
         r.show(MGSolidView(d.assembly))
         XCTAssertTrue(node("casing").geometry === plain)
     }

@@ -60,9 +60,9 @@ public final class MGSolidRenderer {
     public private(set) var view: MGSolidView
     /// Uncut geometry of every part, and the geometry of each capped cut shown so far (keyed by part and local plane).
     private var plainGeometry: [String: SCNGeometry] = [:]
-    /// Keyed by part id and local plane; a part whose mesh changes drops its entries, so a hit needs only a cheap
-    /// fingerprint check (triangle and vertex counts, cap area).
-    private var cutGeometry: [String: (fingerprint: [Double], geometry: SCNGeometry)] = [:]
+    /// Keyed by part id and local plane. A hit must hold an equal cut (full content); arrays compare by storage first,
+    /// so showing the same cut again (the steps of one document share it) costs O(1), and a different cut is rebuilt.
+    private var cutGeometry: [String: (cut: MGSectionCut, geometry: SCNGeometry)] = [:]
 
     public init(assembly: MGAssembly, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
         self.assembly = assembly; self.lighting = lighting; self.options = options
@@ -160,10 +160,9 @@ public final class MGSolidRenderer {
             let g: SCNGeometry?
             if let cut = view.part(id).cut, let p = assembly.part(id) {
                 let key = "\(id)|\(cut.plane.normal.x),\(cut.plane.normal.y),\(cut.plane.normal.z),\(cut.plane.offset)"
-                let print = [Double(cut.mesh.triangleCount), Double(cut.mesh.positions.count), Double(cut.capTriangleCount), cut.capArea]
-                if let hit = cutGeometry[key], hit.fingerprint == print { g = hit.geometry } else {
+                if let hit = cutGeometry[key], hit.cut == cut { g = hit.geometry } else {
                     let made = MGSolidRenderer.geometry(cut.renderMesh(creaseAngle: p.creaseAngle))
-                    cutGeometry[key] = (print, made); g = made
+                    cutGeometry[key] = (cut, made); g = made
                 }
             } else { g = plainGeometry[id] }
             guard let geometry = g, node.geometry !== geometry else { continue }

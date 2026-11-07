@@ -61,14 +61,19 @@ public struct MGSectionCut: Equatable, Sendable {
 }
 
 extension MGSectionCut {
-    /// True when the cut is a closed, outward mesh (`edgeReport.isClosed`, `signedVolume > 0`) whose cap triangles
-    /// do not overlap or fold back: their areas add up to the cap area (outer loops minus holes). Linear time. The
-    /// compiler refuses a step cut that fails it (`section.open.<id>`), so a geometry fault is never shown.
+    /// True when the cap range is valid (the last `capTriangleCount ≥ 1` triangles), the cut is a closed, outward mesh
+    /// (`edgeReport.isClosed`, `signedVolume > 0`) and its cap triangle areas add up to the cap area (outer loops minus
+    /// holes) within 1e-6 × max(1, cap area), so caps do not overlap or fold back. Linear time. The compiler refuses a
+    /// step cut that fails it (`section.open.<id>`). It is a consistency check, not a proof: it does not test that cap
+    /// vertices lie on the plane or that each shell is outward, and at sizes far below 1 mm² its absolute tolerance
+    /// can miss a folded cap.
     public var isSound: Bool {
+        // The caps are the last triangles: check the range without arithmetic that could overflow.
+        let n = mesh.triangleCount
+        guard capFirstTriangle >= 0, capFirstTriangle <= n, capTriangleCount >= 1, capTriangleCount == n - capFirstTriangle else { return false }
         guard MGSolidSection.isWellFormed(mesh), mesh.edgeReport.isClosed, mesh.signedVolume > 0 else { return false }
-        let first = min(max(0, capFirstTriangle), mesh.triangleCount), last = min(mesh.triangleCount, first + max(0, capTriangleCount))
         var sum = 0.0
-        for i in first..<last { sum += mesh.faceNormal(i).length / 2 }
+        for i in capFirstTriangle..<n { sum += mesh.faceNormal(i).length / 2 }
         return capArea >= 0 && abs(sum - capArea) <= 1e-6 * max(1, capArea)
     }
 }
@@ -110,8 +115,14 @@ public enum MGSolidSection {
     /// Exact triangle and vertex counts of `cut(mesh, plane)`, from a pre-pass that classifies vertices, counts the
     /// clipped triangles and chains the cap loops, but builds no cut triangle and no cap. Throws what `cut` throws.
     public static func estimate(_ mesh: MGMesh, _ plane: MGSectionPlane) throws -> (triangles: Int, vertices: Int) {
-        let t = try topology(mesh, plane, build: false)
-        return (t.keptTriangles + t.capTriangles, t.vertexCount)
+        let e = try estimate(mesh, plane, workLimit: .max)
+        return (e.triangles, e.vertices)
+    }
+
+    /// The pre-pass with a cap work limit (`section.budget` when exceeded); also returns the cap work it charged.
+    static func estimate(_ mesh: MGMesh, _ plane: MGSectionPlane, workLimit: Int) throws -> (triangles: Int, vertices: Int, work: Int) {
+        let t = try topology(mesh, plane, build: false, workLimit: workLimit)
+        return (t.keptTriangles + t.capTriangles, t.vertexCount, t.work)
     }
 
     /// Cuts a closed mesh by the plane and caps every cut. Reasons: `section.mesh` (bad indices or non-finite numbers),
@@ -134,7 +145,10 @@ public enum MGSolidSection {
                 for v in loop { slot.append(pts.count); ids.append(v); let p = t.positions[v]; pts.append(MGVec2(p.dot(e1), p.dot(e2))) }
                 slots.append(slot)
             }
-            for (a, b, c) in MGCapTriangulator.triangulate(points: pts, outer: slots[0], holes: Array(slots.dropFirst())) {
+            guard let tris = MGCapTriangulator.triangulate(points: pts, outer: slots[0], holes: Array(slots.dropFirst())) else {
+                throw MGSolidIssue("section.nesting")
+            }
+            for (a, b, c) in tris {
                 out.indices += [UInt32(ids[a]), UInt32(ids[b]), UInt32(ids[c])]
             }
             area += group.area
@@ -162,7 +176,7 @@ public enum MGSolidSection {
         return out
     }
     struct Topology {
-        var keptTriangles = 0, capTriangles = 0, vertexCount = 0
+        var keptTriangles = 0, capTriangles = 0, vertexCount = 0, work = 0
         var positions: [MGVec3] = []
         var indices: [UInt32] = []
         var groups: [Group] = []
@@ -183,7 +197,10 @@ public enum MGSolidSection {
     /// Clips every triangle (Sutherland-Hodgman against the kept half `d <= 0`), dedups the cut points per mesh edge,
     /// finds the open edges the cut leaves and chains them into cap loops grouped by shell. With `build == false` it
     /// only counts, so the counts are known before any cut triangle exists.
-    static func topology(_ mesh: MGMesh, _ plane: MGSectionPlane, build: Bool) throws -> Topology {
+    /// `workLimit`: cap work units (loop points grouped, containment and bridge scans) the pre-pass may spend before it
+    /// refuses with `section.budget`; `work` reports what it spent.
+    static func topology(_ mesh: MGMesh, _ plane: MGSectionPlane, build: Bool, workLimit: Int = .max) throws -> Topology {
+        var work = 0
         guard isWellFormed(mesh), plane.normal.dot(plane.normal).isFinite, plane.offset.isFinite else { throw MGSolidIssue("section.mesh") }
         switch crossing(mesh, plane) {
         case .misses: throw MGSolidIssue("section.miss")
@@ -315,39 +332,70 @@ public enum MGSolidSection {
             groups.append(Group(outer: loop, holes: [], area: areas[k], outerArea: areas[k]))
             groupFlat.append(flats[k]); groupIDs.append(Set(loop)); groupShell.append(shellOf[loop[0]]!)
         }
+        // Hole -> outer search, fast for nested and concentric loops: outer loops are walked in order of gross
+        // area from the first one large enough to hold the hole; a bounding-box test rejects most, and one hole point
+        // (not a vertex of that outer loop) decides containment with a single point-in-polygon test. Every visit is
+        // charged to the cap work budget (`section.budget`), so no arrangement of loops can run long.
+        func charge(_ units: Int) throws {
+            work += units
+            guard work <= workLimit else { throw MGSolidIssue("section.budget") }
+        }
+        func box(_ f: [MGVec2]) -> (MGVec2, MGVec2) {
+            var lo = f[0], hi = f[0]
+            for q in f { lo = MGVec2(min(lo.x, q.x), min(lo.y, q.y)); hi = MGVec2(max(hi.x, q.x), max(hi.y, q.y)) }
+            return (lo, hi)
+        }
+        try charge(flats.reduce(0) { $0 + $1.count })
+        let order = groups.indices.sorted { (groups[$0].outerArea, $0) < (groups[$1].outerArea, $1) }
+        let orderedArea = order.map { groups[$0].outerArea }
+        let groupBox = groupFlat.map(box)
         for (k, loop) in simple.enumerated() where areas[k] < 0 {
             let shell = shellOf[loop[0]]!
-            /// True when every hole point that is not a vertex of the outer loop lies inside it (and one such point exists).
-            func contains(_ g: Int) -> Bool {
-                var any = false
-                for (i, v) in loop.enumerated() where !groupIDs[g].contains(v) {
-                    guard MGSolidParser.inside(flats[k][i], groupFlat[g]) else { return false }
-                    any = true
+            let hb = box(flats[k])
+            let tol = 1e-9 * max(1, hb.1.x - hb.0.x, hb.1.y - hb.0.y)
+            // First outer loop whose gross area could hold this hole (binary search).
+            var lo = 0, hi = order.count
+            while lo < hi { let mid = (lo + hi) / 2; if orderedArea[mid] < -areas[k] * (1 - 1e-9) { lo = mid + 1 } else { hi = mid } }
+            func smallest(sameShell: Bool) throws -> Int? {
+                for g in order[lo...] {
+                    try charge(1)
+                    guard !sameShell || groupShell[g] == shell else { continue }
+                    let (b0, b1) = groupBox[g]
+                    guard b0.x <= hb.0.x + tol, b0.y <= hb.0.y + tol, b1.x >= hb.1.x - tol, b1.y >= hb.1.y - tol else { continue }
+                    guard let i = loop.firstIndex(where: { !groupIDs[g].contains($0) }) else { try charge(loop.count); continue }
+                    try charge(i + 1 + groupFlat[g].count)
+                    if MGSolidParser.inside(flats[k][i], groupFlat[g]) { return g }
                 }
-                return any
+                return nil
             }
-            func smallest(_ candidates: [Int]) -> Int? {
-                candidates.filter(contains).min { (groups[$0].outerArea, $0) < (groups[$1].outerArea, $1) }
-            }
-            guard let g = smallest(groups.indices.filter { groupShell[$0] == shell }) ?? smallest(Array(groups.indices)) else {
-                throw MGSolidIssue("section.nesting")
-            }
+            guard let g = try smallest(sameShell: true) ?? smallest(sameShell: false) else { throw MGSolidIssue("section.nesting") }
             if let j = loop.firstIndex(where: { groupIDs[g].contains($0) }), let i = groups[g].outer.firstIndex(of: loop[j]) {
                 // Splice: …, v, (the hole from after v round to before v), v, … : one weakly simple outer loop.
+                try charge(2 * (groups[g].outer.count + loop.count))
                 let o = groups[g].outer
                 let around = Array(loop[(j + 1)...] + loop[..<j])
                 groups[g].outer = Array(o[...i]) + around + [loop[j]] + Array(o[(i + 1)...])
                 groupFlat[g] = flat(groups[g].outer)
                 groupIDs[g].formUnion(loop)
             } else {
+                try charge(loop.count)
                 groups[g].holes.append(loop)
             }
             groups[g].area += areas[k]
+        }
+        // Triangulation work (charged here, before any cap is built): bridging each hole scans the polygon built so
+        // far twice (the bridge ray and its visibility test) plus one containment test against the outer loop; the
+        // zipper strip and the grid ear clipper visit each point a bounded number of times on ordinary loops.
+        for g in groups {
+            var poly = g.outer.count
+            try charge(poly)
+            for h in g.holes { try charge(3 * poly + h.count); poly += h.count + 2 }
         }
         // Each outer loop with h bridged holes and m points in all triangulates into m + 2h - 2 triangles (ear clipping
         // with hole bridges, or the zipper strip for one hole).
         for g in groups { t.capTriangles += g.outer.count + g.holes.reduce(0) { $0 + $1.count } + 2 * g.holes.count - 2 }
         t.groups = groups
+        t.work = work
         return t
     }
 }
@@ -355,10 +403,12 @@ public enum MGSolidSection {
 /// Cap triangulation for section loops. One hole: the zipper strip when both loops are star-shaped about the hole's
 /// centre and every strip triangle winds counter-clockwise (linear). Otherwise holes are bridged into the outer loop
 /// (`MGTriangulator.bridge`) and the polygon is ear-clipped on a linked list, testing only reflex vertices through a
-/// uniform grid, so gear-sized loops (thousands of points) clip in near-linear time. Both give exactly
+/// uniform grid, so gear-sized loops (thousands of points) clip fast (no proven linear bound). Both give exactly
 /// m + 2h - 2 triangles for m points and h holes.
 enum MGCapTriangulator {
-    static func triangulate(points: [MGVec2], outer: [Int], holes: [[Int]]) -> [(Int, Int, Int)] {
+    /// nil when a hole's rightmost point is not inside the outer loop (bridging needs it; only a self-intersecting
+    /// input can fail), so bridging never traps.
+    static func triangulate(points: [MGVec2], outer: [Int], holes: [[Int]]) -> [(Int, Int, Int)]? {
         if holes.count == 1 {
             let h = holes[0].map { points[$0] }
             let c = h.reduce(MGVec2.zero, +) * (1 / Double(h.count))
@@ -373,7 +423,11 @@ enum MGCapTriangulator {
         let ordered = holes.filter { $0.count > 2 }.sorted { h1, h2 in
             (h1.map { points[$0].x }.max() ?? 0) > (h2.map { points[$0].x }.max() ?? 0)
         }
-        for hole in ordered { poly = MGTriangulator.bridge(points: points, poly: poly, hole: hole) }
+        let outerLoop = outer.map { points[$0] }
+        for hole in ordered {
+            guard let right = hole.max(by: { points[$0].x < points[$1].x }), MGSolidParser.inside(points[right], outerLoop) else { return nil }
+            poly = MGTriangulator.bridge(points: points, poly: poly, hole: hole)
+        }
         return clip(points, poly)
     }
 

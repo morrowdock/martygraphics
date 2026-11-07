@@ -80,9 +80,13 @@ extension MGSolidDocument {
 
 enum MGSolidSections {
     /// Most part triangles that all distinct cuts of one document may read (each distinct part and plane reads its
-    /// part's mesh once). This bounds the compile time of many cuts of large parts (`section.budget`): the worst
-    /// accepted document, seven face cuts of a 200-tooth gear, checks in about 0.7 s on an Apple M1 (release).
+    /// part's mesh once). With `capWork` this bounds the compile time of many cuts of large parts (`section.budget`).
+    /// Measured benchmarks, not a proven worst case (Apple M1, release): 0.65 s for seven face cuts of a 200-tooth
+    /// gear, 1.08 s for one cut of eight 63-fin concentric revolves (docs/SOLID-3D.md, Sections).
     static let work = 400_000
+    /// Most cap work units (loop points grouped, hole-to-outer visits and point-in-polygon points, bridge scans) that
+    /// the pre-passes of all distinct cuts may charge; `section.budget`. Ordinary caps use a few points per point.
+    static let capWork = 4_000_000
 
     /// Cuts every step section. Each listed part must be crossed by the plane: `section.miss.<id>` when nothing of it
     /// would be removed, `section.empty.<id>` when all of it would. The exact counts of every distinct cut join the
@@ -90,13 +94,13 @@ enum MGSolidSections {
     /// plane did not change is reused from `previous`.
     static func compile(_ steps: inout [MGSolidStep], _ assembly: MGAssembly, defaults: MGPoseParameters,
                         budget: (triangles: Int, vertices: Int), shapes: [String: [MGShapeSpec]], previous: MGSolidDocument?,
-                        work: Int = MGSolidSections.work) throws {
+                        work: Int = MGSolidSections.work, capWork: Int = MGSolidSections.capWork) throws {
         guard steps.contains(where: { $0.section != nil }) else { return }
         let world = assembly.pose(MGPoseParameters(input: defaults.input, explode: 0)).world
         struct Key: Hashable { let part: String; let plane: MGSectionPlane }
         var planned: [Key] = []
         var seen = Set<Key>()
-        var triangles = budget.triangles, vertices = budget.vertices, read = 0
+        var triangles = budget.triangles, vertices = budget.vertices, read = 0, capUsed = 0
         for s in steps {
             guard let sec = s.section else { continue }
             for id in sec.parts {
@@ -113,8 +117,11 @@ enum MGSolidSections {
                 case .cuts: break
                 }
                 let e: (triangles: Int, vertices: Int)
-                do { e = try MGSolidSection.estimate(part.mesh, local) }
-                catch let e as MGSolidIssue { throw MGSolidIssue("\(e.reason).\(MGSolidParser.token(id))", part: id) }
+                do {
+                    let r = try MGSolidSection.estimate(part.mesh, local, workLimit: capWork - capUsed)
+                    e = (r.triangles, r.vertices); capUsed += r.work
+                } catch let e as MGSolidIssue where e.reason == "section.budget" { throw e
+                } catch let e as MGSolidIssue { throw MGSolidIssue("\(e.reason).\(MGSolidParser.token(id))", part: id) }
                 triangles += e.triangles; vertices += e.vertices
                 // Stop counting as soon as the budget is exceeded.
                 guard triangles <= MGSolidLimits.triangles, vertices <= MGSolidLimits.vertices else { throw MGSolidIssue("assembly.budget") }
@@ -131,7 +138,7 @@ enum MGSolidSections {
             let cut: MGSectionCut
             do { cut = try MGSolidSection.cut(assembly.part(key.part)!.mesh, key.plane) }
             catch let e as MGSolidIssue { throw MGSolidIssue("\(e.reason).\(MGSolidParser.token(key.part))", part: key.part) }
-            // Safety net: a cut that is not closed, outward and overlap-free is refused, never shown.
+            // Safety net: a cut that fails the consistency check (closed, outward, caps without overlap) is refused.
             guard cut.isSound else { throw MGSolidIssue("section.open.\(MGSolidParser.token(key.part))", part: key.part) }
             cuts[key] = cut
         }
