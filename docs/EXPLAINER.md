@@ -162,7 +162,12 @@ in an explainer.
     fires when the motion settles, filled from the state shown then (the simpler of the two options; there is no
     number-free first version). A line without a 2D engine number fires as before. With `.estimate` pacing the
     line's time starts when it is due; a line the host ends before it is due is dropped, never spoken late;
-    `finishNow()` makes a waiting line due at once. `lineQueued` is for prefetch only: do not speak it.
+    `finishNow()` makes a waiting line due at once. The wait applies to every 2D engine placeholder in a line,
+    whatever the beat's word tier (an `unchecked` line that shows `{theta}` waits too). A host adopts the board once
+    per call, so when one call presents several beats (`finishNow()`, `.immediate` over a whole document or one large
+    chunk), only the line of the last beat, the one the board then shows, is due; the skipped beats' lines are not
+    returned (the history keeps them, and the report keeps their captions). `lineQueued` is for prefetch only: do not
+    speak it.
 
 ## One id namespace
 

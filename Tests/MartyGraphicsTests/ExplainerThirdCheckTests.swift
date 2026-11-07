@@ -170,3 +170,75 @@ final class ExplainerBoardClockTests: ExplainerTestCase {
         XCTAssertTrue(MGLessonController(pacing: .speech, clock: lessonClock).board.presentationClock === lessonClock)
     }
 }
+
+/// The fourth check: a line is spoken only with the board it describes, also when beats are skipped, and also for an
+/// `unchecked` line that shows a 2D engine number.
+final class ExplainerSpeechSkipTests: ExplainerTestCase {
+    static let threeBeats = [XFix.header(), #"{"board":\#(XFix.rotate)}"#, #"{"say":"Start."}"#,
+                             #"{"say":"The angle is {theta}."}"#, #"{"op":"animate","param":"angle","to":90,"dur":6}"#,
+                             #"{"say":"The angle is {theta}."}"#, #"{"op":"animate","param":"angle","to":180,"dur":6}"#]
+
+    /// Every spoken line with the board's θ at that moment, from the controller's own event hook.
+    @MainActor func spoken(_ c: MGExplainerController) -> [(String, Double?)] {
+        var out: [(String, Double?)] = []
+        c.onEvent = { [weak c] e in if case .lineDue(_, let t, _) = e { out.append((t, c?.board.scene?.values["theta"]?.value)) } }
+        return out
+    }
+
+    // `finishNow` over several beats: the line of a skipped beat is not due; the shown beat's line agrees with the board.
+    @MainActor func testFinishNowDropsSkippedLines() {
+        let clock = MGManualClock()
+        let c = MGExplainerController(pacing: .speech, clock: clock)
+        c.begin()
+        var lines: [(String, Double?)] = []
+        c.onEvent = { [weak c] e in if case .lineDue(_, let t, _) = e { lines.append((t, c?.board.scene?.values["theta"]?.value)) } }
+        c.feed(Self.threeBeats.joined(separator: "\n") + "\n"); c.endStream()
+        c.lineEnded(0)
+        clock.advance(by: .seconds(3))
+        c.finishNow()
+        XCTAssertEqual(lines.map(\.0), ["Start.", "The angle is 180°."], "the 90° line of the skipped beat is never due")
+        XCTAssertEqual(lines.last?.1, 180)
+        XCTAssertEqual(c.board.transition, .direct)
+    }
+
+    // `.immediate` over a whole document: only the line of the beat the board shows is due.
+    @MainActor func testImmediateLoadDropsSkippedLines() throws {
+        let c = MGExplainerController(pacing: .immediate, clock: MGManualClock())
+        c.begin()
+        var lines: [(String, Double?)] = []
+        c.onEvent = { [weak c] e in if case .lineDue(_, let t, _) = e { lines.append((t, c?.board.scene?.values["theta"]?.value)) } }
+        let doc = XFix.doc(board: XFix.rotate, beats: #"[{"say":"Start."},{"say":"The angle is {theta}.","ops":[{"op":"animate","param":"angle","to":90,"dur":6}]},{"say":"The angle is {theta}.","ops":[{"op":"animate","param":"angle","to":180,"dur":6}]}]"#)
+        XCTAssertTrue(c.load(try MGExplainer.parse(data: Data(doc.utf8)).get()))
+        XCTAssertEqual(lines.map(\.0), ["The angle is 180°."])
+        XCTAssertEqual(lines.first?.1, 180)
+        // A stream fed in one chunk on an immediate controller: the same rule within one call.
+        let d = MGExplainerController(pacing: .immediate, clock: MGManualClock())
+        d.begin()
+        var more: [String] = []
+        d.onEvent = { e in if case .lineDue(_, let t, _) = e { more.append(t) } }
+        d.feed(Self.threeBeats.joined(separator: "\n") + "\n" + #"{"end":true}"# + "\n")
+        XCTAssertEqual(more.last, "The angle is 180°.")
+        XCTAssertFalse(more.contains("The angle is 90°."))
+    }
+
+    // An `unchecked` line that shows `{theta}` waits for the board like any other (speech and estimate pacing).
+    func testUncheckedLineWithAnEngineNumberWaits() {
+        let lines = [XFix.header(), #"{"board":\#(XFix.rotate)}"#, #"{"say":"Start."}"#,
+                     #"{"say":"The angle is {theta}.","unchecked":"Author supplied"}"#, #"{"op":"animate","param":"angle","to":90,"dur":6}"#]
+        let clock = MGManualClock()
+        var s = MGExplainerSession(pacing: .speech, clock: clock)
+        _ = s.feed(lines.joined(separator: "\n") + "\n"); _ = s.endStream()
+        XCTAssertTrue(XFix.lineDue(s.lineEnded(0)).isEmpty, "not spoken while the board shows 0°")
+        XCTAssertEqual(s.caption, "The angle is ….")
+        clock.advance(by: .seconds(6))
+        XCTAssertEqual(XFix.lineDue(s.tick()), ["The angle is 90°."])
+        let eclock = MGManualClock()
+        var e = MGExplainerSession(pacing: .estimate(wordsPerSecond: 100), clock: eclock)
+        var all = e.feed(lines.joined(separator: "\n") + "\n") + e.endStream()
+        for _ in 0..<16 { eclock.advance(by: .milliseconds(500)); all += e.tick() }
+        let order = all.compactMap { ev -> String? in
+            if case .lineDue(let k, _, _) = ev { return "due\(k)" }; if case .lineEnded(let k) = ev { return "end\(k)" }; return nil
+        }
+        XCTAssertEqual(order, ["due0", "end0", "due1", "end1"])
+    }
+}

@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "72f02ce0cda94c496140e1304d41648bdc6c2b01f64440dc5cdf6799957f19ae"
+      "sha256": "c8087ea89f59446fc142a744db7242890ee2f7ceeabbc431216fc29a40a188aa"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -239,11 +239,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.check.json",
-      "sha256": "9cd6bb96e3d0798fed616c0b1b23744bcc564d4c14230ff30f81ac0a74a250af"
+      "sha256": "802a72ae1a1642fe5eeec3d2aababd4fae8eaf1ef4156e33b08946784fcfd6eb"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.strict.json",
-      "sha256": "e8bad49cfbb99df35c4a651c6fc4f413127fbe520e04bc062e70c680e61d15ee"
+      "sha256": "c8e6e0d9251430d3a1a0578f70dc1150dc5d97a78f9723c2791bf510111eb40b"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-1-refused.check.json",
@@ -479,7 +479,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
-      "sha256": "e1553c83eb4f9fc175de95ca50aa6e92ffa6d6a7cccb4a1a1f56b4298b3084c3"
+      "sha256": "6025b7c5d6fcdc829ed819c83d757aec897dbd34eb983a8964eb9343b31b304e"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerState.swift",
@@ -791,7 +791,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerThirdCheckTests.swift",
-      "sha256": "56ade9b7b2b87e671a2e62e95aa5cabaab3fed4c2761fbba0def9c3af90ccce7"
+      "sha256": "787a1faf6c9e61a5063eb2312cf521a0c65c40f2870f0eed3e34b90ab3c9f742"
     },
     {
       "path": "Tests/MartyGraphicsTests/HighlightReferenceTests.swift",
@@ -951,7 +951,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "5ea34d16ac7aad6f6ada3be9dcbf5bd3aeec24fd6f5ee79fca7ca667931c518a"
+      "sha256": "5a9866d26c967496c13de7050717fe5d4d24584b79b4ebaee867b3bc24c5a305"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1031,7 +1031,7 @@
     },
     {
       "path": "docs/assets/explainer/provenance.json",
-      "sha256": "434500d73d2664a20944d219036b070940aeff9b2d98308e3a9aa5b3f47fcfed"
+      "sha256": "32325e833eaf2bf079839b7a14180ef73d7125d938f948e03eb224c7816ec446"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",

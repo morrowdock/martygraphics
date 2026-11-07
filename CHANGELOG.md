@@ -50,6 +50,8 @@
     (speech is learner-visible); `finishNow` and `.immediate` pacing give the board the end state as a direct change
     in the same step; restore applies the board rules to every held scene (a forged heading is
     `explainer.board.title`) and keeps no inner lesson title.
+  - Fourth-check fixes (PR #32): when one call presents several beats (`finishNow`, `.immediate`), only the shown
+    beat's line is due; the speech wait applies to every 2D engine placeholder, also in an `unchecked` line.
   - The board view draws its transitions on `MGSceneController.presentationClock` when set (default nil: the wall
     clock, as before). `MGLessonController` and `MGExplainerController` set their session's monotonic clock, so a
     wall-clock jump cannot show an earlier frame while the session says the board has settled.
