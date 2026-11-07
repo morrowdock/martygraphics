@@ -19,7 +19,9 @@ public struct MGStudioOptions: Equatable, Sendable {
     public var bloom = true
     /// Render at this multiple of the output size and downsample (1 = off).
     public var supersample = 2
-    /// Section plane in world (Y-up) space: points with `dot(p, normal) > offset` are cut away.
+    /// Section plane in world (Y-up) space: points with `dot(p, normal) > offset` are cut away. This is an uncapped
+    /// fragment discard kept for compatibility; authored step sections (`show(_:)` with `MGSolidDocument.view(step:)`)
+    /// are capped core cuts and need no option.
     public var section: (normal: MGVec3, offset: Double)?
     /// Part ids the section plane applies to (empty = all parts).
     public var sectionParts: Set<String> = []
@@ -41,7 +43,7 @@ public final class MGSolidRenderer {
     public let scene = SCNScene()
     public private(set) var assembly: MGAssembly
     public let lighting: MGStudioLighting
-    public var options: MGStudioOptions { didSet { applySection() } }
+    public var options: MGStudioOptions { didSet { restyleAll() } }
     public let cameraNode = SCNNode()
     private let stageNode = SCNNode()
     private var partNodes: [String: SCNNode] = [:]
@@ -54,9 +56,17 @@ public final class MGSolidRenderer {
     public private(set) var camera: MGSolidCamera
     private var highlighted: Set<String> = []
     private var dimOthers = true
+    /// What each part shows (cuts, opacity, light); `show(_:)` sets it.
+    public private(set) var view: MGSolidView
+    /// Uncut geometry of every part, and the geometry of each capped cut shown so far (keyed by part and local plane).
+    private var plainGeometry: [String: SCNGeometry] = [:]
+    /// Keyed by part id and local plane. A hit must hold an equal cut (full content); arrays compare by storage first,
+    /// so showing the same cut again (the steps of one document share it) costs O(1), and a different cut is rebuilt.
+    private var cutGeometry: [String: (cut: MGSectionCut, geometry: SCNGeometry)] = [:]
 
     public init(assembly: MGAssembly, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
         self.assembly = assembly; self.lighting = lighting; self.options = options
+        view = MGSolidView(assembly)
         camera = MGSolidCamera(target: .zero, yaw: 30, pitch: 25, distance: 300)
         scene.rootNode.addChildNode(stageNode)
         stageNode.simdTransform = MGSolidRenderer.matrix(MGSolidStage.zUpToYUp)
@@ -89,44 +99,77 @@ public final class MGSolidRenderer {
 
     /// Replaces the assembly. Parts keep their nodes when id, mesh and material are unchanged (a patch that only
     /// changes kinematics or one part's material does not rebuild the others).
+    /// The view resets to the new assembly's plain view (parts' own opacity and light, nothing cut).
     public func setAssembly(_ new: MGAssembly) {
         let old = Dictionary(assembly.parts.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         assembly = new
+        view = MGSolidView(new)
         let ids = Set(new.parts.map(\.id))
-        for (id, node) in partNodes where !ids.contains(id) { node.removeFromParentNode(); partNodes[id] = nil }
+        for (id, node) in partNodes where !ids.contains(id) {
+            node.removeFromParentNode(); partNodes[id] = nil; plainGeometry[id] = nil
+            cutGeometry = cutGeometry.filter { !$0.key.hasPrefix(id + "|") }
+        }
         for p in new.parts {
             if let o = old[p.id], o.mesh == p.mesh, o.creaseAngle == p.creaseAngle, let node = partNodes[p.id] {
                 if partMaterials[p.id] != p.material { style(node, p) }
                 continue
             }
             partNodes[p.id]?.removeFromParentNode()
+            cutGeometry = cutGeometry.filter { !$0.key.hasPrefix(p.id + "|") }
             partNodes[p.id] = makeNode(p)
         }
         partMaterials = partMaterials.filter { ids.contains($0.key) }
-        if highlighted.isEmpty { applySection() } else { highlight(highlighted, dimOthers: dimOthers) }
+        applyGeometry()
+        restyleAll()
     }
 
     private func rebuildParts() {
         partNodes.values.forEach { $0.removeFromParentNode() }
         partNodes = [:]
         for p in assembly.parts { partNodes[p.id] = makeNode(p) }
-        applySection()
+        restyleAll()
     }
 
     private func makeNode(_ p: MGPart) -> SCNNode {
-        let node = SCNNode(geometry: MGSolidRenderer.geometry(p.mesh.renderMesh(creaseAngle: p.creaseAngle)))
+        let g = MGSolidRenderer.geometry(p.mesh.renderMesh(creaseAngle: p.creaseAngle))
+        plainGeometry[p.id] = g
+        let node = SCNNode(geometry: g)
         node.name = p.id
+        partNodes[p.id] = node
         style(node, p)
         stageNode.addChildNode(node)
         return node
     }
 
-    /// Gives a part node its preset's shared material and records the preset.
+    /// Gives a part node its preset's material (shared unless the part is modified) and records the preset.
     private func style(_ node: SCNNode, _ p: MGPart) {
-        node.geometry?.materials = [material(for: p.id, preset: p.material)]
-        node.castsShadow = p.material != .glass
-        node.renderingOrder = p.material == .glass ? 10 : 0
         partMaterials[p.id] = p.material
+        restyle(p.id)
+    }
+
+    /// Shows a view: each cut part swaps in its capped cut geometry (built once per cut and kept), and every part
+    /// takes its opacity and light. Pass `document.view(step:)` for an authored step, `MGSolidView(assembly)` for none.
+    public func show(_ view: MGSolidView) {
+        self.view = view
+        applyGeometry()
+        restyleAll()
+    }
+
+    private func applyGeometry() {
+        for (id, node) in partNodes {
+            let g: SCNGeometry?
+            if let cut = view.part(id).cut, let p = assembly.part(id) {
+                let key = "\(id)|\(cut.plane.normal.x),\(cut.plane.normal.y),\(cut.plane.normal.z),\(cut.plane.offset)"
+                if let hit = cutGeometry[key], hit.cut == cut { g = hit.geometry } else {
+                    let made = MGSolidRenderer.geometry(cut.renderMesh(creaseAngle: p.creaseAngle))
+                    cutGeometry[key] = (cut, made); g = made
+                }
+            } else { g = plainGeometry[id] }
+            guard let geometry = g, node.geometry !== geometry else { continue }
+            let materials = node.geometry?.materials ?? []
+            node.geometry = geometry
+            geometry.materials = materials
+        }
     }
 
     /// Moves every part to the pose for `params` (pure kinematics, no geometry rebuild).
@@ -140,18 +183,45 @@ public final class MGSolidRenderer {
     /// Emphasises some parts: the others are dimmed (still opaque, so depth and shadows stay readable).
     public func highlight(_ ids: Set<String>, dimOthers: Bool = true) {
         highlighted = ids; self.dimOthers = dimOthers
-        for (id, node) in partNodes {
-            let base = material(for: id, preset: partMaterials[id] ?? .brushedSteel)
-            let m = base.copy() as! SCNMaterial
-            if !ids.isEmpty && dimOthers && !ids.contains(id) {
-                m.multiply.contents = CGColor(srgbRed: 0.30, green: 0.32, blue: 0.38, alpha: 1)
-            } else if ids.contains(id) {
-                m.emission.contents = CGColor(srgbRed: 0.55, green: 0.66, blue: 1.0, alpha: 1)
-                m.emission.intensity = 0.05
-            }
-            applySection(to: m, id: id)
-            node.geometry?.materials = [m]
+        restyleAll()
+    }
+
+    private func restyleAll() { for id in partNodes.keys { restyle(id) } }
+
+    /// Material and node settings of one part from its preset, its view (opacity, light), the highlight and the legacy
+    /// section option. Unmodified parts share the cached preset material.
+    private func restyle(_ id: String) {
+        guard let node = partNodes[id] else { return }
+        let preset = partMaterials[id] ?? .brushedSteel
+        let pv = view.part(id)
+        let light = pv.emission.flatMap { $0.intensity > 0 ? $0 : nil }
+        let base = material(for: preset, emission: light)
+        let dim = !highlighted.isEmpty && dimOthers && !highlighted.contains(id)
+        let emphasise = highlighted.contains(id)
+        let seeThrough = pv.opacity < 1
+        var m = base
+        if !highlighted.isEmpty || seeThrough || sectionApplies(id) { m = base.copy() as! SCNMaterial }
+        if dim {
+            m.multiply.contents = CGColor(srgbRed: 0.30, green: 0.32, blue: 0.38, alpha: 1)
+        } else if emphasise && light == nil {
+            m.emission.contents = CGColor(srgbRed: 0.55, green: 0.66, blue: 1.0, alpha: 1)
+            m.emission.intensity = 0.05
         }
+        if seeThrough {
+            // A ghost lets the parts behind it show: blend, sort after opaque parts, and keep its own faces from
+            // hiding each other. A rough, non-metal finish keeps its highlights from blooming into a glowing slab.
+            m.metalness.contents = NSNumber(value: 0.0)
+            m.roughness.contents = NSNumber(value: 0.85)
+            m.clearCoat.contents = NSNumber(value: 0.0)
+            m.blendMode = .alpha
+            m.transparencyMode = .dualLayer
+            m.writesToDepthBuffer = false
+        }
+        applySection(to: m, id: id)
+        node.geometry?.materials = [m]
+        node.opacity = CGFloat(pv.opacity)
+        node.castsShadow = preset != .glass && pv.opacity >= 0.5
+        node.renderingOrder = preset == .glass || seeThrough ? 10 : 0
     }
 
     // MARK: Camera
@@ -239,10 +309,16 @@ public final class MGSolidRenderer {
 
     // MARK: Materials
 
-    private func material(for id: String, preset: MGMaterialPreset) -> SCNMaterial {
-        if let m = materialCache[preset.id] { return m }
+    private func material(for preset: MGMaterialPreset, emission: MGEmission?) -> SCNMaterial {
+        let key = preset.id + (emission.map { "+" + $0.id } ?? "")
+        if let m = materialCache[key] { return m }
         let m = MGSolidRenderer.scnMaterial(preset)
-        materialCache[preset.id] = m
+        if let e = emission {
+            // HDR emission that the camera's bloom picks up above intensity 1.
+            m.emission.contents = CGColor(srgbRed: e.color[0], green: e.color[1], blue: e.color[2], alpha: 1)
+            m.emission.intensity = CGFloat(e.intensity)
+        }
+        materialCache[key] = m
         return m
     }
 
@@ -294,18 +370,7 @@ public final class MGSolidRenderer {
         return ctx.makeImage()
     }
 
-    // MARK: Section plane
-
-    private func applySection() {
-        let shared = Set(materialCache.values.map(ObjectIdentifier.init))
-        for (id, node) in partNodes {
-            // Cut parts get a private material copy so parts sharing a cached preset material are not cut with them.
-            if sectionApplies(id), let m = node.geometry?.firstMaterial, shared.contains(ObjectIdentifier(m)) {
-                node.geometry?.materials = [m.copy() as! SCNMaterial]
-            }
-            node.geometry?.materials.forEach { applySection(to: $0, id: id) }
-        }
-    }
+    // MARK: Legacy section plane (uncapped fragment discard)
 
     private func sectionApplies(_ id: String) -> Bool {
         options.section != nil && (options.sectionParts.isEmpty || options.sectionParts.contains(id))

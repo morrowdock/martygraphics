@@ -93,6 +93,27 @@ public enum MGMaterialPreset: Hashable, Sendable {
     }
 }
 
+/// A part's own light (assembly v2 `emissive`): an engine colour role and an intensity of 0 to 4 (0 = none). It is
+/// appearance only; it makes no claim.
+public struct MGEmission: Hashable, Sendable {
+    public var role: MGColorRole
+    public var intensity: Double
+    public init(role: MGColorRole, intensity: Double) { self.role = role; self.intensity = intensity }
+    public static let intensityRange: ClosedRange<Double> = 0...4
+    /// sRGB colour of the role.
+    public var color: [Double] { MGSolidPalette.srgb(role) }
+    /// Stable suffix for material ids (`emissive.orange.2`, `emissive.red.1.234`): the exact intensity (shortest
+    /// round-trip decimal), so different intensities never share a material.
+    public var id: String {
+        let i = intensity == intensity.rounded() && abs(intensity) < 1e15 ? String(Int(intensity)) : "\(intensity)"
+        return "emissive.\(role.rawValue).\(i)"
+    }
+    /// The same light with the intensity limited to 0...4 (NaN gives 0), for values set in code.
+    public var clamped: MGEmission {
+        MGEmission(role: role, intensity: intensity.isNaN ? 0 : min(max(intensity, MGEmission.intensityRange.lowerBound), MGEmission.intensityRange.upperBound))
+    }
+}
+
 /// sRGB values of the engine colour roles. These mirror `MGTheme.board` (kept here as plain numbers so the solid
 /// kernel stays Foundation-only).
 public enum MGSolidPalette {

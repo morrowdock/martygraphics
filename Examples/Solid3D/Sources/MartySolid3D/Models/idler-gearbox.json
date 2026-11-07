@@ -1,0 +1,33 @@
+{"v": 2, "kind": "assembly", "title": "Idler gear in a closed gearbox", "units": "mm",
+ "parts": [
+  {"id": "casing", "name": "Gearbox casing", "material": "aluminum", "shape": [
+    {"extrudedProfile": {"points": [[-30, -40], [130, -40], [130, 40], [-30, 40]], "holes": [[[-24, -34], [124, -34], [124, 34], [-24, 34]]],
+                         "depth": 20, "z0": -10, "chamfer": 1, "rot": [1, 0, 0, -90]}},
+    {"box": {"size": [160, 6, 80], "chamfer": 1, "at": [50, -13, 0]}},
+    {"box": {"size": [160, 6, 80], "chamfer": 1, "at": [50, 13, 0]}},
+    {"box": {"size": [176, 44, 8], "chamfer": 1, "at": [50, 0, -44]}}]},
+  {"id": "input", "name": "Input gear", "material": "brass", "at": [0, 0, 0], "rot": [1, 0, 0, -90],
+   "shape": [{"gear": {"teeth": 16, "module": 2, "width": 12, "bore": 4, "z0": -6}}, {"shaft": {"radius": 4, "length": 20, "z0": -10}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "expect": {"axisWorld": [0, 1, 0]}},
+  {"id": "idler", "name": "Idler gear", "material": "bronze", "at": [39, 0, 0], "rot": [1, 0, 0, -90],
+   "shape": [{"gear": {"teeth": 23, "module": 2, "width": 12, "bore": 4, "z0": -6}}, {"shaft": {"radius": 4, "length": 20, "z0": -10}}],
+   "joint": {"revolute": [0, 0, 1]}, "expect": {"axisWorld": [0, 1, 0]}},
+  {"id": "output", "name": "Output gear", "material": "brushedSteel", "at": [90, 0, 0], "rot": [1, 0, 0, -90],
+   "shape": [{"gear": {"teeth": 28, "module": 2, "width": 12, "bore": 4, "z0": -6}}, {"shaft": {"radius": 4, "length": 20, "z0": -10}}],
+   "joint": {"revolute": [0, 0, 1]}, "expect": {"axisWorld": [0, 1, 0]}}
+ ],
+ "constraints": [{"gearMesh": {"a": "input", "b": "idler"}}, {"gearMesh": {"a": "idler", "b": "output"}}],
+ "steps": [
+  {"say": "A closed gearbox: the casing hides every gear inside it.", "camera": "hero"},
+  {"say": "Cut the front half of the casing away. The cut faces are solid walls.", "camera": "hero",
+   "section": {"normal": [0, -1, 0], "offset": 0, "parts": ["casing"]}},
+  {"say": "Inside: an input with {input.teeth} teeth, an idler with {idler.teeth} and an output with {output.teeth}.",
+   "camera": "front", "highlight": ["input", "idler", "output"], "section": {"normal": [0, -1, 0], "parts": ["casing"]}},
+  {"say": "The idler turns the other way, at {idler.speed|abs|frac} of the input speed.", "camera": "front", "highlight": ["idler"], "spin": 1,
+   "section": {"normal": [0, -1, 0], "parts": ["casing"]}, "check": [{"value": "idler.speed", "lt": 0}]},
+  {"say": "The output turns the same way as the input, {output.speed|frac} of a turn per input turn.", "camera": "front",
+   "highlight": ["output"], "spin": 1, "section": {"normal": [0, -1, 0], "parts": ["casing"]},
+   "check": [{"value": "output.speed", "eq": 0.5714285714285714, "tol": 1e-9}]},
+  {"say": "The idler's size cancels out: the ratio is input teeth over output teeth, {input.teeth} to {output.teeth}.",
+   "camera": "hero", "orbit": -20, "spin": 1, "ghost": ["casing"]}
+ ]}

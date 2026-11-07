@@ -236,6 +236,8 @@ reported `part.parent`.
   normals are built), which recent iPhones and iPads hold. The planetary
   example uses 55,960 triangles (under 4%). A 256-point revolve (96 segments),
   8 per part, repeated 12 times (about 4.7 M triangles) is refused at once.
+  In v2, step section cuts count toward the same budget (exact pre-pass counts, before
+  any cut triangle is built).
 
 **Patches.** `MGSolidParser.applying(_:to:)` accepts `params`, `parts` (merge
 fields by id; `null` removes a field), `constraints`, `steps` and `title`. Part
@@ -250,9 +252,9 @@ part a private material copy, so parts that share a preset are never cut with it
 `"v": 2` is a strict superset of v1. A v1 document keeps its exact meaning: the same
 input gives the same document, the same refusals, and its text is never filled. The new
 keys are legal only in v2; in a v1 document they are refused with the usual reason
-(`part.unknown.expect`, `step.unknown.check`). Keys in v2 so far: part `expect` and
-`offAxis`; step `check` and `unchecked`. Later features add their keys to the v2 sets in
-`MGSolidFormat`.
+(`part.unknown.expect`, `step.unknown.check`). Keys in v2 so far: part `expect`,
+`offAxis`, `opacity` and `emissive`; step `check`, `unchecked`, `section` and `ghost`.
+Later features add their keys to the v2 sets in `MGSolidFormat`.
 
 ### Facts
 
@@ -366,6 +368,87 @@ The engine computes a tier for every visible claim. An author never sets one: a 
   `{"id": "stage.carrier", "motion": "Solved by gearMesh (0.29 turns per input turn)", "notChecked": ["3D tooth contact", …]}`;
   a part on a turning parent says "relative to <parent>" and gives its world speed.
 
+## Sections, ghosts and part appearance (v2)
+
+A casing hides the mechanism inside it. In v2 a step can cut parts open or show them
+see-through, and a part can be faint or give off light.
+
+```json
+{"say": "Cut the front half of the casing away.", "section": {"normal": [0, -1, 0], "offset": 0, "parts": ["casing"]}},
+{"say": "Seen through the casing.", "ghost": ["casing"]}
+```
+
+* **`section`** cuts the listed `parts` (1–16 ids; a `repeat` base cuts every copy) with
+  a plane in assembly coordinates (Z up, mm): points with `normal · p > offset` are cut
+  away (`offset` defaults to 0). So the normal points from the kept half toward the
+  removed half: to open the side that the default cameras look at, use `[0, -1, 0]`.
+  The cut is a true section: the engine cuts each closed shell of the part, chains the
+  open edges into loops and fills them with flat cap faces (`MGSolidSection.cut`), so a
+  cut part is still a closed, outward mesh with solid cut walls. Each hole goes to the
+  smallest outer loop that contains it (a pulley rim and its hub, a double-wall cup); a
+  loop that touches itself or a hole that touches its outer wall at one vertex (a plane
+  through a tube's inner rim) is split or joined at that vertex; a cavity (an inverted
+  inner shell) is a hole of the shell around it. The compiler checks every cut it builds
+  (`MGSectionCut.isSound`: a valid cap range, closed, outward, cap triangle areas that add
+  up to the cap area within 1e-6 × max(1, area)) and refuses one that fails
+  (`section.open.<id>`). This is a consistency check, not a proof: it does not test that
+  cap vertices lie on the plane or that every shell is outward, and far below 1 mm² its
+  tolerance can miss a folded cap. Other parts are not
+  touched. The plane is placed at the document's default input (`params.input`) with
+  explode 0; a cut part then keeps its cut as it moves and explodes, like a physical
+  cutaway model. Use sections on still parts (casings, housings, walls) for the
+  clearest view. A step without `section` shows nothing cut.
+* **Refusals**: `step.section`, `step.section.missing.<keys>`,
+  `step.section.unknown.<keys>`, `step.section.normal` (zero or not three numbers),
+  `step.section.offset`, `step.section.parts`, `ref.unknown.<id>`, and per part
+  `section.miss.<id>` (the plane removes nothing of it) and `section.empty.<id>` (the
+  plane removes all of it). `section.loops.<id>` and `section.nesting.<id>` mean the
+  part's mesh is not a clean closed solid (open, or self-intersecting); `section.mesh` is
+  the same for a mesh built in code with bad indices or numbers. Called directly,
+  `MGSolidSection.cut` and `estimate` also refuse a plane that removes nothing or
+  everything (`section.miss`, `section.empty`; `crossing` tells first).
+* **Cost**: a pre-pass counts every distinct cut exactly (`MGSolidSection.estimate`)
+  before any cut triangle is built, and the cuts count toward the document's mesh
+  budget with the parts (`assembly.budget`). Each distinct part and plane reads its
+  part's mesh once, and all distinct cuts of one document may read at most 400,000 part
+  triangles (`section.budget`, checked before each cut is classified). The cap work is
+  budgeted too: grouping loop points, the hole-to-outer search (outer loops walked by area
+  with a box test and one point-in-polygon test per candidate), hole bridges and splices
+  may charge at most 4,000,000 units over all cuts (`section.budget`), before any cap is
+  built. Caps use the zipper strip or an ear clipper that tests only reflex vertices
+  through a grid; that is fast on gear, ring, comb and spiral loops but has no proven
+  linear bound. These are **measured benchmarks**, not a proven worst case
+  (`marty-solid check`, release build, Apple M1, best of three): seven face cuts of a
+  200-tooth gear 0.65 s; one cut of eight 63-fin concentric "labyrinth" revolves in one
+  part (391,680 triangles read, 585,216 cut triangles) 1.08 s, of which 0.17 s builds the
+  part; the full turbofan casings cut by one plane 0.13 s; the idler example 0.03 s. On
+  these the cut cost grows linearly, about 2.3 µs per part triangle read. Over-budget
+  documents in these sets are refused in 0.08–0.17 s. **Deliberate limit**: the budget
+  allows about 13 distinct planes on a 120-tooth ring (28,800 triangles each; 14 are
+  refused), 8 on a 200-tooth ring and 7 on a 200-tooth gear; one plane shared by many
+  steps is charged once. Steps that share a plane
+  share one cut; a patch that keeps a part's shape and place reuses its cut.
+* **`ghost`** lists parts (1–16 ids) that the step shows see-through, at opacity
+  `MGSolidView.ghostOpacity` (0.2), so the parts behind them show. Ghosts cast no
+  shadow.
+* **Part `opacity`** (0.1–1, default 1; `part.opacity`) makes a part faint in every
+  step, for a glass body or a casing that should always show what is inside. A ghost
+  never makes a part more opaque than its own `opacity`.
+* **Part `emissive`** `{"role": "<colour role>", "intensity": 0–4}` (intensity default 1)
+  makes a part give off light in an engine colour role (a hot core, an indicator lamp).
+  Refusals: `part.emissive` (intensity out of range, or not an object),
+  `part.emissive.role`, `part.emissive.missing.role`, `part.emissive.unknown.<keys>`.
+* Sections, ghosts, opacity and light change what the learner sees, not what the engine
+  claims: they add no tier and no fact.
+
+`MGSolidDocument.view(step:)` gives what a step shows (per part: the cut, the opacity
+and the light; `nil` gives the plain scene). `MGSolidRenderer.show(_:)` displays a view:
+cut parts swap in their capped geometry (built once and kept), ghosts blend over the
+parts behind them, and emissive parts glow with the camera's bloom.
+`MGSolidSnapshot.make(_:step:params:)` exports a view as snapshot format v2 (below).
+`marty-solid check` lists every step section (parts, cap triangles, cap loops, closed),
+and `marty-solid render` shows each step with its section and ghosts.
+
 ## Warnings, strict mode and the check report
 
 The compiler lints every document, v1 and v2, after it compiles
@@ -409,6 +492,16 @@ intent, fix, check again.
 
 Small, complete models that `marty-solid check` accepts; a test keeps them valid. All of
 them also pass `check --strict` with no warnings.
+
+* [`idler-gearbox.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json)
+  (v2, 33 lines): a 16-tooth input, a 23-tooth idler and a 28-tooth output on shafts
+  along Y (`rot` `[1, 0, 0, -90]`, confirmed by `expect.axisWorld`) inside a closed
+  casing (a frame, two covers and a foot in one part). Four steps cut the front half of
+  the casing away with one `section` (normal `[0, -1, 0]`), so the gears show behind solid
+  cut walls; the last step shows the casing as a `ghost`. Captions come from facts: the
+  idler turns at `{idler.speed|abs|frac}` ("16/23") the other way, and the output
+  `{output.speed|frac}` ("4/7") the same way as the input, so the idler's size cancels
+  out. Legend: "Solved 9" (three motions, four captions, two checks).
 
 * [`horizontal-reduction.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json)
   (v2, 24 lines): a 15-tooth pinion driving a 40-tooth wheel on shafts laid along X
@@ -584,7 +677,9 @@ revolute parents, signed by joint axis direction against the pair axis
 
 ## Snapshot for other renderers
 
-`MGSolidSnapshot.make(_:params:camera:aspect:lighting:)` exports one posed frame:
+`MGSolidSnapshot.make(_:params:camera:aspect:lighting:)` exports one posed frame of an
+assembly (format v1); `MGSolidSnapshot.make(_:step:params:…)` exports one step of a
+compiled document (format v2, below):
 
 | Field | Meaning |
 | --- | --- |
@@ -596,6 +691,20 @@ revolute parents, signed by joint axis direction against the pair axis
 | `camera` | target, yaw, pitch, distance, vertical field of view (`position` is derived) |
 | `lighting` | directional lights (direction toward the scene, colour, intensity, shadow softness) and the procedural studio environment (gradient plus soft boxes) |
 | `groundY`, `boundsMin`, `boundsMax`, `aspect` | framing and contact ground |
+
+**Format v2** (`martygraphics.solid.snapshot/2`) adds:
+
+| Field | Meaning |
+| --- | --- |
+| `parts[].opacity` | coverage 0.1–1 (ghosts included), always present; multiply with the material's `opacity` |
+| `parts[].capFirstTriangle`, `parts[].capTriangleCount` | the cap triangles of a cut part, inside the part's range (absent when the part is not cut) |
+| `materials[].emission` | `{"color": sRGB, "intensity": 0–4}` for an emissive part; its material `id` gets a suffix such as `aluminum+emissive.orange.2` |
+| `section` | the step's plane in the snapshot's world frame (Y up, mm): `normal` (unit), `offset` (points with `normal · p > offset` are cut away) and the cut `parts` |
+
+The decoder dispatches on `format`. A `/1` file keeps exactly its v1 meaning: its bytes
+are unchanged for the same assembly, and a `/1` file with any v2 field fails to decode. A
+`/2` file is checked too (an opacity on every part, cap ranges inside their part, a unit
+section normal, known section parts, three-number emission colours).
 
 `format` is `martygraphics.solid.snapshot/1`; encode with `jsonData()` (an empty
 assembly exports zero bounds and a unit framing camera, so the JSON stays finite).
@@ -615,7 +724,12 @@ so the two libraries stay independent.
 
 * SceneKit rasterisation: soft shadow maps, screen-space ambient occlusion,
   image-based lighting from a generated environment; no ray-traced reflections.
-* The section plane is a fragment discard; cut faces are not capped.
+* Step sections are capped core cuts, by one plane per step. The renderer option
+  `MGStudioOptions.section` is still the older fragment discard with uncapped faces, kept
+  for compatibility. A section plane is fixed in each cut part's frame at the default
+  input, so a moving part carries its cut. There are no multi-plane or box cutaways yet.
+* Ghosts and part opacity use alpha blending; overlapping see-through parts can sort
+  imperfectly.
 * Gear contact is checked in 2D at sampled angles, not as continuous 3D contact.
 * Frame lints compare bounding boxes, not meshes; a child that the box test calls near
   can still float. Parts are not checked against each other for collisions.

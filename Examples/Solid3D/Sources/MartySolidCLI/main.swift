@@ -69,10 +69,27 @@ func json(_ object: Any) -> String {
     return String(decoding: d, as: UTF8.self)
 }
 
-/// Engine checks beyond parsing: closed meshes and a gear tooth sweep (when the model has gear meshes).
+/// Engine checks beyond parsing: closed meshes (step section cuts included, as `step.<n>.<part>`) and a gear tooth
+/// sweep (when the model has gear meshes).
 func checks(_ doc: MGSolidDocument) -> [String: Any] {
-    let open = doc.assembly.parts.filter { !$0.mesh.edgeReport.isClosed }.map(\.id).sorted()
+    var open = doc.assembly.parts.filter { !$0.mesh.edgeReport.isClosed }.map(\.id).sorted()
+    var sections: [[String: Any]] = []
+    for (i, step) in doc.steps.enumerated() {
+        guard let sec = step.section else { continue }
+        var parts: [[String: Any]] = []
+        for id in sec.parts {
+            guard let cut = sec.cuts[id] else { continue }
+            // Closed, outward and with caps that do not overlap (`MGSectionCut.isSound`).
+            let closed = cut.isSound
+            if !closed { open.append("step.\(i + 1).\(id)") }
+            parts.append(["part": id, "closed": closed, "triangles": cut.mesh.triangleCount, "capTriangles": cut.capTriangleCount,
+                          "capLoops": cut.loops])
+        }
+        sections.append(["step": i + 1, "normal": [sec.plane.normal.x, sec.plane.normal.y, sec.plane.normal.z], "offset": sec.plane.offset,
+                         "parts": parts])
+    }
     var out: [String: Any] = ["meshesClosed": open.isEmpty, "openMeshes": open]
+    if !sections.isEmpty { out["sections"] = sections }
     let report = MGSolidChecks.gearMeshes(doc, samples: 96, inputRange: 0...(2 * .pi))
     out["gearPairs"] = report.pairs
     if report.pairs > 0 {
@@ -147,13 +164,20 @@ func check(_ path: String, _ lib: MGSolidLibrary, strict: Bool = false) throws -
         return 1
     case .success(let doc):
         let c = checks(doc)
-        let tris = doc.assembly.parts.reduce(0) { $0 + $1.mesh.triangleCount }
+        // Part meshes plus every distinct step cut: the same total the mesh budget counts.
+        var cutTriangles = 0, seenCuts = Set<String>()
+        for s in doc.steps { for (id, cut) in (s.section?.cuts ?? [:]).sorted(by: { $0.key < $1.key }) {
+            let key = "\(id)|\(cut.plane.normal.x),\(cut.plane.normal.y),\(cut.plane.normal.z),\(cut.plane.offset)"
+            if seenCuts.insert(key).inserted { cutTriangles += cut.mesh.triangleCount }
+        } }
+        let tris = doc.assembly.parts.reduce(0) { $0 + $1.mesh.triangleCount } + cutTriangles
         var reason: String? = nil, part: String? = nil
         if (c["meshesClosed"] as? Bool) != true { reason = "check.meshOpen" }
         else if (c["gearsEngage"] as? Bool) == false { reason = "check.gearsInterpenetrate" }
         else if let refusal = (strict ? MGSolidProfile.strict : .standard).refusal(doc) { reason = refusal.reason; part = refusal.part }
         let ok = reason == nil
         var report: [String: Any] = ["ok": ok, "reason": reason as Any, "title": doc.title, "parts": doc.assembly.parts.count, "triangles": tris,
+                                     "sectionTriangles": cutTriangles,
                                      "steps": doc.steps.map(\.say), "ratios": doc.ratios, "checks": c, "strict": strict,
                                      "file": ["lines": src.lines, "sha256": src.sha256]]
         if part != nil { report["part"] = part as Any }
@@ -279,8 +303,11 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     let footer = "Rendered by the MartyGraphics solid engine from \(URL(fileURLWithPath: path).lastPathComponent) (\(sourceSize(src)))"
     var files: [[String: Any]] = []
     var seconds = 0.0, frames = 0
-    func shot(_ params: MGPoseParameters, preset: String, orbit: Double = 0, highlight: [String] = [], margin: Double = 0.8) throws -> CGImage {
+    func shot(_ params: MGPoseParameters, preset: String, orbit: Double = 0, highlight: [String] = [], margin: Double = 0.8,
+              step: Int? = nil) throws -> CGImage {
         let p = MGSolidCamera.presets[preset] ?? MGSolidCamera.presets["hero"]!
+        // Each step shows its own section cuts and ghosts; other shots show the plain scene.
+        r.show(doc.view(step: step))
         r.highlight(Set(highlight), dimOthers: !highlight.isEmpty)
         r.apply(params)
         // Bounding spheres are loose around flat or long assemblies; a margin below 1 fills the frame.
@@ -299,7 +326,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                      title: doc.title + " · exploded", text: nil, footer: footer), "exploded.png")
     for (i, step) in doc.steps.enumerated() {
         let params = MGPoseParameters(input: doc.defaults.input + step.spin * 2 * .pi, explode: step.explode ?? doc.defaults.explode)
-        let img = try shot(params, preset: step.camera ?? "hero", orbit: step.orbit, highlight: step.highlight)
+        let img = try shot(params, preset: step.camera ?? "hero", orbit: step.orbit, highlight: step.highlight, step: i)
         try save(caption(img, title: doc.title, text: "\(i + 1). \(step.say)", footer: footer), "step-\(i + 1).png")
     }
     if loop {
@@ -317,7 +344,8 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         guard CGImageDestinationFinalize(gif) else { throw CLIError.invalid("gif finalize") }
         files.append(["file": "loop.gif", "bytes": (try Data(contentsOf: gifURL)).count, "sha256": try sha(gifURL), "width": 640, "frames": n, "delaySeconds": 0.1, "loopSeconds": 12.0])
     }
-    let snap = MGSolidSnapshot.make(doc.assembly, params: doc.defaults)
+    // v1 documents keep the v1 snapshot; v2 documents export format v2 (part opacity, emission).
+    let snap = doc.version >= 2 ? MGSolidSnapshot.make(doc, step: nil, params: doc.defaults) : MGSolidSnapshot.make(doc.assembly, params: doc.defaults)
     let snapURL = out.appendingPathComponent("snapshot.json"); try snap.jsonData().write(to: snapURL)
     files.append(["file": "snapshot.json", "bytes": (try Data(contentsOf: snapURL)).count, "sha256": try sha(snapURL)])
     let manifest: [String: Any] = ["source": ["file": URL(fileURLWithPath: path).lastPathComponent, "lines": src.lines, "sha256": src.sha256],

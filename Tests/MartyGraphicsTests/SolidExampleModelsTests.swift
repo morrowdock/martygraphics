@@ -15,7 +15,8 @@ final class SolidExampleModelsTests: XCTestCase {
     }
 
     func testEveryExampleModelParsesWithClosedMeshes() throws {
-        for name in ["planetary", "slider-crank", "propeller", "planetary-components", "slider-crank-component"] {
+        for name in ["planetary", "slider-crank", "propeller", "planetary-components", "slider-crank-component", "horizontal-reduction",
+                     "idler-gearbox"] {
             let doc = try model(name)
             for part in doc.assembly.parts { XCTAssertTrue(part.mesh.edgeReport.isClosed, "\(name): \(part.id)") }
             XCTAssertLessThanOrEqual(doc.title.count, MGSolidLimits.title)

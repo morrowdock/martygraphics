@@ -34,6 +34,35 @@
   snapshot whose title holds a decimal literal (`1.5`, `.5`, `2e3`) is refused with `snapshot.title`.
 - Document in `docs/LESSONS.md` that a beat refused at close for the queue budget (`lesson.queue.bytes`) retracts the
   commands and checks already accepted for it.
+- Add capped section cuts, see-through parts and part light to assembly v2
+  (open-vocabulary phase 1, second part). A v2 step can now cut parts open:
+  `"section": {"normal": […], "offset": 0, "parts": ["casing"]}` removes the points with
+  `normal · p > offset` from the listed parts only. The cut is a true section: the core
+  (`MGSolidSection`, Foundation only) cuts each closed shell, chains the open edges into
+  loops and fills them with cap faces through `MGTriangulator`, so a cut part stays a
+  closed, outward mesh with solid cut walls. A pre-pass counts every cut exactly before
+  any cut triangle is built, and cuts count toward the mesh budget (all distinct cuts
+  of a document read at most 400,000 part triangles, and the cap work, including the
+  hole-to-outer search, is budgeted too, both `section.budget`; measured benchmarks on an
+  Apple M1 check in 0.03–1.1 s, and a 120-tooth ring allows 13 distinct planes). A listed part that
+  the plane misses or removes completely is refused (`section.miss.<id>`,
+  `section.empty.<id>`). A step's `ghost` list shows parts at opacity 0.2. Parts take
+  `opacity` (0.1–1, `part.opacity`) and `emissive` (`{"role", "intensity" 0–4}`,
+  `part.emissive`). These keys are refused in v1 documents. `MGSolidDocument.view(step:)`
+  gives what a step shows. `MGSolidRenderer.show(_:)` swaps in the capped geometry and
+  applies opacity and emission (SceneKit). The renderer's older fragment-discard
+  section option stays for compatibility. New snapshot format v2
+  (`MGSolidSnapshot.make(_:step:params:)`) adds per-part `opacity`, cap triangle ranges,
+  material `emission` and the step `section`. The decoder accepts `/1` and `/2`. A `/1`
+  snapshot keeps its exact bytes, and a `/1` file with v2 fields is refused.
+  Each hole goes to the smallest outer loop that contains it, and loops that touch at a
+  vertex are split or joined there. Every built cut is checked (closed, outward, caps
+  without overlap) and refused as `section.open.<id>` if it fails. Caps are triangulated by
+  an ear clipper that tests reflex vertices through a grid, or the zipper strip.
+  `marty-solid check` reports each step section (sound, cap triangles, cap loops) and
+  counts cut triangles in `triangles`, and `marty-solid render` shows each step's cuts and
+  ghosts. `render` now writes snapshot `/2` for every v2 document (v1 documents keep `/1`). New v2 worked example
+  `idler-gearbox.json` (16, 23 and 28 teeth on shafts along Y, a casing cut open).
 - Add assembly v2 and an honesty layer to the solid engine (open-vocabulary phase 1,
   first part). `"v": 2` is a strict superset of v1; v1 documents keep their exact
   meaning, and a v1 document with a v2 key is refused with the usual

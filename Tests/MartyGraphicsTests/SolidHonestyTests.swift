@@ -80,6 +80,7 @@ final class SolidHonestyTests: XCTestCase {
             .appendingPathComponent("Sources/MartyGraphics/Solid")
         let files = try FileManager.default.contentsOfDirectory(atPath: dir.path).filter { $0.hasSuffix(".swift") }.sorted()
         XCTAssertTrue(files.contains("MGSolidFacts.swift") && files.contains("MGSolidTiers.swift") && files.contains("MGSolidFrames.swift"))
+        XCTAssertTrue(files.contains("MGSolidSection.swift") && files.contains("MGSolidView.swift"))
         for f in files where f != "MGSolidRenderer.swift" {
             let text = try String(contentsOf: dir.appendingPathComponent(f), encoding: .utf8)
             let imports = text.split(separator: "\n").filter { $0.hasPrefix("import ") || $0.hasPrefix("@testable import ") }

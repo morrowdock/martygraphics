@@ -283,7 +283,11 @@
     "Sources/MartyGraphics/Solid/MGSolidFrames.swift: idle-joint and frame lints, expect orientation claims, plain-words read-back, strict profile (public-only)",
     "Sources/MartyGraphics/Solid/MGSolidNumericScalars.swift: Unicode 18.0.0 Numeric_Type scalar ranges for the solid caption number rule (derived data, Unicode License v3; public-only)",
     "Tests/MartyGraphicsTests/SolidHonestyTests.swift: v2 version gate, facts, placeholders, N1, checks, tiers, lints, expect and read-back coverage",
-    "Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json: assembly v2 worked example (horizontal shafts, placeholders, claim check, unchecked caption)"
+    "Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json: assembly v2 worked example (horizontal shafts, placeholders, claim check, unchecked caption)",
+    "Sources/MartyGraphics/Solid/MGSolidSection.swift: capped plane cuts of closed meshes, loop chaining, caps through MGTriangulator, exact pre-pass counts (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidView.swift: assembly v2 step sections, ghosts, part opacity and emission views, section budget and reuse (public-only)",
+    "Tests/MartyGraphicsTests/SolidSectionTests.swift: capped cuts, step section and ghost, appearance refusals, renderer views and snapshot v2 coverage",
+    "Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json: assembly v2 worked example (idler gear train, casing section, ghost step)"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

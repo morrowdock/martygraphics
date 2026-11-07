@@ -56,6 +56,10 @@ public struct MGSolidStep: Equatable, Sendable {
     public var facts: [String] = []
     /// Engine-computed caption tier; nil when the caption shows and checks no engine number (see docs/SOLID-3D.md).
     public var tier: MGSolidTier?
+    /// v2: a capped plane cut of some parts, shown during this step.
+    public var section: MGSolidStepSection?
+    /// v2: parts shown see-through during this step (opacity `MGSolidView.ghostOpacity`), in part order.
+    public var ghost: [String] = []
 }
 
 /// Meshing data the compiler derived for one gear part.
@@ -118,8 +122,8 @@ struct MGSolidFormat: Equatable {
     let version: Int
     static let v1 = MGSolidFormat(version: 1), v2 = MGSolidFormat(version: 2)
     static let topKeysV2: Set<String> = []
-    static let partKeysV2: Set<String> = ["expect", "offAxis"]
-    static let stepKeysV2: Set<String> = ["check", "unchecked"]
+    static let partKeysV2: Set<String> = ["expect", "offAxis", "opacity", "emissive"]
+    static let stepKeysV2: Set<String> = ["check", "unchecked", "section", "ghost"]
     var isV2: Bool { version >= 2 }
     var topKeys: Set<String> { isV2 ? MGSolidParser.topKeys.union(Self.topKeysV2) : MGSolidParser.topKeys }
     var partKeys: Set<String> { isV2 ? MGSolidParser.partKeys.union(Self.partKeysV2) : MGSolidParser.partKeys }
@@ -211,6 +215,8 @@ public enum MGSolidParser {
         var base: String, instance: Int?
         /// v2: `offAxis` and `expect` (`axisWorld`, `upWorld`).
         var offAxis = false, expectAxis: MGVec3? = nil, expectUp: MGVec3? = nil
+        /// v2: `opacity` and `emissive`.
+        var opacity = 1.0, emission: MGEmission? = nil
     }
 
     /// True when any object anywhere in the value has a key named `tier` (authors cannot set tiers).
@@ -624,7 +630,8 @@ public enum MGSolidParser {
             if let prev = previous, prev.shapes[p.id] == list, let old = prev.assembly.part(p.id) { mesh = old.mesh }
             else { mesh = MGMesh.merged(list.map { $0.mesh() }) }
             assemblyParts.append(MGPart(id: p.id, name: p.name, mesh: mesh, material: p.material, placement: p.placement, parent: p.parent,
-                                        joint: p.joint, drive: drives[p.id], explode: p.explode, explodeWindow: p.window, creaseAngle: p.crease))
+                                        joint: p.joint, drive: drives[p.id], explode: p.explode, explodeWindow: p.window, creaseAngle: p.crease,
+                                        opacity: p.opacity, emission: p.emission))
         }
         let pairs = meshes.enumerated().map { k, m in
             MGGearPair(a: m.a, b: m.b, teethA: gears[m.a]!.teeth, teethB: gears[m.b]!.teeth, isInternal: gears[m.a]!.ring != nil,
@@ -632,6 +639,7 @@ public enum MGSolidParser {
         }
         let assembly = MGAssembly(name: title, parts: assemblyParts, gearPairs: pairs)
         if let issue = assembly.validate().first { throw MGSolidIssue(issue == "drive cycle" ? "part.drive.cycle" : "assembly.invalid") }
+        try MGSolidSections.compile(&steps, assembly, defaults: defaults, budget: (triangles, vertices), shapes: shapes, previous: previous)
 
         // The compiled motion must match what the solver assumed: replay the posed assembly and check every mesh keeps
         // its axis, centre distance, tooth phase and tooth ratio.
@@ -808,6 +816,13 @@ public enum MGSolidParser {
             if let v = o["offAxis"] {
                 guard case .bool(let b) = v else { throw MGSolidIssue("part.offAxis") }
                 raw.offAxis = b
+            }
+            if let v = o["opacity"] { raw.opacity = try num(v, MGSolidView.opacityRange, "part.opacity") }
+            if let e = o["emissive"] {
+                guard case .object(let eo) = e else { throw MGSolidIssue("part.emissive") }
+                try closed(eo, ["role"], ["intensity"], "part.emissive")
+                guard case .string(let r)? = eo["role"], let role = MGColorRole(rawValue: r) else { throw MGSolidIssue("part.emissive.role") }
+                raw.emission = MGEmission(role: role, intensity: try eo["intensity"].map { try num($0, MGEmission.intensityRange, "part.emissive") } ?? 1)
             }
             if let e = o["expect"] {
                 guard case .object(let eo) = e, !eo.isEmpty else { throw MGSolidIssue("part.expect") }
@@ -1114,10 +1129,33 @@ public enum MGSolidParser {
             guard case .array(let list) = c, (1...MGSolidLimits.checksPerStep).contains(list.count) else { throw MGSolidIssue("step.check") }
             step.checks = try list.map(MGSolidClaimCheck.parse)
         }
+        if let g = o["ghost"] {
+            guard case .array(let list) = g, !list.isEmpty else { throw MGSolidIssue("step.ghost") }
+            step.ghost = unique(try ids("ghost"))
+        }
+        if let sec = o["section"] {
+            guard case .object(let so) = sec else { throw MGSolidIssue("step.section") }
+            try closed(so, ["normal", "parts"], ["offset"], "step.section")
+            let normal = try vector(so["normal"] ?? .null, "step.section.normal")
+            guard normal.length > 1e-9 else { throw MGSolidIssue("step.section.normal") }
+            let offset = try so["offset"].map { try num($0, MGSolidLimits.coordinate, "step.section.offset") } ?? 0
+            guard case .array(let list) = so["parts"]!, (1...MGSolidLimits.idsPerStep).contains(list.count) else { throw MGSolidIssue("step.section.parts") }
+            let parts = try list.flatMap { e -> [String] in
+                guard case .string(let id) = e else { throw MGSolidIssue("step.section.parts") }
+                return try expand(id, "step.section.parts")
+            }
+            step.section = MGSolidStepSection(plane: MGSectionPlane(normal: normal, offset: offset), parts: unique(parts))
+        }
         return step
     }
 
     // MARK: Helpers
+
+    /// The list without repeats, first occurrence kept.
+    static func unique(_ list: [String]) -> [String] {
+        var seen = Set<String>()
+        return list.filter { seen.insert($0).inserted }
+    }
 
     static func closed(_ o: [String: MGJSON], _ required: Set<String>, _ optional: Set<String>, _ what: String) throws {
         let keys = Set(o.keys)
