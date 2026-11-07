@@ -17,7 +17,7 @@
   {"say": "A small gear drives a larger one. Both shafts lie flat, along X.", "camera": "hero"},
   {"say": "The pinion has {pinion.teeth} teeth; the wheel has {wheel.teeth}.", "highlight": ["pinion", "wheel"]},
   {"say": "Each pinion turn moves the wheel {wheel.speed|abs|frac} of a turn, the other way.", "highlight": ["wheel"], "spin": 1,
-   "check": [{"value": "wheel.speed", "eq": -0.375, "tol": 1e-9}]},
+   "check": [{"value": "wheel.speed", "eq": -0.375, "tol": 1e-9}, {"value": "wheel.speed", "lt": 0}]},
   {"say": "So the output collar turns {wheel.speed|abs|inv} times slower than the input.", "highlight": ["collar"], "spin": 1,
    "check": [{"value": "wheel.speed", "lt": 0}]},
   {"say": "Real gears also lose some power to friction.", "unchecked": "general fact, not modelled"}

@@ -9,8 +9,8 @@ import Foundation
 public enum MGSolidTier: Int, Comparable, Sendable, CaseIterable {
     /// Text or a number the engine does not check (for example a caption marked `unchecked`).
     case described = 0
-    /// Exact geometry from the author's numbers, with behaviour or size from the author (scripted motion, stand-ins,
-    /// cited sizes). No PR-1 feature produces it yet; the calculus already handles it.
+    /// Exact geometry from the author's numbers, with behaviour from the author: an `input` scale other than ±1, a
+    /// `follow` ratio, and everything computed from them (later: scripted motion, stand-ins, cited sizes).
     case built = 1
     /// Computed by the engine, and every named check for it passed.
     case solved = 2
@@ -36,8 +36,9 @@ public struct MGSolidFact: Equatable, Sendable {
     public init(value: Double, unit: String, tier: MGSolidTier, source: String) {
         self.value = value; self.unit = unit; self.tier = tier; self.source = source
     }
-    /// What the learner sees (`MGPhysics.format`: about three significant figures).
-    public var text: String { MGPhysics.format(value, unit: unit) }
+    /// What the learner sees: `MGPhysics.format` (about three significant figures), except that a non-zero value
+    /// never shows as "0" (a 1:1000 train shows "0.001", not "0").
+    public var text: String { MGSolidFacts.display(value, unit: unit) }
 }
 
 /// A step claim the engine proves before the learner sees it: `{"value": "<fact>", "eq" | "lt" | "gt": x, "tol"?: t}`.
@@ -78,20 +79,25 @@ public struct MGSolidClaimCheck: Equatable, Sendable {
         }
     }
 
-    /// True when every value that passes this check has the sign of `target` (so the check proves the sign).
+    /// True when the check proves the sign of the fact: only a strict inequality against a bound on one side of zero
+    /// (`lt` t with t ≤ 0, `gt` t with t ≥ 0). An equality never does: without `tol` it compares displayed text, and
+    /// -0.001 and +0.001 both display as "0".
     var provesSign: Bool {
         switch comparison {
-        case .eq: return target != 0 && (tolerance ?? 0) < abs(target)
+        case .eq: return false
         case .lt: return target <= 0
         case .gt: return target >= 0
         }
     }
 
-    /// The claim as text, for example "stage.sun.teeth > 0".
+    /// The claim as text with the exact numbers that were checked, for example "stage.sun.teeth > 0",
+    /// "stage.output.speed = 0.2857142857142857 ± 1e-09", or "stage.output.speed shows as 0.29 (target 0.286)".
     public var text: String {
-        let x = MGPhysics.format(target, unit: "")
+        let x = MGSolidFacts.exact(target)
         switch comparison {
-        case .eq: return tolerance.map { "\(value) = \(x) ± \(MGPhysics.format($0, unit: ""))" } ?? "\(value) shows as \(x)"
+        case .eq:
+            if let t = tolerance { return "\(value) = \(x) ± \(MGSolidFacts.exact(t))" }
+            return target == 0 ? "\(value) = 0" : "\(value) shows as \(MGPhysics.format(target, unit: "")) (target \(x))"
         case .lt: return "\(value) < \(x)"
         case .gt: return "\(value) > \(x)"
         }
@@ -123,15 +129,41 @@ public enum MGSolidFacts {
     /// `pct` and `deg` apply to speeds and ratios only; `abs` needs a check in the same step that proves the sign.
     public static let modifierNames: Set<String> = ["abs", "inv", "pct", "deg", "frac"]
 
+    /// A learner-facing number: `MGPhysics.format`, but a non-zero value that would show as "0" gets enough decimals
+    /// to show its first three significant figures (scientific notation below 1e-9).
+    public static func display(_ v: Double, unit: String) -> String {
+        let s = MGPhysics.format(v, unit: unit)
+        guard v != 0, v.isFinite, s.filter(\.isNumber).allSatisfy({ $0 == "0" }) else { return s }
+        let a = abs(v)
+        var t: String
+        if a >= 1e-9 {
+            let decimals = min(12, 2 - Int(log10(a).rounded(.down)))
+            t = String(format: "%.\(decimals)f", v)
+            while t.hasSuffix("0") { t.removeLast() }
+            if t.hasSuffix(".") { t.removeLast() }
+        } else {
+            t = String(format: "%.2e", v)
+        }
+        return unit.isEmpty ? t : unit == "°" ? t + unit : t + " " + unit
+    }
+
+    /// A number as written for a proof condition: whole numbers without a decimal point, otherwise the shortest text
+    /// that reads back as the same Double ("0.2857142857142857", "1e-09").
+    public static func exact(_ v: Double) -> String {
+        if v == v.rounded(), abs(v) < 1e15 { return String(Int64(v)) }
+        return "\(v)"
+    }
+
     static func isName(_ s: String) -> Bool {
         (1...nameLength).contains(s.count)
             && s.unicodeScalars.allSatisfy { $0.isASCII && (CharacterSet.alphanumerics.contains($0) || $0 == "_" || $0 == ".") }
     }
 
     /// True for a character with any number scalar in it (digits, "½", "²", and a digit inside a grapheme cluster
-    /// that starts with a letter, such as an Indic prepended sign followed by "5").
+    /// that starts with a letter, such as an Indic prepended sign followed by "5"). Every scalar is tested against the
+    /// toolchain's Unicode properties and the pinned Unicode 18.0.0 Numeric_Type table (`MGSolidNumericScalars`).
     static func isNumber(_ ch: Character) -> Bool {
-        ch.isNumber || ch.unicodeScalars.contains { $0.properties.numericType != nil }
+        ch.isNumber || ch.unicodeScalars.contains { $0.properties.numericType != nil || MGSolidNumericScalars.contains($0) }
     }
 
     // MARK: Table
@@ -247,7 +279,10 @@ public enum MGSolidFacts {
                 let suffix = String(name.dropFirst(first.count))
                 let same = ids.allSatisfy { id in
                     guard let o = facts[id + suffix] else { return false }
-                    return o.unit == f.unit && o.tier == f.tier && abs(o.value - f.value) <= 1e-9 * max(1, abs(f.value))
+                    // Same unit, tier and sign, and equal within a relative 1e-9 with no absolute floor: tiny rates of
+                    // opposite sign (+1e-10 and -1e-10) are not one shared value.
+                    guard o.unit == f.unit, o.tier == f.tier, (o.value > 0) == (f.value > 0), (o.value < 0) == (f.value < 0) else { return false }
+                    return o.value == f.value || abs(o.value - f.value) <= 1e-9 * max(abs(o.value), abs(f.value))
                 }
                 if same { put(base + suffix, f.value, f.unit, f.tier, f.source) }
             }

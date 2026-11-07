@@ -10,13 +10,16 @@
   the parent and in the world frame, prismatic travel over one input turn, crank radius
   and rod length, `repeat` counts and `<instance>.ratio`; component anchors resolve, so
   `stage.output.speed` works). In v2 the title and step text fill `{name}` placeholders
-  with closed modifiers (`abs` only with a check that proves the sign, `inv`, `pct`,
-  `deg`, `frac`, so `{stage.output.speed|frac}` prints "2/7"; a non-zero value that would
-  print "0" is refused), and rule N1 refuses a caption with a number character that does
-  not come from a placeholder (`text.number.step.<n>`) unless the step is marked
+  with closed modifiers (`abs` only with a strict-inequality check that proves the sign,
+  `inv`, `pct`, `deg`, `frac`, so `{stage.output.speed|frac}` prints "2/7"; no fact text
+  shows a non-zero value as "0", and a placeholder value that would
+  print "0" is refused), and rule N1 refuses a caption with a number character (by the
+  toolchain's Unicode data and a pinned Unicode 18.0.0 Numeric_Type table) that does not
+  come from a placeholder (`text.number.step.<n>`) unless the step is marked
   `"unchecked": "<why>"`. Steps can state `check` claims
   (`{"value", "eq" | "lt" | "gt", "tol"?}`, as in lessons) that the engine proves before
-  it accepts the document; each check is its own claim. Truth tiers (Solved, Built,
+  it accepts the document (`check.failed.<name>` when false, `check.fact.<name>` when the
+  fact does not exist); each check is its own claim, shown with its exact target. Truth tiers (Solved, Built,
   Described) are computed by the engine for every motion, caption, title and check
   (`claims`, `legend` with chip texts, `motionTier`, `describe(id)` with a "not checked"
   list per motion source): an `input` scale other than ±1, a `follow` ratio and what they
@@ -31,8 +34,9 @@
   refused when the model does not match (`expect.axis.<id>`, `expect.up.<id>`).
   `readBack` describes every part in plain words (world position, "turns about a
   horizontal axis (+X)", parent frame, up). `MGSolidProfile.strict` and
-  `marty-solid check --strict` (the model-harness profile) refuse idle joints and frame
-  errors that the plain API only warns about (`applying` takes the profile too); `check`
+  `marty-solid check --strict` (the model-harness profile) refuse idle joints and turn
+  axes that miss their own part, which the plain API only warns about (`applying` takes
+  the profile too); the child-frame heuristics stay warnings in every profile; `check`
   also prints warnings, facts, legend, `stepFacts` (which fact filled each placeholder),
   `notChecked` and the read-back. `docs/SOLID-3D.md` gains a frames and "up"
   conventions section (child `at` / `rot` are relative to the parent; lay a shaft down

@@ -281,6 +281,7 @@
     "Sources/MartyGraphics/Solid/MGSolidFacts.swift: assembly v2 facts table, {placeholder} fill with closed modifiers, rule N1 and step claim checks (public-only)",
     "Sources/MartyGraphics/Solid/MGSolidTiers.swift: engine-computed truth tiers, claims, legend and chip texts, describe(id) (public-only)",
     "Sources/MartyGraphics/Solid/MGSolidFrames.swift: idle-joint and frame lints, expect orientation claims, plain-words read-back, strict profile (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidNumericScalars.swift: Unicode 18.0.0 Numeric_Type scalar ranges for the solid caption number rule (derived data, Unicode License v3; public-only)",
     "Tests/MartyGraphicsTests/SolidHonestyTests.swift: v2 version gate, facts, placeholders, N1, checks, tiers, lints, expect and read-back coverage",
     "Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json: assembly v2 worked example (horizontal shafts, placeholders, claim check, unchecked caption)"
   ],

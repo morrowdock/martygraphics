@@ -6,12 +6,15 @@ import Foundation
 // read-back of every part, and the strict (model harness) profile. Foundation only, deterministic.
 
 /// Which warnings refuse a document. `standard` (the plain API) only warns; `strict` (the model harness, owner D3)
-/// refuses idle joints and frame errors. `frame.child.far` stays a warning in both.
+/// refuses only errors that are certain from the document itself: a jointed part that nothing moves, and a turn
+/// axis that misses its own jointed part. The child-frame heuristics (`frame.child.absolute`, `frame.child.far`)
+/// stay warnings in both profiles: they can flag correct parent-relative layouts (spaced plates, parts on posts),
+/// so the read-back of world positions, not a refusal, is the defence against frame errors.
 public enum MGSolidProfile: Equatable, Sendable {
     case standard, strict
 
     /// Warning reason prefixes that the strict profile refuses.
-    public static let strictPrefixes = ["joint.idle.", "frame.child.absolute.", "frame.axis.off."]
+    public static let strictPrefixes = ["joint.idle.", "frame.axis.off."]
 
     /// The first warning this profile refuses, in document order; nil when the document passes.
     public func refusal(_ doc: MGSolidDocument) -> MGSolidIssue? {

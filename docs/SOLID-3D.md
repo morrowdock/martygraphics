@@ -61,9 +61,11 @@ along X, and writes that world position into the child.
 ```
 
 The blade lands at x = 100 mm (twice the offset). `marty-solid check` warns
-`frame.child.absolute.blade`, and `--strict` refuses it. The child's `at` is relative to
-the hub, so the fix is `"at": [0, 0, 0]`. The read-back in the check report says, for each
-part, where it is in the world and which way it turns, for example
+`frame.child.absolute.blade`. The child's `at` is relative to the hub, so the fix is
+`"at": [0, 0, 0]`. That warning is a guess from bounding boxes, and correct layouts can
+trigger it (two plates with a gap, a plate on posts), so even `--strict` never refuses it.
+The real defence is the read-back in the check report: it says, for each part, where it is
+in the world and which way it turns, for example
 `rotor: … turns about a horizontal axis (+X) …; child of tower (at [0, 0, 92] in the tower frame)`.
 Compare it with what you meant before you answer. A v2 part can also state its intended
 orientation, and the engine refuses the document when the model does not match:
@@ -263,7 +265,8 @@ value, a unit, a tier and a source.
 | `<base>.<name>` | a fact every copy shares (`stage.planet.teeth`) | as the copies |
 | `<instance>.ratio` | component output anchor speed / input anchor speed (`stage.ratio`) | – |
 
-Component anchors resolve: `stage.output.speed` is `stage.carrier.speed`. Tooth counts,
+Component anchors resolve: `stage.output.speed` is `stage.carrier.speed`. A fact's text never
+shows a non-zero value as "0" (a 1:1000 train shows "-0.001"). Tooth counts,
 modules, crank sizes and counts are Solved. A speed or travel takes the tier of its drive
 chain (see tiers below): the input at ±1 turn per input turn and everything the engine
 solves from it are Solved; an `input` scale other than ±1 or 0 and every `follow` ratio
@@ -276,7 +279,8 @@ modifiers). The engine fills them with `MGPhysics.format` (about three significa
 and keeps the authored text in `MGSolidStep.template`. Modifiers:
 
 * `abs` drops the sign. It needs a `check` in the same step that proves the sign of that
-  fact (`lt` 0, `gt` 0, or `eq` with a tolerance smaller than the target), otherwise
+  fact with a strict inequality (`lt` t with t ≤ 0, or `gt` t with t ≥ 0; an `eq` never
+  proves a sign, because −0.001 and +0.001 both show as "0"), otherwise
   `text.sign.<name>`; a title cannot use it. So "the other way" in the caption is
   proved, not typed.
 * `inv` (1/x) and `frac` (the exact fraction p/q with q ≤ 100 000 within a relative
@@ -298,7 +302,9 @@ apply, for example `inv` of a value in mm, `deg` of a tooth count, or `frac` of 
 (a 1:300 reduction is 0.0033); use `frac` or `inv` for it.
 
 **Rule N1 (numbers).** In a v2 caption, every number character must come from a
-placeholder; otherwise `text.number.step.<n>` (1-based). Every Unicode scalar counts: ASCII
+placeholder; otherwise `text.number.step.<n>` (1-based). Every Unicode scalar counts, by
+the toolchain's Unicode properties and a pinned Unicode 18.0.0 Numeric_Type table (2,348
+scalars, `MGSolidNumericScalars`), so a number newer than the runtime's data counts too: ASCII
 and other digits, "½", superscripts ("mm²", "CO₂") and a digit joined to a letter. The
 exception is a step marked `"unchecked": "<why>"` (1–60 characters): it may type numbers,
 and it shows the "Not checked" chip. For units and formulas write "square mm" or mark the
@@ -315,8 +321,9 @@ Described.
 the document: `{"value": "<fact>", "eq" | "lt" | "gt": x, "tol"?: t}`, the same shape and
 meaning as the lesson `check`. Without `tol`, `eq` compares what the learner sees
 (`MGPhysics.format` of both numbers), except that a target of 0 needs exactly 0; with
-`tol`, |value − x| ≤ t. Refusals: `check.<name>` (the claim is false),
-`check.fact.<name>` (no such fact), `check.comparison`, `check.tol` (only with `eq`),
+`tol`, |value − x| ≤ t. Refusals: `check.failed.<name>` (the claim is false),
+`check.fact.<name>` (no such fact; the two prefixes never collide, even for a part named
+`fact` or `failed`), `check.comparison`, `check.tol` (only with `eq`),
 `check.value`, `check.object`, `step.check` (not a list of 1–8), and the key reasons
 `step.check.missing.value` and `step.check.unknown.<key>`.
 
@@ -344,7 +351,7 @@ The engine computes a tier for every visible claim. An author never sets one: a 
   expression as text, for example "Checked: stage.sun.teeth > 0".
 * `MGSolidDocument.claims` lists the claims (motion once per authored part, then the
   title, then each caption and its checks), each with its chip text and a reason;
-  `legend` gives the counts and one line ("Solved 7 · Not checked 1", always shown),
+  `legend` gives the counts and one line ("Solved 8 · Not checked 1", always shown),
   "Some motion is schematic" when a motion claim is below Solved, and "Shapes as
   authored". `describe(id)` returns one part's motion, tier, facts and what its motion
   source does not check, for example
@@ -357,12 +364,15 @@ The compiler lints every document, v1 and v2, after it compiles
 (`MGSolidDocument.warnings`, in part order; a `repeat` copy reports its base id once).
 The plain API only warns. The strict profile (`MGSolidParser.document(…, profile: .strict)`,
 `MGSolidParser.applying(…, profile: .strict)`, `marty-solid check --strict`; the default for
-model harnesses) refuses the warnings marked below.
+model harnesses) refuses only what the document itself shows to be wrong: a jointed part that
+nothing moves, and a turn axis that misses its own jointed part. The child-frame warnings
+are heuristics and stay warnings in every profile; the read-back below is how an author
+checks frames.
 
 | Warning | When | Strict |
 | --- | --- | --- |
 | `joint.idle.<id>` | A part has a `revolute` or `prismatic` joint but no drive and no constraint moves it, so it never moves. Add a drive (`{"input": 1}`), a mesh or a `fixed` constraint, or remove the joint. | refused |
-| `frame.child.absolute.<id>` | The double offset, confirmed by geometry with every joint at 0: the child's bounds miss its parent's bounds as placed, but if its `at` / `rot` are read as world values it lies nearer, within one parent size. A child that touches its parent as placed (arm links, equal-link chains, stacked plates) never warns, and neither does a child of a parent at the world origin (only rotation differs there). | refused |
+| `frame.child.absolute.<id>` | The double offset, confirmed by geometry with every joint at 0: the child's bounds miss its parent's bounds as placed, but if its `at` / `rot` are read as world values it lies nearer, within one parent size. A child that touches its parent as placed (arm links, equal-link chains, stacked plates) never warns, and neither does a child of a parent at the world origin (only rotation differs there). Correct layouts can still warn (spaced plates, a plate on posts). | warning |
 | `frame.axis.off.<id>` | A revolute part's axis line misses its own mesh bounds. Mark a part that turns about an outside axis on purpose with `"offAxis": true`; this key needs v2, so a v1 document with such a part fails strict mode until it moves to v2. | refused |
 | `frame.child.far.<id>` | A child's bounds miss its parent's bounds grown by 1.5 times the parent's largest size. Often the same error; sometimes intended. | warning |
 
@@ -371,7 +381,8 @@ model harnesses) refuses the warnings marked below.
 `marty-solid check [--strict] FILE.json` prints, besides `ok`, `reason`, meshes and gear
 checks: `version`, `warnings`, `facts` (value, unit, text, tier, source), `legend`
 (counts, text, claims), `stepTiers`, `stepFacts` (for each step, the fact behind each
-placeholder in order and its checks as text), `notChecked` per motion source, and a
+placeholder in order, and each check with its `value`, `comparison`, exact `target`,
+`tolerance` and text), `notChecked` per motion source, and a
 plain-words `readBack` of every part at input 0. One line per part gives its world centre
 and size (from its vertices), how it moves (axis words such as "a horizontal axis (+X)",
 speed, tier and source), its parent and its `at` in the parent frame, how far its origin is
@@ -396,7 +407,7 @@ them also pass `check --strict` with no warnings.
   (`rot` `[0, 1, 0, 90]` with joint `[0, 0, 1]`, both confirmed by `expect.axisWorld`), a
   support placed relative to its base and a collar relative to the wheel, captions filled
   from facts (`{wheel.speed|abs|frac}` gives "3/8", with a check that proves the sign),
-  two claim checks and one `unchecked` caption. Legend: "Solved 7 · Not checked 1".
+  three claim checks and one `unchecked` caption. Legend: "Solved 8 · Not checked 1".
 
 * [`slider-crank.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/slider-crank.json)
   (21 lines): a crank on a `revolute` joint with an `input` drive, a piston on a

@@ -708,7 +708,7 @@ public enum MGSolidParser {
             for c in s.checks {
                 let t = token(c.value)
                 guard let (name, fact) = MGSolidFacts.lookup(c.value, doc.facts, doc.aliases) else { throw MGSolidIssue("check.fact.\(t)") }
-                guard c.holds(fact.value) else { throw MGSolidIssue("check.\(t)") }
+                guard c.holds(fact.value) else { throw MGSolidIssue("check.failed.\(t)") }
                 if c.provesSign { signed.insert(name) }
             }
             for (name, mods) in zip(filled.facts, filled.modifiers) where mods.contains("abs") && !signed.contains(name) {

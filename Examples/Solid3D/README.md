@@ -54,7 +54,7 @@ play/pause. It needs a logged-in desktop session.
 swift build -c release --package-path Examples/Solid3D
 B=$(swift build -c release --package-path Examples/Solid3D --show-bin-path)
 $B/marty-solid check my-model.json             # JSON report; exit 0 accepted, 1 refused
-$B/marty-solid check --strict my-model.json    # model-harness profile: also refuses idle joints and frame errors
+$B/marty-solid check --strict my-model.json    # model-harness profile: also refuses idle joints and off-axis turns
 $B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF, snapshot
 ```
 
@@ -69,8 +69,9 @@ $B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF,
   `frame.child.absolute.<id>`, `frame.child.far.<id>`, `frame.axis.off.<id>`), the engine
   `facts` with their tiers, the tier `legend`, `notChecked` per motion source and a
   plain-words `readBack` of every part (world position, turn axis such as "a horizontal
-  axis (+X)", parent frame, up). With `--strict` the warnings except `frame.child.far` make
-  `ok` false (exit 1) with that reason, and the full report is still printed. See
+  axis (+X)", parent frame, up). With `--strict`, `joint.idle` and `frame.axis.off` make
+  `ok` false (exit 1) with that reason, and the full report is still printed; the
+  child-frame warnings are heuristics and never refuse. See
   [docs/SOLID-3D.md](../../docs/SOLID-3D.md#warnings-strict-mode-and-the-check-report).
 - `render` writes `hero.png`, `exploded.png`, one captioned `step-N.png` per authored
   step (with its highlight, explode amount and camera), a 12-second `loop.gif`

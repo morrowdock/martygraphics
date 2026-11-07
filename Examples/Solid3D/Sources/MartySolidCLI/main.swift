@@ -124,7 +124,12 @@ func honesty(_ doc: MGSolidDocument) -> [String: Any] {
             "stepTiers": doc.steps.map { $0.tier?.name as Any },
             // Which fact filled each placeholder, in order, and what each step's checks proved: a grader or a model
             // can see that "3 times slower" came from `count.stage.planet`, not from a speed.
-            "stepFacts": doc.steps.map { s in ["facts": s.facts, "checks": s.checks.map(\.text)] as [String: Any] },
+            "stepFacts": doc.steps.map { s in
+                ["facts": s.facts,
+                 "checks": s.checks.map { c -> [String: Any] in
+                     ["value": c.value, "comparison": c.comparison.rawValue, "target": c.target, "tolerance": c.tolerance as Any, "text": c.text]
+                 }] as [String: Any]
+            },
             "notChecked": notChecked,
             "readBack": doc.readBack]
 }
