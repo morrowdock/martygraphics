@@ -90,7 +90,12 @@ final class ExplainerCompatTests: ExplainerTestCase {
         _ = s.load(try MGExplainer.parse(json: converted).get())
         for (i, step) in doc.steps.enumerated() {
             XCTAssertEqual(s.presented.beat, i)
-            XCTAssertEqual(s.presented.solid, doc.view(step: i), "beat \(i)")
+            // The same view (cuts, ghosts, opacity, annotations, playback sense); the fingerprint names its own document.
+            let a = try XCTUnwrap(s.presented.solid), b = doc.view(step: i)
+            XCTAssertEqual(a.parts, b.parts, "beat \(i)")
+            XCTAssertEqual(a.section, b.section, "beat \(i)")
+            XCTAssertEqual(a.annotations, b.annotations, "beat \(i)")
+            XCTAssertEqual(a.motionSense, b.motionSense, "beat \(i)")
             XCTAssertEqual(s.presented.step?.explode, step.explode)
             XCTAssertEqual(s.presented.step?.camera ?? nil, step.camera)
             XCTAssertEqual(s.presented.step?.spin ?? 0, step.spin)

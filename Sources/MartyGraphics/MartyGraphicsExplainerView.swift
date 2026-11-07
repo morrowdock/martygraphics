@@ -56,8 +56,14 @@ public final class MGExplainerController: ObservableObject {
     @Published public private(set) var solidParams = MGPoseParameters()
     /// Every event, in order (speech hook: speak `lineDue` text, then call `lineStarted` / `lineEnded`).
     public var onEvent: ((MGExplainerEvent) -> Void)?
-    /// The SceneKit renderer of the solid pane (nil without a solid). It draws highlights with `.strong` emphasis.
+    /// The SceneKit renderer of the solid pane (nil without a solid). It is loaded from the compiled solid
+    /// (`MGSolidRenderer(document:)`, `setDocument(_:)`), shows each beat with `show(document:view:)` (so annotations
+    /// pass #31's one gate) and draws highlights with `.strong` emphasis.
     public private(set) var renderer: MGSolidRenderer?
+    /// The annotation overlay record (labels, leaders, value texts, callouts) of the solid pane at the pose shown now;
+    /// nil without annotations or before the pane has a size. It comes from `MGSolidAnnotations.frame`, through
+    /// `checkedAnnotations`.
+    @Published public private(set) var annotationFrame: MGAnnotationFrame?
     /// The board pane's scene controller (the presented 2D state with the lesson's transitions).
     public let board = MGSceneController()
     public nonisolated let clock: MGLessonClock
@@ -74,6 +80,8 @@ public final class MGExplainerController: ObservableObject {
     /// `finishNow()`: show every remaining beat at its end, without motion.
     private var skipMotion = false
     private var aspect = 1.4
+    private var solidSize = CGSize.zero
+    private var shownFingerprint: String?
     private let signposter = OSSignposter(subsystem: "MartyGraphics", category: "explainer")
     private var beatInterval: OSSignpostIntervalState?
 
@@ -166,6 +174,14 @@ public final class MGExplainerController: ObservableObject {
         aspect = a; frameCamera()
     }
 
+    /// The solid pane's size in points: frames the camera and lays out the annotation overlay for it.
+    public func setSolidSize(_ size: CGSize) {
+        guard size.width > 0, size.height > 0, size != solidSize else { return }
+        solidSize = size
+        setSolidAspect(Double(size.width / size.height))
+        applyPose()
+    }
+
     /// Fraction of the presented beat's `spin` played at `now`: 0 at the beat's start, 1 when it has played (or there is
     /// no spin, `.immediate` pacing, `finishNow`). Paused time does not count.
     public func spinProgress(at now: Duration) -> Double {
@@ -199,6 +215,15 @@ public final class MGExplainerController: ObservableObject {
         let pose = solidPose(at: clock.now)
         renderer?.apply(pose)
         if pose != solidParams { solidParams = pose }
+        // The overlay is laid out at the pose shown, through the one gate (a view or pose not checked shows nothing).
+        if let r = renderer, let d = session.solid, !d.annotations.isEmpty, solidSize.width > 0 {
+            let v = session.presented
+            annotationFrame = MGSolidAnnotations.frame(document: d, view: v.solid ?? d.view(step: nil), params: pose, camera: r.camera,
+                                                       width: Double(solidSize.width), height: Double(solidSize.height),
+                                                       previous: annotationFrame, highlight: v.solidHighlight)
+        } else if annotationFrame != nil {
+            annotationFrame = nil
+        }
     }
 
     /// Plays the beat's spin: one pose about every 1/30 s until it has played or the controller pauses.
@@ -219,11 +244,16 @@ public final class MGExplainerController: ObservableObject {
         var fresh = false
         if let src = session.solidSource, src != shownSolid, let doc = session.solid {
             let interval = signposter.beginInterval("solidCompile", id: signposter.makeSignpostID())
-            let r = MGSolidRenderer(assembly: doc.assembly)
+            let r = MGSolidRenderer(document: doc)
             r.emphasis = .strong
             renderer = r
             signposter.endInterval("solidCompile", interval)
-            shownSolid = src; fresh = true
+            shownSolid = src; shownFingerprint = doc.checkedFingerprint; fresh = true
+        } else if let r = renderer, let doc = session.solid, doc.checkedFingerprint != shownFingerprint {
+            // The solid compiled again (a beat view added or dropped): the renderer loads that exact document, so its
+            // views pass the one gate.
+            r.setDocument(doc)
+            shownFingerprint = doc.checkedFingerprint; fresh = true
         }
         // The board shows the presented 2D state with the lesson's own transition.
         if session.board != nil, let change = session.lesson.lastChange, change.serial != shownSerial, let s = session.state {
@@ -240,9 +270,13 @@ public final class MGExplainerController: ObservableObject {
         }
         if let r = renderer, let d = session.solid {
             let v = session.presented
-            if fresh || changed { r.show(v.solid ?? d.view(step: nil)) }
+            if fresh || changed {
+                r.apply(solidPose(at: clock.now))
+                r.show(document: d, view: v.solid ?? d.view(step: nil))
+            }
             // Also after a learner change, which can move the highlight (an id may stop resolving).
             r.highlight(Set(v.solidHighlight), dimOthers: !v.solidHighlight.isEmpty)
+            r.highlightAnnotations(Set(v.annotations))
             if fresh || changed { frameCamera() }
         }
         applyPose()
@@ -347,9 +381,14 @@ public struct MartyGraphicsExplainerView: View {
             }
             if s.solid != nil, let r = controller.renderer {
                 GeometryReader { g in
-                    SceneView(scene: r.scene, pointOfView: r.cameraNode, options: [.allowsCameraControl], delegate: frameDelegate)
-                        .onAppear { controller.setSolidAspect(Double(g.size.width / max(1, g.size.height))) }
-                        .onChange(of: g.size) { _, size in controller.setSolidAspect(Double(size.width / max(1, size.height))) }
+                    // With annotations the camera stays the engine's, so the overlay's placement matches the picture.
+                    let annotated = !(s.solid?.annotations.isEmpty ?? true)
+                    SceneView(scene: r.scene, pointOfView: r.cameraNode, options: annotated ? [] : [.allowsCameraControl], delegate: frameDelegate)
+                        .overlay {
+                            if let f = controller.annotationFrame, let d = s.solid { MGSolidOverlayView(frame: f, document: d, legend: false).allowsHitTesting(false) }
+                        }
+                        .onAppear { controller.setSolidSize(g.size) }
+                        .onChange(of: g.size) { _, size in controller.setSolidSize(size) }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .frame(maxWidth: .infinity, maxHeight: .infinity).layoutPriority(both && primaryIsSolid ? 1.2 : 1)

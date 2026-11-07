@@ -150,9 +150,13 @@ in an explainer.
     pending (`pendingClaims`): out of `claims` and the legend. They appear when the motion has played; paused time
     does not count, and `nextWake` wakes the host then. `.immediate` pacing and `finishNow()` play no motion: the board
     gets the end state as a direct change in the same step (`finishNow` publishes a new direct change if a motion was
-    still playing), so state and text match at once. 3D facts in this version are rates per input turn, tooth counts
-    and travel over a full turn, so they hold at every pose of a `spin` and show at once. (PR 3a: a fact measured at
-    one pose waits for its pose the same way.)
+    still playing), so state and text match at once. 3D facts are rates per input turn, tooth counts, travel over a
+    full turn and dimension facts (`dim.<id>`). The first three hold at every pose. A dimension fact is measured at
+    one pose, so the assembly's rule for shown text applies unchanged: a caption, the title or board text may show
+    `dim.<id>` only when that dimension holds at every pose its view can show (`text.pose.beat.<n>`,
+    `text.pose.title`, `text.pose.board`; `MGSolidAnnotationEngine.dimensionHolds`). Every shown 3D number therefore
+    holds at every pose of a `spin`, and the host shows a view's first pose at once (`show(document:view:)` poses the
+    parts and attaches the annotations in one transaction), so no 3D number has to wait.
 11. Speech is learner-visible. A beat's `lineDue` (the line a host speaks) never carries a 2D engine number before
     the board shows the state it describes: when such a line is due while the board still moves, `lineDue` waits and
     fires when the motion settles, filled from the state shown then (the simpler of the two options; there is no
@@ -176,9 +180,18 @@ A 2D command that names a 3D id (`set`, `remove`) is `explainer.id.view.<id>`; a
 `notes.view.<id>`. A table sub-address is valid in `highlight` only: `<table>.r<k>` (row `k`, 0-based, the header is
 row 0) and `<table>.r<k>c<j>` (one cell), decimal without a sign or a leading zero, inside the table's size at that beat.
 
-SEAM (open-vocabulary PR 3a): 3D annotation ids (labels, arrows, dimensions) join this namespace, the claims and the
-check report once `annotations` merges. Until then `annotations` in a solid is refused with the assembly's own reason
-(`assembly.unknown.annotations`).
+3D annotations (open-vocabulary PR 3a) work inside an explainer exactly as in an assembly v2: the solid's
+`annotations` (labels, arrows, dimensions) and each beat view's `annotate` (`view.annotate`, `view.annotate.count`,
+`view.annotate.ref.<id>`) follow the assembly rules, including visibility, the linear-motion rule and the pose rules,
+because every beat view compiles as a solid step. Annotation ids join this namespace after the anchor names, in
+authored order (a 2D id equal to one is `explainer.id.duplicate.<id>`). A beat may highlight an annotation id (drawn
+bright). Annotation claims join the one legend after the motion claims, and the solid's legend notes ("Arrow lengths
+are not to scale") join its notes. Hosts draw annotations only through the assembly's one gate
+(`MGSolidDocument.checkedAnnotations`): the renderer is loaded from the compiled solid (`MGSolidRenderer(document:)`,
+`setDocument(_:)` after each recompile) and shows each beat with `show(document:view:)`; the SwiftUI pane and
+`marty-solid render` lay out labels with `MGSolidAnnotations.frame` at the pose shown, and the pane keeps the engine's
+camera when the solid has annotations, so the overlay matches the picture. Compiled documents and views stay
+read-only.
 
 ## Numbers, tiers and the legend
 
@@ -213,7 +226,7 @@ type a number (`text.number.control.<id>`); a raw template's params may not carr
 | A check | the tier of its value | "Checked" |
 | 3D motion | the #21 motion tier | as in the assembly |
 
-`MGExplainerSession.claims` lists the claims in this order: 3D motion (part order), (PR 3a: annotations), the title,
+`MGExplainerSession.claims` lists the claims in this order: 3D motion (part order), 3D annotations (authored order), the title,
 `board.template`, 2D items `item.<id>` (board order, then `add` order), then per kept beat `beat.<n>` and its checks
 `beat.<n>.check.<k>`. The one legend (`MGExplainerLegend`, owner D4) shows `Solved N · Schematic N · Given N · Not
 checked N` (each group only when non-zero). `Schematic` counts Built claims of every kind except `data`; `Given`
@@ -352,8 +365,9 @@ Explainer reasons: `explainer.json`, `explainer.object`, `explainer.number`, `ex
 only), `stmt.json`, `stmt.kind`, `stmt.order`, `stmt.bytes`, `stmt.say`, `stmt.view.twice`, `stmt.highlight.twice`,
 `lesson.depth`, `view.object`, `view.unknown.<keys>`, the step reasons renamed for a beat view (`view.focus`,
 `view.camera`, `view.explode`, `view.orbit`, `view.spin`, `view.ghost`, `view.section`, `view.section.normal`,
-`view.section.offset`, `view.section.parts`, `view.section.missing.<keys>`, `view.section.unknown.<keys>`) and for a 3D
-check (`check.unknown.<keys>`), `text.number.beat.<n>`, `text.number.item.<id>`,
+`view.section.offset`, `view.section.parts`, `view.section.missing.<keys>`, `view.section.unknown.<keys>`,
+`view.annotate`, `view.annotate.count`, `view.annotate.ref.<id>`) and for a 3D check (`check.unknown.<keys>`), the pose
+rule for the explainer's own text (`text.pose.beat.<n>`, `text.pose.board`, `text.pose.title`), `text.number.beat.<n>`, `text.number.item.<id>`,
 `text.number.control.<id>`, `text.number.template`, and for snapshots `snapshot.bytes`, `snapshot.number`,
 `snapshot.depth`, `snapshot.kind`, `snapshot.version`, `snapshot.header`, `snapshot.header.missing`,
 `snapshot.header.unknown.<keys>`, `snapshot.frozen`, `snapshot.beats`, `snapshot.next`, `snapshot.board`,
@@ -384,9 +398,9 @@ when its text holds `"explainer"`, else `assembly.bytes`. Exit codes: 0 ok, 1 re
 | `file` | `{"lines", "bytes", "sha256"}` |
 | `title`, `primary` | the filled title; the primary view |
 | `views` | `{"board": null \| {"items", "template", "values": {name: {value, unit, text, tier}}}, "solid": null \| {the assembly report fields}}` |
-| `ids` | `{"board", "controls", "solid", "annotations"}` in canonical order (`annotations` stays empty until PR 3a) |
+| `ids` | `{"board", "controls", "solid", "annotations"}` in canonical order |
 | `beats` | per kept beat: `{"n", "caption", "template", "unchecked", "tier", "facts", "checks": [{"value", "comparison", "target", "tol"}], "highlight": {"board", "solid", "annotations"}, "view"}` |
-| `annotations` | empty until PR 3a |
+| `annotations` | one entry per 3D annotation: the assembly report's `annotations` (`views.solid` also holds its `placements`) |
 | `legend` | `{"text", "groups": {"solved", "schematic", "given", "described"}, "notes", "claims"}` |
 | `warnings` | `notes.unused.<id>`, then the solid's warnings, each `{"reason", "view", "id"}` |
 | `budget` | `{"bytes", "limit", "statements", "triangles", "triangleLimit"}` |
@@ -410,4 +424,5 @@ the size is taller than wide, the caption band and the legend line), `loop.gif` 
 * Highlights are presentation only; they never prove anything.
 * The 3D view per beat is the solid step view (cuts, ghosts, explode, camera, orbit, spin). Beats cannot change the
   solid (no 3D patches in beats), and learner controls bind 2D template parameters only.
-* No 3D annotations yet (PR 3a), no clip export, no on-device timing.
+* No clip export, no on-device timing. Annotation placement in the SwiftUI pane is checked through the core frame
+  record, not on a device.
