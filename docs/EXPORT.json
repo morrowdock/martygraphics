@@ -277,7 +277,13 @@
     "docs/fixtures/v1/table-region-code.scene.json: synthetic table, region and code-text scene (equals the built-in cells fixture)",
     "Tests/MartyGraphicsTests/LessonNumericTests.swift: lesson regressions for non-finite values built in code (lesson.number, snapshot.number, atomic load and apply, hidden oversized payload)",
     "docs/assets/lessons: rotation lesson loop, beat stills, learner-slider still, frame timing and capture receipt (captured from Examples/LessonDemo)",
-    "Examples/LessonDemo/Sources/LessonDemoKit/Capture.swift: lesson-demo --capture frame plan and ImageIO GIF writer (public-only example code)"
+    "Examples/LessonDemo/Sources/LessonDemoKit/Capture.swift: lesson-demo --capture frame plan and ImageIO GIF writer (public-only example code)",
+    "Sources/MartyGraphics/Solid/MGSolidFacts.swift: assembly v2 facts table, {placeholder} fill with closed modifiers, rule N1 and step claim checks (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidTiers.swift: engine-computed truth tiers, claims, legend and chip texts, describe(id) (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidFrames.swift: idle-joint and frame lints, expect orientation claims, plain-words read-back, strict profile (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidNumericScalars.swift: Unicode 18.0.0 Numeric_Type scalar ranges for the solid caption number rule (derived data, Unicode License v3; public-only)",
+    "Tests/MartyGraphicsTests/SolidHonestyTests.swift: v2 version gate, facts, placeholders, N1, checks, tiers, lints, expect and read-back coverage",
+    "Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json: assembly v2 worked example (horizontal shafts, placeholders, claim check, unchecked caption)"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

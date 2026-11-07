@@ -348,7 +348,9 @@ final class SolidAssemblyFormatTests: XCTestCase {
         XCTAssertEqual(reason(parse(crossing)), "part.extrudedProfile.points")
 
         XCTAssertEqual(reason(MGSolidParser.document(data: Data("{".utf8))), "json")
-        XCTAssertEqual(reason(parse(.object(["v": .number(2), "kind": .string("assembly"), "parts": .array([])]))), "assembly.version")
+        XCTAssertEqual(reason(parse(.object(["v": .number(3), "kind": .string("assembly"), "parts": .array([])]))), "assembly.version")
+        // Assembly v2 exists (a strict superset of v1); an empty v2 document fails on its parts.
+        XCTAssertEqual(reason(parse(.object(["v": .number(2), "kind": .string("assembly"), "parts": .array([])]))), "parts.count")
     }
 
     func testPatchesKeepIdentityAndReuseUnchangedMeshes() throws {

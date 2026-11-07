@@ -1,7 +1,8 @@
 # Third-party inventory
 
 This source package declares **no external package dependencies** and vendors
-no third-party source, fonts, images, model weights, or binary assets. The committed
+no third-party source, fonts, images, model weights, or binary assets; the one derived
+data table (Unicode numeric scalar ranges) is listed below. The committed
 PNG/GIF showcase assets are original synthetic renders of this package, under
 Apache-2.0; their source and hashes are in [the capture receipt](assets/native/provenance.json).
 
@@ -12,6 +13,7 @@ Apache-2.0; their source and hashes are in [the capture receipt](assets/native/p
 | XCTest | Platform test framework | Toolchain/SDK component; not vendored |
 | Python 3 standard library | DCO, local validation and optional post-release install verification | PSF-2.0; https://docs.python.org/3/license.html |
 | actions/checkout | CI only | MIT; https://github.com/actions/checkout/blob/main/LICENSE |
+| Unicode Character Database 18.0.0, `DerivedNumericType.txt` | Numeric_Type ranges (2,348 scalars) derived into `Sources/MartyGraphics/Solid/MGSolidNumericScalars.swift` for the solid caption number rule | Unicode License v3; https://www.unicode.org/license.txt ; data © Unicode, Inc. |
 | Contributor Covenant 2.1 | CODE_OF_CONDUCT.md | CC-BY-4.0; https://github.com/ContributorCovenant/contributor_covenant/blob/91532d80ea5f39b6685aff4892bc6854bf2f6d6f/LICENSE.md ; attribution retained in the document |
 
 CI actions are pinned to immutable commit SHAs in the workflow. Apple frameworks

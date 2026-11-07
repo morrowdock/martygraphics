@@ -10,6 +10,8 @@ public enum MGSolidLimits {
     public static let profilePoints = 256, profileHoles = 16, plateHoles = 32
     public static let constraints = 128, steps = 16, idsPerStep = 16
     public static let title = 80, name = 60, say = 240
+    /// v2: the reason text of an `unchecked` caption, and claim checks per step.
+    public static let unchecked = 60, checksPerStep = 8
     public static let teeth: ClosedRange<Double> = 8...200, ringTeeth: ClosedRange<Double> = 20...400
     public static let module: ClosedRange<Double> = 0.2...20
     /// Lengths and coordinates in millimetres.
@@ -34,6 +36,7 @@ public struct MGSolidIssue: Error, Equatable, CustomStringConvertible, Sendable 
 
 /// One authored step of an explainer.
 public struct MGSolidStep: Equatable, Sendable {
+    /// What the learner sees: in assembly v2 with every `{placeholder}` filled from engine facts.
     public var say: String
     public var focus: [String]
     public var highlight: [String]
@@ -43,6 +46,16 @@ public struct MGSolidStep: Equatable, Sendable {
     public var orbit: Double
     /// Input turns played during the step (for example to show the gears running).
     public var spin: Double
+    /// The authored text before placeholders are filled (equal to `say` in v1).
+    public var template: String = ""
+    /// v2: the author's reason when the caption's numbers are not engine facts (`"unchecked": "…"`).
+    public var unchecked: String?
+    /// v2: claims the engine proved before accepting the document.
+    public var checks: [MGSolidClaimCheck] = []
+    /// v2: canonical names of the facts the caption shows, in order.
+    public var facts: [String] = []
+    /// Engine-computed caption tier; nil when the caption shows and checks no engine number (see docs/SOLID-3D.md).
+    public var tier: MGSolidTier?
 }
 
 /// Meshing data the compiler derived for one gear part.
@@ -71,25 +84,68 @@ public struct MGSolidDocument: Equatable, Sendable {
     public var source: MGJSON
     /// The components `use` entries were resolved against; patches recompile with the same library.
     public var library: MGSolidLibrary = .builtIn
+    /// Assembly format version (1 or 2). New keys are legal only in v2; v1 keeps its exact meaning.
+    public var version: Int = 1
+    /// Engine facts by canonical name (`stage.carrier.speed`, `count.stage.planet`); look names up with `fact(_:)`.
+    public var facts: [String: MGSolidFact] = [:]
+    /// Component anchors to the part (or `repeat` base) ids they name (`stage.output` → `stage.carrier`).
+    public var aliases: [String: String] = [:]
+    /// `repeat` copy ids to their base id (`planet2` → `planet`).
+    public var copies: [String: String] = [:]
+    /// What moves each driven part: `input`, `follow`, `crankSlider`, `crankRod`, `gearMesh`, `fixed` or `phase`.
+    public var motionSources: [String: String] = [:]
+    /// Engine tier of each driven part's own motion through its drive chain (`input` at ±1, crank closed forms and
+    /// mesh solves from them are Solved; other `input` scales and `follow` ratios are author behaviour, Built).
+    public var driveTiers: [String: MGSolidTier] = [:]
+    /// Base ids of parts marked `"offAxis": true` (v2).
+    public var offAxis: Set<String> = []
+    /// Engine-computed title tier (v2, when the title shows facts).
+    public var titleTier: MGSolidTier?
+    /// Honesty warnings (idle joints and frame lints), in part order. The plain API only warns; the strict profile
+    /// (`MGSolidProfile.strict`, the model harness) refuses some of them.
+    public var warnings: [MGSolidIssue] = []
 
     public func pose(_ params: MGPoseParameters) -> MGPose { assembly.pose(params) }
+
+    /// A fact by name; component anchors resolve (`stage.output.speed`).
+    public func fact(_ name: String) -> MGSolidFact? { MGSolidFacts.lookup(name, facts, aliases)?.fact }
+}
+
+/// Assembly format versions. `v: 1` keeps its exact meaning; `v: 2` is a strict superset whose new keys are legal
+/// only when `v` is 2 (a v1 document with one is refused with the existing `….unknown.<key>` reason). Later
+/// features add their keys to the v2 sets here.
+struct MGSolidFormat: Equatable {
+    let version: Int
+    static let v1 = MGSolidFormat(version: 1), v2 = MGSolidFormat(version: 2)
+    static let topKeysV2: Set<String> = []
+    static let partKeysV2: Set<String> = ["expect", "offAxis"]
+    static let stepKeysV2: Set<String> = ["check", "unchecked"]
+    var isV2: Bool { version >= 2 }
+    var topKeys: Set<String> { isV2 ? MGSolidParser.topKeys.union(Self.topKeysV2) : MGSolidParser.topKeys }
+    var partKeys: Set<String> { isV2 ? MGSolidParser.partKeys.union(Self.partKeysV2) : MGSolidParser.partKeys }
+    var stepKeys: Set<String> { isV2 ? MGSolidParser.stepKeys.union(Self.stepKeysV2) : MGSolidParser.stepKeys }
 }
 
 /// Strict decoder and compiler for the solid assembly JSON format (closed keys, bounded values, resolved references).
 public enum MGSolidParser {
+    /// `profile: .strict` (the model harness) also refuses the warnings listed in `MGSolidProfile.strictPrefixes`.
     public static func document(data: Data, reusing previous: MGSolidDocument? = nil,
-                                library: MGSolidLibrary = .builtIn) -> Result<MGSolidDocument, MGSolidIssue> {
+                                library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
         guard data.count <= MGSolidLimits.bytes else { return .failure(.init("assembly.bytes")) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
             return .failure(.init("json"))
         }
-        return document(json: json, reusing: previous, library: library)
+        return document(json: json, reusing: previous, library: library, profile: profile)
     }
 
     /// `library` resolves `use` entries (components); see docs/SOLID-3D.md, Components.
     public static func document(json: MGJSON, reusing previous: MGSolidDocument? = nil,
-                                library: MGSolidLibrary = .builtIn) -> Result<MGSolidDocument, MGSolidIssue> {
-        do { return .success(try compile(json, previous, library)) }
+                                library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
+        do {
+            let doc = try compile(json, previous, library)
+            if let refusal = profile.refusal(doc) { return .failure(refusal) }
+            return .success(doc)
+        }
         catch let e as MGSolidIssue { return .failure(e) }
         catch let e as MGError { return .failure(.init(e.reason)) }
         catch { return .failure(.init("unknown")) }
@@ -99,7 +155,9 @@ public enum MGSolidParser {
     /// fields into existing parts by id; `"constraints"` and `"steps"` replace those arrays. Part ids are stable, and
     /// parts whose shapes did not change keep their meshes. An id inside a component instance (`stage1.pinion`) merges
     /// into that `use` entry's `set`; the instance id itself (`stage1`) edits the `use` entry (`with`, `at`, …).
-    public static func applying(_ patch: MGJSON, to doc: MGSolidDocument) -> Result<MGSolidDocument, MGSolidIssue> {
+    /// `profile: .strict` refuses a patch whose result the strict profile would refuse (an idle joint, a frame error).
+    public static func applying(_ patch: MGJSON, to doc: MGSolidDocument,
+                                profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
         guard case .object(let p) = patch else { return .failure(.init("patch.object")) }
         let allowed: Set<String> = ["params", "parts", "constraints", "steps", "title"]
         guard Set(p.keys).isSubset(of: allowed), !p.isEmpty else {
@@ -133,7 +191,7 @@ public enum MGSolidParser {
             }
             src["parts"] = .array(list)
         }
-        return document(json: .object(src), reusing: doc, library: doc.library)
+        return document(json: .object(src), reusing: doc, library: doc.library, profile: profile)
     }
 
     // MARK: Compile
@@ -141,19 +199,35 @@ public enum MGSolidParser {
     static let topKeys: Set<String> = ["v", "kind", "title", "units", "params", "parts", "constraints", "steps"]
     static let partKeys: Set<String> = ["id", "name", "shape", "material", "parent", "at", "rot", "joint", "drive", "explode",
                                         "explodeWindow", "repeat", "phase", "smooth"]
+    static let stepKeys: Set<String> = ["say", "focus", "highlight", "explode", "camera", "orbit", "spin"]
 
     struct RawPart {
         var id: String, name: String, shapes: [MGShapeSpec], material: MGMaterialPreset
         var parent: String?, placement: MGTransform, joint: MGJoint
         var drive: MGJSON?, explode: MGVec3, window: ClosedRange<Double>, phase: Double, crease: Double
         var base: String, instance: Int?
+        /// v2: `offAxis` and `expect` (`axisWorld`, `upWorld`).
+        var offAxis = false, expectAxis: MGVec3? = nil, expectUp: MGVec3? = nil
+    }
+
+    /// True when any object anywhere in the value has a key named `tier` (authors cannot set tiers).
+    static func hasTierKey(_ v: MGJSON) -> Bool {
+        switch v {
+        case .object(let o): return o["tier"] != nil || o.values.contains(where: hasTierKey)
+        case .array(let a): return a.contains(where: hasTierKey)
+        default: return false
+        }
     }
 
     static func compile(_ json: MGJSON, _ previous: MGSolidDocument?, _ library: MGSolidLibrary = .builtIn) throws -> MGSolidDocument {
         guard case .object(var o) = json else { throw MGSolidIssue("assembly.object") }
         guard json.canonicalByteCount <= MGSolidLimits.bytes else { throw MGSolidIssue("assembly.bytes") }
-        try closed(o, ["v", "kind", "parts"], topKeys, "assembly")
-        guard o["v"] == .number(1) else { throw MGSolidIssue("assembly.version") }
+        // The key set follows the declared version; anything but 2 checks the v1 keys first, exactly as before.
+        let format: MGSolidFormat = o["v"] == .number(2) ? .v2 : .v1
+        // In v2 a `tier` key anywhere (top level included) is refused before any other key check.
+        if format.isV2, hasTierKey(json) { throw MGSolidIssue("tier.key") }
+        try closed(o, ["v", "kind", "parts"], format.topKeys, "assembly")
+        guard o["v"] == .number(1) || format.isV2 else { throw MGSolidIssue("assembly.version") }
         guard o["kind"] == .string("assembly") else { throw MGSolidIssue("assembly.kind") }
         if let u = o["units"], u != .string("mm") { throw MGSolidIssue("assembly.units") }
         let title = try o["title"].map { try text($0, MGSolidLimits.title, "assembly.title") } ?? "Assembly"
@@ -174,7 +248,7 @@ public enum MGSolidParser {
         var repeated: [String: Int] = [:]
         var wireIDs = Set<String>()
         for entry in rawParts {
-            var expanded = try part(entry, generated: expansion.generated)
+            var expanded = try part(entry, generated: expansion.generated, format: format)
             if let frame = expansion.frames[expanded[0].base] {
                 // An instance placed with `at` / `rot` carries its root parts (outside any `repeat` turn).
                 for k in expanded.indices { expanded[k].placement = frame * expanded[k].placement }
@@ -504,12 +578,31 @@ public enum MGSolidParser {
         for (id, phase) in knob.sorted(by: { $0.key < $1.key }) where drives[id] == nil && phase != 0 && jointAxisWorld(id) != nil {
             drives[id] = .input(scale: 0, offset: phase)
         }
+        // What moves each driven part (facts, tiers and the read-back name it).
+        var sources: [String: String] = [:]
+        for p in parts { if case .object(let d)? = p.drive, let k = d.keys.first { sources[p.id] = k } }
+        for id in unknown where sources[id] == nil { sources[id] = fixed.contains(id) ? "fixed" : "gearMesh" }
+        for id in drives.keys where sources[id] == nil { sources[id] = "phase" }
+        // Tier of each part's own drive. An `input` scale is the reference speed only at ±1 (or 0, held); any other
+        // scale, and every `follow` ratio, is behaviour the author set (Built). A gear-mesh solve takes the lowest
+        // tier of the inputs in its connected part of the velocity system.
+        var ownTiers: [String: MGSolidTier] = [:]
+        for (id, s) in inputs { ownTiers[id] = s == 0 || abs(abs(s) - 1) < 1e-12 ? .solved : .built }
+        for p in parts where sources[p.id] == "follow" { ownTiers[p.id] = .built }
+        var root = Array(0..<unknown.count)
+        func find(_ i: Int) -> Int { var i = i; while root[i] != i { root[i] = root[root[i]]; i = root[i] }; return i }
+        for (row, _) in rows { let cols = row.keys.sorted(); for c in cols.dropFirst() { root[find(c)] = find(cols[0]) } }
+        var componentTier: [Int: MGSolidTier] = [:]
+        for (i, id) in unknown.enumerated() where inputs[id] != nil {
+            componentTier[find(i)] = min(componentTier[find(i)] ?? .solved, ownTiers[id] ?? .solved)
+        }
+        for (i, id) in unknown.enumerated() where inputs[id] == nil { ownTiers[id] = componentTier[find(i)] ?? .solved }
 
         // Steps.
         var steps: [MGSolidStep] = []
         if let s = o["steps"] {
             guard case .array(let list) = s, list.count <= MGSolidLimits.steps else { throw MGSolidIssue("steps.count") }
-            for entry in list { steps.append(try step(entry, expand)) }
+            for entry in list { steps.append(try step(entry, expand, format)) }
         }
 
         // Meshes (reused when the shape list is unchanged). A gear without a joint keeps its tooth phase in its shape.
@@ -571,8 +664,61 @@ public enum MGSolidParser {
             let ta = Double(ga.teeth) * turn(m.a), tb = sign * Double(gb.teeth) * turn(m.b)
             guard abs(ta + tb) <= 1e-6 * (abs(ta) + abs(tb)) + 1e-9 else { throw MGSolidIssue("constraint.gearMesh.motion", part: m.b) }
         }
-        return MGSolidDocument(title: title, assembly: assembly, steps: steps, defaults: defaults, gears: gears, shapes: shapes,
-                               ratios: ratios, source: json, library: library)
+        var copies: [String: String] = [:]
+        for p in parts where repeated[p.base] != nil && p.id != p.base { copies[p.id] = p.base }
+        var doc = MGSolidDocument(title: title, assembly: assembly, steps: steps, defaults: defaults, gears: gears, shapes: shapes,
+                                  ratios: ratios, source: json, library: library)
+        doc.version = format.version
+        doc.copies = copies
+        doc.aliases = expansion.aliases
+        doc.motionSources = sources
+        doc.offAxis = Set(parts.filter(\.offAxis).map(\.base))
+        (doc.facts, doc.driveTiers) = MGSolidFacts.table(assembly, gears: gears, sources: sources, ownTiers: ownTiers,
+                                                         copies: copies, aliases: expansion.aliases)
+        if format.isV2 {
+            var expects: [String: (axis: MGVec3?, up: MGVec3?)] = [:]
+            for p in parts where p.expectAxis != nil || p.expectUp != nil { expects[p.base] = (p.expectAxis, p.expectUp) }
+            try MGSolidFrames.checkExpectations(assembly, expects, copies: copies)
+            try fillText(&doc)
+        } else {
+            // v1 text is never filled. A caption or title with a number in it makes a claim the engine did not check.
+            for i in doc.steps.indices where doc.steps[i].say.contains(where: MGSolidFacts.isNumber) { doc.steps[i].tier = .described }
+            if doc.title.contains(where: MGSolidFacts.isNumber) { doc.titleTier = .described }
+        }
+        doc.warnings = MGSolidFrames.lints(doc)
+        return doc
+    }
+
+    /// v2 text: fills the title and every step from the facts table, applies rule N1 to captions (no number character
+    /// outside a placeholder unless the step is `unchecked`), proves step `check` claims and sets text tiers. A title
+    /// may type numbers, but then it is Described. `abs` hides a sign, so it needs a check in the same step that
+    /// proves the sign of that fact (`text.sign.<name>`); a title cannot use it.
+    static func fillText(_ doc: inout MGSolidDocument) throws {
+        let title = try MGSolidFacts.fill(doc.title, where: "title", n1: false, doc.facts, doc.aliases)
+        guard title.text.unicodeScalars.count <= MGSolidLimits.title else { throw MGSolidIssue("assembly.title") }
+        for (name, mods) in zip(title.facts, title.modifiers) where mods.contains("abs") { throw MGSolidIssue("text.sign.\(token(name))") }
+        doc.title = title.text
+        doc.assembly.name = title.text
+        doc.titleTier = MGSolidTiers.text(facts: title.facts.compactMap { doc.facts[$0] }, unchecked: false, typedNumbers: title.typedNumbers)
+        for i in doc.steps.indices {
+            var s = doc.steps[i]
+            let filled = try MGSolidFacts.fill(s.template, where: "step.\(i + 1)", n1: s.unchecked == nil, doc.facts, doc.aliases)
+            guard !filled.text.isEmpty, filled.text.unicodeScalars.count <= MGSolidLimits.say else { throw MGSolidIssue("step.say") }
+            var signed = Set<String>()
+            for c in s.checks {
+                let t = token(c.value)
+                guard let (name, fact) = MGSolidFacts.lookup(c.value, doc.facts, doc.aliases) else { throw MGSolidIssue("check.fact.\(t)") }
+                guard c.holds(fact.value) else { throw MGSolidIssue("check.failed.\(t)") }
+                if c.provesSign { signed.insert(name) }
+            }
+            for (name, mods) in zip(filled.facts, filled.modifiers) where mods.contains("abs") && !signed.contains(name) {
+                throw MGSolidIssue("text.sign.\(token(name))")
+            }
+            s.say = filled.text
+            s.facts = filled.facts
+            s.tier = MGSolidTiers.text(facts: filled.facts.compactMap { doc.facts[$0] }, unchecked: s.unchecked != nil)
+            doc.steps[i] = s
+        }
     }
 
     /// Gauss-Jordan elimination with partial pivoting on a (possibly redundant) linear system. Returns nil entries for
@@ -609,14 +755,14 @@ public enum MGSolidParser {
     // MARK: Parts
 
     /// `generated`: dotted ids made by component expansion (`stage1.pinion`); authored ids stay plain identifiers.
-    static func part(_ entry: MGJSON, generated: Set<String> = []) throws -> [RawPart] {
+    static func part(_ entry: MGJSON, generated: Set<String> = [], format: MGSolidFormat = .v1) throws -> [RawPart] {
         guard case .object(let o) = entry else { throw MGSolidIssue("part.object") }
         let pid: String
         if case .string(let s)? = o["id"], generated.contains(s) { pid = s }
         else { do { pid = try MGParser.identifier(o["id"] ?? .null, "part.id") } catch { throw MGSolidIssue("part.id") } }
         func fail(_ r: String) -> MGSolidIssue { MGSolidIssue(r, part: pid) }
         do {
-            try closed(o, ["id", "shape"], partKeys, "part")
+            try closed(o, ["id", "shape"], format.partKeys, "part")
             let name = try o["name"].map { try text($0, MGSolidLimits.name, "part.name") } ?? pid
             var shapeList: [MGJSON]
             switch o["shape"] {
@@ -654,8 +800,24 @@ public enum MGSolidParser {
             }
             let phase = try o["phase"].map { try num($0, -360...360, "part.phase") * .pi / 180 } ?? 0
             let crease = try o["smooth"].map { try num($0, 0...180, "part.smooth") * .pi / 180 } ?? 0.6
-            let raw = RawPart(id: pid, name: name, shapes: shapes, material: material, parent: parent, placement: placement, joint: joint,
+            var raw = RawPart(id: pid, name: name, shapes: shapes, material: material, parent: parent, placement: placement, joint: joint,
                               drive: o["drive"], explode: explode, window: window, phase: phase, crease: crease, base: pid, instance: nil)
+            if let v = o["offAxis"] {
+                guard case .bool(let b) = v else { throw MGSolidIssue("part.offAxis") }
+                raw.offAxis = b
+            }
+            if let e = o["expect"] {
+                guard case .object(let eo) = e, !eo.isEmpty else { throw MGSolidIssue("part.expect") }
+                try closed(eo, [], ["axisWorld", "upWorld"], "part.expect")
+                func direction(_ key: String) throws -> MGVec3? {
+                    guard let v = eo[key] else { return nil }
+                    let d = try vector(v, "part.expect.\(key)")
+                    guard d.length > 1e-9 else { throw MGSolidIssue("part.expect.\(key)") }
+                    return d.normalized
+                }
+                raw.expectAxis = try direction("axisWorld")
+                raw.expectUp = try direction("upWorld")
+            }
             guard let r = o["repeat"] else { return [raw] }
             guard case .object(let ro) = r else { throw MGSolidIssue("part.repeat") }
             try closed(ro, ["count"], ["count", "axis", "angle"], "part.repeat")
@@ -922,9 +1084,9 @@ public enum MGSolidParser {
         throw MGSolidIssue("part.material")
     }
 
-    static func step(_ entry: MGJSON, _ expand: (String, String) throws -> [String]) throws -> MGSolidStep {
+    static func step(_ entry: MGJSON, _ expand: (String, String) throws -> [String], _ format: MGSolidFormat = .v1) throws -> MGSolidStep {
         guard case .object(let o) = entry else { throw MGSolidIssue("step.object") }
-        try closed(o, ["say"], ["say", "focus", "highlight", "explode", "camera", "orbit", "spin"], "step")
+        try closed(o, ["say"], format.stepKeys, "step")
         func ids(_ key: String) throws -> [String] {
             guard let v = o[key] else { return [] }
             guard case .array(let list) = v, list.count <= MGSolidLimits.idsPerStep else { throw MGSolidIssue("step.\(key)") }
@@ -938,10 +1100,18 @@ public enum MGSolidParser {
             guard case .string(let s) = c, MGSolidCamera.presets[s] != nil else { throw MGSolidIssue("step.camera") }
             camera = s
         }
-        return MGSolidStep(say: try text(o["say"] ?? .null, MGSolidLimits.say, "step.say"), focus: try ids("focus"), highlight: try ids("highlight"),
-                           explode: try o["explode"].map { try num($0, 0...1, "step.explode") }, camera: camera,
-                           orbit: try o["orbit"].map { try num($0, -360...360, "step.orbit") } ?? 0,
-                           spin: try o["spin"].map { try num($0, -20...20, "step.spin") } ?? 0)
+        let say = try text(o["say"] ?? .null, MGSolidLimits.say, "step.say")
+        var step = MGSolidStep(say: say, focus: try ids("focus"), highlight: try ids("highlight"),
+                               explode: try o["explode"].map { try num($0, 0...1, "step.explode") }, camera: camera,
+                               orbit: try o["orbit"].map { try num($0, -360...360, "step.orbit") } ?? 0,
+                               spin: try o["spin"].map { try num($0, -20...20, "step.spin") } ?? 0)
+        step.template = say
+        if let u = o["unchecked"] { step.unchecked = try text(u, MGSolidLimits.unchecked, "step.unchecked") }
+        if let c = o["check"] {
+            guard case .array(let list) = c, (1...MGSolidLimits.checksPerStep).contains(list.count) else { throw MGSolidIssue("step.check") }
+            step.checks = try list.map(MGSolidClaimCheck.parse)
+        }
+        return step
     }
 
     // MARK: Helpers

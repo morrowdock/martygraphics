@@ -13,7 +13,7 @@ enum CLIError: Error, CustomStringConvertible {
     var description: String {
         switch self {
         case .usage: return """
-            Usage: marty-solid check FILE.json [--component C.json ...]
+            Usage: marty-solid check FILE.json [--strict] [--component C.json ...]
                    marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--component C.json ...]
                    marty-solid components [--component C.json ...]
                    marty-solid component check C.json [--component OTHER.json ...] [--with NAME=VALUE ...]
@@ -105,24 +105,60 @@ func library(_ files: [String]) throws -> MGSolidLibrary {
     return lib
 }
 
-func check(_ path: String, _ lib: MGSolidLibrary) throws -> Int32 {
+/// Honesty data for the repair loop: warnings, facts with tiers, the tier legend, what each motion source does not
+/// check, and the plain-words read-back of every part.
+func honesty(_ doc: MGSolidDocument) -> [String: Any] {
+    var facts: [String: Any] = [:]
+    for (name, f) in doc.facts {
+        facts[name] = ["value": f.value, "unit": f.unit, "text": f.text, "tier": f.tier.name, "source": f.source]
+    }
+    let legend = doc.legend
+    let claims: [[String: Any]] = legend.claims.map { ["kind": $0.kind.rawValue, "id": $0.id, "tier": $0.tier.name, "badge": $0.badge, "why": $0.why] }
+    var notChecked: [String: Any] = [:]
+    for s in Set(doc.motionSources.values) { if let list = MGSolidNotChecked.bySource[s] { notChecked[s] = list } }
+    return ["version": doc.version,
+            "warnings": doc.warnings.map { ["reason": $0.reason, "part": $0.part as Any] },
+            "facts": facts,
+            "legend": ["text": legend.text, "solved": legend.solved, "built": legend.built, "described": legend.described,
+                       "note": legend.note as Any, "shapes": legend.shapes, "claims": claims],
+            "stepTiers": doc.steps.map { $0.tier?.name as Any },
+            // Which fact filled each placeholder, in order, and what each step's checks proved: a grader or a model
+            // can see that "3 times slower" came from `count.stage.planet`, not from a speed.
+            "stepFacts": doc.steps.map { s in
+                ["facts": s.facts,
+                 "checks": s.checks.map { c -> [String: Any] in
+                     ["value": c.value, "comparison": c.comparison.rawValue, "target": c.target, "tolerance": c.tolerance as Any, "text": c.text]
+                 }] as [String: Any]
+            },
+            "notChecked": notChecked,
+            "readBack": doc.readBack]
+}
+
+/// `--strict` is the model-harness profile (owner D3): the warnings it lists refuse the document. The report is still
+/// printed in full, so the author can repair from it.
+func check(_ path: String, _ lib: MGSolidLibrary, strict: Bool = false) throws -> Int32 {
     let src: Loaded
     do { src = try load(path) } catch is TooLarge {
         print(json(["ok": false, "reason": "assembly.bytes", "part": NSNull()])); return 1
     }
     switch MGSolidParser.document(data: src.data, library: lib) {
     case .failure(let issue):
-        print(json(["ok": false, "reason": issue.reason, "part": issue.part as Any, "file": ["lines": src.lines, "sha256": src.sha256]]))
+        print(json(["ok": false, "reason": issue.reason, "part": issue.part as Any, "strict": strict, "file": ["lines": src.lines, "sha256": src.sha256]]))
         return 1
     case .success(let doc):
         let c = checks(doc)
         let tris = doc.assembly.parts.reduce(0) { $0 + $1.mesh.triangleCount }
-        var reason: String? = nil
+        var reason: String? = nil, part: String? = nil
         if (c["meshesClosed"] as? Bool) != true { reason = "check.meshOpen" }
         else if (c["gearsEngage"] as? Bool) == false { reason = "check.gearsInterpenetrate" }
+        else if let refusal = (strict ? MGSolidProfile.strict : .standard).refusal(doc) { reason = refusal.reason; part = refusal.part }
         let ok = reason == nil
-        print(json(["ok": ok, "reason": reason as Any, "title": doc.title, "parts": doc.assembly.parts.count, "triangles": tris, "steps": doc.steps.map(\.say),
-                    "ratios": doc.ratios, "checks": c, "file": ["lines": src.lines, "sha256": src.sha256]]))
+        var report: [String: Any] = ["ok": ok, "reason": reason as Any, "title": doc.title, "parts": doc.assembly.parts.count, "triangles": tris,
+                                     "steps": doc.steps.map(\.say), "ratios": doc.ratios, "checks": c, "strict": strict,
+                                     "file": ["lines": src.lines, "sha256": src.sha256]]
+        if part != nil { report["part"] = part as Any }
+        report.merge(honesty(doc)) { a, _ in a }
+        print(json(report))
         return ok ? 0 : 1
     }
 }
@@ -313,7 +349,11 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
             let lib: MGSolidLibrary
             do { lib = try library(files) } catch let e as LibraryRefused { print(json(e.report)); exit(1) }
             switch a.first {
-            case "check"? where a.count == 2: exit(try check(a[1], lib))
+            case "check"? where a.count >= 2:
+                let rest = Array(a.dropFirst())
+                let paths = rest.filter { $0 != "--strict" }
+                guard paths.count == 1, !paths[0].hasPrefix("--"), rest.count - paths.count <= 1 else { throw CLIError.usage }
+                exit(try check(paths[0], lib, strict: rest.contains("--strict")))
             case "components"? where a.count == 1: exit(components(lib))
             case "component"? where a.count >= 3 && a[1] == "check" && !a[2].hasPrefix("--"):
                 var values: [String: Double] = [:]
