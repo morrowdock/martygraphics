@@ -23,21 +23,32 @@ public enum MGLessonLimits {
     /// Canonical JSON bytes that beats received but not shown yet may take in a snapshot (`pending`), across every
     /// stream of the session. A statement that would pass it is refused (`lesson.queue.bytes`). Bounds memory and snapshots.
     public static let queueBytes = 96 * 1024
-    /// Ids in the id history (`MGLessonState.kinds`, removed ids included). A command that would pass it is refused
-    /// (`lesson.ids.count`).
-    public static let ids = 256
+    /// Ids in the id history (`MGLessonState.kinds`), removed ids included, until a new scene starts a new history. A
+    /// command that would pass it is refused (`lesson.ids.count`).
+    public static let ids = 1024
     /// Canonical JSON bytes of one filled line (`lineQueued` / `lineDue` text and the caption): `stmt.say.bytes`.
     public static let lineBytes = 2 * 1024
-    /// Upper bound of one state in a snapshot: the scene source (`MGLimits.sceneBytes`), the id history (an id is at most
-    /// 24 ASCII characters: at most 96 bytes for its kind and beat entries), the controls (each from one statement) and
-    /// the scalar fields.
-    static let stateWireBytes = MGLimits.sceneBytes + ids * 96 + controls * (statementBytes + 256) + 256
-    /// Snapshot size cap, derived from the limits above so that every snapshot of a session fits: the state and the
-    /// queue baseline, the queued beats, the caption, the title (one statement) and the fixed fields. `restore` refuses
-    /// a larger snapshot (`snapshot.bytes`) before it reads any field.
-    public static let snapshotBytes = 2 * stateWireBytes + queueBytes + lineBytes + statementBytes + 2 * 1024
-    /// Nesting depth of a snapshot that `restore` accepts (`snapshot.depth`). A real snapshot nests about 10 levels.
-    public static let snapshotDepth = 32
+    /// Canonical JSON bytes of one bound control (`MGLessonControl.wire`): `control.bytes`.
+    public static let controlBytes = 1024
+
+    // Snapshot bounds. Every part of a snapshot has a bound that each path changing a session enforces (statements,
+    // `apply`, learner values and `restore` itself), so every snapshot a session makes restores.
+
+    /// The title: at most `MGLimits.title` Unicode scalars, none a control character except a newline, so at most 4 bytes each.
+    static let titleBytes = MGLimits.title * 4 + 2
+    /// One id history entry: an id is the item id grammar (at most 24 ASCII characters); its kind (at most 9 bytes)
+    /// and its beat (at most 10 digits) with keys, quotes and commas.
+    static let idEntryBytes = 80
+    /// One state: the scene source (`MGLimits.sceneBytes`), the id history, the controls and the scalar fields.
+    static let stateWireBytes = MGLimits.sceneBytes + ids * idEntryBytes + controls * controlBytes + 256
+    /// Snapshot size cap: the state and the queue baseline, the queued beats, the caption, the title and the fixed
+    /// fields. `restore` refuses a larger snapshot (`snapshot.bytes`) before it reads any field.
+    public static let snapshotBytes = 2 * stateWireBytes + queueBytes + lineBytes + titleBytes + 2 * 1024
+    /// Nesting depth cap of a snapshot (`snapshot.depth`). The only free-form JSON in a lesson is a raw template's
+    /// `params` (at most `MGLimits.rawParamsBytes`), in a scene source or in a queued command (one statement, at most
+    /// `statementBytes`). Each level of nesting takes at least two bytes, so it nests at most half its size; the
+    /// snapshot itself adds at most 8 levels above it.
+    public static let snapshotDepth = max(MGLimits.rawParamsBytes, statementBytes) / 2 + 8
 }
 
 /// Who sent a command. A learner command is gated (bound control, value in range) and then takes the SAME path as a
@@ -406,8 +417,11 @@ enum MGLessonEngine {
         let label = try MGParser.text(c["label"], MGLimits.label, ctx, "control.label")
         guard state.control(id) == nil else { throw MGError("control.duplicate.\(id)") }
         guard state.controls.count < MGLessonLimits.controls else { throw MGError("control.count") }
+        let control = MGLessonControl(id: id, kind: "slider", param: param, min: lo, max: hi, step: step, label: label, unit: spec.unit)
+        // A registered template may declare a long parameter name, and `apply` has no statement size: bound the control itself.
+        guard control.wire.canonicalByteCount <= MGLessonLimits.controlBytes else { throw MGError("control.bytes") }
         var next = state
-        next.controls.append(MGLessonControl(id: id, kind: "slider", param: param, min: lo, max: hi, step: step, label: label, unit: spec.unit))
+        next.controls.append(control)
         return MGCommandResult(state: next, transition: .direct)
     }
 

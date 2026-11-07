@@ -103,7 +103,7 @@ final class LessonControllerRestoreTests: LessonTestCase {
             (with(valid, "title", .string(huge)), "snapshot.bytes"),
             (with(valid, "junk", .array(Array(repeating: .null, count: 300_000))), "snapshot.bytes"),
             (with(valid, "junk", deep(MGLessonLimits.snapshotDepth + 8)), "snapshot.depth"),
-            (with(valid, "junk", deep(2_000)), "snapshot.depth"),
+            (with(valid, "junk", deep(MGLessonLimits.snapshotDepth + 1)), "snapshot.depth"),
             // Over the size and too deep at once: always the size reason, whatever the dictionary order.
             (with(with(valid, "junk", deep(64)), "zjunk", .string(huge)), "snapshot.bytes"),
             // Large data below the depth limit still counts toward the size (review N1).
@@ -147,7 +147,8 @@ final class LessonControllerRestoreTests: LessonTestCase {
         let huge = MGJSON.object(["kind": .string("lessonSnapshot"), "v": .number(2), "x": .string(String(repeating: "b", count: 300_000))])
         XCTAssertEqual(MGLessonSession.restore(huge, pacing: .immediate).failureReason, "snapshot.bytes")
         XCTAssertEqual(MGLessonSession.restore(.array(Array(repeating: .number(1), count: 200_000)), pacing: .immediate).failureReason, "snapshot.bytes")
-        XCTAssertEqual(MGLessonSession.restore(deep(40), pacing: .immediate).failureReason, "snapshot.depth")
+        XCTAssertEqual(MGLessonSession.restore(deep(MGLessonLimits.snapshotDepth + 1), pacing: .immediate).failureReason, "snapshot.depth")
+        XCTAssertEqual(MGLessonSession.restore(deep(MGLessonLimits.snapshotDepth), pacing: .immediate).failureReason, "snapshot.kind")
         XCTAssertEqual(MGLessonSession.restore(.number(1), pacing: .immediate).failureReason, "snapshot.kind")
         // The review's S1 input: before the fix this terminated the process inside the JSON encoder.
         let nan = MGJSON.object(["kind": .string("lessonSnapshot"), "v": .number(1), "x": .number(.nan)])
@@ -158,10 +159,16 @@ final class LessonControllerRestoreTests: LessonTestCase {
     // MARK: session budgets: every snapshot of a session fits the cap (review S2)
 
     func testSnapshotCapIsDerivedFromTheSessionLimits() {
-        XCTAssertEqual(MGLessonLimits.snapshotBytes, 207_360, "docs/LESSONS.md says 202.5 KiB")
+        XCTAssertEqual(MGLessonLimits.snapshotBytes, 291_570, "docs/LESSONS.md says 291,570 bytes")
         XCTAssertEqual(MGLessonLimits.snapshotBytes,
-                       2 * (MGLimits.sceneBytes + MGLessonLimits.ids * 96 + MGLessonLimits.controls * (MGLessonLimits.statementBytes + 256) + 256)
-                       + MGLessonLimits.queueBytes + MGLessonLimits.lineBytes + MGLessonLimits.statementBytes + 2048)
+                       2 * (MGLimits.sceneBytes + MGLessonLimits.ids * 80 + MGLessonLimits.controls * MGLessonLimits.controlBytes + 256)
+                       + MGLessonLimits.queueBytes + MGLessonLimits.lineBytes + (MGLimits.title * 4 + 2) + 2048)
+        XCTAssertEqual(MGLessonLimits.snapshotDepth, 2056, "docs/LESSONS.md says 2,056 levels")
+        // The id history entry bound: the longest id with the longest kind and a 10-digit beat.
+        let id = String(repeating: "h", count: 24)
+        let longestKind = MGKind.allCases.map(\.rawValue).max { $0.utf8.count < $1.utf8.count }!
+        let entry = MGJSON.object(["k": .object([id: .string(longestKind)]), "i": .object([id: .number(1e9)])]).canonicalByteCount
+        XCTAssertLessThanOrEqual(entry - #"{"i":{},"k":{}}"#.utf8.count + 2, MGLessonLimits.idEntryBytes)
     }
 
     /// One beat stream of about `kib` KiB: 24 beats of a long line and nine 60-character title commands.
@@ -235,7 +242,7 @@ final class LessonControllerRestoreTests: LessonTestCase {
         var s = MGLessonSession(pacing: .immediate, clock: MGManualClock())
         var reasons: [String] = []
         var id = 0
-        for n in 0..<4 {
+        for n in 0..<11 {
             var stream = [n == 0 ? scene : #"{"keep":true}"#]
             for _ in 0..<22 {
                 stream.append(#"{"say":"More marks."}"#)
@@ -507,5 +514,182 @@ final class LessonControllerRestoreTests: LessonTestCase {
         XCTAssertTrue(c.load(try F.lesson()))
         XCTAssertEqual(c.timing.requestAt, clock.now)
         XCTAssertNotNil(c.timing.timeToFirstVisible)
+    }
+
+    // MARK: second re-check: every snapshot of a session restores (review 2)
+
+    /// A paused speech session with a queued beat (both states are in its snapshot).
+    func pausedSnapshot(_ clock: MGManualClock) -> MGJSON {
+        var s = MGLessonSession(pacing: .speech, clock: clock)
+        s.feed(lines([#"{"lesson":{"v":1,"title":"Turning"}}"#, scene, #"{"say":"One."}"#, #"{"say":"Two."}"#, #"{"end":true}"#]))
+        s.pause()
+        return s.snapshot()
+    }
+
+    /// Review 2 S1: restored captions, titles and id history keys keep the bounds of a live session.
+    func testRestoredFieldsKeepTheLiveBounds() throws {
+        let clock = MGManualClock()
+        let valid = pausedSnapshot(clock)
+        XCTAssertNoThrow(try MGLessonSession.restore(valid, pacing: .speech, clock: clock).get())
+        var kinds = valid["kinds"]!.objectValue!
+        let longKey = String(repeating: "k", count: 30)
+        var tooMany = kinds
+        for i in 0..<(MGLessonLimits.ids + 1 - kinds.count) { tooMany["x\(i)"] = .string("highlight") }
+        kinds[longKey] = .string("highlight")
+        var introduced = valid["introduced"]!.objectValue!
+        introduced["nope"] = .number(0)
+        var baseline = valid["baseline"]!.objectValue!
+        baseline["kinds"] = .object(kinds)
+        let cases: [(MGJSON, String)] = [
+            (with(valid, "caption", .string(String(repeating: "x", count: 200_000))), "snapshot.caption"),
+            (with(valid, "caption", .string(String(repeating: "x", count: MGLessonLimits.lineBytes))), "snapshot.caption"),
+            (with(valid, "title", .string(String(repeating: "t", count: MGLimits.title + 1))), "snapshot.title"),
+            (with(valid, "title", .string("<b>Bold</b>")), "snapshot.title"),
+            (with(valid, "title", .string(" Untrimmed")), "snapshot.title"),
+            (with(valid, "kinds", .object(kinds)), "snapshot.kinds"),
+            (with(valid, "kinds", .object(tooMany)), "snapshot.kinds"),
+            (with(valid, "introduced", .object(introduced)), "snapshot.introduced"),
+            (with(valid, "introduced", .object(["vA": .number(-1)])), "snapshot.introduced"),
+            (with(valid, "baseline", .object(baseline)), "snapshot.kinds"),
+        ]
+        for (snapshot, reason) in cases {
+            XCTAssertLessThanOrEqual(snapshot.canonicalByteCount, MGLessonLimits.snapshotBytes, reason)
+            XCTAssertEqual(MGLessonSession.restore(snapshot, pacing: .speech, clock: clock).failureReason, reason)
+        }
+        // The review's reproduction: the oversized caption is refused at restore, so it can never grow past the cap.
+        let c = MGLessonController(pacing: .speech, clock: clock)
+        let before = observe(c)
+        XCTAssertEqual(c.restore(cases[0].0).failureReason, "snapshot.caption")
+        XCTAssertEqual(observe(c), before)
+        // A filled line at the bound is accepted (a restored caption at exactly the bound restores).
+        let atBound = String(repeating: "x", count: MGLessonLimits.lineBytes - 2)
+        XCTAssertNoThrow(try MGLessonSession.restore(with(valid, "caption", .string(atBound)), pacing: .speech, clock: clock).get())
+    }
+
+    /// A raw template that takes any nested `tree` and draws one body.
+    static let nested = MGTemplate(name: "host_nested", summary: "nested tree", paramsDoc: "tree: any JSON", sample: .object(["tree": .number(0)])) { raw, _ in
+        guard raw["tree"] != nil else { throw MGError("template.tree") }
+        return MGTemplateBuild(title: "Tree", items: [MGMake.body("A", MGPoint(2, 2))])
+    }
+    func registerNested() throws {
+        try MGPacks.register(MGPack(id: "host_nested_pack", title: "Nested", summary: "nested raw params", templates: [Self.nested],
+                                    fixtures: [MGFixtures.Demo(id: "host_nested_demo", title: "Tree", json: #"{"v":1,"template":"host_nested","params":{"tree":[[0]]}}"#)]))
+    }
+    /// `levels` arrays around 0, as JSON text.
+    func tree(_ levels: Int) -> String { String(repeating: "[", count: levels) + "0" + String(repeating: "]", count: levels) }
+
+    /// Review 2 S2: the deepest legal raw-template scene and queued command restore.
+    func testDeepestLegalRawTemplateSnapshotRestores() throws {
+        try registerNested()
+        let clock = MGManualClock()
+        // The deepest tree that a stream admits, in the scene and in a queued `params` command: it fits one statement
+        // (the scanner's 4 KiB) and the system JSON parser reads it (the parser may have its own nesting limit).
+        func parses(_ text: String) -> Bool { (try? JSONSerialization.jsonObject(with: Data(text.utf8))) != nil }
+        func deepest(_ wrap: (String) -> String) -> String {
+            var k = 1
+            while wrap(tree(k + 1)).utf8.count <= MGLessonLimits.statementBytes, parses(wrap(tree(k + 1))) { k += 1 }
+            return wrap(tree(k))
+        }
+        let sceneStatement = deepest { #"{"scene":{"v":1,"template":"host_nested","params":{"tree":"# + $0 + "}}}" }
+        let command = deepest { #"{"op":"params","params":{"tree":"# + $0 + "}}" }
+        XCTAssertGreaterThan(sceneStatement.utf8.count, 400, "deeper than any closed scene")
+        var s = MGLessonSession(pacing: .speech, clock: clock)
+        let events = s.feed(lines([sceneStatement, #"{"say":"One."}"#, #"{"say":"Two."}"#, command, #"{"end":true}"#]))
+        XCTAssertEqual(F.refusals(events), [])
+        XCTAssertEqual(s.waitingBeats, 1)
+        let snapshot = s.snapshot()
+        let r = try MGLessonSession.restore(snapshot, pacing: .speech, clock: clock).get()
+        XCTAssertEqual(r.snapshot(), snapshot)
+
+        // `apply` has no statement size: the deepest tree is bounded by the raw params limit (4 KiB).
+        var a = MGLessonSession(pacing: .immediate, clock: clock)
+        a.feed(lines([#"{"scene":{"v":1,"template":"host_nested","params":{"tree":0}}}"#, #"{"end":true}"#]))
+        var k = 1
+        while MGJSON.object(["tree": deep(k + 1)]).canonicalByteCount <= MGLimits.rawParamsBytes { k += 1 }
+        func params(_ levels: Int) -> MGJSON { .object(["op": .string("params"), "params": .object(["tree": deep(levels)])]) }
+        XCTAssertGreaterThan(k, 2000)
+        XCTAssertNoThrow(try a.apply(params(k)).get())
+        XCTAssertNotNil(a.apply(params(k + 1)).failureReason, "over the raw params limit")
+        let applied = a.snapshot()
+        XCTAssertEqual(try MGLessonSession.restore(applied, pacing: .immediate, clock: clock).get().snapshot(), applied)
+    }
+
+    /// Review 2 S3: a control is bounded on every path, including public `apply` and `restore`.
+    func testControlsAreBoundedOnEveryPath() throws {
+        let long = String(repeating: "p", count: 900), fine = String(repeating: "q", count: 100)
+        let t = MGTemplate(name: "long_param", summary: "long parameter names",
+                           params: [MGParamSpec(name: long, unit: "", range: 0...1, defaultValue: 0),
+                                    MGParamSpec(name: fine, unit: "", range: 0...1, defaultValue: 0)]) { _, _ in
+            MGTemplateBuild(title: "Long", items: [MGMake.body("A", MGPoint(2, 2))])
+        }
+        try MGPacks.register(MGPack(id: "long_param_pack", title: "Long", summary: "long names", templates: [t],
+                                    fixtures: [MGFixtures.Demo(id: "long_param_demo", title: "Long", json: #"{"v":1,"template":"long_param","params":{}}"#)]))
+        func bind(_ id: String, _ param: String) -> MGJSON {
+            F.json(#"{"op":"bind","control":{"id":"\#(id)","k":"slider","param":"\#(param)","min":0,"max":1,"step":1,"label":"Long"}}"#)
+        }
+        var s = MGLessonSession(pacing: .immediate, clock: MGManualClock())
+        s.feed(#"{"scene":{"v":1,"template":"long_param","params":{}}}"# + "\n")
+        let state = s.state
+        XCTAssertEqual(s.apply(bind("a", long)).failureReason, "control.bytes")
+        XCTAssertEqual(s.state, state)
+        XCTAssertEqual(F.refusals(s.feed(bind("a", long).canonicalString + "\n")).map(\.reason), ["control.bytes"])
+        XCTAssertNoThrow(try s.apply(bind("b", fine)).get())
+        let c = MGLessonController(pacing: .immediate, clock: MGManualClock())
+        c.feed(#"{"scene":{"v":1,"template":"long_param","params":{}}}"# + "\n")
+        XCTAssertFalse(c.apply(bind("a", long)))
+        XCTAssertEqual(c.lastIssue?.reason, "control.bytes")
+        // A snapshot whose control names the long parameter is refused by the same rule when it is bound again.
+        let snapshot = s.snapshot()
+        guard case .array(let controls)? = snapshot["controls"] else { return XCTFail("no controls") }
+        let tampered = with(snapshot, "controls", .array([with(controls[0], "param", .string(long))]))
+        XCTAssertEqual(MGLessonSession.restore(tampered, pacing: .immediate).failureReason, "control.bytes")
+        XCTAssertNoThrow(try MGLessonSession.restore(snapshot, pacing: .immediate).get())
+    }
+
+    /// The largest legal session along every path: header, streams with set-up and queued beats, follow-up `keep`
+    /// streams, host `apply`, learner input, a full id history and a full queue. Its snapshot restores.
+    func testTheLargestLegalSessionRestores() throws {
+        let clock = MGManualClock()
+        let c = MGLessonController(pacing: .speech, clock: clock)
+        let title = String(repeating: "€", count: MGLimits.title)
+        let label = String(repeating: "é", count: MGLimits.label)
+        c.feed(lines([#"{"lesson":{"v":1,"title":"\#(title)"}}"#, scene,
+                      #"{"op":"bind","control":{"id":"angle","k":"slider","param":"angle","min":-360,"max":360,"step":5,"label":"\#(label)"}}"#]))
+        // Host `apply`: three more controls (four in all).
+        for (id, param, lo, hi) in [("px", "px", -2, 2), ("py", "py", -2, 2), ("ghost", "ghost", 0, 1)] {
+            XCTAssertTrue(c.apply(F.json(#"{"op":"bind","control":{"id":"\#(id)","k":"slider","param":"\#(param)","min":\#(lo),"max":\#(hi),"step":1,"label":"\#(label)"}}"#)))
+        }
+        // Follow-up streams fill the id history with the longest ids; every beat is shown.
+        var id = 0, reasons: [String] = []
+        for n in 0..<12 {
+            var stream = n == 0 ? [] : [#"{"keep":true}"#]
+            for _ in 0..<22 {
+                stream.append(#"{"say":"More marks."}"#)
+                let ids = (0..<5).map { _ -> String in id += 1; return "h" + String(format: "%023d", id) }
+                for h in ids { stream.append(#"{"op":"add","item":{"id":"\#(h)","k":"highlight","target":"vA"}}"#) }
+                for h in ids { stream.append(#"{"op":"remove","id":"\#(h)"}"#) }
+            }
+            stream.append(#"{"end":true}"#)
+            var events: [MGLessonEvent] = []
+            c.onEvent = { events.append($0) }
+            c.feed(lines(stream))
+            for _ in 0..<40 { if let k = c.session.openLine { c.lineEnded(k) } }
+            reasons += F.refusals(events).map(\.reason)
+        }
+        XCTAssertTrue(reasons.contains("lesson.ids.count"))
+        XCTAssertEqual(c.state?.kinds.count, MGLessonLimits.ids)
+        // Learner input, then follow-up streams that fill the queue (the line stays open, so beats wait).
+        XCTAssertTrue(c.control("angle", 45))
+        for n in 0..<6 { c.feed(lines(fullStream(first: false, tag: "q\(n)"))) }
+        XCTAssertGreaterThan(c.session.queueUsage, MGLessonLimits.queueBytes / 2)
+        XCTAssertGreaterThan(c.session.waitingBeats, 0, "the snapshot holds the queue baseline: a second full state")
+        let snapshot = c.session.snapshot()
+        let size = snapshot.canonicalByteCount
+        XCTAssertLessThanOrEqual(size, MGLessonLimits.snapshotBytes)
+        XCTAssertGreaterThan(size, MGLessonLimits.snapshotBytes / 2, "a large snapshot, not a toy one")
+        let r = try MGLessonSession.restore(snapshot, pacing: .speech, clock: clock).get()
+        XCTAssertEqual(r.snapshot(), snapshot)
+        let restored = MGLessonController(pacing: .speech, clock: clock)
+        XCTAssertNoThrow(try restored.restore(snapshot).get())
     }
 }

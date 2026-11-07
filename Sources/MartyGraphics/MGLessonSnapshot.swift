@@ -59,9 +59,14 @@ extension MGLessonSession {
         var s = MGLessonState(scene: scene)
         s.beat = try int(o["beat"], "snapshot.beat")
         guard let kinds = o["kinds"]?.objectValue, let introduced = o["introduced"]?.objectValue else { throw MGError("snapshot.kinds") }
+        // The same bounds as a live session: at most `ids` entries, each key an item id, `introduced` only for known ids.
+        guard kinds.count <= MGLessonLimits.ids else { throw MGError("snapshot.kinds") }
         s.kinds = try kinds.mapValues { guard case .string(let k) = $0, let kind = MGKind(rawValue: k) else { throw MGError("snapshot.kinds") }; return kind }
-        s.introduced = try introduced.mapValues { try int($0, "snapshot.introduced") }
-        guard s.kinds.count <= MGLessonLimits.ids, s.introduced.count <= MGLessonLimits.ids else { throw MGError("snapshot.kinds") }
+        for key in kinds.keys { _ = try MGParser.identifier(.string(key), "snapshot.kinds") }
+        s.introduced = try introduced.mapValues { v -> Int in
+            let k = try int(v, "snapshot.introduced"); guard k >= 0 else { throw MGError("snapshot.introduced") }; return k
+        }
+        guard introduced.keys.allSatisfy({ kinds[$0] != nil }) else { throw MGError("snapshot.introduced") }
         guard case .array(let controls)? = o["controls"] else { throw MGError("snapshot.controls") }
         for c in controls {
             // Re-bind through the engine so a control that no longer fits its template is refused.
@@ -119,8 +124,18 @@ extension MGLessonSession {
         func string(_ v: MGJSON?, _ what: String) throws -> String { guard case .string(let s)? = v else { throw MGError(what) }; return s }
 
         var session = MGLessonSession(pacing: pacing, clock: clock)
-        if let t = o["title"] { session.title = try string(t, "snapshot.title") }
-        if let c = o["caption"] { session.caption = try string(c, "snapshot.caption") }
+        // Title and caption keep the bounds of a live session: the header's title rule and the filled-line size.
+        if let t = o["title"] {
+            let empty = MGContext(width: 12, height: 8, is3D: false, values: [:])
+            let title = try MGParser.text(t, MGLimits.title, empty, "snapshot.title")
+            guard .string(title) == t else { throw MGError("snapshot.title") }
+            session.title = title
+        }
+        if let c = o["caption"] {
+            let caption = try string(c, "snapshot.caption")
+            guard c.canonicalByteCount <= MGLessonLimits.lineBytes else { throw MGError("snapshot.caption") }
+            session.caption = caption
+        }
         if o["scene"] != nil {
             let s = try state(o)
             session.state = s

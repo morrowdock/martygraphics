@@ -199,31 +199,57 @@ The event history and the command log start empty after a restore.
 A snapshot covers complete statements only. A statement that has started but not finished is not stored; replay
 `unfinishedInput` into the restored session (`feed(_: Data)`) before the rest of the stream. Those bytes are not in the
 snapshot's byte count, so the budget is the same after the replay.
-`restore` checks the snapshot with one bounded walk before it reads any field or encodes anything. The walk keeps a
-lower bound of the canonical JSON size and stops when it passes the cap, so its work is bounded. The reasons come in
-this order:
+Invariant: every snapshot that a session makes restores. Each part of a snapshot has a bound, and every path that
+changes a session keeps each part inside its bound: stream statements (also through `load`), host `apply`, learner
+values and `restore` itself. A change that would pass a bound is refused with a stable reason, and the state stays as
+it was.
 
-1. The lower bound of the size is over `MGLessonLimits.snapshotBytes` (202.5 KiB): `snapshot.bytes`. This includes
-   data below the depth limit.
+| Part | Bound | Enforced by | Reason (live / restore) |
+| --- | --- | --- | --- |
+| Scene source | 8 KiB canonical JSON (`MGLimits.sceneBytes`) | the scene parser, after every command | `scene.bytes` / the same |
+| Queued beats not shown yet, all streams | 96 KiB canonical JSON | `say`, command, check, beat close | `lesson.queue.bytes` / `snapshot.pending` |
+| Commands / checks per queued beat | 12 / 8 | stream | `beat.ops.count`, `beat.checks.count` / `snapshot.pending` |
+| Id history (removed ids included) | 1024 ids, each an item id | every command, also `apply` and learner values | `lesson.ids.count` / `snapshot.kinds`, `snapshot.introduced` |
+| One control | 1 KiB canonical JSON, at most 4 controls | `bind` on every path | `control.bytes`, `control.count` / the same (restore binds again) |
+| Caption and every filled line | 2 KiB canonical JSON | beat close and presentation | `stmt.say.bytes` / `snapshot.caption` |
+| Title | 60 Unicode scalars, the header text rule | header | `lesson.title` / `snapshot.title` |
+| Free-form JSON (a raw template's `params`) | 4 KiB (`MGLimits.rawParamsBytes`); a queued command is one 4 KiB statement | template, scanner | `template.params.bytes`, `stmt.bytes` / the same |
+
+The snapshot caps come from these bounds:
+
+- Size: `MGLessonLimits.snapshotBytes` = 291,570 bytes. This is two states (the state and the queue baseline: the
+  scene, 1024 ids at 80 bytes each, 4 controls), the queue budget, one caption, the title and 2 KiB of fixed fields.
+- Depth: `MGLessonLimits.snapshotDepth` = 2,056 levels. The only free-form JSON in a lesson is a raw template's
+  `params` (at most 4 KiB) in a scene source, or a queued command (one 4 KiB statement). A level of nesting takes at
+  least two bytes, so such a value nests at most 2,048 levels. The snapshot adds at most 8 levels above it. (The
+  system JSON parser can have a lower nesting limit for streamed text. A host `apply` with a value built in code
+  can reach the full depth.)
+
+`restore` keeps a first check as defence in depth: one bounded walk, before it reads any field or encodes anything.
+The walk keeps a lower bound of the canonical JSON size and stops when it passes the cap, so its work is bounded.
+It uses its own stack, so no input depth can exhaust the call stack. The reasons come in this order:
+
+1. The lower bound of the size is over `snapshotBytes`: `snapshot.bytes`. Data below the depth limit counts too.
 2. A number is NaN or infinite: `snapshot.number`. Such a value is never encoded.
-3. The value nests deeper than 32 levels: `snapshot.depth`.
+3. The value nests deeper than `snapshotDepth`: `snapshot.depth`.
 4. The exact canonical size is over the cap: `snapshot.bytes`.
 
-The cap is derived from the session limits, so every snapshot of a session fits. It is the sum of: two states (the
-state and the queue baseline: a scene of at most 8 KiB, an id history of at most 256 ids, 4 controls), the queue
-budget (96 KiB), one caption (2 KiB), the title and the fixed fields. The session enforces each part:
+The field checks in the table run after the walk, while the fields are read.
 
-- Queue budget: beats received but not shown yet (in every stream, also follow-up `keep` streams) may take at most
-  96 KiB of canonical JSON in the snapshot. A `say`, command or check that would pass it is refused
-  (`lesson.queue.bytes`). A beat whose filled line would pass it is refused when it closes. The budget frees as beats
-  are shown. A whole stream fits: a 23 KiB stream of 24 queued beats uses less than half of the budget
-  (test `testOneFullStreamFitsTheQueue`). Follow-up streams that queue more are refused at the budget.
-- Id history: at most 256 ids, removed ids included (`lesson.ids.count`).
-- A filled line (queued text, due text and the caption) is at most 2 KiB of canonical JSON (`stmt.say.bytes`).
+Compatibility (behaviour change for every lesson host, with or without `restore`):
 
-On restore, a pending beat with more than 12 commands or 8 checks, or a pending queue over the budget, is
-`snapshot.pending`. An id history over 256 ids is `snapshot.kinds`. These checks run while the fields are read, after
-the walk above.
+- A `.speech` or paused session that receives follow-up streams faster than it shows them stops at the queue budget
+  (`lesson.queue.bytes`). One whole stream fits: a 23 KiB stream of 24 queued beats uses less than half of the budget
+  (test `testOneFullStreamFitsTheQueue`). Host response: backpressure. Send the next stream after lines end, or
+  retry a refused statement later.
+- The id history keeps removed ids until a new `scene` starts a new history. 1024 ids allow, for example, 200 beats
+  that each add and remove five new marks. Host response: reuse a stable id for the same kind of mark, or start a new
+  scene for a new topic.
+- A filled line over 2 KiB is refused when its beat closes or is presented (`stmt.say.bytes`). A 200-character line
+  reaches that size only with very long engine values or units. Host response: write shorter narration or fewer
+  placeholders.
+- A control over 1 KiB is refused (`control.bytes`). This affects only a registered template with a very long
+  parameter name.
 
 Work bound: `restore` runs every pending command through the engine again. The queue budget limits that to the
 commands of 96 KiB of JSON (a few thousand short commands). `MGLessonController.restore` does this on the main actor.
@@ -309,9 +335,10 @@ Limits (owner decision D5; scene limits in `MGLimits` do not change):
 | `animate` duration | 0.2–6 s | `animate.dur` |
 | Keyframes per `animate` | 72 (360°) | `animate.to` |
 | Queued beats not shown yet (canonical JSON, all streams) | 96 KiB | `lesson.queue.bytes` |
-| Id history (removed ids included) | 256 | `lesson.ids.count` |
+| Id history (removed ids included) | 1024 | `lesson.ids.count` |
 | Filled line (queued text, due text, caption) | 2 KiB | `stmt.say.bytes` |
-| Snapshot size (canonical JSON) / nesting | 202.5 KiB (derived) / 32 levels | `snapshot.bytes` / `snapshot.depth` |
+| One bound control (canonical JSON) | 1 KiB | `control.bytes` |
+| Snapshot size (canonical JSON) / nesting | 291,570 bytes / 2,056 levels (both derived) | `snapshot.bytes` / `snapshot.depth` |
 
 Stream budget: every received byte counts toward the 32 KiB, including whitespace, garbage, oversized and
 unfinished text. Past the byte or statement limit the session emits one terminal refusal and ignores the rest of the
@@ -332,7 +359,7 @@ New reasons (closed list). Inner engine reasons (`patch.set.ref`, `id.duplicate.
 `animate.param`, `animate.to`, `animate.dur`, `animate.step`, `animate.frame`, `check.object`, `check.missing`, `check.unknown.<keys|name>`,
 `check.value`, `check.comparison`, `check.eq`, `check.lt`, `check.gt`, `check.tol`, `check.<name>`, `text.literal`,
 `snapshot.<field>` (including `snapshot.bytes` and `snapshot.depth`), `lesson.number`, `snapshot.number`,
-`lesson.queue.bytes`, `lesson.ids.count`, `stmt.say.bytes`.
+`lesson.queue.bytes`, `lesson.ids.count`, `stmt.say.bytes`, `control.bytes`.
 
 `lesson.number` and `snapshot.number` refuse an `MGJSON` value built in code that holds NaN or an infinity (JSON has
 no form for them): a lesson document in `MGLesson.parse(json:)`, any statement in `load` (with its index in
