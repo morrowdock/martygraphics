@@ -148,6 +148,17 @@ public struct MGExplainerSession {
     /// Beat index → step index in `solid`.
     var stepOf: [Int: Int] = [:]
     var presentedBeats = Set<Int>()
+    /// The board's motion for its latest change (the lesson's keyframes, or a blend that changes drawn items): when it
+    /// started, how long it plays, and the elapsed time held while paused.
+    var motionSerial = 0
+    var motionStart: Duration?
+    var motionLength: Duration = .zero
+    var motionHeld: Duration?
+    /// Bound controls the script and the host made (`bind` commands), as the lesson stores them: restore accepts a
+    /// saved control only when one of these made it.
+    var hostBinds: [MGJSON] = []
+    /// Restore only: every control the replayed script and the host binds make.
+    var scriptControls = Set<MGJSON>()
     /// The last due line of each beat (what its caption showed).
     public internal(set) var captions: [Int: String] = [:]
     var ids3D: [String] = []
@@ -185,14 +196,65 @@ public struct MGExplainerSession {
     public var state: MGLessonState? { lesson.state }
     /// The caption of the presented beat, filled from the 2D state the learner sees NOW and the 3D facts. After a
     /// learner or host change it shows the live engine values (never a stale number); nil before the first beat.
+    ///
+    /// While the board still moves (`boardSettled` is false: the beat's keyframes play, or a blend changes drawn items),
+    /// the board does not show the state yet, so the caption's 2D numbers (plain names) show as "…" and the beat's 2D
+    /// checks are pending (`pendingClaims`); they appear when the motion settles. 3D facts are rates per input turn,
+    /// tooth counts and travel over a full turn: they hold at every pose, also while a spin plays.
     public var caption: String? {
         guard let k = presented.beat, let info = beats[k], let st = lesson.state else { return nil }
-        return try? MGLessonSession.fillLine(info.say, st.scene.values, env: lesson.env)
+        let say = boardSettled ? info.say : Self.withoutPlainNumbers(info.say)
+        return try? MGLessonSession.fillLine(say, st.scene.values, env: lesson.env)
+    }
+
+    /// The caption template with every 2D placeholder (a name without a dot) shown as "…".
+    static func withoutPlainNumbers(_ say: String) -> String {
+        var out = "", body = "", inside = false
+        for ch in say {
+            if inside {
+                if ch == "}" {
+                    let name = body.split(separator: "|", omittingEmptySubsequences: false).first.map(String.init) ?? body
+                    out += name.contains(".") ? "{\(body)}" : "…"
+                    body = ""; inside = false
+                } else { body.append(ch) }
+            } else if ch == "{" { inside = true } else { out.append(ch) }
+        }
+        return out
     }
     public var isPaused: Bool { lesson.isPaused }
     public var isComplete: Bool { lesson.isComplete }
     public var openLine: Int? { lesson.openLine }
-    public var nextWake: Duration? { lesson.nextWake }
+    public var nextWake: Duration? {
+        // The board's motion settling reveals the caption's 2D numbers and the beat's 2D checks.
+        let settle: Duration? = motionRemaining > .zero && !lesson.isPaused ? clock.now + motionRemaining : nil
+        return [lesson.nextWake, settle].compactMap { $0 }.min()
+    }
+
+    /// Time left until the board's latest change has played (keyframes; a blend that changes drawn items). Paused time
+    /// does not count; `.immediate` pacing and `finishNow()` play no motion.
+    public var motionRemaining: Duration {
+        guard let start = motionStart else { return .zero }
+        let elapsed = motionHeld ?? (clock.now - start)
+        return max(.zero, motionLength - elapsed)
+    }
+    /// True when the board shows the state the caption's 2D numbers and the beat's 2D checks describe.
+    public var boardSettled: Bool { motionRemaining == .zero }
+
+    /// The board started a new change: time its motion.
+    mutating func syncMotion() {
+        guard let c = lesson.lastChange, c.serial != motionSerial else { return }
+        motionSerial = c.serial
+        var seconds: Double
+        switch c.transition {
+        case .keyframes: seconds = c.transition.keyframeDuration
+        case .blend: seconds = c.diff.changed.isEmpty ? 0 : MGLessonSession.settle(.blend)
+        case .direct: seconds = 0
+        }
+        if pacing == .immediate || lesson.fastForward { seconds = 0 }
+        motionStart = clock.now
+        motionLength = .milliseconds(Int64((seconds * 1000).rounded()))
+        motionHeld = lesson.isPaused ? .zero : nil
+    }
     /// True when the explainer has no board (a 3D-only explainer, once its views are fixed).
     public var isBoardless: Bool { lesson.boardless }
     /// Bytes of a statement that has started but not completed (replay after `restore`).
@@ -265,11 +327,21 @@ public struct MGExplainerSession {
 
     @discardableResult public mutating func lineStarted(_ k: Int) -> [MGExplainerEvent] { host { $0.lineStarted(k) } }
     @discardableResult public mutating func lineEnded(_ k: Int) -> [MGExplainerEvent] { host { $0.lineEnded(k) } }
-    @discardableResult public mutating func finishNow() -> [MGExplainerEvent] { host { $0.finishNow() } }
+    @discardableResult public mutating func finishNow() -> [MGExplainerEvent] {
+        let events = host { $0.finishNow() }
+        motionLength = .zero
+        return events
+    }
     @discardableResult public mutating func tick() -> [MGExplainerEvent] { host { $0.tick() } }
-    @discardableResult public mutating func resume() -> [MGExplainerEvent] { host { $0.resume() } }
+    @discardableResult public mutating func resume() -> [MGExplainerEvent] {
+        if lesson.isPaused, let held = motionHeld { motionStart = clock.now - held; motionHeld = nil }
+        return host { $0.resume() }
+    }
     /// Stop the beat clock: no line becomes due and no beat is presented; the 2D transition and the 3D spin hold.
-    public mutating func pause() { lesson.pause() }
+    public mutating func pause() {
+        if !lesson.isPaused, motionHeld == nil, let start = motionStart { motionHeld = clock.now - start }
+        lesson.pause()
+    }
 
     mutating func host(_ call: (inout MGLessonSession) -> [MGLessonEvent]) -> [MGExplainerEvent] {
         outbox = []
@@ -305,7 +377,11 @@ public struct MGExplainerSession {
         }
         let r = lesson.apply(commands, origin: origin)
         absorb(lesson.outbox)
-        if case .success = r { refreshPresented() }
+        if case .success = r {
+            // A host `bind` is the one way a control appears outside the script; restore accepts only known binds.
+            for c in commands where c["op"] == .string("bind") && hostBinds.count < MGLessonLimits.statements { hostBinds.append(c) }
+            refreshPresented()
+        }
         return r.mapError { MGExplainerIssue($0, view: .board) }
     }
 
@@ -376,6 +452,7 @@ public struct MGExplainerSession {
             board = nil; solidSource = nil; solid = nil; ids3D = []; set3D = []
             beats = [:]; stepOf = [:]; presentedBeats = []; presented = MGExplainerBeatView(); frozen = false; beatCount = 0
             setupOps = []; timing = MGExplainerTiming(); captions = [:]
+            motionSerial = 0; motionStart = nil; motionLength = .zero; motionHeld = nil; hostBinds = []
             stream.started = true; stream.header = true
             emit(.accepted(statement: index))
         } catch { refuse(Self.reason(error), index) }
@@ -678,6 +755,7 @@ public struct MGExplainerSession {
             }
         }
         syncDrops()
+        syncMotion()
     }
 
     /// Beats the lesson refused (a failed 2D check, the queue budget, a check that fails at presentation) lose their 3D
