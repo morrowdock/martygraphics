@@ -239,7 +239,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "07a38844f9cb01e0e6f656cb7f93fe660337be4febdb73b42c2c8872d824f80d"
+      "sha256": "b8c1e3898c523bf72656d11cc1f378c90283b1ca3fa12be5ab30c3d5ebdaccca"
     },
     {
       "path": "SECURITY.md",
@@ -603,7 +603,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "ce4c896d279b9da3f745d21b37b6523208490fa4d71f2f38b586599284bd0163"
+      "sha256": "13a9e99e51dec7228a17d07d116b02b6bff173b215d1866d14deffb4deaf452d"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -679,7 +679,7 @@
     },
     {
       "path": "docs/assets/lessons/provenance.json",
-      "sha256": "f5d65477ccf6896293b8f3005134bec94a619adfaa370e092c92547ba3957e1d"
+      "sha256": "eac9e757198b96027bb97a5b84bd92152b03db3bb0d1a1728a07238e7d2e5724"
     },
     {
       "path": "docs/assets/lessons/rotation-loop-frames.json",
