@@ -75,8 +75,37 @@ extension MGLessonSession {
         return s
     }
 
+    /// A lower bound of the canonical JSON size of `json`, walked without building it. The walk stops as soon as the
+    /// bound passes `limit` (every node adds at least one byte, so the work is bounded) and does not descend below
+    /// `MGLessonLimits.snapshotDepth` (it sets `deep` instead). Whether the bound passes `limit` does not depend on
+    /// dictionary order, so the reason chosen from the result is deterministic.
+    static func boundSize(_ json: MGJSON, limit: Int, depth: Int, total: inout Int, deep: inout Bool) {
+        guard depth <= MGLessonLimits.snapshotDepth else { deep = true; total += 1; return }
+        switch json {
+        case .null, .bool, .number: total += 1
+        case .string(let s): total += s.utf8.count + 2
+        case .array(let a):
+            total += 2
+            for v in a { if total > limit { break }; boundSize(v, limit: limit, depth: depth + 1, total: &total, deep: &deep) }
+        case .object(let o):
+            total += 2
+            for (k, v) in o { if total > limit { break }; total += k.utf8.count + 3; boundSize(v, limit: limit, depth: depth + 1, total: &total, deep: &deep) }
+        }
+    }
+
+    /// `snapshot.bytes` when the canonical JSON is over `MGLessonLimits.snapshotBytes` (checked first), else
+    /// `snapshot.depth` when it nests deeper than `MGLessonLimits.snapshotDepth`.
+    static func checkBounds(_ snapshot: MGJSON) throws {
+        var total = 0, deep = false
+        boundSize(snapshot, limit: MGLessonLimits.snapshotBytes, depth: 0, total: &total, deep: &deep)
+        guard total <= MGLessonLimits.snapshotBytes else { throw MGError("snapshot.bytes") }
+        guard !deep else { throw MGError("snapshot.depth") }
+        guard snapshot.canonicalData.count <= MGLessonLimits.snapshotBytes else { throw MGError("snapshot.bytes") }
+    }
+
     static func restoring(_ snapshot: MGJSON, pacing: MGPacing, clock: MGLessonClock) throws -> MGLessonSession {
-        guard snapshot.isEncodable else { throw MGError("snapshot.number") }   // NaN or an infinity built in code
+        // Size and depth first, before any field is read: a bounded walk, then the exact canonical size.
+        try checkBounds(snapshot)
         guard let o = snapshot.objectValue, o["kind"] == .string("lessonSnapshot") else { throw MGError("snapshot.kind") }
         guard o["v"] == .number(1) else { throw MGError("snapshot.version") }
         func int(_ v: MGJSON?, _ what: String) throws -> Int {
@@ -115,7 +144,8 @@ extension MGLessonSession {
             beat.refused = try flag(p["refused"], "snapshot.pending")
             if !beat.refused {
                 beat.end.beat = k
-                guard case .array(let commands)? = p["commands"], case .array(let checks)? = p["checks"] else { throw MGError("snapshot.pending") }
+                guard case .array(let commands)? = p["commands"], case .array(let checks)? = p["checks"],
+                      commands.count <= MGLessonLimits.commandsPerBeat, checks.count <= MGLessonLimits.checksPerBeat else { throw MGError("snapshot.pending") }
                 for c in commands {
                     let r = try MGLessonEngine.run(c["s"] ?? .null, on: beat.end, origin: .script, beat: k)
                     beat.end = r.state; beat.commands.append((try int(c["i"], "snapshot.pending"), c["s"]!)); beat.transitions.append(r.transition)

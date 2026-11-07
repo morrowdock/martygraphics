@@ -17,6 +17,9 @@ public final class MGSceneController: ObservableObject {
     /// True while transitions are held (a paused lesson): an in-flight keyframe animation stops where it is and
     /// continues from there on resume. Default false; only callers of `pauseTransitions()` change it.
     @Published public private(set) var transitionsPaused = false
+    /// False after `show(_:transition:drawsOn: false)`: the board shows the scene as it is, with no draw-on (also on a
+    /// first appearance). Every other entry point sets it back to true (existing behaviour).
+    @Published public private(set) var drawsOn = true
     private var stream: MGStreamParser?
     private var beforeStream: MGScene?
     /// Scene revisions handed out by this controller only ever increase, so a replacement scene never reuses the
@@ -30,8 +33,11 @@ public final class MGSceneController: ObservableObject {
     public func show(_ scene: MGScene?) { show(scene, transition: .blend) }
     /// Show a scene with an explicit transition (lesson sessions: `.direct` for learner controls, `.keyframes` for
     /// `animate`). `show(_:)` is `show(_:transition: .blend)`.
-    public func show(_ scene: MGScene?, transition: MGTransition) {
-        self.transition = transition; self.scene = scene.map(stamped); lastUpdateFailed = false; revision &+= 1
+    public func show(_ scene: MGScene?, transition: MGTransition) { show(scene, transition: transition, drawsOn: true) }
+    /// `drawsOn: false` shows the scene with no draw-on for any id, also when the board appears for the first time
+    /// (a restored lesson: the learner already saw these marks). With `.direct` there is also no blend and no keyframes.
+    public func show(_ scene: MGScene?, transition: MGTransition, drawsOn: Bool) {
+        self.transition = transition; self.drawsOn = drawsOn; self.scene = scene.map(stamped); lastUpdateFailed = false; revision &+= 1
     }
 
     /// Applies a follow-up patch to the current scene. Returns false and keeps the scene if it doesn't validate.
@@ -43,7 +49,7 @@ public final class MGSceneController: ObservableObject {
     @discardableResult public func apply(patch: MGPatch, requireRevision: Bool = false, transition: MGTransition) -> Bool {
         guard let scene, !requireRevision || patch.baseRevision != nil,
               case .success(let next) = scene.applying(patch) else { lastUpdateFailed = true; return false }
-        self.transition = transition; self.scene = stamped(next); lastUpdateFailed = false; revision &+= 1; return true
+        self.transition = transition; drawsOn = true; self.scene = stamped(next); lastUpdateFailed = false; revision &+= 1; return true
     }
     @discardableResult public func apply(patchObject: Any) -> Bool {
         guard case .success(let p) = MGPatch.parse(object: patchObject) else { lastUpdateFailed = true; return false }
@@ -59,7 +65,7 @@ public final class MGSceneController: ObservableObject {
     public func beginStream() { stream = MGStreamParser(); beforeStream = scene; isStreaming = true }
     public func feed(_ chunk: String) {
         guard var s = stream else { return }
-        if let preview = s.feed(chunk) { transition = .blend; scene = stamped(preview); revision &+= 1 }
+        if let preview = s.feed(chunk) { transition = .blend; drawsOn = true; scene = stamped(preview); revision &+= 1 }
         stream = s
     }
     /// Strict final parse. On failure the scene from before the stream comes back (fail safe).
@@ -67,8 +73,8 @@ public final class MGSceneController: ObservableObject {
         defer { stream = nil; beforeStream = nil; isStreaming = false }
         guard let s = stream else { return false }
         switch s.finish() {
-        case .success(let final): transition = .blend; scene = stamped(final); lastUpdateFailed = false; revision &+= 1; return true
-        case .failure: transition = .blend; scene = beforeStream; lastUpdateFailed = true; revision &+= 1; return false
+        case .success(let final): transition = .blend; drawsOn = true; scene = stamped(final); lastUpdateFailed = false; revision &+= 1; return true
+        case .failure: transition = .blend; drawsOn = true; scene = beforeStream; lastUpdateFailed = true; revision &+= 1; return false
         }
     }
 }
@@ -204,14 +210,14 @@ struct MGSceneHost: View {
             .padding(14)
             .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(theme.backgroundBottom))
             .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
-            .onAppear { visible = true; adopt(scene, animated: false) }
+            .onAppear { visible = true; adopt(scene, animated: false, drawsOn: controller.drawsOn) }
             .onDisappear { visible = false }
             .task(id: transientToken) {
                 let wait = max(0, transientUntil.timeIntervalSinceNow)
                 try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
                 if !Task.isCancelled { transientUntil = .distantPast }   // state change → one settled redraw, loop paused
             }
-            .onChange(of: controller.revision) { _, _ in if let s = controller.scene { adopt(s, animated: true, transition: controller.transition) } }
+            .onChange(of: controller.revision) { _, _ in if let s = controller.scene { adopt(s, animated: true, transition: controller.transition, drawsOn: controller.drawsOn) } }
             .onChange(of: controller.transitionsPaused) { _, paused in holdTransitions(paused) }
             .onChange(of: teaching.holdsMotion) { _, held in
                 if !held { epoch = Date(); pausedAt = 0; playing = true }   // revealed: play the motion from its start
@@ -340,10 +346,11 @@ struct MGSceneHost: View {
     /// New scene or patched scene. `.blend`: blend from what is on screen now; new items draw on. `.direct`: no blend
     /// and no draw-on replay for ids already shown (a finger update). `.keyframes`: play engine in-betweens.
     /// A first appearance (not animated) draws everything on. The decision is `MGAdoption.plan` (pure, tested).
-    private func adopt(_ scene: MGScene, animated: Bool, transition: MGTransition = .blend) {
+    private func adopt(_ scene: MGScene, animated: Bool, transition: MGTransition = .blend, drawsOn: Bool = true) {
         let now = Date()
         let previous = shownScene
-        let plan = MGAdoption.plan(previous: animated ? previous?.items : nil, next: scene.items, transition: transition, step: step)
+        let plan = MGAdoption.plan(previous: animated ? previous?.items : nil, next: scene.items, transition: transition, step: step, drawsOn: drawsOn)
+        if !drawsOn { appearStart.removeAll() }   // no draw-on left over from an earlier, interrupted transition
         if plan.blends, let previous {
             blendFrom = MGTimeline.frame(previous, items: MGTimeline.items(previous, step: step), time: time(now)); blendStart = now
         } else {

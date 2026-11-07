@@ -199,6 +199,49 @@ The event history and the command log start empty after a restore.
 A snapshot covers complete statements only. A statement that has started but not finished is not stored; replay
 `unfinishedInput` into the restored session (`feed(_: Data)`) before the rest of the stream. Those bytes are not in the
 snapshot's byte count, so the budget is the same after the replay.
+`restore` checks the size first: a snapshot whose canonical JSON is over 256 KiB is `snapshot.bytes`, and one that
+nests deeper than 32 levels is `snapshot.depth` (the size reason wins when both apply). This holds two scenes and the
+queued beats of several full streams. A session that has queued more beats than that, without presenting them, cannot
+be restored. A pending beat with more than 12 commands or 8 checks is `snapshot.pending`.
+
+### Restoring a live lesson (`MGLessonController.restore`)
+
+`MGLessonController.restore(_ snapshot: MGJSON) -> Result<Void, MGLessonIssue>` adopts a saved lesson state.
+The controller restores the snapshot with its own pacing and clock, so the timing marks, the pacing ticker and the
+session use one clock. (An `adopt(session:)` call could take a session with another clock or pacing.)
+
+- Validate first. `MGLessonSession.restore` validates the whole snapshot before the controller changes anything.
+- A refused snapshot changes nothing: session, board, caption, timing marks, selection and pause state stay as they
+  were. Only `lastIssue` is set. No event is emitted (test `testRefusedSnapshotChangesNothingButLastIssue`).
+- On success the restored session replaces the current one. The board shows its state with `.direct` and no draw-on
+  (`MGSceneController.show(_:transition:drawsOn: false)`): no blend, no keyframe replay and no draw-on replay, also when
+  the board appears for the first time. An animation of the old lesson that is in progress stops.
+- Nothing is left to settle. The board shows the end state, so `lessonComplete` does not wait for the remaining settle
+  time of an animation that was in progress when the snapshot was taken.
+- `selection` and `lastIssue` are cleared.
+- Timing marks are reset to empty, and the first-frame mark is not armed. The restored lesson was visible before it was
+  saved, so this run has no request mark and no time to first visible. Later events in this run record their marks
+  (`firstPresentedAt` of a new scene, `streamEndedAt`, `lessonCompleteAt`), but the `timeTo…` durations stay nil.
+  `begin()` or `load(_:)` starts a new timed run.
+- A restore never starts playback. The result is paused when the snapshot was paused or the controller was paused.
+  The board holds its transitions to match. Call `resume()` to continue.
+- Events: none for the restore itself (no `firstPresented`, no second `lineDue`). The controller then ticks the restored
+  session once. What is due at once comes through `onEvent`, for example `lessonComplete` when the saved lesson only
+  waited for its last transition to settle. With `.speech` pacing and an open line (`session.openLine`), speak `caption`
+  again or call `lineEnded(_:)`. With `.estimate` pacing the open line keeps its remaining time.
+- Partial input: save the old session's `unfinishedInput` with the snapshot. After `restore`, feed it with
+  `feed(_: Data)` before the rest of the stream. The bytes form is necessary because a partial statement can end inside
+  a UTF-8 sequence.
+
+```swift
+let saved = controller.session.snapshot()
+let tail = controller.session.unfinishedInput
+// … later, on the same or another controller:
+switch controller.restore(saved) {
+case .success: controller.feed(tail)        // then the rest of the stream, if any
+case .failure(let issue): log(issue.reason) // the current lesson is unchanged
+}
+```
 
 ## Renderer behaviour
 
@@ -213,6 +256,8 @@ snapshot's byte count, so the budget is the same after the replay.
   Labels show the number of the nearer keyframe, so a label never shows a number that no frame computed.
   Ids that the beat adds after the turn draw on when the turn ends.
 - `MGAdoption.plan` is the pure decision (blend, draw-on ids, keyframe segments). The SwiftUI host and the tests use it (R1–R3).
+- `MGSceneController.show(_:transition:drawsOn: false)` shows a scene with no draw-on, also on a first appearance
+  (`MGAdoption.plan(…, drawsOn: false)`). Every other entry point keeps draw-on. `MGLessonController.restore` uses it.
 - `MGSceneController.pauseTransitions()` / `resumeTransitions()` hold an in-flight keyframe animation on its current
   frame (`MGTransitionClock`). `MGLessonController.pause()` calls it, and the session's settle time continues after
   `resume()` from where it stopped.
@@ -232,6 +277,7 @@ Limits (owner decision D5; scene limits in `MGLimits` do not change):
 | Bound controls | 4 | `control.count` |
 | `animate` duration | 0.2–6 s | `animate.dur` |
 | Keyframes per `animate` | 72 (360°) | `animate.to` |
+| Snapshot size (canonical JSON) / nesting | 256 KiB / 32 levels | `snapshot.bytes` / `snapshot.depth` |
 
 Stream budget: every received byte counts toward the 32 KiB, including whitespace, garbage, oversized and
 unfinished text. Past the byte or statement limit the session emits one terminal refusal and ignores the rest of the
@@ -251,7 +297,7 @@ New reasons (closed list). Inner engine reasons (`patch.set.ref`, `id.duplicate.
 `control.duplicate.<id>`, `control.value`, `control.op`, `control.label.placeholder`, `lesson.statements.count`, `unbind.id`, `animate.missing`, `animate.unknown.<keys>`,
 `animate.param`, `animate.to`, `animate.dur`, `animate.step`, `animate.frame`, `check.object`, `check.missing`, `check.unknown.<keys|name>`,
 `check.value`, `check.comparison`, `check.eq`, `check.lt`, `check.gt`, `check.tol`, `check.<name>`, `text.literal`,
-`snapshot.<field>`, `lesson.number`, `snapshot.number`.
+`snapshot.<field>` (including `snapshot.bytes` and `snapshot.depth`), `lesson.number`, `snapshot.number`.
 
 `lesson.number` and `snapshot.number` refuse an `MGJSON` value built in code that holds NaN or an infinity (JSON has
 no form for them): a lesson document in `MGLesson.parse(json:)`, any statement in `load` (with its index in

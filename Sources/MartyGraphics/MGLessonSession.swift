@@ -629,6 +629,12 @@ public struct MGLessonSession {
         }
     }
 
+    /// Nothing is left to settle (a host showed the presented state directly, for example after a restore): a finished
+    /// lesson can complete at once instead of waiting for a transition that is not on screen.
+    mutating func dropSettle() {
+        if isPaused { settleRemaining = .zero } else { settleUntil = clock.now }
+    }
+
     /// Keep the settle deadline at least `transition`'s length from now (paused: from where the clock stopped).
     mutating func extendSettle(_ transition: MGTransition) {
         let length = Duration.milliseconds(Int64((Self.settle(transition) * 1000).rounded()))

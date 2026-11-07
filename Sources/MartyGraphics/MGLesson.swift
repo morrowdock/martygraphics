@@ -20,6 +20,8 @@ public enum MGLessonLimits {
     public static let defaultAnimateDuration = 1.5
     /// Estimated line length for `.estimate` pacing, in seconds.
     public static let lineSeconds: ClosedRange<Double> = 1...12
+    /// Canonical JSON size of a snapshot that `restore` accepts (`snapshot.bytes`), and its nesting depth (`snapshot.depth`).
+    public static let snapshotBytes = 256 * 1024, snapshotDepth = 32
 }
 
 /// Who sent a command. A learner command is gated (bound control, value in range) and then takes the SAME path as a

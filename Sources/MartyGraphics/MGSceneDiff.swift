@@ -83,8 +83,13 @@ public struct MGAdoption: Equatable, Sendable {
 
     /// `previous == nil` means the board appears for the first time: every item draws on in layer order (existing
     /// behaviour). Otherwise only ids that are new compared with `previous` draw on. `step` selects the visible items of
-    /// stepped keyframe scenes (lesson scenes have no steps).
-    public static func plan(previous: [MGItem]?, next: [MGItem], transition: MGTransition, step: Int = 0) -> MGAdoption {
+    /// stepped keyframe scenes (lesson scenes have no steps). `drawsOn: false` (a restored lesson shown as it was): no
+    /// id draws on, also on a first appearance; the transition still decides blend and keyframes.
+    public static func plan(previous: [MGItem]?, next: [MGItem], transition: MGTransition, step: Int = 0, drawsOn: Bool = true) -> MGAdoption {
+        if !drawsOn {
+            let full = plan(previous: previous, next: next, transition: transition, step: step)
+            return MGAdoption(blends: full.blends, appear: [:], segments: full.segments)
+        }
         guard let previous else {
             var appear: [String: Double] = [:]
             for item in next { appear[item.id] = Double(drawOrder(item)) * 0.05 }

@@ -9,6 +9,14 @@
   start scene and engine keyframes of each `animate`, a scripted learner's slider ticks), shows each planned frame on
   the live demo view offscreen, and writes the frames, `frames.json` and a GIF whose delays are the planned times
   (ImageIO, no external tools). The plan and the GIF writer are example code (`LessonDemoKit/Capture.swift`) with tests.
+- Add `MGLessonController.restore(_:)` to adopt a saved lesson state (`MGLessonSession.snapshot()`) on a live
+  controller. The snapshot is validated first; a refused snapshot changes nothing but `lastIssue`. On success the board
+  shows the restored state with no blend, keyframes or draw-on (new `MGSceneController.show(_:transition:drawsOn:)` and
+  `MGAdoption.plan(…, drawsOn:)`), selection is cleared, timing marks are reset with no first-visible time, a restore
+  never starts playback, and the remaining settle time of an interrupted animation is dropped. Add
+  `MGLessonController.feed(_: Data)` to replay `unfinishedInput`. `MGLessonSession.restore` now refuses a snapshot over
+  256 KiB of canonical JSON (`snapshot.bytes`), deeper than 32 levels (`snapshot.depth`), or with a pending beat over
+  12 commands or 8 checks (`snapshot.pending`), before it reads any field.
 - Add the 2D item kinds `table` (a grid of up to 8 × 6 short cells with an optional
   header row and marked cells) and `region` (a filled closed polygon of 3 to 64
   points), and the text style `code` (monospaced, left-aligned, keeps leading spaces,
