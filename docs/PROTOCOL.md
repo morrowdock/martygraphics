@@ -116,6 +116,16 @@ is unchanged.
 [Copy the scene JSON](fixtures/v1/table-region-code.scene.json); it equals the
 built-in `cells` fixture.
 
+## Explainer boards
+
+An [explainer document](EXPLAINER.md) embeds a v1 scene as its `board`. The wire format does not change: a board is
+an ordinary scene without `steps`, `title` or `"dim": "3d"`, parsed by `MGParser`. Inside an explainer only, the parser
+gets an internal parse environment: a placeholder name with a dot (`{p.teeth}`) or a modifier is filled from the
+explainer's 3D facts, and text limits apply to the filled text (the raw text is capped at four times the limit). With
+no environment every result and reason is byte-identical (test B1). `MGParser.scene` refuses an explainer document
+itself with `scene.unknown.<keys>`. `MGRenderInput.tableRows` and `tableCells` emphasise table rows and cells (an
+explainer beat's `highlight` of `t.r2`); both are empty by default.
+
 ## Template parameters and what-if patches
 
 Record-list parameters and the opt-in `shortest_path` template are unreleased

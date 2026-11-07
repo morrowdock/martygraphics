@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+- Add explainer documents (`"kind": "explainer"`, version 1): one document with a 2D board (a v1 scene), a 3D solid
+  (an assembly v2) or both, driven by ONE beat timeline, with one id namespace and one legend (docs/EXPLAINER.md,
+  `Examples/Explainers`).
+  - `MGExplainer` (document: closed keys, limits, notes, the flattened statement stream), `MGExplainerSession` (the
+    statement lane: header, keep, board, solid, say, op, check, view, highlight, end; one lesson session for the 2D
+    state and pacing; per-beat 3D views compiled as solid steps so cuts are budgeted; highlights of 2D items, table
+    rows and cells (`t.r2`, `t.r1c0`) and 3D parts; 2D and 3D checks; refusal coupling; events; TE1–TE6 timing;
+    `describe`; `snapshot` / `restore`), `MGExplainerReport` (ONE check report for both views),
+    `MGExplainerLegend` / `MGExplainerClaim` / `MGTier`, and `MGExplainerController` with `MartyGraphicsExplainerView`
+    (SwiftUI: two panes, caption, legend, signposts).
+  - One namespace: 2D item and control ids, 3D part, copy, `repeat` base, instance and anchor ids; collisions are
+    refused (`explainer.id.duplicate.<id>`), checked on final names in canonical order. Rule N1 across both views:
+    every number character in author text comes from a placeholder (`{name}` = 2D value, `{part.fact}` = 3D fact) or
+    the 2D item carries a note (`basis`: "Data as given"; `unchecked`: "Not checked"). Legend groups `Solved ·
+    Schematic · Given · Not checked`; a 3D-only explainer has its assembly's own legend text.
+  - `marty-solid check` and `render` dispatch on the top-level `kind`: `explainer` takes the new path (`--strict`
+    also refuses `notes.unused.<id>`; `render --snapshots` writes `snapshot-beat-<n>.json`); a lesson document gives
+    the new `kind.unsupported`; everything else keeps the assembly path, byte-identical (the golden test passes
+    unchanged). The tool now reads up to 128 KiB before it dispatches; a file over 128 KiB whose text holds
+    `"explainer"` is `explainer.bytes`, any other is `assembly.bytes` as before.
+  - The reason catalog (`MGSolidReasons`, `docs/REASONS.md`) gains the format `explainer` and every explainer
+    reason; `tier.key`, `check.fact.<name>`, `check.failed.<name>`, `text.sign.<name>`, the `text.modifier` reasons
+    and `report.engine` also list `explainer`. `MGSolidReasons.explainerStrictPrefixes` names what the explainer's
+    strict check refuses. The catalog test now scans `Sources/MartyGraphics/Explainer` too.
+  - Additive public API: `MGRenderInput.tableRows` / `tableCells` (row and cell emphasis, empty by default),
+    `MGTemplateBuild.builtValues` and `MGScene.builtValues` (template values marked as author data; empty for every
+    built-in template), `MGExplainerBoard.input`. No signature changed.
+  - Compatibility: plain scenes, patches, lessons and assemblies are unchanged. The new parser environment, the
+    lesson hooks (boardless mode, external fill, N1 instead of the D3 decimal rule, close-time refusals, `forward`)
+    and the scanner's statement cap are internal and off by default; tests B1–B7 and the existing suites pin this.
+  - Not in this PR: 3D annotations (labels, arrows, dimensions; open-vocabulary PR 3a, still in review). Their ids
+    join the namespace, the claims and the report at marked seams once it merges; until then `annotations` in a
+    solid is refused with `assembly.unknown.annotations`. The card's 3D example shows its facts in captions instead
+    of an arrow and a dimension.
 - Docs: showcase 3D annotations with the hand-built winch example (two stills, its strict check output and a capture receipt in `docs/assets/annotations`, a SHOWCASE section and a README paragraph). No code change.
 - Add 3D annotations to assembly v2 (open vocabulary 3a): a top-level `annotations` object with `labels`, `arrows`
   and `dimensions`, and a step key `annotate`. Both are refused in v1 documents with the usual reasons

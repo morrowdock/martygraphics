@@ -839,6 +839,11 @@ check or the strict profile has `applied: true`. The library call is
 system parser runs: over 64 KiB `patch.bytes`, not UTF-8 JSON text or not parsed
 `patch.json`, deeper than 64 levels `patch.depth`.
 
+### Explainers
+
+`marty-solid check` and `render` also take explainer documents (`"kind": "explainer"`): a 2D board, an assembly v2
+as `solid`, or both, with one beat timeline and one report. See [EXPLAINER.md](EXPLAINER.md).
+
 ### Reasons and version
 
 `marty-solid reasons` prints the catalog of every stable reason (pattern, meaning,

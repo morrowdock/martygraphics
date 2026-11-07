@@ -16,6 +16,9 @@ public struct MGTemplateBuild {
     public var motion: MGMotion = .none
     public var attachments: [String: String] = [:]
     public var camera: MGCamera?
+    /// Names of `values` that echo data the author gave rather than numbers the template computed. An explainer shows
+    /// them as Built ("Data as given"), not Solved. Default empty; no built-in template uses it.
+    public var builtValues: Set<String> = []
 }
 
 public struct MGParams {

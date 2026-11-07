@@ -443,6 +443,23 @@ The proposed budgets apply to a physical-device receipt, which is pending.
 
 T1 is an offscreen render, not an on-screen frame. The first scene needs 136 bytes of stream (header and scene).
 
+## Inside an explainer
+
+An [explainer document](EXPLAINER.md) runs one lesson session for its board (or an empty built-in board, when it has
+only a 3D solid). Inside an explainer, and only there:
+
+- Ids form one namespace with the 3D parts: an `add`, a template `params` change or a `bind` whose id equals a 3D id,
+  or a control id that equals a 2D item id, is refused (`explainer.id.duplicate.<id>`). Controls have their own
+  namespace in a plain lesson.
+- Number rule N1 replaces the D3 decimal rule: every number character in author text must come from a placeholder, or
+  the item needs a note (`basis` or `unchecked`); `text.literal` is not used.
+- A placeholder name with a dot is a 3D fact (`{wheel.speed|abs|frac}`), filled by the explainer's parse environment;
+  text limits apply to the filled text.
+- The explainer adds a 3D check, a view and a highlight to each beat; a failing 3D check refuses the beat on the
+  lesson's own rollback path.
+
+These hooks are internal and off by default: a plain lesson behaves exactly as before (test B2).
+
 ## What is not checked
 
 - No on-device (iPad) timing, and no XCUITest UI test. The example's tests run on an iPad simulator through
