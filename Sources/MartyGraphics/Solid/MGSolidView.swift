@@ -9,11 +9,11 @@ import Foundation
 public struct MGSolidStepSection: Equatable, Sendable {
     /// Plane in assembly coordinates (kernel frame: Z up, mm) at the document's default input with explode 0.
     /// Points with `normal · p > offset` are cut away.
-    public var plane: MGSectionPlane
+    public internal(set) var plane: MGSectionPlane
     /// Cut parts (resolved ids: a `repeat` base lists every copy), in the authored order.
-    public var parts: [String]
+    public internal(set) var parts: [String]
     /// Each part's capped cut, in its own frame. The cut moves with its part, like a physical cutaway model.
-    public var cuts: [String: MGSectionCut] = [:]
+    public internal(set) var cuts: [String: MGSectionCut] = [:]
 
     public init(plane: MGSectionPlane, parts: [String]) { self.plane = plane; self.parts = parts }
 }
@@ -34,9 +34,20 @@ public struct MGSolidView: Equatable, Sendable {
     /// Allowed part `opacity`. Below 0.1 a part would be invisible but still claim to be there.
     public static let opacityRange: ClosedRange<Double> = 0.1...1
 
-    public var parts: [String: MGSolidPartView]
+    public internal(set) var parts: [String: MGSolidPartView]
     /// The step's section, if any.
-    public var section: MGSolidStepSection?
+    public internal(set) var section: MGSolidStepSection?
+    /// v2: ids of the annotations this view shows (`MGSolidDocument.visibleAnnotations(step:)`), in authored or
+    /// `annotate` order. Empty for a plain assembly.
+    public internal(set) var annotations: [String] = []
+    /// +1, or −1 for a step with a negative `spin` (it plays the input backwards): motion arrows draw the motion the
+    /// view shows.
+    public internal(set) var motionSense: Double = 1
+    /// The step this view shows (nil: the plain view). Only a view from `MGSolidDocument.view(step:)` has poses the
+    /// engine checked (`MGSolidDocument.checkedAnnotations(_:params:)`).
+    public internal(set) var step: Int?
+    /// The fingerprint of the compiled document this view came from (nil for a view built by a host).
+    public internal(set) var fingerprint: String?
 
     /// The view of a plain assembly: every part with its own opacity and light, nothing cut.
     public init(_ assembly: MGAssembly) {
@@ -64,8 +75,12 @@ extension MGSolidDocument {
     /// an index outside the steps) gives the plain scene.
     public func view(step: Int?) -> MGSolidView {
         var v = MGSolidView(assembly)
+        v.annotations = visibleAnnotations(step: step)
+        v.fingerprint = checkedFingerprint
         guard let i = step, steps.indices.contains(i) else { return v }
+        v.step = i
         let s = steps[i]
+        if s.spin < 0 { v.motionSense = -1 }
         for id in s.ghost {
             let faint = min(v.part(id).opacity, MGSolidView.ghostOpacity)
             v.parts[id]?.opacity = faint

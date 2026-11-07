@@ -27,12 +27,12 @@ public enum MGSolidTier: Int, Comparable, Sendable, CaseIterable {
 
 /// One engine number: a value with its unit, its tier and what produced it.
 public struct MGSolidFact: Equatable, Sendable {
-    public var value: Double
+    public internal(set) var value: Double
     /// `""` for pure numbers (tooth counts, turns per input turn, ratios, counts) or `"mm"`.
-    public var unit: String
-    public var tier: MGSolidTier
+    public internal(set) var unit: String
+    public internal(set) var tier: MGSolidTier
     /// What produced it: `shape`, `input`, `gearMesh`, `follow`, `crankSlider`, `repeat` or `anchors`.
-    public var source: String
+    public internal(set) var source: String
     public init(value: Double, unit: String, tier: MGSolidTier, source: String) {
         self.value = value; self.unit = unit; self.tier = tier; self.source = source
     }

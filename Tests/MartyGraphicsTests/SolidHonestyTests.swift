@@ -74,14 +74,16 @@ final class SolidHonestyTests: XCTestCase {
         XCTAssertEqual(reason(#"{"v": 2, "kind": "assembly", "parts": [{"id": "a", \#(box), "tracks": []}]}"#), "part.unknown.tracks")
     }
 
-    /// V6: the solid core stays Foundation-only; only the SceneKit renderer imports more.
+    /// V6: the solid core stays Foundation-only; only the SceneKit renderer and the annotation overlay (SwiftUI,
+    /// CoreGraphics) import more.
     func testSolidCoreImportsOnlyFoundation() throws {
         let dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("Sources/MartyGraphics/Solid")
         let files = try FileManager.default.contentsOfDirectory(atPath: dir.path).filter { $0.hasSuffix(".swift") }.sorted()
         XCTAssertTrue(files.contains("MGSolidFacts.swift") && files.contains("MGSolidTiers.swift") && files.contains("MGSolidFrames.swift"))
         XCTAssertTrue(files.contains("MGSolidSection.swift") && files.contains("MGSolidView.swift"))
-        for f in files where f != "MGSolidRenderer.swift" {
+        XCTAssertTrue(files.contains("MGSolidAnnotations.swift") && files.contains("MGAnnotationLayout.swift"))
+        for f in files where !["MGSolidRenderer.swift", "MGSolidOverlayView.swift"].contains(f) {
             let text = try String(contentsOf: dir.appendingPathComponent(f), encoding: .utf8)
             let imports = text.split(separator: "\n").filter { $0.hasPrefix("import ") || $0.hasPrefix("@testable import ") }
             XCTAssertEqual(imports, ["import Foundation"], f)
@@ -555,7 +557,8 @@ final class SolidHonestyReview2Tests: XCTestCase {
         for f in fixtures { XCTAssertNil(reason(f, profile: .strict), f) }
         // The spaced plates still get the warning, so the report shows the suspicion beside the read-back.
         XCTAssertEqual(try doc(fixtures[0]).warnings.map(\.reason), ["frame.child.absolute.upper"])
-        XCTAssertEqual(MGSolidProfile.strictPrefixes, ["joint.idle.", "frame.axis.off."])
+        // Open vocabulary 3a adds `annotation.unused.` (certain from the document: no step shows it); still no frame heuristic.
+        XCTAssertEqual(MGSolidProfile.strictPrefixes, ["joint.idle.", "frame.axis.off.", "annotation.unused."])
         XCTAssertEqual(reason(#"{"v": 2, "kind": "assembly", "parts": [{"id": "disc", "shape": {"shaft": {"radius": 20, "length": 5}}, "joint": {"revolute": [0, 0, 1]}}]}"#, profile: .strict), "joint.idle.disc")
         XCTAssertEqual(reason(#"{"v": 2, "kind": "assembly", "parts": [{"id": "sat", "shape": {"shaft": {"radius": 5, "length": 4, "at": [80, 0, 0]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}]}"#, profile: .strict), "frame.axis.off.sat")
     }

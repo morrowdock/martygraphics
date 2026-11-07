@@ -1,0 +1,40 @@
+{"v": 2, "kind": "assembly", "title": "Hand winch: a gear pair lifts a weight", "units": "mm",
+ "parts": [
+  {"id": "frame", "name": "Frame", "material": "darkSteel", "shape": [
+    {"box": {"size": [170, 6, 150], "chamfer": 1, "at": [28, 14, 85]}},
+    {"box": {"size": [180, 90, 8], "chamfer": 1, "at": [28, -25, -4]}}]},
+  {"id": "pinion", "name": "Pinion with crank", "material": "brass", "at": [0, 0, 120], "rot": [1, 0, 0, -90],
+   "shape": [{"gear": {"teeth": 14, "module": 2, "width": 8, "bore": 3, "z0": -4}}, {"shaft": {"radius": 3, "length": 26, "z0": -22}},
+             {"box": {"size": [26, 6, 4], "chamfer": 0.5, "at": [13, 0, -22]}}, {"shaft": {"radius": 2.5, "length": 12, "z0": 0, "at": [24, 0, -36]}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "expect": {"axisWorld": [0, 1, 0]}},
+  {"id": "wheel", "name": "Drum gear", "material": "brushedSteel", "at": [56, 0, 120], "rot": [1, 0, 0, -90],
+   "shape": [{"gear": {"teeth": 42, "module": 2, "width": 8, "bore": 4, "z0": -4}}, {"shaft": {"radius": 16, "length": 34, "z0": -40}},
+             {"shaft": {"radius": 4, "length": 60, "z0": -44}}],
+   "joint": {"revolute": [0, 0, 1]}, "expect": {"axisWorld": [0, 1, 0]}},
+  {"id": "rope", "name": "Rope", "material": "blackOxide", "at": [72, -23, 95], "shape": {"box": {"size": [2, 2, 50]}}},
+  {"id": "mass", "name": "Weight", "material": "anodized.blue", "at": [72, -23, 57], "shape": {"box": {"size": [26, 26, 26], "chamfer": 1}}}
+ ],
+ "constraints": [{"gearMesh": {"a": "pinion", "b": "wheel"}}],
+ "annotations": {
+  "labels": [
+   {"id": "lPinion", "at": {"part": "pinion", "offset": [0, 0, -26]}, "text": "Pinion: {pinion.teeth} teeth"},
+   {"id": "lWheel", "at": {"part": "wheel", "offset": [0, 0, -46]}, "text": "Drum gear: {wheel.teeth} teeth"}],
+  "arrows": [
+   {"id": "aPinion", "meaning": "motion", "style": "turn", "on": "pinion", "sense": "ccw"},
+   {"id": "aWheel", "meaning": "motion", "style": "turn", "on": "wheel", "sense": "cw"},
+   {"id": "aWeight", "meaning": "force", "cause": "gravity", "from": {"part": "mass", "offset": [0, 0, -13]},
+    "to": {"part": "mass", "offset": [0, 0, -40]}, "text": "Weight"},
+   {"id": "aLift", "meaning": "motion", "from": {"part": "wheel", "offset": [16, 0, -23]}, "expect": [0, 0, 1], "text": "Rope side moves up"}],
+  "dimensions": [
+   {"id": "centres", "a": {"part": "pinion", "offset": [0, 0, -46]}, "b": {"part": "wheel", "offset": [0, 0, -46]}, "text": "Centres {dim.centres}"}]},
+ "steps": [
+  {"say": "Turn the crank and the small pinion turns with it.", "camera": "hero", "highlight": ["pinion"], "spin": 1,
+   "annotate": ["lPinion", "aPinion"]},
+  {"say": "The drum gear has {wheel.teeth} teeth, so it turns {wheel.speed|abs|frac} of a turn, the other way.", "camera": "hero",
+   "highlight": ["wheel"], "spin": 1, "check": [{"value": "wheel.speed", "lt": 0}], "annotate": ["lWheel", "aWheel"]},
+  {"say": "The gear centres are {dim.centres} apart: half the sum of the tooth counts, times the module.", "camera": "front",
+   "annotate": ["lPinion", "lWheel", "centres"]},
+  {"say": "The weight pulls the rope straight down.", "camera": "hero", "highlight": ["mass"], "annotate": ["aWeight"]},
+  {"say": "As the drum turns, the rope side moves up and winds the weight in.", "camera": "hero", "highlight": ["wheel"],
+   "annotate": ["aWheel", "aLift", "aWeight"]}
+ ]}

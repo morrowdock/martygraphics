@@ -63,6 +63,24 @@ public final class MGSolidRenderer {
     /// Keyed by part id and local plane. A hit must hold an equal cut (full content); arrays compare by storage first,
     /// so showing the same cut again (the steps of one document share it) costs O(1), and a different cut is rebuilt.
     private var cutGeometry: [String: (cut: MGSectionCut, geometry: SCNGeometry)] = [:]
+    /// Arrow and dimension pieces: one node per piece under one `annotations` node, built once per document. Pose
+    /// changes set node transforms only; geometry is never rebuilt. They show only through `show(document:view:)`, and
+    /// only when this renderer was loaded from that same compiled document (`init(document:)`, `setDocument(_:)`).
+    private let annotationsNode = SCNNode()
+    private var annotationDocument: MGSolidDocument?
+    /// The fingerprint of the compiled document whose assembly this renderer shows; nil after `init(assembly:)` or
+    /// `setAssembly(_:)`, so annotations never show against an assembly that did not come from their document.
+    private var loadedFingerprint: String?
+    /// True after a `show(document:view:)` that passed; any other `show(_:)` turns annotations off.
+    private var annotationsOn = false
+    /// A renderer-level switch that hides annotation pieces without changing what the engine checked.
+    public var annotationsHidden = false { didSet { updateAnnotations() } }
+    private var annotationNodes: [String: [SCNNode]] = [:]
+    private var annotationMaterials: [String: SCNMaterial] = [:]
+    private var emphasisedAnnotations: Set<String> = []
+    private var posed = MGPoseParameters()
+    private lazy var unitCylinder = MGSolidRenderer.geometry(MGAnnotationPrimitive(shape: .cylinder, start: .zero, end: .unitZ, radius: 1, hidden: false).renderMesh)
+    private lazy var unitCone = MGSolidRenderer.geometry(MGAnnotationPrimitive(shape: .cone, start: .zero, end: .unitZ, radius: 1, hidden: false).renderMesh)
 
     public init(assembly: MGAssembly, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
         self.assembly = assembly; self.lighting = lighting; self.options = options
@@ -70,6 +88,8 @@ public final class MGSolidRenderer {
         camera = MGSolidCamera(target: .zero, yaw: 30, pitch: 25, distance: 300)
         scene.rootNode.addChildNode(stageNode)
         stageNode.simdTransform = MGSolidRenderer.matrix(MGSolidStage.zUpToYUp)
+        annotationsNode.name = "annotations"
+        stageNode.addChildNode(annotationsNode)
         buildEnvironment()
         buildLights()
         let cam = SCNCamera()
@@ -92,6 +112,7 @@ public final class MGSolidRenderer {
         cameraNode.camera = cam
         scene.rootNode.addChildNode(cameraNode)
         rebuildParts()
+        poseNodes()
         frame(MGPoseParameters(), yaw: 32, pitch: 28, aspect: 1.6)
     }
 
@@ -101,6 +122,10 @@ public final class MGSolidRenderer {
     /// changes kinematics or one part's material does not rebuild the others).
     /// The view resets to the new assembly's plain view (parts' own opacity and light, nothing cut).
     public func setAssembly(_ new: MGAssembly) {
+        // Annotations belong to a document; an assembly set on its own has none.
+        buildAnnotations(nil)
+        loadedFingerprint = nil
+        annotationsOn = false
         let old = Dictionary(assembly.parts.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         assembly = new
         view = MGSolidView(new)
@@ -121,6 +146,10 @@ public final class MGSolidRenderer {
         partMaterials = partMaterials.filter { ids.contains($0.key) }
         applyGeometry()
         restyleAll()
+        // Kept and new nodes take the new assembly's placements at the current pose.
+        SCNTransaction.begin(); SCNTransaction.disableActions = true
+        poseNodes()
+        SCNTransaction.commit()
     }
 
     private func rebuildParts() {
@@ -149,10 +178,47 @@ public final class MGSolidRenderer {
 
     /// Shows a view: each cut part swaps in its capped cut geometry (built once per cut and kept), and every part
     /// takes its opacity and light. Pass `document.view(step:)` for an authored step, `MGSolidView(assembly)` for none.
+    /// This shows no annotations; use `show(document:view:)` for them.
     public func show(_ view: MGSolidView) {
+        self.view = view
+        annotationsOn = false
+        applyGeometry()
+        restyleAll()
+        updateAnnotations()
+    }
+
+    /// The renderer shows a document: its assembly, with no step view (`setAssembly`), and it remembers the document's
+    /// fingerprint so `show(document:view:)` can draw its annotations.
+    /// The parts start at the document's default pose.
+    public convenience init(document: MGSolidDocument, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
+        self.init(assembly: document.assembly, lighting: lighting, options: options)
+        loadedFingerprint = document.checkedFingerprint
+        apply(document.defaults)
+    }
+
+    /// Replaces the assembly with a document's and remembers the document, as `init(document:)` does; the parts move to
+    /// the document's default pose.
+    public func setDocument(_ document: MGSolidDocument) {
+        setAssembly(document.assembly)
+        loadedFingerprint = document.checkedFingerprint
+        apply(document.defaults)
+    }
+
+    /// Shows a document's view with its annotations. They draw only when this renderer was loaded from the same
+    /// compiled document (`init(document:)` or `setDocument(_:)`), and only for poses the engine checked
+    /// (`MGSolidDocument.checkedAnnotations`); otherwise the view shows without annotations.
+    /// Part nodes are posed at the current pose first, and the annotations attach after them, in one SceneKit
+    /// transaction.
+    public func show(document: MGSolidDocument, view: MGSolidView) {
+        SCNTransaction.begin(); SCNTransaction.disableActions = true
         self.view = view
         applyGeometry()
         restyleAll()
+        poseNodes()
+        annotationsOn = loadedFingerprint != nil && loadedFingerprint == document.checkedFingerprint
+        if annotationsOn, annotationDocument?.checkedFingerprint != document.checkedFingerprint { buildAnnotations(document) }
+        updateAnnotations()
+        SCNTransaction.commit()
     }
 
     private func applyGeometry() {
@@ -174,10 +240,90 @@ public final class MGSolidRenderer {
 
     /// Moves every part to the pose for `params` (pure kinematics, no geometry rebuild).
     public func apply(_ params: MGPoseParameters) {
-        let pose = assembly.pose(params)
+        posed = params
         SCNTransaction.begin(); SCNTransaction.disableActions = true
-        for (id, node) in partNodes { node.simdTransform = MGSolidRenderer.matrix(pose.world[id] ?? .identity) }
+        poseNodes()
+        updateAnnotations()
         SCNTransaction.commit()
+    }
+
+    /// Moves every part node to the current pose (`posed`). Every path that loads geometry or shows annotations calls
+    /// it first, so annotation pieces never show beside part nodes in another pose.
+    private func poseNodes() {
+        let pose = assembly.pose(posed)
+        for (id, node) in partNodes { node.simdTransform = MGSolidRenderer.matrix(pose.world[id] ?? .identity) }
+    }
+
+    // MARK: Annotations
+
+    /// Builds the arrow and dimension pieces of a compiled document (nil removes them). Which ones show follows the
+    /// view (`show(document:view:)`); where they are follows the pose (`apply(_:)`). Labels are drawn by the overlay
+    /// (`MGSolidOverlayView`), not in the scene. Pieces are not cut, not ghosted and cast no shadow.
+    private func buildAnnotations(_ document: MGSolidDocument?) {
+        annotationsNode.childNodes.forEach { $0.removeFromParentNode() }
+        annotationNodes = [:]; annotationMaterials = [:]; emphasisedAnnotations = []
+        annotationDocument = document
+        guard let doc = document, !doc.annotations.isEmpty else { return }
+        for id in doc.annotations.ids where doc.annotations.kind(id) != "label" {
+            let role = doc.annotations.arrow(id)?.colorRole ?? MGSolidAnnotations.dimensionRole
+            let m = SCNMaterial()
+            m.lightingModel = .physicallyBased
+            let c = MGSolidAnnotations.srgb(role)
+            m.diffuse.contents = CGColor(srgbRed: c[0], green: c[1], blue: c[2], alpha: 1)
+            m.emission.contents = CGColor(srgbRed: c[0], green: c[1], blue: c[2], alpha: 1)
+            m.emission.intensity = 0.6
+            m.metalness.contents = NSNumber(value: 0.0)
+            m.roughness.contents = NSNumber(value: 0.45)
+            annotationMaterials[id] = m
+            let cylinder = unitCylinder.copy() as! SCNGeometry, cone = unitCone.copy() as! SCNGeometry
+            cylinder.materials = [m]; cone.materials = [m]
+            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed, sense: view.motionSense)
+            annotationNodes[id] = pieces.map { p in
+                let node = SCNNode(geometry: p.shape == .cone ? cone : cylinder)
+                node.name = "annotation.\(id)"
+                node.castsShadow = false
+                annotationsNode.addChildNode(node)
+                return node
+            }
+        }
+        updateAnnotations()
+    }
+
+    /// Brightens some annotations (a beat or step emphasis).
+    public func highlightAnnotations(_ ids: Set<String>) {
+        emphasisedAnnotations = ids
+        for (id, m) in annotationMaterials { m.emission.intensity = ids.contains(id) ? 1.6 : 0.6 }
+    }
+
+    /// Visibility from the view, transforms from the pose: no geometry is built here.
+    private func updateAnnotations() {
+        guard let doc = annotationDocument else { return }
+        // The one gate: annotations only for the loaded document, a view and a pose the engine checked.
+        let bound = annotationsOn && !annotationsHidden && loadedFingerprint == doc.checkedFingerprint
+        let visible = bound ? Set(doc.checkedAnnotations(view, params: posed) ?? []) : []
+        SCNTransaction.begin(); SCNTransaction.disableActions = true
+        for (id, nodes) in annotationNodes {
+            guard visible.contains(id) else { nodes.forEach { $0.isHidden = true }; continue }
+            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed, sense: view.motionSense)
+            for (node, p) in zip(nodes, pieces) {
+                let d = p.end - p.start
+                node.isHidden = p.hidden || d.length < 1e-9
+                guard !node.isHidden else { continue }
+                node.simdTransform = MGSolidRenderer.pieceMatrix(p)
+            }
+        }
+        SCNTransaction.commit()
+    }
+
+    /// Maps the unit piece (radius 1, from z = 0 to z = 1) onto a piece: a scaled, non-rigid transform.
+    static func pieceMatrix(_ p: MGAnnotationPrimitive) -> simd_float4x4 {
+        let d = p.end - p.start
+        let w = d.normalized
+        let (u, v) = MGSolidAnnotations.basis(w)
+        let a = u * p.radius, b = v * p.radius
+        return simd_float4x4(columns: (simd_float4(Float(a.x), Float(a.y), Float(a.z), 0), simd_float4(Float(b.x), Float(b.y), Float(b.z), 0),
+                                       simd_float4(Float(d.x), Float(d.y), Float(d.z), 0),
+                                       simd_float4(Float(p.start.x), Float(p.start.y), Float(p.start.z), 1)))
     }
 
     /// Emphasises some parts: the others are dimmed (still opaque, so depth and shadows stay readable).

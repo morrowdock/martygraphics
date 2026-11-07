@@ -7,10 +7,10 @@ import Foundation
 
 /// One visible claim with its engine-computed tier and the chip text a renderer shows.
 public struct MGSolidClaim: Equatable, Sendable {
-    public enum Kind: String, Equatable, Sendable { case motion, caption, title, check }
+    public enum Kind: String, Equatable, Sendable { case motion, caption, title, check, annotation }
     public var kind: Kind
-    /// Part id (motion; the base id for `repeat` copies), `step.<n>` (caption, 1-based), `title`, or
-    /// `step.<n>.check.<k>` (a claim check, 1-based).
+    /// Part id (motion; the base id for `repeat` copies), an annotation id (annotation), `step.<n>` (caption,
+    /// 1-based), `title`, or `step.<n>.check.<k>` (a claim check, 1-based).
     public var id: String
     public var tier: MGSolidTier
     /// Chip text: "Solved" (motion), "Numbers solved" (caption, title), "Checked" (check), "Schematic motion",
@@ -32,6 +32,9 @@ public struct MGSolidLegend: Equatable, Sendable {
     public var note: String?
     /// Static parts make no motion claim; their shapes are as authored.
     public var shapes: String
+    /// Every engine note in order: "Some motion is schematic" (as `note`), then "Arrow lengths are not to scale" when
+    /// a non-pointer arrow has no fact length.
+    public var notes: [String] = []
 }
 
 /// What the engine does not check for each motion source (shown in `describe` and the check report).
@@ -50,7 +53,7 @@ extension MGSolidTier {
     func badge(_ kind: MGSolidClaim.Kind) -> String {
         switch self {
         // A caption's tier covers its numbers, not its words; the chip says so.
-        case .solved: return kind == .motion ? "Solved" : kind == .check ? "Checked" : "Numbers solved"
+        case .solved: return kind == .motion || kind == .annotation ? "Solved" : kind == .check ? "Checked" : "Numbers solved"
         case .built: return kind == .motion ? "Schematic motion" : "Schematic"
         case .described: return "Not checked"
         }
@@ -95,7 +98,8 @@ extension MGSolidDocument {
     }
 
     /// Every visible claim with its tier. Motion claims are listed once per authored part (`repeat` copies share
-    /// their base id), in part order; then the title and the captions.
+    /// their base id), in part order; then annotation claims (labels, arrows, dimensions); then the title and the
+    /// captions.
     public var claims: [MGSolidClaim] {
         var out: [MGSolidClaim] = []
         var seen = Set<String>()
@@ -107,6 +111,7 @@ extension MGSolidDocument {
                 ? "Moved by \(s), from a speed or ratio the author set" : "Rides on a part whose motion the author set"
             out.append(MGSolidClaim(kind: .motion, id: base, tier: t, badge: t.badge(.motion), why: why))
         }
+        out += annotationClaims
         if let t = titleTier {
             let why = t == .solved ? "Its numbers are engine facts" : t == .described ? "Title has typed numbers" : "It shows a fact below Solved"
             out.append(MGSolidClaim(kind: .title, id: "title", tier: t, badge: t.badge(.title), why: why))
@@ -138,9 +143,42 @@ extension MGSolidDocument {
         if b > 0 { groups.append("Schematic \(b)") }
         if d > 0 { groups.append("Not checked \(d)") }
         let note = c.contains { $0.kind == .motion && $0.tier < .solved } ? "Some motion is schematic" : nil
+        var notes = note.map { [$0] } ?? []
+        if annotations.arrows.contains(where: { $0.meaning != .pointer && !$0.scaled }) { notes.append("Arrow lengths are not to scale") }
         return MGSolidLegend(claims: c, solved: s, built: b, described: d,
                              text: groups.isEmpty ? "No engine-checked claims" : groups.joined(separator: " · "),
-                             note: note, shapes: "Shapes as authored")
+                             note: note, shapes: "Shapes as authored", notes: notes)
+    }
+
+    /// Annotation claims in authored order (labels, arrows, dimensions); an annotation with no tier makes no claim.
+    var annotationClaims: [MGSolidClaim] {
+        var out: [MGSolidClaim] = []
+        func add(_ id: String, _ t: MGSolidTier?, _ why: String) {
+            guard let t else { return }
+            out.append(MGSolidClaim(kind: .annotation, id: id, tier: t, badge: t.badge(.annotation), why: why))
+        }
+        for l in annotations.labels {
+            add(l.id, l.tier, l.unchecked.map { "Marked unchecked: \($0)" }
+                ?? (l.tier == .solved ? "Its numbers are engine facts; its words are not checked" : "It shows a fact below Solved"))
+        }
+        for r in annotations.arrows {
+            let why: String
+            if let u = r.unchecked { why = "Marked unchecked: \(u)" }
+            else {
+                switch (r.meaning, r.style) {
+                case (.motion, .turn): why = "Turn sense from the engine (motion of \(r.on ?? ""))"
+                case (.motion, .line): why = r.scaled ? "Direction from the engine; length shows a fact" : "Direction from the engine; length not to scale"
+                case (.force, _): why = r.cause == nil ? "Direction and length as authored" : "Direction checked against gravity; length not to scale"
+                case (.flow, _): why = "Direction and length as authored"
+                case (.pointer, _): why = "Its numbers are engine facts"
+                }
+            }
+            add(r.id, r.tier, why)
+        }
+        for d in annotations.dimensions {
+            add(d.id, d.tier, d.over ? "Measured by the engine over one input turn" : "Measured by the engine at the default input")
+        }
+        return out
     }
 
     /// A part id from an id, a component anchor or a `repeat` base id (its first copy); nil when none matches.
@@ -155,6 +193,7 @@ extension MGSolidDocument {
     /// `{"id", "name", "motion", "tier", "facts": {name: {value, unit, text, tier, source}}, "notChecked": […]}`.
     /// nil for an unknown id.
     public func describe(_ id: String) -> MGJSON? {
+        if let kind = annotations.kind(id) { return describeAnnotation(id, kind) }
         guard let pid = canonicalPart(id), let p = assembly.part(pid) else { return nil }
         let base = copies[pid] ?? pid
         // Facts are keyed by part id or by `repeat` base id; an anchor names one of those.
@@ -186,6 +225,25 @@ extension MGSolidDocument {
         return .object(["id": .string(key), "name": .string(p.name), "motion": .string(motion),
                         "tier": tier.map { .string($0.name) } ?? .null, "facts": .object(fs),
                         "notChecked": .array((source.flatMap { MGSolidNotChecked.bySource[$0] } ?? []).map { .string($0) })])
+    }
+
+    /// `{"id", "kind", "meaning", "tier", "text", "value"?, "anchors"}` of one annotation; anchors are kernel world
+    /// points (Z up, mm) at the default input with explode 0.
+    func describeAnnotation(_ id: String, _ kind: String) -> MGJSON {
+        let pose = assembly.pose(MGPoseParameters(input: defaults.input, explode: 0))
+        func point(_ p: MGVec3) -> MGJSON { .array([.number(p.x), .number(p.y), .number(p.z)]) }
+        let anchors = MGSolidAnnotationEngine.anchors(annotations, id).map { point($0.world(pose)) }
+        var o: [String: MGJSON] = ["id": .string(id), "kind": .string(kind), "anchors": .array(anchors), "meaning": .null, "tier": .null, "text": .null]
+        if let l = annotations.label(id) { o["text"] = .string(l.text); o["tier"] = l.tier.map { .string($0.name) } ?? .null }
+        if let r = annotations.arrow(id) {
+            o["meaning"] = .string(r.meaning.rawValue); o["text"] = r.text.map { .string($0) } ?? .null
+            o["tier"] = r.tier.map { .string($0.name) } ?? .null
+        }
+        if let d = annotations.dimension(id) {
+            o["meaning"] = .string(d.kind.rawValue); o["text"] = .string(d.text); o["tier"] = .string(d.tier.name)
+            o["value"] = .number(d.value); o["unit"] = .string(d.unit)
+        }
+        return .object(o)
     }
 
     /// Nearest ancestor whose own joint moves.

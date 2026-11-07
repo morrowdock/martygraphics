@@ -239,4 +239,50 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual(component.status, 1)
         XCTAssertNotNil(component.json?["engine"] as? [String: Any])
     }
+
+    /// Open vocabulary 3a (C1): reports of documents without annotations keep their keys; an annotated document adds
+    /// `annotations`, `placements` and `legend.notes`, and its placement records are byte-identical in fresh processes (P4).
+    func testAnnotationReportAndFreshProcessPlacement() throws {
+        for name in ["planetary", "slider-crank", "propeller", "planetary-components", "slider-crank-component", "horizontal-reduction", "idler-gearbox"] {
+            let r = try run(["check", models.appendingPathComponent("\(name).json").path])
+            XCTAssertEqual(r.status, 0, name)
+            XCTAssertNil(r.json?["annotations"], name); XCTAssertNil(r.json?["placements"], name)
+            XCTAssertNil((r.json?["legend"] as? [String: Any])?["notes"], name)
+        }
+        let winch = models.appendingPathComponent("annotated-winch.json").path
+        let strict = try run(["check", "--strict", winch])
+        XCTAssertEqual(strict.status, 0)
+        XCTAssertEqual((strict.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 12")
+        XCTAssertEqual((strict.json?["legend"] as? [String: Any])?["notes"] as? [String], ["Arrow lengths are not to scale"])
+        let annotations = try XCTUnwrap(strict.json?["annotations"] as? [[String: Any]])
+        XCTAssertEqual(annotations.map { $0["id"] as? String }, ["lPinion", "lWheel", "aPinion", "aWheel", "aWeight", "aLift", "centres"])
+        XCTAssertEqual(annotations.last?["value"] as? Double, 56)
+        XCTAssertEqual(annotations.last?["text"] as? String, "Centres 56 mm")
+        XCTAssertNotNil(annotations.first?["occludedAtDefaultCamera"] as? Bool)
+        let claims = try XCTUnwrap((strict.json?["legend"] as? [String: Any])?["claims"] as? [[String: Any]])
+        XCTAssertEqual(claims.filter { $0["kind"] as? String == "annotation" }.count, 7)
+        func placements(_ out: String) throws -> String {
+            let range = try XCTUnwrap(out.range(of: #""placements" : "#))
+            let tail = out[range.upperBound...]
+            let end = try XCTUnwrap(tail.range(of: #""ratios""#))
+            return String(tail[..<end.lowerBound])
+        }
+        let first = try placements(strict.text)
+        XCTAssertTrue(first.contains(#""candidate""#))
+        for _ in 0..<8 { XCTAssertEqual(try placements(try run(["check", winch]).text), first) }
+    }
+
+    /// Three annotation errors at once give the same first reason in every process (authored order).
+    func testAnnotationRefusalOrderIsTheSameInEveryProcess() throws {
+        let gears = #"{"id":"p","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},{"id":"w","at":[45,0,0],"shape":{"gear":{"teeth":30,"module":2,"width":8}},"joint":{"revolute":[0,0,1]}}"#
+        let bad = try write(#"{"v":2,"kind":"assembly","parts":[\#(gears)],"constraints":[{"gearMesh":{"a":"p","b":"w"}}],"annotations":{"labels":[{"id":"l1","at":"p","text":"T","size":1,"color":2,"bold":3}],"arrows":[{"id":"a1","meaning":"motion","style":"turn","on":"w","sense":"ccw","from":"p","expect":[1,0,0]}],"dimensions":[{"id":"d1","a":"p","b":"p"}]},"steps":[{"say":"Gears."}]}"#, "bad-annotations.json")
+        let arrows = try write(#"{"v":2,"kind":"assembly","parts":[\#(gears)],"constraints":[{"gearMesh":{"a":"p","b":"w"}}],"annotations":{"arrows":[{"id":"a1","meaning":"motion","style":"turn","on":"w","sense":"ccw","from":"p","expect":[1,0,0],"length":3}]},"steps":[{"say":"Gears."}]}"#, "bad-arrow.json")
+        for _ in 0..<10 {
+            let a = try run(["check", bad]), b = try run(["check", arrows])
+            XCTAssertEqual(a.status, 1)
+            XCTAssertEqual(a.json?["reason"] as? String, "label.unknown.bold,color,size")
+            XCTAssertEqual(b.json?["reason"] as? String, "arrow.key.expect.a1")
+            XCTAssertEqual(b.json?["part"] as? String, "a1")
+        }
+    }
 }

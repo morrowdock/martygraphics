@@ -31,9 +31,11 @@ path traced through a small adapter.
 | JSON format | `Solid/MGSolidParser.swift` | Foundation only |
 | Components | `Solid/MGSolidComponents.swift`, `MGSolidBuiltInComponents.swift` | Foundation only |
 | Honesty (facts, tiers, lints, read-back) | `Solid/MGSolidFacts.swift`, `MGSolidTiers.swift`, `MGSolidFrames.swift` | Foundation only |
+| Annotations (labels, arrows, dimensions, placement, occlusion) | `Solid/MGSolidAnnotations.swift`, `MGAnnotationLayout.swift` | Foundation only |
 | Snapshot export | `Solid/MGSolidSnapshot.swift`, `MGMaterial.swift` | Foundation only |
 | Check report, render plan, reason catalog | `Solid/MGSolidReport.swift`, `MGSolidRenderPlan.swift`, `MGSolidReasons.swift`, `MGEngine.swift` | Foundation only |
 | Studio renderer | `Solid/MGSolidRenderer.swift` | SceneKit, CoreGraphics, Metal |
+| Annotation overlay | `Solid/MGSolidOverlayView.swift` | SwiftUI, CoreGraphics, CoreText |
 
 Kernel space is millimetres with **+Z up** (gear axes along Z). The render world
 and the snapshot are **Y-up** (`MGSolidStage.zUpToYUp`). Read
@@ -253,8 +255,9 @@ part a private material copy, so parts that share a preset are never cut with it
 `"v": 2` is a strict superset of v1. A v1 document keeps its exact meaning: the same
 input gives the same document, the same refusals, and its text is never filled. The new
 keys are legal only in v2; in a v1 document they are refused with the usual reason
-(`part.unknown.expect`, `step.unknown.check`). Keys in v2 so far: part `expect`,
-`offAxis`, `opacity` and `emissive`; step `check`, `unchecked`, `section` and `ghost`.
+(`part.unknown.expect`, `step.unknown.check`, `assembly.unknown.annotations`). Keys in v2 so
+far: top-level `annotations`; part `expect`, `offAxis`, `opacity` and `emissive`; step `check`,
+`unchecked`, `section`, `ghost` and `annotate`.
 Later features add their keys to the v2 sets in `MGSolidFormat`.
 
 ### Facts
@@ -273,6 +276,7 @@ value, a unit, a tier and a source.
 | `count.<base>` | copies made by `repeat` (`count.stage.planet`) | – |
 | `<base>.<name>` | a fact every copy shares (`stage.planet.teeth`) | as the copies |
 | `<instance>.ratio` | component output anchor speed / input anchor speed (`stage.ratio`) | – |
+| `dim.<id>` | a [dimension](#annotations-v2) the engine measured | mm or ° |
 
 Component anchors resolve: `stage.output.speed` is `stage.carrier.speed`. A fact's text never
 shows a non-zero value as "0" (a 1:1000 train shows "-0.001"). Tooth counts,
@@ -361,7 +365,7 @@ The engine computes a tier for every visible claim. An author never sets one: a 
 * **Checks** are claims of their own (`step.<n>.check.<k>`, chip "Checked"), with the
   expression as text, for example "Checked: stage.sun.teeth > 0".
 * `MGSolidDocument.claims` lists the claims (motion once per authored part, then the
-  title, then each caption and its checks), each with its chip text and a reason;
+  [annotations](#annotations-v2), then the title, then each caption and its checks), each with its chip text and a reason;
   `legend` gives the counts and one line ("Solved 8 · Not checked 1", always shown),
   "Some motion is schematic" when a motion claim is below Solved, and "Shapes as
   authored". `describe(id)` returns one part's motion, tier, facts and what its motion
@@ -443,12 +447,277 @@ see-through, and a part can be faint or give off light.
   claims: they add no tier and no fact.
 
 `MGSolidDocument.view(step:)` gives what a step shows (per part: the cut, the opacity
-and the light; `nil` gives the plain scene). `MGSolidRenderer.show(_:)` displays a view:
+and the light, and the ids of the annotations it shows; `nil` gives the plain scene). `MGSolidRenderer.show(_:)` displays a view:
 cut parts swap in their capped geometry (built once and kept), ghosts blend over the
 parts behind them, and emissive parts glow with the camera's bloom.
 `MGSolidSnapshot.make(_:step:params:)` exports a view as snapshot format v2 (below).
 `marty-solid check` lists every step section (parts, cap triangles, cap loops, closed),
 and `marty-solid render` shows each step with its section and ghosts.
+
+## Annotations (v2)
+
+A v2 assembly can label parts, draw arrows and show measured dimensions. The engine computes every
+annotation from the posed model. An author never types a measured value, a motion direction or a
+turn sense: the engine finds them, and refuses a stated direction or sense that is wrong.
+
+```json
+"annotations": {
+ "labels": [{"id": "lSun", "at": {"part": "stage.sun", "offset": [0, 0, 14]}, "text": "Sun: {stage.sun.teeth} teeth"}],
+ "arrows": [{"id": "aw", "meaning": "motion", "style": "turn", "on": "w", "sense": "cw"},
+            {"id": "aRod", "meaning": "motion", "from": {"part": "piston", "point": "centre"}, "expect": [-1, 0, 0]},
+            {"id": "aG", "meaning": "force", "cause": "gravity", "from": "mass", "to": {"part": "mass", "offset": [0, 0, -30]}, "text": "Weight"},
+            {"id": "aAir", "meaning": "flow", "from": {"world": [0, -80, 40]}, "to": {"world": [0, 80, 40]}, "text": "Air in"},
+            {"id": "aLook", "meaning": "pointer", "from": {"world": [60, 0, 90]}, "to": "valve", "text": "Inlet valve"}],
+ "dimensions": [{"id": "gap", "a": "p", "b": "w"},
+                {"id": "stroke", "a": {"part": "piston", "point": "centre"}, "b": {"world": [0, 0, 0]}, "along": "x", "over": "input"},
+                {"id": "tilt", "kind": "angle", "a": {"world": [100, 0, 0]}, "vertex": "pivot", "b": {"part": "arm", "offset": [80, 0, 0]}}]}
+```
+
+The keys `labels`, `arrows` and `dimensions` are closed (`annotations.unknown.<keys>`,
+`annotations.object`). Annotation ids are plain identifiers (`label.id`, `arrow.id`,
+`dimension.id`). They join the document's one namespace: an id equal to a part, copy, `repeat`
+base, instance or anchor name, or to another annotation, is `id.duplicate.<id>`. A refusal of one
+annotation names its id in `MGSolidIssue.part`.
+
+### Anchors
+
+| Form | Meaning |
+| --- | --- |
+| `"p"` | the origin of part `p`'s frame (for a gear or shaft: a point on its axis) |
+| `{"part": "p", "offset": [x, y, z]}` | a point in `p`'s frame, mm, each coordinate within ±4000 |
+| `{"part": "p", "point": "centre"}` | the centre of `p`'s mesh bounds, in its frame |
+| `{"world": [x, y, z]}` | a fixed world point (kernel frame: Z up, mm) |
+
+A part anchor moves with its part in every pose: an offset away from the joint axis turns with the
+part, so put a label on the axis when the part spins. A part id, a `repeat` copy id and an anchor
+name (`stage.output`) are accepted. A base id with copies and an instance id name more than one part
+(`anchor.ambiguous.<id>`); an unknown id is `anchor.ref.<id>`. Bad shapes: `anchor.form`,
+`anchor.offset`, `anchor.point`, `anchor.world`.
+
+### Text and tiers
+
+Label, arrow and dimension text follows the v2 caption rules: placeholders with the modifiers
+`inv`, `frac`, `pct` and `deg`, and rule N1 (`text.number.label.<id>`, `text.number.arrow.<id>`,
+`text.number.dimension.<id>`). `abs` is refused (`text.sign.<name>`): no step proves a sign for an
+annotation. Filled text is 1–40 Unicode scalars, authored text at most 160 (`label.text.<id>`,
+`arrow.text.<id>`, `dimension.text.form.<id>`). A label or arrow may carry `"unchecked": "<why>"`
+(1–60, `label.unchecked.<id>`, `arrow.unchecked.<id>`; an arrow needs `text` for it,
+`arrow.unchecked.text.<id>`): its text may
+then type numbers and its claim is Described.
+
+Annotation claims (kind `annotation`, id = the annotation id) come after the motion claims, in
+authored order: labels, arrows, dimensions. The legend counts them. When any non-pointer arrow has no
+fact length, the legend adds the note "Arrow lengths are not to scale" (`MGSolidLegend.notes`).
+
+| Annotation | Claim tier |
+| --- | --- |
+| label | Described with `unchecked`; else the lowest tier of the facts it shows; no claim when it shows none |
+| motion arrow (`turn` or `line`) | the motion tier of its part's chain; with a fact `length`, also no higher than that fact |
+| force arrow with `"cause": "gravity"` | Solved (its direction is checked) |
+| force arrow without `cause`, flow arrow | Described: direction and length as authored |
+| pointer arrow | no claim (only its text, when the text shows facts) |
+| dimension | Solved; with `over`, or at a `params.input` other than 0, the lowest motion tier of its anchors' chains |
+
+An arrow's text lowers its claim to the text's tier (an `unchecked` text makes it Described).
+
+### Labels
+
+`{"id", "at", "text", "unchecked"?}` (`label.missing.<keys>`, `label.unknown.<keys>`,
+`label.object`). The text shows at the anchor (see Placement).
+
+### Arrows
+
+`id` and `meaning` are required (`arrow.missing.<keys>`, `arrow.unknown.<keys>`,
+`arrow.meaning.<id>`). A key that the meaning does not take is `arrow.key.<key>.<id>`. Common keys:
+`text`, `unchecked`.
+
+| Meaning | Keys | Direction | Checks |
+| --- | --- | --- | --- |
+| `motion`, `"style": "turn"` | `on` (a part id string, `arrow.on.<id>`), `sense` (`cw` or `ccw`, optional) | The engine: the sign of the part's composed world turn rate (`<part>.worldSpeed`). Drawn as a 270° arc around the joint axis. | `arrow.turn.joint.<id>` (not a revolute part), `arrow.still.<id>` (its own joint never turns; a part that only rides a turning parent counts as still), `annotation.motion.nonlinear.<id>` (a crank drive in its chain), `arrow.turn.steady.<id>` (a turning joint above it with a non-parallel axis, so there is no single world rate), `arrow.sense.<id>` (the stated sense is wrong; "cw" and "ccw" as seen from the tip of the joint axis), `arrow.sense.form.<id>` |
+| `motion`, `"style": "line"` (the default) | `from` (a part anchor), `expect` (a world direction, optional), `length` (optional) | The engine: the anchor's exact velocity at the default input, from its linear motion chain. | `arrow.from.<id>` (a world anchor), `annotation.motion.nonlinear.<id>` (a crank drive in its chain), `arrow.still.<id>` (no velocity at the default input), `arrow.expect.<id>` (more than 30° from the engine direction, sign included), `arrow.expect.form.<id>`, `arrow.style.<id>` |
+| `force` | `from`, `to`, `cause` (`"gravity"`, optional) | As authored. With `cause`, it must be within 10° of world −Z at the default input. | `arrow.gravity.<id>`, `arrow.cause.<id>` |
+| `flow`, `pointer` | `from`, `to` | As authored. | — |
+
+Force, flow and pointer arrows shorter than 0.5 mm at the default input are `arrow.length.<id>`.
+A motion line arrow's `length` is a number in mm (10–4000) or `{"fact": "<name>", "scale": s}` (mm per
+unit, 0.001–1000): its length is then |fact| × s, clamped to 5–4000 mm, and the arrow claims a
+magnitude (`arrow.length.form.<id>`, `arrow.length.fact.<id>` for an unknown fact). The default length
+is 15 % of the model's bounding diagonal at the default input.
+
+While a view plays, a motion line arrow follows the exact velocity at each pose; it hides while its anchor has no
+velocity. A turn arrow rides
+the frame its part turns in (the parent frame), so it does not spin with the part.
+
+Appearance (the same in every renderer): shaft radius 0.6 % of the bounding diagonal, head 4 shaft
+radii long and 2.5 wide. Colour roles: force `warn`, flow `accent`, motion `good`, pointer `ink` (the
+theme's ink colour, the `white` role); dimension lines are `ink`. Arrows and dimension lines are not
+cut, not ghosted and cast no shadow.
+
+### Dimensions
+
+`{"id", "a", "b", "kind"?, "vertex"?, "along"?, "over"?, "text"?}` (`dimension.missing.<keys>`,
+`dimension.unknown.<keys>`, `dimension.object`).
+
+* `kind` is `distance` (the default) or `angle` (`dimension.kind.<id>`).
+* A distance is |b − a| in mm. With `"along": "x"`, `"y"` or `"z"` it is the absolute world component on
+  that axis (`dimension.along.<id>`, also for an angle).
+* An angle is the angle at `vertex` between `a` and `b`, 0–180°. `vertex` is required for an angle and
+  refused for a distance (`dimension.vertex.<id>`).
+* The value is measured at the default input (`params.input`) with explode 0. With `"over": "input"` it is
+  the largest minus the smallest value over one input turn (input 0 to 2π), computed exactly from the joint's
+  closed form, not sampled. `over` needs an anchor that moves (`dimension.over.<id>`; any other value is
+  `dimension.over.form.<id>`). The engine has the exact range only for a distance (optionally `along` an axis)
+  whose one moving anchor moves by one prismatic joint with a linear drive or a crank-slider, while the other
+  anchor stays where it is (a world point, or a point on a turning axis); anything else is
+  `dimension.over.motion.<id>`. The stroke of a slider-crank is such a range.
+* A distance below 0.01 mm at the default input, or an angle arm below 0.01 mm, is `dimension.zero.<id>`. With
+  `over`, a range below 0.01 mm is `dimension.over.still.<id>`.
+* The value is the fact `dim.<id>` (unit `mm` or `°`, source `dimension`). Captions, labels, arrow text and
+  checks can show and check it. A fact with that name already (a part named `dim`) is
+  `dimension.fact.<id>`. No key sets the value.
+* `text` defaults to `{dim.<id>}`. Given text must show `{dim.<id>}` (`dimension.text.<id>`) and follows N1
+  with no `unchecked`.
+
+Drawing: a line between the posed anchors with an end tick at each end; with `along`, the line runs
+parallel to the axis, offset by 5 % of the bounding diagonal, with two extension lines; an angle draws
+its two arms and an arc at the vertex.
+
+### Poses: every claim holds at every pose its view can show
+
+The checks above run at the default input (`params.input`) with explode 0. Then the engine decides, for every
+view, whether each claim it shows holds at every pose the view can show. A step shows its `spin` range (the
+default input to the default input + `spin` turns) at its explode value (the step's `explode`, else
+`params.explode`). The plain view shows the default pose at `params.explode`. The rules are exact; nothing is
+sampled. They use which joints move during the view.
+
+**The linear-motion rule.** A motion line arrow, a turn arrow, an `expect`, and any dimension shown in a step with
+`spin` are allowed only where every moving joint above the annotated point is linear in the input with a constant
+rate: `input` drives, `follow` with a constant ratio of such a joint, gear meshes and planetary carriers. A chain with
+a crank-slider or crank-rod drive, or a `follow` of one, reverses or changes speed, so it is refused with one
+reason, `annotation.motion.nonlinear.<id>`. Show such motion in a step without `spin` (labels, still dimensions and
+`over` ranges work there), or put a turn arrow on a steady part. A turn arrow's sense is the sign of the composed
+world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear chain with parallel axes.
+
+* An anchor is **world-fixed** when every moving joint above it is a revolute whose axis passes through it (a
+  point on a turning shaft's axis), or when nothing above it moves.
+* A **shown dimension** without `over` must be constant: the step has no `spin`, or all its anchors are
+  world-fixed, or all of them ride the same moving joints (a rigid body; with `along`, those joints must not
+  turn, because a turn changes the world components). Its value at the view's first pose must equal its
+  fact. With `over`, its exact range at the view's explode value must equal its fact.
+* **Shown text** (a label, an arrow or dimension text, the step caption, the title) may display a `dim.<id>` fact
+  only when that dimension meets the same rule in the view (also when the dimension itself is not shown).
+* A **gravity arrow** must not turn: in a step with `spin`, both its anchors are world-fixed or translate together.
+  It must point within 10° of −Z at the view's first pose.
+* A **motion line arrow** must not ride a turning joint in a step with `spin` (use a turn arrow there); its linear
+  chain then moves it at one constant velocity. A stated `expect` must hold at the view's first pose.
+* A **turn arrow** with a stated `sense` must not be in a step with a negative `spin`: turn senses are exactly
+  constant for the steady parts a turn arrow allows.
+
+A failure is `annotation.pose.<id>`; a caption is `text.pose.step.<n>`, the title `text.pose.title`. A step with a
+negative `spin` plays the input backwards (`MGSolidView.motionSense` is −1): turn arcs and motion arrows draw the
+motion that the view shows. Labels and the other arrows ride their parts and claim no direction.
+
+**One gate for every output.** `MGSolidDocument.checkedAnnotations(_:params:)` gives the annotations a renderer may
+draw for a view at a pose, or nil. A compiled document and its views are read-only to hosts: every stored property
+of `MGSolidDocument`, `MGSolidStep`, `MGSolidGear`, `MGSolidFact`, `MGSolidStepSection` and `MGSolidView` (its parts
+and cuts, section, annotation list, playback sense, step and fingerprint) has an internal setter, so the only way to
+change a document is the parser or a patch, which compiles and checks it again, and the only way to get a view is
+`view(step:)`. The view must carry this document's fingerprint (a SHA-256 identity computed when the document
+compiles) and list exactly the annotations its step shows; a host hides annotations with the renderer switch
+`MGSolidRenderer.annotationsHidden`, which never changes what the engine checked. The pose must be exactly one the view
+shows, with no tolerance: the step's explode value, and for a still step exactly the default input; for a step with
+`spin`, an input from the default input to `defaults.input + spin * 2 * .pi` (the render plan uses the same
+expression). A document with annotations keeps its default input within 10,000 turns (`annotations.input`), so pose
+arithmetic stays precise. The raw piece builder is internal. `MGSolidAnnotations.frame` (then `refusal: .unchecked`, no
+placements), `MGSolidRenderer` (pieces hidden) and `MGSolidSnapshot.make` (no `annotations`) all use it, so a
+view or pose that the engine did not check shows no annotations. `marty-solid render` also draws annotations on
+`hero.png` and the step stills only (`MGSolidShot.showsAnnotations`), not on `exploded.png` or the loop frames.
+
+### Visibility
+
+* When no step has `annotate`, every annotation shows in every step and in the plain view. Then there
+  may be at most 12 (`annotations.visible`).
+* When any step has `annotate`, each step shows exactly its list (0–12 ids: `step.annotate`,
+  `step.annotate.count`, `step.annotate.ref.<id>`). A step without the key shows none, and the plain view
+  shows none. An annotation that no step shows is the warning `annotation.unused.<id>` (strict refuses).
+* `MGSolidDocument.visibleAnnotations(step:)` and `view(step:).annotations` give the ids.
+
+### Limits
+
+| Limit | Value | Reason |
+| --- | --- | --- |
+| Labels, arrows, dimensions per document | 32, 32, 16 (`MGSolidAnnotationLimits`) | `labels.count`, `arrows.count`, `dimensions.count` |
+| Visible at once | 12 | `annotations.visible`, `step.annotate.count` |
+| Text | 1–40 scalars filled, 160 authored; `unchecked` 1–60 | as above |
+| Occlusion ray tests | 2,000,000 triangle tests per frame | over it, `occluded` is null and the anchor is drawn as visible |
+
+Arrow and dimension pieces join the mesh budget with exact counts before any mesh is built: a line
+arrow is 48 triangles, a turn arrow 784, a distance 96 (160 with `along`), an angle 832
+(`assembly.budget`).
+
+### Placement
+
+`MGAnnotationLayout.place(_:)` is one pure function. The SwiftUI overlay, `marty-solid render` and the
+snapshot call it through `MGSolidAnnotations.frame(document:view:params:camera:…)`.
+
+1. A core perspective projection of `MGSolidCamera` (`MGAnnotationProjection`, the same as
+   `MGSolidRenderer.project`).
+2. Text box: font f = clamp(round(0.022 × view height), 11, 20) px; box width 0.58 × f × scalars + 12 px,
+   height 1.3 × f + 8 px. Renderers shrink their font until the real text fits the box (`MGSolidOverlay.fit`).
+3. Safe frame: the view inset by 12 px, minus the bottom 20 % when a caption shows, minus a top band of
+   14 % when the host draws a title (the CLI does); the top-right legend corner (30 % × 10 %) is excluded.
+4. Candidates: 8 directions at 24, 48 and 72 px. The first points away from the projected model centre
+   (for arrow and dimension text: perpendicular to the line, away from the centre). Clockwise, then outward.
+5. A candidate is valid only inside the safe frame, 4 px away from every placed box, off every label
+   anchor dot (6 px), with a leader at most 30 % of the view diagonal.
+6. Score: overlap with highlighted parts' screen boxes + 0.5 × leader length + 1000 × leader crossings;
+   ties go to the earlier candidate.
+7. Order: labels (in `annotate` or authored order), then arrow texts at arrow midpoints, then dimension
+   texts at line midpoints. Arrows without text place nothing.
+8. A text with no valid candidate becomes a numbered marker at its anchor; its text goes to the callout
+   list (bottom left of the safe frame, in order). An anchor outside the view goes there with "(off view)".
+   Nothing is dropped and no box overlaps another.
+9. Stability: a text keeps its previous candidate while that stays valid. Pass the previous frame each
+   time; live views re-place at most every 100 ms.
+
+Each record (`MGAnnotationPlacement`) holds `id`, `kind`, `text`, `box`, `leader`, `anchor` (normalised view
+coordinates, origin top left), `occluded` (true, false or null), `callout`, `candidate` and `offView`.
+`MGAnnotationFrame` adds the view size, the font size and the posed anchor points; a clip export will
+carry one per frame. `marty-solid check` reports `annotations` (id, kind, meaning, tier, text, value,
+`anchorsWorld`, `occludedAtDefaultCamera`) and `placements` (the placement of the plain view and of each
+step that shows annotations, at the view's first pose (the default input at the view's explode value) and the
+snapshot's default camera, aspect 16:10), so a model can see which texts fell into the callout list. `placements` is not the layout of the
+rendered stills: those use the end of each step's spin range, the step's explode value and its camera
+preset. A frame lays out nothing, and says why in `refusal`, for a view or pose the engine did not check
+(`.unchecked`) or a view size that is not finite and positive (`.viewSize`); nothing is dropped silently.
+
+### Occlusion and renderers
+
+* The core casts a ray from the camera to each text anchor against the posed meshes (cut meshes for cut
+  parts). Parts shown below opacity 0.5 (ghosts, faint parts) do not block it. Part bounds are tested
+  first. A blocked anchor draws a hollow dot and a dashed leader; its text still shows.
+* `MGSolidRenderer` draws annotations only for the document it was loaded with (`init(document:)` or
+  `setDocument(_:)`; the renderer keeps that document's fingerprint) and only through `show(document:view:)`. An
+  assembly given on its own (`init(assembly:)`, `setAssembly(_:)`) and `show(_:)` show none, so a renderer can never
+  draw one document's annotations beside another assembly's motion. It builds one node per arrow or dimension piece
+  (one unit cylinder and one unit cone, scaled); `apply(_:)` moves them and geometry is never rebuilt. Loading a
+  document moves the parts to its default pose, and `show(document:view:)` poses every part before the annotations
+  attach, in one SceneKit transaction, so they never show beside parts in another pose.
+  `highlightAnnotations(_:)` brightens some; `annotationsHidden` hides them all.
+* `MGSolidOverlayView` (SwiftUI) and `MGSolidOverlay.draw` (CoreGraphics, used by `marty-solid render`) draw
+  labels, leaders, dots, chips (a bar in the tier colour: good, warn, muted), callouts and the legend from
+  one frame record.
+* The snapshot `/2` carries the step's annotations (see Snapshot below). The path tracer bridge gets the
+  arrow and dimension triangles as ordinary triangles; it draws no text.
+
+### Not checked
+
+* Words: annotation text is checked for numbers only, not for meaning.
+* Force and flow arrows other than the gravity direction; every arrow length without a fact.
+* The rules are conservative: some constant claims are refused (two anchors on different parts that happen to
+  keep their distance). Move such a claim to a step without `spin`.
+* Occlusion along leader lines (only the anchor point is tested).
+* Placement uses an estimated text width; very long words get small.
 
 ## Warnings, strict mode and the check report
 
@@ -457,7 +726,7 @@ The compiler lints every document, v1 and v2, after it compiles
 The plain API only warns. The strict profile (`MGSolidParser.document(…, profile: .strict)`,
 `MGSolidParser.applying(…, profile: .strict)`, `marty-solid check --strict`; the default for
 model harnesses) refuses only what the document itself shows to be wrong: a jointed part that
-nothing moves, and a turn axis that misses its own jointed part. The child-frame warnings
+nothing moves, a turn axis that misses its own jointed part, and an annotation that no step shows. The child-frame warnings
 are heuristics and stay warnings in every profile; the read-back below is how an author
 checks frames.
 
@@ -467,12 +736,14 @@ checks frames.
 | `frame.child.absolute.<id>` | The double offset, confirmed by geometry with every joint at 0: the child's bounds miss its parent's bounds as placed, but if its `at` / `rot` are read as world values it lies nearer, within one parent size. A child that touches its parent as placed (arm links, equal-link chains, stacked plates) never warns, and neither does a child of a parent at the world origin (only rotation differs there). Correct layouts can still warn (spaced plates, a plate on posts). | warning |
 | `frame.axis.off.<id>` | A revolute part's axis line misses its own mesh bounds. Mark a part that turns about an outside axis on purpose with `"offAxis": true`; this key needs v2, so a v1 document with such a part fails strict mode until it moves to v2. | refused |
 | `frame.child.far.<id>` | A child's bounds miss its parent's bounds grown by 1.5 times the parent's largest size. Often the same error; sometimes intended. | warning |
+| `annotation.unused.<id>` | Some step uses `annotate`, but no step lists this annotation, so the learner never sees it. | refused |
+| `annotation.cut.<id>` | A part anchor of an annotation that a step shows lies in the half that the same step's `section` removes from that part, so the annotation floats over the cut. | warning |
 
 `expect` mismatches (`expect.axis.<id>`, `expect.up.<id>`) are refusals in every profile.
 
 `marty-solid check [--strict] FILE.json` prints, besides `ok`, `reason`, meshes and gear
 checks, `engine`, `partTiers` and `motionTiers` (below): `version`, `warnings`, `facts` (value, unit, text, tier, source), `legend`
-(counts, text, claims), `stepTiers`, `stepFacts` (for each step, the fact behind each
+(counts, text, claims; with annotations also `notes`), `stepTiers`, `stepFacts` (for each step, the fact behind each
 placeholder in order, and each check with its `value`, `comparison`, exact `target`,
 `tolerance` and text), `notChecked` per motion source, and a
 plain-words `readBack` of every part at input 0. One line per part gives its world centre
@@ -519,10 +790,15 @@ pipeline) print the same JSON from one implementation:
 
 The report is built from sections (`MGSolidReport.sections`); a test keeps their keys
 disjoint, so a later feature adds a section and its docs without changing the others.
+The `annotations` section adds `annotations` and `placements` (see
+[Annotations](#annotations-v2)) only for a document with annotations; such a document also
+gets `legend.notes`.
 For every shipped example and every JSON file under `docs/assets`, with and without
 `--strict`, the tool's output without the fields added in this release is byte-identical to
 the output of the release before (golden files in
-`Examples/Solid3D/Tests/MartySolidCLITests/Golden`).
+`Examples/Solid3D/Tests/MartySolidCLITests/Golden`). `annotated-winch.json` is new: the
+release before refuses it (`assembly.unknown.annotations`), so its golden pair holds this
+release's output.
 
 ### Tiers per part and per motion
 
@@ -585,6 +861,17 @@ them also pass `check --strict` with no warnings.
   idler turns at `{idler.speed|abs|frac}` ("16/23") the other way, and the output
   `{output.speed|frac}` ("4/7") the same way as the input, so the idler's size cancels
   out. Legend: "Solved 9" (three motions, four captions, two checks).
+
+* [`annotated-winch.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json)
+  (v2, 40 lines): a hand winch. A 14-tooth pinion with a crank drives a 42-tooth drum gear on
+  shafts along Y; a rope and a weight hang from the drum. It uses all three
+  [annotations](#annotations-v2): labels that show the tooth counts, two turn arrows whose senses
+  the engine checks (`"sense": "ccw"` on the pinion, `"cw"` on the drum), a gravity force arrow
+  under the weight, a motion arrow on the drum's rope side whose stated direction (`"expect": [0, 0, 1]`)
+  the engine checks, and a measured centre distance (`{dim.centres}`, "56 mm"). Each step lists its
+  annotations with `annotate`. The rope-side arrow shows in a step without `spin`: its anchor rides the
+  drum, so while the drum turns it would leave the rope side (`annotation.pose.<id>`). Legend: "Solved 12" (two motions, seven annotations, two
+  captions, one check) with the note "Arrow lengths are not to scale".
 
 * [`horizontal-reduction.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json)
   (v2, 24 lines): a 15-tooth pinion driving a 40-tooth wheel on shafts laid along X
@@ -783,11 +1070,17 @@ compiled document (format v2, below):
 | `parts[].capFirstTriangle`, `parts[].capTriangleCount` | the cap triangles of a cut part, inside the part's range (absent when the part is not cut) |
 | `materials[].emission` | `{"color": sRGB, "intensity": 0–4}` for an emissive part; its material `id` gets a suffix such as `aluminum+emissive.orange.2` |
 | `section` | the step's plane in the snapshot's world frame (Y up, mm): `normal` (unit), `offset` (points with `normal · p > offset` are cut away) and the cut `parts` |
+| `annotations` | the step's [annotations](#annotations-v2) (absent when it shows none): `arrows[]` (`id`, `meaning`, `style`, world `from` and `to`, unit `direction`, `colorRole`, `tier`, `text`, `firstTriangle`, `triangleCount`), `dimensions[]` (`id`, `kind`, world `points`, `value`, `unit`, `text`, `tier`, triangle range), `labels[]` (`id`, world `anchor`, filled `text`, `tier`, `chip`) and `placement[]` (see Placement; a step snapshot assumes a caption band). Arrow and dimension triangles come after every part triangle, so part ranges never move; their materials are `annotation.<role>`. They do not change the bounds or the default framing. |
+| `highlight` | highlighted part ids (`MGSolidSnapshot.make(_:step:params:highlight:…)`; absent when none) |
 
 The decoder dispatches on `format`. A `/1` file keeps exactly its v1 meaning: its bytes
 are unchanged for the same assembly, and a `/1` file with any v2 field fails to decode. A
 `/2` file is checked too (an opacity on every part, cap ranges inside their part, a unit
-section normal, known section parts, three-number emission colours).
+section normal, known section parts, three-number emission colours, and for annotations: finite
+points, unit arrow directions, known meanings, roles and tiers, unique ids, triangle ranges after the
+parts, in order and inside the list, placements of known ids, known highlight parts). A `/2` export
+of a document without annotations and without highlight has the same bytes as before annotations
+existed.
 
 `format` is `martygraphics.solid.snapshot/1`; encode with `jsonData()` (an empty
 assembly exports zero bounds and a unit framing camera, so the JSON stays finite).
@@ -825,7 +1118,7 @@ so the two libraries stay independent.
 * Gear contact is checked in 2D at sampled angles, not as continuous 3D contact.
 * Frame lints compare bounding boxes, not meshes; a child that the box test calls near
   can still float. Parts are not checked against each other for collisions.
-* Placeholders fill the title and step text only (not part names). `<part>.worldSpeed`
+* Placeholders fill the title, step text and annotation text only (not part names). `<part>.worldSpeed`
   exists only when every turning ancestor's axis is parallel to the part's own.
 * `frame.axis.off` checks only that the axis line meets the part's bounds; it does not
   also compare the axis with the bounds centre.

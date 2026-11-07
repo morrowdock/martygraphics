@@ -296,7 +296,14 @@
     "Tests/MartyGraphicsTests/SolidReportTests.swift: report API, patch reports, tiers, render plan, engine identity and guarded snapshot decode coverage",
     "Tests/MartyGraphicsTests/SolidReasonCatalogTests.swift: source scan that keeps the reason catalog and docs/REASONS.md complete",
     "Examples/Solid3D/Tests/MartySolidCLITests/Golden/*.json: marty-solid check output of the previous release for every shipped example, docs/assets JSON and two synthetic inputs",
-    "docs/REASONS.md: generated table of every stable Solid 3D reason"
+    "docs/REASONS.md: generated table of every stable Solid 3D reason",
+    "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift: assembly v2 labels, arrows and dimensions: anchors, engine motion directions and checks, dimension facts, tiers, visibility, warnings, piece meshes (public-only)",
+    "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift: deterministic annotation text placement, core projection, callout list, hysteresis, occlusion ray test, frame records and check report data (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidOverlayView.swift: SwiftUI and CoreGraphics annotation overlay drawn from placement records (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift: exact annotation motion (closed-form joint rates, point velocities, world-fixed anchors, exact over ranges), the per-view claim rules and the one display gate (public-only)",
+    "Tests/MartyGraphicsTests/SolidAnnotationTests.swift: annotation parsing, anchors, arrows, dimensions, visibility, budget and hostile-input coverage",
+    "Tests/MartyGraphicsTests/AnnotationLayoutTests.swift: placement, occlusion, snapshot v2 annotation fields, overlay and SceneKit annotation coverage",
+    "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json: assembly v2 worked example (hand winch with labels, turn, force and motion arrows and a measured dimension)"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",
