@@ -28,6 +28,21 @@ public final class MGSceneController: ObservableObject {
 
     public init(scene: MGScene? = nil) { self.scene = scene.map(stamped) }
 
+    /// The time base of the board's transitions (keyframes, blends, draw-on, motion). nil (the default) keeps the wall
+    /// clock (`Date()`), as before. A lesson or explainer host sets its session's monotonic clock here, so the frame the
+    /// board draws and the session's settle time come from ONE clock: a wall-clock jump can never show an earlier
+    /// frame while the session already says the board has settled.
+    public var presentationClock: MGLessonClock?
+    /// The wall clock (tests replace it to model a jump).
+    var wallClock: () -> Date = { Date() }
+
+    /// Now on the board's time base: the presentation clock as a date (only differences are used), else the wall clock.
+    public func presentationDate() -> Date {
+        guard let c = presentationClock else { return wallClock() }
+        let d = c.now
+        return Date(timeIntervalSinceReferenceDate: Double(d.components.seconds) + Double(d.components.attoseconds) * 1e-18)
+    }
+
     private func stamped(_ s: MGScene) -> MGScene { var s = s; s.revision = nextSceneRevision; nextSceneRevision += 1; return s }
 
     public func show(_ scene: MGScene?) { show(scene, transition: .blend) }
@@ -179,7 +194,7 @@ struct MGSceneHost: View {
 
     @State private var step = 0
     @State private var playing = true
-    @State private var epoch = Date()
+    @State private var epoch = Date()   // replaced on appear (`adopt`) by the board's time base
     @State private var pausedAt: Double = 0
     @State private var appearStart: [String: Date] = [:]
     @State private var blendFrom: [MGItem]?
@@ -199,12 +214,12 @@ struct MGSceneHost: View {
     @State private var transientToken = 0
 
     private func renderState(_ scene: MGScene) -> MGRenderPolicy.State {
-        .init(motionPlaying: playing && scene.animates && !teaching.holdsMotion, transientActive: Date() < transientUntil,
+        .init(motionPlaying: playing && scene.animates && !teaching.holdsMotion, transientActive: controller.presentationDate() < transientUntil,
               visible: visible, sceneActive: scenePhase == .active, reduceMotion: reduceMotion)
     }
     /// Keep the 2D loop alive just long enough for a transition, then settle on a final static frame.
     private func bumpTransient(_ seconds: Double = MGRenderPolicy.transientSeconds) {
-        transientUntil = max(transientUntil, Date().addingTimeInterval(seconds)); transientToken &+= 1
+        transientUntil = max(transientUntil, controller.presentationDate().addingTimeInterval(seconds)); transientToken &+= 1
     }
 
     var body: some View {
@@ -220,14 +235,14 @@ struct MGSceneHost: View {
             .onAppear { visible = true; adopt(scene, animated: false, drawsOn: controller.drawsOn) }
             .onDisappear { visible = false }
             .task(id: transientToken) {
-                let wait = max(0, transientUntil.timeIntervalSinceNow)
+                let wait = max(0, transientUntil.timeIntervalSince(controller.presentationDate()))
                 try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
                 if !Task.isCancelled { transientUntil = .distantPast }   // state change → one settled redraw, loop paused
             }
             .onChange(of: controller.revision) { _, _ in if let s = controller.scene { adopt(s, animated: true, transition: controller.transition, drawsOn: controller.drawsOn) } }
             .onChange(of: controller.transitionsPaused) { _, paused in holdTransitions(paused) }
             .onChange(of: teaching.holdsMotion) { _, held in
-                if !held { epoch = Date(); pausedAt = 0; playing = true }   // revealed: play the motion from its start
+                if !held { epoch = controller.presentationDate(); pausedAt = 0; playing = true }   // revealed: play the motion from its start
                 bumpTransient()
             }
             .onChange(of: teaching.emphasis.union(teaching.selection?.wrappedValue.map { [$0] } ?? [])) { _, _ in bumpTransient() }
@@ -261,7 +276,7 @@ struct MGSceneHost: View {
                 GeometryReader { geo in
                     TimelineView(.animation(minimumInterval: MGRenderPolicy.frameInterval, paused: !running)) { tl in
                         Canvas(rendersAsynchronously: false) { ctx, size in
-                            MGCanvasRenderer.draw(input(scene, now: running ? tl.date : Date(), size: size), in: ctx)
+                            MGCanvasRenderer.draw(input(scene, now: running && controller.presentationClock == nil ? tl.date : controller.presentationDate(), size: size), in: ctx)
                         }
                     }
                     .contentShape(Rectangle())
@@ -283,7 +298,7 @@ struct MGSceneHost: View {
     private func select(_ scene: MGScene, at point: CGPoint, size: CGSize) {
         guard let binding = teaching.selection else { return }
         // Use the drawing's frame calculation, including in-flight item and camera blends.
-        let frame = input(scene, now: Date(), size: size)
+        let frame = input(scene, now: controller.presentationDate(), size: size)
         let selectable = teaching.markers.isEmpty ? nil : Set(teaching.markers.keys)
         binding.wrappedValue = frame.hit(point, among: selectable)?.id
     }
@@ -294,7 +309,7 @@ struct MGSceneHost: View {
     private func finishLoops(_ scene: MGScene) async {
         guard let loops = teaching.loops, playing, !teaching.holdsMotion, scene.animates, let cycle = MGTimeline.cycle(scene) else { return }
         let end = cycle * Double(loops)
-        let remaining = end - Date().timeIntervalSince(epoch)
+        let remaining = end - controller.presentationDate().timeIntervalSince(epoch)
         if remaining > 0 { try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000)) }
         guard !Task.isCancelled, playing else { return }
         pausedAt = MGTimeline.restTime(scene, loops: loops) ?? end; playing = false; bumpTransient()
@@ -315,7 +330,7 @@ struct MGSceneHost: View {
                 control("chevron.left", "Previous step", enabled: step > 0) { go(scene, step - 1) }
                 if scene.animates && !reduceMotion && !teaching.holdsMotion {
                     control(playing ? "pause.fill" : "play.fill", playing ? "Pause" : "Play", enabled: true) { togglePlay() }
-                    control("arrow.counterclockwise", "Replay", enabled: true) { epoch = Date(); pausedAt = 0; playing = true; bumpTransient() }
+                    control("arrow.counterclockwise", "Replay", enabled: true) { epoch = controller.presentationDate(); pausedAt = 0; playing = true; bumpTransient() }
                 }
                 control("chevron.right", "Next step", enabled: step < scene.steps.count - 1) { go(scene, step + 1) }
                 }
@@ -338,17 +353,17 @@ struct MGSceneHost: View {
     private func time(_ now: Date) -> Double { teaching.holdsMotion ? 0 : (playing ? now.timeIntervalSince(epoch) : pausedAt) }
 
     private func togglePlay() {
-        if playing { pausedAt = Date().timeIntervalSince(epoch) } else { epoch = Date().addingTimeInterval(-pausedAt) }
+        if playing { pausedAt = controller.presentationDate().timeIntervalSince(epoch) } else { epoch = controller.presentationDate().addingTimeInterval(-pausedAt) }
         playing.toggle(); bumpTransient()
     }
 
     private func go(_ scene: MGScene, _ next: Int) {
         guard scene.steps.indices.contains(next) else { return }
         let before = Set(MGTimeline.items(scene, step: step).map(\.id))
-        cameraFrom = scene.steps[step].camera ?? scene.camera; cameraStart = Date()
-        blendFrom = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: time(Date())); blendStart = Date()
+        cameraFrom = scene.steps[step].camera ?? scene.camera; cameraStart = controller.presentationDate()
+        blendFrom = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: time(controller.presentationDate())); blendStart = controller.presentationDate()
         step = next; bumpTransient()
-        let now = Date()
+        let now = controller.presentationDate()
         for id in MGTimeline.items(scene, step: next).map(\.id) where !before.contains(id) { appearStart[id] = now }
     }
 
@@ -356,7 +371,7 @@ struct MGSceneHost: View {
     /// and no draw-on replay for ids already shown (a finger update). `.keyframes`: play engine in-betweens.
     /// A first appearance (not animated) draws everything on. The decision is `MGAdoption.plan` (pure, tested).
     private func adopt(_ scene: MGScene, animated: Bool, transition: MGTransition = .blend, drawsOn: Bool = true) {
-        let now = Date()
+        let now = controller.presentationDate()
         let previous = shownScene
         let plan = MGAdoption.plan(previous: animated ? previous?.items : nil, next: scene.items, transition: transition, step: step, drawsOn: drawsOn)
         if !drawsOn { appearStart.removeAll() }   // no draw-on left over from an earlier, interrupted transition
@@ -383,7 +398,7 @@ struct MGSceneHost: View {
 
     /// Lesson pause: freeze keyframe time (and pending draw-on starts); resume continues from the same frame.
     private func holdTransitions(_ paused: Bool) {
-        let now = Date()
+        let now = controller.presentationDate()
         if paused {
             keyframeClock.pause(at: now); heldAt = now
         } else {

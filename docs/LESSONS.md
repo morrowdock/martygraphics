@@ -345,6 +345,9 @@ case .failure(let issue): log(issue.reason) // the current lesson is unchanged
 - `MGAdoption.plan` is the pure decision (blend, draw-on ids, keyframe segments). The SwiftUI host and the tests use it (R1–R3).
 - `MGSceneController.show(_:transition:drawsOn: false)` shows a scene with no draw-on, also on a first appearance
   (`MGAdoption.plan(…, drawsOn: false)`). Every other entry point keeps draw-on. `MGLessonController.restore` uses it.
+- `MGSceneController.presentationClock` sets the board's time base for transitions, draw-on and motion. nil (the
+  default) keeps the wall clock as before; `MGLessonController` (and the explainer controller) set the session's
+  monotonic clock, so a wall-clock jump cannot move the drawn frame away from the session's settle time.
 - `MGSceneController.pauseTransitions()` / `resumeTransitions()` hold an in-flight keyframe animation on its current
   frame (`MGTransitionClock`). `MGLessonController.pause()` calls it, and the session's settle time continues after
   `resume()` from where it stopped.
