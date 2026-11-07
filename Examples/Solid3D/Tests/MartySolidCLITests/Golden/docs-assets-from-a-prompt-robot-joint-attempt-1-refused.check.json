@@ -1,0 +1,10 @@
+{
+  "file" : {
+    "lines" : 1,
+    "sha256" : "2e367658920b20bf7d1e0f77612f7a1b379eff928a75a1cf324d22181aa83607"
+  },
+  "ok" : false,
+  "part" : "ring1",
+  "reason" : "constraint.gearMesh.phase",
+  "strict" : false
+}

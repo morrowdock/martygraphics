@@ -123,7 +123,7 @@ final class SolidTurboTests: XCTestCase {
         }
         let d = try MGSolidParser.document(json: .object(["v": .number(1), "kind": .string("assembly"), "parts": .array(parts)])).get()
         let snap = MGSolidSnapshot.make(d.assembly, params: MGPoseParameters())
-        let back = try JSONDecoder().decode(MGSolidSnapshot.self, from: snap.jsonData())
+        let back = try MGSolidSnapshot.decode(data: snap.jsonData())
         XCTAssertEqual(back, snap)
         XCTAssertEqual(back.materials.map(\.id), ["titanium", "nickelAlloy", "composite", "ceramic"])
     }

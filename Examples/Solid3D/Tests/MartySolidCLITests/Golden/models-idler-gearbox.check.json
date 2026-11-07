@@ -1,0 +1,364 @@
+{
+  "checks" : {
+    "gearPairs" : 2,
+    "gearsEngage" : true,
+    "maxPenetrationMM" : -0.21253514662347683,
+    "meshesClosed" : true,
+    "minClearanceMM" : 0.21253514662347683,
+    "openMeshes" : [
+
+    ],
+    "sections" : [
+      {
+        "normal" : [
+          0,
+          -1,
+          0
+        ],
+        "offset" : 0,
+        "parts" : [
+          {
+            "capLoops" : 3,
+            "capTriangles" : 34,
+            "closed" : true,
+            "part" : "casing",
+            "triangles" : 192
+          }
+        ],
+        "step" : 2
+      },
+      {
+        "normal" : [
+          0,
+          -1,
+          0
+        ],
+        "offset" : 0,
+        "parts" : [
+          {
+            "capLoops" : 3,
+            "capTriangles" : 34,
+            "closed" : true,
+            "part" : "casing",
+            "triangles" : 192
+          }
+        ],
+        "step" : 3
+      },
+      {
+        "normal" : [
+          0,
+          -1,
+          0
+        ],
+        "offset" : 0,
+        "parts" : [
+          {
+            "capLoops" : 3,
+            "capTriangles" : 34,
+            "closed" : true,
+            "part" : "casing",
+            "triangles" : 192
+          }
+        ],
+        "step" : 4
+      },
+      {
+        "normal" : [
+          0,
+          -1,
+          0
+        ],
+        "offset" : 0,
+        "parts" : [
+          {
+            "capLoops" : 3,
+            "capTriangles" : 34,
+            "closed" : true,
+            "part" : "casing",
+            "triangles" : 192
+          }
+        ],
+        "step" : 5
+      }
+    ],
+    "toleranceMM" : 0.02
+  },
+  "facts" : {
+    "idler.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "idler.speed" : {
+      "source" : "gearMesh",
+      "text" : "-0.7",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.69565217391304346
+    },
+    "idler.teeth" : {
+      "source" : "shape",
+      "text" : "23",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 23
+    },
+    "idler.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "-0.7",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.69565217391304346
+    },
+    "input.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "input.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "input.teeth" : {
+      "source" : "shape",
+      "text" : "16",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 16
+    },
+    "input.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "output.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "output.speed" : {
+      "source" : "gearMesh",
+      "text" : "0.57",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.5714285714285714
+    },
+    "output.teeth" : {
+      "source" : "shape",
+      "text" : "28",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 28
+    },
+    "output.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "0.57",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.5714285714285714
+    }
+  },
+  "file" : {
+    "lines" : 33,
+    "sha256" : "edc650a25a1e6ab0e22f865d39449388b10b985769c32a7e2d3f1649853ba957"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "input",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "idler",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "output",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.3",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.4",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.4.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: idler.speed < 0"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.5",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.5.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: output.speed = 0.5714285714285714 ± 1e-09"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.6",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 9,
+    "text" : "Solved 9"
+  },
+  "notChecked" : {
+    "gearMesh" : [
+      "3D tooth contact",
+      "load, strength and wear",
+      "friction and efficiency"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 4,
+  "ratios" : {
+    "idler" : -0.69565217391304346,
+    "input" : 1,
+    "output" : 0.5714285714285714
+  },
+  "readBack" : [
+    "casing: world centre (50, 0, -4) mm, size 176 x 44 x 88 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "input: world centre (0, 0, 0) mm, size 36 x 20 x 36 mm; turns about a horizontal axis (+Y) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Y",
+    "idler: world centre (39.1, 0, 0) mm, size 49.8 x 20 x 50 mm; turns about a horizontal axis (+Y) through (39, 0, 0); -0.7 turns per input turn (Solved, gearMesh); root (at [39, 0, 0] in the world frame); local +Z points +Y",
+    "output: world centre (90, 0, 0) mm, size 59.8 x 20 x 59.8 mm; turns about a horizontal axis (+Y) through (90, 0, 0); 0.57 turns per input turn (Solved, gearMesh); root (at [90, 0, 0] in the world frame); local +Z points +Y"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 192,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+        "input.teeth",
+        "idler.teeth",
+        "output.teeth"
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "lt",
+          "target" : 0,
+          "text" : "idler.speed < 0",
+          "tolerance" : null,
+          "value" : "idler.speed"
+        }
+      ],
+      "facts" : [
+        "idler.speed"
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 0.5714285714285714,
+          "text" : "output.speed = 0.5714285714285714 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "output.speed"
+        }
+      ],
+      "facts" : [
+        "output.speed"
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+        "input.teeth",
+        "output.teeth"
+      ]
+    }
+  ],
+  "steps" : [
+    "A closed gearbox: the casing hides every gear inside it.",
+    "Cut the front half of the casing away. The cut faces are solid walls.",
+    "Inside: an input with 16 teeth, an idler with 23 and an output with 28.",
+    "The idler turns the other way, at 16\/23 of the input speed.",
+    "The output turns the same way as the input, 4\/7 of a turn per input turn.",
+    "The idler's size cancels out: the ratio is input teeth over output teeth, 16 to 28."
+  ],
+  "stepTiers" : [
+    null,
+    null,
+    "solved",
+    "solved",
+    "solved",
+    "solved"
+  ],
+  "strict" : false,
+  "title" : "Idler gear in a closed gearbox",
+  "triangles" : 24964,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

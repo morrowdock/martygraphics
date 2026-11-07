@@ -1,0 +1,182 @@
+{
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+    "crank.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "crank.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "piston.crankRadius" : {
+      "source" : "crankSlider",
+      "text" : "18 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 18
+    },
+    "piston.rodLength" : {
+      "source" : "crankSlider",
+      "text" : "62 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 62
+    },
+    "piston.travel" : {
+      "source" : "crankSlider",
+      "text" : "36 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 36
+    }
+  },
+  "file" : {
+    "lines" : 21,
+    "sha256" : "17c3e8ac5f45ce1be7776d2df291fc6042fd82cb5497decf4a00f4954c9d8491"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "crank",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "piston",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by crankSlider"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "rod",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by crankRod"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "step.2",
+        "kind" : "caption",
+        "tier" : "described",
+        "why" : "Assembly v1 text: its numbers are not checked"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "step.3",
+        "kind" : "caption",
+        "tier" : "described",
+        "why" : "Assembly v1 text: its numbers are not checked"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "step.4",
+        "kind" : "caption",
+        "tier" : "described",
+        "why" : "Assembly v1 text: its numbers are not checked"
+      }
+    ],
+    "described" : 3,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 3,
+    "text" : "Solved 3 · Not checked 3"
+  },
+  "notChecked" : {
+    "crankRod" : [
+      "forces and dynamics",
+      "joint clearance"
+    ],
+    "crankSlider" : [
+      "forces and dynamics",
+      "joint clearance"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 4,
+  "ratios" : {
+    "crank" : 1
+  },
+  "readBack" : [
+    "frame: world centre (30, 0, -14) mm, size 150 x 60 x 6 mm; static; root (at [30, 0, -14] in the world frame); local +Z points +Z",
+    "crank: world centre (9, 0, 0) mm, size 30 x 12 x 20 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "piston: world centre (80, 0, 0) mm, size 24 x 28 x 28 mm; slides along +X; travel 36 mm per input turn (Solved, crankSlider); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "rod: world centre (49, 0, 5) mm, size 62 x 8 x 4 mm; turns about a vertical axis (+Z) through (80, 0, 0); angle from crankRod relative to piston (Solved, crankRod); child of piston (at [0, 0, 0] in the piston frame); local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "A slider-crank turns spinning motion into back-and-forth motion, as in an engine or a pump.",
+    "Input: the crank turns. Its pin travels in a circle of radius 18 mm.",
+    "The connecting rod (62 mm) links the crank pin to the piston and pushes and pulls it.",
+    "The piston slides along a straight line. Its stroke is twice the crank radius: 36 mm per turn."
+  ],
+  "stepTiers" : [
+    null,
+    "described",
+    "described",
+    "described"
+  ],
+  "strict" : true,
+  "title" : "Slider-crank: rotation to back-and-forth",
+  "triangles" : 596,
+  "version" : 1,
+  "warnings" : [
+
+  ]
+}

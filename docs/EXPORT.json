@@ -288,7 +288,15 @@
     "Sources/MartyGraphics/Solid/MGSolidSection.swift: capped plane cuts of closed meshes, loop chaining, caps through MGTriangulator, exact pre-pass counts (public-only)",
     "Sources/MartyGraphics/Solid/MGSolidView.swift: assembly v2 step sections, ghosts, part opacity and emission views, section budget and reuse (public-only)",
     "Tests/MartyGraphicsTests/SolidSectionTests.swift: capped cuts, step section and ghost, appearance refusals, renderer views and snapshot v2 coverage",
-    "Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json: assembly v2 worked example (idler gear train, casing section, ghost step)"
+    "Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json: assembly v2 worked example (idler gear train, casing section, ghost step)",
+    "Sources/MartyGraphics/MGEngine.swift: engine identity (name, version, report format) and a Foundation SHA-256 for document hashes (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidReport.swift: the solid check report as a library API (engine checks, refusal order, honesty and tier sections, patch reports) (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidReasons.swift: catalog of every stable Solid 3D reason with patterns, meanings and formats (public-only)",
+    "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift: the marty-solid render sequence and manifest as data (public-only)",
+    "Tests/MartyGraphicsTests/SolidReportTests.swift: report API, patch reports, tiers, render plan, engine identity and guarded snapshot decode coverage",
+    "Tests/MartyGraphicsTests/SolidReasonCatalogTests.swift: source scan that keeps the reason catalog and docs/REASONS.md complete",
+    "Examples/Solid3D/Tests/MartySolidCLITests/Golden/*.json: marty-solid check output of the previous release for every shipped example, docs/assets JSON and two synthetic inputs",
+    "docs/REASONS.md: generated table of every stable Solid 3D reason"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

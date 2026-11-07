@@ -105,4 +105,138 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual(try run(["check", "--strict", idle, idle]).status, 2)
         XCTAssertEqual(try run(["check", "--strict", "--strict", idle]).status, 2)
     }
+
+    // MARK: Golden output
+
+    var repo: URL { models.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent() }
+    var golden: URL { URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Golden") }
+
+    /// Fields this release adds to the check report; the golden files hold the output of the release before.
+    static let added: Set<String> = ["engine", "partTiers", "motionTiers"]
+
+    /// Removes top-level members from pretty-printed JSON. The writer puts each top-level key on its own line with an
+    /// indent of two spaces and nests everything else deeper, so this is an exact text operation.
+    static func strip(_ text: String, _ keys: Set<String>) -> String {
+        var out: [String] = []
+        var skipping = false
+        for line in text.components(separatedBy: "\n") {
+            if line.hasPrefix("  \"") { skipping = keys.contains(String(line.dropFirst(3).prefix { $0 != "\"" })) }
+            else if line == "}" { skipping = false }
+            if !skipping { out.append(line) }
+        }
+        if let close = out.lastIndex(of: "}"), close > 0, out[close - 1].hasSuffix(",") { out[close - 1].removeLast() }
+        return out.joined(separator: "\n")
+    }
+
+    /// Every shipped example and every JSON file under docs/assets, plus two synthetic inputs (an oversized file and an
+    /// idle joint that strict refuses): golden name to path.
+    func goldenInputs() throws -> [(String, String)] {
+        var out: [(String, String)] = []
+        for f in try FileManager.default.contentsOfDirectory(atPath: models.path).filter({ $0.hasSuffix(".json") }).sorted() {
+            out.append(("models-" + f.dropLast(5), models.appendingPathComponent(f).path))
+        }
+        let assets = repo.appendingPathComponent("docs/assets")
+        let found = FileManager.default.enumerator(atPath: assets.path)!.compactMap { $0 as? String }.filter { $0.hasSuffix(".json") }.sorted()
+        for f in found { out.append(("docs-assets-" + f.dropLast(5).replacingOccurrences(of: "/", with: "-"), assets.appendingPathComponent(f).path)) }
+        out.append(("synthetic-oversize", try write(String(repeating: " ", count: 65_537), "oversize.json")))
+        out.append(("synthetic-idle", try write(#"{"v":2,"kind":"assembly","parts":[{"id":"disc","shape":{"shaft":{"radius":20,"length":5}},"joint":{"revolute":[0,0,1]}}],"steps":[{"say":"A disc on a joint."}]}"#, "idle.json")))
+        return out
+    }
+
+    /// The check report moved into the library (`MGSolidReport`). For every input, with and without `--strict`, the
+    /// output minus the added fields is byte-identical to the output of the release before (the golden files).
+    func testCheckOutputIsByteIdenticalToTheGoldenFiles() throws {
+        let inputs = try goldenInputs()
+        let files = Set(try FileManager.default.contentsOfDirectory(atPath: golden.path).filter { $0.hasSuffix(".json") })
+        XCTAssertEqual(files, Set(inputs.flatMap { ["\($0.0).check.json", "\($0.0).strict.json"] }), "one golden pair per input")
+        XCTAssertGreaterThanOrEqual(inputs.count, 18)
+        for (name, path) in inputs {
+            for (mode, args) in [("check", ["check", path]), ("strict", ["check", "--strict", path])] {
+                let want = try String(contentsOf: golden.appendingPathComponent("\(name).\(mode).json"), encoding: .utf8)
+                let got = try run(args)
+                XCTAssertNotNil(got.json?["engine"] as? [String: Any], "\(name) \(mode): engine")
+                if got.json?["readBack"] != nil {
+                    XCTAssertNotNil(got.json?["partTiers"] as? [Any], "\(name) \(mode): partTiers")
+                    XCTAssertNotNil(got.json?["motionTiers"] as? [Any], "\(name) \(mode): motionTiers")
+                }
+                XCTAssertEqual(Self.strip(got.text, Self.added), want, "\(name) \(mode)")
+                XCTAssertEqual(got.status, want.contains(#""ok" : true"#) ? 0 : 1, "\(name) \(mode)")
+            }
+        }
+    }
+
+    func testStripRemovesOnlyTheNamedTopLevelMembers() {
+        let text = "{\n  \"a\" : 1,\n  \"engine\" : {\n    \"x\" : [\n      1\n    ]\n  },\n  \"z\" : {\n    \"engine\" : 2\n  }\n}\n"
+        XCTAssertEqual(Self.strip(text, ["engine"]), "{\n  \"a\" : 1,\n  \"z\" : {\n    \"engine\" : 2\n  }\n}\n")
+        XCTAssertEqual(Self.strip(text, ["z"]), "{\n  \"a\" : 1,\n  \"engine\" : {\n    \"x\" : [\n      1\n    ]\n  }\n}\n")
+    }
+
+    // MARK: version, reasons, --patch
+
+    func testVersionNamesTheEngineAndThisBuild() throws {
+        let v = try run(["version"])
+        XCTAssertEqual(v.status, 0)
+        XCTAssertEqual(v.json?["name"] as? String, "MartyGraphics")
+        XCTAssertEqual(v.json?["version"] as? String, "unreleased")
+        XCTAssertEqual(v.json?["reportFormat"] as? Int, 1)
+        let exe = v.json?["executableSHA256"] as? String
+        XCTAssertEqual(exe?.count, 64)
+        XCTAssertEqual(exe?.allSatisfy { $0.isHexDigit && !$0.isUppercase }, true)
+        let check = try run(["check", models.appendingPathComponent("propeller.json").path])
+        XCTAssertEqual((check.json?["engine"] as? [String: Any])?["executableSHA256"] as? String, exe)
+        XCTAssertEqual(try run(["version", "extra"]).status, 2)
+    }
+
+    func testReasonsCatalog() throws {
+        let r = try run(["reasons"])
+        XCTAssertEqual(r.status, 0)
+        XCTAssertEqual(r.json?["catalog"] as? String, "martygraphics.solid.reasons/1")
+        let reasons = r.json?["reasons"] as? [[String: Any]] ?? []
+        XCTAssertGreaterThan(reasons.count, 150)
+        let patterns = reasons.compactMap { $0["pattern"] as? String }
+        for p in ["check.meshOpen", "check.gearsInterpenetrate", "joint.idle.<id>", "patch.bytes", "solidSnapshot.depth", "assembly.bytes"] {
+            XCTAssertTrue(patterns.contains(p), p)
+        }
+        XCTAssertTrue(reasons.allSatisfy { ($0["meaning"] as? String)?.isEmpty == false && ($0["formats"] as? [String])?.isEmpty == false })
+    }
+
+    func testCheckWithAPatch() throws {
+        let base = try write(#"{"v":1,"kind":"assembly","title":"Disc","parts":[{"id":"disc","shape":{"shaft":{"radius":20,"length":5}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}}]}"#, "base.json")
+        let rename = try write(#"{"title":"Disc","parts":{"disc":{"name":"Big disc"}}}"#, "rename.json")
+        let unplug = try write(#"{"parts":{"disc":{"drive":null}}}"#, "unplug.json")
+        let bogus = try write(#"{"bogus":1}"#, "bogus.json")
+        let ok = try run(["check", base, "--patch", rename])
+        XCTAssertEqual(ok.status, 0)
+        let patch = ok.json?["patch"] as? [String: Any]
+        XCTAssertEqual(patch?["applied"] as? Bool, true)
+        XCTAssertEqual(patch?["fields"] as? [String], ["parts.disc.name", "title"])
+        XCTAssertEqual(patch?["changed"] as? [String], ["parts.disc.name"])
+        XCTAssertEqual(ok.json?["title"] as? String, "Disc")
+        for args in [["check", "--strict", base, "--patch", unplug], ["check", "--patch", unplug, base, "--strict"]] {
+            let strict = try run(args)
+            XCTAssertEqual(strict.status, 1)
+            XCTAssertEqual(strict.json?["reason"] as? String, "joint.idle.disc")
+            XCTAssertEqual((strict.json?["patch"] as? [String: Any])?["changed"] as? [String], ["parts.disc.drive"])
+        }
+        let refused = try run(["check", base, "--patch", bogus])
+        XCTAssertEqual(refused.status, 1)
+        XCTAssertEqual(refused.json?["reason"] as? String, "patch.unknown.bogus")
+        XCTAssertEqual((refused.json?["patch"] as? [String: Any])?["refusedAt"] as? String, "patch")
+        let big = try write(String(repeating: " ", count: 65_537), "big-patch.json")
+        XCTAssertEqual(try run(["check", base, "--patch", big]).json?["reason"] as? String, "patch.bytes")
+        XCTAssertEqual(try run(["check", base, "--patch"]).status, 2)
+        XCTAssertEqual(try run(["check", base, "--patch", rename, "--patch", rename]).status, 2)
+        XCTAssertEqual(try run(["check", base, "--patch", "--strict"]).status, 2)
+    }
+
+    func testRefusalsCarryTheEngine() throws {
+        let bad = try write("{}", "empty.json")
+        let render = try run(["render", bad, FileManager.default.temporaryDirectory.appendingPathComponent("never-\(UUID().uuidString)").path])
+        XCTAssertEqual(render.status, 1)
+        XCTAssertEqual(render.json?["reason"] as? String, "assembly.missing.kind,parts,v")
+        XCTAssertNotNil(render.json?["engine"] as? [String: Any])
+        let component = try run(["component", "check", bad])
+        XCTAssertEqual(component.status, 1)
+        XCTAssertNotNil(component.json?["engine"] as? [String: Any])
+    }
 }

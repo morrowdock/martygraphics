@@ -1,0 +1,105 @@
+{
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+    "count.blade" : {
+      "source" : "repeat",
+      "text" : "3",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 3
+    },
+    "hub.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "hub.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    }
+  },
+  "file" : {
+    "lines" : 14,
+    "sha256" : "64d90e1bbba5ab934e984fc8628f0994a318811ec4735ae8e0b2a7de5fe1a01f"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "hub",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 1,
+    "text" : "Solved 1"
+  },
+  "notChecked" : {
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 4,
+  "ratios" : {
+    "hub" : 1
+  },
+  "readBack" : [
+    "hub: world centre (0, 0, -20) mm, size 24 x 24 x 70 mm; turns about a vertical axis (-Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "blade1: world centre (65, 6.45, -5.32) mm, size 110 x 26.2 x 22.1 mm; fixed to its parent, moves with hub; copy 1 of 3 (repeat of blade); child of hub (at [0, 0, 0] in the hub frame); its origin is 0 mm from the hub axis; local +Z points +Z",
+    "blade2: world centre (-34.7, 52.4, -5.32) mm, size 70.9 x 107 x 22.1 mm; fixed to its parent, moves with hub; copy 2 of 3 (repeat of blade); child of hub (at [0, 0, 0] in the hub frame); its origin is 0 mm from the hub axis; local +Z points +Z",
+    "blade3: world centre (-25.7, -57.6, -5.32) mm, size 75.3 x 104 x 22.1 mm; fixed to its parent, moves with hub; copy 3 of 3 (repeat of blade); child of hub (at [0, 0, 0] in the hub frame); its origin is 0 mm from the hub axis; local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "A propeller is a set of rotating wings. Each blade is an airfoil that pushes air backwards.",
+    "The blades are twisted: steeper near the hub, flatter at the tip, because the tip moves faster."
+  ],
+  "stepTiers" : [
+    null,
+    null
+  ],
+  "strict" : true,
+  "title" : "Three-blade propeller",
+  "triangles" : 5316,
+  "version" : 1,
+  "warnings" : [
+
+  ]
+}

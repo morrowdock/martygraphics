@@ -226,6 +226,57 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
         let e = JSONEncoder(); e.outputFormatting = [.sortedKeys]
         return try e.encode(self)
     }
+
+    /// Largest snapshot text `decode(data:)` reads: 256 MiB. A document at the mesh budget (1.5 million triangles)
+    /// exports about 150 MB.
+    public static let maxBytes = 256 * 1024 * 1024
+    /// Longest number literal `decode(data:)` reads; the encoder writes at most about 25 characters.
+    public static let maxNumberLength = 64
+
+    /// Decodes snapshot JSON text. Guards run before the system decoder sees the bytes, so hostile text cannot exhaust
+    /// a small thread stack (iOS secondary threads have 512 KiB): `solidSnapshot.bytes` (over `maxBytes`),
+    /// `solidSnapshot.json` (not valid UTF-8, or a raw NUL byte), `solidSnapshot.depth` (nesting deeper than
+    /// `MGLimits.depth`, 64), `solidSnapshot.number` (a number literal longer than `maxNumberLength` or one that is not
+    /// finite as a `Double`, such as `1e999`). Then `JSONDecoder` and the validating initialisers run; anything they
+    /// refuse is `solidSnapshot.invalid`. Use this, not `JSONDecoder` directly, for text from outside the process.
+    public static func decode(data: Data) throws -> MGSolidSnapshot {
+        if let reason = guardRefusal(data) { throw MGSolidIssue(reason) }
+        do { return try JSONDecoder().decode(MGSolidSnapshot.self, from: data) } catch { throw MGSolidIssue("solidSnapshot.invalid") }
+    }
+
+    /// The first guard `decode(data:)` refuses, or nil. One pass over the bytes after the UTF-8 check; no recursion.
+    static func guardRefusal(_ data: Data) -> String? {
+        guard data.count <= maxBytes else { return "solidSnapshot.bytes" }
+        if let r = MGJSON.dataRefusal(data, json: "solidSnapshot.json", depth: "solidSnapshot.depth") { return r }
+        var inString = false, escape = false
+        var token: [UInt8] = []
+        func numberRefusal() -> Bool {
+            defer { token.removeAll(keepingCapacity: true) }
+            guard !token.isEmpty else { return false }
+            guard token.count <= maxNumberLength, let d = Double(String(decoding: token, as: UTF8.self)) else { return true }
+            return !d.isFinite
+        }
+        for b in data {
+            if inString {
+                if escape { escape = false } else if b == UInt8(ascii: "\\") { escape = true } else if b == UInt8(ascii: "\"") { inString = false }
+                continue
+            }
+            let digit = b >= UInt8(ascii: "0") && b <= UInt8(ascii: "9")
+            if token.isEmpty {
+                // A number starts with a digit or `-`; the letters of `true`, `false` and `null` never start one.
+                if digit || b == UInt8(ascii: "-") { token.append(b) } else if b == UInt8(ascii: "\"") { inString = true }
+                continue
+            }
+            if digit || b == UInt8(ascii: "-") || b == UInt8(ascii: "+") || b == UInt8(ascii: ".") || b == UInt8(ascii: "e") || b == UInt8(ascii: "E") {
+                guard token.count < maxNumberLength else { return "solidSnapshot.number" }
+                token.append(b)
+                continue
+            }
+            if numberRefusal() { return "solidSnapshot.number" }
+            if b == UInt8(ascii: "\"") { inString = true }
+        }
+        return numberRefusal() ? "solidSnapshot.number" : nil
+    }
 }
 
 // MARK: Validating decoders

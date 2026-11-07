@@ -32,6 +32,7 @@ path traced through a small adapter.
 | Components | `Solid/MGSolidComponents.swift`, `MGSolidBuiltInComponents.swift` | Foundation only |
 | Honesty (facts, tiers, lints, read-back) | `Solid/MGSolidFacts.swift`, `MGSolidTiers.swift`, `MGSolidFrames.swift` | Foundation only |
 | Snapshot export | `Solid/MGSolidSnapshot.swift`, `MGMaterial.swift` | Foundation only |
+| Check report, render plan, reason catalog | `Solid/MGSolidReport.swift`, `MGSolidRenderPlan.swift`, `MGSolidReasons.swift`, `MGEngine.swift` | Foundation only |
 | Studio renderer | `Solid/MGSolidRenderer.swift` | SceneKit, CoreGraphics, Metal |
 
 Kernel space is millimetres with **+Z up** (gear axes along Z). The render world
@@ -470,7 +471,7 @@ checks frames.
 `expect` mismatches (`expect.axis.<id>`, `expect.up.<id>`) are refusals in every profile.
 
 `marty-solid check [--strict] FILE.json` prints, besides `ok`, `reason`, meshes and gear
-checks: `version`, `warnings`, `facts` (value, unit, text, tier, source), `legend`
+checks, `engine`, `partTiers` and `motionTiers` (below): `version`, `warnings`, `facts` (value, unit, text, tier, source), `legend`
 (counts, text, claims), `stepTiers`, `stepFacts` (for each step, the fact behind each
 placeholder in order, and each check with its `value`, `comparison`, exact `target`,
 `tolerance` and text), `notChecked` per motion source, and a
@@ -487,6 +488,78 @@ blade: world centre (0, 30, 92) mm, size 2 x 60 x 4 mm; fixed to its parent, mov
 
 A model cannot see the render, so this is its repair loop: compare the read-back with the
 intent, fix, check again.
+
+### The report as a library API
+
+The report is built by the library, so `marty-solid` and any host (an MCP server, a data
+pipeline) print the same JSON from one implementation:
+
+* `MGSolidReport.check(data:library:profile:engine:)` parses and checks document bytes,
+  exactly as `marty-solid check` does. Bytes over 64 KiB get the short refusal
+  `{"ok": false, "reason": "assembly.bytes", "part": null}` before they are parsed or hashed;
+  a refused document gets `ok`, `reason`, `part`, `strict` and `file`.
+* `MGSolidReport.make(_:profile:source:engine:)` reports on a compiled document (compile it
+  with the standard profile, so the report can show what `.strict` refuses).
+* `MGSolidReport.refused(_:profile:source:engine:)` gives the refusal shape.
+* The result has `ok`, `reason`, `part`, `exitCode`, the report as `json` (`MGJSON`) and
+  `text`: pretty-printed JSON with sorted keys, byte for byte what the tool prints.
+  `MGSolidReport.Checks(doc)` gives the mesh and gear checks alone; `MGSolidSource(data:)`
+  gives the `file` facts (lines, bytes, SHA-256, computed in Foundation).
+* Refusal order after the document compiles: `check.meshOpen`, then
+  `check.gearsInterpenetrate`, then the profile's refusal. A refused report still holds
+  every field.
+
+The report is built from sections (`MGSolidReport.sections`); a test keeps their keys
+disjoint, so a later feature adds a section and its docs without changing the others.
+For every shipped example and every JSON file under `docs/assets`, with and without
+`--strict`, the tool's output without the fields added in this release is byte-identical to
+the output of the release before (golden files in
+`Examples/Solid3D/Tests/MartySolidCLITests/Golden`).
+
+### Tiers per part and per motion
+
+`partTiers` lists every part in part order: `{"part", "base", "motion", "tier", "source",
+"ridesOn"}`. `motion` is `own` (the part's own joint moves; `tier` is that motion's
+engine tier, `source` what moves it), `idle` (a joint that nothing moves), `rides`
+(static on a moving ancestor, named by `ridesOn`) or `static`. Only `own` has a tier, as in
+the claims: a part that only rides on a moving parent makes no motion claim. `base` is the
+`repeat` base id. `motionTiers` has one entry per motion claim (once per authored part):
+`{"id", "tier", "badge", "source"}`.
+
+### Engine identity
+
+Every `check`, `render` and `component check` output, the render `manifest.json` and
+`marty-solid version` carry `engine`: `{"name": "MartyGraphics", "version",
+"reportFormat", "assemblyVersions", "snapshotFormats", "executableSHA256"}`.
+`version` is a constant in source (`MGEngine.version`): `"unreleased"` until a release
+coordinator assigns a version (a test keeps it equal to the top `CHANGELOG.md` heading).
+`reportFormat` (1) increments when a report field is renamed, removed or retyped, not when
+one is added. `executableSHA256` is the SHA-256 of the running `marty-solid` binary,
+computed at run time without git; it names the exact build. The engine does not know its
+git commit: SwiftPM cannot pass a string into a build. Built from a source tarball, the
+tool reports the version of that source and the hash of the binary you built; record the
+commit next to the hash. A library host gets `MGEngine.identity` (no executable hash) and
+can add its own.
+
+### Checking a patch
+
+`marty-solid check BASE.json --patch PATCH.json [--strict]` applies the patch with
+`MGSolidParser.applying(data:to:)` and prints the report of the result, with `file` naming
+the base, plus `patch`: `{"file", "applied", "fields", "changed", "refusedAt"}`. `fields`
+lists what the patch sets (`title`, `params`, `constraints`, `steps`,
+`parts.<id>.<key>`), sorted; `changed` lists the fields whose value in the document
+source differs after the patch; `refusedAt` is `base` or `patch` when that document was
+refused (then `changed` is absent). A patched document that compiles but fails a report
+check or the strict profile has `applied: true`. The library call is
+`MGSolidReport.check(data:patch:library:profile:engine:)`. Patch text is guarded before the
+system parser runs: over 64 KiB `patch.bytes`, not UTF-8 JSON text or not parsed
+`patch.json`, deeper than 64 levels `patch.depth`.
+
+### Reasons and version
+
+`marty-solid reasons` prints the catalog of every stable reason (pattern, meaning,
+formats, warning or refusal) as JSON; see [REASONS.md](REASONS.md).
+`marty-solid version` prints the `engine` object.
 
 ## Worked examples
 
@@ -712,6 +785,15 @@ Decoding checks every fixed-size slot (three numbers for colours, directions,
 targets and bounds, eight per soft box, three floats per vertex, one normal per
 vertex, indices inside the vertex list, one material per triangle, part ranges
 inside the triangles) and fails instead of trapping later.
+
+Decode snapshot text with `MGSolidSnapshot.decode(data:)` (it throws `MGSolidIssue`). Its
+guards run before the system decoder, so hostile text cannot exhaust a small thread stack:
+`solidSnapshot.bytes` (over `MGSolidSnapshot.maxBytes`, 256 MiB), `solidSnapshot.json` (not
+valid UTF-8, or a raw NUL byte), `solidSnapshot.depth` (nesting deeper than 64 levels),
+`solidSnapshot.number` (a number literal longer than 64 characters, or one that does not
+read as a finite number, such as `1e999`); then anything the decoder or the checks above
+refuse is `solidSnapshot.invalid`. A host that calls `JSONDecoder` on `MGSolidSnapshot`
+directly skips these guards.
 
 `Examples/Turbofan/Sources/MartySolidRT` maps a snapshot to an `MGRTScene` for
 `MartyGraphicsPathTracer`: one mesh and instance per part, sRGB colours to linear,

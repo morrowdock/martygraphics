@@ -289,7 +289,7 @@ final class SolidSectionTests: XCTestCase {
         XCTAssertEqual(view.part("a").emission?.intensity, 4)
         let snap = MGSolidSnapshot.build(a, view: view, params: MGPoseParameters(), camera: nil, aspect: 1.6, lighting: .studio,
                                          stage: MGSolidStage.zUpToYUp)
-        XCTAssertEqual(try JSONDecoder().decode(MGSolidSnapshot.self, from: snap.jsonData()), snap)
+        XCTAssertEqual(try MGSolidSnapshot.decode(data: snap.jsonData()), snap)
     }
 
     // MARK: X3, X4: step section and ghost
@@ -321,7 +321,7 @@ final class SolidSectionTests: XCTestCase {
             for q in [a, b, cc] { XCTAssertEqual(n.dot(q), s.offset, accuracy: 1e-3) }
             XCTAssertGreaterThan((b - a).cross(cc - a).dot(n), 0)
         }
-        XCTAssertEqual(try JSONDecoder().decode(MGSolidSnapshot.self, from: snap.jsonData()), snap)        // V4
+        XCTAssertEqual(try MGSolidSnapshot.decode(data: snap.jsonData()), snap)        // V4
     }
 
     func testGhostAndPartAppearance() throws {
@@ -480,7 +480,7 @@ final class SolidSectionTests: XCTestCase {
             let data = try snap.jsonData()
             XCTAssertEqual(SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined(), hash, name)
             XCTAssertEqual(snap.format, "martygraphics.solid.snapshot/1")
-            XCTAssertEqual(try JSONDecoder().decode(MGSolidSnapshot.self, from: data), snap)
+            XCTAssertEqual(try MGSolidSnapshot.decode(data: data), snap)
         }
     }
 
@@ -488,11 +488,11 @@ final class SolidSectionTests: XCTestCase {
         let d = try doc(casing(#"{"say": "Cut.", \#(cut), "ghost": ["gear"]}"#, casingExtra: #", "emissive": {"role": "teal"}"#))
         let v2 = MGSolidSnapshot.make(d, step: 0, params: MGPoseParameters())
         let data = try v2.jsonData()
-        XCTAssertEqual(try JSONDecoder().decode(MGSolidSnapshot.self, from: data), v2)
+        XCTAssertEqual(try MGSolidSnapshot.decode(data: data), v2)
         func mutated(_ edit: (inout [String: Any]) -> Void) throws -> Bool {
             var o = try JSONSerialization.jsonObject(with: data) as! [String: Any]
             edit(&o)
-            return (try? JSONDecoder().decode(MGSolidSnapshot.self, from: JSONSerialization.data(withJSONObject: o))) != nil
+            return (try? MGSolidSnapshot.decode(data: JSONSerialization.data(withJSONObject: o))) != nil
         }
         // v2 fields in a v1 file fail instead of being ignored.
         XCTAssertFalse(try mutated { $0["format"] = "martygraphics.solid.snapshot/1" })

@@ -1,0 +1,67 @@
+{
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+
+  },
+  "file" : {
+    "lines" : 1,
+    "sha256" : "bc0a912b5b93a18502476e0b7dc97bbb7be7243c06ecbcd9a4914f3d72f5b8dd"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 0,
+    "text" : "No engine-checked claims"
+  },
+  "notChecked" : {
+
+  },
+  "ok" : false,
+  "part" : "disc",
+  "parts" : 1,
+  "ratios" : {
+
+  },
+  "readBack" : [
+    "disc: world centre (0, 0, 2.5) mm, size 40 x 40 x 5 mm; joint about a vertical axis (+Z) with no drive: never moves (joint.idle); root (at [0, 0, 0] in the world frame); local +Z points +Z"
+  ],
+  "reason" : "joint.idle.disc",
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "A disc on a joint."
+  ],
+  "stepTiers" : [
+    null
+  ],
+  "strict" : true,
+  "title" : "Assembly",
+  "triangles" : 320,
+  "version" : 2,
+  "warnings" : [
+    {
+      "part" : "disc",
+      "reason" : "joint.idle.disc"
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+// SPDX-License-Identifier: Apache-2.0
+import Foundation
+import XCTest
+@testable import MartyGraphics
+
+/// The reason catalog (`MGSolidReasons`) against the sources: every reason-shaped string literal in the Solid sources and
+/// the `marty-solid` tool, every single-word reason passed to a reason constructor, and every reason a key or frame
+/// helper composes (`closed` gives `<object>.missing.<keys>` and `<object>.unknown.<keys>`, `transform` gives `.at` and
+/// `.rot`) must match a catalog pattern; and every catalog pattern must match something in the sources.
+final class SolidReasonCatalogTests: XCTestCase {
+    static let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+
+    /// Dotted literals that are not reasons, with why.
+    static let notReasons: Set<String> = [
+        "anodized.", "plastic.",                      // material name prefixes
+        "count.",                                      // fact name prefix (`count.<id>`)
+        "hero.png", "exploded.png", "loop.gif", "manifest.json", "snapshot.json",   // render output files
+        "constraint.gearMesh.a", "constraint.gearMesh.b",                           // unused `what` of `expand` (it throws `ref.unknown.<id>`)
+    ]
+    /// Literals that are reason prefixes: the code appends `.<id>` (`MGSolidFrames.lints`).
+    static let prefixes = ["frame.axis.off", "frame.child.absolute", "frame.child.far", "joint.idle"]
+
+    static func sources() throws -> [(name: String, text: String)] {
+        let dir = root.appendingPathComponent("Sources/MartyGraphics/Solid")
+        var urls = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
+            .filter { $0.pathExtension == "swift" && $0.lastPathComponent != "MGSolidReasons.swift" }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        urls.append(root.appendingPathComponent("Examples/Solid3D/Sources/MartySolidCLI/main.swift"))
+        return try urls.map { ($0.lastPathComponent, try String(contentsOf: $0, encoding: .utf8)) }
+    }
+
+    /// String literals outside comments, with each `\(…)` interpolation replaced by `*`. Raw (`#"…"#`) and multi-line
+    /// literals are skipped (the sources build no reason with them).
+    static func literals(_ src: String) -> [String] {
+        let s = Array(src.unicodeScalars)
+        var out: [String] = []
+        var i = 0
+        func starts(_ t: String, _ k: Int) -> Bool { let u = Array(t.unicodeScalars); return k + u.count <= s.count && Array(s[k..<k + u.count]) == u }
+        while i < s.count {
+            if starts("//", i) { while i < s.count, s[i] != "\n" { i += 1 }; continue }
+            if starts("/*", i) { while i < s.count, !starts("*/", i) { i += 1 }; i += 2; continue }
+            guard s[i] == "\"" else { i += 1; continue }
+            if starts("\"\"\"", i) { i += 3; while i < s.count, !starts("\"\"\"", i) { i += 1 }; i += 3; continue }
+            if i > 0, s[i - 1] == "#" { i += 1; while i < s.count, !starts("\"#", i) { i += 1 }; i += 2; continue }
+            var j = i + 1, buf = ""
+            while j < s.count, s[j] != "\"" {
+                if s[j] == "\\", j + 1 < s.count, s[j + 1] == "(" {
+                    var depth = 1, k = j + 2
+                    while k < s.count, depth > 0 {
+                        if s[k] == "(" { depth += 1 } else if s[k] == ")" { depth -= 1 }
+                        else if s[k] == "\"" { k += 1; while k < s.count, s[k] != "\"" { k += 1 } }
+                        k += 1
+                    }
+                    buf += "*"; j = k; continue
+                }
+                if s[j] == "\\" { buf.unicodeScalars.append(s[j]); j += 1 }
+                if j < s.count { buf.unicodeScalars.append(s[j]) }
+                j += 1
+            }
+            out.append(buf)
+            i = j + 1
+        }
+        return out
+    }
+
+    static func matches(_ pattern: String, _ text: String) -> [[String]] {
+        let re = try! NSRegularExpression(pattern: pattern)
+        return re.matches(in: text, range: NSRange(text.startIndex..., in: text)).map { m in
+            (1..<m.numberOfRanges).map { Range(m.range(at: $0), in: text).map { String(text[$0]) } ?? "" }
+        }
+    }
+
+    /// True when some string fits both: `*` in `literal` and `<…>` in `pattern` each match any run of characters.
+    static func intersects(_ literal: String, _ pattern: String) -> Bool {
+        enum T: Equatable { case c(Character), star }
+        let a: [T] = literal.map { $0 == "*" ? .star : .c($0) }
+        var b: [T] = []
+        var inside = false
+        for ch in pattern {
+            if inside { if ch == ">" { inside = false }; continue }
+            if ch == "<" { inside = true; b.append(.star) } else { b.append(.c(ch)) }
+        }
+        var memo: [Int: Bool] = [:]
+        func f(_ i: Int, _ j: Int) -> Bool {
+            let key = i * 1000 + j
+            if let v = memo[key] { return v }
+            var r = false
+            if i == a.count && j == b.count { r = true }
+            if !r, i < a.count, a[i] == .star { r = f(i + 1, j) || (j < b.count && f(i, j + 1)) }
+            if !r, j < b.count, b[j] == .star { r = f(i, j + 1) || (i < a.count && f(i + 1, j)) }
+            if !r, i < a.count, j < b.count, case .c(let x) = a[i], case .c(let y) = b[j], x == y { r = f(i + 1, j + 1) }
+            memo[key] = r
+            return r
+        }
+        return f(0, 0)
+    }
+
+    /// Every reason the sources can name: (literal with `*` for interpolations, where it came from).
+    static func sourceReasons() throws -> [(String, String)] {
+        var found: [(String, String)] = []
+        let dotted = try NSRegularExpression(pattern: #"^(\*|[a-z][A-Za-z0-9_]*)(\.(\*|[A-Za-z0-9_*]+)?)+$"#)
+        for (name, text) in try sources() {
+            for lit in literals(text) where lit.contains(".") && !notReasons.contains(lit) && !prefixes.contains(lit) {
+                if dotted.firstMatch(in: lit, range: NSRange(lit.startIndex..., in: lit)) != nil { found.append((lit, name)) }
+            }
+            for m in matches(#"(?:MGSolidIssue|\.init|MGError)\("([a-z][A-Za-z]*)""#, text) { found.append((m[0], name)) }
+            for m in matches(#"closed\([^\n]*?, "([^"]+)"\)"#, text) {
+                let what = m[0].replacingOccurrences(of: #"\\\([^)]*\)"#, with: "*", options: .regularExpression)
+                found.append((what + ".missing.*", "\(name) closed")); found.append((what + ".unknown.*", "\(name) closed"))
+            }
+            for m in matches(#"transform\([^\n]*?, "([^"]+)"\)"#, text) {
+                found.append((m[0] + ".at", "\(name) transform")); found.append((m[0] + ".rot", "\(name) transform"))
+            }
+        }
+        for p in prefixes { found.append((p + ".*", "MGSolidFrames.swift lints")) }
+        return found
+    }
+
+    func testEveryReasonInTheSourcesIsInTheCatalog() throws {
+        let found = try Self.sourceReasons()
+        XCTAssertGreaterThan(found.count, 200)
+        let patterns = MGSolidReasons.catalog.map(\.pattern)
+        for (lit, from) in found {
+            XCTAssertTrue(patterns.contains { Self.intersects(lit, $0) }, "\(lit) (\(from)) is not in MGSolidReasons.catalog")
+        }
+        for p in patterns {
+            XCTAssertTrue(found.contains { Self.intersects($0.0, p) }, "catalog entry \(p) matches nothing in the sources")
+        }
+    }
+
+    func testTheDocsPageListsEveryPattern() throws {
+        let page = try String(contentsOf: Self.root.appendingPathComponent("docs/REASONS.md"), encoding: .utf8)
+        let rows = page.split(separator: "\n").filter { $0.hasPrefix("| `") }
+        for e in MGSolidReasons.catalog {
+            XCTAssertTrue(page.contains("| `\(e.pattern)` | \(e.formats.map(\.rawValue).joined(separator: ", ")) |"), "docs/REASONS.md: \(e.pattern)")
+        }
+        XCTAssertEqual(rows.count, MGSolidReasons.catalog.count + 5, "one row per pattern, plus the five placeholder rows")
+    }
+
+    func testClosedObjectsAreTheClosedCallSites() throws {
+        var sites = Set<String>()
+        for (_, text) in try Self.sources() {
+            for m in Self.matches(#"closed\([^\n]*?, "([^"]+)"\)"#, text) {
+                sites.insert(m[0].replacingOccurrences(of: #"\\\([^)]*\)"#, with: "*", options: .regularExpression))
+            }
+        }
+        let listed = Set(MGSolidReasons.closedObjects.map { $0.replacingOccurrences(of: #"<[^>]*>"#, with: "*", options: .regularExpression) })
+        XCTAssertEqual(sites, listed)
+    }
+
+    func testCatalogShape() {
+        let patterns = MGSolidReasons.catalog.map(\.pattern)
+        XCTAssertEqual(Set(patterns).count, patterns.count, "patterns are unique")
+        let token = try! NSRegularExpression(pattern: #"^([A-Za-z0-9_.]|<[a-z]+>)+$"#)
+        for e in MGSolidReasons.catalog {
+            XCTAssertNotNil(token.firstMatch(in: e.pattern, range: NSRange(e.pattern.startIndex..., in: e.pattern)), e.pattern)
+            XCTAssertFalse(e.meaning.isEmpty, e.pattern)
+            XCTAssertTrue(e.meaning.hasSuffix("."), e.pattern)
+            XCTAssertFalse(e.formats.isEmpty, e.pattern)
+            XCTAssertEqual(e.strict, e.kind == .warning && MGSolidProfile.strictPrefixes.contains { e.pattern.hasPrefix($0) }, e.pattern)
+        }
+        // The JSON form is deterministic and encodable.
+        XCTAssertEqual(MGSolidReasons.json.canonicalString, MGSolidReasons.json.canonicalString)
+        XCTAssertTrue(MGSolidReasons.json.isEncodable)
+    }
+
+    /// Reasons the engine gives at run time resolve to their own entry.
+    func testLookupOfReasonsTheEngineGives() throws {
+        let box = #"{"box":{"size":[4,4,4]}}"#
+        func reason(_ json: String) -> String? {
+            guard case .failure(let e) = MGSolidParser.document(data: Data(json.utf8)) else { return nil }
+            return e.reason
+        }
+        let cases: [(String, String)] = [
+            (#"{"v":1,"kind":"assembly"}"#, "<object>.missing.<keys>"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box)}],"extra":1}"#, "<object>.unknown.<keys>"),
+            (#"{"v":3,"kind":"assembly","parts":[{"id":"a","shape":\#(box)}]}"#, "assembly.version"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":{"gear":{"teeth":12,"module":2,"width":5,"bore":30}}}]}"#, "part.gear.bore"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":{"box":{"size":[4,4,4],"chamfer":3}}}]}"#, "part.<kind>.chamfer"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":{"shaft":{"radius":-1,"length":5}}}]}"#, "part.<kind>.<field>"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box),"parent":"zz"}]}"#, "ref.unknown.<id>"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box)},{"id":"a","shape":\#(box)}]}"#, "id.duplicate.<id>"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"a","shape":\#(box),"at":[1,2]}]}"#, "<object>.at"),
+            (#"{"v":2,"kind":"assembly","parts":[{"id":"a","shape":\#(box),"tier":"solved"}]}"#, "tier.key"),
+            (#"{"v":2,"kind":"assembly","parts":[{"id":"a","shape":\#(box)}],"steps":[{"say":"Two 2 parts."}]}"#, "text.number.step.<n>"),
+            (#"{"v":2,"kind":"assembly","parts":[{"id":"a","shape":\#(box)}],"steps":[{"say":"{nope.speed}"}]}"#, "text.placeholder.<name>"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"s","use":"spurPair","with":{"module":50}}]}"#, "component.param.range.<name>"),
+            (#"{"v":1,"kind":"assembly","parts":[{"id":"s","use":"nothing"}]}"#, "component.unknown.<id>"),
+            ("not json", "json"),
+        ]
+        for (json, pattern) in cases {
+            let r = reason(json)
+            XCTAssertNotNil(r, json)
+            XCTAssertEqual(r.flatMap { MGSolidReasons.lookup($0)?.pattern }, pattern, "\(json) -> \(r ?? "accepted")")
+        }
+        XCTAssertEqual(MGSolidReasons.lookup("joint.idle.disc")?.kind, .warning)
+        XCTAssertEqual(MGSolidReasons.lookup("joint.idle.disc")?.strict, true)
+        XCTAssertEqual(MGSolidReasons.lookup("frame.child.far.x")?.strict, false)
+        XCTAssertEqual(MGSolidReasons.lookup("check.meshOpen")?.formats, [.check])
+        XCTAssertEqual(MGSolidReasons.lookup("patch.unknown.")?.pattern, "patch.unknown.")
+        XCTAssertEqual(MGSolidReasons.lookup("patch.unknown.a,b")?.pattern, "patch.unknown.<keys>")
+        XCTAssertNil(MGSolidReasons.lookup("no.such.reason here"))
+        XCTAssertNil(MGSolidReasons.lookup(""))
+    }
+}

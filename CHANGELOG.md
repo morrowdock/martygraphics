@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+- Add the solid check report as a library API, an engine identity, patch checks, a reason catalog, per-part tiers
+  and a guarded snapshot decoder (Foundation only).
+  - `MGSolidReport` builds the `marty-solid check` report in the library: `check(data:library:profile:engine:)`,
+    `check(data:patch:…)`, `make(_:profile:source:engine:)`, `refused(…)`, `Checks` (closed meshes, step cuts, the
+    gear tooth sweep) and `text` (the exact bytes the tool prints). `MGSolidSource` gives the `file` facts with a
+    Foundation SHA-256. The tool now calls the library. A golden test pins the output: for every shipped example
+    and every JSON file under `docs/assets`, with and without `--strict`, the output without the added fields is
+    byte-identical to the previous release.
+  - New report fields: `engine`; `partTiers` (each part's motion: `own` with its tier and source, `idle`, `rides`
+    with the moving ancestor, or `static`); `motionTiers` (one entry per motion claim).
+  - `MGEngine` (`name`, `version` = `"unreleased"`, `reportFormat` = 1, `identity`). `marty-solid version` prints
+    it with `executableSHA256`, the SHA-256 of the running binary; `check`, `render`, `component check` and the
+    render manifest carry the same `engine` object. The engine does not report a git commit.
+  - `marty-solid check BASE.json --patch PATCH.json` and `MGSolidParser.applying(data:to:profile:)`: patch text is
+    refused over 64 KiB (`patch.bytes`, new), when it is not UTF-8 JSON text (`patch.json`, new for solid
+    patches) or deeper than 64 levels (`patch.depth`); the report adds `patch` (`fields`, `changed`, `applied`,
+    `refusedAt`).
+  - `MGSolidReasons` and `marty-solid reasons`: one table of every stable Solid 3D reason (pattern, meaning,
+    formats, warning or refusal), `lookup(_:)`, and `docs/REASONS.md`. A test scans the Solid sources and the
+    tool and fails when a reason-shaped string is not in the catalog.
+  - `MGSolidRenderPlan`: the render sequence as data (hero, exploded, one still per step, the 120 loop frames,
+    captions, footer, snapshot choice and manifest). `marty-solid render` draws it; its output is unchanged apart
+    from `engine` in the printed JSON and the manifest.
+  - `MGSolidSnapshot.decode(data:)` runs the #28 guards before `JSONDecoder` (new reasons `solidSnapshot.bytes`
+    over 256 MiB, `solidSnapshot.json`, `solidSnapshot.depth`, `solidSnapshot.number` for a literal over 64
+    characters or one that is not finite, `solidSnapshot.invalid`); the tests decode through it, also on a 512 KiB
+    thread. `JSONDecoder` on `MGSolidSnapshot` still works and skips the guards.
 - Docs: a showcase section, "Cutaways and honest numbers", for the hand-built `idler-gearbox.json` example (capped section cut, ghost step, engine-filled caption with its truth tier), with three stills and a capture receipt in `docs/assets/cutaway/`. No code change.
 - Compatibility change: JSON nests at most 64 levels (arrays and objects on one path) at every public entry point
   (`MGLimits.depth`). Before, nested input could overflow the stack and crash the process: about 100,000 levels on a
