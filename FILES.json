@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f98c6cf726d5299d052c5fc4a352452736ede4ca7506c45cd50567d5441b647d"
+      "sha256": "3ca82537d0f88532ccb8cc34531b8e4233fafe0eb3aa8a427352246d79b8708f"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -527,7 +527,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerReport.swift",
-      "sha256": "8f9e92c717dd62e2f3d577c571daceb58f39ec6bc843e59e88a2a2e2a0eb76c3"
+      "sha256": "1287fd27a39518b9f690c7dae0b99ddffec33092c68d90a9cc6bf4e26cf15c11"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
@@ -671,7 +671,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnchorCheck.swift",
-      "sha256": "6db552d060ae7e42260a83ecdc0bf9e30b700958985032753854c6b66c63428b"
+      "sha256": "efb29556ad685bd3048e00fe894c1ce97367115838c3acffee51a1bb709b6f89"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
@@ -679,7 +679,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift",
-      "sha256": "df4c3e76bc29cbd241efc911cfc08e0b2fc874256dc8eb984e48e26512a26617"
+      "sha256": "182a8533331336f0aa592003e9a8b872a3248dc539e806d7b89c26503d77e7bf"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidBuilders.swift",
@@ -739,7 +739,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "ceb6930121ea06f7fb9684e22b80e00cebb98c19b234f6b5b709144cc5b4521f"
+      "sha256": "9df784bcd30e86336fac90709bc02c19717ff5f55e15cf07bbbe36cca5b3ce2e"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
@@ -971,7 +971,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidAnchorCheckTests.swift",
-      "sha256": "eb433b5fd3fed335c67b9bb87cee1bc6d4dac3c3d70122f993accf4a84b73d23"
+      "sha256": "b1bf23799c0de7b08cfeade50d669200390855b6ceb876f51cd37ec9d7b3c5a6"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidAnnotationTests.swift",
@@ -1107,7 +1107,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "134240ad6e9e054fc30ecb244eed4845bc7698677929c1f68273bbd05b52aecc"
+      "sha256": "e1872a9d88d55eb5cfdb481da89040369af6fb17bece5feb5f9b4f9c11da2bed"
     },
     {
       "path": "docs/SHOWCASE.md",
@@ -1115,7 +1115,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "3a210a8cf6f461e3a476bab5ce65b64ee5c5409b414b28bebc437ca03b6b8825"
+      "sha256": "e4bbf18566cf24b709eeea94215a0b1807c76b4a40512942890b7bc8c0f90573"
     },
     {
       "path": "docs/THIRD-PARTY.md",

@@ -7,15 +7,18 @@
   (the watertight line-of-sight rays of the unblocked-focus rule, 3,000,000 triangle tests per view), on a hidden or
   ghosted part (automatic ghosts included), or off screen. A part blocks only when it is drawn with a coverage of 0.5 or
   more: view opacity times the material's own coverage (`MGMaterialPreset.coverage`; glass 0.22), as the renderer
-  draws it. An anchor on a part that the view's section cuts is not hidden by the parts inside that cut part (tested in
+  draws it. A blocker hit that also lies on the anchor's own part (a shared face of touching parts) is a tie, not an
+  occlusion. An anchor on a part that the view's section cuts is not hidden by the parts inside that cut part (tested in
   the cut part's own frame) when it lies on the cut face or inside the cut. An anchor that a view's triangle budget
   leaves untested is `annotation.anchor.untested.<id>`: strict refuses it, standard warns. An anchor farther than
-  max(5 % of its part's box diagonal, 0.5 % of the model's diagonal) from its part's oriented box, or nearer to another
-  part's solid than to its own part's box, is `annotation.anchor.off.<id>` (a document warning, so the compile's strict
-  profile also refuses it; the detail names the nearer part). The standard profile warns and keeps the hollow dot and
+  max(5 % of its part's box diagonal, 0.5 % of the model's diagonal) from its part's oriented box, or, at the pose of a
+  view that shows it, nearer to another part's solid than to its own part's box, is `annotation.anchor.off.<id>` (a
+  document warning, so the compile's strict profile also refuses it; the detail names the view and the nearer part).
+  The nearer-part search is exact, stops early and counts every test against 3,000,000 per document; out of budget
+  the anchor is `annotation.anchor.untested.<id>` (`"budget": "nearerPart"`), never off. The standard profile warns and keeps the hollow dot and
   dashed leader. Each step is framed as its 1280 × 800 still; each explainer beat as its still's solid pane (a
   speech-paced replay gives each beat's board pane). The check report gains `anchorIssues` (`id`, `kind`, `reason`,
-  `cause`, `part`, `by`, `closer`, `closerDistance`, `step`, `beat`, `point`, `distance`, `tolerance`, `fix`),
+  `cause`, `part`, `by`, `closer`, `closerDistance`, `budget`, `step`, `beat`, `point`, `distance`, `tolerance`, `fix`),
   `anchorUntested` and, for an anchor refusal, `anchor`; an explainer refusal's `location` names the beat and the cause.
   New API: `MGAnnotationAnchorIssue`, `MGAnnotationAnchorReport`, `MGAnnotationAnchorRules`, `MGMaterialPreset.coverage`,
   `MGSolidDocument.offPartAnchors`, `anchorIssues(view:params:camera:width:height:step:beat:stage:)`,

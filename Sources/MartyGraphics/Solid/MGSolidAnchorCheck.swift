@@ -75,6 +75,17 @@ public struct MGAnnotationAnchorIssue: Equatable, Sendable {
     /// `offPart`: the nearest other part when it is nearer to the anchor than `part`, and its distance (mm).
     public var closer: String? = nil
     public var closerDistance: Double? = nil
+    /// `untested`: the budget that ran out, `lineOfSight` (the view's, `MGAnnotationAnchorRules.tests`) or `nearerPart`
+    /// (the document's, `MGAnnotationAnchorRules.surfaceTests`).
+    public var budget: String? = nil
+
+    /// The same issue for explainer beat `beat` (0-based).
+    func at(beat: Int?) -> MGAnnotationAnchorIssue {
+        var i = MGAnnotationAnchorIssue(id: id, kind: kind, cause: cause, part: part, by: by, step: step, beat: beat, point: point,
+                                        distance: distance, tolerance: tolerance)
+        i.closer = closer; i.closerDistance = closerDistance; i.budget = budget
+        return i
+    }
 
     /// `annotation.anchor.off.<id>`, `annotation.anchor.untested.<id>` or `annotation.anchor.hidden.<id>`.
     public var reason: String {
@@ -104,6 +115,9 @@ public struct MGAnnotationAnchorIssue: Equatable, Sendable {
                 + "a solid part, or leave \(id) out of this view's annotate list."
         case .offScreen:
             return "The anchor is outside the view: change the camera (camera, orbit, focus) or move \(what) onto a framed part."
+        case .untested where budget == "nearerPart":
+            return "The nearer-part test ran over its budget (\(MGAnnotationAnchorRules.surfaceTests) tests per document) before this "
+                + "anchor: use simpler parts near the anchors, or fewer labels and pointers."
         case .untested:
             return "This view's line-of-sight test ran over its budget (\(MGAnnotationAnchorRules.tests) triangle tests) before this "
                 + "anchor: hide or ghost parts that are not needed in this view, use simpler parts, or show fewer labels in it."
@@ -114,8 +128,8 @@ public struct MGAnnotationAnchorIssue: Equatable, Sendable {
         }
     }
 
-    /// `{"id", "kind", "reason", "cause", "part", "by", "closer", "closerDistance", "step", "beat", "point", "distance",
-    /// "tolerance", "fix"}`; `step` and `beat` are 1-based, absent values are null.
+    /// `{"id", "kind", "reason", "cause", "part", "by", "closer", "closerDistance", "budget", "step", "beat", "point",
+    /// "distance", "tolerance", "fix"}`; `step` and `beat` are 1-based, absent values are null.
     public var json: MGJSON {
         func n(_ i: Int?) -> MGJSON { i.map { .number(Double($0 + 1)) } ?? .null }
         func d(_ x: Double?) -> MGJSON { x.flatMap { $0.isFinite ? .number(($0 * 1000).rounded() / 1000) : nil } ?? .null }
@@ -123,7 +137,8 @@ public struct MGAnnotationAnchorIssue: Equatable, Sendable {
             ? .array([point.x, point.y, point.z].map { .number(($0 * 1000).rounded() / 1000) }) : .null
         return .object(["id": .string(id), "kind": .string(kind), "reason": .string(reason), "cause": .string(cause.rawValue),
                         "part": part.map(MGJSON.string) ?? .null, "by": by.map(MGJSON.string) ?? .null,
-                        "closer": closer.map(MGJSON.string) ?? .null, "closerDistance": d(closerDistance), "step": n(step), "beat": n(beat),
+                        "closer": closer.map(MGJSON.string) ?? .null, "closerDistance": d(closerDistance), "budget": budget.map(MGJSON.string) ?? .null,
+                        "step": n(step), "beat": n(beat),
                         "point": pt, "distance": d(distance), "tolerance": d(tolerance), "fix": .string(fix)])
     }
 }
@@ -187,72 +202,162 @@ func mgClosestOnTriangle(_ p: MGVec3, _ a: MGVec3, _ b: MGVec3, _ c: MGVec3) -> 
     return a + ab * v + ac * w
 }
 
-/// The distance (mm) from `q` (in the mesh's frame) to the solid of a closed mesh: 0 when `q` lies inside it (an odd
-/// number of watertight crossings on a segment from `q` past the mesh box along +X), else the distance to its nearest
-/// triangle. Reads every triangle once, plus one segment test.
-func mgSolidDistance(_ q: MGVec3, _ mesh: MGMesh) -> Double {
-    let b = mesh.bounds
-    guard !b.isEmpty else { return .infinity }
-    if q.x <= b.max.x {
+/// A mesh split into runs of `size` consecutive triangles, each with its bounds, for exact searches that skip far runs.
+/// Building it reads every triangle once.
+struct MGMeshChunks {
+    static let size = 64
+    let mesh: MGMesh
+    let bounds: [MGBounds]
+
+    init(_ mesh: MGMesh) {
+        self.mesh = mesh
+        var out: [MGBounds] = []
+        out.reserveCapacity(mesh.triangleCount / MGMeshChunks.size + 1)
+        var start = 0
+        while start < mesh.triangleCount {
+            var b = MGBounds.empty
+            for i in start..<min(start + MGMeshChunks.size, mesh.triangleCount) {
+                let (i0, i1, i2) = mesh.triangle(i)
+                for k in [i0, i1, i2] where k < mesh.positions.count { b.include(mesh.positions[k]) }
+            }
+            out.append(b)
+            start += MGMeshChunks.size
+        }
+        bounds = out
+    }
+
+    /// The result of `nearer`.
+    enum Near: Equatable { case nearer(Double), notNearer, unknown }
+
+    /// Exact and budgeted: does the solid of this closed mesh come nearer than `r` to `q` (in the mesh's frame)?
+    /// 1. Every run whose box is nearer than `r` is searched triangle by triangle; the first triangle nearer than `r`
+    ///    answers `.nearer(its distance)`.
+    /// 2. Else `q` is inside the solid when a segment from `q` along +X past the mesh box crosses its surface an odd
+    ///    number of times (watertight crossings; only runs whose box the segment meets are read): `.nearer(0)`.
+    /// 3. Else `.notNearer`.
+    /// Every run-box test and every triangle test costs 1 from `budget`; when it would go below 0 the answer is
+    /// `.unknown`, never a distance.
+    func nearer(_ q: MGVec3, than r: Double, budget: inout Int) -> Near {
+        guard r > 0, r.isFinite, q.x.isFinite, q.y.isFinite, q.z.isFinite, !mesh.bounds.isEmpty else { return .notNearer }
+        func spend() -> Bool { budget -= 1; return budget >= 0 }
+        let n = mesh.triangleCount, pos = mesh.positions
+        for (c, box) in bounds.enumerated() {
+            guard spend() else { return .unknown }
+            guard mgBoxDistance(q, box) < r else { continue }
+            for i in (c * MGMeshChunks.size)..<min((c + 1) * MGMeshChunks.size, n) {
+                guard spend() else { return .unknown }
+                let (i0, i1, i2) = mesh.triangle(i)
+                guard i0 < pos.count, i1 < pos.count, i2 < pos.count else { continue }
+                let d = (mgClosestOnTriangle(q, pos[i0], pos[i1], pos[i2]) - q).length
+                if d < r { return .nearer(d) }
+            }
+        }
+        let b = mesh.bounds
+        guard q.x <= b.max.x, q.y >= b.min.y, q.y <= b.max.y, q.z >= b.min.z, q.z <= b.max.z else { return .notNearer }
         let far = MGVec3(b.max.x + 1 + (b.max.x - q.x), q.y, q.z)
-        if MGSolidFraming.OcclusionProbe.crossings(q, far, mesh, after: 0, before: 1).count % 2 == 1 { return 0 }
+        guard let ray = WatertightRay(q, far - q) else { return .notNearer }
+        var crossings = 0
+        for (c, box) in bounds.enumerated() {
+            guard spend() else { return .unknown }
+            guard MGAnnotationOcclusion.segmentHits(q, far, box) else { continue }
+            for i in (c * MGMeshChunks.size)..<min((c + 1) * MGMeshChunks.size, n) {
+                guard spend() else { return .unknown }
+                let (i0, i1, i2) = mesh.triangle(i)
+                guard i0 < pos.count, i1 < pos.count, i2 < pos.count else { continue }
+                if let t = ray.hit(pos[i0], pos[i1], pos[i2]), t > 0, t < 1 { crossings += 1 }
+            }
+        }
+        return crossings % 2 == 1 ? .nearer(0) : .notNearer
     }
-    var best = Double.infinity
-    for i in 0..<mesh.triangleCount {
-        let (i0, i1, i2) = mesh.triangle(i)
-        guard i0 < mesh.positions.count, i1 < mesh.positions.count, i2 < mesh.positions.count else { continue }
-        let d = (mgClosestOnTriangle(q, mesh.positions[i0], mesh.positions[i1], mesh.positions[i2]) - q).length
-        if d < best { best = d }
-    }
-    return best
 }
 
 extension MGSolidDocument {
-    /// Labels and pointers whose anchor lies off the part it names (`annotation.anchor.off.<id>`), in authored order, at
-    /// the default input with explode 0. Two tests, each on oriented boxes (a part's mesh box in its own frame):
+    /// The views that show an annotation and their poses: the plain view (`nil`, at `defaults`) when it shows it, then
+    /// every step that shows it (0-based, at the step still's pose, `MGSolidStep.poseParameters`). An explainer beat's
+    /// view is its solid step.
+    func shownPoses(_ id: String) -> [(step: Int?, params: MGPoseParameters)] {
+        var out: [(step: Int?, params: MGPoseParameters)] = []
+        if visibleAnnotations(step: nil).contains(id) { out.append((nil, defaults)) }
+        for i in steps.indices where visibleAnnotations(step: i).contains(id) { out.append((i, steps[i].poseParameters(defaults: defaults))) }
+        return out
+    }
+
+    /// Labels and pointers whose anchor lies off the part it names (`annotation.anchor.off.<id>`), or whose nearer-part
+    /// test ran out of budget (`annotation.anchor.untested.<id>`), in authored order. Two tests:
     ///
-    /// 1. The distance from the anchor to its part's box is at most `max(partShare × that box's diagonal, modelShare ×
-    ///    the model's diagonal)` (in the part's frame, so it holds in every pose).
-    /// 2. No other part is nearer to the anchor than its own part's box by more than the annotation tolerance (0.1 % of
-    ///    the model's diagonal); the nearest such part is `closer`. Another part's distance is to its solid (0 inside
-    ///    it, else to its nearest triangle, `mgSolidDistance`), so an L-shaped part whose box holds empty space does not
-    ///    claim an anchor in that space. A part whose oriented box is not nearer is skipped. The exact tests of one
-    ///    document read at most `MGAnnotationAnchorRules.surfaceTests` triangles; after that, other parts are measured
-    ///    by their oriented box (stricter: an anchor may be refused, never passed, for lack of budget).
+    /// 1. The distance `d` from the anchor to its part's oriented box (the part's mesh box in its own frame) is at most
+    ///    `max(partShare × that box's diagonal, modelShare × the model's diagonal)`. It holds in every pose; the issue
+    ///    has no step unless test 2 also found a nearer part (then its view and part are given too).
+    /// 2. No other part's solid comes nearer to the anchor than `d` less the annotation tolerance (0.1 % of the model's
+    ///    diagonal), at the pose of each view that shows the annotation (`shownPoses`: the plain view at the default
+    ///    pose when it shows it, and each step or beat still). The first such view and part are the issue's `step` and
+    ///    `closer`; `closerDistance` is the distance to the first nearer triangle found (0 when the anchor is inside
+    ///    that part). The search is exact (`MGMeshChunks.nearer`): a part whose oriented box is not nearer is skipped
+    ///    with one box test, far runs of 64 triangles are skipped, and it stops at the first nearer triangle. Every
+    ///    triangle read (building a part's runs once), every run-box test and every triangle test of one document costs
+    ///    1 from `MGAnnotationAnchorRules.surfaceTests`. When the budget runs out, the anchor is `untested` (with the
+    ///    view), never off.
     ///
     /// A world anchor names no part and is not tested.
-    public var offPartAnchors: [MGAnnotationAnchorIssue] {
+    public var offPartAnchors: [MGAnnotationAnchorIssue] { offPartAnchors(budget: MGAnnotationAnchorRules.surfaceTests) }
+
+    /// `offPartAnchors` with another nearer-part budget (tests).
+    func offPartAnchors(budget initial: Int) -> [MGAnnotationAnchorIssue] {
         let a = annotations
         guard !a.isEmpty else { return [] }
-        let rest = assembly.pose(MGPoseParameters(input: defaults.input, explode: 0))
         let eps = Swift.max(1e-6, 1e-3 * a.diagonal)
         var out: [MGAnnotationAnchorIssue] = []
-        var used = 0
+        var budget = initial
+        var chunks: [String: MGMeshChunks] = [:]
+        var poses: [(params: MGPoseParameters, pose: MGPose)] = []
+        func posed(_ params: MGPoseParameters) -> MGPose {
+            if let hit = poses.first(where: { $0.params == params }) { return hit.pose }
+            let p = assembly.pose(params); poses.append((params, p)); return p
+        }
+        let rest = posed(MGPoseParameters(input: defaults.input, explode: 0))
         for id in a.ids {
             guard let (kind, p) = a.checkedAnchor(id), let partID = p.part, let part = assembly.part(partID) else { continue }
             let b = part.mesh.bounds
             guard !b.isEmpty else { continue }
             let dist = mgBoxDistance(p.local, b)
             let tol = Swift.max(MGAnnotationAnchorRules.partShare * b.size.length, MGAnnotationAnchorRules.modelShare * a.diagonal)
-            let x = p.world(rest)
-            var closer: (id: String, d: Double)?
-            for q in assembly.parts where q.id != partID {
-                let qb = q.mesh.bounds
-                guard !qb.isEmpty else { continue }
-                let lq = (rest.world[q.id] ?? .identity).inverse.apply(x)
-                var dq = mgBoxDistance(lq, qb)
-                guard dq < dist - eps else { continue }
-                if used + q.mesh.triangleCount <= MGAnnotationAnchorRules.surfaceTests {
-                    used += q.mesh.triangleCount
-                    dq = mgSolidDistance(lq, q.mesh)
+            // The nearer-part search, view by view (none when the anchor is inside its own part's box).
+            var closer: (step: Int?, x: MGVec3, part: String, d: Double)?, unknownAt: (step: Int?, x: MGVec3)?
+            let r = dist - eps
+            if r > 0 {
+                views: for (step, params) in shownPoses(id) {
+                    let pose = posed(params)
+                    let x = p.world(pose)
+                    for q in assembly.parts where q.id != partID && !q.mesh.bounds.isEmpty {
+                        let lq = (pose.world[q.id] ?? .identity).inverse.apply(x)
+                        budget -= 1
+                        guard budget >= 0 else { unknownAt = (step, x); break views }
+                        guard mgBoxDistance(lq, q.mesh.bounds) < r else { continue }
+                        if chunks[q.id] == nil {
+                            budget -= q.mesh.triangleCount
+                            guard budget >= 0 else { unknownAt = (step, x); break views }
+                            chunks[q.id] = MGMeshChunks(q.mesh)
+                        }
+                        switch chunks[q.id]!.nearer(lq, than: r, budget: &budget) {
+                        case .notNearer: continue
+                        case .unknown: unknownAt = (step, x)
+                        case .nearer(let dq): closer = (step, x, q.id, dq)
+                        }
+                        break views
+                    }
                 }
-                if dq < dist - eps, closer.map({ dq < $0.d }) ?? true { closer = (q.id, dq) }
             }
-            guard !(dist <= tol) || closer != nil else { continue }
-            var issue = MGAnnotationAnchorIssue(id: id, kind: kind, cause: .offPart, part: partID, by: nil, step: nil, beat: nil,
-                                                point: x, distance: dist, tolerance: tol)
-            issue.closer = closer?.id; issue.closerDistance = closer?.d
-            out.append(issue)
+            if !(dist <= tol) || closer != nil {
+                // Off its part: too far from its own box (in every pose), or another part is nearer in a shown view.
+                var issue = MGAnnotationAnchorIssue(id: id, kind: kind, cause: .offPart, part: partID, by: nil, step: closer?.step, beat: nil,
+                                                    point: closer?.x ?? p.world(rest), distance: dist, tolerance: tol)
+                issue.closer = closer?.part; issue.closerDistance = closer?.d
+                out.append(issue)
+            } else if let u = unknownAt {
+                // Within its tolerance, but the nearer-part search ran out of budget: unknown, never off.
+                out.append(MGAnnotationAnchorIssue(id: id, kind: kind, cause: .untested, part: partID, by: nil, step: u.step, beat: nil,
+                                                   point: u.x, distance: nil, tolerance: nil, budget: "nearerPart"))
+            }
         }
         return out
     }
@@ -266,7 +371,9 @@ extension MGSolidDocument {
     /// `MGMaterialPreset.coverage`, so glass does not block; a cut part tests its cut mesh): a part blocks when it
     /// crosses the segment before the anchor (less the annotation tolerance) and before the first crossing of the
     /// anchor's own part. So an anchor at the centre of its part, seen through its part's own surface, is visible, and an
-    /// anchor in the air in front of a part is not hidden by it. Exception: when the view cuts the anchor's part and the
+    /// anchor in the air in front of a part is not hidden by it. A blocker hit within the tolerance of the anchor's own
+    /// part (a shared face or edge of touching parts) is a tie: the own part is there too, so the anchor is visible; this
+    /// test also costs from the view's budget. Exception: when the view cuts the anchor's part and the
     /// anchor lies in that part's box on the kept side of the cut (or on the cut face), the parts whose box lies inside
     /// that part's box, both taken in the cut part's own frame (grown by 0.5 % of the model's diagonal), do not hide it;
     /// parts outside still do. `step` and `beat` only label the issues.
@@ -303,12 +410,13 @@ extension MGSolidDocument {
         }
         let grow = 0.005 * (whole.isEmpty ? 0 : whole.size.length)
         var used = 0, over = false
+        var ownChunks: [String: MGMeshChunks] = [:]
         for id in ids {
             guard let (kind, p) = a.checkedAnchor(id) else { continue }
             let x = p.world(pose)
             func issue(_ c: MGAnnotationAnchorIssue.Cause, by: String? = nil) {
                 out.issues.append(MGAnnotationAnchorIssue(id: id, kind: kind, cause: c, part: p.part, by: by, step: step, beat: beat, point: x,
-                                                          distance: nil, tolerance: nil))
+                                                          distance: nil, tolerance: nil, budget: c == .untested ? "lineOfSight" : nil))
             }
             if let own = p.part {
                 let pv = view.part(own)
@@ -347,7 +455,28 @@ extension MGSolidDocument {
                 if sld.id == p.part { ownT = t } else if first.map({ t < $0.t }) ?? true { first = (t, sld.id) }
             }
             if over { issue(.untested); continue }
-            if let f = first, !(ownT.map { $0 <= f.t } ?? false) { issue(.occluded, by: f.id) }
+            guard let f = first, !(ownT.map { $0 <= f.t } ?? false) else { continue }
+            // A shared surface is a tie, not an occlusion: when the anchor's own part (as the view draws it) also lies
+            // within the tolerance of the blocker's hit point, the own part is there too, so it is visible. Two touching
+            // parts give the same answer whichever of them the anchor names.
+            if let own = p.part, let ownPart = assembly.part(own) {
+                let mesh = view.part(own).cut?.mesh ?? ownPart.mesh
+                if ownChunks[own] == nil {
+                    guard used + mesh.triangleCount <= budget else { issue(.untested); over = true; continue }
+                    used += mesh.triangleCount
+                    ownChunks[own] = MGMeshChunks(mesh)
+                }
+                let h = (pose.world[own] ?? .identity).inverse.apply(eye + d * f.t)
+                var left = budget - used
+                let near = ownChunks[own]!.nearer(h, than: tol, budget: &left)
+                used = budget - max(0, left)
+                switch near {
+                case .nearer: continue
+                case .unknown: issue(.untested); over = true; continue
+                case .notNearer: break
+                }
+            }
+            issue(.occluded, by: f.id)
         }
         return out
     }

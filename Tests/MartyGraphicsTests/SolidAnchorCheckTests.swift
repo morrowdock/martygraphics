@@ -290,7 +290,8 @@ final class SolidAnchorReviewFixtureTests: XCTestCase {
             XCTAssertEqual(r.reason, "annotation.anchor.off.label", offset)
             guard case .object(let a)? = r.json["anchor"] else { XCTFail("anchor"); continue }
             XCTAssertEqual(a["closer"], .string("neighbour"))
-            XCTAssertEqual(a["closerDistance"], .number(0))
+            // The distance of the first nearer triangle found: less than the 29 mm to the plate.
+            if case .number(let c)? = a["closerDistance"] { XCTAssertLessThan(c, 29) } else { XCTFail("closerDistance") }
             XCTAssertEqual(a["distance"], .number(29))
             if case .string(let fix)? = a["fix"] { XCTAssertTrue(fix.contains("`neighbour` is nearer"), fix) } else { XCTFail("fix") }
         }
@@ -308,8 +309,10 @@ final class SolidAnchorReviewFixtureTests: XCTestCase {
         // The frame's box holds the anchor, its solid does not.
         let x = d.annotations.label("l1")!.at.world(d.assembly.pose(d.defaults))
         XCTAssertEqual(mgBoxDistance(x, d.assembly.part("frame")!.mesh.bounds), 0)
-        XCTAssertGreaterThan(mgSolidDistance(x, d.assembly.part("frame")!.mesh), 50)
-        XCTAssertEqual(mgSolidDistance(MGVec3(0, 14, 85), d.assembly.part("frame")!.mesh), 0, "inside the solid")
+        let frame = MGMeshChunks(d.assembly.part("frame")!.mesh)
+        var budget = 1_000_000
+        XCTAssertEqual(frame.nearer(x, than: 50, budget: &budget), .notNearer)
+        XCTAssertEqual(frame.nearer(MGVec3(0, 14, 85), than: 1, budget: &budget), .nearer(0), "inside the solid")
         // The shipped winch passes strict.
         let winch = try Data(contentsOf: URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json"))
@@ -379,5 +382,192 @@ final class SolidAnchorReviewFixtureTests: XCTestCase {
             let first = strict(t).json
             for _ in 0..<3 { XCTAssertEqual(strict(t).json, first) }
         }
+    }
+}
+
+/// The fixtures of the second independent review (nearer-part budget, posed views, touching parts, ordinary layouts),
+/// each as a test. All synthetic.
+final class SolidAnchorRecheckFixtureTests: XCTestCase {
+    func strict(_ t: String) -> MGSolidReport { MGSolidReport.check(data: Data(t.utf8), profile: .strict, engine: nil) }
+    func standard(_ t: String) -> MGSolidReport { MGSolidReport.check(data: Data(t.utf8), profile: .standard, engine: nil) }
+    func issues(_ r: MGSolidReport) -> [[String: MGJSON]] {
+        guard case .array(let a)? = r.json["anchorIssues"] else { return [] }
+        return a.compactMap { if case .object(let o) = $0 { return o }; return nil }
+    }
+    func doc(_ t: String) throws -> MGSolidDocument { try MGSolidParser.document(data: Data(t.utf8)).get() }
+    func assembly(_ parts: String, _ labels: String, steps: String = #"[{"say":"Inspect the named part.","camera":"front"}]"#) -> String {
+        #"{"v":2,"kind":"assembly","parts":[\#(parts)],"annotations":{"labels":[\#(labels)]},"steps":\#(steps)}"#
+    }
+
+    // MARK: Item 1: the nearer-part search never invents a distance
+
+    /// A hollow glass casing of eight sleeves (393,216 triangles; `lowDetail`: four profile points each) and bearings
+    /// inside it, each labelled 1 mm outside its bearing (within its tolerance).
+    func casing(bearings: Int, oneBearing: Bool = false, lowDetail: Bool = false) -> String {
+        var pts: [String] = []
+        if lowDetail { pts = ["[100,-10]", "[100,10]", "[90,10]", "[90,-10]"] } else {
+            for i in 0..<128 { pts.append("[100,\(-10 + 20 * Double(i) / 127)]") }
+            for i in 0..<128 { pts.append("[90,\(10 - 20 * Double(i) / 127)]") }
+        }
+        let sleeves = stride(from: -70, through: 70, by: 20).map { z in #"{"revolvedProfile":{"points":[\#(pts.joined(separator: ","))],"closed":true,"at":[0,0,\#(z)]}}"# }
+        let shell = #"{"id":"shell","material":"glass","shape":[\#(sleeves.joined(separator: ","))]}"#
+        var parts: [String] = [], labels: [String] = []
+        if oneBearing {
+            parts = [#"{"id":"bearing","shape":{"box":{"size":[10,10,10]}}}"#]
+            labels = (0..<bearings).map { #"{"id":"bearingLabel\#($0)","text":"Bearing","at":{"part":"bearing","offset":[0,-6,0]}}"# }
+        } else {
+            for i in 0..<bearings {
+                parts.append(#"{"id":"bearing\#(i)","shape":{"box":{"size":[10,10,10]}},"at":[0,0,\#(-66 + 12 * i)]}"#)
+                labels.append(#"{"id":"bearingLabel\#(i)","text":"Bearing","at":{"part":"bearing\#(i)","offset":[0,-6,0]}}"#)
+            }
+        }
+        return assembly((parts + [shell]).joined(separator: ","), labels.joined(separator: ","))
+    }
+
+    func testTwelveBearingsInAHollowCasingPassWithinTheBudget() throws {
+        let t = casing(bearings: 12)
+        let d = try doc(t)
+        XCTAssertEqual(d.assembly.part("shell")?.mesh.triangleCount, 393_216)
+        let r = strict(t)
+        XCTAssertTrue(r.ok, r.reason ?? "")
+        XCTAssertEqual(issues(r).count, 0)
+        // No budget overrun: the whole document's search fits in a third of the budget.
+        XCTAssertEqual(d.offPartAnchors(budget: MGAnnotationAnchorRules.surfaceTests / 3), [])
+        for v in [casing(bearings: 12, lowDetail: true), casing(bearings: 1), casing(bearings: 12, oneBearing: true), casing(bearings: 1, oneBearing: true)] {
+            XCTAssertTrue(strict(v).ok)
+        }
+    }
+
+    /// Out of budget the answer is unknown: `untested` (strict refuses, standard warns), never `off`.
+    func testOutOfBudgetTheNearerPartTestIsUntestedNeverOff() throws {
+        let t = casing(bearings: 3)
+        let d = try doc(t)
+        let small = d.offPartAnchors(budget: 1_000)
+        XCTAssertEqual(small.map(\.cause), [.untested, .untested, .untested])
+        XCTAssertEqual(small.map(\.reason), ["annotation.anchor.untested.bearingLabel0", "annotation.anchor.untested.bearingLabel1",
+                                             "annotation.anchor.untested.bearingLabel2"])
+        XCTAssertEqual(small.first?.budget, "nearerPart")
+        XCTAssertEqual(small.first?.json["budget"], .string("nearerPart"))
+        XCTAssertNil(small.first?.closer)
+        // The same anchors with the full budget pass.
+        XCTAssertEqual(d.offPartAnchors, [])
+        // The search itself: unknown when the budget runs out, never a distance.
+        let shell = MGMeshChunks(d.assembly.part("shell")!.mesh)
+        var tiny = 10
+        XCTAssertEqual(shell.nearer(MGVec3(0, -6, -66), than: 1, budget: &tiny), .unknown)
+        var enough = 1_000_000
+        XCTAssertEqual(shell.nearer(MGVec3(0, -6, -66), than: 1, budget: &enough), .notNearer)
+        XCTAssertEqual(shell.nearer(MGVec3(95, 0, -70), than: 1, budget: &enough), .nearer(0), "inside the sleeve wall")
+        XCTAssertGreaterThan(enough, 1_000_000 - 50_000, "far runs are skipped")
+    }
+
+    // MARK: Item 2: the nearer-part test runs at the pose of each view that shows the label
+
+    static let arm = #"{"id":"arm","shape":{"box":{"size":[200,2,2]}}}"#
+    static let armLabel = #"{"id":"label","text":"Named part","at":{"part":"arm","offset":[80,-2,0]}}"#
+    static let armStep = #"[{"say":"Inspect the named part.","camera":"front","annotate":["label"],"pose":{"arm":{"rot":[0,0,1,90]}}}]"#
+
+    func testAPartNearOnlyAtTheUnshownDefaultPoseDoesNotRefuse() {
+        for at in ["[80,-2,0]", "[-80,-2,0]"] {
+            let t = assembly(Self.arm + #",{"id":"restNeighbour","shape":{"box":{"size":[5,5,5]}},"at":\#(at)}"#, Self.armLabel, steps: Self.armStep)
+            XCTAssertTrue(strict(t).ok, at)
+        }
+    }
+
+    func testAPartNearAtTheShownPoseRefusesWithTheStep() {
+        // At the posed step the dot is at [2, 80, 0]; a neighbour there is nearer than the arm.
+        let t = assembly(Self.arm + #",{"id":"posedNeighbour","shape":{"box":{"size":[5,5,5]}},"at":[2,80,0]}"#, Self.armLabel, steps: Self.armStep)
+        let r = strict(t)
+        XCTAssertEqual(r.reason, "annotation.anchor.off.label")
+        guard case .object(let a)? = r.json["anchor"] else { return XCTFail("anchor") }
+        XCTAssertEqual(a["closer"], .string("posedNeighbour"))
+        XCTAssertEqual(a["step"], .number(1))
+        // A label shown in the plain view is tested at the default pose there (no step).
+        let plain = assembly(Self.arm + #",{"id":"restNeighbour","shape":{"box":{"size":[5,5,5]}},"at":[80,-2,0]}"#, Self.armLabel,
+                             steps: #"[{"say":"Inspect the named part.","camera":"front"}]"#)
+        let p = strict(plain)
+        XCTAssertEqual(p.reason, "annotation.anchor.off.label")
+        guard case .object(let b)? = p.json["anchor"] else { return XCTFail("anchor") }
+        XCTAssertEqual(b["closer"], .string("restNeighbour"))
+        XCTAssertEqual(b["step"], .null)
+    }
+
+    func testAnExplainerBeatNamesTheBeatOfANearerPart() {
+        let solid = #"{"v":2,"parts":[\#(Self.arm),{"id":"posedNeighbour","shape":{"box":{"size":[5,5,5]}},"at":[2,80,0]}],"annotations":{"labels":[\#(Self.armLabel)]}}"#
+        let t = #"{"v":1,"kind":"explainer","solid":\#(solid),"beats":[{"say":"The arm.","view":{"camera":"front","annotate":[]}},{"say":"The arm turns.","view":{"camera":"front","annotate":["label"],"pose":{"arm":{"rot":[0,0,1,90]}}}}]}"#
+        let r = MGExplainerReport.check(data: Data(t.utf8), profile: .strict, engine: nil)
+        XCTAssertEqual(r.reason, "annotation.anchor.off.label")
+        guard case .object(let a)? = r.json["anchor"] else { return XCTFail("anchor") }
+        XCTAssertEqual(a["beat"], .number(2))
+        XCTAssertEqual(a["closer"], .string("posedNeighbour"))
+    }
+
+    // MARK: Item 3: touching parts are symmetric; a real blocker is still caught
+
+    static let touching = #"{"id":"left","shape":{"box":{"size":[10,10,10]}},"at":[-5,0,0]},{"id":"right","shape":{"box":{"size":[10,10,10]}},"at":[\#(5),0,0]}"#
+    func touchingDoc(right: String = "5", part: String, offset: String) -> String {
+        assembly(#"{"id":"left","shape":{"box":{"size":[10,10,10]}},"at":[-5,0,0]},{"id":"right","shape":{"box":{"size":[10,10,10]}},"at":[\#(right),0,0]}"#,
+                 #"{"id":"label","text":"Named part","at":{"part":"\#(part)","offset":\#(offset)}}"#)
+    }
+
+    func testTouchingPartsGiveTheSameResultForBothNames() {
+        let left = strict(touchingDoc(part: "left", offset: "[5,0,0]")), right = strict(touchingDoc(part: "right", offset: "[-5,0,0]"))
+        XCTAssertEqual(left.ok, right.ok)
+        XCTAssertTrue(left.ok, left.reason ?? "")
+        XCTAssertEqual(issues(left).count, issues(right).count)
+        // The shared front edge, and the same point with the right box moved by ±0.00001 mm.
+        XCTAssertTrue(strict(touchingDoc(part: "left", offset: "[5,-5,0]")).ok)
+        XCTAssertTrue(strict(touchingDoc(part: "right", offset: "[-5,-5,0]")).ok)
+        for r in ["5.00001", "4.99999"] { XCTAssertTrue(strict(touchingDoc(right: r, part: "left", offset: "[5,0,0]")).ok, r) }
+        for _ in 0..<3 { XCTAssertEqual(strict(touchingDoc(part: "left", offset: "[5,0,0]")).json, left.json) }
+    }
+
+    func testARealBlockerOneMillimetreInFrontIsStillCaught() {
+        // A 0.5 mm plate whose back face is 1 mm in front of the left box's front face (the camera looks from -Y).
+        let t = assembly(#"{"id":"left","shape":{"box":{"size":[10,10,10]}}},{"id":"plate","shape":{"box":{"size":[20,0.5,20]}},"at":[0,-6.25,0]}"#,
+                         #"{"id":"label","text":"Named part","at":{"part":"left","offset":[0,-5,0]}}"#)
+        let r = strict(t)
+        XCTAssertEqual(r.reason, "annotation.anchor.hidden.label")
+        XCTAssertEqual(issues(r).first?["by"], .string("plate"))
+    }
+
+    // MARK: Ordinary layouts and controls of the review
+
+    func testOrdinaryLayoutsAndControls() {
+        let bearing = #"{"id":"bearing","shape":{"box":{"size":[12,12,10]}}}"#, tube = #"{"id":"casing","shape":{"tube":{"inner":10,"outer":30,"length":20,"z0":-10}}}"#
+        let label6 = #"{"id":"label","text":"Named part","at":{"part":"bearing","offset":[0,-6,0]}}"#
+        XCTAssertTrue(strict(assembly(bearing + "," + tube, label6, steps: #"[{"say":"Inspect the named part.","camera":"front","ghost":["casing"]}]"#)).ok)
+        let inCasing = strict(assembly(bearing + "," + tube, label6))
+        XCTAssertEqual(inCasing.reason, "annotation.anchor.hidden.label")
+        XCTAssertEqual(issues(inCasing).first?["by"], .string("casing"))
+        XCTAssertTrue(strict(assembly(#"{"id":"bearing","shape":{"box":{"size":[10,10,10]}}},{"id":"casing","shape":{"box":{"size":[100,40,100]}},"at":[0,25,0]}"#,
+                                      #"{"id":"label","text":"Named part","at":{"part":"bearing","offset":[0,5,0]}}"#)).ok)
+        // A 10 mm bearing labelled 1 mm out is past its 0.87 mm tolerance; 0.5 mm out passes.
+        let small = #"{"id":"bearing","shape":{"box":{"size":[10,10,10]}}}"#
+        XCTAssertEqual(strict(assembly(small + "," + tube, #"{"id":"label","text":"Named part","at":{"part":"bearing","offset":[0,-6,0]}}"#)).reason,
+                       "annotation.anchor.off.label")
+        XCTAssertTrue(strict(assembly(small + "," + tube, #"{"id":"label","text":"Named part","at":{"part":"bearing","offset":[0,-5.5,0]}}"#,
+                                      steps: #"[{"say":"Inspect the named part.","camera":"front","ghost":["casing"]}]"#)).ok)
+        // Coverage threshold: 0.49 does not block, 0.5 and 0.51 do.
+        for (o, ok) in [("0.49", true), ("0.5", false), ("0.51", false)] {
+            let t = assembly(#"{"id":"core","shape":{"box":{"size":[20,20,20]}}},{"id":"panel","shape":{"box":{"size":[100,2,100]}},"opacity":\#(o),"at":[0,-30,0]}"#,
+                             #"{"id":"label","text":"Named part","at":{"part":"core","point":"centre"}}"#)
+            XCTAssertEqual(strict(t).ok, ok, o)
+        }
+        for (m, ok) in [("darkSteel", false), ("glass", true)] {
+            let t = assembly(#"{"id":"core","shape":{"box":{"size":[20,20,20]}}},{"id":"shell","shape":{"box":{"size":[100,100,100]}},"material":"\#(m)"}"#,
+                             #"{"id":"label","text":"Named part","at":{"part":"core","point":"centre"}}"#)
+            XCTAssertEqual(strict(t).ok, ok, m)
+        }
+        XCTAssertTrue(strict(assembly(#"{"id":"gear","shape":{"gear":{"teeth":20,"module":2,"width":10,"bore":4,"z0":-5}}},{"id":"shaft","shape":{"shaft":{"radius":4,"length":50,"z0":-25}}}"#,
+                                      #"{"id":"label","text":"Named part","at":{"part":"gear","offset":[20,0,0]}}"#)).ok)
+        XCTAssertTrue(strict(assembly(#"{"id":"pilot","use":"mannequin","at":[100,200,50],"rot":[0,0,1,45]}"#,
+                                      #"{"id":"label","text":"Named part","at":{"part":"pilot.body","point":"centre"}}"#,
+                                      steps: #"[{"say":"Inspect the named part.","camera":"front","pose":{"pilot":{"with":{"leftShoulder":40}}}}]"#)).ok)
+        let carried = #"{"id":"root","shape":{"box":{"size":[2,2,2]}},"at":[200,0,0]},{"id":"bearing","shape":{"box":{"size":[10,10,10]}},"parent":"root"},{"id":"casing","shape":{"tube":{"inner":10,"outer":30,"length":20,"z0":-10}},"parent":"root"}"#
+        let carriedLabel = #"{"id":"label","text":"Named part","at":{"part":"bearing","offset":[0,-5,0]}}"#
+        XCTAssertTrue(strict(assembly(carried, carriedLabel, steps: #"[{"say":"Inspect the named part.","camera":"front","pose":{"root":{"rot":[0,0,1,45]}},"ghost":["casing"]}]"#)).ok)
+        XCTAssertEqual(strict(assembly(carried, carriedLabel, steps: #"[{"say":"Inspect the named part.","camera":"front","pose":{"root":{"at":[100,0,0],"rot":[0,0,1,45]}}}]"#)).reason,
+                       "step.pose.key")
     }
 }

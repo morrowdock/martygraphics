@@ -78,7 +78,10 @@ public struct MGExplainerReport: Equatable, Sendable {
                 for k in ["ok", "reason", "part", "strict", "engine", "file", "anchorIssues", "anchorUntested", "anchor"] { o.removeValue(forKey: k) }
                 solidJSON = .object(o)
             }
-            anchors.issues = d.offPartAnchors
+            // The part rule's views are the solid's steps: name the beat that shows each one.
+            var beatOf: [Int: Int] = [:]
+            for b in s.keptBeats { if let st = s.solidStep(forBeat: b.index), beatOf[st] == nil { beatOf[st] = b.index } }
+            anchors.issues = d.offPartAnchors.map { $0.at(beat: $0.step.flatMap { beatOf[$0] }) }
             if let doc, !d.annotations.isEmpty { anchors.append(MGExplainerFrame.beatAnchorIssues(doc, library: s.library)) }
         }
         if reason == nil, profile == .strict, let id = s.unusedNotes.first {

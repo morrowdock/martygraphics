@@ -864,20 +864,27 @@ preset. A frame lays out nothing, and says why in `refusal`, for a view or pose 
 Two rules check where the dot of a label and the tip of a pointer arrow land. The anchor of a label is its `at`; the
 anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensions are not tested.
 
-**On its part** (`annotation.anchor.off.<id>`). Two tests at the default input with explode 0:
+**On its part** (`annotation.anchor.off.<id>`). Two tests:
 
 1. The anchor lies in its part's oriented box (the box of the part's mesh, in the part's own frame), or at most
    `max(5 % of that box's diagonal, 0.5 % of the model's diagonal)` mm outside it (`MGAnnotationAnchorRules.partShare`,
-   `modelShare`). This test is in the part's own frame, so it holds in every pose.
-2. No other part is nearer to the anchor than its own part's box, by more than 0.1 % of the model's diagonal. Another
-   part's distance is to its solid: 0 when the anchor is inside it (an odd number of watertight crossings on a segment
-   along +X), else the distance to its nearest triangle. So an L-shaped part whose box holds empty space does not claim
-   an anchor in that space. Parts whose oriented box is not nearer are skipped; the exact distances of one document read
-   at most 3,000,000 triangles (`MGAnnotationAnchorRules.surfaceTests`), and after that other parts are measured by
-   their oriented box, which can refuse an anchor but never passes one. The nearest such part is `closer` in the issue.
+   `modelShare`). This test is in the part's own frame, so it holds in every pose; its issue has no step.
+2. No other part's solid comes nearer to the anchor than its own part's box, by more than 0.1 % of the model's
+   diagonal. This test runs at the pose of every view that shows the annotation: the plain view at the default pose
+   when it shows it, and each step or beat at its still's pose (a beat's view is its solid step). The first view where
+   a part is nearer is the issue's `step` (and `beat`), and that part is `closer`. A part's solid is its surface or its
+   inside: the anchor is inside when a segment from it along +X crosses the part's surface an odd number of times
+   (watertight crossings). So an L-shaped part whose box holds empty space does not claim an anchor in that space.
 
-A world anchor names no part and is not tested. It is a document warning (`MGSolidDocument.offPartAnchors`): the
-compile's strict profile refuses it too.
+The nearer-part search is exact and stops early (`MGMeshChunks.nearer`): a part whose oriented box is not nearer costs
+one box test; the part's triangles are read once into runs of 64 with their boxes; runs farther than the own part's
+distance are skipped; the search stops at the first nearer triangle, whose distance is `closerDistance` (0 inside).
+Every triangle read, run-box test and triangle test of one document counts against 3,000,000
+(`MGAnnotationAnchorRules.surfaceTests`). When the budget runs out the answer is unknown: the anchor is
+`annotation.anchor.untested.<id>` with the view and `"budget": "nearerPart"`, never off. A world anchor names no part and is not tested. The first
+test is a document warning (`MGSolidDocument.offPartAnchors`), so the compile's strict profile refuses it too; the
+second test's `off` issues are document warnings as well, and its `untested` issues are refused by the strict check
+report.
 
 **Visible in each step or beat that shows it** (`annotation.anchor.hidden.<id>`). The check frames each step still as
 `marty-solid render` does at 1280 × 800 (`MGSolidDocument.stepAnchorIssues`: the step's shot, its title and caption
@@ -891,7 +898,7 @@ the first cause found is the issue:
 | `ghosted` | the view draws the anchor's part fainter than its own opacity: step `ghost`, or an automatic ghost of the unblocked-focus rule |
 | `offscreen` | the anchor projects outside the view (the whole still or pane, bands included), or lies behind the camera |
 | `occluded` | another part is the first surface on the segment from the camera to the anchor (`by` names it) |
-| `untested` | the view's line-of-sight tests ran out of budget before this anchor (`annotation.anchor.untested.<id>`) |
+| `untested` | the view's line-of-sight tests ran out of budget before this anchor (`annotation.anchor.untested.<id>`, `"budget": "lineOfSight"`) |
 
 The segment test is the watertight ray test of the unblocked-focus rule against every part the view draws with a
 coverage of 0.5 or more. Coverage is what the renderer draws: the view opacity (the part's `opacity` and any ghost)
@@ -899,14 +906,17 @@ times the material's own coverage (`MGMaterialPreset.coverage`: 0.22 for `glass`
 hides no anchor. A cut part tests its cut mesh. A part blocks when it crosses the segment before the anchor (less 0.1 %
 of the model's diagonal) and before the first crossing of the anchor's own part. So an anchor at the centre of its
 part, seen through its own surface, is visible, and an anchor in the air in front of a part is not hidden by it. A
-world anchor has no own part: any crossing before it hides it. **Cut parts:** when the view's section cuts the anchor's
+blocker hit that lies within 0.1 % of the model's diagonal of the anchor's own part (as the view draws it) is a tie, not
+an occlusion: the own part is there too, so the anchor is visible. Two touching parts therefore give the same result
+whichever of them the anchor names; a separate part 1 mm in front of the anchor still hides it. A world anchor has no
+own part: any crossing before it hides it. **Cut parts:** when the view's section cuts the anchor's
 own part and the anchor lies in that part's box on the kept side of the cut or on the cut face, the parts inside the
 cut part do not hide it; parts outside it still do. Inside is tested in the cut part's own frame: every corner of the
 other part's mesh box, posed and taken into that frame, lies in the cut part's mesh box grown by 0.5 % of the model's
 diagonal. So a rotated cut part never exempts a part that only its world-axis box holds.
 
-The tests of one view spend at most 3,000,000 triangle tests (`MGAnnotationAnchorRules.tests`). The anchor whose
-line-of-sight test would pass the budget, and every anchor of that view after it, is `untested`
+The tests of one view spend at most 3,000,000 triangle tests (`MGAnnotationAnchorRules.tests`), the tie tests
+included. The anchor whose line-of-sight test would pass the budget, and every anchor of that view after it, is `untested`
 (`annotation.anchor.untested.<id>`, also listed in `anchorUntested`); the other causes are still tested for it.
 Strict does not pass what it did not check: the strict check report refuses an untested anchor. The standard profile
 warns.
@@ -924,14 +934,14 @@ is the jet-suit example before its fix:
  "fix": "`back.casing` hides the anchor: move the anchor (`at`) to a face of `back.combustor` that faces the camera, change the camera (camera, orbit), or ghost `back.casing` in this view."}
 ```
 
-`step` and `beat` are 1-based; `point` is the anchor in the kernel world (Z up, mm) at the still's pose; `distance`,
-`tolerance` and, when another part is nearer, `closer` and `closerDistance` (mm) are set for `offpart`. A refusal for
+`step` and `beat` are 1-based; `point` is the anchor in the kernel world (Z up, mm) at the view's pose; `distance`,
+`tolerance` and, when another part is nearer, `closer` and `closerDistance` (mm, the first nearer triangle found) are
+set for `offpart`. A refusal for
 an anchor reason also adds `anchor`: the issue it names.
 
 Not tested: the plain view (`hero.png`, `solid-0.png`), the poses during a step's or beat's spin and camera moves,
-other sizes than 1280 × 800, whether the dot is covered by another text, a band or the legend, and the nearer-part test
-at a step's own pose or explode (it uses the default pose). A part made of overlapping closed shapes can count a point
-inside two of them as outside; its nearest-triangle distance is used then.
+other sizes than 1280 × 800, and whether the dot is covered by another text, a band or the legend. A part made of
+overlapping closed shapes can count a point inside two of them as outside; its nearest-triangle distance is used then.
 
 ### Not checked
 
@@ -965,7 +975,7 @@ checks frames.
 | `annotation.cut.<id>` | A part anchor of an annotation that a step shows lies in the half that the same step's `section` removes from that part, so the annotation floats over the cut. | warning |
 | `annotation.anchor.off.<id>` | A label's anchor or a pointer's tip lies off the part it names, or another part is nearer to it ([Anchor checks](#anchor-checks)). | refused |
 | `annotation.anchor.hidden.<id>` | The check report only: a step still shows a label or pointer whose anchor it does not show (occluded, hidden, ghosted, off screen). | refused by the check report |
-| `annotation.anchor.untested.<id>` | The check report only: the view's line-of-sight budget ran out before this anchor. | refused by the check report |
+| `annotation.anchor.untested.<id>` | The check report only: the view's line-of-sight budget, or the document's nearer-part budget, ran out before this anchor. | refused by the check report |
 
 `expect` mismatches (`expect.axis.<id>`, `expect.up.<id>`) are refusals in every profile.
 
@@ -1015,7 +1025,8 @@ pipeline) print the same JSON from one implementation:
   gives the `file` facts (lines, bytes, SHA-256, computed in Foundation).
 * Refusal order after the document compiles: `check.meshOpen`, then
   `check.gearsInterpenetrate`, then the profile's refusal, then (strict) the first
-  `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` in step order. A refused report still holds
+  `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` (the nearer-part test's untested anchors in
+  authored order, then the view issues in step order). A refused report still holds
   every field.
 
 The report is built from sections (`MGSolidReport.sections`); a test keeps their keys

@@ -671,7 +671,7 @@ enum MGSolidAnnotationEngine {
         for i in doc.steps.indices { shown.formUnion(doc.visibleAnnotations(step: i)) }
         let rest = doc.assembly.pose(MGPoseParameters(input: doc.defaults.input, explode: 0))
         var out: [MGSolidIssue] = []
-        let off = Set(doc.offPartAnchors.map(\.id))
+        let off = Set(doc.offPartAnchors.filter { $0.cause == .offPart }.map(\.id))
         for id in a.ids {
             if a.stepped, !shown.contains(id) { out.append(MGSolidIssue("annotation.unused.\(id)", part: id)) }
             let points = anchors(a, id)
