@@ -172,6 +172,34 @@ in an explainer.
     header in the same call starts a new explainer, the earlier explainer's due lines are not returned. `lineQueued`
     is for prefetch only: do not speak it.
 
+## Adaptive board pane
+
+An explainer with both a board and a solid does not give the board half of every frame. The rule is
+`MGExplainerSession.boardPane` (`MGExplainerBoardPane.rule`), and the renderer stills, `story.mp4` and the SwiftUI
+explainer view all read it:
+
+1. The rule reads the presented 2D state (`state`): the state that each presented beat, set-up command and accepted host
+   or learner change makes the shown state. It is the newest state in the legend's record of presented items
+   ([What the legend counts](#what-the-legend-counts-presented-only)), so the pane never decides on an item the legend
+   does not count.
+2. The board pane is drawn while that state has at least one item that is not a `text` item: a table, a plot, a body, a
+   vector, a region, a highlight, any other kind.
+3. While it has only `text` items (or none), the solid takes the whole frame. The board's texts are not lost: they
+   move, in board order and joined with " · ", to the title band (`boardPane.line`; in a still and in `story.mp4` a
+   line under the legend line, truncated with an ellipsis to the width; in the SwiftUI view a line under the title).
+4. An explainer with only a board always draws it; an explainer with only a solid has no board pane.
+5. The rule is deterministic: the same document gives the same pane in every beat on every host. A highlight of a
+   2D text item has nothing to draw on while the pane is hidden.
+
+In `marty-solid render` the pane rects are whole pixels (`MGExplainerFrame.panes`), and the solid pane is framed for
+exactly the pixels it is rendered at (`MGExplainerFrame.solidCamera`), so a beat's still and the hold frames of that beat
+in `story.mp4` have the same camera in either layout. Each beat's manifest record gives `camera` and, when the beat
+shows annotations, `offView` (how many anchors are outside the pane).
+
+In the SwiftUI view the board pane slides in and out over 0.35 s
+(`MartyGraphicsExplainerView.paneAnimationSeconds`); with Reduce Motion it appears and disappears at once. A board
+that is never drawn records no first board frame (`boardFrame` stays nil).
+
 ## One id namespace
 
 One namespace holds 2D item ids (after template build and `hide`, and every id an `add` op introduces), 2D control
@@ -191,7 +219,14 @@ row 0) and `<table>.r<k>c<j>` (one cell), decimal without a sign or a leading ze
 3D annotations (open-vocabulary PR 3a) work inside an explainer exactly as in an assembly v2: the solid's
 `annotations` (labels, arrows, dimensions) and each beat view's `annotate` (`view.annotate`, `view.annotate.count`,
 `view.annotate.ref.<id>`) follow the assembly rules, including visibility, the linear-motion rule and the pose rules,
-because every beat view compiles as a solid step. Annotation ids join this namespace after the anchor names, in
+because every beat view compiles as a solid step. One difference, the visibility limit: in an explainer the limit of
+12 applies to each beat's own `view.annotate` list. With more than 12 annotations (up to the solid's caps: 32 labels,
+32 arrows, 16 dimensions), the solid is stepped from its statement on: the views before the first beat and every beat
+without an `annotate` list show none, and each beat shows exactly its list. A beat that lists more than 12 is
+`view.annotate.count`; the report's `visibility` gives `{"annotation" (the 13th id of the list), "cause": "beat",
+"beat" (1-based), "count", "limit"}`, with `location.beat` (0-based), `location.id` and `location.detail`. With 12 or
+fewer annotations the assembly rule stays as before (no `annotate` anywhere: every beat shows all of them), so such
+documents do not change. `annotations.visible` therefore never refuses an explainer. Annotation ids join this namespace after the anchor names, in
 authored order (a 2D id equal to one is `explainer.id.duplicate.<id>`). A beat may highlight an annotation id (drawn
 bright). Annotation claims join the one legend after the motion claims, and the solid's legend notes ("Arrow lengths
 are not to scale") join its notes. Hosts draw annotations only through the assembly's one gate
@@ -272,7 +307,27 @@ tiers each.
    waiting beats, so they count after it runs.
 
 The title and `board.template` count when they are shown (the title from the first beat on, the template with the
-board). 3D motion and annotation claims come from the whole compiled solid; they do not depend on the beat shown.
+board). 3D motion claims come from the whole compiled solid; they do not depend on the beat shown. Annotation claims
+follow what is displayed. With the show-all rule (no beat has an `annotate` list and the solid has at most 12
+annotations) every view displays every annotation, so all of them count. Whenever the beats choose their labels (some
+beat has `view.annotate`, at any count, or the solid has more than 12), an annotation claim counts only once a presented
+beat has displayed it, at its tier at presentation, and it keeps counting after later beats. A beat with
+`"annotate": []`, or without a list, displays none and adds none. One function gives a beat's displayed list to both the
+overlay and the legend (`MGSolidDocument.visibleAnnotations` for the beat's step, `displayedAnnotations(beat:)`), so in a
+live session the counted set is the set the learner was shown. `load` of a whole document in which some beat has
+`annotate` makes the solid stepped from its statement on, so every beat displays during the load what it displays in
+the loaded document, also after such a beat is refused later; a stream takes the mode when it accepts such a view and
+keeps it (also if that beat is refused later), and the labels its earlier beats displayed keep counting. The
+label-selection mode is saved state: the snapshot's `chooseLabels` is `true` or absent (any other value, `false`
+included, is `snapshot.labels`). `true` is used as saved. Absent (an older snapshot, or no list so far), restore derives
+the mode from every beat the snapshot knows (kept, refused or queued) and keeps it for the rest of the session. The
+record is
+`MGShownAnnotations`, the snapshot's `shownAnnotations` (written whenever the beats choose their labels, at any
+annotation count: at most 80 entries `{"id", "tier"}`, at most 8,976 bytes). After a restore the record is saved data
+checked for structure, not proof of what was shown (see Persistence): each id once, an annotation of the solid with a
+claim, at that claim's tier, and it must hold every annotation the presented beats display now (else
+`snapshot.shown`); without the field it is rebuilt from the presented beats. An annotation that no presented beat
+displayed makes no claim.
 One function (`claims`) serves `legend`, `MGExplainerReport` (`marty-solid check`, which presents every beat),
 `snapshot check` and `MartyGraphicsExplainerView`; `marty-solid render` draws the legend of a copy of the session after
 `finishNow()` (every beat presented) in each still and in the manifest.
@@ -344,7 +399,12 @@ and put a large solid after a small board.
 beat's caption template, commands, checks, view and highlight, the lesson snapshot (as JSON text, so its nesting never
 adds to the explainer's), the stream position, the record of shown 2D item claims (`shown`:
 `[{"id", "tiers"}]` in first-shown order, tiers lowest first) and the record of shown beat claims (`shownBeats`:
-`[{"beat", "caption", "checks"}]` by beat, 0-based, each a list of tiers lowest first).
+`[{"beat", "caption", "checks"}]` by beat, 0-based, each a list of tiers lowest first) and, whenever the beats choose
+their labels (some beat has `view.annotate`, at any annotation count, or the solid has more than 12 annotations), the
+record of shown annotation claims (`shownAnnotations`: `[{"id", "tier"}]` in first-shown order) and the
+label-selection mode (`chooseLabels`: `true` once the session has a beat view with an `annotate` list, after `load` or
+in a stream; absent otherwise). The mode belongs to one explainer: a new `explainer` header in the same session starts
+without it. `chooseLabels` is checked in every snapshot, with or without a solid.
 Captions and claims are not stored. `restore(_:pacing:clock:library:)`
 and `restore(data:…)` trust nothing in it as proof:
 
@@ -371,12 +431,20 @@ and `restore(data:…)` trust nothing in it as proof:
    and only a tier the beat's text can have (an `unchecked` caption Described, a caption without placeholders none, a
    3D fact its own tier, a 2D value Built or Solved; a caption or check with placeholders at least one); and the
    presented beat's entry holds the tiers it shows now. A snapshot without `shownBeats` freezes each presented beat
-   on the state shown now. Trust: both records are saved data that pass these structure checks, not proof of what was
-   shown; a changed snapshot can change past item and beat claims within them (as it can change the held scenes
-   within the board rules);
+   on the state shown now. The record of shown annotation claims is checked for structure too (`snapshot.shown`): at
+   most 80 entries with closed keys `id` and `tier`; each id once, an annotation of the solid that has a claim, at
+   that claim's compiled tier; and it holds every annotation the presented kept beats display now. `chooseLabels`
+   must be `true` or absent (`snapshot.labels`); `true` is used as saved, and absent derives the mode from every beat
+   the snapshot knows. Trust: the three records and the flag are saved data that pass these structure checks, not
+   proof of what was shown; a changed snapshot can change past item and beat claims within them (as it can change
+   the held scenes within the board rules); a forged annotation entry can add annotation claims up to the solid's
+   compiled claim tiers, at most 80 entries; and removing `chooseLabels` gives the derived mode, which can show and
+   count at most the compiled labels (the show-all rule applies only to at most 12) at their compiled tiers;
 5. the caption is the presented beat's line on the restored state, never the saved text; the claims and the legend
-   come only from what steps 1–4 evaluated and from the checked record, so a restored legend equals the legend of the
-   saved session.
+   come only from what steps 1–4 evaluated and from the checked records. For an untouched snapshot in the current
+   format, a restored legend equals the legend of the saved session; a changed snapshot that still passes the checks
+   can change it within the bounds of the trust note (for example, a valid extra `shownAnnotations` entry adds a
+   claim).
 
 All of it runs in beat order, then statement order, so the first reason does not depend on dictionary order. The first
 problem refuses the whole snapshot with its reason (the solid's own reason when it no longer compiles, a rule's own
@@ -407,6 +475,7 @@ reason such as `text.number.item.<id>` or `check.<name>`, `snapshot.<field>` oth
 | Nesting of a stream statement | 64 levels (other than `solid`: 59, `lesson.depth`) | `explainer.depth` |
 | Record of shown 2D item claims in a snapshot | 1024 ids, 3 tiers each, at most 81,936 bytes (part of the snapshot cap) | `snapshot.shown`, `snapshot.bytes` |
 | Record of shown beat claims in a snapshot | 16 beats, a caption and 8 checks each, 3 tiers each, at most 5,776 bytes (part of the snapshot cap) | `snapshot.shown`, `snapshot.bytes` |
+| Record of shown annotation claims in a snapshot | 80 annotations, one tier each, at most 8,976 bytes (part of the snapshot cap) | `snapshot.shown`, `snapshot.bytes` |
 
 Board, lesson and assembly limits (`MGLimits`, `MGLessonLimits`, `MGSolidLimits`) are unchanged and apply inside.
 
@@ -475,10 +544,15 @@ Refusal order after the document loads: the solid's report checks (`check.meshOp
 then with `--strict` the solid's strict refusals (`joint.idle.<id>`, `frame.axis.off.<id>`) and `notes.unused.<id>`.
 The report is printed in full either way, so the author can repair from it.
 
-`marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--snapshots]` writes `board-0.png`
+`marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--no-story] [--story-fps 10|30]
+[--snapshots]` writes `board-0.png`
 and `solid-0.png` (the views before the first beat), one composite `beat-<n>.png` per beat (the `primary` pane 55 % wide,
-stacked when the size is taller than wide, the caption band and the legend line), `loop.gif` and `loop.mp4` (the solid's
-loop, as for an assembly; skipped with `--no-loop` or without a solid), `snapshot-beat-<n>.json` with `--snapshots`
+stacked when the size is taller than wide, the caption band and the legend line with its notes; the board pane follows the adaptive
+rule below, and each beat's manifest record says `boardPane`), `loop.gif` and `loop.mp4` (the solid's
+loop, as for an assembly; skipped with `--no-loop` or without a solid), `story.mp4` (the beats in order with their
+captions, views, highlights, annotations and cameras, the board at each beat's settled state and the legend line in every
+frame; the timing rules, the 3,600-frame cap `story.frames` and the manifest record are in
+[SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop); skipped with `--no-story`), `snapshot-beat-<n>.json` with `--snapshots`
 (snapshot `/2` of each beat's view) and `manifest.json` (source, outputs with bytes and SHA-256, legend, captions, frames
 and seconds per frame). The legend line and the manifest `legend` are the legend of the whole explainer, every beat
 presented (the legend `check` reports). The solid pane of a beat is framed by the step the beat shows, with the assembly rule

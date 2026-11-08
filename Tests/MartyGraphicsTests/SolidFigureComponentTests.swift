@@ -105,6 +105,54 @@ final class SolidFigureComponentTests: XCTestCase {
         XCTAssertGreaterThan(b.z, a.z + 300)
     }
 
+    /// The `back` anchor's frame is on the torso surface: a pack whose shape starts at local y = 0 touches the torso
+    /// (gap under 1 mm, no overlap beyond tessellation), and the catalog says so (`anchorAbout`), so a model that reads
+    /// only the catalog can place it.
+    func testBackAnchorIsOnTheTorsoSurface() throws {
+        let pack = #", {"id": "pack", "parent": "a.back", "at": [0, 30, 0], "shape": {"box": {"size": [260, 60, 380]}}}"#
+        for (ls, rs) in [(10.0, 10.0), (25, 25), (170, 4)] {
+            let d = try compile(use("mannequin", ["leftShoulder": ls, "rightShoulder": rs], extra: pack)).get()
+            let p = bounds(d, "pack")
+            // The torso's back surface over the pack's footprint: the largest y of torso points inside it.
+            let t = d.assembly.pose(d.defaults).world["a.body"]!
+            let torso = d.assembly.part("a.body")!.mesh.positions.map { t.apply($0) }
+                .filter { abs($0.x) < 120 && $0.z > p.min.z && $0.z < p.max.z }
+            let back = try XCTUnwrap(torso.map(\.y).max())
+            XCTAssertEqual(p.min.y, 125, accuracy: 1e-9)              // the pack's inner face is at the anchor
+            XCTAssertLessThan(p.min.y - back, 1.0)                    // touching: gap under 1 mm
+            XCTAssertGreaterThanOrEqual(p.min.y - back, -1e-6)        // and not inside the torso
+        }
+        // An `at` y of 110 for the same box (the origin taken for the torso centre) leaves an 80 mm gap: the reason the
+        // catalog now says where the frame is.
+        let far = try compile(use("mannequin", extra: pack.replacingOccurrences(of: "[0, 30, 0]", with: "[0, 110, 0]"))).get()
+        XCTAssertEqual(bounds(far, "pack").min.y - 125, 80, accuracy: 1e-9)
+        guard case .array(let entries)? = lib.catalog()["components"],
+              let m = entries.first(where: { $0["id"] == .string("mannequin") }) else { return XCTFail("catalog") }
+        guard case .string(let back)? = m["anchorAbout"]?["back"] else { return XCTFail("anchorAbout.back") }
+        XCTAssertTrue(back.contains("back surface") && back.contains("+Y"), back)
+        guard case .object(let about)? = m["anchorAbout"], case .object(let anchors)? = m["anchors"] else { return XCTFail("anchors") }
+        XCTAssertEqual(Set(about.keys), Set(anchors.keys))
+    }
+
+    /// `anchorAbout` is validated: an object whose keys are anchors and whose texts are 1–120 scalars. A refused
+    /// definition leaves the library unchanged.
+    func testAnchorAboutIsValidated() {
+        func def(_ about: String) -> String {
+            #"{"v": 1, "kind": "component", "id": "plate", "title": "Plate", "about": "A plate.", "parts": [{"id": "p", "shape": {"box": {"size": [10, 10, 2]}}}], "anchors": {"top": "p"}, "anchorAbout": \#(about)}"#
+        }
+        var l = MGSolidLibrary.builtIn
+        let before = l
+        for bad in [#""top""#, #"{"bottom": "Under the plate."}"#, #"{"top": ""}"#, #"{"top": 3}"#,
+                    "{\"top\": \"\(String(repeating: "é", count: 121))\"}"] {
+            guard case .failure(let e) = l.register(Data(def(bad).utf8)) else { XCTFail(bad); continue }
+            XCTAssertEqual(e.reason, "component.anchorAbout", bad)
+            XCTAssertEqual(l, before, bad)
+        }
+        guard case .success(let c) = l.register(Data(def("{\"top\": \"\(String(repeating: "é", count: 120))\"}").utf8)) else { return XCTFail("120") }
+        XCTAssertEqual(c.anchorAbout["top"]?.unicodeScalars.count, 120)
+        XCTAssertEqual(c.catalogEntry["anchorAbout"]?["top"], .string(String(repeating: "é", count: 120)))
+    }
+
     // MARK: centrifugalCompressor
 
     func testCompressorPartsCountsAndBudget() throws {

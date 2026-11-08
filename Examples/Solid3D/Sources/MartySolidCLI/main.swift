@@ -18,7 +18,8 @@ enum CLIError: Error, CustomStringConvertible {
         switch self {
         case .usage: return """
             Usage: marty-solid check FILE.json [--strict] [--patch PATCH.json] [--component C.json ...]
-                   marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--snapshots] [--component C.json ...]
+                   marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--no-story] [--story-fps 10|30]
+                                      [--snapshots] [--component C.json ...]
                    marty-solid snapshot check SNAPSHOT.json [--component C.json ...]
                    marty-solid components [--component C.json ...]
                    marty-solid component check C.json [--component OTHER.json ...] [--with NAME=VALUE ...]
@@ -200,7 +201,7 @@ func componentCheck(_ path: String, _ base: MGSolidLibrary, with values: [String
 
 // MARK: render
 
-func caption(_ image: CGImage, title: String, text: String?, footer: String) -> CGImage {
+func caption(_ image: CGImage, title: String, text: String?, footer: String, boardLine: String? = nil) -> CGImage {
     let w = image.width, h = image.height
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
@@ -232,6 +233,17 @@ func caption(_ image: CGImage, title: String, text: String?, footer: String) -> 
         draw(t, 20 * s, .regular, x: 40 * s, y: 30 * s, alpha: 0.95, maxWidth: CGFloat(w) - 80 * s)
     }
     draw(footer, 12 * s, .regular, x: 40 * s, y: CGFloat(h) - 92 * s, alpha: 0.6)
+    // The board's text when its pane is not drawn (an explainer beat whose board shows only text): one line in the
+    // title band, under the legend line, in the board's ink, truncated with an ellipsis.
+    if let line = boardLine {
+        let font = NSFont.systemFont(ofSize: 15 * s, weight: .medium) as CTFont
+        let ink = CGColor(srgbRed: 0.72, green: 0.80, blue: 1.0, alpha: 0.95)
+        let attr = NSAttributedString(string: line, attributes: [.font: font, .foregroundColor: ink])
+        let dots = CTLineCreateWithAttributedString(NSAttributedString(string: "…", attributes: [.font: font, .foregroundColor: ink]))
+        let fitted = CTLineCreateTruncatedLine(CTLineCreateWithAttributedString(attr), Double(CGFloat(w) - 80 * s), .end, dots)
+            ?? CTLineCreateWithAttributedString(attr)
+        ctx.textPosition = CGPoint(x: 40 * s, y: CGFloat(h) - 118 * s); CTLineDraw(fitted, ctx)
+    }
     return ctx.makeImage()!
 }
 
@@ -239,6 +251,16 @@ func writePNG(_ image: CGImage, _ url: URL) throws {
     guard let d = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil) else { throw CLIError.invalid("png") }
     CGImageDestinationAddImage(d, image, nil)
     guard CGImageDestinationFinalize(d) else { throw CLIError.invalid("png finalize") }
+}
+
+/// Only the document legend (text and notes) in the legend corner, with no labels.
+func legendOnly(_ image: CGImage, _ doc: MGSolidDocument) -> CGImage {
+    let w = image.width, h = image.height
+    let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+    MGSolidOverlay.drawLegend(document: doc, in: ctx, width: w, height: h)
+    return ctx.makeImage()!
 }
 
 /// The annotation overlay (labels, leaders, value texts, callouts, legend) drawn over a rendered frame.
@@ -350,16 +372,29 @@ final class MovieWriter {
     }
 }
 
+/// The story manifest's per-beat records with the hold camera (the camera of the beat's last frame) and the number of
+/// annotations off view in that frame (absent when the beat draws none).
+func storyBeats(_ beats: MGJSON?, _ cameras: [Int: MGSolidCamera], _ offView: [Int: Int]) -> MGJSON? {
+    guard case .array(let list)? = beats else { return beats }
+    return .array(list.enumerated().map { k, v -> MGJSON in
+        guard case .object(var o) = v else { return v }
+        if let c = cameras[k] { o["camera"] = c.manifestJSON }
+        if let n = offView[k] { o["offView"] = .number(Double(n)) }
+        return .object(o)
+    })
+}
+
 func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined() }
 
 /// Renders the library's render plan (`MGSolidRenderPlan`): captioned stills, the loop GIF and MP4, the snapshot and the
 /// manifest. Cameras come from the plan (`MGSolidRenderPlan.cameras`, the `MGSolidFraming` rule).
 @MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool, loopRate: Int = 10,
+                       story: Bool = true, storyRate: Int = MGStoryTiming.defaultRate,
                        snapshots: Bool = false, library lib: MGSolidLibrary) throws -> Int32 {
     let document = try loadDocument(path)
     switch document.kind {
     case "explainer"?: return try renderExplainer(path, document.data, outPath, width: width, height: height, loop: loop, loopRate: loopRate,
-                                                  snapshots: snapshots, library: lib)
+                                                  story: story, storyRate: storyRate, snapshots: snapshots, library: lib)
     case "lesson"?: return unsupportedKind()
     default: break
     }
@@ -371,6 +406,13 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     switch MGSolidParser.document(data: src.data, library: lib) {
     case .failure(let issue): print(json(MGSolidReport.refused(issue, engine: engine).json)); return 1
     case .success(let d): doc = d
+    }
+    // The story video's plan (one beat per step), before anything is written: a story over the frame cap is refused
+    // and no directory is made.
+    var storyPlan: MGStoryPlan?
+    if story, !doc.steps.isEmpty {
+        do { storyPlan = try MGStoryPlan(captions: doc.steps.indices.map { "\($0 + 1). \(doc.steps[$0].say)" }, spins: doc.steps.map(\.spin), fps: storyRate) }
+        catch let e as MGSolidIssue { print(json(stamped(["ok": .bool(false), "reason": .string(e.reason)]))); return 1 }
     }
     let out = URL(fileURLWithPath: outPath, isDirectory: true)
     // Atomic "must not exist": creation fails if the directory appears in the meantime. The parent must exist.
@@ -420,8 +462,16 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         try autoreleasepool {
             let img = caption(try shot(s, cameras.stills[k]), title: s.title ?? doc.title, text: s.caption, footer: plan.footer)
             try writePNG(img, out.appendingPathComponent(s.file))
-            try record(s.file, ["width": .number(Double(img.width)), "height": .number(Double(img.height)),
-                                "framing": .string(cameras.rules[k].rawValue)])
+            var fields: [String: MGJSON] = ["width": .number(Double(img.width)), "height": .number(Double(img.height)),
+                                            "framing": .string(cameras.rules[k].rawValue)]
+            // Step stills also record their camera (the story's hold camera for that step) and the annotations off view.
+            if s.step != nil {
+                fields["camera"] = cameras.stills[k].manifestJSON
+                if s.showsAnnotations, !doc.view(step: s.step).annotations.isEmpty, let f = previousFrame {
+                    fields["offView"] = .number(Double(f.placement.filter(\.offView).count))
+                }
+            }
+            try record(s.file, fields)
         }
     }
     if !plan.loop.isEmpty {
@@ -452,6 +502,66 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                                 "frames": .number(Double(movie.frames)), "fps": .number(Double(plan.loopRate)),
                                 "loopSeconds": .number(Double(movie.frames) / Double(plan.loopRate)), "framingScale": .number(cameras.loopScale)])
     }
+    if let story = storyPlan {
+        // The steps in order, each with its caption, view (cuts, ghosts), highlight, annotations and camera; the camera
+        // moves from the previous step's camera at the start of each step, and the step's spin plays as in the view.
+        let stepStill = Dictionary(uniqueKeysWithValues: plan.stills.indices.compactMap { k in plan.stills[k].step.map { ($0, k) } })
+        // The legend shows in every frame: for a document with annotations, in the overlay corner with its notes (also
+        // during camera moves, while arrows are drawn and labels are not); otherwise in the footer line.
+        let annotated = !doc.annotations.isEmpty
+        let footer = annotated ? plan.footer : "\(doc.legend.text) · \(plan.footer)"
+        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(story.fps))
+        // During a step's hold the camera is exactly the step still's camera; only the move at the start of a step is in
+        // between, and labels are hidden during that move.
+        let beatCameras: [MGSolidCamera?] = doc.steps.indices.map { k in stepStill[k].map { cameras.stills[$0] } }
+        var shownStep: Int?, settledStep: Int?
+        var holdCamera: [Int: MGSolidCamera] = [:], holdOffView: [Int: Int] = [:]
+        for i in 0..<story.frameCount {
+            try autoreleasepool {
+                let f = story.frame(i)
+                guard let base = MGSolidShot.step(doc, f.beat), let camera = story.camera(frame: i, beatCameras: beatCameras) else {
+                    throw CLIError.invalid("story step")
+                }
+                let step = doc.steps[f.beat]
+                var s = base
+                s.params = MGPoseParameters(input: doc.defaults.input + step.spin * 2 * .pi * f.spin, explode: base.params.explode)
+                let view = doc.view(step: f.beat)
+                if shownStep != f.beat {
+                    shownStep = f.beat
+                    r.show(document: doc, view: view)
+                    r.highlight(Set(s.highlight), dimOthers: !s.highlight.isEmpty)
+                }
+                // A step's caption, labels and claims appear when its hold starts (after the camera move); labels keep
+                // their places for the rest of the step.
+                let holding = story.holds(frame: i)
+                if !holding || settledStep != f.beat { previousFrame = nil }
+                settledStep = holding ? f.beat : nil
+                r.apply(s.params)
+                r.setCamera(camera)
+                let t0 = Date()
+                guard var img = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
+                seconds += Date().timeIntervalSince(t0); frames += 1
+                if holding { holdCamera[f.beat] = camera }
+                if holding, !view.annotations.isEmpty {
+                    let frame = MGSolidAnnotations.frame(document: doc, view: view, params: s.params, camera: r.camera, width: Double(width),
+                                                         height: Double(height), previous: previousFrame, highlight: s.highlight,
+                                                         caption: true, title: true)
+                    previousFrame = frame
+                    holdOffView[f.beat] = frame.placement.filter(\.offView).count
+                    img = overlaid(img, frame, doc)   // labels and the legend corner
+                } else if annotated {
+                    img = legendOnly(img, doc)        // the legend and its notes, no labels
+                }
+                // During the move the caption band is empty: the caption names what the hold shows.
+                try movie.append(caption(img, title: s.title ?? doc.title, text: story.caption(frame: i) ?? "", footer: footer))
+            }
+        }
+        try movie.finish()
+        var fields = story.manifestFields()
+        fields["beats"] = storyBeats(fields["beats"], holdCamera, holdOffView)
+        fields["codec"] = .string("h264"); fields["width"] = .number(Double(movie.width)); fields["height"] = .number(Double(movie.height))
+        try record("story.mp4", fields)
+    }
     try MGSolidRenderPlan.snapshot(doc).jsonData().write(to: out.appendingPathComponent("snapshot.json"))
     try record("snapshot.json", [:])
     let manifest = try MGSolidRenderPlan.manifest(doc, sourceName: sourceName, source: src.source, framesRendered: frames,
@@ -474,28 +584,22 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     return r.cgImage
 }
 
-/// The panes of one composite frame: the `primary` view gets 55 % (side by side when wider than tall, else stacked).
+/// The panes of one composite frame (`MGExplainerFrame.panes`): the `primary` view gets 55 % (side by side when wider
+/// than tall, else stacked). `board` is false in a beat whose shown board has no non-text item
+/// (`MGExplainerSession.boardPane`): the solid then takes the whole area.
 func paneRects(width w: Int, height h: Int, board: Bool, solid: Bool, primarySolid: Bool) -> (board: CGRect?, solid: CGRect?) {
-    let s = CGFloat(w) / 1280, gap = 16 * s
-    let area = CGRect(x: 24 * s, y: 132 * s, width: CGFloat(w) - 48 * s, height: CGFloat(h) - 132 * s - 112 * s)
-    guard board && solid else { return (board ? area : nil, solid ? area : nil) }
-    var first = area, second = area
-    if w >= h {
-        let a = (area.width - gap) * 0.55, b = area.width - gap - a
-        first.size.width = primarySolid ? b : a
-        second.origin.x = first.maxX + gap; second.size.width = primarySolid ? a : b
-    } else {
-        let a = (area.height - gap) * 0.55, b = area.height - gap - a
-        // CoreGraphics y grows upward: the first pane is the top one.
-        second.size.height = primarySolid ? a : b
-        first.origin.y = second.maxY + gap; first.size.height = primarySolid ? b : a
-    }
-    return (first, second)
+    let p = MGExplainerFrame.panes(width: w, height: h, board: board, solid: solid, primarySolid: primarySolid)
+    func cg(_ r: MGFrameRect?) -> CGRect? { r.map { CGRect(x: $0.x, y: $0.y, width: $0.width, height: $0.height) } }
+    return (cg(p.board), cg(p.solid))
 }
 
+/// A pane rect as the engine's whole-pixel rect (`MGExplainerFrame.panes` gives whole pixels).
+func frameRect(_ r: CGRect) -> MGFrameRect { MGFrameRect(x: Int(r.minX), y: Int(r.minY), width: Int(r.width), height: Int(r.height)) }
+
 /// One composite: the panes on a dark board, then the title, the caption band and the legend line (`caption`).
+/// `boardLine`: the board's text when its pane is not drawn (`MGExplainerBoardPane.line`), shown in the title band.
 func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, rects: (board: CGRect?, solid: CGRect?),
-               title: String, caption text: String?, footer: String) -> CGImage {
+               title: String, caption text: String?, footer: String, boardLine: String? = nil) -> CGImage {
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     ctx.setFillColor(CGColor(red: 0.05, green: 0.07, blue: 0.10, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
@@ -506,12 +610,26 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         ctx.draw(img, in: rect)
         ctx.restoreGState()
     }
-    return caption(ctx.makeImage()!, title: title, text: text, footer: footer)
+    return caption(ctx.makeImage()!, title: title, text: text, footer: footer, boardLine: boardLine)
+}
+
+/// One beat of an explainer as the stills show it, kept for the story video: the view, the caption line, the board
+/// image and pane layout, the board text that moved to the title band, the solid step and its framed camera.
+struct ExplainerBeatShot {
+    var view: MGExplainerBeatView
+    var caption: String
+    var board: CGImage?
+    var rects: (board: CGRect?, solid: CGRect?)
+    var boardLine: String?
+    var stepIndex: Int?
+    var camera: MGSolidCamera?
 }
 
 /// `render` for an explainer: `beat-<n>.png` (one composite per beat), `board-0.png` and `solid-0.png` (the views before
-/// the first beat), `loop.gif` (the solid's loop), `snapshot-beat-<n>.json` with `--snapshots`, and `manifest.json`.
+/// the first beat), `loop.gif` and `loop.mp4` (the solid's loop), `story.mp4` (the beats in order), `snapshot-beat-<n>.json`
+/// with `--snapshots`, and `manifest.json`.
 @MainActor func renderExplainer(_ path: String, _ data: Data, _ outPath: String, width: Int, height: Int, loop: Bool, loopRate: Int = 10,
+                                story: Bool = true, storyRate: Int = MGStoryTiming.defaultRate,
                                 snapshots: Bool, library lib: MGSolidLibrary) throws -> Int32 {
     let source = MGSolidSource(data: data)
     let doc: MGExplainer
@@ -523,6 +641,25 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     var session = MGExplainerSession(pacing: .speech, clock: clock, library: lib)
     if case .failure(let issue) = session.load(doc) {
         print(json(MGExplainerReport.refused(issue, profile: nil, source: nil, engine: engine).json)); return 1
+    }
+    // The story video's plan, before anything is written: a dry run of the beats on a separate session and clock gives
+    // each beat's caption and spin; a story over the frame cap is refused and no directory is made.
+    var storyPlan: MGStoryPlan?
+    if story {
+        let dryClock = MGManualClock()
+        var dry = MGExplainerSession(pacing: .speech, clock: dryClock, library: lib)
+        _ = dry.load(doc)
+        var captions: [String] = [], spins: [Double] = []
+        while let beat = dry.presented.beat, beat == captions.count {
+            dryClock.advance(by: dry.motionRemaining)
+            _ = dry.tick()
+            captions.append("\(beat + 1). \(dry.caption ?? "")"); spins.append(dry.presented.step?.spin ?? 0)
+            _ = dry.lineEnded(beat)
+        }
+        if !captions.isEmpty {
+            do { storyPlan = try MGStoryPlan(captions: captions, spins: spins, fps: storyRate) }
+            catch let e as MGSolidIssue { print(json(stamped(["ok": .bool(false), "reason": .string(e.reason)]))); return 1 }
+        }
     }
     // The views before the first beat: every statement up to the first `say`.
     var before = MGExplainerSession(pacing: .speech, clock: MGManualClock(), library: lib)
@@ -539,7 +676,8 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     var whole = session
     _ = whole.finishNow()
     let legend = whole.legend
-    let footer = "\(legend.text) · Rendered by the MartyGraphics engine from \(sourceName) (\(source.sizeText))"
+    // The legend line and its notes ("Arrow lengths are not to scale"), in every still and every story frame.
+    let footer = (([legend.text] + legend.notes) + ["Rendered by the MartyGraphics engine from \(sourceName) (\(source.sizeText))"]).joined(separator: " · ")
     let title = session.title ?? ""
     let solidDoc = session.solid
     let renderer = solidDoc.map { d -> MGSolidRenderer in
@@ -548,33 +686,48 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         return r
     }
     let primarySolid = (session.primary ?? (solidDoc != nil ? "solid" : "board")) == "solid"
-    let rects = paneRects(width: width, height: height, board: doc.board != nil, solid: solidDoc != nil, primarySolid: primarySolid)
     var files: [MGJSON] = [], names: [String] = []
     var seconds = 0.0, frames = 0
     var lastFraming: MGSolidFraming.Rule?
+    var lastCamera: MGSolidCamera?
+    var lastOffView: Int?   // annotations of the last solid image whose anchor was outside the pane (nil: none drawn)
+    var shownView: MGSolidView?
+    var previousFrame: MGAnnotationFrame?
     /// `stepIndex`: the solid step the beat shows (its focus frames the pane, `MGSolidFraming`); nil for the plain view.
-    func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Bool = true, stepIndex: Int? = nil) throws -> CGImage? {
+    /// `spin`: the played fraction of the beat's spin (1: the beat's end pose, as in a still). `camera`: the story
+    /// video's camera for this frame (`MGStoryPlan.camera(frame:beatCameras:)`); without it the pane is framed by
+    /// `MGExplainerFrame.solidCamera` for the pane's own pixels, as in a still. `labels`: draw the annotation overlay
+    /// (the story hides it while the camera moves). `stable`: keep label places from the last frame.
+    func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Double = 1, stepIndex: Int? = nil, camera: MGSolidCamera? = nil,
+                    labels: Bool = true, stable: Bool = false) throws -> CGImage? {
         guard let r = renderer, let d = solidDoc else { return nil }
-        let step = view.step
+        let pane = frameRect(rect)
         let shown = view.solid ?? d.view(step: nil)
-        let params = MGPoseParameters(input: d.defaults.input + (spin ? (step?.spin ?? 0) : 0) * 2 * .pi, explode: step?.explode ?? d.defaults.explode)
+        let params = MGExplainerFrame.pose(d, view: view, spin: spin)
         r.apply(params)
-        r.show(document: d, view: shown)
-        r.highlight(Set(view.solidHighlight), dimOthers: !view.solidHighlight.isEmpty)
-        r.highlightAnnotations(Set(view.annotations))
-        // The pane holds no title or caption (they sit outside it), so the whole pane is the safe window.
-        let shot = MGSolidShot(file: "", params: params, preset: step?.camera ?? "hero", orbit: step?.orbit ?? 0, highlight: view.solidHighlight,
-                               margin: 0.8, step: step == nil ? nil : stepIndex, title: nil, caption: nil)
-        let framed = MGSolidFraming.framing(d, shot: shot, aspect: Double(rect.width / rect.height), titleBand: 0, captionBand: 0)
-        r.setCamera(framed.camera)
-        lastFraming = framed.rule
+        if !stable || shownView != shown {
+            r.show(document: d, view: shown)
+            r.highlight(Set(view.solidHighlight), dimOthers: !view.solidHighlight.isEmpty)
+            r.highlightAnnotations(Set(view.annotations))
+            shownView = shown; previousFrame = nil
+        }
+        if let camera {
+            r.setCamera(camera)
+        } else {
+            let framed = MGExplainerFrame.solidCamera(d, view: view, stepIndex: stepIndex, pane: pane)
+            r.setCamera(framed.camera)
+            lastFraming = framed.rule; lastCamera = framed.camera
+        }
         let t0 = Date()
-        guard let img = r.render(width: Int(rect.width), height: Int(rect.height)) else { throw CLIError.invalid("render failed (no Metal device?)") }
+        guard let img = r.render(width: pane.width, height: pane.height) else { throw CLIError.invalid("render failed (no Metal device?)") }
         seconds += Date().timeIntervalSince(t0); frames += 1
-        guard !shown.annotations.isEmpty else { return img }
+        lastOffView = nil
+        guard labels, !shown.annotations.isEmpty else { previousFrame = nil; return img }
         // Labels, value texts and callouts from the same placement function as the snapshot and the SwiftUI overlay.
         let frame = MGSolidAnnotations.frame(document: d, view: shown, params: params, camera: r.camera, width: Double(img.width),
-                                             height: Double(img.height), highlight: view.solidHighlight)
+                                             height: Double(img.height), previous: stable ? previousFrame : nil, highlight: view.solidHighlight)
+        previousFrame = frame
+        lastOffView = frame.placement.filter(\.offView).count
         let ctx = CGContext(data: nil, width: img.width, height: img.height, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
         ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
@@ -590,10 +743,11 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         files.append(.object(o)); names.append(name)
     }
     /// `framing`: the rule that framed the solid pane of this image, if it has one.
-    func write(_ img: CGImage, _ name: String, framing: MGSolidFraming.Rule? = nil) throws {
+    func write(_ img: CGImage, _ name: String, framing: MGSolidFraming.Rule? = nil, fields extra: [String: MGJSON] = [:]) throws {
         try writePNG(img, out.appendingPathComponent(name))
         var fields: [String: MGJSON] = ["width": .number(Double(img.width)), "height": .number(Double(img.height))]
         if let framing { fields["framing"] = .string(framing.rawValue) }
+        fields.merge(extra) { a, _ in a }
         try record(name, fields)
     }
     if doc.board != nil, let scene = before.state?.scene {
@@ -605,10 +759,11 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     if solidDoc != nil {
         let alone = paneRects(width: width, height: height, board: false, solid: true, primarySolid: true)
         lastFraming = nil
-        try write(composite(width: width, height: height, board: nil, solid: try solidImage(MGExplainerBeatView(), alone.solid!, spin: false),
+        try write(composite(width: width, height: height, board: nil, solid: try solidImage(MGExplainerBeatView(), alone.solid!, spin: 0),
                             rects: alone, title: title, caption: nil, footer: footer), "solid-0.png", framing: lastFraming)
     }
     var captions: [MGJSON] = []
+    var shots: [ExplainerBeatShot] = []
     var k = 0
     while let beat = session.presented.beat, beat == k {
         // Each still shows the beat's settled state: the caption's 2D numbers appear once the board's motion has played.
@@ -617,11 +772,23 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         let view = session.presented
         let caption = session.caption ?? ""
         captions.append(.string(caption))
+        // The adaptive board pane: a beat whose shown board has only text gives the solid the whole frame, and the
+        // board's text moves to the title band.
+        let pane = session.boardPane
+        let rects = paneRects(width: width, height: height, board: pane.shown, solid: solidDoc != nil, primarySolid: primarySolid)
         let b = rects.board.flatMap { r in session.state.map { boardImage($0.scene, view, width: Int(r.width), height: Int(r.height)) } } ?? nil
-        lastFraming = nil
-        let sImg = try rects.solid.flatMap { try solidImage(view, $0, stepIndex: session.solidStep(forBeat: k)) }
-        try write(composite(width: width, height: height, board: b, solid: sImg, rects: rects, title: title, caption: "\(k + 1). \(caption)", footer: footer),
-                  "beat-\(k + 1).png", framing: lastFraming)
+        lastFraming = nil; lastCamera = nil; lastOffView = nil
+        let step = session.solidStep(forBeat: k)
+        let sImg = try rects.solid.flatMap { try solidImage(view, $0, stepIndex: step) }
+        let line = "\(k + 1). \(caption)"
+        var extra: [String: MGJSON] = ["boardPane": .bool(rects.board != nil)]
+        if let c = lastCamera { extra["camera"] = c.manifestJSON }
+        if let n = lastOffView { extra["offView"] = .number(Double(n)) }
+        try write(composite(width: width, height: height, board: b, solid: sImg, rects: rects, title: title, caption: line, footer: footer,
+                            boardLine: pane.shown ? nil : pane.line),
+                  "beat-\(k + 1).png", framing: lastFraming, fields: extra)
+        shots.append(ExplainerBeatShot(view: view, caption: line, board: b, rects: rects, boardLine: pane.shown ? nil : pane.line,
+                                       stepIndex: step, camera: lastCamera))
         if snapshots, let d = solidDoc {
             let params = MGPoseParameters(input: d.defaults.input + (view.step?.spin ?? 0) * 2 * .pi, explode: view.step?.explode ?? d.defaults.explode)
             let name = "snapshot-beat-\(k + 1).json"
@@ -640,7 +807,7 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         guard let gif = CGImageDestinationCreateWithURL(gifURL as CFURL, UTType.gif.identifier as CFString, n, nil) else { throw CLIError.invalid("gif") }
         CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
         let movie = try MovieWriter(url: out.appendingPathComponent("loop.mp4"), width: width, height: height, fps: Int32(plan.loopRate))
-        r.show(d.view(step: nil)); r.highlight([], dimOthers: false)
+        r.show(d.view(step: nil)); r.highlight([], dimOthers: false); shownView = nil
         for (k, shot) in plan.loop.enumerated() {
             // One pool per frame (render, encode, GIF), as for an assembly loop.
             try autoreleasepool {
@@ -662,6 +829,47 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         try record("loop.mp4", ["codec": .string("h264"), "width": .number(Double(movie.width)), "height": .number(Double(movie.height)),
                                 "frames": .number(Double(movie.frames)), "fps": .number(Double(plan.loopRate)),
                                 "loopSeconds": .number(Double(movie.frames) / Double(plan.loopRate)), "framingScale": .number(cameras.loopScale)])
+    }
+    if let story = storyPlan {
+        // The dry run and the stills run the same session rules on the same document, so they present the same beats.
+        guard story.beats.count == shots.count, zip(story.beats, shots).allSatisfy({ $0.caption == $1.caption }) else {
+            throw CLIError.invalid("story: the beats differ from the stills")
+        }
+        // The beats in order: each frame is a real composite of the beat's board (its settled state, as in its still),
+        // the solid at the beat's view, highlight and annotations, the caption and the legend line. During a beat's hold
+        // the camera is exactly the beat's still camera (same layout, same pane pixels); only in the camera move at the
+        // start of a beat is it in between, and labels are hidden during that move. The beat's spin plays.
+        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(story.fps))
+        let beatCameras = shots.map(\.camera)
+        // A beat whose solid pane has another size than the previous beat's (the board pane appeared or went) cuts to
+        // its own camera instead of moving: the previous camera was fitted for the other pane.
+        let cuts = Set(shots.indices.dropFirst().filter { shots[$0].rects.solid != shots[$0 - 1].rects.solid })
+        shownView = nil
+        var settled: Int?   // the beat whose camera has arrived (its labels keep their places from frame to frame)
+        var holdCamera: [Int: MGSolidCamera] = [:], holdOffView: [Int: Int] = [:]
+        for i in 0..<story.frameCount {
+            try autoreleasepool {
+                let f = story.frame(i)
+                let b = shots[f.beat]
+                let camera = story.camera(frame: i, beatCameras: beatCameras, cuts: cuts)
+                let holding = story.holds(frame: i, cuts: cuts)
+                let sImg = try b.rects.solid.flatMap { try solidImage(b.view, $0, spin: f.spin, stepIndex: b.stepIndex, camera: camera,
+                                                                      labels: holding, stable: settled == f.beat) }
+                settled = holding ? f.beat : nil
+                if holding, let camera { holdCamera[f.beat] = camera; if let n = lastOffView { holdOffView[f.beat] = n } }
+                // A beat's caption, labels and board claims appear when its hold starts. During the camera move the
+                // caption band is empty and the board still shows the previous beat's state (the layout is the same:
+                // a layout change cuts, with no move).
+                let board = holding || f.beat == 0 ? b : shots[f.beat - 1]
+                try movie.append(composite(width: width, height: height, board: board.board, solid: sImg, rects: b.rects, title: title,
+                                           caption: story.caption(frame: i, cuts: cuts) ?? "", footer: footer, boardLine: board.boardLine))
+            }
+        }
+        try movie.finish()
+        var fields = story.manifestFields(cuts: cuts)
+        fields["beats"] = storyBeats(fields["beats"], holdCamera, holdOffView)
+        fields["codec"] = .string("h264"); fields["width"] = .number(Double(movie.width)); fields["height"] = .number(Double(movie.height))
+        try record("story.mp4", fields)
     }
     let manifest: MGJSON = .object([
         "source": .object(["file": .string(sourceName), "lines": .number(Double(source.lines)), "sha256": .string(source.sha256)]),
@@ -740,12 +948,17 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                 }
                 exit(try componentCheck(a[2], lib, with: values))
             case "render"? where a.count >= 3 && !a[1].hasPrefix("--") && !a[2].hasPrefix("--"):
-                var w = 1280, h = 800, loop = true, rate = 10, snapshots = false
+                var w = 1280, h = 800, loop = true, rate = 10, snapshots = false, story = true, storyRate = MGStoryTiming.defaultRate
                 var rest = Array(a.dropFirst(3))
                 while let flag = rest.first {
                     rest.removeFirst()
                     switch flag {
                     case "--no-loop": loop = false
+                    case "--no-story": story = false
+                    case "--story-fps":
+                        guard let v = rest.first, let r = Int(v), MGStoryTiming.rates.contains(r) else { throw CLIError.usage }
+                        rest.removeFirst()
+                        storyRate = r
                     case "--snapshots": snapshots = true
                     case "--loop-fps":
                         guard let v = rest.first, let r = Int(v), MGSolidRenderPlan.loopRates.contains(r) else { throw CLIError.usage }
@@ -760,7 +973,8 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                     default: throw CLIError.usage
                     }
                 }
-                exit(try render(a[1], a[2], width: w, height: h, loop: loop, loopRate: rate, snapshots: snapshots, library: lib))
+                exit(try render(a[1], a[2], width: w, height: h, loop: loop, loopRate: rate, story: story, storyRate: storyRate,
+                                snapshots: snapshots, library: lib))
             default: throw CLIError.usage
             }
         } catch {

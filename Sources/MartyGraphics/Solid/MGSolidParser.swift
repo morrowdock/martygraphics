@@ -30,8 +30,56 @@ public enum MGSolidLimits {
 public struct MGSolidIssue: Error, Equatable, CustomStringConvertible, Sendable {
     public let reason: String
     public let part: String?
-    public init(_ reason: String, part: String? = nil) { self.reason = reason; self.part = part }
+    /// Repair detail of `annotations.visible` (nil for every other reason).
+    public let visibility: MGAnnotationVisibilityDetail?
+    public init(_ reason: String, part: String? = nil) { self.reason = reason; self.part = part; visibility = nil }
+    /// `annotations.visible` with its repair detail; `part` is the detail's annotation id.
+    public init(visibility v: MGAnnotationVisibilityDetail) { reason = "annotations.visible"; part = v.annotation; visibility = v }
+    /// Another visibility reason (`step.annotate.count`, `view.annotate.count`) with its repair detail.
+    public init(_ reason: String, visibility v: MGAnnotationVisibilityDetail) { self.reason = reason; part = v.annotation; visibility = v }
     public var description: String { part.map { "\(reason) (\($0))" } ?? reason }
+}
+
+/// Why the annotation visibility limit refused a document, as report fields (`visibility`): the first annotation over
+/// the limit (in authored order, or in the step's or beat's `annotate` list), the number that would show at once, the
+/// limit, the cause, and the step or beat (1-based in JSON) when one step or beat is at fault. The reason itself stays
+/// one token (`annotations.visible`, `step.annotate.count`, `view.annotate.count`).
+public struct MGAnnotationVisibilityDetail: Equatable, Sendable {
+    public enum Cause: String, Equatable, Sendable {
+        /// The document has no step, so the plain view shows every annotation (in an explainer: the solid statement,
+        /// which is checked before any beat view and may not have steps).
+        case noSteps = "nosteps"
+        /// The document has steps, but none uses `annotate`, so the plain view and every step show every annotation.
+        case unannotated
+        /// One step's `annotate` lists more than the limit (`step.annotate.count`; `step` names it).
+        case step
+        /// One explainer beat's `view.annotate` lists more than the limit (`view.annotate.count`; `beat` names it).
+        case beat
+    }
+    public let annotation: String
+    public let count: Int
+    public let limit: Int
+    public let cause: Cause
+    /// The step (cause `step`) or beat (cause `beat`) at fault, 0-based; nil when no single one is.
+    public let index: Int?
+
+    public init(annotation: String, count: Int, limit: Int, cause: Cause, index: Int? = nil) {
+        self.annotation = String(annotation.unicodeScalars.prefix(64)); self.count = count; self.limit = limit; self.cause = cause
+        self.index = index
+    }
+
+    /// This detail for step or beat `i` (0-based) with `cause`.
+    func at(_ i: Int, cause: Cause) -> MGAnnotationVisibilityDetail {
+        MGAnnotationVisibilityDetail(annotation: annotation, count: count, limit: limit, cause: cause, index: i)
+    }
+
+    /// `{"annotation", "cause", "count", "limit"}`, plus `"step"` (cause `step`) or `"beat"` (cause `beat`), 1-based.
+    public var json: MGJSON {
+        var o: [String: MGJSON] = ["annotation": .string(annotation), "cause": .string(cause.rawValue), "count": .number(Double(count)),
+                                   "limit": .number(Double(limit))]
+        if let index, cause == .step || cause == .beat { o[cause.rawValue] = .number(Double(index + 1)) }
+        return .object(o)
+    }
 }
 
 /// One authored step of an explainer.
@@ -154,9 +202,18 @@ public enum MGSolidParser {
     /// `library` resolves `use` entries (components); see docs/SOLID-3D.md, Components.
     public static func document(json: MGJSON, reusing previous: MGSolidDocument? = nil,
                                 library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
+        document(json: json, reusing: previous, library: library, profile: profile, perStepAnnotations: false)
+    }
+
+    /// `perStepAnnotations` (an explainer's solid): with more than `MGSolidAnnotationLimits.visible` annotations, the
+    /// document is stepped even when no step uses `annotate` (the limit applies to each step's own list).
+    /// `steppedAnnotations`: stepped whatever the steps (an explainer document in which some beat has `annotate`).
+    static func document(json: MGJSON, reusing previous: MGSolidDocument? = nil, library: MGSolidLibrary = .builtIn,
+                         profile: MGSolidProfile = .standard, perStepAnnotations: Bool,
+                         steppedAnnotations: Bool = false) -> Result<MGSolidDocument, MGSolidIssue> {
         if json.nestsTooDeep { return .failure(.init("assembly.depth")) }
         do {
-            let doc = try compile(json, previous, library)
+            let doc = try compile(json, previous, library, perStepAnnotations: perStepAnnotations, steppedAnnotations: steppedAnnotations)
             if let refusal = profile.refusal(doc) { return .failure(refusal) }
             return .success(doc)
         }
@@ -254,7 +311,8 @@ public enum MGSolidParser {
         }
     }
 
-    static func compile(_ json: MGJSON, _ previous: MGSolidDocument?, _ library: MGSolidLibrary = .builtIn) throws -> MGSolidDocument {
+    static func compile(_ json: MGJSON, _ previous: MGSolidDocument?, _ library: MGSolidLibrary = .builtIn,
+                        perStepAnnotations: Bool = false, steppedAnnotations: Bool = false) throws -> MGSolidDocument {
         guard case .object(var o) = json else { throw MGSolidIssue("assembly.object") }
         guard json.canonicalByteCount <= MGSolidLimits.bytes else { throw MGSolidIssue("assembly.bytes") }
         // The key set follows the declared version; anything but 2 checks the v1 keys first, exactly as before.
@@ -637,7 +695,11 @@ public enum MGSolidParser {
         var steps: [MGSolidStep] = []
         if let s = o["steps"] {
             guard case .array(let list) = s, list.count <= MGSolidLimits.steps else { throw MGSolidIssue("steps.count") }
-            for entry in list { steps.append(try step(entry, expand, format)) }
+            for (i, entry) in list.enumerated() {
+                // A visibility refusal of one step names the step.
+                do { steps.append(try step(entry, expand, format)) }
+                catch let e as MGSolidIssue where e.visibility != nil { throw MGSolidIssue(e.reason, visibility: e.visibility!.at(i, cause: .step)) }
+            }
         }
         // v2 annotations: parsed and resolved before any mesh is built; their arrow and dimension pieces join the mesh
         // budget with exact counts.
@@ -646,7 +708,7 @@ public enum MGSolidParser {
             if let a = o["annotations"] {
                 annotations = try MGSolidAnnotations.parse(a, .init(ids: ids, repeated: repeated, aliases: expansion.aliases))
             }
-            try MGSolidAnnotationEngine.checkVisibility(&annotations, steps)
+            try MGSolidAnnotationEngine.checkVisibility(&annotations, steps, perStep: perStepAnnotations, stepped: steppedAnnotations)
             // Poses stay exact enough: a document with annotations keeps its default input within 10,000 turns.
             if !annotations.isEmpty, abs(defaults.input) > MGSolidAnnotationLimits.input { throw MGSolidIssue("annotations.input") }
             let e = annotations.meshEstimate
@@ -1195,7 +1257,12 @@ public enum MGSolidParser {
         }
         if let a = o["annotate"] {
             guard case .array(let list) = a else { throw MGSolidIssue("step.annotate") }
-            guard list.count <= MGSolidAnnotationLimits.visible else { throw MGSolidIssue("step.annotate.count") }
+            guard list.count <= MGSolidAnnotationLimits.visible else {
+                let first: String
+                if case .string(let s) = list[MGSolidAnnotationLimits.visible] { first = s } else { first = "" }
+                throw MGSolidIssue("step.annotate.count", visibility: MGAnnotationVisibilityDetail(annotation: first, count: list.count,
+                                                                                                   limit: MGSolidAnnotationLimits.visible, cause: .step))
+            }
             step.annotate = unique(try list.map { e -> String in
                 guard case .string(let id) = e else { throw MGSolidIssue("step.annotate") }
                 return id

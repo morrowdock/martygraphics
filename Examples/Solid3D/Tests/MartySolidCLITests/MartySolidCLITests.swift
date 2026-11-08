@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import AVFoundation
 import Foundation
 import XCTest
 
@@ -353,9 +354,23 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual(r.status, 0, r.text)
         let files = Set(try FileManager.default.contentsOfDirectory(atPath: out.path))
         XCTAssertEqual(files, ["board-0.png", "solid-0.png", "beat-1.png", "beat-2.png", "snapshot-beat-1.json", "snapshot-beat-2.json",
-                               "loop.gif", "loop.mp4", "manifest.json"])
+                               "loop.gif", "loop.mp4", "story.mp4", "manifest.json"])
         let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
         XCTAssertEqual(manifest?["legend"] as? String, "Solved 6")
+        // The board has a table in every beat, so its pane shows in every beat (the adaptive rule changes nothing here).
+        let outputs = manifest?["outputs"] as? [[String: Any]] ?? []
+        XCTAssertEqual(outputs.filter { ($0["file"] as? String)?.hasPrefix("beat-") == true }.map { $0["boardPane"] as? Bool }, [true, true])
+        // story.mp4: one record with the beats' start times; the captions are the stills' captions.
+        let story = try XCTUnwrap(outputs.first { $0["file"] as? String == "story.mp4" })
+        XCTAssertEqual(story["fps"] as? Int, 30)
+        XCTAssertEqual(story["width"] as? Int, 640); XCTAssertEqual(story["height"] as? Int, 400)
+        let beats = try XCTUnwrap(story["beats"] as? [[String: Any]])
+        XCTAssertEqual(beats.map { $0["beat"] as? Int }, [1, 2])
+        XCTAssertEqual(beats[0]["start"] as? Double, 0)
+        XCTAssertEqual(try XCTUnwrap(beats[1]["start"] as? Double), try XCTUnwrap(beats[0]["seconds"] as? Double), accuracy: 1e-9)
+        let frames = try XCTUnwrap(story["frames"] as? Int)
+        XCTAssertEqual(Double(frames) / 30, try XCTUnwrap(story["seconds"] as? Double), accuracy: 1e-9)
+        XCTAssertLessThanOrEqual(frames, 2 * 9 * 30)
         for o in manifest?["outputs"] as? [[String: Any]] ?? [] {
             let name = try XCTUnwrap(o["file"] as? String)
             let data = try Data(contentsOf: out.appendingPathComponent(name))
@@ -373,7 +388,132 @@ final class MartySolidCLITests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: out) }
         let r = try renderOrSkip(["render", explainers.appendingPathComponent("planets-2d.explainer.json").path, out.path, "--size", "640x400"])
         XCTAssertEqual(r.status, 0, r.text)
-        XCTAssertEqual(Set(try FileManager.default.contentsOfDirectory(atPath: out.path)), ["board-0.png", "beat-1.png", "manifest.json"])
+        XCTAssertEqual(Set(try FileManager.default.contentsOfDirectory(atPath: out.path)), ["board-0.png", "beat-1.png", "story.mp4", "manifest.json"])
+        let none = FileManager.default.temporaryDirectory.appendingPathComponent("explainer-render-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: none) }
+        XCTAssertEqual(try renderOrSkip(["render", explainers.appendingPathComponent("planets-2d.explainer.json").path, none.path, "--size", "640x400",
+                                         "--no-story"]).status, 0)
+        XCTAssertEqual(Set(try FileManager.default.contentsOfDirectory(atPath: none.path)), ["board-0.png", "beat-1.png", "manifest.json"])
+    }
+
+    /// The adaptive board pane in stills: a text-only board gives the solid the whole frame until a beat adds a table.
+    func testExplainerStillsFollowTheBoardPaneRule() throws {
+        let gears = #"{"v":2,"parts":[{"id":"p","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},{"id":"w","at":[45,0,0],"shape":{"gear":{"teeth":30,"module":2,"width":8}},"joint":{"revolute":[0,0,1]}}],"constraints":[{"gearMesh":{"a":"p","b":"w"}}]}"#
+        let doc = try write(#"{"v":1,"kind":"explainer","board":{"v":1,"items":[{"id":"cap","k":"text","at":[6,7],"text":"Figures"}]},"solid":\#(gears),"beats":[{"say":"One."},{"say":"Two.","ops":[{"op":"add","item":{"id":"t","k":"table","at":[6,4],"header":true,"cells":[["Gear","Teeth"],["small","{p.teeth}"]]}}]}]}"#, "pane.json")
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("explainer-pane-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        let r = try renderOrSkip(["render", doc, out.path, "--size", "640x400", "--no-loop", "--story-fps", "10"])
+        XCTAssertEqual(r.status, 0, r.text)
+        let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+        let outputs = manifest?["outputs"] as? [[String: Any]] ?? []
+        let stills = outputs.filter { ($0["file"] as? String)?.hasPrefix("beat-") == true }
+        XCTAssertEqual(stills.map { $0["boardPane"] as? Bool }, [false, true])
+        let story = try XCTUnwrap(outputs.first { $0["file"] as? String == "story.mp4" })
+        XCTAssertEqual(story["fps"] as? Int, 10)
+        // The story's hold camera of each beat is the camera of that beat's still, in both layouts (full frame, split).
+        let beats = try XCTUnwrap(story["beats"] as? [[String: Any]])
+        XCTAssertEqual(beats.count, 2)
+        for (b, still) in zip(beats, stills) {
+            let held = try XCTUnwrap(b["camera"] as? NSDictionary), shot = try XCTUnwrap(still["camera"] as? NSDictionary)
+            XCTAssertEqual(held, shot)
+        }
+    }
+
+    /// Bright (text) pixels in the caption band of frame `index` of a movie: the band is a dark fill over the scene, so
+    /// only caption text is bright there.
+    func captionTextPixels(_ movie: URL, frame index: Int, fps: Int, width: Int, height: Int) throws -> Int {
+        let gen = AVAssetImageGenerator(asset: AVURLAsset(url: movie))
+        gen.requestedTimeToleranceBefore = .zero; gen.requestedTimeToleranceAfter = .zero
+        let image = try gen.copyCGImage(at: CMTime(value: CMTimeValue(index * 10 + 1), timescale: CMTimeScale(fps * 10)), actualTime: nil)
+        let band = Int(120.0 * Double(width) / 1280)
+        var px = [UInt8](repeating: 0, count: width * height * 4)
+        let ctx = CGContext(data: &px, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        var n = 0
+        // Memory rows run top to bottom: the band is the last `band` rows.
+        for y in (height - band + 2)..<height { for x in 0..<width {
+            let i = (y * width + x) * 4
+            if px[i] > 200, px[i + 1] > 200, px[i + 2] > 200 { n += 1 }
+        } }
+        return n
+    }
+
+    /// Two gears 1,000 mm apart with focus steps: during the camera move into step 2 the caption band is empty (the
+    /// caption names the right gear, which the move has not reached); the caption appears on the first hold frame.
+    func testStoryCaptionWaitsForTheHold() throws {
+        let doc = try write(#"{"v":2,"kind":"assembly","title":"Two separate gears","parts":[{"id":"a","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},{"id":"b","at":[1000,0,0],"shape":{"gear":{"teeth":30,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}}],"annotations":{"labels":[{"id":"la","at":"a","text":"Left gear {a.teeth}"},{"id":"lb","at":"b","text":"Right gear {b.teeth}"}]},"steps":[{"say":"The left gear has {a.teeth} teeth.","focus":["a"],"annotate":["la"]},{"say":"The right gear has {b.teeth} teeth.","focus":["b"],"annotate":["lb"]}]}"#, "two-gears.json")
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("story-gears-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        XCTAssertEqual(try renderOrSkip(["render", doc, out.path, "--size", "640x400", "--no-loop", "--story-fps", "10"]).status, 0)
+        let m = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+        let story = try XCTUnwrap((m?["outputs"] as? [[String: Any]])?.first { $0["file"] as? String == "story.mp4" })
+        let beats = try XCTUnwrap(story["beats"] as? [[String: Any]])
+        let start = Int((try XCTUnwrap(beats[1]["start"] as? Double) * 10).rounded())
+        let hold = Int((try XCTUnwrap(beats[1]["holdStart"] as? Double) * 10).rounded())
+        XCTAssertEqual(hold - start, 6)                                   // the 0.6 s move at 10 fps
+        let movie = out.appendingPathComponent("story.mp4")
+        XCTAssertGreaterThan(try captionTextPixels(movie, frame: start - 1, fps: 10, width: 640, height: 400), 20)   // step 1's hold
+        for f in start..<hold {                                          // every move frame: no caption text
+            XCTAssertEqual(try captionTextPixels(movie, frame: f, fps: 10, width: 640, height: 400), 0, "move frame \(f)")
+        }
+        XCTAssertGreaterThan(try captionTextPixels(movie, frame: hold, fps: 10, width: 640, height: 400), 20)        // hold start
+    }
+
+    /// An annotated assembly: each step's hold frame has the still's camera and the same annotations off view.
+    func testAnnotatedAssemblyStoryHoldsOnTheStillCamera() throws {
+        let winch = FileManager.default.temporaryDirectory.appendingPathComponent("story-winch-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: winch) }
+        XCTAssertEqual(try renderOrSkip(["render", models.appendingPathComponent("annotated-winch.json").path, winch.path, "--size", "640x400",
+                                         "--no-loop", "--story-fps", "10"]).status, 0)
+        let wm = try JSONSerialization.jsonObject(with: Data(contentsOf: winch.appendingPathComponent("manifest.json"))) as? [String: Any]
+        let wOut = wm?["outputs"] as? [[String: Any]] ?? []
+        let wSteps = wOut.filter { ($0["file"] as? String)?.hasPrefix("step-") == true }
+        let wBeats = try XCTUnwrap(wOut.first { $0["file"] as? String == "story.mp4" }?["beats"] as? [[String: Any]])
+        XCTAssertEqual(wSteps.count, 5); XCTAssertEqual(wBeats.count, 5)
+        for (b, still) in zip(wBeats, wSteps) {
+            XCTAssertEqual(try XCTUnwrap(b["camera"] as? NSDictionary), try XCTUnwrap(still["camera"] as? NSDictionary))
+            XCTAssertEqual(b["offView"] as? Int, still["offView"] as? Int)
+        }
+        XCTAssertFalse(wSteps.compactMap { $0["offView"] as? Int }.isEmpty)
+    }
+
+    /// `story.mp4` for an assembly with steps; a story over the frame cap is refused before any file is written, and
+    /// `--no-story` renders the same document without it. A bad `--story-fps` is a usage error.
+    func testAssemblyStoryAndItsCap() throws {
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("story-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        let r = try renderOrSkip(["render", models.appendingPathComponent("slider-crank.json").path, out.path, "--size", "320x200", "--no-loop",
+                                  "--story-fps", "10"])
+        XCTAssertEqual(r.status, 0, r.text)
+        let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+        let story = try XCTUnwrap((manifest?["outputs"] as? [[String: Any]])?.first { $0["file"] as? String == "story.mp4" })
+        let storyBeats = try XCTUnwrap(story["beats"] as? [[String: Any]])
+        XCTAssertEqual(storyBeats.count, 4)
+        XCTAssertEqual(story["fps"] as? Int, 10)
+        // Each step's hold camera is its still's camera.
+        let stepStills = (manifest?["outputs"] as? [[String: Any]] ?? []).filter { ($0["file"] as? String)?.hasPrefix("step-") == true }
+        XCTAssertEqual(stepStills.count, 4)
+        for (b, still) in zip(storyBeats, stepStills) {
+            XCTAssertEqual(try XCTUnwrap(b["camera"] as? NSDictionary), try XCTUnwrap(still["camera"] as? NSDictionary))
+        }
+        XCTAssertEqual(story["codec"] as? String, "h264")
+        // 16 steps that each spin 3 turns hold 9 s each: 4,320 frames at 30 fps, over the 3,600 cap.
+        let steps = (0..<16).map { _ in #"{"say":"It turns.","spin":3}"# }.joined(separator: ",")
+        let long = try write(#"{"v":2,"kind":"assembly","parts":[{"id":"p","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}}],"steps":[\#(steps)]}"#, "long-story.json")
+        let never = FileManager.default.temporaryDirectory.appendingPathComponent("never-\(UUID().uuidString)")
+        let refused = try run(["render", long, never.path, "--size", "320x200", "--no-loop"])
+        XCTAssertEqual(refused.status, 1, refused.text)
+        XCTAssertEqual(refused.json?["reason"] as? String, "story.frames")
+        XCTAssertNotNil(refused.json?["engine"] as? [String: Any])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: never.path))
+        // At 10 fps the same story fits (1,440 frames); without the story nothing is refused.
+        let plain = FileManager.default.temporaryDirectory.appendingPathComponent("plain-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: plain) }
+        XCTAssertEqual(try renderOrSkip(["render", long, plain.path, "--size", "320x200", "--no-loop", "--no-story"]).status, 0)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: plain.appendingPathComponent("story.mp4").path))
+        XCTAssertEqual(try run(["render", long, never.path, "--story-fps", "24"]).status, 2)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: never.path))
     }
 
     // The legend counts every 2D item a presented beat showed, also when a later beat removes it: the same legend and

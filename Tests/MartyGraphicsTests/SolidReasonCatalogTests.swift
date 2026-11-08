@@ -16,7 +16,7 @@ final class SolidReasonCatalogTests: XCTestCase {
         "count.",                                      // fact name prefix (`count.<id>`)
         "dim.",                                        // fact name prefix (`dim.<id>`)
         "annotation.",                                 // snapshot material id prefix (`annotation.<role>`)
-        "hero.png", "exploded.png", "loop.gif", "loop.mp4", "manifest.json", "snapshot.json",   // render output files
+        "hero.png", "exploded.png", "loop.gif", "loop.mp4", "story.mp4", "manifest.json", "snapshot.json",   // render output files
         "constraint.gearMesh.a", "constraint.gearMesh.b",                           // unused `what` of `expand` (it throws `ref.unknown.<id>`)
         "beat.*", "beat.*.check.*", "item.*", "board.template",                    // explainer claim ids
         "step.", "step.check.",                                                    // prefixes the explainer renames (to `view.*`, `check.*`)

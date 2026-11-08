@@ -314,7 +314,7 @@ final class SolidComponentTests: XCTestCase {
         for (id, uses) in [("p", "q"), ("q", "p")] {
             let src = component(id, parts: "{\"id\": \"x\", \"use\": \"\(uses)\"}")
             let j = MGJSON(any: try JSONSerialization.jsonObject(with: Data(src.utf8)))!
-            cyc.components[id] = MGSolidComponent(id: id, title: "T", about: "A.", params: [], anchors: [:], parts: [], uses: [uses], source: j)
+            cyc.components[id] = MGSolidComponent(id: id, title: "T", about: "A.", params: [], anchors: [:], anchorAbout: [:], parts: [], uses: [uses], source: j)
         }
         XCTAssertEqual(reason(doc("{\"id\": \"t\", \"use\": \"p\"}"), cyc), "component.cycle.p")
         // Expanded ids stay at most 64 characters.

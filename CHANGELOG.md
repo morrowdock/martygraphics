@@ -2,6 +2,55 @@
 
 ## Unreleased
 
+- Explainers that look good on video: an adaptive board pane, a story video, a documented mannequin back frame and
+  repair detail for `annotations.visible`.
+  - Adaptive board pane (`MGExplainerBoardPane`, `MGExplainerSession.boardPane`, Foundation only): in an explainer
+    with a board and a solid, a beat whose shown board has only `text` items gives the solid the whole frame, and the
+    board's texts move to the title band. The rule reads the shown 2D state (`state`). `marty-solid render` stills,
+    `story.mp4` and `MartyGraphicsExplainerView` use it; the SwiftUI pane slides in and out over 0.35 s and changes at
+    once with Reduce Motion. Each explainer beat's manifest record gains `boardPane`. Example renders: no change for
+    `gears-mixed` (its board has a table in every beat).
+  - Story video (`MGStoryPlan`, `MGStoryTiming`): `marty-solid render` writes `story.mp4` for an assembly with steps
+    and an explainer with beats: each beat held 3–9 s (1 s + caption scalars / 15, or the spin time), with its
+    caption, view, highlight, annotations and framed camera, a 0.6 s eased camera move between beats, the beat's spin
+    at 4 s per turn and the legend line in every frame; 30 fps by default (`--story-fps 10|30`), at the still size,
+    at most 3,600 frames (`story.frames`, refused before any file is written; `--no-story` skips the story). The
+    manifest record gives `fps`, `frames`, `seconds`, `transitionSeconds`, `holdSeconds` and each beat's `start`
+    and `seconds`. New reasons `story.rate`, `story.beats`, `story.frames`.
+  - During a beat's hold the story camera is exactly the camera of the beat's still, for the same layout
+    (`MGStoryPlan.camera(frame:beatCameras:)`). Explainer pane rects are whole pixels (`MGExplainerFrame.panes`) and
+    the solid pane is fitted for its own pixels (`MGExplainerFrame.solidCamera`). Labels are hidden while the camera
+    moves between beats; when the explainer's pane layout changes between beats, the story cuts instead of moving. Step and beat still records and the story's beat records give `camera` and `offView`.
+  - Components may describe their anchors (`anchorAbout`: anchor → one line, 1–120 scalars; `component.anchorAbout`),
+    and the catalog lists it (about 6.2 KB for the built-ins). The `mannequin` describes all eight anchors; its
+    `back` frame's origin is on the torso surface (+Y out of the back), so a pack whose shape starts at y = 0 touches
+    the torso. No geometry changes. There is no `chest` anchor (the component has the maximum of 8 anchors).
+  - Annotation visibility refusals add `visibility` (`annotation`: the first annotation over the limit, `count`,
+    `limit`, `cause`: `nosteps`, `unannotated`, `step` or `beat`, and `step` or `beat` 1-based when one is at fault)
+    to `annotations.visible`, `step.annotate.count` and `view.annotate.count` reports; an explainer report also sets
+    `location.id` and `location.detail`. Reasons stay one token. Other refusals keep their exact keys.
+  - In an explainer the visibility limit of 12 applies per beat: a solid with more than 12 annotations is stepped
+    from its statement on (each beat shows only its own `view.annotate` list, at most 12; the views before the first
+    beat and beats without a list show none). With 12 or fewer the earlier rule stays, so existing documents do not
+    change. An explainer solid with 13 annotations spread over beats was refused before (`annotations.visible`) and
+    is accepted now.
+  - Explainer annotation claims follow what is displayed: whenever the beats choose their labels (some beat has
+    `view.annotate`, at any count, or more than 12 annotations), the legend counts an annotation only once a presented
+    beat displayed it, frozen at presentation (`MGShownAnnotations`, `shownAnnotations` in the snapshot, checked on
+    restore); the overlay and the legend read one function. A whole document with any `annotate` list is stepped from
+    its solid statement on, and a stream keeps the mode once it accepts such a view; the mode is saved in the snapshot
+    (`chooseLabels`: `true` or absent, else `snapshot.labels`) and restored as saved, also after the only beat with a
+    list was refused; an older snapshot without it derives the mode from every beat it knows. A new `explainer` header in the same
+    session starts without the mode of the explainer it replaces. The show-all rule (no list, at most 12) still counts every
+    annotation. Changed test
+    expectation: in the mixed annotated explainer, the label of beat 2 counts once beat 2 is presented.
+  - Story frames: a beat's caption, labels and board claims appear when its hold starts; during a camera move the
+    caption band is empty and the board keeps the previous beat's state (`MGStoryPlan.holds`, `caption(frame:cuts:)`,
+    `holdStartFrame`; the manifest's beats gain `holdStart`). The legend and its notes show in every frame. Spin times
+    are clamped before they become frame counts.
+  - Test expectations changed: `marty-solid render` on `gears-mixed` and `planets-2d` now also writes `story.mp4`.
+    No golden report file changes.
+
 - Fix: the explainer legend is presented-only. It counts the claims of exactly what the learner was shown, from
   the states that were actually presented: the board, each set-up command, each presented beat (as presented) and
   each accepted host or learner change. Before, it read 2D item claims from the projected and shown states only. So

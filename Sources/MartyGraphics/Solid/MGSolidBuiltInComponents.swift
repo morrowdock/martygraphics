@@ -285,7 +285,15 @@ public enum MGSolidBuiltInComponents {
       {"id": "footR", "name": "Right foot", "parent": "legR", "material": "plastic.white", "smooth": 50, "at": [0, 0, -880],
        "shape": [{"revolvedProfile": {"points": [[0, 0], [30, 8], [44, 40], [46, 120], [40, 196], [24, 236], [0, 250]], "rot": [1, 0, 0, 90], "at": [0, 40, 46]}}]}
      ],
-     "anchors": {"back": "body", "head": "skull", "leftShoulder": "upperArmL", "rightShoulder": "upperArmR", "leftHand": "handL", "rightHand": "handR", "leftFoot": "footL", "rightFoot": "footR"}}
+     "anchors": {"back": "body", "head": "skull", "leftShoulder": "upperArmL", "rightShoulder": "upperArmR", "leftHand": "handL", "rightHand": "handR", "leftFoot": "footL", "rightFoot": "footR"},
+     "anchorAbout": {"back": "Origin on the back surface at chest height; +Y points out of the back, so a shape from y = 0 outward touches the torso.",
+      "head": "Centre of the head; world axes.",
+      "leftShoulder": "Left shoulder joint; turns with the arm, local -Z runs down the upper arm.",
+      "rightShoulder": "Right shoulder joint; turns with the arm, local -Z runs down the upper arm.",
+      "leftHand": "Left wrist; local -Z runs along the hand, +Z up the forearm.",
+      "rightHand": "Right wrist; local -Z runs along the hand, +Z up the forearm.",
+      "leftFoot": "Centre of the left sole, on the floor; world axes.",
+      "rightFoot": "Centre of the right sole, on the floor; world axes."}}
     """#
 
     static let centrifugalCompressor = #"""

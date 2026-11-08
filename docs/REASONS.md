@@ -331,7 +331,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `arrows.count` | assembly | `arrows` is not an array of at most 32 arrows. |
 | `dimensions.count` | assembly | `dimensions` is not an array of at most 16 dimensions. |
 | `annotations.input` | assembly | A document with annotations has a default input beyond 10,000 turns (`MGSolidAnnotationLimits.input`), so its poses would lose precision. |
-| `annotations.visible` | assembly | No step uses `annotate`, so every annotation shows at once, and there are more than 12. |
+| `annotations.visible` | assembly | No step uses `annotate`, so every annotation shows at once, and there are more than 12. The report's `visibility` names the first annotation over the limit, the count, the limit and the cause (`nosteps` or `unannotated`). An explainer solid never gives it: there the limit applies to each beat's own list (`view.annotate.count`). |
 | `label.object` | assembly | A label is not an object. |
 | `arrow.object` | assembly | An arrow is not an object. |
 | `dimension.object` | assembly | A dimension is not an object. |
@@ -385,7 +385,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `dimension.text.<id>` | assembly | A dimension's text does not show its own value `{dim.<id>}`. |
 | `text.number.dimension.<id>` | assembly | A dimension's text has a number character outside a placeholder (rule N1; no `unchecked`). |
 | `step.annotate` | assembly | A step's `annotate` is not an array of strings (v2). |
-| `step.annotate.count` | assembly | A step's `annotate` lists more than 12 annotations. |
+| `step.annotate.count` | assembly | A step's `annotate` lists more than 12 annotations. The report's `visibility` names the step (1-based), the 13th id, the count and the limit (cause `step`). |
 | `step.annotate.ref.<id>` | assembly | A step's `annotate` names no annotation. |
 
 ### Patches
@@ -428,6 +428,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `component.depth` | assembly, component | `use` nests more than 3 levels deep. |
 | `component.constraints` | component | `constraints` is not an array of at most 32 entries. |
 | `component.anchors` | component | `anchors` is not an object of at most 8 anchors. |
+| `component.anchorAbout` | component | `anchorAbout` is not an object, names a key that is not an anchor, or has a text that is not 1–120 scalars of plain text (no `<`, `>`, `://` or control characters). |
 | `component.anchor.<name>` | component | An anchor name is not an identifier or is taken, or its target is not a part, copy or nested anchor of the component. |
 | `component.checks` | component | `checks` is not an object of at most 8 checks. |
 | `component.check.name.<name>` | component | A check name is not an identifier. |
@@ -552,7 +553,7 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `view.section.missing.<keys>` | explainer | A beat view's `section` has no `normal` or no `parts`. |
 | `view.section.unknown.<keys>` | explainer | A beat view's `section` has keys it does not allow. |
 | `view.annotate` | explainer | A beat view's `annotate` is not an array of strings (the assembly's `step.annotate`). |
-| `view.annotate.count` | explainer | A beat view's `annotate` lists more than 12 annotations. |
+| `view.annotate.count` | explainer | A beat view's `annotate` lists more than 12 annotations. The report's `visibility` names the beat (1-based), the 13th id, the count and the limit (cause `beat`). |
 | `view.annotate.ref.<id>` | explainer | A beat view's `annotate` names no annotation. |
 | `text.pose.beat.<n>` | explainer | Beat `<n>`'s caption shows a `dim.<id>` fact that does not hold at every pose its view can show (the assembly's `text.pose.step.<n>` rule). |
 | `text.pose.board` | explainer | 2D board text shows a `dim.<id>` fact that does not hold at every pose of every view (the rule for shown text). |
@@ -580,7 +581,8 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `snapshot.lesson` | explainer | The explainer snapshot's lesson snapshot is not JSON text. |
 | `snapshot.pending` | explainer | A beat the restored lesson still queues does not match the explainer's beat, or a queued command breaks the explainer's command rules. |
 | `snapshot.presented` | explainer | The explainer snapshot's presented beats are not valid: one is not a kept beat, comes after the lesson's beat, or is still queued. |
-| `snapshot.shown` | explainer | The explainer snapshot's record of shown 2D item or beat claims is not valid: not an array of at most 1024 `{"id", "tiers"}` (or 16 `{"beat", "caption", "checks"}`) entries, an id or beat twice, an id the id history does not hold, a 3D id, a beat that was not presented, an unknown tier, a tier twice or a tier the text cannot have, or it misses an item or presented beat, or what the state shown now shows. |
+| `snapshot.shown` | explainer | The explainer snapshot's record of shown 2D item, beat or annotation claims is not valid: not an array of at most 1024 `{"id", "tiers"}` (or 16 `{"beat", "caption", "checks"}`, or 80 `{"id", "tier"}`) entries, an id or beat twice, an id the id history does not hold, a 3D id, a beat that was not presented, an unknown tier, a tier twice or a tier the text cannot have, or it misses an item or presented beat, or what the state shown now shows; `shownAnnotations` is present while the show-all rule applies, or names something that is not an annotation with a claim at its tier, or misses an annotation a presented beat displays. |
+| `snapshot.labels` | explainer | The explainer snapshot's `chooseLabels` (the label-selection mode) is present but not `true` (`false` included). |
 | `snapshot.beat` | explainer | The explainer snapshot's presented beat names no kept beat, or not the lesson's presented beat. |
 | `snapshot.stream` | explainer | The explainer snapshot's stream status is not valid. |
 
@@ -590,4 +592,7 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | --- | --- | --- |
 | `report.encoding` | check, cli | A value given to `MGSolidReport.text` or as render manifest outputs is not finite or nests too deep, so it is not encoded (reports the engine builds never are). |
 | `report.engine` | check, explainer | The host's `engine` value is not finite, nests deeper than 8 levels or is larger than 4,096 bytes (`MGSolidReport.engineDepth`, `engineBytes`). |
+| `story.rate` | cli | `marty-solid render --story-fps` is not one of the story rates (10 or 30). |
+| `story.beats` | cli | A story plan got no beat, more than 16 beats, or a different number of captions and spins. |
+| `story.frames` | cli | The story video would have more than 3,600 frames (`MGStoryTiming.maxFrames`); the render is refused before any file is written (`--no-story` renders without it). |
 | `kind.unsupported` | cli | `marty-solid check` or `render` got a lesson document (`"kind": "lesson"`), a format the tool does not take. |

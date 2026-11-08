@@ -636,10 +636,20 @@ view or pose that the engine did not check shows no annotations. `marty-solid re
 ### Visibility
 
 * When no step has `annotate`, every annotation shows in every step and in the plain view. Then there
-  may be at most 12 (`annotations.visible`).
+  may be at most 12 (`annotations.visible`). The refused report adds `visibility`:
+  `{"annotation", "cause", "count", "limit"}`. `annotation` is the first annotation over the limit in
+  authored order (labels, then arrows, then dimensions; the 13th id), also given as `part`. `count` is the
+  number that would show at once and `limit` is 12. `cause` is `nosteps` (the document has no step, so the
+  plain view shows all of them) or `unannotated` (it has steps, but none has `annotate`). No step is at
+  fault, so the report names none. The repair is to remove annotations down to 12, or to add `annotate`
+  to the steps.
 * When any step has `annotate`, each step shows exactly its list (0–12 ids: `step.annotate`,
   `step.annotate.count`, `step.annotate.ref.<id>`). A step without the key shows none, and the plain view
-  shows none. An annotation that no step shows is the warning `annotation.unused.<id>` (strict refuses).
+  shows none. A list over 12 (`step.annotate.count`) adds `visibility` with cause `step` and `"step"`
+  (1-based).
+* An explainer's solid applies the limit per beat: with more than 12 annotations it is stepped even before
+  any beat has `annotate`, so each beat shows only its own list (at most 12, `view.annotate.count`, cause
+  `beat`). With 12 or fewer it follows the rules above unchanged ([EXPLAINER.md](EXPLAINER.md)). An annotation that no step shows is the warning `annotation.unused.<id>` (strict refuses).
 * `MGSolidDocument.visibleAnnotations(step:)` and `view(step:).annotations` give the ids.
 
 ### Limits
@@ -979,8 +989,11 @@ part that the root parts are attached to) and `set`.
 Required keys: `v`, `kind`, `id`, `title` (80 characters), `about` (one line, 160)
 and `parts` (1–24 entries: plain parts as in an assembly, or `use` entries of other
 components). Optional: `params` (at most 16; each `default`, `min`, `max`, optional
-`integer` and `about`), `constraints` (32), `anchors` (8; name → inner id) and
-`checks` (8). References inside a component name its own parts only
+`integer` and `about`), `constraints` (32), `anchors` (8; name → inner id),
+`anchorAbout` (anchor name → one line of plain text, 1–120 scalars, saying where the
+anchor's frame sits and how its axes point; every key must be an anchor, else
+`component.anchorAbout`)
+and `checks` (8). References inside a component name its own parts only
 (`component.ref.unknown.<id>`). Definitions are at most 16 KiB.
 
 **Expressions.** Any number in `parts` and `constraints` may be an expression object
@@ -1014,7 +1027,9 @@ defaults and compiled on its own as an assembly; duplicate ids are refused.
 `MGSolidParser.document(data:library:)` resolves `use` entries against a library
 (default `builtIn`), and patches reuse the document's library. `catalog()` returns a
 compact JSON list (id, title, about, parameters with defaults and ranges, inner part
-ids, anchors), about 5.6 KB for the built-ins, so a model can discover them cheaply.
+ids, anchors and `anchorAbout` when a component has it), about 6.2 KB for the
+built-ins, so a model can discover them cheaply. A model reads only the catalog, so a
+frame that a part should touch (the mannequin's `back`) is described there.
 
 | Component | Parts | Key parameters (defaults) | Anchors |
 | --- | --- | --- | --- |
@@ -1040,7 +1055,7 @@ shoulder and elbow is a `revolute` joint held still by a zero-scale drive
 `leftShoulder` / `rightShoulder` raise the arm out to the side (4–170°, degrees from
 hanging) and `leftElbow` / `rightElbow` bend the forearm forward (0–150°). Anchors
 name parts whose frames sit at useful points, so other parts can hang on them with
-`parent` and a short `at`:
+`parent` and a short `at`. The catalog's `anchorAbout` gives each frame in one line:
 
 | Anchor | Part | Frame origin | Axes |
 | --- | --- | --- | --- |
@@ -1052,8 +1067,16 @@ name parts whose frames sit at useful points, so other parts can hang on them wi
 
 ```json
 {"id": "pilot", "use": "mannequin", "with": {"leftShoulder": 30, "rightShoulder": 30, "leftElbow": 10}},
-{"id": "jet", "parent": "pilot.rightHand", "at": [-85, -62, 0], "shape": {"shaft": {"radius": 50, "length": 300, "z0": -80}}}
+{"id": "jet", "parent": "pilot.rightHand", "at": [-85, -62, 0], "shape": {"shaft": {"radius": 50, "length": 300, "z0": -80}}},
+{"id": "pack", "parent": "pilot.back", "at": [0, 30, 0], "shape": {"box": {"size": [260, 60, 380]}}}
 ```
+
+The `back` frame's origin is on the torso surface, so a back pack touches the body when its
+shape starts at local y = 0 and runs out along +Y (above: a box 60 mm deep, centred 30 mm
+out). An `at` of `[0, 110, 0]` for the same box leaves an 80 mm gap. A test places this
+pack and checks that the gap to the torso is under 1 mm. There is no `chest` anchor: the
+component already has the most anchors a component may have (8), and the chest surface
+has no part frame of its own.
 
 The figure has 12 parts and exactly 26,048 triangles at every parameter value (under
 2 % of the mesh budget). It has no `checks`: the ranges were chosen so that the arms
@@ -1179,6 +1202,44 @@ manifest record gives `codec`, `width`, `height`, `frames`, `fps`, `loopSeconds`
 60 seconds, the render stops with an error and removes its output directory, so no
 manifest names a partial MP4. The poses and cameras are deterministic; the rendered pixels and the H.264 bytes are not byte-identical
 between runs (GPU rendering and the hardware encoder).
+
+**Story video.** `marty-solid render` also writes `story.mp4` for an assembly with steps
+and for an explainer with beats: the steps (or beats) in order, each with its caption,
+its view (section cuts, ghosts), its highlight, its annotations and its framed camera,
+and the legend in every frame. An assembly with annotations draws the document legend
+and its notes ("Arrow lengths are not to scale") in the overlay corner of every frame,
+also while labels are hidden; an assembly without annotations shows the legend at the
+start of the footer line. An explainer's footer is the same legend line, with its notes,
+as its stills. The plan is
+`MGStoryPlan` (Foundation only, deterministic); the rules are `MGStoryTiming`:
+
+| Rule | Value |
+| --- | --- |
+| Hold of one beat | reading time = 1 s + caption Unicode scalars / 15, or the spin time if longer, bounded to 3–9 s |
+| Spin | a step's `spin` plays at 4 s per input turn from the beat's first frame (faster when that would take more than 9 s, so it always ends within the beat; the spin time is clamped to 9 s before it becomes a frame count, the sign is the turn direction, and a spin that is not finite counts as none); the rest of the beat holds the end pose. A step without `spin` holds still (so every shown dimension keeps the value its step was checked at) |
+| Camera | during a beat's hold the camera is exactly the camera of the beat's still, for the same layout (`MGStoryPlan.camera(frame:beatCameras:)`); in an explainer the solid pane is fitted for its own pixels in that beat's layout, full frame or split (`MGExplainerFrame.solidCamera`) |
+| Camera move | from the previous beat's camera to this beat's camera over the first 0.6 s of the beat (at most half the beat), eased in and out: target and field of view in a straight line, yaw the shorter way round, pitch linearly, distance geometrically. During the move the caption band is empty and no label is drawn (3D arrows and dimensions stay, with the legend and its notes); in an explainer the board still shows the previous beat's state. The beat's caption, labels and board claims appear on the first frame of its hold (`MGStoryPlan.holds(frame:cuts:)`, `caption(frame:cuts:)`, `holdStartFrame`). The first beat starts at its own camera. In an explainer, a beat whose solid pane has another size than the previous beat's (the board pane appears or goes) cuts to its own camera instead of moving, because the previous camera was fitted for the other pane |
+| Rate and size | 30 frames per second by default (`--story-fps 10` or `30`), at the still size (default 1280 × 800) |
+| Length | at most 3,600 frames (2 minutes at 30 fps); a longer story is refused with `story.frames` before any file is written (`--no-story` renders without it) |
+
+Every frame is a real render at its pose and camera. Only the camera is in between two
+beats. The view, the highlight and the pose change at the beat's first frame; the
+caption, the labels and (in an explainer) the board's new state appear when the hold
+starts, so a caption never names something the camera has not reached yet, and a
+caption with a number shows only while its own beat's state is on screen at the beat's
+own camera. The board shows the beat's settled state, the same state as the beat's still.
+The last frame of each beat has the same pose and camera as that beat's still. Labels
+keep their places for the rest of the beat. The writer is the one
+`loop.mp4` uses: a pool per frame, the same failure handling (fail fast, a 60-second
+stall timeout, the output directory removed). The manifest record gives `codec`,
+`width`, `height`, `fps`, `frames`, `seconds`, `transitionSeconds`, `holdSeconds`
+(`min`, `max`) and per beat `{"beat", "start", "holdStart", "seconds", "camera", "offView"}`
+(start time, the time the caption, labels and claims appear, and length in seconds, the
+hold camera, and the number of shown annotations whose
+anchor is outside the view in the beat's last frame; `offView` is absent when the beat
+shows none). Each step still's record (`step-<n>.png`) and each explainer beat still's
+record (`beat-<n>.png`) give the same `camera` and `offView`, so a host can check that
+the story holds on the still's framing.
 
 ## Snapshot for other renderers
 
