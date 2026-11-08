@@ -63,6 +63,8 @@ public struct MGExplainerIssue: Error, Equatable, Sendable, CustomStringConverti
     public var origin: MGOrigin = .script
     /// Repair detail of `annotations.visible` (the report's `visibility`); nil for every other reason.
     public var visibility: MGAnnotationVisibilityDetail?
+    /// Repair detail of the solid's `parts.resolved` (the report's `limit`); nil for every other reason.
+    public var limit: MGSolidLimitDetail?
 
     public init(_ reason: String, view: View, beat: Int? = nil, statement: Int? = nil, command: Int? = nil, id: String? = nil,
                 detail: String? = nil, origin: MGOrigin = .script) {

@@ -96,18 +96,22 @@ public struct MGSolidRenderPlan: Equatable, Sendable {
         public var rules: [MGSolidFraming.Rule]
         public var loop: [MGSolidCamera]
         public var loopScale: Double
+        /// Per still: the unblocked-focus result (`MGSolidFraming.clearView`): its automatic ghosts, direction and
+        /// hidden share. `stills[k]` is `clear[k].camera`.
+        public var clear: [MGSolidClearView] = []
     }
 
-    /// The camera of each still and each loop frame for a view of `width` × `height` pixels (`MGSolidFraming`).
+    /// The camera of each still and each loop frame for a view of `width` × `height` pixels (`MGSolidFraming`): every
+    /// still with the unblocked-focus rule (`MGSolidFraming.clearView`), the loop with `loopFraming`.
     public func cameras(_ doc: MGSolidDocument, width: Double, height: Double, fieldOfView: Double = 30) -> Cameras {
         let aspect = width > 0 && height > 0 && width.isFinite && height.isFinite ? width / height : 1.6
         let bands = MGSolidRenderPlan.bands(width: width, height: height)
         let stills = self.stills.map {
-            MGSolidFraming.framing(doc, shot: $0, aspect: aspect, fieldOfView: fieldOfView, titleBand: $0.title != nil ? bands.title : 0,
-                                   captionBand: $0.caption != nil ? bands.caption : 0)
+            MGSolidFraming.clearView(doc, shot: $0, aspect: aspect, fieldOfView: fieldOfView, titleBand: $0.title != nil ? bands.title : 0,
+                                     captionBand: $0.caption != nil ? bands.caption : 0)
         }
         let loop = MGSolidFraming.loopFraming(doc, shots: self.loop, aspect: aspect, fieldOfView: fieldOfView)
-        return Cameras(stills: stills.map(\.camera), rules: stills.map(\.rule), loop: loop.cameras, loopScale: loop.scale)
+        return Cameras(stills: stills.map(\.camera), rules: stills.map(\.rule), loop: loop.cameras, loopScale: loop.scale, clear: stills)
     }
 
     /// The exported snapshot: format v2 for a v2 document (part opacity, emission), the v1 snapshot for a v1 document.

@@ -137,11 +137,13 @@ example `{"id": "stage", "use": "planetaryStage", "with": {"planets": 3}}`.
 [`planetary-components.json`](Sources/MartySolid3D/Models/planetary-components.json)
 (12 lines) and
 [`slider-crank-component.json`](Sources/MartySolid3D/Models/slider-crank-component.json)
-(8 lines) are the two models above built this way. Two built-ins help explainers
+(8 lines) are the two models above built this way. Three built-ins help explainers
 that need a person or a turbine: `mannequin` (a smooth schematic adult with posable
-shoulders and elbows and anchors for the hands, shoulders, back, head and feet) and
+shoulders and elbows and anchors for the hands, shoulders, back, head and feet),
 `centrifugalCompressor` (an impeller with backswept vanes and splitters in a vaned
-diffuser ring). See
+diffuser ring) and `microTurbojet` (a whole small jet engine in 11 parts: intake,
+centrifugal compressor, diffuser, annular combustor, one axial turbine stage, nozzle,
+shaft and two bearings in a casing; rotation solved, thrust not modelled). See
 [docs/SOLID-3D.md](../../docs/SOLID-3D.md#figure-and-compressor-components).
 
 ```sh

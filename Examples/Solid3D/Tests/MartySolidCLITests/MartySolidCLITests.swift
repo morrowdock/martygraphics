@@ -57,7 +57,7 @@ final class MartySolidCLITests: XCTestCase {
     func testExitCodesAndReports() throws {
         let catalog = try run(["components"])
         XCTAssertEqual(catalog.status, 0)
-        XCTAssertEqual((catalog.json?["components"] as? [Any])?.count, 9)
+        XCTAssertEqual((catalog.json?["components"] as? [Any])?.count, 10)
         XCTAssertEqual(catalog.text.split(separator: "\n").count, 1)   // one line of compact JSON
         let accepted = try run(["check", models.appendingPathComponent("planetary-components.json").path])
         XCTAssertEqual(accepted.status, 0)
@@ -408,8 +408,16 @@ final class MartySolidCLITests: XCTestCase {
         let outputs = manifest?["outputs"] as? [[String: Any]] ?? []
         let stills = outputs.filter { ($0["file"] as? String)?.hasPrefix("beat-") == true }
         XCTAssertEqual(stills.map { $0["boardPane"] as? Bool }, [false, true])
+        // The split beat's board pane fits its two-row table: between the bounds, well under the old 45 %.
+        let share = try XCTUnwrap(stills[1]["boardShare"] as? Double)
+        XCTAssertGreaterThanOrEqual(share, 0.279); XCTAssertLessThan(share, 0.40)
+        XCTAssertNil(stills[0]["boardShare"])
         let story = try XCTUnwrap(outputs.first { $0["file"] as? String == "story.mp4" })
         XCTAssertEqual(story["fps"] as? Int, 10)
+        // The layout change cuts, and the manifest says why.
+        let cutBeats = try XCTUnwrap(story["beats"] as? [[String: Any]])
+        XCTAssertEqual(cutBeats.map { $0["cut"] as? Bool }, [false, true])
+        XCTAssertEqual(cutBeats[1]["cutReason"] as? String, "layout")
         // The story's hold camera of each beat is the camera of that beat's still, in both layouts (full frame, split).
         let beats = try XCTUnwrap(story["beats"] as? [[String: Any]])
         XCTAssertEqual(beats.count, 2)
@@ -514,6 +522,76 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: plain.appendingPathComponent("story.mp4").path))
         XCTAssertEqual(try run(["render", long, never.path, "--story-fps", "24"]).status, 2)
         XCTAssertFalse(FileManager.default.fileExists(atPath: never.path))
+    }
+
+    /// `microTurbojet` at every parameter corner through `check --strict` in fresh processes: exact exit codes and
+    /// reasons. Five engines, a mannequin and a back pack pass (68 parts).
+    func testMicroTurbojetCornersAndFiveEngineSuit() throws {
+        for d in [60, 300] { for l in [120, 900] { for cut in [0, 1] {
+            let f = try write(#"{"v":2,"kind":"assembly","parts":[{"id":"jet","use":"microTurbojet","with":{"diameter":\#(d),"length":\#(l),"cutaway":\#(cut)}}]}"#,
+                              "jet-\(d)-\(l)-\(cut).json")
+            let r = try run(["check", f, "--strict"])
+            if d == 300 && l == 120 {
+                XCTAssertEqual(r.status, 1, "\(d) \(l) \(cut)")
+                XCTAssertEqual(r.json?["reason"] as? String, "component.check.fits")
+            } else {
+                XCTAssertEqual(r.status, 0, "\(d) \(l) \(cut): \(r.text)")
+                XCTAssertEqual(r.json?["parts"] as? Int, 11)
+                XCTAssertEqual((r.json?["warnings"] as? [Any])?.count, 0)
+            }
+        } } }
+        let arm = { (id: String, hand: String, x: Int, y: Int) in
+            #"{"id":"\#(id)","use":"microTurbojet","with":{"diameter":70,"length":200},"parent":"pilot.\#(hand)","at":[\#(x),\#(y),200],"rot":[1,0,0,180]}"#
+        }
+        let suit = try write(#"{"v":2,"kind":"assembly","parts":[{"id":"pilot","use":"mannequin","with":{"leftShoulder":25,"rightShoulder":25}},{"id":"pack","parent":"pilot.back","at":[0,40,0],"shape":{"box":{"size":[260,80,380]}}},{"id":"back","use":"microTurbojet","parent":"pack","at":[0,95,140],"rot":[1,0,0,180]},\#(arm("armL1", "leftHand", 78, -38)),\#(arm("armL2", "leftHand", 78, 38)),\#(arm("armR1", "rightHand", -78, -38)),\#(arm("armR2", "rightHand", -78, 38))]}"#, "suit.json")
+        let r = try run(["check", suit, "--strict"])
+        XCTAssertEqual(r.status, 0, r.text)
+        XCTAssertEqual(r.json?["parts"] as? Int, 68)
+    }
+
+    /// `parts.resolved` names the resolved count, the limit and the largest instances, the same in every process.
+    func testPartsResolvedDetailInFreshProcesses() throws {
+        let uses = ["tLH", "tLF", "tRH", "tRF", "tB", "tX"].enumerated().map { #"{"id":"\#($1)","use":"centrifugalCompressor","at":[\#($0 * 300),0,0]}"# }
+        let f = try write(#"{"v":2,"kind":"assembly","parts":[{"id":"pilot","use":"mannequin"},\#(uses.joined(separator: ","))]}"#, "six.json")
+        var first: String?
+        for _ in 0..<3 {
+            let r = try run(["check", f, "--strict"])
+            XCTAssertEqual(r.status, 1)
+            XCTAssertEqual(r.json?["reason"] as? String, "parts.resolved")
+            let limit = try XCTUnwrap(r.json?["limit"] as? [String: Any])
+            XCTAssertEqual(limit["count"] as? Int, 180)
+            XCTAssertEqual(limit["limit"] as? Int, 96)
+            let top = try XCTUnwrap(limit["top"] as? [[String: Any]])
+            XCTAssertEqual(top.map { $0["id"] as? String }, ["tB", "tLF", "tLH", "tRF", "tRH"])
+            XCTAssertEqual(top.map { $0["parts"] as? Int }, [28, 28, 28, 28, 28])
+            XCTAssertEqual(Set(top.compactMap { $0["use"] as? String }), ["centrifugalCompressor"])
+            let text = r.text.components(separatedBy: "\n").filter { !$0.contains("executableSHA256") }.joined()
+            if let first { XCTAssertEqual(text, first) } else { first = text }
+        }
+    }
+
+    /// A focus step with a wall between the camera and the focus: the still draws the wall as an automatic ghost and its
+    /// manifest record (and the story beat) give `autoGhost`, `occluded`, `focusSamples`, `view` and `offView`.
+    func testRenderRecordsTheUnblockedFocus() throws {
+        let doc = try write(#"{"v":2,"kind":"assembly","title":"Blocked","parts":[{"id":"target","shape":{"box":{"size":[60,60,60]}}},{"id":"wall","at":[0,-100,0],"shape":{"box":{"size":[400,20,400]}}}],"steps":[{"say":"The whole model.","camera":"front"},{"say":"The block.","focus":["target"],"camera":"front"}]}"#, "blocked.json")
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("blocked-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        let r = try renderOrSkip(["render", doc, out.path, "--size", "320x200", "--no-loop", "--story-fps", "10"])
+        XCTAssertEqual(r.status, 0, r.text)
+        let m = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+        let outputs = m?["outputs"] as? [[String: Any]] ?? []
+        let steps = outputs.filter { ($0["file"] as? String)?.hasPrefix("step-") == true }
+        XCTAssertEqual(steps.count, 2)
+        XCTAssertNil(steps[0]["autoGhost"])
+        XCTAssertEqual(steps[1]["autoGhost"] as? [String], ["wall"])
+        XCTAssertEqual(steps[1]["occluded"] as? Double, 0)
+        XCTAssertEqual(steps[1]["view"] as? String, "preset")
+        XCTAssertEqual(steps[1]["offView"] as? Int, 0)
+        XCTAssertGreaterThan(steps[1]["focusSamples"] as? Int ?? 0, 0)
+        let beats = try XCTUnwrap(outputs.first { $0["file"] as? String == "story.mp4" }?["beats"] as? [[String: Any]])
+        XCTAssertEqual(beats[1]["autoGhost"] as? [String], ["wall"])
+        XCTAssertEqual(beats.map { $0["cut"] as? Bool }, [false, false])
+        XCTAssertEqual(try XCTUnwrap(beats[1]["camera"] as? NSDictionary), try XCTUnwrap(steps[1]["camera"] as? NSDictionary))
     }
 
     // The legend counts every 2D item a presented beat showed, also when a later beat removes it: the same legend and

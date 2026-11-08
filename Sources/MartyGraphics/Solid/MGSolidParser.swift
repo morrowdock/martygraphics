@@ -6,6 +6,9 @@ public enum MGSolidLimits {
     public static let bytes = 64 * 1024
     /// Wire parts (before `repeat`) and resolved parts (after).
     public static let parts = 48, resolvedParts = 96
+    /// Wire parts (before `repeat`) after component expansion: authored entries plus every part the `use` instances
+    /// make (`parts.count` above it). The resolved limit (`resolvedParts`) still applies after `repeat`.
+    public static let expandedParts = 96
     public static let shapesPerPart = 8, repeatCount = 12
     public static let profilePoints = 256, profileHoles = 16, plateHoles = 32
     public static let constraints = 128, steps = 16, idsPerStep = 16
@@ -32,11 +35,17 @@ public struct MGSolidIssue: Error, Equatable, CustomStringConvertible, Sendable 
     public let part: String?
     /// Repair detail of `annotations.visible` (nil for every other reason).
     public let visibility: MGAnnotationVisibilityDetail?
-    public init(_ reason: String, part: String? = nil) { self.reason = reason; self.part = part; visibility = nil }
+    /// Repair detail of `parts.resolved` (the report's `limit`; nil for every other reason).
+    public let limit: MGSolidLimitDetail?
+    public init(_ reason: String, part: String? = nil) { self.reason = reason; self.part = part; visibility = nil; limit = nil }
     /// `annotations.visible` with its repair detail; `part` is the detail's annotation id.
-    public init(visibility v: MGAnnotationVisibilityDetail) { reason = "annotations.visible"; part = v.annotation; visibility = v }
+    public init(visibility v: MGAnnotationVisibilityDetail) { reason = "annotations.visible"; part = v.annotation; visibility = v; limit = nil }
     /// Another visibility reason (`step.annotate.count`, `view.annotate.count`) with its repair detail.
-    public init(_ reason: String, visibility v: MGAnnotationVisibilityDetail) { self.reason = reason; part = v.annotation; visibility = v }
+    public init(_ reason: String, visibility v: MGAnnotationVisibilityDetail) {
+        self.reason = reason; part = v.annotation; visibility = v; limit = nil
+    }
+    /// `parts.resolved` with its repair detail (no part: the whole document is over the limit).
+    public init(limit l: MGSolidLimitDetail) { reason = "parts.resolved"; part = nil; visibility = nil; limit = l }
     public var description: String { part.map { "\(reason) (\($0))" } ?? reason }
 }
 
@@ -79,6 +88,39 @@ public struct MGAnnotationVisibilityDetail: Equatable, Sendable {
                                    "limit": .number(Double(limit))]
         if let index, cause == .step || cause == .beat { o[cause.rawValue] = .number(Double(index + 1)) }
         return .object(o)
+    }
+}
+
+/// Why `parts.resolved` refused a document, as report fields (`limit`): the number of parts after `use` and `repeat`
+/// expansion, the limit (`MGSolidLimits.resolvedParts`), and the component instances (`use` ids) that add the most
+/// parts, with their resolved part counts, most first, ties by id, at most `MGSolidLimitDetail.maxContributors`. The
+/// reason itself stays one token.
+public struct MGSolidLimitDetail: Equatable, Sendable {
+    /// One component instance: its `use` id, the component it uses and the parts it resolved to.
+    public struct Contributor: Equatable, Sendable {
+        public let id: String
+        public let component: String
+        public let parts: Int
+        public init(id: String, component: String, parts: Int) {
+            self.id = String(id.unicodeScalars.prefix(64)); self.component = String(component.unicodeScalars.prefix(64)); self.parts = parts
+        }
+    }
+    /// Most instances listed in `top`.
+    public static let maxContributors = 5
+    public let count: Int
+    public let limit: Int
+    public let top: [Contributor]
+
+    /// `top` is sorted (most parts first, then id) and cut to `maxContributors`.
+    public init(count: Int, limit: Int, top: [Contributor]) {
+        self.count = count; self.limit = limit
+        self.top = Array(top.sorted { $0.parts != $1.parts ? $0.parts > $1.parts : $0.id < $1.id }.prefix(MGSolidLimitDetail.maxContributors))
+    }
+
+    /// `{"count", "limit", "top": [{"id", "use", "parts"}]}` (`use`: the component id).
+    public var json: MGJSON {
+        .object(["count": .number(Double(count)), "limit": .number(Double(limit)),
+                 "top": .array(top.map { .object(["id": .string($0.id), "use": .string($0.component), "parts": .number(Double($0.parts))]) })])
     }
 }
 
@@ -302,6 +344,20 @@ public enum MGSolidParser {
         var opacity = 1.0, emission: MGEmission? = nil
     }
 
+    /// The `parts.resolved` detail: every top-level `use` instance with the resolved parts its expansion made (part ids
+    /// the expansion generated start with `<instance id>.`; authored ids never hold a dot).
+    static func resolvedDetail(_ authored: [String: MGJSON], _ parts: [RawPart]) -> MGSolidLimitDetail {
+        var uses: [(id: String, component: String)] = []
+        if case .array(let entries)? = authored["parts"] {
+            for e in entries { if case .string(let id)? = e["id"], case .string(let c)? = e["use"] { uses.append((id, c)) } }
+        }
+        let top = uses.map { u -> MGSolidLimitDetail.Contributor in
+            let prefix = u.id + "."
+            return .init(id: u.id, component: u.component, parts: parts.reduce(0) { $0 + ($1.base.hasPrefix(prefix) ? 1 : 0) })
+        }.filter { $0.parts > 0 }
+        return MGSolidLimitDetail(count: parts.count, limit: MGSolidLimits.resolvedParts, top: top)
+    }
+
     /// True when any object anywhere in the value has a key named `tier` (authors cannot set tiers).
     static func hasTierKey(_ v: MGJSON) -> Bool {
         switch v {
@@ -332,9 +388,12 @@ public enum MGSolidParser {
             if let v = po["explode"] { defaults.explode = try num(v, 0...1, "params.explode") }
         }
         // Component instances (`use`) expand into plain parts first; every check below applies to the expanded parts.
+        let authored = o
         let expansion = try MGSolidComponents.expand(o, library)
         o = expansion.object
-        guard case .array(let rawParts)? = o["parts"], (1...MGSolidLimits.parts).contains(rawParts.count) else { throw MGSolidIssue("parts.count") }
+        // Authored `parts` hold 1–48 entries (checked before expansion); expanded component parts may reach `expandedParts`.
+        let wireCap = expansion.generated.isEmpty ? MGSolidLimits.parts : MGSolidLimits.expandedParts
+        guard case .array(let rawParts)? = o["parts"], (1...wireCap).contains(rawParts.count) else { throw MGSolidIssue("parts.count") }
 
         // Parts, with `repeat` expansion.
         var parts: [RawPart] = []
@@ -350,7 +409,7 @@ public enum MGSolidParser {
             if expanded.count > 1 || expanded[0].instance != nil { repeated[expanded[0].base] = expanded.count }
             parts += expanded
         }
-        guard parts.count <= MGSolidLimits.resolvedParts else { throw MGSolidIssue("parts.resolved") }
+        guard parts.count <= MGSolidLimits.resolvedParts else { throw MGSolidIssue(limit: resolvedDetail(authored, parts)) }
         // Mesh budget over every resolved part, counted from the validated fields before any mesh is built.
         var triangles = 0, vertices = 0
         for p in parts { for s in p.shapes { let e = s.meshEstimate; triangles += e.triangles; vertices += e.vertices } }

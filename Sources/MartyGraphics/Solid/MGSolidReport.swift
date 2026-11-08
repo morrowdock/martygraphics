@@ -181,13 +181,16 @@ extension MGSolidReport {
     }
 
     /// The report of a refused document: `{"ok": false, "reason", "part"}`, plus `visibility` for `annotations.visible`
-    /// (`MGAnnotationVisibilityDetail`), `strict` when a profile is given, `file` when a source is given and `engine`.
+    /// (`MGAnnotationVisibilityDetail`), `limit` for `parts.resolved` (`MGSolidLimitDetail`), `strict` when a profile is
+    /// given, `file` when a source is given and `engine`.
     public static func refused(_ issue: MGSolidIssue, profile: MGSolidProfile? = nil, source: MGSolidSource? = nil,
                                engine: MGJSON? = MGEngine.identity) -> MGSolidReport {
         if badEngine(engine) { return engineRefusal }
         var o: [String: MGJSON] = ["ok": .bool(false), "reason": .string(issue.reason), "part": str(issue.part)]
         // `annotations.visible` only: which annotation is over the limit and why (other refusals keep their exact keys).
         if let v = issue.visibility { o["visibility"] = v.json }
+        // `parts.resolved` only: the resolved count, the limit and the instances that add the most parts.
+        if let l = issue.limit { o["limit"] = l.json }
         if let profile { o["strict"] = .bool(profile == .strict) }
         if let source { o["file"] = source.json }
         if let engine { o["engine"] = engine }

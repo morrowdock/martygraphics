@@ -80,6 +80,15 @@ public enum MGSolidFraming {
         if !s.focus.isEmpty { let wanted = Set(s.focus); return order.filter { wanted.contains($0) } }
         let core = Set(s.highlight + (s.section?.parts ?? []))
         guard !core.isEmpty else { return [] }
+        return context(doc, core: core, ghost: Set(s.ghost), params: params, stage: stage)
+    }
+
+    /// `core` with its touching context, in assembly order: every part not in `ghost` whose posed box touches the box of
+    /// a `core` part (one level, within 0.5 % of the model's box diagonal). `focusParts` and the unblocked-focus rule
+    /// (`clearView`) share this one rule.
+    static func context(_ doc: MGSolidDocument, core: Set<String>, ghost: Set<String>, params: MGPoseParameters,
+                        stage: MGTransform) -> [String] {
+        let order = doc.assembly.parts.map(\.id)
         let samples = Samples(doc.assembly, ids: nil), pose = doc.assembly.pose(params)
         var boxes: [String: MGBounds] = [:], whole = MGBounds.empty
         for (id, local) in samples.parts {
@@ -88,7 +97,7 @@ public enum MGSolidFraming {
             for p in local { b.include(t.apply(p)) }
             boxes[id] = b; whole = whole.union(b)
         }
-        let tol = 0.005 * (whole.isEmpty ? 0 : whole.size.length), ghost = Set(s.ghost)
+        let tol = 0.005 * (whole.isEmpty ? 0 : whole.size.length)
         func touches(_ a: MGBounds, _ b: MGBounds) -> Bool {
             !a.isEmpty && !b.isEmpty && a.min.x <= b.max.x + tol && b.min.x <= a.max.x + tol && a.min.y <= b.max.y + tol
                 && b.min.y <= a.max.y + tol && a.min.z <= b.max.z + tol && b.min.z <= a.max.z + tol
@@ -304,12 +313,13 @@ public enum MGSolidFraming {
     }
 
     static func choose(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double, titleBand: Double?,
-                       captionBand: Double?, stage: MGTransform) -> (camera: MGSolidCamera, rule: Rule) {
+                       captionBand: Double?, stage: MGTransform, direction override: (yaw: Double, pitch: Double)? = nil)
+        -> (camera: MGSolidCamera, rule: Rule) {
         let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6, fieldOfView = fov(fieldOfView)
         let bands = MGSolidRenderPlan.bands(width: MGSolidRenderPlan.referenceHeight * aspect, height: MGSolidRenderPlan.referenceHeight)
         let window = Window(titleBand: titleBand ?? (s.title != nil ? bands.title : 0),
                             captionBand: captionBand ?? (s.caption != nil ? bands.caption : 0))
-        let (yaw, pitch) = direction(s)
+        let (yaw, pitch) = override ?? direction(s)
         let a = doc.assembly
         let view = doc.view(step: s.step)
         let anchors = s.showsAnnotations ? annotationPoints(doc, view: view, params: s.params, stage: stage) : []

@@ -39,11 +39,11 @@ final class SolidComponentTests: XCTestCase {
     // MARK: Library
 
     func testBuiltInLibraryAndCatalog() throws {
-        XCTAssertEqual(lib.ids, ["centrifugalCompressor", "fanStage", "housingBase", "mannequin", "planetaryStage", "propeller", "shaftWithBearing",
-                                 "sliderCrank", "spurPair"])
+        XCTAssertEqual(lib.ids, ["centrifugalCompressor", "fanStage", "housingBase", "mannequin", "microTurbojet", "planetaryStage", "propeller",
+                                 "shaftWithBearing", "sliderCrank", "spurPair"])
         XCTAssertEqual(MGSolidBuiltInComponents.sources.count, lib.ids.count)   // none was refused while loading
         guard case .array(let entries)? = lib.catalog()["components"] else { return XCTFail("catalog") }
-        XCTAssertEqual(entries.count, 9)
+        XCTAssertEqual(entries.count, 10)
         let spur = try XCTUnwrap(entries.first { $0["id"] == .string("spurPair") })
         XCTAssertEqual(spur["parts"], .array([.string("pinion"), .string("wheel")]))
         XCTAssertEqual(spur["anchors"]?["output"], .string("wheel"))
@@ -215,9 +215,12 @@ final class SolidComponentTests: XCTestCase {
             XCTAssertEqual(reason(json), reason(json))
             XCTAssertFalse(reason(json)?.contains(where: { $0 == " " || $0 == "\"" }) ?? true)
         }
-        // The part count applies after expansion: 13 slider-cranks are 52 parts.
-        let many = (1...13).map { "{\"id\": \"e\($0)\", \"use\": \"sliderCrank\", \"at\": [0, \($0 * 200), 0]}" }.joined(separator: ", ")
+        // The wire part count applies after expansion, up to 96 (`MGSolidLimits.expandedParts`): 25 slider-cranks are 100
+        // wire parts; 13 are 52 and pass.
+        let many = (1...25).map { "{\"id\": \"e\($0)\", \"use\": \"sliderCrank\", \"at\": [0, \($0 * 100), 0]}" }.joined(separator: ", ")
         XCTAssertEqual(reason(doc(many)), "parts.count")
+        let some = (1...13).map { "{\"id\": \"e\($0)\", \"use\": \"sliderCrank\", \"at\": [0, \($0 * 200), 0]}" }.joined(separator: ", ")
+        XCTAssertNil(reason(doc(some)))
     }
 
     func testMeshBudgetAppliesAfterExpansion() throws {

@@ -218,7 +218,8 @@ reported `part.parent`.
 * **`repeat`** copies a part N times around an axis (`planet` → `planet1…3`).
   References to the base id expand to every copy; a repeated child of a repeated
   parent pairs by index.
-* **Bounds** (`MGSolidLimits`): 64 KiB, 48 wire parts, 96 resolved parts,
+* **Bounds** (`MGSolidLimits`): 64 KiB, 48 authored parts (at most 96 wire parts
+  after component expansion, `expandedParts`), 96 resolved parts (after `repeat`),
   8 shapes per part, 256 profile points, 128 constraints, 16 steps, teeth
   8–200 (ring 20–400), module 0.2–20 mm, lengths up to 4 m. JSON nests at most
   64 levels (`MGLimits.depth`, arrays and objects on one path; the shipped models
@@ -965,7 +966,13 @@ part that the root parts are attached to) and `set`.
 * **Limits.** Nesting at most 3 levels (`component.depth`), cycles refused
   (`component.cycle.<id>`), resolved ids at most 64 characters including the `repeat`
   suffix (`component.id.length`). The part, constraint and step limits and the mesh
-  budget count the expanded assembly (`parts.count`, `assembly.budget`).
+  budget count the expanded assembly (`parts.count`, `parts.resolved`,
+  `assembly.budget`). The authored `parts` array holds 1–48 entries; with the parts
+  the `use` instances make it may hold up to 96 wire parts (`MGSolidLimits.expandedParts`;
+  `parts.count` above it), and at most 96 parts after `repeat` (`parts.resolved`).
+  A `parts.resolved` report adds `limit`: `{"count", "limit": 96, "top"}`, where `top`
+  lists up to 5 `use` instances with the most resolved parts (`{"id", "use", "parts"}`,
+  most parts first, ties by id), so a model sees which components to drop or shrink.
 * **Step lists.** A step's `focus` and `highlight` hold at most 16 entries as authored
   (`step.focus`, `step.highlight`). Then anchors resolve, instance ids expand to their
   wire part ids and duplicates merge; that list of wire names must also hold at most
@@ -1027,7 +1034,7 @@ defaults and compiled on its own as an assembly; duplicate ids are refused.
 `MGSolidParser.document(data:library:)` resolves `use` entries against a library
 (default `builtIn`), and patches reuse the document's library. `catalog()` returns a
 compact JSON list (id, title, about, parameters with defaults and ranges, inner part
-ids, anchors and `anchorAbout` when a component has it), about 6.2 KB for the
+ids, anchors and `anchorAbout` when a component has it), about 7.6 KB for the
 built-ins, so a model can discover them cheaply. A model reads only the catalog, so a
 frame that a part should touch (the mannequin's `back`) is described there.
 
@@ -1042,6 +1049,7 @@ frame that a part should touch (the mannequin's `back`) is described there.
 | `fanStage` | hub, rotor (blade row), casing | blades 18, root 60, span 90, chord 40, stagger 35, twist 15 | input hub |
 | `mannequin` | body, skull, upperArmL/R, lowerArmL/R, handL/R, legL/R, footL/R | leftShoulder 10, rightShoulder 10, leftElbow 15, rightElbow 15 (degrees) | back, head, leftShoulder, rightShoulder, leftHand, rightHand, leftFoot, rightFoot |
 | `centrifugalCompressor` | impeller, vane × N, splitter × N, diffuser, diffuserVane × M | diameter 100, vanes 7, diffuserVanes 12, bore 4 | input impeller, frame diffuser |
+| `microTurbojet` | intakeLip, impeller, diffuser, combustor, nozzleGuideVanes, turbineWheel, nozzle, shaft, frontBearing, rearBearing, casing | diameter 110, length 280, cutaway 0 | intake, exhaust, mount, input shaft, compressor impeller, turbine turbineWheel |
 
 ### Figure and compressor components
 
@@ -1111,6 +1119,50 @@ A step may highlight the whole stage with its instance id (`"highlight": ["comp"
 vanes are flat-topped extrusions in three height steps rather than a curved shroud
 line, and no air flow, pressure or speed is computed.
 
+**`microTurbojet`** is one complete small gas-turbine jet engine of the JetCat class,
+schematic and ready for a cutaway, so a model can show the inside of a jet engine with
+one `use`. The axis is +Z: air enters at z = 0 and leaves at z = `length`. The parts,
+in airflow order: `intakeLip` (a bell-mouth ring), `impeller` (the centrifugal
+compressor: the hub profile of `centrifugalCompressor` at 0.62 × `diameter` with seven
+radial vanes in one blade row), `diffuser` (a vaned diffuser ring and the shaft tunnel
+that holds the bearings), `combustor` (an **annular** combustor: outer liner, inner
+liner and a front dome, one ring, not a can), `nozzleGuideVanes` and `turbineWheel`
+(one axial turbine stage: 13 guide vanes, a disc with 23 blades), `nozzle` (exhaust
+cone and tail cone), `shaft`, `frontBearing`, `rearBearing` and the `casing`.
+Parameters: `diameter` (casing outer diameter, 60–300 mm), `length` (intake to nozzle
+exit, 120–900 mm) and `cutaway` (0 or 1; 1 leaves a 90° window in the casing between
++X and −Y, with capped faces, to show the inside without a section step). Radial sizes
+are fixed fractions of `diameter`, axial positions fixed fractions of `length`.
+
+Anchors (the catalog's `anchorAbout` gives each frame): `intake` (centre of the intake
+plane, z = 0), `exhaust` (centre of the nozzle exit, z = `length`, +Z is the jet
+direction), `mount` (the axis at mid-length), `input` (the shaft), `compressor` and
+`turbine`. The shaft, the impeller and the turbine wheel each turn about +Z with
+`{"input": 1}`, so they turn together, one turn per input turn, and their `speed` facts
+are **Solved** (`jet.shaft.speed`, `jet.compressor.speed`, `jet.turbine.speed` are 1).
+**Thrust, flow, pressure, temperature and fuel are not modelled**: the engine computes
+no force for this component, and the catalog's `about` says so.
+
+Checks (only what holds for the geometry): `bore` (the shaft radius, 0.04 × diameter,
+stays below 0.075 × the compressor diameter, the hub rule of `centrifugalCompressor`)
+and `fits` (the compressor stage, to the end of the front bearing at
+0.1 × length + 0.26 × diameter, ends before the combustor at 0.38 × length;
+`component.check.fits`, so `length` must be at least about 0.93 × `diameter`). Every
+part is a closed mesh, so a step `section` can cut any of them. At the defaults it has
+11 parts and 18,796 triangles (18,608 with `cutaway`). Five engines, a mannequin and a
+back pack are 68 parts: inside the 96-part limits (a test checks exactly that document
+with `check --strict`). The tests run all eight parameter corners through
+`check --strict`: six pass with no warning, and the two corners with diameter 300 and
+length 120 are refused with `component.check.fits`.
+
+```json
+{"id": "back", "use": "microTurbojet", "with": {"diameter": 110, "length": 280},
+ "parent": "pack", "at": [0, 95, 140], "rot": [1, 0, 0, 180]}
+```
+
+The shapes are schematic: straight radial vanes, flat liners, no cooling holes, no fuel
+system, no starter.
+
 **Adding a component.** Write the definition, run
 `marty-solid component check FILE.json` (it validates, compiles the component alone,
 runs the mesh and gear checks, and prints its catalog entry and a `use` line), use it
@@ -1142,8 +1194,11 @@ one captioned still per step, and the loop frames. `cameras(_:width:height:)` gi
 camera of each shot from one rule (`MGSolidFraming`, Foundation only, deterministic);
 the tool and any host use the same cameras.
 
-* **Focus.** A step frames its focus from its own camera preset and `orbit` (the
-  direction never changes; only the target and distance do). The focus is the step's
+* **Focus.** A step first frames its focus from its own camera preset and `orbit` (this
+  first framing keeps the direction; only the target and distance change). The
+  unblocked-focus rule below may then draw blocking parts as ghosts or, when a part of
+  the focus context hides much of the focus or a section faces away, choose one of four
+  fixed other directions. The focus is the step's
   `focus` list as written, or else its `highlight` and section parts **plus every part
   the step does not ghost whose posed box touches one of them** (one level, within
   0.5 % of the model's box diagonal), plus the anchors of the annotations the step
@@ -1182,8 +1237,91 @@ reads `MGSolidFraming.framing(_:shot:aspect:…)`, which also returns the rule t
 the camera (`focus`, `model`, `modelFitted`). `marty-solid render` writes that rule as
 `framing` in each still's manifest record.
 
-**Not checked.** A part between the camera and the focus still hides it (choose the
-camera preset or ghost the part). Parts outside the focus may be cut at the image edge,
+### Title backdrop
+
+Every still and every story frame draws a dark backdrop behind the title band: black at
+88 % opacity over the band (100 px at 1280 px wide, scaled with the width), then a soft
+fade to clear over 28 px below it, the same kind of protection the caption band has.
+It lies under all text of the band (the title, the legend line and the overlay's legend
+corner), so geometry outside the focus that reaches into the band never washes the text
+out: a test renders a bright white wall through the band and measures at least 4.5:1
+contrast for the title and the legend line (and the same over a pure white image). The
+overlay's legend corner scales with the frame height, so in a tall frame it reaches below
+the band: its whole rectangle gets the same backdrop and fade. An explainer's board line
+(a beat whose board shows only text) gets its own backdrop behind the line's text bounds,
+because in a tall frame it can reach into the 3D pane. Tests check 4.5:1 for the legend
+corner and the board line at 1280×800, 800×1280, 1280×1280 and 640×1280. In an explainer
+the band lies over the dark frame background, above the panes. Loop frames draw no title
+or legend text and get no backdrop.
+
+Text readability is guaranteed (every interior stroke row of every glyph of the title, the
+legend line, the legend corner, the board line and the caption at least 4.5:1, also over a
+pure white render) for frames at least 1280 px wide and 720 px tall, up to 3840 px wide,
+with an aspect ratio (width ÷ height) from 0.5 to 2.0. The caption band uses 84 % black,
+the title band and its legend corner 88 %, the legend line is medium weight at 85 % ink,
+and the explainer board line is semibold in full ink. Smaller frames are still rendered,
+but their smallest text falls below about 10 px and is not guaranteed to meet 4.5:1;
+render at the default 1280 × 800 or larger for public stills. The CLI test `testEveryTextLineInTheGuaranteedRange` checks each
+text line row by row over pure white across this range; the per-glyph criterion was
+checked by an independent audit.
+
+### Unblocked focus
+
+A step framed on its focus (`framing: focus`) is then checked for parts that hide the
+focus from the camera (`MGSolidFraming.clearView`, Foundation only, deterministic). The
+render plan's stills (`MGSolidRenderPlan.cameras`, field `clear`), each explainer beat's
+solid pane (`MGExplainerFrame.solidClearView`; `solidCamera` returns its camera) and the
+hold frames of `story.mp4` use this one function.
+
+1. **Samples.** At most 48 (`occlusionSamples`) triangle centroids of the focus parts
+   (a cut part gives its capped cut mesh), split evenly over the parts by a fixed
+   stride, at the shot's pose.
+2. **Rays.** A segment runs from the camera to each sample. A part hides the sample
+   when its triangles cross the segment before the first focus surface on it. Only
+   parts the view shows at opacity 0.5 or more hide samples. The **focus group** never
+   does: the focus parts, the parts attached below them (`parent` chain) and the parts
+   whose posed box lies inside the focus parts' box (the inside of a cutaway). A part
+   does not hide a sample that lies inside it (an odd number of crossings of its
+   surface up to the sample, like a pin in its hole): no direction would show it. The
+   ray test is watertight (Woop, Benthin and Wald 2013) with a half-open tie rule, so a
+   ray through an edge or a vertex shared by two or more triangles counts once. Each
+   view direction may spend 3,000,000 triangle tests (`occlusionTests`); samples after
+   that are not tested.
+3. **Automatic ghosts.** Every part outside the focus context that hides more than 5 %
+   (`ghostShare`) of the samples is drawn at the ghost opacity (0.2) in that still and
+   its story beat only (`autoGhost`, assembly order). The focus context is the focus
+   group, plus, for a step with an explicit `focus` list, the parts whose posed box
+   touches a focus part (the touch rule of the focus framing). The honesty legend does
+   not change.
+4. **Keep the author's direction.** The step's own direction (preset and `orbit`) stays
+   while at most 30 % (`keepShare`) of the samples stay hidden after the ghosts and, when
+   the step's `section` cuts a focus-group part, the view **faces the cut** (`facesCut`):
+   the camera on the cut-away side of the first such part's plane (assembly order),
+   looking within about 75° of its normal (`cutFacing`, cosine 0.25), so the cut face is
+   seen and not the outside of the kept half. (An authored cutaway, such as the turbofan's
+   open casings, may hide part of the far side of its inner parts; that alone does not
+   turn the camera.)
+5. **Other directions.** Otherwise (a context part hides much of the focus, or the view
+   faces away from the cut) a fixed list is tried in order, each framed on the same focus
+   with its own automatic ghosts: `opposite` (yaw + 180°), `quarterLeft` (yaw + 90°),
+   `quarterRight` (yaw − 90°), `raised` (pitch 60°, or 10° when the preset looks down
+   from 45° or more). The first that is **clear** (at most 10 % hidden, `clearShare`) and
+   faces the cut is taken; else the first clear one (the step's own direction first);
+   else the step's own direction stays.
+
+`marty-solid render` writes the result in each step still's and explainer beat still's
+manifest record and in the story's beat record: `autoGhost` (ids), `occluded` (the share
+of samples still hidden), `focusSamples`, `view` (`preset` or the alternative taken) and
+`facesCut` (section steps). The record's `offView` counts the shown annotations whose
+anchor is outside the view **plus** the focus samples still hidden, so a focus hidden
+behind another part no longer reports 0; it is written when the image draws annotations
+or has a tested focus. Example: a cutaway of an engine mounted on a mannequin's back,
+seen from the front through the figure's neck and shoulder, now looks from behind at
+the cut face (`view: opposite`, `occluded: 0`).
+
+**Not checked.** The rule tests only steps framed on their focus. A part may still hide
+the focus when every direction is blocked by the focus context (the record then shows
+the hidden share). Parts outside the focus may be cut at the image edge,
 and may lie under the caption band or the legend (for example the feet of a figure
 whose arms are the focus); only the focus and the step's annotation anchors are kept
 inside the safe window.
@@ -1218,7 +1356,7 @@ as its stills. The plan is
 | Hold of one beat | reading time = 1 s + caption Unicode scalars / 15, or the spin time if longer, bounded to 3–9 s |
 | Spin | a step's `spin` plays at 4 s per input turn from the beat's first frame (faster when that would take more than 9 s, so it always ends within the beat; the spin time is clamped to 9 s before it becomes a frame count, the sign is the turn direction, and a spin that is not finite counts as none); the rest of the beat holds the end pose. A step without `spin` holds still (so every shown dimension keeps the value its step was checked at) |
 | Camera | during a beat's hold the camera is exactly the camera of the beat's still, for the same layout (`MGStoryPlan.camera(frame:beatCameras:)`); in an explainer the solid pane is fitted for its own pixels in that beat's layout, full frame or split (`MGExplainerFrame.solidCamera`) |
-| Camera move | from the previous beat's camera to this beat's camera over the first 0.6 s of the beat (at most half the beat), eased in and out: target and field of view in a straight line, yaw the shorter way round, pitch linearly, distance geometrically. During the move the caption band is empty and no label is drawn (3D arrows and dimensions stay, with the legend and its notes); in an explainer the board still shows the previous beat's state. The beat's caption, labels and board claims appear on the first frame of its hold (`MGStoryPlan.holds(frame:cuts:)`, `caption(frame:cuts:)`, `holdStartFrame`). The first beat starts at its own camera. In an explainer, a beat whose solid pane has another size than the previous beat's (the board pane appears or goes) cuts to its own camera instead of moving, because the previous camera was fitted for the other pane |
+| Camera move | from the previous beat's camera to this beat's camera over the first 0.6 s of the beat (at most half the beat), eased in and out: target and field of view in a straight line, yaw the shorter way round, pitch linearly, distance geometrically. During the move the caption band is empty and no label is drawn (3D arrows and dimensions stay, with the legend and its notes); in an explainer the board still shows the previous beat's state. The beat's caption, labels and board claims appear on the first frame of its hold (`MGStoryPlan.holds(frame:cuts:)`, `caption(frame:cuts:)`, `holdStartFrame`). The first beat starts at its own camera. In an explainer, a beat whose solid pane has another size than the previous beat's (the board pane appears or goes) cuts to its own camera instead of moving, because the previous camera was fitted for the other pane. A move that would pass through a part also cuts (`MGStoryPlan.blockedMoves`): the camera path as played, ends included, is tested exactly against every part's posed box (at the previous beat's and this beat's pose) grown by the near-plane distance at the larger camera distance, with a segment-versus-box slab test. A move that keeps yaw, pitch and distance is one straight segment. A move that turns or zooms is split into straight chords of the played path, at most 1,024 (`maxMoveChords`), and each box also grows by the proven chord error (from a bound on the path's curvature), so no collision between chords is missed; a move that only passes close to a part may cut too |
 | Rate and size | 30 frames per second by default (`--story-fps 10` or `30`), at the still size (default 1280 × 800) |
 | Length | at most 3,600 frames (2 minutes at 30 fps); a longer story is refused with `story.frames` before any file is written (`--no-story` renders without it) |
 
@@ -1233,11 +1371,13 @@ keep their places for the rest of the beat. The writer is the one
 `loop.mp4` uses: a pool per frame, the same failure handling (fail fast, a 60-second
 stall timeout, the output directory removed). The manifest record gives `codec`,
 `width`, `height`, `fps`, `frames`, `seconds`, `transitionSeconds`, `holdSeconds`
-(`min`, `max`) and per beat `{"beat", "start", "holdStart", "seconds", "camera", "offView"}`
-(start time, the time the caption, labels and claims appear, and length in seconds, the
-hold camera, and the number of shown annotations whose
-anchor is outside the view in the beat's last frame; `offView` is absent when the beat
-shows none). Each step still's record (`step-<n>.png`) and each explainer beat still's
+(`min`, `max`) and per beat `{"beat", "start", "holdStart", "seconds", "camera", "offView",
+"cut", "cutReason"}` (start time, the time the caption, labels and claims appear, and
+length in seconds, the hold camera, the number of shown annotations whose anchor is
+outside the view in the beat's last frame plus the focus samples still hidden (absent
+when the beat shows no annotation and has no tested focus), whether the beat cut
+instead of moving, and why: `layout` or `blocked`), plus the unblocked-focus fields
+`autoGhost`, `occluded`, `focusSamples`, `view` and `facesCut` for a tested focus. Each step still's record (`step-<n>.png`) and each explainer beat still's
 record (`beat-<n>.png`) give the same `camera` and `offView`, so a host can check that
 the story holds on the still's framing.
 

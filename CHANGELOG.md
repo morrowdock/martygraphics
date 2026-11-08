@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+- Inside views that are not hidden, a whole jet engine in one `use`, and repair detail for `parts.resolved`.
+  - Unblocked focus (`MGSolidFraming.clearView`, `MGSolidClearView`, Foundation only): after a step is framed on its
+    focus, rays from the camera to at most 48 focus samples find the parts in the way. A part outside the focus context
+    that hides more than 5 % of the samples is drawn as an automatic ghost in that still and story beat only; when a
+    context part is in the way, or a section step does not face its cut, the fixed directions `opposite`,
+    `quarterLeft`, `quarterRight` and `raised` are tried in order and the first clear one is taken. The render plan
+    (`MGSolidRenderPlan.cameras`, new field `clear`), the explainer pane (`MGExplainerFrame.solidClearView`;
+    `solidCamera` returns its camera) and `story.mp4` hold frames use it. Still and beat records gain `autoGhost`,
+    `occluded`, `focusSamples`, `view` and `facesCut`; `offView` now also counts the focus samples still hidden.
+    `MGSolidView.ghosting(_:)` is new. Shipped example cameras that change: only steps whose focus was really hidden or
+    whose section faced away (see the PR for the list).
+  - Story moves (`MGStoryPlan.blockedMoves`): a camera move that would pass through a part's box (grown by the near
+    plane) cuts to the beat's camera. The test is an exact segment-versus-box slab test on the played path: one segment
+    for a straight move; for a turn or zoom, at most 1,024 chords with the proven chord error added to the box growth.
+    Story beat records gain `cut` and `cutReason` (`layout`, `blocked`).
+  - Title backdrop: stills and story frames draw a dark backdrop (88 % black, soft fade below) under the title band's
+    text, so geometry in the band cannot wash out the title, the legend line or the legend corner (at least 4.5:1,
+    tested over a bright render and over pure white). The legend corner and an explainer's board line are covered
+    also where a tall frame puts them below the band. The caption band is now 84 % black (was 55 %), and the board
+    line is semibold in full ink, and the legend line is medium weight at 85 % ink (was regular, 60 %). Every glyph's
+    interior stroke rows of the title, legend line, legend corner, board line and caption keep 4.5:1 for frames at
+    least 1280 × 720, up to 3840 wide, aspect 0.5–2.0 (documented in SOLID-3D.md).
+  - The clear-view ray test is watertight (Woop, Benthin and Wald 2013, with a half-open tie rule): a ray through a
+    shared edge or vertex counts once, so the inside test of a closed part is exact.
+  - Board pane width (`MGExplainerFrame.boardShare`, `boardReferenceSize`, `contentArea`, `paneGap`): side by side, the
+    board pane fits its content, 28–50 % of the split width (55 % for a primary board), drawn at its reference pane's
+    scale; the same in stills, `story.mp4` and `MartyGraphicsExplainerView` (`MartyGraphicsView.viewportFit(_:)`,
+    `MGViewport.resized(to:)`). `MGExplainerFrame.panes` takes an optional `boardShare`; without it the earlier split
+    stays to the pixel. Split beat records gain `boardShare`.
+  - `microTurbojet` built-in component: intake lip, centrifugal compressor, vaned diffuser and shaft tunnel, annular
+    combustor, nozzle guide vanes and turbine wheel, nozzle, shaft, two bearings and a casing (11 parts); parameters
+    `diameter` 60–300, `length` 120–900, `cutaway` 0/1; anchors `intake`, `exhaust`, `mount`, `input`, `compressor`,
+    `turbine`; checks `bore` and `fits`. Shaft, compressor and turbine turn together (Solved); thrust is not modelled.
+  - `parts.resolved` reports add `limit`: `{"count", "limit": 96, "top": [{"id", "use", "parts"}]}` (up to five `use`
+    instances, most parts first, ties by id), in assembly and explainer reports (`MGSolidLimitDetail`,
+    `MGSolidIssue.limit`, `MGExplainerIssue.limit`). The reason stays one token.
+  - Component expansion may now make up to 96 wire parts (`MGSolidLimits.expandedParts`; authored `parts` keep 1–48),
+    so five `microTurbojet` engines, a mannequin and a pack (68 parts) fit. `parts.count` above 96 expanded wire parts.
+
 - Explainers that look good on video: an adaptive board pane, a story video, a documented mannequin back frame and
   repair detail for `annotations.visible`.
   - Adaptive board pane (`MGExplainerBoardPane`, `MGExplainerSession.boardPane`, Foundation only): in an explainer

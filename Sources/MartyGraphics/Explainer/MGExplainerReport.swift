@@ -35,14 +35,17 @@ public struct MGExplainerReport: Equatable, Sendable {
         return make(session, doc: doc, profile: profile, source: source, engine: engine)
     }
 
-    /// The short report of a refused document: `{"ok": false, "reason", "location", "kind", "version"}`, plus `strict`
-    /// when a profile is given, `file` when a source is given, and `engine`.
+    /// The short report of a refused document: `{"ok": false, "reason", "location", "kind", "version"}`, plus `visibility`
+    /// for the visibility reasons, `limit` for the solid's `parts.resolved`, `strict` when a profile is given, `file` when a
+    /// source is given, and `engine`.
     public static func refused(_ issue: MGExplainerIssue, profile: MGSolidProfile?, source: MGSolidSource?,
                                engine: MGJSON? = MGEngine.identity) -> MGExplainerReport {
         var o: [String: MGJSON] = ["ok": .bool(false), "reason": .string(issue.reason), "location": issue.location,
                                    "kind": .string("explainer"), "version": .number(1)]
         // `annotations.visible` only: which annotation is over the limit and why (other refusals keep their exact keys).
         if let v = issue.visibility { o["visibility"] = v.json }
+        // The solid's `parts.resolved` only: the resolved count, the limit and the instances that add the most parts.
+        if let l = issue.limit { o["limit"] = l.json }
         if let profile { o["strict"] = .bool(profile == .strict) }
         if let source { o["file"] = file(source) }
         if let engine { o["engine"] = engine }

@@ -129,6 +129,9 @@ public struct MartyGraphicsView: View {
     public func motionLoops(_ loops: Int?) -> Self { var v = self; v.teaching.loops = loops.map { max(1, $0) }; return v }
     /// VoiceOver value for the board (e.g. a teaching summary); defaults to the current step's narration.
     public func boardAccessibility(_ summary: String?) -> Self { var v = self; v.teaching.summary = summary; return v }
+    /// 2D: fit the board's viewport for `size` instead of the view's own size, keeping that scale and centre (the
+    /// explainer's narrowed board pane uses its reference pane, `MGExplainerFrame.boardReferenceSize`). Nil: own size.
+    public func viewportFit(_ size: CGSize?) -> Self { var v = self; v.teaching.fitSize = size; return v }
     /// Items not drawn and not tappable (values hidden until the host reveals them, e.g. during independent practice).
     public func concealed(_ ids: Set<String>) -> Self { var v = self; v.teaching.concealed = ids; return v }
     /// 3D only: keep the learner's orbit and zoom across updates of the same scene (patches, parameter changes,
@@ -176,6 +179,8 @@ struct MGBoardTeaching {
     var loops: Int?
     var summary: String?
     var concealed: Set<String> = []
+    /// 2D: the size the viewport is fitted for (nil: the view's own size); the view keeps that scale and centre.
+    var fitSize: CGSize?
     /// Non-nil: 3D camera keep/reset key (`preserves3DCamera`).
     var cameraReset: Int?
     /// Opt-in 3D hooks (`inspects3D`); empty keeps the original 3D behaviour.
@@ -423,10 +428,11 @@ struct MGSceneHost: View {
         let blendT = now.timeIntervalSince(blendStart)
         if let from = blendFrom, blendT < 1.2, !reduceMotion { items = MGTimeline.blend(from: from, to: items, t: MGTimeline.spring(blendT)) }
         let camera = scene.steps.indices.contains(step) ? (scene.steps[step].camera ?? scene.camera) : scene.camera
-        var vp = MGViewport(size: size, width: scene.width, height: scene.height, camera: camera)
+        let fit = teaching.fitSize ?? size
+        var vp = MGViewport(size: fit, width: scene.width, height: scene.height, camera: camera).resized(to: size)
         let camT = now.timeIntervalSince(cameraStart)
         if camT < 1.0, !reduceMotion {
-            let from = MGViewport(size: size, width: scene.width, height: scene.height, camera: cameraFrom)
+            let from = MGViewport(size: fit, width: scene.width, height: scene.height, camera: cameraFrom).resized(to: size)
             vp = from.lerp(vp, CGFloat(MGTimeline.spring(camT)))
         }
         var appear: [String: Double] = [:]

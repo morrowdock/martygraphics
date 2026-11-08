@@ -191,10 +191,26 @@ explainer view all read it:
 5. The rule is deterministic: the same document gives the same pane in every beat on every host. A highlight of a
    2D text item has nothing to draw on while the pane is hidden.
 
+### Board pane width
+
+Side by side (a frame wider than tall), the board pane is as wide as its content needs, not a fixed 45 %
+(`MGExplainerFrame.boardShare`). The shown board's items are measured at the viewport of the reference pane (the board
+pane at its largest share, `boardReferenceSize`); the share is the width they span about the pane centre plus 24 px
+(`boardMargin`, scaled with the width) on each side, over the split width, bounded to 28 % (`boardMinShare`) ... 50 %
+(`boardMaxShare`), or 55 % (`boardPrimaryMaxShare`) when the board is the primary view. A board with nothing
+measurable keeps the largest share. The board is drawn at the reference pane's scale and centre, so a narrower pane
+crops only empty board. The rule is deterministic and the same in the stills, `story.mp4` and the SwiftUI explainer
+view (which passes its own area in points). Stacked layouts (taller than wide) keep the 55 % / 45 % split. A 4-row
+table gets about 28 % at 1280 × 800. Each split beat's manifest record gives `boardShare`. A beat whose share differs
+from the previous beat's changes the solid pane, so the story cuts there.
+
 In `marty-solid render` the pane rects are whole pixels (`MGExplainerFrame.panes`), and the solid pane is framed for
 exactly the pixels it is rendered at (`MGExplainerFrame.solidCamera`), so a beat's still and the hold frames of that beat
-in `story.mp4` have the same camera in either layout. Each beat's manifest record gives `camera` and, when the beat
-shows annotations, `offView` (how many anchors are outside the pane).
+in `story.mp4` have the same camera in either layout. The unblocked-focus rule applies to the pane
+([SOLID-3D.md](SOLID-3D.md#unblocked-focus)): a beat framed on its focus draws parts that hide it as automatic ghosts, or
+looks from another fixed direction. Each beat's manifest record gives `camera`, the unblocked-focus fields (`autoGhost`,
+`occluded`, `focusSamples`, `view`, `facesCut`) for a tested focus, and `offView` (anchors outside the pane plus focus
+samples still hidden) when the beat shows annotations or has a tested focus.
 
 In the SwiftUI view the board pane slides in and out over 0.35 s
 (`MartyGraphicsExplainerView.paneAnimationSeconds`); with Reduce Motion it appears and disappears at once. A board
@@ -546,8 +562,9 @@ The report is printed in full either way, so the author can repair from it.
 
 `marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--no-story] [--story-fps 10|30]
 [--snapshots]` writes `board-0.png`
-and `solid-0.png` (the views before the first beat), one composite `beat-<n>.png` per beat (the `primary` pane 55 % wide,
-stacked when the size is taller than wide, the caption band and the legend line with its notes; the board pane follows the adaptive
+and `solid-0.png` (the views before the first beat), one composite `beat-<n>.png` per beat (side by side the board pane
+fits its content, 28–50 % wide, see [Board pane width](#board-pane-width); stacked when the size is taller than wide, with
+the `primary` pane 55 % high, the caption band and the legend line with its notes; the board pane follows the adaptive
 rule below, and each beat's manifest record says `boardPane`), `loop.gif` and `loop.mp4` (the solid's
 loop, as for an assembly; skipped with `--no-loop` or without a solid), `story.mp4` (the beats in order with their
 captions, views, highlights, annotations and cameras, the board at each beat's settled state and the legend line in every

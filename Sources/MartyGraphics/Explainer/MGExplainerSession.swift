@@ -581,6 +581,7 @@ public struct MGExplainerSession {
         case .failure(let issue):
             var e = MGExplainerIssue(issue.reason, view: .solid, statement: index, id: issue.part, detail: issue.visibility?.cause.rawValue)
             e.visibility = issue.visibility
+            e.limit = issue.limit
             return refuse(e)
         case .success(let d): doc = d
         }
