@@ -155,6 +155,11 @@ public struct MGLessonSession {
     /// Refusals the explainer attaches to an open beat, applied when the beat closes (for example `text.sign.<name>`:
     /// an `abs` that no check of the same beat proves). Keyed by beat index.
     var closeRefusals: [Int: MGLessonIssue] = [:]
+    /// Explainer mode: every scene that became the shown state (`state`) since the explainer last read them, oldest
+    /// first: the scene statement, each set-up command, each presented beat (with its beat index) and each accepted
+    /// direct change (host or learner). The explainer freezes the claims of exactly these scenes (`MGShownItems`,
+    /// `MGShownBeats`).
+    var shownScenes: [(beat: Int?, scene: MGScene)] = []
 
     struct StreamStatus: Equatable {
         var started = false, hasScene = false, keep = false, ended = false, header = false
@@ -289,6 +294,7 @@ public struct MGLessonSession {
             }
         }
         state = s
+        shown(s)
         for c in commands { appendLog(MGLessonLogEntry(command: c, origin: origin, beat: nil, statement: nil)) }
         if pending.isEmpty { projected = s }
         let transition = origin == .learner ? MGTransition.direct : Self.combine(transitions)
@@ -459,6 +465,7 @@ public struct MGLessonSession {
             let before = state?.scene.items ?? []
             let fresh = MGLessonState(scene: scene)
             state = fresh; projected = fresh
+            shown(fresh)
             pending = []; nextBeat = 0; openLine = nil; lineEndsAt = nil; lineRemaining = nil; caption = nil
             settleUntil = clock.now; settleRemaining = isPaused ? .zero : nil   // a new lesson inherits no deadline
             reopenPlayback()
@@ -535,6 +542,7 @@ public struct MGLessonSession {
                 let before = p.scene.items
                 let r = try MGLessonEngine.run(json, on: p, origin: .script, beat: nil, env: env)
                 state = r.state; projected = r.state
+                shown(r.state)
                 appendLog(MGLessonLogEntry(command: json, origin: .script, beat: nil, statement: index))
                 emit(.accepted(statement: index))
                 publish(r.transition, from: before)
@@ -747,6 +755,7 @@ public struct MGLessonSession {
         }
         let before = state?.scene.items ?? []
         state = s
+        shown(s, beat: k)
         for entry in applied { appendLog(entry) }
         if pending.isEmpty { projected = s }
         caption = text
@@ -806,6 +815,12 @@ public struct MGLessonSession {
         outbox.append(event)
         history.append(MGLessonRecord(event: event, at: clock.now))
         if history.count > MGLessonLimits.history { history.removeFirst(history.count - MGLessonLimits.history) }
+    }
+
+    /// Explainer mode only: `s` is now the shown state (`shownScenes`); `beat` when it presents that beat. A plain
+    /// lesson keeps nothing.
+    mutating func shown(_ s: MGLessonState, beat: Int? = nil) {
+        if env != nil { shownScenes.append((beat, s.scene)) }
     }
 
     mutating func appendLog(_ entry: MGLessonLogEntry) {

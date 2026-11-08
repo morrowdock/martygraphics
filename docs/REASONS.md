@@ -579,7 +579,8 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `snapshot.solid` | explainer | The explainer snapshot's solid is not valid JSON text, or 3D beat data has no solid. |
 | `snapshot.lesson` | explainer | The explainer snapshot's lesson snapshot is not JSON text. |
 | `snapshot.pending` | explainer | A beat the restored lesson still queues does not match the explainer's beat, or a queued command breaks the explainer's command rules. |
-| `snapshot.presented` | explainer | The explainer snapshot's presented beats are not valid. |
+| `snapshot.presented` | explainer | The explainer snapshot's presented beats are not valid: one is not a kept beat, comes after the lesson's beat, or is still queued. |
+| `snapshot.shown` | explainer | The explainer snapshot's record of shown 2D item or beat claims is not valid: not an array of at most 1024 `{"id", "tiers"}` (or 16 `{"beat", "caption", "checks"}`) entries, an id or beat twice, an id the id history does not hold, a 3D id, a beat that was not presented, an unknown tier, a tier twice or a tier the text cannot have, or it misses an item or presented beat, or what the state shown now shows. |
 | `snapshot.beat` | explainer | The explainer snapshot's presented beat names no kept beat, or not the lesson's presented beat. |
 | `snapshot.stream` | explainer | The explainer snapshot's stream status is not valid. |
 

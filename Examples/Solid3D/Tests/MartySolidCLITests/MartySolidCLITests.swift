@@ -376,6 +376,30 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual(Set(try FileManager.default.contentsOfDirectory(atPath: out.path)), ["board-0.png", "beat-1.png", "manifest.json"])
     }
 
+    // The legend counts every 2D item a presented beat showed, also when a later beat removes it: the same legend and
+    // claim order (first-shown order) in 10 fresh processes, and the same legend in the render manifest.
+    func testLegendCountsRemovedItemsInEveryProcess() throws {
+        let table = { (id: String) in #"{"op":"add","item":{"id":"\#(id)","k":"table","at":[6,4],"header":true,"cells":[["Planet","km"],["Earth",12756]]}}"# }
+        let doc = try write(#"{"v":1,"kind":"explainer","notes":{"zz":{"basis":"Survey data"},"mm":{"unchecked":"from memory"}},"board":{"v":1,"items":[{"id":"keep","k":"text","at":[1,7],"text":"Gears"},{"id":"bb","k":"text","at":[1,1],"text":"Teeth {p.teeth}"}]},"solid":{"v":2,"parts":[{"id":"p","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},{"id":"w","at":[45,0,0],"shape":{"gear":{"teeth":30,"module":2,"width":8}},"joint":{"revolute":[0,0,1]}}],"constraints":[{"gearMesh":{"a":"p","b":"w"}}]},"beats":[{"say":"One.","ops":[\#(table("zz"))]},{"say":"Two.","ops":[\#(table("mm")),{"op":"remove","id":"bb"}]},{"say":"Three.","ops":[{"op":"remove","id":"zz"},{"op":"add","item":{"id":"aa","k":"text","at":[1,2],"text":"Rate {w.speed}"}}]},{"say":"Four.","ops":[{"op":"remove","id":"mm"},{"op":"remove","id":"aa"}]}]}"#, "removed-items.json")
+        for _ in 0..<10 {
+            let r = try run(["check", doc])
+            XCTAssertEqual(r.status, 0, r.text)
+            let legend = r.json?["legend"] as? [String: Any]
+            XCTAssertEqual(legend?["text"] as? String, "Solved 4 · Given 1 · Not checked 1")
+            XCTAssertEqual((legend?["claims"] as? [[String: Any]])?.compactMap { $0["id"] as? String },
+                           ["p", "w", "item.bb", "item.zz", "item.mm", "item.aa"])
+        }
+        // The reported case, rendered: a noted table that beat 1 adds and beat 2 removes stays in the legend line.
+        let twoD = try write(#"{"v":1,"kind":"explainer","notes":{"t":{"basis":"Survey data"}},"board":{"v":1,"items":[{"id":"keep","k":"text","at":[1,7],"text":"Planets"}]},"beats":[{"say":"Here are the sizes.","ops":[\#(table("t"))]},{"say":"Now without the table.","ops":[{"op":"remove","id":"t"}]}]}"#, "removed-table.json")
+        XCTAssertEqual((try run(["check", twoD]).json?["legend"] as? [String: Any])?["text"] as? String, "Given 1")
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("explainer-render-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        let r = try renderOrSkip(["render", twoD, out.path, "--size", "640x400"])
+        XCTAssertEqual(r.status, 0, r.text)
+        let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+        XCTAssertEqual(manifest?["legend"] as? String, "Given 1")
+    }
+
     // N8: three simultaneous id collisions give the same first reason in 20 fresh processes (own hash seeds).
     func testN8CollisionOrderIsTheSameInEveryProcess() throws {
         let doc = try write(#"{"v":1,"kind":"explainer","board":{"v":1,"items":[{"id":"cc","k":"text","at":[1,1],"text":"c"},{"id":"aa","k":"text","at":[2,1],"text":"a"},{"id":"bb","k":"text","at":[3,1],"text":"b"}]},"solid":{"v":2,"parts":[{"id":"bb","shape":{"box":{"size":[1,1,1]}}},{"id":"aa","shape":{"box":{"size":[1,1,1]}}},{"id":"cc","shape":{"box":{"size":[1,1,1]}}}]},"beats":[{"say":"Hi."}]}"#, "collisions.json")
@@ -393,7 +417,9 @@ final class MartySolidCLITests: XCTestCase {
         let fixtures = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Fixtures")
         let clean = try run(["snapshot", "check", fixtures.appendingPathComponent("explainer-mixed.snapshot.json").path])
         XCTAssertEqual(clean.status, 0, clean.text)
-        XCTAssertEqual(clean.json?["legend"] as? String, "Solved 6")
+        // Saved at beat 1 with beat 2 queued, before snapshots held `shown`: the legend is presented-only (2 motion
+        // claims, the table, beat 1's caption) and the record is the state shown now.
+        XCTAssertEqual(clean.json?["legend"] as? String, "Solved 4")
         XCTAssertEqual(clean.json?["caption"] as? String, "Count the teeth: 15 and 30.")
         for _ in 0..<20 {
             let r = try run(["snapshot", "check", fixtures.appendingPathComponent("explainer-two-false-checks.snapshot.json").path])

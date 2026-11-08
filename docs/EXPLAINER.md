@@ -136,8 +136,8 @@ in an explainer.
    highlight and 3D checks are dropped (a dropped view releases its cut budget), and its later statements are
    cascades (`beat.refused`). A refused `view`, `highlight` or command is refused alone; the beat keeps the rest.
 7. A refused statement changes nothing: 2D state, 3D views, cut cache, budget counters, legend, timers. A refused
-   beat leaves no claim: the 2D item claims are read from the scenes themselves (the projected state, then items only
-   the shown state has), so an item that a refused beat added or changed is not counted.
+   beat leaves no claim: an item that only a refused beat added or changed is not counted (see "What the legend
+   counts").
 8. A beat's `view.section` is cut when its statement is accepted. The cut counts toward the document's mesh budget
    (`assembly.budget`) and section work budget (`section.budget`) with every other kept view.
 9. A claim holds at every state its beat can show. After a learner change (a slider) or a host `apply`, `caption` is
@@ -235,11 +235,47 @@ type a number (`text.number.control.<id>`); a raw template's params may not carr
 | 3D motion | the #21 motion tier | as in the assembly |
 
 `MGExplainerSession.claims` lists the claims in this order: 3D motion (part order), 3D annotations (authored order), the title,
-`board.template`, 2D items `item.<id>` (board order, then `add` order), then per kept beat `beat.<n>` and its checks
+`board.template`, 2D items `item.<id>` (first-shown order, below), then per presented kept beat `beat.<n>` and its checks
 `beat.<n>.check.<k>`. The one legend (`MGExplainerLegend`, owner D4) shows `Solved N · Schematic N · Given N · Not
 checked N` (each group only when non-zero). `Schematic` counts Built claims of every kind except `data`; `Given`
 counts Built `data` claims (noted 2D items), so a 3D-only explainer has its assembly's own legend text (test T9).
 Notes: "Some motion is schematic" when a motion claim is below Solved; "Shapes and drawings as authored", always.
+
+### What the legend counts (presented-only)
+
+The legend counts the claims of exactly what the learner was shown, from the states that were actually presented. A
+state is presented when it becomes the shown state (`state`): the board's scene statement, each set-up command, each
+presented beat (as presented, so a command that is refused alone at presentation changes nothing), and each accepted
+host `apply` or learner change. The lesson hands every such state to the explainer as it is shown (also when one call
+presents several beats), and the explainer freezes the claims of its 2D items at that moment (internal
+`MGShownItems`): each item id in first-shown order, with the set of tiers its displayed numbers had. The displayed
+content is the effective one: the item's wire entry with the scene's `over` entries for it applied in order, so an
+override that a later one supersedes was never displayed and does not count. Each placeholder takes the tier of that
+state (a 2D value is Built when that state's template marks it as data, else Solved; a 3D fact has its own tier).
+Nothing is recomputed later. The record only grows: at most 1024 ids (the lesson's id history cap) with at most 3
+tiers each.
+
+1. A 2D item claim counts for every item in the record, also when a later beat or host change removes it (a noted
+   table that beat 1 adds and beat 2 removes counts as `Given 1`). Its tier is the lowest tier it showed, as frozen
+   then: a later change of the board (a template that no longer marks the value as data, a value that is gone) does
+   not change it.
+2. A caption claim and the check claims of a beat count once the beat is presented (and, as before, while the board
+   still moves to it they wait: `pendingClaims`). The presented (current) beat's caption and checks are live: their
+   tiers follow the state shown now, and a 2D check that the state shown now breaks leaves the legend (`notCurrent`).
+   A past beat's are frozen (internal `MGShownBeats`): on its presentation and on every state shown while it was the
+   presented beat (host or learner changes), the engine records the tier its caption had and the tier each check's
+   value had, with that state's built values. A past beat's caption and checks take the lowest frozen tier ("Checked"
+   with that tier) and are never recomputed from a later board.
+3. Nothing else counts: not a beat that waits to be shown (queued), not a beat that is still open while it streams,
+   not a paused lesson's next beat, not a refused beat, command or batch, not the middle of one beat's commands, not a
+   note whose item never appears (`notes.unused.<id>`), and no replay of the script. `finishNow()` presents the
+   waiting beats, so they count after it runs.
+
+The title and `board.template` count when they are shown (the title from the first beat on, the template with the
+board). 3D motion and annotation claims come from the whole compiled solid; they do not depend on the beat shown.
+One function (`claims`) serves `legend`, `MGExplainerReport` (`marty-solid check`, which presents every beat),
+`snapshot check` and `MartyGraphicsExplainerView`; `marty-solid render` draws the legend of a copy of the session after
+`finishNow()` (every beat presented) in each still and in the manifest.
 
 `describe(_:)` routes by member: a 2D id gives the lesson's describe, a table sub-address the table's plus `row` (and
 `column`), a 3D part, anchor or `repeat` base the solid's describe, an instance its parts; an unknown id gives nil.
@@ -306,7 +342,10 @@ and put a large solid after a small board.
 
 `snapshot()` holds engine data only: the header, the views as authored (as JSON text), the set-up commands, each
 beat's caption template, commands, checks, view and highlight, the lesson snapshot (as JSON text, so its nesting never
-adds to the explainer's) and the stream position. Captions and claims are not stored. `restore(_:pacing:clock:library:)`
+adds to the explainer's), the stream position, the record of shown 2D item claims (`shown`:
+`[{"id", "tiers"}]` in first-shown order, tiers lowest first) and the record of shown beat claims (`shownBeats`:
+`[{"beat", "caption", "checks"}]` by beat, 0-based, each a list of tiers lowest first).
+Captions and claims are not stored. `restore(_:pacing:clock:library:)`
 and `restore(data:…)` trust nothing in it as proof:
 
 1. the board and the solid are checked and compiled again (the solid with the kept beats' views); every saved check is
@@ -320,8 +359,24 @@ and `restore(data:…)` trust nothing in it as proof:
    made (of the replayed script, or a recorded host `bind`; `snapshot.controls`), so a control label is never taken
    from saved data; every queued command passes the explainer's command rules, each queued beat must be the
    explainer's beat, and every kept beat is either shown or queued;
-4. the caption is the presented beat's line on the restored state, never the saved text; the claims and the legend
-   come only from what steps 1–3 evaluated, so a restored legend equals the legend of a fresh run of the same script.
+4. every saved presented beat must be a kept beat at or before the lesson's beat that the lesson does not still
+   queue (`snapshot.presented`); the record of shown 2D item claims is checked for structure only (`snapshot.shown`):
+   an array of at most 1024 entries with closed keys `id` and `tiers`; each id once, an item identifier that the
+   restored id history (`kinds`) holds and no 3D id; each tier once, one of `described`, `built`, `solved`; and the
+   record holds every item of the state shown now with the tiers that state shows. Past claims are not recomputed
+   against the restored board (it may have changed since they were shown). A snapshot without `shown` (made before
+   the record) restores with the state shown now as the record. The record of shown beat claims is checked the same
+   way (`snapshot.shown`): at most 16 entries with closed keys `beat`, `caption`, `checks`; each beat once and a
+   presented kept beat, and every presented kept beat has one; one tier list per check of that beat; each tier once
+   and only a tier the beat's text can have (an `unchecked` caption Described, a caption without placeholders none, a
+   3D fact its own tier, a 2D value Built or Solved; a caption or check with placeholders at least one); and the
+   presented beat's entry holds the tiers it shows now. A snapshot without `shownBeats` freezes each presented beat
+   on the state shown now. Trust: both records are saved data that pass these structure checks, not proof of what was
+   shown; a changed snapshot can change past item and beat claims within them (as it can change the held scenes
+   within the board rules);
+5. the caption is the presented beat's line on the restored state, never the saved text; the claims and the legend
+   come only from what steps 1–4 evaluated and from the checked record, so a restored legend equals the legend of the
+   saved session.
 
 All of it runs in beat order, then statement order, so the first reason does not depend on dictionary order. The first
 problem refuses the whole snapshot with its reason (the solid's own reason when it no longer compiles, a rule's own
@@ -350,6 +405,8 @@ reason such as `text.number.item.<id>` or `check.<name>`, `snapshot.<field>` oth
 | Caption `unchecked` | 60 | `beat.unchecked.<n>` |
 | Nesting of a document | 63 levels | `explainer.depth` |
 | Nesting of a stream statement | 64 levels (other than `solid`: 59, `lesson.depth`) | `explainer.depth` |
+| Record of shown 2D item claims in a snapshot | 1024 ids, 3 tiers each, at most 81,936 bytes (part of the snapshot cap) | `snapshot.shown`, `snapshot.bytes` |
+| Record of shown beat claims in a snapshot | 16 beats, a caption and 8 checks each, 3 tiers each, at most 5,776 bytes (part of the snapshot cap) | `snapshot.shown`, `snapshot.bytes` |
 
 Board, lesson and assembly limits (`MGLimits`, `MGLessonLimits`, `MGSolidLimits`) are unchanged and apply inside.
 
@@ -379,7 +436,7 @@ rule for the explainer's own text (`text.pose.beat.<n>`, `text.pose.board`, `tex
 `text.number.control.<id>`, `text.number.template`, and for snapshots `snapshot.bytes`, `snapshot.number`,
 `snapshot.depth`, `snapshot.kind`, `snapshot.version`, `snapshot.header`, `snapshot.header.missing`,
 `snapshot.header.unknown.<keys>`, `snapshot.frozen`, `snapshot.beats`, `snapshot.next`, `snapshot.board`,
-`snapshot.solid`, `snapshot.lesson`, `snapshot.setup`, `snapshot.controls`, `snapshot.pending`, `snapshot.json`, `snapshot.presented`, `snapshot.beat`, `snapshot.stream`.
+`snapshot.solid`, `snapshot.lesson`, `snapshot.setup`, `snapshot.controls`, `snapshot.pending`, `snapshot.json`, `snapshot.presented`, `snapshot.shown`, `snapshot.beat`, `snapshot.stream`.
 Solid reasons an explainer gives itself: `tier.key`, `check.object`, `check.value`, `check.comparison`, `check.eq`,
 `check.lt`, `check.gt`, `check.tol`, `check.fact.<name>`, `check.failed.<name>`, `text.sign.<name>`,
 `text.modifier.<modifier>`, `text.modifier.<modifier>.<name>`, `report.engine`. The tool: `kind.unsupported`.
@@ -423,7 +480,8 @@ and `solid-0.png` (the views before the first beat), one composite `beat-<n>.png
 stacked when the size is taller than wide, the caption band and the legend line), `loop.gif` and `loop.mp4` (the solid's
 loop, as for an assembly; skipped with `--no-loop` or without a solid), `snapshot-beat-<n>.json` with `--snapshots`
 (snapshot `/2` of each beat's view) and `manifest.json` (source, outputs with bytes and SHA-256, legend, captions, frames
-and seconds per frame). The solid pane of a beat is framed by the step the beat shows, with the assembly rule
+and seconds per frame). The legend line and the manifest `legend` are the legend of the whole explainer, every beat
+presented (the legend `check` reports). The solid pane of a beat is framed by the step the beat shows, with the assembly rule
 ([SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop)); the pane holds no title or caption, so all of it
 is the safe window.
 
