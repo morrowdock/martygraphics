@@ -28,7 +28,7 @@
    {"id": "lJetcat", "at": {"part": "back.casing", "offset": [55, 0, -95]}, "text": "JetCat-style micro turbojet (example)"},
    {"id": "lNotGravity", "at": {"part": "back.casing", "offset": [55, 0, -45]}, "text": "Not confirmed Gravity hardware"},
    {"id": "lComp", "at": "back.impeller", "text": "Centrifugal compressor"},
-   {"id": "lComb", "at": {"part": "back.combustor", "offset": [30, 0, 148]}, "text": "Combustion chamber"},
+   {"id": "lComb", "at": {"part": "back.combustor", "offset": [0, -30, 148]}, "text": "Combustion chamber"},
    {"id": "lTurb", "at": {"part": "back.turbineWheel", "offset": [0, 0, 218]}, "text": "Turbine"},
    {"id": "lNozzle", "at": "back.nozzle", "text": "Nozzle: the gas speeds up"},
    {"id": "lRpm", "at": {"part": "back.shaft", "offset": [0, 0, 130]}, "text": "Shaft: about 120,000 rpm (reported)", "unchecked": "GNAAS; JetCat P220 max 117,000 (F13)"}],

@@ -165,12 +165,24 @@ extension MGSolidReport {
     /// with the standard profile so the report can show what strict refuses). `source` adds the `file` object;
     /// `engine` adds the `engine` object (nil leaves it out). Every entry point first refuses an unusable `engine`
     /// (`report.engine`: non-finite, deeper than `engineDepth` or larger than `engineBytes`).
+    ///
+    /// `anchorViews` (default true) runs the view rule of the anchor checks on every step still
+    /// (`MGSolidDocument.stepAnchorIssues`): each issue is a warning `annotation.anchor.hidden.<id>`, and the strict
+    /// profile refuses the first one (after every other refusal). An explainer passes false and tests its beats instead
+    /// (`MGExplainerReport`). The report lists every anchor issue in `anchorIssues` and the anchors a view's budget left
+    /// untested in `anchorUntested` (both only for a document with annotations); a refusal for an anchor reason adds
+    /// `anchor`, the issue it names.
     public static func make(_ doc: MGSolidDocument, profile: MGSolidProfile = .standard, source: MGSolidSource? = nil,
-                            engine: MGJSON? = MGEngine.identity) -> MGSolidReport {
+                            engine: MGJSON? = MGEngine.identity, anchorViews: Bool = true) -> MGSolidReport {
         if badEngine(engine) { return engineRefusal }
         let checks = Checks(doc)
         var reason = checks.refusal, part: String? = nil
         if reason == nil, let r = profile.refusal(doc) { reason = r.reason; part = r.part }
+        var anchors = MGAnnotationAnchorReport()
+        anchors.issues = doc.offPartAnchors
+        if anchorViews { anchors.append(doc.stepAnchorIssues()) }
+        let views = anchors.issues.filter { $0.cause != .offPart }
+        if reason == nil, profile == .strict, let first = views.first { reason = first.reason; part = first.id }
         var o = summary(doc, checks: checks, profile: profile)
         o["ok"] = .bool(reason == nil)
         o["reason"] = str(reason)
@@ -178,7 +190,23 @@ extension MGSolidReport {
         if let source { o["file"] = source.json }
         if let engine { o["engine"] = engine }
         for s in sections { o.merge(s.fields(doc)) { a, _ in a } }
+        // The view rule's warnings follow the document's own warnings (one per issue, in step order).
+        if case .array(var w)? = o["warnings"] {
+            w += views.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
+            o["warnings"] = .array(w)
+        }
+        // Documents with annotations only; other reports keep their exact keys.
+        if !doc.annotations.isEmpty {
+            o["anchorIssues"] = .array(anchors.issues.map(\.json))
+            o["anchorUntested"] = anchors.untestedJSON
+        }
+        if let r = reason, let hit = anchorIssue(r, anchors.issues) { o["anchor"] = hit.json }
         return MGSolidReport(ok: reason == nil, reason: reason, part: part, json: .object(o))
+    }
+
+    /// The issue an anchor refusal names: the first issue with that reason (nil for any other reason).
+    static func anchorIssue(_ reason: String, _ issues: [MGAnnotationAnchorIssue]) -> MGAnnotationAnchorIssue? {
+        issues.first { $0.reason == reason }
     }
 
     /// The report of a refused document: `{"ok": false, "reason", "part"}`, plus `visibility` for `annotations.visible`

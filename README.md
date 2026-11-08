@@ -36,7 +36,7 @@ what the engine computed (the engine motion and the weight direction) and what i
 [All 7 steps](docs/SHOWCASE.md#jet-suit-hand-built-fact-checked) · [Render receipt](docs/assets/jet-suit/provenance.json)
 
 <sub>The picture is the step 2 still. Click it to open the story video: 1280×800 at 30 frames per second, H.264,
-6.4 MB. GitHub shows GIFs at a lower frame rate, and it does not play a video file from the repository inside a
+6.2 MB. GitHub shows GIFs at a lower frame rate, and it does not play a video file from the repository inside a
 README, so this example has no GIF.</sub>
 
 <p align="center">

@@ -114,7 +114,7 @@ final class MartySolidCLITests: XCTestCase {
     var golden: URL { URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Golden") }
 
     /// Fields this release adds to the check report; the golden files hold the output of the release before.
-    static let added: Set<String> = ["engine", "partTiers", "motionTiers"]
+    static let added: Set<String> = ["engine", "partTiers", "motionTiers", "anchorIssues", "anchorUntested", "anchor"]
 
     /// Removes top-level members from pretty-printed JSON. The writer puts each top-level key on its own line with an
     /// indent of two spaces and nests everything else deeper, so this is an exact text operation.

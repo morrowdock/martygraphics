@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "7837ef9d87687bb84504c37111aba73ba1a175cb01615569a0c1fd130b6d4eff"
+      "sha256": "45d70f2308531167df06dbf829e4a4e36890a7f7f987a368c9b6507adee518a7"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -303,19 +303,19 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-jet-suit.check.json",
-      "sha256": "d2b1f898161b66ea6910c9d2478e0173666ee9050336aecef68ced4c8d096617"
+      "sha256": "600fbee429c073ff3ca0d703753c2f188e874430ee917b625956b1a0f1620867"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-jet-suit.strict.json",
-      "sha256": "fe5ee7b6f856a1dc4ccd0694419ed6c61bc98f2b0699d7161a4e843095887848"
+      "sha256": "f651adce7723949e5e3012be462612363b3b29a31bdd3c8a1c30a24c0349474a"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.check.json",
-      "sha256": "03f5ea1d16f8a460d2ba5481509475889ab3c4dfa2b7ec8008ce2d1e179c1113"
+      "sha256": "f7cd0933911c1c3d5229de4683dfcaa0d1bcef2c5e00abf9d731fb331184a800"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.strict.json",
-      "sha256": "8c7290cfb07d027b48b6a1618cfeff260e8970595d68ce4cab0906fc2f6082e6"
+      "sha256": "0a544fb7bd72757d72c5e0cc9442c1568933637dc87ab3d5431c1fe6fa58f6c5"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-lessons-provenance.check.json",
@@ -447,7 +447,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "99df6bcc15f4a1f3191620fe83cb6f7024d66c7febb8e1999ab16f6b188d93b7"
+      "sha256": "1cc53a3b27541e5d904427befdddc0013facdfb01f2d1305cd5ac520c86421bd"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
@@ -507,7 +507,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "8d8f717a38d0d46cadba422cd96fbe27b1da05e84813efe6cd86e68ebbb4dddf"
+      "sha256": "1ec7c3f4eed038d2ccc0cdc7d9374dee1e875d10e4405872f446baf49ce89405"
     },
     {
       "path": "SECURITY.md",
@@ -523,11 +523,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerLayout.swift",
-      "sha256": "eaa2c5cfd57fcfbc88a32f72f73604a03173db145e2164d1e62e713defc2611c"
+      "sha256": "247adb2f58e7f27d547258a54355680929b7a71b386a2cb4987bc597613d630e"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerReport.swift",
-      "sha256": "3a36d72e96e9827cbf24221936d737230ac82736f8ff6d1e7dfa9cd6c1b5afe3"
+      "sha256": "5b22fe2ef673b60a2fa1d09be86e84572eb45290d52e712adc9ef53f19480139"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
@@ -670,12 +670,16 @@
       "sha256": "ba57fcbfe9d29ee5a0ca03cc766d37f91b3eef8a13d15ebf0bb8be3659cba132"
     },
     {
+      "path": "Sources/MartyGraphics/Solid/MGSolidAnchorCheck.swift",
+      "sha256": "eb9743539d9f094d069974977dacc31645b21288240c4ec7a1f39a0a82171057"
+    },
+    {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
       "sha256": "2f690f5789d3e4b817d3efaaeaa67673c0ad477fff46f8d1a71254109cd4623a"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift",
-      "sha256": "4ce8828890973de87e7bbdafc57a15be36e5b9b1af62a131bfe190f475ca4dcc"
+      "sha256": "df4c3e76bc29cbd241efc911cfc08e0b2fc874256dc8eb984e48e26512a26617"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidBuilders.swift",
@@ -703,7 +707,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidFrames.swift",
-      "sha256": "67987b1faf661efadbbcf65d700855d11737584dab7b2817f07d3e94c8a10ea6"
+      "sha256": "23f59c9d0af0a10026ef6b78551726d261861368eec435a01fa3ce038b4d069e"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidFraming.swift",
@@ -735,7 +739,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "76ad716260f3b9f47b1cd51c01fb892a1756dc3632b41d77e1fa01442e823ede"
+      "sha256": "bae4bba35030cdb26aa4031b72544b25cad633fc6915795e7b89cbc1882bff19"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
@@ -747,7 +751,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
-      "sha256": "bc56a4d2040ad2eef9c49423a76b29134679e47f73e05a09e12708a235c86988"
+      "sha256": "2ecfaa3d43c9282dba5a0ece72467e5fb4722845c952fdb234beb1211095ceac"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSection.swift",
@@ -966,6 +970,10 @@
       "sha256": "830c45990ba8a044d4b5857625565d3ee009cc7215f848d4cb8f8678f131f053"
     },
     {
+      "path": "Tests/MartyGraphicsTests/SolidAnchorCheckTests.swift",
+      "sha256": "ace198ec6ba04d105529b0eb224a8b3f219c73e68a05963fc43b79b119231821"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/SolidAnnotationTests.swift",
       "sha256": "782e088a00c2beacbecd872ec31908b3dcdf15598c0f0d447a017199c8e1d694"
     },
@@ -999,11 +1007,11 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidHonestyTests.swift",
-      "sha256": "ede859eb508428054d3ee0f5df6df5bd9f050bce27c7dfb013981f08dcc7c7b9"
+      "sha256": "11b561ee9b15b944c6e56b1be1487ec0fd9f4cca6be8488d8cd8940cc3342a8b"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReasonCatalogTests.swift",
-      "sha256": "9ea4395045ec9f98cb94afcb058a2f4067a335e7bd42247e0959f65f1d99f7f7"
+      "sha256": "34169c4bb000e2d911333dedc59011ca9e26664a6afcbc075b739d8269e544af"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReportTests.swift",
@@ -1063,7 +1071,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "c17fd30e9335d00755ca826602ab402537b7e4c0cf9d92f83d832d052ca008f5"
+      "sha256": "9ef9b6f26830d86b7dc854f56246710ae4b2247862fd084a7af1dbafa5e8bf19"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1099,15 +1107,15 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "4a70b5f59fa90da1ffa131e78ef9422ed1acce82f48eef2bd319acec0ab71860"
+      "sha256": "490a389071cfb76e03131d6df155894aa120e48d92bd6d72bff68954c590c0f8"
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "2ef179bdebec13003026c4aec5589fa239cc31904496047b1d6b49dd9fe63c41"
+      "sha256": "b24d7b0a3fe16ed2b91527edfa9462684566f4b08e3e82139aaeec82e61a0dc5"
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "2bfba7372b4bf686a20aff1926859ecd5af818ccf48a683318293ef900ca1cab"
+      "sha256": "96bb1bd369dda91ba561faad8215792a14ea755d80a62e54dd7159ed3e3426e5"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -1203,11 +1211,11 @@
     },
     {
       "path": "docs/assets/jet-suit/check-strict.json",
-      "sha256": "3a86911149b968da00988bc6126a8120c6015e3dcc833a91864a8227f92c9c74"
+      "sha256": "431b94e46c4634af13b4425cb6fe7b335533bc148b291e93d859874ae545ae61"
     },
     {
       "path": "docs/assets/jet-suit/jet-suit.json",
-      "sha256": "83895fd9348b13819fecacb5aeefcb85fe22a6ad0615f689343b8f0e63041668"
+      "sha256": "59b536616d9cd30b7e70138136fe80ba680028a1f3bb0de1ca0e6c11ef6648a9"
     },
     {
       "path": "docs/assets/jet-suit/poster.jpg",
@@ -1215,7 +1223,7 @@
     },
     {
       "path": "docs/assets/jet-suit/provenance.json",
-      "sha256": "f43bb49572ea29ebc76d3fd0219a15d7f06c12e8c1eb4d50bf1a7f0cf11a23c9"
+      "sha256": "da0e73b797a450b7e40cd5a541c656c3e843fd3f947b97a06002bd6791481fb7"
     },
     {
       "path": "docs/assets/jet-suit/step-1.png",
@@ -1239,7 +1247,7 @@
     },
     {
       "path": "docs/assets/jet-suit/step-6.png",
-      "sha256": "b5e52da3b3140ac33364265c00e26c185d629a567b22557ce9a13c0088148958"
+      "sha256": "095efedab3d4b718035615d0dff750b390ecd59fcdeefa93103f8d553ca7a206"
     },
     {
       "path": "docs/assets/jet-suit/step-7.png",
@@ -1247,7 +1255,7 @@
     },
     {
       "path": "docs/assets/jet-suit/story.mp4",
-      "sha256": "d8d16ff0b68046ed71d7e84cf3504aed90c1b91eb9b3179a0afebc4885db9b5a"
+      "sha256": "77839683c17ad124e003e71da77d1e34df75c4a44ba148fb0f0b7158f9e02992"
     },
     {
       "path": "docs/assets/lessons/beat-1.png",

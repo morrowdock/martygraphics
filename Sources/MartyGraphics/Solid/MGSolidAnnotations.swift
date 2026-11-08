@@ -658,9 +658,12 @@ enum MGSolidAnnotationEngine {
         if let b = base { r.tier = min(b, textTier ?? .solved) } else { r.tier = textTier }
     }
 
-    /// `annotation.unused.<id>` (some step uses `annotate`, no step shows it; strict refuses) and
-    /// `annotation.cut.<id>` (a part anchor lies in the half that the same step's section removes; a warning only),
-    /// in authored order.
+    /// `annotation.unused.<id>` (some step uses `annotate`, no step shows it; strict refuses),
+    /// `annotation.cut.<id>` (a part anchor lies in the half that the same step's section removes; a warning only) and
+    /// `annotation.anchor.off.<id>` (a label's or pointer's anchor lies off the part it names,
+    /// `MGSolidDocument.offPartAnchors`; strict refuses), in authored order. The view rule
+    /// `annotation.anchor.hidden.<id>` needs each still's camera, so the check report adds it
+    /// (`MGSolidDocument.stepAnchorIssues`), not the compile.
     static func warnings(_ doc: MGSolidDocument) -> [MGSolidIssue] {
         let a = doc.annotations
         guard !a.isEmpty else { return [] }
@@ -668,6 +671,7 @@ enum MGSolidAnnotationEngine {
         for i in doc.steps.indices { shown.formUnion(doc.visibleAnnotations(step: i)) }
         let rest = doc.assembly.pose(MGPoseParameters(input: doc.defaults.input, explode: 0))
         var out: [MGSolidIssue] = []
+        let off = Set(doc.offPartAnchors.map(\.id))
         for id in a.ids {
             if a.stepped, !shown.contains(id) { out.append(MGSolidIssue("annotation.unused.\(id)", part: id)) }
             let points = anchors(a, id)
@@ -679,6 +683,7 @@ enum MGSolidAnnotationEngine {
                 }
             }
             if cut { out.append(MGSolidIssue("annotation.cut.\(id)", part: id)) }
+            if off.contains(id) { out.append(MGSolidIssue("annotation.anchor.off.\(id)", part: id)) }
         }
         return out
     }

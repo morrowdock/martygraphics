@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+- Strict label and pointer anchors. In `--strict`, a label (its `at`) or pointer arrow (its tip, `to`) whose anchor a
+  step or beat still does not show is refused: `annotation.anchor.hidden.<id>`, for an anchor occluded by another part
+  (the watertight line-of-sight rays of the unblocked-focus rule, 3,000,000 triangle tests per view), on a hidden or
+  ghosted part (automatic ghosts included), or off screen. An anchor on a part that the view's section cuts is not
+  hidden by the parts inside that cut part when it lies on the cut face or inside the cut. An anchor farther from the
+  box of the part it names than max(15 % of that box's diagonal, 1 % of the model's diagonal) is refused too:
+  `annotation.anchor.off.<id>` (a document warning, so the compile's strict profile also refuses it). The standard
+  profile warns and keeps the hollow dot and dashed leader. Each step is framed as its 1280 × 800 still; each explainer
+  beat as its still's solid pane (a speech-paced replay gives each beat's board pane). The check report gains
+  `anchorIssues` (`id`, `kind`, `reason`, `cause`, `part`, `by`, `step`, `beat`, `point`, `distance`, `tolerance`,
+  `fix`), `anchorUntested` and, for an anchor refusal, `anchor`; an explainer refusal's `location` names the beat and
+  the cause. New API: `MGAnnotationAnchorIssue`, `MGAnnotationAnchorReport`, `MGAnnotationAnchorRules`,
+  `MGSolidDocument.offPartAnchors`, `anchorIssues(view:params:camera:width:height:step:beat:stage:)`,
+  `stepAnchorIssues(width:height:)`, `MGExplainerFrame.beatPanes` and `beatAnchorIssues`,
+  `MGSolidReport.make(…, anchorViews:)` and `MGSolidReasons.reportStrictPrefixes`.
+  - Example fixed: `docs/assets/jet-suit/jet-suit.json` was the only shipped document the rule refused. Its step 6 label
+    `lComb` ("Combustion chamber") had its dot on the cut casing wall; the anchor moved from `[30, 0, 148]` to
+    `[0, -30, 148]` on `back.combustor`, inside the chamber. `step-6.png`, `story.mp4` (6.2 MB) and `check-strict.json`
+    were made again; the render receipt records the revision. Golden change: `docs-assets-jet-suit-jet-suit` (the fixed
+    file's output: `lComb`'s anchor, the file hash and the step 6 reference placements) and
+    `docs-assets-jet-suit-provenance` (the receipt's new line count and hash).
+
 - Docs: the hand-built, fact-checked jet-suit explainer now leads the README and `docs/SHOWCASE.md`
   (`docs/assets/jet-suit/`: the 54-line JSON, 7 step stills, a 63-second story video re-encoded to 6.4 MB, a poster,
   the strict check output, a render receipt, and `SOURCES.md` with a label, source URL and date for every fact). A

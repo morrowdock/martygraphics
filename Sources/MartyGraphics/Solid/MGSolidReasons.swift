@@ -78,6 +78,9 @@ public enum MGSolidReasons {
     ]
     /// Warning prefixes that an explainer's strict check refuses (besides `MGSolidProfile.strictPrefixes`).
     public static let explainerStrictPrefixes = ["notes.unused."]
+    /// Warning prefixes that the strict check report refuses (`MGSolidReport`, `MGExplainerReport`): the anchor view
+    /// rule needs each still's camera, so the compile does not give it (`MGSolidProfile.refusal` does not refuse it).
+    public static let reportStrictPrefixes = ["annotation.anchor.hidden."]
     /// An author name after `MGSolidParser.token`.
     static let token = "[A-Za-z0-9_.]{1,32}"
     /// Longest reason `lookup` and `matches` read (a `<keys>` list is bounded by the document size).
@@ -364,6 +367,10 @@ public enum MGSolidReasons {
         w("frame.child.far.<id>", strict: false, "A child's bounds miss its parent's bounds grown by 1.5 parent sizes."),
         w("annotation.unused.<id>", strict: true, "Some step uses `annotate`, but no step shows this annotation."),
         w("annotation.cut.<id>", strict: false, "A part anchor of an annotation that a step shows lies in the half that the step's `section` removes from that part."),
+        w("annotation.anchor.off.<id>", strict: true, "A label's anchor (`at`) or a pointer's tip (`to`) lies farther from the box of the part it names than max(15 % of that box's diagonal, 1 % of the model's diagonal), in the part's own frame. The report's `anchor` gives the distance, the tolerance and a fix."),
+        MGSolidReason(pattern: "annotation.anchor.hidden.<id>",
+                      meaning: "A step or beat still shows a label or pointer whose anchor point it does not show: the anchor's part is hidden or ghosted in that view, the point is off screen, or another part is the first surface on the line of sight (a cut part's inside does not count). The report's `anchor` gives the step or beat, the cause, the part in the way and a fix.",
+                      formats: [.check, .explainer], kind: .warning, strict: true),
         // Annotations (v2).
         r("annotations.object", [.assembly], "`annotations` is not an object (v2)."),
         r("labels.count", [.assembly], "`labels` is not an array of at most 32 labels."),

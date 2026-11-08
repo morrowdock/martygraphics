@@ -557,8 +557,9 @@ final class SolidHonestyReview2Tests: XCTestCase {
         for f in fixtures { XCTAssertNil(reason(f, profile: .strict), f) }
         // The spaced plates still get the warning, so the report shows the suspicion beside the read-back.
         XCTAssertEqual(try doc(fixtures[0]).warnings.map(\.reason), ["frame.child.absolute.upper"])
-        // Open vocabulary 3a adds `annotation.unused.` (certain from the document: no step shows it); still no frame heuristic.
-        XCTAssertEqual(MGSolidProfile.strictPrefixes, ["joint.idle.", "frame.axis.off.", "annotation.unused."])
+        // Open vocabulary 3a adds `annotation.unused.` (certain from the document: no step shows it) and the anchor
+        // checks add `annotation.anchor.off.` (an anchor off its part, in the part's own frame); still no frame heuristic.
+        XCTAssertEqual(MGSolidProfile.strictPrefixes, ["joint.idle.", "frame.axis.off.", "annotation.unused.", "annotation.anchor.off."])
         XCTAssertEqual(reason(#"{"v": 2, "kind": "assembly", "parts": [{"id": "disc", "shape": {"shaft": {"radius": 20, "length": 5}}, "joint": {"revolute": [0, 0, 1]}}]}"#, profile: .strict), "joint.idle.disc")
         XCTAssertEqual(reason(#"{"v": 2, "kind": "assembly", "parts": [{"id": "sat", "shape": {"shaft": {"radius": 5, "length": 4, "at": [80, 0, 0]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}]}"#, profile: .strict), "frame.axis.off.sat")
     }

@@ -188,7 +188,7 @@ final class SolidReasonCatalogTests: XCTestCase {
             XCTAssertFalse(e.meaning.isEmpty, e.pattern)
             XCTAssertTrue(e.meaning.hasSuffix("."), e.pattern)
             XCTAssertFalse(e.formats.isEmpty, e.pattern)
-            let strictPrefixes = MGSolidProfile.strictPrefixes + MGSolidReasons.explainerStrictPrefixes
+            let strictPrefixes = MGSolidProfile.strictPrefixes + MGSolidReasons.explainerStrictPrefixes + MGSolidReasons.reportStrictPrefixes
             XCTAssertEqual(e.strict, e.kind == .warning && strictPrefixes.contains { e.pattern.hasPrefix($0) }, e.pattern)
         }
         // The JSON form is deterministic and encodable.

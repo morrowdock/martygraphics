@@ -609,6 +609,13 @@ name (`stage.output`) are accepted. A base id with copies and an instance id nam
 (`anchor.ambiguous.<id>`); an unknown id is `anchor.ref.<id>`. Bad shapes: `anchor.form`,
 `anchor.offset`, `anchor.point`, `anchor.world`.
 
+A label's anchor and a pointer's tip must lie on the part they name, and every step or beat that shows them must
+show the point: see [Anchor checks](#anchor-checks). A component anchor name gives its part's frame, not a point of
+its own: `microTurbojet`'s `turbine` is `turbineWheel`, whose frame is at the intake plane (z = 0), so
+`{"part": "e.turbine", "offset": [130, 0, 0]}` lies far from the wheel (`annotation.anchor.off.<id>`). Use
+`{"part": "e.turbine", "point": "centre"}` for the middle of a part's mesh. Free text that names no part takes a
+`{"world": [x, y, z]}` anchor.
+
 ### Text and tiers
 
 Label, arrow and dimension text follows the v2 caption rules: placeholders with the modifiers
@@ -852,6 +859,58 @@ preset. A frame lays out nothing, and says why in `refusal`, for a view or pose 
 * The snapshot `/2` carries the step's annotations (see Snapshot below). The path tracer bridge gets the
   arrow and dimension triangles as ordinary triangles; it draws no text.
 
+### Anchor checks
+
+Two rules check where the dot of a label and the tip of a pointer arrow land. The anchor of a label is its `at`; the
+anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensions are not tested.
+
+**On its part** (`annotation.anchor.off.<id>`). The anchor must lie in the box of its part's mesh, or at most
+`max(15 % of that box's diagonal, 1 % of the model's diagonal)` mm outside it (`MGAnnotationAnchorRules.partShare`,
+`modelShare`). The test is in the part's own frame, so it holds in every pose. A world anchor names no part and is not
+tested. It is a document warning (`MGSolidDocument.offPartAnchors`): the compile's strict profile refuses it too.
+
+**Visible in each step or beat that shows it** (`annotation.anchor.hidden.<id>`). The check frames each step still as
+`marty-solid render` does at 1280 × 800 (`MGSolidDocument.stepAnchorIssues`: the step's shot, its title and caption
+bands, the unblocked-focus rule and its automatic ghosts) and each explainer beat as its still's solid pane
+(`MGExplainerFrame.beatAnchorIssues`), at the still's pose. For each label and pointer the view shows, in view order,
+the first cause found is the issue:
+
+| Cause | When |
+| --- | --- |
+| `hidden` | the anchor's part is hidden in the view (a safety net: `step.hide.claim` already refuses a step that hides a part its annotations name) |
+| `ghosted` | the view draws the anchor's part fainter than its own opacity: step `ghost`, or an automatic ghost of the unblocked-focus rule |
+| `offscreen` | the anchor projects outside the view (the whole still or pane, bands included), or lies behind the camera |
+| `occluded` | another part is the first surface on the segment from the camera to the anchor (`by` names it) |
+
+The segment test is the watertight ray test of the unblocked-focus rule against every part the view shows at
+opacity 0.5 or more (a cut part tests its cut mesh). A part blocks when it crosses the segment before the anchor (less
+0.1 % of the model's diagonal) and before the first crossing of the anchor's own part. So an anchor at the centre of its
+part, seen through its own surface, is visible, and an anchor in the air in front of a part is not hidden by it. A
+world anchor has no own part: any crossing before it hides it. **Cut parts:** when the view's section cuts the anchor's
+own part and the anchor lies in that part's box on the kept side of the cut or on the cut face, the parts inside the
+cut part's box (grown by 0.5 % of the model's diagonal) do not hide it; parts outside it still do. The tests of one view
+spend at most 3,000,000 triangle tests (`MGAnnotationAnchorRules.tests`): an anchor whose line-of-sight test would pass
+the budget, and every anchor after it, is listed in `anchorUntested` and is not refused for occlusion (the other causes
+are still tested).
+
+The standard profile only warns: the renderers keep drawing a blocked anchor with a hollow dot and a dashed leader.
+The strict check report (`marty-solid check --strict`, `MGSolidReport`, `MGExplainerReport`) refuses the first issue,
+after every other refusal. The view rule needs each still's camera, so a compile with
+`MGSolidParser.document(profile: .strict)` does not give it. The report lists every issue in `anchorIssues`; this one is
+the jet-suit example before its fix:
+
+```json
+{"id": "lComb", "kind": "label", "reason": "annotation.anchor.hidden.lComb", "cause": "occluded", "part": "back.combustor",
+ "by": "back.casing", "step": 6, "beat": null, "point": [30, 258, 1362], "distance": null, "tolerance": null,
+ "fix": "`back.casing` hides the anchor: move the anchor (`at`) to a face of `back.combustor` that faces the camera, change the camera (camera, orbit), or ghost `back.casing` in this view."}
+```
+
+`step` and `beat` are 1-based; `point` is the anchor in the kernel world (Z up, mm) at the still's pose; `distance` and
+`tolerance` (mm) are set for `offpart`. A refusal for an anchor reason also adds `anchor`: the issue it names.
+
+Not tested: the plain view (`hero.png`, `solid-0.png`), the poses during a step's or beat's spin and camera moves,
+other sizes than 1280 × 800, and whether the dot is covered by another text, a band or the legend.
+
 ### Not checked
 
 * Words: annotation text is checked for numbers only, not for meaning.
@@ -868,7 +927,9 @@ The compiler lints every document, v1 and v2, after it compiles
 The plain API only warns. The strict profile (`MGSolidParser.document(…, profile: .strict)`,
 `MGSolidParser.applying(…, profile: .strict)`, `marty-solid check --strict`; the default for
 model harnesses) refuses only what the document itself shows to be wrong: a jointed part that
-nothing moves, a turn axis that misses its own jointed part, and an annotation that no step shows. The child-frame warnings
+nothing moves, a turn axis that misses its own jointed part, an annotation that no step shows, and a label or pointer
+anchor off its part. The strict check report also refuses a label or pointer anchor that a step still does not show
+([Anchor checks](#anchor-checks)). The child-frame warnings
 are heuristics and stay warnings in every profile; the read-back below is how an author
 checks frames.
 
@@ -880,6 +941,8 @@ checks frames.
 | `frame.child.far.<id>` | A child's bounds miss its parent's bounds grown by 1.5 times the parent's largest size. Often the same error; sometimes intended. | warning |
 | `annotation.unused.<id>` | Some step uses `annotate`, but no step lists this annotation, so the learner never sees it. | refused |
 | `annotation.cut.<id>` | A part anchor of an annotation that a step shows lies in the half that the same step's `section` removes from that part, so the annotation floats over the cut. | warning |
+| `annotation.anchor.off.<id>` | A label's anchor or a pointer's tip lies off the part it names ([Anchor checks](#anchor-checks)). | refused |
+| `annotation.anchor.hidden.<id>` | The check report only: a step still shows a label or pointer whose anchor it does not show (occluded, hidden, ghosted, off screen). | refused by the check report |
 
 `expect` mismatches (`expect.axis.<id>`, `expect.up.<id>`) are refusals in every profile.
 
@@ -911,8 +974,9 @@ pipeline) print the same JSON from one implementation:
   exactly as `marty-solid check` does. Bytes over 64 KiB get the short refusal
   `{"ok": false, "reason": "assembly.bytes", "part": null}` before they are parsed or hashed;
   a refused document gets `ok`, `reason`, `part`, `strict` and `file`.
-* `MGSolidReport.make(_:profile:source:engine:)` reports on a compiled document (compile it
-  with the standard profile, so the report can show what `.strict` refuses).
+* `MGSolidReport.make(_:profile:source:engine:anchorViews:)` reports on a compiled document (compile it
+  with the standard profile, so the report can show what `.strict` refuses). `anchorViews` (default true) runs the
+  anchor view rule on every step still; an explainer passes false and tests its beats.
 * `MGSolidReport.refused(_:profile:source:engine:)` gives the refusal shape.
 * Every entry point first checks the host's `engine` value, with one walk that does not
   recurse: a non-finite number, more than 8 levels (`engineDepth`) or more than 4,096
@@ -927,20 +991,23 @@ pipeline) print the same JSON from one implementation:
   `MGSolidReport.Checks(doc)` gives the mesh and gear checks alone; `MGSolidSource(data:)`
   gives the `file` facts (lines, bytes, SHA-256, computed in Foundation).
 * Refusal order after the document compiles: `check.meshOpen`, then
-  `check.gearsInterpenetrate`, then the profile's refusal. A refused report still holds
-  every field.
+  `check.gearsInterpenetrate`, then the profile's refusal, then (strict) the first
+  `annotation.anchor.hidden.<id>`. A refused report still holds every field.
 
 The report is built from sections (`MGSolidReport.sections`); a test keeps their keys
 disjoint, so a later feature adds a section and its docs without changing the others.
 The `annotations` section adds `annotations` and `placements` (see
 [Annotations](#annotations-v2)) only for a document with annotations; such a document also
-gets `legend.notes`.
+gets `legend.notes`, `anchorIssues` and `anchorUntested`, and `warnings` ends with one
+`annotation.anchor.hidden.<id>` per step issue ([Anchor checks](#anchor-checks)).
 For every shipped example and every JSON file under `docs/assets`, with and without
 `--strict`, the tool's output without the fields added in this release is byte-identical to
 the output of the release before (golden files in
 `Examples/Solid3D/Tests/MartySolidCLITests/Golden`). `annotated-winch.json` is new: the
 release before refuses it (`assembly.unknown.annotations`), so its golden pair holds this
-release's output.
+release's output. The anchor checks add `anchorIssues`, `anchorUntested` and `anchor`; the only shipped document they
+refused, `docs/assets/jet-suit/jet-suit.json` (label `lComb`), was fixed, so its golden files hold the fixed file's
+output.
 
 ### Tiers per part and per motion
 
