@@ -1,8 +1,8 @@
 {
   "source": {
     "repository": "https://github.com/morrowdock/martygraphics",
-    "base": "35b9e0ac",
-    "captureCommit": "working tree of branch feat/ov-explainer rebased on 35b9e0a (PR #31 merged), with the PR 3a seam wiring and the fourth-check fixes, captured before the fourth-check commit. The sourceFiles hashes, not a commit id, link this artifact to the source.",
+    "base": "c9f1dbd0",
+    "captureCommit": "working tree of branch feat/ov-explainer rebased on c9f1dbd (PR #33 merged), with the fifth-check fixes, captured before that commit. The sourceFiles hashes, not a commit id, link this artifact to the source.",
     "document": "Examples/Explainers/gears-mixed.explainer.json (the authoring card's mixed example in docs/EXPLAINER.md; a test keeps them equal)",
     "authoring": "Written by hand for the example (synthetic content). It is not the output of an AI model answering a prompt.",
     "license": "Apache-2.0; procedural 2D drawing and procedural meshes, no images, models or stock assets",
@@ -14,7 +14,7 @@
       "Sources/MartyGraphics/Explainer/MGExplainer.swift": "f141b5aa5a867051bf089dd221533b01fbe782cf814fcc1db38261f822ba5922",
       "Sources/MartyGraphics/Explainer/MGExplainerHonesty.swift": "5343326d8dc1b83f15e6d2cb5fd16d9060afce09b3ee224fef533cf4e7f183ef",
       "Sources/MartyGraphics/Explainer/MGExplainerReport.swift": "1cf0f76509deef33e24779728e10fc4a4c0e401e85a09ec14b050a079ffe99ba",
-      "Sources/MartyGraphics/Explainer/MGExplainerSession.swift": "6025b7c5d6fcdc829ed819c83d757aec897dbd34eb983a8964eb9343b31b304e",
+      "Sources/MartyGraphics/Explainer/MGExplainerSession.swift": "59c5d1ecffa7c8cd56a1bb000f69dbbb378abc4eabb779a044bb0ecbf7c7575c",
       "Sources/MartyGraphics/Explainer/MGExplainerState.swift": "d50a19d9ba0ef5c7fa2e12798b098ea0de8ae0136f8625fcdf8de9c41323ab02",
       "Sources/MartyGraphics/MGCanvasRenderer.swift": "3bbb276ac5d3b5c90dafb40b3eb240f3e6c540f0770b1231be97fd72f3f2d9ec",
       "Sources/MartyGraphics/MGLesson.swift": "d775b5dcae64d8f935450cc7b9c7216375ae2210daa4fe859db526d55a77b913",
@@ -47,7 +47,7 @@
   },
   "render": {
     "framesRendered": 123,
-    "renderSecondsPerFrame": 0.0361,
+    "renderSecondsPerFrame": 0.0377,
     "legend": "Solved 6",
     "captions": [
       "Count the teeth: 15 and 30.",

@@ -74,3 +74,67 @@ final class ExplainerAnnotationTests: ExplainerTestCase {
         XCTAssertNil(c.annotationFrame?.refusal)
     }
 }
+
+/// The fifth check: host changes keep the pose rule for 3D dimension facts in board text, and one call with two
+/// documents speaks only the shown document's line.
+final class ExplainerHostPoseTests: ExplainerTestCase {
+    /// A gear pair with a still dimension `gap` (both anchors on turning axes: it holds in every pose) and a moving
+    /// one `far` (an anchor off the wheel's axis). Beat 1 shows `far` while still; beat 2 spins and shows none.
+    static var doc: String {
+        let solid = ExplainerAnnotationTests.gears(#"{"dimensions":[{"id":"gap","a":"p","b":"w"},{"id":"far","a":"p","b":{"part":"w","offset":[20,0,0]}}]}"#)
+        let board = #"{"v":1,"template":"rotate2d","params":{"pts":[[2,1],[4,1],[2,3]],"angle":0},"items":[{"id":"ready","k":"text","at":[1,7],"text":"Ready"}]}"#
+        return XFix.doc(board: board, solid: solid,
+                        beats: #"[{"say":"Look.","view":{"annotate":["far","gap"]}},{"say":"Turn.","view":{"spin":1,"annotate":[]}}]"#)
+    }
+
+    func spinning() throws -> MGExplainerSession {
+        var s = MGExplainerSession(pacing: .speech, clock: MGManualClock())
+        _ = try s.load(MGExplainer.parse(data: Data(Self.doc.utf8)).get()).get()
+        _ = s.lineEnded(0)
+        XCTAssertEqual(s.presented.step?.spin, 1)
+        return s
+    }
+
+    // F1: `add`, `set` on an authored item, `set` on a template item (an `over`) and a batch: refused, nothing changes.
+    func testHostChangesKeepThePoseRule() throws {
+        let refused = [#"{"op":"add","item":{"id":"distance","k":"text","at":[2,3],"text":"Distance {dim.far}."}}"#,
+                       #"{"op":"set","id":"ready","key":"text","value":"Distance {dim.far}."}"#,
+                       #"{"op":"set","id":"ltheta","key":"text","value":"Far {dim.far}"}"#]
+        for c in refused {
+            var s = try spinning()
+            let state = s.state, claims = s.claims, legend = s.legend, motion = s.motionRemaining, serial = s.lesson.lastChange?.serial
+            XCTAssertEqual(s.apply([XFix.json(c)]).failureIssue?.reason, "text.pose.board", c)
+            XCTAssertEqual(s.state, state, c); XCTAssertEqual(s.claims, claims, c); XCTAssertEqual(s.legend, legend, c)
+            XCTAssertEqual(s.motionRemaining, motion, c); XCTAssertEqual(s.lesson.lastChange?.serial, serial, c)
+        }
+        // A batch whose second command brings the moving fact in: the whole batch is refused.
+        var s = try spinning()
+        let state = s.state
+        XCTAssertEqual(s.apply([XFix.json(#"{"op":"set","id":"ready","key":"text","value":"Set"}"#), XFix.json(refused[0])]).failureIssue?.reason,
+                       "text.pose.board")
+        XCTAssertEqual(s.state, state)
+        // The control case: a dimension that holds in every pose may show during the spin.
+        var ok = try spinning()
+        XCTAssertNotNil(try? ok.apply([XFix.json(#"{"op":"add","item":{"id":"g","k":"text","at":[2,3],"text":"Gap {dim.gap}."}}"#)]).get())
+        XCTAssertEqual(ok.state?.scene.item("g")?.text, "Gap 45 mm.")
+        XCTAssertEqual(ok.claims.first { $0.id == "item.g" }?.tier, .solved)
+    }
+
+    // F2: one call with two complete documents speaks only the line of the document the board shows.
+    @MainActor func testTwoDocumentsInOneCallSpeakOnlyTheShownOne() throws {
+        func stream(_ angle: Int) -> String {
+            [XFix.header(), #"{"board":{"v":1,"template":"rotate2d","params":{"pts":[[2,1],[4,1],[2,3]],"angle":\#(angle)}}}"#,
+             #"{"say":"Angle {theta}."}"#, #"{"end":true}"#].joined(separator: "\n") + "\n"
+        }
+        for pacing in [MGPacing.speech, .immediate] {
+            let c = MGExplainerController(pacing: pacing, clock: MGManualClock())
+            c.begin()
+            var spoken: [(String, Double?)] = []
+            c.onEvent = { [weak c] e in if case .lineDue(_, let t, _) = e { spoken.append((t, c?.board.scene?.values["theta"]?.value)) } }
+            c.feed(stream(90) + stream(180))
+            XCTAssertEqual(spoken.map(\.0), ["Angle 180°."], "\(pacing)")
+            XCTAssertEqual(spoken.first?.1, 180, "\(pacing)")
+            XCTAssertEqual(c.session.caption, "Angle 180°.")
+        }
+    }
+}

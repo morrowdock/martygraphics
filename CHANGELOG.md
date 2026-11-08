@@ -52,6 +52,8 @@
     `explainer.board.title`) and keeps no inner lesson title.
   - Fourth-check fixes (PR #32): when one call presents several beats (`finishNow`, `.immediate`), only the shown
     beat's line is due; the speech wait applies to every 2D engine placeholder, also in an `unchecked` line.
+  - Fifth-check fixes (PR #32): host `apply` and learner changes keep the pose rule for 3D dimension facts in board
+    text (one transaction; `text.pose.board`); a new header in the same call drops the old explainer's due lines.
   - The board view draws its transitions on `MGSceneController.presentationClock` when set (default nil: the wall
     clock, as before). `MGLessonController` and `MGExplainerController` set their session's monotonic clock, so a
     wall-clock jump cannot show an earlier frame while the session says the board has settled.

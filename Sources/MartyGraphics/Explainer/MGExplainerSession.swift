@@ -396,25 +396,42 @@ public struct MGExplainerSession {
     @discardableResult public mutating func control(_ id: String, _ value: Double) -> Result<MGLessonState, MGExplainerIssue> {
         outbox = []
         current = .board
+        let before = lesson
         let r = lesson.control(id, value)
+        if case .success = r, let doc = solid, let reason = poseRefusal(doc, stepOf: stepOf) {
+            // The changed board would show a 3D number its view does not keep: refused, the board stays.
+            lesson = before
+            let issue = MGExplainerIssue(reason, view: .board, origin: .learner)
+            refuse(issue)
+            return .failure(issue)
+        }
         absorb(lesson.outbox)
         if case .success = r { refreshPresented() }
         return r.mapError { MGExplainerIssue($0, view: .board) }
     }
 
-    /// Apply host commands to the presented 2D state, with the explainer's rules (N1, one namespace).
+    /// Apply host commands to the presented 2D state, with the explainer's rules (N1, one namespace, and the pose rule
+    /// for 3D dimension facts in board text), as one transaction: a refused batch changes nothing (board, claims, motion).
     @discardableResult public mutating func apply(_ commands: [MGJSON], origin: MGOrigin = .script) -> Result<MGLessonState, MGExplainerIssue> {
         outbox = []
         current = .board
         // The lesson refuses a batch of the wrong size (`beat.ops.count`) before any command is read.
         for (i, c) in commands.enumerated() where commands.count <= MGExplainerLimits.commandsPerBeat {
-            if let reason = commandRefusal(c) {
+            if let reason = commandRefusal(c) ?? solid.flatMap({ poseRefusal($0, stepOf: stepOf, board: [c]) }) {
                 let issue = MGExplainerIssue(reason, view: .board, command: i, origin: origin)
                 refuse(issue)
                 return .failure(issue)
             }
         }
+        let before = lesson
         let r = lesson.apply(commands, origin: origin)
+        // The resulting board too (a template or `over` change can bring text in): checked before anything is adopted.
+        if case .success = r, let doc = solid, let reason = poseRefusal(doc, stepOf: stepOf) {
+            lesson = before
+            let issue = MGExplainerIssue(reason, view: .board, origin: origin)
+            refuse(issue)
+            return .failure(issue)
+        }
         absorb(lesson.outbox)
         if case .success = r {
             // A host `bind` is the one way a control appears outside the script; restore accepts only known binds.
@@ -492,6 +509,9 @@ public struct MGExplainerSession {
             beats = [:]; stepOf = [:]; presentedBeats = []; presented = MGExplainerBeatView(); frozen = false; beatCount = 0
             setupOps = []; timing = MGExplainerTiming(); captions = [:]
             motionSerial = 0; motionStart = nil; motionLength = .zero; motionHeld = nil; hostBinds = []; heldLine = nil
+            // Lines of the explainer this header replaces, due earlier in this host call, describe a board that is no
+            // longer shown: they are not returned (a host adopts the board once per call). The history keeps them.
+            outbox.removeAll { if case .lineDue = $0 { return true }; return false }
             stream.started = true; stream.header = true
             emit(.accepted(statement: index))
         } catch { refuse(Self.reason(error), index) }
@@ -928,7 +948,8 @@ public struct MGExplainerSession {
             if !dims([say]).allSatisfy({ MGSolidAnnotationEngine.dimensionHolds($0, doc, step: map[k]) }) { return "text.pose.beat.\(k + 1)" }
         }
         if let t = titleTemplate, !holdsEverywhere(dims([t])) { return "text.pose.title" }
-        let boardTexts = ([lesson.projected?.scene.source].compactMap { $0 } + extra).flatMap(strings)
+        // The board as the learner sees it now (`state`, which host changes reach) and as the script goes on (`projected`).
+        let boardTexts = ([lesson.state?.scene.source, lesson.projected?.scene.source].compactMap { $0 } + extra).flatMap(strings)
         if !holdsEverywhere(dims(boardTexts)) { return "text.pose.board" }
         return nil
     }

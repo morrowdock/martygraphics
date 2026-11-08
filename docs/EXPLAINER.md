@@ -154,7 +154,9 @@ in an explainer.
     full turn and dimension facts (`dim.<id>`). The first three hold at every pose. A dimension fact is measured at
     one pose, so the assembly's rule for shown text applies unchanged: a caption, the title or board text may show
     `dim.<id>` only when that dimension holds at every pose its view can show (`text.pose.beat.<n>`,
-    `text.pose.title`, `text.pose.board`; `MGSolidAnnotationEngine.dimensionHolds`). Every shown 3D number therefore
+    `text.pose.title`, `text.pose.board`; `MGSolidAnnotationEngine.dimensionHolds`). Host `apply` batches and learner
+    changes pass the same rule as one transaction, on each command and on the resulting board; a refused change keeps
+    the board, the claims and the motion. Every shown 3D number therefore
     holds at every pose of a `spin`, and the host shows a view's first pose at once (`show(document:view:)` poses the
     parts and attaches the annotations in one transaction), so no 3D number has to wait.
 11. Speech is learner-visible. A beat's `lineDue` (the line a host speaks) never carries a 2D engine number before
@@ -166,8 +168,9 @@ in an explainer.
     whatever the beat's word tier (an `unchecked` line that shows `{theta}` waits too). A host adopts the board once
     per call, so when one call presents several beats (`finishNow()`, `.immediate` over a whole document or one large
     chunk), only the line of the last beat, the one the board then shows, is due; the skipped beats' lines are not
-    returned (the history keeps them, and the report keeps their captions). `lineQueued` is for prefetch only: do not
-    speak it.
+    returned (the history keeps them, and the report keeps their captions). The same holds across documents: when a
+    header in the same call starts a new explainer, the earlier explainer's due lines are not returned. `lineQueued`
+    is for prefetch only: do not speak it.
 
 ## One id namespace
 
