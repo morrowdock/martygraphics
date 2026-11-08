@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Docs: the hand-built, fact-checked jet-suit explainer now leads the README and `docs/SHOWCASE.md`
+  (`docs/assets/jet-suit/`: the 54-line JSON, 7 step stills, a 63-second story video re-encoded to 6.4 MB, a poster,
+  the strict check output, a render receipt, and `SOURCES.md` with a label, source URL and date for every fact). A
+  Claude agent wrote the JSON by hand from research checked by two independent AI model fact-checks; it is not an AI
+  run of the engine from a prompt. No engine code changes.
 - Inside views that are not hidden, a whole jet engine in one `use`, and repair detail for `parts.resolved`.
   - Unblocked focus (`MGSolidFraming.clearView`, `MGSolidClearView`, Foundation only): after a step is framed on its
     focus, rays from the camera to at most 48 focus samples find the parts in the way. A part outside the focus context

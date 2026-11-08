@@ -1,0 +1,125 @@
+{
+  "source": {
+    "repository": "https://github.com/morrowdock/martygraphics",
+    "commit": "70bfc47ad9bbdd3db396037fe450374a5dd497ab",
+    "commitNote": "origin/main after PR #37 (unblocked focus, story move cuts, microTurbojet); the engine was built from a clean checkout of this commit",
+    "model": "docs/assets/jet-suit/jet-suit.json (54 lines, 71 parts, 7 steps)",
+    "authoring": "Hand-built. A Claude agent wrote this JSON by hand from fact-checked research and a merged fact key. It is not the output of the engine's AI loop answering a prompt. Its bytes are unchanged from the reviewed version.",
+    "license": "Apache-2.0; procedural geometry, no images, models or stock assets",
+    "sourceFiles": {
+      "docs/assets/jet-suit/jet-suit.json": "83895fd9348b13819fecacb5aeefcb85fe22a6ad0615f689343b8f0e63041668",
+      "Examples/Solid3D/Package.swift": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b",
+      "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f"
+    }
+  },
+  "capture": {
+    "machine": "Apple M1 Mac mini (Macmini9,1), arm64; macOS 27.2",
+    "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
+    "configuration": "SwiftPM release build",
+    "capturedUTC": "2026-11-08",
+    "engineExecutableSHA256": "f859f7c7c810367dc54a38ebb9ea7b2624dc0d9c1b166858c0ef6d923b2c3f92",
+    "commands": [
+      "swift build -c release --package-path Examples/Solid3D",
+      "marty-solid check --strict docs/assets/jet-suit/jet-suit.json",
+      "marty-solid render docs/assets/jet-suit/jet-suit.json <NEW_DIR> --size 1280x800 --loop-fps 30 --story-fps 30"
+    ],
+    "note": "check exited 0 with ok true, strict true, no warnings; legend Solved 16 · Not checked 20. Solved 16 = 15 model motions (shaft, impeller and turbine wheel of 5 engines) and 1 gravity-arrow direction. The engine computes no thrust, rpm, load split or hover balance. render wrote 7 step stills, hero.png, exploded.png, loop.gif, loop.mp4, story.mp4 and snapshot.json (2259 frames, about 0.031 s per frame). Only the 7 step stills and story.mp4 are public; hero.png is excluded (its helmet reaches into the title band), and the other outputs are not kept."
+  },
+  "review": {
+    "facts": "Every factual sentence maps to a row of the merged fact key (F1-F20) in docs/assets/jet-suit/SOURCES.md. The key merges two independent AI model web fact-checks (GPT-6.1 Sol and Gemini 3.8 Flash).",
+    "verdict": "An independent read-only review of the same JSON bytes gave PUBLIC-OK for the 7 step stills and story.mp4, with hero.png excluded. That review used renders from the PR #37 head (0a53cc6dec88d0584041c69eb18357d7c314b165) before its merge.",
+    "differenceFromReviewedRenders": "Between 0a53cc6 and this commit the only renderer change is the subtitle line (medium weight, 85 % ink, was regular 60 %). The subtitle now names jet-suit.json, not the earlier working file name. All 7 new stills were inspected one by one: labels, captions, arrows and framing match the reviewed stills. A pixel diff also shows small rendering differences in under 1.7 % of colour channels; no label, arrow or caption moved."
+  },
+  "artifacts": {
+    "step-1.png": {
+      "sha256": "294d8d32862a9a7d980821cb4ace3511ab2a86cb183e76a5ecd996a7784e4bac",
+      "bytes": 688799,
+      "from": "render step 1 (step-1.png), unedited",
+      "pixels": "1280x800",
+      "framing": "focus",
+      "offView": 0,
+      "occluded": 0
+    },
+    "step-2.png": {
+      "sha256": "9258f73cdc0763cad0b33a57ae8d215dec62896bc8b87306258b707cbcd60330",
+      "bytes": 698767,
+      "from": "render step 2 (step-2.png), unedited",
+      "pixels": "1280x800",
+      "framing": "focus",
+      "offView": 0,
+      "occluded": 0
+    },
+    "step-3.png": {
+      "sha256": "abce038197915ed637d048ddf4d10f996b25f2c7d555e57da222b2b35f0d503c",
+      "bytes": 681633,
+      "from": "render step 3 (step-3.png), unedited",
+      "pixels": "1280x800",
+      "framing": "focus",
+      "offView": 0,
+      "occluded": 0
+    },
+    "step-4.png": {
+      "sha256": "37b2eda6896823ded20a991a6fcbe200c031bbae115ab5fea8c6cc301e8346b7",
+      "bytes": 692342,
+      "from": "render step 4 (step-4.png), unedited",
+      "pixels": "1280x800",
+      "framing": "modelFitted",
+      "offView": 0
+    },
+    "step-5.png": {
+      "sha256": "d1088cc1a864c3e2f2430e5aff2b3ed95fddb8b8dfdbf002d008d9327650cdc0",
+      "bytes": 677779,
+      "from": "render step 5 (step-5.png), unedited",
+      "pixels": "1280x800",
+      "framing": "modelFitted",
+      "offView": 0
+    },
+    "step-6.png": {
+      "sha256": "b5e52da3b3140ac33364265c00e26c185d629a567b22557ce9a13c0088148958",
+      "bytes": 947241,
+      "from": "render step 6 (step-6.png), unedited",
+      "pixels": "1280x800",
+      "framing": "focus",
+      "offView": 0,
+      "occluded": 0,
+      "facesCut": true
+    },
+    "step-7.png": {
+      "sha256": "870bc792a85839ff687ac3fbea6b571072b8c613ce9045dc81e1cec15a9f3e43",
+      "bytes": 871882,
+      "from": "render step 7 (step-7.png), unedited",
+      "pixels": "1280x800",
+      "framing": "focus",
+      "offView": 0,
+      "occluded": 0,
+      "facesCut": true
+    },
+    "story.mp4": {
+      "sha256": "d8d16ff0b68046ed71d7e84cf3504aed90c1b91eb9b3179a0afebc4885db9b5a",
+      "bytes": 6385500,
+      "from": "render story.mp4, re-encoded for size (see reencode)",
+      "pixels": "1280x800",
+      "fps": 30,
+      "frames": 1890,
+      "seconds": 63,
+      "beats": 7,
+      "renderedOriginal": {
+        "sha256": "c60fb57395c96033c01f33466c7fe93f02af76ae6605c6bb8d717b48861b9ea5",
+        "bytes": 15862023,
+        "note": "The engine's story.mp4 (1890 frames, 30 fps, 63 s, 7 beats of 9 s, no cuts, video only). Not kept in git: 15.9 MB."
+      },
+      "reencode": "AVFoundation only: AVAssetReader (32BGRA) to AVAssetWriter, H.264 High profile, average 1,000,000 bit/s, key frame every 60 frames, every source frame kept (1890 in, 1890 out). A small Swift script outside the repository; no other tool. Hold frames at 5.0, 32.5, 52.0 and 59.5 s were extracted and inspected: text and labels stay sharp."
+    },
+    "poster.jpg": {
+      "sha256": "7a576168168cafeebe560fa34b62f42fd6ad22a47cbf60ec076c3fa82fa5986c",
+      "bytes": 90700,
+      "from": "step-2.png converted to JPEG (macOS sips, quality 82); pixels not edited",
+      "pixels": "1280x800"
+    },
+    "check-strict.json": {
+      "sha256": "3a86911149b968da00988bc6126a8120c6015e3dcc833a91864a8227f92c9c74",
+      "bytes": 72224,
+      "from": "marty-solid check --strict (stdout re-serialised with sorted keys and 2-space indent; same content)"
+    }
+  }
+}

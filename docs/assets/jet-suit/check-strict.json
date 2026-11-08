@@ -1,0 +1,2603 @@
+{
+  "annotations": [
+    {
+      "anchorsWorld": [
+        [
+          495.5121276160648,
+          -19.622244076363135,
+          1122.8182347540424
+        ]
+      ],
+      "id": "lArms",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": false,
+      "text": "Two engines on each forearm",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          203,
+          1370
+        ]
+      ],
+      "id": "lBack",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "One engine on the back",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          -150,
+          205,
+          1150
+        ]
+      ],
+      "id": "lVersion",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Classic suit, as described 2020–2022",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          -110,
+          1652
+        ]
+      ],
+      "id": "lPilot",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Schematic pilot",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          203,
+          1370
+        ]
+      ],
+      "id": "lBackShare",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Back: equipment + about ⅓ pilot weight",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          -495.5121276160648,
+          -19.622244076363135,
+          1122.8182347540424
+        ]
+      ],
+      "id": "lArmShare",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Arms: about two thirds of pilot weight",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          -420,
+          0,
+          2420
+        ]
+      ],
+      "id": "lFigs",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": false,
+      "text": "Reported suit figures (not computed)",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          -420,
+          0,
+          2190
+        ]
+      ],
+      "id": "l144",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": false,
+      "text": "About 144 kgf (317 lbf), AOPA 2020",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          -420,
+          0,
+          1960
+        ]
+      ],
+      "id": "l155",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": false,
+      "text": "~155 kgf, earlier rig, Browning 2017",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          420,
+          0,
+          2190
+        ]
+      ],
+      "id": "lBhp",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": false,
+      "text": "Claimed about 1,050 bhp",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          420,
+          0,
+          1960
+        ]
+      ],
+      "id": "lRecord",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": false,
+      "text": "Record 136.891 km/h, Guinness 2019-11-14",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          -280,
+          0,
+          1300.096189432334
+        ]
+      ],
+      "id": "lSteer",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Moving the arms aims the thrust",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          55,
+          258,
+          1465
+        ]
+      ],
+      "id": "lJetcat",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "JetCat-style micro turbojet (example)",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          55,
+          258,
+          1415
+        ]
+      ],
+      "id": "lNotGravity",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Not confirmed Gravity hardware",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          258,
+          1472.3
+        ]
+      ],
+      "id": "lComp",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Centrifugal compressor",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          30,
+          258,
+          1362
+        ]
+      ],
+      "id": "lComb",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Combustion chamber",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          258,
+          1292
+        ]
+      ],
+      "id": "lTurb",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Turbine",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          258,
+          1230
+        ]
+      ],
+      "id": "lNozzle",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Nozzle: the gas speeds up",
+      "tier": null,
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          258,
+          1380
+        ]
+      ],
+      "id": "lRpm",
+      "kind": "label",
+      "meaning": null,
+      "occludedAtDefaultCamera": true,
+      "text": "Shaft: about 120,000 rpm (reported)",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          258,
+          1530
+        ],
+        [
+          0,
+          258.00000000000006,
+          1840
+        ]
+      ],
+      "id": "aTB",
+      "kind": "arrow",
+      "meaning": "force",
+      "occludedAtDefaultCamera": false,
+      "text": "Thrust",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          408.57479268540743,
+          0.34729635533386194,
+          1203.3981159285731
+        ],
+        [
+          287.9358429414119,
+          42.89109988373182,
+          1412.350906256922
+        ]
+      ],
+      "id": "aTL1",
+      "kind": "arrow",
+      "meaning": "force",
+      "occludedAtDefaultCamera": false,
+      "text": null,
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          299.45559180856816,
+          0.34729635533386194,
+          1140.3981159285731
+        ],
+        [
+          178.81664206457268,
+          42.89109988373182,
+          1349.350906256922
+        ]
+      ],
+      "id": "aTL2",
+      "kind": "arrow",
+      "meaning": "force",
+      "occludedAtDefaultCamera": true,
+      "text": null,
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          -408.57479268540743,
+          0.34729635533386194,
+          1203.3981159285731
+        ],
+        [
+          -287.9358429414119,
+          42.89109988373182,
+          1412.350906256922
+        ]
+      ],
+      "id": "aTR1",
+      "kind": "arrow",
+      "meaning": "force",
+      "occludedAtDefaultCamera": false,
+      "text": null,
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          -299.45559180856816,
+          0.34729635533386194,
+          1140.3981159285731
+        ],
+        [
+          -178.81664206457268,
+          42.89109988373182,
+          1349.350906256922
+        ]
+      ],
+      "id": "aTR2",
+      "kind": "arrow",
+      "meaning": "force",
+      "occludedAtDefaultCamera": false,
+      "text": null,
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          0,
+          990
+        ],
+        [
+          0,
+          0,
+          490
+        ]
+      ],
+      "id": "aWeight",
+      "kind": "arrow",
+      "meaning": "force",
+      "occludedAtDefaultCamera": false,
+      "text": "Weight: pilot, suit and fuel",
+      "tier": "solved",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          -205,
+          1490
+        ],
+        [
+          0,
+          -705,
+          1490
+        ]
+      ],
+      "id": "aForward",
+      "kind": "arrow",
+      "meaning": "force",
+      "occludedAtDefaultCamera": false,
+      "text": "Forward component of thrust",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          -561.2199944022997,
+          -53.483638721414536,
+          939.0088710233158
+        ],
+        [
+          -793.7553790394738,
+          626.0817956309852,
+          536.2457702741586
+        ]
+      ],
+      "id": "aJetBack",
+      "kind": "arrow",
+      "meaning": "flow",
+      "occludedAtDefaultCamera": false,
+      "text": "If the exhaust is aimed back",
+      "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          258,
+          1210
+        ],
+        [
+          0,
+          258,
+          1010
+        ]
+      ],
+      "id": "aJetOut",
+      "kind": "arrow",
+      "meaning": "flow",
+      "occludedAtDefaultCamera": true,
+      "text": "Hot gas out",
+      "tier": "described",
+      "value": null
+    }
+  ],
+  "checks": {
+    "gearPairs": 0,
+    "meshesClosed": true,
+    "openMeshes": [],
+    "sections": [
+      {
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "offset": 0,
+        "parts": [
+          {
+            "capLoops": 2,
+            "capTriangles": 4,
+            "closed": true,
+            "part": "back.casing",
+            "triangles": 388
+          },
+          {
+            "capLoops": 2,
+            "capTriangles": 10,
+            "closed": true,
+            "part": "back.intakeLip",
+            "triangles": 682
+          },
+          {
+            "capLoops": 6,
+            "capTriangles": 36,
+            "closed": true,
+            "part": "back.diffuser",
+            "triangles": 1168
+          },
+          {
+            "capLoops": 6,
+            "capTriangles": 12,
+            "closed": true,
+            "part": "back.combustor",
+            "triangles": 1324
+          },
+          {
+            "capLoops": 6,
+            "capTriangles": 37,
+            "closed": true,
+            "part": "back.nozzleGuideVanes",
+            "triangles": 1712
+          },
+          {
+            "capLoops": 3,
+            "capTriangles": 8,
+            "closed": true,
+            "part": "back.nozzle",
+            "triangles": 584
+          }
+        ],
+        "step": 6
+      },
+      {
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "offset": 0,
+        "parts": [
+          {
+            "capLoops": 2,
+            "capTriangles": 4,
+            "closed": true,
+            "part": "back.casing",
+            "triangles": 388
+          },
+          {
+            "capLoops": 2,
+            "capTriangles": 10,
+            "closed": true,
+            "part": "back.intakeLip",
+            "triangles": 682
+          },
+          {
+            "capLoops": 6,
+            "capTriangles": 36,
+            "closed": true,
+            "part": "back.diffuser",
+            "triangles": 1168
+          },
+          {
+            "capLoops": 6,
+            "capTriangles": 12,
+            "closed": true,
+            "part": "back.combustor",
+            "triangles": 1324
+          },
+          {
+            "capLoops": 6,
+            "capTriangles": 37,
+            "closed": true,
+            "part": "back.nozzleGuideVanes",
+            "triangles": 1712
+          },
+          {
+            "capLoops": 3,
+            "capTriangles": 8,
+            "closed": true,
+            "part": "back.nozzle",
+            "triangles": 584
+          }
+        ],
+        "step": 7
+      }
+    ]
+  },
+  "engine": {
+    "assemblyVersions": [
+      1,
+      2
+    ],
+    "executableSHA256": "f859f7c7c810367dc54a38ebb9ea7b2624dc0d9c1b166858c0ef6d923b2c3f92",
+    "name": "MartyGraphics",
+    "reportFormat": 1,
+    "snapshotFormats": [
+      "martygraphics.solid.snapshot/1",
+      "martygraphics.solid.snapshot/2"
+    ],
+    "version": "unreleased"
+  },
+  "facts": {
+    "armL1.impeller.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL1.impeller.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL1.shaft.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL1.shaft.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL1.turbineWheel.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL1.turbineWheel.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL2.impeller.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL2.impeller.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL2.shaft.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL2.shaft.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL2.turbineWheel.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armL2.turbineWheel.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR1.impeller.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR1.impeller.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR1.shaft.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR1.shaft.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR1.turbineWheel.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR1.turbineWheel.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR2.impeller.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR2.impeller.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR2.shaft.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR2.shaft.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR2.turbineWheel.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "armR2.turbineWheel.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "back.impeller.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "back.impeller.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "back.shaft.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "back.shaft.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "back.turbineWheel.speed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "back.turbineWheel.worldSpeed": {
+      "source": "input",
+      "text": "1",
+      "tier": "solved",
+      "unit": "",
+      "value": 1
+    },
+    "pilot.lowerArmL.speed": {
+      "source": "input",
+      "text": "0",
+      "tier": "solved",
+      "unit": "",
+      "value": 0
+    },
+    "pilot.lowerArmL.worldSpeed": {
+      "source": "input",
+      "text": "0",
+      "tier": "solved",
+      "unit": "",
+      "value": 0
+    },
+    "pilot.lowerArmR.speed": {
+      "source": "input",
+      "text": "0",
+      "tier": "solved",
+      "unit": "",
+      "value": 0
+    },
+    "pilot.lowerArmR.worldSpeed": {
+      "source": "input",
+      "text": "0",
+      "tier": "solved",
+      "unit": "",
+      "value": 0
+    },
+    "pilot.upperArmL.speed": {
+      "source": "input",
+      "text": "0",
+      "tier": "solved",
+      "unit": "",
+      "value": 0
+    },
+    "pilot.upperArmL.worldSpeed": {
+      "source": "input",
+      "text": "0",
+      "tier": "solved",
+      "unit": "",
+      "value": 0
+    },
+    "pilot.upperArmR.speed": {
+      "source": "input",
+      "text": "0",
+      "tier": "solved",
+      "unit": "",
+      "value": 0
+    },
+    "pilot.upperArmR.worldSpeed": {
+      "source": "input",
+      "text": "0",
+      "tier": "solved",
+      "unit": "",
+      "value": 0
+    }
+  },
+  "file": {
+    "lines": 54,
+    "sha256": "83895fd9348b13819fecacb5aeefcb85fe22a6ad0615f689343b8f0e63041668"
+  },
+  "legend": {
+    "built": 0,
+    "claims": [
+      {
+        "badge": "Solved",
+        "id": "back.impeller",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "back.turbineWheel",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "back.shaft",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armL1.impeller",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armL1.turbineWheel",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armL1.shaft",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armL2.impeller",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armL2.turbineWheel",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armL2.shaft",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armR1.impeller",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armR1.turbineWheel",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armR1.shaft",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armR2.impeller",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armR2.turbineWheel",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Solved",
+        "id": "armR2.shaft",
+        "kind": "motion",
+        "tier": "solved",
+        "why": "Moved by input"
+      },
+      {
+        "badge": "Not checked",
+        "id": "lVersion",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Marked unchecked: Version qualifier (fact key F1)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "lBackShare",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Marked unchecked: Browning, 2021 interview (F9)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "lArmShare",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Marked unchecked: Browning, 2021 interview (F9)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "l144",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Marked unchecked: Reported total thrust (F4)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "l155",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Marked unchecked: Reported total thrust, earlier rig (F5)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "lBhp",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Marked unchecked: Company claim, GNAAS and AOPA (F7)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "lRecord",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Marked unchecked: Guinness World Records (F8)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "lRpm",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Marked unchecked: GNAAS; JetCat P220 max 117,000 (F13)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "aTB",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Direction and length as authored"
+      },
+      {
+        "badge": "Not checked",
+        "id": "aTL1",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Direction and length as authored"
+      },
+      {
+        "badge": "Not checked",
+        "id": "aTL2",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Direction and length as authored"
+      },
+      {
+        "badge": "Not checked",
+        "id": "aTR1",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Direction and length as authored"
+      },
+      {
+        "badge": "Not checked",
+        "id": "aTR2",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Direction and length as authored"
+      },
+      {
+        "badge": "Solved",
+        "id": "aWeight",
+        "kind": "annotation",
+        "tier": "solved",
+        "why": "Direction checked against gravity; length not to scale"
+      },
+      {
+        "badge": "Not checked",
+        "id": "aForward",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Direction and length as authored"
+      },
+      {
+        "badge": "Not checked",
+        "id": "aJetBack",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Direction and length as authored"
+      },
+      {
+        "badge": "Not checked",
+        "id": "aJetOut",
+        "kind": "annotation",
+        "tier": "described",
+        "why": "Direction and length as authored"
+      },
+      {
+        "badge": "Not checked",
+        "id": "step.1",
+        "kind": "caption",
+        "tier": "described",
+        "why": "Marked unchecked: Version years from the fact key (F1, F2)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "step.3",
+        "kind": "caption",
+        "tier": "described",
+        "why": "Marked unchecked: Browning: WIRED 2020 (F19); 2021 interview (F9)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "step.4",
+        "kind": "caption",
+        "tier": "described",
+        "why": "Marked unchecked: Reported and claimed values (F4, F5, F7, F8)"
+      },
+      {
+        "badge": "Not checked",
+        "id": "step.7",
+        "kind": "caption",
+        "tier": "described",
+        "why": "Marked unchecked: GNAAS figure; not solved by the engine (F13)"
+      }
+    ],
+    "described": 20,
+    "note": null,
+    "notes": [
+      "Arrow lengths are not to scale"
+    ],
+    "shapes": "Shapes as authored",
+    "solved": 16,
+    "text": "Solved 16 · Not checked 20"
+  },
+  "motionTiers": [
+    {
+      "badge": "Solved",
+      "id": "back.impeller",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "back.turbineWheel",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "back.shaft",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armL1.impeller",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armL1.turbineWheel",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armL1.shaft",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armL2.impeller",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armL2.turbineWheel",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armL2.shaft",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armR1.impeller",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armR1.turbineWheel",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armR1.shaft",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armR2.impeller",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armR2.turbineWheel",
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "badge": "Solved",
+      "id": "armR2.shaft",
+      "source": "input",
+      "tier": "solved"
+    }
+  ],
+  "notChecked": {
+    "input": [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok": true,
+  "partTiers": [
+    {
+      "base": "pilot.body",
+      "motion": "static",
+      "part": "pilot.body",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.skull",
+      "motion": "static",
+      "part": "pilot.skull",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.upperArmL",
+      "motion": "static",
+      "part": "pilot.upperArmL",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.lowerArmL",
+      "motion": "static",
+      "part": "pilot.lowerArmL",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.handL",
+      "motion": "static",
+      "part": "pilot.handL",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.upperArmR",
+      "motion": "static",
+      "part": "pilot.upperArmR",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.lowerArmR",
+      "motion": "static",
+      "part": "pilot.lowerArmR",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.handR",
+      "motion": "static",
+      "part": "pilot.handR",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.legL",
+      "motion": "static",
+      "part": "pilot.legL",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.footL",
+      "motion": "static",
+      "part": "pilot.footL",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.legR",
+      "motion": "static",
+      "part": "pilot.legR",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pilot.footR",
+      "motion": "static",
+      "part": "pilot.footR",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "helmet",
+      "motion": "static",
+      "part": "helmet",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "visor",
+      "motion": "static",
+      "part": "visor",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "chestUnit",
+      "motion": "static",
+      "part": "chestUnit",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "pack",
+      "motion": "static",
+      "part": "pack",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "back.intakeLip",
+      "motion": "static",
+      "part": "back.intakeLip",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "back.impeller",
+      "motion": "own",
+      "part": "back.impeller",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "back.diffuser",
+      "motion": "static",
+      "part": "back.diffuser",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "back.combustor",
+      "motion": "static",
+      "part": "back.combustor",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "back.nozzleGuideVanes",
+      "motion": "static",
+      "part": "back.nozzleGuideVanes",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "back.turbineWheel",
+      "motion": "own",
+      "part": "back.turbineWheel",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "back.nozzle",
+      "motion": "static",
+      "part": "back.nozzle",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "back.shaft",
+      "motion": "own",
+      "part": "back.shaft",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "back.frontBearing",
+      "motion": "static",
+      "part": "back.frontBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "back.rearBearing",
+      "motion": "static",
+      "part": "back.rearBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "back.casing",
+      "motion": "static",
+      "part": "back.casing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL1.intakeLip",
+      "motion": "static",
+      "part": "armL1.intakeLip",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL1.impeller",
+      "motion": "own",
+      "part": "armL1.impeller",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armL1.diffuser",
+      "motion": "static",
+      "part": "armL1.diffuser",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL1.combustor",
+      "motion": "static",
+      "part": "armL1.combustor",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL1.nozzleGuideVanes",
+      "motion": "static",
+      "part": "armL1.nozzleGuideVanes",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL1.turbineWheel",
+      "motion": "own",
+      "part": "armL1.turbineWheel",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armL1.nozzle",
+      "motion": "static",
+      "part": "armL1.nozzle",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL1.shaft",
+      "motion": "own",
+      "part": "armL1.shaft",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armL1.frontBearing",
+      "motion": "static",
+      "part": "armL1.frontBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL1.rearBearing",
+      "motion": "static",
+      "part": "armL1.rearBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL1.casing",
+      "motion": "static",
+      "part": "armL1.casing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL2.intakeLip",
+      "motion": "static",
+      "part": "armL2.intakeLip",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL2.impeller",
+      "motion": "own",
+      "part": "armL2.impeller",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armL2.diffuser",
+      "motion": "static",
+      "part": "armL2.diffuser",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL2.combustor",
+      "motion": "static",
+      "part": "armL2.combustor",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL2.nozzleGuideVanes",
+      "motion": "static",
+      "part": "armL2.nozzleGuideVanes",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL2.turbineWheel",
+      "motion": "own",
+      "part": "armL2.turbineWheel",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armL2.nozzle",
+      "motion": "static",
+      "part": "armL2.nozzle",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL2.shaft",
+      "motion": "own",
+      "part": "armL2.shaft",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armL2.frontBearing",
+      "motion": "static",
+      "part": "armL2.frontBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL2.rearBearing",
+      "motion": "static",
+      "part": "armL2.rearBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armL2.casing",
+      "motion": "static",
+      "part": "armL2.casing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR1.intakeLip",
+      "motion": "static",
+      "part": "armR1.intakeLip",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR1.impeller",
+      "motion": "own",
+      "part": "armR1.impeller",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armR1.diffuser",
+      "motion": "static",
+      "part": "armR1.diffuser",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR1.combustor",
+      "motion": "static",
+      "part": "armR1.combustor",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR1.nozzleGuideVanes",
+      "motion": "static",
+      "part": "armR1.nozzleGuideVanes",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR1.turbineWheel",
+      "motion": "own",
+      "part": "armR1.turbineWheel",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armR1.nozzle",
+      "motion": "static",
+      "part": "armR1.nozzle",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR1.shaft",
+      "motion": "own",
+      "part": "armR1.shaft",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armR1.frontBearing",
+      "motion": "static",
+      "part": "armR1.frontBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR1.rearBearing",
+      "motion": "static",
+      "part": "armR1.rearBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR1.casing",
+      "motion": "static",
+      "part": "armR1.casing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR2.intakeLip",
+      "motion": "static",
+      "part": "armR2.intakeLip",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR2.impeller",
+      "motion": "own",
+      "part": "armR2.impeller",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armR2.diffuser",
+      "motion": "static",
+      "part": "armR2.diffuser",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR2.combustor",
+      "motion": "static",
+      "part": "armR2.combustor",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR2.nozzleGuideVanes",
+      "motion": "static",
+      "part": "armR2.nozzleGuideVanes",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR2.turbineWheel",
+      "motion": "own",
+      "part": "armR2.turbineWheel",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armR2.nozzle",
+      "motion": "static",
+      "part": "armR2.nozzle",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR2.shaft",
+      "motion": "own",
+      "part": "armR2.shaft",
+      "ridesOn": null,
+      "source": "input",
+      "tier": "solved"
+    },
+    {
+      "base": "armR2.frontBearing",
+      "motion": "static",
+      "part": "armR2.frontBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR2.rearBearing",
+      "motion": "static",
+      "part": "armR2.rearBearing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "armR2.casing",
+      "motion": "static",
+      "part": "armR2.casing",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    }
+  ],
+  "parts": 71,
+  "placements": [
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.488941245425771,
+            0.3712485287140387
+          ],
+          "box": [
+            0.47309537471213015,
+            0.3816095055812327,
+            0.303,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 3,
+          "id": "lVersion",
+          "kind": "label",
+          "leader": [
+            0.488941245425771,
+            0.3816095055812327
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Classic suit, as described 2020–2022"
+        },
+        {
+          "anchor": [
+            0.6018688587603478,
+            0.4745564053460978
+          ],
+          "box": [
+            0.6190208185583105,
+            0.44727738884887225,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 0,
+          "id": "lArms",
+          "kind": "label",
+          "leader": [
+            0.6190208185583105,
+            0.4745564053460978
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Two engines on each forearm"
+        },
+        {
+          "anchor": [
+            0.5200840687073587,
+            0.30392085543011466
+          ],
+          "box": [
+            0.3140112269499747,
+            0.27627010756788434,
+            0.1888125,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 6,
+          "id": "lBack",
+          "kind": "label",
+          "leader": [
+            0.5028237269499747,
+            0.30392085543011466
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "One engine on the back"
+        },
+        {
+          "anchor": [
+            0.47676210699677546,
+            0.23314386427681605
+          ],
+          "box": [
+            0.34339128071121805,
+            0.18360668478499878,
+            0.13171875,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 7,
+          "id": "lPilot",
+          "kind": "label",
+          "leader": [
+            0.47511003071121805,
+            0.2228566847849988
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Schematic pilot"
+        }
+      ],
+      "step": 1
+    },
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.5280165434275274,
+            0.1764246866558143
+          ],
+          "box": [
+            0.533128940359018,
+            0.12212225294679768,
+            0.0583125,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 7,
+          "id": "aTB",
+          "kind": "arrow",
+          "leader": [
+            0.533128940359018,
+            0.1613722529467977
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Thrust"
+        }
+      ],
+      "step": 2
+    },
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.5200840687073587,
+            0.30392085543011466
+          ],
+          "box": [
+            0.18437021794985925,
+            0.27627010756788434,
+            0.3193125,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 6,
+          "id": "lBackShare",
+          "kind": "label",
+          "leader": [
+            0.5036827179498593,
+            0.30392085543011466
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Back: equipment + about ⅓ pilot weight"
+        },
+        {
+          "anchor": [
+            0.38973264278860376,
+            0.3819991566418571
+          ],
+          "box": [
+            0.0550824286446568,
+            0.37203347682788435,
+            0.3193125,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 7,
+          "id": "lArmShare",
+          "kind": "label",
+          "leader": [
+            0.37439492864465673,
+            0.3819991566418571
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Arms: about two thirds of pilot weight"
+        },
+        {
+          "anchor": [
+            0.4933769814338561,
+            0.557159339114098
+          ],
+          "box": [
+            0.4721158002730558,
+            0.5725166398473043,
+            0.23775,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 5,
+          "id": "aWeight",
+          "kind": "arrow",
+          "leader": [
+            0.4933769814338561,
+            0.5725166398473043
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Weight: pilot, suit and fuel"
+        }
+      ],
+      "step": 3
+    },
+    {
+      "placement": [
+        {
+          "anchor": null,
+          "box": [
+            0.009375,
+            0.7015,
+            0.4171875,
+            0.03925
+          ],
+          "callout": 0,
+          "candidate": null,
+          "id": "lFigs",
+          "kind": "label",
+          "leader": null,
+          "occluded": false,
+          "offView": true,
+          "text": "Reported suit figures (not computed) (off view)"
+        },
+        {
+          "anchor": null,
+          "box": [
+            0.009375,
+            0.74575,
+            0.400875,
+            0.03925
+          ],
+          "callout": 1,
+          "candidate": null,
+          "id": "l144",
+          "kind": "label",
+          "leader": null,
+          "occluded": false,
+          "offView": true,
+          "text": "About 144 kgf (317 lbf), AOPA 2020 (off view)"
+        },
+        {
+          "anchor": [
+            0.3990334698661829,
+            0.06420129547280728
+          ],
+          "box": [
+            0.0878983949158689,
+            0.06182486957271323,
+            0.303,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 6,
+          "id": "l155",
+          "kind": "label",
+          "leader": [
+            0.39089839491586886,
+            0.06420129547280728
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "~155 kgf, earlier rig, Browning 2017"
+        },
+        {
+          "anchor": [
+            0.5976390709832772,
+            0.011424925191457491
+          ],
+          "box": [
+            0.46344969682956433,
+            0.03906738465493263,
+            0.19696874999999997,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 4,
+          "id": "lBhp",
+          "kind": "label",
+          "leader": [
+            0.5976390709832772,
+            0.03906738465493263
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Claimed about 1,050 bhp"
+        },
+        {
+          "anchor": [
+            0.5950271438843063,
+            0.11837634401345981
+          ],
+          "box": [
+            0.6005283203726173,
+            0.11711847711548294,
+            0.33562499999999995,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 2,
+          "id": "lRecord",
+          "kind": "label",
+          "leader": [
+            0.6005283203726173,
+            0.11837634401345981
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Record 136.891 km/h, Guinness 2019-11-14"
+        }
+      ],
+      "step": 4
+    },
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.4339373724255232,
+            0.33351604676408536
+          ],
+          "box": [
+            0.13827199814944563,
+            0.29653678725730825,
+            0.26221875,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 15,
+          "id": "lSteer",
+          "kind": "label",
+          "leader": [
+            0.40049074814944563,
+            0.33351604676408536
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Moving the arms aims the thrust"
+        },
+        {
+          "anchor": [
+            0.4016603496765955,
+            0.4534278702195467
+          ],
+          "box": [
+            0.25514594508073757,
+            0.4824168028206905,
+            0.23775,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 4,
+          "id": "aJetBack",
+          "kind": "arrow",
+          "leader": [
+            0.4016603496765955,
+            0.4824168028206905
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "If the exhaust is aimed back"
+        },
+        {
+          "anchor": [
+            0.4238909450676137,
+            0.3485316382091031
+          ],
+          "box": [
+            0.16131746947862885,
+            0.3841106144804656,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 22,
+          "id": "aForward",
+          "kind": "arrow",
+          "leader": [
+            0.39091121947862884,
+            0.3841106144804656
+          ],
+          "occluded": false,
+          "offView": false,
+          "text": "Forward component of thrust"
+        }
+      ],
+      "step": 5
+    },
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.5392894207779932,
+            0.26559281508750365
+          ],
+          "box": [
+            0.552089658450791,
+            0.2588219848845554,
+            0.31115624999999997,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 2,
+          "id": "lJetcat",
+          "kind": "label",
+          "leader": [
+            0.552089658450791,
+            0.26559281508750365
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "JetCat-style micro turbojet (example)"
+        },
+        {
+          "anchor": [
+            0.5390913520533801,
+            0.28446679212804116
+          ],
+          "box": [
+            0.2540476429604218,
+            0.24265069053896254,
+            0.25406249999999997,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 14,
+          "id": "lNotGravity",
+          "kind": "label",
+          "leader": [
+            0.5081101429604218,
+            0.28190069053896255
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Not confirmed Gravity hardware"
+        },
+        {
+          "anchor": [
+            0.52741556186099,
+            0.2586474495473238
+          ],
+          "box": [
+            0.4532435552789192,
+            0.19019728646758868,
+            0.1888125,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 0,
+          "id": "lComp",
+          "kind": "label",
+          "leader": [
+            0.52741556186099,
+            0.2294472864675887
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Centrifugal compressor"
+        },
+        {
+          "anchor": [
+            0.5335177401671796,
+            0.30228133885393077
+          ],
+          "box": [
+            0.5669867880612584,
+            0.3035003617442117,
+            0.15618749999999998,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 10,
+          "id": "lComb",
+          "kind": "label",
+          "leader": [
+            0.5669867880612584,
+            0.3035003617442117
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Combustion chamber"
+        },
+        {
+          "anchor": [
+            0.5269259567094172,
+            0.325632346472165
+          ],
+          "box": [
+            0.43313791142314917,
+            0.34716214088580616,
+            0.06646875,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 13,
+          "id": "lTurb",
+          "kind": "label",
+          "leader": [
+            0.49960666142314925,
+            0.34716214088580616
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Turbine"
+        }
+      ],
+      "step": 6
+    },
+    {
+      "placement": [
+        {
+          "anchor": [
+            0.5392894207779932,
+            0.26559281508750365
+          ],
+          "box": [
+            0.552089658450791,
+            0.2588219848845554,
+            0.31115624999999997,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 2,
+          "id": "lJetcat",
+          "kind": "label",
+          "leader": [
+            0.552089658450791,
+            0.26559281508750365
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "JetCat-style micro turbojet (example)"
+        },
+        {
+          "anchor": [
+            0.5390913520533801,
+            0.28446679212804116
+          ],
+          "box": [
+            0.2540476429604218,
+            0.24265069053896254,
+            0.25406249999999997,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 14,
+          "id": "lNotGravity",
+          "kind": "label",
+          "leader": [
+            0.5081101429604218,
+            0.28190069053896255
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Not confirmed Gravity hardware"
+        },
+        {
+          "anchor": [
+            0.5271627170648377,
+            0.2932401872949497
+          ],
+          "box": [
+            0.2091781882453764,
+            0.3335287237537041,
+            0.29484374999999996,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 21,
+          "id": "lRpm",
+          "kind": "label",
+          "leader": [
+            0.5040219382453763,
+            0.3335287237537041
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Shaft: about 120,000 rpm (reported)"
+        },
+        {
+          "anchor": [
+            0.5267616114987614,
+            0.3481170914968191
+          ],
+          "box": [
+            0.49056406795522617,
+            0.3979605915713108,
+            0.21328125,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 11,
+          "id": "lNozzle",
+          "kind": "label",
+          "leader": [
+            0.5267616114987614,
+            0.3979605915713108
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Nozzle: the gas speeds up"
+        },
+        {
+          "anchor": [
+            0.5264491566315225,
+            0.39086532853727946
+          ],
+          "box": [
+            0.47588436418932706,
+            0.4508598840994751,
+            0.09909375,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 10,
+          "id": "aJetOut",
+          "kind": "arrow",
+          "leader": [
+            0.5264491566315225,
+            0.4508598840994751
+          ],
+          "occluded": true,
+          "offView": false,
+          "text": "Hot gas out"
+        }
+      ],
+      "step": 7
+    }
+  ],
+  "ratios": {
+    "armL1.impeller": 1,
+    "armL1.shaft": 1,
+    "armL1.turbineWheel": 1,
+    "armL2.impeller": 1,
+    "armL2.shaft": 1,
+    "armL2.turbineWheel": 1,
+    "armR1.impeller": 1,
+    "armR1.shaft": 1,
+    "armR1.turbineWheel": 1,
+    "armR2.impeller": 1,
+    "armR2.shaft": 1,
+    "armR2.turbineWheel": 1,
+    "back.impeller": 1,
+    "back.shaft": 1,
+    "back.turbineWheel": 1,
+    "pilot.lowerArmL": 0,
+    "pilot.lowerArmR": 0,
+    "pilot.upperArmL": 0,
+    "pilot.upperArmR": 0
+  },
+  "readBack": [
+    "pilot.body: world centre (0, 0, 1215) mm, size 420 x 250 x 740 mm; static; root (at [0, 125, 1340] in the world frame); local +Z points +Z",
+    "pilot.skull: world centre (0, -8, 1654) mm, size 184 x 200 x 218 mm; static; child of pilot.body (at [0, -125, 312] in the pilot.body frame); local +Z points +Z",
+    "pilot.upperArmL: world centre (262, 0, 1325) mm, size 227 x 112 x 322 mm; joint about a horizontal axis (-Y) held still; child of pilot.body (at [205, -125, 90] in the pilot.body frame); local +Z points (-0.5, 0, 0.87)",
+    "pilot.lowerArmL: world centre (407, -15.4, 1074) mm, size 189 x 113 x 276 mm; joint about an axis tilted 60° from vertical, along (-0.87, 0, -0.5) held still; child of pilot.upperArmL (at [0, 0, -300] in the pilot.upperArmL frame); its origin is 300 mm from the pilot.upperArmL axis; local +Z points (-0.49, 0.17, 0.85)",
+    "pilot.handL: world centre (527, -59, 869) mm, size 117 x 78.3 x 159 mm; static; child of pilot.lowerArmL (at [0, 0, -268] in the pilot.lowerArmL frame); its origin is 268 mm from the pilot.lowerArmL axis; local +Z points (-0.49, 0.17, 0.85)",
+    "pilot.upperArmR: world centre (-262, 0, 1325) mm, size 227 x 112 x 322 mm; joint about a horizontal axis (+Y) held still; child of pilot.body (at [-205, -125, 90] in the pilot.body frame); local +Z points (0.5, 0, 0.87)",
+    "pilot.lowerArmR: world centre (-407, -15.4, 1074) mm, size 189 x 113 x 276 mm; joint about an axis tilted 60° from vertical, along (-0.87, 0, 0.5) held still; child of pilot.upperArmR (at [0, 0, -300] in the pilot.upperArmR frame); its origin is 300 mm from the pilot.upperArmR axis; local +Z points (0.49, 0.17, 0.85)",
+    "pilot.handR: world centre (-527, -59, 869) mm, size 117 x 78.3 x 159 mm; static; child of pilot.lowerArmR (at [0, 0, -268] in the pilot.lowerArmR frame); its origin is 268 mm from the pilot.lowerArmR axis; local +Z points (0.49, 0.17, 0.85)",
+    "pilot.legL: world centre (95, 0, 510) mm, size 152 x 152 x 884 mm; static; root (at [95, 0, 880] in the world frame); local +Z points +Z",
+    "pilot.footL: world centre (95, -85, 46) mm, size 92 x 250 x 92 mm; static; child of pilot.legL (at [0, 0, -880] in the pilot.legL frame); local +Z points +Z",
+    "pilot.legR: world centre (-95, 0, 510) mm, size 152 x 152 x 884 mm; static; root (at [-95, 0, 880] in the world frame); local +Z points +Z",
+    "pilot.footR: world centre (-95, -85, 46) mm, size 92 x 250 x 92 mm; static; child of pilot.legR (at [0, 0, -880] in the pilot.legR frame); local +Z points +Z",
+    "helmet: world centre (0, 0, 1650) mm, size 216 x 216 x 233 mm; static; child of pilot.skull (at [0, 0, 0] in the pilot.skull frame); local +Z points +Z",
+    "visor: world centre (0, -98, 1657) mm, size 150 x 40 x 60 mm; static; child of pilot.skull (at [0, 0, 0] in the pilot.skull frame); local +Z points +Z",
+    "chestUnit: world centre (0, -150, 1300) mm, size 170 x 60 x 130 mm; static; child of pilot.body (at [0, -275, -40] in the pilot.body frame); local +Z points +Z",
+    "pack: world centre (0, 165, 1300) mm, size 300 x 80 x 440 mm; static; child of pilot.body (at [0, 40, -40] in the pilot.body frame); local +Z points +Z",
+    "back.intakeLip: world centre (0, 258, 1502) mm, size 110 x 110 x 16.8 mm; static; child of pilot.body (at [0, 133, 170] in the pilot.body frame); local +Z points -Z",
+    "back.impeller: world centre (0, 258, 1479) mm, size 68.2 x 68.2 x 27.3 mm; turns about a vertical axis (-Z) through (0, 258, 1472); 1 turn per input turn (Solved, input); child of pilot.body (at [0, 133, 132] in the pilot.body frame); local +Z points -Z",
+    "back.diffuser: world centre (0, 258, 1395) mm, size 98.2 x 98.2 x 162 mm; static; child of pilot.body (at [0, 133, 132] in the pilot.body frame); local +Z points -Z",
+    "back.combustor: world centre (0, 258, 1362) mm, size 82.5 x 82.5 x 84 mm; static; child of pilot.body (at [0, 133, 170] in the pilot.body frame); local +Z points -Z",
+    "back.nozzleGuideVanes: world centre (0, 258, 1307) mm, size 77 x 77 x 14 mm; static; child of pilot.body (at [0, 133, 170] in the pilot.body frame); local +Z points -Z",
+    "back.turbineWheel: world centre (0.07, 258, 1292) mm, size 72.5 x 72.6 x 11.2 mm; turns about a vertical axis (-Z) through (0, 258, 1510); 1 turn per input turn (Solved, input); child of pilot.body (at [0, 133, 170] in the pilot.body frame); local +Z points -Z",
+    "back.nozzle: world centre (0, 258, 1257) mm, size 110 x 110 x 53.2 mm; static; child of pilot.body (at [0, 133, -110] in the pilot.body frame); local +Z points -Z",
+    "back.shaft: world centre (0, 258, 1388) mm, size 8.8 x 8.8 x 203 mm; turns about a vertical axis (-Z) through (0, 258, 1510); 1 turn per input turn (Solved, input); child of pilot.body (at [0, 133, 170] in the pilot.body frame); local +Z points -Z",
+    "back.frontBearing: world centre (0, 258, 1459) mm, size 19.4 x 19.3 x 11.2 mm; static; child of pilot.body (at [0, 133, 170] in the pilot.body frame); local +Z points -Z",
+    "back.rearBearing: world centre (0, 258, 1331) mm, size 19.4 x 19.3 x 11.2 mm; static; child of pilot.body (at [0, 133, 170] in the pilot.body frame); local +Z points -Z",
+    "back.casing: world centre (0, 258, 1384) mm, size 110 x 110 x 218 mm; static; child of pilot.body (at [0, 133, 30] in the pilot.body frame); local +Z points -Z",
+    "armL1.intakeLip: world centre (420, -3.65, 1185) mm, size 65 x 70.3 x 45 mm; static; child of pilot.handL (at [63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.impeller: world centre (427, -6.13, 1173) mm, size 42.4 x 44.2 x 32.2 mm; turns about an axis tilted 31.5° from vertical, along (0.49, -0.17, -0.85) through (428, -6.65, 1169); 1 turn per input turn (Solved, input); child of pilot.handL (at [63, 0, 230] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.diffuser: world centre (446, -6.78, 1127) mm, size 90.7 x 61.8 x 119 mm; static; child of pilot.handL (at [63, 0, 230] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.combustor: world centre (468, -20.7, 1100) mm, size 75.2 x 62.1 x 78.6 mm; static; child of pilot.handL (at [63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.nozzleGuideVanes: world centre (487, -27.4, 1067) mm, size 47.6 x 50 x 34.1 mm; static; child of pilot.handL (at [63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.turbineWheel: world centre (493, -29.3, 1058) mm, size 41.5 x 46 x 26.4 mm; turns about an axis tilted 31.5° from vertical, along (0.49, -0.17, -0.85) through (416, -2.26, 1191); 1 turn per input turn (Solved, input); child of pilot.handL (at [63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.nozzle: world centre (504, -31.4, 1036) mm, size 70.6 x 68.9 x 60.2 mm; static; child of pilot.handL (at [63, 0, 55] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.shaft: world centre (459, -17.4, 1116) mm, size 76.2 x 30.7 x 127 mm; turns about an axis tilted 31.5° from vertical, along (0.49, -0.17, -0.85) through (416, -2.26, 1191); 1 turn per input turn (Solved, input); child of pilot.handL (at [63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.frontBearing: world centre (433, -8.2, 1161) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handL (at [63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.rearBearing: world centre (479, -24.5, 1081) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handL (at [63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL1.casing: world centre (460, -17.9, 1114) mm, size 138 x 96 x 170 mm; static; child of pilot.handL (at [63, 0, 155] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.intakeLip: world centre (311, -3.65, 1122) mm, size 65 x 70.3 x 45 mm; static; child of pilot.handL (at [-63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.impeller: world centre (318, -6.13, 1110) mm, size 42.4 x 44.2 x 32.2 mm; turns about an axis tilted 31.5° from vertical, along (0.49, -0.17, -0.85) through (319, -6.65, 1106); 1 turn per input turn (Solved, input); child of pilot.handL (at [-63, 0, 230] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.diffuser: world centre (337, -6.78, 1064) mm, size 90.7 x 61.8 x 119 mm; static; child of pilot.handL (at [-63, 0, 230] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.combustor: world centre (359, -20.7, 1037) mm, size 75.2 x 62.1 x 78.6 mm; static; child of pilot.handL (at [-63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.nozzleGuideVanes: world centre (378, -27.4, 1004) mm, size 47.6 x 50 x 34.1 mm; static; child of pilot.handL (at [-63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.turbineWheel: world centre (384, -29.3, 995) mm, size 41.5 x 46 x 26.4 mm; turns about an axis tilted 31.5° from vertical, along (0.49, -0.17, -0.85) through (307, -2.26, 1128); 1 turn per input turn (Solved, input); child of pilot.handL (at [-63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.nozzle: world centre (394, -31.4, 973) mm, size 70.6 x 68.9 x 60.2 mm; static; child of pilot.handL (at [-63, 0, 55] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.shaft: world centre (350, -17.4, 1053) mm, size 76.2 x 30.7 x 127 mm; turns about an axis tilted 31.5° from vertical, along (0.49, -0.17, -0.85) through (307, -2.26, 1128); 1 turn per input turn (Solved, input); child of pilot.handL (at [-63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.frontBearing: world centre (324, -8.2, 1098) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handL (at [-63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.rearBearing: world centre (370, -24.5, 1018) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handL (at [-63, 0, 255] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armL2.casing: world centre (351, -17.9, 1051) mm, size 138 x 96 x 170 mm; static; child of pilot.handL (at [-63, 0, 155] in the pilot.handL frame); local +Z points (0.49, -0.17, -0.85)",
+    "armR1.intakeLip: world centre (-420, -3.65, 1185) mm, size 65 x 70.3 x 45 mm; static; child of pilot.handR (at [-63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.impeller: world centre (-426, -6.13, 1173) mm, size 43.4 x 44.2 x 32.5 mm; turns about an axis tilted 31.5° from vertical, along (-0.49, -0.17, -0.85) through (-428, -6.65, 1169); 1 turn per input turn (Solved, input); child of pilot.handR (at [-63, 0, 230] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.diffuser: world centre (-446, -6.78, 1127) mm, size 90.7 x 61.8 x 119 mm; static; child of pilot.handR (at [-63, 0, 230] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.combustor: world centre (-468, -20.7, 1100) mm, size 75.2 x 62.1 x 78.6 mm; static; child of pilot.handR (at [-63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.nozzleGuideVanes: world centre (-487, -27.4, 1067) mm, size 47.6 x 50 x 34.1 mm; static; child of pilot.handR (at [-63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.turbineWheel: world centre (-493, -29.3, 1058) mm, size 41.5 x 46 x 26.4 mm; turns about an axis tilted 31.5° from vertical, along (-0.49, -0.17, -0.85) through (-416, -2.26, 1191); 1 turn per input turn (Solved, input); child of pilot.handR (at [-63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.nozzle: world centre (-504, -31.4, 1036) mm, size 70.6 x 68.9 x 60.2 mm; static; child of pilot.handR (at [-63, 0, 55] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.shaft: world centre (-459, -17.4, 1116) mm, size 76.2 x 30.7 x 127 mm; turns about an axis tilted 31.5° from vertical, along (-0.49, -0.17, -0.85) through (-416, -2.26, 1191); 1 turn per input turn (Solved, input); child of pilot.handR (at [-63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.frontBearing: world centre (-433, -8.2, 1161) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handR (at [-63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.rearBearing: world centre (-479, -24.5, 1081) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handR (at [-63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR1.casing: world centre (-460, -17.9, 1114) mm, size 138 x 96 x 170 mm; static; child of pilot.handR (at [-63, 0, 155] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.intakeLip: world centre (-311, -3.65, 1122) mm, size 65 x 70.3 x 45 mm; static; child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.impeller: world centre (-317, -6.13, 1110) mm, size 43.4 x 44.2 x 32.5 mm; turns about an axis tilted 31.5° from vertical, along (-0.49, -0.17, -0.85) through (-319, -6.65, 1106); 1 turn per input turn (Solved, input); child of pilot.handR (at [63, 0, 230] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.diffuser: world centre (-337, -6.78, 1064) mm, size 90.7 x 61.8 x 119 mm; static; child of pilot.handR (at [63, 0, 230] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.combustor: world centre (-359, -20.7, 1037) mm, size 75.2 x 62.1 x 78.6 mm; static; child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.nozzleGuideVanes: world centre (-378, -27.4, 1004) mm, size 47.6 x 50 x 34.1 mm; static; child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.turbineWheel: world centre (-384, -29.3, 995) mm, size 41.5 x 46 x 26.4 mm; turns about an axis tilted 31.5° from vertical, along (-0.49, -0.17, -0.85) through (-307, -2.26, 1128); 1 turn per input turn (Solved, input); child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.nozzle: world centre (-394, -31.4, 973) mm, size 70.6 x 68.9 x 60.2 mm; static; child of pilot.handR (at [63, 0, 55] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.shaft: world centre (-350, -17.4, 1053) mm, size 76.2 x 30.7 x 127 mm; turns about an axis tilted 31.5° from vertical, along (-0.49, -0.17, -0.85) through (-307, -2.26, 1128); 1 turn per input turn (Solved, input); child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.frontBearing: world centre (-324, -8.2, 1098) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.rearBearing: world centre (-370, -24.5, 1018) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "armR2.casing: world centre (-351, -17.9, 1051) mm, size 138 x 96 x 170 mm; static; child of pilot.handR (at [63, 0, 155] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)"
+  ],
+  "reason": null,
+  "sectionTriangles": 5858,
+  "stepFacts": [
+    {
+      "checks": [],
+      "facts": []
+    },
+    {
+      "checks": [],
+      "facts": []
+    },
+    {
+      "checks": [],
+      "facts": []
+    },
+    {
+      "checks": [],
+      "facts": []
+    },
+    {
+      "checks": [],
+      "facts": []
+    },
+    {
+      "checks": [],
+      "facts": []
+    },
+    {
+      "checks": [],
+      "facts": []
+    }
+  ],
+  "stepTiers": [
+    "described",
+    null,
+    "described",
+    "described",
+    null,
+    null,
+    "described"
+  ],
+  "steps": [
+    "Schematic of the classic five-engine Gravity suit (as described 2020–2022): two micro gas turbines on each forearm, one on the back. The Mk4 (not shown) has three back turbines; its total engine count is not published.",
+    "Each engine pushes along its own axis: one arrow per engine. To hover, the upward parts of these thrusts balance the weight of pilot, suit and fuel. The sideways forces and turning moments balance too.",
+    "Browning's analogy: the grouped pushes are a teepee of thrust, like the poles of a tent. In his 2021 description of the classic suit, the back engine carries the equipment plus about one third of his body weight; the arms about two thirds.",
+    "Reported figures, not computed here: about 144 kgf (317 lbf), AOPA 2020; about 155 kgf for an earlier rig, Browning 2017. These are separate total-thrust reports. Record: 136.891 km/h (85.06 mph), Guinness, 2019-11-14.",
+    "The pilot steers by moving the arms to aim the thrust. If the exhaust is aimed back, a forward component of thrust results. The pose shown is schematic, not a worked manoeuvre.",
+    "Inside one engine, cut open: a JetCat-style micro turbojet (schematic example, not confirmed Gravity hardware). The compressor squeezes the air. Fuel burns with oxygen in the compressed air in the combustion chamber.",
+    "JetCat-style example, not confirmed Gravity hardware. Hot gas drives the turbine, which turns the compressor on the same shaft. Gas speeds up out of the nozzle; the reaction is thrust. Shaft: about 120,000 rpm (reported)."
+  ],
+  "strict": true,
+  "title": "How the classic five-engine Gravity jet suit flies (schematic)",
+  "triangles": 120818,
+  "version": 2,
+  "warnings": []
+}

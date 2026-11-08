@@ -13,6 +13,33 @@ Validated JSON → native diagrams, walkthroughs, and animation in SwiftUI.
 </div>
 
 <p align="center">
+  <a href="docs/assets/jet-suit/story.mp4"><img src="docs/assets/jet-suit/poster.jpg" width="840" alt="Schematic pilot seen from behind with five micro jet engines, two on each forearm and one on the back. A yellow thrust arrow points out of each engine. Caption: to hover, the upward parts of these thrusts balance the weight of pilot, suit and fuel."></a>
+</p>
+
+**Hand-built example (written by a Claude agent from fact-checked research, not generated from a prompt by the
+engine's AI loop).** A jet suit, explained in 7 steps and a 63-second story video. The version is the classic
+five-engine Gravity suit, as described 2020–2022; the current Mk4 is different and is not shown. The engine rendered
+every frame from [54 lines of JSON](docs/assets/jet-suit/jet-suit.json), unedited.
+
+**How the classic five-engine suit flies.** The suit has five micro gas turbines: two on each forearm and one on the
+back. To hover, the upward components of their thrusts balance the weight of pilot, suit and fuel, and the sideways
+forces and turning moments balance too. The pilot steers by moving the arms, which aims the thrust. Inside a
+JetCat-style micro turbojet (a schematic example, not confirmed Gravity hardware), the compressor squeezes the air,
+fuel burns with oxygen in the compressed air, the hot gas drives the turbine, which turns the compressor, and the gas
+leaves the nozzle fast; the reaction is thrust. Mk4 note: the current Mk4 has three back turbines, and its total
+engine count is not published.
+
+Every fact has a label (VERIFIED, CLAIM or PLAUSIBLE), a source and a date, from two independent AI model
+fact-checks (GPT-6.1 Sol and Gemini 3.8 Flash). The legend in each still, **Solved 16 · Not checked 20**, tells you
+what the engine computed (the engine motion and the weight direction) and what it only shows (the reported figures).
+[Story video (MP4)](docs/assets/jet-suit/story.mp4) · [Sources](docs/assets/jet-suit/SOURCES.md) ·
+[All 7 steps](docs/SHOWCASE.md#jet-suit-hand-built-fact-checked) · [Render receipt](docs/assets/jet-suit/provenance.json)
+
+<sub>The picture is the step 2 still. Click it to open the story video: 1280×800 at 30 frames per second, H.264,
+6.4 MB. GitHub shows GIFs at a lower frame rate, and it does not play a video file from the repository inside a
+README, so this example has no GIF.</sub>
+
+<p align="center">
   <a href="docs/assets/from-a-prompt/robot-joint/exploded.png"><img src="docs/assets/from-a-prompt/robot-joint/loop.gif" width="840" alt="AI-written two-stage planetary gearbox turning and exploding: brass sun gears, steel planets on blue and orange carriers, two dark ring gears on an aluminium base."></a>
 </p>
 

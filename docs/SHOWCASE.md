@@ -9,9 +9,67 @@ uses of the engine without implying a curriculum or a running service.
 > 1280 pixels wide at 30 and 24 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a> ·
 > <a href="https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4">path-traced gearbox (MP4)</a>. Run an example to see the engine live.
 
+## Jet suit (hand-built, fact-checked)
+
+**Hand-built example (written by a Claude agent from fact-checked research, not generated from a prompt by the
+engine's AI loop).** The lesson explains the classic five-engine Gravity jet suit, as described 2020–2022, in 7
+steps. The current Mk4 has three back turbines and is not shown. The model is
+[`jet-suit.json`](assets/jet-suit/jet-suit.json), 54 lines, 71 parts. The stills and the story video are unedited
+output of `marty-solid render` at 1280×800; `marty-solid check --strict` passes with no warnings
+([check output](assets/jet-suit/check-strict.json)).
+
+[![Story video poster: the step 2 still, five engines with one thrust arrow each.](assets/jet-suit/poster.jpg)](assets/jet-suit/story.mp4)
+
+[Story video (MP4)](assets/jet-suit/story.mp4): 63 seconds, 7 beats of 9 seconds, 1280×800 at 30 frames per
+second, re-encoded with AVFoundation to 6.4 MB (the engine's file is 15.9 MB; both hashes are in the
+[render receipt](assets/jet-suit/provenance.json)). GitHub does not play it inside this page; click to open it.
+
+[![Step 1: schematic pilot seen from behind. Labels: "Two engines on each forearm", "One engine on the back", "Classic suit, as described 2020–2022". Caption: the Mk4 (not shown) has three back turbines; its total engine count is not published.](assets/jet-suit/step-1.png)](assets/jet-suit/step-1.png)
+
+[![Step 2: one yellow thrust arrow out of each of the five engines. Caption: to hover, the upward parts of these thrusts balance the weight of pilot, suit and fuel; the sideways forces and turning moments balance too.](assets/jet-suit/step-2.png)](assets/jet-suit/step-2.png)
+
+[![Step 3: back view with a downward weight arrow "Weight: pilot, suit and fuel" and the labels "Back: equipment + about ⅓ pilot weight" and "Arms: about two thirds of pilot weight". Caption: Browning's teepee-of-thrust analogy and his 2021 load split.](assets/jet-suit/step-3.png)](assets/jet-suit/step-3.png)
+
+[![Step 4: front view under a panel "Reported suit figures (not computed)": about 144 kgf (317 lbf), AOPA 2020; about 155 kgf, earlier rig, Browning 2017; claimed about 1,050 bhp; record 136.891 km/h, Guinness 2019-11-14.](assets/jet-suit/step-4.png)](assets/jet-suit/step-4.png)
+
+[![Step 5: side view with highlighted arms, the label "Moving the arms aims the thrust", a blue arrow "If the exhaust is aimed back" and a yellow arrow "Forward component of thrust". Caption: the pose shown is schematic, not a worked manoeuvre.](assets/jet-suit/step-5.png)](assets/jet-suit/step-5.png)
+
+[![Step 6: the back engine cut open, labelled "JetCat-style micro turbojet (example)" and "Not confirmed Gravity hardware", with the centrifugal compressor, combustion chamber and turbine labelled.](assets/jet-suit/step-6.png)](assets/jet-suit/step-6.png)
+
+[![Step 7: the same cutaway with "Shaft: about 120,000 rpm (reported)", "Nozzle: the gas speeds up" and a blue "Hot gas out" arrow. Caption: hot gas drives the turbine, which turns the compressor on the same shaft; the reaction is thrust.](assets/jet-suit/step-7.png)](assets/jet-suit/step-7.png)
+
+**How the classic five-engine suit flies.** The suit has five micro gas turbines: two on each forearm and one on the
+back. To hover, the upward components of their thrusts balance the weight of pilot, suit and fuel, and the sideways
+forces and turning moments balance too. In Browning's 2021 description, the back engine carries the equipment plus
+about one third of his body weight, and the arms about two thirds. The pilot steers by moving the arms, which aims the
+thrust. Inside a JetCat-style micro turbojet (a schematic example, not confirmed Gravity hardware), the compressor
+squeezes the air, fuel burns with oxygen in the compressed air, the hot gas drives the turbine, which turns the
+compressor on the same shaft, and the gas leaves the nozzle fast; the reaction is thrust.
+
+**Sources.** Every fact in the lesson is in [SOURCES.md](assets/jet-suit/SOURCES.md) with its fact-key row (F1 to
+F20), its label (VERIFIED, CLAIM or PLAUSIBLE), its source URL and its date. Two independent AI model fact-checks
+(GPT-6.1 Sol and Gemini 3.8 Flash) checked the claims on 2026-11-08. They caused these corrections to an earlier
+draft: the version is named, hover is a balance of upward components (not "thrust equals weight"), 144 kgf and 155
+kgf stay separate reports, a claimed thrust loss at altitude was removed, the cutaway is labelled as an example, and
+1,050 bhp is marked as a claim. These are model checks with web access, not a review by a jet-suit engineer.
+
+**What the legend means.** Each still reads **Solved 16 · Not checked 20**.
+
+* **Solved 16:** the engine computed these: the motion of 15 rotating parts (the impeller, turbine wheel and shaft
+  of each of the 5 engines) and the direction of the weight arrow (straight down).
+* **Not checked 20:** 8 labels and 4 captions that give a reported number, a quote or a version, and 8 arrows whose
+  direction and length are as authored. The engine shows them but does not check them; their facts come from the
+  sources table, not from the engine.
+* The engine does not compute thrust, rpm, the load split or the hover balance. "Arrow lengths are not to scale" is
+  printed in each still. Engine sizes, the pack and the pose are schematic.
+
+**Left out.** The hero still is not published: the helmet reaches into the title band. An independent review of the
+same JSON gave PUBLIC-OK for these 7 stills and the story video. It checked the story video at its 7 hold frames,
+not every transition frame.
+
 ## From a prompt
 
-The first example on this page was written by an AI model from one question. The others are
+The example in this section was written by an AI model from one question. The other examples on this page are
 hand-built: people and coding agents wrote their JSON or code for these examples, not a
 model answering a prompt.
 
