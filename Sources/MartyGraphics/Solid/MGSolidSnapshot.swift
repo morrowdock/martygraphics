@@ -216,6 +216,12 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
     public var annotations: Annotations?
     /// v2: highlighted part ids, nil when none.
     public var highlight: [String]?
+    /// v2: ids of the parts the exported view hides (step `hide`, show-only parts), in part order; their ranges hold no
+    /// triangles. Nil when the view hides none.
+    public var hidden: [String]?
+    /// v2: ids of the parts whose placement the exported step's `pose` changed, in part order; nil without a pose. The
+    /// positions are already posed.
+    public var posed: [String]?
 
     public var vertexCount: Int { positions.count / 3 }
     public var triangleCount: Int { indices.count / 3 }
@@ -246,9 +252,13 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
         if let shown = document.checkedAnnotations(view, params: params), !shown.isEmpty {
             addAnnotations(&snap, document, view: view, step: step, params: params, highlight: highlight, stage: stage)
         }
-        let known = Set(document.assembly.parts.map(\.id))
+        let hidden = Set(view.hiddenParts)
+        let known = Set(document.assembly.parts.map(\.id)).subtracting(hidden)
         let lit = MGSolidParser.unique(highlight.filter { known.contains($0) })
         if !lit.isEmpty { snap.highlight = lit }
+        let order = document.assembly.parts.map(\.id)
+        if !hidden.isEmpty { snap.hidden = order.filter { hidden.contains($0) } }
+        if !params.placements.isEmpty { snap.posed = order.filter { params.placements[$0] != nil } }
         return snap
     }
 
@@ -283,7 +293,7 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
         }
         var out = Annotations(arrows: [], dimensions: [], labels: [], placement: [])
         for r in a.arrows where visible.contains(r.id) {
-            let prims = MGSolidAnnotations.primitives(doc, r.id, params: params, sense: view.motionSense)
+            let prims = MGSolidAnnotations.primitives(doc, r.id, params: params, sense: view.motionSense, step: view.step)
             let (first, count) = append(prims, role: r.colorRole)
             let from = prims[0].start
             var to = prims[1].end, dir = to - from
@@ -296,7 +306,7 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
                                                 firstTriangle: first, triangleCount: count))
         }
         for d in a.dimensions where visible.contains(d.id) {
-            let (first, count) = append(MGSolidAnnotations.primitives(doc, d.id, params: params, sense: view.motionSense), role: MGSolidAnnotations.dimensionRole)
+            let (first, count) = append(MGSolidAnnotations.primitives(doc, d.id, params: params, sense: view.motionSense, step: view.step), role: MGSolidAnnotations.dimensionRole)
             out.dimensions.append(Annotations.Dimension(id: d.id, kind: d.kind.rawValue,
                                                         points: [d.a, d.vertex, d.b].compactMap { $0 }.map { xyz($0.world(pose)) },
                                                         value: d.value, unit: d.unit, text: d.text, tier: d.tier.name,
@@ -320,7 +330,9 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
         for part in assembly.parts {
             let t = stage * (pose.world[part.id] ?? .identity)
             let pv = view?.part(part.id)
-            let rm = pv?.cut?.renderMesh(creaseAngle: part.creaseAngle) ?? part.mesh.renderMesh(creaseAngle: part.creaseAngle)
+            // A hidden part keeps its range (so ranges stay in part order) with no triangles.
+            let rm = pv?.hidden == true ? MGRenderMesh(positions: [], normals: [], indices: [])
+                : pv?.cut?.renderMesh(creaseAngle: part.creaseAngle) ?? part.mesh.renderMesh(creaseAngle: part.creaseAngle)
             let mid: Int
             let emission = pv?.emission.flatMap { $0.intensity > 0 ? $0 : nil }
             let key = part.material.id + (emission.map { "+" + $0.id } ?? "")
@@ -338,7 +350,7 @@ public struct MGSolidSnapshot: Codable, Equatable, Sendable {
             var range = PartRange(id: part.id, name: part.name, firstTriangle: idx.count / 3, triangleCount: rm.indices.count / 3, material: mid)
             if let pv {
                 range.opacity = pv.opacity
-                if let cut = pv.cut { range.capFirstTriangle = range.firstTriangle + cut.capFirstTriangle; range.capTriangleCount = cut.capTriangleCount }
+                if let cut = pv.cut, !pv.hidden { range.capFirstTriangle = range.firstTriangle + cut.capFirstTriangle; range.capTriangleCount = cut.capTriangleCount }
             }
             ranges.append(range)
             idx += rm.indices.map { $0 + base }
@@ -518,11 +530,14 @@ extension MGSolidSnapshot {
         section = try c.decodeIfPresent(Section.self, forKey: .section)
         annotations = try c.decodeIfPresent(Annotations.self, forKey: .annotations)
         highlight = try c.decodeIfPresent([String].self, forKey: .highlight)
+        hidden = try c.decodeIfPresent([String].self, forKey: .hidden)
+        posed = try c.decodeIfPresent([String].self, forKey: .posed)
         // v2 fields are legal only in v2; a v1 file keeps exactly its v1 meaning.
-        let v2Fields = section != nil || annotations != nil || highlight != nil || materials.contains { $0.emission != nil }
+        let v2Fields = section != nil || annotations != nil || highlight != nil || hidden != nil || posed != nil
+            || materials.contains { $0.emission != nil }
             || parts.contains { $0.opacity != nil || $0.capFirstTriangle != nil || $0.capTriangleCount != nil }
         if format == MGSolidSnapshot.formatV1 {
-            guard !v2Fields else { throw bad(.format, "snapshot/1 has no section, opacity, cap, emission, annotation or highlight fields") }
+            guard !v2Fields else { throw bad(.format, "snapshot/1 has no section, opacity, cap, emission, annotation, highlight, hidden or posed fields") }
             return
         }
         guard parts.allSatisfy({ ($0.opacity.map { MGSolidView.opacityRange.contains($0) } ?? false) }) else {
@@ -546,6 +561,21 @@ extension MGSolidSnapshot {
         }
         if let h = highlight {
             guard h.allSatisfy({ id in parts.contains { $0.id == id } }) else { throw bad(.highlight, "highlight names known parts") }
+        }
+        // Hidden and posed lists: known part ids, each once, at most one per part; a hidden part has no triangles and is
+        // neither highlighted nor cut.
+        for (key, list) in [(CodingKeys.hidden, hidden), (CodingKeys.posed, posed)] {
+            guard let l = list else { continue }
+            guard l.count <= parts.count, Set(l).count == l.count, l.allSatisfy({ id in parts.contains { $0.id == id } }) else {
+                throw bad(key, "lists known part ids, each once")
+            }
+        }
+        if let h = hidden {
+            let set = Set(h)
+            guard parts.allSatisfy({ !set.contains($0.id) || ($0.triangleCount == 0 && $0.capFirstTriangle == nil) }),
+                  !(highlight ?? []).contains(where: set.contains), !(section?.parts ?? []).contains(where: set.contains) else {
+                throw bad(.hidden, "a hidden part has no triangles and is not highlighted or cut")
+            }
         }
         if let a = annotations, let why = MGSolidSnapshot.annotationProblem(a, partsEnd: parts.map { $0.firstTriangle + $0.triangleCount }.max() ?? 0,
                                                                            triangles: indices.count / 3) {

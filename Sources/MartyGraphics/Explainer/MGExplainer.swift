@@ -39,9 +39,9 @@ public enum MGExplainerLimits {
     /// Snapshot size cap (`snapshot.bytes`): the lesson snapshot and the solid source travel as JSON text, which escaping
     /// can at most double, plus the beat records, plus the records of shown claims (`shown`: at most
     /// `MGLessonLimits.ids` entries of at most 80 bytes; `shownBeats`: at most `beats` entries of at most 360 bytes;
-    /// `shownAnnotations`: at most 80 entries of at most 112 bytes).
+    /// `shownAnnotations`: at most 80 entries of at most 112 bytes; `shownMotion`: at most 96 entries of at most 112 bytes).
     public static let snapshotBytes = 2 * (MGLessonLimits.snapshotBytes + MGSolidLimits.bytes) + 2 * bytes + MGShownItems.maxBytes
-        + MGShownBeats.maxBytes + MGShownAnnotations.maxBytes
+        + MGShownBeats.maxBytes + MGShownAnnotations.maxBytes + MGShownMotion.maxBytes
 }
 
 /// A refused statement, beat or document. `reason` is one stable token (ASCII letters, digits, `_`, `.`, `,`; at most
@@ -126,7 +126,7 @@ public struct MGExplainer: Equatable, Sendable {
     static let keys: Set<String> = ["v", "kind", "title", "primary", "notes", "board", "solid", "beats"]
     static let beatKeys: Set<String> = ["say", "unchecked", "ops", "check", "highlight", "view"]
     /// Keys of a beat `view`: the v2 step view keys, `annotate` included (PR 3a).
-    static let viewKeys: Set<String> = ["focus", "explode", "camera", "orbit", "spin", "section", "ghost", "annotate"]
+    static let viewKeys: Set<String> = ["focus", "explode", "camera", "orbit", "spin", "section", "ghost", "annotate", "pose", "hide", "show"]
 
     /// The top-level `kind` value of a JSON document, for a tool that dispatches between formats. Read with the engine's
     /// guards first (at most `MGExplainerLimits.rawBytes`, UTF-8 only, nesting at most `MGLimits.depth`); nil when the

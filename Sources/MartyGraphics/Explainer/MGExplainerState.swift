@@ -135,7 +135,94 @@ struct MGShownAnnotations: Equatable {
     static let maxBytes = maxCount * entryBytes + 16
 }
 
+/// The 3D motion claims the learner was shown, when some view hides parts (a step `hide`, or a show-only part): each
+/// motion claim (its authored part id, the `repeat` base for copies) of a part that a presented beat displayed (not
+/// hidden in its view), in first-shown order, with its tier at presentation. It only grows. At most `maxCount` entries.
+/// When no view hides any part, every part is displayed in every view and every motion claim counts (the show-all
+/// rule, as for annotations).
+struct MGShownMotion: Equatable {
+    private(set) var ids: [String] = []
+    private(set) var tiers: [String: MGTier] = [:]
+
+    mutating func add(id: String, tier: MGTier) {
+        if let t = tiers[id] { tiers[id] = min(t, tier) } else { ids.append(id); tiers[id] = tier }
+    }
+
+    /// `[{"id", "tier"}]` in first-shown order (the explainer snapshot's `shownMotion`).
+    var json: MGJSON { .array(ids.map { .object(["id": .string($0), "tier": .string(tiers[$0]!.name)]) }) }
+
+    /// Motion claims per document at most (one per resolved part).
+    static let maxCount = MGSolidLimits.resolvedParts
+    /// Canonical bytes of one entry at most: a 64-character id and the longest tier name, plus room.
+    static let entryBytes = 112
+    /// Canonical bytes of the whole record at most (part of `MGExplainerLimits.snapshotBytes`).
+    static let maxBytes = maxCount * entryBytes + 16
+}
+
 extension MGExplainerSession {
+    /// True when some view of the solid hides parts: the legend then counts only the motion of parts a presented beat
+    /// displayed (`MGShownMotion`). Otherwise every part shows in every view and its motion counts.
+    var beatsHideParts: Bool {
+        guard let d = solid else { return false }
+        return !d.showOnly.isEmpty || d.steps.contains { !$0.hide.isEmpty }
+    }
+
+    /// The motion claim ids beat `k` displays: every motion claim with a part its view does not hide (the plain view's
+    /// hidden parts for a beat without a view).
+    func displayedMotion(beat k: Int) -> [String] {
+        guard let doc = solid else { return [] }
+        let hidden = doc.hiddenParts(step: stepOf[k])
+        let shown = Set(doc.assembly.parts.filter { !hidden.contains($0.id) }.map { doc.copies[$0.id] ?? $0.id })
+        return doc.claims.filter { $0.kind == .motion && shown.contains($0.id) }.map(\.id)
+    }
+
+    /// Freezes the motion claims of presented beats, in order, with each claim's tier.
+    func freezeMotion(beats presentedNow: [Int], into r: inout MGShownMotion) {
+        guard let doc = solid else { return }
+        var tier: [String: MGTier] = [:]
+        for c in doc.claims where c.kind == .motion { tier[c.id] = c.tier }
+        for k in presentedNow {
+            for id in displayedMotion(beat: k) { if let t = tier[id] { r.add(id: id, tier: t) } }
+        }
+    }
+
+    /// The record of shown motion claims, with the states `absorb` has not read yet.
+    var recordedMotion: MGShownMotion {
+        var r = shownMotion
+        freezeMotion(beats: lesson.shownScenes.compactMap(\.beat), into: &r)
+        return r
+    }
+
+    /// The record of shown motion claims from a snapshot's `shownMotion`, checked against the restored session. When no
+    /// view hides parts it must be absent (and the record is rebuilt from the presented beats). Otherwise: an array of at
+    /// most `MGShownMotion.maxCount` entries `{"id", "tier"}` (closed keys), each id once, a motion claim of the solid at
+    /// its tier, holding every motion claim the presented kept beats display now. Anything else is `snapshot.shown`.
+    /// Without the field (a snapshot made before it), the record is rebuilt from the presented beats.
+    mutating func restoreShownMotion(_ v: MGJSON?) throws {
+        var expected = MGShownMotion()
+        let presentedKept = presentedBeats.sorted().filter { beats[$0].map { !$0.dropped } ?? false }
+        freezeMotion(beats: presentedKept, into: &expected)
+        guard beatsHideParts, let doc = solid else {
+            if v != nil { throw MGError("snapshot.shown") }
+            shownMotion = expected
+            return
+        }
+        guard let v else { shownMotion = expected; return }
+        var tier: [String: MGTier] = [:]
+        for c in doc.claims where c.kind == .motion { tier[c.id] = c.tier }
+        guard case .array(let entries) = v, entries.count <= MGShownMotion.maxCount else { throw MGError("snapshot.shown") }
+        var record = MGShownMotion()
+        for e in entries {
+            guard let eo = e.objectValue, eo.count == 2, case .string(let id)? = eo["id"], case .string(let name)? = eo["tier"],
+                  record.tiers[id] == nil, let t = MGTier.allCases.first(where: { $0.name == name }), tier[id] == t else {
+                throw MGError("snapshot.shown")
+            }
+            record.add(id: id, tier: t)
+        }
+        guard expected.ids.allSatisfy({ record.tiers[$0] != nil }) else { throw MGError("snapshot.shown") }
+        shownMotion = record
+    }
+
     /// True when the beats choose their labels (the solid is stepped: some beat has `annotate`, or more than 12
     /// annotations): the legend then counts only annotations a presented beat displayed (`MGShownAnnotations`). With
     /// the show-all rule every annotation is displayed in every view and counts.
@@ -183,8 +270,16 @@ extension MGExplainerSession {
     public var claims: [MGExplainerClaim] {
         var out: [MGExplainerClaim] = []
         if let doc = solid {
+            // 3D motion: when some view hides parts, only the motion of parts a presented beat displayed, at its tier at
+            // presentation (`MGShownMotion`); otherwise every part shows everywhere and all motion counts.
+            let shownM = beatsHideParts ? recordedMotion : nil
             for c in doc.claims where c.kind == .motion {
-                out.append(MGExplainerClaim(kind: .motion, id: c.id, tier: c.tier, badge: c.badge, why: c.why))
+                if let r = shownM {
+                    guard let t = r.tiers[c.id] else { continue }
+                    out.append(MGExplainerClaim(kind: .motion, id: c.id, tier: t, badge: t == c.tier ? c.badge : t.badge(.motion), why: c.why))
+                } else {
+                    out.append(MGExplainerClaim(kind: .motion, id: c.id, tier: c.tier, badge: c.badge, why: c.why))
+                }
             }
             // 3D annotation claims (PR 3a), in authored order: labels, arrows, dimensions. When the beats choose their
             // labels, only those a presented beat displayed, at their tier at presentation; with the show-all rule, all.
@@ -386,6 +481,7 @@ extension MGExplainerSession {
         // instead of deriving it from the kept views.
         if beatsChooseLabels { o["chooseLabels"] = .bool(true) }
         if beatsShowOwnAnnotations { o["shownAnnotations"] = recordedAnnotations.json }
+        if beatsHideParts { o["shownMotion"] = recordedMotion.json }
         if let k = presented.beat { o["beat"] = .number(Double(k)) }
         o["stream"] = .object(["started": .bool(stream.started), "header": .bool(stream.header), "keep": .bool(stream.keep),
                                "ended": .bool(stream.ended), "exhausted": .bool(stream.exhausted),
@@ -550,7 +646,7 @@ extension MGExplainerSession {
             case .success(let l): s.lesson = l
             }
             if s.board == nil, s.frozen != s.lesson.boardless { throw MGError("snapshot.board") }
-            if let doc = s.solid, let r = s.poseRefusal(doc, stepOf: s.stepOf) { throw MGError(r) }
+            if let doc = s.solid, let r = s.poseRefusalDetail(doc, stepOf: s.stepOf) { throw MGExplainerIssue(r.reason, view: view, id: r.id) }
             // Every scene the lesson holds (shown and baseline), and every queued command, with the explainer's rules.
             view = .board
             var held = [s.lesson.state, s.lesson.projected].compactMap { $0 }
@@ -600,6 +696,7 @@ extension MGExplainerSession {
             }
             try s.restoreShownBeats(o["shownBeats"])
             try s.restoreShownAnnotations(o["shownAnnotations"])
+            try s.restoreShownMotion(o["shownMotion"])
             // The lesson's caption is the presented beat's line on the restored state, never the saved text; an
             // explainer's lesson has no title of its own (the explainer's title is filled from its header below).
             s.lesson.caption = s.caption
@@ -615,6 +712,11 @@ extension MGExplainerSession {
                                     exhausted: try flag(st["exhausted"], "snapshot.stream"),
                                     bytes: try int(st["bytes"], "snapshot.stream"), statements: try int(st["statements"], "snapshot.stream"))
             return .success(s)
+        } catch let e as MGExplainerIssue {
+            return .failure(e)
+        } catch let e as MGSolidIssue {
+            // A solid refusal names its part or fact (`id`), as in a stream.
+            return .failure(MGExplainerIssue(e.reason, view: view, id: e.part))
         } catch {
             return .failure(MGExplainerIssue(reason(error), view: view))
         }

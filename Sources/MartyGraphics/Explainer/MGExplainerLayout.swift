@@ -151,10 +151,9 @@ public enum MGExplainerFrame {
                           unit: Double(w) / 1280, primarySolid: primarySolid)
     }
 
-    /// The pose of a beat view: the beat's explode and `spin` (0...1) of its spin played.
+    /// The pose of a beat view: the beat's explode, `spin` (0...1) of its spin played, and its `pose` placements.
     public static func pose(_ doc: MGSolidDocument, view: MGExplainerBeatView, spin: Double = 1) -> MGPoseParameters {
-        let step = view.step
-        return MGPoseParameters(input: doc.defaults.input + (step?.spin ?? 0) * 2 * .pi * spin, explode: step?.explode ?? doc.defaults.explode)
+        view.step?.poseParameters(defaults: doc.defaults, spin: spin) ?? doc.defaults
     }
 
     /// The camera of the solid pane for one beat view: the assembly framing rule (`MGSolidFraming`) for the step the

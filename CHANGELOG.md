@@ -7,6 +7,50 @@
   the strict check output, a render receipt, and `SOURCES.md` with a label, source URL and date for every fact). A
   Claude agent wrote the JSON by hand from research checked by two independent AI model fact-checks; it is not an AI
   run of the engine from a prompt. No engine code changes.
+- Step pose and step visibility, instance ids in step lists, instance explode, focus-sized motion arrows, two-line
+  annotation text and a hero that keeps the title band free.
+  - Step and beat-view `pose` (v2): `{"<instance>": {"with": {...}}, "<part>": {"rot": [ax, ay, az, deg]}}` moves parts
+    for that step only (stills, story hold, framing, unblocked focus, snapshot). Each posed step is checked against a
+    compile of the document with the pose applied: only placements may change (`step.pose.with`), no part of a gear
+    solve or constrained mechanism may move, and the compiled motion and every engine fact stay the same
+    (`step.pose.solved`), so captions and claims keep facts that hold at the pose. Gravity arrows, `expect`, dimensions
+    and frame lints are re-checked at the pose. Reasons `step.pose`, `step.pose.ref`, `step.pose.key`, `step.pose.with`,
+    `step.pose.solved` and the explainer's `view.pose.*`. `MGPoseParameters.placements`, `MGSolidStep.pose`,
+    `MGSolidStep.poseParameters`, `MGSolidDocument.poseParameters(step:)` and `poseReadBack` are new; the check report
+    gains `stepViews` (`posed`, `poseReadBack`, `hidden`) and `showOnly` when a step uses these keys. In `story.mp4` the
+    camera move into a step blends the parts from the previous step's pose (`MGStoryPlan.placements`,
+    `MGTransform.blend`), with a real render at every frame; the one annotation gate accepts only a step's own pose.
+  - Step and beat-view `hide` and `show` (v2, 1–16 entries each): a part some step `show`s appears only in those steps.
+    Hidden parts are not drawn, not framed, hide no other part and make no claim (`step.hide.both`, `step.hide.use`,
+    `step.hide.claim`, `step.show.claim`, `text.hide.beat.<n>`). `MGSolidPartView.hidden`, `MGSolidView.hiddenParts`,
+    `MGSolidDocument.hiddenParts(step:)` and `showOnly` are new; snapshots gain `hidden` and `posed` (v2).
+    `MGSolidRenderer.worldBounds` and `frame` take an optional `hidden` set.
+  - A component instance id counts as one entry in a step's `focus`, `highlight`, `ghost`, `hide`, `show` and
+    `section.parts` and expands to all its parts; the expanded list is no longer limited to 16 (five `microTurbojet`
+    instances light 55 parts). Before, the expanded list of `focus`/`highlight` had to fit in 16, and `ghost` and
+    `section.parts` did not take instance ids.
+  - A top-level `use` entry in a v2 assembly may take `explode`: it is added to every root part of the instance
+    (`component.use.explode`).
+  - Motion arrows (turn and line) take the step's focus size (`MGSolidDocument.motionArrowDiagonal(step:)`), so a small
+    shaft's turn arrow no longer covers a close-up cutaway. Golden change: the `annotated-winch` check report's
+    `placements` for step 5 (`aLift` box), from the shorter automatic arrow length.
+  - Annotation text may be 60 Unicode scalars (was 40; authored 240); over 40 it draws on two lines
+    (`MGAnnotationLayout.lines`, `lineScalars`), with the box at most 40 scalars wide and two rows high. A one-line text
+    keeps its earlier box. Golden change: the jet-suit check report's step 4 `placements`, where two off-view callout
+    rows now wrap to two lines.
+  - `hero.png` keeps the title band free: its earlier framing stays only when the model clears the band, else it is
+    fitted. Hidden parts are left out of every framing rule.
+  - Facts at the pose and hidden facts: every geometry fact a posed step or beat displays (caption, checks, title,
+    annotation and board text), and every `check` of any step or beat, must hold over the step's whole motion domain
+    at its pose (its spin, explode and placements); a `dim.<id>` that does not is refused (`step.pose.fact`,
+    `view.pose.fact`, naming the fact, also on host edits and restore). A displayed fact of a hidden part is refused (`step.hide.fact`, `view.hide.fact`); the title
+    and board text may not show a fact of a part that any view hides. In an explainer whose views hide parts, the legend
+    counts a part's motion only once a presented beat displayed it (snapshot `shownMotion`); a part every view hides
+    makes no motion claim. Annotation text may not hold a character of more than 8 scalars (`text.grapheme`), and
+    `MGAnnotationLayout.lines` cuts any line over 40 scalars with "…".
+  - docs/SOLID-3D.md: the readability guarantee notes that `--size` accepts heights only up to 2160. docs/SHOWCASE.md
+    notes that the winch stills predate the focus-sized motion arrows.
+
 - Inside views that are not hidden, a whole jet engine in one `use`, and repair detail for `parts.resolved`.
   - Unblocked focus (`MGSolidFraming.clearView`, `MGSolidClearView`, Foundation only): after a step is framed on its
     focus, rays from the camera to at most 48 focus samples find the parts in the way. A part outside the focus context

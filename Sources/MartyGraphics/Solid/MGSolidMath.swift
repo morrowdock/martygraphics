@@ -120,4 +120,53 @@ public struct MGTransform: Equatable, Sendable {
     public var columnMajor: [Double] {
         [c0.x, c0.y, c0.z, 0, c1.x, c1.y, c1.z, 0, c2.x, c2.y, c2.z, 0, translation.x, translation.y, translation.z, 1]
     }
+
+    /// The transform `t` of the way from `a` to `b` (0: `a`, 1: `b`, exactly): the rotation turns at a constant rate
+    /// about one axis (quaternion slerp, the shorter way), the translation moves in a straight line. Deterministic.
+    public static func blend(_ a: MGTransform, _ b: MGTransform, _ t: Double) -> MGTransform {
+        guard t.isFinite, t < 1 else { return b }
+        guard t > 0 else { return a }
+        var qa = a.quaternion, qb = b.quaternion
+        var d = qa.0 * qb.0 + qa.1 * qb.1 + qa.2 * qb.2 + qa.3 * qb.3
+        if d < 0 { qb = (-qb.0, -qb.1, -qb.2, -qb.3); d = -d }
+        let wa: Double, wb: Double
+        if d > 0.9995 {
+            wa = 1 - t; wb = t
+        } else {
+            let th = acos(min(1, d)), s = sin(th)
+            wa = sin((1 - t) * th) / s; wb = sin(t * th) / s
+        }
+        qa = (qa.0 * wa + qb.0 * wb, qa.1 * wa + qb.1 * wb, qa.2 * wa + qb.2 * wb, qa.3 * wa + qb.3 * wb)
+        let n = (qa.0 * qa.0 + qa.1 * qa.1 + qa.2 * qa.2 + qa.3 * qa.3).squareRoot()
+        guard n > 0, n.isFinite else { return t < 0.5 ? a : b }
+        let (w, x, y, z) = (qa.0 / n, qa.1 / n, qa.2 / n, qa.3 / n)
+        var r = MGTransform(c0: MGVec3(1 - 2 * (y * y + z * z), 2 * (x * y + w * z), 2 * (x * z - w * y)),
+                            c1: MGVec3(2 * (x * y - w * z), 1 - 2 * (x * x + z * z), 2 * (y * z + w * x)),
+                            c2: MGVec3(2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)), translation: .zero)
+        r.translation = a.translation + (b.translation - a.translation) * t
+        return r
+    }
+
+    /// The rotation as a unit quaternion (w, x, y, z) (Shepperd's method; the larger diagonal term first).
+    var quaternion: (Double, Double, Double, Double) {
+        let m00 = c0.x, m11 = c1.y, m22 = c2.z
+        let m01 = c1.x, m02 = c2.x, m10 = c0.y, m12 = c2.y, m20 = c0.z, m21 = c1.z
+        let tr = m00 + m11 + m22
+        var q: (Double, Double, Double, Double)
+        if tr > 0 {
+            let s = (tr + 1).squareRoot() * 2
+            q = (s / 4, (m21 - m12) / s, (m02 - m20) / s, (m10 - m01) / s)
+        } else if m00 > m11 && m00 > m22 {
+            let s = (1 + m00 - m11 - m22).squareRoot() * 2
+            q = ((m21 - m12) / s, s / 4, (m01 + m10) / s, (m02 + m20) / s)
+        } else if m11 > m22 {
+            let s = (1 + m11 - m00 - m22).squareRoot() * 2
+            q = ((m02 - m20) / s, (m01 + m10) / s, s / 4, (m12 + m21) / s)
+        } else {
+            let s = (1 + m22 - m00 - m11).squareRoot() * 2
+            q = ((m10 - m01) / s, (m02 + m20) / s, (m12 + m21) / s, s / 4)
+        }
+        let n = (q.0 * q.0 + q.1 * q.1 + q.2 * q.2 + q.3 * q.3).squareRoot()
+        return n > 0 && n.isFinite ? (q.0 / n, q.1 / n, q.2 / n, q.3 / n) : (1, 0, 0, 0)
+    }
 }

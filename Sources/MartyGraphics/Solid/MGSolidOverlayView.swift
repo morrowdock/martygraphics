@@ -98,6 +98,16 @@ public enum MGSolidOverlay {
             CTLineDraw(line, ctx)
             ctx.restoreGState()
         }
+        /// A placement's text on its lines (`MGAnnotationLayout.lines`), one row each, all at the size that fits them.
+        func block(_ s: String, in box: CGRect, size: Double) {
+            let ls = MGAnnotationLayout.lines(s)
+            guard ls.count > 1 else { return text(s, in: box, size: size) }
+            let fs = ls.map { fit($0, width: Double(box.width) - 12, fontSize: size).size }.min() ?? size
+            let row = max(0, box.height - 8) / CGFloat(ls.count)
+            for (i, l) in ls.enumerated() {
+                text(l, in: CGRect(x: box.minX, y: box.minY + 4 + CGFloat(i) * row, width: box.width, height: row), size: fs)
+            }
+        }
         let shapes = frame.placement.compactMap { Shape($0, w, h) }
         for (p, s) in zip(frame.placement, shapes) {
             let tierColor = chip(tier(doc, p.id))
@@ -123,7 +133,7 @@ public enum MGSolidOverlay {
             ctx.addPath(path); ctx.setStrokeColor(color(tierColor, 0.9)); ctx.setLineWidth(1); ctx.strokePath()
             // The tier chip: a bar on the box's left edge.
             ctx.setFillColor(color(tierColor)); ctx.fill(CGRect(x: s.box.minX + 1, y: s.box.minY + 3, width: 3, height: max(0, s.box.height - 6)))
-            text(s.text, in: s.box, size: f)
+            block(s.text, in: s.box, size: f)
         }
         if legend {
             let l = doc.legend
@@ -171,6 +181,16 @@ public struct MGSolidOverlayView: View {
                 let x = alignRight ? box.maxX - 6 : box.minX + 6
                 ctx.draw(resolved, at: CGPoint(x: x, y: box.midY), anchor: alignRight ? .trailing : .leading)
             }
+            /// A placement's text on its lines (`MGAnnotationLayout.lines`), one row each, at the size that fits them.
+            func block(_ s: String, in box: CGRect, size: Double) {
+                let ls = MGAnnotationLayout.lines(s)
+                guard ls.count > 1 else { return text(s, in: box, size: size) }
+                let fs = ls.map { MGSolidOverlay.fit($0, width: Double(box.width) - 12, fontSize: size).size }.min() ?? size
+                let row = max(0, box.height - 8) / CGFloat(ls.count)
+                for (i, l) in ls.enumerated() {
+                    text(l, in: CGRect(x: box.minX, y: box.minY + 4 + CGFloat(i) * row, width: box.width, height: row), size: fs)
+                }
+            }
             for p in frame.placement {
                 guard let s = MGSolidOverlay.Shape(p, w, h) else { continue }
                 let tierColor = MGSolidOverlay.chip(MGSolidOverlay.tier(document, p.id))
@@ -194,7 +214,7 @@ public struct MGSolidOverlayView: View {
                 ctx.fill(box, with: .color(color(MGSolidOverlay.fill, MGSolidOverlay.fill[3])))
                 ctx.stroke(box, with: .color(color(tierColor, 0.9)), lineWidth: 1)
                 ctx.fill(Path(CGRect(x: s.box.minX + 1, y: s.box.minY + 3, width: 3, height: max(0, s.box.height - 6))), with: .color(color(tierColor)))
-                text(s.text, in: s.box, size: f)
+                block(s.text, in: s.box, size: f)
             }
             if legend {
                 let l = document.legend

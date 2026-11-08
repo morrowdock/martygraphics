@@ -25,6 +25,9 @@ public struct MGSolidPartView: Equatable, Sendable {
     /// Coverage 0.1...1 (1 = opaque); renderers multiply it with the material's own opacity.
     public var opacity: Double
     public var emission: MGEmission?
+    /// v2: the view does not draw the part (step `hide`, or a show-only part the step does not `show`). A hidden part
+    /// is not framed, hides no other part and makes no claim.
+    public var hidden: Bool = false
 }
 
 /// Per-part appearance for one step (or for the plain scene).
@@ -56,6 +59,9 @@ public struct MGSolidView: Equatable, Sendable {
         section = nil
     }
 
+    /// Ids of the parts this view does not draw, sorted.
+    public var hiddenParts: [String] { parts.keys.filter { parts[$0]!.hidden }.sorted() }
+
     /// One part's view with its numbers limited to the allowed ranges (opacity 0.1...1, NaN gives 1; light 0...4), so
     /// values set in code always give a valid snapshot and render. The parser refuses out-of-range authored values.
     public func part(_ id: String) -> MGSolidPartView {
@@ -77,6 +83,7 @@ extension MGSolidDocument {
         var v = MGSolidView(assembly)
         v.annotations = visibleAnnotations(step: step)
         v.fingerprint = checkedFingerprint
+        for id in hiddenParts(step: step) { v.parts[id]?.hidden = true }
         guard let i = step, steps.indices.contains(i) else { return v }
         v.step = i
         let s = steps[i]

@@ -288,8 +288,10 @@ final class AnnotationLayoutTests: XCTestCase {
     // MARK: P14, P15 renderers
 
     @MainActor func testP14OverlayTextFitsItsBox() throws {
-        let long = "ABCDEFGHIJKLMNOPQRSTUVWXYZ WWWWWWWWWWWWW"
+        // At the limit (60 scalars) the text draws on two lines, each fitted in the box.
+        let long = "ABCDEFGHIJKLMNOPQRSTUVWXYZ WWWWWWWWWWWWW abcdefghijklmnopqrs"
         XCTAssertEqual(long.unicodeScalars.count, MGSolidAnnotationLimits.text)
+        XCTAssertEqual(MGAnnotationLayout.lines(long).count, 2)
         let text = #"{"v": 2, "kind": "assembly", "parts": [{"id": "core", "shape": {"box": {"size": [20, 20, 10]}}}], "annotations": {"labels": [{"id": "l1", "at": "core", "text": "\#(long)"}, {"id": "l2", "at": {"part": "core", "offset": [10, 0, 0]}, "text": "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"}]}, "steps": [{"say": "Long."}]}"#
         let d = try doc(text)
         for (w, h) in [(1024.0, 768.0), (640.0, 400.0)] {
@@ -298,9 +300,11 @@ final class AnnotationLayoutTests: XCTestCase {
             for p in f.placement {
                 let boxWidth = p.box[2] * w
                 let shown = p.callout.map { "\($0 + 1). " + p.text } ?? p.text
-                let fit = MGSolidOverlay.fit(shown, width: boxWidth - 12, fontSize: f.fontSize)
-                XCTAssertLessThanOrEqual(fit.width, boxWidth - 12 + 1e-9, "\(p.id) at \(w)x\(h)")
-                XCTAssertEqual(MGSolidOverlay.textWidth(shown, fontSize: fit.size), fit.width, accuracy: 1e-9)
+                for line in MGAnnotationLayout.lines(shown) {
+                    let fit = MGSolidOverlay.fit(line, width: boxWidth - 12, fontSize: f.fontSize)
+                    XCTAssertLessThanOrEqual(fit.width, boxWidth - 12 + 1e-9, "\(p.id) at \(w)x\(h)")
+                    XCTAssertEqual(MGSolidOverlay.textWidth(line, fontSize: fit.size), fit.width, accuracy: 1e-9)
+                }
             }
             let renderer = ImageRenderer(content: MGSolidOverlayView(frame: f, document: d).frame(width: w, height: h))
             let image = try XCTUnwrap(renderer.cgImage)

@@ -140,10 +140,66 @@ public enum MGAnnotationLayout {
         guard height.isFinite else { return 11 }
         return min(20, max(11, (0.022 * height).rounded()))
     }
-    /// Text box: width 0.58 × f × scalars + 2 × 6, height 1.3 × f + 2 × 4. The renderer shrinks its font if its real
-    /// text is wider, so text never overflows the box.
+    /// Text box: width 0.58 × f × (scalars of the longest line) + 2 × 6, height 1.3 × f × lines + 2 × 4, with the
+    /// lines of `lines(_:)` (one line up to `lineScalars`, else two). So a box is at most 0.58 × f × 40 + 12 wide and
+    /// 2.6 × f + 8 high for an annotation text (at most 60 scalars), and a one-line text keeps its earlier box. The
+    /// renderer shrinks its font if its real text is wider, so text never overflows the box.
     public static func boxSize(_ text: String, fontSize f: Double) -> (width: Double, height: Double) {
-        (0.58 * f * Double(text.unicodeScalars.count) + 12, 1.3 * f + 8)
+        let l = lines(text)
+        let widest = l.map { $0.unicodeScalars.count }.max() ?? 0
+        return (0.58 * f * Double(widest) + 12, 1.3 * f * Double(l.count) + 8)
+    }
+
+    /// Longest text drawn on one line (Unicode scalars).
+    public static let lineScalars = 40
+
+    /// The lines a text draws on: the text itself up to `lineScalars` scalars (or when it holds a line break, which
+    /// annotation text cannot); a longer text breaks at the space nearest its middle whose two halves are at most
+    /// `lineScalars` each (the earlier space on a tie), or, with no such space, at the character boundary nearest the
+    /// middle. The space at the break is dropped. Two lines at most. A line still over `lineScalars` (no legal break:
+    /// a text over 80 scalars, or very long characters a host builds in code) is cut at a character boundary and ends in
+    /// "…", so no line exceeds `lineScalars` and no box exceeds its bound. Deterministic.
+    public static func lines(_ text: String) -> [String] {
+        let n = text.unicodeScalars.count
+        guard n > lineScalars, !text.contains("\n") else { return [text] }
+        return split(text).map(bounded).filter { !$0.isEmpty }
+    }
+
+    /// `line` itself when it holds at most `lineScalars` scalars; else its longest prefix of whole characters (or, for
+    /// one character longer than that, of scalars) of `lineScalars` − 1 scalars, then "…".
+    static func bounded(_ line: String) -> String {
+        guard line.unicodeScalars.count > lineScalars else { return line }
+        var out = "", used = 0
+        for c in line {
+            let k = c.unicodeScalars.count
+            guard used + k <= lineScalars - 1 else { break }
+            out.append(c); used += k
+        }
+        if out.isEmpty { out = String(String.UnicodeScalarView(line.unicodeScalars.prefix(lineScalars - 1))) }
+        return out + "…"
+    }
+
+    /// The two-line break of `lines`, before the bound.
+    static func split(_ text: String) -> [String] {
+        let n = text.unicodeScalars.count
+        let chars = Array(text)
+        var prefix = [0]
+        for c in chars { prefix.append(prefix.last! + c.unicodeScalars.count) }
+        let mid = Double(n) / 2
+        var best: (k: Int, d: Double)?
+        for (k, c) in chars.enumerated() where c == " " {
+            let left = prefix[k], right = n - prefix[k + 1]
+            guard left > 0, right > 0, left <= lineScalars, right <= lineScalars else { continue }
+            let d = abs(Double(prefix[k]) - mid)
+            if best == nil || d < best!.d { best = (k, d) }
+        }
+        if let b = best { return [String(chars[..<b.k]), String(chars[(b.k + 1)...])] }
+        var cut = 1, cd = Double.infinity
+        for k in 1..<chars.count {
+            let d = abs(Double(prefix[k]) - mid)
+            if d < cd { cd = d; cut = k }
+        }
+        return [String(chars[..<cut]), String(chars[cut...])]
     }
 
     /// One text to place.
@@ -357,7 +413,8 @@ enum MGAnnotationOcclusion {
         var solids: [Solid] = []
         for p in doc.assembly.parts {
             let pv = view.part(p.id)
-            guard pv.opacity >= 0.5 else { continue }
+            // A part the view hides is not drawn, so it hides no anchor.
+            guard pv.opacity >= 0.5, !pv.hidden else { continue }
             let mesh = pv.cut?.mesh ?? p.mesh
             let t = pose.world[p.id] ?? .identity
             solids.append(Solid(mesh: mesh, transform: t, inverse: t.inverse, bounds: MGSolidFrames.worldBounds(mesh.bounds, t)))
@@ -445,7 +502,7 @@ extension MGSolidAnnotations {
         let anchors = shown.map { id -> MGAnnotationFrame.Anchors in
             var pts: [MGVec3]
             if let r = a.arrow(id) {
-                let prims = primitives(doc, id, params: params, sense: view.motionSense)
+                let prims = primitives(doc, id, params: params, sense: view.motionSense, step: view.step)
                 pts = r.style == .turn ? [prims[0].start, prims[arcChords].end] : [prims[0].start, prims[1].end]
             } else {
                 pts = MGSolidAnnotationEngine.anchors(a, id).map { $0.world(pose) }
@@ -467,7 +524,7 @@ extension MGSolidAnnotations {
         // Placement order: labels (view order), then arrow texts, then dimension texts.
         let ordered = visible.filter { a.kind($0) == "label" } + visible.filter { a.arrow($0)?.text != nil } + visible.filter { a.kind($0) == "dimension" }
         var points: [(id: String, point: MGVec3, line: (MGVec3, MGVec3)?)] = []
-        for id in ordered { if let t = attach(doc, id, pose, params, sense: view.motionSense) { points.append((id, t.point, t.line)) } }
+        for id in ordered { if let t = attach(doc, id, pose, params, sense: view.motionSense, step: view.step) { points.append((id, t.point, t.line)) } }
         let eye = stage.inverse.apply(camera.position)
         let occluded = MGAnnotationOcclusion.test(points.map(\.point), eye: eye, document: doc, view: view, pose: pose, budget: occlusionBudget)
         var items: [MGAnnotationLayout.Item] = []
@@ -517,7 +574,7 @@ extension MGSolidAnnotations {
                                  budget: Int = MGSolidAnnotationLimits.occlusionTests) -> [(id: String, occluded: Bool?)] {
         let pose = doc.assembly.pose(params)
         let ids = view.annotations.filter { doc.annotations.kind($0) != nil }
-        let points = ids.map { attach(doc, $0, pose, params, sense: view.motionSense)?.point ?? .zero }
+        let points = ids.map { attach(doc, $0, pose, params, sense: view.motionSense, step: view.step)?.point ?? .zero }
         // Report data, not a display: it tests every requested annotation at the given pose.
         let result = MGAnnotationOcclusion.test(points, eye: stage.inverse.apply(camera.position), document: doc, view: view, pose: pose, budget: budget)
         return Array(zip(ids, result)).map { (id: $0.0, occluded: $0.1) }
@@ -537,7 +594,8 @@ extension MGSolidDocument {
             let view = view(step: step)
             guard !view.annotations.isEmpty else { continue }
             // The view's first pose: the default input at the view's explode value.
-            let params = MGPoseParameters(input: defaults.input, explode: MGSolidAnnotationEngine.domain(self, step: step).explode)
+            let params = MGPoseParameters(input: defaults.input, explode: MGSolidAnnotationEngine.domain(self, step: step).explode,
+                                          placements: MGSolidAnnotationEngine.placements(self, step: step))
             let frame = MGSolidAnnotations.frame(document: self, view: view, params: params,
                                                  camera: MGSolidAnnotations.defaultCamera(self, params: params), aspect: 16.0 / 10,
                                                  highlight: step.map { steps[$0].highlight } ?? [], caption: step != nil)

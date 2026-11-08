@@ -184,6 +184,8 @@ public struct MGExplainerSession {
     var shownBeats = MGShownBeats()
     /// The annotations every presented beat displayed, frozen at presentation (`MGShownAnnotations`).
     var shownAnnotations = MGShownAnnotations()
+    /// The motion claims of every part a presented beat displayed (not hidden), frozen at presentation (`MGShownMotion`).
+    var shownMotion = MGShownMotion()
     /// `load` of a whole document in which some beat view has `annotate`: the solid is stepped from its statement on,
     /// so every beat displays during the load exactly what it displays in the loaded document (a beat without a list
     /// shows none), also after such a beat is refused later. A stream does not know its later beats; it takes the mode
@@ -415,10 +417,10 @@ public struct MGExplainerSession {
         current = .board
         let before = lesson
         let r = lesson.control(id, value)
-        if case .success = r, let doc = solid, let reason = poseRefusal(doc, stepOf: stepOf) {
+        if case .success = r, let doc = solid, let refusal = poseRefusalDetail(doc, stepOf: stepOf) {
             // The changed board would show a 3D number its view does not keep: refused, the board stays.
             lesson = before
-            let issue = MGExplainerIssue(reason, view: .board, origin: .learner)
+            let issue = MGExplainerIssue(refusal.reason, view: .board, id: refusal.id, origin: .learner)
             refuse(issue)
             return .failure(issue)
         }
@@ -434,8 +436,9 @@ public struct MGExplainerSession {
         current = .board
         // The lesson refuses a batch of the wrong size (`beat.ops.count`) before any command is read.
         for (i, c) in commands.enumerated() where commands.count <= MGExplainerLimits.commandsPerBeat {
-            if let reason = commandRefusal(c) ?? solid.flatMap({ poseRefusal($0, stepOf: stepOf, board: [c]) }) {
-                let issue = MGExplainerIssue(reason, view: .board, command: i, origin: origin)
+            if let refusal = commandRefusal(c).map({ (reason: $0, id: String?.none) })
+                ?? solid.flatMap({ poseRefusalDetail($0, stepOf: stepOf, board: [c]) }) {
+                let issue = MGExplainerIssue(refusal.reason, view: .board, command: i, id: refusal.id, origin: origin)
                 refuse(issue)
                 return .failure(issue)
             }
@@ -443,9 +446,9 @@ public struct MGExplainerSession {
         let before = lesson
         let r = lesson.apply(commands, origin: origin)
         // The resulting board too (a template or `over` change can bring text in): checked before anything is adopted.
-        if case .success = r, let doc = solid, let reason = poseRefusal(doc, stepOf: stepOf) {
+        if case .success = r, let doc = solid, let refusal = poseRefusalDetail(doc, stepOf: stepOf) {
             lesson = before
-            let issue = MGExplainerIssue(reason, view: .board, origin: origin)
+            let issue = MGExplainerIssue(refusal.reason, view: .board, id: refusal.id, origin: origin)
             refuse(issue)
             return .failure(issue)
         }
@@ -526,6 +529,7 @@ public struct MGExplainerSession {
             beats = [:]; stepOf = [:]; presentedBeats = []; presented = MGExplainerBeatView(); frozen = false; beatCount = 0
             setupOps = []; timing = MGExplainerTiming(); captions = [:]; shownItems = MGShownItems(); shownBeats = MGShownBeats()
             shownAnnotations = MGShownAnnotations()
+            shownMotion = MGShownMotion()
             // The label-selection mode belongs to one explainer: a new header starts from `load`'s derived mode (or
             // none) and never inherits the mode of the explainer it replaces.
             beatsChooseLabels = presetChooseLabels; presetChooseLabels = false
@@ -597,7 +601,7 @@ public struct MGExplainerSession {
         if let key = notes.keys.sorted().first(where: { set.contains($0) }) {
             return refuse(MGExplainerIssue("notes.view.\(MGLessonIssue.segment(key))", view: .header, statement: index))
         }
-        if let r = poseRefusal(doc, stepOf: [:]) { return refuse(MGExplainerIssue(r, view: .solid, statement: index)) }
+        if let r = poseRefusalDetail(doc, stepOf: [:]) { return refuse(MGExplainerIssue(r.reason, view: .solid, statement: index, id: r.id)) }
         solidSource = .object(src); solid = doc; ids3D = ids; set3D = set
         lesson.env = MGParseEnvironment(facts: doc.facts, aliases: doc.aliases, reserved: set)
         presented.solid = doc.view(step: nil)
@@ -652,8 +656,8 @@ public struct MGExplainerSession {
                   let doc = solid, let (name, _) = MGSolidFacts.lookup(pieces[0], doc.facts, doc.aliases) else { continue }
             if !absNames.contains(name) { absNames.append(name) }
         }
-        if let doc = solid, let r = poseRefusal(doc, stepOf: stepOf, beat: (k, raw)) {
-            return refuse(MGExplainerIssue(r, view: .beat, beat: k, statement: index))
+        if let doc = solid, let r = poseRefusalDetail(doc, stepOf: stepOf, beat: (k, raw)) {
+            return refuse(MGExplainerIssue(r.reason, view: .beat, beat: k, statement: index, id: r.id))
         }
         let before = lesson
         if !frozen, board == nil { lesson.startBoardless() }
@@ -704,8 +708,9 @@ public struct MGExplainerSession {
 
     mutating func op(_ json: MGJSON, _ o: [String: MGJSON], _ index: Int) {
         guard board != nil else { return refuse("explainer.board.missing", index) }
-        if let reason = commandRefusal(json) ?? solid.flatMap({ poseRefusal($0, stepOf: stepOf, board: [json]) }) {
-            var issue = MGExplainerIssue(reason, view: current, statement: index)
+        if let refusal = commandRefusal(json).map({ (reason: $0, id: String?.none) })
+            ?? solid.flatMap({ poseRefusalDetail($0, stepOf: stepOf, board: [json]) }) {
+            var issue = MGExplainerIssue(refusal.reason, view: current, statement: index, id: refusal.id)
             if let b = lesson.openBeat { issue.beat = lesson.pending[b].index; issue.command = lesson.pending[b].commands.count }
             return refuse(issue)
         }
@@ -726,7 +731,7 @@ public struct MGExplainerSession {
             return absorb(lesson.forward(.object(["check": value]), index: index))
         }
         let k = lesson.pending[b].index
-        func fail(_ r: String) { refuse(MGExplainerIssue(r, view: .beat, beat: k, statement: index)) }
+        func fail(_ r: String, _ id: String? = nil) { refuse(MGExplainerIssue(r, view: .beat, beat: k, statement: index, id: id)) }
         guard !lesson.pending[b].refused else { return fail("beat.refused") }
         let used = lesson.pending[b].checks.count + (beats[k]?.checks3D.count ?? 0)
         guard used < MGExplainerLimits.checksPerBeat else { return fail("beat.checks.count") }
@@ -745,6 +750,12 @@ public struct MGExplainerSession {
         guard c.holds(fact.value) else {
             // A false 3D claim refuses the whole beat: the #20 rollback path.
             return absorb(lesson.refuseOpenBeat(MGLessonIssue("check.failed.\(t)", beat: k, statement: index)))
+        }
+        // A part the beat's view hides makes no claim (`view.hide.fact`), and a posed beat's claim holds at its pose
+        // (`view.pose.fact`).
+        if let name = MGSolidFacts.lookup(c.value, doc.facts, doc.aliases)?.name {
+            if doc.firstFact([name], ownedBy: doc.hiddenParts(step: stepOf[k])) != nil { return fail("view.hide.fact", name) }
+            if let i = stepOf[k], doc.factNotHolding(step: i, names: [name]) != nil { return fail("view.pose.fact", name) }
         }
         beats[k]?.checks3D.append((index, c, value))
         beats[k]?.checkSpecs.append(value)
@@ -780,7 +791,7 @@ public struct MGExplainerSession {
             refuse(e)
         case .success(let (doc, map)):
             // #31's text rule, for the explainer's own text: a shown `dim.<id>` holds at every pose of its view.
-            if let r = poseRefusal(doc, stepOf: map) { return fail(r) }
+            if let r = poseRefusalDetail(doc, stepOf: map) { return fail(r.reason, r.id) }
             solid = doc; stepOf = map
             beats[k]?.view = value
             // A stream learns the label-selection mode here; it stays for the rest of the session (also if this beat is
@@ -841,6 +852,9 @@ public struct MGExplainerSession {
         var annotations = shownAnnotations
         freezeAnnotations(beats: lesson.shownScenes.compactMap(\.beat), into: &annotations)
         shownAnnotations = annotations
+        var motion = shownMotion
+        freezeMotion(beats: lesson.shownScenes.compactMap(\.beat), into: &motion)
+        shownMotion = motion
         lesson.shownScenes = []
         syncMotion()
         // Several beats presented in one call (`finishNow`, `.immediate` over a whole document): the board adopts only
@@ -960,14 +974,25 @@ public struct MGExplainerSession {
     /// 2D board text shows must hold at every pose its view can show (`MGSolidAnnotationEngine.dimensionHolds`). A
     /// caption is checked in its beat's view; the title and the board in every view. `beat` and `board` add a caption
     /// or board text that is not accepted yet. Reasons: `text.pose.beat.<n>`, `text.pose.title`, `text.pose.board`.
+    ///
+    /// Before those, the step-view rules for the explainer's own text (`id` names the fact):
+    /// - a part a beat's view hides (`hide`, a show-only part it does not `show`) makes no claim: no 3D fact of it in the
+    ///   beat's caption or 3D checks, and none in the title or the board text, which show with every view
+    ///   (`view.hide.fact`);
+    /// - every 3D fact a beat with a `pose` displays (its caption, its 3D checks, the title, the board text) is valued at
+    ///   its pose: a `dim.<id>` fact that differs there from its measured value is `view.pose.fact`.
     func poseRefusal(_ doc: MGSolidDocument, stepOf map: [Int: Int], beat: (Int, String)? = nil, board extra: [MGJSON] = []) -> String? {
-        guard !doc.annotations.dimensions.isEmpty else { return nil }
-        func dims(_ texts: [String]) -> [MGSolidDimension] {
-            let names = Set(texts.flatMap(MGExplainerHonesty.placeholders).compactMap { body -> String? in
+        poseRefusalDetail(doc, stepOf: map, beat: beat, board: extra)?.reason
+    }
+
+    /// `poseRefusal` with the fact or annotation id it concerns, when there is one.
+    func poseRefusalDetail(_ doc: MGSolidDocument, stepOf map: [Int: Int], beat: (Int, String)? = nil,
+                           board extra: [MGJSON] = []) -> (reason: String, id: String?)? {
+        func factNames(_ texts: [String]) -> Set<String> {
+            Set(texts.flatMap(MGExplainerHonesty.placeholders).compactMap { body -> String? in
                 let n = body.split(separator: "|", omittingEmptySubsequences: false).first.map(String.init) ?? ""
                 return n.contains(".") ? MGSolidFacts.lookup(n, doc.facts, doc.aliases)?.name : nil
             })
-            return doc.annotations.dimensions.filter { names.contains($0.factName) }
         }
         func strings(_ v: MGJSON) -> [String] {
             var out: [String] = [], stack = [v]
@@ -981,6 +1006,36 @@ public struct MGExplainerSession {
             }
             return out
         }
+        // The board as the learner sees it now (`state`, which host changes reach) and as the script goes on (`projected`).
+        let boardTexts = ([lesson.state?.scene.source, lesson.projected?.scene.source].compactMap { $0 } + extra).flatMap(strings)
+        let everyView = factNames(boardTexts).union(titleTemplate.map { factNames([$0]) } ?? [])
+        var shown = keptBeats.map { ($0.index, $0.say, $0.checks3D.map(\.check.value)) }
+        if let b = beat { shown.append((b.0, b.1, beats[b.0]?.checks3D.map(\.check.value) ?? [])) }
+        shown.sort { $0.0 < $1.0 }
+        func own(_ say: String, _ checks: [String]) -> Set<String> {
+            factNames([say]).union(checks.compactMap { MGSolidFacts.lookup($0, doc.facts, doc.aliases)?.name })
+        }
+        if !doc.showOnly.isEmpty || doc.steps.contains(where: { !$0.hide.isEmpty }) {
+            for (k, say, checks) in shown {
+                if let n = doc.firstFact(Array(own(say, checks)), ownedBy: doc.hiddenParts(step: map[k])) { return ("view.hide.fact", n) }
+            }
+            var everHidden = doc.hiddenParts(step: nil)
+            for i in doc.steps.indices { everHidden.formUnion(doc.hiddenParts(step: i)) }
+            if let n = doc.firstFact(Array(everyView), ownedBy: everHidden) { return ("view.hide.fact", n) }
+        }
+        // Every 3D check, and for a posed beat everything it displays, holds over the beat's whole motion domain at its
+        // pose (an unposed beat's caption, the title and the board keep their `text.pose.*` reasons below).
+        for (k, say, checks) in shown {
+            guard let i = map[k] else { continue }
+            let checked = checks.compactMap { MGSolidFacts.lookup($0, doc.facts, doc.aliases)?.name }
+            let names = doc.steps[i].pose.isEmpty ? Set(checked) : own(say, checks).union(everyView)
+            if let n = doc.factNotHolding(step: i, names: Array(names)) { return ("view.pose.fact", n) }
+        }
+        guard !doc.annotations.dimensions.isEmpty else { return nil }
+        func dims(_ texts: [String]) -> [MGSolidDimension] {
+            let names = factNames(texts)
+            return doc.annotations.dimensions.filter { names.contains($0.factName) }
+        }
         let views: [Int?] = [nil] + doc.steps.indices.map { Optional($0) }
         func holdsEverywhere(_ ds: [MGSolidDimension]) -> Bool {
             ds.allSatisfy { d in views.allSatisfy { MGSolidAnnotationEngine.dimensionHolds(d, doc, step: $0) } }
@@ -988,12 +1043,10 @@ public struct MGExplainerSession {
         var captions = keptBeats.map { ($0.index, $0.say) }
         if let b = beat { captions.append(b) }
         for (k, say) in captions.sorted(by: { $0.0 < $1.0 }) {
-            if !dims([say]).allSatisfy({ MGSolidAnnotationEngine.dimensionHolds($0, doc, step: map[k]) }) { return "text.pose.beat.\(k + 1)" }
+            if !dims([say]).allSatisfy({ MGSolidAnnotationEngine.dimensionHolds($0, doc, step: map[k]) }) { return ("text.pose.beat.\(k + 1)", nil) }
         }
-        if let t = titleTemplate, !holdsEverywhere(dims([t])) { return "text.pose.title" }
-        // The board as the learner sees it now (`state`, which host changes reach) and as the script goes on (`projected`).
-        let boardTexts = ([lesson.state?.scene.source, lesson.projected?.scene.source].compactMap { $0 } + extra).flatMap(strings)
-        if !holdsEverywhere(dims(boardTexts)) { return "text.pose.board" }
+        if let t = titleTemplate, !holdsEverywhere(dims([t])) { return ("text.pose.title", nil) }
+        if !holdsEverywhere(dims(boardTexts)) { return ("text.pose.board", nil) }
         return nil
     }
 
