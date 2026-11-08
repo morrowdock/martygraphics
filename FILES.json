@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "3ca82537d0f88532ccb8cc34531b8e4233fafe0eb3aa8a427352246d79b8708f"
+      "sha256": "3809dd9d2e02e5dd83a39e946bc7764c35fb116478228f0da253e071a0a72774"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -303,19 +303,19 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-jet-suit.check.json",
-      "sha256": "600fbee429c073ff3ca0d703753c2f188e874430ee917b625956b1a0f1620867"
+      "sha256": "20456fc516a97fee715676766554f039ba461483d9ff8caee3143ac54e0d0f57"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-jet-suit.strict.json",
-      "sha256": "f651adce7723949e5e3012be462612363b3b29a31bdd3c8a1c30a24c0349474a"
+      "sha256": "4ac373a351dd41122636e293b05d5972a07a33882164c8ce44eefa453cb35f9f"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.check.json",
-      "sha256": "a24670ec5a469070035b687543b06a361a8c142902d2261638460b4a8018871e"
+      "sha256": "47796d56be8ec3b288b510f231b507dd45a7a96e92ad5bcdaa0d8dd3d9ac50b4"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.strict.json",
-      "sha256": "895ad1b42f3b1ad81295018deb1ca28c34721a42ef55b34d82562f54675f5748"
+      "sha256": "9de045fc2236c1b25400b524e0b50faa0ceb4f070fb20680e88de2882f1d1b8e"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-lessons-provenance.check.json",
@@ -671,7 +671,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnchorCheck.swift",
-      "sha256": "efb29556ad685bd3048e00fe894c1ce97367115838c3acffee51a1bb709b6f89"
+      "sha256": "2b5313a5f46cb74cd9e1c49283c97d4b10c6b482f7facb6d4d46a4fc60b52f93"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
@@ -739,7 +739,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "9df784bcd30e86336fac90709bc02c19717ff5f55e15cf07bbbe36cca5b3ce2e"
+      "sha256": "20a353f246c670cf3011ed90399c01f3196239a33e5b891c2ea620b02a86da06"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
@@ -971,7 +971,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidAnchorCheckTests.swift",
-      "sha256": "b1bf23799c0de7b08cfeade50d669200390855b6ceb876f51cd37ec9d7b3c5a6"
+      "sha256": "436a3d4dc9b4aef78f40d1d7c23063709cda719a13a3e1ad972119e9ee8aab57"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidAnnotationTests.swift",
@@ -1107,15 +1107,15 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "e1872a9d88d55eb5cfdb481da89040369af6fb17bece5feb5f9b4f9c11da2bed"
+      "sha256": "0680515d6ae9478125df7ca8830bf5953935de9fcdfab14b238b28a133970d35"
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "cb12553b65773b943d0d943087a93f661cb2223826890e8032a43723e462cf3b"
+      "sha256": "d9bbaf3f98eb9ad685059f4f0670948e9e4fa445e3a766d25a55181316f61a64"
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "e4bbf18566cf24b709eeea94215a0b1807c76b4a40512942890b7bc8c0f90573"
+      "sha256": "208c0c20fc1c4636f0dc585a11cb2788b0df595a95fae6c7ff231495924685d8"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -1211,51 +1211,51 @@
     },
     {
       "path": "docs/assets/jet-suit/check-strict.json",
-      "sha256": "457713baa1fa22e0ba8f1a9bf045733ac845c104638c5358f9d184d5a6e16c1b"
+      "sha256": "2279abbf0a7629a53e09f0c25e1f2b0927e6ac3a2f008cc7da7bd262e1a7c651"
     },
     {
       "path": "docs/assets/jet-suit/jet-suit.json",
-      "sha256": "59b536616d9cd30b7e70138136fe80ba680028a1f3bb0de1ca0e6c11ef6648a9"
+      "sha256": "9bc7dd9355beffd4f2a8695e8087969a8baab45756c3a8e2abee874c61d21689"
     },
     {
       "path": "docs/assets/jet-suit/poster.jpg",
-      "sha256": "a54a953c445683d77a7f3202f2fa6ded7fd263b620ff84813f6120cc9720c837"
+      "sha256": "e2ae6cf449f034af84afac14009c997ef74a99868943318cca00e477e2f2d10f"
     },
     {
       "path": "docs/assets/jet-suit/provenance.json",
-      "sha256": "eaedeef429ffa93885c549cbb96830f9163e866a1e2484c2721266b39d22feab"
+      "sha256": "adf954c73c15beac43c1a03309ce87c7a9865c4f56dfec07e8fa4b360dc8fe6a"
     },
     {
       "path": "docs/assets/jet-suit/step-1.png",
-      "sha256": "1205781c23b50f025ddcbfaf165dbaa2de563f81f5b32f7fcb5007a3910aeb2a"
+      "sha256": "1dbf1aaebd62a205a5680a37a7198c80180f544874b9486e09c59fe32fe9b6eb"
     },
     {
       "path": "docs/assets/jet-suit/step-2.png",
-      "sha256": "1ea5c78c5c56cff1a0f6bdff557717ce572cf563f84b226c150445e47e615a08"
+      "sha256": "18da12bce3ce0a0a9c241e774f005051faf76b5aafbba9deb1a4b8ee7eacc4c4"
     },
     {
       "path": "docs/assets/jet-suit/step-3.png",
-      "sha256": "bd1b8d772dec44c90cb261124a49556de6ceba7cd43fdec8fcc488a967bb322e"
+      "sha256": "858fa68f25696b4b44849a418d379577ca75e9208dcb10364430b7dad3c891c3"
     },
     {
       "path": "docs/assets/jet-suit/step-4.png",
-      "sha256": "d5155b0ff92a18a82b9fd85dd2957caa014e0bc13b6c09051b3483078995e2ca"
+      "sha256": "34f8adbad48e57e42ed0b2485206f927d70e570c7da37a5c41b4385609428eb4"
     },
     {
       "path": "docs/assets/jet-suit/step-5.png",
-      "sha256": "f50c655bba6fabe154afc351b1371c3b9cad39de9aea0e3c33d503a9d30274af"
+      "sha256": "584b100b63603d2ce9f68fd0345e5469b9615d034dff6c65c41734748a54ddc5"
     },
     {
       "path": "docs/assets/jet-suit/step-6.png",
-      "sha256": "da3becba0738023e5730edbe26cfacf9047ad8d740635d690757637fa87b62e1"
+      "sha256": "c16f4550064028c77d934b05cb8fbd3f7c0ec8ed24ad431bfbe2a55ba165a478"
     },
     {
       "path": "docs/assets/jet-suit/step-7.png",
-      "sha256": "b95fdc91075666eba54660eb0fd4294cd52cfe2acae30dba6bd8163d6f0e9d2d"
+      "sha256": "cf8924378a61feb42bf41d7242d64f3f619c2db9895f2df87e32c7ff46ba8691"
     },
     {
       "path": "docs/assets/jet-suit/story.mp4",
-      "sha256": "3d0fe507c4a3ac9547d093a6376e8ea1628d24e1aa90c0c21764b786e4ea5919"
+      "sha256": "99b4af3e8baa1b2be37d0beec6c188bb84e142116e42e78e8fcf707f523694f3"
     },
     {
       "path": "docs/assets/lessons/beat-1.png",

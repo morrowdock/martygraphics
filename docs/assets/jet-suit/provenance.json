@@ -3,11 +3,11 @@
     "repository": "https://github.com/morrowdock/martygraphics",
     "commit": "70bfc47ad9bbdd3db396037fe450374a5dd497ab",
     "commitNote": "origin/main after PR #37 (unblocked focus, story move cuts, microTurbojet); the engine was built from a clean checkout of this commit",
-    "model": "docs/assets/jet-suit/jet-suit.json (54 lines, 71 parts, 7 steps); one anchor changed on 2026-11-08, see revisions",
-    "authoring": "Hand-built. A Claude agent wrote this JSON by hand from fact-checked research and a merged fact key. It is not the output of the engine's AI loop answering a prompt. Its bytes are the reviewed version except one label anchor (see revisions).",
+    "model": "docs/assets/jet-suit/jet-suit.json (54 lines, 71 parts, 7 steps); two anchors changed on 2026-11-08, see revisions",
+    "authoring": "Hand-built. A Claude agent wrote this JSON by hand from fact-checked research and a merged fact key. It is not the output of the engine's AI loop answering a prompt. Its bytes are the reviewed version except two label anchors (see revisions).",
     "license": "Apache-2.0; procedural geometry, no images, models or stock assets",
     "sourceFiles": {
-      "docs/assets/jet-suit/jet-suit.json": "59b536616d9cd30b7e70138136fe80ba680028a1f3bb0de1ca0e6c11ef6648a9",
+      "docs/assets/jet-suit/jet-suit.json": "9bc7dd9355beffd4f2a8695e8087969a8baab45756c3a8e2abee874c61d21689",
       "Examples/Solid3D/Package.swift": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b",
       "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f"
     }
@@ -32,8 +32,8 @@
   },
   "artifacts": {
     "step-1.png": {
-      "sha256": "1205781c23b50f025ddcbfaf165dbaa2de563f81f5b32f7fcb5007a3910aeb2a",
-      "bytes": 688453,
+      "sha256": "1dbf1aaebd62a205a5680a37a7198c80180f544874b9486e09c59fe32fe9b6eb",
+      "bytes": 686956,
       "from": "render step 1 (step-1.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -41,8 +41,8 @@
       "occluded": 0
     },
     "step-2.png": {
-      "sha256": "1ea5c78c5c56cff1a0f6bdff557717ce572cf563f84b226c150445e47e615a08",
-      "bytes": 698322,
+      "sha256": "18da12bce3ce0a0a9c241e774f005051faf76b5aafbba9deb1a4b8ee7eacc4c4",
+      "bytes": 698382,
       "from": "render step 2 (step-2.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -50,8 +50,8 @@
       "occluded": 0
     },
     "step-3.png": {
-      "sha256": "bd1b8d772dec44c90cb261124a49556de6ceba7cd43fdec8fcc488a967bb322e",
-      "bytes": 681528,
+      "sha256": "858fa68f25696b4b44849a418d379577ca75e9208dcb10364430b7dad3c891c3",
+      "bytes": 681273,
       "from": "render step 3 (step-3.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -59,24 +59,24 @@
       "occluded": 0
     },
     "step-4.png": {
-      "sha256": "d5155b0ff92a18a82b9fd85dd2957caa014e0bc13b6c09051b3483078995e2ca",
-      "bytes": 692446,
+      "sha256": "34f8adbad48e57e42ed0b2485206f927d70e570c7da37a5c41b4385609428eb4",
+      "bytes": 692370,
       "from": "render step 4 (step-4.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "modelFitted",
       "offView": 0
     },
     "step-5.png": {
-      "sha256": "f50c655bba6fabe154afc351b1371c3b9cad39de9aea0e3c33d503a9d30274af",
-      "bytes": 678236,
+      "sha256": "584b100b63603d2ce9f68fd0345e5469b9615d034dff6c65c41734748a54ddc5",
+      "bytes": 678953,
       "from": "render step 5 (step-5.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "modelFitted",
       "offView": 0
     },
     "step-6.png": {
-      "sha256": "da3becba0738023e5730edbe26cfacf9047ad8d740635d690757637fa87b62e1",
-      "bytes": 946551,
+      "sha256": "c16f4550064028c77d934b05cb8fbd3f7c0ec8ed24ad431bfbe2a55ba165a478",
+      "bytes": 944386,
       "from": "render step 6 (step-6.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -85,8 +85,8 @@
       "facesCut": true
     },
     "step-7.png": {
-      "sha256": "b95fdc91075666eba54660eb0fd4294cd52cfe2acae30dba6bd8163d6f0e9d2d",
-      "bytes": 871006,
+      "sha256": "cf8924378a61feb42bf41d7242d64f3f619c2db9895f2df87e32c7ff46ba8691",
+      "bytes": 869747,
       "from": "render step 7 (step-7.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -95,8 +95,8 @@
       "facesCut": true
     },
     "story.mp4": {
-      "sha256": "3d0fe507c4a3ac9547d093a6376e8ea1628d24e1aa90c0c21764b786e4ea5919",
-      "bytes": 6168843,
+      "sha256": "99b4af3e8baa1b2be37d0beec6c188bb84e142116e42e78e8fcf707f523694f3",
+      "bytes": 6178810,
       "from": "render story.mp4 of the 2026-11-08 revision, re-encoded for size (see reencode)",
       "pixels": "1280x800",
       "fps": 30,
@@ -104,32 +104,32 @@
       "seconds": 63,
       "beats": 7,
       "renderedOriginal": {
-        "sha256": "9c3e54fd476a2fa43b5c81dbfeb1db8247f6686355c884b7c35f5e5335517288",
-        "bytes": 15801199,
+        "sha256": "53581f3e22f8d1d4f4fd7bc0c79ba9712723ffb11b67d78992f3e4c1026d5532",
+        "bytes": 15800894,
         "note": "The engine's story.mp4 (1890 frames, 30 fps, 63 s, 7 beats of 9 s, no cuts, video only). Not kept in git: 15.8 MB."
       },
-      "reencode": "AVFoundation only: AVAssetReader (32BGRA) to AVAssetWriter, H.264 High profile, average 1,000,000 bit/s, key frame every 60 frames, every source frame kept (1890 in, 1890 out). A small Swift script outside the repository; no other tool. Hold frames at 5.0, 32.5, 52.0 and 59.5 s were extracted; 5.0, 32.5 and 52.0 s were inspected: text and labels stay sharp."
+      "reencode": "AVFoundation only: AVAssetReader (32BGRA) to AVAssetWriter, H.264 High profile, average 1,000,000 bit/s, key frame every 60 frames, every source frame kept (1890 in, 1890 out). A small Swift script outside the repository; no other tool. Hold frames at 5.0, 32.5, 52.0 and 59.5 s were extracted; 5.0 and 52.0 s were inspected: text and labels stay sharp."
     },
     "poster.jpg": {
-      "sha256": "a54a953c445683d77a7f3202f2fa6ded7fd263b620ff84813f6120cc9720c837",
-      "bytes": 90671,
+      "sha256": "e2ae6cf449f034af84afac14009c997ef74a99868943318cca00e477e2f2d10f",
+      "bytes": 90689,
       "from": "step-2.png of the 2026-11-08 revision converted to JPEG (macOS sips, quality 82); pixels not edited",
       "pixels": "1280x800"
     },
     "check-strict.json": {
-      "sha256": "457713baa1fa22e0ba8f1a9bf045733ac845c104638c5358f9d184d5a6e16c1b",
-      "bytes": 72262,
+      "sha256": "2279abbf0a7629a53e09f0c25e1f2b0927e6ac3a2f008cc7da7bd262e1a7c651",
+      "bytes": 72258,
       "from": "marty-solid check --strict of the 2026-11-08 revision (stdout re-serialised with sorted keys and 2-space indent; same content)"
     }
   },
   "revisions": [
     {
       "date": "2026-11-08",
-      "why": "The new strict anchor check (annotation.anchor.hidden) refused the reviewed file: in step 6 the label lComb (\"Combustion chamber\") had its dot on the cut casing wall (back.casing was the first surface on the line of sight), not on the combustion chamber.",
-      "change": "lComb anchor {\"part\": \"back.combustor\", \"offset\": [30, 0, 148]} -> {\"part\": \"back.combustor\", \"offset\": [0, -30, 148]}: a point on the cut face, inside the annular chamber. No text, fact, part, step or camera changed.",
+      "why": "The new strict anchor checks refused the reviewed file twice. (1) annotation.anchor.hidden: in step 6 the label lComb (\"Combustion chamber\") had its dot on the cut casing wall (back.casing was the first surface on the line of sight). (2) annotation.anchor.off: the step 1 label lPilot (\"Schematic pilot\") named the helmet, but its point lay 2 mm outside the helmet's box and inside the visor, on the far side of the head from the step 1 camera (the earlier render drew its dot hollow, as occluded, on the head's outline).",
+      "change": "lComb anchor {\"part\": \"back.combustor\", \"offset\": [30, 0, 148]} -> {\"part\": \"back.combustor\", \"offset\": [0, -30, 148]} (a point on the cut face, inside the annular chamber); lPilot anchor {\"part\": \"helmet\", \"offset\": [0, -110, 0]} -> {\"part\": \"helmet\", \"offset\": [0, 108, 0]} (the back of the helmet, which faces the step 1 camera). No text, fact, part, step or camera changed.",
       "previousSHA256": "83895fd9348b13819fecacb5aeefcb85fe22a6ad0615f689343b8f0e63041668",
       "engine": "morrowdock/martygraphics branch feat/strict-label-anchors (PR #40) on origin/main 3624a03494047a7b0c495ac0663f0d40ea021e04. The branch changes the check only; the render code is the code of 3624a03.",
-      "engineExecutableSHA256": "762a9738785418e99692baeec46c781439ea8261bbd9a6af96bd4408b582b3ab",
+      "engineExecutableSHA256": "2073e5fae8a41928163ed714baeb86040f4a719edd85adcbd3927228560b4c65",
       "machine": "Apple M1 Mac mini (Macmini9,1), arm64; macOS 27.2; Apple Swift 6.4.2; SwiftPM release build",
       "commands": [
         "marty-solid check --strict docs/assets/jet-suit/jet-suit.json",
@@ -148,8 +148,8 @@
         "story.mp4",
         "check-strict.json"
       ],
-      "review": "The builder inspected the new step-6.png and the story hold frames at 5.0, 32.5 and 52.0 s: the step 6 dot is inside the copper combustion chamber and the text is sharp. The independent PUBLIC-OK review above covers the earlier bytes; an independent review of PR #40 checked the moved anchor and the first replacement step-6.png.",
-      "comparison": "CoreGraphics RGB comparison of each new still with the 70bfc47 still it replaces. Steps 1-5 and 7: 2,020 to 29,826 channels (0.07 % to 0.97 %) differ, by at most 11/255: render noise. Step 6: 87,577 channels (2.85 %) differ. Inside the box x 329-626, y 362-430 (the moved label, its leader and dot) they differ by up to 240/255; outside it, 55,569 channels differ by at most 22/255, spread over x 224-1277, y 3-797 (render noise and the different leader path). Two renders of this build differ by at most 2/255 in at most 64 channels per still, so the stills are not byte-reproducible."
+      "review": "The builder inspected the new step-1.png (the dot is solid, on the back of the helmet) and the story hold frames at 5.0 and 52.0 s (step 1 and step 6; text sharp, step 6 dot inside the copper combustion chamber). The independent PUBLIC-OK review above covers the earlier bytes; independent reviews of PR #40 checked the lComb change and an earlier replacement set. The lPilot change was found and made in PR #40's fourth round.",
+      "comparison": "CoreGraphics RGB comparison of each new still with the 70bfc47 still it replaces, in top-left image coordinates. Step 1: channels differ by more than 24/255 only inside the box x 458-842, y 131-187 (the moved \"Schematic pilot\" label, leader and dot, up to 214/255); outside it 2,089 channels differ, by at most 2/255. Step 6: channels differ by more than 24/255 only inside the box x 329-626, y 369-437 (the moved \"Combustion chamber\" label, up to 240/255); outside it 119,706 channels differ, by at most 22/255, spread over x 224-1277, y 2-796. Steps 2-5 and 7: 2,945 to 64,301 channels (0.10 % to 2.09 %) differ, by at most 11/255. Two renders of this build differ by up to 11/255 in up to about 2 % of channels, so the stills are not byte-reproducible; these small differences are render noise."
     }
   ]
 }

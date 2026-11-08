@@ -867,10 +867,12 @@ anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensi
 **On its part** (`annotation.anchor.off.<id>`). Two tests:
 
 1. The anchor lies in its part's oriented box (the box of the part's mesh, in the part's own frame), or at most
-   `max(5 % of that box's diagonal, 0.5 % of the model's diagonal)` mm outside it (`MGAnnotationAnchorRules.partShare`,
-   `modelShare`). This test is in the part's own frame, so it holds in every pose; its issue has no step.
-2. No other part's solid comes nearer to the anchor than its own part's box, by more than 0.1 % of the model's
-   diagonal. This test runs at the pose of every view that shows the annotation: the plain view at the default pose
+   `max(5 % of that box's diagonal, 0.5 % of the drawn model's diagonal)` mm outside it
+   (`MGAnnotationAnchorRules.partShare`, `modelShare`). The drawn model is the parts that the views showing the
+   annotation draw, at their poses; hidden parts are left out (all parts when no view shows it). This test is in the
+   part's own frame, so it holds in every pose; its issue has no step.
+2. No other part's solid comes nearer to the anchor than its own part's box, by more than the precision epsilon at the
+   anchor (below). The test is skipped only when the anchor is within that epsilon of its own part's box. This test runs at the pose of every view that shows the annotation: the plain view at the default pose
    when it shows it, and each step or beat at its still's pose (a beat's view is its solid step). The first view where
    a part is nearer is the issue's `step` (and `beat`), and that part is `closer`. A part's solid is its surface or its
    inside: the anchor is inside when a segment from it along +X crosses the part's surface an odd number of times
@@ -878,7 +880,10 @@ anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensi
 
 The nearer-part search is exact and stops early (`MGMeshChunks.nearer`): a part whose oriented box is not nearer costs
 one box test; the part's triangles are read once into runs of 64 with their boxes; runs farther than the own part's
-distance are skipped; the search stops at the first nearer triangle, whose distance is `closerDistance` (0 inside).
+distance are skipped; the search stops at the first nearer triangle (in run order), and `closerDistance` is that
+triangle's distance. Only when no triangle is nearer and the anchor lies inside the part (watertight parity) is
+`closerDistance` 0. So `closer` is the first part found (assembly order) and `closerDistance` the first distance found,
+not necessarily the nearest.
 Every triangle read, run-box test and triangle test of one document counts against 3,000,000
 (`MGAnnotationAnchorRules.surfaceTests`). When the budget runs out the answer is unknown: the anchor is
 `annotation.anchor.untested.<id>` with the view and `"budget": "nearerPart"`, never off. A world anchor names no part and is not tested. The first
@@ -903,17 +908,23 @@ the first cause found is the issue:
 The segment test is the watertight ray test of the unblocked-focus rule against every part the view draws with a
 coverage of 0.5 or more. Coverage is what the renderer draws: the view opacity (the part's `opacity` and any ghost)
 times the material's own coverage (`MGMaterialPreset.coverage`: 0.22 for `glass`, 1 for every other preset), so glass
-hides no anchor. A cut part tests its cut mesh. A part blocks when it crosses the segment before the anchor (less 0.1 %
-of the model's diagonal) and before the first crossing of the anchor's own part. So an anchor at the centre of its
-part, seen through its own surface, is visible, and an anchor in the air in front of a part is not hidden by it. A
-blocker hit that lies within 0.1 % of the model's diagonal of the anchor's own part (as the view draws it) is a tie, not
-an occlusion: the own part is there too, so the anchor is visible. Two touching parts therefore give the same result
-whichever of them the anchor names; a separate part 1 mm in front of the anchor still hides it. A world anchor has no
+hides no anchor. A cut part tests its cut mesh. A part blocks when it crosses the segment before the anchor (less the
+precision epsilon at the anchor) and before the first crossing of the anchor's own part. So an anchor at the centre of
+its part, seen through its own surface, is visible, and an anchor in the air in front of a part is not hidden by it. A
+blocker hit that lies on the anchor's own part (as the view draws it) within the precision epsilon at the hit point is
+a coincident surface, a tie, not an occlusion: the own part is there too, so the anchor is visible. Two touching parts
+therefore give the same result whichever of them the anchor names; a separate part in front of the anchor, however
+close (0.1 mm in the tests), still hides it.
+
+**Precision epsilon.** At a point `p` (kernel world, mm) the epsilon is `1e-6 × max(1, |p|) + 1e-4` mm (`mgPrecision`):
+it covers the floating-point error of coordinates of that size (at most about 0.004 mm at the 4,000 mm coordinate
+limit). It does not grow with the model, so a large, distant or hidden part never widens any tolerance of these rules. A world anchor has no
 own part: any crossing before it hides it. **Cut parts:** when the view's section cuts the anchor's
 own part and the anchor lies in that part's box on the kept side of the cut or on the cut face, the parts inside the
 cut part do not hide it; parts outside it still do. Inside is tested in the cut part's own frame: every corner of the
-other part's mesh box, posed and taken into that frame, lies in the cut part's mesh box grown by 0.5 % of the model's
-diagonal. So a rotated cut part never exempts a part that only its world-axis box holds.
+other part's mesh box, posed and taken into that frame, lies in the cut part's mesh box grown by 0.5 % of the diagonal
+of the parts the view draws. So a rotated cut part never exempts a part that only its world-axis box holds. The anchor
+counts as on the cut face or in the box within the precision epsilon.
 
 The tests of one view spend at most 3,000,000 triangle tests (`MGAnnotationAnchorRules.tests`), the tie tests
 included. The anchor whose line-of-sight test would pass the budget, and every anchor of that view after it, is `untested`
@@ -939,7 +950,8 @@ is the jet-suit example before its fix:
 set for `offpart`. A refusal for
 an anchor reason also adds `anchor`: the issue it names.
 
-Not tested: the plain view (`hero.png`, `solid-0.png`), the poses during a step's or beat's spin and camera moves,
+Not tested: the visibility of anchors in the plain view (`hero.png`, `solid-0.png`; the nearer-part test does test the
+plain view when it shows the annotation), the poses during a step's or beat's spin and camera moves,
 other sizes than 1280 × 800, and whether the dot is covered by another text, a band or the legend. A part made of
 overlapping closed shapes can count a point inside two of them as outside; its nearest-triangle distance is used then.
 

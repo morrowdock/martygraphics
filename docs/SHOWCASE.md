@@ -17,9 +17,10 @@ steps. The current Mk4 has three back turbines and is not shown. The model is
 [`jet-suit.json`](assets/jet-suit/jet-suit.json), 54 lines, 71 parts. The stills and the story video are unedited
 output of `marty-solid render` at 1280×800; `marty-solid check --strict` passes with no warnings
 ([check output](assets/jet-suit/check-strict.json)). On 2026-11-08 the strict anchor check (every label dot must land on
-its part and show in its still) found that step 6's "Combustion chamber" dot sat on the cut casing wall. That one
-anchor was moved into the chamber, and all 7 stills, the poster, the story video and the check output were made again
-with one build. Outside the moved label the stills differ from the earlier ones only by render noise (see the
+its part and show in its still) found two misplaced dots: step 6's "Combustion chamber" dot sat on the cut casing wall,
+and step 1's "Schematic pilot" dot named the helmet but lay inside the visor, on the far side of the head. Those two
+anchors were moved (into the chamber, and onto the back of the helmet), and all 7 stills, the poster, the story video
+and the check output were made again with one build. Outside the moved label the stills differ from the earlier ones only by render noise (see the
 [render receipt](assets/jet-suit/provenance.json)).
 
 [![Story video poster: the step 2 still, five engines with one thrust arrow each.](assets/jet-suit/poster.jpg)](assets/jet-suit/story.mp4)

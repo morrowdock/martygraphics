@@ -571,3 +571,120 @@ final class SolidAnchorRecheckFixtureTests: XCTestCase {
                        "step.pose.key")
     }
 }
+
+/// The fixtures of the third independent review: a large, distant or hidden part never widens a tolerance (precision
+/// epsilon only), blockers and neighbours at many gaps and model spreads, exact neighbours and later posed steps. All
+/// synthetic.
+final class SolidAnchorPrecisionFixtureTests: XCTestCase {
+    func strict(_ t: String) -> MGSolidReport { MGSolidReport.check(data: Data(t.utf8), profile: .strict, engine: nil) }
+    func anchor(_ r: MGSolidReport) -> [String: MGJSON] { if case .object(let o)? = r.json["anchor"] { return o }; return [:] }
+    func box(_ id: String, _ size: [Double], _ at: [Double] = [0, 0, 0], material: String? = nil) -> String {
+        let m = material.map { #","material":"\#($0)""# } ?? ""
+        return #"{"id":"\#(id)","shape":{"box":{"size":[\#(size.map { "\($0)" }.joined(separator: ","))]}},"at":[\#(at.map { "\($0)" }.joined(separator: ","))]\#(m)}"#
+    }
+    /// `spread` > 0 adds an unrelated 1 mm part that far along +X, hidden in the step.
+    func doc(_ parts: [String], part: String, offset: [Double], spread: Double = 0, steps: String? = nil) -> String {
+        var all = parts
+        if spread > 0 { all.append(box("distant", [1, 1, 1], [spread, 0, 0])) }
+        let hide = spread > 0 ? #","hide":["distant"]"# : ""
+        let st = steps ?? #"[{"say":"Inspect the named part.","camera":"front"\#(hide)}]"#
+        return #"{"v":2,"kind":"assembly","parts":[\#(all.joined(separator: ","))],"annotations":{"labels":[{"id":"label","text":"Named part","at":{"part":"\#(part)","offset":[\#(offset.map { "\($0)" }.joined(separator: ","))]}}]},"steps":\#(st)}"#
+    }
+
+    func testThePrecisionEpsilonDoesNotGrowWithTheModel() {
+        XCTAssertEqual(mgPrecision(.zero), 1e-6 + 1e-4, accuracy: 1e-15)
+        XCTAssertEqual(mgPrecision(MGVec3(4000, 0, 0)), 4e-3 + 1e-4, accuracy: 1e-12)
+        XCTAssertLessThan(mgPrecision(MGVec3(4000, 4000, 4000)), 0.0071)
+    }
+
+    /// A real blocker whose hit is 10.6 mm before the dot is caught, with or without a hidden part 2 m away.
+    func testASideBlockerIsNotExcusedByAHiddenDistantPart() {
+        for spread in [0.0, 2000] {
+            let t = doc([box("core", [2, 200, 2], [2, 0, 0]), box("blocker", [1, 1, 20], [0, -10, 0])], part: "core", offset: [-2, 0, 0], spread: spread)
+            let r = strict(t)
+            XCTAssertEqual(r.reason, "annotation.anchor.hidden.label", "spread \(spread)")
+            XCTAssertEqual(anchor(r)["by"], .string("blocker"), "spread \(spread)")
+        }
+    }
+
+    /// A plate in front of the named face is caught at every gap from 0.01 mm to 5 mm and every model spread.
+    func testAPlateInFrontIsCaughtAtEveryGapAndSpread() {
+        for spread in [0.0, 100, 1000, 2000, 3900] {
+            for gap in [0.01, 0.1, 1, 2, 5] {
+                let t = doc([box("core", [10, 10, 10]), box("blocker", [20, 0.5, 20], [0, -5 - gap - 0.25, 0])], part: "core", offset: [0, -5, 0], spread: spread)
+                XCTAssertEqual(strict(t).reason, "annotation.anchor.hidden.label", "spread \(spread) gap \(gap)")
+            }
+        }
+        // The same geometry at other scales (blocker 10 % of the core side in front).
+        for scale in [0.1, 1, 10, 100] {
+            let t = doc([box("core", [10 * scale, 10 * scale, 10 * scale]), box("blocker", [20 * scale, 0.5 * scale, 20 * scale], [0, -6.25 * scale, 0])],
+                        part: "core", offset: [0, -5 * scale, 0])
+            XCTAssertEqual(strict(t).reason, "annotation.anchor.hidden.label", "scale \(scale)")
+        }
+    }
+
+    /// A dot on a neighbour's face just outside its named part is off its part at every gap and spread.
+    func testADotOnANeighbourIsOffAtEveryGapAndSpread() {
+        for spread in [0.0, 2000] {
+            let t = doc([box("core", [100, 10, 10]), box("neighbour", [10, 0.5, 10], [0, -5.75, 0])], part: "core", offset: [0, -6, 0], spread: spread)
+            let r = strict(t)
+            XCTAssertEqual(r.reason, "annotation.anchor.off.label", "spread \(spread)")
+            XCTAssertEqual(anchor(r)["closer"], .string("neighbour"))
+        }
+        for spread in [0.0, 100, 1000, 2000, 3900] {
+            for gap in [0.01, 0.1, 0.5, 1, 2] {
+                let t = doc([box("core", [10, 10, 10]), box("neighbour", [10, 0.5, 10], [0, -5 - gap - 0.25, 0], material: "glass")],
+                            part: "core", offset: [0, -5 - gap, 0], spread: spread)
+                XCTAssertEqual(strict(t).reason, "annotation.anchor.off.label", "spread \(spread) gap \(gap)")
+            }
+        }
+    }
+
+    /// `closerDistance` is the distance of the first nearer triangle found, not a guaranteed 0 inside.
+    func testExactNeighboursAndTheReportedCloserDistance() {
+        for y in [-6.0, -6.5, -6.25] {
+            let r = strict(doc([box("core", [100, 10, 10]), box("neighbour", [20, 0.5, 20], [0, -6.25, 0], material: "glass")], part: "core", offset: [0, y, 0]))
+            XCTAssertEqual(r.reason, "annotation.anchor.off.label", "\(y)")
+            XCTAssertEqual(anchor(r)["closer"], .string("neighbour"))
+            if case .number(let c)? = anchor(r)["closerDistance"] { XCTAssertLessThan(c, abs(y) - 5) } else { XCTFail("closerDistance") }
+        }
+    }
+
+    /// A neighbour at the posed place of the dot is caught in whichever step shows the pose.
+    func testAPosedNeighbourIsCaughtInALaterStep() {
+        let parts = [#"{"id":"arm","shape":{"box":{"size":[200,2,2]}}}"#, box("restNeighbour", [5, 5, 5], [2, 80, 0])]
+        let posed = #"{"say":"Inspect the named part.","camera":"front","annotate":["label"],"pose":{"arm":{"rot":[0,0,1,90]}}}"#
+        for (steps, step) in [("[\(posed)]", 1.0), (#"[{"say":"At rest.","camera":"front","annotate":["label"]},\#(posed)]"#, 2.0)] {
+            let r = strict(doc(parts, part: "arm", offset: [80, -2, 0], steps: steps))
+            XCTAssertEqual(r.reason, "annotation.anchor.off.label")
+            XCTAssertEqual(anchor(r)["step"], .number(step))
+        }
+    }
+
+    /// Touching boxes stay symmetric with a hidden distant part present.
+    func testTouchingBoxesStaySymmetricInALargeModel() {
+        let parts = [box("left", [10, 10, 10], [-5, 0, 0]), box("right", [10, 10, 10], [5, 0, 0])]
+        for spread in [0.0, 2000] {
+            XCTAssertTrue(strict(doc(parts, part: "left", offset: [5, 0, 0], spread: spread)).ok)
+            XCTAssertTrue(strict(doc(parts, part: "right", offset: [-5, 0, 0], spread: spread)).ok)
+        }
+    }
+
+    /// A hidden part does not widen the own-part tolerance: it uses the parts the views showing the label draw. The
+    /// step lists the label (`annotate`), so the plain view, which draws the distant part, does not show it.
+    func testHiddenPartsDoNotWidenTheOwnPartTolerance() throws {
+        func t(_ y: Double, _ spread: Double) -> String {
+            let hide = spread > 0 ? #","hide":["distant"]"# : ""
+            return doc([box("core", [10, 10, 10])], part: "core", offset: [0, y, 0], spread: spread,
+                       steps: #"[{"say":"Inspect the named part.","camera":"front","annotate":["label"]\#(hide)}]"#)
+        }
+        // max(5 % of 17.32, 0.5 % of 17.32) = 0.866 mm: 0.8 mm out passes, 1 mm out is off, with or without the far part.
+        for spread in [0.0, 3000] {
+            XCTAssertTrue(strict(t(-5.8, spread)).ok, "spread \(spread)")
+            XCTAssertEqual(strict(t(-6, spread)).reason, "annotation.anchor.off.label", "spread \(spread)")
+        }
+        let d = try MGSolidParser.document(data: Data(t(-6, 3000).utf8)).get()
+        XCTAssertGreaterThan(d.annotations.diagonal, 2000, "the whole assembly is large")
+        if case .number(let tol)? = d.offPartAnchors.first?.json["tolerance"] { XCTAssertEqual(tol, 0.866, accuracy: 0.001) } else { XCTFail("tolerance") }
+    }
+}

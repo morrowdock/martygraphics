@@ -54,7 +54,7 @@
       "anchorsWorld": [
         [
           0,
-          -110,
+          108,
           1652
         ]
       ],
@@ -614,7 +614,7 @@
       1,
       2
     ],
-    "executableSHA256": "762a9738785418e99692baeec46c781439ea8261bbd9a6af96bd4408b582b3ab",
+    "executableSHA256": "2073e5fae8a41928163ed714baeb86040f4a719edd85adcbd3927228560b4c65",
     "name": "MartyGraphics",
     "reportFormat": 1,
     "snapshotFormats": [
@@ -893,7 +893,7 @@
   },
   "file": {
     "lines": 54,
-    "sha256": "59b536616d9cd30b7e70138136fe80ba680028a1f3bb0de1ca0e6c11ef6648a9"
+    "sha256": "9bc7dd9355beffd4f2a8695e8087969a8baab45756c3a8e2abee874c61d21689"
   },
   "legend": {
     "built": 0,
@@ -1904,22 +1904,22 @@
         },
         {
           "anchor": [
-            0.47676210699677546,
-            0.23314386427681605
+            0.5078320176707055,
+            0.2065877955110804
           ],
           "box": [
-            0.34339128071121805,
-            0.18360668478499878,
+            0.5042988541147092,
+            0.15340186820560694,
             0.13171875,
             0.03925
           ],
           "callout": null,
-          "candidate": 7,
+          "candidate": 1,
           "id": "lPilot",
           "kind": "label",
           "leader": [
-            0.47511003071121805,
-            0.2228566847849988
+            0.5078320176707055,
+            0.19265186820560692
           ],
           "occluded": true,
           "offView": false,
