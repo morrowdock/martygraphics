@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "b7b53258e4b802f9ee704888f6fae6e8ec5ae32dae90ca38c6e033b7356b81f8"
+      "sha256": "281cb23b3b01d1031ba2456ffa2d7ffcd6539dcbd1f27cbaf9bb06823f48a784"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -294,6 +294,30 @@
       "sha256": "753ded1779aac9d765bcddf6ae78e2a6626c70c9e702daaaa4e6e9144cde565e"
     },
     {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-check-strict.check.json",
+      "sha256": "0b94b4c24d1288d41638ddd5fffad707267d97d00848f91ab78f80a320f56a9a"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-check-strict.strict.json",
+      "sha256": "0b94b4c24d1288d41638ddd5fffad707267d97d00848f91ab78f80a320f56a9a"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-jet-suit.check.json",
+      "sha256": "a2e84fc520037c7051e23d105f7622ed3a42efd6e60ff54beeddafe03827e014"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-jet-suit.strict.json",
+      "sha256": "6bfc7b4c115e269b9fef4e5eda37c90687faeb14d7a8adee3a70c4ae6d666060"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.check.json",
+      "sha256": "03f5ea1d16f8a460d2ba5481509475889ab3c4dfa2b7ec8008ce2d1e179c1113"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.strict.json",
+      "sha256": "8c7290cfb07d027b48b6a1618cfeff260e8970595d68ce4cab0906fc2f6082e6"
+    },
+    {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-lessons-provenance.check.json",
       "sha256": "de27aba2e1e2bdc8c8b8c6784bb3f96cbec12d0988477aeba6aefb56f2d77a47"
     },
@@ -483,7 +507,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "006d1f2845ce7bfbac6f16347d3d87d96c255d89ca58016b5baea2e3856654be"
+      "sha256": "8d8f717a38d0d46cadba422cd96fbe27b1da05e84813efe6cd86e68ebbb4dddf"
     },
     {
       "path": "SECURITY.md",
@@ -1071,7 +1095,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "c6f8f89222eb14e4d682b4d5d452bb2164dfce5f5cb40eb14e31df0e1702536f"
+      "sha256": "7ad6df3d41c993bfdfc988eef5e245ce515abbada2db4606a670e811c02df7da"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -1164,6 +1188,58 @@
     {
       "path": "docs/assets/from-a-prompt/robot-joint/step-5.png",
       "sha256": "a99f4f3c535b332670358f53846cc58e88e45174e390ac7770ccfbba8cdaf978"
+    },
+    {
+      "path": "docs/assets/jet-suit/SOURCES.md",
+      "sha256": "837b53aa59480e076c9d7b33278949f8c0be4f89bb29bcc100cb4661817cbd2e"
+    },
+    {
+      "path": "docs/assets/jet-suit/check-strict.json",
+      "sha256": "3a86911149b968da00988bc6126a8120c6015e3dcc833a91864a8227f92c9c74"
+    },
+    {
+      "path": "docs/assets/jet-suit/jet-suit.json",
+      "sha256": "83895fd9348b13819fecacb5aeefcb85fe22a6ad0615f689343b8f0e63041668"
+    },
+    {
+      "path": "docs/assets/jet-suit/poster.jpg",
+      "sha256": "7a576168168cafeebe560fa34b62f42fd6ad22a47cbf60ec076c3fa82fa5986c"
+    },
+    {
+      "path": "docs/assets/jet-suit/provenance.json",
+      "sha256": "f43bb49572ea29ebc76d3fd0219a15d7f06c12e8c1eb4d50bf1a7f0cf11a23c9"
+    },
+    {
+      "path": "docs/assets/jet-suit/step-1.png",
+      "sha256": "294d8d32862a9a7d980821cb4ace3511ab2a86cb183e76a5ecd996a7784e4bac"
+    },
+    {
+      "path": "docs/assets/jet-suit/step-2.png",
+      "sha256": "9258f73cdc0763cad0b33a57ae8d215dec62896bc8b87306258b707cbcd60330"
+    },
+    {
+      "path": "docs/assets/jet-suit/step-3.png",
+      "sha256": "abce038197915ed637d048ddf4d10f996b25f2c7d555e57da222b2b35f0d503c"
+    },
+    {
+      "path": "docs/assets/jet-suit/step-4.png",
+      "sha256": "37b2eda6896823ded20a991a6fcbe200c031bbae115ab5fea8c6cc301e8346b7"
+    },
+    {
+      "path": "docs/assets/jet-suit/step-5.png",
+      "sha256": "d1088cc1a864c3e2f2430e5aff2b3ed95fddb8b8dfdbf002d008d9327650cdc0"
+    },
+    {
+      "path": "docs/assets/jet-suit/step-6.png",
+      "sha256": "b5e52da3b3140ac33364265c00e26c185d629a567b22557ce9a13c0088148958"
+    },
+    {
+      "path": "docs/assets/jet-suit/step-7.png",
+      "sha256": "870bc792a85839ff687ac3fbea6b571072b8c613ce9045dc81e1cec15a9f3e43"
+    },
+    {
+      "path": "docs/assets/jet-suit/story.mp4",
+      "sha256": "d8d16ff0b68046ed71d7e84cf3504aed90c1b91eb9b3179a0afebc4885db9b5a"
     },
     {
       "path": "docs/assets/lessons/beat-1.png",
