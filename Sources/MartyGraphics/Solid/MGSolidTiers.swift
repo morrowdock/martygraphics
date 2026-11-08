@@ -100,10 +100,13 @@ extension MGSolidDocument {
     /// Every visible claim with its tier. Motion claims are listed once per authored part (`repeat` copies share
     /// their base id), in part order; then annotation claims (labels, arrows, dimensions); then the title and the
     /// captions.
+    /// A part that every view hides (the plain view, so `hero.png`, and every step) is never seen: it makes no motion
+    /// claim.
     public var claims: [MGSolidClaim] {
         var out: [MGSolidClaim] = []
         var seen = Set<String>()
-        for p in assembly.parts {
+        let unseen = neverShownParts
+        for p in assembly.parts where !unseen.contains(p.id) {
             let base = copies[p.id] ?? p.id
             guard let t = motionTier(p.id), seen.insert(base).inserted else { continue }
             let s = motionSources[p.id] ?? "input"

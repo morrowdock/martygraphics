@@ -284,7 +284,7 @@ public final class MGSolidRenderer {
             annotationMaterials[id] = m
             let cylinder = unitCylinder.copy() as! SCNGeometry, cone = unitCone.copy() as! SCNGeometry
             cylinder.materials = [m]; cone.materials = [m]
-            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed, sense: view.motionSense)
+            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed, sense: view.motionSense, step: view.step)
             annotationNodes[id] = pieces.map { p in
                 let node = SCNNode(geometry: p.shape == .cone ? cone : cylinder)
                 node.name = "annotation.\(id)"
@@ -311,7 +311,7 @@ public final class MGSolidRenderer {
         SCNTransaction.begin(); SCNTransaction.disableActions = true
         for (id, nodes) in annotationNodes {
             guard visible.contains(id) else { nodes.forEach { $0.isHidden = true }; continue }
-            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed, sense: view.motionSense)
+            let pieces = MGSolidAnnotations.primitives(doc, id, params: posed, sense: view.motionSense, step: view.step)
             for (node, p) in zip(nodes, pieces) {
                 let d = p.end - p.start
                 node.isHidden = p.hidden || d.length < 1e-9
@@ -381,6 +381,8 @@ public final class MGSolidRenderer {
         applySection(to: m, id: id)
         node.geometry?.materials = [m]
         node.opacity = CGFloat(pv.opacity)
+        // A part the view hides (step `hide`, a show-only part outside its steps) is not drawn and casts no shadow.
+        node.isHidden = pv.hidden
         node.castsShadow = preset != .glass && pv.opacity >= 0.5
         node.renderingOrder = preset == .glass || seeThrough ? 10 : 0
     }
@@ -389,8 +391,8 @@ public final class MGSolidRenderer {
 
     /// Frames the posed assembly (union of the given poses' bounds if several explode values are passed).
     public func frame(_ params: MGPoseParameters, explodeRange: [Double] = [], yaw: Double, pitch: Double, aspect: Double,
-                      fieldOfView: Double = 30, margin: Double = 1.08) {
-        let b = worldBounds(params, explodeRange: explodeRange)
+                      fieldOfView: Double = 30, margin: Double = 1.08, hidden: Set<String> = []) {
+        let b = worldBounds(params, explodeRange: explodeRange, hidden: hidden)
         setCamera(MGSolidCamera.framing(b, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, margin: margin))
     }
 
@@ -404,11 +406,12 @@ public final class MGSolidRenderer {
                                         captionBand: captionBand))
     }
 
-    public func worldBounds(_ params: MGPoseParameters, explodeRange: [Double] = []) -> MGBounds {
+    /// `hidden`: parts left out (a view's hidden parts, `MGSolidView.hiddenParts`).
+    public func worldBounds(_ params: MGPoseParameters, explodeRange: [Double] = [], hidden: Set<String> = []) -> MGBounds {
         var b = MGBounds.empty
         for e in [params.explode] + explodeRange {
-            let pose = assembly.pose(MGPoseParameters(input: params.input, explode: e))
-            for p in assembly.parts {
+            let pose = assembly.pose(MGPoseParameters(input: params.input, explode: e, placements: params.placements))
+            for p in assembly.parts where !hidden.contains(p.id) {
                 let t = MGSolidStage.zUpToYUp * (pose.world[p.id] ?? .identity)
                 for c in p.mesh.bounds.corners { b.include(t.apply(c)) }
             }

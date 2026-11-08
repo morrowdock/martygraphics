@@ -80,16 +80,16 @@ public enum MGSolidFraming {
         if !s.focus.isEmpty { let wanted = Set(s.focus); return order.filter { wanted.contains($0) } }
         let core = Set(s.highlight + (s.section?.parts ?? []))
         guard !core.isEmpty else { return [] }
-        return context(doc, core: core, ghost: Set(s.ghost), params: params, stage: stage)
+        return context(doc, core: core, ghost: Set(s.ghost), hidden: doc.hiddenParts(step: step), params: params, stage: stage)
     }
 
     /// `core` with its touching context, in assembly order: every part not in `ghost` whose posed box touches the box of
     /// a `core` part (one level, within 0.5 % of the model's box diagonal). `focusParts` and the unblocked-focus rule
-    /// (`clearView`) share this one rule.
-    static func context(_ doc: MGSolidDocument, core: Set<String>, ghost: Set<String>, params: MGPoseParameters,
+    /// (`clearView`) share this one rule. `hidden` (the view's hidden parts) are left out entirely.
+    static func context(_ doc: MGSolidDocument, core: Set<String>, ghost: Set<String>, hidden: Set<String> = [], params: MGPoseParameters,
                         stage: MGTransform) -> [String] {
-        let order = doc.assembly.parts.map(\.id)
-        let samples = Samples(doc.assembly, ids: nil), pose = doc.assembly.pose(params)
+        let order = doc.assembly.parts.map(\.id).filter { !hidden.contains($0) }
+        let samples = Samples(doc.assembly, ids: nil, exclude: hidden), pose = doc.assembly.pose(params)
         var boxes: [String: MGBounds] = [:], whole = MGBounds.empty
         for (id, local) in samples.parts {
             let t = stage * (pose.world[id] ?? .identity)
@@ -115,9 +115,10 @@ public enum MGSolidFraming {
     struct Samples {
         var parts: [(id: String, local: [MGVec3])]
 
-        init(_ assembly: MGAssembly, ids: [String]?) {
+        /// `exclude`: parts left out (the view's hidden parts).
+        init(_ assembly: MGAssembly, ids: [String]?, exclude: Set<String> = []) {
             let wanted = ids.map(Set.init)
-            let chosen = assembly.parts.filter { wanted?.contains($0.id) ?? true }
+            let chosen = assembly.parts.filter { (wanted?.contains($0.id) ?? true) && !exclude.contains($0.id) }
             let total = chosen.reduce(0) { $0 + $1.mesh.positions.count }
             let stride = max(1, (total + MGSolidFraming.pointBudget - 1) / MGSolidFraming.pointBudget)
             parts = chosen.map { p in
@@ -166,7 +167,7 @@ public enum MGSolidFraming {
         var out: [MGVec3] = []
         for id in shown {
             if let r = a.arrow(id) {
-                let prims = MGSolidAnnotations.primitives(doc, id, params: params, sense: view.motionSense)
+                let prims = MGSolidAnnotations.primitives(doc, id, params: params, sense: view.motionSense, step: view.step)
                 guard !prims.isEmpty else { continue }
                 let end = r.style == .turn && prims.count > MGSolidAnnotations.arcChords ? prims[MGSolidAnnotations.arcChords].end
                     : prims[min(1, prims.count - 1)].end
@@ -265,12 +266,13 @@ public enum MGSolidFraming {
 
     /// The bounding-sphere framing of earlier releases: the union of the posed boxes at the shot's explode value and
     /// at 0, with the shot's margin.
+    /// `hidden`: parts the shot's view does not draw (left out of the bounds).
     static func legacy(_ assembly: MGAssembly, _ s: MGSolidShot, yaw: Double, pitch: Double, aspect: Double, fieldOfView: Double,
-                       stage: MGTransform) -> MGSolidCamera {
+                       stage: MGTransform, hidden: Set<String> = []) -> MGSolidCamera {
         var b = MGBounds.empty
         for e in [s.params.explode, 0, s.params.explode] {
-            let pose = assembly.pose(MGPoseParameters(input: s.params.input, explode: e))
-            for p in assembly.parts {
+            let pose = assembly.pose(MGPoseParameters(input: s.params.input, explode: e, placements: s.params.placements))
+            for p in assembly.parts where !hidden.contains(p.id) {
                 let t = stage * (pose.world[p.id] ?? .identity)
                 for c in p.mesh.bounds.corners { b.include(t.apply(c)) }
             }
@@ -322,8 +324,9 @@ public enum MGSolidFraming {
         let (yaw, pitch) = override ?? direction(s)
         let a = doc.assembly
         let view = doc.view(step: s.step)
+        let hidden = doc.hiddenParts(step: s.step)
         let anchors = s.showsAnnotations ? annotationPoints(doc, view: view, params: s.params, stage: stage) : []
-        let all = Samples(a, ids: nil).world(a, s.params, stage: stage) + anchors
+        let all = Samples(a, ids: nil, exclude: hidden).world(a, s.params, stage: stage) + anchors
         if let step = s.step {
             let ids = focusParts(doc, step: step, params: s.params, stage: stage)
             if !ids.isEmpty {
@@ -339,11 +342,12 @@ public enum MGSolidFraming {
                 }
             }
         }
-        let old = legacy(a, s, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, stage: stage)
+        let old = legacy(a, s, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, stage: stage, hidden: hidden)
         // The earlier framing stays when nothing is cut by the frame or covered by the caption band. It may reach into
         // the title band (title text over the model, as in earlier releases); a fitted camera keeps that band free.
+        // `hero.png` keeps the title band free too: its earlier framing stays only when the model clears the band.
         var kept = window
-        kept.top = 1
+        if s.file != "hero.png" { kept.top = 1 }
         if contains(all, camera: old, aspect: aspect, window: kept) { return (old, .model) }
         return (fit(all, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window), .modelFitted)
     }
@@ -359,12 +363,13 @@ public enum MGSolidFraming {
     public static func loopFraming(_ doc: MGSolidDocument, shots: [MGSolidShot], aspect: Double, fieldOfView: Double = 30,
                                    stage: MGTransform = MGSolidStage.zUpToYUp) -> (cameras: [MGSolidCamera], scale: Double) {
         let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6, fieldOfView = fov(fieldOfView)
-        let a = doc.assembly, samples = Samples(a, ids: nil), window = Window(titleBand: 0, captionBand: 0)
+        let hidden = doc.hiddenParts(step: nil)
+        let a = doc.assembly, samples = Samples(a, ids: nil, exclude: hidden), window = Window(titleBand: 0, captionBand: 0)
         let f = focal(fieldOfView)
         var cams: [MGSolidCamera] = [], k = 1.0
         for s in shots {
             let (yaw, pitch) = direction(s)
-            let c = legacy(a, s, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, stage: stage)
+            let c = legacy(a, s, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, stage: stage, hidden: hidden)
             cams.append(c)
             let pts = samples.world(a, s.params, stage: stage)
             guard !contains(pts, camera: c, aspect: aspect, window: window), c.distance > 0 else { continue }

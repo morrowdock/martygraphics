@@ -155,3 +155,22 @@ public struct MGStoryPlan: Equatable, Sendable {
          })]
     }
 }
+
+extension MGStoryPlan {
+    /// The placements `t` of the way from one step pose to the next (0: `from`, 1: `to`, exactly), for the camera move
+    /// at the start of a beat: every part either pose places turns and moves from its `from` placement (or its own) to
+    /// its `to` placement (or its own) with `MGTransform.blend`. A part both poses place alike keeps that placement, so
+    /// two beats with the same pose (or none) give exactly that pose. Ids that name no part are ignored.
+    public static func placements(_ assembly: MGAssembly, from: [String: MGTransform], to: [String: MGTransform],
+                                  _ t: Double) -> [String: MGTransform] {
+        guard t.isFinite, t < 1 else { return to }
+        var out: [String: MGTransform] = [:]
+        for p in assembly.parts {
+            let a = from[p.id], b = to[p.id]
+            guard a != nil || b != nil else { continue }
+            if a == b { out[p.id] = b; continue }
+            out[p.id] = MGTransform.blend(a ?? p.placement, b ?? p.placement, max(0, t))
+        }
+        return out
+    }
+}

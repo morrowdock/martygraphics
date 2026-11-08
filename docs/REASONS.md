@@ -30,7 +30,7 @@ contain `.missing.` or `.unknown.`) and checks that each resolves to its own pat
 | `<shape>` | A shape kind: gear, ringGear, shaft, tube, box, hex, plate, carrier, extrudedProfile, revolvedProfile, blade, bladeRow. |
 | `<crank>` | `crankSlider` or `crankRod`. |
 | `<field>` | A field name: an ASCII letter, then letters or digits. |
-| `<list>` | `focus` or `highlight`. |
+| `<list>` | `focus`, `highlight`, `hide` or `show`. |
 | `<direction>` | `axisWorld` or `upWorld`. |
 | `<modifier>` | A placeholder modifier token: 1–32 ASCII letters, digits or `_`. |
 | `<op>` | An expression operator other than `div` and `param` (they have their own entries). |
@@ -126,6 +126,8 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `part.<shape>.rot` | assembly | A shape's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360. |
 | `component.use.at` | assembly, component | A `use` entry's `at` is not three coordinates in -4000...4000 mm. |
 | `component.use.rot` | assembly, component | A `use` entry's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360. |
+| `text.grapheme` | assembly | An annotation's text (label, arrow or dimension) has a character (grapheme cluster) of more than 8 Unicode scalars. `part` names the annotation. |
+| `component.use.explode` | assembly | A top-level `use` entry's `explode` (v2) is not three coordinates in -4000...4000 mm, or a root part's own explode is not. |
 | `tier.key` | assembly, explainer | A v2 document has a key named `tier` somewhere (tiers are computed by the engine, never authored). |
 
 ### Parameters
@@ -256,7 +258,18 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `steps.count` | assembly | `steps` is not an array of at most 16 entries. |
 | `step.object` | assembly | A step is not an object. |
 | `step.say` | assembly | A step's `say` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 240 characters, also after placeholders are filled. |
-| `step.<list>` | assembly, component | A step id list (`focus`, `highlight`) is not an array of at most 16 strings. |
+| `step.<list>` | assembly, component | A step id list (`focus`, `highlight`; v2 `hide`, `show`) is not an array of at most 16 strings (a component instance id is one entry); `hide` and `show` must not be empty. |
+| `step.pose` | assembly | A step's `pose` is not an object of 1–16 entries (v2). |
+| `step.pose.ref` | assembly | A `pose` entry names neither a component instance (a top-level `use` id), an authored part nor a part inside an instance (by id or anchor), names a `repeat` copy, or names one part twice. `part` gives the id. |
+| `step.pose.key` | assembly | A `pose` entry is not an object of `with` and/or `rot`, gives a key its id does not take (an instance takes `with`, a part takes `rot`), or has a `rot` that is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360. |
+| `step.pose.with` | assembly | A `pose` entry's `with` is not an object of the component's parameters in range, or the change alters something other than placements (a shape, a material, a parent, an explode vector). |
+| `step.pose.solved` | assembly | The pose moves a part of a gear solve or a constrained mechanism (a gear pair or carrier, a gear-mesh or crank drive or its source, a part held by `fixed` or `gearMesh`), or it would change the compiled motion or an engine fact. `part` gives the first such part when there is one. |
+| `step.hide.both` | assembly | A step lists one part in both `hide` and `show` (v2). |
+| `step.hide.use` | assembly | A step focuses, highlights, ghosts or cuts a part it hides (its `hide`, or a show-only part it does not `show`). |
+| `step.hide.claim` | assembly | An annotation a step shows is anchored on a part the step hides. |
+| `step.hide.fact` | assembly | A view displays a fact of a part it hides: the text of an annotation it shows, or a step's caption or `check`; or the title shows a fact of a part that any view hides. `part` names the fact. |
+| `step.pose.fact` | assembly | A `dim.<id>` fact does not hold over a step's whole motion domain at its pose (every input its `spin` plays, at its explode value and placements): one of its `check` claims, or for a posed step its caption, the title or the text of an annotation it shows. `part` names the fact. |
+| `step.show.claim` | assembly | The plain view shows an annotation anchored on a show-only part (a part some step lists in `show`), which the plain view hides. |
 | `step.camera` | assembly | `camera` is not a camera preset name. |
 | `step.explode` | assembly | `explode` is not a number in 0...1. |
 | `step.orbit` | assembly | `orbit` is not in -360...360 degrees. |
@@ -344,7 +357,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `anchor.world` | assembly | An anchor `world` point is not three coordinates in -4000...4000 mm. |
 | `anchor.ref.<id>` | assembly | An annotation anchor or turn arrow `on` names no part, copy or component anchor. |
 | `anchor.ambiguous.<id>` | assembly | An annotation anchor names a `repeat` base with copies or a component instance (more than one part). |
-| `label.text.<id>` | assembly | A label's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 160 characters, or of 1–40 characters after placeholders are filled. |
+| `label.text.<id>` | assembly | A label's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 240 characters, or of 1–60 characters after placeholders are filled. |
 | `label.unchecked.<id>` | assembly | A label's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters. |
 | `text.number.label.<id>` | assembly | A label has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
 | `arrow.meaning.<id>` | assembly | An arrow's `meaning` is not force, flow, motion or pointer. |
@@ -356,7 +369,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `arrow.expect.form.<id>` | assembly | A motion arrow's `expect` is not a non-zero direction of three coordinates. |
 | `arrow.length.form.<id>` | assembly | A motion arrow's `length` is not a number in 10...4000 mm or `{"fact", "scale"}` with a fact name and a scale in 0.001...1000. |
 | `arrow.cause.<id>` | assembly | A force arrow's `cause` is not "gravity". |
-| `arrow.text.<id>` | assembly | An arrow's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 160 characters, or of 1–40 characters after placeholders are filled. |
+| `arrow.text.<id>` | assembly | An arrow's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 240 characters, or of 1–60 characters after placeholders are filled. |
 | `arrow.unchecked.<id>` | assembly | An arrow's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters. |
 | `arrow.unchecked.text.<id>` | assembly | An arrow has `unchecked` but no `text` for it to mark. |
 | `text.number.arrow.<id>` | assembly | An arrow's text has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
@@ -373,7 +386,7 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `dimension.along.<id>` | assembly | A dimension's `along` is not x, y or z, or the dimension is an angle. |
 | `dimension.over.form.<id>` | assembly | A dimension's `over` is not "input". |
 | `dimension.vertex.<id>` | assembly | An angle dimension has no `vertex`, or a distance dimension has one. |
-| `dimension.text.form.<id>` | assembly | A dimension's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 160 characters, or of 1–40 characters after placeholders are filled. |
+| `dimension.text.form.<id>` | assembly | A dimension's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 240 characters, or of 1–60 characters after placeholders are filled. |
 | `dimension.zero.<id>` | assembly | A distance below 0.01 mm at the default input, or an angle arm below 0.01 mm (at the default input, or at any sample with `over`). |
 | `dimension.over.still.<id>` | assembly | A dimension with `over` changes by less than 0.01 mm (or 0.01°) over one input turn. |
 | `annotation.pose.<id>` | assembly | A shown annotation's claim does not hold at every pose its view can show (a step's `spin` range at its explode value, or the plain view's default pose), decided exactly: a shown dimension, or a `dim.<id>` fact its text shows, that changes during the view or differs at the view's pose; a gravity arrow that turns or does not point down; a motion line arrow that rides a turning joint in a moving step, or whose `expect` fails at some pose; a stated `sense` that a backwards step reverses. |
@@ -539,7 +552,7 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `stmt.highlight.twice` | explainer | A beat has a second `highlight` statement. |
 | `lesson.depth` | explainer | A statement other than `solid` nests deeper than 59 levels (the lesson statement cap). |
 | `view.object` | explainer | A beat `view` is not an object. |
-| `view.unknown.<keys>` | explainer | A beat `view` has keys that are not view keys (focus, explode, camera, orbit, spin, section, ghost). |
+| `view.unknown.<keys>` | explainer | A beat `view` has keys that are not view keys (focus, explode, camera, orbit, spin, section, ghost, annotate, pose, hide, show). |
 | `view.focus` | explainer | A beat view's `focus` is not an array of at most 16 strings. |
 | `view.camera` | explainer | A beat view's `camera` is not a camera preset name. |
 | `view.explode` | explainer | A beat view's `explode` is not a number in 0...1. |
@@ -555,6 +568,19 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `view.annotate` | explainer | A beat view's `annotate` is not an array of strings (the assembly's `step.annotate`). |
 | `view.annotate.count` | explainer | A beat view's `annotate` lists more than 12 annotations. The report's `visibility` names the beat (1-based), the 13th id, the count and the limit (cause `beat`). |
 | `view.annotate.ref.<id>` | explainer | A beat view's `annotate` names no annotation. |
+| `view.hide.fact` | explainer | A beat's caption, a 3D check or the text of an annotation it shows displays a fact of a part its view hides, or the title or the board text shows a fact of a part that any view hides (the assembly's `step.hide.fact`). `id` names the fact. |
+| `view.pose.fact` | explainer | A `dim.<id>` fact does not hold over a beat's whole motion domain at its pose: a 3D check of the beat, or for a beat with a `pose` its caption, the title, the board text or annotation text (the assembly's `step.pose.fact`). `id` names the fact. |
+| `view.pose` | explainer | A beat view's `pose` is not an object of 1–16 entries (the assembly's `step.pose`). |
+| `view.pose.ref` | explainer | A beat view's `pose` names nothing it can pose, or one part twice (the assembly's `step.pose.ref`). |
+| `view.pose.key` | explainer | A beat view's `pose` entry has a key its id does not take or a bad `rot` (the assembly's `step.pose.key`). |
+| `view.pose.with` | explainer | A beat view's `pose` `with` is not valid or changes more than placements (the assembly's `step.pose.with`). |
+| `view.pose.solved` | explainer | A beat view's `pose` moves a solved mechanism or changes an engine fact (the assembly's `step.pose.solved`). |
+| `view.hide` | explainer | A beat view's `hide` is not a non-empty array of at most 16 strings. |
+| `view.show` | explainer | A beat view's `show` is not a non-empty array of at most 16 strings. |
+| `view.hide.both` | explainer | A beat view lists one part in both `hide` and `show`. |
+| `view.hide.use` | explainer | A beat view focuses, highlights, ghosts or cuts a part it hides. |
+| `view.hide.claim` | explainer | A part a beat view hides carries an annotation the beat shows (the assembly's `step.hide.claim`). |
+| `view.show.claim` | explainer | The plain view shows an annotation on a show-only part (the assembly's `step.show.claim`). |
 | `text.pose.beat.<n>` | explainer | Beat `<n>`'s caption shows a `dim.<id>` fact that does not hold at every pose its view can show (the assembly's `text.pose.step.<n>` rule). |
 | `text.pose.board` | explainer | 2D board text shows a `dim.<id>` fact that does not hold at every pose of every view (the rule for shown text). |
 | `check.unknown.<keys>` | explainer | A 3D check (dotted `value`) has keys it does not allow (the assembly's `step.check.unknown.<keys>`). |
@@ -581,7 +607,7 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `snapshot.lesson` | explainer | The explainer snapshot's lesson snapshot is not JSON text. |
 | `snapshot.pending` | explainer | A beat the restored lesson still queues does not match the explainer's beat, or a queued command breaks the explainer's command rules. |
 | `snapshot.presented` | explainer | The explainer snapshot's presented beats are not valid: one is not a kept beat, comes after the lesson's beat, or is still queued. |
-| `snapshot.shown` | explainer | The explainer snapshot's record of shown 2D item, beat or annotation claims is not valid: not an array of at most 1024 `{"id", "tiers"}` (or 16 `{"beat", "caption", "checks"}`, or 80 `{"id", "tier"}`) entries, an id or beat twice, an id the id history does not hold, a 3D id, a beat that was not presented, an unknown tier, a tier twice or a tier the text cannot have, or it misses an item or presented beat, or what the state shown now shows; `shownAnnotations` is present while the show-all rule applies, or names something that is not an annotation with a claim at its tier, or misses an annotation a presented beat displays. |
+| `snapshot.shown` | explainer | The explainer snapshot's record of shown 2D item, beat, annotation or motion claims is not valid: not an array of at most 1024 `{"id", "tiers"}` (or 16 `{"beat", "caption", "checks"}`, or 80 `{"id", "tier"}`) entries, an id or beat twice, an id the id history does not hold, a 3D id, a beat that was not presented, an unknown tier, a tier twice or a tier the text cannot have, or it misses an item or presented beat, or what the state shown now shows; `shownAnnotations` is present while the show-all rule applies, or names something that is not an annotation with a claim at its tier, or misses an annotation a presented beat displays; `shownMotion` (at most 96 `{"id", "tier"}`) is present while no view hides parts, or names something that is not a motion claim at its tier, or misses the motion of a part a presented beat displays. |
 | `snapshot.labels` | explainer | The explainer snapshot's `chooseLabels` (the label-selection mode) is present but not `true` (`false` included). |
 | `snapshot.beat` | explainer | The explainer snapshot's presented beat names no kept beat, or not the lesson's presented beat. |
 | `snapshot.stream` | explainer | The explainer snapshot's stream status is not valid. |

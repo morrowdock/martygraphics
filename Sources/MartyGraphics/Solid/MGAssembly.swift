@@ -81,7 +81,12 @@ public struct MGPoseParameters: Equatable, Sendable {
     public var input: Double
     /// 0 = assembled, 1 = fully exploded.
     public var explode: Double
-    public init(input: Double = 0, explode: Double = 0) { self.input = input; self.explode = explode }
+    /// Placements that replace parts' own placements in this pose (part id → placement in the parent frame): a step's
+    /// `pose` (`MGSolidStep.pose`). Empty for the authored placements. Ids that name no part are ignored.
+    public var placements: [String: MGTransform]
+    public init(input: Double = 0, explode: Double = 0, placements: [String: MGTransform] = [:]) {
+        self.input = input; self.explode = explode; self.placements = placements
+    }
 }
 
 public struct MGPose: Equatable, Sendable {
@@ -199,7 +204,7 @@ public struct MGAssembly: Equatable, Sendable {
             case .revolute(let axis): jointT = .rotation(axis: axis, angle: q)
             case .prismatic(let axis): jointT = .translation(axis.normalized * q)
             }
-            let t = parentWorld * .translation(p.explode * e) * p.placement * jointT
+            let t = parentWorld * .translation(p.explode * e) * (params.placements[id] ?? p.placement) * jointT
             world[id] = t
             return t
         }

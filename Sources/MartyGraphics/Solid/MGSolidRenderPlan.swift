@@ -143,13 +143,14 @@ public struct MGSolidRenderPlan: Equatable, Sendable {
 }
 
 extension MGSolidShot {
-    /// The still of step `i` (0-based) as `MGSolidRenderPlan` takes it: the step's pose after its spin, its camera
+    /// The still of step `i` (0-based) as `MGSolidRenderPlan` takes it: the step's pose after its spin (with its `pose`
+    /// placements, `MGSolidStep.poseParameters`), its camera
     /// preset and orbit, highlight, view and caption. A host that shows one step frames it with
     /// `MGSolidRenderer.frame(_:document:aspect:)`. Nil for an index outside the steps.
     public static func step(_ doc: MGSolidDocument, _ i: Int) -> MGSolidShot? {
         guard doc.steps.indices.contains(i) else { return nil }
         let step = doc.steps[i]
-        let params = MGPoseParameters(input: doc.defaults.input + step.spin * 2 * .pi, explode: step.explode ?? doc.defaults.explode)
+        let params = step.poseParameters(defaults: doc.defaults)
         return MGSolidShot(file: "step-\(i + 1).png", params: params, preset: step.camera ?? "hero", orbit: step.orbit,
                            highlight: step.highlight, margin: 0.8, step: i, title: doc.title, caption: "\(i + 1). \(step.say)")
     }

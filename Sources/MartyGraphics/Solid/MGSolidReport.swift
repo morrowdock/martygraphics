@@ -158,6 +158,7 @@ extension MGSolidReport {
         Section(name: "honesty", fields: honesty),
         Section(name: "tiers", fields: tiers),
         Section(name: "annotations", fields: annotations),
+        Section(name: "stepViews", fields: stepViews),
     ]
 
     /// The report of a compiled document. `profile: .strict` adds the strict refusals (the document should be compiled
@@ -333,6 +334,23 @@ extension MGSolidReport {
     static func annotations(_ doc: MGSolidDocument) -> [String: MGJSON] {
         guard !doc.annotations.isEmpty else { return [:] }
         return ["annotations": doc.annotationReport, "placements": doc.annotationPlacements]
+    }
+
+    /// Per-step `pose`, `hide` and `show` (docs/SOLID-3D.md, "Step pose" and "Step visibility"): `stepViews`, one object
+    /// per step, `{"step" (1-based), "posed": [part ids], "poseReadBack": [lines], "hidden": [part ids]}`
+    /// (`MGSolidDocument.poseReadBack`, `hiddenParts(step:)` in part order), and `showOnly`. Absent when no step uses
+    /// these keys.
+    static func stepViews(_ doc: MGSolidDocument) -> [String: MGJSON] {
+        guard doc.steps.contains(where: { !$0.pose.isEmpty || !$0.hide.isEmpty || !$0.show.isEmpty || $0.poseSource != nil }) else { return [:] }
+        let order = doc.assembly.parts.map(\.id)
+        let readBack = Dictionary(doc.poseReadBack.map { ($0.step, $0.lines) }, uniquingKeysWith: { a, _ in a })
+        let steps: [MGJSON] = doc.steps.indices.map { i in
+            let s = doc.steps[i], hidden = doc.hiddenParts(step: i)
+            return .object(["step": num(i + 1), "posed": .array(order.filter { s.pose[$0] != nil }.map { MGJSON.string($0) }),
+                            "poseReadBack": .array((readBack[i + 1] ?? []).map { MGJSON.string($0) }),
+                            "hidden": .array(order.filter { hidden.contains($0) }.map { MGJSON.string($0) })])
+        }
+        return ["stepViews": .array(steps), "showOnly": .array(doc.showOnly.map { MGJSON.string($0) })]
     }
 
     // MARK: Patch fields

@@ -105,7 +105,7 @@ Beat keys:
 | `ops` | 0–12 lesson commands (`add`, `set`, `remove`, `params`, `camera`, `animate`, `bind`, `unbind`); needs `board` | lesson reasons, `explainer.op.title`, `explainer.board.missing`, `beat.ops`, `beat.ops.count` |
 | `check` | 0–8 checks `{"value", "eq" \| "lt" \| "gt", "tol"?}`. A plain name is a 2D value (lesson semantics); a dotted name is a 3D fact (#21 semantics) | `beat.check`, `beat.checks.count`, lesson reasons (`check.<name>`, `check.unknown.<name>`), `check.fact.<name>`, `check.failed.<name>` |
 | `highlight` | 1–16 ids of the namespace or table sub-addresses; presentation only | `beat.highlight`, `beat.highlight.count`, `beat.highlight.ref.<id>` |
-| `view` | the 3D view of the beat: `focus`, `explode`, `camera`, `orbit`, `spin`, `section`, `ghost` (step rules); needs `solid` | `view.object`, `view.unknown.<keys>`, step reasons renamed `step.` → `view.` (`view.section.parts`, `view.camera`), `ref.unknown.<id>`, `section.*`, `assembly.budget`, `explainer.solid.missing` |
+| `view` | the 3D view of the beat: `focus`, `explode`, `camera`, `orbit`, `spin`, `section`, `ghost`, `annotate`, `pose`, `hide`, `show` (step rules, docs/SOLID-3D.md "Step pose and step visibility"); needs `solid` | `view.object`, `view.unknown.<keys>`, step reasons renamed `step.` → `view.` (`view.section.parts`, `view.camera`, `view.pose`, `view.pose.ref`, `view.pose.key`, `view.pose.with`, `view.pose.solved`, `view.hide`, `view.show`, `view.hide.both`, `view.hide.use`, `view.hide.claim`, `view.hide.fact`, `view.show.claim`, `view.pose.fact`), `ref.unknown.<id>`, `section.*`, `assembly.budget`, `explainer.solid.missing` |
 
 Beat numbers in reasons are 1-based (`text.number.beat.2` is the second beat). `MGExplainerIssue.beat` is 0-based.
 A 3D check's shape reasons use the lesson names: `step.check.unknown.<keys>` of an assembly is `check.unknown.<keys>`
@@ -128,6 +128,18 @@ in an explainer.
 2. A 3D-only explainer runs the lesson on an empty board built in code (no wire statement can make one). Commands are
    refused there (`explainer.board.missing`), and there is no `boardPresented`.
 3. 2D changes add up (lesson rule). The 3D view is set fresh in each beat: a beat without `view` shows the default view.
+   A view's `pose` moves parts for that beat only, and its `hide` and `show` hide parts or show a show-only part for that
+   beat only (docs/SOLID-3D.md, "Step pose and step visibility"). A part the beat's view hides makes no claim in the beat:
+   the beat's caption, its 3D checks and the text of the annotations it shows may not show one of its facts, and the
+   title and the board text (which show with every view) may not show a fact of a part that any view hides
+   (`view.hide.fact`, `id` names the fact). Every 3D check of a beat, and every 3D fact a posed beat displays (caption,
+   title, board text, annotation text), must hold over the beat's whole motion domain at its pose (every input its
+   `spin` plays, at its explode value and placements; the rule shown dimensions follow): a `dim.<id>` fact that does
+   not provably hold is `view.pose.fact`. Host edits and restore name the fact in `id` too. This holds for a view streamed later that changes a pose, and on restore. When some view hides
+   parts, the legend counts the motion of a part only once a presented beat displayed it (the snapshot's `shownMotion`,
+   checked on restore like `shownAnnotations`); when no view hides any part, all motion counts, as before. In `story.mp4` the camera move
+   into a beat also moves the posed parts from the previous beat's pose; the hold shows the beat's own pose. Snapshot and
+   restore keep each beat's view as written, so a restored session recompiles the same poses.
 4. Highlight is presentation: it changes no state and is never a claim. At presentation every id is resolved again; an
    id that no longer resolves is dropped and recorded in `hostIssues` (`beat.highlight.stale.<id>`).
 5. A beat settles when its 2D transition settles and its 3D `spin` has played (4 s per input turn,
@@ -419,7 +431,9 @@ adds to the explainer's), the stream position, the record of shown 2D item claim
 their labels (some beat has `view.annotate`, at any annotation count, or the solid has more than 12 annotations), the
 record of shown annotation claims (`shownAnnotations`: `[{"id", "tier"}]` in first-shown order) and the
 label-selection mode (`chooseLabels`: `true` once the session has a beat view with an `annotate` list, after `load` or
-in a stream; absent otherwise). The mode belongs to one explainer: a new `explainer` header in the same session starts
+in a stream; absent otherwise), and, whenever some view hides parts, the record of shown motion claims (`shownMotion`:
+`[{"id", "tier"}]` in first-shown order, at most 96 entries; restore checks it like `shownAnnotations`, and rebuilds it
+from the presented beats when it is absent). The mode belongs to one explainer: a new `explainer` header in the same session starts
 without it. `chooseLabels` is checked in every snapshot, with or without a solid.
 Captions and claims are not stored. `restore(_:pacing:clock:library:)`
 and `restore(data:…)` trust nothing in it as proof:
@@ -449,18 +463,24 @@ and `restore(data:…)` trust nothing in it as proof:
    presented beat's entry holds the tiers it shows now. A snapshot without `shownBeats` freezes each presented beat
    on the state shown now. The record of shown annotation claims is checked for structure too (`snapshot.shown`): at
    most 80 entries with closed keys `id` and `tier`; each id once, an annotation of the solid that has a claim, at
-   that claim's compiled tier; and it holds every annotation the presented kept beats display now. `chooseLabels`
-   must be `true` or absent (`snapshot.labels`); `true` is used as saved, and absent derives the mode from every beat
-   the snapshot knows. Trust: the three records and the flag are saved data that pass these structure checks, not
-   proof of what was shown; a changed snapshot can change past item and beat claims within them (as it can change
-   the held scenes within the board rules); a forged annotation entry can add annotation claims up to the solid's
-   compiled claim tiers, at most 80 entries; and removing `chooseLabels` gives the derived mode, which can show and
-   count at most the compiled labels (the show-all rule applies only to at most 12) at their compiled tiers;
+   that claim's compiled tier; and it holds every annotation the presented kept beats display now. The record of
+   shown motion claims (`shownMotion`, only while some view hides parts) is checked the same way (`snapshot.shown`):
+   at most 96 entries with closed keys `id` and `tier`; each id once, a motion claim of the solid at its compiled
+   tier; and it holds the motion of every part the presented kept beats display now; while no view hides parts it
+   must be absent, and a snapshot without it rebuilds it from the presented beats. `chooseLabels` must be `true` or
+   absent (`snapshot.labels`); `true` is used as saved, and absent derives the mode from every beat the snapshot
+   knows. Trust: all four records (`shown`, `shownBeats`, `shownAnnotations`, `shownMotion`) and the flag are saved
+   data that pass these structure checks, not proof of what was shown; a changed snapshot can change past item and
+   beat claims within them (as it can change the held scenes within the board rules); a forged annotation entry can
+   add annotation claims up to the solid's compiled claim tiers, at most 80 entries; a forged motion entry can add the
+   motion claim of a part no presented beat displayed, at its compiled tier (a Solved claim for a solved part), at most
+   96 entries; and removing `chooseLabels` gives the derived mode, which can show and count at most the compiled
+   labels (the show-all rule applies only to at most 12) at their compiled tiers;
 5. the caption is the presented beat's line on the restored state, never the saved text; the claims and the legend
    come only from what steps 1–4 evaluated and from the checked records. For an untouched snapshot in the current
    format, a restored legend equals the legend of the saved session; a changed snapshot that still passes the checks
-   can change it within the bounds of the trust note (for example, a valid extra `shownAnnotations` entry adds a
-   claim).
+   can change it within the bounds of the trust note (for example, a valid extra `shownAnnotations` or `shownMotion`
+   entry adds a claim).
 
 All of it runs in beat order, then statement order, so the first reason does not depend on dictionary order. The first
 problem refuses the whole snapshot with its reason (the solid's own reason when it no longer compiles, a rule's own

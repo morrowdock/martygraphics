@@ -394,7 +394,7 @@ final class SolidAnnotationTests: XCTestCase {
                                     "annotations": .object(["arrows": .array(Array(repeating: .object(["id": .string("a")]), count: 1_000_000))])])
         XCTAssertEqual(MGSolidParser.document(json: many).failureReason, "assembly.bytes")
         // Under the size limit, a long text is refused by its own reason.
-        XCTAssertEqual(reason(gears(#"{"labels": [{"id": "l1", "at": "p", "text": "\#(String(repeating: "x", count: 41))"}]}"#)), "label.text.l1")
+        XCTAssertEqual(reason(gears(#"{"labels": [{"id": "l1", "at": "p", "text": "\#(String(repeating: "x", count: 61))"}]}"#)), "label.text.l1")
         XCTAssertEqual(reason(gears(#"{"labels": [{"id": "l1", "at": "p", "text": "<b>x</b>"}]}"#)), "label.text.l1")
         XCTAssertEqual(reason(gears(#"{"labels": [{"id": "l1", "at": "p", "text": "P", "unchecked": ""}]}"#)), "label.unchecked.l1")
         // Public layout and drawing types never trap on hostile numbers.

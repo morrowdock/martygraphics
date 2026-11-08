@@ -167,6 +167,10 @@ extension MGSolidComponent {
 enum MGSolidComponents {
     static let topKeys: Set<String> = ["v", "kind", "id", "title", "about", "params", "parts", "constraints", "anchors", "anchorAbout", "checks"]
     static let useKeys: Set<String> = ["id", "use", "with", "at", "rot", "parent", "set"]
+    /// A top-level `use` entry in an assembly v2 may also take `explode` (one offset for the whole instance).
+    static let useKeysV2: Set<String> = useKeys.union(["explode"])
+    /// Step part-id lists in which a component instance id names all of its parts (`section.parts` too).
+    static let stepListKeys = ["focus", "highlight", "ghost", "hide", "show"]
     static let ops: Set<String> = ["param", "add", "sub", "mul", "div", "min", "max", "neg", "pi", "sin", "cos"]
 
     // MARK: Definitions
@@ -596,12 +600,14 @@ enum MGSolidComponents {
         -> (object: [String: MGJSON], frames: [String: MGTransform], generated: Set<String>, aliases: [String: String]) {
         guard case .array(let entries)? = o["parts"], (1...MGSolidLimits.parts).contains(entries.count),
               entries.contains(where: { $0["use"] != nil }) else { return (o, [:], [], [:]) }
-        // Authored step lists keep their own limit, before groups are expanded or duplicates merged.
+        // Authored step lists keep their own limit, before groups are expanded or duplicates merged: an instance id is
+        // one entry.
         if case .array(let steps)? = o["steps"] {
             for s in steps {
-                for key in ["focus", "highlight"] {
+                for key in stepListKeys {
                     if case .array(let ids)? = s[key], ids.count > MGSolidLimits.idsPerStep { throw MGSolidIssue("step.\(key)") }
                 }
+                if case .array(let ids)? = s["section"]?["parts"], ids.count > MGSolidLimits.idsPerStep { throw MGSolidIssue("step.section.parts") }
             }
         }
         // One namespace over the whole document. Authored ids must be plain identifiers here, so an authored part can
@@ -627,12 +633,26 @@ enum MGSolidComponents {
             do { id = try MGParser.identifier(eo["id"] ?? .null, "part.id") } catch { throw MGSolidIssue("part.id") }
             guard !ns.names.contains(id) else { throw MGSolidIssue("id.duplicate.\(id)", part: id) }
             do {
-                try MGSolidParser.closed(eo, ["id", "use"], useKeys, "component.use")
+                try MGSolidParser.closed(eo, ["id", "use"], o["v"] == .number(2) ? useKeysV2 : useKeys, "component.use")
                 guard case .string(let cid) = u, let c = library.components[cid] else {
                     throw MGSolidIssue("component.unknown.\(MGSolidParser.token(u.stringValue ?? "_"))")
                 }
                 var child = try instance(c, with: try withValues(eo, id), prefix: id, depth: 1, stack: [], &ctx)
-                try applyUse(eo, &child, instance: id, map: { $0 })
+                try applySet(eo, &child, instance: id, map: { $0 })
+                // v2 `explode` on the instance: one offset (in the instance's parent frame, like a part's `explode`) added
+                // to the explode of every root part of the instance, so the whole instance moves out together; inner
+                // parts ride on their roots and keep their own explode.
+                let roots = child.parts.filter { $0["parent"] == nil }.compactMap { $0["id"]?.stringValue }
+                try place(eo, &child, instance: id, map: { $0 })
+                if let e = eo["explode"] {
+                    let v = try MGSolidParser.vector(e, "component.use.explode")
+                    for k in child.parts.indices {
+                        guard let pid = child.parts[k]["id"]?.stringValue, roots.contains(pid) else { continue }
+                        let own = try child.parts[k]["explode"].map { try MGSolidParser.vector($0, "component.use.explode") } ?? .zero
+                        let sum = own + v
+                        child.parts[k]["explode"] = .array([.number(sum.x), .number(sum.y), .number(sum.z)])
+                    }
+                }
                 for name in child.names { try ns.claim(name) }
                 parts += child.parts.map { .object($0) }
                 out.merge(child)
@@ -663,19 +683,28 @@ enum MGSolidComponents {
         }
         result["constraints"] = .array(try (out.constraints + constraints).map { try mapConstraintRefs($0, resolve) })
         if case .array(let steps)? = o["steps"] {
+            // Step part lists: an anchor names its part, an instance id names every part of the instance (one authored
+            // entry, counted above), duplicates merge (first kept).
+            func expandList(_ ids: [MGJSON]) -> [MGJSON] {
+                var list: [MGJSON] = [], seen = Set<String>()
+                for v in ids {
+                    guard case .string(let id) = v else { list.append(v); continue }
+                    var cur = id
+                    for _ in 0...MGSolidComponentLimits.depth { guard let a = out.aliases[cur] else { break }; cur = a }
+                    let names = out.groups[cur] ?? [cur]
+                    for n in names where seen.insert(n).inserted { list.append(.string(n)) }
+                }
+                return list
+            }
             result["steps"] = .array(steps.map { s in
                 guard case .object(var so) = s else { return s }
-                for key in ["focus", "highlight"] {
+                for key in stepListKeys {
                     guard case .array(let ids)? = so[key] else { continue }
-                    var list: [MGJSON] = []
-                    for v in ids {
-                        guard case .string(let id) = v else { list.append(v); continue }
-                        var cur = id
-                        for _ in 0...MGSolidComponentLimits.depth { guard let a = out.aliases[cur] else { break }; cur = a }
-                        let names = out.groups[cur] ?? [cur]
-                        for n in names where !list.contains(.string(n)) { list.append(.string(n)) }
-                    }
-                    so[key] = .array(list)
+                    so[key] = .array(expandList(ids))
+                }
+                if case .object(var sec)? = so["section"], case .array(let ids)? = sec["parts"] {
+                    sec["parts"] = .array(expandList(ids))
+                    so["section"] = .object(sec)
                 }
                 return .object(so)
             })

@@ -197,9 +197,7 @@ public final class MGExplainerController: ObservableObject {
     /// The solid's pose at `now`: the beat's explode, and its spin played so far.
     public func solidPose(at now: Duration) -> MGPoseParameters {
         guard let d = session.solid else { return MGPoseParameters() }
-        let step = session.presented.step
-        return MGPoseParameters(input: d.defaults.input + (step?.spin ?? 0) * 2 * .pi * spinProgress(at: now),
-                                explode: step?.explode ?? d.defaults.explode)
+        return session.presented.step?.poseParameters(defaults: d.defaults, spin: spinProgress(at: now)) ?? d.defaults
     }
 
     nonisolated func markBoardFrame() { boardFrame.hit(clock) }
@@ -209,8 +207,9 @@ public final class MGExplainerController: ObservableObject {
         guard let r = renderer, let d = session.solid else { return }
         let step = session.presented.step
         let p = MGSolidCamera.presets[step?.camera ?? "hero"] ?? MGSolidCamera.presets["hero"]!
-        let params = MGPoseParameters(input: d.defaults.input, explode: step?.explode ?? d.defaults.explode)
-        r.frame(params, explodeRange: [0, params.explode], yaw: p.yaw + (step?.orbit ?? 0), pitch: p.pitch, aspect: aspect, margin: 0.8)
+        let params = MGPoseParameters(input: d.defaults.input, explode: step?.explode ?? d.defaults.explode, placements: step?.pose ?? [:])
+        r.frame(params, explodeRange: [0, params.explode], yaw: p.yaw + (step?.orbit ?? 0), pitch: p.pitch, aspect: aspect, margin: 0.8,
+                hidden: Set((session.presented.solid ?? d.view(step: nil)).hiddenParts))
     }
 
     private func applyPose() {

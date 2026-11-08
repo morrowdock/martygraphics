@@ -78,8 +78,10 @@ enum MGSolidFrames {
 
     /// Idle joints and frame lints, in part order (for each part: idle, absolute child, far child, axis off). A
     /// `repeat` copy reports its base id once.
-    static func lints(_ doc: MGSolidDocument) -> [MGSolidIssue] {
-        let a = doc.assembly
+    /// `placements`: a step's pose (`MGSolidStep.pose`); the lints then read the parts at that pose.
+    static func lints(_ doc: MGSolidDocument, placements: [String: MGTransform] = [:]) -> [MGSolidIssue] {
+        var a = doc.assembly
+        for i in a.parts.indices { if let t = placements[a.parts[i].id] { a.parts[i].placement = t } }
         let byID = Dictionary(a.parts.map { ($0.id, $0) }, uniquingKeysWith: { x, _ in x })
         let rest = restWorld(a)
         let posed = a.pose(MGPoseParameters()).world

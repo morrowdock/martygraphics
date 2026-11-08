@@ -128,10 +128,11 @@ enum MGSolidAnnotationMotion {
     /// The exact range of a dimension with `over` over one input turn (`0...2π`) at an explode value. Exactly one anchor
     /// may move, by one prismatic joint (a linear drive or a crank-slider) and nothing else; the other anchors are
     /// world-fixed. Distances along an axis and straight distances only. Otherwise `dimension.over.motion.<id>`.
-    static func range(_ d: MGSolidDimension, _ doc: MGSolidDocument, explode: Double) throws -> Double {
+    static func range(_ d: MGSolidDimension, _ doc: MGSolidDocument, explode: Double,
+                      placements: [String: MGTransform] = [:]) throws -> Double {
         let fail = MGSolidIssue("dimension.over.motion.\(d.id)", part: d.id)
         guard d.kind == .distance else { throw fail }
-        let pose = doc.assembly.pose(MGPoseParameters(input: 0, explode: explode))
+        let pose = doc.assembly.pose(MGPoseParameters(input: 0, explode: explode, placements: placements))
         let points = [d.a, d.b]
         let moving = points.filter { !worldFixed(doc, $0, pose) }
         guard moving.count == 1, let p = moving.first, let other = points.first(where: { $0 != p }) else { throw fail }
@@ -176,14 +177,21 @@ extension MGSolidAnnotationEngine {
         return (doc.defaults.input, s.spin, s.explode ?? doc.defaults.explode)
     }
 
+    /// The placements a view shows: the step's `pose` (empty for the plain view and a step without one).
+    static func placements(_ doc: MGSolidDocument, step: Int?) -> [String: MGTransform] {
+        guard let i = step, doc.steps.indices.contains(i) else { return [:] }
+        return doc.steps[i].pose
+    }
+
     /// A dimension's value holds over a view: with `over`, its exact range at the view's explode value equals the
     /// fact; without, it is constant during the view (no motion, or rigid anchors) and equals the fact at the view's
     /// pose.
     static func dimensionHolds(_ d: MGSolidDimension, _ doc: MGSolidDocument, step: Int?) -> Bool {
         let (u0, spin, e) = domain(doc, step: step)
+        let placed = placements(doc, step: step)
         let tol = 1e-9 * max(1, abs(d.value), doc.annotations.diagonal)
-        if d.over { return (try? MGSolidAnnotationMotion.range(d, doc, explode: e)).map { abs($0 - d.value) <= tol } ?? false }
-        let pose = doc.assembly.pose(MGPoseParameters(input: u0, explode: e))
+        if d.over { return (try? MGSolidAnnotationMotion.range(d, doc, explode: e, placements: placed)).map { abs($0 - d.value) <= tol } ?? false }
+        let pose = doc.assembly.pose(MGPoseParameters(input: u0, explode: e, placements: placed))
         if spin != 0 {
             let pts = [d.a, d.b, d.vertex].compactMap { $0 }
             guard pts.allSatisfy({ MGSolidAnnotationMotion.linearChain(doc, $0.part) }),
@@ -209,7 +217,8 @@ extension MGSolidAnnotationEngine {
         for step in [nil] + doc.steps.indices.map({ Optional($0) }) {
             let (u0, spin, e) = domain(doc, step: step)
             let sense: Double = spin < 0 ? -1 : 1
-            let pose = doc.assembly.pose(MGPoseParameters(input: u0, explode: e))
+            // A posed step is checked at its pose (`MGSolidStep.pose`): gravity arrows, `expect` and dimensions.
+            let pose = doc.assembly.pose(MGPoseParameters(input: u0, explode: e, placements: placements(doc, step: step)))
             let shown = doc.visibleAnnotations(step: step)
             func fail(_ id: String) -> MGSolidIssue { MGSolidIssue("annotation.pose.\(id)", part: id) }
             for id in a.ids where shown.contains(id) {
@@ -273,6 +282,8 @@ extension MGSolidDocument {
         // Exact poses, no tolerance: the step's explode value, and the default input (a still step) or an input from
         // the default input to its end, `defaults.input + spin * 2 * .pi` (the same expression as the render plan).
         guard params.explode == e, params.input.isFinite else { return nil }
+        // The step's pose exactly (no placement for any other step's pose or a pose between two steps).
+        guard params.placements == MGSolidAnnotationEngine.placements(self, step: view.step) else { return nil }
         if spin == 0 { return params.input == u0 ? view.annotations : nil }
         let u1 = u0 + spin * 2 * .pi
         guard params.input >= min(u0, u1), params.input <= max(u0, u1) else { return nil }
@@ -290,7 +301,11 @@ extension MGSolidDocument {
         for p in assembly.parts {
             t += "part \(p.id) \(p.parent ?? "-") \(p.placement) \(p.joint) \(String(describing: p.drive)) \(p.explode) \(p.explodeWindow)\n"
         }
-        for s in steps { t += "step \(s.spin) \(String(describing: s.explode)) \(String(describing: s.annotate)) \(s.say)\n" }
+        for s in steps {
+            t += "step \(s.spin) \(String(describing: s.explode)) \(String(describing: s.annotate)) \(s.say)\n"
+            for id in s.pose.keys.sorted() { t += "pose \(id) \(s.pose[id]!)\n" }
+            if !s.hide.isEmpty || !s.show.isEmpty { t += "hide \(s.hide) show \(s.show)\n" }
+        }
         t += "annotations \(annotations)\n"
         for name in facts.keys.sorted() { let f = facts[name]!; t += "fact \(name) \(f.value) \(f.unit) \(f.tier)\n" }
         for k in aliases.keys.sorted() { t += "alias \(k) \(aliases[k]!)\n" }

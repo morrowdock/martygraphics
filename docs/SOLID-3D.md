@@ -455,6 +455,120 @@ parts behind them, and emissive parts glow with the camera's bloom.
 `marty-solid check` lists every step section (parts, cap triangles, cap loops, closed),
 and `marty-solid render` shows each step with its section and ghosts.
 
+## Step pose and step visibility (v2)
+
+A v2 step (and an explainer beat `view`) can move parts for that step only, and can hide
+parts or show a part only in some steps.
+
+```json
+{"say": "Moving the arms aims the thrust.", "pose": {"pilot": {"with": {"leftShoulder": 40}}, "pilot.lowerArmR": {"rot": [-1, 0, 0, 50]}}, "show": ["plumeL"]},
+{"say": "Inside one engine.", "hide": ["pilot"], "highlight": ["back"]}
+```
+
+### Pose
+
+`pose` is an object of 1–16 entries (`step.pose`). Each entry names what it moves:
+
+* a **component instance** (a top-level `use` id) takes `with`: parameter values merged
+  into the entry's own `with` (`{"pilot": {"with": {"leftShoulder": 40}}}`);
+* an **authored part** takes `rot` ([axisX, axisY, axisZ, degrees]), which replaces the
+  part's own `rot` and keeps its `at`;
+* a **part inside an instance** (`pilot.upperArmL`, or an anchor that names it,
+  `pilot.leftShoulder`) takes `rot` the same way, through the `use` entry's `set`.
+
+A key the id does not take, or a bad `rot`, is `step.pose.key`; an id that names none of
+these, a `repeat` copy, or one part named twice is `step.pose.ref` (the report's `part`
+gives the id). The engine checks each posed step against a compile of the whole
+document with that pose applied:
+
+* **Only placements change.** The parts, their order, shapes, names, materials,
+  parents, joints, explode vectors and windows, opacity and light must stay the same. A
+  `with` value out of range, an unknown parameter, a failed component check, or a value
+  that changes more than placements (a `microTurbojet` diameter) is `step.pose.with`.
+* **No solved mechanism moves.** A moved part (its placement changed, or it hangs below
+  one) may not be a gear pair member or carrier, the part or source of a gear-mesh or
+  crank drive, or a part the solver holds (`fixed`, `gearMesh`). The compiled motion
+  (drives, ratios, motion sources, gear pairs), every drive tier and every engine fact
+  must be unchanged. Otherwise `step.pose.solved`. So a pose never changes a number the
+  step can show: its caption, checks and annotations use facts that hold at the pose,
+  because they are the same facts. A mannequin's arms carrying engines may be posed (the
+  engines' shafts turn by `input` drives); a gear in a mesh may not.
+* **Facts at the pose.** Every fact a posed step displays (its caption, its `check`
+  claims, the title and the text of every annotation it shows) must hold over the step's
+  whole motion domain at its pose: every input its `spin` plays, at its explode value and
+  placements. Joint and shape facts are the same facts (the rule above). A `dim.<id>` fact
+  follows the rule shown dimensions follow (`dimensionHolds`): with `spin`, its anchors
+  must keep their relative place during the motion, and its value at the pose must equal
+  the measured value within 1e-9 × max(1, |value|, model diagonal) (the exact range with
+  `over`). Otherwise the step is refused (`step.pose.fact`, `part` names the fact), also
+  when no annotation shows the dimension. The `check` claims of an unposed step follow
+  the same rule. So a `check` on a dimension can never stay "Checked" at a pose, or
+  during a spin, where it is false.
+* **The step is re-checked at its pose.** Gravity arrows, motion arrow `expect`,
+  dimensions and every `dim.<id>` fact that the step shows are checked at the posed
+  placements (`annotation.pose.<id>`, `text.pose.step.<n>`), and the frame lints run at
+  each pose too (a posed child far from its parent adds `frame.child.far.<id>`).
+
+The pose applies to that step only: its still, its story hold, its snapshot
+(`MGSolidSnapshot.make` with `MGSolidStep.poseParameters`), its framing and its
+unblocked-focus test. The plain view, `hero.png`, `exploded.png`, the loop and other
+steps keep the authored placements. In `story.mp4` the camera move into a step also
+moves the parts from the previous step's pose to this one (`MGStoryPlan.placements`,
+rotation by quaternion slerp, translation in a straight line, eased with the camera),
+with a real render at every frame; a cut jumps. While the parts move between two
+different poses, no annotation is drawn (no label, arrow or dimension): the one gate
+(`checkedAnnotations`) accepts only a step's own pose. Each posed step costs one more
+compile of the document without its steps, annotations and title, reusing every mesh (measured
+on the test Mac: 16 posed steps of a 76-part figure add about 0.07 s to `check`, release
+build).
+`MGSolidStep.pose` gives the posed placements (part id → placement in the parent frame);
+`MGPoseParameters.placements` carries them through every pose function.
+
+Read-back: the check report's `stepViews` lists, per step, `posed` (the parts whose own
+placement changed) and `poseReadBack` (one line per moved part: world centre, size and
+local +Z at the pose, `MGSolidDocument.poseReadBack`). A snapshot of a posed step lists
+the posed parts in `posed`.
+
+Not checked: collisions between posed parts, joint limits of a figure beyond the
+component's parameter ranges, and the poses in between two steps (the story blend) are
+not checked against any rule; `MGStoryPlan.blockedMoves` tests each beat's end pose only,
+and it still counts hidden parts (so a move may cut where it need not).
+
+### Hide and show
+
+`hide` and `show` are arrays of 1–16 part ids (`step.hide`, `step.show`; an instance id
+is one entry and names all its parts; a `repeat` base names every copy). A part that any
+step lists in `show` is **show-only** (`MGSolidDocument.showOnly`): it shows only in the
+steps that list it, and the plain view, `hero.png`, `exploded.png`, the loop and the
+other steps hide it. `hide` hides parts in its step only. Hiding a part does not hide
+the parts attached to it.
+
+A hidden part is not drawn (`MGSolidPartView.hidden`, `MGSolidDocument.hiddenParts`),
+is left out of every framing rule (focus context, whole model, hero, loop), never hides
+another part (unblocked focus, label occlusion) and makes no claim in that view:
+
+* a step may not list a part in both `hide` and `show` (`step.hide.both`);
+* a step may not focus, highlight, ghost or cut a part it hides (`step.hide.use`; a
+  show-only part a step does not show counts as hidden there);
+* no annotation the step shows may be anchored on a hidden part (`step.hide.claim`; in
+  the plain view, an annotation on a show-only part: `step.show.claim`);
+* no displayed fact may belong to a hidden part: the text of every annotation the view
+  shows, and the step's caption and `check` (`step.hide.fact`, `part` names the fact).
+  The title shows in every frame, so it may not show a fact of a part that any view
+  hides, the plain view included. The facts of a part are `<part>.<name>`, a `repeat`
+  base's shared facts and `count.<base>`, `<instance>.ratio` (its input and output
+  anchors) and `dim.<id>` (the dimension's anchors);
+* a part that every view hides (the plain view, so `hero.png`, and every step) is never
+  seen: it makes no motion claim in the legend. In an explainer the legend counts the
+  motion of a part only once a presented beat displayed it (docs/EXPLAINER.md).
+
+`MGSolidRenderer.show(_:)` hides their nodes; `MGSolidRenderer.worldBounds(_:…hidden:)` and
+`frame(_:…hidden:)` take the parts to leave out (the SwiftUI explainer view passes the beat
+view's `hiddenParts`). The snapshot of a view keeps every part range in part order and gives hidden parts no
+triangles; it lists them in `hidden` (v2). The check report's `stepViews` gives each
+step's `hidden` parts and `showOnly`. In `story.mp4` a beat shows its own visibility for
+the whole beat (move and hold), like its cuts and ghosts.
+
 ## Annotations (v2)
 
 A v2 assembly can label parts, draw arrows and show measured dimensions. The engine computes every
@@ -500,11 +614,13 @@ name (`stage.output`) are accepted. A base id with copies and an instance id nam
 Label, arrow and dimension text follows the v2 caption rules: placeholders with the modifiers
 `inv`, `frac`, `pct` and `deg`, and rule N1 (`text.number.label.<id>`, `text.number.arrow.<id>`,
 `text.number.dimension.<id>`). `abs` is refused (`text.sign.<name>`): no step proves a sign for an
-annotation. Filled text is 1–40 Unicode scalars, authored text at most 160 (`label.text.<id>`,
+annotation. Filled text is 1–60 Unicode scalars, authored text at most 240, and no character (grapheme cluster) of
+the authored text may hold more than 8 scalars (`text.grapheme`, `part` names the annotation) (`label.text.<id>`,
 `arrow.text.<id>`, `dimension.text.form.<id>`). A label or arrow may carry `"unchecked": "<why>"`
 (1–60, `label.unchecked.<id>`, `arrow.unchecked.<id>`; an arrow needs `text` for it,
 `arrow.unchecked.text.<id>`): its text may
-then type numbers and its claim is Described.
+then type numbers and its claim is Described. A filled text over 40 scalars draws on two lines
+(`MGAnnotationLayout.lines`, see Placement).
 
 Annotation claims (kind `annotation`, id = the annotation id) come after the motion claims, in
 authored order: labels, arrows, dimensions. The legend counts them. When any non-pointer arrow has no
@@ -543,14 +659,20 @@ Force, flow and pointer arrows shorter than 0.5 mm at the default input are `arr
 A motion line arrow's `length` is a number in mm (10–4000) or `{"fact": "<name>", "scale": s}` (mm per
 unit, 0.001–1000): its length is then |fact| × s, clamped to 5–4000 mm, and the arrow claims a
 magnitude (`arrow.length.form.<id>`, `arrow.length.fact.<id>` for an unknown fact). The default length
-is 15 % of the model's bounding diagonal at the default input.
+is 15 % of the model's bounding diagonal at the default input (in a step, of its motion arrow size; see below).
 
 While a view plays, a motion line arrow follows the exact velocity at each pose; it hides while its anchor has no
 velocity. A turn arrow rides
 the frame its part turns in (the parent frame), so it does not spin with the part.
 
 Appearance (the same in every renderer): shaft radius 0.6 % of the bounding diagonal, head 4 shaft
-radii long and 2.5 wide. Colour roles: force `warn`, flow `accent`, motion `good`, pointer `ink` (the
+radii long and 2.5 wide. **Motion arrows** (turn and line) take the step's focus size instead
+(`MGSolidDocument.motionArrowDiagonal(step:)`): in a step with a `focus`, or else a `highlight` or
+`section`, the diagonal of those parts' posed box, when it is at most 75 % of the model's diagonal; the
+plain view and other steps keep the model's diagonal. Their shaft, head and automatic line length scale
+with it, and a turn arc's radius is the larger of 8 shaft radii and 1.15 × the part's widest radius
+about its axis. So the turn arrow of a small shaft seen close up stays near the shaft instead of
+covering the cutaway. Force, flow and pointer arrows and dimension lines keep the model's size. Colour roles: force `warn`, flow `accent`, motion `good`, pointer `ink` (the
 theme's ink colour, the `white` role); dimension lines are `ink`. Arrows and dimension lines are not
 cut, not ghosted and cast no shadow.
 
@@ -659,7 +781,7 @@ view or pose that the engine did not check shows no annotations. `marty-solid re
 | --- | --- | --- |
 | Labels, arrows, dimensions per document | 32, 32, 16 (`MGSolidAnnotationLimits`) | `labels.count`, `arrows.count`, `dimensions.count` |
 | Visible at once | 12 | `annotations.visible`, `step.annotate.count` |
-| Text | 1–40 scalars filled, 160 authored; `unchecked` 1–60 | as above |
+| Text | 1–60 scalars filled (two lines over 40), 240 authored; `unchecked` 1–60 | as above |
 | Occlusion ray tests | 2,000,000 triangle tests per frame | over it, `occluded` is null and the anchor is drawn as visible |
 
 Arrow and dimension pieces join the mesh budget with exact counts before any mesh is built: a line
@@ -673,8 +795,17 @@ snapshot call it through `MGSolidAnnotations.frame(document:view:params:camera:�
 
 1. A core perspective projection of `MGSolidCamera` (`MGAnnotationProjection`, the same as
    `MGSolidRenderer.project`).
-2. Text box: font f = clamp(round(0.022 × view height), 11, 20) px; box width 0.58 × f × scalars + 12 px,
-   height 1.3 × f + 8 px. Renderers shrink their font until the real text fits the box (`MGSolidOverlay.fit`).
+2. Text box: font f = clamp(round(0.022 × view height), 11, 20) px; box width 0.58 × f × (scalars of the
+   longest line) + 12 px, height 1.3 × f × lines + 8 px. A text up to 40 scalars is one line (its box is the
+   same as in earlier releases); a longer one (at most 60) breaks into two at the space nearest its middle
+   whose halves are at most 40 scalars each (else at the middle character boundary;
+   `MGAnnotationLayout.lines`). A line still over 40 scalars (no legal break, for example a host's text over 80
+   scalars) is cut at a character boundary and ends in "…". So a box is at most 0.58 × f × 40 + 12 px wide and
+   2.6 × f + 8 px high, whatever the text. Tests cover CJK, emoji and combining-mark text.
+   Renderers draw one row per line and shrink their font until every real line fits the box
+   (`MGSolidOverlay.fit`). A test lays out five 60-scalar labels at 1280×720, 1280×800, 1440×720,
+   1280×1280, 1280×2560, 1920×1080, 3840×2160 and 1600×3200: every box inside the view, none
+   overlapping, every line fitted, the same layout twice.
 3. Safe frame: the view inset by 12 px, minus the bottom 20 % when a caption shows, minus a top band of
    14 % when the host draws a title (the CLI does); the top-right legend corner (30 % × 10 %) is excluded.
 4. Candidates: 8 directions at 24, 48 and 72 px. The first points away from the projected model centre
@@ -944,8 +1075,9 @@ part that the root parts are attached to) and `set`.
   and `repeat` copies `stage.planet1…3`. Constraints, drives, parents, anchors and
   steps refer to them by these ids: the base id (`stage.planet`) means every copy, a
   copy id (`stage.planet2`) one copy. An anchor (`stage.input`, `stage.output`) names an
-  inner part. The instance id alone (`stage`) means all its parts in a step `focus` or
-  `highlight`; anywhere else it is refused (`ref.component.stage`). Authored ids are
+  inner part. The instance id alone (`stage`) means all its parts in a step `focus`,
+  `highlight`, `ghost`, `hide`, `show` or `section.parts`; anywhere else it is refused
+  (`ref.component.stage`). Authored ids are
   plain identifiers (no dot, at most 24 characters, `part.id`).
 * **One namespace.** Part ids, `repeat` copy ids, instance ids and anchor names share
   one namespace, inside each component and over the whole document, checked again for
@@ -973,12 +1105,21 @@ part that the root parts are attached to) and `set`.
   A `parts.resolved` report adds `limit`: `{"count", "limit": 96, "top"}`, where `top`
   lists up to 5 `use` instances with the most resolved parts (`{"id", "use", "parts"}`,
   most parts first, ties by id), so a model sees which components to drop or shrink.
-* **Step lists.** A step's `focus` and `highlight` hold at most 16 entries as authored
-  (`step.focus`, `step.highlight`). Then anchors resolve, instance ids expand to their
-  wire part ids and duplicates merge; that list of wire names must also hold at most
-  16 entries. A repeated part's base id then expands to all its copies, as in any
-  document, and the copies are not counted: two instances with repeats can give more
-  than 16 resolved parts.
+* **Step lists.** A step's `focus`, `highlight`, `ghost`, `hide`, `show` and
+  `section.parts` hold at most 16 entries as authored (`step.focus`, `step.highlight`,
+  `step.ghost`, `step.hide`, `step.show`, `step.section.parts`): **an instance id is one
+  entry**. Then anchors resolve, instance ids expand to their wire part ids and
+  duplicates merge; the expanded list is not limited to 16 (it is bounded by the 96
+  resolved parts). So five `microTurbojet` instances (11 parts each) in one `highlight`
+  are 5 entries that light 55 parts. A repeated part's base id then expands to all its
+  copies, as in any document.
+* **`explode` (v2).** A top-level `use` entry in a v2 assembly may take `explode` (three
+  coordinates in mm, in the instance's parent frame, like a part's `explode`): it is
+  added to the explode of every root part of the instance (the parts without a
+  `parent` inside it), so the whole instance moves out together at full explode. Inner
+  parts ride on their roots and keep their own explode, and each root keeps its own
+  `explodeWindow`. Refusals: `component.use.explode` (not three coordinates in
+  -4000...4000, also after the sum), `component.use.unknown.explode` in v1.
 
 ### Definitions
 
@@ -1113,9 +1254,8 @@ stay countable for `repeat` (at most 12 copies each).
  "with": {"diameter": 270, "vanes": 7, "diffuserVanes": 11, "bore": 19}}
 ```
 
-A step may highlight the whole stage with its instance id (`"highlight": ["comp"]`);
-`ghost` takes part ids, so list the base ids (`comp.impeller`, `comp.vane`,
-`comp.splitter`, `comp.diffuser`, `comp.diffuserVane`). The shapes are schematic: the
+A step may highlight, ghost, hide or cut the whole stage with its instance id
+(`"highlight": ["comp"]`, `"ghost": ["comp"]`; one entry each). The shapes are schematic: the
 vanes are flat-topped extrusions in three height steps rather than a curved shroud
 line, and no air flow, pressure or speed is computed.
 
@@ -1211,7 +1351,10 @@ the tool and any host use the same cameras.
 * **Whole model.** Other stills keep the bounding-sphere framing of earlier releases
   unless a part or an annotation anchor would leave the image or enter the caption
   band; only then is the still fitted like a focus. Earlier stills could reach into the
-  title band; a fitted still keeps it free too.
+  title band; a fitted still keeps it free too. **`hero.png`** keeps the title band free
+  always: its earlier framing stays only when the model and its annotation anchors clear
+  the title band as well, otherwise it is fitted (`modelFitted`), so the model never
+  sits under the title. Parts the view hides are left out of every rule.
 * **Safe window.** The image minus the caption band (stills with a caption) and minus
   the title band (stills with a title). `MGSolidRenderPlan.bands(width:height:)` gives
   them as fractions of the height: the bands the tool draws (120 and 100 px at
@@ -1257,7 +1400,10 @@ or legend text and get no backdrop.
 Text readability is guaranteed (every interior stroke row of every glyph of the title, the
 legend line, the legend corner, the board line and the caption at least 4.5:1, also over a
 pure white render) for frames at least 1280 px wide and 720 px tall, up to 3840 px wide,
-with an aspect ratio (width ÷ height) from 0.5 to 2.0. The caption band uses 84 % black,
+with an aspect ratio (width ÷ height) from 0.5 to 2.0. The compositor test covers frames up
+to 1280×2560 and 1600×3200, but `marty-solid render --size` accepts heights only up to 2160
+(widths 320–3840). So the CLI cannot render an aspect of 0.5 inside the guarantee (1080×2160
+is narrower than 1280 px); its tallest guaranteed frame is 1280×2160 (aspect about 0.59). The caption band uses 84 % black,
 the title band and its legend corner 88 %, the legend line is medium weight at 85 % ink,
 and the explainer board line is semibold in full ink. Smaller frames are still rendered,
 but their smallest text falls below about 10 px and is not guaranteed to meet 4.5:1;
@@ -1360,8 +1506,12 @@ as its stills. The plan is
 | Rate and size | 30 frames per second by default (`--story-fps 10` or `30`), at the still size (default 1280 × 800) |
 | Length | at most 3,600 frames (2 minutes at 30 fps); a longer story is refused with `story.frames` before any file is written (`--no-story` renders without it) |
 
-Every frame is a real render at its pose and camera. Only the camera is in between two
-beats. The view, the highlight and the pose change at the beat's first frame; the
+Every frame is a real render at its pose and camera. Only the camera, and the placements of
+a step `pose`, are in between two beats: during the camera move into a beat the parts that
+either beat poses move from the previous beat's placements to this beat's with the same
+eased blend as the camera (`MGStoryPlan.placements`), and the hold shows the beat's own pose.
+The view (cuts, ghosts, hidden and shown parts), the highlight and the input and explode
+change at the beat's first frame; the
 caption, the labels and (in an explainer) the board's new state appear when the hold
 starts, so a caption never names something the camera has not reached yet, and a
 caption with a number shows only while its own beat's state is on screen at the beat's
@@ -1408,13 +1558,16 @@ compiled document (format v2, below):
 | `section` | the step's plane in the snapshot's world frame (Y up, mm): `normal` (unit), `offset` (points with `normal · p > offset` are cut away) and the cut `parts` |
 | `annotations` | the step's [annotations](#annotations-v2) (absent when it shows none): `arrows[]` (`id`, `meaning`, `style`, world `from` and `to`, unit `direction`, `colorRole`, `tier`, `text`, `firstTriangle`, `triangleCount`), `dimensions[]` (`id`, `kind`, world `points`, `value`, `unit`, `text`, `tier`, triangle range), `labels[]` (`id`, world `anchor`, filled `text`, `tier`, `chip`) and `placement[]` (see Placement; a step snapshot assumes a caption band). Arrow and dimension triangles come after every part triangle, so part ranges never move; their materials are `annotation.<role>`. They do not change the bounds or the default framing. |
 | `highlight` | highlighted part ids (`MGSolidSnapshot.make(_:step:params:highlight:…)`; absent when none) |
+| `hidden` | ids of the parts the view hides ([step visibility](#hide-and-show)), in part order; their ranges hold no triangles and they are neither highlighted nor cut (absent when none) |
+| `posed` | ids of the parts whose placement the exported pose changes ([step pose](#pose)), in part order; the positions are already posed (absent without a pose) |
 
 The decoder dispatches on `format`. A `/1` file keeps exactly its v1 meaning: its bytes
 are unchanged for the same assembly, and a `/1` file with any v2 field fails to decode. A
 `/2` file is checked too (an opacity on every part, cap ranges inside their part, a unit
 section normal, known section parts, three-number emission colours, and for annotations: finite
 points, unit arrow directions, known meanings, roles and tiers, unique ids, triangle ranges after the
-parts, in order and inside the list, placements of known ids, known highlight parts). A `/2` export
+parts, in order and inside the list, placements of known ids, known highlight parts; `hidden` and `posed`
+list known parts once each, and a hidden part has no triangles, no cap and no highlight). A `/2` export
 of a document without annotations and without highlight has the same bytes as before annotations
 existed.
 

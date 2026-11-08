@@ -613,7 +613,12 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                 }
                 let step = doc.steps[f.beat]
                 var s = base
-                s.params = MGPoseParameters(input: doc.defaults.input + step.spin * 2 * .pi * f.spin, explode: base.params.explode)
+                s.params = step.poseParameters(defaults: doc.defaults, spin: f.spin)
+                // The camera move into a step also moves the parts from the previous step's pose to this one (real
+                // renders at each blended pose); a cut jumps. The hold shows the step's own pose.
+                if f.camera < 1, f.beat > 0, !cuts.contains(f.beat) {
+                    s.params.placements = MGStoryPlan.placements(doc.assembly, from: doc.steps[f.beat - 1].pose, to: step.pose, f.camera)
+                }
                 // The step's view with its still's automatic ghosts, for the whole beat (move and hold).
                 let view = doc.view(step: f.beat).ghosting(beatClear[f.beat]?.autoGhost ?? [])
                 if shownStep != f.beat {
@@ -799,11 +804,15 @@ struct ExplainerBeatShot {
     /// `MGExplainerFrame.solidCamera` for the pane's own pixels, as in a still. `labels`: draw the annotation overlay
     /// (the story hides it while the camera moves). `stable`: keep label places from the last frame. `ghost`: the
     /// beat's automatic ghosts when `camera` is given (a still frames itself and takes its own, `lastClear`).
+    /// `from`, `blend`: in a story camera move, the previous beat's pose placements and the move's progress (0...1);
+    /// the parts move from that pose to this beat's pose with the camera.
     func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Double = 1, stepIndex: Int? = nil, camera: MGSolidCamera? = nil,
-                    labels: Bool = true, stable: Bool = false, ghost: [String] = []) throws -> CGImage? {
+                    labels: Bool = true, stable: Bool = false, ghost: [String] = [], from: [String: MGTransform]? = nil,
+                    blend: Double = 1) throws -> CGImage? {
         guard let r = renderer, let d = solidDoc else { return nil }
         let pane = frameRect(rect)
-        let params = MGExplainerFrame.pose(d, view: view, spin: spin)
+        var params = MGExplainerFrame.pose(d, view: view, spin: spin)
+        if let from, blend < 1 { params.placements = MGStoryPlan.placements(d.assembly, from: from, to: params.placements, blend) }
         var framed: MGSolidClearView?
         if camera == nil { framed = MGExplainerFrame.solidClearView(d, view: view, stepIndex: stepIndex, pane: pane) }
         // The beat's view with the automatic ghosts of the unblocked-focus rule (`MGSolidFraming.clearView`).
@@ -903,7 +912,7 @@ struct ExplainerBeatShot {
         shots.append(ExplainerBeatShot(view: view, caption: line, board: b, rects: rects, boardLine: pane.shown ? nil : pane.line,
                                        stepIndex: step, camera: lastCamera, clear: lastClear))
         if snapshots, let d = solidDoc {
-            let params = MGPoseParameters(input: d.defaults.input + (view.step?.spin ?? 0) * 2 * .pi, explode: view.step?.explode ?? d.defaults.explode)
+            let params = MGExplainerFrame.pose(d, view: view)
             let name = "snapshot-beat-\(k + 1).json"
             try MGSolidSnapshot.make(d, step: session.solidStep(forBeat: k), params: params).jsonData().write(to: out.appendingPathComponent(name))
             try record(name, [:])
@@ -971,8 +980,11 @@ struct ExplainerBeatShot {
                 let b = shots[f.beat]
                 let camera = story.camera(frame: i, beatCameras: beatCameras, cuts: cuts)
                 let holding = story.holds(frame: i, cuts: cuts)
+                let moving = f.camera < 1 && f.beat > 0 && !cuts.contains(f.beat)
                 let sImg = try b.rects.solid.flatMap { try solidImage(b.view, $0, spin: f.spin, stepIndex: b.stepIndex, camera: camera,
-                                                                      labels: holding, stable: settled == f.beat, ghost: b.clear?.autoGhost ?? []) }
+                                                                      labels: holding, stable: settled == f.beat, ghost: b.clear?.autoGhost ?? [],
+                                                                      from: moving ? (shots[f.beat - 1].view.step?.pose ?? [:]) : nil,
+                                                                      blend: f.camera) }
                 settled = holding ? f.beat : nil
                 if holding, let camera { holdCamera[f.beat] = camera; if let n = lastOffView { holdOffView[f.beat] = n } }
                 // A beat's caption, labels and board claims appear when its hold starts. During the camera move the

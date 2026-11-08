@@ -179,7 +179,8 @@ extension MGSolidFraming {
             let fset = Set(focus)
             var shown: [(part: MGPart, mesh: MGMesh, t: MGTransform, box: MGBounds)] = []
             var whole = MGBounds.empty, focusBox = MGBounds.empty
-            for p in doc.assembly.parts {
+            // A hidden part is not drawn: it neither hides samples nor joins the focus group.
+            for p in doc.assembly.parts where !view.part(p.id).hidden {
                 let mesh = view.part(p.id).cut?.mesh ?? p.mesh
                 let t = pose.world[p.id] ?? .identity
                 let b = MGSolidFrames.worldBounds(mesh.bounds, t)
@@ -209,7 +210,7 @@ extension MGSolidFraming {
             var group = fset
             for x in shown where below(x.part.id) || inside(x.box) { group.insert(x.part.id) }
             context = s.focus.isEmpty ? group
-                : group.union(MGSolidFraming.context(doc, core: fset, ghost: Set(s.ghost), params: params, stage: stage))
+                : group.union(MGSolidFraming.context(doc, core: fset, ghost: Set(s.ghost), hidden: doc.hiddenParts(step: step), params: params, stage: stage))
             for x in shown {
                 let pv = view.part(x.part.id)
                 guard pv.opacity >= MGSolidFraming.blockingOpacity || fset.contains(x.part.id) else { continue }

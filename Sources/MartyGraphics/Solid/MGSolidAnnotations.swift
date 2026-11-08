@@ -16,8 +16,12 @@ public enum MGSolidAnnotationLimits {
     /// Largest default input (radians) of a document with annotations: 10,000 turns (`annotations.input`).
     public static let input = 2 * Double.pi * 10_000
     /// Filled text and `unchecked` text, in Unicode scalars. Authored text before filling may be up to
-    /// `rawTextFactor` times `text`.
-    public static let text = 40, unchecked = 60, rawTextFactor = 4
+    /// `rawTextFactor` times `text`. A filled text over `MGAnnotationLayout.lineScalars` (40) draws on two lines
+    /// (`MGAnnotationLayout.lines`).
+    public static let text = 60, unchecked = 60, rawTextFactor = 4
+    /// Most Unicode scalars in one grapheme cluster (one character) of annotation text (`text.grapheme`): a longer
+    /// cluster (a letter with dozens of combining marks) could not be measured or broken into lines.
+    public static let graphemeScalars = 8
     /// Triangle tests per frame for the occlusion ray test; over it, `occluded` is unknown (null).
     public static let occlusionTests = 2_000_000
     /// Motion line arrow `length` in mm, and `{"fact", "scale"}` scale (mm per unit) with the clamped result.
@@ -120,6 +124,8 @@ public struct MGSolidArrow: Equatable, Sendable {
     /// The arc of a turn arrow, in the part's joint frame: centre on the joint axis and radius (mm).
     public internal(set) var arcCentre: MGVec3 = .zero
     public internal(set) var arcRadius: Double = 0
+    /// The smallest arc radius that clears the part: 1.15 × the mesh's widest radius about the joint axis (mm).
+    public internal(set) var arcClearance: Double = 0
     /// Claim tier (see docs); nil when the arrow makes no claim (a pointer whose text shows no fact).
     public internal(set) var tier: MGSolidTier?
     /// True when the arrow's length shows a fact (it claims a magnitude).
@@ -291,7 +297,7 @@ extension MGSolidAnnotations {
             let id = try identify(lo, "label")
             do {
                 let at = try anchor(lo["at"]!, names, owner: id)
-                let template = try text(lo["text"]!, "label.text.\(id)")
+                let template = try text(lo["text"]!, "label.text.\(id)", id: id)
                 let unchecked = try lo["unchecked"].map { try MGSolidParser.text($0, L.unchecked, "label.unchecked.\(id)") }
                 out.labels.append(MGSolidLabel(id: id, at: at, template: template, text: template, unchecked: unchecked))
             } catch let e as MGSolidIssue { throw e.part == nil ? MGSolidIssue(e.reason, part: id) : e }
@@ -314,8 +320,11 @@ extension MGSolidAnnotations {
     }
 
     /// Authored annotation text: the solid text rule, at most `rawTextFactor × text` scalars before filling.
-    static func text(_ v: MGJSON, _ reason: String) throws -> String {
-        try MGSolidParser.text(v, L.text * L.rawTextFactor, reason)
+    /// `id`: the annotation, named by `text.grapheme`.
+    static func text(_ v: MGJSON, _ reason: String, id: String) throws -> String {
+        let t = try MGSolidParser.text(v, L.text * L.rawTextFactor, reason)
+        guard t.allSatisfy({ $0.unicodeScalars.count <= L.graphemeScalars }) else { throw MGSolidIssue("text.grapheme", part: id) }
+        return t
     }
 
     static func vector3(_ v: MGJSON?, _ reason: String) throws -> MGVec3 {
@@ -400,7 +409,7 @@ extension MGSolidAnnotations {
             guard v == .string("gravity") else { throw MGSolidIssue("arrow.cause.\(id)") }
             cause = "gravity"
         }
-        let template = try o["text"].map { try text($0, "arrow.text.\(id)") }
+        let template = try o["text"].map { try text($0, "arrow.text.\(id)", id: id) }
         let unchecked = try o["unchecked"].map { try MGSolidParser.text($0, L.unchecked, "arrow.unchecked.\(id)") }
         // `unchecked` marks the arrow's text; without text it would mark nothing.
         if unchecked != nil, template == nil { throw MGSolidIssue("arrow.unchecked.text.\(id)") }
@@ -427,7 +436,7 @@ extension MGSolidAnnotations {
         guard (kind == .angle) == (o["vertex"] != nil) else { throw MGSolidIssue("dimension.vertex.\(id)") }
         let a = try anchor(o["a"]!, names, owner: id), b = try anchor(o["b"]!, names, owner: id)
         let vertex = try o["vertex"].map { try anchor($0, names, owner: id) }
-        let template = try o["text"].map { try text($0, "dimension.text.form.\(id)") } ?? "{dim.\(id)}"
+        let template = try o["text"].map { try text($0, "dimension.text.form.\(id)", id: id) } ?? "{dim.\(id)}"
         return MGSolidDimension(id: id, kind: kind, a: a, b: b, vertex: vertex, along: along, over: over, template: template)
     }
 }
@@ -501,6 +510,7 @@ enum MGSolidAnnotationEngine {
             }
             let r = a.diagonal * L.shaftRadius
             a.arrows[i].arcCentre = lo <= hi ? n * ((lo + hi) / 2) : .zero
+            a.arrows[i].arcClearance = 1.15 * radial
             a.arrows[i].arcRadius = max(1.15 * radial, 8 * r)
         }
         doc.annotations = a
@@ -762,16 +772,25 @@ extension MGSolidAnnotations {
     /// Internal: renderers get pieces only through the checked paths (`MGSolidRenderer`, `MGSolidSnapshot.make`). A
     /// motion line arrow follows the exact velocity at the pose and hides while its anchor is still; a turn arrow rides its part's joint frame, so it does not spin with the part.
     /// `sense` −1 draws the motion of a view that plays the input backwards (`MGSolidView.motionSense`).
-    static func primitives(_ doc: MGSolidDocument, _ id: String, params: MGPoseParameters, sense: Double = 1) -> [MGAnnotationPrimitive] {
+    /// `step`: the view's step (`MGSolidView.step`); motion arrows take its size (`MGSolidDocument.motionArrowDiagonal`).
+    static func primitives(_ doc: MGSolidDocument, _ id: String, params: MGPoseParameters, sense: Double = 1,
+                           step: Int? = nil) -> [MGAnnotationPrimitive] {
         let a = doc.annotations
         let pose = doc.assembly.pose(params)
-        let sr = a.diagonal * MGSolidAnnotationLimits.shaftRadius, lr = a.diagonal * MGSolidAnnotationLimits.lineRadius
+        var sr = a.diagonal * MGSolidAnnotationLimits.shaftRadius
+        let lr = a.diagonal * MGSolidAnnotationLimits.lineRadius
         if let r = a.arrow(id) {
+            // Motion arrows (turn and line) are sized to the view's step focus, so a small spinning part in a close-up
+            // keeps a small arrow; other arrows keep the model's size.
+            let md = r.meaning == .motion ? doc.motionArrowDiagonal(step: step) : a.diagonal
+            if r.meaning == .motion { sr = md * MGSolidAnnotationLimits.shaftRadius }
             switch (r.meaning, r.style) {
             case (.motion, .turn):
                 guard let on = r.on, case .revolute(let axis)? = doc.assembly.part(on)?.joint else { return lineArrow(.zero, .zero, radius: sr) }
                 let f = jointFrame(doc, on, pose)
-                let pts = turnArc(r, axis: axis, headLength: 4 * sr, sense: sense).map(f.apply)
+                var sized = r
+                if md != a.diagonal { sized.arcRadius = max(r.arcClearance, 8 * sr) }
+                let pts = turnArc(sized, axis: axis, headLength: 4 * sr, sense: sense).map(f.apply)
                 var out = (0..<arcChords).map { segment(pts[$0], pts[$0 + 1], sr) }
                 out.append(MGAnnotationPrimitive(shape: .cone, start: pts[arcChords], end: pts[arcChords + 1], radius: 2.5 * sr, hidden: false))
                 return out
@@ -779,7 +798,9 @@ extension MGSolidAnnotations {
                 guard let from = r.from else { return lineArrow(.zero, .zero, radius: sr) }
                 let p = from.world(pose)
                 let dir = MGSolidAnnotationMotion.direction(doc, from, pose, sense: sense)
-                return lineArrow(p, p + (dir ?? .zero) * (r.length ?? 0), radius: sr, hidden: dir == nil)
+                var length = r.length ?? 0
+                if case .automatic = r.lengthSpec, md != a.diagonal { length = MGSolidAnnotationLimits.defaultLength * md }
+                return lineArrow(p, p + (dir ?? .zero) * length, radius: sr, hidden: dir == nil)
             default:
                 return lineArrow(r.from?.world(pose) ?? .zero, r.to?.world(pose) ?? .zero, radius: sr)
             }
@@ -826,10 +847,10 @@ extension MGSolidAnnotations {
     /// middle for a turn), a dimension line's midpoint (the arc's middle for an angle). Also the screen line the text
     /// is offset from (nil for labels and arcs).
     static func attach(_ doc: MGSolidDocument, _ id: String, _ pose: MGPose, _ params: MGPoseParameters,
-                       sense: Double = 1) -> (point: MGVec3, line: (MGVec3, MGVec3)?)? {
+                       sense: Double = 1, step: Int? = nil) -> (point: MGVec3, line: (MGVec3, MGVec3)?)? {
         let a = doc.annotations
         if let l = a.label(id) { return (l.at.world(pose), nil) }
-        let prims = primitives(doc, id, params: params, sense: sense)
+        let prims = primitives(doc, id, params: params, sense: sense, step: step)
         if let r = a.arrow(id) {
             if r.style == .turn { let m = prims[arcChords / 2]; return (m.start, nil) }
             let p = prims[0].start, q = prims[1].end

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import AVFoundation
 import Foundation
+import ImageIO
 import XCTest
 
 /// `marty-solid` in fresh processes. Each process has its own hash seed, so a refusal chosen by dictionary order
@@ -568,6 +569,75 @@ final class MartySolidCLITests: XCTestCase {
             let text = r.text.components(separatedBy: "\n").filter { !$0.contains("executableSHA256") }.joined()
             if let first { XCTAssertEqual(text, first) } else { first = text }
         }
+    }
+
+    /// Pixels of one colour in frame `index` of a movie (or in a PNG when `movie` is a still): their count and the angle
+    /// (degrees from vertical, signed: positive leans right) of their principal axis.
+    func colourBlob(_ url: URL, frame index: Int? = nil, fps: Int = 10, width: Int, height: Int,
+                    _ match: (UInt8, UInt8, UInt8) -> Bool) throws -> (count: Int, angle: Double) {
+        let image: CGImage
+        if let index {
+            let gen = AVAssetImageGenerator(asset: AVURLAsset(url: url))
+            gen.requestedTimeToleranceBefore = .zero; gen.requestedTimeToleranceAfter = .zero
+            image = try gen.copyCGImage(at: CMTime(value: CMTimeValue(index * 10 + 1), timescale: CMTimeScale(fps * 10)), actualTime: nil)
+        } else {
+            let src = try XCTUnwrap(CGImageSourceCreateWithURL(url as CFURL, nil))
+            image = try XCTUnwrap(CGImageSourceCreateImageAtIndex(src, 0, nil))
+        }
+        var px = [UInt8](repeating: 0, count: width * height * 4)
+        let ctx = CGContext(data: &px, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        var n = 0.0, sx = 0.0, sy = 0.0, sxx = 0.0, syy = 0.0, sxy = 0.0
+        for y in 0..<height { for x in 0..<width {
+            let i = (y * width + x) * 4
+            guard match(px[i], px[i + 1], px[i + 2]) else { continue }
+            let fx = Double(x), fy = Double(height - y)
+            n += 1; sx += fx; sy += fy; sxx += fx * fx; syy += fy * fy; sxy += fx * fy
+        } }
+        guard n > 2 else { return (Int(n), 0) }
+        let cxx = sxx / n - (sx / n) * (sx / n), cyy = syy / n - (sy / n) * (sy / n), cxy = sxy / n - (sx / n) * (sy / n)
+        // Principal axis angle from the x axis, then from vertical.
+        let theta = 0.5 * atan2(2 * cxy, cxx - cyy) * 180 / .pi
+        return (Int(n), 90 - (theta < 0 ? theta + 180 : theta))
+    }
+
+    /// A step pose and a show-only part, rendered for real: the arm stands in step 1 and leans in step 2 (its still and
+    /// its story hold frame), it leans part-way in the middle of the camera move between them, and the flag shows only
+    /// in step 2.
+    func testStepPoseAndShowOnlyPartRender() throws {
+        let doc = try write(#"{"v":2,"kind":"assembly","title":"Pose","parts":[{"id":"base","shape":{"box":{"size":[400,40,20]}},"material":"plastic.muted"},{"id":"arm","parent":"base","at":[0,0,10],"shape":{"shaft":{"radius":12,"length":300}},"material":"plastic.white","emissive":{"role":"green","intensity":3}},{"id":"flag","parent":"base","at":[160,0,60],"shape":{"box":{"size":[40,20,40]}},"material":"plastic.white","emissive":{"role":"red","intensity":3}}],"steps":[{"say":"Upright.","camera":"front","focus":["base","arm"]},{"say":"Leaning.","camera":"front","focus":["base","arm"],"pose":{"arm":{"rot":[0,1,0,60]}},"show":["flag"]}]}"#, "pose.json")
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("pose-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        let r = try renderOrSkip(["render", doc, out.path, "--size", "320x200", "--no-loop", "--story-fps", "10"])
+        XCTAssertEqual(r.status, 0, r.text)
+        // The lit parts bloom to white at their core; their coloured glow around it gives their shape.
+        func green(_ r: UInt8, _ g: UInt8, _ b: UInt8) -> Bool { g > 120 && Int(g) > Int(r) + 40 }
+        func red(_ r: UInt8, _ g: UInt8, _ b: UInt8) -> Bool { r > 120 && Int(r) > Int(g) + 40 }
+        let still1 = try colourBlob(out.appendingPathComponent("step-1.png"), width: 320, height: 200, green)
+        let still2 = try colourBlob(out.appendingPathComponent("step-2.png"), width: 320, height: 200, green)
+        XCTAssertGreaterThan(still1.count, 50); XCTAssertGreaterThan(still2.count, 50)
+        XCTAssertLessThan(abs(still1.angle), 10, "\(still1)")
+        XCTAssertGreaterThan(still2.angle, 45, "\(still2)")
+        XCTAssertEqual(try colourBlob(out.appendingPathComponent("step-1.png"), width: 320, height: 200, red).count, 0)
+        XCTAssertGreaterThan(try colourBlob(out.appendingPathComponent("step-2.png"), width: 320, height: 200, red).count, 10)
+        XCTAssertEqual(try colourBlob(out.appendingPathComponent("hero.png"), width: 320, height: 200, red).count, 0)
+        let m = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+        let story = try XCTUnwrap((m?["outputs"] as? [[String: Any]])?.first { $0["file"] as? String == "story.mp4" })
+        let beats = try XCTUnwrap(story["beats"] as? [[String: Any]])
+        XCTAssertEqual(beats.map { $0["cut"] as? Bool }, [false, false])
+        let start = Int((try XCTUnwrap(beats[1]["start"] as? Double) * 10).rounded())
+        let hold = Int((try XCTUnwrap(beats[1]["holdStart"] as? Double) * 10).rounded())
+        let movie = out.appendingPathComponent("story.mp4")
+        let before = try colourBlob(movie, frame: start - 1, width: 320, height: 200, green)
+        let middle = try colourBlob(movie, frame: (start + hold) / 2, width: 320, height: 200, green)
+        let after = try colourBlob(movie, frame: hold + 2, width: 320, height: 200, green)
+        XCTAssertLessThan(abs(before.angle), 10, "\(before)")
+        XCTAssertGreaterThan(middle.angle, before.angle + 10, "\(middle)")
+        XCTAssertLessThan(middle.angle, after.angle - 10, "\(middle)")
+        XCTAssertEqual(after.angle, still2.angle, accuracy: 6)
+        XCTAssertEqual(try colourBlob(movie, frame: start - 1, width: 320, height: 200, red).count, 0)
+        XCTAssertGreaterThan(try colourBlob(movie, frame: hold + 2, width: 320, height: 200, red).count, 10)
     }
 
     /// A focus step with a wall between the camera and the focus: the still draws the wall as an automatic ghost and its

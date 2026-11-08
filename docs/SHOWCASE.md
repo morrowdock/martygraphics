@@ -16,7 +16,8 @@ engine's AI loop).** The lesson explains the classic five-engine Gravity jet sui
 steps. The current Mk4 has three back turbines and is not shown. The model is
 [`jet-suit.json`](assets/jet-suit/jet-suit.json), 54 lines, 71 parts. The stills and the story video are unedited
 output of `marty-solid render` at 1280×800; `marty-solid check --strict` passes with no warnings
-([check output](assets/jet-suit/check-strict.json)).
+([check output](assets/jet-suit/check-strict.json)). The check output was made at commit `70bfc47`; the current engine
+also passes it, but wraps two long off-view callout rows of step 4's reference `placements` onto two lines.
 
 [![Story video poster: the step 2 still, five engines with one thrust arrow each.](assets/jet-suit/poster.jpg)](assets/jet-suit/story.mp4)
 
@@ -215,6 +216,10 @@ by hand for these docs. It is not the output of an AI model from a prompt.** The
 
 Step 5 is the first still. Step 3 is the second still. The pinion's turn arrow shows in step 1 (not kept here).
 [Check output](assets/annotations/check-strict.json) · [Capture receipt](assets/annotations/provenance.json)
+
+Archival note: these stills and the check output were rendered at commit `35b9e0a` (after PR #31). The current engine
+sizes motion arrows to the step's focus, so it draws a shorter "Rope side moves up" arrow in step 5 (about 22 mm instead
+of 40 mm), and its check output places that arrow's text a little differently (`placements`, step 5).
 
 **How a hand winch works.** You turn the crank, and the small pinion (14 teeth) turns with it. The pinion meshes with the
 larger drum gear (42 teeth), so the drum turns slower and the other way: `pinion.speed` is 1 (source `input`) and

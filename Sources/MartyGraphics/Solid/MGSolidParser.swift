@@ -152,6 +152,22 @@ public struct MGSolidStep: Equatable, Sendable {
     public internal(set) var ghost: [String] = []
     /// v2: the annotations this step shows (0–12 ids, authored order); nil when the step has no `annotate`.
     public internal(set) var annotate: [String]?
+    /// v2: placements this step shows instead of the authored ones (`pose`): resolved part id → placement in the parent
+    /// frame, for every part whose own placement the pose changes. Empty for a step without `pose`. The other steps,
+    /// the plain view, `hero.png`, `exploded.png` and the loop keep the authored placements.
+    public internal(set) var pose: [String: MGTransform] = [:]
+    /// v2: the authored `pose` object (nil without one), compiled after the assembly (`MGSolidPoses.compile`).
+    var poseSource: [String: MGJSON]?
+    /// v2: parts this step hides (`hide`, resolved ids, authored order).
+    public internal(set) var hide: [String] = []
+    /// v2: show-only parts this step shows (`show`, resolved ids, authored order).
+    public internal(set) var show: [String] = []
+
+    /// The pose this step shows with `spin` (0...1) of its spin played: the document's default input plus the played
+    /// turns, the step's explode value (or the default) and the step's `pose` placements.
+    public func poseParameters(defaults: MGPoseParameters, spin: Double = 1) -> MGPoseParameters {
+        MGPoseParameters(input: defaults.input + self.spin * 2 * .pi * spin, explode: explode ?? defaults.explode, placements: pose)
+    }
 }
 
 /// Meshing data the compiler derived for one gear part.
@@ -206,6 +222,9 @@ public struct MGSolidDocument: Equatable, Sendable {
     public internal(set) var titleFacts: [String] = []
     /// The annotation fingerprint the compiler checked (`checkedAnnotations` refuses a changed document or a foreign view).
     public internal(set) var checkedFingerprint: String?
+    /// v2: show-only parts: every part some step lists in `show`, in part order. Such a part shows only in the steps that
+    /// list it; the plain view, `hero.png`, `exploded.png`, the loop and every other step hide it.
+    public internal(set) var showOnly: [String] = []
 
     public func pose(_ params: MGPoseParameters) -> MGPose { assembly.pose(params) }
 
@@ -221,7 +240,7 @@ struct MGSolidFormat: Equatable {
     static let v1 = MGSolidFormat(version: 1), v2 = MGSolidFormat(version: 2)
     static let topKeysV2: Set<String> = ["annotations"]
     static let partKeysV2: Set<String> = ["expect", "offAxis", "opacity", "emissive"]
-    static let stepKeysV2: Set<String> = ["check", "unchecked", "section", "ghost", "annotate"]
+    static let stepKeysV2: Set<String> = ["check", "unchecked", "section", "ghost", "annotate", "pose", "hide", "show"]
     var isV2: Bool { version >= 2 }
     var topKeys: Set<String> { isV2 ? MGSolidParser.topKeys.union(Self.topKeysV2) : MGSolidParser.topKeys }
     var partKeys: Set<String> { isV2 ? MGSolidParser.partKeys.union(Self.partKeysV2) : MGSolidParser.partKeys }
@@ -756,10 +775,11 @@ public enum MGSolidParser {
             guard case .array(let list) = s, list.count <= MGSolidLimits.steps else { throw MGSolidIssue("steps.count") }
             for (i, entry) in list.enumerated() {
                 // A visibility refusal of one step names the step.
-                do { steps.append(try step(entry, expand, format)) }
+                do { steps.append(try step(entry, expand, format, grouped: !expansion.generated.isEmpty)) }
                 catch let e as MGSolidIssue where e.visibility != nil { throw MGSolidIssue(e.reason, visibility: e.visibility!.at(i, cause: .step)) }
             }
         }
+        let showOnly = try MGSolidStepVisibility.check(steps, order: parts.map(\.id))
         // v2 annotations: parsed and resolved before any mesh is built; their arrow and dimension pieces join the mesh
         // budget with exact counts.
         var annotations = MGSolidAnnotations()
@@ -846,15 +866,20 @@ public enum MGSolidParser {
         doc.motionSources = sources
         doc.offAxis = Set(parts.filter(\.offAxis).map(\.base))
         doc.annotations = annotations
+        doc.showOnly = showOnly
         (doc.facts, doc.driveTiers) = MGSolidFacts.table(assembly, gears: gears, sources: sources, ownTiers: ownTiers,
                                                          copies: copies, aliases: expansion.aliases)
         if format.isV2 {
+            // Step poses: each posed step is checked against a compile of the document with that pose applied.
+            try MGSolidPoses.compile(&doc, authored: authored)
             var expects: [String: (axis: MGVec3?, up: MGVec3?)] = [:]
             for p in parts where p.expectAxis != nil || p.expectUp != nil { expects[p.base] = (p.expectAxis, p.expectUp) }
             try MGSolidFrames.checkExpectations(assembly, expects, copies: copies)
             try MGSolidAnnotationEngine.prepare(&doc)
             try fillText(&doc)
             try MGSolidAnnotationEngine.finish(&doc)
+            try MGSolidStepVisibility.checkClaims(doc)
+            try MGSolidPoses.checkFacts(doc)
             try MGSolidAnnotationEngine.checkViews(doc)
         } else {
             // v1 text is never filled. A caption or title with a number in it makes a claim the engine did not check.
@@ -862,6 +887,12 @@ public enum MGSolidParser {
             if doc.title.contains(where: MGSolidFacts.isNumber) { doc.titleTier = .described }
         }
         doc.warnings = MGSolidFrames.lints(doc) + MGSolidAnnotationEngine.warnings(doc)
+        // Frame lints at each step's pose (a posed child far from its parent), each reason once.
+        for i in doc.steps.indices where !doc.steps[i].pose.isEmpty {
+            for w in MGSolidFrames.lints(doc, placements: doc.steps[i].pose) where !doc.warnings.contains(where: { $0.reason == w.reason }) {
+                doc.warnings.append(w)
+            }
+        }
         // Binds views and annotation output to this compiled document (`checkedAnnotations`).
         doc.checkedFingerprint = doc.annotationFingerprint
         return doc
@@ -1270,12 +1301,16 @@ public enum MGSolidParser {
         throw MGSolidIssue("part.material")
     }
 
-    static func step(_ entry: MGJSON, _ expand: (String, String) throws -> [String], _ format: MGSolidFormat = .v1) throws -> MGSolidStep {
+    /// `grouped`: the document has component instances, so its step id lists arrive expanded (an instance id became its
+    /// parts); their authored entries were counted against `idsPerStep` before expansion (`MGSolidComponents.expand`).
+    static func step(_ entry: MGJSON, _ expand: (String, String) throws -> [String], _ format: MGSolidFormat = .v1,
+                     grouped: Bool = false) throws -> MGSolidStep {
         guard case .object(let o) = entry else { throw MGSolidIssue("step.object") }
         try closed(o, ["say"], format.stepKeys, "step")
+        let cap = grouped ? MGSolidLimits.resolvedParts : MGSolidLimits.idsPerStep
         func ids(_ key: String) throws -> [String] {
             guard let v = o[key] else { return [] }
-            guard case .array(let list) = v, list.count <= MGSolidLimits.idsPerStep else { throw MGSolidIssue("step.\(key)") }
+            guard case .array(let list) = v, list.count <= cap else { throw MGSolidIssue("step.\(key)") }
             return try list.flatMap { e -> [String] in
                 guard case .string(let id) = e else { throw MGSolidIssue("step.\(key)") }
                 return try expand(id, "step.\(key)")
@@ -1307,7 +1342,7 @@ public enum MGSolidParser {
             let normal = try vector(so["normal"] ?? .null, "step.section.normal")
             guard normal.length > 1e-9 else { throw MGSolidIssue("step.section.normal") }
             let offset = try so["offset"].map { try num($0, MGSolidLimits.coordinate, "step.section.offset") } ?? 0
-            guard case .array(let list) = so["parts"]!, (1...MGSolidLimits.idsPerStep).contains(list.count) else { throw MGSolidIssue("step.section.parts") }
+            guard case .array(let list) = so["parts"]!, (1...cap).contains(list.count) else { throw MGSolidIssue("step.section.parts") }
             let parts = try list.flatMap { e -> [String] in
                 guard case .string(let id) = e else { throw MGSolidIssue("step.section.parts") }
                 return try expand(id, "step.section.parts")
@@ -1327,6 +1362,13 @@ public enum MGSolidParser {
                 return id
             })
         }
+        for key in ["hide", "show"] {
+            guard let v = o[key] else { continue }
+            guard case .array(let list) = v, !list.isEmpty else { throw MGSolidIssue("step.\(key)") }
+            let resolved = unique(try ids(key))
+            if key == "hide" { step.hide = resolved } else { step.show = resolved }
+        }
+        if let p = o["pose"] { step.poseSource = try MGSolidPoses.parse(p) }
         return step
     }
 
