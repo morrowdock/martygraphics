@@ -32,8 +32,10 @@ public struct MGExplainerRunTiming: Equatable, Sendable {
 
 /// The board pane's render input for a presented explainer beat: the 2D state with the beat's emphasis and table rows.
 public enum MGExplainerBoard {
-    public static func input(_ scene: MGScene, view: MGExplainerBeatView, size: CGSize, theme: MGTheme = .board) -> MGRenderInput {
-        let vp = MGViewport(size: size, width: scene.width, height: scene.height, camera: scene.camera)
+    /// `fit`: the size the viewport is fitted for (the reference board pane, `MGExplainerFrame.boardReferenceSize`);
+    /// the board then keeps that scale and centre in a pane of `size`. Nil fits `size` itself.
+    public static func input(_ scene: MGScene, view: MGExplainerBeatView, size: CGSize, fit: CGSize? = nil, theme: MGTheme = .board) -> MGRenderInput {
+        let vp = MGViewport(size: fit ?? size, width: scene.width, height: scene.height, camera: scene.camera).resized(to: size)
         var input = MGRenderInput(scene: scene, items: scene.items, viewport: vp, theme: theme)
         input.emphasis = view.boardEmphasis
         input.tableRows = view.tableRows
@@ -388,11 +390,25 @@ public struct MartyGraphicsExplainerView: View {
         // The adaptive rule: with a solid, the board pane shows only while the shown board has a non-text item.
         let showsBoard = s.board != nil && board.scene != nil && s.boardPane.shown
         let both = showsBoard && s.solid != nil
-        let layout = wide ? AnyLayout(HStackLayout(spacing: 12)) : AnyLayout(VStackLayout(spacing: 12))
+        let layout = wide ? AnyLayout(HStackLayout(spacing: Self.paneSpacing)) : AnyLayout(VStackLayout(spacing: Self.paneSpacing))
+        GeometryReader { area in
+        // Side by side with both panes, the board width fits its content (`MGExplainerFrame.boardShare`, the rule the
+        // stills and story video use), drawn at its reference pane's scale; stacked, the primary view gets more room.
+        let share = MGExplainerFrame.boardShare(scene: board.scene, areaWidth: area.size.width, areaHeight: area.size.height,
+                                                gap: Self.paneSpacing, primarySolid: primaryIsSolid)
+        let boardWidth = max(1, (area.size.width - Self.paneSpacing) * share)
+        let fit = MGExplainerFrame.boardReferenceSize(areaWidth: area.size.width, areaHeight: area.size.height, gap: Self.paneSpacing,
+                                                      primarySolid: primaryIsSolid)
         layout {
             if showsBoard {
-                boardPane.frame(maxWidth: .infinity, maxHeight: .infinity).layoutPriority(both && !primaryIsSolid ? 1.2 : 1)
-                    .transition(.move(edge: wide ? .leading : .top).combined(with: .opacity))
+                Group {
+                    if wide && both {
+                        boardPane(fit: fit).frame(width: boardWidth).frame(maxHeight: .infinity)
+                    } else {
+                        boardPane().frame(maxWidth: .infinity, maxHeight: .infinity).layoutPriority(both && !primaryIsSolid ? 1.2 : 1)
+                    }
+                }
+                .transition(.move(edge: wide ? .leading : .top).combined(with: .opacity))
             }
             if s.solid != nil, let r = controller.renderer {
                 GeometryReader { g in
@@ -410,11 +426,16 @@ public struct MartyGraphicsExplainerView: View {
                 .accessibilityIdentifier("explainer.solid")
             }
         }
+        }
     }
 
-    private var boardPane: some View {
+    /// Space between the board and solid panes (points).
+    static let paneSpacing: CGFloat = 12
+
+    private func boardPane(fit: CGSize? = nil) -> some View {
         let v = controller.session.presented
         return MartyGraphicsView(controller: board, showsControls: false, readOnly: true)
+            .viewportFit(fit)
             .emphasis(v.boardEmphasis)
             .tableEmphasis(rows: v.tableRows, cells: v.tableCells)
             .boardAccessibility(controller.session.caption)

@@ -201,6 +201,57 @@ func componentCheck(_ path: String, _ base: MGSolidLibrary, with values: [String
 
 // MARK: render
 
+/// Opacity of the dark backdrop behind the title band (title, legend line and the overlay's legend corner).
+/// Chosen so that every stroke row of thin anti-aliased text keeps at least 4.5:1 over a pure white or emissive render.
+/// The caption band uses `captionBackdropOpacity` for the same reason.
+let captionBackdropOpacity: CGFloat = 0.84
+let titleBackdropOpacity: CGFloat = 0.88
+/// Height (px at 1280 wide, scaled with the width) over which the backdrop fades out below the title band.
+let titleBackdropFadePixels: CGFloat = 28
+
+/// The image with a dark backdrop over the title band, the same kind of protection the caption band has: black at
+/// `titleBackdropOpacity` over the band (`MGSolidRenderPlan.titleBandPixels`, scaled with the width), then a soft fade
+/// to clear over `titleBackdropFadePixels`. Drawn under every text of the band (title, legend line, the overlay's
+/// legend corner, whose whole rectangle is covered also where a tall frame puts it below the band), so geometry that
+/// reaches into the band never washes the text out: white title text keeps a contrast
+/// of at least 4.5:1 even over a pure white render. Loop frames draw no title or legend text and get none.
+func titleBackdrop(_ image: CGImage) -> CGImage {
+    let w = image.width, h = image.height
+    let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+    let s = CGFloat(w) / 1280
+    let band = CGFloat(MGSolidRenderPlan.titleBandPixels) * s, fade = titleBackdropFadePixels * s
+    let top = CGFloat(h)
+    ctx.setFillColor(CGColor(gray: 0, alpha: titleBackdropOpacity))
+    ctx.fill(CGRect(x: 0, y: top - band, width: CGFloat(w), height: band))
+    let colors = [CGColor(gray: 0, alpha: titleBackdropOpacity), CGColor(gray: 0, alpha: 0)] as CFArray
+    if let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceGray(), colors: colors, locations: [0, 1]) {
+        ctx.saveGState()
+        ctx.clip(to: CGRect(x: 0, y: top - band - fade, width: CGFloat(w), height: fade))
+        ctx.drawLinearGradient(g, start: CGPoint(x: 0, y: top - band), end: CGPoint(x: 0, y: top - band - fade), options: [])
+        ctx.restoreGState()
+    }
+    // The overlay's legend corner (`MGAnnotationLayout.legendRect`) scales with the frame height, so in a tall frame it
+    // reaches below the title band: its whole rectangle gets the same backdrop, then the same fade below it.
+    let r = MGAnnotationLayout.legendRect(width: Double(w), height: Double(h))
+    let legendBottom = CGFloat(r.y + r.height)
+    if legendBottom > band {
+        let x = CGFloat(r.x), lw = CGFloat(r.width)
+        ctx.setFillColor(CGColor(gray: 0, alpha: titleBackdropOpacity))
+        ctx.fill(CGRect(x: x, y: top - legendBottom, width: lw, height: legendBottom - band))
+        if let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceGray(), colors: colors, locations: [0, 1]) {
+            ctx.saveGState()
+            ctx.clip(to: CGRect(x: x, y: top - legendBottom - fade, width: lw, height: fade))
+            ctx.drawLinearGradient(g, start: CGPoint(x: 0, y: top - legendBottom), end: CGPoint(x: 0, y: top - legendBottom - fade), options: [])
+            ctx.restoreGState()
+        }
+    }
+    return ctx.makeImage()!
+}
+
+/// Draws the title, the caption band, the footer (legend) line and the board line over `image`. Callers pass an image
+/// that already has its title backdrop (`titleBackdrop`), drawn before any overlay text.
 func caption(_ image: CGImage, title: String, text: String?, footer: String, boardLine: String? = nil) -> CGImage {
     let w = image.width, h = image.height
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
@@ -229,20 +280,29 @@ func caption(_ image: CGImage, title: String, text: String?, footer: String, boa
         ctx.textPosition = CGPoint(x: 40 * s, y: CGFloat(h) - 64 * s); CTLineDraw(fitted, ctx)
     }
     if let t = text {
-        ctx.setFillColor(CGColor(gray: 0, alpha: 0.55)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: Int(band * s)))
+        ctx.setFillColor(CGColor(gray: 0, alpha: captionBackdropOpacity)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: Int(band * s)))
         draw(t, 20 * s, .regular, x: 40 * s, y: 30 * s, alpha: 0.95, maxWidth: CGFloat(w) - 80 * s)
     }
-    draw(footer, 12 * s, .regular, x: 40 * s, y: CGFloat(h) - 92 * s, alpha: 0.6)
+    draw(footer, 12 * s, .medium, x: 40 * s, y: CGFloat(h) - 92 * s, alpha: 0.85)
     // The board's text when its pane is not drawn (an explainer beat whose board shows only text): one line in the
     // title band, under the legend line, in the board's ink, truncated with an ellipsis.
     if let line = boardLine {
-        let font = NSFont.systemFont(ofSize: 15 * s, weight: .medium) as CTFont
-        let ink = CGColor(srgbRed: 0.72, green: 0.80, blue: 1.0, alpha: 0.95)
+        // Semibold and full ink: the thin lower stems of a medium weight anti-alias below 4.5:1 at small sizes.
+        let font = NSFont.systemFont(ofSize: 15 * s, weight: .semibold) as CTFont
+        let ink = CGColor(srgbRed: 0.80, green: 0.86, blue: 1.0, alpha: 1)
         let attr = NSAttributedString(string: line, attributes: [.font: font, .foregroundColor: ink])
         let dots = CTLineCreateWithAttributedString(NSAttributedString(string: "…", attributes: [.font: font, .foregroundColor: ink]))
         let fitted = CTLineCreateTruncatedLine(CTLineCreateWithAttributedString(attr), Double(CGFloat(w) - 80 * s), .end, dots)
             ?? CTLineCreateWithAttributedString(attr)
-        ctx.textPosition = CGPoint(x: 40 * s, y: CGFloat(h) - 118 * s); CTLineDraw(fitted, ctx)
+        // Its own backdrop: in a tall frame the line can reach below the title band into a bright 3D pane, so the
+        // line's typographic bounds (plus a small margin) get the title backdrop's darkness before the text is drawn.
+        let base = CGPoint(x: 40 * s, y: CGFloat(h) - 118 * s)
+        var ascent: CGFloat = 0, descent: CGFloat = 0, leading: CGFloat = 0
+        let width = CGFloat(CTLineGetTypographicBounds(fitted, &ascent, &descent, &leading))
+        let pad = 6 * s
+        ctx.setFillColor(CGColor(gray: 0, alpha: titleBackdropOpacity))
+        ctx.fill(CGRect(x: base.x - pad, y: base.y - descent - pad, width: width + 2 * pad, height: ascent + descent + 2 * pad))
+        ctx.textPosition = base; CTLineDraw(fitted, ctx)
     }
     return ctx.makeImage()!
 }
@@ -372,16 +432,30 @@ final class MovieWriter {
     }
 }
 
-/// The story manifest's per-beat records with the hold camera (the camera of the beat's last frame) and the number of
-/// annotations off view in that frame (absent when the beat draws none).
-func storyBeats(_ beats: MGJSON?, _ cameras: [Int: MGSolidCamera], _ offView: [Int: Int]) -> MGJSON? {
+/// The story manifest's per-beat records with the hold camera (the camera of the beat's last frame), the number of
+/// annotations off view in that frame plus the focus samples still hidden (absent when the beat draws no annotation and
+/// has no tested focus), whether the beat cut instead of moving (`cut`, with `cutReason` `layout` or `blocked`), and the
+/// unblocked-focus fields of the beat (`autoGhost`, `occluded`, `focusSamples`, `view`; only for a tested focus).
+func storyBeats(_ beats: MGJSON?, _ cameras: [Int: MGSolidCamera], _ offView: [Int: Int], clear: [Int: MGSolidClearView] = [:],
+                cuts: [Int: String] = [:]) -> MGJSON? {
     guard case .array(let list)? = beats else { return beats }
     return .array(list.enumerated().map { k, v -> MGJSON in
         guard case .object(var o) = v else { return v }
         if let c = cameras[k] { o["camera"] = c.manifestJSON }
         if let n = offView[k] { o["offView"] = .number(Double(n)) }
+        o["cut"] = .bool(cuts[k] != nil)
+        if let why = cuts[k] { o["cutReason"] = .string(why) }
+        if let c = clear[k] { o.merge(c.manifestFields) { a, _ in a } }
         return .object(o)
     })
+}
+
+/// A still's manifest `offView`: annotations whose anchor is outside the view, plus the focus samples still hidden
+/// behind another part (`MGSolidClearView.occludedSamples`). Nil when the still draws no annotation and has no tested focus.
+func offViewCount(annotations: Int?, clear: MGSolidClearView?) -> Int? {
+    let hidden = clear.flatMap { $0.tested ? $0.occludedSamples : nil }
+    guard annotations != nil || hidden != nil else { return nil }
+    return (annotations ?? 0) + (hidden ?? 0)
 }
 
 func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined() }
@@ -429,18 +503,21 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     var names: [String] = []
     var seconds = 0.0, frames = 0
     var previousFrame: MGAnnotationFrame?
-    func shot(_ s: MGSolidShot, _ camera: MGSolidCamera) throws -> CGImage {
+    func shot(_ s: MGSolidShot, _ camera: MGSolidCamera, ghost: [String] = []) throws -> CGImage {
         // Each step shows its own section cuts, ghosts and annotations; other shots show the plain scene. Annotations
         // show on hero.png and the step stills only (`MGSolidShot.showsAnnotations`), and only where the engine
-        // checked the pose (`checkedAnnotations`, inside the renderer and the frame).
-        let view = doc.view(step: s.step)
+        // checked the pose (`checkedAnnotations`, inside the renderer and the frame). `ghost`: the still's automatic
+        // ghosts (the unblocked-focus rule, `MGSolidFraming.clearView`).
+        let view = doc.view(step: s.step).ghosting(ghost)
         if s.showsAnnotations { r.show(document: doc, view: view) } else { r.show(view) }
         r.highlight(Set(s.highlight), dimOthers: !s.highlight.isEmpty)
         r.apply(s.params)
         r.setCamera(camera)
         let t0 = Date()
-        guard let img = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
+        guard let raw = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
         seconds += Date().timeIntervalSince(t0); frames += 1
+        // A shot with a title (every still) gets the title backdrop under its overlay text; loop frames have no text.
+        let img = s.title != nil ? titleBackdrop(raw) : raw
         guard s.showsAnnotations, !view.annotations.isEmpty else { return img }
         // The same placement function as the snapshot and the SwiftUI overlay; frames of one loop keep their places.
         let frame = MGSolidAnnotations.frame(document: doc, view: view, params: s.params, camera: r.camera, width: Double(width),
@@ -460,16 +537,21 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     for (k, s) in plan.stills.enumerated() {
         previousFrame = nil
         try autoreleasepool {
-            let img = caption(try shot(s, cameras.stills[k]), title: s.title ?? doc.title, text: s.caption, footer: plan.footer)
+            let clear = cameras.clear[k]
+            let img = caption(try shot(s, cameras.stills[k], ghost: clear.autoGhost), title: s.title ?? doc.title, text: s.caption, footer: plan.footer)
             try writePNG(img, out.appendingPathComponent(s.file))
             var fields: [String: MGJSON] = ["width": .number(Double(img.width)), "height": .number(Double(img.height)),
                                             "framing": .string(cameras.rules[k].rawValue)]
-            // Step stills also record their camera (the story's hold camera for that step) and the annotations off view.
+            // Step stills also record their camera (the story's hold camera for that step), the annotations off view plus
+            // the focus samples still hidden, and the unblocked-focus fields.
             if s.step != nil {
                 fields["camera"] = cameras.stills[k].manifestJSON
+                var labels: Int?
                 if s.showsAnnotations, !doc.view(step: s.step).annotations.isEmpty, let f = previousFrame {
-                    fields["offView"] = .number(Double(f.placement.filter(\.offView).count))
+                    labels = f.placement.filter(\.offView).count
                 }
+                if let n = offViewCount(annotations: labels, clear: clear) { fields["offView"] = .number(Double(n)) }
+                fields.merge(clear.manifestFields) { a, _ in a }
             }
             try record(s.file, fields)
         }
@@ -514,18 +596,26 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         // During a step's hold the camera is exactly the step still's camera; only the move at the start of a step is in
         // between, and labels are hidden during that move.
         let beatCameras: [MGSolidCamera?] = doc.steps.indices.map { k in stepStill[k].map { cameras.stills[$0] } }
+        let beatClear: [Int: MGSolidClearView] = Dictionary(uniqueKeysWithValues: doc.steps.indices.compactMap { k in
+            stepStill[k].map { (k, cameras.clear[$0]) }
+        })
+        // A camera move that would pass through a part cuts instead (`MGStoryPlan.blockedMoves`).
+        let cuts = MGStoryPlan.blockedMoves(doc, beats: doc.steps.indices.map { k in
+            (beatCameras[k], MGSolidShot.step(doc, k)?.params ?? doc.defaults)
+        })
         var shownStep: Int?, settledStep: Int?
         var holdCamera: [Int: MGSolidCamera] = [:], holdOffView: [Int: Int] = [:]
         for i in 0..<story.frameCount {
             try autoreleasepool {
                 let f = story.frame(i)
-                guard let base = MGSolidShot.step(doc, f.beat), let camera = story.camera(frame: i, beatCameras: beatCameras) else {
+                guard let base = MGSolidShot.step(doc, f.beat), let camera = story.camera(frame: i, beatCameras: beatCameras, cuts: cuts) else {
                     throw CLIError.invalid("story step")
                 }
                 let step = doc.steps[f.beat]
                 var s = base
                 s.params = MGPoseParameters(input: doc.defaults.input + step.spin * 2 * .pi * f.spin, explode: base.params.explode)
-                let view = doc.view(step: f.beat)
+                // The step's view with its still's automatic ghosts, for the whole beat (move and hold).
+                let view = doc.view(step: f.beat).ghosting(beatClear[f.beat]?.autoGhost ?? [])
                 if shownStep != f.beat {
                     shownStep = f.beat
                     r.show(document: doc, view: view)
@@ -533,14 +623,15 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                 }
                 // A step's caption, labels and claims appear when its hold starts (after the camera move); labels keep
                 // their places for the rest of the step.
-                let holding = story.holds(frame: i)
+                let holding = story.holds(frame: i, cuts: cuts)
                 if !holding || settledStep != f.beat { previousFrame = nil }
                 settledStep = holding ? f.beat : nil
                 r.apply(s.params)
                 r.setCamera(camera)
                 let t0 = Date()
-                guard var img = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
+                guard let raw = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
                 seconds += Date().timeIntervalSince(t0); frames += 1
+                var img = titleBackdrop(raw)   // under the legend corner, the labels and the title
                 if holding { holdCamera[f.beat] = camera }
                 if holding, !view.annotations.isEmpty {
                     let frame = MGSolidAnnotations.frame(document: doc, view: view, params: s.params, camera: r.camera, width: Double(width),
@@ -553,12 +644,18 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                     img = legendOnly(img, doc)        // the legend and its notes, no labels
                 }
                 // During the move the caption band is empty: the caption names what the hold shows.
-                try movie.append(caption(img, title: s.title ?? doc.title, text: story.caption(frame: i) ?? "", footer: footer))
+                try movie.append(caption(img, title: s.title ?? doc.title, text: story.caption(frame: i, cuts: cuts) ?? "", footer: footer))
             }
         }
         try movie.finish()
-        var fields = story.manifestFields()
-        fields["beats"] = storyBeats(fields["beats"], holdCamera, holdOffView)
+        var fields = story.manifestFields(cuts: cuts)
+        // `offView` per beat: annotations off view in the hold plus the focus samples its still's camera leaves hidden.
+        var beatOffView: [Int: Int] = [:]
+        for k in doc.steps.indices {
+            if let n = offViewCount(annotations: holdOffView[k], clear: beatClear[k]) { beatOffView[k] = n }
+        }
+        fields["beats"] = storyBeats(fields["beats"], holdCamera, beatOffView, clear: beatClear.filter { $0.value.tested },
+                                     cuts: Dictionary(uniqueKeysWithValues: cuts.sorted().map { ($0, "blocked") }))
         fields["codec"] = .string("h264"); fields["width"] = .number(Double(movie.width)); fields["height"] = .number(Double(movie.height))
         try record("story.mp4", fields)
     }
@@ -575,20 +672,20 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
 // MARK: explainer render
 
 /// The board pane at `size` pixels: the presented 2D state with the beat's emphasis and table rows (the same input the
-/// SwiftUI explainer view draws).
-@MainActor func boardImage(_ scene: MGScene, _ view: MGExplainerBeatView, width: Int, height: Int) -> CGImage? {
+/// SwiftUI explainer view draws). `fit`: the reference pane the viewport is fitted for (a narrowed pane keeps its scale).
+@MainActor func boardImage(_ scene: MGScene, _ view: MGExplainerBeatView, width: Int, height: Int, fit: CGSize? = nil) -> CGImage? {
     let size = CGSize(width: width, height: height)
-    let r = ImageRenderer(content: Canvas { ctx, sz in MGCanvasRenderer.draw(MGExplainerBoard.input(scene, view: view, size: sz), in: ctx) }
+    let r = ImageRenderer(content: Canvas { ctx, sz in MGCanvasRenderer.draw(MGExplainerBoard.input(scene, view: view, size: sz, fit: fit), in: ctx) }
         .frame(width: size.width, height: size.height))
     r.scale = 1
     return r.cgImage
 }
 
-/// The panes of one composite frame (`MGExplainerFrame.panes`): the `primary` view gets 55 % (side by side when wider
-/// than tall, else stacked). `board` is false in a beat whose shown board has no non-text item
-/// (`MGExplainerSession.boardPane`): the solid then takes the whole area.
-func paneRects(width w: Int, height h: Int, board: Bool, solid: Bool, primarySolid: Bool) -> (board: CGRect?, solid: CGRect?) {
-    let p = MGExplainerFrame.panes(width: w, height: h, board: board, solid: solid, primarySolid: primarySolid)
+/// The panes of one composite frame (`MGExplainerFrame.panes`): side by side, the board takes `boardShare` of the width
+/// (`MGExplainerFrame.boardShare`, fitted to its content); stacked, the `primary` view gets 55 %. `board` is false in a
+/// beat whose shown board has no non-text item (`MGExplainerSession.boardPane`): the solid then takes the whole area.
+func paneRects(width w: Int, height h: Int, board: Bool, solid: Bool, primarySolid: Bool, boardShare: Double? = nil) -> (board: CGRect?, solid: CGRect?) {
+    let p = MGExplainerFrame.panes(width: w, height: h, board: board, solid: solid, primarySolid: primarySolid, boardShare: boardShare)
     func cg(_ r: MGFrameRect?) -> CGRect? { r.map { CGRect(x: $0.x, y: $0.y, width: $0.width, height: $0.height) } }
     return (cg(p.board), cg(p.solid))
 }
@@ -610,7 +707,7 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         ctx.draw(img, in: rect)
         ctx.restoreGState()
     }
-    return caption(ctx.makeImage()!, title: title, text: text, footer: footer, boardLine: boardLine)
+    return caption(titleBackdrop(ctx.makeImage()!), title: title, text: text, footer: footer, boardLine: boardLine)
 }
 
 /// One beat of an explainer as the stills show it, kept for the story video: the view, the caption line, the board
@@ -623,6 +720,8 @@ struct ExplainerBeatShot {
     var boardLine: String?
     var stepIndex: Int?
     var camera: MGSolidCamera?
+    /// The beat's unblocked-focus result (automatic ghosts, hidden share); nil without a solid pane.
+    var clear: MGSolidClearView?
 }
 
 /// `render` for an explainer: `beat-<n>.png` (one composite per beat), `board-0.png` and `solid-0.png` (the views before
@@ -691,19 +790,24 @@ struct ExplainerBeatShot {
     var lastFraming: MGSolidFraming.Rule?
     var lastCamera: MGSolidCamera?
     var lastOffView: Int?   // annotations of the last solid image whose anchor was outside the pane (nil: none drawn)
+    var lastClear: MGSolidClearView?   // the unblocked-focus result of the last framed solid image
     var shownView: MGSolidView?
     var previousFrame: MGAnnotationFrame?
     /// `stepIndex`: the solid step the beat shows (its focus frames the pane, `MGSolidFraming`); nil for the plain view.
     /// `spin`: the played fraction of the beat's spin (1: the beat's end pose, as in a still). `camera`: the story
     /// video's camera for this frame (`MGStoryPlan.camera(frame:beatCameras:)`); without it the pane is framed by
     /// `MGExplainerFrame.solidCamera` for the pane's own pixels, as in a still. `labels`: draw the annotation overlay
-    /// (the story hides it while the camera moves). `stable`: keep label places from the last frame.
+    /// (the story hides it while the camera moves). `stable`: keep label places from the last frame. `ghost`: the
+    /// beat's automatic ghosts when `camera` is given (a still frames itself and takes its own, `lastClear`).
     func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Double = 1, stepIndex: Int? = nil, camera: MGSolidCamera? = nil,
-                    labels: Bool = true, stable: Bool = false) throws -> CGImage? {
+                    labels: Bool = true, stable: Bool = false, ghost: [String] = []) throws -> CGImage? {
         guard let r = renderer, let d = solidDoc else { return nil }
         let pane = frameRect(rect)
-        let shown = view.solid ?? d.view(step: nil)
         let params = MGExplainerFrame.pose(d, view: view, spin: spin)
+        var framed: MGSolidClearView?
+        if camera == nil { framed = MGExplainerFrame.solidClearView(d, view: view, stepIndex: stepIndex, pane: pane) }
+        // The beat's view with the automatic ghosts of the unblocked-focus rule (`MGSolidFraming.clearView`).
+        let shown = (view.solid ?? d.view(step: nil)).ghosting(framed?.autoGhost ?? ghost)
         r.apply(params)
         if !stable || shownView != shown {
             r.show(document: d, view: shown)
@@ -713,10 +817,9 @@ struct ExplainerBeatShot {
         }
         if let camera {
             r.setCamera(camera)
-        } else {
-            let framed = MGExplainerFrame.solidCamera(d, view: view, stepIndex: stepIndex, pane: pane)
+        } else if let framed {
             r.setCamera(framed.camera)
-            lastFraming = framed.rule; lastCamera = framed.camera
+            lastFraming = framed.rule; lastCamera = framed.camera; lastClear = framed
         }
         let t0 = Date()
         guard let img = r.render(width: pane.width, height: pane.height) else { throw CLIError.invalid("render failed (no Metal device?)") }
@@ -775,20 +878,30 @@ struct ExplainerBeatShot {
         // The adaptive board pane: a beat whose shown board has only text gives the solid the whole frame, and the
         // board's text moves to the title band.
         let pane = session.boardPane
-        let rects = paneRects(width: width, height: height, board: pane.shown, solid: solidDoc != nil, primarySolid: primarySolid)
-        let b = rects.board.flatMap { r in session.state.map { boardImage($0.scene, view, width: Int(r.width), height: Int(r.height)) } } ?? nil
-        lastFraming = nil; lastCamera = nil; lastOffView = nil
+        // Side by side, the board pane's width fits the shown board's content (`MGExplainerFrame.boardShare`), drawn at
+        // the scale of its reference pane.
+        let both = pane.shown && solidDoc != nil
+        let share = both ? MGExplainerFrame.boardShare(scene: session.state?.scene, width: width, height: height, primarySolid: primarySolid) : nil
+        let area = MGExplainerFrame.contentArea(width: width, height: height)
+        let fit = both && width >= height
+            ? MGExplainerFrame.boardReferenceSize(areaWidth: Double(area.width), areaHeight: Double(area.height),
+                                                  gap: MGExplainerFrame.paneGap(width: width), primarySolid: primarySolid) : nil
+        let rects = paneRects(width: width, height: height, board: pane.shown, solid: solidDoc != nil, primarySolid: primarySolid, boardShare: share)
+        let b = rects.board.flatMap { r in session.state.map { boardImage($0.scene, view, width: Int(r.width), height: Int(r.height), fit: fit) } } ?? nil
+        lastFraming = nil; lastCamera = nil; lastOffView = nil; lastClear = nil
         let step = session.solidStep(forBeat: k)
         let sImg = try rects.solid.flatMap { try solidImage(view, $0, stepIndex: step) }
         let line = "\(k + 1). \(caption)"
         var extra: [String: MGJSON] = ["boardPane": .bool(rects.board != nil)]
+        if let r = rects.board, rects.solid != nil { extra["boardShare"] = .number(Double(r.width) / Double(area.width - Int(MGExplainerFrame.paneGap(width: width)))) }
         if let c = lastCamera { extra["camera"] = c.manifestJSON }
-        if let n = lastOffView { extra["offView"] = .number(Double(n)) }
+        if let n = offViewCount(annotations: lastOffView, clear: lastClear) { extra["offView"] = .number(Double(n)) }
+        if let c = lastClear { extra.merge(c.manifestFields) { a, _ in a } }
         try write(composite(width: width, height: height, board: b, solid: sImg, rects: rects, title: title, caption: line, footer: footer,
                             boardLine: pane.shown ? nil : pane.line),
                   "beat-\(k + 1).png", framing: lastFraming, fields: extra)
         shots.append(ExplainerBeatShot(view: view, caption: line, board: b, rects: rects, boardLine: pane.shown ? nil : pane.line,
-                                       stepIndex: step, camera: lastCamera))
+                                       stepIndex: step, camera: lastCamera, clear: lastClear))
         if snapshots, let d = solidDoc {
             let params = MGPoseParameters(input: d.defaults.input + (view.step?.spin ?? 0) * 2 * .pi, explode: view.step?.explode ?? d.defaults.explode)
             let name = "snapshot-beat-\(k + 1).json"
@@ -843,7 +956,12 @@ struct ExplainerBeatShot {
         let beatCameras = shots.map(\.camera)
         // A beat whose solid pane has another size than the previous beat's (the board pane appeared or went) cuts to
         // its own camera instead of moving: the previous camera was fitted for the other pane.
-        let cuts = Set(shots.indices.dropFirst().filter { shots[$0].rects.solid != shots[$0 - 1].rects.solid })
+        let layoutCuts = Set(shots.indices.dropFirst().filter { shots[$0].rects.solid != shots[$0 - 1].rects.solid })
+        // A camera move that would pass through a part also cuts (`MGStoryPlan.blockedMoves`).
+        let blocked = solidDoc.map { d in
+            MGStoryPlan.blockedMoves(d, beats: shots.map { ($0.camera, MGExplainerFrame.pose(d, view: $0.view)) })
+        } ?? []
+        let cuts = layoutCuts.union(blocked)
         shownView = nil
         var settled: Int?   // the beat whose camera has arrived (its labels keep their places from frame to frame)
         var holdCamera: [Int: MGSolidCamera] = [:], holdOffView: [Int: Int] = [:]
@@ -854,7 +972,7 @@ struct ExplainerBeatShot {
                 let camera = story.camera(frame: i, beatCameras: beatCameras, cuts: cuts)
                 let holding = story.holds(frame: i, cuts: cuts)
                 let sImg = try b.rects.solid.flatMap { try solidImage(b.view, $0, spin: f.spin, stepIndex: b.stepIndex, camera: camera,
-                                                                      labels: holding, stable: settled == f.beat) }
+                                                                      labels: holding, stable: settled == f.beat, ghost: b.clear?.autoGhost ?? []) }
                 settled = holding ? f.beat : nil
                 if holding, let camera { holdCamera[f.beat] = camera; if let n = lastOffView { holdOffView[f.beat] = n } }
                 // A beat's caption, labels and board claims appear when its hold starts. During the camera move the
@@ -867,7 +985,13 @@ struct ExplainerBeatShot {
         }
         try movie.finish()
         var fields = story.manifestFields(cuts: cuts)
-        fields["beats"] = storyBeats(fields["beats"], holdCamera, holdOffView)
+        var beatOffView: [Int: Int] = [:], beatClear: [Int: MGSolidClearView] = [:], why: [Int: String] = [:]
+        for k in shots.indices {
+            if let n = offViewCount(annotations: holdOffView[k], clear: shots[k].clear) { beatOffView[k] = n }
+            if let c = shots[k].clear, c.tested { beatClear[k] = c }
+            if layoutCuts.contains(k) { why[k] = "layout" } else if blocked.contains(k) { why[k] = "blocked" }
+        }
+        fields["beats"] = storyBeats(fields["beats"], holdCamera, beatOffView, clear: beatClear, cuts: why)
         fields["codec"] = .string("h264"); fields["width"] = .number(Double(movie.width)); fields["height"] = .number(Double(movie.height))
         try record("story.mp4", fields)
     }

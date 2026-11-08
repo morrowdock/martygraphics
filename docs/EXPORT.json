@@ -324,7 +324,11 @@
     "Sources/MartyGraphics/Solid/MGSolidFraming.swift: render-plan camera framing (step focus, whole-model rule, reserved caption band, shared loop factor) (public-only)",
     "Tests/MartyGraphicsTests/SolidFramingTests.swift: framing rule, bands, loop rates, hostile numbers and renderer framing coverage",
     "Tests/MartyGraphicsTests/SolidFigureComponentTests.swift: mannequin and centrifugalCompressor geometry, held joints, anchors, checks, exact mesh counts and strict range-corner coverage",
-    "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift: loop.mp4 writer failure, cancel, timeout, start-failure and exact frame-time coverage"
+    "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift: loop.mp4 writer failure, cancel, timeout, start-failure and exact frame-time coverage",
+    "Sources/MartyGraphics/Solid/MGSolidClearView.swift: unblocked-focus rule (automatic ghosts, fixed alternative directions, cut facing) and story move cuts (public-only)",
+    "Tests/MartyGraphicsTests/UnblockedFocusTests.swift: unblocked focus, story move cuts and board pane width coverage",
+    "Tests/MartyGraphicsTests/MicroTurbojetTests.swift: microTurbojet range corners, fit check, solved rotation, five-engine suit, parts.resolved detail and the expanded wire limit",
+    "Examples/Solid3D/Tests/MartySolidCLITests/TitleBackdropTests.swift: title backdrop contrast (at least 4.5:1) over pure white and over a rendered bright part in the title band"
   ],
   "previous_export_source_commit": "aed3710cb0ff93a4a7dc90598158482e36afb5ac",
   "publication_scope": "Selected generic engine files with the explicit adaptations below; not a byte-identical export of the whole private package.",

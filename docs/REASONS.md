@@ -140,8 +140,8 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 
 | Reason | Formats | Meaning |
 | --- | --- | --- |
-| `parts.count` | assembly, component | `parts` is not an array of 1–48 entries, or component expansion makes more than 48 wire parts. |
-| `parts.resolved` | assembly | More than 96 parts after `repeat` expansion. |
+| `parts.count` | assembly, component | `parts` is not an array of 1–48 entries, or component expansion makes more than 96 wire parts (before `repeat`). |
+| `parts.resolved` | assembly | More than 96 parts after `use` and `repeat` expansion. The report's `limit` gives the resolved part count (`count`), the limit (`limit`, 96) and the component instances that add the most parts (`top`: up to 5 `{"id", "use", "parts"}`, most parts first, ties by id). |
 | `id.duplicate.<id>` | assembly, component | Two parts, `repeat` copies, component instances or anchors share an id, or an annotation id is taken (they share one namespace). |
 | `ref.unknown.<id>` | assembly, patch | A reference names no part: a `parent`, a drive `source` or `crank`, a constraint, a step id list, a section part, or a patch part id. |
 | `part.object` | assembly | A part entry is not an object. |

@@ -24,6 +24,8 @@ public struct MGViewport: Equatable {
         return v
     }
     init(size: CGSize, scale: CGFloat, center: MGPoint) { self.size = size; self.scale = scale; self.center = center }
+    /// This viewport (same scale and centre) for a view of another size: a narrower view crops the sides.
+    public func resized(to size: CGSize) -> MGViewport { MGViewport(size: size, scale: scale, center: center) }
 }
 
 public enum MGLayout {

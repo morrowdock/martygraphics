@@ -61,25 +61,94 @@ public struct MGFrameRect: Equatable, Sendable {
 /// so a still and a story frame of the same beat in the same layout get the same camera.
 public enum MGExplainerFrame {
     /// The panes at `width` × `height` pixels: the content area under the title band and above the caption band;
-    /// with both panes, the `primary` view gets 55 % (side by side when wider than tall, else stacked, the first pane
-    /// on top). `board` is false in a beat whose board pane is not drawn (`MGExplainerSession.boardPane`): the solid
-    /// then takes the whole area.
-    public static func panes(width w: Int, height h: Int, board: Bool, solid: Bool, primarySolid: Bool) -> (board: MGFrameRect?, solid: MGFrameRect?) {
-        let s = Double(w) / 1280, gap = (16 * s).rounded()
-        let x0 = Int((24 * s).rounded()), y0 = Int((132 * s).rounded())
-        let area = MGFrameRect(x: x0, y: y0, width: max(1, w - 2 * x0), height: max(1, h - y0 - Int((112 * s).rounded())))
+    /// with both panes side by side (wider than tall), the board pane takes `boardShare` of the width (nil: 45 %, or 55 %
+    /// when the board is primary; `marty-solid render` passes `boardShare(scene:…)`) and the solid the rest; stacked
+    /// (taller than wide), the `primary` view gets 55 %, the first pane on top. `board` is false in a beat whose board
+    /// pane is not drawn (`MGExplainerSession.boardPane`): the solid then takes the whole area.
+    public static func panes(width w: Int, height h: Int, board: Bool, solid: Bool, primarySolid: Bool,
+                             boardShare: Double? = nil) -> (board: MGFrameRect?, solid: MGFrameRect?) {
+        let area = contentArea(width: w, height: h), gap = paneGap(width: w)
         guard board && solid else { return (board ? area : nil, solid ? area : nil) }
         var first = area, second = area
         if w >= h {
-            let a = Int((Double(area.width) - gap) * 0.55), b = area.width - Int(gap) - a
-            first.width = primarySolid ? b : a
-            second.x = first.x + first.width + Int(gap); second.width = primarySolid ? a : b
+            let total = area.width - Int(gap)
+            let boardWidth: Int
+            if let share = boardShare {
+                let bounded = share.isFinite ? min(boardPrimaryMaxShare, max(boardMinShare, share)) : boardMaxShare
+                boardWidth = min(total - 1, max(1, Int(Double(total) * bounded)))
+            } else {
+                // The split of earlier releases, to the pixel: the primary view gets 55 %.
+                let a = Int((Double(area.width) - gap) * 0.55)
+                boardWidth = primarySolid ? total - a : a
+            }
+            first.width = boardWidth
+            second.x = first.x + first.width + Int(gap); second.width = total - boardWidth
         } else {
             let a = Int((Double(area.height) - gap) * 0.55), b = area.height - Int(gap) - a
             second.height = primarySolid ? a : b
             first.y = second.y + second.height + Int(gap); first.height = primarySolid ? b : a
         }
         return (first, second)
+    }
+
+    /// The content area of a `width` × `height` frame: under the title band, above the caption band, inside the side
+    /// margins (whole pixels).
+    public static func contentArea(width w: Int, height h: Int) -> MGFrameRect {
+        let s = Double(w) / 1280
+        let x0 = Int((24 * s).rounded()), y0 = Int((132 * s).rounded())
+        return MGFrameRect(x: x0, y: y0, width: max(1, w - 2 * x0), height: max(1, h - y0 - Int((112 * s).rounded())))
+    }
+
+    /// The gap between two panes of a `width`-pixel frame (16 px at 1280 px wide).
+    public static func paneGap(width w: Int) -> Double { (16 * Double(w) / 1280).rounded() }
+
+    // MARK: Board pane width
+
+    /// Bounds of the board pane's share of a side-by-side split (docs/EXPLAINER.md, "Board pane width"): at least
+    /// `boardMinShare`, at most `boardMaxShare` (`boardPrimaryMaxShare` when the board is the primary view).
+    public static let boardMinShare = 0.28, boardMaxShare = 0.50, boardPrimaryMaxShare = 0.55
+    /// Margin kept on each side of the board's content, in pixels (points) at `unit` 1 (1280 px wide).
+    public static let boardMargin = 24.0
+
+    /// The reference board pane of a side-by-side split of `areaWidth` × `areaHeight` with `gap` between the panes: the
+    /// board pane at its largest share. The board is drawn at the scale and centre its viewport has in this pane, so a
+    /// narrower pane crops only empty board.
+    public static func boardReferenceSize(areaWidth: Double, areaHeight: Double, gap: Double, primarySolid: Bool) -> CGSize {
+        let share = primarySolid ? boardMaxShare : boardPrimaryMaxShare
+        guard areaWidth.isFinite, areaHeight.isFinite, gap.isFinite, areaWidth > gap, areaHeight > 0 else { return CGSize(width: 1, height: 1) }
+        return CGSize(width: max(1, Int((areaWidth - gap) * share)), height: max(1, Int(areaHeight)))
+    }
+
+    /// The board pane's share of a side-by-side split of `areaWidth` × `areaHeight` (pixels in a still, points in
+    /// SwiftUI), with `gap` between the panes. The shown board's items (`MGLayout.bounds` of every item of `scene`, at
+    /// the viewport of the reference pane, `boardReferenceSize`) span some width about the pane centre; the share is that
+    /// width plus `boardMargin × unit` on each side, over the split width, bounded to `boardMinShare`...`boardMaxShare`
+    /// (`boardPrimaryMaxShare` for a primary board). A board without measurable items keeps the largest share.
+    /// Deterministic; `marty-solid render` stills, `story.mp4` and the SwiftUI explainer view call it with their own
+    /// area.
+    public static func boardShare(scene: MGScene?, areaWidth: Double, areaHeight: Double, gap: Double, unit: Double = 1,
+                                  primarySolid: Bool) -> Double {
+        let top = primarySolid ? boardMaxShare : boardPrimaryMaxShare
+        guard let scene, areaWidth.isFinite, areaHeight.isFinite, gap.isFinite, unit.isFinite, areaWidth > gap, areaHeight > 0 else { return top }
+        let ref = boardReferenceSize(areaWidth: areaWidth, areaHeight: areaHeight, gap: gap, primarySolid: primarySolid)
+        let vp = MGViewport(size: ref, width: scene.width, height: scene.height, camera: scene.camera)
+        let mid = Double(ref.width) / 2
+        var half = 0.0, measured = false
+        for item in scene.items.prefix(MGLimits.resolvedItems) {
+            guard let r = MGLayout.bounds(item, in: scene.items, vp), !r.isNull, r.minX.isFinite, r.maxX.isFinite else { continue }
+            measured = true
+            half = max(half, abs(Double(r.minX) - mid), abs(Double(r.maxX) - mid))
+        }
+        guard measured else { return top }
+        let need = 2 * half + 2 * boardMargin * max(0, unit)
+        return min(top, max(boardMinShare, need / (areaWidth - gap)))
+    }
+
+    /// `boardShare` for a `width` × `height` composite frame (its content area and pane gap, `unit` = width / 1280).
+    public static func boardShare(scene: MGScene?, width w: Int, height h: Int, primarySolid: Bool) -> Double {
+        let area = contentArea(width: w, height: h)
+        return boardShare(scene: scene, areaWidth: Double(area.width), areaHeight: Double(area.height), gap: paneGap(width: w),
+                          unit: Double(w) / 1280, primarySolid: primarySolid)
     }
 
     /// The pose of a beat view: the beat's explode and `spin` (0...1) of its spin played.
@@ -90,15 +159,23 @@ public enum MGExplainerFrame {
 
     /// The camera of the solid pane for one beat view: the assembly framing rule (`MGSolidFraming`) for the step the
     /// beat shows (`stepIndex`; nil for the plain view), at the beat's end pose, for the pane's own pixel size. The
-    /// pane holds no title or caption, so the whole pane is the safe window. A beat's still and every hold frame of the
-    /// beat in `story.mp4` use this camera.
+    /// pane holds no title or caption, so the whole pane is the safe window. The unblocked-focus rule applies
+    /// (`solidClearView`). A beat's still and every hold frame of the beat in `story.mp4` use this camera.
     public static func solidCamera(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?, pane: MGFrameRect)
         -> (camera: MGSolidCamera, rule: MGSolidFraming.Rule) {
+        let c = solidClearView(doc, view: view, stepIndex: stepIndex, pane: pane)
+        return (c.camera, c.rule)
+    }
+
+    /// `solidCamera` with the whole unblocked-focus result (`MGSolidFraming.clearView`): the camera, the parts the
+    /// beat draws as automatic ghosts and the hidden share. A beat's still and its story frames show
+    /// `clear.view(view.solid)`.
+    public static func solidClearView(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?, pane: MGFrameRect) -> MGSolidClearView {
         let step = view.step
         let shot = MGSolidShot(file: "", params: pose(doc, view: view), preset: step?.camera ?? "hero", orbit: step?.orbit ?? 0,
                                highlight: view.solidHighlight, margin: 0.8, step: step == nil ? nil : stepIndex, title: nil, caption: nil)
         // (The camera of the pane only; captions, labels and claims of a story frame follow `MGStoryPlan.holds`.)
-        return MGSolidFraming.framing(doc, shot: shot, aspect: pane.aspect, titleBand: 0, captionBand: 0)
+        return MGSolidFraming.clearView(doc, shot: shot, aspect: pane.aspect, titleBand: 0, captionBand: 0)
     }
 }
 

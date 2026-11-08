@@ -198,8 +198,8 @@ public enum MGSolidReasons {
         r("params.input", [.assembly], "`params.input` is not a number in -1e6...1e6."),
         r("params.explode", [.assembly], "`params.explode` is not a number in 0...1."),
         // Parts.
-        r("parts.count", [.assembly, .component], "`parts` is not an array of 1–48 entries, or component expansion makes more than 48 wire parts."),
-        r("parts.resolved", [.assembly], "More than 96 parts after `repeat` expansion."),
+        r("parts.count", [.assembly, .component], "`parts` is not an array of 1–48 entries, or component expansion makes more than 96 wire parts (before `repeat`)."),
+        r("parts.resolved", [.assembly], "More than 96 parts after `use` and `repeat` expansion. The report's `limit` gives the resolved part count (`count`), the limit (`limit`, 96) and the component instances that add the most parts (`top`: up to 5 `{\"id\", \"use\", \"parts\"}`, most parts first, ties by id)."),
         r("id.duplicate.<id>", [.assembly, .component], "Two parts, `repeat` copies, component instances or anchors share an id, or an annotation id is taken (they share one namespace)."),
         r("ref.unknown.<id>", [.assembly, .patch], "A reference names no part: a `parent`, a drive `source` or `crank`, a constraint, a step id list, a section part, or a patch part id."),
         r("part.object", [.assembly], "A part entry is not an object."),

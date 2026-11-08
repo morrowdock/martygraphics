@@ -269,7 +269,7 @@ enum MGSolidComponents {
 
     struct Context {
         let library: MGSolidLibrary
-        /// Wire parts produced so far over the whole document (bounded by `MGSolidLimits.parts`).
+        /// Wire parts produced so far over the whole document (bounded by `MGSolidLimits.expandedParts`).
         var parts = 0
         var nodes = 0
     }
@@ -459,7 +459,7 @@ enum MGSolidComponents {
                     items.append(.nested(rid, o, child))
                 } else {
                     ctx.parts += 1
-                    guard ctx.parts <= MGSolidLimits.parts else { throw MGSolidIssue("parts.count") }
+                    guard ctx.parts <= MGSolidLimits.expandedParts else { throw MGSolidIssue("parts.count") }
                     try ns.claim(rid, part: full)
                     for copy in copyIDs(o, rid) {
                         // The 64-character cap holds for the ids the compiler makes, repeat suffix included.
@@ -619,7 +619,7 @@ enum MGSolidComponents {
         for e in entries {
             guard case .object(let eo) = e, let u = eo["use"] else {
                 ctx.parts += 1
-                guard ctx.parts <= MGSolidLimits.parts else { throw MGSolidIssue("parts.count") }
+                guard ctx.parts <= MGSolidLimits.expandedParts else { throw MGSolidIssue("parts.count") }
                 parts.append(e)
                 continue
             }
