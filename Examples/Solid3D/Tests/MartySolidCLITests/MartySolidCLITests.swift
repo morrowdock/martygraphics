@@ -56,7 +56,7 @@ final class MartySolidCLITests: XCTestCase {
     func testExitCodesAndReports() throws {
         let catalog = try run(["components"])
         XCTAssertEqual(catalog.status, 0)
-        XCTAssertEqual((catalog.json?["components"] as? [Any])?.count, 7)
+        XCTAssertEqual((catalog.json?["components"] as? [Any])?.count, 9)
         XCTAssertEqual(catalog.text.split(separator: "\n").count, 1)   // one line of compact JSON
         let accepted = try run(["check", models.appendingPathComponent("planetary-components.json").path])
         XCTAssertEqual(accepted.status, 0)
@@ -353,7 +353,7 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual(r.status, 0, r.text)
         let files = Set(try FileManager.default.contentsOfDirectory(atPath: out.path))
         XCTAssertEqual(files, ["board-0.png", "solid-0.png", "beat-1.png", "beat-2.png", "snapshot-beat-1.json", "snapshot-beat-2.json",
-                               "loop.gif", "manifest.json"])
+                               "loop.gif", "loop.mp4", "manifest.json"])
         let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
         XCTAssertEqual(manifest?["legend"] as? String, "Solved 6")
         for o in manifest?["outputs"] as? [[String: Any]] ?? [] {

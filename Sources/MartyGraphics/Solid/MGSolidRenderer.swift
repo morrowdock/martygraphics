@@ -394,6 +394,16 @@ public final class MGSolidRenderer {
         setCamera(MGSolidCamera.framing(b, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, margin: margin))
     }
 
+    /// Frames one render-plan shot with the library's framing rule (`MGSolidFraming`): a step with a focus frames its
+    /// focus from the step's camera preset; other shots frame the whole model, never cut and never under the caption
+    /// band. A SwiftUI or `SCNView` host that shows step `i` calls `frame(MGSolidShot.step(document, i)!, document:
+    /// document, aspect:)`; it passes `titleBand: 0, captionBand: 0` when it draws no title or caption over the view.
+    public func frame(_ shot: MGSolidShot, document: MGSolidDocument, aspect: Double, fieldOfView: Double = 30,
+                      titleBand: Double? = nil, captionBand: Double? = nil) {
+        setCamera(MGSolidFraming.camera(document, shot: shot, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand,
+                                        captionBand: captionBand))
+    }
+
     public func worldBounds(_ params: MGPoseParameters, explodeRange: [Double] = []) -> MGBounds {
         var b = MGBounds.empty
         for e in [params.explode] + explodeRange {
@@ -412,8 +422,12 @@ public final class MGSolidRenderer {
         cameraNode.simdPosition = simd_float3(Float(pos.x), Float(pos.y), Float(pos.z))
         cameraNode.simdLook(at: simd_float3(Float(tgt.x), Float(tgt.y), Float(tgt.z)), up: simd_float3(0, 1, 0), localFront: simd_float3(0, 0, -1))
         cameraNode.camera?.fieldOfView = CGFloat(c.fieldOfView)
-        cameraNode.camera?.zNear = max(0.5, c.distance * 0.05)
-        cameraNode.camera?.zFar = c.distance * 6
+        cameraNode.camera?.zNear = MGSolidFraming.nearPlane(distance: c.distance)
+        // A close focus must not cut the rest of the posed model at the far plane: reach its farthest box corner.
+        var far = c.distance * 6
+        let b = worldBounds(posed)
+        if !b.isEmpty { for p in b.corners { far = max(far, (p - pos).length * 1.05) } }
+        cameraNode.camera?.zFar = far
         cameraNode.camera?.screenSpaceAmbientOcclusionRadius = CGFloat(max(2, c.distance * 0.012))
         updateGround()
     }

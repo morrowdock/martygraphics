@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+- Render upgrades for AI-written explainers: per-step camera framing, an MP4 loop and two built-in components.
+  - Framing (`MGSolidFraming`, Foundation only, used by `MGSolidRenderPlan.cameras(_:width:height:)`, `marty-solid
+    render` and `MGSolidRenderer.frame(_:document:aspect:)`): a step that lists `focus`, or highlights parts or shows
+    a section, is framed on them (highlight and section parts with the parts that touch them, plus the step's
+    annotation anchors) from the step's camera preset and `orbit`, filling 88 % of the safe window. A `focus` list is
+    always framed exactly; inferred context larger than 75 % of the model uses the whole-model rule. The fit keeps
+    every framed point beyond the renderer's near plane (`MGSolidFraming.nearPlane(distance:)`, at least 0.5 mm). Other stills
+    keep the earlier bounding-sphere framing unless a part or annotation anchor leaves the image or enters the
+    caption band; then they are fitted. The caption band (and, for fitted stills, the title band) is reserved
+    (`MGSolidRenderPlan.bands(width:height:)`). Loop frames move back by one shared factor when any frame would cut
+    the model. The fit reads posed mesh vertices (200,000 at most, sampled with extreme points beyond that). The
+    renderer's far plane now reaches the farthest corner of the posed model. Step `focus` was parsed but unused
+    before; it now names the parts the camera frames.
+  - Changed renders of the shipped examples (cameras compared shot by shot with the earlier rule at 1280 × 800):
+    `propeller` unchanged. Stills and loops that were cut or under the caption band are refitted (smaller):
+    `annotated-winch` hero, steps 1–5 and the loop (×1.218); `horizontal-reduction` hero, exploded, steps 1–3 and 5
+    and the loop (×1.195); `idler-gearbox` steps 1, 2 and 6 and the loop (×1.137); `planetary` steps 1–3 and 5;
+    `planetary-components` steps 1–5; `slider-crank` steps 1 and 4; `slider-crank-component` steps 1 and 2. Steps
+    now framed on their focus: `horizontal-reduction` step 4, `planetary` step 4, `slider-crank` steps 2 and 3,
+    `slider-crank-component` steps 3 and 4. The checked-in images under `docs/assets` keep the commits their
+    receipts name. Check reports do not change (the golden files are byte-identical).
+  - The solid pane of an explainer beat (`marty-solid render` on `"kind": "explainer"`) is framed by the same rule, from
+    the step the beat shows; the pane is the whole safe window (its title and caption sit outside it).
+  - `marty-solid render` (assemblies and explainers with a solid) also writes `loop.mp4` (H.264 through AVFoundation,
+    at the still size, every rendered loop frame at its exact time, no frame reordering; a failed, cancelled or stalled
+    encoder stops the render and removes its directory) and records it in the manifest (`codec`, `width`, `height`, `frames`, `fps`,
+    `loopSeconds`, `framingScale`). `--loop-fps 30` renders 360 frames over the same 12 s for the MP4; the GIF keeps
+    every third frame (the poses of the 10 fps loop). `MGSolidRenderPlan` gains `loopRate`, `loopRates`,
+    `gifFrameIndices`, `bands`, `cameras` and `MGSolidShot.step(_:_:)`; each still's manifest record gains `framing`
+    (`focus`, `model`, `modelFitted`).
+  - New built-in components: `mannequin` (a smooth schematic adult figure, 1.75 m, facing −Y; shoulders and elbows
+    are revolute joints held at the `leftShoulder`, `rightShoulder`, `leftElbow`, `rightElbow` angles; anchors
+    `back`, `head`, `leftShoulder`, `rightShoulder`, `leftHand`, `rightHand`, `leftFoot`, `rightFoot`; 12 parts,
+    26,048 triangles) and `centrifugalCompressor` (an impeller with `vanes` backswept vanes and as many splitters
+    on a disc, inside a ring of `diffuserVanes` wedge vanes; `diameter`, `bore` and the check `bore`; 28 parts and
+    5,996 triangles at the defaults). The catalog lists 9 components (about 5.6 KB). See
+    [docs/SOLID-3D.md](docs/SOLID-3D.md#figure-and-compressor-components).
 - Add explainer documents (`"kind": "explainer"`, version 1): one document with a 2D board (a v1 scene), a 3D solid
   (an assembly v2) or both, driven by ONE beat timeline, with one id namespace and one legend (docs/EXPLAINER.md,
   `Examples/Explainers`).
