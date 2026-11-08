@@ -7,7 +7,8 @@ import Foundation
 /// `marty-solid component check FILE.json`, then add it here in a reviewed pull request (the tests compile every
 /// entry at its defaults).
 public enum MGSolidBuiltInComponents {
-    public static let sources: [String] = [spurPair, planetaryStage, sliderCrank, propeller, housingBase, shaftWithBearing, fanStage]
+    public static let sources: [String] = [spurPair, planetaryStage, sliderCrank, propeller, housingBase, shaftWithBearing, fanStage,
+                                           mannequin, centrifugalCompressor]
 
     static let spurPair = #"""
     {"v": 1, "kind": "component", "id": "spurPair", "title": "Spur gear pair",
@@ -232,5 +233,87 @@ public enum MGSolidBuiltInComponents {
        "explode": [0, 0, 40]}
      ],
      "anchors": {"input": "hub"}}
+    """#
+
+    static let mannequin = #"""
+    {"v": 1, "kind": "component", "id": "mannequin", "title": "Schematic human figure (mannequin)",
+     "about": "Smooth schematic adult 1.75 m tall, facing -Y, feet at z = 0, left side +X; shoulder and elbow joints held at the given angles.",
+     "params": {
+      "leftShoulder": {"default": 10, "min": 4, "max": 170, "about": "left arm raised out to the side, degrees from hanging"},
+      "rightShoulder": {"default": 10, "min": 4, "max": 170, "about": "right arm raised out to the side, degrees from hanging"},
+      "leftElbow": {"default": 15, "min": 0, "max": 150, "about": "left forearm bent forward, degrees"},
+      "rightElbow": {"default": 15, "min": 0, "max": 150, "about": "right forearm bent forward, degrees"}
+     },
+     "parts": [
+      {"id": "body", "name": "Torso and pelvis", "material": "plastic.white", "smooth": 50, "at": [0, 125, 1340],
+       "shape": [{"revolvedProfile": {"points": [[0, -175], [40.2, -167], [74.2, -144.2], [97, -110.2], [105, -70], [105, 70], [97, 110.2], [74.2, 144.2], [40.2, 167], [0, 175]], "rot": [0, 1, 0, 90], "at": [0, -125, -390]}},
+                 {"revolvedProfile": {"points": [[0, 990], [70, 995], [98, 1020], [104, 1080], [100, 1150], [106, 1210], [0, 1225]], "at": [0, -125, -1340]}},
+                 {"revolvedProfile": {"points": [[0, 1165], [72, 1176], [110, 1212], [124, 1270], [125, 1340], [119, 1405], [102, 1460], [66, 1494], [0, 1505]], "at": [0, -125, -1340]}},
+                 {"revolvedProfile": {"points": [[0, -210], [23, -205.4], [42.4, -192.4], [55.4, -173], [60, -150], [60, 150], [55.4, 173], [42.4, 192.4], [23, 205.4], [0, 210]], "rot": [0, 1, 0, 90], "at": [0, -120, 92]}},
+                 {"shaft": {"radius": 42, "length": 110, "z0": 135, "at": [0, -125, 0]}}]},
+      {"id": "skull", "name": "Head", "parent": "body", "material": "plastic.white", "smooth": 50, "at": [0, -125, 312],
+       "shape": [{"revolvedProfile": {"points": [[0, -107], [52, -101], [80, -76], [92, -27], [91, 28], [80, 74], [52, 102], [0, 111]]}},
+                 {"revolvedProfile": {"points": [[0, 0], [12, 3], [17, 12], [13, 24], [0, 28]], "rot": [1, 0, 0, 90], "at": [0, -80, -8]}}]},
+      {"id": "upperArmL", "name": "Left upper arm", "parent": "body", "material": "plastic.white", "smooth": 50, "at": [205, -125, 90], "rot": [0, -1, 0, {"param": "leftShoulder"}], "joint": {"revolute": [0, -1, 0]}, "drive": {"input": 0},
+       "shape": [{"revolvedProfile": {"points": [[0, -56], [28, -48.5], [48.5, -28], [56, 0], [48.5, 28], [28, 48.5], [0, 56]]}},
+                 {"revolvedProfile": {"points": [[0, -12], [36, -20], [49, -48], [46, -150], [40, -262], [30, -290], [0, -300]]}}]},
+      {"id": "lowerArmL", "name": "Left forearm", "parent": "upperArmL", "material": "plastic.white", "smooth": 50, "at": [0, 0, -300], "rot": [-1, 0, 0, {"param": "leftElbow"}], "joint": {"revolute": [-1, 0, 0]}, "drive": {"input": 0},
+       "shape": [{"revolvedProfile": {"points": [[0, -42], [21, -36.4], [36.4, -21], [42, 0], [36.4, 21], [21, 36.4], [0, 42]]}},
+                 {"revolvedProfile": {"points": [[0, -10], [34, -18], [41, -55], [37, -170], [30, -245], [20, -262], [0, -268]]}}]},
+      {"id": "handL", "name": "Left hand", "parent": "lowerArmL", "material": "plastic.white", "smooth": 50, "at": [0, 0, -268],
+       "shape": [{"revolvedProfile": {"points": [[0, 4], [24, -6], [35, -45], [33, -110], [24, -158], [0, -178]]}}]},
+      {"id": "upperArmR", "name": "Right upper arm", "parent": "body", "material": "plastic.white", "smooth": 50, "at": [-205, -125, 90], "rot": [0, 1, 0, {"param": "rightShoulder"}], "joint": {"revolute": [0, 1, 0]}, "drive": {"input": 0},
+       "shape": [{"revolvedProfile": {"points": [[0, -56], [28, -48.5], [48.5, -28], [56, 0], [48.5, 28], [28, 48.5], [0, 56]]}},
+                 {"revolvedProfile": {"points": [[0, -12], [36, -20], [49, -48], [46, -150], [40, -262], [30, -290], [0, -300]]}}]},
+      {"id": "lowerArmR", "name": "Right forearm", "parent": "upperArmR", "material": "plastic.white", "smooth": 50, "at": [0, 0, -300], "rot": [-1, 0, 0, {"param": "rightElbow"}], "joint": {"revolute": [-1, 0, 0]}, "drive": {"input": 0},
+       "shape": [{"revolvedProfile": {"points": [[0, -42], [21, -36.4], [36.4, -21], [42, 0], [36.4, 21], [21, 36.4], [0, 42]]}},
+                 {"revolvedProfile": {"points": [[0, -10], [34, -18], [41, -55], [37, -170], [30, -245], [20, -262], [0, -268]]}}]},
+      {"id": "handR", "name": "Right hand", "parent": "lowerArmR", "material": "plastic.white", "smooth": 50, "at": [0, 0, -268],
+       "shape": [{"revolvedProfile": {"points": [[0, 4], [24, -6], [35, -45], [33, -110], [24, -158], [0, -178]]}}]},
+      {"id": "legL", "name": "Left leg", "material": "plastic.white", "smooth": 50, "at": [95, 0, 880],
+       "shape": [{"revolvedProfile": {"points": [[0, -72], [36, -62.4], [62.4, -36], [72, 0], [62.4, 36], [36, 62.4], [0, 72]]}},
+                 {"revolvedProfile": {"points": [[0, -20], [60, -40], [76, -90], [70, -250], [56, -390], [0, -420]]}},
+                 {"revolvedProfile": {"points": [[0, -50], [25, -43.3], [43.3, -25], [50, 0], [43.3, 25], [25, 43.3], [0, 50]], "at": [0, 0, -420]}},
+                 {"revolvedProfile": {"points": [[0, -440], [44, -452], [52, -500], [44, -660], [34, -760], [26, -800], [0, -812]]}}]},
+      {"id": "footL", "name": "Left foot", "parent": "legL", "material": "plastic.white", "smooth": 50, "at": [0, 0, -880],
+       "shape": [{"revolvedProfile": {"points": [[0, 0], [30, 8], [44, 40], [46, 120], [40, 196], [24, 236], [0, 250]], "rot": [1, 0, 0, 90], "at": [0, 40, 46]}}]},
+      {"id": "legR", "name": "Right leg", "material": "plastic.white", "smooth": 50, "at": [-95, 0, 880],
+       "shape": [{"revolvedProfile": {"points": [[0, -72], [36, -62.4], [62.4, -36], [72, 0], [62.4, 36], [36, 62.4], [0, 72]]}},
+                 {"revolvedProfile": {"points": [[0, -20], [60, -40], [76, -90], [70, -250], [56, -390], [0, -420]]}},
+                 {"revolvedProfile": {"points": [[0, -50], [25, -43.3], [43.3, -25], [50, 0], [43.3, 25], [25, 43.3], [0, 50]], "at": [0, 0, -420]}},
+                 {"revolvedProfile": {"points": [[0, -440], [44, -452], [52, -500], [44, -660], [34, -760], [26, -800], [0, -812]]}}]},
+      {"id": "footR", "name": "Right foot", "parent": "legR", "material": "plastic.white", "smooth": 50, "at": [0, 0, -880],
+       "shape": [{"revolvedProfile": {"points": [[0, 0], [30, 8], [44, 40], [46, 120], [40, 196], [24, 236], [0, 250]], "rot": [1, 0, 0, 90], "at": [0, 40, 46]}}]}
+     ],
+     "anchors": {"back": "body", "head": "skull", "leftShoulder": "upperArmL", "rightShoulder": "upperArmR", "leftHand": "handL", "rightHand": "handR", "leftFoot": "footL", "rightFoot": "footR"}}
+    """#
+
+    static let centrifugalCompressor = #"""
+    {"v": 1, "kind": "component", "id": "centrifugalCompressor", "title": "Centrifugal compressor stage",
+     "about": "Impeller (input) with N backswept vanes and N splitters on a disc, in a vaned diffuser ring; axis +Z, air enters at -Z, leaves outward.",
+     "params": {
+      "diameter": {"default": 100, "min": 30, "max": 1000, "about": "impeller tip diameter in mm"},
+      "vanes": {"default": 7, "min": 4, "max": 12, "integer": true, "about": "main vanes; as many shorter splitter vanes sit between them"},
+      "diffuserVanes": {"default": 12, "min": 6, "max": 12, "integer": true},
+      "bore": {"default": 4, "min": 0.5, "max": 70, "about": "shaft hole radius in mm, below 0.075 diameter"}
+     },
+     "checks": {"bore": {"lt": [{"param": "bore"}, {"mul": [0.075, {"param": "diameter"}]}]}},
+     "parts": [
+      {"id": "impeller", "name": "Impeller hub and disc (input)", "material": "titanium", "smooth": 40, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1},
+       "shape": {"revolvedProfile": {"points": [[{"param": "bore"}, {"mul": [-0.3, {"param": "diameter"}]}], [{"mul": [0.09, {"param": "diameter"}]}, {"mul": [-0.3, {"param": "diameter"}]}], [{"mul": [0.098, {"param": "diameter"}]}, {"mul": [-0.27, {"param": "diameter"}]}], [{"mul": [0.112, {"param": "diameter"}]}, {"mul": [-0.205, {"param": "diameter"}]}], [{"mul": [0.138, {"param": "diameter"}]}, {"mul": [-0.14, {"param": "diameter"}]}], [{"mul": [0.18, {"param": "diameter"}]}, {"mul": [-0.085, {"param": "diameter"}]}], [{"mul": [0.25, {"param": "diameter"}]}, {"mul": [-0.042, {"param": "diameter"}]}], [{"mul": [0.35, {"param": "diameter"}]}, {"mul": [-0.018, {"param": "diameter"}]}], [{"mul": [0.5, {"param": "diameter"}]}, {"mul": [-0.006, {"param": "diameter"}]}], [{"mul": [0.5, {"param": "diameter"}]}, {"mul": [0.03, {"param": "diameter"}]}], [{"mul": [0.3, {"param": "diameter"}]}, {"mul": [0.045, {"param": "diameter"}]}], [{"mul": [0.14, {"param": "diameter"}]}, {"mul": [0.085, {"param": "diameter"}]}], [{"param": "bore"}, {"mul": [0.1, {"param": "diameter"}]}]], "closed": true}}},
+      {"id": "vane", "name": "Impeller vane", "parent": "impeller", "material": "titanium", "repeat": {"count": {"param": "vanes"}, "axis": [0, 0, 1]},
+       "shape": [{"extrudedProfile": {"points": [[{"mul": [0.0701, {"param": "diameter"}]}, {"mul": [0.008, {"param": "diameter"}]}], [{"mul": [0.1192, {"param": "diameter"}]}, {"mul": [0.0074, {"param": "diameter"}]}], [{"mul": [0.1685, {"param": "diameter"}]}, {"mul": [0.0044, {"param": "diameter"}]}], [{"mul": [0.2179, {"param": "diameter"}]}, {"mul": [-0.0025, {"param": "diameter"}]}], [{"mul": [0.2665, {"param": "diameter"}]}, {"mul": [-0.0147, {"param": "diameter"}]}], [{"mul": [0.2626, {"param": "diameter"}]}, {"mul": [-0.0302, {"param": "diameter"}]}], [{"mul": [0.2148, {"param": "diameter"}]}, {"mul": [-0.0182, {"param": "diameter"}]}], [{"mul": [0.1669, {"param": "diameter"}]}, {"mul": [-0.0115, {"param": "diameter"}]}], [{"mul": [0.1186, {"param": "diameter"}]}, {"mul": [-0.0086, {"param": "diameter"}]}], [{"mul": [0.0699, {"param": "diameter"}]}, {"mul": [-0.008, {"param": "diameter"}]}]], "depth": {"mul": [0.156, {"param": "diameter"}]}, "z0": {"mul": [-0.16, {"param": "diameter"}]}}},
+                 {"extrudedProfile": {"points": [[{"mul": [0.2504, {"param": "diameter"}]}, {"mul": [-0.0099, {"param": "diameter"}]}], [{"mul": [0.286, {"param": "diameter"}]}, {"mul": [-0.0215, {"param": "diameter"}]}], [{"mul": [0.3214, {"param": "diameter"}]}, {"mul": [-0.0374, {"param": "diameter"}]}], [{"mul": [0.3556, {"param": "diameter"}]}, {"mul": [-0.0581, {"param": "diameter"}]}], [{"mul": [0.3876, {"param": "diameter"}]}, {"mul": [-0.0837, {"param": "diameter"}]}], [{"mul": [0.3776, {"param": "diameter"}]}, {"mul": [-0.0962, {"param": "diameter"}]}], [{"mul": [0.3464, {"param": "diameter"}]}, {"mul": [-0.0712, {"param": "diameter"}]}], [{"mul": [0.3139, {"param": "diameter"}]}, {"mul": [-0.0516, {"param": "diameter"}]}], [{"mul": [0.2803, {"param": "diameter"}]}, {"mul": [-0.0364, {"param": "diameter"}]}], [{"mul": [0.2454, {"param": "diameter"}]}, {"mul": [-0.0251, {"param": "diameter"}]}]], "depth": {"mul": [0.106, {"param": "diameter"}]}, "z0": {"mul": [-0.11, {"param": "diameter"}]}}},
+                 {"extrudedProfile": {"points": [[{"mul": [0.3733, {"param": "diameter"}]}, {"mul": [-0.0715, {"param": "diameter"}]}], [{"mul": [0.3989, {"param": "diameter"}]}, {"mul": [-0.0946, {"param": "diameter"}]}], [{"mul": [0.4229, {"param": "diameter"}]}, {"mul": [-0.1221, {"param": "diameter"}]}], [{"mul": [0.4446, {"param": "diameter"}]}, {"mul": [-0.1537, {"param": "diameter"}]}], [{"mul": [0.463, {"param": "diameter"}]}, {"mul": [-0.1891, {"param": "diameter"}]}], [{"mul": [0.4488, {"param": "diameter"}]}, {"mul": [-0.1965, {"param": "diameter"}]}], [{"mul": [0.4308, {"param": "diameter"}]}, {"mul": [-0.1619, {"param": "diameter"}]}], [{"mul": [0.4103, {"param": "diameter"}]}, {"mul": [-0.1319, {"param": "diameter"}]}], [{"mul": [0.3875, {"param": "diameter"}]}, {"mul": [-0.1058, {"param": "diameter"}]}], [{"mul": [0.3626, {"param": "diameter"}]}, {"mul": [-0.0833, {"param": "diameter"}]}]], "depth": {"mul": [0.066, {"param": "diameter"}]}, "z0": {"mul": [-0.07, {"param": "diameter"}]}}}]},
+      {"id": "splitter", "name": "Splitter vane", "parent": "impeller", "material": "titanium", "rot": [0, 0, 1, {"div": [180, {"param": "vanes"}]}], "repeat": {"count": {"param": "vanes"}, "axis": [0, 0, 1]},
+       "shape": [{"extrudedProfile": {"points": [[{"mul": [0.2504, {"param": "diameter"}]}, {"mul": [-0.0099, {"param": "diameter"}]}], [{"mul": [0.286, {"param": "diameter"}]}, {"mul": [-0.0215, {"param": "diameter"}]}], [{"mul": [0.3214, {"param": "diameter"}]}, {"mul": [-0.0374, {"param": "diameter"}]}], [{"mul": [0.3556, {"param": "diameter"}]}, {"mul": [-0.0581, {"param": "diameter"}]}], [{"mul": [0.3876, {"param": "diameter"}]}, {"mul": [-0.0837, {"param": "diameter"}]}], [{"mul": [0.3776, {"param": "diameter"}]}, {"mul": [-0.0962, {"param": "diameter"}]}], [{"mul": [0.3464, {"param": "diameter"}]}, {"mul": [-0.0712, {"param": "diameter"}]}], [{"mul": [0.3139, {"param": "diameter"}]}, {"mul": [-0.0516, {"param": "diameter"}]}], [{"mul": [0.2803, {"param": "diameter"}]}, {"mul": [-0.0364, {"param": "diameter"}]}], [{"mul": [0.2454, {"param": "diameter"}]}, {"mul": [-0.0251, {"param": "diameter"}]}]], "depth": {"mul": [0.106, {"param": "diameter"}]}, "z0": {"mul": [-0.11, {"param": "diameter"}]}}},
+                 {"extrudedProfile": {"points": [[{"mul": [0.3733, {"param": "diameter"}]}, {"mul": [-0.0715, {"param": "diameter"}]}], [{"mul": [0.3989, {"param": "diameter"}]}, {"mul": [-0.0946, {"param": "diameter"}]}], [{"mul": [0.4229, {"param": "diameter"}]}, {"mul": [-0.1221, {"param": "diameter"}]}], [{"mul": [0.4446, {"param": "diameter"}]}, {"mul": [-0.1537, {"param": "diameter"}]}], [{"mul": [0.463, {"param": "diameter"}]}, {"mul": [-0.1891, {"param": "diameter"}]}], [{"mul": [0.4488, {"param": "diameter"}]}, {"mul": [-0.1965, {"param": "diameter"}]}], [{"mul": [0.4308, {"param": "diameter"}]}, {"mul": [-0.1619, {"param": "diameter"}]}], [{"mul": [0.4103, {"param": "diameter"}]}, {"mul": [-0.1319, {"param": "diameter"}]}], [{"mul": [0.3875, {"param": "diameter"}]}, {"mul": [-0.1058, {"param": "diameter"}]}], [{"mul": [0.3626, {"param": "diameter"}]}, {"mul": [-0.0833, {"param": "diameter"}]}]], "depth": {"mul": [0.066, {"param": "diameter"}]}, "z0": {"mul": [-0.07, {"param": "diameter"}]}}}]},
+      {"id": "diffuser", "name": "Diffuser ring", "material": "darkSteel", "explode": [0, 0, {"mul": [0.25, {"param": "diameter"}]}],
+       "shape": [{"tube": {"inner": {"mul": [0.515, {"param": "diameter"}]}, "outer": {"mul": [0.8, {"param": "diameter"}]}, "length": {"mul": [0.035, {"param": "diameter"}]}, "z0": 0}},
+                 {"tube": {"inner": {"mul": [0.775, {"param": "diameter"}]}, "outer": {"mul": [0.8, {"param": "diameter"}]}, "length": {"mul": [0.075, {"param": "diameter"}]}, "z0": {"mul": [-0.075, {"param": "diameter"}]}}}]},
+      {"id": "diffuserVane", "name": "Diffuser vane", "parent": "diffuser", "material": "aluminum", "repeat": {"count": {"param": "diffuserVanes"}, "axis": [0, 0, 1]},
+       "shape": {"extrudedProfile": {"points": [[{"mul": [0.5424, {"param": "diameter"}]}, {"mul": [0.0014, {"param": "diameter"}]}], [{"mul": [0.682, {"param": "diameter"}]}, {"mul": [0.3109, {"param": "diameter"}]}], [{"mul": [0.7261, {"param": "diameter"}]}, {"mul": [0.2874, {"param": "diameter"}]}], [{"mul": [0.5476, {"param": "diameter"}]}, {"mul": [-0.0014, {"param": "diameter"}]}], [{"mul": [0.5422, {"param": "diameter"}]}, {"mul": [-0.0053, {"param": "diameter"}]}]], "depth": {"mul": [0.071, {"param": "diameter"}]}, "z0": {"mul": [-0.07, {"param": "diameter"}]}}}}
+     ],
+     "anchors": {"input": "impeller", "frame": "diffuser"}}
     """#
 }

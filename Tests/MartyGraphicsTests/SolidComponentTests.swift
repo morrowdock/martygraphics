@@ -39,10 +39,11 @@ final class SolidComponentTests: XCTestCase {
     // MARK: Library
 
     func testBuiltInLibraryAndCatalog() throws {
-        XCTAssertEqual(lib.ids, ["fanStage", "housingBase", "planetaryStage", "propeller", "shaftWithBearing", "sliderCrank", "spurPair"])
+        XCTAssertEqual(lib.ids, ["centrifugalCompressor", "fanStage", "housingBase", "mannequin", "planetaryStage", "propeller", "shaftWithBearing",
+                                 "sliderCrank", "spurPair"])
         XCTAssertEqual(MGSolidBuiltInComponents.sources.count, lib.ids.count)   // none was refused while loading
         guard case .array(let entries)? = lib.catalog()["components"] else { return XCTFail("catalog") }
-        XCTAssertEqual(entries.count, 7)
+        XCTAssertEqual(entries.count, 9)
         let spur = try XCTUnwrap(entries.first { $0["id"] == .string("spurPair") })
         XCTAssertEqual(spur["parts"], .array([.string("pinion"), .string("wheel")]))
         XCTAssertEqual(spur["anchors"]?["output"], .string("wheel"))

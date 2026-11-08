@@ -3,6 +3,7 @@
 // write them). The check reports, the render plan and the reason catalog live in the MartyGraphics library; this tool
 // adds files and pixels.
 import AppKit
+import AVFoundation
 import SwiftUI
 import CoreText
 import CryptoKit
@@ -17,7 +18,7 @@ enum CLIError: Error, CustomStringConvertible {
         switch self {
         case .usage: return """
             Usage: marty-solid check FILE.json [--strict] [--patch PATCH.json] [--component C.json ...]
-                   marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--snapshots] [--component C.json ...]
+                   marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--snapshots] [--component C.json ...]
                    marty-solid snapshot check SNAPSHOT.json [--component C.json ...]
                    marty-solid components [--component C.json ...]
                    marty-solid component check C.json [--component OTHER.json ...] [--with NAME=VALUE ...]
@@ -216,6 +217,7 @@ func caption(_ image: CGImage, title: String, text: String?, footer: String) -> 
         }
     }
     let s = CGFloat(w) / 1280
+    let band = CGFloat(MGSolidRenderPlan.captionBandPixels)
     // Titles stay on one line; a long title is truncated with an ellipsis instead of running off the edge.
     do {
         let font = NSFont.systemFont(ofSize: 28 * s, weight: .semibold) as CTFont
@@ -226,7 +228,7 @@ func caption(_ image: CGImage, title: String, text: String?, footer: String) -> 
         ctx.textPosition = CGPoint(x: 40 * s, y: CGFloat(h) - 64 * s); CTLineDraw(fitted, ctx)
     }
     if let t = text {
-        ctx.setFillColor(CGColor(gray: 0, alpha: 0.55)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: Int(120 * s)))
+        ctx.setFillColor(CGColor(gray: 0, alpha: 0.55)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: Int(band * s)))
         draw(t, 20 * s, .regular, x: 40 * s, y: 30 * s, alpha: 0.95, maxWidth: CGFloat(w) - 80 * s)
     }
     draw(footer, 12 * s, .regular, x: 40 * s, y: CGFloat(h) - 92 * s, alpha: 0.6)
@@ -257,14 +259,107 @@ func scaled(_ image: CGImage, width: Int) -> CGImage {
     return ctx.makeImage()!
 }
 
+/// H.264 MP4 writer (AVFoundation, no installs): frames at a fixed rate, presentation time = frame index / rate.
+final class MovieWriter {
+    let writer: AVAssetWriter
+    let input: AVAssetWriterInput
+    let adaptor: AVAssetWriterInputPixelBufferAdaptor
+    let width: Int, height: Int, fps: Int32
+    private(set) var frames: Int64 = 0
+
+    /// H.264 4:2:0 needs even sizes: an odd width or height is written one pixel smaller (the frame is scaled).
+    static func evenSize(_ w: Int, _ h: Int) -> (width: Int, height: Int) { (w - w % 2, h - h % 2) }
+
+    init(url: URL, width: Int, height: Int, fps: Int32) throws {
+        (self.width, self.height) = MovieWriter.evenSize(width, height)
+        self.fps = fps
+        writer = try AVAssetWriter(outputURL: url, fileType: .mp4)
+        // About 0.2 bits per pixel per frame, at least 2 Mbit/s: sharp edges on dark studio backgrounds.
+        let bitrate = max(2_000_000, min(40_000_000, Int(Double(self.width * self.height) * Double(fps) * 0.2)))
+        input = AVAssetWriterInput(mediaType: .video, outputSettings: [
+            AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: self.width, AVVideoHeightKey: self.height,
+            // No frame reordering (no B-frames): every sample's presentation time is its decode time, frame k at k / fps.
+            AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: bitrate, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
+                                              AVVideoMaxKeyFrameIntervalKey: Int(fps) * 2, AVVideoAllowFrameReorderingKey: false],
+        ])
+        input.expectsMediaDataInRealTime = false
+        adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: self.width,
+            kCVPixelBufferHeightKey as String: self.height,
+        ])
+        writer.add(input)
+        guard writer.startWriting() else { throw CLIError.invalid("mp4: \(writer.error.map { "\($0)" } ?? "start failed")") }
+        writer.startSession(atSourceTime: .zero)
+    }
+
+    /// Longest wait for the encoder to take a frame (seconds).
+    static let readyTimeout = 60.0
+
+    /// Waits until `ready()`; throws as soon as `status()` is `.failed` or `.cancelled` (disk full, a cancel) and after
+    /// `timeout` seconds, so a stopped writer never hangs the render.
+    static func waitUntilReady(timeout: Double = MovieWriter.readyTimeout, ready: () -> Bool, status: () -> AVAssetWriter.Status,
+                               error: () -> Error? = { nil }) throws {
+        let start = Date()
+        while !ready() {
+            switch status() {
+            case .failed: throw CLIError.invalid("mp4: writer failed: \(error().map { "\($0)" } ?? "no error given")")
+            case .cancelled: throw CLIError.invalid("mp4: writer cancelled")
+            default: break
+            }
+            guard Date().timeIntervalSince(start) < timeout else { throw CLIError.invalid("mp4: writer not ready after \(timeout) s") }
+            Thread.sleep(forTimeInterval: 0.002)
+        }
+    }
+
+    /// Stops the file (no partial MP4 is finished) and returns the error to throw; the render then removes its directory.
+    private func abandon(_ e: Error) -> Error {
+        if writer.status == .writing { writer.cancelWriting() }
+        return e
+    }
+
+    func append(_ image: CGImage) throws {
+        do {
+            try MovieWriter.waitUntilReady(ready: { input.isReadyForMoreMediaData }, status: { writer.status }, error: { writer.error })
+        } catch { throw abandon(error) }
+        var buffer: CVPixelBuffer?
+        guard let pool = adaptor.pixelBufferPool, CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer) == kCVReturnSuccess, let pb = buffer else {
+            throw abandon(CLIError.invalid("mp4 pixel buffer"))
+        }
+        CVPixelBufferLockBaseAddress(pb, [])
+        let ctx = CGContext(data: CVPixelBufferGetBaseAddress(pb), width: width, height: height, bitsPerComponent: 8,
+                            bytesPerRow: CVPixelBufferGetBytesPerRow(pb), space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
+        ctx?.interpolationQuality = .high
+        ctx?.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        CVPixelBufferUnlockBaseAddress(pb, [])
+        guard adaptor.append(pb, withPresentationTime: CMTime(value: frames, timescale: fps)) else {
+            throw abandon(CLIError.invalid("mp4 frame \(frames): \(writer.error.map { "\($0)" } ?? "\(writer.status.rawValue)")"))
+        }
+        frames += 1
+    }
+
+    /// Ends the file: the last frame lasts one frame period, so the movie is exactly frames / fps seconds long.
+    func finish() throws {
+        guard writer.status == .writing else { throw abandon(CLIError.invalid("mp4: writer stopped before the end (\(writer.status.rawValue))")) }
+        input.markAsFinished()
+        writer.endSession(atSourceTime: CMTime(value: frames, timescale: fps))
+        let done = DispatchSemaphore(value: 0)
+        writer.finishWriting { done.signal() }
+        done.wait()
+        guard writer.status == .completed else { throw CLIError.invalid("mp4: \(writer.error.map { "\($0)" } ?? "failed")") }
+    }
+}
+
 func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined() }
 
-/// Renders the library's render plan (`MGSolidRenderPlan`): captioned stills, the loop GIF, the snapshot and the manifest.
-@MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool, snapshots: Bool = false,
-                       library lib: MGSolidLibrary) throws -> Int32 {
+/// Renders the library's render plan (`MGSolidRenderPlan`): captioned stills, the loop GIF and MP4, the snapshot and the
+/// manifest. Cameras come from the plan (`MGSolidRenderPlan.cameras`, the `MGSolidFraming` rule).
+@MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool, loopRate: Int = 10,
+                       snapshots: Bool = false, library lib: MGSolidLibrary) throws -> Int32 {
     let document = try loadDocument(path)
     switch document.kind {
-    case "explainer"?: return try renderExplainer(path, document.data, outPath, width: width, height: height, loop: loop, snapshots: snapshots, library: lib)
+    case "explainer"?: return try renderExplainer(path, document.data, outPath, width: width, height: height, loop: loop, loopRate: loopRate,
+                                                  snapshots: snapshots, library: lib)
     case "lesson"?: return unsupportedKind()
     default: break
     }
@@ -285,15 +380,14 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     defer { if !finished { try? FileManager.default.removeItem(at: out) } }  // never leave a half-written result
     _ = NSApplication.shared
     let r = MGSolidRenderer(document: doc)
-    let aspect = Double(width) / Double(height)
     let sourceName = URL(fileURLWithPath: path).lastPathComponent
-    let plan = MGSolidRenderPlan(doc, sourceName: sourceName, source: src.source, loop: loop)
+    let plan = MGSolidRenderPlan(doc, sourceName: sourceName, source: src.source, loop: loop, loopRate: loopRate)
+    let cameras = plan.cameras(doc, width: Double(width), height: Double(height))
     var files: [MGJSON] = []
     var names: [String] = []
     var seconds = 0.0, frames = 0
     var previousFrame: MGAnnotationFrame?
-    func shot(_ s: MGSolidShot) throws -> CGImage {
-        let p = MGSolidCamera.presets[s.preset] ?? MGSolidCamera.presets["hero"]!
+    func shot(_ s: MGSolidShot, _ camera: MGSolidCamera) throws -> CGImage {
         // Each step shows its own section cuts, ghosts and annotations; other shots show the plain scene. Annotations
         // show on hero.png and the step stills only (`MGSolidShot.showsAnnotations`), and only where the engine
         // checked the pose (`checkedAnnotations`, inside the renderer and the frame).
@@ -301,8 +395,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         if s.showsAnnotations { r.show(document: doc, view: view) } else { r.show(view) }
         r.highlight(Set(s.highlight), dimOthers: !s.highlight.isEmpty)
         r.apply(s.params)
-        // Bounding spheres are loose around flat or long assemblies; a margin below 1 fills the frame.
-        r.frame(s.params, explodeRange: [0, s.params.explode], yaw: p.yaw + s.orbit, pitch: p.pitch, aspect: aspect, margin: s.margin)
+        r.setCamera(camera)
         let t0 = Date()
         guard let img = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
         seconds += Date().timeIntervalSince(t0); frames += 1
@@ -322,25 +415,42 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         o["sha256"] = .string(try sha(u))
         files.append(.object(o)); names.append(name)
     }
-    for s in plan.stills {
+    for (k, s) in plan.stills.enumerated() {
         previousFrame = nil
-        let img = caption(try shot(s), title: s.title ?? doc.title, text: s.caption, footer: plan.footer)
-        try writePNG(img, out.appendingPathComponent(s.file))
-        try record(s.file, ["width": .number(Double(img.width)), "height": .number(Double(img.height))])
+        try autoreleasepool {
+            let img = caption(try shot(s, cameras.stills[k]), title: s.title ?? doc.title, text: s.caption, footer: plan.footer)
+            try writePNG(img, out.appendingPathComponent(s.file))
+            try record(s.file, ["width": .number(Double(img.width)), "height": .number(Double(img.height)),
+                                "framing": .string(cameras.rules[k].rawValue)])
+        }
     }
     if !plan.loop.isEmpty {
         previousFrame = nil
-        let n = plan.loop.count, gifURL = out.appendingPathComponent("loop.gif")
+        // One render per loop frame: the MP4 gets every frame at full size, the GIF every (rate / 10)-th frame at 640 px.
+        let gifFrames = Set(plan.gifFrameIndices), n = plan.gifFrameIndices.count
+        let gifURL = out.appendingPathComponent("loop.gif"), mp4URL = out.appendingPathComponent("loop.mp4")
         let delay = MGSolidRenderPlan.loopDelaySeconds
         guard let gif = CGImageDestinationCreateWithURL(gifURL as CFURL, UTType.gif.identifier as CFString, n, nil) else { throw CLIError.invalid("gif") }
         CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
-        for s in plan.loop {
-            CGImageDestinationAddImage(gif, scaled(try shot(s), width: MGSolidRenderPlan.loopWidth),
-                                       [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: delay, kCGImagePropertyGIFUnclampedDelayTime: delay]] as CFDictionary)
+        let movie = try MovieWriter(url: mp4URL, width: width, height: height, fps: Int32(plan.loopRate))
+        for (k, s) in plan.loop.enumerated() {
+            // One pool per frame (render, encode, GIF): SceneKit and CoreGraphics objects are freed every frame, so a
+            // 360-frame loop does not grow memory.
+            try autoreleasepool {
+                let img = try shot(s, cameras.loop[k])
+                try movie.append(img)
+                guard gifFrames.contains(k) else { return }
+                CGImageDestinationAddImage(gif, scaled(img, width: MGSolidRenderPlan.loopWidth),
+                                           [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: delay, kCGImagePropertyGIFUnclampedDelayTime: delay]] as CFDictionary)
+            }
         }
         guard CGImageDestinationFinalize(gif) else { throw CLIError.invalid("gif finalize") }
+        try movie.finish()
         try record("loop.gif", ["width": .number(Double(MGSolidRenderPlan.loopWidth)), "frames": .number(Double(n)), "delaySeconds": .number(delay),
-                                "loopSeconds": .number(MGSolidRenderPlan.loopSeconds)])
+                                "loopSeconds": .number(MGSolidRenderPlan.loopSeconds), "framingScale": .number(cameras.loopScale)])
+        try record("loop.mp4", ["codec": .string("h264"), "width": .number(Double(movie.width)), "height": .number(Double(movie.height)),
+                                "frames": .number(Double(movie.frames)), "fps": .number(Double(plan.loopRate)),
+                                "loopSeconds": .number(Double(movie.frames) / Double(plan.loopRate)), "framingScale": .number(cameras.loopScale)])
     }
     try MGSolidRenderPlan.snapshot(doc).jsonData().write(to: out.appendingPathComponent("snapshot.json"))
     try record("snapshot.json", [:])
@@ -401,8 +511,8 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
 
 /// `render` for an explainer: `beat-<n>.png` (one composite per beat), `board-0.png` and `solid-0.png` (the views before
 /// the first beat), `loop.gif` (the solid's loop), `snapshot-beat-<n>.json` with `--snapshots`, and `manifest.json`.
-@MainActor func renderExplainer(_ path: String, _ data: Data, _ outPath: String, width: Int, height: Int, loop: Bool, snapshots: Bool,
-                                library lib: MGSolidLibrary) throws -> Int32 {
+@MainActor func renderExplainer(_ path: String, _ data: Data, _ outPath: String, width: Int, height: Int, loop: Bool, loopRate: Int = 10,
+                                snapshots: Bool, library lib: MGSolidLibrary) throws -> Int32 {
     let source = MGSolidSource(data: data)
     let doc: MGExplainer
     switch MGExplainer.parse(data: data) {
@@ -437,7 +547,9 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     let rects = paneRects(width: width, height: height, board: doc.board != nil, solid: solidDoc != nil, primarySolid: primarySolid)
     var files: [MGJSON] = [], names: [String] = []
     var seconds = 0.0, frames = 0
-    func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Bool = true) throws -> CGImage? {
+    var lastFraming: MGSolidFraming.Rule?
+    /// `stepIndex`: the solid step the beat shows (its focus frames the pane, `MGSolidFraming`); nil for the plain view.
+    func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Bool = true, stepIndex: Int? = nil) throws -> CGImage? {
         guard let r = renderer, let d = solidDoc else { return nil }
         let step = view.step
         let shown = view.solid ?? d.view(step: nil)
@@ -446,9 +558,12 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         r.show(document: d, view: shown)
         r.highlight(Set(view.solidHighlight), dimOthers: !view.solidHighlight.isEmpty)
         r.highlightAnnotations(Set(view.annotations))
-        let p = MGSolidCamera.presets[step?.camera ?? "hero"] ?? MGSolidCamera.presets["hero"]!
-        r.frame(params, explodeRange: [0, params.explode], yaw: p.yaw + (step?.orbit ?? 0), pitch: p.pitch,
-                aspect: Double(rect.width / rect.height), margin: 0.8)
+        // The pane holds no title or caption (they sit outside it), so the whole pane is the safe window.
+        let shot = MGSolidShot(file: "", params: params, preset: step?.camera ?? "hero", orbit: step?.orbit ?? 0, highlight: view.solidHighlight,
+                               margin: 0.8, step: step == nil ? nil : stepIndex, title: nil, caption: nil)
+        let framed = MGSolidFraming.framing(d, shot: shot, aspect: Double(rect.width / rect.height), titleBand: 0, captionBand: 0)
+        r.setCamera(framed.camera)
+        lastFraming = framed.rule
         let t0 = Date()
         guard let img = r.render(width: Int(rect.width), height: Int(rect.height)) else { throw CLIError.invalid("render failed (no Metal device?)") }
         seconds += Date().timeIntervalSince(t0); frames += 1
@@ -470,9 +585,12 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         o["sha256"] = .string(try sha(u))
         files.append(.object(o)); names.append(name)
     }
-    func write(_ img: CGImage, _ name: String) throws {
+    /// `framing`: the rule that framed the solid pane of this image, if it has one.
+    func write(_ img: CGImage, _ name: String, framing: MGSolidFraming.Rule? = nil) throws {
         try writePNG(img, out.appendingPathComponent(name))
-        try record(name, ["width": .number(Double(img.width)), "height": .number(Double(img.height))])
+        var fields: [String: MGJSON] = ["width": .number(Double(img.width)), "height": .number(Double(img.height))]
+        if let framing { fields["framing"] = .string(framing.rawValue) }
+        try record(name, fields)
     }
     if doc.board != nil, let scene = before.state?.scene {
         let alone = paneRects(width: width, height: height, board: true, solid: false, primarySolid: false)
@@ -482,8 +600,9 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     }
     if solidDoc != nil {
         let alone = paneRects(width: width, height: height, board: false, solid: true, primarySolid: true)
+        lastFraming = nil
         try write(composite(width: width, height: height, board: nil, solid: try solidImage(MGExplainerBeatView(), alone.solid!, spin: false),
-                            rects: alone, title: title, caption: nil, footer: footer), "solid-0.png")
+                            rects: alone, title: title, caption: nil, footer: footer), "solid-0.png", framing: lastFraming)
     }
     var captions: [MGJSON] = []
     var k = 0
@@ -495,9 +614,10 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         let caption = session.caption ?? ""
         captions.append(.string(caption))
         let b = rects.board.flatMap { r in session.state.map { boardImage($0.scene, view, width: Int(r.width), height: Int(r.height)) } } ?? nil
-        let sImg = try rects.solid.flatMap { try solidImage(view, $0) }
+        lastFraming = nil
+        let sImg = try rects.solid.flatMap { try solidImage(view, $0, stepIndex: session.solidStep(forBeat: k)) }
         try write(composite(width: width, height: height, board: b, solid: sImg, rects: rects, title: title, caption: "\(k + 1). \(caption)", footer: footer),
-                  "beat-\(k + 1).png")
+                  "beat-\(k + 1).png", framing: lastFraming)
         if snapshots, let d = solidDoc {
             let params = MGPoseParameters(input: d.defaults.input + (view.step?.spin ?? 0) * 2 * .pi, explode: view.step?.explode ?? d.defaults.explode)
             let name = "snapshot-beat-\(k + 1).json"
@@ -508,24 +628,36 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
         k += 1
     }
     if loop, let d = solidDoc, let r = renderer {
-        let plan = MGSolidRenderPlan(d, sourceName: sourceName, source: source, loop: true)
-        let n = plan.loop.count, gifURL = out.appendingPathComponent("loop.gif")
+        // The solid's loop, framed and written like an assembly's: the GIF and the full-size MP4 from one render per frame.
+        let plan = MGSolidRenderPlan(d, sourceName: sourceName, source: source, loop: true, loopRate: loopRate)
+        let cameras = plan.cameras(d, width: Double(width), height: Double(height))
+        let gifFrames = Set(plan.gifFrameIndices), n = plan.gifFrameIndices.count, gifURL = out.appendingPathComponent("loop.gif")
         let delay = MGSolidRenderPlan.loopDelaySeconds
         guard let gif = CGImageDestinationCreateWithURL(gifURL as CFURL, UTType.gif.identifier as CFString, n, nil) else { throw CLIError.invalid("gif") }
         CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        let movie = try MovieWriter(url: out.appendingPathComponent("loop.mp4"), width: width, height: height, fps: Int32(plan.loopRate))
         r.show(d.view(step: nil)); r.highlight([], dimOthers: false)
-        for shot in plan.loop {
-            let p = MGSolidCamera.presets[shot.preset] ?? MGSolidCamera.presets["hero"]!
-            r.apply(shot.params)
-            r.frame(shot.params, explodeRange: [0, shot.params.explode], yaw: p.yaw + shot.orbit, pitch: p.pitch, aspect: Double(width) / Double(height), margin: shot.margin)
-            let t0 = Date()
-            guard let img = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
-            seconds += Date().timeIntervalSince(t0); frames += 1
-            CGImageDestinationAddImage(gif, scaled(img, width: MGSolidRenderPlan.loopWidth),
-                                       [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: delay, kCGImagePropertyGIFUnclampedDelayTime: delay]] as CFDictionary)
+        for (k, shot) in plan.loop.enumerated() {
+            // One pool per frame (render, encode, GIF), as for an assembly loop.
+            try autoreleasepool {
+                r.apply(shot.params)
+                r.setCamera(cameras.loop[k])
+                let t0 = Date()
+                guard let img = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
+                seconds += Date().timeIntervalSince(t0); frames += 1
+                try movie.append(img)
+                guard gifFrames.contains(k) else { return }
+                CGImageDestinationAddImage(gif, scaled(img, width: MGSolidRenderPlan.loopWidth),
+                                           [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: delay, kCGImagePropertyGIFUnclampedDelayTime: delay]] as CFDictionary)
+            }
         }
         guard CGImageDestinationFinalize(gif) else { throw CLIError.invalid("gif finalize") }
-        try record("loop.gif", ["width": .number(Double(MGSolidRenderPlan.loopWidth)), "frames": .number(Double(n)), "delaySeconds": .number(delay)])
+        try movie.finish()
+        try record("loop.gif", ["width": .number(Double(MGSolidRenderPlan.loopWidth)), "frames": .number(Double(n)), "delaySeconds": .number(delay),
+                                "framingScale": .number(cameras.loopScale)])
+        try record("loop.mp4", ["codec": .string("h264"), "width": .number(Double(movie.width)), "height": .number(Double(movie.height)),
+                                "frames": .number(Double(movie.frames)), "fps": .number(Double(plan.loopRate)),
+                                "loopSeconds": .number(Double(movie.frames) / Double(plan.loopRate)), "framingScale": .number(cameras.loopScale)])
     }
     let manifest: MGJSON = .object([
         "source": .object(["file": .string(sourceName), "lines": .number(Double(source.lines)), "sha256": .string(source.sha256)]),
@@ -604,13 +736,17 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                 }
                 exit(try componentCheck(a[2], lib, with: values))
             case "render"? where a.count >= 3 && !a[1].hasPrefix("--") && !a[2].hasPrefix("--"):
-                var w = 1280, h = 800, loop = true, snapshots = false
+                var w = 1280, h = 800, loop = true, rate = 10, snapshots = false
                 var rest = Array(a.dropFirst(3))
                 while let flag = rest.first {
                     rest.removeFirst()
                     switch flag {
                     case "--no-loop": loop = false
                     case "--snapshots": snapshots = true
+                    case "--loop-fps":
+                        guard let v = rest.first, let r = Int(v), MGSolidRenderPlan.loopRates.contains(r) else { throw CLIError.usage }
+                        rest.removeFirst()
+                        rate = r
                     case "--size":
                         guard let v = rest.first else { throw CLIError.usage }
                         rest.removeFirst()
@@ -620,7 +756,7 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                     default: throw CLIError.usage
                     }
                 }
-                exit(try render(a[1], a[2], width: w, height: h, loop: loop, snapshots: snapshots, library: lib))
+                exit(try render(a[1], a[2], width: w, height: h, loop: loop, loopRate: rate, snapshots: snapshots, library: lib))
             default: throw CLIError.usage
             }
         } catch {

@@ -55,7 +55,7 @@ swift build -c release --package-path Examples/Solid3D
 B=$(swift build -c release --package-path Examples/Solid3D --show-bin-path)
 $B/marty-solid check my-model.json             # JSON report; exit 0 accepted, 1 refused
 $B/marty-solid check --strict my-model.json    # model-harness profile: also refuses idle joints and off-axis turns
-$B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF, snapshot
+$B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF and MP4, snapshot
 $B/marty-solid check base.json --patch fix.json # report on base.json with the patch applied
 $B/marty-solid reasons                         # JSON catalog of every stable reason
 $B/marty-solid version                         # engine name, version and this binary's SHA-256
@@ -89,10 +89,17 @@ $B/marty-solid version                         # engine name, version and this b
   where it applies ([docs/REASONS.md](../../docs/REASONS.md)).
 - `render` writes `hero.png`, `exploded.png`, one captioned `step-N.png` per authored
   step (with its highlight, explode amount and camera), a 12-second `loop.gif`
-  (120 frames at 0.10 s: one orbit, one input turn and an explode beat; `--no-loop`
-  skips it), `snapshot.json` for other renderers such as the path tracer, and a
-  `manifest.json` with SHA-256 digests and the measured render time. `--size WxH`
-  sets the still size (default 1280x800). The output directory must not exist and its
+  (640 px wide, 120 frames at 0.10 s: one orbit, one input turn and an explode beat) and
+  the same loop as `loop.mp4` (H.264 through AVFoundation, at the still size, 10 frames
+  per second; `--loop-fps 30` renders 360 real frames for the MP4 and the GIF keeps every
+  third; `--no-loop` skips both), `snapshot.json` for other renderers such as the path
+  tracer, and a `manifest.json` with SHA-256 digests, the measured render time, each
+  still's `framing` rule and the loop's `framingScale`. `--size WxH` sets the still size
+  (default 1280x800). A step that lists `focus` parts is framed on them; a step that
+  highlights parts or shows a section is framed on those parts and the parts that touch
+  them, from the step's camera preset; other
+  stills show the whole model, never cut and never under the caption band
+  ([framing rule](../../docs/SOLID-3D.md#rendering-camera-framing-and-the-loop)). The output directory must not exist and its
   parent must; a failed render removes the partial directory. A step's `spin` is played
   as that many input turns. Each image also shows the annotations its step shows (labels,
   arrows, dimensions, the callout list and the legend), placed by the same function as the
@@ -112,7 +119,7 @@ $B/marty-solid render ../Explainers/gears-mixed.explainer.json /tmp/mixed --snap
 
 `check` prints one JSON report (`views.board`, `views.solid` with the assembly report fields, `ids`, `beats`,
 `legend`, `warnings`, `budget`); `--strict` also refuses an unused note (`notes.unused.<id>`). `render` writes
-`board-0.png`, `solid-0.png`, one composite `beat-<n>.png` per beat, `loop.gif`, `snapshot-beat-<n>.json` with
+`board-0.png`, `solid-0.png`, one composite `beat-<n>.png` per beat, `loop.gif` and `loop.mp4`, `snapshot-beat-<n>.json` with
 `--snapshots`, and `manifest.json`. A lesson document gives `kind.unsupported`; any other `kind` keeps the assembly
 path and its reasons. `marty-solid snapshot check SNAPSHOT.json` restores an explainer snapshot
 (`MGExplainerSession.snapshot()` as JSON text) with every check and prints the first reason.
@@ -124,7 +131,12 @@ example `{"id": "stage", "use": "planetaryStage", "with": {"planets": 3}}`.
 [`planetary-components.json`](Sources/MartySolid3D/Models/planetary-components.json)
 (12 lines) and
 [`slider-crank-component.json`](Sources/MartySolid3D/Models/slider-crank-component.json)
-(8 lines) are the two models above built this way.
+(8 lines) are the two models above built this way. Two built-ins help explainers
+that need a person or a turbine: `mannequin` (a smooth schematic adult with posable
+shoulders and elbows and anchors for the hands, shoulders, back, head and feet) and
+`centrifugalCompressor` (an impeller with backswept vanes and splitters in a vaned
+diffuser ring). See
+[docs/SOLID-3D.md](../../docs/SOLID-3D.md#figure-and-compressor-components).
 
 ```sh
 $B/marty-solid components                                   # one-line JSON catalog of the built-in components

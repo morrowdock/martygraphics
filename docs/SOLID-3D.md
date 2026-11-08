@@ -33,7 +33,7 @@ path traced through a small adapter.
 | Honesty (facts, tiers, lints, read-back) | `Solid/MGSolidFacts.swift`, `MGSolidTiers.swift`, `MGSolidFrames.swift` | Foundation only |
 | Annotations (labels, arrows, dimensions, placement, occlusion) | `Solid/MGSolidAnnotations.swift`, `MGAnnotationLayout.swift` | Foundation only |
 | Snapshot export | `Solid/MGSolidSnapshot.swift`, `MGMaterial.swift` | Foundation only |
-| Check report, render plan, reason catalog | `Solid/MGSolidReport.swift`, `MGSolidRenderPlan.swift`, `MGSolidReasons.swift`, `MGEngine.swift` | Foundation only |
+| Check report, render plan, camera framing, reason catalog | `Solid/MGSolidReport.swift`, `MGSolidRenderPlan.swift`, `MGSolidFraming.swift`, `MGSolidReasons.swift`, `MGEngine.swift` | Foundation only |
 | Studio renderer | `Solid/MGSolidRenderer.swift` | SceneKit, CoreGraphics, Metal |
 | Annotation overlay | `Solid/MGSolidOverlayView.swift` | SwiftUI, CoreGraphics, CoreText |
 
@@ -1014,7 +1014,7 @@ defaults and compiled on its own as an assembly; duplicate ids are refused.
 `MGSolidParser.document(data:library:)` resolves `use` entries against a library
 (default `builtIn`), and patches reuse the document's library. `catalog()` returns a
 compact JSON list (id, title, about, parameters with defaults and ranges, inner part
-ids, anchors), about 3.8 KB for the built-ins, so a model can discover them cheaply.
+ids, anchors), about 5.6 KB for the built-ins, so a model can discover them cheaply.
 
 | Component | Parts | Key parameters (defaults) | Anchors |
 | --- | --- | --- | --- |
@@ -1025,6 +1025,68 @@ ids, anchors), about 3.8 KB for the built-ins, so a model can discover them chea
 | `housingBase` | base, bolt × N | radius 84, thickness 7.5, bore 8, bolts 6 (top face at z = 0) | frame base |
 | `shaftWithBearing` | shaft, lowerBearing, upperBearing | radius 6, length 80, bearingWidth 12 | input shaft |
 | `fanStage` | hub, rotor (blade row), casing | blades 18, root 60, span 90, chord 40, stagger 35, twist 15 | input hub |
+| `mannequin` | body, skull, upperArmL/R, lowerArmL/R, handL/R, legL/R, footL/R | leftShoulder 10, rightShoulder 10, leftElbow 15, rightElbow 15 (degrees) | back, head, leftShoulder, rightShoulder, leftHand, rightHand, leftFoot, rightFoot |
+| `centrifugalCompressor` | impeller, vane × N, splitter × N, diffuser, diffuserVane × M | diameter 100, vanes 7, diffuserVanes 12, bore 4 | input impeller, frame diffuser |
+
+### Figure and compressor components
+
+**`mannequin`** is a smooth, clearly schematic adult figure, 1.75 m tall (a fixed
+size, so it also gives the scale of a machine beside it). It is built from revolved
+profiles: an egg-shaped head with a small nose, a chest, a shoulder bar, a waist and a
+pelvis bar, ball shoulders, elbows, hips and knees, tapered limbs, mitten hands and
+feet. It stands with its soles at z = 0 and faces −Y; its left side is +X. Each
+shoulder and elbow is a `revolute` joint held still by a zero-scale drive
+(`{"input": 0}`, read back as "held still"), turned to the angle in its parameter:
+`leftShoulder` / `rightShoulder` raise the arm out to the side (4–170°, degrees from
+hanging) and `leftElbow` / `rightElbow` bend the forearm forward (0–150°). Anchors
+name parts whose frames sit at useful points, so other parts can hang on them with
+`parent` and a short `at`:
+
+| Anchor | Part | Frame origin | Axes |
+| --- | --- | --- | --- |
+| `back` | `body` | centre of the upper back surface, (0, 125, 1340) | world axes |
+| `head` | `skull` | centre of the head, (0, 0, 1652) | world axes |
+| `leftShoulder`, `rightShoulder` | `upperArmL`, `upperArmR` | shoulder joint, (±205, 0, 1430) | turn with the arm; local −Z runs down the upper arm |
+| `leftHand`, `rightHand` | `handL`, `handR` | wrist | local −Z runs along the hand, +Z up the forearm |
+| `leftFoot`, `rightFoot` | `footL`, `footR` | centre of the sole, (±95, 0, 0) | world axes |
+
+```json
+{"id": "pilot", "use": "mannequin", "with": {"leftShoulder": 30, "rightShoulder": 30, "leftElbow": 10}},
+{"id": "jet", "parent": "pilot.rightHand", "at": [-85, -62, 0], "shape": {"shaft": {"radius": 50, "length": 300, "z0": -80}}}
+```
+
+The figure has 12 parts and exactly 26,048 triangles at every parameter value (under
+2 % of the mesh budget). It has no `checks`: the ranges were chosen so that the arms
+clear the body at the range corners (worked out by hand from the shapes; the engine does
+not test parts against each other for collisions), and the tests run all 16 range corners
+through `check --strict` (no warning). It is not an anatomical model: proportions are
+those of an artist's mannequin, the joints only turn as listed, and legs, neck and
+hands do not move.
+
+**`centrifugalCompressor`** is one radial compressor stage, as in a small gas turbine
+or a turbocharger: the `impeller` (input; a hub that curves from the eye at −Z out to a
+backing disc at the tip diameter, turning about +Z) carries `vanes` backswept main
+vanes and as many shorter `splitter` vanes half a pitch ahead of them; a fixed
+`diffuser` ring around the tip carries `diffuserVanes` wedge vanes leaned with the
+swirl. Air enters at −Z through the eye and leaves outward. Parameters: `diameter`
+(impeller tip diameter, 30–1000 mm), `vanes` (4–12), `diffuserVanes` (6–12) and `bore`
+(shaft hole radius). The check `bore` refuses `bore ≥ 0.075 × diameter`
+(`component.check.bore`), so the hole stays inside the hub. Every size is a fixed
+fraction of `diameter`: the impeller is 0.40 × diameter long, the diffuser vanes run
+from 0.545 to 0.765 × diameter in radius and the ring ends at 0.80 × diameter. At the
+defaults it has 28 parts and 5,996 triangles; at 12 + 12 + 12 vanes, 38 parts. Parts
+stay countable for `repeat` (at most 12 copies each).
+
+```json
+{"id": "comp", "use": "centrifugalCompressor", "parent": "starter", "at": [0, 0, 262],
+ "with": {"diameter": 270, "vanes": 7, "diffuserVanes": 11, "bore": 19}}
+```
+
+A step may highlight the whole stage with its instance id (`"highlight": ["comp"]`);
+`ghost` takes part ids, so list the base ids (`comp.impeller`, `comp.vane`,
+`comp.splitter`, `comp.diffuser`, `comp.diffuserVane`). The shapes are schematic: the
+vanes are flat-topped extrusions in three height steps rather than a curved shroud
+line, and no air flow, pressure or speed is computed.
 
 **Adding a component.** Write the definition, run
 `marty-solid component check FILE.json` (it validates, compiles the component alone,
@@ -1049,6 +1111,74 @@ pitch at its standard centre distance. `MGAssembly.gearResiduals` checks the
 tooth-ratio equations; each gear's turn is composed from its own joint and its
 revolute parents, signed by joint axis direction against the pair axis
 (`MGGearPair.axis`), relative to the carrier.
+
+## Rendering: camera framing and the loop
+
+`MGSolidRenderPlan` lists what `marty-solid render` takes: `hero.png`, `exploded.png`,
+one captioned still per step, and the loop frames. `cameras(_:width:height:)` gives the
+camera of each shot from one rule (`MGSolidFraming`, Foundation only, deterministic);
+the tool and any host use the same cameras.
+
+* **Focus.** A step frames its focus from its own camera preset and `orbit` (the
+  direction never changes; only the target and distance do). The focus is the step's
+  `focus` list as written, or else its `highlight` and section parts **plus every part
+  the step does not ghost whose posed box touches one of them** (one level, within
+  0.5 % of the model's box diagonal), plus the anchors of the annotations the step
+  shows. So a gear inside a gearbox brings its housing and the mechanism stays whole,
+  while a cutaway that stands apart is framed on its own. The focus fills 88 %
+  (`MGSolidFraming.fill`) of the safe window, centred in it. An inferred focus (highlight
+  and section parts with their context) whose box is more than 75 % of the whole model's
+  box diagonal (`focusShare`) uses the whole-model rule. A `focus` list is always framed
+  exactly, however large: to frame a part exactly, list it in `focus`.
+* **Whole model.** Other stills keep the bounding-sphere framing of earlier releases
+  unless a part or an annotation anchor would leave the image or enter the caption
+  band; only then is the still fitted like a focus. Earlier stills could reach into the
+  title band; a fitted still keeps it free too.
+* **Safe window.** The image minus the caption band (stills with a caption) and minus
+  the title band (stills with a title). `MGSolidRenderPlan.bands(width:height:)` gives
+  them as fractions of the height: the bands the tool draws (120 and 100 px at
+  1280 px wide, scaled with the width), but at least the bands the annotation layout
+  keeps free (0.2 and 0.14). The caption band never covers the model.
+* **Loop.** Loop frames keep the earlier per-frame framing. When any frame would cut
+  the model, every frame moves back by the same factor (to 94 % of the frame), so the
+  orbit never jumps. The manifest records the factor as `framingScale`.
+* **Points.** The fit reads the posed mesh vertices, not box corners, so round parts
+  are not framed by their corners. Over 200,000 vertices (`pointBudget`) each part is
+  sampled with a stride plus its extreme vertices along 26 directions.
+* The renderer's far plane reaches the farthest corner of the posed model, so a close
+  focus never cuts the rest of the scene at the back. The near plane sits at
+  `MGSolidFraming.nearPlane(distance:)`, the larger of 0.5 mm and 5 % of the camera
+  distance; the fit keeps every framed point at least 10 % beyond it, so a
+  sub-millimetre focus moves the camera back instead of being cut. Parts outside the
+  focus that come nearer than the near plane are cut.
+
+A host that shows one step calls
+`renderer.frame(MGSolidShot.step(document, i)!, document: document, aspect: w / h)`
+(`titleBand: 0, captionBand: 0` when it draws no title or caption over the view), or
+reads `MGSolidFraming.framing(_:shot:aspect:…)`, which also returns the rule that chose
+the camera (`focus`, `model`, `modelFitted`). `marty-solid render` writes that rule as
+`framing` in each still's manifest record.
+
+**Not checked.** A part between the camera and the focus still hides it (choose the
+camera preset or ghost the part). Parts outside the focus may be cut at the image edge,
+and may lie under the caption band or the legend (for example the feet of a figure
+whose arms are the focus); only the focus and the step's annotation anchors are kept
+inside the safe window.
+The fit keeps the posed geometry and annotation anchors inside the window, not
+annotation text, shadows or exhaust glow.
+
+**Loop video.** `marty-solid render` also writes `loop.mp4`: H.264 (AVFoundation, no
+other software), at the still size (default 1280 × 800; an odd width or height is
+written one pixel smaller), with every loop frame the engine rendered at its exact time
+(frame k at k / rate seconds; the file lasts frames / rate seconds). The default rate
+is 10 frames per second: 120 frames, the same frames as `loop.gif` at full size.
+`--loop-fps 30` renders 360 real frames over the same 12 seconds for the MP4; the GIF
+keeps every third frame (the same poses as at 10). No frame is interpolated. The
+manifest record gives `codec`, `width`, `height`, `frames`, `fps`, `loopSeconds` and
+`framingScale`. If the encoder fails or stops (a full disk, a cancel) or takes no frame for
+60 seconds, the render stops with an error and removes its output directory, so no
+manifest names a partial MP4. The poses and cameras are deterministic; the rendered pixels and the H.264 bytes are not byte-identical
+between runs (GPU rendering and the hardware encoder).
 
 ## Snapshot for other renderers
 

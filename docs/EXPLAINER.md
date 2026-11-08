@@ -418,11 +418,14 @@ Refusal order after the document loads: the solid's report checks (`check.meshOp
 then with `--strict` the solid's strict refusals (`joint.idle.<id>`, `frame.axis.off.<id>`) and `notes.unused.<id>`.
 The report is printed in full either way, so the author can repair from it.
 
-`marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--snapshots]` writes `board-0.png` and `solid-0.png`
-(the views before the first beat), one composite `beat-<n>.png` per beat (the `primary` pane 55 % wide, stacked when
-the size is taller than wide, the caption band and the legend line), `loop.gif` (the solid's loop; skipped with
-`--no-loop` or without a solid), `snapshot-beat-<n>.json` with `--snapshots` (snapshot `/2` of each beat's view) and
-`manifest.json` (source, outputs with bytes and SHA-256, legend, captions, frames and seconds per frame).
+`marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--snapshots]` writes `board-0.png`
+and `solid-0.png` (the views before the first beat), one composite `beat-<n>.png` per beat (the `primary` pane 55 % wide,
+stacked when the size is taller than wide, the caption band and the legend line), `loop.gif` and `loop.mp4` (the solid's
+loop, as for an assembly; skipped with `--no-loop` or without a solid), `snapshot-beat-<n>.json` with `--snapshots`
+(snapshot `/2` of each beat's view) and `manifest.json` (source, outputs with bytes and SHA-256, legend, captions, frames
+and seconds per frame). The solid pane of a beat is framed by the step the beat shows, with the assembly rule
+([SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop)); the pane holds no title or caption, so all of it
+is the safe window.
 
 ## What is not checked
 
