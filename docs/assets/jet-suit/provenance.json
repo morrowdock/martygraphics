@@ -23,7 +23,7 @@
       "marty-solid check --strict docs/assets/jet-suit/jet-suit.json",
       "marty-solid render docs/assets/jet-suit/jet-suit.json <NEW_DIR> --size 1280x800 --loop-fps 30 --story-fps 30"
     ],
-    "note": "check exited 0 with ok true, strict true, no warnings; legend Solved 16 · Not checked 20. Solved 16 = 15 model motions (shaft, impeller and turbine wheel of 5 engines) and 1 gravity-arrow direction. The engine computes no thrust, rpm, load split or hover balance. render wrote 7 step stills, hero.png, exploded.png, loop.gif, loop.mp4, story.mp4 and snapshot.json (2259 frames, about 0.031 s per frame). Only the 7 step stills and story.mp4 are public; hero.png is excluded (its helmet reaches into the title band), and the other outputs are not kept."
+    "note": "The 70bfc47 capture: check exited 0 with ok true, strict true, no warnings. Every artifact listed below is now from the 2026-11-08 revision (see revisions); this capture block records the original render."
   },
   "review": {
     "facts": "Every factual sentence maps to a row of the merged fact key (F1-F20) in docs/assets/jet-suit/SOURCES.md. The key merges two independent AI model web fact-checks (GPT-6.1 Sol and Gemini 3.8 Flash).",
@@ -32,51 +32,51 @@
   },
   "artifacts": {
     "step-1.png": {
-      "sha256": "294d8d32862a9a7d980821cb4ace3511ab2a86cb183e76a5ecd996a7784e4bac",
-      "bytes": 688799,
-      "from": "render step 1 (step-1.png), unedited",
+      "sha256": "1205781c23b50f025ddcbfaf165dbaa2de563f81f5b32f7fcb5007a3910aeb2a",
+      "bytes": 688453,
+      "from": "render step 1 (step-1.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
       "occluded": 0
     },
     "step-2.png": {
-      "sha256": "9258f73cdc0763cad0b33a57ae8d215dec62896bc8b87306258b707cbcd60330",
-      "bytes": 698767,
-      "from": "render step 2 (step-2.png), unedited",
+      "sha256": "1ea5c78c5c56cff1a0f6bdff557717ce572cf563f84b226c150445e47e615a08",
+      "bytes": 698322,
+      "from": "render step 2 (step-2.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
       "occluded": 0
     },
     "step-3.png": {
-      "sha256": "abce038197915ed637d048ddf4d10f996b25f2c7d555e57da222b2b35f0d503c",
-      "bytes": 681633,
-      "from": "render step 3 (step-3.png), unedited",
+      "sha256": "bd1b8d772dec44c90cb261124a49556de6ceba7cd43fdec8fcc488a967bb322e",
+      "bytes": 681528,
+      "from": "render step 3 (step-3.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
       "occluded": 0
     },
     "step-4.png": {
-      "sha256": "37b2eda6896823ded20a991a6fcbe200c031bbae115ab5fea8c6cc301e8346b7",
-      "bytes": 692342,
-      "from": "render step 4 (step-4.png), unedited",
+      "sha256": "d5155b0ff92a18a82b9fd85dd2957caa014e0bc13b6c09051b3483078995e2ca",
+      "bytes": 692446,
+      "from": "render step 4 (step-4.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "modelFitted",
       "offView": 0
     },
     "step-5.png": {
-      "sha256": "d1088cc1a864c3e2f2430e5aff2b3ed95fddb8b8dfdbf002d008d9327650cdc0",
-      "bytes": 677779,
-      "from": "render step 5 (step-5.png), unedited",
+      "sha256": "f50c655bba6fabe154afc351b1371c3b9cad39de9aea0e3c33d503a9d30274af",
+      "bytes": 678236,
+      "from": "render step 5 (step-5.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "modelFitted",
       "offView": 0
     },
     "step-6.png": {
-      "sha256": "095efedab3d4b718035615d0dff750b390ecd59fcdeefa93103f8d553ca7a206",
-      "bytes": 946549,
+      "sha256": "da3becba0738023e5730edbe26cfacf9047ad8d740635d690757637fa87b62e1",
+      "bytes": 946551,
       "from": "render step 6 (step-6.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -85,9 +85,9 @@
       "facesCut": true
     },
     "step-7.png": {
-      "sha256": "870bc792a85839ff687ac3fbea6b571072b8c613ce9045dc81e1cec15a9f3e43",
-      "bytes": 871882,
-      "from": "render step 7 (step-7.png), unedited",
+      "sha256": "b95fdc91075666eba54660eb0fd4294cd52cfe2acae30dba6bd8163d6f0e9d2d",
+      "bytes": 871006,
+      "from": "render step 7 (step-7.png) of the 2026-11-08 revision, unedited",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
@@ -95,8 +95,8 @@
       "facesCut": true
     },
     "story.mp4": {
-      "sha256": "77839683c17ad124e003e71da77d1e34df75c4a44ba148fb0f0b7158f9e02992",
-      "bytes": 6170316,
+      "sha256": "3d0fe507c4a3ac9547d093a6376e8ea1628d24e1aa90c0c21764b786e4ea5919",
+      "bytes": 6168843,
       "from": "render story.mp4 of the 2026-11-08 revision, re-encoded for size (see reencode)",
       "pixels": "1280x800",
       "fps": 30,
@@ -104,20 +104,20 @@
       "seconds": 63,
       "beats": 7,
       "renderedOriginal": {
-        "sha256": "f028d6673f065caaa9844cb6c1e0b64479d22dc125ad22b16ae978aba6d741fa",
-        "bytes": 15806864,
+        "sha256": "9c3e54fd476a2fa43b5c81dbfeb1db8247f6686355c884b7c35f5e5335517288",
+        "bytes": 15801199,
         "note": "The engine's story.mp4 (1890 frames, 30 fps, 63 s, 7 beats of 9 s, no cuts, video only). Not kept in git: 15.8 MB."
       },
-      "reencode": "AVFoundation only: AVAssetReader (32BGRA) to AVAssetWriter, H.264 High profile, average 1,000,000 bit/s, key frame every 60 frames, every source frame kept (1890 in, 1890 out). A small Swift script outside the repository; no other tool. The hold frame at 52.0 s (step 6) was extracted and inspected: text and labels stay sharp."
+      "reencode": "AVFoundation only: AVAssetReader (32BGRA) to AVAssetWriter, H.264 High profile, average 1,000,000 bit/s, key frame every 60 frames, every source frame kept (1890 in, 1890 out). A small Swift script outside the repository; no other tool. Hold frames at 5.0, 32.5, 52.0 and 59.5 s were extracted; 5.0, 32.5 and 52.0 s were inspected: text and labels stay sharp."
     },
     "poster.jpg": {
-      "sha256": "7a576168168cafeebe560fa34b62f42fd6ad22a47cbf60ec076c3fa82fa5986c",
-      "bytes": 90700,
-      "from": "step-2.png converted to JPEG (macOS sips, quality 82); pixels not edited",
+      "sha256": "a54a953c445683d77a7f3202f2fa6ded7fd263b620ff84813f6120cc9720c837",
+      "bytes": 90671,
+      "from": "step-2.png of the 2026-11-08 revision converted to JPEG (macOS sips, quality 82); pixels not edited",
       "pixels": "1280x800"
     },
     "check-strict.json": {
-      "sha256": "431b94e46c4634af13b4425cb6fe7b335533bc148b291e93d859874ae545ae61",
+      "sha256": "457713baa1fa22e0ba8f1a9bf045733ac845c104638c5358f9d184d5a6e16c1b",
       "bytes": 72262,
       "from": "marty-solid check --strict of the 2026-11-08 revision (stdout re-serialised with sorted keys and 2-space indent; same content)"
     }
@@ -128,8 +128,8 @@
       "why": "The new strict anchor check (annotation.anchor.hidden) refused the reviewed file: in step 6 the label lComb (\"Combustion chamber\") had its dot on the cut casing wall (back.casing was the first surface on the line of sight), not on the combustion chamber.",
       "change": "lComb anchor {\"part\": \"back.combustor\", \"offset\": [30, 0, 148]} -> {\"part\": \"back.combustor\", \"offset\": [0, -30, 148]}: a point on the cut face, inside the annular chamber. No text, fact, part, step or camera changed.",
       "previousSHA256": "83895fd9348b13819fecacb5aeefcb85fe22a6ad0615f689343b8f0e63041668",
-      "engine": "morrowdock/martygraphics branch feat/strict-label-anchors on origin/main 3624a03494047a7b0c495ac0663f0d40ea021e04 (PR: strict label anchors). The branch changes the check only; the render code is the code of 3624a03.",
-      "engineExecutableSHA256": "997822a5ea3d834ba9edb562dda3a2e01087c083bd313bfdbf9516b225c2d275",
+      "engine": "morrowdock/martygraphics branch feat/strict-label-anchors (PR #40) on origin/main 3624a03494047a7b0c495ac0663f0d40ea021e04. The branch changes the check only; the render code is the code of 3624a03.",
+      "engineExecutableSHA256": "762a9738785418e99692baeec46c781439ea8261bbd9a6af96bd4408b582b3ab",
       "machine": "Apple M1 Mac mini (Macmini9,1), arm64; macOS 27.2; Apple Swift 6.4.2; SwiftPM release build",
       "commands": [
         "marty-solid check --strict docs/assets/jet-suit/jet-suit.json",
@@ -137,12 +137,19 @@
       ],
       "check": "exit 0, ok true, strict true, no warnings, anchorIssues empty; legend Solved 16 · Not checked 20.",
       "replaced": [
+        "step-1.png",
+        "step-2.png",
+        "step-3.png",
+        "step-4.png",
+        "step-5.png",
         "step-6.png",
+        "step-7.png",
+        "poster.jpg",
         "story.mp4",
         "check-strict.json"
       ],
-      "kept": "step-1.png to step-5.png, step-7.png and poster.jpg stay the 70bfc47 renders. The new render of these stills differs from them in 0.07 % to 0.97 % of colour channels, and no channel by more than 24 of 255 (measured with CoreGraphics); in step 6 the changed pixels are only in the box x 329-626, y 362-430 (the moved label and its dot).",
-      "review": "The builder inspected the new step-6.png and the story hold frame at 52.0 s: the dot is inside the copper combustion chamber and the text is sharp. The independent PUBLIC-OK review above covers the earlier bytes; this revision was not reviewed independently."
+      "review": "The builder inspected the new step-6.png and the story hold frames at 5.0, 32.5 and 52.0 s: the step 6 dot is inside the copper combustion chamber and the text is sharp. The independent PUBLIC-OK review above covers the earlier bytes; an independent review of PR #40 checked the moved anchor and the first replacement step-6.png.",
+      "comparison": "CoreGraphics RGB comparison of each new still with the 70bfc47 still it replaces. Steps 1-5 and 7: 2,020 to 29,826 channels (0.07 % to 0.97 %) differ, by at most 11/255: render noise. Step 6: 87,577 channels (2.85 %) differ. Inside the box x 329-626, y 362-430 (the moved label, its leader and dot) they differ by up to 240/255; outside it, 55,569 channels differ by at most 22/255, spread over x 224-1277, y 3-797 (render noise and the different leader path). Two renders of this build differ by at most 2/255 in at most 64 channels per still, so the stills are not byte-reproducible."
     }
   ]
 }

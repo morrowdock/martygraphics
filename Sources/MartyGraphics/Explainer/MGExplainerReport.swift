@@ -58,7 +58,8 @@ public struct MGExplainerReport: Equatable, Sendable {
 
     /// The report of a loaded explainer. Refusal order: the solid's report checks (`check.meshOpen`,
     /// `check.gearsInterpenetrate`), then the strict profile (the solid's strict refusals, then `notes.unused.<id>`,
-    /// then `annotation.anchor.hidden.<id>` of the first beat whose still does not show a label's or pointer's anchor).
+    /// then `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` of the first beat whose still does not
+    /// show, or did not test, a label's or pointer's anchor).
     /// A refused report still holds every field, so the author can repair from it.
     ///
     /// The beat anchor check (`MGExplainerFrame.beatAnchorIssues`) needs the document: it runs when `doc` is given (as

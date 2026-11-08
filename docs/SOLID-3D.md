@@ -864,10 +864,20 @@ preset. A frame lays out nothing, and says why in `refusal`, for a view or pose 
 Two rules check where the dot of a label and the tip of a pointer arrow land. The anchor of a label is its `at`; the
 anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensions are not tested.
 
-**On its part** (`annotation.anchor.off.<id>`). The anchor must lie in the box of its part's mesh, or at most
-`max(15 % of that box's diagonal, 1 % of the model's diagonal)` mm outside it (`MGAnnotationAnchorRules.partShare`,
-`modelShare`). The test is in the part's own frame, so it holds in every pose. A world anchor names no part and is not
-tested. It is a document warning (`MGSolidDocument.offPartAnchors`): the compile's strict profile refuses it too.
+**On its part** (`annotation.anchor.off.<id>`). Two tests at the default input with explode 0:
+
+1. The anchor lies in its part's oriented box (the box of the part's mesh, in the part's own frame), or at most
+   `max(5 % of that box's diagonal, 0.5 % of the model's diagonal)` mm outside it (`MGAnnotationAnchorRules.partShare`,
+   `modelShare`). This test is in the part's own frame, so it holds in every pose.
+2. No other part is nearer to the anchor than its own part's box, by more than 0.1 % of the model's diagonal. Another
+   part's distance is to its solid: 0 when the anchor is inside it (an odd number of watertight crossings on a segment
+   along +X), else the distance to its nearest triangle. So an L-shaped part whose box holds empty space does not claim
+   an anchor in that space. Parts whose oriented box is not nearer are skipped; the exact distances of one document read
+   at most 3,000,000 triangles (`MGAnnotationAnchorRules.surfaceTests`), and after that other parts are measured by
+   their oriented box, which can refuse an anchor but never passes one. The nearest such part is `closer` in the issue.
+
+A world anchor names no part and is not tested. It is a document warning (`MGSolidDocument.offPartAnchors`): the
+compile's strict profile refuses it too.
 
 **Visible in each step or beat that shows it** (`annotation.anchor.hidden.<id>`). The check frames each step still as
 `marty-solid render` does at 1280 × 800 (`MGSolidDocument.stepAnchorIssues`: the step's shot, its title and caption
@@ -881,35 +891,47 @@ the first cause found is the issue:
 | `ghosted` | the view draws the anchor's part fainter than its own opacity: step `ghost`, or an automatic ghost of the unblocked-focus rule |
 | `offscreen` | the anchor projects outside the view (the whole still or pane, bands included), or lies behind the camera |
 | `occluded` | another part is the first surface on the segment from the camera to the anchor (`by` names it) |
+| `untested` | the view's line-of-sight tests ran out of budget before this anchor (`annotation.anchor.untested.<id>`) |
 
-The segment test is the watertight ray test of the unblocked-focus rule against every part the view shows at
-opacity 0.5 or more (a cut part tests its cut mesh). A part blocks when it crosses the segment before the anchor (less
-0.1 % of the model's diagonal) and before the first crossing of the anchor's own part. So an anchor at the centre of its
+The segment test is the watertight ray test of the unblocked-focus rule against every part the view draws with a
+coverage of 0.5 or more. Coverage is what the renderer draws: the view opacity (the part's `opacity` and any ghost)
+times the material's own coverage (`MGMaterialPreset.coverage`: 0.22 for `glass`, 1 for every other preset), so glass
+hides no anchor. A cut part tests its cut mesh. A part blocks when it crosses the segment before the anchor (less 0.1 %
+of the model's diagonal) and before the first crossing of the anchor's own part. So an anchor at the centre of its
 part, seen through its own surface, is visible, and an anchor in the air in front of a part is not hidden by it. A
 world anchor has no own part: any crossing before it hides it. **Cut parts:** when the view's section cuts the anchor's
 own part and the anchor lies in that part's box on the kept side of the cut or on the cut face, the parts inside the
-cut part's box (grown by 0.5 % of the model's diagonal) do not hide it; parts outside it still do. The tests of one view
-spend at most 3,000,000 triangle tests (`MGAnnotationAnchorRules.tests`): an anchor whose line-of-sight test would pass
-the budget, and every anchor after it, is listed in `anchorUntested` and is not refused for occlusion (the other causes
-are still tested).
+cut part do not hide it; parts outside it still do. Inside is tested in the cut part's own frame: every corner of the
+other part's mesh box, posed and taken into that frame, lies in the cut part's mesh box grown by 0.5 % of the model's
+diagonal. So a rotated cut part never exempts a part that only its world-axis box holds.
+
+The tests of one view spend at most 3,000,000 triangle tests (`MGAnnotationAnchorRules.tests`). The anchor whose
+line-of-sight test would pass the budget, and every anchor of that view after it, is `untested`
+(`annotation.anchor.untested.<id>`, also listed in `anchorUntested`); the other causes are still tested for it.
+Strict does not pass what it did not check: the strict check report refuses an untested anchor. The standard profile
+warns.
 
 The standard profile only warns: the renderers keep drawing a blocked anchor with a hollow dot and a dashed leader.
-The strict check report (`marty-solid check --strict`, `MGSolidReport`, `MGExplainerReport`) refuses the first issue,
-after every other refusal. The view rule needs each still's camera, so a compile with
-`MGSolidParser.document(profile: .strict)` does not give it. The report lists every issue in `anchorIssues`; this one is
-the jet-suit example before its fix:
+The strict check report (`marty-solid check --strict`, `MGSolidReport`, `MGExplainerReport`) refuses the first view
+issue, after every other refusal. The view rules need each still's camera, so a compile with
+`MGSolidParser.document(profile: .strict)` does not give them. The report lists every issue in `anchorIssues`; this one
+is the jet-suit example before its fix:
 
 ```json
 {"id": "lComb", "kind": "label", "reason": "annotation.anchor.hidden.lComb", "cause": "occluded", "part": "back.combustor",
- "by": "back.casing", "step": 6, "beat": null, "point": [30, 258, 1362], "distance": null, "tolerance": null,
+ "by": "back.casing", "closer": null, "closerDistance": null, "step": 6, "beat": null, "point": [30, 258, 1362],
+ "distance": null, "tolerance": null,
  "fix": "`back.casing` hides the anchor: move the anchor (`at`) to a face of `back.combustor` that faces the camera, change the camera (camera, orbit), or ghost `back.casing` in this view."}
 ```
 
-`step` and `beat` are 1-based; `point` is the anchor in the kernel world (Z up, mm) at the still's pose; `distance` and
-`tolerance` (mm) are set for `offpart`. A refusal for an anchor reason also adds `anchor`: the issue it names.
+`step` and `beat` are 1-based; `point` is the anchor in the kernel world (Z up, mm) at the still's pose; `distance`,
+`tolerance` and, when another part is nearer, `closer` and `closerDistance` (mm) are set for `offpart`. A refusal for
+an anchor reason also adds `anchor`: the issue it names.
 
 Not tested: the plain view (`hero.png`, `solid-0.png`), the poses during a step's or beat's spin and camera moves,
-other sizes than 1280 × 800, and whether the dot is covered by another text, a band or the legend.
+other sizes than 1280 × 800, whether the dot is covered by another text, a band or the legend, and the nearer-part test
+at a step's own pose or explode (it uses the default pose). A part made of overlapping closed shapes can count a point
+inside two of them as outside; its nearest-triangle distance is used then.
 
 ### Not checked
 
@@ -928,8 +950,8 @@ The plain API only warns. The strict profile (`MGSolidParser.document(…, profi
 `MGSolidParser.applying(…, profile: .strict)`, `marty-solid check --strict`; the default for
 model harnesses) refuses only what the document itself shows to be wrong: a jointed part that
 nothing moves, a turn axis that misses its own jointed part, an annotation that no step shows, and a label or pointer
-anchor off its part. The strict check report also refuses a label or pointer anchor that a step still does not show
-([Anchor checks](#anchor-checks)). The child-frame warnings
+anchor off its part. The strict check report also refuses a label or pointer anchor that a step still does not show,
+or that its budget left untested ([Anchor checks](#anchor-checks)). The child-frame warnings
 are heuristics and stay warnings in every profile; the read-back below is how an author
 checks frames.
 
@@ -941,8 +963,9 @@ checks frames.
 | `frame.child.far.<id>` | A child's bounds miss its parent's bounds grown by 1.5 times the parent's largest size. Often the same error; sometimes intended. | warning |
 | `annotation.unused.<id>` | Some step uses `annotate`, but no step lists this annotation, so the learner never sees it. | refused |
 | `annotation.cut.<id>` | A part anchor of an annotation that a step shows lies in the half that the same step's `section` removes from that part, so the annotation floats over the cut. | warning |
-| `annotation.anchor.off.<id>` | A label's anchor or a pointer's tip lies off the part it names ([Anchor checks](#anchor-checks)). | refused |
+| `annotation.anchor.off.<id>` | A label's anchor or a pointer's tip lies off the part it names, or another part is nearer to it ([Anchor checks](#anchor-checks)). | refused |
 | `annotation.anchor.hidden.<id>` | The check report only: a step still shows a label or pointer whose anchor it does not show (occluded, hidden, ghosted, off screen). | refused by the check report |
+| `annotation.anchor.untested.<id>` | The check report only: the view's line-of-sight budget ran out before this anchor. | refused by the check report |
 
 `expect` mismatches (`expect.axis.<id>`, `expect.up.<id>`) are refusals in every profile.
 
@@ -992,14 +1015,15 @@ pipeline) print the same JSON from one implementation:
   gives the `file` facts (lines, bytes, SHA-256, computed in Foundation).
 * Refusal order after the document compiles: `check.meshOpen`, then
   `check.gearsInterpenetrate`, then the profile's refusal, then (strict) the first
-  `annotation.anchor.hidden.<id>`. A refused report still holds every field.
+  `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` in step order. A refused report still holds
+  every field.
 
 The report is built from sections (`MGSolidReport.sections`); a test keeps their keys
 disjoint, so a later feature adds a section and its docs without changing the others.
 The `annotations` section adds `annotations` and `placements` (see
 [Annotations](#annotations-v2)) only for a document with annotations; such a document also
 gets `legend.notes`, `anchorIssues` and `anchorUntested`, and `warnings` ends with one
-`annotation.anchor.hidden.<id>` per step issue ([Anchor checks](#anchor-checks)).
+`annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per step issue ([Anchor checks](#anchor-checks)).
 For every shipped example and every JSON file under `docs/assets`, with and without
 `--strict`, the tool's output without the fields added in this release is byte-identical to
 the output of the release before (golden files in

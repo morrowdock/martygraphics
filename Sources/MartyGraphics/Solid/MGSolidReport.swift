@@ -167,8 +167,9 @@ extension MGSolidReport {
     /// (`report.engine`: non-finite, deeper than `engineDepth` or larger than `engineBytes`).
     ///
     /// `anchorViews` (default true) runs the view rule of the anchor checks on every step still
-    /// (`MGSolidDocument.stepAnchorIssues`): each issue is a warning `annotation.anchor.hidden.<id>`, and the strict
-    /// profile refuses the first one (after every other refusal). An explainer passes false and tests its beats instead
+    /// (`MGSolidDocument.stepAnchorIssues`): each issue is a warning `annotation.anchor.hidden.<id>` (or
+    /// `annotation.anchor.untested.<id>` for an anchor the view's triangle budget left untested), and the strict profile
+    /// refuses the first one in step order (after every other refusal). An explainer passes false and tests its beats instead
     /// (`MGExplainerReport`). The report lists every anchor issue in `anchorIssues` and the anchors a view's budget left
     /// untested in `anchorUntested` (both only for a document with annotations); a refusal for an anchor reason adds
     /// `anchor`, the issue it names.
