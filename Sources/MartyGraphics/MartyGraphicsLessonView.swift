@@ -55,6 +55,8 @@ public final class MGLessonController: ObservableObject {
 
     public init(pacing: MGPacing = .estimate(wordsPerSecond: 2.5), clock: MGLessonClock = MGSystemClock()) {
         session = MGLessonSession(pacing: pacing, clock: clock); self.clock = clock
+        // One clock for the board's frames and the session's settle time (a wall-clock jump cannot desynchronise them).
+        board.presentationClock = clock
     }
 
     public var state: MGLessonState? { session.state }

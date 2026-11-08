@@ -41,6 +41,11 @@ extension MGLessonSession {
         do { return .success(try restoring(snapshot, pacing: pacing, clock: clock)) } catch { return .failure(issue(error)) }
     }
 
+    /// Internal: restore inside an explainer, with its parse environment and (3D-only) its empty built-in board.
+    static func restore(_ snapshot: MGJSON, pacing: MGPacing, clock: MGLessonClock, env: MGParseEnvironment?, boardless: Bool) -> Result<MGLessonSession, MGLessonIssue> {
+        do { return .success(try restoring(snapshot, pacing: pacing, clock: clock, env: env, boardless: boardless)) } catch { return .failure(issue(error)) }
+    }
+
     /// Engine fields of a lesson state (scene source, revision, beat, controls, id history).
     static func wire(_ s: MGLessonState) -> [String: MGJSON] {
         ["scene": s.scene.source, "rev": .number(Double(s.scene.revision)), "beat": .number(Double(s.beat)),
@@ -49,14 +54,22 @@ extension MGLessonSession {
     }
 
     /// Rebuilds a state from `wire`, validating every part with the engine.
-    static func state(_ o: [String: MGJSON]) throws -> MGLessonState {
+    static func state(_ o: [String: MGJSON], env: MGParseEnvironment? = nil, boardless: Bool = false) throws -> MGLessonState {
         func int(_ v: MGJSON?, _ what: String) throws -> Int {
             let d = try MGParser.num(v, -1...1e9, what); guard d.rounded() == d else { throw MGError(what) }; return Int(d)
         }
         guard let source = o["scene"] else { throw MGError("snapshot.scene") }
         // No deeper than a live session makes, so the next snapshot (with a `baseline` copy) still fits the cap.
         guard source.measure().depth <= MGLessonLimits.sceneDepth else { throw MGError("snapshot.depth") }
-        var scene = MGLessonEngine.lessonScene(try MGParser.scene(json: source).get())
+        var scene: MGScene
+        if boardless {
+            // A 3D-only explainer's empty board is built in code; only its exact marker source is accepted.
+            guard source == boardlessSource else { throw MGError("snapshot.scene") }
+            scene = MGScene(source: source, template: nil, title: "", is3D: false, width: 12, height: 8, items: [], steps: [],
+                            camera: nil, values: [:], motion: .none, attachments: [:])
+        } else {
+            scene = MGLessonEngine.lessonScene(try MGParser.scene(json: source, extraTemplates: [], env: env).get())
+        }
         scene.revision = try int(o["rev"], "snapshot.rev")
         var s = MGLessonState(scene: scene)
         s.beat = try int(o["beat"], "snapshot.beat")
@@ -72,7 +85,7 @@ extension MGLessonSession {
         guard case .array(let controls)? = o["controls"] else { throw MGError("snapshot.controls") }
         for c in controls {
             // Re-bind through the engine so a control that no longer fits its template is refused.
-            s = try MGLessonEngine.bind(["op": .string("bind"), "control": c], s).state
+            s = try MGLessonEngine.bind(["op": .string("bind"), "control": c], s, env: env).state
         }
         return s
     }
@@ -94,7 +107,8 @@ extension MGLessonSession {
         guard snapshot.canonicalByteCount <= limit else { throw MGError("snapshot.bytes") }
     }
 
-    static func restoring(_ snapshot: MGJSON, pacing: MGPacing, clock: MGLessonClock) throws -> MGLessonSession {
+    static func restoring(_ snapshot: MGJSON, pacing: MGPacing, clock: MGLessonClock, env: MGParseEnvironment? = nil,
+                          boardless: Bool = false) throws -> MGLessonSession {
         // Size and depth first, before any field is read: a bounded walk, then the exact canonical size.
         try checkBounds(snapshot)
         guard let o = snapshot.objectValue, o["kind"] == .string("lessonSnapshot") else { throw MGError("snapshot.kind") }
@@ -107,10 +121,12 @@ extension MGLessonSession {
         func string(_ v: MGJSON?, _ what: String) throws -> String { guard case .string(let s)? = v else { throw MGError(what) }; return s }
 
         var session = MGLessonSession(pacing: pacing, clock: clock)
+        session.env = env
+        session.boardless = boardless
         // Title and caption keep the bounds of a live session: the header's title rule (also no decimal literal) and
         // the filled-line size.
         if let t = o["title"] {
-            if MGLessonEngine.hasDecimalLiteral(t) { throw MGError("snapshot.title") }
+            if env == nil, MGLessonEngine.hasDecimalLiteral(t) { throw MGError("snapshot.title") }
             let empty = MGContext(width: 12, height: 8, is3D: false, values: [:])
             let title = try MGParser.text(t, MGLimits.title, empty, "snapshot.title")
             guard .string(title) == t else { throw MGError("snapshot.title") }
@@ -122,11 +138,11 @@ extension MGLessonSession {
             session.caption = caption
         }
         if o["scene"] != nil {
-            let s = try state(o)
+            let s = try state(o, env: env, boardless: boardless)
             session.state = s
             session.projected = try o["baseline"].map { b -> MGLessonState in
                 guard let bo = b.objectValue else { throw MGError("snapshot.baseline") }
-                return try state(bo)
+                return try state(bo, env: env, boardless: boardless)
             } ?? s
         }
         guard let next = o["next"]?.objectValue, let st = o["stream"]?.objectValue else { throw MGError("snapshot.stream") }
@@ -150,7 +166,7 @@ extension MGLessonSession {
                 guard case .array(let commands)? = p["commands"], case .array(let checks)? = p["checks"],
                       commands.count <= MGLessonLimits.commandsPerBeat, checks.count <= MGLessonLimits.checksPerBeat else { throw MGError("snapshot.pending") }
                 for c in commands {
-                    let r = try MGLessonEngine.run(c["s"] ?? .null, on: beat.end, origin: .script, beat: k)
+                    let r = try MGLessonEngine.run(c["s"] ?? .null, on: beat.end, origin: .script, beat: k, env: env)
                     beat.end = r.state; beat.commands.append((try int(c["i"], "snapshot.pending"), c["s"]!)); beat.transitions.append(r.transition)
                 }
                 for c in checks {
@@ -159,7 +175,7 @@ extension MGLessonSession {
                     beat.checks.append((try int(c["i"], "snapshot.pending"), check, c["s"]!))
                 }
                 if beat.complete {
-                    let text = try fillLine(beat.say, beat.end.scene.values)
+                    let text = try fillLine(beat.say, beat.end.scene.values, env: env)
                     guard p["queued"] == .string(text) else { throw MGError("snapshot.queued") }
                     beat.queuedText = text
                 }

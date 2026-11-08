@@ -1,0 +1,8 @@
+{"v":1,"kind":"explainer","title":"A small gear turns a big gear",
+ "solid":{"v":2,"parts":[
+  {"id":"p","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},
+  {"id":"w","at":[45,0,0],"shape":{"gear":{"teeth":30,"module":2,"width":8}},"joint":{"revolute":[0,0,1]}}],
+  "constraints":[{"gearMesh":{"a":"p","b":"w"}}]},
+ "beats":[{"say":"The small gear has {p.teeth} teeth; the big gear has {w.teeth}.","highlight":["p","w"]},
+  {"say":"The big gear turns {w.speed|abs|frac} of a turn, the other way.",
+   "check":[{"value":"w.speed","lt":0}],"highlight":["w"],"view":{"spin":1}}]}

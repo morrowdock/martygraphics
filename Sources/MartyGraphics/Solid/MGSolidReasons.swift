@@ -27,6 +27,9 @@ public struct MGSolidReason: Equatable, Sendable {
         case section
         /// The `marty-solid` tool.
         case cli
+        /// Explainer documents and streams (`MGExplainer`, `MGExplainerSession`, `MGExplainerReport`): the explainer's own
+        /// reasons, and the lesson and solid reasons it names itself.
+        case explainer
     }
     /// `refusal`, or `warning`: listed in `MGSolidDocument.warnings`; the strict profile refuses some (`strict`).
     public enum Kind: String, Sendable { case refusal, warning }
@@ -73,6 +76,8 @@ public enum MGSolidReasons {
         "op": MGSolidComponents.ops.subtracting(["div", "param"]).sorted().joined(separator: "|"),
         "keys": "\(token)(?:,\(token))*",
     ]
+    /// Warning prefixes that an explainer's strict check refuses (besides `MGSolidProfile.strictPrefixes`).
+    public static let explainerStrictPrefixes = ["notes.unused."]
     /// An author name after `MGSolidParser.token`.
     static let token = "[A-Za-z0-9_.]{1,32}"
     /// Longest reason `lookup` and `matches` read (a `<keys>` list is bounded by the document size).
@@ -145,6 +150,7 @@ public enum MGSolidReasons {
             "check": "The check report (MGSolidReport, marty-solid check), after the document compiles.",
             "snapshot": "MGSolidSnapshot.decode(data:).", "section": "MGSolidSection.cut and estimate called directly.",
             "cli": "The marty-solid tool.",
+            "explainer": "Explainer documents and streams (MGExplainer, MGExplainerSession, MGExplainerReport).",
         ].mapValues { .string($0) }
         return .object(["catalog": .string("martygraphics.solid.reasons/1"),
                         "slots": .object(slots.mapValues { MGJSON.string($0) }),
@@ -154,6 +160,9 @@ public enum MGSolidReasons {
 
     private static func r(_ pattern: String, _ formats: [MGSolidReason.Format], _ meaning: String) -> MGSolidReason {
         MGSolidReason(pattern: pattern, meaning: meaning, formats: formats, kind: .refusal, strict: false)
+    }
+    private static func x(_ pattern: String, _ meaning: String) -> MGSolidReason {
+        MGSolidReason(pattern: pattern, meaning: meaning, formats: [.explainer], kind: .refusal, strict: false)
     }
     private static func w(_ pattern: String, strict: Bool, _ meaning: String) -> MGSolidReason {
         MGSolidReason(pattern: pattern, meaning: meaning, formats: [.assembly], kind: .warning, strict: strict)
@@ -183,7 +192,7 @@ public enum MGSolidReasons {
         r("part.<shape>.rot", [.assembly], "A shape's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360."),
         r("component.use.at", [.assembly, .component], "A `use` entry's `at` is not three coordinates in -4000...4000 mm."),
         r("component.use.rot", [.assembly, .component], "A `use` entry's `rot` is not [axisX, axisY, axisZ, degrees] with a non-zero axis and an angle in -360...360."),
-        r("tier.key", [.assembly], "A v2 document has a key named `tier` somewhere (tiers are computed by the engine, never authored)."),
+        r("tier.key", [.assembly, .explainer], "A v2 document has a key named `tier` somewhere (tiers are computed by the engine, never authored)."),
         // Parameters.
         r("params", [.assembly], "`params` is not an object."),
         r("params.input", [.assembly], "`params.input` is not a number in -1e6...1e6."),
@@ -302,24 +311,24 @@ public enum MGSolidReasons {
         r("step.section.offset", [.assembly], "`section.offset` is not in -4000...4000 mm."),
         r("step.section.parts", [.assembly], "`section.parts` is not 1–16 part id strings."),
         // Claim checks and text.
-        r("check.object", [.assembly], "A claim check is not an object."),
-        r("check.value", [.assembly], "A claim check's `value` is not a fact name."),
-        r("check.comparison", [.assembly], "A claim check does not have exactly one of `eq`, `lt`, `gt`."),
-        r("check.eq", [.assembly], "The `eq` target is not a number in -1e6...1e6."),
-        r("check.lt", [.assembly], "The `lt` target is not a number in -1e6...1e6."),
-        r("check.gt", [.assembly], "The `gt` target is not a number in -1e6...1e6."),
-        r("check.tol", [.assembly], "`tol` is given without `eq`, or it is not in 0...1e6."),
-        r("check.fact.<name>", [.assembly], "A claim check names a fact that does not exist."),
-        r("check.failed.<name>", [.assembly], "A claim check is false for the engine's value."),
+        r("check.object", [.assembly, .explainer], "A claim check is not an object."),
+        r("check.value", [.assembly, .explainer], "A claim check's `value` is not a fact name."),
+        r("check.comparison", [.assembly, .explainer], "A claim check does not have exactly one of `eq`, `lt`, `gt`."),
+        r("check.eq", [.assembly, .explainer], "The `eq` target is not a number in -1e6...1e6."),
+        r("check.lt", [.assembly, .explainer], "The `lt` target is not a number in -1e6...1e6."),
+        r("check.gt", [.assembly, .explainer], "The `gt` target is not a number in -1e6...1e6."),
+        r("check.tol", [.assembly, .explainer], "`tol` is given without `eq`, or it is not in 0...1e6."),
+        r("check.fact.<name>", [.assembly, .explainer], "A claim check names a fact that does not exist."),
+        r("check.failed.<name>", [.assembly, .explainer], "A claim check is false for the engine's value."),
         r("text.brace", [.assembly], "A `{` or `}` in the title or a caption is unbalanced or nested."),
         r("text.placeholder", [.assembly], "A placeholder is malformed: no valid fact name, too many modifiers, too long, or a modifier with a dot."),
         r("text.placeholder.<name>", [.assembly], "A placeholder names no fact."),
-        r("text.modifier.<modifier>", [.assembly], "Unknown placeholder modifier (abs, inv, pct, deg, frac)."),
-        r("text.modifier.<modifier>.<name>", [.assembly], "A modifier cannot apply to this fact: a value with a unit, `pct` or `deg` on a fact that is not a turn rate, a modifier after a terminal one, `inv` of 0, or no exact fraction."),
+        r("text.modifier.<modifier>", [.assembly, .explainer], "Unknown placeholder modifier (abs, inv, pct, deg, frac)."),
+        r("text.modifier.<modifier>.<name>", [.assembly, .explainer], "A modifier cannot apply to this fact: a value with a unit, `pct` or `deg` on a fact that is not a turn rate, a modifier after a terminal one, `inv` of 0, or no exact fraction."),
         r("text.range.<name>", [.assembly], "A placeholder value overflows or underflows, or would print as 0 although it is not 0."),
         r("text.rounding.<name>", [.assembly], "A placeholder would show a non-zero value as \"0\"; use `frac` or `inv`."),
         r("text.number.step.<n>", [.assembly], "A v2 caption has a number character outside a placeholder and the step is not marked `unchecked` (rule N1)."),
-        r("text.sign.<name>", [.assembly], "`abs` hides a sign that no strict-inequality check in the same step proves (the title can never use `abs`)."),
+        r("text.sign.<name>", [.assembly, .explainer], "`abs` hides a sign that no strict-inequality check in the same step proves (the title can never use `abs`)."),
         r("expect.axis.<id>", [.assembly], "The part's world turn axis differs from `expect.axisWorld` by more than 1 degree (v2)."),
         r("expect.up.<id>", [.assembly], "The part's local +Z in the world differs from `expect.upWorld` by more than 1 degree (v2)."),
         // Step section cuts.
@@ -396,7 +405,7 @@ public enum MGSolidReasons {
         r("annotation.pose.<id>", [.assembly], "A shown annotation's claim does not hold at every pose its view can show (a step's `spin` range at its explode value, or the plain view's default pose), decided exactly: a shown dimension, or a `dim.<id>` fact its text shows, that changes during the view or differs at the view's pose; a gravity arrow that turns or does not point down; a motion line arrow that rides a turning joint in a moving step, or whose `expect` fails at some pose; a stated `sense` that a backwards step reverses."),
         r("dimension.over.motion.<id>", [.assembly], "A dimension with `over` is not one whose exact range the engine has: a distance (optionally along an axis) with exactly one anchor that moves, by one prismatic joint with a linear drive or a crank-slider, the other anchor staying where it is."),
         r("text.pose.step.<n>", [.assembly], "A step caption shows a `dim.<id>` fact that does not hold at every pose the step can show."),
-        r("text.pose.title", [.assembly], "The title shows a `dim.<id>` fact that does not hold at every pose of every view."),
+        r("text.pose.title", [.assembly, .explainer], "The title shows a `dim.<id>` fact that does not hold at every pose of every view."),
         r("dimension.over.<id>", [.assembly], "A dimension has `over` but no anchor that moves."),
         r("dimension.fact.<id>", [.assembly], "The fact name `dim.<id>` already exists (for example a part named `dim`)."),
         r("dimension.text.<id>", [.assembly], "A dimension's text does not show its own value `{dim.<id>}`."),
@@ -475,6 +484,112 @@ public enum MGSolidReasons {
         r("solidSnapshot.invalid", [.snapshot], "The JSON decoder or a validating initialiser refused the snapshot (format, slot sizes, ranges, v2 fields in /1)."),
         // Tool.
         r("report.encoding", [.check, .cli], "A value given to `MGSolidReport.text` or as render manifest outputs is not finite or nests too deep, so it is not encoded (reports the engine builds never are)."),
-        r("report.engine", [.check], "The host's `engine` value is not finite, nests deeper than 8 levels or is larger than 4,096 bytes (`MGSolidReport.engineDepth`, `engineBytes`)."),
+        r("report.engine", [.check, .explainer], "The host's `engine` value is not finite, nests deeper than 8 levels or is larger than 4,096 bytes (`MGSolidReport.engineDepth`, `engineBytes`)."),
+
+        // Explainer documents (docs/EXPLAINER.md).
+        x("explainer.json", "The document bytes are not UTF-8 JSON text."),
+        x("explainer.object", "The document, or a header statement's value, is not a JSON object."),
+        x("explainer.number", "A document or statement built in code holds NaN or an infinity."),
+        x("explainer.depth", "The document nests deeper than 63 levels, or a stream statement deeper than 64."),
+        x("explainer.bytes", "The raw document is over 128 KiB, its flattened statement stream is over 64 KiB, or a stream received more than 64 KiB."),
+        x("explainer.version", "`v` is not 1 (the explainer format version)."),
+        x("explainer.kind", "`kind` is not \"explainer\"."),
+        x("explainer.missing", "A header statement has no `v`."),
+        x("explainer.unknown.<keys>", "The document or a header statement has keys it does not allow (`<keys>`: sorted author segments)."),
+        x("explainer.title", "The title is not plain text of 1–80 characters after 3D facts fill it, or it names a 2D value."),
+        x("explainer.primary", "`primary` is not \"board\" or \"solid\", or it names a view the explainer does not have."),
+        x("explainer.empty", "The explainer has neither a `board` nor a `solid`."),
+        x("explainer.header", "A new stream does not start with an explainer header (or `keep`)."),
+        x("explainer.statements.count", "A stream holds more than 256 statements (terminal)."),
+        x("explainer.board", "`board` is not an object."),
+        x("explainer.board.steps", "The board has `steps` (beats replace them)."),
+        x("explainer.board.title", "The board has a `title` (the explainer has one title)."),
+        x("explainer.board.dim", "The board is `\"dim\": \"3d\"` (3D belongs in `solid`)."),
+        x("explainer.board.missing", "A beat command needs a board, and the explainer has none."),
+        x("explainer.solid", "`solid` is not an object."),
+        x("explainer.solid.version", "The solid is not an assembly v2."),
+        x("explainer.solid.steps", "The solid has `steps` (beats replace them)."),
+        x("explainer.solid.title", "The solid has a `title` (the explainer has one title)."),
+        x("explainer.solid.missing", "A beat `view` needs a solid, and the explainer has none."),
+        x("explainer.beats", "`beats` is missing, not an array, or empty."),
+        x("explainer.beats.count", "More than 16 beats in one explainer, over all its streams."),
+        x("explainer.op.title", "A beat command is `title` (the explainer has one title)."),
+        x("explainer.id.duplicate.<id>", "A 2D item or control id equals a 3D part, copy, `repeat` base, instance or anchor id, or a control id equals a 2D item id (one namespace)."),
+        x("explainer.id.view.<id>", "A 2D command (`set`, `remove`) names a 3D id."),
+        x("notes.object", "`notes` is not an object."),
+        x("notes.count", "`notes` has no entry or more than 24."),
+        x("notes.entry.<id>", "A note key is not an item id, or its value is not exactly one of `basis` and `unchecked`."),
+        x("notes.text.<id>", "A note's text is not plain text of 1–60 characters."),
+        x("notes.view.<id>", "A note key names a 3D id (notes mark 2D items only)."),
+        MGSolidReason(pattern: "notes.unused.<id>", meaning: "A note names no 2D item the board ever has.",
+                      formats: [.explainer], kind: .warning, strict: true),
+        x("beat.object", "A beat is not an object."),
+        x("beat.missing", "A beat has no `say`."),
+        x("beat.unknown.<keys>", "A beat or a `say` statement has keys it does not allow."),
+        x("beat.unchecked.<n>", "Beat `<n>`'s `unchecked` is not plain text of 1–60 characters."),
+        x("beat.ops", "A beat's `ops` is not an array."),
+        x("beat.ops.count", "A beat has more than 12 commands."),
+        x("beat.check", "A beat's `check` is not an array."),
+        x("beat.checks.count", "A beat has more than 8 checks, 2D and 3D together."),
+        x("beat.refused", "A statement belongs to a beat that a failed check already refused (a cascade)."),
+        x("beat.highlight", "A `highlight` is not an array of strings."),
+        x("beat.highlight.count", "A `highlight` has no id or more than 16."),
+        x("beat.highlight.ref.<id>", "A highlight id names no 2D item, control, 3D member or table row or cell of the board at that beat."),
+        MGSolidReason(pattern: "beat.highlight.stale.<id>", meaning: "At presentation a highlight id no longer resolves; it is dropped and recorded in `hostIssues` (nothing is refused).",
+                      formats: [.explainer], kind: .warning, strict: false),
+        x("stmt.json", "A stream statement is not UTF-8 JSON text, or non-whitespace text between statements was skipped."),
+        x("stmt.kind", "A stream statement is not one of the explainer statement kinds."),
+        x("stmt.order", "A statement comes out of order (a view after the first beat or twice, a beat statement with no open beat, a header mid-stream)."),
+        x("stmt.bytes", "A statement other than `solid` is over 4 KiB."),
+        x("stmt.say", "A caption is not a string of 1–200 characters."),
+        x("stmt.view.twice", "A beat has a second `view` statement."),
+        x("stmt.highlight.twice", "A beat has a second `highlight` statement."),
+        x("lesson.depth", "A statement other than `solid` nests deeper than 59 levels (the lesson statement cap)."),
+        x("view.object", "A beat `view` is not an object."),
+        x("view.unknown.<keys>", "A beat `view` has keys that are not view keys (focus, explode, camera, orbit, spin, section, ghost)."),
+        x("view.focus", "A beat view's `focus` is not an array of at most 16 strings."),
+        x("view.camera", "A beat view's `camera` is not a camera preset name."),
+        x("view.explode", "A beat view's `explode` is not a number in 0...1."),
+        x("view.orbit", "A beat view's `orbit` is not a number of degrees in -360...360."),
+        x("view.spin", "A beat view's `spin` is not a number of input turns in -20...20."),
+        x("view.ghost", "A beat view's `ghost` is not a non-empty array, or it has more than 16 entries or a non-string entry."),
+        x("view.section", "A beat view's `section` is not an object."),
+        x("view.section.normal", "A beat view's section normal is not three coordinates, or it is zero."),
+        x("view.section.offset", "A beat view's section offset is not in -4000...4000 mm."),
+        x("view.section.parts", "A beat view's section `parts` is not an array of 1–16 strings."),
+        x("view.section.missing.<keys>", "A beat view's `section` has no `normal` or no `parts`."),
+        x("view.section.unknown.<keys>", "A beat view's `section` has keys it does not allow."),
+        x("view.annotate", "A beat view's `annotate` is not an array of strings (the assembly's `step.annotate`)."),
+        x("view.annotate.count", "A beat view's `annotate` lists more than 12 annotations."),
+        x("view.annotate.ref.<id>", "A beat view's `annotate` names no annotation."),
+        x("text.pose.beat.<n>", "Beat `<n>`'s caption shows a `dim.<id>` fact that does not hold at every pose its view can show (the assembly's `text.pose.step.<n>` rule)."),
+        x("text.pose.board", "2D board text shows a `dim.<id>` fact that does not hold at every pose of every view (the rule for shown text)."),
+        x("check.unknown.<keys>", "A 3D check (dotted `value`) has keys it does not allow (the assembly's `step.check.unknown.<keys>`)."),
+        x("text.number.beat.<n>", "Beat `<n>`'s caption types a number character outside a placeholder and has no `unchecked` (rule N1)."),
+        x("text.number.item.<id>", "A 2D item without a note shows a typed number: in its text, a table or array cell, a bar value or a plot range (rule N1)."),
+        x("text.number.control.<id>", "A control label types a number character (rule N1; a label takes no placeholder)."),
+        x("text.number.template", "A raw template's params carry a string with a typed number (rule N1)."),
+        x("snapshot.bytes", "An explainer snapshot is over its size cap."),
+        x("snapshot.number", "An explainer snapshot holds NaN or an infinity."),
+        x("snapshot.json", "Explainer snapshot text is not UTF-8 JSON."),
+        x("snapshot.setup", "The explainer snapshot's set-up commands are not valid."),
+        x("snapshot.controls", "A saved control is not one that a checked `bind` of the script or the host made (its label is learner-visible text)."),
+        x("snapshot.depth", "An explainer snapshot nests deeper than 64 levels."),
+        x("snapshot.kind", "The value is not an explainer snapshot."),
+        x("snapshot.version", "The explainer snapshot version is not 1."),
+        x("snapshot.header", "The explainer snapshot has no header object."),
+        x("snapshot.header.missing", "The explainer snapshot header has no `v`."),
+        x("snapshot.header.unknown.<keys>", "The explainer snapshot header has keys it does not allow."),
+        x("snapshot.frozen", "The explainer snapshot's `frozen` flag is not a boolean."),
+        x("snapshot.beats", "The explainer snapshot's beat records are not valid, or a kept beat is neither shown nor queued in the lesson."),
+        x("snapshot.next", "The explainer snapshot's statement position is not valid."),
+        x("snapshot.board", "The explainer snapshot's board is not valid, or the board and the boardless lesson disagree."),
+        x("snapshot.solid", "The explainer snapshot's solid is not valid JSON text, or 3D beat data has no solid."),
+        x("snapshot.lesson", "The explainer snapshot's lesson snapshot is not JSON text."),
+        x("snapshot.pending", "A beat the restored lesson still queues does not match the explainer's beat, or a queued command breaks the explainer's command rules."),
+        x("snapshot.presented", "The explainer snapshot's presented beats are not valid."),
+        x("snapshot.beat", "The explainer snapshot's presented beat names no kept beat, or not the lesson's presented beat."),
+        x("snapshot.stream", "The explainer snapshot's stream status is not valid."),
+        r("kind.unsupported", [.cli], "`marty-solid check` or `render` got a lesson document (`\"kind\": \"lesson\"`), a format the tool does not take."),
     ]
 }

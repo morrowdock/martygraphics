@@ -36,6 +36,9 @@ public struct MGStudioOptions: Equatable, Sendable {
     }
 }
 
+/// How a solid renderer draws highlighted parts (`MGSolidRenderer.emphasis`).
+public enum MGSolidEmphasis: Equatable, Sendable { case subtle, strong }
+
 /// SceneKit studio renderer for solid assemblies: PBR material presets, a procedural studio environment for image-based
 /// lighting, key/fill/rim lights, soft shadows, screen-space ambient occlusion and a contact ground. Renders offscreen to
 /// `CGImage`, or exposes `scene` for an interactive `SCNView`.
@@ -56,6 +59,10 @@ public final class MGSolidRenderer {
     public private(set) var camera: MGSolidCamera
     private var highlighted: Set<String> = []
     private var dimOthers = true
+    /// How highlighted parts look. `.subtle` (the default, unchanged) adds a faint cool glow and dims the others;
+    /// `.strong` (explainers) gives highlighted parts the 2D board's emphasis colour as a clear glow and dims the others
+    /// further, so a highlight reads at a glance in a still, also when every part is highlighted.
+    public var emphasis: MGSolidEmphasis = .subtle { didSet { restyleAll() } }
     /// What each part shows (cuts, opacity, light); `show(_:)` sets it.
     public private(set) var view: MGSolidView
     /// Uncut geometry of every part, and the geometry of each capped cut shown so far (keyed by part and local plane).
@@ -348,10 +355,18 @@ public final class MGSolidRenderer {
         var m = base
         if !highlighted.isEmpty || seeThrough || sectionApplies(id) { m = base.copy() as! SCNMaterial }
         if dim {
-            m.multiply.contents = CGColor(srgbRed: 0.30, green: 0.32, blue: 0.38, alpha: 1)
+            m.multiply.contents = emphasis == .strong ? CGColor(srgbRed: 0.20, green: 0.21, blue: 0.25, alpha: 1)
+                                                      : CGColor(srgbRed: 0.30, green: 0.32, blue: 0.38, alpha: 1)
         } else if emphasise && light == nil {
-            m.emission.contents = CGColor(srgbRed: 0.55, green: 0.66, blue: 1.0, alpha: 1)
-            m.emission.intensity = 0.05
+            if emphasis == .strong {
+                // The 2D emphasis colour (`MGColorRole.yellow`, #FFE066), as a glow and a warm tint.
+                m.emission.contents = CGColor(srgbRed: 1.0, green: 0.88, blue: 0.40, alpha: 1)
+                m.emission.intensity = 0.32
+                m.multiply.contents = CGColor(srgbRed: 1.0, green: 0.93, blue: 0.70, alpha: 1)
+            } else {
+                m.emission.contents = CGColor(srgbRed: 0.55, green: 0.66, blue: 1.0, alpha: 1)
+                m.emission.intensity = 0.05
+            }
         }
         if seeThrough {
             // A ghost lets the parts behind it show: blend, sort after opaque parts, and keep its own faces from

@@ -285,4 +285,122 @@ final class MartySolidCLITests: XCTestCase {
             XCTAssertEqual(b.json?["part"] as? String, "a1")
         }
     }
+    // MARK: Explainer documents (spec PR 3b, tests C2–C6 and N8)
+
+    var explainers: URL { repo.appendingPathComponent("Examples/Explainers") }
+
+    // C2: `check` on an explainer prints ONE report with the keys of the explainer report.
+    func testC2ExplainerCheckReport() throws {
+        let r = try run(["check", explainers.appendingPathComponent("gears-mixed.explainer.json").path])
+        XCTAssertEqual(r.status, 0)
+        let keys = Set(r.json?.keys.map { $0 } ?? [])
+        for k in ["ok", "reason", "strict", "kind", "version", "location", "file", "views", "ids", "beats", "annotations", "legend",
+                  "warnings", "budget", "engine", "title", "primary"] { XCTAssertTrue(keys.contains(k), k) }
+        XCTAssertEqual(r.json?["kind"] as? String, "explainer")
+        XCTAssertEqual((r.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 6")
+        let views = r.json?["views"] as? [String: Any]
+        XCTAssertNotNil(views?["board"] as? [String: Any])
+        XCTAssertNotNil((views?["solid"] as? [String: Any])?["facts"])
+        XCTAssertEqual((r.json?["beats"] as? [[String: Any]])?.compactMap { $0["caption"] as? String },
+                       ["Count the teeth: 15 and 30.", "So the big gear turns 1/2 of a turn."])
+    }
+
+    // C3: `--strict` refuses an unused note, and still prints the full report.
+    func testC3StrictRefusesUnusedNote() throws {
+        let doc = try write(#"{"v":1,"kind":"explainer","notes":{"ghost":{"basis":"b"}},"board":{"v":1,"items":[{"id":"l","k":"text","at":[1,1],"text":"A label"}]},"beats":[{"say":"Hi."}]}"#, "unused-note.json")
+        let normal = try run(["check", doc])
+        XCTAssertEqual(normal.status, 0)
+        XCTAssertEqual((normal.json?["warnings"] as? [[String: Any]])?.first?["reason"] as? String, "notes.unused.ghost")
+        let strict = try run(["check", "--strict", doc])
+        XCTAssertEqual(strict.status, 1)
+        XCTAssertEqual(strict.json?["reason"] as? String, "notes.unused.ghost")
+        XCTAssertNotNil(strict.json?["beats"] as? [Any])
+        XCTAssertNotNil(strict.json?["legend"] as? [String: Any])
+    }
+
+    // C4: a lesson document, an oversized explainer, and a FIFO.
+    func testC4KindsLimitsAndFiles() throws {
+        let lesson = try run(["check", try write(#"{"v":1,"kind":"lesson","scene":{"v":1,"items":[]},"beats":[]}"#, "lesson.json")])
+        XCTAssertEqual(lesson.status, 1)
+        XCTAssertEqual(lesson.json?["reason"] as? String, "kind.unsupported")
+        let big = #"{"v":1,"kind":"explainer","title":""# + String(repeating: "x", count: 128 * 1024) + #""}"#
+        let tooLarge = try run(["check", try write(big, "big.json")])
+        XCTAssertEqual(tooLarge.status, 1)
+        XCTAssertEqual(tooLarge.json?["reason"] as? String, "explainer.bytes")
+        let fifo = FileManager.default.temporaryDirectory.appendingPathComponent("marty-fifo-\(ProcessInfo.processInfo.processIdentifier)").path
+        unlink(fifo)
+        XCTAssertEqual(mkfifo(fifo, 0o644), 0)
+        defer { unlink(fifo) }
+        XCTAssertEqual(try run(["check", fifo]).status, 2)
+        // Refused explainers report their location.
+        let refused = try run(["check", try write(#"{"v":1,"kind":"explainer","board":{"v":1,"items":[{"id":"t","k":"text","at":[1,1],"text":"7 km"}]},"beats":[{"say":"Hi."}]}"#, "n1.json")])
+        XCTAssertEqual(refused.status, 1)
+        XCTAssertEqual(refused.json?["reason"] as? String, "text.number.item.t")
+        XCTAssertEqual((refused.json?["location"] as? [String: Any])?["view"] as? String, "board")
+    }
+
+    func renderOrSkip(_ args: [String]) throws -> (status: Int32, json: [String: Any]?, text: String) {
+        let r = try run(args)
+        if r.status == 2 { throw XCTSkip("render failed (no Metal device on this host?)") }
+        return r
+    }
+
+    // C5: `render` on the mixed example writes every output, and the manifest hashes match the files.
+    func testC5RenderMixed() throws {
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("explainer-render-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        let r = try renderOrSkip(["render", explainers.appendingPathComponent("gears-mixed.explainer.json").path, out.path, "--size", "640x400", "--snapshots"])
+        XCTAssertEqual(r.status, 0, r.text)
+        let files = Set(try FileManager.default.contentsOfDirectory(atPath: out.path))
+        XCTAssertEqual(files, ["board-0.png", "solid-0.png", "beat-1.png", "beat-2.png", "snapshot-beat-1.json", "snapshot-beat-2.json",
+                               "loop.gif", "manifest.json"])
+        let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+        XCTAssertEqual(manifest?["legend"] as? String, "Solved 6")
+        for o in manifest?["outputs"] as? [[String: Any]] ?? [] {
+            let name = try XCTUnwrap(o["file"] as? String)
+            let data = try Data(contentsOf: out.appendingPathComponent(name))
+            XCTAssertEqual(o["bytes"] as? Int, data.count, name)
+            let p = Process(); p.executableURL = URL(fileURLWithPath: "/usr/bin/shasum"); p.arguments = ["-a", "256", out.appendingPathComponent(name).path]
+            let pipe = Pipe(); p.standardOutput = pipe; try p.run(); p.waitUntilExit()
+            let sum = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self).split(separator: " ").first.map(String.init)
+            XCTAssertEqual(o["sha256"] as? String, sum, name)
+        }
+    }
+
+    // C6: `render` on the 2D-only example has no solid outputs.
+    func testC6Render2DOnly() throws {
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("explainer-render-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        let r = try renderOrSkip(["render", explainers.appendingPathComponent("planets-2d.explainer.json").path, out.path, "--size", "640x400"])
+        XCTAssertEqual(r.status, 0, r.text)
+        XCTAssertEqual(Set(try FileManager.default.contentsOfDirectory(atPath: out.path)), ["board-0.png", "beat-1.png", "manifest.json"])
+    }
+
+    // N8: three simultaneous id collisions give the same first reason in 20 fresh processes (own hash seeds).
+    func testN8CollisionOrderIsTheSameInEveryProcess() throws {
+        let doc = try write(#"{"v":1,"kind":"explainer","board":{"v":1,"items":[{"id":"cc","k":"text","at":[1,1],"text":"c"},{"id":"aa","k":"text","at":[2,1],"text":"a"},{"id":"bb","k":"text","at":[3,1],"text":"b"}]},"solid":{"v":2,"parts":[{"id":"bb","shape":{"box":{"size":[1,1,1]}}},{"id":"aa","shape":{"box":{"size":[1,1,1]}}},{"id":"cc","shape":{"box":{"size":[1,1,1]}}}]},"beats":[{"say":"Hi."}]}"#, "collisions.json")
+        for _ in 0..<20 {
+            let r = try run(["check", doc])
+            XCTAssertEqual(r.status, 1)
+            XCTAssertEqual(r.json?["reason"] as? String, "explainer.id.duplicate.bb")
+        }
+    }
+
+
+    // Review P2-7: restore revalidates beats in beat order, then statement order: the same first reason in 20 fresh
+    // processes (each with its own hash seed). `snapshot check` restores an explainer snapshot with every check.
+    func testSnapshotCheckOrderIsTheSameInEveryProcess() throws {
+        let fixtures = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Fixtures")
+        let clean = try run(["snapshot", "check", fixtures.appendingPathComponent("explainer-mixed.snapshot.json").path])
+        XCTAssertEqual(clean.status, 0, clean.text)
+        XCTAssertEqual(clean.json?["legend"] as? String, "Solved 6")
+        XCTAssertEqual(clean.json?["caption"] as? String, "Count the teeth: 15 and 30.")
+        for _ in 0..<20 {
+            let r = try run(["snapshot", "check", fixtures.appendingPathComponent("explainer-two-false-checks.snapshot.json").path])
+            XCTAssertEqual(r.status, 1)
+            XCTAssertEqual(r.json?["reason"] as? String, "check.failed.p.speed")
+        }
+        XCTAssertEqual(try run(["snapshot", "check", try write("[", "bad-snapshot.json")]).json?["reason"] as? String, "snapshot.json")
+    }
+
 }

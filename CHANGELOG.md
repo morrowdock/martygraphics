@@ -2,6 +2,67 @@
 
 ## Unreleased
 
+- Add explainer documents (`"kind": "explainer"`, version 1): one document with a 2D board (a v1 scene), a 3D solid
+  (an assembly v2) or both, driven by ONE beat timeline, with one id namespace and one legend (docs/EXPLAINER.md,
+  `Examples/Explainers`).
+  - `MGExplainer` (document: closed keys, limits, notes, the flattened statement stream), `MGExplainerSession` (the
+    statement lane: header, keep, board, solid, say, op, check, view, highlight, end; one lesson session for the 2D
+    state and pacing; per-beat 3D views compiled as solid steps so cuts are budgeted; highlights of 2D items, table
+    rows and cells (`t.r2`, `t.r1c0`) and 3D parts; 2D and 3D checks; refusal coupling; events; TE1–TE6 timing;
+    `describe`; `snapshot` / `restore`), `MGExplainerReport` (ONE check report for both views),
+    `MGExplainerLegend` / `MGExplainerClaim` / `MGTier`, and `MGExplainerController` with `MartyGraphicsExplainerView`
+    (SwiftUI: two panes, caption, legend, signposts).
+  - One namespace: 2D item and control ids, 3D part, copy, `repeat` base, instance and anchor ids; collisions are
+    refused (`explainer.id.duplicate.<id>`), checked on final names in canonical order. Rule N1 across both views:
+    every number character in author text comes from a placeholder (`{name}` = 2D value, `{part.fact}` = 3D fact) or
+    the 2D item carries a note (`basis`: "Data as given"; `unchecked`: "Not checked"). Legend groups `Solved ·
+    Schematic · Given · Not checked`; a 3D-only explainer has its assembly's own legend text.
+  - `marty-solid check` and `render` dispatch on the top-level `kind`: `explainer` takes the new path (`--strict`
+    also refuses `notes.unused.<id>`; `render --snapshots` writes `snapshot-beat-<n>.json`); a lesson document gives
+    the new `kind.unsupported`; everything else keeps the assembly path, byte-identical (the golden test passes
+    unchanged). The tool now reads up to 128 KiB before it dispatches; a file over 128 KiB whose text holds
+    `"explainer"` is `explainer.bytes`, any other is `assembly.bytes` as before.
+  - The reason catalog (`MGSolidReasons`, `docs/REASONS.md`) gains the format `explainer` and every explainer
+    reason; `tier.key`, `check.fact.<name>`, `check.failed.<name>`, `text.sign.<name>`, the `text.modifier` reasons
+    and `report.engine` also list `explainer`. `MGSolidReasons.explainerStrictPrefixes` names what the explainer's
+    strict check refuses. The catalog test now scans `Sources/MartyGraphics/Explainer` too.
+  - Additive public API: `MGRenderInput.tableRows` / `tableCells` (row and cell emphasis, empty by default),
+    `MGTemplateBuild.builtValues` and `MGScene.builtValues` (template values marked as author data; empty for every
+    built-in template), `MGExplainerBoard.input`. No signature changed.
+  - Compatibility: plain scenes, patches, lessons and assemblies are unchanged. The new parser environment, the
+    lesson hooks (boardless mode, external fill, N1 instead of the D3 decimal rule, close-time refusals, `forward`)
+    and the scanner's statement cap are internal and off by default; tests B1–B7 and the existing suites pin this.
+  - Review fixes (PR #32): restore trusts nothing in a snapshot as proof (it replays the script from the board with
+    the explainer's rules, checks every scene and queued command the lesson holds, derives captions again, in beat
+    order then statement order); after a learner or host change the caption shows live values and a 2D check that
+    no longer holds leaves the claims (`notCurrent`); 2D item claims come from the scenes, so refused beats and
+    notes on template-built items are counted correctly; the SwiftUI host plays a beat's spin over time, freezes it
+    on pause, applies the beat's camera and orbit, plays the board's transitions, shows bound sliders and the legend
+    notes, and draws 3D highlights with the new `.strong` emphasis (`MGSolidRenderer.emphasis`, default `.subtle`
+    unchanged); the renamed view and 3D check reasons (`view.camera`, `view.section.parts`, `check.unknown.<keys>`,
+    …) are in the catalog; `marty-solid snapshot check` restores an explainer snapshot;
+    `MartyGraphicsView.tableEmphasis(rows:cells:)`.
+  - Re-check fixes (PR #32): while the board still animates to a beat's state, the caption shows its 2D numbers as
+    "…" and the beat's 2D checks are pending (`boardSettled`, `motionRemaining`, `pendingClaims`); restore refuses a
+    saved control that no checked `bind` made (`snapshot.controls`) and a saved check that is not a check, so a
+    restored legend equals a fresh run's.
+  - Third-check fixes (PR #32): a beat's `lineDue` with a 2D engine number waits until the board shows its state
+    (speech is learner-visible); `finishNow` and `.immediate` pacing give the board the end state as a direct change
+    in the same step; restore applies the board rules to every held scene (a forged heading is
+    `explainer.board.title`) and keeps no inner lesson title.
+  - Fourth-check fixes (PR #32): when one call presents several beats (`finishNow`, `.immediate`), only the shown
+    beat's line is due; the speech wait applies to every 2D engine placeholder, also in an `unchecked` line.
+  - Fifth-check fixes (PR #32): host `apply` and learner changes keep the pose rule for 3D dimension facts in board
+    text (one transaction; `text.pose.board`); a new header in the same call drops the old explainer's due lines.
+  - The board view draws its transitions on `MGSceneController.presentationClock` when set (default nil: the wall
+    clock, as before). `MGLessonController` and `MGExplainerController` set their session's monotonic clock, so a
+    wall-clock jump cannot show an earlier frame while the session says the board has settled.
+  - 3D annotations (PR 3a, merged before this PR) inside explainers: annotation ids join the one namespace,
+    annotation claims and the solid's legend notes join the one legend, beat views take `annotate`
+    (`view.annotate…`), the check report carries the assembly's `annotations`, and hosts draw annotations only
+    through `checkedAnnotations` (`MGSolidRenderer(document:)`, `show(document:view:)`, the frame overlay). A
+    caption, the title or board text may show a `dim.<id>` fact only when it holds at every pose of its views
+    (`text.pose.beat.<n>`, `text.pose.title`, `text.pose.board`).
 - Docs: showcase 3D annotations with the hand-built winch example (two stills, its strict check output and a capture receipt in `docs/assets/annotations`, a SHOWCASE section and a README paragraph). No code change.
 - Add 3D annotations to assembly v2 (open vocabulary 3a): a top-level `annotations` object with `labels`, `arrows`
   and `dimensions`, and a step key `annotate`. Both are refused in v1 documents with the usual reasons

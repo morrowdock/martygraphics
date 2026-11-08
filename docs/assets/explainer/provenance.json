@@ -1,0 +1,59 @@
+{
+  "source": {
+    "repository": "https://github.com/morrowdock/martygraphics",
+    "base": "c9f1dbd0",
+    "captureCommit": "working tree of branch feat/ov-explainer rebased on c9f1dbd (PR #33 merged), with the fifth-check fixes, captured before that commit. The sourceFiles hashes, not a commit id, link this artifact to the source.",
+    "document": "Examples/Explainers/gears-mixed.explainer.json (the authoring card's mixed example in docs/EXPLAINER.md; a test keeps them equal)",
+    "authoring": "Written by hand for the example (synthetic content). It is not the output of an AI model answering a prompt.",
+    "license": "Apache-2.0; procedural 2D drawing and procedural meshes, no images, models or stock assets",
+    "sourceFiles": {
+      "Examples/Explainers/gears-mixed.explainer.json": "4e50e1861827b37999b535454cfb63625dec0d749c7f0cc2fb899d19152b6506",
+      "Examples/Solid3D/Package.swift": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b",
+      "Examples/Solid3D/Sources/MartySolidCLI/main.swift": "ab791906b1e861cf06957aff6a004336f84f2aa18d4789c302f94b2908989b12",
+      "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f",
+      "Sources/MartyGraphics/Explainer/MGExplainer.swift": "f141b5aa5a867051bf089dd221533b01fbe782cf814fcc1db38261f822ba5922",
+      "Sources/MartyGraphics/Explainer/MGExplainerHonesty.swift": "5343326d8dc1b83f15e6d2cb5fd16d9060afce09b3ee224fef533cf4e7f183ef",
+      "Sources/MartyGraphics/Explainer/MGExplainerReport.swift": "1cf0f76509deef33e24779728e10fc4a4c0e401e85a09ec14b050a079ffe99ba",
+      "Sources/MartyGraphics/Explainer/MGExplainerSession.swift": "59c5d1ecffa7c8cd56a1bb000f69dbbb378abc4eabb779a044bb0ecbf7c7575c",
+      "Sources/MartyGraphics/Explainer/MGExplainerState.swift": "d50a19d9ba0ef5c7fa2e12798b098ea0de8ae0136f8625fcdf8de9c41323ab02",
+      "Sources/MartyGraphics/MGCanvasRenderer.swift": "3bbb276ac5d3b5c90dafb40b3eb240f3e6c540f0770b1231be97fd72f3f2d9ec",
+      "Sources/MartyGraphics/MGLesson.swift": "d775b5dcae64d8f935450cc7b9c7216375ae2210daa4fe859db526d55a77b913",
+      "Sources/MartyGraphics/MGLessonSession.swift": "c848a1deb8da6bc5c524f3a676dbaeffd4ef954e5b2c3bac0400c416636910f3",
+      "Sources/MartyGraphics/MGParser.swift": "a008143eedc8f00cd63a89d1746bedd7cc9a8f264ba65a02ba2f0c1bc6b2fff1",
+      "Sources/MartyGraphics/MartyGraphicsExplainerView.swift": "b2864ef12975f39820c8d7b9e492f5b556d480fa26e86225f5ba9d3aba865215",
+      "Sources/MartyGraphics/MartyGraphicsView.swift": "ee1a23e41952ab9fff62b8d2a6476982e3d45a7c620c697efce4ee325da137a4",
+      "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift": "ba3b3c25b7052d81c82510d6247eeb13176267e8edef891358c6b06a4d0b790a",
+      "Sources/MartyGraphics/Solid/MGSolidOverlayView.swift": "340c3b08199268dd2d585ae9f714e4579003600bb263e404696a0b544f755d9a",
+      "Sources/MartyGraphics/Solid/MGSolidParser.swift": "3d2b0ec77c4f3ef94a7498a36def1fe7cce064e72dca782412a8b534810faf0a",
+      "Sources/MartyGraphics/Solid/MGSolidRenderer.swift": "98d67e75f8c2c9a4a43e08144130998e6caa2e52fe46472651ee239c0995c598"
+    }
+  },
+  "command": "swift build --package-path Examples/Solid3D && Examples/Solid3D/.build/debug/marty-solid render Examples/Explainers/gears-mixed.explainer.json NEW_DIR",
+  "host": {
+    "machine": "Apple M1 Mac (local)",
+    "os": "27.2",
+    "swift": "Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)",
+    "build": "debug"
+  },
+  "artifacts": {
+    "docs/assets/explainer/gears-mixed-beat-1.png": {
+      "renderedAs": "beat-1.png",
+      "sha256": "719994caa0d4ff42e938f76ea57e1626e0fc3dac62728340dddfeac40a1a2076",
+      "size": [
+        1280,
+        800
+      ]
+    }
+  },
+  "render": {
+    "framesRendered": 123,
+    "renderSecondsPerFrame": 0.0377,
+    "legend": "Solved 6",
+    "captions": [
+      "Count the teeth: 15 and 30.",
+      "So the big gear turns 1/2 of a turn."
+    ],
+    "highlight": "3D parts highlighted with MGSolidRenderer.emphasis = .strong (the 2D emphasis colour as a glow; other parts dimmed)"
+  },
+  "notChecked": "Pixel output is not deterministic across runs (soft shadows); the engine numbers, captions and legend are. No device timing."
+}

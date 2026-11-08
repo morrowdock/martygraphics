@@ -99,6 +99,24 @@ $B/marty-solid version                         # engine name, version and this b
   snapshot; try
   [`annotated-winch.json`](Sources/MartySolid3D/Models/annotated-winch.json).
 
+## Explainer documents
+
+`check` and `render` also take explainer documents (`"kind": "explainer"`): a 2D board, an assembly v2 as `solid`,
+or both, with one beat timeline (see [docs/EXPLAINER.md](../../docs/EXPLAINER.md) and
+[Examples/Explainers](../Explainers/README.md)).
+
+```sh
+$B/marty-solid check --strict ../Explainers/gears-mixed.explainer.json        # ONE report for both views
+$B/marty-solid render ../Explainers/gears-mixed.explainer.json /tmp/mixed --snapshots
+```
+
+`check` prints one JSON report (`views.board`, `views.solid` with the assembly report fields, `ids`, `beats`,
+`legend`, `warnings`, `budget`); `--strict` also refuses an unused note (`notes.unused.<id>`). `render` writes
+`board-0.png`, `solid-0.png`, one composite `beat-<n>.png` per beat, `loop.gif`, `snapshot-beat-<n>.json` with
+`--snapshots`, and `manifest.json`. A lesson document gives `kind.unsupported`; any other `kind` keeps the assembly
+path and its reasons. `marty-solid snapshot check SNAPSHOT.json` restores an explainer snapshot
+(`MGExplainerSession.snapshot()` as JSON text) with every check and prints the first reason.
+
 ## Components
 
 A model can use reusable components instead of describing every part again, for

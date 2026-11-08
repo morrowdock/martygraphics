@@ -352,7 +352,26 @@ enum MGLessonEngine {
     }
 
     /// Validates and applies one command. Throws an `MGError` with the stable reason; `state` is never modified.
-    static func run(_ command: MGJSON, on state: MGLessonState, origin: MGOrigin, beat: Int?) throws -> MGCommandResult {
+    static func run(_ command: MGJSON, on state: MGLessonState, origin: MGOrigin, beat: Int?, env: MGParseEnvironment? = nil) throws -> MGCommandResult {
+        let r = try runUnguarded(command, on: state, origin: origin, beat: beat, env: env)
+        if let env { try guardIDs(r.state, env) }
+        return r
+    }
+
+    /// Explainer only: one id namespace. A 2D item id may not equal a 3D id (`env.reserved`) or a bound control id, and a
+    /// control id may not equal a 2D item id. Checked on the whole new state in item order, then control order, so the
+    /// first reason never depends on a set's order (`explainer.id.duplicate.<id>`).
+    static func guardIDs(_ state: MGLessonState, _ env: MGParseEnvironment) throws {
+        let controls = Set(state.controls.map(\.id))
+        for item in state.scene.items where env.reserved.contains(item.id) || controls.contains(item.id) {
+            throw MGError("explainer.id.duplicate.\(MGLessonIssue.segment(item.id))")
+        }
+        for c in state.controls where env.reserved.contains(c.id) {
+            throw MGError("explainer.id.duplicate.\(MGLessonIssue.segment(c.id))")
+        }
+    }
+
+    static func runUnguarded(_ command: MGJSON, on state: MGLessonState, origin: MGOrigin, beat: Int?, env: MGParseEnvironment?) throws -> MGCommandResult {
         // NaN or an infinity built in code, and nesting that a snapshot could not store as readable JSON text, are
         // refused before anything reads or walks the command.
         let m = command.measure()
@@ -361,10 +380,11 @@ enum MGLessonEngine {
         guard let o = command.objectValue, case .string(let name)? = o["op"] else { throw MGError("patch.op") }
         if forbidden.contains(name) { throw MGError("lesson.op.\(name)") }
         if origin == .learner { try learnerGate(o, name, state) }
-        if hasDecimalLiteral(command) { throw MGError("text.literal") }
+        // Inside an explainer the explainer applies number rule N1 before a command arrives, so the D3 decimal rule is off.
+        if env == nil, hasDecimalLiteral(command) { throw MGError("text.literal") }
         switch name {
-        case "animate": return try animate(o, state)
-        case "bind": return try bind(o, state)
+        case "animate": return try animate(o, state, env: env)
+        case "bind": return try bind(o, state, env: env)
         case "unbind":
             try closed(o, required: ["op", "id"], optional: [], "unbind")
             guard case .string(let id)? = o["id"] else { throw MGError("unbind.id") }
@@ -379,7 +399,7 @@ enum MGLessonEngine {
                 throw MGError("lesson.id.kind.\(MGLessonIssue.segment(id))")
             }
             let patch = try MGPatch.parse(json: .object(["v": .number(1), "ops": .array([command])])).get()
-            let scene = lessonScene(try state.scene.applying(patch).get())
+            let scene = lessonScene(try state.scene.applying(patch, extraTemplates: [], env: env).get())
             var next = state
             next.scene = scene
             for item in scene.items where next.kinds[item.id] == nil {
@@ -402,13 +422,13 @@ enum MGLessonEngine {
         }
     }
 
-    static func animate(_ o: [String: MGJSON], _ state: MGLessonState) throws -> MGCommandResult {
+    static func animate(_ o: [String: MGJSON], _ state: MGLessonState, env: MGParseEnvironment? = nil) throws -> MGCommandResult {
         try closed(o, required: ["op", "param", "to"], optional: ["dur"], "animate")
         guard case .string(let param)? = o["param"] else { throw MGError("animate.param") }
         guard case .number(let to)? = o["to"] else { throw MGError("animate.to") }
         var duration = MGLessonLimits.defaultAnimateDuration
         if let d = o["dur"] { duration = try MGParser.num(d, MGLessonLimits.animateDuration, "animate.dur") }
-        switch MGTween.keyframes(state.scene, param: param, to: to) {
+        switch MGTween.keyframes(state.scene, param: param, to: to, env: env) {
         case .failure(let e): throw e
         case .success(let frames):
             let lessonFrames = frames.map(lessonScene)
@@ -418,7 +438,7 @@ enum MGLessonEngine {
         }
     }
 
-    static func bind(_ o: [String: MGJSON], _ state: MGLessonState) throws -> MGCommandResult {
+    static func bind(_ o: [String: MGJSON], _ state: MGLessonState, env: MGParseEnvironment? = nil) throws -> MGCommandResult {
         try closed(o, required: ["op", "control"], optional: [], "bind")
         guard let c = o["control"]?.objectValue else { throw MGError("control.object") }
         try closed(c, required: ["id", "k", "param", "min", "max", "step", "label"], optional: [], "control")
@@ -429,11 +449,13 @@ enum MGLessonEngine {
         guard lo < hi, spec.range.contains(lo), spec.range.contains(hi) else { throw MGError("control.range") }
         let step = try MGParser.num(c["step"], 1e-6...(hi - lo), "control.step")
         if spec.integer { guard lo.rounded() == lo, hi.rounded() == hi, step.rounded() == step else { throw MGError("control.step") } }
-        let ctx = MGContext(width: state.scene.width, height: state.scene.height, is3D: state.scene.is3D, values: state.scene.values)
+        let ctx = MGContext(width: state.scene.width, height: state.scene.height, is3D: state.scene.is3D, values: state.scene.values, env: env)
         // A control label is fixed text: an engine number filled in once would go stale when the value changes.
         if case .string(let raw)? = c["label"], raw.contains("{") || raw.contains("}") { throw MGError("control.label.placeholder") }
         let label = try MGParser.text(c["label"], MGLimits.label, ctx, "control.label")
         guard state.control(id) == nil else { throw MGError("control.duplicate.\(id)") }
+        // Explainer: controls join the one id namespace (stricter than a lesson, where controls have their own).
+        if let env, env.reserved.contains(id) || state.scene.item(id) != nil { throw MGError("explainer.id.duplicate.\(id)") }
         guard state.controls.count < MGLessonLimits.controls else { throw MGError("control.count") }
         let control = MGLessonControl(id: id, kind: "slider", param: param, min: lo, max: hi, step: step, label: label, unit: spec.unit)
         // A registered template may declare a long parameter name, and `apply` has no statement size: bound the control itself.
@@ -453,6 +475,7 @@ enum MGLessonEngine {
                           height: scene.height, items: scene.items, steps: [], camera: scene.camera, values: scene.values,
                           motion: scene.motion, attachments: scene.attachments)
         out.revision = scene.revision
+        out.builtValues = scene.builtValues
         return out
     }
 

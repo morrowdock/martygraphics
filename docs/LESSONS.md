@@ -345,6 +345,9 @@ case .failure(let issue): log(issue.reason) // the current lesson is unchanged
 - `MGAdoption.plan` is the pure decision (blend, draw-on ids, keyframe segments). The SwiftUI host and the tests use it (R1–R3).
 - `MGSceneController.show(_:transition:drawsOn: false)` shows a scene with no draw-on, also on a first appearance
   (`MGAdoption.plan(…, drawsOn: false)`). Every other entry point keeps draw-on. `MGLessonController.restore` uses it.
+- `MGSceneController.presentationClock` sets the board's time base for transitions, draw-on and motion. nil (the
+  default) keeps the wall clock as before; `MGLessonController` (and the explainer controller) set the session's
+  monotonic clock, so a wall-clock jump cannot move the drawn frame away from the session's settle time.
 - `MGSceneController.pauseTransitions()` / `resumeTransitions()` hold an in-flight keyframe animation on its current
   frame (`MGTransitionClock`). `MGLessonController.pause()` calls it, and the session's settle time continues after
   `resume()` from where it stopped.
@@ -442,6 +445,23 @@ The proposed budgets apply to a physical-device receipt, which is pending.
 | T4b | `lineDue(0)` → `lessonComplete` at `.estimate(2.5)` (injected clock, pacing arithmetic) | 24.8 s | — |
 
 T1 is an offscreen render, not an on-screen frame. The first scene needs 136 bytes of stream (header and scene).
+
+## Inside an explainer
+
+An [explainer document](EXPLAINER.md) runs one lesson session for its board (or an empty built-in board, when it has
+only a 3D solid). Inside an explainer, and only there:
+
+- Ids form one namespace with the 3D parts: an `add`, a template `params` change or a `bind` whose id equals a 3D id,
+  or a control id that equals a 2D item id, is refused (`explainer.id.duplicate.<id>`). Controls have their own
+  namespace in a plain lesson.
+- Number rule N1 replaces the D3 decimal rule: every number character in author text must come from a placeholder, or
+  the item needs a note (`basis` or `unchecked`); `text.literal` is not used.
+- A placeholder name with a dot is a 3D fact (`{wheel.speed|abs|frac}`), filled by the explainer's parse environment;
+  text limits apply to the filled text.
+- The explainer adds a 3D check, a view and a highlight to each beat; a failing 3D check refuses the beat on the
+  lesson's own rollback path.
+
+These hooks are internal and off by default: a plain lesson behaves exactly as before (test B2).
 
 ## What is not checked
 

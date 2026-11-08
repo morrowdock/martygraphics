@@ -18,6 +18,8 @@ final class SolidReasonCatalogTests: XCTestCase {
         "annotation.",                                 // snapshot material id prefix (`annotation.<role>`)
         "hero.png", "exploded.png", "loop.gif", "manifest.json", "snapshot.json",   // render output files
         "constraint.gearMesh.a", "constraint.gearMesh.b",                           // unused `what` of `expand` (it throws `ref.unknown.<id>`)
+        "beat.*", "beat.*.check.*", "item.*", "board.template",                    // explainer claim ids
+        "step.", "step.check.",                                                    // prefixes the explainer renames (to `view.*`, `check.*`)
     ]
     /// Literals that are reason prefixes: the code appends `.<id>` (`MGSolidFrames.lints`).
     static let prefixes = ["frame.axis.off", "frame.child.absolute", "frame.child.far", "joint.idle"]
@@ -27,6 +29,10 @@ final class SolidReasonCatalogTests: XCTestCase {
         var urls = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "swift" && $0.lastPathComponent != "MGSolidReasons.swift" }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        // Explainer documents give reasons from this catalog too (format `explainer`).
+        let explainer = root.appendingPathComponent("Sources/MartyGraphics/Explainer")
+        urls += try FileManager.default.contentsOfDirectory(at: explainer, includingPropertiesForKeys: nil)
+            .filter { $0.pathExtension == "swift" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
         urls.append(root.appendingPathComponent("Examples/Solid3D/Sources/MartySolidCLI/main.swift"))
         return try urls.map { ($0.lastPathComponent, try String(contentsOf: $0, encoding: .utf8)) }
     }
@@ -126,6 +132,10 @@ final class SolidReasonCatalogTests: XCTestCase {
             for what in helperArguments("closed", text) {
                 found.append((what + ".missing.*", "\(name) closed")); found.append((what + ".unknown.*", "\(name) closed"))
             }
+            // The explainer's closed-key helper follows the lesson rule: `<what>.missing` and `<what>.unknown.<keys>`.
+            for what in helperArguments("closedKeys", text) {
+                found.append((what + ".missing", "\(name) closedKeys")); found.append((what + ".unknown.*", "\(name) closedKeys"))
+            }
             for what in helperArguments("transform", text) {
                 found.append((what + ".at", "\(name) transform")); found.append((what + ".rot", "\(name) transform"))
             }
@@ -178,7 +188,8 @@ final class SolidReasonCatalogTests: XCTestCase {
             XCTAssertFalse(e.meaning.isEmpty, e.pattern)
             XCTAssertTrue(e.meaning.hasSuffix("."), e.pattern)
             XCTAssertFalse(e.formats.isEmpty, e.pattern)
-            XCTAssertEqual(e.strict, e.kind == .warning && MGSolidProfile.strictPrefixes.contains { e.pattern.hasPrefix($0) }, e.pattern)
+            let strictPrefixes = MGSolidProfile.strictPrefixes + MGSolidReasons.explainerStrictPrefixes
+            XCTAssertEqual(e.strict, e.kind == .warning && strictPrefixes.contains { e.pattern.hasPrefix($0) }, e.pattern)
         }
         // The JSON form is deterministic and encodable.
         XCTAssertEqual(MGSolidReasons.json.canonicalString, MGSolidReasons.json.canonicalString)
