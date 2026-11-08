@@ -178,6 +178,10 @@ public struct MGExplainerSession {
     var completedAt: Duration = .zero
     /// Accepted set-up commands (between the board and the first beat), in order.
     var setupOps: [MGJSON] = []
+    /// The 2D item claims of every shown state, frozen when it was shown (`MGShownItems`, read by `itemClaims`).
+    var shownItems = MGShownItems()
+    /// The beat claims of every shown state, frozen while each beat was the presented beat (`MGShownBeats`).
+    var shownBeats = MGShownBeats()
 
     public init(pacing: MGPacing = .immediate, clock: MGLessonClock = MGSystemClock(), library: MGSolidLibrary = .builtIn) {
         self.pacing = pacing; self.clock = clock; self.library = library
@@ -507,7 +511,7 @@ public struct MGExplainerSession {
             title = nil; titleTier = nil; titleTemplate = h.title; primary = h.primary; notes = h.notes
             board = nil; solidSource = nil; solid = nil; ids3D = []; set3D = []
             beats = [:]; stepOf = [:]; presentedBeats = []; presented = MGExplainerBeatView(); frozen = false; beatCount = 0
-            setupOps = []; timing = MGExplainerTiming(); captions = [:]
+            setupOps = []; timing = MGExplainerTiming(); captions = [:]; shownItems = MGShownItems(); shownBeats = MGShownBeats()
             motionSerial = 0; motionStart = nil; motionLength = .zero; motionHeld = nil; hostBinds = []; heldLine = nil
             // Lines of the explainer this header replaces, due earlier in this host call, describe a board that is no
             // longer shown: they are not returned (a host adopts the board once per call). The history keeps them.
@@ -799,6 +803,12 @@ public struct MGExplainerSession {
     // MARK: lesson events
 
     mutating func absorb(_ events: [MGLessonEvent]) {
+        // The states the lesson showed in this call (several when it presented several beats) join the record.
+        for (_, scene) in lesson.shownScenes { shownItems.add(scene, solid: solid) }
+        var frozen = shownBeats
+        freezeBeats(lesson.shownScenes, into: &frozen)
+        shownBeats = frozen
+        lesson.shownScenes = []
         syncMotion()
         // Several beats presented in one call (`finishNow`, `.immediate` over a whole document): the board adopts only
         // the last one, so only its line may be spoken; the lines of the beats it skipped are not due (their captions

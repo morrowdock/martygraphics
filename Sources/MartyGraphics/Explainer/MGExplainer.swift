@@ -37,8 +37,10 @@ public enum MGExplainerLimits {
     /// Size of the session's event history; older records are dropped first.
     public static let history = MGLessonLimits.history
     /// Snapshot size cap (`snapshot.bytes`): the lesson snapshot and the solid source travel as JSON text, which escaping
-    /// can at most double, plus the beat records.
-    public static let snapshotBytes = 2 * (MGLessonLimits.snapshotBytes + MGSolidLimits.bytes) + 2 * bytes
+    /// can at most double, plus the beat records, plus the records of shown claims (`shown`: at most
+    /// `MGLessonLimits.ids` entries of at most 80 bytes; `shownBeats`: at most `beats` entries of at most 360 bytes).
+    public static let snapshotBytes = 2 * (MGLessonLimits.snapshotBytes + MGSolidLimits.bytes) + 2 * bytes + MGShownItems.maxBytes
+        + MGShownBeats.maxBytes
 }
 
 /// A refused statement, beat or document. `reason` is one stable token (ASCII letters, digits, `_`, `.`, `,`; at most

@@ -125,7 +125,9 @@ final class ExplainerRecheckTests: ExplainerTestCase {
         // The legend comes only from claims and checks the restore evaluated: equal to the fresh run.
         guard case .success(let r) = MGExplainerSession.restore(.object(clean), pacing: .speech) else { return XCTFail("clean") }
         XCTAssertEqual(r.legend, fresh.legend)
-        XCTAssertEqual(r.legend.text, "Solved 6")
+        // At beat 1 (beat 2 still waits): 2 motion claims, the table, beat 1's caption; beat 2's caption and check
+        // count once beat 2 is presented (presented-only legend).
+        XCTAssertEqual(r.legend.text, "Solved 4")
         let bound = boundSession()
         guard case .success(let rb) = MGExplainerSession.restore(bound.snapshot(), pacing: .speech) else { return XCTFail("bound") }
         XCTAssertEqual(rb.legend, bound.legend)

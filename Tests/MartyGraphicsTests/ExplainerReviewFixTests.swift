@@ -24,7 +24,7 @@ final class ExplainerReviewFixTests: ExplainerTestCase {
     func testP1RestoreRevalidatesEveryPart() throws {
         let clean = try mixedSnapshot()
         guard case .success(let ok) = MGExplainerSession.restore(.object(clean), pacing: .speech) else { return XCTFail("clean snapshot") }
-        XCTAssertEqual(ok.legend.text, "Solved 6")
+        XCTAssertEqual(ok.legend.text, "Solved 4", "at beat 1: beat 2's caption and check are not presented yet")
         // A typed number in the restored scene (the review's probe): refused by rule N1.
         var o = clean, lesson = lessonObject(clean)
         var scene = lesson["scene"]!.objectValue!

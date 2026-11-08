@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "de25d2594c5373d42236dd6c27275d2c080d79f9a495fce1238f3b569e75b0f6"
+      "sha256": "6e8ca6a03da825c63fa15868dcef087aef306d380198bc61630a1ca2fc2d09af"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -211,7 +211,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "645f89281225eedae4bb5c216616433eb50476ab2bc66c72df86ec64dba28ebc"
+      "sha256": "78c7b6239ac02d36a0a42c8c378854e69512a590bfbeb46852786c61bb4404bc"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
@@ -423,7 +423,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "9d95e55c04377efc9dfb69d361ceb1f81c09b5cd73e5b142305b50b9dd9cf8d3"
+      "sha256": "01c60ae935d881bb769aed159701b0b6ff212ce74655968d1942ccb0ef1b1cb2"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
@@ -487,7 +487,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainer.swift",
-      "sha256": "f141b5aa5a867051bf089dd221533b01fbe782cf814fcc1db38261f822ba5922"
+      "sha256": "8b5a530560b1be98ffd251c5db9945ff4ce640b8e88d23721aa8a8d129c5d1a1"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerHonesty.swift",
@@ -499,11 +499,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
-      "sha256": "59c5d1ecffa7c8cd56a1bb000f69dbbb378abc4eabb779a044bb0ecbf7c7575c"
+      "sha256": "b3e0c94a6742662f707fc2a3e1d70b00303e7fc17cf5b34d003b33a2aa87277e"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerState.swift",
-      "sha256": "d50a19d9ba0ef5c7fa2e12798b098ea0de8ae0136f8625fcdf8de9c41323ab02"
+      "sha256": "5fb6a925b674b50b9503b047b4cbbbfb264cf5c0c21de67919b00ecbc978c9a2"
     },
     {
       "path": "Sources/MartyGraphics/MG3DInteraction.swift",
@@ -547,7 +547,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGLessonSession.swift",
-      "sha256": "c848a1deb8da6bc5c524f3a676dbaeffd4ef954e5b2c3bac0400c416636910f3"
+      "sha256": "d059e370025e413758b991a10e5988e3abda761a58ffa50be212ab9ae62a2022"
     },
     {
       "path": "Sources/MartyGraphics/MGLessonSnapshot.swift",
@@ -695,7 +695,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "ccfd4a6771e63fac3585fa9a55d1205e964822f5c57e6422e54008b3686242ec"
+      "sha256": "856690f0f5bf47b48a5fa5b3b7e356fe99e637c811430271c1eb934e2a59561a"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
@@ -794,16 +794,20 @@
       "sha256": "bd05a72e0f005e3ee6b03aa5149f75856343c8baed1e262125105a5b8d01a270"
     },
     {
+      "path": "Tests/MartyGraphicsTests/ExplainerLegendShownTests.swift",
+      "sha256": "f04b4e7194f77a77db3eb603dd1bd2ec925a171ae94b13f7ced366526eba1e8e"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/ExplainerNamespaceTests.swift",
       "sha256": "d50502c0982dccac9411693322a11b12aa1d96515eeb943bc408c0e29c12f43f"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerRecheckTests.swift",
-      "sha256": "8a07dcc30edd6dddf7d39ec4b11c988145f247bded03e1a4b950cc1541e4244c"
+      "sha256": "7110b33293dc141923ee16b8390d068dbd3d7f74eb2220e482a1594b56c8052a"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerReviewFixTests.swift",
-      "sha256": "31b5a422714525b67ffb9e6356661bf167e41f4ffa6d254022f63d8a36eaf1c1"
+      "sha256": "9cf1efa2fba2c467f64b85b0f0e00532930cfab5f99dda8dd14b81959f5725b1"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerStreamTests.swift",
@@ -983,7 +987,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "f01b3487cf68e759f34e027f029769aeb01f88f19bffa6b274646d9aeb1d638c"
+      "sha256": "d2dd24c028b0c3ce2235a07fc678a41519ed4fd266856d440d900fb337ad5962"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1019,7 +1023,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "41cef954c564b1464256f656d9d449564f0673837a74135eaac756f289a511d5"
+      "sha256": "02fde60b6bfda935ec2685ba1a6fe3187ea85df0f53d83f04300b16759850c15"
     },
     {
       "path": "docs/SHOWCASE.md",

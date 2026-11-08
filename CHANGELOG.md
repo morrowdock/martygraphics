@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+- Fix: the explainer legend is presented-only. It counts the claims of exactly what the learner was shown, from
+  the states that were actually presented: the board, each set-up command, each presented beat (as presented) and
+  each accepted host or learner change. Before, it read 2D item claims from the projected and shown states only. So
+  an item that one beat added and a later beat removed dropped out: a noted table that beat 1 adds and beat 2 removes
+  gave "Solved 2" with no `Given`, and now gives "Solved 2 · Given 1". Also, a beat that waited or was still open
+  already counted its items, captions and checks; now they count once the beat is presented (`finishNow()` presents
+  them).
+  - The lesson hands every newly shown state to the explainer. The explainer freezes the claims of its 2D items at
+    that moment: ids in first-shown order, each with the set of tiers its displayed numbers had. The displayed content
+    is the effective one (wire entry plus `over` entries in order), so a superseded override does not count, and a
+    past claim keeps its tier when the board changes later. A command refused alone at presentation adds nothing.
+  - Beat claims follow the same rule: while a beat is the presented beat, each shown state adds the tier of its
+    caption and of each check. A past beat's caption and checks take the lowest frozen tier ("Checked" with it); the
+    presented beat's stay live (they follow the board, and a false 2D check leaves the legend). The snapshot stores
+    them (`shownBeats`, at most 16 beats with a caption and 8 checks, 3 tiers each; the cap grows by 5,776 bytes);
+    `restore` checks their structure (`snapshot.shown`) and, without `shownBeats`, freezes each presented beat on the
+    state shown now.
+  - The explainer snapshot stores the record (`shown`: `[{"id", "tiers"}]`, at most 1024 ids with 3 tiers each; the
+    snapshot cap grows by 81,936 bytes for it). `restore` checks its structure only (`snapshot.shown`: closed keys,
+    each id once and in the id history, known tiers, every item shown now); it does not recompute past claims, so a
+    valid history whose values are gone still restores. It also refuses a `presented` beat that is still queued,
+    after the lesson's beat, dropped or unknown (`snapshot.presented`). A snapshot without `shown` restores with the
+    state shown now as the record.
+  - `marty-solid render` draws the legend of a copy of the session after `finishNow()` (every beat presented). Before,
+    it used the legend at beat 1.
+  - Changed results: a `.speech` session at beat 1 of `gears-mixed` (and its snapshot) now reads "Solved 4" until beat
+    2 is presented, not "Solved 6". `check` presents every beat, so the golden files are byte-identical. 3D motion and
+    annotation claims come from the whole compiled solid and do not change. See
+    [EXPLAINER.md](docs/EXPLAINER.md#what-the-legend-counts-presented-only).
 - Render upgrades for AI-written explainers: per-step camera framing, an MP4 loop and two built-in components.
   - Framing (`MGSolidFraming`, Foundation only, used by `MGSolidRenderPlan.cameras(_:width:height:)`, `marty-solid
     render` and `MGSolidRenderer.frame(_:document:aspect:)`): a step that lists `focus`, or highlights parts or shows

@@ -534,7 +534,11 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
     defer { if !finished { try? FileManager.default.removeItem(at: out) } }
     _ = NSApplication.shared
     let sourceName = URL(fileURLWithPath: path).lastPathComponent
-    let legend = session.legend
+    // The legend of the whole explainer (every beat presented: a copy finishes now), the same legend `check` reports.
+    // The session itself is at its first beat here, so its own legend would not yet hold the later beats' items.
+    var whole = session
+    _ = whole.finishNow()
+    let legend = whole.legend
     let footer = "\(legend.text) · Rendered by the MartyGraphics engine from \(sourceName) (\(source.sizeText))"
     let title = session.title ?? ""
     let solidDoc = session.solid
