@@ -92,7 +92,11 @@ $B/marty-solid version                         # engine name, version and this b
   (640 px wide, 120 frames at 0.10 s: one orbit, one input turn and an explode beat) and
   the same loop as `loop.mp4` (H.264 through AVFoundation, at the still size, 10 frames
   per second; `--loop-fps 30` renders 360 real frames for the MP4 and the GIF keeps every
-  third; `--no-loop` skips both), `snapshot.json` for other renderers such as the path
+  third; `--no-loop` skips both), `story.mp4` (the steps in order, each held for a time
+  from its caption length, 3–9 s, with its caption, view, highlight, annotations and
+  camera, the camera moving between steps over 0.6 s; 30 frames per second by default,
+  `--story-fps 10|30`, at most 3,600 frames, `--no-story` skips it;
+  [story video](../../docs/SOLID-3D.md#rendering-camera-framing-and-the-loop)), `snapshot.json` for other renderers such as the path
   tracer, and a `manifest.json` with SHA-256 digests, the measured render time, each
   still's `framing` rule and the loop's `framingScale`. `--size WxH` sets the still size
   (default 1280x800). A step that lists `focus` parts is framed on them; a step that
@@ -119,7 +123,9 @@ $B/marty-solid render ../Explainers/gears-mixed.explainer.json /tmp/mixed --snap
 
 `check` prints one JSON report (`views.board`, `views.solid` with the assembly report fields, `ids`, `beats`,
 `legend`, `warnings`, `budget`); `--strict` also refuses an unused note (`notes.unused.<id>`). `render` writes
-`board-0.png`, `solid-0.png`, one composite `beat-<n>.png` per beat, `loop.gif` and `loop.mp4`, `snapshot-beat-<n>.json` with
+`board-0.png`, `solid-0.png`, one composite `beat-<n>.png` per beat (a beat whose board shows only text gives the
+solid the whole frame: the [adaptive board pane](../../docs/EXPLAINER.md#adaptive-board-pane)), `loop.gif`, `loop.mp4`
+and `story.mp4` (the beats in order), `snapshot-beat-<n>.json` with
 `--snapshots`, and `manifest.json`. A lesson document gives `kind.unsupported`; any other `kind` keeps the assembly
 path and its reasons. `marty-solid snapshot check SNAPSHOT.json` restores an explainer snapshot
 (`MGExplainerSession.snapshot()` as JSON text) with every check and prints the first reason.

@@ -65,6 +65,14 @@ public enum MGSolidOverlay {
         }
     }
 
+    /// Draws only the document legend (its text and notes) in the legend corner, with no labels: for frames that show
+    /// no labels but must keep the legend (`story.mp4` during a camera move).
+    public static func drawLegend(document doc: MGSolidDocument, in ctx: CGContext, width: Int, height: Int) {
+        let empty = MGAnnotationFrame(width: Double(width), height: Double(height), fontSize: MGAnnotationLayout.fontSize(height: Double(height)),
+                                      placement: [], anchors: [], refusal: nil)
+        draw(empty, document: doc, legend: true, in: ctx, width: width, height: height)
+    }
+
     /// Draws a frame's overlay into a CoreGraphics context of `width` × `height` pixels (bottom-left origin, as
     /// `CGContext` bitmaps are). `legend`: also draw the document legend in the legend corner.
     public static func draw(_ frame: MGAnnotationFrame, document doc: MGSolidDocument, legend: Bool, in ctx: CGContext, width: Int, height: Int) {

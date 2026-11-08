@@ -182,6 +182,17 @@ public struct MGExplainerSession {
     var shownItems = MGShownItems()
     /// The beat claims of every shown state, frozen while each beat was the presented beat (`MGShownBeats`).
     var shownBeats = MGShownBeats()
+    /// The annotations every presented beat displayed, frozen at presentation (`MGShownAnnotations`).
+    var shownAnnotations = MGShownAnnotations()
+    /// `load` of a whole document in which some beat view has `annotate`: the solid is stepped from its statement on,
+    /// so every beat displays during the load exactly what it displays in the loaded document (a beat without a list
+    /// shows none), also after such a beat is refused later. A stream does not know its later beats; it takes the mode
+    /// when such a view is accepted and keeps it. Saved in the snapshot (`chooseLabels`: `true` or absent) and restored
+    /// as saved; absent, restore derives it from every beat the snapshot knows.
+    var beatsChooseLabels = false
+    /// The mode `load` derives from its whole document, handed to the document's own header. A header resets the
+    /// mode to this value and clears it, so a later explainer in the same session never inherits an older mode.
+    var presetChooseLabels = false
 
     public init(pacing: MGPacing = .immediate, clock: MGLessonClock = MGSystemClock(), library: MGSolidLibrary = .builtIn) {
         self.pacing = pacing; self.clock = clock; self.library = library
@@ -322,6 +333,8 @@ public struct MGExplainerSession {
     /// refused on the first problem (with its location); on success it replaces this session's explainer.
     public mutating func load(_ doc: MGExplainer) -> Result<[MGExplainerEvent], MGExplainerIssue> {
         var trial = MGExplainerSession(pacing: pacing, clock: clock, library: library)
+        trial.presetChooseLabels = doc.statements.contains { $0["view"]?["annotate"] != nil }
+        trial.beatsChooseLabels = trial.presetChooseLabels
         var all: [MGExplainerEvent] = []
         for (index, statement) in doc.statements.enumerated() {
             guard statement.isEncodable else { return .failure(MGExplainerIssue("explainer.number", view: .stream, statement: index)) }
@@ -512,6 +525,10 @@ public struct MGExplainerSession {
             board = nil; solidSource = nil; solid = nil; ids3D = []; set3D = []
             beats = [:]; stepOf = [:]; presentedBeats = []; presented = MGExplainerBeatView(); frozen = false; beatCount = 0
             setupOps = []; timing = MGExplainerTiming(); captions = [:]; shownItems = MGShownItems(); shownBeats = MGShownBeats()
+            shownAnnotations = MGShownAnnotations()
+            // The label-selection mode belongs to one explainer: a new header starts from `load`'s derived mode (or
+            // none) and never inherits the mode of the explainer it replaces.
+            beatsChooseLabels = presetChooseLabels; presetChooseLabels = false
             motionSerial = 0; motionStart = nil; motionLength = .zero; motionHeld = nil; hostBinds = []; heldLine = nil
             // Lines of the explainer this header replaces, due earlier in this host call, describe a board that is no
             // longer shown: they are not returned (a host adopts the board once per call). The history keeps them.
@@ -560,8 +577,11 @@ public struct MGExplainerSession {
         var src = value.objectValue!
         if src["kind"] == nil { src["kind"] = .string("assembly") }
         let doc: MGSolidDocument
-        switch MGSolidParser.document(json: .object(src), library: library) {
-        case .failure(let issue): return refuse(MGExplainerIssue(issue.reason, view: .solid, statement: index, id: issue.part))
+        switch MGSolidParser.document(json: .object(src), library: library, perStepAnnotations: true, steppedAnnotations: beatsChooseLabels) {
+        case .failure(let issue):
+            var e = MGExplainerIssue(issue.reason, view: .solid, statement: index, id: issue.part, detail: issue.visibility?.cause.rawValue)
+            e.visibility = issue.visibility
+            return refuse(e)
         case .success(let d): doc = d
         }
         let ids = MGExplainerHonesty.ids3D(doc)
@@ -751,12 +771,20 @@ public struct MGExplainerSession {
         switch compileSolid(adding: (k, value)) {
         case .failure(let issue):
             let r = issue.reason.hasPrefix("step.") ? "view.\(issue.reason.dropFirst(5))" : issue.reason
-            fail(r, issue.part)
+            guard var v = issue.visibility else { return fail(r, issue.part) }
+            // One beat's own list over the limit names this beat (the compiled step index is not the beat index).
+            if v.cause == .step { v = v.at(k, cause: .beat) }
+            var e = MGExplainerIssue(r, view: .beat, beat: k, statement: index, id: v.annotation, detail: v.cause.rawValue)
+            e.visibility = v
+            refuse(e)
         case .success(let (doc, map)):
             // #31's text rule, for the explainer's own text: a shown `dim.<id>` holds at every pose of its view.
             if let r = poseRefusal(doc, stepOf: map) { return fail(r) }
             solid = doc; stepOf = map
             beats[k]?.view = value
+            // A stream learns the label-selection mode here; it stays for the rest of the session (also if this beat is
+            // refused later), as after `load` of a whole document.
+            if value["annotate"] != nil { beatsChooseLabels = true }
             syncPresentedSolid()
             emit(.accepted(statement: index))
         }
@@ -775,7 +803,8 @@ public struct MGExplainerSession {
             steps.append(.object(s)); map[k] = i
         }
         if !steps.isEmpty { src["steps"] = .array(steps) }
-        return MGSolidParser.document(json: .object(src), reusing: solid, library: library).map { ($0, map) }
+        return MGSolidParser.document(json: .object(src), reusing: solid, library: library, perStepAnnotations: true,
+                                      steppedAnnotations: beatsChooseLabels).map { ($0, map) }
     }
 
     mutating func highlight(_ value: MGJSON, _ index: Int) {
@@ -808,6 +837,9 @@ public struct MGExplainerSession {
         var frozen = shownBeats
         freezeBeats(lesson.shownScenes, into: &frozen)
         shownBeats = frozen
+        var annotations = shownAnnotations
+        freezeAnnotations(beats: lesson.shownScenes.compactMap(\.beat), into: &annotations)
+        shownAnnotations = annotations
         lesson.shownScenes = []
         syncMotion()
         // Several beats presented in one call (`finishNow`, `.immediate` over a whole document): the board adopts only

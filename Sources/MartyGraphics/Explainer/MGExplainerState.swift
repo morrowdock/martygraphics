@@ -111,7 +111,58 @@ struct MGShownBeats: Equatable {
     static let maxBytes = MGExplainerLimits.beats * entryBytes + 16
 }
 
+/// The 3D annotation claims the learner was shown: each annotation with a claim that a presented beat displayed
+/// (`MGExplainerSession.displayedAnnotations(beat:)`, the same list the overlay draws), in first-shown order, with its
+/// tier at presentation. It only grows, so a later beat never removes a claim the learner saw; an annotation no
+/// presented beat displayed has none. At most `maxCount` entries. The legend reads it whenever the beats choose their
+/// labels (the solid is stepped); with the show-all rule every annotation is displayed everywhere and counts.
+struct MGShownAnnotations: Equatable {
+    private(set) var ids: [String] = []
+    private(set) var tiers: [String: MGTier] = [:]
+
+    mutating func add(id: String, tier: MGTier) {
+        if let t = tiers[id] { tiers[id] = min(t, tier) } else { ids.append(id); tiers[id] = tier }
+    }
+
+    /// `[{"id", "tier"}]` in first-shown order (the explainer snapshot's `shownAnnotations`).
+    var json: MGJSON { .array(ids.map { .object(["id": .string($0), "tier": .string(tiers[$0]!.name)]) }) }
+
+    /// Annotations per document at most (labels, arrows, dimensions).
+    static let maxCount = MGSolidAnnotationLimits.labels + MGSolidAnnotationLimits.arrows + MGSolidAnnotationLimits.dimensions
+    /// Canonical bytes of one entry at most: a 64-character id and the longest tier name, plus room.
+    static let entryBytes = 112
+    /// Canonical bytes of the whole record at most (part of `MGExplainerLimits.snapshotBytes`).
+    static let maxBytes = maxCount * entryBytes + 16
+}
+
 extension MGExplainerSession {
+    /// True when the beats choose their labels (the solid is stepped: some beat has `annotate`, or more than 12
+    /// annotations): the legend then counts only annotations a presented beat displayed (`MGShownAnnotations`). With
+    /// the show-all rule every annotation is displayed in every view and counts.
+    var beatsShowOwnAnnotations: Bool { solid?.annotations.stepped ?? false }
+
+    /// The annotations beat `k` displays: its solid step's visible annotations (`MGSolidDocument.visibleAnnotations`,
+    /// the list `view(step:)` gives the overlay), or the plain view's for a beat without a view.
+    func displayedAnnotations(beat k: Int) -> [String] { solid?.visibleAnnotations(step: stepOf[k]) ?? [] }
+
+    /// Freezes the annotation claims of presented beats, in order: each annotation a presented beat displays that has a
+    /// claim, with that claim's tier.
+    func freezeAnnotations(beats presentedNow: [Int], into r: inout MGShownAnnotations) {
+        guard let doc = solid, !doc.annotations.isEmpty else { return }
+        var tier: [String: MGTier] = [:]
+        for c in doc.claims where c.kind == .annotation { tier[c.id] = min(tier[c.id] ?? c.tier, c.tier) }
+        for k in presentedNow {
+            for id in displayedAnnotations(beat: k) { if let t = tier[id] { r.add(id: id, tier: t) } }
+        }
+    }
+
+    /// The record of shown annotation claims, with the states `absorb` has not read yet.
+    var recordedAnnotations: MGShownAnnotations {
+        var r = shownAnnotations
+        freezeAnnotations(beats: lesson.shownScenes.compactMap(\.beat), into: &r)
+        return r
+    }
+
     /// Beats that are kept (accepted and not refused later), in beat order.
     var keptBeats: [BeatInfo] { beats.keys.sorted().compactMap { beats[$0] }.filter { !$0.dropped } }
 
@@ -135,9 +186,16 @@ extension MGExplainerSession {
             for c in doc.claims where c.kind == .motion {
                 out.append(MGExplainerClaim(kind: .motion, id: c.id, tier: c.tier, badge: c.badge, why: c.why))
             }
-            // 3D annotation claims (PR 3a), in authored order: labels, arrows, dimensions.
+            // 3D annotation claims (PR 3a), in authored order: labels, arrows, dimensions. When the beats choose their
+            // labels, only those a presented beat displayed, at their tier at presentation; with the show-all rule, all.
+            let shownA = beatsShowOwnAnnotations ? recordedAnnotations : nil
             for c in doc.claims where c.kind == .annotation {
-                out.append(MGExplainerClaim(kind: .annotation, id: c.id, tier: c.tier, badge: c.badge, why: c.why))
+                if let r = shownA {
+                    guard let t = r.tiers[c.id] else { continue }
+                    out.append(MGExplainerClaim(kind: .annotation, id: c.id, tier: t, badge: t == c.tier ? c.badge : t.badge(.caption), why: c.why))
+                } else {
+                    out.append(MGExplainerClaim(kind: .annotation, id: c.id, tier: c.tier, badge: c.badge, why: c.why))
+                }
             }
         }
         if let t = titleTier {
@@ -324,6 +382,10 @@ extension MGExplainerSession {
         o["presented"] = .array(presentedBeats.sorted().map { .number(Double($0)) })
         if board != nil { o["shown"] = recordedShown.json }
         o["shownBeats"] = recordedBeats.json
+        // The label-selection mode is saved state (a beat that chose labels may have been refused later): restore uses it
+        // instead of deriving it from the kept views.
+        if beatsChooseLabels { o["chooseLabels"] = .bool(true) }
+        if beatsShowOwnAnnotations { o["shownAnnotations"] = recordedAnnotations.json }
         if let k = presented.beat { o["beat"] = .number(Double(k)) }
         o["stream"] = .object(["started": .bool(stream.started), "header": .bool(stream.header), "keep": .bool(stream.keep),
                                "ended": .bool(stream.ended), "exhausted": .bool(stream.exhausted),
@@ -436,11 +498,21 @@ extension MGExplainerSession {
                 s.beats[k] = info
             }
             let order = s.beats.keys.sorted()
+            // `chooseLabels` is `true` or absent in every snapshot, with or without a solid.
+            if let v = o["chooseLabels"], v != .bool(true) { throw MGError("snapshot.labels") }
             if o["solid"] != nil {
                 view = .solid
                 let src = try text(o["solid"], "snapshot.solid")
                 try MGExplainer.checkSolidShape(src)
                 s.solidSource = src
+                // The saved label-selection mode: `true` or absent (any other value, `false` included, is
+                // `snapshot.labels`). Absent (an older snapshot, or no list so far): derived from every beat the
+                // snapshot knows (kept, refused or queued) and kept for the rest of the session.
+                if o["chooseLabels"] != nil {
+                    s.beatsChooseLabels = true
+                } else {
+                    s.beatsChooseLabels = order.contains { s.beats[$0]?.view?["annotate"] != nil }
+                }
                 let (doc, map) = try s.compileSolid().get()
                 s.solid = doc; s.stepOf = map
                 s.ids3D = MGExplainerHonesty.ids3D(doc); s.set3D = Set(s.ids3D)
@@ -527,6 +599,7 @@ extension MGExplainerSession {
                 s.presented.solid = doc.view(step: nil)
             }
             try s.restoreShownBeats(o["shownBeats"])
+            try s.restoreShownAnnotations(o["shownAnnotations"])
             // The lesson's caption is the presented beat's line on the restored state, never the saved text; an
             // explainer's lesson has no title of its own (the explainer's title is filled from its header below).
             s.lesson.caption = s.caption
@@ -647,6 +720,39 @@ extension MGExplainerSession {
             guard probe == record else { throw MGError("snapshot.shown") }
         }
         shownBeats = record
+    }
+
+    /// The record of shown annotation claims from a snapshot's `shownAnnotations`, checked against the restored
+    /// session. When the beats do not choose their labels (show-all rule) it must be absent. Otherwise: an array of at
+    /// most `MGShownAnnotations.maxCount` entries `{"id", "tier"}` (closed keys), each id once, an annotation of the
+    /// solid that has a claim, at that claim's tier, and it must hold every annotation the presented kept beats
+    /// display now (a streamed explainer may have displayed more before its solid became stepped). Anything else is
+    /// `snapshot.shown`. Without the field (a snapshot made before it), the record is rebuilt from the presented beats.
+    mutating func restoreShownAnnotations(_ v: MGJSON?) throws {
+        var expected = MGShownAnnotations()
+        let presentedKept = presentedBeats.sorted().filter { beats[$0].map { !$0.dropped } ?? false }
+        freezeAnnotations(beats: presentedKept, into: &expected)
+        guard beatsShowOwnAnnotations, let doc = solid else {
+            // Show-all rule: every presented beat displayed every annotation; the record is rebuilt (a stream that later
+            // gets a beat with `annotate` keeps them).
+            if v != nil { throw MGError("snapshot.shown") }
+            shownAnnotations = expected
+            return
+        }
+        guard let v else { shownAnnotations = expected; return }
+        var tier: [String: MGTier] = [:]
+        for c in doc.claims where c.kind == .annotation { tier[c.id] = min(tier[c.id] ?? c.tier, c.tier) }
+        guard case .array(let entries) = v, entries.count <= MGShownAnnotations.maxCount else { throw MGError("snapshot.shown") }
+        var record = MGShownAnnotations()
+        for e in entries {
+            guard let eo = e.objectValue, eo.count == 2, case .string(let id)? = eo["id"], case .string(let name)? = eo["tier"],
+                  record.tiers[id] == nil, let t = MGTier.allCases.first(where: { $0.name == name }), tier[id] == t else {
+                throw MGError("snapshot.shown")
+            }
+            record.add(id: id, tier: t)
+        }
+        guard expected.ids.allSatisfy({ record.tiers[$0] != nil }) else { throw MGError("snapshot.shown") }
+        shownAnnotations = record
     }
 
     /// The script from the board: the set-up commands, then each kept beat's commands, its 2D checks on the beat's end

@@ -542,6 +542,11 @@ final class ExplainerLegendShownTests: ExplainerTestCase {
         }
         XCTAssertLessThanOrEqual(record.json.canonicalByteCount, MGShownBeats.maxBytes)
         XCTAssertEqual(MGExplainerLimits.snapshotBytes,
-                       2 * (MGLessonLimits.snapshotBytes + MGSolidLimits.bytes) + 2 * MGExplainerLimits.bytes + MGShownItems.maxBytes + MGShownBeats.maxBytes)
+                       2 * (MGLessonLimits.snapshotBytes + MGSolidLimits.bytes) + 2 * MGExplainerLimits.bytes + MGShownItems.maxBytes + MGShownBeats.maxBytes
+                       + MGShownAnnotations.maxBytes)
+        // The annotation record at its cap (80 entries, 64-character ids, the longest tier name) fits its budget too.
+        var a = MGShownAnnotations()
+        for i in 0..<MGShownAnnotations.maxCount { a.add(id: String(format: "a%063d", i), tier: .described) }
+        XCTAssertLessThanOrEqual(a.json.canonicalByteCount, MGShownAnnotations.maxBytes)
     }
 }

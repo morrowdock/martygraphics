@@ -38,9 +38,10 @@ public enum MGExplainerLimits {
     public static let history = MGLessonLimits.history
     /// Snapshot size cap (`snapshot.bytes`): the lesson snapshot and the solid source travel as JSON text, which escaping
     /// can at most double, plus the beat records, plus the records of shown claims (`shown`: at most
-    /// `MGLessonLimits.ids` entries of at most 80 bytes; `shownBeats`: at most `beats` entries of at most 360 bytes).
+    /// `MGLessonLimits.ids` entries of at most 80 bytes; `shownBeats`: at most `beats` entries of at most 360 bytes;
+    /// `shownAnnotations`: at most 80 entries of at most 112 bytes).
     public static let snapshotBytes = 2 * (MGLessonLimits.snapshotBytes + MGSolidLimits.bytes) + 2 * bytes + MGShownItems.maxBytes
-        + MGShownBeats.maxBytes
+        + MGShownBeats.maxBytes + MGShownAnnotations.maxBytes
 }
 
 /// A refused statement, beat or document. `reason` is one stable token (ASCII letters, digits, `_`, `.`, `,`; at most
@@ -60,6 +61,8 @@ public struct MGExplainerIssue: Error, Equatable, Sendable, CustomStringConverti
     /// The inner reason of a wrapper reason (`animate.frame`, `beat.refused`), else nil.
     public var detail: String?
     public var origin: MGOrigin = .script
+    /// Repair detail of `annotations.visible` (the report's `visibility`); nil for every other reason.
+    public var visibility: MGAnnotationVisibilityDetail?
 
     public init(_ reason: String, view: View, beat: Int? = nil, statement: Int? = nil, command: Int? = nil, id: String? = nil,
                 detail: String? = nil, origin: MGOrigin = .script) {

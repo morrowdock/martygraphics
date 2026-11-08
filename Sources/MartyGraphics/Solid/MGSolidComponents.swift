@@ -22,6 +22,8 @@ public enum MGSolidComponentLimits {
     /// Resolved part ids (`stage1.gears.pinion`, `stage.planet12`), including a `repeat` suffix.
     public static let idLength = 64
     public static let about = 160
+    /// Text of one `anchorAbout` entry, in Unicode scalars.
+    public static let anchorAbout = 120
 }
 
 /// One numeric parameter of a component.
@@ -44,6 +46,9 @@ public struct MGSolidComponent: Equatable, Sendable {
     public let params: [MGSolidComponentParam]
     /// Public names for inner parts (`input` → `pinion`), usable from outside as `<instance>.<anchor>`.
     public let anchors: [String: String]
+    /// Where each anchor's frame sits and how its axes point, for catalogs (`anchorAbout`; anchors without one are
+    /// left out).
+    public let anchorAbout: [String: String]
     /// Inner wire part ids at the default parameters (nested components included, before `repeat`).
     public let parts: [String]
     /// Components this one uses directly.
@@ -141,7 +146,7 @@ public struct MGSolidLibrary: Equatable, Sendable {
 }
 
 extension MGSolidComponent {
-    /// `{"id", "title", "about", "params": {name: {default, min, max, integer?, about?}}, "parts", "anchors"}`.
+    /// `{"id", "title", "about", "params": {name: {default, min, max, integer?, about?}}, "parts", "anchors", "anchorAbout"?}`.
     public var catalogEntry: MGJSON {
         var params: [String: MGJSON] = [:]
         for p in self.params {
@@ -153,13 +158,14 @@ extension MGSolidComponent {
         var o: [String: MGJSON] = ["id": .string(id), "title": .string(title), "about": .string(about), "params": .object(params),
                                    "parts": .array(parts.map { .string($0) })]
         if !anchors.isEmpty { o["anchors"] = .object(anchors.mapValues { .string($0) }) }
+        if !anchorAbout.isEmpty { o["anchorAbout"] = .object(anchorAbout.mapValues { .string($0) }) }
         return .object(o)
     }
 }
 
 /// Definition parsing, expression evaluation and expansion of `use` entries.
 enum MGSolidComponents {
-    static let topKeys: Set<String> = ["v", "kind", "id", "title", "about", "params", "parts", "constraints", "anchors", "checks"]
+    static let topKeys: Set<String> = ["v", "kind", "id", "title", "about", "params", "parts", "constraints", "anchors", "anchorAbout", "checks"]
     static let useKeys: Set<String> = ["id", "use", "with", "at", "rot", "parent", "set"]
     static let ops: Set<String> = ["param", "add", "sub", "mul", "div", "min", "max", "neg", "pi", "sin", "cos"]
 
@@ -229,6 +235,15 @@ enum MGSolidComponents {
                 anchors[name] = t
             }
         }
+        // One line per anchor saying where its frame is, for catalogs: keys must be anchors, texts 1–120 scalars.
+        var anchorAbout: [String: String] = [:]
+        if let a = o["anchorAbout"] {
+            guard case .object(let ao) = a else { throw MGSolidIssue("component.anchorAbout") }
+            for (name, text) in ao.sorted(by: { $0.key < $1.key }) {
+                guard anchors[name] != nil else { throw MGSolidIssue("component.anchorAbout") }
+                anchorAbout[name] = try MGSolidParser.text(text, MGSolidComponentLimits.anchorAbout, "component.anchorAbout")
+            }
+        }
         if let c = o["checks"] {
             guard case .object(let co) = c, co.count <= MGSolidComponentLimits.checks else { throw MGSolidIssue("component.checks") }
             for name in co.keys.sorted() where (try? MGParser.identifier(.string(name), "")) == nil {
@@ -236,12 +251,13 @@ enum MGSolidComponents {
             }
         }
         // Expand at the defaults: evaluates every expression and resolves every inner reference, `set` and anchor.
-        var c = MGSolidComponent(id: id, title: title, about: about, params: params, anchors: anchors, parts: [], uses: uses, source: json)
+        var c = MGSolidComponent(id: id, title: title, about: about, params: params, anchors: anchors, anchorAbout: anchorAbout, parts: [],
+                                 uses: uses, source: json)
         var lib = library
         lib.components[id] = c
         var ctx = Context(library: lib)
         let expanded = try instance(c, with: [:], prefix: id, depth: 1, stack: [], &ctx)
-        c = MGSolidComponent(id: id, title: title, about: about, params: params, anchors: anchors,
+        c = MGSolidComponent(id: id, title: title, about: about, params: params, anchors: anchors, anchorAbout: anchorAbout,
                              parts: expanded.parts.compactMap { p -> String? in
                                  guard case .string(let s)? = p["id"] else { return nil }
                                  return String(s.dropFirst(id.count + 1))

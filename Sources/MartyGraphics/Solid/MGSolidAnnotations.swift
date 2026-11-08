@@ -459,13 +459,20 @@ enum MGSolidAnnotationEngine {
     typealias L = MGSolidAnnotationLimits
 
     /// The step `annotate` references and the visibility rule. Runs right after parsing, before any mesh is built.
-    static func checkVisibility(_ a: inout MGSolidAnnotations, _ steps: [MGSolidStep]) throws {
+    /// `perStep` (an explainer's solid): more than `visible` annotations make the document stepped, so the limit applies
+    /// to each step's (beat's) own list, and a step without `annotate` shows none. At most `visible` annotations keep
+    /// the plain rule (no `annotate` anywhere: every annotation everywhere), so such documents do not change.
+    /// `stepped`: the document is stepped whatever its steps (an explainer document whose beats choose their labels).
+    static func checkVisibility(_ a: inout MGSolidAnnotations, _ steps: [MGSolidStep], perStep: Bool = false, stepped: Bool = false) throws {
         let ids = Set(a.ids)
-        a.stepped = steps.contains { $0.annotate != nil }
+        a.stepped = stepped || steps.contains { $0.annotate != nil } || (perStep && a.ids.count > L.visible)
         for s in steps {
             for id in s.annotate ?? [] where !ids.contains(id) { throw MGSolidIssue("step.annotate.ref.\(MGSolidParser.token(id))") }
         }
-        if !a.stepped, a.ids.count > L.visible { throw MGSolidIssue("annotations.visible") }
+        if !a.stepped, a.ids.count > L.visible {
+            throw MGSolidIssue(visibility: MGAnnotationVisibilityDetail(annotation: a.ids[L.visible], count: a.ids.count, limit: L.visible,
+                                                                        cause: steps.isEmpty ? .noSteps : .unannotated))
+        }
     }
 
     /// Mesh centres, the model scale, turn arcs and every dimension value (facts `dim.<id>`), before text is filled.

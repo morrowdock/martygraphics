@@ -318,12 +318,18 @@ final class MGExplainerSolidFrameDelegate: NSObject, SCNSceneRendererDelegate, @
 }
 
 /// Two panes (the `primary` view larger: side by side when wide, stacked when narrow), the caption, the learner
-/// controls and the legend with its notes.
+/// controls and the legend with its notes. The board pane follows the adaptive rule (`MGExplainerSession.boardPane`):
+/// while the shown board has only text, the solid takes both panes' room and the board's text shows under the title.
+/// The pane slides in and out (0.35 s); with Reduce Motion it changes at once.
 public struct MartyGraphicsExplainerView: View {
     @ObservedObject private var controller: MGExplainerController
     @ObservedObject private var board: MGSceneController
     @Environment(\.mgTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let frameDelegate: MGExplainerSolidFrameDelegate
+
+    /// How long the board pane takes to slide in or out (instant with Reduce Motion).
+    public static let paneAnimationSeconds = 0.35
 
     public init(controller: MGExplainerController) {
         self.controller = controller; board = controller.board
@@ -335,6 +341,11 @@ public struct MartyGraphicsExplainerView: View {
             let wide = geo.size.width >= geo.size.height
             VStack(alignment: .leading, spacing: 12) {
                 if let t = controller.session.title { Text(t).font(.title3.bold()).foregroundStyle(theme.ink) }
+                if let line = controller.session.boardPane.line {
+                    // The board's text while its pane is not drawn (the adaptive rule): it is not lost, it moves here.
+                    Text(line).font(.subheadline.weight(.medium)).foregroundStyle(theme.subtleInk).lineLimit(1).truncationMode(.tail)
+                        .transition(.opacity).accessibilityIdentifier("explainer.boardText")
+                }
                 panes(wide: wide)
                 Text(controller.session.caption ?? " ").font(.title3).foregroundStyle(theme.ink)
                     .fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("explainer.caption")
@@ -342,6 +353,7 @@ public struct MartyGraphicsExplainerView: View {
                 legend
             }
             .padding(16)
+            .animation(reduceMotion ? nil : .easeInOut(duration: Self.paneAnimationSeconds), value: controller.session.boardPane)
         }
         .background(theme.backgroundBottom)
     }
@@ -373,11 +385,14 @@ public struct MartyGraphicsExplainerView: View {
     @ViewBuilder private func panes(wide: Bool) -> some View {
         let s = controller.session
         let primaryIsSolid = (s.primary ?? (s.solid != nil ? "solid" : "board")) == "solid"
-        let both = s.board != nil && s.solid != nil
+        // The adaptive rule: with a solid, the board pane shows only while the shown board has a non-text item.
+        let showsBoard = s.board != nil && board.scene != nil && s.boardPane.shown
+        let both = showsBoard && s.solid != nil
         let layout = wide ? AnyLayout(HStackLayout(spacing: 12)) : AnyLayout(VStackLayout(spacing: 12))
         layout {
-            if s.board != nil, board.scene != nil {
+            if showsBoard {
                 boardPane.frame(maxWidth: .infinity, maxHeight: .infinity).layoutPriority(both && !primaryIsSolid ? 1.2 : 1)
+                    .transition(.move(edge: wide ? .leading : .top).combined(with: .opacity))
             }
             if s.solid != nil, let r = controller.renderer {
                 GeometryReader { g in
