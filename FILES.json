@@ -447,7 +447,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "fb6b19d65059dd1a113b75f78b7eed7b9e0481dcfbdd8d03181587d5d444a01c"
+      "sha256": "ba3c0b162e4fe01f482cd8f74e141e0abc7d3aeb2a519b49104006263b14061b"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
@@ -1107,7 +1107,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "39db8b4fa7ed32d5392a11b10f2184199dfd7125b363e41dee9b12caa81a7375"
+      "sha256": "e5b71125595ace39aec6418c0e373e36eea15c78b3d3183734b41045853b4971"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1151,7 +1151,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "d74c112e03e0458dc7f5f193d52352e35694d5493618a950b7d5574febccd3e4"
+      "sha256": "a14c1c84fecc51b872afcb40d6f902beb97f2d5300a89e08e3c8e17d3b080bc0"
     },
     {
       "path": "docs/THIRD-PARTY.md",

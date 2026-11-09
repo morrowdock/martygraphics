@@ -238,8 +238,10 @@ cut. The panes slide during the camera move into the beat (`MGPaneSlide`):
    out the previous beat's board; an opening pane fades in the previous beat's board state drawn for the new pane,
    while the board line it replaces fades out of the title band. The new beat's board, caption, labels and board
    claims appear on the first frame of its hold. No label is drawn during the move.
-4. **Holds.** At share 0 the panes are exactly the previous beat's and at share 1 exactly this beat's, so every hold
-   frame has the beat's own layout and exactly its still's camera.
+4. **Holds.** At share 0 the panes are exactly the previous beat's and at share 1 exactly this beat's. In every hold
+   frame the layout, the camera, the board state, the caption and the labels are the beat's still's. Parts that the
+   beat's `spin` animates may still move during the hold (the spin plays from the beat's first frame); the beat's
+   settled last frame shows the still's pose too.
 5. **Length.** The slide takes the move's time: 0.6 s, or 1.0 s for a routed move (`MGStoryTiming`), at most half the
    beat. Deterministic.
 
@@ -251,7 +253,8 @@ reach the same layouts. They animate the change differently. The SwiftUI view is
 the leading (or top) edge and fades over 0.35 s (`paneAnimationSeconds`), eased in and out, and the solid pane refits
 its camera each time its size changes (with Reduce Motion the pane appears and goes at once). The story video is a
 recording: the slide runs with the beat's camera move (0.6 s or 1.0 s, smoothstep), so the pane edge and the camera
-arrive together and the hold frames match the stills exactly. The story does not copy the 0.35 s timing.
+arrive together, and each hold frame has its still's layout, camera, board state, caption and labels (a spinning part
+may still move until the spin ends). The story does not copy the 0.35 s timing.
 
 In `marty-solid render` the pane rects are whole pixels (`MGExplainerFrame.panes`), and the solid pane is framed for
 exactly the pixels it is rendered at (`MGExplainerFrame.solidCamera`), so a beat's still and the hold frames of that beat

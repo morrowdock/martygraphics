@@ -464,14 +464,22 @@ final class MartySolidCLITests: XCTestCase {
     }
 
     /// The board pane opens at beat 2 and closes at beat 4: the story has no cut, both layout changes slide over the
-    /// camera move, every hold camera is the still's camera in both layouts, the caption band (and so every label and
-    /// claim of the new beat, which follow the same hold rule) stays empty during each move, and a second render in a
-    /// fresh process gives the same story record and the same stills.
+    /// camera move, and every hold camera is the still's camera in both layouts. During each slide the caption band is
+    /// empty, the opening board pane shows no item of the new beat's board (the table with the value 15), and no label
+    /// is drawn (the move frames equal those of the same lesson with no labels shown). A settled hold frame shows the
+    /// still's picture. A second render in a fresh process gives the same story record and the same stills.
     func testBoardPaneOpensAndClosesWithoutACut() throws {
         let gears = #"{"v":2,"parts":[{"id":"p","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},{"id":"w","at":[45,0,0],"shape":{"gear":{"teeth":30,"module":2,"width":8}},"joint":{"revolute":[0,0,1]}}],"constraints":[{"gearMesh":{"a":"p","b":"w"}}],"annotations":{"labels":[{"id":"lp","at":"p","text":"Small gear"},{"id":"lw","at":"w","text":"Big gear"}]}}"#
-        let doc = try write(#"{"v":1,"kind":"explainer","board":{"v":1,"items":[{"id":"cap","k":"text","at":[6,7],"text":"Figures"}]},"solid":\#(gears),"beats":[{"say":"One.","view":{"annotate":["lp"]}},{"say":"Two.","view":{"annotate":["lw"]},"ops":[{"op":"add","item":{"id":"t","k":"table","at":[6,4],"header":true,"cells":[["Gear","Teeth"],["small","{p.teeth}"]]}}]},{"say":"Three.","view":{"annotate":["lp","lw"]}},{"say":"Four.","view":{"annotate":["lp"]},"ops":[{"op":"remove","id":"t"}]}]}"#, "pane-slide.json")
-        func render() throws -> (URL, [[String: Any]], [[String: Any]]) {
+        func lesson(_ labels: Bool) -> String {
+            let a = { (ids: String) in labels ? #","view":{"annotate":[\#(ids)]}"# : "" }
+            return #"{"v":1,"kind":"explainer","board":{"v":1,"items":[{"id":"cap","k":"text","at":[6,7],"text":"Figures"}]},"solid":\#(gears),"beats":[{"say":"One."\#(a(#""lp""#))},{"say":"Two."\#(a(#""lw""#)),"ops":[{"op":"add","item":{"id":"t","k":"table","at":[6,4],"header":true,"cells":[["Gear","Teeth"],["small","{p.teeth}"]]}}]},{"say":"Three."\#(a(#""lp","lw""#))},{"say":"Four."\#(a(#""lp""#)),"ops":[{"op":"remove","id":"t"}]}]}"#
+        }
+        let doc = try write(lesson(true), "pane-slide.json"), plain = try write(lesson(false), "pane-slide-plain.json")
+        var outs: [URL] = []
+        defer { for o in outs { try? FileManager.default.removeItem(at: o) } }
+        func render(_ doc: String) throws -> (URL, [[String: Any]], [[String: Any]]) {
             let out = FileManager.default.temporaryDirectory.appendingPathComponent("explainer-slide-\(UUID().uuidString)")
+            outs.append(out)
             let r = try renderOrSkip(["render", doc, out.path, "--size", "640x400", "--no-loop", "--story-fps", "10"])
             XCTAssertEqual(r.status, 0, r.text)
             let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
@@ -479,8 +487,7 @@ final class MartySolidCLITests: XCTestCase {
             let story = try XCTUnwrap(outputs.first { $0["file"] as? String == "story.mp4" })
             return (out, try XCTUnwrap(story["beats"] as? [[String: Any]]), outputs.filter { ($0["file"] as? String)?.hasPrefix("beat-") == true })
         }
-        let (out, beats, stills) = try render()
-        defer { try? FileManager.default.removeItem(at: out) }
+        let (out, beats, stills) = try render(doc)
         XCTAssertEqual(stills.map { $0["boardPane"] as? Bool }, [false, true, true, false])
         XCTAssertEqual(beats.map { $0["cut"] as? Bool }, [false, false, false, false])
         XCTAssertEqual(beats.compactMap { $0["cutReason"] }.count, 0)
@@ -494,20 +501,99 @@ final class MartySolidCLITests: XCTestCase {
         for (b, still) in zip(beats, stills) {
             XCTAssertEqual(try XCTUnwrap(b["camera"] as? NSDictionary), try XCTUnwrap(still["camera"] as? NSDictionary))
         }
+        func frames(_ k: Int, _ beats: [[String: Any]]) throws -> (start: Int, hold: Int, end: Int) {
+            let start = Int((try XCTUnwrap(beats[k]["start"] as? Double) * 10).rounded())
+            let hold = Int((try XCTUnwrap(beats[k]["holdStart"] as? Double) * 10).rounded())
+            return (start, hold, start + Int((try XCTUnwrap(beats[k]["seconds"] as? Double) * 10).rounded()) - 1)
+        }
         // During each slide: no caption text; on the first hold frame the caption appears.
         let movie = out.appendingPathComponent("story.mp4")
         for k in [1, 3] {
-            let start = Int((try XCTUnwrap(beats[k]["start"] as? Double) * 10).rounded())
-            let hold = Int((try XCTUnwrap(beats[k]["holdStart"] as? Double) * 10).rounded())
-            XCTAssertEqual(hold - start, 6)
-            for f in start..<hold { XCTAssertEqual(try captionTextPixels(movie, frame: f, fps: 10, width: 640, height: 400), 0, "move frame \(f)") }
-            XCTAssertGreaterThan(try captionTextPixels(movie, frame: hold, fps: 10, width: 640, height: 400), 20)
+            let f = try frames(k, beats)
+            XCTAssertEqual(f.hold - f.start, 6)
+            for i in f.start..<f.hold { XCTAssertEqual(try captionTextPixels(movie, frame: i, fps: 10, width: 640, height: 400), 0, "move frame \(i)") }
+            XCTAssertGreaterThan(try captionTextPixels(movie, frame: f.hold, fps: 10, width: 640, height: 400), 20)
+        }
+        // The content area (memory rows run top to bottom): under the title band, above the caption band.
+        let rows = (400 - 66 - 278)..<(400 - 66)
+        // The opening board pane during the move shows the previous beat's board ("Figures" only), never the new
+        // beat's table: the table's rows (white text on the hold frame, away from the rows of "Figures", which is nearly
+        // opaque on the last move frame) have no bright pixel on any move frame.
+        let open = try frames(1, beats)
+        let boardX = 14..<(12 + Int(608 * 0.28) - 4)
+        func bright(_ px: [UInt8], _ y: Int, _ limit: UInt8) -> Int {
+            boardX.reduce(0) { n, x in let i = (y * 640 + x) * 4; return n + (px[i] > limit && px[i + 1] > limit && px[i + 2] > limit ? 1 : 0) }
+        }
+        let held = try moviePixels(movie, frame: open.hold, fps: 10, width: 640, height: 400)
+        let lastMove = try moviePixels(movie, frame: open.hold - 1, fps: 10, width: 640, height: 400)
+        let previousRows = Set(rows.filter { bright(lastMove, $0, 110) > 0 })   // the board's text ink is a muted blue
+        XCTAssertFalse(previousRows.isEmpty, "the previous board's text fades in")
+        let tableRows = rows.filter { bright(held, $0, 180) > 0 && !(($0 - 3)...($0 + 3)).contains(where: previousRows.contains) }
+        // (A table already drawn on the last move frame would put its rows among `previousRows` and fail here.)
+        XCTAssertGreaterThan(tableRows.reduce(0) { $0 + bright(held, $1, 180) }, 40, "the table shows from the hold")
+        for i in open.start..<open.hold {
+            let px = try moviePixels(movie, frame: i, fps: 10, width: 640, height: 400)
+            XCTAssertEqual(tableRows.reduce(0) { $0 + bright(px, $1, 110) }, 0, "move frame \(i): no item of the new board")
+        }
+        // No label during a move: each move frame equals the same frame of the lesson with no labels shown (same
+        // cameras, same board); the hold frames differ by the labels.
+        let (plainOut, plainBeats, _) = try render(plain)
+        for (a, b) in zip(beats, plainBeats) { XCTAssertEqual(a["camera"] as? NSDictionary, b["camera"] as? NSDictionary) }
+        let plainMovie = plainOut.appendingPathComponent("story.mp4")
+        func differing(_ i: Int) throws -> Int {
+            let a = try moviePixels(movie, frame: i, fps: 10, width: 640, height: 400)
+            let b = try moviePixels(plainMovie, frame: i, fps: 10, width: 640, height: 400)
+            var n = 0
+            for y in rows { for x in 0..<640 {
+                let j = (y * 640 + x) * 4
+                if (0..<3).contains(where: { abs(Int(a[j + $0]) - Int(b[j + $0])) > 48 }) { n += 1 }
+            } }
+            return n
+        }
+        for k in [1, 3] {
+            let f = try frames(k, beats)
+            for i in f.start..<f.hold { XCTAssertLessThan(try differing(i), 50, "move frame \(i): a label is drawn") }
+            XCTAssertGreaterThan(try differing(f.end), 200, "beat \(k + 1)'s hold shows its labels")
+        }
+        // A settled hold frame (no spin) shows the still's picture, within video coding error, in both layouts.
+        for k in [2, 3] {
+            let f = try frames(k, beats)
+            let frame = try moviePixels(movie, frame: f.end, fps: 10, width: 640, height: 400)
+            let still = try pngPixels(out.appendingPathComponent("beat-\(k + 1).png"), width: 640, height: 400)
+            var total = 0, far = 0
+            for j in stride(from: 0, to: frame.count, by: 4) {
+                let d = (0..<3).map { abs(Int(frame[j + $0]) - Int(still[j + $0])) }.max()!
+                total += d; if d > 40 { far += 1 }
+            }
+            XCTAssertLessThan(Double(total) / Double(640 * 400), 4, "beat \(k + 1): mean difference")
+            XCTAssertLessThan(far, 640 * 400 / 200, "beat \(k + 1): pixels far from the still")
         }
         // Determinism: a fresh process gives the same story record (holds, paths, cameras, layout) and the same stills.
-        let (again, beats2, stills2) = try render()
-        defer { try? FileManager.default.removeItem(at: again) }
+        let (_, beats2, stills2) = try render(doc)
         XCTAssertEqual(beats2 as NSArray, beats as NSArray)
         XCTAssertEqual(stills2.map { $0["sha256"] as? String }, stills.map { $0["sha256"] as? String })
+    }
+
+    /// RGBA pixels of frame `index` of a movie (memory rows top to bottom).
+    func moviePixels(_ movie: URL, frame index: Int, fps: Int, width: Int, height: Int) throws -> [UInt8] {
+        let gen = AVAssetImageGenerator(asset: AVURLAsset(url: movie))
+        gen.requestedTimeToleranceBefore = .zero; gen.requestedTimeToleranceAfter = .zero
+        return pixels(try gen.copyCGImage(at: CMTime(value: CMTimeValue(index * 10 + 1), timescale: CMTimeScale(fps * 10)), actualTime: nil),
+                      width: width, height: height)
+    }
+
+    /// RGBA pixels of a PNG file (memory rows top to bottom).
+    func pngPixels(_ url: URL, width: Int, height: Int) throws -> [UInt8] {
+        let src = try XCTUnwrap(CGImageSourceCreateWithURL(url as CFURL, nil))
+        return pixels(try XCTUnwrap(CGImageSourceCreateImageAtIndex(src, 0, nil)), width: width, height: height)
+    }
+
+    func pixels(_ image: CGImage, width: Int, height: Int) -> [UInt8] {
+        var px = [UInt8](repeating: 0, count: width * height * 4)
+        let ctx = CGContext(data: &px, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return px
     }
 
     /// Bright (text) pixels in the caption band of frame `index` of a movie: the band is a dark fill over the scene, so

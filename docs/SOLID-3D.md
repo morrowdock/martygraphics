@@ -1857,7 +1857,10 @@ caption, the labels and (in an explainer) the board's new state appear when the 
 starts, so a caption never names something the camera has not reached yet, and a
 caption with a number shows only while its own beat's state is on screen at the beat's
 own camera. The board shows the beat's settled state, the same state as the beat's still.
-The last frame of each beat has the same pose and camera as that beat's still. Labels
+In every hold frame the layout, the camera, the board state, the caption and the labels are those of the beat's
+still; parts that the beat's spin animates may still move until the spin ends, so a hold frame during a spin is not
+the still's picture. The last frame of each beat (the settled end frame) has the same pose and camera as that beat's
+still. Labels
 keep their places for the rest of the beat. The writer is the one
 `loop.mp4` uses: a pool per frame, the same failure handling (fail fast, a 60-second
 stall timeout, the output directory removed). The manifest record gives `codec`,
