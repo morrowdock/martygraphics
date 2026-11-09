@@ -988,6 +988,20 @@ The search, for each such annotation in issue order:
 5. When still none passes, `suggest` is null and `noSuggest` says why: the first view where no candidate passes on its
    own names the cause, and when every view passes some candidate the cause is that none passes in all of them.
 
+**Form.** A suggestion is always written in a form the parser accepts: `{"part", "offset": [x, y, z]}` with every
+coordinate within ±4000 mm (`anchor.offset`), or `{"part", "point": "centre"}` (the part's mesh centre, which is
+also a candidate and is checked like the others). A point whose offset would be out of range is never a candidate;
+when only such points would pass, the cause is `form`.
+
+**Re-check with the new framing.** The camera of a step or beat still fits the anchors it shows, so moving a dot can
+change the framing and expose another part in front of it. Every suggestion is therefore checked again with the
+document it makes (`MGAnnotationAnchorReport.verify`), at most 3 full re-checks (`MGAnnotationAnchorRules.recheckRounds`):
+the document with every suggestion applied is parsed, compiled, framed and checked again; suggestions whose annotation
+has no issue there hold. For the others the search runs again in that copy's framing and the new set is checked; a
+suggestion that still has an issue is dropped (`framing`) and the rest is checked once more. If that last check still
+shows an issue, every remaining suggestion is dropped (`framing`). So the printed suggestions, all applied together,
+parse and leave no anchor issue for their annotations. A copy that does not compile drops them all (`form`).
+
 `noSuggest` is `{"cause", "code", "step", "beat", "by", "samples", "alternatives"}` (`step` and `beat` 1-based):
 
 | `code` | `cause` | `alternatives` |
@@ -998,6 +1012,8 @@ The search, for each such annotation in issue order:
 | `offscreen` | `part off screen in step N` | leave it out of the list, or change the camera |
 | `nocommonpoint` | no point of the part is visible in every view that shows it | show it in fewer views, or use one label per view |
 | `budget` | suggestion budget ran out | simpler parts near the anchor, or fewer labels |
+| `form` | no visible point of the part can be written as an anchor | anchor it on a part whose frame is near its mesh, or use a world anchor for free text |
+| `framing` | no anchor stays visible once the framing changes | leave it out of the views that hide it, set those cameras, or ghost the part in the way |
 
 "Fully hidden" means that none of the `samples` candidates passed: the search is sampled, not exhaustive. Each
 annotation's search spends at most 8,000,000 tests and one document's searches 64,000,000
@@ -1008,8 +1024,8 @@ before it in the same view share that view's 3,000,000 tests.
 
 `fix` says in one sentence what is wrong, then names the suggestion (`Use {"part": …, "offset": […]} for the anchor
 (`at`): it lies on … and passes the anchor rules in every view that shows …`), or the cause and the alternatives; an
-off-part fix also names the world anchor for free text. It never proposes the part's centre, which an inner part's
-casing often hides. `repair` is one line built from these fields, at most 400 Unicode scalars
+off-part fix also names the world anchor for free text. It proposes the part's centre (`{"point": "centre"}`) only when
+the rules were checked to pass it. `repair` is one line built from these fields, at most 400 Unicode scalars
 (`MGAnnotationAnchorIssue.repair`): what is wrong, where, and the anchor to use. For example, a 40 mm core box inside
 a closed 200 mm shell box:
 
@@ -1019,9 +1035,10 @@ Label l1 (step 1) is hidden behind shell. No visible point: part fully hidden in
 
 and a label 200 mm above the centre of a 40 mm box beside them: `Label l1 is 180.0 mm off side (at most 3.5 mm). Use
 anchor {"part": "side", "offset": [-0.011, 0.042, 19.975]}.` (a point on the top face, 0.05 mm inside along the
-camera ray; the offset depends on the camera). A tool can pass `repair` straight to a model. The
-round-2f refused documents (`docs/fixtures/round-2f`) are the test inputs: applying every `suggest` to a copy clears
-that annotation's anchor issues.
+camera ray; the offset depends on the camera). A tool can pass `repair` straight to a model. The synthetic explainers in
+`docs/fixtures/anchor-suggest` reproduce the round-2f geometry (inner parts behind a casing, off-part dots, a cut
+casing, a posed beat, component instance parts, a pointer) with neutral names: applying every `suggest` to a copy
+clears that annotation's anchor issues.
 
 Not tested: the visibility of anchors in the plain view (`hero.png`, `solid-0.png`; the nearer-part test does test the
 plain view when it shows the annotation), the poses during a step's or beat's spin and camera moves,

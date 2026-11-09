@@ -185,6 +185,16 @@ extension MGSolidReport {
             let framed = doc.stepAnchorViews()
             for v in framed { anchors.append(doc.anchorIssues(v)) }
             anchors.suggest(doc, views: framed)
+            // A suggestion holds only once applied: the copy with it is compiled and framed again (its own cameras).
+            anchors.verify { applied in
+                let src = MGSolidDocument.replacingAnchors(doc.source, applied)
+                guard case .success(let d) = MGSolidParser.document(json: src, library: doc.library) else { return nil }
+                var r = MGAnnotationAnchorReport()
+                r.issues = d.offPartAnchors
+                let views = d.stepAnchorViews()
+                for v in views { r.append(d.anchorIssues(v)) }
+                return MGAnchorRecheck(issues: r.issues, search: { d.anchorSuggestions(for: $0, views: views) })
+            }
         }
         let views = anchors.issues.filter { $0.cause != .offPart }
         if reason == nil, profile == .strict, let first = views.first { reason = first.reason; part = first.id }
@@ -224,6 +234,17 @@ extension MGSolidReport {
             line = "Refused (\(reason))" + (part.map { ", at \(MGSolidParser.token($0))" } ?? "") + ": " + m
         } else { line = "Refused (\(reason))." }
         return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+    }
+
+    /// The repair members of a refusal for hosts that build their own refusal object (the `marty-solid` component
+    /// paths): `limit` (a length, count or size limit; the visibility limits too), `visibility` and `repair`.
+    public static func refusalDetail(_ issue: MGSolidIssue) -> [String: MGJSON] {
+        var o: [String: MGJSON] = [:]
+        let limit = issue.limit ?? issue.visibility?.limitDetail()
+        if let limit { o["limit"] = limit.json }
+        if let v = issue.visibility { o["visibility"] = v.json }
+        o["repair"] = .string(repair(issue.reason, part: issue.part, limit: limit, visibility: issue.visibility))
+        return o
     }
 
     /// The issue an anchor refusal names: the first issue with that reason (nil for any other reason).

@@ -123,9 +123,15 @@ A refusal from a length, count or size limit reports its numbers in the check re
   `.`, `[`, `]` and `=`.
 * `actual` is the value the engine measured: Unicode scalars for text (after placeholders are filled when the rule
   counts the filled text), entries, bytes, triangles, vertices and so on (`unit`).
-* `minimum` is set for a `1–N` rule (an empty text has `actual` 0). `"exact": false` marks a count the engine stops at
-  the first value over the limit (component expansion, expression nodes, nesting, a stream), so `actual` is a lower
-  bound and `repair` says "more than".
+* `minimum` is set for a `1–N` rule (an empty or blank text has `actual` 0).
+* A number the engine does not hold exactly is given as a bound, never as `actual`: `actualAtLeast` when it stopped
+  counting at the first value over the limit (component expansion, expression nodes, nesting, a stream, a file read
+  only to one byte past the limit), or for a document number above 2^53; `actualAtMost` for one below −2^53. `repair`
+  then says "at least" (or "at most"). A whole number up to 2^53 is `actual` as given (`repeat.count: 1e12` is
+  1,000,000,000,000).
+* A shape inside a part's `shape` list is `parts[i].shape[j].<kind>.<field>`; a single shape object is
+  `parts[i].shape.<kind>.<field>`. An explainer's solid prefixes every path with `solid.`, `parts.resolved` included
+  (`solid.parts`).
 * `parts.resolved` keeps its `count` and `top`; `annotations.visible`, `step.annotate.count` and `view.annotate.count`
   keep `visibility` and add `limit`.
 * The same reason for another cause (not an array, a markup character, an unknown key) has no `limit`; `repair` then

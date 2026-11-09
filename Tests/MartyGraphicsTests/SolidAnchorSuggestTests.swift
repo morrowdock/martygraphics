@@ -5,8 +5,8 @@ import XCTest
 
 /// Anchor suggestions (docs/SOLID-3D.md, "Anchor suggestions"): for an off or hidden label or pointer the check report
 /// gives `suggest`, an anchor that passes both anchor rules in every view that shows it, or `suggest: null` with
-/// `noSuggest` (why, and what to do instead), plus a one-line `repair`. Synthetic boxes, and copies of the round-2f
-/// refused documents (docs/fixtures/round-2f).
+/// `noSuggest` (why, and what to do instead), plus a one-line `repair`. Synthetic boxes, and the synthetic explainers of
+/// docs/fixtures/anchor-suggest (the geometry problems of the round-2f refusals, with neutral names).
 final class SolidAnchorSuggestTests: XCTestCase {
     /// A closed 200 mm shell box with a 40 mm core box inside it, and a 40 mm box beside them.
     static let parts = #"{"id": "shell", "shape": {"box": {"size": [200, 200, 200]}}}, {"id": "core", "shape": {"box": {"size": [40, 40, 40]}}}, {"id": "side", "at": [400, 0, 0], "shape": {"box": {"size": [40, 40, 40]}}}"#
@@ -169,18 +169,18 @@ final class SolidAnchorSuggestTests: XCTestCase {
         XCTAssertEqual(MGAnnotationAnchorIssue.number(-30), "-30")
     }
 
-    // MARK: Round 2f
+    // MARK: Synthetic explainers (the round-2f geometry)
 
-    static var fixtures: URL { XFix.root.appendingPathComponent("docs/fixtures/round-2f") }
-    static let names = ["opus-1-try-2", "opus-1-try-3", "opus-1-try-4", "opus-2-try-4", "sonnet-2-try-4"]
+    static var fixtures: URL { XFix.root.appendingPathComponent("docs/fixtures/anchor-suggest") }
+    static let names = ["figure-engines", "cut-engine"]
 
-    /// For each round-2f refused document: every `suggest` the strict check gives, applied to a copy, clears every
-    /// anchor issue of that annotation; every annotation without one names a part fully hidden in a beat (dense
-    /// re-sampling finds no visible point either). The expected counts are this engine's results.
-    func testRound2fSuggestionsClearTheirAnchorIssues() throws {
+    /// For each synthetic explainer: every `suggest` the strict check gives, applied to a copy, clears every anchor
+    /// issue of that annotation and adds none; every annotation without one names a part fully hidden in a beat. The
+    /// fixtures hold off-part dots, inner parts behind a casing, a cut casing, a posed beat, component instance parts
+    /// and a pointer. The expected counts are this engine's results.
+    func testSyntheticSuggestionsClearTheirAnchorIssues() throws {
         // (suggested, of which cleared, annotations with suggest null)
-        let expected: [String: (Int, Int, Int)] = ["opus-1-try-2": (7, 7, 5), "opus-1-try-3": (1, 1, 4), "opus-1-try-4": (1, 1, 1),
-                                                   "opus-2-try-4": (8, 8, 3), "sonnet-2-try-4": (9, 9, 1)]
+        let expected: [String: (Int, Int, Int)] = ["figure-engines": (5, 5, 2), "cut-engine": (3, 3, 3)]
         for name in Self.names {
             let source = try String(contentsOf: Self.fixtures.appendingPathComponent("\(name).explainer.json"), encoding: .utf8)
             let before = MGExplainerReport.check(data: Data(source.utf8), profile: .strict, engine: nil)
@@ -200,7 +200,9 @@ final class SolidAnchorSuggestTests: XCTestCase {
                 }
             }
             let s = suggestions(before.json)
-            let after = MGExplainerReport.check(data: Data(Self.applying(s, to: source).utf8), profile: .strict, engine: nil, suggest: false)
+            let fixed = Self.applying(s, to: source)
+            XCTAssertNotNil(MGExplainer.parse(data: Data(fixed.utf8)).successValue, "\(name): the applied copy parses")
+            let after = MGExplainerReport.check(data: Data(fixed.utf8), profile: .strict, engine: nil, suggest: false)
             let left = Set(issues(after.json).compactMap { i -> String? in if case .string(let id)? = i["id"] { return id }; return nil })
             let cleared = s.keys.filter { !left.contains($0) }
             XCTAssertEqual(cleared.count, s.count, "\(name): applying suggest leaves \(s.keys.filter { left.contains($0) }.sorted())")
@@ -209,10 +211,10 @@ final class SolidAnchorSuggestTests: XCTestCase {
         }
     }
 
-    /// A suggestion is null only when the search finds no visible point: 4 times the samples find none either. (A denser
-    /// first search found one for `lDiff` here; the second, denser pass now finds it too.)
-    func testRound2fNullSuggestionsHoldWithDenseSampling() throws {
-        let source = try String(contentsOf: Self.fixtures.appendingPathComponent("opus-1-try-3.explainer.json"), encoding: .utf8)
+    /// A suggestion is null only when the search finds no visible point: 4 times the samples find none either; the
+    /// diffuser seen through the cutaway (a sliver) gets one.
+    func testSyntheticNullSuggestionsHoldWithDenseSampling() throws {
+        let source = try String(contentsOf: Self.fixtures.appendingPathComponent("figure-engines.explainer.json"), encoding: .utf8)
         let doc = try XCTUnwrap(MGExplainer.parse(data: Data(source.utf8)).successValue)
         let framed = MGExplainerFrame.beatAnchorViews(doc)
         let d = try XCTUnwrap(framed.solid)
@@ -220,13 +222,117 @@ final class SolidAnchorSuggestTests: XCTestCase {
         for v in framed.views { rep.append(d.anchorIssues(v)) }
         let plain = d.anchorSuggestions(for: rep.issues, views: framed.views)
         let nulls = plain.keys.filter { plain[$0]?.offset == nil }.sorted()
-        XCTAssertEqual(nulls, ["lComb", "lExample", "lImp", "lTurb"])
+        XCTAssertEqual(nulls, ["lComb", "lShaft"])
         XCTAssertNotNil(plain["lDiff"]?.offset)
         let dense = d.anchorSuggestions(for: rep.issues.filter { nulls.contains($0.id) }, views: framed.views, scale: 4)
         for id in nulls {
             XCTAssertNil(dense[id]?.offset, "\(id): a visible point exists")
             XCTAssertEqual(dense[id]?.cause, .occluded, id)
         }
+    }
+
+    // MARK: Review fixtures (PR #43): framing and anchor form
+
+    /// Moving an off-part dot changes the framing (the camera fits the shown anchors): a suggestion found with the old
+    /// camera could be hidden by the blocker in the new one. Every printed suggestion is checked again with the document
+    /// it makes, so applying it clears the issue.
+    func testASuggestionHoldsInTheFramingItCauses() throws {
+        let t = #"{"v":2,"kind":"assembly","parts":[{"id":"core","shape":{"box":{"size":[128,128,128]}}},{"id":"blocker","at":[-56,7,-37],"shape":{"box":{"size":[88,72,82]}}}],"annotations":{"labels":[{"id":"label","text":"Core","at":{"part":"core","offset":[495,-956,-910]}}]},"steps":[{"say":"Core.","orbit":-158}]}"#
+        let r = report(t)
+        XCTAssertEqual(r.reason, "annotation.anchor.off.label")
+        let s = suggestions(r.json)
+        XCTAssertNotNil(s["label"])
+        // The anchor the first search finds with the authored framing is hidden once applied.
+        let stale: MGJSON = .object(["part": .string("core"), "offset": .array([.number(-63.965), .number(-58.906), .number(-59.797)])])
+        XCTAssertEqual(report(Self.applying(["label": stale], to: t)).reason, "annotation.anchor.hidden.label")
+        let fixed = report(Self.applying(s, to: t))
+        XCTAssertTrue(fixed.ok, fixed.reason ?? "")
+    }
+
+    /// A part whose mesh lies 8000 mm from its frame: every visible point needs an offset outside ±4000 mm, which the
+    /// anchor syntax refuses (`anchor.offset`). The suggestion is the part's centre, written `{"point": "centre"}`.
+    func testASuggestionIsAlwaysWritable() throws {
+        let t = #"{"v":2,"kind":"assembly","parts":[{"id":"core","shape":{"shaft":{"radius":10,"length":20,"z0":4000,"at":[0,0,4000]}}}],"annotations":{"labels":[{"id":"label","text":"Core","at":{"part":"core","offset":[0,0,0]}}]},"steps":[{"say":"Core."}]}"#
+        let r = report(t)
+        XCTAssertEqual(r.reason, "annotation.anchor.off.label")
+        XCTAssertEqual(suggestions(r.json)["label"], .object(["part": .string("core"), "point": .string("centre")]))
+        let fixed = Self.applying(suggestions(r.json), to: t)
+        XCTAssertNotNil(MGSolidParser.document(data: Data(fixed.utf8)).successValue)
+        XCTAssertTrue(report(fixed).ok)
+        // The out-of-range offset the review saw is refused by the parser.
+        let bad = Self.applying(["label": .object(["part": .string("core"), "offset": .array([.number(5.208), .number(-8.445), .number(8001.085)])])], to: t)
+        XCTAssertEqual(MGSolidReport.check(data: Data(bad.utf8), engine: nil).reason, "anchor.offset")
+    }
+
+    /// When the only visible points need out-of-range offsets and the centre is hidden, the cause is `form`.
+    func testOnlyUnwritablePointsGiveTheFormCause() throws {
+        // A shaft whose mesh lies 8000–10000 mm along its frame's z (every point out of range); a wall in front of its
+        // middle hides the centre from the camera.
+        let t = #"{"v":2,"kind":"assembly","parts":[{"id":"rod","at":[0,0,-4000],"shape":{"shaft":{"radius":40,"length":2000,"z0":4000,"at":[0,0,4000]}}},{"id":"wall","at":[0,-300,1000],"shape":{"box":{"size":[600,20,600],"at":[0,0,4000]}}}],"annotations":{"labels":[{"id":"label","text":"Rod","at":{"part":"rod","offset":[0,0,0]}}]},"steps":[{"say":"Rod."}]}"#
+        let r = report(t)
+        XCTAssertEqual(r.reason, "annotation.anchor.off.label")
+        guard case .object(let a)? = r.json["anchor"], case .object(let n)? = a["noSuggest"] else { return XCTFail("no noSuggest") }
+        XCTAssertEqual(a["suggest"], .null)
+        XCTAssertEqual(n["code"], .string("form"))
+        XCTAssertEqual(n["cause"], .string("no visible point of the part can be written as an anchor"))
+    }
+
+    /// The re-check rounds: a copy that does not compile drops every suggestion (`form`); a suggestion that never holds
+    /// is dropped after the rounds (`framing`); one that holds at once is kept.
+    func testTheReCheckRounds() {
+        func issue(_ id: String) -> MGAnnotationAnchorIssue {
+            var i = MGAnnotationAnchorIssue(id: id, kind: "label", cause: .offPart, part: "p", by: nil, step: nil, beat: nil, point: .zero,
+                                            distance: 10, tolerance: 1)
+            i.suggestion = MGAnnotationAnchorSuggestion(part: "p", offset: MGVec3(1, 2, 3), onCut: false, cause: nil, step: nil, beat: nil, by: nil)
+            return i
+        }
+        var refused = MGAnnotationAnchorReport()
+        refused.issues = [issue("a")]
+        refused.verify { _ in nil }
+        XCTAssertEqual(refused.issues[0].suggestion?.cause, .form)
+        var calls = 0
+        var never = MGAnnotationAnchorReport()
+        never.issues = [issue("a"), issue("b")]
+        never.verify { applied in
+            calls += 1
+            // `a` is always hidden again; `b` holds.
+            return MGAnchorRecheck(issues: applied.keys.contains("a") ? [issue("a")] : [], search: { _ in ["a": issue("a").suggestion!] })
+        }
+        XCTAssertEqual(never.issues[0].suggestion?.cause, .framing)
+        XCTAssertNotNil(never.issues[1].suggestion?.offset, "b held in the last check (without a)")
+        XCTAssertEqual(calls, 3)
+        var good = MGAnnotationAnchorReport()
+        good.issues = [issue("a")]
+        calls = 0
+        good.verify { _ in calls += 1; return MGAnchorRecheck(issues: [], search: { _ in [:] }) }
+        XCTAssertEqual(calls, 1)
+        XCTAssertNotNil(good.issues[0].suggestion?.offset)
+    }
+
+    /// Deterministic replay: two boxes, a random off-part dot and an orbit; every printed suggestion, applied, parses
+    /// and leaves no issue for its annotation.
+    func testRandomTwoBoxSuggestionsHoldWhenApplied() {
+        var seed: UInt64 = 43
+        func rnd(_ lo: Double, _ hi: Double) -> Double {
+            seed = seed &* 6364136223846793005 &+ 1442695040888963407
+            return lo + (hi - lo) * Double(seed >> 11) / Double(UInt64.max >> 11)
+        }
+        func r(_ x: Double) -> String { String(format: "%.0f", x) }
+        var checked = 0
+        for i in 0..<60 {
+            let s = rnd(10, 200), bx = rnd(-120, 120), by = rnd(-120, 120), bz = rnd(-120, 120)
+            let sx = rnd(1, 100), sy = rnd(1, 100), sz = rnd(1, 100), ax = rnd(-1000, 1000), ay = rnd(-1000, 1000), az = rnd(-1000, 1000)
+            let orbit = rnd(-180, 180), focus = i % 2 == 0 ? #", "focus":["core"]"# : ""
+            let t = #"{"v":2,"kind":"assembly","parts":[{"id":"core","shape":{"box":{"size":[\#(r(s)),\#(r(s)),\#(r(s))]}}},{"id":"blocker","at":[\#(r(bx)),\#(r(by)),\#(r(bz))],"shape":{"box":{"size":[\#(r(sx)),\#(r(sy)),\#(r(sz))]}}}],"annotations":{"labels":[{"id":"label","text":"Core","at":{"part":"core","offset":[\#(r(ax)),\#(r(ay)),\#(r(az))]}}]},"steps":[{"say":"Core.","orbit":\#(r(orbit))\#(focus)}]}"#
+            let s0 = suggestions(report(t).json)
+            guard !s0.isEmpty else { continue }
+            checked += 1
+            let fixed = Self.applying(s0, to: t)
+            let after = report(fixed)
+            XCTAssertTrue(issues(after.json).allSatisfy { $0["id"] != .string("label") }, "case \(i): \(after.reason ?? "")\n\(t)")
+            XCTAssertNotEqual(after.reason, "anchor.offset", "case \(i)")
+        }
+        XCTAssertGreaterThan(checked, 30)
     }
 }
 

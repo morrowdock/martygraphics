@@ -305,7 +305,7 @@ public struct MGExplainerSession {
             if stream.exhausted { continue }
             if stream.bytes > MGExplainerLimits.bytes {
                 exhaust("explainer.bytes", limit: MGSolidLimitDetail(field: "stream", actual: stream.bytes, limit: MGExplainerLimits.bytes, unit: "bytes",
-                                                                     exact: false))
+                                                                     bound: .atLeast))
                 continue
             }
             for output in scanner.push(byte) { handle(output) }
@@ -473,7 +473,7 @@ public struct MGExplainerSession {
         if stream.ended { startStream() }
         guard stream.statements < MGExplainerLimits.statements else {
             return exhaust("explainer.statements.count", limit: MGSolidLimitDetail(field: "stream", actual: stream.statements + 1,
-                                                                                   limit: MGExplainerLimits.statements, unit: "statements", exact: false))
+                                                                                   limit: MGExplainerLimits.statements, unit: "statements", bound: .atLeast))
         }
         let index = nextStatement; nextStatement += 1
         stream.statements += 1
@@ -483,7 +483,7 @@ public struct MGExplainerSession {
         case .garbage: refuse("stmt.json", index)
         case .tooLong:
             var e = MGExplainerIssue("explainer.bytes", view: current, statement: index)
-            e.limit = MGSolidLimitDetail(field: "stream", actual: MGExplainerLimits.bytes + 1, limit: MGExplainerLimits.bytes, unit: "bytes", exact: false)
+            e.limit = MGSolidLimitDetail(field: "stream", actual: MGExplainerLimits.bytes + 1, limit: MGExplainerLimits.bytes, unit: "bytes", bound: .atLeast)
             refuse(e)
         case .statement(let raw):
             if let r = MGJSON.dataRefusal(Data(raw), maxDepth: MGExplainerLimits.statementDepth, json: "stmt.json", depth: "explainer.depth") {
@@ -1132,7 +1132,7 @@ public struct MGExplainerSession {
     static func beatField(_ l: MGSolidLimitDetail, _ k: Int) -> MGSolidLimitDetail {
         guard l.field.hasPrefix("steps["), let close = l.field.firstIndex(of: "]") else { return l.prefixed("solid.") }
         let rest = l.field[l.field.index(after: close)...]
-        return MGSolidLimitDetail(field: "beats[\(k)].view" + rest, actual: l.count, limit: l.limit, unit: l.unit, minimum: l.minimum, exact: l.exact)
+        return MGSolidLimitDetail(field: "beats[\(k)].view" + rest, actual: l.count, limit: l.limit, unit: l.unit, minimum: l.minimum, bound: l.bound)
     }
 
     static func reason(_ error: Error) -> String {

@@ -39,8 +39,10 @@ struct Loaded { let data: Data; let source: MGSolidSource }
 struct TooLarge: Error {
     var bytes: Int
     var exact = true
-    /// The limit detail of the refusal (`field: "document"`, unit bytes).
-    func detail(limit: Int) -> MGSolidLimitDetail { MGSolidLimitDetail(field: "document", actual: bytes, limit: limit, unit: "bytes", exact: exact) }
+    /// The limit detail of the refusal (`field: "document"`, unit bytes; at least `bytes` when only that many were read).
+    func detail(limit: Int) -> MGSolidLimitDetail {
+        MGSolidLimitDetail(field: "document", actual: bytes, limit: limit, unit: "bytes", bound: exact ? .exact : .atLeast)
+    }
 }
 
 func load(_ path: String) throws -> Loaded {
@@ -61,6 +63,17 @@ func load(_ path: String) throws -> Loaded {
 /// take) is `kind.unsupported`; anything else (no `kind`, `assembly`, another value) keeps the assembly path and its
 /// reasons, unchanged.
 struct Document { let data: Data; let kind: String? }
+
+/// `explainer.bytes` for a file read only to one byte past the explainer limit: the limit detail gives the file's own
+/// size (the library saw only the bytes read). Nil for a file within the limit.
+func explainerTooLarge(_ path: String, _ data: Data) -> MGExplainerIssue? {
+    guard data.count > MGExplainerLimits.rawBytes else { return nil }
+    let size = ((try? FileManager.default.attributesOfItem(atPath: path))?[.size] as? NSNumber)?.intValue
+    var e = MGExplainerIssue("explainer.bytes", view: .header)
+    e.limit = MGSolidLimitDetail(field: "document", actual: size ?? data.count, limit: MGExplainerLimits.rawBytes, unit: "bytes",
+                                 bound: size == nil ? .atLeast : .exact)
+    return e
+}
 
 func loadDocument(_ path: String) throws -> Document {
     let attrs = try FileManager.default.attributesOfItem(atPath: path)
@@ -123,8 +136,9 @@ func library(_ files: [String]) throws -> MGSolidLibrary {
                                                   "limit": l.json, "repair": .string(l.repair)]))
         }
         if case .failure(let issue) = lib.register(src.data) {
-            throw LibraryRefused(report: .object(["ok": .bool(false), "reason": .string(issue.reason), "part": opt(issue.part),
-                                                  "component": .string(path)]))
+            var o: [String: MGJSON] = ["ok": .bool(false), "reason": .string(issue.reason), "part": opt(issue.part), "component": .string(path)]
+            o.merge(MGSolidReport.refusalDetail(issue)) { a, _ in a }
+            throw LibraryRefused(report: .object(o))
         }
     }
     return lib
@@ -139,6 +153,9 @@ func check(_ path: String, patch patchPath: String?, _ lib: MGSolidLibrary, stri
     case "explainer"?:
         guard patchPath == nil else { throw CLIError.usage }
         // ONE report for both views (`MGExplainerReport`); `--strict` adds the strict set, and the report is printed in full.
+        if let big = explainerTooLarge(path, doc.data) {
+            print(json(MGExplainerReport.refused(big, profile: nil, source: nil, engine: engine).json)); return 1
+        }
         let report = MGExplainerReport.check(data: doc.data, library: lib, profile: profile, engine: engine)
         print(report.text)
         return report.exitCode
@@ -192,14 +209,18 @@ func componentCheck(_ path: String, _ base: MGSolidLibrary, with values: [String
     let component: MGSolidComponent
     switch lib.register(src.data) {
     case .failure(let issue):
-        print(json(stamped(["ok": .bool(false), "reason": .string(issue.reason), "part": opt(issue.part), "file": file])))
+        var o: [String: MGJSON] = ["ok": .bool(false), "reason": .string(issue.reason), "part": opt(issue.part), "file": file]
+        o.merge(MGSolidReport.refusalDetail(issue)) { a, _ in a }
+        print(json(stamped(o)))
         return 1
     case .success(let c): component = c
     }
     switch lib.instantiate(component.id, with: values) {
     case .failure(let issue):
-        print(json(stamped(["ok": .bool(false), "reason": .string(issue.reason), "part": opt(issue.part),
-                            "id": .string(component.id), "with": withJSON, "file": file])))
+        var o: [String: MGJSON] = ["ok": .bool(false), "reason": .string(issue.reason), "part": opt(issue.part),
+                                   "id": .string(component.id), "with": withJSON, "file": file]
+        o.merge(MGSolidReport.refusalDetail(issue)) { a, _ in a }
+        print(json(stamped(o)))
         return 1
     case .success(let doc):
         let c = MGSolidReport.Checks(doc)
@@ -754,6 +775,9 @@ struct ExplainerBeatShot {
                                 story: Bool = true, storyRate: Int = MGStoryTiming.defaultRate,
                                 snapshots: Bool, library lib: MGSolidLibrary) throws -> Int32 {
     let source = MGSolidSource(data: data)
+    if let big = explainerTooLarge(path, data) {
+        print(json(MGExplainerReport.refused(big, profile: nil, source: nil, engine: engine).json)); return 1
+    }
     let doc: MGExplainer
     switch MGExplainer.parse(data: data) {
     case .failure(let issue): print(json(MGExplainerReport.refused(issue, profile: nil, source: nil, engine: engine).json)); return 1

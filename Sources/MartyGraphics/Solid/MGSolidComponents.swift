@@ -301,7 +301,7 @@ enum MGSolidComponents {
 
     /// `parts.count` after component expansion: counting stops at the first part over the limit.
     static func expandedParts(_ n: Int) -> MGSolidIssue {
-        MGSolidIssue("parts.count", limit: MGSolidLimitDetail(field: "parts", actual: n, limit: MGSolidLimits.expandedParts, unit: "parts", exact: false))
+        MGSolidIssue("parts.count", limit: MGSolidLimitDetail(field: "parts", actual: n, limit: MGSolidLimits.expandedParts, unit: "parts", bound: .atLeast))
     }
 
     /// True for `{"<op>": …}` with exactly one operator key.
@@ -314,7 +314,7 @@ enum MGSolidComponents {
         ctx.nodes += 1
         guard ctx.nodes <= MGSolidComponentLimits.exprNodes else {
             throw MGSolidIssue("component.expr.size", limit: MGSolidLimitDetail(field: "use", actual: ctx.nodes, limit: MGSolidComponentLimits.exprNodes,
-                                                                                unit: "nodes", exact: false))
+                                                                                unit: "nodes", bound: .atLeast))
         }
         guard depth <= MGSolidComponentLimits.exprDepth else { throw MGSolidIssue("component.expr.depth") }
         let result: Double
@@ -453,7 +453,7 @@ enum MGSolidComponents {
         do {
             guard depth <= MGSolidComponentLimits.depth else {
                 throw MGSolidIssue("component.depth", limit: MGSolidLimitDetail(field: "use", actual: depth, limit: MGSolidComponentLimits.depth,
-                                                                                unit: "levels", exact: false))
+                                                                                unit: "levels", bound: .atLeast))
             }
             guard !stack.contains(c.id) else { throw MGSolidIssue("component.cycle.\(MGSolidParser.token(c.id))") }
             guard case .object(let def) = c.source, case .array(let entries)? = def["parts"] else { throw MGSolidIssue("component.parts.count") }

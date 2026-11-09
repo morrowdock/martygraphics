@@ -575,7 +575,7 @@ when its text holds `"explainer"`, else `assembly.bytes`. Exit codes: 0 ok, 1 re
 | `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue (`"view": "beat"`), each `{"reason", "view", "id"}` |
 | `anchorIssues`, `anchorUntested` | with 3D annotations only: every label and pointer anchor issue (off part, then the beats in order), each with `suggest`, `noSuggest` and `repair` ([SOLID-3D.md](SOLID-3D.md#anchor-suggestions)), and the anchors a beat's test budget left untested ([SOLID-3D.md](SOLID-3D.md#anchor-checks)); `views.solid` holds neither |
 | `anchor` | with a refusal for an anchor reason only: the issue it names (`id`, `beat`, `cause`, `by`, `fix`, `suggest`, `repair`, …) |
-| `limit` | with a refusal from a length, count or size limit only: `{"field", "actual", "limit", "unit"}` (+ `minimum`, `exact`); `field` is a path into the document such as `title`, `notes.t3.basis`, `beats[2].say` or `solid.annotations.labels[0].text` ([REASONS.md](REASONS.md#limit-details)) |
+| `limit` | with a refusal from a length, count or size limit only: `{"field", "actual", "limit", "unit"}` (+ `minimum`; `actualAtLeast` or `actualAtMost` instead of `actual` for a bound); `field` is a path into the document such as `title`, `notes.t3.basis`, `beats[2].say` or `solid.annotations.labels[0].text` ([REASONS.md](REASONS.md#limit-details)) |
 | `repair` | with a refusal only: one line for a model, built from `anchor`, `limit` or the catalog meaning (at most 400 Unicode scalars) |
 | `budget` | `{"bytes", "limit", "statements", "triangles", "triangleLimit"}` |
 | `engine` | the engine identity |

@@ -269,7 +269,14 @@ public struct MGExplainer: Equatable, Sendable {
             if let d = MGSolidParser.countDetail("title", s.unicodeScalars.count, 1...(4 * MGExplainerLimits.title), unit: "characters") {
                 throw MGError("explainer.title", limit: d)
             }
-            do { _ = try MGSolidParser.text(t, 4 * MGExplainerLimits.title, "explainer.title") } catch { throw MGError("explainer.title") }
+            do { _ = try MGSolidParser.text(t, 4 * MGExplainerLimits.title, "explainer.title", field: "title") }
+            catch let e as MGSolidIssue {
+                // A blank title: 1–80 characters (the filled rule), not the raw cap of the text check.
+                throw MGError("explainer.title", limit: e.limit.map {
+                    $0.actual == 0 ? MGSolidLimitDetail(field: "title", actual: 0, limit: MGExplainerLimits.title, unit: "characters", minimum: 1) : $0
+                })
+            }
+            catch { throw MGError("explainer.title") }
             for body in MGExplainerHonesty.placeholders(s) {
                 let name = body.split(separator: "|", omittingEmptySubsequences: false).first.map(String.init) ?? ""
                 guard name.contains(".") else { throw MGError("explainer.title") }

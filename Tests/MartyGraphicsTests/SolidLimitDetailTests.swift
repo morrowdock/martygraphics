@@ -129,6 +129,29 @@ final class SolidLimitDetailTests: XCTestCase {
         ]
     }
 
+    /// Exact expected values for a sample of the fixtures: field path, which value key, the value, the limit, the repair.
+    static let exact: [String: (field: String, bound: String, actual: Int, limit: Int, repair: String)] = [
+        "assembly.bytes": ("document", "actual", 65_537, 65_536, "document has 65,537 bytes; the limit is 65,536. Make it at most 65,536 bytes."),
+        "assembly.title": ("title", "actual", 81, 80, "title has 81 characters; the limit is 80. Shorten it to at most 80 characters (1 fewer)."),
+        "parts.count": ("parts", "actual", 49, 48, "parts has 49 entries; the limit is 48. Use at most 48 entries (1 fewer)."),
+        "part.name": ("parts[0].name", "actual", 61, 60, "parts[0].name has 61 characters; the limit is 60. Shorten it to at most 60 characters (1 fewer)."),
+        "part.repeat.count": ("parts[0].repeat.count", "actual", 13, 12, "parts[0].repeat.count has 13 copies; the limit is 12. Use at most 12 copies (1 fewer)."),
+        "part.<shape>.holes": ("parts[0].shape.plate.holes", "actual", 33, 32, "parts[0].shape.plate.holes has 33 holes; the limit is 32. Use at most 32 holes (1 fewer)."),
+        "step.say": ("steps[0].say", "actual", 241, 240, "steps[0].say has 241 characters; the limit is 240. Shorten it to at most 240 characters (1 fewer)."),
+        "step.<list>": ("steps[0].focus", "actual", 17, 16, "steps[0].focus has 17 ids; the limit is 16. Use at most 16 ids (1 fewer)."),
+        "step.ghost": ("steps[0].ghost", "actual", 0, 16, "steps[0].ghost has 0 ids; it needs 1 to 16 ids."),
+        "label.text.<id>": ("annotations.labels[0].text", "actual", 61, 60, "annotations.labels[0].text has 61 characters; the limit is 60. Shorten it to at most 60 characters (1 fewer)."),
+        "step.annotate.count": ("steps[0].annotate", "actual", 13, 12, "steps[0].annotate has 13 annotations; the limit is 12. Use at most 12 annotations (1 fewer)."),
+        "component.title": ("title", "actual", 81, 80, "title has 81 characters; the limit is 80. Shorten it to at most 80 characters (1 fewer)."),
+        "component.expr.size": ("use", "actualAtLeast", 4097, 4096, "use has at least 4,097 nodes; the limit is 4,096. Use at most 4,096 nodes."),
+        "explainer.title": ("title", "actual", 81, 80, "title has 81 characters; the limit is 80. Shorten it to at most 80 characters (1 fewer)."),
+        "notes.text.<id>": ("notes.t3.basis", "actual", 61, 60, "notes.t3.basis has 61 characters; the limit is 60. Shorten it to at most 60 characters (1 fewer)."),
+        "stmt.say": ("beats[0].say", "actual", 201, 200, "beats[0].say has 201 characters; the limit is 200. Shorten it to at most 200 characters (1 fewer)."),
+        "view.ghost": ("beats[0].view.ghost", "actual", 0, 16, "beats[0].view.ghost has 0 ids; it needs 1 to 16 ids."),
+        "view.annotate.count": ("beats[0].view.annotate", "actual", 13, 12, "beats[0].view.annotate has 13 annotations; the limit is 12. Use at most 12 annotations (1 fewer)."),
+        "explainer.beats.count": ("beats", "actual", 17, 16, "beats has 17 beats; the limit is 16. Use at most 16 beats (1 fewer)."),
+    ]
+
     /// The catalog test: one fixture per limit pattern; each is refused for that pattern with `limit` (a field path, the
     /// measured value over the limit or under the minimum, the limit, a unit) and a `repair` line that states both
     /// numbers.
@@ -140,11 +163,20 @@ final class SolidLimitDetailTests: XCTestCase {
             guard case .string(let reason)? = r["reason"] else { XCTFail("\(pattern): not refused: \(r.canonicalString.prefix(200))"); continue }
             XCTAssertEqual(MGSolidReasons.lookup(reason)?.pattern, pattern, "\(pattern): refused for \(reason)")
             guard case .object(let l)? = r["limit"] else { XCTFail("\(pattern): no limit detail (\(reason))"); continue }
-            guard case .string(let field)? = l["field"], !field.isEmpty, case .number(let actual)? = l["actual"], case .number(let limit)? = l["limit"],
+            // Exactly one of `actual`, `actualAtLeast` (a lower bound), `actualAtMost`.
+            let values = ["actual", "actualAtLeast", "actualAtMost"].compactMap { k -> Double? in if case .number(let v)? = l[k] { return v }; return nil }
+            guard case .string(let field)? = l["field"], !field.isEmpty, values.count == 1, case .number(let limit)? = l["limit"],
                   case .string(let unit)? = l["unit"], !unit.isEmpty else { XCTFail("\(pattern): incomplete limit \(l)"); continue }
+            let actual = values[0]
             var minimum: Double?
             if case .number(let m)? = l["minimum"] { minimum = m }
             XCTAssertTrue(actual > limit || (minimum.map { actual < $0 } ?? false), "\(pattern): \(actual) within \(minimum ?? 0)...\(limit)")
+            if let e = Self.exact[pattern] {
+                XCTAssertEqual(field, e.field, pattern)
+                XCTAssertEqual(l[e.bound], .number(Double(e.actual)), "\(pattern) \(e.bound)")
+                XCTAssertEqual(limit, Double(e.limit), pattern)
+                XCTAssertEqual(r["repair"], .string(e.repair), pattern)
+            }
             guard case .string(let repair)? = r["repair"] else { XCTFail("\(pattern): no repair"); continue }
             XCTAssertTrue(repair.hasPrefix(field + " has "), "\(pattern): \(repair)")
             XCTAssertLessThanOrEqual(repair.unicodeScalars.count, MGAnnotationAnchorIssue.repairScalars)
@@ -233,14 +265,57 @@ final class SolidLimitDetailTests: XCTestCase {
         }
     }
 
-    /// A count that stops at the first value over the limit says so (`exact: false`, "more than").
+    /// A count that stops at the first value over the limit says so (`actualAtLeast`, "at least"), never as `actual`.
     func testABoundedCountIsALowerBound() {
         let l = MGSolidLimitDetail(field: "parts", actual: 97, limit: 96, unit: "parts", exact: false)
-        XCTAssertEqual(l.json["exact"], .bool(false))
-        XCTAssertEqual(l.repair, "parts has more than 96 parts; the limit is 96. Use at most 96 parts.")
+        XCTAssertEqual(l.json, .object(["field": .string("parts"), "actualAtLeast": .number(97), "limit": .number(96), "unit": .string("parts")]))
+        XCTAssertEqual(l.repair, "parts has at least 97 parts; the limit is 96. Use at most 96 parts.")
         let resolved = MGSolidLimitDetail(count: 99, limit: 96, top: [])
         XCTAssertEqual(resolved.json, .object(["count": .number(99), "limit": .number(96), "top": .array([]), "field": .string("parts"),
                                                "actual": .number(99), "unit": .string("parts")]))
+    }
+
+    /// Review fixtures (PR #43): a repeat count is reported as given (exact up to 2^53, a bound above), never capped.
+    func testARepeatCountIsReportedAsGiven() {
+        func detail(_ count: String) -> MGJSON? {
+            Self.check(Self.asm(parts: #"{"id": "a", "shape": {"box": {"size": [10, 10, 10]}}, "repeat": {"count": \#(count)}}"#))["limit"]
+        }
+        let trillion = detail("1000000000000")
+        XCTAssertEqual(trillion?["actual"], .number(1_000_000_000_000))
+        XCTAssertNil(trillion?["actualAtLeast"])
+        XCTAssertEqual(Self.check(Self.asm(parts: #"{"id": "a", "shape": {"box": {"size": [10, 10, 10]}}, "repeat": {"count": 1000000000000}}"#))["repair"],
+                       .string("parts[0].repeat.count has 1,000,000,000,000 copies; the limit is 12. Use at most 12 copies (999,999,999,988 fewer)."))
+        let huge = detail("1e17")
+        XCTAssertNil(huge?["actual"])
+        XCTAssertEqual(huge?["actualAtLeast"], .number(9_007_199_254_740_992))
+        let negative = detail("-1e17")
+        XCTAssertEqual(negative?["actualAtMost"], .number(-9_007_199_254_740_992))
+        XCTAssertEqual(detail("0")?["actual"], .number(0))
+        XCTAssertEqual(detail("0")?["minimum"], .number(2))
+    }
+
+    /// Review fixtures (PR #43): full field paths.
+    func testFieldPathsNameTheShapeEntryAndTheExplainerSolid() {
+        let holes = Self.list(33) { _ in "[0, 0, 1]" }
+        let compound = Self.check(Self.asm(parts: #"{"id": "a", "shape": [{"box": {"size": [10, 10, 10]}}, {"plate": {"radius": 100, "thickness": 5, "holes": [\#(holes)]}}]}"#))
+        XCTAssertEqual(compound["limit"]?["field"], .string("parts[0].shape[1].plate.holes"))
+        let single = Self.check(Self.asm(parts: #"{"id": "a", "shape": {"plate": {"radius": 100, "thickness": 5, "holes": [\#(holes)]}}}"#))
+        XCTAssertEqual(single["limit"]?["field"], .string("parts[0].shape.plate.holes"))
+        let parts = Self.list(33) { #"{"id": "p\#($0)", "shape": {"box": {"size": [1, 1, 1]}}, "repeat": {"count": 3}}"# }
+        let resolved = Self.explain(#"{"v": 1, "kind": "explainer", "solid": {"v": 2, "parts": [\#(parts)]}, "beats": [{"say": "Boxes."}]}"#)
+        XCTAssertEqual(resolved["reason"], .string("parts.resolved"))
+        XCTAssertEqual(resolved["limit"]?["field"], .string("solid.parts"))
+        XCTAssertEqual(resolved["limit"]?["count"], .number(99))
+        XCTAssertEqual(resolved["limit"]?["top"], .array([]))
+        XCTAssertEqual(resolved["repair"], .string("solid.parts has 99 parts; the limit is 96. Use at most 96 parts (3 fewer)."))
+    }
+
+    /// Review fixtures (PR #43): a blank explainer title keeps its minimum-length detail.
+    func testABlankExplainerTitleKeepsItsMinimum() {
+        let r = Self.explain(Self.xp(#""title": " ""#))
+        XCTAssertEqual(r["reason"], .string("explainer.title"))
+        XCTAssertEqual(r["limit"], .object(["field": .string("title"), "actual": .number(0), "limit": .number(80), "unit": .string("characters"),
+                                            "minimum": .number(1)]))
     }
 
     /// The same refusal gives the same report bytes in a fresh call (no dictionary order leaks into `limit` or `repair`).

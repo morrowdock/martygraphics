@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "de93c146b51298b0a51e2cbb4827502a56bd150621da9bf893551555d4ecbdc9"
+      "sha256": "f7131b1b37f9361c28dcf25cc9f3112c4a73018eb483cc101e299282f03ff8d9"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -211,7 +211,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "4624d3209d8f957c2ef8b8c145887951e4db5d04e8530bb9d3c687a00473c892"
+      "sha256": "3cfc232b3923939ac32a1883657afe9f6bbd3fb7ec27697efa345d379412d4fd"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
@@ -447,7 +447,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "1cc53a3b27541e5d904427befdddc0013facdfb01f2d1305cd5ac520c86421bd"
+      "sha256": "860a82fd51996ea2d72dad02a35302a27d3bacb5170b2fc144882d46865884f0"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
@@ -515,7 +515,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainer.swift",
-      "sha256": "13546cd877ab1dddf106c7f7ad6e39a8f3d9c1df72f9b6ca558ec09c779dc554"
+      "sha256": "a918e87026411ad70d2fad38f9fa10e65b195e770a338f676961c4e2964e58da"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerHonesty.swift",
@@ -527,11 +527,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerReport.swift",
-      "sha256": "43fc04eb11d484e632b73af0527bd94f8dd8fe5236729c3b2e26c0aa1af162e8"
+      "sha256": "c413dbe7ffeb519c3beccca1704195b1b2f2be4871f8a125da6360e646c4a6d0"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
-      "sha256": "872df369e8aa68c239d1a9c741b22e0d6dece368073b2366b8dafe730515bb76"
+      "sha256": "8af2968a09fd93d339a960e68f9d866696f8a67faa45b17037423d194c877501"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerState.swift",
@@ -675,7 +675,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnchorSuggest.swift",
-      "sha256": "8fb286e334fd99fb615ebc3a1ade20ac55dd337af94055bbe09788a9a308cf49"
+      "sha256": "51d27b557c13a85673d7b9d427653850ed546c5d4befff3536d18e14ac8ddb10"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
@@ -703,7 +703,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidComponents.swift",
-      "sha256": "0bd9fce3a69a31ac8c256cbd6b6d3b8b9562c59a0da084b8171b1d100d2f2461"
+      "sha256": "8cf95dc0572d07a2019b4a100b4c51719c6e6be4dc7664041ebb1e7ccf1bd894"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidFacts.swift",
@@ -735,7 +735,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidParser.swift",
-      "sha256": "30e420873f5bf2ea35dd17168379896f27dbb01cbf0b935c4f5b81a4a3630ae2"
+      "sha256": "3efc3852e077d23d9b6cc56b8dac67a981778560de7276a260e22796575eefa4"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidPoses.swift",
@@ -755,7 +755,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
-      "sha256": "62d14a05e1028b5be6c64e5f9e6e90c5eaaf3350aae7c7a6ed6a80af5d6667b9"
+      "sha256": "c2d61263777470eff72d3a45a5e2924cf5773053dbc972070d63121690ebdf39"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSection.swift",
@@ -775,7 +775,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidTurbo.swift",
-      "sha256": "05dd13dfb084f791760990ea4087c5ecbf8ff7b3d15ceb010c87d406dd33af94"
+      "sha256": "50e2e3f82ad9a01d43f26112b7de6720d6927bddf846d12674536c711a928dd2"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidView.swift",
@@ -979,7 +979,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidAnchorSuggestTests.swift",
-      "sha256": "ddd64e0b067bba35686ef79a1786e3d33a880f02e17e61fd5bc9bf7eeb6f1974"
+      "sha256": "0e6c8efaecaf2efdd314adfb8e7880e7235c86a33cc02be92f088aeb6bca56e4"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidAnnotationTests.swift",
@@ -1019,11 +1019,11 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidLimitDetailTests.swift",
-      "sha256": "92af82c3fdd8652a820c7dc1d991ac06b865b6a1b064e4314b2bd8584a3002fd"
+      "sha256": "ea7c05a33ac0c5e1963c2af4017cca166d1ecaf6bf693c991d53e713c75cd182"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReasonCatalogTests.swift",
-      "sha256": "32341b691705cac4d75c93a14f9d45a574f4d7f51e895125efa71b3b63b9e659"
+      "sha256": "fbd704f4bb7cd5754920354c687fe1a34df36e7fec830a80a8957e9adc32851f"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReportTests.swift",
@@ -1083,7 +1083,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "142c6ab763f22bd1fe34ae2ed058fb8b11809660c869856a8af753d296134959"
+      "sha256": "bce0598f25be2585afc7a7f3a0e7c5f9dff758e41c06088796d54daba730223b"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1119,7 +1119,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "9889f130e7dda03579b551117e34019dd80498cd0eb2b0675b712e8ec7aa9646"
+      "sha256": "3dde3261660ae73e888027ee0e2959d9a41968483ca6fb54d8dff329f00af72f"
     },
     {
       "path": "docs/SHOWCASE.md",
@@ -1127,7 +1127,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "a5a7c806994b405fce55028cd083beb4670db9a6507ea61e3c03fc29ca8b9473"
+      "sha256": "89cf11021a65fe3c74f15bdcd1dde077d0fb30eaa9bf5923c0ffe0a95c17c118"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -1422,28 +1422,16 @@
       "sha256": "12d9f93fec8cd20a950ff3a5e4b91b9a81a82ca60fe7de45914d28674aa7c994"
     },
     {
-      "path": "docs/fixtures/round-2f/README.md",
-      "sha256": "7ef99ca2b4ea887b74b625a3ab6212f5a3a1744f52806688d5b07ec37514bfac"
+      "path": "docs/fixtures/anchor-suggest/README.md",
+      "sha256": "cb63fff44ae9298cf635a9acd8544a208dde86465a47024c3606ad5bfb57245b"
     },
     {
-      "path": "docs/fixtures/round-2f/opus-1-try-2.explainer.json",
-      "sha256": "d17073d2853ae602610048d478e61be53745433f3eae22b0d5d18c2d1346adb2"
+      "path": "docs/fixtures/anchor-suggest/cut-engine.explainer.json",
+      "sha256": "edfd32051156f420f5eafd022ac36e471be6ec06b639284bd85532b64d30d22d"
     },
     {
-      "path": "docs/fixtures/round-2f/opus-1-try-3.explainer.json",
-      "sha256": "85cb19f014ab58ec75dac23eb240f1238e29a3ba06cedbbc34fdc470a9047531"
-    },
-    {
-      "path": "docs/fixtures/round-2f/opus-1-try-4.explainer.json",
-      "sha256": "624a629fc72a97a26c90ed671bfdcd0bdeb851a86f42c0436f0eef47e67b4ae1"
-    },
-    {
-      "path": "docs/fixtures/round-2f/opus-2-try-4.explainer.json",
-      "sha256": "a039045f4202a4030195410f5e06cd6d6f77dbb0493b11d757415bb016ca9972"
-    },
-    {
-      "path": "docs/fixtures/round-2f/sonnet-2-try-4.explainer.json",
-      "sha256": "7301ad4d2825fe7ebba64d0100e3d54a8063ea01197ecc5ba26f0ecd81cbcb2b"
+      "path": "docs/fixtures/anchor-suggest/figure-engines.explainer.json",
+      "sha256": "72fe1314304d74830afa66ef7ed691cd798b9ae4a51fbdc7e904dbcd0871fe35"
     },
     {
       "path": "docs/fixtures/v1/explainer-mixed.statements.ndjson",

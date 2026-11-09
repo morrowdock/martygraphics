@@ -242,6 +242,38 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertNotNil(component.json?["engine"] as? [String: Any])
     }
 
+    /// Review fixture (PR #43): every component path keeps the limit detail and the repair line (`component check`, a
+    /// library loaded with `--component`, and an instance refused by `--with`).
+    func testComponentRefusalsKeepTheLimitDetail() throws {
+        let title = String(repeating: "x", count: 81)
+        let bad = try write(#"{"v": 1, "kind": "component", "id": "c", "title": "\#(title)", "about": "Synthetic.", "parts": [{"id": "a", "shape": {"box": {"size": [10, 10, 10]}}}]}"#, "bad-component.json")
+        let good = try write(#"{"v": 2, "kind": "assembly", "parts": [{"id": "a", "shape": {"box": {"size": [10, 10, 10]}}}], "steps": [{"say": "Box."}]}"#, "good-assembly.json")
+        let repair = "title has 81 characters; the limit is 80. Shorten it to at most 80 characters (1 fewer)."
+        for args in [["component", "check", bad], ["check", good, "--component", bad]] {
+            let r = try run(args)
+            XCTAssertEqual(r.status, 1, "\(args)")
+            let report = r.json ?? [:]
+            XCTAssertEqual(report["reason"] as? String, "component.title", "\(args)")
+            let limit = report["limit"] as? [String: Any]
+            XCTAssertEqual(limit?["field"] as? String, "title", "\(args)")
+            XCTAssertEqual(limit?["actual"] as? Int, 81, "\(args)")
+            XCTAssertEqual(limit?["limit"] as? Int, 80, "\(args)")
+            XCTAssertEqual(report["repair"] as? String, repair, "\(args)")
+        }
+        // A file over the explainer limit is read only to one byte past it: `limit` gives the file's own size.
+        let pad = String(repeating: " ", count: 200_000)
+        let huge = try write(#"{"kind": "explainer", "pad": "\#(pad)"}"#, "huge.explainer.json")
+        let size = try XCTUnwrap((try FileManager.default.attributesOfItem(atPath: huge)[.size] as? NSNumber)?.intValue)
+        let big = try run(["check", huge])
+        XCTAssertEqual(big.json?["reason"] as? String, "explainer.bytes")
+        XCTAssertEqual((big.json?["limit"] as? [String: Any])?["actual"] as? Int, size)
+        // An instance refused for its `with` values keeps `repair` too.
+        let ranged = try write(#"{"v": 1, "kind": "component", "id": "r", "title": "Ranged", "about": "Synthetic.", "params": {"w": {"default": 4, "min": 1, "max": 8}}, "parts": [{"id": "a", "shape": {"box": {"size": [{"param": "w"}, 4, 4]}}}]}"#, "ranged.json")
+        let r = try run(["component", "check", ranged, "--with", "w=20"])
+        XCTAssertEqual(r.status, 1)
+        XCTAssertNotNil(r.json?["repair"] as? String)
+    }
+
     /// Open vocabulary 3a (C1): reports of documents without annotations keep their keys; an annotated document adds
     /// `annotations`, `placements` and `legend.notes`, and its placement records are byte-identical in fresh processes (P4).
     func testAnnotationReportAndFreshProcessPlacement() throws {
