@@ -73,8 +73,12 @@ read like another reason (`component.param.unknown.missing.x` is also a `with` k
 
 Warnings are not refusals in the plain API: they are listed in the check report's
 `warnings`. The strict profile (`MGSolidProfile.strict`, `marty-solid check --strict`)
-refuses the two marked "strict refuses". An explainer's strict check (`marty-solid check --strict` on an explainer)
-also refuses `notes.unused.<id>` (`MGSolidReasons.explainerStrictPrefixes`).
+refuses the warnings marked "strict refuses". An explainer's strict check (`marty-solid check --strict` on an explainer)
+also refuses `notes.unused.<id>` (`MGSolidReasons.explainerStrictPrefixes`). The anchor view rules
+`annotation.anchor.hidden.<id>` and `annotation.anchor.untested.<id>` need the camera of each step or beat still, so
+only the check report gives them (`MGSolidReport`, `MGExplainerReport`, `marty-solid check`;
+`MGSolidReasons.reportStrictPrefixes`): a compile with `MGSolidParser.document(profile: .strict)` does not refuse them
+([SOLID-3D.md](SOLID-3D.md), "Anchor checks").
 
 ## Order
 
@@ -334,6 +338,9 @@ see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
 | `frame.child.far.<id>` | assembly | (warning) A child's bounds miss its parent's bounds grown by 1.5 parent sizes. |
 | `annotation.unused.<id>` | assembly | (warning; strict refuses) Some step uses `annotate`, but no step shows this annotation. |
 | `annotation.cut.<id>` | assembly | (warning) A part anchor of an annotation that a step shows lies in the half that the step's `section` removes from that part. |
+| `annotation.anchor.off.<id>` | assembly | (warning; strict refuses) A label's anchor (`at`) or a pointer's tip (`to`) lies farther from the box of the part it names, in that part's own frame, than max(5 % of that box's diagonal, 0.5 % of the diagonal of the parts the views showing it draw); or, at the pose of a view that shows it, another part's solid (its surface, or its inside by watertight parity) comes nearer to it than that box by more than the precision epsilon at the dot (1e-6 × max(1, |p − anchor|) + 1e-4 mm, in anchor-relative coordinates). The nearer-part search is exact and budgeted; when its budget runs out the anchor is `annotation.anchor.untested.<id>`, never off. The report's `anchor` gives the distance, the tolerance, the view, the nearer part (`closer`) and a fix. |
+| `annotation.anchor.hidden.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows a label or pointer whose anchor point it does not show: the anchor's part is hidden or ghosted in that view, the point is off screen, or another part is the first surface on the line of sight (a cut part's inside does not count). The report's `anchor` gives the step or beat, the cause, the part in the way and a fix. |
+| `annotation.anchor.untested.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows a label or pointer that was not fully tested: the view's 3,000,000 line-of-sight triangle tests, or the document's 3,000,000 nearer-part tests, ran out first. The strict check report refuses it, because strict does not pass what it did not check. |
 
 ### Annotations (v2)
 

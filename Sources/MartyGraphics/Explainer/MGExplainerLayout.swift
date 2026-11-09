@@ -206,3 +206,62 @@ extension MGSolidCamera {
                  "fieldOfView": .number(fieldOfView)])
     }
 }
+
+/// One beat as `marty-solid render` frames its still: the beat (0-based), its view, the solid step it shows (nil: the
+/// plain view) and its solid pane.
+public struct MGExplainerBeatPane: Equatable, Sendable {
+    public var beat: Int
+    public var view: MGExplainerBeatView
+    public var stepIndex: Int?
+    public var pane: MGFrameRect
+}
+
+extension MGExplainerFrame {
+    /// The solid pane of every beat still of `doc` at `width` × `height`, as `marty-solid render` lays it out: a fresh
+    /// session with speech pacing and a manual clock plays the beats in order; at each beat the board's motion is let
+    /// settle, and the board pane rule (`MGExplainerSession.boardPane`) and the board pane width (`boardShare`) give the
+    /// panes (`panes`). Returns the solid the session compiled at load (the document every beat view comes from) and
+    /// one entry per beat with a solid pane; nil solid when the document does not load or has no solid. Deterministic;
+    /// at most `MGExplainerLimits.beats` beats.
+    public static func beatPanes(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
+                                 height: Int = MGAnnotationAnchorRules.height) -> (solid: MGSolidDocument?, beats: [MGExplainerBeatPane]) {
+        let clock = MGManualClock()
+        var session = MGExplainerSession(pacing: .speech, clock: clock, library: library)
+        guard case .success = session.load(doc), let solid = session.solid else { return (nil, []) }
+        let primarySolid = (session.primary ?? "solid") == "solid"
+        var out: [MGExplainerBeatPane] = []
+        var k = 0
+        while k < MGExplainerLimits.beats, let beat = session.presented.beat, beat == k {
+            clock.advance(by: session.motionRemaining)
+            _ = session.tick()
+            let pane = session.boardPane
+            let share = pane.shown ? boardShare(scene: session.state?.scene, width: width, height: height, primarySolid: primarySolid) : nil
+            let rects = panes(width: width, height: height, board: pane.shown, solid: true, primarySolid: primarySolid, boardShare: share)
+            if let r = rects.solid {
+                out.append(MGExplainerBeatPane(beat: k, view: session.presented, stepIndex: session.solidStep(forBeat: k), pane: r))
+            }
+            _ = session.lineEnded(k)
+            k += 1
+        }
+        return (solid, out)
+    }
+
+    /// The anchor rules (`MGSolidDocument.anchorIssues`) of every beat still at `width` × `height`: each beat's solid
+    /// pane (`beatPanes`), its camera with the unblocked-focus rule and its automatic ghosts (`solidClearView`, the
+    /// camera of the beat's still and of its hold frames in `story.mp4`), at the beat's end pose (`pose`). The poses
+    /// during a beat's spin and `solid-0.png` are not tested.
+    public static func beatAnchorIssues(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
+                                        height: Int = MGAnnotationAnchorRules.height) -> MGAnnotationAnchorReport {
+        var out = MGAnnotationAnchorReport()
+        let r = beatPanes(doc, library: library, width: width, height: height)
+        guard let d = r.solid, !d.annotations.isEmpty else { return out }
+        for b in r.beats {
+            let base = b.view.solid ?? d.view(step: nil)
+            guard base.annotations.contains(where: { d.annotations.checkedAnchor($0) != nil }) else { continue }
+            let clear = solidClearView(d, view: b.view, stepIndex: b.stepIndex, pane: b.pane)
+            out.append(d.anchorIssues(view: base.ghosting(clear.autoGhost), params: pose(d, view: b.view), camera: clear.camera,
+                                      width: Double(b.pane.width), height: Double(b.pane.height), step: b.stepIndex, beat: b.beat))
+        }
+        return out
+    }
+}

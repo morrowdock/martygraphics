@@ -57,22 +57,40 @@ public struct MGExplainerReport: Equatable, Sendable {
     }
 
     /// The report of a loaded explainer. Refusal order: the solid's report checks (`check.meshOpen`,
-    /// `check.gearsInterpenetrate`), then the strict profile (the solid's strict refusals, then `notes.unused.<id>`).
+    /// `check.gearsInterpenetrate`), then the strict profile (the solid's strict refusals, then `notes.unused.<id>`,
+    /// then `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` of the first beat whose still does not
+    /// show, or did not test, a label's or pointer's anchor).
     /// A refused report still holds every field, so the author can repair from it.
+    ///
+    /// The beat anchor check (`MGExplainerFrame.beatAnchorIssues`) needs the document: it runs when `doc` is given (as
+    /// `check(data:)` does). Its issues are warnings in both profiles and are listed, with the solid's off-part anchors,
+    /// in `anchorIssues`; a refusal for an anchor reason adds `anchor`, the issue it names.
     public static func make(_ s: MGExplainerSession, doc: MGExplainer? = nil, profile: MGSolidProfile = .standard,
                             source: MGSolidSource? = nil, engine: MGJSON? = MGEngine.identity) -> MGExplainerReport {
         var reason: String?, location: MGExplainerIssue?
         var solidJSON: MGJSON = .null
+        var anchors = MGAnnotationAnchorReport()
         if let d = s.solid {
-            let r = MGSolidReport.make(d, profile: profile, engine: nil)
+            // The solid's own steps are the beats' views: the beat check below frames them as the beat stills do.
+            let r = MGSolidReport.make(d, profile: profile, engine: nil, anchorViews: false)
             if !r.ok, let why = r.reason { reason = why; location = MGExplainerIssue(why, view: .solid, id: r.part) }
             if case .object(var o) = r.json {
-                for k in ["ok", "reason", "part", "strict", "engine", "file"] { o.removeValue(forKey: k) }
+                for k in ["ok", "reason", "part", "strict", "engine", "file", "anchorIssues", "anchorUntested", "anchor"] { o.removeValue(forKey: k) }
                 solidJSON = .object(o)
             }
+            // The part rule's views are the solid's steps: name the beat that shows each one.
+            var beatOf: [Int: Int] = [:]
+            for b in s.keptBeats { if let st = s.solidStep(forBeat: b.index), beatOf[st] == nil { beatOf[st] = b.index } }
+            anchors.issues = d.offPartAnchors.map { $0.at(beat: $0.step.flatMap { beatOf[$0] }) }
+            if let doc, !d.annotations.isEmpty { anchors.append(MGExplainerFrame.beatAnchorIssues(doc, library: s.library)) }
         }
         if reason == nil, profile == .strict, let id = s.unusedNotes.first {
             reason = "notes.unused.\(MGLessonIssue.segment(id))"; location = MGExplainerIssue(reason!, view: .header)
+        }
+        let beatIssues = anchors.issues.filter { $0.cause != .offPart }
+        if reason == nil, profile == .strict, let a = beatIssues.first {
+            reason = a.reason
+            location = MGExplainerIssue(a.reason, view: .beat, beat: a.beat, id: a.id, detail: a.cause.rawValue)
         }
         var boardJSON: MGJSON = .null
         if s.board != nil, let st = s.lesson.state {
@@ -116,7 +134,9 @@ public struct MGExplainerReport: Equatable, Sendable {
         let claims: [MGJSON] = legend.claims.map { c in
             .object(["kind": .string(c.kind.rawValue), "id": .string(c.id), "tier": .string(c.tier.name), "badge": .string(c.badge), "why": .string(c.why)])
         }
-        let warnings: [MGJSON] = s.warnings.map { w in .object(["reason": .string(w.reason), "view": .string(w.view.rawValue), "id": w.id.map(MGJSON.string) ?? .null]) }
+        var warnings: [MGJSON] = s.warnings.map { w in .object(["reason": .string(w.reason), "view": .string(w.view.rawValue), "id": w.id.map(MGJSON.string) ?? .null]) }
+        // The beat anchor check's warnings follow (one per issue, in beat order).
+        warnings += beatIssues.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
         var triangles = 0
         if case .object(let so) = solidJSON, case .number(let t)? = so["triangles"] { triangles = Int(t) }
         let bytes = doc.map { $0.statementStream.utf8.count }
@@ -140,6 +160,12 @@ public struct MGExplainerReport: Equatable, Sendable {
                                "statements": doc.map { num($0.statements.count) } ?? .null,
                                "triangles": num(triangles), "triangleLimit": num(MGSolidLimits.triangles)]),
         ]
+        // Explainers with 3D annotations only; other reports keep their exact keys.
+        if let d = s.solid, !d.annotations.isEmpty {
+            o["anchorIssues"] = .array(anchors.issues.map(\.json))
+            o["anchorUntested"] = anchors.untestedJSON
+        }
+        if let r = reason, let hit = MGSolidReport.anchorIssue(r, anchors.issues) { o["anchor"] = hit.json }
         if let source { o["file"] = file(source) }
         if let engine { o["engine"] = engine }
         return MGExplainerReport(ok: reason == nil, reason: reason, location: location, json: .object(o))

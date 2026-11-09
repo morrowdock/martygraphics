@@ -572,12 +572,20 @@ when its text holds `"explainer"`, else `assembly.bytes`. Exit codes: 0 ok, 1 re
 | `beats` | per kept beat: `{"n", "caption", "template", "unchecked", "tier", "facts", "checks": [{"value", "comparison", "target", "tol"}], "highlight": {"board", "solid", "annotations"}, "view"}` |
 | `annotations` | one entry per 3D annotation: the assembly report's `annotations` (`views.solid` also holds its `placements`) |
 | `legend` | `{"text", "groups": {"solved", "schematic", "given", "described"}, "notes", "claims"}` |
-| `warnings` | `notes.unused.<id>`, then the solid's warnings, each `{"reason", "view", "id"}` |
+| `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue (`"view": "beat"`), each `{"reason", "view", "id"}` |
+| `anchorIssues`, `anchorUntested` | with 3D annotations only: every label and pointer anchor issue (off part, then the beats in order) and the anchors a beat's test budget left untested ([SOLID-3D.md](SOLID-3D.md#anchor-checks)); `views.solid` holds neither |
+| `anchor` | with a refusal for an anchor reason only: the issue it names (`id`, `beat`, `cause`, `by`, `fix`, …) |
 | `budget` | `{"bytes", "limit", "statements", "triangles", "triangleLimit"}` |
 | `engine` | the engine identity |
 
 Refusal order after the document loads: the solid's report checks (`check.meshOpen`, `check.gearsInterpenetrate`),
-then with `--strict` the solid's strict refusals (`joint.idle.<id>`, `frame.axis.off.<id>`) and `notes.unused.<id>`.
+then with `--strict` the solid's strict refusals (`joint.idle.<id>`, `frame.axis.off.<id>`, `annotation.unused.<id>`,
+`annotation.anchor.off.<id>`), `notes.unused.<id>`, and last `annotation.anchor.hidden.<id>` or
+`annotation.anchor.untested.<id>` of the first beat still that does not show, or did not test, a label's or pointer's
+anchor. For those reasons `location` is `{"view": "beat", "beat": <0-based beat>, "id": <annotation>, "detail": <cause>}`
+(`occluded`, `hidden`, `ghosted`, `offscreen`, `untested`) and `anchor` names the part in the way and a fix. The beat test frames each beat as `marty-solid render` frames its still at 1280 × 800: the beats are
+played in a speech-paced session so each beat's board pane and pane width are the render's, and the pane camera uses the
+unblocked-focus rule with its automatic ghosts ([SOLID-3D.md](SOLID-3D.md#anchor-checks)).
 The report is printed in full either way, so the author can repair from it.
 
 `marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--no-story] [--story-fps 10|30]

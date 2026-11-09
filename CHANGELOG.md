@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+- Strict label and pointer anchors. In `--strict`, a label (its `at`) or pointer arrow (its tip, `to`) whose anchor a
+  step or beat still does not show is refused: `annotation.anchor.hidden.<id>`, for an anchor occluded by another part
+  (the watertight line-of-sight rays of the unblocked-focus rule, 3,000,000 triangle tests per view), on a hidden or
+  ghosted part (automatic ghosts included), or off screen. A part blocks only when it is drawn with a coverage of 0.5 or
+  more: view opacity times the material's own coverage (`MGMaterialPreset.coverage`; glass 0.22), as the renderer
+  draws it. Every test runs in anchor-relative coordinates; a blocker hit that lies on the anchor's own part within a
+  numeric-precision epsilon (`1e-6 × max(1, |p − anchor|) + 1e-4` mm; a coincident face of touching parts) is a tie,
+  not an occlusion. An anchor on a part that the view's section cuts is not hidden by the parts inside that cut part (tested in
+  the cut part's own frame) when it lies on the cut face or inside the cut. An anchor that a view's triangle budget
+  leaves untested is `annotation.anchor.untested.<id>`: strict refuses it, standard warns. An anchor farther than
+  max(5 % of its part's box diagonal, 0.5 % of the diagonal of the parts the views showing it draw) from its part's
+  oriented box, or, at the pose of a view that shows it (in that view's geometry), nearer (beyond the precision epsilon) to another part's solid
+  than to its own part's box, is `annotation.anchor.off.<id>` (a
+  document warning, so the compile's strict profile also refuses it; the detail names the view and the nearer part).
+  The nearer-part search is exact, stops early and counts every test against 3,000,000 per document; out of budget
+  the anchor is `annotation.anchor.untested.<id>` (`"budget": "nearerPart"`), never off. The standard profile warns and keeps the hollow dot and
+  dashed leader. Each step is framed as its 1280 × 800 still; each explainer beat as its still's solid pane (a
+  speech-paced replay gives each beat's board pane). The check report gains `anchorIssues` (`id`, `kind`, `reason`,
+  `cause`, `part`, `by`, `closer`, `closerDistance`, `budget`, `step`, `beat`, `point`, `distance`, `tolerance`, `fix`),
+  `anchorUntested` and, for an anchor refusal, `anchor`; an explainer refusal's `location` names the beat and the cause.
+  New API: `MGAnnotationAnchorIssue`, `MGAnnotationAnchorReport`, `MGAnnotationAnchorRules`, `MGMaterialPreset.coverage`,
+  `MGSolidDocument.offPartAnchors`, `anchorIssues(view:params:camera:width:height:step:beat:stage:)`,
+  `stepAnchorIssues(width:height:)`, `MGExplainerFrame.beatPanes` and `beatAnchorIssues`,
+  `MGSolidReport.make(…, anchorViews:)` and `MGSolidReasons.reportStrictPrefixes`.
+  - Example fixed: `docs/assets/jet-suit/jet-suit.json` was the only shipped document the rules refused. Its step 6 label
+    `lComb` ("Combustion chamber") had its dot on the cut casing wall; the anchor moved from `[30, 0, 148]` to
+    `[0, -30, 148]` on `back.combustor`, inside the chamber. Its step 1 label `lPilot` ("Schematic pilot") named the
+    helmet but lay 2 mm outside it, inside the visor on the far side of the head; the anchor moved from `[0, -110, 0]` to
+    `[0, 108, 0]` on `helmet`, its back, which faces the camera. All 7 stills, the poster, `story.mp4` (6.2 MB) and
+    `check-strict.json` were made again with one build; the render receipt records the revision and the exact pixel
+    comparison. Golden change: `docs-assets-jet-suit-jet-suit` (the fixed file's output: the two anchors, the file
+    hash and the step 1 and step 6 reference placements) and `docs-assets-jet-suit-provenance` (the receipt's new line count and
+    hash).
 - Docs: the hand-built, fact-checked jet-suit explainer now leads the README and `docs/SHOWCASE.md`
   (`docs/assets/jet-suit/`: the 54-line JSON, 7 step stills, a 63-second story video re-encoded to 6.4 MB, a poster,
   the strict check output, a render receipt, and `SOURCES.md` with a label, source URL and date for every fact). A

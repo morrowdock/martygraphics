@@ -7,14 +7,16 @@ import Foundation
 
 /// Which warnings refuse a document. `standard` (the plain API) only warns; `strict` (the model harness, owner D3)
 /// refuses only errors that are certain from the document itself: a jointed part that nothing moves, a turn axis
-/// that misses its own jointed part, and an annotation that no step shows. The child-frame heuristics (`frame.child.absolute`, `frame.child.far`)
+/// that misses its own jointed part, an annotation that no step shows, and a label or pointer anchor off the part it
+/// names (`annotation.anchor.off.<id>`). The anchor view rule (`annotation.anchor.hidden.<id>`) needs each still's
+/// camera, so only the check report refuses it (`MGSolidReport`, `MGExplainerReport`). The child-frame heuristics (`frame.child.absolute`, `frame.child.far`)
 /// stay warnings in both profiles: they can flag correct parent-relative layouts (spaced plates, parts on posts),
 /// so the read-back of world positions, not a refusal, is the defence against frame errors.
 public enum MGSolidProfile: Equatable, Sendable {
     case standard, strict
 
     /// Warning reason prefixes that the strict profile refuses.
-    public static let strictPrefixes = ["joint.idle.", "frame.axis.off.", "annotation.unused."]
+    public static let strictPrefixes = ["joint.idle.", "frame.axis.off.", "annotation.unused.", "annotation.anchor.off."]
 
     /// The first warning this profile refuses, in document order; nil when the document passes.
     public func refusal(_ doc: MGSolidDocument) -> MGSolidIssue? {
