@@ -14,6 +14,10 @@ public enum MGStoryTiming {
     /// The camera moves from the previous beat's camera to this beat's camera over the first `transitionSeconds` of the
     /// beat (at most half the beat), eased in and out. The first beat starts at its own camera.
     public static let transitionSeconds = 0.6
+    /// A routed move (`MGStoryMove`: `pullback`, `arc` or `combined`; the straight move was blocked) takes
+    /// `routedTransitionSeconds` instead (at most half the beat), so its longer path keeps about the same pace. The
+    /// beat's length does not change; its hold starts later by the difference.
+    public static let routedTransitionSeconds = 1.0
     /// A beat's `spin` plays at the explainer view's pace (`MGExplainerLimits.spinSecondsPerTurn` per input turn) from
     /// the beat's first frame, faster when that would not fit in `maxHoldSeconds`, so it always ends within the beat;
     /// the rest of the beat holds the end pose.
@@ -65,7 +69,12 @@ public struct MGStoryPlan: Equatable, Sendable {
     }
 
     public let fps: Int
-    public let beats: [Beat]
+    public private(set) var beats: [Beat]
+    /// The camera move of each beat (by 0-based beat index; `MGStoryPlan.routes`). A beat without one moves straight
+    /// (`camera(from:to:_:)`); a beat whose move is a cut starts at its own camera.
+    public private(set) var moves: [Int: MGStoryMove] = [:]
+    /// The beats whose move is a cut (`moves`).
+    public var cuts: Set<Int> { Set(moves.filter { $0.value.path == .cut }.keys) }
     /// Every frame, in order.
     public var frameCount: Int { beats.last.map { $0.startFrame + $0.frames } ?? 0 }
     /// Length of the video in seconds (frames / fps).
@@ -92,6 +101,18 @@ public struct MGStoryPlan: Equatable, Sendable {
             guard start <= MGStoryTiming.maxFrames else { throw MGSolidIssue("story.frames") }
         }
         self.fps = fps; self.beats = beats
+    }
+
+    /// This plan with `moves` (`routes`): each beat with a routed move (`pullback`, `arc` or `combined`) moves for
+    /// `MGStoryTiming.routedTransitionSeconds` (at most half the beat) instead of `transitionSeconds`; beat lengths and
+    /// every other beat stay the same. Moves for the first beat or for beats the plan does not have are ignored.
+    public func routed(_ moves: [Int: MGStoryMove]) -> MGStoryPlan {
+        var p = self
+        p.moves = moves.filter { $0.key > 0 && $0.key < beats.count }
+        for (k, m) in p.moves where m.routed {
+            p.beats[k].transitionFrames = min(Int((MGStoryTiming.routedTransitionSeconds * Double(fps)).rounded()), beats[k].frames / 2)
+        }
+        return p
     }
 
     /// Frame `i` (0 ≤ i < `frameCount`). The last frame of every beat shows the beat's end pose at its own camera, the
@@ -126,10 +147,10 @@ public struct MGStoryPlan: Equatable, Sendable {
     }
 
     /// The first frame of beat `k`'s hold: after its camera move, or its first frame when it has no move (the first
-    /// beat, or a beat in `cuts`).
+    /// beat, a beat in `cuts`, or a beat whose move in `moves` is a cut).
     public func holdStartFrame(_ k: Int, cuts: Set<Int> = []) -> Int {
         let b = beats[k]
-        return b.startFrame + (k == 0 || cuts.contains(k) ? 0 : b.transitionFrames)
+        return b.startFrame + (k == 0 || cuts.contains(k) || moves[k]?.path == .cut ? 0 : b.transitionFrames)
     }
 
     /// The caption frame `i` shows: its beat's caption from the first frame of the beat's hold, and none (an empty
@@ -143,16 +164,24 @@ public struct MGStoryPlan: Equatable, Sendable {
 
     /// The manifest record fields of `story.mp4` besides the file facts: `fps`, `frames`, `seconds`, the timing rules
     /// and per beat `{"beat" (1-based), "start", "holdStart", "seconds"}` in seconds (`holdStart`: when its caption,
-    /// labels and claims appear).
+    /// labels and claims appear). A beat with a move in `moves` adds its path (`MGStoryMove.manifestFields`: `path`,
+    /// `pathReason`, `blockedBy`) and `moveSeconds` (0 for a cut).
     public func manifestFields(cuts: Set<Int> = []) -> [String: MGJSON] {
-        ["fps": .number(Double(fps)), "frames": .number(Double(frameCount)), "seconds": .number(seconds),
-         "transitionSeconds": .number(MGStoryTiming.transitionSeconds),
-         "holdSeconds": .object(["min": .number(MGStoryTiming.minHoldSeconds), "max": .number(MGStoryTiming.maxHoldSeconds)]),
-         "beats": .array(beats.enumerated().map { k, b in
-             .object(["beat": .number(Double(k + 1)), "start": .number(Double(b.startFrame) / Double(fps)),
-                      "holdStart": .number(Double(holdStartFrame(k, cuts: cuts)) / Double(fps)),
-                      "seconds": .number(Double(b.frames) / Double(fps))])
-         })]
+        let cuts = cuts.union(self.cuts)
+        return ["fps": .number(Double(fps)), "frames": .number(Double(frameCount)), "seconds": .number(seconds),
+                "transitionSeconds": .number(MGStoryTiming.transitionSeconds),
+                "routedTransitionSeconds": .number(MGStoryTiming.routedTransitionSeconds),
+                "holdSeconds": .object(["min": .number(MGStoryTiming.minHoldSeconds), "max": .number(MGStoryTiming.maxHoldSeconds)]),
+                "beats": .array(beats.enumerated().map { k, b in
+                    var o: [String: MGJSON] = ["beat": .number(Double(k + 1)), "start": .number(Double(b.startFrame) / Double(fps)),
+                                               "holdStart": .number(Double(holdStartFrame(k, cuts: cuts)) / Double(fps)),
+                                               "seconds": .number(Double(b.frames) / Double(fps))]
+                    if let m = moves[k] {
+                        o.merge(m.manifestFields) { a, _ in a }
+                        o["moveSeconds"] = .number(cuts.contains(k) ? 0 : Double(b.transitionFrames) / Double(fps))
+                    }
+                    return .object(o)
+                })]
     }
 }
 

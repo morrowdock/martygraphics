@@ -173,6 +173,13 @@ extension MGSolidReport {
     /// (`MGExplainerReport`). The report lists every anchor issue in `anchorIssues` and the anchors a view's budget left
     /// untested in `anchorUntested` (both only for a document with annotations); a refusal for an anchor reason adds
     /// `anchor`, the issue it names.
+    ///
+    /// With `anchorViews`, the arrow visibility rule also runs on every step still that shows an arrow
+    /// (`MGSolidDocument.arrowIssues`): each issue is a warning `annotation.arrow.hidden.<id>` or
+    /// `annotation.arrow.untested.<id>`, listed in `arrowIssues` with a suggested move (re-checked once applied), and the
+    /// strict profile refuses the first one after the anchor refusals; a refusal for an arrow reason adds `arrow`.
+    /// Last, every printed suggestion, anchors and arrows together, is checked once more on one copy
+    /// (`MGSuggestionUnion.verifyTogether`), so all of them can be applied at once.
     public static func make(_ doc: MGSolidDocument, profile: MGSolidProfile = .standard, source: MGSolidSource? = nil,
                             engine: MGJSON? = MGEngine.identity, anchorViews: Bool = true) -> MGSolidReport {
         if badEngine(engine) { return engineRefusal }
@@ -180,9 +187,13 @@ extension MGSolidReport {
         var reason = checks.refusal, part: String? = nil
         if reason == nil, let r = profile.refusal(doc) { reason = r.reason; part = r.part }
         var anchors = MGAnnotationAnchorReport()
+        var arrows = MGAnnotationArrowReport()
         anchors.issues = doc.offPartAnchors
         if anchorViews {
-            let framed = doc.stepAnchorViews()
+            // The step stills that show a label, pointer or arrow, framed once: the anchor checks test those that show
+            // a label or pointer, the arrow rule those that show an arrow.
+            let checked = doc.stepCheckViews()
+            let framed = checked.filter { doc.showsCheckedAnchor($0.view) }
             for v in framed { anchors.append(doc.anchorIssues(v)) }
             // One search budget for the report, retries included.
             let budget = MGSuggestionBudget()
@@ -199,9 +210,27 @@ extension MGSolidReport {
                                        shown: views.map { ($0.step, $0.beat, Set(d.checkedAnnotations($0.view, params: $0.params) ?? [])) },
                                        search: { d.anchorSuggestions(ids: $0, views: views, shared: budget, excluding: $1) })
             }
+            // The arrow visibility rule, its suggested moves and their re-check (`MGAnnotationArrowReport.verify`).
+            let arrowViews = checked.filter { doc.showsArrow($0.view) }
+            arrows.issues = arrowViews.flatMap { doc.arrowIssues($0) }
+            // One search budget for the first searches and the re-check's searches together.
+            arrows.repair(doc, views: arrowViews, anchorIssues: Set(anchors.issues.map(\.id)),
+                          budget: MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests)) { moves, budget in
+                let src = MGSolidDocument.replacingArrows(doc.source, moves)
+                guard case .success(let d) = MGSolidParser.document(json: src, library: doc.library) else { return nil }
+                return arrowRecheck(d, budget: budget)
+            }
+            // Every printed suggestion, anchors and arrows together, checked once more on one copy.
+            MGSuggestionUnion.verifyTogether(anchors: &anchors, arrows: &arrows) { anchorMoves, arrowMoves in
+                let src = MGSolidDocument.replacingAnchors(MGSolidDocument.replacingArrows(doc.source, arrowMoves), anchorMoves)
+                guard case .success(let d) = MGSolidParser.document(json: src, library: doc.library) else { return nil }
+                return arrowRecheck(d, budget: MGSuggestionBudget(0))
+            }
         }
         let views = anchors.issues.filter { $0.cause != .offPart }
         if reason == nil, profile == .strict, let first = views.first { reason = first.reason; part = first.id }
+        // The arrow rule's refusals follow the anchor refusals (step order).
+        if reason == nil, profile == .strict, let first = arrows.issues.first { reason = first.reason; part = first.id }
         var o = summary(doc, checks: checks, profile: profile)
         o["ok"] = .bool(reason == nil)
         o["reason"] = str(reason)
@@ -212,17 +241,33 @@ extension MGSolidReport {
         // The view rule's warnings follow the document's own warnings (one per issue, in step order).
         if case .array(var w)? = o["warnings"] {
             w += views.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
+            w += arrows.issues.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
             o["warnings"] = .array(w)
         }
         // Documents with annotations only; other reports keep their exact keys.
         if !doc.annotations.isEmpty {
             o["anchorIssues"] = .array(anchors.issues.map(\.json))
             o["anchorUntested"] = anchors.untestedJSON
+            o["arrowIssues"] = .array(arrows.issues.map(\.json))
         }
         let hit = reason.flatMap { anchorIssue($0, anchors.issues) }
         if let hit { o["anchor"] = hit.json }
-        if let r = reason { o["repair"] = .string(repair(r, part: part, anchor: hit)) }
+        let arrowHit = reason.flatMap { r in arrows.issues.first { $0.reason == r } }
+        if let arrowHit { o["arrow"] = arrowHit.json }
+        if let r = reason { o["repair"] = .string(arrowHit?.repair ?? repair(r, part: part, anchor: hit)) }
         return MGSolidReport(ok: reason == nil, reason: reason, part: part, json: .object(o))
+    }
+
+    /// The arrow and anchor issues of a compiled copy as `make` lists them (every step still), for the re-check of
+    /// suggested arrow moves; and a search in its framing.
+    static func arrowRecheck(_ d: MGSolidDocument, budget: MGSuggestionBudget) -> MGArrowRecheck {
+        var anchors = d.offPartAnchors
+        let checked = d.stepCheckViews()
+        for v in checked where d.showsCheckedAnchor(v.view) { anchors += d.anchorIssues(v).issues }
+        let arrowViews = checked.filter { d.showsArrow($0.view) }
+        return MGArrowRecheck(arrows: arrowViews.flatMap { d.arrowIssues($0) }, anchors: anchors,
+                              shown: checked.map { ($0.step, $0.beat, Set(d.checkedAnnotations($0.view, params: $0.params) ?? [])) },
+                              search: { d.arrowSuggestions(for: $0, views: arrowViews, shared: budget, excluding: $1) })
     }
 
     /// The report's one-line `repair` for refusal `reason`, built from its structured detail: the anchor issue's

@@ -2,6 +2,51 @@
 
 ## Unreleased
 
+- Routed story camera moves and strict arrow visibility.
+  - **Routed moves** (`MGStoryPlan.routes`, `MGStoryMove`). When the straight camera move between two beats would pass
+    through a part the move draws, fixed alternative paths are tried before the story cuts: a pull back along the start
+    camera's view (1.5, 2, 3 and 4 times its distance, and the distance that leaves the model's bounding sphere), an
+    arc about the model's bounds centre at a radius no smaller than either camera's distance from it plus a clearance
+    (three radii), and the two together; the first clear path in that order is taken (at most 24 per move). Each leg
+    plays with the move's own interpolation and is tested with the exact segment-versus-box slab test of PR #37 over
+    bounded chords with the proven chord error; each chord's growth is the near plane at that chord's larger camera
+    distance (chords split so the distance changes by at most 10 %), not one growth at the move's largest distance. Each
+    part's box is swept over the move's actual frames (the spin share and pose blend of every frame,
+    `MGStoryPlan.movePose`, which the render tool also draws with), grown by the largest corner step between frames;
+    without the frames, a beat whose parts move cuts (`motion`). Only parts the move draws solid block it: hidden
+    parts, ghosts and glass do not (the coverage rule of the anchor checks).
+    A routed move takes 1.0 s (`MGStoryTiming.routedTransitionSeconds`, at most half the beat) instead of 0.6 s; the
+    beat's length does not change. Every path starts and ends exactly on the beats' still cameras, so hold frames are
+    unchanged. During a move, a part the previous beat ghosts is drawn as a ghost too (`MGSolidView.moving(from:_:)`).
+    The story manifest's beat records gain `path` (`straight`, `pullback`, `arc`, `combined`, `cut`), `pathReason`
+    (`clear`, `blocked`, `layout`, `motion`, `untested`), `blockedBy` and `moveSeconds`, and the record gains
+    `routedTransitionSeconds`. `MGStoryPlan.blockedMoves` stays in the library with its PR #37 rule; the render tool
+    uses `routes`. New API: `MGStoryMove`, `MGStoryBeatShot`, `MGStoryPlan.routes(_:beats:layout:stage:)`,
+    `MGStoryPlan.routed(_:)`, `movePose`, `moves`, `cuts`.
+  - **Arrow visibility** (`annotation.arrow.hidden.<id>`, `annotation.arrow.untested.<id>`). In every step or beat still
+    that shows an arrow (force, flow, motion or pointer), 16 points along the drawn shaft and 3 along the head are
+    tested from the still's camera with the line-of-sight rule of the anchor checks (blocking coverage, cut exception,
+    sample-relative precision), with no own-part exception: an arrow inside its own casing is hidden. Less than half of
+    the samples visible, or fewer than 2 of the 3 head samples, is `annotation.arrow.hidden.<id>`: standard warns,
+    the strict check report refuses (after the anchor refusals) with the view, the visible share and the part in the
+    way. A view's 3,000,000 tests that run out leave the arrow `annotation.arrow.untested.<id>` (strict refuses). The
+    report lists `arrowIssues` and, on an arrow refusal, `arrow`, with `suggest`: a move of a force or flow arrow (both
+    ends by one offset) or of a pointer's start that shows it in every view that shows it, from fixed directions and
+    sizes, that keeps a force or flow arrow's vector (direction and length) in every view that shows it, re-checked once
+    applied as anchor suggestions are (`framing`, `conflict`, `form`); none keeps it: `noSuggest` (`pose`); a motion
+    arrow gets `noSuggest` (`motion`). All searches of a report, retries included, share one 64,000,000-test budget.
+    Last, every printed suggestion of a report, anchors and arrows together (also a union of one family), is applied to
+    one copy and checked again with every anchor and arrow rule (`MGSuggestionUnion.verifyTogether`); a suggestion
+    that conflicts in the union is dropped (`conflict`, with `other`), and the rest is checked again until stable, so
+    a model can apply every printed suggestion at once. New API: `MGAnnotationArrowRules`, `MGAnnotationArrowIssue`, `MGAnnotationArrowSuggestion`,
+    `MGArrowVisibility`, `MGSolidDocument.stepCheckViews`, `stepArrowIssues`, `MGExplainerFrame.beatCheckViews`.
+  - Example fixed: in the jet-suit lesson, arrow `aTL2`'s head was behind the pack in step 2 (73 % of its samples
+    visible, head hidden). It now uses the check's suggested move (135 mm toward the step's camera, same direction and
+    length). Its stills, story video, poster, check report and receipt were made again.
+  - Golden files: the check reports gain `arrowIssues` (and `arrow` on an arrow refusal), stripped like the other added
+    fields; the jet-suit document's golden files hold the fixed file's output. Test inputs:
+    `docs/fixtures/arrow-visibility` holds a synthetic explainer with an arrow inside an engine casing (neutral names).
+
 - Repair-friendly check reports.
   - **Anchor suggestions.** Every `annotation.anchor.off.<id>` and `annotation.anchor.hidden.<id>` issue in
     `anchorIssues` (and the refusal's `anchor`) gains `suggest`: an anchor `{"part", "offset": [x, y, z]}` (the

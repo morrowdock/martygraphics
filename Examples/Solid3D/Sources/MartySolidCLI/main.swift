@@ -473,7 +473,8 @@ final class MovieWriter {
 
 /// The story manifest's per-beat records with the hold camera (the camera of the beat's last frame), the number of
 /// annotations off view in that frame plus the focus samples still hidden (absent when the beat draws no annotation and
-/// has no tested focus), whether the beat cut instead of moving (`cut`, with `cutReason` `layout` or `blocked`), and the
+/// has no tested focus), whether the beat cut instead of moving (`cut`, with `cutReason` `layout` or `blocked`; the
+/// move's `path`, `pathReason`, `blockedBy` and `moveSeconds` come from `MGStoryPlan.manifestFields`), and the
 /// unblocked-focus fields of the beat (`autoGhost`, `occluded`, `focusSamples`, `view`; only for a tested focus).
 func storyBeats(_ beats: MGJSON?, _ cameras: [Int: MGSolidCamera], _ offView: [Int: Int], clear: [Int: MGSolidClearView] = [:],
                 cuts: [Int: String] = [:]) -> MGJSON? {
@@ -623,7 +624,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                                 "frames": .number(Double(movie.frames)), "fps": .number(Double(plan.loopRate)),
                                 "loopSeconds": .number(Double(movie.frames) / Double(plan.loopRate)), "framingScale": .number(cameras.loopScale)])
     }
-    if let story = storyPlan {
+    if let unrouted = storyPlan {
         // The steps in order, each with its caption, view (cuts, ghosts), highlight, annotations and camera; the camera
         // moves from the previous step's camera at the start of each step, and the step's spin plays as in the view.
         let stepStill = Dictionary(uniqueKeysWithValues: plan.stills.indices.compactMap { k in plan.stills[k].step.map { ($0, k) } })
@@ -631,18 +632,28 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         // during camera moves, while arrows are drawn and labels are not); otherwise in the footer line.
         let annotated = !doc.annotations.isEmpty
         let footer = annotated ? plan.footer : "\(doc.legend.text) · \(plan.footer)"
-        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(story.fps))
+        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(unrouted.fps))
         // During a step's hold the camera is exactly the step still's camera; only the move at the start of a step is in
         // between, and labels are hidden during that move.
         let beatCameras: [MGSolidCamera?] = doc.steps.indices.map { k in stepStill[k].map { cameras.stills[$0] } }
         let beatClear: [Int: MGSolidClearView] = Dictionary(uniqueKeysWithValues: doc.steps.indices.compactMap { k in
             stepStill[k].map { (k, cameras.clear[$0]) }
         })
-        // A camera move that would pass through a part cuts instead (`MGStoryPlan.blockedMoves`).
-        let cuts = MGStoryPlan.blockedMoves(doc, beats: doc.steps.indices.map { k in
-            (beatCameras[k], MGSolidShot.step(doc, k)?.params ?? doc.defaults)
-        })
-        var shownStep: Int?, settledStep: Int?
+        // Each step's view with its still's automatic ghosts (the hold), and the view its camera move draws: the same,
+        // with the parts the previous step ghosts drawn as ghosts too (`MGSolidView.moving(from:_:)`).
+        let holdViews = doc.steps.indices.map { k in doc.view(step: k).ghosting(beatClear[k]?.autoGhost ?? []) }
+        let moveViews = doc.steps.indices.map { k in k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], doc.assembly) }
+        // A camera move that would pass through a part the move draws takes a routed path (pull back, arc, both), or
+        // cuts when no path is clear (`MGStoryPlan.routes`).
+        // The move frames' poses come from the same shots (`MGStoryPlan.movePose`), so the router tests the parts
+        // where the frames draw them.
+        let routeShots = doc.steps.indices.map { k in
+            MGStoryBeatShot(camera: beatCameras[k], params: MGSolidShot.step(doc, k)?.params ?? doc.defaults, view: moveViews[k], step: doc.steps[k])
+        }
+        let moves = MGStoryPlan.routes(doc, beats: routeShots, plan: unrouted)
+        let story = unrouted.routed(moves)
+        let cuts = story.cuts
+        var shownView: MGSolidView?, settledStep: Int?
         var holdCamera: [Int: MGSolidCamera] = [:], holdOffView: [Int: Int] = [:]
         for i in 0..<story.frameCount {
             try autoreleasepool {
@@ -654,14 +665,13 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                 var s = base
                 s.params = step.poseParameters(defaults: doc.defaults, spin: f.spin)
                 // The camera move into a step also moves the parts from the previous step's pose to this one (real
-                // renders at each blended pose); a cut jumps. The hold shows the step's own pose.
-                if f.camera < 1, f.beat > 0, !cuts.contains(f.beat) {
-                    s.params.placements = MGStoryPlan.placements(doc.assembly, from: doc.steps[f.beat - 1].pose, to: step.pose, f.camera)
-                }
-                // The step's view with its still's automatic ghosts, for the whole beat (move and hold).
-                let view = doc.view(step: f.beat).ghosting(beatClear[f.beat]?.autoGhost ?? [])
-                if shownStep != f.beat {
-                    shownStep = f.beat
+                // renders at each blended pose, `MGStoryPlan.movePose`); a cut jumps. The hold shows the step's own pose.
+                let moving = f.camera < 1 && f.beat > 0 && !cuts.contains(f.beat)
+                if moving { s.params = MGStoryPlan.movePose(doc, beats: routeShots, f.beat, spin: f.spin, blend: f.camera) }
+                // The step's view with its still's automatic ghosts in the hold; during the move, the move's view.
+                let view = moving ? moveViews[f.beat] : holdViews[f.beat]
+                if shownView != view {
+                    shownView = view
                     r.show(document: doc, view: view)
                     r.highlight(Set(s.highlight), dimOthers: !s.highlight.isEmpty)
                 }
@@ -699,7 +709,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
             if let n = offViewCount(annotations: holdOffView[k], clear: beatClear[k]) { beatOffView[k] = n }
         }
         fields["beats"] = storyBeats(fields["beats"], holdCamera, beatOffView, clear: beatClear.filter { $0.value.tested },
-                                     cuts: Dictionary(uniqueKeysWithValues: cuts.sorted().map { ($0, "blocked") }))
+                                     cuts: Dictionary(uniqueKeysWithValues: cuts.sorted().map { ($0, moves[$0]?.reason ?? "blocked") }))
         fields["codec"] = .string("h264"); fields["width"] = .number(Double(movie.width)); fields["height"] = .number(Double(movie.height))
         try record("story.mp4", fields)
     }
@@ -850,15 +860,19 @@ struct ExplainerBeatShot {
     /// the parts move from that pose to this beat's pose with the camera.
     func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Double = 1, stepIndex: Int? = nil, camera: MGSolidCamera? = nil,
                     labels: Bool = true, stable: Bool = false, ghost: [String] = [], from: [String: MGTransform]? = nil,
-                    blend: Double = 1) throws -> CGImage? {
+                    blend: Double = 1, moveFrom: MGSolidView? = nil, movePose: MGPoseParameters? = nil) throws -> CGImage? {
         guard let r = renderer, let d = solidDoc else { return nil }
         let pane = frameRect(rect)
         var params = MGExplainerFrame.pose(d, view: view, spin: spin)
         if let from, blend < 1 { params.placements = MGStoryPlan.placements(d.assembly, from: from, to: params.placements, blend) }
+        // A story move frame: the pose the move router tested (`MGStoryPlan.movePose`).
+        if let movePose { params = movePose }
         var framed: MGSolidClearView?
         if camera == nil { framed = MGExplainerFrame.solidClearView(d, view: view, stepIndex: stepIndex, pane: pane) }
         // The beat's view with the automatic ghosts of the unblocked-focus rule (`MGSolidFraming.clearView`).
-        let shown = (view.solid ?? d.view(step: nil)).ghosting(framed?.autoGhost ?? ghost)
+        var shown = (view.solid ?? d.view(step: nil)).ghosting(framed?.autoGhost ?? ghost)
+        // A story camera move also draws the parts the previous beat ghosts as ghosts (`MGSolidView.moving(from:_:)`).
+        if let moveFrom { shown = shown.moving(from: moveFrom, d.assembly) }
         r.apply(params)
         if !stable || shownView != shown {
             r.show(document: d, view: shown)
@@ -994,25 +1008,34 @@ struct ExplainerBeatShot {
                                 "frames": .number(Double(movie.frames)), "fps": .number(Double(plan.loopRate)),
                                 "loopSeconds": .number(Double(movie.frames) / Double(plan.loopRate)), "framingScale": .number(cameras.loopScale)])
     }
-    if let story = storyPlan {
+    if let unrouted = storyPlan {
         // The dry run and the stills run the same session rules on the same document, so they present the same beats.
-        guard story.beats.count == shots.count, zip(story.beats, shots).allSatisfy({ $0.caption == $1.caption }) else {
+        guard unrouted.beats.count == shots.count, zip(unrouted.beats, shots).allSatisfy({ $0.caption == $1.caption }) else {
             throw CLIError.invalid("story: the beats differ from the stills")
         }
         // The beats in order: each frame is a real composite of the beat's board (its settled state, as in its still),
         // the solid at the beat's view, highlight and annotations, the caption and the legend line. During a beat's hold
         // the camera is exactly the beat's still camera (same layout, same pane pixels); only in the camera move at the
         // start of a beat is it in between, and labels are hidden during that move. The beat's spin plays.
-        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(story.fps))
+        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(unrouted.fps))
         let beatCameras = shots.map(\.camera)
         // A beat whose solid pane has another size than the previous beat's (the board pane appeared or went) cuts to
         // its own camera instead of moving: the previous camera was fitted for the other pane.
         let layoutCuts = Set(shots.indices.dropFirst().filter { shots[$0].rects.solid != shots[$0 - 1].rects.solid })
-        // A camera move that would pass through a part also cuts (`MGStoryPlan.blockedMoves`).
-        let blocked = solidDoc.map { d in
-            MGStoryPlan.blockedMoves(d, beats: shots.map { ($0.camera, MGExplainerFrame.pose(d, view: $0.view)) })
+        // A camera move that would pass through a part the move draws takes a routed path (pull back, arc, both), or
+        // cuts when no path is clear (`MGStoryPlan.routes`). The move draws the beat's view with its automatic ghosts.
+        // Each beat's solid view with its still's automatic ghosts (the hold); the move into a beat draws it with the
+        // previous beat's ghosts too (`MGSolidView.moving(from:_:)`).
+        let holdViews = solidDoc.map { d in shots.map { ($0.view.solid ?? d.view(step: nil)).ghosting($0.clear?.autoGhost ?? []) } } ?? []
+        let routeShots = solidDoc.map { d in
+            shots.indices.map { k in
+                MGStoryBeatShot(camera: shots[k].camera, params: MGExplainerFrame.pose(d, view: shots[k].view),
+                                view: k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], d.assembly), step: shots[k].view.step)
+            }
         } ?? []
-        let cuts = layoutCuts.union(blocked)
+        let moves = solidDoc.map { d in MGStoryPlan.routes(d, beats: routeShots, plan: unrouted, layout: layoutCuts) } ?? [:]
+        let story = unrouted.routed(moves)
+        let cuts = layoutCuts.union(story.cuts)
         shownView = nil
         var settled: Int?   // the beat whose camera has arrived (its labels keep their places from frame to frame)
         var holdCamera: [Int: MGSolidCamera] = [:], holdOffView: [Int: Int] = [:]
@@ -1026,7 +1049,8 @@ struct ExplainerBeatShot {
                 let sImg = try b.rects.solid.flatMap { try solidImage(b.view, $0, spin: f.spin, stepIndex: b.stepIndex, camera: camera,
                                                                       labels: holding, stable: settled == f.beat, ghost: b.clear?.autoGhost ?? [],
                                                                       from: moving ? (shots[f.beat - 1].view.step?.pose ?? [:]) : nil,
-                                                                      blend: f.camera) }
+                                                                      blend: f.camera, moveFrom: moving ? holdViews[f.beat - 1] : nil,
+                                                                      movePose: moving ? solidDoc.map { MGStoryPlan.movePose($0, beats: routeShots, f.beat, spin: f.spin, blend: f.camera) } : nil) }
                 settled = holding ? f.beat : nil
                 if holding, let camera { holdCamera[f.beat] = camera; if let n = lastOffView { holdOffView[f.beat] = n } }
                 // A beat's caption, labels and board claims appear when its hold starts. During the camera move the
@@ -1043,7 +1067,7 @@ struct ExplainerBeatShot {
         for k in shots.indices {
             if let n = offViewCount(annotations: holdOffView[k], clear: shots[k].clear) { beatOffView[k] = n }
             if let c = shots[k].clear, c.tested { beatClear[k] = c }
-            if layoutCuts.contains(k) { why[k] = "layout" } else if blocked.contains(k) { why[k] = "blocked" }
+            if layoutCuts.contains(k) { why[k] = "layout" } else if let m = moves[k], m.path == .cut { why[k] = m.reason }
         }
         fields["beats"] = storyBeats(fields["beats"], holdCamera, beatOffView, clear: beatClear, cuts: why)
         fields["codec"] = .string("h264"); fields["width"] = .number(Double(movie.width)); fields["height"] = .number(Double(movie.height))

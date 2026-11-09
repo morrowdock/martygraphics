@@ -1,27 +1,28 @@
 {
   "source": {
     "repository": "https://github.com/morrowdock/martygraphics",
-    "commit": "a765ead65c6c7fbbd13a338039f1642434fadad7",
-    "commitNote": "origin/main after PR #40 (strict label and pointer anchors); at build, check and render time the working tree differed from this commit only in docs/assets/jet-suit/jet-suit.json",
+    "commit": "16c1f774f2a3bb9ce62ce48d790fdf2ea69a43a6",
+    "commitNote": "origin/main after PR #43 (repair-friendly check reports); at build, check and render time the working tree held the routed-moves and arrow-visibility change of this pull request (engine code, tests and docs) and the aTL2 move in docs/assets/jet-suit/jet-suit.json",
     "model": "docs/assets/jet-suit/jet-suit.json (59 lines, 76 parts, 7 steps): the sixth version of the lesson",
-    "authoring": "Hand-built. A Claude agent wrote this JSON by hand from fact-checked research and a merged fact key. It is not the output of the engine's AI loop answering a prompt. Its content is the reviewed sixth version (a one-line file, SHA-256 6d8360e01e625b44eab4d17afe21318bf1aababa83483a7e6ae83f184feeaa59) with two label anchors changed (see changeFromReviewed). The file is laid out one part, label, arrow and step per line, as the fifth version was; parsed, it equals the reviewed JSON except for those two anchors.",
+    "authoring": "Hand-built. A Claude agent wrote this JSON by hand from fact-checked research and a merged fact key. It is not the output of the engine's AI loop answering a prompt. Its content is the reviewed sixth version (a one-line file, SHA-256 6d8360e01e625b44eab4d17afe21318bf1aababa83483a7e6ae83f184feeaa59) with two label anchors changed and both ends of arrow aTL2 moved (see changeFromReviewed: what and arrowMove). The file is laid out one part, label, arrow and step per line, as the fifth version was; parsed, it equals the reviewed JSON except for those two label anchors and the x and y offsets of the two aTL2 ends (0, 0 -> -25.702, -132.153).",
     "license": "Apache-2.0; procedural geometry, no images, models or stock assets",
     "sourceFiles": {
-      "docs/assets/jet-suit/jet-suit.json": "aa5078775cbb66f30be98b873c608dcb6500ee1d14aee164cd26a799460366b7",
+      "docs/assets/jet-suit/jet-suit.json": "75c9a9eb8b5cd372acf01d1bbc06d47a823b0fec97b6572f676b9e5611c24b66",
       "Examples/Solid3D/Package.swift": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b",
       "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f"
     }
   },
   "changeFromReviewed": {
     "what": "The same two anchor changes that PR #40 made to the fifth version, so that the strict anchor rules accept the file: lComb anchor {\"part\": \"back.combustor\", \"offset\": [30, 0, 148]} -> {\"part\": \"back.combustor\", \"offset\": [0, -30, 148]} (inside the annular chamber, on the cut face); lPilot anchor {\"part\": \"helmet\", \"offset\": [0, -110, 0]} -> {\"part\": \"helmet\", \"offset\": [0, 108, 0]} (the back of the helmet, which faces the step 1 camera). No text, fact, part, step, pose or camera changed. No further anchor move was needed.",
-    "changesFromTheFifthVersion": "Step 5 poses the pilot (both upper arms swing back, elbows straight); five exhaust plume parts (named \"Exhaust plume (illustration)\") are shown in steps 2 and 5 only; highlights name whole engine instances; explode vectors are set per instance; the two cutaway disclaimer labels are one two-line label; the step 3 back-share label adds \"(Browning, 2021)\"; the step 5 flow arrow starts at an arm engine's exhaust; step 7 adds a turn arrow (aSpin) on back.shaft."
+    "changesFromTheFifthVersion": "Step 5 poses the pilot (both upper arms swing back, elbows straight); five exhaust plume parts (named \"Exhaust plume (illustration)\") are shown in steps 2 and 5 only; highlights name whole engine instances; explode vectors are set per instance; the two cutaway disclaimer labels are one two-line label; the step 3 back-share label adds \"(Browning, 2021)\"; the step 5 flow arrow starts at an arm engine's exhaust; step 7 adds a turn arrow (aSpin) on back.shaft.",
+    "arrowMove": "The strict arrow-visibility rule (this pull request) found that arrow aTL2 (the inner left-arm engine) had its head behind the pack in step 2 (73 % of its samples visible, 0 of 3 head samples). Its two anchors take the check's own suggested move, 134.629 mm toward the step 2 camera with the same direction and length: from {\"part\": \"armL2.intake\", \"offset\": [0, 0, -15]} -> {\"part\": \"armL2.intake\", \"offset\": [-25.702, -132.153, -15]}, to {\"part\": \"armL2.intake\", \"offset\": [0, 0, -260]} -> {\"part\": \"armL2.intake\", \"offset\": [-25.702, -132.153, -260]} (armL2.intake names the part armL2.intakeLip; the suggestion names that part). No text, fact, part, step, pose or camera changed."
   },
   "capture": {
     "machine": "Apple M1 Mac mini (Macmini9,1), arm64; macOS 27.2",
     "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
     "configuration": "SwiftPM release build",
     "capturedUTC": "2026-11-09",
-    "engineExecutableSHA256": "10a6719c34d83cfbe1ff179fd2f7b0664c6824b5b27604a59b802fa0c6b6309a",
+    "engineExecutableSHA256": "89f0c9ae4ca4b355d5053613c1ef64389bd27608b0af0e31880cc76fb9bed7b3",
     "commands": [
       "swift build -c release --package-path Examples/Solid3D",
       "marty-solid check --strict docs/assets/jet-suit/jet-suit.json",
@@ -30,26 +31,28 @@
       "sips -s format jpeg -s formatOptions 82 <NEW_DIR>/step-2.png --out poster.jpg"
     ],
     "oneBuild": "Every file listed under artifacts comes from this one build and this one render: the check report and the render manifest name the same engine executable (SHA-256 above) and the same source hash. The render also wrote exploded.png, loop.gif, loop.mp4, snapshot.json and manifest.json; they are not published.",
-    "check": "exit 0, ok true, strict true, warnings empty, anchorIssues empty, anchorUntested empty; legend Solved 17 · Not checked 20.",
-    "renderManifestSHA256": "b8dd3cb210d2a7f58ab32c03cdbc1b6fd60637e6fb1c03c7a6c936d20da12b15"
+    "check": "exit 0, ok true, strict true, warnings empty, anchorIssues empty, anchorUntested empty, arrowIssues empty; legend Solved 17 · Not checked 20.",
+    "renderManifestSHA256": "89c7606a8c1b0e656792a4b21b2496a9ddf8452e6f82066e235ca235184cbc9f",
+    "reviewFixRecheck": "The review fixes of the same pull request (swept part boxes for story moves, arrow moves that keep the vector, one search budget) were built again (release; engine executable SHA-256 d39d8b4882f1900bc707e1bb267528686ceb774840c6875d30704da2132be2fd) and the lesson was checked and rendered again with the same commands. Every story move path is the same (6 straight, no cut); the check report and the story manifest record are identical except the engine identity and the video bytes; every still matches the published one (CoreGraphics RGB, threshold 24/255: 0 differing pixels). The published files stay those of the build above."
   },
   "review": {
     "facts": "Every factual sentence maps to a row of the merged fact key (F1-F20) in docs/assets/jet-suit/SOURCES.md. The key merges two independent AI model web fact-checks (GPT-6.1 Sol and Gemini 3.8 Flash). The sixth version adds no fact.",
     "verdict": "An independent read-only review of the reviewed sixth-version JSON gave PUBLIC-OK for the 7 step stills and hero.png. It checked the story video at its 7 hold frames and one frame of the move into step 5; an addendum checked two frames of the move out of step 5, and with it the story video is PUBLIC-OK. The exploded view was not added to the public set.",
     "differenceFromReviewedRenders": "The reviewed renders used the earlier two anchors and a one-line file, so their subtitle read \"(1 line)\". CoreGraphics RGB comparison of each new still with the reviewed still, top-left image coordinates: in every still, channels differ by more than 24/255 only in the subtitle (x 345-655, y 82-94: \"(59 lines)\") and, in step 1, the box x 459-842, y 132-187 (the moved \"Schematic pilot\" label and dot) and, in step 6, the box x 327-626, y 369-435 (the moved \"Combustion chamber\" label and dot). Outside those boxes no channel differs by more than 24/255 (render noise); in total 0.21 % to 1.41 % of channels differ per still, the boxes included.",
-    "builderInspection": "The builder viewed all 7 new stills, hero.png and the extracted story frames listed under artifacts.story.mp4.inspected. Step 1: the \"Schematic pilot\" dot is solid, on the back of the helmet. Step 6: the \"Combustion chamber\" dot is inside the copper chamber. Steps 2 and 5 show the plumes; no other step does."
+    "builderInspection": "The builder viewed all 7 new stills, hero.png and the extracted story frames listed under artifacts.story.mp4.inspected. Step 1: the \"Schematic pilot\" dot is solid, on the back of the helmet. Step 6: the \"Combustion chamber\" dot is inside the copper chamber. Steps 2 and 5 show the plumes; no other step does.",
+    "arrowMoveCheck": "The builder compared each new still with the shipped one (CoreGraphics RGB, threshold 24/255): hero.png and steps 1 and 3-7 have no differing pixel; step 2 differs only in the box x 538-576, y 265-337 (740 pixels: the moved aTL2 arrow). The independent review verdict above was given for the earlier aTL2 position; this move was not reviewed again."
   },
   "artifacts": {
     "hero.png": {
-      "sha256": "38856ca65adf39b864b4854212690c6d116d1e3034802eadb1d40e0ebb06c798",
-      "bytes": 802543,
+      "sha256": "526756cbe98d7f33c5b2abf6e0e3bf2f4388c889aa810a2478756d13db4f53f7",
+      "bytes": 802528,
       "from": "render hero.png, unedited",
       "pixels": "1280x800",
       "framing": "modelFitted"
     },
     "step-1.png": {
-      "sha256": "b51fee44959d1f419d002cc99e8a021c9fe7c5686e53d399cf04dba97dedbd0a",
-      "bytes": 686930,
+      "sha256": "ce203eb673be94e8688f8ffba048dd892deb07485970b72364db6f7dfa882049",
+      "bytes": 687224,
       "from": "render step 1 (step-1.png), unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -57,8 +60,8 @@
       "occluded": 0
     },
     "step-2.png": {
-      "sha256": "9fe34e9817a3c5ea907657bef613b2720cf17c4b2c293dd3d51beaad9967eb93",
-      "bytes": 707038,
+      "sha256": "a827b6f6c46469ce18b3edb2cb7784e58f6167a781890c0c7afb57aa1fc3e76c",
+      "bytes": 707631,
       "from": "render step 2 (step-2.png), unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -66,8 +69,8 @@
       "occluded": 0
     },
     "step-3.png": {
-      "sha256": "e9fa53a23820bd1b0fb32ff2e42165b23a489405b8b2d493532a384226c34805",
-      "bytes": 684264,
+      "sha256": "3acc2dde40c5499e6fcce23b3dd6f1b399d78c7a7080dc6400363466cd29896b",
+      "bytes": 684494,
       "from": "render step 3 (step-3.png), unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -75,16 +78,16 @@
       "occluded": 0
     },
     "step-4.png": {
-      "sha256": "1d7a0a684c2b9cb28230a77a564e4dc398b66545e63fff525e8f95cc09bf69b1",
-      "bytes": 691154,
+      "sha256": "9e952baf5335d903596ed409fce5917685edb5f9308e6926520fbdd9e27a1f31",
+      "bytes": 691287,
       "from": "render step 4 (step-4.png), unedited",
       "pixels": "1280x800",
       "framing": "modelFitted",
       "offView": 0
     },
     "step-5.png": {
-      "sha256": "6d6d1d07251c6426a23554d0f0b2c042d3f8c215d52dd85241e6a4bb6a29a9ec",
-      "bytes": 671866,
+      "sha256": "73a8a6e01b0f6dda0958b83ddc22661ffd9b7e2ede0b74dab291710e71fd6d97",
+      "bytes": 671872,
       "from": "render step 5 (step-5.png), unedited",
       "pixels": "1280x800",
       "framing": "focus",
@@ -112,32 +115,31 @@
       "facesCut": true
     },
     "story.mp4": {
-      "sha256": "f382d48bd78af527e9b4db1f8d13ceb674c905137688ed3ae0e12bfb02dd49a4",
-      "bytes": 5657049,
-      "remux": "re-muxed for fast start (passthrough; all 1,890 decoded frames identical)",
-      "from": "render story.mp4, re-encoded for size (see reencode)",
+      "sha256": "4213b901c7452e58246cc16927fa054662c23af09e3246d0b50e9ef1b2481d06",
+      "bytes": 5654582,
+      "from": "render story.mp4, re-encoded for size with fast start (see reencode)",
       "pixels": "1280x800",
       "fps": 30,
       "frames": 1890,
       "seconds": 63,
       "beats": 7,
       "renderedOriginal": {
-        "sha256": "0da0f06358ba97508474b3d1c9dbcc221966764e1637d3aa1b7a88e904d1cd1d",
-        "bytes": 13100317,
-        "note": "The engine's story.mp4 (1890 frames, 30 fps, 63 s, 7 beats of 9 s, no cuts, video only). Not kept in git: 13.1 MB."
+        "sha256": "58c8f467f01bb0ba8a27c1b417ffa04db463d83948b329f884410e14235af4a5",
+        "bytes": 13099264,
+        "note": "The engine's story.mp4 (1890 frames, 30 fps, 63 s, 7 beats of 9 s; every move path straight, no cuts; video only). Not kept in git: 13.1 MB."
       },
-      "reencode": "AVFoundation only: AVAssetReader (32BGRA) to AVAssetWriter, H.264 High profile (auto level), average 1,000,000 bit/s, key frame at most every 60 frames, every source frame kept (1890 in, 1890 out). The same settings as the earlier refresh. A small Swift script outside the repository (source SHA-256 f27ee8cd1fb85d4574935c7204d505191d86fb1fc62ead77b2ab595902c47a24); no other tool. Higher rates were tried and give almost the same size (2,000,000 bit/s: 5,877,463 bytes), so the encoder, not the rate, sets the size of this video.",
-      "inspected": "Frames were extracted from this file with AVAssetImageGenerator (zero time tolerance) and viewed one by one: the 7 hold frames at 5, 14, 23, 32, 41, 50 and 59 s (each matches its step still; text and labels are sharp), the move into step 5 at 36.13, 36.33 and 36.53 s (the arms swing back, the plumes stay on the nozzles, no labels or caption during the move) and the move out of step 5 at 45.10, 45.33 and 45.53 s (only the engine is shown, no labels or caption during the move; the legend stays)."
+      "reencode": "AVFoundation only: AVAssetReader (32BGRA) to AVAssetWriter, H.264 High profile (auto level), average 1,000,000 bit/s, key frame at most every 60 frames, every source frame kept (1890 in, 1890 decoded out), fast start (the writer puts moov before mdat; atoms ftyp, moov, mdat). The same encoder settings as the earlier refreshes. A small Swift script outside the repository (source SHA-256 5d07779e2e2cd162eacf806bb64d2cb959444574e182ccf9d04f48fff96c3dff); no other tool.",
+      "inspected": "Frames were extracted from this file with AVAssetImageGenerator (zero time tolerance): the 7 hold frames at 5, 14, 23, 32, 41, 50 and 59 s were compared with the step stills (CoreGraphics RGB: at most 0.12 % of pixels differ by more than 24/255, scattered encoder noise) and viewed; the step 2 hold shows aTL2 with its head in front of the arm. The move into step 2 at 9.33 s (arrows drawn, no labels or caption) and the move out of step 5 at 45.33 s (only the engine is shown, no labels or caption; the legend stays) were viewed."
     },
     "poster.jpg": {
-      "sha256": "48a6b34ad494b679fdf965d0bfa21cb2f214d06612479fc103b075bdb0c16ec7",
-      "bytes": 93101,
+      "sha256": "206800feb81e1e623ae40381cab55f632a7ed5dfa4d47866d13c9d057d8f4f8e",
+      "bytes": 93154,
       "from": "step-2.png of this build converted to JPEG (macOS sips, quality 82); pixels not edited",
       "pixels": "1280x800"
     },
     "check-strict.json": {
-      "sha256": "aeed3782b12978549a06e0ab339062c9a7a8267f40dd7dcb9b7c40a7899b90fe",
-      "bytes": 86022,
+      "sha256": "178bc48d0cef698344851d6081c998fd8c3e3dd634940940d3bf8263bfc60b14",
+      "bytes": 86042,
       "from": "marty-solid check --strict of this build (stdout re-serialised with sorted keys and 2-space indent; same content)"
     }
   },
@@ -150,6 +152,11 @@
       "date": "2026-11-09",
       "summary": "The sixth version replaces the fifth, with the same two anchor changes. All 7 stills, poster.jpg, story.mp4 and check-strict.json were replaced; hero.png was added.",
       "previousSHA256": "9bc7dd9355beffd4f2a8695e8087969a8baab45756c3a8e2abee874c61d21689"
+    },
+    {
+      "date": "2026-11-09",
+      "summary": "The routed-moves and arrow-visibility pull request moved arrow aTL2 by the check's suggested move (its head was behind the pack in step 2) and made all assets again with one build.",
+      "previousSHA256": "aa5078775cbb66f30be98b873c608dcb6500ee1d14aee164cd26a799460366b7"
     }
   ]
 }

@@ -181,12 +181,15 @@ public enum MGExplainerFrame {
 extension MGStoryPlan {
     /// The camera of frame `i` from each beat's camera (its still's camera; nil without a solid): during a beat's hold
     /// it is exactly that beat's camera; in the camera move at the start of a beat it lies between the previous beat's
-    /// camera and this one (`camera(from:to:_:)`). A beat in `cuts` starts at its own camera (no move): the story cuts
-    /// when the pane layout changes, because the previous camera was fitted for another pane.
+    /// camera and this one (`camera(from:to:_:)`, or along the beat's routed path in `moves` when that path runs from
+    /// the previous beat's camera to this one). A beat in `cuts` or with a cut in `moves` starts at its own camera (no
+    /// move): the story cuts when the pane layout changes, because the previous camera was fitted for another pane, and
+    /// when every path of the move meets a part (`routes`).
     public func camera(frame i: Int, beatCameras: [MGSolidCamera?], cuts: Set<Int> = []) -> MGSolidCamera? {
         let f = frame(i)
         guard beatCameras.indices.contains(f.beat), let to = beatCameras[f.beat] else { return nil }
-        guard f.camera < 1, f.beat > 0, !cuts.contains(f.beat), let from = beatCameras[f.beat - 1] else { return to }
+        guard f.camera < 1, f.beat > 0, !cuts.contains(f.beat), !self.cuts.contains(f.beat), let from = beatCameras[f.beat - 1] else { return to }
+        if let m = moves[f.beat], m.keys.count >= 2, m.keys.first == from, m.keys.last == to { return m.camera(f.camera) }
         return MGStoryPlan.camera(from: from, to: to, f.camera)
     }
 
@@ -263,12 +266,25 @@ extension MGExplainerFrame {
     /// with the solid document they belong to.
     public static func beatAnchorViews(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
                                        height: Int = MGAnnotationAnchorRules.height) -> (solid: MGSolidDocument?, views: [MGAnnotationAnchorView]) {
+        beatViews(doc, library: library, width: width, height: height) { d, v in d.showsCheckedAnchor(v) }
+    }
+
+    /// The framed view of every beat still whose solid view shows a label, a pointer or an arrow: the views both the
+    /// anchor checks and the arrow rule (`MGSolidDocument.arrowIssues`) test.
+    public static func beatCheckViews(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
+                                      height: Int = MGAnnotationAnchorRules.height) -> (solid: MGSolidDocument?, views: [MGAnnotationAnchorView]) {
+        beatViews(doc, library: library, width: width, height: height) { d, v in d.showsCheckedAnchor(v) || d.showsArrow(v) }
+    }
+
+    /// The framed view of every beat still whose solid view satisfies `shows`, with the solid document.
+    static func beatViews(_ doc: MGExplainer, library: MGSolidLibrary, width: Int, height: Int,
+                          where shows: (MGSolidDocument, MGSolidView) -> Bool) -> (solid: MGSolidDocument?, views: [MGAnnotationAnchorView]) {
         let r = beatPanes(doc, library: library, width: width, height: height)
         guard let d = r.solid, !d.annotations.isEmpty else { return (r.solid, []) }
         var out: [MGAnnotationAnchorView] = []
         for b in r.beats {
             let base = b.view.solid ?? d.view(step: nil)
-            guard base.annotations.contains(where: { d.annotations.checkedAnchor($0) != nil }) else { continue }
+            guard shows(d, base) else { continue }
             let clear = solidClearView(d, view: b.view, stepIndex: b.stepIndex, pane: b.pane)
             out.append(MGAnnotationAnchorView(view: base.ghosting(clear.autoGhost), params: pose(d, view: b.view), camera: clear.camera,
                                               width: Double(b.pane.width), height: Double(b.pane.height), step: b.stepIndex, beat: b.beat))

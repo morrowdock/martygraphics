@@ -141,6 +141,8 @@ public enum MGSolidReasons {
         "anchor.ambiguous.<id>": "A reference rule (the name gives more than one part), not a count limit.",
         "annotations.input": "A value bound of the default input, not a length, count or size of the document.",
         "annotation.anchor.untested.<id>": "An internal test budget; the report's `anchor` names the budget that ran out.",
+        "annotation.arrow.hidden.<id>": "Its own detail: the report's `arrow` (visible share, head, the part in the way, suggest).",
+        "annotation.arrow.untested.<id>": "An internal test budget; the report's `arrow` gives the view.",
         "story.beats": "The render tool's story plan, not a check report.",
         "story.frames": "The render tool's story plan, not a check report.",
     ]
@@ -149,7 +151,8 @@ public enum MGSolidReasons {
     public static let explainerStrictPrefixes = ["notes.unused."]
     /// Warning prefixes that the strict check report refuses (`MGSolidReport`, `MGExplainerReport`): the anchor view
     /// rule needs each still's camera, so the compile does not give it (`MGSolidProfile.refusal` does not refuse it).
-    public static let reportStrictPrefixes = ["annotation.anchor.hidden.", "annotation.anchor.untested."]
+    public static let reportStrictPrefixes = ["annotation.anchor.hidden.", "annotation.anchor.untested.", "annotation.arrow.hidden.",
+                                              "annotation.arrow.untested."]
     /// An author name after `MGSolidParser.token`.
     static let token = "[A-Za-z0-9_.]{1,32}"
     /// Longest reason `lookup` and `matches` read (a `<keys>` list is bounded by the document size).
@@ -442,6 +445,12 @@ public enum MGSolidReasons {
                       formats: [.check, .explainer], kind: .warning, strict: true),
         MGSolidReason(pattern: "annotation.anchor.untested.<id>",
                       meaning: "A step or beat still shows a label or pointer that was not fully tested: the view's 3,000,000 line-of-sight triangle tests, or the document's 3,000,000 nearer-part tests, ran out first. The strict check report refuses it, because strict does not pass what it did not check.",
+                      formats: [.check, .explainer], kind: .warning, strict: true),
+        MGSolidReason(pattern: "annotation.arrow.hidden.<id>",
+                      meaning: "A step or beat still shows an arrow (force, flow, motion or pointer) of which less than half of the sample points along its drawn shaft and head, or fewer than two of its three head samples, are visible from the still's camera: off screen, or behind another part by the line-of-sight rule of the anchor checks (the parts the arrow is anchored on hide it too; a cut part's inside does not count). The report's `arrow` gives the step or beat, the visible share, the part in the way and a suggested move.",
+                      formats: [.check, .explainer], kind: .warning, strict: true),
+        MGSolidReason(pattern: "annotation.arrow.untested.<id>",
+                      meaning: "A step or beat still shows an arrow that was not fully tested: the view's 3,000,000 arrow sample tests ran out first. The strict check report refuses it, because strict does not pass what it did not check.",
                       formats: [.check, .explainer], kind: .warning, strict: true),
         // Annotations (v2).
         r("annotations.object", [.assembly], "`annotations` is not an object (v2)."),

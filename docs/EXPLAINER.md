@@ -572,21 +572,27 @@ when its text holds `"explainer"`, else `assembly.bytes`. Exit codes: 0 ok, 1 re
 | `beats` | per kept beat: `{"n", "caption", "template", "unchecked", "tier", "facts", "checks": [{"value", "comparison", "target", "tol"}], "highlight": {"board", "solid", "annotations"}, "view"}` |
 | `annotations` | one entry per 3D annotation: the assembly report's `annotations` (`views.solid` also holds its `placements`) |
 | `legend` | `{"text", "groups": {"solved", "schematic", "given", "described"}, "notes", "claims"}` |
-| `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue (`"view": "beat"`), each `{"reason", "view", "id"}` |
+| `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue, then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per beat arrow issue (`"view": "beat"`), each `{"reason", "view", "id"}` |
 | `anchorIssues`, `anchorUntested` | with 3D annotations only: every label and pointer anchor issue (off part, then the beats in order), each with `suggest`, `noSuggest` and `repair` ([SOLID-3D.md](SOLID-3D.md#anchor-suggestions)), and the anchors a beat's test budget left untested ([SOLID-3D.md](SOLID-3D.md#anchor-checks)); `views.solid` holds neither |
 | `anchor` | with a refusal for an anchor reason only: the issue it names (`id`, `beat`, `cause`, `by`, `fix`, `suggest`, `repair`, …) |
+| `arrowIssues` | with 3D annotations only: every arrow a beat still does not show well enough (beats in order), each with the visible share, the part in the way, `suggest` (a move of the arrow), `noSuggest` and `repair` ([SOLID-3D.md](SOLID-3D.md#arrow-visibility)) |
+| `arrow` | with a refusal for an arrow reason only: the issue it names |
 | `limit` | with a refusal from a length, count or size limit only: `{"field", "actual", "limit", "unit"}` (+ `minimum`; `actualAtLeast` or `actualAtMost` instead of `actual` for a bound); `field` is a path into the document such as `title`, `notes.t3.basis`, `beats[2].say` or `solid.annotations.labels[0].text` ([REASONS.md](REASONS.md#limit-details)) |
-| `repair` | with a refusal only: one line for a model, built from `anchor`, `limit` or the catalog meaning (at most 400 Unicode scalars) |
+| `repair` | with a refusal only: one line for a model, built from `arrow`, `anchor`, `limit` or the catalog meaning (at most 400 Unicode scalars) |
 | `budget` | `{"bytes", "limit", "statements", "triangles", "triangleLimit"}` |
 | `engine` | the engine identity |
 
 Refusal order after the document loads: the solid's report checks (`check.meshOpen`, `check.gearsInterpenetrate`),
 then with `--strict` the solid's strict refusals (`joint.idle.<id>`, `frame.axis.off.<id>`, `annotation.unused.<id>`,
-`annotation.anchor.off.<id>`), `notes.unused.<id>`, and last `annotation.anchor.hidden.<id>` or
+`annotation.anchor.off.<id>`), `notes.unused.<id>`, then `annotation.anchor.hidden.<id>` or
 `annotation.anchor.untested.<id>` of the first beat still that does not show, or did not test, a label's or pointer's
-anchor. For those reasons `location` is `{"view": "beat", "beat": <0-based beat>, "id": <annotation>, "detail": <cause>}`
+anchor, and last `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` of the first beat still that does
+not show an arrow well enough (less than half of its samples or its head visible), or did not test it. For the anchor
+reasons `location` is `{"view": "beat", "beat": <0-based beat>, "id": <annotation>, "detail": <cause>}`
 (`occluded`, `hidden`, `ghosted`, `offscreen`, `untested`) and `anchor` names the part in the way, a fix and `suggest`
-(an anchor that passes in every beat that shows the label) or `noSuggest`. The beat test frames each beat as `marty-solid render` frames its still at 1280 × 800: the beats are
+(an anchor that passes in every beat that shows the label) or `noSuggest`; for the arrow reasons `detail` is `hidden`
+or `untested` and `arrow` gives the visible share, the part in the way and `suggest` (a move of the arrow that shows it
+in every beat that shows it, [SOLID-3D.md](SOLID-3D.md#arrow-visibility)) or `noSuggest`. The beat test frames each beat as `marty-solid render` frames its still at 1280 × 800: the beats are
 played in a speech-paced session so each beat's board pane and pane width are the render's, and the pane camera uses the
 unblocked-focus rule with its automatic ghosts ([SOLID-3D.md](SOLID-3D.md#anchor-checks)).
 The report is printed in full either way, so the author can repair from it.

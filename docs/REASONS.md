@@ -75,10 +75,11 @@ Warnings are not refusals in the plain API: they are listed in the check report'
 `warnings`. The strict profile (`MGSolidProfile.strict`, `marty-solid check --strict`)
 refuses the warnings marked "strict refuses". An explainer's strict check (`marty-solid check --strict` on an explainer)
 also refuses `notes.unused.<id>` (`MGSolidReasons.explainerStrictPrefixes`). The anchor view rules
-`annotation.anchor.hidden.<id>` and `annotation.anchor.untested.<id>` need the camera of each step or beat still, so
+`annotation.anchor.hidden.<id>` and `annotation.anchor.untested.<id>`, and the arrow rules
+`annotation.arrow.hidden.<id>` and `annotation.arrow.untested.<id>`, need the camera of each step or beat still, so
 only the check report gives them (`MGSolidReport`, `MGExplainerReport`, `marty-solid check`;
 `MGSolidReasons.reportStrictPrefixes`): a compile with `MGSolidParser.document(profile: .strict)` does not refuse them
-([SOLID-3D.md](SOLID-3D.md), "Anchor checks").
+([SOLID-3D.md](SOLID-3D.md), "Anchor checks" and "Arrow visibility").
 
 ## Order
 
@@ -169,6 +170,7 @@ list):
 | A placeholder format rule; its length is one of several causes. | `text.placeholder` |
 | An internal work budget of the step cuts. | `section.budget` |
 | Their own detail: the report's `anchor` (distance, tolerance, budget, `suggest`). | `annotation.anchor.off.<id>`, `annotation.anchor.untested.<id>` |
+| Their own detail: the report's `arrow` (visible share, head, view, `suggest`). | `annotation.arrow.hidden.<id>`, `annotation.arrow.untested.<id>` |
 | Host snapshots, not author documents. | `solidSnapshot.bytes`, `solidSnapshot.number`, `snapshot.bytes`, `snapshot.shown`, `snapshot.presented` |
 | A host value; the refusal carries nothing else by design. | `report.engine` |
 | The render tool's story plan, not a check report. | `story.beats`, `story.frames` |
@@ -409,6 +411,8 @@ list):
 | `annotation.anchor.off.<id>` | assembly | (warning; strict refuses) A label's anchor (`at`) or a pointer's tip (`to`) lies farther from the box of the part it names, in that part's own frame, than max(5 % of that box's diagonal, 0.5 % of the diagonal of the parts the views showing it draw); or, at the pose of a view that shows it, another part's solid (its surface, or its inside by watertight parity) comes nearer to it than that box by more than the precision epsilon at the dot (1e-6 × max(1, |p − anchor|) + 1e-4 mm, in anchor-relative coordinates). The nearer-part search is exact and budgeted; when its budget runs out the anchor is `annotation.anchor.untested.<id>`, never off. The report's `anchor` gives the distance, the tolerance, the view, the nearer part (`closer`) and a fix. |
 | `annotation.anchor.hidden.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows a label or pointer whose anchor point it does not show: the anchor's part is hidden or ghosted in that view, the point is off screen, or another part is the first surface on the line of sight (a cut part's inside does not count). The report's `anchor` gives the step or beat, the cause, the part in the way and a fix. |
 | `annotation.anchor.untested.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows a label or pointer that was not fully tested: the view's 3,000,000 line-of-sight triangle tests, or the document's 3,000,000 nearer-part tests, ran out first. The strict check report refuses it, because strict does not pass what it did not check. |
+| `annotation.arrow.hidden.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows an arrow (force, flow, motion or pointer) of which less than half of the sample points along its drawn shaft and head, or fewer than two of its three head samples, are visible from the still's camera: off screen, or behind another part by the line-of-sight rule of the anchor checks (the parts the arrow is anchored on hide it too; a cut part's inside does not count). The report's `arrow` gives the step or beat, the visible share, the part in the way and a suggested move. |
+| `annotation.arrow.untested.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows an arrow that was not fully tested: the view's 3,000,000 arrow sample tests ran out first. The strict check report refuses it, because strict does not pass what it did not check. |
 
 ### Annotations (v2)
 
