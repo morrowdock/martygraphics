@@ -611,7 +611,9 @@ name (`stage.output`) are accepted. A base id with copies and an instance id nam
 (`anchor.ambiguous.<id>`); an unknown id is `anchor.ref.<id>`. Bad shapes: `anchor.form`,
 `anchor.offset`, `anchor.point`, `anchor.world`. `{"part": "p"}` with no `offset` and no `point` is the part's
 centre and gets every centre rule: the anchor checks below test it like `{"point": "centre"}`, and a hidden centre is
-refused in strict mode with a `suggest` (before this release it was `anchor.form`). A suggestion still writes the
+refused in strict mode (before this release it was `anchor.form`). The report gives a `suggest` when a safe
+candidate exists; otherwise it gives `noSuggest` and its alternatives, as for the explicit centre form.
+A suggestion still writes the
 centre as `{"part", "point": "centre"}`.
 
 A label's anchor and a pointer's tip must lie on the part they name, and every step or beat that shows them must

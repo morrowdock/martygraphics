@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "fc36be56b37627b135818cdd3190661ba3c200905cd3eff9f45bdb7efb9d69a5"
+      "sha256": "e1d2109d98c3c110a10eb6eecf4f2d67cb016339e7bdc571a9ec7bd26f76c496"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1155,7 +1155,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "5144040fcdc13b2090cf690afa123f0107c8a57a4e9ab4ad6da8c7e03fcbcaef"
+      "sha256": "52efb9760b20f5bc75700e330b19ee675e2686a271c2a9d3abaacd35203a4718"
     },
     {
       "path": "docs/THIRD-PARTY.md",

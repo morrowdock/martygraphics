@@ -11,7 +11,8 @@
     meaning of `step.camera` and `view.camera` (so the check report's `repair` line) now lists them all.
   - **`{"part": id}` anchors.** An anchor object with only `part` (no `offset`, no `point`) is the part's centre, the
     same as `{"part": id, "point": "centre"}`; every centre rule applies (anchor checks, strict refusal of a hidden
-    centre with its `suggest`). Changed reason for an old input: `{"part": id}` alone was `anchor.form`; it is now
+    centre, with a `suggest` when a safe candidate exists and otherwise `noSuggest` and its alternatives).
+    Changed reason for an old input: `{"part": id}` alone was `anchor.form`; it is now
     accepted. Every other bad anchor shape is still `anchor.form`. The `anchor.form` meaning names the new form.
   - docs/SOLID-3D.md: a "Camera presets" table and the new anchor row; docs/REASONS.md: the three changed meanings.
     Check reports and golden files do not change (no shipped document uses the new names or the new form).
