@@ -114,7 +114,7 @@ final class MartySolidCLITests: XCTestCase {
     var golden: URL { URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Golden") }
 
     /// Fields this release adds to the check report; the golden files hold the output of the release before.
-    static let added: Set<String> = ["engine", "partTiers", "motionTiers", "anchorIssues", "anchorUntested", "anchor"]
+    static let added: Set<String> = ["engine", "partTiers", "motionTiers", "anchorIssues", "anchorUntested", "anchor", "arrowIssues", "arrow"]
 
     /// Removes top-level members from pretty-printed JSON. The writer puts each top-level key on its own line with an
     /// indent of two spaces and nests everything else deeper, so this is an exact text operation.
@@ -517,6 +517,49 @@ final class MartySolidCLITests: XCTestCase {
             XCTAssertEqual(b["offView"] as? Int, still["offView"] as? Int)
         }
         XCTAssertFalse(wSteps.compactMap { $0["offView"] as? Int }.isEmpty)
+    }
+
+    /// A box figure's whole view to a close-up of the engine on its back from the side: the straight move passes an
+    /// arm, so the story takes a routed path instead of cutting. The manifest says which path and why; the routed move
+    /// lasts 1.0 s; the hold cameras are the stills' cameras.
+    func testABlockedStoryMoveTakesARoutedPath() throws {
+        let doc = try write(#"{"v":2,"kind":"assembly","title":"Figure","parts":[{"id":"body","at":[0,0,1215],"shape":{"box":{"size":[400,250,740]}}},{"id":"head","at":[0,0,1680],"shape":{"box":{"size":[184,200,218]}}},{"id":"armL","at":[-550,0,1450],"shape":{"box":{"size":[700,120,120]}}},{"id":"armR","at":[550,0,1450],"shape":{"box":{"size":[700,120,120]}}},{"id":"legs","at":[0,0,420],"shape":{"box":{"size":[300,200,840]}}},{"id":"engine","at":[0,170,1300],"shape":{"box":{"size":[90,90,200]}}}],"steps":[{"say":"The figure.","camera":"hero"},{"say":"The engine.","focus":["engine"],"camera":"side"}]}"#, "routed-figure.json")
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("story-routed-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        let r = try renderOrSkip(["render", doc, out.path, "--size", "640x400", "--no-loop", "--story-fps", "10"])
+        XCTAssertEqual(r.status, 0, r.text)
+        let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+        let outputs = manifest?["outputs"] as? [[String: Any]] ?? []
+        let story = try XCTUnwrap(outputs.first { $0["file"] as? String == "story.mp4" })
+        XCTAssertEqual(story["routedTransitionSeconds"] as? Double, 1)
+        let beats = try XCTUnwrap(story["beats"] as? [[String: Any]])
+        XCTAssertNil(beats[0]["path"])
+        XCTAssertTrue(["pullback", "arc", "combined"].contains(beats[1]["path"] as? String ?? ""), "\(beats[1])")
+        XCTAssertEqual(beats[1]["pathReason"] as? String, "blocked")
+        XCTAssertEqual(beats[1]["blockedBy"] as? String, "armR")
+        XCTAssertEqual(beats[1]["cut"] as? Bool, false)
+        XCTAssertNil(beats[1]["cutReason"])
+        XCTAssertEqual(beats[1]["moveSeconds"] as? Double, 1)
+        XCTAssertEqual(try XCTUnwrap(beats[1]["holdStart"] as? Double) - (try XCTUnwrap(beats[1]["start"] as? Double)), 1, accuracy: 1e-9)
+        let stills = outputs.filter { ($0["file"] as? String)?.hasPrefix("step-") == true }
+        for (b, still) in zip(beats, stills) { XCTAssertEqual(try XCTUnwrap(b["camera"] as? NSDictionary), try XCTUnwrap(still["camera"] as? NSDictionary)) }
+    }
+
+    /// The arrow rule in fresh processes: the synthetic arrow inside an engine casing is refused the same way every run
+    /// (`annotation.arrow.hidden.push`, its view, the casing, the suggested move); standard warns.
+    func testAHiddenArrowIsRefusedTheSameWayInFreshProcesses() throws {
+        let doc = repo.appendingPathComponent("docs/fixtures/arrow-visibility/arrow-in-casing.explainer.json").path
+        let first = try run(["check", "--strict", doc])
+        XCTAssertEqual(first.status, 1, first.text)
+        XCTAssertEqual(first.json?["reason"] as? String, "annotation.arrow.hidden.push")
+        let arrow = try XCTUnwrap(first.json?["arrow"] as? [String: Any])
+        XCTAssertEqual(arrow["by"] as? String, "engine.casing")
+        XCTAssertEqual(arrow["beat"] as? Int, 2)
+        XCTAssertNotNil(arrow["suggest"] as? [String: Any])
+        for _ in 0..<2 { XCTAssertEqual(try run(["check", "--strict", doc]).text, first.text) }
+        let standard = try run(["check", doc])
+        XCTAssertEqual(standard.status, 0, standard.text)
+        XCTAssertEqual((standard.json?["warnings"] as? [[String: Any]])?.compactMap { $0["reason"] as? String }, ["annotation.arrow.hidden.push"])
     }
 
     /// `story.mp4` for an assembly with steps; a story over the frame cap is refused before any file is written, and

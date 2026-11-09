@@ -335,14 +335,14 @@
     {
       "anchorsWorld": [
         [
-          299.45559180856816,
-          0.34729635533386194,
-          1140.3981159285731
+          288.6710706921094,
+          130.4925953391562,
+          1107.6734544375793
         ],
         [
-          178.81664206457268,
-          42.89109988373182,
-          1349.350906256922
+          168.03212094811397,
+          173.03639886755417,
+          1316.6262447659278
         ]
       ],
       "id": "aTL2",
@@ -496,6 +496,7 @@
       "value": null
     }
   ],
+  "arrowIssues": [],
   "checks": {
     "gearPairs": 0,
     "meshesClosed": true,
@@ -614,7 +615,7 @@
       1,
       2
     ],
-    "executableSHA256": "10a6719c34d83cfbe1ff179fd2f7b0664c6824b5b27604a59b802fa0c6b6309a",
+    "executableSHA256": "89f0c9ae4ca4b355d5053613c1ef64389bd27608b0af0e31880cc76fb9bed7b3",
     "name": "MartyGraphics",
     "reportFormat": 1,
     "snapshotFormats": [
@@ -893,7 +894,7 @@
   },
   "file": {
     "lines": 59,
-    "sha256": "aa5078775cbb66f30be98b873c608dcb6500ee1d14aee164cd26a799460366b7"
+    "sha256": "75c9a9eb8b5cd372acf01d1bbc06d47a823b0fec97b6572f676b9e5611c24b66"
   },
   "legend": {
     "built": 0,

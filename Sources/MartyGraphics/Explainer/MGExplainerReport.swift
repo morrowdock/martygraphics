@@ -72,7 +72,10 @@ public struct MGExplainerReport: Equatable, Sendable {
     ///
     /// The beat anchor check (`MGExplainerFrame.beatAnchorIssues`) needs the document: it runs when `doc` is given (as
     /// `check(data:)` does). Its issues are warnings in both profiles and are listed, with the solid's off-part anchors,
-    /// in `anchorIssues`; a refusal for an anchor reason adds `anchor`, the issue it names.
+    /// in `anchorIssues`; a refusal for an anchor reason adds `anchor`, the issue it names. The arrow visibility rule
+    /// (`MGSolidDocument.arrowIssues`) runs on the same beat stills: its issues (`annotation.arrow.hidden.<id>`,
+    /// `annotation.arrow.untested.<id>`) are warnings listed in `arrowIssues`, the strict profile refuses the first one
+    /// after the anchor refusals, and a refusal for an arrow reason adds `arrow`.
     public static func make(_ s: MGExplainerSession, doc: MGExplainer? = nil, profile: MGSolidProfile = .standard,
                             source: MGSolidSource? = nil, engine: MGJSON? = MGEngine.identity) -> MGExplainerReport {
         make(s, doc: doc, profile: profile, source: source, engine: engine, suggest: true)
@@ -83,6 +86,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         var reason: String?, location: MGExplainerIssue?
         var solidJSON: MGJSON = .null
         var anchors = MGAnnotationAnchorReport()
+        var arrows = MGAnnotationArrowReport()
         if let d = s.solid {
             // The solid's own steps are the beats' views: the beat check below frames them as the beat stills do.
             let r = MGSolidReport.make(d, profile: profile, engine: nil, anchorViews: false)
@@ -96,7 +100,10 @@ public struct MGExplainerReport: Equatable, Sendable {
             for b in s.keptBeats { if let st = s.solidStep(forBeat: b.index), beatOf[st] == nil { beatOf[st] = b.index } }
             anchors.issues = d.offPartAnchors.map { $0.at(beat: $0.step.flatMap { beatOf[$0] }) }
             if let doc, !d.annotations.isEmpty {
-                let framed = MGExplainerFrame.beatAnchorViews(doc, library: s.library)
+                // The beat stills that show a label, pointer or arrow, framed once: the anchor checks test those that
+                // show a label or pointer, the arrow rule those that show an arrow.
+                let checked = MGExplainerFrame.beatCheckViews(doc, library: s.library)
+                let framed = (solid: checked.solid, views: checked.views.filter { v in checked.solid.map { $0.showsCheckedAnchor(v.view) } ?? false })
                 if let fd = framed.solid {
                     for v in framed.views { anchors.append(fd.anchorIssues(v)) }
                     if suggest {
@@ -111,6 +118,20 @@ public struct MGExplainerReport: Equatable, Sendable {
                             return anchorRecheck(copy, library: s.library, budget: budget)
                         }
                     }
+                    // The arrow visibility rule, its suggested moves and their re-check (`MGAnnotationArrowReport.verify`).
+                    let arrowViews = checked.views.filter { fd.showsArrow($0.view) }
+                    arrows.issues = arrowViews.flatMap { fd.arrowIssues($0) }
+                    if suggest, arrows.issues.contains(where: { $0.cause == .hidden }) {
+                        arrows.suggest(fd, views: arrowViews, budget: MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests))
+                        let arrowBudget = MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests)
+                        arrows.verify(anchorIssues: Set(anchors.issues.map(\.id))) { moves in
+                            guard let solid = doc.solid else { return nil }
+                            let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board,
+                                                   solid: MGSolidDocument.replacingArrows(solid, moves), beats: doc.beats)
+                            return arrowRecheck(copy, library: s.library, budget: arrowBudget)
+                        }
+                        arrows.measure(fd, views: arrowViews)
+                    }
                 }
             }
         }
@@ -119,6 +140,11 @@ public struct MGExplainerReport: Equatable, Sendable {
         }
         let beatIssues = anchors.issues.filter { $0.cause != .offPart }
         if reason == nil, profile == .strict, let a = beatIssues.first {
+            reason = a.reason
+            location = MGExplainerIssue(a.reason, view: .beat, beat: a.beat, id: a.id, detail: a.cause.rawValue)
+        }
+        // The arrow rule's refusals follow the anchor refusals (beat order).
+        if reason == nil, profile == .strict, let a = arrows.issues.first {
             reason = a.reason
             location = MGExplainerIssue(a.reason, view: .beat, beat: a.beat, id: a.id, detail: a.cause.rawValue)
         }
@@ -167,6 +193,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         var warnings: [MGJSON] = s.warnings.map { w in .object(["reason": .string(w.reason), "view": .string(w.view.rawValue), "id": w.id.map(MGJSON.string) ?? .null]) }
         // The beat anchor check's warnings follow (one per issue, in beat order).
         warnings += beatIssues.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
+        warnings += arrows.issues.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
         var triangles = 0
         if case .object(let so) = solidJSON, case .number(let t)? = so["triangles"] { triangles = Int(t) }
         let bytes = doc.map { $0.statementStream.utf8.count }
@@ -194,10 +221,13 @@ public struct MGExplainerReport: Equatable, Sendable {
         if let d = s.solid, !d.annotations.isEmpty {
             o["anchorIssues"] = .array(anchors.issues.map(\.json))
             o["anchorUntested"] = anchors.untestedJSON
+            o["arrowIssues"] = .array(arrows.issues.map(\.json))
         }
         let hit = reason.flatMap { MGSolidReport.anchorIssue($0, anchors.issues) }
         if let hit { o["anchor"] = hit.json }
-        if let r = reason { o["repair"] = .string(MGSolidReport.repair(r, part: location?.id, anchor: hit)) }
+        let arrowHit = reason.flatMap { r in arrows.issues.first { $0.reason == r } }
+        if let arrowHit { o["arrow"] = arrowHit.json }
+        if let r = reason { o["repair"] = .string(arrowHit?.repair ?? MGSolidReport.repair(r, part: location?.id, anchor: hit)) }
         if let source { o["file"] = file(source) }
         if let engine { o["engine"] = engine }
         return MGExplainerReport(ok: reason == nil, reason: reason, location: location, json: .object(o))
@@ -220,6 +250,20 @@ extension MGExplainerReport {
         return MGAnchorRecheck(issues: r.issues,
                                shown: framed.views.map { ($0.step, $0.beat, Set(fd.checkedAnnotations($0.view, params: $0.params) ?? [])) },
                                search: { fd.anchorSuggestions(ids: $0, views: framed.views, shared: budget, excluding: $1) })
+    }
+}
+
+extension MGExplainerReport {
+    /// The arrow and anchor issues of an explainer copy as `make` lists them (every beat still), for the re-check of
+    /// suggested arrow moves, and a search in its framing; nil when it does not load.
+    static func arrowRecheck(_ doc: MGExplainer, library: MGSolidLibrary, budget: MGSuggestionBudget) -> MGArrowRecheck? {
+        guard let a = anchorRecheck(doc, library: library) else { return nil }
+        let checked = MGExplainerFrame.beatCheckViews(doc, library: library)
+        guard let fd = checked.solid else { return nil }
+        let arrowViews = checked.views.filter { fd.showsArrow($0.view) }
+        return MGArrowRecheck(arrows: arrowViews.flatMap { fd.arrowIssues($0) }, anchors: a.issues,
+                              shown: checked.views.map { ($0.step, $0.beat, Set(fd.checkedAnnotations($0.view, params: $0.params) ?? [])) },
+                              search: { fd.arrowSuggestions(for: $0, views: arrowViews, shared: budget, excluding: $1) })
     }
 }
 

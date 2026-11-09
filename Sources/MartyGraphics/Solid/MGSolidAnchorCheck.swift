@@ -633,6 +633,12 @@ extension MGSolidDocument {
     /// The framed view of every step still as `marty-solid render` frames it at `width` × `height` whose view shows a
     /// label or pointer (see `stepAnchorIssues`).
     public func stepAnchorViews(width: Int = MGAnnotationAnchorRules.width, height: Int = MGAnnotationAnchorRules.height) -> [MGAnnotationAnchorView] {
+        stepViews(width: width, height: height) { showsCheckedAnchor($0) }
+    }
+
+    /// The framed view of every step still as `marty-solid render` frames it at `width` × `height` whose view
+    /// (`view(step:)`) satisfies `shows`.
+    func stepViews(width: Int, height: Int, where shows: (MGSolidView) -> Bool) -> [MGAnnotationAnchorView] {
         var out: [MGAnnotationAnchorView] = []
         guard !annotations.isEmpty else { return out }
         let w = Double(width), h = Double(height)
@@ -640,7 +646,7 @@ extension MGSolidDocument {
         let bands = MGSolidRenderPlan.bands(width: w, height: h)
         for i in steps.indices {
             let base = view(step: i)
-            guard base.annotations.contains(where: { annotations.checkedAnchor($0) != nil }), let shot = MGSolidShot.step(self, i) else { continue }
+            guard shows(base), let shot = MGSolidShot.step(self, i) else { continue }
             let clear = MGSolidFraming.clearView(self, shot: shot, aspect: aspect, titleBand: shot.title != nil ? bands.title : 0,
                                                  captionBand: shot.caption != nil ? bands.caption : 0)
             out.append(MGAnnotationAnchorView(view: base.ghosting(clear.autoGhost), params: shot.params, camera: clear.camera, width: w, height: h,

@@ -531,8 +531,9 @@ the posed parts in `posed`.
 
 Not checked: collisions between posed parts, joint limits of a figure beyond the
 component's parameter ranges, and the poses in between two steps (the story blend) are
-not checked against any rule; `MGStoryPlan.blockedMoves` tests each beat's end pose only,
-and it still counts hidden parts (so a move may cut where it need not).
+not checked against any rule; the story's move test (`MGStoryPlan.routes`) tests the part
+boxes at each beat's end pose only (the previous beat's and this beat's), and only the parts
+the move draws solid (see "Routed moves" under "Story video").
 
 ### Hide and show
 
@@ -862,7 +863,8 @@ preset. A frame lays out nothing, and says why in `refusal`, for a view or pose 
 ### Anchor checks
 
 Two rules check where the dot of a label and the tip of a pointer arrow land. The anchor of a label is its `at`; the
-anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensions are not tested.
+anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensions are not tested by these two rules;
+[Arrow visibility](#arrow-visibility) tests every arrow's shaft and head (pointers too).
 
 **On its part** (`annotation.anchor.off.<id>`). Two tests:
 
@@ -1071,6 +1073,85 @@ plain view when it shows the annotation), the poses during a step's or beat's sp
 other sizes than 1280 × 800, and whether the dot is covered by another text, a band or the legend. A part made of
 overlapping closed shapes can count a point inside two of them as outside; its nearest-triangle distance is used then.
 
+### Arrow visibility
+
+An arrow drawn inside a casing, or behind a part, says nothing. In every step or beat still that shows an arrow (force,
+flow, motion or pointer; `MGSolidDocument.arrowIssues`), the check samples the arrow as the renderer draws it at the
+still's pose, motion sense and step (`MGSolidAnnotations.primitives`): 16 points along the drawn shaft, evenly by
+length (a turn arrow's arc counts its chords; the shaft ends at the head's base), and 3 points along the head's axis,
+at 1/6, 1/2 and 5/6 of its length from its base (`MGAnnotationArrowRules`). An arrow shorter than its head has head
+samples only; an arrow the view does not draw (a motion arrow on a still anchor) is not tested.
+
+Each sample is tested from the still's camera with the line-of-sight rule of the anchor checks (`MGAnchorViewRule`):
+
+* off screen (outside the still's 1280 × 800 view, or behind the camera): not visible;
+* else hidden when a blocking part (one the view does not hide, with a coverage of 0.5 or more: view opacity times
+  `MGMaterialPreset.coverage`, so a ghost or glass does not block; a cut part tests its cut mesh) crosses the segment
+  from the camera to the sample before the sample less the precision epsilon there, with the watertight ray test, in
+  sample-relative coordinates (`mgAnchorRelative`, the epsilon `mgPrecision`); the nearest such part hides it;
+* the cut exception: when the view cuts a part the arrow is anchored on (`from`, `to` or `on`) and the sample lies in
+  that part's box on the kept side (or on the cut face), the parts whose box lies inside that part's box (in its own
+  frame, grown by 0.5 % of the drawn model's diagonal) do not hide it;
+* unlike an anchor, an arrow has no own-part exception: the parts it is anchored on hide it too, so an arrow from a
+  nozzle to its intake lip inside a closed casing is hidden.
+
+The arrow is **hidden** (`annotation.arrow.hidden.<id>`) in a view when less than half of all its samples are visible
+(`minVisibleShare` 0.5), or fewer than 2 of its 3 head samples are (`minHeadSamples`). So a weight arrow that starts at
+a body's centre passes while most of it and its head show; an arrow whose head ends inside a part is hidden. One view
+may spend 3,000,000 tests (`MGAnnotationArrowRules.tests`: every run-box and triangle test through runs of 64
+triangles, and building a part's runs costs its triangle count, once per view); the arrow whose test would pass it,
+and every later arrow of that view, is **untested** (`annotation.arrow.untested.<id>`). A sample whose line of sight
+meets no part box needs no test. The standard profile warns; the strict check report refuses the first arrow issue in
+step or beat order, after the anchor refusals (`MGSolidReasons.reportStrictPrefixes`; the compile does not refuse it,
+because it needs each still's camera).
+
+The report lists every arrow issue in `arrowIssues` (documents with annotations), and a refusal for an arrow reason adds
+`arrow`, the issue it names: `{"id", "meaning", "reason", "cause", "step", "beat", "by", "samples", "visible", "share",
+"head", "headVisible", "offScreen", "fix", "suggest", "noSuggest", "repair"}` (`step` and `beat` 1-based; `by` the part
+that hides the most samples, ties in assembly order, null when none does; `share` the visible share, rounded down to
+0.001). `repair` is one line of at most 400 Unicode scalars, for example:
+
+```text
+Arrow push (beat 2) is 5 % visible, hidden behind engine.casing; its head is hidden. Use {"from": {"part": "engine.nozzle", "offset": [-18.047, -46.987, 0]}, "to": {"part": "engine.intakeLip", "offset": [-18.047, -46.987, 0]}}.
+```
+
+**Suggested move** (`MGSolidDocument.arrowSuggestions`). For a hidden force, flow or pointer arrow, `suggest` is a move
+that passes the rule in every view that shows the arrow: `{"from": anchor, "to": anchor}` for a force or flow arrow
+(both ends move by the same offset, so the arrow keeps its direction and length), `{"from": anchor}` for a pointer (its
+tip stays; only its start moves). At the pose of the first view that shows the arrow, with `u` the arrow's direction,
+`c` the direction toward that view's camera without its `u` part and `e1`, `e2` a basis perpendicular to `u`, the
+offsets tried are the directions `u, −u, c, −c, e1, −e1, e2, −e2` (a pointer: `c, −c, e1, −e1, e2, −e2, −u`) times
+`k × S`, `k = 1 … 8`, where `S = max(the blocking part's box diagonal, the arrow's length) / 4` (at least 0.5 mm),
+smallest offset first, then in direction order. An end on a part moves in that part's frame (the offset taken into
+the frame at that pose; the resolved part id), rounded to 0.001 mm; a world end moves in the world. A candidate outside
+±4000 mm, or a pointer start within 4 shaft radii of its tip, is skipped. The first candidate whose samples are all
+visible in every view is the suggestion, else the first that passes the rule in every view. A motion arrow shows its
+anchor's motion and gets none (`code` `motion`). With none, `suggest` is null and `noSuggest` is `{"cause", "code",
+"step", "beat", "by", "other", "samples", "alternatives"}` (`code`: `motion`, `noclearoffset`, `budget`, `form`,
+`framing` or `conflict`; alternatives: leave the arrow out of that view's `annotate` list, ghost the part in the way,
+or change that view's camera).
+
+**Re-check.** A move changes the framing too (a still's camera fits the arrow ends it shows), so the moves are checked
+again once applied, as anchor suggestions are (`MGAnnotationArrowReport.verify`): the document with every move applied
+is compiled, framed and checked again. The set is accepted only when no moved arrow has an arrow issue and no
+annotation (arrow, label or pointer) that had no issue now has one. Otherwise a moved arrow that still fails is
+searched again in the copy's framing (at most twice) and then dropped (`framing`); the moves shown in the same view as
+a newly failing annotation are searched again away from their last start (at most twice) and then dropped
+(`conflict`, `other` naming it); a copy that does not compile drops the set (`form`). At most 6 re-checks; when they
+run out, the remaining moves are dropped (`framing`). `suggest` gives the anchors exactly as a document writes them.
+Budgets: one search for one arrow spends at most 8,000,000 tests and one report at most 64,000,000 for the searches
+(`suggestTests`, `suggestDocumentTests`); each re-check runs the check's own budgets. Known limit: the moves are
+re-checked without the anchor suggestions applied (and those without the moves), so applying both sets together is
+not checked as one.
+
+The synthetic explainer `docs/fixtures/arrow-visibility/arrow-in-casing.explainer.json` (a figure with one engine on
+its back, neutral names) holds a thrust arrow from the nozzle to the intake lip, inside the casing: strict refuses it
+(5 % visible, `engine.casing` in the way), and its `suggest`, applied, passes strict.
+
+Not tested: arrows in the plain view (`hero.png`, `solid-0.png`), the poses during a spin and camera moves, other sizes
+than 1280 × 800, whether a sample is covered by text, a band or the legend, and how thick the drawn shaft is (the
+samples lie on its axis). Dimensions are not tested.
+
 ### Not checked
 
 * Words: annotation text is checked for numbers only, not for meaning.
@@ -1161,8 +1242,10 @@ The report is built from sections (`MGSolidReport.sections`); a test keeps their
 disjoint, so a later feature adds a section and its docs without changing the others.
 The `annotations` section adds `annotations` and `placements` (see
 [Annotations](#annotations-v2)) only for a document with annotations; such a document also
-gets `legend.notes`, `anchorIssues` and `anchorUntested`, and `warnings` ends with one
-`annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per step issue ([Anchor checks](#anchor-checks)).
+gets `legend.notes`, `anchorIssues`, `anchorUntested` and `arrowIssues`, and `warnings` ends with one
+`annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per step issue ([Anchor checks](#anchor-checks)),
+then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per step arrow issue
+([Arrow visibility](#arrow-visibility)).
 For every shipped example and every JSON file under `docs/assets`, with and without
 `--strict`, the tool's output without the fields added in this release is byte-identical to
 the output of the release before (golden files in
@@ -1172,7 +1255,9 @@ release's output. The anchor checks add `anchorIssues`, `anchorUntested` and `an
 refused, `docs/assets/jet-suit/jet-suit.json` (label `lComb`), was fixed, so its golden files hold the fixed file's
 output. Every refused report now ends with `repair` (one line, [Anchor suggestions](#anchor-suggestions) and
 [REASONS.md](REASONS.md#limit-details)) and a limit refusal adds `limit`; the golden files of refused inputs hold these
-two new members and nothing else changed.
+two new members and nothing else changed. The arrow rule adds `arrowIssues` and `arrow`; the only shipped document it
+refused, `docs/assets/jet-suit/jet-suit.json` (arrow `aTL2`: its head was behind the pack in step 2), was fixed with
+the check's own suggested move, so its golden files hold the fixed file's output.
 
 ### Tiers per part and per motion
 
@@ -1736,7 +1821,7 @@ as its stills. The plan is
 | Hold of one beat | reading time = 1 s + caption Unicode scalars / 15, or the spin time if longer, bounded to 3–9 s |
 | Spin | a step's `spin` plays at 4 s per input turn from the beat's first frame (faster when that would take more than 9 s, so it always ends within the beat; the spin time is clamped to 9 s before it becomes a frame count, the sign is the turn direction, and a spin that is not finite counts as none); the rest of the beat holds the end pose. A step without `spin` holds still (so every shown dimension keeps the value its step was checked at) |
 | Camera | during a beat's hold the camera is exactly the camera of the beat's still, for the same layout (`MGStoryPlan.camera(frame:beatCameras:)`); in an explainer the solid pane is fitted for its own pixels in that beat's layout, full frame or split (`MGExplainerFrame.solidCamera`) |
-| Camera move | from the previous beat's camera to this beat's camera over the first 0.6 s of the beat (at most half the beat), eased in and out: target and field of view in a straight line, yaw the shorter way round, pitch linearly, distance geometrically. During the move the caption band is empty and no label is drawn (3D arrows and dimensions stay, with the legend and its notes); in an explainer the board still shows the previous beat's state. The beat's caption, labels and board claims appear on the first frame of its hold (`MGStoryPlan.holds(frame:cuts:)`, `caption(frame:cuts:)`, `holdStartFrame`). The first beat starts at its own camera. In an explainer, a beat whose solid pane has another size than the previous beat's (the board pane appears or goes) cuts to its own camera instead of moving, because the previous camera was fitted for the other pane. A move that would pass through a part also cuts (`MGStoryPlan.blockedMoves`): the camera path as played, ends included, is tested exactly against every part's posed box (at the previous beat's and this beat's pose) grown by the near-plane distance at the larger camera distance, with a segment-versus-box slab test. A move that keeps yaw, pitch and distance is one straight segment. A move that turns or zooms is split into straight chords of the played path, at most 1,024 (`maxMoveChords`), and each box also grows by the proven chord error (from a bound on the path's curvature), so no collision between chords is missed; a move that only passes close to a part may cut too |
+| Camera move | from the previous beat's camera to this beat's camera over the first 0.6 s of the beat (`transitionSeconds`; at most half the beat), eased in and out: target and field of view in a straight line, yaw the shorter way round, pitch linearly, distance geometrically. When that straight move would pass through a part, a routed path is taken instead (pull back, arc, or both; [Routed moves](#routed-moves) below); a routed move takes 1.0 s (`routedTransitionSeconds`; at most half the beat), and only when no path is clear does the beat cut. During the move the caption band is empty and no label is drawn (3D arrows and dimensions stay, with the legend and its notes); in an explainer the board still shows the previous beat's state. The beat's caption, labels and board claims appear on the first frame of its hold (`MGStoryPlan.holds(frame:cuts:)`, `caption(frame:cuts:)`, `holdStartFrame`). The first beat starts at its own camera. In an explainer, a beat whose solid pane has another size than the previous beat's (the board pane appears or goes) cuts to its own camera instead of moving, because the previous camera was fitted for the other pane |
 | Rate and size | 30 frames per second by default (`--story-fps 10` or `30`), at the still size (default 1280 × 800) |
 | Length | at most 3,600 frames (2 minutes at 30 fps); a longer story is refused with `story.frames` before any file is written (`--no-story` renders without it) |
 
@@ -1745,7 +1830,11 @@ a step `pose`, are in between two beats: during the camera move into a beat the 
 either beat poses move from the previous beat's placements to this beat's with the same
 eased blend as the camera (`MGStoryPlan.placements`), and the hold shows the beat's own pose.
 The view (cuts, ghosts, hidden and shown parts), the highlight and the input and explode
-change at the beat's first frame; the
+change at the beat's first frame, with one exception during the camera move: a part that the
+previous beat draws as a ghost (a step `ghost` or an automatic ghost; drawn fainter than the
+part's own opacity) is also drawn as a ghost during the move into the next beat
+(`MGSolidView.moving(from:_:)`), so a camera that leaves a close-up through a ghosted body
+does not start inside a solid one; it turns solid when the hold starts. The
 caption, the labels and (in an explainer) the board's new state appear when the hold
 starts, so a caption never names something the camera has not reached yet, and a
 caption with a number shows only while its own beat's state is on screen at the beat's
@@ -1754,16 +1843,64 @@ The last frame of each beat has the same pose and camera as that beat's still. L
 keep their places for the rest of the beat. The writer is the one
 `loop.mp4` uses: a pool per frame, the same failure handling (fail fast, a 60-second
 stall timeout, the output directory removed). The manifest record gives `codec`,
-`width`, `height`, `fps`, `frames`, `seconds`, `transitionSeconds`, `holdSeconds`
-(`min`, `max`) and per beat `{"beat", "start", "holdStart", "seconds", "camera", "offView",
-"cut", "cutReason"}` (start time, the time the caption, labels and claims appear, and
+`width`, `height`, `fps`, `frames`, `seconds`, `transitionSeconds`, `routedTransitionSeconds`,
+`holdSeconds` (`min`, `max`) and per beat `{"beat", "start", "holdStart", "seconds", "camera",
+"offView", "cut", "cutReason", "path", "pathReason", "blockedBy", "moveSeconds"}` (start time,
+the time the caption, labels and claims appear, and
 length in seconds, the hold camera, the number of shown annotations whose anchor is
 outside the view in the beat's last frame plus the focus samples still hidden (absent
 when the beat shows no annotation and has no tested focus), whether the beat cut
-instead of moving, and why: `layout` or `blocked`), plus the unblocked-focus fields
+instead of moving, and why: `layout` or `blocked`; for each beat with a tested move,
+its path `straight`, `pullback`, `arc`, `combined` or `cut`, why (`clear`, `blocked`,
+`layout`, or `untested` for a camera that is not finite), the first part the straight
+move meets (`blockedBy`, for `blocked`) and the move's length in seconds, 0 for a cut;
+the first beat has no move), plus the unblocked-focus fields
 `autoGhost`, `occluded`, `focusSamples`, `view` and `facesCut` for a tested focus. Each step still's record (`step-<n>.png`) and each explainer beat still's
 record (`beat-<n>.png`) give the same `camera` and `offView`, so a host can check that
 the story holds on the still's framing.
+
+### Routed moves
+
+`MGStoryPlan.routes` gives each beat's camera move (`MGStoryMove`). For each beat after the first whose camera and
+the previous beat's camera are known, paths are tried in a fixed order, and the first clear one is taken:
+
+1. `straight`: the move above.
+2. `pullback`, for each pull-back distance `D` in ascending order (1.5, 2, 3 and 4 times the start camera's distance,
+   `pullbackFactors`, and the distance at which the start camera leaves the model's bounding sphere grown by the
+   clearance, when that is at most 8 times the start distance): the camera moves straight out along its view to `D`
+   (same target, yaw, pitch and field of view), then moves to the end camera.
+3. `arc`, for each radius `R`: from the start camera to a key camera that looks at the model's bounds centre from the
+   start camera's direction at distance `R`; an orbit about that centre at distance `R` (yaw the shorter way, pitch
+   linearly, pitch limited to ±85°) to the end camera's direction; then to the end camera. The radii are `r0 + c`,
+   `1.25 × max(r0, ρ) + c` and `1.75 × max(r0, ρ) + c` (`arcFactors`), where `r0` is the larger of the two cameras'
+   distances from the centre, `ρ` the bounding sphere's radius (half the bounds diagonal) and `c = 0.1 ρ`
+   (`routeClearance`). So the orbit is never closer to the centre than either camera.
+4. `combined`, for each pull back and then each radius: the pull back, then the arc from there.
+
+At most 24 paths per move (`maxRouteCandidates`). Each path is a chain of key cameras, each leg played with the move's
+own interpolation (`MGStoryPlan.camera(from:to:_:)`); the legs share the move's eased time by their weight (camera path
+length plus target travel plus turn times mean distance), so the camera keeps about one pace. A path starts exactly at
+the previous beat's camera and ends exactly at this beat's camera, so the hold cameras are always the stills' cameras.
+
+**The test.** A path is clear when no leg meets a part box. Each leg is split into straight chords of the played path
+as above (at most 1,024, `maxMoveChords`, with the proven chord error from the curvature bound), and also so that the
+camera distance changes by at most 10 % per chord (`routeDistanceStep`). Each chord is tested with the exact
+segment-versus-box slab test against each blocking part's posed box (render frame, at the previous beat's pose and at
+this beat's pose), grown by the renderer's near plane at the larger camera distance of that chord's two ends plus the
+leg's chord error. The blocking parts are the parts the move draws solid: the parts that the move's view (the beat's
+view with its automatic ghosts, plus the previous beat's ghosts) does not hide and draws with a coverage of
+`MGSolidFraming.blockingOpacity` (0.5) or more, the coverage rule of the anchor checks (view opacity times
+`MGMaterialPreset.coverage`, so a ghost and glass do not block). The bounds centre and sphere are those of the
+blocking boxes. The straight path is tested the same way; it is clear where the earlier rule
+(`MGStoryPlan.blockedMoves`, still in the library: every part, and one growth for the whole move, the near plane at the
+larger camera distance) cut a move that passes a part at a close camera's own near-plane distance.
+
+A beat whose move has no clear path cuts (`cut`, reason `blocked`, `blockedBy` the first part the straight move meets);
+a beat whose solid pane changed size cuts with reason `layout` without a test. The path test is deterministic; at most
+24 paths of at most 4 legs of 1,024 chords against 2 × 96 boxes per move. Not tested: the parts between two poses
+(only the boxes at the two beats' poses), the move's other frames against the meshes themselves (boxes only, so a path
+that only passes close to a part may be refused), and whether the routed path looks good: the arc and pull back keep
+the model in view only roughly (the camera looks along its interpolated target).
 
 ## Snapshot for other renderers
 

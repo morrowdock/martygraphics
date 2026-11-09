@@ -414,7 +414,8 @@ extension MGStoryPlan {
 
     /// The played path of a move as chord end points (render frame) and the box growth that makes the chord test
     /// conservative: the near plane at the larger distance plus the proven chord error. Nil for non-finite cameras.
-    static func movePath(_ a: MGSolidCamera, _ b: MGSolidCamera) -> (points: [MGVec3], grow: Double)? {
+    /// `minChords` (routed moves, `legChords`) raises the chord count; the error bound only shrinks.
+    static func movePath(_ a: MGSolidCamera, _ b: MGSolidCamera, minChords: Int = 1) -> (points: [MGVec3], grow: Double)? {
         guard MGSolidFraming.finite(a), MGSolidFraming.finite(b), a.yaw.isFinite, b.yaw.isFinite, a.pitch.isFinite, b.pitch.isFinite else {
             return nil
         }
@@ -432,7 +433,7 @@ extension MGStoryPlan {
         let tol = MGSolidFraming.nearPlane(distance: dmin)
         guard bound.isFinite, tol > 0 else { return nil }
         let need = bound > 0 ? (bound / (8 * tol)).squareRoot().rounded(.up) : 1
-        let chords = Int(min(Double(maxMoveChords), max(1, need)))
+        let chords = Int(min(Double(maxMoveChords), max(Double(max(1, minChords)), need)))
         let error = bound / (8 * Double(chords * chords))
         let points = (0...chords).map { MGStoryPlan.camera(from: a, to: b, Double($0) / Double(chords)).position }
         guard points.allSatisfy({ $0.x.isFinite && $0.y.isFinite && $0.z.isFinite }) else { return nil }

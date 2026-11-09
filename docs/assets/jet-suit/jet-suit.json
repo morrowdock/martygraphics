@@ -39,7 +39,7 @@
   "arrows": [
    {"id": "aTB", "meaning": "force", "from": {"part": "back.intake", "offset": [0, 0, -20]}, "to": {"part": "back.intake", "offset": [0, 0, -330]}, "text": "Thrust"},
    {"id": "aTL1", "meaning": "force", "from": {"part": "armL1.intake", "offset": [0, 0, -15]}, "to": {"part": "armL1.intake", "offset": [0, 0, -260]}},
-   {"id": "aTL2", "meaning": "force", "from": {"part": "armL2.intake", "offset": [0, 0, -15]}, "to": {"part": "armL2.intake", "offset": [0, 0, -260]}},
+   {"id": "aTL2", "meaning": "force", "from": {"part": "armL2.intake", "offset": [-25.702, -132.153, -15]}, "to": {"part": "armL2.intake", "offset": [-25.702, -132.153, -260]}},
    {"id": "aTR1", "meaning": "force", "from": {"part": "armR1.intake", "offset": [0, 0, -15]}, "to": {"part": "armR1.intake", "offset": [0, 0, -260]}},
    {"id": "aTR2", "meaning": "force", "from": {"part": "armR2.intake", "offset": [0, 0, -15]}, "to": {"part": "armR2.intake", "offset": [0, 0, -260]}},
    {"id": "aWeight", "meaning": "force", "cause": "gravity", "from": {"part": "pilot.back", "offset": [0, -125, -350]}, "to": {"part": "pilot.back", "offset": [0, -125, -850]}, "text": "Weight: pilot, suit and fuel"},

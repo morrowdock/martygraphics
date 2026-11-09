@@ -1,0 +1,10 @@
+{"v": 1, "kind": "explainer", "title": "An arrow inside a casing (synthetic)",
+ "solid": {"v": 2, "parts": [
+  {"id": "figure", "use": "mannequin", "with": {"leftShoulder": 50, "rightShoulder": 50}},
+  {"id": "engine", "use": "microTurbojet", "with": {"diameter": 90, "length": 200}, "parent": "figure.back", "at": [0, 45, 100], "rot": [1, 0, 0, 180]}],
+  "annotations": {
+   "arrows": [{"id": "push", "meaning": "force", "from": "engine.nozzle", "to": "engine.intakeLip"}],
+   "labels": [{"id": "lEngine", "at": {"part": "engine.casing", "point": "centre"}, "text": "Engine (example)"}]}},
+ "beats": [
+  {"say": "A figure carries one engine on its back.", "view": {"camera": "back", "annotate": ["lEngine"]}},
+  {"say": "The engine pushes along its axis.", "view": {"camera": "back", "annotate": ["push"]}}]}
