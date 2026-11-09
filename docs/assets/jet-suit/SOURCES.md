@@ -50,14 +50,15 @@ F3 (earlier-rig history), F6 (per-engine thrust), F16 (all-up mass), F17 (altitu
 
 ## What the engine checks
 
-The legend line in each still reads **Solved 16 · Not checked 20**
+The legend line in each step still reads **Solved 17 · Not checked 20**
 ([check output](check-strict.json)).
 
-- **Solved 16:** the engine computed these. They are the motion of 15 rotating parts (the impeller, turbine
-  wheel and shaft of each of the 5 engines) and the direction of the weight arrow (straight down).
+- **Solved 17:** the engine computed these. They are the motion of 15 rotating parts (the impeller, turbine
+  wheel and shaft of each of the 5 engines), the direction of the weight arrow (straight down), and the sense of
+  the shaft-turn arrow in step 7.
 - **Not checked 20:** 8 labels and 4 captions that give a reported number, a quote or a version, each marked with
   its fact-key row, and 8 arrows whose direction and length are as authored. The engine shows them but does not
   check them. Their facts come from the table above. Labels that only name a part, and the other 3 captions, are
   not counted in the legend; the engine does not check their words either.
 - The engine does not compute thrust, rpm, the load split or the hover balance. "Arrow lengths are not to scale"
-  is printed in each still. Engine sizes, the pack and the arm pose are schematic, not measured Gravity hardware.
+  is printed in each step still. Engine sizes, the pack and the arm pose are schematic, not measured Gravity hardware.

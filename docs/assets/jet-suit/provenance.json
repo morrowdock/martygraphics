@@ -1,83 +1,100 @@
 {
   "source": {
     "repository": "https://github.com/morrowdock/martygraphics",
-    "commit": "70bfc47ad9bbdd3db396037fe450374a5dd497ab",
-    "commitNote": "origin/main after PR #37 (unblocked focus, story move cuts, microTurbojet); the engine was built from a clean checkout of this commit",
-    "model": "docs/assets/jet-suit/jet-suit.json (54 lines, 71 parts, 7 steps); two anchors changed on 2026-11-08, see revisions",
-    "authoring": "Hand-built. A Claude agent wrote this JSON by hand from fact-checked research and a merged fact key. It is not the output of the engine's AI loop answering a prompt. Its bytes are the reviewed version except two label anchors (see revisions).",
+    "commit": "a765ead65c6c7fbbd13a338039f1642434fadad7",
+    "commitNote": "origin/main after PR #40 (strict label and pointer anchors); at build, check and render time the working tree differed from this commit only in docs/assets/jet-suit/jet-suit.json",
+    "model": "docs/assets/jet-suit/jet-suit.json (59 lines, 76 parts, 7 steps): the sixth version of the lesson",
+    "authoring": "Hand-built. A Claude agent wrote this JSON by hand from fact-checked research and a merged fact key. It is not the output of the engine's AI loop answering a prompt. Its content is the reviewed sixth version (a one-line file, SHA-256 6d8360e01e625b44eab4d17afe21318bf1aababa83483a7e6ae83f184feeaa59) with two label anchors changed (see changeFromReviewed). The file is laid out one part, label, arrow and step per line, as the fifth version was; parsed, it equals the reviewed JSON except for those two anchors.",
     "license": "Apache-2.0; procedural geometry, no images, models or stock assets",
     "sourceFiles": {
-      "docs/assets/jet-suit/jet-suit.json": "9bc7dd9355beffd4f2a8695e8087969a8baab45756c3a8e2abee874c61d21689",
+      "docs/assets/jet-suit/jet-suit.json": "aa5078775cbb66f30be98b873c608dcb6500ee1d14aee164cd26a799460366b7",
       "Examples/Solid3D/Package.swift": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b",
       "Package.swift": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f"
     }
+  },
+  "changeFromReviewed": {
+    "what": "The same two anchor changes that PR #40 made to the fifth version, so that the strict anchor rules accept the file: lComb anchor {\"part\": \"back.combustor\", \"offset\": [30, 0, 148]} -> {\"part\": \"back.combustor\", \"offset\": [0, -30, 148]} (inside the annular chamber, on the cut face); lPilot anchor {\"part\": \"helmet\", \"offset\": [0, -110, 0]} -> {\"part\": \"helmet\", \"offset\": [0, 108, 0]} (the back of the helmet, which faces the step 1 camera). No text, fact, part, step, pose or camera changed. No further anchor move was needed.",
+    "changesFromTheFifthVersion": "Step 5 poses the pilot (both upper arms swing back, elbows straight); five exhaust plume parts (named \"Exhaust plume (illustration)\") are shown in steps 2 and 5 only; highlights name whole engine instances; explode vectors are set per instance; the two cutaway disclaimer labels are one two-line label; the step 3 back-share label adds \"(Browning, 2021)\"; the step 5 flow arrow starts at an arm engine's exhaust; step 7 adds a turn arrow (aSpin) on back.shaft."
   },
   "capture": {
     "machine": "Apple M1 Mac mini (Macmini9,1), arm64; macOS 27.2",
     "swift": "Apple Swift 6.4.2 (swiftlang-6.4.2.1.9)",
     "configuration": "SwiftPM release build",
-    "capturedUTC": "2026-11-08",
-    "engineExecutableSHA256": "f859f7c7c810367dc54a38ebb9ea7b2624dc0d9c1b166858c0ef6d923b2c3f92",
+    "capturedUTC": "2026-11-09",
+    "engineExecutableSHA256": "10a6719c34d83cfbe1ff179fd2f7b0664c6824b5b27604a59b802fa0c6b6309a",
     "commands": [
       "swift build -c release --package-path Examples/Solid3D",
       "marty-solid check --strict docs/assets/jet-suit/jet-suit.json",
-      "marty-solid render docs/assets/jet-suit/jet-suit.json <NEW_DIR> --size 1280x800 --loop-fps 30 --story-fps 30"
+      "marty-solid render docs/assets/jet-suit/jet-suit.json <NEW_DIR> --size 1280x800 --loop-fps 30 --story-fps 30",
+      "reencode <NEW_DIR>/story.mp4 story.mp4 1000000 (AVFoundation; see artifacts.story.mp4.reencode)",
+      "sips -s format jpeg -s formatOptions 82 <NEW_DIR>/step-2.png --out poster.jpg"
     ],
-    "note": "The 70bfc47 capture: check exited 0 with ok true, strict true, no warnings. Every artifact listed below is now from the 2026-11-08 revision (see revisions); this capture block records the original render."
+    "oneBuild": "Every file listed under artifacts comes from this one build and this one render: the check report and the render manifest name the same engine executable (SHA-256 above) and the same source hash. The render also wrote exploded.png, loop.gif, loop.mp4, snapshot.json and manifest.json; they are not published.",
+    "check": "exit 0, ok true, strict true, warnings empty, anchorIssues empty, anchorUntested empty; legend Solved 17 · Not checked 20.",
+    "renderManifestSHA256": "b8dd3cb210d2a7f58ab32c03cdbc1b6fd60637e6fb1c03c7a6c936d20da12b15"
   },
   "review": {
-    "facts": "Every factual sentence maps to a row of the merged fact key (F1-F20) in docs/assets/jet-suit/SOURCES.md. The key merges two independent AI model web fact-checks (GPT-6.1 Sol and Gemini 3.8 Flash).",
-    "verdict": "An independent read-only review of the same JSON bytes gave PUBLIC-OK for the 7 step stills and story.mp4, with hero.png excluded. That review used renders from the PR #37 head (0a53cc6dec88d0584041c69eb18357d7c314b165) before its merge.",
-    "differenceFromReviewedRenders": "Between 0a53cc6 and this commit the only renderer change is the subtitle line (medium weight, 85 % ink, was regular 60 %). The subtitle now names jet-suit.json, not the earlier working file name. All 7 new stills were inspected one by one: labels, captions, arrows and framing match the reviewed stills. A pixel diff also shows small rendering differences in under 1.7 % of colour channels; no label, arrow or caption moved."
+    "facts": "Every factual sentence maps to a row of the merged fact key (F1-F20) in docs/assets/jet-suit/SOURCES.md. The key merges two independent AI model web fact-checks (GPT-6.1 Sol and Gemini 3.8 Flash). The sixth version adds no fact.",
+    "verdict": "An independent read-only review of the reviewed sixth-version JSON gave PUBLIC-OK for the 7 step stills and hero.png. It checked the story video at its 7 hold frames and one frame of the move into step 5; an addendum checked two frames of the move out of step 5, and with it the story video is PUBLIC-OK. The exploded view was not added to the public set.",
+    "differenceFromReviewedRenders": "The reviewed renders used the earlier two anchors and a one-line file, so their subtitle read \"(1 line)\". CoreGraphics RGB comparison of each new still with the reviewed still, top-left image coordinates: in every still, channels differ by more than 24/255 only in the subtitle (x 345-655, y 82-94: \"(59 lines)\") and, in step 1, the box x 459-842, y 132-187 (the moved \"Schematic pilot\" label and dot) and, in step 6, the box x 327-626, y 369-435 (the moved \"Combustion chamber\" label and dot). Outside those boxes no channel differs by more than 24/255 (render noise); in total 0.21 % to 1.41 % of channels differ per still, the boxes included.",
+    "builderInspection": "The builder viewed all 7 new stills, hero.png and the extracted story frames listed under artifacts.story.mp4.inspected. Step 1: the \"Schematic pilot\" dot is solid, on the back of the helmet. Step 6: the \"Combustion chamber\" dot is inside the copper chamber. Steps 2 and 5 show the plumes; no other step does."
   },
   "artifacts": {
+    "hero.png": {
+      "sha256": "38856ca65adf39b864b4854212690c6d116d1e3034802eadb1d40e0ebb06c798",
+      "bytes": 802543,
+      "from": "render hero.png, unedited",
+      "pixels": "1280x800",
+      "framing": "modelFitted"
+    },
     "step-1.png": {
-      "sha256": "1dbf1aaebd62a205a5680a37a7198c80180f544874b9486e09c59fe32fe9b6eb",
-      "bytes": 686956,
-      "from": "render step 1 (step-1.png) of the 2026-11-08 revision, unedited",
+      "sha256": "b51fee44959d1f419d002cc99e8a021c9fe7c5686e53d399cf04dba97dedbd0a",
+      "bytes": 686930,
+      "from": "render step 1 (step-1.png), unedited",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
       "occluded": 0
     },
     "step-2.png": {
-      "sha256": "18da12bce3ce0a0a9c241e774f005051faf76b5aafbba9deb1a4b8ee7eacc4c4",
-      "bytes": 698382,
-      "from": "render step 2 (step-2.png) of the 2026-11-08 revision, unedited",
+      "sha256": "9fe34e9817a3c5ea907657bef613b2720cf17c4b2c293dd3d51beaad9967eb93",
+      "bytes": 707038,
+      "from": "render step 2 (step-2.png), unedited",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
       "occluded": 0
     },
     "step-3.png": {
-      "sha256": "858fa68f25696b4b44849a418d379577ca75e9208dcb10364430b7dad3c891c3",
-      "bytes": 681273,
-      "from": "render step 3 (step-3.png) of the 2026-11-08 revision, unedited",
+      "sha256": "e9fa53a23820bd1b0fb32ff2e42165b23a489405b8b2d493532a384226c34805",
+      "bytes": 684264,
+      "from": "render step 3 (step-3.png), unedited",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
       "occluded": 0
     },
     "step-4.png": {
-      "sha256": "34f8adbad48e57e42ed0b2485206f927d70e570c7da37a5c41b4385609428eb4",
-      "bytes": 692370,
-      "from": "render step 4 (step-4.png) of the 2026-11-08 revision, unedited",
+      "sha256": "1d7a0a684c2b9cb28230a77a564e4dc398b66545e63fff525e8f95cc09bf69b1",
+      "bytes": 691154,
+      "from": "render step 4 (step-4.png), unedited",
       "pixels": "1280x800",
       "framing": "modelFitted",
       "offView": 0
     },
     "step-5.png": {
-      "sha256": "584b100b63603d2ce9f68fd0345e5469b9615d034dff6c65c41734748a54ddc5",
-      "bytes": 678953,
-      "from": "render step 5 (step-5.png) of the 2026-11-08 revision, unedited",
+      "sha256": "6d6d1d07251c6426a23554d0f0b2c042d3f8c215d52dd85241e6a4bb6a29a9ec",
+      "bytes": 671866,
+      "from": "render step 5 (step-5.png), unedited",
       "pixels": "1280x800",
-      "framing": "modelFitted",
-      "offView": 0
+      "framing": "focus",
+      "offView": 0,
+      "occluded": 0
     },
     "step-6.png": {
-      "sha256": "c16f4550064028c77d934b05cb8fbd3f7c0ec8ed24ad431bfbe2a55ba165a478",
-      "bytes": 944386,
-      "from": "render step 6 (step-6.png) of the 2026-11-08 revision, unedited",
+      "sha256": "e8222f33787ad5888420d058a75dc8e89b2012dd7b3f68fdcd6c769218aaf767",
+      "bytes": 720872,
+      "from": "render step 6 (step-6.png), unedited",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
@@ -85,9 +102,9 @@
       "facesCut": true
     },
     "step-7.png": {
-      "sha256": "cf8924378a61feb42bf41d7242d64f3f619c2db9895f2df87e32c7ff46ba8691",
-      "bytes": 869747,
-      "from": "render step 7 (step-7.png) of the 2026-11-08 revision, unedited",
+      "sha256": "29b44f44f2ba08052cc09befeea88c74cb13d22fcf8f99b0a32be9f39b5d58d0",
+      "bytes": 681777,
+      "from": "render step 7 (step-7.png), unedited",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
@@ -95,61 +112,43 @@
       "facesCut": true
     },
     "story.mp4": {
-      "sha256": "99b4af3e8baa1b2be37d0beec6c188bb84e142116e42e78e8fcf707f523694f3",
-      "bytes": 6178810,
-      "from": "render story.mp4 of the 2026-11-08 revision, re-encoded for size (see reencode)",
+      "sha256": "b3cb3ef8dca91e5ac2177c59ad7f04d41728ec98bd6864798d3a51a35b0552ad",
+      "bytes": 5657013,
+      "from": "render story.mp4, re-encoded for size (see reencode)",
       "pixels": "1280x800",
       "fps": 30,
       "frames": 1890,
       "seconds": 63,
       "beats": 7,
       "renderedOriginal": {
-        "sha256": "53581f3e22f8d1d4f4fd7bc0c79ba9712723ffb11b67d78992f3e4c1026d5532",
-        "bytes": 15800894,
-        "note": "The engine's story.mp4 (1890 frames, 30 fps, 63 s, 7 beats of 9 s, no cuts, video only). Not kept in git: 15.8 MB."
+        "sha256": "0da0f06358ba97508474b3d1c9dbcc221966764e1637d3aa1b7a88e904d1cd1d",
+        "bytes": 13100317,
+        "note": "The engine's story.mp4 (1890 frames, 30 fps, 63 s, 7 beats of 9 s, no cuts, video only). Not kept in git: 13.1 MB."
       },
-      "reencode": "AVFoundation only: AVAssetReader (32BGRA) to AVAssetWriter, H.264 High profile, average 1,000,000 bit/s, key frame every 60 frames, every source frame kept (1890 in, 1890 out). A small Swift script outside the repository; no other tool. Hold frames at 5.0, 32.5, 52.0 and 59.5 s were extracted; 5.0 and 52.0 s were inspected: text and labels stay sharp."
+      "reencode": "AVFoundation only: AVAssetReader (32BGRA) to AVAssetWriter, H.264 High profile (auto level), average 1,000,000 bit/s, key frame at most every 60 frames, every source frame kept (1890 in, 1890 out). The same settings as the earlier refresh. A small Swift script outside the repository (source SHA-256 f27ee8cd1fb85d4574935c7204d505191d86fb1fc62ead77b2ab595902c47a24); no other tool. Higher rates were tried and give almost the same size (2,000,000 bit/s: 5,877,463 bytes), so the encoder, not the rate, sets the size of this video.",
+      "inspected": "Frames were extracted from this file with AVAssetImageGenerator (zero time tolerance) and viewed one by one: the 7 hold frames at 5, 14, 23, 32, 41, 50 and 59 s (each matches its step still; text and labels are sharp), the move into step 5 at 36.13, 36.33 and 36.53 s (the arms swing back, the plumes stay on the nozzles, no labels or caption during the move) and the move out of step 5 at 45.10, 45.33 and 45.53 s (only the engine is shown, no labels or caption during the move; the legend stays)."
     },
     "poster.jpg": {
-      "sha256": "e2ae6cf449f034af84afac14009c997ef74a99868943318cca00e477e2f2d10f",
-      "bytes": 90689,
-      "from": "step-2.png of the 2026-11-08 revision converted to JPEG (macOS sips, quality 82); pixels not edited",
+      "sha256": "48a6b34ad494b679fdf965d0bfa21cb2f214d06612479fc103b075bdb0c16ec7",
+      "bytes": 93101,
+      "from": "step-2.png of this build converted to JPEG (macOS sips, quality 82); pixels not edited",
       "pixels": "1280x800"
     },
     "check-strict.json": {
-      "sha256": "2279abbf0a7629a53e09f0c25e1f2b0927e6ac3a2f008cc7da7bd262e1a7c651",
-      "bytes": 72258,
-      "from": "marty-solid check --strict of the 2026-11-08 revision (stdout re-serialised with sorted keys and 2-space indent; same content)"
+      "sha256": "aeed3782b12978549a06e0ab339062c9a7a8267f40dd7dcb9b7c40a7899b90fe",
+      "bytes": 86022,
+      "from": "marty-solid check --strict of this build (stdout re-serialised with sorted keys and 2-space indent; same content)"
     }
   },
   "revisions": [
     {
       "date": "2026-11-08",
-      "why": "The new strict anchor checks refused the reviewed file twice. (1) annotation.anchor.hidden: in step 6 the label lComb (\"Combustion chamber\") had its dot on the cut casing wall (back.casing was the first surface on the line of sight). (2) annotation.anchor.off: the step 1 label lPilot (\"Schematic pilot\") named the helmet, but its point lay 2 mm outside the helmet's box and inside the visor, on the far side of the head from the step 1 camera (the earlier render drew its dot hollow, as occluded, on the head's outline).",
-      "change": "lComb anchor {\"part\": \"back.combustor\", \"offset\": [30, 0, 148]} -> {\"part\": \"back.combustor\", \"offset\": [0, -30, 148]} (a point on the cut face, inside the annular chamber); lPilot anchor {\"part\": \"helmet\", \"offset\": [0, -110, 0]} -> {\"part\": \"helmet\", \"offset\": [0, 108, 0]} (the back of the helmet, which faces the step 1 camera). No text, fact, part, step or camera changed.",
-      "previousSHA256": "83895fd9348b13819fecacb5aeefcb85fe22a6ad0615f689343b8f0e63041668",
-      "engine": "morrowdock/martygraphics branch feat/strict-label-anchors (PR #40) on origin/main 3624a03494047a7b0c495ac0663f0d40ea021e04. The branch changes the check only; the render code is the code of 3624a03.",
-      "engineExecutableSHA256": "2073e5fae8a41928163ed714baeb86040f4a719edd85adcbd3927228560b4c65",
-      "machine": "Apple M1 Mac mini (Macmini9,1), arm64; macOS 27.2; Apple Swift 6.4.2; SwiftPM release build",
-      "commands": [
-        "marty-solid check --strict docs/assets/jet-suit/jet-suit.json",
-        "marty-solid render docs/assets/jet-suit/jet-suit.json <NEW_DIR> --size 1280x800 --loop-fps 30 --story-fps 30"
-      ],
-      "check": "exit 0, ok true, strict true, no warnings, anchorIssues empty; legend Solved 16 · Not checked 20.",
-      "replaced": [
-        "step-1.png",
-        "step-2.png",
-        "step-3.png",
-        "step-4.png",
-        "step-5.png",
-        "step-6.png",
-        "step-7.png",
-        "poster.jpg",
-        "story.mp4",
-        "check-strict.json"
-      ],
-      "review": "The builder inspected the new step-1.png (the dot is solid, on the back of the helmet) and the story hold frames at 5.0 and 52.0 s (step 1 and step 6; text sharp, step 6 dot inside the copper combustion chamber). The independent PUBLIC-OK review above covers the earlier bytes; independent reviews of PR #40 checked the lComb change and an earlier replacement set. The lPilot change was found and made in PR #40's fourth round.",
-      "comparison": "CoreGraphics RGB comparison of each new still with the 70bfc47 still it replaces, in top-left image coordinates. Step 1: channels differ by more than 24/255 only inside the box x 458-842, y 131-187 (the moved \"Schematic pilot\" label, leader and dot, up to 214/255); outside it 2,089 channels differ, by at most 2/255. Step 6: channels differ by more than 24/255 only inside the box x 329-626, y 369-437 (the moved \"Combustion chamber\" label, up to 240/255); outside it 119,706 channels differ, by at most 22/255, spread over x 224-1277, y 2-796. Steps 2-5 and 7: 2,945 to 64,301 channels (0.10 % to 2.09 %) differ, by at most 11/255. Two renders of this build differ by up to 11/255 in up to about 2 % of channels, so the stills are not byte-reproducible; these small differences are render noise."
+      "summary": "PR #40 moved the lComb and lPilot anchors of the fifth version (SHA-256 83895fd9348b13819fecacb5aeefcb85fe22a6ad0615f689343b8f0e63041668 -> 9bc7dd9355beffd4f2a8695e8087969a8baab45756c3a8e2abee874c61d21689) and made all assets again. See this file's git history for that receipt."
+    },
+    {
+      "date": "2026-11-09",
+      "summary": "The sixth version replaces the fifth, with the same two anchor changes. All 7 stills, poster.jpg, story.mp4 and check-strict.json were replaced; hero.png was added.",
+      "previousSHA256": "9bc7dd9355beffd4f2a8695e8087969a8baab45756c3a8e2abee874c61d21689"
     }
   ]
 }
