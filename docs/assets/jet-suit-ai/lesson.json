@@ -1,0 +1,769 @@
+{
+ "beats": [
+  {
+   "highlight": [
+    "eL1",
+    "eL2",
+    "eR1",
+    "eR2",
+    "eB"
+   ],
+   "say": "A pilot wears small jet engines on each forearm and on the back, all nozzles pointing down. This is the Daedalus layout; the newer suit differs.",
+   "view": {
+    "annotate": [
+     "lSuit",
+     "lMk4",
+     "lMk4arm"
+    ],
+    "camera": "hero"
+   }
+  },
+  {
+   "highlight": [
+    "eL1",
+    "eL2",
+    "eR1",
+    "eR2",
+    "eB"
+   ],
+   "say": "Each jet pushes its engine up, and gravity pulls the pilot, suit and fuel down. In a hover the upward parts of the thrusts balance the weight, and side forces and turning moments balance.",
+   "view": {
+    "annotate": [
+     "aL1",
+     "aL2",
+     "aR1",
+     "aR2",
+     "aB",
+     "aW",
+     "lThrust",
+     "lTotal"
+    ],
+    "camera": "iso"
+   }
+  },
+  {
+   "highlight": [
+    "t.r1",
+    "t.r2"
+   ],
+   "ops": [
+    {
+     "id": "t",
+     "key": "cells",
+     "op": "set",
+     "value": [
+      [
+       "Item",
+       "Value",
+       "Source"
+      ],
+      [
+       "Dry wt kg",
+       27,
+       "F11 IntEng"
+      ],
+      [
+       "Flight min",
+       3,
+       "F12 IntEng"
+      ]
+     ]
+    }
+   ],
+   "say": "The table gives claimed figures for the current suit, which is not the layout shown here.",
+   "view": {
+    "annotate": [
+     "lMk4",
+     "lSuit"
+    ],
+    "camera": "hero"
+   }
+  },
+  {
+   "highlight": [
+    "pilot.upperArmL",
+    "pilot.lowerArmL",
+    "eL1",
+    "eL2"
+   ],
+   "say": "To steer, the pilot moves one arm, and the forearm engines fixed to it tilt their thrust. The forces no longer balance, so the body moves that way.",
+   "view": {
+    "annotate": [
+     "aSteer",
+     "aL1",
+     "aL2",
+     "aR1",
+     "aR2",
+     "lThrust"
+    ],
+    "camera": "front",
+    "pose": {
+     "pilot": {
+      "with": {
+       "leftElbow": 0,
+       "leftShoulder": 60,
+       "rightElbow": 0,
+       "rightShoulder": 15
+      }
+     }
+    }
+   }
+  },
+  {
+   "highlight": [
+    "eB"
+   ],
+   "say": "From behind: the back engine pushes near the body's centre line. How the load is shared between arm and back engines was not found in this search.",
+   "view": {
+    "annotate": [
+     "aB",
+     "lFuel",
+     "lShare"
+    ],
+    "camera": "back"
+   }
+  },
+  {
+   "highlight": [
+    "eR1.impeller",
+    "eR1.diffuser"
+   ],
+   "say": "Cut open one arm engine: air enters the intake, and the spinning compressor wheel flings it outward into the diffuser, which squeezes it.",
+   "view": {
+    "annotate": [
+     "lExample",
+     "lIntake",
+     "lComp",
+     "lDiff",
+     "aAirIn"
+    ],
+    "camera": "front",
+    "focus": [
+     "eR1"
+    ],
+    "section": {
+     "normal": [
+      0,
+      -1,
+      0
+     ],
+     "offset": 70,
+     "parts": [
+      "eR1.casing"
+     ]
+    },
+    "spin": 1
+   }
+  },
+  {
+   "check": [
+    {
+     "eq": 1,
+     "value": "eR1.turbine.worldSpeed"
+    },
+    {
+     "eq": 1,
+     "value": "eR1.compressor.worldSpeed"
+    }
+   ],
+   "highlight": [
+    "eR1.combustor",
+    "eR1.turbineWheel",
+    "eR1.shaft"
+   ],
+   "say": "Fuel burns with the oxygen in the squeezed air. The hot gas spins the turbine at {eR1.turbine.worldSpeed} turn per input turn, the same as the compressor, because one shaft joins them.",
+   "view": {
+    "annotate": [
+     "lComb",
+     "lTurb",
+     "lFuel"
+    ],
+    "camera": "front",
+    "focus": [
+     "eR1"
+    ],
+    "section": {
+     "normal": [
+      0,
+      -1,
+      0
+     ],
+     "offset": 70,
+     "parts": [
+      "eR1.casing"
+     ]
+    },
+    "spin": 1
+   }
+  },
+  {
+   "highlight": [
+    "eR1.nozzle"
+   ],
+   "say": "The hot gas speeds up through the nozzle. Thrust is the reaction to that gas being pushed out fast.",
+   "view": {
+    "annotate": [
+     "lNoz",
+     "aJet",
+     "lF19",
+     "lExample"
+    ],
+    "camera": "front",
+    "focus": [
+     "eR1"
+    ],
+    "section": {
+     "normal": [
+      0,
+      -1,
+      0
+     ],
+     "offset": 70,
+     "parts": [
+      "eR1.casing"
+     ]
+    },
+    "spin": 1
+   }
+  },
+  {
+   "highlight": [
+    "eL1",
+    "eL2",
+    "eR1",
+    "eR2",
+    "eB"
+   ],
+   "say": "Limits: only the shaft turning is solved. Airflow, burning fuel and thrust are not simulated, so the force arrows carry no value.",
+   "view": {
+    "annotate": [
+     "lLimit",
+     "lSuit",
+     "lTotal"
+    ],
+    "camera": "hero",
+    "spin": 1
+   }
+  }
+ ],
+ "board": {
+  "items": [
+   {
+    "at": [
+     6,
+     4
+    ],
+    "cells": [
+     [
+      "Item",
+      "Value",
+      "Source"
+     ]
+    ],
+    "header": true,
+    "id": "t",
+    "k": "table"
+   }
+  ],
+  "v": 1
+ },
+ "kind": "explainer",
+ "notes": {
+  "t": {
+   "basis": "F11 F12 Interesting Engineering 2026, claimed"
+  }
+ },
+ "primary": "solid",
+ "solid": {
+  "annotations": {
+   "arrows": [
+    {
+     "from": {
+      "offset": [
+       70,
+       0,
+       40
+      ],
+      "part": "eL1.mount"
+     },
+     "id": "aL1",
+     "meaning": "force",
+     "to": {
+      "offset": [
+       70,
+       0,
+       -140
+      ],
+      "part": "eL1.mount"
+     }
+    },
+    {
+     "from": {
+      "offset": [
+       70,
+       0,
+       40
+      ],
+      "part": "eL2.mount"
+     },
+     "id": "aL2",
+     "meaning": "force",
+     "to": {
+      "offset": [
+       70,
+       0,
+       -140
+      ],
+      "part": "eL2.mount"
+     }
+    },
+    {
+     "from": {
+      "offset": [
+       70,
+       0,
+       40
+      ],
+      "part": "eR1.mount"
+     },
+     "id": "aR1",
+     "meaning": "force",
+     "to": {
+      "offset": [
+       70,
+       0,
+       -140
+      ],
+      "part": "eR1.mount"
+     }
+    },
+    {
+     "from": {
+      "offset": [
+       204.702,
+       176.101,
+       40
+      ],
+      "part": "eR2.casing"
+     },
+     "id": "aR2",
+     "meaning": "force",
+     "to": {
+      "offset": [
+       204.702,
+       176.101,
+       -140
+      ],
+      "part": "eR2.casing"
+     }
+    },
+    {
+     "from": {
+      "offset": [
+       90,
+       0,
+       40
+      ],
+      "part": "eB.mount"
+     },
+     "id": "aB",
+     "meaning": "force",
+     "to": {
+      "offset": [
+       90,
+       0,
+       -160
+      ],
+      "part": "eB.mount"
+     }
+    },
+    {
+     "cause": "gravity",
+     "from": {
+      "offset": [
+       0,
+       -500,
+       -100
+      ],
+      "part": "pilot.back"
+     },
+     "id": "aW",
+     "meaning": "force",
+     "text": "Weight of pilot, suit and fuel",
+     "to": {
+      "offset": [
+       0,
+       -500,
+       -500
+      ],
+      "part": "pilot.back"
+     }
+    },
+    {
+     "from": {
+      "world": [
+       700,
+       -300,
+       1000
+      ]
+     },
+     "id": "aSteer",
+     "meaning": "pointer",
+     "text": "Arm moved to aim thrust, claimed (schematic)",
+     "to": {
+      "offset": [
+       -8.667,
+       -3.916,
+       0.019
+      ],
+      "part": "pilot.handL"
+     },
+     "unchecked": "F9 Interesting Engineering 2026"
+    },
+    {
+     "from": {
+      "offset": [
+       0,
+       0,
+       -150
+      ],
+      "part": "eR1.intake"
+     },
+     "id": "aAirIn",
+     "meaning": "flow",
+     "text": "Air in",
+     "to": {
+      "offset": [
+       0,
+       0,
+       -10
+      ],
+      "part": "eR1.intake"
+     }
+    },
+    {
+     "from": {
+      "offset": [
+       0,
+       0,
+       10
+      ],
+      "part": "eR1.exhaust"
+     },
+     "id": "aJet",
+     "meaning": "flow",
+     "text": "Hot jet out",
+     "to": {
+      "offset": [
+       0,
+       0,
+       180
+      ],
+      "part": "eR1.exhaust"
+     }
+    }
+   ],
+   "labels": [
+    {
+     "at": {
+      "world": [
+       700,
+       0,
+       1800
+      ]
+     },
+     "id": "lSuit",
+     "text": "Daedalus suit 2018, claimed: two per arm, one on back",
+     "unchecked": "F5 The Manual 2018, claimed"
+    },
+    {
+     "at": {
+      "world": [
+       700,
+       0,
+       1600
+      ]
+     },
+     "id": "lMk4",
+     "text": "Mk4 (claimed latest): three back turbines",
+     "unchecked": "F1 F3 Gravity Industries, claimed"
+    },
+    {
+     "at": {
+      "world": [
+       700,
+       0,
+       1400
+      ]
+     },
+     "id": "lMk4arm",
+     "text": "Mk4 engines per arm: not found in this search",
+     "unchecked": "F4 not found in this search"
+    },
+    {
+     "at": {
+      "world": [
+       -700,
+       0,
+       1600
+      ]
+     },
+     "id": "lThrust",
+     "text": "Up arrows: thrust of each engine (no value)"
+    },
+    {
+     "at": {
+      "world": [
+       -700,
+       0,
+       1400
+      ]
+     },
+     "id": "lTotal",
+     "text": "Total thrust: not found in this search",
+     "unchecked": "F17 not found in this search"
+    },
+    {
+     "at": {
+      "world": [
+       -700,
+       300,
+       1200
+      ]
+     },
+     "id": "lFuel",
+     "text": "Fuel, claimed: Jet A-1 or diesel in a back bladder",
+     "unchecked": "F10 Interesting Engineering 2026"
+    },
+    {
+     "at": {
+      "world": [
+       -700,
+       300,
+       1000
+      ]
+     },
+     "id": "lShare",
+     "text": "Arm and back thrust split: not found in this search",
+     "unchecked": "F18 not found in this search"
+    },
+    {
+     "at": {
+      "world": [
+       -700,
+       -300,
+       1300
+      ]
+     },
+     "id": "lExample",
+     "text": "Micro gas turbine-style engine (example)",
+     "unchecked": "Not confirmed Gravity hardware"
+    },
+    {
+     "at": {
+      "part": "eR1.intakeLip",
+      "point": "centre"
+     },
+     "id": "lIntake",
+     "text": "Intake"
+    },
+    {
+     "at": {
+      "part": "eR1.impeller",
+      "point": "centre"
+     },
+     "id": "lComp",
+     "text": "Compressor wheel"
+    },
+    {
+     "at": {
+      "offset": [
+       -8.571,
+       1.739,
+       49.642
+      ],
+      "part": "eR1.diffuser"
+     },
+     "id": "lDiff",
+     "text": "Diffuser"
+    },
+    {
+     "at": {
+      "part": "eR1.combustor",
+      "point": "centre"
+     },
+     "id": "lComb",
+     "text": "Combustor: fuel burns here"
+    },
+    {
+     "at": {
+      "offset": [
+       1.184,
+       11.876,
+       155.612
+      ],
+      "part": "eR1.turbineWheel"
+     },
+     "id": "lTurb",
+     "text": "Turbine wheel"
+    },
+    {
+     "at": {
+      "part": "eR1.nozzle",
+      "point": "centre"
+     },
+     "id": "lNoz",
+     "text": "Nozzle"
+    },
+    {
+     "at": {
+      "world": [
+       -700,
+       -300,
+       1100
+      ]
+     },
+     "id": "lF19",
+     "text": "Engines likely micro gas turbines",
+     "unchecked": "F19 plausible, likely"
+    },
+    {
+     "at": {
+      "world": [
+       700,
+       0,
+       1200
+      ]
+     },
+     "id": "lLimit",
+     "text": "Solved: shaft turning only; thrust not simulated"
+    }
+   ]
+  },
+  "params": {
+   "explode": 0,
+   "input": 0
+  },
+  "parts": [
+   {
+    "id": "pilot",
+    "use": "mannequin",
+    "with": {
+     "leftElbow": 0,
+     "leftShoulder": 15,
+     "rightElbow": 0,
+     "rightShoulder": 15
+    }
+   },
+   {
+    "at": [
+     0,
+     70,
+     230
+    ],
+    "id": "eL1",
+    "parent": "pilot.leftHand",
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ],
+    "use": "microTurbojet",
+    "with": {
+     "cutaway": 0,
+     "diameter": 80,
+     "length": 200
+    }
+   },
+   {
+    "at": [
+     0,
+     -70,
+     230
+    ],
+    "id": "eL2",
+    "parent": "pilot.leftHand",
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ],
+    "use": "microTurbojet",
+    "with": {
+     "cutaway": 0,
+     "diameter": 80,
+     "length": 200
+    }
+   },
+   {
+    "at": [
+     0,
+     -70,
+     230
+    ],
+    "id": "eR1",
+    "parent": "pilot.rightHand",
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ],
+    "use": "microTurbojet",
+    "with": {
+     "cutaway": 1,
+     "diameter": 80,
+     "length": 200
+    }
+   },
+   {
+    "at": [
+     0,
+     70,
+     230
+    ],
+    "id": "eR2",
+    "parent": "pilot.rightHand",
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ],
+    "use": "microTurbojet",
+    "with": {
+     "cutaway": 0,
+     "diameter": 80,
+     "length": 200
+    }
+   },
+   {
+    "at": [
+     0,
+     55,
+     140
+    ],
+    "id": "eB",
+    "parent": "pilot.back",
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ],
+    "use": "microTurbojet",
+    "with": {
+     "cutaway": 0,
+     "diameter": 110,
+     "length": 280
+    }
+   }
+  ],
+  "units": "mm",
+  "v": 2
+ },
+ "title": "Gravity jet suit, Daedalus layout: how small jets lift a pilot (schematic)",
+ "v": 1
+}
