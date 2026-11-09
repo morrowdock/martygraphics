@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "d8ec24884faaf2860d2e176d3e9879d58a98fae3b9de6f1ad431fed9d643839c"
+      "sha256": "6a044002c0e8a8daaa523f008b47e6b7ccbf4f68a4d74be501be5c1eaff6b6c3"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -311,11 +311,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.check.json",
-      "sha256": "030df5eb8f7ef0a9b0594d1f15d4c2a56c284ad3a2e130b1fc215e84a5c792f9"
+      "sha256": "bfe0fdd08234a308057b813b28803b7544e70e051753b6785378aeb380e119fe"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.strict.json",
-      "sha256": "a5646da183f52f578e60658757f729c1dfabd1bbfa2006e4e998a6af6f41cba5"
+      "sha256": "1d4bf6fd43943dea919d5217b0b6aa31e4f01c9671b277cd873a529c224d3f1a"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-lessons-provenance.check.json",
@@ -687,7 +687,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidArrowCheck.swift",
-      "sha256": "e038a5577250d94d4bf2e06a0d1ebe494584c72b5d26ed743296d9538a6f80dc"
+      "sha256": "08c64dc59ae521623b1b4de22e82b9ca42091e98cc9d16ac89c8fffa545e2d51"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidBuilders.swift",
@@ -831,7 +831,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ArrowVisibilityTests.swift",
-      "sha256": "9b84840c285b84d459052177cd426c84e99c4e4cdcdf88eb53c0c39bdc825ba2"
+      "sha256": "c62afe6f4e7f0b0b1cbf5b5a1e5cb765b146a5e92f8503bbdb65d78399eeceb9"
     },
     {
       "path": "Tests/MartyGraphicsTests/ControllerRollbackTests.swift",
@@ -1143,7 +1143,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "3a87a7c64bd83f90609c1c1b7d1a13661c2f79174335e2925e1209e78f9a2e3e"
+      "sha256": "39e1d5909e8f0fc889c895e9dbc09d47a5f7f552486b5f7fe4b303d809962d21"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -1255,7 +1255,7 @@
     },
     {
       "path": "docs/assets/jet-suit/provenance.json",
-      "sha256": "4d9630db53e8d5aad48ed0ecb521c7592f327710a877beaedcac519d1101f506"
+      "sha256": "ce9aa2e2172ea6bffad110efa36cec0808030b5cba65788f90e894b976e85238"
     },
     {
       "path": "docs/assets/jet-suit/step-1.png",

@@ -671,55 +671,61 @@ struct MGAnnotationArrowReport {
 }
 
 /// The joint fixed-point check of every printed suggestion of a report, anchors and arrows together
-/// (`verifyTogether`). Each family was already checked on its own (`MGAnnotationAnchorReport.verify`,
-/// `MGAnnotationArrowReport.verify`); this check applies the union to one copy, so a model can apply every printed
-/// suggestion at once.
+/// (`verifyTogether`). Each family was already checked on its own with its own rules (`MGAnnotationAnchorReport.verify`
+/// checks anchors, `MGAnnotationArrowReport.verify` checks arrows and anchors); this check applies the union to one copy
+/// and checks every anchor and arrow rule on every annotation, so a model can apply every printed suggestion at once.
 enum MGSuggestionUnion {
     /// With every printed anchor suggestion and arrow move applied to one copy, `recheck` compiles, frames and checks it
-    /// (its `anchors` and `arrows` issues and the annotations each framed view shows; nil when the copy is refused). The
-    /// union is accepted, as in `MGAnnotationAnchorReport.verify`, only when no suggested annotation has an issue and
-    /// no annotation that had none in the report (`anchors` and `arrows` before the suggestions) has one. Otherwise,
+    /// with every rule (its `anchors` and `arrows` issues and the annotations each framed view shows; nil when the copy
+    /// is refused). It runs for every non-empty union, also when it holds only anchor suggestions or only arrow moves.
+    /// The union is accepted, as in `MGAnnotationAnchorReport.verify`, only when no suggested annotation has an issue
+    /// and no annotation that had none in the report (`anchors` and `arrows` before the suggestions) has one. Otherwise,
     /// with no new search (each family's own re-check already searched):
-    /// - a suggestion whose annotation still has an issue only conflicts in the union (it passed its own family's
-    ///   check), so it is dropped with cause `conflict`, `other` naming the first suggestion of the other family (sorted
-    ///   ids) shown in the same view (of all of them when none is);
+    /// - a suggestion whose annotation still has an issue is dropped: with cause `conflict` and `other` naming the
+    ///   first suggestion of the other family (sorted ids) shown in the same view (of all of them when none is), or with
+    ///   cause `framing` when the union holds no suggestion of the other family;
     /// - an annotation that had no issue and now has one drops the suggestions shown in the same view (all of them when
     ///   none is), each with cause `conflict` and `other` naming that annotation;
     /// - a refused copy drops every suggestion (`form`).
-    /// The smaller union is checked again, at most `MGAnnotationAnchorRules.recheckRounds` times; when they run out, every
-    /// remaining suggestion is dropped (`conflict`). A report whose suggestions are all in one family needs no joint
-    /// check: that family's own check is the check of the union. Deterministic (sorted ids).
+    /// The remaining set is checked again until it is accepted or empty, at most `unionRounds` checks; when they run
+    /// out, every remaining suggestion is dropped (`conflict` with `other` the first other suggestion, or `framing`).
+    /// Deterministic (sorted ids).
+    static let unionRounds = 2 * MGAnnotationAnchorRules.recheckRounds
+
     static func verifyTogether(anchors: inout MGAnnotationAnchorReport, arrows: inout MGAnnotationArrowReport,
                                recheck: (_ anchors: [String: MGJSON], _ arrows: [String: MGJSON]) -> MGArrowRecheck?) {
         let before = Set(anchors.issues.map(\.id)).union(arrows.issues.map(\.id))
         var a: [String: MGAnnotationAnchorSuggestion] = [:], r: [String: MGAnnotationArrowSuggestion] = [:]
         for i in anchors.issues where a[i.id] == nil && i.suggestion?.anchorJSON != nil { a[i.id] = i.suggestion }
         for i in arrows.issues where r[i.id] == nil && i.suggestion?.anchorJSON != nil { r[i.id] = i.suggestion }
-        func dropAnchor(_ id: String, other: String?) {
-            guard let s = a[id] else { return }
-            var n = MGAnnotationAnchorSuggestion(part: s.part, offset: nil, onCut: false, cause: other == nil ? .form : .conflict,
-                                                 step: nil, beat: nil, by: nil)
-            n.other = other; n.samples = s.samples
-            a[id] = nil
-            for k in anchors.issues.indices where anchors.issues[k].id == id { anchors.issues[k].suggestion = n }
-        }
-        func dropArrow(_ id: String, other: String?) {
-            guard let s = r[id] else { return }
-            for k in arrows.issues.indices where arrows.issues[k].id == id {
-                var n = MGAnnotationArrowSuggestion.none(other == nil ? .form : .conflict, step: arrows.issues[k].step, beat: arrows.issues[k].beat,
-                                                         by: arrows.issues[k].by, samples: s.samples)
-                n.other = other
-                arrows.issues[k].suggestion = n
+        func drop(_ id: String, _ cause: MGAnnotationArrowSuggestion.Cause, other: String?) {
+            if let s = a[id] {
+                let c: MGAnnotationAnchorSuggestion.Cause = cause == .form ? .form : cause == .conflict ? .conflict : .framing
+                var n = MGAnnotationAnchorSuggestion(part: s.part, offset: nil, onCut: false, cause: c, step: nil, beat: nil, by: nil)
+                n.other = other; n.samples = s.samples
+                a[id] = nil
+                for k in anchors.issues.indices where anchors.issues[k].id == id { anchors.issues[k].suggestion = n }
+            } else if let s = r[id] {
+                for k in arrows.issues.indices where arrows.issues[k].id == id {
+                    var n = MGAnnotationArrowSuggestion.none(cause, step: arrows.issues[k].step, beat: arrows.issues[k].beat,
+                                                             by: arrows.issues[k].by, samples: s.samples)
+                    n.other = other
+                    arrows.issues[k].suggestion = n
+                }
+                r[id] = nil
             }
-            r[id] = nil
         }
-        func drop(_ id: String, other: String?) { if a[id] != nil { dropAnchor(id, other: other) } else { dropArrow(id, other: other) } }
-        for _ in 0..<MGAnnotationAnchorRules.recheckRounds {
-            guard !a.isEmpty, !r.isEmpty else { return }
+        /// The first suggestion of the other family (sorted ids), preferring those in `near`.
+        func otherFamily(_ id: String, near: Set<String>) -> String? {
+            let others = a[id] != nil ? Set(r.keys) : Set(a.keys)
+            let close = others.intersection(near)
+            return (close.isEmpty ? others : close).sorted().first
+        }
+        for _ in 0..<unionRounds {
+            guard !(a.isEmpty && r.isEmpty) else { return }
             let aSet = a.compactMapValues { $0.anchorJSON }, rSet = r.compactMapValues { $0.anchorJSON }
             guard let c = recheck(aSet, rSet) else {
-                for id in a.keys.sorted() { dropAnchor(id, other: nil) }
-                for id in r.keys.sorted() { dropArrow(id, other: nil) }
+                for id in Set(a.keys).union(r.keys).sorted() { drop(id, .form, other: nil) }
                 return
             }
             // Where each failing annotation's issue is: its step and beat.
@@ -734,20 +740,20 @@ enum MGSuggestionUnion {
             let bad = suggested.filter { at[$0] != nil }.sorted()
             let fresh = Set(at.keys).subtracting(before).subtracting(suggested).sorted()
             if bad.isEmpty && fresh.isEmpty { return }
-            var drops: [(String, String)] = []
+            var drops: [(id: String, cause: MGAnnotationArrowSuggestion.Cause, other: String?)] = []
             for id in bad {
-                let others = (a[id] != nil ? Set(r.keys) : Set(a.keys))
-                let near = others.intersection(shownWith(id))
-                if let o = (near.isEmpty ? others : near).sorted().first { drops.append((id, o)) }
-                else { drops.append((id, id)) }
+                if let o = otherFamily(id, near: shownWith(id)) { drops.append((id, .conflict, o)) } else { drops.append((id, .framing, nil)) }
             }
             for f in fresh {
                 let inView = suggested.intersection(shownWith(f))
-                for id in (inView.isEmpty ? suggested : inView).sorted() { drops.append((id, f)) }
+                for id in (inView.isEmpty ? suggested : inView).sorted() { drops.append((id, .conflict, f)) }
             }
-            for (id, other) in drops where a[id] != nil || r[id] != nil { drop(id, other: other) }
+            for d in drops where a[d.id] != nil || r[d.id] != nil { drop(d.id, d.cause, other: d.other) }
         }
-        for id in a.keys.sorted() { dropAnchor(id, other: r.keys.sorted().first ?? id) }
-        for id in r.keys.sorted() { dropArrow(id, other: a.keys.sorted().first ?? id) }
+        // Out of checks: nothing unchecked is printed.
+        for id in Set(a.keys).union(r.keys).sorted() {
+            let o = otherFamily(id, near: [])
+            drop(id, o == nil ? .framing : .conflict, other: o)
+        }
     }
 }

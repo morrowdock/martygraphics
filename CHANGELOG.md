@@ -35,9 +35,10 @@
     sizes, that keeps a force or flow arrow's vector (direction and length) in every view that shows it, re-checked once
     applied as anchor suggestions are (`framing`, `conflict`, `form`); none keeps it: `noSuggest` (`pose`); a motion
     arrow gets `noSuggest` (`motion`). All searches of a report, retries included, share one 64,000,000-test budget.
-    Last, every printed suggestion of a report, anchors and arrows together, is applied to one copy and checked again
-    (`MGSuggestionUnion.verifyTogether`); a suggestion that only conflicts in the union is dropped (`conflict`, with
-    `other`), so a model can apply every printed suggestion at once. New API: `MGAnnotationArrowRules`, `MGAnnotationArrowIssue`, `MGAnnotationArrowSuggestion`,
+    Last, every printed suggestion of a report, anchors and arrows together (also a union of one family), is applied to
+    one copy and checked again with every anchor and arrow rule (`MGSuggestionUnion.verifyTogether`); a suggestion
+    that conflicts in the union is dropped (`conflict`, with `other`), and the rest is checked again until stable, so
+    a model can apply every printed suggestion at once. New API: `MGAnnotationArrowRules`, `MGAnnotationArrowIssue`, `MGAnnotationArrowSuggestion`,
     `MGArrowVisibility`, `MGSolidDocument.stepCheckViews`, `stepArrowIssues`, `MGExplainerFrame.beatCheckViews`.
   - Example fixed: in the jet-suit lesson, arrow `aTL2`'s head was behind the pack in step 2 (73 % of its samples
     visible, head hidden). It now uses the check's suggested move (135 mm toward the step's camera, same direction and

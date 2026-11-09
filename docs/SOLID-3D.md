@@ -1149,15 +1149,18 @@ Budgets: one search for one arrow spends at most 8,000,000 tests, and all search
 re-check's searches included, at most 64,000,000 (`suggestTests`, `suggestDocumentTests`; one shared budget object,
 `MGAnnotationArrowReport.repair`); each re-check runs the check's own budgets.
 
-**All suggestions together** (`MGSuggestionUnion.verifyTogether`). After each family's own re-check, a report that
-prints both anchor suggestions and arrow moves applies all of them to one copy and checks it again, with the accept
-rule above: no suggested annotation (label, pointer or arrow) has an issue and no annotation that had none has one.
-No new search runs in this check. A suggestion whose annotation still has an issue passed its own family's check, so
-it only conflicts in the union: it is dropped with cause `conflict` and `other` naming the first suggestion of the
-other family (sorted ids) shown in the same view (of all of them when none is). An annotation that had no issue and
+**All suggestions together** (`MGSuggestionUnion.verifyTogether`). After each family's own re-check, a report
+applies every suggestion it would print, anchor suggestions and arrow moves, to one copy and checks it again with
+every anchor and arrow rule on every annotation. This runs for every non-empty union, also one that holds only anchor
+suggestions (the anchor family's own re-check does not test arrow visibility) or only arrow moves. The accept rule is
+the one above: no suggested annotation (label, pointer or arrow) has an issue and no annotation that had none has one.
+No new search runs in this check. A suggestion whose annotation still has an issue is dropped with cause `conflict`
+and `other` naming the first suggestion of the other family (sorted ids) shown in the same view (of all of them when
+none is), or with cause `framing` when the union holds none of the other family. An annotation that had no issue and
 now has one drops the suggestions shown in the same view (all when none is), each with `conflict` and `other` naming
-it. A refused copy drops every suggestion (`form`). The smaller union is checked again, at most 6 times; when they run
-out, every remaining suggestion is dropped. So every printed suggestion, anchors and arrows, can be applied at once.
+it. A refused copy drops every suggestion (`form`). The remaining set is checked again until it is accepted or empty,
+at most 12 checks (`MGSuggestionUnion.unionRounds`); when they run out, every remaining suggestion is dropped. So every
+printed suggestion, anchors and arrows, can be applied at once.
 
 The synthetic explainer `docs/fixtures/arrow-visibility/arrow-in-casing.explainer.json` (a figure with one engine on
 its back, neutral names) holds a thrust arrow from the nozzle to the intake lip, inside the casing: strict refuses it

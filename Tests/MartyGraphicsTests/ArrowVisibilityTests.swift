@@ -280,7 +280,8 @@ final class ArrowVisibilityTests: XCTestCase {
     /// One anchor suggestion and one arrow move that each pass alone but interfere together: the union check keeps
     /// both when the joint copy is clean, drops the one that still fails (`conflict`, `other` the suggestion of the other
     /// family shown with it), drops the suggestions shown with an annotation that gets a new issue (`other` naming it),
-    /// and drops all on a refused copy (`form`). A report with suggestions of one family only is not checked again.
+    /// and drops all on a refused copy (`form`). After a drop the remaining set is checked again; a union of one family
+    /// is checked too.
     func testAnchorAndArrowSuggestionsAreCheckedTogether() throws {
         let t = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"part": "side", "point": "centre"}}]"#)
         let d = try doc(t)
@@ -314,7 +315,7 @@ final class ArrowVisibilityTests: XCTestCase {
         }
         XCTAssertNil(hidden.0?.anchorJSON); XCTAssertEqual(hidden.0?.cause, .conflict); XCTAssertEqual(hidden.0?.other, "f1")
         XCTAssertEqual(hidden.1, move, "the arrow move stays: alone it was checked")
-        XCTAssertEqual(hidden.2, 1, "one family left: no second joint check")
+        XCTAssertEqual(hidden.2, 2, "the remaining arrow move is checked again on its own")
         // An annotation without an issue gets one in the union: the suggestions shown with it are dropped.
         let fresh = MGAnnotationAnchorIssue(id: "l9", kind: "label", cause: .occluded, part: "side", by: "shell", step: 0, beat: nil,
                                             point: .zero, distance: nil, tolerance: nil)
@@ -324,10 +325,65 @@ final class ArrowVisibilityTests: XCTestCase {
         // A refused copy.
         let refused = run { _, _ in nil }
         XCTAssertEqual(refused.0?.cause, .form); XCTAssertEqual(refused.1?.cause, .form)
-        // One family only: no joint check.
-        var a = MGAnnotationAnchorReport(), r = arrowsBase
-        MGSuggestionUnion.verifyTogether(anchors: &a, arrows: &r) { _, _ in XCTFail("no joint check for one family"); return nil }
+        // One family only: still checked with every rule; a clean copy keeps the move.
+        var a = MGAnnotationAnchorReport(), r = arrowsBase, calls = 0
+        MGSuggestionUnion.verifyTogether(anchors: &a, arrows: &r) { am, rm in
+            calls += 1
+            XCTAssertTrue(am.isEmpty); XCTAssertEqual(rm.keys.sorted(), ["f1"])
+            return MGArrowRecheck(arrows: [], anchors: [], search: { _, _ in [:] })
+        }
+        XCTAssertEqual(calls, 1)
         XCTAssertEqual(r.issues[0].suggestion, move)
+        // A suggestion that still fails with no other family in the union: `framing`.
+        var a2 = MGAnnotationAnchorReport(), r2 = arrowsBase
+        MGSuggestionUnion.verifyTogether(anchors: &a2, arrows: &r2) { _, rm in
+            MGArrowRecheck(arrows: rm.isEmpty ? [] : arrowsBase.issues, anchors: [], search: { _, _ in [:] })
+        }
+        XCTAssertEqual(r2.issues[0].suggestion?.cause, .framing)
+        XCTAssertNil(r2.issues[0].suggestion?.other)
+    }
+
+    /// Re-check repro (PR #44): a 128 mm core box, a blocker beside it, an off-part label and a clean force arrow. The
+    /// label's anchor suggestion passes the anchor rules, but in the framing it causes the clean arrow is 0 % visible.
+    /// The report prints only anchor suggestions, and the joint check still runs every rule on the union: the label's
+    /// suggestion is dropped (`conflict`, `other` the arrow), so applying every printed suggestion breaks nothing.
+    func testAnAnchorOnlyUnionIsCheckedAgainstTheArrows() throws {
+        let t = #"{"v":2,"kind":"assembly","parts":[{"id":"core","shape":{"box":{"size":[128,128,128]}}},{"id":"blocker","at":[-56,7,-37],"shape":{"box":{"size":[88,72,82]}}}],"annotations":{"arrows":[{"id":"good","meaning":"force","from":{"world":[-66,-60,-65]},"to":{"world":[-66,-60,-61]}}],"labels":[{"id":"label","text":"Core","at":{"part":"core","offset":[495,-956,-910]}}]},"steps":[{"say":"Core.","orbit":-158}]}"#
+        let r = report(t, .strict)
+        XCTAssertEqual(r.reason, "annotation.anchor.off.label")
+        XCTAssertEqual(arrows(r.json).count, 0, "the arrow is clean before")
+        // The anchor family's own suggestion, applied, hides the clean arrow.
+        let stale: MGJSON = .object(["part": .string("core"), "offset": .array([.number(-63.969), .number(-63.996), .number(-59.794)])])
+        let staleCopy = report(SolidAnchorSuggestTests.applying(["label": stale], to: t), .strict)
+        XCTAssertEqual(staleCopy.reason, "annotation.arrow.hidden.good")
+        // The report does not print it: dropped in the joint check.
+        guard case .object(let a)? = r.json["anchor"] else { return XCTFail("anchor") }
+        XCTAssertEqual(a["suggest"], .null)
+        guard case .object(let n)? = a["noSuggest"] else { return XCTFail("noSuggest") }
+        XCTAssertEqual(n["code"], .string("conflict")); XCTAssertEqual(n["other"], .string("good"))
+        XCTAssertEqual(report(t, .strict).json, r.json, "deterministic")
+    }
+
+    /// The opposite case: only arrow moves are printed candidates, and the move hides a clean label in the framing it
+    /// causes. The move is not printed (`conflict`, `other` the label).
+    func testAnArrowOnlyUnionIsCheckedAgainstTheLabels() throws {
+        let t = #"{"v":2,"kind":"assembly","parts":[{"id":"core","shape":{"box":{"size":[128,128,128]}}},{"id":"blocker","at":[-56,7,-37],"shape":{"box":{"size":[88,72,82]}}}],"annotations":{"labels":[{"id":"label","text":"Core","at":{"part":"core","offset":[-63.969,-63.996,-59.794]}}],"arrows":[{"id":"far","meaning":"force","from":{"world":[-900,300,600]},"to":{"world":[-56,7,-37]}}]},"steps":[{"say":"Core.","orbit":-158}]}"#
+        let r = report(t, .strict)
+        XCTAssertEqual(r.reason, "annotation.arrow.hidden.far")
+        if case .array(let ai)? = r.json["anchorIssues"] { XCTAssertEqual(ai.count, 0, "the label is clean before") } else { XCTFail("anchorIssues") }
+        // The arrow family's first move, applied, hides the clean label.
+        let d = try doc(t)
+        let views = d.stepCheckViews()
+        var first = MGAnnotationArrowReport()
+        first.issues = views.flatMap { d.arrowIssues($0) }
+        first.suggest(d, views: views, budget: MGSuggestionBudget())
+        let move = try XCTUnwrap(first.issues[0].suggestion?.anchorJSON)
+        let moved = report(Self.applying(["far": move], to: t), .strict)
+        if case .array(let ai)? = moved.json["anchorIssues"] { XCTAssertEqual(ai.count, 1, "the move hides the label") } else { XCTFail("anchorIssues") }
+        guard case .object(let a)? = r.json["arrow"] else { return XCTFail("arrow") }
+        XCTAssertEqual(a["suggest"], .null)
+        guard case .object(let n)? = a["noSuggest"] else { return XCTFail("noSuggest") }
+        XCTAssertEqual(n["code"], .string("conflict")); XCTAssertEqual(n["other"], .string("label"))
     }
 
     /// The round-2f synthetic explainer holds anchor suggestions and a pointer move in one report: every printed
