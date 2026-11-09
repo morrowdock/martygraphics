@@ -1,0 +1,1 @@
+The pilot steers by pointing the arms, which aims the thrust of the arm engines (F9, Interesting Engineering 2026, claimed, not checked). Beat 4 shows this: one arm is raised more than the other, so the forearm engines on it tilt their thrust. Once the thrust is tilted, the forces and turning moments no longer balance, so the suit moves or turns that way instead of hovering.

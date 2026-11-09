@@ -9,6 +9,177 @@ uses of the engine without implying a curriculum or a running service.
 > 1280 pixels wide at 30 and 24 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a> ·
 > <a href="https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4">path-traced gearbox (MP4)</a>. Run an example to see the engine live.
 
+## Jet suit from a prompt (AI-written, unedited)
+
+**Asked: "How does the Gravity jet suit work?" — an AI wrote this lesson; the engine rendered it.** Claude Opus 5.5,
+through the [Marty](https://github.com/morrowdock/marty) app with web research on, wrote the lesson JSON. MartyGraphics
+refused its first two tries, each with one reason, and accepted the third. Then the engine rendered 9 beats and a
+78-second story video. **The lesson is shown unedited, with its errors listed.** Nobody changed the JSON, the stills
+or the video. An independent fact check found 1 wrong sentence and 12 other corrections; they are in the
+[panel below](#independent-fact-check), not fixed in the lesson. We asked the same question in 4 runs: 3 lessons were
+accepted, and **1 of the 4 runs met our showcase bar** (this one).
+
+| | |
+| --- | --- |
+| Prompt (exact) | `How does the Gravity jet suit work?` |
+| Follow-up (exact) | `How does the pilot steer?` |
+| Model | `claude-cli:claude-opus-5-5` (Claude Opus 5.5 through the `claude -p` adapter) |
+| Marty | `morrowdock/marty` main `f2d7c5a` (PR #27) |
+| Engine | MartyGraphics `dfc521a` (PR #46), strict check, at most 3 repairs |
+| Research | On: web search and web fetch, 12 turns, quote check on |
+| Tries | 3: refused `text.number.beat.1`; refused `annotation.anchor.hidden.lShaft` (after 4 engine suggestions were applied); accepted |
+| Check | `marty-solid check --strict` passes at `dfc521a` ([check output](assets/jet-suit-ai/check-strict.json)) and again at main `5bae049`, with no warnings |
+
+[Story video (MP4)](assets/jet-suit-ai/story.mp4): 78 seconds, 9 beats, 1280×800 at 30 frames per second, H.264,
+17.4 MB, the engine's file byte for byte (not re-encoded). GitHub does not play it inside this page; click to open it.
+[The lesson JSON](assets/jet-suit-ai/lesson.json) · [Prompt, setup and every try](assets/jet-suit-ai/PROMPT.md) ·
+[Fact check](assets/jet-suit-ai/FACT-CHECK.md) · [Follow-up answer](assets/jet-suit-ai/followup-answer.txt) ·
+[Render receipt](assets/jet-suit-ai/provenance.json)
+
+### The 9 beats
+
+Each still is the engine's file, unedited. The caption under each still is the model's exact text. The "Fact check"
+line says what the [panel](#independent-fact-check) corrects in that beat.
+
+[![Beat 1, hero view: a grey schematic pilot with two gold engines on each forearm and one on the back. Labels: "Daedalus suit 2018, claimed: two per arm, one on back", "Mk4 (claimed latest): three back turbines", "Mk4 engines per arm: not found in this search". An empty table header on the left.](assets/jet-suit-ai/beat-1.png)](assets/jet-suit-ai/beat-1.png)
+
+**Beat 1.** "A pilot wears small jet engines on each forearm and on the back, all nozzles pointing down. This is the
+Daedalus layout; the newer suit differs."
+Fact check: the five-engine layout (two per arm, one on the back) is verified, not only claimed. "Daedalus" is a press
+codename, not a confirmed model name (C4). Gravity's page gives the Mk4 "micro jet arm engines" and three back
+turbines, but no per-arm count (C10).
+
+[![Beat 2, three-quarter view from above: all five gold engines, each with a yellow up arrow, and a yellow down arrow "Weight of pilot, suit and fuel" beside the left arm. Labels: "Up arrows: thrust of each engine (no value)", "Total thrust: not found in this search".](assets/jet-suit-ai/beat-2.png)](assets/jet-suit-ai/beat-2.png)
+
+**Beat 2.** "Each jet pushes its engine up, and gravity pulls the pilot, suit and fuel down. In a hover the upward parts
+of the thrusts balance the weight, and side forces and turning moments balance."
+Fact check: the checkers found the hover balance correct. Total thrust is public: about 144 kgf (317 lbf), reported by AOPA in 2020
+(C2). The weight acts at the combined centre of mass; the arrow beside the arm shows direction only (C13).
+
+[![Beat 3, hero view, the figure highlighted white: the board table fills with "Dry wt kg 27, F11 IntEng" and "Flight min 3, F12 IntEng". Labels: "Daedalus suit 2018, claimed" and "Mk4 (claimed latest): three back turbines".](assets/jet-suit-ai/beat-3.png)](assets/jet-suit-ai/beat-3.png)
+
+**Beat 3.** "The table gives claimed figures for the current suit, which is not the layout shown here."
+Fact check: the sources do not name a suit version, so these are not "current suit" figures. Readable source cells:
+"About 27 kg before fuel — Interesting Engineering, 28 Oct 2026" and "About 3 min — Gravity, Defence page" (C5).
+
+[![Beat 4, front view: the pilot's left arm is raised and highlighted; its engine and its thrust arrow tilt. A pointer "Arm moved to aim thrust, claimed (schematic)" ends at the hand. One thrust arrow sits at the hip.](assets/jet-suit-ai/beat-4.png)](assets/jet-suit-ai/beat-4.png)
+
+**Beat 4.** "To steer, the pilot moves one arm, and the forearm engines fixed to it tilt their thrust. The forces no
+longer balance, so the body moves that way."
+Fact check: steering with the arms is verified, not only claimed. Moving an arm changes the total force and the turning
+moment; the lesson does not calculate the resulting motion, so it should not state a direction (C6).
+
+[![Beat 5, back view: the gold back engine with a yellow up arrow; the four arm engines are dark. Labels: "Fuel, claimed: Jet A-1 or diesel in a back bladder", "Arm and back thrust split: not found in this search".](assets/jet-suit-ai/beat-5.png)](assets/jet-suit-ai/beat-5.png)
+
+**Beat 5.** "From behind: the back engine pushes near the body's centre line. How the load is shared between arm and
+back engines was not found in this search."
+Fact check: ASME (2019) reports a tripod of thrust, roughly one third on each arm and one third on the back, for the
+older suit; approximate, and it changes with throttle and arm angle (C3). The fuel is Jet A-1 or diesel, carried in
+bladders beside the back engine on the older suit (C9).
+
+[![Beat 6, close-up of the right forearm engine cut open: a blue "Air in" arrow, labels "Intake", "Compressor wheel", "Diffuser" and "Micro gas turbine-style engine (example)". The engine sits at the right edge.](assets/jet-suit-ai/beat-6.png)](assets/jet-suit-ai/beat-6.png)
+
+**Beat 6.** "Cut open one arm engine: air enters the intake, and the spinning compressor wheel flings it outward into
+the diffuser, which squeezes it."
+Fact check: the compressor wheel speeds the air outward and raises its pressure; the diffuser slows the air and raises
+its static pressure (C7). The cutaway is a generic single-shaft turbojet, not a drawing of a Gravity engine (C8).
+
+[![Beat 7, the same cutaway: a gold combustor "Combustor: fuel burns here" and the "Turbine wheel" below it; label "Fuel, claimed: Jet A-1 or diesel in a back bladder".](assets/jet-suit-ai/beat-7.png)](assets/jet-suit-ai/beat-7.png)
+
+**Beat 7.** "Fuel burns with the oxygen in the squeezed air. The hot gas spins the turbine at 1 turn per input turn,
+the same as the compressor, because one shaft joins them."
+Fact check: **this is the wrong sentence (C1).** "1 turn per input turn" is the engine's solved animation ratio: the
+compressor and the turbine are on one shaft, so they turn together (1:1). The engine does not calculate gas flow or
+engine speed. Correct: the hot gas expands through the turbine and turns it, and the turbine drives the compressor.
+
+[![Beat 8, the cutaway lower down: the gold "Nozzle" and a blue arrow "Hot jet out"; labels "Micro gas turbine-style engine (example)" and "Engines likely micro gas turbines".](assets/jet-suit-ai/beat-8.png)](assets/jet-suit-ai/beat-8.png)
+
+**Beat 8.** "The hot gas speeds up through the nozzle. Thrust is the reaction to that gas being pushed out fast."
+Fact check: no correction to this caption. Gravity uses small gas-turbine jet engines; that is verified, so the label's "likely" under-claims it (C8).
+
+[![Beat 9, hero view: the whole figure with all five gold engines. Labels: "Total thrust: not found in this search", "Daedalus suit 2018, claimed: two per arm, one on back", "Solved: shaft turning only; thrust not simulated".](assets/jet-suit-ai/beat-9.png)](assets/jet-suit-ai/beat-9.png)
+
+**Beat 9.** "Limits: only the shaft turning is solved. Airflow, burning fuel and thrust are not simulated, so the force
+arrows carry no value."
+Fact check: no correction to this caption. The legend line "Solved 19 · Given 1 · Not checked 16" can read as 19 verified facts; the solved
+items are animation ratios and one arrow direction, and no flight force is calculated (C12).
+
+### The follow-up
+
+**Question:** "How does the pilot steer?" The model kept the lesson unchanged (`{"document": null}`); beat 4 already poses the arms.
+Its answer, exactly ([file](assets/jet-suit-ai/followup-answer.txt)):
+
+> The pilot steers by pointing the arms, which aims the thrust of the arm engines (F9, Interesting Engineering 2026,
+> claimed, not checked). Beat 4 shows this: one arm is raised more than the other, so the forearm engines on it tilt
+> their thrust. Once the thrust is tilted, the forces and turning moments no longer balance, so the suit moves or turns
+> that way instead of hovering.
+
+The answer agrees with beat 4: the left arm is raised (60°, the right 15°), and its engine and thrust arrows tilt.
+Fact check (C6): arm steering is verified, not only claimed. The lesson does not calculate which way the suit moves.
+"F9" is a row of the model's own research table, which is not published.
+
+### Independent fact check
+
+Two AI models with web access checked the lesson on 2026-11-09: **GPT-6.1 Sol** (61 claims) and **Gemini 4 Argon**
+(19 claims, blind: it saw only the lesson, its summary, the follow-up answer and the stills). Neither saw the grader's
+fact key or the grading. Claude Opus 5.5 merged the two reports. **Where they disagree, the stricter label wins.**
+Verdict of both: public with fixes. The core is not wrong (layout, hover balance, arm steering, gas-turbine path, one
+shaft). These are model checks, not a review by a jet-suit engineer. Full table with the checkers' disagreements:
+[FACT-CHECK.md](assets/jet-suit-ai/FACT-CHECK.md).
+
+| # | Where | The lesson says | The correct statement | Label | Sources |
+| --- | --- | --- | --- | --- | --- |
+| C1 | Beat 7 | "The hot gas spins the turbine at 1 turn per input turn" (marked solved) | **WRONG.** The engine solves only the animation ratio: compressor and turbine turn together on one shaft (1:1). It does not calculate gas flow or engine speed. The hot gas expands through the turbine and turns it; the turbine drives the compressor. | WRONG (both) | The lesson's own limits; JetCat P220 catalogue; NASA Glenn |
+| C2 | Beat 2, label "Total thrust" | "not found in this search" | A public figure exists: about 144 kgf (317 lbf) total for the five-engine suit, reported by AOPA, 8 Oct 2020. Reported, not measured independently. Not calculated by the lesson. | WRONG as a gap (Gemini) / misleading (Sol) | AOPA 2020-10-08 |
+| C3 | Beat 5, label "thrust split" | "not found in this search" | ASME (12 Jul 2019) reports a tripod of thrust: roughly one third on each arm and one third on the back, for the older suit. Approximate; changes with throttle and arm angle. Mk4 split not confirmed. | WRONG as a gap (Gemini) / misleading (Sol) | ASME "Iron Man Lives" 2019-07-12 |
+| C4 | Title, label "Daedalus suit 2018" | "Daedalus layout", "claimed" | Name the layout by what is documented: "five-engine layout reported in 2018 (two per arm, one on the back)". The layout is VERIFIED, not only claimed. "Daedalus" is a press codename (The Manual, 2018), not a confirmed model name; "Mk2/Mk3" has no primary source either. | VERIFIED layout; name CLAIM | WIRED 2018-11-09; TIME 2018-11-15; AOPA 2020; The Manual 2018-08-02 |
+| C5 | Board table, beat 3 | "Dry wt kg 27 · F11 IntEng"; "Flight min 3 · F12 IntEng"; figures "for the current suit" | Readable source cells: "About 27 kg before fuel — Interesting Engineering, 28 Oct 2026" and "About 3 min — Gravity, Defence page (accessed 9 Nov 2026)". The sources do not state the suit version; they are not "current suit" figures. | CLAIM (both); scope misleading | Interesting Engineering 2026-10-28; gravity.co Defence page |
+| C6 | Beat 4, arrow text, follow-up answer | Steering "claimed, not checked"; "the body moves that way" | Arm steering is VERIFIED. Moving the arms aims the arm-engine thrust; this changes the total force and the turning moment. The lesson does not calculate the resulting motion, so it should not state a direction. | VERIFIED method; direction not calculated (Sol, stricter) | Gravity Defence page; WIRED 2018; NASA Glenn |
+| C7 | Beat 6 | The diffuser "squeezes" the air | The compressor wheel speeds the air outward and raises its pressure; the diffuser slows it and raises its static pressure. | Imprecise (Sol) | FAA-H-8083-32B glossary; JetCat |
+| C8 | Label | "Engines likely micro gas turbines" | Gravity uses small gas-turbine jet engines (VERIFIED). The cutaway is a generic single-shaft turbojet, not a verified drawing of a Gravity engine; every cutaway beat should say so. | VERIFIED class; geometry schematic | Browning interviews; JetCat |
+| C9 | Label "Fuel" | "Jet A-1 or diesel in a back bladder", shown beside the arm-engine cutaway | Fuel: Jet A-1 or diesel (reported). The older suit carries fuel in bladders beside the back engine; the model does not show them. It is not a store inside the engine. | VERIFIED fuel; location scoped | WIRED 2018; ASME 2019 |
+| C10 | Label "Mk4 per arm" | "not found in this search" | Gravity's page says the Mk4 has "micro jet arm engines" and "three additional micro turbines in the back". It does not state a per-arm count. Two per arm is PLAUSIBLE from secondary coverage only. | PLAUSIBLE (stricter: Sol) | gravity.co/innovation |
+| C11 | Summary text (Marty's run summary; not in the stills) | Mentions power and the 2019 speed record | Neither appears in the lesson; remove them. (If added: Guinness 85.06 mph / 136.891 km/h, 14 Nov 2019, a measured record.) | WRONG for this document (Gemini) | Guinness |
+| C12 | Legend line | "Solved 19 · Given 1 · Not checked 16" | Can read as 19 verified facts. The solved items are animation ratios only; no flight force is calculated. | Misleading framing (Sol) | — |
+| C13 | Beat 2 still | Weight arrow drawn beside the arm | Weight acts at the combined centre of mass; the arrow shows direction only. | Visual (both) | NASA Glenn |
+
+### What the engine checked vs. what it did not
+
+* **Solved (the engine computed it):** the shaft ratios. In each of the 5 engines, the compressor wheel, the shaft and
+  the turbine wheel turn together, 1:1 (15 parts). Also the weight arrow's direction (straight down), the number in beat 7's
+  caption (checked against the engine's value), and beat 7's two checks that the turbine and the compressor turn at 1:
+  15 + 1 + 1 + 2 = 19. That is the "Solved 19" in the legend.
+* **Given 1:** the board table (27 kg, 3 min), shown as the model gave it, with its source note.
+* **Not checked 16:** 8 labels and 8 arrows. **The arrows show direction only.** Their lengths are as the model drew
+  them, not to scale, and they carry no value.
+* **Not computed at all:** thrust, airflow, burning fuel, engine speed, the load split, the hover balance and the
+  steering motion. The strict check tests the geometry, that every label and arrow can be seen in its beat, and that
+  every number in a caption is an engine value. It does not test whether a sentence is true. That is why the beat 7
+  sentence passed: its number is the solved shaft ratio, but the sentence ties it to the hot gas (C1).
+
+### All 4 runs (every try counted)
+
+| # | Run | Model | Result | Try 1 | Try 2 | Try 3 | Try 4 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `r2j-opus-1` (this lesson) | Claude Opus 5.5 | **Accepted, try 3; met the showcase bar** | Refused `text.number.beat.1` | 4 auto-fixed, then refused `annotation.anchor.hidden.lShaft` | **Accepted** | — |
+| 2 | `r2j-sonnet-1` | Claude Sonnet 5.5 | Accepted, try 3 (Marty's lint fallback) | 8 auto-fixed, then refused `annotation.anchor.off.lBackT` | 1 auto-fixed; engine ok; Marty lint | Engine ok; Marty lint again; kept as the fallback | — |
+| 3 | `r2j-opus-2` | Claude Opus 5.5 | **Refused** | Refused `component.use.unknown.name` | 4 auto-fixed, then refused `annotation.anchor.off.lExample` | Refused `annotation.arrow.hidden.aSteer` | Refused (same) |
+| 4 | `r2j-sonnet-2` | Claude Sonnet 5.5 | Accepted, try 2 (by the auto-fix) | Refused `section.miss.b2.intakeLip` | 13 auto-fixed, then accepted | — | — |
+
+4 runs, 3 accepted, 1 refused. Only run 1 met the bar: 0 errors against the grader's fact key, an honest follow-up,
+every named engine visible, no hard cut and no "not published" text. The independent fact check above came after that
+grading and found more. Details: [PROMPT.md](assets/jet-suit-ai/PROMPT.md).
+
+### Next to the hand-built lesson
+
+| AI-written (this lesson, beat 2) | Hand-built reference (step 2) |
+| --- | --- |
+| [![AI lesson beat 2: five gold engines with up arrows and a weight arrow.](assets/jet-suit-ai/beat-2.png)](assets/jet-suit-ai/beat-2.png) | [![Hand-built step 2: five engines, one thrust arrow and one exhaust plume each.](assets/jet-suit/step-2.png)](assets/jet-suit/step-2.png) |
+| Written by Claude Opus 5.5 from the question, with its own web research. Shown unedited; the fact check is listed beside it. | Written by a Claude agent by hand from fact-checked research; corrections were applied before publishing. |
+
+The hand-built lesson below gives the total thrust (about 144 kgf, AOPA 2020) and Browning's load split, the two gaps
+that the AI lesson left as "not found in this search".
+
 ## Jet suit (hand-built, fact-checked)
 
 **Hand-built example (written by a Claude agent from fact-checked research, not generated from a prompt by the
@@ -83,8 +254,9 @@ two earlier label anchors; the published files use the moved anchors (see the
 
 ## From a prompt
 
-The example in this section was written by an AI model from one question. The other examples on this page are
-hand-built: people and coding agents wrote their JSON or code for these examples, not a
+The example in this section was written by an AI model from one question, as was the
+[AI jet-suit lesson](#jet-suit-from-a-prompt-ai-written-unedited) at the top of this page. The other examples on this
+page are hand-built: people and coding agents wrote their JSON or code for these examples, not a
 model answering a prompt.
 
 [![AI-written two-stage planetary gearbox, exploded: brass suns, steel planets, blue and orange carriers, two ring gears.](assets/from-a-prompt/robot-joint/exploded.png)](assets/from-a-prompt/robot-joint/loop.gif)
