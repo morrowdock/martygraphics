@@ -268,6 +268,28 @@ In the SwiftUI view the board pane slides in and out over 0.35 s
 (`MartyGraphicsExplainerView.paneAnimationSeconds`); with Reduce Motion it appears and disappears at once. A board
 that is never drawn records no first board frame (`boardFrame` stays nil).
 
+### The solid pane in SwiftUI
+
+The SwiftUI solid pane (`MGExplainerController`, shown by `MartyGraphicsExplainerView`) frames each beat with the
+function that frames the beat's still and its hold frames in `story.mp4`:
+`MGExplainerFrame.solidClearView(_:view:stepIndex:aspect:)`, for the step the beat shows
+(`MGExplainerSession.solidStep(forBeat:)`), at the beat's end pose and at the pane's aspect in points (the framing reads
+only the aspect; the `pane:` form reads `MGFrameRect.aspect`). The pane has no title or caption over it, as in a still,
+so the whole pane is the safe window. So the pane gets the per-step focus framing, the unblocked-focus rule (automatic
+ghosts drawn at 0.2, or an alternate direction) and every camera preset, `backLeft` and `backRight` included. It draws
+the beat's view with the same automatic ghosts. The controller publishes the result (`paneClear`, `paneView`); it
+computes no camera of its own. For the same beat and the same pane aspect, the pane camera is the still's camera.
+
+- **Start pose and the learner's camera.** The framed camera is the start pose of each beat. In a solid without
+  annotations the learner may orbit and zoom (SceneKit camera control). Each new framing increases
+  `MGExplainerController.cameraReset`: a new beat, a recompiled solid, or a new pane aspect. The view then builds a
+  fresh scene view on the framed camera, so the learner's orbit, any camera SceneKit switched to, and its orbit pivot
+  are dropped. A layout pass with the same size does not reframe. With annotations the learner cannot move the camera,
+  so the overlay always matches the picture.
+- **Timing.** The pane cuts to the next beat's framed camera, as it did before. It plays no camera move and adds no
+  timing rule. The story video plays its routed camera moves (and cuts a blocked move); the live pane does not copy
+  them. When the board pane slides (0.35 s), the solid pane frames once for its new size.
+
 ## One id namespace
 
 One namespace holds 2D item ids (after template build and `hide`, and every id an `add` op introduces), 2D control
@@ -454,9 +476,8 @@ stacked when tall), the caption, a slider for every bound control and the legend
   `tableEmphasis(rows:cells:)`).
 - The solid pane plays each beat's `spin` over time from the beat's start (`MGExplainerLimits.spinSecondsPerTurn` per
   input turn; `solidPose(at:)`, `spinProgress(at:)`). `pause()` freezes the pose it shows; `resume()` continues from
-  there. `.immediate` pacing and `finishNow()` show the end pose. Each beat's `camera` preset and `orbit` frame the
-  camera, as `marty-solid render` does (the preset names, `backLeft` and `backRight` included, are in
-  [SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop)).
+  there. `.immediate` pacing and `finishNow()` show the end pose. The camera follows
+  [The solid pane in SwiftUI](#the-solid-pane-in-swiftui) below: the beat's still camera, from one function.
 - Highlighted 3D parts use the renderer's `.strong` emphasis (`MGSolidRenderer.emphasis`): the 2D emphasis colour as a
   glow, other parts dimmed. The default `.subtle` style of plain assemblies is unchanged. No device budget is claimed: a
 physical-device receipt is pending. Authoring advice: write the view the learner needs first, keep the board small,

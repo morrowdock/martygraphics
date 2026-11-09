@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "e1d2109d98c3c110a10eb6eecf4f2d67cb016339e7bdc571a9ec7bd26f76c496"
+      "sha256": "bae9373ee10317561ab35ebc0727573f77307f038ef2e3d961271ae28abce449"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -523,7 +523,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerLayout.swift",
-      "sha256": "e1ce1b13aa1bac0b7d8d405fe1589cfccb1fd15aeab9d4017546fdeddfd73be9"
+      "sha256": "eb1a8e25052bbfec524a91588c77f096db09a0fd8807692faa509ee1edf8fa23"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerReport.swift",
@@ -639,7 +639,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsExplainerView.swift",
-      "sha256": "c4106ce62fdc3ec8443756090490be1d8906ef6ad8af3fd022c1d21d8cd51ea3"
+      "sha256": "bd62e31bd6e18c294f13d297f2cff8f34c672f33aee12565ee14d4dae964d018"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsLessonView.swift",
@@ -886,6 +886,10 @@
       "sha256": "d50502c0982dccac9411693322a11b12aa1d96515eeb943bc408c0e29c12f43f"
     },
     {
+      "path": "Tests/MartyGraphicsTests/ExplainerPaneFramingTests.swift",
+      "sha256": "36f53029554313867c5a76661239c56bdf0b6e21eadced271ee0a17b917a559e"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/ExplainerRecheckTests.swift",
       "sha256": "7110b33293dc141923ee16b8390d068dbd3d7f74eb2220e482a1594b56c8052a"
     },
@@ -1111,7 +1115,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "598d304a6eaf63504457011bac26b2d3ef3a6f357b8b016a9b7e5e01ac5c3ba8"
+      "sha256": "ca846a2d78d7a624d2d2a50de5317c8df1b33eab018c99041841198ad75a9c6b"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1155,7 +1159,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "52efb9760b20f5bc75700e330b19ee675e2686a271c2a9d3abaacd35203a4718"
+      "sha256": "6f66160ed57b8d93a1ce530437bf0ec03cf18fb9b3ed030b3bb70c44a1b9efe3"
     },
     {
       "path": "docs/THIRD-PARTY.md",

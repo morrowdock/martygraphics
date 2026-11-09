@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+- SwiftUI solid pane uses the still's framing (follow-up from PR #37).
+  - `MGExplainerController` (shown by `MartyGraphicsExplainerView`) now frames each beat with
+    `MGExplainerFrame.solidClearView`, the function of the beat's still and its `story.mp4` hold frames, for the
+    beat's step at the pane's aspect. Before, it framed the posed bounding box from the beat's preset with its own
+    rule, so the app could show a different view than the rendered lesson: no focus framing, no automatic ghosts and no
+    alternate direction. Now the pane gets per-step focus framing, the unblocked-focus rule and every preset (`backLeft`
+    and `backRight` included), and it draws the beat's view with the still's automatic ghosts. For the same beat and
+    pane aspect, the pane camera equals the still camera.
+  - New: `MGExplainerFrame.solidClearView(_:view:stepIndex:aspect:)` (the `pane:` form calls it with
+    `MGFrameRect.aspect`; a bad aspect frames as an empty pane does). `MGExplainerController.paneClear`, `paneView` and
+    `cameraReset`.
+  - The framed camera is the start pose of each beat. The learner may still orbit and zoom a solid without
+    annotations. A new beat, a recompiled solid or a new pane aspect returns to the framed camera: the view builds a
+    fresh scene view for each `cameraReset`, so the orbit, a camera SceneKit switched to and its pivot are dropped. The
+    pane still cuts between beats. It adds no camera timing (the story's routed moves are not played live).
+  - docs/EXPLAINER.md: "The solid pane in SwiftUI"; docs/SOLID-3D.md: the unblocked-focus users. Check reports, golden
+    files and rendered outputs do not change (the CLI did not change).
+  - Tests: every beat of the shipped explainers (`Examples/Explainers`, the docs fixtures with engines and a
+    `microTurbojet`) and of the shipped turbofan model played as an explainer (its beats show automatic ghosts) gives the
+    still's camera, unblocked-focus result and view in the controller; `backLeft` and `backRight` beats; a wall ghosted
+    in the pane; same results in fresh controllers; each framing is a camera reset and a moved camera goes back to the
+    framed camera.
+
 - Back three-quarter camera presets and part-centre anchors.
   - **Camera presets `backLeft` and `backRight`** (`MGSolidCamera.presets`): three-quarter views from behind, yaw 135°
     and 225° (±135° from `front`), at `hero`'s pitch (28°). `backLeft` looks from behind on the +X side (`hero`'s side),
