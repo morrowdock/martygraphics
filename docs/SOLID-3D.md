@@ -1839,7 +1839,7 @@ as its stills. The plan is
 | Hold of one beat | reading time = 1 s + caption Unicode scalars / 15, or the spin time if longer, bounded to 3–9 s |
 | Spin | a step's `spin` plays at 4 s per input turn from the beat's first frame (faster when that would take more than 9 s, so it always ends within the beat; the spin time is clamped to 9 s before it becomes a frame count, the sign is the turn direction, and a spin that is not finite counts as none); the rest of the beat holds the end pose. A step without `spin` holds still (so every shown dimension keeps the value its step was checked at) |
 | Camera | during a beat's hold the camera is exactly the camera of the beat's still, for the same layout (`MGStoryPlan.camera(frame:beatCameras:)`); in an explainer the solid pane is fitted for its own pixels in that beat's layout, full frame or split (`MGExplainerFrame.solidCamera`) |
-| Camera move | from the previous beat's camera to this beat's camera over the first 0.6 s of the beat (`transitionSeconds`; at most half the beat), eased in and out: target and field of view in a straight line, yaw the shorter way round, pitch linearly, distance geometrically. When that straight move would pass through a part, a routed path is taken instead (pull back, arc, or both; [Routed moves](#routed-moves) below); a routed move takes 1.0 s (`routedTransitionSeconds`; at most half the beat), and only when no path is clear does the beat cut. During the move the caption band is empty and no label is drawn (3D arrows and dimensions stay, with the legend and its notes); in an explainer the board still shows the previous beat's state. The beat's caption, labels and board claims appear on the first frame of its hold (`MGStoryPlan.holds(frame:cuts:)`, `caption(frame:cuts:)`, `holdStartFrame`). The first beat starts at its own camera. In an explainer, a beat whose solid pane has another size than the previous beat's (the board pane appears or goes) cuts to its own camera instead of moving, because the previous camera was fitted for the other pane |
+| Camera move | from the previous beat's camera to this beat's camera over the first 0.6 s of the beat (`transitionSeconds`; at most half the beat), eased in and out: target and field of view in a straight line, yaw the shorter way round, pitch linearly, distance geometrically. When that straight move would pass through a part, a routed path is taken instead (pull back, arc, or both; [Routed moves](#routed-moves) below); a routed move takes 1.0 s (`routedTransitionSeconds`; at most half the beat), and only when no path is clear does the beat cut. During the move the caption band is empty and no label is drawn (3D arrows and dimensions stay, with the legend and its notes); in an explainer the board still shows the previous beat's state. The beat's caption, labels and board claims appear on the first frame of its hold (`MGStoryPlan.holds(frame:cuts:)`, `caption(frame:cuts:)`, `holdStartFrame`). The first beat starts at its own camera. In an explainer, a beat whose pane layout differs from the previous beat's (the board pane opens, closes or changes width) does not cut: the panes slide over the move, the camera is fitted to the current solid pane on each frame and the board fades in or out ([EXPLAINER.md](EXPLAINER.md#pane-slide-in-the-story-video)) |
 | Rate and size | 30 frames per second by default (`--story-fps 10` or `30`), at the still size (default 1280 × 800) |
 | Length | at most 3,600 frames (2 minutes at 30 fps); a longer story is refused with `story.frames` before any file is written (`--no-story` renders without it) |
 
@@ -1863,16 +1863,18 @@ keep their places for the rest of the beat. The writer is the one
 stall timeout, the output directory removed). The manifest record gives `codec`,
 `width`, `height`, `fps`, `frames`, `seconds`, `transitionSeconds`, `routedTransitionSeconds`,
 `holdSeconds` (`min`, `max`) and per beat `{"beat", "start", "holdStart", "seconds", "camera",
-"offView", "cut", "cutReason", "path", "pathReason", "blockedBy", "moveSeconds"}` (start time,
+"offView", "cut", "cutReason", "path", "pathReason", "blockedBy", "moveSeconds", "layout"}` (start time,
 the time the caption, labels and claims appear, and
 length in seconds, the hold camera, the number of shown annotations whose anchor is
 outside the view in the beat's last frame plus the focus samples still hidden (absent
 when the beat shows no annotation and has no tested focus), whether the beat cut
-instead of moving, and why: `layout` or `blocked`; for each beat with a tested move,
+instead of moving, and why: `blocked` or `motion`; for each beat with a tested move,
 its path `straight`, `pullback`, `arc`, `combined` or `cut`, why (`clear`, `blocked`,
-`layout`, `motion`, or `untested` for a camera that is not finite), the first part the straight
+`motion`, or `untested` for a camera that is not finite; `layout` only from a host that passes `layout` to
+`routes`), the first part the straight
 move meets (`blockedBy`, for `blocked`) and the move's length in seconds, 0 for a cut;
-the first beat has no move), plus the unblocked-focus fields
+the first beat has no move; in an explainer, `layout` for a beat whose pane layout changes: `path` `slide` or
+`cut`, `change` `open`, `close` or `resize`, and `seconds`), plus the unblocked-focus fields
 `autoGhost`, `occluded`, `focusSamples`, `view` and `facesCut` for a tested focus. Each step still's record (`step-<n>.png`) and each explainer beat still's
 record (`beat-<n>.png`) give the same `camera` and `offView`, so a host can check that
 the story holds on the still's framing.
@@ -1924,7 +1926,9 @@ blocking boxes. The straight path is tested the same way; it is clear where the 
 larger camera distance) cut a move that passes a part at a close camera's own near-plane distance.
 
 A beat whose move has no clear path cuts (`cut`, reason `blocked`, `blockedBy` the first part the straight move meets);
-a beat whose solid pane changed size cuts with reason `layout` without a test. The path test is deterministic; at most
+a beat that a host lists in `layout` cuts with reason `layout` without a test (`marty-solid render` lists none: an
+explainer beat whose pane layout changes is routed like any other and slides its panes). The path test is
+deterministic; at most
 24 paths of at most 4 legs of 1,024 chords against 96 boxes per move, and at most 2 × (the frames of a 1.0 s move + 2)
 poses per beat. Not tested: the meshes themselves (boxes only, and a swept box is the box of a whole sweep, so a path
 that only passes close to a part, or through the empty middle of a sweep, may be refused), and whether the routed path

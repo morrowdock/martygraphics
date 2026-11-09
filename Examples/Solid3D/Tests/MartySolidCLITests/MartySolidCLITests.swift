@@ -447,10 +447,13 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertNil(stills[0]["boardShare"])
         let story = try XCTUnwrap(outputs.first { $0["file"] as? String == "story.mp4" })
         XCTAssertEqual(story["fps"] as? Int, 10)
-        // The layout change cuts, and the manifest says why.
+        // The layout change slides the pane over the camera move (no cut), and the manifest says so.
         let cutBeats = try XCTUnwrap(story["beats"] as? [[String: Any]])
-        XCTAssertEqual(cutBeats.map { $0["cut"] as? Bool }, [false, true])
-        XCTAssertEqual(cutBeats[1]["cutReason"] as? String, "layout")
+        XCTAssertEqual(cutBeats.map { $0["cut"] as? Bool }, [false, false])
+        XCTAssertNil(cutBeats[1]["cutReason"])
+        XCTAssertEqual(cutBeats[1]["path"] as? String, "straight")
+        XCTAssertEqual(cutBeats[1]["layout"] as? NSDictionary, ["path": "slide", "change": "open", "seconds": 0.6] as NSDictionary)
+        XCTAssertNil(cutBeats[0]["layout"])
         // The story's hold camera of each beat is the camera of that beat's still, in both layouts (full frame, split).
         let beats = try XCTUnwrap(story["beats"] as? [[String: Any]])
         XCTAssertEqual(beats.count, 2)
@@ -458,6 +461,53 @@ final class MartySolidCLITests: XCTestCase {
             let held = try XCTUnwrap(b["camera"] as? NSDictionary), shot = try XCTUnwrap(still["camera"] as? NSDictionary)
             XCTAssertEqual(held, shot)
         }
+    }
+
+    /// The board pane opens at beat 2 and closes at beat 4: the story has no cut, both layout changes slide over the
+    /// camera move, every hold camera is the still's camera in both layouts, the caption band (and so every label and
+    /// claim of the new beat, which follow the same hold rule) stays empty during each move, and a second render in a
+    /// fresh process gives the same story record and the same stills.
+    func testBoardPaneOpensAndClosesWithoutACut() throws {
+        let gears = #"{"v":2,"parts":[{"id":"p","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},{"id":"w","at":[45,0,0],"shape":{"gear":{"teeth":30,"module":2,"width":8}},"joint":{"revolute":[0,0,1]}}],"constraints":[{"gearMesh":{"a":"p","b":"w"}}],"annotations":{"labels":[{"id":"lp","at":"p","text":"Small gear"},{"id":"lw","at":"w","text":"Big gear"}]}}"#
+        let doc = try write(#"{"v":1,"kind":"explainer","board":{"v":1,"items":[{"id":"cap","k":"text","at":[6,7],"text":"Figures"}]},"solid":\#(gears),"beats":[{"say":"One.","view":{"annotate":["lp"]}},{"say":"Two.","view":{"annotate":["lw"]},"ops":[{"op":"add","item":{"id":"t","k":"table","at":[6,4],"header":true,"cells":[["Gear","Teeth"],["small","{p.teeth}"]]}}]},{"say":"Three.","view":{"annotate":["lp","lw"]}},{"say":"Four.","view":{"annotate":["lp"]},"ops":[{"op":"remove","id":"t"}]}]}"#, "pane-slide.json")
+        func render() throws -> (URL, [[String: Any]], [[String: Any]]) {
+            let out = FileManager.default.temporaryDirectory.appendingPathComponent("explainer-slide-\(UUID().uuidString)")
+            let r = try renderOrSkip(["render", doc, out.path, "--size", "640x400", "--no-loop", "--story-fps", "10"])
+            XCTAssertEqual(r.status, 0, r.text)
+            let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+            let outputs = manifest?["outputs"] as? [[String: Any]] ?? []
+            let story = try XCTUnwrap(outputs.first { $0["file"] as? String == "story.mp4" })
+            return (out, try XCTUnwrap(story["beats"] as? [[String: Any]]), outputs.filter { ($0["file"] as? String)?.hasPrefix("beat-") == true })
+        }
+        let (out, beats, stills) = try render()
+        defer { try? FileManager.default.removeItem(at: out) }
+        XCTAssertEqual(stills.map { $0["boardPane"] as? Bool }, [false, true, true, false])
+        XCTAssertEqual(beats.map { $0["cut"] as? Bool }, [false, false, false, false])
+        XCTAssertEqual(beats.compactMap { $0["cutReason"] }.count, 0)
+        XCTAssertEqual(beats.map { ($0["layout"] as? [String: Any])?["change"] as? String }, [nil, "open", nil, "close"])
+        for k in [1, 3] {
+            XCTAssertEqual((beats[k]["layout"] as? [String: Any])?["path"] as? String, "slide")
+            XCTAssertEqual(beats[k]["layout"].flatMap { ($0 as? [String: Any])?["seconds"] as? Double }, beats[k]["moveSeconds"] as? Double)
+            XCTAssertNotEqual(beats[k]["path"] as? String, "cut")
+        }
+        // Every hold camera is the still's camera, full frame and split.
+        for (b, still) in zip(beats, stills) {
+            XCTAssertEqual(try XCTUnwrap(b["camera"] as? NSDictionary), try XCTUnwrap(still["camera"] as? NSDictionary))
+        }
+        // During each slide: no caption text; on the first hold frame the caption appears.
+        let movie = out.appendingPathComponent("story.mp4")
+        for k in [1, 3] {
+            let start = Int((try XCTUnwrap(beats[k]["start"] as? Double) * 10).rounded())
+            let hold = Int((try XCTUnwrap(beats[k]["holdStart"] as? Double) * 10).rounded())
+            XCTAssertEqual(hold - start, 6)
+            for f in start..<hold { XCTAssertEqual(try captionTextPixels(movie, frame: f, fps: 10, width: 640, height: 400), 0, "move frame \(f)") }
+            XCTAssertGreaterThan(try captionTextPixels(movie, frame: hold, fps: 10, width: 640, height: 400), 20)
+        }
+        // Determinism: a fresh process gives the same story record (holds, paths, cameras, layout) and the same stills.
+        let (again, beats2, stills2) = try render()
+        defer { try? FileManager.default.removeItem(at: again) }
+        XCTAssertEqual(beats2 as NSArray, beats as NSArray)
+        XCTAssertEqual(stills2.map { $0["sha256"] as? String }, stills.map { $0["sha256"] as? String })
     }
 
     /// Bright (text) pixels in the caption band of frame `index` of a movie: the band is a dark fill over the scene, so

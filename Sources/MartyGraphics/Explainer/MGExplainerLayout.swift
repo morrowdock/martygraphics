@@ -183,8 +183,8 @@ extension MGStoryPlan {
     /// it is exactly that beat's camera; in the camera move at the start of a beat it lies between the previous beat's
     /// camera and this one (`camera(from:to:_:)`, or along the beat's routed path in `moves` when that path runs from
     /// the previous beat's camera to this one). A beat in `cuts` or with a cut in `moves` starts at its own camera (no
-    /// move): the story cuts when the pane layout changes, because the previous camera was fitted for another pane, and
-    /// when every path of the move meets a part (`routes`).
+    /// move): the story cuts when every path of the move meets a part (`routes`). When the pane layout changes, the
+    /// render tool fits this camera to the sliding pane of each move frame (`MGPaneSlide.camera`).
     public func camera(frame i: Int, beatCameras: [MGSolidCamera?], cuts: Set<Int> = []) -> MGSolidCamera? {
         let f = frame(i)
         guard beatCameras.indices.contains(f.beat), let to = beatCameras[f.beat] else { return nil }
