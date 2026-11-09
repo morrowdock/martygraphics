@@ -146,8 +146,9 @@ shaft). These are model checks, not a review by a jet-suit engineer. Full table 
 ### What the engine checked vs. what it did not
 
 * **Solved (the engine computed it):** the shaft ratios. In each of the 5 engines, the compressor wheel, the shaft and
-  the turbine wheel turn together, 1:1 (15 parts). Also the weight arrow's direction (straight down) and beat 7's two
-  checks that the turbine and the compressor turn at 1. That is the "Solved 19" in the legend.
+  the turbine wheel turn together, 1:1 (15 parts). Also the weight arrow's direction (straight down), the number in beat 7's
+  caption (checked against the engine's value), and beat 7's two checks that the turbine and the compressor turn at 1:
+  15 + 1 + 1 + 2 = 19. That is the "Solved 19" in the legend.
 * **Given 1:** the board table (27 kg, 3 min), shown as the model gave it, with its source note.
 * **Not checked 16:** 8 labels and 8 arrows. **The arrows show direction only.** Their lengths are as the model drew
   them, not to scale, and they carry no value.
