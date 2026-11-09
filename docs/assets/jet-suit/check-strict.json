@@ -78,7 +78,7 @@
       "kind": "label",
       "meaning": null,
       "occludedAtDefaultCamera": true,
-      "text": "Back: equipment + about ⅓ pilot weight",
+      "text": "Back: equipment + about ⅓ pilot weight (Browning, 2021)",
       "tier": "described",
       "value": null
     },
@@ -181,7 +181,7 @@
     {
       "anchorsWorld": [
         [
-          -280,
+          280,
           0,
           1300.096189432334
         ]
@@ -206,23 +206,7 @@
       "kind": "label",
       "meaning": null,
       "occludedAtDefaultCamera": true,
-      "text": "JetCat-style micro turbojet (example)",
-      "tier": null,
-      "value": null
-    },
-    {
-      "anchorsWorld": [
-        [
-          55,
-          258,
-          1415
-        ]
-      ],
-      "id": "lNotGravity",
-      "kind": "label",
-      "meaning": null,
-      "occludedAtDefaultCamera": true,
-      "text": "Not confirmed Gravity hardware",
+      "text": "JetCat-style example, not confirmed Gravity hardware",
       "tier": null,
       "value": null
     },
@@ -456,21 +440,21 @@
     {
       "anchorsWorld": [
         [
-          -561.2199944022997,
-          -53.483638721414536,
-          939.0088710233158
+          534.1377811944639,
+          -43.9329889497334,
+          985.9166402807002
         ],
         [
-          -793.7553790394738,
-          626.0817956309852,
-          536.2457702741586
+          770.4916419173937,
+          -127.28411422986001,
+          576.5397449435275
         ]
       ],
       "id": "aJetBack",
       "kind": "arrow",
       "meaning": "flow",
       "occludedAtDefaultCamera": false,
-      "text": "If the exhaust is aimed back",
+      "text": "Exhaust aimed back (schematic pose)",
       "tier": "described",
       "value": null
     },
@@ -493,6 +477,22 @@
       "occludedAtDefaultCamera": true,
       "text": "Hot gas out",
       "tier": "described",
+      "value": null
+    },
+    {
+      "anchorsWorld": [
+        [
+          0,
+          258,
+          1510
+        ]
+      ],
+      "id": "aSpin",
+      "kind": "arrow",
+      "meaning": "motion",
+      "occludedAtDefaultCamera": true,
+      "text": null,
+      "tier": "solved",
       "value": null
     }
   ],
@@ -614,7 +614,7 @@
       1,
       2
     ],
-    "executableSHA256": "2073e5fae8a41928163ed714baeb86040f4a719edd85adcbd3927228560b4c65",
+    "executableSHA256": "10a6719c34d83cfbe1ff179fd2f7b0664c6824b5b27604a59b802fa0c6b6309a",
     "name": "MartyGraphics",
     "reportFormat": 1,
     "snapshotFormats": [
@@ -892,8 +892,8 @@
     }
   },
   "file": {
-    "lines": 54,
-    "sha256": "9bc7dd9355beffd4f2a8695e8087969a8baab45756c3a8e2abee874c61d21689"
+    "lines": 59,
+    "sha256": "aa5078775cbb66f30be98b873c608dcb6500ee1d14aee164cd26a799460366b7"
   },
   "legend": {
     "built": 0,
@@ -1123,6 +1123,13 @@
         "why": "Direction and length as authored"
       },
       {
+        "badge": "Solved",
+        "id": "aSpin",
+        "kind": "annotation",
+        "tier": "solved",
+        "why": "Turn sense from the engine (motion of back.shaft)"
+      },
+      {
         "badge": "Not checked",
         "id": "step.1",
         "kind": "caption",
@@ -1157,8 +1164,8 @@
       "Arrow lengths are not to scale"
     ],
     "shapes": "Shapes as authored",
-    "solved": 16,
-    "text": "Solved 16 · Not checked 20"
+    "solved": 17,
+    "text": "Solved 17 · Not checked 20"
   },
   "motionTiers": [
     {
@@ -1827,20 +1834,60 @@
       "ridesOn": null,
       "source": null,
       "tier": null
+    },
+    {
+      "base": "plumeBack",
+      "motion": "static",
+      "part": "plumeBack",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "plumeArmL1",
+      "motion": "static",
+      "part": "plumeArmL1",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "plumeArmL2",
+      "motion": "static",
+      "part": "plumeArmL2",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "plumeArmR1",
+      "motion": "static",
+      "part": "plumeArmR1",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
+    },
+    {
+      "base": "plumeArmR2",
+      "motion": "static",
+      "part": "plumeArmR2",
+      "ridesOn": null,
+      "source": null,
+      "tier": null
     }
   ],
-  "parts": 71,
+  "parts": 76,
   "placements": [
     {
       "placement": [
         {
           "anchor": [
-            0.488941245425771,
-            0.3712485287140387
+            0.48791394217092643,
+            0.38056983983873804
           ],
           "box": [
-            0.47309537471213015,
-            0.3816095055812327,
+            0.4744928666748945,
+            0.38997526010990186,
             0.303,
             0.03925
           ],
@@ -1849,8 +1896,8 @@
           "id": "lVersion",
           "kind": "label",
           "leader": [
-            0.488941245425771,
-            0.3816095055812327
+            0.48791394217092643,
+            0.38997526010990186
           ],
           "occluded": true,
           "offView": false,
@@ -1858,12 +1905,12 @@
         },
         {
           "anchor": [
-            0.6018688587603478,
-            0.4745564053460978
+            0.5936826243682658,
+            0.47833346054615794
           ],
           "box": [
-            0.6190208185583105,
-            0.44727738884887225,
+            0.6110589509544218,
+            0.45160907567485803,
             0.22959374999999999,
             0.03925
           ],
@@ -1872,8 +1919,8 @@
           "id": "lArms",
           "kind": "label",
           "leader": [
-            0.6190208185583105,
-            0.4745564053460978
+            0.6110589509544218,
+            0.47833346054615794
           ],
           "occluded": false,
           "offView": false,
@@ -1881,12 +1928,12 @@
         },
         {
           "anchor": [
-            0.5200840687073587,
-            0.30392085543011466
+            0.5171849584263833,
+            0.3175396003773645
           ],
           "box": [
-            0.3140112269499747,
-            0.27627010756788434,
+            0.3108858189861816,
+            0.2905198365361947,
             0.1888125,
             0.03925
           ],
@@ -1895,8 +1942,8 @@
           "id": "lBack",
           "kind": "label",
           "leader": [
-            0.5028237269499747,
-            0.30392085543011466
+            0.4996983189861816,
+            0.3175396003773645
           ],
           "occluded": true,
           "offView": false,
@@ -1904,12 +1951,12 @@
         },
         {
           "anchor": [
-            0.5078320176707055,
-            0.2065877955110804
+            0.5055617597877494,
+            0.22677250533030752
           ],
           "box": [
-            0.5042988541147092,
-            0.15340186820560694,
+            0.5014460576441782,
+            0.1732181827044317,
             0.13171875,
             0.03925
           ],
@@ -1918,8 +1965,8 @@
           "id": "lPilot",
           "kind": "label",
           "leader": [
-            0.5078320176707055,
-            0.19265186820560692
+            0.5055617597877494,
+            0.2124681827044317
           ],
           "occluded": true,
           "offView": false,
@@ -1932,12 +1979,12 @@
       "placement": [
         {
           "anchor": [
-            0.5280165434275274,
-            0.1764246866558143
+            0.5245757929301997,
+            0.19802311657217492
           ],
           "box": [
-            0.533128940359018,
-            0.12212225294679768,
+            0.5296420287718353,
+            0.14367180140420674,
             0.0583125,
             0.03925
           ],
@@ -1946,8 +1993,8 @@
           "id": "aTB",
           "kind": "arrow",
           "leader": [
-            0.533128940359018,
-            0.1613722529467977
+            0.5296420287718353,
+            0.18292180140420672
           ],
           "occluded": false,
           "offView": false,
@@ -1960,35 +2007,35 @@
       "placement": [
         {
           "anchor": [
-            0.5200840687073587,
-            0.30392085543011466
+            0.5171849584263833,
+            0.3175396003773645
           ],
           "box": [
-            0.18437021794985925,
-            0.27627010756788434,
-            0.3193125,
-            0.03925
+            0.2541107875366858,
+            0.27371552326310433,
+            0.24590625,
+            0.0685
           ],
           "callout": null,
           "candidate": 6,
           "id": "lBackShare",
           "kind": "label",
           "leader": [
-            0.5036827179498593,
-            0.30392085543011466
+            0.5000170375366858,
+            0.3175396003773645
           ],
           "occluded": true,
           "offView": false,
-          "text": "Back: equipment + about ⅓ pilot weight"
+          "text": "Back: equipment + about ⅓ pilot weight (Browning, 2021)"
         },
         {
           "anchor": [
-            0.38973264278860376,
-            0.3819991566418571
+            0.3943475114872909,
+            0.39069788659564625
           ],
           "box": [
-            0.0550824286446568,
-            0.37203347682788435,
+            0.06025757028819536,
+            0.38148681272551876,
             0.3193125,
             0.03925
           ],
@@ -1997,8 +2044,8 @@
           "id": "lArmShare",
           "kind": "label",
           "leader": [
-            0.37439492864465673,
-            0.3819991566418571
+            0.37957007028819534,
+            0.39069788659564625
           ],
           "occluded": true,
           "offView": false,
@@ -2006,22 +2053,22 @@
         },
         {
           "anchor": [
-            0.4933769814338561,
-            0.557159339114098
+            0.4920893260624831,
+            0.5558893372363213
           ],
           "box": [
-            0.4721158002730558,
-            0.5725166398473043,
+            0.2755427593578661,
+            0.5013030000052622,
             0.23775,
             0.03925
           ],
           "callout": null,
-          "candidate": 5,
+          "candidate": 1,
           "id": "aWeight",
           "kind": "arrow",
           "leader": [
-            0.4933769814338561,
-            0.5725166398473043
+            0.4920893260624831,
+            0.5405530000052622
           ],
           "occluded": false,
           "offView": false,
@@ -2036,7 +2083,7 @@
           "anchor": null,
           "box": [
             0.009375,
-            0.643,
+            0.7165,
             0.21328125,
             0.0685
           ],
@@ -2050,30 +2097,36 @@
           "text": "Reported suit figures (not computed) (off view)"
         },
         {
-          "anchor": null,
-          "box": [
-            0.009375,
-            0.7165,
-            0.2214375,
-            0.0685
+          "anchor": [
+            0.4012183912090048,
+            0.0016572280075814456
           ],
-          "callout": 1,
-          "candidate": null,
+          "box": [
+            0.18327045691695384,
+            0.02608868966311884,
+            0.2866875,
+            0.03925
+          ],
+          "callout": null,
+          "candidate": 5,
           "id": "l144",
           "kind": "label",
-          "leader": null,
+          "leader": [
+            0.4012183912090048,
+            0.02608868966311884
+          ],
           "occluded": false,
-          "offView": true,
-          "text": "About 144 kgf (317 lbf), AOPA 2020 (off view)"
+          "offView": false,
+          "text": "About 144 kgf (317 lbf), AOPA 2020"
         },
         {
           "anchor": [
-            0.3990334698661829,
-            0.06420129547280728
+            0.4034774990943303,
+            0.09331509563008905
           ],
           "box": [
-            0.0878983949158689,
-            0.06182486957271323,
+            0.09281704941399391,
+            0.09130738359068312,
             0.303,
             0.03925
           ],
@@ -2082,8 +2135,8 @@
           "id": "l155",
           "kind": "label",
           "leader": [
-            0.39089839491586886,
-            0.06420129547280728
+            0.39581704941399387,
+            0.09331509563008905
           ],
           "occluded": false,
           "offView": false,
@@ -2091,12 +2144,12 @@
         },
         {
           "anchor": [
-            0.5976390709832772,
-            0.011424925191457491
+            0.5888707010037156,
+            0.04764598200570792
           ],
           "box": [
-            0.46344969682956433,
-            0.03906738465493263,
+            0.4552307809768311,
+            0.0753621802811891,
             0.19696874999999997,
             0.03925
           ],
@@ -2105,8 +2158,8 @@
           "id": "lBhp",
           "kind": "label",
           "leader": [
-            0.5976390709832772,
-            0.03906738465493263
+            0.5888707010037156,
+            0.0753621802811891
           ],
           "occluded": false,
           "offView": false,
@@ -2114,12 +2167,12 @@
         },
         {
           "anchor": [
-            0.5950271438843063,
-            0.11837634401345981
+            0.5866537033025279,
+            0.14647927874487998
           ],
           "box": [
-            0.6005283203726173,
-            0.11711847711548294,
+            0.5925241625787262,
+            0.14497291945152613,
             0.33562499999999995,
             0.03925
           ],
@@ -2128,8 +2181,8 @@
           "id": "lRecord",
           "kind": "label",
           "leader": [
-            0.6005283203726173,
-            0.11837634401345981
+            0.5925241625787262,
+            0.14647927874487998
           ],
           "occluded": false,
           "offView": false,
@@ -2142,22 +2195,22 @@
       "placement": [
         {
           "anchor": [
-            0.4339373724255232,
-            0.33351604676408536
+            0.545066950170522,
+            0.38635378806613646
           ],
           "box": [
-            0.13827199814944563,
-            0.29653678725730825,
+            0.5143349031567921,
+            0.27416382741117373,
             0.26221875,
             0.03925
           ],
           "callout": null,
-          "candidate": 15,
+          "candidate": 16,
           "id": "lSteer",
           "kind": "label",
           "leader": [
-            0.40049074814944563,
-            0.33351604676408536
+            0.545066950170522,
+            0.31341382741117374
           ],
           "occluded": true,
           "offView": false,
@@ -2165,45 +2218,45 @@
         },
         {
           "anchor": [
-            0.4016603496765955,
-            0.4534278702195467
+            0.6608210277491606,
+            0.49287776982941756
           ],
           "box": [
-            0.25514594508073757,
-            0.4824168028206905,
-            0.23775,
+            0.65435586069404,
+            0.4995332951695118,
+            0.29484374999999996,
             0.03925
           ],
           "callout": null,
-          "candidate": 4,
+          "candidate": 2,
           "id": "aJetBack",
           "kind": "arrow",
           "leader": [
-            0.4016603496765955,
-            0.4824168028206905
+            0.6608210277491606,
+            0.4995332951695118
           ],
           "occluded": false,
           "offView": false,
-          "text": "If the exhaust is aimed back"
+          "text": "Exhaust aimed back (schematic pose)"
         },
         {
           "anchor": [
-            0.4238909450676137,
-            0.3485316382091031
+            0.41080446625290257,
+            0.38329348694052034
           ],
           "box": [
-            0.16131746947862885,
-            0.3841106144804656,
+            0.18140539083860832,
+            0.38914656684820637,
             0.22959374999999999,
             0.03925
           ],
           "callout": null,
-          "candidate": 22,
+          "candidate": 6,
           "id": "aForward",
           "kind": "arrow",
           "leader": [
-            0.39091121947862884,
-            0.3841106144804656
+            0.41080446625290257,
+            0.38914656684820637
           ],
           "occluded": false,
           "offView": false,
@@ -2216,58 +2269,35 @@
       "placement": [
         {
           "anchor": [
-            0.5392894207779932,
-            0.26559281508750365
+            0.5352345071919571,
+            0.2815645569382228
           ],
           "box": [
-            0.552089658450791,
-            0.2588219848845554,
-            0.31115624999999997,
-            0.03925
+            0.5498767489356622,
+            0.2633704945769282,
+            0.2214375,
+            0.0685
           ],
           "callout": null,
           "candidate": 2,
           "id": "lJetcat",
           "kind": "label",
           "leader": [
-            0.552089658450791,
-            0.26559281508750365
+            0.5498767489356622,
+            0.2815645569382228
           ],
-          "occluded": true,
+          "occluded": false,
           "offView": false,
-          "text": "JetCat-style micro turbojet (example)"
+          "text": "JetCat-style example, not confirmed Gravity hardware"
         },
         {
           "anchor": [
-            0.5390913520533801,
-            0.28446679212804116
+            0.5240797328035689,
+            0.27495709210325336
           ],
           "box": [
-            0.2540476429604218,
-            0.24265069053896254,
-            0.25406249999999997,
-            0.03925
-          ],
-          "callout": null,
-          "candidate": 14,
-          "id": "lNotGravity",
-          "kind": "label",
-          "leader": [
-            0.5081101429604218,
-            0.28190069053896255
-          ],
-          "occluded": true,
-          "offView": false,
-          "text": "Not confirmed Gravity hardware"
-        },
-        {
-          "anchor": [
-            0.52741556186099,
-            0.2586474495473238
-          ],
-          "box": [
-            0.4532435552789192,
-            0.19019728646758868,
+            0.4487681375885364,
+            0.20641873521919168,
             0.1888125,
             0.03925
           ],
@@ -2276,8 +2306,8 @@
           "id": "lComp",
           "kind": "label",
           "leader": [
-            0.52741556186099,
-            0.2294472864675887
+            0.5240797328035689,
+            0.2456687352191917
           ],
           "occluded": true,
           "offView": false,
@@ -2285,22 +2315,22 @@
         },
         {
           "anchor": [
-            0.5309055280879501,
-            0.2961498289424077
+            0.5274160892786494,
+            0.3100376351324856
           ],
           "box": [
-            0.33809967656970497,
-            0.3335831382641539,
+            0.3366924811035964,
+            0.2724972334322812,
             0.15618749999999998,
             0.03925
           ],
           "callout": null,
-          "candidate": 21,
+          "candidate": 14,
           "id": "lComb",
           "kind": "label",
           "leader": [
-            0.494287176569705,
-            0.3335831382641539
+            0.49287998110359643,
+            0.3100376351324856
           ],
           "occluded": true,
           "offView": false,
@@ -2308,22 +2338,22 @@
         },
         {
           "anchor": [
-            0.5269259567094172,
-            0.325632346472165
+            0.5236746547890845,
+            0.33778064993721735
           ],
           "box": [
-            0.5302511881282858,
-            0.3741720259019909,
+            0.4303604432740774,
+            0.360181229362907,
             0.06646875,
             0.03925
           ],
           "callout": null,
-          "candidate": 11,
+          "candidate": 13,
           "id": "lTurb",
           "kind": "label",
           "leader": [
-            0.5302511881282858,
-            0.3741720259019909
+            0.49682919327407743,
+            0.360181229362907
           ],
           "occluded": true,
           "offView": false,
@@ -2336,58 +2366,35 @@
       "placement": [
         {
           "anchor": [
-            0.5392894207779932,
-            0.26559281508750365
+            0.5352345071919571,
+            0.2815645569382228
           ],
           "box": [
-            0.552089658450791,
-            0.2588219848845554,
-            0.31115624999999997,
-            0.03925
+            0.5498767489356622,
+            0.2633704945769282,
+            0.2214375,
+            0.0685
           ],
           "callout": null,
           "candidate": 2,
           "id": "lJetcat",
           "kind": "label",
           "leader": [
-            0.552089658450791,
-            0.26559281508750365
+            0.5498767489356622,
+            0.2815645569382228
           ],
-          "occluded": true,
+          "occluded": false,
           "offView": false,
-          "text": "JetCat-style micro turbojet (example)"
+          "text": "JetCat-style example, not confirmed Gravity hardware"
         },
         {
           "anchor": [
-            0.5390913520533801,
-            0.28446679212804116
+            0.5238706466964486,
+            0.30738426087879867
           ],
           "box": [
-            0.2540476429604218,
-            0.24265069053896254,
-            0.25406249999999997,
-            0.03925
-          ],
-          "callout": null,
-          "candidate": 14,
-          "id": "lNotGravity",
-          "kind": "label",
-          "leader": [
-            0.5081101429604218,
-            0.28190069053896255
-          ],
-          "occluded": true,
-          "offView": false,
-          "text": "Not confirmed Gravity hardware"
-        },
-        {
-          "anchor": [
-            0.5271627170648377,
-            0.2932401872949497
-          ],
-          "box": [
-            0.2091781882453764,
-            0.3335287237537041,
+            0.20716999697389685,
+            0.3487185497254336,
             0.29484374999999996,
             0.03925
           ],
@@ -2396,8 +2403,8 @@
           "id": "lRpm",
           "kind": "label",
           "leader": [
-            0.5040219382453763,
-            0.3335287237537041
+            0.5020137469738968,
+            0.3487185497254336
           ],
           "occluded": true,
           "offView": false,
@@ -2405,12 +2412,12 @@
         },
         {
           "anchor": [
-            0.5267616114987614,
-            0.3481170914968191
+            0.5235384910120385,
+            0.3588982929992014
           ],
           "box": [
-            0.49056406795522617,
-            0.3979605915713108,
+            0.489089101634986,
+            0.4081919559748983,
             0.21328125,
             0.03925
           ],
@@ -2419,8 +2426,8 @@
           "id": "lNozzle",
           "kind": "label",
           "leader": [
-            0.5267616114987614,
-            0.3979605915713108
+            0.5235384910120385,
+            0.4081919559748983
           ],
           "occluded": true,
           "offView": false,
@@ -2428,12 +2435,12 @@
         },
         {
           "anchor": [
-            0.5264491566315225,
-            0.39086532853727946
+            0.5232793487072387,
+            0.39908867853157726
           ],
           "box": [
-            0.47588436418932706,
-            0.4508598840994751,
+            0.47283449466320004,
+            0.4590844415454782,
             0.09909375,
             0.03925
           ],
@@ -2442,10 +2449,10 @@
           "id": "aJetOut",
           "kind": "arrow",
           "leader": [
-            0.5264491566315225,
-            0.4508598840994751
+            0.5232793487072387,
+            0.4590844415454782
           ],
-          "occluded": true,
+          "occluded": false,
           "offView": false,
           "text": "Hot gas out"
         }
@@ -2545,10 +2552,22 @@
     "armR2.shaft: world centre (-350, -17.4, 1053) mm, size 76.2 x 30.7 x 127 mm; turns about an axis tilted 31.5° from vertical, along (-0.49, -0.17, -0.85) through (-307, -2.26, 1128); 1 turn per input turn (Solved, input); child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
     "armR2.frontBearing: world centre (-324, -8.2, 1098) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
     "armR2.rearBearing: world centre (-370, -24.5, 1018) mm, size 14.6 x 13.5 x 13.3 mm; static; child of pilot.handR (at [63, 0, 255] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
-    "armR2.casing: world centre (-351, -17.9, 1051) mm, size 138 x 96 x 170 mm; static; child of pilot.handR (at [63, 0, 155] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)"
+    "armR2.casing: world centre (-351, -17.9, 1051) mm, size 138 x 96 x 170 mm; static; child of pilot.handR (at [63, 0, 155] in the pilot.handR frame); local +Z points (-0.49, -0.17, -0.85)",
+    "plumeBack: world centre (0, 258, 1020) mm, size 165 x 165 x 420 mm; static; child of back.nozzle (at [0, 0, 0] in the back.nozzle frame); local +Z points -Z",
+    "plumeArmL1: world centre (605, -78.2, 876) mm, size 225 x 132 x 313 mm; static; child of armL1.nozzle (at [0, 0, 0] in the armL1.nozzle frame); local +Z points (0.49, -0.17, -0.85)",
+    "plumeArmL2: world centre (496, -78.2, 813) mm, size 225 x 132 x 313 mm; static; child of armL2.nozzle (at [0, 0, 0] in the armL2.nozzle frame); local +Z points (0.49, -0.17, -0.85)",
+    "plumeArmR1: world centre (-605, -78.2, 876) mm, size 225 x 132 x 313 mm; static; child of armR1.nozzle (at [0, 0, 0] in the armR1.nozzle frame); local +Z points (-0.49, -0.17, -0.85)",
+    "plumeArmR2: world centre (-496, -78.2, 813) mm, size 225 x 132 x 313 mm; static; child of armR2.nozzle (at [0, 0, 0] in the armR2.nozzle frame); local +Z points (-0.49, -0.17, -0.85)"
   ],
   "reason": null,
   "sectionTriangles": 5858,
+  "showOnly": [
+    "plumeBack",
+    "plumeArmL1",
+    "plumeArmL2",
+    "plumeArmR1",
+    "plumeArmR2"
+  ],
   "stepFacts": [
     {
       "checks": [],
@@ -2588,18 +2607,272 @@
     null,
     "described"
   ],
+  "stepViews": [
+    {
+      "hidden": [
+        "plumeBack",
+        "plumeArmL1",
+        "plumeArmL2",
+        "plumeArmR1",
+        "plumeArmR2"
+      ],
+      "poseReadBack": [],
+      "posed": [],
+      "step": 1
+    },
+    {
+      "hidden": [],
+      "poseReadBack": [],
+      "posed": [],
+      "step": 2
+    },
+    {
+      "hidden": [
+        "plumeBack",
+        "plumeArmL1",
+        "plumeArmL2",
+        "plumeArmR1",
+        "plumeArmR2"
+      ],
+      "poseReadBack": [],
+      "posed": [],
+      "step": 3
+    },
+    {
+      "hidden": [
+        "plumeBack",
+        "plumeArmL1",
+        "plumeArmL2",
+        "plumeArmR1",
+        "plumeArmR2"
+      ],
+      "poseReadBack": [],
+      "posed": [],
+      "step": 4
+    },
+    {
+      "hidden": [],
+      "poseReadBack": [
+        "pilot.upperArmL: world centre (262, 72.9, 1357) mm, size 227 x 257 x 257 mm; local +Z points (-0.5, -0.61, 0.61); posed placement at [205, -125, 90] in the pilot.body frame",
+        "pilot.lowerArmL: world centre (408, 251, 1179) mm, size 190 x 218 x 218 mm; local +Z points (-0.5, -0.61, 0.61); posed placement at [0, 0, -300] in the pilot.upperArmL frame",
+        "pilot.handL: world centre (530, 398, 1032) mm, size 118 x 131 x 131 mm; local +Z points (-0.5, -0.61, 0.61); moves with pilot.lowerArmL",
+        "pilot.upperArmR: world centre (-262, 72.9, 1357) mm, size 227 x 257 x 257 mm; local +Z points (0.5, -0.61, 0.61); posed placement at [-205, -125, 90] in the pilot.body frame",
+        "pilot.lowerArmR: world centre (-408, 251, 1179) mm, size 190 x 218 x 218 mm; local +Z points (0.5, -0.61, 0.61); posed placement at [0, 0, -300] in the pilot.upperArmR frame",
+        "pilot.handR: world centre (-530, 398, 1032) mm, size 118 x 131 x 131 mm; local +Z points (0.5, -0.61, 0.61); moves with pilot.lowerArmR",
+        "armL1.intakeLip: world centre (420, 174, 1256) mm, size 64.8 x 60.8 x 60.8 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.impeller: world centre (427, 182, 1248) mm, size 41.6 x 41.1 x 41.1 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.diffuser: world centre (447, 210, 1220) mm, size 91.6 x 102 x 102 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.combustor: world centre (469, 234, 1196) mm, size 75.5 x 78.2 x 78.2 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.nozzleGuideVanes: world centre (489, 258, 1172) mm, size 47.4 x 44.9 x 44.9 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.turbineWheel: world centre (494, 265, 1165) mm, size 41.3 x 38.1 x 38 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.nozzle: world centre (505, 279, 1151) mm, size 70.6 x 69.4 x 69.4 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.shaft: world centre (460, 223, 1207) mm, size 77.3 x 93.2 x 93.2 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.frontBearing: world centre (433, 190, 1240) mm, size 14.7 x 14.6 x 14.6 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.rearBearing: world centre (480, 248, 1182) mm, size 14.7 x 14.6 x 14.6 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL1.casing: world centre (461, 225, 1205) mm, size 139 x 151 x 151 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.intakeLip: world centre (311, 219, 1211) mm, size 64.8 x 60.8 x 60.8 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.impeller: world centre (318, 227, 1203) mm, size 41.6 x 41.1 x 41.1 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.diffuser: world centre (338, 255, 1175) mm, size 91.6 x 102 x 102 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.combustor: world centre (360, 279, 1151) mm, size 75.5 x 78.2 x 78.2 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.nozzleGuideVanes: world centre (379, 303, 1127) mm, size 47.4 x 44.9 x 44.9 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.turbineWheel: world centre (385, 309, 1121) mm, size 41.3 x 38.1 x 38 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.nozzle: world centre (396, 324, 1106) mm, size 70.6 x 69.4 x 69.4 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.shaft: world centre (351, 267, 1163) mm, size 77.3 x 93.2 x 93.2 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.frontBearing: world centre (324, 235, 1195) mm, size 14.7 x 14.6 x 14.6 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.rearBearing: world centre (371, 292, 1138) mm, size 14.7 x 14.6 x 14.6 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armL2.casing: world centre (352, 269, 1161) mm, size 139 x 151 x 151 mm; local +Z points (0.5, 0.61, -0.61); moves with pilot.handL",
+        "armR1.intakeLip: world centre (-420, 174, 1256) mm, size 64.8 x 60.8 x 60.8 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.impeller: world centre (-426, 182, 1248) mm, size 43.4 x 41 x 41 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.diffuser: world centre (-447, 210, 1220) mm, size 91.6 x 102 x 102 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.combustor: world centre (-469, 234, 1196) mm, size 75.5 x 78.2 x 78.2 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.nozzleGuideVanes: world centre (-489, 258, 1172) mm, size 47.4 x 44.9 x 44.9 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.turbineWheel: world centre (-494, 265, 1165) mm, size 41.3 x 38.1 x 38 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.nozzle: world centre (-505, 279, 1151) mm, size 70.6 x 69.4 x 69.4 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.shaft: world centre (-460, 223, 1207) mm, size 77.3 x 93.2 x 93.2 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.frontBearing: world centre (-433, 190, 1240) mm, size 14.7 x 14.6 x 14.6 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.rearBearing: world centre (-480, 248, 1182) mm, size 14.7 x 14.6 x 14.6 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR1.casing: world centre (-461, 225, 1205) mm, size 139 x 151 x 151 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.intakeLip: world centre (-311, 219, 1211) mm, size 64.8 x 60.8 x 60.8 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.impeller: world centre (-317, 227, 1203) mm, size 43.4 x 41 x 41 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.diffuser: world centre (-338, 255, 1175) mm, size 91.6 x 102 x 102 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.combustor: world centre (-360, 279, 1151) mm, size 75.5 x 78.2 x 78.2 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.nozzleGuideVanes: world centre (-379, 303, 1127) mm, size 47.4 x 44.9 x 44.9 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.turbineWheel: world centre (-385, 309, 1120) mm, size 41.3 x 38.1 x 38 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.nozzle: world centre (-396, 324, 1106) mm, size 70.6 x 69.4 x 69.4 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.shaft: world centre (-351, 267, 1163) mm, size 77.3 x 93.2 x 93.2 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.frontBearing: world centre (-324, 235, 1195) mm, size 14.7 x 14.6 x 14.6 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.rearBearing: world centre (-371, 292, 1138) mm, size 14.7 x 14.6 x 14.6 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "armR2.casing: world centre (-352, 269, 1161) mm, size 139 x 151 x 151 mm; local +Z points (-0.5, 0.61, -0.61); moves with pilot.handR",
+        "plumeArmL1: world centre (608, 401, 1029) mm, size 227 x 257 x 257 mm; local +Z points (0.5, 0.61, -0.61); moves with armL1.nozzle",
+        "plumeArmL2: world centre (499, 445, 985) mm, size 227 x 257 x 257 mm; local +Z points (0.5, 0.61, -0.61); moves with armL2.nozzle",
+        "plumeArmR1: world centre (-608, 401, 1029) mm, size 227 x 257 x 257 mm; local +Z points (-0.5, 0.61, -0.61); moves with armR1.nozzle",
+        "plumeArmR2: world centre (-499, 445, 985) mm, size 227 x 257 x 257 mm; local +Z points (-0.5, 0.61, -0.61); moves with armR2.nozzle"
+      ],
+      "posed": [
+        "pilot.upperArmL",
+        "pilot.lowerArmL",
+        "pilot.upperArmR",
+        "pilot.lowerArmR"
+      ],
+      "step": 5
+    },
+    {
+      "hidden": [
+        "pilot.body",
+        "pilot.skull",
+        "pilot.upperArmL",
+        "pilot.lowerArmL",
+        "pilot.handL",
+        "pilot.upperArmR",
+        "pilot.lowerArmR",
+        "pilot.handR",
+        "pilot.legL",
+        "pilot.footL",
+        "pilot.legR",
+        "pilot.footR",
+        "helmet",
+        "visor",
+        "chestUnit",
+        "pack",
+        "armL1.intakeLip",
+        "armL1.impeller",
+        "armL1.diffuser",
+        "armL1.combustor",
+        "armL1.nozzleGuideVanes",
+        "armL1.turbineWheel",
+        "armL1.nozzle",
+        "armL1.shaft",
+        "armL1.frontBearing",
+        "armL1.rearBearing",
+        "armL1.casing",
+        "armL2.intakeLip",
+        "armL2.impeller",
+        "armL2.diffuser",
+        "armL2.combustor",
+        "armL2.nozzleGuideVanes",
+        "armL2.turbineWheel",
+        "armL2.nozzle",
+        "armL2.shaft",
+        "armL2.frontBearing",
+        "armL2.rearBearing",
+        "armL2.casing",
+        "armR1.intakeLip",
+        "armR1.impeller",
+        "armR1.diffuser",
+        "armR1.combustor",
+        "armR1.nozzleGuideVanes",
+        "armR1.turbineWheel",
+        "armR1.nozzle",
+        "armR1.shaft",
+        "armR1.frontBearing",
+        "armR1.rearBearing",
+        "armR1.casing",
+        "armR2.intakeLip",
+        "armR2.impeller",
+        "armR2.diffuser",
+        "armR2.combustor",
+        "armR2.nozzleGuideVanes",
+        "armR2.turbineWheel",
+        "armR2.nozzle",
+        "armR2.shaft",
+        "armR2.frontBearing",
+        "armR2.rearBearing",
+        "armR2.casing",
+        "plumeBack",
+        "plumeArmL1",
+        "plumeArmL2",
+        "plumeArmR1",
+        "plumeArmR2"
+      ],
+      "poseReadBack": [],
+      "posed": [],
+      "step": 6
+    },
+    {
+      "hidden": [
+        "pilot.body",
+        "pilot.skull",
+        "pilot.upperArmL",
+        "pilot.lowerArmL",
+        "pilot.handL",
+        "pilot.upperArmR",
+        "pilot.lowerArmR",
+        "pilot.handR",
+        "pilot.legL",
+        "pilot.footL",
+        "pilot.legR",
+        "pilot.footR",
+        "helmet",
+        "visor",
+        "chestUnit",
+        "pack",
+        "armL1.intakeLip",
+        "armL1.impeller",
+        "armL1.diffuser",
+        "armL1.combustor",
+        "armL1.nozzleGuideVanes",
+        "armL1.turbineWheel",
+        "armL1.nozzle",
+        "armL1.shaft",
+        "armL1.frontBearing",
+        "armL1.rearBearing",
+        "armL1.casing",
+        "armL2.intakeLip",
+        "armL2.impeller",
+        "armL2.diffuser",
+        "armL2.combustor",
+        "armL2.nozzleGuideVanes",
+        "armL2.turbineWheel",
+        "armL2.nozzle",
+        "armL2.shaft",
+        "armL2.frontBearing",
+        "armL2.rearBearing",
+        "armL2.casing",
+        "armR1.intakeLip",
+        "armR1.impeller",
+        "armR1.diffuser",
+        "armR1.combustor",
+        "armR1.nozzleGuideVanes",
+        "armR1.turbineWheel",
+        "armR1.nozzle",
+        "armR1.shaft",
+        "armR1.frontBearing",
+        "armR1.rearBearing",
+        "armR1.casing",
+        "armR2.intakeLip",
+        "armR2.impeller",
+        "armR2.diffuser",
+        "armR2.combustor",
+        "armR2.nozzleGuideVanes",
+        "armR2.turbineWheel",
+        "armR2.nozzle",
+        "armR2.shaft",
+        "armR2.frontBearing",
+        "armR2.rearBearing",
+        "armR2.casing",
+        "plumeBack",
+        "plumeArmL1",
+        "plumeArmL2",
+        "plumeArmR1",
+        "plumeArmR2"
+      ],
+      "poseReadBack": [],
+      "posed": [],
+      "step": 7
+    }
+  ],
   "steps": [
     "Schematic of the classic five-engine Gravity suit (as described 2020–2022): two micro gas turbines on each forearm, one on the back. The Mk4 (not shown) has three back turbines; its total engine count is not published.",
     "Each engine pushes along its own axis: one arrow per engine. To hover, the upward parts of these thrusts balance the weight of pilot, suit and fuel. The sideways forces and turning moments balance too.",
     "Browning's analogy: the grouped pushes are a teepee of thrust, like the poles of a tent. In his 2021 description of the classic suit, the back engine carries the equipment plus about one third of his body weight; the arms about two thirds.",
     "Reported figures, not computed here: about 144 kgf (317 lbf), AOPA 2020; about 155 kgf for an earlier rig, Browning 2017. These are separate total-thrust reports. Record: 136.891 km/h (85.06 mph), Guinness, 2019-11-14.",
-    "The pilot steers by moving the arms to aim the thrust. If the exhaust is aimed back, a forward component of thrust results. The pose shown is schematic, not a worked manoeuvre.",
+    "The pilot steers by moving the arms to aim the thrust. Here both arms swing back, so the exhaust is aimed back and a forward component of thrust results. The pose is schematic, not a worked manoeuvre.",
     "Inside one engine, cut open: a JetCat-style micro turbojet (schematic example, not confirmed Gravity hardware). The compressor squeezes the air. Fuel burns with oxygen in the compressed air in the combustion chamber.",
     "JetCat-style example, not confirmed Gravity hardware. Hot gas drives the turbine, which turns the compressor on the same shaft. Gas speeds up out of the nozzle; the reaction is thrust. Shaft: about 120,000 rpm (reported)."
   ],
   "strict": true,
   "title": "How the classic five-engine Gravity jet suit flies (schematic)",
-  "triangles": 120818,
+  "triangles": 122738,
   "version": 2,
   "warnings": []
 }

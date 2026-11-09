@@ -14,40 +14,46 @@ uses of the engine without implying a curriculum or a running service.
 **Hand-built example (written by a Claude agent from fact-checked research, not generated from a prompt by the
 engine's AI loop).** The lesson explains the classic five-engine Gravity jet suit, as described 2020–2022, in 7
 steps. The current Mk4 has three back turbines and is not shown. The model is
-[`jet-suit.json`](assets/jet-suit/jet-suit.json), 54 lines, 71 parts. The stills and the story video are unedited
+[`jet-suit.json`](assets/jet-suit/jet-suit.json), 59 lines, 76 parts. The stills and the story video are unedited
 output of `marty-solid render` at 1280×800; `marty-solid check --strict` passes with no warnings
-([check output](assets/jet-suit/check-strict.json)). On 2026-11-08 the strict anchor check (every label dot must land on
-its part and show in its still) found two misplaced dots: step 6's "Combustion chamber" dot sat on the cut casing wall,
-and step 1's "Schematic pilot" dot named the helmet but lay inside the visor, on the far side of the head. Those two
-anchors were moved (into the chamber, and onto the back of the helmet), and all 7 stills, the poster, the story video
-and the check output were made again with one build. Outside the moved label the stills differ from the earlier ones only by render noise (see the
-[render receipt](assets/jet-suit/provenance.json)).
+([check output](assets/jet-suit/check-strict.json)).
 
-[![Story video poster: the step 2 still, five engines with one thrust arrow each.](assets/jet-suit/poster.jpg)](assets/jet-suit/story.mp4)
+This is the sixth version of the lesson. Step 5 now poses the pilot: both arms swing back, and the engines move with
+them. Exhaust plumes (an illustration, not measured) show only in steps 2 and 5. Highlights take whole engines, the
+exploded view moves whole engines, the helmet and the packs, long labels take two lines, and step 7 has a turn arrow
+on the shaft. It keeps the two label anchors that the strict anchor check (every label dot must land on its part and show in its
+still) moved on 2026-11-08: step 6's "Combustion chamber" dot is inside the chamber, and step 1's "Schematic pilot"
+dot is on the back of the helmet. The 7 stills, the hero still, the poster, the story video and the check output come
+from one build (see the [render receipt](assets/jet-suit/provenance.json)).
+
+[![Hero still: the schematic pilot from the front, with the helmet, a blue chest pack, the back engine and two engines on each forearm. Title: How the classic five-engine Gravity jet suit flies (schematic).](assets/jet-suit/hero.png)](assets/jet-suit/hero.png)
+
+[![Story video poster: the step 2 still, five engines with one thrust arrow and one exhaust plume each.](assets/jet-suit/poster.jpg)](assets/jet-suit/story.mp4)
 
 [Story video (MP4)](assets/jet-suit/story.mp4): 63 seconds, 7 beats of 9 seconds, 1280×800 at 30 frames per
-second, re-encoded with AVFoundation to 6.2 MB (the engine's file is 15.8 MB; both hashes are in the
+second, re-encoded with AVFoundation to 5.7 MB (the engine's file is 13.1 MB; both hashes are in the
 [render receipt](assets/jet-suit/provenance.json)). GitHub does not play it inside this page; click to open it.
 
 [![Step 1: schematic pilot seen from behind. Labels: "Two engines on each forearm", "One engine on the back", "Classic suit, as described 2020–2022". Caption: the Mk4 (not shown) has three back turbines; its total engine count is not published.](assets/jet-suit/step-1.png)](assets/jet-suit/step-1.png)
 
-[![Step 2: one yellow thrust arrow out of each of the five engines. Caption: to hover, the upward parts of these thrusts balance the weight of pilot, suit and fuel; the sideways forces and turning moments balance too.](assets/jet-suit/step-2.png)](assets/jet-suit/step-2.png)
+[![Step 2: one yellow thrust arrow out of each of the five engines, and an orange exhaust plume (an illustration) out of each nozzle. Caption: to hover, the upward parts of these thrusts balance the weight of pilot, suit and fuel; the sideways forces and turning moments balance too.](assets/jet-suit/step-2.png)](assets/jet-suit/step-2.png)
 
-[![Step 3: back view with a downward weight arrow "Weight: pilot, suit and fuel" and the labels "Back: equipment + about ⅓ pilot weight" and "Arms: about two thirds of pilot weight". Caption: Browning's teepee-of-thrust analogy and his 2021 load split.](assets/jet-suit/step-3.png)](assets/jet-suit/step-3.png)
+[![Step 3: back view with a downward weight arrow "Weight: pilot, suit and fuel" and the labels "Back: equipment + about ⅓ pilot weight (Browning, 2021)" and "Arms: about two thirds of pilot weight". Caption: Browning's teepee-of-thrust analogy and his 2021 load split.](assets/jet-suit/step-3.png)](assets/jet-suit/step-3.png)
 
 [![Step 4: front view under a panel "Reported suit figures (not computed)": about 144 kgf (317 lbf), AOPA 2020; about 155 kgf, earlier rig, Browning 2017; claimed about 1,050 bhp; record 136.891 km/h, Guinness 2019-11-14.](assets/jet-suit/step-4.png)](assets/jet-suit/step-4.png)
 
-[![Step 5: side view with highlighted arms, the label "Moving the arms aims the thrust", a blue arrow "If the exhaust is aimed back" and a yellow arrow "Forward component of thrust". Caption: the pose shown is schematic, not a worked manoeuvre.](assets/jet-suit/step-5.png)](assets/jet-suit/step-5.png)
+[![Step 5: side view; both arms swing back and are highlighted with their engines, and orange exhaust plumes leave the nozzles. The label "Moving the arms aims the thrust", a blue arrow "Exhaust aimed back (schematic pose)" and a yellow arrow "Forward component of thrust". Caption: the pose is schematic, not a worked manoeuvre.](assets/jet-suit/step-5.png)](assets/jet-suit/step-5.png)
 
-[![Step 6: the back engine cut open, labelled "JetCat-style micro turbojet (example)" and "Not confirmed Gravity hardware", with the centrifugal compressor, combustion chamber and turbine labelled.](assets/jet-suit/step-6.png)](assets/jet-suit/step-6.png)
+[![Step 6: the back engine cut open, labelled "JetCat-style example, not confirmed Gravity hardware", with the centrifugal compressor, combustion chamber and turbine labelled.](assets/jet-suit/step-6.png)](assets/jet-suit/step-6.png)
 
-[![Step 7: the same cutaway with "Shaft: about 120,000 rpm (reported)", "Nozzle: the gas speeds up" and a blue "Hot gas out" arrow. Caption: hot gas drives the turbine, which turns the compressor on the same shaft; the reaction is thrust.](assets/jet-suit/step-7.png)](assets/jet-suit/step-7.png)
+[![Step 7: the same cutaway with "JetCat-style example, not confirmed Gravity hardware", "Shaft: about 120,000 rpm (reported)" with a small turn arrow on the shaft, "Nozzle: the gas speeds up" and a blue "Hot gas out" arrow. Caption: hot gas drives the turbine, which turns the compressor on the same shaft; the reaction is thrust.](assets/jet-suit/step-7.png)](assets/jet-suit/step-7.png)
 
 **How the classic five-engine suit flies.** The suit has five micro gas turbines: two on each forearm and one on the
 back. To hover, the upward components of their thrusts balance the weight of pilot, suit and fuel, and the sideways
 forces and turning moments balance too. In Browning's 2021 description, the back engine carries the equipment plus
 about one third of his body weight, and the arms about two thirds. The pilot steers by moving the arms, which aims the
-thrust. Inside a JetCat-style micro turbojet (a schematic example, not confirmed Gravity hardware), the compressor
+thrust. In step 5 the pilot moves both arms back, so the arm engines' exhaust is aimed back and gives a forward
+component of thrust (the pose is schematic, not a worked manoeuvre). Inside a JetCat-style micro turbojet (a schematic example, not confirmed Gravity hardware), the compressor
 squeezes the air, fuel burns with oxygen in the compressed air, the hot gas drives the turbine, which turns the
 compressor on the same shaft, and the gas leaves the nozzle fast; the reaction is thrust.
 
@@ -58,19 +64,22 @@ draft: the version is named, hover is a balance of upward components (not "thrus
 kgf stay separate reports, a claimed thrust loss at altitude was removed, the cutaway is labelled as an example, and
 1,050 bhp is marked as a claim. These are model checks with web access, not a review by a jet-suit engineer.
 
-**What the legend means.** Each still reads **Solved 16 · Not checked 20**.
+**What the legend means.** Each step still reads **Solved 17 · Not checked 20**.
 
-* **Solved 16:** the engine computed these: the motion of 15 rotating parts (the impeller, turbine wheel and shaft
-  of each of the 5 engines) and the direction of the weight arrow (straight down).
+* **Solved 17:** the engine computed these: the motion of 15 rotating parts (the impeller, turbine wheel and shaft
+  of each of the 5 engines), the direction of the weight arrow (straight down) and the turn sense of the shaft's turn
+  arrow in step 7 (from the shaft's motion).
 * **Not checked 20:** 8 labels and 4 captions that give a reported number, a quote or a version, and 8 arrows whose
   direction and length are as authored. The engine shows them but does not check them; their facts come from the
   sources table, not from the engine.
 * The engine does not compute thrust, rpm, the load split or the hover balance. "Arrow lengths are not to scale" is
-  printed in each still. Engine sizes, the pack and the pose are schematic.
+  printed in each step still. Engine sizes, the pack, the poses and the exhaust plumes are schematic.
 
-**Left out.** The hero still is not published: the helmet reaches into the title band. An independent review of the
-same JSON gave PUBLIC-OK for these 7 stills and the story video. It checked the story video at its 7 hold frames,
-not every transition frame.
+**Review.** An independent read-only review of the sixth version gave PUBLIC-OK for these 7 stills and the hero
+still. It checked the story video at its 7 hold frames and at one frame of the move into step 5; two frames of the
+move out of step 5 were checked after it. It did not check every transition frame. That review saw renders with the
+two earlier label anchors; the published files use the moved anchors (see the
+[render receipt](assets/jet-suit/provenance.json)). The exploded view is not published.
 
 ## From a prompt
 

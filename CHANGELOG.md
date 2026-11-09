@@ -35,6 +35,15 @@
     comparison. Golden change: `docs-assets-jet-suit-jet-suit` (the fixed file's output: the two anchors, the file
     hash and the step 1 and step 6 reference placements) and `docs-assets-jet-suit-provenance` (the receipt's new line count and
     hash).
+- Docs: the jet-suit showcase now uses the sixth version of the hand-built lesson (`docs/assets/jet-suit/`, 59 lines,
+  76 parts). Step 5 poses the pilot (both arms swing back, so the arm engines' exhaust is aimed back; the pose is
+  schematic), exhaust plumes (an illustration) show in steps 2 and 5 only, highlights and explode take whole engines,
+  long labels take two lines, and step 7 has a turn arrow on the shaft. The two PR #40 anchor changes (`lComb`,
+  `lPilot`) are kept; no other anchor moved, and `check --strict` passes with no warnings. All 7 stills, the poster,
+  `story.mp4` (5.7 MB) and `check-strict.json` were made again with one build, and `hero.png` is now published. No new
+  fact; the source table in `SOURCES.md` is unchanged (its legend explanation now reads Solved 17). Golden change: `docs-assets-jet-suit-jet-suit` (the new file's output: file hash and
+  lines, parts, read-back, annotations, legend Solved 17, steps, step views, show-only lists, placements, triangles) and
+  `docs-assets-jet-suit-provenance` (the receipt's new line count and hash).
 - Docs: the hand-built, fact-checked jet-suit explainer now leads the README and `docs/SHOWCASE.md`
   (`docs/assets/jet-suit/`: the 54-line JSON, 7 step stills, a 63-second story video re-encoded to 6.4 MB, a poster,
   the strict check output, a render receipt, and `SOURCES.md` with a label, source URL and date for every fact). A
