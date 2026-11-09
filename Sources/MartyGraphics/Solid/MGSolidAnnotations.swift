@@ -768,6 +768,32 @@ extension MGSolidAnnotations {
                 MGAnnotationPrimitive(shape: .cone, start: neck, end: q, radius: 2.5 * r, hidden: false)]
     }
 
+    /// Where a pointer's head is drawn (docs/SOLID-3D.md, "Pointers to a part centre"). A pointer whose tip is a part's
+    /// centre (`{"part": p, "point": "centre"}` or `{"part": p}`) ends on that part's surface: at the first crossing of
+    /// the part's mesh (the step's capped cut when the step cuts the part) on the segment from the pointer's start `p`
+    /// to the centre, at the pose. So its head is not buried inside its own part. Any other tip, and a centre with no
+    /// crossing on that segment (a ring's centre lies in its hole), is drawn where it is. The crossing is the
+    /// watertight ray test of the anchor checks, in the part's frame; it reads every triangle of that one part.
+    static func pointerTip(_ doc: MGSolidDocument, _ to: MGAnnotationPoint?, from p: MGVec3, pose: MGPose, step: Int?) -> MGVec3 {
+        guard let to else { return .zero }
+        let c = to.world(pose)
+        guard case .centre(let id) = to.anchor, let part = doc.assembly.part(id) else { return c }
+        var mesh = part.mesh
+        if let i = step, doc.steps.indices.contains(i), let cut = doc.steps[i].section?.cuts[id] { mesh = cut.mesh }
+        let t = pose.world[id] ?? .identity, inv = t.inverse
+        let a = inv.apply(p), b = to.local
+        guard (b - a).length > 1e-9, let ray = WatertightRay(a, b - a), mgSegmentMeetsBox(a, b - a, mesh.bounds) else { return c }
+        let pos = mesh.positions
+        var best: Double?
+        for i in 0..<mesh.triangleCount {
+            let (i0, i1, i2) = mesh.triangle(i)
+            guard i0 < pos.count, i1 < pos.count, i2 < pos.count else { continue }
+            if let s = ray.hit(pos[i0], pos[i1], pos[i2]), s > 1e-9, s < 1, s < (best ?? 1) { best = s }
+        }
+        guard let s = best else { return c }
+        return t.apply(a + (b - a) * s)
+    }
+
     static func segment(_ p: MGVec3, _ q: MGVec3, _ r: Double) -> MGAnnotationPrimitive {
         MGAnnotationPrimitive(shape: .cylinder, start: p, end: q, radius: r, hidden: (q - p).length < 1e-9)
     }
@@ -825,7 +851,9 @@ extension MGSolidAnnotations {
                 if case .automatic = r.lengthSpec, md != a.diagonal { length = MGSolidAnnotationLimits.defaultLength * md }
                 return lineArrow(p, p + (dir ?? .zero) * length, radius: sr, hidden: dir == nil)
             default:
-                return lineArrow(r.from?.world(pose) ?? .zero, r.to?.world(pose) ?? .zero, radius: sr)
+                let p = r.from?.world(pose) ?? .zero
+                let q = r.meaning == .pointer ? pointerTip(doc, r.to, from: p, pose: pose, step: step) : (r.to?.world(pose) ?? .zero)
+                return lineArrow(p, q, radius: sr)
             }
         }
         guard let d = a.dimension(id) else { return [] }

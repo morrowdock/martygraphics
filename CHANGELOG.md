@@ -2,6 +2,46 @@
 
 ## Unreleased
 
+- Engine fixes from four failures recorded in a prompt-to-3D evaluation round: pointers to a part centre, model names
+  in text, force arrows that left their parts, and an empty board table.
+  - **Pointers to a part centre end on the part's surface.** A pointer whose tip is `{"part", "point": "centre"}` (or
+    `{"part"}`) is drawn to the first crossing of the part's mesh on the segment from its start to the centre
+    (`MGSolidAnnotations.pointerTip`; a step's cut mesh when the step cuts the part). Before, its head sat inside the
+    part, so the arrow rule refused every such pointer as hidden by its own target, with no checked move. The anchor
+    checks still count only other parts for the centre, and strict still refuses a pointer that another part covers.
+    The arrow suggestion search draws each candidate with the tip it gives.
+  - **Model names are not typed numbers (rule N1).** The digits of a model-name token ("Mk4", "A320", "F-35", "P220",
+    "COVID-19") no longer count in captions, labels, arrow and dimension text, beat captions, 2D text and table cells
+    (`MGSolidFacts.isModelName`, `modelNameDigits`; one rule for solid and explainer text). Real numbers still count:
+    "4 engines", "Mk 4", "Mk4.5", "4th", "3D", "x2", "Pre-2020", "Mk-4", "A380-800", "CO₂". Changed reason for an old
+    input: such a text was `text.number.<where>`; it is now accepted. A title with only model-name digits is no longer
+    Described for them.
+  - **Arrow tails.** A suggested move of a force or flow arrow keeps its tail (the end on a part nearest that part's
+    box) within `max(0.5 × the arrow's length, 0.25 × the part's box diagonal)` of the part's box, or no farther than
+    the author put it (`MGSolidDocument.arrowTail`, `MGAnnotationArrowRules.tailLengthShare`, `tailPartShare`). Before,
+    moves of a quarter of the blocker's size or more floated thrust arrows 220–440 mm off their engines. New `noSuggest`
+    code `tail`.
+  - **Arrow drop.** A still whose camera cannot see the unit (component instance) an arrow's tail rides on drops that
+    force or flow arrow: at most 10 % of 48 unit samples seen, the unit's own parts not counting as blockers
+    (`MGSolidFraming.clearView` → `MGSolidClearView.arrowDrops`, `MGSolidDocument.arrowDrops`, `MGArrowDrop`). The one
+    gate `checkedAnnotations` leaves dropped arrows out (`MGSolidView.arrowDrops`), so the still, the story frames and
+    the SwiftUI pane do not draw them, and the arrow rule does not test them there. New warning
+    `annotation.arrow.dropped.<id>` (never refused); the check reports add `arrowDrops` when a still drops one, and
+    `marty-solid render` adds `arrowDrops` to the still's manifest record and story beat. Before, such an arrow passed
+    whenever half of it showed, or after a move toward the camera (a back thrust arrow drawn on the chest).
+  - **Empty tables.** A table with no data row (`MGItem.isEmptyTable`: a header waiting for its first `set`) is not
+    drawn (`MGCanvasRenderer`) and does not open the board pane (`MGExplainerBoardPane.rule`, `boardShare`). The pane
+    opens at the beat that fills the table, and the story slides it open (PR #45); before, a header-only grid showed on
+    the beats before the fill.
+  - docs/SOLID-3D.md: "Model names", "Pointers to a part centre", "Why force arrows left their engines", "Arrow tails",
+    "Arrow drop"; docs/EXPLAINER.md: "Empty tables", N1 model names, the report's `arrowDrops`; docs/REASONS.md: the
+    new warning.
+  - Tests: `PointerCentreTipTests`, `ModelNameNumberTests`, `ArrowTailAndDropTests`, `EmptyTableTests` (synthetic
+    boxes, gears and one `microTurbojet`; neutral names).
+  - Golden files do not change: no shipped example or `docs/assets` document has a pointer to a part centre, a
+    model-name caption, a moved arrow tail, a dropped arrow or an empty table, so every check report and render
+    manifest keeps its bytes (`arrowDrops` is added only when a still drops an arrow).
+
 - SwiftUI solid pane uses the still's framing (follow-up from PR #37).
   - `MGExplainerController` (shown by `MartyGraphicsExplainerView`) now frames each beat with
     `MGExplainerFrame.solidClearView`, the function of the beat's still and its `story.mp4` hold frames, for the

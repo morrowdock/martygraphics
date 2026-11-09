@@ -457,6 +457,9 @@ public enum MGSolidReasons {
         MGSolidReason(pattern: "annotation.arrow.untested.<id>",
                       meaning: "A step or beat still shows an arrow that was not fully tested: the view's 3,000,000 arrow sample tests ran out first. The strict check report refuses it, because strict does not pass what it did not check.",
                       formats: [.check, .explainer], kind: .warning, strict: true),
+        MGSolidReason(pattern: "annotation.arrow.dropped.<id>",
+                      meaning: "A step or beat still does not draw a force or flow arrow that its view lists: the arrow's tail is on its part, and another part (outside that part's unit) hides the tail from the still's camera, so the part the arrow acts on is hidden there. The still and its story frames leave the arrow out (a snapshot, which has no camera, keeps it); it is not moved and not refused. The report's `arrowDrops` gives the view, the tail's part and the part in the way.",
+                      formats: [.check, .explainer], kind: .warning, strict: false),
         // Annotations (v2).
         r("annotations.object", [.assembly], "`annotations` is not an object (v2)."),
         r("labels.count", [.assembly], "`labels` is not an array of at most 32 labels."),

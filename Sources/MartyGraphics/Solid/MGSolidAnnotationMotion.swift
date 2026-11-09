@@ -269,7 +269,8 @@ extension MGSolidDocument {
     /// compiled), keeps its step's playback sense, lists each annotation at most once and only annotations that step
     /// shows (a host may remove some, never add), and `params` lies in the view's poses: the step's explode value and
     /// an input between the default input and the default input + `spin` turns (the plain view: the default pose). An
-    /// empty list is `[]`. `MGSolidAnnotations.frame`, `MGSolidRenderer` and `MGSolidSnapshot.make` all call this.
+    /// empty list is `[]`. A framed still's arrow drops (`MGSolidView.arrowDrops`) are left out of the list.
+    /// `MGSolidAnnotations.frame`, `MGSolidRenderer` and `MGSolidSnapshot.make` all call this.
     public func checkedAnnotations(_ view: MGSolidView, params: MGPoseParameters) -> [String]? {
         if view.annotations.isEmpty { return [] }
         // The view is bound to this compiled document (hosts cannot change a compiled document) and to its step's
@@ -284,10 +285,12 @@ extension MGSolidDocument {
         guard params.explode == e, params.input.isFinite else { return nil }
         // The step's pose exactly (no placement for any other step's pose or a pose between two steps).
         guard params.placements == MGSolidAnnotationEngine.placements(self, step: view.step) else { return nil }
-        if spin == 0 { return params.input == u0 ? view.annotations : nil }
+        // The framing's arrow drops (`MGSolidView.arrowDrops`) are left out; they only ever remove.
+        let shown = view.arrowDrops.isEmpty ? view.annotations : view.annotations.filter { id in !view.arrowDrops.contains { $0.id == id } }
+        if spin == 0 { return params.input == u0 ? shown : nil }
         let u1 = u0 + spin * 2 * .pi
         guard params.input >= min(u0, u1), params.input <= max(u0, u1) else { return nil }
-        return view.annotations
+        return shown
     }
 
     /// The identity of a compiled document for its views: SHA-256 of its source (canonical JSON), the library's

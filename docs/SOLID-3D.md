@@ -326,11 +326,25 @@ exception is a step marked `"unchecked": "<why>"` (1–60 characters): it may ty
 and it shows the "Not checked" chip. For units and formulas write "square mm" or mark the
 step `unchecked`. So "Its stroke is 36 mm." is refused; "Its stroke is
 {engine.piston.travel}." shows "Its stroke is 36 mm." with its numbers Solved.
+**Model names.** The digits of a model-name token do not count: "the newer Mk4 differs" passes. A token is a maximal
+run of letters (any script), number characters and the hyphen-minus "-"; every other character (a space, punctuation,
+an apostrophe, a brace) ends it, and a placeholder ends it too. A token is a model name when all of these hold
+(`MGSolidFacts.isModelName`): every character is ASCII (A–Z, a–z, 0–9 or "-"); it holds at least one capital A–Z and
+at least one digit; split at "-", no piece is empty; the first piece starts with a letter; a later piece that starts
+with a digit follows a piece of capitals only; and it is not "x" or "X" followed by digits only (a multiplier). Every
+other number character still counts. So "Mk4", "A320", "F-35", "P220", "B-52", "COVID-19", "CO2" and "Mk4's" pass, and
+"4 engines", "Mk 4", "Mk4.5" (the "5"), "4th", "3D", "10mm", "5-engine", "x2", "X2", "v2" (no capital), "m2",
+"Pre-2020", "Mk-4", "Su-27", "MiG-29", "A380-800", "Mk½", "CO₂" and a full-width "Mk４" are refused. A name with a
+spaced or non-ASCII number, or a hyphen after mixed case, is refused although it may be a name: write it without the
+space, or mark the text `unchecked`. The same token rule applies to every text rule N1 reads: captions, labels, arrow
+and dimension text, and in an explainer beat captions, 2D item text and table cells
+([EXPLAINER.md](EXPLAINER.md)). A model name is not a typed number, so a title like "V8 engine" is no longer
+Described for its digit.
 N1 covers number characters only. It does not see number words ("three times slower"),
 and it cannot tell whether a placeholder names the right fact: "{count.stage.planet}
 times slower" prints "3 times slower" from the planet count. A `check` is the only proof of
 a relation, and the check report lists which fact filled each placeholder (`stepFacts`).
-Titles and part names may type digits ("V8 engine"), but a title with a typed number is
+Titles and part names may type digits ("V8 engine"), but a title with a typed number (other than a model name) is
 Described.
 
 **Claim checks.** A step may state up to 8 claims that the engine proves before it accepts
@@ -622,6 +636,25 @@ its own: `microTurbojet`'s `turbine` is `turbineWheel`, whose frame is at the in
 `{"part": "e.turbine", "offset": [130, 0, 0]}` lies far from the wheel (`annotation.anchor.off.<id>`). Use
 `{"part": "e.turbine", "point": "centre"}` for the middle of a part's mesh. Free text that names no part takes a
 `{"world": [x, y, z]}` anchor.
+
+**Pointers to a part centre.** A part's centre lies inside the part, so a pointer drawn to it would bury its head in
+its own part. A pointer whose tip is a part's centre (`{"part": "p", "point": "centre"}` or `{"part": "p"}`) is drawn
+to the part's surface instead (`MGSolidAnnotations.pointerTip`): its head ends at the first crossing of the part's
+mesh (the step's capped cut when the step cuts the part) on the segment from the pointer's start to the centre, at the
+pose. So the head ends on the part's visible surface on the pointer's side. The rule for such a tip, in one place:
+
+* The anchor checks test the centre itself, and only **other** parts count as occluders: the centre is visible when
+  the camera's line of sight to it meets the part's own surface before any other part ([Anchor
+  checks](#anchor-checks)).
+* The arrow rule tests the drawn pointer, which now ends on that surface. Every part can hide its samples, its target
+  part too, but the target hides it only where it really stands in front of the drawn pointer (a pointer that comes
+  at its part from the far side).
+* Strict still refuses a pointer whose target or drawn head another part covers (`annotation.anchor.hidden.<id>` or
+  `annotation.arrow.hidden.<id>`, `by` names that part).
+* A centre that the segment does not reach through the mesh (a ring's centre in its hole) and every other tip are
+  drawn where they are. A force or flow arrow keeps its authored ends: its vector is the claim.
+* A suggested move of such a pointer moves its start (`suggest` and `noSuggest` keep the fixed-point rules of
+  [Anchor suggestions](#anchor-suggestions)); each candidate is drawn and tested with the tip it gives.
 
 ### Text and tiers
 
@@ -1139,8 +1172,9 @@ every view is the suggestion, else the first that passes the rule in every view.
 checked once more against the authored arrow in every view (`measure`). A pointer keeps its tip; only its start moves,
 so its vector is not kept. A motion arrow shows its anchor's motion and gets none (`code` `motion`). With none,
 `suggest` is null and `noSuggest` is `{"cause", "code", "step", "beat", "by", "other", "samples", "alternatives"}`
-(`code`: `motion`, `pose` (no candidate keeps the vector in every view), `noclearoffset`, `budget`, `form`, `framing`
-or `conflict`; alternatives: leave the arrow out of that view's `annotate` list, ghost the part in the way, or change
+(`code`: `motion`, `pose` (no candidate keeps the vector in every view), `tail` (every candidate takes a force or
+flow arrow's tail off its part, see [Arrow tails](#arrow-tails)), `noclearoffset`, `budget`, `form`, `framing` or
+`conflict`; alternatives: leave the arrow out of that view's `annotate` list, ghost the part in the way, or change
 that view's camera).
 
 **Re-check.** A move changes the framing too (a still's camera fits the arrow ends it shows), so the moves are checked
@@ -1175,6 +1209,62 @@ its back, neutral names) holds a thrust arrow from the nozzle to the intake lip,
 Not tested: arrows in the plain view (`hero.png`, `solid-0.png`), the poses during a spin and camera moves, other sizes
 than 1280 × 800, whether a sample is covered by text, a band or the legend, and how thick the drawn shaft is (the
 samples lie on its axis). Dimensions are not tested.
+
+#### Why force arrows left their engines
+
+The rule above tests only the arrow's own drawn samples. It never tied a force or flow arrow to the part it acts on.
+Two gaps let a thrust arrow pass far from its engine:
+
+1. The suggested move searched offsets of `k × max(the blocker's box diagonal, the arrow's length) / 4`. Behind a
+   large blocker (a figure's body) the smallest move was already about a quarter of that body, and moves toward the
+   camera (`c`) put the arrow in front of the blocker. The vector rule kept the arrow's direction and length, but
+   nothing kept it near its part, so the first clear move floated 220–440 mm from the engine.
+2. An arrow whose part the camera cannot see (a back engine in a front view) passed whenever half of the arrow and its
+   head stuck out past the part in the way, or after such a move.
+
+[Arrow tails](#arrow-tails) closes the first gap and [Arrow drop](#arrow-drop) the second.
+
+#### Arrow tails
+
+The tail of a force or flow arrow is, of its ends that ride on a part, the one nearest the box of its part's mesh in
+that part's frame (ties: `from`) (`MGSolidDocument.arrowTail`). Its tolerance is
+`max(0.5 × the arrow's length, 0.25 × the part's box diagonal)` (`MGAnnotationArrowRules.tailLengthShare`,
+`tailPartShare`; the length at the default pose with explode 0). A suggested move keeps the tail on its part: a
+candidate whose moved tail lies more than `max(the tolerance, the authored tail's distance)` outside the box, in the
+part's frame, is not tried. So a move never takes the tail farther off than the author put it, beyond the tolerance.
+When every candidate is skipped this way, `noSuggest` has `code` `tail` ("every move tried takes the arrow's tail off
+its part") and the usual alternatives. After the re-check, every move is measured once more against the authored
+arrow (`measure`) and dropped with `tail` if its tail is off. Pointers keep their tips and motion arrows get no move,
+so the rule is for force and flow arrows only.
+
+#### Arrow drop
+
+Before the arrow rule tests a still, the still's framing drops every force or flow arrow whose part the camera cannot
+see (`MGSolidFraming.clearView` → `arrowDrops`; `MGSolidDocument.arrowDrops`). The engine drops the arrow; it does not
+auto-ghost the part in the way. A ghost would change what the beat shows and could ghost the very parts the beat
+highlights, and the arrow says nothing about a part that is not in the picture. So:
+
+* The part an arrow acts on is the **unit** of its tail's part (`unitParts`): every part whose id is the tail part's
+  first id segment (the text before the first ".") or starts with it and a "." (a component instance and its parts:
+  `engine`, `engine.casing`, `engine.nozzle`).
+* Up to 48 sample points of the unit (`dropSamples`): the centroids of every k-th triangle of the unit's parts that
+  the view draws (assembly order; a cut part gives its capped cut), `k = max(1, ⌈triangles / 48⌉)`, at the still's pose.
+* Each sample is tested from the still's camera with the arrow sample test. It is **seen** when no blocking part
+  (coverage 0.5 or more) crosses its line of sight before it, or when the nearest one that does is a part of the unit
+  (the camera sees the unit there: a sample inside a casing is seen as the casing).
+* When at most 10 % of the unit's on-screen samples are seen (`dropVisibleShare`), the arrow is **dropped** from that
+  still: the still, its story hold and move frames and the SwiftUI pane (each draws `clear.view(...)`, whose
+  `MGSolidView.arrowDrops` the one gate `checkedAnnotations` leaves out) do not draw it, and the arrow rule does not
+  test it there. A unit with no on-screen sample keeps its arrows. Each still may spend 3,000,000 tests on this rule
+  (`dropTests`); when they run out, the remaining arrows are kept and tested by the arrow rule.
+* A drop is a warning, never a refusal, in every profile: `annotation.arrow.dropped.<id>` per still that drops it. The
+  check report adds `arrowDrops` (only when a still drops an arrow): `[{"id", "reason", "part", "by", "step",
+  "beat"}]`, with the tail's part and the part outside the unit that hides the most samples (ties in assembly order).
+  `marty-solid render` adds `arrowDrops` (`{"id", "part", "by"}`) to the still's manifest record and to its story beat.
+* A snapshot has no camera and keeps the arrow; the plain view (`hero.png`) is framed and drops as a still does.
+
+So a back engine's thrust arrow is drawn in a back view and dropped in a front view, and an arm engine behind its twin
+drops its arrow in a front view while the twin keeps its own.
 
 ### Not checked
 
@@ -1269,7 +1359,8 @@ The `annotations` section adds `annotations` and `placements` (see
 gets `legend.notes`, `anchorIssues`, `anchorUntested` and `arrowIssues`, and `warnings` ends with one
 `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per step issue ([Anchor checks](#anchor-checks)),
 then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per step arrow issue
-([Arrow visibility](#arrow-visibility)).
+([Arrow visibility](#arrow-visibility)), then one `annotation.arrow.dropped.<id>` per arrow a step still drops; a
+document whose stills drop an arrow also gets `arrowDrops` ([Arrow drop](#arrow-drop)).
 For every shipped example and every JSON file under `docs/assets`, with and without
 `--strict`, the tool's output without the fields added in this release is byte-identical to
 the output of the release before (golden files in

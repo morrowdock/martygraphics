@@ -7,10 +7,12 @@ import Foundation
 /// Whether the board pane is drawn at the shown state, and the board text that moves to the title band when it is not.
 ///
 /// The rule (docs/EXPLAINER.md, "Adaptive board pane"): in an explainer with both a board and a solid, the board pane
-/// is drawn only while the shown board state has at least one item that is not a `text` item (a table, a plot, a
-/// shape, a vector, a highlight, any other kind). While the shown board has only `text` items (or none), the solid
-/// takes the whole frame and the board's texts, in board order, move to the title band (`text`). An explainer with
-/// only a board always draws it; an explainer with only a solid never has a board pane.
+/// is drawn only while the shown board state has at least one item that is not a `text` item (a table with a data row,
+/// a plot, a shape, a vector, a highlight, any other kind). A table with no data row (`MGItem.isEmptyTable`: a header
+/// waiting for its first `set`) is not drawn and does not count, so the pane opens when the table is first filled (the
+/// story slides it open, "Pane slide in the story video"). While the shown board has only `text` items and empty
+/// tables (or none), the solid takes the whole frame and the board's texts, in board order, move to the title band
+/// (`text`). An explainer with only a board always draws it; an explainer with only a solid never has a board pane.
 public struct MGExplainerBoardPane: Equatable, Sendable {
     /// True when the board pane is drawn.
     public var shown: Bool
@@ -28,7 +30,7 @@ public struct MGExplainerBoardPane: Equatable, Sendable {
     public static func rule(scene: MGScene?, hasSolid: Bool) -> MGExplainerBoardPane {
         guard let scene else { return MGExplainerBoardPane(shown: false) }
         guard hasSolid else { return MGExplainerBoardPane(shown: true) }
-        if scene.items.contains(where: { $0.kind != .text }) { return MGExplainerBoardPane(shown: true) }
+        if scene.items.contains(where: { $0.kind != .text && !$0.isEmptyTable }) { return MGExplainerBoardPane(shown: true) }
         let texts = scene.items.compactMap { item -> String? in
             let t = (item.text ?? item.label ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             return t.isEmpty ? nil : t
@@ -134,7 +136,7 @@ public enum MGExplainerFrame {
         let vp = MGViewport(size: ref, width: scene.width, height: scene.height, camera: scene.camera)
         let mid = Double(ref.width) / 2
         var half = 0.0, measured = false
-        for item in scene.items.prefix(MGLimits.resolvedItems) {
+        for item in scene.items.prefix(MGLimits.resolvedItems) where !item.isEmptyTable {
             guard let r = MGLayout.bounds(item, in: scene.items, vp), !r.isNull, r.minX.isFinite, r.maxX.isFinite else { continue }
             measured = true
             half = max(half, abs(Double(r.minX) - mid), abs(Double(r.maxX) - mid))
@@ -295,7 +297,7 @@ extension MGExplainerFrame {
             let base = b.view.solid ?? d.view(step: nil)
             guard shows(d, base) else { continue }
             let clear = solidClearView(d, view: b.view, stepIndex: b.stepIndex, pane: b.pane)
-            out.append(MGAnnotationAnchorView(view: base.ghosting(clear.autoGhost), params: pose(d, view: b.view), camera: clear.camera,
+            out.append(MGAnnotationAnchorView(view: clear.view(base), params: pose(d, view: b.view), camera: clear.camera,
                                               width: Double(b.pane.width), height: Double(b.pane.height), step: b.stepIndex, beat: b.beat))
         }
         return (d, out)

@@ -166,6 +166,52 @@ public enum MGSolidFacts {
         ch.isNumber || ch.unicodeScalars.contains { $0.properties.numericType != nil || MGSolidNumericScalars.contains($0) }
     }
 
+    // MARK: Rule N1: model names
+
+    /// The offsets in `chars` of the digits rule N1 does not count: the ASCII digits of model-name tokens
+    /// (docs/SOLID-3D.md, "Model names"). A token is a maximal run of characters that are letters (any script), number
+    /// characters (`isNumber`) or the hyphen-minus "-"; every other character (a space, punctuation, an apostrophe, a
+    /// brace) ends it. `isModelName` decides each token. Every other number character still counts.
+    static func modelNameDigits(_ chars: [Character]) -> Set<Int> {
+        func joins(_ c: Character) -> Bool { c == "-" || c.isLetter || isNumber(c) }
+        var out = Set<Int>(), i = 0
+        while i < chars.count {
+            guard joins(chars[i]) else { i += 1; continue }
+            var j = i
+            while j < chars.count, joins(chars[j]) { j += 1 }
+            if isModelName(String(chars[i..<j])) {
+                for k in i..<j where chars[k].unicodeScalars.allSatisfy({ (0x30...0x39).contains($0.value) }) { out.insert(k) }
+            }
+            i = j
+        }
+        return out
+    }
+
+    /// True when `token` is a model name such as "Mk4", "A320", "F-35", "P220" or "COVID-19", whose digits rule N1
+    /// does not count. All of:
+    /// 1. every character is ASCII: A–Z, a–z, 0–9 or "-";
+    /// 2. it holds at least one capital A–Z and at least one digit 0–9;
+    /// 3. split at "-", no piece is empty (no leading, trailing or double hyphen);
+    /// 4. the first piece starts with a letter (so "4th", "3D", "10mm" and "5-engine" count);
+    /// 5. a later piece that starts with a digit follows a piece of capitals only ("F-35", "B-52"; not "Pre-2020",
+    ///    "Mk-4", "Su-27" or "A380-800");
+    /// 6. it is not a multiplier: "x" or "X" followed by digits only ("X2", "x10").
+    static func isModelName(_ token: String) -> Bool {
+        let s = Array(token.unicodeScalars)
+        func capital(_ u: Unicode.Scalar) -> Bool { (0x41...0x5A).contains(u.value) }
+        func small(_ u: Unicode.Scalar) -> Bool { (0x61...0x7A).contains(u.value) }
+        func digit(_ u: Unicode.Scalar) -> Bool { (0x30...0x39).contains(u.value) }
+        guard !s.isEmpty, s.allSatisfy({ capital($0) || small($0) || digit($0) || $0 == "-" }) else { return false }
+        guard s.contains(where: capital), s.contains(where: digit) else { return false }
+        let pieces = s.split(separator: "-", omittingEmptySubsequences: false)
+        guard pieces.allSatisfy({ !$0.isEmpty }), let first = pieces.first?.first, capital(first) || small(first) else { return false }
+        for k in pieces.indices.dropFirst() where digit(pieces[k].first!) {
+            guard pieces[k - 1].allSatisfy(capital) else { return false }
+        }
+        if pieces.count == 1, s.count > 1, s[0] == "x" || s[0] == "X", s.dropFirst().allSatisfy(digit) { return false }
+        return true
+    }
+
     // MARK: Table
 
     /// Builds the facts table from a compiled assembly and the tier of every drive. `sources`: what moves each driven
@@ -322,7 +368,8 @@ public enum MGSolidFacts {
                      _ aliases: [String: String]) throws -> MGSolidFilledText {
         var out = MGSolidFilledText(text: "", facts: [])
         var body = "", inside = false
-        for ch in s {
+        let chars = Array(s), names = modelNameDigits(chars)
+        for (k, ch) in chars.enumerated() {
             if inside {
                 if ch == "}" {
                     let (text, name, mods) = try placeholder(body, facts, aliases)
@@ -334,7 +381,7 @@ public enum MGSolidFacts {
             } else if ch == "{" { inside = true }
             else if ch == "}" { throw MGSolidIssue("text.brace") }
             else {
-                if isNumber(ch) {
+                if isNumber(ch), !names.contains(k) {
                     if n1 { throw MGSolidIssue("text.number.\(w)") }
                     out.typedNumbers = true
                 }

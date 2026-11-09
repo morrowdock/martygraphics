@@ -79,7 +79,9 @@ also refuses `notes.unused.<id>` (`MGSolidReasons.explainerStrictPrefixes`). The
 `annotation.arrow.hidden.<id>` and `annotation.arrow.untested.<id>`, need the camera of each step or beat still, so
 only the check report gives them (`MGSolidReport`, `MGExplainerReport`, `marty-solid check`;
 `MGSolidReasons.reportStrictPrefixes`): a compile with `MGSolidParser.document(profile: .strict)` does not refuse them
-([SOLID-3D.md](SOLID-3D.md), "Anchor checks" and "Arrow visibility").
+([SOLID-3D.md](SOLID-3D.md), "Anchor checks" and "Arrow visibility"). The arrow drop warning
+`annotation.arrow.dropped.<id>` also needs each still's camera; no profile refuses it, because the still does not draw
+the arrow ([SOLID-3D.md](SOLID-3D.md), "Arrow drop").
 
 ## Order
 
@@ -413,6 +415,7 @@ list):
 | `annotation.anchor.untested.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows a label or pointer that was not fully tested: the view's 3,000,000 line-of-sight triangle tests, or the document's 3,000,000 nearer-part tests, ran out first. The strict check report refuses it, because strict does not pass what it did not check. |
 | `annotation.arrow.hidden.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows an arrow (force, flow, motion or pointer) of which less than half of the sample points along its drawn shaft and head, or fewer than two of its three head samples, are visible from the still's camera: off screen, or behind another part by the line-of-sight rule of the anchor checks (the parts the arrow is anchored on hide it too; a cut part's inside does not count). The report's `arrow` gives the step or beat, the visible share, the part in the way and a suggested move. |
 | `annotation.arrow.untested.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows an arrow that was not fully tested: the view's 3,000,000 arrow sample tests ran out first. The strict check report refuses it, because strict does not pass what it did not check. |
+| `annotation.arrow.dropped.<id>` | check, explainer | (warning) A step or beat still does not draw a force or flow arrow that its view lists: the arrow's tail is on its part, and another part (outside that part's unit) hides the tail from the still's camera, so the part the arrow acts on is hidden there. The still and its story frames leave the arrow out (a snapshot, which has no camera, keeps it); it is not moved and not refused. The report's `arrowDrops` gives the view, the tail's part and the part in the way. |
 
 ### Annotations (v2)
 

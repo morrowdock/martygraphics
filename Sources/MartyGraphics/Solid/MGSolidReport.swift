@@ -188,11 +188,14 @@ extension MGSolidReport {
         if reason == nil, let r = profile.refusal(doc) { reason = r.reason; part = r.part }
         var anchors = MGAnnotationAnchorReport()
         var arrows = MGAnnotationArrowReport()
+        var drops: [(step: Int?, beat: Int?, drop: MGArrowDrop)] = []
         anchors.issues = doc.offPartAnchors
         if anchorViews {
             // The step stills that show a label, pointer or arrow, framed once: the anchor checks test those that show
             // a label or pointer, the arrow rule those that show an arrow.
             let checked = doc.stepCheckViews()
+            // The arrows each still drops (the framing's arrow drop rule): warnings, never refused.
+            drops = checked.flatMap { v in v.view.arrowDrops.map { (v.step, v.beat, $0) } }
             let framed = checked.filter { doc.showsCheckedAnchor($0.view) }
             for v in framed { anchors.append(doc.anchorIssues(v)) }
             // One search budget for the report, retries included.
@@ -242,6 +245,7 @@ extension MGSolidReport {
         if case .array(var w)? = o["warnings"] {
             w += views.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
             w += arrows.issues.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
+            w += drops.map { .object(["reason": .string($0.drop.reason), "part": .string($0.drop.id)]) }
             o["warnings"] = .array(w)
         }
         // Documents with annotations only; other reports keep their exact keys.
@@ -249,6 +253,8 @@ extension MGSolidReport {
             o["anchorIssues"] = .array(anchors.issues.map(\.json))
             o["anchorUntested"] = anchors.untestedJSON
             o["arrowIssues"] = .array(arrows.issues.map(\.json))
+            // Only when a still drops an arrow; other reports keep their exact keys.
+            if !drops.isEmpty { o["arrowDrops"] = .array(drops.map { $0.drop.json(step: $0.step, beat: $0.beat) }) }
         }
         let hit = reason.flatMap { anchorIssue($0, anchors.issues) }
         if let hit { o["anchor"] = hit.json }

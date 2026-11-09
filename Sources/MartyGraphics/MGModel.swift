@@ -75,6 +75,19 @@ public struct MGItem: Equatable, Identifiable, Sendable {
 
     public func n(_ key: String, _ fallback: Double = 0) -> Double { num[key] ?? fallback }
     public func has(_ flag: String) -> Bool { flags.contains(flag) }
+
+    /// True for a table with no data row (docs/EXPLAINER.md, "Empty tables"): every cell after the header row (the
+    /// first row when `header` is set; no row otherwise) is empty or only white space, so a header-only table waiting
+    /// for its first `set`. Renderers do not draw it and it does not open an explainer's board pane. False for every
+    /// other kind and for a table whose shape does not match its cells.
+    public var isEmptyTable: Bool {
+        guard kind == .table else { return false }
+        let rows = n("rows", 1), cols = n("cols", 1)
+        guard rows.isFinite, cols.isFinite, rows >= 1, cols >= 1, rows.rounded() == rows, cols.rounded() == cols,
+              Double(list.count) == rows * cols else { return false }
+        let skip = has("header") ? Int(cols) : 0
+        return list.dropFirst(skip).allSatisfy { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
 }
 
 public struct MGCamera: Equatable, Sendable {

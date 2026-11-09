@@ -649,7 +649,7 @@ extension MGSolidDocument {
             guard shows(base), let shot = MGSolidShot.step(self, i) else { continue }
             let clear = MGSolidFraming.clearView(self, shot: shot, aspect: aspect, titleBand: shot.title != nil ? bands.title : 0,
                                                  captionBand: shot.caption != nil ? bands.caption : 0)
-            out.append(MGAnnotationAnchorView(view: base.ghosting(clear.autoGhost), params: shot.params, camera: clear.camera, width: w, height: h,
+            out.append(MGAnnotationAnchorView(view: clear.view(base), params: shot.params, camera: clear.camera, width: w, height: h,
                                               step: i, beat: nil))
         }
         return out

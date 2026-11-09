@@ -97,13 +97,15 @@ enum MGExplainerHonesty {
         return out
     }
 
-    /// True when a number character (every scalar, the #21 test) stands outside the `{…}` placeholders.
+    /// True when a number character (every scalar, the #21 test) stands outside the `{…}` placeholders. The digits of
+    /// a model-name token ("Mk4", "F-35") do not count (`MGSolidFacts.modelNameDigits`).
     static func typedNumber(_ s: String) -> Bool {
         var inside = false
-        for ch in s {
+        let chars = Array(s), names = MGSolidFacts.modelNameDigits(chars)
+        for (k, ch) in chars.enumerated() {
             if inside { if ch == "}" { inside = false }; continue }
             if ch == "{" { inside = true; continue }
-            if MGSolidFacts.isNumber(ch) { return true }
+            if MGSolidFacts.isNumber(ch), !names.contains(k) { return true }
         }
         return false
     }
