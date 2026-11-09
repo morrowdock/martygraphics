@@ -11,12 +11,14 @@
     distance to the authored dot, and keeps the first candidate that the check's own rule functions pass, as printed.
     A second, denser pass runs only when the first finds none. A suggestion is written in a form the parser accepts
     (an offset within ±4000 mm, or `{"point": "centre"}`), and it is printed only when a full re-check of the
-    document with the suggestions applied (parsed, compiled and framed again, at most 3 rounds) shows no issue for its
-    annotation; otherwise it is dropped with cause `framing` (or `form`). When no candidate passes, `suggest` is null and
+    document with the suggestions applied (parsed, compiled and framed again) shows no issue for any suggested
+    annotation and no new issue for any other annotation. A suggestion that keeps an issue, or that hides another
+    annotation, is searched again (at most 2 retries; at most 6 re-checks in all); otherwise it is dropped with cause
+    `framing`, `conflict` (with `other` naming the annotation it would hide) or `form`. When no candidate passes, `suggest` is null and
     `noSuggest` gives `{"cause", "code", "step", "beat", "by", "samples", "alternatives"}` (for example
     `"part fully hidden in step 6"`, behind `back.casing`; leave the label out of that view's `annotate`, ghost the
-    blocker, or change the camera). The searches are bounded (8,000,000 tests per annotation, 64,000,000 per
-    document) and deterministic. `fix` names the suggestion and proposes `{"point": "centre"}` only when the rules pass
+    blocker, or change the camera). The searches are bounded (8,000,000 tests per search of one annotation, at most 3
+    searches per annotation, 64,000,000 for all searches of a report, plus at most 6 full re-checks) and deterministic. `fix` names the suggestion and proposes `{"point": "centre"}` only when the rules pass
     it. New API: `MGAnnotationAnchorSuggestion`, `MGAnnotationAnchorView`,
     `MGSolidDocument.anchorSuggestions(for:views:)`, `stepAnchorViews(width:height:)`,
     `MGExplainerFrame.beatAnchorViews`, `MGAnnotationAnchorIssue.suggestion` and `repair`.
@@ -25,7 +27,8 @@
     the mesh budget and so on; `MGSolidReasons.limitPatterns`, 62 patterns) now reports `limit`:
     `{"field", "actual", "limit", "unit"}`, plus `"minimum"` for a `1–N` rule; a number the engine does not hold
     exactly is `actualAtLeast` (it stopped counting at the first value over the limit, or the number is above 2^53)
-    or `actualAtMost`, never a capped `actual`. `field` is a path into the document (`title`, `beats[2].say`,
+    or `actualAtMost`, never a capped `actual`; an integer beyond 2^53 that JSON parsing keeps exactly is read rounded
+    away from zero, so it too is a bound. `field` is a path into the document (`title`, `beats[2].say`,
     `parts[0].shape[1].plate.holes`, `solid.annotations.labels[4].text`, `solid.parts`). `parts.resolved` keeps `count` and `top`. The reasons
     catalog (`marty-solid reasons`) gains `"limit"` per entry; `MGSolidReasons.limitExempt` gives the cause for each
     bound that carries no detail. Every `marty-solid` component path (`component check`, `--component`) keeps `limit`

@@ -290,6 +290,23 @@ final class SolidLimitDetailTests: XCTestCase {
         XCTAssertEqual(huge?["actualAtLeast"], .number(9_007_199_254_740_992))
         let negative = detail("-1e17")
         XCTAssertEqual(negative?["actualAtMost"], .number(-9_007_199_254_740_992))
+        // Integers at the 2^53 boundary: the parser keeps them as Int64, so only 2^53 itself is exact.
+        XCTAssertEqual(detail("9007199254740992")?["actual"], .number(9_007_199_254_740_992))
+        XCTAssertNil(detail("9007199254740992")?["actualAtLeast"])
+        let above = detail("9007199254740993")
+        XCTAssertNil(above?["actual"])
+        XCTAssertEqual(above?["actualAtLeast"], .number(9_007_199_254_740_992))
+        XCTAssertEqual(Self.check(Self.asm(parts: #"{"id": "a", "shape": {"box": {"size": [10, 10, 10]}}, "repeat": {"count": 9007199254740993}}"#))["repair"],
+                       .string("parts[0].repeat.count has at least 9,007,199,254,740,992 copies; the limit is 12. Use at most 12 copies."))
+        XCTAssertEqual(detail("9223372036854775807")?["actualAtLeast"], .number(9_007_199_254_740_992))
+        XCTAssertNil(detail("9223372036854775807")?["actual"])
+        XCTAssertEqual(detail("-9007199254740993")?["actualAtMost"], .number(-9_007_199_254_740_992))
+        XCTAssertEqual(detail("9007199254740991")?["actual"], .number(9_007_199_254_740_991))
+        // A decimal: a whole value is exact; a fraction is not a count (no `limit`).
+        XCTAssertEqual(detail("13.0")?["actual"], .number(13))
+        XCTAssertNil(detail("12.5"))
+        XCTAssertEqual(Self.check(Self.asm(parts: #"{"id": "a", "shape": {"box": {"size": [10, 10, 10]}}, "repeat": {"count": 12.5}}"#))["reason"],
+                       .string("part.repeat.count"))
         XCTAssertEqual(detail("0")?["actual"], .number(0))
         XCTAssertEqual(detail("0")?["minimum"], .number(2))
     }

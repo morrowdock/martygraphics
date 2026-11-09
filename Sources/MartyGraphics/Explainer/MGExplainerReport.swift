@@ -100,13 +100,15 @@ public struct MGExplainerReport: Equatable, Sendable {
                 if let fd = framed.solid {
                     for v in framed.views { anchors.append(fd.anchorIssues(v)) }
                     if suggest {
-                        anchors.suggest(fd, views: framed.views)
+                        // One search budget for the report, retries included.
+                        let budget = MGSuggestionBudget()
+                        anchors.suggest(fd, views: framed.views, budget: budget)
                         // A suggestion holds only once applied: the explainer with it is loaded and framed again.
                         anchors.verify { applied in
                             guard let solid = doc.solid else { return nil }
                             let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board,
                                                    solid: MGSolidDocument.replacingAnchors(solid, applied), beats: doc.beats)
-                            return anchorRecheck(copy, library: s.library)
+                            return anchorRecheck(copy, library: s.library, budget: budget)
                         }
                     }
                 }
@@ -205,7 +207,7 @@ public struct MGExplainerReport: Equatable, Sendable {
 extension MGExplainerReport {
     /// The anchor issues of an explainer as `make` lists them (off part with the beat that shows each, then every beat
     /// still), and a suggestion search in its framing; nil when it does not load.
-    static func anchorRecheck(_ doc: MGExplainer, library: MGSolidLibrary) -> MGAnchorRecheck? {
+    static func anchorRecheck(_ doc: MGExplainer, library: MGSolidLibrary, budget: MGSuggestionBudget = MGSuggestionBudget()) -> MGAnchorRecheck? {
         var session = MGExplainerSession(pacing: .immediate, clock: MGManualClock(), library: library)
         guard case .success = session.load(doc), let d = session.solid else { return nil }
         var beatOf: [Int: Int] = [:]
@@ -215,7 +217,9 @@ extension MGExplainerReport {
         let framed = MGExplainerFrame.beatAnchorViews(doc, library: library)
         guard let fd = framed.solid else { return nil }
         for v in framed.views { r.append(fd.anchorIssues(v)) }
-        return MGAnchorRecheck(issues: r.issues, search: { fd.anchorSuggestions(for: $0, views: framed.views) })
+        return MGAnchorRecheck(issues: r.issues,
+                               shown: framed.views.map { ($0.step, $0.beat, Set(fd.checkedAnnotations($0.view, params: $0.params) ?? [])) },
+                               search: { fd.anchorSuggestions(ids: $0, views: framed.views, shared: budget, excluding: $1) })
     }
 }
 

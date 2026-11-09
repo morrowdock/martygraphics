@@ -285,9 +285,10 @@ public struct MGAnnotationAnchorReport: Equatable, Sendable {
 
     mutating func append(_ o: MGAnnotationAnchorReport) { issues += o.issues }
 
-    /// Sets `suggestion` on every off and hidden issue (`MGSolidDocument.anchorSuggestions` with `views`).
-    mutating func suggest(_ doc: MGSolidDocument, views: [MGAnnotationAnchorView]) {
-        let found = doc.anchorSuggestions(for: issues, views: views)
+    /// Sets `suggestion` on every off and hidden issue (`MGSolidDocument.anchorSuggestions` with `views`), from the
+    /// report's shared search budget.
+    mutating func suggest(_ doc: MGSolidDocument, views: [MGAnnotationAnchorView], budget: MGSuggestionBudget) {
+        let found = doc.anchorSuggestions(for: issues, views: views, scale: 1, shared: budget)
         guard !found.isEmpty else { return }
         for i in issues.indices where issues[i].cause != .untested { issues[i].suggestion = found[issues[i].id] }
     }

@@ -994,15 +994,25 @@ also a candidate and is checked like the others). A point whose offset would be 
 when only such points would pass, the cause is `form`.
 
 **Re-check with the new framing.** The camera of a step or beat still fits the anchors it shows, so moving a dot can
-change the framing and expose another part in front of it. Every suggestion is therefore checked again with the
-document it makes (`MGAnnotationAnchorReport.verify`), at most 3 full re-checks (`MGAnnotationAnchorRules.recheckRounds`):
-the document with every suggestion applied is parsed, compiled, framed and checked again; suggestions whose annotation
-has no issue there hold. For the others the search runs again in that copy's framing and the new set is checked; a
-suggestion that still has an issue is dropped (`framing`) and the rest is checked once more. If that last check still
-shows an issue, every remaining suggestion is dropped (`framing`). So the printed suggestions, all applied together,
-parse and leave no anchor issue for their annotations. A copy that does not compile drops them all (`form`).
+change the framing: it can expose another part in front of that dot, or hide another annotation that had no issue.
+Every suggestion is therefore checked again with the document it makes (`MGAnnotationAnchorReport.verify`): the
+document with every suggestion applied is parsed, compiled, framed and checked again. The set is accepted only when
+that check shows **no issue for any suggested annotation and no issue for any annotation that had none** in the report.
+Otherwise:
 
-`noSuggest` is `{"cause", "code", "step", "beat", "by", "samples", "alternatives"}` (`step` and `beat` 1-based):
+* a suggestion whose annotation still has an issue is searched again in the copy's framing, at most twice
+  (`MGAnnotationAnchorRules.retries`), then dropped (`framing`);
+* an annotation that had no issue and now has one blames the suggestions shown in the same view (every suggestion when
+  none is); each is searched again, avoiding its last anchor and the points within max(1 mm, 10 % of its part's box
+  diagonal) of it, at most twice, then dropped with cause `conflict` and `other` naming that annotation;
+* a copy that does not compile drops every suggestion of that set (`form`).
+
+The set is checked again after each change, at most 6 full re-checks in all (`MGAnnotationAnchorRules.recheckRounds`);
+when they run out first, every remaining suggestion is dropped (`framing`). So the printed suggestions, all applied
+together, parse, clear every suggested annotation and give no other annotation an issue.
+
+`noSuggest` is `{"cause", "code", "step", "beat", "by", "other", "samples", "alternatives"}` (`step` and `beat`
+1-based):
 
 | `code` | `cause` | `alternatives` |
 | --- | --- | --- |
@@ -1014,11 +1024,16 @@ parse and leave no anchor issue for their annotations. A copy that does not comp
 | `budget` | suggestion budget ran out | simpler parts near the anchor, or fewer labels |
 | `form` | no visible point of the part can be written as an anchor | anchor it on a part whose frame is near its mesh, or use a world anchor for free text |
 | `framing` | no anchor stays visible once the framing changes | leave it out of the views that hide it, set those cameras, or ghost the part in the way |
+| `conflict` | every anchor tried hides `other` once applied (`other` had no issue before) | show the two in different views, move `other` as well, or set the camera of the view that shows both |
 
-"Fully hidden" means that none of the `samples` candidates passed: the search is sampled, not exhaustive. Each
-annotation's search spends at most 8,000,000 tests and one document's searches 64,000,000
-(`MGAnnotationAnchorRules.suggestTests`, `suggestDocumentTests`): every triangle read for the samples and runs, every
-run-box and ray–triangle test, and the view rule's own count. The search is deterministic (views in order, samples in a
+"Fully hidden" means that none of the `samples` candidates passed: the search is sampled, not exhaustive. Budgets of one
+report: one search for one annotation spends at most 8,000,000 tests (`MGAnnotationAnchorRules.suggestTests`), and an
+annotation is searched at most 3 times (the first search and 2 retries), so at most 24,000,000; all searches of the
+report together, retries included, spend at most 64,000,000 (`suggestDocumentTests`, one shared budget,
+`MGSuggestionBudget`). A test is every triangle read for the samples and runs, every run-box and ray–triangle test,
+and the view rule's own count. On top of the searches come at most 6 full re-checks (`recheckRounds`), each a parse,
+compile, framing and anchor check of the document with the suggestions applied, with the check's own budgets
+(3,000,000 triangle tests per view, 3,000,000 nearer-part tests). The search is deterministic (views in order, samples in a
 fixed order, no dictionary order). A suggestion is checked with a fresh view budget; in the full check the anchors
 before it in the same view share that view's 3,000,000 tests.
 

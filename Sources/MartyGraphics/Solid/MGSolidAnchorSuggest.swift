@@ -179,9 +179,12 @@ public struct MGAnnotationAnchorSuggestion: Equatable, Sendable {
         /// the part's centre is not visible, or the document with the suggestion applied does not compile.
         case form
         /// The suggestion did not hold once applied: the document with it, framed again, still shows an issue for the
-        /// annotation, and a new search in that framing did not settle within the re-check rounds
+        /// annotation, and a new search in that framing did not settle within the re-checks
         /// (`MGAnnotationAnchorRules.recheckRounds`).
         case framing
+        /// Every anchor tried for this annotation gives another annotation that had no issue (`other`) an issue once
+        /// applied (the framing changes and hides it).
+        case conflict
     }
     /// The named part (the resolved part id; a component anchor name gives its part).
     public let part: String
@@ -201,6 +204,8 @@ public struct MGAnnotationAnchorSuggestion: Equatable, Sendable {
     public let by: String?
     /// Candidates checked against the rules before the search gave up (0 with an offset).
     public internal(set) var samples = 0
+    /// `conflict`: the annotation that the suggestion would give an issue.
+    public internal(set) var other: String? = nil
 
     /// `{"part": p, "offset": [x, y, z]}` (or `{"part": p, "point": "centre"}`): the anchor, in the form a document
     /// writes it and the parser accepts (every offset coordinate within ±4000 mm).
@@ -230,6 +235,7 @@ public struct MGAnnotationAnchorSuggestion: Equatable, Sendable {
         case .budget: return "suggestion budget ran out"
         case .form: return "no visible point of the part can be written as an anchor"
         case .framing: return "no anchor stays visible once the framing changes"
+        case .conflict: return "every anchor tried hides \(other ?? "another annotation") once applied"
         }
     }
 
@@ -256,26 +262,33 @@ public struct MGAnnotationAnchorSuggestion: Equatable, Sendable {
             return ["Anchor \(id) on a part whose frame is near its mesh.", "Use a {\"world\": [x, y, z]} anchor for free text."]
         case .framing:
             return ["Leave \(id) out of the views that hide it.", "Set the camera of those views.", "Ghost the part in the way."]
+        case .conflict:
+            let o = other ?? "the other annotation"
+            return ["Show \(id) and \(o) in different views.", "Move \(o) as well.", "Set the camera of the view that shows both."]
         }
     }
 
-    /// `{"cause", "code", "step", "beat", "by", "samples", "alternatives"}` (step and beat 1-based) for a suggestion
+    /// `{"cause", "code", "step", "beat", "by", "other", "samples", "alternatives"}` (step and beat 1-based) for a suggestion
     /// without an offset. `samples` is the number of candidates checked: "fully hidden" means none of them passed.
     func noneJSON(id: String) -> MGJSON {
         func n(_ i: Int?) -> MGJSON { i.map { .number(Double($0 + 1)) } ?? .null }
         return .object(["cause": .string(causeText ?? ""), "code": .string(cause?.rawValue ?? ""), "step": n(step), "beat": n(beat),
-                        "by": by.map(MGJSON.string) ?? .null, "samples": .number(Double(samples)),
+                        "by": by.map(MGJSON.string) ?? .null, "other": other.map(MGJSON.string) ?? .null, "samples": .number(Double(samples)),
                         "alternatives": .array(alternatives(id: id).map(MGJSON.string))])
     }
 }
 
 extension MGAnnotationAnchorRules {
-    /// Tests one annotation's suggestion search may spend (`MGSolidDocument.anchorSuggestions`): each triangle read for
-    /// the samples, each ray–triangle test of the casts, and each triangle test the rule checks spend (the view rule's
-    /// own count, the nearer-part tests) cost 1. Over it, the suggestion has cause `budget`.
+    /// Tests one search for one annotation may spend (`MGSolidDocument.anchorSuggestions`): each triangle read for the
+    /// samples, each ray–triangle test of the casts, and each triangle test the rule checks spend (the view rule's own
+    /// count, the nearer-part tests) cost 1. Over it, the suggestion has cause `budget`. An annotation is searched at
+    /// most `1 + retries` times in one report.
     public static let suggestTests = 8_000_000
-    /// Tests one document's suggestion searches may spend together.
+    /// Tests all searches of one report may spend together, retries included (`MGSuggestionBudget`).
     public static let suggestDocumentTests = 64_000_000
+    /// Searches again for one annotation after its first search, at most: its suggestion still had an issue in the
+    /// re-check, or it gave another annotation an issue.
+    public static let retries = 2
     /// Sample points per view: the triangles nearest to the authored anchor, triangles spread over the mesh, cap
     /// triangles of a cut part, and the part's box centre.
     public static let nearSamples = 24, spreadSamples = 24, capSamples = 16
@@ -286,6 +299,12 @@ extension MGAnnotationAnchorRules {
     public static let denseSpread = 512
     /// How far (mm) a candidate moves past the hit, into its part, before it is rounded and checked.
     public static let inset = 0.05
+}
+
+/// The search budget one report shares between its suggestion searches, retries included.
+final class MGSuggestionBudget {
+    var left: Int
+    init(_ tests: Int = MGAnnotationAnchorRules.suggestDocumentTests) { left = tests }
 }
 
 extension MGSolidDocument {
@@ -319,30 +338,39 @@ extension MGSolidDocument {
     }
 
     /// `anchorSuggestions` with `scale` times the samples and the budgets (tests: a denser search).
-    func anchorSuggestions(for issues: [MGAnnotationAnchorIssue], views: [MGAnnotationAnchorView], scale: Int) -> [String: MGAnnotationAnchorSuggestion] {
-        let k = max(1, scale)
+    func anchorSuggestions(for issues: [MGAnnotationAnchorIssue], views: [MGAnnotationAnchorView], scale: Int,
+                           shared: MGSuggestionBudget? = nil) -> [String: MGAnnotationAnchorSuggestion] {
         let wanted: Set<MGAnnotationAnchorIssue.Cause> = [.offPart, .hidden, .ghosted, .offScreen, .occluded]
         var ids: [String] = []
         for i in issues where wanted.contains(i.cause) && !ids.contains(i.id) { ids.append(i.id) }
+        return anchorSuggestions(ids: ids, views: views, scale: scale, shared: shared ?? MGSuggestionBudget(MGAnnotationAnchorRules.suggestDocumentTests * max(1, scale)))
+    }
+
+    /// The suggestion for each annotation `ids` names, in that order, from `shared`. `excluding` gives, per annotation,
+    /// anchors (in its part's frame) already found to give another annotation an issue: no candidate within
+    /// `max(1 mm, 10 % of the part's box diagonal)` of one is used.
+    func anchorSuggestions(ids: [String], views: [MGAnnotationAnchorView], scale: Int = 1, shared: MGSuggestionBudget,
+                           excluding: [String: [MGVec3]] = [:]) -> [String: MGAnnotationAnchorSuggestion] {
+        let k = max(1, scale)
         guard !ids.isEmpty else { return [:] }
         var rules = views.map { MGAnchorViewRule(self, $0) }
         var shownBy: [[String]] = views.map { checkedAnnotations($0.view, params: $0.params) ?? [] }
         if shownBy.count != rules.count { shownBy = Array(repeating: [], count: rules.count) }
-        var left = MGAnnotationAnchorRules.suggestDocumentTests * k
         var out: [String: MGAnnotationAnchorSuggestion] = [:]
         for id in ids {
             guard let (kind, p) = annotations.checkedAnchor(id), let partID = p.part else { continue }
             let mine = rules.indices.filter { shownBy[$0].contains(id) }
-            var budget = min(left, MGAnnotationAnchorRules.suggestTests * k)
+            var budget = min(shared.left, MGAnnotationAnchorRules.suggestTests * k)
             let start = budget
-            out[id] = suggestion(id: id, kind: kind, p, partID: partID, rules: &rules, views: mine, budget: &budget, scale: k)
-            left -= start - max(0, budget)
+            out[id] = suggestion(id: id, kind: kind, p, partID: partID, rules: &rules, views: mine, budget: &budget, scale: k,
+                                 excluding: excluding[id] ?? [])
+            shared.left -= start - max(0, budget)
         }
         return out
     }
 
     func suggestion(id: String, kind: String, _ p: MGAnnotationPoint, partID: String, rules: inout [MGAnchorViewRule], views mine: [Int],
-                    budget: inout Int, scale: Int = 1) -> MGAnnotationAnchorSuggestion {
+                    budget: inout Int, scale: Int = 1, excluding: [MGVec3] = []) -> MGAnnotationAnchorSuggestion {
         var tested = 0
         func none(_ c: MGAnnotationAnchorSuggestion.Cause, _ k: Int? = nil, by: String? = nil) -> MGAnnotationAnchorSuggestion {
             var s = MGAnnotationAnchorSuggestion(part: partID, offset: nil, onCut: false, cause: c, step: k.flatMap { rules[$0].v.step },
@@ -372,15 +400,18 @@ extension MGSolidDocument {
         func rounded(_ v: MGVec3) -> MGVec3 { MGVec3((v.x * 1000).rounded() / 1000, (v.y * 1000).rounded() / 1000, (v.z * 1000).rounded() / 1000) }
         // Only a point the anchor syntax can write is a candidate: every offset coordinate within ±4000 mm.
         var far: [MGVec3] = []
+        // Anchors that gave another annotation an issue, and the points near them, are not used again.
+        let keepOff = max(1, 0.1 * part.mesh.bounds.size.length)
+        func excluded(_ v: MGVec3) -> Bool { excluding.contains { ($0 - v).length < keepOff } }
         func add(_ v: MGVec3, onCut: Bool) {
             let r = rounded(v)
-            guard [r.x, r.y, r.z].allSatisfy(\.isFinite) else { return }
+            guard [r.x, r.y, r.z].allSatisfy(\.isFinite), !excluded(r) else { return }
             guard [r.x, r.y, r.z].allSatisfy({ MGSolidLimits.coordinate.contains($0) }) else { if far.count < 64 { far.append(r) }; return }
             guard seen.insert([r.x, r.y, r.z]).inserted else { return }
             cands.append(Candidate(local: r, onCut: onCut, order: cands.count))
         }
         // The part's centre is always writable (`{"point": "centre"}`), whatever its coordinates.
-        cands.append(Candidate(local: part.mesh.bounds.center, onCut: false, order: 0, centre: true))
+        if !excluded(part.mesh.bounds.center) { cands.append(Candidate(local: part.mesh.bounds.center, onCut: false, order: 0, centre: true)) }
         // The sample points of one mesh (in the part's frame): nearest points of the `near` triangles nearest to the
         // authored anchor, `spread` centroids spread evenly over the triangles, `caps` cap centroids, the box centre.
         func samples(_ mesh: MGMesh, cut: MGSectionCut?, near nearCount: Int, spread spreadCount: Int, caps capCount: Int) -> [(point: MGVec3, cap: Bool)]? {
@@ -660,54 +691,94 @@ extension MGSolidDocument {
 }
 
 /// One full re-check of a document with suggested anchors applied (`MGSolidReport`, `MGExplainerReport`): the copy's
-/// anchor issues (off part and every framed view, with the copy's own framing), and a search in that framing.
+/// anchor issues (off part and every framed view, with the copy's own framing), the annotations each framed view shows,
+/// and a search in that framing.
 struct MGAnchorRecheck {
     let issues: [MGAnnotationAnchorIssue]
-    let search: ([MGAnnotationAnchorIssue]) -> [String: MGAnnotationAnchorSuggestion]
+    /// Per framed view: its step and beat (0-based) and the annotations it shows.
+    var shown: [(step: Int?, beat: Int?, ids: Set<String>)] = []
+    /// A search for these annotations in the copy's framing, avoiding the given anchors.
+    let search: (_ ids: [String], _ excluding: [String: [MGVec3]]) -> [String: MGAnnotationAnchorSuggestion]
 }
 
 extension MGAnnotationAnchorRules {
     /// Full re-checks of the document with the suggestions applied, at most (`MGAnnotationAnchorReport.verify`).
-    public static let recheckRounds = 3
+    public static let recheckRounds = 6
 }
 
 extension MGAnnotationAnchorReport {
     /// Keeps only suggestions that hold once applied. Framing depends on the anchors a view shows, so a suggestion found
-    /// with the authored framing can be hidden in the framing it causes. With every suggestion applied to a copy of the
-    /// document, `recheck` compiles and frames it again and returns its anchor issues (nil when the copy is refused).
-    /// Rounds, at most `MGAnnotationAnchorRules.recheckRounds` re-checks:
-    /// 1. Check the copy with every suggestion. Suggestions whose annotation has no issue there all hold: done.
-    /// 2. Search again, in the copy's framing, for the annotations that still have an issue; check the new set.
-    /// 3. Drop the suggestions that still have an issue (`suggest: null`, cause `framing`) and check the rest.
-    /// When the last check still shows an issue for one of them, every remaining suggestion is dropped (`framing`): a
-    /// suggestion is never printed unless a full check of the document with exactly the printed suggestions applied
-    /// shows no issue for its annotation. A refused copy drops every suggestion of that round (cause `form`).
+    /// with the authored framing can be hidden in the framing it causes, or can hide another annotation. With every
+    /// suggestion applied to a copy of the document, `recheck` compiles and frames it again and returns its anchor
+    /// issues (nil when the copy is refused). A set is accepted only when that check shows no issue for any suggested
+    /// annotation and no issue for any annotation that had none in this report (`issues`). Otherwise, at most
+    /// `MGAnnotationAnchorRules.recheckRounds` re-checks in all:
+    /// - a suggestion whose annotation still has an issue is searched again in the copy's framing, at most
+    ///   `MGAnnotationAnchorRules.retries` times, then dropped (`framing`);
+    /// - an annotation that had no issue and now has one names the suggestions shown in the same view (all of them when
+    ///   none is): each is searched again away from its current anchor, at most `retries` times, then dropped
+    ///   (`conflict`, `other` naming that annotation);
+    /// - a refused copy drops every suggestion of that set (`form`).
+    /// When the re-checks run out before a set is accepted, every remaining suggestion is dropped (`framing`). So a
+    /// printed set of suggestions, applied together, parses, clears every suggested annotation and adds no issue.
     mutating func verify(_ recheck: ([String: MGJSON]) -> MGAnchorRecheck?) {
+        let before = Set(issues.map(\.id))
         var current: [String: MGAnnotationAnchorSuggestion] = [:]
         for i in issues { if let s = i.suggestion, current[i.id] == nil { current[i.id] = s } }
+        var retries: [String: Int] = [:]
+        var excluding: [String: [MGVec3]] = [:]
         func applied() -> [String: MGJSON] { current.compactMapValues { $0.anchorJSON } }
-        func drop(_ ids: [String], _ cause: MGAnnotationAnchorSuggestion.Cause) {
+        func drop(_ ids: [String], _ cause: MGAnnotationAnchorSuggestion.Cause, other: String? = nil) {
             for id in ids {
                 guard let s = current[id], s.offset != nil else { continue }
-                current[id] = MGAnnotationAnchorSuggestion(part: s.part, offset: nil, onCut: false, cause: cause, step: nil, beat: nil, by: nil)
+                var n = MGAnnotationAnchorSuggestion(part: s.part, offset: nil, onCut: false, cause: cause, step: nil, beat: nil, by: nil)
+                n.other = other
+                current[id] = n
             }
         }
-        for round in 1...MGAnnotationAnchorRules.recheckRounds {
+        var accepted = false
+        for _ in 0..<MGAnnotationAnchorRules.recheckRounds {
             let set = applied()
-            if set.isEmpty { break }
-            guard let r = recheck(set) else { drop(set.keys.sorted(), .form); break }
-            let bad = set.keys.sorted().filter { id in r.issues.contains { $0.id == id } }
-            if bad.isEmpty { break }
-            switch round {
-            case 1:
-                let found = r.search(r.issues.filter { bad.contains($0.id) })
-                for id in bad {
-                    if let s = found[id], s.offset != nil { current[id] = s } else { drop([id], .framing) }
+            if set.isEmpty { accepted = true; break }
+            guard let r = recheck(set) else { drop(set.keys.sorted(), .form); continue }
+            let suggested = set.keys.sorted()
+            let bad = suggested.filter { id in r.issues.contains { $0.id == id } }
+            var fresh: [(id: String, issue: MGAnnotationAnchorIssue)] = []
+            for i in r.issues where !before.contains(i.id) && !set.keys.contains(i.id) && !fresh.contains(where: { $0.id == i.id }) {
+                fresh.append((i.id, i))
+            }
+            if bad.isEmpty && fresh.isEmpty { accepted = true; break }
+            // The suggestions to search again: those still failing, and those shown with a newly failing annotation.
+            var again: [String] = [], blame: [String: String] = [:]
+            for id in bad where !again.contains(id) { again.append(id) }
+            for (other, i) in fresh.sorted(by: { $0.id < $1.id }) {
+                let inView = r.shown.filter { $0.step == i.step && $0.beat == i.beat }.flatMap(\.ids)
+                var suspects = suggested.filter { inView.contains($0) }
+                if suspects.isEmpty { suspects = suggested }
+                for id in suspects where blame[id] == nil {
+                    blame[id] = other
+                    if let x = current[id]?.offset { excluding[id, default: []].append(x) }
+                    if !again.contains(id) { again.append(id) }
                 }
-            case 2: drop(bad, .framing)
-            default: drop(set.keys.sorted(), .framing)
+            }
+            var search: [String] = []
+            for id in again {
+                if retries[id, default: 0] >= MGAnnotationAnchorRules.retries {
+                    if let o = blame[id] { drop([id], .conflict, other: o) } else { drop([id], .framing) }
+                } else {
+                    retries[id, default: 0] += 1
+                    search.append(id)
+                }
+            }
+            guard !search.isEmpty else { continue }
+            let found = r.search(search, excluding)
+            for id in search {
+                if let s = found[id], s.offset != nil { current[id] = s }
+                else if let o = blame[id] { drop([id], .conflict, other: o) }
+                else { drop([id], .framing) }
             }
         }
+        if !accepted { drop(applied().keys.sorted(), .framing) }
         for k in issues.indices where issues[k].suggestion != nil { issues[k].suggestion = current[issues[k].id] }
     }
 }

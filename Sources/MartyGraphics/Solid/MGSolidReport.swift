@@ -184,7 +184,9 @@ extension MGSolidReport {
         if anchorViews {
             let framed = doc.stepAnchorViews()
             for v in framed { anchors.append(doc.anchorIssues(v)) }
-            anchors.suggest(doc, views: framed)
+            // One search budget for the report, retries included.
+            let budget = MGSuggestionBudget()
+            anchors.suggest(doc, views: framed, budget: budget)
             // A suggestion holds only once applied: the copy with it is compiled and framed again (its own cameras).
             anchors.verify { applied in
                 let src = MGSolidDocument.replacingAnchors(doc.source, applied)
@@ -193,7 +195,9 @@ extension MGSolidReport {
                 r.issues = d.offPartAnchors
                 let views = d.stepAnchorViews()
                 for v in views { r.append(d.anchorIssues(v)) }
-                return MGAnchorRecheck(issues: r.issues, search: { d.anchorSuggestions(for: $0, views: views) })
+                return MGAnchorRecheck(issues: r.issues,
+                                       shown: views.map { ($0.step, $0.beat, Set(d.checkedAnnotations($0.view, params: $0.params) ?? [])) },
+                                       search: { d.anchorSuggestions(ids: $0, views: views, shared: budget, excluding: $1) })
             }
         }
         let views = anchors.issues.filter { $0.cause != .offPart }

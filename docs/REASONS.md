@@ -128,7 +128,9 @@ A refusal from a length, count or size limit reports its numbers in the check re
   counting at the first value over the limit (component expansion, expression nodes, nesting, a stream, a file read
   only to one byte past the limit), or for a document number above 2^53; `actualAtMost` for one below −2^53. `repair`
   then says "at least" (or "at most"). A whole number up to 2^53 is `actual` as given (`repeat.count: 1e12` is
-  1,000,000,000,000).
+  1,000,000,000,000). An integer the JSON parser keeps exactly but a double cannot hold (2^53 + 1, 2^63 − 1) is read
+  rounded away from zero, so it is reported as a bound (`actualAtLeast: 9007199254740992`), never as a different
+  exact number.
 * A shape inside a part's `shape` list is `parts[i].shape[j].<kind>.<field>`; a single shape object is
   `parts[i].shape.<kind>.<field>`. An explainer's solid prefixes every path with `solid.`, `parts.resolved` included
   (`solid.parts`).
