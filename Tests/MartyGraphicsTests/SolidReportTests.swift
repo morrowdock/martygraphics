@@ -69,7 +69,11 @@ final class SolidReportTests: XCTestCase {
 
     func testRefusalShapes() {
         let short = MGSolidReport.check(data: Data(count: MGSolidLimits.bytes + 1))
-        XCTAssertEqual(short.json, .object(["ok": .bool(false), "reason": .string("assembly.bytes"), "part": .null, "engine": MGEngine.identity]))
+        // A limit refusal adds `limit` and `repair` (docs/REASONS.md, "Limit details").
+        XCTAssertEqual(short.json, .object(["ok": .bool(false), "reason": .string("assembly.bytes"), "part": .null, "engine": MGEngine.identity,
+                                            "limit": .object(["field": .string("document"), "actual": .number(65537), "limit": .number(65536),
+                                                              "unit": .string("bytes")]),
+                                            "repair": .string("document has 65,537 bytes; the limit is 65,536. Make it at most 65,536 bytes.")]))
         XCTAssertEqual(short.exitCode, 1)
         let bad = MGSolidReport.check(data: Data("{}".utf8), profile: .strict)
         XCTAssertEqual(bad.reason, "assembly.missing.kind,parts,v")

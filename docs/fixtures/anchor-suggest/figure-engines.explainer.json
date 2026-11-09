@@ -1,0 +1,266 @@
+{
+ "v": 1,
+ "kind": "explainer",
+ "title": "Small engines on a test figure (synthetic)",
+ "solid": {
+  "v": 2,
+  "parts": [
+   {
+    "id": "figure",
+    "use": "mannequin",
+    "with": {
+     "leftShoulder": 20,
+     "rightShoulder": 20
+    }
+   },
+   {
+    "id": "unitB",
+    "use": "microTurbojet",
+    "with": {
+     "diameter": 110,
+     "length": 280,
+     "cutaway": 0
+    },
+    "parent": "figure.back",
+    "at": [
+     0,
+     55,
+     0
+    ],
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ]
+   },
+   {
+    "id": "unitL1",
+    "use": "microTurbojet",
+    "with": {
+     "diameter": 70,
+     "length": 200,
+     "cutaway": 1
+    },
+    "parent": "figure.leftHand",
+    "at": [
+     0,
+     -45,
+     150
+    ],
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ]
+   },
+   {
+    "id": "unitL2",
+    "use": "microTurbojet",
+    "with": {
+     "diameter": 70,
+     "length": 200,
+     "cutaway": 0
+    },
+    "parent": "figure.leftHand",
+    "at": [
+     0,
+     45,
+     150
+    ],
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ]
+   },
+   {
+    "id": "unitR1",
+    "use": "microTurbojet",
+    "with": {
+     "diameter": 70,
+     "length": 200,
+     "cutaway": 0
+    },
+    "parent": "figure.rightHand",
+    "at": [
+     0,
+     -45,
+     150
+    ],
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ]
+   }
+  ],
+  "annotations": {
+   "labels": [
+    {
+     "id": "lHead",
+     "at": {
+      "part": "figure.skull",
+      "offset": [
+       0,
+       -300,
+       180
+      ]
+     },
+     "text": "Test figure"
+    },
+    {
+     "id": "lBody",
+     "at": {
+      "part": "figure.body",
+      "offset": [
+       0,
+       -225,
+       690
+      ]
+     },
+     "text": "Body"
+    },
+    {
+     "id": "lHand",
+     "at": {
+      "part": "figure.handL",
+      "offset": [
+       0,
+       -60,
+       0
+      ]
+     },
+     "text": "Raised hand"
+    },
+    {
+     "id": "lShaft",
+     "at": {
+      "part": "unitL1.shaft",
+      "point": "centre"
+     },
+     "text": "Shaft"
+    },
+    {
+     "id": "lCase",
+     "at": {
+      "part": "unitL1.casing",
+      "point": "centre"
+     },
+     "text": "Casing"
+    },
+    {
+     "id": "lDiff",
+     "at": {
+      "part": "unitL1.diffuser",
+      "point": "centre"
+     },
+     "text": "Diffuser"
+    },
+    {
+     "id": "lComb",
+     "at": {
+      "part": "unitL1.combustor",
+      "point": "centre"
+     },
+     "text": "Combustor"
+    },
+    {
+     "id": "lNoz",
+     "at": {
+      "part": "unitL1.nozzle",
+      "point": "centre"
+     },
+     "text": "Nozzle"
+    }
+   ],
+   "arrows": [
+    {
+     "id": "pBack",
+     "meaning": "pointer",
+     "from": {
+      "world": [
+       400,
+       -500,
+       1500
+      ]
+     },
+     "to": {
+      "part": "unitB.casing",
+      "offset": [
+       0,
+       -200,
+       0
+      ]
+     },
+     "text": "Back unit"
+    }
+   ]
+  }
+ },
+ "beats": [
+  {
+   "say": "A test figure carries small engines.",
+   "view": {
+    "camera": "hero",
+    "annotate": [
+     "lHead",
+     "lBody",
+     "pBack"
+    ]
+   }
+  },
+  {
+   "say": "One arm is raised.",
+   "view": {
+    "camera": "hero",
+    "pose": {
+     "figure": {
+      "with": {
+       "leftShoulder": 45
+      }
+     }
+    },
+    "annotate": [
+     "lHand"
+    ]
+   }
+  },
+  {
+   "say": "The left engine is drawn with a cutaway.",
+   "view": {
+    "camera": "hero",
+    "focus": [
+     "unitL1"
+    ],
+    "ghost": [
+     "unitL2"
+    ],
+    "annotate": [
+     "lShaft",
+     "lCase",
+     "lDiff"
+    ]
+   }
+  },
+  {
+   "say": "Further back are the combustor and the nozzle.",
+   "view": {
+    "camera": "hero",
+    "focus": [
+     "unitL1"
+    ],
+    "ghost": [
+     "unitL2"
+    ],
+    "annotate": [
+     "lComb",
+     "lNoz"
+    ]
+   }
+  }
+ ]
+}

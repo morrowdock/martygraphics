@@ -1,0 +1,205 @@
+{
+ "v": 1,
+ "kind": "explainer",
+ "title": "A cut engine on a test figure (synthetic)",
+ "solid": {
+  "v": 2,
+  "parts": [
+   {
+    "id": "figure",
+    "use": "mannequin",
+    "with": {
+     "leftShoulder": 20,
+     "rightShoulder": 20,
+     "leftElbow": 0,
+     "rightElbow": 0
+    }
+   },
+   {
+    "id": "pack",
+    "material": "plastic.muted",
+    "parent": "figure.back",
+    "at": [
+     0,
+     70,
+     0
+    ],
+    "shape": {
+     "box": {
+      "size": [
+       280,
+       140,
+       380
+      ]
+     }
+    }
+   },
+   {
+    "id": "unitA",
+    "use": "microTurbojet",
+    "with": {
+     "diameter": 80,
+     "length": 220,
+     "cutaway": 0
+    },
+    "parent": "figure.rightHand",
+    "at": [
+     0,
+     0,
+     120
+    ],
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ]
+   },
+   {
+    "id": "unitC",
+    "use": "microTurbojet",
+    "with": {
+     "diameter": 80,
+     "length": 220,
+     "cutaway": 0
+    },
+    "parent": "figure.leftHand",
+    "at": [
+     0,
+     0,
+     120
+    ],
+    "rot": [
+     1,
+     0,
+     0,
+     180
+    ]
+   }
+  ],
+  "annotations": {
+   "labels": [
+    {
+     "id": "lPack",
+     "at": {
+      "part": "pack",
+      "offset": [
+       0,
+       0,
+       260
+      ]
+     },
+     "text": "Pack"
+    },
+    {
+     "id": "lMount",
+     "at": {
+      "part": "unitA.mount",
+      "offset": [
+       0,
+       -120,
+       0
+      ]
+     },
+     "text": "Mount"
+    },
+    {
+     "id": "lComp",
+     "at": {
+      "part": "unitA.compressor",
+      "offset": [
+       0,
+       -90,
+       0
+      ]
+     },
+     "text": "Compressor"
+    },
+    {
+     "id": "lComb",
+     "at": {
+      "part": "unitA.combustor",
+      "offset": [
+       0,
+       -90,
+       0
+      ]
+     },
+     "text": "Combustor"
+    },
+    {
+     "id": "lTurb",
+     "at": {
+      "part": "unitA.turbine",
+      "offset": [
+       0,
+       -90,
+       0
+      ]
+     },
+     "text": "Turbine"
+    },
+    {
+     "id": "lExit",
+     "at": {
+      "part": "unitA.exhaust",
+      "offset": [
+       0,
+       -90,
+       0
+      ]
+     },
+     "text": "Exhaust"
+    }
+   ]
+  }
+ },
+ "beats": [
+  {
+   "say": "A pack sits on the back.",
+   "view": {
+    "camera": "hero",
+    "orbit": 150,
+    "annotate": [
+     "lPack"
+    ]
+   }
+  },
+  {
+   "say": "The right engine is cut open.",
+   "view": {
+    "section": {
+     "normal": [
+      0,
+      -1,
+      0
+     ],
+     "offset": 0,
+     "parts": [
+      "unitA.casing"
+     ]
+    },
+    "focus": [
+     "unitA"
+    ],
+    "annotate": [
+     "lMount",
+     "lComp",
+     "lComb",
+     "lTurb",
+     "lExit"
+    ]
+   }
+  },
+  {
+   "say": "Seen from another side.",
+   "view": {
+    "camera": "hero",
+    "orbit": 60,
+    "annotate": [
+     "lMount"
+    ]
+   }
+  }
+ ]
+}

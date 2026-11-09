@@ -303,7 +303,11 @@ public struct MGExplainerSession {
             if stream.ended, !MGLessonSession.isSpace(byte) { startStream() }
             stream.bytes += 1
             if stream.exhausted { continue }
-            if stream.bytes > MGExplainerLimits.bytes { exhaust("explainer.bytes"); continue }
+            if stream.bytes > MGExplainerLimits.bytes {
+                exhaust("explainer.bytes", limit: MGSolidLimitDetail(field: "stream", actual: stream.bytes, limit: MGExplainerLimits.bytes, unit: "bytes",
+                                                                     bound: .atLeast))
+                continue
+            }
             for output in scanner.push(byte) { handle(output) }
         }
         absorb(lesson.tick())
@@ -354,10 +358,12 @@ public struct MGExplainerSession {
     mutating func startStream() { stream = StreamStatus(); resetScanner() }
     mutating func resetScanner() { scanner = MGStatementScanner(); scanner.cap = MGExplainerLimits.bytes }
 
-    mutating func exhaust(_ reason: String) {
+    mutating func exhaust(_ reason: String, limit: MGSolidLimitDetail? = nil) {
         stream.exhausted = true
         resetScanner()
-        refuse(MGExplainerIssue(reason, view: .stream, statement: nextStatement))
+        var e = MGExplainerIssue(reason, view: .stream, statement: nextStatement)
+        e.limit = limit
+        refuse(e)
     }
 
     // MARK: host calls
@@ -465,14 +471,20 @@ public struct MGExplainerSession {
 
     mutating func handle(_ output: MGStatementScanner.Output) {
         if stream.ended { startStream() }
-        guard stream.statements < MGExplainerLimits.statements else { return exhaust("explainer.statements.count") }
+        guard stream.statements < MGExplainerLimits.statements else {
+            return exhaust("explainer.statements.count", limit: MGSolidLimitDetail(field: "stream", actual: stream.statements + 1,
+                                                                                   limit: MGExplainerLimits.statements, unit: "statements", bound: .atLeast))
+        }
         let index = nextStatement; nextStatement += 1
         stream.statements += 1
         completedAt = clock.now
         current = .stream
         switch output {
         case .garbage: refuse("stmt.json", index)
-        case .tooLong: refuse("explainer.bytes", index)
+        case .tooLong:
+            var e = MGExplainerIssue("explainer.bytes", view: current, statement: index)
+            e.limit = MGSolidLimitDetail(field: "stream", actual: MGExplainerLimits.bytes + 1, limit: MGExplainerLimits.bytes, unit: "bytes", bound: .atLeast)
+            refuse(e)
         case .statement(let raw):
             if let r = MGJSON.dataRefusal(Data(raw), maxDepth: MGExplainerLimits.statementDepth, json: "stmt.json", depth: "explainer.depth") {
                 return refuse(r, index)
@@ -490,7 +502,11 @@ public struct MGExplainerSession {
         // The first statement of a stream is a header (a new explainer) or `keep` (a follow-up).
         if !stream.started, key != "explainer", key != "keep" { return refuse(MGExplainerIssue("explainer.header", view: .header, statement: index)) }
         if key != "solid" {
-            guard bytes <= MGExplainerLimits.statementBytes else { return refuse("stmt.bytes", index) }
+            guard bytes <= MGExplainerLimits.statementBytes else {
+                var e = MGExplainerIssue("stmt.bytes", view: current, statement: index)
+                e.limit = MGSolidLimitDetail(field: key.isEmpty ? "statement" : key, actual: bytes, limit: MGExplainerLimits.statementBytes, unit: "bytes")
+                return refuse(e)
+            }
             guard json.measure().depth <= MGLessonLimits.statementDepth else { return refuse("lesson.depth", index) }
         }
         if MGSolidParser.hasTierKey(json) { return refuse("tier.key", index) }
@@ -539,7 +555,11 @@ public struct MGExplainerSession {
             outbox.removeAll { if case .lineDue = $0 { return true }; return false }
             stream.started = true; stream.header = true
             emit(.accepted(statement: index))
-        } catch { refuse(Self.reason(error), index) }
+        } catch {
+            var e = MGExplainerIssue(Self.reason(error), view: current, statement: index)
+            e.limit = Self.limit(error)
+            refuse(e)
+        }
     }
 
     mutating func keep(_ value: MGJSON, _ index: Int) {
@@ -585,7 +605,7 @@ public struct MGExplainerSession {
         case .failure(let issue):
             var e = MGExplainerIssue(issue.reason, view: .solid, statement: index, id: issue.part, detail: issue.visibility?.cause.rawValue)
             e.visibility = issue.visibility
-            e.limit = issue.limit
+            e.limit = issue.limit?.prefixed("solid.")
             return refuse(e)
         case .success(let d): doc = d
         }
@@ -616,7 +636,10 @@ public struct MGExplainerSession {
         guard let t = titleTemplate else { return nil }
         do {
             let f = try MGSolidFacts.fill(t, where: "title", n1: false, solid?.facts ?? [:], solid?.aliases ?? [:])
-            guard !f.text.isEmpty, f.text.unicodeScalars.count <= MGExplainerLimits.title else { throw MGError("explainer.title") }
+            guard !f.text.isEmpty, f.text.unicodeScalars.count <= MGExplainerLimits.title else {
+                throw MGError("explainer.title", limit: MGSolidLimitDetail(field: "title", actual: f.text.unicodeScalars.count, limit: MGExplainerLimits.title,
+                                                                           unit: "characters", minimum: 1))
+            }
             for (name, mods) in zip(f.facts, f.modifiers) where mods.contains("abs") { throw MGError("text.sign.\(MGSolidParser.token(name))") }
             let tier = MGSolidTiers.text(facts: f.facts.compactMap { solid?.facts[$0] }, unchecked: false, typedNumbers: f.typedNumbers)
             return (f.text, tier)
@@ -627,7 +650,13 @@ public struct MGExplainerSession {
         current = .beat
         let extra = Set(o.keys).subtracting(["say", "unchecked"])
         guard extra.isEmpty else { return refuse("beat.unknown.\(MGLessonEngine.segments(extra))", index) }
-        guard case .string(let raw)? = o["say"], (1...MGExplainerLimits.say).contains(raw.unicodeScalars.count) else { return refuse("stmt.say", index) }
+        guard case .string(let raw)? = o["say"] else { return refuse("stmt.say", index) }
+        if let d = MGSolidParser.countDetail("beats[\(frozen || board != nil ? lesson.nextBeat : 0)].say", raw.unicodeScalars.count,
+                                             1...MGExplainerLimits.say, unit: "characters") {
+            var e = MGExplainerIssue("stmt.say", view: current, statement: index)
+            e.limit = d
+            return refuse(e)
+        }
         // The views and the title are fixed at the first beat.
         var fixedTitle: (String, MGTier?)?
         if !frozen {
@@ -635,14 +664,28 @@ public struct MGExplainerSession {
             if let p = primary, (p == "board" && board == nil) || (p == "solid" && solidSource == nil) {
                 return refuse(MGExplainerIssue("explainer.primary", view: .header, statement: index))
             }
-            do { fixedTitle = try filledTitle() } catch { return refuse(MGExplainerIssue(Self.reason(error), view: .header, statement: index)) }
+            do { fixedTitle = try filledTitle() } catch {
+                var e = MGExplainerIssue(Self.reason(error), view: .header, statement: index)
+                e.limit = Self.limit(error)
+                return refuse(e)
+            }
         }
         let k = frozen || board != nil ? lesson.nextBeat : 0, n = k + 1
-        guard beatCount < MGExplainerLimits.beats else { return refuse(MGExplainerIssue("explainer.beats.count", view: .beat, beat: k, statement: index)) }
+        guard beatCount < MGExplainerLimits.beats else {
+            var e = MGExplainerIssue("explainer.beats.count", view: .beat, beat: k, statement: index)
+            e.limit = MGSolidLimitDetail(field: "beats", actual: beatCount + 1, limit: MGExplainerLimits.beats, unit: "beats")
+            return refuse(e)
+        }
         var unchecked: String?
         if let u = o["unchecked"] {
             guard case .string(let s) = u, (try? MGSolidParser.text(u, MGExplainerLimits.unchecked, "")) != nil else {
-                return refuse(MGExplainerIssue("beat.unchecked.\(n)", view: .beat, beat: k, statement: index))
+                var e = MGExplainerIssue("beat.unchecked.\(n)", view: .beat, beat: k, statement: index)
+                if case .string(let s) = u {
+                    let blank = s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    e.limit = MGSolidParser.countDetail("beats[\(k)].unchecked", blank ? 0 : s.unicodeScalars.count, 1...MGExplainerLimits.unchecked,
+                                                        unit: "characters")
+                }
+                return refuse(e)
             }
             unchecked = s
         }
@@ -734,7 +777,11 @@ public struct MGExplainerSession {
         func fail(_ r: String, _ id: String? = nil) { refuse(MGExplainerIssue(r, view: .beat, beat: k, statement: index, id: id)) }
         guard !lesson.pending[b].refused else { return fail("beat.refused") }
         let used = lesson.pending[b].checks.count + (beats[k]?.checks3D.count ?? 0)
-        guard used < MGExplainerLimits.checksPerBeat else { return fail("beat.checks.count") }
+        guard used < MGExplainerLimits.checksPerBeat else {
+            var e = MGExplainerIssue("beat.checks.count", view: .beat, beat: k, statement: index)
+            e.limit = MGSolidLimitDetail(field: "beats[\(k)].check", actual: used + 1, limit: MGExplainerLimits.checksPerBeat, unit: "checks")
+            return refuse(e)
+        }
         guard dotted else {
             let events = lesson.forward(.object(["check": value]), index: index)
             if events.contains(.accepted(statement: index)) { beats[k]?.checkSpecs.append(value) }
@@ -783,7 +830,11 @@ public struct MGExplainerSession {
         switch compileSolid(adding: (k, value)) {
         case .failure(let issue):
             let r = issue.reason.hasPrefix("step.") ? "view.\(issue.reason.dropFirst(5))" : issue.reason
-            guard var v = issue.visibility else { return fail(r, issue.part) }
+            guard var v = issue.visibility else {
+                var e = MGExplainerIssue(r, view: .beat, beat: k, statement: index, id: issue.part)
+                e.limit = issue.limit.map { Self.beatField($0, k) }
+                return refuse(e)
+            }
             // One beat's own list over the limit names this beat (the compiled step index is not the beat index).
             if v.cause == .step { v = v.at(k, cause: .beat) }
             var e = MGExplainerIssue(r, view: .beat, beat: k, statement: index, id: v.annotation, detail: v.cause.rawValue)
@@ -827,7 +878,11 @@ public struct MGExplainerSession {
         guard case .array(let list) = value else { return fail("beat.highlight") }
         var ids: [String] = []
         for v in list { guard case .string(let s) = v else { return fail("beat.highlight") }; ids.append(s) }
-        guard (1...MGExplainerLimits.highlightIDs).contains(ids.count) else { return fail("beat.highlight.count") }
+        if let d = MGSolidParser.countDetail("beats[\(k)].highlight", ids.count, 1...MGExplainerLimits.highlightIDs, unit: "ids") {
+            var e = MGExplainerIssue("beat.highlight.count", view: .beat, beat: k, statement: index)
+            e.limit = d
+            return refuse(e)
+        }
         let scene = lesson.projectedIfClosed.scene
         let controls = Set(lesson.projectedIfClosed.controls.map(\.id))
         for id in ids where !resolves(id, scene, controls) { return fail("beat.highlight.ref.\(MGLessonIssue.segment(id))") }
@@ -1064,6 +1119,21 @@ public struct MGExplainerSession {
     }
     mutating func refuse(_ reason: String, _ statement: Int) { refuse(MGExplainerIssue(reason, view: current, statement: statement)) }
     mutating func refuse(_ issue: MGExplainerIssue) { emit(.refused(issue)) }
+
+    /// The limit detail an error carries (`MGError`, `MGSolidIssue`), else nil.
+    static func limit(_ error: Error) -> MGSolidLimitDetail? {
+        if let e = error as? MGError { return e.limit }
+        if let e = error as? MGSolidIssue { return e.limit }
+        return nil
+    }
+
+    /// A limit detail of the solid compiled with a beat's view: a field under `steps[i].` (the compiled step) is the
+    /// beat's `view` (`beats[k].view.`); any other field is under the explainer's `solid.`.
+    static func beatField(_ l: MGSolidLimitDetail, _ k: Int) -> MGSolidLimitDetail {
+        guard l.field.hasPrefix("steps["), let close = l.field.firstIndex(of: "]") else { return l.prefixed("solid.") }
+        let rest = l.field[l.field.index(after: close)...]
+        return MGSolidLimitDetail(field: "beats[\(k)].view" + rest, actual: l.count, limit: l.limit, unit: l.unit, minimum: l.minimum, bound: l.bound)
+    }
 
     static func reason(_ error: Error) -> String {
         if let e = error as? MGError { return e.reason }

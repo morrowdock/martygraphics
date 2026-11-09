@@ -1,5 +1,12 @@
 {
+  "limit" : {
+    "actual" : 65537,
+    "field" : "document",
+    "limit" : 65536,
+    "unit" : "bytes"
+  },
   "ok" : false,
   "part" : null,
-  "reason" : "assembly.bytes"
+  "reason" : "assembly.bytes",
+  "repair" : "document has 65,537 bytes; the limit is 65,536. Make it at most 65,536 bytes."
 }

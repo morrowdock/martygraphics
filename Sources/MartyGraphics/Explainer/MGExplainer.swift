@@ -141,7 +141,7 @@ public struct MGExplainer: Equatable, Sendable {
     static let parses = MGExplainerCounter()
 
     public static func parse(data: Data) -> Result<MGExplainer, MGExplainerIssue> {
-        guard data.count <= MGExplainerLimits.rawBytes else { return .failure(.init("explainer.bytes", view: .header)) }
+        guard data.count <= MGExplainerLimits.rawBytes else { return .failure(bytesIssue(data.count, MGExplainerLimits.rawBytes)) }
         if let r = MGJSON.dataRefusal(data, maxDepth: MGExplainerLimits.documentDepth, json: "explainer.json", depth: "explainer.depth") {
             return .failure(.init(r, view: .header))   // UTF-8 only, nesting counted before the system parser
         }
@@ -150,6 +150,13 @@ public struct MGExplainer: Equatable, Sendable {
             return .failure(.init("explainer.json", view: .header))
         }
         return parse(json: json)
+    }
+
+    /// `explainer.bytes` for a raw document of `bytes` bytes over `limit`.
+    static func bytesIssue(_ bytes: Int, _ limit: Int) -> MGExplainerIssue {
+        var e = MGExplainerIssue("explainer.bytes", view: .header)
+        e.limit = MGSolidLimitDetail(field: "document", actual: bytes, limit: limit, unit: "bytes")
+        return e
     }
 
     public static func parse(json: MGJSON) -> Result<MGExplainer, MGExplainerIssue> {
@@ -172,7 +179,9 @@ public struct MGExplainer: Equatable, Sendable {
             view = .header
             if let p = header.primary, (p == "board" && board == nil) || (p == "solid" && solid == nil) { throw MGError("explainer.primary") }
             guard case .array(let list)? = o["beats"], !list.isEmpty else { throw MGError("explainer.beats") }
-            guard list.count <= MGExplainerLimits.beats else { throw MGError("explainer.beats.count") }
+            guard list.count <= MGExplainerLimits.beats else {
+                throw MGError("explainer.beats.count", limit: MGSolidLimitDetail(field: "beats", actual: list.count, limit: MGExplainerLimits.beats, unit: "beats"))
+            }
             view = .beat
             var beats: [Beat] = []
             for (k, entry) in list.enumerated() {
@@ -188,7 +197,10 @@ public struct MGExplainer: Equatable, Sendable {
                 var ops: [MGJSON] = [], checks: [MGJSON] = []
                 if let raw = b["ops"] {
                     guard case .array(let l) = raw else { throw MGError("beat.ops") }
-                    guard l.count <= MGExplainerLimits.commandsPerBeat else { throw MGError("beat.ops.count") }
+                    guard l.count <= MGExplainerLimits.commandsPerBeat else {
+                        throw MGError("beat.ops.count", limit: MGSolidParser.countDetail("beats[\(k)].ops", l.count, 0...MGExplainerLimits.commandsPerBeat,
+                                                                                         unit: "commands"))
+                    }
                     if !l.isEmpty, board == nil { throw MGError("explainer.board.missing") }
                     for op in l {
                         if case .string("title")? = op["op"] { throw MGError("explainer.op.title") }
@@ -198,13 +210,18 @@ public struct MGExplainer: Equatable, Sendable {
                 }
                 if let raw = b["check"] {
                     guard case .array(let l) = raw else { throw MGError("beat.check") }
-                    guard l.count <= MGExplainerLimits.checksPerBeat else { throw MGError("beat.checks.count") }
+                    guard l.count <= MGExplainerLimits.checksPerBeat else {
+                        throw MGError("beat.checks.count", limit: MGSolidParser.countDetail("beats[\(k)].check", l.count, 0...MGExplainerLimits.checksPerBeat,
+                                                                                            unit: "checks"))
+                    }
                     checks = l
                 }
                 var highlight: [MGJSON]?
                 if let raw = b["highlight"] {
                     guard case .array(let l) = raw, l.allSatisfy({ if case .string = $0 { return true }; return false }) else { throw MGError("beat.highlight") }
-                    guard (1...MGExplainerLimits.highlightIDs).contains(l.count) else { throw MGError("beat.highlight.count") }
+                    if let d = MGSolidParser.countDetail("beats[\(k)].highlight", l.count, 1...MGExplainerLimits.highlightIDs, unit: "ids") {
+                        throw MGError("beat.highlight.count", limit: d)
+                    }
                     highlight = l
                 }
                 var v: MGJSON?
@@ -218,10 +235,15 @@ public struct MGExplainer: Equatable, Sendable {
             beat = nil; view = .stream
             let doc = MGExplainer(title: header.title, primary: header.primary, notes: header.notes, board: board, solid: solid, beats: beats)
             // A document's size is the size of the statement stream it becomes (the solid counts, owner D5).
-            guard doc.statementStream.utf8.count <= MGExplainerLimits.bytes else { throw MGError("explainer.bytes") }
+            let streamBytes = doc.statementStream.utf8.count
+            guard streamBytes <= MGExplainerLimits.bytes else {
+                throw MGError("explainer.bytes", limit: MGSolidLimitDetail(field: "document", actual: streamBytes, limit: MGExplainerLimits.bytes, unit: "bytes"))
+            }
             return .success(doc)
         } catch let e as MGError {
-            return .failure(MGExplainerIssue(e.reason, view: view, beat: beat))
+            var issue = MGExplainerIssue(e.reason, view: view, beat: beat)
+            issue.limit = e.limit
+            return .failure(issue)
         } catch { return .failure(MGExplainerIssue("unknown", view: view)) }
     }
 
@@ -243,8 +265,18 @@ public struct MGExplainer: Equatable, Sendable {
     static func header(_ o: [String: MGJSON]) throws -> Header {
         var h = Header(title: nil, primary: nil, notes: [:])
         if let t = o["title"] {
-            guard case .string(let s) = t, (1...(4 * MGExplainerLimits.title)).contains(s.unicodeScalars.count) else { throw MGError("explainer.title") }
-            do { _ = try MGSolidParser.text(t, 4 * MGExplainerLimits.title, "explainer.title") } catch { throw MGError("explainer.title") }
+            guard case .string(let s) = t else { throw MGError("explainer.title") }
+            if let d = MGSolidParser.countDetail("title", s.unicodeScalars.count, 1...(4 * MGExplainerLimits.title), unit: "characters") {
+                throw MGError("explainer.title", limit: d)
+            }
+            do { _ = try MGSolidParser.text(t, 4 * MGExplainerLimits.title, "explainer.title", field: "title") }
+            catch let e as MGSolidIssue {
+                // A blank title: 1–80 characters (the filled rule), not the raw cap of the text check.
+                throw MGError("explainer.title", limit: e.limit.map {
+                    $0.actual == 0 ? MGSolidLimitDetail(field: "title", actual: 0, limit: MGExplainerLimits.title, unit: "characters", minimum: 1) : $0
+                })
+            }
+            catch { throw MGError("explainer.title") }
             for body in MGExplainerHonesty.placeholders(s) {
                 let name = body.split(separator: "|", omittingEmptySubsequences: false).first.map(String.init) ?? ""
                 guard name.contains(".") else { throw MGError("explainer.title") }
@@ -257,13 +289,19 @@ public struct MGExplainer: Equatable, Sendable {
         }
         if let n = o["notes"] {
             guard case .object(let entries) = n else { throw MGError("notes.object") }
-            guard (1...MGExplainerLimits.notes).contains(entries.count) else { throw MGError("notes.count") }
+            if let d = MGSolidParser.countDetail("notes", entries.count, 1...MGExplainerLimits.notes, unit: "notes") { throw MGError("notes.count", limit: d) }
             for key in entries.keys.sorted() {
                 let seg = MGLessonIssue.segment(key)
                 guard (try? MGParser.identifier(.string(key), "")) != nil, let e = entries[key]!.objectValue, e.count == 1,
                       let (kind, value) = e.first, let k = Note.Kind(rawValue: kind) else { throw MGError("notes.entry.\(seg)") }
-                guard case .string(let text) = value, (1...MGExplainerLimits.noteText).contains(text.unicodeScalars.count),
-                      (try? MGSolidParser.text(value, MGExplainerLimits.noteText, "")) != nil else { throw MGError("notes.text.\(seg)") }
+                guard case .string(let text) = value else { throw MGError("notes.text.\(seg)") }
+                if let d = MGSolidParser.countDetail("notes.\(seg).\(kind)", text.unicodeScalars.count, 1...MGExplainerLimits.noteText, unit: "characters") {
+                    throw MGError("notes.text.\(seg)", limit: d)
+                }
+                guard (try? MGSolidParser.text(value, MGExplainerLimits.noteText, "")) != nil else {
+                    throw MGError("notes.text.\(seg)", limit: (text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ? MGSolidLimitDetail(field: "notes.\(seg).\(kind)", actual: 0, limit: MGExplainerLimits.noteText, unit: "characters", minimum: 1) : nil))
+                }
                 h.notes[key] = Note(kind: k, text: text)
             }
         }

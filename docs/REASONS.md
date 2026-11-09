@@ -4,7 +4,7 @@ Every stable reason the Solid 3D formats give, in one table. A reason is one tok
 (ASCII letters, digits, `_`, `.` and `,`) with one meaning; hosts and model harnesses can
 branch on it. The machine-readable catalog is the same table:
 
-* `marty-solid reasons` prints it as JSON (`{"catalog": "martygraphics.solid.reasons/1", "slots", "closedObjects", "formats", "reasons": [{"pattern", "meaning", "formats", "kind", "strict"}]}`).
+* `marty-solid reasons` prints it as JSON (`{"catalog": "martygraphics.solid.reasons/1", "slots", "closedObjects", "formats", "reasons": [{"pattern", "meaning", "formats", "kind", "strict", "limit"}]}`). `limit` is true for a limit reason ([Limit details](#limit-details)).
 * In Swift: `MGSolidReasons.catalog` (typed entries), `MGSolidReasons.json`,
   `MGSolidReasons.matches(_:)` (every matching entry) and `MGSolidReasons.lookup(_:)`,
   which returns the entry for a concrete reason such as `part.gear.bore`. Reasons longer
@@ -104,6 +104,74 @@ direction finds only entries that nothing could produce. A short list in the tes
 the dotted literals that are not reasons (output file names, fact-name and material
 prefixes). Scene, patch and lesson reasons of the 2D protocol are not in this catalog;
 see [PROTOCOL.md](PROTOCOL.md) and [LESSONS.md](LESSONS.md).
+
+## Limit details
+
+A refusal from a length, count or size limit reports its numbers in the check report's `limit`
+(`MGSolidLimitDetail`), and every refused report carries `repair`, one line built from them:
+
+```json
+"limit": {"field": "annotations.labels[0].text", "actual": 69, "limit": 60, "unit": "characters", "minimum": 1},
+"repair": "annotations.labels[0].text has 69 characters; the limit is 60. Shorten it to at most 60 characters (9 fewer)."
+```
+
+* `field` is a path into the document: object keys joined by `.`, array entries as `[i]` with a 0-based index
+  (`steps[2].say`, `beats[0].view.ghost`). An explainer's solid is under `solid.` (`solid.annotations.labels[4].text`),
+  a beat view's step list under `beats[i].view.`, a note under `notes.<id>.<kind>`, a component's own fields
+  (`title`, `about`, `params`, `anchorAbout.<name>`) at its top level, a whole file as `document` and a stream as
+  `stream`. A part made by a component is `parts[id=<id>]`. At most 128 characters of ASCII letters, digits, `_`,
+  `.`, `[`, `]` and `=`.
+* `actual` is the value the engine measured: Unicode scalars for text (after placeholders are filled when the rule
+  counts the filled text), entries, bytes, triangles, vertices and so on (`unit`).
+* `minimum` is set for a `1–N` rule (an empty or blank text has `actual` 0).
+* A number the engine does not hold exactly is given as a bound, never as `actual`: `actualAtLeast` when it stopped
+  counting at the first value over the limit (component expansion, expression nodes, nesting, a stream, a file read
+  only to one byte past the limit), or for a document number above 2^53; `actualAtMost` for one below −2^53. `repair`
+  then says "at least" (or "at most"). A whole number up to 2^53 is `actual` as given (`repeat.count: 1e12` is
+  1,000,000,000,000). An integer the JSON parser keeps exactly but a double cannot hold (2^53 + 1, 2^63 − 1) is read
+  rounded away from zero, so it is reported as a bound (`actualAtLeast: 9007199254740992`), never as a different
+  exact number.
+* A shape inside a part's `shape` list is `parts[i].shape[j].<kind>.<field>`; a single shape object is
+  `parts[i].shape.<kind>.<field>`. An explainer's solid prefixes every path with `solid.`, `parts.resolved` included
+  (`solid.parts`).
+* `parts.resolved` keeps its `count` and `top`; `annotations.visible`, `step.annotate.count` and `view.annotate.count`
+  keep `visibility` and add `limit`.
+* The same reason for another cause (not an array, a markup character, an unknown key) has no `limit`; `repair` then
+  gives the catalog meaning: `Refused (<reason>), at <part>: <meaning>`.
+* `repair` is at most 400 Unicode scalars and deterministic. For an anchor reason it is the anchor issue's own
+  `repair` ([SOLID-3D.md](SOLID-3D.md#anchor-suggestions)).
+
+The limit patterns (`MGSolidReasons.limitPatterns`; `SolidLimitDetailTests` triggers each one over its limit and checks
+`limit` and `repair`): `assembly.bytes`, `assembly.title`, `assembly.budget`, `text.grapheme`, `parts.count`,
+`parts.resolved`, `part.name`, `part.shape.count`, `part.repeat.count`, `part.<shape>.holes`,
+`part.bladeRow.triangles`, `constraints.count`, `steps.count`, `step.say`, `step.<list>`, `step.pose`,
+`step.unchecked`, `step.check`, `step.ghost`, `step.section.parts`, `labels.count`, `arrows.count`,
+`dimensions.count`, `annotations.visible`, `label.text.<id>`, `label.unchecked.<id>`, `arrow.text.<id>`,
+`arrow.unchecked.<id>`, `dimension.text.form.<id>`, `step.annotate.count`, `patch.bytes`, `component.bytes`,
+`component.title`, `component.about`, `component.params`, `component.parts.count`, `component.depth`,
+`component.constraints`, `component.anchors`, `component.anchorAbout`, `component.checks`, `component.expr.size`,
+`component.id.length`, `explainer.bytes`, `explainer.title`, `explainer.statements.count`, `explainer.beats.count`,
+`notes.count`, `notes.text.<id>`, `beat.unchecked.<n>`, `beat.ops.count`, `beat.checks.count`,
+`beat.highlight.count`, `stmt.bytes`, `stmt.say`, `view.focus`, `view.ghost`, `view.section.parts`,
+`view.annotate.count`, `view.pose`, `view.hide`, `view.show`.
+
+Bounds without `limit` (`MGSolidReasons.limitExempt`; a test fails when a meaning that names a bound is in neither
+list):
+
+| Why no `limit` | Reasons |
+| --- | --- |
+| Not a limit: invalid text. | `json`, `patch.json`, `explainer.json`, `solidSnapshot.json` |
+| Nesting: the walk stops at the first level over the limit, so no depth is measured. | `assembly.depth`, `explainer.depth`, `component.expr.depth` |
+| Value ranges, not a length, count or size of the document. | `part.<shape>.<field>`, `part.drive.<crank>.rod`, `part.blade.twist`, `part.bladeRow.twist`, `constraint.ratio`, `component.expr.range`, `annotations.input` |
+| Shape, geometry and reference rules. | `part.revolvedProfile.axis`, `part.bladeRow.count`, `part.shape.gears`, `anchor.ambiguous.<id>`, `constraint.gearMesh.carrier`, `constraint.gearMesh.repeat` |
+| Geometric and angle tolerances. | `constraint.gearMesh.distance`, `constraint.gearMesh.interference`, `check.gearsInterpenetrate`, `expect.axis.<id>`, `expect.up.<id>`, `arrow.expect.<id>`, `arrow.gravity.<id>`, `dimension.over.still.<id>` |
+| Fact and pose rules. | `step.pose.fact`, `view.pose.fact`, `view.pose.with` |
+| A placeholder format rule; its length is one of several causes. | `text.placeholder` |
+| An internal work budget of the step cuts. | `section.budget` |
+| Their own detail: the report's `anchor` (distance, tolerance, budget, `suggest`). | `annotation.anchor.off.<id>`, `annotation.anchor.untested.<id>` |
+| Host snapshots, not author documents. | `solidSnapshot.bytes`, `solidSnapshot.number`, `snapshot.bytes`, `snapshot.shown`, `snapshot.presented` |
+| A host value; the refusal carries nothing else by design. | `report.engine` |
+| The render tool's story plan, not a check report. | `story.beats`, `story.frames` |
 
 ## Reasons
 

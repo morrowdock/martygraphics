@@ -37,6 +37,7 @@
     "disc: world centre (0, 0, 2.5) mm, size 40 x 40 x 5 mm; joint about a vertical axis (+Z) with no drive: never moves (joint.idle); root (at [0, 0, 0] in the world frame); local +Z points +Z"
   ],
   "reason" : "joint.idle.disc",
+  "repair" : "Refused (joint.idle.disc), at disc: A jointed part that no drive or constraint moves, so it never moves.",
   "sectionTriangles" : 0,
   "stepFacts" : [
     {

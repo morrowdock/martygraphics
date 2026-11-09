@@ -6,5 +6,6 @@
   "ok" : false,
   "part" : null,
   "reason" : "assembly.missing.kind,v",
+  "repair" : "Refused (assembly.missing.kind,v): Required keys are missing from an object. `<object>` names the object (see `closedObjects`); `<keys>` lists the missing keys.",
   "strict" : true
 }

@@ -41,13 +41,17 @@ public struct MGSolidReason: Equatable, Sendable {
     /// True for a warning the strict profile (`MGSolidProfile.strict`, `marty-solid check --strict`) refuses.
     public var strict: Bool
 
+    /// True for a limit reason (`MGSolidReasons.limitPatterns`): a refusal its length, count or size limit causes carries
+    /// the report's `limit` detail (field, actual, limit, unit).
+    public var limit: Bool { MGSolidReasons.limitPatterns.contains(pattern) }
+
     /// True when `reason` fits the pattern, every slot holding a value of its domain.
     public func matches(_ reason: String) -> Bool { MGSolidReasons.slotCharacters(pattern, reason) != nil }
 
-    /// `{"pattern", "meaning", "formats", "kind", "strict"}`.
+    /// `{"pattern", "meaning", "formats", "kind", "strict", "limit"}`.
     public var json: MGJSON {
         .object(["pattern": .string(pattern), "meaning": .string(meaning), "formats": .array(formats.map { MGJSON.string($0.rawValue) }),
-                 "kind": .string(kind.rawValue), "strict": .bool(strict)])
+                 "kind": .string(kind.rawValue), "strict": .bool(strict), "limit": .bool(limit)])
     }
 }
 
@@ -76,6 +80,71 @@ public enum MGSolidReasons {
         "op": MGSolidComponents.ops.subtracting(["div", "param"]).sorted().joined(separator: "|"),
         "keys": "\(token)(?:,\(token))*",
     ]
+    /// The limit reasons: when one of these refuses a document because of its length, count or size limit, the check
+    /// report carries `limit` (`MGSolidLimitDetail`: the field path, the measured value, the limit, the unit, and the
+    /// minimum for a `1–N` rule). The same reason for another cause (not an array, a markup character) has no `limit`.
+    /// docs/REASONS.md, "Limit details", lists them; a test triggers each one over its limit.
+    public static let limitPatterns: Set<String> = [
+        "assembly.bytes", "assembly.title", "assembly.budget", "text.grapheme", "parts.count", "parts.resolved", "part.name",
+        "part.shape.count", "part.repeat.count", "part.<shape>.holes", "part.bladeRow.triangles", "constraints.count", "steps.count",
+        "step.say", "step.<list>", "step.pose", "step.unchecked", "step.check", "step.ghost", "step.section.parts", "labels.count",
+        "arrows.count", "dimensions.count", "annotations.visible", "label.text.<id>", "label.unchecked.<id>", "arrow.text.<id>",
+        "arrow.unchecked.<id>", "dimension.text.form.<id>", "step.annotate.count", "patch.bytes", "component.bytes", "component.title",
+        "component.about", "component.params", "component.parts.count", "component.depth", "component.constraints", "component.anchors",
+        "component.anchorAbout", "component.checks", "component.expr.size", "component.id.length", "explainer.bytes", "explainer.title",
+        "explainer.statements.count", "explainer.beats.count", "notes.count", "notes.text.<id>", "beat.unchecked.<n>", "beat.ops.count",
+        "beat.checks.count", "beat.highlight.count", "stmt.bytes", "stmt.say", "view.focus", "view.ghost", "view.section.parts",
+        "view.annotate.count", "view.pose", "view.hide", "view.show",
+    ]
+
+    /// Reasons whose meaning states a number but that carry no `limit` detail, and why. With `limitPatterns` this covers
+    /// every catalog entry whose meaning names a length, count or size bound (a test checks it).
+    public static let limitExempt: [String: String] = [
+        "json": "Not a limit: invalid JSON text.",
+        "patch.json": "Not a limit: invalid JSON text.",
+        "explainer.json": "Not a limit: invalid JSON text.",
+        "solidSnapshot.json": "Not a limit: invalid snapshot text.",
+        "assembly.depth": "Nesting: the walk before parsing stops at the first level over the limit, so no depth is measured.",
+        "explainer.depth": "Nesting: the walk before parsing stops at the first level over the limit, so no depth is measured.",
+        "component.expr.depth": "Nesting of one expression: evaluation stops at the first level over the limit.",
+        "part.<shape>.<field>": "A value range of a shape field, not a length, count or size of the document.",
+        "part.revolvedProfile.axis": "A shape rule (open profile on the axis), not a length, count or size.",
+        "part.blade.twist": "An angle range, not a length, count or size.",
+        "part.bladeRow.twist": "An angle range, not a length, count or size.",
+        "part.bladeRow.count": "A geometric rule (neighbouring blades touch), not a count limit.",
+        "part.drive.<crank>.rod": "A value range of a drive, not a length, count or size of the document.",
+        "constraint.gearMesh.carrier": "A geometric rule, not a limit.",
+        "constraint.gearMesh.distance": "A geometric tolerance, not a limit.",
+        "constraint.gearMesh.interference": "A geometric tolerance, not a limit.",
+        "constraint.gearMesh.repeat": "A pairing rule, not a limit.",
+        "constraint.ratio": "A solved value bound, not a length, count or size of the document.",
+        "expect.axis.<id>": "An angle tolerance, not a limit.",
+        "expect.up.<id>": "An angle tolerance, not a limit.",
+        "arrow.expect.<id>": "An angle tolerance, not a limit.",
+        "arrow.gravity.<id>": "An angle tolerance, not a limit.",
+        "dimension.over.still.<id>": "A motion threshold, not a limit.",
+        "check.gearsInterpenetrate": "A geometric tolerance, not a limit.",
+        "component.expr.range": "A value bound of an expression result, not a length, count or size.",
+        "step.pose.fact": "A fact check over a motion domain, not a limit.",
+        "view.pose.fact": "A fact check over a motion domain, not a limit.",
+        "view.pose.with": "A pose rule, not a limit.",
+        "text.placeholder": "A placeholder format rule; its length is one of several causes.",
+        "section.budget": "An internal work budget of the step cuts, not an authored size.",
+        "annotation.anchor.off.<id>": "Its own detail: the report's `anchor` (distance, tolerance, suggest).",
+        "solidSnapshot.bytes": "A host snapshot, not an author document.",
+        "solidSnapshot.number": "A host snapshot, not an author document.",
+        "snapshot.bytes": "A host snapshot, not an author document.",
+        "snapshot.shown": "A host snapshot, not an author document.",
+        "snapshot.presented": "A host snapshot, not an author document.",
+        "report.engine": "A host value; the refusal carries nothing else by design.",
+        "part.shape.gears": "A shape rule (one gear per part), not a count limit.",
+        "anchor.ambiguous.<id>": "A reference rule (the name gives more than one part), not a count limit.",
+        "annotations.input": "A value bound of the default input, not a length, count or size of the document.",
+        "annotation.anchor.untested.<id>": "An internal test budget; the report's `anchor` names the budget that ran out.",
+        "story.beats": "The render tool's story plan, not a check report.",
+        "story.frames": "The render tool's story plan, not a check report.",
+    ]
+
     /// Warning prefixes that an explainer's strict check refuses (besides `MGSolidProfile.strictPrefixes`).
     public static let explainerStrictPrefixes = ["notes.unused."]
     /// Warning prefixes that the strict check report refuses (`MGSolidReport`, `MGExplainerReport`): the anchor view

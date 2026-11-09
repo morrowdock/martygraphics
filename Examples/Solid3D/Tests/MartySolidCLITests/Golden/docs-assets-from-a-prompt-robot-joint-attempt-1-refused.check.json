@@ -6,5 +6,6 @@
   "ok" : false,
   "part" : "ring1",
   "reason" : "constraint.gearMesh.phase",
+  "repair" : "Refused (constraint.gearMesh.phase), at ring1: The teeth cannot be phased to mesh around a loop of gears.",
   "strict" : false
 }

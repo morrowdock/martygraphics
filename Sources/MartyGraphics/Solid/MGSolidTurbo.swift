@@ -226,7 +226,10 @@ enum MGSolidTurbo {
         _ = try number(f, "phase", -360...360, 0)
         let sections = try integer(f, "sections", 2...24, 8), samples = try integer(f, "chordSamples", 6...32, 16)
         let perBlade = sections * 4 * samples + 2 * (2 * samples - 2)
-        guard count * perBlade <= rowTriangles else { throw MGSolidIssue("part.bladeRow.triangles") }
+        guard count * perBlade <= rowTriangles else {
+            throw MGSolidIssue("part.bladeRow.triangles", limit: MGSolidLimitDetail(field: "bladeRow", actual: count * perBlade, limit: rowTriangles,
+                                                                                    unit: "triangles"))
+        }
         // Sections must stay well inside a half turn of their cylinder, and neighbouring blades must not touch.
         let loop = MGMesh.airfoilLoop(thickness: thickness, camber: camber, camberPosition: camberPosition, samples: samples)
         for t in [0.0, 0.5, 1.0] {

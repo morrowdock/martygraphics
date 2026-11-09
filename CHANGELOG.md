@@ -2,6 +2,47 @@
 
 ## Unreleased
 
+- Repair-friendly check reports.
+  - **Anchor suggestions.** Every `annotation.anchor.off.<id>` and `annotation.anchor.hidden.<id>` issue in
+    `anchorIssues` (and the refusal's `anchor`) gains `suggest`: an anchor `{"part", "offset": [x, y, z]}` (the
+    part's own frame, mm, rounded to 0.001 mm) that passes both anchor rules in every view that shows the label or
+    pointer. The search casts rays from each view's camera toward sample points of the part and across a grid facing
+    the camera, takes the first hit on the part (moved 0.05 mm into it), prefers the cut face of a cut part, sorts by
+    distance to the authored dot, and keeps the first candidate that the check's own rule functions pass, as printed.
+    A second, denser pass runs only when the first finds none. A suggestion is written in a form the parser accepts
+    (an offset within ±4000 mm, or `{"point": "centre"}`), and it is printed only when a full re-check of the
+    document with the suggestions applied (parsed, compiled and framed again) shows no issue for any suggested
+    annotation and no new issue for any other annotation. A suggestion that keeps an issue, or that hides another
+    annotation, is searched again (at most 2 retries; at most 6 re-checks in all); otherwise it is dropped with cause
+    `framing`, `conflict` (with `other` naming the annotation it would hide) or `form`. When no candidate passes, `suggest` is null and
+    `noSuggest` gives `{"cause", "code", "step", "beat", "by", "other", "samples", "alternatives"}` (for example
+    `"part fully hidden in step 6"`, behind `back.casing`; leave the label out of that view's `annotate`, ghost the
+    blocker, or change the camera). The searches are bounded (8,000,000 tests per search of one annotation, at most 3
+    searches per annotation, 64,000,000 for all searches of a report, plus at most 6 full re-checks) and deterministic. `fix` names the suggestion and proposes `{"point": "centre"}` only when the rules pass
+    it. New API: `MGAnnotationAnchorSuggestion`, `MGAnnotationAnchorView`,
+    `MGSolidDocument.anchorSuggestions(for:views:)`, `stepAnchorViews(width:height:)`,
+    `MGExplainerFrame.beatAnchorViews`, `MGAnnotationAnchorIssue.suggestion` and `repair`.
+  - **Limit details.** Every refusal from a length, count or size limit (titles, captions, `say`, label and note
+    texts, parts, steps, beats, notes, `annotate` lists, step and view id lists, component limits, document bytes,
+    the mesh budget and so on; `MGSolidReasons.limitPatterns`, 62 patterns) now reports `limit`:
+    `{"field", "actual", "limit", "unit"}`, plus `"minimum"` for a `1–N` rule; a number the engine does not hold
+    exactly is `actualAtLeast` (it stopped counting at the first value over the limit, or the number is above 2^53)
+    or `actualAtMost`, never a capped `actual`; an integer beyond 2^53 that JSON parsing keeps exactly is read rounded
+    away from zero, so it too is a bound. `field` is a path into the document (`title`, `beats[2].say`,
+    `parts[0].shape[1].plate.holes`, `solid.annotations.labels[4].text`, `solid.parts`). `parts.resolved` keeps `count` and `top`. The reasons
+    catalog (`marty-solid reasons`) gains `"limit"` per entry; `MGSolidReasons.limitExempt` gives the cause for each
+    bound that carries no detail. Every `marty-solid` component path (`component check`, `--component`) keeps `limit`
+    and `repair`. New API: `MGSolidLimitDetail(field:actual:limit:unit:minimum:bound:)`, `MGSolidReport.refusalDetail`,
+    `MGSolidIssue(_:part:limit:)`, `MGError.limit`, `MGAnnotationVisibilityDetail.limitDetail(prefix:)`.
+  - **`repair`.** Each anchor issue and every refused report carries `repair`, one line built from the structured
+    fields (at most 400 Unicode scalars, deterministic), for example `Label lComb (step 6) is hidden behind
+    back.casing. Use anchor {"part": "back.combustor", "offset": [0, -30, 148]}.` or `title has 87 characters; the
+    limit is 80. Shorten it to at most 80 characters (7 fewer).` A refusal without detail gives the catalog meaning.
+  - Golden files: the refused reports gain `repair` and, for a limit refusal, `limit`; nothing else changed.
+  - Test inputs: `docs/fixtures/anchor-suggest` holds two synthetic explainers with the geometry problems of the
+    round-2f refusals (neutral names, no real-world claims); applying every `suggest` clears that annotation's anchor
+    issues.
+
 - Strict label and pointer anchors. In `--strict`, a label (its `at`) or pointer arrow (its tip, `to`) whose anchor a
   step or beat still does not show is refused: `annotation.anchor.hidden.<id>`, for an anchor occluded by another part
   (the watertight line-of-sight rays of the unblocked-focus rule, 3,000,000 triangle tests per view), on a hidden or

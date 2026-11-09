@@ -278,7 +278,8 @@ extension MGSolidAnnotations {
         try MGSolidParser.closed(o, [], ["labels", "arrows", "dimensions"], "annotations")
         func list(_ key: String, _ max: Int, _ reason: String) throws -> [MGJSON] {
             guard let v = o[key] else { return [] }
-            guard case .array(let a) = v, a.count <= max else { throw MGSolidIssue(reason) }
+            guard case .array(let a) = v else { throw MGSolidIssue(reason) }
+            if let l = MGSolidParser.countDetail("annotations.\(key)", a.count, 0...max) { throw MGSolidIssue(reason, limit: l) }
             return a
         }
         let labels = try list("labels", L.labels, "labels.count")
@@ -291,30 +292,34 @@ extension MGSolidAnnotations {
             guard !names.taken(id), seen.insert(id).inserted else { throw MGSolidIssue("id.duplicate.\(id)", part: id) }
             return id
         }
-        for e in labels {
+        // A refusal names its annotation (`part`); a limit detail gets the annotation's path.
+        func named(_ e: MGSolidIssue, _ id: String, _ path: String) -> MGSolidIssue {
+            (e.part == nil ? MGSolidIssue(e.reason, part: id, limit: e.limit) : e).prefixed(path)
+        }
+        for (k, e) in labels.enumerated() {
             guard case .object(let lo) = e else { throw MGSolidIssue("label.object") }
             try MGSolidParser.closed(lo, ["id", "at", "text"], ["unchecked"], "label")
             let id = try identify(lo, "label")
             do {
                 let at = try anchor(lo["at"]!, names, owner: id)
                 let template = try text(lo["text"]!, "label.text.\(id)", id: id)
-                let unchecked = try lo["unchecked"].map { try MGSolidParser.text($0, L.unchecked, "label.unchecked.\(id)") }
+                let unchecked = try lo["unchecked"].map { try MGSolidParser.text($0, L.unchecked, "label.unchecked.\(id)", field: "unchecked") }
                 out.labels.append(MGSolidLabel(id: id, at: at, template: template, text: template, unchecked: unchecked))
-            } catch let e as MGSolidIssue { throw e.part == nil ? MGSolidIssue(e.reason, part: id) : e }
+            } catch let e as MGSolidIssue { throw named(e, id, "annotations.labels[\(k)].") }
         }
-        for e in arrows {
+        for (k, e) in arrows.enumerated() {
             guard case .object(let ao) = e else { throw MGSolidIssue("arrow.object") }
             try MGSolidParser.closed(ao, ["id", "meaning"], ["text", "unchecked", "on", "style", "sense", "from", "to", "expect", "length", "cause"], "arrow")
             let id = try identify(ao, "arrow")
             do { out.arrows.append(try arrow(ao, id, names)) }
-            catch let e as MGSolidIssue { throw e.part == nil ? MGSolidIssue(e.reason, part: id) : e }
+            catch let e as MGSolidIssue { throw named(e, id, "annotations.arrows[\(k)].") }
         }
-        for e in dimensions {
+        for (k, e) in dimensions.enumerated() {
             guard case .object(let d) = e else { throw MGSolidIssue("dimension.object") }
             try MGSolidParser.closed(d, ["id", "a", "b"], ["kind", "vertex", "along", "over", "text"], "dimension")
             let id = try identify(d, "dimension")
             do { out.dimensions.append(try dimension(d, id, names)) }
-            catch let e as MGSolidIssue { throw e.part == nil ? MGSolidIssue(e.reason, part: id) : e }
+            catch let e as MGSolidIssue { throw named(e, id, "annotations.dimensions[\(k)].") }
         }
         return out
     }
@@ -322,8 +327,12 @@ extension MGSolidAnnotations {
     /// Authored annotation text: the solid text rule, at most `rawTextFactor × text` scalars before filling.
     /// `id`: the annotation, named by `text.grapheme`.
     static func text(_ v: MGJSON, _ reason: String, id: String) throws -> String {
-        let t = try MGSolidParser.text(v, L.text * L.rawTextFactor, reason)
-        guard t.allSatisfy({ $0.unicodeScalars.count <= L.graphemeScalars }) else { throw MGSolidIssue("text.grapheme", part: id) }
+        let t = try MGSolidParser.text(v, L.text * L.rawTextFactor, reason, field: "text")
+        let widest = t.map { $0.unicodeScalars.count }.max() ?? 0
+        guard widest <= L.graphemeScalars else {
+            throw MGSolidIssue("text.grapheme", part: id, limit: MGSolidLimitDetail(field: "text", actual: widest, limit: L.graphemeScalars,
+                                                                                    unit: "scalars"))
+        }
         return t
     }
 
@@ -410,7 +419,7 @@ extension MGSolidAnnotations {
             cause = "gravity"
         }
         let template = try o["text"].map { try text($0, "arrow.text.\(id)", id: id) }
-        let unchecked = try o["unchecked"].map { try MGSolidParser.text($0, L.unchecked, "arrow.unchecked.\(id)") }
+        let unchecked = try o["unchecked"].map { try MGSolidParser.text($0, L.unchecked, "arrow.unchecked.\(id)", field: "unchecked") }
         // `unchecked` marks the arrow's text; without text it would mark nothing.
         if unchecked != nil, template == nil { throw MGSolidIssue("arrow.unchecked.text.\(id)") }
         return MGSolidArrow(id: id, meaning: meaning, style: style, on: on, from: from, to: to, sense: sense, expect: expect,
@@ -567,10 +576,14 @@ enum MGSolidAnnotationEngine {
     }
 
     /// Fills one annotation text. `abs` is refused: no step proves a sign for an annotation (`text.sign.<name>`).
-    static func fill(_ template: String, _ w: String, n1: Bool, _ doc: MGSolidDocument, tooLong: String) throws -> MGSolidFilledText {
+    static func fill(_ template: String, _ w: String, n1: Bool, _ doc: MGSolidDocument, tooLong: String, field: String) throws -> MGSolidFilledText {
         let filled = try MGSolidFacts.fill(template, where: w, n1: n1, doc.facts, doc.aliases)
         for (name, mods) in zip(filled.facts, filled.modifiers) where mods.contains("abs") { throw MGSolidIssue("text.sign.\(MGSolidParser.token(name))") }
-        guard !filled.text.trimmingCharacters(in: .whitespaces).isEmpty, filled.text.unicodeScalars.count <= L.text else { throw MGSolidIssue(tooLong) }
+        let empty = filled.text.trimmingCharacters(in: .whitespaces).isEmpty
+        guard !empty, filled.text.unicodeScalars.count <= L.text else {
+            throw MGSolidIssue(tooLong, limit: MGSolidLimitDetail(field: field, actual: empty ? 0 : filled.text.unicodeScalars.count, limit: L.text,
+                                                                  unit: "characters", minimum: 1))
+        }
         return filled
     }
 
@@ -582,34 +595,36 @@ enum MGSolidAnnotationEngine {
         for i in a.labels.indices {
             var l = a.labels[i]
             do {
-                let f = try fill(l.template, "label.\(l.id)", n1: l.unchecked == nil, doc, tooLong: "label.text.\(l.id)")
+                let f = try fill(l.template, "label.\(l.id)", n1: l.unchecked == nil, doc, tooLong: "label.text.\(l.id)",
+                                 field: "annotations.labels[\(i)].text")
                 l.text = f.text; l.facts = f.facts
                 l.tier = MGSolidTiers.text(facts: f.facts.compactMap { doc.facts[$0] }, unchecked: l.unchecked != nil)
-            } catch let e as MGSolidIssue { throw MGSolidIssue(e.reason, part: l.id) }
+            } catch let e as MGSolidIssue { throw MGSolidIssue(e.reason, part: l.id, limit: e.limit) }
             a.labels[i] = l
         }
         for i in a.arrows.indices {
             var r = a.arrows[i]
-            do { try check(&r, doc, rest) } catch let e as MGSolidIssue { throw MGSolidIssue(e.reason, part: r.id) }
+            do { try check(&r, doc, rest, index: i) } catch let e as MGSolidIssue { throw MGSolidIssue(e.reason, part: r.id, limit: e.limit) }
             a.arrows[i] = r
         }
         for i in a.dimensions.indices {
             var d = a.dimensions[i]
             do {
-                let f = try fill(d.template, "dimension.\(d.id)", n1: true, doc, tooLong: "dimension.text.form.\(d.id)")
+                let f = try fill(d.template, "dimension.\(d.id)", n1: true, doc, tooLong: "dimension.text.form.\(d.id)",
+                                 field: "annotations.dimensions[\(i)].text")
                 guard f.facts.contains(d.factName) else { throw MGSolidIssue("dimension.text.\(d.id)") }
                 d.text = f.text; d.facts = f.facts
                 d.tier = min(d.tier, f.facts.compactMap { doc.facts[$0]?.tier }.min() ?? .solved)
-            } catch let e as MGSolidIssue { throw MGSolidIssue(e.reason, part: d.id) }
+            } catch let e as MGSolidIssue { throw MGSolidIssue(e.reason, part: d.id, limit: e.limit) }
             a.dimensions[i] = d
         }
         doc.annotations = a
     }
 
-    static func check(_ r: inout MGSolidArrow, _ doc: MGSolidDocument, _ rest: MGPose) throws {
+    static func check(_ r: inout MGSolidArrow, _ doc: MGSolidDocument, _ rest: MGPose, index: Int = 0) throws {
         var textTier: MGSolidTier?
         if let t = r.template {
-            let f = try fill(t, "arrow.\(r.id)", n1: r.unchecked == nil, doc, tooLong: "arrow.text.\(r.id)")
+            let f = try fill(t, "arrow.\(r.id)", n1: r.unchecked == nil, doc, tooLong: "arrow.text.\(r.id)", field: "annotations.arrows[\(index)].text")
             r.text = f.text; r.facts = f.facts
             textTier = MGSolidTiers.text(facts: f.facts.compactMap { doc.facts[$0] }, unchecked: r.unchecked != nil)
         }

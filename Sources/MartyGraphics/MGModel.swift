@@ -176,7 +176,7 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
         case nil, is NSNull: self = .null
         case let n as NSNumber:
             if CFGetTypeID(n) == CFBooleanGetTypeID() { self = .bool(n.boolValue) }
-            else { guard n.doubleValue.isFinite else { return nil }; self = .number(n.doubleValue) }
+            else { let d = MGJSON.number(of: n); guard d.isFinite else { return nil }; self = .number(d) }
         case let s as String: self = .string(s)
         case let a as [Any]:
             guard level < MGLimits.depth else { return nil }
@@ -191,6 +191,30 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
         default: return nil
         }
     }
+    /// The value of a Foundation number. An integer the parser kept exactly (`Int64`, `UInt64`) that a `Double` cannot
+    /// hold (beyond ±2^53) is rounded away from zero, never toward it: so `2^53 + 1` reads as `2^53 + 2`, and any test
+    /// "beyond 2^53" stays true (`MGSolidLimitDetail.number` reports it as a bound, not as an exact value). A number
+    /// that arrives as a double (written with a fraction or an exponent) with a magnitude of 2^53 or more is never
+    /// exact either: exactly ±2^53 moves one step away from zero, so it too is a bound.
+    static func number(of n: NSNumber) -> Double {
+        let d = n.doubleValue
+        guard d.isFinite, abs(d) >= MGSolidLimitDetail.exactLimit else { return d }
+        // A number written with a fraction or an exponent arrives as a double: at ±2^53 or beyond, its digits may have
+        // been rounded already, so it is never exact there. ±2^53 itself moves one step away from zero.
+        if CFNumberIsFloatType(n) { return abs(d) == MGSolidLimitDetail.exactLimit ? (d > 0 ? d.nextUp : d.nextDown) : d }
+        if n.compare(NSNumber(value: Int64.max)) == .orderedDescending {
+            let u = n.uint64Value
+            // `d` is a whole number of at most 2^64; compare in UInt64 when it fits.
+            if d < 18_446_744_073_709_551_616.0, UInt64(d) < u { return d.nextUp }
+            return d
+        }
+        let v = n.int64Value
+        if d >= 9_223_372_036_854_775_808.0 || d < -9_223_372_036_854_775_808.0 { return d }   // already beyond Int64: away from zero
+        let back = Int64(d)
+        if back.magnitude < v.magnitude { return v > 0 ? d.nextUp : d.nextDown }
+        return d
+    }
+
     /// The Foundation form (for `JSONSerialization`). It recurses once per level of nesting (see the type's note).
     public var any: Any {
         switch self {
