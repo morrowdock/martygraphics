@@ -32,7 +32,8 @@
     ],
     "oneBuild": "Every file listed under artifacts comes from this one build and this one render: the check report and the render manifest name the same engine executable (SHA-256 above) and the same source hash. The render also wrote exploded.png, loop.gif, loop.mp4, snapshot.json and manifest.json; they are not published.",
     "check": "exit 0, ok true, strict true, warnings empty, anchorIssues empty, anchorUntested empty, arrowIssues empty; legend Solved 17 · Not checked 20.",
-    "renderManifestSHA256": "89c7606a8c1b0e656792a4b21b2496a9ddf8452e6f82066e235ca235184cbc9f"
+    "renderManifestSHA256": "89c7606a8c1b0e656792a4b21b2496a9ddf8452e6f82066e235ca235184cbc9f",
+    "reviewFixRecheck": "The review fixes of the same pull request (swept part boxes for story moves, arrow moves that keep the vector, one search budget) were built again (release; engine executable SHA-256 d39d8b4882f1900bc707e1bb267528686ceb774840c6875d30704da2132be2fd) and the lesson was checked and rendered again with the same commands. Every story move path is the same (6 straight, no cut); the check report and the story manifest record are identical except the engine identity and the video bytes; every still matches the published one (CoreGraphics RGB, threshold 24/255: 0 differing pixels). The published files stay those of the build above."
   },
   "review": {
     "facts": "Every factual sentence maps to a row of the merged fact key (F1-F20) in docs/assets/jet-suit/SOURCES.md. The key merges two independent AI model web fact-checks (GPT-6.1 Sol and Gemini 3.8 Flash). The sixth version adds no fact.",

@@ -10,16 +10,19 @@
     (three radii), and the two together; the first clear path in that order is taken (at most 24 per move). Each leg
     plays with the move's own interpolation and is tested with the exact segment-versus-box slab test of PR #37 over
     bounded chords with the proven chord error; each chord's growth is the near plane at that chord's larger camera
-    distance (chords split so the distance changes by at most 10 %), not one growth at the move's largest distance. Only
-    parts the move draws solid block it: hidden parts, ghosts and glass do not (the coverage rule of the anchor checks).
+    distance (chords split so the distance changes by at most 10 %), not one growth at the move's largest distance. Each
+    part's box is swept over the move's actual frames (the spin share and pose blend of every frame,
+    `MGStoryPlan.movePose`, which the render tool also draws with), grown by the largest corner step between frames;
+    without the frames, a beat whose parts move cuts (`motion`). Only parts the move draws solid block it: hidden
+    parts, ghosts and glass do not (the coverage rule of the anchor checks).
     A routed move takes 1.0 s (`MGStoryTiming.routedTransitionSeconds`, at most half the beat) instead of 0.6 s; the
     beat's length does not change. Every path starts and ends exactly on the beats' still cameras, so hold frames are
     unchanged. During a move, a part the previous beat ghosts is drawn as a ghost too (`MGSolidView.moving(from:_:)`).
     The story manifest's beat records gain `path` (`straight`, `pullback`, `arc`, `combined`, `cut`), `pathReason`
-    (`clear`, `blocked`, `layout`, `untested`), `blockedBy` and `moveSeconds`, and the record gains
+    (`clear`, `blocked`, `layout`, `motion`, `untested`), `blockedBy` and `moveSeconds`, and the record gains
     `routedTransitionSeconds`. `MGStoryPlan.blockedMoves` stays in the library with its PR #37 rule; the render tool
     uses `routes`. New API: `MGStoryMove`, `MGStoryBeatShot`, `MGStoryPlan.routes(_:beats:layout:stage:)`,
-    `MGStoryPlan.routed(_:)`, `moves`, `cuts`.
+    `MGStoryPlan.routed(_:)`, `movePose`, `moves`, `cuts`.
   - **Arrow visibility** (`annotation.arrow.hidden.<id>`, `annotation.arrow.untested.<id>`). In every step or beat still
     that shows an arrow (force, flow, motion or pointer), 16 points along the drawn shaft and 3 along the head are
     tested from the still's camera with the line-of-sight rule of the anchor checks (blocking coverage, cut exception,
@@ -29,8 +32,12 @@
     way. A view's 3,000,000 tests that run out leave the arrow `annotation.arrow.untested.<id>` (strict refuses). The
     report lists `arrowIssues` and, on an arrow refusal, `arrow`, with `suggest`: a move of a force or flow arrow (both
     ends by one offset) or of a pointer's start that shows it in every view that shows it, from fixed directions and
-    sizes, re-checked once applied as anchor suggestions are (`framing`, `conflict`, `form`); a motion arrow gets
-    `noSuggest` (`motion`). New API: `MGAnnotationArrowRules`, `MGAnnotationArrowIssue`, `MGAnnotationArrowSuggestion`,
+    sizes, that keeps a force or flow arrow's vector (direction and length) in every view that shows it, re-checked once
+    applied as anchor suggestions are (`framing`, `conflict`, `form`); none keeps it: `noSuggest` (`pose`); a motion
+    arrow gets `noSuggest` (`motion`). All searches of a report, retries included, share one 64,000,000-test budget.
+    Last, every printed suggestion of a report, anchors and arrows together, is applied to one copy and checked again
+    (`MGSuggestionUnion.verifyTogether`); a suggestion that only conflicts in the union is dropped (`conflict`, with
+    `other`), so a model can apply every printed suggestion at once. New API: `MGAnnotationArrowRules`, `MGAnnotationArrowIssue`, `MGAnnotationArrowSuggestion`,
     `MGArrowVisibility`, `MGSolidDocument.stepCheckViews`, `stepArrowIssues`, `MGExplainerFrame.beatCheckViews`.
   - Example fixed: in the jet-suit lesson, arrow `aTL2`'s head was behind the pack in step 2 (73 % of its samples
     visible, head hidden). It now uses the check's suggested move (135 mm toward the step's camera, same direction and

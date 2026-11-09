@@ -645,9 +645,12 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         let moveViews = doc.steps.indices.map { k in k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], doc.assembly) }
         // A camera move that would pass through a part the move draws takes a routed path (pull back, arc, both), or
         // cuts when no path is clear (`MGStoryPlan.routes`).
-        let moves = MGStoryPlan.routes(doc, beats: doc.steps.indices.map { k in
-            MGStoryBeatShot(camera: beatCameras[k], params: MGSolidShot.step(doc, k)?.params ?? doc.defaults, view: moveViews[k])
-        })
+        // The move frames' poses come from the same shots (`MGStoryPlan.movePose`), so the router tests the parts
+        // where the frames draw them.
+        let routeShots = doc.steps.indices.map { k in
+            MGStoryBeatShot(camera: beatCameras[k], params: MGSolidShot.step(doc, k)?.params ?? doc.defaults, view: moveViews[k], step: doc.steps[k])
+        }
+        let moves = MGStoryPlan.routes(doc, beats: routeShots, plan: unrouted)
         let story = unrouted.routed(moves)
         let cuts = story.cuts
         var shownView: MGSolidView?, settledStep: Int?
@@ -662,11 +665,9 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                 var s = base
                 s.params = step.poseParameters(defaults: doc.defaults, spin: f.spin)
                 // The camera move into a step also moves the parts from the previous step's pose to this one (real
-                // renders at each blended pose); a cut jumps. The hold shows the step's own pose.
+                // renders at each blended pose, `MGStoryPlan.movePose`); a cut jumps. The hold shows the step's own pose.
                 let moving = f.camera < 1 && f.beat > 0 && !cuts.contains(f.beat)
-                if moving {
-                    s.params.placements = MGStoryPlan.placements(doc.assembly, from: doc.steps[f.beat - 1].pose, to: step.pose, f.camera)
-                }
+                if moving { s.params = MGStoryPlan.movePose(doc, beats: routeShots, f.beat, spin: f.spin, blend: f.camera) }
                 // The step's view with its still's automatic ghosts in the hold; during the move, the move's view.
                 let view = moving ? moveViews[f.beat] : holdViews[f.beat]
                 if shownView != view {
@@ -859,11 +860,13 @@ struct ExplainerBeatShot {
     /// the parts move from that pose to this beat's pose with the camera.
     func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Double = 1, stepIndex: Int? = nil, camera: MGSolidCamera? = nil,
                     labels: Bool = true, stable: Bool = false, ghost: [String] = [], from: [String: MGTransform]? = nil,
-                    blend: Double = 1, moveFrom: MGSolidView? = nil) throws -> CGImage? {
+                    blend: Double = 1, moveFrom: MGSolidView? = nil, movePose: MGPoseParameters? = nil) throws -> CGImage? {
         guard let r = renderer, let d = solidDoc else { return nil }
         let pane = frameRect(rect)
         var params = MGExplainerFrame.pose(d, view: view, spin: spin)
         if let from, blend < 1 { params.placements = MGStoryPlan.placements(d.assembly, from: from, to: params.placements, blend) }
+        // A story move frame: the pose the move router tested (`MGStoryPlan.movePose`).
+        if let movePose { params = movePose }
         var framed: MGSolidClearView?
         if camera == nil { framed = MGExplainerFrame.solidClearView(d, view: view, stepIndex: stepIndex, pane: pane) }
         // The beat's view with the automatic ghosts of the unblocked-focus rule (`MGSolidFraming.clearView`).
@@ -1024,12 +1027,13 @@ struct ExplainerBeatShot {
         // Each beat's solid view with its still's automatic ghosts (the hold); the move into a beat draws it with the
         // previous beat's ghosts too (`MGSolidView.moving(from:_:)`).
         let holdViews = solidDoc.map { d in shots.map { ($0.view.solid ?? d.view(step: nil)).ghosting($0.clear?.autoGhost ?? []) } } ?? []
-        let moves = solidDoc.map { d in
-            MGStoryPlan.routes(d, beats: shots.indices.map { k in
+        let routeShots = solidDoc.map { d in
+            shots.indices.map { k in
                 MGStoryBeatShot(camera: shots[k].camera, params: MGExplainerFrame.pose(d, view: shots[k].view),
-                                view: k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], d.assembly))
-            }, layout: layoutCuts)
-        } ?? [:]
+                                view: k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], d.assembly), step: shots[k].view.step)
+            }
+        } ?? []
+        let moves = solidDoc.map { d in MGStoryPlan.routes(d, beats: routeShots, plan: unrouted, layout: layoutCuts) } ?? [:]
         let story = unrouted.routed(moves)
         let cuts = layoutCuts.union(story.cuts)
         shownView = nil
@@ -1045,7 +1049,8 @@ struct ExplainerBeatShot {
                 let sImg = try b.rects.solid.flatMap { try solidImage(b.view, $0, spin: f.spin, stepIndex: b.stepIndex, camera: camera,
                                                                       labels: holding, stable: settled == f.beat, ghost: b.clear?.autoGhost ?? [],
                                                                       from: moving ? (shots[f.beat - 1].view.step?.pose ?? [:]) : nil,
-                                                                      blend: f.camera, moveFrom: moving ? holdViews[f.beat - 1] : nil) }
+                                                                      blend: f.camera, moveFrom: moving ? holdViews[f.beat - 1] : nil,
+                                                                      movePose: moving ? solidDoc.map { MGStoryPlan.movePose($0, beats: routeShots, f.beat, spin: f.spin, blend: f.camera) } : nil) }
                 settled = holding ? f.beat : nil
                 if holding, let camera { holdCamera[f.beat] = camera; if let n = lastOffView { holdOffView[f.beat] = n } }
                 // A beat's caption, labels and board claims appear when its hold starts. During the camera move the

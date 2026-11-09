@@ -30,6 +30,15 @@ public enum MGAnnotationArrowRules {
     public static let suggestSteps = 8
     /// Tests one search for one arrow may spend, and all searches of one report together (retries included).
     public static let suggestTests = 8_000_000, suggestDocumentTests = 64_000_000
+    /// A moved force or flow arrow must keep its drawn vector (end minus start) in every view that shows it: the
+    /// moved vector may differ from the authored one by at most the precision epsilon at that vector
+    /// (`mgPrecision`, 1e-6 × max(1, |v|) + 1e-4 mm) plus `roundingAllowance`, the most that rounding both moved ends
+    /// to 0.001 mm (in their parts' frames) can add (2 × √3 × 0.0005 mm < 0.002 mm).
+    public static let roundingAllowance = 0.002
+    static func keepsVector(_ authored: MGVec3, _ moved: MGVec3) -> Bool {
+        let d = (moved - authored).length
+        return d.isFinite && d <= mgPrecision(authored) + roundingAllowance
+    }
 }
 
 /// What one view shows of one arrow.
@@ -142,6 +151,9 @@ public struct MGAnnotationArrowSuggestion: Equatable, Sendable {
     public enum Cause: String, Equatable, Sendable {
         /// A motion arrow shows the engine's motion of its anchor; it cannot be moved.
         case motion
+        /// Every move tried changes the arrow's direction or length in some view that shows it (its ends ride on parts
+        /// that turn differently between those views), so no move keeps what the arrow says.
+        case pose
         /// No offset tried shows the arrow in every view that shows it.
         case noClearOffset = "noclearoffset"
         /// The suggestion budget ran out first.
@@ -201,6 +213,7 @@ public struct MGAnnotationArrowSuggestion: Equatable, Sendable {
         guard let cause else { return nil }
         switch cause {
         case .motion: return "a motion arrow shows its anchor's motion and cannot move"
+        case .pose: return "no move keeps the arrow's direction and length in every view that shows it"
         case .noClearOffset: return "no offset tried is clear" + (viewName.map { " in \($0)" } ?? "")
         case .budget: return "suggestion budget ran out"
         case .form: return "the moved arrow cannot be written or does not compile"
@@ -474,7 +487,7 @@ extension MGSolidDocument {
             return MGAnnotationPoint(anchor: .world(local), local: local)
         }
         let parts = [from.part, to.part].compactMap { $0 }.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
-        var tried = 0
+        var tried = 0, keptVector = 0
         var firstPass: MGAnnotationArrowSuggestion?
         var seen = Set<[Double]>()
         for k in 1...MGAnnotationArrowRules.suggestSteps {
@@ -486,6 +499,15 @@ extension MGSolidDocument {
                 guard seen.insert([f2.local.x, f2.local.y, f2.local.z, t2.local.x, t2.local.y, t2.local.z]).inserted else { continue }
                 guard budget > 0 else { return firstPass ?? none(.budget, tried: tried) }
                 tried += 1
+                // A force or flow arrow says something with its vector: the move must keep it in every view.
+                if r.meaning != .pointer {
+                    let keeps = mine.allSatisfy { kv in
+                        let pose = rules[kv].base.pose
+                        return MGAnnotationArrowRules.keepsVector(to.world(pose) - from.world(pose), t2.world(pose) - f2.world(pose))
+                    }
+                    guard keeps else { continue }
+                }
+                keptVector += 1
                 var passes = true, full = true
                 for kv in mine {
                     let pose = rules[kv].base.pose
@@ -505,7 +527,7 @@ extension MGSolidDocument {
                 if firstPass == nil { firstPass = found }
             }
         }
-        return firstPass ?? none(.noClearOffset, tried: tried)
+        return firstPass ?? none(tried > 0 && keptVector == 0 ? .pose : .noClearOffset, tried: tried)
     }
 
     /// `source` (an assembly, or an explainer's solid object) with each arrow in `moves` given the anchors of its
@@ -535,6 +557,18 @@ struct MGArrowRecheck {
 /// The arrow issues of a report, with the shared suggestion pass and its re-check.
 struct MGAnnotationArrowReport {
     var issues: [MGAnnotationArrowIssue] = []
+
+    /// The whole suggestion pass of a report, from ONE search budget: `suggest`, then `verify` (its re-searches get
+    /// the same `budget` through `recheck`), then `measure`. So all searches of a report, retries included, spend at
+    /// most what `budget` holds (`MGAnnotationArrowRules.suggestDocumentTests` in the reports). Nothing runs when no
+    /// issue is `hidden`.
+    mutating func repair(_ doc: MGSolidDocument, views: [MGAnnotationAnchorView], anchorIssues: Set<String>, budget: MGSuggestionBudget,
+                         recheck: ([String: MGJSON], MGSuggestionBudget) -> MGArrowRecheck?) {
+        guard issues.contains(where: { $0.cause == .hidden }) else { return }
+        suggest(doc, views: views, budget: budget)
+        verify(anchorIssues: anchorIssues) { recheck($0, budget) }
+        measure(doc, views: views)
+    }
 
     /// Sets `suggestion` on every hidden issue (`arrowSuggestions`).
     mutating func suggest(_ doc: MGSolidDocument, views: [MGAnnotationAnchorView], budget: MGSuggestionBudget) {
@@ -609,16 +643,111 @@ struct MGAnnotationArrowReport {
         for k in issues.indices where issues[k].suggestion != nil { issues[k].suggestion = current[issues[k].id] }
     }
 
-    /// Sets each move's `offset` from the authored arrow of `doc`: the moved start minus the authored start, at the pose
-    /// of the first view in `views` that shows the arrow (a re-check may have searched from an already moved arrow).
+    /// Checks each move against the authored arrow of `doc` and sets its `offset`. A force or flow move must keep the
+    /// authored vector in every view of `views` that shows the arrow (`MGAnnotationArrowRules.keepsVector`; a re-check
+    /// may have searched from an already moved arrow); otherwise it is dropped with cause `pose`. `offset` is the moved
+    /// start minus the authored start at the pose of the first such view.
     mutating func measure(_ doc: MGSolidDocument, views: [MGAnnotationAnchorView]) {
         for k in issues.indices {
             guard var s = issues[k].suggestion, let f = s.from, let r = doc.annotations.arrow(issues[k].id), let from = r.from else { continue }
-            let v = views.first { (doc.checkedAnnotations($0.view, params: $0.params) ?? []).contains(r.id) }
+            let shown = views.filter { (doc.checkedAnnotations($0.view, params: $0.params) ?? []).contains(r.id) }
+            if r.meaning != .pointer, let to = r.to, let t = s.to {
+                let keeps = shown.allSatisfy { v in
+                    let pose = doc.assembly.pose(v.params)
+                    return MGAnnotationArrowRules.keepsVector(to.world(pose) - from.world(pose), t.world(pose) - f.world(pose))
+                }
+                if !keeps {
+                    issues[k].suggestion = .none(.pose, step: issues[k].step, beat: issues[k].beat, by: issues[k].by, samples: s.samples)
+                    continue
+                }
+            }
+            let v = shown.first
             let pose = doc.assembly.pose(v?.params ?? doc.defaults)
             let o = f.world(pose) - from.world(pose)
             s.offset = MGVec3((o.x * 1000).rounded() / 1000, (o.y * 1000).rounded() / 1000, (o.z * 1000).rounded() / 1000)
             issues[k].suggestion = s
         }
+    }
+}
+
+/// The joint fixed-point check of every printed suggestion of a report, anchors and arrows together
+/// (`verifyTogether`). Each family was already checked on its own (`MGAnnotationAnchorReport.verify`,
+/// `MGAnnotationArrowReport.verify`); this check applies the union to one copy, so a model can apply every printed
+/// suggestion at once.
+enum MGSuggestionUnion {
+    /// With every printed anchor suggestion and arrow move applied to one copy, `recheck` compiles, frames and checks it
+    /// (its `anchors` and `arrows` issues and the annotations each framed view shows; nil when the copy is refused). The
+    /// union is accepted, as in `MGAnnotationAnchorReport.verify`, only when no suggested annotation has an issue and
+    /// no annotation that had none in the report (`anchors` and `arrows` before the suggestions) has one. Otherwise,
+    /// with no new search (each family's own re-check already searched):
+    /// - a suggestion whose annotation still has an issue only conflicts in the union (it passed its own family's
+    ///   check), so it is dropped with cause `conflict`, `other` naming the first suggestion of the other family (sorted
+    ///   ids) shown in the same view (of all of them when none is);
+    /// - an annotation that had no issue and now has one drops the suggestions shown in the same view (all of them when
+    ///   none is), each with cause `conflict` and `other` naming that annotation;
+    /// - a refused copy drops every suggestion (`form`).
+    /// The smaller union is checked again, at most `MGAnnotationAnchorRules.recheckRounds` times; when they run out, every
+    /// remaining suggestion is dropped (`conflict`). A report whose suggestions are all in one family needs no joint
+    /// check: that family's own check is the check of the union. Deterministic (sorted ids).
+    static func verifyTogether(anchors: inout MGAnnotationAnchorReport, arrows: inout MGAnnotationArrowReport,
+                               recheck: (_ anchors: [String: MGJSON], _ arrows: [String: MGJSON]) -> MGArrowRecheck?) {
+        let before = Set(anchors.issues.map(\.id)).union(arrows.issues.map(\.id))
+        var a: [String: MGAnnotationAnchorSuggestion] = [:], r: [String: MGAnnotationArrowSuggestion] = [:]
+        for i in anchors.issues where a[i.id] == nil && i.suggestion?.anchorJSON != nil { a[i.id] = i.suggestion }
+        for i in arrows.issues where r[i.id] == nil && i.suggestion?.anchorJSON != nil { r[i.id] = i.suggestion }
+        func dropAnchor(_ id: String, other: String?) {
+            guard let s = a[id] else { return }
+            var n = MGAnnotationAnchorSuggestion(part: s.part, offset: nil, onCut: false, cause: other == nil ? .form : .conflict,
+                                                 step: nil, beat: nil, by: nil)
+            n.other = other; n.samples = s.samples
+            a[id] = nil
+            for k in anchors.issues.indices where anchors.issues[k].id == id { anchors.issues[k].suggestion = n }
+        }
+        func dropArrow(_ id: String, other: String?) {
+            guard let s = r[id] else { return }
+            for k in arrows.issues.indices where arrows.issues[k].id == id {
+                var n = MGAnnotationArrowSuggestion.none(other == nil ? .form : .conflict, step: arrows.issues[k].step, beat: arrows.issues[k].beat,
+                                                         by: arrows.issues[k].by, samples: s.samples)
+                n.other = other
+                arrows.issues[k].suggestion = n
+            }
+            r[id] = nil
+        }
+        func drop(_ id: String, other: String?) { if a[id] != nil { dropAnchor(id, other: other) } else { dropArrow(id, other: other) } }
+        for _ in 0..<MGAnnotationAnchorRules.recheckRounds {
+            guard !a.isEmpty, !r.isEmpty else { return }
+            let aSet = a.compactMapValues { $0.anchorJSON }, rSet = r.compactMapValues { $0.anchorJSON }
+            guard let c = recheck(aSet, rSet) else {
+                for id in a.keys.sorted() { dropAnchor(id, other: nil) }
+                for id in r.keys.sorted() { dropArrow(id, other: nil) }
+                return
+            }
+            // Where each failing annotation's issue is: its step and beat.
+            var at: [String: (step: Int?, beat: Int?)] = [:]
+            for i in c.anchors where at[i.id] == nil { at[i.id] = (i.step, i.beat) }
+            for i in c.arrows where at[i.id] == nil { at[i.id] = (i.step, i.beat) }
+            func shownWith(_ id: String) -> Set<String> {
+                guard let w = at[id] else { return [] }
+                return Set(c.shown.filter { $0.step == w.step && $0.beat == w.beat }.flatMap(\.ids))
+            }
+            let suggested = Set(a.keys).union(r.keys)
+            let bad = suggested.filter { at[$0] != nil }.sorted()
+            let fresh = Set(at.keys).subtracting(before).subtracting(suggested).sorted()
+            if bad.isEmpty && fresh.isEmpty { return }
+            var drops: [(String, String)] = []
+            for id in bad {
+                let others = (a[id] != nil ? Set(r.keys) : Set(a.keys))
+                let near = others.intersection(shownWith(id))
+                if let o = (near.isEmpty ? others : near).sorted().first { drops.append((id, o)) }
+                else { drops.append((id, id)) }
+            }
+            for f in fresh {
+                let inView = suggested.intersection(shownWith(f))
+                for id in (inView.isEmpty ? suggested : inView).sorted() { drops.append((id, f)) }
+            }
+            for (id, other) in drops where a[id] != nil || r[id] != nil { drop(id, other: other) }
+        }
+        for id in a.keys.sorted() { dropAnchor(id, other: r.keys.sorted().first ?? id) }
+        for id in r.keys.sorted() { dropArrow(id, other: a.keys.sorted().first ?? id) }
     }
 }

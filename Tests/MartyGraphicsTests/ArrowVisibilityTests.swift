@@ -200,6 +200,161 @@ final class ArrowVisibilityTests: XCTestCase {
         XCTAssertEqual(known.issues[0].suggestion, issue.suggestion)
     }
 
+    // MARK: Review fixes (PR #44)
+
+    /// Review repro: the arrow's ends ride on parts that turn differently between the two steps that show it. An
+    /// offset taken into each end's frame at step 1 moves the ends by different world offsets at step 2, so the moved
+    /// arrow would point another way there (25.456 mm became 380.791 mm). A force or flow move must keep the authored
+    /// vector in every view; here none does, so `suggest` is null with code `pose`.
+    func testAMoveMustKeepTheArrowVectorInEveryView() throws {
+        let t = #"{"v":2,"kind":"assembly","parts":[{"id":"shell","shape":{"box":{"size":[200,200,200]}}},{"id":"end","at":[0,0,0],"shape":{"box":{"size":[1,1,1]}}}],"annotations":{"arrows":[{"id":"push","meaning":"force","from":{"part":"shell","offset":[0,0,-18]},"to":{"part":"end","offset":[0,0,18]}}]},"steps":[{"say":"Start."},{"say":"Turn.","pose":{"end":{"rot":[1,1,1,120]}}}]}"#
+        let r = report(t, .strict)
+        XCTAssertEqual(r.reason, "annotation.arrow.hidden.push")
+        let issues = arrows(r.json)
+        XCTAssertFalse(issues.isEmpty)
+        for i in issues {
+            if let s = i["suggest"], s != .null {
+                // Any move printed keeps the vector in both steps.
+                let d = try doc(t), fixed = try doc(Self.applying(["push": s], to: t))
+                for k in d.steps.indices {
+                    let pose = d.assembly.pose(MGSolidShot.step(d, k)!.params)
+                    let a = d.annotations.arrow("push")!, m = fixed.annotations.arrow("push")!
+                    XCTAssertTrue(MGAnnotationArrowRules.keepsVector(a.to!.world(pose) - a.from!.world(pose), m.to!.world(pose) - m.from!.world(pose)), "step \(k + 1)")
+                }
+            } else {
+                guard case .object(let n)? = i["noSuggest"] else { return XCTFail("noSuggest") }
+                XCTAssertEqual(n["code"], .string("pose"))
+                guard case .array(let alts)? = n["alternatives"] else { return XCTFail("alternatives") }
+                XCTAssertEqual(alts.count, 3)
+            }
+        }
+        guard case .object(let a)? = r.json["arrow"] else { return XCTFail("arrow") }
+        XCTAssertEqual(a["suggest"], .null)
+        // The final check also drops a move that does not keep the vector (one made by hand here): cause `pose`.
+        let d = try doc(t)
+        let views = d.stepCheckViews().filter { d.showsArrow($0.view) }
+        var rep = MGAnnotationArrowReport()
+        rep.issues = views.flatMap { d.arrowIssues($0) }
+        let o = MGVec3(-259.808, 0, 0)
+        let from = MGAnnotationPoint(anchor: .offset(part: "shell", MGVec3(0, 0, -18) + o), local: MGVec3(0, 0, -18) + o)
+        let to = MGAnnotationPoint(anchor: .offset(part: "end", MGVec3(0, 0, 18) + o), local: MGVec3(0, 0, 18) + o)
+        rep.issues[0].suggestion = MGAnnotationArrowSuggestion(from: from, to: to, offset: o, full: true, cause: nil, step: nil, beat: nil, by: nil)
+        rep.measure(d, views: views)
+        XCTAssertEqual(rep.issues[0].suggestion?.cause, .pose)
+        XCTAssertNil(rep.issues[0].suggestion?.anchorJSON)
+        // The tolerance: the precision epsilon at the vector plus the rounding of both ends.
+        XCTAssertTrue(MGAnnotationArrowRules.keepsVector(MGVec3(18, 0, 18), MGVec3(18.0017, 0, 18)))
+        XCTAssertFalse(MGAnnotationArrowRules.keepsVector(MGVec3(18, 0, 18), MGVec3(18.003, 0, 18)))
+    }
+
+    /// One search budget per report: the first searches and the re-check's searches draw from the same object, so a
+    /// report spends at most `suggestDocumentTests` on them together. With an empty budget nothing is searched, and the
+    /// re-check gets that same budget.
+    func testTheReportSharesOneSearchBudget() throws {
+        let t = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"part": "side", "point": "centre"}}]"#)
+        let d = try doc(t)
+        let views = d.stepCheckViews().filter { d.showsArrow($0.view) }
+        var empty = MGAnnotationArrowReport()
+        empty.issues = views.flatMap { d.arrowIssues($0) }
+        let none = MGSuggestionBudget(0)
+        var seen: [MGSuggestionBudget] = []
+        empty.repair(d, views: views, anchorIssues: [], budget: none) { _, b in seen.append(b); return nil }
+        XCTAssertEqual(empty.issues[0].suggestion?.cause, .budget)
+        XCTAssertTrue(seen.isEmpty, "nothing to re-check without a move")
+        var full = MGAnnotationArrowReport()
+        full.issues = empty.issues.map { var i = $0; i.suggestion = nil; return i }
+        let budget = MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests)
+        full.repair(d, views: views, anchorIssues: [], budget: budget) { moves, b in
+            seen.append(b)
+            guard case .success(let c) = MGSolidParser.document(json: MGSolidDocument.replacingArrows(d.source, moves), library: d.library) else { return nil }
+            return MGSolidReport.arrowRecheck(c, budget: b)
+        }
+        XCTAssertFalse(seen.isEmpty)
+        XCTAssertTrue(seen.allSatisfy { $0 === budget })
+        XCTAssertLessThan(budget.left, MGAnnotationArrowRules.suggestDocumentTests)
+        XCTAssertNotNil(full.issues[0].suggestion?.anchorJSON)
+    }
+
+    // MARK: Joint check of every printed suggestion (anchors and arrows together)
+
+    /// One anchor suggestion and one arrow move that each pass alone but interfere together: the union check keeps
+    /// both when the joint copy is clean, drops the one that still fails (`conflict`, `other` the suggestion of the other
+    /// family shown with it), drops the suggestions shown with an annotation that gets a new issue (`other` naming it),
+    /// and drops all on a refused copy (`form`). A report with suggestions of one family only is not checked again.
+    func testAnchorAndArrowSuggestionsAreCheckedTogether() throws {
+        let t = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"part": "side", "point": "centre"}}]"#)
+        let d = try doc(t)
+        let views = d.stepCheckViews()
+        var arrowsBase = MGAnnotationArrowReport()
+        arrowsBase.issues = views.flatMap { d.arrowIssues($0) }
+        arrowsBase.suggest(d, views: views, budget: MGSuggestionBudget())
+        let move = try XCTUnwrap(arrowsBase.issues[0].suggestion)
+        XCTAssertNotNil(move.anchorJSON)
+        var label = MGAnnotationAnchorIssue(id: "l1", kind: "label", cause: .occluded, part: "side", by: "shell", step: 0, beat: nil,
+                                            point: .zero, distance: nil, tolerance: nil)
+        label.suggestion = MGAnnotationAnchorSuggestion(part: "side", offset: MGVec3(0, 0, 20), onCut: false, cause: nil, step: nil, beat: nil, by: nil)
+        var anchorsBase = MGAnnotationAnchorReport()
+        anchorsBase.issues = [label]
+        func run(_ recheck: @escaping ([String: MGJSON], [String: MGJSON]) -> MGArrowRecheck?) -> (MGAnnotationAnchorSuggestion?, MGAnnotationArrowSuggestion?, Int) {
+            var a = anchorsBase, r = arrowsBase, calls = 0
+            MGSuggestionUnion.verifyTogether(anchors: &a, arrows: &r) { am, rm in
+                calls += 1
+                XCTAssertEqual(am.keys.sorted() + rm.keys.sorted(), (am.isEmpty ? [] : ["l1"]) + (rm.isEmpty ? [] : ["f1"]))
+                return recheck(am, rm)
+            }
+            return (a.issues[0].suggestion, r.issues[0].suggestion, calls)
+        }
+        // Clean union: both kept, one check.
+        let clean = run { _, _ in MGArrowRecheck(arrows: [], anchors: [], search: { _, _ in [:] }) }
+        XCTAssertEqual(clean.0, label.suggestion); XCTAssertEqual(clean.1, move); XCTAssertEqual(clean.2, 1)
+        // The arrow move hides the label in the union (the framing changes): the label's suggestion is the conflict.
+        var stillHidden = label; stillHidden.suggestion = nil
+        let hidden = run { am, _ in
+            MGArrowRecheck(arrows: [], anchors: am.isEmpty ? [] : [stillHidden], shown: [(0, nil, ["l1", "f1"])], search: { _, _ in [:] })
+        }
+        XCTAssertNil(hidden.0?.anchorJSON); XCTAssertEqual(hidden.0?.cause, .conflict); XCTAssertEqual(hidden.0?.other, "f1")
+        XCTAssertEqual(hidden.1, move, "the arrow move stays: alone it was checked")
+        XCTAssertEqual(hidden.2, 1, "one family left: no second joint check")
+        // An annotation without an issue gets one in the union: the suggestions shown with it are dropped.
+        let fresh = MGAnnotationAnchorIssue(id: "l9", kind: "label", cause: .occluded, part: "side", by: "shell", step: 0, beat: nil,
+                                            point: .zero, distance: nil, tolerance: nil)
+        let both = run { _, _ in MGArrowRecheck(arrows: [], anchors: [fresh], shown: [(0, nil, ["l1", "f1", "l9"])], search: { _, _ in [:] }) }
+        XCTAssertEqual(both.0?.cause, .conflict); XCTAssertEqual(both.0?.other, "l9")
+        XCTAssertEqual(both.1?.cause, .conflict); XCTAssertEqual(both.1?.other, "l9")
+        // A refused copy.
+        let refused = run { _, _ in nil }
+        XCTAssertEqual(refused.0?.cause, .form); XCTAssertEqual(refused.1?.cause, .form)
+        // One family only: no joint check.
+        var a = MGAnnotationAnchorReport(), r = arrowsBase
+        MGSuggestionUnion.verifyTogether(anchors: &a, arrows: &r) { _, _ in XCTFail("no joint check for one family"); return nil }
+        XCTAssertEqual(r.issues[0].suggestion, move)
+    }
+
+    /// The round-2f synthetic explainer holds anchor suggestions and a pointer move in one report: every printed
+    /// suggestion applied at once clears every suggested annotation and gives no other annotation an issue.
+    func testEveryPrintedSuggestionAppliesAtOnce() throws {
+        let url = XFix.root.appendingPathComponent("docs/fixtures/anchor-suggest/figure-engines.explainer.json")
+        let source = try String(contentsOf: url, encoding: .utf8)
+        let before = MGExplainerReport.check(data: Data(source.utf8), profile: .strict, engine: nil)
+        func list(_ json: MGJSON, _ key: String) -> [[String: MGJSON]] {
+            guard case .array(let a)? = json[key] else { return [] }
+            return a.compactMap { if case .object(let o) = $0 { return o }; return nil }
+        }
+        var anchorMoves: [String: MGJSON] = [:], arrowMoves: [String: MGJSON] = [:]
+        for i in list(before.json, "anchorIssues") { if case .string(let id)? = i["id"], let s = i["suggest"], s != .null { anchorMoves[id] = s } }
+        for i in list(before.json, "arrowIssues") { if case .string(let id)? = i["id"], let s = i["suggest"], s != .null { arrowMoves[id] = s } }
+        XCTAssertFalse(anchorMoves.isEmpty)
+        let hadIssue = Set((list(before.json, "anchorIssues") + list(before.json, "arrowIssues")).compactMap { i -> String? in
+            if case .string(let id)? = i["id"] { return id }; return nil })
+        guard case .object(var root)? = Self.json(source), let solid = root["solid"] else { return XCTFail("json") }
+        root["solid"] = MGSolidDocument.replacingAnchors(MGSolidDocument.replacingArrows(solid, arrowMoves), anchorMoves)
+        let after = MGExplainerReport.check(data: Data(MGJSON.object(root).canonicalString.utf8), profile: .strict, engine: nil, suggest: false)
+        let left = Set((list(after.json, "anchorIssues") + list(after.json, "arrowIssues")).compactMap { i -> String? in
+            if case .string(let id)? = i["id"] { return id }; return nil })
+        XCTAssertTrue(left.isDisjoint(with: Set(anchorMoves.keys).union(arrowMoves.keys)), "\(left.sorted())")
+        XCTAssertTrue(left.isSubset(of: hadIssue), "new issues: \(left.subtracting(hadIssue).sorted())")
+    }
+
     // MARK: The synthetic explainer (an arrow from a nozzle to its intake lip, inside the casing)
 
     static var fixture: URL {

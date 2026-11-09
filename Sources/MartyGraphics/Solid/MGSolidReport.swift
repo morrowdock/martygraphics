@@ -178,6 +178,8 @@ extension MGSolidReport {
     /// (`MGSolidDocument.arrowIssues`): each issue is a warning `annotation.arrow.hidden.<id>` or
     /// `annotation.arrow.untested.<id>`, listed in `arrowIssues` with a suggested move (re-checked once applied), and the
     /// strict profile refuses the first one after the anchor refusals; a refusal for an arrow reason adds `arrow`.
+    /// Last, every printed suggestion, anchors and arrows together, is checked once more on one copy
+    /// (`MGSuggestionUnion.verifyTogether`), so all of them can be applied at once.
     public static func make(_ doc: MGSolidDocument, profile: MGSolidProfile = .standard, source: MGSolidSource? = nil,
                             engine: MGJSON? = MGEngine.identity, anchorViews: Bool = true) -> MGSolidReport {
         if badEngine(engine) { return engineRefusal }
@@ -211,15 +213,18 @@ extension MGSolidReport {
             // The arrow visibility rule, its suggested moves and their re-check (`MGAnnotationArrowReport.verify`).
             let arrowViews = checked.filter { doc.showsArrow($0.view) }
             arrows.issues = arrowViews.flatMap { doc.arrowIssues($0) }
-            if arrows.issues.contains(where: { $0.cause == .hidden }) {
-                arrows.suggest(doc, views: arrowViews, budget: MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests))
-                let arrowBudget = MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests)
-                arrows.verify(anchorIssues: Set(anchors.issues.map(\.id))) { moves in
-                    let src = MGSolidDocument.replacingArrows(doc.source, moves)
-                    guard case .success(let d) = MGSolidParser.document(json: src, library: doc.library) else { return nil }
-                    return arrowRecheck(d, budget: arrowBudget)
-                }
-                arrows.measure(doc, views: arrowViews)
+            // One search budget for the first searches and the re-check's searches together.
+            arrows.repair(doc, views: arrowViews, anchorIssues: Set(anchors.issues.map(\.id)),
+                          budget: MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests)) { moves, budget in
+                let src = MGSolidDocument.replacingArrows(doc.source, moves)
+                guard case .success(let d) = MGSolidParser.document(json: src, library: doc.library) else { return nil }
+                return arrowRecheck(d, budget: budget)
+            }
+            // Every printed suggestion, anchors and arrows together, checked once more on one copy.
+            MGSuggestionUnion.verifyTogether(anchors: &anchors, arrows: &arrows) { anchorMoves, arrowMoves in
+                let src = MGSolidDocument.replacingAnchors(MGSolidDocument.replacingArrows(doc.source, arrowMoves), anchorMoves)
+                guard case .success(let d) = MGSolidParser.document(json: src, library: doc.library) else { return nil }
+                return arrowRecheck(d, budget: MGSuggestionBudget(0))
             }
         }
         let views = anchors.issues.filter { $0.cause != .offPart }

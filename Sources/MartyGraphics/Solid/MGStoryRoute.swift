@@ -20,8 +20,9 @@ public struct MGStoryMove: Equatable, Sendable {
     /// Where each leg ends, as a share of the move (0...1, increasing; the last is exactly 1). One per leg.
     public let ends: [Double]
     /// Why the path was chosen: `clear` (the straight move is clear), `blocked` (the straight move meets a part: a
-    /// routed path, or a cut when every path is blocked), `layout` (a cut because the beat's solid pane changed size)
-    /// or `untested` (a camera is not finite; the move stays straight, as in `blockedMoves`).
+    /// routed path, or a cut when every path is blocked), `layout` (a cut because the beat's solid pane changed size),
+    /// `motion` (a cut because parts move during the move and their swept boxes could not be computed) or `untested`
+    /// (a camera is not finite; the move stays straight, as in `blockedMoves`).
     public let reason: String
     /// `blocked`: the first part the straight move meets (chords in play order, then parts in assembly order, the
     /// previous beat's pose first).
@@ -68,14 +69,17 @@ public struct MGStoryMove: Equatable, Sendable {
     }
 }
 
-/// One beat as the move router sees it: its camera (its still's camera; nil without a solid), its end pose and the view
-/// its camera move draws (nil: every part blocks).
+/// One beat as the move router sees it: its camera (its still's camera; nil without a solid), its end pose, the view
+/// its camera move draws (nil: every part blocks) and the solid step it shows (nil: the plain view, or a host that
+/// gives only `params`). The frames of the move into a beat show that step's pose at the played share of its spin,
+/// with the placements blended from the previous beat's (`MGStoryPlan.movePose`).
 public struct MGStoryBeatShot: Sendable {
     public var camera: MGSolidCamera?
     public var params: MGPoseParameters
     public var view: MGSolidView?
-    public init(camera: MGSolidCamera?, params: MGPoseParameters, view: MGSolidView? = nil) {
-        self.camera = camera; self.params = params; self.view = view
+    public var step: MGSolidStep?
+    public init(camera: MGSolidCamera?, params: MGPoseParameters, view: MGSolidView? = nil, step: MGSolidStep? = nil) {
+        self.camera = camera; self.params = params; self.view = view; self.step = step
     }
 }
 
@@ -112,45 +116,115 @@ extension MGStoryPlan {
     ///
     /// A path is clear when no leg meets a part box. Each leg is split into chords as `blockedMoves` splits a curved
     /// move (at most `maxMoveChords`, proven chord error), and each chord is tested with the exact segment-versus-box
-    /// slab test against every blocking part's posed box (render frame, at the previous beat's pose and at this beat's
-    /// pose), grown by the renderer's near plane at the larger camera distance of that chord plus the leg's chord
-    /// error. The blocking parts are the parts the move draws solid: with a `view`, the parts it does not hide whose
-    /// drawn coverage (view opacity times `MGMaterialPreset.coverage`) is at least `MGSolidFraming.blockingOpacity`, the
-    /// coverage rule of the anchor checks (a ghost does not block); without one, every part. The model's bounds centre
-    /// and bounding sphere are those of the blocking boxes.
+    /// slab test against every blocking part's box (render frame), grown by the renderer's near plane at the larger
+    /// camera distance of that chord plus the leg's chord error. The blocking parts are the parts the move draws
+    /// solid: with a `view`, the parts it does not hide whose drawn coverage (view opacity times
+    /// `MGMaterialPreset.coverage`) is at least `MGSolidFraming.blockingOpacity`, the coverage rule of the anchor checks
+    /// (a ghost does not block); without one, every part. The model's bounds centre and bounding sphere are those of
+    /// the blocking boxes.
+    ///
+    /// A part's box is its swept box over the move (`sweptBoxes`): the union of its world boxes at the previous beat's
+    /// end pose, at every frame of the move as `plan` plays it (`movePose`: the beat's spin share and placement blend
+    /// of each frame) and at this beat's end pose, grown by the largest distance any corner of its box moves between
+    /// two of those poses in a row. A straight path is tested with the frames of a straight move
+    /// (`MGStoryTiming.transitionSeconds`), a routed path with those of a routed move (`routedTransitionSeconds`). A
+    /// part that does not move keeps its one box. Without `plan`, the frames are not known: when the two end poses
+    /// differ or the beat spins, the beat cuts with reason `motion`; so does a beat whose swept boxes are not finite.
     ///
     /// A beat in `layout` cuts with reason `layout`. When no path is clear, the beat cuts with reason `blocked`. The
     /// hold cameras are never changed: every path starts exactly at the previous beat's camera and ends exactly at
     /// this beat's camera. Deterministic; at most `maxRouteCandidates` paths per move, each at most 4 legs of
-    /// `maxMoveChords` chords against 2 × 96 boxes.
-    public static func routes(_ doc: MGSolidDocument, beats: [MGStoryBeatShot], layout: Set<Int> = [],
+    /// `maxMoveChords` chords against 96 boxes; at most 2 × (`MGStoryTiming` frames of a routed move + 2) poses.
+    public static func routes(_ doc: MGSolidDocument, beats: [MGStoryBeatShot], plan: MGStoryPlan? = nil, layout: Set<Int> = [],
                               stage: MGTransform = MGSolidStage.zUpToYUp) -> [Int: MGStoryMove] {
         guard beats.count > 1 else { return [:] }
-        // Each beat's posed part boxes, once (render frame), with the part ids.
-        let poses = beats.map { doc.assembly.pose($0.params) }
         var out: [Int: MGStoryMove] = [:]
         for k in 1..<beats.count {
             guard let from = beats[k - 1].camera, let to = beats[k].camera else { continue }
             if layout.contains(k) { out[k] = .cut(to, reason: "layout"); continue }
-            var boxes: [(id: String, box: MGBounds)] = []
-            for pose in [poses[k - 1], poses[k]] {
-                for p in doc.assembly.parts {
-                    if let v = beats[k].view {
-                        let pv = v.part(p.id)
-                        guard !pv.hidden, pv.opacity * p.material.coverage >= MGSolidFraming.blockingOpacity else { continue }
-                    }
-                    let b = MGSolidFrames.worldBounds(p.mesh.bounds, stage * (pose.world[p.id] ?? .identity))
-                    guard !b.isEmpty, [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z].allSatisfy(\.isFinite) else { continue }
-                    boxes.append((p.id, b))
-                }
+            let still = beats[k - 1].params == beats[k].params && (beats[k].step?.spin ?? 0) == 0
+                && (beats[k].step == nil || beats[k].step?.poseParameters(defaults: doc.defaults, spin: 0) == beats[k].params)
+            let straight: [(id: String, box: MGBounds)]?, routed: [(id: String, box: MGBounds)]?
+            if still {
+                straight = sweptBoxes(doc, beats: beats, k, frames: [], stage: stage); routed = straight
+            } else if let plan, plan.beats.indices.contains(k) {
+                straight = sweptBoxes(doc, beats: beats, k, frames: moveFrames(plan, k, routed: false), stage: stage)
+                routed = sweptBoxes(doc, beats: beats, k, frames: moveFrames(plan, k, routed: true), stage: stage)
+            } else {
+                straight = nil; routed = nil
             }
-            out[k] = route(from, to, boxes: boxes)
+            guard let straight, let routed else { out[k] = .cut(to, reason: "motion"); continue }
+            out[k] = route(from, to, boxes: straight, routedBoxes: routed)
         }
         return out
     }
 
-    /// The first clear path from `a` to `b` among the candidates of `routes`, or a cut.
-    static func route(_ a: MGSolidCamera, _ b: MGSolidCamera, boxes: [(id: String, box: MGBounds)]) -> MGStoryMove {
+    /// The parameters of a frame of the move into beat `k`: the beat's step pose at the played share `spin` of its
+    /// spin (`MGSolidStep.poseParameters`; without a step, its `params`), with every placement blended by `blend`
+    /// from the previous beat's step pose (without a step, its `params` placements) with `placements`. `blend` 1 gives
+    /// the beat's own placements. The render tool draws every move frame with this pose.
+    public static func movePose(_ doc: MGSolidDocument, beats: [MGStoryBeatShot], _ k: Int, spin: Double, blend: Double) -> MGPoseParameters {
+        guard beats.indices.contains(k) else { return doc.defaults }
+        var p = beats[k].step?.poseParameters(defaults: doc.defaults, spin: spin) ?? beats[k].params
+        guard k > 0, blend < 1 else { return p }
+        let previous = beats[k - 1].step?.pose ?? beats[k - 1].params.placements
+        p.placements = placements(doc.assembly, from: previous, to: p.placements, blend)
+        return p
+    }
+
+    /// The spin share and placement blend of every frame of beat `k`'s move as `plan` (the plan before routing)
+    /// plays it, straight or routed (`frame(_:)` of the plan, with a routed move's timing for `routed`).
+    static func moveFrames(_ plan: MGStoryPlan, _ k: Int, routed: Bool) -> [(spin: Double, blend: Double)] {
+        var p = plan
+        if routed {
+            let c = MGSolidCamera(target: .zero, yaw: 0, pitch: 0, distance: 1)
+            p = plan.routed([k: MGStoryMove(path: .arc, keys: [c, c], ends: [1], reason: "blocked", blockedBy: nil)])
+        }
+        let b = p.beats[k]
+        return (0..<b.transitionFrames).map { j in let f = p.frame(b.startFrame + j); return (f.spin, f.camera) }
+    }
+
+    /// Each blocking part's swept box over the move into beat `k` (render frame, assembly order): the union of its
+    /// world boxes at the previous beat's end pose, at each of `frames` (`movePose`) and at this beat's end pose, grown
+    /// by the largest distance a corner of its mesh box moves between two poses in a row (0 for a part that does not
+    /// move). Nil when a pose is not finite.
+    static func sweptBoxes(_ doc: MGSolidDocument, beats: [MGStoryBeatShot], _ k: Int, frames: [(spin: Double, blend: Double)],
+                           stage: MGTransform) -> [(id: String, box: MGBounds)]? {
+        var params = [beats[k - 1].params]
+        params += frames.map { movePose(doc, beats: beats, k, spin: $0.spin, blend: $0.blend) }
+        params.append(beats[k].params)
+        var unique: [MGPoseParameters] = []
+        for p in params where unique.last != p { unique.append(p) }
+        let poses = unique.map { doc.assembly.pose($0) }
+        var out: [(id: String, box: MGBounds)] = []
+        for p in doc.assembly.parts {
+            if let v = beats[k].view {
+                let pv = v.part(p.id)
+                guard !pv.hidden, pv.opacity * p.material.coverage >= MGSolidFraming.blockingOpacity else { continue }
+            }
+            let local = p.mesh.bounds
+            guard !local.isEmpty else { continue }
+            var box = MGBounds.empty, step = 0.0
+            var last: [MGVec3]?
+            for pose in poses {
+                let t = stage * (pose.world[p.id] ?? .identity)
+                let corners = local.corners.map { t.apply($0) }
+                for c in corners { box.include(c) }
+                if let last { for (a, b) in zip(last, corners) { step = max(step, (b - a).length) } }
+                last = corners
+            }
+            let g = MGVec3(step, step, step)
+            box = MGBounds(min: box.min - g, max: box.max + g)
+            guard [box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z, step].allSatisfy(\.isFinite) else { return nil }
+            out.append((p.id, box))
+        }
+        return out
+    }
+
+    /// The first clear path from `a` to `b` among the candidates of `routes`, or a cut: the straight path against
+    /// `boxes`, the routed paths against `routedBoxes` (the same parts swept over a routed move's frames).
+    static func route(_ a: MGSolidCamera, _ b: MGSolidCamera, boxes: [(id: String, box: MGBounds)],
+                      routedBoxes: [(id: String, box: MGBounds)]? = nil) -> MGStoryMove {
         let first: String
         switch test([a, b], boxes) {
         case .clear: return .straight(a, b)
@@ -158,12 +232,13 @@ extension MGStoryPlan {
         case .invalid: return MGStoryMove(path: .straight, keys: [a, b], ends: [1], reason: "untested", blockedBy: nil)
         case .blocked(let id): first = id
         }
+        let swept = routedBoxes ?? boxes
         var whole = MGBounds.empty
-        for x in boxes { whole = whole.union(x.box) }
+        for x in swept { whole = whole.union(x.box) }
         let centre = whole.isEmpty ? (a.targetVector + b.targetVector) * 0.5 : whole.center
         let rho = whole.isEmpty ? 0 : whole.radius
         for c in candidates(a, b, centre: centre, rho: rho) {
-            guard test(c.keys, boxes) == .clear else { continue }
+            guard test(c.keys, swept) == .clear else { continue }
             return MGStoryMove(path: c.path, keys: c.keys, ends: shares(c.keys), reason: "blocked", blockedBy: first)
         }
         return .cut(b, reason: "blocked", blockedBy: first)

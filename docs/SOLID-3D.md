@@ -531,9 +531,9 @@ the posed parts in `posed`.
 
 Not checked: collisions between posed parts, joint limits of a figure beyond the
 component's parameter ranges, and the poses in between two steps (the story blend) are
-not checked against any rule; the story's move test (`MGStoryPlan.routes`) tests the part
-boxes at each beat's end pose only (the previous beat's and this beat's), and only the parts
-the move draws solid (see "Routed moves" under "Story video").
+not checked against any rule. The story's move test (`MGStoryPlan.routes`) tests each part's
+box swept over the move's frames (the poses in between two steps as the story plays them),
+for the parts the move draws solid (see "Routed moves" under "Story video").
 
 ### Hide and show
 
@@ -1124,12 +1124,18 @@ offsets tried are the directions `u, −u, c, −c, e1, −e1, e2, −e2` (a poi
 `k × S`, `k = 1 … 8`, where `S = max(the blocking part's box diagonal, the arrow's length) / 4` (at least 0.5 mm),
 smallest offset first, then in direction order. An end on a part moves in that part's frame (the offset taken into
 the frame at that pose; the resolved part id), rounded to 0.001 mm; a world end moves in the world. A candidate outside
-±4000 mm, or a pointer start within 4 shaft radii of its tip, is skipped. The first candidate whose samples are all
-visible in every view is the suggestion, else the first that passes the rule in every view. A motion arrow shows its
-anchor's motion and gets none (`code` `motion`). With none, `suggest` is null and `noSuggest` is `{"cause", "code",
-"step", "beat", "by", "other", "samples", "alternatives"}` (`code`: `motion`, `noclearoffset`, `budget`, `form`,
-`framing` or `conflict`; alternatives: leave the arrow out of that view's `annotate` list, ghost the part in the way,
-or change that view's camera).
+±4000 mm, or a pointer start within 4 shaft radii of its tip, is skipped. A force or flow arrow says something with its
+vector, so a candidate is kept only when the moved arrow's vector (end minus start) equals the authored one in **every**
+view that shows it, within the precision epsilon at that vector plus 0.002 mm for rounding both ends
+(`MGAnnotationArrowRules.keepsVector`): when the ends ride on parts that turn differently between views, an offset
+taken into their frames at one pose moves them apart at another. The first candidate whose samples are all visible in
+every view is the suggestion, else the first that passes the rule in every view. After the re-check, every move is
+checked once more against the authored arrow in every view (`measure`). A pointer keeps its tip; only its start moves,
+so its vector is not kept. A motion arrow shows its anchor's motion and gets none (`code` `motion`). With none,
+`suggest` is null and `noSuggest` is `{"cause", "code", "step", "beat", "by", "other", "samples", "alternatives"}`
+(`code`: `motion`, `pose` (no candidate keeps the vector in every view), `noclearoffset`, `budget`, `form`, `framing`
+or `conflict`; alternatives: leave the arrow out of that view's `annotate` list, ghost the part in the way, or change
+that view's camera).
 
 **Re-check.** A move changes the framing too (a still's camera fits the arrow ends it shows), so the moves are checked
 again once applied, as anchor suggestions are (`MGAnnotationArrowReport.verify`): the document with every move applied
@@ -1139,10 +1145,19 @@ searched again in the copy's framing (at most twice) and then dropped (`framing`
 a newly failing annotation are searched again away from their last start (at most twice) and then dropped
 (`conflict`, `other` naming it); a copy that does not compile drops the set (`form`). At most 6 re-checks; when they
 run out, the remaining moves are dropped (`framing`). `suggest` gives the anchors exactly as a document writes them.
-Budgets: one search for one arrow spends at most 8,000,000 tests and one report at most 64,000,000 for the searches
-(`suggestTests`, `suggestDocumentTests`); each re-check runs the check's own budgets. Known limit: the moves are
-re-checked without the anchor suggestions applied (and those without the moves), so applying both sets together is
-not checked as one.
+Budgets: one search for one arrow spends at most 8,000,000 tests, and all searches of one report together, the
+re-check's searches included, at most 64,000,000 (`suggestTests`, `suggestDocumentTests`; one shared budget object,
+`MGAnnotationArrowReport.repair`); each re-check runs the check's own budgets.
+
+**All suggestions together** (`MGSuggestionUnion.verifyTogether`). After each family's own re-check, a report that
+prints both anchor suggestions and arrow moves applies all of them to one copy and checks it again, with the accept
+rule above: no suggested annotation (label, pointer or arrow) has an issue and no annotation that had none has one.
+No new search runs in this check. A suggestion whose annotation still has an issue passed its own family's check, so
+it only conflicts in the union: it is dropped with cause `conflict` and `other` naming the first suggestion of the
+other family (sorted ids) shown in the same view (of all of them when none is). An annotation that had no issue and
+now has one drops the suggestions shown in the same view (all when none is), each with `conflict` and `other` naming
+it. A refused copy drops every suggestion (`form`). The smaller union is checked again, at most 6 times; when they run
+out, every remaining suggestion is dropped. So every printed suggestion, anchors and arrows, can be applied at once.
 
 The synthetic explainer `docs/fixtures/arrow-visibility/arrow-in-casing.explainer.json` (a figure with one engine on
 its back, neutral names) holds a thrust arrow from the nozzle to the intake lip, inside the casing: strict refuses it
@@ -1852,7 +1867,7 @@ outside the view in the beat's last frame plus the focus samples still hidden (a
 when the beat shows no annotation and has no tested focus), whether the beat cut
 instead of moving, and why: `layout` or `blocked`; for each beat with a tested move,
 its path `straight`, `pullback`, `arc`, `combined` or `cut`, why (`clear`, `blocked`,
-`layout`, or `untested` for a camera that is not finite), the first part the straight
+`layout`, `motion`, or `untested` for a camera that is not finite), the first part the straight
 move meets (`blockedBy`, for `blocked`) and the move's length in seconds, 0 for a cut;
 the first beat has no move), plus the unblocked-focus fields
 `autoGhost`, `occluded`, `focusSamples`, `view` and `facesCut` for a tested focus. Each step still's record (`step-<n>.png`) and each explainer beat still's
@@ -1885,9 +1900,19 @@ the previous beat's camera and ends exactly at this beat's camera, so the hold c
 **The test.** A path is clear when no leg meets a part box. Each leg is split into straight chords of the played path
 as above (at most 1,024, `maxMoveChords`, with the proven chord error from the curvature bound), and also so that the
 camera distance changes by at most 10 % per chord (`routeDistanceStep`). Each chord is tested with the exact
-segment-versus-box slab test against each blocking part's posed box (render frame, at the previous beat's pose and at
-this beat's pose), grown by the renderer's near plane at the larger camera distance of that chord's two ends plus the
-leg's chord error. The blocking parts are the parts the move draws solid: the parts that the move's view (the beat's
+segment-versus-box slab test against each blocking part's swept box (render frame), grown by the renderer's near
+plane at the larger camera distance of that chord's two ends plus the leg's chord error.
+
+**Parts that move during the move.** The frames of a move show the parts moving: the beat's spin plays from its first
+frame, and the placements of a step `pose` blend from the previous beat's (`MGStoryPlan.movePose`, the pose the render
+tool draws each move frame with). A part's swept box is the union of its world boxes at the previous beat's end pose,
+at every frame of the move as the story plays it, and at this beat's end pose, grown by the largest distance any
+corner of its mesh box moves between two of those poses in a row (`MGStoryPlan.sweptBoxes`). The straight path is
+tested with the frames of a 0.6 s move, a routed path with those of a 1.0 s move. A part that does not move keeps its
+one box. When the frames are not known (`routes` without a `plan`) and the parts move, or a swept box is not finite,
+the beat cuts with reason `motion`. So a part that crosses the camera's path between the two beat poses blocks that
+path, and a route that was clear only because a part was elsewhere at both ends is refused (it routes around the
+swept box, or cuts). The blocking parts are the parts the move draws solid: the parts that the move's view (the beat's
 view with its automatic ghosts, plus the previous beat's ghosts) does not hide and draws with a coverage of
 `MGSolidFraming.blockingOpacity` (0.5) or more, the coverage rule of the anchor checks (view opacity times
 `MGMaterialPreset.coverage`, so a ghost and glass do not block). The bounds centre and sphere are those of the
@@ -1897,10 +1922,10 @@ larger camera distance) cut a move that passes a part at a close camera's own ne
 
 A beat whose move has no clear path cuts (`cut`, reason `blocked`, `blockedBy` the first part the straight move meets);
 a beat whose solid pane changed size cuts with reason `layout` without a test. The path test is deterministic; at most
-24 paths of at most 4 legs of 1,024 chords against 2 × 96 boxes per move. Not tested: the parts between two poses
-(only the boxes at the two beats' poses), the move's other frames against the meshes themselves (boxes only, so a path
-that only passes close to a part may be refused), and whether the routed path looks good: the arc and pull back keep
-the model in view only roughly (the camera looks along its interpolated target).
+24 paths of at most 4 legs of 1,024 chords against 96 boxes per move, and at most 2 × (the frames of a 1.0 s move + 2)
+poses per beat. Not tested: the meshes themselves (boxes only, and a swept box is the box of a whole sweep, so a path
+that only passes close to a part, or through the empty middle of a sweep, may be refused), and whether the routed path
+looks good: the arc and pull back keep the model in view only roughly (the camera looks along its interpolated target).
 
 ## Snapshot for other renderers
 

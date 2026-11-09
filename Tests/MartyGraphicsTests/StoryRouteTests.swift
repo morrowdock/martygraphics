@@ -276,6 +276,104 @@ final class StoryRouteTests: XCTestCase {
     }
 }
 
+// MARK: Review fixes (PR #44): parts that move during the move
+
+extension StoryRouteTests {
+    /// Review repro: a 20 mm cube on a pivot turns from −90° to +90° during the move. Its boxes at the two beat poses
+    /// clear the pull back, but at the middle frame the camera is inside it. The router now tests every part's swept
+    /// box over the move's actual frames, so that path is refused; without the frames (no plan) the beat cuts
+    /// (`motion`). Every frame of the move the router gives shows the camera outside every part's box at that frame.
+    func testAPartThatMovesDuringTheMoveIsSwept() throws {
+        let a = MGSolidCamera(target: .zero, yaw: 0, pitch: 0, distance: 500), b = MGSolidCamera(target: .zero, yaw: 180, pitch: 0, distance: 500)
+        // The pivot sits so that the pull back's middle camera (t = 0.5, distance 1000 leg) meets the cube's middle pose.
+        let mid = MGStoryPlan.route(a, b, boxes: [("post", MGBounds(min: MGVec3(450, -50, -50), max: MGVec3(550, 50, 50)))]).camera(0.5).position
+        let pivot = mid - MGVec3(1200, 0, 0)
+        let text = """
+            {"v":2,"kind":"assembly","parts":[{"id":"post","at":[500,0,0],"shape":{"box":{"size":[100,100,100]}}},{"id":"pivot","at":[\(pivot.x),\(pivot.y),\(pivot.z)],"shape":{"box":{"size":[1,1,1]}}},{"id":"moving","parent":"pivot","at":[1200,0,0],"shape":{"box":{"size":[20,20,20]}}}],"steps":[{"say":"Before.","pose":{"pivot":{"rot":[0,0,1,-90]}}},{"say":"After.","pose":{"pivot":{"rot":[0,0,1,90]}}}]}
+            """
+        let d = try compile(text)
+        let shots = d.steps.indices.map { k in MGStoryBeatShot(camera: k == 0 ? a : b, params: MGSolidShot.step(d, k)!.params, step: d.steps[k]) }
+        // The endpoint boxes alone (the rule this replaces) accept a pull back that crosses the cube.
+        var ends: [(id: String, box: MGBounds)] = []
+        for k in 0..<2 {
+            let pose = d.assembly.pose(shots[k].params)
+            for p in d.assembly.parts { ends.append((p.id, MGSolidFrames.worldBounds(p.mesh.bounds, pose.world[p.id] ?? .identity))) }
+        }
+        let old = MGStoryPlan.route(a, b, boxes: ends)
+        XCTAssertEqual(old.path, .pullback)
+        let plan = try MGStoryPlan(captions: ["1. Before.", "2. After."], spins: [0, 0], fps: 30)
+        var crossed = false
+        let routedPlan = plan.routed([1: old])
+        for i in routedPlan.beats[1].startFrame..<routedPlan.holdStartFrame(1) {
+            let f = routedPlan.frame(i)
+            let pose = d.assembly.pose(MGStoryPlan.movePose(d, beats: shots, 1, spin: f.spin, blend: f.camera))
+            let box = MGSolidFrames.worldBounds(d.assembly.part("moving")!.mesh.bounds, pose.world["moving"] ?? .identity)
+            if inside(old.camera(f.camera).position, box, grow: 0) { crossed = true }
+        }
+        XCTAssertTrue(crossed, "the old route puts the camera inside the moving cube at a frame")
+        // Without the frames: a cut, reason `motion`.
+        let blind = try XCTUnwrap(MGStoryPlan.routes(d, beats: shots, stage: .identity)[1])
+        XCTAssertEqual(blind.path, .cut); XCTAssertEqual(blind.reason, "motion")
+        // With the frames: the pull back is refused; the arc the router takes keeps the camera outside every part at
+        // every frame it plays (grown by the near plane there).
+        let move = try XCTUnwrap(MGStoryPlan.routes(d, beats: shots, plan: plan, stage: .identity)[1])
+        XCTAssertEqual(move.path, .arc)
+        XCTAssertEqual(MGStoryPlan.routes(d, beats: shots, plan: plan, stage: .identity)[1], move, "deterministic")
+        let played = plan.routed([1: move])
+        for i in played.beats[1].startFrame..<played.holdStartFrame(1) {
+            let f = played.frame(i), c = move.camera(f.camera)
+            let pose = d.assembly.pose(MGStoryPlan.movePose(d, beats: shots, 1, spin: f.spin, blend: f.camera))
+            for part in d.assembly.parts {
+                let box = MGSolidFrames.worldBounds(part.mesh.bounds, pose.world[part.id] ?? .identity)
+                XCTAssertFalse(inside(c.position, box, grow: MGSolidFraming.nearPlane(distance: c.distance)), "frame \(i) \(part.id)")
+            }
+        }
+        // The swept box holds the cube at every frame of a routed move.
+        let swept = try XCTUnwrap(MGStoryPlan.sweptBoxes(d, beats: shots, 1, frames: MGStoryPlan.moveFrames(plan, 1, routed: true), stage: .identity))
+        let cube = try XCTUnwrap(swept.first { $0.id == "moving" }).box
+        for (spin, blend) in MGStoryPlan.moveFrames(plan, 1, routed: true) {
+            let pose = d.assembly.pose(MGStoryPlan.movePose(d, beats: shots, 1, spin: spin, blend: blend))
+            let box = MGSolidFrames.worldBounds(d.assembly.part("moving")!.mesh.bounds, pose.world["moving"] ?? .identity)
+            XCTAssertTrue(inside(box.min, cube, grow: 0) && inside(box.max, cube, grow: 0))
+        }
+        XCTAssertEqual(MGStoryPlan.moveFrames(plan, 1, routed: true).count, 30)
+        XCTAssertEqual(MGStoryPlan.moveFrames(plan, 1, routed: false).count, 18)
+        // A part that does not move keeps its one box; a still beat needs no plan.
+        let post = try XCTUnwrap(swept.first { $0.id == "post" }).box
+        XCTAssertEqual(post, MGBounds(min: MGVec3(450, -50, -50), max: MGVec3(550, 50, 50)))
+        let still = MGStoryPlan.routes(d, beats: [shots[0], MGStoryBeatShot(camera: b, params: shots[0].params, step: d.steps[0])], stage: .identity)
+        XCTAssertNotEqual(still[1]?.reason, "motion")
+    }
+
+    /// A routed move that was clear only because a moving part sits elsewhere at both beat poses: a 20 mm cube on a
+    /// pivot turns from 60° to 120° about X and passes through the start camera's place at the middle frame. The post
+    /// blocks the straight move, and the endpoint boxes alone accept a pull back; the swept box holds the start camera,
+    /// so every path is refused and the engine now cuts.
+    func testARouteClearOnlyBecauseOfAMovingPartNowCuts() throws {
+        let a = MGSolidCamera(target: .zero, yaw: 0, pitch: 0, distance: 500), b = MGSolidCamera(target: .zero, yaw: 180, pitch: 0, distance: 500)
+        let text = #"{"v":2,"kind":"assembly","parts":[{"id":"post","at":[500,0,0],"shape":{"box":{"size":[100,100,100]}}},{"id":"pivot","at":[0,0,200],"shape":{"box":{"size":[1,1,1]}}},{"id":"moving","parent":"pivot","at":[0,300,0],"shape":{"box":{"size":[20,20,20]}}}],"steps":[{"say":"Before.","pose":{"pivot":{"rot":[1,0,0,60]}}},{"say":"After.","pose":{"pivot":{"rot":[1,0,0,120]}}}]}"#
+        let d = try compile(text)
+        let shots = d.steps.indices.map { k in MGStoryBeatShot(camera: k == 0 ? a : b, params: MGSolidShot.step(d, k)!.params, step: d.steps[k]) }
+        var ends: [(id: String, box: MGBounds)] = []
+        for k in 0..<2 {
+            let pose = d.assembly.pose(shots[k].params)
+            for p in d.assembly.parts { ends.append((p.id, MGSolidFrames.worldBounds(p.mesh.bounds, pose.world[p.id] ?? .identity))) }
+        }
+        let old = MGStoryPlan.route(a, b, boxes: ends)
+        XCTAssertTrue(old.routed, "the endpoint boxes alone route it: \(old.path)")
+        let plan = try MGStoryPlan(captions: ["1. Before.", "2. After."], spins: [0, 0], fps: 30)
+        // The cube's middle frame holds the start camera's place.
+        let f = plan.routed([1: old]).frame(plan.beats[1].startFrame + 15)
+        let pose = d.assembly.pose(MGStoryPlan.movePose(d, beats: shots, 1, spin: f.spin, blend: f.camera))
+        let cube = MGSolidFrames.worldBounds(d.assembly.part("moving")!.mesh.bounds, pose.world["moving"] ?? .identity)
+        XCTAssertTrue(inside(a.position, cube, grow: MGSolidFraming.nearPlane(distance: a.distance)))
+        let move = try XCTUnwrap(MGStoryPlan.routes(d, beats: shots, plan: plan, stage: .identity)[1])
+        XCTAssertEqual(move.path, .cut)
+        XCTAssertEqual(move.reason, "blocked")
+        XCTAssertEqual(move.blockedBy, "moving")
+    }
+}
+
 extension MGSolidCamera {
     func with(distance d: Double) -> MGSolidCamera { MGSolidCamera(target: targetVector, yaw: yaw, pitch: pitch, distance: d, fieldOfView: fieldOfView) }
 }

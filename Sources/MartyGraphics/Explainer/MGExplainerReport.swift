@@ -121,16 +121,22 @@ public struct MGExplainerReport: Equatable, Sendable {
                     // The arrow visibility rule, its suggested moves and their re-check (`MGAnnotationArrowReport.verify`).
                     let arrowViews = checked.views.filter { fd.showsArrow($0.view) }
                     arrows.issues = arrowViews.flatMap { fd.arrowIssues($0) }
-                    if suggest, arrows.issues.contains(where: { $0.cause == .hidden }) {
-                        arrows.suggest(fd, views: arrowViews, budget: MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests))
-                        let arrowBudget = MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests)
-                        arrows.verify(anchorIssues: Set(anchors.issues.map(\.id))) { moves in
+                    if suggest {
+                        // One search budget for the first searches and the re-check's searches together.
+                        arrows.repair(fd, views: arrowViews, anchorIssues: Set(anchors.issues.map(\.id)),
+                                      budget: MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests)) { moves, budget in
                             guard let solid = doc.solid else { return nil }
                             let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board,
                                                    solid: MGSolidDocument.replacingArrows(solid, moves), beats: doc.beats)
-                            return arrowRecheck(copy, library: s.library, budget: arrowBudget)
+                            return arrowRecheck(copy, library: s.library, budget: budget)
                         }
-                        arrows.measure(fd, views: arrowViews)
+                        // Every printed suggestion, anchors and arrows together, checked once more on one copy.
+                        MGSuggestionUnion.verifyTogether(anchors: &anchors, arrows: &arrows) { anchorMoves, arrowMoves in
+                            guard let solid = doc.solid else { return nil }
+                            let both = MGSolidDocument.replacingAnchors(MGSolidDocument.replacingArrows(solid, arrowMoves), anchorMoves)
+                            let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board, solid: both, beats: doc.beats)
+                            return arrowRecheck(copy, library: s.library, budget: MGSuggestionBudget(0))
+                        }
                     }
                 }
             }
