@@ -112,8 +112,9 @@
       "facesCut": true
     },
     "story.mp4": {
-      "sha256": "b3cb3ef8dca91e5ac2177c59ad7f04d41728ec98bd6864798d3a51a35b0552ad",
-      "bytes": 5657013,
+      "sha256": "f382d48bd78af527e9b4db1f8d13ceb674c905137688ed3ae0e12bfb02dd49a4",
+      "bytes": 5657049,
+      "remux": "re-muxed for fast start (passthrough; all 1,890 decoded frames identical)",
       "from": "render story.mp4, re-encoded for size (see reencode)",
       "pixels": "1280x800",
       "fps": 30,
