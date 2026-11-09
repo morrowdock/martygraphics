@@ -20,7 +20,8 @@ public struct MGStoryMove: Equatable, Sendable {
     /// Where each leg ends, as a share of the move (0...1, increasing; the last is exactly 1). One per leg.
     public let ends: [Double]
     /// Why the path was chosen: `clear` (the straight move is clear), `blocked` (the straight move meets a part: a
-    /// routed path, or a cut when every path is blocked), `layout` (a cut because the beat's solid pane changed size),
+    /// routed path, or a cut when every path is blocked), `layout` (a cut because the host listed the beat in `routes`'s
+    /// `layout`; `marty-solid render` lists none and slides the panes instead, `MGPaneSlide`),
     /// `motion` (a cut because parts move during the move and their swept boxes could not be computed) or `untested`
     /// (a camera is not finite; the move stays straight, as in `blockedMoves`).
     public let reason: String
@@ -131,7 +132,9 @@ extension MGStoryPlan {
     /// part that does not move keeps its one box. Without `plan`, the frames are not known: when the two end poses
     /// differ or the beat spins, the beat cuts with reason `motion`; so does a beat whose swept boxes are not finite.
     ///
-    /// A beat in `layout` cuts with reason `layout`. When no path is clear, the beat cuts with reason `blocked`. The
+    /// A beat in `layout` cuts with reason `layout` (for hosts that cut on a pane layout change; `marty-solid render`
+    /// passes none: a layout change moves like any beat and slides its panes, `MGPaneSlide`). When no path is clear,
+    /// the beat cuts with reason `blocked`. The
     /// hold cameras are never changed: every path starts exactly at the previous beat's camera and ends exactly at
     /// this beat's camera. Deterministic; at most `maxRouteCandidates` paths per move, each at most 4 legs of
     /// `maxMoveChords` chords against 96 boxes; at most 2 × (`MGStoryTiming` frames of a routed move + 2) poses.

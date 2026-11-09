@@ -214,7 +214,47 @@ measurable keeps the largest share. The board is drawn at the reference pane's s
 crops only empty board. The rule is deterministic and the same in the stills, `story.mp4` and the SwiftUI explainer
 view (which passes its own area in points). Stacked layouts (taller than wide) keep the 55 % / 45 % split. A 4-row
 table gets about 28 % at 1280 × 800. Each split beat's manifest record gives `boardShare`. A beat whose share differs
-from the previous beat's changes the solid pane, so the story cuts there.
+from the previous beat's changes the solid pane, so the story slides the panes there
+([Pane slide in the story video](#pane-slide-in-the-story-video)).
+
+### Pane slide in the story video
+
+When the pane layout changes between two beats (the board pane opens, closes or changes width), `story.mp4` does not
+cut. The panes slide during the camera move into the beat (`MGPaneSlide`):
+
+1. **Panes.** At share `s` of the move (the move's eased camera blend, 0...1) every pane edge lies `s` of the way
+   between its two layouts, rounded to whole pixels. The solid pane eases from full frame to its split rect, or the
+   reverse. A board pane that opens grows from zero size at its outer edge (the left edge side by side, the top edge
+   stacked); one that closes shrinks to that edge.
+2. **Camera.** The camera moves as any move does: straight, or along a routed path ([SOLID-3D.md](SOLID-3D.md#routed-moves))
+   tested against the parts' swept boxes, and it cuts only when no path is clear (`path` `cut`, `pathReason`
+   `blocked`; the panes then jump too). The move's key cameras are each fitted to their own beat's pane, and the
+   camera blends between them with the same share as the panes. On every frame the camera is fitted to the current
+   solid pane (`MGPaneSlide.camera`): the 3D image is rendered at the pane's current pixels, and when the pane is
+   narrower than the blended aspect (pixel rounding, or a stacked layout) the field of view widens by that ratio. The
+   camera position is never changed, so the routed path stays as tested.
+3. **Board.** The board fades in or out in its sliding pane, drawn at its own size and centred in the pane (the pane
+   crops it). As in every move, the board shows the previous beat's state until the hold starts: a closing pane fades
+   out the previous beat's board; an opening pane fades in the previous beat's board state drawn for the new pane,
+   while the board line it replaces fades out of the title band. The new beat's board, caption, labels and board
+   claims appear on the first frame of its hold. No label is drawn during the move.
+4. **Holds.** At share 0 the panes are exactly the previous beat's and at share 1 exactly this beat's. In every hold
+   frame the layout, the camera, the board state, the caption and the labels are the beat's still's. Parts that the
+   beat's `spin` animates may still move during the hold (the spin plays from the beat's first frame); the beat's
+   settled last frame shows the still's pose too.
+5. **Length.** The slide takes the move's time: 0.6 s, or 1.0 s for a routed move (`MGStoryTiming`), at most half the
+   beat. Deterministic.
+
+The manifest record of each such beat gains `layout`: `{"path": "slide" | "cut", "change": "open" | "close" |
+"resize", "seconds"}` (`seconds` 0 for a cut). Its `path` and `pathReason` give the camera's path, as for any beat.
+
+**Story and SwiftUI.** Both read the same pane rule and pane width (`MGExplainerFrame.panes`, `boardShare`), so they
+reach the same layouts. They animate the change differently. The SwiftUI view is live: the board pane slides in from
+the leading (or top) edge and fades over 0.35 s (`paneAnimationSeconds`), eased in and out, and the solid pane refits
+its camera each time its size changes (with Reduce Motion the pane appears and goes at once). The story video is a
+recording: the slide runs with the beat's camera move (0.6 s or 1.0 s, smoothstep), so the pane edge and the camera
+arrive together, and each hold frame has its still's layout, camera, board state, caption and labels (a spinning part
+may still move until the spin ends). The story does not copy the 0.35 s timing.
 
 In `marty-solid render` the pane rects are whole pixels (`MGExplainerFrame.panes`), and the solid pane is framed for
 exactly the pixels it is rendered at (`MGExplainerFrame.solidCamera`), so a beat's still and the hold frames of that beat

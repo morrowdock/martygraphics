@@ -66,10 +66,22 @@ final class StoryCameraTests: ExplainerTestCase {
                 }
             }
             XCTAssertEqual(holds, plan.beats.reduce(0) { $0 + $1.frames - $1.transitionFrames })
-            // The layout changes at beats 2 and 3 (split, then full frame): those beats cut, so every one of their
-            // frames has the still's camera and shows labels.
-            let cuts = Set(panes.indices.dropFirst().filter { panes[$0] != panes[$0 - 1] })
-            XCTAssertEqual(cuts, [1, 2])
+            // The layout changes at beats 2 and 3 (split, then full frame): those beats slide the pane over their
+            // move (`MGPaneSlide`). The move's camera keeps its position and is fitted to the current pane; hold frames
+            // keep the still's camera.
+            let changes = panes.indices.dropFirst().filter { panes[$0] != panes[$0 - 1] }
+            XCTAssertEqual(changes, [1, 2])
+            for i in 0..<plan.frameCount where changes.contains(plan.frame(i).beat) {
+                let f = plan.frame(i), c = try XCTUnwrap(plan.camera(frame: i, beatCameras: stills))
+                let p = MGExplainerFrame.panes(width: w, height: h, board: beats[f.beat - 1].pane.shown, solid: true, primarySolid: true)
+                let q = MGExplainerFrame.panes(width: w, height: h, board: beats[f.beat].pane.shown, solid: true, primarySolid: true)
+                let slide = try XCTUnwrap(MGPaneSlide(from: p, to: q))
+                let fitted = slide.camera(c, f.camera)
+                XCTAssertEqual(fitted.position, c.position)
+                if plan.holds(frame: i) { XCTAssertEqual(fitted, stills[f.beat]) }
+            }
+            // A host that still cuts on a layout change (`cuts`): every frame of those beats has the still's camera.
+            let cuts = Set(changes)
             for i in 0..<plan.frameCount where cuts.contains(plan.frame(i).beat) {
                 XCTAssertEqual(plan.camera(frame: i, beatCameras: stills, cuts: cuts), stills[plan.frame(i).beat])
                 XCTAssertTrue(plan.holds(frame: i, cuts: cuts))

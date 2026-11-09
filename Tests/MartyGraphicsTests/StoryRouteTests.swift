@@ -112,7 +112,7 @@ final class StoryRouteTests: XCTestCase {
     }
 
     /// A move whose ends are clear but whose straight path passes a post takes a pull back; one whose end camera sits
-    /// inside a part cuts (no path can end there clear). A layout beat cuts with reason `layout`; cameras that are not
+    /// inside a part cuts (no path can end there clear). A beat a host lists in `layout` cuts with reason `layout`; cameras that are not
     /// finite stay straight and untested, as `blockedMoves` skips them.
     func testPullbackCutAndLayout() throws {
         let post = try compile("""
@@ -141,7 +141,8 @@ final class StoryRouteTests: XCTestCase {
         XCTAssertEqual(cut.blockedBy, "post")
         XCTAssertEqual(cut.keys, [inPost])
         XCTAssertEqual(cut.camera(0.5), inPost)
-        // Layout: a cut whatever the geometry.
+        // `layout` (kept for hosts that cut on a layout change; `marty-solid render` slides the pane instead): a cut
+        // whatever the geometry.
         let shots = [MGStoryBeatShot(camera: a, params: p), MGStoryBeatShot(camera: a, params: p)]
         XCTAssertEqual(MGStoryPlan.routes(post, beats: shots, layout: [1])[1], .cut(a, reason: "layout"))
         // Not finite: straight, untested; a missing camera: no move.

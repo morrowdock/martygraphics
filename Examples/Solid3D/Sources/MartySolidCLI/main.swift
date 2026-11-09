@@ -290,8 +290,9 @@ func titleBackdrop(_ image: CGImage) -> CGImage {
 }
 
 /// Draws the title, the caption band, the footer (legend) line and the board line over `image`. Callers pass an image
-/// that already has its title backdrop (`titleBackdrop`), drawn before any overlay text.
-func caption(_ image: CGImage, title: String, text: String?, footer: String, boardLine: String? = nil) -> CGImage {
+/// that already has its title backdrop (`titleBackdrop`), drawn before any overlay text. `boardLineOpacity`: the board
+/// line's opacity (with its backdrop); below 1 only while a story's board pane opens (`MGPaneSlide`).
+func caption(_ image: CGImage, title: String, text: String?, footer: String, boardLine: String? = nil, boardLineOpacity: CGFloat = 1) -> CGImage {
     let w = image.width, h = image.height
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
@@ -325,7 +326,9 @@ func caption(_ image: CGImage, title: String, text: String?, footer: String, boa
     draw(footer, 12 * s, .medium, x: 40 * s, y: CGFloat(h) - 92 * s, alpha: 0.85)
     // The board's text when its pane is not drawn (an explainer beat whose board shows only text): one line in the
     // title band, under the legend line, in the board's ink, truncated with an ellipsis.
-    if let line = boardLine {
+    if let line = boardLine, boardLineOpacity > 0 {
+        ctx.saveGState(); defer { ctx.restoreGState() }
+        if boardLineOpacity < 1 { ctx.setAlpha(boardLineOpacity) }
         // Semibold and full ink: the thin lower stems of a medium weight anti-alias below 4.5:1 at small sizes.
         let font = NSFont.systemFont(ofSize: 15 * s, weight: .semibold) as CTFont
         let ink = CGColor(srgbRed: 0.80, green: 0.86, blue: 1.0, alpha: 1)
@@ -473,11 +476,12 @@ final class MovieWriter {
 
 /// The story manifest's per-beat records with the hold camera (the camera of the beat's last frame), the number of
 /// annotations off view in that frame plus the focus samples still hidden (absent when the beat draws no annotation and
-/// has no tested focus), whether the beat cut instead of moving (`cut`, with `cutReason` `layout` or `blocked`; the
-/// move's `path`, `pathReason`, `blockedBy` and `moveSeconds` come from `MGStoryPlan.manifestFields`), and the
-/// unblocked-focus fields of the beat (`autoGhost`, `occluded`, `focusSamples`, `view`; only for a tested focus).
+/// has no tested focus), whether the beat cut instead of moving (`cut`, with `cutReason` `blocked` or `motion`; the
+/// move's `path`, `pathReason`, `blockedBy` and `moveSeconds` come from `MGStoryPlan.manifestFields`), the pane layout
+/// change into the beat (`layout`, `MGPaneSlide.manifestJSON`; only where the layout changes), and the unblocked-focus
+/// fields of the beat (`autoGhost`, `occluded`, `focusSamples`, `view`; only for a tested focus).
 func storyBeats(_ beats: MGJSON?, _ cameras: [Int: MGSolidCamera], _ offView: [Int: Int], clear: [Int: MGSolidClearView] = [:],
-                cuts: [Int: String] = [:]) -> MGJSON? {
+                cuts: [Int: String] = [:], layout: [Int: MGJSON] = [:]) -> MGJSON? {
     guard case .array(let list)? = beats else { return beats }
     return .array(list.enumerated().map { k, v -> MGJSON in
         guard case .object(var o) = v else { return v }
@@ -485,6 +489,7 @@ func storyBeats(_ beats: MGJSON?, _ cameras: [Int: MGSolidCamera], _ offView: [I
         if let n = offView[k] { o["offView"] = .number(Double(n)) }
         o["cut"] = .bool(cuts[k] != nil)
         if let why = cuts[k] { o["cutReason"] = .string(why) }
+        if let l = layout[k] { o["layout"] = l }
         if let c = clear[k] { o.merge(c.manifestFields) { a, _ in a } }
         return .object(o)
     })
@@ -749,20 +754,32 @@ func frameRect(_ r: CGRect) -> MGFrameRect { MGFrameRect(x: Int(r.minX), y: Int(
 
 /// One composite: the panes on a dark board, then the title, the caption band and the legend line (`caption`).
 /// `boardLine`: the board's text when its pane is not drawn (`MGExplainerBoardPane.line`), shown in the title band.
+/// An image whose size differs from its pane (a board during a story's pane slide, `MGPaneSlide`) is drawn at its own
+/// size, centred in the pane and clipped to it; `boardOpacity` and `boardLineOpacity` fade the board and the board line.
 func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, rects: (board: CGRect?, solid: CGRect?),
-               title: String, caption text: String?, footer: String, boardLine: String? = nil) -> CGImage {
+               title: String, caption text: String?, footer: String, boardLine: String? = nil,
+               boardOpacity: CGFloat = 1, boardLineOpacity: CGFloat = 1) -> CGImage {
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     ctx.setFillColor(CGColor(red: 0.05, green: 0.07, blue: 0.10, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
-    for (img, rect) in [(board, rects.board), (solid, rects.solid)] {
-        guard let img, let rect else { continue }
+    for (img, rect, opacity) in [(board, rects.board, boardOpacity), (solid, rects.solid, 1)] {
+        guard let img, let rect, rect.width > 0, rect.height > 0, opacity > 0 else { continue }
         ctx.saveGState()
-        ctx.addPath(CGPath(roundedRect: rect, cornerWidth: 14, cornerHeight: 14, transform: nil)); ctx.clip()
-        ctx.draw(img, in: rect)
+        // The corner radius never exceeds half the pane (a sliding pane can be a few pixels wide).
+        let radius = min(14, rect.width / 2, rect.height / 2)
+        ctx.addPath(CGPath(roundedRect: rect, cornerWidth: radius, cornerHeight: radius, transform: nil)); ctx.clip()
+        if opacity < 1 { ctx.setAlpha(opacity) }
+        let iw = CGFloat(img.width), ih = CGFloat(img.height)
+        ctx.draw(img, in: iw == rect.width && ih == rect.height ? rect
+                 : CGRect(x: (rect.midX - iw / 2).rounded(), y: (rect.midY - ih / 2).rounded(), width: iw, height: ih))
         ctx.restoreGState()
     }
-    return caption(titleBackdrop(ctx.makeImage()!), title: title, text: text, footer: footer, boardLine: boardLine)
+    return caption(titleBackdrop(ctx.makeImage()!), title: title, text: text, footer: footer, boardLine: boardLine,
+                   boardLineOpacity: boardLineOpacity)
 }
+
+/// A pane rect as a CoreGraphics rect.
+func cgRect(_ r: MGFrameRect?) -> CGRect? { r.map { CGRect(x: $0.x, y: $0.y, width: $0.width, height: $0.height) } }
 
 /// One beat of an explainer as the stills show it, kept for the story video: the view, the caption line, the board
 /// image and pane layout, the board text that moved to the title band, the solid step and its framed camera.
@@ -772,6 +789,10 @@ struct ExplainerBeatShot {
     var board: CGImage?
     var rects: (board: CGRect?, solid: CGRect?)
     var boardLine: String?
+    /// The beat's shown board state and the reference pane its board is drawn for (`boardImage`'s `fit`): a pane that
+    /// opens in the next beat shows this state during the move (`MGPaneSlide`).
+    var scene: MGScene?
+    var fit: CGSize?
     var stepIndex: Int?
     var camera: MGSolidCamera?
     /// The beat's unblocked-focus result (automatic ghosts, hidden share); nil without a solid pane.
@@ -966,7 +987,7 @@ struct ExplainerBeatShot {
                             boardLine: pane.shown ? nil : pane.line),
                   "beat-\(k + 1).png", framing: lastFraming, fields: extra)
         shots.append(ExplainerBeatShot(view: view, caption: line, board: b, rects: rects, boardLine: pane.shown ? nil : pane.line,
-                                       stepIndex: step, camera: lastCamera, clear: lastClear))
+                                       scene: session.state?.scene, fit: fit, stepIndex: step, camera: lastCamera, clear: lastClear))
         if snapshots, let d = solidDoc {
             let params = MGExplainerFrame.pose(d, view: view)
             let name = "snapshot-beat-\(k + 1).json"
@@ -1019,9 +1040,15 @@ struct ExplainerBeatShot {
         // start of a beat is it in between, and labels are hidden during that move. The beat's spin plays.
         let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(unrouted.fps))
         let beatCameras = shots.map(\.camera)
-        // A beat whose solid pane has another size than the previous beat's (the board pane appeared or went) cuts to
-        // its own camera instead of moving: the previous camera was fitted for the other pane.
-        let layoutCuts = Set(shots.indices.dropFirst().filter { shots[$0].rects.solid != shots[$0 - 1].rects.solid })
+        // A beat whose pane layout differs from the previous beat's (the board pane opens, closes or changes width)
+        // slides the pane boundary between the two layouts over its camera move (`MGPaneSlide`): the solid pane eases
+        // between its two rects, the camera is fitted to the current pane on every frame, and the board fades in or
+        // out in its sliding pane. Only a move with no clear path still cuts (`MGStoryPlan.routes`).
+        var slides: [Int: MGPaneSlide] = [:]
+        for k in shots.indices.dropFirst() {
+            let a = shots[k - 1].rects, b = shots[k].rects
+            slides[k] = MGPaneSlide(from: (a.board.map(frameRect), a.solid.map(frameRect)), to: (b.board.map(frameRect), b.solid.map(frameRect)))
+        }
         // A camera move that would pass through a part the move draws takes a routed path (pull back, arc, both), or
         // cuts when no path is clear (`MGStoryPlan.routes`). The move draws the beat's view with its automatic ghosts.
         // Each beat's solid view with its still's automatic ghosts (the hold); the move into a beat draws it with the
@@ -1033,9 +1060,16 @@ struct ExplainerBeatShot {
                                 view: k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], d.assembly), step: shots[k].view.step)
             }
         } ?? []
-        let moves = solidDoc.map { d in MGStoryPlan.routes(d, beats: routeShots, plan: unrouted, layout: layoutCuts) } ?? [:]
+        let moves = solidDoc.map { d in MGStoryPlan.routes(d, beats: routeShots, plan: unrouted) } ?? [:]
         let story = unrouted.routed(moves)
-        let cuts = layoutCuts.union(story.cuts)
+        let cuts = story.cuts
+        // An opening board pane shows the previous beat's board state during the move, as every move does (the beat's
+        // own board and its claims appear when its hold starts), drawn for the new pane at the new layout's scale.
+        var openingBoards: [Int: CGImage] = [:]
+        for k in slides.keys.sorted() where slides[k]?.change == .open {
+            guard let r = slides[k]?.toBoard, let scene = shots[k - 1].scene else { continue }
+            openingBoards[k] = boardImage(scene, shots[k - 1].view, width: r.width, height: r.height, fit: shots[k].fit)
+        }
         shownView = nil
         var settled: Int?   // the beat whose camera has arrived (its labels keep their places from frame to frame)
         var holdCamera: [Int: MGSolidCamera] = [:], holdOffView: [Int: Int] = [:]
@@ -1043,10 +1077,16 @@ struct ExplainerBeatShot {
             try autoreleasepool {
                 let f = story.frame(i)
                 let b = shots[f.beat]
-                let camera = story.camera(frame: i, beatCameras: beatCameras, cuts: cuts)
                 let holding = story.holds(frame: i, cuts: cuts)
                 let moving = f.camera < 1 && f.beat > 0 && !cuts.contains(f.beat)
-                let sImg = try b.rects.solid.flatMap { try solidImage(b.view, $0, spin: f.spin, stepIndex: b.stepIndex, camera: camera,
+                // A pane slide: the panes at the move's share, and the move's camera fitted to the current solid pane.
+                // Hold frames (share 1) keep the beat's own layout and its still's camera exactly.
+                let slide = moving ? slides[f.beat] : nil
+                let slid = slide.map { $0.panes(f.camera) }
+                let rects: (board: CGRect?, solid: CGRect?) = slid.map { (cgRect($0.board), cgRect($0.solid)) } ?? b.rects
+                var camera = story.camera(frame: i, beatCameras: beatCameras, cuts: cuts)
+                if let slide, let c = camera { camera = slide.camera(c, f.camera) }
+                let sImg = try rects.solid.flatMap { try solidImage(b.view, $0, spin: f.spin, stepIndex: b.stepIndex, camera: camera,
                                                                       labels: holding, stable: settled == f.beat, ghost: b.clear?.autoGhost ?? [],
                                                                       from: moving ? (shots[f.beat - 1].view.step?.pose ?? [:]) : nil,
                                                                       blend: f.camera, moveFrom: moving ? holdViews[f.beat - 1] : nil,
@@ -1054,22 +1094,32 @@ struct ExplainerBeatShot {
                 settled = holding ? f.beat : nil
                 if holding, let camera { holdCamera[f.beat] = camera; if let n = lastOffView { holdOffView[f.beat] = n } }
                 // A beat's caption, labels and board claims appear when its hold starts. During the camera move the
-                // caption band is empty and the board still shows the previous beat's state (the layout is the same:
-                // a layout change cuts, with no move).
+                // caption band is empty and the board still shows the previous beat's state: in a pane slide, the
+                // closing pane fades it out, and an opening pane fades it in (drawn for the new pane) while the board
+                // line it replaces in the title band fades out.
                 let board = holding || f.beat == 0 ? b : shots[f.beat - 1]
-                try movie.append(composite(width: width, height: height, board: board.board, solid: sImg, rects: b.rects, title: title,
-                                           caption: story.caption(frame: i, cuts: cuts) ?? "", footer: footer, boardLine: board.boardLine))
+                var boardImg = board.board, boardOpacity = 1.0, lineOpacity = 1.0
+                if let slide {
+                    boardOpacity = slide.boardOpacity(f.camera)
+                    if slide.change == .open { boardImg = openingBoards[f.beat]; lineOpacity = 1 - f.camera }
+                }
+                try movie.append(composite(width: width, height: height, board: boardImg, solid: sImg, rects: rects, title: title,
+                                           caption: story.caption(frame: i, cuts: cuts) ?? "", footer: footer, boardLine: board.boardLine,
+                                           boardOpacity: CGFloat(boardOpacity), boardLineOpacity: CGFloat(lineOpacity)))
             }
         }
         try movie.finish()
         var fields = story.manifestFields(cuts: cuts)
-        var beatOffView: [Int: Int] = [:], beatClear: [Int: MGSolidClearView] = [:], why: [Int: String] = [:]
+        var beatOffView: [Int: Int] = [:], beatClear: [Int: MGSolidClearView] = [:], why: [Int: String] = [:], layout: [Int: MGJSON] = [:]
         for k in shots.indices {
             if let n = offViewCount(annotations: holdOffView[k], clear: shots[k].clear) { beatOffView[k] = n }
             if let c = shots[k].clear, c.tested { beatClear[k] = c }
-            if layoutCuts.contains(k) { why[k] = "layout" } else if let m = moves[k], m.path == .cut { why[k] = m.reason }
+            if let m = moves[k], m.path == .cut { why[k] = m.reason }
+            if let s = slides[k] {
+                layout[k] = s.manifestJSON(cut: cuts.contains(k), seconds: Double(story.beats[k].transitionFrames) / Double(story.fps))
+            }
         }
-        fields["beats"] = storyBeats(fields["beats"], holdCamera, beatOffView, clear: beatClear, cuts: why)
+        fields["beats"] = storyBeats(fields["beats"], holdCamera, beatOffView, clear: beatClear, cuts: why, layout: layout)
         fields["codec"] = .string("h264"); fields["width"] = .number(Double(movie.width)); fields["height"] = .number(Double(movie.height))
         try record("story.mp4", fields)
     }

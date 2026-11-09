@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- Pane slide in explainer story videos (`MGPaneSlide`).
+  - A beat whose pane layout differs from the previous beat's (the board pane opens, closes or changes width) no longer
+    cuts. During the camera move into the beat the pane edges move with the move's eased share, in whole pixels: the
+    solid pane eases between full frame and split, a board pane grows from or shrinks to its outer edge, and the board
+    fades in or out, drawn at its own size and centred in the pane. The camera moves as any move does (straight or
+    routed, swept boxes, PR #44) and is fitted to the current solid pane on every frame: the 3D image is rendered at
+    the pane's current pixels, and the field of view widens when the pane is narrower than the blended aspect; the
+    camera position never changes. At share 0 and 1 the panes are exactly the two beats' layouts, so hold frames keep
+    the stills' layouts and cameras exactly. The board shows the previous beat's state until the hold starts (an
+    opening pane fades it in, drawn for the new pane, while its title-band line fades out); the caption, labels and
+    claims wait for the hold, as before. Only a move with no clear path still cuts.
+  - Manifest: a story beat whose layout changes gains `layout` `{"path": "slide" | "cut", "change": "open" | "close" |
+    "resize", "seconds"}`; its `path` and `pathReason` give the camera path (before: `cut`, `layout`), and `cut` is
+    false unless the move cut. `cutReason` `layout` no longer occurs in `marty-solid render` output.
+    `MGStoryPlan.routes(_:beats:plan:layout:stage:)` keeps its `layout` argument for hosts that cut on a layout change.
+  - docs/EXPLAINER.md: "Pane slide in the story video", and how the story (the move's 0.6 s or 1.0 s) and the SwiftUI
+    view (0.35 s, `paneAnimationSeconds`) animate the same layout change. Check reports and golden files do not change.
+  - Tests: a synthetic explainer whose board pane opens at beat 2 and closes at beat 4 renders with no cut; hold
+    cameras equal the stills' cameras; no caption, label or claim of the new beat shows during a slide; same output in
+    fresh processes.
+
 - Routed story camera moves and strict arrow visibility.
   - **Routed moves** (`MGStoryPlan.routes`, `MGStoryMove`). When the straight camera move between two beats would pass
     through a part the move draws, fixed alternative paths are tried before the story cuts: a pull back along the start
