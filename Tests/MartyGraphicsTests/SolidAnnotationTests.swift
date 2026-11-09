@@ -261,7 +261,9 @@ final class SolidAnnotationTests: XCTestCase {
         XCTAssertEqual(reason(stage(#"{"labels": [{"id": "l1", "at": "stage", "text": "Stage"}]}"#)), "anchor.ambiguous.stage")
         XCTAssertEqual(reason(stage(#"{"labels": [{"id": "l1", "at": "nope", "text": "Nothing"}]}"#)), "anchor.ref.nope")
         XCTAssertNil(reason(stage(#"{"labels": [{"id": "l1", "at": "stage.planet2", "text": "One planet"}]}"#)))
-        XCTAssertEqual(reason(gears(#"{"labels": [{"id": "l1", "at": {"part": "p"}, "text": "P"}]}"#)), "anchor.form")
+        // `{"part": "p"}` alone is the part's centre (it was `anchor.form` before the back-preset release).
+        XCTAssertNil(reason(gears(#"{"labels": [{"id": "l1", "at": {"part": "p"}, "text": "P"}]}"#)))
+        XCTAssertEqual(reason(gears(#"{"labels": [{"id": "l1", "at": {"part": "p", "point": "centre", "offset": [0, 0, 1]}, "text": "P"}]}"#)), "anchor.form")
         XCTAssertEqual(reason(gears(#"{"labels": [{"id": "l1", "at": {"part": "p", "offset": [0, 0, 5000]}, "text": "P"}]}"#)), "anchor.offset")
         XCTAssertEqual(reason(gears(#"{"labels": [{"id": "l1", "at": {"part": "p", "point": "middle"}, "text": "P"}]}"#)), "anchor.point")
         XCTAssertEqual(reason(gears(#"{"labels": [{"id": "l1", "at": {"world": [0, 0]}, "text": "P"}]}"#)), "anchor.world")

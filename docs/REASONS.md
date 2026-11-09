@@ -344,7 +344,7 @@ list):
 | `step.hide.fact` | assembly | A view displays a fact of a part it hides: the text of an annotation it shows, or a step's caption or `check`; or the title shows a fact of a part that any view hides. `part` names the fact. |
 | `step.pose.fact` | assembly | A `dim.<id>` fact does not hold over a step's whole motion domain at its pose (every input its `spin` plays, at its explode value and placements): one of its `check` claims, or for a posed step its caption, the title or the text of an annotation it shows. `part` names the fact. |
 | `step.show.claim` | assembly | The plain view shows an annotation anchored on a show-only part (a part some step lists in `show`), which the plain view hides. |
-| `step.camera` | assembly | `camera` is not a camera preset name. |
+| `step.camera` | assembly | `camera` is not a camera preset name (`hero`, `front`, `side`, `top`, `low`, `back`, `iso`, `backLeft` or `backRight`). |
 | `step.explode` | assembly | `explode` is not a number in 0...1. |
 | `step.orbit` | assembly | `orbit` is not in -360...360 degrees. |
 | `step.spin` | assembly | `spin` is not in -20...20 input turns. |
@@ -430,7 +430,7 @@ list):
 | `label.id` | assembly | A label id is not an identifier. |
 | `arrow.id` | assembly | An arrow id is not an identifier. |
 | `dimension.id` | assembly | A dimension id is not an identifier. |
-| `anchor.form` | assembly | An anchor is not a part id, `{"part", "offset"}`, `{"part", "point"}` or `{"world"}`. |
+| `anchor.form` | assembly | An anchor is not a part id, `{"part"}` (the part's centre), `{"part", "offset"}`, `{"part", "point"}` or `{"world"}`. |
 | `anchor.offset` | assembly | An anchor `offset` is not three coordinates in -4000...4000 mm. |
 | `anchor.point` | assembly | An anchor `point` is not "centre". |
 | `anchor.world` | assembly | An anchor `world` point is not three coordinates in -4000...4000 mm. |
@@ -633,7 +633,7 @@ passes inner scene, lesson and assembly reasons through unchanged.
 | `view.object` | explainer | A beat `view` is not an object. |
 | `view.unknown.<keys>` | explainer | A beat `view` has keys that are not view keys (focus, explode, camera, orbit, spin, section, ghost, annotate, pose, hide, show). |
 | `view.focus` | explainer | A beat view's `focus` is not an array of at most 16 strings. |
-| `view.camera` | explainer | A beat view's `camera` is not a camera preset name. |
+| `view.camera` | explainer | A beat view's `camera` is not a camera preset name (`hero`, `front`, `side`, `top`, `low`, `back`, `iso`, `backLeft` or `backRight`). |
 | `view.explode` | explainer | A beat view's `explode` is not a number in 0...1. |
 | `view.orbit` | explainer | A beat view's `orbit` is not a number of degrees in -360...360. |
 | `view.spin` | explainer | A beat view's `spin` is not a number of input turns in -20...20. |

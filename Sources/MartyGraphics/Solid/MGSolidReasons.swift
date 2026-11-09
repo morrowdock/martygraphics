@@ -243,6 +243,11 @@ public enum MGSolidReasons {
         MGSolidReason(pattern: pattern, meaning: meaning, formats: [.assembly], kind: .warning, strict: strict)
     }
 
+    /// The camera preset names as the refusal meanings list them: `hero`, `front`, … or `backRight`.
+    private static let cameraNames: String = {
+        let n = MGSolidCamera.presetNames.map { "`\($0)`" }
+        return n.dropLast().joined(separator: ", ") + " or " + n.last!
+    }()
     private static let text = "valid text (not empty after trimming, no `<`, `>`, `://` or control characters)"
 
     /// Every stable reason, grouped as in docs/REASONS.md.
@@ -387,7 +392,7 @@ public enum MGSolidReasons {
         r("step.hide.fact", [.assembly], "A view displays a fact of a part it hides: the text of an annotation it shows, or a step's caption or `check`; or the title shows a fact of a part that any view hides. `part` names the fact."),
         r("step.pose.fact", [.assembly], "A `dim.<id>` fact does not hold over a step's whole motion domain at its pose (every input its `spin` plays, at its explode value and placements): one of its `check` claims, or for a posed step its caption, the title or the text of an annotation it shows. `part` names the fact."),
         r("step.show.claim", [.assembly], "The plain view shows an annotation anchored on a show-only part (a part some step lists in `show`), which the plain view hides."),
-        r("step.camera", [.assembly], "`camera` is not a camera preset name."),
+        r("step.camera", [.assembly], "`camera` is not a camera preset name (\(cameraNames))."),
         r("step.explode", [.assembly], "`explode` is not a number in 0...1."),
         r("step.orbit", [.assembly], "`orbit` is not in -360...360 degrees."),
         r("step.spin", [.assembly], "`spin` is not in -20...20 input turns."),
@@ -465,7 +470,7 @@ public enum MGSolidReasons {
         r("label.id", [.assembly], "A label id is not an identifier."),
         r("arrow.id", [.assembly], "An arrow id is not an identifier."),
         r("dimension.id", [.assembly], "A dimension id is not an identifier."),
-        r("anchor.form", [.assembly], "An anchor is not a part id, `{\"part\", \"offset\"}`, `{\"part\", \"point\"}` or `{\"world\"}`."),
+        r("anchor.form", [.assembly], "An anchor is not a part id, `{\"part\"}` (the part's centre), `{\"part\", \"offset\"}`, `{\"part\", \"point\"}` or `{\"world\"}`."),
         r("anchor.offset", [.assembly], "An anchor `offset` is not three coordinates in -4000...4000 mm."),
         r("anchor.point", [.assembly], "An anchor `point` is not \"centre\"."),
         r("anchor.world", [.assembly], "An anchor `world` point is not three coordinates in -4000...4000 mm."),
@@ -650,7 +655,7 @@ public enum MGSolidReasons {
         x("view.object", "A beat `view` is not an object."),
         x("view.unknown.<keys>", "A beat `view` has keys that are not view keys (focus, explode, camera, orbit, spin, section, ghost, annotate, pose, hide, show)."),
         x("view.focus", "A beat view's `focus` is not an array of at most 16 strings."),
-        x("view.camera", "A beat view's `camera` is not a camera preset name."),
+        x("view.camera", "A beat view's `camera` is not a camera preset name (\(cameraNames))."),
         x("view.explode", "A beat view's `explode` is not a number in 0...1."),
         x("view.orbit", "A beat view's `orbit` is not a number of degrees in -360...360."),
         x("view.spin", "A beat view's `spin` is not a number of input turns in -20...20."),
