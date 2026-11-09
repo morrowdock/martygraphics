@@ -45,7 +45,8 @@ public enum MGExplainerBoard {
 }
 
 /// SwiftUI adapter around `MGExplainerSession`: publishes both views, runs the pacing clock, plays each beat's 3D
-/// `spin` over time from the beat's start (frozen while paused), applies the beat's camera preset and orbit, drives
+/// `spin` over time from the beat's start (frozen while paused), frames the solid pane with the beat's framed camera
+/// and automatic ghosts (`MGExplainerFrame.solidClearView`, the camera of the beat's still and story hold), drives
 /// the board through an `MGSceneController` (the lesson's blends and keyframes, held while paused), writes signposts
 /// (subsystem `MartyGraphics`, category `explainer`: `statement`, `beat`, `solidCompile`) and records TE1–TE6.
 @MainActor
@@ -66,6 +67,18 @@ public final class MGExplainerController: ObservableObject {
     /// nil without annotations or before the pane has a size. It comes from `MGSolidAnnotations.frame`, through
     /// `checkedAnnotations`.
     @Published public private(set) var annotationFrame: MGAnnotationFrame?
+    /// The framing of the solid pane for the presented beat: `MGExplainerFrame.solidClearView` for the beat's step
+    /// (`MGExplainerSession.solidStep(forBeat:)`) at the pane's aspect, the same function the beat's still and its
+    /// `story.mp4` hold frames use (per-step focus framing, the unblocked-focus rule with its automatic ghosts and
+    /// alternate directions, every camera preset). The pane draws `paneView` from `clear.camera`. Nil without a solid.
+    public private(set) var paneClear: MGSolidClearView?
+    /// The view the solid pane draws: the beat's solid view with `paneClear`'s automatic ghosts, as in its still.
+    public private(set) var paneView: MGSolidView?
+    /// Grows by one each time the pane goes back to its framed camera: a new beat, a new solid, or a new pane aspect.
+    /// The framed camera is the start pose of each beat; the learner may orbit and zoom from it (a document without
+    /// annotations), and the next framing discards that orbit (`MartyGraphicsExplainerView` rebuilds its scene view
+    /// for each key, which also drops a camera SceneKit's camera control switched to and its orbit pivot).
+    @Published public private(set) var cameraReset = 0
     /// The board pane's scene controller (the presented 2D state with the lesson's transitions).
     public let board = MGSceneController()
     public nonisolated let clock: MGLessonClock
@@ -104,7 +117,7 @@ public final class MGExplainerController: ObservableObject {
         session = MGExplainerSession(pacing: session.pacing, clock: session.clock, library: session.library)
         timing = MGExplainerRunTiming(requestAt: clock.now)
         lastIssue = nil; renderer = nil; shownSolid = nil; shownSerial = 0; shownBeat = nil; beatStart = nil; heldElapsed = nil
-        skipMotion = false
+        skipMotion = false; paneClear = nil; paneView = nil
         boardFrame.arm(); solidFrame.arm()
         board.resumeTransitions(); board.show(nil)
     }
@@ -131,7 +144,7 @@ public final class MGExplainerController: ObservableObject {
         case .success(let events):
             ticker?.cancel(); animator?.cancel()
             session = trial; lastIssue = nil; renderer = nil; shownSolid = nil; shownSerial = 0; shownBeat = nil
-            beatStart = nil; heldElapsed = nil; skipMotion = false
+            beatStart = nil; heldElapsed = nil; skipMotion = false; paneClear = nil; paneView = nil
             if timing.requestAt == nil || timing.core.completeAt != nil { timing = MGExplainerRunTiming(requestAt: started) }
             boardFrame.arm(); solidFrame.arm()
             board.resumeTransitions()
@@ -170,7 +183,7 @@ public final class MGExplainerController: ObservableObject {
         if let k = session.openLine { lineEnded(k) }
     }
 
-    /// The solid pane's size changed: frame the camera for the new aspect.
+    /// The solid pane's size changed: frame the camera for the new aspect (the framing reads only the aspect).
     public func setSolidAspect(_ a: Double) {
         guard a.isFinite, a > 0, abs(a - aspect) > 1e-3 else { return }
         aspect = a; frameCamera()
@@ -203,13 +216,30 @@ public final class MGExplainerController: ObservableObject {
     nonisolated func markBoardFrame() { boardFrame.hit(clock) }
     nonisolated func markSolidFrame() { solidFrame.hit(clock) }
 
+    /// The framing of the presented beat in a pane of width over height `aspect`: `MGExplainerFrame.solidClearView`
+    /// for the beat's step, and the view the pane draws (the beat's solid view with the automatic ghosts). The one
+    /// function the beat's still and story hold frames use; nothing here computes a camera of its own.
+    static func paneFraming(_ session: MGExplainerSession, aspect: Double) -> (clear: MGSolidClearView, view: MGSolidView)? {
+        guard let d = session.solid else { return nil }
+        let v = session.presented
+        let clear = MGExplainerFrame.solidClearView(d, view: v, stepIndex: v.beat.flatMap { session.solidStep(forBeat: $0) }, aspect: aspect)
+        return (clear, (v.solid ?? d.view(step: nil)).ghosting(clear.autoGhost))
+    }
+
+    /// Frames the pane for the presented beat at the pane's aspect: the beat's framed camera (a cut, as before; the
+    /// story's camera moves are not played here) and its automatic ghosts. Each call is a camera reset.
     private func frameCamera() {
-        guard let r = renderer, let d = session.solid else { return }
-        let step = session.presented.step
-        let p = MGSolidCamera.presets[step?.camera ?? "hero"] ?? MGSolidCamera.presets["hero"]!
-        let params = MGPoseParameters(input: d.defaults.input, explode: step?.explode ?? d.defaults.explode, placements: step?.pose ?? [:])
-        r.frame(params, explodeRange: [0, params.explode], yaw: p.yaw + (step?.orbit ?? 0), pitch: p.pitch, aspect: aspect, margin: 0.8,
-                hidden: Set((session.presented.solid ?? d.view(step: nil)).hiddenParts))
+        guard let r = renderer, let d = session.solid, let f = Self.paneFraming(session, aspect: aspect) else { return }
+        paneClear = f.clear
+        if paneView != f.view || r.view != f.view {
+            paneView = f.view
+            r.show(document: d, view: f.view)
+            // `show` restyles every part: the highlight goes back on.
+            let v = session.presented
+            r.highlight(Set(v.solidHighlight), dimOthers: !v.solidHighlight.isEmpty)
+        }
+        r.setCamera(f.clear.camera)
+        cameraReset &+= 1
     }
 
     private func applyPose() {
@@ -219,7 +249,7 @@ public final class MGExplainerController: ObservableObject {
         // The overlay is laid out at the pose shown, through the one gate (a view or pose not checked shows nothing).
         if let r = renderer, let d = session.solid, !d.annotations.isEmpty, solidSize.width > 0 {
             let v = session.presented
-            annotationFrame = MGSolidAnnotations.frame(document: d, view: v.solid ?? d.view(step: nil), params: pose, camera: r.camera,
+            annotationFrame = MGSolidAnnotations.frame(document: d, view: paneView ?? v.solid ?? d.view(step: nil), params: pose, camera: r.camera,
                                                        width: Double(solidSize.width), height: Double(solidSize.height),
                                                        previous: annotationFrame, highlight: v.solidHighlight)
         } else if annotationFrame != nil {
@@ -269,16 +299,17 @@ public final class MGExplainerController: ObservableObject {
             beatStart = clock.now
             heldElapsed = session.isPaused ? .zero : nil
         }
-        if let r = renderer, let d = session.solid {
+        if let r = renderer, session.solid != nil {
             let v = session.presented
             if fresh || changed {
                 r.apply(solidPose(at: clock.now))
-                r.show(document: d, view: v.solid ?? d.view(step: nil))
+                // The beat's view with its automatic ghosts and its framed camera (`frameCamera`).
+                paneView = nil
+                frameCamera()
             }
             // Also after a learner change, which can move the highlight (an id may stop resolving).
             r.highlight(Set(v.solidHighlight), dimOthers: !v.solidHighlight.isEmpty)
             r.highlightAnnotations(Set(v.annotations))
-            if fresh || changed { frameCamera() }
         }
         applyPose()
         animate()
@@ -321,7 +352,9 @@ final class MGExplainerSolidFrameDelegate: NSObject, SCNSceneRendererDelegate, @
 /// Two panes (the `primary` view larger: side by side when wide, stacked when narrow), the caption, the learner
 /// controls and the legend with its notes. The board pane follows the adaptive rule (`MGExplainerSession.boardPane`):
 /// while the shown board has only text, the solid takes both panes' room and the board's text shows under the title.
-/// The pane slides in and out (0.35 s); with Reduce Motion it changes at once.
+/// The pane slides in and out (0.35 s); with Reduce Motion it changes at once. The solid pane shows each beat with
+/// its still's framed camera and automatic ghosts (`MGExplainerController.paneClear`) and cuts to the next beat's
+/// camera (no camera move, so no camera timing of its own).
 public struct MartyGraphicsExplainerView: View {
     @ObservedObject private var controller: MGExplainerController
     @ObservedObject private var board: MGSceneController
@@ -412,8 +445,12 @@ public struct MartyGraphicsExplainerView: View {
             if s.solid != nil, let r = controller.renderer {
                 GeometryReader { g in
                     // With annotations the camera stays the engine's, so the overlay's placement matches the picture.
+                    // Without them the learner may orbit and zoom from the beat's framed camera; each new framing
+                    // (`cameraReset`: a new beat, solid or pane aspect) builds a fresh scene view on the framed
+                    // camera, so the learner's orbit, a camera SceneKit switched to and its orbit pivot are dropped.
                     let annotated = !(s.solid?.annotations.isEmpty ?? true)
                     SceneView(scene: r.scene, pointOfView: r.cameraNode, options: annotated ? [] : [.allowsCameraControl], delegate: frameDelegate)
+                        .id(annotated ? 0 : controller.cameraReset)
                         .overlay {
                             if let f = controller.annotationFrame, let d = s.solid { MGSolidOverlayView(frame: f, document: d, legend: false).allowsHitTesting(false) }
                         }

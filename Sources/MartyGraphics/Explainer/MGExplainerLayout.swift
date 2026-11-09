@@ -170,11 +170,20 @@ public enum MGExplainerFrame {
     /// beat draws as automatic ghosts and the hidden share. A beat's still and its story frames show
     /// `clear.view(view.solid)`.
     public static func solidClearView(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?, pane: MGFrameRect) -> MGSolidClearView {
+        solidClearView(doc, view: view, stepIndex: stepIndex, aspect: pane.aspect)
+    }
+
+    /// `solidClearView` for a pane of width over height `aspect` (the framing reads only the pane's aspect): the
+    /// SwiftUI solid pane (`MGExplainerController`) frames each beat with this, for its own size in points, so it
+    /// shows the camera and automatic ghosts of the beat's still and story hold frames. A non-finite or non-positive
+    /// aspect gives 1.6 (`MGFrameRect.aspect` of an empty pane).
+    public static func solidClearView(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?, aspect: Double) -> MGSolidClearView {
+        let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6
         let step = view.step
         let shot = MGSolidShot(file: "", params: pose(doc, view: view), preset: step?.camera ?? "hero", orbit: step?.orbit ?? 0,
                                highlight: view.solidHighlight, margin: 0.8, step: step == nil ? nil : stepIndex, title: nil, caption: nil)
         // (The camera of the pane only; captions, labels and claims of a story frame follow `MGStoryPlan.holds`.)
-        return MGSolidFraming.clearView(doc, shot: shot, aspect: pane.aspect, titleBand: 0, captionBand: 0)
+        return MGSolidFraming.clearView(doc, shot: shot, aspect: aspect, titleBand: 0, captionBand: 0)
     }
 }
 

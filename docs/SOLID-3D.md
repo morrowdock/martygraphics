@@ -564,8 +564,8 @@ another part (unblocked focus, label occlusion) and makes no claim in that view:
   motion of a part only once a presented beat displayed it (docs/EXPLAINER.md).
 
 `MGSolidRenderer.show(_:)` hides their nodes; `MGSolidRenderer.worldBounds(_:…hidden:)` and
-`frame(_:…hidden:)` take the parts to leave out (the SwiftUI explainer view passes the beat
-view's `hiddenParts`). The snapshot of a view keeps every part range in part order and gives hidden parts no
+`frame(_:…hidden:)` take the parts to leave out. (The SwiftUI explainer pane frames with
+`MGExplainerFrame.solidClearView`, which leaves out the view's hidden parts, as the stills do.) The snapshot of a view keeps every part range in part order and gives hidden parts no
 triangles; it lists them in `hidden` (v2). The check report's `stepViews` gives each
 step's `hidden` parts and `showOnly`. In `story.mp4` a beat shows its own visibility for
 the whole beat (move and hold), like its cuts and ghosts.
@@ -1780,8 +1780,9 @@ checked by an independent audit.
 A step framed on its focus (`framing: focus`) is then checked for parts that hide the
 focus from the camera (`MGSolidFraming.clearView`, Foundation only, deterministic). The
 render plan's stills (`MGSolidRenderPlan.cameras`, field `clear`), each explainer beat's
-solid pane (`MGExplainerFrame.solidClearView`; `solidCamera` returns its camera) and the
-hold frames of `story.mp4` use this one function.
+solid pane (`MGExplainerFrame.solidClearView`; `solidCamera` returns its camera), the
+hold frames of `story.mp4` and the SwiftUI explainer pane (`MGExplainerController`,
+docs/EXPLAINER.md, "The solid pane in SwiftUI") use this one function.
 
 1. **Samples.** At most 48 (`occlusionSamples`) triangle centroids of the focus parts
    (a cut part gives its capped cut mesh), split evenly over the parts by a fixed
