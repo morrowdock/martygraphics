@@ -602,13 +602,19 @@ annotation names its id in `MGSolidIssue.part`.
 | `"p"` | the origin of part `p`'s frame (for a gear or shaft: a point on its axis) |
 | `{"part": "p", "offset": [x, y, z]}` | a point in `p`'s frame, mm, each coordinate within ±4000 |
 | `{"part": "p", "point": "centre"}` | the centre of `p`'s mesh bounds, in its frame |
+| `{"part": "p"}` | the same as `{"part": "p", "point": "centre"}`: the centre of `p`'s mesh bounds (not the frame origin that the bare id `"p"` gives) |
 | `{"world": [x, y, z]}` | a fixed world point (kernel frame: Z up, mm) |
 
 A part anchor moves with its part in every pose: an offset away from the joint axis turns with the
 part, so put a label on the axis when the part spins. A part id, a `repeat` copy id and an anchor
 name (`stage.output`) are accepted. A base id with copies and an instance id name more than one part
 (`anchor.ambiguous.<id>`); an unknown id is `anchor.ref.<id>`. Bad shapes: `anchor.form`,
-`anchor.offset`, `anchor.point`, `anchor.world`.
+`anchor.offset`, `anchor.point`, `anchor.world`. `{"part": "p"}` with no `offset` and no `point` is the part's
+centre and gets every centre rule: the anchor checks below test it like `{"point": "centre"}`, and a hidden centre is
+refused in strict mode (before this release it was `anchor.form`). The report gives a `suggest` when a safe
+candidate exists; otherwise it gives `noSuggest` and its alternatives, as for the explicit centre form.
+A suggestion still writes the
+centre as `{"part", "point": "centre"}`.
 
 A label's anchor and a pointer's tip must lie on the part they name, and every step or beat that shows them must
 show the point: see [Anchor checks](#anchor-checks). A component anchor name gives its part's frame, not a point of
@@ -1670,6 +1676,27 @@ revolute parents, signed by joint axis direction against the pair axis
 one captioned still per step, and the loop frames. `cameras(_:width:height:)` gives the
 camera of each shot from one rule (`MGSolidFraming`, Foundation only, deterministic);
 the tool and any host use the same cameras.
+
+**Camera presets** (`MGSolidCamera.presets`, names in `MGSolidCamera.presetNames`). A step's or beat view's `camera`
+is one of these names; any other string is `step.camera` (`view.camera` in an explainer), whose meaning lists every
+name. There are no aliases. Yaw is in degrees about the vertical axis, 0 looks from the front (kernel −Y, world +Z)
+and 90 from +X; pitch is degrees above the horizon. Every preset gets the same framing rules below (per-step focus,
+unblocked focus, title-band fit).
+
+| Preset | Yaw | Pitch | View |
+| --- | --- | --- | --- |
+| `hero` (default) | 32 | 28 | three-quarter front, +X side |
+| `front` | 0 | 8 | front |
+| `side` | 90 | 8 | from +X |
+| `top` | 0 | 88 | from above |
+| `low` | 24 | 9 | low three-quarter front |
+| `back` | 200 | 24 | from behind, slightly to −X |
+| `iso` | 45 | 35.264 | isometric |
+| `backLeft` | 135 | 28 | three-quarter back, +X side (+135° from `front`; `hero`'s side, from behind) |
+| `backRight` | 225 | 28 | three-quarter back, −X side (−135° from `front`) |
+
+`backLeft` and `backRight` are named as a viewer behind the model sees them: for a model that faces the `front`
+camera (the `mannequin` does), `backLeft` shows its left side and back (its left arm is on +X).
 
 * **Focus.** A step first frames its focus from its own camera preset and `orbit` (this
   first framing keeps the direction; only the target and distance change). The

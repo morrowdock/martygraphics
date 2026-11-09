@@ -342,7 +342,8 @@ extension MGSolidAnnotations {
                       try MGSolidParser.num(a[2], MGSolidLimits.coordinate, reason))
     }
 
-    /// `"p"`, `{"part": "p", "offset": [x, y, z]}`, `{"part": "p", "point": "centre"}` or `{"world": [x, y, z]}`.
+    /// `"p"`, `{"part": "p", "offset": [x, y, z]}`, `{"part": "p", "point": "centre"}`, `{"part": "p"}` (the same as
+    /// `"point": "centre"`) or `{"world": [x, y, z]}`.
     static func anchor(_ v: MGJSON, _ names: Names, owner: String) throws -> MGAnnotationPoint {
         switch v {
         case .string(let ref):
@@ -350,12 +351,14 @@ extension MGSolidAnnotations {
         case .object(let o):
             let keys = Set(o.keys)
             if keys == ["world"] { return MGAnnotationPoint(anchor: .world(try vector3(o["world"], "anchor.world")), local: try vector3(o["world"], "anchor.world")) }
-            guard case .string(let ref)? = o["part"], keys == ["part", "offset"] || keys == ["part", "point"] else { throw MGSolidIssue("anchor.form") }
+            guard case .string(let ref)? = o["part"], keys == ["part"] || keys == ["part", "offset"] || keys == ["part", "point"] else {
+                throw MGSolidIssue("anchor.form")
+            }
             if keys.contains("offset") {
                 let off = try vector3(o["offset"], "anchor.offset")
                 return MGAnnotationPoint(anchor: .offset(part: try names.part(ref, owner: owner), off), local: off)
             }
-            guard o["point"] == .string("centre") else { throw MGSolidIssue("anchor.point") }
+            guard keys == ["part"] || o["point"] == .string("centre") else { throw MGSolidIssue("anchor.point") }
             // The mesh centre is filled in once meshes exist (`prepare`).
             return MGAnnotationPoint(anchor: .centre(part: try names.part(ref, owner: owner)), local: .zero)
         default:

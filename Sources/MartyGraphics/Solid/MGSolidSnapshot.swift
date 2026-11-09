@@ -35,10 +35,16 @@ public struct MGSolidCamera: Codable, Equatable, Sendable {
         return MGSolidCamera(target: bounds.center, yaw: yaw, pitch: pitch, distance: d, fieldOfView: fieldOfView)
     }
 
-    /// Named presets for authored steps.
+    /// Named presets for authored steps. `backLeft` and `backRight` are three-quarter views from behind: yaw 135° and
+    /// 225° (±135° from `front`), at `hero`'s pitch. `backLeft` looks from behind on the +X side (kernel and world),
+    /// the side `side` and `hero` look from; `backRight` looks from behind on the −X side.
     public static let presets: [String: (yaw: Double, pitch: Double)] = [
         "hero": (32, 28), "front": (0, 8), "side": (90, 8), "top": (0, 88), "low": (24, 9), "back": (200, 24), "iso": (45, 35.264),
+        "backLeft": (135, 28), "backRight": (225, 28),
     ]
+
+    /// Every preset name in a fixed order (the refusal meaning of `step.camera` and `view.camera` lists them).
+    public static let presetNames = ["hero", "front", "side", "top", "low", "back", "iso", "backLeft", "backRight"]
 }
 
 /// Studio light rig shared by the rasteriser and any other renderer (directions point from the light toward the scene).

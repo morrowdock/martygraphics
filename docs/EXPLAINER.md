@@ -455,7 +455,8 @@ stacked when tall), the caption, a slider for every bound control and the legend
 - The solid pane plays each beat's `spin` over time from the beat's start (`MGExplainerLimits.spinSecondsPerTurn` per
   input turn; `solidPose(at:)`, `spinProgress(at:)`). `pause()` freezes the pose it shows; `resume()` continues from
   there. `.immediate` pacing and `finishNow()` show the end pose. Each beat's `camera` preset and `orbit` frame the
-  camera, as `marty-solid render` does.
+  camera, as `marty-solid render` does (the preset names, `backLeft` and `backRight` included, are in
+  [SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop)).
 - Highlighted 3D parts use the renderer's `.strong` emphasis (`MGSolidRenderer.emphasis`): the 2D emphasis colour as a
   glow, other parts dimmed. The default `.subtle` style of plain assemblies is unchanged. No device budget is claimed: a
 physical-device receipt is pending. Authoring advice: write the view the learner needs first, keep the board small,

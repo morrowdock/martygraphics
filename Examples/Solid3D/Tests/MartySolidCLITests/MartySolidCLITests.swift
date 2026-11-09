@@ -698,6 +698,41 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual((standard.json?["warnings"] as? [[String: Any]])?.compactMap { $0["reason"] as? String }, ["annotation.arrow.hidden.push"])
     }
 
+    /// The back presets and the part-only anchor `{"part": id}` in fresh processes: the same check text each time, a
+    /// hidden part-only centre refused in strict mode (a warning in the normal check), and renders framed from behind.
+    func testBackPresetsAndPartCentreAnchorsInFreshProcesses() throws {
+        let parts = #"[{"id":"shell","shape":{"box":{"size":[200,200,200]}}},{"id":"core","shape":{"box":{"size":[40,40,40]}}},{"id":"side","at":[400,0,0],"shape":{"box":{"size":[40,40,40]}}}]"#
+        let steps = #"[{"say":"From behind, left.","camera":"backLeft"},{"say":"The side box from behind, right.","focus":["side"],"camera":"backRight"}]"#
+        let ok = try write(#"{"v":2,"kind":"assembly","title":"Back views","parts":\#(parts),"annotations":{"labels":[{"id":"l1","at":{"part":"side"},"text":"Side"}]},"steps":\#(steps)}"#, "back-ok.json")
+        let first = try run(["check", "--strict", ok])
+        XCTAssertEqual(first.status, 0, first.text)
+        for _ in 0..<2 { XCTAssertEqual(try run(["check", "--strict", ok]).text, first.text) }
+        let hidden = try write(#"{"v":2,"kind":"assembly","title":"Back views","parts":\#(parts),"annotations":{"labels":[{"id":"l1","at":{"part":"core"},"text":"Core"}]},"steps":\#(steps)}"#, "back-hidden.json")
+        let refused = try run(["check", "--strict", hidden])
+        XCTAssertEqual(refused.status, 1, refused.text)
+        XCTAssertEqual(refused.json?["reason"] as? String, "annotation.anchor.hidden.l1")
+        for _ in 0..<2 { XCTAssertEqual(try run(["check", "--strict", hidden]).text, refused.text) }
+        let standard = try run(["check", hidden])
+        XCTAssertEqual(standard.status, 0, standard.text)
+        XCTAssertTrue((standard.json?["warnings"] as? [[String: Any]])?.contains { $0["reason"] as? String == "annotation.anchor.hidden.l1" } ?? false, standard.text)
+        let alias = try write(#"{"v":2,"kind":"assembly","parts":\#(parts),"steps":[{"say":"A.","camera":"three-quarter-back"}]}"#, "back-alias.json")
+        let a = try run(["check", alias])
+        XCTAssertEqual(a.status, 1, a.text)
+        XCTAssertEqual(a.json?["reason"] as? String, "step.camera")
+        XCTAssertTrue((a.json?["repair"] as? String)?.contains("backRight") ?? false, a.text)
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("back-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: out) }
+        let r = try renderOrSkip(["render", ok, out.path, "--size", "320x200", "--no-loop", "--no-story"])
+        XCTAssertEqual(r.status, 0, r.text)
+        let m = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
+        let stills = (m?["outputs"] as? [[String: Any]] ?? []).filter { ($0["file"] as? String)?.hasPrefix("step-") == true }
+        XCTAssertEqual(stills.count, 2)
+        XCTAssertEqual((stills[0]["camera"] as? [String: Any])?["yaw"] as? Double, 135)
+        XCTAssertEqual((stills[1]["camera"] as? [String: Any])?["yaw"] as? Double, 225)
+        XCTAssertEqual(stills[1]["framing"] as? String, "focus")
+        for s in stills { XCTAssertTrue(FileManager.default.fileExists(atPath: out.appendingPathComponent(s["file"] as! String).path)) }
+    }
+
     /// `story.mp4` for an assembly with steps; a story over the frame cap is refused before any file is written, and
     /// `--no-story` renders the same document without it. A bad `--story-fps` is a usage error.
     func testAssemblyStoryAndItsCap() throws {

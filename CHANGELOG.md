@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- Back three-quarter camera presets and part-centre anchors.
+  - **Camera presets `backLeft` and `backRight`** (`MGSolidCamera.presets`): three-quarter views from behind, yaw 135°
+    and 225° (±135° from `front`), at `hero`'s pitch (28°). `backLeft` looks from behind on the +X side (`hero`'s side),
+    `backRight` on the −X side. They take the same framing rules as every preset (per-step focus, unblocked focus,
+    title-band fit). There are no aliases: `three-quarter-back`, `back-left` and other spellings are still
+    `step.camera` / `view.camera`. `MGSolidCamera.presetNames` lists every name in a fixed order, and the catalog
+    meaning of `step.camera` and `view.camera` (so the check report's `repair` line) now lists them all.
+  - **`{"part": id}` anchors.** An anchor object with only `part` (no `offset`, no `point`) is the part's centre, the
+    same as `{"part": id, "point": "centre"}`; every centre rule applies (anchor checks, strict refusal of a hidden
+    centre, with a `suggest` when a safe candidate exists and otherwise `noSuggest` and its alternatives).
+    Changed reason for an old input: `{"part": id}` alone was `anchor.form`; it is now
+    accepted. Every other bad anchor shape is still `anchor.form`. The `anchor.form` meaning names the new form.
+  - docs/SOLID-3D.md: a "Camera presets" table and the new anchor row; docs/REASONS.md: the three changed meanings.
+    Check reports and golden files do not change (no shipped document uses the new names or the new form).
+  - Tests: both presets frame their focus and the whole model inside the safe window, use the unblocked-focus rule,
+    render with the framed camera and are accepted in a beat view; aliases are refused; `{"part": id}` parses as the
+    centre and gets the same strict report as the centre form, with a suggestion that passes; fresh-process checks
+    give the same text.
+
 - Pane slide in explainer story videos (`MGPaneSlide`).
   - A beat whose pane layout differs from the previous beat's (the board pane opens, closes or changes width) no longer
     cuts. During the camera move into the beat the pane edges move with the move's eased share, in whole pixels: the
