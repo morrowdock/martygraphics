@@ -35,9 +35,22 @@ public struct MGSolidIssue: Error, Equatable, CustomStringConvertible, Sendable 
     public let part: String?
     /// Repair detail of `annotations.visible` (nil for every other reason).
     public let visibility: MGAnnotationVisibilityDetail?
-    /// Repair detail of `parts.resolved` (the report's `limit`; nil for every other reason).
+    /// Repair detail of a length, count or size limit (the report's `limit`; `parts.resolved` adds its instances); nil
+    /// for every other reason.
     public let limit: MGSolidLimitDetail?
     public init(_ reason: String, part: String? = nil) { self.reason = reason; self.part = part; visibility = nil; limit = nil }
+    /// A limit reason with its repair detail (nil when the refusal had another cause).
+    public init(_ reason: String, part: String? = nil, limit: MGSolidLimitDetail?) {
+        self.reason = reason; self.part = part; visibility = nil; self.limit = limit
+    }
+    private init(reason: String, part: String?, visibility: MGAnnotationVisibilityDetail?, limit: MGSolidLimitDetail?) {
+        self.reason = reason; self.part = part; self.visibility = visibility; self.limit = limit
+    }
+    /// The same issue with `prefix` before its limit field (a step's issue in the document: `steps[2].`).
+    func prefixed(_ prefix: String) -> MGSolidIssue {
+        guard let l = limit else { return self }
+        return MGSolidIssue(reason: reason, part: part, visibility: visibility, limit: l.prefixed(prefix))
+    }
     /// `annotations.visible` with its repair detail; `part` is the detail's annotation id.
     public init(visibility v: MGAnnotationVisibilityDetail) { reason = "annotations.visible"; part = v.annotation; visibility = v; limit = nil }
     /// Another visibility reason (`step.annotate.count`, `view.annotate.count`) with its repair detail.
@@ -77,6 +90,18 @@ public struct MGAnnotationVisibilityDetail: Equatable, Sendable {
         self.index = index
     }
 
+    /// The same numbers as a limit detail (the report's `limit`): the list over the limit (`annotations`, a step's
+    /// `annotate` or a beat's `view.annotate`; `prefix` goes before `annotations`), the count and the limit.
+    public func limitDetail(prefix: String = "") -> MGSolidLimitDetail {
+        let field: String
+        switch cause {
+        case .step: field = index.map { "steps[\($0)].annotate" } ?? "steps.annotate"
+        case .beat: field = index.map { "beats[\($0)].view.annotate" } ?? "beats.view.annotate"
+        case .noSteps, .unannotated: field = prefix + "annotations"
+        }
+        return MGSolidLimitDetail(field: field, actual: count, limit: limit, unit: "annotations")
+    }
+
     /// This detail for step or beat `i` (0-based) with `cause`.
     func at(_ i: Int, cause: Cause) -> MGAnnotationVisibilityDetail {
         MGAnnotationVisibilityDetail(annotation: annotation, count: count, limit: limit, cause: cause, index: i)
@@ -91,10 +116,12 @@ public struct MGAnnotationVisibilityDetail: Equatable, Sendable {
     }
 }
 
-/// Why `parts.resolved` refused a document, as report fields (`limit`): the number of parts after `use` and `repeat`
-/// expansion, the limit (`MGSolidLimits.resolvedParts`), and the component instances (`use` ids) that add the most
-/// parts, with their resolved part counts, most first, ties by id, at most `MGSolidLimitDetail.maxContributors`. The
-/// reason itself stays one token.
+/// Repair detail of a refusal from a length, count or size limit (the report's `limit`): the field it concerns, the
+/// value the engine measured (`actual`), the limit, the unit, and the smallest allowed value when a value below it is
+/// refused too (an empty text of `1–60` characters). `parts.resolved` (the number of parts after `use` and `repeat`
+/// expansion against `MGSolidLimits.resolvedParts`) also lists the component instances (`use` ids) that add the most
+/// parts, with their resolved part counts, most first, ties by id, at most `maxContributors` (`top`). The reason itself
+/// stays one token.
 public struct MGSolidLimitDetail: Equatable, Sendable {
     /// One component instance: its `use` id, the component it uses and the parts it resolved to.
     public struct Contributor: Equatable, Sendable {
@@ -107,20 +134,88 @@ public struct MGSolidLimitDetail: Equatable, Sendable {
     }
     /// Most instances listed in `top`.
     public static let maxContributors = 5
+    /// Longest `field`, in Unicode scalars.
+    public static let maxField = 128
+    /// The measured value (`actual` in JSON; `count` too for `parts.resolved`).
     public let count: Int
     public let limit: Int
     public let top: [Contributor]
+    /// A path into the document: object keys joined by `.`, array entries as `[i]` (0-based), for example `title`,
+    /// `beats[2].say`, `solid.annotations.labels[4].text`; a part a component made is `parts[id=<id>]`. At most
+    /// `maxField` scalars of ASCII letters, digits, `_`, `.`, `[`, `]` and `=` (anything else becomes `_`).
+    public let field: String
+    /// What is counted: `characters` (Unicode scalars), `entries`, `bytes`, `triangles`, `vertices`, `levels`, `nodes`,
+    /// `parts`, `annotations`, `statements`, `beats`, `frames` or `scalars`.
+    public let unit: String
+    /// The smallest allowed value, when a value below it is refused too; nil otherwise.
+    public let minimum: Int?
+    /// False when the engine stopped counting at the first value over the limit (a bounded walk), so `actual` is a
+    /// lower bound (`limit + 1`), not the full count.
+    public let exact: Bool
+    /// True for `parts.resolved` (the JSON keeps its `count` and `top`).
+    let contributors: Bool
 
-    /// `top` is sorted (most parts first, then id) and cut to `maxContributors`.
+    /// The value the engine measured.
+    public var actual: Int { count }
+
+    /// `parts.resolved`: `top` is sorted (most parts first, then id) and cut to `maxContributors`.
     public init(count: Int, limit: Int, top: [Contributor]) {
         self.count = count; self.limit = limit
         self.top = Array(top.sorted { $0.parts != $1.parts ? $0.parts > $1.parts : $0.id < $1.id }.prefix(MGSolidLimitDetail.maxContributors))
+        field = "parts"; unit = "parts"; minimum = nil; contributors = true; exact = true
     }
 
-    /// `{"count", "limit", "top": [{"id", "use", "parts"}]}` (`use`: the component id).
+    /// Any other limit: `field` is sanitised and cut to `maxField` scalars.
+    public init(field: String, actual: Int, limit: Int, unit: String, minimum: Int? = nil, exact: Bool = true) {
+        count = actual; self.limit = limit; top = []; contributors = false; self.unit = unit; self.minimum = minimum; self.exact = exact
+        let f = String(field.unicodeScalars.prefix(MGSolidLimitDetail.maxField).map { u -> Character in
+            u.isASCII && (CharacterSet.alphanumerics.contains(u) || "_.[]=".unicodeScalars.contains(u)) ? Character(u) : "_"
+        })
+        self.field = f.isEmpty ? "_" : f
+    }
+
+    /// The same detail with `prefix` before its field (`solid.` for an explainer's solid).
+    func prefixed(_ prefix: String) -> MGSolidLimitDetail {
+        if contributors { return self }
+        return MGSolidLimitDetail(field: prefix + field, actual: count, limit: limit, unit: unit, minimum: minimum, exact: exact)
+    }
+
+    /// `{"field", "actual", "limit", "unit"}`, plus `"minimum"` when set and `"exact": false` for a lower bound;
+    /// `parts.resolved` also keeps
+    /// `{"count", "top": [{"id", "use", "parts"}]}` (`use`: the component id).
     public var json: MGJSON {
-        .object(["count": .number(Double(count)), "limit": .number(Double(limit)),
-                 "top": .array(top.map { .object(["id": .string($0.id), "use": .string($0.component), "parts": .number(Double($0.parts))]) })])
+        var o: [String: MGJSON] = ["field": .string(field), "actual": .number(Double(count)), "limit": .number(Double(limit)), "unit": .string(unit)]
+        if let minimum { o["minimum"] = .number(Double(minimum)) }
+        if !exact { o["exact"] = .bool(false) }
+        if contributors {
+            o["count"] = .number(Double(count))
+            o["top"] = .array(top.map { .object(["id": .string($0.id), "use": .string($0.component), "parts": .number(Double($0.parts))]) })
+        }
+        return .object(o)
+    }
+
+    /// One line: `title has 87 characters; the limit is 80. Shorten it to at most 80 characters.`
+    public var repair: String {
+        func n(_ i: Int) -> String {
+            let digits = String(i.magnitude)
+            var out = ""
+            for (k, c) in digits.enumerated() { if k > 0, (digits.count - k) % 3 == 0 { out.append(",") }; out.append(c) }
+            return (i < 0 ? "-" : "") + out
+        }
+        if let minimum, count < minimum {
+            return "\(field) has \(n(count)) \(unit); it needs \(n(minimum)) to \(n(limit)) \(unit)."
+        }
+        let verb: String
+        switch unit {
+        case "characters", "scalars": verb = "Shorten it to at most"
+        case "bytes": verb = "Make it at most"
+        default: verb = "Use at most"
+        }
+        let over = count - limit
+        let has = exact ? "has \(n(count))" : "has more than \(n(limit))"
+        var line = "\(field) \(has) \(unit); the limit is \(n(limit)). \(verb) \(n(limit)) \(unit)"
+        if exact, over > 0, unit != "bytes" { line += " (\(n(over)) fewer)" }
+        return line + "."
     }
 }
 
@@ -252,12 +347,17 @@ public enum MGSolidParser {
     /// `profile: .strict` (the model harness) also refuses the warnings listed in `MGSolidProfile.strictPrefixes`.
     public static func document(data: Data, reusing previous: MGSolidDocument? = nil,
                                 library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard) -> Result<MGSolidDocument, MGSolidIssue> {
-        guard data.count <= MGSolidLimits.bytes else { return .failure(.init("assembly.bytes")) }
+        guard data.count <= MGSolidLimits.bytes else { return .failure(bytesIssue("assembly.bytes", data.count)) }
         if let r = MGJSON.dataRefusal(data, json: "json", depth: "assembly.depth") { return .failure(.init(r)) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
             return .failure(.init("json"))
         }
         return document(json: json, reusing: previous, library: library, profile: profile)
+    }
+
+    /// A byte-limit refusal (`assembly.bytes`, `patch.bytes`) with its detail: the whole document, `bytes` long.
+    static func bytesIssue(_ reason: String, _ bytes: Int, limit: Int = MGSolidLimits.bytes) -> MGSolidIssue {
+        MGSolidIssue(reason, limit: MGSolidLimitDetail(field: "document", actual: bytes, limit: limit, unit: "bytes"))
     }
 
     /// `library` resolves `use` entries (components); see docs/SOLID-3D.md, Components.
@@ -337,7 +437,7 @@ public enum MGSolidParser {
 
     /// Patch text to a value, with the guards of `applying(data:to:)`.
     static func patchJSON(_ data: Data) -> Result<MGJSON, MGSolidIssue> {
-        guard data.count <= MGSolidLimits.bytes else { return .failure(.init("patch.bytes")) }
+        guard data.count <= MGSolidLimits.bytes else { return .failure(bytesIssue("patch.bytes", data.count)) }
         if let r = MGJSON.dataRefusal(data, json: "patch.json", depth: "patch.depth") { return .failure(.init(r)) }
         guard let object = try? JSONSerialization.jsonObject(with: data), let json = MGJSON(any: object) else {
             return .failure(.init("patch.json"))
@@ -378,6 +478,17 @@ public enum MGSolidParser {
     }
 
     /// True when any object anywhere in the value has a key named `tier` (authors cannot set tiers).
+    /// `assembly.budget` with its detail (triangles first, then vertices), or nil within both limits.
+    static func budgetIssue(_ triangles: Int, _ vertices: Int) -> MGSolidIssue? {
+        if triangles > MGSolidLimits.triangles {
+            return MGSolidIssue("assembly.budget", limit: MGSolidLimitDetail(field: "parts", actual: triangles, limit: MGSolidLimits.triangles, unit: "triangles"))
+        }
+        if vertices > MGSolidLimits.vertices {
+            return MGSolidIssue("assembly.budget", limit: MGSolidLimitDetail(field: "parts", actual: vertices, limit: MGSolidLimits.vertices, unit: "vertices"))
+        }
+        return nil
+    }
+
     static func hasTierKey(_ v: MGJSON) -> Bool {
         switch v {
         case .object(let o): return o["tier"] != nil || o.values.contains(where: hasTierKey)
@@ -389,7 +500,8 @@ public enum MGSolidParser {
     static func compile(_ json: MGJSON, _ previous: MGSolidDocument?, _ library: MGSolidLibrary = .builtIn,
                         perStepAnnotations: Bool = false, steppedAnnotations: Bool = false) throws -> MGSolidDocument {
         guard case .object(var o) = json else { throw MGSolidIssue("assembly.object") }
-        guard json.canonicalByteCount <= MGSolidLimits.bytes else { throw MGSolidIssue("assembly.bytes") }
+        let canonical = json.canonicalByteCount
+        guard canonical <= MGSolidLimits.bytes else { throw bytesIssue("assembly.bytes", canonical) }
         // The key set follows the declared version; anything but 2 checks the v1 keys first, exactly as before.
         let format: MGSolidFormat = o["v"] == .number(2) ? .v2 : .v1
         // In v2 a `tier` key anywhere (top level included) is refused before any other key check.
@@ -398,7 +510,7 @@ public enum MGSolidParser {
         guard o["v"] == .number(1) || format.isV2 else { throw MGSolidIssue("assembly.version") }
         guard o["kind"] == .string("assembly") else { throw MGSolidIssue("assembly.kind") }
         if let u = o["units"], u != .string("mm") { throw MGSolidIssue("assembly.units") }
-        let title = try o["title"].map { try text($0, MGSolidLimits.title, "assembly.title") } ?? "Assembly"
+        let title = try o["title"].map { try text($0, MGSolidLimits.title, "assembly.title", field: "title") } ?? "Assembly"
         var defaults = MGPoseParameters()
         if let p = o["params"] {
             guard case .object(let po) = p else { throw MGSolidIssue("params") }
@@ -412,14 +524,23 @@ public enum MGSolidParser {
         o = expansion.object
         // Authored `parts` hold 1–48 entries (checked before expansion); expanded component parts may reach `expandedParts`.
         let wireCap = expansion.generated.isEmpty ? MGSolidLimits.parts : MGSolidLimits.expandedParts
-        guard case .array(let rawParts)? = o["parts"], (1...wireCap).contains(rawParts.count) else { throw MGSolidIssue("parts.count") }
+        guard case .array(let rawParts)? = o["parts"] else { throw MGSolidIssue("parts.count") }
+        if let l = countDetail("parts", rawParts.count, 1...wireCap) { throw MGSolidIssue("parts.count", limit: l) }
 
         // Parts, with `repeat` expansion.
         var parts: [RawPart] = []
         var repeated: [String: Int] = [:]
         var wireIDs = Set<String>()
+        // A part's limit detail names it by its index in the authored `parts`, or `[id=…]` for a part a component made.
+        var authoredIDs: [String] = []
+        if case .array(let list)? = authored["parts"] { authoredIDs = list.map { $0["id"]?.stringValue ?? "" } }
         for entry in rawParts {
-            var expanded = try part(entry, generated: expansion.generated, format: format)
+            var expanded: [RawPart]
+            do { expanded = try part(entry, generated: expansion.generated, format: format) }
+            catch let e as MGSolidIssue where e.limit != nil {
+                let id = entry["id"]?.stringValue ?? ""
+                throw e.prefixed(authoredIDs.firstIndex(of: id).map { "parts[\($0)]." } ?? "parts[id=\(token(id))].")
+            }
             if let frame = expansion.frames[expanded[0].base] {
                 // An instance placed with `at` / `rot` carries its root parts (outside any `repeat` turn).
                 for k in expanded.indices { expanded[k].placement = frame * expanded[k].placement }
@@ -432,7 +553,7 @@ public enum MGSolidParser {
         // Mesh budget over every resolved part, counted from the validated fields before any mesh is built.
         var triangles = 0, vertices = 0
         for p in parts { for s in p.shapes { let e = s.meshEstimate; triangles += e.triangles; vertices += e.vertices } }
-        guard triangles <= MGSolidLimits.triangles, vertices <= MGSolidLimits.vertices else { throw MGSolidIssue("assembly.budget") }
+        if let b = budgetIssue(triangles, vertices) { throw b }
         var ids = Set<String>()
         for p in parts { guard ids.insert(p.id).inserted else { throw MGSolidIssue("id.duplicate.\(token(p.id))", part: p.id) } }
         // Resolve parents (a repeated child of a repeated parent pairs by instance).
@@ -480,7 +601,8 @@ public enum MGSolidParser {
         struct Mesh { var a: String, b: String, carrier: String? }
         var meshes: [Mesh] = [], fixed: [String] = []
         if let c = o["constraints"] {
-            guard case .array(let list) = c, list.count <= MGSolidLimits.constraints else { throw MGSolidIssue("constraints.count") }
+            guard case .array(let list) = c else { throw MGSolidIssue("constraints.count") }
+            if let l = countDetail("constraints", list.count, 0...MGSolidLimits.constraints) { throw MGSolidIssue("constraints.count", limit: l) }
             for entry in list {
                 guard case .object(let co) = entry, co.count == 1, let (kind, body) = co.first else { throw MGSolidIssue("constraint.object") }
                 switch kind {
@@ -772,11 +894,13 @@ public enum MGSolidParser {
         // Steps.
         var steps: [MGSolidStep] = []
         if let s = o["steps"] {
-            guard case .array(let list) = s, list.count <= MGSolidLimits.steps else { throw MGSolidIssue("steps.count") }
+            guard case .array(let list) = s else { throw MGSolidIssue("steps.count") }
+            if let l = countDetail("steps", list.count, 0...MGSolidLimits.steps) { throw MGSolidIssue("steps.count", limit: l) }
             for (i, entry) in list.enumerated() {
-                // A visibility refusal of one step names the step.
+                // A visibility refusal of one step names the step; a limit detail gets the step's path.
                 do { steps.append(try step(entry, expand, format, grouped: !expansion.generated.isEmpty)) }
                 catch let e as MGSolidIssue where e.visibility != nil { throw MGSolidIssue(e.reason, visibility: e.visibility!.at(i, cause: .step)) }
+                catch let e as MGSolidIssue where e.limit != nil { throw e.prefixed("steps[\(i)].") }
             }
         }
         let showOnly = try MGSolidStepVisibility.check(steps, order: parts.map(\.id))
@@ -792,7 +916,7 @@ public enum MGSolidParser {
             if !annotations.isEmpty, abs(defaults.input) > MGSolidAnnotationLimits.input { throw MGSolidIssue("annotations.input") }
             let e = annotations.meshEstimate
             triangles += e.triangles; vertices += e.vertices
-            guard triangles <= MGSolidLimits.triangles, vertices <= MGSolidLimits.vertices else { throw MGSolidIssue("assembly.budget") }
+            if let b = budgetIssue(triangles, vertices) { throw b }
         }
 
         // Meshes (reused when the shape list is unchanged). A gear without a joint keeps its tooth phase in its shape.
@@ -904,7 +1028,10 @@ public enum MGSolidParser {
     /// proves the sign of that fact (`text.sign.<name>`); a title cannot use it.
     static func fillText(_ doc: inout MGSolidDocument) throws {
         let title = try MGSolidFacts.fill(doc.title, where: "title", n1: false, doc.facts, doc.aliases)
-        guard title.text.unicodeScalars.count <= MGSolidLimits.title else { throw MGSolidIssue("assembly.title") }
+        guard title.text.unicodeScalars.count <= MGSolidLimits.title else {
+            throw MGSolidIssue("assembly.title", limit: MGSolidLimitDetail(field: "title", actual: title.text.unicodeScalars.count,
+                                                                           limit: MGSolidLimits.title, unit: "characters"))
+        }
         for (name, mods) in zip(title.facts, title.modifiers) where mods.contains("abs") { throw MGSolidIssue("text.sign.\(token(name))") }
         doc.title = title.text
         doc.titleFacts = title.facts
@@ -913,7 +1040,10 @@ public enum MGSolidParser {
         for i in doc.steps.indices {
             var s = doc.steps[i]
             let filled = try MGSolidFacts.fill(s.template, where: "step.\(i + 1)", n1: s.unchecked == nil, doc.facts, doc.aliases)
-            guard !filled.text.isEmpty, filled.text.unicodeScalars.count <= MGSolidLimits.say else { throw MGSolidIssue("step.say") }
+            guard !filled.text.isEmpty, filled.text.unicodeScalars.count <= MGSolidLimits.say else {
+                throw MGSolidIssue("step.say", limit: MGSolidLimitDetail(field: "steps[\(i)].say", actual: filled.text.unicodeScalars.count,
+                                                                         limit: MGSolidLimits.say, unit: "characters", minimum: 1))
+            }
             var signed = Set<String>()
             for c in s.checks {
                 let t = token(c.value)
@@ -973,14 +1103,16 @@ public enum MGSolidParser {
         func fail(_ r: String) -> MGSolidIssue { MGSolidIssue(r, part: pid) }
         do {
             try closed(o, ["id", "shape"], format.partKeys, "part")
-            let name = try o["name"].map { try text($0, MGSolidLimits.name, "part.name") } ?? pid
+            let name = try o["name"].map { try text($0, MGSolidLimits.name, "part.name", field: "name", part: pid) } ?? pid
             var shapeList: [MGJSON]
             switch o["shape"] {
             case .array(let l)?: shapeList = l
             case let s?: shapeList = [s]
             case nil: shapeList = []
             }
-            guard (1...MGSolidLimits.shapesPerPart).contains(shapeList.count) else { throw MGSolidIssue("part.shape.count") }
+            if let l = countDetail("shape", shapeList.count, 1...MGSolidLimits.shapesPerPart, unit: "shapes") {
+                throw MGSolidIssue("part.shape.count", part: pid, limit: l)
+            }
             let shapes = try shapeList.map(shape)
             guard shapes.filter({ $0.kind == "gear" || $0.kind == "ringGear" }).count <= 1 else { throw MGSolidIssue("part.shape.gears") }
             let material = try materialPreset(o["material"] ?? .string("brushedSteel"))
@@ -1038,8 +1170,14 @@ public enum MGSolidParser {
             guard let r = o["repeat"] else { return [raw] }
             guard case .object(let ro) = r else { throw MGSolidIssue("part.repeat") }
             try closed(ro, ["count"], ["count", "axis", "angle"], "part.repeat")
-            let countValue = try num(ro["count"], 2...Double(MGSolidLimits.repeatCount), "part.repeat.count")
-            guard countValue.rounded() == countValue else { throw MGSolidIssue("part.repeat.count") }
+            guard case .number(let countValue)? = ro["count"], countValue.isFinite, countValue.rounded() == countValue else {
+                throw MGSolidIssue("part.repeat.count", part: pid)
+            }
+            guard (2...Double(MGSolidLimits.repeatCount)).contains(countValue) else {
+                throw MGSolidIssue("part.repeat.count", part: pid, limit: MGSolidLimitDetail(
+                    field: "repeat.count", actual: countValue > 1e9 ? Int(1e9) : countValue < -1e9 ? Int(-1e9) : Int(countValue),
+                    limit: MGSolidLimits.repeatCount, unit: "copies", minimum: 2))
+            }
             let count = Int(countValue)
             let axis = try ro["axis"].map { try vector($0, "part.repeat.axis") } ?? .unitZ
             guard axis.length > 1e-9 else { throw MGSolidIssue("part.repeat.axis") }
@@ -1052,7 +1190,7 @@ public enum MGSolidParser {
                 return c
             }
         } catch let e as MGSolidIssue {
-            throw e.part == nil ? fail(e.reason) : e
+            throw e.part == nil ? MGSolidIssue(e.reason, part: pid, limit: e.limit) : e
         } catch let e as MGError {
             throw fail(e.reason)
         }
@@ -1149,7 +1287,8 @@ public enum MGSolidParser {
             let ch = try opt("chamfer", 0...50) ?? 0
             guard ch < min(r / 4, t / 2) else { throw MGSolidIssue("\(w).chamfer") }
             if let h = f["holes"] {
-                guard case .array(let list) = h, list.count <= MGSolidLimits.plateHoles else { throw MGSolidIssue("\(w).holes") }
+                guard case .array(let list) = h else { throw MGSolidIssue("\(w).holes") }
+                if let l = countDetail("shape.plate.holes", list.count, 0...MGSolidLimits.plateHoles, unit: "holes") { throw MGSolidIssue("\(w).holes", limit: l) }
                 var circles: [(MGVec2, Double)] = []
                 for e in list {
                     guard case .array(let v) = e, v.count == 3 else { throw MGSolidIssue("\(w).holes") }
@@ -1173,7 +1312,10 @@ public enum MGSolidParser {
             let depth = try n("depth")
             var holes: [[MGVec2]] = []
             if let h = f["holes"] {
-                guard case .array(let list) = h, list.count <= MGSolidLimits.profileHoles else { throw MGSolidIssue("\(w).holes") }
+                guard case .array(let list) = h else { throw MGSolidIssue("\(w).holes") }
+                if let l = countDetail("shape.extrudedProfile.holes", list.count, 0...MGSolidLimits.profileHoles, unit: "holes") {
+                    throw MGSolidIssue("\(w).holes", limit: l)
+                }
                 holes = try list.map { try pointList($0, 3, "\(w).holes") }
             }
             guard abs(MGProfile.signedArea(outer)) > 1e-6, !selfIntersects(outer) else { throw MGSolidIssue("\(w).points") }
@@ -1310,7 +1452,8 @@ public enum MGSolidParser {
         let cap = grouped ? MGSolidLimits.resolvedParts : MGSolidLimits.idsPerStep
         func ids(_ key: String) throws -> [String] {
             guard let v = o[key] else { return [] }
-            guard case .array(let list) = v, list.count <= cap else { throw MGSolidIssue("step.\(key)") }
+            guard case .array(let list) = v else { throw MGSolidIssue("step.\(key)") }
+            if let l = countDetail(key, list.count, 0...cap, unit: "ids") { throw MGSolidIssue("step.\(key)", limit: l) }
             return try list.flatMap { e -> [String] in
                 guard case .string(let id) = e else { throw MGSolidIssue("step.\(key)") }
                 return try expand(id, "step.\(key)")
@@ -1321,19 +1464,21 @@ public enum MGSolidParser {
             guard case .string(let s) = c, MGSolidCamera.presets[s] != nil else { throw MGSolidIssue("step.camera") }
             camera = s
         }
-        let say = try text(o["say"] ?? .null, MGSolidLimits.say, "step.say")
+        let say = try text(o["say"] ?? .null, MGSolidLimits.say, "step.say", field: "say")
         var step = MGSolidStep(say: say, focus: try ids("focus"), highlight: try ids("highlight"),
                                explode: try o["explode"].map { try num($0, 0...1, "step.explode") }, camera: camera,
                                orbit: try o["orbit"].map { try num($0, -360...360, "step.orbit") } ?? 0,
                                spin: try o["spin"].map { try num($0, -20...20, "step.spin") } ?? 0)
         step.template = say
-        if let u = o["unchecked"] { step.unchecked = try text(u, MGSolidLimits.unchecked, "step.unchecked") }
+        if let u = o["unchecked"] { step.unchecked = try text(u, MGSolidLimits.unchecked, "step.unchecked", field: "unchecked") }
         if let c = o["check"] {
-            guard case .array(let list) = c, (1...MGSolidLimits.checksPerStep).contains(list.count) else { throw MGSolidIssue("step.check") }
+            guard case .array(let list) = c else { throw MGSolidIssue("step.check") }
+            if let l = countDetail("check", list.count, 1...MGSolidLimits.checksPerStep, unit: "checks") { throw MGSolidIssue("step.check", limit: l) }
             step.checks = try list.map(MGSolidClaimCheck.parse)
         }
         if let g = o["ghost"] {
-            guard case .array(let list) = g, !list.isEmpty else { throw MGSolidIssue("step.ghost") }
+            guard case .array(let list) = g else { throw MGSolidIssue("step.ghost") }
+            if list.isEmpty { throw MGSolidIssue("step.ghost", limit: countDetail("ghost", 0, 1...cap, unit: "ids")) }
             step.ghost = unique(try ids("ghost"))
         }
         if let sec = o["section"] {
@@ -1342,7 +1487,8 @@ public enum MGSolidParser {
             let normal = try vector(so["normal"] ?? .null, "step.section.normal")
             guard normal.length > 1e-9 else { throw MGSolidIssue("step.section.normal") }
             let offset = try so["offset"].map { try num($0, MGSolidLimits.coordinate, "step.section.offset") } ?? 0
-            guard case .array(let list) = so["parts"]!, (1...cap).contains(list.count) else { throw MGSolidIssue("step.section.parts") }
+            guard case .array(let list) = so["parts"]! else { throw MGSolidIssue("step.section.parts") }
+            if let l = countDetail("section.parts", list.count, 1...cap, unit: "ids") { throw MGSolidIssue("step.section.parts", limit: l) }
             let parts = try list.flatMap { e -> [String] in
                 guard case .string(let id) = e else { throw MGSolidIssue("step.section.parts") }
                 return try expand(id, "step.section.parts")
@@ -1364,7 +1510,8 @@ public enum MGSolidParser {
         }
         for key in ["hide", "show"] {
             guard let v = o[key] else { continue }
-            guard case .array(let list) = v, !list.isEmpty else { throw MGSolidIssue("step.\(key)") }
+            guard case .array(let list) = v else { throw MGSolidIssue("step.\(key)") }
+            if list.isEmpty { throw MGSolidIssue("step.\(key)", limit: countDetail(key, 0, 1...cap, unit: "ids")) }
             let resolved = unique(try ids(key))
             if key == "hide" { step.hide = resolved } else { step.show = resolved }
         }
@@ -1417,11 +1564,23 @@ public enum MGSolidParser {
         if let p = at { t = .translation(try vector(p, "\(what).at")) * t }
         return t
     }
-    static func text(_ v: MGJSON, _ max: Int, _ what: String) throws -> String {
-        guard case .string(let s) = v else { throw MGSolidIssue(what) }
+    /// Plain text of 1...`max` Unicode scalars. A text that is empty after trimming or longer than `max` is refused with
+    /// a limit detail at `field` (characters; minimum 1); any other fault without one.
+    static func text(_ v: MGJSON, _ max: Int, _ what: String, field: String? = nil, part: String? = nil) throws -> String {
+        guard case .string(let s) = v else { throw MGSolidIssue(what, part: part) }
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty, s.unicodeScalars.count <= max, !s.contains("<"), !s.contains(">"), !s.contains("://"),
-              !s.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { throw MGSolidIssue(what) }
+        if t.isEmpty || s.unicodeScalars.count > max {
+            throw MGSolidIssue(what, part: part, limit: MGSolidLimitDetail(field: field ?? what, actual: t.isEmpty ? 0 : s.unicodeScalars.count,
+                                                                           limit: max, unit: "characters", minimum: 1))
+        }
+        guard !s.contains("<"), !s.contains(">"), !s.contains("://"),
+              !s.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { throw MGSolidIssue(what, part: part) }
         return t
+    }
+
+    /// The limit detail of a count `n` against `range` (nil inside it).
+    static func countDetail(_ field: String, _ n: Int, _ range: ClosedRange<Int>, unit: String = "entries") -> MGSolidLimitDetail? {
+        guard !range.contains(n) else { return nil }
+        return MGSolidLimitDetail(field: field, actual: n, limit: range.upperBound, unit: unit, minimum: range.lowerBound > 0 ? range.lowerBound : nil)
     }
 }

@@ -114,7 +114,8 @@ final class MicroTurbojetTests: ExplainerTestCase {
         let top: [MGJSON] = ["tB", "tLF", "tLH", "tRF", "tRH"].map {
             .object(["id": .string($0), "use": .string("centrifugalCompressor"), "parts": .number(28)])
         }
-        XCTAssertEqual(r.json["limit"], .object(["count": .number(180), "limit": .number(96), "top": .array(top)]))
+        XCTAssertEqual(r.json["limit"], .object(["count": .number(180), "limit": .number(96), "top": .array(top), "field": .string("parts"),
+                                                 "actual": .number(180), "unit": .string("parts")]))
         for _ in 0..<3 { XCTAssertEqual(MGSolidReport.check(data: Data(text.utf8), profile: .strict).json, r.json) }
         XCTAssertNotNil(MGSolidReasons.lookup("parts.resolved"))
         // Larger instances come first.
@@ -123,8 +124,8 @@ final class MicroTurbojetTests: ExplainerTestCase {
         XCTAssertEqual(list.map { $0["id"] }, [.string("c"), .string("a"), .string("b"), .string("d"), .string("pilot")])
         XCTAssertEqual(list.first?["parts"], .number(38))
         XCTAssertEqual(mixed.json["limit"]?["count"], .number(12 + 38 + 3 * 28))
-        // Other refusals keep their exact keys.
-        XCTAssertNil(MGSolidReport.check(data: Data(#"{"v": 2, "kind": "assembly", "parts": []}"#.utf8)).json["limit"])
+        // Another limit refusal gives its own detail, without `top`.
+        XCTAssertNil(MGSolidReport.check(data: Data(#"{"v": 2, "kind": "assembly", "parts": []}"#.utf8)).json["limit"]?["top"])
     }
 
     /// Repeats alone over the limit: the count and the limit, no instance.
@@ -132,7 +133,8 @@ final class MicroTurbojetTests: ExplainerTestCase {
         let parts = (0..<9).map { #"{"id": "p\#($0)", "at": [\#($0 * 100), 0, 0], "repeat": {"count": 12, "axis": [0, 0, 1]}, "shape": {"box": {"size": [4, 4, 4], "at": [20, 0, 0]}}}"# }
         let r = MGSolidReport.check(data: Data(#"{"v": 2, "kind": "assembly", "parts": [\#(parts.joined(separator: ", "))]}"#.utf8))
         XCTAssertEqual(r.reason, "parts.resolved")
-        XCTAssertEqual(r.json["limit"], .object(["count": .number(108), "limit": .number(96), "top": .array([])]))
+        XCTAssertEqual(r.json["limit"], .object(["count": .number(108), "limit": .number(96), "top": .array([]), "field": .string("parts"),
+                                                 "actual": .number(108), "unit": .string("parts")]))
     }
 
     /// The explainer check report carries the same detail, and the refused document leaves the session unchanged.

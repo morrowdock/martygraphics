@@ -146,7 +146,7 @@ enum MGSolidSections {
                 } catch let e as MGSolidIssue { throw MGSolidIssue("\(e.reason).\(MGSolidParser.token(id))", part: id) }
                 triangles += e.triangles; vertices += e.vertices
                 // Stop counting as soon as the budget is exceeded.
-                guard triangles <= MGSolidLimits.triangles, vertices <= MGSolidLimits.vertices else { throw MGSolidIssue("assembly.budget") }
+                if let b = MGSolidParser.budgetIssue(triangles, vertices) { throw b }
                 planned.append(key)
             }
         }

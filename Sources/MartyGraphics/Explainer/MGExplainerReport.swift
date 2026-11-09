@@ -20,9 +20,15 @@ public struct MGExplainerReport: Equatable, Sendable {
     /// Parses, loads and checks a document. Bytes over 128 KiB are refused (`explainer.bytes`) before they are parsed.
     public static func check(data: Data, library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard,
                              engine: MGJSON? = MGEngine.identity) -> MGExplainerReport {
+        check(data: data, library: library, profile: profile, engine: engine, suggest: true)
+    }
+
+    /// `check` with or without anchor suggestions (`suggest: false` leaves `suggest` and `noSuggest` null; tests).
+    static func check(data: Data, library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard,
+                      engine: MGJSON? = MGEngine.identity, suggest: Bool) -> MGExplainerReport {
         if MGSolidReport.badEngine(engine) { return MGExplainerReport(ok: false, reason: "report.engine", location: nil, json: MGSolidReport.engineRefusal.json) }
         guard data.count <= MGExplainerLimits.rawBytes else {
-            return refused(MGExplainerIssue("explainer.bytes", view: .header), profile: nil, source: nil, engine: engine)
+            return refused(MGExplainer.bytesIssue(data.count, MGExplainerLimits.rawBytes), profile: nil, source: nil, engine: engine)
         }
         let source = MGSolidSource(data: data)
         let doc: MGExplainer
@@ -32,12 +38,12 @@ public struct MGExplainerReport: Equatable, Sendable {
         }
         var session = MGExplainerSession(pacing: .immediate, clock: MGManualClock(), library: library)
         if case .failure(let issue) = session.load(doc) { return refused(issue, profile: profile, source: source, engine: engine) }
-        return make(session, doc: doc, profile: profile, source: source, engine: engine)
+        return make(session, doc: doc, profile: profile, source: source, engine: engine, suggest: suggest)
     }
 
-    /// The short report of a refused document: `{"ok": false, "reason", "location", "kind", "version"}`, plus `visibility`
-    /// for the visibility reasons, `limit` for the solid's `parts.resolved`, `strict` when a profile is given, `file` when a
-    /// source is given, and `engine`.
+    /// The short report of a refused document: `{"ok": false, "reason", "location", "kind", "version", "repair"}`, plus
+    /// `visibility` for the visibility reasons, `limit` for every length, count or size limit, `strict` when a profile is
+    /// given, `file` when a source is given, and `engine`.
     public static func refused(_ issue: MGExplainerIssue, profile: MGSolidProfile?, source: MGSolidSource?,
                                engine: MGJSON? = MGEngine.identity) -> MGExplainerReport {
         var o: [String: MGJSON] = ["ok": .bool(false), "reason": .string(issue.reason), "location": issue.location,
@@ -45,7 +51,9 @@ public struct MGExplainerReport: Equatable, Sendable {
         // `annotations.visible` only: which annotation is over the limit and why (other refusals keep their exact keys).
         if let v = issue.visibility { o["visibility"] = v.json }
         // The solid's `parts.resolved` only: the resolved count, the limit and the instances that add the most parts.
-        if let l = issue.limit { o["limit"] = l.json }
+        let limit = issue.limit ?? issue.visibility?.limitDetail(prefix: "solid.")
+        if let limit { o["limit"] = limit.json }
+        o["repair"] = .string(MGSolidReport.repair(issue.reason, part: issue.id, limit: limit, visibility: issue.visibility))
         if let profile { o["strict"] = .bool(profile == .strict) }
         if let source { o["file"] = file(source) }
         if let engine { o["engine"] = engine }
@@ -67,6 +75,11 @@ public struct MGExplainerReport: Equatable, Sendable {
     /// in `anchorIssues`; a refusal for an anchor reason adds `anchor`, the issue it names.
     public static func make(_ s: MGExplainerSession, doc: MGExplainer? = nil, profile: MGSolidProfile = .standard,
                             source: MGSolidSource? = nil, engine: MGJSON? = MGEngine.identity) -> MGExplainerReport {
+        make(s, doc: doc, profile: profile, source: source, engine: engine, suggest: true)
+    }
+
+    static func make(_ s: MGExplainerSession, doc: MGExplainer?, profile: MGSolidProfile, source: MGSolidSource?, engine: MGJSON?,
+                     suggest: Bool) -> MGExplainerReport {
         var reason: String?, location: MGExplainerIssue?
         var solidJSON: MGJSON = .null
         var anchors = MGAnnotationAnchorReport()
@@ -82,7 +95,13 @@ public struct MGExplainerReport: Equatable, Sendable {
             var beatOf: [Int: Int] = [:]
             for b in s.keptBeats { if let st = s.solidStep(forBeat: b.index), beatOf[st] == nil { beatOf[st] = b.index } }
             anchors.issues = d.offPartAnchors.map { $0.at(beat: $0.step.flatMap { beatOf[$0] }) }
-            if let doc, !d.annotations.isEmpty { anchors.append(MGExplainerFrame.beatAnchorIssues(doc, library: s.library)) }
+            if let doc, !d.annotations.isEmpty {
+                let framed = MGExplainerFrame.beatAnchorViews(doc, library: s.library)
+                if let fd = framed.solid {
+                    for v in framed.views { anchors.append(fd.anchorIssues(v)) }
+                    if suggest { anchors.suggest(fd, views: framed.views) }
+                }
+            }
         }
         if reason == nil, profile == .strict, let id = s.unusedNotes.first {
             reason = "notes.unused.\(MGLessonIssue.segment(id))"; location = MGExplainerIssue(reason!, view: .header)
@@ -165,7 +184,9 @@ public struct MGExplainerReport: Equatable, Sendable {
             o["anchorIssues"] = .array(anchors.issues.map(\.json))
             o["anchorUntested"] = anchors.untestedJSON
         }
-        if let r = reason, let hit = MGSolidReport.anchorIssue(r, anchors.issues) { o["anchor"] = hit.json }
+        let hit = reason.flatMap { MGSolidReport.anchorIssue($0, anchors.issues) }
+        if let hit { o["anchor"] = hit.json }
+        if let r = reason { o["repair"] = .string(MGSolidReport.repair(r, part: location?.id, anchor: hit)) }
         if let source { o["file"] = file(source) }
         if let engine { o["engine"] = engine }
         return MGExplainerReport(ok: reason == nil, reason: reason, location: location, json: .object(o))

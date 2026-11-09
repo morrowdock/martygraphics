@@ -32,7 +32,11 @@ public enum MGLimits {
 public struct MGError: Error, Equatable, CustomStringConvertible {
     /// Developer reason for tests and logs only. Never shown to the learner.
     public let reason: String
-    public init(_ reason: String) { self.reason = reason }
+    /// Repair detail of a length, count or size limit (explainer reasons; the check report's `limit`), else nil.
+    public var limit: MGSolidLimitDetail?
+    public init(_ reason: String) { self.reason = reason; limit = nil }
+    /// A limit reason with its repair detail.
+    public init(_ reason: String, limit: MGSolidLimitDetail?) { self.reason = reason; self.limit = limit }
     public var description: String { reason }
 }
 

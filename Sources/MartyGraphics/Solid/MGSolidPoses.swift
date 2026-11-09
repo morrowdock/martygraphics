@@ -14,7 +14,8 @@ enum MGSolidPoses {
     /// and/or `rot` ([ax, ay, az, degrees], a non-zero axis, degrees in -360...360). Which ids take which key is checked
     /// against the document (`compile`). Reasons: `step.pose`, `step.pose.key`, `step.pose.with`.
     static func parse(_ v: MGJSON) throws -> [String: MGJSON] {
-        guard case .object(let o) = v, (1...entries).contains(o.count) else { throw MGSolidIssue("step.pose") }
+        guard case .object(let o) = v else { throw MGSolidIssue("step.pose") }
+        if let l = MGSolidParser.countDetail("pose", o.count, 1...entries) { throw MGSolidIssue("step.pose", limit: l) }
         for (id, e) in o.sorted(by: { $0.key < $1.key }) {
             guard case .object(let eo) = e, !eo.isEmpty, Set(eo.keys).isSubset(of: ["with", "rot"]) else {
                 throw MGSolidIssue("step.pose.key", part: MGSolidParser.token(id))

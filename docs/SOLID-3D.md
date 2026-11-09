@@ -956,7 +956,72 @@ is the jet-suit example before its fix:
 `step` and `beat` are 1-based; `point` is the anchor in the kernel world (Z up, mm) at the view's pose; `distance`,
 `tolerance` and, when another part is nearer, `closer` and `closerDistance` (mm, the first nearer triangle found) are
 set for `offpart`. A refusal for
-an anchor reason also adds `anchor`: the issue it names.
+an anchor reason also adds `anchor`: the issue it names. Each issue also has `suggest`, `noSuggest` and `repair`
+([Anchor suggestions](#anchor-suggestions)).
+
+### Anchor suggestions
+
+For every off or hidden issue (`offpart`, `hidden`, `ghosted`, `offscreen`, `occluded`; not `untested`), the check
+report gives `suggest`: an anchor that passes both rules above in every view that shows the label or pointer, in the
+form a document writes it, `{"part": "<part>", "offset": [x, y, z]}` (the part's own frame, mm, rounded to 0.001 mm;
+`"point"` takes only `"centre"`, so a suggestion is always an offset). `part` is the resolved part (a component anchor
+name gives its part). For a pointer it is the tip (`to`). One suggestion serves all issues of the same annotation
+(`MGSolidDocument.anchorSuggestions(for:views:)`).
+
+The search, for each such annotation in issue order:
+
+1. For each view that shows it (the framed step or beat stills above), sample points of the part as that view draws it
+   (a cut part's cut mesh): the 24 triangles nearest to the authored dot (their nearest points), 24 triangle centroids
+   spread over the mesh, 16 centroids of a cut's cap triangles, the box centre, and a 12 × 12 grid of rays across the
+   part as the camera sees it (spanning its box diagonal in the plane through the box centre that faces the camera).
+   A ray from the camera through each sample, to just past it, gives the first hit on the part; the candidate is that
+   hit moved 0.05 mm further along the ray, into the part (`MGAnnotationAnchorRules.inset`). A cap sample is also a
+   candidate itself, 0.05 mm to the kept side. An annotation that no view shows takes its part's points, 0.05 mm inward.
+2. Candidates are rounded to 0.001 mm and sorted: on a cut face first when a view cuts the part, then by distance to
+   the authored dot, then by generation order.
+3. The first candidate that passes the view rule (`MGAnchorViewRule.test`, the code `anchorIssues` runs) in every view
+   that shows the annotation, and then the off-part rule (`MGSolidDocument.offPartIssue`), is the suggestion. A
+   cheaper screen runs first: the rule's own segment test through runs of 64 triangles; it can only drop a candidate
+   (a coincident-surface tie counts as hidden there), never pass one.
+4. When none passes, a second pass adds denser samples (48 nearest, up to 512 centroids, 32 cap centroids, a 24 × 24
+   grid) and checks only the new candidates.
+5. When still none passes, `suggest` is null and `noSuggest` says why: the first view where no candidate passes on its
+   own names the cause, and when every view passes some candidate the cause is that none passes in all of them.
+
+`noSuggest` is `{"cause", "code", "step", "beat", "by", "samples", "alternatives"}` (`step` and `beat` 1-based):
+
+| `code` | `cause` | `alternatives` |
+| --- | --- | --- |
+| `occluded` | `part fully hidden in step N` (or `beat N`); `by` is the part in the way of the nearest sample | leave the annotation out of that view's `annotate` (`view.annotate`) list, ghost `by` in that view, or change that view's camera |
+| `hidden` | `part hidden in step N` | leave it out of the list, show the part, or anchor it on a part the view shows |
+| `ghosted` | `part ghosted in step N` | leave it out of the list, do not ghost the part, or change the camera |
+| `offscreen` | `part off screen in step N` | leave it out of the list, or change the camera |
+| `nocommonpoint` | no point of the part is visible in every view that shows it | show it in fewer views, or use one label per view |
+| `budget` | suggestion budget ran out | simpler parts near the anchor, or fewer labels |
+
+"Fully hidden" means that none of the `samples` candidates passed: the search is sampled, not exhaustive. Each
+annotation's search spends at most 8,000,000 tests and one document's searches 64,000,000
+(`MGAnnotationAnchorRules.suggestTests`, `suggestDocumentTests`): every triangle read for the samples and runs, every
+run-box and ray–triangle test, and the view rule's own count. The search is deterministic (views in order, samples in a
+fixed order, no dictionary order). A suggestion is checked with a fresh view budget; in the full check the anchors
+before it in the same view share that view's 3,000,000 tests.
+
+`fix` says in one sentence what is wrong, then names the suggestion (`Use {"part": …, "offset": […]} for the anchor
+(`at`): it lies on … and passes the anchor rules in every view that shows …`), or the cause and the alternatives; an
+off-part fix also names the world anchor for free text. It never proposes the part's centre, which an inner part's
+casing often hides. `repair` is one line built from these fields, at most 400 Unicode scalars
+(`MGAnnotationAnchorIssue.repair`): what is wrong, where, and the anchor to use. For example, a 40 mm core box inside
+a closed 200 mm shell box:
+
+```text
+Label l1 (step 1) is hidden behind shell. No visible point: part fully hidden in step 1. Leave l1 out of step 1's annotate list, ghost `shell` in step 1, or change step 1's camera.
+```
+
+and a label 200 mm above the centre of a 40 mm box beside them: `Label l1 is 180.0 mm off side (at most 3.5 mm). Use
+anchor {"part": "side", "offset": [-0.011, 0.042, 19.975]}.` (a point on the top face, 0.05 mm inside along the
+camera ray; the offset depends on the camera). A tool can pass `repair` straight to a model. The
+round-2f refused documents (`docs/fixtures/round-2f`) are the test inputs: applying every `suggest` to a copy clears
+that annotation's anchor issues.
 
 Not tested: the visibility of anchors in the plain view (`hero.png`, `solid-0.png`; the nearer-part test does test the
 plain view when it shows the annotation), the poses during a step's or beat's spin and camera moves,
@@ -1062,7 +1127,9 @@ the output of the release before (golden files in
 release before refuses it (`assembly.unknown.annotations`), so its golden pair holds this
 release's output. The anchor checks add `anchorIssues`, `anchorUntested` and `anchor`; the only shipped document they
 refused, `docs/assets/jet-suit/jet-suit.json` (label `lComb`), was fixed, so its golden files hold the fixed file's
-output.
+output. Every refused report now ends with `repair` (one line, [Anchor suggestions](#anchor-suggestions) and
+[REASONS.md](REASONS.md#limit-details)) and a limit refusal adds `limit`; the golden files of refused inputs hold these
+two new members and nothing else changed.
 
 ### Tiers per part and per motion
 
@@ -1224,9 +1291,11 @@ part that the root parts are attached to) and `set`.
   `assembly.budget`). The authored `parts` array holds 1–48 entries; with the parts
   the `use` instances make it may hold up to 96 wire parts (`MGSolidLimits.expandedParts`;
   `parts.count` above it), and at most 96 parts after `repeat` (`parts.resolved`).
-  A `parts.resolved` report adds `limit`: `{"count", "limit": 96, "top"}`, where `top`
+  A `parts.resolved` report adds `limit`: `{"count", "limit": 96, "top", "field": "parts",
+  "actual", "unit": "parts"}`, where `top`
   lists up to 5 `use` instances with the most resolved parts (`{"id", "use", "parts"}`,
   most parts first, ties by id), so a model sees which components to drop or shrink.
+  Every other limit refusal reports `limit` too ([REASONS.md](REASONS.md#limit-details)).
 * **Step lists.** A step's `focus`, `highlight`, `ghost`, `hide`, `show` and
   `section.parts` hold at most 16 entries as authored (`step.focus`, `step.highlight`,
   `step.ghost`, `step.hide`, `step.show`, `step.section.parts`): **an instance id is one

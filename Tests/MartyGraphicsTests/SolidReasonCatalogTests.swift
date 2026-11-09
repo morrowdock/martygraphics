@@ -20,6 +20,8 @@ final class SolidReasonCatalogTests: XCTestCase {
         "constraint.gearMesh.a", "constraint.gearMesh.b",                           // unused `what` of `expand` (it throws `ref.unknown.<id>`)
         "beat.*", "beat.*.check.*", "item.*", "board.template",                    // explainer claim ids
         "step.", "step.check.",                                                    // prefixes the explainer renames (to `view.*`, `check.*`)
+        "repeat.count", "section.parts", "shape.plate.holes", "shape.extrudedProfile.holes", "shape.bladeRow",
+        "steps.annotate", "beats.view.annotate", "solid.",                         // limit detail field paths (`MGSolidLimitDetail.field`)
     ]
     /// Literals that are reason prefixes: the code appends `.<id>` (`MGSolidFrames.lints`).
     static let prefixes = ["frame.axis.off", "frame.child.absolute", "frame.child.far", "joint.idle"]

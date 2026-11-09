@@ -88,12 +88,15 @@ public struct MGAnnotationAnchorIssue: Equatable, Sendable {
     /// `untested`: the budget that ran out, `lineOfSight` (the view's, `MGAnnotationAnchorRules.tests`) or `nearerPart`
     /// (the document's, `MGAnnotationAnchorRules.surfaceTests`).
     public var budget: String? = nil
+    /// The anchor the check report suggests instead (`MGSolidDocument.anchorSuggestions`), or why there is none. Set by
+    /// the check reports for `offPart`, `hidden`, `ghosted`, `offScreen` and `occluded`; nil elsewhere.
+    public var suggestion: MGAnnotationAnchorSuggestion? = nil
 
     /// The same issue for explainer beat `beat` (0-based).
     func at(beat: Int?) -> MGAnnotationAnchorIssue {
         var i = MGAnnotationAnchorIssue(id: id, kind: kind, cause: cause, part: part, by: by, step: step, beat: beat, point: point,
                                         distance: distance, tolerance: tolerance)
-        i.closer = closer; i.closerDistance = closerDistance; i.budget = budget
+        i.closer = closer; i.closerDistance = closerDistance; i.budget = budget; i.suggestion = suggestion
         return i
     }
 
@@ -106,15 +109,43 @@ public struct MGAnnotationAnchorIssue: Equatable, Sendable {
         }
     }
 
-    /// A repair a model can act on.
+    /// `at` for a label, `to` for a pointer.
+    var key: String { kind == "pointer" ? "to" : "at" }
+
+    /// A repair a model can act on. With a suggestion it names the suggested anchor (or why there is none); it never
+    /// proposes a point the rules were not checked to pass.
     public var fix: String {
         let what = kind == "pointer" ? "the pointer tip (`to`)" : "the anchor (`at`)"
         let p = part.map { "`\($0)`" } ?? "the world point"
         func mm(_ x: Double?) -> String { x.map { String(format: "%.1f", $0) } ?? "?" }
+        if let s = suggestion, cause != .untested {
+            // What is wrong in one sentence, then the suggested anchor (checked to pass) or why there is none.
+            var lead = ""
+            switch cause {
+            case .offPart: lead = closer.map { "`\($0)` is nearer to the anchor (\(mm(closerDistance)) mm) than \(p) (\(mm(distance)) mm), so the dot lands on `\($0)`. " }
+                ?? "The anchor is \(mm(distance)) mm off \(p) (at most \(mm(tolerance)) mm). "
+            case .occluded: lead = "\(by.map { "`\($0)`" } ?? "Another part") hides the anchor. "
+            case .hidden: lead = "\(p) is hidden in this view. "
+            case .ghosted: lead = "\(p) is ghosted in this view. "
+            case .offScreen: lead = "The anchor is outside the view. "
+            case .untested: break
+            }
+            var tail = ""
+            if cause == .offPart {
+                tail = " For free text, use a {\"world\": [x, y, z]} anchor."
+                if let c = closer { tail += " If the label names `\(c)`, anchor it on `\(c)`." }
+            }
+            if let a = s.anchorJSON {
+                return lead + "Use \(MGAnnotationAnchorIssue.compact(a)) for \(what): it lies on \(p) and passes the anchor rules in every view that shows "
+                    + "\(id)." + tail
+            }
+            return lead + "No point of \(p) passes in every view that shows \(id) (\(s.causeText ?? "")): "
+                + MGAnnotationAnchorIssue.orList(s.alternatives(id: id)) + tail
+        }
         switch cause {
         case .offPart:
-            let move = "Move \(what) onto \(p): an offset inside its box or within \(mm(tolerance)) mm of it, or {\"part\": \"\(part ?? "")\", "
-                + "\"point\": \"centre\"}. For free text, use a {\"world\": [x, y, z]} anchor."
+            let move = "Move \(what) onto a face of \(p) that the views showing \(id) can see (an offset inside its box or within "
+                + "\(mm(tolerance)) mm of it). For free text, use a {\"world\": [x, y, z]} anchor."
             guard let c = closer else { return move }
             return "`\(c)` is nearer to the anchor (\(mm(closerDistance)) mm) than \(p) (\(mm(distance)) mm), so the dot lands on `\(c)`. "
                 + move + " If the label names `\(c)`, anchor it on `\(c)`."
@@ -138,18 +169,111 @@ public struct MGAnnotationAnchorIssue: Equatable, Sendable {
         }
     }
 
+    /// Longest `repair` text, in Unicode scalars.
+    public static let repairScalars = 400
+
+    /// One line a tool can pass straight to a model, built from the fields above: what is wrong, where, and the anchor to
+    /// use (or why there is none and what to do instead). At most `repairScalars` Unicode scalars; deterministic.
+    public var repair: String {
+        let who = (kind == "pointer" ? "Pointer " : "Label ") + id
+        let at = beat.map { " (beat \($0 + 1))" } ?? step.map { " (step \($0 + 1))" } ?? ""
+        let p = part ?? "the world point"
+        func mm(_ x: Double?) -> String { x.map { String(format: "%.1f", $0) } ?? "?" }
+        let problem: String
+        switch cause {
+        case .offPart:
+            if let c = closer { problem = "lands on \(c), which is nearer than \(p)" }
+            else { problem = "is \(mm(distance)) mm off \(p) (at most \(mm(tolerance)) mm)" }
+        case .occluded: problem = "is hidden behind \(by ?? "another part")"
+        case .hidden: problem = "is on \(p), which this view hides"
+        case .ghosted: problem = "is on \(p), which this view ghosts"
+        case .offScreen: problem = "is outside the view"
+        case .untested: problem = budget == "nearerPart" ? "was not tested: the nearer-part budget ran out" : "was not tested: the view's triangle budget ran out"
+        }
+        var action: String
+        if let s = suggestion, cause != .untested {
+            if let a = s.anchorJSON {
+                action = (kind == "pointer" ? "Use tip (`to`) " : "Use anchor ") + MGAnnotationAnchorIssue.compact(a) + "."
+            } else {
+                action = "No visible point: \(s.causeText ?? ""). " + MGAnnotationAnchorIssue.orList(s.alternatives(id: id))
+            }
+        } else {
+            switch cause {
+            case .untested: action = budget == "nearerPart" ? "Use simpler parts near the anchors, or fewer labels." : "Hide or ghost parts this view does not need, or show fewer labels in it."
+            case .offPart: action = "Move `\(key)` onto a visible face of \(p), or use a {\"world\": [x, y, z]} anchor for free text."
+            case .occluded: action = "Move `\(key)` to a face of \(p) that faces the camera, ghost \(by ?? "the part in the way"), or change the camera."
+            case .hidden: action = "Show \(p) in this view, or leave \(id) out of its annotate list."
+            case .ghosted: action = "Do not ghost \(p) in this view, or leave \(id) out of its annotate list."
+            case .offScreen: action = "Change the camera, or move `\(key)` onto a framed part."
+            }
+        }
+        let line = "\(who)\(at) \(problem). \(action)"
+        return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+    }
+
+    /// `"a, b or c"` from sentences ending in a period: the first kept, the rest lower-cased after "or".
+    static func orList(_ items: [String]) -> String {
+        guard let first = items.first else { return "" }
+        if items.count == 1 { return first }
+        func bare(_ s: String) -> String { s.hasSuffix(".") ? String(s.dropLast()) : s }
+        func lower(_ s: String) -> String { s.prefix(1).lowercased() + s.dropFirst() }
+        var parts = [bare(first)] + items.dropFirst().dropLast().map { lower(bare($0)) }
+        let last = "or " + lower(bare(items.last!))
+        parts.append(last)
+        return parts.joined(separator: ", ") + "."
+    }
+
+    /// `text` cut to `max` Unicode scalars (the last kept scalar becomes `…` when it is cut).
+    static func bounded(_ text: String, _ max: Int) -> String {
+        let one = text.replacingOccurrences(of: "\n", with: " ")
+        guard one.unicodeScalars.count > max else { return one }
+        var u = String.UnicodeScalarView()
+        u.append(contentsOf: one.unicodeScalars.prefix(max - 1))
+        u.append("…")
+        return String(u)
+    }
+
+    /// A number as the repair text writes it: rounded to 0.001, without trailing zeros (`-30`, `148.25`).
+    static func number(_ x: Double) -> String {
+        guard x.isFinite else { return "null" }
+        var s = String(format: "%.3f", (x * 1000).rounded() / 1000)
+        while s.contains("."), s.hasSuffix("0") { s.removeLast() }
+        if s.hasSuffix(".") { s.removeLast() }
+        return s == "-0" ? "0" : s
+    }
+
+    /// One-line JSON for an anchor (`{"part": "p", "offset": [x, y, z]}`), keys in a fixed order.
+    static func compact(_ v: MGJSON) -> String {
+        switch v {
+        case .object(let o):
+            let order = ["part", "offset", "point", "world"]
+            let keys = order.filter { o[$0] != nil } + o.keys.filter { !order.contains($0) }.sorted()
+            return "{" + keys.map { "\"\($0)\": " + compact(o[$0]!) }.joined(separator: ", ") + "}"
+        case .array(let a): return "[" + a.map(compact).joined(separator: ", ") + "]"
+        case .string(let s): return "\"" + s.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
+        case .number(let d): return number(d)
+        case .bool(let b): return b ? "true" : "false"
+        case .null: return "null"
+        }
+    }
+
     /// `{"id", "kind", "reason", "cause", "part", "by", "closer", "closerDistance", "budget", "step", "beat", "point",
-    /// "distance", "tolerance", "fix"}`; `step` and `beat` are 1-based, absent values are null.
+    /// "distance", "tolerance", "fix", "suggest", "noSuggest", "repair"}`; `step` and `beat` are 1-based, absent values are
+    /// null. `suggest` is the suggested anchor (`{"part", "offset"}`) and `noSuggest` says why there is none
+    /// (`MGAnnotationAnchorSuggestion.noneJSON`); both are null when no suggestion was computed.
     public var json: MGJSON {
         func n(_ i: Int?) -> MGJSON { i.map { .number(Double($0 + 1)) } ?? .null }
         func d(_ x: Double?) -> MGJSON { x.flatMap { $0.isFinite ? .number(($0 * 1000).rounded() / 1000) : nil } ?? .null }
         let pt: MGJSON = [point.x, point.y, point.z].allSatisfy(\.isFinite)
             ? .array([point.x, point.y, point.z].map { .number(($0 * 1000).rounded() / 1000) }) : .null
+        let s = cause == .untested ? nil : suggestion
         return .object(["id": .string(id), "kind": .string(kind), "reason": .string(reason), "cause": .string(cause.rawValue),
                         "part": part.map(MGJSON.string) ?? .null, "by": by.map(MGJSON.string) ?? .null,
                         "closer": closer.map(MGJSON.string) ?? .null, "closerDistance": d(closerDistance), "budget": budget.map(MGJSON.string) ?? .null,
                         "step": n(step), "beat": n(beat),
-                        "point": pt, "distance": d(distance), "tolerance": d(tolerance), "fix": .string(fix)])
+                        "point": pt, "distance": d(distance), "tolerance": d(tolerance), "fix": .string(fix),
+                        "suggest": s?.anchorJSON ?? .null, "noSuggest": s.map { $0.offset == nil ? $0.noneJSON(id: id) : .null } ?? .null,
+                        "repair": .string(repair)])
     }
 }
 
@@ -160,6 +284,13 @@ public struct MGAnnotationAnchorReport: Equatable, Sendable {
     public init() {}
 
     mutating func append(_ o: MGAnnotationAnchorReport) { issues += o.issues }
+
+    /// Sets `suggestion` on every off and hidden issue (`MGSolidDocument.anchorSuggestions` with `views`).
+    mutating func suggest(_ doc: MGSolidDocument, views: [MGAnnotationAnchorView]) {
+        let found = doc.anchorSuggestions(for: issues, views: views)
+        guard !found.isEmpty else { return }
+        for i in issues.indices where issues[i].cause != .untested { issues[i].suggestion = found[issues[i].id] }
+    }
 
     /// `(id, step, beat)` of each anchor a view did not test (0-based step and beat).
     public var untested: [(id: String, step: Int?, beat: Int?)] {
@@ -183,6 +314,20 @@ extension MGSolidAnnotations {
         if let r = arrow(id), r.meaning == .pointer, let to = r.to { return ("pointer", to) }
         return nil
     }
+}
+
+/// Slab test of the segment `a + t d`, 0 ≤ t ≤ 1, against a box (the test of `MGAnnotationOcclusion.segmentHits`, without
+/// building arrays).
+@inline(__always) func mgSegmentMeetsBox(_ a: MGVec3, _ d: MGVec3, _ box: MGBounds) -> Bool {
+    guard !box.isEmpty else { return false }
+    var lo = 0.0, hi = 1.0
+    @inline(__always) func axis(_ o: Double, _ v: Double, _ mn: Double, _ mx: Double) -> Bool {
+        if abs(v) < 1e-12 { return o >= mn && o <= mx }
+        let t1 = (mn - o) / v, t2 = (mx - o) / v
+        lo = max(lo, min(t1, t2)); hi = min(hi, max(t1, t2))
+        return lo <= hi
+    }
+    return axis(a.x, d.x, box.min.x, box.max.x) && axis(a.y, d.y, box.min.y, box.max.y) && axis(a.z, d.z, box.min.z, box.max.z)
 }
 
 /// The distance (mm) from a point to a box (0 inside).
@@ -255,6 +400,28 @@ struct MGMeshChunks {
             start += MGMeshChunks.size
         }
         bounds = out
+    }
+
+    /// The smallest `t` with `after < t < before` at which a triangle crosses `a + t (b − a)` (the watertight test of
+    /// `MGSolidFraming.OcclusionProbe.firstHit`, the same answer), reading only runs whose box the segment meets. Each
+    /// run-box test and each triangle test costs 1 from `budget`; `ok` is false when it would go below 0.
+    func firstHit(_ a: MGVec3, _ b: MGVec3, after: Double, before: Double, budget: inout Int) -> (t: Double?, ok: Bool) {
+        guard let ray = WatertightRay(a, b - a) else { return (nil, true) }
+        let n = mesh.triangleCount, pos = mesh.positions, d = b - a
+        var best: Double?
+        for c in bounds.indices {
+            budget -= 1
+            guard budget >= 0 else { return (nil, false) }
+            guard mgSegmentMeetsBox(a, d, bounds[c]) else { continue }
+            for i in (c * MGMeshChunks.size)..<min((c + 1) * MGMeshChunks.size, n) {
+                budget -= 1
+                guard budget >= 0 else { return (nil, false) }
+                let (i0, i1, i2) = mesh.triangle(i)
+                guard i0 < pos.count, i1 < pos.count, i2 < pos.count else { continue }
+                if let t = ray.hit(pos[i0], pos[i1], pos[i2]), t > after, t < before { best = min(best ?? t, t) }
+            }
+        }
+        return (best, true)
     }
 
     /// The result of `nearer`.
@@ -340,74 +507,77 @@ extension MGSolidDocument {
         let a = annotations
         guard !a.isEmpty else { return [] }
         var out: [MGAnnotationAnchorIssue] = []
-        var budget = initial
-        var chunks: [String: MGMeshChunks] = [:]
-        var poses: [(params: MGPoseParameters, pose: MGPose)] = []
-        func posed(_ params: MGPoseParameters) -> MGPose {
-            if let hit = poses.first(where: { $0.params == params }) { return hit.pose }
-            let p = assembly.pose(params); poses.append((params, p)); return p
-        }
-        let rest = posed(MGPoseParameters(input: defaults.input, explode: 0))
+        var state = MGOffPartState(budget: initial)
         for id in a.ids {
-            guard let (kind, p) = a.checkedAnchor(id), let partID = p.part, let part = assembly.part(partID) else { continue }
-            let b = part.mesh.bounds
-            guard !b.isEmpty else { continue }
-            let dist = mgBoxDistance(p.local, b)
-            // The drawn model: the parts the views showing the annotation draw, at their poses (hidden parts left out).
-            let shown = shownPoses(id)
-            var drawn = MGBounds.empty
-            for (step, params) in shown {
-                let pose = posed(params), hidden = hiddenParts(step: step)
-                for q in assembly.parts where !hidden.contains(q.id) {
-                    drawn = drawn.union(MGSolidFrames.worldBounds(q.mesh.bounds, pose.world[q.id] ?? .identity))
-                }
-            }
-            let model = shown.isEmpty || drawn.isEmpty ? a.diagonal : drawn.size.length
-            let tol = Swift.max(MGAnnotationAnchorRules.partShare * b.size.length, MGAnnotationAnchorRules.modelShare * model)
-            // The nearer-part search, view by view, in each shown view's own geometry and in anchor-relative coordinates
-            // (`mgAnchorRelative`): the anchor's distance to its own part's box and to each other part are measured in
-            // those parts' frames from the anchor, and the epsilon is the one at the anchor (1.01e-4 mm). A view is
-            // skipped only when, in that view, the anchor is within that epsilon of its own part's box.
-            let eps = mgPrecision(.zero)
-            var closer: (step: Int?, x: MGVec3, part: String, d: Double)?, unknownAt: (step: Int?, x: MGVec3)?
-            views: for (step, params) in shown {
-                let pose = posed(params)
-                let x = p.world(pose)
-                let own = mgAnchorRelative(pose.world[partID] ?? .identity, anchor: x).toLocal.apply(.zero)
-                let r = mgBoxDistance(own, b) - eps
-                guard r > 0 else { continue }
-                for q in assembly.parts where q.id != partID && !q.mesh.bounds.isEmpty {
-                        let lq = mgAnchorRelative(pose.world[q.id] ?? .identity, anchor: x).toLocal.apply(.zero)
-                        budget -= 1
-                        guard budget >= 0 else { unknownAt = (step, x); break views }
-                        guard mgBoxDistance(lq, q.mesh.bounds) < r else { continue }
-                        if chunks[q.id] == nil {
-                            budget -= q.mesh.triangleCount
-                            guard budget >= 0 else { unknownAt = (step, x); break views }
-                            chunks[q.id] = MGMeshChunks(q.mesh)
-                        }
-                        switch chunks[q.id]!.nearer(lq, than: r, budget: &budget) {
-                        case .notNearer: continue
-                        case .unknown: unknownAt = (step, x)
-                        case .nearer(let dq): closer = (step, x, q.id, dq)
-                        }
-                        break views
-                }
-            }
-            if !(dist <= tol) || closer != nil {
-                // Off its part: too far from its own box (in every pose), or another part is nearer in a shown view.
-                var issue = MGAnnotationAnchorIssue(id: id, kind: kind, cause: .offPart, part: partID, by: nil, step: closer?.step, beat: nil,
-                                                    point: closer?.x ?? shown.first.map { p.world(posed($0.params)) } ?? p.world(rest),
-                                                    distance: dist, tolerance: tol)
-                issue.closer = closer?.part; issue.closerDistance = closer?.d
-                out.append(issue)
-            } else if let u = unknownAt {
-                // Within its tolerance, but the nearer-part search ran out of budget: unknown, never off.
-                out.append(MGAnnotationAnchorIssue(id: id, kind: kind, cause: .untested, part: partID, by: nil, step: u.step, beat: nil,
-                                                   point: u.x, distance: nil, tolerance: nil, budget: "nearerPart"))
-            }
+            guard let (kind, p) = a.checkedAnchor(id), let issue = offPartIssue(id: id, kind: kind, p, state: &state) else { continue }
+            out.append(issue)
         }
         return out
+    }
+
+    /// The off-part rule (`offPartAnchors`) for one anchor `p` of annotation `id`: the issue, or nil when it passes (or
+    /// names no part). `state` carries the document's nearer-part budget and its caches.
+    func offPartIssue(id: String, kind: String, _ p: MGAnnotationPoint, state: inout MGOffPartState) -> MGAnnotationAnchorIssue? {
+        let a = annotations
+        guard let partID = p.part, let part = assembly.part(partID) else { return nil }
+        let b = part.mesh.bounds
+        guard !b.isEmpty else { return nil }
+        let dist = mgBoxDistance(p.local, b)
+        // The drawn model: the parts the views showing the annotation draw, at their poses (hidden parts left out).
+        let shown = shownPoses(id)
+        var drawn = MGBounds.empty
+        for (step, params) in shown {
+            let pose = state.posed(self, params), hidden = hiddenParts(step: step)
+            for q in assembly.parts where !hidden.contains(q.id) {
+                drawn = drawn.union(MGSolidFrames.worldBounds(q.mesh.bounds, pose.world[q.id] ?? .identity))
+            }
+        }
+        let model = shown.isEmpty || drawn.isEmpty ? a.diagonal : drawn.size.length
+        let tol = Swift.max(MGAnnotationAnchorRules.partShare * b.size.length, MGAnnotationAnchorRules.modelShare * model)
+        // The nearer-part search, view by view, in each shown view's own geometry and in anchor-relative coordinates
+        // (`mgAnchorRelative`): the anchor's distance to its own part's box and to each other part are measured in
+        // those parts' frames from the anchor, and the epsilon is the one at the anchor (1.01e-4 mm). A view is
+        // skipped only when, in that view, the anchor is within that epsilon of its own part's box.
+        let eps = mgPrecision(.zero)
+        var closer: (step: Int?, x: MGVec3, part: String, d: Double)?, unknownAt: (step: Int?, x: MGVec3)?
+        views: for (step, params) in shown {
+            let pose = state.posed(self, params)
+            let x = p.world(pose)
+            let own = mgAnchorRelative(pose.world[partID] ?? .identity, anchor: x).toLocal.apply(.zero)
+            let r = mgBoxDistance(own, b) - eps
+            guard r > 0 else { continue }
+            for q in assembly.parts where q.id != partID && !q.mesh.bounds.isEmpty {
+                    let lq = mgAnchorRelative(pose.world[q.id] ?? .identity, anchor: x).toLocal.apply(.zero)
+                    state.budget -= 1
+                    guard state.budget >= 0 else { unknownAt = (step, x); break views }
+                    guard mgBoxDistance(lq, q.mesh.bounds) < r else { continue }
+                    if state.chunks[q.id] == nil {
+                        state.budget -= q.mesh.triangleCount
+                        guard state.budget >= 0 else { unknownAt = (step, x); break views }
+                        state.chunks[q.id] = MGMeshChunks(q.mesh)
+                    }
+                    switch state.chunks[q.id]!.nearer(lq, than: r, budget: &state.budget) {
+                    case .notNearer: continue
+                    case .unknown: unknownAt = (step, x)
+                    case .nearer(let dq): closer = (step, x, q.id, dq)
+                    }
+                    break views
+            }
+        }
+        if !(dist <= tol) || closer != nil {
+            // Off its part: too far from its own box (in every pose), or another part is nearer in a shown view.
+            let rest = state.posed(self, MGPoseParameters(input: defaults.input, explode: 0))
+            var issue = MGAnnotationAnchorIssue(id: id, kind: kind, cause: .offPart, part: partID, by: nil, step: closer?.step, beat: nil,
+                                                point: closer?.x ?? shown.first.map { p.world(state.posed(self, $0.params)) } ?? p.world(rest),
+                                                distance: dist, tolerance: tol)
+            issue.closer = closer?.part; issue.closerDistance = closer?.d
+            return issue
+        } else if let u = unknownAt {
+            // Within its tolerance, but the nearer-part search ran out of budget: unknown, never off.
+            return MGAnnotationAnchorIssue(id: id, kind: kind, cause: .untested, part: partID, by: nil, step: u.step, beat: nil,
+                                           point: u.x, distance: nil, tolerance: nil, budget: "nearerPart")
+        }
+        return nil
     }
 
     /// The anchor rules of one framed view: for each label and pointer the view shows (`checkedAnnotations`, view order),
@@ -437,107 +607,43 @@ extension MGSolidDocument {
     /// `anchorIssues` with another triangle-test budget (tests).
     func anchorIssues(view: MGSolidView, params: MGPoseParameters, camera: MGSolidCamera, width: Double, height: Double,
                       step: Int?, beat: Int?, stage: MGTransform, budget: Int) -> MGAnnotationAnchorReport {
+        anchorIssues(MGAnnotationAnchorView(view: view, params: params, camera: camera, width: width, height: height, step: step, beat: beat,
+                                            stage: stage), budget: budget)
+    }
+
+    /// `anchorIssues` of one framed view.
+    func anchorIssues(_ v: MGAnnotationAnchorView, budget: Int = MGAnnotationAnchorRules.tests) -> MGAnnotationAnchorReport {
         var out = MGAnnotationAnchorReport()
         let a = annotations
-        let ids = (checkedAnnotations(view, params: params) ?? []).filter { a.checkedAnchor($0) != nil }
+        let ids = (checkedAnnotations(v.view, params: v.params) ?? []).filter { a.checkedAnchor($0) != nil }
         guard !ids.isEmpty else { return out }
-        let pose = assembly.pose(params)
-        let proj = MGAnnotationProjection(camera: camera, width: width, height: height)
-        let eye = stage.inverse.apply(camera.position)
-        struct Solid { let id: String; let mesh: MGMesh; let world: MGTransform }
-        var solids: [Solid] = []
-        var whole = MGBounds.empty
-        for p in assembly.parts {
-            let t = pose.world[p.id] ?? .identity
-            let full = MGSolidFrames.worldBounds(p.mesh.bounds, t)
-            let pv = view.part(p.id)
-            guard !pv.hidden else { continue }
-            whole = whole.union(full)
-            // Drawn coverage: the view opacity (part opacity and ghosts) times the material's own (glass 0.22).
-            guard pv.opacity * p.material.coverage >= MGSolidFraming.blockingOpacity else { continue }
-            solids.append(Solid(id: p.id, mesh: pv.cut?.mesh ?? p.mesh, world: t))
-        }
-        let grow = 0.005 * (whole.isEmpty ? 0 : whole.size.length)
-        // Every test below runs in anchor-relative coordinates (world minus the anchor, `mgAnchorRelative`): the camera,
-        // each part's placement and every hit point are taken relative to the dot before any test, so the precision
-        // epsilon (`mgPrecision`) depends on the distance from the dot only, never on where the model is.
-        let eps = mgPrecision(.zero)
+        var rule = MGAnchorViewRule(self, v)
         var used = 0, over = false
-        var ownChunks: [String: MGMeshChunks] = [:]
         for id in ids {
             guard let (kind, p) = a.checkedAnchor(id) else { continue }
-            let x = p.world(pose)
-            func issue(_ c: MGAnnotationAnchorIssue.Cause, by: String? = nil) {
-                out.issues.append(MGAnnotationAnchorIssue(id: id, kind: kind, cause: c, part: p.part, by: by, step: step, beat: beat, point: x,
-                                                          distance: nil, tolerance: nil, budget: c == .untested ? "lineOfSight" : nil))
-            }
-            if let own = p.part {
-                let pv = view.part(own)
-                if pv.hidden { issue(.hidden); continue }
-                let base = MGSolidView.clamp(opacity: assembly.part(own)?.opacity ?? 1)
-                if pv.opacity < base - 1e-9 { issue(.ghosted); continue }
-            }
-            guard let s = proj.project(stage.apply(x)), s.x >= 0, s.x <= width, s.y >= 0, s.y <= height else { issue(.offScreen); continue }
-            if over { issue(.untested); continue }
-            let eyeRel = eye - x
-            let ownRel = p.part.map { mgAnchorRelative(pose.world[$0] ?? .identity, anchor: x) }
-            // The cut exception: the inside of the anchor's own cut part does not hide it.
-            var exempt = Set<String>()
-            // Containment is tested in the cut part's own frame: every corner of another part's mesh box, posed and
-            // taken into that frame (through anchor-relative coordinates), must lie in the cut part's mesh box (grown
-            // by `grow`), so a rotated cut part never exempts a part outside it that only its world-axis box would hold.
-            if let own = p.part, let ownRel, let cut = view.part(own).cut, let box = assembly.part(own)?.mesh.bounds {
-                let lo = ownRel.toLocal.apply(.zero)
-                if mgBoxDistance(lo, box) <= eps, cut.plane.distance(lo) <= eps {
-                    for q in assembly.parts where q.id != own && !q.mesh.bounds.isEmpty {
-                        let qRel = mgAnchorRelative(pose.world[q.id] ?? .identity, anchor: x)
-                        if q.mesh.bounds.corners.allSatisfy({ c in
-                            let l = ownRel.toLocal.apply(qRel.toRelative.apply(c))
-                            return l.x >= box.min.x - grow && l.x <= box.max.x + grow && l.y >= box.min.y - grow && l.y <= box.max.y + grow
-                                && l.z >= box.min.z - grow && l.z <= box.max.z + grow
-                        }) { exempt.insert(q.id) }
-                    }
-                }
-            }
-            // The segment from the camera (t = 0) to the dot (t = 1, the origin), less the epsilon at the dot.
-            let len = eyeRel.length
-            guard len > eps, len.isFinite else { continue }
-            let before = 1 - eps / len
-            var first: (t: Double, id: String)?, ownT: Double?
-            for sld in solids where !exempt.contains(sld.id) {
-                let rel = mgAnchorRelative(sld.world, anchor: x)
-                guard MGAnnotationOcclusion.segmentHits(eyeRel, .zero, MGSolidFrames.worldBounds(sld.mesh.bounds, rel.toRelative)) else { continue }
-                guard used + sld.mesh.triangleCount <= budget else { over = true; break }
-                used += sld.mesh.triangleCount
-                guard let t = MGSolidFraming.OcclusionProbe.firstHit(rel.toLocal.apply(eyeRel), rel.toLocal.apply(.zero), sld.mesh,
-                                                                     after: 1e-9, before: before) else { continue }
-                if sld.id == p.part { ownT = t } else if first.map({ t < $0.t }) ?? true { first = (t, sld.id) }
-            }
-            if over { issue(.untested); continue }
-            guard let f = first, !(ownT.map { $0 <= f.t } ?? false) else { continue }
-            // A coincident surface is a tie, not an occlusion: when the blocker's hit point lies on the anchor's own part
-            // (as the view draws it) within the precision epsilon at that point (its distance from the dot), the own
-            // part is there too, so it is visible. Two touching parts give the same answer whichever of them the anchor
-            // names; a separate part in front is a tie only when it is within that epsilon of the own part
-            // (1.01e-4 mm plus 1e-6 per mm from the dot), wherever the model is.
-            if let own = p.part, let ownRel, let ownPart = assembly.part(own) {
-                let mesh = view.part(own).cut?.mesh ?? ownPart.mesh
-                if ownChunks[own] == nil {
-                    guard used + mesh.triangleCount <= budget else { issue(.untested); over = true; continue }
-                    used += mesh.triangleCount
-                    ownChunks[own] = MGMeshChunks(mesh)
-                }
-                let hRel = eyeRel * (1 - f.t)
-                var left = budget - used
-                let near = ownChunks[own]!.nearer(ownRel.toLocal.apply(hRel), than: mgPrecision(hRel), budget: &left)
-                used = budget - max(0, left)
-                switch near {
-                case .nearer: continue
-                case .unknown: issue(.untested); over = true; continue
-                case .notNearer: break
-                }
-            }
-            issue(.occluded, by: f.id)
+            guard let (c, by) = rule.test(p, used: &used, over: &over, budget: budget) else { continue }
+            out.issues.append(MGAnnotationAnchorIssue(id: id, kind: kind, cause: c, part: p.part, by: by, step: v.step, beat: v.beat,
+                                                      point: p.world(rule.pose), distance: nil, tolerance: nil,
+                                                      budget: c == .untested ? "lineOfSight" : nil))
+        }
+        return out
+    }
+
+    /// The framed view of every step still as `marty-solid render` frames it at `width` × `height` whose view shows a
+    /// label or pointer (see `stepAnchorIssues`).
+    public func stepAnchorViews(width: Int = MGAnnotationAnchorRules.width, height: Int = MGAnnotationAnchorRules.height) -> [MGAnnotationAnchorView] {
+        var out: [MGAnnotationAnchorView] = []
+        guard !annotations.isEmpty else { return out }
+        let w = Double(width), h = Double(height)
+        let aspect = w > 0 && h > 0 ? w / h : 1.6
+        let bands = MGSolidRenderPlan.bands(width: w, height: h)
+        for i in steps.indices {
+            let base = view(step: i)
+            guard base.annotations.contains(where: { annotations.checkedAnchor($0) != nil }), let shot = MGSolidShot.step(self, i) else { continue }
+            let clear = MGSolidFraming.clearView(self, shot: shot, aspect: aspect, titleBand: shot.title != nil ? bands.title : 0,
+                                                 captionBand: shot.caption != nil ? bands.caption : 0)
+            out.append(MGAnnotationAnchorView(view: base.ghosting(clear.autoGhost), params: shot.params, camera: clear.camera, width: w, height: h,
+                                              step: i, beat: nil))
         }
         return out
     }
@@ -548,18 +654,7 @@ extension MGSolidDocument {
     /// (`hero.png`) and the poses during a step's spin are not tested.
     public func stepAnchorIssues(width: Int = MGAnnotationAnchorRules.width, height: Int = MGAnnotationAnchorRules.height) -> MGAnnotationAnchorReport {
         var out = MGAnnotationAnchorReport()
-        guard !annotations.isEmpty else { return out }
-        let w = Double(width), h = Double(height)
-        let aspect = w > 0 && h > 0 ? w / h : 1.6
-        let bands = MGSolidRenderPlan.bands(width: w, height: h)
-        for i in steps.indices {
-            let base = view(step: i)
-            guard base.annotations.contains(where: { annotations.checkedAnchor($0) != nil }), let shot = MGSolidShot.step(self, i) else { continue }
-            let clear = MGSolidFraming.clearView(self, shot: shot, aspect: aspect, titleBand: shot.title != nil ? bands.title : 0,
-                                                 captionBand: shot.caption != nil ? bands.caption : 0)
-            out.append(anchorIssues(view: base.ghosting(clear.autoGhost), params: shot.params, camera: clear.camera, width: w, height: h,
-                                    step: i, beat: nil))
-        }
+        for v in stepAnchorViews(width: width, height: height) { out.append(anchorIssues(v)) }
         return out
     }
 }

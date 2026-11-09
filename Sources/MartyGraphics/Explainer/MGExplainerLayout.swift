@@ -253,15 +253,26 @@ extension MGExplainerFrame {
     public static func beatAnchorIssues(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
                                         height: Int = MGAnnotationAnchorRules.height) -> MGAnnotationAnchorReport {
         var out = MGAnnotationAnchorReport()
+        let r = beatAnchorViews(doc, library: library, width: width, height: height)
+        guard let d = r.solid else { return out }
+        for v in r.views { out.append(d.anchorIssues(v)) }
+        return out
+    }
+
+    /// The framed view of every beat still whose solid view shows a label or pointer, as `beatAnchorIssues` tests it,
+    /// with the solid document they belong to.
+    public static func beatAnchorViews(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
+                                       height: Int = MGAnnotationAnchorRules.height) -> (solid: MGSolidDocument?, views: [MGAnnotationAnchorView]) {
         let r = beatPanes(doc, library: library, width: width, height: height)
-        guard let d = r.solid, !d.annotations.isEmpty else { return out }
+        guard let d = r.solid, !d.annotations.isEmpty else { return (r.solid, []) }
+        var out: [MGAnnotationAnchorView] = []
         for b in r.beats {
             let base = b.view.solid ?? d.view(step: nil)
             guard base.annotations.contains(where: { d.annotations.checkedAnchor($0) != nil }) else { continue }
             let clear = solidClearView(d, view: b.view, stepIndex: b.stepIndex, pane: b.pane)
-            out.append(d.anchorIssues(view: base.ghosting(clear.autoGhost), params: pose(d, view: b.view), camera: clear.camera,
-                                      width: Double(b.pane.width), height: Double(b.pane.height), step: b.stepIndex, beat: b.beat))
+            out.append(MGAnnotationAnchorView(view: base.ghosting(clear.autoGhost), params: pose(d, view: b.view), camera: clear.camera,
+                                              width: Double(b.pane.width), height: Double(b.pane.height), step: b.stepIndex, beat: b.beat))
         }
-        return out
+        return (d, out)
     }
 }

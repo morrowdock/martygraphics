@@ -181,7 +181,11 @@ extension MGSolidReport {
         if reason == nil, let r = profile.refusal(doc) { reason = r.reason; part = r.part }
         var anchors = MGAnnotationAnchorReport()
         anchors.issues = doc.offPartAnchors
-        if anchorViews { anchors.append(doc.stepAnchorIssues()) }
+        if anchorViews {
+            let framed = doc.stepAnchorViews()
+            for v in framed { anchors.append(doc.anchorIssues(v)) }
+            anchors.suggest(doc, views: framed)
+        }
         let views = anchors.issues.filter { $0.cause != .offPart }
         if reason == nil, profile == .strict, let first = views.first { reason = first.reason; part = first.id }
         var o = summary(doc, checks: checks, profile: profile)
@@ -201,8 +205,25 @@ extension MGSolidReport {
             o["anchorIssues"] = .array(anchors.issues.map(\.json))
             o["anchorUntested"] = anchors.untestedJSON
         }
-        if let r = reason, let hit = anchorIssue(r, anchors.issues) { o["anchor"] = hit.json }
+        let hit = reason.flatMap { anchorIssue($0, anchors.issues) }
+        if let hit { o["anchor"] = hit.json }
+        if let r = reason { o["repair"] = .string(repair(r, part: part, anchor: hit)) }
         return MGSolidReport(ok: reason == nil, reason: reason, part: part, json: .object(o))
+    }
+
+    /// The report's one-line `repair` for refusal `reason`, built from its structured detail: the anchor issue's
+    /// `repair`, else the limit detail's (`MGSolidLimitDetail.repair`), else the catalog meaning of the reason
+    /// (`MGSolidReasons.lookup`), else the bare reason. At most `MGAnnotationAnchorIssue.repairScalars` Unicode scalars;
+    /// deterministic.
+    static func repair(_ reason: String, part: String?, anchor: MGAnnotationAnchorIssue? = nil, limit: MGSolidLimitDetail? = nil,
+                       visibility: MGAnnotationVisibilityDetail? = nil) -> String {
+        if let anchor { return anchor.repair }
+        let line: String
+        if let limit { line = limit.repair }
+        else if let m = MGSolidReasons.lookup(reason)?.meaning {
+            line = "Refused (\(reason))" + (part.map { ", at \(MGSolidParser.token($0))" } ?? "") + ": " + m
+        } else { line = "Refused (\(reason))." }
+        return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
     }
 
     /// The issue an anchor refusal names: the first issue with that reason (nil for any other reason).
@@ -210,9 +231,9 @@ extension MGSolidReport {
         issues.first { $0.reason == reason }
     }
 
-    /// The report of a refused document: `{"ok": false, "reason", "part"}`, plus `visibility` for `annotations.visible`
-    /// (`MGAnnotationVisibilityDetail`), `limit` for `parts.resolved` (`MGSolidLimitDetail`), `strict` when a profile is
-    /// given, `file` when a source is given and `engine`.
+    /// The report of a refused document: `{"ok": false, "reason", "part", "repair"}`, plus `visibility` for
+    /// `annotations.visible` (`MGAnnotationVisibilityDetail`), `limit` for every length, count or size limit
+    /// (`MGSolidLimitDetail`), `strict` when a profile is given, `file` when a source is given and `engine`.
     public static func refused(_ issue: MGSolidIssue, profile: MGSolidProfile? = nil, source: MGSolidSource? = nil,
                                engine: MGJSON? = MGEngine.identity) -> MGSolidReport {
         if badEngine(engine) { return engineRefusal }
@@ -220,7 +241,11 @@ extension MGSolidReport {
         // `annotations.visible` only: which annotation is over the limit and why (other refusals keep their exact keys).
         if let v = issue.visibility { o["visibility"] = v.json }
         // `parts.resolved` only: the resolved count, the limit and the instances that add the most parts.
-        if let l = issue.limit { o["limit"] = l.json }
+        // A limit refusal: the field, the measured value and the limit (`annotations.visible` and the `annotate` counts
+        // give theirs from `visibility`).
+        let limit = issue.limit ?? issue.visibility?.limitDetail()
+        if let limit { o["limit"] = limit.json }
+        o["repair"] = .string(repair(issue.reason, part: issue.part, limit: limit, visibility: issue.visibility))
         if let profile { o["strict"] = .bool(profile == .strict) }
         if let source { o["file"] = source.json }
         if let engine { o["engine"] = engine }
@@ -232,7 +257,7 @@ extension MGSolidReport {
     public static func check(data: Data, library: MGSolidLibrary = .builtIn, profile: MGSolidProfile = .standard,
                              engine: MGJSON? = MGEngine.identity) -> MGSolidReport {
         if badEngine(engine) { return engineRefusal }
-        guard data.count <= MGSolidLimits.bytes else { return refused(MGSolidIssue("assembly.bytes"), engine: engine) }
+        guard data.count <= MGSolidLimits.bytes else { return refused(MGSolidParser.bytesIssue("assembly.bytes", data.count), engine: engine) }
         let source = MGSolidSource(data: data)
         switch MGSolidParser.document(data: data, library: library) {
         case .failure(let issue): return refused(issue, profile: profile, source: source, engine: engine)
@@ -258,7 +283,7 @@ extension MGSolidReport {
         }
         guard data.count <= MGSolidLimits.bytes else {
             info["refusedAt"] = .string("base")
-            return with(refused(MGSolidIssue("assembly.bytes"), engine: engine), info)
+            return with(refused(MGSolidParser.bytesIssue("assembly.bytes", data.count), engine: engine), info)
         }
         let source = MGSolidSource(data: data)
         let base: MGSolidDocument

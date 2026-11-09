@@ -54,7 +54,8 @@ final class AnnotationVisibilityDetailTests: XCTestCase {
     func testOtherRefusalsKeepTheirKeys() {
         let r = MGSolidReport.check(data: Data(#"{"v":2,"kind":"assembly","parts":[]}"#.utf8), engine: nil).json
         XCTAssertNotEqual(r["reason"], .string("annotations.visible"))
-        XCTAssertEqual(Set(r.objectValue?.keys.map { $0 } ?? []), ["ok", "reason", "part", "strict", "file"])
+        // No `visibility`; `parts.count` is a limit reason, so it gives `limit` (and every refusal `repair`).
+        XCTAssertEqual(Set(r.objectValue?.keys.map { $0 } ?? []), ["ok", "reason", "part", "strict", "file", "limit", "repair"])
         let ref = report(Self.assembly(labels: 2, steps: #"[{"say":"One.","annotate":["zz"]}]"#))
         XCTAssertEqual(ref["reason"], .string("step.annotate.ref.zz"))
         XCTAssertNil(ref["visibility"])
