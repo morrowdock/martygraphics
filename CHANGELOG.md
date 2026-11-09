@@ -7,12 +7,13 @@
   (the watertight line-of-sight rays of the unblocked-focus rule, 3,000,000 triangle tests per view), on a hidden or
   ghosted part (automatic ghosts included), or off screen. A part blocks only when it is drawn with a coverage of 0.5 or
   more: view opacity times the material's own coverage (`MGMaterialPreset.coverage`; glass 0.22), as the renderer
-  draws it. A blocker hit that lies on the anchor's own part within a numeric-precision epsilon (`1e-6 × max(1, |p|) +
-  1e-4` mm; a coincident face of touching parts) is a tie, not an occlusion. An anchor on a part that the view's section cuts is not hidden by the parts inside that cut part (tested in
+  draws it. Every test runs in anchor-relative coordinates; a blocker hit that lies on the anchor's own part within a
+  numeric-precision epsilon (`1e-6 × max(1, |p − anchor|) + 1e-4` mm; a coincident face of touching parts) is a tie,
+  not an occlusion. An anchor on a part that the view's section cuts is not hidden by the parts inside that cut part (tested in
   the cut part's own frame) when it lies on the cut face or inside the cut. An anchor that a view's triangle budget
   leaves untested is `annotation.anchor.untested.<id>`: strict refuses it, standard warns. An anchor farther than
   max(5 % of its part's box diagonal, 0.5 % of the diagonal of the parts the views showing it draw) from its part's
-  oriented box, or, at the pose of a view that shows it, nearer (beyond the precision epsilon) to another part's solid
+  oriented box, or, at the pose of a view that shows it (in that view's geometry), nearer (beyond the precision epsilon) to another part's solid
   than to its own part's box, is `annotation.anchor.off.<id>` (a
   document warning, so the compile's strict profile also refuses it; the detail names the view and the nearer part).
   The nearer-part search is exact, stops early and counts every test against 3,000,000 per document; out of budget

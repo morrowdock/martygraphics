@@ -872,7 +872,9 @@ anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensi
    annotation draw, at their poses; hidden parts are left out (all parts when no view shows it). This test is in the
    part's own frame, so it holds in every pose; its issue has no step.
 2. No other part's solid comes nearer to the anchor than its own part's box, by more than the precision epsilon at the
-   anchor (below). The test is skipped only when the anchor is within that epsilon of its own part's box. This test runs at the pose of every view that shows the annotation: the plain view at the default pose
+   dot (below). Each view uses its own geometry: the anchor's distance to its own part's box and to every other part
+   are measured at that view's pose, in anchor-relative coordinates. A view is skipped only when, in that view, the
+   anchor is within the epsilon of its own part's box. This test runs at the pose of every view that shows the annotation: the plain view at the default pose
    when it shows it, and each step or beat at its still's pose (a beat's view is its solid step). The first view where
    a part is nearer is the issue's `step` (and `beat`), and that part is `closer`. A part's solid is its surface or its
    inside: the anchor is inside when a segment from it along +X crosses the part's surface an odd number of times
@@ -881,9 +883,10 @@ anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensi
 The nearer-part search is exact and stops early (`MGMeshChunks.nearer`): a part whose oriented box is not nearer costs
 one box test; the part's triangles are read once into runs of 64 with their boxes; runs farther than the own part's
 distance are skipped; the search stops at the first nearer triangle (in run order), and `closerDistance` is that
-triangle's distance. Only when no triangle is nearer and the anchor lies inside the part (watertight parity) is
-`closerDistance` 0. So `closer` is the first part found (assembly order) and `closerDistance` the first distance found,
-not necessarily the nearest.
+triangle's distance, which is 0 when the anchor lies on that triangle (a dot on the part's face). When no triangle is
+nearer and the anchor lies inside the part (watertight parity), `closerDistance` is also 0; an anchor inside a part can
+still report a positive distance to a face found first. So `closer` is the first part found (assembly order) and
+`closerDistance` the first distance found, not necessarily the nearest.
 Every triangle read, run-box test and triangle test of one document counts against 3,000,000
 (`MGAnnotationAnchorRules.surfaceTests`). When the budget runs out the answer is unknown: the anchor is
 `annotation.anchor.untested.<id>` with the view and `"budget": "nearerPart"`, never off. A world anchor names no part and is not tested. The first
@@ -913,12 +916,17 @@ precision epsilon at the anchor) and before the first crossing of the anchor's o
 its part, seen through its own surface, is visible, and an anchor in the air in front of a part is not hidden by it. A
 blocker hit that lies on the anchor's own part (as the view draws it) within the precision epsilon at the hit point is
 a coincident surface, a tie, not an occlusion: the own part is there too, so the anchor is visible. Two touching parts
-therefore give the same result whichever of them the anchor names; a separate part in front of the anchor, however
-close (0.1 mm in the tests), still hides it.
+therefore give the same result whichever of them the anchor names. A separate part in front of the anchor hides it
+unless its hit lies within that epsilon of the own part (0.01 mm and more are caught in the tests, also with the model
+driven to 10⁶ mm).
 
-**Precision epsilon.** At a point `p` (kernel world, mm) the epsilon is `1e-6 × max(1, |p|) + 1e-4` mm (`mgPrecision`):
-it covers the floating-point error of coordinates of that size (at most about 0.004 mm at the 4,000 mm coordinate
-limit). It does not grow with the model, so a large, distant or hidden part never widens any tolerance of these rules. A world anchor has no
+**Anchor-relative coordinates and the precision epsilon.** Every visibility, tie and nearer-part test runs in
+anchor-relative coordinates (`mgAnchorRelative`): the anchor point is subtracted, in double precision, from the camera
+and from each part's placement before any test, and hit points are kept relative to the dot. Each part's triangles are
+tested in the part's own frame, reached from those relative coordinates. At a point `p` the epsilon is
+`1e-6 × max(1, |p − anchor|) + 1e-4` mm (`mgPrecision`): 1.01e-4 mm at the dot, at most 2e-4 mm within 100 mm of it,
+1.1e-3 mm 1 m from it. It depends only on the distance from the dot, so neither the size of the model, nor hidden or
+distant parts, nor where drives or poses move the model (a model driven to 10⁶ mm) widens it. A world anchor has no
 own part: any crossing before it hides it. **Cut parts:** when the view's section cuts the anchor's
 own part and the anchor lies in that part's box on the kept side of the cut or on the cut face, the parts inside the
 cut part do not hide it; parts outside it still do. Inside is tested in the cut part's own frame: every corner of the

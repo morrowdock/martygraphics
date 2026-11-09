@@ -592,9 +592,10 @@ final class SolidAnchorPrecisionFixtureTests: XCTestCase {
     }
 
     func testThePrecisionEpsilonDoesNotGrowWithTheModel() {
+        // The argument is anchor-relative: the epsilon depends on the distance from the dot only.
         XCTAssertEqual(mgPrecision(.zero), 1e-6 + 1e-4, accuracy: 1e-15)
-        XCTAssertEqual(mgPrecision(MGVec3(4000, 0, 0)), 4e-3 + 1e-4, accuracy: 1e-12)
-        XCTAssertLessThan(mgPrecision(MGVec3(4000, 4000, 4000)), 0.0071)
+        XCTAssertEqual(mgPrecision(MGVec3(100, 0, 0)), 2e-4, accuracy: 1e-15)
+        XCTAssertEqual(mgPrecision(MGVec3(1000, 0, 0)), 1.1e-3, accuracy: 1e-15)
     }
 
     /// A real blocker whose hit is 10.6 mm before the dot is caught, with or without a hidden part 2 m away.
@@ -686,5 +687,148 @@ final class SolidAnchorPrecisionFixtureTests: XCTestCase {
         let d = try MGSolidParser.document(data: Data(t(-6, 3000).utf8)).get()
         XCTAssertGreaterThan(d.annotations.diagonal, 2000, "the whole assembly is large")
         if case .number(let tol)? = d.offPartAnchors.first?.json["tolerance"] { XCTAssertEqual(tol, 0.866, accuracy: 0.001) } else { XCTFail("tolerance") }
+    }
+}
+
+/// The fixtures of the fourth independent review: legal drives and poses that move a model to about 10⁶ mm, or whose
+/// rest pose is far from the shown pose. Every test runs in anchor-relative coordinates, so a blocker or neighbour is
+/// caught wherever the model is, and every coincident touching face still passes. All synthetic.
+final class SolidAnchorWorldPositionFixtureTests: XCTestCase {
+    func strict(_ t: String, library: MGSolidLibrary = .builtIn) -> MGSolidReport {
+        MGSolidReport.check(data: Data(t.utf8), library: library, profile: .strict, engine: nil)
+    }
+    func anchor(_ r: MGSolidReport) -> [String: MGJSON] { if case .object(let o)? = r.json["anchor"] { return o }; return [:] }
+    func num(_ x: Double) -> String { "\(x)" }
+    func part(_ id: String, _ size: [Double], at: [Double] = [0, 0, 0], extra: String = "") -> String {
+        #"{"id":"\#(id)","shape":{"box":{"size":[\#(size.map(num).joined(separator: ","))]}},"at":[\#(at.map(num).joined(separator: ","))]\#(extra)}"#
+    }
+    func doc(_ parts: [String], _ label: String, _ offset: [Double], step: String, params: String = "") -> String {
+        #"{"v":2,"kind":"assembly","parts":[\#(parts.joined(separator: ","))],"annotations":{"labels":[{"id":"label","text":"Named part","at":{"part":"\#(label)","offset":[\#(offset.map(num).joined(separator: ","))]}}]},"steps":[\#(step)]\#(params)}"#
+    }
+    /// Both parts on equal prismatic drives along `axis`, shown at the end of a one-turn spin that ends at
+    /// `coordinate` mm along the axis.
+    func driven(_ parts: [String], _ label: String, _ offset: [Double], axis: [Double], coordinate: Double) -> String {
+        let length = (axis.map { $0 * $0 }.reduce(0, +)).squareRoot()
+        let input = coordinate * length / 1000 - 2 * .pi
+        return doc(parts, label, offset, step: #"{"say":"Inspect the named part.","camera":"front","annotate":["label"],"spin":1}"#,
+                   params: #","params":{"input":\#(input)}"#)
+    }
+    func drive(_ axis: [Double]) -> String { #","joint":{"prismatic":[\#(axis.map(num).joined(separator: ","))]},"drive":{"input":1000}"# }
+
+    func testAnchorRelativeTransformsKeepTheirPrecisionFarAway() {
+        let t = MGTransform(c0: MGVec3(0, 1, 0), c1: MGVec3(-1, 0, 0), c2: MGVec3(0, 0, 1), translation: MGVec3(2e6, 1e6, 0))
+        let x = t.apply(MGVec3(0, -5, 0))
+        let rel = mgAnchorRelative(t, anchor: x)
+        let local = rel.toLocal.apply(.zero)
+        XCTAssertEqual(local.x, 0, accuracy: 1e-9); XCTAssertEqual(local.y, -5, accuracy: 1e-9); XCTAssertEqual(local.z, 0, accuracy: 1e-9)
+        let back = rel.toRelative.apply(MGVec3(0, -6, 0))
+        XCTAssertEqual(back.length, 1, accuracy: 1e-9, "a point 1 mm from the anchor stays 1 mm away")
+    }
+
+    /// A plate 0.1, 1 or 2 mm in front of the dot is caught with the model driven to 10⁵, 10⁶ or 2 × 10⁶ mm, along X
+    /// or a diagonal.
+    func testADrivenFarBlockerIsCaught() {
+        for (axis, coordinates) in [([1.0, 0, 0], [1e5, 1e6, 2e6]), ([1, 1, 0], [1e6]), ([1, 1, 1], [1e6])] {
+            for c in coordinates {
+                for gap in [0.1, 1, 2] {
+                    let t = driven([part("core", [10, 10, 10], extra: drive(axis)), part("blocker", [20, 0.05, 20], at: [0, -5 - gap - 0.025, 0], extra: drive(axis))],
+                                   "core", [0, -5, 0], axis: axis, coordinate: c)
+                    let r = strict(t)
+                    XCTAssertEqual(r.reason, "annotation.anchor.hidden.label", "axis \(axis) at \(c) gap \(gap)")
+                    XCTAssertEqual(anchor(r)["by"], .string("blocker"), "axis \(axis) at \(c) gap \(gap)")
+                }
+            }
+        }
+    }
+
+    /// The side blocker 10.6 mm before the dot is not excused as a tie when the model is driven to 10⁵…2 × 10⁶ mm.
+    func testADrivenFarSideBlockerIsNotATie() {
+        for c in [1e5, 1e6, 2e6] {
+            let t = driven([part("core", [2, 200, 2], at: [2, 0, 0], extra: drive([1, 0, 0])), part("blocker", [1, 1, 20], at: [0, -10, 0], extra: drive([1, 0, 0]))],
+                           "core", [-2, 0, 0], axis: [1, 0, 0], coordinate: c)
+            XCTAssertEqual(anchor(strict(t))["by"], .string("blocker"), "at \(c)")
+        }
+    }
+
+    /// A dot on a neighbour's face 0.1, 1 or 2 mm outside its part is off its part far away.
+    func testADrivenFarNeighbourIsOff() {
+        for c in [1e5, 1e6, 2e6] {
+            for gap in [0.1, 1, 2] {
+                let t = driven([part("core", [100, 10, 10], extra: drive([1, 0, 0])),
+                                part("neighbour", [10, 0.5, 10], at: [0, -5 - gap + 0.25, 0], extra: #","material":"glass""# + drive([1, 0, 0]))],
+                               "core", [0, -5 - gap, 0], axis: [1, 0, 0], coordinate: c)
+                let r = strict(t)
+                XCTAssertEqual(r.reason, "annotation.anchor.off.label", "at \(c) gap \(gap)")
+                XCTAssertEqual(anchor(r)["closer"], .string("neighbour"), "at \(c) gap \(gap)")
+            }
+        }
+    }
+
+    /// The shown pose decides, not the rest pose: a child driven to 2 × 10⁶ mm at rest and posed back near the origin,
+    /// and a child 3,990 mm out at rest posed to the origin, are refused at their shown pose.
+    func testTheShownPoseDecidesNotTheRestPose() {
+        for input in [0, 1000] {
+            for gap in [0.1, 1, 2, 3] {
+                let parts = [part("carrier", [0.05, 0.05, 0.05], extra: drive([1, 0, 0])),
+                             part("core", [100, 10, 10], extra: #","parent":"carrier""# + drive([1, 0, 0])),
+                             part("neighbour", [10, 0.5, 10], at: [0, 5 + gap - 0.25, 0], extra: #","material":"glass""#)]
+                let t = doc(parts, "core", [0, -5 - gap, 0],
+                            step: #"{"say":"Inspect the named part.","camera":"front","annotate":["label"],"pose":{"core":{"rot":[0,0,1,180]}},"hide":["carrier"]}"#,
+                            params: #","params":{"input":\#(input)}"#)
+                XCTAssertEqual(strict(t).reason, "annotation.anchor.off.label", "input \(input) gap \(gap)")
+            }
+        }
+        for coordinate in [0.0, 3990] {
+            for gap in [0.001, 0.002, 0.005, 0.01, 1] {
+                let parts = [part("carrier", [0.05, 0.05, 0.05], at: [coordinate / 2, 0, 0]),
+                             part("core", [100, 10, 10], at: [coordinate / 2, 0, 0], extra: #","parent":"carrier""#),
+                             part("neighbour", [10, 0.5, 10], at: [0, 5 + gap - 0.25, 0], extra: #","material":"glass""#)]
+                let t = doc(parts, "core", [0, -5 - gap, 0],
+                            step: #"{"say":"Inspect the named part.","camera":"front","annotate":["label"],"pose":{"carrier":{"rot":[0,0,1,180]}},"hide":["carrier"]}"#)
+                XCTAssertEqual(strict(t).reason, "annotation.anchor.off.label", "rest \(coordinate) gap \(gap)")
+            }
+        }
+    }
+
+    /// Coincident touching faces still pass for both names: rounding-noise offsets, rotations, a posed carrier, and a
+    /// custom component placed or posed at each angle.
+    func testCoincidentTouchingFacesPassEverywhere() throws {
+        for separation in [0, (0.1 + 0.2) - 0.3, 1e-7, -1e-7] {
+            for angle in [0.0, 17, 45, 90] {
+                let r = angle * .pi / 180
+                for named in ["left", "right"] {
+                    let parts = [("left", -5.0), ("right", 5 + separation)].map { id, c in
+                        part(id, [10, 10, 10], at: [0.1 + 0.2 + c * cos(r), 0.3 + c * sin(r), 0], extra: #","rot":[0,0,1,\#(angle)]"#)
+                    }
+                    let t = doc(parts, named, [named == "left" ? 5 : -5, 0, 0],
+                                step: #"{"say":"Inspect the named part.","camera":"front","annotate":["label"],"orbit":\#(angle)}"#)
+                    XCTAssertTrue(strict(t).ok, "separation \(separation) angle \(angle) \(named)")
+                }
+            }
+        }
+        for angle in [17.0, 45, 90] {
+            for named in ["left", "right"] {
+                let parts = [part("carrier", [0.05, 0.05, 0.05], at: [0.1 + 0.2, 0.3, 0]), part("left", [10, 10, 10], at: [-5, 0, 0], extra: #","parent":"carrier""#),
+                             part("right", [10, 10, 10], at: [5 + (0.1 + 0.2) - 0.3, 0, 0], extra: #","parent":"carrier""#)]
+                let t = doc(parts, named, [named == "left" ? 5 : -5, 0, 0],
+                            step: #"{"say":"Inspect the named part.","camera":"front","annotate":["label"],"pose":{"carrier":{"rot":[0,0,1,\#(angle)]}},"hide":["carrier"],"orbit":\#(angle)}"#)
+                XCTAssertTrue(strict(t).ok, "posed carrier \(angle) \(named)")
+            }
+        }
+        let component = #"{"v":1,"kind":"component","id":"touchingPair","title":"Two touching boxes","about":"Synthetic precision fixture.","params":{"angle":{"default":0,"min":-180,"max":180}},"parts":[{"id":"carrier","shape":{"box":{"size":[0.05,0.05,0.05]}},"rot":[0,0,1,{"param":"angle"}]},{"id":"left","shape":{"box":{"size":[10,10,10]}},"parent":"carrier","at":[-5,0,0]},{"id":"right","shape":{"box":{"size":[10,10,10]}},"parent":"carrier","at":[5,0,0]}],"anchors":{"leftFace":"left","rightFace":"right"}}"#
+        var library = MGSolidLibrary.builtIn
+        _ = try library.register(Data(component.utf8)).get()
+        for angle in [0.0, 17, 45, 90] {
+            for named in ["left", "right"] {
+                for posed in [false, true] {
+                    let instance = posed ? #"{"id":"pair","use":"touchingPair","at":[0.30000000000000004,0.3,0]}"#
+                        : #"{"id":"pair","use":"touchingPair","at":[0.30000000000000004,0.3,0],"rot":[0,0,1,\#(angle)]}"#
+                    let pose = posed ? #","pose":{"pair":{"with":{"angle":\#(angle)}}}"# : ""
+                    let t = doc([instance], "pair.\(named)", [named == "left" ? 5 : -5, 0, 0],
+                                step: #"{"say":"Inspect the named part.","camera":"front","annotate":["label"],"hide":["pair.carrier"],"orbit":\#(angle)\#(pose)}"#)
+                    XCTAssertTrue(strict(t, library: library).ok, "component \(angle) \(named) posed \(posed): \(strict(t, library: library).reason ?? "")")
+                }
+            }
+        }
     }
 }

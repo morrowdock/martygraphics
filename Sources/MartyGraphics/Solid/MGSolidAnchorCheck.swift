@@ -73,14 +73,16 @@ public struct MGAnnotationAnchorIssue: Equatable, Sendable {
     public let step: Int?
     public let beat: Int?
     /// The anchor point in the posed kernel world (Z up, mm) at the pose of that view; for an `offPart` found only by the
-    /// distance test, at the default input with explode 0.
+    /// distance test, at the pose of the first view that shows it (the default input with explode 0 when none does).
     public let point: MGVec3
     /// `offPart`: the distance (mm) from the anchor to its part's oriented box, and the largest distance allowed.
     public let distance: Double?
     public let tolerance: Double?
     /// `offPart`: the first other part (assembly order) found nearer to the anchor than `part`'s box, and the distance
-    /// (mm) to the first of its triangles found nearer; 0 when no triangle is nearer and the anchor lies inside that
-    /// part (watertight parity). Not necessarily the nearest part or distance: the search stops at the first.
+    /// (mm) to the first of its triangles found nearer (run order). That distance is 0 when the anchor lies on that
+    /// triangle (a dot on the part's face), and also 0 when no triangle is nearer and the anchor lies inside that part
+    /// (watertight parity); an anchor inside a part can also report a positive distance to a face found first. Not
+    /// necessarily the nearest part or distance: the search stops at the first.
     public var closer: String? = nil
     public var closerDistance: Double? = nil
     /// `untested`: the budget that ran out, `lineOfSight` (the view's, `MGAnnotationAnchorRules.tests`) or `nearerPart`
@@ -189,11 +191,25 @@ func mgBoxDistance(_ q: MGVec3, _ b: MGBounds) -> Double {
     return (dx * dx + dy * dy + dz * dz).squareRoot()
 }
 
-/// The numeric-precision epsilon at a point (mm): `1e-6 × max(1, |p|) + 1e-4`. It covers floating-point error of
-/// coordinates of that size; it does not grow with the model, so an unrelated or hidden part never widens it.
-func mgPrecision(_ p: MGVec3) -> Double {
-    let m = p.length
+/// The numeric-precision epsilon (mm) at an anchor-relative point `v` (the point minus the anchor):
+/// `1e-6 × max(1, |v|) + 1e-4`. Every anchor test runs in anchor-relative coordinates (`mgAnchorRelative`), so the
+/// epsilon grows only with the distance from the dot, never with the world position or the size of the model: 1.01e-4
+/// mm at the dot, at most 2e-4 mm within 100 mm of it, 1.1e-3 mm 1 m from it.
+func mgPrecision(_ v: MGVec3) -> Double {
+    let m = v.length
     return 1e-6 * max(1, m.isFinite ? m : 0) + 1e-4
+}
+
+/// For a part placed by `t` (its posed world transform) and an anchor at world point `x`: the transform from
+/// anchor-relative coordinates (world minus `x`) to the part's own frame, and the transform from the part's frame to
+/// anchor-relative coordinates. The anchor is subtracted from the part's translation in double precision first, so
+/// both stay exact to the size of the offsets, not the world position (a model driven to 1e6 mm keeps the same
+/// precision as one at the origin).
+func mgAnchorRelative(_ t: MGTransform, anchor x: MGVec3) -> (toLocal: MGTransform, toRelative: MGTransform) {
+    let toRelative = MGTransform(c0: t.c0, c1: t.c1, c2: t.c2, translation: t.translation - x)
+    let inv = t.inverse
+    let toLocal = MGTransform(c0: inv.c0, c1: inv.c1, c2: inv.c2, translation: inv.applyVector(x - t.translation))
+    return (toLocal, toRelative)
 }
 
 /// The closest point of triangle `abc` to `p` (Ericson, "Real-Time Collision Detection", 5.1.5).
@@ -304,12 +320,13 @@ extension MGSolidDocument {
     ///    `max(partShare × that box's diagonal, modelShare × the drawn model's diagonal)` (the parts the views showing
     ///    the annotation draw, at their poses; all parts when no view shows it). It holds in every pose; the issue has
     ///    no step unless test 2 also found a nearer part (then its view and part are given too).
-    /// 2. No other part's solid comes nearer to the anchor than `d` less the precision epsilon at the anchor
-    ///    (`mgPrecision`), at the pose of each view that shows the annotation (`shownPoses`: the plain view at the
-    ///    default pose when it shows it, and each step or beat still). The search is skipped only when `d` is within that
-    ///    epsilon (the anchor is on or in its own part's box). The first such view and part (assembly order) are the
-    ///    issue's `step` and `closer`; `closerDistance` is the distance to the first of its triangles found nearer, or 0
-    ///    when none is and the anchor lies inside that part (watertight parity). The search is exact (`MGMeshChunks.nearer`): a part whose oriented box is not nearer is skipped
+    /// 2. At the pose of each view that shows the annotation (`shownPoses`: the plain view at the default pose when it
+    ///    shows it, and each step or beat still), and in that view's own geometry, no other part's solid comes nearer to
+    ///    the anchor than the anchor's distance `d'` to its own part's box (measured in that view) less the precision
+    ///    epsilon at the dot (`mgPrecision(.zero)`, 1.01e-4 mm). All distances are taken in anchor-relative coordinates
+    ///    (`mgAnchorRelative`). A view is skipped only when `d'` is within that epsilon (the anchor is on or in its own
+    ///    part's box in that view). The first such view and part (assembly order) are the issue's `step` and `closer`;
+    ///    `closerDistance` is described at `MGAnnotationAnchorIssue.closer`. The search is exact (`MGMeshChunks.nearer`): a part whose oriented box is not nearer is skipped
     ///    with one box test, far runs of 64 triangles are skipped, and it stops at the first nearer triangle. Every
     ///    triangle read (building a part's runs once), every run-box test and every triangle test of one document costs
     ///    1 from `MGAnnotationAnchorRules.surfaceTests`. When the budget runs out, the anchor is `untested` (with the
@@ -347,17 +364,20 @@ extension MGSolidDocument {
             }
             let model = shown.isEmpty || drawn.isEmpty ? a.diagonal : drawn.size.length
             let tol = Swift.max(MGAnnotationAnchorRules.partShare * b.size.length, MGAnnotationAnchorRules.modelShare * model)
-            // The nearer-part search, view by view. It is skipped only when the anchor is on or in its own part's box
-            // within the precision epsilon: then no part can be nearer.
+            // The nearer-part search, view by view, in each shown view's own geometry and in anchor-relative coordinates
+            // (`mgAnchorRelative`): the anchor's distance to its own part's box and to each other part are measured in
+            // those parts' frames from the anchor, and the epsilon is the one at the anchor (1.01e-4 mm). A view is
+            // skipped only when, in that view, the anchor is within that epsilon of its own part's box.
+            let eps = mgPrecision(.zero)
             var closer: (step: Int?, x: MGVec3, part: String, d: Double)?, unknownAt: (step: Int?, x: MGVec3)?
-            if dist > mgPrecision(p.world(rest)) {
-                views: for (step, params) in shown {
-                    let pose = posed(params)
-                    let x = p.world(pose)
-                    let r = dist - mgPrecision(x)
-                    guard r > 0 else { continue }
-                    for q in assembly.parts where q.id != partID && !q.mesh.bounds.isEmpty {
-                        let lq = (pose.world[q.id] ?? .identity).inverse.apply(x)
+            views: for (step, params) in shown {
+                let pose = posed(params)
+                let x = p.world(pose)
+                let own = mgAnchorRelative(pose.world[partID] ?? .identity, anchor: x).toLocal.apply(.zero)
+                let r = mgBoxDistance(own, b) - eps
+                guard r > 0 else { continue }
+                for q in assembly.parts where q.id != partID && !q.mesh.bounds.isEmpty {
+                        let lq = mgAnchorRelative(pose.world[q.id] ?? .identity, anchor: x).toLocal.apply(.zero)
                         budget -= 1
                         guard budget >= 0 else { unknownAt = (step, x); break views }
                         guard mgBoxDistance(lq, q.mesh.bounds) < r else { continue }
@@ -372,13 +392,13 @@ extension MGSolidDocument {
                         case .nearer(let dq): closer = (step, x, q.id, dq)
                         }
                         break views
-                    }
                 }
             }
             if !(dist <= tol) || closer != nil {
                 // Off its part: too far from its own box (in every pose), or another part is nearer in a shown view.
                 var issue = MGAnnotationAnchorIssue(id: id, kind: kind, cause: .offPart, part: partID, by: nil, step: closer?.step, beat: nil,
-                                                    point: closer?.x ?? p.world(rest), distance: dist, tolerance: tol)
+                                                    point: closer?.x ?? shown.first.map { p.world(posed($0.params)) } ?? p.world(rest),
+                                                    distance: dist, tolerance: tol)
                 issue.closer = closer?.part; issue.closerDistance = closer?.d
                 out.append(issue)
             } else if let u = unknownAt {
@@ -397,11 +417,12 @@ extension MGSolidDocument {
     /// ran out before its test (`untested`). The segment test is the watertight ray test of the unblocked-focus rule
     /// against every part the view draws with a coverage of `MGSolidFraming.blockingOpacity` or more (view opacity times
     /// `MGMaterialPreset.coverage`, so glass does not block; a cut part tests its cut mesh): a part blocks when it
-    /// crosses the segment before the anchor (less the precision epsilon at the anchor, `mgPrecision`) and before the
-    /// first crossing of the
+    /// crosses the segment before the anchor (less the precision epsilon at the dot, `mgPrecision`; every test runs in
+    /// anchor-relative coordinates, `mgAnchorRelative`) and before the first crossing of the
     /// anchor's own part. So an anchor at the centre of its part, seen through its part's own surface, is visible, and an
     /// anchor in the air in front of a part is not hidden by it. A blocker hit that lies on the anchor's own part within
-    /// the precision epsilon at the hit point (a coincident face or edge of touching parts) is a tie: the own part is
+    /// the precision epsilon at the hit point (by its distance from the dot; a coincident face or edge of touching parts)
+    /// is a tie: the own part is
     /// there too, so the anchor is visible; this test also costs from the view's budget. Exception: when the view cuts the anchor's part and the
     /// anchor lies in that part's box on the kept side of the cut (or on the cut face), the parts whose box lies inside
     /// that part's box, both taken in the cut part's own frame (grown by 0.5 % of the diagonal of the parts the view
@@ -423,7 +444,7 @@ extension MGSolidDocument {
         let pose = assembly.pose(params)
         let proj = MGAnnotationProjection(camera: camera, width: width, height: height)
         let eye = stage.inverse.apply(camera.position)
-        struct Solid { let id: String; let mesh: MGMesh; let inverse: MGTransform; let bounds: MGBounds }
+        struct Solid { let id: String; let mesh: MGMesh; let world: MGTransform }
         var solids: [Solid] = []
         var whole = MGBounds.empty
         for p in assembly.parts {
@@ -434,17 +455,18 @@ extension MGSolidDocument {
             whole = whole.union(full)
             // Drawn coverage: the view opacity (part opacity and ghosts) times the material's own (glass 0.22).
             guard pv.opacity * p.material.coverage >= MGSolidFraming.blockingOpacity else { continue }
-            let mesh = pv.cut?.mesh ?? p.mesh
-            solids.append(Solid(id: p.id, mesh: mesh, inverse: t.inverse, bounds: MGSolidFrames.worldBounds(mesh.bounds, t)))
+            solids.append(Solid(id: p.id, mesh: pv.cut?.mesh ?? p.mesh, world: t))
         }
         let grow = 0.005 * (whole.isEmpty ? 0 : whole.size.length)
+        // Every test below runs in anchor-relative coordinates (world minus the anchor, `mgAnchorRelative`): the camera,
+        // each part's placement and every hit point are taken relative to the dot before any test, so the precision
+        // epsilon (`mgPrecision`) depends on the distance from the dot only, never on where the model is.
+        let eps = mgPrecision(.zero)
         var used = 0, over = false
         var ownChunks: [String: MGMeshChunks] = [:]
         for id in ids {
             guard let (kind, p) = a.checkedAnchor(id) else { continue }
             let x = p.world(pose)
-            // Numeric precision only: unrelated or hidden parts never widen it.
-            let eps = mgPrecision(x)
             func issue(_ c: MGAnnotationAnchorIssue.Cause, by: String? = nil) {
                 out.issues.append(MGAnnotationAnchorIssue(id: id, kind: kind, cause: c, part: p.part, by: by, step: step, beat: beat, point: x,
                                                           distance: nil, tolerance: nil, budget: c == .untested ? "lineOfSight" : nil))
@@ -457,51 +479,57 @@ extension MGSolidDocument {
             }
             guard let s = proj.project(stage.apply(x)), s.x >= 0, s.x <= width, s.y >= 0, s.y <= height else { issue(.offScreen); continue }
             if over { issue(.untested); continue }
+            let eyeRel = eye - x
+            let ownRel = p.part.map { mgAnchorRelative(pose.world[$0] ?? .identity, anchor: x) }
             // The cut exception: the inside of the anchor's own cut part does not hide it.
             var exempt = Set<String>()
             // Containment is tested in the cut part's own frame: every corner of another part's mesh box, posed and
-            // taken into that frame, must lie in the cut part's mesh box (grown by `grow`), so a rotated cut part never
-            // exempts a part outside it that only its world-axis box would hold.
-            if let own = p.part, let cut = view.part(own).cut, let box = assembly.part(own)?.mesh.bounds,
-               mgBoxDistance(p.local, box) <= eps, cut.plane.distance(p.local) <= eps {
-                let toOwn = (pose.world[own] ?? .identity).inverse
-                for q in assembly.parts where q.id != own && !q.mesh.bounds.isEmpty {
-                    let t = toOwn * (pose.world[q.id] ?? .identity)
-                    if q.mesh.bounds.corners.allSatisfy({ c in
-                        let l = t.apply(c)
-                        return l.x >= box.min.x - grow && l.x <= box.max.x + grow && l.y >= box.min.y - grow && l.y <= box.max.y + grow
-                            && l.z >= box.min.z - grow && l.z <= box.max.z + grow
-                    }) { exempt.insert(q.id) }
+            // taken into that frame (through anchor-relative coordinates), must lie in the cut part's mesh box (grown
+            // by `grow`), so a rotated cut part never exempts a part outside it that only its world-axis box would hold.
+            if let own = p.part, let ownRel, let cut = view.part(own).cut, let box = assembly.part(own)?.mesh.bounds {
+                let lo = ownRel.toLocal.apply(.zero)
+                if mgBoxDistance(lo, box) <= eps, cut.plane.distance(lo) <= eps {
+                    for q in assembly.parts where q.id != own && !q.mesh.bounds.isEmpty {
+                        let qRel = mgAnchorRelative(pose.world[q.id] ?? .identity, anchor: x)
+                        if q.mesh.bounds.corners.allSatisfy({ c in
+                            let l = ownRel.toLocal.apply(qRel.toRelative.apply(c))
+                            return l.x >= box.min.x - grow && l.x <= box.max.x + grow && l.y >= box.min.y - grow && l.y <= box.max.y + grow
+                                && l.z >= box.min.z - grow && l.z <= box.max.z + grow
+                        }) { exempt.insert(q.id) }
+                    }
                 }
             }
-            let d = x - eye, len = d.length
+            // The segment from the camera (t = 0) to the dot (t = 1, the origin), less the epsilon at the dot.
+            let len = eyeRel.length
             guard len > eps, len.isFinite else { continue }
             let before = 1 - eps / len
             var first: (t: Double, id: String)?, ownT: Double?
-            for sld in solids where !exempt.contains(sld.id) && MGAnnotationOcclusion.segmentHits(eye, x, sld.bounds) {
+            for sld in solids where !exempt.contains(sld.id) {
+                let rel = mgAnchorRelative(sld.world, anchor: x)
+                guard MGAnnotationOcclusion.segmentHits(eyeRel, .zero, MGSolidFrames.worldBounds(sld.mesh.bounds, rel.toRelative)) else { continue }
                 guard used + sld.mesh.triangleCount <= budget else { over = true; break }
                 used += sld.mesh.triangleCount
-                guard let t = MGSolidFraming.OcclusionProbe.firstHit(sld.inverse.apply(eye), sld.inverse.apply(x), sld.mesh,
+                guard let t = MGSolidFraming.OcclusionProbe.firstHit(rel.toLocal.apply(eyeRel), rel.toLocal.apply(.zero), sld.mesh,
                                                                      after: 1e-9, before: before) else { continue }
                 if sld.id == p.part { ownT = t } else if first.map({ t < $0.t }) ?? true { first = (t, sld.id) }
             }
             if over { issue(.untested); continue }
             guard let f = first, !(ownT.map { $0 <= f.t } ?? false) else { continue }
             // A coincident surface is a tie, not an occlusion: when the blocker's hit point lies on the anchor's own part
-            // (as the view draws it) within the precision epsilon at that point, the own part is there too, so it is
-            // visible. Two touching parts give the same answer whichever of them the anchor names; a separate part in
-            // front, however close, still hides it.
-            if let own = p.part, let ownPart = assembly.part(own) {
+            // (as the view draws it) within the precision epsilon at that point (its distance from the dot), the own
+            // part is there too, so it is visible. Two touching parts give the same answer whichever of them the anchor
+            // names; a separate part in front is a tie only when it is within that epsilon of the own part
+            // (1.01e-4 mm plus 1e-6 per mm from the dot), wherever the model is.
+            if let own = p.part, let ownRel, let ownPart = assembly.part(own) {
                 let mesh = view.part(own).cut?.mesh ?? ownPart.mesh
                 if ownChunks[own] == nil {
                     guard used + mesh.triangleCount <= budget else { issue(.untested); over = true; continue }
                     used += mesh.triangleCount
                     ownChunks[own] = MGMeshChunks(mesh)
                 }
-                let hw = eye + d * f.t
-                let h = (pose.world[own] ?? .identity).inverse.apply(hw)
+                let hRel = eyeRel * (1 - f.t)
                 var left = budget - used
-                let near = ownChunks[own]!.nearer(h, than: mgPrecision(hw), budget: &left)
+                let near = ownChunks[own]!.nearer(ownRel.toLocal.apply(hRel), than: mgPrecision(hRel), budget: &left)
                 used = budget - max(0, left)
                 switch near {
                 case .nearer: continue
