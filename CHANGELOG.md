@@ -35,6 +35,9 @@
     comparison. Golden change: `docs-assets-jet-suit-jet-suit` (the fixed file's output: the two anchors, the file
     hash and the step 1 and step 6 reference placements) and `docs-assets-jet-suit-provenance` (the receipt's new line count and
     hash).
+- Docs: `docs/assets/jet-suit/story.mp4` is re-muxed for fast start (`moov` before `mdat`; AVFoundation passthrough,
+  no re-encode). All 1,890 decoded frames are identical; 5,657,049 bytes. `provenance.json` has the new hash and size; golden change:
+  `docs-assets-jet-suit-provenance` (the receipt's new line count and hash).
 - Docs: the jet-suit showcase now uses the sixth version of the hand-built lesson (`docs/assets/jet-suit/`, 59 lines,
   76 parts). Step 5 poses the pilot (both arms swing back, so the arm engines' exhaust is aimed back; the pose is
   schematic), exhaust plumes (an illustration) show in steps 2 and 5 only, highlights and explode take whole engines,
