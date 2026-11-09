@@ -302,6 +302,21 @@ final class SolidLimitDetailTests: XCTestCase {
         XCTAssertNil(detail("9223372036854775807")?["actual"])
         XCTAssertEqual(detail("-9007199254740993")?["actualAtMost"], .number(-9_007_199_254_740_992))
         XCTAssertEqual(detail("9007199254740991")?["actual"], .number(9_007_199_254_740_991))
+        // Written as a double (a fraction or an exponent) at 2^53 or beyond: never exact, whatever its digits.
+        for literal in ["9007199254740993.0", "9007199254740993e0", "9007199254740992.0", "9007199254740992.5", "1e30"] {
+            XCTAssertNil(detail(literal)?["actual"], literal)
+            XCTAssertEqual(detail(literal)?["actualAtLeast"], .number(9_007_199_254_740_992), literal)
+        }
+        XCTAssertEqual(Self.check(Self.asm(parts: #"{"id": "a", "shape": {"box": {"size": [10, 10, 10]}}, "repeat": {"count": 9007199254740993.0}}"#))["repair"],
+                       .string("parts[0].repeat.count has at least 9,007,199,254,740,992 copies; the limit is 12. Use at most 12 copies."))
+        for literal in ["-9007199254740993.0", "-9007199254740993e0", "-9007199254740992.0"] {
+            XCTAssertNil(detail(literal)?["actual"], literal)
+            XCTAssertEqual(detail(literal)?["actualAtMost"], .number(-9_007_199_254_740_992), literal)
+        }
+        XCTAssertEqual(Self.check(Self.asm(parts: #"{"id": "a", "shape": {"box": {"size": [10, 10, 10]}}, "repeat": {"count": -9007199254740993.0}}"#))["repair"],
+                       .string("parts[0].repeat.count has at most -9,007,199,254,740,992 copies; it needs 2 to 12 copies."))
+        // Below 2^53 a double is exact for whole numbers.
+        XCTAssertEqual(detail("9007199254740991.0")?["actual"], .number(9_007_199_254_740_991))
         // A decimal: a whole value is exact; a fraction is not a count (no `limit`).
         XCTAssertEqual(detail("13.0")?["actual"], .number(13))
         XCTAssertNil(detail("12.5"))

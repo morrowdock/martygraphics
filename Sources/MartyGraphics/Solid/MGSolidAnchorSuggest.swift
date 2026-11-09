@@ -182,8 +182,9 @@ public struct MGAnnotationAnchorSuggestion: Equatable, Sendable {
         /// annotation, and a new search in that framing did not settle within the re-checks
         /// (`MGAnnotationAnchorRules.recheckRounds`).
         case framing
-        /// Every anchor tried for this annotation gives another annotation that had no issue (`other`) an issue once
-        /// applied (the framing changes and hides it).
+        /// Every anchor tried for this annotation conflicts with another annotation (`other`) once applied: it gives
+        /// `other`, which had no issue, an issue, or `other`'s suggestion keeps giving this one an issue (the framing
+        /// changes).
         case conflict
     }
     /// The named part (the resolved part id; a component anchor name gives its part).
@@ -235,7 +236,7 @@ public struct MGAnnotationAnchorSuggestion: Equatable, Sendable {
         case .budget: return "suggestion budget ran out"
         case .form: return "no visible point of the part can be written as an anchor"
         case .framing: return "no anchor stays visible once the framing changes"
-        case .conflict: return "every anchor tried hides \(other ?? "another annotation") once applied"
+        case .conflict: return "every anchor tried conflicts with \(other ?? "another annotation") once applied"
         }
     }
 
@@ -718,6 +719,9 @@ extension MGAnnotationAnchorReport {
     /// - an annotation that had no issue and now has one names the suggestions shown in the same view (all of them when
     ///   none is): each is searched again away from its current anchor, at most `retries` times, then dropped
     ///   (`conflict`, `other` naming that annotation);
+    /// - a suggested annotation that passed an earlier check with the same anchor and fails now was broken by another
+    ///   suggestion: the first, in sorted order, of those that changed since and are shown in the same view (of those
+    ///   shown with it when none changed). When it is dropped, the cause is `conflict` with `other` naming that one;
     /// - a refused copy drops every suggestion of that set (`form`).
     /// When the re-checks run out before a set is accepted, every remaining suggestion is dropped (`framing`). So a
     /// printed set of suggestions, applied together, parses, clears every suggested annotation and adds no issue.
@@ -727,11 +731,18 @@ extension MGAnnotationAnchorReport {
         for i in issues { if let s = i.suggestion, current[i.id] == nil { current[i.id] = s } }
         var retries: [String: Int] = [:]
         var excluding: [String: [MGVec3]] = [:]
+        // The other suggestion an annotation's issue was first attributed to (fixed order: sorted ids), kept across
+        // re-checks; and the applied set of the last check each suggested annotation passed.
+        var conflictWith: [String: String] = [:]
+        var passedIn: [String: [String: MGJSON]] = [:]
         func applied() -> [String: MGJSON] { current.compactMapValues { $0.anchorJSON } }
-        func drop(_ ids: [String], _ cause: MGAnnotationAnchorSuggestion.Cause, other: String? = nil) {
+        func drop(_ ids: [String], _ cause: MGAnnotationAnchorSuggestion.Cause) {
             for id in ids {
                 guard let s = current[id], s.offset != nil else { continue }
-                var n = MGAnnotationAnchorSuggestion(part: s.part, offset: nil, onCut: false, cause: cause, step: nil, beat: nil, by: nil)
+                // Dropped for its issue: a conflict when another suggestion caused it, else the framing.
+                let other = cause == .form ? nil : conflictWith[id]
+                var n = MGAnnotationAnchorSuggestion(part: s.part, offset: nil, onCut: false, cause: other != nil ? .conflict : cause,
+                                                     step: nil, beat: nil, by: nil)
                 n.other = other
                 current[id] = n
             }
@@ -743,20 +754,36 @@ extension MGAnnotationAnchorReport {
             guard let r = recheck(set) else { drop(set.keys.sorted(), .form); continue }
             let suggested = set.keys.sorted()
             let bad = suggested.filter { id in r.issues.contains { $0.id == id } }
+            for id in suggested where !bad.contains(id) { passedIn[id] = set }
             var fresh: [(id: String, issue: MGAnnotationAnchorIssue)] = []
             for i in r.issues where !before.contains(i.id) && !set.keys.contains(i.id) && !fresh.contains(where: { $0.id == i.id }) {
                 fresh.append((i.id, i))
             }
             if bad.isEmpty && fresh.isEmpty { accepted = true; break }
+            func shownWith(_ i: MGAnnotationAnchorIssue) -> Set<String> {
+                Set(r.shown.filter { $0.step == i.step && $0.beat == i.beat }.flatMap(\.ids))
+            }
             // The suggestions to search again: those still failing, and those shown with a newly failing annotation.
-            var again: [String] = [], blame: [String: String] = [:]
-            for id in bad where !again.contains(id) { again.append(id) }
+            var again: [String] = []
+            for id in bad where !again.contains(id) {
+                again.append(id)
+                // A suggested annotation that passed with this same anchor, and fails now, was broken by the other
+                // suggestions that changed since (those shown in the same view; all others shown with it when none
+                // changed): the first of them in sorted order is the conflict.
+                guard conflictWith[id] == nil, let last = passedIn[id], last[id] == set[id],
+                      let i = r.issues.first(where: { $0.id == id }) else { continue }
+                let inView = shownWith(i)
+                let others = suggested.filter { $0 != id && (inView.isEmpty || inView.contains($0)) }
+                let changed = others.filter { last[$0] != set[$0] }
+                if let o = (changed.isEmpty ? others : changed).first { conflictWith[id] = o }
+            }
+            var blamed = Set<String>()
             for (other, i) in fresh.sorted(by: { $0.id < $1.id }) {
-                let inView = r.shown.filter { $0.step == i.step && $0.beat == i.beat }.flatMap(\.ids)
+                let inView = shownWith(i)
                 var suspects = suggested.filter { inView.contains($0) }
                 if suspects.isEmpty { suspects = suggested }
-                for id in suspects where blame[id] == nil {
-                    blame[id] = other
+                for id in suspects where blamed.insert(id).inserted {
+                    if conflictWith[id] == nil { conflictWith[id] = other }
                     if let x = current[id]?.offset { excluding[id, default: []].append(x) }
                     if !again.contains(id) { again.append(id) }
                 }
@@ -764,7 +791,7 @@ extension MGAnnotationAnchorReport {
             var search: [String] = []
             for id in again {
                 if retries[id, default: 0] >= MGAnnotationAnchorRules.retries {
-                    if let o = blame[id] { drop([id], .conflict, other: o) } else { drop([id], .framing) }
+                    drop([id], .framing)
                 } else {
                     retries[id, default: 0] += 1
                     search.append(id)
@@ -773,9 +800,7 @@ extension MGAnnotationAnchorReport {
             guard !search.isEmpty else { continue }
             let found = r.search(search, excluding)
             for id in search {
-                if let s = found[id], s.offset != nil { current[id] = s }
-                else if let o = blame[id] { drop([id], .conflict, other: o) }
-                else { drop([id], .framing) }
+                if let s = found[id], s.offset != nil { current[id] = s } else { drop([id], .framing) }
             }
         }
         if !accepted { drop(applied().keys.sorted(), .framing) }

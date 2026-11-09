@@ -15,7 +15,7 @@
     annotation and no new issue for any other annotation. A suggestion that keeps an issue, or that hides another
     annotation, is searched again (at most 2 retries; at most 6 re-checks in all); otherwise it is dropped with cause
     `framing`, `conflict` (with `other` naming the annotation it would hide) or `form`. When no candidate passes, `suggest` is null and
-    `noSuggest` gives `{"cause", "code", "step", "beat", "by", "samples", "alternatives"}` (for example
+    `noSuggest` gives `{"cause", "code", "step", "beat", "by", "other", "samples", "alternatives"}` (for example
     `"part fully hidden in step 6"`, behind `back.casing`; leave the label out of that view's `annotate`, ghost the
     blocker, or change the camera). The searches are bounded (8,000,000 tests per search of one annotation, at most 3
     searches per annotation, 64,000,000 for all searches of a report, plus at most 6 full re-checks) and deterministic. `fix` names the suggestion and proposes `{"point": "centre"}` only when the rules pass

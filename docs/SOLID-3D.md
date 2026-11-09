@@ -1005,6 +1005,11 @@ Otherwise:
 * an annotation that had no issue and now has one blames the suggestions shown in the same view (every suggestion when
   none is); each is searched again, avoiding its last anchor and the points within max(1 mm, 10 % of its part's box
   diagonal) of it, at most twice, then dropped with cause `conflict` and `other` naming that annotation;
+* a suggested annotation that passed an earlier re-check with the same anchor and fails now was broken by another
+  suggestion (two or more suggestions that keep breaking each other): the first, in sorted id order, of those that
+  changed since and are shown in the same view (of those shown with it when none changed). It is searched again like
+  any failing suggestion; when it is dropped, the cause is `conflict` with `other` naming that suggestion. `framing`
+  remains only when no other suggestion caused the issue;
 * a copy that does not compile drops every suggestion of that set (`form`).
 
 The set is checked again after each change, at most 6 full re-checks in all (`MGAnnotationAnchorRules.recheckRounds`);
@@ -1024,7 +1029,7 @@ together, parse, clear every suggested annotation and give no other annotation a
 | `budget` | suggestion budget ran out | simpler parts near the anchor, or fewer labels |
 | `form` | no visible point of the part can be written as an anchor | anchor it on a part whose frame is near its mesh, or use a world anchor for free text |
 | `framing` | no anchor stays visible once the framing changes | leave it out of the views that hide it, set those cameras, or ghost the part in the way |
-| `conflict` | every anchor tried hides `other` once applied (`other` had no issue before) | show the two in different views, move `other` as well, or set the camera of the view that shows both |
+| `conflict` | every anchor tried conflicts with `other` once applied: it hides `other` (`other` had no issue before), or `other`'s suggestion keeps hiding this one | show the two in different views, move `other` as well, or set the camera of the view that shows both |
 
 "Fully hidden" means that none of the `samples` candidates passed: the search is sampled, not exhaustive. Budgets of one
 report: one search for one annotation spends at most 8,000,000 tests (`MGAnnotationAnchorRules.suggestTests`), and an

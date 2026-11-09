@@ -327,6 +327,56 @@ final class SolidAnchorSuggestTests: XCTestCase {
         XCTAssertEqual(excluded.first?["a"], [MGVec3(1, 2, 3)], "the next search avoids the anchor that hid c")
     }
 
+    /// Review probes (PR #43 second re-check): suggestions that keep breaking each other. In each re-check the
+    /// suggestion with the smallest x (ties by id) is hidden whenever more than one is applied, and every new search
+    /// moves the requested one past the others. Two: `A` is dropped as a conflict naming `B`, and `B` holds alone.
+    /// Three: the re-checks run out; each is dropped as a conflict naming the suggestion that changed before it broke.
+    func testSuggestionsThatBreakEachOtherAreConflicts() {
+        func issue(_ id: String, x: Double = 1) -> MGAnnotationAnchorIssue {
+            var i = MGAnnotationAnchorIssue(id: id, kind: "label", cause: .offPart, part: "p", by: nil, step: nil, beat: nil, point: .zero,
+                                            distance: 10, tolerance: 1)
+            i.suggestion = MGAnnotationAnchorSuggestion(part: "p", offset: MGVec3(x, 2, 3), onCut: false, cause: nil, step: nil, beat: nil, by: nil)
+            return i
+        }
+        func x(_ v: MGJSON?) -> Double {
+            guard case .array(let c)? = v?["offset"], case .number(let n) = c[0] else { return 0 }
+            return n
+        }
+        func run(_ ids: [String]) -> (report: MGAnnotationAnchorReport, calls: Int, searches: [String: Int]) {
+            var report = MGAnnotationAnchorReport()
+            report.issues = ids.map { issue($0) }
+            var calls = 0, searches: [String: Int] = [:]
+            report.verify { applied in
+                calls += 1
+                let ordered = ids.filter { applied[$0] != nil }.sorted { x(applied[$0]) == x(applied[$1]) ? $0 < $1 : x(applied[$0]) < x(applied[$1]) }
+                let broken = ordered.count > 1 ? ordered.first : nil
+                let unresolved = ids.filter { applied[$0] == nil }
+                return MGAnchorRecheck(issues: ((broken.map { [$0] } ?? []) + unresolved).map { issue($0) }, shown: [(0, nil, Set(ids))],
+                                       search: { requested, _ in
+                    let next = applied.values.map { x($0) }.max()! + 1
+                    var found: [String: MGAnnotationAnchorSuggestion] = [:]
+                    for id in requested { searches[id, default: 0] += 1; found[id] = issue(id, x: next).suggestion! }
+                    return found
+                })
+            }
+            return (report, calls, searches)
+        }
+        let two = run(["A", "B"])
+        XCTAssertLessThanOrEqual(two.calls, MGAnnotationAnchorRules.recheckRounds)
+        XCTAssertTrue(two.searches.values.allSatisfy { $0 <= MGAnnotationAnchorRules.retries })
+        XCTAssertEqual(two.report.issues[0].suggestion?.cause, .conflict)
+        XCTAssertEqual(two.report.issues[0].suggestion?.other, "B")
+        XCTAssertNotNil(two.report.issues[1].suggestion?.offset, "B holds once A keeps its authored anchor")
+        let three = run(["A", "B", "C"])
+        XCTAssertEqual(three.calls, MGAnnotationAnchorRules.recheckRounds)
+        XCTAssertTrue(three.searches.values.allSatisfy { $0 <= MGAnnotationAnchorRules.retries })
+        XCTAssertEqual(three.report.issues.map { $0.suggestion?.cause }, [.conflict, .conflict, .conflict])
+        XCTAssertEqual(three.report.issues.map { $0.suggestion?.other }, ["C", "A", "B"])
+        // A suggestion that fails without any other suggestion changing is still `framing`.
+        let alone = run(["A"])
+        XCTAssertNotNil(alone.report.issues[0].suggestion?.offset)
+    }
+
     /// Review fixture (PR #43 re-check): a suggestion for `label` that hides the clean label `good` (the framing changes)
     /// is never printed; the report names the conflict.
     func testASuggestionNeverAddsAnIssueToAnotherAnnotation() throws {
@@ -342,7 +392,7 @@ final class SolidAnchorSuggestTests: XCTestCase {
         guard case .object(let a)? = r.json["anchor"], case .object(let n)? = a["noSuggest"] else { return XCTFail("noSuggest") }
         XCTAssertEqual(n["code"], .string("conflict"))
         XCTAssertEqual(n["other"], .string("good"))
-        XCTAssertEqual(n["cause"], .string("every anchor tried hides good once applied"))
+        XCTAssertEqual(n["cause"], .string("every anchor tried conflicts with good once applied"))
         guard case .string(let repair)? = a["repair"] else { return XCTFail("repair") }
         XCTAssertTrue(repair.contains("Show label and good in different views"), repair)
     }

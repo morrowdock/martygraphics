@@ -193,10 +193,15 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
     }
     /// The value of a Foundation number. An integer the parser kept exactly (`Int64`, `UInt64`) that a `Double` cannot
     /// hold (beyond ±2^53) is rounded away from zero, never toward it: so `2^53 + 1` reads as `2^53 + 2`, and any test
-    /// "beyond 2^53" stays true (`MGSolidLimitDetail.number` reports it as a bound, not as an exact value).
+    /// "beyond 2^53" stays true (`MGSolidLimitDetail.number` reports it as a bound, not as an exact value). A number
+    /// that arrives as a double (written with a fraction or an exponent) with a magnitude of 2^53 or more is never
+    /// exact either: exactly ±2^53 moves one step away from zero, so it too is a bound.
     static func number(of n: NSNumber) -> Double {
         let d = n.doubleValue
-        guard !CFNumberIsFloatType(n), d.isFinite, abs(d) >= MGSolidLimitDetail.exactLimit else { return d }
+        guard d.isFinite, abs(d) >= MGSolidLimitDetail.exactLimit else { return d }
+        // A number written with a fraction or an exponent arrives as a double: at ±2^53 or beyond, its digits may have
+        // been rounded already, so it is never exact there. ±2^53 itself moves one step away from zero.
+        if CFNumberIsFloatType(n) { return abs(d) == MGSolidLimitDetail.exactLimit ? (d > 0 ? d.nextUp : d.nextDown) : d }
         if n.compare(NSNumber(value: Int64.max)) == .orderedDescending {
             let u = n.uint64Value
             // `d` is a whole number of at most 2^64; compare in UInt64 when it fits.
