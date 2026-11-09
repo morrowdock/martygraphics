@@ -675,7 +675,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnchorSuggest.swift",
-      "sha256": "6a9bc7c0cca5246a7bff9f4019cae9547725d98dc6e02c5e2f0c7c073746c6b4"
+      "sha256": "bda7fa07400645e3afaf2a58af2b6ae3a31e19f88fde85a0cc7141be0f5a8851"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
@@ -1127,7 +1127,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "207c94b54d11edce079c25f5e54cd0a2d28f00f5267344208e6ccc76af3fe1d7"
+      "sha256": "f41f4e0b3d5a750ad97e04cc137fb1f5af00ee7b70d830b4b9f4bf255a57c5e2"
     },
     {
       "path": "docs/THIRD-PARTY.md",

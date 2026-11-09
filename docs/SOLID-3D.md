@@ -1001,7 +1001,8 @@ that check shows **no issue for any suggested annotation and no issue for any an
 Otherwise:
 
 * a suggestion whose annotation still has an issue is searched again in the copy's framing, at most twice
-  (`MGAnnotationAnchorRules.retries`), then dropped (`framing`);
+  (`MGAnnotationAnchorRules.retries`), then dropped (`framing`, or `conflict` when another suggestion caused the
+  issue, see below);
 * an annotation that had no issue and now has one blames the suggestions shown in the same view (every suggestion when
   none is); each is searched again, avoiding its last anchor and the points within max(1 mm, 10 % of its part's box
   diagonal) of it, at most twice, then dropped with cause `conflict` and `other` naming that annotation;
@@ -1013,8 +1014,13 @@ Otherwise:
 * a copy that does not compile drops every suggestion of that set (`form`).
 
 The set is checked again after each change, at most 6 full re-checks in all (`MGAnnotationAnchorRules.recheckRounds`);
-when they run out first, every remaining suggestion is dropped (`framing`). So the printed suggestions, all applied
-together, parse, clear every suggested annotation and give no other annotation an issue.
+when they run out first, every remaining suggestion is dropped: with cause `conflict` and `other` when its issue was
+attributed to another suggestion or it was blamed for another annotation's new issue (so all three suggestions of a
+three-way cycle are conflicts), else with cause `framing`. So the printed suggestions, all applied together, parse,
+clear every suggested annotation and give no other annotation an issue. Known limit (a follow-up): when two
+suggestions each pass on their own but fail together already in the first re-check, no earlier pass exists to
+attribute the issue, so the cause is `framing` without `other`; those suggestions are not printed, so no unsafe
+suggestion results.
 
 `noSuggest` is `{"cause", "code", "step", "beat", "by", "other", "samples", "alternatives"}` (`step` and `beat`
 1-based):

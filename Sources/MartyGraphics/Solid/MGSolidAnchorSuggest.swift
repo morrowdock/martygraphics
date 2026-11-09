@@ -715,7 +715,8 @@ extension MGAnnotationAnchorReport {
     /// annotation and no issue for any annotation that had none in this report (`issues`). Otherwise, at most
     /// `MGAnnotationAnchorRules.recheckRounds` re-checks in all:
     /// - a suggestion whose annotation still has an issue is searched again in the copy's framing, at most
-    ///   `MGAnnotationAnchorRules.retries` times, then dropped (`framing`);
+    ///   `MGAnnotationAnchorRules.retries` times, then dropped (`framing`, or `conflict` when its issue was attributed
+    ///   to another suggestion, below);
     /// - an annotation that had no issue and now has one names the suggestions shown in the same view (all of them when
     ///   none is): each is searched again away from its current anchor, at most `retries` times, then dropped
     ///   (`conflict`, `other` naming that annotation);
@@ -723,8 +724,11 @@ extension MGAnnotationAnchorReport {
     ///   suggestion: the first, in sorted order, of those that changed since and are shown in the same view (of those
     ///   shown with it when none changed). When it is dropped, the cause is `conflict` with `other` naming that one;
     /// - a refused copy drops every suggestion of that set (`form`).
-    /// When the re-checks run out before a set is accepted, every remaining suggestion is dropped (`framing`). So a
-    /// printed set of suggestions, applied together, parses, clears every suggested annotation and adds no issue.
+    /// When the re-checks run out before a set is accepted, every remaining suggestion is dropped: `conflict` with
+    /// `other` when an issue was attributed to it or it was blamed (a three-way cycle gives three conflicts), else
+    /// `framing`. Known limit: two suggestions that each pass alone but fail together in the first re-check have no
+    /// earlier pass to attribute, so they get `framing` without `other` (they are not printed). So a printed set of
+    /// suggestions, applied together, parses, clears every suggested annotation and adds no issue.
     mutating func verify(_ recheck: ([String: MGJSON]) -> MGAnchorRecheck?) {
         let before = Set(issues.map(\.id))
         var current: [String: MGAnnotationAnchorSuggestion] = [:]
