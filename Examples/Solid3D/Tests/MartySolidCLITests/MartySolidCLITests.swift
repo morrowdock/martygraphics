@@ -613,6 +613,96 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual(stills2.map { $0["sha256"] as? String }, stills.map { $0["sha256"] as? String })
     }
 
+    /// Pixel bounds between fresh processes (docs/SOLID-3D.md, "Determinism"). A pixel's difference is the largest
+    /// range of any channel over the runs. Measured on 2026-11-10 at d35e0c3 (Apple M1, macOS 27.2): 164 stills of 21
+    /// documents at 1280 x 800, 5 fresh processes each. Per still, the largest measured values were: mean difference
+    /// 0.1081 levels, share of pixels more than 16 levels apart 0.0112 %, share of differing pixels 5.016 %. The bounds
+    /// are 1.5 x, 2 x and 2 x those. The single largest difference (99 levels) is reported, not a gate. The cause is
+    /// inside SceneKit's physically based shading, not in the engine's data.
+    static let crossProcessMaxMeanDifference = 0.1622
+    static let crossProcessMaxPercentAbove16 = 0.0225
+    static let crossProcessMaxDifferingPercent = 10.03
+
+    /// Fresh processes: every byte the engine decides is identical (check reports, the manifest with its cameras,
+    /// framing, layout and placement records, snapshot JSON); the stills are within the measured pixel bound. A
+    /// representative shipped set: the worst measured channel difference (planetary-components), the worst differing
+    /// share (robot-joint-gearbox), an explainer with a board pane (gears-mixed) and the published AI lesson.
+    func testCrossProcessOutputIsByteIdenticalExceptBoundedPixels() throws {
+        let docs = [models.appendingPathComponent("planetary-components.json"),
+                    repo.appendingPathComponent("docs/assets/from-a-prompt/robot-joint/robot-joint-gearbox.json"),
+                    explainers.appendingPathComponent("gears-mixed.explainer.json"),
+                    repo.appendingPathComponent("docs/assets/jet-suit-ai/lesson.json")]
+        for doc in docs {
+            let name = doc.lastPathComponent
+            var checks: [String] = [], manifests: [Data] = [], others: [[String: Data]] = [], stills: [[String: [UInt8]]] = []
+            var sizes: [String: (Int, Int)] = [:]
+            for _ in 0..<3 {
+                let check = try run(["check", doc.path])
+                XCTAssertEqual(check.status, 0, "\(name): check")
+                checks.append(check.text)
+                let out = FileManager.default.temporaryDirectory.appendingPathComponent("cross-\(UUID().uuidString)")
+                defer { try? FileManager.default.removeItem(at: out) }
+                let r = try renderOrSkip(["render", doc.path, out.path, "--size", "1280x800", "--no-loop", "--no-story"])
+                XCTAssertEqual(r.status, 0, "\(name): \(r.text)")
+                manifests.append(try Self.decidedManifest(out.appendingPathComponent("manifest.json")))
+                let files = try FileManager.default.contentsOfDirectory(atPath: out.path)
+                var json: [String: Data] = [:], png: [String: [UInt8]] = [:]
+                for f in files where f.hasSuffix(".json") && f != "manifest.json" { json[f] = try Data(contentsOf: out.appendingPathComponent(f)) }
+                for f in files where f.hasSuffix(".png") {
+                    let src = try XCTUnwrap(CGImageSourceCreateWithURL(out.appendingPathComponent(f) as CFURL, nil))
+                    let image = try XCTUnwrap(CGImageSourceCreateImageAtIndex(src, 0, nil))
+                    sizes[f] = (image.width, image.height)
+                    png[f] = pixels(image, width: image.width, height: image.height)
+                }
+                others.append(json); stills.append(png)
+            }
+            XCTAssertEqual(Set(checks).count, 1, "\(name): the check report is byte-identical")
+            XCTAssertEqual(Set(manifests).count, 1, "\(name): the manifest (cameras, framing, records) is byte-identical")
+            for o in others.dropFirst() { XCTAssertEqual(o, others[0], "\(name): snapshot JSON is byte-identical") }
+            XCTAssertFalse(stills[0].isEmpty, name)
+            for s in stills.dropFirst() { XCTAssertEqual(Set(s.keys), Set(stills[0].keys), name) }
+            for (file, base) in stills[0] {
+                let (w, h) = try XCTUnwrap(sizes[file])
+                let b = try XCTUnwrap(stills[1][file]), c = try XCTUnwrap(stills[2][file])
+                XCTAssertEqual(b.count, base.count, "\(name) \(file)"); XCTAssertEqual(c.count, base.count, "\(name) \(file)")
+                guard b.count == base.count, c.count == base.count else { continue }
+                var maxDiff = 0, differing = 0, above16 = 0, total = 0
+                base.withUnsafeBufferPointer { p0 in b.withUnsafeBufferPointer { p1 in c.withUnsafeBufferPointer { p2 in
+                    var i = 0
+                    while i < p0.count {
+                        var d = 0
+                        for k in i..<(i + 4) {
+                            let x = Int(p0[k]), y = Int(p1[k]), z = Int(p2[k])
+                            d = max(d, max(x, y, z) - min(x, y, z))
+                        }
+                        if d > 0 { differing += 1; maxDiff = max(maxDiff, d); total += d }
+                        if d > 16 { above16 += 1 }
+                        i += 4
+                    }
+                } } }
+                let n = Double(w * h), percent = Double(differing) * 100 / n
+                let mean = Double(total) / n, percentAbove16 = Double(above16) * 100 / n
+                print("cross-process \(name) \(file): max \(maxDiff), mean \(mean), above 16 \(above16), differing \(differing)")
+                XCTAssertLessThanOrEqual(mean, Self.crossProcessMaxMeanDifference, "\(name) \(file): mean difference")
+                XCTAssertLessThanOrEqual(percentAbove16, Self.crossProcessMaxPercentAbove16, "\(name) \(file): \(above16) pixels above 16 levels")
+                XCTAssertLessThanOrEqual(percent, Self.crossProcessMaxDifferingPercent, "\(name) \(file): differing pixels \(differing)")
+            }
+        }
+    }
+
+    /// A render manifest without what is not decided by the engine: `renderSecondsPerFrame` (wall time) and the bytes
+    /// and SHA-256 of image and video files (GPU pixels and the hardware encoder). Every other member is kept and
+    /// serialised with sorted keys.
+    static func decidedManifest(_ url: URL) throws -> Data {
+        var m = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        m["renderSecondsPerFrame"] = nil
+        m["outputs"] = (m["outputs"] as? [[String: Any]] ?? []).map { o -> [String: Any] in
+            guard let f = o["file"] as? String, f.hasSuffix(".png") || f.hasSuffix(".mp4") || f.hasSuffix(".gif") else { return o }
+            var o = o; o["sha256"] = nil; o["bytes"] = nil; return o
+        }
+        return try JSONSerialization.data(withJSONObject: m, options: [.sortedKeys])
+    }
+
     /// RGBA pixels of frame `index` of a movie (memory rows top to bottom).
     func moviePixels(_ movie: URL, frame index: Int, fps: Int, width: Int, height: Int) throws -> [UInt8] {
         let gen = AVAssetImageGenerator(asset: AVURLAsset(url: movie))

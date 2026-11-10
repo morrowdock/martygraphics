@@ -173,6 +173,8 @@ checks its exit codes, JSON reports and that refusals are the same in every proc
 golden test runs `check` and `check --strict` on every shipped example and every JSON
 file under `docs/assets`; without the fields this release added (`engine`, `partTiers`,
 `motionTiers`), the output is byte-identical to the files in
-`Tests/MartySolidCLITests/Golden`, written by the release before.
+`Tests/MartySolidCLITests/Golden`, written by the release before. A cross-process test renders a representative
+shipped set three times and requires byte-identical reports, manifests and snapshots, and stills within the measured
+pixel bound ([Determinism](../../docs/SOLID-3D.md#determinism)).
 
 The format is documented in [docs/SOLID-3D.md](../../docs/SOLID-3D.md).

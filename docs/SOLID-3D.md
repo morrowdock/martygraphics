@@ -2070,8 +2070,9 @@ keeps every third frame (the same poses as at 10). No frame is interpolated. The
 manifest record gives `codec`, `width`, `height`, `frames`, `fps`, `loopSeconds` and
 `framingScale`. If the encoder fails or stops (a full disk, a cancel) or takes no frame for
 60 seconds, the render stops with an error and removes its output directory, so no
-manifest names a partial MP4. The poses and cameras are deterministic; the rendered pixels and the H.264 bytes are not byte-identical
-between runs (GPU rendering and the hardware encoder).
+manifest names a partial MP4. The poses and cameras are deterministic; the rendered pixels can differ between processes
+within a measured bound, and the H.264 bytes are not byte-identical between runs (the hardware encoder). See
+[Determinism](#determinism).
 
 **Story video.** `marty-solid render` also writes `story.mp4` for an assembly with steps
 and for an explainer with beats: the steps (or beats) in order, each with its caption,
@@ -2185,6 +2186,52 @@ deterministic; at most
 poses per beat. Not tested: the meshes themselves (boxes only, and a swept box is the box of a whole sweep, so a path
 that only passes close to a part, or through the empty middle of a sweep, may be refused), and whether the routed path
 looks good: the arc and pull back keep the model in view only roughly (the camera looks along its interpolated target).
+
+### Determinism
+
+**Byte-identical in every run** (fresh processes, same build, same input): the document parse and its refusals, the
+solved facts and tiers, the `check` and `check --strict` reports, the cameras and framing of every still and loop frame,
+the unblocked-focus results, the annotation layout and placement records, the story plan (holds, moves, routed paths,
+cuts, pane layouts) and its frame timing, `snapshot.json`, and every member of `manifest.json` except
+`renderSecondsPerFrame` (wall time) and the `bytes` and `sha256` of PNG, GIF and MP4 files. An image without a 3D
+view (an explainer's `board-0.png`, the stills of a 2D-only explainer; CoreGraphics on the CPU) is also byte-identical.
+
+**Pixels of the 3D view.** One renderer instance gives the same pixels every time it draws the same view. Between
+processes (and between two renderer instances in one process), SceneKit's physically based shading can give
+different pixels. The cause is inside SceneKit's Metal rendering, not in the engine's data: the meshes, normals,
+cameras and options are byte-identical, and the difference stays with every renderer effect off (ambient occlusion,
+shadows, ground, image-based lighting, HDR, vignette, multisampling, supersampling and bloom). Material clearcoat shows
+it most. In a diagnostic run, one recorded model document drawn with Lambert, Blinn or unlit (constant) materials and
+the effects off gave byte-identical images in five fresh processes; the engine draws physically based materials, so
+this locates the cause and is not an option.
+
+Measured on 2026-11-10 at commit d35e0c3 (Apple M1 Mac mini, macOS 27.2): every renderable shipped example, the renderable JSON
+under `docs/assets` and five recorded model documents, 21 documents and 164 stills at 1280 × 800, five fresh
+processes each (`--no-loop --no-story`). A pixel's difference is the largest range of any of its channels over the
+five runs.
+
+| Measure (per still) | Median | 90th percentile | Maximum |
+| --- | --- | --- | --- |
+| Largest pixel difference | 3 levels | 12 levels | 99 levels |
+| Mean pixel difference (over all pixels) | 0.0025 levels | 0.0129 levels | 0.1081 levels |
+| Share of pixels that differ | 0.23 % | 0.91 % | 5.02 % |
+| Share of pixels more than 16 levels apart | 0 | 0 | 0.0112 % (115 pixels) |
+
+Over all 164 stills: 22 are byte-identical; 0.48 % of the pixels differ; 2,054 pixels differ by more than 8 levels,
+308 by more than 16 and 156 by more than 32. Of the differing pixels, 86 % change by 1 level and 96 % by at most 3
+levels; in every still, 99.9 % of all pixels are within 7 levels. Only 13 stills have any pixel more than 16
+levels apart, and 4 any pixel more than 32. The visible effects are local: a few pixels inside a small hole in the
+anodized carrier of `planetary-components.json`, where gear-tooth tips below show through (step 4: 12 pixels more
+than 32 levels apart, at most 99), and a 14 × 8 pixel patch at the
+turbine wheel of a recorded jet-suit document (step 7) where the surface seen through a thin gap flips between two
+surfaces (71 pixels more than 32 levels apart, at most 82).
+
+`swift test --package-path Examples/Solid3D` renders a representative shipped set in three fresh processes. It
+requires byte identity for the check reports, the manifests (as above) and `snapshot.json`, and per still: a mean
+pixel difference of at most 0.1622 levels, at most 0.0225 % of the pixels more than 16 levels apart, and at most
+10.03 % differing pixels (1.5 ×, 2 × and 2 × the measured maxima). It prints the largest difference; it does not gate
+on it. A still from another host, GPU or macOS release can differ more; compare stills with these measures, not a
+hash. The H.264 bytes of `loop.mp4` and `story.mp4` also vary (the hardware encoder).
 
 ## Snapshot for other renderers
 

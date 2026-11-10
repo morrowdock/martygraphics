@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f65b17e14fb3ab17e6567542e6537742f7bad2a91f9d8015077feb75ccb3b0d3"
+      "sha256": "34692565ceb0c2da2d52ac6ea83f1ada71ec9240c521a08a67fa6646ae61d52a"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -171,7 +171,7 @@
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "c094a3e3b943564d52f8375bbe576812023cb181ad1b9e0367e349eb45249747"
+      "sha256": "46c3cd17284d02a0bd9f1bc69ad3fa4ad796b196b5df24a92b1508adf4de7951"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json",
@@ -475,7 +475,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "6aa3f4ad01ec8efa9324194192e7755f83322d1dc48baf0f311ef3552b33c27a"
+      "sha256": "5ca41210eef7dc95634b0e3cd1edd8ccf48eaf04a23ca4232e15143cd2929362"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
@@ -1179,7 +1179,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "10643dbbf54a2151b418ca4496a7e2ca774f9b873bff3531b12b404a19cb10cb"
+      "sha256": "e4542ef1d97af6f96c02788dbfc7c54eb3f13b0211c07c9e56e4d5092e6c4582"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1223,7 +1223,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "dd75ffafcd760df5f34b1b4185477a7ce73eceb5616d04b7d60db7c561e10ddb"
+      "sha256": "4b5c6842d44cc3febcaa9495f8cb5edda4e3a6b991fbbea4656e6d033e9c1012"
     },
     {
       "path": "docs/THIRD-PARTY.md",

@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Docs and tests: the determinism promise now says exactly what is byte-identical and what is not
+  ([SOLID-3D.md, Determinism](docs/SOLID-3D.md#determinism)).
+  - **Byte-identical in every run:** parse and refusals, solved facts, check reports, cameras, framing, annotation
+    layout, story plan and frame timing, `snapshot.json`, and the render manifest except its wall time and the hashes
+    of image and video files. Images without a 3D view are byte-identical too.
+  - **3D pixels:** identical within one renderer instance; between processes SceneKit's physically based shading can
+    change them (cause inside SceneKit, not in the engine's data). Measured on 2026-11-10 at d35e0c3: 164 stills of 21
+    documents at 1280 × 800 in five fresh processes; 22 byte-identical; per still the largest difference has median 3
+    levels and maximum 99, the differing share is at most 5.02 %, and at most 0.0112 % of the pixels are more than 16
+    levels apart. The largest differences are two local spots (gear teeth seen through a small hole in an anodized
+    carrier, a 14 × 8 pixel patch in a thin gap).
+  - **New test** `testCrossProcessOutputIsByteIdenticalExceptBoundedPixels` (Solid3D): four shipped documents in three
+    fresh processes; byte identity for the check reports, manifests and snapshot JSON; per still a mean pixel
+    difference of at most 0.1622 levels, at most 0.0225 % of the pixels more than 16 levels apart and at most 10.03 %
+    differing pixels. Every existing exact check is unchanged.
 - Engine fixes from the remaining failures recorded in a prompt-to-3D evaluation round (r2j): figures cut by the frame
   or under the title band, wrist-ring engines too small to read, and full-width numbers.
   - **Subject-first framing** (one rule for stills, story hold frames, `MGSolidRenderPlan`, the SwiftUI pane and the

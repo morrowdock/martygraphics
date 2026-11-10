@@ -707,6 +707,12 @@ presented (the legend `check` reports). The solid pane of a beat is framed by th
 ([SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop)); the pane holds no title or caption, so all of it
 is the safe window.
 
+Determinism: the pane rule, the board share, the cameras, the story plan and every manifest member except the wall
+time and the hashes of image and video files are byte-identical in every run, and so is the board pane (CoreGraphics).
+The 3D pane's pixels are identical within one renderer instance; between processes SceneKit's physically based
+shading can change them (per still the largest difference has median 3 levels, and a median 0.23 % of the pixels differ; a few local spots reach 99 levels).
+The measurements and the test are in [SOLID-3D.md](SOLID-3D.md#determinism).
+
 ## What is not checked
 
 * Words. A caption or a 2D text is checked for numbers only, not for meaning.
