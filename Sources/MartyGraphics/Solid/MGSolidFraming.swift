@@ -7,16 +7,22 @@ import Foundation
 
 /// The framing rule of `marty-solid render` and of any host that shows a step (`MGSolidRenderer.frame(_:document:aspect:)`).
 ///
-/// * **Focus.** A step frames its focus: the step's `focus` parts, or else its `highlight` and section parts with the
-///   parts that touch them (`focusParts`), plus the anchors of the annotations the step shows. The camera keeps the step's preset direction (`camera`
-///   plus `orbit`) and moves its target and distance so the focus fills `fill` of the safe window. An explicit `focus`
-///   is always fitted; an inferred focus whose box is larger than `focusShare` of the whole model's box keeps the
-///   whole-model rule.
+/// * **Subject first.** A shot with a subject frames the subject (`subjectParts`): the step's explicit `focus`, or else
+///   its highlighted parts, its section parts and the parts that the labels and arrows it shows ride on, plus, in a
+///   posed step, every chain the pose moves. The camera keeps the step's preset direction (`camera` plus `orbit`) and
+///   takes the closest framing that keeps the subject whole inside the safe window together with every target the shot
+///   draws (label anchors, pointer tips, arrow tails and heads): they fill `fill` of it. No touching context joins.
+///   Context may be cut at the safe window's edges; the renderer clips the model to the safe window
+///   (`MGSolidRenderer.render(width:height:clip:)`), so nothing is drawn under the title or caption band. An inferred
+///   subject whose box diagonal is more than `focusShare` of the whole model's is a whole-model shot. The check report
+///   measures each subject group against the floors (`subjectFill`, `subjectAreaShare`, `subjectExtentPixels`) and
+///   warns `framing.subject.small.step.<n>` (`.beat.<n>`) with exact repairs. The unblocked-focus rule
+///   (`clearView`) then tests the same subject, and keeps the main-rule camera (`mainRule`) for a still whose subject
+///   camera would hide a label, pointer or arrow that the main-rule camera shows.
 /// * **Whole model.** Other shots keep the bounding-sphere framing of earlier releases unless a part or an annotation
-///   anchor would leave the view or enter the caption band; only then is the shot fitted like a focus (inside the
-///   safe window, title band included).
+///   anchor would leave the safe window (the title band included); only then is the shot fitted like a focus.
 /// * **Safe window.** The view minus the title band (shots with a title) and minus the caption band (shots with a
-///   caption), as `MGSolidRenderPlan.bands(width:height:)` gives them. The caption band never covers the model.
+///   caption), as `MGSolidRenderPlan.bands(width:height:)` gives them. Neither band covers a solid part.
 /// * **Loop.** Loop frames keep the earlier per-frame framing; when any frame would cut the model, every frame moves
 ///   back by the same factor, so the orbit does not jump.
 ///
@@ -36,6 +42,14 @@ public enum MGSolidFraming {
     public static let nearMinimum = 0.5, nearShare = 0.05
     /// The near-plane distance for a camera at `distance` from its target.
     public static func nearPlane(distance: Double) -> Double { max(nearMinimum, nearShare * distance) }
+    /// Subject floors (docs/SOLID-3D.md, "Subject first"). The subject's projected extent fills at least this share of
+    /// the safe window (on its larger axis, as `fill` measures it).
+    public static let subjectFill = 0.25
+    /// Each subject group (its subject parts in one unit) covers at least this share of the safe window's pixels.
+    public static let subjectAreaShare = 0.005
+    /// Each subject group's shorter screen extent is at least this many pixels at a frame 800 px high (scaled with the
+    /// frame height: 24 px at 1280 × 800, 65 px at 3840 × 2160).
+    public static let subjectExtentPixels = 24.0
 
     /// A rectangle in normalised device coordinates (x right, y up, both −1...1).
     public struct Window: Equatable, Sendable {
@@ -143,6 +157,15 @@ public enum MGSolidFraming {
             return out
         }()
 
+        /// The points of each part in the render world (Y up) at a pose, in assembly order.
+        func perPart(_ assembly: MGAssembly, _ params: MGPoseParameters, stage: MGTransform) -> [(id: String, points: [MGVec3])] {
+            let pose = assembly.pose(params)
+            return parts.map { id, local in
+                let t = stage * (pose.world[id] ?? .identity)
+                return (id, local.map(t.apply).filter { $0.x.isFinite && $0.y.isFinite && $0.z.isFinite })
+            }
+        }
+
         /// The points in the render world (Y up) at a pose.
         func world(_ assembly: MGAssembly, _ params: MGPoseParameters, stage: MGTransform) -> [MGVec3] {
             let pose = assembly.pose(params)
@@ -228,6 +251,182 @@ public enum MGSolidFraming {
         return true
     }
 
+    // MARK: Subject
+
+    /// The parts `view` draws solid, in assembly order: not hidden, at a view opacity of at least `blockingOpacity`.
+    /// A step's `ghost` and the automatic ghosts are see-through context, not solid.
+    public static func solidParts(_ doc: MGSolidDocument, view: MGSolidView) -> [String] {
+        doc.assembly.parts.compactMap { p in
+            let v = view.part(p.id)
+            return !v.hidden && v.opacity >= blockingOpacity ? p.id : nil
+        }
+    }
+
+    /// The subject of a shot (resolved part ids, assembly order, hidden parts left out): the step's explicit `focus`
+    /// (`explicit`), or else the shot's highlighted parts, the step's section parts and the parts that the labels and
+    /// arrows the shot shows ride on (a world-point anchor names no part). `moved`: for an inferred subject of a posed
+    /// step, every other part the pose moves (the posed joints' parts and everything attached below them, found by
+    /// comparing each part's world placement with and without the pose), so a raised arm stays in view with its jet.
+    /// The moved chain joins the fit but is not measured by the subject floors. Empty for a shot with none of these.
+    public static func subjectParts(_ doc: MGSolidDocument, shot s: MGSolidShot) -> (parts: [String], explicit: Bool, moved: [String]) {
+        let step = s.step.flatMap { doc.steps.indices.contains($0) ? doc.steps[$0] : nil }
+        let hidden = doc.hiddenParts(step: s.step)
+        let order = doc.assembly.parts.map(\.id).filter { !hidden.contains($0) }
+        if let f = step?.focus, !f.isEmpty { let want = Set(f); return (order.filter { want.contains($0) }, true, []) }
+        var want = Set(s.highlight).union(step?.section?.parts ?? [])
+        if s.showsAnnotations {
+            let view = doc.view(step: s.step), a = doc.annotations
+            for id in doc.checkedAnnotations(view, params: s.params) ?? [] where a.label(id) != nil || a.arrow(id) != nil {
+                want.formUnion(MGSolidAnnotationEngine.anchors(a, id).compactMap(\.part))
+            }
+        }
+        let parts = order.filter { want.contains($0) }
+        guard !parts.isEmpty, !s.params.placements.isEmpty else { return (parts, false, []) }
+        let posed = doc.assembly.pose(s.params).world
+        let base = doc.assembly.pose(MGPoseParameters(input: s.params.input, explode: s.params.explode)).world
+        let moved = order.filter { id in
+            guard !want.contains(id), let p = posed[id], let q = base[id] else { return false }
+            return zip(p.columnMajor, q.columnMajor).contains { abs($0 - $1) > 1e-6 * max(1, abs($0), abs($1)) }
+        }
+        return (parts, false, moved)
+    }
+
+    /// The subject's groups, the units of the floors: the subject parts of each instance in `whole` (an instance the
+    /// step or beat names by its instance id in `focus` or `highlight`) form one group, except the parts in `named`;
+    /// every other subject part is its own group. `named` holds the parts named explicitly anywhere (in `focus`, in
+    /// `highlight`, or as an annotation target): such a part is always measured alone, also when its instance is named
+    /// too, and also when such parts together cover an instance. Assembly order.
+    public static func subjectGroups(_ doc: MGSolidDocument, _ parts: [String], whole: Set<String> = [],
+                                     named: Set<String> = []) -> [(unit: String, parts: [String])] {
+        var out: [(unit: String, parts: [String])] = [], done = Set<String>()
+        func pooled(_ p: String) -> Bool {
+            let u = MGSolidDocument.unitID(p)
+            return whole.contains(u) && u != p && !named.contains(p)
+        }
+        for p in parts {
+            let u = MGSolidDocument.unitID(p)
+            if pooled(p) {
+                if done.insert(u).inserted { out.append((u, parts.filter { MGSolidDocument.unitID($0) == u && pooled($0) })) }
+            } else {
+                out.append((p, [p]))
+            }
+        }
+        return out
+    }
+
+    /// The projected box of `pts` with `camera` in normalised device units (width, height); nil when no point lies in
+    /// front of the camera.
+    static func projectedBox(_ pts: [MGVec3], camera c: MGSolidCamera, aspect: Double) -> (w: Double, h: Double)? {
+        guard finite(c), aspect.isFinite, aspect > 0 else { return nil }
+        let b = Basis(yaw: c.yaw, pitch: c.pitch), f = focal(c.fieldOfView), t = c.targetVector
+        var lo = (x: Double.infinity, y: Double.infinity), hi = (x: -Double.infinity, y: -Double.infinity)
+        for p in pts {
+            let r = p - t, depth = c.distance + r.dot(b.fwd)
+            guard depth > 0 else { continue }
+            let x = r.dot(b.right) * f / aspect / depth, y = r.dot(b.up) * f / depth
+            guard x.isFinite, y.isFinite else { continue }
+            lo = (min(lo.x, x), min(lo.y, y)); hi = (max(hi.x, x), max(hi.y, y))
+        }
+        guard lo.x <= hi.x else { return nil }
+        return (hi.x - lo.x, hi.y - lo.y)
+    }
+
+    /// The share of `window` that the projected extent of `pts` fills with `camera`, on the larger axis (the measure of
+    /// `fill`: a fitted subject fills `fill`). 0 for no point in front of the camera.
+    static func filled(_ pts: [MGVec3], camera c: MGSolidCamera, aspect: Double, window: Window) -> Double {
+        guard let box = projectedBox(pts, camera: c, aspect: aspect) else { return 0 }
+        let w = window.usable
+        return max(box.w / (w.right - w.left), box.h / (w.top - w.bottom))
+    }
+
+    /// `c` moved back along its view line until its eye lies outside the posed box of every part of `view` that is
+    /// solid (`solidParts`) and not in `subject`, by at least the near plane plus 10 %, so a subject inside a closed or
+    /// hollow part (a core in a shell, a gear in a ring) is never framed from inside that part. A ghost is not solid,
+    /// so ghosting the part lets the camera in. At most one move per part; deterministic (assembly order).
+    static func outsideContext(_ c: MGSolidCamera, _ doc: MGSolidDocument, view: MGSolidView, params: MGPoseParameters,
+                               subject: Set<String>, stage: MGTransform) -> MGSolidCamera {
+        guard finite(c) else { return c }
+        let pose = doc.assembly.pose(params)
+        let boxes: [MGBounds] = doc.assembly.parts.compactMap { p in
+            let v = view.part(p.id)
+            guard !subject.contains(p.id), !v.hidden, v.opacity >= blockingOpacity else { return nil }
+            let b = MGSolidFrames.worldBounds((v.cut?.mesh ?? p.mesh).bounds, stage * (pose.world[p.id] ?? .identity))
+            return b.isEmpty ? nil : b
+        }
+        guard !boxes.isEmpty else { return c }
+        var cam = c
+        for _ in 0..<boxes.count {
+            let back = (cam.position - cam.targetVector).normalized
+            var moved = false
+            for box in boxes {
+                let near = nearPlane(distance: cam.distance) * 1.1
+                let e = cam.position
+                let lo = box.min - MGVec3(near, near, near), hi = box.max + MGVec3(near, near, near)
+                guard e.x > lo.x, e.x < hi.x, e.y > lo.y, e.y < hi.y, e.z > lo.z, e.z < hi.z else { continue }
+                // Leave the grown box along the view line, backwards (slab exit), then keep the near plane clear of it.
+                var exit = Double.infinity
+                for (pe, pb, l, h) in [(e.x, back.x, lo.x, hi.x), (e.y, back.y, lo.y, hi.y), (e.z, back.z, lo.z, hi.z)] where abs(pb) > 1e-12 {
+                    exit = min(exit, ((pb > 0 ? h : l) - pe) / pb)
+                }
+                guard exit.isFinite, exit >= 0 else { continue }
+                let d = cam.distance + exit
+                cam.distance = max(cam.distance, (d + nearMinimum) / (1 - 1.1 * nearShare) + 1e-6)
+                moved = true
+            }
+            if !moved { break }
+        }
+        return cam
+    }
+
+    // MARK: Crops
+
+    /// The parts of `ids` (default: the solid parts of `view`, `solidParts`) that a still at `camera` cuts at pose
+    /// `params`, for a view of width over height `aspect` whose safe window is `window`; assembly order. A part is cut
+    /// when the view shows some of it and not all of it inside the window. The test reads every triangle of the posed
+    /// mesh (a cut part's cut mesh) in camera space, without dividing by depth, so a face that crosses the view with
+    /// every vertex outside it, or that straddles the near plane, counts: a triangle is in view unless all three
+    /// vertices lie outside one of the five view planes (left, right, bottom, top, near), which is conservative (a
+    /// triangle near a frustum corner may count); the part is outside the window when any vertex lies outside a window
+    /// plane or nearer than the near plane (exact for a triangle, whose projection is convex). Context cut at the edges
+    /// is allowed and clipped by the renderer; the render manifest lists it, and tests use it to prove that no subject
+    /// part is ever cut.
+    public static func cutParts(_ doc: MGSolidDocument, view: MGSolidView, params: MGPoseParameters, camera c: MGSolidCamera,
+                                aspect: Double, window: Window, ids: [String]? = nil, stage: MGTransform = MGSolidStage.zUpToYUp) -> [String] {
+        guard finite(c), aspect.isFinite, aspect > 0 else { return [] }
+        let want = Set(ids ?? solidParts(doc, view: view))
+        let w = window.usable, b = Basis(yaw: c.yaw, pitch: c.pitch), f = focal(c.fieldOfView), t = c.targetVector
+        let near = nearPlane(distance: c.distance)
+        let pose = doc.assembly.pose(params)
+        var out: [String] = []
+        for p in doc.assembly.parts where want.contains(p.id) {
+            let pv = view.part(p.id)
+            guard !pv.hidden else { continue }
+            let mesh = pv.cut?.mesh ?? p.mesh
+            let m = stage * (pose.world[p.id] ?? .identity)
+            // Camera-space coordinates scaled so the view planes are |X| = Z and |Y| = Z.
+            let q: [(x: Double, y: Double, z: Double)] = mesh.positions.map { v in
+                let r = m.apply(v) - t
+                return (r.dot(b.right) * f / aspect, r.dot(b.up) * f, c.distance + r.dot(b.fwd))
+            }
+            var outside = false
+            for v in q where !(v.z >= near && v.x <= w.right * v.z && v.x >= w.left * v.z && v.y <= w.top * v.z && v.y >= w.bottom * v.z) {
+                outside = true; break
+            }
+            guard outside else { continue }
+            var shown = false
+            for i in 0..<mesh.triangleCount {
+                let (i0, i1, i2) = mesh.triangle(i)
+                guard i0 < q.count, i1 < q.count, i2 < q.count else { continue }
+                let tri = [q[i0], q[i1], q[i2]]
+                if tri.allSatisfy({ $0.z < near }) || tri.allSatisfy({ $0.x > $0.z }) || tri.allSatisfy({ $0.x < -$0.z })
+                    || tri.allSatisfy({ $0.y > $0.z }) || tri.allSatisfy({ $0.y < -$0.z }) { continue }
+                shown = true; break
+            }
+            if shown { out.append(p.id) }
+        }
+        return out
+    }
+
     /// The camera from `yaw` and `pitch` that fits every point into `fill` of `window`, centred in it.
     public static func fit(_ pts: [MGVec3], yaw: Double, pitch: Double, aspect: Double, fieldOfView: Double = 30,
                            window: Window, fill: Double = MGSolidFraming.fill) -> MGSolidCamera {
@@ -287,7 +486,7 @@ public enum MGSolidFraming {
 
     /// Which rule framed a still (`marty-solid render` writes it into each still's manifest record).
     public enum Rule: String, Equatable, Sendable {
-        /// The step's focus, fitted.
+        /// The shot's subject, fitted (`subjectParts`; with the annotation anchors when the subject keeps its floors).
         case focus
         /// The whole model with the bounding-sphere framing of earlier releases (nothing left the safe window).
         case model
@@ -303,10 +502,21 @@ public enum MGSolidFraming {
         framing(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage).camera
     }
 
-    /// `camera(_:shot:aspect:…)` and the rule that chose it.
+    /// `camera(_:shot:aspect:…)` and the rule that chose it: the effective camera of the still, exactly the camera of
+    /// `clearView` (the unblocked-focus rule and the main-rule fallback included), so the renderer, a host, the check
+    /// report, the story and the SwiftUI pane all get one camera for a shot.
     public static func framing(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double = 30,
                                titleBand: Double? = nil, captionBand: Double? = nil,
                                stage: MGTransform = MGSolidStage.zUpToYUp) -> (camera: MGSolidCamera, rule: Rule) {
+        let c = clearView(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage,
+                          drops: false)
+        return (c.camera, c.rule)
+    }
+
+    /// The subject-first chooser alone (`choose`), with a finite fallback: the first candidate of `clearView`.
+    static func rawFraming(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double = 30,
+                           titleBand: Double? = nil, captionBand: Double? = nil,
+                           stage: MGTransform = MGSolidStage.zUpToYUp) -> (camera: MGSolidCamera, rule: Rule) {
         let r = choose(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage)
         if finite(r.camera) { return r }
         // Only a shot built in code with non-finite numbers gets here: frame a unit cube rather than return NaN.
@@ -327,6 +537,44 @@ public enum MGSolidFraming {
         let hidden = doc.hiddenParts(step: s.step)
         let anchors = s.showsAnnotations ? annotationPoints(doc, view: view, params: s.params, stage: stage) : []
         let all = Samples(a, ids: nil, exclude: hidden).world(a, s.params, stage: stage) + anchors
+        let subject = subjectParts(doc, shot: s)
+        if !subject.parts.isEmpty {
+            // The subject, its moved chain, and every target the shot draws: label anchors, pointer tips, arrow tails and
+            // heads all lie inside the safe window (a framing never leaves a label "off view").
+            let parts = Samples(a, ids: subject.parts + subject.moved).world(a, s.params, stage: stage) + anchors
+            var sb = MGBounds.empty, wb = MGBounds.empty
+            for p in parts { sb.include(p) }
+            for p in all { wb.include(p) }
+            // An explicit `focus` is always framed; an inferred subject that spans most of the model is a whole-model shot.
+            if !sb.isEmpty, subject.explicit || sb.size.length <= focusShare * wb.size.length {
+                let c = fit(parts, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window)
+                return (outsideContext(c, doc, view: view, params: s.params, subject: Set(subject.parts + subject.moved), stage: stage), .focus)
+            }
+        }
+        let old = legacy(a, s, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, stage: stage, hidden: hidden)
+        // The earlier framing stays when nothing is cut by the frame or covered by the title or caption band; otherwise
+        // the shot is fitted inside the safe window.
+        if contains(all, camera: old, aspect: aspect, window: window) { return (old, .model) }
+        return (fit(all, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window), .modelFitted)
+    }
+
+    /// The framing rule of main (a13f1f1) before subject-first framing, kept as the fallback of `clearView`: a step's
+    /// focus (`focusParts`: its `focus`, or its highlight and section parts with their touching context) plus the shown
+    /// annotation anchors, fitted when explicit or at most `focusShare` of the model; else the earlier bounding-sphere
+    /// framing, which may reach into the title band (the renderer now clips it there), or the whole-model fit.
+    static func mainRule(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double, titleBand: Double?,
+                         captionBand: Double?, stage: MGTransform, direction override: (yaw: Double, pitch: Double)? = nil)
+        -> (camera: MGSolidCamera, rule: Rule) {
+        let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6, fieldOfView = fov(fieldOfView)
+        let bands = MGSolidRenderPlan.bands(width: MGSolidRenderPlan.referenceHeight * aspect, height: MGSolidRenderPlan.referenceHeight)
+        let window = Window(titleBand: titleBand ?? (s.title != nil ? bands.title : 0),
+                            captionBand: captionBand ?? (s.caption != nil ? bands.caption : 0))
+        let (yaw, pitch) = override ?? direction(s)
+        let a = doc.assembly
+        let view = doc.view(step: s.step)
+        let hidden = doc.hiddenParts(step: s.step)
+        let anchors = s.showsAnnotations ? annotationPoints(doc, view: view, params: s.params, stage: stage) : []
+        let all = Samples(a, ids: nil, exclude: hidden).world(a, s.params, stage: stage) + anchors
         if let step = s.step {
             let ids = focusParts(doc, step: step, params: s.params, stage: stage)
             if !ids.isEmpty {
@@ -334,8 +582,6 @@ public enum MGSolidFraming {
                 var fb = MGBounds.empty, wb = MGBounds.empty
                 for p in focus { fb.include(p) }
                 for p in all { wb.include(p) }
-                // An explicit `focus` is always framed exactly; only inferred context (highlight, section) falls back
-                // to the whole model when it spans most of it.
                 let explicit = doc.steps.indices.contains(step) && !doc.steps[step].focus.isEmpty
                 if !fb.isEmpty, explicit || fb.size.length <= focusShare * wb.size.length {
                     return (fit(focus, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window), .focus)
@@ -343,9 +589,6 @@ public enum MGSolidFraming {
             }
         }
         let old = legacy(a, s, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, stage: stage, hidden: hidden)
-        // The earlier framing stays when nothing is cut by the frame or covered by the caption band. It may reach into
-        // the title band (title text over the model, as in earlier releases); a fitted camera keeps that band free.
-        // `hero.png` keeps the title band free too: its earlier framing stays only when the model clears the band.
         var kept = window
         if s.file != "hero.png" { kept.top = 1 }
         if contains(all, camera: old, aspect: aspect, window: kept) { return (old, .model) }

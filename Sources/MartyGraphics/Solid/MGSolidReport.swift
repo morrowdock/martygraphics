@@ -189,11 +189,16 @@ extension MGSolidReport {
         var anchors = MGAnnotationAnchorReport()
         var arrows = MGAnnotationArrowReport()
         var drops: [(step: Int?, beat: Int?, drop: MGArrowDrop)] = []
+        var subjects: [MGSubjectSmall] = [], small: [MGSmallUnit] = [], stillPlacements: MGJSON?
         anchors.issues = doc.offPartAnchors
         if anchorViews {
-            // The step stills that show a label, pointer or arrow, framed once: the anchor checks test those that show
-            // a label or pointer, the arrow rule those that show an arrow.
-            let checked = doc.stepCheckViews()
+            // Every step still, framed once: the subject rule and the small-unit rule read them all (warnings, never
+            // refused); the anchor checks test those that show a label or pointer, the arrow rule those that show an arrow.
+            let stills = doc.framedStills()
+            (subjects, small) = doc.stillMeasures(stills) { doc.authoredGhost(step: $0.still.step) }
+            stillPlacements = doc.stillPlacements(stills, title: true)
+            let checked = doc.annotations.isEmpty ? []
+                : stills.map(\.still).filter { $0.step != nil && (doc.showsCheckedAnchor($0.view) || doc.showsArrow($0.view)) }
             // The arrows each still drops (the framing's arrow drop rule): warnings, never refused.
             drops = checked.flatMap { v in v.view.arrowDrops.map { (v.step, v.beat, $0) } }
             let framed = checked.filter { doc.showsCheckedAnchor($0.view) }
@@ -246,8 +251,15 @@ extension MGSolidReport {
             w += views.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
             w += arrows.issues.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
             w += drops.map { .object(["reason": .string($0.drop.reason), "part": .string($0.drop.id)]) }
+            w += subjects.map { .object(["reason": .string($0.reason), "part": .string($0.groups[$0.small.first ?? 0].unit)]) }
+            w += small.map { .object(["reason": .string($0.reason), "part": .string($0.unit)]) }
             o["warnings"] = .array(w)
         }
+        // Only when a still's subject misses a floor or a named unit is small; other reports keep their exact keys.
+        if !subjects.isEmpty { o["subjectFloors"] = .array(subjects.map(\.json)) }
+        // Documents with annotations only: the label placement each still shows (its effective camera).
+        if !doc.annotations.isEmpty, let stillPlacements { o["stillPlacements"] = stillPlacements }
+        if !small.isEmpty { o["smallUnits"] = .array(small.map(\.json)) }
         // Documents with annotations only; other reports keep their exact keys.
         if !doc.annotations.isEmpty {
             o["anchorIssues"] = .array(anchors.issues.map(\.json))

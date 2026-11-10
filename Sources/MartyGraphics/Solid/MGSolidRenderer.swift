@@ -396,9 +396,9 @@ public final class MGSolidRenderer {
         setCamera(MGSolidCamera.framing(b, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, margin: margin))
     }
 
-    /// Frames one render-plan shot with the library's framing rule (`MGSolidFraming`): a step with a focus frames its
-    /// focus from the step's camera preset; other shots frame the whole model, never cut and never under the caption
-    /// band. A SwiftUI or `SCNView` host that shows step `i` calls `frame(MGSolidShot.step(document, i)!, document:
+    /// Frames one render-plan shot with the library's framing rule (`MGSolidFraming.framing`): the still's effective
+    /// camera, the same one `marty-solid render`, the check report, the story and the SwiftUI pane use (subject first,
+    /// the unblocked-focus rule and the main-rule fallback included). A SwiftUI or `SCNView` host that shows step `i` calls `frame(MGSolidShot.step(document, i)!, document:
     /// document, aspect:)`; it passes `titleBand: 0, captionBand: 0` when it draws no title or caption over the view.
     public func frame(_ shot: MGSolidShot, document: MGSolidDocument, aspect: Double, fieldOfView: Double = 30,
                       titleBand: Double? = nil, captionBand: Double? = nil) {
@@ -439,7 +439,13 @@ public final class MGSolidRenderer {
 
     /// Renders the current pose and camera to an sRGB image of `width` x `height` pixels, composited over the studio
     /// backdrop. Returns nil when no Metal device is available.
-    public func render(width: Int, height: Int) -> CGImage? {
+    public func render(width: Int, height: Int) -> CGImage? { render(width: width, height: height, clip: nil) }
+
+    /// `render(width:height:)` with the model clipped to `clip`, a safe window in normalised device coordinates
+    /// (`MGSolidFraming.Window`): outside it only the studio backdrop is drawn, so no geometry (or its shadow) sits under
+    /// a title or caption band. Context that a subject framing cuts ends at the window's edge (docs/SOLID-3D.md,
+    /// "Subject first"). Nil `clip`, or a window that is the whole view, draws everything.
+    public func render(width: Int, height: Int, clip: MGSolidFraming.Window?) -> CGImage? {
         #if canImport(Metal)
         if renderer == nil {
             guard let device = MTLCreateSystemDefaultDevice() else { return nil }
@@ -460,7 +466,7 @@ public final class MGSolidRenderer {
         #else
         guard let raw = snapshot.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
         #endif
-        return MGSolidRenderer.composite(raw, width: width, height: height, background: lighting.background)
+        return MGSolidRenderer.composite(raw, width: width, height: height, background: lighting.background, clip: clip)
         #else
         return nil
         #endif
@@ -698,7 +704,7 @@ public final class MGSolidRenderer {
     }
 
     /// Downsamples the supersampled render and composites it over a soft radial studio backdrop.
-    static func composite(_ img: CGImage, width: Int, height: Int, background bg: [Double]) -> CGImage? {
+    static func composite(_ img: CGImage, width: Int, height: Int, background bg: [Double], clip: MGSolidFraming.Window? = nil) -> CGImage? {
         guard let space = CGColorSpace(name: CGColorSpace.sRGB),
               let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: space,
                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
@@ -712,8 +718,17 @@ public final class MGSolidRenderer {
                                    options: [.drawsAfterEndLocation])
         }
         ctx.interpolationQuality = .high
+        if let r = MGSolidRenderer.clipRect(clip, width: width, height: height) { ctx.clip(to: r) }
         ctx.draw(img, in: rect)
         return ctx.makeImage()
+    }
+
+    /// The pixel rectangle (Core Graphics coordinates, origin at the bottom left) of a safe window in a `width` ×
+    /// `height` image; nil for no window or the whole view.
+    public static func clipRect(_ w: MGSolidFraming.Window?, width: Int, height: Int) -> CGRect? {
+        guard let w = w?.usable, w != MGSolidFraming.Window(left: -1, right: 1, bottom: -1, top: 1) else { return nil }
+        let W = Double(width), H = Double(height)
+        return CGRect(x: (w.left + 1) / 2 * W, y: (w.bottom + 1) / 2 * H, width: (w.right - w.left) / 2 * W, height: (w.top - w.bottom) / 2 * H)
     }
 
     // MARK: Conversions

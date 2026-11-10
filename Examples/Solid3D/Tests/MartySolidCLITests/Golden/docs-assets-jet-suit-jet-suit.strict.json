@@ -2210,11 +2210,1912 @@
       "step" : 7
     }
   ],
+  "stillPlacements" : [
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.56712833419589781,
+            0.40095801281039678
+          ],
+          "box" : [
+            0.56056684578642924,
+            0.43243649295301578,
+            0.30299999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 10,
+          "id" : "lVersion",
+          "kind" : "label",
+          "leader" : [
+            0.56712833419589781,
+            0.43243649295301578
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Classic suit, as described 2020–2022"
+        },
+        {
+          "anchor" : [
+            0.42547607748118638,
+            0.45081212597896708
+          ],
+          "box" : [
+            0.181239476797461,
+            0.41897464651171346,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lArms",
+          "kind" : "label",
+          "leader" : [
+            0.41083322679746104,
+            0.45081212597896708
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Two engines on each forearm"
+        },
+        {
+          "anchor" : [
+            0.54462372826035688,
+            0.33839478776799564
+          ],
+          "box" : [
+            0.34049792615110425,
+            0.30663243119091477,
+            0.18881249999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 6,
+          "id" : "lBack",
+          "kind" : "label",
+          "leader" : [
+            0.52931042615110424,
+            0.33839478776799564
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "One engine on the back"
+        },
+        {
+          "anchor" : [
+            0.52932247539115451,
+            0.22955794278853681
+          ],
+          "box" : [
+            0.52634386755178697,
+            0.17672977800249595,
+            0.13171875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lPilot",
+          "kind" : "label",
+          "leader" : [
+            0.52932247539115451,
+            0.21597977800249596
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Schematic pilot"
+        }
+      ],
+      "step" : 1
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.47183385623644936,
+            0.2391366371347215
+          ],
+          "box" : [
+            0.47689358711229141,
+            0.25424482979752705,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "aTB",
+          "kind" : "arrow",
+          "leader" : [
+            0.47689358711229141,
+            0.25424482979752705
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Thrust"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.5,
+            0.34948969212022668
+          ],
+          "box" : [
+            0.23534375000000002,
+            0.31523969212022668,
+            0.24590624999999999,
+            0.068500000000000005
+          ],
+          "callout" : null,
+          "candidate" : 6,
+          "id" : "lBackShare",
+          "kind" : "label",
+          "leader" : [
+            0.48125000000000001,
+            0.34948969212022668
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Back: equipment + about ⅓ pilot weight (Browning, 2021)"
+        },
+        {
+          "anchor" : [
+            0.61205444351907667,
+            0.40730023735619048
+          ],
+          "box" : [
+            0.62796750408426094,
+            0.35144851679947692,
+            0.3193125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 8,
+          "id" : "lArmShare",
+          "kind" : "label",
+          "leader" : [
+            0.62796750408426094,
+            0.39069851679947687
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Arms: about two thirds of pilot weight"
+        },
+        {
+          "anchor" : [
+            0.5,
+            0.53576937536859859
+          ],
+          "box" : [
+            0.28380942923920138,
+            0.48105420135221616,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "aWeight",
+          "kind" : "arrow",
+          "leader" : [
+            0.5,
+            0.52030420135221611
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight: pilot, suit and fuel"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.42549649217480201,
+            0.17959999999999993
+          ],
+          "box" : [
+            0.11180096040741934,
+            0.17505815123966453,
+            0.30299999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 6,
+          "id" : "lFigs",
+          "kind" : "label",
+          "leader" : [
+            0.41480096040741932,
+            0.17959999999999993
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Reported suit figures (not computed)"
+        },
+        {
+          "anchor" : [
+            0.42669901380257541,
+            0.24141611724037346
+          ],
+          "box" : [
+            0.13173980807093255,
+            0.23934378680278176,
+            0.28668749999999998,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 6,
+          "id" : "l144",
+          "kind" : "label",
+          "leader" : [
+            0.41842730807093254,
+            0.24141611724037346
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "About 144 kgf (317 lbf), AOPA 2020"
+        },
+        {
+          "anchor" : [
+            0.4278633334991232,
+            0.30126844854550122
+          ],
+          "box" : [
+            0.43624770218669517,
+            0.29869471525456215,
+            0.30299999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "l155",
+          "kind" : "label",
+          "leader" : [
+            0.43624770218669517,
+            0.30126844854550122
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "~155 kgf, earlier rig, Browning 2017"
+        },
+        {
+          "anchor" : [
+            0.57062292711365181,
+            0.23026912187636264
+          ],
+          "box" : [
+            0.57877601545266821,
+            0.19002667249264044,
+            0.19696874999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lBhp",
+          "kind" : "label",
+          "leader" : [
+            0.57877601545266821,
+            0.22927667249264044
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Claimed about 1,050 bhp"
+        },
+        {
+          "anchor" : [
+            0.56951792464771922,
+            0.28940064226491952
+          ],
+          "box" : [
+            0.57630868805801172,
+            0.25229404209045164,
+            0.33562499999999995,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lRecord",
+          "kind" : "label",
+          "leader" : [
+            0.57630868805801172,
+            0.28940064226491952
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Record 136.891 km\/h, Guinness 2019-11-14"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.52108239430600345,
+            0.32733436676796662
+          ],
+          "box" : [
+            0.4930644350849841,
+            0.21617130820677324,
+            0.26221875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 17,
+          "id" : "lSteer",
+          "kind" : "label",
+          "leader" : [
+            0.52108239430600345,
+            0.25542130820677328
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Moving the arms aims the thrust"
+        },
+        {
+          "anchor" : [
+            0.60797709113659848,
+            0.47124781652071623
+          ],
+          "box" : [
+            0.34134383730789736,
+            0.4861947429888277,
+            0.29484374999999996,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "aJetBack",
+          "kind" : "arrow",
+          "leader" : [
+            0.60797709113659848,
+            0.4861947429888277
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Exhaust aimed back (schematic pose)"
+        },
+        {
+          "anchor" : [
+            0.40705532492050311,
+            0.27253523002294705
+          ],
+          "box" : [
+            0.19782654900173086,
+            0.21782005600656465,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "aForward",
+          "kind" : "arrow",
+          "leader" : [
+            0.40705532492050311,
+            0.25707005600656463
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Forward component of thrust"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.43095107078900974,
+            0.25821281269060314
+          ],
+          "box" : [
+            0.17723036545086421,
+            0.24874794311807333,
+            0.22143750000000001,
+            0.068500000000000005
+          ],
+          "callout" : null,
+          "candidate" : 14,
+          "id" : "lJetcat",
+          "kind" : "label",
+          "leader" : [
+            0.39866786545086424,
+            0.25821281269060314
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "JetCat-style example, not confirmed Gravity hardware"
+        },
+        {
+          "anchor" : [
+            0.50000972061380722,
+            0.25464755809135742
+          ],
+          "box" : [
+            0.55505194140048619,
+            0.22116927713419154,
+            0.18881249999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 18,
+          "id" : "lComp",
+          "kind" : "label",
+          "leader" : [
+            0.55505194140048619,
+            0.25464755809135742
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Centrifugal compressor"
+        },
+        {
+          "anchor" : [
+            0.48628296621479594,
+            0.50025069380861309
+          ],
+          "box" : [
+            0.27724565300002957,
+            0.50513334935950926,
+            0.15618749999999998,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 22,
+          "id" : "lComb",
+          "kind" : "label",
+          "leader" : [
+            0.4334331530000296,
+            0.50513334935950926
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Combustion chamber"
+        },
+        {
+          "anchor" : [
+            0.50000895079771224,
+            0.60599368115478514
+          ],
+          "box" : [
+            0.48723482976779697,
+            0.69308967198480143,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 20,
+          "id" : "lTurb",
+          "kind" : "label",
+          "leader" : [
+            0.50000895079771224,
+            0.69308967198480143
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Turbine"
+        }
+      ],
+      "step" : 6
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.45703716321164994,
+            0.22850902363565434
+          ],
+          "box" : [
+            0.20262192896735637,
+            0.21736288835237677,
+            0.22143750000000001,
+            0.068500000000000005
+          ],
+          "callout" : null,
+          "candidate" : 14,
+          "id" : "lJetcat",
+          "kind" : "label",
+          "leader" : [
+            0.42405942896735632,
+            0.22850902363565434
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "JetCat-style example, not confirmed Gravity hardware"
+        },
+        {
+          "anchor" : [
+            0.50000189374389037,
+            0.34390443962689204
+          ],
+          "box" : [
+            0.55367695366289349,
+            0.30690280663718428,
+            0.29484374999999996,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 18,
+          "id" : "lRpm",
+          "kind" : "label",
+          "leader" : [
+            0.55367695366289349,
+            0.34390443962689204
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Shaft: about 120,000 rpm (reported)"
+        },
+        {
+          "anchor" : [
+            0.50000181574712033,
+            0.52295295031185873
+          ],
+          "box" : [
+            0.32219511134085221,
+            0.5725712126186715,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 13,
+          "id" : "lNozzle",
+          "kind" : "label",
+          "leader" : [
+            0.50000181574712033,
+            0.5725712126186715
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Nozzle: the gas speeds up"
+        },
+        {
+          "anchor" : [
+            0.50000175782802825,
+            0.65591136864563215
+          ],
+          "box" : [
+            0.40216166572187512,
+            0.67137651820454269,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "aJetOut",
+          "kind" : "arrow",
+          "leader" : [
+            0.50000175782802825,
+            0.67137651820454269
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Hot gas out"
+        }
+      ],
+      "step" : 7
+    }
+  ],
   "strict" : true,
+  "subjectFloors" : [
+    {
+      "annotate" : {
+        "keep" : [
+          "lArms",
+          "lBack",
+          "lPilot"
+        ],
+        "move" : [
+          "lVersion"
+        ]
+      },
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.88,
+      "ghost" : [
+        "pilot.legL",
+        "pilot.legR",
+        "pilot.lowerArmL",
+        "pilot.lowerArmR",
+        "pilot.upperArmR",
+        "pack"
+      ],
+      "groups" : [
+        {
+          "extent" : 0,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "pilot.skull"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "pilot.skull"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
+            "pilot.footL"
+          ],
+          "pixels" : 1072,
+          "small" : true,
+          "unit" : "pilot.footL"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+            "pilot.legL",
+            "pilot.legR"
+          ],
+          "parts" : [
+            "pilot.footR"
+          ],
+          "pixels" : 672,
+          "small" : true,
+          "unit" : "pilot.footR"
+        },
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "helmet"
+          ],
+          "pixels" : 3712,
+          "small" : false,
+          "unit" : "helmet"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.intakeLip",
+            "back.impeller",
+            "back.diffuser",
+            "back.combustor",
+            "back.nozzleGuideVanes",
+            "back.turbineWheel",
+            "back.nozzle",
+            "back.shaft",
+            "back.frontBearing",
+            "back.rearBearing"
+          ],
+          "pixels" : 640,
+          "small" : true,
+          "unit" : "back"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 2144,
+          "small" : true,
+          "unit" : "back.casing"
+        },
+        {
+          "extent" : 44,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "armL1.intakeLip",
+            "armL1.impeller",
+            "armL1.diffuser",
+            "armL1.combustor",
+            "armL1.nozzleGuideVanes",
+            "armL1.turbineWheel",
+            "armL1.nozzle",
+            "armL1.shaft",
+            "armL1.frontBearing",
+            "armL1.rearBearing"
+          ],
+          "pixels" : 304,
+          "small" : true,
+          "unit" : "armL1"
+        },
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "armL1.casing"
+          ],
+          "pixels" : 944,
+          "small" : true,
+          "unit" : "armL1.casing"
+        },
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
+            "armL2.intakeLip",
+            "armL2.impeller",
+            "armL2.diffuser",
+            "armL2.combustor",
+            "armL2.nozzleGuideVanes",
+            "armL2.turbineWheel",
+            "armL2.nozzle",
+            "armL2.shaft",
+            "armL2.frontBearing",
+            "armL2.rearBearing",
+            "armL2.casing"
+          ],
+          "pixels" : 704,
+          "small" : true,
+          "unit" : "armL2"
+        },
+        {
+          "extent" : 20,
+          "hiddenBy" : [
+            "pilot.lowerArmR",
+            "pilot.upperArmR"
+          ],
+          "parts" : [
+            "armR1.intakeLip",
+            "armR1.impeller",
+            "armR1.diffuser",
+            "armR1.combustor",
+            "armR1.nozzleGuideVanes",
+            "armR1.turbineWheel",
+            "armR1.nozzle",
+            "armR1.shaft",
+            "armR1.frontBearing",
+            "armR1.rearBearing",
+            "armR1.casing"
+          ],
+          "pixels" : 496,
+          "small" : true,
+          "unit" : "armR1"
+        },
+        {
+          "extent" : 4,
+          "hiddenBy" : [
+            "pack"
+          ],
+          "parts" : [
+            "armR2.intakeLip",
+            "armR2.impeller",
+            "armR2.diffuser",
+            "armR2.combustor",
+            "armR2.nozzleGuideVanes",
+            "armR2.turbineWheel",
+            "armR2.nozzle",
+            "armR2.shaft",
+            "armR2.frontBearing",
+            "armR2.rearBearing",
+            "armR2.casing"
+          ],
+          "pixels" : 96,
+          "small" : true,
+          "unit" : "armR2"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 1: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 1072 px, shorter side 36 px; pilot.footR shows 672 px, shorter side 32 px; back shows 640 px, shorter side 36 px; back.casing sho…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "pilot.skull"
+        ],
+        [
+          "pilot.footL"
+        ],
+        [
+          "pilot.footR"
+        ],
+        [
+          "helmet"
+        ],
+        [
+          "back.intakeLip",
+          "back.impeller",
+          "back.diffuser",
+          "back.combustor",
+          "back.nozzleGuideVanes",
+          "back.turbineWheel",
+          "back.nozzle",
+          "back.shaft",
+          "back.frontBearing",
+          "back.rearBearing"
+        ],
+        [
+          "back.casing"
+        ],
+        [
+          "armL1.intakeLip",
+          "armL1.impeller",
+          "armL1.diffuser",
+          "armL1.combustor",
+          "armL1.nozzleGuideVanes",
+          "armL1.turbineWheel",
+          "armL1.nozzle",
+          "armL1.shaft",
+          "armL1.frontBearing",
+          "armL1.rearBearing"
+        ],
+        [
+          "armL1.casing"
+        ],
+        [
+          "armL2"
+        ],
+        [
+          "armR1"
+        ],
+        [
+          "armR2"
+        ]
+      ],
+      "step" : 1,
+      "subset" : [
+        "pilot.skull"
+      ]
+    },
+    {
+      "annotate" : null,
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.874,
+      "ghost" : [
+        "pilot.legL",
+        "pilot.legR",
+        "pilot.lowerArmL",
+        "pilot.lowerArmR"
+      ],
+      "groups" : [
+        {
+          "extent" : 0,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "pilot.skull"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "pilot.skull"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
+            "pilot.footL"
+          ],
+          "pixels" : 640,
+          "small" : true,
+          "unit" : "pilot.footL"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "pilot.legR"
+          ],
+          "parts" : [
+            "pilot.footR"
+          ],
+          "pixels" : 688,
+          "small" : true,
+          "unit" : "pilot.footR"
+        },
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "helmet"
+          ],
+          "pixels" : 3696,
+          "small" : false,
+          "unit" : "helmet"
+        },
+        {
+          "extent" : 12,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.intakeLip"
+          ],
+          "pixels" : 336,
+          "small" : true,
+          "unit" : "back.intakeLip"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.impeller",
+            "back.diffuser",
+            "back.combustor",
+            "back.nozzleGuideVanes",
+            "back.turbineWheel",
+            "back.nozzle",
+            "back.shaft",
+            "back.frontBearing",
+            "back.rearBearing",
+            "back.casing"
+          ],
+          "pixels" : 2416,
+          "small" : true,
+          "unit" : "back"
+        },
+        {
+          "extent" : 16,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
+            "armL1.intakeLip"
+          ],
+          "pixels" : 160,
+          "small" : true,
+          "unit" : "armL1.intakeLip"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
+            "armL1.impeller",
+            "armL1.diffuser",
+            "armL1.combustor",
+            "armL1.nozzleGuideVanes",
+            "armL1.turbineWheel",
+            "armL1.nozzle",
+            "armL1.shaft",
+            "armL1.frontBearing",
+            "armL1.rearBearing",
+            "armL1.casing"
+          ],
+          "pixels" : 688,
+          "small" : true,
+          "unit" : "armL1"
+        },
+        {
+          "extent" : 16,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
+            "armL2.intakeLip"
+          ],
+          "pixels" : 160,
+          "small" : true,
+          "unit" : "armL2.intakeLip"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
+            "armL2.impeller",
+            "armL2.diffuser",
+            "armL2.combustor",
+            "armL2.nozzleGuideVanes",
+            "armL2.turbineWheel",
+            "armL2.nozzle",
+            "armL2.shaft",
+            "armL2.frontBearing",
+            "armL2.rearBearing",
+            "armL2.casing"
+          ],
+          "pixels" : 768,
+          "small" : true,
+          "unit" : "armL2"
+        },
+        {
+          "extent" : 12,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "armR1.intakeLip"
+          ],
+          "pixels" : 176,
+          "small" : true,
+          "unit" : "armR1.intakeLip"
+        },
+        {
+          "extent" : 44,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "armR1.impeller",
+            "armR1.diffuser",
+            "armR1.combustor",
+            "armR1.nozzleGuideVanes",
+            "armR1.turbineWheel",
+            "armR1.nozzle",
+            "armR1.shaft",
+            "armR1.frontBearing",
+            "armR1.rearBearing",
+            "armR1.casing"
+          ],
+          "pixels" : 1008,
+          "small" : true,
+          "unit" : "armR1"
+        },
+        {
+          "extent" : 16,
+          "hiddenBy" : [
+            "pilot.lowerArmR"
+          ],
+          "parts" : [
+            "armR2.intakeLip"
+          ],
+          "pixels" : 112,
+          "small" : true,
+          "unit" : "armR2.intakeLip"
+        },
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+            "pilot.lowerArmR"
+          ],
+          "parts" : [
+            "armR2.impeller",
+            "armR2.diffuser",
+            "armR2.combustor",
+            "armR2.nozzleGuideVanes",
+            "armR2.turbineWheel",
+            "armR2.nozzle",
+            "armR2.shaft",
+            "armR2.frontBearing",
+            "armR2.rearBearing",
+            "armR2.casing"
+          ],
+          "pixels" : 784,
+          "small" : true,
+          "unit" : "armR2"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 2: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 640 px, shorter side 32 px; pilot.footR shows 688 px, shorter side 36 px; back.intakeLip shows 336 px, shorter side 12 px; back s…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "pilot.skull"
+        ],
+        [
+          "pilot.footL"
+        ],
+        [
+          "pilot.footR"
+        ],
+        [
+          "helmet"
+        ],
+        [
+          "back.intakeLip"
+        ],
+        [
+          "back.impeller",
+          "back.diffuser",
+          "back.combustor",
+          "back.nozzleGuideVanes",
+          "back.turbineWheel",
+          "back.nozzle",
+          "back.shaft",
+          "back.frontBearing",
+          "back.rearBearing",
+          "back.casing"
+        ],
+        [
+          "armL1.intakeLip"
+        ],
+        [
+          "armL1.impeller",
+          "armL1.diffuser",
+          "armL1.combustor",
+          "armL1.nozzleGuideVanes",
+          "armL1.turbineWheel",
+          "armL1.nozzle",
+          "armL1.shaft",
+          "armL1.frontBearing",
+          "armL1.rearBearing",
+          "armL1.casing"
+        ],
+        [
+          "armL2.intakeLip"
+        ],
+        [
+          "armL2.impeller",
+          "armL2.diffuser",
+          "armL2.combustor",
+          "armL2.nozzleGuideVanes",
+          "armL2.turbineWheel",
+          "armL2.nozzle",
+          "armL2.shaft",
+          "armL2.frontBearing",
+          "armL2.rearBearing",
+          "armL2.casing"
+        ],
+        [
+          "armR1.intakeLip"
+        ],
+        [
+          "armR1.impeller",
+          "armR1.diffuser",
+          "armR1.combustor",
+          "armR1.nozzleGuideVanes",
+          "armR1.turbineWheel",
+          "armR1.nozzle",
+          "armR1.shaft",
+          "armR1.frontBearing",
+          "armR1.rearBearing",
+          "armR1.casing"
+        ],
+        [
+          "armR2.intakeLip"
+        ],
+        [
+          "armR2.impeller",
+          "armR2.diffuser",
+          "armR2.combustor",
+          "armR2.nozzleGuideVanes",
+          "armR2.turbineWheel",
+          "armR2.nozzle",
+          "armR2.shaft",
+          "armR2.frontBearing",
+          "armR2.rearBearing",
+          "armR2.casing"
+        ]
+      ],
+      "step" : 2,
+      "subset" : [
+        "pilot.skull"
+      ]
+    },
+    {
+      "annotate" : {
+        "keep" : [
+          "lBackShare",
+          "lArmShare"
+        ],
+        "move" : [
+          "aWeight"
+        ]
+      },
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.88,
+      "ghost" : [
+        "pilot.legL",
+        "pilot.legR",
+        "pilot.lowerArmL",
+        "pilot.lowerArmR"
+      ],
+      "groups" : [
+        {
+          "extent" : 0,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "pilot.skull"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "pilot.skull"
+        },
+        {
+          "extent" : 24,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
+            "pilot.footL"
+          ],
+          "pixels" : 432,
+          "small" : true,
+          "unit" : "pilot.footL"
+        },
+        {
+          "extent" : 24,
+          "hiddenBy" : [
+            "pilot.legR"
+          ],
+          "parts" : [
+            "pilot.footR"
+          ],
+          "pixels" : 432,
+          "small" : true,
+          "unit" : "pilot.footR"
+        },
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "helmet"
+          ],
+          "pixels" : 3936,
+          "small" : false,
+          "unit" : "helmet"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.intakeLip",
+            "back.impeller",
+            "back.diffuser",
+            "back.combustor",
+            "back.nozzleGuideVanes",
+            "back.turbineWheel",
+            "back.nozzle",
+            "back.shaft",
+            "back.frontBearing",
+            "back.rearBearing"
+          ],
+          "pixels" : 736,
+          "small" : true,
+          "unit" : "back"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 2112,
+          "small" : true,
+          "unit" : "back.casing"
+        },
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
+            "armL1.intakeLip",
+            "armL1.impeller",
+            "armL1.diffuser",
+            "armL1.combustor",
+            "armL1.nozzleGuideVanes",
+            "armL1.turbineWheel",
+            "armL1.nozzle",
+            "armL1.shaft",
+            "armL1.frontBearing",
+            "armL1.rearBearing",
+            "armL1.casing"
+          ],
+          "pixels" : 1056,
+          "small" : true,
+          "unit" : "armL1"
+        },
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+            "pilot.lowerArmR"
+          ],
+          "parts" : [
+            "armR1.intakeLip",
+            "armR1.impeller",
+            "armR1.diffuser",
+            "armR1.combustor",
+            "armR1.nozzleGuideVanes",
+            "armR1.turbineWheel",
+            "armR1.nozzle",
+            "armR1.shaft",
+            "armR1.frontBearing",
+            "armR1.rearBearing"
+          ],
+          "pixels" : 256,
+          "small" : true,
+          "unit" : "armR1"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "pilot.lowerArmR"
+          ],
+          "parts" : [
+            "armR1.casing"
+          ],
+          "pixels" : 800,
+          "small" : true,
+          "unit" : "armR1.casing"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 3: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 432 px, shorter side 24 px; pilot.footR shows 432 px, shorter side 24 px; back shows 736 px, shorter side 32 px; back.casing show…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "pilot.skull"
+        ],
+        [
+          "pilot.footL"
+        ],
+        [
+          "pilot.footR"
+        ],
+        [
+          "helmet"
+        ],
+        [
+          "back.intakeLip",
+          "back.impeller",
+          "back.diffuser",
+          "back.combustor",
+          "back.nozzleGuideVanes",
+          "back.turbineWheel",
+          "back.nozzle",
+          "back.shaft",
+          "back.frontBearing",
+          "back.rearBearing"
+        ],
+        [
+          "back.casing"
+        ],
+        [
+          "armL1"
+        ],
+        [
+          "armR1.intakeLip",
+          "armR1.impeller",
+          "armR1.diffuser",
+          "armR1.combustor",
+          "armR1.nozzleGuideVanes",
+          "armR1.turbineWheel",
+          "armR1.nozzle",
+          "armR1.shaft",
+          "armR1.frontBearing",
+          "armR1.rearBearing"
+        ],
+        [
+          "armR1.casing"
+        ]
+      ],
+      "step" : 3,
+      "subset" : [
+        "pilot.skull"
+      ]
+    },
+    {
+      "annotate" : {
+        "keep" : [
+          "aJetBack"
+        ],
+        "move" : [
+          "lSteer",
+          "aForward"
+        ]
+      },
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.88,
+      "ghost" : [
+        "visor",
+        "pilot.legL",
+        "pilot.body",
+        "pilot.lowerArmL",
+        "pilot.upperArmL",
+        "back",
+        "pilot.handL",
+        "pilot.handR"
+      ],
+      "groups" : [
+        {
+          "extent" : 0,
+          "hiddenBy" : [
+            "visor"
+          ],
+          "parts" : [
+            "pilot.skull"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "pilot.skull"
+        },
+        {
+          "extent" : 24,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
+            "pilot.footL"
+          ],
+          "pixels" : 1312,
+          "small" : true,
+          "unit" : "pilot.footL"
+        },
+        {
+          "extent" : 16,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
+            "pilot.footR"
+          ],
+          "pixels" : 528,
+          "small" : true,
+          "unit" : "pilot.footR"
+        },
+        {
+          "extent" : 56,
+          "hiddenBy" : [
+            "visor",
+            "pilot.body"
+          ],
+          "parts" : [
+            "helmet"
+          ],
+          "pixels" : 2752,
+          "small" : true,
+          "unit" : "helmet"
+        },
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "armL1.intakeLip",
+            "armL1.impeller",
+            "armL1.diffuser",
+            "armL1.combustor",
+            "armL1.nozzleGuideVanes",
+            "armL1.turbineWheel",
+            "armL1.shaft",
+            "armL1.frontBearing",
+            "armL1.rearBearing",
+            "armL1.casing"
+          ],
+          "pixels" : 832,
+          "small" : true,
+          "unit" : "armL1"
+        },
+        {
+          "extent" : 20,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "armL1.nozzle"
+          ],
+          "pixels" : 272,
+          "small" : true,
+          "unit" : "armL1.nozzle"
+        },
+        {
+          "extent" : 0,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
+            "armL2.intakeLip",
+            "armL2.impeller",
+            "armL2.diffuser",
+            "armL2.combustor",
+            "armL2.nozzleGuideVanes",
+            "armL2.turbineWheel",
+            "armL2.nozzle",
+            "armL2.shaft",
+            "armL2.frontBearing",
+            "armL2.rearBearing",
+            "armL2.casing"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "armL2"
+        },
+        {
+          "extent" : 0,
+          "hiddenBy" : [
+            "pilot.upperArmL",
+            "pilot.lowerArmL",
+            "back"
+          ],
+          "parts" : [
+            "armR1.intakeLip",
+            "armR1.impeller",
+            "armR1.diffuser",
+            "armR1.combustor",
+            "armR1.nozzleGuideVanes",
+            "armR1.turbineWheel",
+            "armR1.nozzle",
+            "armR1.shaft",
+            "armR1.frontBearing",
+            "armR1.rearBearing",
+            "armR1.casing"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "armR1"
+        },
+        {
+          "extent" : 12,
+          "hiddenBy" : [
+            "pilot.lowerArmL",
+            "back"
+          ],
+          "parts" : [
+            "armR2.intakeLip",
+            "armR2.impeller",
+            "armR2.diffuser",
+            "armR2.combustor",
+            "armR2.nozzleGuideVanes",
+            "armR2.turbineWheel",
+            "armR2.nozzle",
+            "armR2.shaft",
+            "armR2.frontBearing",
+            "armR2.rearBearing",
+            "armR2.casing"
+          ],
+          "pixels" : 48,
+          "small" : true,
+          "unit" : "armR2"
+        },
+        {
+          "extent" : 0,
+          "hiddenBy" : [
+            "pilot.handL",
+            "pilot.lowerArmL",
+            "pilot.handR"
+          ],
+          "parts" : [
+            "plumeArmL1"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "plumeArmL1"
+        },
+        {
+          "extent" : 0,
+          "hiddenBy" : [
+            "pilot.handL",
+            "pilot.lowerArmL",
+            "pilot.handR"
+          ],
+          "parts" : [
+            "plumeArmR1"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "plumeArmR1"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 5: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 1312 px, shorter side 24 px; pilot.footR shows 528 px, shorter side 16 px; helmet shows 2752 px, shorter side 56 px; armL1 shows …Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "pilot.skull"
+        ],
+        [
+          "pilot.footL"
+        ],
+        [
+          "pilot.footR"
+        ],
+        [
+          "helmet"
+        ],
+        [
+          "armL1.intakeLip",
+          "armL1.impeller",
+          "armL1.diffuser",
+          "armL1.combustor",
+          "armL1.nozzleGuideVanes",
+          "armL1.turbineWheel",
+          "armL1.shaft",
+          "armL1.frontBearing",
+          "armL1.rearBearing",
+          "armL1.casing"
+        ],
+        [
+          "armL1.nozzle"
+        ],
+        [
+          "armL2"
+        ],
+        [
+          "armR1"
+        ],
+        [
+          "armR2"
+        ],
+        [
+          "plumeArmL1"
+        ],
+        [
+          "plumeArmR1"
+        ]
+      ],
+      "step" : 5,
+      "subset" : [
+        "pilot.skull"
+      ]
+    },
+    {
+      "annotate" : null,
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.88,
+      "ghost" : [
+        "back.nozzleGuideVanes",
+        "back.shaft"
+      ],
+      "groups" : [
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.impeller"
+          ],
+          "pixels" : 4576,
+          "small" : false,
+          "unit" : "back.impeller"
+        },
+        {
+          "extent" : 56,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.combustor"
+          ],
+          "pixels" : 5520,
+          "small" : false,
+          "unit" : "back.combustor"
+        },
+        {
+          "extent" : 60,
+          "hiddenBy" : [
+            "back.nozzleGuideVanes",
+            "back.shaft"
+          ],
+          "parts" : [
+            "back.turbineWheel"
+          ],
+          "pixels" : 2048,
+          "small" : true,
+          "unit" : "back.turbineWheel"
+        },
+        {
+          "extent" : 108,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.nozzle"
+          ],
+          "pixels" : 4240,
+          "small" : false,
+          "unit" : "back.nozzle"
+        },
+        {
+          "extent" : 128,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 26032,
+          "small" : false,
+          "unit" : "back.casing"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 6: at the closest framing that keeps its subject whole, back.turbineWheel shows 2048 px, shorter side 60 px (minimum 3379 px and 24 px per group). Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "back.impeller"
+        ],
+        [
+          "back.combustor"
+        ],
+        [
+          "back.turbineWheel"
+        ],
+        [
+          "back.nozzle"
+        ],
+        [
+          "back.casing"
+        ]
+      ],
+      "step" : 6,
+      "subset" : [
+        "back.turbineWheel"
+      ]
+    },
+    {
+      "annotate" : {
+        "keep" : [
+          "lJetcat",
+          "lNozzle",
+          "aJetOut"
+        ],
+        "move" : [
+          "lRpm",
+          "aSpin"
+        ]
+      },
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.55600000000000005,
+      "ghost" : [
+        "back.intakeLip",
+        "back.diffuser",
+        "back.shaft",
+        "back.rearBearing",
+        "back.nozzleGuideVanes"
+      ],
+      "groups" : [
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "back.intakeLip",
+            "back.diffuser"
+          ],
+          "parts" : [
+            "back.impeller"
+          ],
+          "pixels" : 1664,
+          "small" : true,
+          "unit" : "back.impeller"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "back.shaft",
+            "back.diffuser",
+            "back.rearBearing"
+          ],
+          "parts" : [
+            "back.combustor"
+          ],
+          "pixels" : 2352,
+          "small" : true,
+          "unit" : "back.combustor"
+        },
+        {
+          "extent" : 28,
+          "hiddenBy" : [
+            "back.nozzleGuideVanes",
+            "back.shaft"
+          ],
+          "parts" : [
+            "back.turbineWheel"
+          ],
+          "pixels" : 800,
+          "small" : true,
+          "unit" : "back.turbineWheel"
+        },
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+            "back.nozzleGuideVanes"
+          ],
+          "parts" : [
+            "back.nozzle"
+          ],
+          "pixels" : 2208,
+          "small" : true,
+          "unit" : "back.nozzle"
+        },
+        {
+          "extent" : 80,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 10464,
+          "small" : false,
+          "unit" : "back.casing"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 7: at the closest framing that keeps its subject whole, back.impeller shows 1664 px, shorter side 36 px; back.combustor shows 2352 px, shorter side 36 px; back.turbineWheel shows 800 px, shorter side 28 px; back.nozzle shows 2208 px, shorter side…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "back.impeller"
+        ],
+        [
+          "back.combustor"
+        ],
+        [
+          "back.turbineWheel"
+        ],
+        [
+          "back.nozzle"
+        ],
+        [
+          "back.casing"
+        ]
+      ],
+      "step" : 7,
+      "subset" : [
+        "back.impeller"
+      ]
+    }
+  ],
   "title" : "How the classic five-engine Gravity jet suit flies (schematic)",
   "triangles" : 122738,
   "version" : 2,
   "warnings" : [
-
+    {
+      "part" : "pilot.skull",
+      "reason" : "framing.subject.small.step.1"
+    },
+    {
+      "part" : "pilot.skull",
+      "reason" : "framing.subject.small.step.2"
+    },
+    {
+      "part" : "pilot.skull",
+      "reason" : "framing.subject.small.step.3"
+    },
+    {
+      "part" : "pilot.skull",
+      "reason" : "framing.subject.small.step.5"
+    },
+    {
+      "part" : "back.turbineWheel",
+      "reason" : "framing.subject.small.step.6"
+    },
+    {
+      "part" : "back.impeller",
+      "reason" : "framing.subject.small.step.7"
+    }
   ]
 }

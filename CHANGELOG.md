@@ -2,6 +2,55 @@
 
 ## Unreleased
 
+- Engine fixes from the remaining failures recorded in a prompt-to-3D evaluation round (r2j): figures cut by the frame
+  or under the title band, wrist-ring engines too small to read, and full-width numbers.
+  - **Subject-first framing** (one rule for stills, story hold frames, `MGSolidRenderPlan`, the SwiftUI pane and the
+    check report: `MGSolidFraming.clearView`). A still's subject (`MGSolidFraming.subjectParts`) is its explicit
+    `focus`, or else its highlighted, section and annotated parts plus, in a posed step, every chain the pose moves (a
+    raised arm and its jet). The camera takes the closest framing that keeps the subject whole together with every
+    target the still draws (label anchors, pointer tips, arrow tails and heads), so no label is left "(off view)".
+    Context may be cut at the safe window's edges; the renderer clips the model to the safe window
+    (`MGSolidRenderer.render(width:height:clip:)`, used for every still and story frame), so nothing is drawn under the
+    title or caption band. The camera stays outside the box of every solid context part. A still that draws a label,
+    pointer or arrow keeps main's camera (`MGSolidFraming.mainRule`, manifest `"mainRule": true`) when the subject
+    camera would hide one that main's camera shows (any still: focus, inferred subject or whole model), so framing
+    alone never refuses a document accepted before (a test checks every shipped document; the published AI lesson
+    passes `check --strict`). `MGSolidFraming.camera`, `MGSolidFraming.framing` and `MGSolidRenderer.frame` return this
+    effective camera. The check reports add `stillPlacements`, the label placement at each still's effective camera
+    (`placements` keeps the legacy default camera). The whole-model rule keeps the
+    title band free. Causes found: at main a focus fit read only the focus and anchors (a head above a highlighted back
+    pack sat under the title band); PR #51's first fix widened the close-ups until nothing was cut, which shrank the
+    subjects; this replaces it.
+  - **`framing.subject.small.step.<n>`, `framing.subject.small.beat.<n>`** (new warnings, never refused): a subject
+    group misses a floor, on every still with a subject: a 25 % fill of the safe window (`subjectFill`), and per group
+    0.5 % of its pixels (`subjectAreaShare`) and a 24 px shorter side at 800 px high (`subjectExtentPixels`). A group
+    is an instance named by its instance id (less its explicitly named parts), or one named part: a part named
+    explicitly anywhere (focus, highlight, annotation target) is always measured alone, also beside its named
+    instance. The check reports add `subjectFloors` with the measure and exact repairs:
+    `split`, `subset`, `ghost` (the complete list, the view's own ghosts kept, also from the public API by default) and
+    `annotate` (the step's list without the far annotations that widen it).
+  - **Crops from triangles.** `MGSolidFraming.cutParts` tests every triangle in camera space against the five view
+    planes, so a face that spans the view with every vertex outside it, or crosses the near plane, counts. The render
+    manifest lists a step still's clipped parts as `clipped`. The coverage raster (`MGStillRaster`, quarter size, one
+    per still for the subject floors and the small units) clips triangles to the near plane instead of dropping them,
+    so a near occluder still hides what lies behind it.
+  - **Exact repairs.** Repair lines write ids as complete JSON strings (`MGExactRepair`) and never cut a JSON
+    fragment; when it does not fit the 400-scalar line, the line names the structured field that holds it.
+  - **`unit.small.<id>`** (new warning, never refused): a unit (component instance or plain part) that a shown label or
+    arrow rides on, or that a step or beat highlights, covers fewer than 0.05 % of a 1280 × 800 frame (512 px) in every
+    still that shows it, measured by a quarter-size depth raster of the solid parts (`MGSmallUnitRules`,
+    `MGSolidDocument.smallUnits`). The check reports add `smallUnits` with the most pixels, the still and the repair
+    (a focused view, a larger size, a closer camera). New `MGSolidDocument.framedStills()` and
+    `MGExplainerFrame.beatStills(_:)` give every still as the render tool frames it.
+  - **Unicode NFKC for rule N1 and declared names.** Text is put in NFKC form (one grapheme at a time, with a map
+    back) before it is split into tokens (`MGSolidFacts.typedNumberOffsets`), in captions, labels, titles, board
+    cells, `add` and `set`. A token matches a declared name when the NFKC forms are equal (exact, case-sensitive), so
+    full-width "Ｆ－３５" matches "F-35"; "㎏Mk4" and "kgMk4" get one answer. In other tokens, a character is a
+    number when its normalized form holds a digit or the original has a numeric value ("Ⅻ", "²", "½", Arabic-Indic
+    digits, "㋀"). A name whose original form holds a number character other than an ASCII digit ("Ⅻ2", "Mk²",
+    "Ａ３２０") is `names.number.<n>`; other names are kept in NFKC form ("Ｍａｃｈ２" is refused as "Mach2").
+    Captions are shown as written.
+
 - Engine fixes from four failures recorded in a prompt-to-3D evaluation round: pointers to a part centre, model names
   in text, force arrows that left their parts, and an empty board table.
   - **Pointers to a part centre end on the part's surface.** A pointer whose tip is `{"part", "point": "centre"}` (or

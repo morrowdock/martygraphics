@@ -602,6 +602,222 @@
     null,
     null
   ],
+  "stillPlacements" : [
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.37644127051160536,
+            0.5774632162290555
+          ],
+          "box" : [
+            0.18275575921785556,
+            0.53638676595646861,
+            0.139875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 23,
+          "id" : "lPinion",
+          "kind" : "label",
+          "leader" : [
+            0.32263075921785556,
+            0.57563676595646862
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pinion: 14 teeth"
+        }
+      ],
+      "step" : 1
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.38308909552203607,
+            0.58055791450901506
+          ],
+          "box" : [
+            0.16643782540732591,
+            0.58691011823026085,
+            0.16434374999999998,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 21,
+          "id" : "lWheel",
+          "kind" : "label",
+          "leader" : [
+            0.33078157540732589,
+            0.58691011823026085
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Drum gear: 42 teeth"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.31048954884828694,
+            0.49697112789803533
+          ],
+          "box" : [
+            0.31224831673197651,
+            0.44813618221256107,
+            0.139875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lPinion",
+          "kind" : "label",
+          "leader" : [
+            0.31224831673197651,
+            0.48738618221256103
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pinion: 14 teeth"
+        },
+        {
+          "anchor" : [
+            0.56862935283798854,
+            0.51850049879246418
+          ],
+          "box" : [
+            0.56520862648624104,
+            0.52991013137984566,
+            0.16434374999999998,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lWheel",
+          "kind" : "label",
+          "leader" : [
+            0.56862935283798854,
+            0.52991013137984566
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Drum gear: 42 teeth"
+        },
+        {
+          "anchor" : [
+            0.43168972729806188,
+            0.51850049879246418
+          ],
+          "box" : [
+            0.42804712542846463,
+            0.53396567280884666,
+            0.11540625,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "centres",
+          "kind" : "dimension",
+          "leader" : [
+            0.43168972729806188,
+            0.53396567280884666
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Centres 56 mm"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.50215808023702113,
+            0.64231016631103244
+          ],
+          "box" : [
+            0.43909227627149877,
+            0.65773933804546336,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "aWeight",
+          "kind" : "arrow",
+          "leader" : [
+            0.49740477627149876,
+            0.65773933804546336
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.50140186847329005,
+            0.36649412107169921
+          ],
+          "box" : [
+            0.5573121033013253,
+            0.35466079080738083,
+            0.15618749999999998,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 16,
+          "id" : "aLift",
+          "kind" : "arrow",
+          "leader" : [
+            0.5573121033013253,
+            0.36649412107169921
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Rope side moves up"
+        },
+        {
+          "anchor" : [
+            0.49967737425712028,
+            0.71770111137964843
+          ],
+          "box" : [
+            0.50440127016254921,
+            0.73316078229522519,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "aWeight",
+          "kind" : "arrow",
+          "leader" : [
+            0.50440127016254921,
+            0.73316078229522519
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 5
+    }
+  ],
   "strict" : false,
   "title" : "Hand winch: a gear pair lifts a weight",
   "triangles" : 17404,

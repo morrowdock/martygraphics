@@ -145,6 +145,9 @@ public enum MGSolidReasons {
         "annotation.arrow.untested.<id>": "An internal test budget; the report's `arrow` gives the view.",
         "story.beats": "The render tool's story plan, not a check report.",
         "story.frames": "The render tool's story plan, not a check report.",
+        "unit.small.<id>": "A pixel measure of the rendered stills, not a length, count or size of the document; the report's `smallUnits` gives the measure and the minimum.",
+        "framing.subject.small.step.<n>": "A pixel measure of the rendered still, not a length, count or size of the document; the report's `subjectFloors` gives the measure and the floors.",
+        "framing.subject.small.beat.<n>": "A pixel measure of the rendered still, not a length, count or size of the document; the report's `subjectFloors` gives the measure and the floors.",
     ]
 
     /// Warning prefixes that an explainer's strict check refuses (besides `MGSolidProfile.strictPrefixes`).
@@ -460,6 +463,15 @@ public enum MGSolidReasons {
         MGSolidReason(pattern: "annotation.arrow.dropped.<id>",
                       meaning: "A step or beat still does not draw a force or flow arrow that its view lists: the arrow's tail is on its part, and another part (outside that part's unit) hides the tail from the still's camera, so the part the arrow acts on is hidden there. The still and its story frames leave the arrow out (a snapshot, which has no camera, keeps it); it is not moved and not refused. The report's `arrowDrops` gives the view, the tail's part and the part in the way.",
                       formats: [.check, .explainer], kind: .warning, strict: false),
+        MGSolidReason(pattern: "framing.subject.small.step.<n>",
+                      meaning: "Step `<n>`'s still has a subject (its `focus`, or its highlighted, section and annotated parts), and at its effective camera (whatever its framing class) a subject group (an instance named by its id, or one named part) shows fewer visible pixels than 0.5 % of the safe window or a shorter side under 24 px at 800 px high, or the subject fills less than 25 % of the safe window, or a subject part is cut. The report's `subjectFloors` gives the measure and exact repairs: split the step (`split`), focus a subset (`subset`), set the complete `ghost` list (`ghost`) or move far annotations to their own view (`annotate`).",
+                      formats: [.check], kind: .warning, strict: false),
+        MGSolidReason(pattern: "framing.subject.small.beat.<n>",
+                      meaning: "Beat `<n>`'s still has a subject (its view's `focus`, or its highlighted, section and annotated parts), and at its effective camera a subject group shows fewer visible pixels than 0.5 % of the pane or a shorter side under 24 px at 800 px high, or the subject fills less than 25 % of the pane, or a subject part is cut. The report's `subjectFloors` gives the measure and exact repairs for the beat's `view`.",
+                      formats: [.explainer], kind: .warning, strict: false),
+        MGSolidReason(pattern: "unit.small.<id>",
+                      meaning: "A unit (a component instance, or a plain part) that a shown label or arrow rides on, or that a step or beat highlights, covers fewer than 0.05 % of a 1280 × 800 frame's pixels (512 px) in every still that shows it solid, measured on a quarter-size depth raster (`MGSmallUnitRules`). The report's `smallUnits` gives the most pixels, the still and the repair: a focused view, a larger size or a closer camera.",
+                      formats: [.check, .explainer], kind: .warning, strict: false),
         // Annotations (v2).
         r("annotations.object", [.assembly], "`annotations` is not an object (v2)."),
         r("labels.count", [.assembly], "`labels` is not an array of at most 32 labels."),
@@ -482,9 +494,9 @@ public enum MGSolidReasons {
         r("label.text.<id>", [.assembly], "A label's text is not \(text) of at most 240 characters, or of 1–60 characters after placeholders are filled."),
         r("label.unchecked.<id>", [.assembly], "A label's `unchecked` is not \(text) of at most 60 characters."),
         r("names.count", [.assembly, .explainer], "`names` is not an array of strings, or it has fewer than 1 or more than 24 entries (`MGSolidFacts.namesCount`)."),
-        r("names.text.<n>", [.assembly, .explainer], "Declared name `<n>` (1-based) is not 1–24 characters long (`MGSolidFacts.nameText`)."),
+        r("names.text.<n>", [.assembly, .explainer], "Declared name `<n>` (1-based) is not 1–24 characters long, as written or in Unicode NFKC form (`MGSolidFacts.nameText`)."),
         r("names.token.<n>", [.assembly, .explainer], "Declared name `<n>` is not one token (a run of letters, number characters and \"-\" with no space or punctuation), or it has no number character (it needs no declaration)."),
-        r("names.number.<n>", [.assembly, .explainer], "Declared name `<n>` is a number or a quantity: it does not start with a letter (\"2e3\", \"1e-3\", \"120N\", \"0x1F\", \"3D\"), a number literal that rule N1 finds covers all of it, or its leading letters are a unit or quantity word (\"Mach2\", \"USD120\", \"RPM120\"). A quantity is a claim, not a name."),
+        r("names.number.<n>", [.assembly, .explainer], "Declared name `<n>` is a number or a quantity: it does not start with a letter (\"2e3\", \"1e-3\", \"120N\", \"0x1F\", \"3D\"), a number literal that rule N1 finds covers all of it, or its leading letters are a unit or quantity word (\"Mach2\", \"USD120\", \"RPM120\"). A name whose original form has a number character other than an ASCII digit (\"Ⅻ2\", \"Mk²\", full-width \"Ａ３２０\") is refused too; the other rules read the name in Unicode NFKC form, so full-width \"Ｍａｃｈ２\" is \"Mach2\". A quantity is a claim, not a name."),
         r("text.number.label.<id>", [.assembly], "A label has a number character outside a placeholder and is not marked `unchecked` (rule N1)."),
         r("arrow.meaning.<id>", [.assembly], "An arrow's `meaning` is not force, flow, motion or pointer."),
         r("arrow.style.<id>", [.assembly], "A motion arrow's `style` is not line or turn."),

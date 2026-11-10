@@ -326,11 +326,38 @@ exception is a step marked `"unchecked": "<why>"` (1–60 characters): it may ty
 and it shows the "Not checked" chip. For units and formulas write "square mm" or mark the
 step `unchecked`. So "Its stroke is 36 mm." is refused; "Its stroke is
 {engine.piston.travel}." shows "Its stroke is 36 mm." with its numbers Solved.
+
+**Which characters are numbers.** N1 and the declared names read text in Unicode NFKC form
+(`MGSolidFacts.nfkc`: compatibility decomposition, then canonical composition), so a full-width or other
+compatibility form is its plain form. A character is a number when the character itself, or its NFKC form, holds a
+scalar of Numeric_Type Decimal, Digit or Numeric (`MGSolidFacts.isNumber`). Decision: every such character counts,
+because each one can state a quantity:
+
+| Counts as a number | Examples |
+| --- | --- |
+| Digits of every script | "2", full-width "２", Arabic-Indic "٢", Extended Arabic-Indic "۲", Devanagari "२", mathematical "𝟐" |
+| Superscripts, subscripts, fractions | "²", "₂", "½" |
+| Circled, parenthesized and other enclosed numbers | "②", "⑵" |
+| Roman and CJK numerals | "Ⅻ", "二" |
+| Compatibility symbols whose NFKC form holds a digit | "㋀" (NFKC "1月"), "㍘" (NFKC "0点") |
+
+Not numbers: letters of any script or width ("A", "Ａ", "π") and unit symbols whose NFKC form has no digit ("㎏" is
+"kg"). The caption, label or title is shown as written; NFKC changes only what the rules read.
 **Declared names.** A v2 document may list `names`: 1–24 strings (`MGSolidFacts.namesCount`), each one token of 1–24
 characters with at least one number character, such as `"names": ["Mk4", "A320", "F-35"]`. A token is a maximal run of
 letters (any script), number characters and the hyphen-minus "-"; every other character (a space, punctuation, an
-apostrophe, a brace) ends it, and a placeholder ends it too. A token of a caption, a label, an arrow or a dimension
-text, or the title, that **exactly** equals a declared name (whole token, case-sensitive) is not a typed number. Every
+apostrophe, a brace) ends it, and a placeholder ends it too. **The text is put in NFKC form before it is split into
+tokens** (`MGSolidFacts.typedNumberOffsets`: one grapheme at a time, with a map back to the original characters), so a
+full-width hyphen joins a token like "-". A token of a caption, a label, an arrow or a dimension text, the title, a
+board cell or an `add` or `set` string whose NFKC form **exactly** equals a declared name (whole token,
+case-sensitive) is not a typed number: "Ｆ－３５" matches "F-35", "Ａ３２０" matches "A320", "Ⅻ2" matches "XII2"
+(equal NFKC forms), and "ａ３２０" does not. "㎏Mk4" and "kgMk4" have one NFKC form ("kgMk4"), so both are refused
+with `names: ["Mk4"]`. In every other token, a character is a typed number when its normalized form holds a digit or
+the original character has a numeric value ("Ⅻ", "²", "½", Arabic-Indic digits). A declared name whose original form
+holds a number character other than an ASCII digit ("Ⅻ2", "Mk²", "A½", full-width "Ａ３２０") is `names.number.<n>`:
+the normalization would turn it into letters or ASCII digits, so names are declared in plain form and text may use
+any form. Each other name is then put in NFKC form, every rule below reads that form, and the list keeps it ("Ｍａｃｈ２"
+is "Mach2": refused, a quantity). Every
 other number character still counts, as before: "Mk 4", "mk4", "Mk4s", "Mk4.5" (the "5"), and "4 engines" in the same
 text are refused. There is no lexical exception: an undeclared "Mk4" is still `text.number.<where>`. A declared name is
 valid only when all of these hold; (a)–(c) fail with `names.number.<n>` (`MGSolidFacts.isQuantityName`), (d) with
@@ -346,9 +373,9 @@ valid only when all of these hold; (a)–(c) fail with `names.number.<n>` (`MGSo
 * (d) it holds at least one number character; a name with none needs no declaration and is refused as
   `names.token.<n>`, not accepted as a no-op.
 
-Other reasons: `names.count` (not an array of strings, or 0 or more than 24 entries), `names.text.<n>` (length),
-`names.token.<n>` (not one token, or (d)); `<n>` is 1-based. A name listed
-twice is kept once. The engine has no general number and unit parser: rule (b) reuses N1's own character scan, and (c) is a closed word
+Other reasons: `names.count` (not an array of strings, or 0 or more than 24 entries), `names.text.<n>` (length, as
+written or in NFKC form), `names.token.<n>` (not one token, or (d)); `<n>` is 1-based. A name listed
+twice (in either form) is kept once. The engine has no general number and unit parser: rule (b) reuses N1's own character scan, and (c) is a closed word
 list. An explainer
 lists `names` in its header ([EXPLAINER.md](EXPLAINER.md)); they also apply to its solid. Marty fills `names` from the
 names its research rows give.
@@ -1323,6 +1350,8 @@ checks frames.
 | `annotation.anchor.off.<id>` | A label's anchor or a pointer's tip lies off the part it names, or another part is nearer to it ([Anchor checks](#anchor-checks)). | refused |
 | `annotation.anchor.hidden.<id>` | The check report only: a step still shows a label or pointer whose anchor it does not show (occluded, hidden, ghosted, off screen). | refused by the check report |
 | `annotation.anchor.untested.<id>` | The check report only: the view's line-of-sight budget, or the document's nearer-part budget, ran out before this anchor. | refused by the check report |
+| `framing.subject.small.step.<n>` | The check report only: step `<n>`'s subject misses a floor at the closest framing that keeps it whole ([Rendering](#rendering-camera-framing-and-the-loop)). `subjectFloors` gives the measure and exact repairs. | warning |
+| `unit.small.<id>` | The check report only: a named unit covers fewer than 512 px of a 1280 × 800 frame in every still that shows it. `smallUnits` gives the measure and the repair. | warning |
 
 `expect` mismatches (`expect.axis.<id>`, `expect.up.<id>`) are refusals in every profile.
 
@@ -1798,7 +1827,7 @@ the tool and any host use the same cameras.
 is one of these names; any other string is `step.camera` (`view.camera` in an explainer), whose meaning lists every
 name. There are no aliases. Yaw is in degrees about the vertical axis, 0 looks from the front (kernel −Y, world +Z)
 and 90 from +X; pitch is degrees above the horizon. Every preset gets the same framing rules below (per-step focus,
-unblocked focus, title-band fit).
+subject first, unblocked focus, title-band fit, clipping at the safe window).
 
 | Preset | Yaw | Pitch | View |
 | --- | --- | --- | --- |
@@ -1815,32 +1844,108 @@ unblocked focus, title-band fit).
 `backLeft` and `backRight` are named as a viewer behind the model sees them: for a model that faces the `front`
 camera (the `mannequin` does), `backLeft` shows its left side and back (its left arm is on +X).
 
-* **Focus.** A step first frames its focus from its own camera preset and `orbit` (this
-  first framing keeps the direction; only the target and distance change). The
-  unblocked-focus rule below may then draw blocking parts as ghosts or, when a part of
-  the focus context hides much of the focus or a section faces away, choose one of four
-  fixed other directions. The focus is the step's
-  `focus` list as written, or else its `highlight` and section parts **plus every part
-  the step does not ghost whose posed box touches one of them** (one level, within
-  0.5 % of the model's box diagonal), plus the anchors of the annotations the step
-  shows. So a gear inside a gearbox brings its housing and the mechanism stays whole,
-  while a cutaway that stands apart is framed on its own. The focus fills 88 %
-  (`MGSolidFraming.fill`) of the safe window, centred in it. An inferred focus (highlight
-  and section parts with their context) whose box is more than 75 % of the whole model's
-  box diagonal (`focusShare`) uses the whole-model rule. A `focus` list is always framed
-  exactly, however large: to frame a part exactly, list it in `focus`.
+* **Subject first.** A still with a subject frames the subject, from its own camera preset and `orbit` (the
+  direction stays; only the target and distance change). One rule for every still, story hold frame, render plan
+  camera, SwiftUI pane, check report and host (`MGSolidFraming.clearView`; the public `MGSolidFraming.camera`,
+  `MGSolidFraming.framing` and `MGSolidRenderer.frame(_:document:aspect:)` return this effective camera, the fallback
+  below included).
+  - **The subject** (`MGSolidFraming.subjectParts`) is the step's (or beat view's) explicit `focus`. Without one, it
+    is the highlighted parts, the section parts and the parts that the labels and arrows the still shows ride on; and,
+    in a **posed step**, every chain the pose moves (`moved`: each part whose world placement differs with and without
+    the pose: the posed joints' parts and everything attached below them, such as a raised arm and its jet). No
+    touching context joins.
+  - **The camera** takes the closest framing that keeps every subject part whole inside the safe window together with
+    **every target the still draws**: label anchors, pointer tips, and arrow tails and heads. They fill 88 %
+    (`MGSolidFraming.fill`) of the window, centred. A framing never leaves a label "(off view)". There is no fill
+    ceiling. When the targets and the floors conflict, the targets win and the check report warns.
+  - **Floors** (the check report, `MGSolidDocument.subjectIssues`), on **every** still with a subject, whatever its
+    framing class (a far target can make it a whole-model still; the floors still apply). (i) The subject fills at least **25 %** of the safe
+    window on its larger axis (`MGSolidFraming.subjectFill`). (ii) Each subject **group**
+    (`MGSolidFraming.subjectGroups`) shows at least **0.5 %** of the safe window's pixels (`subjectAreaShare`: 3,379 px
+    of the 1280 × 528 px safe window of a captioned 1280 × 800 still), and the shorter side of its visible pixels is
+    at least **24 px at a frame 800 px high**, scaled with the height (`subjectExtentPixels`: 65 px at 3840 × 2160). A
+    group is an instance that the step or beat names **by its instance id** in `focus` or `highlight`
+    (`MGFramedStill.wholeInstances`), less its explicitly named parts; every other subject part is its own group. A
+    part named explicitly anywhere (in `focus`, in `highlight`, or as an annotation target) is always measured alone,
+    also when its instance is named too and also when such parts together cover an instance. So a foot named beside
+    the body, a hidden bearing among eleven named engine parts, or a bearing named beside its whole engine
+    (`"focus": ["jet", "jet.frontBearing"]`) is measured on its own.
+    The moved chain is framed but not measured. Visible pixels come from the still's depth raster (`MGStillRaster`).
+  - **Context** (every other part) may be cut at the safe window's edges. The renderer clips the model to the safe
+    window (`MGSolidRenderer.render(width:height:clip:)`; `marty-solid render` does this for every still and story
+    frame), so nothing is drawn under the title or caption band. The render manifest lists the clipped solid parts of
+    a step still as `clipped` (`MGSolidFraming.cutParts`). The framing never zooms out for context.
+  - **Never from inside.** The camera then moves back along its view line until it is outside the posed box of every
+    solid context part (`MGSolidFraming.outsideContext`), so a subject inside a closed or hollow part is not framed from
+    inside it; the floors then report it hidden, with the repair to ghost that part (a ghost is not solid).
+  - **Accepted documents stay accepted.** For every still that draws a label, pointer or arrow (a focus, an inferred
+    subject or a whole-model still), `clearView` tests the drawn anchors and arrows (the anchor and arrow view rules) at
+    the subject-first camera. When that camera gives a view
+    issue (hidden, ghosted, off screen, untested) and the camera of main's rule (`MGSolidFraming.mainRule`: the step's
+    focus with its touching context, or the earlier whole-model framing) gives none, the still keeps main's camera and
+    its manifest record says `"mainRule": true`. So framing alone never refuses a document that passed `check
+    --strict` before subject-first framing (a test checks every shipped document). The unblocked-focus probe samples
+    the focused, highlighted and section parts and the moved chain; the annotated parts are tested by this check.
+  - **At the limit.** When the closest whole framing misses a floor, the check report warns
+    `framing.subject.small.step.<n>` (`framing.subject.small.beat.<n>`) in `subjectFloors`: `{"step", "beat", "groups":
+    [{"unit", "parts", "pixels", "extent", "small", "hiddenBy"}], "cut", "fill", "minimumPixels", "minimumExtent",
+    "split", "subset", "ghost", "repair"}`. The repairs are exact: `split` (one `focus` list per group: a step each),
+    `subset` (the first small group alone), `ghost`, the **complete** `ghost` list to set (the view's own ghosts as
+    written, then the context parts or units that cover a small group, without repeats, never a part of the subject;
+    the public API reads the written list by default, `authoredGhost`), and `annotate`: `{"keep", "move"}`, the step's
+    exact `annotate` list without the drawn annotations whose targets lie off the subject (a world point, or a part
+    outside it), which widen this framing and move to a view of their own.
+    A warning, not a refusal: the subject is whole and the still is truthful; the author decides how to split or ghost.
+    Ids in a repair are complete JSON strings; when the JSON would not fit the 400-scalar line, the line names the
+    structured field.
+  - An inferred subject whose box is more than 75 % of the whole model's box diagonal (`focusShare`) is a whole-model
+    still. A `focus` list is always framed: to frame a part exactly, list it in `focus`.
+* **Placements.** The check report's `stillPlacements` gives the label placement of each still that draws
+  annotations at its effective camera and pixel size (`MGSolidDocument.stillPlacements`): what the still shows. The
+  older `placements` keeps the snapshot default camera (legacy data, not the still).
+* **Crops.** `MGSolidFraming.cutParts` decides which parts a camera cuts from the triangles, not the vertices: a
+  triangle is in view unless all three vertices lie outside one of the five view planes, tested in camera space
+  without dividing by depth. So a face that spans the view with every vertex outside it (a 2 m wall behind a 20 mm
+  detail), or that crosses the near plane (a floor under the camera), counts. The test is conservative: a triangle
+  near a frustum corner may count as in view. A part is cut when it is in view and some vertex lies outside the safe
+  window or nearer than the near plane.
 * **Whole model.** Other stills keep the bounding-sphere framing of earlier releases
-  unless a part or an annotation anchor would leave the image or enter the caption
-  band; only then is the still fitted like a focus. Earlier stills could reach into the
-  title band; a fitted still keeps it free too. **`hero.png`** keeps the title band free
-  always: its earlier framing stays only when the model and its annotation anchors clear
-  the title band as well, otherwise it is fitted (`modelFitted`), so the model never
-  sits under the title. Parts the view hides are left out of every rule.
+  unless a part or an annotation anchor would leave the safe window, the title band
+  included; only then is the still fitted like a focus (`modelFitted`). So no still puts
+  the model under its title (before, only `hero.png` kept the title band free; other
+  stills could reach into it). Parts the view hides are left out of every rule.
 * **Safe window.** The image minus the caption band (stills with a caption) and minus
-  the title band (stills with a title). `MGSolidRenderPlan.bands(width:height:)` gives
-  them as fractions of the height: the bands the tool draws (120 and 100 px at
-  1280 px wide, scaled with the width), but at least the bands the annotation layout
-  keeps free (0.2 and 0.14). The caption band never covers the model.
+  the title band (stills with a title); an explainer beat's whole solid pane.
+  `MGSolidRenderPlan.bands(width:height:)` gives them as fractions of the height: the
+  bands the tool draws (120 and 100 px at 1280 px wide, scaled with the width), but at
+  least the bands the annotation layout keeps free (0.2 and 0.14). Neither band covers a
+  solid part.
+
+**Why the r2j figures were cut, and why the first fix was replaced.** At main, a focus fitted only its focus and
+anchors, so a figure's head sat under the title band and its legs were cut; the whole-model rule let the earlier
+framing reach into the title band; and a label at a world point pulled an explicit close-up to one side. PR #51's first
+fix widened every close-up until no solid part was cut. That removed the crops but shrank the subjects (the review
+measured sonnet-1's arm jets at 112 visible px in step 4). Subject-first framing keeps the subject large and clips the
+context at the safe window instead. Its re-check then added the moved chain of a posed step (a close-up of one jet had
+lost the raised arm), every drawn target in the fit (labels had gone "(off view)"), and the main-rule fallback (two
+accepted documents, one of them the published AI lesson, had become refused for a hidden anchor at the new camera).
+
+**Small named units** (`unit.small.<id>`, a warning, never refused, strict included). A unit is a component
+instance (its parts share the instance id as their first id segment) or a plain part (`MGSolidDocument.unitID`). A unit
+is **named** when a label or arrow that a still shows (not dropped) rides on one of its parts, or when a step or beat
+highlights one (the parts its caption is about). The check report measures, in every still (`framedStills`: the step
+stills, or the plain view of a document without steps; an explainer's beat stills), the pixels each named unit covers:
+a depth raster of every solid part on a quarter-size grid (`MGSmallUnitRules.rasterScale`, each cell 16 pixels; one
+raster per still serves this rule and the subject floors), where a cell counts for the unit whose surface is nearest
+there, so a unit inside another part counts only where it shows. A triangle that crosses the near plane is clipped to
+it (Sutherland–Hodgman in camera space), not dropped, so a near occluder still hides what lies behind it.
+When a named unit covers fewer than **N = 0.05 % of a 1280 × 800 frame (512 px**, about 23 × 23 px,
+`MGSmallUnitRules.minimumShare`) in **every** still that shows it solid, the report lists it in `smallUnits`:
+`{"unit", "pixels", "minimum", "stills", "step", "beat", "repair"}` with the most pixels it reached and where. N is a
+share of the frame, so it scales with the frame size. It was set from the r2j jet-suit lessons: wrist rings that did not
+read as engines reached at most 172 px; arm engines that did read reached 1,080 px or more in their best still. The
+repair names three fixes: show it in a focused view (`"focus": ["<unit>"]`), make it larger (its shape size, or its
+component's size in `with`), or bring the camera closer. A focused view or a larger size clears the warning.
 * **Loop.** Loop frames keep the earlier per-frame framing. When any frame would cut
   the model, every frame moves back by the same factor (to 94 % of the frame), so the
   orbit never jumps. The manifest records the factor as `framingScale`.
@@ -1947,14 +2052,13 @@ or has a tested focus. Example: a cutaway of an engine mounted on a mannequin's 
 seen from the front through the figure's neck and shoulder, now looks from behind at
 the cut face (`view: opposite`, `occluded: 0`).
 
-**Not checked.** The rule tests only steps framed on their focus. A part may still hide
-the focus when every direction is blocked by the focus context (the record then shows
-the hidden share). Parts outside the focus may be cut at the image edge,
-and may lie under the caption band or the legend (for example the feet of a figure
-whose arms are the focus); only the focus and the step's annotation anchors are kept
-inside the safe window.
-The fit keeps the posed geometry and annotation anchors inside the window, not
-annotation text, shadows or exhaust glow.
+**Not checked.** The rule tests only steps framed on their subject. A part may still hide
+the subject when every direction is blocked by the subject context (the record then shows
+the hidden share). Parts outside the subject may be cut at the safe window's edges (for
+example the feet of a figure whose arms are the subject); the renderer clips them there,
+so they never lie under the caption band or the title band, and the subject is never cut.
+A whole-model still keeps every part whole. The fit keeps the posed geometry and the
+anchors that join it inside the window, not annotation text, shadows or exhaust glow.
 
 **Loop video.** `marty-solid render` also writes `loop.mp4`: H.264 (AVFoundation, no
 other software), at the still size (default 1280 × 800; an odd width or height is

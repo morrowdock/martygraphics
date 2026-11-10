@@ -567,10 +567,103 @@
     null
   ],
   "strict" : false,
+  "subjectFloors" : [
+    {
+      "annotate" : null,
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.51800000000000002,
+      "ghost" : [
+        "sun2",
+        "carrier1",
+        "planet21",
+        "ring2"
+      ],
+      "groups" : [
+        {
+          "extent" : 264,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "ring1"
+          ],
+          "pixels" : 37728,
+          "small" : false,
+          "unit" : "ring1"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+            "sun2",
+            "carrier1",
+            "planet21",
+            "ring2"
+          ],
+          "parts" : [
+            "planet11"
+          ],
+          "pixels" : 896,
+          "small" : true,
+          "unit" : "planet11"
+        },
+        {
+          "extent" : 52,
+          "hiddenBy" : [
+            "ring2"
+          ],
+          "parts" : [
+            "planet12"
+          ],
+          "pixels" : 2000,
+          "small" : true,
+          "unit" : "planet12"
+        },
+        {
+          "extent" : 68,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "planet13"
+          ],
+          "pixels" : 4432,
+          "small" : false,
+          "unit" : "planet13"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 3: at the closest framing that keeps its subject whole, planet11 shows 896 px, shorter side 3…Repair (any one): split it into one step per subject: \"focus\": [\"ring1\"] then \"focus\": [\"planet11\"] then \"focus\": [\"planet12\"] then \"focus\": [\"planet13\"]; or focus a subset in the step: \"focus\": [\"planet11\"]; or set the whole ghost list in the step: \"ghost\": [\"sun2\", \"carrier1\", \"planet21\", \"ring2\"].",
+      "split" : [
+        [
+          "ring1"
+        ],
+        [
+          "planet11"
+        ],
+        [
+          "planet12"
+        ],
+        [
+          "planet13"
+        ]
+      ],
+      "step" : 3,
+      "subset" : [
+        "planet11"
+      ]
+    }
+  ],
   "title" : "Two-stage planetary reducer, robot joint (schematic, 12.25:1)",
   "triangles" : 102352,
   "version" : 1,
   "warnings" : [
-
+    {
+      "part" : "planet11",
+      "reason" : "framing.subject.small.step.3"
+    }
   ]
 }
