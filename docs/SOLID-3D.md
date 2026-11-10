@@ -2220,18 +2220,31 @@ five runs.
 Over all 164 stills: 22 are byte-identical; 0.48 % of the pixels differ; 2,054 pixels differ by more than 8 levels,
 308 by more than 16 and 156 by more than 32. Of the differing pixels, 86 % change by 1 level and 96 % by at most 3
 levels; in every still, 99.9 % of all pixels are within 7 levels. Only 13 stills have any pixel more than 16
-levels apart, and 4 any pixel more than 32. The visible effects are local: a few pixels inside a small hole in the
-anodized carrier of `planetary-components.json`, where gear-tooth tips below show through (step 4: 12 pixels more
-than 32 levels apart, at most 99), and a 14 × 8 pixel patch at the
-turbine wheel of a recorded jet-suit document (step 7) where the surface seen through a thin gap flips between two
-surfaces (71 pixels more than 32 levels apart, at most 82).
+levels apart, and 4 any pixel more than 32. The visible effects are local: thin slivers of gear teeth seen through
+the pin holes of the anodized carrier of `planetary-components.json` flicker (step 4: in this measurement 12 pixels
+more than 32 levels apart, at most 99; more in other runs, below), and in a 14 × 8 pixel patch at the turbine wheel of
+a recorded jet-suit document (step 7) the surface seen through a thin gap flips (71 pixels more than 32 levels apart,
+at most 82).
 
-`swift test --package-path Examples/Solid3D` renders a representative shipped set in three fresh processes. It
-requires byte identity for the check reports, the manifests (as above) and `snapshot.json`, and per still: a mean
-pixel difference of at most 0.1622 levels, at most 0.0225 % of the pixels more than 16 levels apart, and at most
-10.03 % differing pixels (1.5 ×, 2 × and 2 × the measured maxima). It prints the largest difference; it does not gate
-on it. A still from another host, GPU or macOS release can differ more; compare stills with these measures, not a
-hash. The H.264 bytes of `loop.mp4` and `story.mp4` also vary (the hardware encoder).
+The spots also vary between runs of the measurement itself. In ten release runs of the cross-process test below
+(three fresh processes each) the pin holes of `planetary-components.json` step 4, where thin slivers of the gear teeth
+below show through, reached 554 pixels more than 16 levels apart (0.0541 %) and 134 levels; the hosted macOS 26 VM
+of CI run 42866536748 reached 528 pixels (0.0516 %) and 132 levels on the same still.
+
+`swift test --package-path Examples/Solid3D` renders a representative shipped set in three fresh processes
+(`--size 1280x800 --no-loop --story-fps 10`, and `--snapshots` for explainers): `planetary-components.json` and
+`gears-mixed.explainer.json`, and in a release build (`swift test -c release`) also `robot-joint-gearbox.json` and the
+published AI lesson. It compares exactly: the check reports; the manifest without `renderSecondsPerFrame`, the `bytes`
+and `sha256` of PNG, GIF and MP4 files and `engine.executableSHA256`, between runs and against committed goldens in
+`Examples/Solid3D/Tests/MartySolidCLITests/Golden/render` (cameras, framing, unblocked-focus and annotation records,
+the story plan with its beats, paths and timing; a 0.5° change of the `hero` preset fails all four); every snapshot
+file, which must exist and hold JSON; and the board images (`board-0.png`, CPU only) by SHA-256. Only the 3D stills
+are bounded, per still: a mean pixel difference of at most 0.1622 levels, at most 0.1082 % of the pixels more than 16
+levels apart, and at most 10.03 % differing pixels. Each bound is the higher of the local and hosted maxima above times
+1.5, 2 and 2. The test prints the largest difference; it does not gate on it. Story and loop frames are not compared
+(the hardware encoder). A still from another host, GPU or macOS release can differ more; compare stills with these
+measures, not a hash. The H.264 bytes of `loop.mp4` and `story.mp4` also vary. Set `MARTY_SOLID_WRITE_RENDER_GOLDEN=1`
+to rewrite the render goldens after an intended camera or plan change.
 
 ## Snapshot for other renderers
 

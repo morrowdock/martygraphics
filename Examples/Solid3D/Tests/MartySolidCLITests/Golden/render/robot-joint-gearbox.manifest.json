@@ -1,0 +1,391 @@
+{
+  "checks" : {
+    "gearPairs" : 12,
+    "gearsEngage" : true,
+    "maxPenetrationMM" : -0.20754669991917751,
+    "meshesClosed" : true,
+    "minClearanceMM" : 0.20754669991917751,
+    "openMeshes" : [
+
+    ],
+    "toleranceMM" : 0.02
+  },
+  "engine" : {
+    "assemblyVersions" : [
+      1,
+      2
+    ],
+    "name" : "MartyGraphics",
+    "reportFormat" : 1,
+    "snapshotFormats" : [
+      "martygraphics.solid.snapshot\/1",
+      "martygraphics.solid.snapshot\/2"
+    ],
+    "version" : "unreleased"
+  },
+  "framesRendered" : 506,
+  "outputs" : [
+    {
+      "file" : "hero.png",
+      "framing" : "model",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "file" : "exploded.png",
+      "framing" : "model",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "camera" : {
+        "distance" : 417.7078955549224,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          6.6552609936261309,
+          11.380976082917151,
+          10.649993573787537
+        ],
+        "yaw" : 32
+      },
+      "file" : "step-1.png",
+      "framing" : "modelFitted",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "autoGhost" : [
+        "carrier1",
+        "sun2",
+        "ring2",
+        "planet23"
+      ],
+      "camera" : {
+        "distance" : 114.45713031894635,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          1.1767775103049221,
+          2.7412285354075721,
+          1.9348335194952655
+        ],
+        "yaw" : 32
+      },
+      "clipped" : [
+        "base",
+        "ring1",
+        "pin11",
+        "pin12",
+        "pin13",
+        "planet11",
+        "planet12",
+        "planet13",
+        "pin21",
+        "pin23",
+        "planet21"
+      ],
+      "file" : "step-2.png",
+      "focusSamples" : 48,
+      "framing" : "focus",
+      "height" : 800,
+      "occluded" : 0,
+      "offView" : 0,
+      "view" : "preset",
+      "width" : 1280
+    },
+    {
+      "camera" : {
+        "distance" : 417.70433948655295,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          6.6553838402072536,
+          11.380537927225951,
+          10.650191525701374
+        ],
+        "yaw" : 32
+      },
+      "file" : "step-3.png",
+      "framing" : "modelFitted",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "autoGhost" : [
+        "carrier2"
+      ],
+      "camera" : {
+        "distance" : 182.87512903715418,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          -2.1484705284314165,
+          20.609669332783561,
+          4.272812262086096
+        ],
+        "yaw" : 32
+      },
+      "clipped" : [
+        "base",
+        "ring1",
+        "sun1",
+        "pin13",
+        "planet12",
+        "planet13",
+        "ring2",
+        "pin22",
+        "planet22"
+      ],
+      "file" : "step-4.png",
+      "focusSamples" : 48,
+      "framing" : "focus",
+      "height" : 800,
+      "occluded" : 0,
+      "offView" : 0,
+      "view" : "preset",
+      "width" : 1280
+    },
+    {
+      "autoGhost" : [
+
+      ],
+      "camera" : {
+        "distance" : 178.98083585979657,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          12.225089297110115,
+          54.160841812338248,
+          8.0346887610116955
+        ],
+        "yaw" : 32
+      },
+      "clipped" : [
+        "base",
+        "ring1",
+        "sun1",
+        "carrier1",
+        "pin12",
+        "pin13",
+        "planet12",
+        "planet13",
+        "ring2",
+        "pin23",
+        "planet23"
+      ],
+      "file" : "step-5.png",
+      "focusSamples" : 48,
+      "framing" : "focus",
+      "height" : 800,
+      "occluded" : 0.020833333333333332,
+      "offView" : 1,
+      "view" : "preset",
+      "width" : 1280
+    },
+    {
+      "camera" : {
+        "distance" : 598.51105138084176,
+        "fieldOfView" : 30,
+        "pitch" : 35.264000000000003,
+        "target" : [
+          12.104446545715579,
+          18.790757628405977,
+          12.104446545715581
+        ],
+        "yaw" : 45
+      },
+      "file" : "step-6.png",
+      "framing" : "modelFitted",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "beats" : [
+        {
+          "beat" : 1,
+          "camera" : {
+            "distance" : 417.7078955549224,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              6.6552609936261309,
+              11.380976082917151,
+              10.649993573787537
+            ],
+            "yaw" : 32
+          },
+          "cut" : false,
+          "holdStart" : 0,
+          "seconds" : 8.3000000000000007,
+          "start" : 0
+        },
+        {
+          "autoGhost" : [
+            "carrier1",
+            "sun2",
+            "ring2",
+            "planet23"
+          ],
+          "beat" : 2,
+          "blockedBy" : "planet13",
+          "camera" : {
+            "distance" : 114.45713031894635,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              1.1767775103049221,
+              2.7412285354075721,
+              1.9348335194952655
+            ],
+            "yaw" : 32
+          },
+          "cut" : true,
+          "cutReason" : "blocked",
+          "focusSamples" : 48,
+          "holdStart" : 8.3000000000000007,
+          "moveSeconds" : 0,
+          "occluded" : 0,
+          "offView" : 0,
+          "path" : "cut",
+          "pathReason" : "blocked",
+          "seconds" : 6.2000000000000002,
+          "start" : 8.3000000000000007,
+          "view" : "preset"
+        },
+        {
+          "beat" : 3,
+          "blockedBy" : "pin12",
+          "camera" : {
+            "distance" : 417.70433948655295,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              6.6553838402072536,
+              11.380537927225951,
+              10.650191525701374
+            ],
+            "yaw" : 32
+          },
+          "cut" : true,
+          "cutReason" : "blocked",
+          "holdStart" : 14.5,
+          "moveSeconds" : 0,
+          "path" : "cut",
+          "pathReason" : "blocked",
+          "seconds" : 9,
+          "start" : 14.5
+        },
+        {
+          "autoGhost" : [
+            "carrier2"
+          ],
+          "beat" : 4,
+          "blockedBy" : "planet13",
+          "camera" : {
+            "distance" : 182.87512903715418,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              -2.1484705284314165,
+              20.609669332783561,
+              4.272812262086096
+            ],
+            "yaw" : 32
+          },
+          "cut" : true,
+          "cutReason" : "blocked",
+          "focusSamples" : 48,
+          "holdStart" : 23.5,
+          "moveSeconds" : 0,
+          "occluded" : 0,
+          "offView" : 0,
+          "path" : "cut",
+          "pathReason" : "blocked",
+          "seconds" : 8.3000000000000007,
+          "start" : 23.5,
+          "view" : "preset"
+        },
+        {
+          "autoGhost" : [
+
+          ],
+          "beat" : 5,
+          "blockedBy" : "carrier1",
+          "camera" : {
+            "distance" : 178.98083585979657,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              12.225089297110115,
+              54.160841812338248,
+              8.0346887610116955
+            ],
+            "yaw" : 32
+          },
+          "cut" : true,
+          "cutReason" : "blocked",
+          "focusSamples" : 48,
+          "holdStart" : 31.800000000000001,
+          "moveSeconds" : 0,
+          "occluded" : 0.020833333333333332,
+          "offView" : 1,
+          "path" : "cut",
+          "pathReason" : "blocked",
+          "seconds" : 9,
+          "start" : 31.800000000000001,
+          "view" : "preset"
+        },
+        {
+          "beat" : 6,
+          "blockedBy" : "carrier1",
+          "camera" : {
+            "distance" : 598.51105138084176,
+            "fieldOfView" : 30,
+            "pitch" : 35.264000000000003,
+            "target" : [
+              12.104446545715579,
+              18.790757628405977,
+              12.104446545715581
+            ],
+            "yaw" : 45
+          },
+          "cut" : true,
+          "cutReason" : "blocked",
+          "holdStart" : 40.799999999999997,
+          "moveSeconds" : 0,
+          "path" : "cut",
+          "pathReason" : "blocked",
+          "seconds" : 9,
+          "start" : 40.799999999999997
+        }
+      ],
+      "codec" : "h264",
+      "file" : "story.mp4",
+      "fps" : 10,
+      "frames" : 498,
+      "height" : 800,
+      "holdSeconds" : {
+        "max" : 9,
+        "min" : 3
+      },
+      "routedTransitionSeconds" : 1,
+      "seconds" : 49.799999999999997,
+      "transitionSeconds" : 0.59999999999999998,
+      "width" : 1280
+    },
+    {
+      "bytes" : 7989393,
+      "file" : "snapshot.json",
+      "sha256" : "6646df829c51a9712d08304c4327cc272dac28ad7b0f45cf61a4db14bc36953e"
+    }
+  ],
+  "parts" : 19,
+  "source" : {
+    "file" : "robot-joint-gearbox.json",
+    "lines" : 35,
+    "sha256" : "6811dc65bdfba3ad9b21fda1139c89bde04357ef704f5245abdf68cc8060fdca"
+  },
+  "steps" : 6,
+  "title" : "Two-stage planetary reducer, robot joint (schematic, 12.25:1)"
+}

@@ -174,7 +174,9 @@ golden test runs `check` and `check --strict` on every shipped example and every
 file under `docs/assets`; without the fields this release added (`engine`, `partTiers`,
 `motionTiers`), the output is byte-identical to the files in
 `Tests/MartySolidCLITests/Golden`, written by the release before. A cross-process test renders a representative
-shipped set three times and requires byte-identical reports, manifests and snapshots, and stills within the measured
-pixel bound ([Determinism](../../docs/SOLID-3D.md#determinism)).
+shipped set three times. It requires byte-identical check reports, snapshot files and board images, and manifests
+(without wall time and the `bytes` and `sha256` of image and video files) equal to committed goldens in
+`Tests/MartySolidCLITests/Golden/render`; the 3D stills must stay within the measured pixel bound
+([Determinism](../../docs/SOLID-3D.md#determinism)).
 
 The format is documented in [docs/SOLID-3D.md](../../docs/SOLID-3D.md).
