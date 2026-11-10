@@ -88,7 +88,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         var anchors = MGAnnotationAnchorReport()
         var arrows = MGAnnotationArrowReport()
         var drops: [(beat: Int?, drop: MGArrowDrop)] = []
-        var cuts: [MGFramingCut] = [], small: [MGSmallUnit] = []
+        var subjects: [MGSubjectSmall] = [], small: [MGSmallUnit] = []
         if let d = s.solid {
             // The solid's own steps are the beats' views: the beat check below frames them as the beat stills do.
             let r = MGSolidReport.make(d, profile: profile, engine: nil, anchorViews: false)
@@ -101,14 +101,11 @@ public struct MGExplainerReport: Equatable, Sendable {
             var beatOf: [Int: Int] = [:]
             for b in s.keptBeats { if let st = s.solidStep(forBeat: b.index), beatOf[st] == nil { beatOf[st] = b.index } }
             anchors.issues = d.offPartAnchors.map { $0.at(beat: $0.step.flatMap { beatOf[$0] }) }
-            // Every beat still, framed once: the framing rule and the small-unit rule read them all (warnings, never
+            // Every beat still, framed once: the subject rule and the small-unit rule read them all (warnings, never
             // refused); the anchor checks test those that show a label or pointer, the arrow rule those that show an arrow.
             let stills = doc.map { MGExplainerFrame.beatStills($0, library: s.library) }
             if let doc, let fd = stills?.solid, let all = stills?.stills {
-                cuts = fd.framingCuts(all) { f in
-                    guard let b = f.still.beat, doc.beats.indices.contains(b), case .object(let v)? = doc.beats[b].view else { return [] }
-                    return MGSolidDocument.strings(v["ghost"])
-                }
+                subjects = fd.subjectIssues(all)
                 small = fd.smallUnits(all)
             }
             if let doc, !d.annotations.isEmpty {
@@ -216,7 +213,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         warnings += beatIssues.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
         warnings += arrows.issues.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
         warnings += drops.map { .object(["reason": .string($0.drop.reason), "view": .string("beat"), "id": .string($0.drop.id)]) }
-        warnings += cuts.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.parts[0])]) }
+        warnings += subjects.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.groups[$0.small.first ?? 0].unit)]) }
         warnings += small.map { .object(["reason": .string($0.reason), "view": .string("solid"), "id": .string($0.unit)]) }
         var triangles = 0
         if case .object(let so) = solidJSON, case .number(let t)? = so["triangles"] { triangles = Int(t) }
@@ -249,8 +246,8 @@ public struct MGExplainerReport: Equatable, Sendable {
             // Only when a beat still drops an arrow; other reports keep their exact keys.
             if !drops.isEmpty { o["arrowDrops"] = .array(drops.map { $0.drop.json(step: nil, beat: $0.beat) }) }
         }
-        // Only when a beat still cuts a solid part or a named unit is small; other reports keep their exact keys.
-        if !cuts.isEmpty { o["framingCuts"] = .array(cuts.map(\.json)) }
+        // Only when a beat still's subject misses a floor or a named unit is small; other reports keep their exact keys.
+        if !subjects.isEmpty { o["subjectFloors"] = .array(subjects.map(\.json)) }
         if !small.isEmpty { o["smallUnits"] = .array(small.map(\.json)) }
         let hit = reason.flatMap { MGSolidReport.anchorIssue($0, anchors.issues) }
         if let hit { o["anchor"] = hit.json }

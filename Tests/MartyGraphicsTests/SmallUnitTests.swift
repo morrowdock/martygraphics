@@ -20,8 +20,8 @@ final class SmallUnitTests: XCTestCase {
           {"id": "arm", "shape": {"box": {"size": [500, 100, 100], "at": [450, 0, 1450]}}},
           {"id": "ring", "shape": {"box": {"size": [\(size[0]), \(size[1]), \(size[2])], "at": [\(706 + size[0] / 2), 0, 1450]}}}],
          "annotations": {"labels": [{"id": "lRing", "at": {"part": "ring", "point": "centre"}, "text": "Arm engine"}]},
-         "steps": [{"say": "The figure.", "camera": "front", "annotate": ["lRing"]},
-                   {"say": "From the side.", "camera": "iso", "annotate": ["lRing"]}\(focus)]}
+         "steps": [{"say": "The figure.", "highlight": ["legs", "torso", "head", "arm", "ring"], "camera": "front", "annotate": ["lRing"]},
+                   {"say": "From the side.", "highlight": ["legs", "torso", "head", "arm", "ring"], "camera": "iso", "annotate": ["lRing"]}\(focus)]}
         """
     }
 
@@ -62,6 +62,7 @@ final class SmallUnitTests: XCTestCase {
     /// figure parts are never small.
     func testOnlyNamedUnitsAreMeasured() {
         let unnamed = Self.figure().replacingOccurrences(of: #""annotate": ["lRing"]"#, with: #""annotate": []"#)
+            .replacingOccurrences(of: #""arm", "ring"]"#, with: #""arm"]"#)
         XCTAssertNil(report(unnamed).o["smallUnits"])
         XCTAssertEqual(MGSmallUnitRules.minimumPixels(width: 1280, height: 800), 512)
         XCTAssertEqual(MGSmallUnitRules.minimumPixels(width: 1920, height: 1080), 1037)

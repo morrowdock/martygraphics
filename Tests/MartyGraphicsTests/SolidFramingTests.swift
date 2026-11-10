@@ -41,17 +41,19 @@ final class SolidFramingTests: XCTestCase {
         // hero and step 3 cut the tall column with the earlier framing. The exploded still (margin 0.92) kept it, but
         // its earlier framing reaches into the title band, which no still may do now ("Shown parts stay whole").
         XCTAssertEqual(cams.rules, [.modelFitted, .modelFitted, .focus, .focus, .modelFitted, .modelFitted])
-        // Step 1: the block and the pin that touches it, inside the safe window, from the front preset.
+        // Step 1: the subject is the highlighted block alone (subject first: the pin that touches it is context, which
+        // may be cut at the safe window and is clipped there), inside the safe window, from the front preset.
         let s1 = plan.stills[2], c1 = cams.stills[2]
-        XCTAssertEqual(MGSolidFraming.focusParts(doc, step: 0, params: s1.params), ["block", "pin"])
+        XCTAssertEqual(MGSolidFraming.focusParts(doc, step: 0, params: s1.params), ["block", "pin"], "the unblocked-focus context")
+        XCTAssertEqual(MGSolidFraming.subjectParts(doc, shot: s1).parts, ["block"])
         XCTAssertEqual(c1.yaw, MGSolidCamera.presets["front"]!.yaw)
         XCTAssertEqual(c1.pitch, MGSolidCamera.presets["front"]!.pitch)
         let bands = MGSolidRenderPlan.bands(width: 1280, height: 800)
         let safe = MGSolidFraming.Window(titleBand: bands.title, captionBand: bands.caption)
-        XCTAssertTrue(MGSolidFraming.contains(points(doc, ["block", "pin"], s1), camera: c1, aspect: 1.6, window: safe))
+        XCTAssertTrue(MGSolidFraming.contains(points(doc, ["block"], s1), camera: c1, aspect: 1.6, window: safe))
         // Much closer than the whole tower, and filling the safe window to `fill` (not more).
         XCTAssertLessThan(c1.distance, cams.stills[0].distance / 3)
-        XCTAssertFalse(MGSolidFraming.contains(points(doc, ["block", "pin"], s1), camera: c1, aspect: 1.6, window: safe.scaled(0.8)))
+        XCTAssertFalse(MGSolidFraming.contains(points(doc, ["block"], s1), camera: c1, aspect: 1.6, window: safe.scaled(0.8)))
         // Step 2: `focus` is used as written (no touching parts), with the preset yaw plus the orbit.
         XCTAssertEqual(MGSolidFraming.focusParts(doc, step: 1, params: plan.stills[3].params), ["block"])
         XCTAssertEqual(cams.stills[3].yaw, MGSolidCamera.presets["side"]!.yaw + 20)
@@ -99,14 +101,21 @@ final class SolidFramingTests: XCTestCase {
         }
     }
 
-    /// A gear inside a housing brings its neighbours: the planetary steps keep the whole mechanism in view.
-    func testHighlightedInnerPartKeepsItsMechanism() throws {
+    /// A highlighted inner gear is the subject alone (subject first): the sun step frames the sun whole, and its
+    /// neighbours are context that the safe window may clip. The unblocked-focus context still holds the mechanism.
+    func testHighlightedInnerPartIsTheSubject() throws {
         let (doc, data) = try model("planetary")
         let plan = MGSolidRenderPlan(doc, sourceName: "planetary.json", source: MGSolidSource(data: data))
         let cams = plan.cameras(doc, width: 1280, height: 800)
         let sun = try XCTUnwrap(doc.steps.firstIndex { $0.highlight == ["sun"] })
-        XCTAssertNotEqual(cams.rules[sun + 2], .focus)
-        let focus = MGSolidFraming.focusParts(doc, step: sun, params: plan.stills[sun + 2].params)
+        let shot = plan.stills[sun + 2]
+        XCTAssertEqual(cams.rules[sun + 2], .focus)
+        XCTAssertEqual(MGSolidFraming.subjectParts(doc, shot: shot).parts, ["sun"])
+        let bands = MGSolidRenderPlan.bands(width: 1280, height: 800)
+        let safe = MGSolidFraming.Window(titleBand: bands.title, captionBand: bands.caption)
+        XCTAssertEqual(MGSolidFraming.cutParts(doc, view: cams.clear[sun + 2].view(doc.view(step: sun)), params: shot.params,
+                                               camera: cams.stills[sun + 2], aspect: 1.6, window: safe, ids: ["sun"]), [])
+        let focus = MGSolidFraming.focusParts(doc, step: sun, params: shot.params)
         XCTAssertTrue(focus.contains("sun") && focus.contains("planet1") && focus.count >= 4, "\(focus)")
     }
 

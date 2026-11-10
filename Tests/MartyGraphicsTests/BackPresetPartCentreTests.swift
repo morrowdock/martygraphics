@@ -108,10 +108,12 @@ final class BackPresetPartCentreTests: XCTestCase {
         let safe = MGSolidFraming.Window(titleBand: bands.title, captionBand: bands.caption)
         let s1 = plan.stills[2], c1 = cams.stills[2]
         XCTAssertEqual(MGSolidFraming.focusParts(doc, step: 0, params: s1.params), ["block", "pin"])
+        // Subject first: the highlighted block alone is framed; the touching pin is context.
+        XCTAssertEqual(MGSolidFraming.subjectParts(doc, shot: s1).parts, ["block"])
         XCTAssertEqual(c1.yaw, 135)
         XCTAssertEqual(c1.pitch, 28)
-        XCTAssertTrue(MGSolidFraming.contains(points(doc, ["block", "pin"], s1), camera: c1, aspect: 1.6, window: safe))
-        XCTAssertFalse(MGSolidFraming.contains(points(doc, ["block", "pin"], s1), camera: c1, aspect: 1.6, window: safe.scaled(0.8)))
+        XCTAssertTrue(MGSolidFraming.contains(points(doc, ["block"], s1), camera: c1, aspect: 1.6, window: safe))
+        XCTAssertFalse(MGSolidFraming.contains(points(doc, ["block"], s1), camera: c1, aspect: 1.6, window: safe.scaled(0.8)))
         XCTAssertLessThan(c1.distance, cams.stills[0].distance / 3)
         // Step 2: the `focus` list as written, the preset yaw plus the orbit.
         XCTAssertEqual(MGSolidFraming.focusParts(doc, step: 1, params: plan.stills[3].params), ["block"])

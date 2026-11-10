@@ -560,7 +560,10 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         r.apply(s.params)
         r.setCamera(camera)
         let t0 = Date()
-        guard let raw = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
+        // The model is clipped to the still's safe window: nothing is drawn under its title or caption band.
+        let bands = MGSolidRenderPlan.bands(width: Double(width), height: Double(height))
+        let safe = MGSolidFraming.Window(titleBand: s.title != nil ? bands.title : 0, captionBand: s.caption != nil ? bands.caption : 0)
+        guard let raw = r.render(width: width, height: height, clip: safe) else { throw CLIError.invalid("render failed (no Metal device?)") }
         seconds += Date().timeIntervalSince(t0); frames += 1
         // A shot with a title (every still) gets the title backdrop under its overlay text; loop frames have no text.
         let img = s.title != nil ? titleBackdrop(raw) : raw
@@ -598,6 +601,12 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                 }
                 if let n = offViewCount(annotations: labels, clear: clear) { fields["offView"] = .number(Double(n)) }
                 fields.merge(clear.manifestFields) { a, _ in a }
+                // The solid parts the safe window clips (context of a subject framing; `MGSolidFraming.cutParts`).
+                let bands = MGSolidRenderPlan.bands(width: Double(width), height: Double(height))
+                let safe = MGSolidFraming.Window(titleBand: s.title != nil ? bands.title : 0, captionBand: s.caption != nil ? bands.caption : 0)
+                let clipped = MGSolidFraming.cutParts(doc, view: clear.view(doc.view(step: s.step)), params: s.params, camera: cameras.stills[k],
+                                                      aspect: Double(width) / Double(height), window: safe)
+                if !clipped.isEmpty { fields["clipped"] = .array(clipped.map { .string($0) }) }
             }
             try record(s.file, fields)
         }
@@ -689,7 +698,10 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                 r.apply(s.params)
                 r.setCamera(camera)
                 let t0 = Date()
-                guard let raw = r.render(width: width, height: height) else { throw CLIError.invalid("render failed (no Metal device?)") }
+                // Clipped to the step stills' safe window (title and caption bands), as each still is.
+                let bands = MGSolidRenderPlan.bands(width: Double(width), height: Double(height))
+                let safe = MGSolidFraming.Window(titleBand: bands.title, captionBand: bands.caption)
+                guard let raw = r.render(width: width, height: height, clip: safe) else { throw CLIError.invalid("render failed (no Metal device?)") }
                 seconds += Date().timeIntervalSince(t0); frames += 1
                 var img = titleBackdrop(raw)   // under the legend corner, the labels and the title
                 if holding { holdCamera[f.beat] = camera }

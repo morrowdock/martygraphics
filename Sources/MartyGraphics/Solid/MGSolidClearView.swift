@@ -126,7 +126,8 @@ extension MGSolidFraming {
     /// The camera of one still with the unblocked-focus rule. The shot is first framed as `framing(_:shot:aspect:…)`
     /// frames it. Only a step framed on its focus (`rule == .focus`) is tested:
     ///
-    /// 1. Sample points: at most `occlusionSamples` triangle centroids of the focus parts (a cut part gives its capped
+    /// 1. Sample points: at most `occlusionSamples` triangle centroids of the focus parts (`focusParts`: the step's `focus`,
+    ///    or its highlight and section parts with their touching context, not its annotated parts; a cut part gives its capped
     ///    cut mesh), split evenly over the parts, by a fixed stride, posed at the shot's pose.
     /// 2. From the camera, a segment runs to each sample. A sample is hidden by a part when the part's triangles cross the
     ///    segment before the first focus surface on it. Only parts the step view shows at `blockingOpacity` or more
@@ -179,7 +180,7 @@ extension MGSolidFraming {
         guard first.rule == .focus, let step = s.step, doc.steps.indices.contains(step) else {
             return MGSolidClearView(camera: first.camera, rule: first.rule)
         }
-        let probe = OcclusionProbe(doc, step: step, params: s.params, stage: stage)
+        let probe = OcclusionProbe(doc, step: step, focus: focusParts(doc, step: step, params: s.params, stage: stage), params: s.params, stage: stage)
         guard !probe.samples.isEmpty else { return MGSolidClearView(camera: first.camera, rule: first.rule) }
         func result(_ camera: MGSolidCamera, _ d: MGSolidClearView.Direction) -> MGSolidClearView {
             let e = probe.evaluate(camera)
@@ -214,10 +215,10 @@ extension MGSolidFraming {
         var tol = 0.0
         let stage: MGTransform
 
-        init(_ doc: MGSolidDocument, step: Int, params: MGPoseParameters, stage: MGTransform) {
+        /// `focus`: the step's focus (`MGSolidFraming.focusParts`), whose samples are tested.
+        init(_ doc: MGSolidDocument, step: Int, focus: [String], params: MGPoseParameters, stage: MGTransform) {
             self.stage = stage
             let s = doc.steps[step], view = doc.view(step: step), pose = doc.assembly.pose(params)
-            let focus = MGSolidFraming.focusParts(doc, step: step, params: params, stage: stage)
             let fset = Set(focus)
             var shown: [(part: MGPart, mesh: MGMesh, t: MGTransform, box: MGBounds)] = []
             var whole = MGBounds.empty, focusBox = MGBounds.empty

@@ -97,15 +97,15 @@ enum MGExplainerHonesty {
         return out
     }
 
-    /// True when a number character (every scalar, the #21 test) stands outside the `{…}` placeholders. The number
-    /// characters of a token that exactly equals a declared name do not count (`MGSolidFacts.nameOffsets`).
+    /// True when a typed number character stands outside the `{…}` placeholders: rule N1 on the NFKC form of the text,
+    /// where a token that exactly equals a declared name types no number (`MGSolidFacts.typedNumberOffsets`).
     static func typedNumber(_ s: String, names: Set<String>) -> Bool {
         var inside = false
-        let chars = Array(s), declared = MGSolidFacts.nameOffsets(chars, names: names)
+        let chars = Array(s), typed = MGSolidFacts.typedNumberOffsets(chars, names: names)
         for (k, ch) in chars.enumerated() {
             if inside { if ch == "}" { inside = false }; continue }
             if ch == "{" { inside = true; continue }
-            if MGSolidFacts.isNumber(ch), !declared.contains(k) { return true }
+            if typed.contains(k) { return true }
         }
         return false
     }

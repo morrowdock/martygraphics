@@ -457,7 +457,7 @@
     },
     {
       "beat" : 4,
-      "by" : "eR1.casing",
+      "by" : "pilot.lowerArmR",
       "id" : "aR2",
       "part" : "eR2.casing",
       "reason" : "annotation.arrow.dropped.aR2",
@@ -862,60 +862,6 @@
     "lines" : 769,
     "sha256" : "bb8f1893d90b869103fe84993a41585c5eaf8b73be2e8889a8cfe8f7f04b7df7"
   },
-  "framingCuts" : [
-    {
-      "beat" : 6,
-      "ghost" : [
-        "pilot",
-        "eB"
-      ],
-      "parts" : [
-        "pilot.body",
-        "pilot.upperArmR",
-        "pilot.handR",
-        "pilot.legR",
-        "eB.combustor",
-        "eB.nozzleGuideVanes",
-        "eB.turbineWheel",
-        "eB.nozzle",
-        "eB.casing"
-      ],
-      "repair" : "Beat 6 cuts pilot.body, pilot.upperArmR, pilot.handR, pilot.legR and 5 more at the frame edge or under a band, and widening its close-up would make the focus fill less than 25 % of the safe window. Set \"ghost\": [\"pilot\", \"eB\"] in its \"view\" (see-through context may leave the frame), or remove its \"focus\" so the whole model is framed.",
-      "step" : 6
-    },
-    {
-      "beat" : 7,
-      "ghost" : [
-        "pilot"
-      ],
-      "parts" : [
-        "pilot.body",
-        "pilot.upperArmR",
-        "pilot.handR",
-        "pilot.legR"
-      ],
-      "repair" : "Beat 7 cuts pilot.body, pilot.upperArmR, pilot.handR, pilot.legR at the frame edge or under a band, and widening its close-up would make the focus fill less than 25 % of the safe window. Set \"ghost\": [\"pilot\"] in its \"view\" (see-through context may leave the frame), or remove its \"focus\" so the whole model is framed.",
-      "step" : 7
-    },
-    {
-      "beat" : 8,
-      "ghost" : [
-        "pilot",
-        "eB"
-      ],
-      "parts" : [
-        "pilot.body",
-        "pilot.upperArmR",
-        "pilot.legL",
-        "pilot.legR",
-        "eB.diffuser",
-        "eB.shaft",
-        "eB.casing"
-      ],
-      "repair" : "Beat 8 cuts pilot.body, pilot.upperArmR, pilot.legL, pilot.legR and 3 more at the frame edge or under a band, and widening its close-up would make the focus fill less than 25 % of the safe window. Set \"ghost\": [\"pilot\", \"eB\"] in its \"view\" (see-through context may leave the frame), or remove its \"focus\" so the whole model is framed.",
-      "step" : 8
-    }
-  ],
   "ids" : {
     "annotations" : [
       "lSuit",
@@ -1332,11 +1278,594 @@
     ],
     "text" : "Solved 19 · Given 1 · Not checked 16"
   },
-  "location" : null,
-  "ok" : true,
+  "location" : {
+    "beat" : 3,
+    "command" : null,
+    "detail" : "occluded",
+    "id" : "aSteer",
+    "statement" : null,
+    "view" : "beat"
+  },
+  "ok" : false,
   "primary" : "solid",
-  "reason" : null,
+  "reason" : "annotation.anchor.hidden.aSteer",
+  "repair" : "Pointer aSteer (beat 4) is hidden behind eL2.nozzle. Use tip (`to`) {\"part\": \"pilot.handL\", \"offset\": [-7.539, -14.056, -2.684]}.",
   "strict" : true,
+  "subjectFloors" : [
+    {
+      "beat" : 1,
+      "cut" : [
+
+      ],
+      "fill" : 0.71999999999999997,
+      "ghost" : [
+        "pilot"
+      ],
+      "groups" : [
+        {
+          "extent" : 42,
+          "hiddenBy" : [
+            "pilot"
+          ],
+          "parts" : [
+            "eL1.intakeLip",
+            "eL1.impeller",
+            "eL1.diffuser",
+            "eL1.combustor",
+            "eL1.nozzleGuideVanes",
+            "eL1.turbineWheel",
+            "eL1.nozzle",
+            "eL1.shaft",
+            "eL1.frontBearing",
+            "eL1.rearBearing",
+            "eL1.casing"
+          ],
+          "pixels" : 2620,
+          "small" : true,
+          "unit" : "eL1"
+        },
+        {
+          "extent" : 66,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eL2.intakeLip",
+            "eL2.impeller",
+            "eL2.diffuser",
+            "eL2.combustor",
+            "eL2.nozzleGuideVanes",
+            "eL2.turbineWheel",
+            "eL2.nozzle",
+            "eL2.shaft",
+            "eL2.frontBearing",
+            "eL2.rearBearing",
+            "eL2.casing"
+          ],
+          "pixels" : 5168,
+          "small" : false,
+          "unit" : "eL2"
+        },
+        {
+          "extent" : 48,
+          "hiddenBy" : [
+            "pilot"
+          ],
+          "parts" : [
+            "eR1.intakeLip",
+            "eR1.impeller",
+            "eR1.diffuser",
+            "eR1.combustor",
+            "eR1.nozzleGuideVanes",
+            "eR1.turbineWheel",
+            "eR1.nozzle",
+            "eR1.shaft",
+            "eR1.frontBearing",
+            "eR1.rearBearing",
+            "eR1.casing"
+          ],
+          "pixels" : 3356,
+          "small" : true,
+          "unit" : "eR1"
+        },
+        {
+          "extent" : 34,
+          "hiddenBy" : [
+            "pilot"
+          ],
+          "parts" : [
+            "eR2.intakeLip",
+            "eR2.impeller",
+            "eR2.diffuser",
+            "eR2.combustor",
+            "eR2.nozzleGuideVanes",
+            "eR2.turbineWheel",
+            "eR2.nozzle",
+            "eR2.shaft",
+            "eR2.frontBearing",
+            "eR2.rearBearing",
+            "eR2.casing"
+          ],
+          "pixels" : 1840,
+          "small" : true,
+          "unit" : "eR2"
+        },
+        {
+          "extent" : 60,
+          "hiddenBy" : [
+            "pilot"
+          ],
+          "parts" : [
+            "eB.intakeLip",
+            "eB.impeller",
+            "eB.diffuser",
+            "eB.combustor",
+            "eB.nozzleGuideVanes",
+            "eB.turbineWheel",
+            "eB.nozzle",
+            "eB.shaft",
+            "eB.frontBearing",
+            "eB.rearBearing",
+            "eB.casing"
+          ],
+          "pixels" : 2412,
+          "small" : true,
+          "unit" : "eB"
+        }
+      ],
+      "minimumExtent" : 16.699999999999999,
+      "minimumPixels" : 3425,
+      "repair" : "Beat 1: at the closest framing that keeps its subject whole, eL1 shows 2620 px, shorter side 42 px; eR1 shows 3356 px, …Repair (any one): split it into one step per subject: \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"]; or ghost the context that covers it in its \"view\": \"ghost\": [\"pilot\"].",
+      "split" : [
+        [
+          "eL1"
+        ],
+        [
+          "eL2"
+        ],
+        [
+          "eR1"
+        ],
+        [
+          "eR2"
+        ],
+        [
+          "eB"
+        ]
+      ],
+      "step" : 1,
+      "subset" : [
+        "eL1"
+      ]
+    },
+    {
+      "beat" : 2,
+      "cut" : [
+
+      ],
+      "fill" : 0.874,
+      "ghost" : [
+
+      ],
+      "groups" : [
+        {
+          "extent" : 202,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "pilot.body"
+          ],
+          "pixels" : 50420,
+          "small" : false,
+          "unit" : "pilot"
+        },
+        {
+          "extent" : 42,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eL1.intakeLip",
+            "eL1.impeller",
+            "eL1.diffuser",
+            "eL1.combustor",
+            "eL1.nozzleGuideVanes",
+            "eL1.turbineWheel",
+            "eL1.nozzle",
+            "eL1.shaft",
+            "eL1.frontBearing",
+            "eL1.rearBearing",
+            "eL1.casing"
+          ],
+          "pixels" : 3528,
+          "small" : false,
+          "unit" : "eL1"
+        },
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eL2.intakeLip",
+            "eL2.impeller",
+            "eL2.diffuser",
+            "eL2.combustor",
+            "eL2.nozzleGuideVanes",
+            "eL2.turbineWheel",
+            "eL2.nozzle",
+            "eL2.shaft",
+            "eL2.frontBearing",
+            "eL2.rearBearing",
+            "eL2.casing"
+          ],
+          "pixels" : 6040,
+          "small" : false,
+          "unit" : "eL2"
+        },
+        {
+          "extent" : 48,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.intakeLip",
+            "eR1.impeller",
+            "eR1.diffuser",
+            "eR1.combustor",
+            "eR1.nozzleGuideVanes",
+            "eR1.turbineWheel",
+            "eR1.nozzle",
+            "eR1.shaft",
+            "eR1.frontBearing",
+            "eR1.rearBearing",
+            "eR1.casing"
+          ],
+          "pixels" : 3408,
+          "small" : true,
+          "unit" : "eR1"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR2.intakeLip",
+            "eR2.impeller",
+            "eR2.diffuser",
+            "eR2.combustor",
+            "eR2.nozzleGuideVanes",
+            "eR2.turbineWheel",
+            "eR2.nozzle",
+            "eR2.shaft",
+            "eR2.frontBearing",
+            "eR2.rearBearing",
+            "eR2.casing"
+          ],
+          "pixels" : 1696,
+          "small" : true,
+          "unit" : "eR2"
+        },
+        {
+          "extent" : 66,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eB.intakeLip",
+            "eB.impeller",
+            "eB.diffuser",
+            "eB.combustor",
+            "eB.nozzleGuideVanes",
+            "eB.turbineWheel",
+            "eB.nozzle",
+            "eB.shaft",
+            "eB.frontBearing",
+            "eB.rearBearing",
+            "eB.casing"
+          ],
+          "pixels" : 3788,
+          "small" : false,
+          "unit" : "eB"
+        }
+      ],
+      "minimumExtent" : 16.699999999999999,
+      "minimumPixels" : 3425,
+      "repair" : "Beat 2: at the closest framing that keeps its subject whole, eR1 shows 3408 px, shorter side 48 px; eR2 shows 1696 px, shorter side 36 px (minimum 3425 px and 17…Repair (any one): split it into one step per subject: \"focus\": [\"pilot.body\"] then \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eR1\"].",
+      "split" : [
+        [
+          "pilot.body"
+        ],
+        [
+          "eL1"
+        ],
+        [
+          "eL2"
+        ],
+        [
+          "eR1"
+        ],
+        [
+          "eR2"
+        ],
+        [
+          "eB"
+        ]
+      ],
+      "step" : 2,
+      "subset" : [
+        "eR1"
+      ]
+    },
+    {
+      "beat" : 4,
+      "cut" : [
+
+      ],
+      "fill" : 0.68999999999999995,
+      "ghost" : [
+
+      ],
+      "groups" : [
+        {
+          "extent" : 216,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "pilot.upperArmL",
+            "pilot.lowerArmL",
+            "pilot.handL"
+          ],
+          "pixels" : 10628,
+          "small" : false,
+          "unit" : "pilot"
+        },
+        {
+          "extent" : 26,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eL1.intakeLip",
+            "eL1.impeller",
+            "eL1.diffuser",
+            "eL1.combustor",
+            "eL1.nozzleGuideVanes",
+            "eL1.turbineWheel",
+            "eL1.nozzle",
+            "eL1.shaft",
+            "eL1.frontBearing",
+            "eL1.rearBearing",
+            "eL1.casing"
+          ],
+          "pixels" : 20,
+          "small" : true,
+          "unit" : "eL1"
+        },
+        {
+          "extent" : 82,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eL2.intakeLip",
+            "eL2.impeller",
+            "eL2.diffuser",
+            "eL2.combustor",
+            "eL2.nozzleGuideVanes",
+            "eL2.turbineWheel",
+            "eL2.nozzle",
+            "eL2.shaft",
+            "eL2.frontBearing",
+            "eL2.rearBearing",
+            "eL2.casing"
+          ],
+          "pixels" : 4308,
+          "small" : false,
+          "unit" : "eL2"
+        },
+        {
+          "extent" : 58,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.casing"
+          ],
+          "pixels" : 3132,
+          "small" : false,
+          "unit" : "eR1"
+        },
+        {
+          "extent" : 24,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR2.casing"
+          ],
+          "pixels" : 264,
+          "small" : true,
+          "unit" : "eR2"
+        }
+      ],
+      "minimumExtent" : 16.699999999999999,
+      "minimumPixels" : 2435,
+      "repair" : "Beat 4: at the closest framing that keeps its subject whole, eL1 shows 20 px, shorter side 26 px; eR2 shows 264 px, shorter side …Repair (any one): split it into one step per subject: \"focus\": [\"pilot.upperArmL\", \"pilot.lowerArmL\", \"pilot.handL\"] then \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1.casing\"] then \"focus\": [\"eR2.casing\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"].",
+      "split" : [
+        [
+          "pilot.upperArmL",
+          "pilot.lowerArmL",
+          "pilot.handL"
+        ],
+        [
+          "eL1"
+        ],
+        [
+          "eL2"
+        ],
+        [
+          "eR1.casing"
+        ],
+        [
+          "eR2.casing"
+        ]
+      ],
+      "step" : 4,
+      "subset" : [
+        "eL1"
+      ]
+    },
+    {
+      "beat" : 9,
+      "cut" : [
+
+      ],
+      "fill" : 0.71999999999999997,
+      "ghost" : [
+        "pilot"
+      ],
+      "groups" : [
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+            "pilot"
+          ],
+          "parts" : [
+            "eL1.intakeLip",
+            "eL1.impeller",
+            "eL1.diffuser",
+            "eL1.combustor",
+            "eL1.nozzleGuideVanes",
+            "eL1.turbineWheel",
+            "eL1.nozzle",
+            "eL1.shaft",
+            "eL1.frontBearing",
+            "eL1.rearBearing",
+            "eL1.casing"
+          ],
+          "pixels" : 2428,
+          "small" : true,
+          "unit" : "eL1"
+        },
+        {
+          "extent" : 66,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eL2.intakeLip",
+            "eL2.impeller",
+            "eL2.diffuser",
+            "eL2.combustor",
+            "eL2.nozzleGuideVanes",
+            "eL2.turbineWheel",
+            "eL2.nozzle",
+            "eL2.shaft",
+            "eL2.frontBearing",
+            "eL2.rearBearing",
+            "eL2.casing"
+          ],
+          "pixels" : 5132,
+          "small" : false,
+          "unit" : "eL2"
+        },
+        {
+          "extent" : 48,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.intakeLip",
+            "eR1.impeller",
+            "eR1.diffuser",
+            "eR1.combustor",
+            "eR1.nozzleGuideVanes",
+            "eR1.turbineWheel",
+            "eR1.nozzle",
+            "eR1.shaft",
+            "eR1.frontBearing",
+            "eR1.rearBearing",
+            "eR1.casing"
+          ],
+          "pixels" : 3336,
+          "small" : false,
+          "unit" : "eR1"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "pilot"
+          ],
+          "parts" : [
+            "eR2.intakeLip",
+            "eR2.impeller",
+            "eR2.diffuser",
+            "eR2.combustor",
+            "eR2.nozzleGuideVanes",
+            "eR2.turbineWheel",
+            "eR2.nozzle",
+            "eR2.shaft",
+            "eR2.frontBearing",
+            "eR2.rearBearing",
+            "eR2.casing"
+          ],
+          "pixels" : 1696,
+          "small" : true,
+          "unit" : "eR2"
+        },
+        {
+          "extent" : 60,
+          "hiddenBy" : [
+            "pilot"
+          ],
+          "parts" : [
+            "eB.intakeLip",
+            "eB.impeller",
+            "eB.diffuser",
+            "eB.combustor",
+            "eB.nozzleGuideVanes",
+            "eB.turbineWheel",
+            "eB.nozzle",
+            "eB.shaft",
+            "eB.frontBearing",
+            "eB.rearBearing",
+            "eB.casing"
+          ],
+          "pixels" : 2388,
+          "small" : true,
+          "unit" : "eB"
+        }
+      ],
+      "minimumExtent" : 16.699999999999999,
+      "minimumPixels" : 2435,
+      "repair" : "Beat 9: at the closest framing that keeps its subject whole, eL1 shows 2428 px, shorter side 40 px; eR2 shows 1696 px, …Repair (any one): split it into one step per subject: \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"]; or ghost the context that covers it in its \"view\": \"ghost\": [\"pilot\"].",
+      "split" : [
+        [
+          "eL1"
+        ],
+        [
+          "eL2"
+        ],
+        [
+          "eR1"
+        ],
+        [
+          "eR2"
+        ],
+        [
+          "eB"
+        ]
+      ],
+      "step" : 9,
+      "subset" : [
+        "eL1"
+      ]
+    }
+  ],
   "title" : "Gravity jet suit, Daedalus layout: how small jets lift a pilot (schematic)",
   "version" : 1,
   "views" : {
@@ -4007,6 +4536,11 @@
   },
   "warnings" : [
     {
+      "id" : "aSteer",
+      "reason" : "annotation.anchor.hidden.aSteer",
+      "view" : "beat"
+    },
+    {
       "id" : "aL1",
       "reason" : "annotation.arrow.dropped.aL1",
       "view" : "beat"
@@ -4017,18 +4551,23 @@
       "view" : "beat"
     },
     {
-      "id" : "pilot.body",
-      "reason" : "framing.cut.beat.6",
+      "id" : "eL1",
+      "reason" : "framing.subject.small.beat.1",
       "view" : "beat"
     },
     {
-      "id" : "pilot.body",
-      "reason" : "framing.cut.beat.7",
+      "id" : "eR1",
+      "reason" : "framing.subject.small.beat.2",
       "view" : "beat"
     },
     {
-      "id" : "pilot.body",
-      "reason" : "framing.cut.beat.8",
+      "id" : "eL1",
+      "reason" : "framing.subject.small.beat.4",
+      "view" : "beat"
+    },
+    {
+      "id" : "eL1",
+      "reason" : "framing.subject.small.beat.9",
       "view" : "beat"
     }
   ]

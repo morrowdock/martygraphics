@@ -311,8 +311,8 @@ extension MGExplainerFrame {
 
     /// Every beat still with a solid pane at `width` × `height` (`beatPanes`), framed as the still and its story hold
     /// frames are (`solidClearView`: the automatic ghosts and the beat's arrow drops), at the beat's end pose, with the
-    /// whole pane as its safe window, the beat's 3D highlight and its view's `focus`; with the solid document. The
-    /// framing rule and the small-unit rule of the check report read these.
+    /// whole pane as its safe window and the beat's shot (`beatShot`: its 3D highlight and step); with the solid
+    /// document. The subject rule and the small-unit rule of the check report read these.
     public static func beatStills(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
                                   height: Int = MGAnnotationAnchorRules.height) -> (solid: MGSolidDocument?, stills: [MGFramedStill]) {
         let r = beatPanes(doc, library: library, width: width, height: height)
@@ -322,8 +322,8 @@ extension MGExplainerFrame {
             let clear = solidClearView(d, view: b.view, stepIndex: b.stepIndex, pane: b.pane)
             let still = MGAnnotationAnchorView(view: clear.view(base), params: pose(d, view: b.view), camera: clear.camera,
                                                width: Double(b.pane.width), height: Double(b.pane.height), step: b.stepIndex, beat: b.beat)
-            return MGFramedStill(still: still, window: MGSolidFraming.Window(titleBand: 0, captionBand: 0), highlight: b.view.solidHighlight,
-                                 focus: b.view.step?.focus ?? [])
+            return MGFramedStill(still: still, shot: beatShot(d, view: b.view, stepIndex: b.stepIndex),
+                                 window: MGSolidFraming.Window(titleBand: 0, captionBand: 0), rule: clear.rule)
         })
     }
 

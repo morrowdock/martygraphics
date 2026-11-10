@@ -147,7 +147,8 @@ final class ArrowTailAndDropTests: XCTestCase {
         let rep = report(t)
         XCTAssertTrue(rep.ok, rep.reason ?? "")
         let warnings = objects(rep.json["warnings"]).compactMap { o -> String? in if case .string(let s)? = o["reason"] { return s }; return nil }
-        XCTAssertEqual(warnings, ["annotation.arrow.dropped.t"])
+        // The arrow's part is the front step's subject, and the body hides it: the subject rule warns too (0 px).
+        XCTAssertEqual(warnings, ["annotation.arrow.dropped.t", "framing.subject.small.step.1"])
         let drops = objects(rep.json["arrowDrops"])
         XCTAssertEqual(drops.count, 1)
         XCTAssertEqual(drops.first?["id"], .string("t")); XCTAssertEqual(drops.first?["part"], .string("pack"))

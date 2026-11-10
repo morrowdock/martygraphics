@@ -469,7 +469,9 @@ final class MartySolidCLITests: XCTestCase {
     /// is drawn (the move frames equal those of the same lesson with no labels shown). A settled hold frame shows the
     /// still's picture. A second render in a fresh process gives the same story record and the same stills.
     func testBoardPaneOpensAndClosesWithoutACut() throws {
-        let gears = #"{"v":2,"parts":[{"id":"p","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},{"id":"w","at":[45,0,0],"shape":{"gear":{"teeth":30,"module":2,"width":8}},"joint":{"revolute":[0,0,1]}}],"constraints":[{"gearMesh":{"a":"p","b":"w"}}],"annotations":{"labels":[{"id":"lp","at":"p","text":"Small gear"},{"id":"lw","at":"w","text":"Big gear"}]}}"#
+        let gears = #"{"v":2,"parts":[{"id":"p","shape":{"gear":{"teeth":15,"module":2,"width":8}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},{"id":"w","at":[45,0,0],"shape":{"gear":{"teeth":30,"module":2,"width":8}},"joint":{"revolute":[0,0,1]}}],"constraints":[{"gearMesh":{"a":"p","b":"w"}}],"annotations":{"labels":[{"id":"lp","at":{"world":[0,0,6]},"text":"Small gear"},{"id":"lw","at":{"world":[45,0,6]},"text":"Big gear"}]}}"#
+        // The labels sit at world points over the gears: they name no part, so no beat has a subject (subject first) and
+        // every beat is a whole-model view; the slide, not a camera close-up, is what the frames show.
         func lesson(_ labels: Bool) -> String {
             let a = { (ids: String) in labels ? #","view":{"annotate":[\#(ids)]}"# : "" }
             return #"{"v":1,"kind":"explainer","board":{"v":1,"items":[{"id":"cap","k":"text","at":[6,7],"text":"Figures"}]},"solid":\#(gears),"beats":[{"say":"One."\#(a(#""lp""#))},{"say":"Two."\#(a(#""lw""#)),"ops":[{"op":"add","item":{"id":"t","k":"table","at":[6,4],"header":true,"cells":[["Gear","Teeth"],["small","{p.teeth}"]]}}]},{"say":"Three."\#(a(#""lp","lw""#))},{"say":"Four."\#(a(#""lp""#)),"ops":[{"op":"remove","id":"t"}]}]}"#

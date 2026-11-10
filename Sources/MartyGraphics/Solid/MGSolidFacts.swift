@@ -201,14 +201,28 @@ public enum MGSolidFacts {
         return out
     }
 
-    /// The offsets in `chars` of the characters of every token whose NFKC form (`nfkc`) exactly equals a declared name
-    /// (declared names are kept in NFKC form; whole token, case-sensitive): rule N1 does not count their number
-    /// characters. Every other number character still counts.
-    static func nameOffsets(_ chars: [Character], names: Set<String>) -> Set<Int> {
-        guard !names.isEmpty else { return [] }
-        var out = Set<Int>()
-        for r in tokens(chars) where names.contains(nfkc(String(chars[r]))) { out.formUnion(r) }
-        return out
+    /// Rule N1 on one text (docs/SOLID-3D.md, "Declared names" and "Which characters are numbers"): the offsets in
+    /// `chars` of the typed number characters. The text is first put in NFKC form, one grapheme at a time, with a map
+    /// from each normalized character back to its original one; the tokens (`tokens`) are found in the normalized text.
+    /// A token that exactly equals a declared name (case-sensitive; names are kept in NFKC form) types no number. In
+    /// every other token, each original character that is a number (`isNumber`: it, or its NFKC form, holds a numeric
+    /// scalar) is a typed number; so a token types a number when its normalized form holds a digit, or when any of its
+    /// original characters has a numeric value (the "Ⅻ", "²", "½" and Arabic-Indic digits included). A number
+    /// character outside every token is a typed number too.
+    static func typedNumberOffsets(_ chars: [Character], names: Set<String>) -> Set<Int> {
+        var norm: [Character] = [], from: [Int] = []
+        for (k, ch) in chars.enumerated() {
+            for c in nfkc(String(ch)) { norm.append(c); from.append(k) }
+        }
+        var typed = Set<Int>(), inToken = Set<Int>()
+        for r in tokens(norm) {
+            let originals = Set(from[r])
+            inToken.formUnion(originals)
+            guard !names.contains(String(norm[r])) else { continue }
+            for k in originals where isNumber(chars[k]) { typed.insert(k) }
+        }
+        for (k, ch) in chars.enumerated() where !inToken.contains(k) && isNumber(ch) { typed.insert(k) }
+        return typed
     }
 
     /// Unit and quantity words a declared name may not join to a number (`names.number.<n>`), lowercase. Matched
@@ -257,9 +271,10 @@ public enum MGSolidFacts {
 
     /// A document's `names` list (docs/SOLID-3D.md, "Declared names"): 1–`namesCount` strings, each one token
     /// (`tokens`) of 1–`nameText` characters with (d) at least one number character, and not a number or a quantity
-    /// (`isQuantityName`, rules (a)–(c)). Each name is first put in Unicode NFKC form (`nfkc`), and every rule reads
-    /// that form, so "Ｍａｃｈ２" is "Mach2" (a quantity); the list keeps the NFKC forms, and a token of the text matches
-    /// a name exactly after the same normalization (`nameOffsets`). Reasons: `names.count` (not an array of strings,
+    /// (`isQuantityName`, rules (a)–(c)). A name whose original form has a number character other than an ASCII digit
+    /// ("Ⅻ2", "Mk²", "Ａ３２０") is `names.number.<n>`. Each name is then put in Unicode NFKC form (`nfkc`), and every rule
+    /// reads that form, so "Ｍａｃｈ２" is "Mach2" (a quantity); the list keeps the NFKC forms, and a token of the
+    /// normalized text matches a name exactly (`typedNumberOffsets`). Reasons: `names.count` (not an array of strings,
     /// or a count out of range, with `limit`), `names.text.<n>` (length as written, or in NFKC form, with `limit`),
     /// `names.token.<n>` (not one token, or (d): no number character, so it needs no declaration), `names.number.<n>`
     /// (`<n>` 1-based). Repeats (in NFKC form) are kept once.
@@ -272,6 +287,9 @@ public enum MGSolidFacts {
             if let d = MGSolidParser.countDetail("names[\(k)]", raw.unicodeScalars.count, 1...nameText, unit: "characters") {
                 throw MGSolidIssue("names.text.\(k + 1)", limit: d)
             }
+            // A number character other than an ASCII digit ("Ⅻ", "²", "½", "٢", "２") is refused before the normalization
+            // could turn it into letters or ASCII digits: declare names in plain form; text may use other forms.
+            guard !raw.contains(where: { isNumber($0) && !($0.isASCII && $0.isNumber) }) else { throw MGSolidIssue("names.number.\(k + 1)") }
             let n = nfkc(raw)
             if let d = MGSolidParser.countDetail("names[\(k)]", n.unicodeScalars.count, 1...nameText, unit: "characters") {
                 throw MGSolidIssue("names.text.\(k + 1)", limit: d)
@@ -440,7 +458,7 @@ public enum MGSolidFacts {
                      _ aliases: [String: String], names: Set<String>) throws -> MGSolidFilledText {
         var out = MGSolidFilledText(text: "", facts: [])
         var body = "", inside = false
-        let chars = Array(s), declared = nameOffsets(chars, names: names)
+        let chars = Array(s), typed = typedNumberOffsets(chars, names: names)
         for (k, ch) in chars.enumerated() {
             if inside {
                 if ch == "}" {
@@ -453,7 +471,7 @@ public enum MGSolidFacts {
             } else if ch == "{" { inside = true }
             else if ch == "}" { throw MGSolidIssue("text.brace") }
             else {
-                if isNumber(ch), !declared.contains(k) {
+                if typed.contains(k) {
                     if n1 { throw MGSolidIssue("text.number.\(w)") }
                     out.typedNumbers = true
                 }

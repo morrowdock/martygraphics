@@ -1,0 +1,260 @@
+// SPDX-License-Identifier: Apache-2.0
+import Foundation
+import XCTest
+@testable import MartyGraphics
+
+/// Subject-first framing (docs/SOLID-3D.md, "Subject first"): a step's subject (its `focus`, or its highlighted,
+/// section and annotated parts) is framed alone at the closest framing that keeps it whole; context may be cut at the
+/// safe window's edges and the renderer clips the model to that window; a subject that misses a floor gives
+/// `framing.subject.small.<step|beat>.<n>` with exact repairs. One framing function gives the stills, the story, the
+/// render plan and the SwiftUI pane. The fixtures are generic reductions of the r2j jet-suit failures (a head under the
+/// title band above a highlighted back pack; arm engines too small to read) and of the PR #51 review (a whole-figure
+/// view that shrank the subject; a wall that spans the view with every vertex outside it).
+final class SubjectFramingTests: XCTestCase {
+    /// A figure (Z up, mm): legs, torso, head, a back pack, two arms and a small engine at each hand. The parts are apart
+    /// by 20 mm (more than the touch tolerance), except where an arm meets the torso and an engine its arm.
+    static let parts = """
+    [{"id": "legs", "shape": {"box": {"size": [200, 120, 900], "at": [0, 0, 450]}}},
+     {"id": "torso", "shape": {"box": {"size": [400, 200, 600], "at": [0, 0, 1220]}}},
+     {"id": "head", "shape": {"box": {"size": [180, 180, 220], "at": [0, 0, 1650]}}},
+     {"id": "pack", "shape": {"box": {"size": [200, 120, 300], "at": [0, 160, 1350]}}},
+     {"id": "armL", "shape": {"box": {"size": [500, 100, 100], "at": [450, 0, 1450]}}},
+     {"id": "armR", "shape": {"box": {"size": [500, 100, 100], "at": [-450, 0, 1450]}}},
+     {"id": "jetL", "shape": {"box": {"size": [24, 60, 60], "at": [712, 0, 1450]}}},
+     {"id": "jetR", "shape": {"box": {"size": [24, 60, 60], "at": [-712, 0, 1450]}}}]
+    """
+    static let labels = #"{"labels": [{"id": "lFar", "at": {"world": [-3900, 0, 3900]}, "text": "Far note"}, {"id": "lPack", "at": {"part": "pack", "point": "centre"}, "text": "Pack"}]}"#
+
+    /// Step 1: the pack (highlight), the head-under-the-band case. Step 2: both small engines (highlight), far apart.
+    /// Step 3: the pack with a far world-point label. Step 4: the whole figure.
+    static func assembly(step2: String = #""highlight": ["jetL", "jetR"]"#, far: Bool = true) -> String {
+        let step3 = far ? #"["lPack", "lFar"]"# : #"["lPack"]"#
+        let annotations = far ? labels : #"{"labels": [{"id": "lPack", "at": {"part": "pack", "point": "centre"}, "text": "Pack"}]}"#
+        return """
+        {"v": 2, "kind": "assembly", "title": "Figure", "parts": \(parts), "annotations": \(annotations),
+         "steps": [{"say": "The pack on the back.", "highlight": ["pack"], "camera": "back", "annotate": ["lPack"]},
+                   {"say": "The hand engines.", \(step2), "camera": "front", "annotate": []},
+                   {"say": "The pack, with a note.", "highlight": ["pack"], "camera": "back", "annotate": \(step3)},
+                   {"say": "The whole figure.", "camera": "front", "annotate": []}]}
+        """
+    }
+
+    static func explainer() -> String {
+        """
+        {"v": 1, "kind": "explainer", "title": "Figure", "solid": {"v": 2, "parts": \(parts), "annotations": \(labels)},
+         "beats": [{"say": "The pack on the back.", "highlight": ["pack"], "view": {"camera": "back", "annotate": ["lPack"]}},
+                   {"say": "The hand engines.", "highlight": ["jetL", "jetR"], "view": {"camera": "front", "annotate": []}},
+                   {"say": "The pack, with a note.", "highlight": ["pack"], "view": {"camera": "back", "annotate": ["lPack", "lFar"]}},
+                   {"say": "The whole figure.", "view": {"camera": "front", "annotate": []}}]}
+        """
+    }
+
+    func compile(_ t: String) throws -> MGSolidDocument { try MGSolidParser.document(data: Data(t.utf8)).get() }
+    func report(_ t: String) -> [String: MGJSON] {
+        guard case .object(let o) = MGSolidReport.check(data: Data(t.utf8), profile: .strict).json else { return [:] }
+        return o
+    }
+    func cut(_ doc: MGSolidDocument, _ f: MGFramedStill, ids: [String]? = nil) -> [String] {
+        let v = f.still
+        return MGSolidFraming.cutParts(doc, view: v.view, params: v.params, camera: v.camera, aspect: v.width / v.height, window: f.window,
+                                       ids: ids)
+    }
+
+    /// The pack step is a close-up of the pack, not a whole-figure view: the subject is whole and large, the context
+    /// (head, legs) is cut at the safe window and clipped there. Before (PR #51 head), the step zoomed out to the whole
+    /// figure and the pack filled a few per cent of the window; at main it was a close-up whose head sat under the band.
+    func testTheSubjectIsFramedAloneAndStaysLarge() throws {
+        let doc = try compile(Self.assembly())
+        let stills = doc.framedStills()
+        XCTAssertEqual(stills.map(\.rule), [.focus, .focus, .focus, .modelFitted])
+        let pack = stills[0]
+        XCTAssertEqual(MGSolidFraming.subjectParts(doc, shot: pack.shot).parts, ["pack"])
+        let pts = MGSolidFraming.Samples(doc.assembly, ids: ["pack"]).world(doc.assembly, pack.still.params, stage: MGSolidStage.zUpToYUp)
+        XCTAssertEqual(MGSolidFraming.filled(pts, camera: pack.still.camera, aspect: 1.6, window: pack.window), MGSolidFraming.fill, accuracy: 0.01)
+        XCTAssertEqual(cut(doc, pack, ids: ["pack"]), [], "the subject is whole")
+        XCTAssertTrue(cut(doc, pack).contains("head"), "context is cut at the safe window: \(cut(doc, pack))")
+        // The whole-figure step keeps every part whole.
+        XCTAssertEqual(cut(doc, stills[3]), [])
+        // No subject floor is missed in the pack steps.
+        let floors = doc.subjectIssues(stills)
+        XCTAssertEqual(floors.map(\.reason), ["framing.subject.small.step.2"])
+    }
+
+    /// A label at a far world point may not shrink the subject: with it the pack would miss its floors, so the anchors do
+    /// not join the fit and the camera is the pack's own close-up.
+    func testAFarLabelDoesNotShrinkTheSubject() throws {
+        let doc = try compile(Self.assembly())
+        let stills = doc.framedStills()
+        XCTAssertEqual(stills[2].still.camera, stills[0].still.camera)
+        XCTAssertEqual(MGSolidFraming.subjectParts(doc, shot: stills[2].shot).parts, ["pack"])
+        // So the far label's point is off the still: a world-point label names no part, so the overlay shows it as a
+        // callout (no dot) and the anchor rule does not refuse it.
+        XCTAssertEqual(report(Self.assembly())["ok"], .bool(true))
+        guard case .array(let issues)? = report(Self.assembly())["anchorIssues"] else { return XCTFail("anchorIssues") }
+        XCTAssertTrue(issues.isEmpty)
+    }
+
+    /// Two small engines far apart: the closest whole framing shows each one too small. The report warns with the
+    /// measure and exact repairs; applying the split repair (one step per engine) clears it.
+    func testASubjectThatMissesAFloorWarnsWithExactRepairs() throws {
+        let o = report(Self.assembly(far: false))
+        XCTAssertEqual(o["ok"], .bool(true), "a warning, not a refusal: \(o["reason"] ?? .null)")
+        guard case .array(let floors)? = o["subjectFloors"], case .object(let f)? = floors.first, case .array(let warnings)? = o["warnings"],
+              case .string(let repair)? = f["repair"] else { return XCTFail("subjectFloors") }
+        XCTAssertEqual(floors.count, 1)
+        XCTAssertEqual(f["step"], .number(2))
+        XCTAssertEqual(f["split"], .array([.array([.string("jetL")]), .array([.string("jetR")])]))
+        XCTAssertEqual(f["subset"], .array([.string("jetL")]))
+        XCTAssertTrue(repair.contains(#""focus": ["jetL"] then "focus": ["jetR"]"#), repair)
+        XCTAssertTrue(repair.contains(#"focus a subset in the step: "focus": ["jetL"]"#), repair)
+        XCTAssertTrue(warnings.contains(.object(["reason": .string("framing.subject.small.step.2"), "part": .string("jetL")])))
+        XCTAssertEqual(MGSolidReasons.lookup("framing.subject.small.step.2")?.kind, .warning)
+        XCTAssertEqual(MGSolidReasons.lookup("framing.subject.small.beat.2")?.strict, false)
+        // The repair, applied: one engine per step.
+        XCTAssertNil(report(Self.assembly(step2: #""focus": ["jetL"]"#, far: false))["subjectFloors"])
+    }
+
+    /// The review's adversarial fixture: a 2000 mm wall spans the whole view behind a 20 mm detail and every wall vertex
+    /// lies outside the view. The crop test reads triangles, so the wall counts as shown and cut; the detail (the
+    /// subject) is whole. With the wall as the subject, the wall is framed whole.
+    func testAFaceThatSpansTheViewWithEveryVertexOutsideIsCut() throws {
+        let spanning = #"{"v":2,"kind":"assembly","title":"Spanning surface","parts":[{"id":"wall","shape":{"box":{"size":[2000,20,2000],"at":[0,100,0]}}},{"id":"detail","shape":{"box":{"size":[20,20,20],"at":[0,0,0]}}}],"steps":[{"say":"The detail.","camera":"front","focus":["detail"]}]}"#
+        let doc = try compile(spanning)
+        let f = try XCTUnwrap(doc.framedStills().first)
+        let v = f.still
+        // Every wall vertex projects outside the view: the vertex test would call the wall unshown.
+        let wall = MGSolidFraming.Samples(doc.assembly, ids: ["wall"]).world(doc.assembly, v.params, stage: MGSolidStage.zUpToYUp)
+        let full = MGSolidFraming.Window(left: -1, right: 1, bottom: -1, top: 1)
+        let b = MGSolidFraming.Basis(yaw: v.camera.yaw, pitch: v.camera.pitch), fo = MGSolidFraming.focal(v.camera.fieldOfView)
+        for p in wall {
+            let r = p - v.camera.targetVector, z = v.camera.distance + r.dot(b.fwd)
+            XCTAssertFalse(abs(r.dot(b.right) * fo / 1.6 / z) <= 1 && abs(r.dot(b.up) * fo / z) <= 1)
+        }
+        XCTAssertEqual(cut(doc, f), ["wall"])
+        XCTAssertEqual(cut(doc, f, ids: ["detail"]), [])
+        XCTAssertGreaterThan(doc.unitPixels(v, units: ["wall"])?["wall"] ?? 0, 400_000, "the wall fills the view")
+        XCTAssertEqual(MGSolidFraming.cutParts(doc, view: v.view, params: v.params, camera: v.camera, aspect: 1.6, window: full), ["wall"])
+        // The wall as the subject: framed whole.
+        let wallDoc = try compile(spanning.replacingOccurrences(of: #""focus":["detail"]"#, with: #""focus":["wall"]"#))
+        let g = try XCTUnwrap(wallDoc.framedStills().first)
+        XCTAssertEqual(cut(wallDoc, g), [])
+    }
+
+    /// A face that straddles the near plane (a floor under the camera) is in view: the test needs no division by depth.
+    func testAFaceAcrossTheNearPlaneCounts() throws {
+        let doc = try compile(#"{"v":2,"kind":"assembly","parts":[{"id":"floor","shape":{"box":{"size":[4000,4000,10],"at":[0,0,-200]}}},{"id":"detail","shape":{"box":{"size":[20,20,20]}}}],"steps":[{"say":"The detail.","camera":"low","focus":["detail"]}]}"#)
+        let f = try XCTUnwrap(doc.framedStills().first)
+        XCTAssertEqual(cut(doc, f), ["floor"])
+    }
+
+    /// One framing function, four hosts: the render plan's step stills, the story's hold frames (they take the still
+    /// cameras), the beat stills and the SwiftUI solid pane frame each step or beat the same way; no subject part is cut
+    /// in any of them; and the renderer clips the model to each still's safe window.
+    @MainActor func testStillsStoryRenderPlanAndPaneShareTheSubjectRule() throws {
+        let doc = try compile(Self.assembly())
+        let plan = MGSolidRenderPlan(doc, sourceName: "figure.json", source: MGSolidSource(data: Data(Self.assembly().utf8)))
+        let cams = plan.cameras(doc, width: 1280, height: 800)
+        let stills = doc.framedStills()
+        var stepCameras: [MGSolidCamera] = []
+        for f in stills {
+            let k = try XCTUnwrap(plan.stills.firstIndex { $0.step == f.still.step })
+            XCTAssertEqual(f.still.camera, cams.stills[k], "step \((f.still.step ?? 0) + 1)")
+            XCTAssertEqual(cut(doc, f, ids: MGSolidFraming.subjectParts(doc, shot: f.shot).parts), [], "step \((f.still.step ?? 0) + 1)")
+            stepCameras.append(f.still.camera)
+        }
+        let story = try MGStoryPlan(captions: doc.steps.map(\.say), spins: doc.steps.map(\.spin))
+        for k in doc.steps.indices {
+            XCTAssertEqual(story.camera(frame: story.holdStartFrame(k), beatCameras: stepCameras), stepCameras[k], "story beat \(k + 1)")
+        }
+        let ex = try MGExplainer.parse(data: Data(Self.explainer().utf8)).get()
+        let beats = MGExplainerFrame.beatStills(ex)
+        let solid = try XCTUnwrap(beats.solid)
+        // The whole-figure beat keeps the earlier framing: a pane has no band, and nothing leaves it.
+        XCTAssertEqual(beats.stills.map(\.rule), [.focus, .focus, .focus, .model])
+        for f in beats.stills {
+            XCTAssertEqual(cut(solid, f, ids: MGSolidFraming.subjectParts(solid, shot: f.shot).parts), [], "beat \((f.still.beat ?? 0) + 1)")
+        }
+        XCTAssertEqual(MGSolidFraming.subjectParts(solid, shot: beats.stills[0].shot).parts, ["pack"])
+        let pane = try ExplainerPaneFramingTests().playPane(ex, "figure")
+        XCTAssertEqual(pane.map(\.camera), beats.stills.map(\.still.camera))
+        // The explainer report warns for the engines beat, with the beat's `view` repair.
+        guard case .object(let o) = MGExplainerReport.check(data: Data(Self.explainer().utf8), profile: .strict).json,
+              case .array(let floors)? = o["subjectFloors"], case .object(let f)? = floors.first, case .string(let repair)? = f["repair"]
+        else { return XCTFail("subjectFloors") }
+        XCTAssertEqual(f["beat"], .number(2))
+        XCTAssertTrue(repair.contains(#"focus a subset in its "view": "focus": ["jetL"]"#), repair)
+    }
+
+    /// The renderer's clip: the safe window's pixel rectangle, and a real render whose title and caption bands hold only
+    /// the studio backdrop although the pack close-up cuts the head there.
+    func testTheRendererClipsTheModelToTheSafeWindow() throws {
+        let bands = MGSolidRenderPlan.bands(width: 1280, height: 800)
+        let w = MGSolidFraming.Window(titleBand: bands.title, captionBand: bands.caption)
+        let r = try XCTUnwrap(MGSolidRenderer.clipRect(w, width: 1280, height: 800))
+        XCTAssertEqual(r.minY, 160, accuracy: 0.5, "above the 160 px caption band (0.2 of 800)")
+        XCTAssertEqual(r.maxY, 688, accuracy: 0.5, "below the 112 px title band (0.14 of 800)")
+        XCTAssertEqual(r.width, 1280, accuracy: 0.5)
+        XCTAssertNil(MGSolidRenderer.clipRect(MGSolidFraming.Window(titleBand: 0, captionBand: 0), width: 1280, height: 800))
+        let doc = try compile(Self.assembly())
+        let f = try XCTUnwrap(doc.framedStills().first)
+        let renderer = MGSolidRenderer(document: doc)
+        renderer.show(document: doc, view: f.still.view)
+        renderer.apply(f.still.params)
+        renderer.setCamera(f.still.camera)
+        guard let clipped = renderer.render(width: 320, height: 200, clip: w), let open = renderer.render(width: 320, height: 200) else {
+            throw XCTSkip("no Metal device")
+        }
+        guard let backdrop = MGSolidRenderer.composite(Self.clear(320, 200), width: 320, height: 200, background: renderer.lighting.background)
+        else { return XCTFail("backdrop") }
+        let c = Self.rgba(clipped), o = Self.rgba(open), bg = Self.rgba(backdrop)
+        let bandRows = Array(0..<Int(200 * bands.title)) + Array(Int(200 * (1 - bands.caption)) + 1..<200)
+        var differsOpen = 0
+        for y in bandRows { for x in 0..<320 {
+            let i = (y * 320 + x) * 4
+            XCTAssertEqual(Array(c[i..<i + 3]), Array(bg[i..<i + 3]), "row \(y)")
+            if Array(o[i..<i + 3]) != Array(bg[i..<i + 3]) { differsOpen += 1 }
+        } }
+        XCTAssertGreaterThan(differsOpen, 100, "without the clip, the cut head is drawn in the title band")
+    }
+
+    static func clear(_ w: Int, _ h: Int) -> CGImage {
+        let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        return ctx.makeImage()!
+    }
+
+    /// RGBA bytes, rows from the top.
+    static func rgba(_ img: CGImage) -> [UInt8] {
+        let w = img.width, h = img.height
+        var out = [UInt8](repeating: 0, count: w * h * 4)
+        let ctx = CGContext(data: &out, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return out
+    }
+
+    /// Exact repairs (review S2): a 37-character resolved id is printed whole, and a fragment too long for the line is
+    /// never cut: the repair names the structured field instead.
+    func testRepairsAreExact() {
+        let long = "abcdefghijklmnopqrstuvwx.turbineWheel"
+        let g = MGSubjectSmall.Group(unit: "abcdefghijklmnopqrstuvwx", parts: [long], pixels: 10, extent: 3, hiddenBy: [], whole: false)
+        let other = MGSubjectSmall.Group(unit: "b", parts: ["b"], pixels: 9000, extent: 90, hiddenBy: [], whole: true)
+        let one = MGSubjectSmall(step: 0, beat: nil, groups: [g, other], small: [0], cut: [], fill: 0.88, minimumPixels: 3379, minimumExtent: 24)
+        XCTAssertTrue(one.repair.contains(#""focus": ["abcdefghijklmnopqrstuvwx.turbineWheel"]"#), one.repair)
+        XCTAssertFalse(one.repair.contains("…"))
+        // Eight 24-character units: the split fragment is longer than the line, so the repair points at `split`.
+        let units = (0..<8).map { "unit\($0)" + String(repeating: "x", count: 19) }
+        let many = MGSubjectSmall(step: 3, beat: nil, groups: units.map { .init(unit: $0, parts: [$0 + ".a"], pixels: 5, extent: 2, hiddenBy: [units[0]], whole: true) },
+                                  small: Array(0..<8), cut: [], fill: 0.88, minimumPixels: 3379, minimumExtent: 24)
+        XCTAssertLessThanOrEqual(many.repair.unicodeScalars.count, MGAnnotationAnchorIssue.repairScalars)
+        if many.repair.contains("[") {
+            // Any JSON in the line is complete.
+            XCTAssertEqual(many.repair.filter { $0 == "[" }.count, many.repair.filter { $0 == "]" }.count, many.repair)
+        }
+        XCTAssertTrue(many.repair.contains("`split`"), many.repair)
+        XCTAssertEqual(many.split, units.map { [$0] })
+        XCTAssertEqual(MGExactRepair.json("a\"b\\c"), #""a\"b\\c""#)
+        let unit = MGSmallUnit(unit: long, pixels: 10, step: 1, beat: nil, stills: 2, minimum: 512, width: 1280, height: 800)
+        XCTAssertTrue(unit.repair.contains(#""focus": ["abcdefghijklmnopqrstuvwx.turbineWheel"]"#), unit.repair)
+    }
+}

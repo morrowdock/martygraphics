@@ -4,32 +4,40 @@
 
 - Engine fixes from the remaining failures recorded in a prompt-to-3D evaluation round (r2j): figures cut by the frame
   or under the title band, wrist-ring engines too small to read, and full-width numbers.
-  - **Shown parts stay whole** (one framing rule for stills, story hold frames, `MGSolidRenderPlan` and the SwiftUI
-    pane). Every part a still draws solid (not hidden, not a ghost) that its camera shows at all now lies wholly inside
-    the safe window, clear of the title and caption bands (`MGSolidFraming.solidParts`, `cutParts`). A focus close-up
-    that cuts a solid part widens (`MGSolidFraming.widen`): the cut parts join the fit until none is cut. An inferred
-    focus (`highlight`, section) widens as far as needed; an explicit `focus` widens only while its parts fill at least
-    25 % of the safe window (`minimumFocusFill`, the minimum zoom). The whole-model rule no longer keeps an earlier
-    framing that reaches into the title band (before, only `hero.png` kept the band free). Causes found: the focus fit
-    read only the focus parts and anchors (a head above a highlighted back pack sat under the title band, legs were
-    cut), and a label at a world point pulled an explicit close-up to one side. Poses, explode values, ghosts and cuts
-    were not the cause.
-  - **`framing.cut.step.<n>`, `framing.cut.beat.<n>`** (new warnings, never refused): an explicit `focus` close-up
-    that still cuts a solid part. The check reports add `framingCuts` (`{"step", "beat", "parts", "ghost", "repair"}`)
-    with the exact `ghost` list that makes the cut parts see-through context (or: remove the `focus`). A warning, not a
-    refusal: the focus is whole and the still is truthful; the author asked for the close-up.
+  - **Subject-first framing** (one rule for stills, story hold frames, `MGSolidRenderPlan` and the SwiftUI pane). A
+    still's subject (`MGSolidFraming.subjectParts`) is its explicit `focus`, or else its highlighted, section and
+    annotated parts, measured alone (no touching context, no world-point anchor). The camera takes the closest
+    framing that keeps every subject part whole; the annotation anchors join only when the subject keeps its floors:
+    a 25 % fill of the safe window (`subjectFill`), and per subject group 0.5 % of the safe window's pixels
+    (`subjectAreaShare`) and a 24 px shorter side at 800 px high (`subjectExtentPixels`). Context may be cut at the
+    safe window's edges; the renderer clips the model to the safe window (`MGSolidRenderer.render(width:height:clip:)`,
+    used for every still and story frame), so nothing is drawn under the title or caption band. The whole-model rule
+    keeps the title band free. The unblocked-focus probe tests the subject. Causes found: at main a focus fit read
+    only the focus and anchors (a head above a highlighted back pack sat under the title band); PR #51's first fix
+    widened the close-ups until nothing was cut, which shrank the subjects; this replaces it.
+  - **`framing.subject.small.step.<n>`, `framing.subject.small.beat.<n>`** (new warnings, never refused): the
+    subject misses a floor at the closest whole framing. The check reports add `subjectFloors` with the measure and
+    exact repairs (`split`, `subset`, `ghost`). A label at a world point that a subject close-up leaves out is drawn
+    as a callout and is no longer an `offscreen` anchor issue.
+  - **Crops from triangles.** `MGSolidFraming.cutParts` tests every triangle in camera space against the five view
+    planes, so a face that spans the view with every vertex outside it, or crosses the near plane, counts. The render
+    manifest lists a step still's clipped parts as `clipped`.
+  - **Exact repairs.** Repair lines write ids as complete JSON strings (`MGExactRepair`) and never cut a JSON
+    fragment; when it does not fit the 400-scalar line, the line names the structured field that holds it.
   - **`unit.small.<id>`** (new warning, never refused): a unit (component instance or plain part) that a shown label or
     arrow rides on, or that a step or beat highlights, covers fewer than 0.05 % of a 1280 × 800 frame (512 px) in every
     still that shows it, measured by a half-size depth raster of the solid parts (`MGSmallUnitRules`,
     `MGSolidDocument.smallUnits`). The check reports add `smallUnits` with the most pixels, the still and the repair
     (a focused view, a larger size, a closer camera). New `MGSolidDocument.framedStills()` and
     `MGExplainerFrame.beatStills(_:)` give every still as the render tool frames it.
-  - **Unicode NFKC for rule N1 and declared names.** Both read text in NFKC form (`MGSolidFacts.nfkc`): a declared
-    name is normalized before its rules (so full-width "Ｍａｃｈ２" is refused as the quantity "Mach2") and kept in that
-    form; a text token matches a name exactly (case-sensitive, whole token) after the same normalization. A character
-    is a number when it, or its NFKC form, holds a Numeric_Type Decimal, Digit or Numeric scalar: digits of every
-    script (full-width, Arabic-Indic, Devanagari), superscripts, subscripts, fractions, enclosed numbers, Roman and
-    CJK numerals, and compatibility symbols such as "㋀" (NFKC "1月"). Captions are shown as written.
+  - **Unicode NFKC for rule N1 and declared names.** Text is put in NFKC form (one grapheme at a time, with a map
+    back) before it is split into tokens (`MGSolidFacts.typedNumberOffsets`), in captions, labels, titles, board
+    cells, `add` and `set`. A token matches a declared name when the NFKC forms are equal (exact, case-sensitive), so
+    full-width "Ｆ－３５" matches "F-35"; "㎏Mk4" and "kgMk4" get one answer. In other tokens, a character is a
+    number when its normalized form holds a digit or the original has a numeric value ("Ⅻ", "²", "½", Arabic-Indic
+    digits, "㋀"). A name whose original form holds a number character other than an ASCII digit ("Ⅻ2", "Mk²",
+    "Ａ３２０") is `names.number.<n>`; other names are kept in NFKC form ("Ｍａｃｈ２" is refused as "Mach2").
+    Captions are shown as written.
 
 - Engine fixes from four failures recorded in a prompt-to-3D evaluation round: pointers to a part centre, model names
   in text, force arrows that left their parts, and an empty board table.
