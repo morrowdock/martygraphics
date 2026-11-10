@@ -1,0 +1,333 @@
+{
+  "checks" : {
+    "gearPairs" : 6,
+    "gearsEngage" : true,
+    "maxPenetrationMM" : -0.21520590891061531,
+    "meshesClosed" : true,
+    "minClearanceMM" : 0.21520590891061531,
+    "openMeshes" : [
+
+    ],
+    "toleranceMM" : 0.02
+  },
+  "engine" : {
+    "assemblyVersions" : [
+      1,
+      2
+    ],
+    "name" : "MartyGraphics",
+    "reportFormat" : 1,
+    "snapshotFormats" : [
+      "martygraphics.solid.snapshot\/1",
+      "martygraphics.solid.snapshot\/2"
+    ],
+    "version" : "unreleased"
+  },
+  "framesRendered" : 312,
+  "outputs" : [
+    {
+      "file" : "hero.png",
+      "framing" : "model",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "file" : "exploded.png",
+      "framing" : "model",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "camera" : {
+        "distance" : 285.07491521894877,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          5.9834092251491287,
+          -11.734918968896933,
+          9.5750263681209518
+        ],
+        "yaw" : 32
+      },
+      "file" : "step-1.png",
+      "framing" : "modelFitted",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "autoGhost" : [
+
+      ],
+      "camera" : {
+        "distance" : 114.41289932460265,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          -0.13996170807661654,
+          0.92716153921690592,
+          -0.18036407908127214
+        ],
+        "yaw" : 32
+      },
+      "clipped" : [
+        "base.base",
+        "base.bolt2",
+        "base.bolt3",
+        "base.bolt4",
+        "stage.ring",
+        "stage.carrier",
+        "stage.planet1",
+        "stage.planet2",
+        "stage.planet3"
+      ],
+      "file" : "step-2.png",
+      "focusSamples" : 42,
+      "framing" : "focus",
+      "height" : 800,
+      "occluded" : 0,
+      "offView" : 0,
+      "view" : "preset",
+      "width" : 1280
+    },
+    {
+      "autoGhost" : [
+
+      ],
+      "camera" : {
+        "distance" : 196.97901485970198,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          -1.5013517448355436,
+          -1.2541929389926434,
+          4.4109336625516349
+        ],
+        "yaw" : 32
+      },
+      "clipped" : [
+        "base.base",
+        "base.bolt1",
+        "base.bolt6",
+        "stage.ring"
+      ],
+      "file" : "step-3.png",
+      "focusSamples" : 42,
+      "framing" : "focus",
+      "height" : 800,
+      "occluded" : 0,
+      "offView" : 0,
+      "view" : "preset",
+      "width" : 1280
+    },
+    {
+      "autoGhost" : [
+
+      ],
+      "camera" : {
+        "distance" : 129.87635662088141,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          -1.055803657358152,
+          11.624589266326101,
+          4.2070461600551425
+        ],
+        "yaw" : 32
+      },
+      "clipped" : [
+        "base.base",
+        "base.bolt2",
+        "stage.sun",
+        "stage.ring",
+        "stage.planet2",
+        "stage.planet3"
+      ],
+      "file" : "step-4.png",
+      "focusSamples" : 48,
+      "framing" : "focus",
+      "height" : 800,
+      "occluded" : 0,
+      "offView" : 0,
+      "view" : "preset",
+      "width" : 1280
+    },
+    {
+      "camera" : {
+        "distance" : 529.9526211678359,
+        "fieldOfView" : 30,
+        "pitch" : 35.264000000000003,
+        "target" : [
+          11.148601758840693,
+          8.9524747835591238,
+          11.148601758840696
+        ],
+        "yaw" : 45
+      },
+      "file" : "step-5.png",
+      "framing" : "modelFitted",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "beats" : [
+        {
+          "beat" : 1,
+          "camera" : {
+            "distance" : 285.07491521894877,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              5.9834092251491287,
+              -11.734918968896933,
+              9.5750263681209518
+            ],
+            "yaw" : 32
+          },
+          "cut" : false,
+          "holdStart" : 0,
+          "seconds" : 6.4000000000000004,
+          "start" : 0
+        },
+        {
+          "autoGhost" : [
+
+          ],
+          "beat" : 2,
+          "blockedBy" : "stage.planet3",
+          "camera" : {
+            "distance" : 114.41289932460265,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              -0.13996170807661654,
+              0.92716153921690592,
+              -0.18036407908127214
+            ],
+            "yaw" : 32
+          },
+          "cut" : true,
+          "cutReason" : "blocked",
+          "focusSamples" : 42,
+          "holdStart" : 6.4000000000000004,
+          "moveSeconds" : 0,
+          "occluded" : 0,
+          "offView" : 0,
+          "path" : "cut",
+          "pathReason" : "blocked",
+          "seconds" : 4.0999999999999996,
+          "start" : 6.4000000000000004,
+          "view" : "preset"
+        },
+        {
+          "autoGhost" : [
+
+          ],
+          "beat" : 3,
+          "blockedBy" : "stage.carrier",
+          "camera" : {
+            "distance" : 196.97901485970198,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              -1.5013517448355436,
+              -1.2541929389926434,
+              4.4109336625516349
+            ],
+            "yaw" : 32
+          },
+          "cut" : true,
+          "cutReason" : "blocked",
+          "focusSamples" : 42,
+          "holdStart" : 10.5,
+          "moveSeconds" : 0,
+          "occluded" : 0,
+          "offView" : 0,
+          "path" : "cut",
+          "pathReason" : "blocked",
+          "seconds" : 6.9000000000000004,
+          "start" : 10.5,
+          "view" : "preset"
+        },
+        {
+          "autoGhost" : [
+
+          ],
+          "beat" : 4,
+          "blockedBy" : "stage.carrier",
+          "camera" : {
+            "distance" : 129.87635662088141,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              -1.055803657358152,
+              11.624589266326101,
+              4.2070461600551425
+            ],
+            "yaw" : 32
+          },
+          "cut" : true,
+          "cutReason" : "blocked",
+          "focusSamples" : 48,
+          "holdStart" : 17.399999999999999,
+          "moveSeconds" : 0,
+          "occluded" : 0,
+          "offView" : 0,
+          "path" : "cut",
+          "pathReason" : "blocked",
+          "seconds" : 7.4000000000000004,
+          "start" : 17.399999999999999,
+          "view" : "preset"
+        },
+        {
+          "beat" : 5,
+          "blockedBy" : "stage.carrier",
+          "camera" : {
+            "distance" : 529.9526211678359,
+            "fieldOfView" : 30,
+            "pitch" : 35.264000000000003,
+            "target" : [
+              11.148601758840693,
+              8.9524747835591238,
+              11.148601758840696
+            ],
+            "yaw" : 45
+          },
+          "cut" : true,
+          "cutReason" : "blocked",
+          "holdStart" : 24.800000000000001,
+          "moveSeconds" : 0,
+          "path" : "cut",
+          "pathReason" : "blocked",
+          "seconds" : 5.7000000000000002,
+          "start" : 24.800000000000001
+        }
+      ],
+      "codec" : "h264",
+      "file" : "story.mp4",
+      "fps" : 10,
+      "frames" : 305,
+      "height" : 800,
+      "holdSeconds" : {
+        "max" : 9,
+        "min" : 3
+      },
+      "routedTransitionSeconds" : 1,
+      "seconds" : 30.5,
+      "transitionSeconds" : 0.59999999999999998,
+      "width" : 1280
+    },
+    {
+      "bytes" : 3991542,
+      "file" : "snapshot.json",
+      "sha256" : "d27bbb03725acd49c0dc599614990e9d67a3262d70fff528a725bc73b4424652"
+    }
+  ],
+  "parts" : 13,
+  "source" : {
+    "file" : "planetary-components.json",
+    "lines" : 12,
+    "sha256" : "bddaaa590ca70d2d603080726fbd70c950309e81e67121228d55971232416c5c"
+  },
+  "steps" : 5,
+  "title" : "Planetary gear set (from components)"
+}

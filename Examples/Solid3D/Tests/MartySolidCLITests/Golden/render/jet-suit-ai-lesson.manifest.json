@@ -1,0 +1,556 @@
+{
+  "captions" : [
+    "A pilot wears small jet engines on each forearm and on the back, all nozzles pointing down. This is the Daedalus layout; the newer suit differs.",
+    "Each jet pushes its engine up, and gravity pulls the pilot, suit and fuel down. In a hover the upward parts of the thrusts balance the weight, and side forces and turning moments balance.",
+    "The table gives claimed figures for the current suit, which is not the layout shown here.",
+    "To steer, the pilot moves one arm, and the forearm engines fixed to it tilt their thrust. The forces no longer balance, so the body moves that way.",
+    "From behind: the back engine pushes near the body's centre line. How the load is shared between arm and back engines was not found in this search.",
+    "Cut open one arm engine: air enters the intake, and the spinning compressor wheel flings it outward into the diffuser, which squeezes it.",
+    "Fuel burns with the oxygen in the squeezed air. The hot gas spins the turbine at 1 turn per input turn, the same as the compressor, because one shaft joins them.",
+    "The hot gas speeds up through the nozzle. Thrust is the reaction to that gas being pushed out fast.",
+    "Limits: only the shaft turning is solved. Airflow, burning fuel and thrust are not simulated, so the force arrows carry no value."
+  ],
+  "engine" : {
+    "assemblyVersions" : [
+      1,
+      2
+    ],
+    "name" : "MartyGraphics",
+    "reportFormat" : 1,
+    "snapshotFormats" : [
+      "martygraphics.solid.snapshot\/1",
+      "martygraphics.solid.snapshot\/2"
+    ],
+    "version" : "unreleased"
+  },
+  "framesRendered" : 789,
+  "kind" : "explainer",
+  "legend" : "Solved 19 · Given 1 · Not checked 16",
+  "outputs" : [
+    {
+      "file" : "board-0.png",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "file" : "solid-0.png",
+      "framing" : "modelFitted",
+      "height" : 800,
+      "width" : 1280
+    },
+    {
+      "boardPane" : false,
+      "camera" : {
+        "distance" : 1820.6258772932858,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          230.87269350282082,
+          1287.9372380319971,
+          -65.717513537359125
+        ],
+        "yaw" : 32
+      },
+      "file" : "beat-1.png",
+      "framing" : "focus",
+      "height" : 800,
+      "offView" : 0,
+      "width" : 1280
+    },
+    {
+      "bytes" : 8335567,
+      "file" : "snapshot-beat-1.json",
+      "sha256" : "06eb8c3c2f9c62a894bb104867529fbaaa344b7e24f48f2af000dfe68b50e3c2"
+    },
+    {
+      "boardPane" : false,
+      "camera" : {
+        "distance" : 2199.874578737521,
+        "fieldOfView" : 30,
+        "pitch" : 35.264000000000003,
+        "target" : [
+          -88.363133350629965,
+          1229.380609498681,
+          -2.852185109176836
+        ],
+        "yaw" : 45
+      },
+      "file" : "beat-2.png",
+      "framing" : "focus",
+      "height" : 800,
+      "offView" : 0,
+      "width" : 1280
+    },
+    {
+      "bytes" : 8364011,
+      "file" : "snapshot-beat-2.json",
+      "sha256" : "3be2e82d0362eda24483b3dd6fc4350334fd4678fcc622536ec6ef4ace6eb31c"
+    },
+    {
+      "boardPane" : true,
+      "boardShare" : 0.27960526315789475,
+      "camera" : {
+        "distance" : 3524.1105958272192,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          172.5816151512399,
+          942.4440354448252,
+          -58.247596223640826
+        ],
+        "yaw" : 32
+      },
+      "file" : "beat-3.png",
+      "framing" : "modelFitted",
+      "height" : 800,
+      "offView" : 0,
+      "width" : 1280
+    },
+    {
+      "bytes" : 8335104,
+      "file" : "snapshot-beat-3.json",
+      "sha256" : "d4231392989a6980dad4b5bec99bd1fbbd612dbeecaf586c103696bb577e9539"
+    },
+    {
+      "arrowDrops" : [
+        {
+          "by" : "eL2.casing",
+          "id" : "aL1",
+          "part" : "eL1.casing"
+        },
+        {
+          "by" : "eR1.casing",
+          "id" : "aR2",
+          "part" : "eR2.casing"
+        }
+      ],
+      "boardPane" : true,
+      "boardShare" : 0.27960526315789475,
+      "camera" : {
+        "distance" : 3454.8825294488211,
+        "fieldOfView" : 30,
+        "pitch" : 8,
+        "target" : [
+          218.33426982829667,
+          881.5,
+          -12.499999999999957
+        ],
+        "yaw" : 0
+      },
+      "file" : "beat-4.png",
+      "framing" : "model",
+      "height" : 800,
+      "mainRule" : true,
+      "offView" : 0,
+      "width" : 1280
+    },
+    {
+      "bytes" : 8297994,
+      "file" : "snapshot-beat-4.json",
+      "sha256" : "ad904f444e1afc93e076684d017927fade308f66245157206143789dee7fdf1e"
+    },
+    {
+      "boardPane" : true,
+      "boardShare" : 0.27960526315789475,
+      "camera" : {
+        "distance" : 1322.4804615345083,
+        "fieldOfView" : 30,
+        "pitch" : 24,
+        "target" : [
+          -329.85951329569519,
+          1224.6211938374672,
+          -215.47641818204909
+        ],
+        "yaw" : 200
+      },
+      "file" : "beat-5.png",
+      "framing" : "focus",
+      "height" : 800,
+      "offView" : 0,
+      "width" : 1280
+    },
+    {
+      "bytes" : 8339591,
+      "file" : "snapshot-beat-5.json",
+      "sha256" : "d0ad85ceaa72d5441c712eee93b59509eb777e0b3253351325086ebcbdf5a6de"
+    },
+    {
+      "autoGhost" : [
+
+      ],
+      "boardPane" : true,
+      "boardShare" : 0.27960526315789475,
+      "camera" : {
+        "distance" : 801.12974839297999,
+        "fieldOfView" : 30,
+        "pitch" : 8,
+        "target" : [
+          -511.44746775157239,
+          1128.1581577006862,
+          161.18666200735473
+        ],
+        "yaw" : 0
+      },
+      "facesCut" : true,
+      "file" : "beat-6.png",
+      "focusSamples" : 44,
+      "framing" : "focus",
+      "height" : 800,
+      "occluded" : 0,
+      "offView" : 0,
+      "view" : "preset",
+      "width" : 1280
+    },
+    {
+      "bytes" : 8309223,
+      "file" : "snapshot-beat-6.json",
+      "sha256" : "376485d8fe7e3ed838f7864bb4f5fb3db74fd942bd2b1a3a00ddbe5de622dfae"
+    },
+    {
+      "autoGhost" : [
+
+      ],
+      "boardPane" : true,
+      "boardShare" : 0.27960526315789475,
+      "camera" : {
+        "distance" : 728.80496890595816,
+        "fieldOfView" : 30,
+        "pitch" : 8,
+        "target" : [
+          -423.24946191527141,
+          1012.7308067620845,
+          -89.618123479367881
+        ],
+        "yaw" : 0
+      },
+      "facesCut" : true,
+      "file" : "beat-7.png",
+      "focusSamples" : 44,
+      "framing" : "focus",
+      "height" : 800,
+      "occluded" : 0,
+      "offView" : 0,
+      "view" : "preset",
+      "width" : 1280
+    },
+    {
+      "bytes" : 8303325,
+      "file" : "snapshot-beat-7.json",
+      "sha256" : "852ed676eb95ec09bc03010c4a1ea60992a85ea160fb747155477a667f34325c"
+    },
+    {
+      "autoGhost" : [
+
+      ],
+      "boardPane" : true,
+      "boardShare" : 0.27960526315789475,
+      "camera" : {
+        "distance" : 1135.2811470318716,
+        "fieldOfView" : 30,
+        "pitch" : 8,
+        "target" : [
+          -503.28992529003307,
+          1051.2205070025443,
+          160.36385600082829
+        ],
+        "yaw" : 0
+      },
+      "facesCut" : true,
+      "file" : "beat-8.png",
+      "focusSamples" : 44,
+      "framing" : "focus",
+      "height" : 800,
+      "occluded" : 0,
+      "offView" : 0,
+      "view" : "preset",
+      "width" : 1280
+    },
+    {
+      "bytes" : 8308820,
+      "file" : "snapshot-beat-8.json",
+      "sha256" : "e75cfc36a86c9e633ab5f86a06798287c321b40fced2c2943ef89ac8d6cb5d50"
+    },
+    {
+      "boardPane" : true,
+      "boardShare" : 0.27960526315789475,
+      "camera" : {
+        "distance" : 1896.7488311487668,
+        "fieldOfView" : 30,
+        "pitch" : 28,
+        "target" : [
+          121.77639687097289,
+          1252.2855821430446,
+          -76.686765762910923
+        ],
+        "yaw" : 32
+      },
+      "file" : "beat-9.png",
+      "framing" : "focus",
+      "height" : 800,
+      "offView" : 0,
+      "width" : 1280
+    },
+    {
+      "bytes" : 8335574,
+      "file" : "snapshot-beat-9.json",
+      "sha256" : "597dff8736f1b9aefcfcb164ea9e198b8ce20a422a14248fcda389b19473c0f1"
+    },
+    {
+      "beats" : [
+        {
+          "beat" : 1,
+          "camera" : {
+            "distance" : 1820.6258772932858,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              230.87269350282082,
+              1287.9372380319971,
+              -65.717513537359125
+            ],
+            "yaw" : 32
+          },
+          "cut" : false,
+          "holdStart" : 0,
+          "offView" : 0,
+          "seconds" : 9,
+          "start" : 0
+        },
+        {
+          "beat" : 2,
+          "camera" : {
+            "distance" : 2199.874578737521,
+            "fieldOfView" : 30,
+            "pitch" : 35.264000000000003,
+            "target" : [
+              -88.363133350629965,
+              1229.380609498681,
+              -2.852185109176836
+            ],
+            "yaw" : 45
+          },
+          "cut" : false,
+          "holdStart" : 9.5999999999999996,
+          "moveSeconds" : 0.59999999999999998,
+          "offView" : 0,
+          "path" : "straight",
+          "pathReason" : "clear",
+          "seconds" : 9,
+          "start" : 9
+        },
+        {
+          "beat" : 3,
+          "camera" : {
+            "distance" : 3524.1105958272192,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              172.5816151512399,
+              942.4440354448252,
+              -58.247596223640826
+            ],
+            "yaw" : 32
+          },
+          "cut" : false,
+          "holdStart" : 18.600000000000001,
+          "layout" : {
+            "change" : "open",
+            "path" : "slide",
+            "seconds" : 0.59999999999999998
+          },
+          "moveSeconds" : 0.59999999999999998,
+          "offView" : 0,
+          "path" : "straight",
+          "pathReason" : "clear",
+          "seconds" : 7.0999999999999996,
+          "start" : 18
+        },
+        {
+          "arrowDrops" : [
+            {
+              "by" : "eL2.casing",
+              "id" : "aL1",
+              "part" : "eL1.casing"
+            },
+            {
+              "by" : "eR1.casing",
+              "id" : "aR2",
+              "part" : "eR2.casing"
+            }
+          ],
+          "beat" : 4,
+          "camera" : {
+            "distance" : 3454.8825294488211,
+            "fieldOfView" : 30,
+            "pitch" : 8,
+            "target" : [
+              218.33426982829667,
+              881.5,
+              -12.499999999999957
+            ],
+            "yaw" : 0
+          },
+          "cut" : false,
+          "holdStart" : 25.699999999999999,
+          "mainRule" : true,
+          "moveSeconds" : 0.59999999999999998,
+          "offView" : 0,
+          "path" : "straight",
+          "pathReason" : "clear",
+          "seconds" : 9,
+          "start" : 25.100000000000001
+        },
+        {
+          "beat" : 5,
+          "camera" : {
+            "distance" : 1322.4804615345083,
+            "fieldOfView" : 30,
+            "pitch" : 24,
+            "target" : [
+              -329.85951329569519,
+              1224.6211938374672,
+              -215.47641818204909
+            ],
+            "yaw" : 200
+          },
+          "cut" : false,
+          "holdStart" : 34.700000000000003,
+          "moveSeconds" : 0.59999999999999998,
+          "offView" : 0,
+          "path" : "straight",
+          "pathReason" : "clear",
+          "seconds" : 9,
+          "start" : 34.100000000000001
+        },
+        {
+          "autoGhost" : [
+
+          ],
+          "beat" : 6,
+          "camera" : {
+            "distance" : 801.12974839297999,
+            "fieldOfView" : 30,
+            "pitch" : 8,
+            "target" : [
+              -511.44746775157239,
+              1128.1581577006862,
+              161.18666200735473
+            ],
+            "yaw" : 0
+          },
+          "cut" : false,
+          "facesCut" : true,
+          "focusSamples" : 44,
+          "holdStart" : 43.700000000000003,
+          "moveSeconds" : 0.59999999999999998,
+          "occluded" : 0,
+          "offView" : 0,
+          "path" : "straight",
+          "pathReason" : "clear",
+          "seconds" : 9,
+          "start" : 43.100000000000001,
+          "view" : "preset"
+        },
+        {
+          "autoGhost" : [
+
+          ],
+          "beat" : 7,
+          "camera" : {
+            "distance" : 728.80496890595816,
+            "fieldOfView" : 30,
+            "pitch" : 8,
+            "target" : [
+              -423.24946191527141,
+              1012.7308067620845,
+              -89.618123479367881
+            ],
+            "yaw" : 0
+          },
+          "cut" : false,
+          "facesCut" : true,
+          "focusSamples" : 44,
+          "holdStart" : 52.700000000000003,
+          "moveSeconds" : 0.59999999999999998,
+          "occluded" : 0,
+          "offView" : 0,
+          "path" : "straight",
+          "pathReason" : "clear",
+          "seconds" : 9,
+          "start" : 52.100000000000001,
+          "view" : "preset"
+        },
+        {
+          "autoGhost" : [
+
+          ],
+          "beat" : 8,
+          "camera" : {
+            "distance" : 1135.2811470318716,
+            "fieldOfView" : 30,
+            "pitch" : 8,
+            "target" : [
+              -503.28992529003307,
+              1051.2205070025443,
+              160.36385600082829
+            ],
+            "yaw" : 0
+          },
+          "cut" : false,
+          "facesCut" : true,
+          "focusSamples" : 44,
+          "holdStart" : 61.700000000000003,
+          "moveSeconds" : 0.59999999999999998,
+          "occluded" : 0,
+          "offView" : 0,
+          "path" : "straight",
+          "pathReason" : "clear",
+          "seconds" : 7.7999999999999998,
+          "start" : 61.100000000000001,
+          "view" : "preset"
+        },
+        {
+          "beat" : 9,
+          "camera" : {
+            "distance" : 1896.7488311487668,
+            "fieldOfView" : 30,
+            "pitch" : 28,
+            "target" : [
+              121.77639687097289,
+              1252.2855821430446,
+              -76.686765762910923
+            ],
+            "yaw" : 32
+          },
+          "cut" : false,
+          "holdStart" : 69.5,
+          "moveSeconds" : 0.59999999999999998,
+          "offView" : 0,
+          "path" : "straight",
+          "pathReason" : "clear",
+          "seconds" : 9,
+          "start" : 68.900000000000006
+        }
+      ],
+      "codec" : "h264",
+      "file" : "story.mp4",
+      "fps" : 10,
+      "frames" : 779,
+      "height" : 800,
+      "holdSeconds" : {
+        "max" : 9,
+        "min" : 3
+      },
+      "routedTransitionSeconds" : 1,
+      "seconds" : 77.900000000000006,
+      "transitionSeconds" : 0.59999999999999998,
+      "width" : 1280
+    }
+  ],
+  "source" : {
+    "file" : "lesson.json",
+    "lines" : 769,
+    "sha256" : "bb8f1893d90b869103fe84993a41585c5eaf8b73be2e8889a8cfe8f7f04b7df7"
+  },
+  "title" : "Gravity jet suit, Daedalus layout: how small jets lift a pilot (schematic)"
+}

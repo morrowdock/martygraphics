@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f65b17e14fb3ab17e6567542e6537742f7bad2a91f9d8015077feb75ccb3b0d3"
+      "sha256": "b58c47335b04ed646440d15406d005ca939ddc9a6aeae519f1c84b4a483ddcb0"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -171,7 +171,7 @@
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "c094a3e3b943564d52f8375bbe576812023cb181ad1b9e0367e349eb45249747"
+      "sha256": "4da8875273cff49a60da430092efb508c10ec1cd6d77a5823601b43448203cbd"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json",
@@ -458,6 +458,22 @@
       "sha256": "80ead89b10efa7f43da8f9fe03ca10a37f692f1d5d3f31654d4e553311f494b2"
     },
     {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/gears-mixed.manifest.json",
+      "sha256": "17e6d8b40d38e7ef11f8ea2911d01c981b9c8a443f5f6f7a1b3f1b8f900828c4"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/jet-suit-ai-lesson.manifest.json",
+      "sha256": "6d98795b3a1c3a4fa405440c175a4f13d83d87ada77a7888ddb7b67334063758"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/planetary-components.manifest.json",
+      "sha256": "8dea25cbd47d00b22f29c0c6fa3bfbffec6935ee016f37be24f147ee925e0e6f"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/robot-joint-gearbox.manifest.json",
+      "sha256": "97f17c2481bf4be53bfe7b244f0a662ba40751772bd7bf9ae3b5879c49bb354a"
+    },
+    {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/synthetic-idle.check.json",
       "sha256": "d8fd7ff1d8353400816094690062f1471873c0ac1ee7557bebdacac823c51c23"
     },
@@ -475,7 +491,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "6aa3f4ad01ec8efa9324194192e7755f83322d1dc48baf0f311ef3552b33c27a"
+      "sha256": "d2709bc42e61c082aece542066053d7e035e0f0851b68ba70e40812844b2900b"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
@@ -1179,7 +1195,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "10643dbbf54a2151b418ca4496a7e2ca774f9b873bff3531b12b404a19cb10cb"
+      "sha256": "5e0fe7a498390505bd208e677a7a9cdbbac389208ba0e9d61c4fc06ebcbd9685"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1223,7 +1239,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "dd75ffafcd760df5f34b1b4185477a7ce73eceb5616d04b7d60db7c561e10ddb"
+      "sha256": "1f846067770116b36d16cd2d95436d21c27e5f96659def5dc0fc88e1d1dbf268"
     },
     {
       "path": "docs/THIRD-PARTY.md",
