@@ -48,6 +48,50 @@ final class DeclaredNamesTests: XCTestCase {
         XCTAssertEqual(reason(mixed), "text.number.step.1")
     }
 
+    /// The re-check's list (PR #49): numbers, numbers with a unit and quantities are refused as names (`names.number.1`)
+    /// and model names are accepted, each in a solid caption and an explainer caption beside a real placeholder. An
+    /// accepted name's caption is still a Solved claim; a refused one makes no claim at all.
+    func testNamesBesideARealPlaceholder() throws {
+        let refused = ["2e3", "1e-3", "1E3", "120N", "100W", "0x1F", "3D", "Mach2", "USD120", "RPM120"]
+        let accepted = ["Mk4", "A320", "F-35", "P220"]
+        func solid(_ name: String) -> String {
+            #"{"v": 2, "kind": "assembly", "names": ["\#(name)"], "parts": [{"id": "rotor", "shape": {"box": {"size": [10, 10, 10]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}}], "steps": [{"say": "The \#(name) rotor turns {rotor.speed} turns per input turn."}]}"#
+        }
+        func explainer(_ name: String) -> String {
+            #"{"v": 1, "kind": "explainer", "names": ["\#(name)"], "solid": \#(XFix.gears), "beats": [{"say": "The \#(name) gear turns {p.speed} turns per input turn."}]}"#
+        }
+        for n in refused {
+            XCTAssertEqual(reason(solid(n)), "names.number.1", "solid \(n)")
+            XCTAssertEqual(XFix.refusal(explainer(n))?.reason, "names.number.1", "explainer \(n)")
+        }
+        for n in accepted {
+            guard case .success(let d) = compile(solid(n)) else { return XCTFail("solid \(n): \(reason(solid(n)) ?? "")") }
+            XCTAssertEqual(d.claims.first { $0.id == "step.1" }?.tier, .solved, "solid \(n)")
+            XCTAssertNil(XFix.refusal(explainer(n)), "explainer \(n)")
+            let s = try XFix.load(explainer(n))
+            XCTAssertEqual(s.claims.first { $0.id == "beat.1" }?.tier, .solved, "explainer \(n)")
+        }
+        // A name with no number character needs no declaration: refused as `names.token.1`.
+        XCTAssertEqual(reason(solid("Daedalus")), "names.token.1")
+    }
+
+    /// `set` and `add` on a board item use the declared names too (review: `set` did not pass them).
+    func testBoardCommandsUseTheNames() {
+        let board = #"{"v":1,"items":[{"id":"model","k":"text","at":[6,4],"text":"Model"}]}"#
+        func doc(_ names: String?, op: String) -> String {
+            let n = names.map { #", "names": \#($0)"# } ?? ""
+            return #"{"v": 1, "kind": "explainer"\#(n), "board": \#(board), "beats": [{"say": "Model.", "ops": [\#(op)]}]}"#
+        }
+        let set = #"{"op":"set","id":"model","key":"text","value":"Mk4"}"#
+        let add = #"{"op":"add","item":{"id":"m2","k":"text","at":[6,3],"text":"Mk4"}}"#
+        XCTAssertNil(XFix.refusal(doc(#"["Mk4"]"#, op: set)))
+        XCTAssertEqual(XFix.refusal(doc(nil, op: set))?.reason, "text.number.item.model")
+        XCTAssertNil(XFix.refusal(doc(#"["Mk4"]"#, op: add)))
+        XCTAssertEqual(XFix.refusal(doc(nil, op: add))?.reason, "text.number.item.m2")
+        let setCell = #"{"op":"set","id":"model","key":"text","value":"Mk 4"}"#
+        XCTAssertEqual(XFix.refusal(doc(#"["Mk4"]"#, op: setCell))?.reason, "text.number.item.model")
+    }
+
     func testTheNamesList() {
         XCTAssertEqual(reason(Self.asm("Box.", names: #"[]"#)), "names.count")
         XCTAssertEqual(reason(Self.asm("Box.", names: #""Mk4""#)), "names.count")
@@ -90,11 +134,15 @@ final class DeclaredNamesTests: XCTestCase {
     /// The rule functions themselves.
     func testTokensAndQuantities() {
         XCTAssertFalse(MGExplainerHonesty.typedNumber("Mk4 suit", names: ["Mk4"]))
-        XCTAssertTrue(MGExplainerHonesty.typedNumber("Mk4 suit"))
+        XCTAssertTrue(MGExplainerHonesty.typedNumber("Mk4 suit", names: []))
         XCTAssertTrue(MGExplainerHonesty.typedNumber("Mk 4 suit", names: ["Mk4"]))
         XCTAssertFalse(MGExplainerHonesty.typedNumber("{x}Mk4", names: ["Mk4"]))
         XCTAssertTrue(MGExplainerHonesty.typedNumber("Mk4 {x} 4", names: ["Mk4"]))
-        for q in ["Mach2", "USD120", "RPM120", "120", "4th", "x2", "kmh-90"] { XCTAssertTrue(MGSolidFacts.isQuantityName(q), q) }
-        for n in ["Mk4", "A320", "F-35", "V8", "COVID-19", "MiG-29", "A380-800"] { XCTAssertFalse(MGSolidFacts.isQuantityName(n), n) }
+        for q in ["Mach2", "USD120", "RPM120", "120", "4th", "x2", "kmh-90", "2e3", "1e-3", "1E3", "120N", "100W", "0x1F", "3D", "Ⅻ"] {
+            XCTAssertTrue(MGSolidFacts.isQuantityName(q), q)
+        }
+        for n in ["Mk4", "A320", "F-35", "P220", "V8", "COVID-19", "MiG-29", "A380-800", "St4"] { XCTAssertFalse(MGSolidFacts.isQuantityName(n), n) }
+        XCTAssertEqual(MGSolidFacts.numberLiterals(Array("1e-3")), [0..<1, 3..<4])
+        XCTAssertEqual(MGSolidFacts.numberLiterals(Array("Ⅻ")), [0..<1])
     }
 }

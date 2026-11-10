@@ -58,6 +58,60 @@ final class ArrowTailAndDropTests: XCTestCase {
         XCTAssertTrue(MGAnnotationArrowRules.keepsTail(authored: 14.4, moved: 3))
         XCTAssertFalse(MGAnnotationArrowRules.keepsTail(authored: 14.4, moved: 43.789))
         XCTAssertFalse(MGAnnotationArrowRules.keepsTail(authored: 0, moved: .nan))
+        // The review's precision case: an attached tail (0.000075 mm) stays within the absolute epsilon, never
+        // authored + epsilon; a detached tail may not move farther off by any amount.
+        XCTAssertTrue(MGAnnotationArrowRules.keepsTail(authored: 0.000075, moved: 0.0001))
+        XCTAssertFalse(MGAnnotationArrowRules.keepsTail(authored: 0.000075, moved: 0.000150))
+        XCTAssertFalse(MGAnnotationArrowRules.keepsTail(authored: 14.4, moved: 14.4 + 1e-6))
+    }
+
+    /// The review's synthetic case: a 60 × 60.0017 × 60 mm pack with its tail 0.000075 mm outside the box (attached),
+    /// and a blocker in front. Before, the suggested move (≈ 21.213 mm in X, Y rounded to −30.001) left the tail
+    /// 0.000150 mm off. Now no printed move (suggest, repaired report, union check) and no applied move detaches it;
+    /// a hand-made move with that offset is dropped by the final check (`measure`, the repair and auto-fix path).
+    func testAnAttachedTailStaysAttached() throws {
+        let t = #"{"v": 2, "kind": "assembly", "parts": [{"id": "pack", "shape": {"box": {"size": [60, 60.0017, 60]}}}, {"id": "blocker", "at": [0, -50, 0], "shape": {"box": {"size": [20, 20, 80]}}}], "annotations": {"arrows": [{"id": "t", "meaning": "force", "from": {"part": "pack", "offset": [0, -30.000925, -20]}, "to": {"part": "pack", "offset": [0, -30.000925, 20]}}]}, "steps": [{"say": "Front.", "camera": "front"}]}"#
+        let d = try doc(t)
+        let r = try XCTUnwrap(d.annotations.arrow("t"))
+        let tail = try XCTUnwrap(d.arrowTail(r))
+        XCTAssertLessThanOrEqual(tail.distance, mgPrecision(.zero))
+        XCTAssertGreaterThan(tail.distance, 0)
+        let box = try XCTUnwrap(d.assembly.part("pack")).mesh.bounds
+        func tailDistance(_ s: MGJSON?) -> Double? {
+            guard case .object(let m)? = s, case .object(let e)? = m[tail.from ? "from" : "to"], case .array(let o)? = e["offset"] else { return nil }
+            let v = o.compactMap { x -> Double? in if case .number(let n) = x { return n }; return nil }
+            return mgBoxDistance(MGVec3(v[0], v[1], v[2]), box)
+        }
+        // Raw suggest.
+        let views = d.stepCheckViews().filter { d.showsArrow($0.view) }
+        let raw = d.arrowSuggestions(for: views.flatMap { d.arrowIssues($0) }, views: views, shared: MGSuggestionBudget())
+        if let s = raw["t"]?.anchorJSON { XCTAssertLessThanOrEqual(try XCTUnwrap(tailDistance(s)), mgPrecision(.zero)) }
+        // The repaired report (re-check and union).
+        let rep = report(t, .standard)
+        for i in objects(rep.json["arrowIssues"]) where i["id"] == .string("t") {
+            if let dist = tailDistance(i["suggest"]) {
+                XCTAssertLessThanOrEqual(dist, mgPrecision(.zero))
+                // Auto-fix: the applied move keeps the tail attached in the compiled copy.
+                let fixed = try doc(ArrowVisibilityTests.applying(["t": i["suggest"]!], to: t))
+                let ft = try XCTUnwrap(fixed.arrowTail(try XCTUnwrap(fixed.annotations.arrow("t"))))
+                XCTAssertLessThanOrEqual(ft.distance, mgPrecision(.zero))
+            } else {
+                guard case .object(let none)? = i["noSuggest"] else { return XCTFail("noSuggest") }
+                XCTAssertEqual(none["code"], .string("tail"))
+            }
+        }
+        // The review's move, made by hand: the final check drops it.
+        var rp = MGAnnotationArrowReport()
+        rp.issues = views.flatMap { d.arrowIssues($0) }
+        XCTAssertEqual(rp.issues.map(\.id), ["t"])
+        let o = MGVec3(21.213, -0.000075, 0)
+        let f = MGAnnotationPoint(anchor: .offset(part: "pack", MGVec3(21.213, -30.001, -20)), local: MGVec3(21.213, -30.001, -20))
+        let to = MGAnnotationPoint(anchor: .offset(part: "pack", MGVec3(21.213, -30.001, 20)), local: MGVec3(21.213, -30.001, 20))
+        XCTAssertGreaterThan(mgBoxDistance(f.local, box), mgPrecision(.zero), "the review's move detaches the tail")
+        rp.issues[0].suggestion = MGAnnotationArrowSuggestion(from: f, to: to, offset: o, full: true, cause: nil, step: nil, beat: nil, by: nil)
+        rp.measure(d, views: views)
+        XCTAssertEqual(rp.issues[0].suggestion?.cause, .tail)
+        XCTAssertNil(rp.issues[0].suggestion?.anchorJSON)
     }
 
     /// A reduction of r2j sonnet-2 `tb2` (a thrust arrow from a back engine's exhaust whose tail lies 14.4 mm off the

@@ -332,13 +332,24 @@ letters (any script), number characters and the hyphen-minus "-"; every other ch
 apostrophe, a brace) ends it, and a placeholder ends it too. A token of a caption, a label, an arrow or a dimension
 text, or the title, that **exactly** equals a declared name (whole token, case-sensitive) is not a typed number. Every
 other number character still counts, as before: "Mk 4", "mk4", "Mk4s", "Mk4.5" (the "5"), and "4 engines" in the same
-text are refused. There is no lexical exception: an undeclared "Mk4" is still `text.number.<where>`. A name may not be
-a number or a quantity: a name with no letter, or (hyphens removed) one run of letters and one run of digits in either
-order whose letters are a unit or quantity word (`MGSolidFacts.isQuantityName`: "Mach2", "USD120", "RPM120", "120km",
-"4th", "x2"; the one-letter units match only in lowercase, so "A320", "V8" and "M6" may be names) is refused
-(`names.number.<n>`). Other reasons: `names.count` (not an array of strings, or 0 or more than 24 entries),
-`names.text.<n>` (length), `names.token.<n>` (not one token, or no number character); `<n>` is 1-based. A name listed
-twice is kept once. The engine has no general number and unit parser; this closed word list is the check. An explainer
+text are refused. There is no lexical exception: an undeclared "Mk4" is still `text.number.<where>`. A declared name is
+valid only when all of these hold; (a)–(c) fail with `names.number.<n>` (`MGSolidFacts.isQuantityName`), (d) with
+`names.token.<n>`:
+
+* (a) it starts with a letter, so "2e3", "1e-3", "1E3", "120N", "100W", "0x1F", "3D" and "4th" are refused;
+* (b) no number literal that rule N1's own scan finds (`MGSolidFacts.numberLiterals`: the runs of the number characters
+  N1 counts in a caption) covers the whole name, so a letter that is also a number character (the Roman numeral "Ⅻ")
+  is refused;
+* (c) its leading letters (the letters before its first non-letter) are not a unit or quantity word of the closed list
+  (`quantityWords`, matched without case; one-letter units only in lowercase), so "Mach2", "USD120", "RPM120",
+  "kmh-90" and "x2" are refused and "Mk4", "A320", "F-35", "P220", "V8" and "M6" are accepted;
+* (d) it holds at least one number character; a name with none needs no declaration and is refused as
+  `names.token.<n>`, not accepted as a no-op.
+
+Other reasons: `names.count` (not an array of strings, or 0 or more than 24 entries), `names.text.<n>` (length),
+`names.token.<n>` (not one token, or (d)); `<n>` is 1-based. A name listed
+twice is kept once. The engine has no general number and unit parser: rule (b) reuses N1's own character scan, and (c) is a closed word
+list. An explainer
 lists `names` in its header ([EXPLAINER.md](EXPLAINER.md)); they also apply to its solid. Marty fills `names` from the
 names its research rows give.
 N1 covers number characters only. It does not see number words ("three times slower"),
@@ -1230,9 +1241,10 @@ Two gaps let a thrust arrow pass far from its engine:
 
 The tail of a force or flow arrow is, of its ends that ride on a part, the one nearest the box of its part's mesh in
 that part's frame (ties: `from`) (`MGSolidDocument.arrowTail`). A suggested move never takes the tail farther from its
-part (`MGAnnotationArrowRules.keepsTail`): the moved tail's distance to that box may exceed the authored distance by at
-most the precision epsilon at the dot (`mgPrecision(.zero)`, 1.01e-4 mm). So a tail on or inside its part stays on or
-inside it, and a tail off its part never moves farther off. A candidate that breaks this is not tried. When no move is
+part (`MGAnnotationArrowRules.keepsTail`). A tail is **attached** when its distance to that box is at most the precision
+epsilon at the dot (`mgPrecision(.zero)`, 1.01e-4 mm). An attached tail must stay attached: moved distance ≤ epsilon,
+an absolute bound. A tail that is not attached may not move farther off: moved distance ≤ authored distance. The
+epsilon is never added to the authored distance, so a tail cannot creep off its part move by move. A candidate that breaks this is not tried. When no move is
 left and the rule skipped a candidate that kept the vector (a candidate that changes the vector is `pose` first),
 `noSuggest` has `code` `tail` ("every move tried takes the arrow's tail farther
 from its part") and the usual alternatives; the arrow is refused in strict mode and the author redraws it. After the

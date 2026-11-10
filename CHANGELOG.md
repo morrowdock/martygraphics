@@ -13,13 +13,16 @@
   - **Declared names (rule N1).** A v2 assembly, and an explainer header, may list `names` (1–24 tokens such as
     "Mk4", "A320", "F-35"). A text token that exactly equals a declared name (whole token, case-sensitive) is not a
     typed number; an explainer's names also cover its solid's text. Nothing else is exempt: an undeclared "Mk4" is still
-    `text.number.<where>`, and "Mk 4", "mk4", "Mk4s" and other numbers in the same text still count. A name may not be
-    a number or a number with a unit or quantity word (`names.number.<n>`: "Mach2", "USD120", "RPM120", "120km",
-    "4th"). New reasons `names.count`, `names.text.<n>` (both with `limit`), `names.token.<n>`, `names.number.<n>`.
+    `text.number.<where>`, and "Mk 4", "mk4", "Mk4s" and other numbers in the same text still count. A name must start
+    with a letter, no number literal of N1's own scan may cover it, its leading letters may not be a unit or quantity
+    word, else `names.number.<n>` ("2e3", "1e-3", "120N", "0x1F", "3D", "Mach2", "USD120", "RPM120"); a name with no
+    number character is `names.token.<n>`. `add`, `set`, captions, labels, arrows, dimensions, titles, board cells,
+    bar labels, control labels and template params all pass the names (the N1 functions take them as a required
+    argument). New reasons `names.count`, `names.text.<n>` (both with `limit`), `names.token.<n>`, `names.number.<n>`.
     Marty fills `names` from its research rows.
   - **Arrow tails.** A suggested, re-checked or auto-applied move of a force or flow arrow never takes its tail (the
-    end on a part nearest that part's box) farther from its part than authored, within the precision epsilon
-    (`MGAnnotationArrowRules.keepsTail`): a tail on or inside its part stays there. When no move is left, `noSuggest`
+    end on a part nearest that part's box) farther from its part (`MGAnnotationArrowRules.keepsTail`): a tail within
+    the precision epsilon of its part stays within it (an absolute bound); any other tail may not move farther off. When no move is left, `noSuggest`
     has the new code `tail` and strict refuses. Before, moves of a quarter of the blocker's size or more floated thrust
     arrows 220–440 mm off their engines.
   - **Arrow drop.** A still whose camera cannot see the unit (component instance) an arrow's tail rides on drops that

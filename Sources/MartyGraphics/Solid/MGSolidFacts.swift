@@ -207,31 +207,44 @@ public enum MGSolidFacts {
         "ml", "cl", "dl", "gal", "cc", "psi", "bar", "mbar", "pa", "kpa", "mpa", "gpa", "atm",
         "deg", "rad", "db", "dba", "lux", "lm", "kb", "mb", "gb", "tb", "kib", "mib", "gib", "bit", "bits",
         "pct", "percent", "pc", "pcs", "usd", "eur", "gbp", "jpy", "cny", "aud", "cad", "chf", "inr", "krw", "rub", "btc",
-        "st", "nd", "rd", "th",
     ]
     static let quantityLetters: Set<Character> = ["m", "g", "s", "h", "l", "t", "x", "k", "n", "w", "v", "a", "j", "c", "f", "b"]
 
-    /// True when a declared name is a number or a number with a unit (`names.number.<n>`): it has no letter, or its
-    /// hyphens removed, it is one run of letters and one run of digits in either order (as "Mach2", "USD120",
-    /// "120RPM", "km-5", "4th") where the letters are a unit or quantity word (`quantityWords`, `quantityLetters`).
-    static func isQuantityName(_ name: String) -> Bool {
-        let chars = Array(name).filter { $0 != "-" }
-        guard chars.contains(where: { $0.isLetter }) else { return true }
-        var runs: [(letters: Bool, text: String)] = []
-        for c in chars {
-            let l = c.isLetter
-            if let last = runs.last, last.letters == l { runs[runs.count - 1].text.append(c) } else { runs.append((l, String(c))) }
+    /// The number literals rule N1 finds in `chars`: the maximal runs of number characters (`isNumber`, the test the N1
+    /// scan in `fill` and `MGExplainerHonesty.typedNumber` applies to each character).
+    static func numberLiterals(_ chars: [Character]) -> [Range<Int>] {
+        var out: [Range<Int>] = [], i = 0
+        while i < chars.count {
+            guard isNumber(chars[i]) else { i += 1; continue }
+            var j = i
+            while j < chars.count, isNumber(chars[j]) { j += 1 }
+            out.append(i..<j)
+            i = j
         }
-        guard runs.count == 2, let word = runs.first(where: { $0.letters })?.text else { return false }
-        if word.count == 1, let c = word.first { return quantityLetters.contains(c) }
-        return quantityWords.contains(word.lowercased())
+        return out
+    }
+
+    /// True when a declared name is a number or a quantity (`names.number.<n>`), that is when any of these fails:
+    /// (a) it starts with a letter (so "2e3", "1e-3", "120N", "100W", "0x1F", "3D" and "4th" fail);
+    /// (b) no number literal that rule N1's scan finds (`numberLiterals`) covers the whole name (a letter that is also
+    ///     a number character, such as the Roman numeral "Ⅻ", fails);
+    /// (c) its leading letters (the letters before its first non-letter) are not a unit or quantity word
+    ///     (`quantityWords`, matched without case, or a one-letter unit of `quantityLetters`, matched in lowercase only,
+    ///     so "Mach2", "USD120", "RPM120", "kmh-90" and "x2" fail, and "A320", "V8" and "M6" pass).
+    static func isQuantityName(_ name: String) -> Bool {
+        let chars = Array(name)
+        guard let first = chars.first, first.isLetter else { return true }
+        if numberLiterals(chars).contains(0..<chars.count) { return true }
+        let lead = String(chars.prefix { $0.isLetter && !isNumber($0) })
+        if lead.count == 1, let c = lead.first { return quantityLetters.contains(c) }
+        return quantityWords.contains(lead.lowercased())
     }
 
     /// A document's `names` list (docs/SOLID-3D.md, "Declared names"): 1–`namesCount` strings, each one token
-    /// (`tokens`) of 1–`nameText` characters with at least one number character, and not a number or a number with a
-    /// unit (`isQuantityName`). Reasons: `names.count` (not an array of strings, or a count out of range, with
-    /// `limit`), `names.text.<n>` (length, with `limit`), `names.token.<n>` (not one token, or no number character),
-    /// `names.number.<n>` (`<n>` 1-based). Repeats are kept once.
+    /// (`tokens`) of 1–`nameText` characters with (d) at least one number character, and not a number or a quantity
+    /// (`isQuantityName`, rules (a)–(c)). Reasons: `names.count` (not an array of strings, or a count out of range,
+    /// with `limit`), `names.text.<n>` (length, with `limit`), `names.token.<n>` (not one token, or (d): no number
+    /// character, so it needs no declaration), `names.number.<n>` (`<n>` 1-based). Repeats are kept once.
     static func names(_ v: MGJSON) throws -> [String] {
         guard case .array(let list) = v else { throw MGSolidIssue("names.count") }
         if let d = MGSolidParser.countDetail("names", list.count, 1...namesCount, unit: "names") { throw MGSolidIssue("names.count", limit: d) }
@@ -402,7 +415,7 @@ public enum MGSolidFacts {
     /// modifier), `text.modifier.<mod>.<name>` (a modifier that does not apply to this fact) and
     /// `text.rounding.<name>` (a non-zero value that would print as "0").
     static func fill(_ s: String, where w: String, n1: Bool, _ facts: [String: MGSolidFact],
-                     _ aliases: [String: String], names: Set<String> = []) throws -> MGSolidFilledText {
+                     _ aliases: [String: String], names: Set<String>) throws -> MGSolidFilledText {
         var out = MGSolidFilledText(text: "", facts: [])
         var body = "", inside = false
         let chars = Array(s), declared = nameOffsets(chars, names: names)

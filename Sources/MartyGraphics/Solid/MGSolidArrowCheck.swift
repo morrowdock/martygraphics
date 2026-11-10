@@ -40,11 +40,14 @@ public enum MGAnnotationArrowRules {
         return d.isFinite && d <= mgPrecision(authored) + roundingAllowance
     }
     /// A suggested move never takes the tail of a force or flow arrow (`MGSolidDocument.arrowTail`) farther from its
-    /// part: the moved tail's distance to the box of the part's mesh, in the part's own frame, may exceed the authored
-    /// tail's distance by at most the precision epsilon at the dot (`mgPrecision(.zero)`, 1.01e-4 mm). So a tail on or
-    /// inside its part stays on or inside it (docs/SOLID-3D.md, "Arrow tails").
+    /// part (docs/SOLID-3D.md, "Arrow tails"). Distances are to the box of the part's mesh, in the part's own frame. A
+    /// tail is attached when its distance is at most the precision epsilon at the dot (`mgPrecision(.zero)`,
+    /// 1.01e-4 mm). An attached tail must stay attached (moved ≤ epsilon, an absolute bound); a tail that is not
+    /// attached may not move farther off (moved ≤ authored). The epsilon is never added to the authored distance.
     static func keepsTail(authored d0: Double, moved d1: Double) -> Bool {
-        d0.isFinite && d1.isFinite && d1 <= d0 + mgPrecision(.zero)
+        guard d0.isFinite, d1.isFinite else { return false }
+        let eps = mgPrecision(.zero)
+        return d0 <= eps ? d1 <= eps : d1 <= d0
     }
     /// Line-of-sight tests one view may spend on the arrow drop rule (`MGSolidDocument.arrowDrops`). When they run out,
     /// the remaining arrows are not dropped (the arrow visibility rule still tests them).

@@ -443,8 +443,8 @@ list):
 | `label.unchecked.<id>` | assembly | A label's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters. |
 | `names.count` | assembly, explainer | `names` is not an array of strings, or it has fewer than 1 or more than 24 entries (`MGSolidFacts.namesCount`). |
 | `names.text.<n>` | assembly, explainer | Declared name `<n>` (1-based) is not 1–24 characters long (`MGSolidFacts.nameText`). |
-| `names.token.<n>` | assembly, explainer | Declared name `<n>` is not one token (a run of letters, number characters and "-" with no space or punctuation) or has no number character, so no text could match it. |
-| `names.number.<n>` | assembly, explainer | Declared name `<n>` is a number, or a number joined to a unit or quantity word ("Mach2", "USD120", "RPM120", "120km", "4th"): a quantity is a claim, not a name. |
+| `names.token.<n>` | assembly, explainer | Declared name `<n>` is not one token (a run of letters, number characters and "-" with no space or punctuation), or it has no number character (it needs no declaration). |
+| `names.number.<n>` | assembly, explainer | Declared name `<n>` is a number or a quantity: it does not start with a letter ("2e3", "1e-3", "120N", "0x1F", "3D"), a number literal that rule N1 finds covers all of it, or its leading letters are a unit or quantity word ("Mach2", "USD120", "RPM120"). A quantity is a claim, not a name. |
 | `text.number.label.<id>` | assembly | A label has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
 | `arrow.meaning.<id>` | assembly | An arrow's `meaning` is not force, flow, motion or pointer. |
 | `arrow.style.<id>` | assembly | A motion arrow's `style` is not line or turn. |
