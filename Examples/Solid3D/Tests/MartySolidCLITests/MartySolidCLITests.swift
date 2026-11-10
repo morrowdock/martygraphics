@@ -682,7 +682,8 @@ final class MartySolidCLITests: XCTestCase {
     }
 
     /// The arrow rule in fresh processes: the synthetic arrow inside an engine casing is refused the same way every run
-    /// (`annotation.arrow.hidden.push`, its view, the casing, the suggested move); standard warns.
+    /// (`annotation.arrow.hidden.push`, its view, the casing; no move: every move that clears the casing takes the tail
+    /// off the nozzle, `noSuggest` code `tail`); standard warns.
     func testAHiddenArrowIsRefusedTheSameWayInFreshProcesses() throws {
         let doc = repo.appendingPathComponent("docs/fixtures/arrow-visibility/arrow-in-casing.explainer.json").path
         let first = try run(["check", "--strict", doc])
@@ -691,7 +692,8 @@ final class MartySolidCLITests: XCTestCase {
         let arrow = try XCTUnwrap(first.json?["arrow"] as? [String: Any])
         XCTAssertEqual(arrow["by"] as? String, "engine.casing")
         XCTAssertEqual(arrow["beat"] as? Int, 2)
-        XCTAssertNotNil(arrow["suggest"] as? [String: Any])
+        XCTAssertTrue(arrow["suggest"] is NSNull)
+        XCTAssertEqual((arrow["noSuggest"] as? [String: Any])?["code"] as? String, "tail")
         for _ in 0..<2 { XCTAssertEqual(try run(["check", "--strict", doc]).text, first.text) }
         let standard = try run(["check", doc])
         XCTAssertEqual(standard.status, 0, standard.text)

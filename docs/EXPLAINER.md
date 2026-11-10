@@ -88,6 +88,7 @@ legend "Solved 5" (2 motion claims, 2 captions, 1 check). The mixed example fill
 | `title` | no | plain text; 1–80 characters after 3D facts fill it; placeholders name 3D facts only; typed digits make the title Described | `explainer.title` |
 | `primary` | no | `"board"` or `"solid"`: the larger pane. Default: `solid` when there is one. It must name a present view. | `explainer.primary` |
 | `notes` | no | 1–24 entries; key = a 2D item id; value = exactly one of `{"basis": "…"}` or `{"unchecked": "…"}`, 1–60 characters | `notes.object`, `notes.count`, `notes.entry.<id>`, `notes.text.<id>` |
+| `names` | no | 1–24 declared names (rule N1, "Declared names" in [SOLID-3D.md](SOLID-3D.md#placeholders)): each one token of 1–24 characters with a number character, not a number or a quantity ("Mach2", "USD120"). A caption, 2D text or solid text token that exactly equals one is not a typed number. The solid compiles with them added to its own `names`. | `names.count`, `names.text.<n>`, `names.token.<n>`, `names.number.<n>` |
 | `board` | one of the two | a v1 scene without `steps`, `title` or `"dim": "3d"` | `explainer.board`, `explainer.board.steps`, `explainer.board.title`, `explainer.board.dim`, inner scene reasons |
 | `solid` | one of the two | an assembly `"v": 2` without `steps` or `title`; `kind` may be left out | `explainer.solid`, `explainer.solid.version`, `explainer.solid.steps`, `explainer.solid.title`, inner assembly reasons |
 | `beats` | yes | 1–16 beats | `explainer.beats`, `explainer.beats.count` |
@@ -359,9 +360,9 @@ shows a non-zero value as "0" (`text.rounding.<name>`); 2D values keep `MGValue.
 Rule N1 (owner decision D2): every number character the learner sees in author text comes from a placeholder. Every
 Unicode scalar counts (the #21 number test). It applies to beat captions (except with `unchecked`:
 `text.number.beat.<n>`), and to 2D item text, table and array cells, bar values, plot ranges, `over` values and the
-strings of `set` and `add` commands, unless the item has a note (`text.number.item.<id>`). The digits of a model-name
-token ("Mk4", "A320", "F-35") do not count; the token rule is the one in
-[SOLID-3D.md](SOLID-3D.md#placeholders), "Model names". A control label may not
+strings of `set` and `add` commands, unless the item has a note (`text.number.item.<id>`). A token that exactly equals a
+declared name (the header's `names`, see below) is not a typed number; nothing else is exempt. The token rule and the
+name rules are the ones in [SOLID-3D.md](SOLID-3D.md#placeholders), "Declared names". A control label may not
 type a number (`text.number.control.<id>`); a raw template's params may not carry a string with one
 (`text.number.template`). Inside an explainer the lesson's decimal rule (`text.literal`) is off: N1 replaces it.
 
@@ -408,7 +409,11 @@ tiers each.
    presented beat (host or learner changes), the engine records the tier its caption had and the tier each check's
    value had, with that state's built values. A past beat's caption and checks take the lowest frozen tier ("Checked"
    with that tier) and are never recomputed from a later board.
-3. Nothing else counts: not a beat that waits to be shown (queued), not a beat that is still open while it streams,
+3. A 3D annotation claim counts only for what a presented beat draws: its step's annotations less the arrows the beat
+   drops (`MGExplainerSession.displayedAnnotations`; one drop set per beat, the one its still, story frames and the
+   SwiftUI pane use, [SOLID-3D.md](SOLID-3D.md#arrow-drop)). A dropped arrow is not presented in that beat. Under the
+   show-all rule an arrow that every kept beat drops makes no claim.
+4. Nothing else counts: not a beat that waits to be shown (queued), not a beat that is still open while it streams,
    not a paused lesson's next beat, not a refused beat, command or batch, not the middle of one beat's commands, not a
    note whose item never appears (`notes.unused.<id>`), and no replay of the script. `finishNow()` presents the
    waiting beats, so they count after it runs.
@@ -449,7 +454,7 @@ give the same final state, test S1). Fixture: [`explainer-mixed.statements.ndjso
 
 | Statement | Form | Rule |
 | --- | --- | --- |
-| header | `{"explainer": {"v": 1, "title"?, "primary"?, "notes"?}}` | Required first statement of a new stream (`explainer.header`). A header in a later stream replaces the explainer. |
+| header | `{"explainer": {"v": 1, "title"?, "primary"?, "notes"?, "names"?}}` | Required first statement of a new stream (`explainer.header`). A header in a later stream replaces the explainer. |
 | keep | `{"keep": true}` | First statement of a follow-up stream. State, ids, views and controls stay; beat numbers continue. |
 | board | `{"board": {…}}` | Once, before the first `say` (`stmt.order`); at most 4 KiB. A board that shows a 3D fact must come after the solid. |
 | solid | `{"solid": {…}}` | Once, before the first `say` (`stmt.order`); up to 64 KiB. |
@@ -608,6 +613,7 @@ Explainer reasons: `explainer.json`, `explainer.object`, `explainer.number`, `ex
 `explainer.solid.version`, `explainer.solid.steps`, `explainer.solid.title`, `explainer.solid.missing`,
 `explainer.beats`, `explainer.beats.count`, `explainer.op.title`, `explainer.id.duplicate.<id>`,
 `explainer.id.view.<id>`, `notes.object`, `notes.count`, `notes.entry.<id>`, `notes.text.<id>`, `notes.view.<id>`,
+`names.count`, `names.text.<n>`, `names.token.<n>`, `names.number.<n>`,
 `notes.unused.<id>` (a warning; the strict check refuses it), `beat.object`, `beat.missing`, `beat.unknown.<keys>`,
 `beat.unchecked.<n>`, `beat.ops`, `beat.ops.count`, `beat.check`, `beat.checks.count`, `beat.refused`,
 `beat.highlight`, `beat.highlight.count`, `beat.highlight.ref.<id>`, `beat.highlight.stale.<id>` (in `hostIssues`

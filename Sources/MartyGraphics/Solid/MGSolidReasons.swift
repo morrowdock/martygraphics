@@ -94,7 +94,7 @@ public enum MGSolidReasons {
         "component.anchorAbout", "component.checks", "component.expr.size", "component.id.length", "explainer.bytes", "explainer.title",
         "explainer.statements.count", "explainer.beats.count", "notes.count", "notes.text.<id>", "beat.unchecked.<n>", "beat.ops.count",
         "beat.checks.count", "beat.highlight.count", "stmt.bytes", "stmt.say", "view.focus", "view.ghost", "view.section.parts",
-        "view.annotate.count", "view.pose", "view.hide", "view.show",
+        "view.annotate.count", "view.pose", "view.hide", "view.show", "names.count", "names.text.<n>",
     ]
 
     /// Reasons whose meaning states a number but that carry no `limit` detail, and why. With `limitPatterns` this covers
@@ -481,6 +481,10 @@ public enum MGSolidReasons {
         r("anchor.ambiguous.<id>", [.assembly], "An annotation anchor names a `repeat` base with copies or a component instance (more than one part)."),
         r("label.text.<id>", [.assembly], "A label's text is not \(text) of at most 240 characters, or of 1–60 characters after placeholders are filled."),
         r("label.unchecked.<id>", [.assembly], "A label's `unchecked` is not \(text) of at most 60 characters."),
+        r("names.count", [.assembly, .explainer], "`names` is not an array of strings, or it has fewer than 1 or more than 24 entries (`MGSolidFacts.namesCount`)."),
+        r("names.text.<n>", [.assembly, .explainer], "Declared name `<n>` (1-based) is not 1–24 characters long (`MGSolidFacts.nameText`)."),
+        r("names.token.<n>", [.assembly, .explainer], "Declared name `<n>` is not one token (a run of letters, number characters and \"-\" with no space or punctuation) or has no number character, so no text could match it."),
+        r("names.number.<n>", [.assembly, .explainer], "Declared name `<n>` is a number, or a number joined to a unit or quantity word (\"Mach2\", \"USD120\", \"RPM120\", \"120km\", \"4th\"): a quantity is a claim, not a name."),
         r("text.number.label.<id>", [.assembly], "A label has a number character outside a placeholder and is not marked `unchecked` (rule N1)."),
         r("arrow.meaning.<id>", [.assembly], "An arrow's `meaning` is not force, flow, motion or pointer."),
         r("arrow.style.<id>", [.assembly], "A motion arrow's `style` is not line or turn."),

@@ -117,7 +117,7 @@ public struct MGExplainerReport: Equatable, Sendable {
                         anchors.verify { applied in
                             guard let solid = doc.solid else { return nil }
                             let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board,
-                                                   solid: MGSolidDocument.replacingAnchors(solid, applied), beats: doc.beats)
+                                                   solid: MGSolidDocument.replacingAnchors(solid, applied), beats: doc.beats, names: doc.names)
                             return anchorRecheck(copy, library: s.library, budget: budget)
                         }
                     }
@@ -130,14 +130,14 @@ public struct MGExplainerReport: Equatable, Sendable {
                                       budget: MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests)) { moves, budget in
                             guard let solid = doc.solid else { return nil }
                             let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board,
-                                                   solid: MGSolidDocument.replacingArrows(solid, moves), beats: doc.beats)
+                                                   solid: MGSolidDocument.replacingArrows(solid, moves), beats: doc.beats, names: doc.names)
                             return arrowRecheck(copy, library: s.library, budget: budget)
                         }
                         // Every printed suggestion, anchors and arrows together, checked once more on one copy.
                         MGSuggestionUnion.verifyTogether(anchors: &anchors, arrows: &arrows) { anchorMoves, arrowMoves in
                             guard let solid = doc.solid else { return nil }
                             let both = MGSolidDocument.replacingAnchors(MGSolidDocument.replacingArrows(solid, arrowMoves), anchorMoves)
-                            let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board, solid: both, beats: doc.beats)
+                            let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board, solid: both, beats: doc.beats, names: doc.names)
                             return arrowRecheck(copy, library: s.library, budget: MGSuggestionBudget(0))
                         }
                     }

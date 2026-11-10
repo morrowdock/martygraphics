@@ -149,8 +149,15 @@ extension MGSolidFraming {
     public static func clearView(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double = 30,
                                  titleBand: Double? = nil, captionBand: Double? = nil,
                                  stage: MGTransform = MGSolidStage.zUpToYUp) -> MGSolidClearView {
+        clearView(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage, drops: true)
+    }
+
+    /// `clearView`, with the arrow drop rule only when `drops` (an explainer beat takes its drops from its canonical
+    /// framing instead, `MGExplainerFrame.beatArrowDrops`).
+    static func clearView(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double = 30,
+                          titleBand: Double?, captionBand: Double?, stage: MGTransform, drops: Bool) -> MGSolidClearView {
         var c = clearCamera(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage)
-        c.arrowDrops = arrowDrops(doc, shot: s, camera: c.camera, autoGhost: c.autoGhost, aspect: aspect, stage: stage)
+        if drops { c.arrowDrops = arrowDrops(doc, shot: s, camera: c.camera, autoGhost: c.autoGhost, aspect: aspect, stage: stage) }
         return c
     }
 

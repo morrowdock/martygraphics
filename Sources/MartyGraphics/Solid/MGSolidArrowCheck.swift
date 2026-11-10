@@ -39,11 +39,13 @@ public enum MGAnnotationArrowRules {
         let d = (moved - authored).length
         return d.isFinite && d <= mgPrecision(authored) + roundingAllowance
     }
-    /// The tail of a force or flow arrow (`MGSolidDocument.arrowTail`) is on its part when it lies at most
-    /// `max(tailLengthShare × the arrow's length, tailPartShare × the part's box diagonal)` mm outside the box of that
-    /// part's mesh, in the part's own frame. A suggested move keeps it there: the moved tail may lie at most
-    /// `max(that tolerance, the authored tail's distance)` outside the box (docs/SOLID-3D.md, "Arrow tails").
-    public static let tailLengthShare = 0.5, tailPartShare = 0.25
+    /// A suggested move never takes the tail of a force or flow arrow (`MGSolidDocument.arrowTail`) farther from its
+    /// part: the moved tail's distance to the box of the part's mesh, in the part's own frame, may exceed the authored
+    /// tail's distance by at most the precision epsilon at the dot (`mgPrecision(.zero)`, 1.01e-4 mm). So a tail on or
+    /// inside its part stays on or inside it (docs/SOLID-3D.md, "Arrow tails").
+    static func keepsTail(authored d0: Double, moved d1: Double) -> Bool {
+        d0.isFinite && d1.isFinite && d1 <= d0 + mgPrecision(.zero)
+    }
     /// Line-of-sight tests one view may spend on the arrow drop rule (`MGSolidDocument.arrowDrops`). When they run out,
     /// the remaining arrows are not dropped (the arrow visibility rule still tests them).
     public static let dropTests = 3_000_000
@@ -182,7 +184,7 @@ public struct MGAnnotationArrowSuggestion: Equatable, Sendable {
         case pose
         /// No offset tried shows the arrow in every view that shows it.
         case noClearOffset = "noclearoffset"
-        /// Every move tried takes the tail of a force or flow arrow off its part (`MGAnnotationArrowRules.tailLengthShare`).
+        /// Every move tried takes the tail of a force or flow arrow farther from its part (`MGAnnotationArrowRules.keepsTail`).
         case tail
         /// The suggestion budget ran out first.
         case budget
@@ -242,7 +244,7 @@ public struct MGAnnotationArrowSuggestion: Equatable, Sendable {
         switch cause {
         case .motion: return "a motion arrow shows its anchor's motion and cannot move"
         case .pose: return "no move keeps the arrow's direction and length in every view that shows it"
-        case .tail: return "every move tried takes the arrow's tail off its part"
+        case .tail: return "every move tried takes the arrow's tail farther from its part"
         case .noClearOffset: return "no offset tried is clear" + (viewName.map { " in \($0)" } ?? "")
         case .budget: return "suggestion budget ran out"
         case .form: return "the moved arrow cannot be written or does not compile"
@@ -386,22 +388,40 @@ extension MGSolidDocument {
     func showsArrow(_ view: MGSolidView) -> Bool { view.annotations.contains { annotations.arrow($0) != nil } }
 
     /// The tail of a force or flow arrow (docs/SOLID-3D.md, "Arrow tails"): of its ends that ride on a part, the one
-    /// nearest the box of its part's mesh, in that part's frame (ties: `from`), with that distance (mm, 0 inside) and the
-    /// tolerance `max(tailLengthShare × the arrow's length at the default pose with explode 0, tailPartShare × the part's
-    /// box diagonal)`. nil for a pointer or motion arrow, and for an arrow with no end on a part.
-    func arrowTail(_ r: MGSolidArrow) -> (from: Bool, part: String, distance: Double, tolerance: Double)? {
+    /// nearest the box of its part's mesh, in that part's frame (ties: `from`), with that distance (mm, 0 inside). nil
+    /// for a pointer or motion arrow, and for an arrow with no end on a part.
+    func arrowTail(_ r: MGSolidArrow) -> (from: Bool, part: String, distance: Double)? {
         guard r.meaning == .force || r.meaning == .flow, let f = r.from, let t = r.to else { return nil }
-        var best: (from: Bool, part: String, distance: Double, diagonal: Double)?
+        var best: (from: Bool, part: String, distance: Double)?
         for (isFrom, e) in [(true, f), (false, t)] {
             guard let id = e.part, let b = assembly.part(id)?.mesh.bounds, !b.isEmpty else { continue }
             let d = mgBoxDistance(e.local, b)
-            if best.map({ d < $0.distance }) ?? true { best = (isFrom, id, d, b.size.length) }
+            if best.map({ d < $0.distance }) ?? true { best = (isFrom, id, d) }
         }
-        guard let b = best else { return nil }
-        let rest = assembly.pose(MGPoseParameters(input: defaults.input, explode: 0))
-        let len = (t.world(rest) - f.world(rest)).length
-        let tol = max(MGAnnotationArrowRules.tailLengthShare * (len.isFinite ? len : 0), MGAnnotationArrowRules.tailPartShare * b.diagonal)
-        return (b.from, b.part, b.distance, tol)
+        return best
+    }
+
+    /// The force and flow arrows every still that lists them drops: `hero.png` and every step still as `marty-solid
+    /// render` frames them at 1280 × 800 (`MGSolidRenderPlan`'s shots, bands and `MGSolidFraming.clearView`). An
+    /// arrow no still lists is not in the set. Cheap when no force or flow arrow has an end on a part.
+    func computeUndrawnArrows() -> Set<String> {
+        let candidates = annotations.arrows.filter { arrowTail($0) != nil }.map(\.id)
+        guard !candidates.isEmpty else { return [] }
+        let w = Double(MGAnnotationAnchorRules.width), h = Double(MGAnnotationAnchorRules.height)
+        let bands = MGSolidRenderPlan.bands(width: w, height: h)
+        var shots = [MGSolidShot(file: "hero.png", params: defaults, preset: "hero", orbit: 0, highlight: [], margin: 0.8, step: nil,
+                                 title: title, caption: nil)]
+        shots += steps.indices.compactMap { MGSolidShot.step(self, $0) }
+        var listed: [String: Int] = [:], dropped: [String: Int] = [:]
+        for s in shots {
+            let ids = Set(view(step: s.step).annotations).intersection(candidates)
+            guard !ids.isEmpty else { continue }
+            let c = MGSolidFraming.clearView(self, shot: s, aspect: w / h, titleBand: s.title != nil ? bands.title : 0,
+                                             captionBand: s.caption != nil ? bands.caption : 0)
+            for id in ids { listed[id, default: 0] += 1 }
+            for d in c.arrowDrops where ids.contains(d.id) { dropped[d.id, default: 0] += 1 }
+        }
+        return Set(listed.keys.filter { dropped[$0] == listed[$0] })
     }
 
     /// The unit of a part: every part whose id is the part's first id segment (the text before the first ".") or starts
@@ -605,13 +625,12 @@ extension MGSolidDocument {
             return MGAnnotationPoint(anchor: .world(local), local: local)
         }
         let parts = [from.part, to.part].compactMap { $0 }.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
-        // A force or flow arrow's tail stays on its part (`MGAnnotationArrowRules.tailLengthShare`).
+        // A force or flow arrow's tail never moves farther from its part (`MGAnnotationArrowRules.keepsTail`).
         let tail = arrowTail(r)
         let tailBox = tail.flatMap { assembly.part($0.part)?.mesh.bounds }
         func keepsTail(_ f2: MGAnnotationPoint, _ t2: MGAnnotationPoint) -> Bool {
             guard let tail, let box = tailBox else { return true }
-            let d = mgBoxDistance((tail.from ? f2 : t2).local, box)
-            return d.isFinite && d <= max(tail.tolerance, tail.distance)
+            return MGAnnotationArrowRules.keepsTail(authored: tail.distance, moved: mgBoxDistance((tail.from ? f2 : t2).local, box))
         }
         var tried = 0, keptVector = 0, keptTail = 0
         var firstPass: MGAnnotationArrowSuggestion?
@@ -625,8 +644,6 @@ extension MGSolidDocument {
                 guard seen.insert([f2.local.x, f2.local.y, f2.local.z, t2.local.x, t2.local.y, t2.local.z]).inserted else { continue }
                 guard budget > 0 else { return firstPass ?? none(.budget, tried: tried) }
                 tried += 1
-                guard keepsTail(f2, t2) else { continue }
-                keptTail += 1
                 // A force or flow arrow says something with its vector: the move must keep it in every view.
                 if r.meaning != .pointer {
                     let keeps = mine.allSatisfy { kv in
@@ -636,6 +653,8 @@ extension MGSolidDocument {
                     guard keeps else { continue }
                 }
                 keptVector += 1
+                guard keepsTail(f2, t2) else { continue }
+                keptTail += 1
                 var passes = true, full = true
                 for kv in mine {
                     let pose = rules[kv].base.pose
@@ -659,8 +678,10 @@ extension MGSolidDocument {
             }
         }
         if let firstPass { return firstPass }
-        if tried > 0 && keptTail == 0 { return none(.tail, tried: tried) }
-        return none(keptTail > 0 && keptVector == 0 ? .pose : .noClearOffset, tried: tried)
+        // No candidate keeps the vector: `pose`. Else the tail rule skipped one and nothing passed: `tail`.
+        if tried > 0 && keptVector == 0 { return none(.pose, tried: tried) }
+        if keptTail < keptVector { return none(.tail, tried: tried) }
+        return none(.noClearOffset, tried: tried)
     }
 
     /// `source` (an assembly, or an explainer's solid object) with each arrow in `moves` given the anchors of its
@@ -793,10 +814,10 @@ struct MGAnnotationArrowReport {
                     issues[k].suggestion = .none(.pose, step: issues[k].step, beat: issues[k].beat, by: issues[k].by, samples: s.samples)
                     continue
                 }
-                // The tail stays on its part, measured against the authored arrow (a re-check searched from a moved one).
+                // The tail never moves farther from its part, measured against the authored arrow (a re-check searched
+                // from a moved one).
                 if let tail = doc.arrowTail(r), let box = doc.assembly.part(tail.part)?.mesh.bounds {
-                    let d = mgBoxDistance((tail.from ? f : t).local, box)
-                    if !(d <= max(tail.tolerance, tail.distance)) {
+                    if !MGAnnotationArrowRules.keepsTail(authored: tail.distance, moved: mgBoxDistance((tail.from ? f : t).local, box)) {
                         issues[k].suggestion = .none(.tail, step: issues[k].step, beat: issues[k].beat, by: issues[k].by, samples: s.samples)
                         continue
                     }

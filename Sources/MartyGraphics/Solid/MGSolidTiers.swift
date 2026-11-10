@@ -153,7 +153,8 @@ extension MGSolidDocument {
                              note: note, shapes: "Shapes as authored", notes: notes)
     }
 
-    /// Annotation claims in authored order (labels, arrows, dimensions); an annotation with no tier makes no claim.
+    /// Annotation claims in authored order (labels, arrows, dimensions); an annotation with no tier makes no claim, and
+    /// neither does an arrow that every still listing it drops (`undrawnArrows`).
     var annotationClaims: [MGSolidClaim] {
         var out: [MGSolidClaim] = []
         func add(_ id: String, _ t: MGSolidTier?, _ why: String) {
@@ -164,7 +165,7 @@ extension MGSolidDocument {
             add(l.id, l.tier, l.unchecked.map { "Marked unchecked: \($0)" }
                 ?? (l.tier == .solved ? "Its numbers are engine facts; its words are not checked" : "It shows a fact below Solved"))
         }
-        for r in annotations.arrows {
+        for r in annotations.arrows where !undrawnArrows.contains(r.id) {
             let why: String
             if let u = r.unchecked { why = "Marked unchecked: \(u)" }
             else {

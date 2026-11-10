@@ -59,7 +59,7 @@ final class ArrowVisibilityTests: XCTestCase {
         let ok = report(open, .strict)
         XCTAssertTrue(ok.ok, ok.reason ?? "")
         XCTAssertEqual(arrows(ok.json).count, 0)
-        let head = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"part": "side", "point": "centre"}}]"#)
+        let head = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"world": [400, 0, 0]}}]"#)
         let r = report(head, .strict)
         XCTAssertEqual(r.reason, "annotation.arrow.hidden.f1")
         guard case .object(let a)? = r.json["arrow"] else { return XCTFail("arrow") }
@@ -69,7 +69,7 @@ final class ArrowVisibilityTests: XCTestCase {
         // The suggestion slides the arrow back along itself (world anchors move in the world) and passes once applied.
         guard case .object(let s)? = a["suggest"] else { return XCTFail("suggest") }
         guard case .object(let from)? = s["from"], case .object(let to)? = s["to"] else { return XCTFail("anchors") }
-        XCTAssertNotNil(from["world"]); XCTAssertEqual(to["part"], .string("side"))
+        XCTAssertNotNil(from["world"]); XCTAssertNotNil(to["world"])
         let fixed = Self.applying(["f1": .object(s)], to: head)
         let after = report(fixed, .strict)
         XCTAssertTrue(after.ok, after.reason ?? "")
@@ -163,7 +163,7 @@ final class ArrowVisibilityTests: XCTestCase {
     /// a move that gives another annotation an issue is dropped as a `conflict` naming it; a copy that does not compile
     /// drops the set (`form`); a clean copy keeps every move.
     func testTheRecheckKeepsOnlyMovesThatHold() throws {
-        let t = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"part": "side", "point": "centre"}}]"#)
+        let t = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"world": [400, 0, 0]}}]"#)
         let d = try doc(t)
         let views = d.stepCheckViews()
         var base = MGAnnotationArrowReport()
@@ -251,7 +251,7 @@ final class ArrowVisibilityTests: XCTestCase {
     /// report spends at most `suggestDocumentTests` on them together. With an empty budget nothing is searched, and the
     /// re-check gets that same budget.
     func testTheReportSharesOneSearchBudget() throws {
-        let t = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"part": "side", "point": "centre"}}]"#)
+        let t = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"world": [400, 0, 0]}}]"#)
         let d = try doc(t)
         let views = d.stepCheckViews().filter { d.showsArrow($0.view) }
         var empty = MGAnnotationArrowReport()
@@ -283,7 +283,7 @@ final class ArrowVisibilityTests: XCTestCase {
     /// and drops all on a refused copy (`form`). After a drop the remaining set is checked again; a union of one family
     /// is checked too.
     func testAnchorAndArrowSuggestionsAreCheckedTogether() throws {
-        let t = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"part": "side", "point": "centre"}}]"#)
+        let t = text(#"[{"id": "f1", "meaning": "force", "from": {"world": [400, 0, 200]}, "to": {"world": [400, 0, 0]}}]"#)
         let d = try doc(t)
         let views = d.stepCheckViews()
         var arrowsBase = MGAnnotationArrowReport()
@@ -418,8 +418,9 @@ final class ArrowVisibilityTests: XCTestCase {
     }
 
     /// The thrust arrow of an engine on a figure's back runs inside the engine casing: strict refuses it in the beat
-    /// that shows it, names the casing and the visible share, and suggests a move; applied, the copy passes strict with
-    /// no arrow or anchor issue. Standard warns. The report is the same on every run.
+    /// that shows it and names the casing and the visible share. Its tail lies on the nozzle, and every move that clears
+    /// the casing takes the tail off the nozzle, so there is no move (`noSuggest` code `tail`, PR #49): the author must
+    /// redraw the arrow. Standard warns. The report is the same on every run.
     func testAnArrowInsideAnEngineCasingIsRefusedAndTheMoveClearsIt() throws {
         let source = try String(contentsOf: Self.fixture, encoding: .utf8)
         let strict = MGExplainerReport.check(data: Data(source.utf8), profile: .strict, engine: nil)
@@ -431,19 +432,13 @@ final class ArrowVisibilityTests: XCTestCase {
         XCTAssertEqual(a["beat"], .number(2))
         XCTAssertEqual(a["by"], .string("engine.casing"))
         if case .number(let s)? = a["share"] { XCTAssertLessThan(s, MGAnnotationArrowRules.minVisibleShare) } else { XCTFail("share") }
-        guard case .object(let s)? = a["suggest"] else { return XCTFail("suggest") }
+        XCTAssertEqual(a["suggest"], .null)
+        guard case .object(let none)? = a["noSuggest"] else { return XCTFail("noSuggest") }
+        XCTAssertEqual(none["code"], .string("tail"))
         XCTAssertEqual(MGExplainerReport.check(data: Data(source.utf8), profile: .strict, engine: nil).json, strict.json, "deterministic")
         let standard = MGExplainerReport.check(data: Data(source.utf8), profile: .standard, engine: nil)
         XCTAssertTrue(standard.ok)
         XCTAssertEqual(warnings(standard.json), ["annotation.arrow.hidden.push"])
-        // Applied to a copy of the solid: strict passes, with no arrow or anchor issue.
-        guard case .object(var root)? = Self.json(source), let solid = root["solid"] else { return XCTFail("json") }
-        root["solid"] = MGSolidDocument.replacingArrows(solid, ["push": .object(s)])
-        let fixed = MGJSON.object(root).canonicalString
-        let after = MGExplainerReport.check(data: Data(fixed.utf8), profile: .strict, engine: nil)
-        XCTAssertTrue(after.ok, after.reason ?? "")
-        XCTAssertEqual(arrows(after.json).count, 0)
-        if case .array(let anchors)? = after.json["anchorIssues"] { XCTAssertEqual(anchors.count, 0) } else { XCTFail("anchorIssues") }
     }
 
     /// Replaces each arrow's anchors in an assembly's text with its `suggest`.

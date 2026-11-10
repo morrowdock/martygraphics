@@ -156,7 +156,7 @@ The limit patterns (`MGSolidReasons.limitPatterns`; `SolidLimitDetailTests` trig
 `component.id.length`, `explainer.bytes`, `explainer.title`, `explainer.statements.count`, `explainer.beats.count`,
 `notes.count`, `notes.text.<id>`, `beat.unchecked.<n>`, `beat.ops.count`, `beat.checks.count`,
 `beat.highlight.count`, `stmt.bytes`, `stmt.say`, `view.focus`, `view.ghost`, `view.section.parts`,
-`view.annotate.count`, `view.pose`, `view.hide`, `view.show`.
+`view.annotate.count`, `view.pose`, `view.hide`, `view.show`, `names.count`, `names.text.<n>`.
 
 Bounds without `limit` (`MGSolidReasons.limitExempt`; a test fails when a meaning that names a bound is in neither
 list):
@@ -441,6 +441,10 @@ list):
 | `anchor.ambiguous.<id>` | assembly | An annotation anchor names a `repeat` base with copies or a component instance (more than one part). |
 | `label.text.<id>` | assembly | A label's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 240 characters, or of 1–60 characters after placeholders are filled. |
 | `label.unchecked.<id>` | assembly | A label's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters. |
+| `names.count` | assembly, explainer | `names` is not an array of strings, or it has fewer than 1 or more than 24 entries (`MGSolidFacts.namesCount`). |
+| `names.text.<n>` | assembly, explainer | Declared name `<n>` (1-based) is not 1–24 characters long (`MGSolidFacts.nameText`). |
+| `names.token.<n>` | assembly, explainer | Declared name `<n>` is not one token (a run of letters, number characters and "-" with no space or punctuation) or has no number character, so no text could match it. |
+| `names.number.<n>` | assembly, explainer | Declared name `<n>` is a number, or a number joined to a unit or quantity word ("Mach2", "USD120", "RPM120", "120km", "4th"): a quantity is a claim, not a name. |
 | `text.number.label.<id>` | assembly | A label has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
 | `arrow.meaning.<id>` | assembly | An arrow's `meaning` is not force, flow, motion or pointer. |
 | `arrow.style.<id>` | assembly | A motion arrow's `style` is not line or turn. |

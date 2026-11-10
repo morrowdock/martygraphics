@@ -580,7 +580,7 @@ enum MGSolidAnnotationEngine {
 
     /// Fills one annotation text. `abs` is refused: no step proves a sign for an annotation (`text.sign.<name>`).
     static func fill(_ template: String, _ w: String, n1: Bool, _ doc: MGSolidDocument, tooLong: String, field: String) throws -> MGSolidFilledText {
-        let filled = try MGSolidFacts.fill(template, where: w, n1: n1, doc.facts, doc.aliases)
+        let filled = try MGSolidFacts.fill(template, where: w, n1: n1, doc.facts, doc.aliases, names: Set(doc.names))
         for (name, mods) in zip(filled.facts, filled.modifiers) where mods.contains("abs") { throw MGSolidIssue("text.sign.\(MGSolidParser.token(name))") }
         let empty = filled.text.trimmingCharacters(in: .whitespaces).isEmpty
         guard !empty, filled.text.unicodeScalars.count <= L.text else {

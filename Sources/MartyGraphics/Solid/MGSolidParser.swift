@@ -355,6 +355,13 @@ public struct MGSolidDocument: Equatable, Sendable {
     public internal(set) var annotations = MGSolidAnnotations()
     /// v2: canonical names of the facts the title shows, in order.
     public internal(set) var titleFacts: [String] = []
+    /// v2: the declared names (`names`, docs/SOLID-3D.md "Declared names"): a token of the text that exactly equals one
+    /// is not a typed number for rule N1. Empty when the document declares none.
+    public internal(set) var names: [String] = []
+    /// v2 assemblies: the force and flow arrows that every still listing them drops (`MGSolidDocument.computeUndrawnArrows`,
+    /// docs/SOLID-3D.md "Arrow drop"). They are never drawn, so they make no claim. Empty for an explainer's solid (its
+    /// session counts the arrows each beat draws).
+    public internal(set) var undrawnArrows: Set<String> = []
     /// The annotation fingerprint the compiler checked (`checkedAnnotations` refuses a changed document or a foreign view).
     public internal(set) var checkedFingerprint: String?
     /// v2: show-only parts: every part some step lists in `show`, in part order. Such a part shows only in the steps that
@@ -373,7 +380,7 @@ public struct MGSolidDocument: Equatable, Sendable {
 struct MGSolidFormat: Equatable {
     let version: Int
     static let v1 = MGSolidFormat(version: 1), v2 = MGSolidFormat(version: 2)
-    static let topKeysV2: Set<String> = ["annotations"]
+    static let topKeysV2: Set<String> = ["annotations", "names"]
     static let partKeysV2: Set<String> = ["expect", "offAxis", "opacity", "emissive"]
     static let stepKeysV2: Set<String> = ["check", "unchecked", "section", "ghost", "annotate", "pose", "hide", "show"]
     var isV2: Bool { version >= 2 }
@@ -551,6 +558,7 @@ public enum MGSolidParser {
         guard o["kind"] == .string("assembly") else { throw MGSolidIssue("assembly.kind") }
         if let u = o["units"], u != .string("mm") { throw MGSolidIssue("assembly.units") }
         let title = try o["title"].map { try text($0, MGSolidLimits.title, "assembly.title", field: "title") } ?? "Assembly"
+        let names = try o["names"].map(MGSolidFacts.names) ?? []
         var defaults = MGPoseParameters()
         if let p = o["params"] {
             guard case .object(let po) = p else { throw MGSolidIssue("params") }
@@ -1025,6 +1033,7 @@ public enum MGSolidParser {
         var doc = MGSolidDocument(title: title, assembly: assembly, steps: steps, defaults: defaults, gears: gears, shapes: shapes,
                                   ratios: ratios, source: json, library: library)
         doc.version = format.version
+        doc.names = names
         doc.copies = copies
         doc.aliases = expansion.aliases
         doc.motionSources = sources
@@ -1059,6 +1068,7 @@ public enum MGSolidParser {
         }
         // Binds views and annotation output to this compiled document (`checkedAnnotations`).
         doc.checkedFingerprint = doc.annotationFingerprint
+        if format.isV2, !perStepAnnotations { doc.undrawnArrows = doc.computeUndrawnArrows() }
         return doc
     }
 
@@ -1067,7 +1077,7 @@ public enum MGSolidParser {
     /// may type numbers, but then it is Described. `abs` hides a sign, so it needs a check in the same step that
     /// proves the sign of that fact (`text.sign.<name>`); a title cannot use it.
     static func fillText(_ doc: inout MGSolidDocument) throws {
-        let title = try MGSolidFacts.fill(doc.title, where: "title", n1: false, doc.facts, doc.aliases)
+        let title = try MGSolidFacts.fill(doc.title, where: "title", n1: false, doc.facts, doc.aliases, names: Set(doc.names))
         guard title.text.unicodeScalars.count <= MGSolidLimits.title else {
             throw MGSolidIssue("assembly.title", limit: MGSolidLimitDetail(field: "title", actual: title.text.unicodeScalars.count,
                                                                            limit: MGSolidLimits.title, unit: "characters"))
@@ -1079,7 +1089,8 @@ public enum MGSolidParser {
         doc.titleTier = MGSolidTiers.text(facts: title.facts.compactMap { doc.facts[$0] }, unchecked: false, typedNumbers: title.typedNumbers)
         for i in doc.steps.indices {
             var s = doc.steps[i]
-            let filled = try MGSolidFacts.fill(s.template, where: "step.\(i + 1)", n1: s.unchecked == nil, doc.facts, doc.aliases)
+            let filled = try MGSolidFacts.fill(s.template, where: "step.\(i + 1)", n1: s.unchecked == nil, doc.facts, doc.aliases,
+                                               names: Set(doc.names))
             guard !filled.text.isEmpty, filled.text.unicodeScalars.count <= MGSolidLimits.say else {
                 throw MGSolidIssue("step.say", limit: MGSolidLimitDetail(field: "steps[\(i)].say", actual: filled.text.unicodeScalars.count,
                                                                          limit: MGSolidLimits.say, unit: "characters", minimum: 1))

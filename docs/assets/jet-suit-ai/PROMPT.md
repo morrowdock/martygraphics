@@ -55,7 +55,8 @@ Total: **4 runs, 3 accepted, 1 refused; 12 author and repair tries.** **1 of the
 ## Render
 
 The lesson was rendered with `marty-solid` built from the engine at `dfc521a` (release build), one render, no
-changes:
+changes. The published render and check are at engine `dfc521a`; newer engines (PR #49) drop two beat-4 thrust arrows
+(`aL1`, `aR2`) whose engines are hidden in that view.
 
 ```
 marty-solid render accepted-document.json <OUT> --size 1280x800 --loop-fps 30

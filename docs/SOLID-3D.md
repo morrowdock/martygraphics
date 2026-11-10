@@ -326,25 +326,26 @@ exception is a step marked `"unchecked": "<why>"` (1–60 characters): it may ty
 and it shows the "Not checked" chip. For units and formulas write "square mm" or mark the
 step `unchecked`. So "Its stroke is 36 mm." is refused; "Its stroke is
 {engine.piston.travel}." shows "Its stroke is 36 mm." with its numbers Solved.
-**Model names.** The digits of a model-name token do not count: "the newer Mk4 differs" passes. A token is a maximal
-run of letters (any script), number characters and the hyphen-minus "-"; every other character (a space, punctuation,
-an apostrophe, a brace) ends it, and a placeholder ends it too. A token is a model name when all of these hold
-(`MGSolidFacts.isModelName`): every character is ASCII (A–Z, a–z, 0–9 or "-"); it holds at least one capital A–Z and
-at least one digit; split at "-", no piece is empty; the first piece starts with a letter; a later piece that starts
-with a digit follows a piece of capitals only; and it is not "x" or "X" followed by digits only (a multiplier). Every
-other number character still counts. So "Mk4", "A320", "F-35", "P220", "B-52", "COVID-19", "CO2" and "Mk4's" pass, and
-"4 engines", "Mk 4", "Mk4.5" (the "5"), "4th", "3D", "10mm", "5-engine", "x2", "X2", "v2" (no capital), "m2",
-"Pre-2020", "Mk-4", "Su-27", "MiG-29", "A380-800", "Mk½", "CO₂" and a full-width "Mk４" are refused. A name with a
-spaced or non-ASCII number, or a hyphen after mixed case, is refused although it may be a name: write it without the
-space, or mark the text `unchecked`. The same token rule applies to every text rule N1 reads: captions, labels, arrow
-and dimension text, and in an explainer beat captions, 2D item text and table cells
-([EXPLAINER.md](EXPLAINER.md)). A model name is not a typed number, so a title like "V8 engine" is no longer
-Described for its digit.
+**Declared names.** A v2 document may list `names`: 1–24 strings (`MGSolidFacts.namesCount`), each one token of 1–24
+characters with at least one number character, such as `"names": ["Mk4", "A320", "F-35"]`. A token is a maximal run of
+letters (any script), number characters and the hyphen-minus "-"; every other character (a space, punctuation, an
+apostrophe, a brace) ends it, and a placeholder ends it too. A token of a caption, a label, an arrow or a dimension
+text, or the title, that **exactly** equals a declared name (whole token, case-sensitive) is not a typed number. Every
+other number character still counts, as before: "Mk 4", "mk4", "Mk4s", "Mk4.5" (the "5"), and "4 engines" in the same
+text are refused. There is no lexical exception: an undeclared "Mk4" is still `text.number.<where>`. A name may not be
+a number or a quantity: a name with no letter, or (hyphens removed) one run of letters and one run of digits in either
+order whose letters are a unit or quantity word (`MGSolidFacts.isQuantityName`: "Mach2", "USD120", "RPM120", "120km",
+"4th", "x2"; the one-letter units match only in lowercase, so "A320", "V8" and "M6" may be names) is refused
+(`names.number.<n>`). Other reasons: `names.count` (not an array of strings, or 0 or more than 24 entries),
+`names.text.<n>` (length), `names.token.<n>` (not one token, or no number character); `<n>` is 1-based. A name listed
+twice is kept once. The engine has no general number and unit parser; this closed word list is the check. An explainer
+lists `names` in its header ([EXPLAINER.md](EXPLAINER.md)); they also apply to its solid. Marty fills `names` from the
+names its research rows give.
 N1 covers number characters only. It does not see number words ("three times slower"),
 and it cannot tell whether a placeholder names the right fact: "{count.stage.planet}
 times slower" prints "3 times slower" from the planet count. A `check` is the only proof of
 a relation, and the check report lists which fact filled each placeholder (`stepFacts`).
-Titles and part names may type digits ("V8 engine"), but a title with a typed number (other than a model name) is
+Titles and part names may type digits ("V8 engine"), but a title with a typed number (other than a declared name) is
 Described.
 
 **Claim checks.** A step may state up to 8 claims that the engine proves before it accepts
@@ -1172,8 +1173,8 @@ every view is the suggestion, else the first that passes the rule in every view.
 checked once more against the authored arrow in every view (`measure`). A pointer keeps its tip; only its start moves,
 so its vector is not kept. A motion arrow shows its anchor's motion and gets none (`code` `motion`). With none,
 `suggest` is null and `noSuggest` is `{"cause", "code", "step", "beat", "by", "other", "samples", "alternatives"}`
-(`code`: `motion`, `pose` (no candidate keeps the vector in every view), `tail` (every candidate takes a force or
-flow arrow's tail off its part, see [Arrow tails](#arrow-tails)), `noclearoffset`, `budget`, `form`, `framing` or
+(`code`: `motion`, `pose` (no candidate keeps the vector in every view), `tail` (no move is left that keeps a force or
+flow arrow's tail as near its part, see [Arrow tails](#arrow-tails)), `noclearoffset`, `budget`, `form`, `framing` or
 `conflict`; alternatives: leave the arrow out of that view's `annotate` list, ghost the part in the way, or change
 that view's camera).
 
@@ -1204,7 +1205,8 @@ printed suggestion, anchors and arrows, can be applied at once.
 
 The synthetic explainer `docs/fixtures/arrow-visibility/arrow-in-casing.explainer.json` (a figure with one engine on
 its back, neutral names) holds a thrust arrow from the nozzle to the intake lip, inside the casing: strict refuses it
-(5 % visible, `engine.casing` in the way), and its `suggest`, applied, passes strict.
+(5 % visible, `engine.casing` in the way). Every move that clears the casing takes the tail off the nozzle, so there is
+no move (`noSuggest` code `tail`); before the tail rule, its `suggest` moved the arrow out of the casing.
 
 Not tested: arrows in the plain view (`hero.png`, `solid-0.png`), the poses during a spin and camera moves, other sizes
 than 1280 × 800, whether a sample is covered by text, a band or the legend, and how thick the drawn shaft is (the
@@ -1227,15 +1229,16 @@ Two gaps let a thrust arrow pass far from its engine:
 #### Arrow tails
 
 The tail of a force or flow arrow is, of its ends that ride on a part, the one nearest the box of its part's mesh in
-that part's frame (ties: `from`) (`MGSolidDocument.arrowTail`). Its tolerance is
-`max(0.5 × the arrow's length, 0.25 × the part's box diagonal)` (`MGAnnotationArrowRules.tailLengthShare`,
-`tailPartShare`; the length at the default pose with explode 0). A suggested move keeps the tail on its part: a
-candidate whose moved tail lies more than `max(the tolerance, the authored tail's distance)` outside the box, in the
-part's frame, is not tried. So a move never takes the tail farther off than the author put it, beyond the tolerance.
-When every candidate is skipped this way, `noSuggest` has `code` `tail` ("every move tried takes the arrow's tail off
-its part") and the usual alternatives. After the re-check, every move is measured once more against the authored
-arrow (`measure`) and dropped with `tail` if its tail is off. Pointers keep their tips and motion arrows get no move,
-so the rule is for force and flow arrows only.
+that part's frame (ties: `from`) (`MGSolidDocument.arrowTail`). A suggested move never takes the tail farther from its
+part (`MGAnnotationArrowRules.keepsTail`): the moved tail's distance to that box may exceed the authored distance by at
+most the precision epsilon at the dot (`mgPrecision(.zero)`, 1.01e-4 mm). So a tail on or inside its part stays on or
+inside it, and a tail off its part never moves farther off. A candidate that breaks this is not tried. When no move is
+left and the rule skipped a candidate that kept the vector (a candidate that changes the vector is `pose` first),
+`noSuggest` has `code` `tail` ("every move tried takes the arrow's tail farther
+from its part") and the usual alternatives; the arrow is refused in strict mode and the author redraws it. After the
+re-check, every move is measured once more against the authored arrow (`measure`) and dropped with `tail` if it moved
+the tail farther, so no suggested, re-checked or auto-applied move detaches an arrow. Pointers keep their tips and
+motion arrows get no move, so the rule is for force and flow arrows only.
 
 #### Arrow drop
 
@@ -1262,6 +1265,15 @@ highlights, and the arrow says nothing about a part that is not in the picture. 
   "beat"}]`, with the tail's part and the part outside the unit that hides the most samples (ties in assembly order).
   `marty-solid render` adds `arrowDrops` (`{"id", "part", "by"}`) to the still's manifest record and to its story beat.
 * A snapshot has no camera and keeps the arrow; the plain view (`hero.png`) is framed and drops as a still does.
+* **One set per explainer beat.** A beat's drops are decided once, at the beat's framing for the whole content area of
+  a 1280 × 800 frame with no board pane (`MGExplainerFrame.beatArrowDrops`; it reads only the beat's solid step and its
+  highlighted 3D parts). The beat still, its story frames, the SwiftUI pane and the check report all use that set,
+  whatever their own pane (`MGExplainerFrame.solidClearView`), so every view of a beat draws the same annotations.
+* **Claims count only what is drawn.** A dropped arrow is not presented in that view. In an explainer, the record of
+  presented annotations, the claims and the legend use the annotations each beat draws after its drops
+  (`MGExplainerSession.displayedAnnotations`); under the show-all rule an arrow that every kept beat drops makes no
+  claim. In an assembly, an arrow that every still listing it drops (`hero.png` and every step still, as `marty-solid
+  render` frames them; `MGSolidDocument.undrawnArrows`) makes no claim, so the legend does not count it.
 
 So a back engine's thrust arrow is drawn in a back view and dropped in a front view, and an arm engine behind its twin
 drops its arrow in a front view while the twin keeps its own.
@@ -1372,7 +1384,9 @@ output. Every refused report now ends with `repair` (one line, [Anchor suggestio
 [REASONS.md](REASONS.md#limit-details)) and a limit refusal adds `limit`; the golden files of refused inputs hold these
 two new members and nothing else changed. The arrow rule adds `arrowIssues` and `arrow`; the only shipped document it
 refused, `docs/assets/jet-suit/jet-suit.json` (arrow `aTL2`: its head was behind the pack in step 2), was fixed with
-the check's own suggested move, so its golden files hold the fixed file's output.
+the check's own suggested move, so its golden files hold the fixed file's output. The arrow drop rule adds
+`arrowDrops` and its warnings; the only shipped document it changes, `docs/assets/jet-suit-ai/lesson.json`, drops two
+beat-4 arrows, and its golden files hold that output.
 
 ### Tiers per part and per motion
 

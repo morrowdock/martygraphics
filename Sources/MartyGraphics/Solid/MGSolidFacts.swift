@@ -166,50 +166,87 @@ public enum MGSolidFacts {
         ch.isNumber || ch.unicodeScalars.contains { $0.properties.numericType != nil || MGSolidNumericScalars.contains($0) }
     }
 
-    // MARK: Rule N1: model names
+    // MARK: Rule N1: declared names
 
-    /// The offsets in `chars` of the digits rule N1 does not count: the ASCII digits of model-name tokens
-    /// (docs/SOLID-3D.md, "Model names"). A token is a maximal run of characters that are letters (any script), number
-    /// characters (`isNumber`) or the hyphen-minus "-"; every other character (a space, punctuation, an apostrophe, a
-    /// brace) ends it. `isModelName` decides each token. Every other number character still counts.
-    static func modelNameDigits(_ chars: [Character]) -> Set<Int> {
+    /// Most entries of a document's `names` list, and the most characters of one name.
+    public static let namesCount = 24, nameText = 24
+
+    /// The tokens of `chars` (docs/SOLID-3D.md, "Declared names"): maximal runs of characters that are letters (any
+    /// script), number characters (`isNumber`) or the hyphen-minus "-". Every other character (a space, punctuation,
+    /// an apostrophe, a brace) ends a token.
+    static func tokens(_ chars: [Character]) -> [Range<Int>] {
         func joins(_ c: Character) -> Bool { c == "-" || c.isLetter || isNumber(c) }
-        var out = Set<Int>(), i = 0
+        var out: [Range<Int>] = [], i = 0
         while i < chars.count {
             guard joins(chars[i]) else { i += 1; continue }
             var j = i
             while j < chars.count, joins(chars[j]) { j += 1 }
-            if isModelName(String(chars[i..<j])) {
-                for k in i..<j where chars[k].unicodeScalars.allSatisfy({ (0x30...0x39).contains($0.value) }) { out.insert(k) }
-            }
+            out.append(i..<j)
             i = j
         }
         return out
     }
 
-    /// True when `token` is a model name such as "Mk4", "A320", "F-35", "P220" or "COVID-19", whose digits rule N1
-    /// does not count. All of:
-    /// 1. every character is ASCII: A–Z, a–z, 0–9 or "-";
-    /// 2. it holds at least one capital A–Z and at least one digit 0–9;
-    /// 3. split at "-", no piece is empty (no leading, trailing or double hyphen);
-    /// 4. the first piece starts with a letter (so "4th", "3D", "10mm" and "5-engine" count);
-    /// 5. a later piece that starts with a digit follows a piece of capitals only ("F-35", "B-52"; not "Pre-2020",
-    ///    "Mk-4", "Su-27" or "A380-800");
-    /// 6. it is not a multiplier: "x" or "X" followed by digits only ("X2", "x10").
-    static func isModelName(_ token: String) -> Bool {
-        let s = Array(token.unicodeScalars)
-        func capital(_ u: Unicode.Scalar) -> Bool { (0x41...0x5A).contains(u.value) }
-        func small(_ u: Unicode.Scalar) -> Bool { (0x61...0x7A).contains(u.value) }
-        func digit(_ u: Unicode.Scalar) -> Bool { (0x30...0x39).contains(u.value) }
-        guard !s.isEmpty, s.allSatisfy({ capital($0) || small($0) || digit($0) || $0 == "-" }) else { return false }
-        guard s.contains(where: capital), s.contains(where: digit) else { return false }
-        let pieces = s.split(separator: "-", omittingEmptySubsequences: false)
-        guard pieces.allSatisfy({ !$0.isEmpty }), let first = pieces.first?.first, capital(first) || small(first) else { return false }
-        for k in pieces.indices.dropFirst() where digit(pieces[k].first!) {
-            guard pieces[k - 1].allSatisfy(capital) else { return false }
+    /// The offsets in `chars` of the characters of every token that exactly equals a declared name (whole token,
+    /// case-sensitive): rule N1 does not count their number characters. Every other number character still counts.
+    static func nameOffsets(_ chars: [Character], names: Set<String>) -> Set<Int> {
+        guard !names.isEmpty else { return [] }
+        var out = Set<Int>()
+        for r in tokens(chars) where names.contains(String(chars[r])) { out.formUnion(r) }
+        return out
+    }
+
+    /// Unit and quantity words a declared name may not join to a number (`names.number.<n>`), lowercase. Matched
+    /// without case, except the one-letter units, which match only in lowercase (so "A320" and "V8" stay names).
+    static let quantityWords: Set<String> = [
+        "mach", "rpm", "rps", "mph", "kph", "kmh", "kmph", "fps", "knots", "kt", "kts",
+        "km", "cm", "mm", "nm", "um", "mi", "ft", "yd", "in", "inch", "nmi", "ly", "au",
+        "kg", "mg", "lb", "lbs", "oz", "ton", "tons", "tonne",
+        "kn", "kw", "mw", "gw", "hp", "bhp", "ps", "kj", "mj", "kwh", "wh", "mah", "kv", "mv", "ma",
+        "hz", "khz", "mhz", "ghz", "ms", "us", "sec", "secs", "min", "mins", "hr", "hrs", "yr", "yrs", "day", "days",
+        "ml", "cl", "dl", "gal", "cc", "psi", "bar", "mbar", "pa", "kpa", "mpa", "gpa", "atm",
+        "deg", "rad", "db", "dba", "lux", "lm", "kb", "mb", "gb", "tb", "kib", "mib", "gib", "bit", "bits",
+        "pct", "percent", "pc", "pcs", "usd", "eur", "gbp", "jpy", "cny", "aud", "cad", "chf", "inr", "krw", "rub", "btc",
+        "st", "nd", "rd", "th",
+    ]
+    static let quantityLetters: Set<Character> = ["m", "g", "s", "h", "l", "t", "x", "k", "n", "w", "v", "a", "j", "c", "f", "b"]
+
+    /// True when a declared name is a number or a number with a unit (`names.number.<n>`): it has no letter, or its
+    /// hyphens removed, it is one run of letters and one run of digits in either order (as "Mach2", "USD120",
+    /// "120RPM", "km-5", "4th") where the letters are a unit or quantity word (`quantityWords`, `quantityLetters`).
+    static func isQuantityName(_ name: String) -> Bool {
+        let chars = Array(name).filter { $0 != "-" }
+        guard chars.contains(where: { $0.isLetter }) else { return true }
+        var runs: [(letters: Bool, text: String)] = []
+        for c in chars {
+            let l = c.isLetter
+            if let last = runs.last, last.letters == l { runs[runs.count - 1].text.append(c) } else { runs.append((l, String(c))) }
         }
-        if pieces.count == 1, s.count > 1, s[0] == "x" || s[0] == "X", s.dropFirst().allSatisfy(digit) { return false }
-        return true
+        guard runs.count == 2, let word = runs.first(where: { $0.letters })?.text else { return false }
+        if word.count == 1, let c = word.first { return quantityLetters.contains(c) }
+        return quantityWords.contains(word.lowercased())
+    }
+
+    /// A document's `names` list (docs/SOLID-3D.md, "Declared names"): 1–`namesCount` strings, each one token
+    /// (`tokens`) of 1–`nameText` characters with at least one number character, and not a number or a number with a
+    /// unit (`isQuantityName`). Reasons: `names.count` (not an array of strings, or a count out of range, with
+    /// `limit`), `names.text.<n>` (length, with `limit`), `names.token.<n>` (not one token, or no number character),
+    /// `names.number.<n>` (`<n>` 1-based). Repeats are kept once.
+    static func names(_ v: MGJSON) throws -> [String] {
+        guard case .array(let list) = v else { throw MGSolidIssue("names.count") }
+        if let d = MGSolidParser.countDetail("names", list.count, 1...namesCount, unit: "names") { throw MGSolidIssue("names.count", limit: d) }
+        var out: [String] = []
+        for (k, e) in list.enumerated() {
+            guard case .string(let n) = e else { throw MGSolidIssue("names.count") }
+            if let d = MGSolidParser.countDetail("names[\(k)]", n.unicodeScalars.count, 1...nameText, unit: "characters") {
+                throw MGSolidIssue("names.text.\(k + 1)", limit: d)
+            }
+            let chars = Array(n)
+            guard tokens(chars) == [0..<chars.count], chars.contains(where: isNumber) else { throw MGSolidIssue("names.token.\(k + 1)") }
+            guard !isQuantityName(n) else { throw MGSolidIssue("names.number.\(k + 1)") }
+            if !out.contains(n) { out.append(n) }
+        }
+        return out
     }
 
     // MARK: Table
@@ -365,10 +402,10 @@ public enum MGSolidFacts {
     /// modifier), `text.modifier.<mod>.<name>` (a modifier that does not apply to this fact) and
     /// `text.rounding.<name>` (a non-zero value that would print as "0").
     static func fill(_ s: String, where w: String, n1: Bool, _ facts: [String: MGSolidFact],
-                     _ aliases: [String: String]) throws -> MGSolidFilledText {
+                     _ aliases: [String: String], names: Set<String> = []) throws -> MGSolidFilledText {
         var out = MGSolidFilledText(text: "", facts: [])
         var body = "", inside = false
-        let chars = Array(s), names = modelNameDigits(chars)
+        let chars = Array(s), declared = nameOffsets(chars, names: names)
         for (k, ch) in chars.enumerated() {
             if inside {
                 if ch == "}" {
@@ -381,7 +418,7 @@ public enum MGSolidFacts {
             } else if ch == "{" { inside = true }
             else if ch == "}" { throw MGSolidIssue("text.brace") }
             else {
-                if isNumber(ch), !names.contains(k) {
+                if isNumber(ch), !declared.contains(k) {
                     if n1 { throw MGSolidIssue("text.number.\(w)") }
                     out.typedNumbers = true
                 }

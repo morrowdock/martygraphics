@@ -179,13 +179,35 @@ public enum MGExplainerFrame {
     /// SwiftUI solid pane (`MGExplainerController`) frames each beat with this, for its own size in points, so it
     /// shows the camera and automatic ghosts of the beat's still and story hold frames. A non-finite or non-positive
     /// aspect gives 1.6 (`MGFrameRect.aspect` of an empty pane).
+    ///
+    /// The arrow drops are the beat's canonical set (`beatArrowDrops`), whatever `aspect`: every view of a beat draws
+    /// the same annotations, and the legend counts exactly those.
     public static func solidClearView(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?, aspect: Double) -> MGSolidClearView {
         let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6
+        var c = MGSolidFraming.clearView(doc, shot: beatShot(doc, view: view, stepIndex: stepIndex), aspect: aspect, titleBand: 0, captionBand: 0,
+                                         stage: MGSolidStage.zUpToYUp, drops: false)
+        c.arrowDrops = beatArrowDrops(doc, view: view, stepIndex: stepIndex)
+        return c
+    }
+
+    /// The shot a beat's solid pane frames (the camera of the pane only; captions, labels and claims of a story frame
+    /// follow `MGStoryPlan.holds`).
+    static func beatShot(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?) -> MGSolidShot {
         let step = view.step
-        let shot = MGSolidShot(file: "", params: pose(doc, view: view), preset: step?.camera ?? "hero", orbit: step?.orbit ?? 0,
-                               highlight: view.solidHighlight, margin: 0.8, step: step == nil ? nil : stepIndex, title: nil, caption: nil)
-        // (The camera of the pane only; captions, labels and claims of a story frame follow `MGStoryPlan.holds`.)
-        return MGSolidFraming.clearView(doc, shot: shot, aspect: aspect, titleBand: 0, captionBand: 0)
+        return MGSolidShot(file: "", params: pose(doc, view: view), preset: step?.camera ?? "hero", orbit: step?.orbit ?? 0,
+                           highlight: view.solidHighlight, margin: 0.8, step: step == nil ? nil : stepIndex, title: nil, caption: nil)
+    }
+
+    /// The arrows a beat drops (docs/SOLID-3D.md, "Arrow drop"): the drop rule at the beat's framing for the whole
+    /// content area of a 1280 × 800 frame (`contentArea`, no board pane). It reads only the beat's solid step and its
+    /// highlighted 3D parts, so a session, a still, the story and the SwiftUI pane all get the same set for a beat,
+    /// whatever their own pane; the legend counts what they draw (`MGExplainerSession.displayedAnnotations`).
+    public static func beatArrowDrops(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?) -> [MGArrowDrop] {
+        guard !doc.annotations.arrows.isEmpty else { return [] }
+        let area = contentArea(width: MGAnnotationAnchorRules.width, height: MGAnnotationAnchorRules.height)
+        let shot = beatShot(doc, view: view, stepIndex: stepIndex)
+        let c = MGSolidFraming.clearView(doc, shot: shot, aspect: area.aspect, titleBand: 0, captionBand: 0, stage: MGSolidStage.zUpToYUp, drops: false)
+        return MGSolidFraming.arrowDrops(doc, shot: shot, camera: c.camera, autoGhost: c.autoGhost, aspect: area.aspect)
     }
 }
 

@@ -112,6 +112,8 @@ final class SolidLimitDetailTests: XCTestCase {
             },
             "explainer.beats.count": { explain(xp(beats: "[" + list(17) { _ in #"{"say": "A box."}"# } + "]")) },
             "notes.count": { explain(xp(#""notes": {}"#)) },
+            "names.count": { check(asm(#""names": []"#)) },
+            "names.text.<n>": { check(asm(#""names": ["Mk4", "\#(x(25))"]"#)) },
             "notes.text.<id>": { explain(xp(#""notes": {"t3": {"basis": "\#(x(61))"}}"#)) },
             "beat.unchecked.<n>": { explain(xp(beats: #"[{"say": "A box.", "unchecked": "\#(x(61))"}]"#)) },
             "beat.ops.count": { explain(xp(beats: #"[{"say": "A box.", "ops": [\#(list(13) { _ in "{}" })]}]"#)) },
