@@ -86,6 +86,14 @@ public struct MGSubjectSmall: Equatable, Sendable {
     /// The subject's fill (`MGSolidFraming.filled`) and the floors: `minimumPixels` (`subjectAreaShare` of the safe
     /// window) and `minimumExtent` (`subjectExtentPixels`, scaled with the frame height).
     public var fill: Double, minimumPixels: Int, minimumExtent: Double
+    /// The view's own `ghost` list as written; the `ghost` repair keeps it.
+    public var existingGhost: [String] = []
+
+    public init(step: Int?, beat: Int?, groups: [Group], small: [Int], cut: [String], fill: Double, minimumPixels: Int,
+                minimumExtent: Double, existingGhost: [String] = []) {
+        self.step = step; self.beat = beat; self.groups = groups; self.small = small; self.cut = cut; self.fill = fill
+        self.minimumPixels = minimumPixels; self.minimumExtent = minimumExtent; self.existingGhost = existingGhost
+    }
 
     public var reason: String {
         if let beat { return "framing.subject.small.beat.\(beat + 1)" }
@@ -96,11 +104,12 @@ public struct MGSubjectSmall: Equatable, Sendable {
     public var split: [[String]] { groups.count > 1 ? groups.map(\.ids) : [] }
     /// The `focus` list of the first small group alone: the subset repair (more than one group only).
     public var subset: [String] { groups.count > 1 ? small.first.map { groups[$0].ids } ?? [] : [] }
-    /// The context units that cover the small groups, for the `ghost` repair (first-seen order).
+    /// The complete `ghost` list of the repair: the view's own ghosts as written, then the context units that cover the
+    /// small groups (first-seen order), without repeats. Empty when no new unit is needed.
     public var ghost: [String] {
-        var out: [String] = []
-        for k in small { for u in groups[k].hiddenBy where !out.contains(u) { out.append(u) } }
-        return out
+        var added: [String] = []
+        for k in small { for u in groups[k].hiddenBy where !existingGhost.contains(u) && !added.contains(u) { added.append(u) } }
+        return added.isEmpty ? [] : existingGhost + added
     }
 
     /// One exact line: the measure, then every repair that applies, as complete JSON.
@@ -120,7 +129,7 @@ public struct MGSubjectSmall: Equatable, Sendable {
             options.append("split it into one step per subject: " + split.map { "\"focus\": \(MGExactRepair.list($0))" }.joined(separator: " then "))
         }
         if !subset.isEmpty { options.append("focus a subset \(at): \"focus\": \(MGExactRepair.list(subset))") }
-        if !ghost.isEmpty { options.append("ghost the context that covers it \(at): \"ghost\": \(MGExactRepair.list(ghost))") }
+        if !ghost.isEmpty { options.append("set the whole ghost list \(at): \"ghost\": \(MGExactRepair.list(ghost))") }
         if options.isEmpty { options.append("make the subject larger, or show fewer subject parts in this view") }
         let fragment = "Repair (any one): " + options.joined(separator: "; or ") + "."
         return MGExactRepair.line(prose: prose, fragment: fragment,
@@ -186,8 +195,8 @@ public enum MGSmallUnitRules {
     /// as engines covered at most 172 px; arm engines that did read covered 1,080 px or more in their best still.)
     public static let minimumShare = 0.0005
     /// The raster of the coverage measure: this share of the still's size on each axis (a 1280 × 800 still is measured
-    /// on 640 × 400 cells, each standing for 4 pixels).
-    public static let rasterScale = 0.5
+    /// on 320 × 200 cells, each standing for 16 pixels).
+    public static let rasterScale = 0.25
     /// Most triangles one still's raster reads; a still over it is not measured.
     public static let triangleBudget = 600_000
 
@@ -201,7 +210,8 @@ public enum MGSmallUnitRules {
     }
 }
 
-/// A depth raster of one still on `MGSmallUnitRules.rasterScale` of its size: for each cell the nearest solid part
+/// A depth raster of one still on `MGSmallUnitRules.rasterScale` of its size (one raster per still serves the subject
+/// rule and the small-unit rule): for each cell the nearest solid part
 /// (not hidden, view opacity at least `MGSolidFraming.blockingOpacity`; a cut part draws its cut mesh), and for each
 /// group of parts the cells its triangles cover at any depth. Ghosts neither count nor hide.
 struct MGStillRaster {
@@ -211,8 +221,8 @@ struct MGStillRaster {
     /// Nearest solid part per cell (index into `parts`, -1 empty), and per cell a bit per group whose parts cover it.
     var owner: [Int32], cover: [UInt64]
     let parts: [String]
-    /// The group of each part index (-1: none).
-    let groupOf: [Int]
+    /// The groups each part index belongs to (a bit per group; a part may be in several groups).
+    let groupBits: [UInt64]
 
     /// Nil when the still's camera is not usable or its triangles pass `MGSmallUnitRules.triangleBudget`. At most 64
     /// groups are measured.
@@ -226,8 +236,8 @@ struct MGStillRaster {
         let b = MGSolidFraming.Basis(yaw: c.yaw, pitch: c.pitch), f = MGSolidFraming.focal(c.fieldOfView), t = c.targetVector
         let near = MGSolidFraming.nearPlane(distance: c.distance)
         let pose = doc.assembly.pose(v.params)
-        var g: [String: Int] = [:]
-        for (i, set) in groups.prefix(64).enumerated() { for p in set where g[p] == nil { g[p] = i } }
+        var g: [String: UInt64] = [:]
+        for (i, set) in groups.prefix(64).enumerated() { for p in set { g[p, default: 0] |= 1 << UInt64(i) } }
         var drawn: [(id: String, mesh: MGMesh, solid: Bool)] = []
         var triangles = 0
         for p in doc.assembly.parts {
@@ -241,44 +251,64 @@ struct MGStillRaster {
             drawn.append((p.id, mesh, solid))
         }
         parts = drawn.map(\.id)
-        groupOf = drawn.map { g[$0.id] ?? -1 }
+        groupBits = drawn.map { g[$0.id] ?? 0 }
         var depth = [Double](repeating: 0, count: gw * gh)
         owner = [Int32](repeating: -1, count: gw * gh); cover = [UInt64](repeating: 0, count: gw * gh)
         let W = Double(gw), H = Double(gh)
         for (pi, d) in drawn.enumerated() {
             let m = MGSolidStage.zUpToYUp * (pose.world[d.id] ?? .identity)
-            let screen: [(x: Double, y: Double, w: Double)?] = d.mesh.positions.map { q in
+            // Camera-space vertices (x, y scaled so the view planes are |x| = z, |y| = z), clipped to the near plane per
+            // triangle (Sutherland–Hodgman on z >= near, then a fan): a face across the near plane keeps its visible part.
+            let cam: [(x: Double, y: Double, z: Double)] = d.mesh.positions.map { q in
                 let r = m.apply(q) - t
-                let z = c.distance + r.dot(b.fwd)
-                guard z >= near, z.isFinite else { return nil }
-                let x = r.dot(b.right) * f / aspect / z, y = r.dot(b.up) * f / z
-                guard x.isFinite, y.isFinite else { return nil }
-                return ((x + 1) / 2 * W, (1 - y) / 2 * H, 1 / z)
+                return (r.dot(b.right) * f / aspect, r.dot(b.up) * f, c.distance + r.dot(b.fwd))
             }
-            let bit: UInt64 = groupOf[pi] >= 0 ? (1 << UInt64(groupOf[pi])) : 0
+            let bit = groupBits[pi]
+            func project(_ v: (x: Double, y: Double, z: Double)) -> (x: Double, y: Double, w: Double) {
+                ((v.x / v.z + 1) / 2 * W, (1 - v.y / v.z) / 2 * H, 1 / v.z)
+            }
             for i in 0..<d.mesh.triangleCount {
                 let (i0, i1, i2) = d.mesh.triangle(i)
-                guard i0 < screen.count, i1 < screen.count, i2 < screen.count,
-                      let a = screen[i0], let bb = screen[i1], let cc = screen[i2] else { continue }
-                let area = (bb.x - a.x) * (cc.y - a.y) - (bb.y - a.y) * (cc.x - a.x)
-                guard abs(area) > 1e-12 else { continue }
-                let x0 = max(0, Int(floor(min(a.x, bb.x, cc.x)))), x1 = min(gw - 1, Int(ceil(max(a.x, bb.x, cc.x))))
-                let y0 = max(0, Int(floor(min(a.y, bb.y, cc.y)))), y1 = min(gh - 1, Int(ceil(max(a.y, bb.y, cc.y))))
-                guard x0 <= x1, y0 <= y1 else { continue }
-                for py in y0...y1 {
-                    let sy = Double(py) + 0.5
-                    for px in x0...x1 {
-                        let sx = Double(px) + 0.5
-                        // Barycentric weights at the cell centre; the inverse depth is linear on the screen.
-                        let w0 = ((bb.x - sx) * (cc.y - sy) - (bb.y - sy) * (cc.x - sx)) / area
-                        let w1 = ((cc.x - sx) * (a.y - sy) - (cc.y - sy) * (a.x - sx)) / area
-                        let w2 = 1 - w0 - w1
-                        guard w0 >= 0, w1 >= 0, w2 >= 0 else { continue }
-                        let cell = py * gw + px
-                        cover[cell] |= bit
-                        guard d.solid else { continue }
-                        let inv = w0 * a.w + w1 * bb.w + w2 * cc.w
-                        if inv > depth[cell] { depth[cell] = inv; owner[cell] = Int32(pi) }
+                guard i0 < cam.count, i1 < cam.count, i2 < cam.count else { continue }
+                var poly = [cam[i0], cam[i1], cam[i2]]
+                guard poly.allSatisfy({ $0.x.isFinite && $0.y.isFinite && $0.z.isFinite }) else { continue }
+                if poly.contains(where: { $0.z < near }) {
+                    var out: [(x: Double, y: Double, z: Double)] = []
+                    for k in 0..<poly.count {
+                        let a = poly[k], e = poly[(k + 1) % poly.count]
+                        let ain = a.z >= near, ein = e.z >= near
+                        if ain { out.append(a) }
+                        if ain != ein {
+                            let u = (near - a.z) / (e.z - a.z)
+                            out.append((a.x + (e.x - a.x) * u, a.y + (e.y - a.y) * u, near))
+                        }
+                    }
+                    poly = out
+                }
+                guard poly.count >= 3 else { continue }
+                let sp = poly.map(project)
+                for k in 1..<(sp.count - 1) {
+                    let a = sp[0], bb = sp[k], cc = sp[k + 1]
+                    let area = (bb.x - a.x) * (cc.y - a.y) - (bb.y - a.y) * (cc.x - a.x)
+                    guard abs(area) > 1e-12 else { continue }
+                    let x0 = max(0, Int(floor(min(a.x, bb.x, cc.x)))), x1 = min(gw - 1, Int(ceil(max(a.x, bb.x, cc.x))))
+                    let y0 = max(0, Int(floor(min(a.y, bb.y, cc.y)))), y1 = min(gh - 1, Int(ceil(max(a.y, bb.y, cc.y))))
+                    guard x0 <= x1, y0 <= y1 else { continue }
+                    for py in y0...y1 {
+                        let sy = Double(py) + 0.5
+                        for px in x0...x1 {
+                            let sx = Double(px) + 0.5
+                            // Barycentric weights at the cell centre; the inverse depth is linear on the screen.
+                            let w0 = ((bb.x - sx) * (cc.y - sy) - (bb.y - sy) * (cc.x - sx)) / area
+                            let w1 = ((cc.x - sx) * (a.y - sy) - (cc.y - sy) * (a.x - sx)) / area
+                            let w2 = 1 - w0 - w1
+                            guard w0 >= 0, w1 >= 0, w2 >= 0 else { continue }
+                            let cell = py * gw + px
+                            cover[cell] |= bit
+                            guard d.solid else { continue }
+                            let inv = w0 * a.w + w1 * bb.w + w2 * cc.w
+                            if inv > depth[cell] { depth[cell] = inv; owner[cell] = Int32(pi) }
+                        }
                     }
                 }
             }
@@ -288,10 +318,12 @@ struct MGStillRaster {
     /// The visible pixels of group `k` (cells whose nearest solid part is in the group), and the shorter side of their
     /// box in pixels (0 when none).
     func visible(_ k: Int) -> (pixels: Int, extent: Double) {
+        guard k < 64 else { return (0, 0) }
+        let bit: UInt64 = 1 << UInt64(k)
         var n = 0, x0 = Int.max, x1 = Int.min, y0 = Int.max, y1 = Int.min
         for cell in 0..<owner.count {
             let o = Int(owner[cell])
-            guard o >= 0, groupOf[o] == k else { continue }
+            guard o >= 0, groupBits[o] & bit != 0 else { continue }
             n += 1
             let x = cell % gw, y = cell / gw
             x0 = min(x0, x); x1 = max(x1, x); y0 = min(y0, y); y1 = max(y1, y)
@@ -300,19 +332,23 @@ struct MGStillRaster {
         return (Int((Double(n) * perCell).rounded()), Double(min(x1 - x0 + 1, y1 - y0 + 1)) / scale)
     }
 
-    /// The units outside `exclude` whose solid surface is nearest where group `k` lies behind it, most cells first
-    /// (ties: assembly order); at most `limit`.
-    func coveredBy(_ k: Int, exclude: Set<String>, order: [String], limit: Int = 4) -> [String] {
+    /// The ids to ghost so group `k` shows where it lies behind another solid surface, most cells first (ties: part
+    /// order); at most `limit`. A covering part is named by its unit (a component instance), unless that unit holds a
+    /// part of `subject`: then the covering part itself, so a repair never ghosts the subject.
+    func coveredBy(_ k: Int, subject: Set<String>, limit: Int = 4) -> [String] {
         guard k < 64 else { return [] }
         let bit: UInt64 = 1 << UInt64(k)
-        var counts: [String: Int] = [:]
+        let subjectUnits = Set(subject.map(MGSolidDocument.unitID))
+        var counts: [String: Int] = [:], first: [String: Int] = [:]
         for cell in 0..<owner.count where cover[cell] & bit != 0 {
             let o = Int(owner[cell])
-            guard o >= 0, groupOf[o] != k else { continue }
+            guard o >= 0, groupBits[o] & bit == 0, !subject.contains(parts[o]) else { continue }
             let u = MGSolidDocument.unitID(parts[o])
-            if !exclude.contains(u) { counts[u, default: 0] += 1 }
+            let id = subjectUnits.contains(u) ? parts[o] : u
+            counts[id, default: 0] += 1
+            if first[id] == nil { first[id] = o }
         }
-        return order.filter { counts[$0] != nil }.sorted { counts[$0]! > counts[$1]! }.prefix(limit).map { $0 }
+        return counts.keys.sorted { counts[$0]! != counts[$1]! ? counts[$0]! > counts[$1]! : first[$0]! < first[$1]! }.prefix(limit).map { $0 }
     }
 }
 
@@ -349,35 +385,60 @@ extension MGSolidDocument {
         }
     }
 
+    /// The subject rule (`subjectIssues`) and the small-unit rule (`smallUnits`) over `stills`, on one raster per still.
+    public func stillMeasures(_ stills: [MGFramedStill], width: Int = MGAnnotationAnchorRules.width, height: Int = MGAnnotationAnchorRules.height,
+                              ghosts: (MGFramedStill) -> [String] = { _ in [] }) -> (subjects: [MGSubjectSmall], small: [MGSmallUnit]) {
+        var named = Set<String>()
+        for f in stills { named.formUnion(namedUnits(f)) }
+        let rasters = stills.map { f -> MGStillRaster? in
+            let subject = MGSolidFraming.subjectParts(self, shot: f.shot)
+            var groups = f.rule == .focus ? MGSolidFraming.subjectGroups(self, subject.parts).map(\.parts) : []
+            groups += unitsShown(f.still, named).map { u in unitParts(of: u).map(\.id) }
+            guard !groups.isEmpty else { return nil }
+            return MGStillRaster(self, f.still, groups: groups)
+        }
+        return (subjectIssues(stills, rasters: rasters, ghosts: ghosts), smallUnits(stills, rasters: rasters, width: width, height: height))
+    }
+
+    /// The named units a still shows solid, in unit order (the small-unit groups of its raster, after the subject groups).
+    func unitsShown(_ v: MGAnnotationAnchorView, _ units: Set<String>) -> [String] {
+        unitOrder.filter { u in
+            units.contains(u) && unitParts(of: u).contains { !v.view.part($0.id).hidden && v.view.part($0.id).opacity >= MGSolidFraming.blockingOpacity }
+        }
+    }
+
     /// The subject rule at each still (docs/SOLID-3D.md, "Subject first"): the still's subject
     /// (`MGSolidFraming.subjectParts`) by group (`subjectGroups`), each group's visible pixels and the shorter side of
     /// their box on the still's raster (`MGStillRaster`), against `subjectAreaShare` of the safe window's pixels and
     /// `subjectExtentPixels` × height / 800; the subject's fill against `subjectFill`; and no subject part cut
     /// (`MGSolidFraming.cutParts`). One issue per still that misses any, in still order. A still whose raster is over
     /// budget is not measured.
-    public func subjectIssues(_ stills: [MGFramedStill]) -> [MGSubjectSmall] {
-        let order = unitOrder
-        return stills.compactMap { f in
+    public func subjectIssues(_ stills: [MGFramedStill], ghosts: (MGFramedStill) -> [String] = { _ in [] }) -> [MGSubjectSmall] {
+        subjectIssues(stills, rasters: nil, ghosts: ghosts)
+    }
+
+    /// `subjectIssues` reading `rasters[k]` (subject groups first) for still `k` when given.
+    func subjectIssues(_ stills: [MGFramedStill], rasters: [MGStillRaster?]?, ghosts: (MGFramedStill) -> [String]) -> [MGSubjectSmall] {
+        return stills.enumerated().compactMap { index, f in
             let subject = MGSolidFraming.subjectParts(self, shot: f.shot)
             // Only a still framed on its subject: a whole-model still shows every part whole.
             guard f.rule == .focus, !subject.parts.isEmpty else { return nil }
             let v = f.still
             let aspect = v.width / v.height
-            let groups = MGSolidFraming.subjectGroups(subject.parts)
-            guard let raster = MGStillRaster(self, v, groups: groups.map(\.parts)) else { return nil }
+            let groups = MGSolidFraming.subjectGroups(self, subject.parts)
+            guard let raster = rasters.map({ $0[index] }) ?? MGStillRaster(self, v, groups: groups.map(\.parts)) else { return nil }
             let w = f.window.usable
             let windowPixels = (w.right - w.left) / 2 * v.width * (w.top - w.bottom) / 2 * v.height
             let minPixels = Int((MGSolidFraming.subjectAreaShare * windowPixels).rounded())
             let minExtent = MGSolidFraming.subjectExtentPixels * v.height / MGSolidRenderPlan.referenceHeight
-            let subjectUnits = Set(groups.map(\.unit))
             var out: [MGSubjectSmall.Group] = [], small: [Int] = []
             for (k, g) in groups.enumerated() {
                 let m = raster.visible(k)
-                let whole = Set(unitParts(of: g.parts[0]).map(\.id)) == Set(g.parts)
+                let whole = g.unit == MGSolidDocument.unitID(g.parts[0]) && Set(unitParts(of: g.parts[0]).map(\.id)) == Set(g.parts)
                 let isSmall = m.pixels < minPixels || m.extent < minExtent
                 if isSmall { small.append(k) }
                 out.append(.init(unit: g.unit, parts: g.parts, pixels: m.pixels, extent: m.extent,
-                                 hiddenBy: isSmall ? raster.coveredBy(k, exclude: subjectUnits, order: order) : [], whole: whole))
+                                 hiddenBy: isSmall ? raster.coveredBy(k, subject: Set(subject.parts)) : [], whole: whole))
             }
             let pts = MGSolidFraming.Samples(assembly, ids: subject.parts).world(assembly, v.params, stage: v.stage)
             let fill = MGSolidFraming.filled(pts, camera: v.camera, aspect: aspect, window: f.window)
@@ -385,8 +446,21 @@ extension MGSolidDocument {
                                               ids: subject.parts, stage: v.stage)
             guard !small.isEmpty || !cut.isEmpty || fill < MGSolidFraming.subjectFill else { return nil }
             return MGSubjectSmall(step: v.step, beat: v.beat, groups: out, small: small, cut: cut, fill: fill, minimumPixels: minPixels,
-                                  minimumExtent: minExtent)
+                                  minimumExtent: minExtent, existingGhost: ghosts(f))
         }
+    }
+
+    /// The strings of a JSON array (other values skipped); empty for anything else.
+    static func strings(_ j: MGJSON?) -> [String] {
+        guard case .array(let a)? = j else { return [] }
+        return a.compactMap { if case .string(let s) = $0 { return s } else { return nil } }
+    }
+
+    /// The authored `ghost` list of step `step` (0-based) in the source (before component expansion); empty without one.
+    func authoredGhost(step: Int?) -> [String] {
+        guard let step, case .object(let o) = source, case .array(let steps)? = o["steps"], steps.indices.contains(step),
+              case .object(let s) = steps[step] else { return [] }
+        return MGSolidDocument.strings(s["ghost"])
     }
 
     /// The units that a still names: the units of the parts that the labels and arrows it shows (not dropped) ride on,
@@ -407,13 +481,31 @@ extension MGSolidDocument {
     /// not tested.
     public func smallUnits(_ stills: [MGFramedStill], width: Int = MGAnnotationAnchorRules.width,
                            height: Int = MGAnnotationAnchorRules.height) -> [MGSmallUnit] {
+        smallUnits(stills, rasters: nil, width: width, height: height)
+    }
+
+    /// `smallUnits` reading `rasters[k]` for still `k` when given (its unit groups follow the still's subject groups).
+    func smallUnits(_ stills: [MGFramedStill], rasters: [MGStillRaster?]?, width: Int, height: Int) -> [MGSmallUnit] {
         var named = Set<String>()
         for f in stills { named.formUnion(namedUnits(f)) }
         guard !named.isEmpty else { return [] }
         let minimum = MGSmallUnitRules.minimumPixels(width: width, height: height)
         var best: [String: (px: Int, step: Int?, beat: Int?)] = [:], shown: [String: Int] = [:], over = Set<String>()
-        for f in stills {
-            guard let px = unitPixels(f.still, units: named) else { continue }
+        for (index, f) in stills.enumerated() {
+            let px: [String: Int]
+            if let rasters {
+                let shown = unitsShown(f.still, named)
+                if shown.isEmpty { px = [:] } else {
+                    guard let r = rasters[index] else { continue }
+                    let offset = f.rule == .focus ? MGSolidFraming.subjectGroups(self, MGSolidFraming.subjectParts(self, shot: f.shot).parts).count : 0
+                    var out: [String: Int] = [:]
+                    for (k, u) in shown.enumerated() where offset + k < 64 { out[u] = r.visible(offset + k).pixels }
+                    px = out
+                }
+            } else {
+                guard let p = unitPixels(f.still, units: named) else { continue }
+                px = p
+            }
             for u in unitOrder {
                 guard let n = px[u] else { continue }
                 shown[u, default: 0] += 1
@@ -431,9 +523,7 @@ extension MGSolidDocument {
     /// view opacity of at least `MGSolidFraming.blockingOpacity`), on the still's raster (`MGStillRaster`): a cell
     /// counts for the unit whose surface is nearest there. Nil when the raster is over budget or the camera is not usable.
     func unitPixels(_ v: MGAnnotationAnchorView, units: Set<String>) -> [String: Int]? {
-        let shown = unitOrder.filter { u in
-            units.contains(u) && unitParts(of: u).contains { !v.view.part($0.id).hidden && v.view.part($0.id).opacity >= MGSolidFraming.blockingOpacity }
-        }
+        let shown = unitsShown(v, units)
         guard !shown.isEmpty else { return [:] }
         guard let r = MGStillRaster(self, v, groups: shown.map { u in unitParts(of: u).map(\.id) }) else { return nil }
         var out: [String: Int] = [:]

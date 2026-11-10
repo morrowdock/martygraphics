@@ -105,8 +105,10 @@ public struct MGExplainerReport: Equatable, Sendable {
             // refused); the anchor checks test those that show a label or pointer, the arrow rule those that show an arrow.
             let stills = doc.map { MGExplainerFrame.beatStills($0, library: s.library) }
             if let doc, let fd = stills?.solid, let all = stills?.stills {
-                subjects = fd.subjectIssues(all)
-                small = fd.smallUnits(all)
+                (subjects, small) = fd.stillMeasures(all) { f in
+                    guard let b = f.still.beat, doc.beats.indices.contains(b), case .object(let v)? = doc.beats[b].view else { return [] }
+                    return MGSolidDocument.strings(v["ghost"])
+                }
             }
             if let doc, !d.annotations.isEmpty {
                 // The beat stills that show a label, pointer or arrow (`MGExplainerFrame.beatCheckViews`).

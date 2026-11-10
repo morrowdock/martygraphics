@@ -167,6 +167,36 @@ final class MartySolidCLITests: XCTestCase {
         }
     }
 
+    /// Framing alone never refuses a shipped document (PR #51 re-check): every golden input that passed
+    /// `check --strict` at main (a13f1f1; `Fixtures/strict-at-main.json`, generated from main's strict goldens) still
+    /// passes at head, and its warnings only grow: every warning it had at main is still there, and every added one is
+    /// a warning reason (`marty-solid reasons`). The golden test above proves the golden files are the head's output.
+    func testEveryShippedDocumentAcceptedAtMainIsStillAccepted() throws {
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Fixtures/strict-at-main.json")
+        let fixture = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        let accepted = try XCTUnwrap(fixture["accepted"] as? [String: [String]])
+        XCTAssertGreaterThanOrEqual(accepted.count, 12)
+        XCTAssertNotNil(accepted["docs-assets-jet-suit-ai-lesson"], "the published AI lesson")
+        let catalog = try XCTUnwrap(run(["reasons"]).json?["reasons"] as? [[String: Any]])
+        let warningPatterns = catalog.filter { $0["kind"] as? String == "warning" }.compactMap { $0["pattern"] as? String }
+        func isWarning(_ reason: String) -> Bool {
+            warningPatterns.contains { p in
+                let rx = "^" + NSRegularExpression.escapedPattern(for: p).replacingOccurrences(of: #"<[a-z]+>"#, with: "[^ ]+", options: .regularExpression) + "$"
+                return reason.range(of: rx, options: .regularExpression) != nil
+            }
+        }
+        for (name, before) in accepted.sorted(by: { $0.key < $1.key }) {
+            let data = try Data(contentsOf: golden.appendingPathComponent("\(name).strict.json"))
+            let head = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any], name)
+            XCTAssertEqual(head["ok"] as? Bool, true, "\(name): accepted at main, refused at head: \(head["reason"] ?? "")")
+            var now = (head["warnings"] as? [[String: Any]] ?? []).compactMap { $0["reason"] as? String }
+            for w in before {
+                if let k = now.firstIndex(of: w) { now.remove(at: k) } else { XCTFail("\(name): lost warning \(w)") }
+            }
+            for w in now { XCTAssertTrue(isWarning(w), "\(name): added \(w) is not a warning") }
+        }
+    }
+
     func testStripRemovesOnlyTheNamedTopLevelMembers() {
         let text = "{\n  \"a\" : 1,\n  \"engine\" : {\n    \"x\" : [\n      1\n    ]\n  },\n  \"z\" : {\n    \"engine\" : 2\n  }\n}\n"
         XCTAssertEqual(Self.strip(text, ["engine"]), "{\n  \"a\" : 1,\n  \"z\" : {\n    \"engine\" : 2\n  }\n}\n")

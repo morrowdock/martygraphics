@@ -106,11 +106,7 @@ struct MGAnchorViewRule {
             let base = MGSolidView.clamp(opacity: assembly.part(own)?.opacity ?? 1)
             if pv.opacity < base - 1e-9 { return (.ghosted, nil) }
         }
-        guard let s = proj.project(v.stage.apply(x)), s.x >= 0, s.x <= v.width, s.y >= 0, s.y <= v.height else {
-            // A label at a world point names no part: off the still (a subject close-up leaves far labels out, docs/SOLID-3D.md
-            // "Subject first"), the overlay shows it as a callout without a dot, so nothing points at the wrong place.
-            return p.part == nil ? nil : (.offScreen, nil)
-        }
+        guard let s = proj.project(v.stage.apply(x)), s.x >= 0, s.x <= v.width, s.y >= 0, s.y <= v.height else { return (.offScreen, nil) }
         if over { return (.untested, nil) }
         // Every test below runs in anchor-relative coordinates (world minus the anchor, `mgAnchorRelative`): the camera,
         // each part's placement and every hit point are taken relative to the dot before any test, so the precision

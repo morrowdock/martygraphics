@@ -195,8 +195,7 @@ extension MGSolidReport {
             // Every step still, framed once: the subject rule and the small-unit rule read them all (warnings, never
             // refused); the anchor checks test those that show a label or pointer, the arrow rule those that show an arrow.
             let stills = doc.framedStills()
-            subjects = doc.subjectIssues(stills)
-            small = doc.smallUnits(stills)
+            (subjects, small) = doc.stillMeasures(stills) { doc.authoredGhost(step: $0.still.step) }
             let checked = doc.annotations.isEmpty ? []
                 : stills.map(\.still).filter { $0.step != nil && (doc.showsCheckedAnchor($0.view) || doc.showsArrow($0.view)) }
             // The arrows each still drops (the framing's arrow drop rule): warnings, never refused.

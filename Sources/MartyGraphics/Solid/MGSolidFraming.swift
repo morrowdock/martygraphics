@@ -8,17 +8,17 @@ import Foundation
 /// The framing rule of `marty-solid render` and of any host that shows a step (`MGSolidRenderer.frame(_:document:aspect:)`).
 ///
 /// * **Subject first.** A shot with a subject frames the subject (`subjectParts`): the step's explicit `focus`, or else
-///   its highlighted parts, its section parts and the parts that the labels and arrows it shows ride on. The subject is
-///   measured alone: no touching context, no annotation anchor at a world point. The camera keeps the step's preset
-///   direction (`camera` plus `orbit`) and takes the closest framing that keeps every subject part whole inside the
-///   safe window, with the label anchors and arrow ends on subject parts: the subject fills `fill` of it. Other anchors
-///   (a world point, a part outside an explicit `focus`) join the fit only when the subject still meets both floors
-///   with them (`subjectFill`; per subject group `subjectAreaShare` and `subjectExtentPixels`), so a far label never
-///   shrinks the subject. Context (every other part) may be cut at the safe window's edges; the renderer
-///   clips the model to the safe window (`MGSolidRenderer.render(width:height:clip:)`), so nothing is drawn under the
-///   title or caption band. An inferred subject (no `focus`) whose box diagonal is more than `focusShare` of the whole
-///   model's is a whole-model shot. When the closest whole framing misses a floor (subject parts far apart, or hidden
-///   inside other parts), the check report warns `framing.subject.small.step.<n>` (`.beat.<n>`) with an exact repair.
+///   its highlighted parts, its section parts and the parts that the labels and arrows it shows ride on, plus, in a
+///   posed step, every chain the pose moves. The camera keeps the step's preset direction (`camera` plus `orbit`) and
+///   takes the closest framing that keeps the subject whole inside the safe window together with every target the shot
+///   draws (label anchors, pointer tips, arrow tails and heads): they fill `fill` of it. No touching context joins.
+///   Context may be cut at the safe window's edges; the renderer clips the model to the safe window
+///   (`MGSolidRenderer.render(width:height:clip:)`), so nothing is drawn under the title or caption band. An inferred
+///   subject whose box diagonal is more than `focusShare` of the whole model's is a whole-model shot. The check report
+///   measures each subject group against the floors (`subjectFill`, `subjectAreaShare`, `subjectExtentPixels`) and
+///   warns `framing.subject.small.step.<n>` (`.beat.<n>`) with exact repairs. The unblocked-focus rule
+///   (`clearView`) then tests the same subject, and keeps the main-rule camera (`mainRule`) for a still whose subject
+///   camera would hide a label, pointer or arrow that the main-rule camera shows.
 /// * **Whole model.** Other shots keep the bounding-sphere framing of earlier releases unless a part or an annotation
 ///   anchor would leave the safe window (the title band included); only then is the shot fitted like a focus.
 /// * **Safe window.** The view minus the title band (shots with a title) and minus the caption band (shots with a
@@ -202,35 +202,6 @@ public enum MGSolidFraming {
         return out.filter { $0.x.isFinite && $0.y.isFinite && $0.z.isFinite }
     }
 
-    /// `annotationPoints` split by what each point rides on: `onSubject`, the points on a part of `subject` (a label on
-    /// it; both ends of an arrow with either end on it); `other`, the rest (a world point, or a part outside the subject).
-    static func annotationPoints(_ doc: MGSolidDocument, view: MGSolidView, params: MGPoseParameters, subject: Set<String>,
-                                 stage: MGTransform) -> (onSubject: [MGVec3], other: [MGVec3]) {
-        guard let shown = doc.checkedAnnotations(view, params: params), !shown.isEmpty else { return ([], []) }
-        let a = doc.annotations, pose = doc.assembly.pose(params)
-        var on: [MGVec3] = [], other: [MGVec3] = []
-        func add(_ p: MGVec3, _ part: String?) {
-            guard p.x.isFinite, p.y.isFinite, p.z.isFinite else { return }
-            if let part, subject.contains(part) { on.append(p) } else { other.append(p) }
-        }
-        for id in shown {
-            let anchors = MGSolidAnnotationEngine.anchors(a, id)
-            if let r = a.arrow(id) {
-                let prims = MGSolidAnnotations.primitives(doc, id, params: params, sense: view.motionSense, step: view.step)
-                guard !prims.isEmpty else { continue }
-                let end = r.style == .turn && prims.count > MGSolidAnnotations.arcChords ? prims[MGSolidAnnotations.arcChords].end
-                    : prims[min(1, prims.count - 1)].end
-                // An arrow with either end on the subject belongs to it: both ends are framed (a pointer's tail too).
-                let onIt = anchors.compactMap(\.part).first { subject.contains($0) }
-                add(stage.apply(prims[0].start), onIt ?? anchors.first?.part)
-                add(stage.apply(end), onIt ?? anchors.last?.part)
-            } else {
-                for p in anchors { add(stage.apply(p.world(pose)), p.part) }
-            }
-        }
-        return (on, other)
-    }
-
     // MARK: Projection
 
     struct Basis {
@@ -293,12 +264,15 @@ public enum MGSolidFraming {
 
     /// The subject of a shot (resolved part ids, assembly order, hidden parts left out): the step's explicit `focus`
     /// (`explicit`), or else the shot's highlighted parts, the step's section parts and the parts that the labels and
-    /// arrows the shot shows ride on (a world-point anchor names no part). Empty for a shot with none of these.
-    public static func subjectParts(_ doc: MGSolidDocument, shot s: MGSolidShot) -> (parts: [String], explicit: Bool) {
+    /// arrows the shot shows ride on (a world-point anchor names no part). `moved`: for an inferred subject of a posed
+    /// step, every other part the pose moves (the posed joints' parts and everything attached below them, found by
+    /// comparing each part's world placement with and without the pose), so a raised arm stays in view with its jet.
+    /// The moved chain joins the fit but is not measured by the subject floors. Empty for a shot with none of these.
+    public static func subjectParts(_ doc: MGSolidDocument, shot s: MGSolidShot) -> (parts: [String], explicit: Bool, moved: [String]) {
         let step = s.step.flatMap { doc.steps.indices.contains($0) ? doc.steps[$0] : nil }
         let hidden = doc.hiddenParts(step: s.step)
         let order = doc.assembly.parts.map(\.id).filter { !hidden.contains($0) }
-        if let f = step?.focus, !f.isEmpty { let want = Set(f); return (order.filter { want.contains($0) }, true) }
+        if let f = step?.focus, !f.isEmpty { let want = Set(f); return (order.filter { want.contains($0) }, true, []) }
         var want = Set(s.highlight).union(step?.section?.parts ?? [])
         if s.showsAnnotations {
             let view = doc.view(step: s.step), a = doc.annotations
@@ -306,15 +280,31 @@ public enum MGSolidFraming {
                 want.formUnion(MGSolidAnnotationEngine.anchors(a, id).compactMap(\.part))
             }
         }
-        return (order.filter { want.contains($0) }, false)
+        let parts = order.filter { want.contains($0) }
+        guard !parts.isEmpty, !s.params.placements.isEmpty else { return (parts, false, []) }
+        let posed = doc.assembly.pose(s.params).world
+        let base = doc.assembly.pose(MGPoseParameters(input: s.params.input, explode: s.params.explode)).world
+        let moved = order.filter { id in
+            guard !want.contains(id), let p = posed[id], let q = base[id] else { return false }
+            return zip(p.columnMajor, q.columnMajor).contains { abs($0 - $1) > 1e-6 * max(1, abs($0), abs($1)) }
+        }
+        return (parts, false, moved)
     }
 
-    /// The subject's groups: its parts by unit (`MGSolidDocument.unitID`), in assembly order of each unit's first part.
-    public static func subjectGroups(_ parts: [String]) -> [(unit: String, parts: [String])] {
-        var out: [(unit: String, parts: [String])] = []
+    /// The subject's groups, the units of the floors: a unit (`MGSolidDocument.unitID`) whose every part is a subject
+    /// part is one group (a highlighted or focused component instance); otherwise each subject part is its own group
+    /// (a separately named part is measured on its own, never paid for by a larger part of its instance). Assembly order.
+    public static func subjectGroups(_ doc: MGSolidDocument, _ parts: [String]) -> [(unit: String, parts: [String])] {
+        let set = Set(parts)
+        var out: [(unit: String, parts: [String])] = [], done = Set<String>()
         for p in parts {
             let u = MGSolidDocument.unitID(p)
-            if let k = out.firstIndex(where: { $0.unit == u }) { out[k].parts.append(p) } else { out.append((u, [p])) }
+            let unit = doc.unitParts(of: p).map(\.id)
+            if unit.count > 1, unit.allSatisfy(set.contains) {
+                if done.insert(u).inserted { out.append((u, unit.filter(set.contains))) }
+            } else {
+                out.append((p, [p]))
+            }
         }
         return out
     }
@@ -342,31 +332,6 @@ public enum MGSolidFraming {
         guard let box = projectedBox(pts, camera: c, aspect: aspect) else { return 0 }
         let w = window.usable
         return max(box.w / (w.right - w.left), box.h / (w.top - w.bottom))
-    }
-
-    /// The geometric floor measure of one subject group (its projected box): `area` as a share of the window's area,
-    /// and `extent`, the shorter side, in pixels of a frame 800 px high. The check report measures visible pixels
-    /// instead (`MGSolidDocument.subjectIssues`); the framing reads this cheaper upper bound only to decide whether the
-    /// annotation anchors may join the fit.
-    static func groupMeasure(_ pts: [MGVec3], camera: MGSolidCamera, aspect: Double, window: Window) -> (area: Double, extent: Double) {
-        guard let box = projectedBox(pts, camera: camera, aspect: aspect) else { return (0, 0) }
-        let w = window.usable
-        let area = box.w * box.h / ((w.right - w.left) * (w.top - w.bottom))
-        let extent = min(box.w * aspect, box.h) / 2 * MGSolidRenderPlan.referenceHeight
-        return (area, extent)
-    }
-
-    /// True when `wide` keeps the subject floors that `close` keeps: the subject fills at least `subjectFill`, and no
-    /// group that meets a floor at `close` falls below it. A group that misses a floor even at `close` cannot be helped
-    /// by the closest framing, so it does not keep the anchors out (the check report warns for it either way).
-    static func keepsFloors(_ groups: [[MGVec3]], all: [MGVec3], close: MGSolidCamera, wide: MGSolidCamera, aspect: Double, window: Window) -> Bool {
-        guard filled(all, camera: wide, aspect: aspect, window: window) >= subjectFill else { return false }
-        for g in groups {
-            let c = groupMeasure(g, camera: close, aspect: aspect, window: window), w = groupMeasure(g, camera: wide, aspect: aspect, window: window)
-            if c.area >= subjectAreaShare, w.area < subjectAreaShare { return false }
-            if c.extent >= subjectExtentPixels, w.extent < subjectExtentPixels { return false }
-        }
-        return true
     }
 
     /// `c` moved back along its view line until its eye lies outside the posed box of every part of `view` that is
@@ -558,33 +523,59 @@ public enum MGSolidFraming {
         let all = Samples(a, ids: nil, exclude: hidden).world(a, s.params, stage: stage) + anchors
         let subject = subjectParts(doc, shot: s)
         if !subject.parts.isEmpty {
-            let groups = subjectGroups(subject.parts).map { Samples(a, ids: $0.parts).world(a, s.params, stage: stage) }
-            // The labels and arrow ends on subject parts belong to the subject: they are always framed. Other anchors (a
-            // world point, a part outside an explicit focus) join only when the subject keeps its floors.
-            let split = s.showsAnnotations ? annotationPoints(doc, view: view, params: s.params, subject: Set(subject.parts), stage: stage)
-                : (onSubject: [], other: [])
-            let parts = groups.flatMap { $0 } + split.onSubject
+            // The subject, its moved chain, and every target the shot draws: label anchors, pointer tips, arrow tails and
+            // heads all lie inside the safe window (a framing never leaves a label "off view").
+            let parts = Samples(a, ids: subject.parts + subject.moved).world(a, s.params, stage: stage) + anchors
             var sb = MGBounds.empty, wb = MGBounds.empty
             for p in parts { sb.include(p) }
             for p in all { wb.include(p) }
             // An explicit `focus` is always framed; an inferred subject that spans most of the model is a whole-model shot.
             if !sb.isEmpty, subject.explicit || sb.size.length <= focusShare * wb.size.length {
-                let inner = Set(subject.parts)
-                func outside(_ c: MGSolidCamera) -> MGSolidCamera {
-                    outsideContext(c, doc, view: view, params: s.params, subject: inner, stage: stage)
-                }
-                let close = outside(fit(parts, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window))
-                guard !split.other.isEmpty else { return (close, .focus) }
-                // The other anchors join only when the subject keeps its floors with them.
-                let wide = outside(fit(parts + split.other, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window))
-                let keep = finite(wide) && keepsFloors(groups, all: groups.flatMap { $0 }, close: close, wide: wide, aspect: aspect, window: window)
-                return (keep ? wide : close, .focus)
+                let c = fit(parts, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window)
+                return (outsideContext(c, doc, view: view, params: s.params, subject: Set(subject.parts + subject.moved), stage: stage), .focus)
             }
         }
         let old = legacy(a, s, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, stage: stage, hidden: hidden)
         // The earlier framing stays when nothing is cut by the frame or covered by the title or caption band; otherwise
         // the shot is fitted inside the safe window.
         if contains(all, camera: old, aspect: aspect, window: window) { return (old, .model) }
+        return (fit(all, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window), .modelFitted)
+    }
+
+    /// The framing rule of main (a13f1f1) before subject-first framing, kept as the fallback of `clearView`: a step's
+    /// focus (`focusParts`: its `focus`, or its highlight and section parts with their touching context) plus the shown
+    /// annotation anchors, fitted when explicit or at most `focusShare` of the model; else the earlier bounding-sphere
+    /// framing, which may reach into the title band (the renderer now clips it there), or the whole-model fit.
+    static func mainRule(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double, titleBand: Double?,
+                         captionBand: Double?, stage: MGTransform, direction override: (yaw: Double, pitch: Double)? = nil)
+        -> (camera: MGSolidCamera, rule: Rule) {
+        let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6, fieldOfView = fov(fieldOfView)
+        let bands = MGSolidRenderPlan.bands(width: MGSolidRenderPlan.referenceHeight * aspect, height: MGSolidRenderPlan.referenceHeight)
+        let window = Window(titleBand: titleBand ?? (s.title != nil ? bands.title : 0),
+                            captionBand: captionBand ?? (s.caption != nil ? bands.caption : 0))
+        let (yaw, pitch) = override ?? direction(s)
+        let a = doc.assembly
+        let view = doc.view(step: s.step)
+        let hidden = doc.hiddenParts(step: s.step)
+        let anchors = s.showsAnnotations ? annotationPoints(doc, view: view, params: s.params, stage: stage) : []
+        let all = Samples(a, ids: nil, exclude: hidden).world(a, s.params, stage: stage) + anchors
+        if let step = s.step {
+            let ids = focusParts(doc, step: step, params: s.params, stage: stage)
+            if !ids.isEmpty {
+                let focus = Samples(a, ids: ids).world(a, s.params, stage: stage) + anchors
+                var fb = MGBounds.empty, wb = MGBounds.empty
+                for p in focus { fb.include(p) }
+                for p in all { wb.include(p) }
+                let explicit = doc.steps.indices.contains(step) && !doc.steps[step].focus.isEmpty
+                if !fb.isEmpty, explicit || fb.size.length <= focusShare * wb.size.length {
+                    return (fit(focus, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window), .focus)
+                }
+            }
+        }
+        let old = legacy(a, s, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, stage: stage, hidden: hidden)
+        var kept = window
+        if s.file != "hero.png" { kept.top = 1 }
+        if contains(all, camera: old, aspect: aspect, window: kept) { return (old, .model) }
         return (fit(all, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window), .modelFitted)
     }
 

@@ -457,7 +457,7 @@
     },
     {
       "beat" : 4,
-      "by" : "pilot.lowerArmR",
+      "by" : "eR1.casing",
       "id" : "aR2",
       "part" : "eR2.casing",
       "reason" : "annotation.arrow.dropped.aR2",
@@ -1278,18 +1278,10 @@
     ],
     "text" : "Solved 19 · Given 1 · Not checked 16"
   },
-  "location" : {
-    "beat" : 3,
-    "command" : null,
-    "detail" : "occluded",
-    "id" : "aSteer",
-    "statement" : null,
-    "view" : "beat"
-  },
-  "ok" : false,
+  "location" : null,
+  "ok" : true,
   "primary" : "solid",
-  "reason" : "annotation.anchor.hidden.aSteer",
-  "repair" : "Pointer aSteer (beat 4) is hidden behind eL2.nozzle. Use tip (`to`) {\"part\": \"pilot.handL\", \"offset\": [-7.539, -14.056, -2.684]}.",
+  "reason" : null,
   "strict" : true,
   "subjectFloors" : [
     {
@@ -1303,7 +1295,7 @@
       ],
       "groups" : [
         {
-          "extent" : 42,
+          "extent" : 40,
           "hiddenBy" : [
             "pilot"
           ],
@@ -1320,12 +1312,12 @@
             "eL1.rearBearing",
             "eL1.casing"
           ],
-          "pixels" : 2620,
+          "pixels" : 2560,
           "small" : true,
           "unit" : "eL1"
         },
         {
-          "extent" : 66,
+          "extent" : 64,
           "hiddenBy" : [
 
           ],
@@ -1364,12 +1356,12 @@
             "eR1.rearBearing",
             "eR1.casing"
           ],
-          "pixels" : 3356,
+          "pixels" : 3312,
           "small" : true,
           "unit" : "eR1"
         },
         {
-          "extent" : 34,
+          "extent" : 36,
           "hiddenBy" : [
             "pilot"
           ],
@@ -1386,7 +1378,7 @@
             "eR2.rearBearing",
             "eR2.casing"
           ],
-          "pixels" : 1840,
+          "pixels" : 1808,
           "small" : true,
           "unit" : "eR2"
         },
@@ -1408,14 +1400,14 @@
             "eB.rearBearing",
             "eB.casing"
           ],
-          "pixels" : 2412,
+          "pixels" : 2416,
           "small" : true,
           "unit" : "eB"
         }
       ],
       "minimumExtent" : 16.699999999999999,
       "minimumPixels" : 3425,
-      "repair" : "Beat 1: at the closest framing that keeps its subject whole, eL1 shows 2620 px, shorter side 42 px; eR1 shows 3356 px, …Repair (any one): split it into one step per subject: \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"]; or ghost the context that covers it in its \"view\": \"ghost\": [\"pilot\"].",
+      "repair" : "Beat 1: at the closest framing that keeps its subject whole, eL1 shows 2560 px, shorter side 40 px; eR1 shows 3312 px, shorter …Repair (any one): split it into one step per subject: \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"]; or set the whole ghost list in its \"view\": \"ghost\": [\"pilot\"].",
       "split" : [
         [
           "eL1"
@@ -1443,27 +1435,32 @@
       "cut" : [
 
       ],
-      "fill" : 0.874,
+      "fill" : 0.69699999999999995,
       "ghost" : [
-
+        "pilot.lowerArmL",
+        "pilot.upperArmL",
+        "pilot.lowerArmR",
+        "pilot.upperArmR",
+        "pilot.skull"
       ],
       "groups" : [
         {
-          "extent" : 202,
+          "extent" : 164,
           "hiddenBy" : [
 
           ],
           "parts" : [
             "pilot.body"
           ],
-          "pixels" : 50420,
+          "pixels" : 33216,
           "small" : false,
-          "unit" : "pilot"
+          "unit" : "pilot.body"
         },
         {
-          "extent" : 42,
+          "extent" : 36,
           "hiddenBy" : [
-
+            "pilot.lowerArmL",
+            "pilot.upperArmL"
           ],
           "parts" : [
             "eL1.intakeLip",
@@ -1478,12 +1475,12 @@
             "eL1.rearBearing",
             "eL1.casing"
           ],
-          "pixels" : 3528,
-          "small" : false,
+          "pixels" : 2288,
+          "small" : true,
           "unit" : "eL1"
         },
         {
-          "extent" : 64,
+          "extent" : 52,
           "hiddenBy" : [
 
           ],
@@ -1500,14 +1497,14 @@
             "eL2.rearBearing",
             "eL2.casing"
           ],
-          "pixels" : 6040,
+          "pixels" : 3952,
           "small" : false,
           "unit" : "eL2"
         },
         {
-          "extent" : 48,
+          "extent" : 44,
           "hiddenBy" : [
-
+            "pilot.lowerArmR"
           ],
           "parts" : [
             "eR1.intakeLip",
@@ -1522,14 +1519,15 @@
             "eR1.rearBearing",
             "eR1.casing"
           ],
-          "pixels" : 3408,
+          "pixels" : 2304,
           "small" : true,
           "unit" : "eR1"
         },
         {
-          "extent" : 36,
+          "extent" : 32,
           "hiddenBy" : [
-
+            "pilot.lowerArmR",
+            "pilot.upperArmR"
           ],
           "parts" : [
             "eR2.intakeLip",
@@ -1544,14 +1542,15 @@
             "eR2.rearBearing",
             "eR2.casing"
           ],
-          "pixels" : 1696,
+          "pixels" : 1264,
           "small" : true,
           "unit" : "eR2"
         },
         {
-          "extent" : 66,
+          "extent" : 56,
           "hiddenBy" : [
-
+            "pilot.upperArmL",
+            "pilot.skull"
           ],
           "parts" : [
             "eB.intakeLip",
@@ -1566,14 +1565,14 @@
             "eB.rearBearing",
             "eB.casing"
           ],
-          "pixels" : 3788,
-          "small" : false,
+          "pixels" : 2720,
+          "small" : true,
           "unit" : "eB"
         }
       ],
       "minimumExtent" : 16.699999999999999,
       "minimumPixels" : 3425,
-      "repair" : "Beat 2: at the closest framing that keeps its subject whole, eR1 shows 3408 px, shorter side 48 px; eR2 shows 1696 px, shorter side 36 px (minimum 3425 px and 17…Repair (any one): split it into one step per subject: \"focus\": [\"pilot.body\"] then \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eR1\"].",
+      "repair" : "Beat 2: at the closest framing that keeps its subject whole, eL1 shows 2288 px, shorter side 36 px; eR1 shows 2304 px, shorter side 44 px; eR2 shows 1264 px, shorter side 32 px; eB shows 2720 px, shorter side 56 px (minimum 3425 px and 17 px per group). Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
       "split" : [
         [
           "pilot.body"
@@ -1595,126 +1594,6 @@
         ]
       ],
       "step" : 2,
-      "subset" : [
-        "eR1"
-      ]
-    },
-    {
-      "beat" : 4,
-      "cut" : [
-
-      ],
-      "fill" : 0.68999999999999995,
-      "ghost" : [
-
-      ],
-      "groups" : [
-        {
-          "extent" : 216,
-          "hiddenBy" : [
-
-          ],
-          "parts" : [
-            "pilot.upperArmL",
-            "pilot.lowerArmL",
-            "pilot.handL"
-          ],
-          "pixels" : 10628,
-          "small" : false,
-          "unit" : "pilot"
-        },
-        {
-          "extent" : 26,
-          "hiddenBy" : [
-
-          ],
-          "parts" : [
-            "eL1.intakeLip",
-            "eL1.impeller",
-            "eL1.diffuser",
-            "eL1.combustor",
-            "eL1.nozzleGuideVanes",
-            "eL1.turbineWheel",
-            "eL1.nozzle",
-            "eL1.shaft",
-            "eL1.frontBearing",
-            "eL1.rearBearing",
-            "eL1.casing"
-          ],
-          "pixels" : 20,
-          "small" : true,
-          "unit" : "eL1"
-        },
-        {
-          "extent" : 82,
-          "hiddenBy" : [
-
-          ],
-          "parts" : [
-            "eL2.intakeLip",
-            "eL2.impeller",
-            "eL2.diffuser",
-            "eL2.combustor",
-            "eL2.nozzleGuideVanes",
-            "eL2.turbineWheel",
-            "eL2.nozzle",
-            "eL2.shaft",
-            "eL2.frontBearing",
-            "eL2.rearBearing",
-            "eL2.casing"
-          ],
-          "pixels" : 4308,
-          "small" : false,
-          "unit" : "eL2"
-        },
-        {
-          "extent" : 58,
-          "hiddenBy" : [
-
-          ],
-          "parts" : [
-            "eR1.casing"
-          ],
-          "pixels" : 3132,
-          "small" : false,
-          "unit" : "eR1"
-        },
-        {
-          "extent" : 24,
-          "hiddenBy" : [
-
-          ],
-          "parts" : [
-            "eR2.casing"
-          ],
-          "pixels" : 264,
-          "small" : true,
-          "unit" : "eR2"
-        }
-      ],
-      "minimumExtent" : 16.699999999999999,
-      "minimumPixels" : 2435,
-      "repair" : "Beat 4: at the closest framing that keeps its subject whole, eL1 shows 20 px, shorter side 26 px; eR2 shows 264 px, shorter side …Repair (any one): split it into one step per subject: \"focus\": [\"pilot.upperArmL\", \"pilot.lowerArmL\", \"pilot.handL\"] then \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1.casing\"] then \"focus\": [\"eR2.casing\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"].",
-      "split" : [
-        [
-          "pilot.upperArmL",
-          "pilot.lowerArmL",
-          "pilot.handL"
-        ],
-        [
-          "eL1"
-        ],
-        [
-          "eL2"
-        ],
-        [
-          "eR1.casing"
-        ],
-        [
-          "eR2.casing"
-        ]
-      ],
-      "step" : 4,
       "subset" : [
         "eL1"
       ]
@@ -1747,12 +1626,12 @@
             "eL1.rearBearing",
             "eL1.casing"
           ],
-          "pixels" : 2428,
+          "pixels" : 2384,
           "small" : true,
           "unit" : "eL1"
         },
         {
-          "extent" : 66,
+          "extent" : 64,
           "hiddenBy" : [
 
           ],
@@ -1769,7 +1648,7 @@
             "eL2.rearBearing",
             "eL2.casing"
           ],
-          "pixels" : 5132,
+          "pixels" : 5168,
           "small" : false,
           "unit" : "eL2"
         },
@@ -1791,7 +1670,7 @@
             "eR1.rearBearing",
             "eR1.casing"
           ],
-          "pixels" : 3336,
+          "pixels" : 3328,
           "small" : false,
           "unit" : "eR1"
         },
@@ -1813,12 +1692,12 @@
             "eR2.rearBearing",
             "eR2.casing"
           ],
-          "pixels" : 1696,
+          "pixels" : 1664,
           "small" : true,
           "unit" : "eR2"
         },
         {
-          "extent" : 60,
+          "extent" : 56,
           "hiddenBy" : [
             "pilot"
           ],
@@ -1835,14 +1714,14 @@
             "eB.rearBearing",
             "eB.casing"
           ],
-          "pixels" : 2388,
+          "pixels" : 2224,
           "small" : true,
           "unit" : "eB"
         }
       ],
       "minimumExtent" : 16.699999999999999,
       "minimumPixels" : 2435,
-      "repair" : "Beat 9: at the closest framing that keeps its subject whole, eL1 shows 2428 px, shorter side 40 px; eR2 shows 1696 px, …Repair (any one): split it into one step per subject: \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"]; or ghost the context that covers it in its \"view\": \"ghost\": [\"pilot\"].",
+      "repair" : "Beat 9: at the closest framing that keeps its subject whole, eL1 shows 2384 px, shorter side 40 px; eR2 shows 1664 px, shorter …Repair (any one): split it into one step per subject: \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"]; or set the whole ghost list in its \"view\": \"ghost\": [\"pilot\"].",
       "split" : [
         [
           "eL1"
@@ -4536,11 +4415,6 @@
   },
   "warnings" : [
     {
-      "id" : "aSteer",
-      "reason" : "annotation.anchor.hidden.aSteer",
-      "view" : "beat"
-    },
-    {
       "id" : "aL1",
       "reason" : "annotation.arrow.dropped.aL1",
       "view" : "beat"
@@ -4556,13 +4430,8 @@
       "view" : "beat"
     },
     {
-      "id" : "eR1",
-      "reason" : "framing.subject.small.beat.2",
-      "view" : "beat"
-    },
-    {
       "id" : "eL1",
-      "reason" : "framing.subject.small.beat.4",
+      "reason" : "framing.subject.small.beat.2",
       "view" : "beat"
     },
     {

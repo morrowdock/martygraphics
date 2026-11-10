@@ -2219,22 +2219,50 @@
       ],
       "fill" : 0.88,
       "ghost" : [
+        "pilot.legL",
+        "pilot.legR",
+        "pilot.lowerArmL",
+        "pilot.lowerArmR",
+        "pilot.upperArmR",
         "pack"
       ],
       "groups" : [
         {
-          "extent" : 52,
+          "extent" : 0,
           "hiddenBy" : [
 
           ],
           "parts" : [
-            "pilot.skull",
-            "pilot.footL",
+            "pilot.skull"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "pilot.skull"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
+            "pilot.footL"
+          ],
+          "pixels" : 1072,
+          "small" : true,
+          "unit" : "pilot.footL"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+            "pilot.legL",
+            "pilot.legR"
+          ],
+          "parts" : [
             "pilot.footR"
           ],
-          "pixels" : 1724,
+          "pixels" : 672,
           "small" : true,
-          "unit" : "pilot"
+          "unit" : "pilot.footR"
         },
         {
           "extent" : 64,
@@ -2244,12 +2272,12 @@
           "parts" : [
             "helmet"
           ],
-          "pixels" : 3740,
+          "pixels" : 3712,
           "small" : false,
           "unit" : "helmet"
         },
         {
-          "extent" : 34,
+          "extent" : 36,
           "hiddenBy" : [
 
           ],
@@ -2266,7 +2294,7 @@
             "back.rearBearing",
             "back.casing"
           ],
-          "pixels" : 2808,
+          "pixels" : 2784,
           "small" : true,
           "unit" : "back"
         },
@@ -2288,14 +2316,14 @@
             "armL1.rearBearing",
             "armL1.casing"
           ],
-          "pixels" : 1264,
+          "pixels" : 1248,
           "small" : true,
           "unit" : "armL1"
         },
         {
-          "extent" : 38,
+          "extent" : 40,
           "hiddenBy" : [
-
+            "pilot.lowerArmL"
           ],
           "parts" : [
             "armL2.intakeLip",
@@ -2310,14 +2338,15 @@
             "armL2.rearBearing",
             "armL2.casing"
           ],
-          "pixels" : 688,
+          "pixels" : 704,
           "small" : true,
           "unit" : "armL2"
         },
         {
-          "extent" : 22,
+          "extent" : 20,
           "hiddenBy" : [
-
+            "pilot.lowerArmR",
+            "pilot.upperArmR"
           ],
           "parts" : [
             "armR1.intakeLip",
@@ -2332,12 +2361,12 @@
             "armR1.rearBearing",
             "armR1.casing"
           ],
-          "pixels" : 520,
+          "pixels" : 496,
           "small" : true,
           "unit" : "armR1"
         },
         {
-          "extent" : 10,
+          "extent" : 4,
           "hiddenBy" : [
             "pack"
           ],
@@ -2354,18 +2383,22 @@
             "armR2.rearBearing",
             "armR2.casing"
           ],
-          "pixels" : 140,
+          "pixels" : 96,
           "small" : true,
           "unit" : "armR2"
         }
       ],
       "minimumExtent" : 24,
       "minimumPixels" : 3379,
-      "repair" : "Step 1: at the closest framing that keeps its subject whole, pilot shows 1724 px, shorter side 52 px; back shows 2808 px, shorter side 34 px; armL1 shows 1264 px, shorter side 44 px; armL2 shows 688 px, shorter side 38 px; armR1 shows 520 px, shorter side 22 px; armR2 shows 140 px, shor…Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
+      "repair" : "Step 1: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 1072 px, shorter side 36 px; pilot.footR shows 672 px, shorter side 32 px; back shows 2784 px, shorter side 36 px; armL1 shows 1248 px, shorter side 44 px; armL2 sho…Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
       "split" : [
         [
-          "pilot.skull",
-          "pilot.footL",
+          "pilot.skull"
+        ],
+        [
+          "pilot.footL"
+        ],
+        [
           "pilot.footR"
         ],
         [
@@ -2389,9 +2422,7 @@
       ],
       "step" : 1,
       "subset" : [
-        "pilot.skull",
-        "pilot.footL",
-        "pilot.footR"
+        "pilot.skull"
       ]
     },
     {
@@ -2401,22 +2432,47 @@
       ],
       "fill" : 0.874,
       "ghost" : [
-
+        "pilot.legL",
+        "pilot.legR",
+        "pilot.lowerArmL",
+        "pilot.lowerArmR"
       ],
       "groups" : [
         {
-          "extent" : 50,
+          "extent" : 0,
           "hiddenBy" : [
 
           ],
           "parts" : [
-            "pilot.skull",
-            "pilot.footL",
+            "pilot.skull"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "pilot.skull"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
+            "pilot.footL"
+          ],
+          "pixels" : 640,
+          "small" : true,
+          "unit" : "pilot.footL"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "pilot.legR"
+          ],
+          "parts" : [
             "pilot.footR"
           ],
-          "pixels" : 1364,
+          "pixels" : 688,
           "small" : true,
-          "unit" : "pilot"
+          "unit" : "pilot.footR"
         },
         {
           "extent" : 64,
@@ -2426,12 +2482,12 @@
           "parts" : [
             "helmet"
           ],
-          "pixels" : 3736,
+          "pixels" : 3696,
           "small" : false,
           "unit" : "helmet"
         },
         {
-          "extent" : 34,
+          "extent" : 32,
           "hiddenBy" : [
 
           ],
@@ -2448,14 +2504,14 @@
             "back.rearBearing",
             "back.casing"
           ],
-          "pixels" : 2880,
+          "pixels" : 2752,
           "small" : true,
           "unit" : "back"
         },
         {
-          "extent" : 34,
+          "extent" : 36,
           "hiddenBy" : [
-
+            "pilot.lowerArmL"
           ],
           "parts" : [
             "armL1.intakeLip",
@@ -2470,14 +2526,14 @@
             "armL1.rearBearing",
             "armL1.casing"
           ],
-          "pixels" : 816,
+          "pixels" : 848,
           "small" : true,
           "unit" : "armL1"
         },
         {
           "extent" : 36,
           "hiddenBy" : [
-
+            "pilot.lowerArmL"
           ],
           "parts" : [
             "armL2.intakeLip",
@@ -2492,7 +2548,7 @@
             "armL2.rearBearing",
             "armL2.casing"
           ],
-          "pixels" : 924,
+          "pixels" : 928,
           "small" : true,
           "unit" : "armL2"
         },
@@ -2514,14 +2570,14 @@
             "armR1.rearBearing",
             "armR1.casing"
           ],
-          "pixels" : 1168,
+          "pixels" : 1184,
           "small" : true,
           "unit" : "armR1"
         },
         {
           "extent" : 44,
           "hiddenBy" : [
-
+            "pilot.lowerArmR"
           ],
           "parts" : [
             "armR2.intakeLip",
@@ -2536,18 +2592,22 @@
             "armR2.rearBearing",
             "armR2.casing"
           ],
-          "pixels" : 900,
+          "pixels" : 896,
           "small" : true,
           "unit" : "armR2"
         }
       ],
       "minimumExtent" : 24,
       "minimumPixels" : 3379,
-      "repair" : "Step 2: at the closest framing that keeps its subject whole…Repair (any one): split it into one step per subject: \"focus\": [\"pilot.skull\", \"pilot.footL\", \"pilot.footR\"] then \"focus\": [\"helmet\"] then \"focus\": [\"back\"] then \"focus\": [\"armL1\"] then \"focus\": [\"armL2\"] then \"focus\": [\"armR1\"] then \"focus\": [\"armR2\"]; or focus a subset in the step: \"focus\": [\"pilot.skull\", \"pilot.footL\", \"pilot.footR\"].",
+      "repair" : "Step 2: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 640 px, shorter side 32 px; pilot.footR shows 688 px, shorter side 36 px; back shows 2752 px, shorter side 32 px; armL1 shows 848 px, shorter side 36 px; armL2 shows…Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
       "split" : [
         [
-          "pilot.skull",
-          "pilot.footL",
+          "pilot.skull"
+        ],
+        [
+          "pilot.footL"
+        ],
+        [
           "pilot.footR"
         ],
         [
@@ -2571,9 +2631,7 @@
       ],
       "step" : 2,
       "subset" : [
-        "pilot.skull",
-        "pilot.footL",
-        "pilot.footR"
+        "pilot.skull"
       ]
     },
     {
@@ -2583,22 +2641,47 @@
       ],
       "fill" : 0.88,
       "ghost" : [
-
+        "pilot.legL",
+        "pilot.legR",
+        "pilot.lowerArmL",
+        "pilot.lowerArmR"
       ],
       "groups" : [
         {
-          "extent" : 36,
+          "extent" : 0,
           "hiddenBy" : [
 
           ],
           "parts" : [
-            "pilot.skull",
-            "pilot.footL",
+            "pilot.skull"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "pilot.skull"
+        },
+        {
+          "extent" : 24,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
+            "pilot.footL"
+          ],
+          "pixels" : 432,
+          "small" : true,
+          "unit" : "pilot.footL"
+        },
+        {
+          "extent" : 24,
+          "hiddenBy" : [
+            "pilot.legR"
+          ],
+          "parts" : [
             "pilot.footR"
           ],
-          "pixels" : 872,
+          "pixels" : 432,
           "small" : true,
-          "unit" : "pilot"
+          "unit" : "pilot.footR"
         },
         {
           "extent" : 64,
@@ -2608,12 +2691,12 @@
           "parts" : [
             "helmet"
           ],
-          "pixels" : 3896,
+          "pixels" : 3936,
           "small" : false,
           "unit" : "helmet"
         },
         {
-          "extent" : 36,
+          "extent" : 32,
           "hiddenBy" : [
 
           ],
@@ -2630,14 +2713,14 @@
             "back.rearBearing",
             "back.casing"
           ],
-          "pixels" : 3048,
+          "pixels" : 2848,
           "small" : true,
           "unit" : "back"
         },
         {
           "extent" : 40,
           "hiddenBy" : [
-
+            "pilot.lowerArmL"
           ],
           "parts" : [
             "armL1.intakeLip",
@@ -2659,7 +2742,7 @@
         {
           "extent" : 40,
           "hiddenBy" : [
-
+            "pilot.lowerArmR"
           ],
           "parts" : [
             "armR1.intakeLip",
@@ -2681,11 +2764,15 @@
       ],
       "minimumExtent" : 24,
       "minimumPixels" : 3379,
-      "repair" : "Step 3: at the closest framing that keeps its subject whole, pilot shows 872 px, shorter side 36 px; back s…Repair (any one): split it into one step per subject: \"focus\": [\"pilot.skull\", \"pilot.footL\", \"pilot.footR\"] then \"focus\": [\"helmet\"] then \"focus\": [\"back\"] then \"focus\": [\"armL1\"] then \"focus\": [\"armR1\"]; or focus a subset in the step: \"focus\": [\"pilot.skull\", \"pilot.footL\", \"pilot.footR\"].",
+      "repair" : "Step 3: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 432 px, shorter side 24 px; pilot.footR shows 432 px, shorter side 24 px; back shows 2848 px, shorter side 32 px; armL1 shows 1056 px, shorter side 40 px; armR1 show…Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
       "split" : [
         [
-          "pilot.skull",
-          "pilot.footL",
+          "pilot.skull"
+        ],
+        [
+          "pilot.footL"
+        ],
+        [
           "pilot.footR"
         ],
         [
@@ -2703,9 +2790,7 @@
       ],
       "step" : 3,
       "subset" : [
-        "pilot.skull",
-        "pilot.footL",
-        "pilot.footR"
+        "pilot.skull"
       ]
     },
     {
@@ -2716,38 +2801,66 @@
       "fill" : 0.88,
       "ghost" : [
         "visor",
+        "pilot.legL",
+        "pilot.body",
+        "pilot.lowerArmL",
+        "pilot.upperArmL",
         "back",
-        "pack"
+        "pilot.handL",
+        "pilot.handR"
       ],
       "groups" : [
         {
-          "extent" : 36,
+          "extent" : 0,
           "hiddenBy" : [
             "visor"
           ],
           "parts" : [
-            "pilot.skull",
-            "pilot.footL",
+            "pilot.skull"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "pilot.skull"
+        },
+        {
+          "extent" : 24,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
+            "pilot.footL"
+          ],
+          "pixels" : 1312,
+          "small" : true,
+          "unit" : "pilot.footL"
+        },
+        {
+          "extent" : 16,
+          "hiddenBy" : [
+            "pilot.legL"
+          ],
+          "parts" : [
             "pilot.footR"
           ],
-          "pixels" : 1808,
+          "pixels" : 528,
           "small" : true,
-          "unit" : "pilot"
+          "unit" : "pilot.footR"
         },
         {
           "extent" : 56,
           "hiddenBy" : [
-            "visor"
+            "visor",
+            "pilot.body"
           ],
           "parts" : [
             "helmet"
           ],
-          "pixels" : 2812,
+          "pixels" : 2752,
           "small" : true,
           "unit" : "helmet"
         },
         {
-          "extent" : 50,
+          "extent" : 48,
           "hiddenBy" : [
 
           ],
@@ -2764,14 +2877,14 @@
             "armL1.rearBearing",
             "armL1.casing"
           ],
-          "pixels" : 1116,
+          "pixels" : 1104,
           "small" : true,
           "unit" : "armL1"
         },
         {
           "extent" : 0,
           "hiddenBy" : [
-
+            "pilot.lowerArmL"
           ],
           "parts" : [
             "armL2.intakeLip",
@@ -2793,8 +2906,9 @@
         {
           "extent" : 0,
           "hiddenBy" : [
-            "back",
-            "pack"
+            "pilot.upperArmL",
+            "pilot.lowerArmL",
+            "back"
           ],
           "parts" : [
             "armR1.intakeLip",
@@ -2814,8 +2928,9 @@
           "unit" : "armR1"
         },
         {
-          "extent" : 20,
+          "extent" : 12,
           "hiddenBy" : [
+            "pilot.lowerArmL",
             "back"
           ],
           "parts" : [
@@ -2831,14 +2946,16 @@
             "armR2.rearBearing",
             "armR2.casing"
           ],
-          "pixels" : 28,
+          "pixels" : 48,
           "small" : true,
           "unit" : "armR2"
         },
         {
           "extent" : 0,
           "hiddenBy" : [
-
+            "pilot.handL",
+            "pilot.lowerArmL",
+            "pilot.handR"
           ],
           "parts" : [
             "plumeArmL1"
@@ -2850,7 +2967,9 @@
         {
           "extent" : 0,
           "hiddenBy" : [
-
+            "pilot.handL",
+            "pilot.lowerArmL",
+            "pilot.handR"
           ],
           "parts" : [
             "plumeArmR1"
@@ -2862,11 +2981,15 @@
       ],
       "minimumExtent" : 24,
       "minimumPixels" : 3379,
-      "repair" : "Step 5: at the closest framing that keeps its subject whole, pilot shows 1808 px, shorter side 36 px; helmet shows 2812 px, shorter side 56 px; armL1 shows 1116 px, shorter side 50 px; armL2 shows 0 px, shorter side 0 px; armR1 shows 0 px, shorter side 0 px; armR2 shows 28 px, shorter s…Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
+      "repair" : "Step 5: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 1312 px, shorter side 24 px; pilot.footR shows 528 px, shorter side 16 px; helmet shows 2752 px, shorter side 56 px; armL1 shows 1104 px, shorter side 48 px; armL2 s…Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
       "split" : [
         [
-          "pilot.skull",
-          "pilot.footL",
+          "pilot.skull"
+        ],
+        [
+          "pilot.footL"
+        ],
+        [
           "pilot.footR"
         ],
         [
@@ -2893,9 +3016,209 @@
       ],
       "step" : 5,
       "subset" : [
-        "pilot.skull",
-        "pilot.footL",
-        "pilot.footR"
+        "pilot.skull"
+      ]
+    },
+    {
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.88,
+      "ghost" : [
+        "back.nozzleGuideVanes",
+        "back.shaft"
+      ],
+      "groups" : [
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.impeller"
+          ],
+          "pixels" : 4576,
+          "small" : false,
+          "unit" : "back.impeller"
+        },
+        {
+          "extent" : 56,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.combustor"
+          ],
+          "pixels" : 5520,
+          "small" : false,
+          "unit" : "back.combustor"
+        },
+        {
+          "extent" : 60,
+          "hiddenBy" : [
+            "back.nozzleGuideVanes",
+            "back.shaft"
+          ],
+          "parts" : [
+            "back.turbineWheel"
+          ],
+          "pixels" : 2048,
+          "small" : true,
+          "unit" : "back.turbineWheel"
+        },
+        {
+          "extent" : 108,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.nozzle"
+          ],
+          "pixels" : 4240,
+          "small" : false,
+          "unit" : "back.nozzle"
+        },
+        {
+          "extent" : 128,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 26032,
+          "small" : false,
+          "unit" : "back.casing"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 6: at the closest framing that keeps its subject whole, back.turbineWheel shows 2048 px, shorter side 60 px (minimum 3379 px and 24 px per group). Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
+      "split" : [
+        [
+          "back.impeller"
+        ],
+        [
+          "back.combustor"
+        ],
+        [
+          "back.turbineWheel"
+        ],
+        [
+          "back.nozzle"
+        ],
+        [
+          "back.casing"
+        ]
+      ],
+      "step" : 6,
+      "subset" : [
+        "back.turbineWheel"
+      ]
+    },
+    {
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.55600000000000005,
+      "ghost" : [
+        "back.intakeLip",
+        "back.diffuser",
+        "back.shaft",
+        "back.rearBearing",
+        "back.nozzleGuideVanes"
+      ],
+      "groups" : [
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "back.intakeLip",
+            "back.diffuser"
+          ],
+          "parts" : [
+            "back.impeller"
+          ],
+          "pixels" : 1664,
+          "small" : true,
+          "unit" : "back.impeller"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "back.shaft",
+            "back.diffuser",
+            "back.rearBearing"
+          ],
+          "parts" : [
+            "back.combustor"
+          ],
+          "pixels" : 2352,
+          "small" : true,
+          "unit" : "back.combustor"
+        },
+        {
+          "extent" : 28,
+          "hiddenBy" : [
+            "back.nozzleGuideVanes",
+            "back.shaft"
+          ],
+          "parts" : [
+            "back.turbineWheel"
+          ],
+          "pixels" : 800,
+          "small" : true,
+          "unit" : "back.turbineWheel"
+        },
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+            "back.nozzleGuideVanes"
+          ],
+          "parts" : [
+            "back.nozzle"
+          ],
+          "pixels" : 2208,
+          "small" : true,
+          "unit" : "back.nozzle"
+        },
+        {
+          "extent" : 80,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 10464,
+          "small" : false,
+          "unit" : "back.casing"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 7: at the closest framing that keeps its subject whole, back.impeller shows 1664 px, shorter side 36 px; back.combustor shows 2352 px, shorter side 36 px; back.turbineWheel shows 800 px, shorter side 28 px; back.nozzle shows 2208 px, shorter side 64 px (minimum 3379 px and 24 px pe…Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
+      "split" : [
+        [
+          "back.impeller"
+        ],
+        [
+          "back.combustor"
+        ],
+        [
+          "back.turbineWheel"
+        ],
+        [
+          "back.nozzle"
+        ],
+        [
+          "back.casing"
+        ]
+      ],
+      "step" : 7,
+      "subset" : [
+        "back.impeller"
       ]
     }
   ],
@@ -2904,20 +3227,28 @@
   "version" : 2,
   "warnings" : [
     {
-      "part" : "pilot",
+      "part" : "pilot.skull",
       "reason" : "framing.subject.small.step.1"
     },
     {
-      "part" : "pilot",
+      "part" : "pilot.skull",
       "reason" : "framing.subject.small.step.2"
     },
     {
-      "part" : "pilot",
+      "part" : "pilot.skull",
       "reason" : "framing.subject.small.step.3"
     },
     {
-      "part" : "pilot",
+      "part" : "pilot.skull",
       "reason" : "framing.subject.small.step.5"
+    },
+    {
+      "part" : "back.turbineWheel",
+      "reason" : "framing.subject.small.step.6"
+    },
+    {
+      "part" : "back.impeller",
+      "reason" : "framing.subject.small.step.7"
     }
   ]
 }

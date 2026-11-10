@@ -39,6 +39,9 @@ public struct MGSolidClearView: Equatable, Sendable {
     /// The force and flow arrows this shot does not draw (`MGSolidFraming.arrowDrops`): the camera cannot see the unit
     /// (component instance) each one's tail rides on. Set for every shot, whatever its rule.
     public var arrowDrops: [MGArrowDrop] = []
+    /// True when the shot keeps the main-rule camera (`MGSolidFraming.mainRule`): its subject camera would hide a label,
+    /// pointer or arrow that the main-rule camera shows.
+    public var mainRule = false
 
     public init(camera: MGSolidCamera, rule: MGSolidFraming.Rule, tested: Bool = false, direction: Direction = .preset,
                 autoGhost: [String] = [], samples: Int = 0, occludedSamples: Int = 0, facesCut: Bool? = nil) {
@@ -71,6 +74,7 @@ public struct MGSolidClearView: Equatable, Sendable {
                  "focusSamples": .number(Double(samples)), "view": .string(direction.rawValue)]
             if let f = facesCut { o["facesCut"] = .bool(f) }
         }
+        if mainRule { o["mainRule"] = .bool(true) }
         if !arrowDrops.isEmpty {
             o["arrowDrops"] = .array(arrowDrops.map { .object(["id": .string($0.id), "part": .string($0.part), "by": .string($0.by)]) })
         }
@@ -176,11 +180,53 @@ extension MGSolidFraming {
 
     static func clearCamera(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double,
                             titleBand: Double?, captionBand: Double?, stage: MGTransform) -> MGSolidClearView {
-        let first = framing(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage)
+        let subject = clearCamera(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand,
+                                  stage: stage, main: false)
+        // The subject camera may not hide what the main rule shows: a still that draws a label, pointer or arrow keeps the
+        // main-rule camera when the subject camera gives a view issue (hidden, ghosted, off screen, untested) and the
+        // main-rule camera gives none. So a document accepted before subject-first framing is not refused for framing.
+        guard subject.rule == .focus, s.showsAnnotations else { return subject }
+        let base = doc.view(step: s.step)
+        guard doc.showsCheckedAnchor(base) || doc.showsArrow(base) else { return subject }
+        var main = clearCamera(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand,
+                               stage: stage, main: true)
+        guard main.camera != subject.camera, viewIssues(doc, shot: s, clear: subject, aspect: aspect, stage: stage) > 0,
+              viewIssues(doc, shot: s, clear: main, aspect: aspect, stage: stage) == 0 else { return subject }
+        main.mainRule = true
+        return main
+    }
+
+    /// The label, pointer and arrow view issues (`anchorIssues`, `arrowIssues`) of a shot at a candidate camera, with its
+    /// automatic ghosts and the arrows it drops there, in a view 800 px high of the shot's aspect.
+    static func viewIssues(_ doc: MGSolidDocument, shot s: MGSolidShot, clear c: MGSolidClearView, aspect: Double, stage: MGTransform) -> Int {
+        let a = aspect.isFinite && aspect > 0 ? aspect : 1.6
+        var view = c.view(doc.view(step: s.step))
+        view.arrowDrops = arrowDrops(doc, shot: s, camera: c.camera, autoGhost: c.autoGhost, aspect: a, stage: stage)
+        let v = MGAnnotationAnchorView(view: view, params: s.params, camera: c.camera, width: 800 * a, height: 800, step: s.step, beat: nil,
+                                       stage: stage)
+        var n = 0
+        if doc.showsCheckedAnchor(view) { n += doc.anchorIssues(v).issues.count }
+        if doc.showsArrow(view) { n += doc.arrowIssues(v).count }
+        return n
+    }
+
+    /// The unblocked-focus rule on the subject-first camera (`main` false: `choose`, probing `focusParts` and the
+    /// moved chain of a posed step) or on the main-rule camera (`main` true: `mainRule`, probing `focusParts` as before).
+    static func clearCamera(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double,
+                            titleBand: Double?, captionBand: Double?, stage: MGTransform, main: Bool) -> MGSolidClearView {
+        let pick = main ? mainRule : choose
+        let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6
+        var first = pick(doc, s, aspect, fov(fieldOfView), titleBand, captionBand, stage, nil)
+        if !finite(first.camera) { first = framing(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage) }
         guard first.rule == .focus, let step = s.step, doc.steps.indices.contains(step) else {
             return MGSolidClearView(camera: first.camera, rule: first.rule)
         }
-        let probe = OcclusionProbe(doc, step: step, focus: focusParts(doc, step: step, params: s.params, stage: stage), params: s.params, stage: stage)
+        // The probe samples the focused, highlighted and section parts (`focusParts`) and, for the subject camera, the
+        // moved chain of a posed step. The subject's annotated parts are tested by the label, pointer and arrow rules at
+        // the same camera (`viewIssues`), which decide between this camera and the main-rule camera.
+        var focus = focusParts(doc, step: step, params: s.params, stage: stage)
+        if !main { let have = Set(focus); focus += subjectParts(doc, shot: s).moved.filter { !have.contains($0) } }
+        let probe = OcclusionProbe(doc, step: step, focus: focus, params: s.params, stage: stage)
         guard !probe.samples.isEmpty else { return MGSolidClearView(camera: first.camera, rule: first.rule) }
         func result(_ camera: MGSolidCamera, _ d: MGSolidClearView.Direction) -> MGSolidClearView {
             let e = probe.evaluate(camera)
@@ -190,12 +236,10 @@ extension MGSolidFraming {
         let preset = result(first.camera, .preset)
         if preset.occluded <= keepShare && preset.facesCut != false { return preset }
         let base = direction(s)
-        let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6
         var tried = [preset]
         for d in alternatives {
             let (yaw, pitch) = direction(d, yaw: base.yaw, pitch: base.pitch)
-            let r = choose(doc, shot: s, aspect: aspect, fieldOfView: fov(fieldOfView), titleBand: titleBand, captionBand: captionBand,
-                           stage: stage, direction: (yaw, min(89, max(-89, pitch))))
+            let r = pick(doc, s, aspect, fov(fieldOfView), titleBand, captionBand, stage, (yaw, min(89, max(-89, pitch))))
             guard r.rule == .focus, finite(r.camera) else { continue }
             let v = result(r.camera, d)
             if v.accepted { return v }
@@ -216,7 +260,9 @@ extension MGSolidFraming {
         let stage: MGTransform
 
         /// `focus`: the step's focus (`MGSolidFraming.focusParts`), whose samples are tested.
-        init(_ doc: MGSolidDocument, step: Int, focus: [String], params: MGPoseParameters, stage: MGTransform) {
+        /// `touching`: the touching context of the focus (`MGSolidFraming.context`) never becomes an automatic ghost, also
+        /// for an inferred focus (the subject-first probe); without it only an explicit `focus` keeps its touching parts.
+        init(_ doc: MGSolidDocument, step: Int, focus: [String], params: MGPoseParameters, stage: MGTransform, touching: Bool = false) {
             self.stage = stage
             let s = doc.steps[step], view = doc.view(step: step), pose = doc.assembly.pose(params)
             let fset = Set(focus)
@@ -252,7 +298,7 @@ extension MGSolidFraming {
             }
             var group = fset
             for x in shown where below(x.part.id) || inside(x.box) { group.insert(x.part.id) }
-            context = s.focus.isEmpty ? group
+            context = s.focus.isEmpty && !touching ? group
                 : group.union(MGSolidFraming.context(doc, core: fset, ghost: Set(s.ghost), hidden: doc.hiddenParts(step: step), params: params, stage: stage))
             for x in shown {
                 let pv = view.part(x.part.id)

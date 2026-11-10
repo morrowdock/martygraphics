@@ -4,29 +4,36 @@
 
 - Engine fixes from the remaining failures recorded in a prompt-to-3D evaluation round (r2j): figures cut by the frame
   or under the title band, wrist-ring engines too small to read, and full-width numbers.
-  - **Subject-first framing** (one rule for stills, story hold frames, `MGSolidRenderPlan` and the SwiftUI pane). A
-    still's subject (`MGSolidFraming.subjectParts`) is its explicit `focus`, or else its highlighted, section and
-    annotated parts, measured alone (no touching context, no world-point anchor). The camera takes the closest
-    framing that keeps every subject part whole; the annotation anchors join only when the subject keeps its floors:
-    a 25 % fill of the safe window (`subjectFill`), and per subject group 0.5 % of the safe window's pixels
-    (`subjectAreaShare`) and a 24 px shorter side at 800 px high (`subjectExtentPixels`). Context may be cut at the
-    safe window's edges; the renderer clips the model to the safe window (`MGSolidRenderer.render(width:height:clip:)`,
-    used for every still and story frame), so nothing is drawn under the title or caption band. The whole-model rule
-    keeps the title band free. The unblocked-focus probe tests the subject. Causes found: at main a focus fit read
-    only the focus and anchors (a head above a highlighted back pack sat under the title band); PR #51's first fix
-    widened the close-ups until nothing was cut, which shrank the subjects; this replaces it.
-  - **`framing.subject.small.step.<n>`, `framing.subject.small.beat.<n>`** (new warnings, never refused): the
-    subject misses a floor at the closest whole framing. The check reports add `subjectFloors` with the measure and
-    exact repairs (`split`, `subset`, `ghost`). A label at a world point that a subject close-up leaves out is drawn
-    as a callout and is no longer an `offscreen` anchor issue.
+  - **Subject-first framing** (one rule for stills, story hold frames, `MGSolidRenderPlan`, the SwiftUI pane and the
+    check report: `MGSolidFraming.clearView`). A still's subject (`MGSolidFraming.subjectParts`) is its explicit
+    `focus`, or else its highlighted, section and annotated parts plus, in a posed step, every chain the pose moves (a
+    raised arm and its jet). The camera takes the closest framing that keeps the subject whole together with every
+    target the still draws (label anchors, pointer tips, arrow tails and heads), so no label is left "(off view)".
+    Context may be cut at the safe window's edges; the renderer clips the model to the safe window
+    (`MGSolidRenderer.render(width:height:clip:)`, used for every still and story frame), so nothing is drawn under the
+    title or caption band. The camera stays outside the box of every solid context part. A still that draws a label,
+    pointer or arrow keeps main's camera (`MGSolidFraming.mainRule`, manifest `"mainRule": true`) when the subject
+    camera would hide one that main's camera shows, so framing alone never refuses a document accepted before (a test
+    checks every shipped document; the published AI lesson passes `check --strict`). The whole-model rule keeps the
+    title band free. Causes found: at main a focus fit read only the focus and anchors (a head above a highlighted back
+    pack sat under the title band); PR #51's first fix widened the close-ups until nothing was cut, which shrank the
+    subjects; this replaces it.
+  - **`framing.subject.small.step.<n>`, `framing.subject.small.beat.<n>`** (new warnings, never refused): a subject
+    group misses a floor at the closest framing: a 25 % fill of the safe window (`subjectFill`), and per group 0.5 %
+    of its pixels (`subjectAreaShare`) and a 24 px shorter side at 800 px high (`subjectExtentPixels`). A group is a
+    whole focused or highlighted instance, or one named part (a foot named beside the body is measured on its own).
+    The check reports add `subjectFloors` with the measure and exact repairs (`split`, `subset`, and `ghost`: the
+    complete list, the view's own ghosts kept).
   - **Crops from triangles.** `MGSolidFraming.cutParts` tests every triangle in camera space against the five view
     planes, so a face that spans the view with every vertex outside it, or crosses the near plane, counts. The render
-    manifest lists a step still's clipped parts as `clipped`.
+    manifest lists a step still's clipped parts as `clipped`. The coverage raster (`MGStillRaster`, quarter size, one
+    per still for the subject floors and the small units) clips triangles to the near plane instead of dropping them,
+    so a near occluder still hides what lies behind it.
   - **Exact repairs.** Repair lines write ids as complete JSON strings (`MGExactRepair`) and never cut a JSON
     fragment; when it does not fit the 400-scalar line, the line names the structured field that holds it.
   - **`unit.small.<id>`** (new warning, never refused): a unit (component instance or plain part) that a shown label or
     arrow rides on, or that a step or beat highlights, covers fewer than 0.05 % of a 1280 × 800 frame (512 px) in every
-    still that shows it, measured by a half-size depth raster of the solid parts (`MGSmallUnitRules`,
+    still that shows it, measured by a quarter-size depth raster of the solid parts (`MGSmallUnitRules`,
     `MGSolidDocument.smallUnits`). The check reports add `smallUnits` with the most pixels, the still and the repair
     (a focused view, a larger size, a closer camera). New `MGSolidDocument.framedStills()` and
     `MGExplainerFrame.beatStills(_:)` give every still as the render tool frames it.

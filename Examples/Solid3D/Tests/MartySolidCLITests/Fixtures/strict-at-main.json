@@ -1,0 +1,21 @@
+{
+  "accepted": {
+    "docs-assets-from-a-prompt-robot-joint-attempt-2-accepted": [],
+    "docs-assets-from-a-prompt-robot-joint-robot-joint-gearbox": [],
+    "docs-assets-jet-suit-ai-lesson": [
+      "annotation.arrow.dropped.aL1",
+      "annotation.arrow.dropped.aR2"
+    ],
+    "docs-assets-jet-suit-jet-suit": [],
+    "models-annotated-winch": [],
+    "models-horizontal-reduction": [],
+    "models-idler-gearbox": [],
+    "models-planetary": [],
+    "models-planetary-components": [],
+    "models-propeller": [],
+    "models-slider-crank": [],
+    "models-slider-crank-component": []
+  },
+  "base": "a13f1f1c634a7032729ae840896bd69f9a0e9199",
+  "comment": "Every golden input that passed check --strict at main a13f1f1, with its warning reasons there (generated from main's strict golden files)."
+}

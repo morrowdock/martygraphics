@@ -984,7 +984,7 @@ the first cause found is the issue:
 | --- | --- |
 | `hidden` | the anchor's part is hidden in the view (a safety net: `step.hide.claim` already refuses a step that hides a part its annotations name) |
 | `ghosted` | the view draws the anchor's part fainter than its own opacity: step `ghost`, or an automatic ghost of the unblocked-focus rule |
-| `offscreen` | the anchor projects outside the view (the whole still or pane, bands included), or lies behind the camera; a label at a world point names no part, so outside the view it is drawn as a callout (no dot) and is not an issue (a subject close-up may leave far labels out, "Subject first") |
+| `offscreen` | the anchor projects outside the view (the whole still or pane, bands included), or lies behind the camera |
 | `occluded` | another part is the first surface on the segment from the camera to the anchor (`by` names it) |
 | `untested` | the view's line-of-sight tests ran out of budget before this anchor (`annotation.anchor.untested.<id>`, `"budget": "lineOfSight"`) |
 
@@ -1846,43 +1846,49 @@ camera (the `mannequin` does), `backLeft` shows its left side and back (its left
 
 * **Subject first.** A still with a subject frames the subject, from its own camera preset and `orbit` (the
   direction stays; only the target and distance change). One rule for every still, story hold frame, render plan
-  camera and SwiftUI pane (`MGSolidFraming.choose`).
+  camera, SwiftUI pane and check report (`MGSolidFraming.clearView`).
   - **The subject** (`MGSolidFraming.subjectParts`) is the step's (or beat view's) explicit `focus`. Without one, it
-    is the highlighted parts, the section parts and the parts that the labels and arrows the still shows ride on. It
-    is measured **alone**: no touching context, and no anchor at a world point.
-  - **The camera** takes the closest framing that keeps every subject part whole inside the safe window, with the
-    label anchors that ride on subject parts and both ends of every arrow with an end on one (they belong to the subject): together they fill 88 %
-    (`MGSolidFraming.fill`) of it, centred. Other shown anchors (a world point, a part outside an explicit `focus`)
-    join the fit only when the subject still meets the floors with them; a subject group that misses a floor even at
-    the closest framing does not keep them out. So a far label never shrinks a subject that the close-up makes readable. A label at a world point that
-    the still leaves out is drawn as a callout (no dot); it is not an anchor fault.
-  - **Floors.** (i) The subject fills at least **25 %** of the safe window on its larger axis
-    (`MGSolidFraming.subjectFill`). (ii) Each subject **group** (its subject parts in one unit,
-    `MGSolidFraming.subjectGroups`) shows at least **0.5 %** of the safe window's pixels (`subjectAreaShare`: 3,379 px
+    is the highlighted parts, the section parts and the parts that the labels and arrows the still shows ride on; and,
+    in a **posed step**, every chain the pose moves (`moved`: each part whose world placement differs with and without
+    the pose: the posed joints' parts and everything attached below them, such as a raised arm and its jet). No
+    touching context joins.
+  - **The camera** takes the closest framing that keeps every subject part whole inside the safe window together with
+    **every target the still draws**: label anchors, pointer tips, and arrow tails and heads. They fill 88 %
+    (`MGSolidFraming.fill`) of the window, centred. A framing never leaves a label "(off view)". There is no fill
+    ceiling. When the targets and the floors conflict, the targets win and the check report warns.
+  - **Floors** (the check report, `MGSolidDocument.subjectIssues`). (i) The subject fills at least **25 %** of the safe
+    window on its larger axis (`MGSolidFraming.subjectFill`). (ii) Each subject **group**
+    (`MGSolidFraming.subjectGroups`) shows at least **0.5 %** of the safe window's pixels (`subjectAreaShare`: 3,379 px
     of the 1280 × 528 px safe window of a captioned 1280 × 800 still), and the shorter side of its visible pixels is
-    at least **24 px at a frame 800 px high**, scaled with the height (`subjectExtentPixels`: 65 px at 3840 × 2160).
-    The check report measures visible pixels on the still's depth raster (`MGStillRaster`: half size, nearest solid
-    surface); the framing reads the cheaper projected box of each group only to decide whether the anchors join.
+    at least **24 px at a frame 800 px high**, scaled with the height (`subjectExtentPixels`: 65 px at 3840 × 2160). A
+    group is a component instance whose every part is in the subject (a highlighted or focused instance); every other
+    subject part is its own group, so a separately named part (a foot named beside the body) is measured on its own.
+    The moved chain is framed but not measured. Visible pixels come from the still's depth raster (`MGStillRaster`).
   - **Context** (every other part) may be cut at the safe window's edges. The renderer clips the model to the safe
     window (`MGSolidRenderer.render(width:height:clip:)`; `marty-solid render` does this for every still and story
     frame), so nothing is drawn under the title or caption band. The render manifest lists the clipped solid parts of
     a step still as `clipped` (`MGSolidFraming.cutParts`). The framing never zooms out for context.
-  - **At the limit.** When the closest whole framing misses a floor (subject parts far apart, or a subject hidden
-    inside other parts), the close-up stays and the check report warns `framing.subject.small.step.<n>`
-    (`framing.subject.small.beat.<n>`) in `subjectFloors`: `{"step", "beat", "groups": [{"unit", "parts", "pixels",
-    "extent", "small", "hiddenBy"}], "cut", "fill", "minimumPixels", "minimumExtent", "split", "subset", "ghost",
-    "repair"}`. The repairs are exact: `split` (one `focus` list per group: a step each), `subset` (the first small
-    group alone) and `ghost` (the context units whose surface covers a small group). A warning, not a refusal: the
-    subject is whole and the still is truthful; the author decides how to split or ghost. Ids in a repair are written
-    as complete JSON strings; when the JSON would not fit the 400-scalar line, the line names the structured field.
   - **Never from inside.** The camera then moves back along its view line until it is outside the posed box of every
-    solid context part (`MGSolidFraming.outsideContext`), so a subject inside a closed or hollow part (a core in a
-    shell) is not framed from inside it; the subject floors then report it hidden, with the repair to ghost that part
-    (a ghost is not solid, so the camera may go in).
+    solid context part (`MGSolidFraming.outsideContext`), so a subject inside a closed or hollow part is not framed from
+    inside it; the floors then report it hidden, with the repair to ghost that part (a ghost is not solid).
+  - **Accepted documents stay accepted.** For a still that draws a label, pointer or arrow, `clearView` tests the
+    drawn anchors and arrows (the anchor and arrow view rules) at the subject camera. When that camera gives a view
+    issue (hidden, ghosted, off screen, untested) and the camera of main's rule (`MGSolidFraming.mainRule`: the step's
+    focus with its touching context, or the earlier whole-model framing) gives none, the still keeps main's camera and
+    its manifest record says `"mainRule": true`. So framing alone never refuses a document that passed `check
+    --strict` before subject-first framing (a test checks every shipped document). The unblocked-focus probe samples
+    the focused, highlighted and section parts and the moved chain; the annotated parts are tested by this check.
+  - **At the limit.** When the closest whole framing misses a floor, the check report warns
+    `framing.subject.small.step.<n>` (`framing.subject.small.beat.<n>`) in `subjectFloors`: `{"step", "beat", "groups":
+    [{"unit", "parts", "pixels", "extent", "small", "hiddenBy"}], "cut", "fill", "minimumPixels", "minimumExtent",
+    "split", "subset", "ghost", "repair"}`. The repairs are exact: `split` (one `focus` list per group: a step each),
+    `subset` (the first small group alone) and `ghost`, the **complete** `ghost` list to set: the view's own ghosts as
+    written, then the context parts or units that cover a small group, without repeats (never a part of the subject).
+    A warning, not a refusal: the subject is whole and the still is truthful; the author decides how to split or ghost.
+    Ids in a repair are complete JSON strings; when the JSON would not fit the 400-scalar line, the line names the
+    structured field.
   - An inferred subject whose box is more than 75 % of the whole model's box diagonal (`focusShare`) is a whole-model
     still. A `focus` list is always framed: to frame a part exactly, list it in `focus`.
-  - The unblocked-focus rule below tests the subject's samples, and may then draw blocking parts as ghosts or choose
-    one of four fixed other directions.
 * **Crops.** `MGSolidFraming.cutParts` decides which parts a camera cuts from the triangles, not the vertices: a
   triangle is in view unless all three vertices lie outside one of the five view planes, tested in camera space
   without dividing by depth. So a face that spans the view with every vertex outside it (a 2 m wall behind a 20 mm
@@ -1906,15 +1912,19 @@ anchors, so a figure's head sat under the title band and its legs were cut; the 
 framing reach into the title band; and a label at a world point pulled an explicit close-up to one side. PR #51's first
 fix widened every close-up until no solid part was cut. That removed the crops but shrank the subjects (the review
 measured sonnet-1's arm jets at 112 visible px in step 4). Subject-first framing keeps the subject large and clips the
-context at the safe window instead.
+context at the safe window instead. Its re-check then added the moved chain of a posed step (a close-up of one jet had
+lost the raised arm), every drawn target in the fit (labels had gone "(off view)"), and the main-rule fallback (two
+accepted documents, one of them the published AI lesson, had become refused for a hidden anchor at the new camera).
 
 **Small named units** (`unit.small.<id>`, a warning, never refused, strict included). A unit is a component
 instance (its parts share the instance id as their first id segment) or a plain part (`MGSolidDocument.unitID`). A unit
 is **named** when a label or arrow that a still shows (not dropped) rides on one of its parts, or when a step or beat
 highlights one (the parts its caption is about). The check report measures, in every still (`framedStills`: the step
 stills, or the plain view of a document without steps; an explainer's beat stills), the pixels each named unit covers:
-a depth raster of every solid part on a half-size grid (`MGSmallUnitRules.rasterScale`, each cell 4 pixels), where a
-cell counts for the unit whose surface is nearest there, so a unit inside another part counts only where it shows.
+a depth raster of every solid part on a quarter-size grid (`MGSmallUnitRules.rasterScale`, each cell 16 pixels; one
+raster per still serves this rule and the subject floors), where a cell counts for the unit whose surface is nearest
+there, so a unit inside another part counts only where it shows. A triangle that crosses the near plane is clipped to
+it (Sutherland–Hodgman in camera space), not dropped, so a near occluder still hides what lies behind it.
 When a named unit covers fewer than **N = 0.05 % of a 1280 × 800 frame (512 px**, about 23 × 23 px,
 `MGSmallUnitRules.minimumShare`) in **every** still that shows it solid, the report lists it in `smallUnits`:
 `{"unit", "pixels", "minimum", "stills", "step", "beat", "repair"}` with the most pixels it reached and where. N is a

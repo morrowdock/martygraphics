@@ -12,7 +12,7 @@ import XCTest
 /// view that shrank the subject; a wall that spans the view with every vertex outside it).
 final class SubjectFramingTests: XCTestCase {
     /// A figure (Z up, mm): legs, torso, head, a back pack, two arms and a small engine at each hand. The parts are apart
-    /// by 20 mm (more than the touch tolerance), except where an arm meets the torso and an engine its arm.
+    /// by 20 mm or more (more than the touch tolerance), except where an arm meets the torso.
     static let parts = """
     [{"id": "legs", "shape": {"box": {"size": [200, 120, 900], "at": [0, 0, 450]}}},
      {"id": "torso", "shape": {"box": {"size": [400, 200, 600], "at": [0, 0, 1220]}}},
@@ -20,8 +20,8 @@ final class SubjectFramingTests: XCTestCase {
      {"id": "pack", "shape": {"box": {"size": [200, 120, 300], "at": [0, 160, 1350]}}},
      {"id": "armL", "shape": {"box": {"size": [500, 100, 100], "at": [450, 0, 1450]}}},
      {"id": "armR", "shape": {"box": {"size": [500, 100, 100], "at": [-450, 0, 1450]}}},
-     {"id": "jetL", "shape": {"box": {"size": [24, 60, 60], "at": [712, 0, 1450]}}},
-     {"id": "jetR", "shape": {"box": {"size": [24, 60, 60], "at": [-712, 0, 1450]}}}]
+     {"id": "jetL", "shape": {"box": {"size": [24, 60, 60], "at": [740, 0, 1450]}}},
+     {"id": "jetR", "shape": {"box": {"size": [24, 60, 60], "at": [-740, 0, 1450]}}}]
     """
     static let labels = #"{"labels": [{"id": "lFar", "at": {"world": [-3900, 0, 3900]}, "text": "Far note"}, {"id": "lPack", "at": {"part": "pack", "point": "centre"}, "text": "Pack"}]}"#
 
@@ -66,7 +66,8 @@ final class SubjectFramingTests: XCTestCase {
     func testTheSubjectIsFramedAloneAndStaysLarge() throws {
         let doc = try compile(Self.assembly())
         let stills = doc.framedStills()
-        XCTAssertEqual(stills.map(\.rule), [.focus, .focus, .focus, .modelFitted])
+        // Step 3's far label joins the fit (every drawn target is inside), so it spans the model: a whole-model still.
+        XCTAssertEqual(stills.map(\.rule), [.focus, .focus, .modelFitted, .modelFitted])
         let pack = stills[0]
         XCTAssertEqual(MGSolidFraming.subjectParts(doc, shot: pack.shot).parts, ["pack"])
         let pts = MGSolidFraming.Samples(doc.assembly, ids: ["pack"]).world(doc.assembly, pack.still.params, stage: MGSolidStage.zUpToYUp)
@@ -80,18 +81,87 @@ final class SubjectFramingTests: XCTestCase {
         XCTAssertEqual(floors.map(\.reason), ["framing.subject.small.step.2"])
     }
 
-    /// A label at a far world point may not shrink the subject: with it the pack would miss its floors, so the anchors do
-    /// not join the fit and the camera is the pack's own close-up.
-    func testAFarLabelDoesNotShrinkTheSubject() throws {
+    /// Rule (b): every target a still draws lies inside its safe window, a far world-point label too. The re-check
+    /// found labels left "(off view)" by a close-up; now the label joins the fit and the subject floors warn instead.
+    func testEveryDrawnTargetIsInsideTheSafeWindow() throws {
         let doc = try compile(Self.assembly())
         let stills = doc.framedStills()
-        XCTAssertEqual(stills[2].still.camera, stills[0].still.camera)
-        XCTAssertEqual(MGSolidFraming.subjectParts(doc, shot: stills[2].shot).parts, ["pack"])
-        // So the far label's point is off the still: a world-point label names no part, so the overlay shows it as a
-        // callout (no dot) and the anchor rule does not refuse it.
-        XCTAssertEqual(report(Self.assembly())["ok"], .bool(true))
-        guard case .array(let issues)? = report(Self.assembly())["anchorIssues"] else { return XCTFail("anchorIssues") }
-        XCTAssertTrue(issues.isEmpty)
+        let f = stills[2], v = f.still
+        let anchors = MGSolidFraming.annotationPoints(doc, view: v.view, params: v.params)
+        XCTAssertEqual(anchors.count, 2)
+        XCTAssertTrue(MGSolidFraming.contains(anchors, camera: v.camera, aspect: 1.6, window: f.window))
+        XCTAssertNotEqual(stills[2].still.camera, stills[0].still.camera, "the far label widens the pack shot")
+        let o = report(Self.assembly())
+        XCTAssertEqual(o["ok"], .bool(true))
+        guard case .array(let issues)? = o["anchorIssues"] else { return XCTFail("anchorIssues") }
+        XCTAssertTrue(issues.isEmpty, "\(issues)")
+    }
+
+    /// Rule (c): a posed step's inferred subject brings every chain the pose moves. The step highlights only the jet at
+    /// the raised hand (the r2j step-5 case); the raised upper arm, forearm and hand join the fit, so the step does not
+    /// become a close-up of the jet.
+    func testAPosedStepKeepsItsMovedChain() throws {
+        let t = #"{"v": 2, "kind": "assembly", "title": "Pose", "parts": [{"id": "pilot", "use": "mannequin"}, {"id": "jet", "parent": "pilot.leftHand", "shape": {"box": {"size": [40, 40, 90]}}}], "annotations": {"labels": [{"id": "lNote", "at": {"world": [0, -350, 1950]}, "text": "Steering by the arms"}]}, "steps": [{"say": "One arm raised.", "highlight": ["jet"], "camera": "front", "annotate": ["lNote"], "pose": {"pilot": {"with": {"leftShoulder": 70}}}}]}"#
+        let doc = try compile(t)
+        let f = try XCTUnwrap(doc.framedStills().first)
+        let subject = MGSolidFraming.subjectParts(doc, shot: f.shot)
+        XCTAssertEqual(subject.parts, ["jet"])
+        for p in ["pilot.upperArmL", "pilot.lowerArmL", "pilot.handL"] { XCTAssertTrue(subject.moved.contains(p), p) }
+        XCTAssertFalse(subject.moved.contains("pilot.legL"))
+        let pts = MGSolidFraming.Samples(doc.assembly, ids: subject.parts + subject.moved).world(doc.assembly, f.still.params, stage: MGSolidStage.zUpToYUp)
+        XCTAssertTrue(MGSolidFraming.contains(pts, camera: f.still.camera, aspect: 1.6, window: f.window), "the raised arm is whole")
+        XCTAssertTrue(MGSolidFraming.contains(MGSolidFraming.annotationPoints(doc, view: f.still.view, params: f.still.params),
+                                              camera: f.still.camera, aspect: 1.6, window: f.window), "the label is inside")
+    }
+
+    /// Re-check B3: a core inside an opaque 200 mm shell (an inner 100 mm shell already ghosted) is hidden; a face that
+    /// crosses the near plane still hides it on the raster (clipped, not dropped). Before: 88,112 px "visible".
+    func testAFaceAcrossTheNearPlaneStillHidesOnTheRaster() throws {
+        let t = #"{"v": 2, "kind": "assembly", "parts": [{"id": "core", "shape": {"box": {"size": [20, 20, 20]}}}, {"id": "shellA", "shape": {"box": {"size": [100, 100, 100]}}}, {"id": "shellB", "shape": {"box": {"size": [200, 200, 200]}}}], "steps": [{"say": "The core.", "camera": "front", "focus": ["core"], "ghost": ["shellA"]}]}"#
+        let doc = try compile(t)
+        let f = try XCTUnwrap(doc.framedStills().first)
+        let r = try XCTUnwrap(MGStillRaster(doc, f.still, groups: [["core"]]))
+        XCTAssertEqual(r.visible(0).pixels, 0)
+        let issues = doc.subjectIssues([f]) { doc.authoredGhost(step: $0.still.step) }
+        XCTAssertEqual(issues.map(\.reason), ["framing.subject.small.step.1"])
+        XCTAssertEqual(issues.first?.ghost, ["shellA", "shellB"], "the complete list: the existing ghost kept")
+    }
+
+    /// Re-check S1: separately named parts of one instance are measured on their own. A foot named beside the body
+    /// misses the floor although the body is large.
+    func testSeparatelyNamedPartsMeetTheFloorEachOnTheirOwn() throws {
+        let t = #"{"v": 2, "kind": "assembly", "parts": [{"id": "pilot", "use": "mannequin"}], "steps": [{"say": "Body and foot.", "camera": "front", "focus": ["pilot.body", "pilot.footL"]}]}"#
+        let doc = try compile(t)
+        let stills = doc.framedStills()
+        XCTAssertEqual(MGSolidFraming.subjectGroups(doc, ["pilot.body", "pilot.footL"]).map(\.unit), ["pilot.body", "pilot.footL"])
+        let issues = doc.subjectIssues(stills)
+        let small = issues.first.map { i in i.small.map { i.groups[$0].unit } } ?? []
+        XCTAssertEqual(small, ["pilot.footL"])
+        // A whole instance is one group.
+        let whole = try compile(#"{"v": 2, "kind": "assembly", "parts": [{"id": "pilot", "use": "mannequin"}], "steps": [{"say": "All.", "camera": "front", "highlight": ["pilot"]}]}"#)
+        XCTAssertEqual(MGSolidFraming.subjectGroups(whole, whole.assembly.parts.map(\.id)).map(\.unit), ["pilot"])
+    }
+
+    /// Re-check S2: the ghost repair returns the complete list. A core inside two shells (enclosing context is never an
+    /// automatic ghost, and no direction sees past it), shell A already ghosted: the repair is ["shellA", "shellB"]
+    /// (before: ["shellB"], which made A opaque again), and applying it clears the floor warning. With a label on the
+    /// core, the main-rule camera of main keeps the document accepted (its camera sees the core).
+    func testTheGhostRepairKeepsTheExistingGhosts() throws {
+        func doc(_ ghost: String, label: Bool = false) -> String {
+            let l = label ? #", "annotations": {"labels": [{"id": "lCore", "at": {"part": "core", "point": "centre"}, "text": "Core"}]}"# : ""
+            let a = label ? #", "annotate": ["lCore"]"# : ""
+            return #"{"v": 2, "kind": "assembly", "parts": [{"id": "core", "shape": {"box": {"size": [20, 20, 20]}}}, {"id": "shellA", "shape": {"box": {"size": [100, 100, 100]}}}, {"id": "shellB", "shape": {"box": {"size": [200, 200, 200]}}}]\#(l), "steps": [{"say": "The core.", "camera": "front", "focus": ["core"], "ghost": \#(ghost)\#(a)}]}"#
+        }
+        let o = report(doc(#"["shellA"]"#))
+        guard case .array(let floors)? = o["subjectFloors"], case .object(let f)? = floors.first, case .string(let repair)? = f["repair"]
+        else { return XCTFail("subjectFloors: \(o["reason"] ?? .null)") }
+        XCTAssertEqual(f["ghost"], .array([.string("shellA"), .string("shellB")]))
+        XCTAssertTrue(repair.contains(#""ghost": ["shellA", "shellB"]"#), repair)
+        let fixed = report(doc(#"["shellA", "shellB"]"#))
+        XCTAssertEqual(fixed["ok"], .bool(true))
+        XCTAssertNil(fixed["subjectFloors"])
+        XCTAssertEqual(report(doc(#"["shellA"]"#, label: true))["ok"], .bool(true))
+        XCTAssertEqual(report(doc(#"["shellA", "shellB"]"#, label: true))["ok"], .bool(true))
     }
 
     /// Two small engines far apart: the closest whole framing shows each one too small. The report warns with the
@@ -170,7 +240,7 @@ final class SubjectFramingTests: XCTestCase {
         let beats = MGExplainerFrame.beatStills(ex)
         let solid = try XCTUnwrap(beats.solid)
         // The whole-figure beat keeps the earlier framing: a pane has no band, and nothing leaves it.
-        XCTAssertEqual(beats.stills.map(\.rule), [.focus, .focus, .focus, .model])
+        XCTAssertEqual(beats.stills.map(\.rule), [.focus, .focus, .modelFitted, .model])
         for f in beats.stills {
             XCTAssertEqual(cut(solid, f, ids: MGSolidFraming.subjectParts(solid, shot: f.shot).parts), [], "beat \((f.still.beat ?? 0) + 1)")
         }
