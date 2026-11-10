@@ -88,6 +88,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         var anchors = MGAnnotationAnchorReport()
         var arrows = MGAnnotationArrowReport()
         var drops: [(beat: Int?, drop: MGArrowDrop)] = []
+        var dropNotes: [MGArrowDropNote] = []
         var subjects: [MGSubjectSmall] = [], small: [MGSmallUnit] = [], stillPlacements: MGJSON?
         if let d = s.solid {
             // The solid's own steps are the beats' views: the beat check below frames them as the beat stills do.
@@ -118,6 +119,10 @@ public struct MGExplainerReport: Equatable, Sendable {
                                views: stills?.solid.map { fd in views.filter { fd.showsCheckedAnchor($0.view) || fd.showsArrow($0.view) } } ?? [])
                 // The arrows each beat still drops (the framing's arrow drop rule): warnings, never refused.
                 drops = checked.views.flatMap { v in v.view.arrowDrops.map { (v.beat, $0) } }
+                // A dropped arrow that no beat draws, or whose force the beat's caption names: warnings, never refused.
+                if let fd = checked.solid {
+                    dropNotes = fd.arrowDropNotes(views, beats: true) { k in s.captions[k] ?? s.keptBeats.first { $0.index == k }?.say }
+                }
                 let framed = (solid: checked.solid, views: checked.views.filter { v in checked.solid.map { $0.showsCheckedAnchor(v.view) } ?? false })
                 if let fd = framed.solid {
                     for v in framed.views { anchors.append(fd.anchorIssues(v)) }
@@ -153,6 +158,8 @@ public struct MGExplainerReport: Equatable, Sendable {
                             return arrowRecheck(copy, library: s.library, budget: MGSuggestionBudget(0))
                         }
                     }
+                    // Every beat still, also those that do not list it, for each hidden arrow (one refusal names them all).
+                    fd.scanHiddenArrows(&arrows.issues, views: views, beats: true)
                 }
             }
         }
@@ -169,6 +176,10 @@ public struct MGExplainerReport: Equatable, Sendable {
             reason = a.reason
             location = MGExplainerIssue(a.reason, view: .beat, beat: a.beat, id: a.id, detail: a.cause.rawValue)
         }
+        // The board items each beat's board pane cuts at 1280 × 800 (`MGExplainerFrame.boardClips`): warnings, each
+        // item once, at the first beat that cuts it.
+        var boardClips: [MGBoardClip] = []
+        if s.board != nil, let doc { boardClips = MGExplainerFrame.beatBoardClips(doc, library: s.library) }
         var boardJSON: MGJSON = .null
         if s.board != nil, let st = s.lesson.state {
             var values: [String: MGJSON] = [:]
@@ -216,6 +227,8 @@ public struct MGExplainerReport: Equatable, Sendable {
         warnings += beatIssues.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
         warnings += arrows.issues.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
         warnings += drops.map { .object(["reason": .string($0.drop.reason), "view": .string("beat"), "id": .string($0.drop.id)]) }
+        warnings += dropNotes.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
+        warnings += boardClips.map { .object(["reason": .string($0.reason), "view": .string("board"), "id": .string($0.id)]) }
         warnings += subjects.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.groups[$0.small.first ?? 0].unit)]) }
         warnings += small.map { .object(["reason": .string($0.reason), "view": .string("solid"), "id": .string($0.unit)]) }
         var triangles = 0
@@ -248,9 +261,13 @@ public struct MGExplainerReport: Equatable, Sendable {
             o["arrowIssues"] = .array(arrows.issues.map(\.json))
             // Only when a beat still drops an arrow; other reports keep their exact keys.
             if !drops.isEmpty { o["arrowDrops"] = .array(drops.map { $0.drop.json(step: nil, beat: $0.beat) }) }
+            // Only when a dropped arrow leaves a caption or the story without it.
+            if !dropNotes.isEmpty { o["arrowDropNotes"] = .array(dropNotes.map(\.json)) }
         }
         // Only when a beat still's subject misses a floor or a named unit is small; other reports keep their exact keys.
         if !subjects.isEmpty { o["subjectFloors"] = .array(subjects.map(\.json)) }
+        // Only when a beat's board pane cuts an item; other reports keep their exact keys.
+        if !boardClips.isEmpty { o["boardClips"] = .array(boardClips.map(\.json)) }
         if let stillPlacements { o["stillPlacements"] = stillPlacements }
         if !small.isEmpty { o["smallUnits"] = .array(small.map(\.json)) }
         let hit = reason.flatMap { MGSolidReport.anchorIssue($0, anchors.issues) }

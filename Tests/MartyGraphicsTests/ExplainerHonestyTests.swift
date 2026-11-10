@@ -119,7 +119,7 @@ final class ExplainerHonestyTests: ExplainerTestCase {
         let solid = #"{"v":2,"parts":[{"id":"p","shape":{"shaft":{"radius":2,"length":4}},"joint":{"revolute":[0,0,1]},"drive":{"input":1}},{"id":"f","at":[10,0,0],"shape":{"shaft":{"radius":2,"length":4}},"joint":{"revolute":[0,0,1]},"drive":{"follow":{"source":"p","ratio":2}}}]}"#
         let s = try XFix.load(XFix.doc(notes: #"{"t":{"basis":"a table"}}"#, board: XFix.table(), solid: solid,
                                        beats: #"[{"say":"It turns {p.speed} times.","check":[{"value":"p.speed","eq":1}]},{"say":"About 2 turns.","unchecked":"rough"}]"#))
-        XCTAssertEqual(s.legend.text, "Solved 3 · Schematic 1 · Given 1 · Not checked 1")
+        XCTAssertEqual(s.legend.text, "Solved 3 (1 animation ratio) · Schematic 1 · Given 1 · Not checked 1")
         XCTAssertEqual(s.legend.notes, ["Some motion is schematic", "Shapes and drawings as authored"])
     }
 

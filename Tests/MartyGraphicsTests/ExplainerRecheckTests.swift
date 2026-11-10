@@ -127,7 +127,7 @@ final class ExplainerRecheckTests: ExplainerTestCase {
         XCTAssertEqual(r.legend, fresh.legend)
         // At beat 1 (beat 2 still waits): 2 motion claims, the table, beat 1's caption; beat 2's caption and check
         // count once beat 2 is presented (presented-only legend).
-        XCTAssertEqual(r.legend.text, "Solved 4")
+        XCTAssertEqual(r.legend.text, "Solved 4 (2 animation ratios)")
         let bound = boundSession()
         guard case .success(let rb) = MGExplainerSession.restore(bound.snapshot(), pacing: .speech) else { return XCTFail("bound") }
         XCTAssertEqual(rb.legend, bound.legend)

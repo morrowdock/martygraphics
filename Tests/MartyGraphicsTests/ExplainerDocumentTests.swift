@@ -17,7 +17,7 @@ final class ExplainerDocumentTests: ExplainerTestCase {
         let threeD = try XFix.load(try XFix.example("gears-3d"))
         XCTAssertEqual(threeD.captions[0], "The small gear has 15 teeth; the big gear has 30.")
         XCTAssertEqual(threeD.captions[1], "The big gear turns 1/2 of a turn, the other way.")
-        XCTAssertEqual(threeD.legend.text, "Solved 5")   // 2 motion, 2 captions, 1 check; the title shows no fact
+        XCTAssertEqual(threeD.legend.text, "Solved 5 (2 animation ratios)")   // 2 motion, 2 captions, 1 check; the title shows no fact
         XCTAssertEqual(threeD.claims.map(\.id), ["p", "w", "beat.1", "beat.2", "beat.2.check.1"])
         XCTAssertTrue(threeD.isBoardless)
 
@@ -25,7 +25,7 @@ final class ExplainerDocumentTests: ExplainerTestCase {
         XCTAssertEqual(mixed.state?.scene.item("t")?.list, ["gear", "teeth", "turns", "small", "15", "1", "big", "30", "-0.5"])
         XCTAssertEqual(mixed.captions[0], "Count the teeth: 15 and 30.")
         XCTAssertEqual(mixed.captions[1], "So the big gear turns 1/2 of a turn.")
-        XCTAssertEqual(mixed.legend.text, "Solved 6")    // 2 motion, 1 table, 2 captions, 1 check
+        XCTAssertEqual(mixed.legend.text, "Solved 6 (2 animation ratios)")    // 2 motion, 1 table, 2 captions, 1 check
         XCTAssertEqual(mixed.claims.map(\.id), ["p", "w", "item.t", "beat.1", "beat.2", "beat.2.check.1"])
 
         for name in ["planets-2d", "gears-3d", "gears-mixed"] {

@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+- Engine fixes from the failures recorded in prompt-to-3D round r2k (one hidden view per refusal, a thrust arrow inside
+  its own forearm, a hidden forearm "nearer" to a label, captions without their arrows, a weight arrow at a thigh, a
+  board table under the title band, and a legend line that read as verified facts).
+  - **Every view of a hidden arrow** (`MGSolidDocument.arrowViewScan`, `MGArrowViewScan`). The check reports test each
+    hidden arrow in every framed step or beat still, also those that do not list it, and add `views` (`hidden`,
+    `clear`, `every`, `hiddenCameras`, `tested`) to its issue. `fix` and `repair` name every other view that hides it
+    and say "hidden in every `front` view" or "hidden in every beat still". Before, each refusal named one beat and a
+    model moved the arrow from beat to beat.
+  - **Arrow drop, cause `part`.** A force or flow arrow that is fully hidden in a still whose camera cannot see its
+    tail's part (that part alone; the unit shows elsewhere) is dropped (`annotation.arrow.dropped.<id>`), not refused
+    with `noSuggest` code `tail`, which left no way out. An arrow whose tail's part shows is still refused.
+    `arrowDrops` entries add `cause` (`unit` or `part`).
+  - **The off-part test skips hidden parts.** `annotation.anchor.off.<id>` no longer finds a part nearer in a view
+    that hides it, so a part hidden in every view that shows the label never counts.
+  - **`annotation.arrow.orphan.<id>`, `annotation.arrow.caption.<id>`** (new warnings, never refused): every still
+    that lists an arrow drops it, or a step's or beat's text names the force of an arrow its still drops (gravity:
+    "weight", "gravity"; force and flow words of the arrow's text). The reports add `arrowDropNotes` with repairs.
+  - **Centre-of-mass anchor** `{"point": "centreOfMass"}` (optional world `"offset"`), at force arrows' ends: the
+    volume-weighted centre of every part's mesh (uniform density), posed at each view. **`annotation.arrow.weight.<id>`**
+    (new warning): a gravity arrow placed off the body whose line of action misses that centre by more than 5 % of
+    the model's diagonal; the report's `weightPlacements` suggests the centre-of-mass anchors with the authored vector.
+    `anchor.point` and `anchor.form` name the new form.
+  - **`board.clip.<id>`** (new explainer warning): a beat's board pane at 1280 × 800 cuts a board item (it leaves the
+    pane less 8 px). The report's `boardClips` gives the overflow and the exact move of the item's `at`.
+  - **Legend wording.** The Solved group says how many of its claims are animation ratios (Solved motion claims):
+    "Solved 18 (15 animation ratios)", "Solved 3 (animation ratios)" when all are (`MGLegendText.solved`). One string
+    for the stills, `story.mp4`, the SwiftUI views and the reports; the counts do not change.
+
 - Docs and tests: the determinism promise now says exactly what is byte-identical and what is not
   ([SOLID-3D.md, Determinism](docs/SOLID-3D.md#determinism)).
   - **Byte-identical in every run:** parse and refusals, solved facts, check reports, cameras, framing, annotation

@@ -53,7 +53,8 @@ public struct MGExplainerClaim: Equatable, Sendable {
 }
 
 /// The one legend of an explainer (owner D4: always shown). Groups in this order, each only when non-zero:
-/// `Solved N · Schematic N · Given N · Not checked N`. `Schematic` counts Built claims of every kind except `data`;
+/// `Solved N · Schematic N · Given N · Not checked N`. The Solved group says how many of its claims are animation ratios
+/// (Solved `motion` claims; `MGLegendText.solved`): "Solved 18 (15 animation ratios)". `Schematic` counts Built claims of every kind except `data`;
 /// `Given` counts Built `data` claims, so a 3D-only explainer's legend text equals its assembly's.
 public struct MGExplainerLegend: Equatable, Sendable {
     public var claims: [MGExplainerClaim]
@@ -70,7 +71,7 @@ public struct MGExplainerLegend: Equatable, Sendable {
         given = claims.filter { $0.tier == .built && $0.kind == .data }.count
         described = claims.filter { $0.tier == .described }.count
         var groups: [String] = []
-        if solved > 0 { groups.append("Solved \(solved)") }
+        if solved > 0 { groups.append(MGLegendText.solved(solved, ratios: claims.filter { $0.kind == .motion && $0.tier == .solved }.count)) }
         if schematic > 0 { groups.append("Schematic \(schematic)") }
         if given > 0 { groups.append("Given \(given)") }
         if described > 0 { groups.append("Not checked \(described)") }

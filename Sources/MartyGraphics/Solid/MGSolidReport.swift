@@ -189,6 +189,7 @@ extension MGSolidReport {
         var anchors = MGAnnotationAnchorReport()
         var arrows = MGAnnotationArrowReport()
         var drops: [(step: Int?, beat: Int?, drop: MGArrowDrop)] = []
+        var dropNotes: [MGArrowDropNote] = []
         var subjects: [MGSubjectSmall] = [], small: [MGSmallUnit] = [], stillPlacements: MGJSON?
         anchors.issues = doc.offPartAnchors
         if anchorViews {
@@ -201,6 +202,10 @@ extension MGSolidReport {
                 : stills.map(\.still).filter { $0.step != nil && (doc.showsCheckedAnchor($0.view) || doc.showsArrow($0.view)) }
             // The arrows each still drops (the framing's arrow drop rule): warnings, never refused.
             drops = checked.flatMap { v in v.view.arrowDrops.map { (v.step, v.beat, $0) } }
+            // A dropped arrow that no still draws, or whose force the step's caption names: warnings, never refused.
+            dropNotes = doc.arrowDropNotes(stills.map(\.still).filter { $0.step != nil }, beats: false) { k in
+                doc.steps.indices.contains(k) ? doc.steps[k].say : nil
+            }
             let framed = checked.filter { doc.showsCheckedAnchor($0.view) }
             for v in framed { anchors.append(doc.anchorIssues(v)) }
             // One search budget for the report, retries included.
@@ -234,6 +239,8 @@ extension MGSolidReport {
                 guard case .success(let d) = MGSolidParser.document(json: src, library: doc.library) else { return nil }
                 return arrowRecheck(d, budget: MGSuggestionBudget(0))
             }
+            // Every step still, also those that do not list it, for each hidden arrow (one refusal names them all).
+            doc.scanHiddenArrows(&arrows.issues, views: stills.map(\.still).filter { $0.step != nil }, beats: false)
         }
         let views = anchors.issues.filter { $0.cause != .offPart }
         if reason == nil, profile == .strict, let first = views.first { reason = first.reason; part = first.id }
@@ -251,6 +258,7 @@ extension MGSolidReport {
             w += views.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
             w += arrows.issues.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
             w += drops.map { .object(["reason": .string($0.drop.reason), "part": .string($0.drop.id)]) }
+            w += dropNotes.map { .object(["reason": .string($0.reason), "part": .string($0.id)]) }
             w += subjects.map { .object(["reason": .string($0.reason), "part": .string($0.groups[$0.small.first ?? 0].unit)]) }
             w += small.map { .object(["reason": .string($0.reason), "part": .string($0.unit)]) }
             o["warnings"] = .array(w)
@@ -267,6 +275,8 @@ extension MGSolidReport {
             o["arrowIssues"] = .array(arrows.issues.map(\.json))
             // Only when a still drops an arrow; other reports keep their exact keys.
             if !drops.isEmpty { o["arrowDrops"] = .array(drops.map { $0.drop.json(step: $0.step, beat: $0.beat) }) }
+            // Only when a dropped arrow leaves a caption or the document without it.
+            if !dropNotes.isEmpty { o["arrowDropNotes"] = .array(dropNotes.map(\.json)) }
         }
         let hit = reason.flatMap { anchorIssue($0, anchors.issues) }
         if let hit { o["anchor"] = hit.json }
@@ -475,7 +485,11 @@ extension MGSolidReport {
     /// `placements` (`MGSolidDocument.annotationPlacements`). Both are absent for a document without annotations.
     static func annotations(_ doc: MGSolidDocument) -> [String: MGJSON] {
         guard !doc.annotations.isEmpty else { return [:] }
-        return ["annotations": doc.annotationReport, "placements": doc.annotationPlacements]
+        var o: [String: MGJSON] = ["annotations": doc.annotationReport, "placements": doc.annotationPlacements]
+        // Only when a gravity arrow misses the centre of mass; other reports keep their exact keys.
+        let weight = doc.weightPlacements
+        if !weight.isEmpty { o["weightPlacements"] = .array(weight.map(\.json)) }
+        return o
     }
 
     /// Per-step `pose`, `hide` and `show` (docs/SOLID-3D.md, "Step pose" and "Step visibility"): `stepViews`, one object

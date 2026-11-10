@@ -58,17 +58,114 @@ public enum MGAnnotationArrowRules {
 }
 
 /// One force or flow arrow a framed still does not draw (docs/SOLID-3D.md, "Arrow drop"): the unit its tail rides on
-/// (a component instance and its parts) is hidden there from the still's camera.
+/// (a component instance and its parts) is hidden there from the still's camera, or the arrow itself and its tail's
+/// part are both hidden there.
 public struct MGArrowDrop: Equatable, Sendable {
+    public enum Cause: String, Equatable, Sendable {
+        /// The unit of the tail's part is hidden (at most `dropVisibleShare` of its samples seen).
+        case unit
+        /// The arrow is fully hidden (no sample visible) and its tail's part alone is hidden: no move that keeps the
+        /// tail on that part can show the arrow, so the still drops it instead of refusing it (r2k: an arm engine's
+        /// thrust arrow inside its own forearm).
+        case part
+    }
     public let id: String
-    /// The part the arrow's tail rides on, and the part outside that part's unit that hides most of the unit.
+    /// The part the arrow's tail rides on, and the part outside that part's unit that hides most of the unit (`unit`)
+    /// or of the tail's part (`part`).
     public let part: String, by: String
+    public var cause: Cause = .unit
+    public init(id: String, part: String, by: String, cause: Cause = .unit) {
+        self.id = id; self.part = part; self.by = by; self.cause = cause
+    }
     /// `annotation.arrow.dropped.<id>`.
     public var reason: String { "annotation.arrow.dropped.\(id)" }
-    /// `{"id", "reason", "part", "by", "step", "beat"}` (`step` and `beat` 1-based, absent values null).
+    /// `{"id", "reason", "cause", "part", "by", "step", "beat"}` (`step` and `beat` 1-based, absent values null).
     public func json(step: Int?, beat: Int?) -> MGJSON {
         func n(_ i: Int?) -> MGJSON { i.map { .number(Double($0 + 1)) } ?? .null }
-        return .object(["id": .string(id), "reason": .string(reason), "part": .string(part), "by": .string(by), "step": n(step), "beat": n(beat)])
+        return .object(["id": .string(id), "reason": .string(reason), "cause": .string(cause.rawValue), "part": .string(part), "by": .string(by),
+                        "step": n(step), "beat": n(beat)])
+    }
+}
+
+/// A dropped arrow that leaves its story without it (docs/SOLID-3D.md, "Dropped arrows that leave a caption alone"): no
+/// still draws it (`orphan`), or a step's or beat's text names the force of an arrow that its still drops (`caption`).
+/// Warnings only, in every profile.
+public struct MGArrowDropNote: Equatable, Sendable {
+    public enum Kind: String, Equatable, Sendable {
+        /// Every still that lists the arrow drops it (`annotation.arrow.orphan.<id>`).
+        case orphan
+        /// The text of a step or beat names the arrow's force, and its still drops the arrow (`annotation.arrow.caption.<id>`).
+        case caption
+    }
+    public let id: String
+    public let kind: Kind
+    /// The 0-based steps or beats concerned: every still that drops it (`orphan`), or the one whose text names it (`caption`).
+    public let views: [Int]
+    /// True when the views are explainer beats.
+    public let beats: Bool
+    /// The tail's part and the part that hides it in the first view.
+    public let part: String, by: String
+    /// `caption`: the word of the text that names the force.
+    public let word: String?
+
+    public var reason: String { kind == .orphan ? "annotation.arrow.orphan.\(id)" : "annotation.arrow.caption.\(id)" }
+
+    var noun: String { beats ? "beat" : "step" }
+
+    /// One line a tool can pass to a model (at most `MGAnnotationAnchorIssue.repairScalars` Unicode scalars).
+    public var repair: String {
+        let where_ = "\(noun)\(views.count > 1 ? "s" : "") \(MGArrowViewScan.list(views))"
+        let line: String
+        switch kind {
+        case .orphan:
+            line = "Arrow \(id) is dropped in every \(noun) that lists it (\(where_): `\(by)` hides `\(part)`), so no view draws it. "
+                + "List it in a \(noun) whose camera sees `\(part)`, ghost `\(by)` there, or remove the arrow and the words about it."
+        case .caption:
+            let w = word ?? id
+            line = "The text of \(where_) names \"\(w)\", but its still drops arrow \(id) (`\(by)` hides `\(part)`). "
+                + "Show \(id) in a \(noun) whose camera sees `\(part)`, ghost `\(by)` in \(where_), or say there that the arrow is shown elsewhere."
+        }
+        return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+    }
+
+    /// `{"id", "reason", "kind", "steps"|"beats": [n], "part", "by", "word", "repair"}` (1-based; `word` null for `orphan`).
+    public var json: MGJSON {
+        .object(["id": .string(id), "reason": .string(reason), "kind": .string(kind.rawValue),
+                 beats ? "beats" : "steps": .array(views.map { .number(Double($0 + 1)) }), "part": .string(part), "by": .string(by),
+                 "word": word.map(MGJSON.string) ?? .null, "repair": .string(repair)])
+    }
+
+    /// The words that name a force arrow's force (`cause` gravity: weight, gravity; and these words of its text).
+    public static let forceWords: Set<String> = ["weight", "gravity", "thrust", "lift", "drag", "push", "pull", "force", "torque",
+                                                 "friction", "tension", "reaction", "load"]
+    /// The words that name a flow arrow's flow, from its text.
+    public static let flowWords: Set<String> = ["air", "jet", "flow", "exhaust", "gas", "water", "stream", "fuel", "oil", "steam"]
+
+    /// Lower-case letter runs of `text`.
+    static func words(_ text: String) -> [String] {
+        text.lowercased().split { !$0.isLetter }.map(String.init)
+    }
+
+    /// The words that name `r`'s force or flow, in order without repeats: for a gravity force "weight" and "gravity",
+    /// then each word of its text (filled) that is in `forceWords` (a force) or `flowWords` (a flow), alone or with "s"
+    /// or "es".
+    static func names(_ r: MGSolidArrow) -> [String] {
+        var out: [String] = []
+        if r.meaning == .force, r.cause == "gravity" { out += ["weight", "gravity"] }
+        let vocab = r.meaning == .force ? forceWords : r.meaning == .flow ? flowWords : []
+        for w in words(r.text ?? "") {
+            // A plural in the text ("thrusts", "pushes") names its word.
+            let base = vocab.contains(w) ? w : [2, 1].map { String(w.dropLast($0)) }.first { w.count > $0.count && vocab.contains($0) && w.hasSuffix(w.count - $0.count == 2 ? "es" : "s") }
+            if let b = base, !out.contains(b) { out.append(b) }
+        }
+        return out
+    }
+
+    /// The first word of `text` that names one of `names` (a word equals it, or it plus "s" or "es"), as `names` gives it.
+    static func named(_ text: String, _ names: [String]) -> String? {
+        let ws = words(text)
+        for w in ws { if let n = names.first(where: { w == $0 || w == $0 + "s" || w == $0 + "es" }) { return n } }
+        return nil
     }
 }
 
@@ -115,6 +212,9 @@ public struct MGAnnotationArrowIssue: Equatable, Sendable {
     public let by: String?
     /// The move the check report suggests, or why there is none (set by the reports for `hidden`).
     public var suggestion: MGAnnotationArrowSuggestion? = nil
+    /// Every framed still of the report tested for this arrow, also the stills that do not list it (set by the reports
+    /// for `hidden`; `MGSolidDocument.arrowViewScan`), so one refusal names every view where it is hidden.
+    public var views: MGArrowViewScan? = nil
 
     /// `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>`.
     public var reason: String { cause == .untested ? "annotation.arrow.untested.\(id)" : "annotation.arrow.hidden.\(id)" }
@@ -132,13 +232,14 @@ public struct MGAnnotationArrowIssue: Equatable, Sendable {
         }
         let what = "\(percent) % of \(id) is visible in \(viewName)" + (visibility.headVisible < min(visibility.head, MGAnnotationArrowRules.minHeadSamples) ? ", and its head is hidden" : "")
         let why = by.map { " (`\($0)` hides it)" } ?? (visibility.offScreen > 0 ? " (it is outside the view)" : "")
+        let scan = views.map { " " + $0.sentence(id: id, except: step ?? beat) } ?? ""
         if let s = suggestion, let a = s.anchorJSON {
-            return "\(what)\(why). Use \(MGAnnotationAnchorIssue.compact(a)): it moves \(s.moveText) and shows \(id) in every view that shows it."
+            return "\(what)\(why).\(scan) Use \(MGAnnotationAnchorIssue.compact(a)): it moves \(s.moveText) and shows \(id) in every view that shows it."
         }
         if let s = suggestion {
-            return "\(what)\(why). No move of \(id) shows it in every view (\(s.causeText ?? "")): " + MGAnnotationAnchorIssue.orList(s.alternatives(id: id))
+            return "\(what)\(why).\(scan) No move of \(id) shows it in every view (\(s.causeText ?? "")): " + MGAnnotationAnchorIssue.orList(s.alternatives(id: id))
         }
-        return "\(what)\(why): move the arrow out of the part in the way, ghost that part in this view, or change the camera."
+        return "\(what)\(why).\(scan) Move the arrow out of the part in the way, ghost that part in this view, or change the camera."
     }
 
     /// One line a tool can pass straight to a model (at most `MGAnnotationAnchorIssue.repairScalars` Unicode scalars).
@@ -152,28 +253,96 @@ public struct MGAnnotationArrowIssue: Equatable, Sendable {
             if visibility.headVisible < min(visibility.head, MGAnnotationArrowRules.minHeadSamples) { p += "; its head is hidden" }
             problem = p
         }
+        // Every other view where the arrow is hidden, in the same line (r2k: four tries moved it from beat to beat).
+        let scan = cause == .untested ? "" : views.map { " " + $0.sentence(id: id, except: step ?? beat) } ?? ""
         let action: String
         if cause == .untested { action = "Hide or ghost parts this view does not need, or show fewer arrows in it." }
         else if let s = suggestion, let a = s.anchorJSON { action = "Use " + MGAnnotationAnchorIssue.compact(a) + "." }
         else if let s = suggestion { action = "No clear move: \(s.causeText ?? ""). " + MGAnnotationAnchorIssue.orList(s.alternatives(id: id)) }
         else { action = "Move the arrow out of \(by ?? "the part in the way"), ghost that part, or change the camera." }
-        return MGAnnotationAnchorIssue.bounded("\(who) \(problem). \(action)", MGAnnotationAnchorIssue.repairScalars)
+        return MGAnnotationAnchorIssue.bounded("\(who) \(problem).\(scan) \(action)", MGAnnotationAnchorIssue.repairScalars)
     }
 
     /// `{"id", "meaning", "reason", "cause", "step", "beat", "by", "samples", "visible", "share", "head",
-    /// "headVisible", "offScreen", "fix", "suggest", "noSuggest", "repair"}`; `step` and `beat` 1-based, absent values
-    /// null; `share` rounded down to 0.001.
+    /// "headVisible", "offScreen", "fix", "suggest", "noSuggest", "repair", "views"}`; `step` and `beat` 1-based, absent
+    /// values null; `share` rounded down to 0.001; `views` (`MGArrowViewScan.json`) only on a hidden issue.
     public var json: MGJSON {
         func n(_ i: Int?) -> MGJSON { i.map { .number(Double($0 + 1)) } ?? .null }
         let v = visibility
         let s = cause == .untested ? nil : suggestion
-        return .object(["id": .string(id), "meaning": .string(meaning), "reason": .string(reason), "cause": .string(cause.rawValue),
+        var o: [String: MGJSON] = ["id": .string(id), "meaning": .string(meaning), "reason": .string(reason), "cause": .string(cause.rawValue),
                         "step": n(step), "beat": n(beat), "by": by.map(MGJSON.string) ?? .null,
                         "samples": .number(Double(v.samples)), "visible": .number(Double(v.visible)),
                         "share": .number((v.share * 1000).rounded(.down) / 1000), "head": .number(Double(v.head)),
                         "headVisible": .number(Double(v.headVisible)), "offScreen": .number(Double(v.offScreen)),
                         "fix": .string(fix), "suggest": s?.anchorJSON ?? .null,
-                        "noSuggest": s.map { $0.anchorJSON == nil ? $0.noneJSON(id: id) : .null } ?? .null, "repair": .string(repair)])
+                        "noSuggest": s.map { $0.anchorJSON == nil ? $0.noneJSON(id: id) : .null } ?? .null, "repair": .string(repair)]
+        if cause == .hidden, let views { o["views"] = views.json }
+        return .object(o)
+    }
+}
+
+/// Where a hidden arrow is hidden (docs/SOLID-3D.md, "Every view of a hidden arrow"): the arrow tested in every framed
+/// still of the report, also in the stills that do not list it, at each still's camera and pose as it is framed now.
+public struct MGArrowViewScan: Equatable, Sendable {
+    /// True when the views are explainer beats, false for assembly steps.
+    public let beats: Bool
+    /// One tested still: its 0-based step or beat, its camera preset, and whether the arrow fails the rule there.
+    public struct View: Equatable, Sendable {
+        public let index: Int
+        public let camera: String
+        public let hidden: Bool
+        /// True when the still lists the arrow (`annotate`).
+        public let listed: Bool
+    }
+    /// The tested stills, in step or beat order. A still that does not draw the arrow (a motion arrow on a still
+    /// anchor), that drops it (`arrowDrops`, for the stills that list it), or whose budget ran out is not in the list.
+    public internal(set) var tested: [View] = []
+
+    public var hidden: [Int] { tested.filter(\.hidden).map(\.index) }
+    public var clear: [Int] { tested.filter { !$0.hidden }.map(\.index) }
+    /// True when the arrow is hidden in every tested still (at least one).
+    public var every: Bool { !tested.isEmpty && tested.allSatisfy(\.hidden) }
+    /// The camera presets (sorted) whose every tested still hides the arrow, when some other preset shows it.
+    public var hiddenCameras: [String] {
+        let names = Set(tested.map(\.camera)).sorted()
+        return names.filter { c in tested.filter { $0.camera == c }.allSatisfy(\.hidden) }
+    }
+
+    var noun: String { beats ? "beat" : "step" }
+
+    /// "1, 2 and 4".
+    static func list(_ xs: [Int]) -> String {
+        let s = xs.map { String($0 + 1) }
+        guard s.count > 1 else { return s.first ?? "" }
+        return s.dropLast().joined(separator: ", ") + " and " + s.last!
+    }
+
+    /// One sentence for the repair line: every other still that hides the arrow, and the summary ("hidden in every
+    /// still" or "in every front and back view"). `except`: the still the issue names.
+    public func sentence(id: String, except: Int?) -> String {
+        let others = hidden.filter { $0 != except }
+        if every {
+            return tested.count > 1 ? "It is hidden in every \(noun) still (\(noun)s \(MGArrowViewScan.list(tested.map(\.index)))): no camera of this document shows it there."
+                : "No other \(noun) still shows it either."
+        }
+        var out = others.isEmpty ? "No other \(noun) still hides it" : "It is also hidden in \(noun)\(others.count > 1 ? "s" : "") \(MGArrowViewScan.list(others))"
+        let cams = hiddenCameras
+        if !cams.isEmpty {
+            out += "; hidden in every \(cams.map { "`\($0)`" }.joined(separator: " and ")) view"
+        }
+        out += "; shown in \(noun)\(clear.count > 1 ? "s" : "") \(MGArrowViewScan.list(clear))."
+        return out
+    }
+
+    /// `{"hidden": [n], "clear": [n], "every": bool, "hiddenCameras": [preset], "tested": [{"step"|"beat": n,
+    /// "camera", "hidden", "listed"}]}` (1-based).
+    public var json: MGJSON {
+        func ns(_ xs: [Int]) -> MGJSON { .array(xs.map { .number(Double($0 + 1)) }) }
+        return .object(["hidden": ns(hidden), "clear": ns(clear), "every": .bool(every),
+                        "hiddenCameras": .array(hiddenCameras.map(MGJSON.string)),
+                        "tested": .array(tested.map { t in .object([noun: .number(Double(t.index + 1)), "camera": .string(t.camera),
+                                                                    "hidden": .bool(t.hidden), "listed": .bool(t.listed)]) })])
     }
 }
 
@@ -222,6 +391,8 @@ public struct MGAnnotationArrowSuggestion: Equatable, Sendable {
         case .part(let id): return .string(id)
         case .centre(let id): return .object(["part": .string(id), "point": .string("centre")])
         case .offset(let id, let o): return .object(["part": .string(id), "offset": v(o)])
+        case .centreOfMass(let o):
+            return o == .zero ? .object(["point": .string("centreOfMass")]) : .object(["point": .string("centreOfMass"), "offset": v(o)])
         }
     }
 
@@ -442,59 +613,89 @@ extension MGSolidDocument {
     /// A sample is seen when no blocking part crosses its line of sight before it, or when the nearest one that does
     /// belongs to the unit: the camera sees the unit there (a sample inside a casing is seen as the casing). When at
     /// most `dropVisibleShare` of the unit's on-screen samples are seen, the part the arrow acts on is hidden in this
-    /// view, so the still does not draw the arrow: it is dropped (`MGArrowDrop`, warning
+    /// view, so the still does not draw the arrow: it is dropped (`MGArrowDrop`, cause `unit`, warning
     /// `annotation.arrow.dropped.<id>`; `by` is the part outside the unit that hides the most samples, ties in
-    /// assembly order), not moved and not refused. Otherwise the arrow visibility rule tests it as before. A unit with no on-screen sample
-    /// keeps its arrows. At most `MGAnnotationArrowRules.dropTests` tests per view; a unit whose test runs over keeps
-    /// its arrows, and so does every later one. Deterministic.
+    /// assembly order), not moved and not refused. A unit with no on-screen sample keeps its arrows.
+    ///
+    /// Second test, for an arrow the unit test keeps: its drawn samples (`MGArrowSamples`, the arrow visibility rule's
+    /// samples and test) are tested; when none is visible and at least one is hidden by a part (fully hidden), the
+    /// tail's part alone is sampled as the unit is (at most `dropSamples` centroids of its drawn mesh, seen as above).
+    /// When at most `dropVisibleShare` of its on-screen samples are seen, the arrow is dropped with cause `part` (`by`:
+    /// the part outside the unit that hides the most of the tail's part). No move that keeps the tail on its part
+    /// (`MGAnnotationArrowRules.keepsTail`) can show such an arrow, so it is dropped, not refused. An arrow whose
+    /// tail's part is visible keeps the arrow rule (and its refusal).
+    ///
+    /// At most `MGAnnotationArrowRules.dropTests` tests per view; an arrow whose test runs over keeps its arrow, and so
+    /// does every later one. Deterministic.
     func arrowDrops(_ v: MGAnnotationAnchorView) -> [MGArrowDrop] {
         let a = annotations
         let ids = (checkedAnnotations(v.view, params: v.params) ?? []).filter { id in a.arrow(id).map { $0.meaning == .force || $0.meaning == .flow } ?? false }
         guard !ids.isEmpty else { return [] }
         var rule = MGArrowViewRule(self, v)
-        let pose = rule.base.pose
         var budget = MGAnnotationArrowRules.dropTests, over = false
         var seen: [String: String?] = [:]   // unit → the part that hides it (nil: not hidden)
+        var partSeen: [String: String?] = [:]   // tail part → the part that hides it (nil: not hidden)
         var out: [MGArrowDrop] = []
         for id in ids {
             guard !over, let r = a.arrow(id), let tail = arrowTail(r) else { continue }
-            let members = unitParts(of: tail.part)
             let unit = String(tail.part.prefix { $0 != "." })
             if seen[unit] == nil {
-                let mine = Set(members.map(\.id))
-                let drawn = members.compactMap { p -> (mesh: MGMesh, t: MGTransform)? in
-                    let pv = v.view.part(p.id)
-                    return pv.hidden ? nil : (pv.cut?.mesh ?? p.mesh, pose.world[p.id] ?? .identity)
-                }
-                let total = drawn.reduce(0) { $0 + $1.mesh.triangleCount }
-                let k = max(1, (total + MGAnnotationArrowRules.dropSamples - 1) / MGAnnotationArrowRules.dropSamples)
-                var vis = MGArrowVisibility()
-                var index = 0
-                samples: for d in drawn {
-                    let pos = d.mesh.positions
-                    for i in 0..<d.mesh.triangleCount {
-                        defer { index += 1 }
-                        guard index % k == 0 else { continue }
-                        let (i0, i1, i2) = d.mesh.triangle(i)
-                        guard i0 < pos.count, i1 < pos.count, i2 < pos.count else { continue }
-                        let x = d.t.apply((pos[i0] + pos[i1] + pos[i2]) * (1.0 / 3))
-                        switch rule.sample(x, parts: [], budget: &budget) {
-                        case .over: over = true; break samples
-                        case .visible: vis.visible += 1
-                        case .offScreen: vis.offScreen += 1
-                        case .hidden(let b): if mine.contains(b) { vis.visible += 1 } else { vis.hiddenBy[b, default: 0] += 1 }
-                        }
-                        vis.samples += 1
-                    }
-                }
-                guard !over else { continue }
-                let onScreen = vis.samples - vis.offScreen
-                let hidden = onScreen > 0 && Double(vis.visible) <= MGAnnotationArrowRules.dropVisibleShare * Double(onScreen)
-                seen[unit] = .some(hidden ? rule.mainBlocker(vis) : nil)
+                let members = unitParts(of: tail.part)
+                guard let h = hiddenBlocker(of: members, unit: Set(members.map(\.id)), rule: &rule, budget: &budget) else { over = true; continue }
+                seen[unit] = .some(h)
             }
-            if case .some(.some(let by)) = seen[unit] { out.append(MGArrowDrop(id: id, part: tail.part, by: by)) }
+            if case .some(.some(let by)) = seen[unit] { out.append(MGArrowDrop(id: id, part: tail.part, by: by)); continue }
+            // The arrow itself, fully hidden, on a hidden tail part: dropped (cause `part`).
+            let prims = MGSolidAnnotations.primitives(self, id, params: v.params, sense: v.view.motionSense, step: v.view.step)
+            guard let samples = MGArrowSamples(prims, turn: r.style == .turn) else { continue }
+            let vis = rule.visibility(samples, parts: arrowParts(r), budget: &budget)
+            if vis.over { over = true; continue }
+            guard vis.visible == 0, !vis.hiddenBy.isEmpty else { continue }
+            if partSeen[tail.part] == nil {
+                guard let p = assembly.part(tail.part) else { continue }
+                guard let h = hiddenBlocker(of: [p], unit: Set(unitParts(of: tail.part).map(\.id)), rule: &rule, budget: &budget) else { over = true; continue }
+                partSeen[tail.part] = .some(h)
+            }
+            if case .some(.some(let by)) = partSeen[tail.part] { out.append(MGArrowDrop(id: id, part: tail.part, by: by, cause: .part)) }
         }
         return out
+    }
+
+    /// The drop rule's sample test of `parts` (their drawn meshes at the view's pose; `dropSamples` centroids): the part
+    /// outside `unit` that hides the most samples when at most `dropVisibleShare` of the on-screen samples are seen
+    /// (`.some(blocker)`), `.some(nil)` when they are seen (or none is on screen), nil when the budget ran out. A sample
+    /// is seen when no blocking part hides it or the nearest one that does is in `unit`.
+    private func hiddenBlocker(of parts: [MGPart], unit: Set<String>, rule: inout MGArrowViewRule, budget: inout Int) -> String?? {
+        let v = rule.base.v
+        let pose = rule.base.pose
+        let drawn = parts.compactMap { p -> (mesh: MGMesh, t: MGTransform)? in
+            let pv = v.view.part(p.id)
+            return pv.hidden ? nil : (pv.cut?.mesh ?? p.mesh, pose.world[p.id] ?? .identity)
+        }
+        let total = drawn.reduce(0) { $0 + $1.mesh.triangleCount }
+        let k = max(1, (total + MGAnnotationArrowRules.dropSamples - 1) / MGAnnotationArrowRules.dropSamples)
+        var vis = MGArrowVisibility()
+        var index = 0
+        for d in drawn {
+            let pos = d.mesh.positions
+            for i in 0..<d.mesh.triangleCount {
+                defer { index += 1 }
+                guard index % k == 0 else { continue }
+                let (i0, i1, i2) = d.mesh.triangle(i)
+                guard i0 < pos.count, i1 < pos.count, i2 < pos.count else { continue }
+                let x = d.t.apply((pos[i0] + pos[i1] + pos[i2]) * (1.0 / 3))
+                switch rule.sample(x, parts: [], budget: &budget) {
+                case .over: return nil
+                case .visible: vis.visible += 1
+                case .offScreen: vis.offScreen += 1
+                case .hidden(let b): if unit.contains(b) { vis.visible += 1 } else { vis.hiddenBy[b, default: 0] += 1 }
+                }
+                vis.samples += 1
+            }
+        }
+        let onScreen = vis.samples - vis.offScreen
+        let hidden = onScreen > 0 && Double(vis.visible) <= MGAnnotationArrowRules.dropVisibleShare * Double(onScreen)
+        return .some(hidden ? rule.mainBlocker(vis) : nil)
     }
 
     /// The parts an arrow is anchored on (`from`, `to`, `on`), without repeats.
@@ -547,6 +748,75 @@ extension MGSolidDocument {
     /// The arrow rule of every step still as `marty-solid render` frames it at `width` × `height`, in step order.
     public func stepArrowIssues(width: Int = MGAnnotationAnchorRules.width, height: Int = MGAnnotationAnchorRules.height) -> [MGAnnotationArrowIssue] {
         stepCheckViews(width: width, height: height).filter { showsArrow($0.view) }.flatMap { arrowIssues($0) }
+    }
+
+    /// Every view of a hidden arrow (docs/SOLID-3D.md, "Every view of a hidden arrow"): each arrow `ids` names is tested
+    /// with the arrow rule (`MGArrowViewRule.visibility`, the samples `arrowIssues` tests) in every still of `views` (the
+    /// report's framed stills, in order, also those that do not list the arrow), at each still's camera, pose, motion
+    /// sense and step as it is framed now (a still that does not list the arrow is framed without it; listing it can
+    /// move that still's camera). A still that draws nothing for the arrow, a still that lists it and drops it
+    /// (`MGSolidView.arrowDrops`), and a still whose budget (`MGAnnotationArrowRules.tests` per still, for all the arrows
+    /// together) ran out are left out. `beats`: the views are explainer beats. Deterministic.
+    func arrowViewScan(_ ids: [String], views: [MGAnnotationAnchorView], beats: Bool) -> [String: MGArrowViewScan] {
+        var out: [String: MGArrowViewScan] = [:]
+        let a = annotations
+        let wanted = ids.reduce(into: [String]()) { if a.arrow($1) != nil, !$0.contains($1) { $0.append($1) } }
+        guard !wanted.isEmpty else { return [:] }
+        for id in wanted { out[id] = MGArrowViewScan(beats: beats) }
+        for v in views {
+            guard let index = beats ? v.beat : v.step else { continue }
+            let camera = v.step.flatMap { steps.indices.contains($0) ? steps[$0].camera : nil } ?? "hero"
+            let listed = Set(v.view.annotations)
+            let dropped = Set(v.view.arrowDrops.map(\.id))
+            var rule = MGArrowViewRule(self, v)
+            var budget = MGAnnotationArrowRules.tests
+            for id in wanted {
+                guard let r = a.arrow(id), !dropped.contains(id) else { continue }
+                let prims = MGSolidAnnotations.primitives(self, id, params: v.params, sense: v.view.motionSense, step: v.view.step)
+                guard let s = MGArrowSamples(prims, turn: r.style == .turn) else { continue }
+                let vis = rule.visibility(s, parts: arrowParts(r), budget: &budget)
+                if vis.over { break }
+                out[id]?.tested.append(.init(index: index, camera: camera, hidden: !vis.passes, listed: listed.contains(id)))
+            }
+        }
+        return out
+    }
+
+    /// The drop notes of a report (`MGArrowDropNote`) from its framed stills `views` (step or beat order, each with its
+    /// `MGSolidView.arrowDrops`). `orphan`: every still that lists the arrow drops it (in an assembly, also the plain
+    /// view, `hero.png`, when it lists it: `undrawnArrows`), one note per arrow, in authored order. `caption`: a still
+    /// drops the arrow and the text of its step or beat (`say`) names the arrow's force (`MGArrowDropNote.names`): one
+    /// note per still and arrow, in view order. Deterministic.
+    func arrowDropNotes(_ views: [MGAnnotationAnchorView], beats: Bool, say: (Int) -> String?) -> [MGArrowDropNote] {
+        var out: [MGArrowDropNote] = []
+        var listed: [String: [Int]] = [:], dropped: [String: [(index: Int, drop: MGArrowDrop)]] = [:]
+        for v in views {
+            guard let k = beats ? v.beat : v.step else { continue }
+            for id in v.view.annotations where annotations.arrow(id) != nil { listed[id, default: []].append(k) }
+            for d in v.view.arrowDrops { dropped[d.id, default: []].append((k, d)) }
+        }
+        let plain = beats ? [] : visibleAnnotations(step: nil)
+        for r in annotations.arrows {
+            guard let ds = dropped[r.id], let first = ds.first, let ls = listed[r.id], ds.count == ls.count else { continue }
+            if plain.contains(r.id), !undrawnArrows.contains(r.id) { continue }
+            out.append(MGArrowDropNote(id: r.id, kind: .orphan, views: ds.map(\.index), beats: beats, part: first.drop.part, by: first.drop.by, word: nil))
+        }
+        for v in views {
+            guard let k = beats ? v.beat : v.step, let text = say(k) else { continue }
+            for d in v.view.arrowDrops {
+                guard let r = annotations.arrow(d.id), let w = MGArrowDropNote.named(text, MGArrowDropNote.names(r)) else { continue }
+                out.append(MGArrowDropNote(id: d.id, kind: .caption, views: [k], beats: beats, part: d.part, by: d.by, word: w))
+            }
+        }
+        return out
+    }
+
+    /// Sets `views` on every hidden issue of `issues` (`arrowViewScan` over `views`).
+    func scanHiddenArrows(_ issues: inout [MGAnnotationArrowIssue], views: [MGAnnotationAnchorView], beats: Bool) {
+        let ids = issues.filter { $0.cause == .hidden }.map(\.id)
+        guard !ids.isEmpty else { return }
+        let scan = arrowViewScan(ids, views: views, beats: beats)
+        for k in issues.indices where issues[k].cause == .hidden { issues[k].views = scan[issues[k].id] }
     }
 }
 
@@ -625,6 +895,8 @@ extension MGSolidDocument {
             else { local = rounded(pt.local + o) }
             guard [local.x, local.y, local.z].allSatisfy({ $0.isFinite && MGSolidLimits.coordinate.contains($0) }) else { return nil }
             if let part = pt.part { return MGAnnotationPoint(anchor: .offset(part: part, local), local: local) }
+            // A centre-of-mass end keeps its anchor and moves its world offset.
+            if pt.isCentreOfMass { return MGAnnotationPoint(anchor: .centreOfMass(local), local: local, mass: pt.mass) }
             return MGAnnotationPoint(anchor: .world(local), local: local)
         }
         let parts = [from.part, to.part].compactMap { $0 }.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }

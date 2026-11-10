@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "b58c47335b04ed646440d15406d005ca939ddc9a6aeae519f1c84b4a483ddcb0"
+      "sha256": "81ecdef35aacd7f730f41bc1fe54877379b240b35735e98bdc4ddea366d96982"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -31,7 +31,7 @@
     },
     {
       "path": "Examples/Explainers/README.md",
-      "sha256": "5e061349e8ccd2b4a8dfd925a4084ed935bebc4201ac607a19b7dd2c3c142364"
+      "sha256": "8c3c57eb92163e915022d57dac0165203972eff7a0c157e99402b8e1db9af15d"
     },
     {
       "path": "Examples/Explainers/gears-3d.explainer.json",
@@ -171,7 +171,7 @@
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "4da8875273cff49a60da430092efb508c10ec1cd6d77a5823601b43448203cbd"
+      "sha256": "c094a3e3b943564d52f8375bbe576812023cb181ad1b9e0367e349eb45249747"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json",
@@ -275,11 +275,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-2-accepted.check.json",
-      "sha256": "c421132248c20f8a15a3c7c7baff5311fb3d8dac0882c1552f15ae5721d9f092"
+      "sha256": "a6619b6a0f25e160ed5bf284e17a403d06b8dfe7810b8e34e3dea5d8731c4d1f"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-2-accepted.strict.json",
-      "sha256": "f2b0f01c61c078d7319513d33f6ddc813b2ee35a98e653dd732bc08de8672222"
+      "sha256": "15d24d1752b6e39da7b01b2a788fc5a3dbe03c556189fc2e3c5d45de129b004c"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-provenance.check.json",
@@ -291,11 +291,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-robot-joint-gearbox.check.json",
-      "sha256": "a543f900e43e0230888bed63ac53a7a2fad4cbaecde206dbde1d95de259db0c4"
+      "sha256": "9ef50e891ca87843cab4c9301a328f6a334d11696000547c5bdb31d760ff906a"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-robot-joint-gearbox.strict.json",
-      "sha256": "0099e6d60a15510cf4f5f884b8720da800fbecd55f1b8b6d3ca6f8f3883117cd"
+      "sha256": "1e4c39a6a48b947daab1a6b2e3424b95278498d46b9917144d5b762396a41792"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-ai-check-strict.check.json",
@@ -307,11 +307,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-ai-lesson.check.json",
-      "sha256": "0365f163bf2aa55e9ce998aac07a09ed4ad4e8b7327c7de7006cd144257788a9"
+      "sha256": "88b15c8b1f07e5ace2db412ba99f681c33bc1f05abb8b946ec17c6f7cfcebdb3"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-ai-lesson.strict.json",
-      "sha256": "e314fa09b0c0ea35c70bb98e1644d94efab9f31818fa9497d058b63ac8ef5b7b"
+      "sha256": "6ba42c690fff1bbd41deb53b4856bdc70682dac0fdf746b49dce28e1d696e190"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-ai-provenance.check.json",
@@ -331,11 +331,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-jet-suit.check.json",
-      "sha256": "8bc7ae1c8535cd41761e3f824ac4fb0273c89741b98008fe96e29707c22424dd"
+      "sha256": "7d68582092fb6e4c50258a995953566a681b78ad4992424eca672fea0d20bc84"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-jet-suit.strict.json",
-      "sha256": "90d28d0d1b7948df518c1e49c7bdb18dad54a50126f17a6a5a96c96d434235fc"
+      "sha256": "20b75382916d8c2b4d70c888b5e5fd62376c10a91728f6c4e9dcea374d56f7a9"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.check.json",
@@ -395,83 +395,67 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-annotated-winch.check.json",
-      "sha256": "4625bda3b2da2c8c99e3bb180051058125753c53627c45469e3979983587462b"
+      "sha256": "df10fe7c4d9a64ee5cff0a8bb1d0a5683bbc7dba3fa17109791fd825db630923"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-annotated-winch.strict.json",
-      "sha256": "e3b5ef964ea1a665f0092e520d4d5166a9b4102654fb7e199a7e6017e6a890b6"
+      "sha256": "2ff745bee15ec1d3577574274235c8af4d4cfac634b94f7af9023626136eec6f"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-horizontal-reduction.check.json",
-      "sha256": "5b36aa5880b673743c255f6f2355a2ed62a3e4c726acbe9247aa4ac87d5bfb24"
+      "sha256": "f3d7a25a4b886f6c2c84c15f6754de4a88fe42b50e030f8aae3d68066c2053e8"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-horizontal-reduction.strict.json",
-      "sha256": "645678dcf0b59f33fb582c9de4275b172b3968b995ee3c74c6d8ddcacd50abe7"
+      "sha256": "43fc64e6e503a9d592f8de35bc637efad5812e07ee426b145cce23eecb34617c"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-idler-gearbox.check.json",
-      "sha256": "8e41c5186d7a9f6a10d22664efcdacfbc8763dc69b936cf6061e9c06aa8785cd"
+      "sha256": "617c3412b8ad911304828b55b341c44ad9e5ccc6b0c028fd0d4fd1b09010ece3"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-idler-gearbox.strict.json",
-      "sha256": "000a8d546a3f765bb5ed226b2c58a18247d07f972ece71504266b199f9d18557"
+      "sha256": "138e9d42027b11865a710db83e1f36992843fe297fc8da349dd8afa0fdefd1ab"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-planetary-components.check.json",
-      "sha256": "2d44f6536a6fdf383611b34827825b91b0842593d5a6b5d63628f1e7f85620e9"
+      "sha256": "a43982e9f338f7539aa7a4c89f95196c2f8b7f86b376b042d39638ded41219b9"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-planetary-components.strict.json",
-      "sha256": "3e88d4597fd5497e5bb5027038dae4437f8b0a0720d42a19f7e631dbcb9ee690"
+      "sha256": "403e1b41f96172aabfd9f2dcd6ab2cb0876e0b83bdf0f10a781e4d7e18aca653"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-planetary.check.json",
-      "sha256": "eb433986b48d924087cc1c912f54b4a571885f76e7ceeb6e2bc36aa20ef7b636"
+      "sha256": "078b7e93de653c59694ad5c0b10712eb1e32637e091418a78f5b0ec8f5285a26"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-planetary.strict.json",
-      "sha256": "96a20a439d72c700ffb4efa7aeba9e120edb57e74c871b02ff595f7319e66fff"
+      "sha256": "872a1b7564899a2cb9770991c5aaa0e053a7f08565aaed036c38de1f704ada63"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-propeller.check.json",
-      "sha256": "4bde7c198da67005c489e388b931d1ff48ae788fd62ad18042ad72488a006a78"
+      "sha256": "88557e6f182fc870997e0e32c574c713aaaa150588f3badebd56da0fbf0ca826"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-propeller.strict.json",
-      "sha256": "0bf9cdabec8993f83c83349fe6ec267d7b9508c7a29ac97f2a8e2f77f92530bf"
+      "sha256": "fc5e657569a92e854dd0f8eb4a0b19f1b00e2268bb88a3d31fb39a1acf7ba944"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-slider-crank-component.check.json",
-      "sha256": "f212f9631d1c84c0f41ea9cad4be1e2cca2e0f1006e1923f1c0646c47b3010be"
+      "sha256": "71816989ac59a7efced8364811e50fa1e0ec1f8586473b4efca9ce485ec286f7"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-slider-crank-component.strict.json",
-      "sha256": "05c2d2dec972580daf13036be5b4c32b347d2e900a1fbb5e3f7a844c307bca36"
+      "sha256": "e2117b96207a420d4960549b802446c05dac895920a229e21fa9ecb161f9ff87"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-slider-crank.check.json",
-      "sha256": "b4a3b7cda69b200d6c1a72b1ad5a7a196791a7ed0e3bdd6f848216d6034afa7c"
+      "sha256": "c4d2fee23287932ad4b6e3bd8990833403c3ad6a7760f7ba5142b2a90e6856d3"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-slider-crank.strict.json",
-      "sha256": "80ead89b10efa7f43da8f9fe03ca10a37f692f1d5d3f31654d4e553311f494b2"
-    },
-    {
-      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/gears-mixed.manifest.json",
-      "sha256": "17e6d8b40d38e7ef11f8ea2911d01c981b9c8a443f5f6f7a1b3f1b8f900828c4"
-    },
-    {
-      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/jet-suit-ai-lesson.manifest.json",
-      "sha256": "6d98795b3a1c3a4fa405440c175a4f13d83d87ada77a7888ddb7b67334063758"
-    },
-    {
-      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/planetary-components.manifest.json",
-      "sha256": "8dea25cbd47d00b22f29c0c6fa3bfbffec6935ee016f37be24f147ee925e0e6f"
-    },
-    {
-      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/robot-joint-gearbox.manifest.json",
-      "sha256": "97f17c2481bf4be53bfe7b244f0a662ba40751772bd7bf9ae3b5879c49bb354a"
+      "sha256": "742a0a29402ae0499f898f94bf70797179a5e020d8fa07c5d8fec32836a71041"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/synthetic-idle.check.json",
@@ -491,7 +475,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "d2709bc42e61c082aece542066053d7e035e0f0851b68ba70e40812844b2900b"
+      "sha256": "fc4ec74a6d19c9364fef80d7891b779b055100a90b30d93776dc16d9d8a95830"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
@@ -563,15 +547,15 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerHonesty.swift",
-      "sha256": "2527daabbbd902d258eed2c725f34ff0a0ef35110f5d0007e36853b2bf41d21e"
+      "sha256": "ca8f4e17642368c365df1a1757c69caa8a84f3dd81bf3464652d1e1b8bd6f19f"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerLayout.swift",
-      "sha256": "5568d82a572f10bff36a9bd2d758d6274d535925a4b9e7a4bd444665f454ea34"
+      "sha256": "a6509c77926bd972c516fa5b212760c77e4f11c423bb6b217183b83b36f15581"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerReport.swift",
-      "sha256": "87a4e5ad9d086b1601b2085428268bda8b01b6f4bd0f0ae4ee86d340957df65c"
+      "sha256": "617ae4cbe842b26e5dd09f9a2b0a2cfe1c0c864520d596fd61625485679cc321"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
@@ -719,7 +703,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnchorCheck.swift",
-      "sha256": "ec19713d1cf48054d777e8cfe15c4f11937ce8d3f1f4b4d26d4e96fb2a081fef"
+      "sha256": "e88b754802788239032399ac21fb0d0342296603913f52ad255e0eb5cc7a32b7"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnchorSuggest.swift",
@@ -731,11 +715,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift",
-      "sha256": "7e6bcd09b4b309489a177828470efeeac0d1acdec2bf3f62f1f9187adf5e22b1"
+      "sha256": "0bb75dd6e88eb0f5f417a3eb19f0feccaf8667b2fc9ddf81e091c46d16bb39ad"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidArrowCheck.swift",
-      "sha256": "6c5e69d2846282c39198820ed87d6b05f5999574d1ba79e690cd911fdfa291bb"
+      "sha256": "6ffeddb350a342bf632a698d5f46100cfde13745511246bb383f44728c0019f0"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidBuilders.swift",
@@ -795,7 +779,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "bd341cd4db5248bbffb1c74aaa081519234e3eea431af6f8cd26bda112cb156c"
+      "sha256": "4307c0057fa8ea2c40fbd5e4174865d2ae2d2f20c0a9a0458a01e2a41601cfc5"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
@@ -807,7 +791,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
-      "sha256": "41725303830e9186dad725064a735b62fde33e6d87e892d7a04592008518bb58"
+      "sha256": "752f10c0e1be3b7e196c042bc545173e76836d8143f4bf08eb2618ed6834df30"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSection.swift",
@@ -827,7 +811,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidTiers.swift",
-      "sha256": "639f905f1d0350e6a4ef196137c0388d96768d18563f867c7e5201fe14dc81a8"
+      "sha256": "cb50a8b089b8c087486c0526bef9af325d10eee6411c91ca54492c33c524ad76"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidTurbo.swift",
@@ -875,7 +859,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/AnnotationLayoutTests.swift",
-      "sha256": "500130b78386cdb3139daefe7f2d7649a2445cb3998631be2739476a68b2f4a7"
+      "sha256": "ab8740e1074eac5eecbc44e20110a90aa0ebcb4b74808788657333ad24a81781"
     },
     {
       "path": "Tests/MartyGraphicsTests/AnnotationVisibilityDetailTests.swift",
@@ -931,15 +915,15 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerDocumentTests.swift",
-      "sha256": "f98d97f06135eab3e337c2cab40c75f9654243e5d93602a00c8e00b203f18001"
+      "sha256": "f70b5e337b3d0468dad07621020c734be68ff953d338cc53e7aad5ba098c4a04"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerHonestyTests.swift",
-      "sha256": "bd05a72e0f005e3ee6b03aa5149f75856343c8baed1e262125105a5b8d01a270"
+      "sha256": "be9b8b5e0fe10a983f424562de81a0c0c3c00ee6cf915505a5e3b5df0d758721"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerLegendShownTests.swift",
-      "sha256": "b4d38e140ef81bbd3757400c7f99a8e108801225d0c0a579b7800e631fcbb3ac"
+      "sha256": "8a1d07c58d2ec996c04d935d1741ff9916bb37946cb709d92d5b199f61e6043a"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerNamespaceTests.swift",
@@ -955,15 +939,15 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerRecheckTests.swift",
-      "sha256": "7110b33293dc141923ee16b8390d068dbd3d7f74eb2220e482a1594b56c8052a"
+      "sha256": "5f7a7cbc04d0e75423b1a942fc0d3564f87e676e3b66964b30d53edadb9d8a71"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerReviewFixTests.swift",
-      "sha256": "9cf1efa2fba2c467f64b85b0f0e00532930cfab5f99dda8dd14b81959f5725b1"
+      "sha256": "572888ec8274b9d0bade3fd52e3a401ae770708e45183a4c686226323f374df3"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerStreamTests.swift",
-      "sha256": "afe32de89c6dcb79902ae7955e72a2b43b6c54b0f2079edcc87beb8c192aeb6d"
+      "sha256": "610be421dae6a841d34fe3865108a968fe8143b57c25b0f5303fc15eeb7b692c"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerTestSupport.swift",
@@ -1050,6 +1034,10 @@
       "sha256": "b9577c19010e4bc5577b8fd6394d3d6332306435a5ab00a6f9af2a43ca3b2217"
     },
     {
+      "path": "Tests/MartyGraphicsTests/R2KEngineFixTests.swift",
+      "sha256": "e55f79a48de28bfe0a4d6378c2c115442421767eafb4e65aa1d82044e3ae1c9a"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/RecordParamsGuardTests.swift",
       "sha256": "b34afc463f4d6f45bf284597931374ffe074a0f6c1d1d0b74970875371e9df11"
     },
@@ -1079,7 +1067,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidAnnotationTests.swift",
-      "sha256": "fb2f69072479eb7cf0694b59cb42e788ee4be02830c2ca12673fc22eafa5603f"
+      "sha256": "51c58c87e11a16494cf7c0f2b32ac1af677195472a802fd645c6747ef613bccd"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidComponentNamespaceTests.swift",
@@ -1111,7 +1099,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidHonestyTests.swift",
-      "sha256": "11b561ee9b15b944c6e56b1be1487ec0fd9f4cca6be8488d8cd8940cc3342a8b"
+      "sha256": "a9f4b0ae34bb10b8f0d86c293b2032c5eb069ca6c179ecf86e711794f35d2784"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidLimitDetailTests.swift",
@@ -1127,7 +1115,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidSectionTests.swift",
-      "sha256": "595339416cf9b064078130431c3270846e9c5eaffe12f2ff3f9c9836aeee5b26"
+      "sha256": "3cc483cb3b65d94bc7c59ba38031de6aa0eae6283e56f166dda69202548b0787"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidTurboTests.swift",
@@ -1195,7 +1183,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "5e0fe7a498390505bd208e677a7a9cdbbac389208ba0e9d61c4fc06ebcbd9685"
+      "sha256": "bebde853b254f67dcf61a380edd2fb605953f8fbede1f695b1e3d3b59093f44f"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1231,15 +1219,15 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "8e1e564c203d699b0a239b2c110d15b206d3c8352b09c9523162899e20a47b4a"
+      "sha256": "a1f407d62a7b63937ecb7d47d2ff26e6401e54869de5ed5307be6122ce91b6b6"
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "65de3021c86fc6ce499fafd3bd9930aa8b1d2f1ce07697404f4278375011038e"
+      "sha256": "97018b5d31042795701e6db83cd7312eb9e50d5fa335a1c2c97e1da5f4c42535"
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "1f846067770116b36d16cd2d95436d21c27e5f96659def5dc0fc88e1d1dbf268"
+      "sha256": "5398a7f3a2e19575f4fff0d63f736fdac5451ede9a094f5322364e1dc84503b9"
     },
     {
       "path": "docs/THIRD-PARTY.md",

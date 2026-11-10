@@ -420,12 +420,20 @@ The engine computes a tier for every visible claim. An author never sets one: a 
   expression as text, for example "Checked: stage.sun.teeth > 0".
 * `MGSolidDocument.claims` lists the claims (motion once per authored part, then the
   [annotations](#annotations-v2), then the title, then each caption and its checks), each with its chip text and a reason;
-  `legend` gives the counts and one line ("Solved 8 · Not checked 1", always shown),
+  `legend` gives the counts and one line ("Solved 8 (2 animation ratios) · Not checked 1", always shown),
   "Some motion is schematic" when a motion claim is below Solved, and "Shapes as
   authored". `describe(id)` returns one part's motion, tier, facts and what its motion
   source does not check, for example
   `{"id": "stage.carrier", "motion": "Solved by gearMesh (0.29 turns per input turn)", "notChecked": ["3D tooth contact", …]}`;
   a part on a turning parent says "relative to <parent>" and gives its world speed.
+
+**The legend's Solved group** (`MGLegendText.solved`). A Solved motion claim is an animation ratio: a part's turn or
+travel per input turn, solved from the model's joints and drives. It is not a measured fact about the real object.
+"Solved 18" read as 18 verified facts in a lesson whose 18 claims were 15 shaft ratios, one gravity direction and two
+ratio numbers (r2k, C12). So the group says how many of its claims are such ratios: "Solved N (animation ratios)" when
+all N are ("Solved 1 (animation ratio)"), "Solved N (M animation ratios)" when M of them are, and "Solved N" when none
+is. The still's legend line, `story.mp4`, the SwiftUI views (`MGSolidLegend.text`, `MGExplainerLegend.text`) and the
+check reports' `legend.text` all show this one string; the counts (`solved`, `groups.solved`) are unchanged.
 
 ## Sections, ghosts and part appearance (v2)
 
@@ -657,6 +665,7 @@ annotation names its id in `MGSolidIssue.part`.
 | `{"part": "p", "point": "centre"}` | the centre of `p`'s mesh bounds, in its frame |
 | `{"part": "p"}` | the same as `{"part": "p", "point": "centre"}`: the centre of `p`'s mesh bounds (not the frame origin that the bare id `"p"` gives) |
 | `{"world": [x, y, z]}` | a fixed world point (kernel frame: Z up, mm) |
+| `{"point": "centreOfMass"}`, `{"point": "centreOfMass", "offset": [x, y, z]}` | the centre of mass of the whole assembly at the view's pose, plus a world offset (mm); force arrows' `from` and `to` only |
 
 A part anchor moves with its part in every pose: an offset away from the joint axis turns with the
 part, so put a label on the axis when the part spins. A part id, a `repeat` copy id and an anchor
@@ -675,6 +684,17 @@ its own: `microTurbojet`'s `turbine` is `turbineWheel`, whose frame is at the in
 `{"part": "e.turbine", "offset": [130, 0, 0]}` lies far from the wheel (`annotation.anchor.off.<id>`). Use
 `{"part": "e.turbine", "point": "centre"}` for the middle of a part's mesh. Free text that names no part takes a
 `{"world": [x, y, z]}` anchor.
+
+**Centre of mass** (`MGAnnotationAnchor.centreOfMass`). Weight acts at the centre of mass, so a gravity arrow can start
+there: `{"from": {"point": "centreOfMass"}, "to": {"point": "centreOfMass", "offset": [0, 0, -300]}}`. The point is
+the volume-weighted mean of every part's volume centroid (uniform density; `MGMassProperties.shares`): each part's mesh
+volume and centroid in its own frame (divergence theorem over its triangles; a mesh with no volume counts as its box),
+posed at the view's pose, so the point moves when a pose moves an arm. The schema has no mass or density, so this is
+the centre of the drawn shapes, a schematic centre of mass. The offset is in world axes and does not turn with any
+part. It is accepted only at a force arrow's ends; anywhere else it is `anchor.point`. Such an end rides on no part:
+the arrow has no tail for [Arrow tails](#arrow-tails) and [Arrow drop](#arrow-drop) when both ends are centre-of-mass
+anchors, and a suggested move keeps the anchor and moves its offset. See
+[Weight at the centre of mass](#weight-at-the-centre-of-mass).
 
 **Pointers to a part centre.** A part's centre lies inside the part, so a pointer drawn to it would bury its head in
 its own part. A pointer whose tip is a part's centre (`{"part": "p", "point": "centre"}` or `{"part": "p"}`) is drawn
@@ -955,8 +975,11 @@ anchor of a pointer is its tip (`to`). Force, flow and motion arrows and dimensi
    dot (below). Each view uses its own geometry: the anchor's distance to its own part's box and to every other part
    are measured at that view's pose, in anchor-relative coordinates. A view is skipped only when, in that view, the
    anchor is within the epsilon of its own part's box. This test runs at the pose of every view that shows the annotation: the plain view at the default pose
-   when it shows it, and each step or beat at its still's pose (a beat's view is its solid step). The first view where
-   a part is nearer is the issue's `step` (and `beat`), and that part is `closer`. A part's solid is its surface or its
+   when it shows it, and each step or beat at its still's pose (a beat's view is its solid step). A part that view
+   hides (`hide`, `show`, `showOnly`; `hiddenParts(step:)`) is not drawn there, so the dot cannot land on it: it is
+   skipped in that view. So a part hidden in every view that shows the annotation never counts as nearer (r2k: a label
+   on an engine shaft inside a forearm was "nearer to the forearm (0.0 mm)" in steps that hide the forearm). The first
+   view where a part is nearer is the issue's `step` (and `beat`), and that part is `closer`. A part's solid is its surface or its
    inside: the anchor is inside when a segment from it along +X crosses the part's surface an odd number of times
    (watertight crossings). So an L-shaped part whose box holds empty space does not claim an anchor in that space.
 
@@ -1216,6 +1239,19 @@ flow arrow's tail as near its part, see [Arrow tails](#arrow-tails)), `noclearof
 `conflict`; alternatives: leave the arrow out of that view's `annotate` list, ghost the part in the way, or change
 that view's camera).
 
+**Every view of a hidden arrow** (`MGSolidDocument.arrowViewScan`, `MGArrowViewScan`). A refusal names one view, so a
+model that moves the arrow from beat to beat is refused again in each (r2k: an arm engine's thrust arrow was hidden in
+its own forearm in beats 4, 2 and 3 of three tries). So the check report tests each hidden arrow in **every** framed
+step or beat still, also the stills that do not list it, with the same samples and rule, at each still's camera,
+pose, motion sense and step as it is framed now (listing the arrow in a still can move that still's camera). A still
+that draws nothing for the arrow, a still that lists it and drops it, and a still whose budget (3,000,000 tests for
+all scanned arrows) ran out are left out. Each hidden issue gets `views`: `{"hidden": [n], "clear": [n], "every":
+bool, "hiddenCameras": [preset], "tested": [{"beat" | "step": n, "camera", "hidden", "listed"}]}` (1-based), where
+`hiddenCameras` lists the camera presets whose every tested still hides the arrow. `fix` and `repair` add one
+sentence: "It is also hidden in beats 1, 2 and 3; hidden in every `back` and `front` view; shown in beat 5." or, when
+no tested still shows it, "It is hidden in every beat still (beats 1, 2, 3 and 4): no camera of this document shows it
+there." The suggestion search is unchanged (it still tests the views that list the arrow).
+
 **Re-check.** A move changes the framing too (a still's camera fits the arrow ends it shows), so the moves are checked
 again once applied, as anchor suggestions are (`MGAnnotationArrowReport.verify`): the document with every move applied
 is compiled, framed and checked again. The set is accepted only when no moved arrow has an arrow issue and no
@@ -1295,13 +1331,21 @@ highlights, and the arrow says nothing about a part that is not in the picture. 
   (coverage 0.5 or more) crosses its line of sight before it, or when the nearest one that does is a part of the unit
   (the camera sees the unit there: a sample inside a casing is seen as the casing).
 * When at most 10 % of the unit's on-screen samples are seen (`dropVisibleShare`), the arrow is **dropped** from that
-  still: the still, its story hold and move frames and the SwiftUI pane (each draws `clear.view(...)`, whose
+  still (cause `unit`): the still, its story hold and move frames and the SwiftUI pane (each draws `clear.view(...)`, whose
   `MGSolidView.arrowDrops` the one gate `checkedAnnotations` leaves out) do not draw it, and the arrow rule does not
   test it there. A unit with no on-screen sample keeps its arrows. Each still may spend 3,000,000 tests on this rule
   (`dropTests`); when they run out, the remaining arrows are kept and tested by the arrow rule.
+* **An arrow inside its own hidden part** (cause `part`). The unit test keeps an arrow when any of the unit shows. Then
+  the arrow's own samples (the arrow rule's) are tested at the still's camera; when none is visible and a part hides at
+  least one (fully hidden), the tail's part alone is sampled like the unit (up to 48 centroids of its drawn mesh, seen
+  when no part outside the unit is in front). When at most 10 % of them are seen, the arrow is dropped too. Every move
+  that keeps the tail on a hidden part keeps the arrow hidden, and every other move breaks the tail rule, so a refusal
+  with `noSuggest` code `tail` gave the author no way out (r2k: an arm engine's thrust arrow along its forearm). An
+  arrow whose tail's part shows keeps the arrow rule and its refusal: a visible part is not left without its arrow.
 * A drop is a warning, never a refusal, in every profile: `annotation.arrow.dropped.<id>` per still that drops it. The
-  check report adds `arrowDrops` (only when a still drops an arrow): `[{"id", "reason", "part", "by", "step",
-  "beat"}]`, with the tail's part and the part outside the unit that hides the most samples (ties in assembly order).
+  check report adds `arrowDrops` (only when a still drops an arrow): `[{"id", "reason", "cause", "part", "by", "step",
+  "beat"}]`, with the cause (`unit` or `part`), the tail's part and the part outside the unit that hides the most
+  samples (ties in assembly order).
   `marty-solid render` adds `arrowDrops` (`{"id", "part", "by"}`) to the still's manifest record and to its story beat.
 * A snapshot has no camera and keeps the arrow; the plain view (`hero.png`) is framed and drops as a still does.
 * **One set per explainer beat.** A beat's drops are decided once, at the beat's framing for the whole content area of
@@ -1316,6 +1360,48 @@ highlights, and the arrow says nothing about a part that is not in the picture. 
 
 So a back engine's thrust arrow is drawn in a back view and dropped in a front view, and an arm engine behind its twin
 drops its arrow in a front view while the twin keeps its own.
+
+#### Dropped arrows that leave a caption alone
+
+A drop is right for the still, but the story can lose the arrow (r2k: a front force beat dropped all three back
+thrusts, and no other beat showed them; another beat said "Weight pulls down" while its still dropped the weight).
+Two warnings, never refused, from the report's framed stills (`MGSolidDocument.arrowDropNotes`):
+
+* `annotation.arrow.orphan.<id>`: every step or beat still that lists the arrow drops it, so no view draws it (in an
+  assembly, a plain view that lists it must drop it too, `undrawnArrows`). One per arrow, in authored order.
+* `annotation.arrow.caption.<id>`: a still drops the arrow, and the text of its step or beat names the arrow's force.
+  The force's names are "weight" and "gravity" for a `"cause": "gravity"` arrow, and the words of the arrow's own text
+  that are force words (`MGArrowDropNote.forceWords`: weight, gravity, thrust, lift, drag, push, pull, force, torque,
+  friction, tension, reaction, load) for a force, or flow words (`flowWords`: air, jet, flow, exhaust, gas, water,
+  stream, fuel, oil, steam) for a flow. A word of the text names one when it equals it, or it plus "s" or "es"
+  (case-insensitive letter runs). An arrow with no cause and no such word names nothing. One per still and arrow.
+
+The report adds `arrowDropNotes` (only when there is one): `[{"id", "reason", "kind", "steps" | "beats": [n], "part",
+"by", "word", "repair"}]` (`kind` `orphan` or `caption`; `word` null for `orphan`). The repair: list the arrow in a view
+whose camera sees its part, ghost the part in the way, or change the words.
+
+#### Weight at the centre of mass
+
+A gravity arrow (`"cause": "gravity"`) says where weight acts: at the centre of mass. The document warns
+`annotation.arrow.weight.<id>` (never refused; r2k: a weight arrow drawn at a thigh, offset from the pack it rode on)
+(`MGSolidDocument.weightPlacements`) when all of these hold:
+
+* neither end is a centre-of-mass anchor;
+* the arrow lies off the body: it has no end on a part, or its tail (`arrowTail`) is farther from its part's box than
+  the off-part tolerance, max(5 % of that box's diagonal, 0.5 % of the model's diagonal). An arrow on its part is that
+  part's weight (a hanging load on a winch) and is not measured;
+* across a view that shows it, its start lies farther than 5 % of the model's bounding diagonal
+  (`MGSolidDocument.weightShare`) from the centre of mass of the whole assembly, both at the rest pose (default
+  input, explode 0; see [Anchors](#anchors)). "Across" leaves out the offset's component along the view's direction:
+  an arrow drawn in front of (or behind) the body, at the centre's place on screen, reads right and stays visible.
+  The views are the steps (or beats) that show the arrow, each at its camera preset plus `orbit`; the plain view
+  (`hero`) when no step does. The first such view is reported.
+
+The report adds `weightPlacements` (only when there is one): `[{"id", "reason", "step", "camera", "distance",
+"tolerance", "centreOfMass": [x, y, z], "suggest", "repair"}]`. `suggest` draws the arrow from the centre of mass with
+the authored vector and the authored depth offset along that view: `{"from": {"point": "centreOfMass", "offset":
+depth}, "to": {"point": "centreOfMass", "offset": depth + vector}}` (0.001 mm; a zero offset is left out). The arrow
+visibility rule still tests the moved arrow.
 
 ### Not checked
 
@@ -1494,7 +1580,7 @@ them also pass `check --strict` with no warnings.
   cut walls; the last step shows the casing as a `ghost`. Captions come from facts: the
   idler turns at `{idler.speed|abs|frac}` ("16/23") the other way, and the output
   `{output.speed|frac}` ("4/7") the same way as the input, so the idler's size cancels
-  out. Legend: "Solved 9" (three motions, four captions, two checks).
+  out. Legend: "Solved 9 (3 animation ratios)" (three motions, four captions, two checks).
 
 * [`annotated-winch.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json)
   (v2, 40 lines): a hand winch. A 14-tooth pinion with a crank drives a 42-tooth drum gear on
@@ -1504,7 +1590,7 @@ them also pass `check --strict` with no warnings.
   under the weight, a motion arrow on the drum's rope side whose stated direction (`"expect": [0, 0, 1]`)
   the engine checks, and a measured centre distance (`{dim.centres}`, "56 mm"). Each step lists its
   annotations with `annotate`. The rope-side arrow shows in a step without `spin`: its anchor rides the
-  drum, so while the drum turns it would leave the rope side (`annotation.pose.<id>`). Legend: "Solved 12" (two motions, seven annotations, two
+  drum, so while the drum turns it would leave the rope side (`annotation.pose.<id>`). Legend: "Solved 12 (2 animation ratios)" (two motions, seven annotations, two
   captions, one check) with the note "Arrow lengths are not to scale".
 
 * [`horizontal-reduction.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/horizontal-reduction.json)
@@ -1512,7 +1598,7 @@ them also pass `check --strict` with no warnings.
   (`rot` `[0, 1, 0, 90]` with joint `[0, 0, 1]`, both confirmed by `expect.axisWorld`), a
   support placed relative to its base and a collar relative to the wheel, captions filled
   from facts (`{wheel.speed|abs|frac}` gives "3/8", with a check that proves the sign),
-  three claim checks and one `unchecked` caption. Legend: "Solved 8 · Not checked 1".
+  three claim checks and one `unchecked` caption. Legend: "Solved 8 (2 animation ratios) · Not checked 1".
 
 * [`slider-crank.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/slider-crank.json)
   (21 lines): a crank on a `revolute` joint with an `input` drive, a piston on a

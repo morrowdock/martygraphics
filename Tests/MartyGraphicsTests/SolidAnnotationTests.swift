@@ -105,7 +105,7 @@ final class SolidAnnotationTests: XCTestCase {
         XCTAssertEqual(c.tier, .described)
         XCTAssertEqual(c.badge, "Not checked")
         XCTAssertTrue(d.legend.notes.contains("Arrow lengths are not to scale"))
-        XCTAssertEqual(d.legend.text, "Solved 2 · Not checked 1")
+        XCTAssertEqual(d.legend.text, "Solved 2 (animation ratios) · Not checked 1")
         // A pointer makes no claim and needs no note.
         let pointer = try doc(gears(#"{"arrows": [{"id": "aLook", "meaning": "pointer", "from": {"world": [60, 0, 90]}, "to": "w", "text": "Wheel"}]}"#))
         XCTAssertNil(claim(pointer, "aLook"))

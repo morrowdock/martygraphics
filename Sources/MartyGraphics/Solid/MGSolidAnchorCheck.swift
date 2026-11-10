@@ -493,7 +493,9 @@ extension MGSolidDocument {
     ///    the anchor than the anchor's distance `d'` to its own part's box (measured in that view) less the precision
     ///    epsilon at the dot (`mgPrecision(.zero)`, 1.01e-4 mm). All distances are taken in anchor-relative coordinates
     ///    (`mgAnchorRelative`). A view is skipped only when `d'` is within that epsilon (the anchor is on or in its own
-    ///    part's box in that view). The first such view and part (assembly order) are the issue's `step` and `closer`;
+    ///    part's box in that view). A part the view hides (`hiddenParts(step:)`) is not drawn there and is skipped, so a
+    ///    part hidden in every view that shows the annotation never counts as nearer. The first such view and part
+    ///    (assembly order) are the issue's `step` and `closer`;
     ///    `closerDistance` is described at `MGAnnotationAnchorIssue.closer`. The search is exact (`MGMeshChunks.nearer`): a part whose oriented box is not nearer is skipped
     ///    with one box test, far runs of 64 triangles are skipped, and it stops at the first nearer triangle. Every
     ///    triangle read (building a part's runs once), every run-box test and every triangle test of one document costs
@@ -547,7 +549,10 @@ extension MGSolidDocument {
             let own = mgAnchorRelative(pose.world[partID] ?? .identity, anchor: x).toLocal.apply(.zero)
             let r = mgBoxDistance(own, b) - eps
             guard r > 0 else { continue }
-            for q in assembly.parts where q.id != partID && !q.mesh.bounds.isEmpty {
+            // A part this view hides is not drawn there, so the dot cannot land on it (r2k: a forearm that every view
+            // showing the label hides was "nearer"). A part hidden in every view that shows the label never counts.
+            let hiddenHere = hiddenParts(step: step)
+            for q in assembly.parts where q.id != partID && !q.mesh.bounds.isEmpty && !hiddenHere.contains(q.id) {
                     let lq = mgAnchorRelative(pose.world[q.id] ?? .identity, anchor: x).toLocal.apply(.zero)
                     state.budget -= 1
                     guard state.budget >= 0 else { unknownAt = (step, x); break views }

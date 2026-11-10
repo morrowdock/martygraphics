@@ -349,3 +349,118 @@ extension MGExplainerFrame {
         return (d, out)
     }
 }
+
+/// A board item that a beat's board pane cuts (docs/EXPLAINER.md, "Board items inside the pane"): its box leaves the
+/// pane's safe area at a 1280 × 800 frame. `board.clip.<id>`, a warning, with the exact move that brings it inside.
+public struct MGBoardClip: Equatable, Sendable {
+    public let id: String
+    /// The 0-based beat whose pane cuts it first.
+    public let beat: Int
+    /// How far the item's box passes each side of the safe area, in pixels (0 when inside on that side).
+    public let left: Double, right: Double, top: Double, bottom: Double
+    /// Pixels per board unit in that pane.
+    public let scale: Double
+    /// The item's `at` (board units), when it has one.
+    public let at: MGPoint?
+
+    public var reason: String { "board.clip.\(id)" }
+
+    /// The board-unit move (x right, y up) that brings the box inside the safe area, each part rounded away from zero
+    /// to 0.01; nil when the box is wider or taller than the safe area (no move fits).
+    public var move: (dx: Double, dy: Double)? {
+        guard scale.isFinite, scale > 0, !(left > 0 && right > 0), !(top > 0 && bottom > 0) else { return nil }
+        func up(_ px: Double) -> Double { (px / scale * 100).rounded(.up) / 100 }
+        let dx = left > 0 ? up(left) : right > 0 ? -up(right) : 0
+        let dy = top > 0 ? -up(top) : bottom > 0 ? up(bottom) : 0
+        return (dx, dy)
+    }
+
+    static func n(_ x: Double) -> String { MGAnnotationAnchorIssue.number(x) }
+
+    /// One line a tool can pass to a model (at most `MGAnnotationAnchorIssue.repairScalars` Unicode scalars).
+    public var repair: String {
+        var sides: [String] = []
+        for (px, name) in [(top, "top"), (bottom, "bottom"), (left, "left"), (right, "right")] where px > 0 { sides.append("\(MGBoardClip.n(px.rounded(.up))) px past the \(name)") }
+        let what = "Board item \(id) (beat \(beat + 1)) runs \(sides.joined(separator: " and ")) of the board pane's safe area, so the pane cuts it."
+        guard let m = move else {
+            return MGAnnotationAnchorIssue.bounded(what + " It does not fit the pane: give it fewer rows or columns, split it, or zoom the board out (`camera` zoom below 1).",
+                                                   MGAnnotationAnchorIssue.repairScalars)
+        }
+        var line = what + " Move it by [\(MGBoardClip.n(m.dx)), \(MGBoardClip.n(m.dy))] board units"
+        if let at { line += ": \"at\": [\(MGBoardClip.n(at.x + m.dx)), \(MGBoardClip.n(at.y + m.dy))]" }
+        line += ", and keep the other items clear of it."
+        return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+    }
+
+    /// `{"id", "reason", "beat", "overflow": {"left", "right", "top", "bottom"} (px), "scale", "at", "move", "repair"}`
+    /// (`beat` 1-based; `at` and `move` [x, y] board units or null).
+    public var json: MGJSON {
+        func r(_ x: Double) -> MGJSON { x.isFinite ? .number((x * 1000).rounded() / 1000) : .null }
+        return .object(["id": .string(id), "reason": .string(reason), "beat": .number(Double(beat + 1)),
+                        "overflow": .object(["left": r(left), "right": r(right), "top": r(top), "bottom": r(bottom)]),
+                        "scale": r(scale), "at": at.map { .array([r($0.x), r($0.y)]) } ?? .null,
+                        "move": move.map { .array([r($0.dx), r($0.dy)]) } ?? .null, "repair": .string(repair)])
+    }
+}
+
+extension MGExplainerFrame {
+    /// The board pane's safe area: the pane less this many pixels on each side at a frame 1280 px wide.
+    public static let boardSafeInset = 8.0
+
+    /// The board items each beat's board pane cuts (`boardClips`), as `marty-solid render` lays the beats out: a fresh
+    /// session with speech pacing and a manual clock plays the beats in order (as `beatPanes`); at each beat whose board
+    /// pane is drawn (`MGExplainerSession.boardPane`) the settled board state is measured. Each item once, at the first
+    /// beat that cuts it. Empty when the document does not load or has no board. Deterministic; at most
+    /// `MGExplainerLimits.beats` beats.
+    public static func beatBoardClips(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
+                                      height: Int = MGAnnotationAnchorRules.height) -> [MGBoardClip] {
+        let clock = MGManualClock()
+        var session = MGExplainerSession(pacing: .speech, clock: clock, library: library)
+        guard case .success = session.load(doc), session.board != nil else { return [] }
+        let solid = session.solid != nil
+        let primarySolid = (session.primary ?? (solid ? "solid" : "board")) == "solid"
+        var out: [MGBoardClip] = [], seen = Set<String>()
+        var k = 0
+        while k < MGExplainerLimits.beats, let beat = session.presented.beat, beat == k {
+            clock.advance(by: session.motionRemaining)
+            _ = session.tick()
+            if session.boardPane.shown, let scene = session.state?.scene {
+                for c in boardClips(scene: scene, beat: k, width: width, height: height, solid: solid, primarySolid: primarySolid)
+                where seen.insert(c.id).inserted { out.append(c) }
+            }
+            _ = session.lineEnded(k)
+            k += 1
+        }
+        return out
+    }
+
+    /// The items of `scene` that a board pane cuts at a `width` × `height` frame (docs/EXPLAINER.md, "Board items inside
+    /// the pane"): the pane as `marty-solid render` lays it out (`panes`, side by side at `boardShare`, the viewport of the
+    /// reference pane `boardReferenceSize` when both views show; the whole content area for a board alone), each item's
+    /// box (`MGLayout.bounds`; empty tables and highlights skipped) against the pane less `boardSafeInset` × width / 1280
+    /// on each side. Item order; nil `beat` labels are the caller's.
+    public static func boardClips(scene: MGScene, beat: Int, width w: Int = MGAnnotationAnchorRules.width, height h: Int = MGAnnotationAnchorRules.height,
+                                  solid: Bool, primarySolid: Bool) -> [MGBoardClip] {
+        let both = solid
+        let share = both ? boardShare(scene: scene, width: w, height: h, primarySolid: primarySolid) : nil
+        guard let pane = panes(width: w, height: h, board: true, solid: solid, primarySolid: primarySolid, boardShare: share).board else { return [] }
+        let area = contentArea(width: w, height: h)
+        let size = CGSize(width: pane.width, height: pane.height)
+        let fit = both && w >= h ? boardReferenceSize(areaWidth: Double(area.width), areaHeight: Double(area.height), gap: paneGap(width: w),
+                                                      primarySolid: primarySolid) : size
+        let vp = MGViewport(size: fit, width: scene.width, height: scene.height, camera: scene.camera).resized(to: size)
+        let inset = boardSafeInset * Double(w) / 1280
+        let safe = CGRect(x: inset, y: inset, width: Double(pane.width) - 2 * inset, height: Double(pane.height) - 2 * inset)
+        var out: [MGBoardClip] = []
+        for item in scene.items.prefix(MGLimits.resolvedItems) where item.kind != .highlight && !item.isEmptyTable {
+            guard let r = MGLayout.bounds(item, in: scene.items, vp), !r.isNull, r.minX.isFinite, r.maxX.isFinite, r.minY.isFinite, r.maxY.isFinite else { continue }
+            let left = max(0, Double(safe.minX - r.minX)), right = max(0, Double(r.maxX - safe.maxX))
+            let top = max(0, Double(safe.minY - r.minY)), bottom = max(0, Double(r.maxY - safe.maxY))
+            // Half a pixel of rounding is not a cut.
+            guard max(left, right, top, bottom) > 0.5 else { continue }
+            out.append(MGBoardClip(id: item.id, beat: beat, left: left, right: right, top: top, bottom: bottom, scale: Double(vp.scale),
+                                   at: item.pts.count == 1 ? item.pts.first : nil))
+        }
+        return out
+    }
+}
