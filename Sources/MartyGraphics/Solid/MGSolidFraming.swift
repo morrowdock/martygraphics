@@ -292,15 +292,21 @@ public enum MGSolidFraming {
     }
 
     /// The subject's groups, the units of the floors: the subject parts of each instance in `whole` (an instance the
-    /// step or beat names by its instance id in `focus` or `highlight`) form one group; every other subject part (a part
-    /// named on its own in `focus` or `highlight`, or an annotation target) is its own group, also when such parts
-    /// together cover a whole instance. Assembly order.
-    public static func subjectGroups(_ doc: MGSolidDocument, _ parts: [String], whole: Set<String> = []) -> [(unit: String, parts: [String])] {
+    /// step or beat names by its instance id in `focus` or `highlight`) form one group, except the parts in `named`;
+    /// every other subject part is its own group. `named` holds the parts named explicitly anywhere (in `focus`, in
+    /// `highlight`, or as an annotation target): such a part is always measured alone, also when its instance is named
+    /// too, and also when such parts together cover an instance. Assembly order.
+    public static func subjectGroups(_ doc: MGSolidDocument, _ parts: [String], whole: Set<String> = [],
+                                     named: Set<String> = []) -> [(unit: String, parts: [String])] {
         var out: [(unit: String, parts: [String])] = [], done = Set<String>()
+        func pooled(_ p: String) -> Bool {
+            let u = MGSolidDocument.unitID(p)
+            return whole.contains(u) && u != p && !named.contains(p)
+        }
         for p in parts {
             let u = MGSolidDocument.unitID(p)
-            if whole.contains(u), u != p {
-                if done.insert(u).inserted { out.append((u, parts.filter { MGSolidDocument.unitID($0) == u })) }
+            if pooled(p) {
+                if done.insert(u).inserted { out.append((u, parts.filter { MGSolidDocument.unitID($0) == u && pooled($0) })) }
             } else {
                 out.append((p, [p]))
             }

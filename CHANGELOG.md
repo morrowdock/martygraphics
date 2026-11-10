@@ -24,8 +24,9 @@
   - **`framing.subject.small.step.<n>`, `framing.subject.small.beat.<n>`** (new warnings, never refused): a subject
     group misses a floor, on every still with a subject: a 25 % fill of the safe window (`subjectFill`), and per group
     0.5 % of its pixels (`subjectAreaShare`) and a 24 px shorter side at 800 px high (`subjectExtentPixels`). A group
-    is an instance named by its instance id, or one named part (a foot named beside the body, or each of eleven named
-    engine parts, is measured on its own). The check reports add `subjectFloors` with the measure and exact repairs:
+    is an instance named by its instance id (less its explicitly named parts), or one named part: a part named
+    explicitly anywhere (focus, highlight, annotation target) is always measured alone, also beside its named
+    instance. The check reports add `subjectFloors` with the measure and exact repairs:
     `split`, `subset`, `ghost` (the complete list, the view's own ghosts kept, also from the public API by default) and
     `annotate` (the step's list without the far annotations that widen it).
   - **Crops from triangles.** `MGSolidFraming.cutParts` tests every triangle in camera space against the five view

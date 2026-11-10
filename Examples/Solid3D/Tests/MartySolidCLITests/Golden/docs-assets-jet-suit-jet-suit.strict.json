@@ -2897,12 +2897,23 @@
             "back.nozzle",
             "back.shaft",
             "back.frontBearing",
-            "back.rearBearing",
-            "back.casing"
+            "back.rearBearing"
           ],
-          "pixels" : 2784,
+          "pixels" : 640,
           "small" : true,
           "unit" : "back"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 2144,
+          "small" : true,
+          "unit" : "back.casing"
         },
         {
           "extent" : 44,
@@ -2919,12 +2930,23 @@
             "armL1.nozzle",
             "armL1.shaft",
             "armL1.frontBearing",
-            "armL1.rearBearing",
-            "armL1.casing"
+            "armL1.rearBearing"
           ],
-          "pixels" : 1248,
+          "pixels" : 304,
           "small" : true,
           "unit" : "armL1"
+        },
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "armL1.casing"
+          ],
+          "pixels" : 944,
+          "small" : true,
+          "unit" : "armL1.casing"
         },
         {
           "extent" : 40,
@@ -2996,7 +3018,7 @@
       ],
       "minimumExtent" : 24,
       "minimumPixels" : 3379,
-      "repair" : "Step 1: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 1072 px, shorter side 36 px; pilot.footR shows 672 px, shorter side 32 px; back shows 2784 px, shorter side 36 px; armL1 shows 12…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "repair" : "Step 1: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 1072 px, shorter side 36 px; pilot.footR shows 672 px, shorter side 32 px; back shows 640 px, shorter side 36 px; back.casing sho…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
       "split" : [
         [
           "pilot.skull"
@@ -3011,10 +3033,34 @@
           "helmet"
         ],
         [
-          "back"
+          "back.intakeLip",
+          "back.impeller",
+          "back.diffuser",
+          "back.combustor",
+          "back.nozzleGuideVanes",
+          "back.turbineWheel",
+          "back.nozzle",
+          "back.shaft",
+          "back.frontBearing",
+          "back.rearBearing"
         ],
         [
-          "armL1"
+          "back.casing"
+        ],
+        [
+          "armL1.intakeLip",
+          "armL1.impeller",
+          "armL1.diffuser",
+          "armL1.combustor",
+          "armL1.nozzleGuideVanes",
+          "armL1.turbineWheel",
+          "armL1.nozzle",
+          "armL1.shaft",
+          "armL1.frontBearing",
+          "armL1.rearBearing"
+        ],
+        [
+          "armL1.casing"
         ],
         [
           "armL2"
@@ -3094,12 +3140,23 @@
           "unit" : "helmet"
         },
         {
+          "extent" : 12,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.intakeLip"
+          ],
+          "pixels" : 336,
+          "small" : true,
+          "unit" : "back.intakeLip"
+        },
+        {
           "extent" : 32,
           "hiddenBy" : [
 
           ],
           "parts" : [
-            "back.intakeLip",
             "back.impeller",
             "back.diffuser",
             "back.combustor",
@@ -3111,17 +3168,28 @@
             "back.rearBearing",
             "back.casing"
           ],
-          "pixels" : 2752,
+          "pixels" : 2416,
           "small" : true,
           "unit" : "back"
         },
         {
-          "extent" : 36,
+          "extent" : 16,
           "hiddenBy" : [
             "pilot.lowerArmL"
           ],
           "parts" : [
-            "armL1.intakeLip",
+            "armL1.intakeLip"
+          ],
+          "pixels" : 160,
+          "small" : true,
+          "unit" : "armL1.intakeLip"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
             "armL1.impeller",
             "armL1.diffuser",
             "armL1.combustor",
@@ -3133,17 +3201,28 @@
             "armL1.rearBearing",
             "armL1.casing"
           ],
-          "pixels" : 848,
+          "pixels" : 688,
           "small" : true,
           "unit" : "armL1"
         },
         {
-          "extent" : 36,
+          "extent" : 16,
           "hiddenBy" : [
             "pilot.lowerArmL"
           ],
           "parts" : [
-            "armL2.intakeLip",
+            "armL2.intakeLip"
+          ],
+          "pixels" : 160,
+          "small" : true,
+          "unit" : "armL2.intakeLip"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
             "armL2.impeller",
             "armL2.diffuser",
             "armL2.combustor",
@@ -3155,9 +3234,21 @@
             "armL2.rearBearing",
             "armL2.casing"
           ],
-          "pixels" : 928,
+          "pixels" : 768,
           "small" : true,
           "unit" : "armL2"
+        },
+        {
+          "extent" : 12,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "armR1.intakeLip"
+          ],
+          "pixels" : 176,
+          "small" : true,
+          "unit" : "armR1.intakeLip"
         },
         {
           "extent" : 44,
@@ -3165,7 +3256,6 @@
 
           ],
           "parts" : [
-            "armR1.intakeLip",
             "armR1.impeller",
             "armR1.diffuser",
             "armR1.combustor",
@@ -3177,17 +3267,28 @@
             "armR1.rearBearing",
             "armR1.casing"
           ],
-          "pixels" : 1184,
+          "pixels" : 1008,
           "small" : true,
           "unit" : "armR1"
         },
         {
-          "extent" : 44,
+          "extent" : 16,
           "hiddenBy" : [
             "pilot.lowerArmR"
           ],
           "parts" : [
-            "armR2.intakeLip",
+            "armR2.intakeLip"
+          ],
+          "pixels" : 112,
+          "small" : true,
+          "unit" : "armR2.intakeLip"
+        },
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+            "pilot.lowerArmR"
+          ],
+          "parts" : [
             "armR2.impeller",
             "armR2.diffuser",
             "armR2.combustor",
@@ -3199,14 +3300,14 @@
             "armR2.rearBearing",
             "armR2.casing"
           ],
-          "pixels" : 896,
+          "pixels" : 784,
           "small" : true,
           "unit" : "armR2"
         }
       ],
       "minimumExtent" : 24,
       "minimumPixels" : 3379,
-      "repair" : "Step 2: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 640 px, shorter side 32 px; pilot.footR shows 688 px, shorter side 36 px; back shows 2752 px, shorter side 32 px; armL1 shows 848…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "repair" : "Step 2: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 640 px, shorter side 32 px; pilot.footR shows 688 px, shorter side 36 px; back.intakeLip shows 336 px, shorter side 12 px; back s…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
       "split" : [
         [
           "pilot.skull"
@@ -3221,19 +3322,79 @@
           "helmet"
         ],
         [
-          "back"
+          "back.intakeLip"
         ],
         [
-          "armL1"
+          "back.impeller",
+          "back.diffuser",
+          "back.combustor",
+          "back.nozzleGuideVanes",
+          "back.turbineWheel",
+          "back.nozzle",
+          "back.shaft",
+          "back.frontBearing",
+          "back.rearBearing",
+          "back.casing"
         ],
         [
-          "armL2"
+          "armL1.intakeLip"
         ],
         [
-          "armR1"
+          "armL1.impeller",
+          "armL1.diffuser",
+          "armL1.combustor",
+          "armL1.nozzleGuideVanes",
+          "armL1.turbineWheel",
+          "armL1.nozzle",
+          "armL1.shaft",
+          "armL1.frontBearing",
+          "armL1.rearBearing",
+          "armL1.casing"
         ],
         [
-          "armR2"
+          "armL2.intakeLip"
+        ],
+        [
+          "armL2.impeller",
+          "armL2.diffuser",
+          "armL2.combustor",
+          "armL2.nozzleGuideVanes",
+          "armL2.turbineWheel",
+          "armL2.nozzle",
+          "armL2.shaft",
+          "armL2.frontBearing",
+          "armL2.rearBearing",
+          "armL2.casing"
+        ],
+        [
+          "armR1.intakeLip"
+        ],
+        [
+          "armR1.impeller",
+          "armR1.diffuser",
+          "armR1.combustor",
+          "armR1.nozzleGuideVanes",
+          "armR1.turbineWheel",
+          "armR1.nozzle",
+          "armR1.shaft",
+          "armR1.frontBearing",
+          "armR1.rearBearing",
+          "armR1.casing"
+        ],
+        [
+          "armR2.intakeLip"
+        ],
+        [
+          "armR2.impeller",
+          "armR2.diffuser",
+          "armR2.combustor",
+          "armR2.nozzleGuideVanes",
+          "armR2.turbineWheel",
+          "armR2.nozzle",
+          "armR2.shaft",
+          "armR2.frontBearing",
+          "armR2.rearBearing",
+          "armR2.casing"
         ]
       ],
       "step" : 2,
@@ -3326,12 +3487,23 @@
             "back.nozzle",
             "back.shaft",
             "back.frontBearing",
-            "back.rearBearing",
-            "back.casing"
+            "back.rearBearing"
           ],
-          "pixels" : 2848,
+          "pixels" : 736,
           "small" : true,
           "unit" : "back"
+        },
+        {
+          "extent" : 32,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 2112,
+          "small" : true,
+          "unit" : "back.casing"
         },
         {
           "extent" : 40,
@@ -3370,17 +3542,28 @@
             "armR1.nozzle",
             "armR1.shaft",
             "armR1.frontBearing",
-            "armR1.rearBearing",
-            "armR1.casing"
+            "armR1.rearBearing"
           ],
-          "pixels" : 1056,
+          "pixels" : 256,
           "small" : true,
           "unit" : "armR1"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "pilot.lowerArmR"
+          ],
+          "parts" : [
+            "armR1.casing"
+          ],
+          "pixels" : 800,
+          "small" : true,
+          "unit" : "armR1.casing"
         }
       ],
       "minimumExtent" : 24,
       "minimumPixels" : 3379,
-      "repair" : "Step 3: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 432 px, shorter side 24 px; pilot.footR shows 432 px, shorter side 24 px; back shows 2848 px, shorter side 32 px; armL1 shows 105…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "repair" : "Step 3: at the closest framing that keeps its subject whole, pilot.skull shows 0 px, shorter side 0 px; pilot.footL shows 432 px, shorter side 24 px; pilot.footR shows 432 px, shorter side 24 px; back shows 736 px, shorter side 32 px; back.casing show…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
       "split" : [
         [
           "pilot.skull"
@@ -3395,13 +3578,37 @@
           "helmet"
         ],
         [
-          "back"
+          "back.intakeLip",
+          "back.impeller",
+          "back.diffuser",
+          "back.combustor",
+          "back.nozzleGuideVanes",
+          "back.turbineWheel",
+          "back.nozzle",
+          "back.shaft",
+          "back.frontBearing",
+          "back.rearBearing"
+        ],
+        [
+          "back.casing"
         ],
         [
           "armL1"
         ],
         [
-          "armR1"
+          "armR1.intakeLip",
+          "armR1.impeller",
+          "armR1.diffuser",
+          "armR1.combustor",
+          "armR1.nozzleGuideVanes",
+          "armR1.turbineWheel",
+          "armR1.nozzle",
+          "armR1.shaft",
+          "armR1.frontBearing",
+          "armR1.rearBearing"
+        ],
+        [
+          "armR1.casing"
         ]
       ],
       "step" : 3,
@@ -3485,7 +3692,7 @@
           "unit" : "helmet"
         },
         {
-          "extent" : 48,
+          "extent" : 40,
           "hiddenBy" : [
 
           ],
@@ -3496,15 +3703,26 @@
             "armL1.combustor",
             "armL1.nozzleGuideVanes",
             "armL1.turbineWheel",
-            "armL1.nozzle",
             "armL1.shaft",
             "armL1.frontBearing",
             "armL1.rearBearing",
             "armL1.casing"
           ],
-          "pixels" : 1104,
+          "pixels" : 832,
           "small" : true,
           "unit" : "armL1"
+        },
+        {
+          "extent" : 20,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "armL1.nozzle"
+          ],
+          "pixels" : 272,
+          "small" : true,
+          "unit" : "armL1.nozzle"
         },
         {
           "extent" : 0,
@@ -3621,7 +3839,19 @@
           "helmet"
         ],
         [
-          "armL1"
+          "armL1.intakeLip",
+          "armL1.impeller",
+          "armL1.diffuser",
+          "armL1.combustor",
+          "armL1.nozzleGuideVanes",
+          "armL1.turbineWheel",
+          "armL1.shaft",
+          "armL1.frontBearing",
+          "armL1.rearBearing",
+          "armL1.casing"
+        ],
+        [
+          "armL1.nozzle"
         ],
         [
           "armL2"
@@ -3642,6 +3872,220 @@
       "step" : 5,
       "subset" : [
         "pilot.skull"
+      ]
+    },
+    {
+      "annotate" : null,
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.88,
+      "ghost" : [
+        "back.nozzleGuideVanes",
+        "back.shaft"
+      ],
+      "groups" : [
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.impeller"
+          ],
+          "pixels" : 4576,
+          "small" : false,
+          "unit" : "back.impeller"
+        },
+        {
+          "extent" : 56,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.combustor"
+          ],
+          "pixels" : 5520,
+          "small" : false,
+          "unit" : "back.combustor"
+        },
+        {
+          "extent" : 60,
+          "hiddenBy" : [
+            "back.nozzleGuideVanes",
+            "back.shaft"
+          ],
+          "parts" : [
+            "back.turbineWheel"
+          ],
+          "pixels" : 2048,
+          "small" : true,
+          "unit" : "back.turbineWheel"
+        },
+        {
+          "extent" : 108,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.nozzle"
+          ],
+          "pixels" : 4240,
+          "small" : false,
+          "unit" : "back.nozzle"
+        },
+        {
+          "extent" : 128,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 26032,
+          "small" : false,
+          "unit" : "back.casing"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 6: at the closest framing that keeps its subject whole, back.turbineWheel shows 2048 px, shorter side 60 px (minimum 3379 px and 24 px per group). Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "back.impeller"
+        ],
+        [
+          "back.combustor"
+        ],
+        [
+          "back.turbineWheel"
+        ],
+        [
+          "back.nozzle"
+        ],
+        [
+          "back.casing"
+        ]
+      ],
+      "step" : 6,
+      "subset" : [
+        "back.turbineWheel"
+      ]
+    },
+    {
+      "annotate" : {
+        "keep" : [
+          "lJetcat",
+          "lNozzle",
+          "aJetOut"
+        ],
+        "move" : [
+          "lRpm",
+          "aSpin"
+        ]
+      },
+      "beat" : null,
+      "cut" : [
+
+      ],
+      "fill" : 0.55600000000000005,
+      "ghost" : [
+        "back.intakeLip",
+        "back.diffuser",
+        "back.shaft",
+        "back.rearBearing",
+        "back.nozzleGuideVanes"
+      ],
+      "groups" : [
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "back.intakeLip",
+            "back.diffuser"
+          ],
+          "parts" : [
+            "back.impeller"
+          ],
+          "pixels" : 1664,
+          "small" : true,
+          "unit" : "back.impeller"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "back.shaft",
+            "back.diffuser",
+            "back.rearBearing"
+          ],
+          "parts" : [
+            "back.combustor"
+          ],
+          "pixels" : 2352,
+          "small" : true,
+          "unit" : "back.combustor"
+        },
+        {
+          "extent" : 28,
+          "hiddenBy" : [
+            "back.nozzleGuideVanes",
+            "back.shaft"
+          ],
+          "parts" : [
+            "back.turbineWheel"
+          ],
+          "pixels" : 800,
+          "small" : true,
+          "unit" : "back.turbineWheel"
+        },
+        {
+          "extent" : 64,
+          "hiddenBy" : [
+            "back.nozzleGuideVanes"
+          ],
+          "parts" : [
+            "back.nozzle"
+          ],
+          "pixels" : 2208,
+          "small" : true,
+          "unit" : "back.nozzle"
+        },
+        {
+          "extent" : 80,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "back.casing"
+          ],
+          "pixels" : 10464,
+          "small" : false,
+          "unit" : "back.casing"
+        }
+      ],
+      "minimumExtent" : 24,
+      "minimumPixels" : 3379,
+      "repair" : "Step 7: at the closest framing that keeps its subject whole, back.impeller shows 1664 px, shorter side 36 px; back.combustor shows 2352 px, shorter side 36 px; back.turbineWheel shows 800 px, shorter side 28 px; back.nozzle shows 2208 px, shorter side…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "back.impeller"
+        ],
+        [
+          "back.combustor"
+        ],
+        [
+          "back.turbineWheel"
+        ],
+        [
+          "back.nozzle"
+        ],
+        [
+          "back.casing"
+        ]
+      ],
+      "step" : 7,
+      "subset" : [
+        "back.impeller"
       ]
     }
   ],
@@ -3664,6 +4108,14 @@
     {
       "part" : "pilot.skull",
       "reason" : "framing.subject.small.step.5"
+    },
+    {
+      "part" : "back.turbineWheel",
+      "reason" : "framing.subject.small.step.6"
+    },
+    {
+      "part" : "back.impeller",
+      "reason" : "framing.subject.small.step.7"
     }
   ]
 }

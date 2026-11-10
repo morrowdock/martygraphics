@@ -2158,7 +2158,7 @@
           "unit" : "pilot.body"
         },
         {
-          "extent" : 36,
+          "extent" : 32,
           "hiddenBy" : [
             "pilot.lowerArmL",
             "pilot.upperArmL"
@@ -2173,17 +2173,28 @@
             "eL1.nozzle",
             "eL1.shaft",
             "eL1.frontBearing",
-            "eL1.rearBearing",
-            "eL1.casing"
+            "eL1.rearBearing"
           ],
-          "pixels" : 2288,
+          "pixels" : 656,
           "small" : true,
           "unit" : "eL1"
         },
         {
+          "extent" : 36,
+          "hiddenBy" : [
+            "pilot.lowerArmL"
+          ],
+          "parts" : [
+            "eL1.casing"
+          ],
+          "pixels" : 1632,
+          "small" : true,
+          "unit" : "eL1.casing"
+        },
+        {
           "extent" : 52,
           "hiddenBy" : [
-
+            "pilot.lowerArmL"
           ],
           "parts" : [
             "eL2.intakeLip",
@@ -2195,12 +2206,23 @@
             "eL2.nozzle",
             "eL2.shaft",
             "eL2.frontBearing",
-            "eL2.rearBearing",
+            "eL2.rearBearing"
+          ],
+          "pixels" : 1200,
+          "small" : true,
+          "unit" : "eL2"
+        },
+        {
+          "extent" : 52,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
             "eL2.casing"
           ],
-          "pixels" : 3952,
-          "small" : false,
-          "unit" : "eL2"
+          "pixels" : 2752,
+          "small" : true,
+          "unit" : "eL2.casing"
         },
         {
           "extent" : 44,
@@ -2217,15 +2239,26 @@
             "eR1.nozzle",
             "eR1.shaft",
             "eR1.frontBearing",
-            "eR1.rearBearing",
-            "eR1.casing"
+            "eR1.rearBearing"
           ],
-          "pixels" : 2304,
+          "pixels" : 960,
           "small" : true,
           "unit" : "eR1"
         },
         {
-          "extent" : 32,
+          "extent" : 36,
+          "hiddenBy" : [
+            "pilot.lowerArmR"
+          ],
+          "parts" : [
+            "eR1.casing"
+          ],
+          "pixels" : 1344,
+          "small" : true,
+          "unit" : "eR1.casing"
+        },
+        {
+          "extent" : 28,
           "hiddenBy" : [
             "pilot.lowerArmR",
             "pilot.upperArmR"
@@ -2240,15 +2273,27 @@
             "eR2.nozzle",
             "eR2.shaft",
             "eR2.frontBearing",
-            "eR2.rearBearing",
-            "eR2.casing"
+            "eR2.rearBearing"
           ],
-          "pixels" : 1264,
+          "pixels" : 464,
           "small" : true,
           "unit" : "eR2"
         },
         {
-          "extent" : 56,
+          "extent" : 28,
+          "hiddenBy" : [
+            "pilot.lowerArmR",
+            "pilot.upperArmR"
+          ],
+          "parts" : [
+            "eR2.casing"
+          ],
+          "pixels" : 800,
+          "small" : true,
+          "unit" : "eR2.casing"
+        },
+        {
+          "extent" : 32,
           "hiddenBy" : [
             "pilot.upperArmL",
             "pilot.skull"
@@ -2263,40 +2308,120 @@
             "eB.nozzle",
             "eB.shaft",
             "eB.frontBearing",
-            "eB.rearBearing",
-            "eB.casing"
+            "eB.rearBearing"
           ],
-          "pixels" : 2720,
+          "pixels" : 1312,
           "small" : true,
           "unit" : "eB"
+        },
+        {
+          "extent" : 56,
+          "hiddenBy" : [
+            "pilot.upperArmL"
+          ],
+          "parts" : [
+            "eB.casing"
+          ],
+          "pixels" : 1408,
+          "small" : true,
+          "unit" : "eB.casing"
         }
       ],
       "minimumExtent" : 16.699999999999999,
       "minimumPixels" : 3425,
-      "repair" : "Beat 2: at the closest framing that keeps its subject whole, eL1 shows 2288 px, shorter side 36 px; eR1 shows 2304 px, shorter side 44 px; eR2 shows 1264 px, shorter side 32 px; eB shows 2720 px, shorter side 56 px (minimum 3425 px and 17 px per group…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "repair" : "Beat 2: at the closest framing that keeps its subject whole, eL1 shows 656 px, shorter side 32 px; eL1.casing shows 1632 px, shorter side 36 px; eL2 shows 1200 px, shorter side 52 px; eL2.casing shows 2752 px, shorter side 52 px; eR1 shows 960 px, sho…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
       "split" : [
         [
           "pilot.body"
         ],
         [
-          "eL1"
+          "eL1.intakeLip",
+          "eL1.impeller",
+          "eL1.diffuser",
+          "eL1.combustor",
+          "eL1.nozzleGuideVanes",
+          "eL1.turbineWheel",
+          "eL1.nozzle",
+          "eL1.shaft",
+          "eL1.frontBearing",
+          "eL1.rearBearing"
         ],
         [
-          "eL2"
+          "eL1.casing"
         ],
         [
-          "eR1"
+          "eL2.intakeLip",
+          "eL2.impeller",
+          "eL2.diffuser",
+          "eL2.combustor",
+          "eL2.nozzleGuideVanes",
+          "eL2.turbineWheel",
+          "eL2.nozzle",
+          "eL2.shaft",
+          "eL2.frontBearing",
+          "eL2.rearBearing"
         ],
         [
-          "eR2"
+          "eL2.casing"
         ],
         [
-          "eB"
+          "eR1.intakeLip",
+          "eR1.impeller",
+          "eR1.diffuser",
+          "eR1.combustor",
+          "eR1.nozzleGuideVanes",
+          "eR1.turbineWheel",
+          "eR1.nozzle",
+          "eR1.shaft",
+          "eR1.frontBearing",
+          "eR1.rearBearing"
+        ],
+        [
+          "eR1.casing"
+        ],
+        [
+          "eR2.intakeLip",
+          "eR2.impeller",
+          "eR2.diffuser",
+          "eR2.combustor",
+          "eR2.nozzleGuideVanes",
+          "eR2.turbineWheel",
+          "eR2.nozzle",
+          "eR2.shaft",
+          "eR2.frontBearing",
+          "eR2.rearBearing"
+        ],
+        [
+          "eR2.casing"
+        ],
+        [
+          "eB.intakeLip",
+          "eB.impeller",
+          "eB.diffuser",
+          "eB.combustor",
+          "eB.nozzleGuideVanes",
+          "eB.turbineWheel",
+          "eB.nozzle",
+          "eB.shaft",
+          "eB.frontBearing",
+          "eB.rearBearing"
+        ],
+        [
+          "eB.casing"
         ]
       ],
       "step" : 2,
       "subset" : [
-        "eL1"
+        "eL1.intakeLip",
+        "eL1.impeller",
+        "eL1.diffuser",
+        "eL1.combustor",
+        "eL1.nozzleGuideVanes",
+        "eL1.turbineWheel",
+        "eL1.nozzle",
+        "eL1.shaft",
+        "eL1.frontBearing",
+        "eL1.rearBearing"
       ]
     },
     {
@@ -2393,12 +2518,23 @@
             "eL2.nozzle",
             "eL2.shaft",
             "eL2.frontBearing",
-            "eL2.rearBearing",
-            "eL2.casing"
+            "eL2.rearBearing"
           ],
-          "pixels" : 1568,
+          "pixels" : 336,
           "small" : true,
           "unit" : "eL2"
+        },
+        {
+          "extent" : 44,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eL2.casing"
+          ],
+          "pixels" : 1232,
+          "small" : true,
+          "unit" : "eL2.casing"
         },
         {
           "extent" : 36,
@@ -2428,7 +2564,7 @@
       ],
       "minimumExtent" : 16.699999999999999,
       "minimumPixels" : 2435,
-      "repair" : "Beat 4: at the closest framing that keeps its subject whole, pilot.lowerArmL shows 512 px, shorter side 60 px; pilot.handL shows 928 px, shorter side 36 px; eL1 shows 16 px, shorter side 4 px; eL2 shows 1568 px, shorter side 48 px; eR1.casing shows 12…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "repair" : "Beat 4: at the closest framing that keeps its subject whole, pilot.lowerArmL shows 512 px, shorter side 60 px; pilot.handL shows 928 px, shorter side 36 px; eL1 shows 16 px, shorter side 4 px; eL2 shows 336 px, shorter side 48 px; eL2.casing shows 123…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
       "split" : [
         [
           "pilot.upperArmL"
@@ -2443,7 +2579,19 @@
           "eL1"
         ],
         [
-          "eL2"
+          "eL2.intakeLip",
+          "eL2.impeller",
+          "eL2.diffuser",
+          "eL2.combustor",
+          "eL2.nozzleGuideVanes",
+          "eL2.turbineWheel",
+          "eL2.nozzle",
+          "eL2.shaft",
+          "eL2.frontBearing",
+          "eL2.rearBearing"
+        ],
+        [
+          "eL2.casing"
         ],
         [
           "eR1.casing"
@@ -2455,6 +2603,295 @@
       "step" : 4,
       "subset" : [
         "pilot.lowerArmL"
+      ]
+    },
+    {
+      "annotate" : {
+        "keep" : [
+          "lIntake",
+          "lComp",
+          "lDiff",
+          "aAirIn"
+        ],
+        "move" : [
+          "lExample"
+        ]
+      },
+      "beat" : 6,
+      "cut" : [
+
+      ],
+      "fill" : 0.437,
+      "ghost" : [
+        "pilot"
+      ],
+      "groups" : [
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+            "pilot"
+          ],
+          "parts" : [
+            "eR1.intakeLip"
+          ],
+          "pixels" : 1840,
+          "small" : true,
+          "unit" : "eR1.intakeLip"
+        },
+        {
+          "extent" : 28,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.impeller"
+          ],
+          "pixels" : 848,
+          "small" : true,
+          "unit" : "eR1.impeller"
+        },
+        {
+          "extent" : 72,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.diffuser"
+          ],
+          "pixels" : 1536,
+          "small" : true,
+          "unit" : "eR1.diffuser"
+        },
+        {
+          "extent" : 108,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.combustor",
+            "eR1.nozzleGuideVanes",
+            "eR1.turbineWheel",
+            "eR1.nozzle",
+            "eR1.shaft",
+            "eR1.frontBearing",
+            "eR1.rearBearing",
+            "eR1.casing"
+          ],
+          "pixels" : 13280,
+          "small" : false,
+          "unit" : "eR1"
+        }
+      ],
+      "minimumExtent" : 16.699999999999999,
+      "minimumPixels" : 2435,
+      "repair" : "Beat 6: at the closest framing that keeps its subject whole, eR1.intakeLip shows 1840 px, shorter side 40 px; eR1.impeller shows 848 px, shorter side 28 px; eR1.diffuser shows 1536 px, shorter side 72 px (minimum 2435 px and 17 px per group). Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "eR1.intakeLip"
+        ],
+        [
+          "eR1.impeller"
+        ],
+        [
+          "eR1.diffuser"
+        ],
+        [
+          "eR1.combustor",
+          "eR1.nozzleGuideVanes",
+          "eR1.turbineWheel",
+          "eR1.nozzle",
+          "eR1.shaft",
+          "eR1.frontBearing",
+          "eR1.rearBearing",
+          "eR1.casing"
+        ]
+      ],
+      "step" : 6,
+      "subset" : [
+        "eR1.intakeLip"
+      ]
+    },
+    {
+      "annotate" : {
+        "keep" : [
+          "lComb",
+          "lTurb"
+        ],
+        "move" : [
+          "lFuel"
+        ]
+      },
+      "beat" : 7,
+      "cut" : [
+
+      ],
+      "fill" : 0.69599999999999995,
+      "ghost" : [
+
+      ],
+      "groups" : [
+        {
+          "extent" : 228,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.intakeLip",
+            "eR1.impeller",
+            "eR1.diffuser",
+            "eR1.nozzleGuideVanes",
+            "eR1.nozzle",
+            "eR1.frontBearing",
+            "eR1.rearBearing",
+            "eR1.casing"
+          ],
+          "pixels" : 29248,
+          "small" : false,
+          "unit" : "eR1"
+        },
+        {
+          "extent" : 136,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.combustor"
+          ],
+          "pixels" : 13024,
+          "small" : false,
+          "unit" : "eR1.combustor"
+        },
+        {
+          "extent" : 40,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.turbineWheel"
+          ],
+          "pixels" : 1056,
+          "small" : true,
+          "unit" : "eR1.turbineWheel"
+        },
+        {
+          "extent" : 0,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.shaft"
+          ],
+          "pixels" : 0,
+          "small" : true,
+          "unit" : "eR1.shaft"
+        }
+      ],
+      "minimumExtent" : 16.699999999999999,
+      "minimumPixels" : 2435,
+      "repair" : "Beat 7: at the closest framing that keeps its subject whole, eR1.turbineWheel shows 1056 px, shorter side 40 px; eR1.shaft shows 0 px, shorter side 0 px (minimum 2435 px and 17 px per group). Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "eR1.intakeLip",
+          "eR1.impeller",
+          "eR1.diffuser",
+          "eR1.nozzleGuideVanes",
+          "eR1.nozzle",
+          "eR1.frontBearing",
+          "eR1.rearBearing",
+          "eR1.casing"
+        ],
+        [
+          "eR1.combustor"
+        ],
+        [
+          "eR1.turbineWheel"
+        ],
+        [
+          "eR1.shaft"
+        ]
+      ],
+      "step" : 7,
+      "subset" : [
+        "eR1.turbineWheel"
+      ]
+    },
+    {
+      "annotate" : {
+        "keep" : [
+          "lNoz",
+          "aJet"
+        ],
+        "move" : [
+          "lF19",
+          "lExample"
+        ]
+      },
+      "beat" : 8,
+      "cut" : [
+
+      ],
+      "fill" : 0.32000000000000001,
+      "ghost" : [
+
+      ],
+      "groups" : [
+        {
+          "extent" : 104,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.intakeLip",
+            "eR1.impeller",
+            "eR1.diffuser",
+            "eR1.combustor",
+            "eR1.nozzleGuideVanes",
+            "eR1.turbineWheel",
+            "eR1.shaft",
+            "eR1.frontBearing",
+            "eR1.rearBearing",
+            "eR1.casing"
+          ],
+          "pixels" : 7120,
+          "small" : false,
+          "unit" : "eR1"
+        },
+        {
+          "extent" : 44,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eR1.nozzle"
+          ],
+          "pixels" : 2112,
+          "small" : true,
+          "unit" : "eR1.nozzle"
+        }
+      ],
+      "minimumExtent" : 16.699999999999999,
+      "minimumPixels" : 2435,
+      "repair" : "Beat 8: at the closest framing that keeps its subject whole, eR1.nozzle shows 2112 px, shorter side 44 px (minimum 2435 px and 17 px per group). Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "eR1.intakeLip",
+          "eR1.impeller",
+          "eR1.diffuser",
+          "eR1.combustor",
+          "eR1.nozzleGuideVanes",
+          "eR1.turbineWheel",
+          "eR1.shaft",
+          "eR1.frontBearing",
+          "eR1.rearBearing",
+          "eR1.casing"
+        ],
+        [
+          "eR1.nozzle"
+        ]
+      ],
+      "step" : 8,
+      "subset" : [
+        "eR1.nozzle"
       ]
     },
     {
@@ -5306,6 +5743,21 @@
     {
       "id" : "pilot.lowerArmL",
       "reason" : "framing.subject.small.beat.4",
+      "view" : "beat"
+    },
+    {
+      "id" : "eR1.intakeLip",
+      "reason" : "framing.subject.small.beat.6",
+      "view" : "beat"
+    },
+    {
+      "id" : "eR1.turbineWheel",
+      "reason" : "framing.subject.small.beat.7",
+      "view" : "beat"
+    },
+    {
+      "id" : "eR1.nozzle",
+      "reason" : "framing.subject.small.beat.8",
       "view" : "beat"
     },
     {

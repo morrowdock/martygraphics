@@ -1865,9 +1865,11 @@ camera (the `mannequin` does), `backLeft` shows its left side and back (its left
     of the 1280 × 528 px safe window of a captioned 1280 × 800 still), and the shorter side of its visible pixels is
     at least **24 px at a frame 800 px high**, scaled with the height (`subjectExtentPixels`: 65 px at 3840 × 2160). A
     group is an instance that the step or beat names **by its instance id** in `focus` or `highlight`
-    (`MGFramedStill.wholeInstances`); every other subject part is its own group: a part named on its own in `focus` or
-    `highlight`, or an annotation target, also when such parts together cover an instance. So a foot named beside the
-    body, or a hidden bearing among eleven named engine parts, is measured on its own.
+    (`MGFramedStill.wholeInstances`), less its explicitly named parts; every other subject part is its own group. A
+    part named explicitly anywhere (in `focus`, in `highlight`, or as an annotation target) is always measured alone,
+    also when its instance is named too and also when such parts together cover an instance. So a foot named beside
+    the body, a hidden bearing among eleven named engine parts, or a bearing named beside its whole engine
+    (`"focus": ["jet", "jet.frontBearing"]`) is measured on its own.
     The moved chain is framed but not measured. Visible pixels come from the still's depth raster (`MGStillRaster`).
   - **Context** (every other part) may be cut at the safe window's edges. The renderer clips the model to the safe
     window (`MGSolidRenderer.render(width:height:clip:)`; `marty-solid render` does this for every still and story

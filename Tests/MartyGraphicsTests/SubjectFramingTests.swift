@@ -244,6 +244,26 @@ final class SubjectFramingTests: XCTestCase {
         XCTAssertNil(whole["subjectFloors"])
     }
 
+    /// A sub-part named explicitly is always measured alone, also when its instance is named too: the instance stays one
+    /// group for its other parts, and the hidden front bearing warns (re-check of 2452f2d: it was pooled into the
+    /// instance and measured 0 px with no warning). Both a focus list and a highlight name it.
+    func testANamedSubPartIsMeasuredAloneBesideItsNamedInstance() throws {
+        for keys in [#""focus":["jet","jet.frontBearing"]"#, #""focus":["jet"],"highlight":["jet.frontBearing"]"#] {
+            let t = #"{"v":2,"kind":"assembly","parts":[{"id":"jet","use":"microTurbojet","with":{"cutaway":0}}],"steps":[{"say":"The engine and its bearing.","camera":"side",\#(keys)}]}"#
+            let o = report(t)
+            guard case .array(let floors)? = o["subjectFloors"], case .object(let f)? = floors.first, case .array(let groups)? = f["groups"]
+            else { return XCTFail("\(keys): subjectFloors") }
+            let units = groups.compactMap { g -> String? in if case .object(let x) = g, case .string(let u)? = x["unit"] { return u }; return nil }
+            XCTAssertEqual(units, ["jet", "jet.frontBearing"], keys)
+            let bearing = groups.compactMap { g -> [String: MGJSON]? in if case .object(let x) = g, x["unit"] == .string("jet.frontBearing") { return x }; return nil }.first
+            XCTAssertEqual(bearing?["pixels"], .number(0), keys)
+            XCTAssertEqual(bearing?["small"], .bool(true), keys)
+            guard case .object(let jet)? = groups.first, case .array(let parts)? = jet["parts"] else { return XCTFail("jet group") }
+            XCTAssertFalse(parts.contains(.string("jet.frontBearing")), "the instance group keeps its other parts only")
+            XCTAssertEqual(parts.count, 10)
+        }
+    }
+
     /// S3: the public API's default returns the complete ghost list (the step's own ghosts kept), as the CLI does.
     func testThePublicAPIReturnsTheCompleteGhostList() throws {
         let doc = try compile(#"{"v": 2, "kind": "assembly", "parts": [{"id": "core", "shape": {"box": {"size": [20, 20, 20]}}}, {"id": "shellA", "shape": {"box": {"size": [100, 100, 100]}}}, {"id": "shellB", "shape": {"box": {"size": [200, 200, 200]}}}], "steps": [{"say": "The core.", "camera": "front", "focus": ["core"], "ghost": ["shellA"]}]}"#)

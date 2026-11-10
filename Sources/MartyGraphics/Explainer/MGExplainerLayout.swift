@@ -328,7 +328,8 @@ extension MGExplainerFrame {
                 if case .object(let v)? = doc.beats[b.beat].view { named += MGSolidDocument.strings(v["focus"]) }
             }
             return MGFramedStill(still: still, shot: beatShot(d, view: b.view, stepIndex: b.stepIndex),
-                                 window: MGSolidFraming.Window(titleBand: 0, captionBand: 0), rule: clear.rule, wholeInstances: d.instances(named))
+                                 window: MGSolidFraming.Window(titleBand: 0, captionBand: 0), rule: clear.rule, wholeInstances: d.instances(named),
+                                 namedParts: d.namedParts(named))
         })
     }
 

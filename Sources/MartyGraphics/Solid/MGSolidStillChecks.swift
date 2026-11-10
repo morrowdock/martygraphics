@@ -20,10 +20,14 @@ public struct MGFramedStill: Sendable {
     public let rule: MGSolidFraming.Rule
     /// The instances the step or beat names whole, by instance id, in `focus` or `highlight` (`subjectGroups`).
     public let wholeInstances: Set<String>
+    /// The parts the step or beat names explicitly in `focus` or `highlight` (part ids, not instance ids); with the
+    /// targets of the annotations the still draws, each is measured alone (`subjectGroups`).
+    public let namedParts: Set<String>
 
     public init(still: MGAnnotationAnchorView, shot: MGSolidShot, window: MGSolidFraming.Window, rule: MGSolidFraming.Rule,
-                wholeInstances: Set<String> = []) {
+                wholeInstances: Set<String> = [], namedParts: Set<String> = []) {
         self.still = still; self.shot = shot; self.window = window; self.rule = rule; self.wholeInstances = wholeInstances
+        self.namedParts = namedParts
     }
 }
 
@@ -396,7 +400,7 @@ extension MGSolidDocument {
             let still = MGAnnotationAnchorView(view: clear.view(view(step: i)), params: shot.params, camera: clear.camera,
                                                width: w, height: h, step: i, beat: nil)
             return MGFramedStill(still: still, shot: shot, window: MGSolidFraming.Window(titleBand: title, captionBand: caption), rule: clear.rule,
-                                 wholeInstances: authoredInstances(step: i))
+                                 wholeInstances: authoredInstances(step: i), namedParts: authoredParts(step: i))
         }
     }
 
@@ -407,7 +411,7 @@ extension MGSolidDocument {
         for f in stills { named.formUnion(namedUnits(f)) }
         let rasters = stills.map { f -> MGStillRaster? in
             let subject = MGSolidFraming.subjectParts(self, shot: f.shot)
-            var groups = MGSolidFraming.subjectGroups(self, subject.parts, whole: f.wholeInstances).map(\.parts)
+            var groups = MGSolidFraming.subjectGroups(self, subject.parts, whole: f.wholeInstances, named: floorNamed(f)).map(\.parts)
             groups += unitsShown(f.still, named).map { u in unitParts(of: u).map(\.id) }
             guard !groups.isEmpty else { return nil }
             return MGStillRaster(self, f.still, groups: groups)
@@ -443,7 +447,7 @@ extension MGSolidDocument {
             guard !subject.parts.isEmpty else { return nil }
             let v = f.still
             let aspect = v.width / v.height
-            let groups = MGSolidFraming.subjectGroups(self, subject.parts, whole: f.wholeInstances)
+            let groups = MGSolidFraming.subjectGroups(self, subject.parts, whole: f.wholeInstances, named: floorNamed(f))
             guard let raster = rasters.map({ $0[index] }) ?? MGStillRaster(self, v, groups: groups.map(\.parts)) else { return nil }
             let w = f.window.usable
             let windowPixels = (w.right - w.left) / 2 * v.width * (w.top - w.bottom) / 2 * v.height
@@ -497,6 +501,31 @@ extension MGSolidDocument {
         return instances(MGSolidDocument.strings(s["focus"]) + MGSolidDocument.strings(s["highlight"]))
     }
 
+    /// The part ids that step `step` names in its authored `focus` or `highlight` (not instance ids).
+    func authoredParts(step: Int?) -> Set<String> {
+        guard let step, case .object(let o) = source, case .array(let steps)? = o["steps"], steps.indices.contains(step),
+              case .object(let s) = steps[step] else { return [] }
+        return namedParts(MGSolidDocument.strings(s["focus"]) + MGSolidDocument.strings(s["highlight"]))
+    }
+
+    /// The ids of `selectors` that name a single part of the assembly (not a whole instance).
+    func namedParts(_ selectors: [String]) -> Set<String> {
+        let ids = Set(assembly.parts.map(\.id)), whole = instances(selectors)
+        return Set(selectors.filter { ids.contains($0) && !whole.contains($0) })
+    }
+
+    /// The parts named for the floors in a still: its explicitly named parts and the targets of the labels and arrows it
+    /// draws (not dropped).
+    func floorNamed(_ f: MGFramedStill) -> Set<String> {
+        var out = f.namedParts
+        let dropped = Set(f.still.view.arrowDrops.map(\.id))
+        for id in checkedAnnotations(f.still.view, params: f.still.params) ?? [] where !dropped.contains(id) {
+            guard annotations.label(id) != nil || annotations.arrow(id) != nil else { continue }
+            out.formUnion(MGSolidAnnotationEngine.anchors(annotations, id).compactMap(\.part))
+        }
+        return out
+    }
+
     /// The ids of `selectors` that name a whole instance (a unit with more than one part).
     func instances(_ selectors: [String]) -> Set<String> {
         Set(selectors.filter { MGSolidDocument.unitID($0) == $0 && unitParts(of: $0).count > 1 })
@@ -536,7 +565,7 @@ extension MGSolidDocument {
                 let shown = unitsShown(f.still, named)
                 if shown.isEmpty { px = [:] } else {
                     guard let r = rasters[index] else { continue }
-                    let offset = MGSolidFraming.subjectGroups(self, MGSolidFraming.subjectParts(self, shot: f.shot).parts, whole: f.wholeInstances).count
+                    let offset = MGSolidFraming.subjectGroups(self, MGSolidFraming.subjectParts(self, shot: f.shot).parts, whole: f.wholeInstances, named: floorNamed(f)).count
                     var out: [String: Int] = [:]
                     for (k, u) in shown.enumerated() where offset + k < 64 { out[u] = r.visible(offset + k).pixels }
                     px = out
