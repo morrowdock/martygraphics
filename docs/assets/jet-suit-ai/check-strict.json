@@ -1,0 +1,3962 @@
+{
+  "anchorIssues" : [
+
+  ],
+  "anchorUntested" : [
+
+  ],
+  "annotations" : [
+    {
+      "anchorsWorld" : [
+        [
+          700,
+          0,
+          1800
+        ]
+      ],
+      "id" : "lSuit",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Daedalus suit 2018, claimed: two per arm, one on back",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          700,
+          0,
+          1600
+        ]
+      ],
+      "id" : "lMk4",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Mk4 (claimed latest): three back turbines",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          700,
+          0,
+          1400
+        ]
+      ],
+      "id" : "lMk4arm",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Mk4 engines per arm: not found in this search",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -700,
+          0,
+          1600
+        ]
+      ],
+      "id" : "lThrust",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Up arrows: thrust of each engine (no value)",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -700,
+          0,
+          1400
+        ]
+      ],
+      "id" : "lTotal",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Total thrust: not found in this search",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -700,
+          300,
+          1200
+        ]
+      ],
+      "id" : "lFuel",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Fuel, claimed: Jet A-1 or diesel in a back bladder",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -700,
+          300,
+          1000
+        ]
+      ],
+      "id" : "lShare",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Arm and back thrust split: not found in this search",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -700,
+          -300,
+          1300
+        ]
+      ],
+      "id" : "lExample",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Micro gas turbine-style engine (example)",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -294.03375151526717,
+          -70,
+          1097.7215157565606
+        ]
+      ],
+      "id" : "lIntake",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Intake",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -298.23697280773206,
+          -70,
+          1082.0348803376262
+        ]
+      ],
+      "id" : "lComp",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Compressor wheel",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -320.64796056554349,
+          -71.739000000000004,
+          1031.5117364061641
+        ]
+      ],
+      "id" : "lDiff",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Diffuser",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -319.91565602551924,
+          -70.000000000000014,
+          1001.1289331276537
+        ]
+      ],
+      "id" : "lComb",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Combustor: fuel burns here",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -331.61253031281922,
+          -81.876000000000019,
+          952.90097928439911
+        ]
+      ],
+      "id" : "lTurb",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Turbine wheel",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -339.32708440820829,
+          -70.000000000000028,
+          928.68449615597353
+        ]
+      ],
+      "id" : "lNoz",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Nozzle",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -700,
+          -300,
+          1100
+        ]
+      ],
+      "id" : "lF19",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Engines likely micro gas turbines",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          700,
+          0,
+          1200
+        ]
+      ],
+      "id" : "lLimit",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Solved: shaft turning only; thrust not simulated",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          396.33031139923969,
+          69.999999999999986,
+          986.40478819100178
+        ],
+        [
+          349.74288328078597,
+          70,
+          1160.2714369230341
+        ]
+      ],
+      "id" : "aL1",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          396.33031139923969,
+          -70.000000000000014,
+          986.40478819100178
+        ],
+        [
+          349.74288328078597,
+          -70,
+          1160.2714369230341
+        ]
+      ],
+      "id" : "aL2",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -261.10069571877017,
+          -70.000000000000014,
+          950.17012187664886
+        ],
+        [
+          -214.51326760031642,
+          -70,
+          1124.0367706086811
+        ]
+      ],
+      "id" : "aR1",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -130.98855506598008,
+          -106.10100000000001,
+          915.30667886324909
+        ],
+        [
+          -84.401126947526336,
+          -106.10099999999998,
+          1089.1733275952813
+        ]
+      ],
+      "id" : "aR2",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          90,
+          180,
+          1300
+        ],
+        [
+          90,
+          180.00000000000003,
+          1500
+        ]
+      ],
+      "id" : "aB",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : true,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          -375,
+          1240
+        ],
+        [
+          0,
+          -375,
+          840
+        ]
+      ],
+      "id" : "aW",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Weight of pilot, suit and fuel",
+      "tier" : "solved",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          700,
+          -300,
+          1000
+        ],
+        [
+          343.63262091992749,
+          -3.9159999999999999,
+          879.12929859460507
+        ]
+      ],
+      "id" : "aSteer",
+      "kind" : "arrow",
+      "meaning" : "pointer",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Arm moved to aim thrust, claimed (schematic)",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -253.65798047927393,
+          -69.999999999999986,
+          1248.4059446576553
+        ],
+        [
+          -289.89264679362685,
+          -70,
+          1113.1763289771857
+        ]
+      ],
+      "id" : "aAirIn",
+      "kind" : "arrow",
+      "meaning" : "flow",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Air in",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -346.83283671618136,
+          -70.000000000000028,
+          900.67264719359048
+        ],
+        [
+          -390.83207438360989,
+          -70.000000000000057,
+          736.46525672444886
+        ]
+      ],
+      "id" : "aJet",
+      "kind" : "arrow",
+      "meaning" : "flow",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Hot jet out",
+      "tier" : "described",
+      "value" : null
+    }
+  ],
+  "arrowIssues" : [
+
+  ],
+  "beats" : [
+    {
+      "caption" : "A pilot wears small jet engines on each forearm and on the back, all nozzles pointing down. This is the Daedalus layout; the newer suit differs.",
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ],
+      "highlight" : {
+        "annotations" : [
+
+        ],
+        "board" : [
+
+        ],
+        "solid" : [
+          "eL1",
+          "eL2",
+          "eR1",
+          "eR2",
+          "eB"
+        ]
+      },
+      "n" : 1,
+      "template" : "A pilot wears small jet engines on each forearm and on the back, all nozzles pointing down. This is the Daedalus layout; the newer suit differs.",
+      "tier" : null,
+      "unchecked" : null,
+      "view" : {
+        "annotate" : [
+          "lSuit",
+          "lMk4",
+          "lMk4arm"
+        ],
+        "camera" : "hero"
+      }
+    },
+    {
+      "caption" : "Each jet pushes its engine up, and gravity pulls the pilot, suit and fuel down. In a hover the upward parts of the thrusts balance the weight, and side forces and turning moments balance.",
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ],
+      "highlight" : {
+        "annotations" : [
+
+        ],
+        "board" : [
+
+        ],
+        "solid" : [
+          "eL1",
+          "eL2",
+          "eR1",
+          "eR2",
+          "eB"
+        ]
+      },
+      "n" : 2,
+      "template" : "Each jet pushes its engine up, and gravity pulls the pilot, suit and fuel down. In a hover the upward parts of the thrusts balance the weight, and side forces and turning moments balance.",
+      "tier" : null,
+      "unchecked" : null,
+      "view" : {
+        "annotate" : [
+          "aL1",
+          "aL2",
+          "aR1",
+          "aR2",
+          "aB",
+          "aW",
+          "lThrust",
+          "lTotal"
+        ],
+        "camera" : "iso"
+      }
+    },
+    {
+      "caption" : "The table gives claimed figures for the current suit, which is not the layout shown here.",
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ],
+      "highlight" : {
+        "annotations" : [
+
+        ],
+        "board" : [
+          "t.r1",
+          "t.r2"
+        ],
+        "solid" : [
+
+        ]
+      },
+      "n" : 3,
+      "template" : "The table gives claimed figures for the current suit, which is not the layout shown here.",
+      "tier" : null,
+      "unchecked" : null,
+      "view" : {
+        "annotate" : [
+          "lMk4",
+          "lSuit"
+        ],
+        "camera" : "hero"
+      }
+    },
+    {
+      "caption" : "To steer, the pilot moves one arm, and the forearm engines fixed to it tilt their thrust. The forces no longer balance, so the body moves that way.",
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ],
+      "highlight" : {
+        "annotations" : [
+
+        ],
+        "board" : [
+
+        ],
+        "solid" : [
+          "pilot.upperArmL",
+          "pilot.lowerArmL",
+          "eL1",
+          "eL2"
+        ]
+      },
+      "n" : 4,
+      "template" : "To steer, the pilot moves one arm, and the forearm engines fixed to it tilt their thrust. The forces no longer balance, so the body moves that way.",
+      "tier" : null,
+      "unchecked" : null,
+      "view" : {
+        "annotate" : [
+          "aSteer",
+          "aL1",
+          "aL2",
+          "aR1",
+          "aR2",
+          "lThrust"
+        ],
+        "camera" : "front",
+        "pose" : {
+          "pilot" : {
+            "with" : {
+              "leftElbow" : 0,
+              "leftShoulder" : 60,
+              "rightElbow" : 0,
+              "rightShoulder" : 15
+            }
+          }
+        }
+      }
+    },
+    {
+      "caption" : "From behind: the back engine pushes near the body's centre line. How the load is shared between arm and back engines was not found in this search.",
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ],
+      "highlight" : {
+        "annotations" : [
+
+        ],
+        "board" : [
+
+        ],
+        "solid" : [
+          "eB"
+        ]
+      },
+      "n" : 5,
+      "template" : "From behind: the back engine pushes near the body's centre line. How the load is shared between arm and back engines was not found in this search.",
+      "tier" : null,
+      "unchecked" : null,
+      "view" : {
+        "annotate" : [
+          "aB",
+          "lFuel",
+          "lShare"
+        ],
+        "camera" : "back"
+      }
+    },
+    {
+      "caption" : "Cut open one arm engine: air enters the intake, and the spinning compressor wheel flings it outward into the diffuser, which squeezes it.",
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ],
+      "highlight" : {
+        "annotations" : [
+
+        ],
+        "board" : [
+
+        ],
+        "solid" : [
+          "eR1.impeller",
+          "eR1.diffuser"
+        ]
+      },
+      "n" : 6,
+      "template" : "Cut open one arm engine: air enters the intake, and the spinning compressor wheel flings it outward into the diffuser, which squeezes it.",
+      "tier" : null,
+      "unchecked" : null,
+      "view" : {
+        "annotate" : [
+          "lExample",
+          "lIntake",
+          "lComp",
+          "lDiff",
+          "aAirIn"
+        ],
+        "camera" : "front",
+        "focus" : [
+          "eR1"
+        ],
+        "section" : {
+          "normal" : [
+            0,
+            -1,
+            0
+          ],
+          "offset" : 70,
+          "parts" : [
+            "eR1.casing"
+          ]
+        },
+        "spin" : 1
+      }
+    },
+    {
+      "caption" : "Fuel burns with the oxygen in the squeezed air. The hot gas spins the turbine at 1 turn per input turn, the same as the compressor, because one shaft joins them.",
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 1,
+          "tol" : null,
+          "value" : "eR1.turbine.worldSpeed"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 1,
+          "tol" : null,
+          "value" : "eR1.compressor.worldSpeed"
+        }
+      ],
+      "facts" : [
+        "eR1.turbineWheel.worldSpeed"
+      ],
+      "highlight" : {
+        "annotations" : [
+
+        ],
+        "board" : [
+
+        ],
+        "solid" : [
+          "eR1.combustor",
+          "eR1.turbineWheel",
+          "eR1.shaft"
+        ]
+      },
+      "n" : 7,
+      "template" : "Fuel burns with the oxygen in the squeezed air. The hot gas spins the turbine at {eR1.turbine.worldSpeed} turn per input turn, the same as the compressor, because one shaft joins them.",
+      "tier" : "solved",
+      "unchecked" : null,
+      "view" : {
+        "annotate" : [
+          "lComb",
+          "lTurb",
+          "lFuel"
+        ],
+        "camera" : "front",
+        "focus" : [
+          "eR1"
+        ],
+        "section" : {
+          "normal" : [
+            0,
+            -1,
+            0
+          ],
+          "offset" : 70,
+          "parts" : [
+            "eR1.casing"
+          ]
+        },
+        "spin" : 1
+      }
+    },
+    {
+      "caption" : "The hot gas speeds up through the nozzle. Thrust is the reaction to that gas being pushed out fast.",
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ],
+      "highlight" : {
+        "annotations" : [
+
+        ],
+        "board" : [
+
+        ],
+        "solid" : [
+          "eR1.nozzle"
+        ]
+      },
+      "n" : 8,
+      "template" : "The hot gas speeds up through the nozzle. Thrust is the reaction to that gas being pushed out fast.",
+      "tier" : null,
+      "unchecked" : null,
+      "view" : {
+        "annotate" : [
+          "lNoz",
+          "aJet",
+          "lF19",
+          "lExample"
+        ],
+        "camera" : "front",
+        "focus" : [
+          "eR1"
+        ],
+        "section" : {
+          "normal" : [
+            0,
+            -1,
+            0
+          ],
+          "offset" : 70,
+          "parts" : [
+            "eR1.casing"
+          ]
+        },
+        "spin" : 1
+      }
+    },
+    {
+      "caption" : "Limits: only the shaft turning is solved. Airflow, burning fuel and thrust are not simulated, so the force arrows carry no value.",
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ],
+      "highlight" : {
+        "annotations" : [
+
+        ],
+        "board" : [
+
+        ],
+        "solid" : [
+          "eL1",
+          "eL2",
+          "eR1",
+          "eR2",
+          "eB"
+        ]
+      },
+      "n" : 9,
+      "template" : "Limits: only the shaft turning is solved. Airflow, burning fuel and thrust are not simulated, so the force arrows carry no value.",
+      "tier" : null,
+      "unchecked" : null,
+      "view" : {
+        "annotate" : [
+          "lLimit",
+          "lSuit",
+          "lTotal"
+        ],
+        "camera" : "hero",
+        "spin" : 1
+      }
+    }
+  ],
+  "budget" : {
+    "bytes" : 7599,
+    "limit" : 65536,
+    "statements" : 34,
+    "triangleLimit" : 1500000,
+    "triangles" : 116260
+  },
+  "engine" : {
+    "assemblyVersions" : [
+      1,
+      2
+    ],
+    "executableSHA256" : "a0b80b9e0725b07834ade63b1641ae03a8479699874981200c428c8b3f01f1e0",
+    "name" : "MartyGraphics",
+    "reportFormat" : 1,
+    "snapshotFormats" : [
+      "martygraphics.solid.snapshot\/1",
+      "martygraphics.solid.snapshot\/2"
+    ],
+    "version" : "unreleased"
+  },
+  "file" : {
+    "bytes" : 12225,
+    "lines" : 769,
+    "sha256" : "bb8f1893d90b869103fe84993a41585c5eaf8b73be2e8889a8cfe8f7f04b7df7"
+  },
+  "ids" : {
+    "annotations" : [
+      "lSuit",
+      "lMk4",
+      "lMk4arm",
+      "lThrust",
+      "lTotal",
+      "lFuel",
+      "lShare",
+      "lExample",
+      "lIntake",
+      "lComp",
+      "lDiff",
+      "lComb",
+      "lTurb",
+      "lNoz",
+      "lF19",
+      "lLimit",
+      "aL1",
+      "aL2",
+      "aR1",
+      "aR2",
+      "aB",
+      "aW",
+      "aSteer",
+      "aAirIn",
+      "aJet"
+    ],
+    "board" : [
+      "t"
+    ],
+    "controls" : [
+
+    ],
+    "solid" : [
+      "pilot",
+      "pilot.body",
+      "pilot.skull",
+      "pilot.upperArmL",
+      "pilot.lowerArmL",
+      "pilot.handL",
+      "pilot.upperArmR",
+      "pilot.lowerArmR",
+      "pilot.handR",
+      "pilot.legL",
+      "pilot.footL",
+      "pilot.legR",
+      "pilot.footR",
+      "eL1",
+      "eL1.intakeLip",
+      "eL1.impeller",
+      "eL1.diffuser",
+      "eL1.combustor",
+      "eL1.nozzleGuideVanes",
+      "eL1.turbineWheel",
+      "eL1.nozzle",
+      "eL1.shaft",
+      "eL1.frontBearing",
+      "eL1.rearBearing",
+      "eL1.casing",
+      "eL2",
+      "eL2.intakeLip",
+      "eL2.impeller",
+      "eL2.diffuser",
+      "eL2.combustor",
+      "eL2.nozzleGuideVanes",
+      "eL2.turbineWheel",
+      "eL2.nozzle",
+      "eL2.shaft",
+      "eL2.frontBearing",
+      "eL2.rearBearing",
+      "eL2.casing",
+      "eR1",
+      "eR1.intakeLip",
+      "eR1.impeller",
+      "eR1.diffuser",
+      "eR1.combustor",
+      "eR1.nozzleGuideVanes",
+      "eR1.turbineWheel",
+      "eR1.nozzle",
+      "eR1.shaft",
+      "eR1.frontBearing",
+      "eR1.rearBearing",
+      "eR1.casing",
+      "eR2",
+      "eR2.intakeLip",
+      "eR2.impeller",
+      "eR2.diffuser",
+      "eR2.combustor",
+      "eR2.nozzleGuideVanes",
+      "eR2.turbineWheel",
+      "eR2.nozzle",
+      "eR2.shaft",
+      "eR2.frontBearing",
+      "eR2.rearBearing",
+      "eR2.casing",
+      "eB",
+      "eB.intakeLip",
+      "eB.impeller",
+      "eB.diffuser",
+      "eB.combustor",
+      "eB.nozzleGuideVanes",
+      "eB.turbineWheel",
+      "eB.nozzle",
+      "eB.shaft",
+      "eB.frontBearing",
+      "eB.rearBearing",
+      "eB.casing",
+      "eB.compressor",
+      "eB.exhaust",
+      "eB.input",
+      "eB.intake",
+      "eB.mount",
+      "eB.turbine",
+      "eL1.compressor",
+      "eL1.exhaust",
+      "eL1.input",
+      "eL1.intake",
+      "eL1.mount",
+      "eL1.turbine",
+      "eL2.compressor",
+      "eL2.exhaust",
+      "eL2.input",
+      "eL2.intake",
+      "eL2.mount",
+      "eL2.turbine",
+      "eR1.compressor",
+      "eR1.exhaust",
+      "eR1.input",
+      "eR1.intake",
+      "eR1.mount",
+      "eR1.turbine",
+      "eR2.compressor",
+      "eR2.exhaust",
+      "eR2.input",
+      "eR2.intake",
+      "eR2.mount",
+      "eR2.turbine",
+      "pilot.back",
+      "pilot.head",
+      "pilot.leftFoot",
+      "pilot.leftHand",
+      "pilot.leftShoulder",
+      "pilot.rightFoot",
+      "pilot.rightHand",
+      "pilot.rightShoulder"
+    ]
+  },
+  "kind" : "explainer",
+  "legend" : {
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "eL1.impeller",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eL1.turbineWheel",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eL1.shaft",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eL2.impeller",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eL2.turbineWheel",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eL2.shaft",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eR1.impeller",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eR1.turbineWheel",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eR1.shaft",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eR2.impeller",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eR2.turbineWheel",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eR2.shaft",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eB.impeller",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eB.turbineWheel",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "eB.shaft",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "lSuit",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Marked unchecked: F5 The Manual 2018, claimed"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "lMk4",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Marked unchecked: F1 F3 Gravity Industries, claimed"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "lMk4arm",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Marked unchecked: F4 not found in this search"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "lTotal",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Marked unchecked: F17 not found in this search"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "lFuel",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Marked unchecked: F10 Interesting Engineering 2026"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "lShare",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Marked unchecked: F18 not found in this search"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "lExample",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Marked unchecked: Not confirmed Gravity hardware"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "lF19",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Marked unchecked: F19 plausible, likely"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aL1",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aL2",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aR1",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aR2",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aB",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "aW",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Direction checked against gravity; length not to scale"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aSteer",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Marked unchecked: F9 Interesting Engineering 2026"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aAirIn",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aJet",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Data as given",
+        "id" : "item.t",
+        "kind" : "data",
+        "tier" : "built",
+        "why" : "Data as given: F11 F12 Interesting Engineering 2026, claimed"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "beat.7",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine values or facts; its words are not checked"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "beat.7.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: eR1.turbine.worldSpeed shows as 1 (target 1)"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "beat.7.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: eR1.compressor.worldSpeed shows as 1 (target 1)"
+      }
+    ],
+    "groups" : {
+      "described" : 16,
+      "given" : 1,
+      "schematic" : 0,
+      "solved" : 19
+    },
+    "notes" : [
+      "Arrow lengths are not to scale",
+      "Shapes and drawings as authored"
+    ],
+    "text" : "Solved 19 · Given 1 · Not checked 16"
+  },
+  "location" : null,
+  "ok" : true,
+  "primary" : "solid",
+  "reason" : null,
+  "strict" : true,
+  "title" : "Gravity jet suit, Daedalus layout: how small jets lift a pilot (schematic)",
+  "version" : 1,
+  "views" : {
+    "board" : {
+      "items" : [
+        "t"
+      ],
+      "template" : null,
+      "values" : {
+
+      }
+    },
+    "solid" : {
+      "annotations" : [
+        {
+          "anchorsWorld" : [
+            [
+              700,
+              0,
+              1800
+            ]
+          ],
+          "id" : "lSuit",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Daedalus suit 2018, claimed: two per arm, one on back",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              700,
+              0,
+              1600
+            ]
+          ],
+          "id" : "lMk4",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Mk4 (claimed latest): three back turbines",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              700,
+              0,
+              1400
+            ]
+          ],
+          "id" : "lMk4arm",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Mk4 engines per arm: not found in this search",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -700,
+              0,
+              1600
+            ]
+          ],
+          "id" : "lThrust",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Up arrows: thrust of each engine (no value)",
+          "tier" : null,
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -700,
+              0,
+              1400
+            ]
+          ],
+          "id" : "lTotal",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Total thrust: not found in this search",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -700,
+              300,
+              1200
+            ]
+          ],
+          "id" : "lFuel",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Fuel, claimed: Jet A-1 or diesel in a back bladder",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -700,
+              300,
+              1000
+            ]
+          ],
+          "id" : "lShare",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Arm and back thrust split: not found in this search",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -700,
+              -300,
+              1300
+            ]
+          ],
+          "id" : "lExample",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Micro gas turbine-style engine (example)",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -294.03375151526717,
+              -70,
+              1097.7215157565606
+            ]
+          ],
+          "id" : "lIntake",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Intake",
+          "tier" : null,
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -298.23697280773206,
+              -70,
+              1082.0348803376262
+            ]
+          ],
+          "id" : "lComp",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : true,
+          "text" : "Compressor wheel",
+          "tier" : null,
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -320.64796056554349,
+              -71.739000000000004,
+              1031.5117364061641
+            ]
+          ],
+          "id" : "lDiff",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : true,
+          "text" : "Diffuser",
+          "tier" : null,
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -319.91565602551924,
+              -70.000000000000014,
+              1001.1289331276537
+            ]
+          ],
+          "id" : "lComb",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : true,
+          "text" : "Combustor: fuel burns here",
+          "tier" : null,
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -331.61253031281922,
+              -81.876000000000019,
+              952.90097928439911
+            ]
+          ],
+          "id" : "lTurb",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : true,
+          "text" : "Turbine wheel",
+          "tier" : null,
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -339.32708440820829,
+              -70.000000000000028,
+              928.68449615597353
+            ]
+          ],
+          "id" : "lNoz",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : true,
+          "text" : "Nozzle",
+          "tier" : null,
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -700,
+              -300,
+              1100
+            ]
+          ],
+          "id" : "lF19",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Engines likely micro gas turbines",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              700,
+              0,
+              1200
+            ]
+          ],
+          "id" : "lLimit",
+          "kind" : "label",
+          "meaning" : null,
+          "occludedAtDefaultCamera" : false,
+          "text" : "Solved: shaft turning only; thrust not simulated",
+          "tier" : null,
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              396.33031139923969,
+              69.999999999999986,
+              986.40478819100178
+            ],
+            [
+              349.74288328078597,
+              70,
+              1160.2714369230341
+            ]
+          ],
+          "id" : "aL1",
+          "kind" : "arrow",
+          "meaning" : "force",
+          "occludedAtDefaultCamera" : false,
+          "text" : null,
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              396.33031139923969,
+              -70.000000000000014,
+              986.40478819100178
+            ],
+            [
+              349.74288328078597,
+              -70,
+              1160.2714369230341
+            ]
+          ],
+          "id" : "aL2",
+          "kind" : "arrow",
+          "meaning" : "force",
+          "occludedAtDefaultCamera" : false,
+          "text" : null,
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -261.10069571877017,
+              -70.000000000000014,
+              950.17012187664886
+            ],
+            [
+              -214.51326760031642,
+              -70,
+              1124.0367706086811
+            ]
+          ],
+          "id" : "aR1",
+          "kind" : "arrow",
+          "meaning" : "force",
+          "occludedAtDefaultCamera" : false,
+          "text" : null,
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -130.98855506598008,
+              -106.10100000000001,
+              915.30667886324909
+            ],
+            [
+              -84.401126947526336,
+              -106.10099999999998,
+              1089.1733275952813
+            ]
+          ],
+          "id" : "aR2",
+          "kind" : "arrow",
+          "meaning" : "force",
+          "occludedAtDefaultCamera" : false,
+          "text" : null,
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              90,
+              180,
+              1300
+            ],
+            [
+              90,
+              180.00000000000003,
+              1500
+            ]
+          ],
+          "id" : "aB",
+          "kind" : "arrow",
+          "meaning" : "force",
+          "occludedAtDefaultCamera" : true,
+          "text" : null,
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              0,
+              -375,
+              1240
+            ],
+            [
+              0,
+              -375,
+              840
+            ]
+          ],
+          "id" : "aW",
+          "kind" : "arrow",
+          "meaning" : "force",
+          "occludedAtDefaultCamera" : false,
+          "text" : "Weight of pilot, suit and fuel",
+          "tier" : "solved",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              700,
+              -300,
+              1000
+            ],
+            [
+              343.63262091992749,
+              -3.9159999999999999,
+              879.12929859460507
+            ]
+          ],
+          "id" : "aSteer",
+          "kind" : "arrow",
+          "meaning" : "pointer",
+          "occludedAtDefaultCamera" : false,
+          "text" : "Arm moved to aim thrust, claimed (schematic)",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -253.65798047927393,
+              -69.999999999999986,
+              1248.4059446576553
+            ],
+            [
+              -289.89264679362685,
+              -70,
+              1113.1763289771857
+            ]
+          ],
+          "id" : "aAirIn",
+          "kind" : "arrow",
+          "meaning" : "flow",
+          "occludedAtDefaultCamera" : false,
+          "text" : "Air in",
+          "tier" : "described",
+          "value" : null
+        },
+        {
+          "anchorsWorld" : [
+            [
+              -346.83283671618136,
+              -70.000000000000028,
+              900.67264719359048
+            ],
+            [
+              -390.83207438360989,
+              -70.000000000000057,
+              736.46525672444886
+            ]
+          ],
+          "id" : "aJet",
+          "kind" : "arrow",
+          "meaning" : "flow",
+          "occludedAtDefaultCamera" : false,
+          "text" : "Hot jet out",
+          "tier" : "described",
+          "value" : null
+        }
+      ],
+      "arrowIssues" : [
+
+      ],
+      "checks" : {
+        "gearPairs" : 0,
+        "meshesClosed" : true,
+        "openMeshes" : [
+
+        ],
+        "sections" : [
+          {
+            "normal" : [
+              0,
+              -1,
+              0
+            ],
+            "offset" : 70,
+            "parts" : [
+              {
+                "capLoops" : 1,
+                "capTriangles" : 2,
+                "closed" : true,
+                "part" : "eR1.casing",
+                "triangles" : 196
+              }
+            ],
+            "step" : 6
+          },
+          {
+            "normal" : [
+              0,
+              -1,
+              0
+            ],
+            "offset" : 70,
+            "parts" : [
+              {
+                "capLoops" : 1,
+                "capTriangles" : 2,
+                "closed" : true,
+                "part" : "eR1.casing",
+                "triangles" : 196
+              }
+            ],
+            "step" : 7
+          },
+          {
+            "normal" : [
+              0,
+              -1,
+              0
+            ],
+            "offset" : 70,
+            "parts" : [
+              {
+                "capLoops" : 1,
+                "capTriangles" : 2,
+                "closed" : true,
+                "part" : "eR1.casing",
+                "triangles" : 196
+              }
+            ],
+            "step" : 8
+          }
+        ]
+      },
+      "facts" : {
+        "eB.impeller.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eB.impeller.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eB.shaft.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eB.shaft.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eB.turbineWheel.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eB.turbineWheel.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL1.impeller.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL1.impeller.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL1.shaft.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL1.shaft.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL1.turbineWheel.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL1.turbineWheel.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL2.impeller.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL2.impeller.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL2.shaft.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL2.shaft.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL2.turbineWheel.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eL2.turbineWheel.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR1.impeller.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR1.impeller.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR1.shaft.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR1.shaft.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR1.turbineWheel.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR1.turbineWheel.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR2.impeller.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR2.impeller.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR2.shaft.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR2.shaft.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR2.turbineWheel.speed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "eR2.turbineWheel.worldSpeed" : {
+          "source" : "input",
+          "text" : "1",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 1
+        },
+        "pilot.lowerArmL.speed" : {
+          "source" : "input",
+          "text" : "0",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 0
+        },
+        "pilot.lowerArmL.worldSpeed" : {
+          "source" : "input",
+          "text" : "0",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 0
+        },
+        "pilot.lowerArmR.speed" : {
+          "source" : "input",
+          "text" : "0",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 0
+        },
+        "pilot.lowerArmR.worldSpeed" : {
+          "source" : "input",
+          "text" : "0",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 0
+        },
+        "pilot.upperArmL.speed" : {
+          "source" : "input",
+          "text" : "0",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 0
+        },
+        "pilot.upperArmL.worldSpeed" : {
+          "source" : "input",
+          "text" : "0",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 0
+        },
+        "pilot.upperArmR.speed" : {
+          "source" : "input",
+          "text" : "0",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 0
+        },
+        "pilot.upperArmR.worldSpeed" : {
+          "source" : "input",
+          "text" : "0",
+          "tier" : "solved",
+          "unit" : "",
+          "value" : 0
+        }
+      },
+      "legend" : {
+        "built" : 0,
+        "claims" : [
+          {
+            "badge" : "Solved",
+            "id" : "eL1.impeller",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eL1.turbineWheel",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eL1.shaft",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eL2.impeller",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eL2.turbineWheel",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eL2.shaft",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eR1.impeller",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eR1.turbineWheel",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eR1.shaft",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eR2.impeller",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eR2.turbineWheel",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eR2.shaft",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eB.impeller",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eB.turbineWheel",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "eB.shaft",
+            "kind" : "motion",
+            "tier" : "solved",
+            "why" : "Moved by input"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "lSuit",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Marked unchecked: F5 The Manual 2018, claimed"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "lMk4",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Marked unchecked: F1 F3 Gravity Industries, claimed"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "lMk4arm",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Marked unchecked: F4 not found in this search"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "lTotal",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Marked unchecked: F17 not found in this search"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "lFuel",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Marked unchecked: F10 Interesting Engineering 2026"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "lShare",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Marked unchecked: F18 not found in this search"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "lExample",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Marked unchecked: Not confirmed Gravity hardware"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "lF19",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Marked unchecked: F19 plausible, likely"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "aL1",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Direction and length as authored"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "aL2",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Direction and length as authored"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "aR1",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Direction and length as authored"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "aR2",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Direction and length as authored"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "aB",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Direction and length as authored"
+          },
+          {
+            "badge" : "Solved",
+            "id" : "aW",
+            "kind" : "annotation",
+            "tier" : "solved",
+            "why" : "Direction checked against gravity; length not to scale"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "aSteer",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Marked unchecked: F9 Interesting Engineering 2026"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "aAirIn",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Direction and length as authored"
+          },
+          {
+            "badge" : "Not checked",
+            "id" : "aJet",
+            "kind" : "annotation",
+            "tier" : "described",
+            "why" : "Direction and length as authored"
+          }
+        ],
+        "described" : 16,
+        "note" : null,
+        "notes" : [
+          "Arrow lengths are not to scale"
+        ],
+        "shapes" : "Shapes as authored",
+        "solved" : 16,
+        "text" : "Solved 16 · Not checked 16"
+      },
+      "motionTiers" : [
+        {
+          "badge" : "Solved",
+          "id" : "eL1.impeller",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eL1.turbineWheel",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eL1.shaft",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eL2.impeller",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eL2.turbineWheel",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eL2.shaft",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eR1.impeller",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eR1.turbineWheel",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eR1.shaft",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eR2.impeller",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eR2.turbineWheel",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eR2.shaft",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eB.impeller",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eB.turbineWheel",
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "badge" : "Solved",
+          "id" : "eB.shaft",
+          "source" : "input",
+          "tier" : "solved"
+        }
+      ],
+      "notChecked" : {
+        "input" : [
+          "what drives the input",
+          "power and torque"
+        ]
+      },
+      "parts" : 67,
+      "partTiers" : [
+        {
+          "base" : "pilot.body",
+          "motion" : "static",
+          "part" : "pilot.body",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.skull",
+          "motion" : "static",
+          "part" : "pilot.skull",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.upperArmL",
+          "motion" : "static",
+          "part" : "pilot.upperArmL",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.lowerArmL",
+          "motion" : "static",
+          "part" : "pilot.lowerArmL",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.handL",
+          "motion" : "static",
+          "part" : "pilot.handL",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.upperArmR",
+          "motion" : "static",
+          "part" : "pilot.upperArmR",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.lowerArmR",
+          "motion" : "static",
+          "part" : "pilot.lowerArmR",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.handR",
+          "motion" : "static",
+          "part" : "pilot.handR",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.legL",
+          "motion" : "static",
+          "part" : "pilot.legL",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.footL",
+          "motion" : "static",
+          "part" : "pilot.footL",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.legR",
+          "motion" : "static",
+          "part" : "pilot.legR",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "pilot.footR",
+          "motion" : "static",
+          "part" : "pilot.footR",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL1.intakeLip",
+          "motion" : "static",
+          "part" : "eL1.intakeLip",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL1.impeller",
+          "motion" : "own",
+          "part" : "eL1.impeller",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eL1.diffuser",
+          "motion" : "static",
+          "part" : "eL1.diffuser",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL1.combustor",
+          "motion" : "static",
+          "part" : "eL1.combustor",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL1.nozzleGuideVanes",
+          "motion" : "static",
+          "part" : "eL1.nozzleGuideVanes",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL1.turbineWheel",
+          "motion" : "own",
+          "part" : "eL1.turbineWheel",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eL1.nozzle",
+          "motion" : "static",
+          "part" : "eL1.nozzle",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL1.shaft",
+          "motion" : "own",
+          "part" : "eL1.shaft",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eL1.frontBearing",
+          "motion" : "static",
+          "part" : "eL1.frontBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL1.rearBearing",
+          "motion" : "static",
+          "part" : "eL1.rearBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL1.casing",
+          "motion" : "static",
+          "part" : "eL1.casing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL2.intakeLip",
+          "motion" : "static",
+          "part" : "eL2.intakeLip",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL2.impeller",
+          "motion" : "own",
+          "part" : "eL2.impeller",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eL2.diffuser",
+          "motion" : "static",
+          "part" : "eL2.diffuser",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL2.combustor",
+          "motion" : "static",
+          "part" : "eL2.combustor",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL2.nozzleGuideVanes",
+          "motion" : "static",
+          "part" : "eL2.nozzleGuideVanes",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL2.turbineWheel",
+          "motion" : "own",
+          "part" : "eL2.turbineWheel",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eL2.nozzle",
+          "motion" : "static",
+          "part" : "eL2.nozzle",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL2.shaft",
+          "motion" : "own",
+          "part" : "eL2.shaft",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eL2.frontBearing",
+          "motion" : "static",
+          "part" : "eL2.frontBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL2.rearBearing",
+          "motion" : "static",
+          "part" : "eL2.rearBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eL2.casing",
+          "motion" : "static",
+          "part" : "eL2.casing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR1.intakeLip",
+          "motion" : "static",
+          "part" : "eR1.intakeLip",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR1.impeller",
+          "motion" : "own",
+          "part" : "eR1.impeller",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eR1.diffuser",
+          "motion" : "static",
+          "part" : "eR1.diffuser",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR1.combustor",
+          "motion" : "static",
+          "part" : "eR1.combustor",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR1.nozzleGuideVanes",
+          "motion" : "static",
+          "part" : "eR1.nozzleGuideVanes",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR1.turbineWheel",
+          "motion" : "own",
+          "part" : "eR1.turbineWheel",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eR1.nozzle",
+          "motion" : "static",
+          "part" : "eR1.nozzle",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR1.shaft",
+          "motion" : "own",
+          "part" : "eR1.shaft",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eR1.frontBearing",
+          "motion" : "static",
+          "part" : "eR1.frontBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR1.rearBearing",
+          "motion" : "static",
+          "part" : "eR1.rearBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR1.casing",
+          "motion" : "static",
+          "part" : "eR1.casing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR2.intakeLip",
+          "motion" : "static",
+          "part" : "eR2.intakeLip",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR2.impeller",
+          "motion" : "own",
+          "part" : "eR2.impeller",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eR2.diffuser",
+          "motion" : "static",
+          "part" : "eR2.diffuser",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR2.combustor",
+          "motion" : "static",
+          "part" : "eR2.combustor",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR2.nozzleGuideVanes",
+          "motion" : "static",
+          "part" : "eR2.nozzleGuideVanes",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR2.turbineWheel",
+          "motion" : "own",
+          "part" : "eR2.turbineWheel",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eR2.nozzle",
+          "motion" : "static",
+          "part" : "eR2.nozzle",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR2.shaft",
+          "motion" : "own",
+          "part" : "eR2.shaft",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eR2.frontBearing",
+          "motion" : "static",
+          "part" : "eR2.frontBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR2.rearBearing",
+          "motion" : "static",
+          "part" : "eR2.rearBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eR2.casing",
+          "motion" : "static",
+          "part" : "eR2.casing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eB.intakeLip",
+          "motion" : "static",
+          "part" : "eB.intakeLip",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eB.impeller",
+          "motion" : "own",
+          "part" : "eB.impeller",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eB.diffuser",
+          "motion" : "static",
+          "part" : "eB.diffuser",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eB.combustor",
+          "motion" : "static",
+          "part" : "eB.combustor",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eB.nozzleGuideVanes",
+          "motion" : "static",
+          "part" : "eB.nozzleGuideVanes",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eB.turbineWheel",
+          "motion" : "own",
+          "part" : "eB.turbineWheel",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eB.nozzle",
+          "motion" : "static",
+          "part" : "eB.nozzle",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eB.shaft",
+          "motion" : "own",
+          "part" : "eB.shaft",
+          "ridesOn" : null,
+          "source" : "input",
+          "tier" : "solved"
+        },
+        {
+          "base" : "eB.frontBearing",
+          "motion" : "static",
+          "part" : "eB.frontBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eB.rearBearing",
+          "motion" : "static",
+          "part" : "eB.rearBearing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        },
+        {
+          "base" : "eB.casing",
+          "motion" : "static",
+          "part" : "eB.casing",
+          "ridesOn" : null,
+          "source" : null,
+          "tier" : null
+        }
+      ],
+      "placements" : [
+        {
+          "placement" : [
+            {
+              "anchor" : [
+                0.69083445853394709,
+                0.17133411528620138
+              ],
+              "box" : [
+                0.67278792061197712,
+                0.18081427824395216,
+                0.23774999999999999,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 2,
+              "id" : "lSuit",
+              "kind" : "label",
+              "leader" : [
+                0.69083445853394709,
+                0.18081427824395216
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Daedalus suit 2018, claimed: two per arm, one on back"
+            },
+            {
+              "anchor" : [
+                0.68596714330702102,
+                0.26922776832352224
+              ],
+              "box" : [
+                0.66248848701070639,
+                0.2857476417319828,
+                0.18065624999999999,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 2,
+              "id" : "lMk4",
+              "kind" : "label",
+              "leader" : [
+                0.68596714330702102,
+                0.2857476417319828
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Mk4 (claimed latest): three back turbines"
+            },
+            {
+              "anchor" : [
+                0.68134193889046712,
+                0.36225197885256855
+              ],
+              "box" : [
+                0.63080724977518376,
+                0.38604312783422706,
+                0.205125,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 2,
+              "id" : "lMk4arm",
+              "kind" : "label",
+              "leader" : [
+                0.68134193889046712,
+                0.38604312783422706
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Mk4 engines per arm: not found in this search"
+            }
+          ],
+          "step" : 1
+        },
+        {
+          "placement" : [
+            {
+              "anchor" : [
+                0.33856167752103294,
+                0.15421045536277861
+              ],
+              "box" : [
+                0.17643644590674654,
+                0.068486179839527137,
+                0.18881249999999999,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 0,
+              "id" : "lThrust",
+              "kind" : "label",
+              "leader" : [
+                0.33856167752103294,
+                0.13698617983952716
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Up arrows: thrust of each engine (no value)"
+            },
+            {
+              "anchor" : [
+                0.34198315765760884,
+                0.23591806646939872
+              ],
+              "box" : [
+                0.31119542632087632,
+                0.18197506709344999,
+                0.3193125,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 2,
+              "id" : "lTotal",
+              "kind" : "label",
+              "leader" : [
+                0.34198315765760884,
+                0.22122506709345
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Total thrust: not found in this search"
+            },
+            {
+              "anchor" : [
+                0.43999334660905454,
+                0.50670010316386294
+              ],
+              "box" : [
+                0.20709346451244395,
+                0.45295955743377142,
+                0.25406249999999997,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 1,
+              "id" : "aW",
+              "kind" : "arrow",
+              "leader" : [
+                0.43999334660905454,
+                0.49220955743377137
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Weight of pilot, suit and fuel"
+            }
+          ],
+          "step" : 2
+        },
+        {
+          "placement" : [
+            {
+              "anchor" : [
+                0.68596714330702102,
+                0.26922776832352224
+              ],
+              "box" : [
+                0.52878954960333568,
+                0.1842078949150617,
+                0.18065624999999999,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 6,
+              "id" : "lMk4",
+              "kind" : "label",
+              "leader" : [
+                0.68596714330702102,
+                0.25270789491506174
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Mk4 (claimed latest): three back turbines"
+            },
+            {
+              "anchor" : [
+                0.69083445853394709,
+                0.17133411528620138
+              ],
+              "box" : [
+                0.45739414876136264,
+                0.072935199196426825,
+                0.23774999999999999,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 14,
+              "id" : "lSuit",
+              "kind" : "label",
+              "leader" : [
+                0.69083445853394709,
+                0.1414351991964268
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Daedalus suit 2018, claimed: two per arm, one on back"
+            }
+          ],
+          "step" : 3
+        },
+        {
+          "placement" : [
+            {
+              "anchor" : [
+                0.31381441248269559,
+                0.17461599369821101
+              ],
+              "box" : [
+                0.30286923939101529,
+                0.09698011379394797,
+                0.18881249999999999,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 2,
+              "id" : "lThrust",
+              "kind" : "label",
+              "leader" : [
+                0.31381441248269559,
+                0.16548011379394797
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Up arrows: thrust of each engine (no value)"
+            },
+            {
+              "anchor" : [
+                0.58429697795722779,
+                0.50788676206418293
+              ],
+              "box" : [
+                0.37646578209744608,
+                0.4417042424689257,
+                0.205125,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 4,
+              "id" : "aSteer",
+              "kind" : "arrow",
+              "leader" : [
+                0.58159078209744608,
+                0.50788676206418293
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Arm moved to aim thrust, claimed (schematic)"
+            }
+          ],
+          "step" : 4
+        },
+        {
+          "placement" : [
+            {
+              "anchor" : [
+                0.39162520429979536,
+                0.27608798261845113
+              ],
+              "box" : [
+                0.20821039267713851,
+                0.19103930378488848,
+                0.21328125000000001,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 0,
+              "id" : "lFuel",
+              "kind" : "label",
+              "leader" : [
+                0.39162520429979536,
+                0.25953930378488849
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Fuel, claimed: Jet A-1 or diesel in a back bladder"
+            },
+            {
+              "anchor" : [
+                0.39372646075107204,
+                0.34847401181656273
+              ],
+              "box" : [
+                0.37966612908830888,
+                0.35696945846838768,
+                0.22143750000000001,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 4,
+              "id" : "lShare",
+              "kind" : "label",
+              "leader" : [
+                0.39372646075107204,
+                0.35696945846838768
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Arm and back thrust split: not found in this search"
+            }
+          ],
+          "step" : 5
+        },
+        {
+          "placement" : [
+            {
+              "anchor" : [
+                0.29178195376842353,
+                0.31603727135430931
+              ],
+              "box" : [
+                0.30322131987992484,
+                0.28265652804387492,
+                0.33562499999999995,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 3,
+              "id" : "lExample",
+              "kind" : "label",
+              "leader" : [
+                0.30322131987992484,
+                0.31603727135430931
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Micro gas turbine-style engine (example)"
+            },
+            {
+              "anchor" : [
+                0.42105909576902789,
+                0.40035284277410116
+              ],
+              "box" : [
+                0.4295134337078651,
+                0.41146483022609603,
+                0.058312500000000003,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 4,
+              "id" : "lIntake",
+              "kind" : "label",
+              "leader" : [
+                0.4295134337078651,
+                0.41146483022609603
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Intake"
+            },
+            {
+              "anchor" : [
+                0.42027078998851619,
+                0.40607372909992701
+              ],
+              "box" : [
+                0.4029171289147328,
+                0.34648732315738434,
+                0.139875,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 2,
+              "id" : "lComp",
+              "kind" : "label",
+              "leader" : [
+                0.42027078998851619,
+                0.38573732315738435
+              ],
+              "occluded" : true,
+              "offView" : false,
+              "text" : "Compressor wheel"
+            },
+            {
+              "anchor" : [
+                0.41555517457657187,
+                0.42373596656644419
+              ],
+              "box" : [
+                0.35068505264817007,
+                0.44732681577233357,
+                0.074624999999999997,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 6,
+              "id" : "lDiff",
+              "kind" : "label",
+              "leader" : [
+                0.41555517457657187,
+                0.44732681577233357
+              ],
+              "occluded" : true,
+              "offView" : false,
+              "text" : "Diffuser"
+            },
+            {
+              "anchor" : [
+                0.42529091255268997,
+                0.36964173628527397
+              ],
+              "box" : [
+                0.33995917389986063,
+                0.39287753735985281,
+                0.058312500000000003,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 15,
+              "id" : "aAirIn",
+              "kind" : "arrow",
+              "leader" : [
+                0.39827167389986062,
+                0.39287753735985281
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Air in"
+            }
+          ],
+          "step" : 6
+        },
+        {
+          "placement" : [
+            {
+              "anchor" : [
+                0.41625824305689096,
+                0.43519355219442263
+              ],
+              "box" : [
+                0.42209081124498377,
+                0.43717627107089735,
+                0.22143750000000001,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 4,
+              "id" : "lComb",
+              "kind" : "label",
+              "leader" : [
+                0.42209081124498377,
+                0.43717627107089735
+              ],
+              "occluded" : true,
+              "offView" : false,
+              "text" : "Combustor: fuel burns here"
+            },
+            {
+              "anchor" : [
+                0.41233251243363434,
+                0.45427873653236989
+              ],
+              "box" : [
+                0.28647664330663786,
+                0.45714155094662567,
+                0.11540625,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 7,
+              "id" : "lTurb",
+              "kind" : "label",
+              "leader" : [
+                0.4018828933066379,
+                0.45714155094662567
+              ],
+              "occluded" : true,
+              "offView" : false,
+              "text" : "Turbine wheel"
+            },
+            {
+              "anchor" : [
+                0.39162520429979536,
+                0.27608798261845113
+              ],
+              "box" : [
+                0.20821039267713851,
+                0.19103930378488848,
+                0.21328125000000001,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 0,
+              "id" : "lFuel",
+              "kind" : "label",
+              "leader" : [
+                0.39162520429979536,
+                0.25953930378488849
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Fuel, claimed: Jet A-1 or diesel in a back bladder"
+            }
+          ],
+          "step" : 7
+        },
+        {
+          "placement" : [
+            {
+              "anchor" : [
+                0.41273932231019905,
+                0.46073103533750859
+              ],
+              "box" : [
+                0.42536443306836424,
+                0.41682743251810939,
+                0.058312500000000003,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 3,
+              "id" : "lNoz",
+              "kind" : "label",
+              "leader" : [
+                0.42536443306836424,
+                0.45607743251810939
+              ],
+              "occluded" : true,
+              "offView" : false,
+              "text" : "Nozzle"
+            },
+            {
+              "anchor" : [
+                0.29627994437316446,
+                0.39582423562128632
+              ],
+              "box" : [
+                0.084599629330071563,
+                0.33209202967959117,
+                0.27853125000000001,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 1,
+              "id" : "lF19",
+              "kind" : "label",
+              "leader" : [
+                0.29627994437316446,
+                0.37134202967959112
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Engines likely micro gas turbines"
+            },
+            {
+              "anchor" : [
+                0.29178195376842353,
+                0.31603727135430931
+              ],
+              "box" : [
+                0.30322131987992484,
+                0.28265652804387492,
+                0.33562499999999995,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 3,
+              "id" : "lExample",
+              "kind" : "label",
+              "leader" : [
+                0.30322131987992484,
+                0.31603727135430931
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Micro gas turbine-style engine (example)"
+            },
+            {
+              "anchor" : [
+                0.40751975763555598,
+                0.49861041782097376
+              ],
+              "box" : [
+                0.30041473427608162,
+                0.50569772241533439,
+                0.099093749999999994,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 7,
+              "id" : "aJet",
+              "kind" : "arrow",
+              "leader" : [
+                0.3995084842760816,
+                0.50569772241533439
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Hot jet out"
+            }
+          ],
+          "step" : 8
+        },
+        {
+          "placement" : [
+            {
+              "anchor" : [
+                0.67694121899441406,
+                0.45076125481551776
+              ],
+              "box" : [
+                0.64072981811241125,
+                0.36396682122489515,
+                0.22143750000000001,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 7,
+              "id" : "lLimit",
+              "kind" : "label",
+              "leader" : [
+                0.67694121899441406,
+                0.43246682122489516
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Solved: shaft turning only; thrust not simulated"
+            },
+            {
+              "anchor" : [
+                0.69083445853394709,
+                0.17133411528620138
+              ],
+              "box" : [
+                0.67278792061197712,
+                0.18081427824395216,
+                0.23774999999999999,
+                0.068500000000000005
+              ],
+              "callout" : null,
+              "candidate" : 2,
+              "id" : "lSuit",
+              "kind" : "label",
+              "leader" : [
+                0.69083445853394709,
+                0.18081427824395216
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Daedalus suit 2018, claimed: two per arm, one on back"
+            },
+            {
+              "anchor" : [
+                0.34198315765760884,
+                0.23591806646939872
+              ],
+              "box" : [
+                0.31119542632087632,
+                0.18197506709344999,
+                0.3193125,
+                0.03925
+              ],
+              "callout" : null,
+              "candidate" : 2,
+              "id" : "lTotal",
+              "kind" : "label",
+              "leader" : [
+                0.34198315765760884,
+                0.22122506709345
+              ],
+              "occluded" : false,
+              "offView" : false,
+              "text" : "Total thrust: not found in this search"
+            }
+          ],
+          "step" : 9
+        }
+      ],
+      "ratios" : {
+        "eB.impeller" : 1,
+        "eB.shaft" : 1,
+        "eB.turbineWheel" : 1,
+        "eL1.impeller" : 1,
+        "eL1.shaft" : 1,
+        "eL1.turbineWheel" : 1,
+        "eL2.impeller" : 1,
+        "eL2.shaft" : 1,
+        "eL2.turbineWheel" : 1,
+        "eR1.impeller" : 1,
+        "eR1.shaft" : 1,
+        "eR1.turbineWheel" : 1,
+        "eR2.impeller" : 1,
+        "eR2.shaft" : 1,
+        "eR2.turbineWheel" : 1,
+        "pilot.lowerArmL" : 0,
+        "pilot.lowerArmR" : 0,
+        "pilot.upperArmL" : 0,
+        "pilot.upperArmR" : 0
+      },
+      "readBack" : [
+        "pilot.body: world centre (0, 0, 1215) mm, size 420 x 250 x 740 mm; static; root (at [0, 125, 1340] in the world frame); local +Z points +Z",
+        "pilot.skull: world centre (0, -8, 1654) mm, size 184 x 200 x 218 mm; static; child of pilot.body (at [0, -125, 312] in the pilot.body frame); local +Z points +Z",
+        "pilot.upperArmL: world centre (231, 0, 1312) mm, size 161 x 112 x 344 mm; joint about a horizontal axis (-Y) held still; child of pilot.body (at [205, -125, 90] in the pilot.body frame); local +Z points (-0.26, 0, 0.97)",
+        "pilot.lowerArmL: world centre (309, 0, 1031) mm, size 133 x 84 x 299 mm; joint about an axis tilted 75° from vertical, along (-0.97, 0, -0.26) held still; child of pilot.upperArmL (at [0, 0, -300] in the pilot.upperArmL frame); its origin is 300 mm from the pilot.upperArmL axis; local +Z points (-0.26, 0, 0.97)",
+        "pilot.handL: world centre (373, 0, 797) mm, size 86.2 x 70 x 176 mm; static; child of pilot.lowerArmL (at [0, 0, -268] in the pilot.lowerArmL frame); its origin is 268 mm from the pilot.lowerArmL axis; local +Z points (-0.26, 0, 0.97)",
+        "pilot.upperArmR: world centre (-231, 0, 1312) mm, size 161 x 112 x 344 mm; joint about a horizontal axis (+Y) held still; child of pilot.body (at [-205, -125, 90] in the pilot.body frame); local +Z points (0.26, 0, 0.97)",
+        "pilot.lowerArmR: world centre (-309, 0, 1031) mm, size 133 x 84 x 299 mm; joint about an axis tilted 75° from vertical, along (-0.97, 0, 0.26) held still; child of pilot.upperArmR (at [0, 0, -300] in the pilot.upperArmR frame); its origin is 300 mm from the pilot.upperArmR axis; local +Z points (0.26, 0, 0.97)",
+        "pilot.handR: world centre (-373, 0, 797) mm, size 86.2 x 70 x 176 mm; static; child of pilot.lowerArmR (at [0, 0, -268] in the pilot.lowerArmR frame); its origin is 268 mm from the pilot.lowerArmR axis; local +Z points (0.26, 0, 0.97)",
+        "pilot.legL: world centre (95, 0, 510) mm, size 152 x 152 x 884 mm; static; root (at [95, 0, 880] in the world frame); local +Z points +Z",
+        "pilot.footL: world centre (95, -85, 46) mm, size 92 x 250 x 92 mm; static; child of pilot.legL (at [0, 0, -880] in the pilot.legL frame); local +Z points +Z",
+        "pilot.legR: world centre (-95, 0, 510) mm, size 152 x 152 x 884 mm; static; root (at [-95, 0, 880] in the world frame); local +Z points +Z",
+        "pilot.footR: world centre (-95, -85, 46) mm, size 92 x 250 x 92 mm; static; child of pilot.legR (at [0, 0, -880] in the pilot.legR frame); local +Z points +Z",
+        "eL1.intakeLip: world centre (295, 70, 1097) mm, size 79.3 x 80 x 30.7 mm; static; child of pilot.handL (at [0, 70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.impeller: world centre (299, 70, 1082) mm, size 49 x 49.6 x 25.8 mm; turns about an axis tilted 15° from vertical, along (0.26, 0, -0.97) through (300, 70, 1077); 1 turn per input turn (Solved, input); child of pilot.handL (at [0, 70, 203] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.diffuser: world centre (301, 70, 1028) mm, size 72.2 x 71.4 x 123 mm; static; child of pilot.handL (at [0, 70, 203] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.combustor: world centre (320, 70, 1001) mm, size 73.5 x 60 x 73.5 mm; static; child of pilot.handL (at [0, 70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.nozzleGuideVanes: world centre (330, 70, 963) mm, size 56.7 x 56 x 24.2 mm; static; child of pilot.handL (at [0, 70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.turbineWheel: world centre (333, 70, 953) mm, size 51.7 x 52.8 x 16.6 mm; turns about an axis tilted 15° from vertical, along (0.26, 0, -0.97) through (292, 70, 1104); 1 turn per input turn (Solved, input); child of pilot.handL (at [0, 70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.nozzle: world centre (336, 70, 927) mm, size 77.8 x 80 x 49.5 mm; static; child of pilot.handL (at [0, 70, 30] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.shaft: world centre (315, 70, 1019) mm, size 43.6 x 6.4 x 142 mm; turns about an axis tilted 15° from vertical, along (0.26, 0, -0.97) through (292, 70, 1104); 1 turn per input turn (Solved, input); child of pilot.handL (at [0, 70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.frontBearing: world centre (302, 70, 1068) mm, size 15.7 x 14.1 x 11.4 mm; static; child of pilot.handL (at [0, 70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.rearBearing: world centre (326, 70, 980) mm, size 15.7 x 14.1 x 11.4 mm; static; child of pilot.handL (at [0, 70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL1.casing: world centre (316, 70, 1017) mm, size 118 x 80 x 171 mm; static; child of pilot.handL (at [0, 70, 130] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.intakeLip: world centre (295, -70, 1097) mm, size 79.3 x 80 x 30.7 mm; static; child of pilot.handL (at [0, -70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.impeller: world centre (299, -70, 1082) mm, size 49 x 49.6 x 25.8 mm; turns about an axis tilted 15° from vertical, along (0.26, 0, -0.97) through (300, -70, 1077); 1 turn per input turn (Solved, input); child of pilot.handL (at [0, -70, 203] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.diffuser: world centre (301, -70, 1028) mm, size 72.2 x 71.4 x 123 mm; static; child of pilot.handL (at [0, -70, 203] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.combustor: world centre (320, -70, 1001) mm, size 73.5 x 60 x 73.5 mm; static; child of pilot.handL (at [0, -70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.nozzleGuideVanes: world centre (330, -70, 963) mm, size 56.7 x 56 x 24.2 mm; static; child of pilot.handL (at [0, -70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.turbineWheel: world centre (333, -70, 953) mm, size 51.7 x 52.8 x 16.6 mm; turns about an axis tilted 15° from vertical, along (0.26, 0, -0.97) through (292, -70, 1104); 1 turn per input turn (Solved, input); child of pilot.handL (at [0, -70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.nozzle: world centre (336, -70, 927) mm, size 77.8 x 80 x 49.5 mm; static; child of pilot.handL (at [0, -70, 30] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.shaft: world centre (315, -70, 1019) mm, size 43.6 x 6.4 x 142 mm; turns about an axis tilted 15° from vertical, along (0.26, 0, -0.97) through (292, -70, 1104); 1 turn per input turn (Solved, input); child of pilot.handL (at [0, -70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.frontBearing: world centre (302, -70, 1068) mm, size 15.7 x 14.1 x 11.4 mm; static; child of pilot.handL (at [0, -70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.rearBearing: world centre (326, -70, 980) mm, size 15.7 x 14.1 x 11.4 mm; static; child of pilot.handL (at [0, -70, 230] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eL2.casing: world centre (316, -70, 1017) mm, size 118 x 80 x 171 mm; static; child of pilot.handL (at [0, -70, 130] in the pilot.handL frame); local +Z points (0.26, 0, -0.97)",
+        "eR1.intakeLip: world centre (-295, -70, 1097) mm, size 79.3 x 80 x 30.7 mm; static; child of pilot.handR (at [0, -70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.impeller: world centre (-298, -70, 1082) mm, size 51.4 x 49.6 x 25.1 mm; turns about an axis tilted 15° from vertical, along (-0.26, 0, -0.97) through (-300, -70, 1077); 1 turn per input turn (Solved, input); child of pilot.handR (at [0, -70, 203] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.diffuser: world centre (-301, -70, 1028) mm, size 72.2 x 71.4 x 123 mm; static; child of pilot.handR (at [0, -70, 203] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.combustor: world centre (-320, -70, 1001) mm, size 73.5 x 60 x 73.5 mm; static; child of pilot.handR (at [0, -70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.nozzleGuideVanes: world centre (-330, -70, 963) mm, size 56.7 x 56 x 24.2 mm; static; child of pilot.handR (at [0, -70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.turbineWheel: world centre (-333, -70, 953) mm, size 51.7 x 52.8 x 16.6 mm; turns about an axis tilted 15° from vertical, along (-0.26, 0, -0.97) through (-292, -70, 1104); 1 turn per input turn (Solved, input); child of pilot.handR (at [0, -70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.nozzle: world centre (-336, -70, 927) mm, size 77.8 x 80 x 49.5 mm; static; child of pilot.handR (at [0, -70, 30] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.shaft: world centre (-315, -70, 1019) mm, size 43.6 x 6.4 x 142 mm; turns about an axis tilted 15° from vertical, along (-0.26, 0, -0.97) through (-292, -70, 1104); 1 turn per input turn (Solved, input); child of pilot.handR (at [0, -70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.frontBearing: world centre (-302, -70, 1068) mm, size 15.7 x 14.1 x 11.4 mm; static; child of pilot.handR (at [0, -70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.rearBearing: world centre (-326, -70, 980) mm, size 15.7 x 14.1 x 11.4 mm; static; child of pilot.handR (at [0, -70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR1.casing: world centre (-316, -70, 1017) mm, size 118 x 80 x 171 mm; static; child of pilot.handR (at [0, -70, 130] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.intakeLip: world centre (-295, 70, 1097) mm, size 79.3 x 80 x 30.7 mm; static; child of pilot.handR (at [0, 70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.impeller: world centre (-298, 70, 1082) mm, size 51.4 x 49.6 x 25.1 mm; turns about an axis tilted 15° from vertical, along (-0.26, 0, -0.97) through (-300, 70, 1077); 1 turn per input turn (Solved, input); child of pilot.handR (at [0, 70, 203] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.diffuser: world centre (-301, 70, 1028) mm, size 72.2 x 71.4 x 123 mm; static; child of pilot.handR (at [0, 70, 203] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.combustor: world centre (-320, 70, 1001) mm, size 73.5 x 60 x 73.5 mm; static; child of pilot.handR (at [0, 70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.nozzleGuideVanes: world centre (-330, 70, 963) mm, size 56.7 x 56 x 24.2 mm; static; child of pilot.handR (at [0, 70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.turbineWheel: world centre (-333, 70, 953) mm, size 51.7 x 52.8 x 16.6 mm; turns about an axis tilted 15° from vertical, along (-0.26, 0, -0.97) through (-292, 70, 1104); 1 turn per input turn (Solved, input); child of pilot.handR (at [0, 70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.nozzle: world centre (-336, 70, 927) mm, size 77.8 x 80 x 49.5 mm; static; child of pilot.handR (at [0, 70, 30] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.shaft: world centre (-315, 70, 1019) mm, size 43.6 x 6.4 x 142 mm; turns about an axis tilted 15° from vertical, along (-0.26, 0, -0.97) through (-292, 70, 1104); 1 turn per input turn (Solved, input); child of pilot.handR (at [0, 70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.frontBearing: world centre (-302, 70, 1068) mm, size 15.7 x 14.1 x 11.4 mm; static; child of pilot.handR (at [0, 70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.rearBearing: world centre (-326, 70, 980) mm, size 15.7 x 14.1 x 11.4 mm; static; child of pilot.handR (at [0, 70, 230] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eR2.casing: world centre (-316, 70, 1017) mm, size 118 x 80 x 171 mm; static; child of pilot.handR (at [0, 70, 130] in the pilot.handR frame); local +Z points (-0.26, 0, -0.97)",
+        "eB.intakeLip: world centre (0, 180, 1472) mm, size 110 x 110 x 16.8 mm; static; child of pilot.body (at [0, 55, 140] in the pilot.body frame); local +Z points -Z",
+        "eB.impeller: world centre (0, 180, 1449) mm, size 68.2 x 68.2 x 27.3 mm; turns about a vertical axis (-Z) through (0, 180, 1442); 1 turn per input turn (Solved, input); child of pilot.body (at [0, 55, 102] in the pilot.body frame); local +Z points -Z",
+        "eB.diffuser: world centre (0, 180, 1365) mm, size 98.2 x 98.2 x 162 mm; static; child of pilot.body (at [0, 55, 102] in the pilot.body frame); local +Z points -Z",
+        "eB.combustor: world centre (0, 180, 1332) mm, size 82.5 x 82.5 x 84 mm; static; child of pilot.body (at [0, 55, 140] in the pilot.body frame); local +Z points -Z",
+        "eB.nozzleGuideVanes: world centre (0, 180, 1277) mm, size 77 x 77 x 14 mm; static; child of pilot.body (at [0, 55, 140] in the pilot.body frame); local +Z points -Z",
+        "eB.turbineWheel: world centre (0.07, 180, 1262) mm, size 72.5 x 72.6 x 11.2 mm; turns about a vertical axis (-Z) through (0, 180, 1480); 1 turn per input turn (Solved, input); child of pilot.body (at [0, 55, 140] in the pilot.body frame); local +Z points -Z",
+        "eB.nozzle: world centre (0, 180, 1227) mm, size 110 x 110 x 53.2 mm; static; child of pilot.body (at [0, 55, -140] in the pilot.body frame); local +Z points -Z",
+        "eB.shaft: world centre (0, 180, 1358) mm, size 8.8 x 8.8 x 203 mm; turns about a vertical axis (-Z) through (0, 180, 1480); 1 turn per input turn (Solved, input); child of pilot.body (at [0, 55, 140] in the pilot.body frame); local +Z points -Z",
+        "eB.frontBearing: world centre (0, 180, 1429) mm, size 19.4 x 19.3 x 11.2 mm; static; child of pilot.body (at [0, 55, 140] in the pilot.body frame); local +Z points -Z",
+        "eB.rearBearing: world centre (0, 180, 1301) mm, size 19.4 x 19.3 x 11.2 mm; static; child of pilot.body (at [0, 55, 140] in the pilot.body frame); local +Z points -Z",
+        "eB.casing: world centre (0, 180, 1354) mm, size 110 x 110 x 218 mm; static; child of pilot.body (at [0, 55, 0] in the pilot.body frame); local +Z points -Z"
+      ],
+      "sectionTriangles" : 196,
+      "showOnly" : [
+
+      ],
+      "stepFacts" : [
+        {
+          "checks" : [
+
+          ],
+          "facts" : [
+
+          ]
+        },
+        {
+          "checks" : [
+
+          ],
+          "facts" : [
+
+          ]
+        },
+        {
+          "checks" : [
+
+          ],
+          "facts" : [
+
+          ]
+        },
+        {
+          "checks" : [
+
+          ],
+          "facts" : [
+
+          ]
+        },
+        {
+          "checks" : [
+
+          ],
+          "facts" : [
+
+          ]
+        },
+        {
+          "checks" : [
+
+          ],
+          "facts" : [
+
+          ]
+        },
+        {
+          "checks" : [
+
+          ],
+          "facts" : [
+
+          ]
+        },
+        {
+          "checks" : [
+
+          ],
+          "facts" : [
+
+          ]
+        },
+        {
+          "checks" : [
+
+          ],
+          "facts" : [
+
+          ]
+        }
+      ],
+      "steps" : [
+        "Beat",
+        "Beat",
+        "Beat",
+        "Beat",
+        "Beat",
+        "Beat",
+        "Beat",
+        "Beat",
+        "Beat"
+      ],
+      "stepTiers" : [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "stepViews" : [
+        {
+          "hidden" : [
+
+          ],
+          "posed" : [
+
+          ],
+          "poseReadBack" : [
+
+          ],
+          "step" : 1
+        },
+        {
+          "hidden" : [
+
+          ],
+          "posed" : [
+
+          ],
+          "poseReadBack" : [
+
+          ],
+          "step" : 2
+        },
+        {
+          "hidden" : [
+
+          ],
+          "posed" : [
+
+          ],
+          "poseReadBack" : [
+
+          ],
+          "step" : 3
+        },
+        {
+          "hidden" : [
+
+          ],
+          "posed" : [
+            "pilot.upperArmL"
+          ],
+          "poseReadBack" : [
+            "pilot.upperArmL: world centre (310, 0, 1373) mm, size 322 x 112 x 227 mm; local +Z points (-0.87, 0, 0.5); posed placement at [205, -125, 90] in the pilot.body frame",
+            "pilot.lowerArmL: world centre (562, 0, 1227) mm, size 279 x 84 x 191 mm; local +Z points (-0.87, 0, 0.5); moves with pilot.upperArmL",
+            "pilot.handL: world centre (771, 0, 1105) mm, size 161 x 70 x 118 mm; local +Z points (-0.87, 0, 0.5); moves with pilot.lowerArmL",
+            "eL1.intakeLip: world centre (504, 70, 1257) mm, size 48.6 x 80 x 73.3 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.impeller: world centre (517, 70, 1250) mm, size 35.2 x 49.6 x 49.7 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.diffuser: world centre (562, 70, 1231) mm, size 122 x 71.4 x 95.5 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.combustor: world centre (590, 70, 1208) mm, size 82 x 60 x 82 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.nozzleGuideVanes: world centre (623, 70, 1188) mm, size 36.7 x 56 x 53.5 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.turbineWheel: world centre (633, 70, 1183) mm, size 29 x 52.8 x 47.1 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.nozzle: world centre (655, 70, 1172) mm, size 63.7 x 80 x 78.4 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.shaft: world centre (573, 70, 1217) mm, size 129 x 6.4 x 77.8 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.frontBearing: world centre (530, 70, 1243) mm, size 14 x 14.1 x 16.2 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.rearBearing: world centre (609, 70, 1197) mm, size 14 x 14.1 x 16.2 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL1.casing: world centre (576, 70, 1216) mm, size 175 x 80 x 147 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.intakeLip: world centre (504, -70, 1257) mm, size 48.6 x 80 x 73.3 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.impeller: world centre (517, -70, 1250) mm, size 35.2 x 49.6 x 49.7 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.diffuser: world centre (562, -70, 1231) mm, size 122 x 71.4 x 95.5 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.combustor: world centre (590, -70, 1208) mm, size 82 x 60 x 82 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.nozzleGuideVanes: world centre (623, -70, 1188) mm, size 36.7 x 56 x 53.5 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.turbineWheel: world centre (633, -70, 1183) mm, size 29 x 52.8 x 47.1 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.nozzle: world centre (655, -70, 1172) mm, size 63.7 x 80 x 78.4 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.shaft: world centre (573, -70, 1217) mm, size 129 x 6.4 x 77.8 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.frontBearing: world centre (530, -70, 1243) mm, size 14 x 14.1 x 16.2 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.rearBearing: world centre (609, -70, 1197) mm, size 14 x 14.1 x 16.2 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL",
+            "eL2.casing: world centre (576, -70, 1216) mm, size 175 x 80 x 147 mm; local +Z points (0.87, 0, -0.5); moves with pilot.handL"
+          ],
+          "step" : 4
+        },
+        {
+          "hidden" : [
+
+          ],
+          "posed" : [
+
+          ],
+          "poseReadBack" : [
+
+          ],
+          "step" : 5
+        },
+        {
+          "hidden" : [
+
+          ],
+          "posed" : [
+
+          ],
+          "poseReadBack" : [
+
+          ],
+          "step" : 6
+        },
+        {
+          "hidden" : [
+
+          ],
+          "posed" : [
+
+          ],
+          "poseReadBack" : [
+
+          ],
+          "step" : 7
+        },
+        {
+          "hidden" : [
+
+          ],
+          "posed" : [
+
+          ],
+          "poseReadBack" : [
+
+          ],
+          "step" : 8
+        },
+        {
+          "hidden" : [
+
+          ],
+          "posed" : [
+
+          ],
+          "poseReadBack" : [
+
+          ],
+          "step" : 9
+        }
+      ],
+      "title" : "Assembly",
+      "triangles" : 116260,
+      "version" : 2,
+      "warnings" : [
+
+      ]
+    }
+  },
+  "warnings" : [
+
+  ]
+}

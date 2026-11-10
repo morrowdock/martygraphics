@@ -42,6 +42,19 @@
     model-name caption, a moved arrow tail, a dropped arrow or an empty table, so every check report and render
     manifest keeps its bytes (`arrowDrops` is added only when a still drops an arrow).
 
+- Docs: the first AI prompt-to-3D lesson that meets the showcase bar leads the README and docs/SHOWCASE.md.
+  - Question "How does the Gravity jet suit work?" (follow-up "How does the pilot steer?"), answered by Claude Opus 5.5
+    through Marty `f2d7c5a` with research on; engine `dfc521a`; round 2j, run `r2j-opus-1`, accepted on try 3. All 4
+    runs of the round and every try are listed (3 accepted, 1 refused; 1 of 4 met the bar).
+  - New folder `docs/assets/jet-suit-ai/`: the accepted lesson JSON, the strict check output at `dfc521a`, the 9 beat
+    stills, a poster (a copy of beat 2), the story video and the follow-up answer, all byte-identical to the run and
+    render outputs; `PROMPT.md` (prompt, setup, tries), `FACT-CHECK.md` (the independent fact check, corrections
+    C1–C13) and `provenance.json` (SHAs, file hashes, render command). The lesson is shown unedited; the corrections
+    are listed, not applied.
+  - The lesson still passes `marty-solid check --strict` at main (`5bae049`); the report is the same except the engine
+    identity. New golden check files for the three new JSON files.
+  - The hand-built jet-suit lesson stays as the reference, unchanged.
+
 - SwiftUI solid pane uses the still's framing (follow-up from PR #37).
   - `MGExplainerController` (shown by `MartyGraphicsExplainerView`) now frames each beat with
     `MGExplainerFrame.solidClearView`, the function of the beat's still and its `story.mp4` hold frames, for the

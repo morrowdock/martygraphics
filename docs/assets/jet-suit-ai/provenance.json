@@ -1,0 +1,177 @@
+{
+  "what": "AI-written lesson, shown unedited: the answer of Marty (Claude Opus 5.5, research on) to the question \"How does the Gravity jet suit work?\", round 2j, run r2j-opus-1, checked and rendered by MartyGraphics.",
+  "authoring": "AI-written. The model wrote the lesson JSON; the engine checked and rendered it. No person or agent changed the JSON, the stills or the video. The fact-check corrections are listed beside the lesson (FACT-CHECK.md), not applied to it.",
+  "run": {
+    "id": "r2j-opus-1",
+    "date": "2026-11-09",
+    "startedUTC": "2026-11-09T21:43:50Z",
+    "question": "How does the Gravity jet suit work?",
+    "followUp": "How does the pilot steer?",
+    "command": "marty ask \"How does the Gravity jet suit work?\" --out runs/r2j-opus-1 --model claude-opus-5-5 --follow-up \"How does the pilot steer?\" --repairs 3",
+    "model": "claude-cli:claude-opus-5-5",
+    "marty": {
+      "repository": "https://github.com/morrowdock/marty",
+      "commit": "f2d7c5a281760b0e956334254efb52f7f1eb790c",
+      "prompts": "marty-prompts/22"
+    },
+    "engine": {
+      "repository": "https://github.com/morrowdock/martygraphics",
+      "commit": "dfc521a83c8fdefc1f918a6d1bd1065e7e3a89b2"
+    },
+    "options": {
+      "research": true,
+      "researchTurns": 12,
+      "quoteCheck": true,
+      "repairs": 3,
+      "strict": true
+    },
+    "tries": [
+      "try 1 author: refused text.number.beat.1",
+      "try 2 repair 1: 4 engine suggestions auto-fixed, then refused annotation.anchor.hidden.lShaft",
+      "try 3 repair 2: accepted"
+    ],
+    "followUpResult": "no change to the lesson (document null); 2 answer calls; Marty's answer check still records answer.unsourced",
+    "receiptAcceptedRef": "sha256:faa069c2c2c73c3b08fa7b67172d59b28d18b2880a8284c6e6b25a3a4c77bdce",
+    "round": "4 runs, 3 accepted, 1 refused; 1 of 4 met the showcase bar (see PROMPT.md)"
+  },
+  "render": {
+    "tool": "marty-solid from MartyGraphics dfc521a83c8fdefc1f918a6d1bd1065e7e3a89b2, Examples/Solid3D, SwiftPM release build",
+    "engineExecutableSHA256": "a0b80b9e0725b07834ade63b1641ae03a8479699874981200c428c8b3f01f1e0",
+    "command": "marty-solid render accepted-document.json <OUT> --size 1280x800 --loop-fps 30",
+    "manifestSHA256": "b0ac7255e25adf0443fa31efe7e9a12402343539607b490ea63733b8d71b5efa",
+    "manifestSource": {
+      "file": "accepted-document.json",
+      "lines": 769,
+      "sha256": "bb8f1893d90b869103fe84993a41585c5eaf8b73be2e8889a8cfe8f7f04b7df7"
+    },
+    "legend": "Solved 19 · Given 1 · Not checked 16",
+    "notPublished": "The render also wrote board-0.png, solid-0.png, loop.gif, loop.mp4 and manifest.json; they are not published. The run's raw model prompts, research reply and receipt are not published."
+  },
+  "checkAtMain": {
+    "commit": "5bae0491e49d04b6a7cde8aa064d200b0bdfc650",
+    "command": "marty-solid check --strict docs/assets/jet-suit-ai/lesson.json",
+    "engineExecutableSHA256": "823f7ab21b2638a4afd1b980e3e611c08e6fb3ba5f9f32b338e771f61215a3e7",
+    "result": "exit 0, ok true, strict true, warnings empty, anchorIssues empty, arrowIssues empty; the report equals check-strict.json except the engine identity"
+  },
+  "factCheck": {
+    "date": "2026-11-09",
+    "checkers": [
+      "GPT-6.1 Sol (web, 61 claims)",
+      "Gemini 4 Argon (web, 19 claims, blind)"
+    ],
+    "merged": "Claude Opus 5.5 (coordinator); the stricter label wins",
+    "verdict": "public with fixes: 1 wrong sentence (C1) and 12 corrections (C2-C13)",
+    "file": "FACT-CHECK.md"
+  },
+  "artifacts": {
+    "lesson.json": {
+      "sha256": "bb8f1893d90b869103fe84993a41585c5eaf8b73be2e8889a8cfe8f7f04b7df7",
+      "bytes": 12225,
+      "from": "the run's accepted-document.json (accepted on try 3), byte-identical; not edited",
+      "lines": 769
+    },
+    "check-strict.json": {
+      "sha256": "d4e1a971ba056be1dcd5f9fed68901045a0e73bdf4fd60893991c9223f536920",
+      "bytes": 112356,
+      "from": "the grader's check-strict-dfc521a-accepted-document.json, byte-identical: stdout of `marty-solid check --strict accepted-document.json` at engine dfc521a (engine executable SHA-256 a0b80b9e0725b07834ade63b1641ae03a8479699874981200c428c8b3f01f1e0)",
+      "result": "ok true, strict true, warnings empty, anchorIssues empty, arrowIssues empty"
+    },
+    "beat-1.png": {
+      "sha256": "44cdca04833a119dd76b54558418f52bb62e50f0699d3e47300063388df17e69",
+      "bytes": 535923,
+      "from": "render beat-1.png, byte-identical; not edited",
+      "pixels": "1280x800",
+      "camera": "hero"
+    },
+    "beat-2.png": {
+      "sha256": "c9c1e671f6510966c234e708a4e4ffcfe7c280572d51e67890c6dd530fa26272",
+      "bytes": 549286,
+      "from": "render beat-2.png, byte-identical; not edited",
+      "pixels": "1280x800",
+      "camera": "iso"
+    },
+    "beat-3.png": {
+      "sha256": "d00a72a1e14a4ed72d05e6245b2992f2c44641e7a6e6c6d5aa1caec695889eeb",
+      "bytes": 587393,
+      "from": "render beat-3.png, byte-identical; not edited",
+      "pixels": "1280x800",
+      "camera": "hero"
+    },
+    "beat-4.png": {
+      "sha256": "e255ab9d0e1ffa50a9aecb83995d85225ab99ade93820606d47e01711e522911",
+      "bytes": 547538,
+      "from": "render beat-4.png, byte-identical; not edited",
+      "pixels": "1280x800",
+      "camera": "front"
+    },
+    "beat-5.png": {
+      "sha256": "e898400b95d357b299272ae72433e438b4d4010b5d8692a8fd506bbf46d3e8cf",
+      "bytes": 538829,
+      "from": "render beat-5.png, byte-identical; not edited",
+      "pixels": "1280x800",
+      "camera": "back"
+    },
+    "beat-6.png": {
+      "sha256": "4c85c841ef39eb40084a6fbf0f7f7f2b1f75bd09caad0c0946e58bdaa5ec468e",
+      "bytes": 549955,
+      "from": "render beat-6.png, byte-identical; not edited",
+      "pixels": "1280x800",
+      "camera": "front, focus on one arm engine, cut open"
+    },
+    "beat-7.png": {
+      "sha256": "5f3cdde1b93e0c34bd210b420505e2ef7a7b93a9f1d7df0c4014daf3f82f5d54",
+      "bytes": 566293,
+      "from": "render beat-7.png, byte-identical; not edited",
+      "pixels": "1280x800",
+      "camera": "front, focus on one arm engine, cut open"
+    },
+    "beat-8.png": {
+      "sha256": "2f041c0fd695db738efbd28638eab0ca740a1f5f1bf96158a3e4de955dc3115a",
+      "bytes": 548201,
+      "from": "render beat-8.png, byte-identical; not edited",
+      "pixels": "1280x800",
+      "camera": "front, focus on one arm engine, cut open"
+    },
+    "beat-9.png": {
+      "sha256": "aade8c7972c6c82eeb60ac9d51ffb487346cca1585147bceec8519c7c7d197a1",
+      "bytes": 541933,
+      "from": "render beat-9.png, byte-identical; not edited",
+      "pixels": "1280x800",
+      "camera": "hero"
+    },
+    "poster.png": {
+      "sha256": "c9c1e671f6510966c234e708a4e4ffcfe7c280572d51e67890c6dd530fa26272",
+      "bytes": 549286,
+      "from": "a byte-identical copy of beat-2.png (the iso view that shows all five engines, five thrust arrows and the weight arrow); not edited, not converted"
+    },
+    "story.mp4": {
+      "sha256": "04e9b2dc44797e00c787ac7d9c8c1f442da16f2b027b00dc8fb2c044e9942ce3",
+      "bytes": 17359589,
+      "from": "render story.mp4, byte-identical; not re-encoded, not cropped, not edited",
+      "transcode": "none (the repository checks have no file-size limit; 17.4 MB is below GitHub's 50 MB warning)",
+      "codec": "h264",
+      "pixels": "1280x800",
+      "fps": 30,
+      "frames": 2338,
+      "seconds": 77.93,
+      "beats": 9,
+      "moves": "8 straight moves of 0.6 s, no hard cut (render manifest: cut false on every beat)",
+      "inspected": "The grader decoded all 2,338 frames (AVAssetReader, status completed) and compared one hold frame per beat with its still (mean difference at most 2.6 of 255)."
+    },
+    "followup-answer.txt": {
+      "sha256": "761c77feeae328a9fe670d2ea11d86aebd091bbd1556ceef74a18bf01dc031ff",
+      "bytes": 377,
+      "from": "the run's final answer reply to the follow-up \"How does the pilot steer?\" (answer call 2 of 2), byte-identical; equal to receipt followUp.answer"
+    },
+    "PROMPT.md": {
+      "sha256": "5091b0d31bb8a9ae8cc48c8a16ed6705d7508339b32b17b84fabf8d72846b539",
+      "bytes": 5514,
+      "from": "written for this page from the run receipt and the round 2j grading"
+    },
+    "FACT-CHECK.md": {
+      "sha256": "8fb3ce0fd22f83cc29f4333423a66ae9394c1f158b3aec71c8bd4e9cef55bf38",
+      "bytes": 6285,
+      "from": "the merged independent fact check (corrections C1-C13), shortened only in its header; every correction kept"
+    }
+  }
+}

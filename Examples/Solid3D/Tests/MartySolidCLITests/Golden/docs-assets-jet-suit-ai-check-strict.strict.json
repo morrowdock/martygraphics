@@ -1,0 +1,21 @@
+{
+  "file" : {
+    "bytes" : 112356,
+    "lines" : 3962,
+    "sha256" : "d4e1a971ba056be1dcd5f9fed68901045a0e73bdf4fd60893991c9223f536920"
+  },
+  "kind" : "explainer",
+  "location" : {
+    "beat" : null,
+    "command" : null,
+    "detail" : null,
+    "id" : null,
+    "statement" : null,
+    "view" : "header"
+  },
+  "ok" : false,
+  "reason" : "tier.key",
+  "repair" : "Refused (tier.key): A v2 document has a key named `tier` somewhere (tiers are computed by the engine, never authored).",
+  "strict" : true,
+  "version" : 1
+}

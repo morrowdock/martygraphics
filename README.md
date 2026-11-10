@@ -13,6 +13,27 @@ Validated JSON → native diagrams, walkthroughs, and animation in SwiftUI.
 </div>
 
 <p align="center">
+  <a href="docs/assets/jet-suit-ai/story.mp4"><img src="docs/assets/jet-suit-ai/poster.png" width="840" alt="AI-written lesson, beat 2: a grey schematic pilot with two gold engines on each forearm and one on the back, a yellow up arrow on each engine and a down arrow labelled Weight of pilot, suit and fuel. Caption: in a hover the upward parts of the thrusts balance the weight, and side forces and turning moments balance."></a>
+</p>
+
+**Asked: "How does the Gravity jet suit work?" — an AI wrote this lesson; the engine rendered it.**
+
+**Independent fact check: 1 wrong sentence and 12 corrections — [see the panel](docs/SHOWCASE.md#independent-fact-check).**
+
+Claude Opus 5.5, through the [Marty](https://github.com/morrowdock/marty) app with web research on, wrote the lesson
+JSON. MartyGraphics refused its first two tries, each with one reason, accepted the third, and rendered 9 beats and a
+78-second story video. The lesson is **shown unedited, with its errors listed**: the corrections from two independent
+AI model fact checks are beside it, not applied to it. The wrong sentence is in beat 7: it says the hot gas spins the
+turbine "at 1 turn per input turn", but the engine solved only the 1:1 shaft link, not the gas flow. We asked the same
+question in 4 runs; 3 lessons were accepted, and **1 of 4 runs met our showcase bar** (this one).
+[Story video (MP4)](docs/assets/jet-suit-ai/story.mp4) · [All 9 beats](docs/SHOWCASE.md#jet-suit-from-a-prompt-ai-written-unedited) ·
+[Prompt and every try](docs/assets/jet-suit-ai/PROMPT.md) · [Fact check](docs/assets/jet-suit-ai/FACT-CHECK.md) ·
+[Its JSON](docs/assets/jet-suit-ai/lesson.json) · [Render receipt](docs/assets/jet-suit-ai/provenance.json)
+
+<sub>Click the picture to open the story video: 1280×800 at 30 frames per second, H.264, 17.4 MB, the engine's file
+byte for byte. Below is the hand-built lesson of the same suit, for reference.</sub>
+
+<p align="center">
   <a href="docs/assets/jet-suit/story.mp4"><img src="docs/assets/jet-suit/poster.jpg" width="840" alt="Schematic pilot seen from behind with five micro jet engines, two on each forearm and one on the back. A yellow thrust arrow points out of each engine, and an orange exhaust plume (an illustration) leaves each nozzle. Caption: to hover, the upward parts of these thrusts balance the weight of pilot, suit and fuel."></a>
 </p>
 
@@ -42,8 +63,8 @@ what the engine computed (the engine motion, the weight direction and the shaft'
 [Story video (MP4)](docs/assets/jet-suit/story.mp4) · [Sources](docs/assets/jet-suit/SOURCES.md) ·
 [All 7 steps](docs/SHOWCASE.md#jet-suit-hand-built-fact-checked) · [Render receipt](docs/assets/jet-suit/provenance.json)
 
-<sub>The first picture is the step 2 still; further down are the hero still and the posed steering step (step 5). Click
-the first picture to open the story video: 1280×800 at 30 frames per second, H.264, 5.7 MB. GitHub shows GIFs at a
+<sub>The first hand-built picture is the step 2 still; further down are the hero still and the posed steering step (step 5).
+Click the first hand-built picture to open its story video: 1280×800 at 30 frames per second, H.264, 5.7 MB. GitHub shows GIFs at a
 lower frame rate, and it does not play a video file from the repository inside a README, so this example has no
 GIF.</sub>
 
