@@ -923,7 +923,11 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerPaneFramingTests.swift",
-      "sha256": "36f53029554313867c5a76661239c56bdf0b6e21eadced271ee0a17b917a559e"
+      "sha256": "dd2a1694d022588a8d426e472494578cb1b60963d483178e22337a970802a514"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/ExplainerPaneHostTests.swift",
+      "sha256": "74d7c811699c00901165ccda54f8980742d60f02faf1f3547ad1ed7503b6d0f0"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerRecheckTests.swift",

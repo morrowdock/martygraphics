@@ -8,11 +8,11 @@ import XCTest
 /// framing, the unblocked-focus rule (automatic ghosts, alternate directions) and every camera preset, `backLeft` and
 /// `backRight` included (docs/EXPLAINER.md, "The solid pane in SwiftUI").
 final class ExplainerPaneFramingTests: XCTestCase {
-    /// Shipped explainers with a solid: the examples and the docs fixtures (a figure with engines, a cut engine, a
-    /// microTurbojet seen from `back`).
+    /// Shipped explainers with a solid: the examples, the docs fixtures (a figure with engines, a cut engine, a
+    /// microTurbojet seen from `back`) and the AI-authored jet-suit lesson (board and solid, annotations and arrows).
     static let shipped = ["Examples/Explainers/gears-3d.explainer.json", "Examples/Explainers/gears-mixed.explainer.json",
                           "docs/fixtures/anchor-suggest/figure-engines.explainer.json", "docs/fixtures/anchor-suggest/cut-engine.explainer.json",
-                          "docs/fixtures/arrow-visibility/arrow-in-casing.explainer.json"]
+                          "docs/fixtures/arrow-visibility/arrow-in-casing.explainer.json", "docs/assets/jet-suit-ai/lesson.json"]
 
     static func parse(_ text: String) throws -> MGExplainer { try MGExplainer.parse(data: Data(text.utf8)).get() }
     static func shippedDoc(_ path: String) throws -> MGExplainer {
@@ -92,7 +92,8 @@ final class ExplainerPaneFramingTests: XCTestCase {
             XCTAssertEqual(c.session.presented.step, b.view.step, file: file, line: line)
             // The still's camera and view (`marty-solid render`, `beatViews`): one function, the same result.
             let still = MGExplainerFrame.solidClearView(solid, view: b.view, stepIndex: b.stepIndex, pane: b.pane)
-            let stillView = (b.view.solid ?? solid.view(step: nil)).ghosting(still.autoGhost)
+            // The still draws `clear.view(base)`: the automatic ghosts and the beat's arrow drops (PR #49).
+            let stillView = still.view(b.view.solid ?? solid.view(step: nil))
             let r = try XCTUnwrap(c.renderer, file: file, line: line)
             XCTAssertEqual(r.camera, still.camera, "\(name): beat \(b.beat + 1) camera", file: file, line: line)
             XCTAssertEqual(c.paneClear, still, "\(name): beat \(b.beat + 1) unblocked-focus result", file: file, line: line)
@@ -105,10 +106,13 @@ final class ExplainerPaneFramingTests: XCTestCase {
     }
 
     /// Every beat of every shipped explainer with a solid (`MGExplainerFrame.solidCamera` is this camera too).
+    /// The pane is checked at every beat of each document: the beats it showed are exactly the document's beats, in order.
     @MainActor func testShippedExplainersShowTheStillCameraInEveryBeat() throws {
-        var beats = 0
-        for path in Self.shipped { beats += try playPane(try Self.shippedDoc(path), path).count }
-        XCTAssertGreaterThanOrEqual(beats, 10)
+        for path in Self.shipped {
+            let doc = try Self.shippedDoc(path)
+            XCTAssertFalse(doc.beats.isEmpty, path)
+            XCTAssertEqual(try playPane(doc, path).map(\.beat), Array(doc.beats.indices), "\(path): every beat, in order")
+        }
     }
 
     /// The shipped turbofan model: every step as a beat. Its blades hide the compressor and combustor from the authored
@@ -148,9 +152,10 @@ final class ExplainerPaneFramingTests: XCTestCase {
         }
     }
 
-    /// The framed camera is each beat's start pose: a camera moved away from it (as the learner's orbit moves the
-    /// pane's camera) goes back to the framed camera at the next beat and at a new pane aspect; every framing is a new
-    /// reset key, and a same-size layout pass is not.
+    /// The framed camera is each beat's start pose: the renderer's camera moved away from it goes back to the framed
+    /// camera at the next beat and at a new pane aspect; every framing is a new reset key, and a same-size layout pass
+    /// is not. (The controller only; SceneKit's own free camera and orbit pivot in the hosted view are
+    /// `ExplainerPaneHostTests`.)
     @MainActor func testEachFramingIsACameraReset() throws {
         let doc = try Self.parse(Self.backTower)
         let clock = MGManualClock()
