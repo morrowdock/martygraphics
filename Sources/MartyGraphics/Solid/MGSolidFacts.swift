@@ -166,6 +166,102 @@ public enum MGSolidFacts {
         ch.isNumber || ch.unicodeScalars.contains { $0.properties.numericType != nil || MGSolidNumericScalars.contains($0) }
     }
 
+    // MARK: Rule N1: declared names
+
+    /// Most entries of a document's `names` list, and the most characters of one name.
+    public static let namesCount = 24, nameText = 24
+
+    /// The tokens of `chars` (docs/SOLID-3D.md, "Declared names"): maximal runs of characters that are letters (any
+    /// script), number characters (`isNumber`) or the hyphen-minus "-". Every other character (a space, punctuation,
+    /// an apostrophe, a brace) ends a token.
+    static func tokens(_ chars: [Character]) -> [Range<Int>] {
+        func joins(_ c: Character) -> Bool { c == "-" || c.isLetter || isNumber(c) }
+        var out: [Range<Int>] = [], i = 0
+        while i < chars.count {
+            guard joins(chars[i]) else { i += 1; continue }
+            var j = i
+            while j < chars.count, joins(chars[j]) { j += 1 }
+            out.append(i..<j)
+            i = j
+        }
+        return out
+    }
+
+    /// The offsets in `chars` of the characters of every token that exactly equals a declared name (whole token,
+    /// case-sensitive): rule N1 does not count their number characters. Every other number character still counts.
+    static func nameOffsets(_ chars: [Character], names: Set<String>) -> Set<Int> {
+        guard !names.isEmpty else { return [] }
+        var out = Set<Int>()
+        for r in tokens(chars) where names.contains(String(chars[r])) { out.formUnion(r) }
+        return out
+    }
+
+    /// Unit and quantity words a declared name may not join to a number (`names.number.<n>`), lowercase. Matched
+    /// without case, except the one-letter units, which match only in lowercase (so "A320" and "V8" stay names).
+    static let quantityWords: Set<String> = [
+        "mach", "rpm", "rps", "mph", "kph", "kmh", "kmph", "fps", "knots", "kt", "kts",
+        "km", "cm", "mm", "nm", "um", "mi", "ft", "yd", "in", "inch", "nmi", "ly", "au",
+        "kg", "mg", "lb", "lbs", "oz", "ton", "tons", "tonne",
+        "kn", "kw", "mw", "gw", "hp", "bhp", "ps", "kj", "mj", "kwh", "wh", "mah", "kv", "mv", "ma",
+        "hz", "khz", "mhz", "ghz", "ms", "us", "sec", "secs", "min", "mins", "hr", "hrs", "yr", "yrs", "day", "days",
+        "ml", "cl", "dl", "gal", "cc", "psi", "bar", "mbar", "pa", "kpa", "mpa", "gpa", "atm",
+        "deg", "rad", "db", "dba", "lux", "lm", "kb", "mb", "gb", "tb", "kib", "mib", "gib", "bit", "bits",
+        "pct", "percent", "pc", "pcs", "usd", "eur", "gbp", "jpy", "cny", "aud", "cad", "chf", "inr", "krw", "rub", "btc",
+    ]
+    static let quantityLetters: Set<Character> = ["m", "g", "s", "h", "l", "t", "x", "k", "n", "w", "v", "a", "j", "c", "f", "b"]
+
+    /// The number literals rule N1 finds in `chars`: the maximal runs of number characters (`isNumber`, the test the N1
+    /// scan in `fill` and `MGExplainerHonesty.typedNumber` applies to each character).
+    static func numberLiterals(_ chars: [Character]) -> [Range<Int>] {
+        var out: [Range<Int>] = [], i = 0
+        while i < chars.count {
+            guard isNumber(chars[i]) else { i += 1; continue }
+            var j = i
+            while j < chars.count, isNumber(chars[j]) { j += 1 }
+            out.append(i..<j)
+            i = j
+        }
+        return out
+    }
+
+    /// True when a declared name is a number or a quantity (`names.number.<n>`), that is when any of these fails:
+    /// (a) it starts with a letter (so "2e3", "1e-3", "120N", "100W", "0x1F", "3D" and "4th" fail);
+    /// (b) no number literal that rule N1's scan finds (`numberLiterals`) covers the whole name (a letter that is also
+    ///     a number character, such as the Roman numeral "Ⅻ", fails);
+    /// (c) its leading letters (the letters before its first non-letter) are not a unit or quantity word
+    ///     (`quantityWords`, matched without case, or a one-letter unit of `quantityLetters`, matched in lowercase only,
+    ///     so "Mach2", "USD120", "RPM120", "kmh-90" and "x2" fail, and "A320", "V8" and "M6" pass).
+    static func isQuantityName(_ name: String) -> Bool {
+        let chars = Array(name)
+        guard let first = chars.first, first.isLetter else { return true }
+        if numberLiterals(chars).contains(0..<chars.count) { return true }
+        let lead = String(chars.prefix { $0.isLetter && !isNumber($0) })
+        if lead.count == 1, let c = lead.first { return quantityLetters.contains(c) }
+        return quantityWords.contains(lead.lowercased())
+    }
+
+    /// A document's `names` list (docs/SOLID-3D.md, "Declared names"): 1–`namesCount` strings, each one token
+    /// (`tokens`) of 1–`nameText` characters with (d) at least one number character, and not a number or a quantity
+    /// (`isQuantityName`, rules (a)–(c)). Reasons: `names.count` (not an array of strings, or a count out of range,
+    /// with `limit`), `names.text.<n>` (length, with `limit`), `names.token.<n>` (not one token, or (d): no number
+    /// character, so it needs no declaration), `names.number.<n>` (`<n>` 1-based). Repeats are kept once.
+    static func names(_ v: MGJSON) throws -> [String] {
+        guard case .array(let list) = v else { throw MGSolidIssue("names.count") }
+        if let d = MGSolidParser.countDetail("names", list.count, 1...namesCount, unit: "names") { throw MGSolidIssue("names.count", limit: d) }
+        var out: [String] = []
+        for (k, e) in list.enumerated() {
+            guard case .string(let n) = e else { throw MGSolidIssue("names.count") }
+            if let d = MGSolidParser.countDetail("names[\(k)]", n.unicodeScalars.count, 1...nameText, unit: "characters") {
+                throw MGSolidIssue("names.text.\(k + 1)", limit: d)
+            }
+            let chars = Array(n)
+            guard tokens(chars) == [0..<chars.count], chars.contains(where: isNumber) else { throw MGSolidIssue("names.token.\(k + 1)") }
+            guard !isQuantityName(n) else { throw MGSolidIssue("names.number.\(k + 1)") }
+            if !out.contains(n) { out.append(n) }
+        }
+        return out
+    }
+
     // MARK: Table
 
     /// Builds the facts table from a compiled assembly and the tier of every drive. `sources`: what moves each driven
@@ -319,10 +415,11 @@ public enum MGSolidFacts {
     /// modifier), `text.modifier.<mod>.<name>` (a modifier that does not apply to this fact) and
     /// `text.rounding.<name>` (a non-zero value that would print as "0").
     static func fill(_ s: String, where w: String, n1: Bool, _ facts: [String: MGSolidFact],
-                     _ aliases: [String: String]) throws -> MGSolidFilledText {
+                     _ aliases: [String: String], names: Set<String>) throws -> MGSolidFilledText {
         var out = MGSolidFilledText(text: "", facts: [])
         var body = "", inside = false
-        for ch in s {
+        let chars = Array(s), declared = nameOffsets(chars, names: names)
+        for (k, ch) in chars.enumerated() {
             if inside {
                 if ch == "}" {
                     let (text, name, mods) = try placeholder(body, facts, aliases)
@@ -334,7 +431,7 @@ public enum MGSolidFacts {
             } else if ch == "{" { inside = true }
             else if ch == "}" { throw MGSolidIssue("text.brace") }
             else {
-                if isNumber(ch) {
+                if isNumber(ch), !declared.contains(k) {
                     if n1 { throw MGSolidIssue("text.number.\(w)") }
                     out.typedNumbers = true
                 }

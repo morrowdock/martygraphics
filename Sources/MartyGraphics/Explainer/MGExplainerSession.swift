@@ -103,6 +103,11 @@ public struct MGExplainerSession {
     public internal(set) var titleTier: MGTier?
     public internal(set) var primary: String?
     public internal(set) var notes: [String: MGExplainer.Note] = [:]
+    /// The header's declared names (`names`): rule N1 does not count the number characters of a token that equals one,
+    /// in captions, 2D text and the solid's text (the solid compiles with them added to its own `names`).
+    public internal(set) var names: [String] = []
+    /// The arrows each beat drops, shared by copies of this session (`droppedArrows`).
+    let dropCache = MGBeatDropCache()
     /// The accepted board (wire), nil without one.
     public internal(set) var board: MGJSON?
     /// The accepted solid as authored (with `kind`), nil without one.
@@ -533,14 +538,14 @@ public struct MGExplainerSession {
         guard !stream.started else { return refuse("stmt.order", index) }
         do {
             guard let o = value.objectValue else { throw MGError("explainer.object") }
-            try MGExplainer.closedKeys(o, required: ["v"], optional: ["title", "primary", "notes"], "explainer")
+            try MGExplainer.closedKeys(o, required: ["v"], optional: ["title", "primary", "notes", "names"], "explainer")
             guard o["v"] == .number(1) else { throw MGError("explainer.version") }
             let h = try MGExplainer.header(o)
             // A header starts a new explainer: everything of the old one goes.
             let paused = lesson.isPaused
             lesson = Self.freshLesson(pacing: pacing, clock: clock)
             if paused { lesson.pause() }
-            title = nil; titleTier = nil; titleTemplate = h.title; primary = h.primary; notes = h.notes
+            title = nil; titleTier = nil; titleTemplate = h.title; primary = h.primary; notes = h.notes; names = h.names
             board = nil; solidSource = nil; solid = nil; ids3D = []; set3D = []
             beats = [:]; stepOf = [:]; presentedBeats = []; presented = MGExplainerBeatView(); frozen = false; beatCount = 0
             setupOps = []; timing = MGExplainerTiming(); captions = [:]; shownItems = MGShownItems(); shownBeats = MGShownBeats()
@@ -579,7 +584,7 @@ public struct MGExplainerSession {
         guard !stream.keep, board == nil, !frozen else { return refuse("stmt.order", index) }
         do {
             try MGExplainer.checkBoardShape(value)
-            try MGExplainerHonesty.checkBoard(value.objectValue!, notes: notes)
+            try MGExplainerHonesty.checkBoard(value.objectValue!, notes: notes, names: Set(names))
             // Parsed with the explainer environment (3D facts must already be there), then checked against the 3D
             // namespace in resolved item order (after template build and `hide`).
             let scene = try MGParser.scene(json: value, extraTemplates: [], env: lesson.env).get()
@@ -595,10 +600,21 @@ public struct MGExplainerSession {
         absorb(events)
     }
 
+    /// The solid object with the header's declared names added to its own `names` (its own first, no repeats).
+    func withNames(_ o: [String: MGJSON]) -> [String: MGJSON] {
+        guard !names.isEmpty else { return o }
+        var o = o
+        var list: [MGJSON] = []
+        if case .array(let own)? = o["names"] { list = own }
+        for n in names where !list.contains(.string(n)) { list.append(.string(n)) }
+        o["names"] = .array(list)
+        return o
+    }
+
     mutating func solidStatement(_ value: MGJSON, _ index: Int) {
         guard !stream.keep, solidSource == nil, !frozen else { return refuse("stmt.order", index) }
         do { try MGExplainer.checkSolidShape(value) } catch { return refuse(Self.reason(error), index) }
-        var src = value.objectValue!
+        var src = withNames(value.objectValue!)
         if src["kind"] == nil { src["kind"] = .string("assembly") }
         let doc: MGSolidDocument
         switch MGSolidParser.document(json: .object(src), library: library, perStepAnnotations: true, steppedAnnotations: beatsChooseLabels) {
@@ -635,7 +651,7 @@ public struct MGExplainerSession {
     func filledTitle() throws -> (String, MGTier?)? {
         guard let t = titleTemplate else { return nil }
         do {
-            let f = try MGSolidFacts.fill(t, where: "title", n1: false, solid?.facts ?? [:], solid?.aliases ?? [:])
+            let f = try MGSolidFacts.fill(t, where: "title", n1: false, solid?.facts ?? [:], solid?.aliases ?? [:], names: Set(names))
             guard !f.text.isEmpty, f.text.unicodeScalars.count <= MGExplainerLimits.title else {
                 throw MGError("explainer.title", limit: MGSolidLimitDetail(field: "title", actual: f.text.unicodeScalars.count, limit: MGExplainerLimits.title,
                                                                            unit: "characters", minimum: 1))
@@ -689,7 +705,7 @@ public struct MGExplainerSession {
             }
             unchecked = s
         }
-        if unchecked == nil, MGExplainerHonesty.typedNumber(raw) {
+        if unchecked == nil, MGExplainerHonesty.typedNumber(raw, names: Set(names)) {
             return refuse(MGExplainerIssue("text.number.beat.\(n)", view: .beat, beat: k, statement: index))
         }
         var absNames: [String] = []
@@ -738,7 +754,7 @@ public struct MGExplainerSession {
     func commandRefusal(_ json: MGJSON) -> String? {
         guard let o = json.objectValue else { return nil }
         if case .string("title")? = o["op"] { return "explainer.op.title" }
-        do { try MGExplainerHonesty.checkCommand(o, notes: notes) } catch { return Self.reason(error) }
+        do { try MGExplainerHonesty.checkCommand(o, notes: notes, names: Set(names)) } catch { return Self.reason(error) }
         switch o["op"] {
         case .string("set")?, .string("remove")?:
             if case .string(let id)? = o["id"], set3D.contains(id) { return "explainer.id.view.\(MGLessonIssue.segment(id))" }

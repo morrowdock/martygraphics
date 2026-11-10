@@ -7,10 +7,12 @@ import Foundation
 /// Whether the board pane is drawn at the shown state, and the board text that moves to the title band when it is not.
 ///
 /// The rule (docs/EXPLAINER.md, "Adaptive board pane"): in an explainer with both a board and a solid, the board pane
-/// is drawn only while the shown board state has at least one item that is not a `text` item (a table, a plot, a
-/// shape, a vector, a highlight, any other kind). While the shown board has only `text` items (or none), the solid
-/// takes the whole frame and the board's texts, in board order, move to the title band (`text`). An explainer with
-/// only a board always draws it; an explainer with only a solid never has a board pane.
+/// is drawn only while the shown board state has at least one item that is not a `text` item (a table with a data row,
+/// a plot, a shape, a vector, a highlight, any other kind). A table with no data row (`MGItem.isEmptyTable`: a header
+/// waiting for its first `set`) is not drawn and does not count, so the pane opens when the table is first filled (the
+/// story slides it open, "Pane slide in the story video"). While the shown board has only `text` items and empty
+/// tables (or none), the solid takes the whole frame and the board's texts, in board order, move to the title band
+/// (`text`). An explainer with only a board always draws it; an explainer with only a solid never has a board pane.
 public struct MGExplainerBoardPane: Equatable, Sendable {
     /// True when the board pane is drawn.
     public var shown: Bool
@@ -28,7 +30,7 @@ public struct MGExplainerBoardPane: Equatable, Sendable {
     public static func rule(scene: MGScene?, hasSolid: Bool) -> MGExplainerBoardPane {
         guard let scene else { return MGExplainerBoardPane(shown: false) }
         guard hasSolid else { return MGExplainerBoardPane(shown: true) }
-        if scene.items.contains(where: { $0.kind != .text }) { return MGExplainerBoardPane(shown: true) }
+        if scene.items.contains(where: { $0.kind != .text && !$0.isEmptyTable }) { return MGExplainerBoardPane(shown: true) }
         let texts = scene.items.compactMap { item -> String? in
             let t = (item.text ?? item.label ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             return t.isEmpty ? nil : t
@@ -134,7 +136,7 @@ public enum MGExplainerFrame {
         let vp = MGViewport(size: ref, width: scene.width, height: scene.height, camera: scene.camera)
         let mid = Double(ref.width) / 2
         var half = 0.0, measured = false
-        for item in scene.items.prefix(MGLimits.resolvedItems) {
+        for item in scene.items.prefix(MGLimits.resolvedItems) where !item.isEmptyTable {
             guard let r = MGLayout.bounds(item, in: scene.items, vp), !r.isNull, r.minX.isFinite, r.maxX.isFinite else { continue }
             measured = true
             half = max(half, abs(Double(r.minX) - mid), abs(Double(r.maxX) - mid))
@@ -177,13 +179,35 @@ public enum MGExplainerFrame {
     /// SwiftUI solid pane (`MGExplainerController`) frames each beat with this, for its own size in points, so it
     /// shows the camera and automatic ghosts of the beat's still and story hold frames. A non-finite or non-positive
     /// aspect gives 1.6 (`MGFrameRect.aspect` of an empty pane).
+    ///
+    /// The arrow drops are the beat's canonical set (`beatArrowDrops`), whatever `aspect`: every view of a beat draws
+    /// the same annotations, and the legend counts exactly those.
     public static func solidClearView(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?, aspect: Double) -> MGSolidClearView {
         let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6
+        var c = MGSolidFraming.clearView(doc, shot: beatShot(doc, view: view, stepIndex: stepIndex), aspect: aspect, titleBand: 0, captionBand: 0,
+                                         stage: MGSolidStage.zUpToYUp, drops: false)
+        c.arrowDrops = beatArrowDrops(doc, view: view, stepIndex: stepIndex)
+        return c
+    }
+
+    /// The shot a beat's solid pane frames (the camera of the pane only; captions, labels and claims of a story frame
+    /// follow `MGStoryPlan.holds`).
+    static func beatShot(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?) -> MGSolidShot {
         let step = view.step
-        let shot = MGSolidShot(file: "", params: pose(doc, view: view), preset: step?.camera ?? "hero", orbit: step?.orbit ?? 0,
-                               highlight: view.solidHighlight, margin: 0.8, step: step == nil ? nil : stepIndex, title: nil, caption: nil)
-        // (The camera of the pane only; captions, labels and claims of a story frame follow `MGStoryPlan.holds`.)
-        return MGSolidFraming.clearView(doc, shot: shot, aspect: aspect, titleBand: 0, captionBand: 0)
+        return MGSolidShot(file: "", params: pose(doc, view: view), preset: step?.camera ?? "hero", orbit: step?.orbit ?? 0,
+                           highlight: view.solidHighlight, margin: 0.8, step: step == nil ? nil : stepIndex, title: nil, caption: nil)
+    }
+
+    /// The arrows a beat drops (docs/SOLID-3D.md, "Arrow drop"): the drop rule at the beat's framing for the whole
+    /// content area of a 1280 × 800 frame (`contentArea`, no board pane). It reads only the beat's solid step and its
+    /// highlighted 3D parts, so a session, a still, the story and the SwiftUI pane all get the same set for a beat,
+    /// whatever their own pane; the legend counts what they draw (`MGExplainerSession.displayedAnnotations`).
+    public static func beatArrowDrops(_ doc: MGSolidDocument, view: MGExplainerBeatView, stepIndex: Int?) -> [MGArrowDrop] {
+        guard !doc.annotations.arrows.isEmpty else { return [] }
+        let area = contentArea(width: MGAnnotationAnchorRules.width, height: MGAnnotationAnchorRules.height)
+        let shot = beatShot(doc, view: view, stepIndex: stepIndex)
+        let c = MGSolidFraming.clearView(doc, shot: shot, aspect: area.aspect, titleBand: 0, captionBand: 0, stage: MGSolidStage.zUpToYUp, drops: false)
+        return MGSolidFraming.arrowDrops(doc, shot: shot, camera: c.camera, autoGhost: c.autoGhost, aspect: area.aspect)
     }
 }
 
@@ -295,7 +319,7 @@ extension MGExplainerFrame {
             let base = b.view.solid ?? d.view(step: nil)
             guard shows(d, base) else { continue }
             let clear = solidClearView(d, view: b.view, stepIndex: b.stepIndex, pane: b.pane)
-            out.append(MGAnnotationAnchorView(view: base.ghosting(clear.autoGhost), params: pose(d, view: b.view), camera: clear.camera,
+            out.append(MGAnnotationAnchorView(view: clear.view(base), params: pose(d, view: b.view), camera: clear.camera,
                                               width: Double(b.pane.width), height: Double(b.pane.height), step: b.stepIndex, beat: b.beat))
         }
         return (d, out)

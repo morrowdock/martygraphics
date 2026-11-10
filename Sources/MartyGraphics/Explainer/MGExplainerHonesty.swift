@@ -97,23 +97,25 @@ enum MGExplainerHonesty {
         return out
     }
 
-    /// True when a number character (every scalar, the #21 test) stands outside the `{…}` placeholders.
-    static func typedNumber(_ s: String) -> Bool {
+    /// True when a number character (every scalar, the #21 test) stands outside the `{…}` placeholders. The number
+    /// characters of a token that exactly equals a declared name do not count (`MGSolidFacts.nameOffsets`).
+    static func typedNumber(_ s: String, names: Set<String>) -> Bool {
         var inside = false
-        for ch in s {
+        let chars = Array(s), declared = MGSolidFacts.nameOffsets(chars, names: names)
+        for (k, ch) in chars.enumerated() {
             if inside { if ch == "}" { inside = false }; continue }
             if ch == "{" { inside = true; continue }
-            if MGSolidFacts.isNumber(ch) { return true }
+            if MGSolidFacts.isNumber(ch), !declared.contains(k) { return true }
         }
         return false
     }
 
     /// True when any string in the value has a typed number.
-    static func typedNumber(in v: MGJSON) -> Bool {
+    static func typedNumber(in v: MGJSON, names: Set<String>) -> Bool {
         var stack = [v]
         while let x = stack.popLast() {
             switch x {
-            case .string(let s): if typedNumber(s) { return true }
+            case .string(let s): if typedNumber(s, names: names) { return true }
             case .array(let a): stack += a
             case .object(let o): stack += o.keys.sorted().map { o[$0]! }
             default: break
@@ -143,62 +145,62 @@ enum MGExplainerHonesty {
 
     /// True when a wire item (or one value set on it) shows author-typed numbers: a typed number in any of its text, or
     /// a number in a numeric display field.
-    static func itemShowsNumbers(_ item: [String: MGJSON]) -> Bool {
+    static func itemShowsNumbers(_ item: [String: MGJSON], names: Set<String>) -> Bool {
         for key in item.keys.sorted() where !nonTextKeys.contains(key) {
-            if valueShowsNumbers(key: key, item[key]!) { return true }
+            if valueShowsNumbers(key: key, item[key]!, names: names) { return true }
         }
         return false
     }
-    static func valueShowsNumbers(key: String, _ v: MGJSON) -> Bool {
+    static func valueShowsNumbers(key: String, _ v: MGJSON, names: Set<String>) -> Bool {
         if nonTextKeys.contains(key) { return false }
         if displayKeys.contains(key), key == "bars" {
             // A bar's `value` is drawn as digits; its `label` is text.
             if case .array(let bars) = v {
-                for b in bars { if b["value"].map(hasNumber) == true || b["label"].map(typedNumber(in:)) == true { return true } }
+                for b in bars { if b["value"].map(hasNumber) == true || b["label"].map({ typedNumber(in: $0, names: names) }) == true { return true } }
                 return false
             }
         }
         if displayKeys.contains(key), hasNumber(v) { return true }
-        return typedNumber(in: v)
+        return typedNumber(in: v, names: names)
     }
 
     /// Rule N1 over a 2D wire board: every item without a note shows no typed number, and neither do `over` values on
     /// items without a note. The first offender in wire order: `text.number.item.<id>`.
-    static func checkBoard(_ board: [String: MGJSON], notes: [String: MGExplainer.Note]) throws {
+    static func checkBoard(_ board: [String: MGJSON], notes: [String: MGExplainer.Note], names: Set<String>) throws {
         if case .array(let items)? = board["items"] {
             for entry in items {
                 guard let o = entry.objectValue, case .string(let id)? = o["id"] else { continue }
-                if notes[id] == nil, itemShowsNumbers(o) { throw MGError("text.number.item.\(MGLessonIssue.segment(id))") }
+                if notes[id] == nil, itemShowsNumbers(o, names: names) { throw MGError("text.number.item.\(MGLessonIssue.segment(id))") }
             }
         }
         if case .array(let over)? = board["over"] {
             for entry in over {
                 guard case .string(let id)? = entry["id"], case .string(let key)? = entry["key"], let value = entry["value"] else { continue }
-                if notes[id] == nil, valueShowsNumbers(key: key, value) { throw MGError("text.number.item.\(MGLessonIssue.segment(id))") }
+                if notes[id] == nil, valueShowsNumbers(key: key, value, names: names) { throw MGError("text.number.item.\(MGLessonIssue.segment(id))") }
             }
         }
         // A raw template's free-form params can carry text the template draws.
-        if let params = board["params"], typedNumber(in: params) { throw MGError("text.number.template") }
+        if let params = board["params"], typedNumber(in: params, names: names) { throw MGError("text.number.template") }
     }
 
     /// Rule N1 over one 2D command: `add` and `set` on an item without a note, a control label, raw template params.
-    static func checkCommand(_ o: [String: MGJSON], notes: [String: MGExplainer.Note]) throws {
+    static func checkCommand(_ o: [String: MGJSON], notes: [String: MGExplainer.Note], names: Set<String>) throws {
         guard case .string(let name)? = o["op"] else { return }
         switch name {
         case "add":
             guard let item = o["item"]?.objectValue, case .string(let id)? = item["id"] else { return }
-            if notes[id] == nil, itemShowsNumbers(item) { throw MGError("text.number.item.\(MGLessonIssue.segment(id))") }
+            if notes[id] == nil, itemShowsNumbers(item, names: names) { throw MGError("text.number.item.\(MGLessonIssue.segment(id))") }
         case "set":
             guard case .string(let id)? = o["id"], case .string(let key)? = o["key"], let value = o["value"] else { return }
-            if notes[id] == nil, valueShowsNumbers(key: key, value) { throw MGError("text.number.item.\(MGLessonIssue.segment(id))") }
+            if notes[id] == nil, valueShowsNumbers(key: key, value, names: names) { throw MGError("text.number.item.\(MGLessonIssue.segment(id))") }
         case "bind":
             guard let c = o["control"]?.objectValue, let label = c["label"] else { return }
-            if typedNumber(in: label) {
+            if typedNumber(in: label, names: names) {
                 let id = c["id"].flatMap { if case .string(let s) = $0 { return s }; return nil } ?? "_"
                 throw MGError("text.number.control.\(MGLessonIssue.segment(id))")
             }
         case "params":
-            if let p = o["params"], typedNumber(in: p) { throw MGError("text.number.template") }
+            if let p = o["params"], typedNumber(in: p, names: names) { throw MGError("text.number.template") }
         default: break
         }
     }

@@ -122,8 +122,11 @@ public struct MGExplainer: Equatable, Sendable {
     public let board: MGJSON?
     public let solid: MGJSON?
     public let beats: [Beat]
+    /// The declared names (docs/EXPLAINER.md, "Declared names"): a token of a caption, 2D text or the solid's text that
+    /// exactly equals one is not a typed number for rule N1.
+    public internal(set) var names: [String] = []
 
-    static let keys: Set<String> = ["v", "kind", "title", "primary", "notes", "board", "solid", "beats"]
+    static let keys: Set<String> = ["v", "kind", "title", "primary", "notes", "names", "board", "solid", "beats"]
     static let beatKeys: Set<String> = ["say", "unchecked", "ops", "check", "highlight", "view"]
     /// Keys of a beat `view`: the v2 step view keys, `annotate` included (PR 3a).
     static let viewKeys: Set<String> = ["focus", "explode", "camera", "orbit", "spin", "section", "ghost", "annotate", "pose", "hide", "show"]
@@ -233,7 +236,8 @@ public struct MGExplainer: Equatable, Sendable {
                 beats.append(Beat(say: say, unchecked: unchecked, ops: ops, checks: checks, highlight: highlight, view: v))
             }
             beat = nil; view = .stream
-            let doc = MGExplainer(title: header.title, primary: header.primary, notes: header.notes, board: board, solid: solid, beats: beats)
+            let doc = MGExplainer(title: header.title, primary: header.primary, notes: header.notes, board: board, solid: solid, beats: beats,
+                                  names: header.names)
             // A document's size is the size of the statement stream it becomes (the solid counts, owner D5).
             let streamBytes = doc.statementStream.utf8.count
             guard streamBytes <= MGExplainerLimits.bytes else {
@@ -258,7 +262,7 @@ public struct MGExplainer: Equatable, Sendable {
 
     // MARK: header
 
-    struct Header: Equatable { var title: String?; var primary: String?; var notes: [String: Note] }
+    struct Header: Equatable { var title: String?; var primary: String?; var notes: [String: Note]; var names: [String] = [] }
 
     /// `title`, `primary` and `notes` of a document or a header statement. The title's placeholders must name 3D facts
     /// (they fill once the views are fixed, at the first beat).
@@ -305,6 +309,9 @@ public struct MGExplainer: Equatable, Sendable {
                 h.notes[key] = Note(kind: k, text: text)
             }
         }
+        if let n = o["names"] {
+            do { h.names = try MGSolidFacts.names(n) } catch let e as MGSolidIssue { throw MGError(e.reason, limit: e.limit) }
+        }
         return h
     }
 
@@ -332,6 +339,7 @@ public struct MGExplainer: Equatable, Sendable {
         if let title { h["title"] = .string(title) }
         if let primary { h["primary"] = .string(primary) }
         if !notes.isEmpty { h["notes"] = .object(notes.mapValues(\.json)) }
+        if !names.isEmpty { h["names"] = .array(names.map { .string($0) }) }
         return .object(h)
     }
 

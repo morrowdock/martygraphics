@@ -479,7 +479,8 @@ final class MovieWriter {
 /// has no tested focus), whether the beat cut instead of moving (`cut`, with `cutReason` `blocked` or `motion`; the
 /// move's `path`, `pathReason`, `blockedBy` and `moveSeconds` come from `MGStoryPlan.manifestFields`), the pane layout
 /// change into the beat (`layout`, `MGPaneSlide.manifestJSON`; only where the layout changes), and the unblocked-focus
-/// fields of the beat (`autoGhost`, `occluded`, `focusSamples`, `view`; only for a tested focus).
+/// fields of the beat (`autoGhost`, `occluded`, `focusSamples`, `view`; only for a tested focus) and its `arrowDrops`
+/// (only when the beat drops an arrow, `MGSolidClearView.manifestFields`).
 func storyBeats(_ beats: MGJSON?, _ cameras: [Int: MGSolidCamera], _ offView: [Int: Int], clear: [Int: MGSolidClearView] = [:],
                 cuts: [Int: String] = [:], layout: [Int: MGJSON] = [:]) -> MGJSON? {
     guard case .array(let list)? = beats else { return beats }
@@ -548,12 +549,12 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     var names: [String] = []
     var seconds = 0.0, frames = 0
     var previousFrame: MGAnnotationFrame?
-    func shot(_ s: MGSolidShot, _ camera: MGSolidCamera, ghost: [String] = []) throws -> CGImage {
+    func shot(_ s: MGSolidShot, _ camera: MGSolidCamera, clear: MGSolidClearView? = nil) throws -> CGImage {
         // Each step shows its own section cuts, ghosts and annotations; other shots show the plain scene. Annotations
         // show on hero.png and the step stills only (`MGSolidShot.showsAnnotations`), and only where the engine
-        // checked the pose (`checkedAnnotations`, inside the renderer and the frame). `ghost`: the still's automatic
-        // ghosts (the unblocked-focus rule, `MGSolidFraming.clearView`).
-        let view = doc.view(step: s.step).ghosting(ghost)
+        // checked the pose (`checkedAnnotations`, inside the renderer and the frame). `clear`: the still's framing, its
+        // automatic ghosts and arrow drops (`MGSolidFraming.clearView`).
+        let view = clear?.view(doc.view(step: s.step)) ?? doc.view(step: s.step)
         if s.showsAnnotations { r.show(document: doc, view: view) } else { r.show(view) }
         r.highlight(Set(s.highlight), dimOthers: !s.highlight.isEmpty)
         r.apply(s.params)
@@ -583,7 +584,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         previousFrame = nil
         try autoreleasepool {
             let clear = cameras.clear[k]
-            let img = caption(try shot(s, cameras.stills[k], ghost: clear.autoGhost), title: s.title ?? doc.title, text: s.caption, footer: plan.footer)
+            let img = caption(try shot(s, cameras.stills[k], clear: clear), title: s.title ?? doc.title, text: s.caption, footer: plan.footer)
             try writePNG(img, out.appendingPathComponent(s.file))
             var fields: [String: MGJSON] = ["width": .number(Double(img.width)), "height": .number(Double(img.height)),
                                             "framing": .string(cameras.rules[k].rawValue)]
@@ -646,7 +647,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         })
         // Each step's view with its still's automatic ghosts (the hold), and the view its camera move draws: the same,
         // with the parts the previous step ghosts drawn as ghosts too (`MGSolidView.moving(from:_:)`).
-        let holdViews = doc.steps.indices.map { k in doc.view(step: k).ghosting(beatClear[k]?.autoGhost ?? []) }
+        let holdViews = doc.steps.indices.map { k in beatClear[k]?.view(doc.view(step: k)) ?? doc.view(step: k) }
         let moveViews = doc.steps.indices.map { k in k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], doc.assembly) }
         // A camera move that would pass through a part the move draws takes a routed path (pull back, arc, both), or
         // cuts when no path is clear (`MGStoryPlan.routes`).
@@ -713,7 +714,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         for k in doc.steps.indices {
             if let n = offViewCount(annotations: holdOffView[k], clear: beatClear[k]) { beatOffView[k] = n }
         }
-        fields["beats"] = storyBeats(fields["beats"], holdCamera, beatOffView, clear: beatClear.filter { $0.value.tested },
+        fields["beats"] = storyBeats(fields["beats"], holdCamera, beatOffView, clear: beatClear.filter { $0.value.tested || !$0.value.arrowDrops.isEmpty },
                                      cuts: Dictionary(uniqueKeysWithValues: cuts.sorted().map { ($0, moves[$0]?.reason ?? "blocked") }))
         fields["codec"] = .string("h264"); fields["width"] = .number(Double(movie.width)); fields["height"] = .number(Double(movie.height))
         try record("story.mp4", fields)
@@ -875,12 +876,12 @@ struct ExplainerBeatShot {
     /// `spin`: the played fraction of the beat's spin (1: the beat's end pose, as in a still). `camera`: the story
     /// video's camera for this frame (`MGStoryPlan.camera(frame:beatCameras:)`); without it the pane is framed by
     /// `MGExplainerFrame.solidCamera` for the pane's own pixels, as in a still. `labels`: draw the annotation overlay
-    /// (the story hides it while the camera moves). `stable`: keep label places from the last frame. `ghost`: the
-    /// beat's automatic ghosts when `camera` is given (a still frames itself and takes its own, `lastClear`).
+    /// (the story hides it while the camera moves). `stable`: keep label places from the last frame. `clear`: the
+    /// beat's framing (automatic ghosts, arrow drops) when `camera` is given (a still frames itself, `lastClear`).
     /// `from`, `blend`: in a story camera move, the previous beat's pose placements and the move's progress (0...1);
     /// the parts move from that pose to this beat's pose with the camera.
     func solidImage(_ view: MGExplainerBeatView, _ rect: CGRect, spin: Double = 1, stepIndex: Int? = nil, camera: MGSolidCamera? = nil,
-                    labels: Bool = true, stable: Bool = false, ghost: [String] = [], from: [String: MGTransform]? = nil,
+                    labels: Bool = true, stable: Bool = false, clear: MGSolidClearView? = nil, from: [String: MGTransform]? = nil,
                     blend: Double = 1, moveFrom: MGSolidView? = nil, movePose: MGPoseParameters? = nil) throws -> CGImage? {
         guard let r = renderer, let d = solidDoc else { return nil }
         let pane = frameRect(rect)
@@ -890,8 +891,9 @@ struct ExplainerBeatShot {
         if let movePose { params = movePose }
         var framed: MGSolidClearView?
         if camera == nil { framed = MGExplainerFrame.solidClearView(d, view: view, stepIndex: stepIndex, pane: pane) }
-        // The beat's view with the automatic ghosts of the unblocked-focus rule (`MGSolidFraming.clearView`).
-        var shown = (view.solid ?? d.view(step: nil)).ghosting(framed?.autoGhost ?? ghost)
+        // The beat's view with the automatic ghosts of the unblocked-focus rule and its arrow drops (`MGSolidFraming.clearView`).
+        let base = view.solid ?? d.view(step: nil)
+        var shown = (framed ?? clear)?.view(base) ?? base
         // A story camera move also draws the parts the previous beat ghosts as ghosts (`MGSolidView.moving(from:_:)`).
         if let moveFrom { shown = shown.moving(from: moveFrom, d.assembly) }
         r.apply(params)
@@ -1053,7 +1055,7 @@ struct ExplainerBeatShot {
         // cuts when no path is clear (`MGStoryPlan.routes`). The move draws the beat's view with its automatic ghosts.
         // Each beat's solid view with its still's automatic ghosts (the hold); the move into a beat draws it with the
         // previous beat's ghosts too (`MGSolidView.moving(from:_:)`).
-        let holdViews = solidDoc.map { d in shots.map { ($0.view.solid ?? d.view(step: nil)).ghosting($0.clear?.autoGhost ?? []) } } ?? []
+        let holdViews = solidDoc.map { d in shots.map { s in s.clear?.view(s.view.solid ?? d.view(step: nil)) ?? (s.view.solid ?? d.view(step: nil)) } } ?? []
         let routeShots = solidDoc.map { d in
             shots.indices.map { k in
                 MGStoryBeatShot(camera: shots[k].camera, params: MGExplainerFrame.pose(d, view: shots[k].view),
@@ -1087,7 +1089,7 @@ struct ExplainerBeatShot {
                 var camera = story.camera(frame: i, beatCameras: beatCameras, cuts: cuts)
                 if let slide, let c = camera { camera = slide.camera(c, f.camera) }
                 let sImg = try rects.solid.flatMap { try solidImage(b.view, $0, spin: f.spin, stepIndex: b.stepIndex, camera: camera,
-                                                                      labels: holding, stable: settled == f.beat, ghost: b.clear?.autoGhost ?? [],
+                                                                      labels: holding, stable: settled == f.beat, clear: b.clear,
                                                                       from: moving ? (shots[f.beat - 1].view.step?.pose ?? [:]) : nil,
                                                                       blend: f.camera, moveFrom: moving ? holdViews[f.beat - 1] : nil,
                                                                       movePose: moving ? solidDoc.map { MGStoryPlan.movePose($0, beats: routeShots, f.beat, spin: f.spin, blend: f.camera) } : nil) }
@@ -1113,7 +1115,7 @@ struct ExplainerBeatShot {
         var beatOffView: [Int: Int] = [:], beatClear: [Int: MGSolidClearView] = [:], why: [Int: String] = [:], layout: [Int: MGJSON] = [:]
         for k in shots.indices {
             if let n = offViewCount(annotations: holdOffView[k], clear: shots[k].clear) { beatOffView[k] = n }
-            if let c = shots[k].clear, c.tested { beatClear[k] = c }
+            if let c = shots[k].clear, c.tested || !c.arrowDrops.isEmpty { beatClear[k] = c }
             if let m = moves[k], m.path == .cut { why[k] = m.reason }
             if let s = slides[k] {
                 layout[k] = s.manifestJSON(cut: cuts.contains(k), seconds: Double(story.beats[k].transitionFrames) / Double(story.fps))

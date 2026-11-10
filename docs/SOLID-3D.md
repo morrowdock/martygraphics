@@ -326,11 +326,37 @@ exception is a step marked `"unchecked": "<why>"` (1–60 characters): it may ty
 and it shows the "Not checked" chip. For units and formulas write "square mm" or mark the
 step `unchecked`. So "Its stroke is 36 mm." is refused; "Its stroke is
 {engine.piston.travel}." shows "Its stroke is 36 mm." with its numbers Solved.
+**Declared names.** A v2 document may list `names`: 1–24 strings (`MGSolidFacts.namesCount`), each one token of 1–24
+characters with at least one number character, such as `"names": ["Mk4", "A320", "F-35"]`. A token is a maximal run of
+letters (any script), number characters and the hyphen-minus "-"; every other character (a space, punctuation, an
+apostrophe, a brace) ends it, and a placeholder ends it too. A token of a caption, a label, an arrow or a dimension
+text, or the title, that **exactly** equals a declared name (whole token, case-sensitive) is not a typed number. Every
+other number character still counts, as before: "Mk 4", "mk4", "Mk4s", "Mk4.5" (the "5"), and "4 engines" in the same
+text are refused. There is no lexical exception: an undeclared "Mk4" is still `text.number.<where>`. A declared name is
+valid only when all of these hold; (a)–(c) fail with `names.number.<n>` (`MGSolidFacts.isQuantityName`), (d) with
+`names.token.<n>`:
+
+* (a) it starts with a letter, so "2e3", "1e-3", "1E3", "120N", "100W", "0x1F", "3D" and "4th" are refused;
+* (b) no number literal that rule N1's own scan finds (`MGSolidFacts.numberLiterals`: the runs of the number characters
+  N1 counts in a caption) covers the whole name, so a letter that is also a number character (the Roman numeral "Ⅻ")
+  is refused;
+* (c) its leading letters (the letters before its first non-letter) are not a unit or quantity word of the closed list
+  (`quantityWords`, matched without case; one-letter units only in lowercase), so "Mach2", "USD120", "RPM120",
+  "kmh-90" and "x2" are refused and "Mk4", "A320", "F-35", "P220", "V8" and "M6" are accepted;
+* (d) it holds at least one number character; a name with none needs no declaration and is refused as
+  `names.token.<n>`, not accepted as a no-op.
+
+Other reasons: `names.count` (not an array of strings, or 0 or more than 24 entries), `names.text.<n>` (length),
+`names.token.<n>` (not one token, or (d)); `<n>` is 1-based. A name listed
+twice is kept once. The engine has no general number and unit parser: rule (b) reuses N1's own character scan, and (c) is a closed word
+list. An explainer
+lists `names` in its header ([EXPLAINER.md](EXPLAINER.md)); they also apply to its solid. Marty fills `names` from the
+names its research rows give.
 N1 covers number characters only. It does not see number words ("three times slower"),
 and it cannot tell whether a placeholder names the right fact: "{count.stage.planet}
 times slower" prints "3 times slower" from the planet count. A `check` is the only proof of
 a relation, and the check report lists which fact filled each placeholder (`stepFacts`).
-Titles and part names may type digits ("V8 engine"), but a title with a typed number is
+Titles and part names may type digits ("V8 engine"), but a title with a typed number (other than a declared name) is
 Described.
 
 **Claim checks.** A step may state up to 8 claims that the engine proves before it accepts
@@ -622,6 +648,25 @@ its own: `microTurbojet`'s `turbine` is `turbineWheel`, whose frame is at the in
 `{"part": "e.turbine", "offset": [130, 0, 0]}` lies far from the wheel (`annotation.anchor.off.<id>`). Use
 `{"part": "e.turbine", "point": "centre"}` for the middle of a part's mesh. Free text that names no part takes a
 `{"world": [x, y, z]}` anchor.
+
+**Pointers to a part centre.** A part's centre lies inside the part, so a pointer drawn to it would bury its head in
+its own part. A pointer whose tip is a part's centre (`{"part": "p", "point": "centre"}` or `{"part": "p"}`) is drawn
+to the part's surface instead (`MGSolidAnnotations.pointerTip`): its head ends at the first crossing of the part's
+mesh (the step's capped cut when the step cuts the part) on the segment from the pointer's start to the centre, at the
+pose. So the head ends on the part's visible surface on the pointer's side. The rule for such a tip, in one place:
+
+* The anchor checks test the centre itself, and only **other** parts count as occluders: the centre is visible when
+  the camera's line of sight to it meets the part's own surface before any other part ([Anchor
+  checks](#anchor-checks)).
+* The arrow rule tests the drawn pointer, which now ends on that surface. Every part can hide its samples, its target
+  part too, but the target hides it only where it really stands in front of the drawn pointer (a pointer that comes
+  at its part from the far side).
+* Strict still refuses a pointer whose target or drawn head another part covers (`annotation.anchor.hidden.<id>` or
+  `annotation.arrow.hidden.<id>`, `by` names that part).
+* A centre that the segment does not reach through the mesh (a ring's centre in its hole) and every other tip are
+  drawn where they are. A force or flow arrow keeps its authored ends: its vector is the claim.
+* A suggested move of such a pointer moves its start (`suggest` and `noSuggest` keep the fixed-point rules of
+  [Anchor suggestions](#anchor-suggestions)); each candidate is drawn and tested with the tip it gives.
 
 ### Text and tiers
 
@@ -1139,8 +1184,9 @@ every view is the suggestion, else the first that passes the rule in every view.
 checked once more against the authored arrow in every view (`measure`). A pointer keeps its tip; only its start moves,
 so its vector is not kept. A motion arrow shows its anchor's motion and gets none (`code` `motion`). With none,
 `suggest` is null and `noSuggest` is `{"cause", "code", "step", "beat", "by", "other", "samples", "alternatives"}`
-(`code`: `motion`, `pose` (no candidate keeps the vector in every view), `noclearoffset`, `budget`, `form`, `framing`
-or `conflict`; alternatives: leave the arrow out of that view's `annotate` list, ghost the part in the way, or change
+(`code`: `motion`, `pose` (no candidate keeps the vector in every view), `tail` (no move is left that keeps a force or
+flow arrow's tail as near its part, see [Arrow tails](#arrow-tails)), `noclearoffset`, `budget`, `form`, `framing` or
+`conflict`; alternatives: leave the arrow out of that view's `annotate` list, ghost the part in the way, or change
 that view's camera).
 
 **Re-check.** A move changes the framing too (a still's camera fits the arrow ends it shows), so the moves are checked
@@ -1170,11 +1216,79 @@ printed suggestion, anchors and arrows, can be applied at once.
 
 The synthetic explainer `docs/fixtures/arrow-visibility/arrow-in-casing.explainer.json` (a figure with one engine on
 its back, neutral names) holds a thrust arrow from the nozzle to the intake lip, inside the casing: strict refuses it
-(5 % visible, `engine.casing` in the way), and its `suggest`, applied, passes strict.
+(5 % visible, `engine.casing` in the way). Every move that clears the casing takes the tail off the nozzle, so there is
+no move (`noSuggest` code `tail`); before the tail rule, its `suggest` moved the arrow out of the casing.
 
 Not tested: arrows in the plain view (`hero.png`, `solid-0.png`), the poses during a spin and camera moves, other sizes
 than 1280 × 800, whether a sample is covered by text, a band or the legend, and how thick the drawn shaft is (the
 samples lie on its axis). Dimensions are not tested.
+
+#### Why force arrows left their engines
+
+The rule above tests only the arrow's own drawn samples. It never tied a force or flow arrow to the part it acts on.
+Two gaps let a thrust arrow pass far from its engine:
+
+1. The suggested move searched offsets of `k × max(the blocker's box diagonal, the arrow's length) / 4`. Behind a
+   large blocker (a figure's body) the smallest move was already about a quarter of that body, and moves toward the
+   camera (`c`) put the arrow in front of the blocker. The vector rule kept the arrow's direction and length, but
+   nothing kept it near its part, so the first clear move floated 220–440 mm from the engine.
+2. An arrow whose part the camera cannot see (a back engine in a front view) passed whenever half of the arrow and its
+   head stuck out past the part in the way, or after such a move.
+
+[Arrow tails](#arrow-tails) closes the first gap and [Arrow drop](#arrow-drop) the second.
+
+#### Arrow tails
+
+The tail of a force or flow arrow is, of its ends that ride on a part, the one nearest the box of its part's mesh in
+that part's frame (ties: `from`) (`MGSolidDocument.arrowTail`). A suggested move never takes the tail farther from its
+part (`MGAnnotationArrowRules.keepsTail`). A tail is **attached** when its distance to that box is at most the precision
+epsilon at the dot (`mgPrecision(.zero)`, 1.01e-4 mm). An attached tail must stay attached: moved distance ≤ epsilon,
+an absolute bound. A tail that is not attached may not move farther off: moved distance ≤ authored distance. The
+epsilon is never added to the authored distance, so a tail cannot creep off its part move by move. A candidate that breaks this is not tried. When no move is
+left and the rule skipped a candidate that kept the vector (a candidate that changes the vector is `pose` first),
+`noSuggest` has `code` `tail` ("every move tried takes the arrow's tail farther
+from its part") and the usual alternatives; the arrow is refused in strict mode and the author redraws it. After the
+re-check, every move is measured once more against the authored arrow (`measure`) and dropped with `tail` if it moved
+the tail farther, so no suggested, re-checked or auto-applied move detaches an arrow. Pointers keep their tips and
+motion arrows get no move, so the rule is for force and flow arrows only.
+
+#### Arrow drop
+
+Before the arrow rule tests a still, the still's framing drops every force or flow arrow whose part the camera cannot
+see (`MGSolidFraming.clearView` → `arrowDrops`; `MGSolidDocument.arrowDrops`). The engine drops the arrow; it does not
+auto-ghost the part in the way. A ghost would change what the beat shows and could ghost the very parts the beat
+highlights, and the arrow says nothing about a part that is not in the picture. So:
+
+* The part an arrow acts on is the **unit** of its tail's part (`unitParts`): every part whose id is the tail part's
+  first id segment (the text before the first ".") or starts with it and a "." (a component instance and its parts:
+  `engine`, `engine.casing`, `engine.nozzle`).
+* Up to 48 sample points of the unit (`dropSamples`): the centroids of every k-th triangle of the unit's parts that
+  the view draws (assembly order; a cut part gives its capped cut), `k = max(1, ⌈triangles / 48⌉)`, at the still's pose.
+* Each sample is tested from the still's camera with the arrow sample test. It is **seen** when no blocking part
+  (coverage 0.5 or more) crosses its line of sight before it, or when the nearest one that does is a part of the unit
+  (the camera sees the unit there: a sample inside a casing is seen as the casing).
+* When at most 10 % of the unit's on-screen samples are seen (`dropVisibleShare`), the arrow is **dropped** from that
+  still: the still, its story hold and move frames and the SwiftUI pane (each draws `clear.view(...)`, whose
+  `MGSolidView.arrowDrops` the one gate `checkedAnnotations` leaves out) do not draw it, and the arrow rule does not
+  test it there. A unit with no on-screen sample keeps its arrows. Each still may spend 3,000,000 tests on this rule
+  (`dropTests`); when they run out, the remaining arrows are kept and tested by the arrow rule.
+* A drop is a warning, never a refusal, in every profile: `annotation.arrow.dropped.<id>` per still that drops it. The
+  check report adds `arrowDrops` (only when a still drops an arrow): `[{"id", "reason", "part", "by", "step",
+  "beat"}]`, with the tail's part and the part outside the unit that hides the most samples (ties in assembly order).
+  `marty-solid render` adds `arrowDrops` (`{"id", "part", "by"}`) to the still's manifest record and to its story beat.
+* A snapshot has no camera and keeps the arrow; the plain view (`hero.png`) is framed and drops as a still does.
+* **One set per explainer beat.** A beat's drops are decided once, at the beat's framing for the whole content area of
+  a 1280 × 800 frame with no board pane (`MGExplainerFrame.beatArrowDrops`; it reads only the beat's solid step and its
+  highlighted 3D parts). The beat still, its story frames, the SwiftUI pane and the check report all use that set,
+  whatever their own pane (`MGExplainerFrame.solidClearView`), so every view of a beat draws the same annotations.
+* **Claims count only what is drawn.** A dropped arrow is not presented in that view. In an explainer, the record of
+  presented annotations, the claims and the legend use the annotations each beat draws after its drops
+  (`MGExplainerSession.displayedAnnotations`); under the show-all rule an arrow that every kept beat drops makes no
+  claim. In an assembly, an arrow that every still listing it drops (`hero.png` and every step still, as `marty-solid
+  render` frames them; `MGSolidDocument.undrawnArrows`) makes no claim, so the legend does not count it.
+
+So a back engine's thrust arrow is drawn in a back view and dropped in a front view, and an arm engine behind its twin
+drops its arrow in a front view while the twin keeps its own.
 
 ### Not checked
 
@@ -1269,7 +1383,8 @@ The `annotations` section adds `annotations` and `placements` (see
 gets `legend.notes`, `anchorIssues`, `anchorUntested` and `arrowIssues`, and `warnings` ends with one
 `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per step issue ([Anchor checks](#anchor-checks)),
 then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per step arrow issue
-([Arrow visibility](#arrow-visibility)).
+([Arrow visibility](#arrow-visibility)), then one `annotation.arrow.dropped.<id>` per arrow a step still drops; a
+document whose stills drop an arrow also gets `arrowDrops` ([Arrow drop](#arrow-drop)).
 For every shipped example and every JSON file under `docs/assets`, with and without
 `--strict`, the tool's output without the fields added in this release is byte-identical to
 the output of the release before (golden files in
@@ -1281,7 +1396,9 @@ output. Every refused report now ends with `repair` (one line, [Anchor suggestio
 [REASONS.md](REASONS.md#limit-details)) and a limit refusal adds `limit`; the golden files of refused inputs hold these
 two new members and nothing else changed. The arrow rule adds `arrowIssues` and `arrow`; the only shipped document it
 refused, `docs/assets/jet-suit/jet-suit.json` (arrow `aTL2`: its head was behind the pack in step 2), was fixed with
-the check's own suggested move, so its golden files hold the fixed file's output.
+the check's own suggested move, so its golden files hold the fixed file's output. The arrow drop rule adds
+`arrowDrops` and its warnings; the only shipped document it changes, `docs/assets/jet-suit-ai/lesson.json`, drops two
+beat-4 arrows, and its golden files hold that output.
 
 ### Tiers per part and per motion
 

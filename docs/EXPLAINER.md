@@ -88,6 +88,7 @@ legend "Solved 5" (2 motion claims, 2 captions, 1 check). The mixed example fill
 | `title` | no | plain text; 1–80 characters after 3D facts fill it; placeholders name 3D facts only; typed digits make the title Described | `explainer.title` |
 | `primary` | no | `"board"` or `"solid"`: the larger pane. Default: `solid` when there is one. It must name a present view. | `explainer.primary` |
 | `notes` | no | 1–24 entries; key = a 2D item id; value = exactly one of `{"basis": "…"}` or `{"unchecked": "…"}`, 1–60 characters | `notes.object`, `notes.count`, `notes.entry.<id>`, `notes.text.<id>` |
+| `names` | no | 1–24 declared names (rule N1, "Declared names" in [SOLID-3D.md](SOLID-3D.md#placeholders)): each one token of 1–24 characters that starts with a letter and holds a number character, not a number or a quantity ("2e3", "120N", "Mach2", "USD120"). A caption, 2D text (`add`, `set`, board cells, bar labels, control labels, template params) or solid text token that exactly equals one is not a typed number. The solid compiles with them added to its own `names`. | `names.count`, `names.text.<n>`, `names.token.<n>`, `names.number.<n>` |
 | `board` | one of the two | a v1 scene without `steps`, `title` or `"dim": "3d"` | `explainer.board`, `explainer.board.steps`, `explainer.board.title`, `explainer.board.dim`, inner scene reasons |
 | `solid` | one of the two | an assembly `"v": 2` without `steps` or `title`; `kind` may be left out | `explainer.solid`, `explainer.solid.version`, `explainer.solid.steps`, `explainer.solid.title`, inner assembly reasons |
 | `beats` | yes | 1–16 beats | `explainer.beats`, `explainer.beats.count` |
@@ -194,14 +195,29 @@ explainer view all read it:
    or learner change makes the shown state. It is the newest state in the legend's record of presented items
    ([What the legend counts](#what-the-legend-counts-presented-only)), so the pane never decides on an item the legend
    does not count.
-2. The board pane is drawn while that state has at least one item that is not a `text` item: a table, a plot, a body, a
-   vector, a region, a highlight, any other kind.
-3. While it has only `text` items (or none), the solid takes the whole frame. The board's texts are not lost: they
+2. The board pane is drawn while that state has at least one item that is not a `text` item: a table with a data row,
+   a plot, a body, a vector, a region, a highlight, any other kind. An empty table does not count (see
+   [Empty tables](#empty-tables)).
+3. While it has only `text` items and empty tables (or none), the solid takes the whole frame. The board's texts are not lost: they
    move, in board order and joined with " · ", to the title band (`boardPane.line`; in a still and in `story.mp4` a
    line under the legend line, truncated with an ellipsis to the width; in the SwiftUI view a line under the title).
 4. An explainer with only a board always draws it; an explainer with only a solid has no board pane.
 5. The rule is deterministic: the same document gives the same pane in every beat on every host. A highlight of a
    2D text item has nothing to draw on while the pane is hidden.
+
+### Empty tables
+
+A table with no data row is not drawn, and it does not open the board pane (`MGItem.isEmptyTable`). A data row is a row
+after the header row (every row when the table has no `header`); a table is empty when every cell of its data rows is
+empty or only white space. So a header-only table that a later beat fills with `set` (`{"op": "set", "id": "t",
+"key": "cells", ...}`) shows nothing on the beats before that fill: in an explainer with a solid, the solid takes the
+whole frame there, and the beat that fills the table opens the pane. That change of layout is the board pane opening,
+which the story slides open with the camera move into the beat ([Pane slide in the story video](#pane-slide-in-the-story-video))
+and the SwiftUI view animates; it is not a cut. The other choice, keeping the pane open as an empty space, was not
+taken: it shows a blank half frame on every beat before the fill and makes the solid smaller there for nothing. An
+explainer with only a board keeps its pane, with no table drawn in it. The same rule holds in a plain lesson: the 2D
+renderer (`MGCanvasRenderer`) draws no table without a data row. The board pane width (`boardShare`) measures no empty
+table.
 
 ### Board pane width
 
@@ -344,7 +360,9 @@ shows a non-zero value as "0" (`text.rounding.<name>`); 2D values keep `MGValue.
 Rule N1 (owner decision D2): every number character the learner sees in author text comes from a placeholder. Every
 Unicode scalar counts (the #21 number test). It applies to beat captions (except with `unchecked`:
 `text.number.beat.<n>`), and to 2D item text, table and array cells, bar values, plot ranges, `over` values and the
-strings of `set` and `add` commands, unless the item has a note (`text.number.item.<id>`). A control label may not
+strings of `set` and `add` commands, unless the item has a note (`text.number.item.<id>`). A token that exactly equals a
+declared name (the header's `names`, see below) is not a typed number; nothing else is exempt. The token rule and the
+name rules are the ones in [SOLID-3D.md](SOLID-3D.md#placeholders), "Declared names". A control label may not
 type a number (`text.number.control.<id>`); a raw template's params may not carry a string with one
 (`text.number.template`). Inside an explainer the lesson's decimal rule (`text.literal`) is off: N1 replaces it.
 
@@ -391,7 +409,11 @@ tiers each.
    presented beat (host or learner changes), the engine records the tier its caption had and the tier each check's
    value had, with that state's built values. A past beat's caption and checks take the lowest frozen tier ("Checked"
    with that tier) and are never recomputed from a later board.
-3. Nothing else counts: not a beat that waits to be shown (queued), not a beat that is still open while it streams,
+3. A 3D annotation claim counts only for what a presented beat draws: its step's annotations less the arrows the beat
+   drops (`MGExplainerSession.displayedAnnotations`; one drop set per beat, the one its still, story frames and the
+   SwiftUI pane use, [SOLID-3D.md](SOLID-3D.md#arrow-drop)). A dropped arrow is not presented in that beat. Under the
+   show-all rule an arrow that every kept beat drops makes no claim.
+4. Nothing else counts: not a beat that waits to be shown (queued), not a beat that is still open while it streams,
    not a paused lesson's next beat, not a refused beat, command or batch, not the middle of one beat's commands, not a
    note whose item never appears (`notes.unused.<id>`), and no replay of the script. `finishNow()` presents the
    waiting beats, so they count after it runs.
@@ -432,7 +454,7 @@ give the same final state, test S1). Fixture: [`explainer-mixed.statements.ndjso
 
 | Statement | Form | Rule |
 | --- | --- | --- |
-| header | `{"explainer": {"v": 1, "title"?, "primary"?, "notes"?}}` | Required first statement of a new stream (`explainer.header`). A header in a later stream replaces the explainer. |
+| header | `{"explainer": {"v": 1, "title"?, "primary"?, "notes"?, "names"?}}` | Required first statement of a new stream (`explainer.header`). A header in a later stream replaces the explainer. |
 | keep | `{"keep": true}` | First statement of a follow-up stream. State, ids, views and controls stay; beat numbers continue. |
 | board | `{"board": {…}}` | Once, before the first `say` (`stmt.order`); at most 4 KiB. A board that shows a 3D fact must come after the solid. |
 | solid | `{"solid": {…}}` | Once, before the first `say` (`stmt.order`); up to 64 KiB. |
@@ -591,6 +613,7 @@ Explainer reasons: `explainer.json`, `explainer.object`, `explainer.number`, `ex
 `explainer.solid.version`, `explainer.solid.steps`, `explainer.solid.title`, `explainer.solid.missing`,
 `explainer.beats`, `explainer.beats.count`, `explainer.op.title`, `explainer.id.duplicate.<id>`,
 `explainer.id.view.<id>`, `notes.object`, `notes.count`, `notes.entry.<id>`, `notes.text.<id>`, `notes.view.<id>`,
+`names.count`, `names.text.<n>`, `names.token.<n>`, `names.number.<n>`,
 `notes.unused.<id>` (a warning; the strict check refuses it), `beat.object`, `beat.missing`, `beat.unknown.<keys>`,
 `beat.unchecked.<n>`, `beat.ops`, `beat.ops.count`, `beat.check`, `beat.checks.count`, `beat.refused`,
 `beat.highlight`, `beat.highlight.count`, `beat.highlight.ref.<id>`, `beat.highlight.stale.<id>` (in `hostIssues`
@@ -634,10 +657,11 @@ when its text holds `"explainer"`, else `assembly.bytes`. Exit codes: 0 ok, 1 re
 | `beats` | per kept beat: `{"n", "caption", "template", "unchecked", "tier", "facts", "checks": [{"value", "comparison", "target", "tol"}], "highlight": {"board", "solid", "annotations"}, "view"}` |
 | `annotations` | one entry per 3D annotation: the assembly report's `annotations` (`views.solid` also holds its `placements`) |
 | `legend` | `{"text", "groups": {"solved", "schematic", "given", "described"}, "notes", "claims"}` |
-| `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue, then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per beat arrow issue (`"view": "beat"`), each `{"reason", "view", "id"}` |
+| `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue, then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per beat arrow issue, then one `annotation.arrow.dropped.<id>` per arrow a beat still drops (`"view": "beat"`), each `{"reason", "view", "id"}` |
 | `anchorIssues`, `anchorUntested` | with 3D annotations only: every label and pointer anchor issue (off part, then the beats in order), each with `suggest`, `noSuggest` and `repair` ([SOLID-3D.md](SOLID-3D.md#anchor-suggestions)), and the anchors a beat's test budget left untested ([SOLID-3D.md](SOLID-3D.md#anchor-checks)); `views.solid` holds neither |
 | `anchor` | with a refusal for an anchor reason only: the issue it names (`id`, `beat`, `cause`, `by`, `fix`, `suggest`, `repair`, …) |
 | `arrowIssues` | with 3D annotations only: every arrow a beat still does not show well enough (beats in order), each with the visible share, the part in the way, `suggest` (a move of the arrow), `noSuggest` and `repair` ([SOLID-3D.md](SOLID-3D.md#arrow-visibility)) |
+| `arrowDrops` | only when a beat still drops an arrow: `[{"id", "reason", "part", "by", "step", "beat"}]`, the force and flow arrows whose part the beat's camera cannot see, so the still does not draw them; a warning, never refused ([SOLID-3D.md](SOLID-3D.md#arrow-drop)) |
 | `arrow` | with a refusal for an arrow reason only: the issue it names |
 | `limit` | with a refusal from a length, count or size limit only: `{"field", "actual", "limit", "unit"}` (+ `minimum`; `actualAtLeast` or `actualAtMost` instead of `actual` for a bound); `field` is a path into the document such as `title`, `notes.t3.basis`, `beats[2].say` or `solid.annotations.labels[0].text` ([REASONS.md](REASONS.md#limit-details)) |
 | `repair` | with a refusal only: one line for a model, built from `arrow`, `anchor`, `limit` or the catalog meaning (at most 400 Unicode scalars) |

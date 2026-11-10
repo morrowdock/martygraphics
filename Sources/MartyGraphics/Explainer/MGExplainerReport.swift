@@ -87,6 +87,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         var solidJSON: MGJSON = .null
         var anchors = MGAnnotationAnchorReport()
         var arrows = MGAnnotationArrowReport()
+        var drops: [(beat: Int?, drop: MGArrowDrop)] = []
         if let d = s.solid {
             // The solid's own steps are the beats' views: the beat check below frames them as the beat stills do.
             let r = MGSolidReport.make(d, profile: profile, engine: nil, anchorViews: false)
@@ -103,6 +104,8 @@ public struct MGExplainerReport: Equatable, Sendable {
                 // The beat stills that show a label, pointer or arrow, framed once: the anchor checks test those that
                 // show a label or pointer, the arrow rule those that show an arrow.
                 let checked = MGExplainerFrame.beatCheckViews(doc, library: s.library)
+                // The arrows each beat still drops (the framing's arrow drop rule): warnings, never refused.
+                drops = checked.views.flatMap { v in v.view.arrowDrops.map { (v.beat, $0) } }
                 let framed = (solid: checked.solid, views: checked.views.filter { v in checked.solid.map { $0.showsCheckedAnchor(v.view) } ?? false })
                 if let fd = framed.solid {
                     for v in framed.views { anchors.append(fd.anchorIssues(v)) }
@@ -114,7 +117,7 @@ public struct MGExplainerReport: Equatable, Sendable {
                         anchors.verify { applied in
                             guard let solid = doc.solid else { return nil }
                             let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board,
-                                                   solid: MGSolidDocument.replacingAnchors(solid, applied), beats: doc.beats)
+                                                   solid: MGSolidDocument.replacingAnchors(solid, applied), beats: doc.beats, names: doc.names)
                             return anchorRecheck(copy, library: s.library, budget: budget)
                         }
                     }
@@ -127,14 +130,14 @@ public struct MGExplainerReport: Equatable, Sendable {
                                       budget: MGSuggestionBudget(MGAnnotationArrowRules.suggestDocumentTests)) { moves, budget in
                             guard let solid = doc.solid else { return nil }
                             let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board,
-                                                   solid: MGSolidDocument.replacingArrows(solid, moves), beats: doc.beats)
+                                                   solid: MGSolidDocument.replacingArrows(solid, moves), beats: doc.beats, names: doc.names)
                             return arrowRecheck(copy, library: s.library, budget: budget)
                         }
                         // Every printed suggestion, anchors and arrows together, checked once more on one copy.
                         MGSuggestionUnion.verifyTogether(anchors: &anchors, arrows: &arrows) { anchorMoves, arrowMoves in
                             guard let solid = doc.solid else { return nil }
                             let both = MGSolidDocument.replacingAnchors(MGSolidDocument.replacingArrows(solid, arrowMoves), anchorMoves)
-                            let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board, solid: both, beats: doc.beats)
+                            let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board, solid: both, beats: doc.beats, names: doc.names)
                             return arrowRecheck(copy, library: s.library, budget: MGSuggestionBudget(0))
                         }
                     }
@@ -200,6 +203,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         // The beat anchor check's warnings follow (one per issue, in beat order).
         warnings += beatIssues.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
         warnings += arrows.issues.map { .object(["reason": .string($0.reason), "view": .string("beat"), "id": .string($0.id)]) }
+        warnings += drops.map { .object(["reason": .string($0.drop.reason), "view": .string("beat"), "id": .string($0.drop.id)]) }
         var triangles = 0
         if case .object(let so) = solidJSON, case .number(let t)? = so["triangles"] { triangles = Int(t) }
         let bytes = doc.map { $0.statementStream.utf8.count }
@@ -228,6 +232,8 @@ public struct MGExplainerReport: Equatable, Sendable {
             o["anchorIssues"] = .array(anchors.issues.map(\.json))
             o["anchorUntested"] = anchors.untestedJSON
             o["arrowIssues"] = .array(arrows.issues.map(\.json))
+            // Only when a beat still drops an arrow; other reports keep their exact keys.
+            if !drops.isEmpty { o["arrowDrops"] = .array(drops.map { $0.drop.json(step: nil, beat: $0.beat) }) }
         }
         let hit = reason.flatMap { MGSolidReport.anchorIssue($0, anchors.issues) }
         if let hit { o["anchor"] = hit.json }

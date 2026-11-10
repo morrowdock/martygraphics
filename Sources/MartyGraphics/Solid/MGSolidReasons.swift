@@ -94,7 +94,7 @@ public enum MGSolidReasons {
         "component.anchorAbout", "component.checks", "component.expr.size", "component.id.length", "explainer.bytes", "explainer.title",
         "explainer.statements.count", "explainer.beats.count", "notes.count", "notes.text.<id>", "beat.unchecked.<n>", "beat.ops.count",
         "beat.checks.count", "beat.highlight.count", "stmt.bytes", "stmt.say", "view.focus", "view.ghost", "view.section.parts",
-        "view.annotate.count", "view.pose", "view.hide", "view.show",
+        "view.annotate.count", "view.pose", "view.hide", "view.show", "names.count", "names.text.<n>",
     ]
 
     /// Reasons whose meaning states a number but that carry no `limit` detail, and why. With `limitPatterns` this covers
@@ -457,6 +457,9 @@ public enum MGSolidReasons {
         MGSolidReason(pattern: "annotation.arrow.untested.<id>",
                       meaning: "A step or beat still shows an arrow that was not fully tested: the view's 3,000,000 arrow sample tests ran out first. The strict check report refuses it, because strict does not pass what it did not check.",
                       formats: [.check, .explainer], kind: .warning, strict: true),
+        MGSolidReason(pattern: "annotation.arrow.dropped.<id>",
+                      meaning: "A step or beat still does not draw a force or flow arrow that its view lists: the arrow's tail is on its part, and another part (outside that part's unit) hides the tail from the still's camera, so the part the arrow acts on is hidden there. The still and its story frames leave the arrow out (a snapshot, which has no camera, keeps it); it is not moved and not refused. The report's `arrowDrops` gives the view, the tail's part and the part in the way.",
+                      formats: [.check, .explainer], kind: .warning, strict: false),
         // Annotations (v2).
         r("annotations.object", [.assembly], "`annotations` is not an object (v2)."),
         r("labels.count", [.assembly], "`labels` is not an array of at most 32 labels."),
@@ -478,6 +481,10 @@ public enum MGSolidReasons {
         r("anchor.ambiguous.<id>", [.assembly], "An annotation anchor names a `repeat` base with copies or a component instance (more than one part)."),
         r("label.text.<id>", [.assembly], "A label's text is not \(text) of at most 240 characters, or of 1–60 characters after placeholders are filled."),
         r("label.unchecked.<id>", [.assembly], "A label's `unchecked` is not \(text) of at most 60 characters."),
+        r("names.count", [.assembly, .explainer], "`names` is not an array of strings, or it has fewer than 1 or more than 24 entries (`MGSolidFacts.namesCount`)."),
+        r("names.text.<n>", [.assembly, .explainer], "Declared name `<n>` (1-based) is not 1–24 characters long (`MGSolidFacts.nameText`)."),
+        r("names.token.<n>", [.assembly, .explainer], "Declared name `<n>` is not one token (a run of letters, number characters and \"-\" with no space or punctuation), or it has no number character (it needs no declaration)."),
+        r("names.number.<n>", [.assembly, .explainer], "Declared name `<n>` is a number or a quantity: it does not start with a letter (\"2e3\", \"1e-3\", \"120N\", \"0x1F\", \"3D\"), a number literal that rule N1 finds covers all of it, or its leading letters are a unit or quantity word (\"Mach2\", \"USD120\", \"RPM120\"). A quantity is a claim, not a name."),
         r("text.number.label.<id>", [.assembly], "A label has a number character outside a placeholder and is not marked `unchecked` (rule N1)."),
         r("arrow.meaning.<id>", [.assembly], "An arrow's `meaning` is not force, flow, motion or pointer."),
         r("arrow.style.<id>", [.assembly], "A motion arrow's `style` is not line or turn."),

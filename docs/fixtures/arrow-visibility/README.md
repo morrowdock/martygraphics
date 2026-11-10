@@ -8,5 +8,7 @@ with neutral names and makes no real-world claims. It reproduces the geometry pr
 | --- | --- |
 | `arrow-in-casing.explainer.json` | A figure with one engine on its back. Beat 2 shows a force arrow from the engine's nozzle to its intake lip: the arrow runs inside the closed casing, so the casing hides it. |
 
-The test checks that `marty-solid check --strict` refuses `annotation.arrow.hidden.push` in beat 2, names
-`engine.casing`, and that the `suggest` it gives, applied to a copy, passes strict with no arrow or anchor issue.
+The test checks that `marty-solid check --strict` refuses `annotation.arrow.hidden.push` in beat 2 and names
+`engine.casing`. The arrow's tail lies on the nozzle, and every move that clears the casing takes the tail off the
+nozzle, so the report gives no move: `noSuggest` with code `tail` (since PR #49; before, its `suggest` moved the
+arrow out of the casing).

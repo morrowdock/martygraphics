@@ -227,6 +227,8 @@ public enum MGCanvasRenderer {
                 layer.stroke(shape, with: .color(color.opacity(0.85)), style: StrokeStyle(lineWidth: 1.8, dash: item.has("dashed") ? [6, 5] : []))
                 if let r = MGLayout.bounds(item, in: input.items, vp) { label(item.label, at: CGPoint(x: r.midX, y: r.minY), dir: CGVector(dx: 0, dy: -1)) }
             case .table:
+                // A table with no data row is not drawn (`MGItem.isEmptyTable`): no header-only grid before its first fill.
+                guard !item.isEmptyTable else { continue }
                 table(ctx, item, vp, theme, color, p, rows: input.tableRows[item.id] ?? [], cells: input.tableCells[item.id] ?? [])
                 if let r = MGLayout.bounds(item, in: input.items, vp) {
                     obstacles.append(r)

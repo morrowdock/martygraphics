@@ -28,7 +28,7 @@ accepted, and **1 of the 4 runs met our showcase bar** (this one).
 | Engine | MartyGraphics `dfc521a` (PR #46), strict check, at most 3 repairs |
 | Research | On: web search and web fetch, 12 turns, quote check on |
 | Tries | 3: refused `text.number.beat.1`; refused `annotation.anchor.hidden.lShaft` (after 4 engine suggestions were applied); accepted |
-| Check | `marty-solid check --strict` passes at `dfc521a` ([check output](assets/jet-suit-ai/check-strict.json)) and again at main `5bae049`, with no warnings |
+| Check | `marty-solid check --strict` passes at `dfc521a` ([check output](assets/jet-suit-ai/check-strict.json)) and again at main `5bae049`, with no warnings. The published render and check are at engine `dfc521a`; newer engines drop two beat-4 arrows whose engines are hidden. |
 
 [Story video (MP4)](assets/jet-suit-ai/story.mp4): 78 seconds, 9 beats, 1280×800 at 30 frames per second, H.264,
 17.4 MB, the engine's file byte for byte (not re-encoded). GitHub does not play it inside this page; click to open it.

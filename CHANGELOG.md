@@ -2,6 +2,53 @@
 
 ## Unreleased
 
+- Engine fixes from four failures recorded in a prompt-to-3D evaluation round: pointers to a part centre, model names
+  in text, force arrows that left their parts, and an empty board table.
+  - **Pointers to a part centre end on the part's surface.** A pointer whose tip is `{"part", "point": "centre"}` (or
+    `{"part"}`) is drawn to the first crossing of the part's mesh on the segment from its start to the centre
+    (`MGSolidAnnotations.pointerTip`; a step's cut mesh when the step cuts the part). Before, its head sat inside the
+    part, so the arrow rule refused every such pointer as hidden by its own target, with no checked move. The anchor
+    checks still count only other parts for the centre, and strict still refuses a pointer that another part covers.
+    The arrow suggestion search draws each candidate with the tip it gives.
+  - **Declared names (rule N1).** A v2 assembly, and an explainer header, may list `names` (1–24 tokens such as
+    "Mk4", "A320", "F-35"). A text token that exactly equals a declared name (whole token, case-sensitive) is not a
+    typed number; an explainer's names also cover its solid's text. Nothing else is exempt: an undeclared "Mk4" is still
+    `text.number.<where>`, and "Mk 4", "mk4", "Mk4s" and other numbers in the same text still count. A name must start
+    with a letter, no number literal of N1's own scan may cover it, its leading letters may not be a unit or quantity
+    word, else `names.number.<n>` ("2e3", "1e-3", "120N", "0x1F", "3D", "Mach2", "USD120", "RPM120"); a name with no
+    number character is `names.token.<n>`. `add`, `set`, captions, labels, arrows, dimensions, titles, board cells,
+    bar labels, control labels and template params all pass the names (the N1 functions take them as a required
+    argument). New reasons `names.count`, `names.text.<n>` (both with `limit`), `names.token.<n>`, `names.number.<n>`.
+    Marty fills `names` from its research rows.
+  - **Arrow tails.** A suggested, re-checked or auto-applied move of a force or flow arrow never takes its tail (the
+    end on a part nearest that part's box) farther from its part (`MGAnnotationArrowRules.keepsTail`): a tail within
+    the precision epsilon of its part stays within it (an absolute bound); any other tail may not move farther off. When no move is left, `noSuggest`
+    has the new code `tail` and strict refuses. Before, moves of a quarter of the blocker's size or more floated thrust
+    arrows 220–440 mm off their engines.
+  - **Arrow drop.** A still whose camera cannot see the unit (component instance) an arrow's tail rides on drops that
+    force or flow arrow: at most 10 % of 48 unit samples seen, where a sample counts as seen when the first surface on
+    its line of sight is the unit's own (`MGSolidFraming.clearView` → `MGSolidClearView.arrowDrops`,
+    `MGSolidDocument.arrowDrops`, `MGArrowDrop`). The one gate `checkedAnnotations` leaves dropped arrows out
+    (`MGSolidView.arrowDrops`). An explainer beat has one drop set, decided at its framing for the whole 1280 × 800
+    content area (`MGExplainerFrame.beatArrowDrops`), which its still, story frames, SwiftUI pane and check report all
+    use. New warning `annotation.arrow.dropped.<id>` (never refused); the check reports add `arrowDrops` when a still
+    drops one, and `marty-solid render` adds `arrowDrops` to the still's manifest record and story beat.
+  - **Claims count only what is drawn.** An explainer's presentation record, claims and legend use the annotations
+    each beat draws after its drops (`MGExplainerSession.displayedAnnotations`); under the show-all rule an arrow that
+    every kept beat drops makes no claim. An assembly arrow that every still listing it drops makes no claim
+    (`MGSolidDocument.undrawnArrows`). Before, a dropped arrow still counted ("Not checked 1").
+  - **Empty tables.** A table with no data row (`MGItem.isEmptyTable`: a header waiting for its first `set`) is not
+    drawn (`MGCanvasRenderer`) and does not open the board pane (`MGExplainerBoardPane.rule`, `boardShare`). The pane
+    opens at the beat that fills the table, and the story slides it open (PR #45).
+  - Golden files: only `docs/assets/jet-suit-ai/lesson.json` changes. Its check (standard and strict) now lists two
+    beat-4 drops (`aL1` behind `eL2.casing`, `aR2` behind `eR1.casing`) in `arrowDrops` and `warnings`; it still passes.
+    The arrow-visibility fixture `arrow-in-casing.explainer.json` now gets no move (`noSuggest` code `tail`).
+  - docs/SOLID-3D.md: "Declared names", "Pointers to a part centre", "Why force arrows left their engines", "Arrow
+    tails", "Arrow drop"; docs/EXPLAINER.md: "Empty tables", `names`, what the legend counts, the report's
+    `arrowDrops`; docs/REASONS.md: the new reasons and warning.
+  - Tests: `PointerCentreTipTests`, `DeclaredNamesTests`, `ArrowTailAndDropTests`, `EmptyTableTests` (synthetic
+    boxes, gears and `microTurbojet`s; neutral names).
+
 - Docs: the first AI prompt-to-3D lesson that meets the showcase bar leads the README and docs/SHOWCASE.md.
   - Question "How does the Gravity jet suit work?" (follow-up "How does the pilot steer?"), answered by Claude Opus 5.5
     through Marty `f2d7c5a` with research on; engine `dfc521a`; round 2j, run `r2j-opus-1`, accepted on try 3. All 4
@@ -11,8 +58,10 @@
     render outputs; `PROMPT.md` (prompt, setup, tries), `FACT-CHECK.md` (the independent fact check, corrections
     C1–C13) and `provenance.json` (SHAs, file hashes, render command). The lesson is shown unedited; the corrections
     are listed, not applied.
-  - The lesson still passes `marty-solid check --strict` at main (`5bae049`); the report is the same except the engine
-    identity. New golden check files for the three new JSON files.
+  - The lesson still passes `marty-solid check --strict` at main (`5bae049`); at that commit the report is the same
+    except the engine identity. Later engines change it: from PR #49 the check also lists two beat-4 arrow drops
+    (`annotation.arrow.dropped.aL1`, `aR2`, warnings, still passing). New golden check files for the three new JSON
+    files.
   - The hand-built jet-suit lesson stays as the reference, unchanged.
 
 - SwiftUI solid pane uses the still's framing (follow-up from PR #37).

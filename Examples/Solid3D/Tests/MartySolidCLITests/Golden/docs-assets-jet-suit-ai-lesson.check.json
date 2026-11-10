@@ -446,6 +446,24 @@
       "value" : null
     }
   ],
+  "arrowDrops" : [
+    {
+      "beat" : 4,
+      "by" : "eL2.casing",
+      "id" : "aL1",
+      "part" : "eL1.casing",
+      "reason" : "annotation.arrow.dropped.aL1",
+      "step" : null
+    },
+    {
+      "beat" : 4,
+      "by" : "eR1.casing",
+      "id" : "aR2",
+      "part" : "eR2.casing",
+      "reason" : "annotation.arrow.dropped.aR2",
+      "step" : null
+    }
+  ],
   "beats" : [
     {
       "caption" : "A pilot wears small jet engines on each forearm and on the back, all nozzles pointing down. This is the Daedalus layout; the newer suit differs.",
@@ -3934,6 +3952,15 @@
     }
   },
   "warnings" : [
-
+    {
+      "id" : "aL1",
+      "reason" : "annotation.arrow.dropped.aL1",
+      "view" : "beat"
+    },
+    {
+      "id" : "aR2",
+      "reason" : "annotation.arrow.dropped.aR2",
+      "view" : "beat"
+    }
   ]
 }

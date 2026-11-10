@@ -79,7 +79,9 @@ also refuses `notes.unused.<id>` (`MGSolidReasons.explainerStrictPrefixes`). The
 `annotation.arrow.hidden.<id>` and `annotation.arrow.untested.<id>`, need the camera of each step or beat still, so
 only the check report gives them (`MGSolidReport`, `MGExplainerReport`, `marty-solid check`;
 `MGSolidReasons.reportStrictPrefixes`): a compile with `MGSolidParser.document(profile: .strict)` does not refuse them
-([SOLID-3D.md](SOLID-3D.md), "Anchor checks" and "Arrow visibility").
+([SOLID-3D.md](SOLID-3D.md), "Anchor checks" and "Arrow visibility"). The arrow drop warning
+`annotation.arrow.dropped.<id>` also needs each still's camera; no profile refuses it, because the still does not draw
+the arrow ([SOLID-3D.md](SOLID-3D.md), "Arrow drop").
 
 ## Order
 
@@ -154,7 +156,7 @@ The limit patterns (`MGSolidReasons.limitPatterns`; `SolidLimitDetailTests` trig
 `component.id.length`, `explainer.bytes`, `explainer.title`, `explainer.statements.count`, `explainer.beats.count`,
 `notes.count`, `notes.text.<id>`, `beat.unchecked.<n>`, `beat.ops.count`, `beat.checks.count`,
 `beat.highlight.count`, `stmt.bytes`, `stmt.say`, `view.focus`, `view.ghost`, `view.section.parts`,
-`view.annotate.count`, `view.pose`, `view.hide`, `view.show`.
+`view.annotate.count`, `view.pose`, `view.hide`, `view.show`, `names.count`, `names.text.<n>`.
 
 Bounds without `limit` (`MGSolidReasons.limitExempt`; a test fails when a meaning that names a bound is in neither
 list):
@@ -413,6 +415,7 @@ list):
 | `annotation.anchor.untested.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows a label or pointer that was not fully tested: the view's 3,000,000 line-of-sight triangle tests, or the document's 3,000,000 nearer-part tests, ran out first. The strict check report refuses it, because strict does not pass what it did not check. |
 | `annotation.arrow.hidden.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows an arrow (force, flow, motion or pointer) of which less than half of the sample points along its drawn shaft and head, or fewer than two of its three head samples, are visible from the still's camera: off screen, or behind another part by the line-of-sight rule of the anchor checks (the parts the arrow is anchored on hide it too; a cut part's inside does not count). The report's `arrow` gives the step or beat, the visible share, the part in the way and a suggested move. |
 | `annotation.arrow.untested.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows an arrow that was not fully tested: the view's 3,000,000 arrow sample tests ran out first. The strict check report refuses it, because strict does not pass what it did not check. |
+| `annotation.arrow.dropped.<id>` | check, explainer | (warning) A step or beat still does not draw a force or flow arrow that its view lists: the arrow's tail is on its part, and another part (outside that part's unit) hides the tail from the still's camera, so the part the arrow acts on is hidden there. The still and its story frames leave the arrow out (a snapshot, which has no camera, keeps it); it is not moved and not refused. The report's `arrowDrops` gives the view, the tail's part and the part in the way. |
 
 ### Annotations (v2)
 
@@ -438,6 +441,10 @@ list):
 | `anchor.ambiguous.<id>` | assembly | An annotation anchor names a `repeat` base with copies or a component instance (more than one part). |
 | `label.text.<id>` | assembly | A label's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 240 characters, or of 1–60 characters after placeholders are filled. |
 | `label.unchecked.<id>` | assembly | A label's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters. |
+| `names.count` | assembly, explainer | `names` is not an array of strings, or it has fewer than 1 or more than 24 entries (`MGSolidFacts.namesCount`). |
+| `names.text.<n>` | assembly, explainer | Declared name `<n>` (1-based) is not 1–24 characters long (`MGSolidFacts.nameText`). |
+| `names.token.<n>` | assembly, explainer | Declared name `<n>` is not one token (a run of letters, number characters and "-" with no space or punctuation), or it has no number character (it needs no declaration). |
+| `names.number.<n>` | assembly, explainer | Declared name `<n>` is a number or a quantity: it does not start with a letter ("2e3", "1e-3", "120N", "0x1F", "3D"), a number literal that rule N1 finds covers all of it, or its leading letters are a unit or quantity word ("Mach2", "USD120", "RPM120"). A quantity is a claim, not a name. |
 | `text.number.label.<id>` | assembly | A label has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
 | `arrow.meaning.<id>` | assembly | An arrow's `meaning` is not force, flow, motion or pointer. |
 | `arrow.style.<id>` | assembly | A motion arrow's `style` is not line or turn. |

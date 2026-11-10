@@ -229,8 +229,46 @@ extension MGExplainerSession {
     var beatsShowOwnAnnotations: Bool { solid?.annotations.stepped ?? false }
 
     /// The annotations beat `k` displays: its solid step's visible annotations (`MGSolidDocument.visibleAnnotations`,
-    /// the list `view(step:)` gives the overlay), or the plain view's for a beat without a view.
-    func displayedAnnotations(beat k: Int) -> [String] { solid?.visibleAnnotations(step: stepOf[k]) ?? [] }
+    /// the list `view(step:)` gives the overlay), or the plain view's for a beat without a view, less the arrows the
+    /// beat drops (`droppedArrows`): every view of the beat draws exactly these, so the legend counts exactly these.
+    func displayedAnnotations(beat k: Int) -> [String] {
+        let shown = solid?.visibleAnnotations(step: stepOf[k]) ?? []
+        let dropped = droppedArrows(beat: k)
+        return dropped.isEmpty ? shown : shown.filter { !dropped.contains($0) }
+    }
+
+    /// The view beat `k`'s solid pane frames: its solid view and step and its highlighted 3D parts (the board plays no
+    /// part in the framing).
+    func framingView(beat k: Int) -> MGExplainerBeatView {
+        var v = MGExplainerBeatView(beat: k)
+        guard let doc = solid else { return v }
+        let step = stepOf[k]
+        v.solid = doc.view(step: step)
+        v.step = step.map { doc.steps[$0] }
+        for id in beats[k]?.highlight ?? [] where set3D.contains(id) {
+            for p in MGExplainerHonesty.parts3D(id, doc) ?? [] where !v.solidHighlight.contains(p) { v.solidHighlight.append(p) }
+        }
+        return v
+    }
+
+    /// The arrows beat `k` drops (`MGExplainerFrame.beatArrowDrops`, the beat's canonical framing), cached by the
+    /// compiled solid, the beat's step and its highlighted parts.
+    func droppedArrows(beat k: Int) -> Set<String> {
+        guard let doc = solid, doc.annotations.arrows.contains(where: { $0.meaning == .force || $0.meaning == .flow }) else { return [] }
+        let v = framingView(beat: k)
+        let key = "\(doc.checkedFingerprint ?? "")|\(stepOf[k].map(String.init) ?? "-")|\(v.solidHighlight.joined(separator: ","))"
+        return Set(dropCache.value(key) { MGExplainerFrame.beatArrowDrops(doc, view: v, stepIndex: stepOf[k]).map(\.id) })
+    }
+
+    /// Arrows every kept beat drops (none before a beat is kept): under the show-all rule they are never drawn, so they
+    /// make no claim.
+    var neverDrawnArrows: Set<String> {
+        let kept = keptBeats.map(\.index)
+        guard let first = kept.first else { return [] }
+        var out = droppedArrows(beat: first)
+        for k in kept.dropFirst() where !out.isEmpty { out.formIntersection(droppedArrows(beat: k)) }
+        return out
+    }
 
     /// Freezes the annotation claims of presented beats, in order: each annotation a presented beat displays that has a
     /// claim, with that claim's tier.
@@ -284,7 +322,8 @@ extension MGExplainerSession {
             // 3D annotation claims (PR 3a), in authored order: labels, arrows, dimensions. When the beats choose their
             // labels, only those a presented beat displayed, at their tier at presentation; with the show-all rule, all.
             let shownA = beatsShowOwnAnnotations ? recordedAnnotations : nil
-            for c in doc.claims where c.kind == .annotation {
+            let undrawn = shownA == nil ? neverDrawnArrows : []
+            for c in doc.claims where c.kind == .annotation && !undrawn.contains(c.id) {
                 if let r = shownA {
                     guard let t = r.tiers[c.id] else { continue }
                     out.append(MGExplainerClaim(kind: .annotation, id: c.id, tier: t, badge: t == c.tier ? c.badge : t.badge(.caption), why: c.why))
@@ -459,6 +498,7 @@ extension MGExplainerSession {
         if let t = titleTemplate { h["title"] = .string(t) }
         if let p = primary { h["primary"] = .string(p) }
         if !notes.isEmpty { h["notes"] = .object(notes.mapValues(\.json)) }
+        if !names.isEmpty { h["names"] = .array(names.map { .string($0) }) }
         o["header"] = .object(h)
         if let board { o["board"] = text(board) }
         if let solidSource { o["solid"] = text(solidSource) }
@@ -536,9 +576,9 @@ extension MGExplainerSession {
             var s = MGExplainerSession(pacing: pacing, clock: clock, library: library)
             view = .header
             guard let ho = o["header"]?.objectValue else { throw MGError("snapshot.header") }
-            try MGExplainer.closedKeys(ho, required: ["v"], optional: ["title", "primary", "notes"], "snapshot.header")
+            try MGExplainer.closedKeys(ho, required: ["v"], optional: ["title", "primary", "notes", "names"], "snapshot.header")
             let h = try MGExplainer.header(ho)
-            s.titleTemplate = h.title; s.primary = h.primary; s.notes = h.notes
+            s.titleTemplate = h.title; s.primary = h.primary; s.notes = h.notes; s.names = h.names
             s.frozen = try flag(o["frozen"], "snapshot.frozen")
             s.beatCount = try int(o["beatCount"], "snapshot.beats")
             guard (0...MGExplainerLimits.beats).contains(s.beatCount) else { throw MGError("snapshot.beats") }
@@ -547,7 +587,7 @@ extension MGExplainerSession {
                 view = .board
                 let b = try text(o["board"], "snapshot.board")
                 try MGExplainer.checkBoardShape(b)
-                try MGExplainerHonesty.checkBoard(b.objectValue!, notes: s.notes)
+                try MGExplainerHonesty.checkBoard(b.objectValue!, notes: s.notes, names: Set(s.names))
                 s.board = b
             }
             s.setupOps = try commands(o["setup"], "snapshot.setup")
@@ -655,7 +695,7 @@ extension MGExplainerSession {
                 // The board rules too: a held scene has no wire `title` (a heading), `steps` or 3D dimension; a
                 // template's own computed title stays.
                 try MGExplainer.checkBoardShape(st.scene.source)
-                if let src = st.scene.source.objectValue { try MGExplainerHonesty.checkBoard(src, notes: s.notes) }
+                if let src = st.scene.source.objectValue { try MGExplainerHonesty.checkBoard(src, notes: s.notes, names: Set(s.names)) }
                 try MGLessonEngine.guardIDs(st, env)
                 // A saved control (its label is text the learner reads) must be one a checked `bind` made.
                 for c in st.controls where !s.scriptControls.contains(c.wire) { throw MGError("snapshot.controls") }
@@ -882,7 +922,7 @@ extension MGExplainerSession {
             let info = beats[k]!
             guard (1...MGExplainerLimits.say).contains(info.say.unicodeScalars.count) else { throw MGError("stmt.say") }
             if let u = info.unchecked, (try? MGSolidParser.text(.string(u), MGExplainerLimits.unchecked, "")) == nil { throw MGError("beat.unchecked.\(k + 1)") }
-            if info.unchecked == nil, MGExplainerHonesty.typedNumber(info.say) { throw MGError("text.number.beat.\(k + 1)") }
+            if info.unchecked == nil, MGExplainerHonesty.typedNumber(info.say, names: Set(names)) { throw MGError("text.number.beat.\(k + 1)") }
             for op in info.ops { try run(op, k) }
             for spec in info.checkSpecs {
                 guard case .string(let name)? = spec["value"], !name.contains(".") else { continue }
@@ -897,5 +937,26 @@ extension MGExplainerSession {
             for control in r.controls { made.insert(control.wire) }
         }
         scriptControls = made
+    }
+}
+
+/// A shared cache of the arrows each beat drops (`MGExplainerSession.droppedArrows`), keyed by the compiled solid's
+/// fingerprint, the beat's step and its highlighted parts, so copies of a session share it safely. Bounded: it is
+/// cleared when it holds more than `limit` entries.
+final class MGBeatDropCache: @unchecked Sendable {
+    static let limit = 512
+    private var store: [String: [String]] = [:]
+    private let lock = NSLock()
+
+    func value(_ key: String, _ make: () -> [String]) -> [String] {
+        lock.lock()
+        if let v = store[key] { lock.unlock(); return v }
+        lock.unlock()
+        let v = make()
+        lock.lock()
+        if store.count >= Self.limit { store = [:] }
+        store[key] = v
+        lock.unlock()
+        return v
     }
 }

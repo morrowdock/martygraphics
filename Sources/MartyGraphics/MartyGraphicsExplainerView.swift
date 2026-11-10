@@ -223,7 +223,7 @@ public final class MGExplainerController: ObservableObject {
         guard let d = session.solid else { return nil }
         let v = session.presented
         let clear = MGExplainerFrame.solidClearView(d, view: v, stepIndex: v.beat.flatMap { session.solidStep(forBeat: $0) }, aspect: aspect)
-        return (clear, (v.solid ?? d.view(step: nil)).ghosting(clear.autoGhost))
+        return (clear, clear.view(v.solid ?? d.view(step: nil)))
     }
 
     /// Frames the pane for the presented beat at the pane's aspect: the beat's framed camera (a cut, as before; the

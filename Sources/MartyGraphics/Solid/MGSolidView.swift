@@ -51,6 +51,10 @@ public struct MGSolidView: Equatable, Sendable {
     public internal(set) var step: Int?
     /// The fingerprint of the compiled document this view came from (nil for a view built by a host).
     public internal(set) var fingerprint: String?
+    /// The force and flow arrows a framed still does not draw because that still's camera cannot see the unit their
+    /// tail rides on (`MGSolidFraming.arrowDrops`, docs/SOLID-3D.md "Arrow drop"). Only the framing
+    /// sets it (`MGSolidClearView.view(_:)`); `MGSolidDocument.checkedAnnotations` leaves these arrows out.
+    public internal(set) var arrowDrops: [MGArrowDrop] = []
 
     /// The view of a plain assembly: every part with its own opacity and light, nothing cut.
     public init(_ assembly: MGAssembly) {

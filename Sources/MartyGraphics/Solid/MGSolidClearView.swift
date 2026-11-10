@@ -36,6 +36,9 @@ public struct MGSolidClearView: Equatable, Sendable {
     /// For a step whose section cuts a focus part: true when the camera is on the cut-away side of that part's plane,
     /// so the cut face and the inside are seen; nil for a step without such a cut.
     public var facesCut: Bool?
+    /// The force and flow arrows this shot does not draw (`MGSolidFraming.arrowDrops`): the camera cannot see the unit
+    /// (component instance) each one's tail rides on. Set for every shot, whatever its rule.
+    public var arrowDrops: [MGArrowDrop] = []
 
     public init(camera: MGSolidCamera, rule: MGSolidFraming.Rule, tested: Bool = false, direction: Direction = .preset,
                 autoGhost: [String] = [], samples: Int = 0, occludedSamples: Int = 0, facesCut: Bool? = nil) {
@@ -50,16 +53,27 @@ public struct MGSolidClearView: Equatable, Sendable {
     /// True when the view is clear and, for a section step, faces the cut (`facesCut` is not false).
     public var accepted: Bool { clear && facesCut != false }
 
-    /// `base` (the step's view) with the automatic ghosts added. Annotations, cuts and the legend are unchanged.
-    public func view(_ base: MGSolidView) -> MGSolidView { base.ghosting(autoGhost) }
+    /// `base` (the step's view) with the automatic ghosts added and the dropped arrows left out
+    /// (`MGSolidView.arrowDrops`). Cuts and the legend are unchanged.
+    public func view(_ base: MGSolidView) -> MGSolidView {
+        var v = base.ghosting(autoGhost)
+        v.arrowDrops = arrowDrops
+        return v
+    }
 
-    /// Manifest fields of a tested shot: `{"autoGhost": [ids], "occluded": share, "focusSamples": n, "view": direction,
-    /// "facesCut"?: bool}`; empty when the rule did not run.
+    /// Manifest fields of a shot: for a tested shot `{"autoGhost": [ids], "occluded": share, "focusSamples": n,
+    /// "view": direction, "facesCut"?: bool}`, and for any shot that drops an arrow `"arrowDrops": [{"id", "part",
+    /// "by"}]`; empty otherwise.
     public var manifestFields: [String: MGJSON] {
-        guard tested else { return [:] }
-        var o: [String: MGJSON] = ["autoGhost": .array(autoGhost.map { .string($0) }), "occluded": .number(occluded),
-                                   "focusSamples": .number(Double(samples)), "view": .string(direction.rawValue)]
-        if let f = facesCut { o["facesCut"] = .bool(f) }
+        var o: [String: MGJSON] = [:]
+        if tested {
+            o = ["autoGhost": .array(autoGhost.map { .string($0) }), "occluded": .number(occluded),
+                 "focusSamples": .number(Double(samples)), "view": .string(direction.rawValue)]
+            if let f = facesCut { o["facesCut"] = .bool(f) }
+        }
+        if !arrowDrops.isEmpty {
+            o["arrowDrops"] = .array(arrowDrops.map { .object(["id": .string($0.id), "part": .string($0.part), "by": .string($0.by)]) })
+        }
         return o
     }
 }
@@ -130,9 +144,37 @@ extension MGSolidFraming {
     /// 5. Otherwise the `alternatives` are tried in order, each framed on the same focus, and the first that is clear
     ///    (at most `clearShare` hidden) and faces the cut is taken with its own automatic ghosts. When none is, the first
     ///    clear one is taken (the preset first); when none is clear, the step's own direction stays.
+    ///
+    /// Last, for every shot (any rule), the arrow drop rule runs at the chosen camera (`arrowDrops`).
     public static func clearView(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double = 30,
                                  titleBand: Double? = nil, captionBand: Double? = nil,
                                  stage: MGTransform = MGSolidStage.zUpToYUp) -> MGSolidClearView {
+        clearView(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage, drops: true)
+    }
+
+    /// `clearView`, with the arrow drop rule only when `drops` (an explainer beat takes its drops from its canonical
+    /// framing instead, `MGExplainerFrame.beatArrowDrops`).
+    static func clearView(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double = 30,
+                          titleBand: Double?, captionBand: Double?, stage: MGTransform, drops: Bool) -> MGSolidClearView {
+        var c = clearCamera(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage)
+        if drops { c.arrowDrops = arrowDrops(doc, shot: s, camera: c.camera, autoGhost: c.autoGhost, aspect: aspect, stage: stage) }
+        return c
+    }
+
+    /// The force and flow arrows a shot at `camera` does not draw (`MGSolidDocument.arrowDrops`): the shot's step view
+    /// (`MGSolidDocument.view(step:)`) with its automatic ghosts, at the shot's pose, in a view of the shot's aspect.
+    public static func arrowDrops(_ doc: MGSolidDocument, shot s: MGSolidShot, camera: MGSolidCamera, autoGhost: [String], aspect: Double,
+                                  stage: MGTransform = MGSolidStage.zUpToYUp) -> [MGArrowDrop] {
+        guard !doc.annotations.isEmpty, s.step.map({ doc.steps.indices.contains($0) }) ?? true else { return [] }
+        let view = doc.view(step: s.step).ghosting(autoGhost)
+        guard doc.annotations.arrows.contains(where: { view.annotations.contains($0.id) }) else { return [] }
+        let a = aspect.isFinite && aspect > 0 ? aspect : 1.6
+        return doc.arrowDrops(MGAnnotationAnchorView(view: view, params: s.params, camera: camera, width: 800 * a, height: 800,
+                                                     step: s.step, beat: nil, stage: stage))
+    }
+
+    static func clearCamera(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double,
+                            titleBand: Double?, captionBand: Double?, stage: MGTransform) -> MGSolidClearView {
         let first = framing(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage)
         guard first.rule == .focus, let step = s.step, doc.steps.indices.contains(step) else {
             return MGSolidClearView(camera: first.camera, rule: first.rule)
