@@ -76,9 +76,10 @@ final class SubjectFramingTests: XCTestCase {
         XCTAssertTrue(cut(doc, pack).contains("head"), "context is cut at the safe window: \(cut(doc, pack))")
         // The whole-figure step keeps every part whole.
         XCTAssertEqual(cut(doc, stills[3]), [])
-        // No subject floor is missed in the pack steps.
+        // The pack close-up meets its floors. Step 3's far label makes it a whole-model still, where the pack is small:
+        // the floors are measured whatever the framing class.
         let floors = doc.subjectIssues(stills)
-        XCTAssertEqual(floors.map(\.reason), ["framing.subject.small.step.2"])
+        XCTAssertEqual(floors.map(\.reason), ["framing.subject.small.step.2", "framing.subject.small.step.3"])
     }
 
     /// Rule (b): every target a still draws lies inside its safe window, a far world-point label too. The re-check
@@ -139,7 +140,8 @@ final class SubjectFramingTests: XCTestCase {
         XCTAssertEqual(small, ["pilot.footL"])
         // A whole instance is one group.
         let whole = try compile(#"{"v": 2, "kind": "assembly", "parts": [{"id": "pilot", "use": "mannequin"}], "steps": [{"say": "All.", "camera": "front", "highlight": ["pilot"]}]}"#)
-        XCTAssertEqual(MGSolidFraming.subjectGroups(whole, whole.assembly.parts.map(\.id)).map(\.unit), ["pilot"])
+        XCTAssertEqual(MGSolidFraming.subjectGroups(whole, whole.assembly.parts.map(\.id), whole: ["pilot"]).map(\.unit), ["pilot"])
+        XCTAssertEqual(whole.framedStills().first?.wholeInstances, ["pilot"])
     }
 
     /// Re-check S2: the ghost repair returns the complete list. A core inside two shells (enclosing context is never an
@@ -162,6 +164,109 @@ final class SubjectFramingTests: XCTestCase {
         XCTAssertNil(fixed["subjectFloors"])
         XCTAssertEqual(report(doc(#"["shellA"]"#, label: true))["ok"], .bool(true))
         XCTAssertEqual(report(doc(#"["shellA", "shellB"]"#, label: true))["ok"], .bool(true))
+    }
+
+    // MARK: Re-check of 36f5d21
+
+    static let farLabelTwoSteps = #"{"v":2,"kind":"assembly","title":"Far label","parts":[{"id":"detail","shape":{"box":{"size":[20,20,20]}}},{"id":"body","shape":{"box":{"size":[200,100,300],"at":[0,100,0]}}}],"annotations":{"labels":[{"id":"far","at":{"world":[3900,0,3900]},"text":"A remote note"}]},"steps":[{"say":"The readable detail.","focus":["detail"],"camera":"front","annotate":[]},{"say":"A detail with a remote note.","highlight":["detail"],"camera":"front","annotate":["far"]}]}"#
+    static let wholeAcceptance = #"{"v":2,"kind":"assembly","title":"Whole model","parts":[{"id":"lower","shape":{"box":{"size":[800,20,20],"at":[0,400,0]}}},{"id":"upper","shape":{"box":{"size":[800,20,20],"at":[0,-400,1000]}}},{"id":"blocker","at":[72.0,-291.3935875760057,543.3813304927515],"shape":{"box":{"size":[4,4,4]}}}],"annotations":{"labels":[{"id":"note","at":{"world":[80,0,500]},"text":"A note"}]},"steps":[{"say":"The model.","camera":"front","annotate":["note"]}]}"#
+
+    /// B2: the floors are measured on every still with a subject, whatever its framing class. Step 2's far label makes it
+    /// a whole-model still; its 20 mm detail still warns (before: no warning at all).
+    func testTheFloorsApplyWhateverTheFramingClass() throws {
+        let doc = try compile(Self.farLabelTwoSteps)
+        let stills = doc.framedStills()
+        XCTAssertEqual(stills[1].rule, .modelFitted)
+        let o = report(Self.farLabelTwoSteps)
+        XCTAssertEqual(o["ok"], .bool(true))
+        guard case .array(let floors)? = o["subjectFloors"] else { return XCTFail("subjectFloors") }
+        let steps: [MGJSON] = floors.compactMap { j -> MGJSON? in
+            guard case .object(let f) = j else { return nil }
+            return f["step"]
+        }
+        XCTAssertEqual(steps, [MGJSON.number(2)])
+    }
+
+    /// B3: the main-rule fallback covers whole-model stills too. This document passes `check --strict` at main; the
+    /// subject-first whole-model fit would hide its label behind a 4 mm blocker, so the still keeps main's camera.
+    func testAWholeModelDocumentAcceptedAtMainStaysAccepted() throws {
+        let o = report(Self.wholeAcceptance)
+        XCTAssertEqual(o["ok"], .bool(true), "\(o["reason"] ?? .null)")
+        let doc = try compile(Self.wholeAcceptance)
+        let shot = try XCTUnwrap(MGSolidShot.step(doc, 0))
+        let bands = MGSolidRenderPlan.bands(width: 1280, height: 800)
+        let clear = MGSolidFraming.clearView(doc, shot: shot, aspect: 1.6, titleBand: bands.title, captionBand: bands.caption)
+        XCTAssertTrue(clear.mainRule)
+        XCTAssertEqual(clear.camera.distance, MGSolidFraming.mainRule(doc, shot: shot, aspect: 1.6, fieldOfView: 30, titleBand: bands.title,
+                                                                       captionBand: bands.caption, stage: MGSolidStage.zUpToYUp).camera.distance,
+                       accuracy: 1e-9)
+    }
+
+    /// S1: every camera consumer gets the one effective camera. The renderer's `frame` (a host's entry point) takes the
+    /// still's camera with the fallback, so the label is visible there; the report's `stillPlacements` places a far
+    /// label at the still's camera (inside the frame, not "off view"), where the legacy `placements` used a default camera.
+    func testEveryCameraConsumerGetsTheEffectiveCamera() throws {
+        let doc = try compile(Self.wholeAcceptance)
+        let f = try XCTUnwrap(doc.framedStills().first)
+        let r = MGSolidRenderer(document: doc)
+        let shot = try XCTUnwrap(MGSolidShot.step(doc, 0))
+        r.apply(shot.params)
+        r.frame(shot, document: doc, aspect: 1.6)
+        XCTAssertEqual(r.camera, f.still.camera)
+        XCTAssertEqual(MGSolidFraming.camera(doc, shot: shot, aspect: 1.6), f.still.camera)
+        let v = MGAnnotationAnchorView(view: f.still.view, params: f.still.params, camera: r.camera, width: 1280, height: 800, step: 0, beat: nil)
+        XCTAssertEqual(doc.anchorIssues(v).issues.count, 0, "the label is visible in the render")
+        let o = report(Self.farLabelTwoSteps)
+        guard case .array(let placed)? = o["stillPlacements"], case .object(let step2)? = placed.last,
+              case .array(let items)? = step2["placement"], case .object(let item)? = items.first else { return XCTFail("stillPlacements") }
+        XCTAssertEqual(step2["step"], .number(2))
+        XCTAssertEqual(item["id"], .string("far"))
+        XCTAssertEqual(item["offView"], .bool(false), "the still shows the far label")
+    }
+
+    /// S2: each explicitly named part is measured alone, also when the named parts together cover an instance; only an
+    /// instance named by its id is one group. Naming all 11 engine parts: the hidden bearings and shaft warn.
+    func testEveryExplicitlyNamedPartIsMeasuredAlone() throws {
+        let names = ["jet.intakeLip", "jet.impeller", "jet.diffuser", "jet.combustor", "jet.nozzleGuideVanes", "jet.turbineWheel", "jet.nozzle",
+                     "jet.shaft", "jet.frontBearing", "jet.rearBearing", "jet.casing"]
+        let t = #"{"v":2,"kind":"assembly","parts":[{"id":"jet","use":"microTurbojet","with":{"cutaway":0}}],"steps":[{"say":"Every named engine part.","camera":"side","focus":[\#(names.map { "\"\($0)\"" }.joined(separator: ","))]}]}"#
+        let o = report(t)
+        guard case .array(let floors)? = o["subjectFloors"], case .object(let f)? = floors.first, case .array(let groups)? = f["groups"]
+        else { return XCTFail("subjectFloors") }
+        XCTAssertEqual(groups.count, 11)
+        let small = groups.compactMap { g -> String? in
+            guard case .object(let o) = g, o["small"] == .bool(true), case .string(let u)? = o["unit"] else { return nil }
+            return u
+        }
+        XCTAssertTrue(small.contains("jet.frontBearing") && small.contains("jet.rearBearing") && small.contains("jet.shaft"), "\(small)")
+        // The instance named by its id is one group.
+        let whole = report(#"{"v":2,"kind":"assembly","parts":[{"id":"jet","use":"microTurbojet","with":{"cutaway":0}}],"steps":[{"say":"The engine.","camera":"side","focus":["jet"]}]}"#)
+        XCTAssertNil(whole["subjectFloors"])
+    }
+
+    /// S3: the public API's default returns the complete ghost list (the step's own ghosts kept), as the CLI does.
+    func testThePublicAPIReturnsTheCompleteGhostList() throws {
+        let doc = try compile(#"{"v": 2, "kind": "assembly", "parts": [{"id": "core", "shape": {"box": {"size": [20, 20, 20]}}}, {"id": "shellA", "shape": {"box": {"size": [100, 100, 100]}}}, {"id": "shellB", "shape": {"box": {"size": [200, 200, 200]}}}], "steps": [{"say": "The core.", "camera": "front", "focus": ["core"], "ghost": ["shellA"]}]}"#)
+        XCTAssertEqual(doc.subjectIssues(doc.framedStills()).first?.ghost, ["shellA", "shellB"])
+        XCTAssertEqual(doc.stillMeasures(doc.framedStills()).subjects.first?.ghost, ["shellA", "shellB"])
+    }
+
+    /// S4: an explicit focus that a far label pushes below its floors gets an exact repair: the step's `annotate` list
+    /// without the far label, which moves to a view of its own.
+    func testAFarLabelGetsAnExactAnnotateRepair() throws {
+        let t = Self.farLabelTwoSteps.replacingOccurrences(of: #""highlight":["detail"],"camera":"front","annotate":["far"]"#,
+                                                           with: #""focus":["detail"],"camera":"front","annotate":["far"]"#)
+        let o = report(t)
+        guard case .array(let floors)? = o["subjectFloors"], case .object(let f)? = floors.first, case .string(let repair)? = f["repair"]
+        else { return XCTFail("subjectFloors") }
+        XCTAssertEqual(f["annotate"], .object(["keep": .array([]), "move": .array([.string("far")])]))
+        XCTAssertTrue(repair.contains(#"set "annotate": [] in the step, and show ["far"] in a view of their own"#), repair)
+        // The repair, applied: the far label in a step of its own.
+        let fixed = t.replacingOccurrences(of: #""focus":["detail"],"camera":"front","annotate":["far"]}]"#,
+                                           with: #""focus":["detail"],"camera":"front","annotate":[]},{"say":"A remote note.","camera":"front","annotate":["far"]}]"#)
+        XCTAssertNotEqual(fixed, t)
+        guard case .array(let after)? = report(fixed)["subjectFloors"] ?? .array([]) else { return XCTFail("report") }
+        XCTAssertFalse(after.contains { if case .object(let x) = $0 { return x["step"] == .number(2) && x["annotate"] != .null } else { return false } })
     }
 
     /// Two small engines far apart: the closest whole framing shows each one too small. The report warns with the

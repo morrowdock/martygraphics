@@ -88,7 +88,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         var anchors = MGAnnotationAnchorReport()
         var arrows = MGAnnotationArrowReport()
         var drops: [(beat: Int?, drop: MGArrowDrop)] = []
-        var subjects: [MGSubjectSmall] = [], small: [MGSmallUnit] = []
+        var subjects: [MGSubjectSmall] = [], small: [MGSmallUnit] = [], stillPlacements: MGJSON?
         if let d = s.solid {
             // The solid's own steps are the beats' views: the beat check below frames them as the beat stills do.
             let r = MGSolidReport.make(d, profile: profile, engine: nil, anchorViews: false)
@@ -105,6 +105,7 @@ public struct MGExplainerReport: Equatable, Sendable {
             // refused); the anchor checks test those that show a label or pointer, the arrow rule those that show an arrow.
             let stills = doc.map { MGExplainerFrame.beatStills($0, library: s.library) }
             if let doc, let fd = stills?.solid, let all = stills?.stills {
+                if !fd.annotations.isEmpty { stillPlacements = fd.stillPlacements(all, title: false) }
                 (subjects, small) = fd.stillMeasures(all) { f in
                     guard let b = f.still.beat, doc.beats.indices.contains(b), case .object(let v)? = doc.beats[b].view else { return [] }
                     return MGSolidDocument.strings(v["ghost"])
@@ -250,6 +251,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         }
         // Only when a beat still's subject misses a floor or a named unit is small; other reports keep their exact keys.
         if !subjects.isEmpty { o["subjectFloors"] = .array(subjects.map(\.json)) }
+        if let stillPlacements { o["stillPlacements"] = stillPlacements }
         if !small.isEmpty { o["smallUnits"] = .array(small.map(\.json)) }
         let hit = reason.flatMap { MGSolidReport.anchorIssue($0, anchors.issues) }
         if let hit { o["anchor"] = hit.json }

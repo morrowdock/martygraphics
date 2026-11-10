@@ -189,13 +189,14 @@ extension MGSolidReport {
         var anchors = MGAnnotationAnchorReport()
         var arrows = MGAnnotationArrowReport()
         var drops: [(step: Int?, beat: Int?, drop: MGArrowDrop)] = []
-        var subjects: [MGSubjectSmall] = [], small: [MGSmallUnit] = []
+        var subjects: [MGSubjectSmall] = [], small: [MGSmallUnit] = [], stillPlacements: MGJSON?
         anchors.issues = doc.offPartAnchors
         if anchorViews {
             // Every step still, framed once: the subject rule and the small-unit rule read them all (warnings, never
             // refused); the anchor checks test those that show a label or pointer, the arrow rule those that show an arrow.
             let stills = doc.framedStills()
             (subjects, small) = doc.stillMeasures(stills) { doc.authoredGhost(step: $0.still.step) }
+            stillPlacements = doc.stillPlacements(stills, title: true)
             let checked = doc.annotations.isEmpty ? []
                 : stills.map(\.still).filter { $0.step != nil && (doc.showsCheckedAnchor($0.view) || doc.showsArrow($0.view)) }
             // The arrows each still drops (the framing's arrow drop rule): warnings, never refused.
@@ -256,6 +257,8 @@ extension MGSolidReport {
         }
         // Only when a still's subject misses a floor or a named unit is small; other reports keep their exact keys.
         if !subjects.isEmpty { o["subjectFloors"] = .array(subjects.map(\.json)) }
+        // Documents with annotations only: the label placement each still shows (its effective camera).
+        if !doc.annotations.isEmpty, let stillPlacements { o["stillPlacements"] = stillPlacements }
         if !small.isEmpty { o["smallUnits"] = .array(small.map(\.json)) }
         // Documents with annotations only; other reports keep their exact keys.
         if !doc.annotations.isEmpty {

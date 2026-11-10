@@ -184,8 +184,9 @@ extension MGSolidFraming {
                                   stage: stage, main: false)
         // The subject camera may not hide what the main rule shows: a still that draws a label, pointer or arrow keeps the
         // main-rule camera when the subject camera gives a view issue (hidden, ghosted, off screen, untested) and the
-        // main-rule camera gives none. So a document accepted before subject-first framing is not refused for framing.
-        guard subject.rule == .focus, s.showsAnnotations else { return subject }
+        // main-rule camera gives none, whatever the shot's rule (focus, inferred subject or whole model). So a document
+        // accepted before subject-first framing is not refused for framing.
+        guard s.showsAnnotations else { return subject }
         let base = doc.view(step: s.step)
         guard doc.showsCheckedAnchor(base) || doc.showsArrow(base) else { return subject }
         var main = clearCamera(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand,
@@ -217,7 +218,7 @@ extension MGSolidFraming {
         let pick = main ? mainRule : choose
         let aspect = aspect.isFinite && aspect > 0 ? aspect : 1.6
         var first = pick(doc, s, aspect, fov(fieldOfView), titleBand, captionBand, stage, nil)
-        if !finite(first.camera) { first = framing(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage) }
+        if !finite(first.camera) { first = rawFraming(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage) }
         guard first.rule == .focus, let step = s.step, doc.steps.indices.contains(step) else {
             return MGSolidClearView(camera: first.camera, rule: first.rule)
         }

@@ -322,8 +322,13 @@ extension MGExplainerFrame {
             let clear = solidClearView(d, view: b.view, stepIndex: b.stepIndex, pane: b.pane)
             let still = MGAnnotationAnchorView(view: clear.view(base), params: pose(d, view: b.view), camera: clear.camera,
                                                width: Double(b.pane.width), height: Double(b.pane.height), step: b.stepIndex, beat: b.beat)
+            var named: [String] = []
+            if doc.beats.indices.contains(b.beat) {
+                named = (doc.beats[b.beat].highlight ?? []).compactMap { if case .string(let x) = $0 { return x } else { return nil } }
+                if case .object(let v)? = doc.beats[b.beat].view { named += MGSolidDocument.strings(v["focus"]) }
+            }
             return MGFramedStill(still: still, shot: beatShot(d, view: b.view, stepIndex: b.stepIndex),
-                                 window: MGSolidFraming.Window(titleBand: 0, captionBand: 0), rule: clear.rule)
+                                 window: MGSolidFraming.Window(titleBand: 0, captionBand: 0), rule: clear.rule, wholeInstances: d.instances(named))
         })
     }
 

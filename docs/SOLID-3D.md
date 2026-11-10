@@ -1846,7 +1846,9 @@ camera (the `mannequin` does), `backLeft` shows its left side and back (its left
 
 * **Subject first.** A still with a subject frames the subject, from its own camera preset and `orbit` (the
   direction stays; only the target and distance change). One rule for every still, story hold frame, render plan
-  camera, SwiftUI pane and check report (`MGSolidFraming.clearView`).
+  camera, SwiftUI pane, check report and host (`MGSolidFraming.clearView`; the public `MGSolidFraming.camera`,
+  `MGSolidFraming.framing` and `MGSolidRenderer.frame(_:document:aspect:)` return this effective camera, the fallback
+  below included).
   - **The subject** (`MGSolidFraming.subjectParts`) is the step's (or beat view's) explicit `focus`. Without one, it
     is the highlighted parts, the section parts and the parts that the labels and arrows the still shows ride on; and,
     in a **posed step**, every chain the pose moves (`moved`: each part whose world placement differs with and without
@@ -1856,13 +1858,16 @@ camera (the `mannequin` does), `backLeft` shows its left side and back (its left
     **every target the still draws**: label anchors, pointer tips, and arrow tails and heads. They fill 88 %
     (`MGSolidFraming.fill`) of the window, centred. A framing never leaves a label "(off view)". There is no fill
     ceiling. When the targets and the floors conflict, the targets win and the check report warns.
-  - **Floors** (the check report, `MGSolidDocument.subjectIssues`). (i) The subject fills at least **25 %** of the safe
+  - **Floors** (the check report, `MGSolidDocument.subjectIssues`), on **every** still with a subject, whatever its
+    framing class (a far target can make it a whole-model still; the floors still apply). (i) The subject fills at least **25 %** of the safe
     window on its larger axis (`MGSolidFraming.subjectFill`). (ii) Each subject **group**
     (`MGSolidFraming.subjectGroups`) shows at least **0.5 %** of the safe window's pixels (`subjectAreaShare`: 3,379 px
     of the 1280 × 528 px safe window of a captioned 1280 × 800 still), and the shorter side of its visible pixels is
     at least **24 px at a frame 800 px high**, scaled with the height (`subjectExtentPixels`: 65 px at 3840 × 2160). A
-    group is a component instance whose every part is in the subject (a highlighted or focused instance); every other
-    subject part is its own group, so a separately named part (a foot named beside the body) is measured on its own.
+    group is an instance that the step or beat names **by its instance id** in `focus` or `highlight`
+    (`MGFramedStill.wholeInstances`); every other subject part is its own group: a part named on its own in `focus` or
+    `highlight`, or an annotation target, also when such parts together cover an instance. So a foot named beside the
+    body, or a hidden bearing among eleven named engine parts, is measured on its own.
     The moved chain is framed but not measured. Visible pixels come from the still's depth raster (`MGStillRaster`).
   - **Context** (every other part) may be cut at the safe window's edges. The renderer clips the model to the safe
     window (`MGSolidRenderer.render(width:height:clip:)`; `marty-solid render` does this for every still and story
@@ -1871,8 +1876,9 @@ camera (the `mannequin` does), `backLeft` shows its left side and back (its left
   - **Never from inside.** The camera then moves back along its view line until it is outside the posed box of every
     solid context part (`MGSolidFraming.outsideContext`), so a subject inside a closed or hollow part is not framed from
     inside it; the floors then report it hidden, with the repair to ghost that part (a ghost is not solid).
-  - **Accepted documents stay accepted.** For a still that draws a label, pointer or arrow, `clearView` tests the
-    drawn anchors and arrows (the anchor and arrow view rules) at the subject camera. When that camera gives a view
+  - **Accepted documents stay accepted.** For every still that draws a label, pointer or arrow (a focus, an inferred
+    subject or a whole-model still), `clearView` tests the drawn anchors and arrows (the anchor and arrow view rules) at
+    the subject-first camera. When that camera gives a view
     issue (hidden, ghosted, off screen, untested) and the camera of main's rule (`MGSolidFraming.mainRule`: the step's
     focus with its touching context, or the earlier whole-model framing) gives none, the still keeps main's camera and
     its manifest record says `"mainRule": true`. So framing alone never refuses a document that passed `check
@@ -1882,13 +1888,19 @@ camera (the `mannequin` does), `backLeft` shows its left side and back (its left
     `framing.subject.small.step.<n>` (`framing.subject.small.beat.<n>`) in `subjectFloors`: `{"step", "beat", "groups":
     [{"unit", "parts", "pixels", "extent", "small", "hiddenBy"}], "cut", "fill", "minimumPixels", "minimumExtent",
     "split", "subset", "ghost", "repair"}`. The repairs are exact: `split` (one `focus` list per group: a step each),
-    `subset` (the first small group alone) and `ghost`, the **complete** `ghost` list to set: the view's own ghosts as
-    written, then the context parts or units that cover a small group, without repeats (never a part of the subject).
+    `subset` (the first small group alone), `ghost`, the **complete** `ghost` list to set (the view's own ghosts as
+    written, then the context parts or units that cover a small group, without repeats, never a part of the subject;
+    the public API reads the written list by default, `authoredGhost`), and `annotate`: `{"keep", "move"}`, the step's
+    exact `annotate` list without the drawn annotations whose targets lie off the subject (a world point, or a part
+    outside it), which widen this framing and move to a view of their own.
     A warning, not a refusal: the subject is whole and the still is truthful; the author decides how to split or ghost.
     Ids in a repair are complete JSON strings; when the JSON would not fit the 400-scalar line, the line names the
     structured field.
   - An inferred subject whose box is more than 75 % of the whole model's box diagonal (`focusShare`) is a whole-model
     still. A `focus` list is always framed: to frame a part exactly, list it in `focus`.
+* **Placements.** The check report's `stillPlacements` gives the label placement of each still that draws
+  annotations at its effective camera and pixel size (`MGSolidDocument.stillPlacements`): what the still shows. The
+  older `placements` keeps the snapshot default camera (legacy data, not the still).
 * **Crops.** `MGSolidFraming.cutParts` decides which parts a camera cuts from the triangles, not the vertices: a
   triangle is in view unless all three vertices lie outside one of the five view planes, tested in camera space
   without dividing by depth. So a face that spans the view with every vertex outside it (a 2 m wall behind a 20 mm

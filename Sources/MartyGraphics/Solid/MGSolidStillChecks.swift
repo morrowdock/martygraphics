@@ -18,9 +18,12 @@ public struct MGFramedStill: Sendable {
     public let window: MGSolidFraming.Window
     /// The rule that framed the still: `focus` when it was framed on its subject.
     public let rule: MGSolidFraming.Rule
+    /// The instances the step or beat names whole, by instance id, in `focus` or `highlight` (`subjectGroups`).
+    public let wholeInstances: Set<String>
 
-    public init(still: MGAnnotationAnchorView, shot: MGSolidShot, window: MGSolidFraming.Window, rule: MGSolidFraming.Rule) {
-        self.still = still; self.shot = shot; self.window = window; self.rule = rule
+    public init(still: MGAnnotationAnchorView, shot: MGSolidShot, window: MGSolidFraming.Window, rule: MGSolidFraming.Rule,
+                wholeInstances: Set<String> = []) {
+        self.still = still; self.shot = shot; self.window = window; self.rule = rule; self.wholeInstances = wholeInstances
     }
 }
 
@@ -88,11 +91,15 @@ public struct MGSubjectSmall: Equatable, Sendable {
     public var fill: Double, minimumPixels: Int, minimumExtent: Double
     /// The view's own `ghost` list as written; the `ghost` repair keeps it.
     public var existingGhost: [String] = []
+    /// The annotations the still draws whose targets lie off the subject (a world point, or a part outside it): they
+    /// widen the framing, and the `annotate` repair moves them to a view of their own. `keepAnnotations`: the rest.
+    public var farAnnotations: [String] = [], keepAnnotations: [String] = []
 
     public init(step: Int?, beat: Int?, groups: [Group], small: [Int], cut: [String], fill: Double, minimumPixels: Int,
-                minimumExtent: Double, existingGhost: [String] = []) {
+                minimumExtent: Double, existingGhost: [String] = [], farAnnotations: [String] = [], keepAnnotations: [String] = []) {
         self.step = step; self.beat = beat; self.groups = groups; self.small = small; self.cut = cut; self.fill = fill
         self.minimumPixels = minimumPixels; self.minimumExtent = minimumExtent; self.existingGhost = existingGhost
+        self.farAnnotations = farAnnotations; self.keepAnnotations = keepAnnotations
     }
 
     public var reason: String {
@@ -130,14 +137,18 @@ public struct MGSubjectSmall: Equatable, Sendable {
         }
         if !subset.isEmpty { options.append("focus a subset \(at): \"focus\": \(MGExactRepair.list(subset))") }
         if !ghost.isEmpty { options.append("set the whole ghost list \(at): \"ghost\": \(MGExactRepair.list(ghost))") }
+        if !farAnnotations.isEmpty {
+            options.append("set \"annotate\": \(MGExactRepair.list(keepAnnotations)) \(at), and show \(MGExactRepair.list(farAnnotations)) in a view of their own (their targets lie off the subject and widen this framing)")
+        }
         if options.isEmpty { options.append("make the subject larger, or show fewer subject parts in this view") }
         let fragment = "Repair (any one): " + options.joined(separator: "; or ") + "."
         return MGExactRepair.line(prose: prose, fragment: fragment,
-                                  fallback: "Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.")
+                                  fallback: "Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.")
     }
 
     /// `{"step", "beat", "groups": [{"unit", "parts", "pixels", "extent", "small", "hiddenBy"}], "cut", "fill",
-    /// "minimumPixels", "minimumExtent", "split", "subset", "ghost", "repair"}` (1-based step and beat, null when absent).
+    /// "minimumPixels", "minimumExtent", "split", "subset", "ghost", "annotate": null | {"keep", "move"}, "repair"}`
+    /// (1-based step and beat, null when absent).
     public var json: MGJSON {
         .object(["step": step.map { .number(Double($0 + 1)) } ?? .null, "beat": beat.map { .number(Double($0 + 1)) } ?? .null,
                  "groups": .array(groups.enumerated().map { k, g in
@@ -148,7 +159,10 @@ public struct MGSubjectSmall: Equatable, Sendable {
                  "cut": .array(cut.map { .string($0) }), "fill": .number((fill * 1000).rounded() / 1000),
                  "minimumPixels": .number(Double(minimumPixels)), "minimumExtent": .number((minimumExtent * 10).rounded() / 10),
                  "split": .array(split.map { .array($0.map { .string($0) }) }), "subset": .array(subset.map { .string($0) }),
-                 "ghost": .array(ghost.map { .string($0) }), "repair": .string(repair)])
+                 "ghost": .array(ghost.map { .string($0) }),
+                 "annotate": farAnnotations.isEmpty ? .null : .object(["keep": .array(keepAnnotations.map { .string($0) }),
+                                                                       "move": .array(farAnnotations.map { .string($0) })]),
+                 "repair": .string(repair)])
     }
 }
 
@@ -381,18 +395,19 @@ extension MGSolidDocument {
             let clear = MGSolidFraming.clearView(self, shot: shot, aspect: aspect, titleBand: title, captionBand: caption)
             let still = MGAnnotationAnchorView(view: clear.view(view(step: i)), params: shot.params, camera: clear.camera,
                                                width: w, height: h, step: i, beat: nil)
-            return MGFramedStill(still: still, shot: shot, window: MGSolidFraming.Window(titleBand: title, captionBand: caption), rule: clear.rule)
+            return MGFramedStill(still: still, shot: shot, window: MGSolidFraming.Window(titleBand: title, captionBand: caption), rule: clear.rule,
+                                 wholeInstances: authoredInstances(step: i))
         }
     }
 
     /// The subject rule (`subjectIssues`) and the small-unit rule (`smallUnits`) over `stills`, on one raster per still.
     public func stillMeasures(_ stills: [MGFramedStill], width: Int = MGAnnotationAnchorRules.width, height: Int = MGAnnotationAnchorRules.height,
-                              ghosts: (MGFramedStill) -> [String] = { _ in [] }) -> (subjects: [MGSubjectSmall], small: [MGSmallUnit]) {
+                              ghosts: ((MGFramedStill) -> [String])? = nil) -> (subjects: [MGSubjectSmall], small: [MGSmallUnit]) {
         var named = Set<String>()
         for f in stills { named.formUnion(namedUnits(f)) }
         let rasters = stills.map { f -> MGStillRaster? in
             let subject = MGSolidFraming.subjectParts(self, shot: f.shot)
-            var groups = f.rule == .focus ? MGSolidFraming.subjectGroups(self, subject.parts).map(\.parts) : []
+            var groups = MGSolidFraming.subjectGroups(self, subject.parts, whole: f.wholeInstances).map(\.parts)
             groups += unitsShown(f.still, named).map { u in unitParts(of: u).map(\.id) }
             guard !groups.isEmpty else { return nil }
             return MGStillRaster(self, f.still, groups: groups)
@@ -413,19 +428,22 @@ extension MGSolidDocument {
     /// `subjectExtentPixels` × height / 800; the subject's fill against `subjectFill`; and no subject part cut
     /// (`MGSolidFraming.cutParts`). One issue per still that misses any, in still order. A still whose raster is over
     /// budget is not measured.
-    public func subjectIssues(_ stills: [MGFramedStill], ghosts: (MGFramedStill) -> [String] = { _ in [] }) -> [MGSubjectSmall] {
+    /// `ghosts(still)` gives the view's own `ghost` list as written; by default the compiled source's step list
+    /// (`authoredGhost(step:)`; an explainer's solid holds its beats' views as steps).
+    public func subjectIssues(_ stills: [MGFramedStill], ghosts: ((MGFramedStill) -> [String])? = nil) -> [MGSubjectSmall] {
         subjectIssues(stills, rasters: nil, ghosts: ghosts)
     }
 
     /// `subjectIssues` reading `rasters[k]` (subject groups first) for still `k` when given.
-    func subjectIssues(_ stills: [MGFramedStill], rasters: [MGStillRaster?]?, ghosts: (MGFramedStill) -> [String]) -> [MGSubjectSmall] {
+    func subjectIssues(_ stills: [MGFramedStill], rasters: [MGStillRaster?]?, ghosts: ((MGFramedStill) -> [String])?) -> [MGSubjectSmall] {
+        let ghosts = ghosts ?? { self.authoredGhost(step: $0.still.step) }
         return stills.enumerated().compactMap { index, f in
             let subject = MGSolidFraming.subjectParts(self, shot: f.shot)
-            // Only a still framed on its subject: a whole-model still shows every part whole.
-            guard f.rule == .focus, !subject.parts.isEmpty else { return nil }
+            // Every still with a subject, whatever its rule (a far target can make it a whole-model still).
+            guard !subject.parts.isEmpty else { return nil }
             let v = f.still
             let aspect = v.width / v.height
-            let groups = MGSolidFraming.subjectGroups(self, subject.parts)
+            let groups = MGSolidFraming.subjectGroups(self, subject.parts, whole: f.wholeInstances)
             guard let raster = rasters.map({ $0[index] }) ?? MGStillRaster(self, v, groups: groups.map(\.parts)) else { return nil }
             let w = f.window.usable
             let windowPixels = (w.right - w.left) / 2 * v.width * (w.top - w.bottom) / 2 * v.height
@@ -445,8 +463,16 @@ extension MGSolidDocument {
             let cut = MGSolidFraming.cutParts(self, view: v.view, params: v.params, camera: v.camera, aspect: aspect, window: f.window,
                                               ids: subject.parts, stage: v.stage)
             guard !small.isEmpty || !cut.isEmpty || fill < MGSolidFraming.subjectFill else { return nil }
+            // The drawn annotations whose targets lie off the subject widen the framing: the `annotate` repair.
+            let dropped = Set(v.view.arrowDrops.map(\.id)), inSubject = Set(subject.parts)
+            let drawn = (checkedAnnotations(v.view, params: v.params) ?? []).filter { !dropped.contains($0) }
+            let far = drawn.filter { id in
+                guard annotations.label(id) != nil || annotations.arrow(id) != nil else { return false }
+                return !MGSolidAnnotationEngine.anchors(annotations, id).contains { $0.part.map(inSubject.contains) ?? false }
+            }
             return MGSubjectSmall(step: v.step, beat: v.beat, groups: out, small: small, cut: cut, fill: fill, minimumPixels: minPixels,
-                                  minimumExtent: minExtent, existingGhost: ghosts(f))
+                                  minimumExtent: minExtent, existingGhost: ghosts(f), farAnnotations: far,
+                                  keepAnnotations: drawn.filter { !far.contains($0) })
         }
     }
 
@@ -461,6 +487,19 @@ extension MGSolidDocument {
         guard let step, case .object(let o) = source, case .array(let steps)? = o["steps"], steps.indices.contains(step),
               case .object(let s) = steps[step] else { return [] }
         return MGSolidDocument.strings(s["ghost"])
+    }
+
+    /// The instance ids that step `step` names whole in its authored `focus` or `highlight` (an id that is a unit with
+    /// more than one part).
+    func authoredInstances(step: Int?) -> Set<String> {
+        guard let step, case .object(let o) = source, case .array(let steps)? = o["steps"], steps.indices.contains(step),
+              case .object(let s) = steps[step] else { return [] }
+        return instances(MGSolidDocument.strings(s["focus"]) + MGSolidDocument.strings(s["highlight"]))
+    }
+
+    /// The ids of `selectors` that name a whole instance (a unit with more than one part).
+    func instances(_ selectors: [String]) -> Set<String> {
+        Set(selectors.filter { MGSolidDocument.unitID($0) == $0 && unitParts(of: $0).count > 1 })
     }
 
     /// The units that a still names: the units of the parts that the labels and arrows it shows (not dropped) ride on,
@@ -497,7 +536,7 @@ extension MGSolidDocument {
                 let shown = unitsShown(f.still, named)
                 if shown.isEmpty { px = [:] } else {
                     guard let r = rasters[index] else { continue }
-                    let offset = f.rule == .focus ? MGSolidFraming.subjectGroups(self, MGSolidFraming.subjectParts(self, shot: f.shot).parts).count : 0
+                    let offset = MGSolidFraming.subjectGroups(self, MGSolidFraming.subjectParts(self, shot: f.shot).parts, whole: f.wholeInstances).count
                     var out: [String: Int] = [:]
                     for (k, u) in shown.enumerated() where offset + k < 64 { out[u] = r.visible(offset + k).pixels }
                     px = out

@@ -606,6 +606,27 @@ extension MGSolidDocument {
         return .array(out)
     }
 
+    /// The check report's `stillPlacements`: for each still that draws annotations, the placement at the still's
+    /// effective camera and pixel size (`framedStills`, `MGExplainerFrame.beatStills`: the camera `marty-solid render`
+    /// draws with), `[{"step": n | null, "beat": n | null, "placement": [...]}]` (1-based). `placements` above keeps the
+    /// legacy snapshot default camera; this is what each still shows.
+    public func stillPlacements(_ stills: [MGFramedStill], title: Bool) -> MGJSON {
+        guard !annotations.isEmpty else { return .array([]) }
+        var out: [MGJSON] = []
+        let enc = JSONEncoder(); enc.outputFormatting = [.sortedKeys]
+        for f in stills {
+            let v = f.still
+            guard !v.view.annotations.isEmpty else { continue }
+            let frame = MGSolidAnnotations.frame(document: self, view: v.view, params: v.params, camera: v.camera, width: v.width,
+                                                 height: v.height, highlight: f.shot.highlight, caption: f.shot.caption != nil, title: title)
+            guard let data = try? enc.encode(frame.placement), let any = try? JSONSerialization.jsonObject(with: data),
+                  let placement = MGJSON(any: any) else { continue }
+            out.append(.object(["step": v.step.map { .number(Double($0 + 1)) } ?? .null, "beat": v.beat.map { .number(Double($0 + 1)) } ?? .null,
+                                "placement": placement]))
+        }
+        return .array(out)
+    }
+
     /// The check report's `annotations`: one object per annotation in authored order, `{"id", "kind", "meaning",
     /// "tier", "text", "value", "anchorsWorld", "occludedAtDefaultCamera"}`. Anchors are kernel world points (Z up,
     /// mm) at the default input with explode 0; occlusion uses the snapshot's default camera and the plain view of

@@ -13,17 +13,21 @@
     (`MGSolidRenderer.render(width:height:clip:)`, used for every still and story frame), so nothing is drawn under the
     title or caption band. The camera stays outside the box of every solid context part. A still that draws a label,
     pointer or arrow keeps main's camera (`MGSolidFraming.mainRule`, manifest `"mainRule": true`) when the subject
-    camera would hide one that main's camera shows, so framing alone never refuses a document accepted before (a test
-    checks every shipped document; the published AI lesson passes `check --strict`). The whole-model rule keeps the
+    camera would hide one that main's camera shows (any still: focus, inferred subject or whole model), so framing
+    alone never refuses a document accepted before (a test checks every shipped document; the published AI lesson
+    passes `check --strict`). `MGSolidFraming.camera`, `MGSolidFraming.framing` and `MGSolidRenderer.frame` return this
+    effective camera. The check reports add `stillPlacements`, the label placement at each still's effective camera
+    (`placements` keeps the legacy default camera). The whole-model rule keeps the
     title band free. Causes found: at main a focus fit read only the focus and anchors (a head above a highlighted back
     pack sat under the title band); PR #51's first fix widened the close-ups until nothing was cut, which shrank the
     subjects; this replaces it.
   - **`framing.subject.small.step.<n>`, `framing.subject.small.beat.<n>`** (new warnings, never refused): a subject
-    group misses a floor at the closest framing: a 25 % fill of the safe window (`subjectFill`), and per group 0.5 %
-    of its pixels (`subjectAreaShare`) and a 24 px shorter side at 800 px high (`subjectExtentPixels`). A group is a
-    whole focused or highlighted instance, or one named part (a foot named beside the body is measured on its own).
-    The check reports add `subjectFloors` with the measure and exact repairs (`split`, `subset`, and `ghost`: the
-    complete list, the view's own ghosts kept).
+    group misses a floor, on every still with a subject: a 25 % fill of the safe window (`subjectFill`), and per group
+    0.5 % of its pixels (`subjectAreaShare`) and a 24 px shorter side at 800 px high (`subjectExtentPixels`). A group
+    is an instance named by its instance id, or one named part (a foot named beside the body, or each of eleven named
+    engine parts, is measured on its own). The check reports add `subjectFloors` with the measure and exact repairs:
+    `split`, `subset`, `ghost` (the complete list, the view's own ghosts kept, also from the public API by default) and
+    `annotate` (the step's list without the far annotations that widen it).
   - **Crops from triangles.** `MGSolidFraming.cutParts` tests every triangle in camera space against the five view
     planes, so a face that spans the view with every vertex outside it, or crosses the near plane, counts. The render
     manifest lists a step still's clipped parts as `clipped`. The coverage raster (`MGStillRaster`, quarter size, one

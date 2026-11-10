@@ -1282,9 +1282,696 @@
   "ok" : true,
   "primary" : "solid",
   "reason" : null,
+  "stillPlacements" : [
+    {
+      "beat" : 1,
+      "placement" : [
+        {
+          "anchor" : [
+            0.73309600988332568,
+            0.060000200537797019
+          ],
+          "box" : [
+            0.64999221729072776,
+            0.10316297532489202,
+            0.16792207792207789,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lSuit",
+          "kind" : "label",
+          "leader" : [
+            0.73309600988332568,
+            0.10316297532489202
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Daedalus suit 2018, claimed: two per arm, one on back"
+        },
+        {
+          "anchor" : [
+            0.71752308356514927,
+            0.32386147511581609
+          ],
+          "box" : [
+            0.72246662883317969,
+            0.24443761581509602,
+            0.12837662337662334,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lMk4",
+          "kind" : "label",
+          "leader" : [
+            0.72246662883317969,
+            0.31494121293739819
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Mk4 (claimed latest): three back turbines"
+        },
+        {
+          "anchor" : [
+            0.70390067055045069,
+            0.55467405249834856
+          ],
+          "box" : [
+            0.71460021722917877,
+            0.55283143006474422,
+            0.1453246753246753,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lMk4arm",
+          "kind" : "label",
+          "leader" : [
+            0.71460021722917877,
+            0.55467405249834856
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Mk4 engines per arm: not found in this search"
+        }
+      ],
+      "step" : 1
+    },
+    {
+      "beat" : 2,
+      "placement" : [
+        {
+          "anchor" : [
+            0.34345078883407504,
+            0.060000075139690412
+          ],
+          "box" : [
+            0.20167953438748581,
+            0.064187323811974825,
+            0.13402597402597399,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 6,
+          "id" : "lThrust",
+          "kind" : "label",
+          "leader" : [
+            0.33570550841345981,
+            0.064187323811974825
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Up arrows: thrust of each engine (no value)"
+        },
+        {
+          "anchor" : [
+            0.35082040244726298,
+            0.20494500241076791
+          ],
+          "box" : [
+            0.34616375747811934,
+            0.14656670106740152,
+            0.22441558441558437,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lTotal",
+          "kind" : "label",
+          "leader" : [
+            0.35082040244726298,
+            0.18901274423286918
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Total thrust: not found in this search"
+        },
+        {
+          "anchor" : [
+            0.4154994083650686,
+            0.81553400967898837
+          ],
+          "box" : [
+            0.2428031224308978,
+            0.75258576237948271,
+            0.1792207792207792,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "aW",
+          "kind" : "arrow",
+          "leader" : [
+            0.4154994083650686,
+            0.79503180554495045
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight of pilot, suit and fuel"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "beat" : 3,
+      "placement" : [
+        {
+          "anchor" : [
+            0.6686089028593144,
+            0.22811385763084829
+          ],
+          "box" : [
+            0.48691554094213074,
+            0.24223495205071333,
+            0.18054794520547943,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lMk4",
+          "kind" : "label",
+          "leader" : [
+            0.6674634861476102,
+            0.24223495205071333
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Mk4 (claimed latest): three back turbines"
+        },
+        {
+          "anchor" : [
+            0.67420082333484854,
+            0.1027045987012698
+          ],
+          "box" : [
+            0.6653297894594965,
+            0.1192588014862047,
+            0.23616438356164379,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lSuit",
+          "kind" : "label",
+          "leader" : [
+            0.67420082333484854,
+            0.1192588014862047
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Daedalus suit 2018, claimed: two per arm, one on back"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "beat" : 4,
+      "placement" : [
+        {
+          "anchor" : [
+            0.17460076053481755,
+            0.10375715105803385
+          ],
+          "box" : [
+            0.17660172350826139,
+            0.11645957035376035,
+            0.18849315068493147,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lThrust",
+          "kind" : "label",
+          "leader" : [
+            0.17660172350826139,
+            0.11645957035376035
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Up arrows: thrust of each engine (no value)"
+        },
+        {
+          "anchor" : [
+            0.6733249900872269,
+            0.40684627955706293
+          ],
+          "box" : [
+            0.68458385215121464,
+            0.40949212666792201,
+            0.20438356164383559,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "aSteer",
+          "kind" : "arrow",
+          "leader" : [
+            0.68458385215121464,
+            0.40949212666792201
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Arm moved to aim thrust, claimed (schematic)"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "beat" : 5,
+      "placement" : [
+        {
+          "anchor" : [
+            0.8300818566243735,
+            0.67332947514026531
+          ],
+          "box" : [
+            0.62584886631745418,
+            0.58484244323096446,
+            0.21232876712328763,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "lFuel",
+          "kind" : "label",
+          "leader" : [
+            0.8300818566243735,
+            0.6553460403532666
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Fuel, claimed: Jet A-1 or diesel in a back bladder"
+        },
+        {
+          "anchor" : [
+            0.80817374859254087,
+            0.94000000000000017
+          ],
+          "box" : [
+            0.56695505485707554,
+            0.881010860342055,
+            0.2202739726027397,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lShare",
+          "kind" : "label",
+          "leader" : [
+            0.78722902745981516,
+            0.94000000000000017
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Arm and back thrust split: not found in this search"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "beat" : 6,
+      "placement" : [
+        {
+          "anchor" : [
+            0.15093263623348391,
+            0.060000000000000095
+          ],
+          "box" : [
+            0.15326376866281521,
+            0.070498255567135348,
+            0.33150684931506846,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lExample",
+          "kind" : "label",
+          "leader" : [
+            0.15326376866281521,
+            0.070498255567135348
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Micro gas turbine-style engine (example)"
+        },
+        {
+          "anchor" : [
+            0.78749453757135657,
+            0.53635465603298105
+          ],
+          "box" : [
+            0.71036758829470525,
+            0.47646348210918871,
+            0.061369863013698622,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lIntake",
+          "kind" : "label",
+          "leader" : [
+            0.77173745130840388,
+            0.51890952527465639
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Intake"
+        },
+        {
+          "anchor" : [
+            0.78125091497575361,
+            0.56855099549699506
+          ],
+          "box" : [
+            0.8374680402735234,
+            0.6314410418228058,
+            0.14082191780821915,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 20,
+          "id" : "lComp",
+          "kind" : "label",
+          "leader" : [
+            0.8374680402735234,
+            0.6314410418228058
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Compressor wheel"
+        },
+        {
+          "anchor" : [
+            0.75020846354133408,
+            0.67201869003466319
+          ],
+          "box" : [
+            0.60042273620613007,
+            0.59172427805325645,
+            0.077260273972602725,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 16,
+          "id" : "lDiff",
+          "kind" : "label",
+          "leader" : [
+            0.67768301017873267,
+            0.63417032121872419
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Diffuser"
+        },
+        {
+          "anchor" : [
+            0.82107205928542171,
+            0.36320625205551271
+          ],
+          "box" : [
+            0.73910850360817737,
+            0.37222202416622757,
+            0.061369863013698622,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "aAirIn",
+          "kind" : "arrow",
+          "leader" : [
+            0.80047836662187599,
+            0.37222202416622757
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Air in"
+        }
+      ],
+      "step" : 6
+    },
+    {
+      "beat" : 7,
+      "placement" : [
+        {
+          "anchor" : [
+            0.71382833393907819,
+            0.60988219542271627
+          ],
+          "box" : [
+            0.42131785248599996,
+            0.54079674853998894,
+            0.2202739726027397,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 16,
+          "id" : "lComb",
+          "kind" : "label",
+          "leader" : [
+            0.64159182508873958,
+            0.58324279170545668
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Combustor: fuel burns here"
+        },
+        {
+          "anchor" : [
+            0.69131146761882667,
+            0.77338762837211594
+          ],
+          "box" : [
+            0.70151268855243742,
+            0.83768955407799761,
+            0.116986301369863,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 13,
+          "id" : "lTurb",
+          "kind" : "label",
+          "leader" : [
+            0.70151268855243742,
+            0.83768955407799761
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Turbine wheel"
+        },
+        {
+          "anchor" : [
+            0.14023258639730501,
+            0.060207616237442474
+          ],
+          "box" : [
+            0.15464105547832127,
+            0.058688130563025007,
+            0.21232876712328763,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lFuel",
+          "kind" : "label",
+          "leader" : [
+            0.15464105547832127,
+            0.060207616237442474
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Fuel, claimed: Jet A-1 or diesel in a back bladder"
+        }
+      ],
+      "step" : 7
+    },
+    {
+      "beat" : 8,
+      "placement" : [
+        {
+          "anchor" : [
+            0.65637785971839102,
+            0.66343964714460391
+          ],
+          "box" : [
+            0.57051901547894013,
+            0.56006791812141465,
+            0.061369863013698622,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 9,
+          "id" : "lNoz",
+          "kind" : "label",
+          "leader" : [
+            0.63188887849263875,
+            0.60251396128688239
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Nozzle"
+        },
+        {
+          "anchor" : [
+            0.2647198552013173,
+            0.44559328410542942
+          ],
+          "box" : [
+            0.26759521382599649,
+            0.39062776134059946,
+            0.2758904109589041,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lF19",
+          "kind" : "label",
+          "leader" : [
+            0.26759521382599649,
+            0.43307380450606708
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Engines likely micro gas turbines"
+        },
+        {
+          "anchor" : [
+            0.25791492374163227,
+            0.059999999999999831
+          ],
+          "box" : [
+            0.25848855564198514,
+            0.071511556415557967,
+            0.33150684931506846,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lExample",
+          "kind" : "label",
+          "leader" : [
+            0.25848855564198514,
+            0.071511556415557967
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Micro gas turbine-style engine (example)"
+        },
+        {
+          "anchor" : [
+            0.62667414955989076,
+            0.82330510444211547
+          ],
+          "box" : [
+            0.64450663370214423,
+            0.77117795854900606,
+            0.10109589041095889,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "aJet",
+          "kind" : "arrow",
+          "leader" : [
+            0.64450663370214423,
+            0.81362400171447369
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Hot jet out"
+        }
+      ],
+      "step" : 8
+    },
+    {
+      "beat" : 9,
+      "placement" : [
+        {
+          "anchor" : [
+            0.83429410004087523,
+            0.75829550246157817
+          ],
+          "box" : [
+            0.73075103374067218,
+            0.80137079280814172,
+            0.2202739726027397,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lLimit",
+          "kind" : "label",
+          "leader" : [
+            0.83429410004087523,
+            0.80137079280814172
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Solved: shaft turning only; thrust not simulated"
+        },
+        {
+          "anchor" : [
+            0.90608557376179788,
+            0.060085250636775292
+          ],
+          "box" : [
+            0.66304223654377326,
+            0.10884977586408459,
+            0.23616438356164379,
+            0.07050359712230217
+          ],
+          "callout" : null,
+          "candidate" : 12,
+          "id" : "lSuit",
+          "kind" : "label",
+          "leader" : [
+            0.89920662010541708,
+            0.10884977586408459
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Daedalus suit 2018, claimed: two per arm, one on back"
+        },
+        {
+          "anchor" : [
+            0.094553744298926767,
+            0.23641076749704465
+          ],
+          "box" : [
+            0.072212794955600096,
+            0.17128107540389903,
+            0.31561643835616432,
+            0.042446043165467628
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lTotal",
+          "kind" : "label",
+          "leader" : [
+            0.094553744298926767,
+            0.21372711856936669
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Total thrust: not found in this search"
+        }
+      ],
+      "step" : 9
+    }
+  ],
   "strict" : true,
   "subjectFloors" : [
     {
+      "annotate" : {
+        "keep" : [
+
+        ],
+        "move" : [
+          "lSuit",
+          "lMk4",
+          "lMk4arm"
+        ]
+      },
       "beat" : 1,
       "cut" : [
 
@@ -1407,7 +2094,7 @@
       ],
       "minimumExtent" : 16.699999999999999,
       "minimumPixels" : 3425,
-      "repair" : "Beat 1: at the closest framing that keeps its subject whole, eL1 shows 2560 px, shorter side 40 px; eR1 shows 3312 px, shorter …Repair (any one): split it into one step per subject: \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"]; or set the whole ghost list in its \"view\": \"ghost\": [\"pilot\"].",
+      "repair" : "Beat 1: at the closest framing that keeps its subject whole, eL1 shows 2560 px, shorter side 40 px; eR1 shows 3312 px, shorter side 48 px; eR2 shows 1808 px, shorter side 36 px; eB shows 2416 px, shorter side 60 px (minimum 3425 px and 17 px per group…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
       "split" : [
         [
           "eL1"
@@ -1431,6 +2118,20 @@
       ]
     },
     {
+      "annotate" : {
+        "keep" : [
+          "aL1",
+          "aL2",
+          "aR1",
+          "aR2",
+          "aB",
+          "aW"
+        ],
+        "move" : [
+          "lThrust",
+          "lTotal"
+        ]
+      },
       "beat" : 2,
       "cut" : [
 
@@ -1572,7 +2273,7 @@
       ],
       "minimumExtent" : 16.699999999999999,
       "minimumPixels" : 3425,
-      "repair" : "Beat 2: at the closest framing that keeps its subject whole, eL1 shows 2288 px, shorter side 36 px; eR1 shows 2304 px, shorter side 44 px; eR2 shows 1264 px, shorter side 32 px; eB shows 2720 px, shorter side 56 px (minimum 3425 px and 17 px per group). Repair: split it (`split`), focus a subset (`subset`) or ghost the context (`ghost`), exact lists in the report.",
+      "repair" : "Beat 2: at the closest framing that keeps its subject whole, eL1 shows 2288 px, shorter side 36 px; eR1 shows 2304 px, shorter side 44 px; eR2 shows 1264 px, shorter side 32 px; eB shows 2720 px, shorter side 56 px (minimum 3425 px and 17 px per group…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
       "split" : [
         [
           "pilot.body"
@@ -1599,6 +2300,174 @@
       ]
     },
     {
+      "annotate" : {
+        "keep" : [
+          "aSteer",
+          "aL2",
+          "aR1"
+        ],
+        "move" : [
+          "lThrust"
+        ]
+      },
+      "beat" : 4,
+      "cut" : [
+
+      ],
+      "fill" : 0.42799999999999999,
+      "ghost" : [
+        "eR1.intakeLip",
+        "pilot.lowerArmR"
+      ],
+      "groups" : [
+        {
+          "extent" : 72,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "pilot.upperArmL"
+          ],
+          "pixels" : 2752,
+          "small" : false,
+          "unit" : "pilot.upperArmL"
+        },
+        {
+          "extent" : 60,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "pilot.lowerArmL"
+          ],
+          "pixels" : 512,
+          "small" : true,
+          "unit" : "pilot.lowerArmL"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "pilot.handL"
+          ],
+          "pixels" : 928,
+          "small" : true,
+          "unit" : "pilot.handL"
+        },
+        {
+          "extent" : 4,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eL1.intakeLip",
+            "eL1.impeller",
+            "eL1.diffuser",
+            "eL1.combustor",
+            "eL1.nozzleGuideVanes",
+            "eL1.turbineWheel",
+            "eL1.nozzle",
+            "eL1.shaft",
+            "eL1.frontBearing",
+            "eL1.rearBearing",
+            "eL1.casing"
+          ],
+          "pixels" : 16,
+          "small" : true,
+          "unit" : "eL1"
+        },
+        {
+          "extent" : 48,
+          "hiddenBy" : [
+
+          ],
+          "parts" : [
+            "eL2.intakeLip",
+            "eL2.impeller",
+            "eL2.diffuser",
+            "eL2.combustor",
+            "eL2.nozzleGuideVanes",
+            "eL2.turbineWheel",
+            "eL2.nozzle",
+            "eL2.shaft",
+            "eL2.frontBearing",
+            "eL2.rearBearing",
+            "eL2.casing"
+          ],
+          "pixels" : 1568,
+          "small" : true,
+          "unit" : "eL2"
+        },
+        {
+          "extent" : 36,
+          "hiddenBy" : [
+            "eR1.intakeLip"
+          ],
+          "parts" : [
+            "eR1.casing"
+          ],
+          "pixels" : 1216,
+          "small" : true,
+          "unit" : "eR1.casing"
+        },
+        {
+          "extent" : 12,
+          "hiddenBy" : [
+            "pilot.lowerArmR",
+            "eR1.intakeLip"
+          ],
+          "parts" : [
+            "eR2.casing"
+          ],
+          "pixels" : 144,
+          "small" : true,
+          "unit" : "eR2.casing"
+        }
+      ],
+      "minimumExtent" : 16.699999999999999,
+      "minimumPixels" : 2435,
+      "repair" : "Beat 4: at the closest framing that keeps its subject whole, pilot.lowerArmL shows 512 px, shorter side 60 px; pilot.handL shows 928 px, shorter side 36 px; eL1 shows 16 px, shorter side 4 px; eL2 shows 1568 px, shorter side 48 px; eR1.casing shows 12…Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
+      "split" : [
+        [
+          "pilot.upperArmL"
+        ],
+        [
+          "pilot.lowerArmL"
+        ],
+        [
+          "pilot.handL"
+        ],
+        [
+          "eL1"
+        ],
+        [
+          "eL2"
+        ],
+        [
+          "eR1.casing"
+        ],
+        [
+          "eR2.casing"
+        ]
+      ],
+      "step" : 4,
+      "subset" : [
+        "pilot.lowerArmL"
+      ]
+    },
+    {
+      "annotate" : {
+        "keep" : [
+
+        ],
+        "move" : [
+          "lLimit",
+          "lSuit",
+          "lTotal"
+        ]
+      },
       "beat" : 9,
       "cut" : [
 
@@ -1721,7 +2590,7 @@
       ],
       "minimumExtent" : 16.699999999999999,
       "minimumPixels" : 2435,
-      "repair" : "Beat 9: at the closest framing that keeps its subject whole, eL1 shows 2384 px, shorter side 40 px; eR2 shows 1664 px, shorter …Repair (any one): split it into one step per subject: \"focus\": [\"eL1\"] then \"focus\": [\"eL2\"] then \"focus\": [\"eR1\"] then \"focus\": [\"eR2\"] then \"focus\": [\"eB\"]; or focus a subset in its \"view\": \"focus\": [\"eL1\"]; or set the whole ghost list in its \"view\": \"ghost\": [\"pilot\"].",
+      "repair" : "Beat 9: at the closest framing that keeps its subject whole, eL1 shows 2384 px, shorter side 40 px; eR2 shows 1664 px, shorter side 36 px; eB shows 2224 px, shorter side 56 px (minimum 2435 px and 17 px per group). Repair: split it (`split`), focus a subset (`subset`), set the ghost list (`ghost`) or move far annotations (`annotate`), exact lists in the report.",
       "split" : [
         [
           "eL1"
@@ -4432,6 +5301,11 @@
     {
       "id" : "eL1",
       "reason" : "framing.subject.small.beat.2",
+      "view" : "beat"
+    },
+    {
+      "id" : "pilot.lowerArmL",
+      "reason" : "framing.subject.small.beat.4",
       "view" : "beat"
     },
     {

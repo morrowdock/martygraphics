@@ -396,9 +396,9 @@ public final class MGSolidRenderer {
         setCamera(MGSolidCamera.framing(b, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, margin: margin))
     }
 
-    /// Frames one render-plan shot with the library's framing rule (`MGSolidFraming`): a step with a focus frames its
-    /// focus from the step's camera preset; other shots frame the whole model, never cut and never under the caption
-    /// band. A SwiftUI or `SCNView` host that shows step `i` calls `frame(MGSolidShot.step(document, i)!, document:
+    /// Frames one render-plan shot with the library's framing rule (`MGSolidFraming.framing`): the still's effective
+    /// camera, the same one `marty-solid render`, the check report, the story and the SwiftUI pane use (subject first,
+    /// the unblocked-focus rule and the main-rule fallback included). A SwiftUI or `SCNView` host that shows step `i` calls `frame(MGSolidShot.step(document, i)!, document:
     /// document, aspect:)`; it passes `titleBand: 0, captionBand: 0` when it draws no title or caption over the view.
     public func frame(_ shot: MGSolidShot, document: MGSolidDocument, aspect: Double, fieldOfView: Double = 30,
                       titleBand: Double? = nil, captionBand: Double? = nil) {

@@ -291,17 +291,16 @@ public enum MGSolidFraming {
         return (parts, false, moved)
     }
 
-    /// The subject's groups, the units of the floors: a unit (`MGSolidDocument.unitID`) whose every part is a subject
-    /// part is one group (a highlighted or focused component instance); otherwise each subject part is its own group
-    /// (a separately named part is measured on its own, never paid for by a larger part of its instance). Assembly order.
-    public static func subjectGroups(_ doc: MGSolidDocument, _ parts: [String]) -> [(unit: String, parts: [String])] {
-        let set = Set(parts)
+    /// The subject's groups, the units of the floors: the subject parts of each instance in `whole` (an instance the
+    /// step or beat names by its instance id in `focus` or `highlight`) form one group; every other subject part (a part
+    /// named on its own in `focus` or `highlight`, or an annotation target) is its own group, also when such parts
+    /// together cover a whole instance. Assembly order.
+    public static func subjectGroups(_ doc: MGSolidDocument, _ parts: [String], whole: Set<String> = []) -> [(unit: String, parts: [String])] {
         var out: [(unit: String, parts: [String])] = [], done = Set<String>()
         for p in parts {
             let u = MGSolidDocument.unitID(p)
-            let unit = doc.unitParts(of: p).map(\.id)
-            if unit.count > 1, unit.allSatisfy(set.contains) {
-                if done.insert(u).inserted { out.append((u, unit.filter(set.contains))) }
+            if whole.contains(u), u != p {
+                if done.insert(u).inserted { out.append((u, parts.filter { MGSolidDocument.unitID($0) == u })) }
             } else {
                 out.append((p, [p]))
             }
@@ -497,10 +496,21 @@ public enum MGSolidFraming {
         framing(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage).camera
     }
 
-    /// `camera(_:shot:aspect:…)` and the rule that chose it.
+    /// `camera(_:shot:aspect:…)` and the rule that chose it: the effective camera of the still, exactly the camera of
+    /// `clearView` (the unblocked-focus rule and the main-rule fallback included), so the renderer, a host, the check
+    /// report, the story and the SwiftUI pane all get one camera for a shot.
     public static func framing(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double = 30,
                                titleBand: Double? = nil, captionBand: Double? = nil,
                                stage: MGTransform = MGSolidStage.zUpToYUp) -> (camera: MGSolidCamera, rule: Rule) {
+        let c = clearView(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage,
+                          drops: false)
+        return (c.camera, c.rule)
+    }
+
+    /// The subject-first chooser alone (`choose`), with a finite fallback: the first candidate of `clearView`.
+    static func rawFraming(_ doc: MGSolidDocument, shot s: MGSolidShot, aspect: Double, fieldOfView: Double = 30,
+                           titleBand: Double? = nil, captionBand: Double? = nil,
+                           stage: MGTransform = MGSolidStage.zUpToYUp) -> (camera: MGSolidCamera, rule: Rule) {
         let r = choose(doc, shot: s, aspect: aspect, fieldOfView: fieldOfView, titleBand: titleBand, captionBand: captionBand, stage: stage)
         if finite(r.camera) { return r }
         // Only a shot built in code with non-finite numbers gets here: frame a unit cube rather than return NaN.
