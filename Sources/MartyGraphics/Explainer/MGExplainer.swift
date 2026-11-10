@@ -65,6 +65,8 @@ public struct MGExplainerIssue: Error, Equatable, Sendable, CustomStringConverti
     public var visibility: MGAnnotationVisibilityDetail?
     /// Repair detail of the solid's `parts.resolved` (the report's `limit`); nil for every other reason.
     public var limit: MGSolidLimitDetail?
+    /// The solid's `annotation.pose.<id>` detail for a moving centre of mass (`MGSolidIssue.centreOfMass`).
+    public var centreOfMass: MGCentreOfMassMotion?
 
     public init(_ reason: String, view: View, beat: Int? = nil, statement: Int? = nil, command: Int? = nil, id: String? = nil,
                 detail: String? = nil, origin: MGOrigin = .script) {

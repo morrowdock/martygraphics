@@ -234,39 +234,66 @@ final class R2KEngineFixTests: XCTestCase {
 
     // MARK: Review of c69245b
 
-    /// An off-axis rotor (its 20 mm cube centred 100 mm from the joint axis): the centre of mass turns with it. Before:
-    /// a gravity arrow from the centre to a world point was accepted as Solved, although a quarter turn later it is
-    /// 54.7° from downward. Now the centre-of-mass end is a moving anchor and the sampled proof refuses it
-    /// (`annotation.pose.w`), at the compile and so in every profile.
-    func rotorText(from: String, to: String, spin: Double) -> String {
-        #"{"v": 2, "kind": "assembly", "parts": [{"id": "rotor", "shape": {"box": {"size": [20, 20, 20], "at": [100, 0, 0]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "offAxis": true}], "annotations": {"arrows": [{"id": "w", "meaning": "force", "cause": "gravity", "from": \#(from), "to": \#(to)}]}, "steps": [{"say": "Weight points down.", "camera": "front", "spin": \#(spin), "annotate": ["w"]}]}"#
+    /// An off-axis rotor (its 20 mm cube centred `x` mm from the joint axis): the centre of mass turns with it.
+    func rotorText(from: String, to: String, spin: Double, x: Double = 100) -> String {
+        let at = "\(x)"
+        let off = x == 0 ? "" : #", "offAxis": true"#
+        return #"{"v": 2, "kind": "assembly", "parts": [{"id": "rotor", "shape": {"box": {"size": [20, 20, 20], "at": [\#(at), 0, 0]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}\#(off)}], "annotations": {"arrows": [{"id": "w", "meaning": "force", "cause": "gravity", "from": \#(from), "to": \#(to)}]}, "steps": [{"say": "Weight points down.", "camera": "front", "spin": \#(spin), "annotate": ["w"]}]}"#
     }
 
-    func testAMovingCentreOfMassEndIsProvedAtEverySample() throws {
-        let mixed = rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"world": [100, -100, -100]}"#, spin: 0.25)
-        guard case .failure(let e) = MGSolidParser.document(data: Data(mixed.utf8)) else { return XCTFail("a turning weight arrow was accepted") }
+    func refusal(_ t: String) -> MGSolidIssue? {
+        if case .failure(let e) = MGSolidParser.document(data: Data(t.utf8)) { return e }
+        return nil
+    }
+
+    /// Before: an off-axis rotor's gravity arrow from its centre to a world point was accepted as Solved, although a
+    /// quarter turn later it is 54.7° from downward; then a sampled proof missed a 63.25° turn in a 64-joint chain and a
+    /// turn just beyond the epsilon between samples. Now an exact rule decides it: a moving centre is refused
+    /// (`annotation.pose.w`) with the part and joint that move it, a fixed centre (on the axis) or a still step passes.
+    func testAMovingCentreOfMassIsNeverASolvedDirection() throws {
+        let com = #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#
+        // The single off-axis rotor: refused, with its detail.
+        let mixed = rotorText(from: com, to: #"{"world": [100, -100, -100]}"#, spin: 0.25)
+        let e = try XCTUnwrap(refusal(mixed), "a turning weight arrow was accepted")
         XCTAssertEqual(e.reason, "annotation.pose.w")
-        XCTAssertEqual(report(mixed, .standard).reason, "annotation.pose.w")
-        // The centre at the first and last pose: it turns a quarter turn about Z.
-        let still = rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"world": [100, -100, -100]}"#, spin: 0)
-        let d = try doc(still)
-        let r = try XCTUnwrap(d.annotations.arrow("w"))
-        let c0 = try XCTUnwrap(r.from).world(d.assembly.pose(MGPoseParameters(input: 0, explode: 0)))
-        let c1 = try XCTUnwrap(r.from).world(d.assembly.pose(MGPoseParameters(input: .pi / 2, explode: 0)))
-        XCTAssertEqual(c0.x, 100, accuracy: 1e-6); XCTAssertEqual(c1.x, 0, accuracy: 1e-6); XCTAssertEqual(c1.y, 0, accuracy: 1e-6)
-        // A still step shows one pose: the same arrow passes there.
+        let c = try XCTUnwrap(e.centreOfMass)
+        XCTAssertEqual(c.part, "rotor"); XCTAssertEqual(c.joint, "rotor"); XCTAssertEqual(c.step, 0)
+        XCTAssertEqual(try XCTUnwrap(c.distance), 100, accuracy: 1e-6)
+        let rep = report(mixed, .standard)
+        XCTAssertEqual(rep.reason, "annotation.pose.w")
+        guard case .object(let detail)? = rep.json["centreOfMass"], case .string(let line)? = rep.json["repair"] else { return XCTFail("centreOfMass") }
+        XCTAssertEqual(detail["fixed"], .object(["from": .object(["world": .array([.number(100), .number(-100), .number(0)])]),
+                                                 "to": .object(["world": .array([.number(100), .number(-100), .number(-100)])])]))
+        XCTAssertTrue(line.contains("100 mm off the axis of joint `rotor`"), line)
+        XCTAssertTrue(line.contains("\"spin\": 0"), line)
+        // The review's epsilon case: 0.000100004 mm off the axis, 1.1 turns. Exact: refused, whatever the samples.
+        XCTAssertEqual(refusal(rotorText(from: com, to: #"{"world": [0.000100004, -100, -100]}"#, spin: 1.1, x: 0.000100004))?.reason, "annotation.pose.w")
+        // Both ends on a moving centre: never a Solved direction either.
+        XCTAssertEqual(refusal(rotorText(from: com, to: #"{"point": "centreOfMass", "offset": [0, -100, -100]}"#, spin: 1))?.reason, "annotation.pose.w")
+        // The centroid on the axis: the centre is fixed, so the mixed arrow passes.
+        XCTAssertNil(refusal(rotorText(from: com, to: #"{"world": [0, -100, -100]}"#, spin: 1, x: 0)))
+        // A still step shows one pose: the off-axis arrow passes there.
+        let still = rotorText(from: com, to: #"{"world": [100, -100, -100]}"#, spin: 0)
+        XCTAssertNil(refusal(still))
         XCTAssertTrue(report(still).ok, "\(report(still).reason ?? "")")
-        // Both ends on the centre keep their vector during any spin.
-        let both = rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"point": "centreOfMass", "offset": [0, -100, -100]}"#, spin: 1)
-        XCTAssertNoThrow(try doc(both))
-        // A centre that does not move (the cube on the axis) keeps a mixed arrow's vector.
-        let onAxis = rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"world": [0, -100, -100]}"#, spin: 1)
-            .replacingOccurrences(of: #""at": [100, 0, 0]"#, with: #""at": [0, 0, 0]"#).replacingOccurrences(of: #", "offAxis": true"#, with: "")
-        XCTAssertNoThrow(try doc(onAxis))
-        // The proof itself, at every sample.
-        let dm = try doc(both)
-        let rb = try XCTUnwrap(dm.annotations.arrow("w"))
-        XCTAssertTrue(MGSolidAnnotationMotion.constantVector(dm, try XCTUnwrap(rb.from), try XCTUnwrap(rb.to), step: 0))
+    }
+
+    /// The review's 64-joint chain: four copies of a 16-part component, each part a unit cube on one axis turning on its
+    /// parent at the input rate; the last part a 20 mm cube 100 mm off the axis. Its world rate is 64 turns per input
+    /// turn. A sampled proof missed its 63.25° turn; the exact rule refuses it, naming the last part and its own joint.
+    func testAComposedChainThatCarriesTheCentreOffTheAxisIsRefused() throws {
+        var segment: [String] = []
+        for k in 1...16 {
+            let parent = k == 1 ? "" : #", "parent": "p\#(k - 1)""#
+            segment.append(#"{"id": "p\#(k)", "shape": {"box": {"size": [1, 1, 1]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}\#(parent)}"#)
+        }
+        let component = #"{"v": 1, "kind": "component", "id": "chainSegment", "title": "Chain segment", "anchors": {"end": "p16"}, "about": "Sixteen coaxial driven boxes.", "parts": [\#(segment.joined(separator: ", "))]}"#
+        var library = MGSolidLibrary.builtIn
+        guard case .success = library.register(Data(component.utf8)) else { return XCTFail("component") }
+        let t = #"{"v": 2, "kind": "assembly", "parts": [{"id": "s1", "use": "chainSegment"}, {"id": "s2", "use": "chainSegment", "parent": "s1.end"}, {"id": "s3", "use": "chainSegment", "parent": "s2.end"}, {"id": "s4", "use": "chainSegment", "parent": "s3.end", "set": {"p16": {"shape": {"box": {"size": [20, 20, 20], "at": [100, 0, 0]}}, "offAxis": true}}}], "annotations": {"arrows": [{"id": "w", "meaning": "force", "cause": "gravity", "from": {"point": "centreOfMass", "offset": [0, -200, 0]}, "to": {"world": [99.21865310678407, -200, -100]}}]}, "steps": [{"say": "Weight points down.", "camera": "front", "spin": 1, "annotate": ["w"]}]}"#
+        guard case .failure(let e) = MGSolidParser.document(data: Data(t.utf8), library: library) else { return XCTFail("a 64-joint chain turning the centre was accepted") }
+        XCTAssertEqual(e.reason, "annotation.pose.w")
+        XCTAssertEqual(e.centreOfMass?.part, "s4.p16"); XCTAssertEqual(e.centreOfMass?.joint, "s4.p16")
     }
 
     /// A document without steps has only its plain view. Before: the report skipped it, so an arrow its hero drops had no

@@ -54,6 +54,7 @@ public struct MGExplainerReport: Equatable, Sendable {
         let limit = issue.limit ?? issue.visibility?.limitDetail(prefix: "solid.")
         if let limit { o["limit"] = limit.json }
         o["repair"] = .string(MGSolidReport.repair(issue.reason, part: issue.id, limit: limit, visibility: issue.visibility))
+        if let c = issue.centreOfMass { o["centreOfMass"] = c.json; o["repair"] = .string(c.repair) }
         if let profile { o["strict"] = .bool(profile == .strict) }
         if let source { o["file"] = file(source) }
         if let engine { o["engine"] = engine }
