@@ -693,7 +693,9 @@ posed at the view's pose, so the point moves when a pose moves an arm. The schem
 the centre of the drawn shapes, a schematic centre of mass. The offset is in world axes and does not turn with any
 part. It is accepted only at a force arrow's ends; anywhere else it is `anchor.point`. Such an end rides on no part:
 the arrow has no tail for [Arrow tails](#arrow-tails) and [Arrow drop](#arrow-drop) when both ends are centre-of-mass
-anchors, and a suggested move keeps the anchor and moves its offset. See
+anchors, and a suggested move keeps the anchor and moves its offset. It is a moving anchor: every renderer and check
+resolves it from the posed parts at each pose, and a gravity arrow with such an end must keep its vector during a
+moving step ([Poses](#poses-every-claim-holds-at-every-pose-its-view-can-show)). See
 [Weight at the centre of mass](#weight-at-the-centre-of-mass).
 
 **Pointers to a part centre.** A part's centre lies inside the part, so a pointer drawn to it would bury its head in
@@ -835,7 +837,15 @@ world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear 
   fact. With `over`, its exact range at the view's explode value must equal its fact.
 * **Shown text** (a label, an arrow or dimension text, the step caption, the title) may display a `dim.<id>` fact
   only when that dimension meets the same rule in the view (also when the dimension itself is not shown).
-* A **gravity arrow** must not turn: in a step with `spin`, both its anchors are world-fixed or translate together.
+* A **gravity arrow** must not turn: in a step with `spin`, both its anchors are world-fixed or translate together. An
+  arrow with a centre-of-mass end ([Anchors](#anchors)) is the one sampled proof: that end moves with every part, so
+  no structural rule decides it. At `n + 1` evenly spaced poses of the step's spin (`n` = 64 per turn of the fastest
+  moving joint over the spin, at least 64; a crank drive counts twice its crank's turns), its vector (end minus start)
+  must stay within the precision epsilon of the first one (`MGSolidAnnotationMotion.constantVector`). Otherwise, or
+  when `n` would pass 8,192, it is the same refusal, `annotation.pose.<id>`. Two centre-of-mass ends keep their
+  vector (the offsets); a centre-of-mass end and a world end pass only when the centre does not move (r2k review: an
+  off-axis rotor's arrow from its centre to a world point turned 54.7° from downward a quarter turn later and was
+  accepted as Solved).
   It must point within 10° of −Z at the view's first pose.
 * A **motion line arrow** must not ride a turning joint in a step with `spin` (use a turn arrow there); its linear
   chain then moves it at one constant velocity. A stated `expect` must hold at the view's first pose.
@@ -1363,12 +1373,17 @@ drops its arrow in a front view while the twin keeps its own.
 
 #### Dropped arrows that leave a caption alone
 
+The check report counts the drops of every still it frames: each step still, and the plain view (`hero.png`, framed
+as `marty-solid render` frames it; the only still of a document without steps), whose `arrowDrops` entries have
+`step` and `beat` null.
+
 A drop is right for the still, but the story can lose the arrow (r2k: a front force beat dropped all three back
 thrusts, and no other beat showed them; another beat said "Weight pulls down" while its still dropped the weight).
 Two warnings, never refused, from the report's framed stills (`MGSolidDocument.arrowDropNotes`):
 
-* `annotation.arrow.orphan.<id>`: every step or beat still that lists the arrow drops it, so no view draws it (in an
-  assembly, a plain view that lists it must drop it too, `undrawnArrows`). One per arrow, in authored order.
+* `annotation.arrow.orphan.<id>`: every still that lists the arrow drops it (in an assembly the plain view counts as
+  one: in `steps` it is null and the repair says "the plain view (hero.png)"), so no view draws it. One per arrow, in
+  authored order.
 * `annotation.arrow.caption.<id>`: a still drops the arrow, and the text of its step or beat names the arrow's force.
   The force's names are "weight" and "gravity" for a `"cause": "gravity"` arrow, and the words of the arrow's own text
   that are force words (`MGArrowDropNote.forceWords`: weight, gravity, thrust, lift, drag, push, pull, force, torque,

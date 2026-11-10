@@ -232,6 +232,84 @@ final class R2KEngineFixTests: XCTestCase {
         XCTAssertNil(again.json["boardClips"])
     }
 
+    // MARK: Review of c69245b
+
+    /// An off-axis rotor (its 20 mm cube centred 100 mm from the joint axis): the centre of mass turns with it. Before:
+    /// a gravity arrow from the centre to a world point was accepted as Solved, although a quarter turn later it is
+    /// 54.7° from downward. Now the centre-of-mass end is a moving anchor and the sampled proof refuses it
+    /// (`annotation.pose.w`), at the compile and so in every profile.
+    func rotorText(from: String, to: String, spin: Double) -> String {
+        #"{"v": 2, "kind": "assembly", "parts": [{"id": "rotor", "shape": {"box": {"size": [20, 20, 20], "at": [100, 0, 0]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "offAxis": true}], "annotations": {"arrows": [{"id": "w", "meaning": "force", "cause": "gravity", "from": \#(from), "to": \#(to)}]}, "steps": [{"say": "Weight points down.", "camera": "front", "spin": \#(spin), "annotate": ["w"]}]}"#
+    }
+
+    func testAMovingCentreOfMassEndIsProvedAtEverySample() throws {
+        let mixed = rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"world": [100, -100, -100]}"#, spin: 0.25)
+        guard case .failure(let e) = MGSolidParser.document(data: Data(mixed.utf8)) else { return XCTFail("a turning weight arrow was accepted") }
+        XCTAssertEqual(e.reason, "annotation.pose.w")
+        XCTAssertEqual(report(mixed, .standard).reason, "annotation.pose.w")
+        // The centre at the first and last pose: it turns a quarter turn about Z.
+        let still = rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"world": [100, -100, -100]}"#, spin: 0)
+        let d = try doc(still)
+        let r = try XCTUnwrap(d.annotations.arrow("w"))
+        let c0 = try XCTUnwrap(r.from).world(d.assembly.pose(MGPoseParameters(input: 0, explode: 0)))
+        let c1 = try XCTUnwrap(r.from).world(d.assembly.pose(MGPoseParameters(input: .pi / 2, explode: 0)))
+        XCTAssertEqual(c0.x, 100, accuracy: 1e-6); XCTAssertEqual(c1.x, 0, accuracy: 1e-6); XCTAssertEqual(c1.y, 0, accuracy: 1e-6)
+        // A still step shows one pose: the same arrow passes there.
+        XCTAssertTrue(report(still).ok, "\(report(still).reason ?? "")")
+        // Both ends on the centre keep their vector during any spin.
+        let both = rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"point": "centreOfMass", "offset": [0, -100, -100]}"#, spin: 1)
+        XCTAssertNoThrow(try doc(both))
+        // A centre that does not move (the cube on the axis) keeps a mixed arrow's vector.
+        let onAxis = rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"world": [0, -100, -100]}"#, spin: 1)
+            .replacingOccurrences(of: #""at": [100, 0, 0]"#, with: #""at": [0, 0, 0]"#).replacingOccurrences(of: #", "offAxis": true"#, with: "")
+        XCTAssertNoThrow(try doc(onAxis))
+        // The proof itself, at every sample.
+        let dm = try doc(both)
+        let rb = try XCTUnwrap(dm.annotations.arrow("w"))
+        XCTAssertTrue(MGSolidAnnotationMotion.constantVector(dm, try XCTUnwrap(rb.from), try XCTUnwrap(rb.to), step: 0))
+    }
+
+    /// A document without steps has only its plain view. Before: the report skipped it, so an arrow its hero drops had no
+    /// `annotation.arrow.dropped` or `orphan` warning. Now the plain view counts (step null).
+    func testThePlainViewCountsInTheDropAccounting() throws {
+        let t = #"{"v": 2, "kind": "assembly", "parts": [{"id": "body", "shape": {"box": {"size": [300, 300, 600]}}}, {"id": "pack", "shape": {"box": {"size": [60, 60, 60]}}}], "annotations": {"arrows": [{"id": "t", "meaning": "force", "cause": "gravity", "from": {"part": "pack", "offset": [0, 0, -20]}, "to": {"part": "pack", "offset": [0, 0, -120]}, "text": "Weight"}]}}"#
+        let rep = report(t)
+        XCTAssertTrue(rep.ok, "\(rep.reason ?? "")")
+        let w = warnings(rep)
+        XCTAssertTrue(w.contains("annotation.arrow.dropped.t"), "\(w)")
+        XCTAssertTrue(w.contains("annotation.arrow.orphan.t"), "\(w)")
+        let drop = try XCTUnwrap(objects(rep.json["arrowDrops"]).first)
+        XCTAssertEqual(drop["step"], .null); XCTAssertEqual(drop["by"], .string("body"))
+        let note = try XCTUnwrap(objects(rep.json["arrowDropNotes"]).first)
+        XCTAssertEqual(note["steps"], .array([.null]))
+        guard case .string(let line)? = note["repair"] else { return XCTFail("repair") }
+        XCTAssertTrue(line.contains("the plain view (hero.png)"), line)
+    }
+
+    /// A six-column table with `cw` 4 in a board-only explainer is 1560 px wide in a 1216 px safe area. Before: the
+    /// report moved it from one side to the other. Now no move is given (`move` null) and `fit` gives exact sizes; the
+    /// table resized and placed by `fit` is not cut.
+    func testABoardItemLargerThanThePaneGetsSizesNotAMove() throws {
+        func text(cw: String, at: String) -> String {
+            #"{"v": 1, "kind": "explainer", "title": "Board", "board": {"v": 1, "items": [{"id": "t", "k": "table", "at": \#(at), "cw": \#(cw), "header": true, "cells": [["A","B","C","D","E","F"],["a","b","c","d","e","f"]]}]}, "beats": [{"say": "Look."}]}"#
+        }
+        let rep = MGExplainerReport.check(data: Data(text(cw: "4", at: "[10, 4]").utf8), profile: .strict, engine: nil)
+        let c = try XCTUnwrap(objects(rep.json["boardClips"]).first)
+        XCTAssertEqual(c["move"], .null)
+        XCTAssertEqual(numbers(c["safe"]).first, 1216)
+        XCTAssertGreaterThan(numbers(c["size"]).first ?? 0, 1216)
+        guard case .object(let fit)? = c["fit"], case .number(let cw)? = fit["cw"], case .number(let cols)? = fit["columns"] else { return XCTFail("fit") }
+        XCTAssertLessThan(cw, 4); XCTAssertLessThan(cols, 6)
+        let at = numbers(fit["at"])
+        XCTAssertEqual(at.count, 2); XCTAssertEqual(at[1], 4)
+        guard case .string(let line)? = c["repair"] else { return XCTFail("repair") }
+        XCTAssertTrue(line.contains("no move fits it"), line)
+        XCTAssertTrue(line.contains("\"cw\" to at most \(MGAnnotationAnchorIssue.number(cw))"), line)
+        // Applied, the sizes fit.
+        let fixed = text(cw: MGAnnotationAnchorIssue.number(cw), at: "[\(MGAnnotationAnchorIssue.number(at[0])), 4]")
+        XCTAssertNil(MGExplainerReport.check(data: Data(fixed.utf8), profile: .strict, engine: nil).json["boardClips"])
+    }
+
     // MARK: 8. The legend's Solved group
 
     func testTheSolvedGroupNamesAnimationRatios() {

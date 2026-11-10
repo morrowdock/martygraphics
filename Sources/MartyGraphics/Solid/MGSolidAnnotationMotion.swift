@@ -2,7 +2,7 @@
 import Foundation
 
 // Exact motion facts for annotations, and the one check of what a view may show. No sampling: every pose rule is
-// decided by the structure of the motion. Direction-bearing annotations (motion arrows, turn arrows, `expect`, and
+// decided by the structure of the motion, except a gravity arrow with a centre-of-mass end (`constantVector`). Direction-bearing annotations (motion arrows, turn arrows, `expect`, and
 // any dimension in a moving view) need a linear motion chain: every moving joint above the point is linear in the
 // input with a constant rate (input drives, constant-ratio follows, gear meshes, planetary carriers). Crank closed
 // forms are used only for exact `over` ranges. Foundation only, deterministic.
@@ -114,6 +114,50 @@ enum MGSolidAnnotationMotion {
             if (d - a * a.dot(d)).length > tol { return false }
         }
         return true
+    }
+
+    /// Samples per input turn of the fastest moving joint for `constantVector`, and the most samples one proof may take.
+    static let comSamplesPerTurn = 64, comMaxSamples = 8_192
+
+    /// The one sampled proof (docs/SOLID-3D.md, "Poses: every claim holds at every pose its view can show"): a
+    /// centre-of-mass anchor moves with every part (`MGAnnotationPoint.world` sums every part's posed centroid), so no
+    /// structural rule decides it. An arrow with such an end keeps its vector during step `step`'s spin when, at
+    /// `n + 1` evenly spaced poses `k / n` of the spin (`MGSolidDocument.poseParameters(step:spin:)`, k = 0 … n), the
+    /// vector `to − from` differs from the first one by at most the precision epsilon at it (`mgPrecision`). `n` is
+    /// `comSamplesPerTurn` per turn of the fastest moving joint over the spin (at least `comSamplesPerTurn`; a crank
+    /// drive counts its crank's turns twice); over `comMaxSamples` the proof fails (refused, never assumed). False for a
+    /// non-finite vector.
+    static func constantVector(_ doc: MGSolidDocument, _ from: MGAnnotationPoint, _ to: MGAnnotationPoint, step: Int?) -> Bool {
+        guard let i = step, doc.steps.indices.contains(i) else { return true }
+        let spin = abs(doc.steps[i].spin)
+        guard spin > 0 else { return true }
+        var turns = spin
+        for p in doc.assembly.parts where doc.ownMotion(p.id) {
+            if let l = linear(doc, p.id) { turns = max(turns, abs(l.rate) * spin) }
+            else { turns = max(turns, 2 * spin * max(1, crankRate(doc, p.id))) }
+        }
+        let n = Int((Double(comSamplesPerTurn) * max(1, turns)).rounded(.up))
+        guard n <= comMaxSamples else { return false }
+        func vector(_ f: Double) -> MGVec3 {
+            let pose = doc.assembly.pose(doc.poseParameters(step: i, spin: f))
+            return to.world(pose) - from.world(pose)
+        }
+        let v0 = vector(0)
+        guard v0.x.isFinite, v0.y.isFinite, v0.z.isFinite else { return false }
+        let eps = mgPrecision(v0)
+        for k in 1...n {
+            let d = (vector(Double(k) / Double(n)) - v0).length
+            guard d.isFinite, d <= eps else { return false }
+        }
+        return true
+    }
+
+    /// The input rate of a crank drive's crank (its linear chain), 1 when it has none.
+    static func crankRate(_ doc: MGSolidDocument, _ id: String) -> Double {
+        switch doc.assembly.part(id)?.drive {
+        case .crankSlider(let c, _, _, _)?, .crankRod(let c, _, _)?: return linear(doc, c).map { abs($0.rate) } ?? 1
+        default: return 1
+        }
     }
 
     /// True when the points keep their relative placement during any motion: all world-fixed, or all on the same
@@ -246,7 +290,10 @@ extension MGSolidAnnotationEngine {
                     guard let dir = MGSolidAnnotationMotion.direction(doc, from, pose, sense: sense), angle(expect, dir) <= L.expectDegrees else { throw fail(id) }
                 case (.force, _) where r.cause == "gravity":
                     guard let from = r.from, let to = r.to else { continue }
-                    if spin != 0, !MGSolidAnnotationMotion.rigid(doc, [from, to], pose, translationOnly: true) { throw fail(id) }
+                    if from.isCentreOfMass || to.isCentreOfMass {
+                        // A centre-of-mass end moves with every part: the vector must stay the same at every sample.
+                        if spin != 0, !MGSolidAnnotationMotion.constantVector(doc, from, to, step: step) { throw fail(id) }
+                    } else if spin != 0, !MGSolidAnnotationMotion.rigid(doc, [from, to], pose, translationOnly: true) { throw fail(id) }
                     let dv = to.world(pose) - from.world(pose)
                     if dv.length < L.minAuthorLength || angle(dv, MGVec3(0, 0, -1)) > L.gravityDegrees { throw fail(id) }
                 default: continue

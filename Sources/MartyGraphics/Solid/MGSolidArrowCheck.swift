@@ -99,8 +99,9 @@ public struct MGArrowDropNote: Equatable, Sendable {
     }
     public let id: String
     public let kind: Kind
-    /// The 0-based steps or beats concerned: every still that drops it (`orphan`), or the one whose text names it (`caption`).
-    public let views: [Int]
+    /// The 0-based steps or beats concerned: every still that drops it (`orphan`), or the one whose text names it
+    /// (`caption`); nil is the plain view (`hero.png`) of an assembly.
+    public let views: [Int?]
     /// True when the views are explainer beats.
     public let beats: Bool
     /// The tail's part and the part that hides it in the first view.
@@ -113,8 +114,17 @@ public struct MGArrowDropNote: Equatable, Sendable {
     var noun: String { beats ? "beat" : "step" }
 
     /// One line a tool can pass to a model (at most `MGAnnotationAnchorIssue.repairScalars` Unicode scalars).
+    /// "step 2", "steps 1 and 3", "the plain view (hero.png)", "the plain view (hero.png) and step 2".
+    var whereText: String {
+        let numbered = views.compactMap { $0 }
+        var parts: [String] = []
+        if views.contains(where: { $0 == nil }) { parts.append("the plain view (hero.png)") }
+        if !numbered.isEmpty { parts.append("\(noun)\(numbered.count > 1 ? "s" : "") \(MGArrowViewScan.list(numbered))") }
+        return parts.joined(separator: " and ")
+    }
+
     public var repair: String {
-        let where_ = "\(noun)\(views.count > 1 ? "s" : "") \(MGArrowViewScan.list(views))"
+        let where_ = whereText
         let line: String
         switch kind {
         case .orphan:
@@ -128,10 +138,11 @@ public struct MGArrowDropNote: Equatable, Sendable {
         return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
     }
 
-    /// `{"id", "reason", "kind", "steps"|"beats": [n], "part", "by", "word", "repair"}` (1-based; `word` null for `orphan`).
+    /// `{"id", "reason", "kind", "steps"|"beats": [n], "part", "by", "word", "repair"}` (1-based, null for the plain view;
+    /// `word` null for `orphan`).
     public var json: MGJSON {
         .object(["id": .string(id), "reason": .string(reason), "kind": .string(kind.rawValue),
-                 beats ? "beats" : "steps": .array(views.map { .number(Double($0 + 1)) }), "part": .string(part), "by": .string(by),
+                 beats ? "beats" : "steps": .array(views.map { $0.map { .number(Double($0 + 1)) } ?? .null }), "part": .string(part), "by": .string(by),
                  "word": word.map(MGJSON.string) ?? .null, "repair": .string(repair)])
     }
 
@@ -782,30 +793,30 @@ extension MGSolidDocument {
         return out
     }
 
-    /// The drop notes of a report (`MGArrowDropNote`) from its framed stills `views` (step or beat order, each with its
-    /// `MGSolidView.arrowDrops`). `orphan`: every still that lists the arrow drops it (in an assembly, also the plain
-    /// view, `hero.png`, when it lists it: `undrawnArrows`), one note per arrow, in authored order. `caption`: a still
+    /// The drop notes of a report (`MGArrowDropNote`) from its framed stills `views` (each with its
+    /// `MGSolidView.arrowDrops`; in an assembly the plain view, `hero.png`, with step nil, is one of them). `orphan`:
+    /// every still that lists the arrow drops it, one note per arrow, in authored order. `caption`: a still
     /// drops the arrow and the text of its step or beat (`say`) names the arrow's force (`MGArrowDropNote.names`): one
     /// note per still and arrow, in view order. Deterministic.
     func arrowDropNotes(_ views: [MGAnnotationAnchorView], beats: Bool, say: (Int) -> String?) -> [MGArrowDropNote] {
         var out: [MGArrowDropNote] = []
-        var listed: [String: [Int]] = [:], dropped: [String: [(index: Int, drop: MGArrowDrop)]] = [:]
+        // Each view once, by its step or beat (nil: the plain view of an assembly).
+        func index(_ v: MGAnnotationAnchorView) -> Int?? { beats ? v.beat.map { .some($0) } : .some(v.step) }
+        var listed: [String: [Int?]] = [:], dropped: [String: [(index: Int?, drop: MGArrowDrop)]] = [:]
         for v in views {
-            guard let k = beats ? v.beat : v.step else { continue }
+            guard let k = index(v) else { continue }
             for id in v.view.annotations where annotations.arrow(id) != nil { listed[id, default: []].append(k) }
             for d in v.view.arrowDrops { dropped[d.id, default: []].append((k, d)) }
         }
-        let plain = beats ? [] : visibleAnnotations(step: nil)
         for r in annotations.arrows {
             guard let ds = dropped[r.id], let first = ds.first, let ls = listed[r.id], ds.count == ls.count else { continue }
-            if plain.contains(r.id), !undrawnArrows.contains(r.id) { continue }
             out.append(MGArrowDropNote(id: r.id, kind: .orphan, views: ds.map(\.index), beats: beats, part: first.drop.part, by: first.drop.by, word: nil))
         }
         for v in views {
-            guard let k = beats ? v.beat : v.step, let text = say(k) else { continue }
+            guard let k = index(v), let n = k, let text = say(n) else { continue }
             for d in v.view.arrowDrops {
                 guard let r = annotations.arrow(d.id), let w = MGArrowDropNote.named(text, MGArrowDropNote.names(r)) else { continue }
-                out.append(MGArrowDropNote(id: d.id, kind: .caption, views: [k], beats: beats, part: d.part, by: d.by, word: w))
+                out.append(MGArrowDropNote(id: d.id, kind: .caption, views: [n], beats: beats, part: d.part, by: d.by, word: w))
             }
         }
         return out

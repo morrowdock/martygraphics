@@ -26,6 +26,13 @@
     `anchor.point` and `anchor.form` name the new form.
   - **`board.clip.<id>`** (new explainer warning): a beat's board pane at 1280 × 800 cuts a board item (it leaves the
     pane less 8 px). The report's `boardClips` gives the overflow and the exact move of the item's `at`.
+  - **Review fixes.** A centre-of-mass anchor is a moving anchor: a gravity arrow with such an end must keep its
+    vector at every sample of a moving step (`MGSolidAnnotationMotion.constantVector`, 64 samples per turn of the
+    fastest joint, at most 8,192), else `annotation.pose.<id>` (an off-axis rotor's mixed centre/world arrow was
+    accepted as Solved). The check report counts the plain view (`hero.png`) in `arrowDrops` and `arrowDropNotes`
+    (step null), so an assembly without steps warns too. A board item larger than the pane's safe area gets no move;
+    `boardClips` gives `size`, `safe` and `fit` (the largest `cw`, `rh` and zoom, the most columns and rows per table,
+    and the `at` that fits).
   - **Legend wording.** The Solved group says how many of its claims are animation ratios (Solved motion claims):
     "Solved 18 (15 animation ratios)", "Solved 3 (animation ratios)" when all are (`MGLegendText.solved`). One string
     for the stills, `story.mp4`, the SwiftUI views and the reports; the counts do not change.

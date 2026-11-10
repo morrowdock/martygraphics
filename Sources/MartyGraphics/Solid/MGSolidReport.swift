@@ -200,12 +200,14 @@ extension MGSolidReport {
             stillPlacements = doc.stillPlacements(stills, title: true)
             let checked = doc.annotations.isEmpty ? []
                 : stills.map(\.still).filter { $0.step != nil && (doc.showsCheckedAnchor($0.view) || doc.showsArrow($0.view)) }
-            // The arrows each still drops (the framing's arrow drop rule): warnings, never refused.
-            drops = checked.flatMap { v in v.view.arrowDrops.map { (v.step, v.beat, $0) } }
+            // The arrows each still drops (the framing's arrow drop rule), the plain view (`hero.png`) first: warnings,
+            // never refused. A document without steps has only the plain view.
+            var all = stills.map(\.still)
+            if !doc.annotations.isEmpty, !all.contains(where: { $0.step == nil }), let hero = doc.heroStill() { all.insert(hero, at: 0) }
+            let dropping = doc.annotations.isEmpty ? [] : all.filter { doc.showsArrow($0.view) }
+            drops = dropping.flatMap { v in v.view.arrowDrops.map { (v.step, v.beat, $0) } }
             // A dropped arrow that no still draws, or whose force the step's caption names: warnings, never refused.
-            dropNotes = doc.arrowDropNotes(stills.map(\.still).filter { $0.step != nil }, beats: false) { k in
-                doc.steps.indices.contains(k) ? doc.steps[k].say : nil
-            }
+            dropNotes = doc.arrowDropNotes(dropping, beats: false) { k in doc.steps.indices.contains(k) ? doc.steps[k].say : nil }
             let framed = checked.filter { doc.showsCheckedAnchor($0.view) }
             for v in framed { anchors.append(doc.anchorIssues(v)) }
             // One search budget for the report, retries included.
