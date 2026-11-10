@@ -159,12 +159,26 @@ public enum MGSolidFacts {
             && s.unicodeScalars.allSatisfy { $0.isASCII && (CharacterSet.alphanumerics.contains($0) || $0 == "_" || $0 == ".") }
     }
 
-    /// True for a character with any number scalar in it (digits, "½", "²", and a digit inside a grapheme cluster
-    /// that starts with a letter, such as an Indic prepended sign followed by "5"). Every scalar is tested against the
-    /// toolchain's Unicode properties and the pinned Unicode 18.0.0 Numeric_Type table (`MGSolidNumericScalars`).
+    /// True for a character with any number scalar in it, before or after Unicode NFKC normalization (`nfkc`): digits
+    /// of any script (ASCII, full-width "２", Arabic-Indic "٢", Devanagari "२"), superscripts and subscripts ("²",
+    /// "₂"), fractions ("½"), circled and parenthesized numbers ("②"), Roman numerals ("Ⅻ"), CJK numerals ("二"), a
+    /// compatibility symbol whose NFKC form holds a digit ("㋀" is "1月"), and a digit inside a grapheme cluster that
+    /// starts with a letter (an Indic prepended sign followed by "5"). Every scalar is tested against the toolchain's
+    /// Unicode properties and the pinned Unicode 18.0.0 Numeric_Type table (`MGSolidNumericScalars`): Numeric_Type
+    /// Decimal, Digit or Numeric counts. Rule N1 counts all of these as numbers: each can state a quantity.
     static func isNumber(_ ch: Character) -> Bool {
+        if hasNumberScalar(ch) { return true }
+        let plain = nfkc(String(ch))
+        return plain != String(ch) && plain.contains(where: hasNumberScalar)
+    }
+
+    static func hasNumberScalar(_ ch: Character) -> Bool {
         ch.isNumber || ch.unicodeScalars.contains { $0.properties.numericType != nil || MGSolidNumericScalars.contains($0) }
     }
+
+    /// Unicode NFKC (compatibility decomposition, then canonical composition): full-width and other compatibility
+    /// forms become their plain form ("Ｍａｃｈ２" is "Mach2"). Rule N1 and the declared names read text in this form.
+    static func nfkc(_ s: String) -> String { s.precomposedStringWithCompatibilityMapping }
 
     // MARK: Rule N1: declared names
 
@@ -187,12 +201,13 @@ public enum MGSolidFacts {
         return out
     }
 
-    /// The offsets in `chars` of the characters of every token that exactly equals a declared name (whole token,
-    /// case-sensitive): rule N1 does not count their number characters. Every other number character still counts.
+    /// The offsets in `chars` of the characters of every token whose NFKC form (`nfkc`) exactly equals a declared name
+    /// (declared names are kept in NFKC form; whole token, case-sensitive): rule N1 does not count their number
+    /// characters. Every other number character still counts.
     static func nameOffsets(_ chars: [Character], names: Set<String>) -> Set<Int> {
         guard !names.isEmpty else { return [] }
         var out = Set<Int>()
-        for r in tokens(chars) where names.contains(String(chars[r])) { out.formUnion(r) }
+        for r in tokens(chars) where names.contains(nfkc(String(chars[r]))) { out.formUnion(r) }
         return out
     }
 
@@ -242,15 +257,22 @@ public enum MGSolidFacts {
 
     /// A document's `names` list (docs/SOLID-3D.md, "Declared names"): 1–`namesCount` strings, each one token
     /// (`tokens`) of 1–`nameText` characters with (d) at least one number character, and not a number or a quantity
-    /// (`isQuantityName`, rules (a)–(c)). Reasons: `names.count` (not an array of strings, or a count out of range,
-    /// with `limit`), `names.text.<n>` (length, with `limit`), `names.token.<n>` (not one token, or (d): no number
-    /// character, so it needs no declaration), `names.number.<n>` (`<n>` 1-based). Repeats are kept once.
+    /// (`isQuantityName`, rules (a)–(c)). Each name is first put in Unicode NFKC form (`nfkc`), and every rule reads
+    /// that form, so "Ｍａｃｈ２" is "Mach2" (a quantity); the list keeps the NFKC forms, and a token of the text matches
+    /// a name exactly after the same normalization (`nameOffsets`). Reasons: `names.count` (not an array of strings,
+    /// or a count out of range, with `limit`), `names.text.<n>` (length as written, or in NFKC form, with `limit`),
+    /// `names.token.<n>` (not one token, or (d): no number character, so it needs no declaration), `names.number.<n>`
+    /// (`<n>` 1-based). Repeats (in NFKC form) are kept once.
     static func names(_ v: MGJSON) throws -> [String] {
         guard case .array(let list) = v else { throw MGSolidIssue("names.count") }
         if let d = MGSolidParser.countDetail("names", list.count, 1...namesCount, unit: "names") { throw MGSolidIssue("names.count", limit: d) }
         var out: [String] = []
         for (k, e) in list.enumerated() {
-            guard case .string(let n) = e else { throw MGSolidIssue("names.count") }
+            guard case .string(let raw) = e else { throw MGSolidIssue("names.count") }
+            if let d = MGSolidParser.countDetail("names[\(k)]", raw.unicodeScalars.count, 1...nameText, unit: "characters") {
+                throw MGSolidIssue("names.text.\(k + 1)", limit: d)
+            }
+            let n = nfkc(raw)
             if let d = MGSolidParser.countDetail("names[\(k)]", n.unicodeScalars.count, 1...nameText, unit: "characters") {
                 throw MGSolidIssue("names.text.\(k + 1)", limit: d)
             }

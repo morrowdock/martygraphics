@@ -326,11 +326,31 @@ exception is a step marked `"unchecked": "<why>"` (1–60 characters): it may ty
 and it shows the "Not checked" chip. For units and formulas write "square mm" or mark the
 step `unchecked`. So "Its stroke is 36 mm." is refused; "Its stroke is
 {engine.piston.travel}." shows "Its stroke is 36 mm." with its numbers Solved.
+
+**Which characters are numbers.** N1 and the declared names read text in Unicode NFKC form
+(`MGSolidFacts.nfkc`: compatibility decomposition, then canonical composition), so a full-width or other
+compatibility form is its plain form. A character is a number when the character itself, or its NFKC form, holds a
+scalar of Numeric_Type Decimal, Digit or Numeric (`MGSolidFacts.isNumber`). Decision: every such character counts,
+because each one can state a quantity:
+
+| Counts as a number | Examples |
+| --- | --- |
+| Digits of every script | "2", full-width "２", Arabic-Indic "٢", Extended Arabic-Indic "۲", Devanagari "२", mathematical "𝟐" |
+| Superscripts, subscripts, fractions | "²", "₂", "½" |
+| Circled, parenthesized and other enclosed numbers | "②", "⑵" |
+| Roman and CJK numerals | "Ⅻ", "二" |
+| Compatibility symbols whose NFKC form holds a digit | "㋀" (NFKC "1月"), "㍘" (NFKC "0点") |
+
+Not numbers: letters of any script or width ("A", "Ａ", "π") and unit symbols whose NFKC form has no digit ("㎏" is
+"kg"). The caption, label or title is shown as written; NFKC changes only what the rules read.
 **Declared names.** A v2 document may list `names`: 1–24 strings (`MGSolidFacts.namesCount`), each one token of 1–24
 characters with at least one number character, such as `"names": ["Mk4", "A320", "F-35"]`. A token is a maximal run of
 letters (any script), number characters and the hyphen-minus "-"; every other character (a space, punctuation, an
 apostrophe, a brace) ends it, and a placeholder ends it too. A token of a caption, a label, an arrow or a dimension
-text, or the title, that **exactly** equals a declared name (whole token, case-sensitive) is not a typed number. Every
+text, or the title, whose NFKC form **exactly** equals a declared name (whole token, case-sensitive) is not a typed
+number. Each declared name is put in NFKC form first, every rule below reads that form, and the list keeps it: so
+"Ｍａｃｈ２" is "Mach2" (refused, a quantity), "Ａ３２０" is the name "A320", a caption's "Ａ３２０" matches the name
+"A320", and "ａ３２０" does not (case-sensitive after the normalization). Every
 other number character still counts, as before: "Mk 4", "mk4", "Mk4s", "Mk4.5" (the "5"), and "4 engines" in the same
 text are refused. There is no lexical exception: an undeclared "Mk4" is still `text.number.<where>`. A declared name is
 valid only when all of these hold; (a)–(c) fail with `names.number.<n>` (`MGSolidFacts.isQuantityName`), (d) with
@@ -346,9 +366,9 @@ valid only when all of these hold; (a)–(c) fail with `names.number.<n>` (`MGSo
 * (d) it holds at least one number character; a name with none needs no declaration and is refused as
   `names.token.<n>`, not accepted as a no-op.
 
-Other reasons: `names.count` (not an array of strings, or 0 or more than 24 entries), `names.text.<n>` (length),
-`names.token.<n>` (not one token, or (d)); `<n>` is 1-based. A name listed
-twice is kept once. The engine has no general number and unit parser: rule (b) reuses N1's own character scan, and (c) is a closed word
+Other reasons: `names.count` (not an array of strings, or 0 or more than 24 entries), `names.text.<n>` (length, as
+written or in NFKC form), `names.token.<n>` (not one token, or (d)); `<n>` is 1-based. A name listed
+twice (in either form) is kept once. The engine has no general number and unit parser: rule (b) reuses N1's own character scan, and (c) is a closed word
 list. An explainer
 lists `names` in its header ([EXPLAINER.md](EXPLAINER.md)); they also apply to its solid. Marty fills `names` from the
 names its research rows give.
@@ -1323,6 +1343,8 @@ checks frames.
 | `annotation.anchor.off.<id>` | A label's anchor or a pointer's tip lies off the part it names, or another part is nearer to it ([Anchor checks](#anchor-checks)). | refused |
 | `annotation.anchor.hidden.<id>` | The check report only: a step still shows a label or pointer whose anchor it does not show (occluded, hidden, ghosted, off screen). | refused by the check report |
 | `annotation.anchor.untested.<id>` | The check report only: the view's line-of-sight budget, or the document's nearer-part budget, ran out before this anchor. | refused by the check report |
+| `framing.cut.step.<n>` | The check report only: step `<n>`'s explicit `focus` close-up cuts a solid part, and widening it would pass the minimum zoom ([Rendering](#rendering-camera-framing-and-the-loop)). `framingCuts` gives the exact `ghost` repair. | warning |
+| `unit.small.<id>` | The check report only: a named unit covers fewer than 512 px of a 1280 × 800 frame in every still that shows it. `smallUnits` gives the measure and the repair. | warning |
 
 `expect` mismatches (`expect.axis.<id>`, `expect.up.<id>`) are refusals in every profile.
 
@@ -1798,7 +1820,7 @@ the tool and any host use the same cameras.
 is one of these names; any other string is `step.camera` (`view.camera` in an explainer), whose meaning lists every
 name. There are no aliases. Yaw is in degrees about the vertical axis, 0 looks from the front (kernel −Y, world +Z)
 and 90 from +X; pitch is degrees above the horizon. Every preset gets the same framing rules below (per-step focus,
-unblocked focus, title-band fit).
+unblocked focus, title-band fit, shown parts stay whole).
 
 | Preset | Yaw | Pitch | View |
 | --- | --- | --- | --- |
@@ -1829,18 +1851,64 @@ camera (the `mannequin` does), `backLeft` shows its left side and back (its left
   and section parts with their context) whose box is more than 75 % of the whole model's
   box diagonal (`focusShare`) uses the whole-model rule. A `focus` list is always framed
   exactly, however large: to frame a part exactly, list it in `focus`.
+* **Shown parts stay whole.** One rule for every still, story hold frame, render plan
+  camera and SwiftUI pane: every part the view draws **solid** (`MGSolidFraming.solidParts`:
+  not hidden, view opacity at least 0.5, so not a step `ghost` or an automatic ghost) that
+  the camera shows at all lies wholly inside the safe window, never cut by the frame edge
+  or under the title or caption band (`MGSolidFraming.cutParts`; a part wholly outside the
+  view is not shown, so it is not cut). When a focus close-up cuts a solid part, the
+  framing **widens** (`widen`): the cut parts join the fitted points and the still is
+  fitted again from the same direction, until no solid part is cut (at most 6 rounds, then
+  every solid part at once). An inferred focus (a `highlight` or section) is not a request
+  for a close-up, so it widens as far as needed. An explicit `focus` is: it widens only
+  while its parts still fill at least 25 % of the safe window (`minimumFocusFill`, the
+  minimum zoom, measured like `fill` on the larger axis). When that is impossible the
+  close-up stays, and the check report warns `framing.cut.step.<n>` (`framing.cut.beat.<n>`
+  for an explainer beat) with an exact repair (see below). Ghosts are see-through context
+  and may leave the frame. The rule keeps `focus` as the manifest's `framing`.
 * **Whole model.** Other stills keep the bounding-sphere framing of earlier releases
-  unless a part or an annotation anchor would leave the image or enter the caption
-  band; only then is the still fitted like a focus. Earlier stills could reach into the
-  title band; a fitted still keeps it free too. **`hero.png`** keeps the title band free
-  always: its earlier framing stays only when the model and its annotation anchors clear
-  the title band as well, otherwise it is fitted (`modelFitted`), so the model never
-  sits under the title. Parts the view hides are left out of every rule.
+  unless a part or an annotation anchor would leave the safe window, the title band
+  included; only then is the still fitted like a focus (`modelFitted`). So no still puts
+  the model under its title (before, only `hero.png` kept the title band free; other
+  stills could reach into it). Parts the view hides are left out of every rule.
 * **Safe window.** The image minus the caption band (stills with a caption) and minus
-  the title band (stills with a title). `MGSolidRenderPlan.bands(width:height:)` gives
-  them as fractions of the height: the bands the tool draws (120 and 100 px at
-  1280 px wide, scaled with the width), but at least the bands the annotation layout
-  keeps free (0.2 and 0.14). The caption band never covers the model.
+  the title band (stills with a title); an explainer beat's whole solid pane.
+  `MGSolidRenderPlan.bands(width:height:)` gives them as fractions of the height: the
+  bands the tool draws (120 and 100 px at 1280 px wide, scaled with the width), but at
+  least the bands the annotation layout keeps free (0.2 and 0.14). Neither band covers a
+  solid part.
+
+**Why the r2j figures were cut.** Three causes, all fixed by the rule above: (1) a focus close-up fitted only the
+focus parts and the annotation anchors, so the rest of a figure (the head above a highlighted back pack, the legs
+below) was cut by the frame or sat under the title band; (2) the whole-model rule kept the earlier framing even when it
+reached into the title band; (3) a label at a world point far from an explicit `focus` (a hand engine) pulled the
+close-up to one side, so the body was cut at the pane edge. Poses and explode values were already in the bounds (the
+fit reads the posed vertices of each still), and cut or ghosted parts were not the cause.
+
+**`framing.cut.step.<n>` and `framing.cut.beat.<n>`** (warnings, never refused, strict included). Only an explicit
+`focus` whose widening would pass the minimum zoom keeps a close-up that cuts a solid part. The check report lists each
+such still in `framingCuts`: `{"step", "beat", "parts", "ghost", "repair"}`. `ghost` holds the unit of each cut part
+(a component instance id, or the part id for a plain part), or the part itself when a part of that unit is in the
+still's focus or highlight; `repair` prints the step's (or beat view's) whole `ghost` list after the repair, for
+example `Set "ghost": ["pilot", "eB"] in its "view"`, or else "remove its `focus`". Applying either clears the warning
+(the cut parts become see-through context; the camera does not change). A warning, not a refusal: the focus is whole
+and the still is truthful, the cut is composition only; refusing would reject every close-up of a large model whose
+context is not ghosted, and the author asked for the close-up.
+
+**Small named units** (`unit.small.<id>`, a warning, never refused, strict included). A unit is a component
+instance (its parts share the instance id as their first id segment) or a plain part (`MGSolidDocument.unitID`). A unit
+is **named** when a label or arrow that a still shows (not dropped) rides on one of its parts, or when a step or beat
+highlights one (the parts its caption is about). The check report measures, in every still (`framedStills`: the step
+stills, or the plain view of a document without steps; an explainer's beat stills), the pixels each named unit covers:
+a depth raster of every solid part on a half-size grid (`MGSmallUnitRules.rasterScale`, each cell 4 pixels), where a
+cell counts for the unit whose surface is nearest there, so a unit inside another part counts only where it shows.
+When a named unit covers fewer than **N = 0.05 % of a 1280 × 800 frame (512 px**, about 23 × 23 px,
+`MGSmallUnitRules.minimumShare`) in **every** still that shows it solid, the report lists it in `smallUnits`:
+`{"unit", "pixels", "minimum", "stills", "step", "beat", "repair"}` with the most pixels it reached and where. N is a
+share of the frame, so it scales with the frame size. It was set from the r2j jet-suit lessons: wrist rings that did not
+read as engines reached at most 172 px; arm engines that did read reached 1,080 px or more in their best still. The
+repair names three fixes: show it in a focused view (`"focus": ["<unit>"]`), make it larger (its shape size, or its
+component's size in `with`), or bring the camera closer. A focused view or a larger size clears the warning.
 * **Loop.** Loop frames keep the earlier per-frame framing. When any frame would cut
   the model, every frame moves back by the same factor (to 94 % of the frame), so the
   orbit never jumps. The manifest records the factor as `framingScale`.

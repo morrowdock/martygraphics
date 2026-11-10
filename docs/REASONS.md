@@ -81,7 +81,10 @@ only the check report gives them (`MGSolidReport`, `MGExplainerReport`, `marty-s
 `MGSolidReasons.reportStrictPrefixes`): a compile with `MGSolidParser.document(profile: .strict)` does not refuse them
 ([SOLID-3D.md](SOLID-3D.md), "Anchor checks" and "Arrow visibility"). The arrow drop warning
 `annotation.arrow.dropped.<id>` also needs each still's camera; no profile refuses it, because the still does not draw
-the arrow ([SOLID-3D.md](SOLID-3D.md), "Arrow drop").
+the arrow ([SOLID-3D.md](SOLID-3D.md), "Arrow drop"). The framing warnings `framing.cut.step.<n>` and
+`framing.cut.beat.<n>` and the small-unit warning `unit.small.<id>` need each still's camera too; no profile refuses
+them: the still is truthful and the fix is composition ([SOLID-3D.md](SOLID-3D.md), "Rendering: camera framing and the
+loop").
 
 ## Order
 
@@ -176,6 +179,7 @@ list):
 | Host snapshots, not author documents. | `solidSnapshot.bytes`, `solidSnapshot.number`, `snapshot.bytes`, `snapshot.shown`, `snapshot.presented` |
 | A host value; the refusal carries nothing else by design. | `report.engine` |
 | The render tool's story plan, not a check report. | `story.beats`, `story.frames` |
+| Its own detail: the report's `smallUnits` (pixels, minimum, still, `repair`); a pixel measure of the stills. | `unit.small.<id>` |
 
 ## Reasons
 
@@ -416,6 +420,9 @@ list):
 | `annotation.arrow.hidden.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows an arrow (force, flow, motion or pointer) of which less than half of the sample points along its drawn shaft and head, or fewer than two of its three head samples, are visible from the still's camera: off screen, or behind another part by the line-of-sight rule of the anchor checks (the parts the arrow is anchored on hide it too; a cut part's inside does not count). The report's `arrow` gives the step or beat, the visible share, the part in the way and a suggested move. |
 | `annotation.arrow.untested.<id>` | check, explainer | (warning; the strict check report refuses) A step or beat still shows an arrow that was not fully tested: the view's 3,000,000 arrow sample tests ran out first. The strict check report refuses it, because strict does not pass what it did not check. |
 | `annotation.arrow.dropped.<id>` | check, explainer | (warning) A step or beat still does not draw a force or flow arrow that its view lists: the arrow's tail is on its part, and another part (outside that part's unit) hides the tail from the still's camera, so the part the arrow acts on is hidden there. The still and its story frames leave the arrow out (a snapshot, which has no camera, keeps it); it is not moved and not refused. The report's `arrowDrops` gives the view, the tail's part and the part in the way. |
+| `framing.cut.step.<n>` | check | (warning) Step `<n>`'s still cuts a solid part it shows (not hidden, not a ghost): some of the part is in the frame and some is outside the safe window (beyond the frame edge, or under the title or caption band). Only an explicit `focus` keeps such a close-up: its widening would make the focus parts fill less than 25 % of the safe window (`MGSolidFraming.minimumFocusFill`). The report's `framingCuts` gives the parts and the exact `ghost` list that makes them see-through context; or remove the step's `focus`. |
+| `framing.cut.beat.<n>` | explainer | (warning) Beat `<n>`'s still cuts a solid part its solid pane shows (not hidden, not a ghost): some of the part is in the pane and some is outside it. Only an explicit view `focus` keeps such a close-up: its widening would make the focus parts fill less than 25 % of the pane (`MGSolidFraming.minimumFocusFill`). The report's `framingCuts` gives the parts and the exact `ghost` list for the beat's `view`; or remove the view's `focus`. |
+| `unit.small.<id>` | check, explainer | (warning) A unit (a component instance, or a plain part) that a shown label or arrow rides on, or that a step or beat highlights, covers fewer than 0.05 % of a 1280 × 800 frame's pixels (512 px) in every still that shows it solid, measured on a half-size depth raster (`MGSmallUnitRules`). The report's `smallUnits` gives the most pixels, the still and the repair: a focused view, a larger size or a closer camera. |
 
 ### Annotations (v2)
 
@@ -442,9 +449,9 @@ list):
 | `label.text.<id>` | assembly | A label's text is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 240 characters, or of 1–60 characters after placeholders are filled. |
 | `label.unchecked.<id>` | assembly | A label's `unchecked` is not valid text (not empty after trimming, no `<`, `>`, `://` or control characters) of at most 60 characters. |
 | `names.count` | assembly, explainer | `names` is not an array of strings, or it has fewer than 1 or more than 24 entries (`MGSolidFacts.namesCount`). |
-| `names.text.<n>` | assembly, explainer | Declared name `<n>` (1-based) is not 1–24 characters long (`MGSolidFacts.nameText`). |
+| `names.text.<n>` | assembly, explainer | Declared name `<n>` (1-based) is not 1–24 characters long, as written or in Unicode NFKC form (`MGSolidFacts.nameText`). |
 | `names.token.<n>` | assembly, explainer | Declared name `<n>` is not one token (a run of letters, number characters and "-" with no space or punctuation), or it has no number character (it needs no declaration). |
-| `names.number.<n>` | assembly, explainer | Declared name `<n>` is a number or a quantity: it does not start with a letter ("2e3", "1e-3", "120N", "0x1F", "3D"), a number literal that rule N1 finds covers all of it, or its leading letters are a unit or quantity word ("Mach2", "USD120", "RPM120"). A quantity is a claim, not a name. |
+| `names.number.<n>` | assembly, explainer | Declared name `<n>` is a number or a quantity: it does not start with a letter ("2e3", "1e-3", "120N", "0x1F", "3D"), a number literal that rule N1 finds covers all of it, or its leading letters are a unit or quantity word ("Mach2", "USD120", "RPM120"). The rules read the name in Unicode NFKC form, so full-width "Ｍａｃｈ２" is "Mach2". A quantity is a claim, not a name. |
 | `text.number.label.<id>` | assembly | A label has a number character outside a placeholder and is not marked `unchecked` (rule N1). |
 | `arrow.meaning.<id>` | assembly | An arrow's `meaning` is not force, flow, motion or pointer. |
 | `arrow.style.<id>` | assembly | A motion arrow's `style` is not line or turn. |

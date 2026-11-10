@@ -294,7 +294,10 @@ only the aspect; the `pane:` form reads `MGFrameRect.aspect`). The pane has no t
 so the whole pane is the safe window. So the pane gets the per-step focus framing, the unblocked-focus rule (automatic
 ghosts drawn at 0.2, or an alternate direction) and every camera preset, `backLeft` and `backRight` included. It draws
 the beat's view with the same automatic ghosts. The controller publishes the result (`paneClear`, `paneView`); it
-computes no camera of its own. For the same beat and the same pane aspect, the pane camera is the still's camera.
+computes no camera of its own. For the same beat and the same pane aspect, the pane camera is the still's camera. The
+"shown parts stay whole" rule ([SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop)) is part of that one
+function, so a beat's still, its story hold frames and the pane never cut a solid part, except an explicit `focus`
+close-up that the check report warns about (`framing.cut.beat.<n>`).
 
 - **Start pose and the learner's camera.** The framed camera is the start pose of each beat. In a solid without
   annotations the learner may orbit and zoom (SceneKit camera control). Each new framing increases
@@ -360,8 +363,10 @@ shows a non-zero value as "0" (`text.rounding.<name>`); 2D values keep `MGValue.
 Rule N1 (owner decision D2): every number character the learner sees in author text comes from a placeholder. Every
 Unicode scalar counts (the #21 number test). It applies to beat captions (except with `unchecked`:
 `text.number.beat.<n>`), and to 2D item text, table and array cells, bar values, plot ranges, `over` values and the
-strings of `set` and `add` commands, unless the item has a note (`text.number.item.<id>`). A token that exactly equals a
-declared name (the header's `names`, see below) is not a typed number; nothing else is exempt. The token rule and the
+strings of `set` and `add` commands, unless the item has a note (`text.number.item.<id>`). N1 and the declared names
+read text in Unicode NFKC form, so full-width "２" and every other number form count ("Which characters are numbers" in
+[SOLID-3D.md](SOLID-3D.md#placeholders)). A token whose NFKC form exactly equals a declared name (the header's `names`,
+see below; kept in NFKC form, so "Ｍａｃｈ２" is refused as "Mach2") is not a typed number; nothing else is exempt. The token rule and the
 name rules are the ones in [SOLID-3D.md](SOLID-3D.md#placeholders), "Declared names". A control label may not
 type a number (`text.number.control.<id>`); a raw template's params may not carry a string with one
 (`text.number.template`). Inside an explainer the lesson's decimal rule (`text.literal`) is off: N1 replaces it.
@@ -657,11 +662,13 @@ when its text holds `"explainer"`, else `assembly.bytes`. Exit codes: 0 ok, 1 re
 | `beats` | per kept beat: `{"n", "caption", "template", "unchecked", "tier", "facts", "checks": [{"value", "comparison", "target", "tol"}], "highlight": {"board", "solid", "annotations"}, "view"}` |
 | `annotations` | one entry per 3D annotation: the assembly report's `annotations` (`views.solid` also holds its `placements`) |
 | `legend` | `{"text", "groups": {"solved", "schematic", "given", "described"}, "notes", "claims"}` |
-| `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue, then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per beat arrow issue, then one `annotation.arrow.dropped.<id>` per arrow a beat still drops (`"view": "beat"`), each `{"reason", "view", "id"}` |
+| `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue, then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per beat arrow issue, then one `annotation.arrow.dropped.<id>` per arrow a beat still drops (`"view": "beat"`), then one `framing.cut.beat.<n>` per beat still that cuts a solid part (`"view": "beat"`, `id` the first cut part), then one `unit.small.<id>` per small named unit (`"view": "solid"`), each `{"reason", "view", "id"}` |
 | `anchorIssues`, `anchorUntested` | with 3D annotations only: every label and pointer anchor issue (off part, then the beats in order), each with `suggest`, `noSuggest` and `repair` ([SOLID-3D.md](SOLID-3D.md#anchor-suggestions)), and the anchors a beat's test budget left untested ([SOLID-3D.md](SOLID-3D.md#anchor-checks)); `views.solid` holds neither |
 | `anchor` | with a refusal for an anchor reason only: the issue it names (`id`, `beat`, `cause`, `by`, `fix`, `suggest`, `repair`, …) |
 | `arrowIssues` | with 3D annotations only: every arrow a beat still does not show well enough (beats in order), each with the visible share, the part in the way, `suggest` (a move of the arrow), `noSuggest` and `repair` ([SOLID-3D.md](SOLID-3D.md#arrow-visibility)) |
 | `arrowDrops` | only when a beat still drops an arrow: `[{"id", "reason", "part", "by", "step", "beat"}]`, the force and flow arrows whose part the beat's camera cannot see, so the still does not draw them; a warning, never refused ([SOLID-3D.md](SOLID-3D.md#arrow-drop)) |
+| `framingCuts` | only when a beat still cuts a solid part: `[{"step", "beat", "parts", "ghost", "repair"}]`, the parts its explicit `focus` close-up cuts and the beat view's whole `ghost` list that makes them see-through context; a warning, never refused ([SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop)) |
+| `smallUnits` | only when a named unit is small in every beat still that shows it: `[{"unit", "pixels", "minimum", "stills", "step", "beat", "repair"}]`; a warning, never refused ([SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop), "Small named units") |
 | `arrow` | with a refusal for an arrow reason only: the issue it names |
 | `limit` | with a refusal from a length, count or size limit only: `{"field", "actual", "limit", "unit"}` (+ `minimum`; `actualAtLeast` or `actualAtMost` instead of `actual` for a bound); `field` is a path into the document such as `title`, `notes.t3.basis`, `beats[2].say` or `solid.annotations.labels[0].text` ([REASONS.md](REASONS.md#limit-details)) |
 | `repair` | with a refusal only: one line for a model, built from `arrow`, `anchor`, `limit` or the catalog meaning (at most 400 Unicode scalars) |

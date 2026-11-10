@@ -309,6 +309,24 @@ extension MGExplainerFrame {
         beatViews(doc, library: library, width: width, height: height) { d, v in d.showsCheckedAnchor(v) || d.showsArrow(v) }
     }
 
+    /// Every beat still with a solid pane at `width` × `height` (`beatPanes`), framed as the still and its story hold
+    /// frames are (`solidClearView`: the automatic ghosts and the beat's arrow drops), at the beat's end pose, with the
+    /// whole pane as its safe window, the beat's 3D highlight and its view's `focus`; with the solid document. The
+    /// framing rule and the small-unit rule of the check report read these.
+    public static func beatStills(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
+                                  height: Int = MGAnnotationAnchorRules.height) -> (solid: MGSolidDocument?, stills: [MGFramedStill]) {
+        let r = beatPanes(doc, library: library, width: width, height: height)
+        guard let d = r.solid else { return (nil, []) }
+        return (d, r.beats.map { b in
+            let base = b.view.solid ?? d.view(step: nil)
+            let clear = solidClearView(d, view: b.view, stepIndex: b.stepIndex, pane: b.pane)
+            let still = MGAnnotationAnchorView(view: clear.view(base), params: pose(d, view: b.view), camera: clear.camera,
+                                               width: Double(b.pane.width), height: Double(b.pane.height), step: b.stepIndex, beat: b.beat)
+            return MGFramedStill(still: still, window: MGSolidFraming.Window(titleBand: 0, captionBand: 0), highlight: b.view.solidHighlight,
+                                 focus: b.view.step?.focus ?? [])
+        })
+    }
+
     /// The framed view of every beat still whose solid view satisfies `shows`, with the solid document.
     static func beatViews(_ doc: MGExplainer, library: MGSolidLibrary, width: Int, height: Int,
                           where shows: (MGSolidDocument, MGSolidView) -> Bool) -> (solid: MGSolidDocument?, views: [MGAnnotationAnchorView]) {

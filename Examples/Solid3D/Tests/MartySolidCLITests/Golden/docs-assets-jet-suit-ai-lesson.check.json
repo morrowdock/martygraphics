@@ -862,6 +862,60 @@
     "lines" : 769,
     "sha256" : "bb8f1893d90b869103fe84993a41585c5eaf8b73be2e8889a8cfe8f7f04b7df7"
   },
+  "framingCuts" : [
+    {
+      "beat" : 6,
+      "ghost" : [
+        "pilot",
+        "eB"
+      ],
+      "parts" : [
+        "pilot.body",
+        "pilot.upperArmR",
+        "pilot.handR",
+        "pilot.legR",
+        "eB.combustor",
+        "eB.nozzleGuideVanes",
+        "eB.turbineWheel",
+        "eB.nozzle",
+        "eB.casing"
+      ],
+      "repair" : "Beat 6 cuts pilot.body, pilot.upperArmR, pilot.handR, pilot.legR and 5 more at the frame edge or under a band, and widening its close-up would make the focus fill less than 25 % of the safe window. Set \"ghost\": [\"pilot\", \"eB\"] in its \"view\" (see-through context may leave the frame), or remove its \"focus\" so the whole model is framed.",
+      "step" : 6
+    },
+    {
+      "beat" : 7,
+      "ghost" : [
+        "pilot"
+      ],
+      "parts" : [
+        "pilot.body",
+        "pilot.upperArmR",
+        "pilot.handR",
+        "pilot.legR"
+      ],
+      "repair" : "Beat 7 cuts pilot.body, pilot.upperArmR, pilot.handR, pilot.legR at the frame edge or under a band, and widening its close-up would make the focus fill less than 25 % of the safe window. Set \"ghost\": [\"pilot\"] in its \"view\" (see-through context may leave the frame), or remove its \"focus\" so the whole model is framed.",
+      "step" : 7
+    },
+    {
+      "beat" : 8,
+      "ghost" : [
+        "pilot",
+        "eB"
+      ],
+      "parts" : [
+        "pilot.body",
+        "pilot.upperArmR",
+        "pilot.legL",
+        "pilot.legR",
+        "eB.diffuser",
+        "eB.shaft",
+        "eB.casing"
+      ],
+      "repair" : "Beat 8 cuts pilot.body, pilot.upperArmR, pilot.legL, pilot.legR and 3 more at the frame edge or under a band, and widening its close-up would make the focus fill less than 25 % of the safe window. Set \"ghost\": [\"pilot\", \"eB\"] in its \"view\" (see-through context may leave the frame), or remove its \"focus\" so the whole model is framed.",
+      "step" : 8
+    }
+  ],
   "ids" : {
     "annotations" : [
       "lSuit",
@@ -3960,6 +4014,21 @@
     {
       "id" : "aR2",
       "reason" : "annotation.arrow.dropped.aR2",
+      "view" : "beat"
+    },
+    {
+      "id" : "pilot.body",
+      "reason" : "framing.cut.beat.6",
+      "view" : "beat"
+    },
+    {
+      "id" : "pilot.body",
+      "reason" : "framing.cut.beat.7",
+      "view" : "beat"
+    },
+    {
+      "id" : "pilot.body",
+      "reason" : "framing.cut.beat.8",
       "view" : "beat"
     }
   ]

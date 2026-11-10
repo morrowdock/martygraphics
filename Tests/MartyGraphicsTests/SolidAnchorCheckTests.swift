@@ -82,7 +82,8 @@ final class SolidAnchorCheckTests: XCTestCase {
         let t = text(#"{"labels": [{"id": "l1", "at": {"part": "core", "point": "centre"}, "text": "Core"}]}"#)
         let standard = report(t, .standard)
         XCTAssertTrue(standard.ok, "the standard profile only warns")
-        XCTAssertEqual(warnings(standard), ["annotation.anchor.hidden.l1"])
+        // The labelled core is wholly inside its shell, so it also covers 0 px in every still (`unit.small.core`).
+        XCTAssertEqual(warnings(standard), ["annotation.anchor.hidden.l1", "unit.small.core"])
         XCTAssertEqual(issues(standard).first?["cause"], .string("occluded"))
         XCTAssertEqual(issues(standard).first?["by"], .string("shell"))
         XCTAssertEqual(issues(standard).first?["step"], .number(1))

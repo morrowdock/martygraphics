@@ -12,11 +12,19 @@ import Foundation
 ///   plus `orbit`) and moves its target and distance so the focus fills `fill` of the safe window. An explicit `focus`
 ///   is always fitted; an inferred focus whose box is larger than `focusShare` of the whole model's box keeps the
 ///   whole-model rule.
+/// * **Shown parts stay whole.** Every part the view draws solid (`solidParts`: not hidden, view opacity at least
+///   `blockingOpacity`, so not a ghost) that a framed camera shows at all lies wholly inside the safe window: never
+///   cut by the frame edge, the title band or the caption band (`cutParts`). When the close-up of a focus cuts such a
+///   part, the framing widens (`widen`): the cut parts join the fitted points and the shot is fitted again, until no
+///   solid part is cut. An inferred focus (a `highlight` or section) is not a request for a close-up, so it widens as
+///   far as needed (at most to every solid part). An explicit `focus` is: it widens only while the focus parts still
+///   fill at least `minimumFocusFill` of the safe window (the minimum zoom). When that is impossible, the close-up
+///   stays and the check report warns (`framing.cut.step.<n>`, `framing.cut.beat.<n>`) with the exact repair: ghost
+///   the parts it cuts. Ghosts are see-through context and may leave the window.
 /// * **Whole model.** Other shots keep the bounding-sphere framing of earlier releases unless a part or an annotation
-///   anchor would leave the view or enter the caption band; only then is the shot fitted like a focus (inside the
-///   safe window, title band included).
+///   anchor would leave the safe window (the title band included); only then is the shot fitted like a focus.
 /// * **Safe window.** The view minus the title band (shots with a title) and minus the caption band (shots with a
-///   caption), as `MGSolidRenderPlan.bands(width:height:)` gives them. The caption band never covers the model.
+///   caption), as `MGSolidRenderPlan.bands(width:height:)` gives them. Neither band covers a solid part.
 /// * **Loop.** Loop frames keep the earlier per-frame framing; when any frame would cut the model, every frame moves
 ///   back by the same factor, so the orbit does not jump.
 ///
@@ -36,6 +44,13 @@ public enum MGSolidFraming {
     public static let nearMinimum = 0.5, nearShare = 0.05
     /// The near-plane distance for a camera at `distance` from its target.
     public static func nearPlane(distance: Double) -> Double { max(nearMinimum, nearShare * distance) }
+    /// The minimum zoom of an explicit `focus` that widens to keep the shown parts whole: the focus parts' projected
+    /// extent must stay at least this share of the safe window (on its larger axis, as `fill` measures it; a fitted
+    /// focus alone fills `fill`). Below it the asked-for close-up would no longer read as one, so the close-up stays
+    /// and the check warns instead. An inferred focus has no minimum (it widens to the whole solid model if needed).
+    public static let minimumFocusFill = 0.25
+    /// Most fits one widening tries before its last try, which fits every solid part.
+    public static let widenRounds = 6
 
     /// A rectangle in normalised device coordinates (x right, y up, both −1...1).
     public struct Window: Equatable, Sendable {
@@ -143,6 +158,15 @@ public enum MGSolidFraming {
             return out
         }()
 
+        /// The points of each part in the render world (Y up) at a pose, in assembly order.
+        func perPart(_ assembly: MGAssembly, _ params: MGPoseParameters, stage: MGTransform) -> [(id: String, points: [MGVec3])] {
+            let pose = assembly.pose(params)
+            return parts.map { id, local in
+                let t = stage * (pose.world[id] ?? .identity)
+                return (id, local.map(t.apply).filter { $0.x.isFinite && $0.y.isFinite && $0.z.isFinite })
+            }
+        }
+
         /// The points in the render world (Y up) at a pose.
         func world(_ assembly: MGAssembly, _ params: MGPoseParameters, stage: MGTransform) -> [MGVec3] {
             let pose = assembly.pose(params)
@@ -228,6 +252,93 @@ public enum MGSolidFraming {
         return true
     }
 
+    // MARK: Shown parts stay whole
+
+    /// The parts `view` draws solid, in assembly order: not hidden, at a view opacity of at least `blockingOpacity`.
+    /// A step's `ghost` and the automatic ghosts are see-through context, not solid.
+    public static func solidParts(_ doc: MGSolidDocument, view: MGSolidView) -> [String] {
+        doc.assembly.parts.compactMap { p in
+            let v = view.part(p.id)
+            return !v.hidden && v.opacity >= blockingOpacity ? p.id : nil
+        }
+    }
+
+    /// The ids of `parts` that `camera` cuts, in the order of `parts`: at least one sample point projects inside the
+    /// view (−1...1 on both axes, beyond the near plane) and at least one lies outside `window` (or nearer than the
+    /// near plane). A part wholly outside the view is not shown, so it is not cut.
+    static func cut(_ parts: [(id: String, points: [MGVec3])], camera c: MGSolidCamera, aspect: Double, window: Window) -> [String] {
+        guard finite(c), aspect.isFinite, aspect > 0 else { return [] }
+        let w = window.usable, b = Basis(yaw: c.yaw, pitch: c.pitch), f = focal(c.fieldOfView), t = c.targetVector
+        let near = nearPlane(distance: c.distance), tol = 1e-9
+        return parts.compactMap { part in
+            var shown = false, outside = false
+            for p in part.points {
+                let r = p - t, depth = c.distance + r.dot(b.fwd)
+                guard depth >= near else { outside = true; continue }
+                let x = r.dot(b.right) * f / aspect / depth, y = r.dot(b.up) * f / depth
+                guard x.isFinite, y.isFinite else { outside = true; continue }
+                if abs(x) <= 1 + tol && abs(y) <= 1 + tol { shown = true }
+                if x > w.right + tol || x < w.left - tol || y > w.top + tol || y < w.bottom - tol { outside = true }
+                if shown && outside { return part.id }
+            }
+            return nil
+        }
+    }
+
+    /// The solid parts of `view` (`solidParts`) that a still at `camera` cuts (`cut`) at pose `params`, for a view of
+    /// width over height `aspect` whose safe window is `window`. Assembly order. The check report's framing rule
+    /// (`framing.cut.step.<n>`, `framing.cut.beat.<n>`) reads this at each still's camera with its automatic ghosts.
+    public static func cutParts(_ doc: MGSolidDocument, view: MGSolidView, params: MGPoseParameters, camera: MGSolidCamera,
+                                aspect: Double, window: Window, stage: MGTransform = MGSolidStage.zUpToYUp) -> [String] {
+        let ids = solidParts(doc, view: view)
+        guard !ids.isEmpty else { return [] }
+        return cut(Samples(doc.assembly, ids: ids).perPart(doc.assembly, params, stage: stage), camera: camera, aspect: aspect, window: window)
+    }
+
+    /// The share of `window` that the projected extent of `pts` fills with `camera`, on the larger axis (the measure of
+    /// `fill`: a fitted focus fills `fill`). 0 for no point in front of the camera.
+    static func filled(_ pts: [MGVec3], camera c: MGSolidCamera, aspect: Double, window: Window) -> Double {
+        guard finite(c), aspect.isFinite, aspect > 0 else { return 0 }
+        let w = window.usable, b = Basis(yaw: c.yaw, pitch: c.pitch), f = focal(c.fieldOfView), t = c.targetVector
+        var lo = (x: Double.infinity, y: Double.infinity), hi = (x: -Double.infinity, y: -Double.infinity)
+        for p in pts {
+            let r = p - t, depth = c.distance + r.dot(b.fwd)
+            guard depth > 0 else { continue }
+            let x = r.dot(b.right) * f / aspect / depth, y = r.dot(b.up) * f / depth
+            guard x.isFinite, y.isFinite else { continue }
+            lo = (min(lo.x, x), min(lo.y, y)); hi = (max(hi.x, x), max(hi.y, y))
+        }
+        guard lo.x <= hi.x else { return 0 }
+        return max((hi.x - lo.x) / (w.right - w.left), (hi.y - lo.y) / (w.top - w.bottom))
+    }
+
+    /// The widening of a focus close-up (`close`, fitted on the focus points `focus` plus the annotation anchors
+    /// `extra`) so that no solid part (`solid`, per part) is cut. While `close` cuts a solid part, the cut parts join the
+    /// fitted points and the shot is fitted again from the same direction (at most `widenRounds` rounds, then every solid
+    /// part at once). The first fit that cuts no solid part is taken if the focus still fills at least `minimum` of the
+    /// window (`minimumFocusFill` for an explicit `focus`, 0 for an inferred one); otherwise `close` stays (the check
+    /// warns, `framing.cut.step.<n>`).
+    static func widen(_ close: MGSolidCamera, focus: [MGVec3], extra: [MGVec3], solid: [(id: String, points: [MGVec3])],
+                      yaw: Double, pitch: Double, aspect: Double, fieldOfView: Double, window: Window, minimum: Double) -> MGSolidCamera {
+        let first = cut(solid, camera: close, aspect: aspect, window: window)
+        guard !first.isEmpty, !focus.isEmpty else { return close }
+        let everyone = Set(solid.map(\.id))
+        var set = Set(first)
+        for round in 0...widenRounds {
+            if round == widenRounds { set = everyone }
+            let pts = focus + extra + solid.filter { set.contains($0.id) }.flatMap(\.points)
+            let c = fit(pts, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window)
+            // Each round only adds points, so the focus only gets smaller: below the minimum zoom, stop.
+            guard finite(c), minimum <= 0 || filled(focus, camera: c, aspect: aspect, window: window) >= minimum else { return close }
+            let more = cut(solid, camera: c, aspect: aspect, window: window)
+            if more.isEmpty { return c }
+            let next = set.union(more)
+            if round == widenRounds { break }
+            set = next.count == set.count ? everyone : next
+        }
+        return close
+    }
+
     /// The camera from `yaw` and `pitch` that fits every point into `fill` of `window`, centred in it.
     public static func fit(_ pts: [MGVec3], yaw: Double, pitch: Double, aspect: Double, fieldOfView: Double = 30,
                            window: Window, fill: Double = MGSolidFraming.fill) -> MGSolidCamera {
@@ -287,7 +398,7 @@ public enum MGSolidFraming {
 
     /// Which rule framed a still (`marty-solid render` writes it into each still's manifest record).
     public enum Rule: String, Equatable, Sendable {
-        /// The step's focus, fitted.
+        /// The step's focus, fitted, and widened so the solid parts it shows stay whole (down to `minimumFocusFill`).
         case focus
         /// The whole model with the bounding-sphere framing of earlier releases (nothing left the safe window).
         case model
@@ -330,7 +441,8 @@ public enum MGSolidFraming {
         if let step = s.step {
             let ids = focusParts(doc, step: step, params: s.params, stage: stage)
             if !ids.isEmpty {
-                let focus = Samples(a, ids: ids).world(a, s.params, stage: stage) + anchors
+                let parts = Samples(a, ids: ids).world(a, s.params, stage: stage)
+                let focus = parts + anchors
                 var fb = MGBounds.empty, wb = MGBounds.empty
                 for p in focus { fb.include(p) }
                 for p in all { wb.include(p) }
@@ -338,17 +450,18 @@ public enum MGSolidFraming {
                 // to the whole model when it spans most of it.
                 let explicit = doc.steps.indices.contains(step) && !doc.steps[step].focus.isEmpty
                 if !fb.isEmpty, explicit || fb.size.length <= focusShare * wb.size.length {
-                    return (fit(focus, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window), .focus)
+                    let close = fit(focus, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window)
+                    // Every solid part the close-up shows stays whole: widen down to the minimum zoom (`widen`).
+                    let solid = Samples(a, ids: solidParts(doc, view: view)).perPart(a, s.params, stage: stage)
+                    return (widen(close, focus: parts, extra: anchors, solid: solid, yaw: yaw, pitch: pitch, aspect: aspect,
+                                  fieldOfView: fieldOfView, window: window, minimum: explicit ? minimumFocusFill : 0), .focus)
                 }
             }
         }
         let old = legacy(a, s, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, stage: stage, hidden: hidden)
-        // The earlier framing stays when nothing is cut by the frame or covered by the caption band. It may reach into
-        // the title band (title text over the model, as in earlier releases); a fitted camera keeps that band free.
-        // `hero.png` keeps the title band free too: its earlier framing stays only when the model clears the band.
-        var kept = window
-        if s.file != "hero.png" { kept.top = 1 }
-        if contains(all, camera: old, aspect: aspect, window: kept) { return (old, .model) }
+        // The earlier framing stays when nothing is cut by the frame or covered by the title or caption band; otherwise
+        // the shot is fitted inside the safe window.
+        if contains(all, camera: old, aspect: aspect, window: window) { return (old, .model) }
         return (fit(all, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, window: window), .modelFitted)
     }
 

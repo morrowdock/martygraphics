@@ -38,8 +38,9 @@ final class SolidFramingTests: XCTestCase {
         let doc = try compile(Self.tower)
         let plan = MGSolidRenderPlan(doc, sourceName: "t.json", source: MGSolidSource(data: Data(Self.tower.utf8)))
         let cams = plan.cameras(doc, width: 1280, height: 800)
-        // hero and step 3 cut the tall column with the earlier framing; the exploded still (margin 0.92) did not.
-        XCTAssertEqual(cams.rules, [.modelFitted, .model, .focus, .focus, .modelFitted, .modelFitted])
+        // hero and step 3 cut the tall column with the earlier framing. The exploded still (margin 0.92) kept it, but
+        // its earlier framing reaches into the title band, which no still may do now ("Shown parts stay whole").
+        XCTAssertEqual(cams.rules, [.modelFitted, .modelFitted, .focus, .focus, .modelFitted, .modelFitted])
         // Step 1: the block and the pin that touches it, inside the safe window, from the front preset.
         let s1 = plan.stills[2], c1 = cams.stills[2]
         XCTAssertEqual(MGSolidFraming.focusParts(doc, step: 0, params: s1.params), ["block", "pin"])
