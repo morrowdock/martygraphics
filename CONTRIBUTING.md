@@ -17,7 +17,11 @@ automatically on each push to the PR; a fork PR runs with a read-only token and
 no secrets. Branch protection also requires the branch to be up to date with
 `main` before merging, because the checks test the PR head itself, not a
 synthetic merge; update the branch when GitHub asks. `main` takes only squash
-merges. Hosted runners have no real GPU, so local GPU and iOS-simulator
+merges. On a push to `main` whose previous commit is unknown (for example a new
+branch or a rewritten history), the `hygiene` DCO step checks only the last
+commit, so it can miss a missing sign-off on earlier commits of a multi-commit
+push. This is acceptable only because `main` takes squash merges of reviewed
+PRs, force pushes are disabled, and the rules include administrators. Hosted runners have no real GPU, so local GPU and iOS-simulator
 receipts are still required where [Verify on Mac](docs/VERIFY-ON-MAC.md) and
 [local validation](docs/LOCAL-VALIDATION.md) ask for them.
 
