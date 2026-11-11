@@ -76,11 +76,12 @@ Options:
 | --- | --- |
 | `--camera auto` | Hero orbit: 40 degrees around the subject over the shot, 22 degrees up. The distance is solved so that the motion bounds of all frames stay inside 86 % of the frame at every orbit angle. |
 | `--camera export` / `--camera NAME` | Use the first manifest camera, or the named export camera (with its animation). Default: `export` when the manifest lists a camera, else `auto`. |
-| `--backdrop studio` | Default. Curved cyclorama, soft studio HDRI, the HDRI hidden from camera rays. |
+| `--backdrop studio` | Default. A round studio bowl (flat floor that curves up into a wall all around), sized from the camera positions of all frames, so a swinging or orbiting camera always sees the wall. The bowl shows only to camera and transmission rays: it receives contact shadows but blocks no light, and reflections see the soft studio HDRI. |
 | `--backdrop shadow` | Shadow catcher over a plain background. Master frames are RGBA; the MP4 and poster put them over a light grey. |
 | `--resolution 720p\|1080p\|1440p\|4k\|WxH`, `--samples N` | Override the preset. |
 | `--frames A-B` | Render only frames A..B (the full export is still checked). |
 | `--no-motion-blur` | Frame-exact stills. |
+| `--poster-frame N` | Poster frame (default: manifest `posterFrame`, else the middle frame); must be inside `--frames`. |
 | `--resume` | Keep frames that exist in `<out>/frames`. |
 | `--wait-for-simulator SEC` | Wait up to SEC seconds for the simulator to stop before the start. |
 
@@ -92,14 +93,23 @@ Exit codes: 0 done, 1 export refused, 2 usage, 3 simulator running,
 Look-dev replaces material slots with procedural presets: `polished_metal`,
 `brushed_metal` (radial anisotropy), `painted_metal` (clear coat),
 `anodised_aluminium`, `rubber`, `carbon_fibre` (coated weave), `glass`
-(covers), `plastic`. Choice order: manifest `parts[].material.preset`, then
-the name rules on the readable `parts[].label` (for example "Sun gear 1"), then
-the same rules on the glTF node name (often a part id such as `sun1`), using the
-rules in [mgrender/presets.py](mgrender/presets.py) (for example
+(covers), `plastic`. Choice order:
+
+1. the manifest preset `parts[].material.preset`;
+2. the exporter's material name `parts[].gltfMaterial` (else the glTF material name) with the
+   material-name rules (`anodized.*` -> anodised, `polishedSteel` -> polished, `darkSteel`,
+   `titanium`, `brass`, `aluminum` -> brushed, `composite` -> carbon fibre, `ceramic`,
+   `plastic.*` -> plastic). The exporter states the intended finish there, so this step
+   comes before the names;
+3. the name rules on the readable `parts[].label` (for example "Sun gear 1");
+4. the same rules on the glTF node name (often a part id such as `sun1`);
+5. the glTF material values (metallic, roughness, alpha).
+
+The rules are in [mgrender/presets.py](mgrender/presets.py) (for example
 `cover|window|canopy` -> glass, `shaft|bearing|bolt` -> polished, `gear|blade|rotor`
--> brushed), then the glTF material values (metallic, roughness, alpha). Painted
-and anodised parts keep the exported base colour unless the manifest gives
-`baseColor`. Textured imported materials stay unchanged unless the manifest
+-> brushed). Every preset except glass, carbon fibre and rubber keeps the exported
+base colour (the explainer's colour coding, for example the blue N1 and orange N2
+spools) unless the manifest gives `baseColor`. Textured imported materials stay unchanged unless the manifest
 names a preset. `render-report.json` lists each part's preset and the reason.
 
 ## Outputs

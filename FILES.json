@@ -2795,7 +2795,7 @@
     },
     {
       "path": "tools/render-blender/README.md",
-      "sha256": "2978156e56237f5fd259a4f780c16227c90ef61a0dc01315dd081705e7b442b5"
+      "sha256": "5f29c049ee3c8749bb583f7acfbfeda604481b45acfd02d6efe036f939811784"
     },
     {
       "path": "tools/render-blender/assets.lock.json",
@@ -2819,7 +2819,7 @@
     },
     {
       "path": "tools/render-blender/mgrender/lookdev.py",
-      "sha256": "5342e04fe63111580eba82a241e82f19fa0326f0133cd794346df90803574a70"
+      "sha256": "8411cd1f55cb1e0f117cacd1f9efe87108090d6ca5ef3ab87724cb39a43c7288"
     },
     {
       "path": "tools/render-blender/mgrender/manifest.py",
@@ -2827,7 +2827,7 @@
     },
     {
       "path": "tools/render-blender/mgrender/presets.py",
-      "sha256": "a968e9690db5b288d374580e0b8771c010c1f5bc1b2869d433333432e7472eaa"
+      "sha256": "85c94e7ee138fa3282ce1e45af0f4d7a3abd333e73282e51eebfc7241b92a613"
     },
     {
       "path": "tools/render-blender/mgrender/simguard.py",
@@ -2835,15 +2835,15 @@
     },
     {
       "path": "tools/render-blender/render.py",
-      "sha256": "c617d63ea3361449cb066fec327e32af9f4f972032a16abe3fc1e9308376b84d"
+      "sha256": "16009ecdee4c10903525876f42e9a798e6d5d1d64fc3b64ee7d127643f6982f4"
     },
     {
       "path": "tools/render-blender/selftest.sh",
-      "sha256": "73012cda3e61a966efd28571f073f8e18c2c732451db867e794525419047a781"
+      "sha256": "c19190836206d6f1a1ef7c2ccb48b54f02b76441a1274e457c4d84f9a8e7f0e3"
     },
     {
       "path": "tools/render-blender/selftest_scene.py",
-      "sha256": "e327bfd5a238c9a098b57e4cb93fa3be6fc831ef736401ea1d4791e1a5404872"
+      "sha256": "b5caa7f2b61e43ac77e39c1fb1c83c3bb009067b47436854dd3e0d51f5f6da86"
     },
     {
       "path": "tools/render-blender/setup.sh",
@@ -2863,7 +2863,7 @@
     },
     {
       "path": "tools/tests/test_render_blender.py",
-      "sha256": "5e3354d0bfb13b28484bcb4c63b53195bf4b39d00d360ae86cb750a74237adef"
+      "sha256": "759817f6642ea88d966f8cb53c5df4842e9e7196f23ba12bcfe3bdea8059aaf6"
     },
     {
       "path": "tools/validate_local.py",

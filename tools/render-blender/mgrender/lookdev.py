@@ -161,10 +161,11 @@ def assign_materials(objects, parts, size):
             if params["textured"] and not override.get("preset"):
                 decisions.append(("imported_textured", "kept imported textured material"))
                 continue
-            preset, reason = choose_preset(ob.name, params, override.get("preset"), label)
+            gltf_material = part.get("gltfMaterial") or (slot.material.name if slot.material else None)
+            preset, reason = choose_preset(ob.name, params, override.get("preset"), label, gltf_material)
             color = override.get("baseColor")
-            if color is None and preset in ("painted_metal", "anodised_aluminium", "plastic"):
-                color = params["color"]
+            if color is None and preset not in ("glass", "carbon_fibre", "rubber"):
+                color = params["color"]       # keep the exported colour coding (e.g. N1 blue, N2 orange)
             key = (preset, tuple(round(v, 4) for v in color) if color else None)
             if key not in cache:
                 cache[key] = build_material(preset, color, size)
@@ -237,37 +238,69 @@ def _link(scene, ob):
     return ob
 
 
-def cyclorama(scene, lo, hi, color):
-    """Floor that sweeps up into a back wall (behind +Y of the subject)."""
+def cyclorama(scene, lo, hi, color, camera_positions):
+    """A round studio bowl: a flat floor that curves up into a wall all around the subject.
+
+    It is sized so that every camera position of the shot stays inside the flat floor, so
+    an orbiting or swinging camera (export or auto) always sees the wall behind the subject.
+    The bowl shows only to camera and transmission rays and casts no shadow: it does not
+    block the exported lights, and reflections still see the HDRI. It still receives the
+    subject's shadows (contact shadows on the floor).
+    """
     import bmesh
     size = max((hi - lo).length, 1e-4)
-    cx, cy = (lo.x + hi.x) / 2, (lo.y + hi.y) / 2
+    c = (lo + hi) / 2
     z0 = lo.z - 0.002 * size
-    half_w, front, back = 10 * size, 10 * size, 3 * size
-    radius, wall = 2.5 * size, 8 * size
-    profile = [(cy - front, z0), (cy + back, z0)]
-    for i in range(1, 13):
-        a = math.radians(90 * i / 12)
-        profile.append((cy + back + radius * math.sin(a), z0 + radius * (1 - math.cos(a))))
-    profile.append((cy + back + radius, z0 + radius + wall))
+    reach = max([(Vector((p.x, p.y)) - Vector((c.x, c.y))).length for p in camera_positions] + [size])
+    top = max([p.z for p in camera_positions] + [hi.z])
+    floor_r = 1.25 * reach + 0.5 * size
+    curve_r = 0.35 * floor_r
+    wall = max(2.0 * (top - z0), 1.5 * floor_r)
+    profile = [(0.0, z0), (floor_r, z0)]
+    for i in range(1, 17):
+        a = math.radians(90 * i / 16)
+        profile.append((floor_r + curve_r * math.sin(a), z0 + curve_r * (1 - math.cos(a))))
+    profile.append((floor_r + curve_r, z0 + curve_r + wall))
+    seg = 96
     bm = bmesh.new()
-    left = [bm.verts.new((cx - half_w, y, z)) for y, z in profile]
-    right = [bm.verts.new((cx + half_w, y, z)) for y, z in profile]
-    for i in range(len(profile) - 1):
-        bm.faces.new((left[i], right[i], right[i + 1], left[i + 1]))
+    rings = []
+    for r, z in profile[1:]:
+        rings.append([bm.verts.new((c.x + r * math.cos(2 * math.pi * k / seg),
+                                    c.y + r * math.sin(2 * math.pi * k / seg), z)) for k in range(seg)])
+    centre = bm.verts.new((c.x, c.y, z0))
+    for k in range(seg):
+        bm.faces.new((centre, rings[0][k], rings[0][(k + 1) % seg]))
+    for ra, rb in zip(rings, rings[1:]):
+        for k in range(seg):
+            bm.faces.new((ra[k], rb[k], rb[(k + 1) % seg], ra[(k + 1) % seg]))
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    for f in bm.faces:            # normals point inward, towards the subject
+        if f.normal.dot(Vector((c.x, c.y, z0 + curve_r)) - f.calc_center_median()) < 0:
+            f.normal_flip()
     me = bpy.data.meshes.new("mg_backdrop")
     bm.to_mesh(me)
     bm.free()
     for p in me.polygons:
         p.use_smooth = True
     ob = _link(scene, bpy.data.objects.new("mg_backdrop", me))
+    ob.visible_shadow = False
+    ob.visible_glossy = False
+    ob.visible_diffuse = False
+    ob.visible_volume_scatter = False
     m, nt, bsdf = _new_material("mg_backdrop")
     _set(bsdf, "Base Color", (*color, 1))
-    _set(bsdf, "Roughness", 0.55)
-    _set(bsdf, "Specular IOR Level", 0.3)
+    _set(bsdf, "Roughness", 0.6)
+    _set(bsdf, "Specular IOR Level", 0.2)
     me.materials.append(m)
-    return ob
+    return ob, {"floor_radius_m": floor_r, "wall_height_m": wall}
+
+
+def camera_positions(scene, cam, frames):
+    out = []
+    for f in frames:
+        scene.frame_set(f)
+        out.append(cam.matrix_world.translation.copy())
+    return out
 
 
 def shadow_catcher(scene, lo, hi):

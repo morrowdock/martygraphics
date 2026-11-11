@@ -136,7 +136,7 @@ def main(out_dir):
             gear_b: material("bronze", (0.80, 0.55, 0.30), 1.0, 0.30),
             shaft_a: material("chrome", (0.9, 0.9, 0.9), 1.0, 0.05),
             shaft_b: material("chrome2", (0.9, 0.9, 0.9), 1.0, 0.05),
-            base: material("paint_blue", (0.06, 0.18, 0.45), 0.0, 0.5),
+            base: material("base_finish", (0.06, 0.18, 0.45), 0.0, 0.5),
             cover: material("cover", (0.9, 0.95, 1.0), 0.0, 0.05, alpha=0.2),
             panel: material("carbon", (0.03, 0.03, 0.03), 0.0, 0.3)}
     rubber = material("rubber", (0.02, 0.02, 0.02), 0.0, 0.9)
@@ -169,8 +169,8 @@ def main(out_dir):
         export_apply=False, export_yup=True, export_extras=False, export_lights=False)
     sha = hashlib.sha256(open(glb, "rb").read()).hexdigest()
     # Same part shape as the MartyGraphics exporter: readable label, glTF material name,
-    # empty material override. "base_housing" gets a label that its name rules would not
-    # give (painted -> carbon fibre) to prove that the label comes first.
+    # empty material override. "base_housing" has a material name without a rule and a label
+    # that its node-name rules would not give (painted -> carbon fibre): the label comes first.
     labels = {"gear_drive": "Drive gear (24 teeth)", "pinion_driven": "Driven pinion (12 teeth)",
               "shaft_drive": "Drive shaft", "shaft_driven": "Driven shaft",
               "base_housing": "Carbon fibre base plate", "cover_window": "Inspection cover",

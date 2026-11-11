@@ -17,23 +17,39 @@ NAME_RULES = [
     ("painted_metal", r"paint|housing|casing|case|cowl|nacelle|body|frame|chassis|base|shell|plate|cover|spinner"),
 ]
 
+# The exporter's own material name (manifest parts[].gltfMaterial, for example
+# "anodized.blue", "polishedSteel", "darkSteel", "brass"). It states the intended
+# finish, so it comes before the label and node-name rules. Ordered; first match wins.
+MATERIAL_NAME_RULES = [
+    ("glass", r"glass|transparent|window|acrylic|polycarbonate"),
+    ("rubber", r"rubber|elastomer|silicone|neoprene"),
+    ("carbon_fibre", r"carbon|cfrp|composite"),
+    ("anodised_aluminium", r"anodi[sz]"),
+    ("polished_metal", r"polish|chrome|mirror"),
+    ("painted_metal", r"paint|enamel|powder.?coat"),
+    ("plastic", r"plastic|nylon|delrin|ceramic|resin"),
+    ("brushed_metal", r"brush|steel|titan|nickel|inconel|alloy|alumin|brass|bronze|copper|iron|metal"),
+]
 
-def choose_preset(name, params, override=None, label=None):
+
+def choose_preset(name, params, override=None, label=None, gltf_material=None):
     """Return (preset, reason).
 
-    Order: the manifest preset, then the name rules on the readable part label
-    (manifest parts[].label, for example "Sun gear 1"), then the name rules on the
-    glTF node name (often a part id such as "sun1"), then the glTF material values.
+    Order: the manifest preset; the exporter's material name (parts[].gltfMaterial)
+    with MATERIAL_NAME_RULES; the name rules on the readable part label (parts[].label,
+    for example "Sun gear 1"); the name rules on the glTF node name (often a part id
+    such as "sun1"); then the glTF material values.
     """
     if override:
         if override not in MATERIAL_PRESETS:
             raise ValueError(f"unknown material preset '{override}' for part '{name}'")
         return override, "manifest"
-    for source, text in (("label", label), ("name", name)):
+    for source, text, rules in (("gltfMaterial", gltf_material, MATERIAL_NAME_RULES),
+                                ("label", label, NAME_RULES), ("name", name, NAME_RULES)):
         if not text:
             continue
         low = text.lower()
-        for preset, pattern in NAME_RULES:
+        for preset, pattern in rules:
             hit = re.search(pattern, low)
             if hit:
                 return preset, f"{source} contains '{hit.group(0).strip('_- ')}'"

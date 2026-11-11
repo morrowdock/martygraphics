@@ -13,6 +13,7 @@ Options:
   --frames A-B                render only frames A..B (inclusive); the whole export is still verified
   --no-motion-blur            frame-exact stills (motion blur is on by default)
   --no-burn-in                no burned-in provenance caption on the MP4 and poster
+  --poster-frame N            poster frame (default: manifest posterFrame, else the middle frame)
   --resume                    keep frames that already exist in <out-dir>/frames
   --wait-for-simulator SEC    wait up to SEC seconds for the landing-lab simulator to stop (default 0: refuse)
   --allow-cpu                 render on the CPU when no OptiX/CUDA device exists
@@ -61,7 +62,7 @@ def parse_args(argv):
         raise Refused(2, "usage: blender -b -P render.py -- <manifest.json> <out-dir> [--preset hero|preview] ...")
     a = {"manifest": argv[0], "out": argv[1], "preset": "preview", "resolution": None, "samples": None,
          "camera": None, "backdrop": "studio", "frames": None, "motion_blur": True, "burn_in": True,
-         "resume": False, "wait": 0, "allow_cpu": False}
+         "resume": False, "wait": 0, "allow_cpu": False, "poster_frame": None}
     it = iter(argv[2:])
     for opt in it:
         def val():
@@ -102,6 +103,8 @@ def parse_args(argv):
             a["resume"] = True
         elif opt == "--wait-for-simulator":
             a["wait"] = int(val())
+        elif opt == "--poster-frame":
+            a["poster_frame"] = int(val())
         elif opt == "--allow-cpu":
             a["allow_cpu"] = True
         else:
@@ -375,17 +378,6 @@ def run(argv):
     if not os.path.isfile(hdri):
         log("WARNING: HDRI asset missing (run setup.sh); using a procedural world")
         hdri = None
-    if args["backdrop"] == "studio":
-        lookdev.setup_world(scene, hdri, BACKDROP, hide_hdri_from_camera=True)
-        lookdev.cyclorama(scene, lo, hi, BACKDROP)
-        scene.render.film_transparent = False
-        encode_bg = None
-    else:
-        lookdev.setup_world(scene, hdri, SHADOW_BG, hide_hdri_from_camera=False)
-        lookdev.shadow_catcher(scene, lo, hi)
-        scene.render.film_transparent = True
-        scene.cycles.film_transparent_glass = True   # glass over a transparent film must not darken
-        encode_bg = SHADOW_BG
     parts = {p["name"]: p for p in checked["manifest"].get("parts", [])}
     mat_report = lookdev.assign_materials(imported, parts, size)
 
@@ -398,6 +390,22 @@ def run(argv):
         if name not in cams:
             raise Refused(2, f"camera '{name}' is not an imported export camera (have {sorted(cams)})")
         cam, cam_info, view_dir = lookdev.export_camera(scene, cams[name], lo, hi)
+
+    if args["backdrop"] == "studio":
+        lookdev.setup_world(scene, hdri, BACKDROP, hide_hdri_from_camera=True)
+        cam_path = lookdev.camera_positions(scene, cam, all_frames[::stride] + [count - 1])
+        _, cam_info["backdrop"] = lookdev.cyclorama(scene, lo, hi, BACKDROP, cam_path)
+        far = 2.5 * (cam_info["backdrop"]["floor_radius_m"] + cam_info["backdrop"]["wall_height_m"])
+        if cam.data.clip_end < far:          # the bowl wall must not be clipped (cosmetic camera setting)
+            cam.data.clip_end = far
+        scene.render.film_transparent = False
+        encode_bg = None
+    else:
+        lookdev.setup_world(scene, hdri, SHADOW_BG, hide_hdri_from_camera=False)
+        lookdev.shadow_catcher(scene, lo, hi)
+        scene.render.film_transparent = True
+        scene.cycles.film_transparent_glass = True   # glass over a transparent film must not darken
+        encode_bg = SHADOW_BG
     lookdev.key_light(scene, (lo + hi) / 2, size, view_dir)
     lookdev.configure_render(scene, preset, resolution, dev, args["motion_blur"], args["samples"])
     lookdev.provenance_metadata(scene, label)
@@ -440,7 +448,10 @@ def run(argv):
     sid = checked["scene_id"]
     mp4 = os.path.join(out, f"{sid}-{args['preset']}.mp4")
     rewrote = encode_mp4(enc, mp4, fps)
-    poster_frame = min(max(checked["poster_frame"], first), last)
+    wanted = checked["poster_frame"] if args["poster_frame"] is None else args["poster_frame"]
+    if args["poster_frame"] is not None and not (first <= wanted <= last):
+        raise Refused(2, f"--poster-frame {wanted} is outside the rendered frames {first}-{last}")
+    poster_frame = min(max(wanted, first), last)
     poster = os.path.join(out, f"{sid}-{args['preset']}-poster.png")
     write_poster(enc, poster, poster_frame - first + 1)
     t_enc = time.time() - t_enc

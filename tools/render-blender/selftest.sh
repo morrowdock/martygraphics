@@ -88,12 +88,12 @@ print(f"selftest: first frame {t['first_frame']} s, mean after first {t['mean_af
 print(f"selftest: motion max error {r['motion_check']['max_error']:.3g} (tol {r['motion_check']['tolerance']:.3g}), "
       f"look-dev drift {r['motion_check']['lookdev_drift']}")
 mats = {k: v[0] for k, v in r["materials"].items()}
-want = {"base_housing": ["carbon_fibre", "label contains 'carbon'"],     # label beats the node name rules
-        "gear_drive": ["brushed_metal", "label contains 'gear'"],
+want = {"base_housing": ["carbon_fibre", "label contains 'carbon'"],       # label beats the node name rules
+        "gear_drive": ["brushed_metal", "gltfMaterial contains 'steel'"],  # material name beats the label
         "pinion_driven": ["anodised_aluminium", "manifest"],
-        "rubber_foot_0": ["rubber", "label contains 'rubber'"]}        # material: null = no override
+        "rubber_foot_0": ["rubber", "gltfMaterial contains 'rubber'"]}   # material: null = no override
 bad = {k: (mats.get(k), v) for k, v in want.items() if mats.get(k) != v}
-print(f"selftest: material presets from labels: {'OK' if not bad else 'WRONG ' + str(bad)}")
+print(f"selftest: material presets (manifest, gltfMaterial, label): {'OK' if not bad else 'WRONG ' + str(bad)}")
 sys.exit(1 if bad else 0)
 PY
 say "PASS. outputs in $OUT"

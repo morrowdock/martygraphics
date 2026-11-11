@@ -237,6 +237,21 @@ class PresetTests(unittest.TestCase):
         self.assertEqual(presets.choose_preset("sun1", self.PARAMS, "glass", label="Sun gear 1"),
                          ("glass", "manifest"))
 
+    def test_exporter_material_name_comes_before_the_label(self):
+        # The exporter colour-codes the spools: the material name must win over "shaft" in the label.
+        self.assertEqual(presets.choose_preset("lpShaft", self.PARAMS, label="LP shaft (N1)",
+                                               gltf_material="anodized.blue"),
+                         ("anodised_aluminium", "gltfMaterial contains 'anodiz'"))
+        cases = {"polishedSteel": "polished_metal", "darkSteel": "brushed_metal", "brass": "brushed_metal",
+                 "titanium": "brushed_metal", "composite": "carbon_fibre", "ceramic": "plastic",
+                 "plastic.white": "plastic"}
+        for material, want in cases.items():
+            self.assertEqual(presets.choose_preset("n", self.PARAMS, label="Nacelle (inlet and fan cowl)",
+                                                   gltf_material=material)[0], want, material)
+        # A material name without a rule falls through to the label.
+        self.assertEqual(presets.choose_preset("n", self.PARAMS, label="Nacelle", gltf_material="mat_07"),
+                         ("painted_metal", "label contains 'nacelle'"))
+
     def test_empty_material_means_no_override(self):
         for empty in (None, "", {}):
             self.assertEqual(presets.part_material({"name": "x", "material": empty}), {})
