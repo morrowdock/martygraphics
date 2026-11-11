@@ -855,9 +855,16 @@ world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear 
   `step.pose.fact`), and the report adds `dimensionMotion`: `{"dimension", "step", "over", "boundA", "boundB",
   "boundVertex", "change", "offset", "tolerance", "unit", "anchor", "part", "joint", "distance", "fixed", "repair"}`
   (the anchors' bounds in mm, the most the value can change in `unit`, the anchor, part and joint that add the most,
-  the anchor's distance from that joint's axis, and `fixed`, the anchors that can move as world points at the first
-  pose at full precision). The repair is to anchor the dimension there or to set `"spin": 0` in the step. The rule
-  only removes acceptances (the old rule must also pass). The explainer's own text rules (`text.pose.beat.<n>`,
+  the anchor's distance from that joint's axis, and `fixed`, the replacement anchors). The repair is to set
+  `"spin": 0` in the step or to replace the anchors with `fixed`. `fixed` is given only when it **validates**: a copy
+  of the document with it applied must compile (`MGRepairCheck`, as the weight suggestions are `verified`). The
+  engine tries the anchors that can move as world points at the first pose at full precision, then, when that copy is
+  refused (a world point outside ±4000 mm is `anchor.world`), as offsets on the nearest part above each anchor that
+  does not move. When neither validates, `fixed` is null and `fixedNote` says why; `"spin": 0` stays (for `over`,
+  whose range covers a whole input turn, the line says to hold that end on a part that does not move). The rule only
+  removes acceptances (the old rule must also pass). An angle's arm must also stay measurable: when its length minus
+  `E_end + Ev` is below 0.01 mm, the bound is 180° (refused; before, an arm 0.010000000000001 mm long whose end moved
+  about 1.2e-10 mm passed strict, though most poses had no value). The explainer's own text rules (`text.pose.beat.<n>`,
   `text.pose.board`, `view.pose.fact`) use the same check without the detail. (Review of #53: an eight-joint chain
   with axes 0.0000018 mm around one point moved a dimension's end 0.0000288 mm, 7.18 × the tolerance, and an `over`
   range held by that chain was 0.0000288 mm off; both passed strict as Solved before this rule.)
@@ -883,11 +890,16 @@ world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear 
   most the world-fixed epsilon (1e-9 × max(1, the model's diagonal)) **and** its angle from down at the first pose plus
   that worst-case angle is at most 10°. Else it is refused, `annotation.pose.<id>` (every profile), also when both ends
   are on the centre. The refusal adds `centreOfMass`: `{"arrow", "step", "part", "joint", "distance", "bound",
-  "endBound", "tolerance", "angle", "extraAngle", "fixed", "repair"}` (`bound` is `D`, `endBound` is `E`): the part
+  "endBound", "tolerance", "angle", "extraAngle", "fixed", "fixedNote", "repair"}` (`bound` is `D`, `endBound` is `E`): the part
   that adds the most (the centre's part or the end's part) and the joint in its chain that adds the most, the
   centroid's distance from that joint's axis (null for a sliding joint), the bound and its tolerance, the angles, and
-  `fixed`, the arrow's ends as world points at the step's first pose at full precision; the repair is to anchor the
-  arrow there (which keeps its exact vector) or to remove the motion from the step (`"spin": 0`). A still step, a step
+  `fixed`, the arrow's ends as world points at the step's first pose at full precision; the repair is to remove the
+  motion from the step (`"spin": 0`) or to anchor the arrow there (which keeps its exact vector). `fixed` is given only
+  when a copy of the document with it applied compiles; else it is null and `fixedNote` names the copy's reason (an
+  end outside ±4000 mm is `anchor.world`).
+  **Repair lines** (`MGRepairLine`, at most 400 Unicode scalars, both rules): every executable action comes first and
+  whole, `Set "spin": 0 in step <n>.`, then the replacement JSON complete (or, when it does not fit, "the report's
+  `fixed` (see fixed)"); only the explanation after them is cut. A still step, a step
   `pose` and the plain view show one pose each: the centre is resolved there and nothing moves. The rule is
   conservative: two off-axis parts that keep the centre in place between them still count as moving. (r2k reviews: an
   off-axis rotor's arrow turned 54.7° from down a quarter turn later; a sampled proof missed a 63.25° turn in a 64-joint

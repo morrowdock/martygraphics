@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "b4177e18bd214930705cb93c44b52dacd29989f2e06ad3135cf237868a40cd85"
+      "sha256": "2d2a4ed02b9603ea66c664df0fd77b1e02c22972a2d70af75c45025ebdab3df8"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -727,11 +727,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
-      "sha256": "f1fcd9befdf2c6b9f7fee08afa3601e23551615d991aa3646f13e91fad5591b5"
+      "sha256": "93ceca4585968d2b21c6682eaddc52fc822da47cc4f6e2672356ce003b29d3e3"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift",
-      "sha256": "a43bafda60dc9bad0ac65fa8cb92b340ac5d3412d57d0b39336de41f36cc966f"
+      "sha256": "1c4e4d163597b02e7a9b0c7c7adfe8cfc91b3ce797841708f8e057943c196ef7"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidArrowCheck.swift",
@@ -787,7 +787,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidParser.swift",
-      "sha256": "e292aeb7e15a84201a334e613b9d7f16ce85a696a618ca87bc272102d4b75aed"
+      "sha256": "d468e284a63b61ccb66c060dab85ddcaed06a627d2263ed5a8fdbd16406643e3"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidPoses.swift",
@@ -907,7 +907,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/DimensionMotionBoundTests.swift",
-      "sha256": "3e5c4081213e6a2b43e87acacbfe8f4c72b182d3735b08b5ac3e2b9fbe42a67e"
+      "sha256": "72c0e65c09abf9b29ef65477d12c206463b3134bee7a57ed0883be1411e2107e"
     },
     {
       "path": "Tests/MartyGraphicsTests/EmptyTableTests.swift",
@@ -1247,7 +1247,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "6adf98786d8096fbfb17f947979d5d6198b0476fe8ed033c21e43ed0208862ab"
+      "sha256": "72575f63dde376d5157ec4065801b8d0d25e91992f74df200de7c87004bcee28"
     },
     {
       "path": "docs/THIRD-PARTY.md",

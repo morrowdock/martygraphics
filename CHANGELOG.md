@@ -14,6 +14,12 @@
   most, `fixed` world points at full precision) and a repair: anchor at fixed points, or `"spin": 0`. Anchors on the
   same moving joints stay exact (proved in `MGSolidAnnotationMotion.sameMotion`). The rule only removes acceptances;
   every shipped document and example keeps its outcome.
+  - **Review fixes.** A fixed-point repair (dimension and #53 gravity) is given only when a copy with it applied
+    compiles (`MGRepairCheck`): an end at x = 4000.0000018 is not a valid world anchor (`anchor.world`), so a
+    dimension falls back to an offset on the nearest still part, and otherwise `fixed` is null with `fixedNote`.
+    Repair lines (`MGRepairLine`) put every action first and whole (`"spin": 0`, then the complete JSON or "see
+    fixed") and cut only the explanation; a 24-character angle repair had been cut inside its JSON. An angle arm that
+    can fall below the 0.01 mm a measured angle needs is now refused.
 
 - Engine fixes from the failures recorded in prompt-to-3D round r2k (one hidden view per refusal, a thrust arrow inside
   its own forearm, a hidden forearm "nearer" to a label, captions without their arrows, a weight arrow at a thigh, a

@@ -430,7 +430,13 @@ public enum MGSolidParser {
             if let refusal = profile.refusal(doc) { return .failure(refusal) }
             return .success(doc)
         }
-        catch let e as MGSolidIssue { return .failure(e) }
+        catch let e as MGSolidIssue {
+            // A fixed-point repair is given only when a copy with it applied compiles (`MGRepairCheck`).
+            return .failure(MGRepairCheck.verify(e, json) {
+                document(json: $0, reusing: previous, library: library, profile: profile, perStepAnnotations: perStepAnnotations,
+                         steppedAnnotations: steppedAnnotations)
+            })
+        }
         catch let e as MGError { return .failure(.init(e.reason)) }
         catch { return .failure(.init("unknown")) }
     }

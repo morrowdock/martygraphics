@@ -638,7 +638,7 @@ enum MGSolidAnnotationEngine {
             let tol = 1e-9 * max(1, abs(r.value), doc.annotations.diagonal)
             if !(r.bound <= tol) {
                 var issue = MGSolidIssue("dimension.over.motion.\(d.id)", part: d.id)
-                issue.dimensionMotion = MGDimensionMotion.over(d, step: nil, r, tolerance: tol)
+                issue.dimensionMotion = MGDimensionMotion.over(d, doc, step: nil, r, tolerance: tol)
                 throw issue
             }
             // A range below 0.01 mm (or 0.01°) means nothing changes over the turn.

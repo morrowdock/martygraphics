@@ -205,14 +205,16 @@ enum MGSolidAnnotationMotion {
     /// The most a dimension's value can change at `pose` while its anchors move by at most `ea`, `eb` and `ev` (the
     /// vertex). A distance, also `along` an axis: `ea + eb` (the triangle inequality: `| |x| − |y| | ≤ |x − y|`, and one
     /// world component changes by at most the length of the change). An angle: each arm (vertex to end, length `L`)
-    /// turns by at most `asin((e_end + ev) / L)` when that sum is below `L`, else 180°; the angle changes by at most the
-    /// sum over its two arms (degrees). Not finite when a bound is not.
+    /// turns by at most `asin((e_end + ev) / L)` when that sum is below `L` and `L` minus the sum is at least 0.01 mm (the
+    /// arm stays measurable), else 180°; the angle changes by at most the sum over its two arms (degrees). Not finite
+    /// when a bound is not.
     static func valueBound(_ d: MGSolidDimension, _ pose: MGPose, ea: Double, eb: Double, ev: Double) -> Double {
         guard d.kind == .angle, let v = d.vertex else { let s = ea + eb; return s.isNaN ? .infinity : s }
         func arm(_ end: MGAnnotationPoint, _ e: Double) -> Double {
             let delta = e + ev, len = (end.world(pose) - v.world(pose)).length
             if delta == 0 { return 0 }
-            guard delta < len else { return 180 }
+            // The arm must also stay long enough to measure (`dimensionValue`: 0.01 mm) at every pose.
+            guard delta < len, len - delta >= MGSolidAnnotationLimits.minDimension else { return 180 }
             return asin(delta / len) * 180 / .pi
         }
         return min(180, arm(d.a, ea) + arm(d.b, eb))
@@ -315,7 +317,7 @@ extension MGSolidAnnotationEngine {
             let off = abs(r.value - d.value)
             if off + r.bound <= tol { return (true, nil) }
             guard r.bound > 0, off <= tol else { return (false, nil) }
-            return (false, MGDimensionMotion.over(d, step: step, r, tolerance: tol))
+            return (false, MGDimensionMotion.over(d, doc, step: step, r, tolerance: tol))
         }
         let pose = doc.assembly.pose(MGPoseParameters(input: u0, explode: e, placements: placed))
         let pts = [d.a, d.b, d.vertex].compactMap { $0 }
@@ -337,7 +339,7 @@ extension MGSolidAnnotationEngine {
         let off = abs(v - d.value)
         if off + change <= tol { return (true, nil) }
         guard change > 0, off <= tol, let i = step else { return (false, nil) }
-        return (false, MGDimensionMotion(d, step: i, ends: ends, change: change, offset: off, tolerance: tol, pose: pose))
+        return (false, MGDimensionMotion(d, doc, step: i, ends: ends, change: change, offset: off, tolerance: tol, pose: pose))
     }
 
     /// The first of `ds` that does not hold over the view, with its motion detail (`dimensionCheck`); nil when all hold.
@@ -537,31 +539,39 @@ public struct MGCentreOfMassMotion: Equatable, Sendable {
     public let from: MGVec3, to: MGVec3
 
     /// `{"from": {"world": from}, "to": {"world": to}}` at full precision: the arrow at fixed points, exactly as it stands
-    /// at the step's first pose, so the applied repair has the same vector (and the same angle from down).
+    /// at the step's first pose, so the applied repair has the same vector (and the same angle from down). A candidate:
+    /// the report and the repair line give it only when a copy with it applied compiles (`fixedVerified`).
     public var fixed: MGJSON {
         func w(_ x: MGVec3) -> MGJSON { .object(["world": .array([x.x, x.y, x.z].map { .number($0) })]) }
         return .object(["from": w(from), "to": w(to)])
     }
+    /// True when a copy of the document with `fixed` applied compiles (`MGRepairCheck`); else `fixedNote` says why
+    /// (a world point outside ±4000 mm is `anchor.world`).
+    public internal(set) var fixedVerified = false
+    public internal(set) var fixedNote: String? = nil
 
     /// A measure for the text (not an executable value): six significant digits.
     static func g(_ x: Double) -> String { x.isFinite ? String(format: "%.6g", x) : "infinite" }
 
+    /// The actions first, each complete (`MGRepairLine`): `"spin": 0`, then the fixed points when they validate; then
+    /// the explanation, cut to fit.
     public var repair: String {
         let g = MGCentreOfMassMotion.g
         let why = distance.map { "its centroid lies \(g($0)) mm off the axis of joint `\(joint)`" } ?? "joint `\(joint)` slides it"
-        let line = "Arrow \(arrow) (step \(step + 1)) can turn during the spin: its ends can move \(g(bound + endBound)) mm (at most \(g(tolerance))), "
-            + "mostly because part `\(part)` moves and \(why). Anchor it at fixed points, \(MGAnnotationAnchorIssue.compactExact(fixed)), "
-            + "or set \"spin\": 0 in step \(step + 1)."
-        return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+        var prose = "Arrow \(arrow) (step \(step + 1)) can turn during the spin: its ends can move \(g(bound + endBound)) mm (at most \(g(tolerance))), "
+            + "mostly because part `\(part)` moves and \(why)."
+        if let note = fixedNote { prose += " No fixed points: \(note)." }
+        return MGRepairLine.compose(#"Set "spin": 0 in step \#(step + 1)."#, fixed: fixedVerified ? ("Or anchor it at fixed points: ", fixed) : nil, prose: prose)
     }
 
     /// `{"arrow", "step" (1-based), "part", "joint", "distance", "bound", "endBound", "tolerance", "angle", "extraAngle",
-    /// "fixed", "repair"}` (numbers at full precision; null when not finite).
+    /// "fixed", "fixedNote", "repair"}` (numbers at full precision; null when not finite; `fixed` null and `fixedNote`
+    /// set when the fixed points do not validate).
     public var json: MGJSON {
         func n(_ x: Double?) -> MGJSON { x.flatMap { $0.isFinite ? MGJSON.number($0) : nil } ?? .null }
         return .object(["arrow": .string(arrow), "step": .number(Double(step + 1)), "part": .string(part), "joint": .string(joint),
                         "distance": n(distance), "bound": n(bound), "endBound": n(endBound), "tolerance": n(tolerance), "angle": n(angle), "extraAngle": n(extra),
-                        "fixed": fixed, "repair": .string(repair)])
+                        "fixed": fixedVerified ? fixed : .null, "fixedNote": fixedNote.map { .string($0) } ?? .null, "repair": .string(repair)])
     }
 }
 
@@ -586,10 +596,17 @@ public struct MGDimensionMotion: Equatable, Sendable {
     /// The anchor that can move the most (`a`, `b` or `vertex`), its part, the joint in its chain that adds the most, and
     /// the anchor's distance from that joint's axis (nil for a sliding joint).
     public let anchor: String, part: String, joint: String, distance: Double?
-    /// The anchors that can move, as world points at the first pose at full precision: the repair.
-    public let fixed: MGJSON
+    /// The replacement anchors that validate (`MGRepairCheck`: a copy of the document with them applied compiles): the
+    /// anchors that can move, as world points at the first pose at full precision, or, when that copy is refused (a world
+    /// point outside ±4000 mm is `anchor.world`), as offsets on the nearest part above each that does not move. Nil when
+    /// neither validates; `fixedNote` then says why.
+    public internal(set) var fixed: MGJSON? = nil
+    public internal(set) var fixedNote: String? = nil
+    /// The replacements to try, in order (world points, then static-part offsets when every moving anchor has such a
+    /// part).
+    let candidates: [MGJSON]
 
-    init(_ d: MGSolidDimension, step: Int?, over: Bool = false,
+    init(_ d: MGSolidDimension, _ doc: MGSolidDocument, step: Int?, over: Bool = false,
          ends: [(name: String, point: MGAnnotationPoint, bound: Double, joint: String?, distance: Double?)],
          change: Double, offset: Double, tolerance: Double, pose: MGPose) {
         dimension = d.id; self.step = step; self.over = over
@@ -598,42 +615,122 @@ public struct MGDimensionMotion: Equatable, Sendable {
         self.change = change; self.offset = offset; self.tolerance = tolerance; unit = d.unit
         let top = ends.filter { $0.bound > 0 }.max { $0.bound < $1.bound }
         anchor = top?.name ?? ""; part = top?.point.part ?? ""; joint = top?.joint ?? ""; distance = top?.distance
-        func w(_ x: MGVec3) -> MGJSON { .object(["world": .array([x.x, x.y, x.z].map { .number($0) })]) }
-        var f: [String: MGJSON] = [:]
-        for e in ends where e.bound > 0 { f[e.name] = w(e.point.world(pose)) }
-        fixed = .object(f)
+        func v(_ x: MGVec3) -> MGJSON { .array([x.x, x.y, x.z].map { .number($0) }) }
+        var world: [String: MGJSON] = [:], still: [String: MGJSON] = [:]
+        var allStill = true
+        for e in ends where e.bound > 0 {
+            let x = e.point.world(pose)
+            world[e.name] = .object(["world": v(x)])
+            // The nearest part at or above the anchor's part whose own chain does not move.
+            var cur = e.point.part, found: String?
+            while let c = cur, found == nil {
+                if MGSolidAnnotationMotion.movers(doc, c).isEmpty { found = c }
+                cur = doc.assembly.part(c)?.parent
+            }
+            if let f = found { still[e.name] = .object(["part": .string(f), "offset": v((pose.world[f] ?? .identity).inverse.apply(x))]) }
+            else { allStill = false }
+        }
+        candidates = world.isEmpty ? [] : [.object(world)] + (allStill ? [.object(still)] : [])
     }
 
     /// The detail of an `over` range whose held anchor can move (`MGSolidAnnotationMotion.rangeBound`).
-    static func over(_ d: MGSolidDimension, step: Int?, _ r: (value: Double, bound: Double, other: MGAnnotationPoint, pose: MGPose, joint: String?, distance: Double?),
+    static func over(_ d: MGSolidDimension, _ doc: MGSolidDocument, step: Int?,
+                     _ r: (value: Double, bound: Double, other: MGAnnotationPoint, pose: MGPose, joint: String?, distance: Double?),
                      tolerance: Double) -> MGDimensionMotion {
         let name = r.other == d.a ? "a" : "b", slider = name == "a" ? "b" : "a"
-        return MGDimensionMotion(d, step: step, over: true,
+        return MGDimensionMotion(d, doc, step: step, over: true,
                                  ends: [(name, r.other, r.bound / 2, r.joint, r.distance), (slider, name == "a" ? d.b : d.a, 0, nil, nil)],
                                  change: r.bound, offset: abs(r.value - d.value), tolerance: tolerance, pose: r.pose)
     }
 
+    /// The actions first, each complete (`MGRepairLine`): `"spin": 0` (not for `over`, whose range covers a whole input
+    /// turn whatever the step plays), then the replacement anchors when they validate; then the explanation, cut to fit.
     public var repair: String {
         let g = MGCentreOfMassMotion.g
         let top = [("a", boundA), ("b", boundB), ("vertex", boundVertex ?? 0)].first { $0.0 == anchor }?.1 ?? 0
         let why = distance.map { "joint `\(joint)` turns it \(g($0)) mm off its axis" } ?? "joint `\(joint)` slides it"
         let at = step.map { " (step \($0 + 1))" } ?? ""
-        let what = over ? "Dimension \(dimension)\(at): its range over one input turn can be off by \(g(change)) \(unit)"
-            : "Dimension \(dimension)\(at) can change during the spin by \(g(change)) \(unit)"
-        var line = what + " (at most \(g(tolerance - offset)) \(unit)): anchor \(anchor) on part `\(part)` can move \(g(top)) mm, mostly because \(why). "
-        if over { line += "Anchor it at a fixed point, \(MGAnnotationAnchorIssue.compactExact(fixed))." }
-        else { line += "Anchor it at fixed points, \(MGAnnotationAnchorIssue.compactExact(fixed)), or set \"spin\": 0 in step \((step ?? 0) + 1)." }
-        return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+        var prose = (over ? "Dimension \(dimension)\(at): its range over one input turn can be off by \(g(change)) \(unit)"
+            : "Dimension \(dimension)\(at) can change during the spin by \(g(change)) \(unit)")
+            + " (at most \(g(tolerance - offset)) \(unit)): anchor \(anchor) on part `\(part)` can move \(g(top)) mm, mostly because \(why)."
+        if let note = fixedNote { prose += " No fixed anchor: \(note)." + (over ? " Hold that end on a part that does not move." : "") }
+        let head = over ? "" : #"Set "spin": 0 in step \#((step ?? 0) + 1)."#
+        return MGRepairLine.compose(head, fixed: fixed.map { (head.isEmpty ? "Replace its anchors with " : "Or replace its anchors with ", $0) }, prose: prose)
     }
 
     /// `{"dimension", "step" (1-based; null when measured), "over", "boundA", "boundB", "boundVertex", "change", "offset",
-    /// "tolerance", "unit", "anchor", "part", "joint", "distance", "fixed", "repair"}` (numbers at full precision; null
-    /// when not finite or absent).
+    /// "tolerance", "unit", "anchor", "part", "joint", "distance", "fixed", "fixedNote", "repair"}` (numbers at full
+    /// precision; null when not finite or absent).
     public var json: MGJSON {
         func n(_ x: Double?) -> MGJSON { x.flatMap { $0.isFinite ? MGJSON.number($0) : nil } ?? .null }
         return .object(["dimension": .string(dimension), "step": step.map { .number(Double($0 + 1)) } ?? .null, "over": .bool(over),
                         "boundA": n(boundA), "boundB": n(boundB), "boundVertex": n(boundVertex), "change": n(change), "offset": n(offset),
                         "tolerance": n(tolerance), "unit": .string(unit), "anchor": .string(anchor), "part": .string(part), "joint": .string(joint),
-                        "distance": n(distance), "fixed": fixed, "repair": .string(repair)])
+                        "distance": n(distance), "fixed": fixed ?? .null, "fixedNote": fixedNote.map { .string($0) } ?? .null, "repair": .string(repair)])
+    }
+}
+
+/// One repair line that a tool can pass to a model (at most `MGAnnotationAnchorIssue.repairScalars` Unicode scalars):
+/// every executable action complete and first, then the explanation, which alone is cut to fit.
+enum MGRepairLine {
+    /// `head` (a short action, or empty), then `lead` + the replacement JSON + "." when it fits whole (else `lead` + "the
+    /// report's `fixed` (see fixed)."), then `prose`, cut with "…" to the rest of the limit.
+    static func compose(_ head: String, fixed: (lead: String, json: MGJSON)?, prose: String,
+                        max: Int = MGAnnotationAnchorIssue.repairScalars) -> String {
+        func join(_ a: String, _ b: String) -> String { a.isEmpty ? b : b.isEmpty ? a : a + " " + b }
+        var actions = head
+        if let f = fixed {
+            let whole = join(actions, f.lead + MGAnnotationAnchorIssue.compactExact(f.json) + ".")
+            // Room for at least a short explanation after the actions.
+            actions = whole.unicodeScalars.count <= max - 40 ? whole : join(actions, f.lead + "the report's `fixed` (see fixed).")
+        }
+        let rest = max - actions.unicodeScalars.count - (actions.isEmpty ? 0 : 1)
+        guard rest > 1 else { return actions }
+        return join(actions, MGAnnotationAnchorIssue.bounded(prose, rest))
+    }
+}
+
+/// Every executable fixed-point repair is checked before a report gives it (`MGSolidParser.document`): a copy of the
+/// source with the repair applied must compile, as the weight suggestions are checked (`verified`). The copy's own
+/// refusals are not checked again (`nested`).
+enum MGRepairCheck {
+    @TaskLocal static var nested = false
+
+    static func verify(_ issue: MGSolidIssue, _ json: MGJSON, compile: (MGJSON) -> Result<MGSolidDocument, MGSolidIssue>) -> MGSolidIssue {
+        guard !nested, issue.dimensionMotion != nil || issue.centreOfMass != nil else { return issue }
+        func refusal(_ src: MGJSON) -> String? {
+            guard case .failure(let e) = $nested.withValue(true, operation: { compile(src) }) else { return nil }
+            return e.reason
+        }
+        var out = issue
+        if var m = out.dimensionMotion {
+            var notes: [String] = []
+            for (k, c) in m.candidates.enumerated() {
+                guard let r = refusal(replacingDimension(json, m.dimension, c)) else { m.fixed = c; break }
+                notes.append((k == 0 ? "world points" : "part offsets") + " are refused (`\(r)`)")
+            }
+            if m.fixed == nil { m.fixedNote = notes.isEmpty ? "no part above it stays still" : notes.joined(separator: "; ") }
+            out.dimensionMotion = m
+        }
+        if var c = out.centreOfMass {
+            let r = refusal(MGSolidDocument.replacingArrows(json, [c.arrow: c.fixed]))
+            c.fixedVerified = r == nil
+            c.fixedNote = r.map { "they are refused (`\($0)`)" }
+            out.centreOfMass = c
+        }
+        return out
+    }
+
+    /// `source` with the fields of `anchors` (`{"a"}`, `{"b"}`, `{"vertex"}`) set on dimension `id`.
+    static func replacingDimension(_ source: MGJSON, _ id: String, _ anchors: MGJSON) -> MGJSON {
+        guard case .object(var o) = source, case .object(var ann)? = o["annotations"], case .array(let list)? = ann["dimensions"],
+              case .object(let fields) = anchors else { return source }
+        ann["dimensions"] = .array(list.map { e in
+            guard case .object(var eo) = e, eo["id"] == .string(id) else { return e }
+            for (k, v) in fields { eo[k] = v }
+            return .object(eo)
+        })
+        o["annotations"] = .object(ann)
+        return .object(o)
     }
 }
