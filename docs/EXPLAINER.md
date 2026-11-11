@@ -65,9 +65,10 @@ equals the example file and runs it with `--strict`.
 Expected results (test X1): the 2D example shows "Venus and Earth are almost the same width." and the legend
 "Given 1" (the table is data as given; the caption shows no engine number, so it has no tier). The 3D example shows
 "The small gear has 15 teeth; the big gear has 30." and "The big gear turns 1/2 of a turn, the other way." with the
-legend "Solved 5" (2 motion claims, 2 captions, 1 check). The mixed example fills the table cells "15", "1", "30" and
-"-0.5", shows "Count the teeth: 15 and 30." and "So the big gear turns 1/2 of a turn." and its legend is "Solved 6"
-(2 motion claims, the table, 2 captions, 1 check).
+legend "Solved 5 (2 animation ratios)" (2 motion claims, 2 captions, 1 check). The mixed example fills the table cells
+"15", "1", "30" and "-0.5", shows "Count the teeth: 15 and 30." and "So the big gear turns 1/2 of a turn." and its
+legend is "Solved 6 (2 animation ratios)" (2 motion claims, the table, 2 captions, 1 check). The Solved group says how
+many of its claims are animation ratios (Solved motion claims; docs/SOLID-3D.md, "The legend's Solved group").
 
 ![Beat 1 of the mixed example: the table rows and both gears highlighted together](assets/explainer/gears-mixed-beat-1.png)
 
@@ -232,6 +233,36 @@ view (which passes its own area in points). Stacked layouts (taller than wide) k
 table gets about 28 % at 1280 × 800. Each split beat's manifest record gives `boardShare`. A beat whose share differs
 from the previous beat's changes the solid pane, so the story slides the panes there
 ([Pane slide in the story video](#pane-slide-in-the-story-video)).
+
+### Board items inside the pane
+
+The board is drawn at its viewport (the scene's `width`, `height` and `camera`, fitted to the reference pane), so an
+item placed beyond it is cut by the pane (r2k: the top table of three stacked tables lost its header under the title
+band). The check report measures every beat whose board pane is drawn (`MGExplainerFrame.boardClips`): the beat's
+settled board state, laid out as `marty-solid render` lays out a 1280 × 800 frame (the pane at its `boardShare`, the
+reference pane's viewport when both views show, the whole content area for a board alone), each item's box
+(`MGLayout.bounds`; empty tables and highlights skipped) against the pane less 8 px on each side
+(`boardSafeInset`, scaled with the width). An item that passes a side by more than half a pixel is
+`board.clip.<id>`, a warning (never refused), once per item at the first beat that cuts it. The report adds
+`boardClips` (only when there is one): `[{"id", "reason", "beat", "overflow": {"left", "right", "top", "bottom"},
+"size", "safe", "scale", "at", "move", "fit", "repair"}]`: the overflow in pixels, the item's box and the safe area
+[width, height] in pixels, the pixels per board unit, the item's `at`, and `move`, the board-unit move [x, y] (y up)
+that brings the box to the safe area's edge, at full precision (a rounded move could push a box that just fits past the
+other side; docs/SOLID-3D.md, "Executable repairs at full precision"). An item wider or taller than the safe area has no
+move (`move` null; r2k review: a six-column table with `cw` 4 is 1560 px wide in a 1216 px safe area, so every move
+leaves one side cut). Its `fit` gives the exact sizes, each rounded down to 0.01 (counts to whole numbers): for a table
+the largest `cw` (`rh`) for its columns (rows) and the most columns (rows) one table may keep at its `cw` (`rh`), so it
+can be split; for every item the largest board camera `zoom` that fits its box; and the `at` of the safe area's centre
+on the axis it overflows (full precision; the board point at the pane's centre, so it holds at any zoom): `{"cw", "columns", "rh", "rows", "zoom", "at"}` (null where it does not apply). The repair
+lists them. For example, for three stacked tables at `at` [6, 4], [6, 7] and [6, 10] in
+a board beside a solid (r2k):
+
+```text
+Board item t6 (beat 8) runs 50 px past the top of the board pane's safe area, so the pane cuts it. Move it by [0, -1.0356643356643347] board units: "at": [6, 8.964335664335666], and keep the other items clear of it.
+```
+
+The drawing is unchanged: the engine does not move or shrink an authored item. Other sizes than 1280 × 800 and the
+stacked layout are not measured.
 
 ### Pane slide in the story video
 
@@ -619,7 +650,7 @@ Explainer reasons: `explainer.json`, `explainer.object`, `explainer.number`, `ex
 `explainer.beats`, `explainer.beats.count`, `explainer.op.title`, `explainer.id.duplicate.<id>`,
 `explainer.id.view.<id>`, `notes.object`, `notes.count`, `notes.entry.<id>`, `notes.text.<id>`, `notes.view.<id>`,
 `names.count`, `names.text.<n>`, `names.token.<n>`, `names.number.<n>`,
-`notes.unused.<id>` (a warning; the strict check refuses it), `beat.object`, `beat.missing`, `beat.unknown.<keys>`,
+`notes.unused.<id>` (a warning; the strict check refuses it), `board.clip.<id>` (a warning, never refused), `beat.object`, `beat.missing`, `beat.unknown.<keys>`,
 `beat.unchecked.<n>`, `beat.ops`, `beat.ops.count`, `beat.check`, `beat.checks.count`, `beat.refused`,
 `beat.highlight`, `beat.highlight.count`, `beat.highlight.ref.<id>`, `beat.highlight.stale.<id>` (in `hostIssues`
 only), `stmt.json`, `stmt.kind`, `stmt.order`, `stmt.bytes`, `stmt.say`, `stmt.view.twice`, `stmt.highlight.twice`,
@@ -662,11 +693,13 @@ when its text holds `"explainer"`, else `assembly.bytes`. Exit codes: 0 ok, 1 re
 | `beats` | per kept beat: `{"n", "caption", "template", "unchecked", "tier", "facts", "checks": [{"value", "comparison", "target", "tol"}], "highlight": {"board", "solid", "annotations"}, "view"}` |
 | `annotations` | one entry per 3D annotation: the assembly report's `annotations` (`views.solid` also holds its `placements`) |
 | `legend` | `{"text", "groups": {"solved", "schematic", "given", "described"}, "notes", "claims"}` |
-| `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue, then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per beat arrow issue, then one `annotation.arrow.dropped.<id>` per arrow a beat still drops (`"view": "beat"`), then one `framing.subject.small.beat.<n>` per beat still whose subject misses a floor (`"view": "beat"`, `id` the first small group's unit), then one `unit.small.<id>` per small named unit (`"view": "solid"`), each `{"reason", "view", "id"}` |
+| `warnings` | `notes.unused.<id>`, then the solid's warnings, then one `annotation.anchor.hidden.<id>` or `annotation.anchor.untested.<id>` per beat anchor issue, then one `annotation.arrow.hidden.<id>` or `annotation.arrow.untested.<id>` per beat arrow issue, then one `annotation.arrow.dropped.<id>` per arrow a beat still drops (`"view": "beat"`), then the drop notes (`annotation.arrow.orphan.<id>`, then `annotation.arrow.caption.<id>`, `"view": "beat"`), then one `board.clip.<id>` per board item a beat's pane cuts (`"view": "board"`), then one `framing.subject.small.beat.<n>` per beat still whose subject misses a floor (`"view": "beat"`, `id` the first small group's unit), then one `unit.small.<id>` per small named unit (`"view": "solid"`), each `{"reason", "view", "id"}` |
 | `anchorIssues`, `anchorUntested` | with 3D annotations only: every label and pointer anchor issue (off part, then the beats in order), each with `suggest`, `noSuggest` and `repair` ([SOLID-3D.md](SOLID-3D.md#anchor-suggestions)), and the anchors a beat's test budget left untested ([SOLID-3D.md](SOLID-3D.md#anchor-checks)); `views.solid` holds neither |
 | `anchor` | with a refusal for an anchor reason only: the issue it names (`id`, `beat`, `cause`, `by`, `fix`, `suggest`, `repair`, …) |
 | `arrowIssues` | with 3D annotations only: every arrow a beat still does not show well enough (beats in order), each with the visible share, the part in the way, `suggest` (a move of the arrow), `noSuggest` and `repair` ([SOLID-3D.md](SOLID-3D.md#arrow-visibility)) |
-| `arrowDrops` | only when a beat still drops an arrow: `[{"id", "reason", "part", "by", "step", "beat"}]`, the force and flow arrows whose part the beat's camera cannot see, so the still does not draw them; a warning, never refused ([SOLID-3D.md](SOLID-3D.md#arrow-drop)) |
+| `arrowDrops` | only when a beat still drops an arrow: `[{"id", "reason", "cause", "part", "by", "step", "beat"}]`, the force and flow arrows whose part the beat's camera cannot see (`cause` `unit`), or that are fully hidden on a hidden tail part (`cause` `part`), so the still does not draw them; a warning, never refused ([SOLID-3D.md](SOLID-3D.md#arrow-drop)) |
+| `arrowDropNotes` | only when a dropped arrow leaves the story without it: `annotation.arrow.orphan.<id>` (every beat that lists it drops it) and `annotation.arrow.caption.<id>` (the beat's caption names the force of an arrow it drops), `[{"id", "reason", "kind", "beats", "part", "by", "word", "repair"}]`; warnings, never refused ([SOLID-3D.md](SOLID-3D.md#dropped-arrows-that-leave-a-caption-alone)) |
+| `boardClips` | only when a beat's board pane cuts a board item: `board.clip.<id>`, `[{"id", "reason", "beat", "overflow", "scale", "at", "move", "repair"}]`; a warning, never refused ([Board items inside the pane](#board-items-inside-the-pane)) |
 | `stillPlacements` | with 3D annotations only: the label placement of each beat still that draws annotations, at the still's effective camera and pane size (`[{"step", "beat", "placement"}]`) |
 | `subjectFloors` | only when a beat still's subject misses a floor at the closest framing that keeps it whole: the measure per subject group and exact repairs (`split`, `subset`, `ghost`, `repair`); a warning, never refused ([SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop)) |
 | `smallUnits` | only when a named unit is small in every beat still that shows it: `[{"unit", "pixels", "minimum", "stills", "step", "beat", "repair"}]`; a warning, never refused ([SOLID-3D.md](SOLID-3D.md#rendering-camera-framing-and-the-loop), "Small named units") |

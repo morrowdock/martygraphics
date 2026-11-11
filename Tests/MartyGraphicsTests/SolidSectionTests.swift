@@ -534,6 +534,6 @@ final class SolidSectionTests: XCTestCase {
         let whole = d.assembly.part("casing")!.mesh
         XCTAssertLessThan(c.mesh.signedVolume, 0.6 * whole.signedVolume)
         // Three solved motions, four captions with engine facts and two claim checks; sections and ghosts make no claim.
-        XCTAssertEqual(d.legend.text, "Solved 9")
+        XCTAssertEqual(d.legend.text, "Solved 9 (3 animation ratios)")
     }
 }

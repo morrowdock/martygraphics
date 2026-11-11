@@ -349,3 +349,187 @@ extension MGExplainerFrame {
         return (d, out)
     }
 }
+
+/// A board item that a beat's board pane cuts (docs/EXPLAINER.md, "Board items inside the pane"): its box leaves the
+/// pane's safe area at a 1280 × 800 frame. `board.clip.<id>`, a warning, with the exact move that brings it inside, or,
+/// when the box is larger than the safe area, the exact sizes that make it fit.
+public struct MGBoardClip: Equatable, Sendable {
+    public let id: String
+    /// The 0-based beat whose pane cuts it first.
+    public let beat: Int
+    /// How far the item's box passes each side of the safe area, in pixels (0 when inside on that side).
+    public let left: Double, right: Double, top: Double, bottom: Double
+    /// The item's box and the safe area, in pixels.
+    public let width: Double, height: Double, safeWidth: Double, safeHeight: Double
+    /// Pixels per board unit in that pane, and the board camera's zoom.
+    public let scale: Double, zoom: Double
+    /// The item's `at` (board units), when it has one.
+    public let at: MGPoint?
+    /// The board point (units) at the safe area's centre.
+    public let safeCentre: MGPoint
+    /// A table's columns, rows, column width `cw` and row height `rh` (board units); nil for another kind.
+    public let table: (cols: Int, rows: Int, cw: Double, rh: Double)?
+
+    public static func == (a: MGBoardClip, b: MGBoardClip) -> Bool {
+        a.id == b.id && a.beat == b.beat && a.left == b.left && a.right == b.right && a.top == b.top && a.bottom == b.bottom
+            && a.width == b.width && a.height == b.height && a.safeWidth == b.safeWidth && a.safeHeight == b.safeHeight
+            && a.scale == b.scale && a.zoom == b.zoom && a.at == b.at && a.safeCentre == b.safeCentre
+            && a.table?.cols == b.table?.cols && a.table?.rows == b.table?.rows && a.table?.cw == b.table?.cw && a.table?.rh == b.table?.rh
+    }
+
+    public var reason: String { "board.clip.\(id)" }
+
+    /// True when the box is wider or taller than the safe area: no move fits it.
+    public var tooLarge: Bool { width > safeWidth + 0.5 || height > safeHeight + 0.5 }
+
+    /// The board-unit move (x right, y up) that brings the box exactly to the safe area's edge, at full precision (a
+    /// rounded move could push a box that just fits past the other side); nil when the box is wider or taller than the
+    /// safe area (`tooLarge`: no move fits).
+    public var move: (dx: Double, dy: Double)? {
+        guard scale.isFinite, scale > 0, !tooLarge else { return nil }
+        let dx = left > 0 ? left / scale : right > 0 ? -right / scale : 0
+        let dy = top > 0 ? -top / scale : bottom > 0 ? bottom / scale : 0
+        return (dx, dy)
+    }
+
+    /// The exact sizes that make a too large item fit (`tooLarge`), each rounded down to 0.01 (counts down to whole
+    /// numbers): a table's largest `cw` for its columns and largest `rh` for its rows, the most columns or rows one
+    /// table may keep at its `cw` and `rh` (split it), the largest board camera zoom that fits the box, and the `at` of
+    /// the safe area's centre (where the resized item fits). nil when the box fits.
+    public var fit: (cw: Double?, cols: Int?, rh: Double?, rows: Int?, zoom: Double, at: MGPoint)? {
+        guard tooLarge, scale.isFinite, scale > 0, width > 0, height > 0 else { return nil }
+        func down(_ x: Double) -> Double { (x * 100).rounded(.down) / 100 }
+        let wide = width > safeWidth + 0.5, tall = height > safeHeight + 0.5
+        var cw: Double?, cols: Int?, rh: Double?, rows: Int?
+        if let t = table {
+            if wide, t.cols > 0 { cw = down(safeWidth / scale / Double(t.cols)); cols = max(1, Int((safeWidth / scale / t.cw).rounded(.down))) }
+            if tall, t.rows > 0 { rh = down(safeHeight / scale / Double(t.rows)); rows = max(1, Int((safeHeight / scale / t.rh).rounded(.down))) }
+        }
+        let z = down(zoom * min(safeWidth / width, safeHeight / height))
+        var c = at ?? safeCentre
+        if wide { c.x = safeCentre.x }
+        if tall { c.y = safeCentre.y }
+        return (cw, cols, rh, rows, z, c)
+    }
+
+    static func n(_ x: Double) -> String { MGAnnotationAnchorIssue.number(x) }
+    /// A coordinate of an executable repair, at full precision (`MGAnnotationAnchorIssue.exact`).
+    static func e(_ x: Double) -> String { MGAnnotationAnchorIssue.exact(x) }
+
+    /// One line a tool can pass to a model (at most `MGAnnotationAnchorIssue.repairScalars` Unicode scalars).
+    public var repair: String {
+        var sides: [String] = []
+        for (px, name) in [(top, "top"), (bottom, "bottom"), (left, "left"), (right, "right")] where px > 0 { sides.append("\(MGBoardClip.n(px.rounded(.up))) px past the \(name)") }
+        let what = "Board item \(id) (beat \(beat + 1)) runs \(sides.joined(separator: " and ")) of the board pane's safe area, so the pane cuts it."
+        if let f = fit {
+            let size = "It is \(MGBoardClip.n(width.rounded(.up))) × \(MGBoardClip.n(height.rounded(.up))) px and the safe area is "
+                + "\(MGBoardClip.n(safeWidth)) × \(MGBoardClip.n(safeHeight)) px, so no move fits it."
+            var ways: [String] = []
+            if let cw = f.cw, let cols = f.cols, let t = table {
+                ways.append("set \"cw\" to at most \(MGBoardClip.n(cw)) (\(t.cols) columns)")
+                ways.append("split it into tables of at most \(cols) column\(cols == 1 ? "" : "s")")
+            }
+            if let rh = f.rh, let rows = f.rows, let t = table {
+                ways.append("set \"rh\" to at most \(MGBoardClip.n(rh)) (\(t.rows) rows)")
+                ways.append("split it into tables of at most \(rows) row\(rows == 1 ? "" : "s")")
+            }
+            ways.append("set the board camera's \"zoom\" to at most \(MGBoardClip.n(f.zoom))")
+            let line = "\(what) \(size) " + MGAnnotationAnchorIssue.orList(ways.map { $0.prefix(1).uppercased() + $0.dropFirst() + "." })
+                + " Then use \"at\": [\(MGBoardClip.e(f.at.x)), \(MGBoardClip.e(f.at.y))]."
+            return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+        }
+        guard let m = move else {
+            return MGAnnotationAnchorIssue.bounded(what + " Move it inside the pane.", MGAnnotationAnchorIssue.repairScalars)
+        }
+        var line = what + " Move it by [\(MGBoardClip.e(m.dx)), \(MGBoardClip.e(m.dy))] board units"
+        if let at { line += ": \"at\": [\(MGBoardClip.e(at.x + m.dx)), \(MGBoardClip.e(at.y + m.dy))]" }
+        line += ", and keep the other items clear of it."
+        return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+    }
+
+    /// `{"id", "reason", "beat", "overflow": {"left", "right", "top", "bottom"} (px), "size": [w, h] (px), "safe": [w, h]
+    /// (px), "scale", "at", "move", "fit", "repair"}` (`beat` 1-based; `at` and `move` [x, y] board units or null; `fit`
+    /// `{"cw", "columns", "rh", "rows", "zoom", "at"}` when no move fits, else null).
+    public var json: MGJSON {
+        func r(_ x: Double) -> MGJSON { x.isFinite ? .number((x * 1000).rounded() / 1000) : .null }
+        // Executable values at full precision (`at`, `move`); `cw`, `rh` and `zoom` are already exact hundredths.
+        func x(_ v: Double) -> MGJSON { v.isFinite ? .number(v) : .null }
+        let fitJSON: MGJSON = fit.map { f in
+            .object(["cw": f.cw.map(x) ?? .null, "columns": f.cols.map { .number(Double($0)) } ?? .null, "rh": f.rh.map(x) ?? .null,
+                     "rows": f.rows.map { .number(Double($0)) } ?? .null, "zoom": x(f.zoom), "at": .array([x(f.at.x), x(f.at.y)])])
+        } ?? .null
+        return .object(["id": .string(id), "reason": .string(reason), "beat": .number(Double(beat + 1)),
+                        "overflow": .object(["left": r(left), "right": r(right), "top": r(top), "bottom": r(bottom)]),
+                        "size": .array([r(width), r(height)]), "safe": .array([r(safeWidth), r(safeHeight)]),
+                        "scale": r(scale), "at": at.map { .array([x($0.x), x($0.y)]) } ?? .null,
+                        "move": move.map { .array([x($0.dx), x($0.dy)]) } ?? .null, "fit": fitJSON, "repair": .string(repair)])
+    }
+}
+
+extension MGExplainerFrame {
+    /// The board pane's safe area: the pane less this many pixels on each side at a frame 1280 px wide.
+    public static let boardSafeInset = 8.0
+
+    /// The board items each beat's board pane cuts (`boardClips`), as `marty-solid render` lays the beats out: a fresh
+    /// session with speech pacing and a manual clock plays the beats in order (as `beatPanes`); at each beat whose board
+    /// pane is drawn (`MGExplainerSession.boardPane`) the settled board state is measured. Each item once, at the first
+    /// beat that cuts it. Empty when the document does not load or has no board. Deterministic; at most
+    /// `MGExplainerLimits.beats` beats.
+    public static func beatBoardClips(_ doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = MGAnnotationAnchorRules.width,
+                                      height: Int = MGAnnotationAnchorRules.height) -> [MGBoardClip] {
+        let clock = MGManualClock()
+        var session = MGExplainerSession(pacing: .speech, clock: clock, library: library)
+        guard case .success = session.load(doc), session.board != nil else { return [] }
+        let solid = session.solid != nil
+        let primarySolid = (session.primary ?? (solid ? "solid" : "board")) == "solid"
+        var out: [MGBoardClip] = [], seen = Set<String>()
+        var k = 0
+        while k < MGExplainerLimits.beats, let beat = session.presented.beat, beat == k {
+            clock.advance(by: session.motionRemaining)
+            _ = session.tick()
+            if session.boardPane.shown, let scene = session.state?.scene {
+                for c in boardClips(scene: scene, beat: k, width: width, height: height, solid: solid, primarySolid: primarySolid)
+                where seen.insert(c.id).inserted { out.append(c) }
+            }
+            _ = session.lineEnded(k)
+            k += 1
+        }
+        return out
+    }
+
+    /// The items of `scene` that a board pane cuts at a `width` × `height` frame (docs/EXPLAINER.md, "Board items inside
+    /// the pane"): the pane as `marty-solid render` lays it out (`panes`, side by side at `boardShare`, the viewport of the
+    /// reference pane `boardReferenceSize` when both views show; the whole content area for a board alone), each item's
+    /// box (`MGLayout.bounds`; empty tables and highlights skipped) against the pane less `boardSafeInset` × width / 1280
+    /// on each side. Item order; nil `beat` labels are the caller's.
+    public static func boardClips(scene: MGScene, beat: Int, width w: Int = MGAnnotationAnchorRules.width, height h: Int = MGAnnotationAnchorRules.height,
+                                  solid: Bool, primarySolid: Bool) -> [MGBoardClip] {
+        let both = solid
+        let share = both ? boardShare(scene: scene, width: w, height: h, primarySolid: primarySolid) : nil
+        guard let pane = panes(width: w, height: h, board: true, solid: solid, primarySolid: primarySolid, boardShare: share).board else { return [] }
+        let area = contentArea(width: w, height: h)
+        let size = CGSize(width: pane.width, height: pane.height)
+        let fit = both && w >= h ? boardReferenceSize(areaWidth: Double(area.width), areaHeight: Double(area.height), gap: paneGap(width: w),
+                                                      primarySolid: primarySolid) : size
+        let vp = MGViewport(size: fit, width: scene.width, height: scene.height, camera: scene.camera).resized(to: size)
+        let inset = boardSafeInset * Double(w) / 1280
+        let safe = CGRect(x: inset, y: inset, width: Double(pane.width) - 2 * inset, height: Double(pane.height) - 2 * inset)
+        var out: [MGBoardClip] = []
+        for item in scene.items.prefix(MGLimits.resolvedItems) where item.kind != .highlight && !item.isEmptyTable {
+            guard let r = MGLayout.bounds(item, in: scene.items, vp), !r.isNull, r.minX.isFinite, r.maxX.isFinite, r.minY.isFinite, r.maxY.isFinite else { continue }
+            let left = max(0, Double(safe.minX - r.minX)), right = max(0, Double(r.maxX - safe.maxX))
+            let top = max(0, Double(safe.minY - r.minY)), bottom = max(0, Double(r.maxY - safe.maxY))
+            // Half a pixel of rounding is not a cut.
+            guard max(left, right, top, bottom) > 0.5 else { continue }
+            let sc = Double(vp.scale)
+            let centre = MGPoint(vp.center.x + (Double(safe.midX) - Double(pane.width) / 2) / sc, vp.center.y - (Double(safe.midY) - Double(pane.height) / 2) / sc)
+            let table: (cols: Int, rows: Int, cw: Double, rh: Double)? = item.kind == .table
+                ? (Int(item.n("cols", 1)), Int(item.n("rows", 1)), item.n("cw", 1.6), item.n("rh", 0.7)) : nil
+            out.append(MGBoardClip(id: item.id, beat: beat, left: left, right: right, top: top, bottom: bottom,
+                                   width: Double(r.width), height: Double(r.height), safeWidth: Double(safe.width), safeHeight: Double(safe.height),
+                                   scale: sc, zoom: scene.camera?.zoom ?? 1, at: item.pts.count == 1 ? item.pts.first : nil,
+                                   safeCentre: centre, table: table))
+        }
+        return out
+    }
+}

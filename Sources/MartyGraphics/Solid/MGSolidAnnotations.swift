@@ -49,6 +49,17 @@ public enum MGAnnotationAnchor: Equatable, Sendable {
     case centre(part: String)
     /// A fixed world point (kernel frame: Z up, mm).
     case world(MGVec3)
+    /// The centre of mass of the whole assembly at the pose, plus a world offset (kernel frame, mm): uniform density,
+    /// each part weighted by its mesh volume (`MGMassPoint`). Force arrows only (docs/SOLID-3D.md, "Anchors").
+    case centreOfMass(MGVec3)
+}
+
+/// One part's share of the assembly's centre of mass: its mesh's volume centroid in its own frame and its share of the
+/// total volume (uniform density; the shares add up to 1).
+public struct MGMassPoint: Equatable, Sendable {
+    public let part: String
+    public let centroid: MGVec3
+    public let share: Double
 }
 
 /// A resolved anchor: a point in a part's frame (it moves with the part in every pose) or a fixed world point.
@@ -58,16 +69,62 @@ public struct MGAnnotationPoint: Equatable, Sendable {
     public var part: String? {
         switch anchor {
         case .part(let p), .offset(let p, _), .centre(let p): return p
-        case .world: return nil
+        case .world, .centreOfMass: return nil
         }
     }
-    /// The point in the part's frame, or the world point.
+    /// The point in the part's frame, or the world point (a centre-of-mass anchor: its world offset).
     public internal(set) var local: MGVec3
+    /// A centre-of-mass anchor: every part's share (filled once meshes exist); empty for every other anchor.
+    public internal(set) var mass: [MGMassPoint] = []
 
-    /// The point in the posed kernel world (Z up, mm).
+    /// True for a centre-of-mass anchor.
+    public var isCentreOfMass: Bool { if case .centreOfMass = anchor { return true }; return false }
+
+    /// The point in the posed kernel world (Z up, mm). A centre-of-mass anchor is the share-weighted sum of every part's
+    /// posed volume centroid, plus its offset.
     public func world(_ pose: MGPose) -> MGVec3 {
+        if isCentreOfMass {
+            var c = MGVec3.zero
+            for m in mass { c = c + (pose.world[m.part] ?? .identity).apply(m.centroid) * m.share }
+            return c + local
+        }
         guard let p = part else { return local }
         return (pose.world[p] ?? .identity).apply(local)
+    }
+}
+
+enum MGMassProperties {
+    /// The volume and volume centroid of a closed mesh in its own frame (divergence theorem over its triangles, taken
+    /// about the box centre). A mesh whose volume is not finite or below 1e-9 mm³ counts as its box (volume and centre).
+    static func volume(_ mesh: MGMesh) -> (volume: Double, centroid: MGVec3) {
+        let b = mesh.bounds
+        guard !b.isEmpty else { return (0, .zero) }
+        let o = b.center, pos = mesh.positions
+        var v = 0.0, m = MGVec3.zero
+        for i in 0..<mesh.triangleCount {
+            let (i0, i1, i2) = mesh.triangle(i)
+            guard i0 < pos.count, i1 < pos.count, i2 < pos.count else { continue }
+            let a = pos[i0] - o, bb = pos[i1] - o, c = pos[i2] - o
+            let t = a.dot(bb.cross(c)) / 6
+            v += t
+            m = m + (a + bb + c) * (t / 4)
+        }
+        if v.isFinite, abs(v) > 1e-9, m.x.isFinite, m.y.isFinite, m.z.isFinite { return (abs(v), o + m * (1 / v)) }
+        let s = b.size
+        return (max(0, s.x * s.y * s.z), o)
+    }
+
+    /// Every part's share of the assembly's mass (uniform density, by mesh volume; assembly order). Parts with no volume
+    /// get no share; when no part has volume, every part with a mesh gets an equal share at its box centre.
+    static func shares(_ assembly: MGAssembly) -> [MGMassPoint] {
+        let parts = assembly.parts.map { ($0.id, volume($0.mesh)) }
+        let total = parts.reduce(0) { $0 + $1.1.volume }
+        if total.isFinite, total > 0 {
+            return parts.filter { $0.1.volume > 0 }.map { MGMassPoint(part: $0.0, centroid: $0.1.centroid, share: $0.1.volume / total) }
+        }
+        let meshed = assembly.parts.filter { !$0.mesh.bounds.isEmpty }
+        guard !meshed.isEmpty else { return [] }
+        return meshed.map { MGMassPoint(part: $0.id, centroid: $0.mesh.bounds.center, share: 1 / Double(meshed.count)) }
     }
 }
 
@@ -343,13 +400,20 @@ extension MGSolidAnnotations {
     }
 
     /// `"p"`, `{"part": "p", "offset": [x, y, z]}`, `{"part": "p", "point": "centre"}`, `{"part": "p"}` (the same as
-    /// `"point": "centre"`) or `{"world": [x, y, z]}`.
-    static func anchor(_ v: MGJSON, _ names: Names, owner: String) throws -> MGAnnotationPoint {
+    /// `"point": "centre"`), `{"world": [x, y, z]}`, or, where `centreOfMass` allows it (a force arrow's ends),
+    /// `{"point": "centreOfMass"}` with an optional world `"offset": [x, y, z]` (any other use is `anchor.point`).
+    static func anchor(_ v: MGJSON, _ names: Names, owner: String, centreOfMass: Bool = false) throws -> MGAnnotationPoint {
         switch v {
         case .string(let ref):
             return MGAnnotationPoint(anchor: .part(try names.part(ref, owner: owner)), local: .zero)
         case .object(let o):
             let keys = Set(o.keys)
+            if keys == ["point"] || keys == ["point", "offset"], o["point"] == .string("centreOfMass") {
+                guard centreOfMass else { throw MGSolidIssue("anchor.point") }
+                let off = keys.contains("offset") ? try vector3(o["offset"], "anchor.offset") : .zero
+                // The parts' shares are filled in once meshes exist (`prepare`).
+                return MGAnnotationPoint(anchor: .centreOfMass(off), local: off)
+            }
             if keys == ["world"] { return MGAnnotationPoint(anchor: .world(try vector3(o["world"], "anchor.world")), local: try vector3(o["world"], "anchor.world")) }
             guard case .string(let ref)? = o["part"], keys == ["part"] || keys == ["part", "offset"] || keys == ["part", "point"] else {
                 throw MGSolidIssue("anchor.form")
@@ -389,8 +453,8 @@ extension MGSolidAnnotations {
             guard case .string(let ref) = v else { throw MGSolidIssue("arrow.on.\(id)") }
             on = try names.part(ref, owner: id)
         }
-        let from = try o["from"].map { try anchor($0, names, owner: id) }
-        let to = try o["to"].map { try anchor($0, names, owner: id) }
+        let from = try o["from"].map { try anchor($0, names, owner: id, centreOfMass: meaning == .force) }
+        let to = try o["to"].map { try anchor($0, names, owner: id, centreOfMass: meaning == .force) }
         if meaning == .motion, style == .line, from?.part == nil { throw MGSolidIssue("arrow.from.\(id)") }
         var sense: String?
         if let v = o["sense"] {
@@ -500,8 +564,13 @@ enum MGSolidAnnotationEngine {
     static func prepare(_ doc: inout MGSolidDocument) throws {
         guard !doc.annotations.isEmpty else { return }
         var a = doc.annotations
+        var shares: [MGMassPoint]?
         func resolve(_ p: inout MGAnnotationPoint) {
             if case .centre(let id) = p.anchor { p.local = doc.assembly.part(id)?.mesh.bounds.center ?? .zero }
+            if p.isCentreOfMass {
+                if shares == nil { shares = MGMassProperties.shares(doc.assembly) }
+                p.mass = shares ?? []
+            }
         }
         for i in a.labels.indices { var p = a.labels[i].at; resolve(&p); a.labels[i] = a.labels[i].with(at: p) }
         for i in a.arrows.indices { a.arrows[i] = a.arrows[i].resolving(resolve) }
@@ -677,9 +746,10 @@ enum MGSolidAnnotationEngine {
     }
 
     /// `annotation.unused.<id>` (some step uses `annotate`, no step shows it; strict refuses),
-    /// `annotation.cut.<id>` (a part anchor lies in the half that the same step's section removes; a warning only) and
+    /// `annotation.cut.<id>` (a part anchor lies in the half that the same step's section removes; a warning only),
     /// `annotation.anchor.off.<id>` (a label's or pointer's anchor lies off the part it names,
-    /// `MGSolidDocument.offPartAnchors`; strict refuses), in authored order. The view rule
+    /// `MGSolidDocument.offPartAnchors`; strict refuses) and `annotation.arrow.weight.<id>` (a gravity arrow's line of
+    /// action misses the centre of mass, `MGSolidDocument.weightPlacements`; a warning only), in authored order. The view rule
     /// `annotation.anchor.hidden.<id>` needs each still's camera, so the check report adds it
     /// (`MGSolidDocument.stepAnchorIssues`), not the compile.
     static func warnings(_ doc: MGSolidDocument) -> [MGSolidIssue] {
@@ -690,6 +760,7 @@ enum MGSolidAnnotationEngine {
         let rest = doc.assembly.pose(MGPoseParameters(input: doc.defaults.input, explode: 0))
         var out: [MGSolidIssue] = []
         let off = Set(doc.offPartAnchors.filter { $0.cause == .offPart }.map(\.id))
+        let weight = Set(doc.weightPlacements.map(\.id))
         for id in a.ids {
             if a.stepped, !shown.contains(id) { out.append(MGSolidIssue("annotation.unused.\(id)", part: id)) }
             let points = anchors(a, id)
@@ -702,6 +773,7 @@ enum MGSolidAnnotationEngine {
             }
             if cut { out.append(MGSolidIssue("annotation.cut.\(id)", part: id)) }
             if off.contains(id) { out.append(MGSolidIssue("annotation.anchor.off.\(id)", part: id)) }
+            if weight.contains(id) { out.append(MGSolidIssue("annotation.arrow.weight.\(id)", part: id)) }
         }
         return out
     }
@@ -961,5 +1033,128 @@ extension MGAnnotationPrimitive {
             }
         }
         return MGRenderMesh(positions: pos, normals: nor, indices: idx)
+    }
+}
+
+/// A gravity arrow drawn away from the assembly's centre of mass (docs/SOLID-3D.md, "Weight at the centre of mass"):
+/// `annotation.arrow.weight.<id>`, a warning, with the centre-of-mass anchors that draw it from the centre.
+public struct MGWeightPlacement: Equatable, Sendable {
+    public let id: String
+    /// The view that measured it: its 0-based step (nil: the plain view) and camera preset.
+    public let step: Int?, camera: String
+    /// How far (mm) the arrow's start lies from the centre of mass across that view (its depth along the view left
+    /// out), and the most allowed.
+    public let distance: Double, tolerance: Double
+    /// The centre of mass at the rest pose (kernel world, mm), the authored vector (end minus start) and the start's
+    /// depth offset from the centre along that view (kept, so the arrow stays in front of or behind the body as authored).
+    public let centre: MGVec3, vector: MGVec3, depth: MGVec3
+
+    public var reason: String { "annotation.arrow.weight.\(id)" }
+
+    /// Set by the check reports, which apply the suggestion to a copy and check it again (`verifying`): nil before,
+    /// true when the copy compiles, no longer warns for this arrow and shows it (no arrow issue in any still), false
+    /// otherwise, with `unverified` saying why.
+    public internal(set) var verified: Bool? = nil
+    public internal(set) var unverified: String? = nil
+
+    /// This placement with the report's re-check of its suggestion.
+    func verifying(_ why: String?) -> MGWeightPlacement {
+        var p = self; p.verified = why == nil; p.unverified = why; return p
+    }
+
+    /// `{"from": {"point": "centreOfMass", "offset": depth}, "to": {"point": "centreOfMass", "offset": depth + vector}}`
+    /// at full precision (the applied suggestion keeps the authored vector exactly; a zero offset is left out).
+    public var suggest: MGJSON {
+        func end(_ o: MGVec3) -> MGJSON {
+            let v = [o.x, o.y, o.z].map { $0 == 0 ? 0 : $0 }
+            return v.allSatisfy { $0 == 0 } ? .object(["point": .string("centreOfMass")])
+                : .object(["point": .string("centreOfMass"), "offset": .array(v.map { .number($0) })])
+        }
+        return .object(["from": end(depth), "to": end(depth + vector)])
+    }
+
+    var viewName: String { step.map { "step \($0 + 1)" } ?? "the plain view" }
+
+    public var repair: String {
+        if verified == false {
+            let line = "Weight arrow \(id) starts \(MGAnnotationAnchorIssue.number(distance)) mm from the centre of mass across \(viewName) "
+                + "(`\(camera)`; at most \(MGAnnotationAnchorIssue.number(tolerance)) mm): weight acts at the centre of mass. No checked suggestion: "
+                + "drawn from the centre with its depth, \(unverified ?? "it does not pass"). Draw it from {\"point\": \"centreOfMass\"} with an offset toward the camera."
+            return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+        }
+        let line = "Weight arrow \(id) starts \(MGAnnotationAnchorIssue.number(distance)) mm from the centre of mass across \(viewName) "
+            + "(`\(camera)`; at most \(MGAnnotationAnchorIssue.number(tolerance)) mm): weight acts at the centre of mass. Use \(MGAnnotationAnchorIssue.compactExact(suggest))."
+        return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+    }
+
+    /// `{"id", "reason", "step", "camera", "distance", "tolerance", "centreOfMass": [x, y, z], "suggest", "verified",
+    /// "repair"}` (measures to 0.001 mm; `step` 1-based, null for the plain view; `suggest` at full precision, null when
+    /// the re-check refused it; `verified` null when no re-check ran).
+    public var json: MGJSON {
+        func r(_ x: Double) -> MGJSON { x.isFinite ? .number((x * 1000).rounded() / 1000) : .null }
+        return .object(["id": .string(id), "reason": .string(reason), "step": step.map { .number(Double($0 + 1)) } ?? .null,
+                        "camera": .string(camera), "distance": r(distance), "tolerance": r(tolerance),
+                        "centreOfMass": .array([r(centre.x), r(centre.y), r(centre.z)]), "suggest": verified == false ? .null : suggest,
+                        "verified": verified.map(MGJSON.bool) ?? .null, "repair": .string(repair)])
+    }
+}
+
+extension MGSolidDocument {
+    /// Share of the model's bounding diagonal by which a gravity arrow's start may miss the centre of mass across a view.
+    public static let weightShare = 0.05
+
+    /// The centre of mass of the whole assembly at the rest pose (default input, explode 0; `MGMassProperties.shares`).
+    public var restCentreOfMass: MGVec3? {
+        let shares = MGMassProperties.shares(assembly)
+        guard !shares.isEmpty else { return nil }
+        let rest = assembly.pose(MGPoseParameters(input: defaults.input, explode: 0))
+        var c = MGVec3.zero
+        for m in shares { c = c + (rest.world[m.part] ?? .identity).apply(m.centroid) * m.share }
+        return c.x.isFinite && c.y.isFinite && c.z.isFinite ? c : nil
+    }
+
+    /// Gravity force arrows (`"cause": "gravity"`) with no centre-of-mass end, placed off the body (no end on a part,
+    /// or a tail (`arrowTail`) farther from its part's box than the off-part tolerance `max(partShare × that box's
+    /// diagonal, modelShare × the model's diagonal)`), whose start, at the rest pose, lies farther than `weightShare` ×
+    /// the model's bounding diagonal from the centre of mass across a view that shows the arrow: the offset with its
+    /// component along the view's direction left out (the steps that show it, each at its camera preset and orbit; the
+    /// plain view, `hero`, when no step does). Depth is left out because an arrow drawn in front of (or behind) the
+    /// body at the centre's place on screen reads right and stays visible; a weight drawn at a thigh does not. The first
+    /// such view (step order) is reported. A warning, never a refusal; the suggestion draws the arrow from the centre of
+    /// mass with the authored vector and the authored depth offset along that view. Deterministic.
+    public var weightPlacements: [MGWeightPlacement] {
+        let gravity = annotations.arrows.filter { $0.meaning == .force && $0.cause == "gravity" }
+        guard !gravity.isEmpty, let c = restCentreOfMass else { return [] }
+        let rest = assembly.pose(MGPoseParameters(input: defaults.input, explode: 0))
+        let tol = MGSolidDocument.weightShare * annotations.diagonal
+        let back = MGSolidStage.zUpToYUp.inverse
+        var out: [MGWeightPlacement] = []
+        for r in gravity {
+            guard let f = r.from, let t = r.to, !f.isCentreOfMass, !t.isCentreOfMass else { continue }
+            // An arrow on its part is that part's weight (a hanging load): only a weight placed off the body is measured.
+            if let tail = arrowTail(r), let b = assembly.part(tail.part)?.mesh.bounds, !b.isEmpty,
+               tail.distance <= Swift.max(MGAnnotationAnchorRules.partShare * b.size.length, MGAnnotationAnchorRules.modelShare * annotations.diagonal) {
+                continue
+            }
+            let p = f.world(rest), v = t.world(rest) - p
+            guard v.length.isFinite, v.length > 1e-9 else { continue }
+            var views: [(step: Int?, camera: String, yaw: Double, pitch: Double)] = []
+            for i in steps.indices where visibleAnnotations(step: i).contains(r.id) {
+                let name = steps[i].camera ?? "hero", d = MGSolidCamera.presets[name] ?? MGSolidCamera.presets["hero"]!
+                views.append((i, name, d.yaw + steps[i].orbit, d.pitch))
+            }
+            if views.isEmpty, visibleAnnotations(step: nil).contains(r.id), let d = MGSolidCamera.presets["hero"] { views.append((nil, "hero", d.yaw, d.pitch)) }
+            let w = p - c
+            for view in views {
+                let fwd = back.applyVector(MGSolidFraming.Basis(yaw: view.yaw, pitch: view.pitch).fwd).normalized
+                let depth = fwd * w.dot(fwd)
+                let across = (w - depth).length
+                guard across.isFinite, across > tol else { continue }
+                out.append(MGWeightPlacement(id: r.id, step: view.step, camera: view.camera, distance: across, tolerance: tol, centre: c,
+                                             vector: v, depth: depth))
+                break
+            }
+        }
+        return out
     }
 }

@@ -622,6 +622,7 @@ public struct MGExplainerSession {
             var e = MGExplainerIssue(issue.reason, view: .solid, statement: index, id: issue.part, detail: issue.visibility?.cause.rawValue)
             e.visibility = issue.visibility
             e.limit = issue.limit?.prefixed("solid.")
+            e.centreOfMass = issue.centreOfMass
             return refuse(e)
         case .success(let d): doc = d
         }

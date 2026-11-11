@@ -404,6 +404,21 @@ extension MGSolidDocument {
         }
     }
 
+    /// The plain view (`hero.png`) as `marty-solid render` frames it (`MGSolidRenderPlan`'s first still, with
+    /// `MGSolidFraming.clearView` and its arrow drops), step nil; nil when the plan has no still. `framedStills` holds it
+    /// already when the document has no steps.
+    public func heroStill(width: Int = MGAnnotationAnchorRules.width, height: Int = MGAnnotationAnchorRules.height) -> MGAnnotationAnchorView? {
+        let w = Double(width), h = Double(height)
+        let aspect = w > 0 && h > 0 ? w / h : 1.6
+        let bands = MGSolidRenderPlan.bands(width: w, height: h)
+        let plan = MGSolidRenderPlan(self, sourceName: "", source: MGSolidSource(data: Data()), loop: false)
+        guard let shot = plan.stills.first, shot.step == nil else { return nil }
+        let clear = MGSolidFraming.clearView(self, shot: shot, aspect: aspect, titleBand: shot.title != nil ? bands.title : 0,
+                                             captionBand: shot.caption != nil ? bands.caption : 0)
+        return MGAnnotationAnchorView(view: clear.view(view(step: nil)), params: shot.params, camera: clear.camera, width: w, height: h,
+                                      step: nil, beat: nil)
+    }
+
     /// The subject rule (`subjectIssues`) and the small-unit rule (`smallUnits`) over `stills`, on one raster per still.
     public func stillMeasures(_ stills: [MGFramedStill], width: Int = MGAnnotationAnchorRules.width, height: Int = MGAnnotationAnchorRules.height,
                               ghosts: ((MGFramedStill) -> [String])? = nil) -> (subjects: [MGSubjectSmall], small: [MGSmallUnit]) {

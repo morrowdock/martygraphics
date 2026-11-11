@@ -151,7 +151,7 @@ final class ExplainerLegendShownTests: ExplainerTestCase {
         XCTAssertEqual(first.state?.scene.items.map(\.id), ["keep"])
         XCTAssertEqual(first.claims.map(\.id), ["p", "w", "item.bb", "item.zz", "item.mm", "item.aa"])
         XCTAssertEqual(first.claims.filter { $0.id.hasPrefix("item.") }.map(\.tier), [.solved, .built, .described, .solved])
-        XCTAssertEqual(first.legend.text, "Solved 4 · Given 1 · Not checked 1")
+        XCTAssertEqual(first.legend.text, "Solved 4 (2 animation ratios) · Given 1 · Not checked 1")
         let report = MGExplainerReport.check(data: Data(doc.utf8)).text
         for _ in 0..<2 {
             XCTAssertEqual(try XFix.load(doc).legend, first.legend)
@@ -231,17 +231,17 @@ final class ExplainerLegendShownTests: ExplainerTestCase {
             """)
         let clock = MGManualClock()
         var s = try XFix.load(doc, pacing: .speech, clock: clock)
-        XCTAssertEqual(s.legend.text, "Solved 2")
+        XCTAssertEqual(s.legend.text, "Solved 2 (animation ratios)")
         XCTAssertNotNil(try? s.apply([XFix.json(Self.remove("q"))]).get())
-        XCTAssertEqual(s.legend.text, "Solved 2")
+        XCTAssertEqual(s.legend.text, "Solved 2 (animation ratios)")
         let ev = Self.next(&s, clock, 0)
         XCTAssertEqual(s.presented.beat, 1)
         XCTAssertTrue(XFix.reasons(ev).contains("patch.set.ref"), "\(XFix.reasons(ev))")
-        XCTAssertEqual(s.legend.text, "Solved 2")
+        XCTAssertEqual(s.legend.text, "Solved 2 (animation ratios)")
         _ = Self.next(&s, clock, 1)
         XCTAssertEqual(s.presented.beat, 2)
         XCTAssertFalse(s.claims.contains { $0.id == "item.q" })
-        XCTAssertEqual(s.legend.text, "Solved 2")
+        XCTAssertEqual(s.legend.text, "Solved 2 (animation ratios)")
     }
 
     /// Repro B: a host change gives `q` a fact text; that shown state counts, and stays counted after beat 3 removes
@@ -252,15 +252,15 @@ final class ExplainerLegendShownTests: ExplainerTestCase {
             """)
         let clock = MGManualClock()
         var s = try XFix.load(doc, pacing: .speech, clock: clock)
-        XCTAssertEqual(s.legend.text, "Solved 2")
+        XCTAssertEqual(s.legend.text, "Solved 2 (animation ratios)")
         XCTAssertNotNil(try? s.apply([XFix.json(#"{"op":"set","id":"q","key":"text","value":"Teeth {p.teeth}"}"#)]).get())
         XCTAssertEqual(s.claims.first { $0.id == "item.q" }?.tier, .solved)
-        XCTAssertEqual(s.legend.text, "Solved 3")
+        XCTAssertEqual(s.legend.text, "Solved 3 (2 animation ratios)")
         _ = Self.next(&s, clock, 0)
         _ = Self.next(&s, clock, 1)
         XCTAssertEqual(s.presented.beat, 2)
         XCTAssertNil(s.state?.scene.item("q"))
-        XCTAssertEqual(s.legend.text, "Solved 3", "q showed the fact before beat 3 removed it")
+        XCTAssertEqual(s.legend.text, "Solved 3 (2 animation ratios)", "q showed the fact before beat 3 removed it")
         guard case .success(let r) = MGExplainerSession.restore(s.snapshot(), pacing: .speech, clock: clock) else { return XCTFail("restore") }
         XCTAssertEqual(r.legend, s.legend)
         XCTAssertEqual(r.recordedShown, s.recordedShown)
@@ -315,7 +315,7 @@ final class ExplainerLegendShownTests: ExplainerTestCase {
         let s = try XFix.load(XFix.doc(board: board, solid: XFix.gears, beats: #"[{"say":"Look."}]"#))
         XCTAssertEqual(s.state?.scene.item("ltheta")?.text, "Plain")
         XCTAssertNil(s.claims.first { $0.id == "item.ltheta" }, "the superseded fact text was never shown")
-        XCTAssertEqual(s.legend.text, "Solved 3", "2 motion claims and the template")
+        XCTAssertEqual(s.legend.text, "Solved 3 (2 animation ratios)", "2 motion claims and the template")
         // The winning override counts when it shows a fact.
         let shown = board.replacingOccurrences(of: #""value":"Teeth {p.teeth}"},{"id":"ltheta","key":"text","value":"Plain"}"#,
                                                with: #""value":"Plain"},{"id":"ltheta","key":"text","value":"Teeth {p.teeth}"}"#)

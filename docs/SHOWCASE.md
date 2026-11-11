@@ -381,7 +381,7 @@ step 6 say the cancelling, and the engine does not check those words.)
 and the engine fills it in as **"The idler turns the other way, at 16/23 of the input speed."** The placeholder reads
 the fact `idler.speed` (source `gearMesh`, tier `solved`). A check in the same step, `idler.speed < 0`, proves the
 sign that `abs` drops; the check output lists it as `Checked`. The check report gives the step tier `solved` (`stepTiers`)
-and lists the facts the step used (`stepFacts`). The legend line for the whole model reads **"Solved 9"**: three
+and lists the facts the step used (`stepFacts`). The legend line for the whole model reads **"Solved 9 (3 animation ratios)"**: three
 motions, four captions with engine numbers and two checks. Its Built count is 0. A caption badge says "Numbers solved"
 and the reason says "Its numbers are engine facts; its words are not checked". The engine does not check the gears'
 3D tooth contact, load, strength, wear, friction or efficiency (`notChecked`). All of this is in
@@ -431,7 +431,7 @@ unit `mm`, source `dimension`). That is half the sum of the tooth counts, (14 + 
 * Arrow lengths are not to scale. The legend says so, and the engine prints this note: "Arrow lengths are not to scale"
   (`legend.notes`). It is drawn in the top right corner of each still.
 
-The legend line for the whole model reads "Solved 12" (`legend.text`): two motions, two labels, five arrows, one dimension
+The legend line for the whole model reads "Solved 12 (2 animation ratios)" (`legend.text`): two motions, two labels, five arrows, one dimension
 and two captions with engine numbers, plus one check. Its Built count is 0. Label and caption words are not checked, only their
 numbers. The engine does not check the gears' 3D tooth contact, load, strength, wear, friction or efficiency, or what
 drives the input (`notChecked`).

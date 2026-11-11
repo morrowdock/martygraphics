@@ -26,7 +26,7 @@ final class ExplainerStreamTests: ExplainerTestCase {
         let fixture = try String(contentsOf: XFix.root.appendingPathComponent("docs/fixtures/v1/explainer-mixed.statements.ndjson"), encoding: .utf8)
         var s = MGExplainerSession(pacing: .immediate, clock: MGManualClock())
         XCTAssertTrue(XFix.reasons(s.feed(fixture) + s.endStream()).isEmpty)
-        XCTAssertEqual(s.legend.text, "Solved 6")
+        XCTAssertEqual(s.legend.text, "Solved 6 (2 animation ratios)")
     }
 
     // S2: a new stream starts with an explainer header.

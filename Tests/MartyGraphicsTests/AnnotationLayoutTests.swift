@@ -503,7 +503,7 @@ final class AnnotationLayoutTests: XCTestCase {
         let d = try model("annotated-winch")
         guard case .success = MGSolidParser.document(json: d.source, profile: .strict) else { return XCTFail("strict") }
         XCTAssertEqual(d.warnings, [])
-        XCTAssertEqual(d.legend.text, "Solved 12")
+        XCTAssertEqual(d.legend.text, "Solved 12 (2 animation ratios)")
         XCTAssertEqual(d.legend.notes, ["Arrow lengths are not to scale"])
         XCTAssertEqual(d.steps.map(\.say)[1], "The drum gear has 42 teeth, so it turns 1/3 of a turn, the other way.")
         XCTAssertEqual(d.steps.map(\.say)[2], "The gear centres are 56 mm apart: half the sum of the tooth counts, times the module.")

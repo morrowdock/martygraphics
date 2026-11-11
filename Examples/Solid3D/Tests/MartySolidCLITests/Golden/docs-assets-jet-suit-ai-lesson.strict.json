@@ -450,6 +450,7 @@
     {
       "beat" : 4,
       "by" : "eL2.casing",
+      "cause" : "unit",
       "id" : "aL1",
       "part" : "eL1.casing",
       "reason" : "annotation.arrow.dropped.aL1",
@@ -458,6 +459,7 @@
     {
       "beat" : 4,
       "by" : "eR1.casing",
+      "cause" : "unit",
       "id" : "aR2",
       "part" : "eR2.casing",
       "reason" : "annotation.arrow.dropped.aR2",
@@ -1276,7 +1278,7 @@
       "Arrow lengths are not to scale",
       "Shapes and drawings as authored"
     ],
-    "text" : "Solved 19 · Given 1 · Not checked 16"
+    "text" : "Solved 19 (15 animation ratios) · Given 1 · Not checked 16"
   },
   "location" : null,
   "ok" : true,
@@ -4080,7 +4082,7 @@
         ],
         "shapes" : "Shapes as authored",
         "solved" : 16,
-        "text" : "Solved 16 · Not checked 16"
+        "text" : "Solved 16 (15 animation ratios) · Not checked 16"
       },
       "motionTiers" : [
         {
@@ -5715,11 +5717,54 @@
       "triangles" : 116260,
       "version" : 2,
       "warnings" : [
-
+        {
+          "part" : "aW",
+          "reason" : "annotation.arrow.weight.aW"
+        }
+      ],
+      "weightPlacements" : [
+        {
+          "camera" : "iso",
+          "centreOfMass" : [
+            0.126,
+            -0.748,
+            1022.429
+          ],
+          "distance" : 265.89499999999998,
+          "id" : "aW",
+          "reason" : "annotation.arrow.weight.aW",
+          "repair" : "Weight arrow aW starts 265.895 mm from the centre of mass across step 2 (`iso`; at most 100.652 mm): weight acts at the centre of mass. Use {\"from\": {\"offset\": [197.23323817227927, -197.23323817227933, 197.23039257899333], \"point\": \"centreOfMass\"}, \"to\": {\"offset\": [197.23323817227927, -197.23323817227933, -202.76960742100667], \"point\": \"centreOfMass\"}}.",
+          "step" : 2,
+          "suggest" : {
+            "from" : {
+              "offset" : [
+                197.23323817227927,
+                -197.23323817227933,
+                197.23039257899333
+              ],
+              "point" : "centreOfMass"
+            },
+            "to" : {
+              "offset" : [
+                197.23323817227927,
+                -197.23323817227933,
+                -202.76960742100667
+              ],
+              "point" : "centreOfMass"
+            }
+          },
+          "tolerance" : 100.652,
+          "verified" : true
+        }
       ]
     }
   },
   "warnings" : [
+    {
+      "id" : "aW",
+      "reason" : "annotation.arrow.weight.aW",
+      "view" : "solid"
+    },
     {
       "id" : "aL1",
       "reason" : "annotation.arrow.dropped.aL1",

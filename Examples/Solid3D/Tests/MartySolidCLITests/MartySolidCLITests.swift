@@ -93,7 +93,7 @@ final class MartySolidCLITests: XCTestCase {
         let example = try run(["check", "--strict", models.appendingPathComponent("horizontal-reduction.json").path])
         XCTAssertEqual(example.status, 0)
         XCTAssertEqual(example.json?["version"] as? Int, 2)
-        XCTAssertEqual((example.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 8 · Not checked 1")
+        XCTAssertEqual((example.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 8 (2 animation ratios) · Not checked 1")
         // Which fact filled each placeholder, and what each check proved.
         let stepFacts = example.json?["stepFacts"] as? [[String: Any]]
         XCTAssertEqual(stepFacts?[1]["facts"] as? [String], ["pinion.teeth", "wheel.teeth"])
@@ -317,7 +317,7 @@ final class MartySolidCLITests: XCTestCase {
         let winch = models.appendingPathComponent("annotated-winch.json").path
         let strict = try run(["check", "--strict", winch])
         XCTAssertEqual(strict.status, 0)
-        XCTAssertEqual((strict.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 12")
+        XCTAssertEqual((strict.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 12 (2 animation ratios)")
         XCTAssertEqual((strict.json?["legend"] as? [String: Any])?["notes"] as? [String], ["Arrow lengths are not to scale"])
         let annotations = try XCTUnwrap(strict.json?["annotations"] as? [[String: Any]])
         XCTAssertEqual(annotations.map { $0["id"] as? String }, ["lPinion", "lWheel", "aPinion", "aWheel", "aWeight", "aLift", "centres"])
@@ -362,7 +362,7 @@ final class MartySolidCLITests: XCTestCase {
         for k in ["ok", "reason", "strict", "kind", "version", "location", "file", "views", "ids", "beats", "annotations", "legend",
                   "warnings", "budget", "engine", "title", "primary"] { XCTAssertTrue(keys.contains(k), k) }
         XCTAssertEqual(r.json?["kind"] as? String, "explainer")
-        XCTAssertEqual((r.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 6")
+        XCTAssertEqual((r.json?["legend"] as? [String: Any])?["text"] as? String, "Solved 6 (2 animation ratios)")
         let views = r.json?["views"] as? [String: Any]
         XCTAssertNotNil(views?["board"] as? [String: Any])
         XCTAssertNotNil((views?["solid"] as? [String: Any])?["facts"])
@@ -420,7 +420,7 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual(files, ["board-0.png", "solid-0.png", "beat-1.png", "beat-2.png", "snapshot-beat-1.json", "snapshot-beat-2.json",
                                "loop.gif", "loop.mp4", "story.mp4", "manifest.json"])
         let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
-        XCTAssertEqual(manifest?["legend"] as? String, "Solved 6")
+        XCTAssertEqual(manifest?["legend"] as? String, "Solved 6 (2 animation ratios)")
         // The board has a table in every beat, so its pane shows in every beat (the adaptive rule changes nothing here).
         let outputs = manifest?["outputs"] as? [[String: Any]] ?? []
         XCTAssertEqual(outputs.filter { ($0["file"] as? String)?.hasPrefix("beat-") == true }.map { $0["boardPane"] as? Bool }, [true, true])
@@ -1099,7 +1099,7 @@ final class MartySolidCLITests: XCTestCase {
             let r = try run(["check", doc])
             XCTAssertEqual(r.status, 0, r.text)
             let legend = r.json?["legend"] as? [String: Any]
-            XCTAssertEqual(legend?["text"] as? String, "Solved 4 · Given 1 · Not checked 1")
+            XCTAssertEqual(legend?["text"] as? String, "Solved 4 (2 animation ratios) · Given 1 · Not checked 1")
             XCTAssertEqual((legend?["claims"] as? [[String: Any]])?.compactMap { $0["id"] as? String },
                            ["p", "w", "item.bb", "item.zz", "item.mm", "item.aa"])
         }
@@ -1133,7 +1133,7 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual(clean.status, 0, clean.text)
         // Saved at beat 1 with beat 2 queued, before snapshots held `shown`: the legend is presented-only (2 motion
         // claims, the table, beat 1's caption) and the record is the state shown now.
-        XCTAssertEqual(clean.json?["legend"] as? String, "Solved 4")
+        XCTAssertEqual(clean.json?["legend"] as? String, "Solved 4 (2 animation ratios)")
         XCTAssertEqual(clean.json?["caption"] as? String, "Count the teeth: 15 and 30.")
         for _ in 0..<20 {
             let r = try run(["snapshot", "check", fixtures.appendingPathComponent("explainer-two-false-checks.snapshot.json").path])

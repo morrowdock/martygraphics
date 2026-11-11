@@ -7,8 +7,8 @@ equal). They are synthetic, hand-written examples (Apache-2.0), not the output o
 | File | Views | What it shows | Legend |
 | --- | --- | --- | --- |
 | [`planets-2d.explainer.json`](planets-2d.explainer.json) | 2D | A table of typed data with a `basis` note; one beat highlights two rows. | Given 1 |
-| [`gears-3d.explainer.json`](gears-3d.explainer.json) | 3D | Two meshing gears; captions filled from engine facts (`{w.speed\|abs\|frac}`), a sign check, a spin. | Solved 5 |
-| [`gears-mixed.explainer.json`](gears-mixed.explainer.json) | both | The same gears plus a table whose cells show the 3D facts; each beat highlights a table row and a gear together. | Solved 6 |
+| [`gears-3d.explainer.json`](gears-3d.explainer.json) | 3D | Two meshing gears; captions filled from engine facts (`{w.speed\|abs\|frac}`), a sign check, a spin. | Solved 5 (2 animation ratios) |
+| [`gears-mixed.explainer.json`](gears-mixed.explainer.json) | both | The same gears plus a table whose cells show the 3D facts; each beat highlights a table row and a gear together. | Solved 6 (2 animation ratios) |
 
 ```sh
 swift build --package-path Examples/Solid3D

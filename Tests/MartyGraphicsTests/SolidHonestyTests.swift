@@ -217,7 +217,7 @@ final class SolidHonestyTests: XCTestCase {
         let legend = d.legend
         XCTAssertEqual(legend.claims.map(\.id), ["pinion", "wheel", "step.2", "step.3", "step.3.check.1", "step.3.check.2", "step.4", "step.4.check.1", "step.5"])
         XCTAssertEqual([legend.solved, legend.built, legend.described], [8, 0, 1])
-        XCTAssertEqual(legend.text, "Solved 8 · Not checked 1")
+        XCTAssertEqual(legend.text, "Solved 8 (2 animation ratios) · Not checked 1")
         XCTAssertNil(legend.note)
         XCTAssertEqual(legend.shapes, "Shapes as authored")
         XCTAssertEqual(Array(d.steps.map(\.say)[1...3]), ["The pinion has 15 teeth; the wheel has 40.",
@@ -231,7 +231,7 @@ final class SolidHonestyTests: XCTestCase {
         XCTAssertEqual(p.motionTier("stage.output"), .solved)
         // v1 captions with numbers are Not checked.
         guard case .success(let v1) = MGSolidParser.document(data: try model("slider-crank")) else { return XCTFail() }
-        XCTAssertEqual(v1.legend.text, "Solved 3 · Not checked 3")
+        XCTAssertEqual(v1.legend.text, "Solved 3 (animation ratios) · Not checked 3")
     }
 
     func testDescribe() throws {
@@ -437,7 +437,7 @@ final class SolidHonestyReviewTests: XCTestCase {
         XCTAssertEqual(follow.fact("a.speed")?.tier, .solved)
         XCTAssertEqual(follow.steps[0].tier, .built)
         XCTAssertEqual(follow.motionTier("b"), .built)
-        XCTAssertEqual(follow.legend.text, "Solved 1 · Schematic 2")
+        XCTAssertEqual(follow.legend.text, "Solved 1 (animation ratio) · Schematic 2")
         XCTAssertEqual(follow.legend.note, "Some motion is schematic")
         XCTAssertEqual(follow.claims.first { $0.id == "b" }?.badge, "Schematic motion")
         let scaled = try doc(#"{"v": 2, "kind": "assembly", "parts": [{"id": "d", "shape": {"shaft": {"radius": 10, "length": 4}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 0.333}}], "steps": [{"say": "It turns {d.speed|frac} of a turn."}]}"#)
@@ -452,7 +452,7 @@ final class SolidHonestyReviewTests: XCTestCase {
         // The shipped turbofan's HP spool runs at an authored 3 x N1.
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         guard case .success(let fan) = MGSolidParser.document(data: try Data(contentsOf: root.appendingPathComponent("Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json"))) else { return XCTFail() }
-        XCTAssertEqual(fan.legend.text, "Solved 1 · Schematic 1 · Not checked 1")
+        XCTAssertEqual(fan.legend.text, "Solved 1 (animation ratio) · Schematic 1 · Not checked 1")
     }
 
     /// S3: a check does not make prose Solved; it is its own claim with its expression.

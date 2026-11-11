@@ -26,7 +26,8 @@ public struct MGSolidLegend: Equatable, Sendable {
     public var solved: Int
     public var built: Int
     public var described: Int
-    /// For example "Solved 9 · Schematic 2 · Not checked 1" (groups with no claims are left out).
+    /// For example "Solved 9 (7 animation ratios) · Schematic 2 · Not checked 1" (groups with no claims are left out;
+    /// the Solved group says how many of its claims are animation ratios, `MGLegendText.solved`).
     public var text: String
     /// "Some motion is schematic" when a motion claim is below Solved; the author cannot remove it.
     public var note: String?
@@ -57,6 +58,20 @@ extension MGSolidTier {
         case .built: return kind == .motion ? "Schematic motion" : "Schematic"
         case .described: return "Not checked"
         }
+    }
+}
+
+/// The legend's group words (docs/SOLID-3D.md, "Truth tiers", "The legend's Solved group").
+public enum MGLegendText {
+    /// The Solved group: "Solved N". A Solved motion claim is an animation ratio (a part's turn or travel per input
+    /// turn, solved from the joints and drives), not a measured fact about the real object, so the group says how many
+    /// of its claims are such ratios: "Solved N (animation ratios)" when all N are ("Solved 1 (animation ratio)"),
+    /// "Solved N (M animation ratios)" when M of them are (M ≥ 1; "1 animation ratio"), and "Solved N" when none is.
+    public static func solved(_ n: Int, ratios m: Int) -> String {
+        let r = min(max(0, m), n)
+        if r == 0 { return "Solved \(n)" }
+        if r == n { return "Solved \(n) (animation \(n == 1 ? "ratio" : "ratios"))" }
+        return "Solved \(n) (\(r) animation \(r == 1 ? "ratio" : "ratios"))"
     }
 }
 
@@ -142,7 +157,7 @@ extension MGSolidDocument {
         let n = { (t: MGSolidTier) in c.filter { $0.tier == t }.count }
         let (s, b, d) = (n(.solved), n(.built), n(.described))
         var groups: [String] = []
-        if s > 0 { groups.append("Solved \(s)") }
+        if s > 0 { groups.append(MGLegendText.solved(s, ratios: c.filter { $0.kind == .motion && $0.tier == .solved }.count)) }
         if b > 0 { groups.append("Schematic \(b)") }
         if d > 0 { groups.append("Not checked \(d)") }
         let note = c.contains { $0.kind == .motion && $0.tier < .solved } ? "Some motion is schematic" : nil
