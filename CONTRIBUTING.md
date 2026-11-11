@@ -11,4 +11,14 @@ Every commit must include a DCO sign-off. By signing, you certify the
 Use `git commit -s` and an email you are comfortable publishing; a GitHub noreply
 address is recommended. A sign-off is a certification, not a cryptographic signature.
 
+Every pull request must pass the required `CI` check runs `hygiene` (whitespace,
+tool tests, DCO, file manifest) and `macos` (hosted build and Swift tests). They run
+automatically on each push to the PR; a fork PR runs with a read-only token and
+no secrets. Branch protection also requires the branch to be up to date with
+`main` before merging, because the checks test the PR head itself, not a
+synthetic merge; update the branch when GitHub asks. `main` takes only squash
+merges. Hosted runners have no real GPU, so local GPU and iOS-simulator
+receipts are still required where [Verify on Mac](docs/VERIFY-ON-MAC.md) and
+[local validation](docs/LOCAL-VALIDATION.md) ask for them.
+
 Follow CODE_OF_CONDUCT.md. Report vulnerabilities using SECURITY.md.

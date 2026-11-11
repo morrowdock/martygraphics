@@ -49,22 +49,54 @@ or patches. The standard mechanics math helpers have numerical checks;
 there are no built-in mechanics walkthrough templates.
 
 The Ubuntu `hygiene` job checks repository hygiene and DCO. The `macos` job
-(see below) runs the build and tests on a hosted Mac. Record a successful Mac run at the exact
-release commit before publication. These tests do not establish visual
+(see below) runs the build and tests on a hosted Mac. Both are required pull
+request checks. Record a successful Mac run at the exact release commit before
+publication. These tests do not establish visual
 quality on a physical iPhone/iPad or cover every possible scene.
 
-## Hosted macOS run (maintainer dispatch)
+## Hosted CI (required merge gate)
 
-`.github/workflows/ci.yml` is dispatch-only: no PR, fork, or push triggers, no
-secrets, read-only token, exact head-SHA checkout, no caches. A maintainer runs it:
+`.github/workflows/ci.yml` (workflow `CI`) runs on every pull request (opened,
+synchronize, reopened, ready for review), on every push to `main`, and on manual
+dispatch. Branch protection on `main` requires its two check runs, **`hygiene`**
+and **`macos`**, to pass before a merge, and requires branches to be **up to date
+before merging**. `main` takes only squash merges of PRs, force pushes are
+disabled, and the rules include administrators. It uses `pull_request`, never
+`pull_request_target`: fork PRs run with a read-only token and no secrets. There
+are no caches, and checkouts do not keep credentials. A new push to a PR cancels
+that PR's older run.
+
+Each job checks out the **actual head commit**, not the synthetic merge ref, so a
+result names one real SHA. This is sound only because branches must be up to
+date: the PR head then already contains the latest `main`. The push run on `main`
+after each merge is a late safety net, not the gate. The DCO range is the PR base
+to the PR head; for a push to `main` it is the previous tip to the new tip. A new
+branch, or a base that is gone after a force push, checks the head commit only
+(`HEAD^..HEAD`). That fallback can miss a missing sign-off on an earlier commit of
+a multi-commit push; this is acceptable because `main` takes only squash merges,
+force pushes are disabled and administrators are included, so such a push
+cannot reach `main`. The `hygiene` job
+runs `git diff --check`, the `tools/tests` suite, `check_dco.py` and
+`validate_local.py --check-files`.
+
+A maintainer can also dispatch a run. A dispatched run uses the workflow file of
+the dispatched `--ref` and attaches its check runs to **that ref's tip SHA**, not
+to `head_sha`. To publish the required checks on a PR head, dispatch with
+`--ref <the PR branch>` and with `head_sha` equal to that branch's current tip:
 
 ```sh
-gh workflow run ci.yml --repo morrowdock/martygraphics --ref main \
-  -f base_sha=<full base sha> -f head_sha=<full PR head sha>
+gh workflow run ci.yml --repo morrowdock/martygraphics --ref <PR branch> \
+  -f base_sha=<full PR base sha> -f head_sha=<full tip sha of that PR branch>
 gh run watch
 ```
 
-Use the actual PR head SHA, not the synthetic merge. The `macos` job runs on the
+A run dispatched with `--ref main` never satisfies a PR's required checks; its
+check runs land on `main`'s tip. A fork PR's branch is not in this repository,
+so a dispatch cannot publish its checks; its `pull_request` run does that. When
+`head_sha` differs from the dispatched ref's tip, the run still tests `head_sha`
+as evidence only, and the `hygiene` job writes a warning that its check runs are
+on the ref's tip. Use the actual
+PR head SHA, not the synthetic merge. The `macos` job runs on the
 free standard `macos-26` image (Xcode 26.6) and does `swift build --jobs 2`,
 `swift test --jobs 2` for the root package, tests for Examples/Solid3D,
 Examples/Turbofan, Examples/KeySwitch3D and tools/SceneValidator, and builds for
@@ -74,4 +106,6 @@ artifact. Several dispatches run in parallel, so they do not queue on one Mac.
 Hosted VMs have no real Metal GPU. Tests that need one already `XCTSkip`
 themselves (`MGRTRenderer.isSupported`); no test was weakened. A hosted pass
 therefore does NOT replace local native receipts: GPU path-tracer checks and
-iOS-simulator checks still require a local Mac receipt.
+iOS-simulator checks still require a local Mac receipt wherever this page or
+[local validation](LOCAL-VALIDATION.md) asks for one. The PR checks are required
+in addition to those receipts, not instead of them.

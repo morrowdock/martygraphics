@@ -1,6 +1,27 @@
-name: optional hosted checks
-# Maintainers may opt in to hosted Ubuntu execution. No automatic PR/fork jobs.
+name: CI
+# Merge gate. Every pull request and every push to main run the `hygiene` and
+# `macos` jobs; branch protection on main requires both check runs to pass.
+# Maintainers can also dispatch the workflow by hand with pinned SHAs.
+#
+# Safety: `pull_request` only (never `pull_request_target`), so a fork PR runs
+# with a read-only token and no secrets. No caches (a cache shared across PRs
+# could be poisoned). Checkouts do not persist credentials.
+#
+# Both jobs check out the ACTUAL head commit, not the synthetic merge ref, so
+# the result belongs to one real, reproducible SHA (the same SHA that local
+# receipts and the DCO range name). This is sound ONLY because branch
+# protection requires branches to be up to date before merging: the PR head
+# then already contains the latest main. The push run on main after a merge is
+# a late safety net, not the gate.
+#
+# A manual dispatch attaches its check runs to the dispatched ref's tip, not to
+# inputs.head_sha. To publish a PR's required checks, dispatch --ref <PR branch>
+# with head_sha equal to that branch's tip; --ref main never satisfies them.
 on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       base_sha:
@@ -11,35 +32,98 @@ on:
         required: true
 permissions:
   contents: read
+# A new push to a PR cancels that PR's older runs. Pushes to main and
+# dispatches each get their own group, so they never cancel or replace a run.
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   hygiene:
+    name: hygiene
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: ${{ inputs.head_sha }}
-      - run: git show --format= --check HEAD
-      - run: python3 -m unittest discover -s tools/tests -v
-      - env:
-          BASE_SHA: ${{ inputs.base_sha }}
-          HEAD_SHA: ${{ inputs.head_sha }}
-        run: python3 tools/check_dco.py "$BASE_SHA" "$HEAD_SHA"
+          ref: ${{ github.event.pull_request.head.sha || inputs.head_sha || github.sha }}
+      - name: Resolve commit range
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          REF_SHA: ${{ github.sha }}
+          IN_BASE: ${{ inputs.base_sha }}
+          IN_HEAD: ${{ inputs.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$EVENT" in
+            pull_request) base=$PR_BASE; head=$PR_HEAD ;;
+            push) base=$PUSH_BEFORE; head=$REF_SHA ;;
+            workflow_dispatch) base=$IN_BASE; head=$IN_HEAD ;;
+            *) echo "::error::Unexpected event $EVENT"; exit 1 ;;
+          esac
+          sha() { [[ $1 =~ ^[0-9a-fA-F]{40}$ ]]; }
+          sha "$head" || { echo "::error::Head is not a full commit SHA"; exit 1; }
+          [ "$(git rev-parse HEAD)" = "$(git rev-parse "$head^{commit}")" ] \
+            || { echo "::error::Checkout is not the head commit"; exit 1; }
+          if [ "$EVENT" = workflow_dispatch ] && [ "$(git rev-parse "$head^{commit}")" != "$(git rev-parse "$REF_SHA^{commit}")" ]; then
+            # Evidence only (for example a fork PR head): this run's checks
+            # attach to the ref's tip, so they cannot satisfy a PR's required checks.
+            echo "::warning::head_sha is not the dispatched ref's tip ($REF_SHA). These check runs attach to $REF_SHA and do not satisfy a PR's required checks; dispatch --ref <PR branch> with head_sha equal to its tip."
+          fi
+          if [ "$EVENT" = push ]; then
+            # A new branch has an all-zero `before`; a force push can name a
+            # commit that is gone. Then check the pushed head commit only.
+            # This can miss DCO on earlier commits of a multi-commit push.
+            # Accepted: main takes only squash merges of PRs, force pushes are
+            # disabled, and branch protection includes administrators.
+            if [[ $base =~ ^0{40}$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+              if git rev-parse -q --verify HEAD^ >/dev/null; then
+                echo "::warning::Push base $base is not usable; checking the head commit only"
+                base=$(git rev-parse HEAD^)
+              else
+                echo "::warning::Head is a root commit; checking it alone"
+                base=root
+              fi
+            fi
+          fi
+          [ "$base" = root ] || sha "$base" || { echo "::error::Base is not a full commit SHA"; exit 1; }
+          echo "BASE_SHA=$base" >> "$GITHUB_ENV"
+          echo "HEAD_SHA=$head" >> "$GITHUB_ENV"
+          echo "Range: $base..$head ($EVENT)"
+      - name: Whitespace
+        shell: bash
+        run: |
+          if [ "$BASE_SHA" = root ]; then git show --format= --check HEAD
+          else git diff --check "$BASE_SHA...$HEAD_SHA"; fi
+      - name: Tool tests
+        run: python3 -m unittest discover -s tools/tests -v
+      - name: DCO sign-off
+        shell: bash
+        run: |
+          if [ "$BASE_SHA" = root ]; then
+            git show -s --format=%B HEAD | grep -Eq '^Signed-off-by: .+ <[^<>[:space:]]+@[^<>[:space:]]+>$' \
+              || { echo "Missing DCO sign-off: $HEAD_SHA" >&2; exit 1; }
+          else python3 tools/check_dco.py "$BASE_SHA" "$HEAD_SHA"; fi
+      - name: File manifest
+        run: python3 tools/validate_local.py --check-files
   # Hosted macOS build/tests on GitHub's free standard runner (not a larger,
-  # paid runner). Dispatch only; no secrets; no caches (a cache shared across
-  # PRs could be poisoned, and the build is small enough to run clean).
-  # GPU-dependent tests already XCTSkip when no Metal ray-tracing device exists
-  # (hosted VMs have no real GPU). Local native receipts stay required for GPU
-  # and iOS-simulator checks (docs/VERIFY-ON-MAC.md).
+  # paid runner). GPU-dependent tests already XCTSkip when no Metal ray-tracing
+  # device exists (hosted VMs have no real GPU). Local native receipts stay
+  # required for GPU and iOS-simulator checks (docs/VERIFY-ON-MAC.md).
   macos:
+    name: macos
     runs-on: macos-26
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-          ref: ${{ inputs.head_sha }}
+          ref: ${{ github.event.pull_request.head.sha || inputs.head_sha || github.sha }}
       - name: Select Xcode
         run: |
           sudo xcode-select -s /Applications/Xcode_26.6.app

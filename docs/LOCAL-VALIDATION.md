@@ -1,4 +1,10 @@
-# Maintainer validation without hosted CI
+# Maintainer local validation
+
+Two gates apply to every PR. The hosted `CI` workflow's check runs **`hygiene`**
+and **`macos`** are required and run automatically ([hosted CI](VERIFY-ON-MAC.md#hosted-ci-required-merge-gate)).
+The local evidence below is still required where this page and
+[Verify on Mac](VERIFY-ON-MAC.md) ask for it: hosted VMs have no real GPU and no
+iOS simulator lane, and they do not run Gitleaks or the privacy review.
 
 The required commit status is **`maintainer/local-validation`**. A trusted
 maintainer publishes it for the **actual PR head SHA**, after reviewing local
@@ -7,10 +13,11 @@ An old success, a synthetic merge check or an Actions quota failure cannot clear
 the candidate. Branch protection, PR review and administrator enforcement remain
 in effect; this process provides evidence for those gates.
 
-The workflow is **manual `workflow_dispatch` only**, on hosted `ubuntu-latest`.
-It has no automatic push/PR/fork trigger and no self-hosted runner. Maintainers
-may opt in with full base/head SHA inputs; hosted execution is optional and does
-not replace local evidence. Do not route public-fork jobs to a personal laptop.
+The workflow runs on `pull_request`, on push to `main` and on manual
+`workflow_dispatch` (full base/head SHA inputs), on hosted `ubuntu-latest` and
+`macos-26` runners. It never uses `pull_request_target` or a self-hosted runner;
+fork PRs get a read-only token and no secrets. A hosted pass does not replace
+local evidence. Do not route public-fork jobs to a personal laptop.
 
 ## Review and pin the candidate
 
@@ -61,7 +68,7 @@ The DCO checker validates full SHA arguments, checks **every** commit in
 `BASE_SHA..HEAD_SHA` and does not skip contributor merge commits. Its regressions
 include unsigned contributor commits/merges and a synthetic checkout merge outside
 the explicit contributor range. SHA values are passed as separate arguments;
-the optional hosted workflow pins them through quoted environment variables.
+the hosted workflow pins them through quoted environment variables.
 
 The file check covers manifest hashes, JSON syntax, source SPDX and relative file
 links. It is not a privacy review, semantic renderer test or proof that a link's

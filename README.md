@@ -373,9 +373,11 @@ not a complete learning app or a collection of courses.
 See the [public versus app matrix](docs/CAPABILITIES.md),
 [quality and measurement plan](docs/QUALITY.md), and
 [portable-core proposal](docs/PORTABILITY-PROPOSAL.md).
-Use [local maintainer validation](docs/LOCAL-VALIDATION.md) for hygiene and DCO;
-hosted Ubuntu checks are manual opt-in. The [Mac verification steps](docs/VERIFY-ON-MAC.md)
-cover Apple-framework builds. Each candidate needs reviewed evidence and its own
+Every pull request must pass the hosted `CI` checks `hygiene` and `macos`
+([hosted CI](docs/VERIFY-ON-MAC.md#hosted-ci-required-merge-gate)). Use
+[local maintainer validation](docs/LOCAL-VALIDATION.md) for Gitleaks and receipts;
+the [Mac verification steps](docs/VERIFY-ON-MAC.md) cover Apple-framework builds and
+the local GPU and iOS receipts that hosted runners cannot give. Each candidate needs reviewed evidence and its own
 authenticated maintainer status.
 
 ## What's next

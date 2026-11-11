@@ -11,7 +11,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "af24cf13b21d1f88dc7367acb59419246303d6bea2d047644fe36b8e2b221637"
+      "sha256": "c063a67fd67ccc5e00007823e187502fb3fc76b94d9ec67c37364f7d5d5633f1"
     },
     {
       "path": ".gitignore",
@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "2d2a4ed02b9603ea66c664df0fd77b1e02c22972a2d70af75c45025ebdab3df8"
+      "sha256": "0e93bb64f364fdf6e43bcf9d751770c4791e31fa867882043a9c9f52574e8a98"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -27,7 +27,7 @@
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256": "af74627f237bb9f35e45ebb1123dd422d0563c844d4517fd1abd509caa52efb3"
+      "sha256": "1bbe0dfc1a06fecdd18bd28827d4c7b11e8c44b6963ef16b9766a9820ea4007e"
     },
     {
       "path": "Examples/Explainers/README.md",
@@ -551,7 +551,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "360fe3f8f6eb07c7e910e2969ed034db01d3fb07c7a74c32414f3d71eee85cf6"
+      "sha256": "95250868afea154e162def23f7c77e2b81bed60a600ae09a9b884e330d060d29"
     },
     {
       "path": "SECURITY.md",
@@ -1219,7 +1219,7 @@
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
-      "sha256": "ab1bb7b17d73df3e30b0e4de9b49cd2ff5dd874db1866e5e989f2c4592571ed1"
+      "sha256": "ff50cbe924644e64aea3c92ca37f4eb4402847be59237edc584012eddcc6fd74"
     },
     {
       "path": "docs/PORTABILITY-PROPOSAL.md",
@@ -1255,7 +1255,7 @@
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
-      "sha256": "6c3ad467a16a2d356f07193ebffa270b788340911ec078010a7a0293692aa0d3"
+      "sha256": "f36106dd99e8f9d209c017193269aeebba741e3f496a2ecc5ac758f58b202637"
     },
     {
       "path": "docs/assets/annotations/check-strict.json",
@@ -1679,7 +1679,7 @@
     },
     {
       "path": "tools/SceneValidator/README.md",
-      "sha256": "340e3c087600b51256f420c13edd845ec1ca6099dd6b75ff49c76606eafc9553"
+      "sha256": "fa4b3992a343ccedb77861491a1c196af05bceacb5762d6d087bef40a5ad3da6"
     },
     {
       "path": "tools/SceneValidator/Sources/MartySceneValidate/main.swift",

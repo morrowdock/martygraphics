@@ -9,8 +9,8 @@ engine accepts. The exit status tells a script whether every file is valid.
 
 macOS 14 or later with a Swift 6 toolchain. The tool links the MartyGraphics
 library, which needs Apple's SwiftUI, SceneKit, CoreGraphics and Combine. Linux
-and Windows are **not** supported, and the repository's optional hosted Ubuntu
-workflow does not build or run it. See [Verify on Mac](../../docs/VERIFY-ON-MAC.md).
+and Windows are **not** supported. The hosted `CI` workflow's Ubuntu `hygiene`
+job does not build or run it; its `macos` job tests it. See [Verify on Mac](../../docs/VERIFY-ON-MAC.md).
 There are no external package dependencies.
 
 ## Build and run

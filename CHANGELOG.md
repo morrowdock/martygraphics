@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- **CI gates merges.** `.github/workflows/ci.yml` (now named `CI`) runs on `pull_request` (opened, synchronize,
+  reopened, ready for review), on push to `main`, and still on `workflow_dispatch` with pinned SHAs. Its check runs
+  `hygiene` and `macos` are the required merge checks. It uses `pull_request`, never `pull_request_target`; the token
+  stays read-only, with no secrets, no caches and no kept credentials, so fork PRs run safely. Both jobs check out the
+  actual head commit, not the synthetic merge. The DCO and whitespace range comes from the PR base and head, the
+  push's previous and new tip (the head commit only for a new branch or a lost base), or the dispatch inputs.
+  `hygiene` now runs `git diff --check` over that range and `validate_local.py --check-files`. A new push to a PR
+  cancels its older run. Local GPU and iOS-simulator receipts stay required where documented.
+  - The head-only checkout relies on branch protection requiring branches to be up to date before merging; the push
+    run on `main` is a late safety net. The push fallback (`HEAD^..HEAD`) can miss a sign-off on an earlier commit of
+    a multi-commit push, which `main` does not take (squash merges only, no force pushes, administrators included).
+  - A dispatched run's check runs attach to the dispatched ref's tip, not to `head_sha`: dispatch `--ref <PR branch>`
+    with `head_sha` equal to its tip to publish a PR's checks; `--ref main` never does. A mismatch now warns.
 - **Dimension claims get the proven motion bound of #53.** A dimension whose anchors were world-fixed only within the
   epsilon of each axis counted as constant in a moving step, and an `over` range counted its held anchor as still,
   though such offsets add up along a joint chain: an eight-joint chain with axes 0.0000018 mm around one point moved a
