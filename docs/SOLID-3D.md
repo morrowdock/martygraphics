@@ -838,22 +838,29 @@ world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear 
 * **Shown text** (a label, an arrow or dimension text, the step caption, the title) may display a `dim.<id>` fact
   only when that dimension meets the same rule in the view (also when the dimension itself is not shown).
 * A **gravity arrow** must not turn: in a step with `spin`, both its anchors are world-fixed or translate together. A
-  centre-of-mass end ([Anchors](#anchors)) is decided by an exact, conservative rule, with no sampling
-  (`MGSolidAnnotationMotion.movingCentre`): the centre is **fixed** during the step when every part with a share of the
-  mass (nonzero volume) whose placement can change (a moving joint in its chain) has its volume centroid on the axis
-  of every moving joint in that chain, each a revolute joint, within the world-fixed epsilon (1e-9 × max(1, the
-  model's diagonal)). A turn about an axis through a point keeps the point; a composed chain keeps it only when every
-  joint does; a sliding (prismatic) joint always moves it. A fixed centre counts as a world-fixed anchor, and the rule
-  above applies. A **moving** centre is never a Solved direction: any gravity arrow with a centre-of-mass end in that
-  step is refused, `annotation.pose.<id>` (every profile), also when both ends are on the centre. The refusal adds
-  `centreOfMass`: `{"arrow", "step", "part", "joint", "distance", "fixed", "repair"}`, the first part (assembly order)
-  and joint (nearest first) that move the centre, the centroid's distance from that joint's axis (null for a sliding
-  joint), and `fixed`, the arrow's ends as world points at the step's first pose; the repair is to anchor the arrow
-  there or to remove the motion from the step (`"spin": 0`). A still step, a step `pose` and the plain view show one
-  pose each: the centre is resolved there and nothing moves. The rule is conservative: two off-axis parts that keep
-  the centre in place between them still count as moving. (r2k reviews: an off-axis rotor's arrow from its centre to a
-  world point turned 54.7° from downward a quarter turn later; a sampled proof missed a 63.25° turn in a 64-joint
-  chain, and between samples could pass a turn beyond the epsilon. Both were accepted as Solved before this rule.)
+  centre-of-mass end ([Anchors](#anchors)) moves with every part, so it is judged with a conservative **bound** on how far
+  the centre can move during the step, computed from the structure, with no sampling
+  (`MGSolidAnnotationMotion.centreBound`). For each part with a share of the mass and a moving joint in its chain, the
+  joints are taken from the part upward, each turning about its axis as it lies at the step's first pose (the
+  product-of-exponentials form): a revolute joint adds `2 × (d + D)`, where `d` is the centroid's distance from its axis
+  and `D` the part's bound so far (the joints below may already have carried the centroid that far), and a sliding
+  joint adds its travel over the step (`|rate| × |spin| × 2π` for a linear drive, the crank's diameter for a
+  crank-slider). The centre's bound is the share-weighted sum of the parts' bounds. (A plain sum of `2 × d` is not an
+  upper bound once a lower joint moves the centroid away from an upper joint's axis.) With `L` the arrow's length, the
+  most the centre can turn the arrow is `asin(min(1, bound / L))` (0 when both ends are on the centre). A bound of 0
+  keeps the existing rules. Otherwise the arrow passes only when the bound is at most the world-fixed epsilon (1e-9 ×
+  max(1, the model's diagonal)) **and** its angle from down at the first pose plus that worst-case angle is at most
+  10°. Else it is refused, `annotation.pose.<id>` (every profile), also when both ends are on the centre. The refusal
+  adds `centreOfMass`: `{"arrow", "step", "part", "joint", "distance", "bound", "tolerance", "angle", "extraAngle",
+  "fixed", "repair"}`: the part that adds the most to the bound and the joint in its chain that adds the most, the
+  centroid's distance from that joint's axis (null for a sliding joint), the bound and its tolerance, the angles, and
+  `fixed`, the arrow's ends as world points at the step's first pose at full precision; the repair is to anchor the
+  arrow there (which keeps its exact vector) or to remove the motion from the step (`"spin": 0`). A still step, a step
+  `pose` and the plain view show one pose each: the centre is resolved there and nothing moves. The rule is
+  conservative: two off-axis parts that keep the centre in place between them still count as moving. (r2k reviews: an
+  off-axis rotor's arrow turned 54.7° from down a quarter turn later; a sampled proof missed a 63.25° turn in a 64-joint
+  chain; a per-joint yes/no with an epsilon let a 64-joint chain of centroids each 0.0000018 mm off its axes turn an
+  arrow from 9.99° to 10.0155°. All three passed as Solved before this rule.)
   It must point within 10° of −Z at the view's first pose.
 * A **motion line arrow** must not ride a turning joint in a step with `spin` (use a turn arrow there); its linear
   chain then moves it at one constant velocity. A stated `expect` must hold at the view's first pose.
@@ -1421,10 +1428,19 @@ A gravity arrow (`"cause": "gravity"`) says where weight acts: at the centre of 
   (`hero`) when no step does. The first such view is reported.
 
 The report adds `weightPlacements` (only when there is one): `[{"id", "reason", "step", "camera", "distance",
-"tolerance", "centreOfMass": [x, y, z], "suggest", "repair"}]`. `suggest` draws the arrow from the centre of mass with
-the authored vector and the authored depth offset along that view: `{"from": {"point": "centreOfMass", "offset":
-depth}, "to": {"point": "centreOfMass", "offset": depth + vector}}` (0.001 mm; a zero offset is left out). The arrow
-visibility rule still tests the moved arrow.
+"tolerance", "centreOfMass": [x, y, z], "suggest", "verified", "repair"}]`. `suggest` draws the arrow from the centre
+of mass with the authored vector and the authored depth offset along that view: `{"from": {"point": "centreOfMass",
+"offset": depth}, "to": {"point": "centreOfMass", "offset": depth + vector}}`, at full precision (a zero offset is left
+out). The check report applies it to a copy and checks it again: the copy must compile, warn no more for the arrow
+and show it in every still that lists it (the arrow rule; an explainer's beat stills). Then `verified` is true; else
+`verified` is false, `suggest` is null and the repair says why.
+
+**Executable repairs at full precision.** Every repair that gives values to apply (the fixed points of
+`centreOfMass`, the weight suggestion, a board item's `move` and `fit.at`) prints them at full precision: Swift's
+shortest round-trip form, a whole number without a fraction (`MGAnnotationAnchorIssue.exact`). A coordinate rounded to
+0.001 mm could turn a 9.999° arrow past the 10° limit (r2k review). Values that are limits, not positions (`fit.cw`,
+`fit.rh`, `fit.zoom`), are rounded down to 0.01, so they fit as printed. Arrow and anchor moves keep their 0.001 mm
+rounding: they are rounded before they are checked, so what is printed is what passed.
 
 ### Not checked
 

@@ -280,6 +280,16 @@ extension MGSolidReport {
             // Only when a dropped arrow leaves a caption or the document without it.
             if !dropNotes.isEmpty { o["arrowDropNotes"] = .array(dropNotes.map(\.json)) }
         }
+        // The weight suggestions hold once applied: each is applied to a copy, compiled and checked again.
+        if anchorViews, o["weightPlacements"] != nil {
+            o["weightPlacements"] = .array(doc.weightPlacements.map { p in
+                let src = MGSolidDocument.replacingArrows(doc.source, [p.id: p.suggest])
+                guard case .success(let d) = MGSolidParser.document(json: src, library: doc.library) else { return p.verifying("the copy is refused").json }
+                if d.weightPlacements.contains(where: { $0.id == p.id }) { return p.verifying("it still warns").json }
+                if let i = d.stepArrowIssues().first(where: { $0.id == p.id }) { return p.verifying("it is hidden in \(i.viewName)").json }
+                return p.verifying(nil).json
+            })
+        }
         let hit = reason.flatMap { anchorIssue($0, anchors.issues) }
         if let hit { o["anchor"] = hit.json }
         let arrowHit = reason.flatMap { r in arrows.issues.first { $0.reason == r } }

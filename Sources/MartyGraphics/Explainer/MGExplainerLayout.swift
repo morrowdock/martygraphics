@@ -382,13 +382,13 @@ public struct MGBoardClip: Equatable, Sendable {
     /// True when the box is wider or taller than the safe area: no move fits it.
     public var tooLarge: Bool { width > safeWidth + 0.5 || height > safeHeight + 0.5 }
 
-    /// The board-unit move (x right, y up) that brings the box inside the safe area, each part rounded away from zero
-    /// to 0.01; nil when the box is wider or taller than the safe area (`tooLarge`: no move fits).
+    /// The board-unit move (x right, y up) that brings the box exactly to the safe area's edge, at full precision (a
+    /// rounded move could push a box that just fits past the other side); nil when the box is wider or taller than the
+    /// safe area (`tooLarge`: no move fits).
     public var move: (dx: Double, dy: Double)? {
         guard scale.isFinite, scale > 0, !tooLarge else { return nil }
-        func up(_ px: Double) -> Double { (px / scale * 100).rounded(.up) / 100 }
-        let dx = left > 0 ? up(left) : right > 0 ? -up(right) : 0
-        let dy = top > 0 ? -up(top) : bottom > 0 ? up(bottom) : 0
+        let dx = left > 0 ? left / scale : right > 0 ? -right / scale : 0
+        let dy = top > 0 ? -top / scale : bottom > 0 ? bottom / scale : 0
         return (dx, dy)
     }
 
@@ -413,6 +413,8 @@ public struct MGBoardClip: Equatable, Sendable {
     }
 
     static func n(_ x: Double) -> String { MGAnnotationAnchorIssue.number(x) }
+    /// A coordinate of an executable repair, at full precision (`MGAnnotationAnchorIssue.exact`).
+    static func e(_ x: Double) -> String { MGAnnotationAnchorIssue.exact(x) }
 
     /// One line a tool can pass to a model (at most `MGAnnotationAnchorIssue.repairScalars` Unicode scalars).
     public var repair: String {
@@ -433,14 +435,14 @@ public struct MGBoardClip: Equatable, Sendable {
             }
             ways.append("set the board camera's \"zoom\" to at most \(MGBoardClip.n(f.zoom))")
             let line = "\(what) \(size) " + MGAnnotationAnchorIssue.orList(ways.map { $0.prefix(1).uppercased() + $0.dropFirst() + "." })
-                + " Then use \"at\": [\(MGBoardClip.n(f.at.x)), \(MGBoardClip.n(f.at.y))]."
+                + " Then use \"at\": [\(MGBoardClip.e(f.at.x)), \(MGBoardClip.e(f.at.y))]."
             return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
         }
         guard let m = move else {
             return MGAnnotationAnchorIssue.bounded(what + " Move it inside the pane.", MGAnnotationAnchorIssue.repairScalars)
         }
-        var line = what + " Move it by [\(MGBoardClip.n(m.dx)), \(MGBoardClip.n(m.dy))] board units"
-        if let at { line += ": \"at\": [\(MGBoardClip.n(at.x + m.dx)), \(MGBoardClip.n(at.y + m.dy))]" }
+        var line = what + " Move it by [\(MGBoardClip.e(m.dx)), \(MGBoardClip.e(m.dy))] board units"
+        if let at { line += ": \"at\": [\(MGBoardClip.e(at.x + m.dx)), \(MGBoardClip.e(at.y + m.dy))]" }
         line += ", and keep the other items clear of it."
         return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
     }
@@ -450,15 +452,17 @@ public struct MGBoardClip: Equatable, Sendable {
     /// `{"cw", "columns", "rh", "rows", "zoom", "at"}` when no move fits, else null).
     public var json: MGJSON {
         func r(_ x: Double) -> MGJSON { x.isFinite ? .number((x * 1000).rounded() / 1000) : .null }
+        // Executable values at full precision (`at`, `move`); `cw`, `rh` and `zoom` are already exact hundredths.
+        func x(_ v: Double) -> MGJSON { v.isFinite ? .number(v) : .null }
         let fitJSON: MGJSON = fit.map { f in
-            .object(["cw": f.cw.map(r) ?? .null, "columns": f.cols.map { .number(Double($0)) } ?? .null, "rh": f.rh.map(r) ?? .null,
-                     "rows": f.rows.map { .number(Double($0)) } ?? .null, "zoom": r(f.zoom), "at": .array([r(f.at.x), r(f.at.y)])])
+            .object(["cw": f.cw.map(x) ?? .null, "columns": f.cols.map { .number(Double($0)) } ?? .null, "rh": f.rh.map(x) ?? .null,
+                     "rows": f.rows.map { .number(Double($0)) } ?? .null, "zoom": x(f.zoom), "at": .array([x(f.at.x), x(f.at.y)])])
         } ?? .null
         return .object(["id": .string(id), "reason": .string(reason), "beat": .number(Double(beat + 1)),
                         "overflow": .object(["left": r(left), "right": r(right), "top": r(top), "bottom": r(bottom)]),
                         "size": .array([r(width), r(height)]), "safe": .array([r(safeWidth), r(safeHeight)]),
-                        "scale": r(scale), "at": at.map { .array([r($0.x), r($0.y)]) } ?? .null,
-                        "move": move.map { .array([r($0.dx), r($0.dy)]) } ?? .null, "fit": fitJSON, "repair": .string(repair)])
+                        "scale": r(scale), "at": at.map { .array([x($0.x), x($0.y)]) } ?? .null,
+                        "move": move.map { .array([x($0.dx), x($0.dy)]) } ?? .null, "fit": fitJSON, "repair": .string(repair)])
     }
 }
 

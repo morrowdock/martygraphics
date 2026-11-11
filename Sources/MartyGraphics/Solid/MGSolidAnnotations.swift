@@ -1051,12 +1051,22 @@ public struct MGWeightPlacement: Equatable, Sendable {
 
     public var reason: String { "annotation.arrow.weight.\(id)" }
 
+    /// Set by the check reports, which apply the suggestion to a copy and check it again (`verifying`): nil before,
+    /// true when the copy compiles, no longer warns for this arrow and shows it (no arrow issue in any still), false
+    /// otherwise, with `unverified` saying why.
+    public internal(set) var verified: Bool? = nil
+    public internal(set) var unverified: String? = nil
+
+    /// This placement with the report's re-check of its suggestion.
+    func verifying(_ why: String?) -> MGWeightPlacement {
+        var p = self; p.verified = why == nil; p.unverified = why; return p
+    }
+
     /// `{"from": {"point": "centreOfMass", "offset": depth}, "to": {"point": "centreOfMass", "offset": depth + vector}}`
-    /// (0.001 mm; a zero offset is left out).
+    /// at full precision (the applied suggestion keeps the authored vector exactly; a zero offset is left out).
     public var suggest: MGJSON {
-        func r(_ x: Double) -> Double { let v = (x * 1000).rounded() / 1000; return v == 0 ? 0 : v }
         func end(_ o: MGVec3) -> MGJSON {
-            let v = [r(o.x), r(o.y), r(o.z)]
+            let v = [o.x, o.y, o.z].map { $0 == 0 ? 0 : $0 }
             return v.allSatisfy { $0 == 0 } ? .object(["point": .string("centreOfMass")])
                 : .object(["point": .string("centreOfMass"), "offset": .array(v.map { .number($0) })])
         }
@@ -1066,18 +1076,26 @@ public struct MGWeightPlacement: Equatable, Sendable {
     var viewName: String { step.map { "step \($0 + 1)" } ?? "the plain view" }
 
     public var repair: String {
+        if verified == false {
+            let line = "Weight arrow \(id) starts \(MGAnnotationAnchorIssue.number(distance)) mm from the centre of mass across \(viewName) "
+                + "(`\(camera)`; at most \(MGAnnotationAnchorIssue.number(tolerance)) mm): weight acts at the centre of mass. No checked suggestion: "
+                + "drawn from the centre with its depth, \(unverified ?? "it does not pass"). Draw it from {\"point\": \"centreOfMass\"} with an offset toward the camera."
+            return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+        }
         let line = "Weight arrow \(id) starts \(MGAnnotationAnchorIssue.number(distance)) mm from the centre of mass across \(viewName) "
-            + "(`\(camera)`; at most \(MGAnnotationAnchorIssue.number(tolerance)) mm): weight acts at the centre of mass. Use \(MGAnnotationAnchorIssue.compact(suggest))."
+            + "(`\(camera)`; at most \(MGAnnotationAnchorIssue.number(tolerance)) mm): weight acts at the centre of mass. Use \(MGAnnotationAnchorIssue.compactExact(suggest))."
         return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
     }
 
-    /// `{"id", "reason", "step", "camera", "distance", "tolerance", "centreOfMass": [x, y, z], "suggest", "repair"}`
-    /// (0.001 mm; `step` 1-based, null for the plain view).
+    /// `{"id", "reason", "step", "camera", "distance", "tolerance", "centreOfMass": [x, y, z], "suggest", "verified",
+    /// "repair"}` (measures to 0.001 mm; `step` 1-based, null for the plain view; `suggest` at full precision, null when
+    /// the re-check refused it; `verified` null when no re-check ran).
     public var json: MGJSON {
         func r(_ x: Double) -> MGJSON { x.isFinite ? .number((x * 1000).rounded() / 1000) : .null }
         return .object(["id": .string(id), "reason": .string(reason), "step": step.map { .number(Double($0 + 1)) } ?? .null,
                         "camera": .string(camera), "distance": r(distance), "tolerance": r(tolerance),
-                        "centreOfMass": .array([r(centre.x), r(centre.y), r(centre.z)]), "suggest": suggest, "repair": .string(repair)])
+                        "centreOfMass": .array([r(centre.x), r(centre.y), r(centre.z)]), "suggest": verified == false ? .null : suggest,
+                        "verified": verified.map(MGJSON.bool) ?? .null, "repair": .string(repair)])
     }
 }
 

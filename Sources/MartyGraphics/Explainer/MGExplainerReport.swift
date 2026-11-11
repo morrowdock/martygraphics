@@ -181,6 +181,22 @@ public struct MGExplainerReport: Equatable, Sendable {
         // item once, at the first beat that cuts it.
         var boardClips: [MGBoardClip] = []
         if s.board != nil, let doc { boardClips = MGExplainerFrame.beatBoardClips(doc, library: s.library) }
+        // The weight suggestions hold once applied: each is applied to the explainer's solid, loaded and checked again on
+        // the beat stills.
+        if let doc, let d = s.solid, case .object(var so) = solidJSON, so["weightPlacements"] != nil {
+            so["weightPlacements"] = .array(d.weightPlacements.map { p in
+                guard let solid = doc.solid else { return p.verifying("the copy is refused").json }
+                let copy = MGExplainer(title: doc.title, primary: doc.primary, notes: doc.notes, board: doc.board,
+                                       solid: MGSolidDocument.replacingArrows(solid, [p.id: p.suggest]), beats: doc.beats, names: doc.names)
+                var session = MGExplainerSession(pacing: .immediate, clock: MGManualClock(), library: s.library)
+                guard case .success = session.load(copy), let cd = session.solid else { return p.verifying("the copy is refused").json }
+                if cd.weightPlacements.contains(where: { $0.id == p.id }) { return p.verifying("it still warns").json }
+                guard let r = arrowRecheck(copy, library: s.library, budget: MGSuggestionBudget(0)) else { return p.verifying("the copy is refused").json }
+                if let i = r.arrows.first(where: { $0.id == p.id }) { return p.verifying("it is hidden in \(i.viewName)").json }
+                return p.verifying(nil).json
+            })
+            solidJSON = .object(so)
+        }
         var boardJSON: MGJSON = .null
         if s.board != nil, let st = s.lesson.state {
             var values: [String: MGJSON] = [:]

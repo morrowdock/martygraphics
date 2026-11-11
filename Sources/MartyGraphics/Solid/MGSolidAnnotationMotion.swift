@@ -116,30 +116,53 @@ enum MGSolidAnnotationMotion {
         return true
     }
 
-    /// The exact invariance rule of a centre-of-mass anchor (docs/SOLID-3D.md, "Poses: every claim holds at every pose
-    /// its view can show"): the centre stays where it is during any motion of the view when every part with a share of
-    /// the mass (`MGAnnotationPoint.mass`, nonzero volume) whose world placement can change (a moving joint in its chain,
-    /// `movers`) has its volume centroid on the axis of every moving joint in its chain, each a revolute joint: a turn
-    /// about an axis through a point keeps the point, and a composed chain keeps it only when every joint does. A
-    /// prismatic (sliding) joint in the chain always moves it. The test is `worldFixed`'s, at `pose` (the view's first
-    /// pose) and within its epsilon (1e-9 × max(1, the model's diagonal)). Returns nil when the centre is fixed, else the
-    /// first part (assembly order) and joint (nearest first) that break the rule, with the centroid's distance from
-    /// that joint's axis (nil for a prismatic joint). Exact, no sampling; conservative (a centre that a symmetric
-    /// pair of off-axis parts keeps in place is still moving).
-    static func movingCentre(_ doc: MGSolidDocument, _ p: MGAnnotationPoint, _ pose: MGPose) -> (part: String, joint: String, distance: Double?)? {
-        guard p.isCentreOfMass else { return nil }
-        let tol = 1e-9 * max(1, doc.annotations.diagonal)
+    /// A conservative bound on how far a centre-of-mass anchor can move during a step's motion (docs/SOLID-3D.md,
+    /// "Poses: every claim holds at every pose its view can show"). Exact arithmetic on the structure, no sampling.
+    ///
+    /// For each part with a share of the mass (`MGAnnotationPoint.mass`) and a moving joint in its chain (`movers`,
+    /// nearest first), its centroid's displacement over any motion is bounded by `D`, built joint by joint from the
+    /// part upward (the product-of-exponentials form: each joint turns about its axis as it lies at `pose`, the view's
+    /// first pose, applied from the leaf up): a revolute joint adds `2 × (d + D)`, with `d` the centroid's distance from
+    /// that axis at `pose` and `D` the bound so far (the joints below may already have carried it that far off); a
+    /// prismatic joint adds its travel over the step (`travel`). The centre's bound is the share-weighted sum of the
+    /// parts' bounds (the centre is their share-weighted mean). Returns that bound, the part that adds the most to it
+    /// and, in that part's chain, the joint that adds the most, with the centroid's distance from that joint's axis
+    /// (nil for a prismatic joint). A bound of 0 means the centre cannot move.
+    static func centreBound(_ doc: MGSolidDocument, _ p: MGAnnotationPoint, _ pose: MGPose, spin: Double)
+        -> (bound: Double, part: String?, joint: String?, distance: Double?) {
+        guard p.isCentreOfMass else { return (0, nil, nil, nil) }
+        var total = 0.0
+        var worst: (share: Double, part: String, joint: String, distance: Double?)?
         for m in p.mass where m.share > 0 {
             let x = (pose.world[m.part] ?? .identity).apply(m.centroid)
+            var bound = 0.0
+            var top: (term: Double, joint: String, distance: Double?)?
             for id in movers(doc, m.part) {
-                guard case .revolute(let axis)? = doc.assembly.part(id)?.joint else { return (m.part, id, nil) }
-                let w = pose.world[id] ?? .identity
-                let a = w.applyVector(axis).normalized, d = x - w.translation
-                let off = (d - a * a.dot(d)).length
-                if !(off <= tol) { return (m.part, id, off) }
+                let term: Double, distance: Double?
+                switch doc.assembly.part(id)?.joint {
+                case .revolute(let axis)?:
+                    let w = pose.world[id] ?? .identity
+                    let a = w.applyVector(axis).normalized, d = x - w.translation
+                    let off = (d - a * a.dot(d)).length
+                    term = 2 * (off + bound); distance = off
+                case .prismatic?: term = travel(doc, id, spin: spin); distance = nil
+                default: term = .infinity; distance = nil
+                }
+                bound += term.isNaN ? .infinity : term
+                if top.map({ term > $0.term }) ?? (term > 0) { top = (term, id, distance) }
             }
+            total += m.share * bound
+            if let t = top, worst.map({ m.share * bound > $0.share }) ?? (bound > 0) { worst = (m.share * bound, m.part, t.joint, t.distance) }
         }
-        return nil
+        return (total.isNaN ? .infinity : total, worst?.part, worst?.joint, worst?.distance)
+    }
+
+    /// The most a prismatic joint's displacement can change during `spin` input turns: `|rate| × |spin| × 2π` for a
+    /// linear drive, `2r` (the crank's diameter) for a crank-slider, infinity otherwise.
+    static func travel(_ doc: MGSolidDocument, _ id: String, spin: Double) -> Double {
+        if let l = linear(doc, id) { return abs(l.rate) * abs(spin) * 2 * .pi }
+        if case .crankSlider(_, let r, _, _)? = doc.assembly.part(id)?.drive { return 2 * abs(r) }
+        return .infinity
     }
 
     /// True when the points keep their relative placement during any motion: all world-fixed, or all on the same
@@ -272,15 +295,25 @@ extension MGSolidAnnotationEngine {
                     guard let dir = MGSolidAnnotationMotion.direction(doc, from, pose, sense: sense), angle(expect, dir) <= L.expectDegrees else { throw fail(id) }
                 case (.force, _) where r.cause == "gravity":
                     guard let from = r.from, let to = r.to else { continue }
-                    // A centre-of-mass end is fixed only when no moving part carries its centroid off a joint axis
-                    // (`movingCentre`); a moving centre is never a Solved direction. A fixed one counts as world-fixed.
-                    if spin != 0, let i = step {
-                        for end in [from, to] {
-                            guard let m = MGSolidAnnotationMotion.movingCentre(doc, end, pose) else { continue }
-                            var issue = fail(id)
-                            issue.centreOfMass = MGCentreOfMassMotion(arrow: id, step: i, part: m.part, joint: m.joint, distance: m.distance,
-                                                                      from: from.world(pose), to: to.world(pose))
-                            throw issue
+                    // A centre-of-mass end: the centre's displacement bound `D` (`centreBound`) must be at most the
+                    // world-fixed epsilon, and the arrow's angle from down plus the most `D` can turn it must stay within
+                    // the gravity limit. A moving centre is never a Solved direction. Then it counts as world-fixed.
+                    if spin != 0, let i = step, let com = [from, to].first(where: { $0.isCentreOfMass }) {
+                        let b = MGSolidAnnotationMotion.centreBound(doc, com, pose, spin: spin)
+                        if b.bound > 0 {
+                            let dv = to.world(pose) - from.world(pose)
+                            let both = from.isCentreOfMass && to.isCentreOfMass
+                            let len = dv.length
+                            let extra = both ? 0 : (len > 0 ? asin(min(1, b.bound / len)) * 180 / .pi : 90)
+                            let now = angle(dv, MGVec3(0, 0, -1))
+                            let tol = 1e-9 * max(1, doc.annotations.diagonal)
+                            if !(b.bound <= tol) || !(now + extra <= L.gravityDegrees) {
+                                var issue = fail(id)
+                                issue.centreOfMass = MGCentreOfMassMotion(arrow: id, step: i, part: b.part ?? "", joint: b.joint ?? "", distance: b.distance,
+                                                                          bound: b.bound, tolerance: tol, angle: now, extra: extra,
+                                                                          from: from.world(pose), to: to.world(pose))
+                                throw issue
+                            }
                         }
                     }
                     if spin != 0, !MGSolidAnnotationMotion.rigid(doc, [from, to], pose, translationOnly: true) { throw fail(id) }
@@ -361,40 +394,45 @@ extension MGSolidShot {
 }
 
 /// Why a gravity arrow with a centre-of-mass end was refused in a moving step (`annotation.pose.<id>`): the centre of mass
-/// moves there (`MGSolidAnnotationMotion.movingCentre`), so the arrow's direction is not one Solved claim.
+/// can move there (`MGSolidAnnotationMotion.centreBound`), so the arrow's direction is not one Solved claim.
 public struct MGCentreOfMassMotion: Equatable, Sendable {
     public let arrow: String
     /// The 0-based step whose `spin` moves the centre.
     public let step: Int
-    /// The first part whose volume centroid moves, and the joint (a part id) that moves it.
+    /// The part that adds the most to the bound, and the joint (a part id) in its chain that adds the most.
     public let part: String, joint: String
-    /// The centroid's distance (mm) from that joint's axis; nil for a prismatic joint.
+    /// The centroid's distance (mm) from that joint's axis at the step's first pose; nil for a prismatic joint.
     public let distance: Double?
+    /// The centre's displacement bound `D` (mm) and the most it may be (the world-fixed epsilon).
+    public let bound: Double, tolerance: Double
+    /// The arrow's angle from down at the step's first pose, and the most `D` can add to it (degrees; 0 for two
+    /// centre-of-mass ends).
+    public let angle: Double, extra: Double
     /// The arrow's ends at the step's first pose (kernel world, mm): the fixed points of the repair.
     public let from: MGVec3, to: MGVec3
 
-    static func v(_ x: MGVec3) -> String {
-        "[\(MGAnnotationAnchorIssue.number(x.x)), \(MGAnnotationAnchorIssue.number(x.y)), \(MGAnnotationAnchorIssue.number(x.z))]"
-    }
-
-    /// `{"from": {"world": from}, "to": {"world": to}}`: the arrow at fixed points, as it stands at the step's first pose.
+    /// `{"from": {"world": from}, "to": {"world": to}}` at full precision: the arrow at fixed points, exactly as it stands
+    /// at the step's first pose, so the applied repair has the same vector (and the same angle from down).
     public var fixed: MGJSON {
-        func w(_ x: MGVec3) -> MGJSON { .object(["world": .array([x.x, x.y, x.z].map { .number(($0 * 1000).rounded() / 1000) })]) }
+        func w(_ x: MGVec3) -> MGJSON { .object(["world": .array([x.x, x.y, x.z].map { .number($0) })]) }
         return .object(["from": w(from), "to": w(to)])
     }
 
     public var repair: String {
-        let why = distance.map { "its volume centroid lies \(MGAnnotationAnchorIssue.number($0)) mm off the axis of joint `\(joint)`" }
+        let why = distance.map { "its volume centroid lies \(MGAnnotationAnchorIssue.exact($0)) mm off the axis of joint `\(joint)`" }
             ?? "joint `\(joint)` slides it"
-        let line = "Arrow \(arrow) (step \(step + 1)): the centre of mass moves during the step's spin, because part `\(part)` moves and \(why). "
-            + "A moving centre is not one direction. Anchor the arrow at fixed points, \(MGAnnotationAnchorIssue.compact(fixed)), "
-            + "or remove the motion from step \(step + 1) (\"spin\": 0)."
+        let line = "Arrow \(arrow) (step \(step + 1)): the centre of mass can move \(MGAnnotationAnchorIssue.number(bound)) mm during the step's spin "
+            + "(at most \(MGAnnotationAnchorIssue.exact(tolerance))), mostly because part `\(part)` moves and \(why). A moving centre is not one direction. "
+            + "Anchor the arrow at fixed points, \(MGAnnotationAnchorIssue.compactExact(fixed)), or remove the motion from step \(step + 1) (\"spin\": 0)."
         return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
     }
 
-    /// `{"arrow", "step" (1-based), "part", "joint", "distance", "fixed", "repair"}`.
+    /// `{"arrow", "step" (1-based), "part", "joint", "distance", "bound", "tolerance", "angle", "extraAngle", "fixed",
+    /// "repair"}` (numbers at full precision; null when not finite).
     public var json: MGJSON {
-        .object(["arrow": .string(arrow), "step": .number(Double(step + 1)), "part": .string(part), "joint": .string(joint),
-                 "distance": distance.map { .number(($0 * 1000).rounded() / 1000) } ?? .null, "fixed": fixed, "repair": .string(repair)])
+        func n(_ x: Double?) -> MGJSON { x.flatMap { $0.isFinite ? MGJSON.number($0) : nil } ?? .null }
+        return .object(["arrow": .string(arrow), "step": .number(Double(step + 1)), "part": .string(part), "joint": .string(joint),
+                        "distance": n(distance), "bound": n(bound), "tolerance": n(tolerance), "angle": n(angle), "extraAngle": n(extra),
+                        "fixed": fixed, "repair": .string(repair)])
     }
 }

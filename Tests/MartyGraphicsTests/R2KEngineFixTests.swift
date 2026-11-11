@@ -222,11 +222,11 @@ final class R2KEngineFixTests: XCTestCase {
         XCTAssertEqual(move.count, 2); XCTAssertEqual(move[0], 0); XCTAssertLessThan(move[1], 0)
         XCTAssertEqual(at, [6, 10])
         guard case .string(let line)? = c["repair"] else { return XCTFail("repair") }
-        XCTAssertTrue(line.contains("\"at\": [6, \(MGAnnotationAnchorIssue.number(10 + move[1]))]"), line)
+        XCTAssertTrue(line.contains("\"at\": [6, \(MGAnnotationAnchorIssue.exact(10 + move[1]))]"), line)
         let w = objects(rep.json["warnings"]).compactMap { o -> String? in if case .string(let s)? = o["reason"] { return s }; return nil }
         XCTAssertTrue(w.contains("board.clip.t6"), "\(w)")
         // The move holds: with t6 moved, nothing is cut.
-        let moved = board.replacingOccurrences(of: #""at":[6,10]"#, with: #""at":[6,\#(MGAnnotationAnchorIssue.number(10 + move[1]))]"#)
+        let moved = board.replacingOccurrences(of: #""at":[6,10]"#, with: #""at":[6,\#(MGAnnotationAnchorIssue.exact(10 + move[1]))]"#)
         let again = MGExplainerReport.check(data: Data(XFix.doc(board: moved, solid: XFix.gears, beats: #"[{"say":"One."},{"say":"Two.","ops":[\#(fill)]}]"#).utf8),
                                             profile: .strict, engine: nil)
         XCTAssertNil(again.json["boardClips"])
@@ -259,12 +259,12 @@ final class R2KEngineFixTests: XCTestCase {
         let c = try XCTUnwrap(e.centreOfMass)
         XCTAssertEqual(c.part, "rotor"); XCTAssertEqual(c.joint, "rotor"); XCTAssertEqual(c.step, 0)
         XCTAssertEqual(try XCTUnwrap(c.distance), 100, accuracy: 1e-6)
+        XCTAssertGreaterThan(c.bound, c.tolerance)
         let rep = report(mixed, .standard)
         XCTAssertEqual(rep.reason, "annotation.pose.w")
         guard case .object(let detail)? = rep.json["centreOfMass"], case .string(let line)? = rep.json["repair"] else { return XCTFail("centreOfMass") }
-        XCTAssertEqual(detail["fixed"], .object(["from": .object(["world": .array([.number(100), .number(-100), .number(0)])]),
-                                                 "to": .object(["world": .array([.number(100), .number(-100), .number(-100)])])]))
-        XCTAssertTrue(line.contains("100 mm off the axis of joint `rotor`"), line)
+        XCTAssertNotNil(detail["bound"]); XCTAssertNotNil(detail["extraAngle"])
+        XCTAssertTrue(line.contains("off the axis of joint `rotor`"), line)
         XCTAssertTrue(line.contains("\"spin\": 0"), line)
         // The review's epsilon case: 0.000100004 mm off the axis, 1.1 turns. Exact: refused, whatever the samples.
         XCTAssertEqual(refusal(rotorText(from: com, to: #"{"world": [0.000100004, -100, -100]}"#, spin: 1.1, x: 0.000100004))?.reason, "annotation.pose.w")
@@ -278,9 +278,80 @@ final class R2KEngineFixTests: XCTestCase {
         XCTAssertTrue(report(still).ok, "\(report(still).reason ?? "")")
     }
 
+    /// The review's near-axis chain: 64 joints with alternating rates ±1, each centroid 0.0000018 mm from every axis
+    /// above it (under the world-fixed epsilon), and an arrow at 9.99° from down. A per-joint yes/no passed it, though
+    /// half a turn later it is 10.0155° from down. The bound sums the composed offsets: refused.
+    func testANearAxisChainIsJudgedByItsBound() throws {
+        var segment: [String] = []
+        for k in 1...16 {
+            let parent = k == 1 ? "" : #", "parent": "p\#(k - 1)""#
+            let sign = k % 2 == 1 ? 1.0 : -1.0
+            segment.append(#"{"id": "p\#(k)", "shape": {"box": {"size": [1, 1, 1], "at": [\#(1.8e-06 * sign), 0, 0]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": \#(Int(sign))}, "at": [\#(-3.6e-06 * sign), 0, 0]\#(parent)}"#)
+        }
+        let component = #"{"v": 1, "kind": "component", "id": "epsilonChain", "title": "Near axes", "about": "Synthetic.", "anchors": {"end": "p16"}, "parts": [\#(segment.joined(separator: ", "))]}"#
+        var library = MGSolidLibrary.builtIn
+        guard case .success = library.register(Data(component.utf8)) else { return XCTFail("component") }
+        let t = #"{"v": 2, "kind": "assembly", "parts": [{"id": "s1", "use": "epsilonChain", "set": {"p1": {"at": [-1.8e-06, 0, 0]}}}, {"id": "s2", "use": "epsilonChain", "parent": "s1.end"}, {"id": "s3", "use": "epsilonChain", "parent": "s2.end"}, {"id": "s4", "use": "epsilonChain", "parent": "s3.end", "set": {"p16": {"shape": {"box": {"size": [20, 20, 20], "at": [-1.8e-06, 0, 0]}}, "offAxis": true}}}, {"id": "distant", "shape": {"box": {"size": [0.05, 0.05, 0.05]}}, "at": [4000, 0, 0]}], "annotations": {"arrows": [{"id": "w", "meaning": "force", "cause": "gravity", "from": {"point": "centreOfMass", "offset": [0, -100, 0]}, "to": {"world": [0.08813552509757477, -100, -0.5]}}]}, "steps": [{"say": "Weight points down.", "camera": "front", "spin": 1, "annotate": ["w"]}]}"#
+        guard case .failure(let e) = MGSolidParser.document(data: Data(t.utf8), library: library) else { return XCTFail("a near-axis chain that turns the arrow past 10° was accepted") }
+        XCTAssertEqual(e.reason, "annotation.pose.w")
+        let c = try XCTUnwrap(e.centreOfMass)
+        XCTAssertGreaterThan(c.bound, c.tolerance)
+        XCTAssertEqual(c.angle, 9.99, accuracy: 0.001)
+        // The same chain without spin passes.
+        let still = t.replacingOccurrences(of: #""spin": 1"#, with: #""spin": 0"#)
+        guard case .success = MGSolidParser.document(data: Data(still.utf8), library: library) else { return XCTFail("still") }
+    }
+
+    // MARK: Executable repairs pass when applied
+
+    /// The review's 9.999° arrow on an off-axis rotor: refused for the motion. Its fixed-point repair at full precision,
+    /// applied, passes strict (rounded to 0.001 mm it turned the arrow to 10.0096° and failed `arrow.gravity.w`).
+    func testTheFixedPointRepairPassesWhenApplied() throws {
+        let t = rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"world": [100.35261796965489, -100, -2]}"#, spin: 0.25)
+        let rep = report(t, .standard)
+        XCTAssertEqual(rep.reason, "annotation.pose.w")
+        guard case .object(let detail)? = rep.json["centreOfMass"], case .object(let fixed)? = detail["fixed"],
+              case .string(let line)? = rep.json["repair"] else { return XCTFail("centreOfMass") }
+        XCTAssertTrue(line.contains("100.35261796965489"), line)
+        let d = try doc(rotorText(from: #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#, to: #"{"world": [100.35261796965489, -100, -2]}"#, spin: 0))
+        let applied = MGSolidDocument.replacingArrows(d.source, ["w": .object(fixed)])
+        guard case .success(let a) = MGSolidParser.document(json: applied) else { return XCTFail("the applied repair does not compile") }
+        let r = MGSolidReport.make(a, profile: .strict, engine: nil)
+        XCTAssertTrue(r.ok, "\(r.reason ?? "")")
+        // The text gives the same numbers.
+        XCTAssertTrue(line.contains("[100.35261796965489, -100, -2]"), line)
+    }
+
+    /// The weight suggestion, applied, compiles, warns no more and shows the arrow (`verified`).
+    func testTheWeightSuggestionPassesWhenApplied() throws {
+        let off = comText(arrow: #"{"id": "w", "meaning": "force", "cause": "gravity", "from": {"world": [-200, -300, 0]}, "to": {"world": [-200, -300, -150]}}"#)
+        let rep = report(off, .standard)
+        let wp = try XCTUnwrap(objects(rep.json["weightPlacements"]).first)
+        XCTAssertEqual(wp["verified"], .bool(true))
+        guard case .object(let sug)? = wp["suggest"] else { return XCTFail("suggest") }
+        let applied = MGSolidDocument.replacingArrows(try doc(off).source, ["w": .object(sug)])
+        guard case .success(let a) = MGSolidParser.document(json: applied) else { return XCTFail("compile") }
+        XCTAssertTrue(a.weightPlacements.isEmpty)
+        let r = MGSolidReport.make(a, profile: .strict, engine: nil)
+        XCTAssertTrue(r.ok, "\(r.reason ?? "")")
+        XCTAssertFalse(warnings(r).contains("annotation.arrow.weight.w"))
+    }
+
+    /// A suggested move of a hidden arrow (a world-anchored force arrow behind a wall), applied, passes strict.
+    func testASuggestedArrowMovePassesWhenApplied() throws {
+        let t = #"{"v": 2, "kind": "assembly", "parts": [{"id": "wall", "shape": {"box": {"size": [300, 20, 300]}}}, {"id": "post", "at": [0, 100, -200], "shape": {"box": {"size": [20, 20, 20]}}}], "annotations": {"arrows": [{"id": "t", "meaning": "force", "from": {"world": [0, 100, 50]}, "to": {"world": [0, 100, -50]}}]}, "steps": [{"say": "Front.", "camera": "front", "annotate": ["t"]}]}"#
+        let rep = report(t)
+        XCTAssertEqual(rep.reason, "annotation.arrow.hidden.t")
+        guard case .object(let a)? = rep.json["arrow"], case .object(let move)? = a["suggest"] else { return XCTFail("suggest") }
+        let applied = MGSolidDocument.replacingArrows(try doc(t).source, ["t": .object(move)])
+        guard case .success(let d) = MGSolidParser.document(json: applied) else { return XCTFail("compile") }
+        let r = MGSolidReport.make(d, profile: .strict, engine: nil)
+        XCTAssertTrue(r.ok, "\(r.reason ?? "")")
+    }
+
     /// The review's 64-joint chain: four copies of a 16-part component, each part a unit cube on one axis turning on its
     /// parent at the input rate; the last part a 20 mm cube 100 mm off the axis. Its world rate is 64 turns per input
-    /// turn. A sampled proof missed its 63.25° turn; the exact rule refuses it, naming the last part and its own joint.
+    /// turn. A sampled proof missed its 63.25° turn; the bound refuses it, naming the last part.
     func testAComposedChainThatCarriesTheCentreOffTheAxisIsRefused() throws {
         var segment: [String] = []
         for k in 1...16 {
@@ -293,7 +364,8 @@ final class R2KEngineFixTests: XCTestCase {
         let t = #"{"v": 2, "kind": "assembly", "parts": [{"id": "s1", "use": "chainSegment"}, {"id": "s2", "use": "chainSegment", "parent": "s1.end"}, {"id": "s3", "use": "chainSegment", "parent": "s2.end"}, {"id": "s4", "use": "chainSegment", "parent": "s3.end", "set": {"p16": {"shape": {"box": {"size": [20, 20, 20], "at": [100, 0, 0]}}, "offAxis": true}}}], "annotations": {"arrows": [{"id": "w", "meaning": "force", "cause": "gravity", "from": {"point": "centreOfMass", "offset": [0, -200, 0]}, "to": {"world": [99.21865310678407, -200, -100]}}]}, "steps": [{"say": "Weight points down.", "camera": "front", "spin": 1, "annotate": ["w"]}]}"#
         guard case .failure(let e) = MGSolidParser.document(data: Data(t.utf8), library: library) else { return XCTFail("a 64-joint chain turning the centre was accepted") }
         XCTAssertEqual(e.reason, "annotation.pose.w")
-        XCTAssertEqual(e.centreOfMass?.part, "s4.p16"); XCTAssertEqual(e.centreOfMass?.joint, "s4.p16")
+        // The last part adds the most; in the composed bound its base joint adds the largest term.
+        XCTAssertEqual(e.centreOfMass?.part, "s4.p16"); XCTAssertEqual(e.centreOfMass?.joint, "s1.p1")
     }
 
     /// A document without steps has only its plain view. Before: the report skipped it, so an arrow its hero drops had no
@@ -333,8 +405,15 @@ final class R2KEngineFixTests: XCTestCase {
         XCTAssertTrue(line.contains("no move fits it"), line)
         XCTAssertTrue(line.contains("\"cw\" to at most \(MGAnnotationAnchorIssue.number(cw))"), line)
         // Applied, the sizes fit.
-        let fixed = text(cw: MGAnnotationAnchorIssue.number(cw), at: "[\(MGAnnotationAnchorIssue.number(at[0])), 4]")
+        let fixed = text(cw: MGAnnotationAnchorIssue.number(cw), at: "[\(MGAnnotationAnchorIssue.exact(at[0])), 4]")
         XCTAssertNil(MGExplainerReport.check(data: Data(fixed.utf8), profile: .strict, engine: nil).json["boardClips"])
+        // The zoom alternative, applied with the same `at`, fits too.
+        guard case .number(let zoom)? = fit["zoom"] else { return XCTFail("zoom") }
+        let zoomed = text(cw: "4", at: "[\(MGAnnotationAnchorIssue.exact(at[0])), 4]")
+            .replacingOccurrences(of: #""board": {"v": 1, "items""#, with: #""board": {"v": 1, "camera": {"zoom": \#(MGAnnotationAnchorIssue.number(zoom))}, "items""#)
+        let zr = MGExplainerReport.check(data: Data(zoomed.utf8), profile: .strict, engine: nil)
+        XCTAssertTrue(zr.ok, "\(zr.reason ?? "")")
+        XCTAssertNil(zr.json["boardClips"])
     }
 
     // MARK: 8. The legend's Solved group

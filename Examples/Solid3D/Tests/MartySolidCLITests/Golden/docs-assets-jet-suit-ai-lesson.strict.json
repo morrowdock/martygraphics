@@ -5733,27 +5733,28 @@
           "distance" : 265.89499999999998,
           "id" : "aW",
           "reason" : "annotation.arrow.weight.aW",
-          "repair" : "Weight arrow aW starts 265.895 mm from the centre of mass across step 2 (`iso`; at most 100.652 mm): weight acts at the centre of mass. Use {\"from\": {\"offset\": [197.233, -197.233, 197.23], \"point\": \"centreOfMass\"}, \"to\": {\"offset\": [197.233, -197.233, -202.77], \"point\": \"centreOfMass\"}}.",
+          "repair" : "Weight arrow aW starts 265.895 mm from the centre of mass across step 2 (`iso`; at most 100.652 mm): weight acts at the centre of mass. Use {\"from\": {\"offset\": [197.23323817227927, -197.23323817227933, 197.23039257899333], \"point\": \"centreOfMass\"}, \"to\": {\"offset\": [197.23323817227927, -197.23323817227933, -202.76960742100667], \"point\": \"centreOfMass\"}}.",
           "step" : 2,
           "suggest" : {
             "from" : {
               "offset" : [
-                197.233,
-                -197.233,
-                197.22999999999999
+                197.23323817227927,
+                -197.23323817227933,
+                197.23039257899333
               ],
               "point" : "centreOfMass"
             },
             "to" : {
               "offset" : [
-                197.233,
-                -197.233,
-                -202.77000000000001
+                197.23323817227927,
+                -197.23323817227933,
+                -202.76960742100667
               ],
               "point" : "centreOfMass"
             }
           },
-          "tolerance" : 100.652
+          "tolerance" : 100.652,
+          "verified" : true
         }
       ]
     }

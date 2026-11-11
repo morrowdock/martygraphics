@@ -26,11 +26,14 @@
     `anchor.point` and `anchor.form` name the new form.
   - **`board.clip.<id>`** (new explainer warning): a beat's board pane at 1280 × 800 cuts a board item (it leaves the
     pane less 8 px). The report's `boardClips` gives the overflow and the exact move of the item's `at`.
-  - **Review fixes.** A gravity arrow with a centre-of-mass end in a moving step is decided by an exact rule, no
-    sampling (`MGSolidAnnotationMotion.movingCentre`): the centre is fixed only when every moving part with volume has
-    its centroid on the axis of every moving joint above it (all revolute). A moving centre is refused,
-    `annotation.pose.<id>`, with `centreOfMass` (the part and joint that move it and the fixed-point repair). Before,
-    an off-axis rotor's mixed centre/world arrow, then a 64-joint chain (63.25°), passed as Solved. The check report counts the plain view (`hero.png`) in `arrowDrops` and `arrowDropNotes`
+  - **Review fixes.** A gravity arrow with a centre-of-mass end in a moving step is judged with a conservative bound
+    on the centre's displacement, no sampling (`MGSolidAnnotationMotion.centreBound`: per part, from the part upward,
+    `2 × (d + D)` per revolute joint and the travel per sliding joint; share-weighted). It passes only when the bound is
+    at most the world-fixed epsilon and its angle plus `asin(bound / length)` is at most 10°; else
+    `annotation.pose.<id>`, with `centreOfMass` (bound, angles, the part and joint, a fixed-point repair). Before, an
+    off-axis rotor, a 64-joint chain (63.25°) and a near-axis 64-joint chain (9.99° → 10.0155°) passed as Solved.
+    Executable repairs print their values at full precision (`MGAnnotationAnchorIssue.exact`); the weight suggestion
+    is applied to a copy and checked again (`verified`). The check report counts the plain view (`hero.png`) in `arrowDrops` and `arrowDropNotes`
     (step null), so an assembly without steps warns too. A board item larger than the pane's safe area gets no move;
     `boardClips` gives `size`, `safe` and `fit` (the largest `cw`, `rh` and zoom, the most columns and rows per table,
     and the `at` that fits).

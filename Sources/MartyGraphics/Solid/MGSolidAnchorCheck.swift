@@ -242,6 +242,27 @@ public struct MGAnnotationAnchorIssue: Equatable, Sendable {
         return s == "-0" ? "0" : s
     }
 
+    /// A number at full precision: Swift's shortest round-trip form (`100.35261796965489`), a whole number without a
+    /// fraction (`100`). Parsing it gives the same Double, so an executable repair applies exactly.
+    static func exact(_ x: Double) -> String {
+        guard x.isFinite else { return "null" }
+        if x == x.rounded(), abs(x) < 1e15 { let s = String(Int64(x)); return s == "-0" ? "0" : s }
+        return "\(x)"
+    }
+
+    /// `compact` with every number at full precision (`exact`).
+    static func compactExact(_ v: MGJSON) -> String {
+        switch v {
+        case .object(let o):
+            let order = ["part", "offset", "point", "world"]
+            let keys = order.filter { o[$0] != nil } + o.keys.filter { !order.contains($0) }.sorted()
+            return "{" + keys.map { "\"\($0)\": " + compactExact(o[$0]!) }.joined(separator: ", ") + "}"
+        case .array(let a): return "[" + a.map(compactExact).joined(separator: ", ") + "]"
+        case .number(let d): return exact(d)
+        default: return compact(v)
+        }
+    }
+
     /// One-line JSON for an anchor (`{"part": "p", "offset": [x, y, z]}`), keys in a fixed order.
     static func compact(_ v: MGJSON) -> String {
         switch v {

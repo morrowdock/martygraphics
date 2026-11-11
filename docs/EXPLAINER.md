@@ -247,17 +247,18 @@ reference pane's viewport when both views show, the whole content area for a boa
 `boardClips` (only when there is one): `[{"id", "reason", "beat", "overflow": {"left", "right", "top", "bottom"},
 "size", "safe", "scale", "at", "move", "fit", "repair"}]`: the overflow in pixels, the item's box and the safe area
 [width, height] in pixels, the pixels per board unit, the item's `at`, and `move`, the board-unit move [x, y] (y up)
-that brings the box inside, each part rounded away from zero to 0.01. An item wider or taller than the safe area has no
+that brings the box to the safe area's edge, at full precision (a rounded move could push a box that just fits past the
+other side; docs/SOLID-3D.md, "Executable repairs at full precision"). An item wider or taller than the safe area has no
 move (`move` null; r2k review: a six-column table with `cw` 4 is 1560 px wide in a 1216 px safe area, so every move
 leaves one side cut). Its `fit` gives the exact sizes, each rounded down to 0.01 (counts to whole numbers): for a table
 the largest `cw` (`rh`) for its columns (rows) and the most columns (rows) one table may keep at its `cw` (`rh`), so it
 can be split; for every item the largest board camera `zoom` that fits its box; and the `at` of the safe area's centre
-on the axis it overflows: `{"cw", "columns", "rh", "rows", "zoom", "at"}` (null where it does not apply). The repair
+on the axis it overflows (full precision; the board point at the pane's centre, so it holds at any zoom): `{"cw", "columns", "rh", "rows", "zoom", "at"}` (null where it does not apply). The repair
 lists them. For example, for three stacked tables at `at` [6, 4], [6, 7] and [6, 10] in
 a board beside a solid (r2k):
 
 ```text
-Board item t6 (beat 8) runs 50 px past the top of the board pane's safe area, so the pane cuts it. Move it by [0, -1.04] board units: "at": [6, 8.96], and keep the other items clear of it.
+Board item t6 (beat 8) runs 50 px past the top of the board pane's safe area, so the pane cuts it. Move it by [0, -1.0356643356643347] board units: "at": [6, 8.964335664335666], and keep the other items clear of it.
 ```
 
 The drawing is unchanged: the engine does not move or shrink an authored item. Other sizes than 1280 × 800 and the
