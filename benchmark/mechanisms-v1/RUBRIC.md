@@ -28,11 +28,13 @@ Each explainer folder holds:
 How to judge motion from the sheets:
 
 - Follow a feature that does not repeat around the part: a pin, a crank, a label, a marker, a single spoke or arm.
-- Do not judge a direction from gear teeth or other repeating patterns alone. If a repeating pattern is the only
-  feature and it moves about a quarter of its spacing or more between two frames, the direction cannot be seen.
-- **Large jumps:** if the feature you follow moves about a quarter turn or more between two frames (for a single
-  feature such as one pin), or a quarter of its spacing or more (for a repeating feature), answer CANNOT JUDGE for that
-  direction or ratio, even if a direction seems to show. Such motion can look reversed between frames.
+- Prefer a non-repeating feature to gear teeth or other repeating patterns.
+- **The motion limit (one boundary for every feature).** Between two consecutive frames, the feature you follow may
+  move at most **one quarter of its repeat period**. A single feature (one pin, one marker) repeats once per turn, so
+  its limit is a quarter turn (90°). A feature that repeats k times around the part (k teeth, k arms) has the limit
+  90°/k, a quarter of its spacing. **At or below the limit:** judge the direction or ratio. **Above the limit:** answer
+  CANNOT JUDGE for that direction or ratio, even if a direction seems to show; such motion can look reversed between
+  frames.
 - Timing: use the times under the frames. A frame step is 0.1 s.
 
 ## General rules
@@ -57,7 +59,7 @@ How to judge motion from the sheets:
    values or calibrated graphics (a plotted trace, a labelled scale) show it. A still alone cannot show rotation or
    phase.
 2. **Undersampled motion cannot fail direction or ratio.** The sheets are 10 frames per second. If the motion is too
-   fast to follow between frames (see "Large jumps" above), the direction or ratio is CANNOT JUDGE, not FAIL.
+   fast to follow between frames (above "The motion limit"), the direction or ratio is CANNOT JUDGE, not FAIL.
 3. **Measurements need resolved features.** "Within 10 %" applies only when turns, teeth, angles or seconds are
    actually resolved. Arrows and decorative tooth counts are not measurements of hidden geometry.
 4. **Labels are not calibration.** Readable numbers can support an explained relation, but they do not prove that an
@@ -137,7 +139,9 @@ accepted variant is not an error because a conventional-only fact says otherwise
 **Coverage.** List the **core** key facts (`"core": true`) that apply to the shown configuration and that the explainer
 states or shows clearly and correctly, in text or unmistakably in the visuals (`coveredFacts`). List the facts that are
 N/A (`notApplicableFacts`). A core fact stated wrongly is not covered (and is an error). The analysis divides the covered
-core facts by the applicable core facts.
+core facts by the applicable core facts. Every configuration in this set has at least 2 applicable core facts; if
+none applied, coverage would be N/A for that explainer, and clarity would be judged without the core-fact parts of the
+anchors.
 
 ## (c) Teaching clarity: ordinal scale 1 to 5
 
@@ -147,10 +151,10 @@ follow.
 
 | Score | Anchor |
 | --- | --- |
-| **5 Excellent** | A learner could answer the question in their own words after seeing it once. The whole mechanism is shown first, then the key idea, step by step. Motion makes the cause and effect obvious. Each text appears when the matching motion is on screen. All core key facts are present. Nothing is confusing. |
-| **4 Good** | Answers the question. One small gap: one core fact is missing, or one moment is confusing, or text and motion are out of step once. |
-| **3 Adequate** | The main idea is present but takes effort: the order is confusing, or two core facts are missing, or the text and the visuals are only loosely linked. |
-| **2 Poor** | A learner would probably not get the answer. The key mechanism is hard to see, or the text is mostly generic, or most core facts are missing. |
+| **5 Excellent** | A learner could answer the question in their own words after seeing it once. The whole mechanism is shown first, then the key idea, step by step. Motion makes the cause and effect obvious. Each text appears when the matching motion is on screen. All applicable core key facts are present. Nothing is confusing. |
+| **4 Good** | Answers the question. One small gap: one applicable core fact is missing, or one moment is confusing, or text and motion are out of step once. |
+| **3 Adequate** | The main idea is present but takes effort: the order is confusing, or two applicable core facts are missing, or the text and the visuals are only loosely linked. |
+| **2 Poor** | A learner would probably not get the answer. The key mechanism is hard to see, or the text is mostly generic, or most applicable core facts are missing. |
 | **1 Very poor** | Does not answer the question, or shows a different mechanism, or is mostly unreadable. |
 
 ## (d) Visual defects: counts by type and severity

@@ -34,7 +34,7 @@ seeds.
 
 - **The benchmark always runs the locked commits.** No engine, Marty or prompt change of any kind applies to the
   benchmark after registration, also not a correctness fix. There is no pre-lock correctness window.
-- **The engine is the one Marty main pins.** At registration Marty main is `1f2729518451d9cd8391bcd7f160f81385184f8f`;
+- **The engine is the one Marty main pins.** At registration Marty main is `adbfba98b0665d79e03ac39f89e8be101caa770c`;
   it pins MartyGraphics `38f3863d5ed27c94fccf44b5f117a43938b79455`. Arm 1 runs exactly that: Marty's check and render
   use the pinned engine, and `marty-solid` (for the story video) is built from the same commit. MartyGraphics main is
   `ca2218131e897f1138fa80c0cf23cf21cd23fa4d` at registration (7 commits after the pin); LOCK.json records it, but the benchmark does not use it,
@@ -58,7 +58,7 @@ two reports; the stricter label won. The merged result and every action are in [
   (RUBRIC.md, "Configurations and N/A").
 - The mechanism checks were revised (every check the Sol report marked R, and the Gemini items). The rubric adds six
   judging limits for what pictures cannot show.
-- QUESTIONS.json is now key version 2 (108 facts). Each fact records both labels, the merged label and the action.
+- QUESTIONS.json is key version 2 after the gate (108 facts) and key version 3 after the review fixes (109 facts; FACTCHECK.md, "Review fixes"). Each fact records both labels, the merged label, the action and any review fix. Every configuration has at least 2 applicable core facts.
 - Open item (recorded, not blocking): the textbook citations have no page-level verification, except Norton section 9.8
   and Uicker section 8.15, which the Sol check read.
 
@@ -228,8 +228,11 @@ output whose pair partner failed keeps T = L.
 **Equal evidence.** Both primary graders get exactly the same files: the five stills, the sheets and `TEXT.txt`. No
 grader gets the video, so no grader has more temporal evidence than the other.
 
-**Adequacy rule.** The strip is adequate for a motion when a visible feature moves at most 1/4 of its repeat period
-between strip frames (sampling at 4 × the feature's event frequency or more). At 10 fps this covers:
+**Adequacy rule (one boundary).** The strip is adequate for a motion when a visible feature moves **at most** 1/4 of
+its repeat period between strip frames (sampling at 4 × the feature's event frequency or more). At or below the
+boundary graders judge; above it they answer CANNOT JUDGE (RUBRIC.md, "The motion limit"). The validation key uses the
+same boundary: the in-scope single-marker case at 2.5 turns per second (exactly 90° per strip frame) expects a
+direction. At 10 fps this covers:
 
 - a part with one non-repeating feature (a pin, crank, marker) up to 2.5 turns per second;
 - a feature that repeats k times around a part up to 2.5 / k turns per second;
@@ -319,8 +322,8 @@ were both made (PASS, FAIL or NOT SHOWN):
 | Item | Merge (G1 and G2; a missing grade leaves the other) |
 | --- | --- |
 | each check `M1`–`M5` | Both judged: PASS only if both PASS. One judged, one CANNOT JUDGE or N/A: the judgment. Neither judged: the check is **unjudged** (both N/A: **N/A**). |
-| (a) mechanism score | 5 × (merged PASS) / (judged checks). Unjudged and N/A checks leave the numerator and the denominator. If no check is judged, the score is undefined and the output counts as ungraded for the primary metric. |
-| (b) errors | The larger count. Coverage: the smaller fraction (covered applicable core facts / applicable core facts). |
+| (a) mechanism score | 5 × (merged PASS) / (judged checks). Unjudged and N/A checks leave the numerator and the denominator. If no check is judged (the denominator is 0), the run's mechanism score is **N/A**: it is reported, left out of M(q, a) like an ungraded output, and never counted as a pass. The same rule applies to both arms. |
+| (b) errors | The larger count. Coverage: the smaller fraction (covered applicable core facts / applicable core facts). If one grader's fraction is undefined (no applicable core fact), the other's is used; if both are undefined, coverage is **N/A** for that run, reported and never counted as full coverage. The same rule applies to both arms. Every configuration in the key has at least 2 applicable core facts (checked by `tools/grader_questions.py --check`). |
 | (c) clarity | The lower score. |
 | (d) defects | The larger count, for major and for minor apart. |
 | (e) preference | Same answer: that answer. One "tie" and one side: tie. A against B: tie. |

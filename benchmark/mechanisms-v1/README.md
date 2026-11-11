@@ -17,7 +17,7 @@ every run and to publish the result whether it is good or bad.
 - **Arm 2:** the same model writes one three.js HTML file, with a headless render and up to 3 repairs from console
   errors and screenshots.
 - **Equal maximum repair counts, different route-specific assistance.** Research is off in both arms.
-- **Locked inputs:** Marty `1f27295`, the engine it pins (`38f3863`), Marty's prompt file, three.js r170 and every
+- **Locked inputs:** Marty `adbfba9`, the engine it pins (`38f3863`), Marty's prompt file, three.js r170 and every
   prompt file here, by hash. No engine, Marty or prompt change applies after registration.
 - **3 runs** per question per arm (120 runs). Every run counts; a failure scores zero.
 - **The same evidence** for both arms and both graders: 5 stills, a 10 fps frame strip in labelled contact sheets, and
@@ -33,7 +33,7 @@ every run and to publish the result whether it is good or bad.
 
 | File | Content |
 | --- | --- |
-| [QUESTIONS.json](QUESTIONS.json) | Key version 2: the 20 questions with ids and categories, the conventional configuration and accepted variants, key facts with sources, `appliesTo`, accepted wordings, designer notes and fact-check records, five mechanism checks per question, the excluded questions and the source list. |
+| [QUESTIONS.json](QUESTIONS.json) | Key version 3: the 20 questions with ids and categories, the conventional configuration and accepted variants, key facts with sources, `appliesTo`, accepted wordings, designer notes and fact-check records, five mechanism checks per question, the excluded questions and the source list. |
 | [FACTCHECK.md](FACTCHECK.md) | The receipt of the two independent fact checks and every action taken. |
 | [GRADER-QUESTIONS.json](GRADER-QUESTIONS.json) | The graders' view: only the question text, the configurations, the key facts with `appliesTo` and accepted wordings, and the checks. Made by [tools/grader_questions.py](tools/grader_questions.py). |
 | [RUBRIC.md](RUBRIC.md) | The scorecard: (a) mechanism correctness, (b) text errors and coverage, (c) teaching clarity, (d) visual defects, (e) pairwise preference. |
@@ -53,7 +53,7 @@ shasum -a 256 -c HASHES.txt
 
 1. A refresh of LOCK.json if a locked main moves.
 
-Done: the fact-check gate (key version 2, [FACTCHECK.md](FACTCHECK.md)) and the grader validation on the synthetic
+Done: the fact-check gate and the review fixes (key version 3, [FACTCHECK.md](FACTCHECK.md)) and the grader validation on the synthetic
 packets (both graders pass, [validation/](validation/README.md)).
 
 ## After registration
@@ -70,7 +70,7 @@ leaves them out), an engine 7 commits behind main, and low power with 20 questio
 
 ## Key-fact status
 
-The key is **version 2**, after two independent fact checks ([FACTCHECK.md](FACTCHECK.md)). Each fact has a check
+The key is **version 3**, after two independent fact checks and a review ([FACTCHECK.md](FACTCHECK.md)). Each fact has a check
 label (`verified-web`, `single-source`, `textbook-only`, `fact-check-only` or `derived`) and a record of both fact-check
 labels and the action taken. Textbook citations name the reference by chapter topic; page-level verification is an
 open item, except Norton section 9.8 and Uicker section 8.15.

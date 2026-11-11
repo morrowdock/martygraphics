@@ -23,8 +23,10 @@ python3 -I validation/temporal_evidence.py validation/RESULTS.json validation/pa
 
 The run reproduces [RESULTS.json](RESULTS.json) and every packet PNG byte for byte.
 
-The adequacy rule under test: a motion is adequate when a visible feature moves at most 1/4 of its repeat period
-between strip frames (4 × sampling).
+The adequacy rule under test: a motion is adequate when a visible feature moves **at most** 1/4 of its repeat period
+between strip frames (4 × sampling). This is the same boundary as RUBRIC.md ("The motion limit") and PROTOCOL.md
+section 7: at or below it graders judge; above it they answer CANNOT JUDGE. The in-scope single-marker cases at
+2.5 turns per second sit exactly on the boundary (90° per strip frame) and expect a direction.
 
 ## Results ([RESULTS.json](RESULTS.json))
 

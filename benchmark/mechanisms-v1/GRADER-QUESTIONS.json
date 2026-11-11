@@ -486,7 +486,7 @@
         {
           "id": "K6",
           "fact": "For a reversing-motor drive: the motor (or its control) reverses at each end of the sweep, so the wiper swings back and forth without a continuously turning crank.",
-          "core": false,
+          "core": true,
           "appliesTo": [
             "reversing-motor"
           ],
@@ -495,9 +495,18 @@
         {
           "id": "K7",
           "fact": "For a rack drive: a crank-driven slider moves a toothed rack or a cable-rack back and forth, and the rack turns a pinion on each wiper spindle, so the spindle swings back and forth.",
-          "core": false,
+          "core": true,
           "appliesTo": [
             "rack-drive"
+          ],
+          "acceptedWordings": []
+        },
+        {
+          "id": "K8",
+          "fact": "In every accepted wiper drive, the wiper arm is fixed to a pivot shaft that swings back and forth through a fixed angle and reverses at the two ends of the sweep.",
+          "core": true,
+          "appliesTo": [
+            "all"
           ],
           "acceptedWordings": []
         }
@@ -673,7 +682,7 @@
         {
           "id": "M4",
           "kind": "ratio",
-          "pass": "At constant crank speed the cutting stroke visibly takes longer than the return stroke; measure complete strokes, not instantaneous ram speed. A stated time ratio is more than 1 and equals the ratio of the stated crank angles."
+          "pass": "At constant crank speed, one complete stroke visibly takes longer than the other; measure complete strokes, not instantaneous ram speed. When a tool, a workpiece or a label makes the cutting direction judgeable, the cutting stroke is the slow one; otherwise judge only the slow and fast strokes. A stated time ratio is more than 1 and equals the ratio of the stated crank angles."
         },
         {
           "id": "M5",
@@ -747,7 +756,7 @@
         {
           "id": "K6",
           "fact": "For a desmodromic valvetrain: a second cam lobe and a closing rocker close the valve positively; no spring is needed to close it.",
-          "core": false,
+          "core": true,
           "appliesTo": [
             "desmodromic"
           ],
@@ -756,7 +765,7 @@
         {
           "id": "K7",
           "fact": "For a two-stroke engine with poppet valves: the camshaft turns at crankshaft speed (1:1), so each valve opens once per crankshaft turn.",
-          "core": false,
+          "core": true,
           "appliesTo": [
             "two-stroke-poppet"
           ],
@@ -808,7 +817,7 @@
         },
         {
           "id": "K2",
-          "fact": "The follower position is set by the cam's lift along the follower's line of motion: for an in-line knife-edge follower, the distance from the cam axis to the contact point; for a roller follower, the distance along the guide to the roller centre on the pitch curve; for a flat-faced follower perpendicular to its motion, the distance from the cam axis to the flat face (the contact point shifts sideways by ds/dtheta). For an offset follower, the lift follows from the follower geometry. Where the lift grows, the follower rises; where it shrinks, the follower falls.",
+          "fact": "Lift s is the follower's displacement along its line of motion, measured from its lowest position (s = 0 when the follower rests on the base circle). For an in-line knife-edge follower, the follower's distance from the cam axis is the contact radius r, and the lift is s = r - Rb (Rb = base-circle radius). For a roller follower, s is the displacement of the roller centre (on the pitch curve) along the guide from its lowest position. For a flat-faced follower perpendicular to its motion, the face's distance from the cam axis is Rb + s; the contact point shifts sideways by ds/dtheta, so the contact radius is not the lift. For an offset follower, s follows from the follower geometry. Where s grows, the follower rises; where it shrinks, the follower falls.",
           "core": true,
           "appliesTo": [
             "all"
@@ -1491,7 +1500,7 @@
           ],
           "acceptedWordings": [
             "Qualitative statements ('most of the air goes around the core', 'several times more air goes around than through') are correct.",
-            "A specific bypass ratio is correct when it is hedged or tied to a named engine; a grader who cannot check a specific number lists it as unsure, not as an error."
+            "A specific bypass ratio is correct only if it names the engine, its date and the operating condition and agrees with them. A hedge ('about', 'typically') alone does not make a number correct. A specific number that the grader cannot check is listed as unsure, not as an error."
           ]
         },
         {
@@ -1530,7 +1539,7 @@
           ],
           "acceptedWordings": [
             "'The bypass stream gives most of the thrust' is the expected statement.",
-            "A specific percentage is correct when it is hedged or tied to a named engine and condition. A percentage given as true of every turbofan is listed as unsure, unless it is plainly false (for example less than half for a high-bypass engine)."
+            "A specific percentage is correct only if it names the engine and the operating condition and agrees with them. A hedge alone does not make it correct. A percentage that the grader cannot check is listed as unsure, not as an error. There is no universal cutoff."
           ]
         }
       ],
@@ -1621,7 +1630,7 @@
         {
           "id": "K6",
           "fact": "For an internal gear pump (gerotor or crescent): an inner gear drives an outer internal-toothed gear set off-centre in the housing, and both turn the same way; the spaces between the teeth open on the inlet side and close on the outlet side (in a crescent pump, a fixed crescent separates the two sides).",
-          "core": false,
+          "core": true,
           "appliesTo": [
             "internal-gear"
           ],
@@ -1673,10 +1682,11 @@
       "keyFacts": [
         {
           "id": "K1",
-          "fact": "In the common single-acting valved-bucket suction hand pump, a valved piston (bucket) moves up and down in a cylinder, and a lower one-way inlet (foot) valve admits water from below.",
+          "fact": "In the common single-acting valved-bucket hand pump, a valved piston (bucket) moves up and down in a cylinder, and a lower one-way inlet (foot) valve admits water from below.",
           "core": true,
           "appliesTo": [
-            "conventional"
+            "conventional",
+            "deep-well"
           ],
           "acceptedWordings": []
         },
@@ -1685,7 +1695,8 @@
           "fact": "Upstroke: the piston valve closes and the water above the piston rises toward the spout; the inlet valve opens when the pressure below it exceeds the cylinder pressure. In a shallow suction installation, atmospheric pressure on the well water pushes the water up through it.",
           "core": true,
           "appliesTo": [
-            "conventional"
+            "conventional",
+            "deep-well"
           ],
           "acceptedWordings": []
         },
@@ -1694,7 +1705,8 @@
           "fact": "Downstroke: the inlet (foot) valve closes and holds the water; the piston valve opens and water passes through the descending piston.",
           "core": true,
           "appliesTo": [
-            "conventional"
+            "conventional",
+            "deep-well"
           ],
           "acceptedWordings": []
         },
@@ -1721,7 +1733,7 @@
         {
           "id": "K6",
           "fact": "For a deep-well lift pump: the cylinder with its piston valve and foot valve sits below the pumping water level at the bottom of a drop pipe and is driven by a long rod from the handle; it lifts the water mechanically, so the atmospheric suction limit does not apply.",
-          "core": false,
+          "core": true,
           "appliesTo": [
             "deep-well"
           ],
@@ -1729,8 +1741,8 @@
         },
         {
           "id": "K7",
-          "fact": "For a force (plunger) pump: a plunger and a check valve in the delivery pipe push the water up to the outlet on the downstroke.",
-          "core": false,
+          "fact": "For a force (plunger) pump: on the upstroke water enters the cylinder through an inlet check valve; on the downstroke the plunger pushes it out through a delivery check valve to the outlet.",
+          "core": true,
           "appliesTo": [
             "force-pump"
           ],
@@ -1746,7 +1758,7 @@
         {
           "id": "M2",
           "kind": "connections",
-          "pass": "The rod joins the handle to the piston. The piston valve is in the piston; the foot valve is below it."
+          "pass": "Valved-bucket pump (suction or deep-well): the rod joins the handle to the piston; the piston valve is in the piston, and the foot valve is below it. Force pump: the rod joins the handle to the plunger; an inlet check valve is on the inlet side and a delivery check valve is on the delivery side."
         },
         {
           "id": "M3",

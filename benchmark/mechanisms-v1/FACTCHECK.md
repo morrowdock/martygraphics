@@ -34,7 +34,7 @@ So 43 facts needed an action. All 43 are corrected or re-sourced. The question t
 | A.1 Do not change the 20 prompts | applied | The `question` strings are byte-identical to key version 1 (checked by the apply script). |
 | A.2 Per-question accepted variants | applied | Every question has `conventional` and `acceptedVariants`; 9 questions list variants (MECH-06, 08, 09, 12, 13, 17, 18, 19, 20). |
 | A.3 Conditional facts, N/A grade, variant facts | applied | Facts have `appliesTo` (`all`, `conventional` or variant ids); 6 kept-text facts were made conditional; 7 variant facts added. RUBRIC.md defines N/A (leaves numerator and denominator). Check clauses name their configuration inline. The per-fact field `acceptedVariants` of version 1 is renamed `acceptedWordings`, so it does not clash with the per-question list. |
-| A.4 Six global judging fixes | applied | RUBRIC.md, "Judging limits" (adapted to the 10 fps strip) and the clause rule; a "Large jumps" rule tells graders to answer CANNOT JUDGE for undersampled motion (the grader validation showed confident wrong directions beyond the limits). |
+| A.4 Six global judging fixes | applied | RUBRIC.md, "Judging limits" (adapted to the 10 fps strip) and the clause rule; a motion-limit rule tells graders to answer CANNOT JUDGE for undersampled motion (the grader validation showed confident wrong directions beyond the limits). |
 | B WRONG (1) | applied | MECH-10 K2 rewritten (lift along the line of motion; knife-edge, roller, flat-faced and offset followers). |
 | B AMBIGUOUS in both (6) | applied | MECH-01 K3, MECH-02 K3, MECH-06 K4, MECH-07 K2, K3, MECH-17 K4: both fixes combined. |
 | B AMBIGUOUS, Gemini only (1) | applied | MECH-08 K3: tangency only for the crank-and-slotted-lever; Whitworth stated. |
@@ -135,3 +135,19 @@ The other 52 facts are VERIFIED in both checks and unchanged (they gain `applies
 | MECH-18 | M2 (R), M3 (R), M4 (R), M5 (Y/G11) |
 | MECH-19 | M3 (D), M4 (R/G12), M5 (R) |
 | MECH-20 | M1 (R), M3 (D), M4 (R) |
+
+## Review fixes (key version 3)
+
+A fresh review of the pull request at `a4d8b55` found six items (FIX-FIRST). All six are applied:
+
+| Finding | Status | How |
+| --- | --- | --- |
+| 1. One motion limit | applied | RUBRIC.md "The motion limit", PROTOCOL.md section 7 and validation/README.md use one boundary: at most one quarter of the repeat period between strip frames (90° for a single feature, 90°/k for a k-fold feature); at or below it graders judge, above it CANNOT JUDGE. The validation key already used this boundary (2.5 turn/s, exactly 90°, expects a direction). |
+| 2. Core facts for every configuration; zero denominators | applied | MECH-06 K8 added (core, all configurations); the 7 variant facts are core; MECH-20 K1 to K3 also apply to the deep-well valved-bucket pump. Every configuration now has at least 2 applicable core facts; `tools/grader_questions.py --check` fails otherwise. Zero denominators: the run's mechanism score or coverage is N/A, reported and never counted as a pass, with the same rule for both arms (PROTOCOL.md section 10). New sources: MECH-06 K7 (How a Car Works, MathWorks), MECH-20 K6 (Wikipedia India Mark II, RWSN), MECH-20 K7 (Wikipedia Piston pump; single-source). |
+| 3. MECH-18 K1 and K5 numeric exceptions | applied | The accepted wordings no longer let a hedge or an engine name alone make a number correct, and the "less than half is plainly false" cutoff is removed. Unverifiable numbers are listed as unsure. |
+| 4. MECH-20 M2 | applied | Valved-bucket (suction or deep-well) and force-pump connections are separate conditional clauses. |
+| 5. MECH-08 M4 | applied | The cutting stroke is required to be the slow one only when a tool, a workpiece or a label makes the cutting direction judgeable, as in M3. |
+| 6. MECH-10 K2 | applied | The lift s is measured from the lowest follower position (s = 0 on the base circle); for an in-line knife edge s = r - Rb; position and lift are separate. |
+
+The 20 question texts are unchanged. QUESTIONS.json is key version 3 (109 facts); each changed item lists the fix
+under `review`.

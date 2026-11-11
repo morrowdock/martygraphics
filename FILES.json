@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "984fd4448f6f41c8833acbfb5b208952abb313d99f8e422c60cc35060fdaaa91"
+      "sha256": "0ea5195d51cf694050ff451039feefa887cffd89b15fec0dc686c861ad7ae412"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1195,35 +1195,35 @@
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
-      "sha256": "bc94343cac277f246a773559c2e390cd9fefea8239a7a44d242d1984bca80c28"
+      "sha256": "a6800ff8e1f6644b4cdc38e9b5a010cede089607a453c6b2cc5f32f635c436ec"
     },
     {
       "path": "benchmark/mechanisms-v1/GRADER-QUESTIONS.json",
-      "sha256": "534ca777b5a47e9203903ded118402dedbdb471ef2a1ea9dbbf5164449da0c9f"
+      "sha256": "c33091f72fba3b092e93cf7c3b78908458a994c0b51bf6a526a215298196c9f6"
     },
     {
       "path": "benchmark/mechanisms-v1/HASHES.txt",
-      "sha256": "a21f9e6fccb134102c077283b521a42b4c602c6cfb43ec99ebb7105c277beaa3"
+      "sha256": "f845abcc60f422a1a3f8f790c80ad05b5b2c2e734a2ee7b34c2d328967a75c17"
     },
     {
       "path": "benchmark/mechanisms-v1/LOCK.json",
-      "sha256": "5a3986ab3194e601464b10c69e3ea7d4215572cfc81cf829c1e3d83807e5185c"
+      "sha256": "97a3b5dbc9197622a0b54db90c37698bfd3ed234b46389048d8187bf9414f761"
     },
     {
       "path": "benchmark/mechanisms-v1/PROTOCOL.md",
-      "sha256": "68ab089e3c897443bbaa67c7187457f6b5109f766d1c9f267c2276243b4475f2"
+      "sha256": "0061266099351719b4b8dd7d40633b258667b0ce0f9b8b41fdef9227ea427de7"
     },
     {
       "path": "benchmark/mechanisms-v1/QUESTIONS.json",
-      "sha256": "07ffdd7ab2953a91d2db9a7e181dc38e35197b9563782946612e44056765a6a4"
+      "sha256": "90acad5e181f1bef393af074aa220a81785161730dd544c8bed903193241dcf8"
     },
     {
       "path": "benchmark/mechanisms-v1/README.md",
-      "sha256": "e1302234db5ac17f5303b19294a704f87fd8b91beb33067afac756adb5ee8fa4"
+      "sha256": "82a22aa2d9004e5639a42634b09686296e644c52a088341171e556f5ec9ee832"
     },
     {
       "path": "benchmark/mechanisms-v1/RUBRIC.md",
-      "sha256": "e1a00577a041ab60d99a3e0802bee101298b25c04e51d016d1d2a7f1b03a30cd"
+      "sha256": "8177a1d12967366ddb06a445d60d5333ba363690d30fcdd23729450bf5551553"
     },
     {
       "path": "benchmark/mechanisms-v1/prompts/ARM2-REPAIR.txt",
@@ -1247,11 +1247,11 @@
     },
     {
       "path": "benchmark/mechanisms-v1/tools/grader_questions.py",
-      "sha256": "fc5db81110a0b126ac4d268d90f90e3dfb3bdc1aa419833d6f852f71f58c69c8"
+      "sha256": "8fca4cb570e6e11736cca9b1dcd5e961f21ba2e4baa832f3f73b2d7b02bab06c"
     },
     {
       "path": "benchmark/mechanisms-v1/validation/README.md",
-      "sha256": "2703ca7861ddc4666c53bda06a84b6887a0867dfabbe5df55093b9868fec4d92"
+      "sha256": "ee0acb46ec83c3fc7e5c618633f724127c9f78e1fcf9ff2932d02937de5077f9"
     },
     {
       "path": "benchmark/mechanisms-v1/validation/RESULTS.json",
