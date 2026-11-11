@@ -13,20 +13,22 @@ Gear trains, slider-crank linkages and engine cutaways, as 3D stills, loops and 
 </div>
 
 **What the engine checks:** gear meshing (tooth phase, centre distance and tooth interference), gear ratios, joint
-motion and layout (in the strict check, every label and arrow must land on its part and show in its step).
+motion and layout. In the strict check, the labels and arrows that a view shows pass the anchor and visibility checks;
+an arrow whose part is hidden in a view is dropped from that view and reported as a warning.
 **What it does not check:** whether the words are true. It checks motion and layout, not the truth of text claims.
 
 <p align="center">
-  <a href="docs/assets/turbofan/turbofan-loop.gif"><img src="docs/assets/turbofan/labelled.png" width="840" alt="Labelled cutaway of a schematic two-spool turbofan: nacelle, bypass duct and guide vanes, a 20-blade fan, a 3-stage LP compressor, a 6-stage HP compressor, an annular combustor, a 2-stage HP turbine, a 4-stage LP turbine and the exhaust cone, with an orange HP shaft."></a>
+  <a href="docs/assets/turbofan/exploded.png"><img src="docs/assets/turbofan/exploded.png" width="840" alt="Exploded schematic two-spool turbofan, step 8 of 8: the 20-blade fan at the left; below, the 3-stage LP compressor, the 6-stage HP compressor, the 2-stage HP turbine and the 4-stage LP turbine stay on the blue LP shaft and the orange HP shaft beside the exhaust cone; above, the fixed vanes and the annular combustor float. Caption: the casings lift away."></a>
 </p>
 
-**A turbofan, cut away, from 38 lines of JSON.** The solid engine builds every blade row, casing and shaft of this
+**A turbofan cutaway, exploded here, from 38 lines of JSON.** The solid engine builds every blade row, casing and shaft of this
 schematic two-spool turbofan. The HP spool turns three times for each turn of the fan; that ratio is authored as two
 input drives, not solved from gears. The example's own check confirms that both spools turn about one axis and that
 every rotor keeps at least 4.52 mm from the parts that do not turn with it. The JSON was written by hand in the
-documented format, not from a prompt. A teaching model, not a real engine design.
-[Turning loop (GIF)](docs/assets/turbofan/turbofan-loop.gif) · [Video (MP4)](https://morrowdock.app/mg/turbofan/turbofan-loop.mp4) ·
-[Exploded](docs/assets/turbofan/exploded.png) · [Its JSON](Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json) ·
+documented format, not from a prompt. A teaching model, not a real engine design. The labelled cutaway and the loop
+name the spool speeds with the pilots' terms N1 (LP spool) and N2 (HP spool).
+[Labelled cutaway](docs/assets/turbofan/labelled.png) · [Turning loop (GIF)](docs/assets/turbofan/turbofan-loop.gif) ·
+[Video (MP4)](https://morrowdock.app/mg/turbofan/turbofan-loop.mp4) · [Its JSON](Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json) ·
 [Run it](Examples/Turbofan/README.md) · [Render receipt](docs/assets/turbofan/provenance.json)
 
 ### Refused, then repaired: a robot-joint gearbox from a prompt

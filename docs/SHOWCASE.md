@@ -6,14 +6,15 @@ and tooth interference), gear ratios, joint motion and layout. It does not check
 motion and layout, not the truth of text claims. A "Solved" count in a legend counts animation ratios and engine
 values computed from the model, not verified facts about the real object.
 
-Later sections show the AI-written jet-suit lesson with its fact check, the hand-built jet-suit lesson, beat-by-beat
-lessons, the path tracer and the 2D scene engine. None of the examples implies a curriculum or a running service.
+After the mechanisms come the AI-written jet-suit lesson with its fact check and the hand-built jet-suit lesson.
+Other parts of the repository are at the end, under [Also in this repo](#also-in-this-repo). None of the examples
+implies a curriculum or a running service.
 
 > **About the 3D loops on this page.** GitHub shows them as GIF images, not video. A GIF
 > has at most 256 colours, and these previews are 480 to 640 pixels wide at 10 to 12 frames per
-> second, so they look rougher and less smooth than the real output. The turbofan and gearbox source videos are
-> 1280 pixels wide at 30 and 24 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a> ·
-> <a href="https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4">path-traced gearbox (MP4)</a>. Run an example to see the engine live.
+> second, so they look rougher and less smooth than the real output. The turbofan source video is
+> 1280 pixels wide at 30 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a>.
+> Run an example to see the engine live.
 
 ## Turbofan cutaway
 
@@ -28,7 +29,7 @@ The HP spool turns three times for each turn of the fan. That ratio is authored 
 gears. The example's `--verify` check confirms that every mesh is closed, that both spools turn about one engine axis
 and that no rotor touches a part that does not turn with it (smallest lower-bound gap 4.52 mm).
 
-[![Turbofan cutaway turning: fan, compressors, combustor and turbines exposed inside a half-cut nacelle.](assets/turbofan/turbofan-loop.gif)](assets/turbofan/pathtraced-hero.png)
+[![Turbofan cutaway turning: fan, compressors, combustor and turbines exposed inside a half-cut nacelle.](assets/turbofan/turbofan-loop.gif)](assets/turbofan/labelled.png)
 
 [Path-traced still](assets/turbofan/pathtraced-hero.png) · [Labelled cutaway](assets/turbofan/labelled.png) ·
 [Exploded](assets/turbofan/exploded.png) · [Loop (GIF, 640×400, 10 fps, 12 s)](assets/turbofan/turbofan-loop.gif) ·
@@ -420,7 +421,12 @@ move out of step 5 were checked after it. It did not check every transition fram
 two earlier label anchors; the published files use the moved anchors (see the
 [render receipt](assets/jet-suit/provenance.json)). The exploded view is not published.
 
-## Beat-by-beat lessons
+## Also in this repo
+
+These sections show other parts of the repository: beat-by-beat lessons, the path tracer and the 2D scene engine with
+its packs. They are not part of the mechanism pitch.
+
+### Beat-by-beat lessons
 
 A short rotation lesson on the lesson layer: triangle ABC turns about the origin O in five beats, with one angle
 slider. The lesson was written by hand as part of the [example](../Examples/LessonDemo/README.md), like the other
@@ -464,7 +470,7 @@ iPad): a scene statement reaches the first offscreen frame (1024×768) in 0.52 m
 commits new state in 0.14 ms, median of 500 runs. The first figure needs 136 bytes of stream.
 See [measured timing](LESSONS.md#measured-timing-this-mac-only).
 
-## Path-traced gearbox
+### Path-traced gearbox
 
 A procedurally generated two-stage gearbox, path traced on an
 Apple M1 GPU by `MartyGraphicsPathTracer`: 1920×1080, 768 samples per pixel, about
@@ -486,7 +492,7 @@ Together: 2 × 3.5 = 7 turns of the input for one turn of the output. Planetary 
 used where a big reduction must fit in a small space, such as in car automatic
 transmissions, power drills and helicopter rotor gearboxes.
 
-## Native scenes
+### Native scenes
 
 | Example | In `--preview` | What to notice | Source |
 | --- | --- | --- | --- |
@@ -498,7 +504,7 @@ transmissions, power drills and helicopter rotor gearboxes.
 | Geometric motion | Move through a scene | A marker takes two seconds from A to B, then returns. No force model is implied. | [motion.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
 | Shortest path | Find the cheapest route | Dijkstra settles six routers one at a time; the cheapest route 0→2→1→3→4→5 costs 13. Opt-in graph pack. | [shortest-path.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
-## Run or reproduce
+### Run or reproduce
 
 Follow the [native showcase instructions](../Examples/Showcase/README.md).
 The [exporter source](../Examples/Showcase/Sources/MartyShowcase/Showcase.swift)
@@ -509,7 +515,7 @@ All examples are original synthetic material under [Apache-2.0](../LICENSE).
 No private course fixture, premium pack, browser screenshot, concept, or external
 artwork belongs to this set.
 
-## Native versus browser demonstrations
+### Native versus browser demonstrations
 
 - Native exports are engine frames with a small SwiftUI card/caption wrapper,
   not screenshots of the full Morrowdock application.
@@ -519,7 +525,7 @@ artwork belongs to this set.
   This gallery uses the two current built-ins, the public opt-in graph pack and
   generic primitives only.
 
-## Accepted capture inventory
+### Accepted capture inventory
 
 The [machine-readable receipt](assets/native/provenance.json) pins the capture commit
 `9b4ba89780af54d7de7f7e4fd209625a2db24f33` and the SHA-256 of every scene, tool and engine source
@@ -546,49 +552,49 @@ These are offscreen native captures with a caption wrapper. No full-app screensh
 video, live interactive playback, accessibility, performance or adopter receipt is
 claimed. See the [remaining quality work](QUALITY.md).
 
-## Static gallery
+### Static gallery
 
 Each source link above is runnable in the [same local showcase](../Examples/Showcase/README.md):
 pick a scene by its preview title from the table above in `--preview`, or export
 the complete set with `--export`.
 The accepted receipt covers export; interactive controls still need validation.
 
-### Tree search
+#### Tree search
 
 Search 12 → 5 → 8, finding 8 in three comparisons.
 [Source](../Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json) · [Run](../Examples/Showcase/README.md)
 
 [![Native binary search tree: path twelve, five, eight highlighted.](assets/native/tree.png)](assets/native/tree.png)
 
-### Two pointers
+#### Two pointers
 
 The final step selects 5 + 9 = 14 from [2, 5, 9, 14].
 [Source](../Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json) · [Run](../Examples/Showcase/README.md)
 
 [![Native array with five and nine selected for target fourteen.](assets/native/two-pointers.png)](assets/native/two-pointers.png)
 
-### Message handoff
+#### Message handoff
 
 Source → Queue → Worker; the final step highlights Worker. This is a diagram.
 [Source](../Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json) · [Run](../Examples/Showcase/README.md)
 
 [![Native directed handoff diagram with Worker highlighted.](assets/native/handoff.png)](assets/native/handoff.png)
 
-### Sampled function
+#### Sampled function
 
 Seven supplied points sketch y = x² from x = −3 to 3, without a solver.
 [Source](../Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) · [Run](../Examples/Showcase/README.md)
 
 [![Native plot of seven supplied samples of x squared.](assets/native/function.png)](assets/native/function.png)
 
-### Synthetic counts
+#### Synthetic counts
 
 Alpha 18, Beta 30, Gamma 24. Every quantity is invented.
 [Source](../Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) · [Run](../Examples/Showcase/README.md)
 
 [![Native labeled bars comparing eighteen, thirty and twenty-four.](assets/native/counts.png)](assets/native/counts.png)
 
-### Geometric motion
+#### Geometric motion
 
 A still sampled at one second between A and B. The timeline animates position;
 it does not simulate forces.
@@ -596,7 +602,7 @@ it does not simulate forces.
 
 [![Native geometric marker midway between A and B.](assets/native/motion.png)](assets/native/motion.png)
 
-### Shortest path
+#### Shortest path
 
 Dijkstra over six routers with link latencies in milliseconds. The final step
 highlights 0→2→1→3→4→5 at cost 13, the only route at that cost.
