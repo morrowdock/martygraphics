@@ -66,7 +66,7 @@ packets (both graders pass, [validation/](validation/README.md)).
 
 See [PROTOCOL.md, section 14](PROTOCOL.md#14-residual-risks-and-known-limits): partial blinding (render style and the
 kept limitation labels can reveal the arm), five questions near shipped examples (a descriptive sensitivity analysis
-leaves them out), an engine 7 commits behind main, and low power with 20 questions.
+leaves them out), an engine 10 commits behind main, and low power with 20 questions.
 
 ## Key-fact status
 

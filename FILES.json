@@ -1195,7 +1195,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
-      "sha256": "5417b49072f1515e9a000b29681173a70231b59e7f4c9ca5af7be4641df0d25b"
+      "sha256": "2255053a66094ca2e46f0922ce02aa17ea9811be71b557b13de38dd2110c763a"
     },
     {
       "path": "benchmark/mechanisms-v1/GRADER-QUESTIONS.json",
@@ -1203,23 +1203,23 @@
     },
     {
       "path": "benchmark/mechanisms-v1/HASHES.txt",
-      "sha256": "98df922fa4d025d38a673a3d9db576c10bfaafcb1cf28e361884bb4c0d9cabb5"
+      "sha256": "49f770caf091684e354eee64efffa174c7a4cbe144001ecb00c1b791f33114c3"
     },
     {
       "path": "benchmark/mechanisms-v1/LOCK.json",
-      "sha256": "0db1e5fbdc46cc3a85666d78fb8f91ce21153367a35cfa18d524ecfec088b664"
+      "sha256": "1a176911a3d339804307f9c080aa6d70b81f0e915ccfb7e61bb0d30017fc3afa"
     },
     {
       "path": "benchmark/mechanisms-v1/PROTOCOL.md",
-      "sha256": "e25bb93d68d70b98008a4bf61989342ba096446b01404482a24f7b9af79f8f1d"
+      "sha256": "3c59e19e757daeaa68eba030da7d979bfc3d6d1fef409de51864cf1a43b38c9b"
     },
     {
       "path": "benchmark/mechanisms-v1/QUESTIONS.json",
-      "sha256": "a76db3dc50f9fea1a74707403a231f1416dc8a8df0dedc230ab76356e920a715"
+      "sha256": "b487e2388187b9580d80ac115072b9912332f9eaa34984519be7396526e308b8"
     },
     {
       "path": "benchmark/mechanisms-v1/README.md",
-      "sha256": "82a22aa2d9004e5639a42634b09686296e644c52a088341171e556f5ec9ee832"
+      "sha256": "d75722cdae8d08171053347023f34cc2e58edfc1f14b8de0b0b9532b32819c42"
     },
     {
       "path": "benchmark/mechanisms-v1/RUBRIC.md",

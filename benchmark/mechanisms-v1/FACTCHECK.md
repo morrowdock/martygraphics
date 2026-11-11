@@ -1,7 +1,7 @@
 # Fact-check receipt: mechanisms-v1 key version 2
 
 Date: 2026-11-11. Status: **applied** to [QUESTIONS.json](QUESTIONS.json) (key version 2), [RUBRIC.md](RUBRIC.md) and
-[GRADER-QUESTIONS.json](GRADER-QUESTIONS.json). Baseline: key version 1 at commit `0de70ed` (pre-registration; `bd2239e` after the rebase onto `ca22181`).
+[GRADER-QUESTIONS.json](GRADER-QUESTIONS.json). Baseline: key version 1 at commit `0de70ed` (pre-registration; `b3435cf` after the rebase onto `f1fca98`).
 
 ## The two checks
 

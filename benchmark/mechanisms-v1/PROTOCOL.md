@@ -37,7 +37,7 @@ seeds.
 - **The engine is the one Marty main pins.** At registration Marty main is `adbfba98b0665d79e03ac39f89e8be101caa770c`;
   it pins MartyGraphics `38f3863d5ed27c94fccf44b5f117a43938b79455`. Arm 1 runs exactly that: Marty's check and render
   use the pinned engine, and `marty-solid` (for the story video) is built from the same commit. MartyGraphics main is
-  `ca2218131e897f1138fa80c0cf23cf21cd23fa4d` at registration (7 commits after the pin); LOCK.json records it, but the benchmark does not use it,
+  `f1fca98e8a798fe318964e25996d53b6293858f7` at registration (10 commits after the pin); LOCK.json records it, but the benchmark does not use it,
   because a pin change would be a Marty change.
 - **If a locked main moves before the merge,** LOCK.json and HASHES.txt are refreshed in this pull request and
   reviewed again before the merge. After the merge, nothing changes.
@@ -447,7 +447,7 @@ Changes after registration go in `AMENDMENTS.md` (dated, with the reason, and th
    out.
 3. **Different route-specific assistance.** Arm 1 gets Marty's plan step and the engine's checks; Arm 2 gets
    screenshots of its own render; the repair maximum is equal. This compares the routes as products.
-4. **Older engine.** Arm 1 uses the engine that Marty main pins (`38f3863`), 7 commits behind MartyGraphics main at
+4. **Older engine.** Arm 1 uses the engine that Marty main pins (`38f3863`), 10 commits behind MartyGraphics main at
    registration. The result is about that locked route.
 5. **Motion limits are asked, not enforced.** Arm 2 is asked to stay inside the limits; Arm 1 uses the engine's default
    story speed. The grader validation showed that both graders can give a confident wrong direction for motion beyond

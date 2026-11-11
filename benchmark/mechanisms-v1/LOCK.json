@@ -1,7 +1,7 @@
 {
   "kind": "martygraphics.benchmark.lock/1",
   "benchmark": "mechanisms-v1",
-  "capturedUTC": "2026-11-11T20:19:05Z",
+  "capturedUTC": "2026-11-11T21:45:01Z",
   "locks": "at the merge of the registration pull request (morrowdock/martygraphics #57). If a locked main moves before the merge, this file is refreshed in that pull request before the merge. After the merge nothing here changes; the benchmark always runs these values.",
   "arm1": {
     "marty": {
@@ -21,7 +21,7 @@
       "why": "the engine that Marty main pins (Package.swift, revision). Marty's check and render use it, and marty-solid is built from it. Changing the pin would be a Marty change, which the lock forbids."
     },
     "engineMainAtCapture": {
-      "commit": "ca2218131e897f1138fa80c0cf23cf21cd23fa4d",
+      "commit": "f1fca98e8a798fe318964e25996d53b6293858f7",
       "used": false
     },
     "command": [
@@ -89,11 +89,11 @@
     "validation": "validation/graders/SCORES.json: both pass (G1 21/21, G2 20/21 in scope; 0 wrong directions)"
   },
   "inputs": {
-    "QUESTIONS.json": "a76db3dc50f9fea1a74707403a231f1416dc8a8df0dedc230ab76356e920a715",
+    "QUESTIONS.json": "b487e2388187b9580d80ac115072b9912332f9eaa34984519be7396526e308b8",
     "GRADER-QUESTIONS.json": "27be0849c50d02c783eff8cff1d14213ebcb8b8b13d51ec1960cd658f0eef16a",
     "RUBRIC.md": "a64ffa95eac2eb876c2c6a60a3fd4de7fa1f353f5e2ad9b6b7d3ecd70627d305",
-    "PROTOCOL.md": "e25bb93d68d70b98008a4bf61989342ba096446b01404482a24f7b9af79f8f1d",
-    "FACTCHECK.md": "5417b49072f1515e9a000b29681173a70231b59e7f4c9ca5af7be4641df0d25b"
+    "PROTOCOL.md": "3c59e19e757daeaa68eba030da7d979bfc3d6d1fef409de51864cf1a43b38c9b",
+    "FACTCHECK.md": "2255053a66094ca2e46f0922ce02aa17ea9811be71b557b13de38dd2110c763a"
   },
   "evidence": {
     "stripFps": 10,
@@ -119,7 +119,7 @@
     "blinding": "made after generation; its SHA-256 is committed before grading"
   },
   "pendingBeforeMerge": [
-    "refresh of this file if a locked main moved (Marty main adbfba9, MartyGraphics main ca22181 at capture)"
+    "refresh of this file if a locked main moved (Marty main adbfba9, MartyGraphics main f1fca98 at capture)"
   ],
   "pendingBeforeRun1": [
     "harness pull request with the primary scoring and merge code and its zero-denominator tests (both arms), reviewed and hash-pinned",
