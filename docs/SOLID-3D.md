@@ -847,12 +847,18 @@ world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear 
   joint adds its travel over the step (`|rate| × |spin| × 2π` for a linear drive, the crank's diameter for a
   crank-slider). The centre's bound is the share-weighted sum of the parts' bounds. (A plain sum of `2 × d` is not an
   upper bound once a lower joint moves the centroid away from an upper joint's axis.) With `L` the arrow's length, the
-  most the centre can turn the arrow is `asin(min(1, bound / L))` (0 when both ends are on the centre). A bound of 0
-  keeps the existing rules. Otherwise the arrow passes only when the bound is at most the world-fixed epsilon (1e-9 ×
-  max(1, the model's diagonal)) **and** its angle from down at the first pose plus that worst-case angle is at most
-  10°. Else it is refused, `annotation.pose.<id>` (every profile), also when both ends are on the centre. The refusal
-  adds `centreOfMass`: `{"arrow", "step", "part", "joint", "distance", "bound", "tolerance", "angle", "extraAngle",
-  "fixed", "repair"}`: the part that adds the most to the bound and the joint in its chain that adds the most, the
+  most the centre can turn the arrow is `asin(min(1, bound / L))` (0 when both ends are on the centre). The other end
+  is bounded the same way (`MGSolidAnnotationMotion.pointBound`): a part-mounted end applies the recurrence to its
+  anchor point (`E`), a world end does not move. The same two-end bound applies to every gravity arrow in a moving
+  step, with or without a centre-of-mass end (`worldFixed` alone admits a point within its epsilon of each axis, and
+  such offsets add up along a chain), except two ends that translate together on one chain with no revolute joint,
+  whose vector is exactly constant. With `L` the arrow's length at the first pose, the worst-case extra angle is
+  `asin(min(1, (D + E) / L))`. A total of 0 keeps the existing rules. Otherwise the arrow passes only when `D + E` is at
+  most the world-fixed epsilon (1e-9 × max(1, the model's diagonal)) **and** its angle from down at the first pose plus
+  that worst-case angle is at most 10°. Else it is refused, `annotation.pose.<id>` (every profile), also when both ends
+  are on the centre. The refusal adds `centreOfMass`: `{"arrow", "step", "part", "joint", "distance", "bound",
+  "endBound", "tolerance", "angle", "extraAngle", "fixed", "repair"}` (`bound` is `D`, `endBound` is `E`): the part
+  that adds the most (the centre's part or the end's part) and the joint in its chain that adds the most, the
   centroid's distance from that joint's axis (null for a sliding joint), the bound and its tolerance, the angles, and
   `fixed`, the arrow's ends as world points at the step's first pose at full precision; the repair is to anchor the
   arrow there (which keeps its exact vector) or to remove the motion from the step (`"spin": 0`). A still step, a step
@@ -860,7 +866,8 @@ world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear 
   conservative: two off-axis parts that keep the centre in place between them still count as moving. (r2k reviews: an
   off-axis rotor's arrow turned 54.7° from down a quarter turn later; a sampled proof missed a 63.25° turn in a 64-joint
   chain; a per-joint yes/no with an epsilon let a 64-joint chain of centroids each 0.0000018 mm off its axes turn an
-  arrow from 9.99° to 10.0155°. All three passed as Solved before this rule.)
+  arrow from 9.99° to 10.0155°; bounding the centre alone let an eight-joint chain under the other end turn an arrow
+  from 9.999999° to 10.0032°. All four passed as Solved before this rule.)
   It must point within 10° of −Z at the view's first pose.
 * A **motion line arrow** must not ride a turning joint in a step with `spin` (use a turn arrow there); its linear
   chain then moves it at one constant velocity. A stated `expect` must hold at the view's first pose.

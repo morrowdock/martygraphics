@@ -28,8 +28,9 @@
     pane less 8 px). The report's `boardClips` gives the overflow and the exact move of the item's `at`.
   - **Review fixes.** A gravity arrow with a centre-of-mass end in a moving step is judged with a conservative bound
     on the centre's displacement, no sampling (`MGSolidAnnotationMotion.centreBound`: per part, from the part upward,
-    `2 × (d + D)` per revolute joint and the travel per sliding joint; share-weighted). It passes only when the bound is
-    at most the world-fixed epsilon and its angle plus `asin(bound / length)` is at most 10°; else
+    `2 × (d + D)` per revolute joint and the travel per sliding joint; share-weighted), and its part-mounted end with
+    the same recurrence on the anchor point (`pointBound`, `E`; every gravity arrow in a moving step). It passes only
+    when `D + E` is at most the world-fixed epsilon and its angle plus `asin((D + E) / length)` is at most 10°; else
     `annotation.pose.<id>`, with `centreOfMass` (bound, angles, the part and joint, a fixed-point repair). Before, an
     off-axis rotor, a 64-joint chain (63.25°) and a near-axis 64-joint chain (9.99° → 10.0155°) passed as Solved.
     Executable repairs print their values at full precision (`MGAnnotationAnchorIssue.exact`); the weight suggestion

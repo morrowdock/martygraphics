@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "299721b88631ff0b5c404ced0292aa5f6a5e34d4717588073196f9456a8f8d7b"
+      "sha256": "c71e6fcd00f1aa050803f8d6f2f36e42d6384c8c5994659855c171fe6ffb7f86"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -727,7 +727,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
-      "sha256": "1ea8d72abacaae4e095522eefa7512799d2fab0fbeb7cac5e9fbb555dbb84e1a"
+      "sha256": "ebe3fe391bfaf4c26d7b1e26179550f395e02e4901aad664246b0a57097d02ef"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift",
@@ -795,7 +795,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "06c40da708d4c8ec002727aedc4634b267c42aa6137d5c712ce08fc43b8983a7"
+      "sha256": "a3c8fbb701b8c52beef76607a6e2fcd9b58adaf1cc7a52d7ce679c3c9ef2cdd5"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
@@ -1051,7 +1051,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/R2KEngineFixTests.swift",
-      "sha256": "4fabb2835773bce5e06431e8cc9cd714ebd7d61ff67ea76eafd2fbb0990fad57"
+      "sha256": "459f72292ef4b212c280b1c4922d196632f70627917cac87216b2153772d0e62"
     },
     {
       "path": "Tests/MartyGraphicsTests/RecordParamsGuardTests.swift",
@@ -1235,7 +1235,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "027a9f28ffb95f6cfeded85fd702c2071279bf91ab3be1b9f10b3d8d10c89215"
+      "sha256": "9e357faf05dcab3f4fc35d7f448e682ee53316b77397d35b802520e6d189aca1"
     },
     {
       "path": "docs/SHOWCASE.md",
@@ -1243,7 +1243,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "2dde06da46ef99f56c2023cdf4f1888e4c68f33e27c9e046f813637cebeb16bf"
+      "sha256": "b3437a7fbab05905718506dbdd0f5acd5c1f47385f96477e11ed9c213f833175"
     },
     {
       "path": "docs/THIRD-PARTY.md",

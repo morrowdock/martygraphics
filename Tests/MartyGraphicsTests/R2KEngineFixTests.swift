@@ -266,6 +266,7 @@ final class R2KEngineFixTests: XCTestCase {
         XCTAssertNotNil(detail["bound"]); XCTAssertNotNil(detail["extraAngle"])
         XCTAssertTrue(line.contains("off the axis of joint `rotor`"), line)
         XCTAssertTrue(line.contains("\"spin\": 0"), line)
+        XCTAssertLessThan(line.unicodeScalars.count, MGAnnotationAnchorIssue.repairScalars, "the whole line fits")
         // The review's epsilon case: 0.000100004 mm off the axis, 1.1 turns. Exact: refused, whatever the samples.
         XCTAssertEqual(refusal(rotorText(from: com, to: #"{"world": [0.000100004, -100, -100]}"#, spin: 1.1, x: 0.000100004))?.reason, "annotation.pose.w")
         // Both ends on a moving centre: never a Solved direction either.
@@ -300,6 +301,40 @@ final class R2KEngineFixTests: XCTestCase {
         // The same chain without spin passes.
         let still = t.replacingOccurrences(of: #""spin": 1"#, with: #""spin": 0"#)
         guard case .success = MGSolidParser.document(data: Data(still.utf8), library: library) else { return XCTFail("still") }
+    }
+
+    /// The re-check's counterexample: an eight-joint chain with alternating rates whose axes lie 0.0000018 mm around one
+    /// point (each under the world-fixed epsilon), an arrow from the centre of mass to an offset on its last part at
+    /// 9.999999° from down. Bounding the centre alone accepted it, though it turns to 10.0032°. Both ends are bounded
+    /// now: refused, with `endBound` over the tolerance. The same arrow to a world point passes; an arrow from a world
+    /// point to the chain (no centre of mass) is refused too.
+    func chainEndText(to: String, from: String = #"{"point": "centreOfMass", "offset": [0, -100, 0]}"#) -> String {
+        var parts = [#"{"id": "body", "shape": {"box": {"size": [20, 20, 20]}}}"#,
+                     #"{"id": "dust", "shape": {"box": {"size": [0.05, 0.05, 0.05], "at": [0.001, 0, 0]}}, "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "offAxis": true}"#]
+        for k in 1...8 {
+            let sign = k % 2 == 1 ? 1.0 : -1.0
+            let at = k == 1 ? "[-0.08810279236302726, -100.00001249999961, -0.5000000624999981]" : "[\(-3.6e-06 * sign), 0, 0]"
+            let parent = k == 1 ? "" : #", "parent": "t\#(k - 1)""#
+            parts.append(#"{"id": "t\#(k)", "shape": {"box": {"size": [0.05, 0.05, 0.05], "at": [\#(1.8e-06 * sign), 0, 0]}}, "at": \#(at), "joint": {"revolute": [0, 0, 1]}, "drive": {"input": \#(Int(sign))}, "offAxis": true\#(parent)}"#)
+        }
+        parts.append(#"{"id": "distant", "shape": {"box": {"size": [0.05, 0.05, 0.05]}}, "at": [4000, 0, 0]}"#)
+        return #"{"v": 2, "kind": "assembly", "parts": [\#(parts.joined(separator: ", "))], "annotations": {"arrows": [{"id": "w", "meaning": "force", "cause": "gravity", "from": \#(from), "to": \#(to)}]}, "steps": [{"say": "Weight points down.", "camera": "front", "spin": 1, "annotate": ["w"]}]}"#
+    }
+
+    func testBothEndsOfAGravityArrowAreBounded() throws {
+        let t = chainEndText(to: #"{"part": "t8", "offset": [-1.8e-06, 0, 0]}"#)
+        let e = try XCTUnwrap(refusal(t), "the arrow that turns past 10° through its part-mounted end was accepted")
+        XCTAssertEqual(e.reason, "annotation.pose.w")
+        let c = try XCTUnwrap(e.centreOfMass)
+        XCTAssertGreaterThan(c.bound + c.endBound, c.tolerance)
+        XCTAssertGreaterThan(c.endBound, c.bound)
+        XCTAssertEqual(c.angle, 9.999999, accuracy: 1e-5)
+        XCTAssertTrue(c.part.hasPrefix("t"), c.part)
+        // The world-point control passes.
+        XCTAssertNil(refusal(chainEndText(to: "[-0.08810099236302726, -100.00001249999961, -0.5000000624999981]".replacingOccurrences(of: "[", with: #"{"world": ["#).replacingOccurrences(of: "]", with: "]}"))))
+        // Without a centre of mass: a world point to the chain's end is bounded the same way.
+        let plain = chainEndText(to: #"{"part": "t8", "offset": [-1.8e-06, 0, 0]}"#, from: #"{"world": [0, -100, 0]}"#)
+        XCTAssertEqual(refusal(plain)?.reason, "annotation.pose.w")
     }
 
     // MARK: Executable repairs pass when applied
