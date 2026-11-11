@@ -40,6 +40,9 @@ public struct MGSolidIssue: Error, Equatable, CustomStringConvertible, Sendable 
     public let limit: MGSolidLimitDetail?
     /// Repair detail of `annotation.pose.<id>` for a gravity arrow whose centre-of-mass end moves (nil otherwise).
     public internal(set) var centreOfMass: MGCentreOfMassMotion? = nil
+    /// Repair detail of a dimension claim that the motion bound refuses (`annotation.pose.<id>`, `text.pose.step.<n>`,
+    /// `text.pose.title`, `step.pose.fact`, `dimension.over.motion.<id>`); nil otherwise.
+    public internal(set) var dimensionMotion: MGDimensionMotion? = nil
     public init(_ reason: String, part: String? = nil) { self.reason = reason; self.part = part; visibility = nil; limit = nil }
     /// A limit reason with its repair detail (nil when the refusal had another cause).
     public init(_ reason: String, part: String? = nil, limit: MGSolidLimitDetail?) {

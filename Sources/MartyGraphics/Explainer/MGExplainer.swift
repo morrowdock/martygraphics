@@ -67,6 +67,8 @@ public struct MGExplainerIssue: Error, Equatable, Sendable, CustomStringConverti
     public var limit: MGSolidLimitDetail?
     /// The solid's `annotation.pose.<id>` detail for a moving centre of mass (`MGSolidIssue.centreOfMass`).
     public var centreOfMass: MGCentreOfMassMotion?
+    /// The solid's detail for a dimension claim that the motion bound refuses (`MGSolidIssue.dimensionMotion`).
+    public var dimensionMotion: MGDimensionMotion?
 
     public init(_ reason: String, view: View, beat: Int? = nil, statement: Int? = nil, command: Int? = nil, id: String? = nil,
                 detail: String? = nil, origin: MGOrigin = .script) {

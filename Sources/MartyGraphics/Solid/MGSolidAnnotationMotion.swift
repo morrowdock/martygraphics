@@ -179,16 +179,60 @@ enum MGSolidAnnotationMotion {
     /// moving chain (the same moving joints), and with `translationOnly`, no moving joint turns.
     static func rigid(_ doc: MGSolidDocument, _ points: [MGAnnotationPoint], _ pose: MGPose, translationOnly: Bool) -> Bool {
         if points.allSatisfy({ worldFixed(doc, $0, pose) }) { return true }
+        return sameMotion(doc, points, translationOnly: translationOnly)
+    }
+
+    /// True when the points ride the same moving joints (the same ordered `movers` list) and, with `translationOnly`,
+    /// none of them turns. Then their relative placement is exactly constant during any motion, with no tolerance:
+    /// the two paths to the world are disjoint below their lowest common part, so equal lists of moving joints mean
+    /// that no joint below it moves; both points take one rigid motion of that part (distances and angles keep), and
+    /// without a turning joint that motion is a translation (world components keep too).
+    static func sameMotion(_ doc: MGSolidDocument, _ points: [MGAnnotationPoint], translationOnly: Bool) -> Bool {
         let sets = points.map { movers(doc, $0.part) }
         guard let first = sets.first, sets.allSatisfy({ $0 == first }) else { return false }
         return !translationOnly || !first.contains { isRevolute(doc, $0) }
     }
 
-    /// The exact range of a dimension with `over` over one input turn (`0...2π`) at an explode value. Exactly one anchor
-    /// may move, by one prismatic joint (a linear drive or a crank-slider) and nothing else; the other anchors are
-    /// world-fixed. Distances along an axis and straight distances only. Otherwise `dimension.over.motion.<id>`.
+    /// The most a dimension anchor can move during a step's motion (`pointBound` on its posed point; `spin` the step's
+    /// turns): 0 for a world anchor (a dimension has no centre-of-mass anchor). With the joint that adds the most and the
+    /// point's distance from its axis (nil for a sliding joint).
+    static func anchorBound(_ doc: MGSolidDocument, _ p: MGAnnotationPoint, _ pose: MGPose, spin: Double)
+        -> (bound: Double, joint: String?, distance: Double?) {
+        guard let part = p.part else { return (0, nil, nil) }
+        return pointBound(doc, p.world(pose), on: part, pose, spin: spin)
+    }
+
+    /// The most a dimension's value can change at `pose` while its anchors move by at most `ea`, `eb` and `ev` (the
+    /// vertex). A distance, also `along` an axis: `ea + eb` (the triangle inequality: `| |x| − |y| | ≤ |x − y|`, and one
+    /// world component changes by at most the length of the change). An angle: each arm (vertex to end, length `L`)
+    /// turns by at most `asin((e_end + ev) / L)` when that sum is below `L`, else 180°; the angle changes by at most the
+    /// sum over its two arms (degrees). Not finite when a bound is not.
+    static func valueBound(_ d: MGSolidDimension, _ pose: MGPose, ea: Double, eb: Double, ev: Double) -> Double {
+        guard d.kind == .angle, let v = d.vertex else { let s = ea + eb; return s.isNaN ? .infinity : s }
+        func arm(_ end: MGAnnotationPoint, _ e: Double) -> Double {
+            let delta = e + ev, len = (end.world(pose) - v.world(pose)).length
+            if delta == 0 { return 0 }
+            guard delta < len else { return 180 }
+            return asin(delta / len) * 180 / .pi
+        }
+        return min(180, arm(d.a, ea) + arm(d.b, eb))
+    }
+
+    /// The range of a dimension with `over` over one input turn (`0...2π`) at an explode value, and how far off it can
+    /// be. Exactly one anchor may move, by one prismatic joint (a linear drive or a crank-slider) and nothing else; its
+    /// motion is exact, from the joint's closed form. The other anchor is world-fixed (`worldFixed`): a world point,
+    /// or a point whose moving joints are all revolutes with their axes within the epsilon of it. Such a point can still
+    /// move by its `anchorBound` `E` (offsets add up along a chain), so every value over the turn is within `E` of the
+    /// value computed with it held still, and the range (largest minus smallest) within `2E`: `bound` is `2E`, `other`
+    /// the anchor that can move, with its joint and distance. Distances along an axis and straight distances only.
+    /// Otherwise `dimension.over.motion.<id>`.
     static func range(_ d: MGSolidDimension, _ doc: MGSolidDocument, explode: Double,
                       placements: [String: MGTransform] = [:]) throws -> Double {
+        try rangeBound(d, doc, explode: explode, placements: placements).value
+    }
+
+    static func rangeBound(_ d: MGSolidDimension, _ doc: MGSolidDocument, explode: Double, placements: [String: MGTransform] = [:]) throws
+        -> (value: Double, bound: Double, other: MGAnnotationPoint, pose: MGPose, joint: String?, distance: Double?) {
         let fail = MGSolidIssue("dimension.over.motion.\(d.id)", part: d.id)
         guard d.kind == .distance else { throw fail }
         let pose = doc.assembly.pose(MGPoseParameters(input: 0, explode: explode, placements: placements))
@@ -213,15 +257,18 @@ enum MGSolidAnnotationMotion {
         let qlo = qs.min()! - q0, qhi = qs.max()! - q0
         let a = pose.world[m[0]].map { $0.applyVector(axis).normalized } ?? axis.normalized
         let w = p.world(pose) - other.world(pose)
+        // The other anchor's motion: its moving joints are revolutes, so the bound does not depend on the turns.
+        let ob = anchorBound(doc, other, pose, spin: 1)
+        let bound = (2 * ob.bound).isNaN ? Double.infinity : 2 * ob.bound
         if let k = d.along {
             let alpha = [w.x, w.y, w.z][k], beta = [a.x, a.y, a.z][k]
             let e0 = alpha + beta * qlo, e1 = alpha + beta * qhi
             let hiV = max(abs(e0), abs(e1)), loV = e0 * e1 <= 0 ? 0 : min(abs(e0), abs(e1))
-            return hiV - loV
+            return (hiV - loV, bound, other, pose, ob.joint, ob.distance)
         }
         func dist(_ s: Double) -> Double { (w + a * s).length }
         let star = min(max(-w.dot(a), qlo), qhi)
-        return max(dist(qlo), dist(qhi)) - dist(star)
+        return (max(dist(qlo), dist(qhi)) - dist(star), bound, other, pose, ob.joint, ob.distance)
     }
 }
 
@@ -242,22 +289,64 @@ extension MGSolidAnnotationEngine {
         return doc.steps[i].pose
     }
 
-    /// A dimension's value holds over a view: with `over`, its exact range at the view's explode value equals the
-    /// fact; without, it is constant during the view (no motion, or rigid anchors) and equals the fact at the view's
-    /// pose.
+    /// A dimension's value holds over a view: with `over`, its range at the view's explode value equals the fact; without,
+    /// it is constant during the view (no motion, or rigid anchors) and equals the fact at the view's pose
+    /// (`dimensionCheck`).
     static func dimensionHolds(_ d: MGSolidDimension, _ doc: MGSolidDocument, step: Int?) -> Bool {
+        dimensionCheck(d, doc, step: step).holds
+    }
+
+    /// `dimensionHolds` with the detail of a refusal that the motion bound decides (nil for every other cause), with the
+    /// dimension tolerance `tol` = 1e-9 × max(1, |value|, model diagonal):
+    /// - with `over`: the range `R` at the view's explode value (`rangeBound`) and its bound `B` (`2E` of the anchor that
+    ///   is held still) must give `|R − value| + B ≤ tol`;
+    /// - without, in a step with `spin`: the anchors' chains are linear and the anchors are rigid (`rigid`: all
+    ///   world-fixed, or the same moving joints). The same moving joints keep the value exactly (`sameMotion`). Anchors
+    ///   that are only world-fixed get the motion bound: each anchor's `anchorBound` (`E1`, `E2`, the vertex's `Ev`), and
+    ///   from them the most the value can change, `C` (`valueBound`: `E1 + E2` for a distance);
+    /// - the value `v` at the view's first pose must give `|v − value| + C ≤ tol` (`C` is 0 for a still view or exact
+    ///   rigid anchors).
+    static func dimensionCheck(_ d: MGSolidDimension, _ doc: MGSolidDocument, step: Int?) -> (holds: Bool, motion: MGDimensionMotion?) {
         let (u0, spin, e) = domain(doc, step: step)
         let placed = placements(doc, step: step)
         let tol = 1e-9 * max(1, abs(d.value), doc.annotations.diagonal)
-        if d.over { return (try? MGSolidAnnotationMotion.range(d, doc, explode: e, placements: placed)).map { abs($0 - d.value) <= tol } ?? false }
-        let pose = doc.assembly.pose(MGPoseParameters(input: u0, explode: e, placements: placed))
-        if spin != 0 {
-            let pts = [d.a, d.b, d.vertex].compactMap { $0 }
-            guard pts.allSatisfy({ MGSolidAnnotationMotion.linearChain(doc, $0.part) }),
-                  MGSolidAnnotationMotion.rigid(doc, pts, pose, translationOnly: d.along != nil) else { return false }
+        if d.over {
+            guard let r = try? MGSolidAnnotationMotion.rangeBound(d, doc, explode: e, placements: placed) else { return (false, nil) }
+            let off = abs(r.value - d.value)
+            if off + r.bound <= tol { return (true, nil) }
+            guard r.bound > 0, off <= tol else { return (false, nil) }
+            return (false, MGDimensionMotion.over(d, step: step, r, tolerance: tol))
         }
-        guard let v = dimensionValue(d, pose) else { return false }
-        return abs(v - d.value) <= tol
+        let pose = doc.assembly.pose(MGPoseParameters(input: u0, explode: e, placements: placed))
+        let pts = [d.a, d.b, d.vertex].compactMap { $0 }
+        var change = 0.0
+        var ends: [(name: String, point: MGAnnotationPoint, bound: Double, joint: String?, distance: Double?)] = []
+        if spin != 0 {
+            guard pts.allSatisfy({ MGSolidAnnotationMotion.linearChain(doc, $0.part) }),
+                  MGSolidAnnotationMotion.rigid(doc, pts, pose, translationOnly: d.along != nil) else { return (false, nil) }
+            if !MGSolidAnnotationMotion.sameMotion(doc, pts, translationOnly: d.along != nil) {
+                for (name, p) in [("a", d.a), ("b", d.b)] + (d.vertex.map { [("vertex", $0)] } ?? []) {
+                    let b = MGSolidAnnotationMotion.anchorBound(doc, p, pose, spin: spin)
+                    ends.append((name, p, b.bound, b.joint, b.distance))
+                }
+                func e(_ n: String) -> Double { ends.first { $0.name == n }?.bound ?? 0 }
+                change = MGSolidAnnotationMotion.valueBound(d, pose, ea: e("a"), eb: e("b"), ev: e("vertex"))
+            }
+        }
+        guard let v = dimensionValue(d, pose) else { return (false, nil) }
+        let off = abs(v - d.value)
+        if off + change <= tol { return (true, nil) }
+        guard change > 0, off <= tol, let i = step else { return (false, nil) }
+        return (false, MGDimensionMotion(d, step: i, ends: ends, change: change, offset: off, tolerance: tol, pose: pose))
+    }
+
+    /// The first of `ds` that does not hold over the view, with its motion detail (`dimensionCheck`); nil when all hold.
+    static func firstBroken(_ ds: [MGSolidDimension], _ doc: MGSolidDocument, step: Int?) -> (dimension: MGSolidDimension, motion: MGDimensionMotion?)? {
+        for d in ds {
+            let c = dimensionCheck(d, doc, step: step)
+            if !c.holds { return (d, c.motion) }
+        }
+        return nil
     }
 
     /// Every displayed annotation claim holds at every pose its view can show, decided exactly (no sampling):
@@ -280,18 +369,23 @@ extension MGSolidAnnotationEngine {
             let pose = doc.assembly.pose(MGPoseParameters(input: u0, explode: e, placements: placements(doc, step: step)))
             let shown = doc.visibleAnnotations(step: step)
             func fail(_ id: String) -> MGSolidIssue { MGSolidIssue("annotation.pose.\(id)", part: id) }
+            // A dimension refused by the motion bound adds its detail (`MGSolidIssue.dimensionMotion`).
+            func broken(_ issue: MGSolidIssue, _ ds: [MGSolidDimension]) -> MGSolidIssue? {
+                guard let b = firstBroken(ds, doc, step: step) else { return nil }
+                var out = issue
+                out.dimensionMotion = b.motion
+                return out
+            }
             for id in a.ids where shown.contains(id) {
-                if let l = a.label(id) {
-                    if !dims(l.facts).allSatisfy({ dimensionHolds($0, doc, step: step) }) { throw fail(id) }
-                }
+                if let l = a.label(id), let issue = broken(fail(id), dims(l.facts)) { throw issue }
                 if let d = a.dimension(id) {
                     if spin != 0, ![d.a, d.b, d.vertex].compactMap({ $0 }).allSatisfy({ MGSolidAnnotationMotion.linearChain(doc, $0.part) }) {
                         throw MGSolidIssue("annotation.motion.nonlinear.\(id)", part: id)
                     }
-                    if !dimensionHolds(d, doc, step: step) || !dims(d.facts).allSatisfy({ dimensionHolds($0, doc, step: step) }) { throw fail(id) }
+                    if let issue = broken(fail(id), [d] + dims(d.facts)) { throw issue }
                 }
                 guard let r = a.arrow(id) else { continue }
-                if !dims(r.facts).allSatisfy({ dimensionHolds($0, doc, step: step) }) { throw fail(id) }
+                if let issue = broken(fail(id), dims(r.facts)) { throw issue }
                 switch (r.meaning, r.style) {
                 case (.motion, .turn):
                     if let stated = r.sense, ((r.turnSign ?? 1) * sense > 0) != (stated == "ccw") { throw fail(id) }
@@ -353,10 +447,8 @@ extension MGSolidAnnotationEngine {
                 default: continue
                 }
             }
-            if let i = step, !dims(doc.steps[i].facts).allSatisfy({ dimensionHolds($0, doc, step: step) }) {
-                throw MGSolidIssue("text.pose.step.\(i + 1)")
-            }
-            if !dims(doc.titleFacts).allSatisfy({ dimensionHolds($0, doc, step: step) }) { throw MGSolidIssue("text.pose.title") }
+            if let i = step, let issue = broken(MGSolidIssue("text.pose.step.\(i + 1)"), dims(doc.steps[i].facts)) { throw issue }
+            if let issue = broken(MGSolidIssue("text.pose.title"), dims(doc.titleFacts)) { throw issue }
         }
     }
 }
@@ -470,5 +562,78 @@ public struct MGCentreOfMassMotion: Equatable, Sendable {
         return .object(["arrow": .string(arrow), "step": .number(Double(step + 1)), "part": .string(part), "joint": .string(joint),
                         "distance": n(distance), "bound": n(bound), "endBound": n(endBound), "tolerance": n(tolerance), "angle": n(angle), "extraAngle": n(extra),
                         "fixed": fixed, "repair": .string(repair)])
+    }
+}
+
+/// Why a dimension claim was refused for the motion (`annotation.pose.<id>`, `text.pose.step.<n>`, `text.pose.title`,
+/// `step.pose.fact`, `dimension.over.motion.<id>`): an anchor that is world-fixed only within the epsilon of its axes can
+/// still move during the motion (`MGSolidAnnotationMotion.anchorBound`; such offsets add up along a chain), so the value
+/// (or, with `over`, the range) is not provably within its tolerance at every pose.
+public struct MGDimensionMotion: Equatable, Sendable {
+    public let dimension: String
+    /// The 0-based step whose `spin` moves the anchors; nil when the range was measured (`over`, at the default pose).
+    public let step: Int?
+    /// True for a dimension with `over` (the bound is on its range).
+    public let over: Bool
+    /// The most each anchor can move (mm): `a`, `b` and, for an angle, `vertex`. With `over`, the sliding anchor's
+    /// motion is exact (0 here).
+    public let boundA: Double, boundB: Double, boundVertex: Double?
+    /// The most the value can change during the motion (`mm` or `°`; with `over`, the most the range can be off: 2 × the
+    /// held anchor's bound), the value's distance from its fact at the first pose, and the tolerance their sum must keep.
+    public let change: Double, offset: Double, tolerance: Double
+    /// `mm` or `°`.
+    public let unit: String
+    /// The anchor that can move the most (`a`, `b` or `vertex`), its part, the joint in its chain that adds the most, and
+    /// the anchor's distance from that joint's axis (nil for a sliding joint).
+    public let anchor: String, part: String, joint: String, distance: Double?
+    /// The anchors that can move, as world points at the first pose at full precision: the repair.
+    public let fixed: MGJSON
+
+    init(_ d: MGSolidDimension, step: Int?, over: Bool = false,
+         ends: [(name: String, point: MGAnnotationPoint, bound: Double, joint: String?, distance: Double?)],
+         change: Double, offset: Double, tolerance: Double, pose: MGPose) {
+        dimension = d.id; self.step = step; self.over = over
+        func b(_ n: String) -> Double? { ends.first { $0.name == n }?.bound }
+        boundA = b("a") ?? 0; boundB = b("b") ?? 0; boundVertex = d.vertex == nil ? nil : (b("vertex") ?? 0)
+        self.change = change; self.offset = offset; self.tolerance = tolerance; unit = d.unit
+        let top = ends.filter { $0.bound > 0 }.max { $0.bound < $1.bound }
+        anchor = top?.name ?? ""; part = top?.point.part ?? ""; joint = top?.joint ?? ""; distance = top?.distance
+        func w(_ x: MGVec3) -> MGJSON { .object(["world": .array([x.x, x.y, x.z].map { .number($0) })]) }
+        var f: [String: MGJSON] = [:]
+        for e in ends where e.bound > 0 { f[e.name] = w(e.point.world(pose)) }
+        fixed = .object(f)
+    }
+
+    /// The detail of an `over` range whose held anchor can move (`MGSolidAnnotationMotion.rangeBound`).
+    static func over(_ d: MGSolidDimension, step: Int?, _ r: (value: Double, bound: Double, other: MGAnnotationPoint, pose: MGPose, joint: String?, distance: Double?),
+                     tolerance: Double) -> MGDimensionMotion {
+        let name = r.other == d.a ? "a" : "b", slider = name == "a" ? "b" : "a"
+        return MGDimensionMotion(d, step: step, over: true,
+                                 ends: [(name, r.other, r.bound / 2, r.joint, r.distance), (slider, name == "a" ? d.b : d.a, 0, nil, nil)],
+                                 change: r.bound, offset: abs(r.value - d.value), tolerance: tolerance, pose: r.pose)
+    }
+
+    public var repair: String {
+        let g = MGCentreOfMassMotion.g
+        let top = [("a", boundA), ("b", boundB), ("vertex", boundVertex ?? 0)].first { $0.0 == anchor }?.1 ?? 0
+        let why = distance.map { "joint `\(joint)` turns it \(g($0)) mm off its axis" } ?? "joint `\(joint)` slides it"
+        let at = step.map { " (step \($0 + 1))" } ?? ""
+        let what = over ? "Dimension \(dimension)\(at): its range over one input turn can be off by \(g(change)) \(unit)"
+            : "Dimension \(dimension)\(at) can change during the spin by \(g(change)) \(unit)"
+        var line = what + " (at most \(g(tolerance - offset)) \(unit)): anchor \(anchor) on part `\(part)` can move \(g(top)) mm, mostly because \(why). "
+        if over { line += "Anchor it at a fixed point, \(MGAnnotationAnchorIssue.compactExact(fixed))." }
+        else { line += "Anchor it at fixed points, \(MGAnnotationAnchorIssue.compactExact(fixed)), or set \"spin\": 0 in step \((step ?? 0) + 1)." }
+        return MGAnnotationAnchorIssue.bounded(line, MGAnnotationAnchorIssue.repairScalars)
+    }
+
+    /// `{"dimension", "step" (1-based; null when measured), "over", "boundA", "boundB", "boundVertex", "change", "offset",
+    /// "tolerance", "unit", "anchor", "part", "joint", "distance", "fixed", "repair"}` (numbers at full precision; null
+    /// when not finite or absent).
+    public var json: MGJSON {
+        func n(_ x: Double?) -> MGJSON { x.flatMap { $0.isFinite ? MGJSON.number($0) : nil } ?? .null }
+        return .object(["dimension": .string(dimension), "step": step.map { .number(Double($0 + 1)) } ?? .null, "over": .bool(over),
+                        "boundA": n(boundA), "boundB": n(boundB), "boundVertex": n(boundVertex), "change": n(change), "offset": n(offset),
+                        "tolerance": n(tolerance), "unit": .string(unit), "anchor": .string(anchor), "part": .string(part), "joint": .string(joint),
+                        "distance": n(distance), "fixed": fixed, "repair": .string(repair)])
     }
 }

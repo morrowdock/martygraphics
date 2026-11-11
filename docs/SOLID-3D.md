@@ -800,7 +800,14 @@ cut, not ghosted and cast no shadow.
   `dimension.over.form.<id>`). The engine has the exact range only for a distance (optionally `along` an axis)
   whose one moving anchor moves by one prismatic joint with a linear drive or a crank-slider, while the other
   anchor stays where it is (a world point, or a point on a turning axis); anything else is
-  `dimension.over.motion.<id>`. The stroke of a slider-crank is such a range.
+  `dimension.over.motion.<id>`. The stroke of a slider-crank is such a range. A point on a turning axis is
+  world-fixed only within an epsilon of each axis, and such offsets add up along a chain, so the held anchor gets the
+  motion bound `E` of [Poses](#poses-every-claim-holds-at-every-pose-its-view-can-show)
+  (`MGSolidAnnotationMotion.anchorBound`): every value over the turn is within `E` of the value with that anchor held
+  still, so the range is within `2E`. The engine refuses rather than widens: when `2E` is over the dimension tolerance
+  (1e-9 × max(1, |value|, the model's diagonal)), the range is not one Solved fact, `dimension.over.motion.<id>` with
+  `dimensionMotion` (below) and the repair to anchor that end at a fixed point. In a view, the range there plus `2E`
+  must stay within the tolerance of the fact.
 * A distance below 0.01 mm at the default input, or an angle arm below 0.01 mm, is `dimension.zero.<id>`. With
   `over`, a range below 0.01 mm is `dimension.over.still.<id>`.
 * The value is the fact `dim.<id>` (unit `mm` or `°`, source `dimension`). Captions, labels, arrow text and
@@ -835,6 +842,25 @@ world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear 
   world-fixed, or all of them ride the same moving joints (a rigid body; with `along`, those joints must not
   turn, because a turn changes the world components). Its value at the view's first pose must equal its
   fact. With `over`, its exact range at the view's explode value must equal its fact.
+  Anchors on the same moving joints keep their relative placement exactly (the two paths to the world are disjoint
+  below their lowest common part, so equal lists of moving joints mean no joint below it moves; without a turning
+  joint the common motion is a translation), so they need no bound. Anchors that are only world-fixed get the same
+  proven bound as gravity arrows (below; `MGSolidAnnotationMotion.anchorBound`, the `pointBound` recurrence on the
+  anchor's point, 0 for a world point): `E1` and `E2` for the two ends, `Ev` for an angle's vertex. A distance (also
+  `along` an axis) can change by at most `E1 + E2` (the triangle inequality); an angle by at most the sum over its two
+  arms of `asin((E_end + Ev) / L)` (`L` the arm's length; 180° when the sum reaches `L`). The dimension is constant
+  only when the value's offset from its fact at the view's first pose plus that change is at most the dimension
+  tolerance, 1e-9 × max(1, |value|, the model's diagonal), the tolerance every dimension check uses. Else it is
+  refused with its existing reason (`annotation.pose.<id>`, `text.pose.step.<n>`, `text.pose.title`,
+  `step.pose.fact`), and the report adds `dimensionMotion`: `{"dimension", "step", "over", "boundA", "boundB",
+  "boundVertex", "change", "offset", "tolerance", "unit", "anchor", "part", "joint", "distance", "fixed", "repair"}`
+  (the anchors' bounds in mm, the most the value can change in `unit`, the anchor, part and joint that add the most,
+  the anchor's distance from that joint's axis, and `fixed`, the anchors that can move as world points at the first
+  pose at full precision). The repair is to anchor the dimension there or to set `"spin": 0` in the step. The rule
+  only removes acceptances (the old rule must also pass). The explainer's own text rules (`text.pose.beat.<n>`,
+  `text.pose.board`, `view.pose.fact`) use the same check without the detail. (Review of #53: an eight-joint chain
+  with axes 0.0000018 mm around one point moved a dimension's end 0.0000288 mm, 7.18 × the tolerance, and an `over`
+  range held by that chain was 0.0000288 mm off; both passed strict as Solved before this rule.)
 * **Shown text** (a label, an arrow or dimension text, the step caption, the title) may display a `dim.<id>` fact
   only when that dimension meets the same rule in the view (also when the dimension itself is not shown).
 * A **gravity arrow** must not turn: in a step with `spin`, both its anchors are world-fixed or translate together. A
