@@ -239,6 +239,25 @@ def load_manifest(path):
     return m
 
 
+def _check_part(p):
+    """Optional part fields: label and gltfMaterial (strings), material (empty or an override)."""
+    from .presets import MATERIAL_PRESETS
+    who = f"manifest part '{p['name']}'"
+    for key in ("label", "gltfMaterial"):
+        _require(p.get(key) is None or isinstance(p[key], str), f"{who}: {key} must be a string")
+    mat = p.get("material")
+    if not mat:
+        return                                   # None, {} or "": no override
+    _require(isinstance(mat, dict), f"{who}: material must be an object (or empty)")
+    preset = mat.get("preset")
+    _require(preset is None or preset in MATERIAL_PRESETS,
+             f"{who}: unknown material preset {preset!r} (use one of {', '.join(MATERIAL_PRESETS)})")
+    color = mat.get("baseColor")
+    _require(color is None or (isinstance(color, list) and len(color) == 3 and all(
+        isinstance(c, (int, float)) and not isinstance(c, bool) and 0 <= c <= 1 for c in color)),
+        f"{who}: material.baseColor must be 3 numbers in 0..1")
+
+
 def verify(manifest_path):
     """Check the export. Return a dict that render.py uses. Raise ExportError on any mismatch."""
     manifest_path = os.path.abspath(manifest_path)
@@ -285,8 +304,11 @@ def verify(manifest_path):
     _require(all(len(n.encode("utf-8")) <= NAME_LIMIT for n in named),
              f"GLB node names must be at most {NAME_LIMIT} bytes (Blender truncates longer names)")
     parts = m.get("parts", [])
+    _require(isinstance(parts, list), "manifest parts must be a list")
     for p in parts:
+        _require(isinstance(p, dict), f"manifest part {p!r} is not an object")
         _require(p.get("name") in names, f"manifest part '{p.get('name')}' is not a GLB node")
+        _check_part(p)
     cameras = m.get("cameras", [])
     for c in cameras:
         hit = [n for n in nodes if n.get("name") == c.get("name")]

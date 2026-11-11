@@ -168,11 +168,21 @@ def main(out_dir):
         export_anim_scene_split_object=False, export_nla_strips_merged_animation_name="mechanism",
         export_apply=False, export_yup=True, export_extras=False, export_lights=False)
     sha = hashlib.sha256(open(glb, "rb").read()).hexdigest()
-    parts = [{"name": ob.name} for ob in mats]
+    # Same part shape as the MartyGraphics exporter: readable label, glTF material name,
+    # empty material override. "base_housing" gets a label that its name rules would not
+    # give (painted -> carbon fibre) to prove that the label comes first.
+    labels = {"gear_drive": "Drive gear (24 teeth)", "pinion_driven": "Driven pinion (12 teeth)",
+              "shaft_drive": "Drive shaft", "shaft_driven": "Driven shaft",
+              "base_housing": "Carbon fibre base plate", "cover_window": "Inspection cover",
+              "carbon_back_panel": "Carbon fibre back panel"}
+    parts = [{"name": ob.name, "label": labels.get(ob.name, ob.name.replace("_", " ").capitalize()),
+              "gltfMaterial": m.name, "material": {}} for ob, m in mats.items()]
     # One explicit preset to exercise the manifest override path.
     for p in parts:
         if p["name"] == "pinion_driven":
             p["material"] = {"preset": "anodised_aluminium", "baseColor": [0.75, 0.42, 0.12]}
+        if p["name"] == "rubber_foot_0":
+            p["material"] = None
     manifest = {
         "format": "martygraphics.render-export/1",
         "engine": {"name": "MartyGraphics", "commit": "0000000",

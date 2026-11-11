@@ -20,7 +20,7 @@ PRESETS = {
 }
 RESOLUTIONS = {"720p": (1280, 720), "1080p": (1920, 1080), "1440p": (2560, 1440), "4k": (3840, 2160)}
 
-from .presets import MATERIAL_PRESETS, NAME_RULES, choose_preset  # noqa: F401 (re-exported)
+from .presets import MATERIAL_PRESETS, NAME_RULES, choose_preset, part_material  # noqa: F401 (re-exported)
 
 
 # ----------------------------------------------------------------- helpers
@@ -138,13 +138,18 @@ def build_material(preset, color, size):
     return m
 
 
-def assign_materials(objects, part_overrides, size):
-    """Replace material slots (object-linked) with preset materials. Return {object: (preset, reason)}."""
+def assign_materials(objects, parts, size):
+    """Replace material slots (object-linked) with preset materials.
+
+    parts maps a node name to its manifest part (with optional 'label' and 'material').
+    Return {object name: [(preset, reason), ...]}."""
     cache, report = {}, {}
     for ob in objects:
         if ob.type != "MESH":
             continue
-        override = part_overrides.get(ob.name, {})
+        part = parts.get(ob.name, {})
+        override = part_material(part)
+        label = part.get("label")
         if not ob.material_slots:
             # A mesh without materials gets one slot. This changes the material list only,
             # never vertex positions (render.py hashes the vertices before and after).
@@ -156,7 +161,7 @@ def assign_materials(objects, part_overrides, size):
             if params["textured"] and not override.get("preset"):
                 decisions.append(("imported_textured", "kept imported textured material"))
                 continue
-            preset, reason = choose_preset(ob.name, params, override.get("preset"))
+            preset, reason = choose_preset(ob.name, params, override.get("preset"), label)
             color = override.get("baseColor")
             if color is None and preset in ("painted_metal", "anodised_aluminium", "plastic"):
                 color = params["color"]

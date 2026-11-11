@@ -386,8 +386,8 @@ def run(argv):
         scene.render.film_transparent = True
         scene.cycles.film_transparent_glass = True   # glass over a transparent film must not darken
         encode_bg = SHADOW_BG
-    overrides = {p["name"]: p.get("material", {}) for p in checked["manifest"].get("parts", [])}
-    mat_report = lookdev.assign_materials(imported, overrides, size)
+    parts = {p["name"]: p for p in checked["manifest"].get("parts", [])}
+    mat_report = lookdev.assign_materials(imported, parts, size)
 
     cam_choice = args["camera"] or ("export" if checked["manifest"].get("cameras") else "auto")
     cams = {ob.name: ob for ob in imported if ob.type == "CAMERA"}

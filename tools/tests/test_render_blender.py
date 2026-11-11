@@ -127,6 +127,22 @@ class ManifestTests(unittest.TestCase):
         with self.assertRaisesRegex(mf.ExportError, "missing_part"):
             mf.verify(fx.write())
 
+    def test_part_fields_from_the_exporter(self):
+        fx = ExportFixture(self.tmp.name)
+        fx.manifest["parts"] = [{"name": "gear", "label": "Sun gear 1", "gltfMaterial": "steel", "material": {}}]
+        mf.verify(fx.write())
+        for empty in (None, "", {}):
+            fx.manifest["parts"][0]["material"] = empty
+            mf.verify(fx.write())
+        bad = [({"label": 7}, "label must be a string"),
+               ({"material": {"preset": "gold_leaf"}}, "unknown material preset"),
+               ({"material": {"baseColor": [1, 0]}}, "baseColor"),
+               ({"material": "glass"}, "material must be an object")]
+        for extra, message in bad:
+            fx.manifest["parts"] = [dict({"name": "gear"}, **extra)]
+            with self.assertRaisesRegex(mf.ExportError, message):
+                mf.verify(fx.write())
+
     def test_world_matrices_follow_parent_rotation(self):
         fx = ExportFixture(self.tmp.name)
         c = mf.verify(fx.write())
@@ -206,6 +222,27 @@ class PresetTests(unittest.TestCase):
                  "motor_arm": "anodised_aluminium", "nacelle": "painted_metal"}
         for name, want in cases.items():
             self.assertEqual(presets.choose_preset(name, self.PARAMS)[0], want, name)
+
+    def test_label_comes_before_the_node_name(self):
+        # Exporter node names are part ids; the readable name is the manifest label.
+        self.assertEqual(presets.choose_preset("p07", self.PARAMS, label="Output shaft"),
+                         ("polished_metal", "label contains 'shaft'"))
+        self.assertEqual(presets.choose_preset("cover_3", self.PARAMS, label="Sun gear 1"),
+                         ("brushed_metal", "label contains 'sun'"))
+        # No rule in the label: the node name rules still apply.
+        self.assertEqual(presets.choose_preset("planet1a", self.PARAMS, label="Part 12"),
+                         ("brushed_metal", "name contains 'planet'"))
+        self.assertEqual(presets.choose_preset("sun1", self.PARAMS, label=None)[0], "brushed_metal")
+        # The manifest preset still wins over the label.
+        self.assertEqual(presets.choose_preset("sun1", self.PARAMS, "glass", label="Sun gear 1"),
+                         ("glass", "manifest"))
+
+    def test_empty_material_means_no_override(self):
+        for empty in (None, "", {}):
+            self.assertEqual(presets.part_material({"name": "x", "material": empty}), {})
+        self.assertEqual(presets.part_material({"name": "x"}), {})
+        self.assertEqual(presets.part_material({"name": "x", "material": {"preset": "rubber"}}),
+                         {"preset": "rubber"})
 
     def test_manifest_override_and_material_fallback(self):
         self.assertEqual(presets.choose_preset("gear", self.PARAMS, "glass"), ("glass", "manifest"))

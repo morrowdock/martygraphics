@@ -77,7 +77,7 @@ nice -n 10 "$BLENDER" -b --factory-startup -P "$HERE/render.py" -- "$MANIFEST" "
   2>&1 | tee "$WORK/render.log" | grep -E '^render: (PASS|motion|look-dev|Cycles|DONE|poster|frames|time)|REFUSED|FAILED' || true
 grep -q '^MG_RENDER_REPORT ' "$WORK/render.log" || die "render did not finish (see $WORK/render.log)"
 REPORT="$(sed -n 's/^MG_RENDER_REPORT //p' "$WORK/render.log")"
-python3 -I - "$REPORT" <<'PY'
+python3 -I - "$REPORT" <<'PY' || die "report check failed"
 import json, sys
 r = json.load(open(sys.argv[1]))
 t = r["timing_s"]
@@ -87,5 +87,13 @@ print(f"selftest: first frame {t['first_frame']} s, mean after first {t['mean_af
       f"encode {t['encode']} s, total {t['total']} s")
 print(f"selftest: motion max error {r['motion_check']['max_error']:.3g} (tol {r['motion_check']['tolerance']:.3g}), "
       f"look-dev drift {r['motion_check']['lookdev_drift']}")
+mats = {k: v[0] for k, v in r["materials"].items()}
+want = {"base_housing": ["carbon_fibre", "label contains 'carbon'"],     # label beats the node name rules
+        "gear_drive": ["brushed_metal", "label contains 'gear'"],
+        "pinion_driven": ["anodised_aluminium", "manifest"],
+        "rubber_foot_0": ["rubber", "label contains 'rubber'"]}        # material: null = no override
+bad = {k: (mats.get(k), v) for k, v in want.items() if mats.get(k) != v}
+print(f"selftest: material presets from labels: {'OK' if not bad else 'WRONG ' + str(bad)}")
+sys.exit(1 if bad else 0)
 PY
 say "PASS. outputs in $OUT"

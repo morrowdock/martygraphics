@@ -93,7 +93,9 @@ Look-dev replaces material slots with procedural presets: `polished_metal`,
 `brushed_metal` (radial anisotropy), `painted_metal` (clear coat),
 `anodised_aluminium`, `rubber`, `carbon_fibre` (coated weave), `glass`
 (covers), `plastic`. Choice order: manifest `parts[].material.preset`, then
-part-name rules in [mgrender/presets.py](mgrender/presets.py) (for example
+the name rules on the readable `parts[].label` (for example "Sun gear 1"), then
+the same rules on the glTF node name (often a part id such as `sun1`), using the
+rules in [mgrender/presets.py](mgrender/presets.py) (for example
 `cover|window|canopy` -> glass, `shaft|bearing|bolt` -> polished, `gear|blade|rotor`
 -> brushed), then the glTF material values (metallic, roughness, alpha). Painted
 and anodised parts keep the exported base colour unless the manifest gives
@@ -128,7 +130,8 @@ The MartyGraphics exporter writes this JSON next to the `.glb`:
   "fps": 30,
   "frameCount": 240,
   "posterFrame": 120,
-  "parts": [{"name": "sun1", "material": {"preset": "brushed_metal", "baseColor": [0.7, 0.7, 0.72]}}],
+  "parts": [{"name": "sun1", "label": "Sun gear 1", "gltfMaterial": "steel",
+             "material": {"preset": "brushed_metal", "baseColor": [0.7, 0.7, 0.72]}}],
   "cameras": [{"name": "hero"}]
 }
 ```
@@ -143,6 +146,9 @@ Requirements that the check enforces:
   and the last key is at `(frameCount - 1) / fps`. Bake one key per frame.
 - Node names are unique and at most 63 bytes (Blender's limit); every `parts[].name`
   is a node; every `cameras[].name` is a camera node. Animated nodes use TRS, not `matrix`.
+- `parts[].label` and `parts[].gltfMaterial` are strings when present. `parts[].material` is empty
+  (`null`, `{}` or `""`: no override) or an object whose `preset` is one of the presets below and
+  whose `baseColor` is 3 numbers in 0..1.
 - `posterFrame` (optional) is in `0..frameCount-1`.
 
 `parts`, `cameras`, `posterFrame` and `animation` are optional. Unknown keys are ignored.

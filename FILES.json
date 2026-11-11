@@ -2795,7 +2795,7 @@
     },
     {
       "path": "tools/render-blender/README.md",
-      "sha256": "4194bdb9a2277745e8a18a77d33bfdc77984a1d7419f5e52e86b1fad2e2d13d5"
+      "sha256": "2978156e56237f5fd259a4f780c16227c90ef61a0dc01315dd081705e7b442b5"
     },
     {
       "path": "tools/render-blender/assets.lock.json",
@@ -2819,15 +2819,15 @@
     },
     {
       "path": "tools/render-blender/mgrender/lookdev.py",
-      "sha256": "fd132faeb4b99bc25d1ac01eb5b15bc090eeadb2fa9e600ca1131c04a8f1a8de"
+      "sha256": "5342e04fe63111580eba82a241e82f19fa0326f0133cd794346df90803574a70"
     },
     {
       "path": "tools/render-blender/mgrender/manifest.py",
-      "sha256": "c74a379225bba2acee9a693f6bfb88bcdaefc33574477b416202d1bfecc6848b"
+      "sha256": "5e2f94153195e9184c680c4b513ff1730f58da0a045147a989fea50bfa0f4bd6"
     },
     {
       "path": "tools/render-blender/mgrender/presets.py",
-      "sha256": "cabfc3475af182e30114a53c4e5055a34036f6d08a71d8c1c3fda89639248c16"
+      "sha256": "a968e9690db5b288d374580e0b8771c010c1f5bc1b2869d433333432e7472eaa"
     },
     {
       "path": "tools/render-blender/mgrender/simguard.py",
@@ -2835,15 +2835,15 @@
     },
     {
       "path": "tools/render-blender/render.py",
-      "sha256": "59dd190e1d56e1031624e9500f1b1f6708551e21be86050364645f7035020518"
+      "sha256": "c617d63ea3361449cb066fec327e32af9f4f972032a16abe3fc1e9308376b84d"
     },
     {
       "path": "tools/render-blender/selftest.sh",
-      "sha256": "9b5daffefc3c87c8a36b377c5068470d349de7e21b6f4f4e3b8126afcea64acf"
+      "sha256": "73012cda3e61a966efd28571f073f8e18c2c732451db867e794525419047a781"
     },
     {
       "path": "tools/render-blender/selftest_scene.py",
-      "sha256": "78b52d472297a85aa3332a3700f16c763bfe6a41201d4419944a7ee9135aab00"
+      "sha256": "e327bfd5a238c9a098b57e4cb93fa3be6fc831ef736401ea1d4791e1a5404872"
     },
     {
       "path": "tools/render-blender/setup.sh",
@@ -2863,7 +2863,7 @@
     },
     {
       "path": "tools/tests/test_render_blender.py",
-      "sha256": "084f08b0a3b18743e565db44742371e061f6441244cf06c5bee0f5463c6dce91"
+      "sha256": "5e3354d0bfb13b28484bcb4c63b53195bf4b39d00d360ae86cb750a74237adef"
     },
     {
       "path": "tools/validate_local.py",

@@ -18,17 +18,25 @@ NAME_RULES = [
 ]
 
 
-def choose_preset(name, params, override=None):
-    """Return (preset, reason)."""
+def choose_preset(name, params, override=None, label=None):
+    """Return (preset, reason).
+
+    Order: the manifest preset, then the name rules on the readable part label
+    (manifest parts[].label, for example "Sun gear 1"), then the name rules on the
+    glTF node name (often a part id such as "sun1"), then the glTF material values.
+    """
     if override:
         if override not in MATERIAL_PRESETS:
             raise ValueError(f"unknown material preset '{override}' for part '{name}'")
         return override, "manifest"
-    low = name.lower()
-    for preset, pattern in NAME_RULES:
-        hit = re.search(pattern, low)
-        if hit:
-            return preset, f"name contains '{hit.group(0).strip('_- ')}'"
+    for source, text in (("label", label), ("name", name)):
+        if not text:
+            continue
+        low = text.lower()
+        for preset, pattern in NAME_RULES:
+            hit = re.search(pattern, low)
+            if hit:
+                return preset, f"{source} contains '{hit.group(0).strip('_- ')}'"
     if params["transmission"] > 0.5 or params["alpha"] < 0.6:
         return "glass", "material alpha/transmission"
     if params["metallic"] >= 0.5:
@@ -37,3 +45,9 @@ def choose_preset(name, params, override=None):
     if params["roughness"] > 0.75:
         return "rubber", "material rough dielectric"
     return "painted_metal", "material default"
+
+
+def part_material(part):
+    """The manifest material override of a part as a dict; empty (None, {} or "") means none."""
+    value = part.get("material")
+    return value if value else {}
