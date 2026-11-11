@@ -1,0 +1,18 @@
+{
+  "comment": "Pinned public-domain/CC0 assets. setup.sh downloads each file into the asset cache and refuses a SHA-256 mismatch. See ASSETS.md.",
+  "assets": [
+    {
+      "id": "studio_small_09_2k",
+      "kind": "hdri",
+      "file": "studio_small_09_2k.hdr",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/studio_small_09_2k.hdr",
+      "page": "https://polyhaven.com/a/studio_small_09",
+      "author": "Sergej Majboroda",
+      "licence": "CC0 1.0",
+      "licence_url": "https://polyhaven.com/license",
+      "bytes": 6312947,
+      "md5_published": "b056fea247bc84b81d2e0987d44c87d8",
+      "sha256": "36724313c0fc66dab126ff90f081b85a0b1ef47be65eda1417bd20b033f0573f"
+    }
+  ]
+}

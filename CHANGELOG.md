@@ -30,6 +30,14 @@
   lives outside the engine library (library `MartySolidGLTF` in `Examples/Solid3D`) and changes no engine output. A
   test re-reads the gearbox export and matches every node to the engine's transform within 1e-5 m and 1e-5 rad; two
   exports are byte-identical. See [docs/GLTF-EXPORT.md](docs/GLTF-EXPORT.md).
+- **Blender render path (`tools/render-blender/`).** Owner decision 2026-11-11: verify in MartyGraphics, render in
+  Blender. `setup.sh` installs the official Blender 5.2.4 LTS Linux build in user space and checks its published
+  SHA-256; `render.py` renders a `martygraphics.render-export/1` export (`.glb` + manifest) in Cycles with HDRI
+  lighting, a studio or shadow-catcher backdrop, material presets, an export or auto-orbit camera, depth of field,
+  motion blur, AgX, adaptive sampling and denoising, to a PNG sequence, a fast-start H.264 MP4 and a poster. It refuses
+  an export whose `.glb` SHA-256, fps or frame count differs from the manifest, proves that imported and look-dev
+  motion equal the glTF evaluation at every frame, labels every output with its provenance, and does not start while
+  the landing-lab simulator runs. `selftest.sh` checks the whole path on a 2:1 gear pair without an export.
 - **`studio` is the default look, and live views draw its backdrop (pixels only).** `marty-solid render`,
   `MGSolidRenderer` and the explainer view now use `studio` unless told otherwise; pass `--look classic` (or
   `look: .classic`) for the renderer as it was. The explainer's live 3D pane draws the look's backdrop as the scene
