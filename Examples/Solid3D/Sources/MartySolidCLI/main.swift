@@ -11,6 +11,7 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 import MartyGraphics
+import MartySolidGLTF
 
 enum CLIError: Error, CustomStringConvertible {
     case usage, invalid(String)
@@ -20,6 +21,7 @@ enum CLIError: Error, CustomStringConvertible {
             Usage: marty-solid check FILE.json [--strict] [--patch PATCH.json] [--component C.json ...]
                    marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--no-story] [--story-fps 10|30]
                                       [--snapshots] [--look classic|studio|paper] [--component C.json ...]
+                   marty-solid export-gltf FILE.json NEW_DIR --engine-commit SHA [--fps 10|30] [--size WxH] [--component C.json ...]
                    marty-solid snapshot check SNAPSHOT.json [--component C.json ...]
                    marty-solid transcript FILE.json [--strict] [--component C.json ...]
                    marty-solid components [--component C.json ...]
@@ -1370,6 +1372,29 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                 }
                 exit(try render(a[1], a[2], width: w, height: h, loop: loop, loopRate: rate, story: story, storyRate: storyRate,
                                 snapshots: snapshots, look: look, library: lib))
+            case "export-gltf"? where a.count >= 3 && !a[1].hasPrefix("--") && !a[2].hasPrefix("--"):
+                var fps = MGSolidGLTF.defaultFPS, w = 1280, h = 800
+                var commit: String?
+                var rest = Array(a.dropFirst(3))
+                while let flag = rest.first {
+                    rest.removeFirst()
+                    guard let v = rest.first else { throw CLIError.usage }
+                    rest.removeFirst()
+                    switch flag {
+                    case "--fps":
+                        guard let r = Int(v), MGSolidRenderPlan.loopRates.contains(r) else { throw CLIError.usage }
+                        fps = r
+                    case "--size":
+                        let p = v.split(separator: "x").compactMap { Int($0) }
+                        guard p.count == 2, (320...3840).contains(p[0]), (200...2160).contains(p[1]) else { throw CLIError.usage }
+                        w = p[0]; h = p[1]
+                    case "--engine-commit": commit = v
+                    default: throw CLIError.usage
+                    }
+                }
+                // The engine cannot know its own commit; the caller names the commit it built (40 hex digits).
+                guard let commit else { throw CLIError.usage }
+                exit(try exportGLTF(a[1], a[2], fps: fps, width: w, height: h, engineCommit: commit, library: lib))
             default: throw CLIError.usage
             }
         } catch {

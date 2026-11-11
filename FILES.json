@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "7f008f5cb609fdfd9ed1f3589fd5e1c95f37e834b16a288e46f9e4e1af066a64"
+      "sha256": "39bd63174dfecadb1de814f2fb700d479034e8ac72d586667cbd27e07353b119"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -191,11 +191,11 @@
     },
     {
       "path": "Examples/Solid3D/Package.swift",
-      "sha256": "bf64145176a4d5ace0f4b20560e97b00df03846d575ecaa23a37070c5a8ac57b"
+      "sha256": "4757ee6b7caa7e7e99c8556a6a526a64c0200a050b7108b355224feb52066efd"
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "0ab3677e1900a48bdc40e00e2b418922666d722b276e2f710c1d92c0ac145768"
+      "sha256": "10af5241be21413c6cf78607be08ad70a0f0ba6a6255357f237eb0d4fb321578"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json",
@@ -234,8 +234,16 @@
       "sha256": "190f7bdcd539f888061f506039c8c2b66c9b478d0eb8c024dd60c932ab62c958"
     },
     {
+      "path": "Examples/Solid3D/Sources/MartySolidCLI/ExportGLTF.swift",
+      "sha256": "dd644e807129b373f8192ac92705ea821f90a64c40c13fdb9e935d70eab3d79a"
+    },
+    {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "609e4219d54043f2e286c30dc37490d30523e2ba5aff9a6895f0e96395381217"
+      "sha256": "70b79abc2b48584da8a31c4ca64e0da2d9805cfccc30605744043e8d258a7512"
+    },
+    {
+      "path": "Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift",
+      "sha256": "f5ff301c4854250c045923a94eaa96f84886dfc9a1d1d09e2b382255cd3ad0ac"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
@@ -650,16 +658,24 @@
       "sha256": "85a380614fceae79670e13b1325df5c30a9a0be861a06e1ee8b0284f5e87cf0e"
     },
     {
+      "path": "Examples/Solid3D/Tests/MartySolidGLTFTests/MartySolidGLTFTests.swift",
+      "sha256": "2f8aef4900bcd42c9ce4b762a496012121007fb707b8b06df90a59a2634cc4ff"
+    },
+    {
       "path": "Examples/Turbofan/Package.swift",
-      "sha256": "a0aebee38f1d4f526aa14d578929b797a20bc82deef1c0cc7647075c3060ddeb"
+      "sha256": "495317d591d05e8f781c67f394faf0020af047402ced147000cebbacb1fc4d14"
     },
     {
       "path": "Examples/Turbofan/README.md",
-      "sha256": "0a58cfb329f0848a535c29abd81c48b25dbff9492a82bff561be443f745ea402"
+      "sha256": "d63b74224036b54039316271ae5b059a9cc543998714891695f9f27a7556f623"
     },
     {
       "path": "Examples/Turbofan/Sources/MartySolidRT/MGSolidRT.swift",
       "sha256": "ce35593191b4032d05bbdde9227959df16f13568df5135b8997b67407ef84471"
+    },
+    {
+      "path": "Examples/Turbofan/Sources/MartyTurbofan/GLTFExport.swift",
+      "sha256": "bdf9612cf93a0cfd23d13ebb4b4af0049e3bd08e3d9bc841a71f5ee85abc22f4"
     },
     {
       "path": "Examples/Turbofan/Sources/MartyTurbofan/Media.swift",
@@ -667,7 +683,7 @@
     },
     {
       "path": "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift",
-      "sha256": "2e351af484c0bebce2a202f9b2ea9ae68f0e2de3c6583189a6cc70891f44c1ed"
+      "sha256": "b6023665f154371e4b3dcab8384ad4419bfddf9bba3e4d73d036dc3952fafe3d"
     },
     {
       "path": "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json",
@@ -1878,6 +1894,10 @@
       "sha256": "3df018e9a1c8cb61ed47048ba156f5bb8b985f1a5a79e20d17b0852e4755330a"
     },
     {
+      "path": "docs/GLTF-EXPORT.md",
+      "sha256": "eccf26facc3ae2d116cd1e5dc7f8d7b93f0ca02c468a928115136e824f4d6234"
+    },
+    {
       "path": "docs/HISTORY.md",
       "sha256": "0871041ae15c27b8b2abf66a4b0ee0419112690bff64994504b36fc6b1c3f48a"
     },
@@ -1915,7 +1935,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "4573e13700ce716e49677a9c021c36d151c88faeaf5fb8670e5a8030e39f8341"
+      "sha256": "3a3002ecf58c25c9bccee43a46e50bdc6bc7afeee05593e766f893f4cb762826"
     },
     {
       "path": "docs/THIRD-PARTY.md",

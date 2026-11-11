@@ -121,10 +121,13 @@ Examples/Turbofan/.build/release/marty-turbofan --export NEW_DIR        # stills
 Examples/Turbofan/.build/release/marty-turbofan --pathtrace NEW_DIR --size 1920x1080 --spp 768
 Examples/Turbofan/.build/release/marty-turbofan --ptloop NEW_DIR --size 960x540 --spp 48   # path-traced 10 s loop
 Examples/Turbofan/.build/release/marty-turbofan --view FILE.png --yaw -30 --pitch 20 [--explode 1]
+Examples/Turbofan/.build/release/marty-turbofan --export-gltf NEW_DIR --engine-commit SHA   # glTF for Blender
 swift test --package-path Examples/Turbofan
 ```
 
-Each export command writes to a **new** directory. `--export` writes `hero.png`,
+Each export command writes to a **new** directory. `--export-gltf` writes `turbofan.glb` and
+`turbofan.manifest.json`: the scene and the loop's motion and camera for offline renderers, after the strict check
+passes ([glTF export](../../docs/GLTF-EXPORT.md)). `--export` writes `hero.png`,
 `hero-clean.png`, `labelled.png`, `step-1.png` … `step-8.png`, `turbofan-loop.mp4`
 (1280×800, 30 fps, 12 s), `turbofan-loop.gif` (640×400, 120 frames at 10 hundredths of a
 second, 12.00 s), `loop-poster.png`, `hero-snapshot.json` and `manifest.json` with sizes and

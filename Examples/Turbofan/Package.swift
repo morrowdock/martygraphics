@@ -9,7 +9,9 @@ let package = Package(
     name: "MartyTurbofan",
     platforms: [.macOS(.v14)],
     products: [.executable(name: "marty-turbofan", targets: ["MartyTurbofan"])],
-    dependencies: [.package(name: "MartyGraphics", path: "../..")],
+    dependencies: [.package(name: "MartyGraphics", path: "../.."),
+                   // The glTF exporter (`--export-gltf`, docs/GLTF-EXPORT.md).
+                   .package(name: "MartySolid3D", path: "../Solid3D")],
     targets: [
         .target(name: "MartySolidRT",
                 dependencies: [.product(name: "MartyGraphics", package: "MartyGraphics"),
@@ -19,6 +21,7 @@ let package = Package(
                 resources: [.copy("Models")]),
         .executableTarget(name: "MartyTurbofan",
                           dependencies: ["MartySolidRT", "TurbofanKit",
+                                         .product(name: "MartySolidGLTF", package: "MartySolid3D"),
                                          .product(name: "MartyGraphics", package: "MartyGraphics"),
                                          .product(name: "MartyGraphicsPathTracer", package: "MartyGraphics")]),
         .testTarget(name: "TurbofanTests",

@@ -1651,6 +1651,12 @@ formats, warning or refusal) as JSON; see [REASONS.md](REASONS.md). Slots are ty
 to its own entry, also when an author name holds `.missing.` or `.unknown.`.
 `marty-solid version` prints the `engine` object.
 
+### glTF export
+
+`marty-solid export-gltf FILE.json NEW_DIR --engine-commit SHA` writes the scene and the render loop's motion as
+glTF 2.0 binary for offline renderers, after the strict check passes. The render is cosmetic; the proof stays in
+the check report. See [GLTF-EXPORT.md](GLTF-EXPORT.md).
+
 ## Worked examples
 
 Small, complete models that `marty-solid check` accepts; a test keeps them valid. All of

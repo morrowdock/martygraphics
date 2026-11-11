@@ -21,6 +21,15 @@
   open points with honest labels, and `harness/OPEN-QUESTIONS.md` records the options that were considered. No
   question, key fact, check, prompt, rubric or protocol text changed, and nothing outside `benchmark/` changed
   except this file and `FILES.json`.
+- **glTF export for offline renders (the one exception to the engine feature freeze).** `marty-solid export-gltf
+  FILE.json NEW_DIR --engine-commit SHA` and `marty-turbofan --export-gltf NEW_DIR --engine-commit SHA` write the
+  scene and its loop motion as glTF 2.0 binary (`.glb`): one node per part in the part hierarchy, meshes in metres
+  (+Y up), simple PBR materials, the loop camera and still cameras, the studio's directional lights, and one
+  translation and rotation key per frame for every moving node (default 30 fps). The sidecar manifest has the format
+  of the Blender render path, `martygraphics.render-export/1`. The exporter runs only after the strict check passes,
+  lives outside the engine library (library `MartySolidGLTF` in `Examples/Solid3D`) and changes no engine output. A
+  test re-reads the gearbox export and matches every node to the engine's transform within 1e-5 m and 1e-5 rad; two
+  exports are byte-identical. See [docs/GLTF-EXPORT.md](docs/GLTF-EXPORT.md).
 - **`studio` is the default look, and live views draw its backdrop (pixels only).** `marty-solid render`,
   `MGSolidRenderer` and the explainer view now use `studio` unless told otherwise; pass `--look classic` (or
   `look: .classic`) for the renderer as it was. The explainer's live 3D pane draws the look's backdrop as the scene

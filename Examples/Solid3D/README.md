@@ -26,7 +26,11 @@ swift run --package-path Examples/Solid3D marty-solid3d --verify
 swift run --package-path Examples/Solid3D marty-solid3d --export NEW_DIR   # NEW_DIR must not exist
 swift run --package-path Examples/Solid3D marty-solid3d --preview
 swift run --package-path Examples/Solid3D marty-solid3d --snapshot hero-snapshot.json
+swift run --package-path Examples/Solid3D marty-solid export-gltf FILE.json NEW_DIR --engine-commit SHA   # glTF for Blender
 ```
+
+`marty-solid export-gltf` writes any assembly that passes the strict check, with its 12-second loop motion, as a
+`.glb` and a manifest for offline renderers ([glTF export](../../docs/GLTF-EXPORT.md)).
 
 `--verify` parses the JSON, checks that the solved carrier ratio equals
 Zs / (Zs + Zr) = 24/84, that the gear-ratio residuals are zero, that no tooth

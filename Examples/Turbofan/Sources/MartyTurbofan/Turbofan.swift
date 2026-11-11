@@ -5,6 +5,7 @@ import Metal
 import simd
 import MartyGraphics
 import MartyGraphicsPathTracer
+import MartySolidGLTF
 import MartySolidRT
 import TurbofanKit
 
@@ -58,6 +59,29 @@ func fmt(_ x: Double) -> String {
 
 // MARK: Studio
 
+/// World bounds of some parts (all when empty) of `a` at a pose. `Studio.bounds` and the glTF export use it.
+func partBounds(_ a: MGAssembly, _ ids: [String], _ params: MGPoseParameters) -> MGBounds {
+    let pose = a.pose(params)
+    var b = MGBounds.empty
+    for p in a.parts where ids.isEmpty || ids.contains(p.id) {
+        let t = MGSolidStage.zUpToYUp * (pose.world[p.id] ?? .identity)
+        for c in p.mesh.bounds.corners { b.include(t.apply(c)) }
+    }
+    return b
+}
+
+/// Camera that frames the bounds of `ids` from yaw/pitch, `zoom` < 1 moves closer (`Studio.camera`; no renderer needed).
+func framedCamera(_ a: MGAssembly, aspect: Double, _ ids: [String], _ params: MGPoseParameters, yaw: Double, pitch: Double,
+                  zoom: Double = 1, shift: MGVec3 = .zero, fieldOfView: Double = 28) -> MGSolidCamera {
+    let b = partBounds(a, ids, params)
+    var c = MGSolidCamera.framing(b, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, margin: 1.0)
+    // A bounding sphere is loose around a long cylinder; sit closer than the sphere fit.
+    c.distance *= 0.78 * zoom
+    let t = c.targetVector + shift
+    c.target = [t.x, t.y, t.z]
+    return c
+}
+
 /// Label anchor in the engine frame: radius, angle (degrees about the axis, 225 = middle of the cutaway), axial position.
 struct Anchor {
     let part: String; let r: Double; let phi: Double; let z: Double; let text: String
@@ -94,27 +118,12 @@ struct Anchor {
     }
 
     /// World bounds of some parts (all when empty) at a pose.
-    func bounds(_ ids: [String], _ params: MGPoseParameters) -> MGBounds {
-        let a = renderer.assembly
-        let pose = a.pose(params)
-        var b = MGBounds.empty
-        for p in a.parts where ids.isEmpty || ids.contains(p.id) {
-            let t = MGSolidStage.zUpToYUp * (pose.world[p.id] ?? .identity)
-            for c in p.mesh.bounds.corners { b.include(t.apply(c)) }
-        }
-        return b
-    }
+    func bounds(_ ids: [String], _ params: MGPoseParameters) -> MGBounds { partBounds(renderer.assembly, ids, params) }
 
     /// Camera that frames the bounds of `ids` from yaw/pitch, `zoom` < 1 moves closer.
     func camera(_ ids: [String], _ params: MGPoseParameters, yaw: Double, pitch: Double, zoom: Double = 1, shift: MGVec3 = .zero,
                 fieldOfView: Double = 28) -> MGSolidCamera {
-        let b = bounds(ids, params)
-        var c = MGSolidCamera.framing(b, yaw: yaw, pitch: pitch, aspect: aspect, fieldOfView: fieldOfView, margin: 1.0)
-        // A bounding sphere is loose around a long cylinder; sit closer than the sphere fit.
-        c.distance *= 0.78 * zoom
-        let t = c.targetVector + shift
-        c.target = [t.x, t.y, t.z]
-        return c
+        framedCamera(renderer.assembly, aspect: aspect, ids, params, yaw: yaw, pitch: pitch, zoom: zoom, shift: shift, fieldOfView: fieldOfView)
     }
 
     /// World point of an engine-frame anchor, following the part's explode offset.
@@ -417,6 +426,7 @@ func pathTraceSettings(_ width: Int, _ height: Int, spp: Int, seed: UInt32) -> M
         let usage = """
         Usage: marty-turbofan --verify [--cell MM]
                marty-turbofan --export NEW_DIR [--quick] [--loop-only]
+               marty-turbofan --export-gltf NEW_DIR --engine-commit SHA [--fps 30]
                marty-turbofan --pathtrace NEW_DIR [--size 1920x1080] [--spp 256] [--seed N] [--label TEXT]
                marty-turbofan --ptloop NEW_DIR [--size 960x540] [--spp 48] [--fps 24] [--seconds 10]
                marty-turbofan --view FILE.png [--yaw D] [--pitch D] [--zoom Z] [--explode E] [--focus ids] [--only ids]
@@ -430,6 +440,14 @@ func pathTraceSettings(_ width: Int, _ height: Int, spp: Int, seed: UInt32) -> M
                 try verify(m)
                 _ = NSApplication.shared
                 try export(m, to: try Media.newDirectory(args[1]), quick: args.contains("--quick"), loopOnly: args.contains("--loop-only"))
+            case "--export-gltf"? where args.count >= 2 && !args[1].hasPrefix("--"):
+                try verify(m)
+                let fps = try value("--fps").map { v -> Int in
+                    guard let f = Int(v), MGSolidGLTF.fpsRange.contains(f) else { throw Failure("--fps 1...240") }
+                    return f
+                } ?? Loop.fps
+                guard let commit = value("--engine-commit") else { throw Failure("--export-gltf needs --engine-commit SHA (40 hex digits)") }
+                try exportGLTF(m, to: args[1], fps: fps, engineCommit: commit)
             case "--view"? where args.count >= 2:
                 // Debug view: --view FILE.png [--yaw D] [--pitch D] [--zoom Z] [--explode E] [--input A] [--focus a,b] [--only a,b]
                 _ = NSApplication.shared
