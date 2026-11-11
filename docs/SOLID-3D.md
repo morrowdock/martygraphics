@@ -1,7 +1,7 @@
 # Solid 3D engine (preview)
 
-The solid engine turns a small, validated JSON assembly into shaded mechanical
-models: closed triangle meshes, kinematic joints, gear-mesh constraints, an
+The solid engine turns a small JSON assembly, strictly parsed and checked (motion and
+layout, not content), into shaded mechanical models: closed triangle meshes, kinematic joints, gear-mesh constraints, an
 explode parameter and authored teaching steps. A SceneKit studio renderer draws
 it with physically based materials and soft shadows; a plain-number snapshot
 lets any other renderer draw the same frame.

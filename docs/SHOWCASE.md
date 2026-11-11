@@ -1,13 +1,181 @@
-# A small native scene gallery
+# Showcase: mechanism explainers first
 
-These examples use the public format and drawing primitives. They show different
-uses of the engine without implying a curriculum or a running service.
+MartyGraphics makes kinematically verified mechanism explainers: gear trains, slider-crank linkages and engine
+cutaways. The mechanism examples come first on this page. The engine checks gear meshing (tooth phase, centre distance
+and tooth interference), gear ratios, joint motion and layout. It does not check whether the words are true: it checks
+motion and layout, not the truth of text claims. A "Solved" count in a legend counts animation ratios and engine
+values computed from the model, not verified facts about the real object.
+
+Later sections show the AI-written jet-suit lesson with its fact check, the hand-built jet-suit lesson, beat-by-beat
+lessons, the path tracer and the 2D scene engine. None of the examples implies a curriculum or a running service.
 
 > **About the 3D loops on this page.** GitHub shows them as GIF images, not video. A GIF
 > has at most 256 colours, and these previews are 480 to 640 pixels wide at 10 to 12 frames per
 > second, so they look rougher and less smooth than the real output. The turbofan and gearbox source videos are
 > 1280 pixels wide at 30 and 24 frames per second: <a href="https://morrowdock.app/mg/turbofan/turbofan-loop.mp4">turbofan (MP4)</a> ·
 > <a href="https://morrowdock.app/mg/pathtrace/gearbox-loop.mp4">path-traced gearbox (MP4)</a>. Run an example to see the engine live.
+
+## Turbofan cutaway
+
+A schematic two-spool, high-bypass turbofan built and rendered by the solid engine from
+[38 lines of JSON](../Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json): a 20-blade
+fan, 3 LP and 6 HP compressor stages, an annular combustor, 2 HP and 4 LP turbine stages, and
+an LP shaft (blue) inside the HP shaft (orange). The model is JSON written for this example in
+the documented format, not the output of a prompt run. It is a teaching model, not a real
+engine design.
+
+The HP spool turns three times for each turn of the fan. That ratio is authored as two input drives, not solved from
+gears. The example's `--verify` check confirms that every mesh is closed, that both spools turn about one engine axis
+and that no rotor touches a part that does not turn with it (smallest lower-bound gap 4.52 mm).
+
+[![Turbofan cutaway turning: fan, compressors, combustor and turbines exposed inside a half-cut nacelle.](assets/turbofan/turbofan-loop.gif)](assets/turbofan/pathtraced-hero.png)
+
+[Path-traced still](assets/turbofan/pathtraced-hero.png) · [Labelled cutaway](assets/turbofan/labelled.png) ·
+[Exploded](assets/turbofan/exploded.png) · [Loop (GIF, 640×400, 10 fps, 12 s)](assets/turbofan/turbofan-loop.gif) ·
+[Video (MP4, 1280×800, 30 fps)](https://morrowdock.app/mg/turbofan/turbofan-loop.mp4) ·
+[Run it](../Examples/Turbofan/README.md) · [Render receipt](assets/turbofan/provenance.json)
+
+**How a turbofan works.** The big fan at the front pulls in a huge flow of air (suck). A small
+part of it goes into the core, where rows of spinning blades and fixed vanes squeeze it to many
+times its intake pressure (squeeze). Fuel burns steadily in the ring-shaped combustor, so the air
+gets very hot and expands (bang). The hot gas rushes through the turbines and spins them (blow):
+the HP turbine drives the HP compressor, and the LP turbine drives the fan through a shaft that
+runs inside the HP shaft. Here the HP shaft turns three times as fast as the LP shaft. Most of the
+fan's air goes around the core through the bypass duct, and in a high-bypass engine like this it
+gives most of the thrust.
+
+## From a prompt
+
+The example in this section was written by an AI model from one question, as was the
+[AI jet-suit lesson](#jet-suit-from-a-prompt-ai-written-unedited) further down this page. The other examples on this
+page are hand-built: people and coding agents wrote their JSON or code for these examples, not a
+model answering a prompt.
+
+[![AI-written two-stage planetary gearbox, exploded: brass suns, steel planets, blue and orange carriers, two ring gears.](assets/from-a-prompt/robot-joint/exploded.png)](assets/from-a-prompt/robot-joint/loop.gif)
+
+| | |
+| --- | --- |
+| Prompt | "Show a two-stage planetary gearbox like in a robot joint." |
+| Model | Claude Haiku 5.5, fresh process, no tools, only the public docs and worked example models at commit `17396a2f` |
+| Attempt 1 | Refused: `constraint.gearMesh.phase` on `ring1` (sun 20, ring 56: 76 ÷ 3 is not whole) |
+| Attempt 2 | Accepted: sun 24, planets 18, ring 60 (the gear set of the worked example in its docs); 19 parts, 12 meshes, output 4/49 (12.25:1) |
+| Time | 121 s for both attempts |
+| Grader | Independent model, against pre-registered checks: mechanics, explanation and labels pass |
+
+[Loop](assets/from-a-prompt/robot-joint/loop.gif) · [JSON](assets/from-a-prompt/robot-joint/robot-joint-gearbox.json) ·
+[Refused first try](assets/from-a-prompt/robot-joint/attempt-1-refused.json) · [Run receipt](assets/from-a-prompt/robot-joint/provenance.json)
+
+**What the full test found.** Haiku answered 50 pre-registered questions. All 40 in-scope ones
+were accepted within three repairs (median 25 s over all 50), but only 29 of 40 were fully correct in
+mechanics, and 4 of 50 explanations had a critical error. The main failures: the model quietly
+swapped bevel, worm or crown gears for flat spur gears; its text sometimes gave a number the solved
+model did not have; and it skipped or misused features whose conventions the docs did not show clearly. Our plan is
+to change the engine and docs from recorded failures like these.
+
+## Cutaways and honest numbers
+
+A closed gearbox hides its gears. This example opens it in three steps: the closed casing, a cut that removes the
+front half of the casing, and a ghost step that makes the casing see-through. The model is
+[`idler-gearbox.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json). **It was written by hand for
+these docs. It is not the output of an AI model from a prompt.** The stills are unedited output of
+`marty-solid render`.
+
+[![Step 1: a closed aluminium gearbox casing. The caption reads: A closed gearbox, the casing hides every gear inside it.](assets/cutaway/closed.png)](assets/cutaway/closed.png)
+
+[![Step 2: the front half of the casing is cut away. The cut faces are solid walls. A brass 16-tooth gear, a bronze 23-tooth gear and a steel 28-tooth gear mesh in a row inside.](assets/cutaway/cut.png)](assets/cutaway/cut.png)
+
+[![Step 6: the casing is a ghost, drawn see-through, with the three gears visible inside it.](assets/cutaway/ghost.png)](assets/cutaway/ghost.png)
+
+In step 2 the engine cuts the casing at a plane and caps the cut, so the walls look solid and not hollow. For this
+model `marty-solid check --strict` reports the capped casing with `closed: true`, 3 cap loops and 34 cap triangles
+(step 2 to 5). In step 6 the same casing is a ghost: it stays in the scene but is drawn see-through.
+
+**How an idler works.** The input gear has 16 teeth, the idler has 23 and the output has 28. The idler meshes with both.
+It turns the other way, at 16/23 of the input speed (`idler.speed` = -0.6956521739130435, the minus sign is the
+direction). The output meshes with the idler, so it turns the same way as the input, at 16/28 = 4/7 of the input speed
+(`output.speed` = 0.5714285714285714). The idler does not change that overall ratio: its 23 teeth cancel, because
+16/23 × 23/28 = 16/28. (The cancelling is arithmetic. The engine solves each gear's speed from its mesh; the words of
+step 6 say the cancelling, and the engine does not check those words.)
+
+**Honest numbers.** The captions do not hold typed numbers. Step 4 is written in the model as
+
+`The idler turns the other way, at {idler.speed|abs|frac} of the input speed.`
+
+and the engine fills it in as **"The idler turns the other way, at 16/23 of the input speed."** The placeholder reads
+the fact `idler.speed` (source `gearMesh`, tier `solved`). A check in the same step, `idler.speed < 0`, proves the
+sign that `abs` drops; the check output lists it as `Checked`. The check report gives the step tier `solved` (`stepTiers`)
+and lists the facts the step used (`stepFacts`). The legend line for the whole model reads **"Solved 9 (3 animation ratios)"**: three
+motions, four captions with engine numbers and two checks. Its Built count is 0. A caption badge says "Numbers solved"
+and the reason says "Its numbers are engine facts; its words are not checked". The engine does not check the gears'
+3D tooth contact, load, strength, wear, friction or efficiency (`notChecked`). All of this is in
+[`check-strict.json`](assets/cutaway/check-strict.json), the strict check output for this model.
+[Capture receipt](assets/cutaway/provenance.json)
+
+## Labels, arrows and measured dimensions
+
+A model can put labels, arrows and dimension lines on its parts. This example is a hand winch:
+[`annotated-winch.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json), 40 lines. **It was written
+by hand for these docs. It is not the output of an AI model from a prompt.** The stills are unedited output of
+`marty-solid render`, and the check output is from `marty-solid check --strict`.
+
+[![Step 5: the big drum gear has a green turn arrow. A second green arrow on the drum is labelled "Rope side moves up". A short orange arrow under the blue weight is labelled "Weight". The corner note reads "Arrow lengths are not to scale".](assets/annotations/winch-lift.png)](assets/annotations/winch-lift.png)
+
+[![Step 3: the front view with the labels "Pinion: 14 teeth" and "Drum gear: 42 teeth" and a measured line labelled "Centres 56 mm" between the two gear centres. The labels overlap a little.](assets/annotations/winch-dimension.png)](assets/annotations/winch-dimension.png)
+
+Step 5 is the first still. Step 3 is the second still. The pinion's turn arrow shows in step 1 (not kept here).
+[Check output](assets/annotations/check-strict.json) · [Capture receipt](assets/annotations/provenance.json)
+
+Archival note: these stills and the check output were rendered at commit `35b9e0a` (after PR #31). The current engine
+sizes motion arrows to the step's focus, so it draws a shorter "Rope side moves up" arrow in step 5 (about 22 mm instead
+of 40 mm), and its check output places that arrow's text a little differently (`placements`, step 5).
+
+**How a hand winch works.** You turn the crank, and the small pinion (14 teeth) turns with it. The pinion meshes with the
+larger drum gear (42 teeth), so the drum turns slower and the other way: `pinion.speed` is 1 (source `input`) and
+`wheel.speed` is -0.3333333333333333 (source `gearMesh`). The minus sign is the direction. The step 2 caption says
+"1/3 of a turn, the other way". The rope is on the drum, on the side that moves up (the arrow "Rope side moves up"), so
+the turning drum winds the rope in and lifts the weight. The two gear centres are 56 mm apart (`dim.centres` = 56,
+unit `mm`, source `dimension`). That is half the sum of the tooth counts, (14 + 42) / 2 = 28, times the module 2 mm
+(`pinion.module` and `wheel.module` are both 2 mm).
+
+**What the engine guarantees here.**
+
+* The dimension is measured by the engine. The model does not contain the number 56: the label text is
+  `Centres {dim.centres}` and the engine fills in "Centres 56 mm".
+* A turn arrow takes its direction from the engine: the sign of the part's turn rate (`wheel.worldSpeed` is
+  -0.3333333333333333). The model states `cw` for the drum and `ccw` for the pinion, and the engine refuses a stated
+  sense that is wrong. The motion arrow "Rope side moves up" takes its direction from the engine's exact velocity at
+  its anchor, and the model's expected direction (up) is refused if it is more than 30 degrees off.
+* A motion arrow or a turn arrow is allowed only where the motion has a constant rate, so that its direction is true for the
+  whole step. A chain with a crank-slider or crank-rod drive is refused with the reason
+  `annotation.motion.nonlinear.<id>`.
+* A gravity arrow (`"cause": "gravity"`) is refused unless it points within 10 degrees of straight down. In a step with
+  `spin`, it is also refused if the part it sits on turns (both its anchors must be world-fixed or move together). Here
+  it sits on the weight, which does not move (`partTiers`: `static`).
+* Arrow lengths are not to scale. The legend says so, and the engine prints this note: "Arrow lengths are not to scale"
+  (`legend.notes`). It is drawn in the top right corner of each still.
+
+The legend line for the whole model reads "Solved 12 (2 animation ratios)" (`legend.text`): two motions, two labels, five arrows, one dimension
+and two captions with engine numbers, plus one check. Its Built count is 0. Label and caption words are not checked, only their
+numbers. The engine does not check the gears' 3D tooth contact, load, strength, wear, friction or efficiency, or what
+drives the input (`notChecked`).
+
+## Solid 3D from JSON
+
+A planetary gear set built and rendered in real time by the solid engine from
+[53 lines of JSON](../Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json).
+
+[![Solid 3D planetary gear set exploded along its shaft with part labels.](assets/solid/exploded-labelled.png)](assets/solid/exploded-labelled.png)
+
+[Assembled](assets/solid/hero.png) · [Slider-crank cutaway](assets/solid/slider-crank-section.png) ·
+[Loop (GIF, 480×300, 10 fps, 12 s)](assets/solid/planetary-loop.gif) · [Run it](../Examples/Solid3D/README.md) ·
+[Render receipt](assets/solid/provenance.json)
+
+**How a planetary gear set works.** The sun gear (24 teeth) sits in the middle and is the
+input. Three planet gears (18 teeth) mesh with it and with the ring gear (60 teeth) around
+them. The ring is held still, so when the sun turns, the planets are pushed around inside
+the ring. Their pins sit on the blue carrier, and the carrier is the output. It turns once
+for every (24 + 60) ÷ 24 = 3.5 turns of the sun: slower, but with 3.5 times the torque.
+The labelled exploded view shows each part, in the order they stack on the shaft.
 
 ## Jet suit from a prompt (AI-written, unedited)
 
@@ -252,59 +420,6 @@ move out of step 5 were checked after it. It did not check every transition fram
 two earlier label anchors; the published files use the moved anchors (see the
 [render receipt](assets/jet-suit/provenance.json)). The exploded view is not published.
 
-## From a prompt
-
-The example in this section was written by an AI model from one question, as was the
-[AI jet-suit lesson](#jet-suit-from-a-prompt-ai-written-unedited) at the top of this page. The other examples on this
-page are hand-built: people and coding agents wrote their JSON or code for these examples, not a
-model answering a prompt.
-
-[![AI-written two-stage planetary gearbox, exploded: brass suns, steel planets, blue and orange carriers, two ring gears.](assets/from-a-prompt/robot-joint/exploded.png)](assets/from-a-prompt/robot-joint/loop.gif)
-
-| | |
-| --- | --- |
-| Prompt | "Show a two-stage planetary gearbox like in a robot joint." |
-| Model | Claude Haiku 5.5, fresh process, no tools, only the public docs and worked example models at commit `17396a2f` |
-| Attempt 1 | Refused: `constraint.gearMesh.phase` on `ring1` (sun 20, ring 56: 76 ÷ 3 is not whole) |
-| Attempt 2 | Accepted: sun 24, planets 18, ring 60 (the gear set of the worked example in its docs); 19 parts, 12 meshes, output 4/49 (12.25:1) |
-| Time | 121 s for both attempts |
-| Grader | Independent model, against pre-registered checks: mechanics, explanation and labels pass |
-
-[Loop](assets/from-a-prompt/robot-joint/loop.gif) · [JSON](assets/from-a-prompt/robot-joint/robot-joint-gearbox.json) ·
-[Refused first try](assets/from-a-prompt/robot-joint/attempt-1-refused.json) · [Run receipt](assets/from-a-prompt/robot-joint/provenance.json)
-
-**What the full test found.** Haiku answered 50 pre-registered questions. All 40 in-scope ones
-were accepted within three repairs (median 25 s over all 50), but only 29 of 40 were fully correct in
-mechanics, and 4 of 50 explanations had a critical error. The main failures: the model quietly
-swapped bevel, worm or crown gears for flat spur gears; its text sometimes gave a number the solved
-model did not have; and it skipped or misused features whose conventions the docs did not show clearly. Our plan is
-to change the engine and docs from recorded failures like these.
-
-## Turbofan cutaway
-
-A schematic two-spool, high-bypass turbofan built and rendered by the solid engine from
-[38 lines of JSON](../Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json): a 20-blade
-fan, 3 LP and 6 HP compressor stages, an annular combustor, 2 HP and 4 LP turbine stages, and
-an LP shaft (blue) inside the HP shaft (orange). The model is JSON written for this example in
-the documented format, not the output of a prompt run. It is a teaching model, not a real
-engine design.
-
-[![Turbofan cutaway turning: fan, compressors, combustor and turbines exposed inside a half-cut nacelle.](assets/turbofan/turbofan-loop.gif)](assets/turbofan/pathtraced-hero.png)
-
-[Path-traced still](assets/turbofan/pathtraced-hero.png) · [Labelled cutaway](assets/turbofan/labelled.png) ·
-[Exploded](assets/turbofan/exploded.png) · [Loop (GIF, 640×400, 10 fps, 12 s)](assets/turbofan/turbofan-loop.gif) ·
-[Video (MP4, 1280×800, 30 fps)](https://morrowdock.app/mg/turbofan/turbofan-loop.mp4) ·
-[Run it](../Examples/Turbofan/README.md) · [Render receipt](assets/turbofan/provenance.json)
-
-**How a turbofan works.** The big fan at the front pulls in a huge flow of air (suck). A small
-part of it goes into the core, where rows of spinning blades and fixed vanes squeeze it to many
-times its intake pressure (squeeze). Fuel burns steadily in the ring-shaped combustor, so the air
-gets very hot and expands (bang). The hot gas rushes through the turbines and spins them (blow):
-the HP turbine drives the HP compressor, and the LP turbine drives the fan through a shaft that
-runs inside the HP shaft. Here the HP shaft turns three times as fast as the LP shaft. Most of the
-fan's air goes around the core through the bypass duct, and in a high-bypass engine like this it
-gives most of the thrust.
-
 ## Beat-by-beat lessons
 
 A short rotation lesson on the lesson layer: triangle ABC turns about the origin O in five beats, with one angle
@@ -349,123 +464,6 @@ iPad): a scene statement reaches the first offscreen frame (1024×768) in 0.52 m
 commits new state in 0.14 ms, median of 500 runs. The first figure needs 136 bytes of stream.
 See [measured timing](LESSONS.md#measured-timing-this-mac-only).
 
-## Cutaways and honest numbers
-
-A closed gearbox hides its gears. This example opens it in three steps: the closed casing, a cut that removes the
-front half of the casing, and a ghost step that makes the casing see-through. The model is
-[`idler-gearbox.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json). **It was written by hand for
-these docs. It is not the output of an AI model from a prompt.** The stills are unedited output of
-`marty-solid render`.
-
-[![Step 1: a closed aluminium gearbox casing. The caption reads: A closed gearbox, the casing hides every gear inside it.](assets/cutaway/closed.png)](assets/cutaway/closed.png)
-
-[![Step 2: the front half of the casing is cut away. The cut faces are solid walls. A brass 16-tooth gear, a bronze 23-tooth gear and a steel 28-tooth gear mesh in a row inside.](assets/cutaway/cut.png)](assets/cutaway/cut.png)
-
-[![Step 6: the casing is a ghost, drawn see-through, with the three gears visible inside it.](assets/cutaway/ghost.png)](assets/cutaway/ghost.png)
-
-In step 2 the engine cuts the casing at a plane and caps the cut, so the walls look solid and not hollow. For this
-model `marty-solid check --strict` reports the capped casing with `closed: true`, 3 cap loops and 34 cap triangles
-(step 2 to 5). In step 6 the same casing is a ghost: it stays in the scene but is drawn see-through.
-
-**How an idler works.** The input gear has 16 teeth, the idler has 23 and the output has 28. The idler meshes with both.
-It turns the other way, at 16/23 of the input speed (`idler.speed` = -0.6956521739130435, the minus sign is the
-direction). The output meshes with the idler, so it turns the same way as the input, at 16/28 = 4/7 of the input speed
-(`output.speed` = 0.5714285714285714). The idler does not change that overall ratio: its 23 teeth cancel, because
-16/23 × 23/28 = 16/28. (The cancelling is arithmetic. The engine solves each gear's speed from its mesh; the words of
-step 6 say the cancelling, and the engine does not check those words.)
-
-**Honest numbers.** The captions do not hold typed numbers. Step 4 is written in the model as
-
-`The idler turns the other way, at {idler.speed|abs|frac} of the input speed.`
-
-and the engine fills it in as **"The idler turns the other way, at 16/23 of the input speed."** The placeholder reads
-the fact `idler.speed` (source `gearMesh`, tier `solved`). A check in the same step, `idler.speed < 0`, proves the
-sign that `abs` drops; the check output lists it as `Checked`. The check report gives the step tier `solved` (`stepTiers`)
-and lists the facts the step used (`stepFacts`). The legend line for the whole model reads **"Solved 9 (3 animation ratios)"**: three
-motions, four captions with engine numbers and two checks. Its Built count is 0. A caption badge says "Numbers solved"
-and the reason says "Its numbers are engine facts; its words are not checked". The engine does not check the gears'
-3D tooth contact, load, strength, wear, friction or efficiency (`notChecked`). All of this is in
-[`check-strict.json`](assets/cutaway/check-strict.json), the strict check output for this model.
-[Capture receipt](assets/cutaway/provenance.json)
-
-## Labels, arrows and measured dimensions
-
-A model can put labels, arrows and dimension lines on its parts. This example is a hand winch:
-[`annotated-winch.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json), 40 lines. **It was written
-by hand for these docs. It is not the output of an AI model from a prompt.** The stills are unedited output of
-`marty-solid render`, and the check output is from `marty-solid check --strict`.
-
-[![Step 5: the big drum gear has a green turn arrow. A second green arrow on the drum is labelled "Rope side moves up". A short orange arrow under the blue weight is labelled "Weight". The corner note reads "Arrow lengths are not to scale".](assets/annotations/winch-lift.png)](assets/annotations/winch-lift.png)
-
-[![Step 3: the front view with the labels "Pinion: 14 teeth" and "Drum gear: 42 teeth" and a measured line labelled "Centres 56 mm" between the two gear centres. The labels overlap a little.](assets/annotations/winch-dimension.png)](assets/annotations/winch-dimension.png)
-
-Step 5 is the first still. Step 3 is the second still. The pinion's turn arrow shows in step 1 (not kept here).
-[Check output](assets/annotations/check-strict.json) · [Capture receipt](assets/annotations/provenance.json)
-
-Archival note: these stills and the check output were rendered at commit `35b9e0a` (after PR #31). The current engine
-sizes motion arrows to the step's focus, so it draws a shorter "Rope side moves up" arrow in step 5 (about 22 mm instead
-of 40 mm), and its check output places that arrow's text a little differently (`placements`, step 5).
-
-**How a hand winch works.** You turn the crank, and the small pinion (14 teeth) turns with it. The pinion meshes with the
-larger drum gear (42 teeth), so the drum turns slower and the other way: `pinion.speed` is 1 (source `input`) and
-`wheel.speed` is -0.3333333333333333 (source `gearMesh`). The minus sign is the direction. The step 2 caption says
-"1/3 of a turn, the other way". The rope is on the drum, on the side that moves up (the arrow "Rope side moves up"), so
-the turning drum winds the rope in and lifts the weight. The two gear centres are 56 mm apart (`dim.centres` = 56,
-unit `mm`, source `dimension`). That is half the sum of the tooth counts, (14 + 42) / 2 = 28, times the module 2 mm
-(`pinion.module` and `wheel.module` are both 2 mm).
-
-**What the engine guarantees here.**
-
-* The dimension is measured by the engine. The model does not contain the number 56: the label text is
-  `Centres {dim.centres}` and the engine fills in "Centres 56 mm".
-* A turn arrow takes its direction from the engine: the sign of the part's turn rate (`wheel.worldSpeed` is
-  -0.3333333333333333). The model states `cw` for the drum and `ccw` for the pinion, and the engine refuses a stated
-  sense that is wrong. The motion arrow "Rope side moves up" takes its direction from the engine's exact velocity at
-  its anchor, and the model's expected direction (up) is refused if it is more than 30 degrees off.
-* A motion arrow or a turn arrow is allowed only where the motion has a constant rate, so that its direction is true for the
-  whole step. A chain with a crank-slider or crank-rod drive is refused with the reason
-  `annotation.motion.nonlinear.<id>`.
-* A gravity arrow (`"cause": "gravity"`) is refused unless it points within 10 degrees of straight down. In a step with
-  `spin`, it is also refused if the part it sits on turns (both its anchors must be world-fixed or move together). Here
-  it sits on the weight, which does not move (`partTiers`: `static`).
-* Arrow lengths are not to scale. The legend says so, and the engine prints this note: "Arrow lengths are not to scale"
-  (`legend.notes`). It is drawn in the top right corner of each still.
-
-The legend line for the whole model reads "Solved 12 (2 animation ratios)" (`legend.text`): two motions, two labels, five arrows, one dimension
-and two captions with engine numbers, plus one check. Its Built count is 0. Label and caption words are not checked, only their
-numbers. The engine does not check the gears' 3D tooth contact, load, strength, wear, friction or efficiency, or what
-drives the input (`notChecked`).
-
-## Native scenes
-
-| Example | In `--preview` | What to notice | Source |
-| --- | --- | --- | --- |
-| Tree search | Follow a search | Follow comparisons through a binary search tree. | [tree.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json) |
-| Two pointers | Walk an array | Move through an array to find two numbers totaling 14. | [two-pointers.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json) |
-| Message handoff | Trace a handoff | A step changes the highlighted node in a directed diagram; no queue is executed. | [handoff.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json) |
-| Sampled function | See the samples | Seven supplied points sketch y = x²; the engine does not derive them. | [function.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
-| Synthetic counts | Compare quantities | Compare Alpha 18, Beta 30, Gamma 24. Every value is invented. | [counts.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
-| Geometric motion | Move through a scene | A marker takes two seconds from A to B, then returns. No force model is implied. | [motion.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
-| Shortest path | Find the cheapest route | Dijkstra settles six routers one at a time; the cheapest route 0→2→1→3→4→5 costs 13. Opt-in graph pack. | [shortest-path.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
-
-## Solid 3D from JSON
-
-A planetary gear set built and rendered in real time by the solid engine from
-[53 lines of JSON](../Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json).
-
-[![Solid 3D planetary gear set exploded along its shaft with part labels.](assets/solid/exploded-labelled.png)](assets/solid/exploded-labelled.png)
-
-[Assembled](assets/solid/hero.png) · [Slider-crank cutaway](assets/solid/slider-crank-section.png) ·
-[Loop (GIF, 480×300, 10 fps, 12 s)](assets/solid/planetary-loop.gif) · [Run it](../Examples/Solid3D/README.md) ·
-[Render receipt](assets/solid/provenance.json)
-
-**How a planetary gear set works.** The sun gear (24 teeth) sits in the middle and is the
-input. Three planet gears (18 teeth) mesh with it and with the ring gear (60 teeth) around
-them. The ring is held still, so when the sun turns, the planets are pushed around inside
-the ring. Their pins sit on the blue carrier, and the carrier is the output. It turns once
-for every (24 + 60) ÷ 24 = 3.5 turns of the sun: slower, but with 3.5 times the torque.
-The labelled exploded view shows each part, in the order they stack on the shaft.
-
 ## Path-traced gearbox
 
 A procedurally generated two-stage gearbox, path traced on an
@@ -487,6 +485,18 @@ them, slowly. The carrier turns once for every 1 + 60 ÷ 24 = 3.5 turns of the s
 Together: 2 × 3.5 = 7 turns of the input for one turn of the output. Planetary sets are
 used where a big reduction must fit in a small space, such as in car automatic
 transmissions, power drills and helicopter rotor gearboxes.
+
+## Native scenes
+
+| Example | In `--preview` | What to notice | Source |
+| --- | --- | --- | --- |
+| Tree search | Follow a search | Follow comparisons through a binary search tree. | [tree.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json) |
+| Two pointers | Walk an array | Move through an array to find two numbers totaling 14. | [two-pointers.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json) |
+| Message handoff | Trace a handoff | A step changes the highlighted node in a directed diagram; no queue is executed. | [handoff.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json) |
+| Sampled function | See the samples | Seven supplied points sketch y = x²; the engine does not derive them. | [function.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/function.json) |
+| Synthetic counts | Compare quantities | Compare Alpha 18, Beta 30, Gamma 24. Every value is invented. | [counts.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json) |
+| Geometric motion | Move through a scene | A marker takes two seconds from A to B, then returns. No force model is implied. | [motion.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json) |
+| Shortest path | Find the cheapest route | Dijkstra settles six routers one at a time; the cheapest route 0→2→1→3→4→5 costs 13. Opt-in graph pack. | [shortest-path.json](../Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json) |
 
 ## Run or reproduce
 
@@ -526,8 +536,8 @@ renderer scale 1. Later documentation/CI changes do not change the captured Swif
 | [Shortest path](assets/native/shortest-path.gif) | 840 × 662 | 125 KiB | 8 frames × 1.2 s = 9.6 s |
 | [Motion](assets/native/motion.gif) | 840 × 662 | 124 KiB | 32 frames × stored 0.13 s = 4.16 s (about 7.69 fps) |
 
-All eleven images total **1,807,710 bytes (about 1.72 MiB)**. The README shows two small animations
-and puts the third in a disclosure. Stills are single-column and can
+All eleven images total **1,807,710 bytes (about 1.72 MiB)**. The README leads with the mechanism examples and
+links to this gallery for the 2D scenes. Stills are single-column and can
 be opened at full resolution. GitHub controls GIF playback; choose the static
 gallery below to avoid the animations. Descriptions and values remain available
 as text rather than relying on small image labels alone.
