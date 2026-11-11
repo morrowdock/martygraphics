@@ -1,9 +1,12 @@
 # Versioned installation and discovery
 
-Status: release preparation. The public baseline is
+Status: first release. The public baseline was
 `55c98121766c8a079006ee3106289ee97c30e7cd`. No package tag or GitHub release existed
-when checked on 2026-11-04. **A remote SPM install at a reviewed semver tag is not
-verified yet.** Protocol `v: 1` does not imply a package version. Do not substitute
+when checked on 2026-11-04. The first tag, `v0.1.0`, is made from the reviewed merge
+commit of the pull request that adds the `v0.1.0` section to the
+[changelog](../CHANGELOG.md); its GitHub release notes come from that section.
+**A remote SPM install at that tag is not verified until the remote-consumer row
+below has a receipt.** Protocol `v: 1` does not imply a package version. Do not substitute
 an invented tag, an unreviewed branch or a local path dependency as release evidence.
 
 Use the [local quickstart](../README.md#quick-start) today. The versioned Markdown

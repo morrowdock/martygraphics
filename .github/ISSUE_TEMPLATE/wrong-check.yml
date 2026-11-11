@@ -1,0 +1,46 @@
+name: Wrong check result
+description: The engine accepted a document that a documented rule refuses, or refused a valid one.
+labels: [bug, check]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The engine checks motion and layout (gear meshes, ratios, joints, visibility), not the meaning of text.
+        A factual error in a caption that the engine marks "Not checked" is not a check bug; see the limits in docs/SOLID-3D.md.
+  - type: input
+    id: version
+    attributes:
+      label: Release or commit
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Accepted, but a documented rule says it must be refused
+        - Refused, but the document is valid
+        - Refused with an unclear or wrong reason or repair
+    validations:
+      required: true
+  - type: textarea
+    id: doc
+    attributes:
+      label: The document
+      description: The smallest synthetic JSON document that shows the problem.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: The check report
+      description: Output of `marty-solid check --strict <file>`.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: rule
+    attributes:
+      label: Which rule?
+      description: A link to the documented rule or reason (docs/REASONS.md, docs/SOLID-3D.md), and why the result is wrong.

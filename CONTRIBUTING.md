@@ -7,7 +7,7 @@ Do not submit personal data, course-derived material, generation instructions,
 private adapters, credentials, or proprietary templates.
 
 Every commit must include a DCO sign-off. By signing, you certify the
-[Developer Certificate of Origin 1.1](https://developercertificate.org/).
+[Developer Certificate of Origin 1.1](https://developercertificate.org/) (full text in [DCO](DCO)).
 Use `git commit -s` and an email you are comfortable publishing; a GitHub noreply
 address is recommended. A sign-off is a certification, not a cryptographic signature.
 

@@ -6,8 +6,24 @@
       "sha256": "d60f352d0db1404c70afb4bb8b2ca3fd1c610572aa40720e8a0b7baa7885418c"
     },
     {
+      "path": ".github/ISSUE_TEMPLATE/bug.yml",
+      "sha256": "5194abce0a9f19981eba652e529f42b3c46f7a8e2d6606d2c8de3f61066e70c7"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "sha256": "4cbcb21fa8c7b6764c28068c3ecd1be692ffeeb1592478557c208bd19e77388b"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/idea.yml",
+      "sha256": "dc467c16b1c329ec001a899a27b876b9ffd7ee61e94cd99a87307b36f0068b1d"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/wrong-check.yml",
+      "sha256": "942ddf6e1e8a30859380978f1600b823a1917a84363f6276033cec3ce20f561a"
+    },
+    {
       "path": ".github/pull_request_template.md",
-      "sha256": "66b1903e2b621be33b6656733d7805e2a2b7601fb9735478cb6050fed6508149"
+      "sha256": "8f48dedc65f7485cae1b48cd7dc55995b0e6980e3d75ed02ae700a3d4b8e4fb1"
     },
     {
       "path": ".github/workflows/ci.yml",
@@ -19,15 +35,19 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "390773300c70a69a772a4ee72b22809fe699723e211d22627e1d9d47bb556522"
+      "sha256": "7a0cd08172bb2e7adb9c590f8af2ab3a68ba38d0b40ab701cd39ad4f6bb5e8a3"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
-      "sha256": "1d8cb2b326b5ab30d2393a52ee67dbb8ce703c604bc038cfe5b6e94a9d26230c"
+      "sha256": "01310ef0b17bdb7d1d79faddcf3b30aee50888dd9342c723ecfbc30cb5760f1c"
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256": "d26fc32d8476f0ae1a3bb2769fe8ba01eb42d010aed2bd9d87be31d475b9326d"
+      "sha256": "a623ea37227937cca7d70e38b97d71758b0c2d8d3627547eb95b4a9b83b44900"
+    },
+    {
+      "path": "DCO",
+      "sha256": "f7ac75b443f4ca16b503241344b41aeff9503b0c30bedc2b119551d83cb0fa90"
     },
     {
       "path": "Examples/Explainers/README.md",
@@ -543,7 +563,7 @@
     },
     {
       "path": "NOTICE",
-      "sha256": "460dcde9189d9bb75d2a25f0f9f116ddbbc990a3594fc24149f1d0db3034e0a7"
+      "sha256": "0805a8f435fb77cf7be3e1670d4d155b47e76261ec7788f4f8c8596367ab5fc5"
     },
     {
       "path": "Package.swift",
@@ -551,11 +571,11 @@
     },
     {
       "path": "README.md",
-      "sha256": "34782c17c1c6d9d26aa36940e4ad4ac16899e8acf033494e1ab058bf4c40bb15"
+      "sha256": "9b6cdb2a596f04a690b5e7b397c1d55f6b9552c5858655f79b84a346629bc5ca"
     },
     {
       "path": "SECURITY.md",
-      "sha256": "b2e2e63af593d03c4d577ecc26b5ba2a0567d742b4e3984e109c2b5dac9453f9"
+      "sha256": "ff596538faea587edb9fdaed2cbcd879d265b5557b05d2d5868349904572a687"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainer.swift",
@@ -864,6 +884,10 @@
     {
       "path": "Sources/MartyGraphicsPathTracer/MGRTShaderSource.swift",
       "sha256": "8c86d1cf4c17107a202c41e8d9a7b639816cc52089d95cf0509c9302d3b2c40d"
+    },
+    {
+      "path": "TRADEMARKS.md",
+      "sha256": "6e032e40ddbec5b6ed375535c837ea339a25d08506406f49a63d93a4995a7324"
     },
     {
       "path": "Tests/MartyGraphicsPathTracerTests/MGRTGPUSmokeTests.swift",
@@ -1639,7 +1663,7 @@
     },
     {
       "path": "docs/DISTRIBUTION.md",
-      "sha256": "d969d80938427f44f7c0822521cbeedac335294d742645d46644fbd05bb97374"
+      "sha256": "caf6073091d6e0133479c6646b2557a4a2d2bf4efa26f13cb720fceb158f9a7e"
     },
     {
       "path": "docs/EXPLAINER.md",
@@ -1652,6 +1676,10 @@
     {
       "path": "docs/GETTING-STARTED.md",
       "sha256": "3df018e9a1c8cb61ed47048ba156f5bb8b985f1a5a79e20d17b0852e4755330a"
+    },
+    {
+      "path": "docs/HISTORY.md",
+      "sha256": "0871041ae15c27b8b2abf66a4b0ee0419112690bff64994504b36fc6b1c3f48a"
     },
     {
       "path": "docs/LESSONS.md",

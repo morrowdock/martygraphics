@@ -1,0 +1,20 @@
+name: Idea or feature request
+description: Suggest a change to the engine, the formats or the docs.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        During the current blind benchmark the engine has a feature freeze: bug fixes, docs and tooling are still welcome.
+        Ideas are recorded and reviewed later.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to explain or check that you cannot today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The format change or API you suggest, and how the engine could check it.

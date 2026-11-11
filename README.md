@@ -69,7 +69,7 @@ The format: [Solid 3D](docs/SOLID-3D.md) · [Explainer documents](docs/EXPLAINER
 
 ## Honesty and limits
 
-**Early preview.** APIs and the wire format may change. There is no tagged release yet.
+**Early preview.** APIs and the wire format may change. The first tagged release is v0.1.0; see the [changelog](CHANGELOG.md).
 
 - **Reliability is not good enough yet.** In a 50-question test, Claude Haiku 5.5 got all 40 in-scope questions
   accepted within three repairs, but only 29 of 40 were fully correct in mechanics, and 46 of 50 explanations had no
