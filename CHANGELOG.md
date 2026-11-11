@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **Benchmark harness: scoring and analysis (draft for review).** `benchmark/mechanisms-v1/harness/` adds the
+  primary scoring and grade-merge code that the protocol requires before run 1: the per-check merge of the two
+  graders, the mechanism score (N/A when no check is judged), coverage, errors, clarity and defects, failed-run
+  scores with E_fail(q), ungraded outputs listed and left out, M(q, a) and the exact sign test with the
+  15-of-20 boundary, all in exact fractions. `agreement.py` adds Krippendorff's alpha (interval), Spearman's rho and
+  Cohen's kappa, tested against published values. Python standard library only (NumPy only for the bootstrap
+  interval). The tests use synthetic data only. `RUN-LOCK.json` is a draft with the harness hashes, and
+  `harness/OPEN-QUESTIONS.md` lists 12 places where the protocol leaves a choice open, for the owner to decide.
+  No question, key fact, check, prompt, rubric or protocol text changed, and nothing outside `benchmark/` changed
+  except this file and `FILES.json`.
 - **`studio` is the default look, and live views draw its backdrop (pixels only).** `marty-solid render`,
   `MGSolidRenderer` and the explainer view now use `studio` unless told otherwise; pass `--look classic` (or
   `look: .classic`) for the renderer as it was. The explainer's live 3D pane draws the look's backdrop as the scene

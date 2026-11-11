@@ -1,0 +1,31 @@
+{
+  "kind": "martygraphics.benchmark.run-lock/1",
+  "benchmark": "mechanisms-v1",
+  "status": "DRAFT: not reviewed. Not valid for run 1 until the harness review passes, every item in harness/OPEN-QUESTIONS.md is decided, and every pending field below is filled.",
+  "createdUTC": "2026-11-11",
+  "protocol": "PROTOCOL.md section 2.1 (what RUN-LOCK.json adds) and section 11 (the primary scoring and grade-merge code is reviewed and hash-pinned here before run 1; a later change is a recorded deviation in AMENDMENTS.md)",
+  "lockSha256": "1a176911a3d339804307f9c080aa6d70b81f0e915ccfb7e61bb0d30017fc3afa",
+  "harness": {
+    "commit": "pending: the main commit that merges the reviewed harness",
+    "scoring": {
+      "harness/score.py": "cdc885a20e7edcf798635c98f3e8ccccc188971b04594cbd836ff00f0b53ab04",
+      "harness/agreement.py": "2e972d68d19940fd174fbaa5905ce6810235fb0f76d8330a8159bb91896b5998",
+      "harness/tests/support.py": "43144caf3bc2ebc043d397cee8ab50469e0b7ad062720dfcb5343ba90f443db6",
+      "harness/tests/test_score.py": "0e95b0d1644981fbfca530382c83cbd4eebe0b6126537bdd3e65bc6e99904667",
+      "harness/tests/test_agreement.py": "01822adbcefaa5908f96f3f20a520841daf0ea95f666fecd39663d34569796b9",
+      "harness/tests/test_end_to_end.py": "f7e553eacf0f2cc5845dffc3cc454a5f92aab7951306ea5c471b623d9ecac30d"
+    },
+    "python": "pending: the exact Python version used for the result",
+    "numpy": "pending: the exact NumPy version used for the effect-size bootstrap (harness/OPEN-QUESTIONS.md OQ-05)",
+    "decisions": "pending: the reviewed values of score.DECISIONS (harness/OPEN-QUESTIONS.md OQ-01 to OQ-03)"
+  },
+  "pendingBeforeRun1": {
+    "martySolidSha256": "pending: SHA-256 of the marty-solid binary built from engine 38f3863d5ed27c94fccf44b5f117a43938b79455",
+    "arm2Renderer": "pending: R-WK or R-CR and its version, chosen after the dry run (PROTOCOL.md section 5)",
+    "graderTools": "pending: the OpenAI Codex CLI and Antigravity versions",
+    "generatorCliSha256": "pending: SHA-256 of the Claude Code 2.1.322 binary (LOCK.json generator.cliRule)",
+    "host": "pending: hardware and macOS version of the run host",
+    "dryRun": "pending: the dry-run evidence (PROTOCOL.md section 2.4)",
+    "packer": "pending: the masking, normalisation and packing code and the HMAC key encoding (harness/OPEN-QUESTIONS.md OQ-09)"
+  }
+}

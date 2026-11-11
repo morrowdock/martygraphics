@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "7fc0a77cd13308da690b367cc44f3e30f4e77cb171d765891c89c23f5be0d595"
+      "sha256": "6c572fc5e8b0c44264ae9f1d2b617f59e270ee6d2d9d57bd978a088f3e8762af"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1392,6 +1392,42 @@
     {
       "path": "benchmark/mechanisms-v1/RUBRIC.md",
       "sha256": "a64ffa95eac2eb876c2c6a60a3fd4de7fa1f353f5e2ad9b6b7d3ecd70627d305"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
+      "sha256": "995f46a5ad97d2cc43acbf461aef345e89df50858bcb913066ad9ea34005ea02"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
+      "sha256": "f8a012207d3caee9016a3808752dc40d68b16419876fee3d2983b4f0e1ebd5bc"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/README.md",
+      "sha256": "b79becf4732820f1ebef4c8a1d00b93a9e48aa597eb1886ea59b24e5443325cf"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/agreement.py",
+      "sha256": "2e972d68d19940fd174fbaa5905ce6810235fb0f76d8330a8159bb91896b5998"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/score.py",
+      "sha256": "cdc885a20e7edcf798635c98f3e8ccccc188971b04594cbd836ff00f0b53ab04"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/support.py",
+      "sha256": "43144caf3bc2ebc043d397cee8ab50469e0b7ad062720dfcb5343ba90f443db6"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_agreement.py",
+      "sha256": "01822adbcefaa5908f96f3f20a520841daf0ea95f666fecd39663d34569796b9"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_end_to_end.py",
+      "sha256": "f7e553eacf0f2cc5845dffc3cc454a5f92aab7951306ea5c471b623d9ecac30d"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_score.py",
+      "sha256": "0e95b0d1644981fbfca530382c83cbd4eebe0b6126537bdd3e65bc6e99904667"
     },
     {
       "path": "benchmark/mechanisms-v1/prompts/ARM2-REPAIR.txt",
