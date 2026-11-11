@@ -6,7 +6,7 @@
   no engine change): a research-disabled product-route comparison, with partial blinding, of MartyGraphics through
   Marty against the same model writing three.js directly, on 20 mechanism questions.
   - [QUESTIONS.json](benchmark/mechanisms-v1/QUESTIONS.json), key version 3: 20 questions in learner language (text
-    unchanged since version 1); 109 key facts with textbook and web sources, check labels, `appliesTo`, accepted
+    unchanged since version 1); 110 key facts with textbook and web sources, check labels, `appliesTo`, accepted
     wordings, designer notes and per-fact fact-check records; a conventional configuration and accepted variants per
     question; five mechanism checks per question; the excluded shipped examples.
   - Fact-check gate ([FACTCHECK.md](benchmark/mechanisms-v1/FACTCHECK.md)): two independent checks (`gpt-6.1-sol`
@@ -21,7 +21,9 @@
     repeat period between strip frames; above it CANNOT JUDGE); core facts for every accepted configuration (MECH-06
     K8 added, variant facts made core, at least 2 per configuration, checked by the tool); N/A rules for zero
     denominators, the same for both arms; MECH-18 K1 and K5 numeric exceptions removed; MECH-20 M2 and MECH-08 M4 made
-    conditional; MECH-10 K2 lift measured from the base circle (s = r - Rb). [GRADER-QUESTIONS.json](benchmark/mechanisms-v1/GRADER-QUESTIONS.json) is the
+    conditional; MECH-10 K2 lift measured from the base circle (s = r - Rb). After a re-check: the CANNOT JUDGE
+    example follows the motion limit; the sector-gear wiper form is its own variant with core fact K9; the primary
+    scoring code and its zero-denominator tests must be reviewed and hash-pinned before run 1. [GRADER-QUESTIONS.json](benchmark/mechanisms-v1/GRADER-QUESTIONS.json) is the
     graders' view (question, key facts with accepted variants, checks), made and checked for arm-revealing words by
     [tools/grader_questions.py](benchmark/mechanisms-v1/tools/grader_questions.py); it now also carries the
     configurations and `appliesTo`.

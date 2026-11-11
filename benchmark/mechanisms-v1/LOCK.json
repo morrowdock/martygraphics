@@ -1,7 +1,7 @@
 {
   "kind": "martygraphics.benchmark.lock/1",
   "benchmark": "mechanisms-v1",
-  "capturedUTC": "2026-11-11T20:02:27Z",
+  "capturedUTC": "2026-11-11T20:19:05Z",
   "locks": "at the merge of the registration pull request (morrowdock/martygraphics #57). If a locked main moves before the merge, this file is refreshed in that pull request before the merge. After the merge nothing here changes; the benchmark always runs these values.",
   "arm1": {
     "marty": {
@@ -89,11 +89,11 @@
     "validation": "validation/graders/SCORES.json: both pass (G1 21/21, G2 20/21 in scope; 0 wrong directions)"
   },
   "inputs": {
-    "QUESTIONS.json": "90acad5e181f1bef393af074aa220a81785161730dd544c8bed903193241dcf8",
-    "GRADER-QUESTIONS.json": "c33091f72fba3b092e93cf7c3b78908458a994c0b51bf6a526a215298196c9f6",
-    "RUBRIC.md": "8177a1d12967366ddb06a445d60d5333ba363690d30fcdd23729450bf5551553",
-    "PROTOCOL.md": "0061266099351719b4b8dd7d40633b258667b0ce0f9b8b41fdef9227ea427de7",
-    "FACTCHECK.md": "a6800ff8e1f6644b4cdc38e9b5a010cede089607a453c6b2cc5f32f635c436ec"
+    "QUESTIONS.json": "a76db3dc50f9fea1a74707403a231f1416dc8a8df0dedc230ab76356e920a715",
+    "GRADER-QUESTIONS.json": "27be0849c50d02c783eff8cff1d14213ebcb8b8b13d51ec1960cd658f0eef16a",
+    "RUBRIC.md": "a64ffa95eac2eb876c2c6a60a3fd4de7fa1f353f5e2ad9b6b7d3ecd70627d305",
+    "PROTOCOL.md": "e25bb93d68d70b98008a4bf61989342ba096446b01404482a24f7b9af79f8f1d",
+    "FACTCHECK.md": "5417b49072f1515e9a000b29681173a70231b59e7f4c9ca5af7be4641df0d25b"
   },
   "evidence": {
     "stripFps": 10,
@@ -122,7 +122,7 @@
     "refresh of this file if a locked main moved (Marty main adbfba9, MartyGraphics main ca22181 at capture)"
   ],
   "pendingBeforeRun1": [
-    "harness pull request",
+    "harness pull request with the primary scoring and merge code and its zero-denominator tests (both arms), reviewed and hash-pinned",
     "RUN-LOCK.json",
     "dry run (PROTOCOL.md 2.4)"
   ],

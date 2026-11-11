@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "0ea5195d51cf694050ff451039feefa887cffd89b15fec0dc686c861ad7ae412"
+      "sha256": "390773300c70a69a772a4ee72b22809fe699723e211d22627e1d9d47bb556522"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1195,27 +1195,27 @@
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
-      "sha256": "a6800ff8e1f6644b4cdc38e9b5a010cede089607a453c6b2cc5f32f635c436ec"
+      "sha256": "5417b49072f1515e9a000b29681173a70231b59e7f4c9ca5af7be4641df0d25b"
     },
     {
       "path": "benchmark/mechanisms-v1/GRADER-QUESTIONS.json",
-      "sha256": "c33091f72fba3b092e93cf7c3b78908458a994c0b51bf6a526a215298196c9f6"
+      "sha256": "27be0849c50d02c783eff8cff1d14213ebcb8b8b13d51ec1960cd658f0eef16a"
     },
     {
       "path": "benchmark/mechanisms-v1/HASHES.txt",
-      "sha256": "f845abcc60f422a1a3f8f790c80ad05b5b2c2e734a2ee7b34c2d328967a75c17"
+      "sha256": "98df922fa4d025d38a673a3d9db576c10bfaafcb1cf28e361884bb4c0d9cabb5"
     },
     {
       "path": "benchmark/mechanisms-v1/LOCK.json",
-      "sha256": "97a3b5dbc9197622a0b54db90c37698bfd3ed234b46389048d8187bf9414f761"
+      "sha256": "0db1e5fbdc46cc3a85666d78fb8f91ce21153367a35cfa18d524ecfec088b664"
     },
     {
       "path": "benchmark/mechanisms-v1/PROTOCOL.md",
-      "sha256": "0061266099351719b4b8dd7d40633b258667b0ce0f9b8b41fdef9227ea427de7"
+      "sha256": "e25bb93d68d70b98008a4bf61989342ba096446b01404482a24f7b9af79f8f1d"
     },
     {
       "path": "benchmark/mechanisms-v1/QUESTIONS.json",
-      "sha256": "90acad5e181f1bef393af074aa220a81785161730dd544c8bed903193241dcf8"
+      "sha256": "a76db3dc50f9fea1a74707403a231f1416dc8a8df0dedc230ab76356e920a715"
     },
     {
       "path": "benchmark/mechanisms-v1/README.md",
@@ -1223,7 +1223,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUBRIC.md",
-      "sha256": "8177a1d12967366ddb06a445d60d5333ba363690d30fcdd23729450bf5551553"
+      "sha256": "a64ffa95eac2eb876c2c6a60a3fd4de7fa1f353f5e2ad9b6b7d3ecd70627d305"
     },
     {
       "path": "benchmark/mechanisms-v1/prompts/ARM2-REPAIR.txt",

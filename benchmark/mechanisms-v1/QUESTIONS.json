@@ -101,7 +101,8 @@
     "W-MATHWORKS-WIPERRACK": "https://www.mathworks.com/help/sm/ug/using-the-rack-pinion-block-windshield-wiper-mechanism.html",
     "W-WIKI-INDIAMARK2": "https://en.wikipedia.org/wiki/India_Mark_II",
     "W-RWSN-EXTRADEEP": "https://www.rural-water-supply.net/en/implementation/public-domain-handpumps/india-mark-ii-extra-deep-well-pump",
-    "W-WIKI-PISTONPUMP": "https://en.wikipedia.org/wiki/Piston_pump"
+    "W-WIKI-PISTONPUMP": "https://en.wikipedia.org/wiki/Piston_pump",
+    "W-USPTO-SECTORWIPER": "https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/7739771"
   },
   "questions": [
     {
@@ -1183,7 +1184,8 @@
             "action": "added in key version 2 for an accepted variant (fact-check section C)"
           },
           "review": [
-            "review fix (2026-11-11, review of a4d8b55): made core, so each accepted configuration has applicable core facts."
+            "review fix (2026-11-11, review of a4d8b55): made core, so each accepted configuration has applicable core facts.",
+            "re-check fix (2026-11-11, review of f02975c): K7 covers only the rack form; the sector form moved to sector-drive (K9)."
           ]
         },
         {
@@ -1209,17 +1211,43 @@
             "merged": null,
             "action": "added by the review fix: a core fact shared by every accepted configuration"
           }
+        },
+        {
+          "id": "K9",
+          "fact": "For a sector-gear drive: a toothed sector swings back and forth about its pivot, driven by a crank linkage or a rack, and turns the wiper spindle, either because the sector sits on the spindle or through a pinion on the spindle; the spindle's swing is the sector's swing times the gear ratio.",
+          "core": true,
+          "appliesTo": [
+            "sector-drive"
+          ],
+          "acceptedWordings": [],
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-USPTO-SECTORWIPER"
+          ],
+          "check": "single-source",
+          "factCheck": {
+            "sol": null,
+            "gemini": null,
+            "merged": null,
+            "action": "added by the re-check fix: core fact for the sector-gear form, split from rack-drive"
+          },
+          "review": [
+            "re-check fix (2026-11-11, review of f02975c): the sector-gear form is its own accepted variant with this core fact."
+          ]
         }
       ],
       "mechanismChecks": [
         {
           "id": "M1",
           "kind": "parts",
-          "pass": "Conventional crank-rocker: a motor (with or without a visible reduction), a crank, a connecting rod, a rocker on the wiper pivot, a wiper arm or blade, and fixed pivots. Accepted variant: its own drive parts (a reversing motor and its links; or a slider with a rack or cable-rack and pinions), the wiper arm or blade, and fixed pivots.",
+          "pass": "Conventional crank-rocker: a motor (with or without a visible reduction), a crank, a connecting rod, a rocker on the wiper pivot, a wiper arm or blade, and fixed pivots. Accepted variant: its own drive parts (a reversing motor and its links; a slider with a rack or cable-rack and pinions; or a swinging toothed sector with its drive), the wiper arm or blade, and fixed pivots.",
           "factCheck": {
             "sol": "R",
             "geminiItem": null,
-            "action": "revised"
+            "action": "revised",
+            "review": "re-check fix (2026-11-11): sector form added"
           }
         },
         {
@@ -1271,7 +1299,11 @@
         },
         {
           "id": "rack-drive",
-          "description": "A crank-driven slider moves a toothed rack or a cable-rack that turns a pinion on each wiper spindle; or a sector gear drives a pinion."
+          "description": "A crank-driven slider moves a toothed rack or a cable-rack that turns a pinion on each wiper spindle."
+        },
+        {
+          "id": "sector-drive",
+          "description": "A toothed sector, swung back and forth by a crank linkage or a rack, turns the wiper spindle directly or through a pinion."
         }
       ]
     },
@@ -4046,6 +4078,7 @@
     "W-REDCRAB-RACK": "designer",
     "W-RWSN-EXTRADEEP": "designer",
     "W-SDPSI-HELICAL": "designer",
+    "W-USPTO-SECTORWIPER": "designer",
     "W-VLAB-QUICKRETURN": "designer",
     "W-WFR-STEERING": "sol",
     "W-WIKI-CAM": "gemini",
@@ -4072,7 +4105,7 @@
     {
       "version": 3,
       "date": "2026-11-11",
-      "note": "review fixes on key version 2: MECH-10 K2 lift reference; MECH-18 K1 and K5 accepted wordings; core facts for every accepted configuration (MECH-06 K8 added; 7 variant facts made core; MECH-20 K1 to K3 also apply to deep-well); MECH-20 M2 and MECH-08 M4 made conditional"
+      "note": "review fixes on key version 2: MECH-10 K2 lift reference; MECH-18 K1 and K5 accepted wordings; core facts for every accepted configuration (MECH-06 K8 added; 7 variant facts made core; MECH-20 K1 to K3 also apply to deep-well); MECH-20 M2 and MECH-08 M4 made conditional; after the re-check of f02975c: the sector-gear wiper form split into its own variant with core fact K9, and the rubric's CANNOT JUDGE example made to follow the motion limit"
     }
   ]
 }

@@ -432,7 +432,11 @@
         },
         {
           "id": "rack-drive",
-          "description": "A crank-driven slider moves a toothed rack or a cable-rack that turns a pinion on each wiper spindle; or a sector gear drives a pinion."
+          "description": "A crank-driven slider moves a toothed rack or a cable-rack that turns a pinion on each wiper spindle."
+        },
+        {
+          "id": "sector-drive",
+          "description": "A toothed sector, swung back and forth by a crank linkage or a rack, turns the wiper spindle directly or through a pinion."
         }
       ],
       "keyFacts": [
@@ -509,13 +513,22 @@
             "all"
           ],
           "acceptedWordings": []
+        },
+        {
+          "id": "K9",
+          "fact": "For a sector-gear drive: a toothed sector swings back and forth about its pivot, driven by a crank linkage or a rack, and turns the wiper spindle, either because the sector sits on the spindle or through a pinion on the spindle; the spindle's swing is the sector's swing times the gear ratio.",
+          "core": true,
+          "appliesTo": [
+            "sector-drive"
+          ],
+          "acceptedWordings": []
         }
       ],
       "mechanismChecks": [
         {
           "id": "M1",
           "kind": "parts",
-          "pass": "Conventional crank-rocker: a motor (with or without a visible reduction), a crank, a connecting rod, a rocker on the wiper pivot, a wiper arm or blade, and fixed pivots. Accepted variant: its own drive parts (a reversing motor and its links; or a slider with a rack or cable-rack and pinions), the wiper arm or blade, and fixed pivots."
+          "pass": "Conventional crank-rocker: a motor (with or without a visible reduction), a crank, a connecting rod, a rocker on the wiper pivot, a wiper arm or blade, and fixed pivots. Accepted variant: its own drive parts (a reversing motor and its links; a slider with a rack or cable-rack and pinions; or a swinging toothed sector with its drive), the wiper arm or blade, and fixed pivots."
         },
         {
           "id": "M2",

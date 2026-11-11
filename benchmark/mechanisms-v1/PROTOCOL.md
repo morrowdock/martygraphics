@@ -58,7 +58,7 @@ two reports; the stricter label won. The merged result and every action are in [
   (RUBRIC.md, "Configurations and N/A").
 - The mechanism checks were revised (every check the Sol report marked R, and the Gemini items). The rubric adds six
   judging limits for what pictures cannot show.
-- QUESTIONS.json is key version 2 after the gate (108 facts) and key version 3 after the review fixes (109 facts; FACTCHECK.md, "Review fixes"). Each fact records both labels, the merged label, the action and any review fix. Every configuration has at least 2 applicable core facts.
+- QUESTIONS.json is key version 2 after the gate (108 facts) and key version 3 after the review fixes (110 facts; FACTCHECK.md, "Review fixes"). Each fact records both labels, the merged label, the action and any review fix. Every configuration has at least 2 applicable core facts.
 - Open item (recorded, not blocking): the textbook citations have no page-level verification, except Norton section 9.8
   and Uicker section 8.15, which the Sol check read.
 
@@ -342,7 +342,7 @@ interval over items, labelled exploratory:
 
 ## 11. Analysis plan
 
-Fixed in advance. The analysis script lands with the harness and is tested on synthetic data before run 1.
+Fixed in advance. The analysis script lands with the harness and is tested on synthetic data before run 1. **The primary scoring and grade-merge code, with tests of every zero-denominator case for both arms (no judged check; no applicable core fact; one or both graders undefined), must exist, be reviewed and be hash-pinned in RUN-LOCK.json before run 1; any later change to that code is a recorded deviation in AMENDMENTS.md.** (The temporal-validation scorer is not this code.)
 
 **Scores of a failed run.** Mechanism score 0, clarity 0, coverage 0 (as a fraction). Errors = E_fail(q) = 1 + the largest merged
 error count of any graded output of question q in either arm (a failure is always worse than any graded output).

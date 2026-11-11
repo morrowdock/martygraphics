@@ -94,7 +94,7 @@ Give each check `M1` to `M5` one result:
 | **FAIL** | Something visible or stated contradicts the check: a missing connection, a wrong direction, a wrong ratio or timing, a part passing through another part, a link that changes length, an impossible arrangement. |
 | **NOT SHOWN** | The explainer does not show the thing the check asks about: the part is missing, or the motion does not happen at all, or (limit 1) only an invisible quantity is asked. |
 | **N/A** | Every clause of the check is for a configuration other than the shown accepted variant (see "Configurations and N/A"). |
-| **CANNOT JUDGE** | Only for `M3` (direction) and `M4` (ratio or timing). The motion is shown, but the evidence does not let you decide: for example it moves too fast between frames, it is too small, or only a repeating pattern moves. Give the reason. Do not use CANNOT JUDGE when the motion is missing (that is NOT SHOWN) or when you can see that it is wrong (that is FAIL). |
+| **CANNOT JUDGE** | Only for `M3` (direction) and `M4` (ratio or timing). The motion is shown, but the evidence does not let you decide: for example the feature you follow moves more than the motion limit between frames (more than a quarter of its repeat period: 90° for a single feature, 90°/k for a pattern that repeats k times), or every moving feature is too small to resolve. A repeating pattern that moves at or below its limit is judged. Give the reason. Do not use CANNOT JUDGE when the motion is missing (that is NOT SHOWN) or when you can see that it is wrong (that is FAIL). |
 
 Kinds of check:
 

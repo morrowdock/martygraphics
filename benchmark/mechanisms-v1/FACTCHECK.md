@@ -149,5 +149,15 @@ A fresh review of the pull request at `a4d8b55` found six items (FIX-FIRST). All
 | 5. MECH-08 M4 | applied | The cutting stroke is required to be the slow one only when a tool, a workpiece or a label makes the cutting direction judgeable, as in M3. |
 | 6. MECH-10 K2 | applied | The lift s is measured from the lowest follower position (s = 0 on the base circle); for an in-line knife edge s = r - Rb; position and lift are separate. |
 
-The 20 question texts are unchanged. QUESTIONS.json is key version 3 (109 facts); each changed item lists the fix
+The 20 question texts are unchanged. QUESTIONS.json is key version 3 (110 facts); each changed item lists the fix
 under `review`.
+
+A narrow re-check at `f02975c` found two remaining conflicts; both are fixed:
+
+| Finding | Status | How |
+| --- | --- | --- |
+| 1. Repeated-pattern CANNOT JUDGE example | fixed | The CANNOT JUDGE definition now follows the motion limit: CANNOT JUDGE only above a quarter of the repeat period (90°/k for a k-fold pattern) or when every moving feature is too small to resolve; a repeating pattern at or below its limit is judged. The validation already covers a 4-arm pattern below (9° per frame), near (21.6°) and above (72°, control) its 22.5° limit. |
+| 2. Sector-gear wiper form | fixed | The sector form is its own accepted variant (`sector-drive`) with core fact K9 (single-source: US patent 7739771); `rack-drive` keeps only the rack and cable-rack form. Each MECH-06 form now has 2 or more true applicable core facts, which the tool checks per form. |
+
+The primary scoring and merge code is not in this pull request. PROTOCOL.md section 11 requires it, with tests of
+every zero-denominator case for both arms, to be reviewed and hash-pinned before run 1.
