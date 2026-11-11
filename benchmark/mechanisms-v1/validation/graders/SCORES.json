@@ -1,0 +1,470 @@
+{
+  "kind": "martygraphics.benchmark.grader-validation/1",
+  "benchmark": "mechanisms-v1",
+  "date": "2026-11-11",
+  "scorer": {
+    "file": "graders/score_grader_validation.py",
+    "sha256": "59aa8d06592f8c2f4d78e07fa63b6589f2a35a66b6814a914a6166cef2b2dae5",
+    "originalSha256": "8bf6f6f1fd4bd53a4eedd977b6724cb834475eefd7c2994c59271be2ab2e5b7d",
+    "change": "only an SPDX license line added as line 2; the logic is unchanged",
+    "note": "A Geneva motion share given as a range is scored at the midpoint of the range.",
+    "command": "python3 -I graders/score_grader_validation.py packets/KEY.json graders/MAPPING.json graders/answers-<grader>.json"
+  },
+  "inputs": {
+    "answerFile": "9e6bdbbdc8eec3dfb31b1ef4782d875c8b8816d77fb5a33a1f82cc3f0e19782c",
+    "mapping": "a5c589da8082a1cf045e4704a5ad499b7d74cb8a41414d5b8f3e3fc21dabe084",
+    "questions": "d50a91d0ebf9d64f1539b424e25c663bf54746ae15f3a096a3b61a0826d51dbe",
+    "prompt": "175867ddd4d68bbd4a5aa9021c78d01c3f8835a062bd6b715624c778b238cf29",
+    "order": "706415fd260c7507c736badd7e20eb35c4411afdd731a78630fcc85dd7ca5f61"
+  },
+  "graders": {
+    "sol": {
+      "model": "gpt-6.1-sol",
+      "tool": "OpenAI Codex CLI",
+      "reasoning": "high",
+      "answers": "graders/answers-sol.json",
+      "answersSha256": "a3a6e1f135c7c5a9f2fb62f88cfd8053df60b9f4a2fdf6a88a5b27c6cdf72c4e",
+      "summary": {
+        "inScopeCorrect": 21,
+        "inScope": 21,
+        "rate": 1.0,
+        "wrongDirectionInScope": 0,
+        "pass": true
+      },
+      "rows": [
+        {
+          "packet": "P01",
+          "case": "V4-flicker-2f-o1",
+          "inScope": false,
+          "correct": null,
+          "key": "no (gap not in the evidence)",
+          "answer": "cannot judge"
+        },
+        {
+          "packet": "P02",
+          "case": "V1-marker-0.25r-cw",
+          "inScope": true,
+          "correct": true,
+          "key": "clockwise",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P03",
+          "case": "V4-flicker-6f-o0",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "Yes, at 1.50 and 1.60 seconds."
+        },
+        {
+          "packet": "P04",
+          "case": "V1-marker-2.5r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P05",
+          "case": "V1-control-beyond-cap-2.0r-k4",
+          "inScope": false,
+          "correct": false,
+          "key": "cannot judge",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P06",
+          "case": "V4-flicker-6f-o1",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "Yes, at 1.60 and 1.70 seconds."
+        },
+        {
+          "packet": "P07",
+          "case": "V3-geneva-n4",
+          "inScope": true,
+          "correct": true,
+          "key": "stop and go, 90 degrees per driver turn, moves 25 % of the time, opposite way",
+          "answer": "Yes; approximately 90 degrees per driver turn, moving about 20% of the time, in the opposite direction to the driver."
+        },
+        {
+          "packet": "P08",
+          "case": "V4-flicker-3f-o0",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "Yes, at 1.50 seconds."
+        },
+        {
+          "packet": "P09",
+          "case": "V4-flicker-15f-o0",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "Yes, in the sampled frames from 1.50 through 1.90 seconds."
+        },
+        {
+          "packet": "P10",
+          "case": "V4-flicker-15f-o2",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.6 s",
+          "answer": "Yes, in the sampled frames from 1.60 through 2.00 seconds."
+        },
+        {
+          "packet": "P11",
+          "case": "V2-valve-1.0r",
+          "inScope": true,
+          "correct": true,
+          "key": "open 0, close 180, turns per opening 2",
+          "answer": "open ~0, close ~180, turns per opening 2"
+        },
+        {
+          "packet": "P12",
+          "case": "V4-flicker-15f-o1",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "Yes, in the sampled frames from 1.60 through 2.00 seconds."
+        },
+        {
+          "packet": "P13",
+          "case": "V1-cross-0.6r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P14",
+          "case": "V4-flicker-3f-o1",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "Yes, at 1.60 seconds."
+        },
+        {
+          "packet": "P15",
+          "case": "V1-marker-1.0r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P16",
+          "case": "V1-control-beyond-cap-5.0r-k1",
+          "inScope": false,
+          "correct": true,
+          "key": "cannot judge",
+          "answer": "cannot judge"
+        },
+        {
+          "packet": "P17",
+          "case": "V1-control-beyond-cap-6.0r-k1",
+          "inScope": false,
+          "correct": false,
+          "key": "cannot judge",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P18",
+          "case": "V4-flicker-3f-o2",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.6 s",
+          "answer": "Yes, at 1.60 seconds."
+        },
+        {
+          "packet": "P19",
+          "case": "V1-cross-0.25r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P20",
+          "case": "V4-flicker-1f-o1",
+          "inScope": false,
+          "correct": null,
+          "key": "no (gap not in the evidence)",
+          "answer": "cannot judge"
+        },
+        {
+          "packet": "P21",
+          "case": "V1-marker-2.5r-cw",
+          "inScope": true,
+          "correct": true,
+          "key": "clockwise",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P22",
+          "case": "V4-flicker-6f-o2",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.6 s",
+          "answer": "Yes, at 1.60 and 1.70 seconds."
+        },
+        {
+          "packet": "P23",
+          "case": "V1-marker-0.25r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P24",
+          "case": "V2-valve-0.25r",
+          "inScope": true,
+          "correct": true,
+          "key": "open 0, close 180, turns per opening 2",
+          "answer": "open ~350, close ~170, turns per opening 2"
+        },
+        {
+          "packet": "P25",
+          "case": "V1-marker-1.0r-cw",
+          "inScope": true,
+          "correct": true,
+          "key": "clockwise",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P26",
+          "case": "V3-geneva-n6",
+          "inScope": true,
+          "correct": true,
+          "key": "stop and go, 60 degrees per driver turn, moves 33 % of the time, opposite way",
+          "answer": "Yes; approximately 60 degrees per driver turn, moving about 30% of the time, in the opposite direction to the driver."
+        }
+      ]
+    },
+    "gemini": {
+      "model": "gemini-4-argon",
+      "tool": "Antigravity",
+      "thinking": "high",
+      "answers": "graders/answers-gemini.json",
+      "answersSha256": "300c19951c98745d869d74e65137b1d9ac3713f5c9d61298fd4be7814b6c5628",
+      "summary": {
+        "inScopeCorrect": 20,
+        "inScope": 21,
+        "rate": 0.9524,
+        "wrongDirectionInScope": 0,
+        "pass": true
+      },
+      "rows": [
+        {
+          "packet": "P01",
+          "case": "V4-flicker-2f-o1",
+          "inScope": false,
+          "correct": null,
+          "key": "no (gap not in the evidence)",
+          "answer": "no"
+        },
+        {
+          "packet": "P02",
+          "case": "V1-marker-0.25r-cw",
+          "inScope": true,
+          "correct": true,
+          "key": "clockwise",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P03",
+          "case": "V4-flicker-6f-o0",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "yes, at 1.50 s to 1.60 s"
+        },
+        {
+          "packet": "P04",
+          "case": "V1-marker-2.5r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P05",
+          "case": "V1-control-beyond-cap-2.0r-k4",
+          "inScope": false,
+          "correct": false,
+          "key": "cannot judge",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P06",
+          "case": "V4-flicker-6f-o1",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "yes, at 1.60 s to 1.70 s"
+        },
+        {
+          "packet": "P07",
+          "case": "V3-geneva-n4",
+          "inScope": true,
+          "correct": true,
+          "key": "stop and go, 90 degrees per driver turn, moves 25 % of the time, opposite way",
+          "answer": "yes; 90 degrees per driver turn, 1/5 to 1/4 (20%–25%) of the time, opposite way"
+        },
+        {
+          "packet": "P08",
+          "case": "V4-flicker-3f-o0",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "yes, at 1.50 s"
+        },
+        {
+          "packet": "P09",
+          "case": "V4-flicker-15f-o0",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "yes, at 1.50 s to 1.90 s"
+        },
+        {
+          "packet": "P10",
+          "case": "V4-flicker-15f-o2",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.6 s",
+          "answer": "yes, at 1.60 s to 2.00 s"
+        },
+        {
+          "packet": "P11",
+          "case": "V2-valve-1.0r",
+          "inScope": true,
+          "correct": true,
+          "key": "open 0, close 180, turns per opening 2",
+          "answer": "open 0, close 180, turns per opening 2"
+        },
+        {
+          "packet": "P12",
+          "case": "V4-flicker-15f-o1",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "yes, at 1.60 s to 2.00 s"
+        },
+        {
+          "packet": "P13",
+          "case": "V1-cross-0.6r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P14",
+          "case": "V4-flicker-3f-o1",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.5 s",
+          "answer": "yes, at 1.60 s"
+        },
+        {
+          "packet": "P15",
+          "case": "V1-marker-1.0r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P16",
+          "case": "V1-control-beyond-cap-5.0r-k1",
+          "inScope": false,
+          "correct": true,
+          "key": "cannot judge",
+          "answer": "cannot judge"
+        },
+        {
+          "packet": "P17",
+          "case": "V1-control-beyond-cap-6.0r-k1",
+          "inScope": false,
+          "correct": false,
+          "key": "cannot judge",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P18",
+          "case": "V4-flicker-3f-o2",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.6 s",
+          "answer": "yes, at 1.60 s"
+        },
+        {
+          "packet": "P19",
+          "case": "V1-cross-0.25r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P20",
+          "case": "V4-flicker-1f-o1",
+          "inScope": false,
+          "correct": null,
+          "key": "no (gap not in the evidence)",
+          "answer": "no"
+        },
+        {
+          "packet": "P21",
+          "case": "V1-marker-2.5r-cw",
+          "inScope": true,
+          "correct": true,
+          "key": "clockwise",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P22",
+          "case": "V4-flicker-6f-o2",
+          "inScope": true,
+          "correct": true,
+          "key": "yes, at about 1.6 s",
+          "answer": "yes, at 1.60 s to 1.70 s"
+        },
+        {
+          "packet": "P23",
+          "case": "V1-marker-0.25r-ccw",
+          "inScope": true,
+          "correct": true,
+          "key": "counterclockwise",
+          "answer": "counterclockwise"
+        },
+        {
+          "packet": "P24",
+          "case": "V2-valve-0.25r",
+          "inScope": true,
+          "correct": true,
+          "key": "open 0, close 180, turns per opening 2",
+          "answer": "open 0, close 180, turns per opening 2"
+        },
+        {
+          "packet": "P25",
+          "case": "V1-marker-1.0r-cw",
+          "inScope": true,
+          "correct": true,
+          "key": "clockwise",
+          "answer": "clockwise"
+        },
+        {
+          "packet": "P26",
+          "case": "V3-geneva-n6",
+          "inScope": true,
+          "correct": false,
+          "key": "stop and go, 60 degrees per driver turn, moves 33 % of the time, opposite way",
+          "answer": "yes; 60 degrees per driver turn, 1/5 to 1/4 (20%–25%) of the time, opposite way"
+        }
+      ]
+    }
+  }
+}

@@ -25,7 +25,9 @@
     mapping.
   - [validation/](benchmark/mechanisms-v1/validation/README.md): a deterministic synthetic test of the frame strip
     (rotation direction, valve timing, Geneva dwell, flicker): 21 of 21 in-scope cases pass; beyond-cap controls show
-    aliasing. Grader validation packets with an answer key; the grader run is pending.
+    aliasing. Grader validation on 26 renamed packets in one fresh session per grader (a recorded deviation from one
+    session per packet): `gpt-6.1-sol` 21 of 21 and `gemini-4-argon` 20 of 21 in scope, 0 wrong directions, both
+    pass; both gave a confident wrong direction beyond the motion limits. G2 now runs in Antigravity, as validated.
   - [HASHES.txt](benchmark/mechanisms-v1/HASHES.txt): SHA-256 of every other file in the folder.
 
 - **CI gates merges.** `.github/workflows/ci.yml` (now named `CI`) runs on `pull_request` (opened, synchronize,

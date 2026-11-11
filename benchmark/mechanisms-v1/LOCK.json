@@ -62,13 +62,15 @@
   "graders": {
     "G1": {
       "model": "GPT-6.1 Sol",
-      "cli": "OpenAI Codex CLI",
-      "exactModelString": "pending: recorded with the grader validation before the merge"
+      "exactModelString": "gpt-6.1-sol",
+      "tool": "OpenAI Codex CLI",
+      "settings": "reasoning high"
     },
     "G2": {
       "model": "Gemini 4 Argon",
-      "cli": "Gemini CLI",
-      "exactModelString": "pending: recorded with the grader validation before the merge"
+      "exactModelString": "gemini-4-argon",
+      "tool": "Antigravity",
+      "settings": "thinking high"
     },
     "prompts": {
       "GRADER-GUESS.txt": {
@@ -83,13 +85,14 @@
         "path": "prompts/GRADER-SCORE.txt",
         "sha256": "13a7113fdbab8ca5b5f6a7c991723f555b859d3d95d8c94e2f8ea6402a714107"
       }
-    }
+    },
+    "validation": "validation/graders/SCORES.json: both pass (G1 21/21, G2 20/21 in scope; 0 wrong directions)"
   },
   "inputs": {
     "QUESTIONS.json": "93ce812587c0642145f075dfb21554736482fe9722dd604da6ef7c852c828ad7",
     "GRADER-QUESTIONS.json": "4bb5b6e88a4108236c5c251eb3c998ff56fcaf80d1769d5145c507f6849bedd0",
     "RUBRIC.md": "cc4fe9d21057063c94fb4fad546dcbf9757706369cb93eaae9224e62f8ec8786",
-    "PROTOCOL.md": "16f3bcd8dcd1c74e456e41af44ff86328ede95e9ebc6ea150f33fd2d1622d5a9"
+    "PROTOCOL.md": "a7f8f49f84ee4a9857c4125a79b39d57f6b3aeee7fcfe36054b65cac203ad361"
   },
   "evidence": {
     "stripFps": 10,
@@ -105,7 +108,8 @@
     "validation": {
       "script": "89614c4b1a80e600848783964480a38d37757f9bd8a5ac21a967c4d9d93fe943",
       "results": "11541233f1c0077e01d74d30a04ba4a2a06493eee45aefe59d63ba3111d2ff82",
-      "answerFile": "9e6bdbbdc8eec3dfb31b1ef4782d875c8b8816d77fb5a33a1f82cc3f0e19782c"
+      "answerFile": "9e6bdbbdc8eec3dfb31b1ef4782d875c8b8816d77fb5a33a1f82cc3f0e19782c",
+      "graderScores": "dfdd6ab88ee64ad1106b99f5781be0253e82d171492b93dc55231ea33f8b0abf"
     }
   },
   "seeds": {
@@ -115,7 +119,6 @@
   },
   "pendingBeforeMerge": [
     "fact-check gate corrections (PROTOCOL.md 2.2)",
-    "grader temporal validation (PROTOCOL.md 2.3)",
     "refresh of this file if a locked main moved"
   ],
   "pendingBeforeRun1": [

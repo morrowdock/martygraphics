@@ -42,7 +42,7 @@ seeds.
 - **If a locked main moves before the merge,** LOCK.json and HASHES.txt are refreshed in this pull request and
   reviewed again before the merge. After the merge, nothing changes.
 - **Before run 1,** `RUN-LOCK.json` adds what exists only after building: the harness commit, the `marty-solid`
-  binary SHA-256, the Arm 2 renderer and its version, the grader CLI versions, the host (hardware, macOS version) and
+  binary SHA-256, the Arm 2 renderer and its version, the grader tool versions, the host (hardware, macOS version) and
   the dry-run evidence. These are tools, not choices: they implement this protocol and change no input above. All input
   hashes are committed before generation.
 
@@ -64,13 +64,24 @@ check needs, and equal for both graders.
    synthetic mechanisms at 30 fps, keeps only the strip frames, and recovers the answers from those pixels:
    rotation direction, valve timing, Geneva dwell and a short flicker. Results: [validation/RESULTS.json](validation/RESULTS.json)
    and [validation/README.md](validation/README.md).
-2. **Grader validation (required before the merge).** Each primary grader answers the committed synthetic packets
-   ([validation/packets/](validation/packets/KEY.json), prompt in `validation/packets/PROMPT.txt`). A grader passes if
-   it answers at least 90 % of the in-scope packets correctly and gives no wrong direction on any in-scope rotation
+2. **Grader validation (done, 2026-11-11; both graders pass).** Each primary grader answered the committed synthetic
+   packets. Pass rule: at least 90 % of the in-scope packets correct and no wrong direction on an in-scope rotation
    packet (CANNOT JUDGE on an in-scope packet counts as not correct). Tolerances: valve angles ±45°, Geneva motion
-   share ±10 points and step ±10°, flicker time ±0.2 s. The beyond-cap controls are reported, not scored. The raw
-   replies and the scores are committed in `validation/graders/`. If a grader fails, the evidence format changes
-   (more frames per second or larger thumbnails) in this pull request, and both validations run again.
+   share ±10 points and step ±10°, flicker time ±0.2 s. The beyond-cap controls are reported, not scored.
+   - **Method as run (a protocol change before registration closes).** The packet folders were renamed P01–P26,
+     because the case names revealed the answers; the case-to-packet mapping is a random order with seed 20261111.
+     One fresh session per grader answered all 26 packets in that order, with no answer key and no feedback. Each
+     grader got only `PROMPT.txt` (with `{case}` replaced by `{packet id}`), the 26 questions without answers, and the
+     sheets.
+   - **Deviation.** The plan was one new session per packet (52 sessions). That was impractical. The packets are
+     independent synthetic tests and no answer was shown, so one session per grader keeps the test valid; the
+     deviation is recorded here.
+   - **Results** ([validation/graders/SCORES.json](validation/graders/SCORES.json)): `gpt-6.1-sol` 21 of 21 in-scope
+     packets correct, 0 wrong directions: **pass**. `gemini-4-argon` 20 of 21 (95.2 %), 0 wrong directions: **pass**;
+     its miss was the 6-slot Geneva motion share (20–25 % against 33 %). On the controls, both graders gave a confident
+     wrong direction beyond the cap (6 turn/s; the 4-arm cross at 2 turn/s) and both answered cannot judge at 5 turn/s.
+     These support the motion limits and the CANNOT JUDGE answer.
+   - The evidence format does not change.
 
 ### 2.4 Dry run (before run 1)
 
@@ -84,8 +95,8 @@ published as harness evidence.
 | --- | --- | --- | --- |
 | Generator (primary, both arms) | Claude Opus 5.5 | `claude-opus-5-5` | Claude Code CLI in print mode (`claude -p`), version in LOCK.json, subscription login. No paid API. No `ANTHROPIC_*` variable passes to the child process. |
 | Generator (optional, both arms) | Claude Sonnet 5.5 | `claude-sonnet-5-5` | Same as above. LOCK.json says whether it runs. |
-| Grader G1 | GPT-6.1 Sol | exact string recorded with the grader validation | OpenAI Codex CLI, subscription login. No paid API. |
-| Grader G2 | Gemini 4 Argon | exact string recorded with the grader validation | Gemini CLI, Google account login. No paid API. |
+| Grader G1 | GPT-6.1 Sol | `gpt-6.1-sol` | OpenAI Codex CLI, reasoning high, subscription login (the same tool and settings as the grader validation). No paid API. |
+| Grader G2 | Gemini 4 Argon | `gemini-4-argon` | Antigravity, thinking high, Google account login (the same tool and settings as the grader validation). No paid API. |
 | Graders H1..Hn (optional) | Humans, if the owner adds them before grading starts | — | Same packets and rubric. Separate analysis only. |
 
 Model IDs do not change during the benchmark. If a model is withdrawn, the work stops, and the result is published
@@ -427,7 +438,9 @@ Changes after registration go in `AMENDMENTS.md` (dated, with the reason, and th
 4. **Older engine.** Arm 1 uses the engine that Marty main pins (`38f3863`), 5 commits behind MartyGraphics main at
    registration. The result is about that locked route.
 5. **Motion limits are asked, not enforced.** Arm 2 is asked to stay inside the limits; Arm 1 uses the engine's default
-   story speed. Faster motion leads to CANNOT JUDGE, which the result counts per arm.
+   story speed. The grader validation showed that both graders can give a confident wrong direction for motion beyond
+   the limits, instead of CANNOT JUDGE. So motion faster than the limits can cost either arm a wrong M3 or M4 result.
+   The result reports CANNOT JUDGE counts per arm.
 6. **Same-family key.** A Claude model wrote the key facts and generates both arms. The fact-check gate uses two other
    model families.
 7. **Small set.** 20 questions chosen by one designer. Low power for small effects (section 11).

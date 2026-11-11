@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "eab41f229ebf331ad2b8615d24df522c143fcf50393dc84b98a58ca5226e5af5"
+      "sha256": "c89765caad4e6ea73bdcf28153a86969b6ec6ace1e5890d00aeb5f747f7f5814"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1199,15 +1199,15 @@
     },
     {
       "path": "benchmark/mechanisms-v1/HASHES.txt",
-      "sha256": "1ad87e7b21933872fe6dffec0b84616edd228ecebd22f1fcdb5ef58f27dd197e"
+      "sha256": "70e4ffa234768dff6a7caf09a466da73adc0bf6afebfe48f671a94d41b5e917e"
     },
     {
       "path": "benchmark/mechanisms-v1/LOCK.json",
-      "sha256": "ddf9a309ab022f525ac743bc6c297d02606b73add1a4ad23d6f9e6203e2150d3"
+      "sha256": "d63ed96b2feee436134f83d39e0f79ee7745899ac04d337130b8430d8d29d910"
     },
     {
       "path": "benchmark/mechanisms-v1/PROTOCOL.md",
-      "sha256": "16f3bcd8dcd1c74e456e41af44ff86328ede95e9ebc6ea150f33fd2d1622d5a9"
+      "sha256": "a7f8f49f84ee4a9857c4125a79b39d57f6b3aeee7fcfe36054b65cac203ad361"
     },
     {
       "path": "benchmark/mechanisms-v1/QUESTIONS.json",
@@ -1215,7 +1215,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/README.md",
-      "sha256": "71ef5df583ac19fc6bf46625a34b635c08f2208a3509223932008cb65ad0cc19"
+      "sha256": "0a001aa1516c57f7d79de63650ff7ba2b42cabfde3683763fc35d9b24ad8d440"
     },
     {
       "path": "benchmark/mechanisms-v1/RUBRIC.md",
@@ -1247,11 +1247,43 @@
     },
     {
       "path": "benchmark/mechanisms-v1/validation/README.md",
-      "sha256": "634037d5c2bd07a74adb0fd8ff43c5ee472d93910c6361ea5c74d77cf948ae10"
+      "sha256": "2703ca7861ddc4666c53bda06a84b6887a0867dfabbe5df55093b9868fec4d92"
     },
     {
       "path": "benchmark/mechanisms-v1/validation/RESULTS.json",
       "sha256": "11541233f1c0077e01d74d30a04ba4a2a06493eee45aefe59d63ba3111d2ff82"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/validation/graders/MAPPING.json",
+      "sha256": "a5c589da8082a1cf045e4704a5ad499b7d74cb8a41414d5b8f3e3fc21dabe084"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/validation/graders/ORDER.txt",
+      "sha256": "706415fd260c7507c736badd7e20eb35c4411afdd731a78630fcc85dd7ca5f61"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/validation/graders/PROMPT.txt",
+      "sha256": "175867ddd4d68bbd4a5aa9021c78d01c3f8835a062bd6b715624c778b238cf29"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/validation/graders/QUESTIONS.json",
+      "sha256": "d50a91d0ebf9d64f1539b424e25c663bf54746ae15f3a096a3b61a0826d51dbe"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/validation/graders/SCORES.json",
+      "sha256": "dfdd6ab88ee64ad1106b99f5781be0253e82d171492b93dc55231ea33f8b0abf"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/validation/graders/answers-gemini.json",
+      "sha256": "300c19951c98745d869d74e65137b1d9ac3713f5c9d61298fd4be7814b6c5628"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/validation/graders/answers-sol.json",
+      "sha256": "a3a6e1f135c7c5a9f2fb62f88cfd8053df60b9f4a2fdf6a88a5b27c6cdf72c4e"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/validation/graders/score_grader_validation.py",
+      "sha256": "59aa8d06592f8c2f4d78e07fa63b6589f2a35a66b6814a914a6166cef2b2dae5"
     },
     {
       "path": "benchmark/mechanisms-v1/validation/packets/KEY.json",

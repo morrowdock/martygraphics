@@ -21,7 +21,8 @@ every run and to publish the result whether it is good or bad.
   prompt file here, by hash. No engine, Marty or prompt change applies after registration.
 - **3 runs** per question per arm (120 runs). Every run counts; a failure scores zero.
 - **The same evidence** for both arms and both graders: 5 stills, a 10 fps frame strip in labelled contact sheets, and
-  the OCR text. The strip's adequacy is validated on synthetic motion ([validation/](validation/README.md)).
+  the OCR text. The strip's adequacy is validated on synthetic motion, objectively and with both graders
+  ([validation/](validation/README.md)).
 - **Grading:** every rendered output is scored alone in an anonymous packet, by GPT-6.1 Sol and Gemini 4 Argon. Pairs
   with two rendered outputs also get a preference call. A grader may answer CANNOT JUDGE for direction or timing;
   otherwise the stricter grade wins.
@@ -50,8 +51,9 @@ shasum -a 256 -c HASHES.txt
 ## Before registration closes
 
 1. The merged corrections from two independent fact checks (GPT-6.1 Sol with sources, Gemini 4 Argon blind).
-2. The grader validation on the synthetic packets (pending: no grader access on the designer's host).
-3. A refresh of LOCK.json if a locked main moves.
+2. A refresh of LOCK.json if a locked main moves.
+
+The grader validation on the synthetic packets is done: both graders pass ([validation/](validation/README.md)).
 
 ## After registration
 

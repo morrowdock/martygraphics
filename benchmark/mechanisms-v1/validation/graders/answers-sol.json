@@ -1,0 +1,132 @@
+[
+  {
+    "case": "P01",
+    "answer": "cannot judge",
+    "reason": "The block is present in every sampled frame, so a disappearance between samples cannot be ruled out or timed."
+  },
+  {
+    "case": "P02",
+    "answer": "clockwise",
+    "reason": "The marker progresses from the upper right through the lower right, bottom, left, and top in successive frames."
+  },
+  {
+    "case": "P03",
+    "answer": "Yes, at 1.50 and 1.60 seconds.",
+    "reason": "The block is absent in the frames labeled 1.50 and 1.60 seconds and visible in the adjacent frames."
+  },
+  {
+    "case": "P04",
+    "answer": "counterclockwise",
+    "reason": "The marker advances from the upper right to the upper left, lower left, and lower right in reading order."
+  },
+  {
+    "case": "P05",
+    "answer": "clockwise",
+    "reason": "The four-arm pattern shifts clockwise by a small angle between successive frames."
+  },
+  {
+    "case": "P06",
+    "answer": "Yes, at 1.60 and 1.70 seconds.",
+    "reason": "The block is missing at 1.60 and 1.70 seconds, between visible frames at 1.50 and 1.80 seconds."
+  },
+  {
+    "case": "P07",
+    "answer": "Yes; approximately 90 degrees per driver turn, moving about 20% of the time, in the opposite direction to the driver.",
+    "reason": "Each four-second counterclockwise driver revolution accompanies a clockwise quarter-turn of the wheel over roughly 0.8 seconds followed by a dwell."
+  },
+  {
+    "case": "P08",
+    "answer": "Yes, at 1.50 seconds.",
+    "reason": "The block is absent at 1.50 seconds and visible at both 1.40 and 1.60 seconds."
+  },
+  {
+    "case": "P09",
+    "answer": "Yes, in the sampled frames from 1.50 through 1.90 seconds.",
+    "reason": "All five frames labeled 1.50 through 1.90 seconds lack the block, which returns at 2.00 seconds."
+  },
+  {
+    "case": "P10",
+    "answer": "Yes, in the sampled frames from 1.60 through 2.00 seconds.",
+    "reason": "The block is absent at every sampled time from 1.60 through 2.00 seconds and reappears at 2.10 seconds."
+  },
+  {
+    "case": "P11",
+    "answer": "open ~0, close ~180, turns per opening 2",
+    "reason": "At the available 36-degree sampling resolution, the valve first appears low near the rightward crank position and high near the leftward position, repeating every two turns."
+  },
+  {
+    "case": "P12",
+    "answer": "Yes, in the sampled frames from 1.60 through 2.00 seconds.",
+    "reason": "The block is visible at 1.50 seconds, missing from 1.60 through 2.00 seconds, and visible again at 2.10 seconds."
+  },
+  {
+    "case": "P13",
+    "answer": "counterclockwise",
+    "reason": "Successive arm positions shift counterclockwise, with the initially rightward arm moving upward."
+  },
+  {
+    "case": "P14",
+    "answer": "Yes, at 1.60 seconds.",
+    "reason": "Only the frame labeled 1.60 seconds lacks the block, while the neighboring frames show it."
+  },
+  {
+    "case": "P15",
+    "answer": "counterclockwise",
+    "reason": "The marker moves from the right toward the top, then left and bottom, before returning to the right."
+  },
+  {
+    "case": "P16",
+    "answer": "cannot judge",
+    "reason": "The marker alternates between diametrically opposite positions, making clockwise and counterclockwise half-turns indistinguishable."
+  },
+  {
+    "case": "P17",
+    "answer": "clockwise",
+    "reason": "The successive marker positions follow clockwise steps of approximately 144 degrees as drawn."
+  },
+  {
+    "case": "P18",
+    "answer": "Yes, at 1.60 seconds.",
+    "reason": "The block is missing in the 1.60-second frame but present at 1.50 and 1.70 seconds."
+  },
+  {
+    "case": "P19",
+    "answer": "counterclockwise",
+    "reason": "The arms shift steadily counterclockwise, with the near-rightward arm rising across the early frames."
+  },
+  {
+    "case": "P20",
+    "answer": "cannot judge",
+    "reason": "Every sampled frame contains the block, leaving any disappearance between the sampled times undecidable."
+  },
+  {
+    "case": "P21",
+    "answer": "clockwise",
+    "reason": "The marker proceeds from the upper right to the lower right, lower left, and upper left in successive frames."
+  },
+  {
+    "case": "P22",
+    "answer": "Yes, at 1.60 and 1.70 seconds.",
+    "reason": "The frames at 1.60 and 1.70 seconds are empty where the block appears at 1.50 and 1.80 seconds."
+  },
+  {
+    "case": "P23",
+    "answer": "counterclockwise",
+    "reason": "The marker gradually travels upward from the right, across the top, down the left, and around the bottom."
+  },
+  {
+    "case": "P24",
+    "answer": "open ~350, close ~170, turns per opening 2",
+    "reason": "The valve first lowers near 7.90 seconds and rises near 9.90 seconds, corresponding approximately to 350 and 170 degrees, with openings separated by two crank turns."
+  },
+  {
+    "case": "P25",
+    "answer": "clockwise",
+    "reason": "The marker progresses from the right down through the bottom and left, then across the top back to the right."
+  },
+  {
+    "case": "P26",
+    "answer": "Yes; approximately 60 degrees per driver turn, moving about 30% of the time, in the opposite direction to the driver.",
+    "reason": "Each four-second counterclockwise driver revolution accompanies a clockwise one-sixth turn of the wheel lasting roughly 1.2 seconds, with the wheel stationary between movements."
+  }
+]

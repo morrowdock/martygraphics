@@ -1,0 +1,132 @@
+[
+  {
+    "case": "P01",
+    "answer": "no",
+    "reason": "The light block remains continuously visible in every frame from t=0.00 s through t=3.90 s."
+  },
+  {
+    "case": "P02",
+    "answer": "clockwise",
+    "reason": "The dark marker rotates steadily clockwise by 9 degrees per 0.10 s frame, completing one full clockwise turn in 4.00 s."
+  },
+  {
+    "case": "P03",
+    "answer": "yes, at 1.50 s to 1.60 s",
+    "reason": "The light block is absent in the frames at t=1.50 s and t=1.60 s and visible in all other frames."
+  },
+  {
+    "case": "P04",
+    "answer": "counterclockwise",
+    "reason": "The dark marker advances counterclockwise by 90 degrees every 0.10 s frame, completing a full counterclockwise turn every 0.40 s."
+  },
+  {
+    "case": "P05",
+    "answer": "clockwise",
+    "reason": "The four symmetric dark arms shift clockwise by 18 degrees per 0.10 s frame, repeating their 90-degree symmetry pattern every 0.50 s."
+  },
+  {
+    "case": "P06",
+    "answer": "yes, at 1.60 s to 1.70 s",
+    "reason": "The light block disappears in the frames at t=1.60 s and t=1.70 s and is present in all other frames."
+  },
+  {
+    "case": "P07",
+    "answer": "yes; 90 degrees per driver turn, 1/5 to 1/4 (20%–25%) of the time, opposite way",
+    "reason": "As the left driver disk turns counterclockwise once every 4.00 s, the four-slotted right wheel intermittently rotates 90 degrees clockwise (the opposite way) during roughly t=0.60 s to t=1.40 s (about 20%–25% of each cycle) and remains stationary the rest of the time."
+  },
+  {
+    "case": "P08",
+    "answer": "yes, at 1.50 s",
+    "reason": "The light block disappears in the single frame at t=1.50 s and is visible in all other frames."
+  },
+  {
+    "case": "P09",
+    "answer": "yes, at 1.50 s to 1.90 s",
+    "reason": "The light block disappears for five consecutive frames from t=1.50 s through t=1.90 s."
+  },
+  {
+    "case": "P10",
+    "answer": "yes, at 1.60 s to 2.00 s",
+    "reason": "The light block disappears for five consecutive frames from t=1.60 s through t=2.00 s."
+  },
+  {
+    "case": "P11",
+    "answer": "open 0, close 180, turns per opening 2",
+    "reason": "The crank completes one counterclockwise turn every 1.00 s, and the valve drops to its low (open) position from crank angle 0 degrees to 180 degrees once every 2.00 s (every 2 crank turns)."
+  },
+  {
+    "case": "P12",
+    "answer": "yes, at 1.60 s to 2.00 s",
+    "reason": "The light block disappears in the frames from t=1.60 s through t=2.00 s and is present in all other frames."
+  },
+  {
+    "case": "P13",
+    "answer": "counterclockwise",
+    "reason": "Tracking the four-armed wheel modulo its 90-degree symmetry shows the arms advancing counterclockwise by 21.6 degrees per 0.10 s frame."
+  },
+  {
+    "case": "P14",
+    "answer": "yes, at 1.60 s",
+    "reason": "The light block is absent in the frame at t=1.60 s and visible in every other frame."
+  },
+  {
+    "case": "P15",
+    "answer": "counterclockwise",
+    "reason": "The dark marker rotates counterclockwise by 36 degrees per 0.10 s frame, completing one full turn every 1.00 s."
+  },
+  {
+    "case": "P16",
+    "answer": "cannot judge",
+    "reason": "The dark marker alternates between two opposite positions 180 degrees apart on consecutive frames, making clockwise and counterclockwise rotation indistinguishable at the Nyquist limit."
+  },
+  {
+    "case": "P17",
+    "answer": "clockwise",
+    "reason": "Between consecutive 0.10 s frames, the shortest angular displacement of the dark marker is 144 degrees clockwise (repeating every 0.50 s)."
+  },
+  {
+    "case": "P18",
+    "answer": "yes, at 1.60 s",
+    "reason": "The light block disappears in the frame at t=1.60 s and remains visible in all other frames."
+  },
+  {
+    "case": "P19",
+    "answer": "counterclockwise",
+    "reason": "The four dark arms rotate smoothly counterclockwise by 9 degrees per 0.10 s frame, repeating their 90-degree symmetry pattern every 1.00 s."
+  },
+  {
+    "case": "P20",
+    "answer": "no",
+    "reason": "The light block is continuously present in every frame from t=0.00 s through t=3.90 s."
+  },
+  {
+    "case": "P21",
+    "answer": "clockwise",
+    "reason": "The dark marker rotates clockwise by 90 degrees per 0.10 s frame, completing one full clockwise turn every 0.40 s."
+  },
+  {
+    "case": "P22",
+    "answer": "yes, at 1.60 s to 1.70 s",
+    "reason": "The light block disappears in the frames at t=1.60 s and t=1.70 s and is visible in all other frames."
+  },
+  {
+    "case": "P23",
+    "answer": "counterclockwise",
+    "reason": "The dark marker rotates steadily counterclockwise by 9 degrees per 0.10 s frame, completing one full turn in 4.00 s."
+  },
+  {
+    "case": "P24",
+    "answer": "open 0, close 180, turns per opening 2",
+    "reason": "The crank turns counterclockwise at 90 degrees per second (4.00 s per turn), and the valve is low (open) from crank angle 0 degrees to 180 degrees once every 8.00 s, which is 2 crank turns per opening."
+  },
+  {
+    "case": "P25",
+    "answer": "clockwise",
+    "reason": "The dark marker rotates clockwise by 36 degrees per 0.10 s frame, completing a full clockwise turn every 1.00 s."
+  },
+  {
+    "case": "P26",
+    "answer": "yes; 60 degrees per driver turn, 1/5 to 1/4 (20%–25%) of the time, opposite way",
+    "reason": "As the left driver disk turns counterclockwise once every 4.00 s, the six-slotted right wheel intermittently rotates 60 degrees clockwise (the opposite way) between roughly t=0.60 s and t=1.40 s (about 20%–25% of each cycle) and rests the remainder of the time."
+  }
+]

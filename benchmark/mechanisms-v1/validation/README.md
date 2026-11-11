@@ -1,7 +1,7 @@
 # Temporal evidence validation (mechanisms-v1)
 
-Status: **objective validation done (2026-11-11), all in-scope cases pass. Grader validation: pending** (required
-before registration closes; see [PROTOCOL.md, section 2.3](../PROTOCOL.md#23-temporal-evidence-gate-before-the-merge)).
+Status: **objective validation done (2026-11-11), all in-scope cases pass. Grader validation done (2026-11-11): both
+graders pass** ([PROTOCOL.md, section 2.3](../PROTOCOL.md#23-temporal-evidence-gate-before-the-merge)).
 
 ## Why
 
@@ -50,18 +50,51 @@ can show a confident wrong direction.
 ## Grader validation packets ([packets/](packets/KEY.json))
 
 26 packets (21 in scope, 5 controls): the strip sheets of the cases above, a fixed prompt (`packets/PROMPT.txt`) and an
-answer key (`packets/KEY.json`, with the pass rule and tolerances). Each primary grader (GPT-6.1 Sol, Gemini 4 Argon)
-answers every packet in a new session that holds only that packet's sheets. The raw replies and the scores go in
-`graders/`. Pass rule: at least 90 % of the in-scope packets correct, and no wrong direction on an in-scope rotation
-packet.
+answer key (`packets/KEY.json`, with the pass rule and tolerances). Pass rule: at least 90 % of the in-scope packets
+correct, and no wrong direction on an in-scope rotation packet.
 
-**Pending.** On 2026-11-11 the designer's host had no working grader access (the Codex CLI was not logged in; the
-Gemini CLI was not installed). The grader validation must run where both graders are available, and its results must
-be committed before registration closes.
+## Grader validation results ([graders/](graders/SCORES.json))
+
+Run on 2026-11-11 by the coordinator; committed here as run.
+
+**Method.** The packet folders were renamed P01–P26, because the case names revealed the answers
+([MAPPING.json](graders/MAPPING.json); a random order with seed 20261111). One fresh session per grader answered all 26
+packets in that order ([ORDER.txt](graders/ORDER.txt)), with no answer key and no feedback. Each grader got only
+[PROMPT.txt](graders/PROMPT.txt) (`{case}` replaced by `{packet id}`), the questions without answers
+([QUESTIONS.json](graders/QUESTIONS.json)) and the sheets (byte-identical to `packets/`; checked by SHA-256, 83 of 83).
+
+**Deviation from the plan.** The plan was one new session per packet (52 sessions); that was impractical. The packets
+are independent synthetic tests and no answer was shown, so one session per grader keeps the test valid.
+
+**Scoring.** [score_grader_validation.py](graders/score_grader_validation.py) scores the raw replies against
+`packets/KEY.json`. It scores a Geneva motion share given as a range at the midpoint of the range. The committed copy
+adds only an SPDX license line to the original (original SHA-256 in SCORES.json).
+
+| Grader | Model string, tool | In scope correct | Wrong directions (in scope) | Result |
+| --- | --- | --- | --- | --- |
+| G1 | `gpt-6.1-sol`, Codex, reasoning high | 21 / 21 (100 %) | 0 | **Pass** |
+| G2 | `gemini-4-argon`, Antigravity, thinking high | 20 / 21 (95.2 %) | 0 | **Pass** |
+
+G2's miss: the 6-slot Geneva wheel; it gave a motion share of 20–25 % against the true 33 %.
+
+**Controls (reported, not scored):**
+
+| Control | G1 (Sol) | G2 (Gemini) |
+| --- | --- | --- |
+| One marker at 5 turn/s | cannot judge | cannot judge |
+| One marker at 6 turn/s | **clockwise (WRONG, confident)** | **clockwise (WRONG, confident)** |
+| 4-arm cross at 2 turn/s | **clockwise (WRONG, confident)** | **clockwise (WRONG, confident)** |
+| Flicker of 1 or 2 video frames (not in the strip) | cannot judge | no |
+
+**What this shows.** Inside the motion limits, both graders read direction, valve timing, Geneva steps and flicker
+times from the strip. Beyond the limits, both graders gave a confident wrong direction, exactly as the objective
+controls predicted. This supports the speed limits in the Arm 2 prompt and the engine's default story speed, and the
+CANNOT JUDGE answer for direction and timing. It also shows that a grader does not always notice when motion is too
+fast; the per-arm CANNOT JUDGE counts and the limits are the protection, not the grader's caution.
 
 ## Limits
 
-- Synthetic shapes are simpler than real renders: high contrast, no shading, no occlusion. The strip's information is
-  validated; the graders' ability to use it on real renders is tested by the grader validation and measured during
-  grading by the CANNOT JUDGE counts.
+- Synthetic shapes are simpler than real renders: high contrast, no shading, no occlusion. Both validations (objective
+  and grader) use these synthetic shapes. How well the graders use the strip on real renders is not validated here; it
+  is measured during grading by the CANNOT JUDGE counts and the grader agreement.
 - The analyser tracks one known feature per part. A grader must find such a feature itself; the rubric tells it how.
