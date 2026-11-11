@@ -1,13 +1,13 @@
 {
   "kind": "martygraphics.benchmark.lock/1",
   "benchmark": "mechanisms-v1",
-  "capturedUTC": "2026-11-11T18:50:26Z",
+  "capturedUTC": "2026-11-11T19:41:00Z",
   "locks": "at the merge of the registration pull request (morrowdock/martygraphics #57). If a locked main moves before the merge, this file is refreshed in that pull request before the merge. After the merge nothing here changes; the benchmark always runs these values.",
   "arm1": {
     "marty": {
       "repository": "https://github.com/morrowdock/marty",
-      "commit": "0593bcda098365df514756b21e3b907f011d6b88",
-      "note": "Marty main at capture"
+      "commit": "1f2729518451d9cd8391bcd7f160f81385184f8f",
+      "note": "Marty main at capture. Refreshed from 0593bcd: the one new commit changes only docs and templates; the engine pin and Prompts.swift are byte-identical."
     },
     "martyPrompts": {
       "version": "marty-prompts/24",
@@ -21,7 +21,7 @@
       "why": "the engine that Marty main pins (Package.swift, revision). Marty's check and render use it, and marty-solid is built from it. Changing the pin would be a Marty change, which the lock forbids."
     },
     "engineMainAtCapture": {
-      "commit": "933db57c6beb9863f543c4519d35ece84952ebb3",
+      "commit": "ca2218131e897f1138fa80c0cf23cf21cd23fa4d",
       "used": false
     },
     "command": [
@@ -89,10 +89,11 @@
     "validation": "validation/graders/SCORES.json: both pass (G1 21/21, G2 20/21 in scope; 0 wrong directions)"
   },
   "inputs": {
-    "QUESTIONS.json": "93ce812587c0642145f075dfb21554736482fe9722dd604da6ef7c852c828ad7",
-    "GRADER-QUESTIONS.json": "4bb5b6e88a4108236c5c251eb3c998ff56fcaf80d1769d5145c507f6849bedd0",
-    "RUBRIC.md": "cc4fe9d21057063c94fb4fad546dcbf9757706369cb93eaae9224e62f8ec8786",
-    "PROTOCOL.md": "a7f8f49f84ee4a9857c4125a79b39d57f6b3aeee7fcfe36054b65cac203ad361"
+    "QUESTIONS.json": "07ffdd7ab2953a91d2db9a7e181dc38e35197b9563782946612e44056765a6a4",
+    "GRADER-QUESTIONS.json": "534ca777b5a47e9203903ded118402dedbdb471ef2a1ea9dbbf5164449da0c9f",
+    "RUBRIC.md": "e1a00577a041ab60d99a3e0802bee101298b25c04e51d016d1d2a7f1b03a30cd",
+    "PROTOCOL.md": "68ab089e3c897443bbaa67c7187457f6b5109f766d1c9f267c2276243b4475f2",
+    "FACTCHECK.md": "bc94343cac277f246a773559c2e390cd9fefea8239a7a44d242d1984bca80c28"
   },
   "evidence": {
     "stripFps": 10,
@@ -118,8 +119,7 @@
     "blinding": "made after generation; its SHA-256 is committed before grading"
   },
   "pendingBeforeMerge": [
-    "fact-check gate corrections (PROTOCOL.md 2.2)",
-    "refresh of this file if a locked main moved"
+    "refresh of this file if a locked main moved (Marty main 1f27295, MartyGraphics main ca22181 at capture)"
   ],
   "pendingBeforeRun1": [
     "harness pull request",
@@ -127,6 +127,7 @@
     "dry run (PROTOCOL.md 2.4)"
   ],
   "toolsSha256": {
-    "tools/grader_questions.py": "21c9183b366049fe5065a1a2551fdfd6a274540190395266ccb5c0ce37c77420"
-  }
+    "tools/grader_questions.py": "fc5db81110a0b126ac4d268d90f90e3dfb3bdc1aa419833d6f852f71f58c69c8"
+  },
+  "keyVersion": 2
 }

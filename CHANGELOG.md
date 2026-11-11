@@ -5,16 +5,26 @@
 - Benchmark pre-registration [`benchmark/mechanisms-v1`](benchmark/mechanisms-v1/README.md) (design only; not run;
   no engine change): a research-disabled product-route comparison, with partial blinding, of MartyGraphics through
   Marty against the same model writing three.js directly, on 20 mechanism questions.
-  - [QUESTIONS.json](benchmark/mechanisms-v1/QUESTIONS.json): 20 questions in learner language; 101 key facts with
-    textbook and web sources, check labels, accepted variants and designer notes; five mechanism checks per question;
-    the excluded shipped examples. [GRADER-QUESTIONS.json](benchmark/mechanisms-v1/GRADER-QUESTIONS.json) is the
+  - [QUESTIONS.json](benchmark/mechanisms-v1/QUESTIONS.json), key version 2: 20 questions in learner language (text
+    unchanged since version 1); 108 key facts with textbook and web sources, check labels, `appliesTo`, accepted
+    wordings, designer notes and per-fact fact-check records; a conventional configuration and accepted variants per
+    question; five mechanism checks per question; the excluded shipped examples.
+  - Fact-check gate ([FACTCHECK.md](benchmark/mechanisms-v1/FACTCHECK.md)): two independent checks (`gpt-6.1-sol`
+    with sources, `gemini-4-argon` blind), merged with the stricter label winning. 43 of 101 facts corrected or
+    re-sourced (1 WRONG: MECH-10 K2, the cam-follower lift rule); 9 questions gain accepted variants (reversing-motor
+    wipers, Whitworth, desmodromic and two-stroke valvetrains, hypoid and parallel-axis final drives, centrifugal and
+    multi-spool engines, geared turbofans, internal gear pumps, deep-well and force hand pumps) with 7 variant facts;
+    57 mechanism checks revised; the rubric adds an N/A grade, six judging limits for what pictures cannot show, and
+    coverage over the applicable facts. The universal bypass-ratio and fan-thrust windows are removed. The grader
+    validation stays valid: it tests the perception of speed, direction, timing and flicker, not the key text. [GRADER-QUESTIONS.json](benchmark/mechanisms-v1/GRADER-QUESTIONS.json) is the
     graders' view (question, key facts with accepted variants, checks), made and checked for arm-revealing words by
-    [tools/grader_questions.py](benchmark/mechanisms-v1/tools/grader_questions.py).
+    [tools/grader_questions.py](benchmark/mechanisms-v1/tools/grader_questions.py); it now also carries the
+    configurations and `appliesTo`.
   - [RUBRIC.md](benchmark/mechanisms-v1/RUBRIC.md): neutral scorecard for one output (mechanism checks with PASS, FAIL,
     NOT SHOWN and, for direction and timing, CANNOT JUDGE; text errors and coverage; clarity 1 to 5; visual defects)
     and a separate pairwise preference.
   - [PROTOCOL.md](benchmark/mechanisms-v1/PROTOCOL.md): inputs locked at registration in
-    [LOCK.json](benchmark/mechanisms-v1/LOCK.json) (Marty `0593bcd`, the engine it pins `38f3863`, Marty's prompt file,
+    [LOCK.json](benchmark/mechanisms-v1/LOCK.json) (Marty `1f27295`, the engine it pins `38f3863`, Marty's prompt file,
     three.js r170, every prompt file in [prompts/](benchmark/mechanisms-v1/prompts/ARM2-SYSTEM.txt)); fact-check and
     temporal-evidence gates before registration closes; equal maximum repair counts with different route-specific
     assistance; 3 runs per question per arm, every run counted; the same evidence for both graders (5 stills, a 10 fps

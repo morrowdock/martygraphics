@@ -17,7 +17,7 @@ every run and to publish the result whether it is good or bad.
 - **Arm 2:** the same model writes one three.js HTML file, with a headless render and up to 3 repairs from console
   errors and screenshots.
 - **Equal maximum repair counts, different route-specific assistance.** Research is off in both arms.
-- **Locked inputs:** Marty `0593bcd`, the engine it pins (`38f3863`), Marty's prompt file, three.js r170 and every
+- **Locked inputs:** Marty `1f27295`, the engine it pins (`38f3863`), Marty's prompt file, three.js r170 and every
   prompt file here, by hash. No engine, Marty or prompt change applies after registration.
 - **3 runs** per question per arm (120 runs). Every run counts; a failure scores zero.
 - **The same evidence** for both arms and both graders: 5 stills, a 10 fps frame strip in labelled contact sheets, and
@@ -33,8 +33,9 @@ every run and to publish the result whether it is good or bad.
 
 | File | Content |
 | --- | --- |
-| [QUESTIONS.json](QUESTIONS.json) | The 20 questions with ids and categories, key facts with sources, accepted variants and designer notes, five mechanism checks per question, the excluded questions and the source list. |
-| [GRADER-QUESTIONS.json](GRADER-QUESTIONS.json) | The graders' view: only the question text, the key facts with accepted variants, and the checks. Made by [tools/grader_questions.py](tools/grader_questions.py). |
+| [QUESTIONS.json](QUESTIONS.json) | Key version 2: the 20 questions with ids and categories, the conventional configuration and accepted variants, key facts with sources, `appliesTo`, accepted wordings, designer notes and fact-check records, five mechanism checks per question, the excluded questions and the source list. |
+| [FACTCHECK.md](FACTCHECK.md) | The receipt of the two independent fact checks and every action taken. |
+| [GRADER-QUESTIONS.json](GRADER-QUESTIONS.json) | The graders' view: only the question text, the configurations, the key facts with `appliesTo` and accepted wordings, and the checks. Made by [tools/grader_questions.py](tools/grader_questions.py). |
 | [RUBRIC.md](RUBRIC.md) | The scorecard: (a) mechanism correctness, (b) text errors and coverage, (c) teaching clarity, (d) visual defects, (e) pairwise preference. |
 | [PROTOCOL.md](PROTOCOL.md) | The lock and the gates, models, both arms, runs and failures, the evidence, partial blinding, graders, merging, the analysis plan, verdict, publication and amendments. |
 | [LOCK.json](LOCK.json) | The locked inputs (commits, prompt file hashes, three.js hashes, models, seeds). |
@@ -50,10 +51,10 @@ shasum -a 256 -c HASHES.txt
 
 ## Before registration closes
 
-1. The merged corrections from two independent fact checks (GPT-6.1 Sol with sources, Gemini 4 Argon blind).
-2. A refresh of LOCK.json if a locked main moves.
+1. A refresh of LOCK.json if a locked main moves.
 
-The grader validation on the synthetic packets is done: both graders pass ([validation/](validation/README.md)).
+Done: the fact-check gate (key version 2, [FACTCHECK.md](FACTCHECK.md)) and the grader validation on the synthetic
+packets (both graders pass, [validation/](validation/README.md)).
 
 ## After registration
 
@@ -65,11 +66,11 @@ The grader validation on the synthetic packets is done: both graders pass ([vali
 
 See [PROTOCOL.md, section 14](PROTOCOL.md#14-residual-risks-and-known-limits): partial blinding (render style and the
 kept limitation labels can reveal the arm), five questions near shipped examples (a descriptive sensitivity analysis
-leaves them out), an engine 5 commits behind main, and low power with 20 questions.
+leaves them out), an engine 7 commits behind main, and low power with 20 questions.
 
 ## Key-fact status
 
-The key facts are **proposed**. Each has a check label: `verified-web` (a web source seen on 2026-11-11 states it),
-`textbook-only` (a standard textbook fact with no web source found yet) or `derived` (arithmetic shown in the designer note).
-The textbook citations name the standard reference by chapter topic; the designer did not re-read the books. The
-fact-check gate confirms or corrects every fact and citation before registration closes.
+The key is **version 2**, after two independent fact checks ([FACTCHECK.md](FACTCHECK.md)). Each fact has a check
+label (`verified-web`, `single-source`, `textbook-only`, `fact-check-only` or `derived`) and a record of both fact-check
+labels and the action taken. Textbook citations name the reference by chapter topic; page-level verification is an
+open item, except Norton section 9.8 and Uicker section 8.15.

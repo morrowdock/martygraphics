@@ -10,8 +10,9 @@ There are two kinds of grading call:
 1. **Score call:** one explainer (folder `output/`). Grade items (a) to (d).
 2. **Preference call:** two explainers for the same question (folders `A/` and `B/`). Give item (e) only.
 
-For the question you get `question.json`: the question text, the key facts (with `core` flags and
-`acceptedVariants`) and the five mechanism checks (`M1` to `M5`).
+For the question you get `question.json`: the question text, the **conventional** configuration and the
+**accepted variants** (other physically correct configurations), the key facts (with `core` flags, `appliesTo` and
+`acceptedWordings`) and the five mechanism checks (`M1` to `M5`).
 
 ## The evidence
 
@@ -29,6 +30,9 @@ How to judge motion from the sheets:
 - Follow a feature that does not repeat around the part: a pin, a crank, a label, a marker, a single spoke or arm.
 - Do not judge a direction from gear teeth or other repeating patterns alone. If a repeating pattern is the only
   feature and it moves about a quarter of its spacing or more between two frames, the direction cannot be seen.
+- **Large jumps:** if the feature you follow moves about a quarter turn or more between two frames (for a single
+  feature such as one pin), or a quarter of its spacing or more (for a repeating feature), answer CANNOT JUDGE for that
+  direction or ratio, even if a direction seems to show. Such motion can look reversed between frames.
 - Timing: use the times under the frames. A frame step is 0.1 s.
 
 ## General rules
@@ -43,8 +47,40 @@ How to judge motion from the sheets:
    (a), not a text error (b). If the text is false, it is a text error (b), also when the animation matches it.
 5. **Evidence.** For every FAIL, CANNOT JUDGE, error and defect, give the still or the frame time (seconds) and one
    sentence of evidence.
-6. **Strict but fair.** Accept correct statements in other words. Accept what `acceptedVariants` lists. Do not reward
+6. **Strict but fair.** Accept correct statements in other words. Accept what `acceptedWordings` lists. Do not reward
    length. A short explainer that is correct can get the best scores.
+
+## Judging limits (apply to every item)
+
+1. **Invisible quantities are NOT SHOWN.** Mass flow, torque, force magnitude, friction, noise, self-locking and a
+   small speed fluctuation cannot be seen in pictures. A check clause about such a quantity is NOT SHOWN unless readable
+   values or calibrated graphics (a plotted trace, a labelled scale) show it. A still alone cannot show rotation or
+   phase.
+2. **Undersampled motion cannot fail direction or ratio.** The sheets are 10 frames per second. If the motion is too
+   fast to follow between frames (see "Large jumps" above), the direction or ratio is CANNOT JUDGE, not FAIL.
+3. **Measurements need resolved features.** "Within 10 %" applies only when turns, teeth, angles or seconds are
+   actually resolved. Arrows and decorative tooth counts are not measurements of hidden geometry.
+4. **Labels are not calibration.** Readable numbers can support an explained relation, but they do not prove that an
+   uncalibrated fluid animation (arrow widths, particle counts) shows the stated mass flow.
+5. **Hidden is not broken.** A connection hidden behind another part is not evidence of a disconnection. Two parts that
+   cross in the 2-D picture are not a 3-D collision unless the overlap is clearly solid.
+6. **One configuration, consistently.** Identify the configuration the explainer shows (below) and grade it against the
+   facts and check clauses for that configuration. Accept any physically correct accepted variant.
+
+**Clause rule.** A check can have several clauses. Grade the check on its visible, applicable clauses. A clause that is
+NOT SHOWN under limit 1, or N/A (below), neither passes nor fails the check; give it in the evidence. The check is NOT
+SHOWN only when none of its applicable clauses is visible.
+
+## Configurations and N/A
+
+`question.json` names the **conventional** configuration and the **accepted variants**. First decide which one the
+explainer shows: `conventional`, an accepted variant's id, or `unclear` (then use `conventional`).
+
+**N/A (not applicable).** A key fact whose `appliesTo` does not include the shown configuration, or a check clause
+written for another configuration, is N/A when the explainer shows a correctly explained accepted variant. An N/A item
+is not a FAIL and not NOT SHOWN: it leaves both the numerator and the denominator of every score. A whole check is N/A
+only if all its clauses are for other configurations. An explainer that shows a configuration that is neither the
+conventional one nor an accepted variant is graded against the conventional one.
 
 ## (a) Mechanism correctness: five checks
 
@@ -54,7 +90,8 @@ Give each check `M1` to `M5` one result:
 | --- | --- |
 | **PASS** | The explainer shows what the check asks, and nothing visible contradicts it. When an exact value cannot be measured (for example a speed ratio), PASS needs the visible behaviour to have the right sign and order (for example "the larger gear turns slower") and no stated value that contradicts the check. "Within 10 %" applies only where you can count turns, teeth, degrees or seconds. |
 | **FAIL** | Something visible or stated contradicts the check: a missing connection, a wrong direction, a wrong ratio or timing, a part passing through another part, a link that changes length, an impossible arrangement. |
-| **NOT SHOWN** | The explainer does not show the thing the check asks about: the part is missing, or the motion does not happen at all. |
+| **NOT SHOWN** | The explainer does not show the thing the check asks about: the part is missing, or the motion does not happen at all, or (limit 1) only an invisible quantity is asked. |
+| **N/A** | Every clause of the check is for a configuration other than the shown accepted variant (see "Configurations and N/A"). |
 | **CANNOT JUDGE** | Only for `M3` (direction) and `M4` (ratio or timing). The motion is shown, but the evidence does not let you decide: for example it moves too fast between frames, it is too small, or only a repeating pattern moves. Give the reason. Do not use CANNOT JUDGE when the motion is missing (that is NOT SHOWN) or when you can see that it is wrong (that is FAIL). |
 
 Kinds of check:
@@ -94,8 +131,13 @@ Rules for counting:
 - Statements about how exact the explainer is ("schematic", "schematic motion", "not checked", "not to scale",
   "simplified") are limitation labels, not claims about the mechanism. They are never errors.
 
-**Coverage.** Count the **core** key facts (`"core": true`) that the explainer states or shows clearly and correctly,
-in text or unmistakably in the visuals. A core fact stated wrongly is not covered (and is an error).
+Check claims only against the key facts that apply to the shown configuration. A claim that is correct for the shown
+accepted variant is not an error because a conventional-only fact says otherwise.
+
+**Coverage.** List the **core** key facts (`"core": true`) that apply to the shown configuration and that the explainer
+states or shows clearly and correctly, in text or unmistakably in the visuals (`coveredFacts`). List the facts that are
+N/A (`notApplicableFacts`). A core fact stated wrongly is not covered (and is an error). The analysis divides the covered
+core facts by the applicable core facts.
 
 ## (c) Teaching clarity: ordinal scale 1 to 5
 
@@ -150,13 +192,15 @@ has no meaning.
 {
   "question": "MECH-01",
   "output": "<output id given to you>",
+  "configuration": "conventional",
   "mechanism": {"M1": "PASS", "M2": "FAIL", "M3": "CANNOT JUDGE", "M4": "NOT SHOWN", "M5": "PASS",
                 "evidence": {"M2": "t=6.0 s: the two gears of the compound pair are on different shafts",
                              "M3": "only the gear teeth move; no single feature to follow",
                              "M4": "no motion is shown"}},
   "errors": [{"type": "K", "keyFact": "K3", "time": "10.0 s", "text": "quoted text", "reason": "one sentence"}],
   "unsure": [],
-  "coverage": 3,
+  "coveredFacts": ["K1", "K2", "K4"],
+  "notApplicableFacts": [],
   "clarity": 4,
   "clarityReason": "one sentence",
   "defects": [{"type": "D3", "severity": "minor", "time": "14.0 s", "evidence": "one sentence"}]
@@ -169,5 +213,6 @@ has no meaning.
 {"question": "MECH-01", "pair": "<pair id given to you>", "preference": "A", "preferenceReason": "one sentence"}
 ```
 
-Do not add totals: the analysis counts the lists. A separate later call may ask you other questions. It never changes
+Each check result is one of `PASS`, `FAIL`, `NOT SHOWN`, `N/A` and (for `M3` and `M4` only) `CANNOT JUDGE`. Do not
+add totals: the analysis counts the lists. A separate later call may ask you other questions. It never changes
 a grade.

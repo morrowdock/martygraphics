@@ -34,10 +34,10 @@ seeds.
 
 - **The benchmark always runs the locked commits.** No engine, Marty or prompt change of any kind applies to the
   benchmark after registration, also not a correctness fix. There is no pre-lock correctness window.
-- **The engine is the one Marty main pins.** At registration Marty main is `0593bcda098365df514756b21e3b907f011d6b88`;
+- **The engine is the one Marty main pins.** At registration Marty main is `1f2729518451d9cd8391bcd7f160f81385184f8f`;
   it pins MartyGraphics `38f3863d5ed27c94fccf44b5f117a43938b79455`. Arm 1 runs exactly that: Marty's check and render
   use the pinned engine, and `marty-solid` (for the story video) is built from the same commit. MartyGraphics main is
-  `933db57c6beb9863f543c4519d35ece84952ebb3` at registration; LOCK.json records it, but the benchmark does not use it,
+  `ca2218131e897f1138fa80c0cf23cf21cd23fa4d` at registration (7 commits after the pin); LOCK.json records it, but the benchmark does not use it,
   because a pin change would be a Marty change.
 - **If a locked main moves before the merge,** LOCK.json and HASHES.txt are refreshed in this pull request and
   reviewed again before the merge. After the merge, nothing changes.
@@ -46,14 +46,21 @@ seeds.
   the dry-run evidence. These are tools, not choices: they implement this protocol and change no input above. All input
   hashes are committed before generation.
 
-### 2.2 Fact-check gate (before the merge)
+### 2.2 Fact-check gate (done, 2026-11-11)
 
-Two independent checkers verify every key fact with web search: GPT-6.1 Sol with the designer's sources, and Gemini 4
-Argon without them (blind to the earlier research). Each labels each fact VERIFIED, CLAIM, PLAUSIBLE, UNKNOWN or WRONG
-with sources. The stricter label wins. A fact labelled WRONG or UNKNOWN is corrected from a cited source or removed.
-A correction changes only `keyFacts` and, where a check quotes the corrected fact, the matching words of
-`mechanismChecks`. The question text does not change. The merged corrections, the reports and new hashes are committed
-in this pull request before the merge. No benchmark output exists at that time.
+Two independent checkers verified every key fact with web search: GPT-6.1 Sol (`gpt-6.1-sol`) with the designer's
+sources, and Gemini 4 Argon (`gemini-4-argon`) without them (blind to the earlier research). The coordinator merged the
+two reports; the stricter label won. The merged result and every action are in [FACTCHECK.md](FACTCHECK.md).
+
+- 43 of the 101 version-1 facts were corrected or re-sourced (1 WRONG: MECH-10 K2). The question texts did not change.
+- Configuration-specific facts and check clauses are now conditional. Nine questions name a conventional configuration
+  and accepted variants; 7 facts were added for accepted variants. A fact or clause for another configuration is N/A
+  (RUBRIC.md, "Configurations and N/A").
+- The mechanism checks were revised (every check the Sol report marked R, and the Gemini items). The rubric adds six
+  judging limits for what pictures cannot show.
+- QUESTIONS.json is now key version 2 (108 facts). Each fact records both labels, the merged label and the action.
+- Open item (recorded, not blocking): the textbook citations have no page-level verification, except Norton section 9.8
+  and Uicker section 8.15, which the Sol check read.
 
 ### 2.3 Temporal evidence gate (before the merge)
 
@@ -305,19 +312,21 @@ wrong and cannot-tell guesses and an exact binomial test of correct against wron
 
 ## 10. Merging grades and agreement
 
-**Adequate judgments.** For `M3` and `M4`, a CANNOT JUDGE answer is not a judgment. "Stricter wins" applies only
-between two judgments that were both made (PASS, FAIL or NOT SHOWN):
+**Adequate judgments.** For `M3` and `M4`, a CANNOT JUDGE answer is not a judgment. An N/A answer (the check does not
+apply to the shown accepted variant) is not a judgment either. "Stricter wins" applies only between two judgments that
+were both made (PASS, FAIL or NOT SHOWN):
 
 | Item | Merge (G1 and G2; a missing grade leaves the other) |
 | --- | --- |
-| each check `M1`–`M5` | Both judged: PASS only if both PASS. One judged, one CANNOT JUDGE: the judgment. Both CANNOT JUDGE: the check is **unjudged**. |
-| (a) mechanism score | 5 × (merged PASS) / (judged checks). `M1`, `M2` and `M5` are always judged, so the denominator is 3 to 5. |
-| (b) errors | The larger count. Coverage: the smaller count. |
+| each check `M1`–`M5` | Both judged: PASS only if both PASS. One judged, one CANNOT JUDGE or N/A: the judgment. Neither judged: the check is **unjudged** (both N/A: **N/A**). |
+| (a) mechanism score | 5 × (merged PASS) / (judged checks). Unjudged and N/A checks leave the numerator and the denominator. If no check is judged, the score is undefined and the output counts as ungraded for the primary metric. |
+| (b) errors | The larger count. Coverage: the smaller fraction (covered applicable core facts / applicable core facts). |
 | (c) clarity | The lower score. |
 | (d) defects | The larger count, for major and for minor apart. |
 | (e) preference | Same answer: that answer. One "tie" and one side: tie. A against B: tie. |
 
-The result reports the CANNOT JUDGE and unjudged counts per arm and per check.
+The result reports the CANNOT JUDGE, unjudged and N/A counts per arm and per check, and the configurations that each
+grader identified (with their agreement).
 
 **Agreement statistics** (G1 against G2, on the outputs and pairs that both graded), each with a 95 % bootstrap
 interval over items, labelled exploratory:
@@ -332,7 +341,7 @@ interval over items, labelled exploratory:
 
 Fixed in advance. The analysis script lands with the harness and is tested on synthetic data before run 1.
 
-**Scores of a failed run.** Mechanism score 0, clarity 0, coverage 0. Errors = E_fail(q) = 1 + the largest merged
+**Scores of a failed run.** Mechanism score 0, clarity 0, coverage 0 (as a fraction). Errors = E_fail(q) = 1 + the largest merged
 error count of any graded output of question q in either arm (a failure is always worse than any graded output).
 Defects are not defined for a failed run. Ungraded outputs are left out (section 6).
 
@@ -359,8 +368,8 @@ estimate and a 95 % interval by the same question-level bootstrap.
 3. Teaching clarity, as the primary method.
 4. Visual defects: mean major and minor counts per graded output, per arm.
 5. Success rate: rendered runs / all runs, per arm and per question.
-6. Coverage of core key facts.
-7. CANNOT JUDGE and unjudged counts per arm and per check.
+6. Coverage: covered applicable core key facts / applicable core key facts.
+7. CANNOT JUDGE, unjudged and N/A counts per arm and per check; the configurations shown per arm.
 8. Cost of the route: tries used, wall time, and the CLI's `total_cost_usd` sum (a subscription equivalent, not a
    bill), per arm.
 9. Per category table.
@@ -435,7 +444,7 @@ Changes after registration go in `AMENDMENTS.md` (dated, with the reason, and th
    out.
 3. **Different route-specific assistance.** Arm 1 gets Marty's plan step and the engine's checks; Arm 2 gets
    screenshots of its own render; the repair maximum is equal. This compares the routes as products.
-4. **Older engine.** Arm 1 uses the engine that Marty main pins (`38f3863`), 5 commits behind MartyGraphics main at
+4. **Older engine.** Arm 1 uses the engine that Marty main pins (`38f3863`), 7 commits behind MartyGraphics main at
    registration. The result is about that locked route.
 5. **Motion limits are asked, not enforced.** Arm 2 is asked to stay inside the limits; Arm 1 uses the engine's default
    story speed. The grader validation showed that both graders can give a confident wrong direction for motion beyond

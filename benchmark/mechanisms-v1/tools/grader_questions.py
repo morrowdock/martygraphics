@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 """Make the graders' question file from QUESTIONS.json (mechanisms-v1).
 
-Graders see only: the question id and text, each key fact's id, fact, core flag and acceptedVariants, and the five
-mechanism checks. No category, sources, check labels, designer notes, nearShipped notes, or anything about how the
-outputs are made.
+Graders see only: the question id and text, the conventional configuration and the accepted variants, each key
+fact's id, fact, core flag, appliesTo and acceptedWordings, and the five mechanism checks. No category, sources, check
+labels, designer notes, fact-check records, nearShipped notes, or anything about how the outputs are made.
 
 Usage (from benchmark/mechanisms-v1):
   python3 tools/grader_questions.py            write GRADER-QUESTIONS.json
@@ -32,11 +32,14 @@ def build():
         questions.append({
             "id": q["id"],
             "question": q["question"],
-            "keyFacts": [{"id": k["id"], "fact": k["fact"], "core": k["core"], "acceptedVariants": k["acceptedVariants"]}
+            "conventional": q["conventional"],
+            "acceptedVariants": q["acceptedVariants"],
+            "keyFacts": [{"id": k["id"], "fact": k["fact"], "core": k["core"], "appliesTo": k["appliesTo"],
+                          "acceptedWordings": k["acceptedWordings"]}
                          for k in q["keyFacts"]],
             "mechanismChecks": [{"id": m["id"], "kind": m["kind"], "pass": m["pass"]} for m in q["mechanismChecks"]],
         })
-    return {"kind": "grader-questions/1", "questions": questions}
+    return {"kind": "grader-questions/2", "questions": questions}
 
 
 def leaks(doc):
