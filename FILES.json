@@ -727,7 +727,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
-      "sha256": "ebe3fe391bfaf4c26d7b1e26179550f395e02e4901aad664246b0a57097d02ef"
+      "sha256": "ad1614e15478b3759a7b309b0a095211cc6e1ab3b8e242e2bb43420b2b20c066"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift",
@@ -1051,7 +1051,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/R2KEngineFixTests.swift",
-      "sha256": "459f72292ef4b212c280b1c4922d196632f70627917cac87216b2153772d0e62"
+      "sha256": "f336ad72e6db9334f0fb7f84c8aef440aac6d0a9317e93c9ff825e36bd6e5534"
     },
     {
       "path": "Tests/MartyGraphicsTests/RecordParamsGuardTests.swift",

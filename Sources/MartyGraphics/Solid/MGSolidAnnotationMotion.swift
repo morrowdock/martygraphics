@@ -129,8 +129,8 @@ enum MGSolidAnnotationMotion {
     /// and, in that part's chain, the joint that adds the most, with the centroid's distance from that joint's axis
     /// (nil for a prismatic joint). A bound of 0 means the centre cannot move.
     static func centreBound(_ doc: MGSolidDocument, _ p: MGAnnotationPoint, _ pose: MGPose, spin: Double)
-        -> (bound: Double, part: String?, joint: String?, distance: Double?) {
-        guard p.isCentreOfMass else { return (0, nil, nil, nil) }
+        -> (bound: Double, part: String?, joint: String?, distance: Double?, top: Double) {
+        guard p.isCentreOfMass else { return (0, nil, nil, nil, 0) }
         var total = 0.0
         var worst: (share: Double, part: String, joint: String, distance: Double?)?
         for m in p.mass where m.share > 0 {
@@ -139,7 +139,7 @@ enum MGSolidAnnotationMotion {
             total += m.share * b.bound
             if let j = b.joint, worst.map({ m.share * b.bound > $0.share }) ?? (b.bound > 0) { worst = (m.share * b.bound, m.part, j, b.distance) }
         }
-        return (total.isNaN ? .infinity : total, worst?.part, worst?.joint, worst?.distance)
+        return (total.isNaN ? .infinity : total, worst?.part, worst?.joint, worst?.distance, worst?.share ?? 0)
     }
 
     /// The same recurrence for one point `x` (posed world, at `pose`) that rides on `part`: from the part upward, a
@@ -334,8 +334,9 @@ extension MGSolidAnnotationEngine {
                                 let now = angle(dv, MGVec3(0, 0, -1))
                                 let tol = 1e-9 * max(1, doc.annotations.diagonal)
                                 if !(d + e <= tol) || !(now + extra <= L.gravityDegrees) {
-                                    // The top contributor: the centre's part or the end's part, whichever bound is larger.
-                                    let useEnd = endTop.map { $0.bound > d } ?? false
+                                    // The top contributor: the centre's largest single (volume-weighted) part term or the end's part,
+                                    // whichever is larger. Compared per contributor, not against the total `D`.
+                                    let useEnd = endTop.map { $0.bound > (c?.top ?? 0) } ?? false
                                     var issue = fail(id)
                                     issue.centreOfMass = MGCentreOfMassMotion(
                                         arrow: id, step: i, part: useEnd ? endTop!.part : (c?.part ?? ""), joint: useEnd ? endTop!.joint : (c?.joint ?? ""),

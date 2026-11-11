@@ -337,6 +337,19 @@ final class R2KEngineFixTests: XCTestCase {
         XCTAssertEqual(refusal(plain)?.reason, "annotation.pose.w")
     }
 
+    /// The re-check's contributor control: two centre-of-mass parts add about 0.01 mm each (D about 0.02 mm), the end's
+    /// part adds 0.015 mm. The report must name the end's part, because it adds the most: the comparison is per
+    /// contributor (the centre's largest single weighted term), not against the total `D`.
+    func testTheTopContributorIsComparedPerPartNotAgainstTheTotal() throws {
+        let t = #"{"v":2,"kind":"assembly","parts":[{"id":"a","shape":{"box":{"size":[2,2,2],"at":[0.01,0,0]}},"joint":{"revolute":[0,0,1]},"drive":{"input":1},"offAxis":true},{"id":"b","shape":{"box":{"size":[2,2,2],"at":[0.01,0,0]}},"joint":{"revolute":[0,0,1]},"drive":{"input":1},"offAxis":true},{"id":"end","shape":{"box":{"size":[0.05,0.05,0.05]}},"at":[0,-100,-1],"joint":{"revolute":[0,0,1]},"drive":{"input":1}}],"annotations":{"arrows":[{"id":"w","meaning":"force","cause":"gravity","from":{"point":"centreOfMass","offset":[0,-100,0]},"to":{"part":"end","offset":[0.0075,0,0]}}]},"steps":[{"say":"Weight points down.","camera":"front","spin":1,"annotate":["w"]}]}"#
+        let e = try XCTUnwrap(refusal(t), "the contributor control was accepted")
+        XCTAssertEqual(e.reason, "annotation.pose.w")
+        let c = try XCTUnwrap(e.centreOfMass)
+        XCTAssertGreaterThan(c.bound, c.endBound, "the total D is larger than E in this control")
+        XCTAssertEqual(c.part, "end")
+        XCTAssertEqual(c.joint, "end")
+    }
+
     // MARK: Executable repairs pass when applied
 
     /// The review's 9.999° arrow on an off-axis rotor: refused for the motion. Its fixed-point repair at full precision,
