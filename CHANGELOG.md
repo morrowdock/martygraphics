@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Benchmark pre-registration [`benchmark/mechanisms-v1`](benchmark/mechanisms-v1/README.md) (design only; not run;
+  no engine change). A blind comparison of MartyGraphics through Marty with the same model writing three.js directly,
+  on 20 mechanism questions.
+  - [QUESTIONS.json](benchmark/mechanisms-v1/QUESTIONS.json): 20 questions in learner language over gear trains, a
+    planetary set, a worm drive, rack and pinion, four-bar and crank-slider linkages, cams, a Geneva drive,
+    differentials, four-stroke engines, turbines, a turbofan and pumps; 101 key facts with textbook and web sources and
+    a check label each; five mechanism checks per question; the shipped examples that were excluded.
+  - [RUBRIC.md](benchmark/mechanisms-v1/RUBRIC.md): blind scorecard for mechanism correctness, text errors and coverage,
+    teaching clarity (anchored 1 to 5), visual defects and pairwise preference.
+  - [PROTOCOL.md](benchmark/mechanisms-v1/PROTOCOL.md): Claude Opus 5.5 by the subscription CLI in both arms, exact
+    prompts, 3 runs per question per arm with every run counted, one artifact set for both arms (20 s video and 5
+    stills at 1280 × 800), masking and seeded A/B labels with a committed seed hash, two graders from other model
+    families with the stricter grade winning, a fixed analysis plan (primary: mechanism score, sign test over
+    questions), a stopping rule, verdict rules and publication whatever the result.
+  - [HASHES.txt](benchmark/mechanisms-v1/HASHES.txt): SHA-256 of the pre-registration files.
+
 - **CI gates merges.** `.github/workflows/ci.yml` (now named `CI`) runs on `pull_request` (opened, synchronize,
   reopened, ready for review), on push to `main`, and still on `workflow_dispatch` with pinned SHAs. Its check runs
   `hygiene` and `macos` are the required merge checks. It uses `pull_request`, never `pull_request_target`; the token

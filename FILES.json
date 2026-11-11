@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "0e93bb64f364fdf6e43bcf9d751770c4791e31fa867882043a9c9f52574e8a98"
+      "sha256": "40dace8371be01a9476124324cf1dad9773748f37999aee796cdfd4a40920d3f"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1192,6 +1192,26 @@
     {
       "path": "Tests/MartyGraphicsTests/UnicodeNumbersTests.swift",
       "sha256": "86d275df67ba367b90319ffdda0ddb9ce7223034e95a6743580d6470af359745"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/HASHES.txt",
+      "sha256": "df51ffc7579ca5b77bdc1924bc311467700e6de58937513c87433caca3701970"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/PROTOCOL.md",
+      "sha256": "aa611e5878dc85f4241e89b4003722f21a5fdb75a1fd7f94f692b24cf111e8b6"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/QUESTIONS.json",
+      "sha256": "15e8c0e527bdfd856ad21bcd144f737e1c44683e489e3403f3b648ae4e701fd1"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/README.md",
+      "sha256": "628a2a89145eeaadd83534e2a274eadd211852e1fc0adf5959def871aafe1c13"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/RUBRIC.md",
+      "sha256": "91ba69fca91357a0c9cbecf90f8820539b93dab2d71747789bb4db69597f19dd"
     },
     {
       "path": "docs/CAPABILITIES.md",

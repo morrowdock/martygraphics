@@ -1,0 +1,2006 @@
+{
+  "schema": "martygraphics.benchmark.questions/1",
+  "benchmark": "mechanisms-v1",
+  "preregistered": "2026-11-11",
+  "status": "proposed: pre-registered key; two independent fact checks (GPT-6.1 Sol, Gemini 4 Argon) are pending and must finish before run 1 (PROTOCOL.md, 'Fact-check gate')",
+  "designer": "Claude Opus 5.5 (claude-opus-5-5), for the repository owner; no engine or Marty code read for question choice beyond the shipped-example list",
+  "rules": {
+    "questionText": "The 'question' string is given to both arms byte for byte, with no other words.",
+    "keyFacts": "Grade text claims against keyFacts. 'core' facts count for coverage and clarity. A claim that contradicts a key fact is an error. Notes list accepted variants.",
+    "mechanismChecks": "Five checks per question (M1 parts, M2 connections, M3 direction, M4 ratio or timing, M5 geometry). RUBRIC.md defines PASS, FAIL and NOT SHOWN.",
+    "checkLabels": {
+      "verified-web": "A web source seen on 2026-11-11 states the fact. The textbook citation names the standard reference by chapter topic; the designer did not re-read the book for this pre-registration.",
+      "textbook-only": "A standard textbook fact. The designer's web check did not find a source page. Pending until the fact-check gate.",
+      "derived": "Follows by arithmetic from constants or other key facts, as the note shows."
+    }
+  },
+  "sources": {
+    "SHIGLEY11": "Budynas, R. G., Nisbett, J. K. Shigley's Mechanical Engineering Design, 11th ed. McGraw-Hill, 2020. Chapters on gears (general), helical gears, worm gears, and flywheels.",
+    "NORTON6": "Norton, R. L. Design of Machinery, 6th ed. McGraw-Hill, 2019. Chapters on kinematics fundamentals (Grashof condition), graphical linkage synthesis (quick-return and straight-line linkages), cam design, gear trains, and dynamic force analysis (flywheels).",
+    "UICKER5": "Uicker, J. J., Pennock, G. R., Shigley, J. E. Theory of Machines and Mechanisms, 5th ed. Oxford University Press, 2017. Chapters on the world of mechanisms (inversions, Geneva wheel, straight-line linkages), cams, and gear trains.",
+    "SCLATER5": "Sclater, N. Mechanisms and Mechanical Devices Sourcebook, 5th ed. McGraw-Hill, 2011. Sections on Geneva and intermittent mechanisms and on linkages.",
+    "ISO1122": "ISO 1122-1:1998, Vocabulary of gear terms - Part 1: Definitions related to geometry. Used for terms only (helix angle, hand of helix, worm, lead).",
+    "HEYWOOD2": "Heywood, J. B. Internal Combustion Engine Fundamentals, 2nd ed. McGraw-Hill, 2018. Chapter 1 (engine types and operation: the four-stroke cycle).",
+    "GILLESPIE": "Gillespie, T. D. Fundamentals of Vehicle Dynamics. SAE International, 1992. Chapters on steering systems and on the drivetrain (differentials).",
+    "HEISLER2": "Heisler, H. Advanced Vehicle Technology, 2nd ed. Butterworth-Heinemann, 2002. Chapters on steering (rack and pinion) and final drives and differentials (open, limited-slip and locking).",
+    "SARAVANAMUTTOO7": "Saravanamuttoo, H. I. H., Rogers, G. F. C., Cohen, H., Straznicky, P. V., Nix, A. C. Gas Turbine Theory, 7th ed. Pearson, 2017. Chapters on shaft-power and aircraft propulsion cycles (turbojet, turbofan, propulsive efficiency).",
+    "RRJET": "Rolls-Royce plc. The Jet Engine, 5th ed. Rolls-Royce, 1996. Chapters on basic mechanics, compressors, turbines and the turbofan.",
+    "DIXONHALL7": "Dixon, S. L., Hall, C. A. Fluid Mechanics and Thermodynamics of Turbomachinery, 7th ed. Butterworth-Heinemann, 2014. Chapter on hydraulic turbines (Pelton wheel).",
+    "WHITE8": "White, F. M. Fluid Mechanics, 8th ed. McGraw-Hill, 2016. Chapters on pressure distribution in a fluid (hydrostatics) and on turbomachinery (impulse turbines, positive-displacement pumps).",
+    "KARASSIK4": "Karassik, I. J., Messina, J. P., Cooper, P., Heald, C. C. Pump Handbook, 4th ed. McGraw-Hill, 2008. Sections on rotary (gear) pumps and on reciprocating pumps.",
+    "ESPOSITO7": "Esposito, A. Fluid Power with Applications, 7th ed. Pearson, 2009. Chapter on hydraulic pumps (external gear pump, displacement, relief valve)."
+  },
+  "web": {
+    "W-SDPSI-HELICAL": "https://www.sdp-si.com/resources/elements-of-metric-gear-technology/page4.php",
+    "W-NASA-GEARNOISE": "https://ntrs.nasa.gov/api/citations/19940029466/downloads/19940029466.pdf",
+    "W-GEARSOL-SPURHELICAL": "https://gearsolutions.com/features/comparative-analysis-of-spur-and-helical-gears/",
+    "W-MACHINEDESIGN-WORM": "https://www.machinedesign.com/mechanical-drives/self-locking-worm-gears-fact-or-fiction",
+    "W-MOTIONCONTROL-WORM": "https://www.motioncontroltips.com/when-are-worm-gears-self-locking-and-where-is-this-useful/",
+    "W-CMU-GRASHOF": "https://www.cs.cmu.edu/~rapidproto/mechanisms/chpt5.html",
+    "W-VLAB-QUICKRETURN": "https://mr-iitkgp.vlabs.ac.in/exp/quick-return-mechanism/theory.html",
+    "W-FIRGELLI-WATT": "https://www.firgelliauto.com/blogs/mechanisms/watt-s-linkage",
+    "W-FIRGELLI-GENEVA": "https://www.firgelliauto.com/blogs/mechanisms/geneva-drive-external",
+    "W-ENGINEERSEDGE-4STROKE": "https://engineersedge.com/power_transmission/four_stroke_cycle.htm",
+    "W-COMSOL-DIFF": "https://doc.comsol.com/6.1/doc/com.comsol.help.models.mbd.differential_gear/models.mbd.differential_gear.pdf",
+    "W-HSW-DIFF": "https://auto.howstuffworks.com/differential.htm",
+    "W-CODECOGS-FLYWHEEL": "https://www.codecogs.com/library/engineering/theory_of_machines/turning-moment-diagrams.php",
+    "W-NPTEL-PELTON": "https://archive.nptel.ac.in/content/storage2/courses/112104117/chapter_7/7_4.html",
+    "W-NASA-TURBOFAN": "https://www.grc.nasa.gov/www/k-12/airplane/aturbf.html",
+    "W-NASA-TURBOFAN-THRUST": "https://www.grc.nasa.gov/www/K-12/airplane/turbfan.html",
+    "W-NTRS-GUYNN-BPR": "https://ntrs.nasa.gov/api/citations/20090035613/downloads/20090035613.pdf",
+    "W-DTIC-FANTHRUST": "https://apps.dtic.mil/sti/pdfs/ADA277722.pdf",
+    "W-PUMPSSYSTEMS-RELIEF": "https://pumpsandsystems.com/pressure-relief-valves-positive-displacement-pumps",
+    "W-REDCRAB-RACK": "https://www.redcrab-software.com/en/Calculator/Physics/Rack-Pinion",
+    "W-ENGINEEREXCEL-PLANETARY": "https://engineerexcel.com/planetary-gear-calculation/",
+    "W-OMNI-GEARRATIO": "https://www.omnicalculator.com/physics/gear-ratio"
+  },
+  "questions": [
+    {
+      "id": "MECH-01",
+      "category": "spur-gear-train",
+      "question": "How does a compound gear train get a big speed reduction from small gears?",
+      "teachingValue": "Shows why stage ratios multiply and why a compound shaft carries two gears; the basis of clocks, gearboxes and winches.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "In one mesh, the driven gear turns slower than the driving gear by the ratio of their teeth: speed out / speed in = driving teeth / driven teeth.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11",
+            "NORTON6"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K2",
+          "fact": "In a compound train, two gears of different sizes are fixed on one shaft and turn together at the same speed.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K3",
+          "fact": "The overall ratio is the product of the stage ratios (product of driving teeth / product of driven teeth). Example: 12 to 36 and then 12 to 36 gives 1/3 x 1/3 = 1/9.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11",
+            "NORTON6"
+          ],
+          "web": [
+            "W-OMNI-GEARRATIO"
+          ],
+          "check": "verified-web",
+          "note": "Web results agree that stage ratios multiply; no single authoritative page was read in full."
+        },
+        {
+          "id": "K4",
+          "fact": "Each external mesh reverses the direction of rotation. With two external meshes the output turns the same way as the input. An idler gear changes the direction but not the ratio.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11",
+            "NORTON6"
+          ],
+          "web": [
+            "W-OMNI-GEARRATIO"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "Output torque rises by about the same factor that speed falls, less friction losses; power is about the same in and out.",
+          "core": false,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K6",
+          "fact": "Gears that mesh must have the same tooth size (module or diametral pitch).",
+          "core": false,
+          "sources": [
+            "SHIGLEY11",
+            "ISO1122"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "An input pinion, at least one compound shaft that carries two gears of different sizes, an output gear, and shafts with supports. At least two meshes."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The two gears of the compound pair are on one shaft and turn as one. Each mesh is between gears on different parallel shafts, with the pitch circles touching."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "Meshed external gears turn in opposite directions. The two gears on the compound shaft turn in the same direction."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "Relative speeds follow the tooth counts: a smaller driving gear turns faster than its larger driven gear, and the output is slowest. A stated overall ratio equals the product of the stated or visible stage ratios (within 10 %)."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "No gear passes through another gear or a shaft. No gear floats without a shaft. Meshed gears have the same tooth size."
+        }
+      ],
+      "nearShipped": "Examples/PathTrace (a spur pair followed by a planetary stage) and Examples/Solid3D horizontal-reduction.json (one spur pair). This question asks for two or more spur stages on a compound shaft; the single-pair question is excluded."
+    },
+    {
+      "id": "MECH-02",
+      "category": "helical-gears",
+      "question": "Why do helical gears run more quietly than straight-cut gears, and why do they push sideways on their shafts?",
+      "teachingValue": "Connects tooth shape to noise and to bearing loads; a standard design trade-off.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "Helical gear teeth are cut at an angle (the helix angle) to the gear axis; straight-cut (spur) teeth are parallel to the axis.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11",
+            "ISO1122"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K2",
+          "fact": "A helical tooth comes into contact gradually, starting at one end of the face, and more teeth share the load at once (higher total contact ratio). The load transfers smoothly, so there is less noise and vibration than with spur gears.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-NASA-GEARNOISE",
+            "W-GEARSOL-SPURHELICAL"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "Two helical gears on parallel shafts have opposite hands (one left-hand, one right-hand).",
+          "core": true,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K4",
+          "fact": "The tooth force has a component along the shaft axis (axial thrust): Wa = Wt x tan(helix angle). The bearings must carry this thrust. It grows with the helix angle. The thrusts on the two meshed gears are equal and opposite.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-SDPSI-HELICAL"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "Double-helical (herringbone) gears cancel the axial thrust inside the gear.",
+          "core": false,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-GEARSOL-SPURHELICAL"
+          ],
+          "check": "verified-web"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "Two meshed gears with visibly slanted teeth, their shafts, and bearings or supports. A spur gear for comparison is allowed but not required."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The shafts are parallel. The gears mesh. The helices are of opposite hand, so the slanted teeth match at the mesh."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The meshed gears turn in opposite directions."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "Relative speeds follow the tooth counts. If thrust is shown, it acts along the shaft axes (not radially), opposite on the two gears."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "Teeth do not pass through each other; the slant of the teeth stays continuous across the face."
+        }
+      ]
+    },
+    {
+      "id": "MECH-03",
+      "category": "planetary",
+      "question": "Why does a planetary gear set turn backward when you hold the planet carrier still?",
+      "teachingValue": "Teaches that the held member decides the behaviour of an epicyclic set and that internal and external meshes differ in direction.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "A planetary set has a central sun gear, planet gears on a carrier, and a ring gear with internal teeth. Each planet meshes with both the sun and the ring.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K2",
+          "fact": "With the carrier held, the planet axles cannot move, so the planets spin in place like idler gears.",
+          "core": true,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [
+            "W-ENGINEEREXCEL-PLANETARY"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "The sun-to-planet mesh is external and reverses direction; the planet-to-ring mesh is internal and keeps direction. So the ring turns opposite to the sun.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K4",
+          "fact": "With the carrier held: ring speed / sun speed = -(sun teeth / ring teeth). Example: sun 24, ring 60: the ring turns at 0.4 x sun speed, backward. The planet tooth count does not change this ratio.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-ENGINEEREXCEL-PLANETARY"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "For standard gears, ring teeth = sun teeth + 2 x planet teeth; with equally spaced planets, (sun teeth + ring teeth) must be divisible by the number of planets.",
+          "core": false,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A sun gear, at least two planet gears, a carrier, and a ring gear with internal teeth."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "Each planet sits on a carrier pin and meshes with both the sun and the ring. The carrier is shown held (fixed to the frame or marked as held)."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The carrier does not move. The planets spin about their own pins. The ring turns opposite to the sun."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "The ring turns slower than the sun, at sun teeth / ring teeth of the sun speed (within 10 % where it can be judged). A stated ratio matches the stated or visible tooth counts."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The planets touch both the sun and the ring without overlap or gap (ring = sun + 2 x planet for standard gears). No gear passes through another part."
+        }
+      ],
+      "nearShipped": "Examples/Solid3D planetary.json and planetary-components.json (ring held, sun in, carrier out) and docs/assets/from-a-prompt/robot-joint (two stages, ring held). This question holds the carrier instead; the ring-held reduction question is excluded. Marty's prompts may contain a planetary worked example: a known possible advantage for Arm 1."
+    },
+    {
+      "id": "MECH-04",
+      "category": "worm-drive",
+      "question": "How does a worm gear make such a big speed reduction, and why do some worm gears lock so the gear cannot turn the worm back?",
+      "teachingValue": "Large ratios in one stage, sliding contact and friction, and the limits of self-locking (a common misconception).",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "A worm (a screw-like gear with one or more threads, called starts) meshes with a worm wheel. Their shafts are at right angles and do not intersect.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11",
+            "ISO1122"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K2",
+          "fact": "Each turn of the worm moves the wheel by as many teeth as the worm has starts. Ratio = wheel teeth / worm starts (example: 40 teeth, single start: 40:1).",
+          "core": true,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K3",
+          "fact": "The teeth mostly slide on each other, so friction losses are higher and efficiency is lower than for spur gears; efficiency falls as the lead angle gets smaller.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-MACHINEDESIGN-WORM"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "A worm drive is self-locking (the wheel cannot drive the worm) only when friction is large compared with the lead angle: about friction coefficient > cos(normal pressure angle) x tan(lead angle). Many worm drives are not self-locking.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-MACHINEDESIGN-WORM",
+            "W-MOTIONCONTROL-WORM"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "Self-locking is not a reliable brake: vibration and lower running friction can let a drive back-drive.",
+          "core": false,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-MACHINEDESIGN-WORM"
+          ],
+          "check": "verified-web"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A worm with a helical thread, a worm wheel, and both shafts with supports."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The shafts are at right angles and offset (they do not intersect). The worm thread engages the wheel teeth."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The worm turns about its own axis; the wheel turns about its own axis. At the contact, the wheel teeth move along the worm axis."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "The wheel turns much slower than the worm: wheel teeth / starts worm turns per wheel turn (within 10 % where it can be judged). A stated ratio equals wheel teeth / starts."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The thread pitch matches the wheel tooth spacing at the contact. No part passes through another."
+        }
+      ]
+    },
+    {
+      "id": "MECH-05",
+      "category": "rack-and-pinion",
+      "question": "How does rack-and-pinion steering turn a car's front wheels when you turn the steering wheel?",
+      "teachingValue": "Rotation to straight-line motion, then linkages to a turning wheel; an everyday system.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "The steering wheel turns a shaft (the steering column) with a small pinion gear at its lower end.",
+          "core": true,
+          "sources": [
+            "GILLESPIE",
+            "HEISLER2"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K2",
+          "fact": "The pinion meshes with a straight toothed bar, the rack, in a housing across the car. Turning the pinion slides the rack left or right.",
+          "core": true,
+          "sources": [
+            "GILLESPIE",
+            "HEISLER2"
+          ],
+          "web": [
+            "W-REDCRAB-RACK"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "The rack moves pi x pinion pitch diameter for each turn of the pinion.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-REDCRAB-RACK"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "Tie rods connect the ends of the rack to steering arms on the wheel hubs (knuckles); the wheels pivot about near-vertical steering axes.",
+          "core": true,
+          "sources": [
+            "GILLESPIE",
+            "HEISLER2"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K5",
+          "fact": "Both front wheels turn toward the side to which the steering wheel is turned; the inner wheel turns a little more (Ackermann geometry).",
+          "core": false,
+          "sources": [
+            "GILLESPIE"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K6",
+          "fact": "Many cars add hydraulic or electric power assist to the rack or column.",
+          "core": false,
+          "sources": [
+            "HEISLER2"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "Steering wheel and column, pinion, rack, tie rods, steering arms or knuckles, and two front wheels."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The pinion meshes with the rack. The tie rods join the rack ends to the steering arms with joints. Each wheel pivots about a steering axis."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "Turning the steering wheel moves the rack sideways, and both wheels turn toward the same side as the steering wheel."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "Rack travel is proportional to pinion rotation; a stated travel per turn equals pi x pitch diameter. The wheels steer through a limited angle, not a full turn."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The tie rods keep a constant length. The rack stays straight in its housing. No wheel passes through the body or another part."
+        }
+      ]
+    },
+    {
+      "id": "MECH-06",
+      "category": "four-bar-linkage",
+      "question": "How does a windshield wiper turn a spinning motor into a back-and-forth sweep?",
+      "teachingValue": "The crank-rocker four-bar linkage and the Grashof condition in a familiar machine.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "An electric motor turns a gear reduction (often a worm gear) whose output crank turns continuously, all the way around.",
+          "core": true,
+          "sources": [
+            "SCLATER5"
+          ],
+          "web": [],
+          "check": "textbook-only",
+          "note": "The worm-gear detail is common practice, not a requirement; a stated different reduction is not an error."
+        },
+        {
+          "id": "K2",
+          "fact": "A connecting rod (coupler) joins the crank to a lever (rocker) on the wiper pivot shaft. The crank, rod, rocker and the fixed body form a four-bar linkage of the crank-rocker type.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [
+            "W-CMU-GRASHOF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "As the crank makes one full turn, the rocker swings once back and forth through a fixed angle, and the wiper arm on the pivot shaft sweeps the glass.",
+          "core": true,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K4",
+          "fact": "The crank can turn fully only if the Grashof condition holds: shortest link + longest link <= sum of the other two links, with the shortest link as the crank next to the fixed link.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [
+            "W-CMU-GRASHOF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "A second rod often drives a second wiper so both move together.",
+          "core": false,
+          "sources": [
+            "SCLATER5"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A motor (with or without a visible reduction), a crank, a connecting rod, a rocker on the wiper pivot, a wiper arm or blade, and fixed pivots."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "Four links joined by four pivots in a closed loop. The rocker is fixed to the wiper pivot shaft."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The crank turns continuously in one direction. The rocker and wiper swing back and forth and reverse at two end positions."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "One full wipe cycle (out and back) per crank turn. The sweep angle is the same in every cycle."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "Every link keeps its length. The crank completes its turns without the linkage locking or flipping. The wiper does not pass through the glass."
+        }
+      ]
+    },
+    {
+      "id": "MECH-07",
+      "category": "four-bar-linkage",
+      "question": "How does Watt's linkage make a point move in an almost straight line?",
+      "teachingValue": "Approximate straight-line motion from pure rotation; a historic steam-engine problem still used in car suspensions.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "Two bars (rockers) are each pivoted to the fixed frame at one end, on opposite sides. A short middle bar (coupler) joins their free ends.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [
+            "W-FIRGELLI-WATT"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K2",
+          "fact": "The free end of each rocker moves on an arc, and the two arcs curve in opposite directions. Near the middle of the motion their sideways movements cancel at the midpoint of the coupler.",
+          "core": true,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [
+            "W-FIRGELLI-WATT"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "The midpoint of the coupler traces a figure-eight curve (Watt's curve) whose middle part is nearly straight. The line is approximate, not exact; the error grows with the stroke.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [
+            "W-FIRGELLI-WATT"
+          ],
+          "check": "verified-web",
+          "note": "Calling the curve 'lemniscate-like' or 'figure-eight' is correct. Calling it exactly straight is an error."
+        },
+        {
+          "id": "K4",
+          "fact": "James Watt used it (patent of 1784) to guide a steam-engine piston rod; today it locates a car's rear axle sideways.",
+          "core": false,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [
+            "W-FIRGELLI-WATT"
+          ],
+          "check": "verified-web"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "Two rockers, a coupler, two fixed pivots, and the traced point marked on the coupler."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "Each rocker hinges to the frame at its outer end, the two pivots on opposite sides; the coupler hinges to both free ends."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "As the traced point moves along the line, the two rockers turn in opposite senses and the coupler tilts."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "The traced point follows a nearly straight path in the middle of its motion (a figure-eight if the full motion is shown). No text or graphic calls the path exactly straight."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "Every link keeps its length. The pivots stay fixed. No link passes through another."
+        }
+      ]
+    },
+    {
+      "id": "MECH-08",
+      "category": "crank-slider-linkage",
+      "question": "How does a shaping machine's quick-return mechanism cut slowly and come back fast?",
+      "teachingValue": "A slider-crank inversion where a constant-speed crank gives unequal stroke times; time ratio from crank angles.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "A crank turning at constant speed carries a sliding block in the slot of a lever. The lever pivots at a fixed point and swings back and forth; a link from the lever drives the ram, which carries the cutting tool in a straight guide.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [
+            "W-VLAB-QUICKRETURN"
+          ],
+          "check": "verified-web",
+          "note": "This is the crank-and-slotted-lever form. The Whitworth form (crank and rotating slotted link) is also correct if described correctly."
+        },
+        {
+          "id": "K2",
+          "fact": "The cutting stroke happens over a larger crank angle than the return stroke. At constant crank speed, time ratio = cutting crank angle / return crank angle, which is more than 1.",
+          "core": true,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [
+            "W-VLAB-QUICKRETURN"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "The two end positions of the lever are where it is tangent to the crank-pin circle; these split the crank turn into the two unequal angles.",
+          "core": true,
+          "sources": [
+            "UICKER5"
+          ],
+          "web": [
+            "W-VLAB-QUICKRETURN"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "It is an inversion of the slider-crank chain.",
+          "core": false,
+          "sources": [
+            "UICKER5"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A crank, a sliding block, a slotted lever with a fixed pivot, a link or direct drive to the ram, the ram with its tool, and the frame or guide."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The block turns on the crank pin and slides in the slot. The lever pivot is fixed. The ram moves in a straight guide."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The crank turns in one direction. The lever swings. The ram moves back and forth; the slow stroke is the cutting stroke."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "The cutting stroke visibly takes longer than the return stroke at constant crank speed. A stated time ratio is more than 1 and equals the ratio of the stated crank angles."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The block stays in the slot. Links keep their lengths. No part passes through another."
+        }
+      ],
+      "nearShipped": "Examples/Solid3D slider-crank.json and slider-crank-component.json (the plain slider-crank). That question is excluded; this is a different inversion with a different teaching point."
+    },
+    {
+      "id": "MECH-09",
+      "category": "cam-and-follower",
+      "question": "How does a camshaft open and close an engine's valves at the right time?",
+      "teachingValue": "Cam lobes, followers and springs, and the 2:1 timing drive of a four-stroke engine.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "The camshaft carries egg-shaped lobes (cams). As it turns, a lobe pushes a follower (tappet or lifter, sometimes through a pushrod and rocker arm), which pushes the valve open.",
+          "core": true,
+          "sources": [
+            "HEYWOOD2",
+            "NORTON6"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K2",
+          "fact": "A valve spring closes the valve and keeps the follower against the cam.",
+          "core": true,
+          "sources": [
+            "HEYWOOD2",
+            "NORTON6"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K3",
+          "fact": "In a four-stroke engine the camshaft turns at half the crankshaft speed (a 2:1 belt, chain or gear drive), so each valve opens once every two crankshaft turns.",
+          "core": true,
+          "sources": [
+            "HEYWOOD2"
+          ],
+          "web": [
+            "W-ENGINEERSEDGE-4STROKE"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "The lobes are set at angles so the intake valve opens around the intake stroke and the exhaust valve around the exhaust stroke. The valves open inward, into the cylinder.",
+          "core": true,
+          "sources": [
+            "HEYWOOD2"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K5",
+          "fact": "On the round part of the cam (base circle) the valve is closed; the lift follows the lobe shape.",
+          "core": false,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A camshaft with at least one lobe, a follower, a valve spring, a poppet valve, and the cylinder head or port."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The follower touches the lobe. The spring sits between the head and the valve retainer. If the crankshaft is shown, a drive links it to the camshaft."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The valve moves into the cylinder to open and back out to close; the follower moves with the lobe."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "The valve opens once per camshaft turn and is closed on the base circle. If the crankshaft is shown, it turns twice per camshaft turn."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The follower stays on the cam without gap or overlap. The spring gets shorter when the valve opens. The valve does not pass through the piston."
+        }
+      ]
+    },
+    {
+      "id": "MECH-10",
+      "category": "cam-and-follower",
+      "question": "How can a spinning cam make a follower rise, pause, and drop back once every turn?",
+      "teachingValue": "Profile radius to follower motion, dwell from a constant-radius arc, and how designers plan cam motion.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "A plate (disk) cam turns on a shaft. A follower (knife-edge, roller or flat-faced) rests on its edge and moves in a guide.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K2",
+          "fact": "The follower position depends on the distance from the cam axis to the contact point: where that distance grows, the follower rises; where it shrinks, the follower falls.",
+          "core": true,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K3",
+          "fact": "A dwell (pause) happens where the profile is a circular arc centred on the cam axis (constant radius).",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "UICKER5"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K4",
+          "fact": "A spring or gravity (force closure) or a groove (form closure) keeps the follower on the cam.",
+          "core": true,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K5",
+          "fact": "The motion repeats once per cam turn. Designers plan it with a displacement diagram (follower position against cam angle) and use smooth curves, such as cycloidal motion, so velocity and acceleration change without jumps.",
+          "core": false,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A cam on a shaft, a follower, its guide, and a spring, weight or groove that keeps contact."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The follower moves in its guide and touches the cam."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The cam turns in one direction. The follower moves up and down along its guide only."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "One rise, one dwell and one fall per cam turn, in that order. The dwell happens while a constant-radius arc is under the follower."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The follower neither passes into the cam nor leaves it (unless the text says so and explains why). The follower motion matches the profile shape under it."
+        }
+      ]
+    },
+    {
+      "id": "MECH-11",
+      "category": "geneva-drive",
+      "question": "How does a Geneva drive turn steady rotation into stop-and-go steps?",
+      "teachingValue": "Intermittent motion with positive locking, used in film projectors and indexing tables.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "The driver wheel carries a pin on an arm and a raised locking disc. The driven wheel has n radial slots with concave arcs between them.",
+          "core": true,
+          "sources": [
+            "UICKER5",
+            "SCLATER5"
+          ],
+          "web": [
+            "W-FIRGELLI-GENEVA"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K2",
+          "fact": "For each driver turn, the pin enters a slot, turns the driven wheel by one step of 360/n degrees, and leaves the slot.",
+          "core": true,
+          "sources": [
+            "UICKER5",
+            "SCLATER5"
+          ],
+          "web": [
+            "W-FIRGELLI-GENEVA"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "The pin enters and leaves along the slot's length (the slot is tangent to the pin circle at entry), so the wheel starts and stops without a hard knock.",
+          "core": true,
+          "sources": [
+            "UICKER5"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K4",
+          "fact": "While the pin is out of the slots, the convex locking disc sits in a concave arc of the driven wheel and holds it still (dwell).",
+          "core": true,
+          "sources": [
+            "UICKER5",
+            "SCLATER5"
+          ],
+          "web": [
+            "W-FIRGELLI-GENEVA"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "For an external Geneva with n slots, the wheel moves during (180 - 360/n) degrees of the driver turn and dwells for the rest; with 4 slots: 90 degrees of motion and 270 degrees of dwell. The driven wheel turns opposite to the driver.",
+          "core": true,
+          "sources": [
+            "UICKER5"
+          ],
+          "web": [
+            "W-FIRGELLI-GENEVA"
+          ],
+          "check": "verified-web"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A driver with a pin and a locking disc, a slotted driven wheel, and two fixed axes."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The pin engages the slots. The locking disc fits the concave arcs. The centre distance lets the pin reach into each slot."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The driver turns continuously in one direction. During each step the driven wheel turns in the opposite direction, then stops."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "One step of 360/n degrees per driver turn. For n >= 4 the dwell is longer than the motion (n = 4: motion 1/4 of the driver turn)."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The pin does not pass through wheel material. The locking surfaces do not overlap. The driven wheel does not move during a dwell."
+        }
+      ]
+    },
+    {
+      "id": "MECH-12",
+      "category": "differential",
+      "question": "Why does a car need a differential to go around a corner?",
+      "teachingValue": "Kinematic need for unequal wheel speeds and how bevel gears share one input between two outputs.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "In a turn the outer wheel travels a longer path than the inner wheel in the same time, so it must turn faster.",
+          "core": true,
+          "sources": [
+            "GILLESPIE",
+            "HEISLER2"
+          ],
+          "web": [
+            "W-COMSOL-DIFF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K2",
+          "fact": "If both driven wheels were on one solid axle, a tyre would have to slip or scrub in turns.",
+          "core": true,
+          "sources": [
+            "HEISLER2"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K3",
+          "fact": "The drive pinion turns a ring (crown) gear bolted to the differential case. Inside the case, spider (pinion) gears on a cross-shaft mesh with two side gears, one on each axle shaft.",
+          "core": true,
+          "sources": [
+            "HEISLER2",
+            "GILLESPIE"
+          ],
+          "web": [
+            "W-COMSOL-DIFF",
+            "W-HSW-DIFF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "When driving straight, the case, spider gears and side gears turn together as one unit; the spider gears do not spin on their shaft.",
+          "core": true,
+          "sources": [
+            "HEISLER2"
+          ],
+          "web": [
+            "W-COMSOL-DIFF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "In a turn, the spider gears spin on their shaft so one side gear speeds up as much as the other slows down. The case (ring gear) speed is the average of the two wheel speeds.",
+          "core": true,
+          "sources": [
+            "HEISLER2",
+            "GILLESPIE"
+          ],
+          "web": [
+            "W-COMSOL-DIFF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K6",
+          "fact": "An open differential gives about equal torque to both wheels.",
+          "core": false,
+          "sources": [
+            "GILLESPIE",
+            "HEISLER2"
+          ],
+          "web": [
+            "W-HSW-DIFF"
+          ],
+          "check": "verified-web"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A drive pinion, a ring gear, a case, at least one spider gear (two is typical), two side gears, two axle shafts and the wheels."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The ring gear is fixed to the case. The spider gears are on a shaft in the case and mesh with both side gears. Each side gear drives one axle."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "Driving straight: all parts in the case turn together. Cornering: the spider gears spin on their shaft and the outer axle turns faster. The pinion axis is at right angles to the ring gear axis."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "The case speed equals the average of the two axle speeds (stated values are consistent; visible speeds do not contradict it)."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The bevel gear axes meet correctly. No gear passes through another part."
+        }
+      ]
+    },
+    {
+      "id": "MECH-13",
+      "category": "differential",
+      "question": "Why does one wheel spin in mud while the other wheel stays still with an open differential?",
+      "teachingValue": "Equal-torque behaviour of an open differential and why traction aids exist; corrects the 'all power goes to the spinning wheel' half-truth.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "An open differential splits torque about equally between the two axles (internal friction aside).",
+          "core": true,
+          "sources": [
+            "GILLESPIE",
+            "HEISLER2"
+          ],
+          "web": [
+            "W-HSW-DIFF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K2",
+          "fact": "The wheel in mud can push only with a small force before it slips, so its torque is small, and the wheel with grip gets the same small torque: too little to move the car.",
+          "core": true,
+          "sources": [
+            "GILLESPIE",
+            "HEISLER2"
+          ],
+          "web": [
+            "W-HSW-DIFF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "The case speed is the average of the two wheel speeds, so if one wheel stays still, the other spins at twice the case (ring gear) speed.",
+          "core": true,
+          "sources": [
+            "HEISLER2"
+          ],
+          "web": [
+            "W-COMSOL-DIFF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "The engine's power goes into spinning the slipping wheel, not into moving the car.",
+          "core": false,
+          "sources": [
+            "HEISLER2"
+          ],
+          "web": [
+            "W-HSW-DIFF"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "Limited-slip or locking differentials, or brake-based traction control that brakes the spinning wheel, send more torque to the wheel with grip.",
+          "core": true,
+          "sources": [
+            "HEISLER2"
+          ],
+          "web": [
+            "W-HSW-DIFF"
+          ],
+          "check": "verified-web"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "The differential parts (pinion, ring gear, case, spider gears, two side gears, axles) and two wheels, one on a low-grip surface."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "As in a differential: ring gear fixed to the case; spider gears mesh with both side gears; each side gear drives one axle."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The slipping wheel's side gear spins, the other side gear is still, and the spider gears spin on their shaft as the case turns."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "With one wheel still, the other turns at twice the case speed. If torque is shown, it is equal on both axles."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The bevel gear axes meet correctly. No gear passes through another part."
+        }
+      ]
+    },
+    {
+      "id": "MECH-14",
+      "category": "piston-engine-4-stroke",
+      "question": "How does a four-stroke car engine turn burning fuel into turning motion?",
+      "teachingValue": "The core thermodynamic cycle in mechanical form: valves, piston, connecting rod and crankshaft.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "Intake: the piston moves down with the intake valve open and draws in air (with fuel in many petrol engines).",
+          "core": true,
+          "sources": [
+            "HEYWOOD2"
+          ],
+          "web": [
+            "W-ENGINEERSEDGE-4STROKE"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K2",
+          "fact": "Compression: both valves are closed and the piston moves up, compressing the charge.",
+          "core": true,
+          "sources": [
+            "HEYWOOD2"
+          ],
+          "web": [
+            "W-ENGINEERSEDGE-4STROKE"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "Power: near the top of the stroke the spark plug ignites the mixture (in a diesel, the fuel ignites from the heat of compression); the hot gas pushes the piston down with both valves closed.",
+          "core": true,
+          "sources": [
+            "HEYWOOD2"
+          ],
+          "web": [
+            "W-ENGINEERSEDGE-4STROKE"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "Exhaust: the exhaust valve is open and the piston moves up, pushing the burned gas out.",
+          "core": true,
+          "sources": [
+            "HEYWOOD2"
+          ],
+          "web": [
+            "W-ENGINEERSEDGE-4STROKE"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "One cycle is four strokes and two crankshaft turns (720 degrees); each cylinder makes one power stroke every two turns. The connecting rod and crankshaft turn the piston's back-and-forth motion into rotation.",
+          "core": true,
+          "sources": [
+            "HEYWOOD2"
+          ],
+          "web": [
+            "W-ENGINEERSEDGE-4STROKE"
+          ],
+          "check": "verified-web"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A cylinder, a piston, a connecting rod, a crankshaft, intake and exhaust valves, and a spark plug (or injector for a diesel)."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The connecting rod joins the piston pin to the crank pin. The piston is in the cylinder. The valves are in the head."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "Piston direction and valve states are correct for each stroke (intake down/intake open; compression up/both closed; power down/both closed; exhaust up/exhaust open). The crankshaft turns in one direction."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "Four strokes take two crankshaft turns. Ignition happens near the top of the piston's travel at the start of the power stroke."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The piston stays in the cylinder and does not hit the valves. The connecting rod keeps its length."
+        }
+      ]
+    },
+    {
+      "id": "MECH-15",
+      "category": "piston-engine-4-stroke",
+      "question": "Why does a single-cylinder engine need a heavy flywheel?",
+      "teachingValue": "Torque fluctuation and stored kinetic energy; the difference between smoothing and adding power.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "A single-cylinder four-stroke engine makes one power stroke every two crankshaft turns; during the other three strokes the crankshaft must keep turning, and compression takes work.",
+          "core": true,
+          "sources": [
+            "HEYWOOD2",
+            "NORTON6"
+          ],
+          "web": [
+            "W-CODECOGS-FLYWHEEL"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K2",
+          "fact": "So the engine's torque rises and falls strongly over each cycle, which would make the speed rise and fall.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-CODECOGS-FLYWHEEL"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "A flywheel stores kinetic energy (1/2 x I x omega^2). It speeds up slightly while engine torque is more than the load (power stroke) and gives energy back, slowing slightly, while torque is less.",
+          "core": true,
+          "sources": [
+            "NORTON6",
+            "SHIGLEY11"
+          ],
+          "web": [
+            "W-CODECOGS-FLYWHEEL"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "Speed fluctuation (omega max - omega min) / omega average is about energy swing / (I x omega average^2): more inertia or a higher speed gives a smoother speed. Mass far from the axis adds the most inertia.",
+          "core": true,
+          "sources": [
+            "SHIGLEY11",
+            "NORTON6"
+          ],
+          "web": [
+            "W-CODECOGS-FLYWHEEL"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "A flywheel adds no energy or power; it only smooths the speed. Engines with more cylinders have more even torque and need smaller flywheels.",
+          "core": false,
+          "sources": [
+            "NORTON6"
+          ],
+          "web": [
+            "W-CODECOGS-FLYWHEEL"
+          ],
+          "check": "verified-web"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A cylinder, a piston, a connecting rod, a crankshaft and a flywheel."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The flywheel is fixed to the crankshaft. The connecting rod joins the piston and the crank pin."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The crankshaft and flywheel turn in one direction throughout the cycle."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "One power stroke per two crankshaft turns. A shown speed or energy trace rises during the power stroke and falls during the other strokes."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The piston stays in the cylinder. The connecting rod keeps its length. The flywheel does not pass through other parts."
+        }
+      ]
+    },
+    {
+      "id": "MECH-16",
+      "category": "turbine",
+      "question": "How does a Pelton water wheel turn a fast jet of water into spinning power?",
+      "teachingValue": "Impulse turbines: momentum change, split buckets, and the half-jet-speed optimum.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "A nozzle turns the water's pressure head into a fast jet at atmospheric pressure (an impulse turbine).",
+          "core": true,
+          "sources": [
+            "DIXONHALL7",
+            "WHITE8"
+          ],
+          "web": [
+            "W-NPTEL-PELTON"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K2",
+          "fact": "The jet hits double, cup-shaped buckets on the wheel's rim; a ridge (splitter) in the middle of each bucket divides the jet into two halves.",
+          "core": true,
+          "sources": [
+            "DIXONHALL7"
+          ],
+          "web": [
+            "W-NPTEL-PELTON"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "Each bucket turns the water almost all the way back (about 165 degrees, not a full 180, so the water clears the next bucket). The change in the water's momentum pushes the bucket.",
+          "core": true,
+          "sources": [
+            "DIXONHALL7",
+            "WHITE8"
+          ],
+          "web": [
+            "W-NPTEL-PELTON"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "In the ideal case the most power is taken when the bucket speed is half the jet speed; the water then leaves with little speed and falls away. Real wheels peak a little below half.",
+          "core": true,
+          "sources": [
+            "DIXONHALL7",
+            "WHITE8"
+          ],
+          "web": [
+            "W-NPTEL-PELTON"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "Pelton wheels suit sites with a high head and lower flow.",
+          "core": false,
+          "sources": [
+            "DIXONHALL7"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A nozzle, the jet, a wheel with double buckets and splitters, and a shaft."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The jet is aimed along a tangent to the bucket circle. The buckets are fixed to the rim."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The wheel turns in the direction the jet pushes the buckets. The water leaves each bucket sideways and backward from both halves."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "Where speeds are stated or shown, the bucket speed is about half the jet speed for best output, and the leaving water is slow."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The jet stays on one line from the nozzle. Water does not pass through bucket walls."
+        }
+      ]
+    },
+    {
+      "id": "MECH-17",
+      "category": "turbine",
+      "question": "In a jet engine, how does the turbine keep the compressor spinning?",
+      "teachingValue": "The self-sustaining gas-turbine core: one shaft, energy taken by the turbine, the rest left for the jet.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "The compressor at the front squeezes the air; in the combustor, fuel burns in this air at about constant pressure; the turbine is behind the combustor.",
+          "core": true,
+          "sources": [
+            "SARAVANAMUTTOO7",
+            "RRJET"
+          ],
+          "web": [
+            "W-NASA-TURBOFAN"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K2",
+          "fact": "The hot, high-pressure gas expands through the turbine blades and turns the turbine.",
+          "core": true,
+          "sources": [
+            "SARAVANAMUTTOO7",
+            "RRJET"
+          ],
+          "web": [
+            "W-NASA-TURBOFAN"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "The turbine and the compressor are on the same shaft (a spool), so the turbine drives the compressor. A starter spins the spool up first; after that the engine keeps itself running.",
+          "core": true,
+          "sources": [
+            "RRJET",
+            "SARAVANAMUTTOO7"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K4",
+          "fact": "The turbine takes only the energy needed to drive the compressor (and accessories); the rest of the gas energy speeds the gas out of the nozzle as the jet that gives thrust.",
+          "core": true,
+          "sources": [
+            "SARAVANAMUTTOO7",
+            "RRJET"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K5",
+          "fact": "Both the compressor and the turbine have rows of rotating blades with rows of fixed vanes between them.",
+          "core": false,
+          "sources": [
+            "RRJET"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "An inlet, a compressor (blade rows), a combustor, a turbine, a shaft and a nozzle."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The compressor and the turbine are on one shaft. The combustor is between them."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The gas flows from front to back. The compressor and the turbine turn together in the same direction. Fixed vanes do not turn."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "The compressor and the turbine on one spool turn at the same speed. The exhaust jet is faster than the incoming air."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The blades stay inside the casing. The flow does not pass through solid walls."
+        }
+      ],
+      "nearShipped": "Examples/Turbofan (two-spool high-bypass turbofan cutaway). The general 'How does a turbofan engine work?' question is excluded. Arm 1 may have seen turbine parts in its library: a known possible advantage for Arm 1."
+    },
+    {
+      "id": "MECH-18",
+      "category": "turbofan",
+      "question": "Why does a turbofan get most of its thrust from its big fan instead of the hot jet?",
+      "teachingValue": "Momentum thrust and propulsive efficiency: move a lot of air a little rather than a little air a lot.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "A large fan at the front pushes air; most of that air goes around the core through a bypass duct. Bypass ratio = bypass air mass flow / core air mass flow; about 5 to 12 in modern airliner engines.",
+          "core": true,
+          "sources": [
+            "SARAVANAMUTTOO7",
+            "RRJET"
+          ],
+          "web": [
+            "W-NASA-TURBOFAN",
+            "W-NTRS-GUYNN-BPR"
+          ],
+          "check": "verified-web",
+          "note": "The NASA source gives 5 to 10 for engines of its date; newer engines reach about 12. Any stated range inside 4 to 13 is not an error."
+        },
+        {
+          "id": "K2",
+          "fact": "Thrust is about mass flow x (exit speed - flight speed). The same thrust can come from a lot of air sped up a little or from a little air sped up a lot.",
+          "core": true,
+          "sources": [
+            "SARAVANAMUTTOO7"
+          ],
+          "web": [
+            "W-NASA-TURBOFAN-THRUST"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K3",
+          "fact": "Speeding up a large mass of air by a small amount wastes less kinetic energy in the jet, so propulsive efficiency is higher and fuel burn is lower: efficiency is about 2 / (1 + jet speed / flight speed).",
+          "core": true,
+          "sources": [
+            "SARAVANAMUTTOO7"
+          ],
+          "web": [
+            "W-NTRS-GUYNN-BPR"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K4",
+          "fact": "A low-pressure turbine in the core drives the fan through the inner (low-pressure) shaft.",
+          "core": true,
+          "sources": [
+            "RRJET",
+            "SARAVANAMUTTOO7"
+          ],
+          "web": [
+            "W-NASA-TURBOFAN"
+          ],
+          "check": "verified-web"
+        },
+        {
+          "id": "K5",
+          "fact": "In high-bypass engines the fan stream gives most of the thrust; sources give about 75 to 80 percent at take-off, and it varies by engine and condition.",
+          "core": true,
+          "sources": [
+            "RRJET"
+          ],
+          "web": [
+            "W-DTIC-FANTHRUST"
+          ],
+          "check": "verified-web",
+          "note": "One web source (DTIC ADA277722, FAA technical note) checked. A specific single percentage without a hedge is acceptable only inside 70 to 90 percent."
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A fan, a bypass duct, a core (compressor, combustor, turbine), the low-pressure shaft, and the exhaust streams."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The fan is joined to the low-pressure turbine by the inner shaft. The bypass duct surrounds the core."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "Air flows from front to back in both streams. The fan turns with the low-pressure turbine."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "The bypass flow is shown larger than the core flow (consistent with a stated bypass ratio). The bypass jet is slower than the core jet."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The shafts are concentric. The flow does not pass through walls."
+        }
+      ],
+      "nearShipped": "Examples/Turbofan and docs/assets/turbofan (two-spool high-bypass turbofan cutaway). The general 'How does a turbofan engine work?' question is excluded; this question tests bypass and propulsive efficiency. Known possible advantage for Arm 1."
+    },
+    {
+      "id": "MECH-19",
+      "category": "pump",
+      "question": "How does a gear pump push oil out using two meshing gears?",
+      "teachingValue": "Positive displacement and the counter-intuitive flow path around the outside of the gears.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "Two meshing external gears turn in a close-fitting housing; one gear is driven and turns the other.",
+          "core": true,
+          "sources": [
+            "KARASSIK4",
+            "ESPOSITO7"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K2",
+          "fact": "On the inlet side the teeth come out of mesh; the space between them opens and the lower pressure lets oil flow in.",
+          "core": true,
+          "sources": [
+            "KARASSIK4",
+            "ESPOSITO7"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K3",
+          "fact": "The oil is carried in the spaces between the teeth around the outside of each gear, between the teeth and the housing wall, not through the middle between the gears.",
+          "core": true,
+          "sources": [
+            "KARASSIK4",
+            "ESPOSITO7"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K4",
+          "fact": "On the outlet side the teeth mesh again and push the oil out; the meshing teeth seal against flow back to the inlet.",
+          "core": true,
+          "sources": [
+            "KARASSIK4",
+            "ESPOSITO7"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K5",
+          "fact": "It is a positive-displacement pump: a fixed volume per turn, so flow is about proportional to speed and nearly independent of outlet pressure (less internal leakage). A relief valve protects the system from overpressure.",
+          "core": true,
+          "sources": [
+            "ESPOSITO7",
+            "KARASSIK4"
+          ],
+          "web": [
+            "W-PUMPSSYSTEMS-RELIEF"
+          ],
+          "check": "verified-web"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "Two gears, a housing, an inlet port, an outlet port and a drive shaft."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The gears mesh. The housing closely surrounds the gear tips. The ports are on opposite sides of the mesh."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "The gears turn in opposite directions, so the teeth carry oil from the inlet side, around the outside, to the outlet side. The inlet is on the side where the teeth come out of mesh."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "Oil moves around the outside in the tooth spaces; the delivered volume per turn is fixed (more speed, more flow)."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "No oil path passes through the meshed teeth. The teeth do not pass through each other."
+        }
+      ]
+    },
+    {
+      "id": "MECH-20",
+      "category": "pump",
+      "question": "How does a hand pump lift water up from a well?",
+      "teachingValue": "Check valves, atmospheric pressure and the 10-metre suction limit.",
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "A piston (bucket) with a one-way valve moves up and down in a cylinder; a one-way foot valve sits at the bottom of the cylinder or suction pipe.",
+          "core": true,
+          "sources": [
+            "KARASSIK4"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K2",
+          "fact": "Upstroke: the piston valve is closed; the piston lifts the water above it toward the spout, the pressure below it falls, and atmospheric pressure on the well water pushes water up through the open foot valve.",
+          "core": true,
+          "sources": [
+            "KARASSIK4",
+            "WHITE8"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K3",
+          "fact": "Downstroke: the foot valve closes and holds the water; the piston valve opens and the piston moves down through the water.",
+          "core": true,
+          "sources": [
+            "KARASSIK4"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        },
+        {
+          "id": "K4",
+          "fact": "Atmospheric pressure limits the suction lift: at most about 10.3 m of water at sea level in theory (101.3 kPa / (1000 kg/m3 x 9.81 m/s2)), and about 7 to 7.6 m in practice. Deeper wells need the cylinder down near the water.",
+          "core": true,
+          "sources": [
+            "WHITE8",
+            "KARASSIK4"
+          ],
+          "web": [],
+          "check": "derived",
+          "note": "The 10.3 m figure is computed from standard sea-level pressure. The practical figure matches a pump supplier guide seen on 2026-11-11 (not a citable public URL). Any practical figure from 6 to 8 m is not an error."
+        },
+        {
+          "id": "K5",
+          "fact": "The handle is a lever that multiplies the user's force.",
+          "core": false,
+          "sources": [
+            "KARASSIK4"
+          ],
+          "web": [],
+          "check": "textbook-only"
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "A handle, a pump rod, a piston with a valve, a cylinder, a foot valve, a suction pipe, a spout and the well water."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The rod joins the handle to the piston. The piston valve is in the piston; the foot valve is below it."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "Upstroke: piston valve closed, foot valve open, water rises. Downstroke: foot valve closed, piston valve open. The handle and piston move consistently with the shown lever pivot."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio",
+          "pass": "Water comes out on the upstroke. A shown or stated suction lift is not more than about 10 m."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "Valves open only in the flow direction. Water does not pass through a closed valve."
+        }
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "question": "How does a small gear turn a big gear? / Why do tooth counts set the speed?",
+      "reason": "Shipped explainers Examples/Explainers/gears-3d.explainer.json and gears-mixed.explainer.json (docs/assets/explainer)."
+    },
+    {
+      "question": "How does a hand winch use a gear pair to lift a weight?",
+      "reason": "Shipped model Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json (docs/assets/annotations)."
+    },
+    {
+      "question": "How does a single gear pair on horizontal shafts reduce speed?",
+      "reason": "Shipped model horizontal-reduction.json."
+    },
+    {
+      "question": "What does an idler gear do?",
+      "reason": "Shipped model idler-gearbox.json (docs/assets/cutaway)."
+    },
+    {
+      "question": "How does a planetary gear set reduce speed (ring held, sun in, carrier out)?",
+      "reason": "Shipped models planetary.json and planetary-components.json (docs/assets/solid)."
+    },
+    {
+      "question": "Show a two-stage planetary gearbox like in a robot joint.",
+      "reason": "Published prompt docs/assets/from-a-prompt/robot-joint."
+    },
+    {
+      "question": "How does a two-stage gearbox (spur pair then planetary stage) work?",
+      "reason": "Shipped example Examples/PathTrace."
+    },
+    {
+      "question": "How does a slider-crank turn rotation into back-and-forth motion?",
+      "reason": "Shipped models slider-crank.json and slider-crank-component.json (docs/assets/solid)."
+    },
+    {
+      "question": "How does a propeller work?",
+      "reason": "Shipped model propeller.json."
+    },
+    {
+      "question": "How does a turbofan engine work?",
+      "reason": "Shipped example Examples/Turbofan (docs/assets/turbofan)."
+    },
+    {
+      "question": "How does the Gravity jet suit work?",
+      "reason": "Shipped AI lesson docs/assets/jet-suit-ai and model docs/assets/jet-suit."
+    },
+    {
+      "question": "How does a mechanical key switch work?",
+      "reason": "Shipped example Examples/KeySwitch3D."
+    },
+    {
+      "question": "Any question from the separate prompt-to-3D development set, or from the 'marty bench' development set.",
+      "reason": "Not read and not reused by design (held-out development sets). Overlap in topic, if any, is by chance."
+    }
+  ]
+}
