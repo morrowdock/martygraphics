@@ -231,7 +231,12 @@ extension MGSolidPoses {
         for i in doc.steps.indices {
             let names = doc.steps[i].pose.isEmpty ? doc.checkFacts(i)
                 : doc.stepFacts(i) + doc.titleFacts + doc.annotationTextFacts(doc.visibleAnnotations(step: i))
-            if let n = doc.factNotHolding(step: i, names: names) { throw MGSolidIssue("step.pose.fact", part: MGSolidParser.token(n)) }
+            if let n = doc.factNotHolding(step: i, names: names) {
+                var issue = MGSolidIssue("step.pose.fact", part: MGSolidParser.token(n))
+                // A dimension that the motion bound refuses adds its detail.
+                if let d = doc.annotations.dimension(String(n.dropFirst(4))) { issue.dimensionMotion = MGSolidAnnotationEngine.dimensionCheck(d, doc, step: i).motion }
+                throw issue
+            }
         }
     }
 }

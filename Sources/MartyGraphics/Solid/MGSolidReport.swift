@@ -334,6 +334,7 @@ extension MGSolidReport {
         if let v = issue.visibility { o["visibility"] = v.json }
         o["repair"] = .string(repair(issue.reason, part: issue.part, limit: limit, visibility: issue.visibility))
         if let c = issue.centreOfMass { o["centreOfMass"] = c.json; o["repair"] = .string(c.repair) }
+        if let m = issue.dimensionMotion { o["dimensionMotion"] = m.json; o["repair"] = .string(m.repair) }
         return o
     }
 
@@ -359,6 +360,7 @@ extension MGSolidReport {
         o["repair"] = .string(repair(issue.reason, part: issue.part, limit: limit, visibility: issue.visibility))
         // A gravity arrow whose centre-of-mass end moves: the part and joint that move it and the fixed-point repair.
         if let c = issue.centreOfMass { o["centreOfMass"] = c.json; o["repair"] = .string(c.repair) }
+        if let m = issue.dimensionMotion { o["dimensionMotion"] = m.json; o["repair"] = .string(m.repair) }
         if let profile { o["strict"] = .bool(profile == .strict) }
         if let source { o["file"] = source.json }
         if let engine { o["engine"] = engine }

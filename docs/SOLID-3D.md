@@ -800,7 +800,14 @@ cut, not ghosted and cast no shadow.
   `dimension.over.form.<id>`). The engine has the exact range only for a distance (optionally `along` an axis)
   whose one moving anchor moves by one prismatic joint with a linear drive or a crank-slider, while the other
   anchor stays where it is (a world point, or a point on a turning axis); anything else is
-  `dimension.over.motion.<id>`. The stroke of a slider-crank is such a range.
+  `dimension.over.motion.<id>`. The stroke of a slider-crank is such a range. A point on a turning axis is
+  world-fixed only within an epsilon of each axis, and such offsets add up along a chain, so the held anchor gets the
+  motion bound `E` of [Poses](#poses-every-claim-holds-at-every-pose-its-view-can-show)
+  (`MGSolidAnnotationMotion.anchorBound`): every value over the turn is within `E` of the value with that anchor held
+  still, so the range is within `2E`. The engine refuses rather than widens: when `2E` is over the dimension tolerance
+  (1e-9 × max(1, |value|, the model's diagonal)), the range is not one Solved fact, `dimension.over.motion.<id>` with
+  `dimensionMotion` (below) and the repair to anchor that end at a fixed point. In a view, the range there plus `2E`
+  must stay within the tolerance of the fact.
 * A distance below 0.01 mm at the default input, or an angle arm below 0.01 mm, is `dimension.zero.<id>`. With
   `over`, a range below 0.01 mm is `dimension.over.still.<id>`.
 * The value is the fact `dim.<id>` (unit `mm` or `°`, source `dimension`). Captions, labels, arrow text and
@@ -835,6 +842,32 @@ world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear 
   world-fixed, or all of them ride the same moving joints (a rigid body; with `along`, those joints must not
   turn, because a turn changes the world components). Its value at the view's first pose must equal its
   fact. With `over`, its exact range at the view's explode value must equal its fact.
+  Anchors on the same moving joints keep their relative placement exactly (the two paths to the world are disjoint
+  below their lowest common part, so equal lists of moving joints mean no joint below it moves; without a turning
+  joint the common motion is a translation), so they need no bound. Anchors that are only world-fixed get the same
+  proven bound as gravity arrows (below; `MGSolidAnnotationMotion.anchorBound`, the `pointBound` recurrence on the
+  anchor's point, 0 for a world point): `E1` and `E2` for the two ends, `Ev` for an angle's vertex. A distance (also
+  `along` an axis) can change by at most `E1 + E2` (the triangle inequality); an angle by at most the sum over its two
+  arms of `asin((E_end + Ev) / L)` (`L` the arm's length; 180° when the sum reaches `L`). The dimension is constant
+  only when the value's offset from its fact at the view's first pose plus that change is at most the dimension
+  tolerance, 1e-9 × max(1, |value|, the model's diagonal), the tolerance every dimension check uses. Else it is
+  refused with its existing reason (`annotation.pose.<id>`, `text.pose.step.<n>`, `text.pose.title`,
+  `step.pose.fact`), and the report adds `dimensionMotion`: `{"dimension", "step", "over", "boundA", "boundB",
+  "boundVertex", "change", "offset", "tolerance", "unit", "anchor", "part", "joint", "distance", "fixed", "repair"}`
+  (the anchors' bounds in mm, the most the value can change in `unit`, the anchor, part and joint that add the most,
+  the anchor's distance from that joint's axis, and `fixed`, the replacement anchors). The repair is to set
+  `"spin": 0` in the step or to replace the anchors with `fixed`. `fixed` is given only when it **validates**: a copy
+  of the document with it applied must compile (`MGRepairCheck`, as the weight suggestions are `verified`). The
+  engine tries the anchors that can move as world points at the first pose at full precision, then, when that copy is
+  refused (a world point outside ±4000 mm is `anchor.world`), as offsets on the nearest part above each anchor that
+  does not move. When neither validates, `fixed` is null and `fixedNote` says why; `"spin": 0` stays (for `over`,
+  whose range covers a whole input turn, the line says to hold that end on a part that does not move). The rule only
+  removes acceptances (the old rule must also pass). An angle's arm must also stay measurable: when its length minus
+  `E_end + Ev` is below 0.01 mm, the bound is 180° (refused; before, an arm 0.010000000000001 mm long whose end moved
+  about 1.2e-10 mm passed strict, though most poses had no value). The explainer's own text rules (`text.pose.beat.<n>`,
+  `text.pose.board`, `view.pose.fact`) use the same check without the detail. (Review of #53: an eight-joint chain
+  with axes 0.0000018 mm around one point moved a dimension's end 0.0000288 mm, 7.18 × the tolerance, and an `over`
+  range held by that chain was 0.0000288 mm off; both passed strict as Solved before this rule.)
 * **Shown text** (a label, an arrow or dimension text, the step caption, the title) may display a `dim.<id>` fact
   only when that dimension meets the same rule in the view (also when the dimension itself is not shown).
 * A **gravity arrow** must not turn: in a step with `spin`, both its anchors are world-fixed or translate together. A
@@ -857,11 +890,16 @@ world turn rate about its axis (`<part>.worldSpeed`): one constant for a linear 
   most the world-fixed epsilon (1e-9 × max(1, the model's diagonal)) **and** its angle from down at the first pose plus
   that worst-case angle is at most 10°. Else it is refused, `annotation.pose.<id>` (every profile), also when both ends
   are on the centre. The refusal adds `centreOfMass`: `{"arrow", "step", "part", "joint", "distance", "bound",
-  "endBound", "tolerance", "angle", "extraAngle", "fixed", "repair"}` (`bound` is `D`, `endBound` is `E`): the part
+  "endBound", "tolerance", "angle", "extraAngle", "fixed", "fixedNote", "repair"}` (`bound` is `D`, `endBound` is `E`): the part
   that adds the most (the centre's part or the end's part) and the joint in its chain that adds the most, the
   centroid's distance from that joint's axis (null for a sliding joint), the bound and its tolerance, the angles, and
-  `fixed`, the arrow's ends as world points at the step's first pose at full precision; the repair is to anchor the
-  arrow there (which keeps its exact vector) or to remove the motion from the step (`"spin": 0`). A still step, a step
+  `fixed`, the arrow's ends as world points at the step's first pose at full precision; the repair is to remove the
+  motion from the step (`"spin": 0`) or to anchor the arrow there (which keeps its exact vector). `fixed` is given only
+  when a copy of the document with it applied compiles; else it is null and `fixedNote` names the copy's reason (an
+  end outside ±4000 mm is `anchor.world`).
+  **Repair lines** (`MGRepairLine`, at most 400 Unicode scalars, both rules): every executable action comes first and
+  whole, `Set "spin": 0 in step <n>.`, then the replacement JSON complete (or, when it does not fit, "the report's
+  `fixed` (see fixed)"); only the explanation after them is cut. A still step, a step
   `pose` and the plain view show one pose each: the centre is resolved there and nothing moves. The rule is
   conservative: two off-axis parts that keep the centre in place between them still count as moving. (r2k reviews: an
   off-axis rotor's arrow turned 54.7° from down a quarter turn later; a sampled proof missed a 63.25° turn in a 64-joint

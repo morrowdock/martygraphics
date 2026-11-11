@@ -629,8 +629,18 @@ enum MGSolidAnnotationEngine {
         let chain = parts.compactMap(doc.chainTier).min()
         if d.over {
             guard chain != nil else { throw MGSolidIssue("dimension.over.\(d.id)", part: d.id) }
-            // The exact range over one input turn from the joint's closed form (`dimension.over.motion.<id>` otherwise).
-            d.value = try MGSolidAnnotationMotion.range(d, doc, explode: 0)
+            // The range over one input turn from the joint's closed form (`dimension.over.motion.<id>` otherwise). The anchor
+            // held still is world-fixed only within the epsilon, so the range is known within `bound` (2 × that anchor's
+            // motion bound): over the dimension tolerance, the range is not one Solved fact (`dimension.over.motion.<id>`,
+            // with `dimensionMotion`).
+            let r = try MGSolidAnnotationMotion.rangeBound(d, doc, explode: 0)
+            d.value = r.value
+            let tol = 1e-9 * max(1, abs(r.value), doc.annotations.diagonal)
+            if !(r.bound <= tol) {
+                var issue = MGSolidIssue("dimension.over.motion.\(d.id)", part: d.id)
+                issue.dimensionMotion = MGDimensionMotion.over(d, doc, step: nil, r, tolerance: tol)
+                throw issue
+            }
             // A range below 0.01 mm (or 0.01°) means nothing changes over the turn.
             if d.value < L.minDimension { throw MGSolidIssue("dimension.over.still.\(d.id)", part: d.id) }
             d.tier = chain ?? .solved

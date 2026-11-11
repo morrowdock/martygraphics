@@ -623,6 +623,7 @@ public struct MGExplainerSession {
             e.visibility = issue.visibility
             e.limit = issue.limit?.prefixed("solid.")
             e.centreOfMass = issue.centreOfMass
+            e.dimensionMotion = issue.dimensionMotion
             return refuse(e)
         case .success(let d): doc = d
         }

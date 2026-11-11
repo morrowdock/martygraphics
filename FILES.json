@@ -19,7 +19,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "c71e6fcd00f1aa050803f8d6f2f36e42d6384c8c5994659855c171fe6ffb7f86"
+      "sha256": "2d2a4ed02b9603ea66c664df0fd77b1e02c22972a2d70af75c45025ebdab3df8"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -559,7 +559,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainer.swift",
-      "sha256": "6c7f1267ec9ffa4c6a76d695f1c90b6cdcdbd53b9eb18b34b9ea8cd889810dba"
+      "sha256": "ac9a79ae6ee7e7a9b8eb2ba95d45dddb12fa281404b8a1945d619a880bf329ae"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerHonesty.swift",
@@ -571,11 +571,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerReport.swift",
-      "sha256": "209adb30b0d02066a271e4db4212078b5180761f7ee2eb4e1dc658afc29fc95c"
+      "sha256": "b7defc0eaccf159d121b04add0f6b980204c5aedf1473d2cbab56a64c68d8023"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerSession.swift",
-      "sha256": "cb2de480f25751bb0c42b4af680c2393854ef1522876f61848c1ad778c605ec4"
+      "sha256": "1229b22203ea650f3ee330096b0f44ccec080c16cd9d8be68fc518a6979f0333"
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGExplainerState.swift",
@@ -727,11 +727,11 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotationMotion.swift",
-      "sha256": "ad1614e15478b3759a7b309b0a095211cc6e1ab3b8e242e2bb43420b2b20c066"
+      "sha256": "93ceca4585968d2b21c6682eaddc52fc822da47cc4f6e2672356ce003b29d3e3"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidAnnotations.swift",
-      "sha256": "4a54d9b5fc6a778d01b2d369becd2aeb31a52fb923836e48cec45568f0b09caa"
+      "sha256": "1c4e4d163597b02e7a9b0c7c7adfe8cfc91b3ce797841708f8e057943c196ef7"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidArrowCheck.swift",
@@ -787,15 +787,15 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidParser.swift",
-      "sha256": "85164292789f9398ed9d6bf77c08bc9eed49e08bcd864e1103ca24d20e23e078"
+      "sha256": "d468e284a63b61ccb66c060dab85ddcaed06a627d2263ed5a8fdbd16406643e3"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidPoses.swift",
-      "sha256": "116dc267f2ddeb2d1468372d42f00fe6b3a82f8a0695f947acd57bc79e0bcb28"
+      "sha256": "4c62ac7b5ed9cf062034818c4d60e65d390cf698a1e9d80dfec252a74500d61b"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReasons.swift",
-      "sha256": "a3c8fbb701b8c52beef76607a6e2fcd9b58adaf1cc7a52d7ce679c3c9ef2cdd5"
+      "sha256": "13040238378e681293c327ca4098480f23bd5977262840925bfa2c04b01a8b54"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
@@ -807,7 +807,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
-      "sha256": "137286b8e0fdb2ead1eda7a3b9b09173e8b26dff02b4d5368c008786a15abc81"
+      "sha256": "716126190199f24a51631372b9514dadf3d951c6b65d8a548d0ca52494df7baf"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidSection.swift",
@@ -904,6 +904,10 @@
     {
       "path": "Tests/MartyGraphicsTests/DeepJSONGuardTests.swift",
       "sha256": "777845f379649de37f7f3c6d644b694ea315e986f2073925e777f33beed1db79"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/DimensionMotionBoundTests.swift",
+      "sha256": "72c0e65c09abf9b29ef65477d12c206463b3134bee7a57ed0883be1411e2107e"
     },
     {
       "path": "Tests/MartyGraphicsTests/EmptyTableTests.swift",
@@ -1235,7 +1239,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "9e357faf05dcab3f4fc35d7f448e682ee53316b77397d35b802520e6d189aca1"
+      "sha256": "042cf26b091a7330668a0a8b79b3a0dd871e7f83fd2b7b35fb0018423644e57f"
     },
     {
       "path": "docs/SHOWCASE.md",
@@ -1243,7 +1247,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "b3437a7fbab05905718506dbdd0f5acd5c1f47385f96477e11ed9c213f833175"
+      "sha256": "72575f63dde376d5157ec4065801b8d0d25e91992f74df200de7c87004bcee28"
     },
     {
       "path": "docs/THIRD-PARTY.md",
