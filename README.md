@@ -14,7 +14,7 @@ Gear trains, slider-crank linkages and engine cutaways, as 3D stills, loops and 
 
 **What the engine checks:** gear meshing (tooth phase, centre distance and tooth interference), gear ratios, joint
 motion and layout. In the strict check, the labels and arrows that a view shows pass the anchor and visibility checks;
-an arrow whose part is hidden in a view is dropped from that view and reported as a warning.
+a force or flow arrow whose part is hidden in a view is dropped from that view and reported as a warning.
 **What it does not check:** whether the words are true. It checks motion and layout, not the truth of text claims.
 
 <p align="center">
