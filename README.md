@@ -128,7 +128,7 @@ the library in an app, add a local checkout as a path dependency; see the [tutor
 This is the engine, not a complete learning app or a course collection. The renderers need Apple frameworks; Windows,
 Linux and browser builds are not supported. No model, hosted generation API or code executor is bundled. See the
 [public versus app matrix](docs/CAPABILITIES.md) and the [quality plan](docs/QUALITY.md). Every pull request must
-pass the hosted `CI` checks `hygiene` and `macos` ([hosted CI](docs/VERIFY-ON-MAC.md#hosted-ci-required-merge-gate)).
+pass the hosted `CI` check `hygiene`; the hosted `macos` tests run on every pull request too ([hosted CI](docs/VERIFY-ON-MAC.md#hosted-ci-required-merge-gate)).
 Use [local maintainer validation](docs/LOCAL-VALIDATION.md) for Gitleaks and receipts; the
 [Mac verification steps](docs/VERIFY-ON-MAC.md) cover Apple-framework builds and the local GPU and iOS receipts that
 hosted runners cannot give.

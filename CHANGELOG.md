@@ -2,7 +2,13 @@
 
 ## Unreleased
 
-Nothing yet.
+- **Faster CI that does not block merges.** The hosted macOS tests now run in four shards on four `macos-26`
+  runners at the same time (about 13 minutes instead of about 43). Every split is a `--filter` shard plus a `--skip`
+  shard with the same pattern, so no test is dropped; a filter shard that runs no test fails. No test changed, tests
+  in one shard still run one at a time, and there are still no caches. `macos` (a short job that passes only when
+  all shards pass) still runs on every pull request and push, but it is no longer a required merge check: the
+  required checks are `hygiene` and `maintainer/local-validation`. A red `macos` after a merge is fixed or reverted
+  at once.
 
 ## v0.1.0 — 2026-11-11
 

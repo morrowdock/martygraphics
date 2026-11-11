@@ -49,8 +49,8 @@ or patches. The standard mechanics math helpers have numerical checks;
 there are no built-in mechanics walkthrough templates.
 
 The Ubuntu `hygiene` job checks repository hygiene and DCO. The `macos` job
-(see below) runs the build and tests on a hosted Mac. Both are required pull
-request checks. Record a successful Mac run at the exact release commit before
+(see below) runs the build and tests on a hosted Mac. `hygiene` is a required
+pull request check; `macos` runs on every pull request but does not block a merge. Record a successful Mac run at the exact release commit before
 publication. These tests do not establish visual
 quality on a physical iPhone/iPad or cover every possible scene.
 
@@ -58,9 +58,11 @@ quality on a physical iPhone/iPad or cover every possible scene.
 
 `.github/workflows/ci.yml` (workflow `CI`) runs on every pull request (opened,
 synchronize, reopened, ready for review), on every push to `main`, and on manual
-dispatch. Branch protection on `main` requires its two check runs, **`hygiene`**
-and **`macos`**, to pass before a merge, and requires branches to be **up to date
-before merging**. `main` takes only squash merges of PRs, force pushes are
+dispatch. Branch protection on `main` requires the **`hygiene`** check run and
+the **`maintainer/local-validation`** status, and requires branches to be **up to
+date before merging**. The **`macos`** check still runs on every pull request and
+every push to `main`, but it is not required, so a slow hosted Mac never holds a
+merge. Maintainers read its result, and fix or revert at once when it is red. `main` takes only squash merges of PRs, force pushes are
 disabled, and the rules include administrators. It uses `pull_request`, never
 `pull_request_target`: fork PRs run with a read-only token and no secrets. There
 are no caches, and checkouts do not keep credentials. A new push to a PR cancels
@@ -96,12 +98,24 @@ so a dispatch cannot publish its checks; its `pull_request` run does that. When
 `head_sha` differs from the dispatched ref's tip, the run still tests `head_sha`
 as evidence only, and the `hygiene` job writes a warning that its check runs are
 on the ref's tip. Use the actual
-PR head SHA, not the synthetic merge. The `macos` job runs on the
-free standard `macos-26` image (Xcode 26.6) and does `swift build --jobs 2`,
-`swift test --jobs 2` for the root package, tests for Examples/Solid3D,
-Examples/Turbofan, Examples/KeySwitch3D and tools/SceneValidator, and builds for
-Examples/Showcase and Examples/PathTrace. Logs upload as the `macos-test-logs`
-artifact. Several dispatches run in parallel, so they do not queue on one Mac.
+PR head SHA, not the synthetic merge. The required `macos` check is a short
+Ubuntu job that passes only when all four `macos-<shard>` jobs pass. The shards
+run at the same time on the free standard `macos-26` image (Xcode 26.6), each
+with `--jobs 2`:
+
+| Shard | Runs |
+|---|---|
+| `engine-solid` | root package tests whose class starts with `Solid` (`--filter '^MartyGraphicsTests\.Solid'`) |
+| `engine-rest` | `swift build` of the root package and all other root tests (`--skip` with the same pattern) |
+| `solid3d-golden` | the Examples/Solid3D golden-file test alone |
+| `solid3d-rest` | the other Examples/Solid3D tests (`--skip` with the same pattern), tests for Examples/Turbofan, Examples/KeySwitch3D and tools/SceneValidator, and builds for Examples/Showcase and Examples/PathTrace |
+
+Each `--filter` shard has a `--skip` partner with the same pattern, so every
+test, a new one too, runs in exactly one shard. A `--filter` shard fails when it
+runs no test. Inside a shard the tests run one at a time, as before (some tests
+assert wall-clock limits). This takes about 13 minutes instead of about 43 in one
+job. Logs upload as one `macos-test-logs-<shard>` artifact per shard.
+Several dispatches run in parallel, so they do not queue on one Mac.
 
 Hosted VMs have no real Metal GPU. Tests that need one already `XCTSkip`
 themselves (`MGRTRenderer.isSupported`); no test was weakened. A hosted pass

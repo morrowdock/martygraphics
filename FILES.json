@@ -27,7 +27,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "c063a67fd67ccc5e00007823e187502fb3fc76b94d9ec67c37364f7d5d5633f1"
+      "sha256": "a5e4b2c8854803eff45f3a98a8638ab3aaabbc775389866bf6f06c1842fbb674"
     },
     {
       "path": ".gitignore",
@@ -35,7 +35,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "7a0cd08172bb2e7adb9c590f8af2ab3a68ba38d0b40ab701cd39ad4f6bb5e8a3"
+      "sha256": "9270bec8359a8a5d60ca68804f4e02ed3d335db4fa684b92b2f5de7ea8728097"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -43,7 +43,7 @@
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256": "a623ea37227937cca7d70e38b97d71758b0c2d8d3627547eb95b4a9b83b44900"
+      "sha256": "982a29d0184cd4bf90a341419ab74db03dbac69022b955c82f3f3052b5f49ae8"
     },
     {
       "path": "DCO",
@@ -571,7 +571,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "9b6cdb2a596f04a690b5e7b397c1d55f6b9552c5858655f79b84a346629bc5ca"
+      "sha256": "66f9b0128f3e9501703b4468bbace04f6d6cb3e4a276dc457ecf556c0a89c915"
     },
     {
       "path": "SECURITY.md",
@@ -1687,7 +1687,7 @@
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
-      "sha256": "ff50cbe924644e64aea3c92ca37f4eb4402847be59237edc584012eddcc6fd74"
+      "sha256": "2a0cc0996bbbe9d6807ac334a3ef94f0b70a4b202f67a2833bfe7347e20c3e6d"
     },
     {
       "path": "docs/PORTABILITY-PROPOSAL.md",
@@ -1723,7 +1723,7 @@
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
-      "sha256": "f36106dd99e8f9d209c017193269aeebba741e3f496a2ecc5ac758f58b202637"
+      "sha256": "eb8a68a7909553220b80007fed7fe9bacd6b692e28e94f7b2381fe69c21e8eb5"
     },
     {
       "path": "docs/assets/annotations/check-strict.json",

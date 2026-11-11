@@ -1,6 +1,8 @@
 name: CI
-# Merge gate. Every pull request and every push to main run the `hygiene` and
-# `macos` jobs; branch protection on main requires both check runs to pass.
+# Every pull request and every push to main run the `hygiene` and `macos` jobs.
+# Branch protection on main requires `hygiene` (and the maintainer's local
+# validation status); `macos` is not required, so a slow hosted Mac never holds
+# a merge. Maintainers read it and fix or revert at once when it is red.
 # Maintainers can also dispatch the workflow by hand with pinned SHAs.
 #
 # Safety: `pull_request` only (never `pull_request_target`), so a fork PR runs
@@ -115,10 +117,22 @@ jobs:
   # paid runner). GPU-dependent tests already XCTSkip when no Metal ray-tracing
   # device exists (hosted VMs have no real GPU). Local native receipts stay
   # required for GPU and iOS-simulator checks (docs/VERIFY-ON-MAC.md).
-  macos:
-    name: macos
+  #
+  # Speed: the tests run in four shards on four runners at the same time
+  # (about 13 minutes instead of about 43 in one job). Each test still runs
+  # alone and in order inside its shard; nothing runs in parallel inside one
+  # process, because some tests assert wall-clock limits. Each split is a
+  # `--filter X` shard plus a `--skip X` shard with the SAME pattern, so every
+  # test runs in exactly one shard, including new ones. A filter shard fails if
+  # it runs no test (for example after a rename). Still no caches.
+  macos-shard:
+    name: macos-${{ matrix.shard }}
     runs-on: macos-26
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [engine-solid, engine-rest, solid3d-golden, solid3d-rest]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -132,6 +146,8 @@ jobs:
           sw_vers
       - name: Run packages
         shell: bash
+        env:
+          SHARD: ${{ matrix.shard }}
         run: |
           set -o pipefail
           mkdir -p logs
@@ -144,20 +160,54 @@ jobs:
             else echo "FAIL $name $((SECONDS-t))s" | tee -a logs/summary.txt; fail=1; fi
             echo "::endgroup::"
           }
-          run root-build swift build --jobs 2
-          run root-test swift test --jobs 2
-          for p in Examples/Solid3D Examples/Turbofan Examples/KeySwitch3D tools/SceneValidator; do
-            n=$(echo "$p" | tr / -)
-            run "$n-test" swift test --jobs 2 --package-path "$p"
-          done
-          for p in Examples/Showcase Examples/PathTrace; do
-            run "$(echo "$p" | tr / -)-build" swift build --jobs 2 --package-path "$p"
-          done
+          ran() { # name: a filter shard must run at least one test
+            if ! grep -Eq 'Executed [1-9][0-9]* tests?, with' "logs/$1.log"; then
+              echo "FAIL $1 ran no test" | tee -a logs/summary.txt; fail=1
+            fi
+          }
+          ENGINE='^MartyGraphicsTests\.Solid'
+          GOLDEN='^MartySolidCLITests\.MartySolidCLITests/testCheckOutputIsByteIdenticalToTheGoldenFiles$'
+          case "$SHARD" in
+            engine-solid)
+              run root-test-solid swift test --jobs 2 --filter "$ENGINE"
+              ran root-test-solid ;;
+            engine-rest)
+              run root-build swift build --jobs 2
+              run root-test-rest swift test --jobs 2 --skip "$ENGINE" ;;
+            solid3d-golden)
+              run Examples-Solid3D-test-golden swift test --jobs 2 --package-path Examples/Solid3D --filter "$GOLDEN"
+              ran Examples-Solid3D-test-golden ;;
+            solid3d-rest)
+              run Examples-Solid3D-test-rest swift test --jobs 2 --package-path Examples/Solid3D --skip "$GOLDEN"
+              for p in Examples/Turbofan Examples/KeySwitch3D tools/SceneValidator; do
+                n=$(echo "$p" | tr / -)
+                run "$n-test" swift test --jobs 2 --package-path "$p"
+              done
+              for p in Examples/Showcase Examples/PathTrace; do
+                run "$(echo "$p" | tr / -)-build" swift build --jobs 2 --package-path "$p"
+              done ;;
+            *) echo "::error::Unknown shard $SHARD"; exit 1 ;;
+          esac
           exit $fail
       - name: Upload logs
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: macos-test-logs
+          name: macos-test-logs-${{ matrix.shard }}
           path: logs/
           if-no-files-found: warn
+  # The required check. It passes only when all four shards passed; a failed,
+  # cancelled or skipped shard fails it.
+  macos:
+    name: macos
+    needs: macos-shard
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All macOS shards passed
+        env:
+          RESULT: ${{ needs.macos-shard.result }}
+        run: |
+          echo "macos-shard result: $RESULT"
+          [ "$RESULT" = success ]

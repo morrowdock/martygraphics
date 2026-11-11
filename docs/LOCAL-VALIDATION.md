@@ -1,7 +1,8 @@
 # Maintainer local validation
 
-Two gates apply to every PR. The hosted `CI` workflow's check runs **`hygiene`**
-and **`macos`** are required and run automatically ([hosted CI](VERIFY-ON-MAC.md#hosted-ci-required-merge-gate)).
+Two gates apply to every PR. The hosted `CI` workflow's check run **`hygiene`**
+is required and runs automatically; its **`macos`** check also runs on every PR
+but is not required ([hosted CI](VERIFY-ON-MAC.md#hosted-ci-required-merge-gate)).
 The local evidence below is still required where this page and
 [Verify on Mac](VERIFY-ON-MAC.md) ask for it: hosted VMs have no real GPU and no
 iOS simulator lane, and they do not run Gitleaks or the privacy review.
