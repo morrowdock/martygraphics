@@ -1,0 +1,475 @@
+{
+  "kind": "martygraphics.benchmark.temporal-validation/1",
+  "benchmark": "mechanisms-v1",
+  "evidence": {
+    "videoFps": 30,
+    "stripFps": 10.0,
+    "thumbnail": [
+      256,
+      160
+    ],
+    "sheet": [
+      5,
+      5
+    ],
+    "rule": "adequate when a visible feature moves at most 1/4 of its repeat period between strip frames"
+  },
+  "summary": {
+    "V1 rotation direction": {
+      "cases": 8,
+      "pass": 8,
+      "controls": 0
+    },
+    "V1 rotation direction (negative control: beyond the cap)": {
+      "cases": 0,
+      "pass": 0,
+      "controls": 3
+    },
+    "V2 valve timing": {
+      "cases": 2,
+      "pass": 2,
+      "controls": 0
+    },
+    "V3 Geneva dwell": {
+      "cases": 2,
+      "pass": 2,
+      "controls": 0
+    },
+    "V4 short flicker": {
+      "cases": 9,
+      "pass": 9,
+      "controls": 6
+    }
+  },
+  "allPass": true,
+  "cases": [
+    {
+      "group": "V1 rotation direction",
+      "id": "V1-marker-0.25r-ccw",
+      "params": {
+        "revPerSecond": 0.25,
+        "k": 1
+      },
+      "truth": "counterclockwise",
+      "measured": "counterclockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 9.0,
+      "repeatPeriodDegrees": 360.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V1 rotation direction",
+      "id": "V1-marker-0.25r-cw",
+      "params": {
+        "revPerSecond": 0.25,
+        "k": 1
+      },
+      "truth": "clockwise",
+      "measured": "clockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 9.0,
+      "repeatPeriodDegrees": 360.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V1 rotation direction",
+      "id": "V1-marker-1.0r-ccw",
+      "params": {
+        "revPerSecond": 1.0,
+        "k": 1
+      },
+      "truth": "counterclockwise",
+      "measured": "counterclockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 36.0,
+      "repeatPeriodDegrees": 360.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V1 rotation direction",
+      "id": "V1-marker-1.0r-cw",
+      "params": {
+        "revPerSecond": 1.0,
+        "k": 1
+      },
+      "truth": "clockwise",
+      "measured": "clockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 36.0,
+      "repeatPeriodDegrees": 360.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V1 rotation direction",
+      "id": "V1-marker-2.5r-ccw",
+      "params": {
+        "revPerSecond": 2.5,
+        "k": 1
+      },
+      "truth": "counterclockwise",
+      "measured": "counterclockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 90.0,
+      "repeatPeriodDegrees": 360.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V1 rotation direction",
+      "id": "V1-marker-2.5r-cw",
+      "params": {
+        "revPerSecond": 2.5,
+        "k": 1
+      },
+      "truth": "clockwise",
+      "measured": "clockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 90.0,
+      "repeatPeriodDegrees": 360.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V1 rotation direction",
+      "id": "V1-cross-0.25r-ccw",
+      "params": {
+        "revPerSecond": 0.25,
+        "k": 4
+      },
+      "truth": "counterclockwise",
+      "measured": "counterclockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 9.0,
+      "repeatPeriodDegrees": 90.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V1 rotation direction",
+      "id": "V1-cross-0.6r-ccw",
+      "params": {
+        "revPerSecond": 0.6,
+        "k": 4
+      },
+      "truth": "counterclockwise",
+      "measured": "counterclockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 21.6,
+      "repeatPeriodDegrees": 90.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V1 rotation direction (negative control: beyond the cap)",
+      "id": "V1-control-beyond-cap-5.0r-k1",
+      "params": {
+        "revPerSecond": 5.0,
+        "k": 1
+      },
+      "truth": "counterclockwise",
+      "measured": "cannot judge",
+      "ambiguousShare": 1.0,
+      "degreesPerStripFrame": 180.0,
+      "repeatPeriodDegrees": 360.0,
+      "within4x": false,
+      "pass": null,
+      "outcome": "cannot judge"
+    },
+    {
+      "group": "V1 rotation direction (negative control: beyond the cap)",
+      "id": "V1-control-beyond-cap-6.0r-k1",
+      "params": {
+        "revPerSecond": 6.0,
+        "k": 1
+      },
+      "truth": "counterclockwise",
+      "measured": "clockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 216.0,
+      "repeatPeriodDegrees": 360.0,
+      "within4x": false,
+      "pass": null,
+      "outcome": "WRONG direction (aliasing)"
+    },
+    {
+      "group": "V1 rotation direction (negative control: beyond the cap)",
+      "id": "V1-control-beyond-cap-2.0r-k4",
+      "params": {
+        "revPerSecond": 2.0,
+        "k": 4
+      },
+      "truth": "counterclockwise",
+      "measured": "clockwise",
+      "ambiguousShare": 0.0,
+      "degreesPerStripFrame": 72.0,
+      "repeatPeriodDegrees": 90.0,
+      "within4x": false,
+      "pass": null,
+      "outcome": "WRONG direction (aliasing)"
+    },
+    {
+      "group": "V2 valve timing",
+      "id": "V2-valve-0.25r",
+      "params": {
+        "crankRevPerSecond": 0.25
+      },
+      "truth": "opens at crank 0 degrees, closes at 180 degrees, once every two crank turns",
+      "measuredOpenErrorDegrees": 4.1,
+      "measuredCloseErrorDegrees": 4.1,
+      "openingsSeen": 2,
+      "openingsExpected": 2,
+      "crankDegreesPerStripFrame": 9.0,
+      "pass": true
+    },
+    {
+      "group": "V2 valve timing",
+      "id": "V2-valve-1.0r",
+      "params": {
+        "crankRevPerSecond": 1.0
+      },
+      "truth": "opens at crank 0 degrees, closes at 180 degrees, once every two crank turns",
+      "measuredOpenErrorDegrees": 13.0,
+      "measuredCloseErrorDegrees": 13.0,
+      "openingsSeen": 7,
+      "openingsExpected": 7,
+      "crankDegreesPerStripFrame": 36.0,
+      "pass": true
+    },
+    {
+      "group": "V3 Geneva dwell",
+      "id": "V3-geneva-n4",
+      "params": {
+        "slots": 4,
+        "driverRevPerSecond": 0.25
+      },
+      "truth": "step 90 degrees per driver turn, motion share 0.250, star turns opposite to the driver",
+      "measuredMotionShare": 0.252,
+      "tolerance": 0.045,
+      "measuredSteps": [
+        90.0,
+        90.0,
+        90.0
+      ],
+      "driverDirection": "counterclockwise",
+      "starDirection": "clockwise",
+      "starAmbiguousShare": 0.0,
+      "starPeakDegreesPerStripFrame": 21.73,
+      "starRepeatPeriodDegrees": 90.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V3 Geneva dwell",
+      "id": "V3-geneva-n6",
+      "params": {
+        "slots": 6,
+        "driverRevPerSecond": 0.25
+      },
+      "truth": "step 60 degrees per driver turn, motion share 0.333, star turns opposite to the driver",
+      "measuredMotionShare": 0.352,
+      "tolerance": 0.045,
+      "measuredSteps": [
+        60.0,
+        60.0,
+        60.0
+      ],
+      "driverDirection": "counterclockwise",
+      "starDirection": "clockwise",
+      "starAmbiguousShare": 0.0,
+      "starPeakDegreesPerStripFrame": 9.0,
+      "starRepeatPeriodDegrees": 60.0,
+      "within4x": true,
+      "pass": true
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-1f-o0",
+      "params": {
+        "missingVideoFrames": 1,
+        "phase": 0
+      },
+      "truth": "block missing for 1 video frame(s) (0.033 s) from frame 45",
+      "gapSeenInStrip": true,
+      "guaranteed": false,
+      "pass": null,
+      "outcome": "seen"
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-1f-o1",
+      "params": {
+        "missingVideoFrames": 1,
+        "phase": 1
+      },
+      "truth": "block missing for 1 video frame(s) (0.033 s) from frame 46",
+      "gapSeenInStrip": false,
+      "guaranteed": false,
+      "pass": null,
+      "outcome": "not seen"
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-1f-o2",
+      "params": {
+        "missingVideoFrames": 1,
+        "phase": 2
+      },
+      "truth": "block missing for 1 video frame(s) (0.033 s) from frame 47",
+      "gapSeenInStrip": false,
+      "guaranteed": false,
+      "pass": null,
+      "outcome": "not seen"
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-2f-o0",
+      "params": {
+        "missingVideoFrames": 2,
+        "phase": 0
+      },
+      "truth": "block missing for 2 video frame(s) (0.067 s) from frame 45",
+      "gapSeenInStrip": true,
+      "guaranteed": false,
+      "pass": null,
+      "outcome": "seen"
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-2f-o1",
+      "params": {
+        "missingVideoFrames": 2,
+        "phase": 1
+      },
+      "truth": "block missing for 2 video frame(s) (0.067 s) from frame 46",
+      "gapSeenInStrip": false,
+      "guaranteed": false,
+      "pass": null,
+      "outcome": "not seen"
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-2f-o2",
+      "params": {
+        "missingVideoFrames": 2,
+        "phase": 2
+      },
+      "truth": "block missing for 2 video frame(s) (0.067 s) from frame 47",
+      "gapSeenInStrip": true,
+      "guaranteed": false,
+      "pass": null,
+      "outcome": "seen"
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-3f-o0",
+      "params": {
+        "missingVideoFrames": 3,
+        "phase": 0
+      },
+      "truth": "block missing for 3 video frame(s) (0.100 s) from frame 45",
+      "gapSeenInStrip": true,
+      "guaranteed": true,
+      "pass": true
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-3f-o1",
+      "params": {
+        "missingVideoFrames": 3,
+        "phase": 1
+      },
+      "truth": "block missing for 3 video frame(s) (0.100 s) from frame 46",
+      "gapSeenInStrip": true,
+      "guaranteed": true,
+      "pass": true
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-3f-o2",
+      "params": {
+        "missingVideoFrames": 3,
+        "phase": 2
+      },
+      "truth": "block missing for 3 video frame(s) (0.100 s) from frame 47",
+      "gapSeenInStrip": true,
+      "guaranteed": true,
+      "pass": true
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-6f-o0",
+      "params": {
+        "missingVideoFrames": 6,
+        "phase": 0
+      },
+      "truth": "block missing for 6 video frame(s) (0.200 s) from frame 45",
+      "gapSeenInStrip": true,
+      "guaranteed": true,
+      "pass": true
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-6f-o1",
+      "params": {
+        "missingVideoFrames": 6,
+        "phase": 1
+      },
+      "truth": "block missing for 6 video frame(s) (0.200 s) from frame 46",
+      "gapSeenInStrip": true,
+      "guaranteed": true,
+      "pass": true
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-6f-o2",
+      "params": {
+        "missingVideoFrames": 6,
+        "phase": 2
+      },
+      "truth": "block missing for 6 video frame(s) (0.200 s) from frame 47",
+      "gapSeenInStrip": true,
+      "guaranteed": true,
+      "pass": true
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-15f-o0",
+      "params": {
+        "missingVideoFrames": 15,
+        "phase": 0
+      },
+      "truth": "block missing for 15 video frame(s) (0.500 s) from frame 45",
+      "gapSeenInStrip": true,
+      "guaranteed": true,
+      "pass": true
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-15f-o1",
+      "params": {
+        "missingVideoFrames": 15,
+        "phase": 1
+      },
+      "truth": "block missing for 15 video frame(s) (0.500 s) from frame 46",
+      "gapSeenInStrip": true,
+      "guaranteed": true,
+      "pass": true
+    },
+    {
+      "group": "V4 short flicker",
+      "id": "V4-flicker-15f-o2",
+      "params": {
+        "missingVideoFrames": 15,
+        "phase": 2
+      },
+      "truth": "block missing for 15 video frame(s) (0.500 s) from frame 47",
+      "gapSeenInStrip": true,
+      "guaranteed": true,
+      "pass": true
+    }
+  ]
+}

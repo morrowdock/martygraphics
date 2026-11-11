@@ -1,0 +1,129 @@
+{
+  "kind": "martygraphics.benchmark.lock/1",
+  "benchmark": "mechanisms-v1",
+  "capturedUTC": "2026-11-11T18:50:26Z",
+  "locks": "at the merge of the registration pull request (morrowdock/martygraphics #57). If a locked main moves before the merge, this file is refreshed in that pull request before the merge. After the merge nothing here changes; the benchmark always runs these values.",
+  "arm1": {
+    "marty": {
+      "repository": "https://github.com/morrowdock/marty",
+      "commit": "0593bcda098365df514756b21e3b907f011d6b88",
+      "note": "Marty main at capture"
+    },
+    "martyPrompts": {
+      "version": "marty-prompts/24",
+      "path": "Sources/MartyLoop/Prompts.swift",
+      "gitBlob": "1937a1d8360b75e078148a2e171e22d19206405f",
+      "sha256": "cfe77a3ccf21b8c1c961cfb87af61f2a5634c1874307c199ea78a5c8a6e8d216"
+    },
+    "engine": {
+      "repository": "https://github.com/morrowdock/martygraphics",
+      "commit": "38f3863d5ed27c94fccf44b5f117a43938b79455",
+      "why": "the engine that Marty main pins (Package.swift, revision). Marty's check and render use it, and marty-solid is built from it. Changing the pin would be a Marty change, which the lock forbids."
+    },
+    "engineMainAtCapture": {
+      "commit": "933db57c6beb9863f543c4519d35ece84952ebb3",
+      "used": false
+    },
+    "command": [
+      "marty ask \"<question>\" --out <run>/arm1 --model claude-opus-5-5 --repairs 3 --no-research --render",
+      "marty-solid render <run>/arm1/<accepted document> <run>/arm1/render --size 1280x800 --story-fps 30 --loop-fps 30"
+    ]
+  },
+  "arm2": {
+    "three": {
+      "version": "0.170.0",
+      "tarball": "https://registry.npmjs.org/three/-/three-0.170.0.tgz",
+      "tarballSha256": "4a608a355dcaba72e0e5383cdc814303f5b6060b43c238cdf6932dceb699238d",
+      "npmShasum": "6087f97aab79e9e9312f9c89fcef6808642dfbb7",
+      "npmIntegrity": "sha512-FQK+LEpYc0fBD+J8g6oSEyyNzjp+Q7Ks1C568WWaoMRLW+TkNNWmenWeGgJjV105Gd+p/2ql1ZcjYvNiPZBhuQ==",
+      "files": {
+        "build/three.module.min.js": "08fd7545d13d2c7fb65ab691530a802dafefd638596501854f267d0fb13c39e7"
+      },
+      "addons": "examples/jsm/ from the same tarball"
+    },
+    "systemPrompt": {
+      "path": "prompts/ARM2-SYSTEM.txt",
+      "sha256": "1b6f75b78da633ed61f4edd3fb30e5d496a2ffc03c8d109f2c82d3936ae0582b"
+    },
+    "repairPrompt": {
+      "path": "prompts/ARM2-REPAIR.txt",
+      "sha256": "9767d9fbfb0d89aaebe1f6d9fa1c0ad4403e7ad662b5ae0f6a822db0ebb9169c"
+    }
+  },
+  "generator": {
+    "model": "claude-opus-5-5",
+    "cli": "Claude Code 2.1.322",
+    "cliRule": "the run host uses exactly this CLI version; RUN-LOCK.json records the binary hash",
+    "optionalSecondModel": {
+      "model": "claude-sonnet-5-5",
+      "runs": false
+    }
+  },
+  "graders": {
+    "G1": {
+      "model": "GPT-6.1 Sol",
+      "cli": "OpenAI Codex CLI",
+      "exactModelString": "pending: recorded with the grader validation before the merge"
+    },
+    "G2": {
+      "model": "Gemini 4 Argon",
+      "cli": "Gemini CLI",
+      "exactModelString": "pending: recorded with the grader validation before the merge"
+    },
+    "prompts": {
+      "GRADER-GUESS.txt": {
+        "path": "prompts/GRADER-GUESS.txt",
+        "sha256": "d1266e8778742f8321ff67a2d5475081a4efad5ecc5cffbea60f1062b2da9148"
+      },
+      "GRADER-PREFERENCE.txt": {
+        "path": "prompts/GRADER-PREFERENCE.txt",
+        "sha256": "6ecac04e336948c555dd90b120203ff366387094006103c1237523362c9cf6d1"
+      },
+      "GRADER-SCORE.txt": {
+        "path": "prompts/GRADER-SCORE.txt",
+        "sha256": "13a7113fdbab8ca5b5f6a7c991723f555b859d3d95d8c94e2f8ea6402a714107"
+      }
+    }
+  },
+  "inputs": {
+    "QUESTIONS.json": "93ce812587c0642145f075dfb21554736482fe9722dd604da6ef7c852c828ad7",
+    "GRADER-QUESTIONS.json": "4bb5b6e88a4108236c5c251eb3c998ff56fcaf80d1769d5145c507f6849bedd0",
+    "RUBRIC.md": "cc4fe9d21057063c94fb4fad546dcbf9757706369cb93eaae9224e62f8ec8786",
+    "PROTOCOL.md": "16f3bcd8dcd1c74e456e41af44ff86328ede95e9ebc6ea150f33fd2d1622d5a9"
+  },
+  "evidence": {
+    "stripFps": 10,
+    "thumbnail": [
+      256,
+      160
+    ],
+    "sheet": [
+      5,
+      5
+    ],
+    "stills": "10, 30, 50, 70, 90 % of the content length",
+    "validation": {
+      "script": "89614c4b1a80e600848783964480a38d37757f9bd8a5ac21a967c4d9d93fe943",
+      "results": "11541233f1c0077e01d74d30a04ba4a2a06493eee45aefe59d63ba3111d2ff82",
+      "answerFile": "9e6bdbbdc8eec3dfb31b1ef4782d875c8b8816d77fb5a33a1f82cc3f0e19782c"
+    }
+  },
+  "seeds": {
+    "runOrder": 20261111,
+    "bootstrap": 20261111,
+    "blinding": "made after generation; its SHA-256 is committed before grading"
+  },
+  "pendingBeforeMerge": [
+    "fact-check gate corrections (PROTOCOL.md 2.2)",
+    "grader temporal validation (PROTOCOL.md 2.3)",
+    "refresh of this file if a locked main moved"
+  ],
+  "pendingBeforeRun1": [
+    "harness pull request",
+    "RUN-LOCK.json",
+    "dry run (PROTOCOL.md 2.4)"
+  ],
+  "toolsSha256": {
+    "tools/grader_questions.py": "21c9183b366049fe5065a1a2551fdfd6a274540190395266ccb5c0ce37c77420"
+  }
+}

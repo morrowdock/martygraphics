@@ -1,0 +1,15 @@
+Question: {question}
+
+Your HTML file (try {n} of 4):
+```html
+{html}
+```
+
+Render report:
+- Harness errors: {harness_errors}
+- Uncaught exceptions: {exceptions}
+- Console errors and warnings (first 50 lines): {console}
+
+The attached images are your page's frames at t = {t1}, {t2}, {t3}, {t4} and {t5} s (10, 30, 50, 70 and 90 % of benchDuration), at 1280 x 800.
+
+Check the mechanism, the text and the frames. If you want to change the file, answer with the complete new HTML file in one ```html code block. If the file is final, answer with exactly ACCEPT. You have {left} repair(s) left.

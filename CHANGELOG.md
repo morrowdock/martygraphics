@@ -3,20 +3,30 @@
 ## Unreleased
 
 - Benchmark pre-registration [`benchmark/mechanisms-v1`](benchmark/mechanisms-v1/README.md) (design only; not run;
-  no engine change). A blind comparison of MartyGraphics through Marty with the same model writing three.js directly,
-  on 20 mechanism questions.
-  - [QUESTIONS.json](benchmark/mechanisms-v1/QUESTIONS.json): 20 questions in learner language over gear trains, a
-    planetary set, a worm drive, rack and pinion, four-bar and crank-slider linkages, cams, a Geneva drive,
-    differentials, four-stroke engines, turbines, a turbofan and pumps; 101 key facts with textbook and web sources and
-    a check label each; five mechanism checks per question; the shipped examples that were excluded.
-  - [RUBRIC.md](benchmark/mechanisms-v1/RUBRIC.md): blind scorecard for mechanism correctness, text errors and coverage,
-    teaching clarity (anchored 1 to 5), visual defects and pairwise preference.
-  - [PROTOCOL.md](benchmark/mechanisms-v1/PROTOCOL.md): Claude Opus 5.5 by the subscription CLI in both arms, exact
-    prompts, 3 runs per question per arm with every run counted, one artifact set for both arms (20 s video and 5
-    stills at 1280 × 800), masking and seeded A/B labels with a committed seed hash, two graders from other model
-    families with the stricter grade winning, a fixed analysis plan (primary: mechanism score, sign test over
-    questions), a stopping rule, verdict rules and publication whatever the result.
-  - [HASHES.txt](benchmark/mechanisms-v1/HASHES.txt): SHA-256 of the pre-registration files.
+  no engine change): a research-disabled product-route comparison, with partial blinding, of MartyGraphics through
+  Marty against the same model writing three.js directly, on 20 mechanism questions.
+  - [QUESTIONS.json](benchmark/mechanisms-v1/QUESTIONS.json): 20 questions in learner language; 101 key facts with
+    textbook and web sources, check labels, accepted variants and designer notes; five mechanism checks per question;
+    the excluded shipped examples. [GRADER-QUESTIONS.json](benchmark/mechanisms-v1/GRADER-QUESTIONS.json) is the
+    graders' view (question, key facts with accepted variants, checks), made and checked for arm-revealing words by
+    [tools/grader_questions.py](benchmark/mechanisms-v1/tools/grader_questions.py).
+  - [RUBRIC.md](benchmark/mechanisms-v1/RUBRIC.md): neutral scorecard for one output (mechanism checks with PASS, FAIL,
+    NOT SHOWN and, for direction and timing, CANNOT JUDGE; text errors and coverage; clarity 1 to 5; visual defects)
+    and a separate pairwise preference.
+  - [PROTOCOL.md](benchmark/mechanisms-v1/PROTOCOL.md): inputs locked at registration in
+    [LOCK.json](benchmark/mechanisms-v1/LOCK.json) (Marty `0593bcd`, the engine it pins `38f3863`, Marty's prompt file,
+    three.js r170, every prompt file in [prompts/](benchmark/mechanisms-v1/prompts/ARM2-SYSTEM.txt)); fact-check and
+    temporal-evidence gates before registration closes; equal maximum repair counts with different route-specific
+    assistance; 3 runs per question per arm, every run counted; the same evidence for both graders (5 stills, a 10 fps
+    frame strip, OCR text); every rendered output graded alone; stricter grade wins only between adequate judgments;
+    ungraded outputs counted, never dropped; a question-level sign-test verdict, an opposite-sign statement,
+    exploratory unadjusted secondaries, a sensitivity analysis without the 5 near-shipped questions; descriptive
+    results only for incomplete data; publication of all generation and grading evidence, unmasked renders and the arm
+    mapping.
+  - [validation/](benchmark/mechanisms-v1/validation/README.md): a deterministic synthetic test of the frame strip
+    (rotation direction, valve timing, Geneva dwell, flicker): 21 of 21 in-scope cases pass; beyond-cap controls show
+    aliasing. Grader validation packets with an answer key; the grader run is pending.
+  - [HASHES.txt](benchmark/mechanisms-v1/HASHES.txt): SHA-256 of every other file in the folder.
 
 - **CI gates merges.** `.github/workflows/ci.yml` (now named `CI`) runs on `pull_request` (opened, synchronize,
   reopened, ready for review), on push to `main`, and still on `workflow_dispatch` with pinned SHAs. Its check runs

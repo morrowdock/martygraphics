@@ -1,0 +1,385 @@
+{
+  "scoring": {
+    "pass": "at least 90 % of inScope packets correct and no wrong direction on an inScope rotation packet; cannot judge on an inScope packet is not correct; packets with inScope false are reported, not scored",
+    "tolerance": {
+      "valveDegrees": 45,
+      "genevaSharePoints": 10,
+      "genevaStepDegrees": 10,
+      "flickerSeconds": 0.2
+    }
+  },
+  "packets": [
+    {
+      "id": "V1-marker-0.25r-ccw",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "counterclockwise",
+      "accept": [
+        "counterclockwise"
+      ]
+    },
+    {
+      "id": "V1-marker-0.25r-cw",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "clockwise",
+      "accept": [
+        "clockwise"
+      ]
+    },
+    {
+      "id": "V1-marker-1.0r-ccw",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "counterclockwise",
+      "accept": [
+        "counterclockwise"
+      ]
+    },
+    {
+      "id": "V1-marker-1.0r-cw",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "clockwise",
+      "accept": [
+        "clockwise"
+      ]
+    },
+    {
+      "id": "V1-marker-2.5r-ccw",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "counterclockwise",
+      "accept": [
+        "counterclockwise"
+      ]
+    },
+    {
+      "id": "V1-marker-2.5r-cw",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "clockwise",
+      "accept": [
+        "clockwise"
+      ]
+    },
+    {
+      "id": "V1-cross-0.25r-ccw",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "counterclockwise",
+      "accept": [
+        "counterclockwise"
+      ]
+    },
+    {
+      "id": "V1-cross-0.6r-ccw",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "counterclockwise",
+      "accept": [
+        "counterclockwise"
+      ]
+    },
+    {
+      "id": "V1-control-beyond-cap-5.0r-k1",
+      "inScope": false,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "cannot judge",
+      "accept": [
+        "cannot judge",
+        "counterclockwise"
+      ]
+    },
+    {
+      "id": "V1-control-beyond-cap-6.0r-k1",
+      "inScope": false,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "cannot judge",
+      "accept": [
+        "cannot judge",
+        "counterclockwise"
+      ]
+    },
+    {
+      "id": "V1-control-beyond-cap-2.0r-k4",
+      "inScope": false,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png"
+      ],
+      "question": "The large light disk carries a dark marker (or dark arms). Seen as drawn, does the disk turn clockwise or counterclockwise? Answer clockwise, counterclockwise or cannot judge.",
+      "answer": "cannot judge",
+      "accept": [
+        "cannot judge",
+        "counterclockwise"
+      ]
+    },
+    {
+      "id": "V2-valve-0.25r",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png",
+        "sheet-04.png",
+        "sheet-05.png",
+        "sheet-06.png",
+        "sheet-07.png"
+      ],
+      "question": "The left disk is a crank with a dark marker (angle 0 = marker pointing right; it turns counterclockwise). The bar on the right is a valve: low means open. At which crank angle does the valve open and at which does it close, and how many crank turns are there per opening? Answer as: open <deg>, close <deg>, turns per opening <n>; or cannot judge.",
+      "answer": "open 0, close 180, turns per opening 2",
+      "accept": [
+        "open 0, close 180, turns per opening 2"
+      ]
+    },
+    {
+      "id": "V2-valve-1.0r",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png",
+        "sheet-04.png",
+        "sheet-05.png",
+        "sheet-06.png",
+        "sheet-07.png"
+      ],
+      "question": "The left disk is a crank with a dark marker (angle 0 = marker pointing right; it turns counterclockwise). The bar on the right is a valve: low means open. At which crank angle does the valve open and at which does it close, and how many crank turns are there per opening? Answer as: open <deg>, close <deg>, turns per opening <n>; or cannot judge.",
+      "answer": "open 0, close 180, turns per opening 2",
+      "accept": [
+        "open 0, close 180, turns per opening 2"
+      ]
+    },
+    {
+      "id": "V3-geneva-n4",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png",
+        "sheet-04.png",
+        "sheet-05.png",
+        "sheet-06.png",
+        "sheet-07.png"
+      ],
+      "question": "Left: a driver disk with a dark pin marker. Right: a slotted wheel (dark arms). Does the slotted wheel stop and go? If yes: how many degrees does it turn per driver turn, what share of the time does it move, and does it turn the same way as the driver or the opposite way? Or answer cannot judge.",
+      "answer": "stop and go, 90 degrees per driver turn, moves 25 % of the time, opposite way",
+      "accept": [
+        "stop and go, 90 degrees per driver turn, moves 25 % of the time, opposite way"
+      ]
+    },
+    {
+      "id": "V3-geneva-n6",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png",
+        "sheet-03.png",
+        "sheet-04.png",
+        "sheet-05.png",
+        "sheet-06.png",
+        "sheet-07.png"
+      ],
+      "question": "Left: a driver disk with a dark pin marker. Right: a slotted wheel (dark arms). Does the slotted wheel stop and go? If yes: how many degrees does it turn per driver turn, what share of the time does it move, and does it turn the same way as the driver or the opposite way? Or answer cannot judge.",
+      "answer": "stop and go, 60 degrees per driver turn, moves 33 % of the time, opposite way",
+      "accept": [
+        "stop and go, 60 degrees per driver turn, moves 33 % of the time, opposite way"
+      ]
+    },
+    {
+      "id": "V4-flicker-1f-o1",
+      "inScope": false,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "no (gap not in the evidence)",
+      "accept": [
+        "no (gap not in the evidence)"
+      ]
+    },
+    {
+      "id": "V4-flicker-2f-o1",
+      "inScope": false,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "no (gap not in the evidence)",
+      "accept": [
+        "no (gap not in the evidence)"
+      ]
+    },
+    {
+      "id": "V4-flicker-3f-o0",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "yes, at about 1.5 s",
+      "accept": [
+        "yes, at about 1.5 s"
+      ]
+    },
+    {
+      "id": "V4-flicker-3f-o1",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "yes, at about 1.5 s",
+      "accept": [
+        "yes, at about 1.5 s"
+      ]
+    },
+    {
+      "id": "V4-flicker-3f-o2",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "yes, at about 1.6 s",
+      "accept": [
+        "yes, at about 1.6 s"
+      ]
+    },
+    {
+      "id": "V4-flicker-6f-o0",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "yes, at about 1.5 s",
+      "accept": [
+        "yes, at about 1.5 s"
+      ]
+    },
+    {
+      "id": "V4-flicker-6f-o1",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "yes, at about 1.5 s",
+      "accept": [
+        "yes, at about 1.5 s"
+      ]
+    },
+    {
+      "id": "V4-flicker-6f-o2",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "yes, at about 1.6 s",
+      "accept": [
+        "yes, at about 1.6 s"
+      ]
+    },
+    {
+      "id": "V4-flicker-15f-o0",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "yes, at about 1.5 s",
+      "accept": [
+        "yes, at about 1.5 s"
+      ]
+    },
+    {
+      "id": "V4-flicker-15f-o1",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "yes, at about 1.5 s",
+      "accept": [
+        "yes, at about 1.5 s"
+      ]
+    },
+    {
+      "id": "V4-flicker-15f-o2",
+      "inScope": true,
+      "sheets": [
+        "sheet-01.png",
+        "sheet-02.png"
+      ],
+      "question": "Does the light block disappear at any time? If yes, at what time (seconds)? Or answer cannot judge.",
+      "answer": "yes, at about 1.6 s",
+      "accept": [
+        "yes, at about 1.6 s"
+      ]
+    }
+  ]
+}
