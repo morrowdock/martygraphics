@@ -1,0 +1,11 @@
+{
+  "file" : {
+    "lines" : 1671,
+    "sha256" : "c9f4e7958d7c2313836a4ccccfe32de1ee3360f2057b31d65a1a340373572a7d"
+  },
+  "ok" : false,
+  "part" : null,
+  "reason" : "assembly.missing.kind,v",
+  "repair" : "Refused (assembly.missing.kind,v): Required keys are missing from an object. `<object>` names the object (see `closedObjects`); `<keys>` lists the missing keys.",
+  "strict" : false
+}

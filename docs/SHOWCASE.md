@@ -7,6 +7,8 @@ motion and layout, not the truth of text claims. A "Solved" count in a legend co
 values computed from the model, not verified facts about the real object.
 
 After the mechanisms come the AI-written jet-suit lesson with its fact check and the hand-built jet-suit lesson.
+Between these two is a set of hand-built [drone and aviation explainers](#drone-and-aviation-explainers-hand-built);
+two independent fact checks found no wrong claim and asked for 16 fixes, which are applied.
 Other parts of the repository are at the end, under [Also in this repo](#also-in-this-repo). None of the examples
 implies a curriculum or a running service.
 
@@ -348,6 +350,140 @@ grading and found more. Details: [PROMPT.md](assets/jet-suit-ai/PROMPT.md).
 
 The hand-built lesson below gives the total thrust (about 144 kgf, AOPA 2020) and Browning's load split, the two gaps
 that the AI lesson left as "not found in this search".
+
+## Drone and aviation explainers (hand-built)
+
+**Status: fact-checked on 2026-11-11 by two independent checks (Sol and Gemini); no claim failed, and all 16
+fixes are applied** ([fact list](assets/drone-aviation/FACTS.md)). Five explainers
+made with the solid engine as it is at main, with no engine change. A Claude agent (Claude Fable 5.2) wrote each
+document by hand from a short brief; they are not the output of a prompt run through Marty. The engine checked every
+attempt (39 in all: 14 refused, 2 of them deliberate negative controls; the last attempt of each document applies
+the fact-check fixes) and rendered the accepted files. Stills and
+videos are unedited engine output, re-encoded only for size. [Index, attempts and hashes](assets/drone-aviation/README.md) ·
+[Engine gaps found](assets/drone-aviation/GAPS.md)
+
+### Quadcopter steering
+
+[![Step 1: a quadcopter with two blue and two orange propellers hovers above a white landing pad marking; a battery, a flight controller and a GPS mast sit on its frame.](assets/drone-aviation/quadcopter/poster.jpg)](assets/drone-aviation/quadcopter/story.mp4)
+
+[Story video (MP4)](assets/drone-aviation/quadcopter/story.mp4): 87 seconds, 10 beats, 1280×800 at 30 frames per second ·
+[Loop (MP4)](assets/drone-aviation/quadcopter/loop.mp4) · [JSON](assets/drone-aviation/quadcopter/quadcopter.json) ·
+[Brief and all 11 attempts](assets/drone-aviation/quadcopter/PROMPT.md) · [Check output](assets/drone-aviation/quadcopter/check-strict.json)
+
+[![Step 3, from above: four turn arrows; M1 front right and M2 rear left turn counter-clockwise, M3 front left and M4 rear right turn clockwise.](assets/drone-aviation/quadcopter/step-3.jpg)](assets/drone-aviation/quadcopter/step-3.jpg)
+
+[![Step 6, from behind: the drone is rolled to the right; long thrust arrows on the left motors, short arrows on the right motors, a weight arrow straight down.](assets/drone-aviation/quadcopter/step-6.jpg)](assets/drone-aviation/quadcopter/step-6.jpg)
+
+**How it steers.** The motors are in the ArduPilot "QUAD X" order: M1 (front right) and M2 (rear left) turn
+counter-clockwise, M3 (front left) and M4 (rear right) turn clockwise. Each motor applies an opposite reaction
+torque to the frame; the clockwise and counter-clockwise reaction torques cancel when their totals are equal. Roll
+and pitch come from more thrust on one side and less on the other; the tilted thrust then has a sideways or forward
+part. For a clockwise yaw turn the controller increases the thrust of M1 and M2 and reduces the thrust of M3 and M4,
+so the reaction torques no longer balance. It can choose these changes to keep the total thrust nearly constant.
+
+**What the engine checked.** The turn direction of every propeller (four turn arrows with a stated sense, and eight
+checks on the signs of the speeds) and the direction of the weight. The weight arrow starts at the volume centre of
+all drawn parts, with the ground marking; this is not the aircraft's centre of gravity. Legend: "Solved 17 (4 animation ratios) · Not
+checked 13". The thrust arrows and the tilted poses are the author's; no airflow or force is computed. Attempt 2 was
+refused (`annotation.unused.s2`: an arrow that no step showed), and four more refusals were hidden label anchors.
+The story video has two camera cuts (beats 4 and 5, into and out of the close-up of a turning propeller).
+
+### Payload position and centre of gravity
+
+[![Step 5: the quadcopter with a red payload forward on a rail under its frame; long thrust arrows on the front motors, short arrows on the rear motors, and a weight arrow ahead of the centre.](assets/drone-aviation/payload-cg/poster.jpg)](assets/drone-aviation/payload-cg/story.mp4)
+
+[Story video (MP4)](assets/drone-aviation/payload-cg/story.mp4): 81 seconds, 9 beats · [JSON](assets/drone-aviation/payload-cg/payload-cg.json) ·
+[Brief and all 5 attempts](assets/drone-aviation/payload-cg/PROMPT.md) · [Check output](assets/drone-aviation/payload-cg/check-strict.json)
+
+[![Step 3: the payload is forward; the weight arrow is ahead of the arrow for the total of four equal thrusts.](assets/drone-aviation/payload-cg/step-3.jpg)](assets/drone-aviation/payload-cg/step-3.jpg)
+
+**How it works.** The weight acts at the centre of gravity (CG). For an ideal hover with the payload in the middle,
+assume the CG is exactly below the centre of the four propellers; four equal thrusts can then balance the weight
+without a pitch or roll moment. Move the payload forward and the CG moves forward. Four equal thrusts would now let
+the nose drop. With enough thrust available, the flight controller can correct the turn. In a steady, level hover
+with this forward CG, the resultant thrust line passes through the CG, and the front pair must keep producing more
+thrust than the rear pair, so the front motors have less additional thrust available before their upper limit. If
+the thrust needed for a steady, level hover is outside the motor-thrust limits, that hover is not possible (step 8
+shows this as an assumed limit case).
+
+**What the engine checked.** Where the weight arrow starts: the engine's volume centre of all drawn parts (one
+density for all parts, the ground marking included), worked out again for each payload position. This is not the
+aircraft's CG. The thrust arrows, the total-thrust arrow's place and the tilts are the author's. The engine does not
+calculate the thrust balance or the margin, and no flight is simulated. Legend: "Solved 5 (4 animation ratios) · Not checked 16". The scene makes no regulation claim.
+
+### Brushless outrunner motor
+
+[![Step 2: an outrunner motor with half of its blue bell cut away; red and white magnets inside the bell, a steel stator with twelve teeth and copper coils, a shaft, a base plate and three wires.](assets/drone-aviation/brushless-motor/poster.jpg)](assets/drone-aviation/brushless-motor/story.mp4)
+
+[Story video (MP4)](assets/drone-aviation/brushless-motor/story.mp4): 91 seconds, 11 beats ·
+[Loop (MP4)](assets/drone-aviation/brushless-motor/loop.mp4) · [JSON](assets/drone-aviation/brushless-motor/motor.json) ·
+[Brief and all 6 attempts](assets/drone-aviation/brushless-motor/PROMPT.md) · [Check output](assets/drone-aviation/brushless-motor/check-strict.json)
+
+[![Step 3: the motor pulled apart along its shaft: the cut bell with magnets, the shaft, the stator with coils, the bearings and the base.](assets/drone-aviation/brushless-motor/step-3.jpg)](assets/drone-aviation/brushless-motor/step-3.jpg)
+
+[![Step 5, from above without the bell: fourteen magnets round twelve coils; the four coils of phase A are lit, two neighbours on each side.](assets/drone-aviation/brushless-motor/step-5.jpg)](assets/drone-aviation/brushless-motor/step-5.jpg)
+
+**How it works.** In an outrunner the outer shell (the bell) carries the magnets and turns; the stator in the
+middle carries the coils and is fixed. The 12 coils are joined in three phases (winding pattern AabBCcaABbcC: the
+two neighbouring coils of each pair are wound in opposite directions, so one is a north pole and one a south pole).
+In six-step control the speed controller energizes two phases at a time and changes the pair in a repeating order;
+the stator's field turns, and the magnets follow. One turn of the
+bell takes 7 electrical cycles, one for each pair of magnets. Swap any two of the three wires and the motor turns
+the other way.
+
+**What the engine checked.** The bell's rotation, and the counts in the captions: 12 coils, 7 and 7 magnets (they
+are `repeat` counts, not typed numbers). Legend: "Solved 5 (1 animation ratio)". Currents, magnetic forces and
+torque are not computed. Attempt 2 was refused with `step.hide.fact`: a caption gave the magnet count while its
+cutaway step hid seven magnets. The count moved to a step that hides none.
+
+### Three-axis camera gimbal
+
+[![Step 6: a white drone, pitched, rolled and yawed; under it a level camera on a blue yaw arm and an orange roll arm; two white measured lines on the camera read "Lens axis, forward: 39 mm" and "Camera top, up: 20 mm".](assets/drone-aviation/gimbal/poster.jpg)](assets/drone-aviation/gimbal/story.mp4)
+
+[Story video (MP4)](assets/drone-aviation/gimbal/story.mp4): 70 seconds, 8 beats · [JSON](assets/drone-aviation/gimbal/gimbal.json) ·
+[Brief and all 6 attempts](assets/drone-aviation/gimbal/PROMPT.md) · [Check output](assets/drone-aviation/gimbal/check-strict.json)
+
+[![Step 1: a white drone, pitched, rolled and yawed, with spinning propellers; the camera under it is level.](assets/drone-aviation/gimbal/step-1.jpg)](assets/drone-aviation/gimbal/step-1.jpg)
+
+**How it works.** Three motors hold the camera: yaw, then roll, then pitch. When the drone turns about one of these
+axes, the motor on that axis turns its arm the other way by the same angle, so the camera keeps its direction. A
+motion sensor on the camera measures the camera's turn, and the controller drives the motors to cancel it. A gimbal
+holds direction only: it does not remove movement up, down or sideways.
+
+**What the engine checked.** At four poses (yaw, roll, pitch, and all three), two measured dimensions on the camera
+keep their values at that pose: the lens axis along the forward line and the camera top along the vertical. The
+equal and opposite motor angles cancel the drone's turn exactly because the model nests the drone's pitch, roll and
+yaw pivots in the reverse order of the gimbal's joints; for a general 3-D turn they would not. A deliberate wrong
+pose (the yaw motor does not cancel the yaw) was refused with `step.pose.fact`. The motion itself is schematic: the
+author set each motor to follow the drone's turn with ratio -1, and the legend says "Solved 10 · Schematic 10" with
+the note "Some motion is schematic". The drone turns about the camera's centre in this model. No control loop is
+modelled.
+The story video has one camera cut (beat 2, from the wide view into the close-up).
+
+### Landing gear over-centre lock
+
+[![Step 3: a landing gear leg with a wheel under an aircraft beam; the orange and the blue brace link are lit and meet at a knee joint; arrows show a side load on the wheel, the squeeze in the brace and the knee pushed onto its stop.](assets/drone-aviation/landing-gear/poster.jpg)](assets/drone-aviation/landing-gear/story.mp4)
+
+[Story video (MP4)](assets/drone-aviation/landing-gear/story.mp4): 78 seconds, 11 beats · [JSON](assets/drone-aviation/landing-gear/landing-gear.json) ·
+[Brief and all 11 attempts](assets/drone-aviation/landing-gear/PROMPT.md) · [Check output](assets/drone-aviation/landing-gear/check-strict.json)
+
+[![Step 2, close-up: the knee joint between the orange upper link and the blue lower link sits a little past the straight line, against a small stop.](assets/drone-aviation/landing-gear/step-2.jpg)](assets/drone-aviation/landing-gear/step-2.jpg)
+
+[![Step 8: the leg is half way up; the brace is folded at the knee and its pin is still on the leg.](assets/drone-aviation/landing-gear/step-8.jpg)](assets/drone-aviation/landing-gear/step-8.jpg)
+
+**How it works.** The leg turns about its trunnion. A side brace of two links holds it down. With the gear down,
+the knee between the links sits a little past the straight line and rests on a stop. A load that tries to fold the
+gear squeezes the brace, and the squeeze pushes the knee harder onto the stop, so the gear cannot fold. In this
+example, an unlock actuator moves the knee back through centre before retraction (one design, US 5,022,609); then
+the retract actuator turns the leg up and the brace folds.
+
+**What the engine checked.** The engine has no linkage solver, so the author computed the link angles for seven
+poses outside the engine. The engine then checked the two pin-to-leg distances at each shown pose (100 mm and
+500 mm). The two distances alone do not prove that the pin is in its hole: they have a second, mirror solution
+(GAPS.md, gap 14). A deliberate wrong angle was refused with
+`step.pose.fact`. Legend: "Solved 16 · Not checked 5". Between two poses the video blends the angles, and the engine
+does not check the blend. Loads and hydraulics are not computed. The model is schematic: real designs can use lock
+links, springs and actuators; use the aircraft maintenance manual for its geometry and adjustments.
 
 ## Jet suit (hand-built, fact-checked)
 

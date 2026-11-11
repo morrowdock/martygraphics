@@ -1,0 +1,1889 @@
+{
+  "annotations" : [
+    {
+      "anchorsWorld" : [
+        [
+          42,
+          0,
+          -58
+        ]
+      ],
+      "id" : "lPayload",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Payload",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          5.9509999999999996,
+          -164.58199999999999,
+          -11.003
+        ]
+      ],
+      "id" : "lRail",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Rail: the payload can sit forward or aft",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          159.09999999999999,
+          148
+        ]
+      ],
+      "id" : "f1",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          148
+        ]
+      ],
+      "id" : "f2",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          148
+        ]
+      ],
+      "id" : "f3",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          148
+        ]
+      ],
+      "id" : "f4",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          159.09999999999999,
+          198
+        ]
+      ],
+      "id" : "bF1",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Front motors: more thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          198
+        ]
+      ],
+      "id" : "bF3",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          103
+        ]
+      ],
+      "id" : "sR2",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          103
+        ]
+      ],
+      "id" : "sR4",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Rear motors: less thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          198
+        ]
+      ],
+      "id" : "bR2",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          198
+        ]
+      ],
+      "id" : "bR4",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Rear motors: more thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          159.09999999999999,
+          103
+        ]
+      ],
+      "id" : "sF1",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Front motors: less thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          103
+        ]
+      ],
+      "id" : "sF3",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          218
+        ]
+      ],
+      "id" : "xR2",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          218
+        ]
+      ],
+      "id" : "xR4",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Rear motors at full power (assumed limit)",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          0,
+          130
+        ],
+        [
+          0,
+          0,
+          300
+        ]
+      ],
+      "id" : "tC",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Total of four equal thrusts",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -5.86724989542421e-15,
+          0.33395693334386561,
+          124.2399848290477
+        ],
+        [
+          -5.86724989542421e-15,
+          0.33395693334386561,
+          294.23998482904773
+        ]
+      ],
+      "id" : "tW",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Total thrust (placed by the author)",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -5.86724989542421e-15,
+          0.33395693334386561,
+          -15.760015170952295
+        ],
+        [
+          -5.86724989542421e-15,
+          0.33395693334386561,
+          -205.7600151709523
+        ]
+      ],
+      "id" : "w",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Weight",
+      "tier" : "solved",
+      "value" : null
+    }
+  ],
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+    "prop1.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop1.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop2.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop2.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop3.speed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    },
+    "prop3.worldSpeed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    },
+    "prop4.speed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    },
+    "prop4.worldSpeed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    }
+  },
+  "file" : {
+    "lines" : 143,
+    "sha256" : "37659f53103ec6413428ffa600e453a2eaab8639f26ef9eacbdf795026b748ed"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "prop1",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "prop2",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "prop3",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "prop4",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "f1",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "f2",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "f3",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "f4",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "bF1",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "bF3",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "sR2",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "sR4",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "bR2",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "bR4",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "sF1",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "sF3",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "xR2",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "xR4",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "tC",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "tW",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "w",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Direction checked against gravity; length not to scale"
+      }
+    ],
+    "described" : 16,
+    "note" : null,
+    "notes" : [
+      "Arrow lengths are not to scale"
+    ],
+    "shapes" : "Shapes as authored",
+    "solved" : 5,
+    "text" : "Solved 5 (4 animation ratios) · Not checked 16"
+  },
+  "notChecked" : {
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 23,
+  "placements" : [
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.52279003157290871,
+            0.51670887240472141
+          ],
+          "box" : [
+            0.44229661613608123,
+            0.47641128554810941,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lPayload",
+          "kind" : "label",
+          "leader" : [
+            0.50876536613608125,
+            0.51566128554810942
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Payload"
+        },
+        {
+          "anchor" : [
+            0.44343954075057274,
+            0.53456357289306744
+          ],
+          "box" : [
+            0.10134351753783244,
+            0.53264448148647381,
+            0.33562499999999995,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lRail",
+          "kind" : "label",
+          "leader" : [
+            0.43696851753783239,
+            0.53456357289306744
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Rail: the payload can sit forward or aft"
+        }
+      ],
+      "step" : 1
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.6411469694134575,
+            0.33513733124734435
+          ],
+          "box" : [
+            0.64787986710105672,
+            0.28264092332660323,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "f1",
+          "kind" : "arrow",
+          "leader" : [
+            0.64787986710105672,
+            0.32189092332660324
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Thrust"
+        },
+        {
+          "anchor" : [
+            0.50011052489889252,
+            0.55228517363041141
+          ],
+          "box" : [
+            0.50483084182923554,
+            0.49757179456446449,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.50483084182923554,
+            0.53682179456446444
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.5,
+            0.24400101074013281
+          ],
+          "box" : [
+            0.29077122408122774,
+            0.18928583672375041,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "tC",
+          "kind" : "arrow",
+          "leader" : [
+            0.5,
+            0.22853583672375041
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Total of four equal thrusts"
+        },
+        {
+          "anchor" : [
+            0.51200768709238087,
+            0.5367070164040153
+          ],
+          "box" : [
+            0.44878971972897147,
+            0.55197752847763515,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.5071022197289714,
+            0.55197752847763515
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.51816926797792773,
+            0.24144656362384828
+          ],
+          "box" : [
+            0.50948316811437788,
+            0.19168986426142356,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "tC",
+          "kind" : "arrow",
+          "leader" : [
+            0.51816926797792773,
+            0.23093986426142357
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Total of four equal thrusts"
+        },
+        {
+          "anchor" : [
+            0.5107011310188545,
+            0.5502854678468958
+          ],
+          "box" : [
+            0.51558696674187743,
+            0.4957444055185814,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.51558696674187743,
+            0.53499440551858135
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.64206743747707229,
+            0.31117565364317573
+          ],
+          "box" : [
+            0.62936367163981999,
+            0.25867924572243461,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "bF1",
+          "kind" : "arrow",
+          "leader" : [
+            0.64206743747707229,
+            0.29792924572243462
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Front motors: more thrust"
+        },
+        {
+          "anchor" : [
+            0.5372712481298294,
+            0.48410428101989633
+          ],
+          "box" : [
+            0.34748929671419015,
+            0.49897094840395761,
+            0.205125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "sR4",
+          "kind" : "arrow",
+          "leader" : [
+            0.5372712481298294,
+            0.49897094840395761
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Rear motors: less thrust"
+        },
+        {
+          "anchor" : [
+            0.51200768709238087,
+            0.5367070164040153
+          ],
+          "box" : [
+            0.44878971972897147,
+            0.55197752847763515,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.5071022197289714,
+            0.55197752847763515
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.51304193244070628,
+            0.2375900629493562
+          ],
+          "box" : [
+            0.48376955651437203,
+            0.18306955087573637,
+            0.29484374999999996,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "tW",
+          "kind" : "arrow",
+          "leader" : [
+            0.51304193244070628,
+            0.22231955087573638
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Total thrust (placed by the author)"
+        },
+        {
+          "anchor" : [
+            0.51200768709238087,
+            0.5367070164040153
+          ],
+          "box" : [
+            0.44878971972897147,
+            0.55197752847763515,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.5071022197289714,
+            0.55197752847763515
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 6
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.53780352594538028,
+            0.43375766881023609
+          ],
+          "box" : [
+            0.34802157452974081,
+            0.44862433619429731,
+            0.205125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "bR4",
+          "kind" : "arrow",
+          "leader" : [
+            0.53780352594538028,
+            0.44862433619429731
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Rear motors: more thrust"
+        },
+        {
+          "anchor" : [
+            0.6403286871280599,
+            0.3564389027922617
+          ],
+          "box" : [
+            0.4397512029653125,
+            0.36968531071300303,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "sF1",
+          "kind" : "arrow",
+          "leader" : [
+            0.6403286871280599,
+            0.36968531071300303
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Front motors: less thrust"
+        },
+        {
+          "anchor" : [
+            0.48786019089232752,
+            0.56725298559144166
+          ],
+          "box" : [
+            0.49276938050187014,
+            0.58251959854388613,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.49276938050187014,
+            0.58251959854388613
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 7
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.52669551162197337,
+            0.47798083267822711
+          ],
+          "box" : [
+            0.34877851233016594,
+            0.40543849764563489,
+            0.18065624999999999,
+            0.068500000000000005
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "xR4",
+          "kind" : "arrow",
+          "leader" : [
+            0.52669551162197337,
+            0.47393849764563489
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Rear motors at full power (assumed limit)"
+        },
+        {
+          "anchor" : [
+            0.63528768496610777,
+            0.32651281120101394
+          ],
+          "box" : [
+            0.43431060728176057,
+            0.27419613251075275,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "sF1",
+          "kind" : "arrow",
+          "leader" : [
+            0.63528768496610777,
+            0.31344613251075276
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Front motors: less thrust"
+        },
+        {
+          "anchor" : [
+            0.48299438154579838,
+            0.58128290778987612
+          ],
+          "box" : [
+            0.41969551440561015,
+            0.52684733435386621,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.47800801440561014,
+            0.56609733435386611
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 8
+    }
+  ],
+  "ratios" : {
+    "prop1" : 1,
+    "prop2" : 1,
+    "prop3" : -1,
+    "prop4" : -1
+  },
+  "readBack" : [
+    "pad: world centre (0, 0, -225) mm, size 524 x 524 x 0.4 mm; static; root (at [0, 0, -225] in the world frame); local +Z points +Z",
+    "frame: world centre (0, 0, 0) mm, size 337 x 337 x 22 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "deck: world centre (0, 0, 45) mm, size 84 x 124 x 3 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "standoffs: world centre (0, 0, 27.2) mm, size 74 x 110 x 32.5 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "battery: world centre (0, 0, 26) mm, size 54 x 100 x 28 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "fc: world centre (0, 22, 54.5) mm, size 44 x 64 x 16 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "gps: world centre (0, -38, 83.5) mm, size 64 x 64 x 74 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "escs: world centre (0, 0, 12.5) mm, size 215 x 215 x 9 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "ant: world centre (0, -58, 84) mm, size 131 x 3.2 x 76.6 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "legs: world centre (0, 0, -66.2) mm, size 159 x 190 x 113 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "cam: world centre (0, 105, -2) mm, size 34 x 34 x 26 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "motors: world centre (0, 0, 11.5) mm, size 358 x 358 x 11 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "stators: world centre (0, 0, 24.2) mm, size 341 x 341 x 14.5 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "prop1: world centre (159, 159, 37.5) mm, size 254 x 52 x 24 mm; turns about a vertical axis (+Z) through (159, 159, 17); 1 turn per input turn (Solved, input); child of frame (at [159, 159, 17] in the frame frame); local +Z points +Z",
+    "prop2: world centre (-159, -159, 37.5) mm, size 254 x 52 x 24 mm; turns about a vertical axis (+Z) through (-159, -159, 17); 1 turn per input turn (Solved, input); child of frame (at [-159, -159, 17] in the frame frame); local +Z points +Z",
+    "prop3: world centre (-159, 159, 37.5) mm, size 254 x 52 x 24 mm; turns about a vertical axis (+Z) through (-159, 159, 17); -1 turn per input turn (Solved, input); child of frame (at [-159, 159, 17] in the frame frame); local +Z points +Z",
+    "prop4: world centre (159, -159, 37.5) mm, size 254 x 52 x 24 mm; turns about a vertical axis (+Z) through (159, -159, 17); -1 turn per input turn (Solved, input); child of frame (at [159, -159, 17] in the frame frame); local +Z points +Z",
+    "bell1: world centre (159, 159, 27.5) mm, size 31 x 31 x 20 mm; fixed to its parent, moves with prop1; child of prop1 (at [0, 0, 0] in the prop1 frame); its origin is 0 mm from the prop1 axis; local +Z points +Z",
+    "bell2: world centre (-159, -159, 27.5) mm, size 31 x 31 x 20 mm; fixed to its parent, moves with prop2; child of prop2 (at [0, 0, 0] in the prop2 frame); its origin is 0 mm from the prop2 axis; local +Z points +Z",
+    "bell3: world centre (-159, 159, 27.5) mm, size 31 x 31 x 20 mm; fixed to its parent, moves with prop3; child of prop3 (at [0, 0, 0] in the prop3 frame); its origin is 0 mm from the prop3 axis; local +Z points +Z",
+    "bell4: world centre (159, -159, 27.5) mm, size 31 x 31 x 20 mm; fixed to its parent, moves with prop4; child of prop4 (at [0, 0, 0] in the prop4 frame); its origin is 0 mm from the prop4 axis; local +Z points +Z",
+    "rail: world centre (0, -61, -14) mm, size 14 x 290 x 6 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "payload: world centre (0, 0, -56) mm, size 84 x 84 x 88 mm; static; child of frame (at [0, 0, 2942] in the frame frame); local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "showOnly" : [
+
+  ],
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "This quadcopter carries a payload on a rail under its frame. The payload can sit in the middle, forward or aft. The black camera marks the front.",
+    "For this ideal hover example, assume the aircraft CG is exactly below the centre of the four propellers. Four equal thrusts can then balance weight without a pitch or roll moment. The weight marker is not this CG.",
+    "Move the payload forward. The centre of gravity moves forward with it, so the weight now acts ahead of the centre of the propellers.",
+    "The total of four equal thrusts acts at the centre of the propellers. The weight ahead of it turns the nose down.",
+    "With enough thrust available, the flight controller can correct the nose-down turn. In a steady, level hover with this forward CG, the front pair must keep producing more thrust than the rear pair.",
+    "In this steady, level hover, the resultant thrust line passes through the aircraft CG. The torques balance. The front motors produce more thrust than the rear motors, so they have less additional thrust available before their upper limit.",
+    "Move the payload aft and the opposite occurs: the weight acts behind the centre, and the rear motors must work harder.",
+    "An assumed limit case. If the thrust needed for a steady, level hover is outside the motor-thrust limits, that hover is not possible. At a limit, less control is available in one direction.",
+    "The engine finds the volume centre of all drawn parts, including the ground marking. This is not the aircraft CG. The force arrows and tilts are authored. The engine does not calculate the thrust balance or margin. No flight is simulated."
+  ],
+  "stepTiers" : [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "stepViews" : [
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 1
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 2
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "payload"
+      ],
+      "poseReadBack" : [
+        "payload: world centre (0, 100, -54.1) mm, size 84 x 84 x 88.4 mm; local +Z points (0, -0.03, 1); posed placement at [0, 0, 2942] in the frame frame"
+      ],
+      "step" : 3
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "frame",
+        "payload"
+      ],
+      "poseReadBack" : [
+        "frame: world centre (0, 0, 0) mm, size 337 x 327 x 94.5 mm; local +Z points (0, 0.24, 0.97); posed placement at [0, 0, 0] in the world frame",
+        "deck: world centre (0, 10.9, 43.7) mm, size 84 x 121 x 32.4 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "standoffs: world centre (0, 6.59, 26.4) mm, size 74 x 115 x 58.1 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "battery: world centre (0, 6.29, 25.2) mm, size 54 x 102 x 49.4 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "fc: world centre (0, 34.5, 47.6) mm, size 44 x 65 x 30 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "gps: world centre (0, -9.17, 93.5) mm, size 64 x 63.6 x 79.3 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "escs: world centre (0, 3.02, 12.1) mm, size 215 x 210 x 60.3 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "ant: world centre (0, -35.9, 95.6) mm, size 131 x 21.3 x 74.5 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "legs: world centre (0, -28.5, -70.1) mm, size 159 x 187 x 143 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "cam: world centre (0, 101, -26.4) mm, size 34 x 37.6 x 30.1 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "motors: world centre (0, 1.94, 10.6) mm, size 358 x 349 x 96.1 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "stators: world centre (0, 5.87, 23.5) mm, size 341 x 335 x 96.6 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "prop1: world centre (159, 161, -4.62) mm, size 254 x 50.4 x 30.8 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "prop2: world centre (-159, -148, 72.4) mm, size 254 x 50.4 x 30.8 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "prop3: world centre (-159, 161, -4.62) mm, size 254 x 50.4 x 30.8 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "prop4: world centre (159, -148, 72.4) mm, size 254 x 50.4 x 30.8 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "bell1: world centre (159, 161, -12.8) mm, size 31 x 34.4 x 25 mm; local +Z points (0, 0.24, 0.97); moves with prop1",
+        "bell2: world centre (-159, -148, 64.2) mm, size 31 x 34.4 x 25 mm; local +Z points (0, 0.24, 0.97); moves with prop2",
+        "bell3: world centre (-159, 161, -12.8) mm, size 31 x 34.4 x 25 mm; local +Z points (0, 0.24, 0.97); moves with prop3",
+        "bell4: world centre (159, -148, 64.2) mm, size 31 x 34.4 x 25 mm; local +Z points (0, 0.24, 0.97); moves with prop4",
+        "rail: world centre (0, -62.6, 1.17) mm, size 14 x 282 x 75.5 mm; local +Z points (0, 0.24, 0.97); moves with frame",
+        "payload: world centre (0, 83.4, -76.1) mm, size 84 x 84 x 89.5 mm; local +Z points (0, 0.21, 0.98); posed placement at [0, 0, 2942] in the frame frame"
+      ],
+      "step" : 4
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "payload"
+      ],
+      "poseReadBack" : [
+        "payload: world centre (0, 100, -54.1) mm, size 84 x 84 x 88.4 mm; local +Z points (0, -0.03, 1); posed placement at [0, 0, 2942] in the frame frame"
+      ],
+      "step" : 5
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "payload"
+      ],
+      "poseReadBack" : [
+        "payload: world centre (0, 100, -54.1) mm, size 84 x 84 x 88.4 mm; local +Z points (0, -0.03, 1); posed placement at [0, 0, 2942] in the frame frame"
+      ],
+      "step" : 6
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "payload"
+      ],
+      "poseReadBack" : [
+        "payload: world centre (0, -100, -54.1) mm, size 84 x 84 x 88.4 mm; local +Z points (0, 0.03, 1); posed placement at [0, 0, 2942] in the frame frame"
+      ],
+      "step" : 7
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "frame",
+        "payload"
+      ],
+      "poseReadBack" : [
+        "frame: world centre (0, 0, 0) mm, size 337 x 327 x 94.5 mm; local +Z points (0, -0.24, 0.97); posed placement at [0, 0, 0] in the world frame",
+        "deck: world centre (0, -10.9, 43.7) mm, size 84 x 121 x 32.4 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "standoffs: world centre (0, -6.59, 26.4) mm, size 74 x 115 x 58.1 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "battery: world centre (0, -6.29, 25.2) mm, size 54 x 102 x 49.4 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "fc: world centre (0, 8.16, 58.2) mm, size 44 x 65 x 30 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "gps: world centre (0, -64.6, 75.1) mm, size 64 x 63.6 x 79.3 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "escs: world centre (0, -3.02, 12.1) mm, size 215 x 210 x 60.3 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "ant: world centre (0, -76.6, 67.5) mm, size 131 x 21.3 x 74.5 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "legs: world centre (0, 28.5, -70.1) mm, size 159 x 187 x 143 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "cam: world centre (0, 102, 22.5) mm, size 34 x 37.6 x 30.1 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "motors: world centre (0, -1.94, 10.6) mm, size 358 x 349 x 96.1 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "stators: world centre (0, -5.87, 23.5) mm, size 341 x 335 x 96.6 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "prop1: world centre (159, 148, 72.4) mm, size 254 x 50.4 x 30.8 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "prop2: world centre (-159, -161, -4.62) mm, size 254 x 50.4 x 30.8 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "prop3: world centre (-159, 148, 72.4) mm, size 254 x 50.4 x 30.8 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "prop4: world centre (159, -161, -4.62) mm, size 254 x 50.4 x 30.8 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "bell1: world centre (159, 148, 64.2) mm, size 31 x 34.4 x 25 mm; local +Z points (0, -0.24, 0.97); moves with prop1",
+        "bell2: world centre (-159, -161, -12.8) mm, size 31 x 34.4 x 25 mm; local +Z points (0, -0.24, 0.97); moves with prop2",
+        "bell3: world centre (-159, 148, 64.2) mm, size 31 x 34.4 x 25 mm; local +Z points (0, -0.24, 0.97); moves with prop3",
+        "bell4: world centre (159, -161, -12.8) mm, size 31 x 34.4 x 25 mm; local +Z points (0, -0.24, 0.97); moves with prop4",
+        "rail: world centre (0, -55.8, -28.3) mm, size 14 x 282 x 75.5 mm; local +Z points (0, -0.24, 0.97); moves with frame",
+        "payload: world centre (0, -132, -86.2) mm, size 84 x 84 x 89.5 mm; local +Z points (0, -0.19, 0.98); posed placement at [0, 0, 2942] in the frame frame"
+      ],
+      "step" : 8
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 9
+    }
+  ],
+  "stillPlacements" : [
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.48093328475533481,
+            0.53006303101413044
+          ],
+          "box" : [
+            0.40640016638415305,
+            0.48029899760062605,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lPayload",
+          "kind" : "label",
+          "leader" : [
+            0.47286891638415307,
+            0.51954899760062601
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Payload"
+        },
+        {
+          "anchor" : [
+            0.10227280043386462,
+            0.38349758868360218
+          ],
+          "box" : [
+            0.088727569520037464,
+            0.33596552623665621,
+            0.33562499999999995,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lRail",
+          "kind" : "label",
+          "leader" : [
+            0.10227280043386462,
+            0.37521552623665622
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Rail: the payload can sit forward or aft"
+        }
+      ],
+      "step" : 1
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.72233146169650198,
+            0.26488453312254923
+          ],
+          "box" : [
+            0.72803756738549952,
+            0.21122304067868181,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "f1",
+          "kind" : "arrow",
+          "leader" : [
+            0.72803756738549952,
+            0.25047304067868181
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Thrust"
+        },
+        {
+          "anchor" : [
+            0.48645753497118494,
+            0.61114198583076829
+          ],
+          "box" : [
+            0.49123895427861808,
+            0.62654194945898134,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.49123895427861808,
+            0.62654194945898134
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.49284197155617093,
+            0.28234628442017445
+          ],
+          "box" : [
+            0.28352310707793693,
+            0.22766461859226883,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "tC",
+          "kind" : "arrow",
+          "leader" : [
+            0.49284197155617093,
+            0.26691461859226884
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Total of four equal thrusts"
+        },
+        {
+          "anchor" : [
+            0.51696504980609381,
+            0.65550284829875249
+          ],
+          "box" : [
+            0.45385496883978299,
+            0.67088600011276045,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.51216746883978304,
+            0.67088600011276045
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.52796165408477758,
+            0.27787296787584648
+          ],
+          "box" : [
+            0.52601449220388274,
+            0.23171171892155684,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "tC",
+          "kind" : "arrow",
+          "leader" : [
+            0.52796165408477758,
+            0.27096171892155685
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Total of four equal thrusts"
+        },
+        {
+          "anchor" : [
+            0.51492121600684582,
+            0.65534613246633999
+          ],
+          "box" : [
+            0.51970928887448042,
+            0.60070308811275241,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.51970928887448042,
+            0.63995308811275242
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.69791513422079843,
+            0.29242784031885871
+          ],
+          "box" : [
+            0.68224919336297241,
+            0.23865139478801184,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "bF1",
+          "kind" : "arrow",
+          "leader" : [
+            0.69791513422079843,
+            0.27790139478801185
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Front motors: more thrust"
+        },
+        {
+          "anchor" : [
+            0.4009927282373279,
+            0.38847852626912721
+          ],
+          "box" : [
+            0.2115144811426215,
+            0.33423380938756614,
+            0.205125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "sR4",
+          "kind" : "arrow",
+          "leader" : [
+            0.4009927282373279,
+            0.37348380938756615
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Rear motors: less thrust"
+        },
+        {
+          "anchor" : [
+            0.51901523374940306,
+            0.6290056886253248
+          ],
+          "box" : [
+            0.45589581984051469,
+            0.64437912472289993,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.51420831984051474,
+            0.64437912472289993
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.51761764087987072,
+            0.28243052475693353
+          ],
+          "box" : [
+            0.2524187999147246,
+            0.29781316913547023,
+            0.29484374999999996,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "tW",
+          "kind" : "arrow",
+          "leader" : [
+            0.51761764087987072,
+            0.29781316913547023
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Total thrust (placed by the author)"
+        },
+        {
+          "anchor" : [
+            0.51707154604812577,
+            0.65436997994222978
+          ],
+          "box" : [
+            0.45396097751036002,
+            0.66975262432076632,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.51227347751036001,
+            0.66975262432076632
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 6
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.40386428247794087,
+            0.30269739321831962
+          ],
+          "box" : [
+            0.21442657057639264,
+            0.24843565517874702,
+            0.205125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "bR4",
+          "kind" : "arrow",
+          "leader" : [
+            0.40386428247794087,
+            0.287685655178747
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Rear motors: more thrust"
+        },
+        {
+          "anchor" : [
+            0.69135188871507758,
+            0.36512407996392626
+          ],
+          "box" : [
+            0.49379870054851144,
+            0.37967642596707202,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "sF1",
+          "kind" : "arrow",
+          "leader" : [
+            0.69135188871507758,
+            0.37967642596707202
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Front motors: less thrust"
+        },
+        {
+          "anchor" : [
+            0.4602734227682953,
+            0.62944443451525345
+          ],
+          "box" : [
+            0.39705805834003427,
+            0.5749211963312213,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.45537055834003431,
+            0.6141711963312213
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 7
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.39482706752522523,
+            0.32214497975913192
+          ],
+          "box" : [
+            0.39805660595917675,
+            0.3209278156369389,
+            0.18065624999999999,
+            0.068500000000000005
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "xR4",
+          "kind" : "arrow",
+          "leader" : [
+            0.39805660595917675,
+            0.32214497975913192
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Rear motors at full power (assumed limit)"
+        },
+        {
+          "anchor" : [
+            0.69976887794841303,
+            0.27446093600713872
+          ],
+          "box" : [
+            0.49009938703763084,
+            0.22655101211531026,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "sF1",
+          "kind" : "arrow",
+          "leader" : [
+            0.69976887794841303,
+            0.26580101211531026
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Front motors: less thrust"
+        },
+        {
+          "anchor" : [
+            0.46708429114357247,
+            0.62516582675376742
+          ],
+          "box" : [
+            0.47195557826887413,
+            0.64047210300822455,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.47195557826887413,
+            0.64047210300822455
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 8
+    }
+  ],
+  "strict" : true,
+  "title" : "Payload position and centre of gravity on a quadcopter",
+  "triangles" : 28324,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

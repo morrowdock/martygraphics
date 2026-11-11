@@ -1,0 +1,1555 @@
+{
+  "annotations" : [
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          -118,
+          0
+        ]
+      ],
+      "id" : "lTrunnion",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Trunnion: the leg turns here",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          -42,
+          -250
+        ]
+      ],
+      "id" : "lLeg",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Shock strut (leg)",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          372.28263781832874,
+          -69,
+          -91.433099124567221
+        ]
+      ],
+      "id" : "lUpper",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Upper brace link",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          103.24469065788699,
+          -67,
+          -331.322974358544
+        ]
+      ],
+      "id" : "lLower",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Lower brace link",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -260.17467255710176,
+          -24,
+          106.99126637214491
+        ]
+      ],
+      "id" : "lAct",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Retract actuator",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          253.11601580643278,
+          -72,
+          -231.63051778223695
+        ]
+      ],
+      "id" : "lKnee",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Knee joint: past the straight line",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          210.41008079743767,
+          -69,
+          -232.00026770784052
+        ]
+      ],
+      "id" : "lStop",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Stop",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -230,
+          -40,
+          -1040
+        ],
+        [
+          -50,
+          -40,
+          -1040
+        ]
+      ],
+      "id" : "aLoad",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Side load on the wheel",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          482.76365586533842,
+          -69,
+          -54.09753094493017
+        ],
+        [
+          398.56984683519454,
+          -69,
+          -153.15005499654467
+        ]
+      ],
+      "id" : "aSqueezeA",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Squeeze",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          49.883188319718442,
+          -67,
+          -438.88016876325889
+        ],
+        [
+          158.12358981589043,
+          -67,
+          -366.88006123592606
+        ]
+      ],
+      "id" : "aSqueezeB",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          228.75414064964849,
+          -67,
+          -187.78420620594517
+        ],
+        [
+          173.36944255170013,
+          -67,
+          -104.52235890119753
+        ]
+      ],
+      "id" : "aKnee",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Knee pushed onto its stop",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          228.19290166235601,
+          -95,
+          -194.1626864951005
+        ],
+        [
+          167.26973375461282,
+          -95,
+          -102.57465445987808
+        ]
+      ],
+      "id" : "aUnlock",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Unlock actuator pulls here",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -1.1368683772161603e-13,
+          -55,
+          -400
+        ],
+        [
+          100,
+          -55,
+          -400
+        ]
+      ],
+      "id" : "pinA",
+      "kind" : "dimension",
+      "meaning" : "distance",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Pin to leg point: 100 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 100.00000000000011
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -1.1368683772161603e-13,
+          -55,
+          -400
+        ],
+        [
+          0,
+          -55,
+          -900
+        ]
+      ],
+      "id" : "pinB",
+      "kind" : "dimension",
+      "meaning" : "distance",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Pin to axle line: 500 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 500
+    }
+  ],
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+    "dim.pinA" : {
+      "source" : "dimension",
+      "text" : "100 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 100.00000000000011
+    },
+    "dim.pinB" : {
+      "source" : "dimension",
+      "text" : "500 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 500
+    }
+  },
+  "file" : {
+    "lines" : 80,
+    "sha256" : "c0c4e14b7de62481846952dd47ba9d03a816100c19950f11d1c5b1ee37d81e2d"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Not checked",
+        "id" : "aLoad",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aSqueezeA",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aSqueezeB",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aKnee",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "aUnlock",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "pinA",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Measured by the engine at the default input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "pinB",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Measured by the engine at the default input"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.4.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinA = 100 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.4.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinB = 500 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.5.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinA = 100 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.5.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinB = 500 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.6.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinA = 100 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.6.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinB = 500 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.7.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinA = 100 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.7.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinB = 500 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.8.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinA = 100 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.8.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinB = 500 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.9.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinA = 100 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.9.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinB = 500 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.10.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinA = 100 ± 1e-06"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.10.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.pinB = 500 ± 1e-06"
+      }
+    ],
+    "described" : 5,
+    "note" : null,
+    "notes" : [
+      "Arrow lengths are not to scale"
+    ],
+    "shapes" : "Shapes as authored",
+    "solved" : 16,
+    "text" : "Solved 16 · Not checked 5"
+  },
+  "notChecked" : {
+
+  },
+  "ok" : true,
+  "parts" : 11,
+  "placements" : [
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.41506474416679939,
+            0.35621940335738889
+          ],
+          "box" : [
+            0.39620893858551182,
+            0.30250697481395478,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lTrunnion",
+          "kind" : "label",
+          "leader" : [
+            0.41506474416679939,
+            0.34175697481395473
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Trunnion: the leg turns here"
+        },
+        {
+          "anchor" : [
+            0.4277342335817188,
+            0.43425915168633628
+          ],
+          "box" : [
+            0.27307632080196492,
+            0.39010632927717931,
+            0.14803125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lLeg",
+          "kind" : "label",
+          "leader" : [
+            0.42110757080196493,
+            0.42935632927717926
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Shock strut (leg)"
+        },
+        {
+          "anchor" : [
+            0.4998210863790325,
+            0.4155815361754136
+          ],
+          "box" : [
+            0.49280741116580701,
+            0.43092751885639685,
+            0.139875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lUpper",
+          "kind" : "label",
+          "leader" : [
+            0.4998210863790325,
+            0.43092751885639685
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Upper brace link"
+        },
+        {
+          "anchor" : [
+            0.44518460788249675,
+            0.47523335011068402
+          ],
+          "box" : [
+            0.29785325837579812,
+            0.47984182601594944,
+            0.139875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lLower",
+          "kind" : "label",
+          "leader" : [
+            0.4377282583757981,
+            0.47984182601594944
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Lower brace link"
+        },
+        {
+          "anchor" : [
+            0.37641741441374654,
+            0.28467790136007254
+          ],
+          "box" : [
+            0.37180282038429474,
+            0.23148746793905647,
+            0.139875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lAct",
+          "kind" : "label",
+          "leader" : [
+            0.37641741441374654,
+            0.27073746793905651
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Retract actuator"
+        }
+      ],
+      "step" : 1
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.47449506612770398,
+            0.45535410033347412
+          ],
+          "box" : [
+            0.45079613870001883,
+            0.40224869049000567,
+            0.28668749999999998,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lKnee",
+          "kind" : "label",
+          "leader" : [
+            0.47449506612770398,
+            0.44149869049000562
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Knee joint: past the straight line"
+        },
+        {
+          "anchor" : [
+            0.46611084623198862,
+            0.45104857742736404
+          ],
+          "box" : [
+            0.47461588646846231,
+            0.4646776016105531,
+            0.042000000000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lStop",
+          "kind" : "label",
+          "leader" : [
+            0.47461588646846231,
+            0.4646776016105531
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Stop"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.40786298792320663,
+            0.67212557111941307
+          ],
+          "box" : [
+            0.21107342744703161,
+            0.67363315398696189,
+            0.18881249999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "aLoad",
+          "kind" : "arrow",
+          "leader" : [
+            0.39988592744703161,
+            0.67363315398696189
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Side load on the wheel"
+        },
+        {
+          "anchor" : [
+            0.51458584117992001,
+            0.42641293703748212
+          ],
+          "box" : [
+            0.53332734067167442,
+            0.40768533234838134,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "aSqueezeA",
+          "kind" : "arrow",
+          "leader" : [
+            0.53332734067167442,
+            0.42641293703748212
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Squeeze"
+        },
+        {
+          "anchor" : [
+            0.46416420054276247,
+            0.41945137834160151
+          ],
+          "box" : [
+            0.23740122391430404,
+            0.38559303814220963,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "aKnee",
+          "kind" : "arrow",
+          "leader" : [
+            0.45068247391430399,
+            0.41945137834160151
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Knee pushed onto its stop"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.4367131621561981,
+            0.4917524111442535
+          ],
+          "box" : [
+            0.22734386558228775,
+            0.49565868162444282,
+            0.205125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "pinA",
+          "kind" : "dimension",
+          "leader" : [
+            0.4324688655822877,
+            0.49565868162444282
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pin to leg point: 100 mm"
+        },
+        {
+          "anchor" : [
+            0.42869053847075306,
+            0.56889364106934792
+          ],
+          "box" : [
+            0.4147048635088475,
+            0.58317653316537355,
+            0.205125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "pinB",
+          "kind" : "dimension",
+          "leader" : [
+            0.42869053847075306,
+            0.58317653316537355
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pin to axle line: 500 mm"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.45077988798829283,
+            0.41165190196994983
+          ],
+          "box" : [
+            0.23268616975290773,
+            0.41975381562516234,
+            0.22143750000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "aUnlock",
+          "kind" : "arrow",
+          "leader" : [
+            0.45077988798829283,
+            0.41975381562516234
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Unlock actuator pulls here"
+        }
+      ],
+      "step" : 5
+    }
+  ],
+  "ratios" : {
+
+  },
+  "readBack" : [
+    "floor: world centre (330, 0, -1107) mm, size 1560 x 560 x 8 mm; static; root (at [330, 0, -1103] in the world frame); local +Z points +Z",
+    "airframe: world centre (330, 0, 175) mm, size 1560 x 240 x 390 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "leg: world centre (0, 6, -394) mm, size 84 x 248 x 1057 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "oleo: world centre (0, 0, -715) mm, size 60 x 60 x 420 mm; static; child of leg (at [0, 0, 0] in the leg frame); local +Z points +Z",
+    "scissors: world centre (-63.1, 0, -600) mm, size 84.1 x 18 x 245 mm; static; child of leg (at [0, 0, 0] in the leg frame); local +Z points +Z",
+    "tire: world centre (0, 95, -900) mm, size 406 x 104 x 406 mm; static; child of leg (at [0, 95, -900] in the leg frame); local +Z points +Y",
+    "hub: world centre (0, 95, -900) mm, size 250 x 96 x 250 mm; static; child of leg (at [0, 95, -900] in the leg frame); local +Z points +Y",
+    "upper: world centre (334, -55, -116) mm, size 284 x 34 x 284 mm; static; child of airframe (at [450, -55, 0] in the airframe frame); local +Z points (0.76, 0, -0.65)",
+    "lower: world centre (119, -55, -321) mm, size 285 x 30 x 206 mm; static; child of upper (at [304, 0, 0] in the upper frame); local +Z points (0.55, 0, -0.83)",
+    "barrel: world centre (-270, 0, 107) mm, size 301 x 50 x 61.9 mm; static; child of airframe (at [-400, 0, 100] in the airframe frame); local +Z points (-0.05, 0, 1)",
+    "rod: world centre (-132, 0, 116) mm, size 297 x 40 x 42 mm; static; child of leg (at [0, 0, 120] in the leg frame); local +Z points (0.05, 0, -1)"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "showOnly" : [
+
+  ],
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 100,
+          "text" : "dim.pinA = 100 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinA"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 500,
+          "text" : "dim.pinB = 500 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinB"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 100,
+          "text" : "dim.pinA = 100 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinA"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 500,
+          "text" : "dim.pinB = 500 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinB"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 100,
+          "text" : "dim.pinA = 100 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinA"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 500,
+          "text" : "dim.pinB = 500 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinB"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 100,
+          "text" : "dim.pinA = 100 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinA"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 500,
+          "text" : "dim.pinB = 500 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinB"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 100,
+          "text" : "dim.pinA = 100 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinA"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 500,
+          "text" : "dim.pinB = 500 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinB"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 100,
+          "text" : "dim.pinA = 100 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinA"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 500,
+          "text" : "dim.pinB = 500 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinB"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 100,
+          "text" : "dim.pinA = 100 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinA"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 500,
+          "text" : "dim.pinB = 500 ± 1e-06",
+          "tolerance" : 9.9999999999999995e-07,
+          "value" : "dim.pinB"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "A retractable main landing gear, shown with the aircraft on jacks. The leg turns about the trunnion. A folding side brace holds it down.",
+    "The side brace has two links. With the gear down, the knee joint between them sits a little past the straight line and rests on a stop. This is the over-centre lock.",
+    "A side load on the wheel tries to fold the gear, and it squeezes the brace. The knee is already past the straight line, so the squeeze pushes it harder onto the stop. The gear cannot fold.",
+    "The pin at the end of the lower link joins the leg. The engine checked these two pin-to-leg distances at each shown pose.",
+    "In this example, an unlock actuator (not shown) moves the knee back through centre before retraction. Here the brace is exactly straight.",
+    "Then the retract actuator shortens. It pulls the lever at the top of the leg.",
+    "The leg swings up about the trunnion, and the brace folds at the knee.",
+    "The knee moves up into the wheel well.",
+    "The brace is almost folded flat.",
+    "Gear up. The folded brace lies above the leg.",
+    "The engine checked the two pin-to-leg distances at each shown pose, not the blend, loads or hydraulics. Real designs can use lock links, springs and actuators. Use the aircraft maintenance manual for its geometry and adjustments."
+  ],
+  "stepTiers" : [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "stepViews" : [
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 1
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 2
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 3
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 4
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "leg",
+        "upper",
+        "lower",
+        "barrel",
+        "rod"
+      ],
+      "poseReadBack" : [
+        "leg: world centre (-5.17, 6, -393) mm, size 94.1 x 248 x 1057 mm; local +Z points (0.02, 0, 1); posed placement at [0, 0, 0] in the world frame",
+        "oleo: world centre (-14.2, 0, -715) mm, size 68.2 x 60 x 421 mm; local +Z points (0.02, 0, 1); moves with leg",
+        "scissors: world centre (-75.8, 0, -599) mm, size 82.4 x 18 x 245 mm; local +Z points (0.02, 0, 1); moves with leg",
+        "tire: world centre (-17.9, 95, -900) mm, size 406 x 104 x 406 mm; local +Z points +Y; moves with leg",
+        "hub: world centre (-17.9, 95, -900) mm, size 250 x 96 x 250 mm; local +Z points +Y; moves with leg",
+        "upper: world centre (318, -55, -100) mm, size 316 x 34 x 252 mm; local +Z points (0.66, 0, -0.75); posed placement at [450, -55, 0] in the airframe frame",
+        "lower: world centre (99.5, -55, -306) mm, size 263 x 30 x 236 mm; local +Z points (0.66, 0, -0.75); posed placement at [304, 0, 0] in the upper frame",
+        "barrel: world centre (-270, 0, 107) mm, size 301 x 50 x 61.8 mm; local +Z points (-0.05, 0, 1); posed placement at [-400, 0, 100] in the airframe frame",
+        "rod: world centre (-129, 0, 116) mm, size 297 x 40 x 41.9 mm; local +Z points (0.05, 0, -1); posed placement at [0, 0, 120] in the leg frame"
+      ],
+      "step" : 5
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "leg",
+        "upper",
+        "lower",
+        "barrel",
+        "rod"
+      ],
+      "poseReadBack" : [
+        "leg: world centre (80.2, 6, -383) mm, size 258 x 248 x 1038 mm; local +Z points (-0.21, 0, 0.98); posed placement at [0, 0, 0] in the world frame",
+        "oleo: world centre (149, 0, -699) mm, size 145 x 60 x 422 mm; local +Z points (-0.21, 0, 0.98); moves with leg",
+        "scissors: world centre (74.4, 0, -594) mm, size 107 x 18 x 239 mm; local +Z points (-0.21, 0, 0.98); moves with leg",
+        "tire: world centre (187, 95, -880) mm, size 406 x 104 x 406 mm; local +Z points +Y; moves with leg",
+        "hub: world centre (187, 95, -880) mm, size 250 x 96 x 250 mm; local +Z points +Y; moves with leg",
+        "upper: world centre (291, -55, -48.8) mm, size 369 x 34 x 150 mm; local +Z points (0.32, 0, -0.95); posed placement at [450, -55, 0] in the airframe frame",
+        "lower: world centre (120, -55, -255) mm, size 121 x 30 x 321 mm; local +Z points (0.97, 0, -0.26); posed placement at [304, 0, 0] in the upper frame",
+        "barrel: world centre (-270, 0, 106) mm, size 301 x 50 x 60.9 mm; local +Z points (-0.05, 0, 1); posed placement at [-400, 0, 100] in the airframe frame",
+        "rod: world centre (-157, 0, 114) mm, size 297 x 40 x 40.9 mm; local +Z points (0.05, 0, -1); posed placement at [0, 0, 120] in the leg frame"
+      ],
+      "step" : 6
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "leg",
+        "upper",
+        "lower",
+        "barrel",
+        "rod"
+      ],
+      "poseReadBack" : [
+        "leg: world centre (194, 6, -338) mm, size 557 x 248 x 927 mm; local +Z points (-0.5, 0, 0.87); posed placement at [0, 0, 0] in the world frame",
+        "oleo: world centre (357, 0, -619) mm, size 259 x 60 x 391 mm; local +Z points (-0.5, 0, 0.87); moves with leg",
+        "scissors: world centre (273, 0, -536) mm, size 134 x 18 x 211 mm; local +Z points (-0.5, 0, 0.87); moves with leg",
+        "tire: world centre (450, 95, -779) mm, size 406 x 104 x 406 mm; local +Z points +Y; moves with leg",
+        "hub: world centre (450, 95, -779) mm, size 250 x 96 x 250 mm; local +Z points +Y; moves with leg",
+        "upper: world centre (287, -55, -23.3) mm, size 377 x 34 x 98.6 mm; local +Z points (0.15, 0, -0.99); posed placement at [450, -55, 0] in the airframe frame",
+        "lower: world centre (177, -55, -207) mm, size 93.3 x 30 x 326 mm; local +Z points (0.99, 0, 0.17); posed placement at [304, 0, 0] in the upper frame",
+        "barrel: world centre (-270, 0, 102) mm, size 300 x 50 x 51.2 mm; local +Z points +Z; posed placement at [-400, 0, 100] in the airframe frame",
+        "rod: world centre (-192, 0, 104) mm, size 297 x 40 x 34 mm; local +Z points -Z; posed placement at [0, 0, 120] in the leg frame"
+      ],
+      "step" : 7
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "leg",
+        "upper",
+        "lower",
+        "barrel",
+        "rod"
+      ],
+      "poseReadBack" : [
+        "leg: world centre (298, 6, -250) mm, size 826 x 248 x 702 mm; local +Z points (-0.77, 0, 0.64); posed placement at [0, 0, 0] in the world frame",
+        "oleo: world centre (548, 0, -460) mm, size 356 x 60 x 312 mm; local +Z points (-0.77, 0, 0.64); moves with leg",
+        "scissors: world centre (439, 0, -410) mm, size 193 x 18 x 160 mm; local +Z points (-0.77, 0, 0.64); moves with leg",
+        "tire: world centre (689, 95, -579) mm, size 406 x 104 x 406 mm; local +Z points +Y; moves with leg",
+        "hub: world centre (689, 95, -579) mm, size 250 x 96 x 250 mm; local +Z points +Y; moves with leg",
+        "upper: world centre (288, -55, 9.29) mm, size 376 x 34 x 70.6 mm; local +Z points -Z; posed placement at [450, -55, 0] in the airframe frame",
+        "lower: world centre (231, -55, -136) mm, size 199 x 30 x 290 mm; local +Z points (0.85, 0, 0.53); posed placement at [304, 0, 0] in the upper frame",
+        "barrel: world centre (-269, 0, 89.6) mm, size 301 x 50 x 68.6 mm; local +Z points (0.07, 0, 1); posed placement at [-400, 0, 100] in the airframe frame",
+        "rod: world centre (-223, 0, 84.5) mm, size 297 x 40 x 48.7 mm; local +Z points (-0.07, 0, -1); posed placement at [0, 0, 120] in the leg frame"
+      ],
+      "step" : 8
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "leg",
+        "upper",
+        "lower",
+        "barrel",
+        "rod"
+      ],
+      "poseReadBack" : [
+        "leg: world centre (362, 6, -145) mm, size 988 x 248 x 429 mm; local +Z points (-0.93, 0, 0.37); posed placement at [0, 0, 0] in the world frame",
+        "oleo: world centre (663, 0, -268) mm, size 410 x 60 x 211 mm; local +Z points (-0.93, 0, 0.37); moves with leg",
+        "scissors: world centre (544, 0, -264) mm, size 229 x 18 x 120 mm; local +Z points (-0.93, 0, 0.37); moves with leg",
+        "tire: world centre (834, 95, -337) mm, size 406 x 104 x 406 mm; local +Z points +Y; moves with leg",
+        "hub: world centre (834, 95, -337) mm, size 250 x 96 x 250 mm; local +Z points +Y; moves with leg",
+        "upper: world centre (295, -55, 43.2) mm, size 362 x 34 x 138 mm; local +Z points (-0.2, 0, -0.98); posed placement at [450, -55, 0] in the airframe frame",
+        "lower: world centre (268, -55, -50.8) mm, size 253 x 30 x 246 mm; local +Z points (0.69, 0, 0.72); posed placement at [304, 0, 0] in the upper frame",
+        "barrel: world centre (-270, 0, 73.8) mm, size 300 x 50 x 99.6 mm; local +Z points (0.19, 0, 0.98); posed placement at [-400, 0, 100] in the airframe frame",
+        "rod: world centre (-241, 0, 68.1) mm, size 294 x 40 x 80.2 mm; local +Z points (-0.19, 0, -0.98); posed placement at [0, 0, 120] in the leg frame"
+      ],
+      "step" : 9
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "leg",
+        "upper",
+        "lower",
+        "barrel",
+        "rod"
+      ],
+      "poseReadBack" : [
+        "leg: world centre (391, 6, -29.5) mm, size 1055 x 248 x 142 mm; local +Z points (-1, 0, 0.09); posed placement at [0, 0, 0] in the world frame",
+        "oleo: world centre (712, 0, -62.3) mm, size 423 x 60 x 95.9 mm; local +Z points (-1, 0, 0.09); moves with leg",
+        "scissors: world centre (595, 0, -112) mm, size 245 x 18 x 90.2 mm; local +Z points (-1, 0, 0.09); moves with leg",
+        "tire: world centre (897, 95, -78.4) mm, size 406 x 104 x 406 mm; local +Z points +Y; moves with leg",
+        "hub: world centre (897, 95, -78.4) mm, size 250 x 96 x 250 mm; local +Z points +Y; moves with leg",
+        "upper: world centre (352, -55, 134) mm, size 247 x 34 x 320 mm; local +Z points (-0.77, 0, -0.64); posed placement at [450, -55, 0] in the airframe frame",
+        "lower: world centre (331, -55, 90.6) mm, size 183 x 30 x 299 mm; local +Z points (0.88, 0, 0.47); posed placement at [304, 0, 0] in the upper frame",
+        "barrel: world centre (-273, 0, 57.4) mm, size 294 x 50 x 131 mm; local +Z points (0.3, 0, 0.95); posed placement at [-400, 0, 100] in the airframe frame",
+        "rod: world centre (-246, 0, 49.8) mm, size 287 x 40 x 113 mm; local +Z points (-0.3, 0, -0.95); posed placement at [0, 0, 120] in the leg frame"
+      ],
+      "step" : 10
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 11
+    }
+  ],
+  "stillPlacements" : [
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.43394310427465144,
+            0.33664639872925917
+          ],
+          "box" : [
+            0.42192661033062429,
+            0.28574858382403645,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lTrunnion",
+          "kind" : "label",
+          "leader" : [
+            0.43394310427465144,
+            0.32499858382403646
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Trunnion: the leg turns here"
+        },
+        {
+          "anchor" : [
+            0.42952832121354129,
+            0.43649711446241118
+          ],
+          "box" : [
+            0.43866072355662117,
+            0.39486837368113364,
+            0.14803125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lLeg",
+          "kind" : "label",
+          "leader" : [
+            0.43866072355662117,
+            0.4341183736811336
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Shock strut (leg)"
+        },
+        {
+          "anchor" : [
+            0.52085981039181917,
+            0.36981656247576722
+          ],
+          "box" : [
+            0.51794455542445628,
+            0.4430756147025855,
+            0.139875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 19,
+          "id" : "lUpper",
+          "kind" : "label",
+          "leader" : [
+            0.52085981039181917,
+            0.4430756147025855
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Upper brace link"
+        },
+        {
+          "anchor" : [
+            0.45649143426742339,
+            0.46874972856020752
+          ],
+          "box" : [
+            0.31723166485198984,
+            0.48007692071727204,
+            0.139875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lLower",
+          "kind" : "label",
+          "leader" : [
+            0.45649143426742339,
+            0.48007692071727204
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Lower brace link"
+        },
+        {
+          "anchor" : [
+            0.3622017846607346,
+            0.291977904398046
+          ],
+          "box" : [
+            0.22334282891523519,
+            0.24112172144473931,
+            0.139875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lAct",
+          "kind" : "label",
+          "leader" : [
+            0.3622017846607346,
+            0.28037172144473932
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Retract actuator"
+        }
+      ],
+      "step" : 1
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.5179186112158487,
+            0.5187117292679938
+          ],
+          "box" : [
+            0.5317227345608202,
+            0.51125182822413429,
+            0.28668749999999998,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lKnee",
+          "kind" : "label",
+          "leader" : [
+            0.5317227345608202,
+            0.5187117292679938
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Knee joint: past the straight line"
+        },
+        {
+          "anchor" : [
+            0.48331076380322979,
+            0.51860594600757093
+          ],
+          "box" : [
+            0.49107252867165513,
+            0.46472705303805817,
+            0.042000000000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lStop",
+          "kind" : "label",
+          "leader" : [
+            0.49107252867165513,
+            0.50397705303805818
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Stop"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.38348395518862544,
+            0.74768016765359602
+          ],
+          "box" : [
+            0.20906415347998517,
+            0.69296499363721353,
+            0.18881249999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "aLoad",
+          "kind" : "arrow",
+          "leader" : [
+            0.38348395518862544,
+            0.73221499363721354
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Side load on the wheel"
+        },
+        {
+          "anchor" : [
+            0.52839490595457028,
+            0.37733492416807202
+          ],
+          "box" : [
+            0.54698417707921942,
+            0.35381059317241997,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "aSqueezeA",
+          "kind" : "arrow",
+          "leader" : [
+            0.54698417707921942,
+            0.37733492416807202
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Squeeze"
+        },
+        {
+          "anchor" : [
+            0.46697439374444505,
+            0.39469331777649347
+          ],
+          "box" : [
+            0.23731532419473506,
+            0.36546120170134572,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "aKnee",
+          "kind" : "arrow",
+          "leader" : [
+            0.45059657419473503,
+            0.39469331777649347
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Knee pushed onto its stop"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.51524616676386337,
+            0.44364912220808944
+          ],
+          "box" : [
+            0.3269027753711703,
+            0.45911429622447192,
+            0.205125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "pinA",
+          "kind" : "dimension",
+          "leader" : [
+            0.51524616676386337,
+            0.45911429622447192
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pin to leg point: 100 mm"
+        },
+        {
+          "anchor" : [
+            0.5,
+            0.5638506231185203
+          ],
+          "box" : [
+            0.31165660860730693,
+            0.50913544910213793,
+            0.205125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "pinB",
+          "kind" : "dimension",
+          "leader" : [
+            0.5,
+            0.54838544910213793
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pin to axle line: 500 mm"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.44011428835257804,
+            0.38230588353126593
+          ],
+          "box" : [
+            0.4265291055431244,
+            0.32987094638772063,
+            0.22143750000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "aUnlock",
+          "kind" : "arrow",
+          "leader" : [
+            0.44011428835257804,
+            0.36912094638772058
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Unlock actuator pulls here"
+        }
+      ],
+      "step" : 5
+    }
+  ],
+  "strict" : true,
+  "title" : "How an over-centre brace locks a landing gear down",
+  "triangles" : 9984,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

@@ -1,0 +1,68 @@
+{"v": 2, "kind": "assembly", "title": "Inside a drone's brushless motor (outrunner)", "units": "mm", "params": {"input": 0, "explode": 0},
+ "parts": [
+  {"id": "base", "name": "Base with bearing tube", "material": "aluminum", "shape": [
+    {"plate": {"radius": 31, "thickness": 3, "z0": -5, "chamfer": 0.6, "holes": [[27.5, 0, 1.6], [-27.5, 0, 1.6], [0, 27.5, 1.6], [0, -27.5, 1.6], [0, 0, 6]]}},
+    {"tube": {"inner": 6, "outer": 8, "length": 15, "z0": -2}}], "explode": [0, 0, -22]},
+  {"id": "leads", "name": "Three wires to the speed controller", "parent": "base", "material": "rubber", "shape": [
+    {"shaft": {"radius": 1.3, "length": 18, "z0": 27, "rot": [1, 0, 0, 90], "at": [-5, 0, -3.5]}},
+    {"shaft": {"radius": 1.3, "length": 18, "z0": 27, "rot": [1, 0, 0, 90], "at": [0, 0, -3.5]}},
+    {"shaft": {"radius": 1.3, "length": 18, "z0": 27, "rot": [1, 0, 0, 90], "at": [5, 0, -3.5]}}]},
+  {"id": "bearings", "name": "Two ball bearings", "material": "polishedSteel", "shape": [
+    {"tube": {"inner": 3, "outer": 6, "length": 4, "z0": -1.5}},
+    {"tube": {"inner": 3, "outer": 6, "length": 4, "z0": 8.5}}], "explode": [0, 0, -11]},
+  {"id": "stator", "name": "Stator (iron core with teeth)", "material": "brushedSteel", "shape": {"extrudedProfile": {"depth": 12, "z0": 0,
+    "points": [[11.89,-1.6],[18.3,-1.6],[17.99,-3.33],[20.16,-3.74],[20.5,0.0],[20.16,3.74],[17.99,3.33],[18.3,1.6],[11.89,1.6],[11.59,3.11],[11.1,4.56],[16.65,7.76],[17.25,6.11],[19.32,6.84],[17.75,10.25],[15.59,13.31],[13.92,11.88],[15.05,10.54],[9.5,7.33],[8.49,8.49],[7.33,9.5],[10.54,15.05],[11.88,13.92],[13.31,15.59],[10.25,17.75],[6.84,19.32],[6.11,17.25],[7.76,16.65],[4.56,11.1],[3.11,11.59],[1.6,11.89],[1.6,18.3],[3.33,17.99],[3.74,20.16],[0.0,20.5],[-3.74,20.16],[-3.33,17.99],[-1.6,18.3],[-1.6,11.89],[-3.11,11.59],[-4.56,11.1],[-7.76,16.65],[-6.11,17.25],[-6.84,19.32],[-10.25,17.75],[-13.31,15.59],[-11.88,13.92],[-10.54,15.05],[-7.33,9.5],[-8.49,8.49],[-9.5,7.33],[-15.05,10.54],[-13.92,11.88],[-15.59,13.31],[-17.75,10.25],[-19.32,6.84],[-17.25,6.11],[-16.65,7.76],[-11.1,4.56],[-11.59,3.11],[-11.89,1.6],[-18.3,1.6],[-17.99,3.33],[-20.16,3.74],[-20.5,0.0],[-20.16,-3.74],[-17.99,-3.33],[-18.3,-1.6],[-11.89,-1.6],[-11.59,-3.11],[-11.1,-4.56],[-16.65,-7.76],[-17.25,-6.11],[-19.32,-6.84],[-17.75,-10.25],[-15.59,-13.31],[-13.92,-11.88],[-15.05,-10.54],[-9.5,-7.33],[-8.49,-8.49],[-7.33,-9.5],[-10.54,-15.05],[-11.88,-13.92],[-13.31,-15.59],[-10.25,-17.75],[-6.84,-19.32],[-6.11,-17.25],[-7.76,-16.65],[-4.56,-11.1],[-3.11,-11.59],[-1.6,-11.89],[-1.6,-18.3],[-3.33,-17.99],[-3.74,-20.16],[0.0,-20.5],[3.74,-20.16],[3.33,-17.99],[1.6,-18.3],[1.6,-11.89],[3.11,-11.59],[4.56,-11.1],[7.76,-16.65],[6.11,-17.25],[6.84,-19.32],[10.25,-17.75],[13.31,-15.59],[11.88,-13.92],[10.54,-15.05],[7.33,-9.5],[8.49,-8.49],[9.5,-7.33],[15.05,-10.54],[13.92,-11.88],[15.59,-13.31],[17.75,-10.25],[19.32,-6.84],[17.25,-6.11],[16.65,-7.76],[11.1,-4.56],[11.59,-3.11]],
+    "holes": [[[8.0,0.0],[7.73,2.07],[6.93,4.0],[5.66,5.66],[4.0,6.93],[2.07,7.73],[0.0,8.0],[-2.07,7.73],[-4.0,6.93],[-5.66,5.66],[-6.93,4.0],[-7.73,2.07],[-8.0,0.0],[-7.73,-2.07],[-6.93,-4.0],[-5.66,-5.66],[-4.0,-6.93],[-2.07,-7.73],[0.0,-8.0],[2.07,-7.73],[4.0,-6.93],[5.66,-5.66],[6.93,-4.0],[7.73,-2.07]]]}}},
+  {"id": "coil", "name": "Coil of copper wire", "parent": "stator", "material": "bronze", "repeat": {"count": 12, "axis": [0, 0, 1]},
+   "shape": {"box": {"size": [5.4, 5.8, 15.6], "chamfer": 1.4, "at": [15.2, 0, 6]}}},
+  {"id": "bell", "name": "Bell (rotor)", "material": "anodized.blue", "shape": [
+    {"tube": {"inner": 24.5, "outer": 26.5, "length": 16, "z0": -1}},
+    {"plate": {"radius": 26.5, "thickness": 2.5, "z0": 15, "chamfer": 0.5, "holes": [[15.5, 0, 5.2], [7.75, 13.42, 5.2], [-7.75, 13.42, 5.2], [-15.5, 0, 5.2], [-7.75, -13.42, 5.2], [7.75, -13.42, 5.2]]}},
+    {"shaft": {"radius": 5.5, "length": 4, "z0": 17.5, "chamfer": 0.8}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "explode": [0, 0, 30]},
+  {"id": "magN", "name": "Magnet, north pole facing in", "parent": "bell", "material": "anodized.red", "repeat": {"count": 7, "axis": [0, 0, 1]},
+   "shape": {"box": {"size": [3, 8.6, 13], "chamfer": 0.4, "at": [23, 0, 6.5]}}},
+  {"id": "magS", "name": "Magnet, south pole facing in", "parent": "bell", "material": "plastic.white", "rot": [0, 0, 1, 25.714285714285715], "repeat": {"count": 7, "axis": [0, 0, 1]},
+   "shape": {"box": {"size": [3, 8.6, 13], "chamfer": 0.4, "at": [23, 0, 6.5]}}},
+  {"id": "shaft", "name": "Shaft", "parent": "bell", "material": "polishedSteel", "shape": {"shaft": {"radius": 3, "length": 38, "z0": -8, "chamfer": 0.5}}, "explode": [0, 0, 16]}
+ ],
+ "annotations": {
+  "labels": [
+   {"id": "lBell", "at": {"part": "bell", "offset": [-17.8, 17.8, 17.5]}, "text": "Bell: turns with the propeller"},
+   {"id": "lMag", "at": {"part": "magN3", "offset": [23.461, -4.288, 10.67]}, "text": "Permanent magnets inside the bell"},
+   {"id": "lStator", "at": {"part": "stator", "offset": [17.32, -10, 12]}, "text": "Stator: fixed iron core"},
+   {"id": "lCoil", "at": {"part": "coil11", "offset": [15.2, 0, 13.75]}, "text": "Coil of copper wire on each tooth"},
+   {"id": "lBearing", "at": {"part": "bearings", "offset": [5.869, -0.787, 2.405]}, "text": "Two bearings hold the shaft"},
+   {"id": "lShaft", "at": {"part": "shaft", "offset": [0, 0, 30]}, "text": "Shaft"},
+   {"id": "lWires", "at": {"part": "leads", "offset": [0, -45, -3.5]}, "text": "Three wires from the speed controller (ESC)"},
+   {"id": "lA", "at": {"part": "coil1", "offset": [15.2, 0, 13.75]}, "text": "Phase A"},
+   {"id": "lB", "at": {"part": "coil3", "offset": [15.2, 0, 13.75]}, "text": "Phase B"},
+   {"id": "lC", "at": {"part": "coil5", "offset": [15.2, 0, 13.75]}, "text": "Phase C"}],
+  "arrows": [
+   {"id": "tBell", "meaning": "motion", "style": "turn", "on": "bell", "sense": "ccw"},
+   {"id": "tBack", "meaning": "motion", "style": "turn", "on": "bell"}]},
+ "steps": [
+  {"say": "A brushless outrunner motor. The outer shell, called the bell, turns with the propeller. The middle part is fixed to the drone.", "camera": "hero", "spin": 1,
+   "focus": ["bell", "base", "leads", "shaft"], "annotate": ["lBell", "tBell", "lWires"]},
+  {"say": "Cut the bell open. Permanent magnets line the inside of the bell. The fixed stator in the middle carries coils of copper wire.", "camera": "hero",
+   "focus": ["bell", "base", "leads", "shaft"], "section": {"normal": [1, -1, 0], "offset": 0, "parts": ["bell"]}, "hide": ["magN1", "magN6", "magN7", "magS1", "magS5", "magS6", "magS7"],
+   "annotate": ["lMag", "lCoil", "lStator"]},
+  {"say": "The parts, pulled apart along the shaft. Two bearings hold the shaft, so the bell turns freely round the stator.", "camera": "hero", "explode": 1,
+   "focus": ["bell", "base", "shaft", "stator"], "section": {"normal": [1, -1, 0], "offset": 0, "parts": ["bell"]}, "hide": ["magN1", "magN6", "magN7", "magS1", "magS5", "magS6", "magS7"],
+   "annotate": ["lBell", "lMag", "lShaft", "lStator", "lCoil", "lBearing"]},
+  {"say": "This stator has {count.coil} coils, one on each tooth. The bell has {count.magN} magnets with the north pole facing in and {count.magS} with the south pole facing in. They alternate round the ring.", "camera": "top",
+   "focus": ["base"], "hide": ["bell"]},
+  {"say": "The coils are joined in three groups, called phases. This is phase A: two pairs of neighbouring coils on opposite sides. In each pair, the two coils are wound in opposite directions.", "camera": "top",
+   "focus": ["base"], "hide": ["bell"], "highlight": ["coil1", "coil2", "coil7", "coil8"], "annotate": ["lA"]},
+  {"say": "Phase B is the next two pairs.", "camera": "top", "focus": ["base"], "hide": ["bell"], "highlight": ["coil3", "coil4", "coil9", "coil10"], "annotate": ["lB"]},
+  {"say": "Phase C is the last two pairs. Current in a phase makes its coils electromagnets. In each pair, one coil face is north and one is south. They pull unlike magnet poles and push like poles.", "camera": "top",
+   "focus": ["base"], "hide": ["bell"], "highlight": ["coil5", "coil6", "coil11", "coil12"], "annotate": ["lC"]},
+  {"say": "In six-step control, the speed controller energizes two phases at a time and changes the pair in a repeating order. The stator's magnetic field turns, and the magnets follow it.", "camera": "hero", "spin": 1,
+   "focus": ["bell", "base", "leads", "shaft"], "section": {"normal": [1, -1, 0], "offset": 0, "parts": ["bell"]}, "hide": ["magN1", "magN6", "magN7", "magS1", "magS5", "magS6", "magS7"], "annotate": ["tBell"]},
+  {"say": "Seen from above without the bell: the ring of magnets turns round the fixed coils. One turn of the bell takes {count.magN} electrical cycles, one for each pair of magnets.", "camera": "top", "spin": 1,
+   "focus": ["base"], "hide": ["bell"]},
+  {"say": "Swap any two of the three wires and the order reverses: the motor turns the other way.", "camera": "top", "spin": -1,
+   "focus": ["base", "leads"], "annotate": ["tBack", "lWires"]},
+  {"say": "What the engine checked: the turning of the bell, and the counts of coils and magnets. Currents, magnetic forces and torque are not computed.", "camera": "hero", "spin": 1,
+   "focus": ["bell", "base", "leads", "shaft"], "section": {"normal": [1, -1, 0], "offset": 0, "parts": ["bell"]}, "hide": ["magN1", "magN6", "magN7", "magS1", "magS5", "magS6", "magS7"]}
+ ]}

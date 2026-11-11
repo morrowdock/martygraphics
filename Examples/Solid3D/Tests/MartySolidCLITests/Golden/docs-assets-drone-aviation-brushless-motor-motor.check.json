@@ -1,0 +1,1483 @@
+{
+  "annotations" : [
+    {
+      "anchorsWorld" : [
+        [
+          -17.800000000000001,
+          17.800000000000001,
+          17.5
+        ]
+      ],
+      "id" : "lBell",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Bell: turns with the propeller",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -1.0400727441134308,
+          23.826953512502438,
+          10.67
+        ]
+      ],
+      "id" : "lMag",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Permanent magnets inside the bell",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          17.32,
+          -10,
+          12
+        ]
+      ],
+      "id" : "lStator",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Stator: fixed iron core",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          7.6000000000000014,
+          -13.163586137523467,
+          13.75
+        ]
+      ],
+      "id" : "lCoil",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Coil of copper wire on each tooth",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          5.8689999999999998,
+          -0.78700000000000003,
+          2.4049999999999998
+        ]
+      ],
+      "id" : "lBearing",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Two bearings hold the shaft",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          0,
+          30
+        ]
+      ],
+      "id" : "lShaft",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Shaft",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          -45,
+          -3.5
+        ]
+      ],
+      "id" : "lWires",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Three wires from the speed controller (ESC)",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          15.199999999999999,
+          0,
+          13.75
+        ]
+      ],
+      "id" : "lA",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Phase A",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          7.6000000000000014,
+          13.163586137523467,
+          13.75
+        ]
+      ],
+      "id" : "lB",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Phase B",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -7.599999999999997,
+          13.163586137523469,
+          13.75
+        ]
+      ],
+      "id" : "lC",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Phase C",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "id" : "tBell",
+      "kind" : "arrow",
+      "meaning" : "motion",
+      "occludedAtDefaultCamera" : true,
+      "text" : null,
+      "tier" : "solved",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "id" : "tBack",
+      "kind" : "arrow",
+      "meaning" : "motion",
+      "occludedAtDefaultCamera" : true,
+      "text" : null,
+      "tier" : "solved",
+      "value" : null
+    }
+  ],
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ],
+    "sections" : [
+      {
+        "normal" : [
+          0.70710678118654746,
+          -0.70710678118654746,
+          0
+        ],
+        "offset" : 0,
+        "parts" : [
+          {
+            "capLoops" : 6,
+            "capTriangles" : 244,
+            "closed" : true,
+            "part" : "bell",
+            "triangles" : 2612
+          }
+        ],
+        "step" : 2
+      },
+      {
+        "normal" : [
+          0.70710678118654746,
+          -0.70710678118654746,
+          0
+        ],
+        "offset" : 0,
+        "parts" : [
+          {
+            "capLoops" : 6,
+            "capTriangles" : 244,
+            "closed" : true,
+            "part" : "bell",
+            "triangles" : 2612
+          }
+        ],
+        "step" : 3
+      },
+      {
+        "normal" : [
+          0.70710678118654746,
+          -0.70710678118654746,
+          0
+        ],
+        "offset" : 0,
+        "parts" : [
+          {
+            "capLoops" : 6,
+            "capTriangles" : 244,
+            "closed" : true,
+            "part" : "bell",
+            "triangles" : 2612
+          }
+        ],
+        "step" : 8
+      },
+      {
+        "normal" : [
+          0.70710678118654746,
+          -0.70710678118654746,
+          0
+        ],
+        "offset" : 0,
+        "parts" : [
+          {
+            "capLoops" : 6,
+            "capTriangles" : 244,
+            "closed" : true,
+            "part" : "bell",
+            "triangles" : 2612
+          }
+        ],
+        "step" : 11
+      }
+    ]
+  },
+  "facts" : {
+    "bell.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "bell.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "count.coil" : {
+      "source" : "repeat",
+      "text" : "12",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 12
+    },
+    "count.magN" : {
+      "source" : "repeat",
+      "text" : "7",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 7
+    },
+    "count.magS" : {
+      "source" : "repeat",
+      "text" : "7",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 7
+    }
+  },
+  "file" : {
+    "lines" : 68,
+    "sha256" : "9ad66aab88e16ab788e35aaf5a242cb15c75ab54517f795ce98760ac4a28f961"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "bell",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "tBell",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Turn sense from the engine (motion of bell)"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "tBack",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Turn sense from the engine (motion of bell)"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.4",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.9",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "notes" : [
+      "Arrow lengths are not to scale"
+    ],
+    "shapes" : "Shapes as authored",
+    "solved" : 5,
+    "text" : "Solved 5 (1 animation ratio)"
+  },
+  "notChecked" : {
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 32,
+  "placements" : [
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.49093989132030769,
+            0.35126344207605326
+          ],
+          "box" : [
+            0.4765047232499125,
+            0.36315930260958801,
+            0.25406249999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lBell",
+          "kind" : "label",
+          "leader" : [
+            0.49093989132030769,
+            0.36315930260958801
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Bell: turns with the propeller"
+        },
+        {
+          "anchor" : [
+            0.38596231766858602,
+            0.75308986725242899
+          ],
+          "box" : [
+            0.35773005789185858,
+            0.66672180004709736,
+            0.18881249999999999,
+            0.068500000000000005
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lWires",
+          "kind" : "label",
+          "leader" : [
+            0.38596231766858602,
+            0.73522180004709725
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Three wires from the speed controller (ESC)"
+        }
+      ],
+      "step" : 1
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.57171658070267817,
+            0.40911132188368116
+          ],
+          "box" : [
+            0.55631739665501434,
+            0.35867400362311003,
+            0.27853125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lMag",
+          "kind" : "label",
+          "leader" : [
+            0.57171658070267817,
+            0.39792400362310998
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Permanent magnets inside the bell"
+        },
+        {
+          "anchor" : [
+            0.51699720378490155,
+            0.51639598665898323
+          ],
+          "box" : [
+            0.22435283718155175,
+            0.50870451722177501,
+            0.27853125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lCoil",
+          "kind" : "label",
+          "leader" : [
+            0.50288408718155175,
+            0.51639598665898323
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Coil of copper wire on each tooth"
+        },
+        {
+          "anchor" : [
+            0.57047299764720649,
+            0.53977399098702417
+          ],
+          "box" : [
+            0.57774077672686763,
+            0.4987300590722854,
+            0.19696874999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lStator",
+          "kind" : "label",
+          "leader" : [
+            0.57774077672686763,
+            0.53798005907228541
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Stator: fixed iron core"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.49296553741617793,
+            0.30056979995628297
+          ],
+          "box" : [
+            0.25720675464682896,
+            0.2478875951539882,
+            0.25406249999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lBell",
+          "kind" : "label",
+          "leader" : [
+            0.49296553741617793,
+            0.28713759515398818
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Bell: turns with the propeller"
+        },
+        {
+          "anchor" : [
+            0.55567622515376991,
+            0.34546006528562501
+          ],
+          "box" : [
+            0.56901379887399939,
+            0.31295819357548432,
+            0.27853125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lMag",
+          "kind" : "label",
+          "leader" : [
+            0.56901379887399939,
+            0.34546006528562501
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Permanent magnets inside the bell"
+        },
+        {
+          "anchor" : [
+            0.51497986333565071,
+            0.18818565910139681
+          ],
+          "box" : [
+            0.52317690041097586,
+            0.13626298254452318,
+            0.050156249999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lShaft",
+          "kind" : "label",
+          "leader" : [
+            0.52317690041097586,
+            0.17551298254452319
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Shaft"
+        },
+        {
+          "anchor" : [
+            0.55037435339857377,
+            0.60177698288134884
+          ],
+          "box" : [
+            0.35998407258941723,
+            0.61296036285462496,
+            0.19696874999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lStator",
+          "kind" : "label",
+          "leader" : [
+            0.55037435339857377,
+            0.61296036285462496
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Stator: fixed iron core"
+        },
+        {
+          "anchor" : [
+            0.51217126550595482,
+            0.5847602752181853
+          ],
+          "box" : [
+            0.456782884739519,
+            0.5230787325621713,
+            0.27853125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "lCoil",
+          "kind" : "label",
+          "leader" : [
+            0.51217126550595482,
+            0.56232873256217131
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Coil of copper wire on each tooth"
+        },
+        {
+          "anchor" : [
+            0.52965907614805974,
+            0.66186792711173903
+          ],
+          "box" : [
+            0.35081053813392632,
+            0.68578770656978316,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lBearing",
+          "kind" : "label",
+          "leader" : [
+            0.52965907614805974,
+            0.68578770656978316
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Two bearings hold the shaft"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.58626347028566261,
+            0.48808042073645913
+          ],
+          "box" : [
+            0.59855693054188419,
+            0.40751649021120578,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 15,
+          "id" : "lA",
+          "kind" : "label",
+          "leader" : [
+            0.59855693054188419,
+            0.44676649021120574
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Phase A"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.58399996631846207,
+            0.4327995409892339
+          ],
+          "box" : [
+            0.61403224815413093,
+            0.37756495244085481,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 8,
+          "id" : "lB",
+          "kind" : "label",
+          "leader" : [
+            0.61403224815413093,
+            0.41681495244085476
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Phase B"
+        }
+      ],
+      "step" : 6
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.52018719509463285,
+            0.40594337811636394
+          ],
+          "box" : [
+            0.4641258275786046,
+            0.34173368757344508,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lC",
+          "kind" : "label",
+          "leader" : [
+            0.52018719509463285,
+            0.38098368757344503
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Phase C"
+        }
+      ],
+      "step" : 7
+    },
+    {
+      "placement" : [
+
+      ],
+      "step" : 8
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.38596231766858602,
+            0.75308986725242899
+          ],
+          "box" : [
+            0.35773005789185858,
+            0.66672180004709736,
+            0.18881249999999999,
+            0.068500000000000005
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lWires",
+          "kind" : "label",
+          "leader" : [
+            0.38596231766858602,
+            0.73522180004709725
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Three wires from the speed controller (ESC)"
+        }
+      ],
+      "step" : 10
+    }
+  ],
+  "ratios" : {
+    "bell" : 1
+  },
+  "readBack" : [
+    "base: world centre (0, 0, 4) mm, size 62 x 62 x 18 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "leads: world centre (0, -36, -3.5) mm, size 12.6 x 18 x 2.6 mm; static; child of base (at [0, 0, 0] in the base frame); local +Z points +Z",
+    "bearings: world centre (0, 0, 5.5) mm, size 12 x 12 x 14 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "stator: world centre (0, 0, 6) mm, size 41 x 41 x 12 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "coil1: world centre (15.2, 0, 6) mm, size 5.4 x 5.8 x 15.6 mm; static; copy 1 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil2: world centre (13.2, 7.6, 6) mm, size 6.18 x 6.32 x 15.6 mm; static; copy 2 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil3: world centre (7.6, 13.2, 6) mm, size 6.32 x 6.18 x 15.6 mm; static; copy 3 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil4: world centre (0, 15.2, 6) mm, size 5.8 x 5.4 x 15.6 mm; static; copy 4 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil5: world centre (-7.6, 13.2, 6) mm, size 6.32 x 6.18 x 15.6 mm; static; copy 5 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil6: world centre (-13.2, 7.6, 6) mm, size 6.18 x 6.32 x 15.6 mm; static; copy 6 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil7: world centre (-15.2, 0, 6) mm, size 5.4 x 5.8 x 15.6 mm; static; copy 7 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil8: world centre (-13.2, -7.6, 6) mm, size 6.18 x 6.32 x 15.6 mm; static; copy 8 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil9: world centre (-7.6, -13.2, 6) mm, size 6.32 x 6.18 x 15.6 mm; static; copy 9 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil10: world centre (0, -15.2, 6) mm, size 5.8 x 5.4 x 15.6 mm; static; copy 10 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil11: world centre (7.6, -13.2, 6) mm, size 6.32 x 6.18 x 15.6 mm; static; copy 11 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "coil12: world centre (13.2, -7.6, 6) mm, size 6.18 x 6.32 x 15.6 mm; static; copy 12 of 12 (repeat of coil); child of stator (at [0, 0, 0] in the stator frame); local +Z points +Z",
+    "bell: world centre (0, 0, 10.2) mm, size 53 x 53 x 22.5 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "magN1: world centre (23, 0, 6.5) mm, size 3 x 8.6 x 13 mm; fixed to its parent, moves with bell; copy 1 of 7 (repeat of magN); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magN2: world centre (14.3, 18, 6.5) mm, size 8.1 x 7.21 x 13 mm; fixed to its parent, moves with bell; copy 2 of 7 (repeat of magN); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magN3: world centre (-5.12, 22.4, 6.5) mm, size 8.87 x 4.66 x 13 mm; fixed to its parent, moves with bell; copy 3 of 7 (repeat of magN); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magN4: world centre (-20.7, 9.98, 6.5) mm, size 6.09 x 8.7 x 13 mm; fixed to its parent, moves with bell; copy 4 of 7 (repeat of magN); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magN5: world centre (-20.7, -9.98, 6.5) mm, size 6.09 x 8.7 x 13 mm; fixed to its parent, moves with bell; copy 5 of 7 (repeat of magN); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magN6: world centre (-5.12, -22.4, 6.5) mm, size 8.87 x 4.66 x 13 mm; fixed to its parent, moves with bell; copy 6 of 7 (repeat of magN); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magN7: world centre (14.3, -18, 6.5) mm, size 8.1 x 7.21 x 13 mm; fixed to its parent, moves with bell; copy 7 of 7 (repeat of magN); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magS1: world centre (20.7, 9.98, 6.5) mm, size 6.09 x 8.7 x 13 mm; fixed to its parent, moves with bell; copy 1 of 7 (repeat of magS); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magS2: world centre (5.12, 22.4, 6.5) mm, size 8.87 x 4.66 x 13 mm; fixed to its parent, moves with bell; copy 2 of 7 (repeat of magS); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magS3: world centre (-14.3, 18, 6.5) mm, size 8.1 x 7.21 x 13 mm; fixed to its parent, moves with bell; copy 3 of 7 (repeat of magS); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magS4: world centre (-23, 0, 6.5) mm, size 3 x 8.6 x 13 mm; fixed to its parent, moves with bell; copy 4 of 7 (repeat of magS); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magS5: world centre (-14.3, -18, 6.5) mm, size 8.1 x 7.21 x 13 mm; fixed to its parent, moves with bell; copy 5 of 7 (repeat of magS); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magS6: world centre (5.12, -22.4, 6.5) mm, size 8.87 x 4.66 x 13 mm; fixed to its parent, moves with bell; copy 6 of 7 (repeat of magS); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "magS7: world centre (20.7, -9.98, 6.5) mm, size 6.09 x 8.7 x 13 mm; fixed to its parent, moves with bell; copy 7 of 7 (repeat of magS); child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z",
+    "shaft: world centre (0, 0, 11) mm, size 6 x 6 x 38 mm; fixed to its parent, moves with bell; child of bell (at [0, 0, 0] in the bell frame); its origin is 0 mm from the bell axis; local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 2612,
+  "showOnly" : [
+
+  ],
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+        "count.coil",
+        "count.magN",
+        "count.magS"
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+        "count.magN"
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "A brushless outrunner motor. The outer shell, called the bell, turns with the propeller. The middle part is fixed to the drone.",
+    "Cut the bell open. Permanent magnets line the inside of the bell. The fixed stator in the middle carries coils of copper wire.",
+    "The parts, pulled apart along the shaft. Two bearings hold the shaft, so the bell turns freely round the stator.",
+    "This stator has 12 coils, one on each tooth. The bell has 7 magnets with the north pole facing in and 7 with the south pole facing in. They alternate round the ring.",
+    "The coils are joined in three groups, called phases. This is phase A: two pairs of neighbouring coils on opposite sides. In each pair, the two coils are wound in opposite directions.",
+    "Phase B is the next two pairs.",
+    "Phase C is the last two pairs. Current in a phase makes its coils electromagnets. In each pair, one coil face is north and one is south. They pull unlike magnet poles and push like poles.",
+    "In six-step control, the speed controller energizes two phases at a time and changes the pair in a repeating order. The stator's magnetic field turns, and the magnets follow it.",
+    "Seen from above without the bell: the ring of magnets turns round the fixed coils. One turn of the bell takes 7 electrical cycles, one for each pair of magnets.",
+    "Swap any two of the three wires and the order reverses: the motor turns the other way.",
+    "What the engine checked: the turning of the bell, and the counts of coils and magnets. Currents, magnetic forces and torque are not computed."
+  ],
+  "stepTiers" : [
+    null,
+    null,
+    null,
+    "solved",
+    null,
+    null,
+    null,
+    null,
+    "solved",
+    null,
+    null
+  ],
+  "stepViews" : [
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 1
+    },
+    {
+      "hidden" : [
+        "magN1",
+        "magN6",
+        "magN7",
+        "magS1",
+        "magS5",
+        "magS6",
+        "magS7"
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 2
+    },
+    {
+      "hidden" : [
+        "magN1",
+        "magN6",
+        "magN7",
+        "magS1",
+        "magS5",
+        "magS6",
+        "magS7"
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 3
+    },
+    {
+      "hidden" : [
+        "bell"
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 4
+    },
+    {
+      "hidden" : [
+        "bell"
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 5
+    },
+    {
+      "hidden" : [
+        "bell"
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 6
+    },
+    {
+      "hidden" : [
+        "bell"
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 7
+    },
+    {
+      "hidden" : [
+        "magN1",
+        "magN6",
+        "magN7",
+        "magS1",
+        "magS5",
+        "magS6",
+        "magS7"
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 8
+    },
+    {
+      "hidden" : [
+        "bell"
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 9
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 10
+    },
+    {
+      "hidden" : [
+        "magN1",
+        "magN6",
+        "magN7",
+        "magS1",
+        "magS5",
+        "magS6",
+        "magS7"
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 11
+    }
+  ],
+  "stillPlacements" : [
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.47610476041123356,
+            0.22678737311731084
+          ],
+          "box" : [
+            0.23730449106273238,
+            0.17530225276778549,
+            0.25406249999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lBell",
+          "kind" : "label",
+          "leader" : [
+            0.47610476041123356,
+            0.2145522527677855
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Bell: turns with the propeller"
+        },
+        {
+          "anchor" : [
+            0.33126103092315584,
+            0.72763617192646346
+          ],
+          "box" : [
+            0.30538664386989345,
+            0.64225991778051328,
+            0.18881249999999999,
+            0.068500000000000005
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lWires",
+          "kind" : "label",
+          "leader" : [
+            0.33126103092315584,
+            0.71075991778051317
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Three wires from the speed controller (ESC)"
+        }
+      ],
+      "step" : 1
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.57795847171761039,
+            0.29965951551839676
+          ],
+          "box" : [
+            0.56820561646024803,
+            0.25160398000570305,
+            0.27853125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lMag",
+          "kind" : "label",
+          "leader" : [
+            0.57795847171761039,
+            0.29085398000570306
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Permanent magnets inside the bell"
+        },
+        {
+          "anchor" : [
+            0.50734822965498372,
+            0.41867750664968184
+          ],
+          "box" : [
+            0.21967854255685476,
+            0.41609589049478812,
+            0.27853125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lCoil",
+          "kind" : "label",
+          "leader" : [
+            0.49820979255685477,
+            0.41867750664968184
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Coil of copper wire on each tooth"
+        },
+        {
+          "anchor" : [
+            0.57763100132368594,
+            0.44863257764752829
+          ],
+          "box" : [
+            0.5830115756084624,
+            0.40599339098595677,
+            0.19696874999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lStator",
+          "kind" : "label",
+          "leader" : [
+            0.5830115756084624,
+            0.44524339098595678
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Stator: fixed iron core"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.48195571084869915,
+            0.28391089256915225
+          ],
+          "box" : [
+            0.24662341189152298,
+            0.23106685765891741,
+            0.25406249999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lBell",
+          "kind" : "label",
+          "leader" : [
+            0.48195571084869915,
+            0.27031685765891739
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Bell: turns with the propeller"
+        },
+        {
+          "anchor" : [
+            0.53743730847195714,
+            0.32362341200195088
+          ],
+          "box" : [
+            0.5511988133588932,
+            0.29162768260750349,
+            0.27853125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lMag",
+          "kind" : "label",
+          "leader" : [
+            0.5511988133588932,
+            0.32362341200195088
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Permanent magnets inside the bell"
+        },
+        {
+          "anchor" : [
+            0.50000044327340631,
+            0.18407786138222812
+          ],
+          "box" : [
+            0.51863703806021277,
+            0.16802044750145176,
+            0.050156249999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lShaft",
+          "kind" : "label",
+          "leader" : [
+            0.51863703806021277,
+            0.18407786138222812
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Shaft"
+        },
+        {
+          "anchor" : [
+            0.53170213904545838,
+            0.54736522497112228
+          ],
+          "box" : [
+            0.52503844317082915,
+            0.49688634417571559,
+            0.19696874999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 6,
+          "id" : "lStator",
+          "kind" : "label",
+          "leader" : [
+            0.53170213904545838,
+            0.53613634417571554
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Stator: fixed iron core"
+        },
+        {
+          "anchor" : [
+            0.49821630876071576,
+            0.53263016044775868
+          ],
+          "box" : [
+            0.27491475648280678,
+            0.55503044849244654,
+            0.27853125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lCoil",
+          "kind" : "label",
+          "leader" : [
+            0.49821630876071576,
+            0.55503044849244654
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Coil of copper wire on each tooth"
+        },
+        {
+          "anchor" : [
+            0.51447860461569839,
+            0.60380790196967893
+          ],
+          "box" : [
+            0.33589919903022725,
+            0.6277821955208569,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lBearing",
+          "kind" : "label",
+          "leader" : [
+            0.51447860461569839,
+            0.6277821955208569
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Two bearings hold the shaft"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.59706825713893363,
+            0.45976077777424812
+          ],
+          "box" : [
+            0.4996641353171275,
+            0.47363514477309443,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 12,
+          "id" : "lA",
+          "kind" : "label",
+          "leader" : [
+            0.56613288531712747,
+            0.47363514477309443
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Phase A"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.54841234587303755,
+            0.32577924754236631
+          ],
+          "box" : [
+            0.57959795417064219,
+            0.27326910627603357,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 9,
+          "id" : "lB",
+          "kind" : "label",
+          "leader" : [
+            0.57959795417064219,
+            0.31251910627603358
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Phase B"
+        }
+      ],
+      "step" : 6
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.45158765412696245,
+            0.32577924754236631
+          ],
+          "box" : [
+            0.35393329582935784,
+            0.27326910627603362,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 15,
+          "id" : "lC",
+          "kind" : "label",
+          "leader" : [
+            0.42040204582935781,
+            0.31251910627603363
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Phase C"
+        }
+      ],
+      "step" : 7
+    },
+    {
+      "beat" : null,
+      "placement" : [
+
+      ],
+      "step" : 8
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.49746694709409967,
+            0.75937854451291131
+          ],
+          "box" : [
+            0.32298475005343968,
+            0.67973238947438175,
+            0.18881249999999999,
+            0.068500000000000005
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lWires",
+          "kind" : "label",
+          "leader" : [
+            0.49746694709409967,
+            0.74823238947438175
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Three wires from the speed controller (ESC)"
+        }
+      ],
+      "step" : 10
+    }
+  ],
+  "strict" : false,
+  "title" : "Inside a drone's brushless motor (outrunner)",
+  "triangles" : 12912,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

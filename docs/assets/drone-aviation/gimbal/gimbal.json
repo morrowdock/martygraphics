@@ -1,0 +1,103 @@
+{"v": 2, "kind": "assembly", "title": "How a three-axis gimbal keeps a drone camera steady", "units": "mm", "params": {"input": 0, "explode": 0},
+ "parts": [
+  {"id": "pad", "name": "Landing pad marking on the ground", "material": "plastic.white", "at": [0, 0, -260], "shape": [
+    {"tube": {"inner": 150, "outer": 168, "length": 0.4, "z0": 0}},
+    {"box": {"size": [22, 130, 0.4], "at": [-44, 0, 0.2]}},
+    {"box": {"size": [22, 130, 0.4], "at": [44, 0, 0.2]}},
+    {"box": {"size": [66, 22, 0.4], "at": [0, 0, 0.2]}}]},
+  {"id": "pivotP", "name": "Drone pitch (authored input, pivot at the camera centre)", "material": "darkSteel",
+   "shape": {"revolvedProfile": {"points": [[0, -19], [7.3, -17.5], [13.4, -13.4], [17.5, -7.3], [19, 0], [17.5, 7.3], [13.4, 13.4], [7.3, 17.5], [0, 19]]}},
+   "joint": {"revolute": [1, 0, 0]}, "drive": {"input": -0.04}},
+  {"id": "pivotR", "name": "Drone roll (authored input, pivot at the camera centre)", "parent": "pivotP", "material": "darkSteel",
+   "shape": {"revolvedProfile": {"points": [[0, -19], [7.3, -17.5], [13.4, -13.4], [17.5, -7.3], [19, 0], [17.5, 7.3], [13.4, 13.4], [7.3, 17.5], [0, 19]]}},
+   "joint": {"revolute": [0, 1, 0]}, "drive": {"input": 0.05}},
+  {"id": "drone", "name": "Drone body (yaw is an authored input)", "parent": "pivotR", "material": "plastic.white", "shape": [
+    {"box": {"size": [84, 150, 36], "chamfer": 9, "at": [0, 0, 140]}},
+    {"box": {"size": [60, 60, 4], "chamfer": 1, "at": [0, 0, 120]}},
+    {"shaft": {"radius": 17, "length": 20, "z0": 98}},
+    {"shaft": {"radius": 4, "length": 30, "z0": 70}},
+    {"box": {"size": [30, 16, 14], "chamfer": 3, "at": [0, 78, 138]}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 0.08}},
+  {"id": "arms", "name": "Drone arms", "parent": "drone", "material": "composite", "at": [0, 0, 140], "shape": [
+    {"shaft": {"radius": 6, "length": 145, "z0": 20, "rot": [-1, 1, 0, 90]}},
+    {"shaft": {"radius": 6, "length": 145, "z0": 20, "rot": [-1, -1, 0, 90]}},
+    {"shaft": {"radius": 6, "length": 145, "z0": 20, "rot": [1, -1, 0, 90]}},
+    {"shaft": {"radius": 6, "length": 145, "z0": 20, "rot": [1, 1, 0, 90]}}]},
+  {"id": "pods", "name": "Drone motors", "parent": "drone", "material": "darkSteel", "shape": [
+    {"shaft": {"radius": 13, "length": 18, "z0": 134, "at": [115, 115, 0]}},
+    {"shaft": {"radius": 13, "length": 18, "z0": 134, "at": [-115, -115, 0]}},
+    {"shaft": {"radius": 13, "length": 18, "z0": 134, "at": [-115, 115, 0]}},
+    {"shaft": {"radius": 13, "length": 18, "z0": 134, "at": [115, -115, 0]}}]},
+  {"id": "prop1", "name": "Propeller, front right", "parent": "drone", "material": "plastic.blue", "at": [115, 115, 152], "shape": [
+    {"shaft": {"radius": 6, "length": 7, "z0": 0}},
+    {"blade": {"root": 4, "span": 80, "chord": 26, "tipChord": 11, "pitch": 28, "twist": -20, "thickness": 0.09, "at": [0, 0, 3.5], "rot": [1, 0, 0, 180]}},
+    {"blade": {"root": 4, "span": 80, "chord": 26, "tipChord": 11, "pitch": 28, "twist": -20, "thickness": 0.09, "at": [0, 0, 3.5], "rot": [0, 1, 0, 180]}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}},
+  {"id": "prop2", "name": "Propeller, rear left", "parent": "drone", "material": "plastic.blue", "at": [-115, -115, 152], "shape": [
+    {"shaft": {"radius": 6, "length": 7, "z0": 0}},
+    {"blade": {"root": 4, "span": 80, "chord": 26, "tipChord": 11, "pitch": 28, "twist": -20, "thickness": 0.09, "at": [0, 0, 3.5], "rot": [1, 0, 0, 180]}},
+    {"blade": {"root": 4, "span": 80, "chord": 26, "tipChord": 11, "pitch": 28, "twist": -20, "thickness": 0.09, "at": [0, 0, 3.5], "rot": [0, 1, 0, 180]}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}},
+  {"id": "prop3", "name": "Propeller, front left", "parent": "drone", "material": "plastic.orange", "at": [-115, 115, 152], "shape": [
+    {"shaft": {"radius": 6, "length": 7, "z0": 0}},
+    {"blade": {"root": 4, "span": 80, "chord": 26, "tipChord": 11, "pitch": -28, "twist": 20, "thickness": 0.09, "at": [0, 0, 3.5]}},
+    {"blade": {"root": 4, "span": 80, "chord": 26, "tipChord": 11, "pitch": -28, "twist": 20, "thickness": 0.09, "at": [0, 0, 3.5], "rot": [0, 0, 1, 180]}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": -1}},
+  {"id": "prop4", "name": "Propeller, rear right", "parent": "drone", "material": "plastic.orange", "at": [115, -115, 152], "shape": [
+    {"shaft": {"radius": 6, "length": 7, "z0": 0}},
+    {"blade": {"root": 4, "span": 80, "chord": 26, "tipChord": 11, "pitch": -28, "twist": 20, "thickness": 0.09, "at": [0, 0, 3.5]}},
+    {"blade": {"root": 4, "span": 80, "chord": 26, "tipChord": 11, "pitch": -28, "twist": 20, "thickness": 0.09, "at": [0, 0, 3.5], "rot": [0, 0, 1, 180]}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": -1}},
+  {"id": "yawArm", "name": "Yaw arm (turned by the yaw motor)", "parent": "drone", "material": "anodized.blue", "shape": [
+    {"shaft": {"radius": 17, "length": 8, "z0": 90}},
+    {"box": {"size": [14, 84, 6], "chamfer": 1.5, "at": [0, -31, 87]}},
+    {"box": {"size": [14, 6, 103], "chamfer": 1.5, "at": [0, -70, 38.5]}},
+    {"shaft": {"radius": 16, "length": 14, "z0": -67, "rot": [1, 0, 0, -90]}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"follow": {"source": "drone", "ratio": -1}}},
+  {"id": "rollArm", "name": "Roll arm (turned by the roll motor)", "parent": "yawArm", "material": "anodized.orange", "shape": [
+    {"shaft": {"radius": 16, "length": 6, "z0": -53, "rot": [1, 0, 0, -90]}},
+    {"box": {"size": [56, 6, 14], "chamfer": 1.5, "at": [24, -44, 0]}},
+    {"box": {"size": [6, 55, 14], "chamfer": 1.5, "at": [49, -19.5, 0]}},
+    {"shaft": {"radius": 14, "length": 10, "z0": 36, "rot": [0, 1, 0, 90]}}],
+   "joint": {"revolute": [0, 1, 0]}, "drive": {"follow": {"source": "pivotR", "ratio": -1}}},
+  {"id": "cam", "name": "Camera (turned by the pitch motor)", "parent": "rollArm", "material": "blackOxide", "shape": [
+    {"box": {"size": [56, 42, 40], "chamfer": 4}},
+    {"shaft": {"radius": 14, "length": 18, "z0": 21, "rot": [1, 0, 0, -90]}},
+    {"shaft": {"radius": 14, "length": 8, "z0": 28, "rot": [0, 1, 0, 90]}}],
+   "joint": {"revolute": [1, 0, 0]}, "drive": {"follow": {"source": "pivotP", "ratio": -1}}},
+  {"id": "lens", "name": "Lens", "parent": "cam", "material": "glass", "shape": {"shaft": {"radius": 11, "length": 2, "z0": 39, "rot": [1, 0, 0, -90]}}},
+  {"id": "imu", "name": "Motion sensor (IMU)", "parent": "cam", "material": "anodized.green", "shape": {"box": {"size": [16, 16, 4], "chamfer": 0.8, "at": [-12, -4, 22]}}}
+ ],
+ "annotations": {
+  "labels": [
+   {"id": "lYaw", "at": {"part": "yawArm", "offset": [0, -31, 90]}, "text": "Yaw motor turns the blue arm"},
+   {"id": "lRoll", "at": {"part": "rollArm", "offset": [24, -44, 7]}, "text": "Roll motor turns the orange arm"},
+   {"id": "lPitch", "at": {"part": "cam", "offset": [32, 0, 14]}, "text": "Pitch motor tilts the camera"},
+   {"id": "lCam", "at": {"part": "cam", "offset": [-20, 21, 0]}, "text": "Camera"},
+   {"id": "lImu", "at": {"part": "imu", "offset": [-12, -4, 24]}, "text": "Motion sensor on the camera"}],
+  "dimensions": [
+   {"id": "fwd", "a": "cam", "b": {"part": "cam", "offset": [0, 39, 0]}, "along": "y", "text": "Lens axis, forward: {dim.fwd}"},
+   {"id": "up", "a": "cam", "b": {"part": "cam", "offset": [0, 0, 20]}, "along": "z", "text": "Camera top, up: {dim.up}"}]},
+ "steps": [
+  {"say": "A three-axis gimbal holds a drone's camera steady. Here the drone pitches, rolls and yaws at once. The camera keeps its direction.", "camera": "low", "orbit": 111, "spin": 1,
+   "focus": ["drone", "arms", "prop1", "prop2", "prop3", "prop4", "cam", "yawArm", "rollArm"]},
+  {"say": "Three motors hold the camera: yaw, roll and pitch. Their axes meet at the camera. A motion sensor on the camera measures how the camera turns.", "camera": "low", "orbit": 111,
+   "focus": ["cam", "yawArm", "rollArm"], "annotate": ["lYaw", "lRoll", "lPitch", "lCam", "lImu"]},
+  {"say": "Yaw: the drone turns to the left. The yaw motor turns the blue arm to the right by the same angle, so the camera still points the same way.", "camera": "low", "orbit": 111,
+   "focus": ["drone", "arms", "cam", "yawArm", "rollArm"], "pose": {"drone": {"rot": [0, 0, 1, 30]}, "yawArm": {"rot": [0, 0, 1, -30]}}, "annotate": ["lYaw"],
+   "check": [{"value": "dim.fwd", "eq": 39, "tol": 1e-9}, {"value": "dim.up", "eq": 20, "tol": 1e-9}]},
+  {"say": "Roll: the drone tips to the right. The roll motor turns the orange arm back by the same angle, so the camera stays level.", "camera": "low", "orbit": 111,
+   "focus": ["drone", "arms", "cam", "yawArm", "rollArm"], "pose": {"pivotR": {"rot": [0, 1, 0, 20]}, "rollArm": {"rot": [0, 1, 0, -20]}}, "annotate": ["lRoll"],
+   "check": [{"value": "dim.fwd", "eq": 39, "tol": 1e-9}, {"value": "dim.up", "eq": 20, "tol": 1e-9}]},
+  {"say": "Pitch: the drone's nose goes down. The pitch motor tilts the camera back up by the same angle.", "camera": "low", "orbit": 111,
+   "focus": ["drone", "arms", "cam", "yawArm", "rollArm"], "pose": {"pivotP": {"rot": [-1, 0, 0, 20]}, "cam": {"rot": [1, 0, 0, 20]}}, "annotate": ["lPitch"],
+   "check": [{"value": "dim.fwd", "eq": 39, "tol": 1e-9}, {"value": "dim.up", "eq": 20, "tol": 1e-9}]},
+  {"say": "All three at once. The engine measured two camera dimensions at this pose only: the lens axis along the forward line and the camera top along the vertical. Both keep their level values.", "camera": "low", "orbit": 111,
+   "focus": ["drone", "arms", "cam", "yawArm", "rollArm"],
+   "pose": {"pivotP": {"rot": [-1, 0, 0, 16]}, "pivotR": {"rot": [0, 1, 0, 18]}, "drone": {"rot": [0, 0, 1, 28]}, "yawArm": {"rot": [0, 0, 1, -28]}, "rollArm": {"rot": [0, 1, 0, -18]}, "cam": {"rot": [1, 0, 0, 16]}},
+   "annotate": ["fwd", "up"], "check": [{"value": "dim.fwd", "eq": 39, "tol": 1e-9}, {"value": "dim.up", "eq": 20, "tol": 1e-9}]},
+  {"say": "The controller repeats this many times each second: the sensor measures a small turn of the camera, and the motors cancel it.", "camera": "low", "orbit": 111, "spin": -1,
+   "focus": ["drone", "arms", "prop1", "prop3", "cam", "yawArm", "rollArm"]},
+  {"say": "Limits: a gimbal holds the camera's direction. It does not remove movement up, down or sideways. In this model the drone turns about the camera's centre, and the author set the motor angles; the engine did not solve a control loop.", "camera": "low", "orbit": 111, "spin": 1,
+   "focus": ["drone", "arms", "prop1", "prop2", "prop3", "prop4", "cam", "yawArm", "rollArm"]}
+ ]}

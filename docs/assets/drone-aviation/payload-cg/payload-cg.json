@@ -1,0 +1,143 @@
+{"v": 2, "kind": "assembly", "title": "Payload position and centre of gravity on a quadcopter", "units": "mm", "params": {"input": 0, "explode": 0},
+ "parts": [
+  {"id": "pad", "name": "Landing pad marking on the ground", "material": "plastic.white", "at": [0, 0, -225], "shape": [
+    {"tube": {"inner": 236, "outer": 262, "length": 0.4, "z0": 0}},
+    {"box": {"size": [34, 210, 0.4], "at": [-70, 0, 0.2]}},
+    {"box": {"size": [34, 210, 0.4], "at": [70, 0, 0.2]}},
+    {"box": {"size": [106, 34, 0.4], "at": [0, 0, 0.2]}}]},
+  {"id": "frame", "name": "Frame (arms and centre plates)", "material": "composite", "shape": [
+    {"shaft": {"radius": 8, "length": 192, "z0": 38, "rot": [-1, 1, 0, 90]}},
+    {"shaft": {"radius": 8, "length": 192, "z0": 38, "rot": [-1, -1, 0, 90]}},
+    {"shaft": {"radius": 8, "length": 192, "z0": 38, "rot": [1, -1, 0, 90]}},
+    {"shaft": {"radius": 8, "length": 192, "z0": 38, "rot": [1, 1, 0, 90]}},
+    {"box": {"size": [100, 176, 3], "chamfer": 1, "at": [0, 0, -9.5]}},
+    {"box": {"size": [100, 176, 3], "chamfer": 1, "at": [0, 0, 9.5]}}]},
+  {"id": "deck", "name": "Top deck", "parent": "frame", "material": "composite", "shape": {"box": {"size": [84, 124, 3], "chamfer": 1, "at": [0, 0, 45]}}, "explode": [0, 0, 35]},
+  {"id": "standoffs", "name": "Standoffs", "parent": "frame", "material": "aluminum", "shape": [
+    {"shaft": {"radius": 3, "length": 32.5, "z0": 11, "at": [34, 52, 0]}},
+    {"shaft": {"radius": 3, "length": 32.5, "z0": 11, "at": [-34, 52, 0]}},
+    {"shaft": {"radius": 3, "length": 32.5, "z0": 11, "at": [-34, -52, 0]}},
+    {"shaft": {"radius": 3, "length": 32.5, "z0": 11, "at": [34, -52, 0]}}], "explode": [0, 0, 18]},
+  {"id": "battery", "name": "Battery", "parent": "frame", "material": "plastic.yellow", "shape": {"box": {"size": [54, 100, 28], "chamfer": 4, "at": [0, 0, 26]}}, "explode": [0, -135, 0]},
+  {"id": "fc", "name": "Flight controller", "parent": "frame", "material": "anodized.purple", "shape": {"box": {"size": [44, 64, 16], "chamfer": 2, "at": [0, 22, 54.5]}}, "explode": [0, 0, 70]},
+  {"id": "gps", "name": "GPS and compass on a mast", "parent": "frame", "material": "plastic.white", "shape": [
+    {"shaft": {"radius": 2.2, "length": 62, "z0": 46.5, "at": [0, -38, 0]}},
+    {"shaft": {"radius": 32, "length": 12, "z0": 108.5, "chamfer": 3, "at": [0, -38, 0]}}], "explode": [0, 0, 78]},
+  {"id": "escs", "name": "Speed controllers (ESCs)", "parent": "frame", "material": "aluminum", "shape": [
+    {"box": {"size": [44, 22, 9], "chamfer": 1, "at": [84.85, 84.85, 12.5], "rot": [0, 0, 1, 45]}},
+    {"box": {"size": [44, 22, 9], "chamfer": 1, "at": [-84.85, 84.85, 12.5], "rot": [0, 0, 1, 135]}},
+    {"box": {"size": [44, 22, 9], "chamfer": 1, "at": [-84.85, -84.85, 12.5], "rot": [0, 0, 1, 45]}},
+    {"box": {"size": [44, 22, 9], "chamfer": 1, "at": [84.85, -84.85, 12.5], "rot": [0, 0, 1, 135]}}], "explode": [0, 0, 25]},
+  {"id": "ant", "name": "Radio antennas", "parent": "frame", "material": "blackOxide", "shape": [
+    {"shaft": {"radius": 1.6, "length": 85, "z0": 0, "rot": [0, 1, 0, 28], "at": [24, -58, 46.5]}},
+    {"shaft": {"radius": 1.6, "length": 85, "z0": 0, "rot": [0, 1, 0, -28], "at": [-24, -58, 46.5]}}], "explode": [0, 0, 60]},
+  {"id": "legs", "name": "Landing legs", "parent": "frame", "material": "darkSteel", "shape": [
+    {"shaft": {"radius": 4.5, "length": 190, "z0": -95, "rot": [1, 0, 0, 90], "at": [75, 0, -118]}},
+    {"shaft": {"radius": 4.5, "length": 190, "z0": -95, "rot": [1, 0, 0, 90], "at": [-75, 0, -118]}},
+    {"shaft": {"radius": 3.5, "length": 113, "z0": 0, "rot": [0, 1, 0, 161.89], "at": [40, 45, -11]}},
+    {"shaft": {"radius": 3.5, "length": 113, "z0": 0, "rot": [0, 1, 0, 161.89], "at": [40, -45, -11]}},
+    {"shaft": {"radius": 3.5, "length": 113, "z0": 0, "rot": [0, 1, 0, -161.89], "at": [-40, 45, -11]}},
+    {"shaft": {"radius": 3.5, "length": 113, "z0": 0, "rot": [0, 1, 0, -161.89], "at": [-40, -45, -11]}}], "explode": [0, 0, -42]},
+  {"id": "cam", "name": "Camera (marks the front)", "parent": "frame", "material": "blackOxide", "shape": [
+    {"box": {"size": [34, 26, 26], "chamfer": 3, "at": [0, 101, -2]}},
+    {"shaft": {"radius": 9, "length": 8, "z0": 0, "rot": [1, 0, 0, -90], "at": [0, 114, -2]}}], "explode": [0, 70, 0]},
+  {"id": "motors", "name": "Motor bases", "parent": "frame", "material": "darkSteel", "shape": [
+    {"shaft": {"radius": 20, "length": 4, "z0": 6, "at": [159.1, 159.1, 0]}},
+    {"shaft": {"radius": 20, "length": 4, "z0": 6, "at": [-159.1, -159.1, 0]}},
+    {"shaft": {"radius": 20, "length": 4, "z0": 6, "at": [-159.1, 159.1, 0]}},
+    {"shaft": {"radius": 20, "length": 4, "z0": 6, "at": [159.1, -159.1, 0]}},
+    {"shaft": {"radius": 15, "length": 7, "z0": 10, "at": [159.1, 159.1, 0]}},
+    {"shaft": {"radius": 15, "length": 7, "z0": 10, "at": [-159.1, -159.1, 0]}},
+    {"shaft": {"radius": 15, "length": 7, "z0": 10, "at": [-159.1, 159.1, 0]}},
+    {"shaft": {"radius": 15, "length": 7, "z0": 10, "at": [159.1, -159.1, 0]}}]},
+  {"id": "stators", "name": "Motor windings", "parent": "frame", "material": "brass", "shape": [
+    {"shaft": {"radius": 11.5, "length": 14.5, "z0": 17, "at": [159.1, 159.1, 0]}},
+    {"shaft": {"radius": 11.5, "length": 14.5, "z0": 17, "at": [-159.1, -159.1, 0]}},
+    {"shaft": {"radius": 11.5, "length": 14.5, "z0": 17, "at": [-159.1, 159.1, 0]}},
+    {"shaft": {"radius": 11.5, "length": 14.5, "z0": 17, "at": [159.1, -159.1, 0]}}]},
+  {"id": "prop1", "name": "Propeller M1 (front right, counter-clockwise)", "parent": "frame", "material": "plastic.blue", "at": [159.1, 159.1, 17], "shape": [
+    {"shaft": {"radius": 8, "length": 8, "z0": 19.5}},
+    {"blade": {"root": 5, "span": 122, "chord": 40, "tipChord": 17, "pitch": 30, "twist": -22, "thickness": 0.09, "at": [0, 0, 23.5], "rot": [1, 0, 0, 180]}},
+    {"blade": {"root": 5, "span": 122, "chord": 40, "tipChord": 17, "pitch": 30, "twist": -22, "thickness": 0.09, "at": [0, 0, 23.5], "rot": [0, 1, 0, 180]}},
+    {"hex": {"acrossFlats": 9, "length": 5, "z0": 27.5}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "explode": [0, 0, 70]},
+  {"id": "prop2", "name": "Propeller M2 (rear left, counter-clockwise)", "parent": "frame", "material": "plastic.blue", "at": [-159.1, -159.1, 17], "shape": [
+    {"shaft": {"radius": 8, "length": 8, "z0": 19.5}},
+    {"blade": {"root": 5, "span": 122, "chord": 40, "tipChord": 17, "pitch": 30, "twist": -22, "thickness": 0.09, "at": [0, 0, 23.5], "rot": [1, 0, 0, 180]}},
+    {"blade": {"root": 5, "span": 122, "chord": 40, "tipChord": 17, "pitch": 30, "twist": -22, "thickness": 0.09, "at": [0, 0, 23.5], "rot": [0, 1, 0, 180]}},
+    {"hex": {"acrossFlats": 9, "length": 5, "z0": 27.5}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "explode": [0, 0, 70]},
+  {"id": "prop3", "name": "Propeller M3 (front left, clockwise)", "parent": "frame", "material": "plastic.orange", "at": [-159.1, 159.1, 17], "shape": [
+    {"shaft": {"radius": 8, "length": 8, "z0": 19.5}},
+    {"blade": {"root": 5, "span": 122, "chord": 40, "tipChord": 17, "pitch": -30, "twist": 22, "thickness": 0.09, "at": [0, 0, 23.5]}},
+    {"blade": {"root": 5, "span": 122, "chord": 40, "tipChord": 17, "pitch": -30, "twist": 22, "thickness": 0.09, "at": [0, 0, 23.5], "rot": [0, 0, 1, 180]}},
+    {"hex": {"acrossFlats": 9, "length": 5, "z0": 27.5}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": -1}, "explode": [0, 0, 70]},
+  {"id": "prop4", "name": "Propeller M4 (rear right, clockwise)", "parent": "frame", "material": "plastic.orange", "at": [159.1, -159.1, 17], "shape": [
+    {"shaft": {"radius": 8, "length": 8, "z0": 19.5}},
+    {"blade": {"root": 5, "span": 122, "chord": 40, "tipChord": 17, "pitch": -30, "twist": 22, "thickness": 0.09, "at": [0, 0, 23.5]}},
+    {"blade": {"root": 5, "span": 122, "chord": 40, "tipChord": 17, "pitch": -30, "twist": 22, "thickness": 0.09, "at": [0, 0, 23.5], "rot": [0, 0, 1, 180]}},
+    {"hex": {"acrossFlats": 9, "length": 5, "z0": 27.5}}],
+   "joint": {"revolute": [0, 0, 1]}, "drive": {"input": -1}, "explode": [0, 0, 70]},
+  {"id": "bell1", "name": "Motor bell M1", "parent": "prop1", "material": "anodized.blue", "shape": [
+    {"tube": {"inner": 13.5, "outer": 15.5, "length": 15.5, "z0": 0.5}},
+    {"plate": {"radius": 15.5, "thickness": 2.5, "z0": 16, "holes": [[8, 0, 3.2], [-8, 0, 3.2], [0, 8, 3.2], [0, -8, 3.2]]}},
+    {"shaft": {"radius": 3, "length": 3, "z0": 17.5}}], "explode": [0, 0, -40]},
+  {"id": "bell2", "name": "Motor bell M2", "parent": "prop2", "material": "anodized.blue", "shape": [
+    {"tube": {"inner": 13.5, "outer": 15.5, "length": 15.5, "z0": 0.5}},
+    {"plate": {"radius": 15.5, "thickness": 2.5, "z0": 16, "holes": [[8, 0, 3.2], [-8, 0, 3.2], [0, 8, 3.2], [0, -8, 3.2]]}},
+    {"shaft": {"radius": 3, "length": 3, "z0": 17.5}}], "explode": [0, 0, -40]},
+  {"id": "bell3", "name": "Motor bell M3", "parent": "prop3", "material": "anodized.orange", "shape": [
+    {"tube": {"inner": 13.5, "outer": 15.5, "length": 15.5, "z0": 0.5}},
+    {"plate": {"radius": 15.5, "thickness": 2.5, "z0": 16, "holes": [[8, 0, 3.2], [-8, 0, 3.2], [0, 8, 3.2], [0, -8, 3.2]]}},
+    {"shaft": {"radius": 3, "length": 3, "z0": 17.5}}], "explode": [0, 0, -40]},
+  {"id": "bell4", "name": "Motor bell M4", "parent": "prop4", "material": "anodized.orange", "shape": [
+    {"tube": {"inner": 13.5, "outer": 15.5, "length": 15.5, "z0": 0.5}},
+    {"plate": {"radius": 15.5, "thickness": 2.5, "z0": 16, "holes": [[8, 0, 3.2], [-8, 0, 3.2], [0, 8, 3.2], [0, -8, 3.2]]}},
+    {"shaft": {"radius": 3, "length": 3, "z0": 17.5}}], "explode": [0, 0, -40]},
+  {"id": "rail", "name": "Payload rail", "parent": "frame", "material": "aluminum", "shape": {"box": {"size": [14, 290, 6], "chamfer": 1, "at": [0, -61, -14]}}},
+  {"id": "payload", "name": "Payload", "parent": "frame", "material": "anodized.red", "at": [0, 0, 2942], "shape": [
+    {"shaft": {"radius": 42, "length": 84, "z0": -42, "chamfer": 4, "rot": [0, 1, 0, 90], "at": [0, 0, -3000]}},
+    {"box": {"size": [22, 26, 5], "chamfer": 1, "at": [0, 0, -2956.5]}}]}
+ ],
+ "annotations": {
+  "labels": [
+   {"id": "lPayload", "at": {"part": "payload", "offset": [42, 0, -3000]}, "text": "Payload"},
+   {"id": "lRail", "at": {"part": "rail", "offset": [5.951, -164.582, -11.003]}, "text": "Rail: the payload can sit forward or aft"}],
+  "arrows": [
+   {"id": "f1", "meaning": "force", "from": {"part": "frame", "offset": [159.1, 159.1, 58]}, "to": {"part": "frame", "offset": [159.1, 159.1, 148]}, "text": "Thrust"},
+   {"id": "f2", "meaning": "force", "from": {"part": "frame", "offset": [-159.1, -159.1, 58]}, "to": {"part": "frame", "offset": [-159.1, -159.1, 148]}},
+   {"id": "f3", "meaning": "force", "from": {"part": "frame", "offset": [-159.1, 159.1, 58]}, "to": {"part": "frame", "offset": [-159.1, 159.1, 148]}},
+   {"id": "f4", "meaning": "force", "from": {"part": "frame", "offset": [159.1, -159.1, 58]}, "to": {"part": "frame", "offset": [159.1, -159.1, 148]}},
+   {"id": "bF1", "meaning": "force", "from": {"part": "frame", "offset": [159.1, 159.1, 58]}, "to": {"part": "frame", "offset": [159.1, 159.1, 198]}, "text": "Front motors: more thrust"},
+   {"id": "bF3", "meaning": "force", "from": {"part": "frame", "offset": [-159.1, 159.1, 58]}, "to": {"part": "frame", "offset": [-159.1, 159.1, 198]}},
+   {"id": "sR2", "meaning": "force", "from": {"part": "frame", "offset": [-159.1, -159.1, 58]}, "to": {"part": "frame", "offset": [-159.1, -159.1, 103]}},
+   {"id": "sR4", "meaning": "force", "from": {"part": "frame", "offset": [159.1, -159.1, 58]}, "to": {"part": "frame", "offset": [159.1, -159.1, 103]}, "text": "Rear motors: less thrust"},
+   {"id": "bR2", "meaning": "force", "from": {"part": "frame", "offset": [-159.1, -159.1, 58]}, "to": {"part": "frame", "offset": [-159.1, -159.1, 198]}},
+   {"id": "bR4", "meaning": "force", "from": {"part": "frame", "offset": [159.1, -159.1, 58]}, "to": {"part": "frame", "offset": [159.1, -159.1, 198]}, "text": "Rear motors: more thrust"},
+   {"id": "sF1", "meaning": "force", "from": {"part": "frame", "offset": [159.1, 159.1, 58]}, "to": {"part": "frame", "offset": [159.1, 159.1, 103]}, "text": "Front motors: less thrust"},
+   {"id": "sF3", "meaning": "force", "from": {"part": "frame", "offset": [-159.1, 159.1, 58]}, "to": {"part": "frame", "offset": [-159.1, 159.1, 103]}},
+   {"id": "xR2", "meaning": "force", "from": {"part": "frame", "offset": [-159.1, -159.1, 58]}, "to": {"part": "frame", "offset": [-159.1, -159.1, 218]}},
+   {"id": "xR4", "meaning": "force", "from": {"part": "frame", "offset": [159.1, -159.1, 58]}, "to": {"part": "frame", "offset": [159.1, -159.1, 218]}, "text": "Rear motors at full power (assumed limit)"},
+   {"id": "tC", "meaning": "force", "from": {"part": "frame", "offset": [0, 0, 130]}, "to": {"part": "frame", "offset": [0, 0, 300]}, "text": "Total of four equal thrusts"},
+   {"id": "tW", "meaning": "force", "from": {"point": "centreOfMass", "offset": [0, 0, 140]}, "to": {"point": "centreOfMass", "offset": [0, 0, 310]}, "text": "Total thrust (placed by the author)"},
+   {"id": "w", "meaning": "force", "cause": "gravity", "from": {"point": "centreOfMass"}, "to": {"point": "centreOfMass", "offset": [0, 0, -190]}, "text": "Weight"}]},
+ "steps": [
+  {"say": "This quadcopter carries a payload on a rail under its frame. The payload can sit in the middle, forward or aft. The black camera marks the front.", "camera": "low", "orbit": 41, "spin": 2,
+   "focus": ["frame", "payload"], "annotate": ["lPayload", "lRail"]},
+  {"say": "For this ideal hover example, assume the aircraft CG is exactly below the centre of the four propellers. Four equal thrusts can then balance weight without a pitch or roll moment. The weight marker is not this CG.", "camera": "low", "orbit": 41, "spin": 2,
+   "focus": ["frame", "payload"], "annotate": ["f1", "f2", "f3", "f4", "w"]},
+  {"say": "Move the payload forward. The centre of gravity moves forward with it, so the weight now acts ahead of the centre of the propellers.", "camera": "low", "orbit": 41, "spin": 2,
+   "focus": ["frame", "payload"], "pose": {"payload": {"rot": [1, 0, 0, 1.9102131717099304]}}, "annotate": ["tC", "w"]},
+  {"say": "The total of four equal thrusts acts at the centre of the propellers. The weight ahead of it turns the nose down.", "camera": "low", "orbit": 41, "spin": 2,
+   "focus": ["frame", "payload"], "pose": {"frame": {"rot": [-1, 0, 0, 14]}, "payload": {"rot": [1, 0, 0, 1.9102131717099304]}}, "annotate": ["tC", "w"]},
+  {"say": "With enough thrust available, the flight controller can correct the nose-down turn. In a steady, level hover with this forward CG, the front pair must keep producing more thrust than the rear pair.", "camera": "low", "orbit": 41, "spin": 2,
+   "focus": ["frame", "payload"], "pose": {"payload": {"rot": [1, 0, 0, 1.9102131717099304]}}, "annotate": ["bF1", "bF3", "sR2", "sR4", "w"]},
+  {"say": "In this steady, level hover, the resultant thrust line passes through the aircraft CG. The torques balance. The front motors produce more thrust than the rear motors, so they have less additional thrust available before their upper limit.", "camera": "low", "orbit": 41, "spin": 2,
+   "focus": ["frame", "payload"], "pose": {"payload": {"rot": [1, 0, 0, 1.9102131717099304]}}, "annotate": ["tW", "w"]},
+  {"say": "Move the payload aft and the opposite occurs: the weight acts behind the centre, and the rear motors must work harder.", "camera": "low", "orbit": 41, "spin": 2,
+   "focus": ["frame", "payload"], "pose": {"payload": {"rot": [-1, 0, 0, 1.9102131717099304]}}, "annotate": ["bR2", "bR4", "sF1", "sF3", "w"]},
+  {"say": "An assumed limit case. If the thrust needed for a steady, level hover is outside the motor-thrust limits, that hover is not possible. At a limit, less control is available in one direction.", "camera": "low", "orbit": 41, "spin": 2,
+   "focus": ["frame", "payload"], "pose": {"frame": {"rot": [1, 0, 0, 14]}, "payload": {"rot": [-1, 0, 0, 2.8659839825988622]}}, "annotate": ["xR2", "xR4", "sF1", "sF3", "w"]},
+  {"say": "The engine finds the volume centre of all drawn parts, including the ground marking. This is not the aircraft CG. The force arrows and tilts are authored. The engine does not calculate the thrust balance or margin. No flight is simulated.", "camera": "low", "orbit": 41, "spin": 2}
+ ]}

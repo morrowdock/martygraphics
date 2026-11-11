@@ -1,0 +1,1442 @@
+{
+  "anchorIssues" : [
+
+  ],
+  "anchorUntested" : [
+
+  ],
+  "annotations" : [
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          -31,
+          90
+        ]
+      ],
+      "id" : "lYaw",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Yaw motor turns the blue arm",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          24,
+          -44,
+          7
+        ]
+      ],
+      "id" : "lRoll",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Roll motor turns the orange arm",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          32,
+          0,
+          14
+        ]
+      ],
+      "id" : "lPitch",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Pitch motor tilts the camera",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -20,
+          21,
+          0
+        ]
+      ],
+      "id" : "lCam",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Camera",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -12,
+          -4,
+          24
+        ]
+      ],
+      "id" : "lImu",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Motion sensor on the camera",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          39,
+          0
+        ]
+      ],
+      "id" : "fwd",
+      "kind" : "dimension",
+      "meaning" : "distance",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Lens axis, forward: 39 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 39
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          20
+        ]
+      ],
+      "id" : "up",
+      "kind" : "dimension",
+      "meaning" : "distance",
+      "occludedAtDefaultCamera" : true,
+      "text" : "Camera top, up: 20 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 20
+    }
+  ],
+  "arrowIssues" : [
+
+  ],
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "engine" : {
+    "assemblyVersions" : [
+      1,
+      2
+    ],
+    "executableSHA256" : "21b76c201f144fd2d618d89e84cc3b8ccc4d275c316bb9960ed78f6669e6bc40",
+    "name" : "MartyGraphics",
+    "reportFormat" : 1,
+    "snapshotFormats" : [
+      "martygraphics.solid.snapshot\/1",
+      "martygraphics.solid.snapshot\/2"
+    ],
+    "version" : "unreleased"
+  },
+  "facts" : {
+    "cam.speed" : {
+      "source" : "follow",
+      "text" : "0.04",
+      "tier" : "built",
+      "unit" : "",
+      "value" : 0.040000000000000001
+    },
+    "dim.fwd" : {
+      "source" : "dimension",
+      "text" : "39 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 39
+    },
+    "dim.up" : {
+      "source" : "dimension",
+      "text" : "20 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 20
+    },
+    "drone.speed" : {
+      "source" : "input",
+      "text" : "0.08",
+      "tier" : "built",
+      "unit" : "",
+      "value" : 0.080000000000000002
+    },
+    "pivotP.speed" : {
+      "source" : "input",
+      "text" : "-0.04",
+      "tier" : "built",
+      "unit" : "",
+      "value" : -0.040000000000000001
+    },
+    "pivotP.worldSpeed" : {
+      "source" : "input",
+      "text" : "-0.04",
+      "tier" : "built",
+      "unit" : "",
+      "value" : -0.040000000000000001
+    },
+    "pivotR.speed" : {
+      "source" : "input",
+      "text" : "0.05",
+      "tier" : "built",
+      "unit" : "",
+      "value" : 0.050000000000000003
+    },
+    "prop1.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop2.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop3.speed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    },
+    "prop4.speed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    },
+    "rollArm.speed" : {
+      "source" : "follow",
+      "text" : "-0.05",
+      "tier" : "built",
+      "unit" : "",
+      "value" : -0.050000000000000003
+    },
+    "yawArm.speed" : {
+      "source" : "follow",
+      "text" : "-0.08",
+      "tier" : "built",
+      "unit" : "",
+      "value" : -0.080000000000000002
+    }
+  },
+  "file" : {
+    "lines" : 103,
+    "sha256" : "e8912667e2afd3229903e0b2a65a4c20cdb25fcbdcf563b1f0be6abaaeef9605"
+  },
+  "legend" : {
+    "built" : 10,
+    "claims" : [
+      {
+        "badge" : "Schematic motion",
+        "id" : "pivotP",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Moved by input, from a speed or ratio the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "pivotR",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Moved by input, from a speed or ratio the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "drone",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Moved by input, from a speed or ratio the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "prop1",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Rides on a part whose motion the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "prop2",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Rides on a part whose motion the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "prop3",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Rides on a part whose motion the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "prop4",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Rides on a part whose motion the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "yawArm",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Moved by follow, from a speed or ratio the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "rollArm",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Moved by follow, from a speed or ratio the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "cam",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Moved by follow, from a speed or ratio the author set"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "fwd",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Measured by the engine at the default input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "up",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Measured by the engine at the default input"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.3.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.fwd = 39 ± 1e-09"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.3.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.up = 20 ± 1e-09"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.4.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.fwd = 39 ± 1e-09"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.4.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.up = 20 ± 1e-09"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.5.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.fwd = 39 ± 1e-09"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.5.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.up = 20 ± 1e-09"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.6.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.fwd = 39 ± 1e-09"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.6.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: dim.up = 20 ± 1e-09"
+      }
+    ],
+    "described" : 0,
+    "note" : "Some motion is schematic",
+    "notes" : [
+      "Some motion is schematic"
+    ],
+    "shapes" : "Shapes as authored",
+    "solved" : 10,
+    "text" : "Solved 10 · Schematic 10"
+  },
+  "motionTiers" : [
+    {
+      "badge" : "Schematic motion",
+      "id" : "pivotP",
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "badge" : "Schematic motion",
+      "id" : "pivotR",
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "badge" : "Schematic motion",
+      "id" : "drone",
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "badge" : "Schematic motion",
+      "id" : "prop1",
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "badge" : "Schematic motion",
+      "id" : "prop2",
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "badge" : "Schematic motion",
+      "id" : "prop3",
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "badge" : "Schematic motion",
+      "id" : "prop4",
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "badge" : "Schematic motion",
+      "id" : "yawArm",
+      "source" : "follow",
+      "tier" : "built"
+    },
+    {
+      "badge" : "Schematic motion",
+      "id" : "rollArm",
+      "source" : "follow",
+      "tier" : "built"
+    },
+    {
+      "badge" : "Schematic motion",
+      "id" : "cam",
+      "source" : "follow",
+      "tier" : "built"
+    }
+  ],
+  "notChecked" : {
+    "follow" : [
+      "the mechanism that keeps the authored ratio",
+      "slip"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 15,
+  "partTiers" : [
+    {
+      "base" : "pad",
+      "motion" : "static",
+      "part" : "pad",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "pivotP",
+      "motion" : "own",
+      "part" : "pivotP",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "base" : "pivotR",
+      "motion" : "own",
+      "part" : "pivotR",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "base" : "drone",
+      "motion" : "own",
+      "part" : "drone",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "base" : "arms",
+      "motion" : "rides",
+      "part" : "arms",
+      "ridesOn" : "drone",
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "pods",
+      "motion" : "rides",
+      "part" : "pods",
+      "ridesOn" : "drone",
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "prop1",
+      "motion" : "own",
+      "part" : "prop1",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "base" : "prop2",
+      "motion" : "own",
+      "part" : "prop2",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "base" : "prop3",
+      "motion" : "own",
+      "part" : "prop3",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "base" : "prop4",
+      "motion" : "own",
+      "part" : "prop4",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "built"
+    },
+    {
+      "base" : "yawArm",
+      "motion" : "own",
+      "part" : "yawArm",
+      "ridesOn" : null,
+      "source" : "follow",
+      "tier" : "built"
+    },
+    {
+      "base" : "rollArm",
+      "motion" : "own",
+      "part" : "rollArm",
+      "ridesOn" : null,
+      "source" : "follow",
+      "tier" : "built"
+    },
+    {
+      "base" : "cam",
+      "motion" : "own",
+      "part" : "cam",
+      "ridesOn" : null,
+      "source" : "follow",
+      "tier" : "built"
+    },
+    {
+      "base" : "lens",
+      "motion" : "rides",
+      "part" : "lens",
+      "ridesOn" : "cam",
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "imu",
+      "motion" : "rides",
+      "part" : "imu",
+      "ridesOn" : "cam",
+      "source" : null,
+      "tier" : null
+    }
+  ],
+  "placements" : [
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.48588348310965934,
+            0.34640543886660341
+          ],
+          "box" : [
+            0.47744683502024854,
+            0.35639206956696667,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lYaw",
+          "kind" : "label",
+          "leader" : [
+            0.48588348310965934,
+            0.35639206956696667
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Yaw motor turns the blue arm"
+        },
+        {
+          "anchor" : [
+            0.49748691065094891,
+            0.46298221775409587
+          ],
+          "box" : [
+            0.48316744487431473,
+            0.47445292245908616,
+            0.26221875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lRoll",
+          "kind" : "label",
+          "leader" : [
+            0.49748691065094891,
+            0.47445292245908616
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Roll motor turns the orange arm"
+        },
+        {
+          "anchor" : [
+            0.5225889054452233,
+            0.43475546738712528
+          ],
+          "box" : [
+            0.53599713841712315,
+            0.4014388824379857,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lPitch",
+          "kind" : "label",
+          "leader" : [
+            0.53599713841712315,
+            0.43475546738712528
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pitch motor tilts the camera"
+        },
+        {
+          "anchor" : [
+            0.4953013438550869,
+            0.42533869006072805
+          ],
+          "box" : [
+            0.41847987381054164,
+            0.41068542522642704,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 6,
+          "id" : "lCam",
+          "kind" : "label",
+          "leader" : [
+            0.47679237381054163,
+            0.42533869006072805
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Camera"
+        },
+        {
+          "anchor" : [
+            0.48985812793444861,
+            0.411354556921119
+          ],
+          "box" : [
+            0.23431140496668806,
+            0.32943784841257739,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 23,
+          "id" : "lImu",
+          "kind" : "label",
+          "leader" : [
+            0.4639051549666881,
+            0.36868784841257735
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Motion sensor on the camera"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.48777659185444405,
+            0.36700338162342983
+          ],
+          "box" : [
+            0.47933994376503331,
+            0.37699001232379309,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lYaw",
+          "kind" : "label",
+          "leader" : [
+            0.48777659185444405,
+            0.37699001232379309
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Yaw motor turns the blue arm"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.47354921369396774,
+            0.48684312654069201
+          ],
+          "box" : [
+            0.19933625990285048,
+            0.45248614296988648,
+            0.26221875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lRoll",
+          "kind" : "label",
+          "leader" : [
+            0.46155500990285053,
+            0.48684312654069201
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Roll motor turns the orange arm"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.51934504588580688,
+            0.46036768225505126
+          ],
+          "box" : [
+            0.50893607220699633,
+            0.4712874757598251,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lPitch",
+          "kind" : "label",
+          "leader" : [
+            0.51934504588580688,
+            0.4712874757598251
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pitch motor tilts the camera"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.46745032637797229,
+            0.4492098074393524
+          ],
+          "box" : [
+            0.46421853927539114,
+            0.40151790715707192,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "fwd",
+          "kind" : "dimension",
+          "leader" : [
+            0.46745032637797229,
+            0.44076790715707193
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Lens axis, forward: 39 mm"
+        },
+        {
+          "anchor" : [
+            0.47964734499373163,
+            0.48967875127412752
+          ],
+          "box" : [
+            0.46715935469364933,
+            0.50481779304222907,
+            0.18065624999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "up",
+          "kind" : "dimension",
+          "leader" : [
+            0.47964734499373163,
+            0.50481779304222907
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Camera top, up: 20 mm"
+        }
+      ],
+      "step" : 6
+    }
+  ],
+  "ratios" : {
+    "drone" : 0.080000000000000002,
+    "pivotP" : -0.040000000000000001,
+    "pivotR" : 0.050000000000000003,
+    "prop1" : 1,
+    "prop2" : 1,
+    "prop3" : -1,
+    "prop4" : -1
+  },
+  "readBack" : [
+    "pad: world centre (0, 0, -260) mm, size 336 x 336 x 0.4 mm; static; root (at [0, 0, -260] in the world frame); local +Z points +Z",
+    "pivotP: world centre (0, 0, 0) mm, size 38 x 38 x 38 mm; turns about a horizontal axis (+X) through (0, 0, 0); -0.04 turns per input turn (Built, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "pivotR: world centre (0, 0, 0) mm, size 38 x 38 x 38 mm; turns about a horizontal axis (+Y) through (0, 0, 0); 0.05 turns per input turn relative to pivotP (Built, input); child of pivotP (at [0, 0, 0] in the pivotP frame); its origin is 0 mm from the pivotP axis; local +Z points +Z",
+    "drone: world centre (0, 5.5, 114) mm, size 84 x 161 x 88 mm; turns about a vertical axis (+Z) through (0, 0, 0); 0.08 turns per input turn relative to pivotR (Built, input); child of pivotR (at [0, 0, 0] in the pivotR frame); its origin is 0 mm from the pivotR axis; local +Z points +Z",
+    "arms: world centre (0, 0, 140) mm, size 242 x 242 x 12 mm; fixed to its parent, moves with drone; child of drone (at [0, 0, 140] in the drone frame); its origin is 0 mm from the drone axis; local +Z points +Z",
+    "pods: world centre (0, 0, 143) mm, size 256 x 256 x 18 mm; fixed to its parent, moves with drone; child of drone (at [0, 0, 0] in the drone frame); its origin is 0 mm from the drone axis; local +Z points +Z",
+    "prop1: world centre (115, 115, 153) mm, size 168 x 34.4 x 12.7 mm; turns about a vertical axis (+Z) through (115, 115, 152); 1 turn per input turn relative to drone (Built, input); child of drone (at [115, 115, 152] in the drone frame); its origin is 163 mm from the drone axis; local +Z points +Z",
+    "prop2: world centre (-115, -115, 153) mm, size 168 x 34.4 x 12.7 mm; turns about a vertical axis (+Z) through (-115, -115, 152); 1 turn per input turn relative to drone (Built, input); child of drone (at [-115, -115, 152] in the drone frame); its origin is 163 mm from the drone axis; local +Z points +Z",
+    "prop3: world centre (-115, 115, 153) mm, size 168 x 34.4 x 12.7 mm; turns about a vertical axis (+Z) through (-115, 115, 152); -1 turn per input turn relative to drone (Built, input); child of drone (at [-115, 115, 152] in the drone frame); its origin is 163 mm from the drone axis; local +Z points +Z",
+    "prop4: world centre (115, -115, 153) mm, size 168 x 34.4 x 12.7 mm; turns about a vertical axis (+Z) through (115, -115, 152); -1 turn per input turn relative to drone (Built, input); child of drone (at [115, -115, 152] in the drone frame); its origin is 163 mm from the drone axis; local +Z points +Z",
+    "yawArm: world centre (0, -28, 41) mm, size 34 x 90 x 114 mm; turns about a vertical axis (+Z) through (0, 0, 0); -0.08 turns per input turn relative to drone (Built, follow); child of drone (at [0, 0, 0] in the drone frame); its origin is 0 mm from the drone axis; local +Z points +Z",
+    "rollArm: world centre (18, -19.5, 0) mm, size 68 x 67 x 32 mm; turns about a horizontal axis (+Y) through (0, 0, 0); -0.05 turns per input turn relative to yawArm (Built, follow); child of yawArm (at [0, 0, 0] in the yawArm frame); its origin is 0 mm from the yawArm axis; local +Z points +Z",
+    "cam: world centre (4, 9, 0) mm, size 64 x 60 x 40 mm; turns about a horizontal axis (+X) through (0, 0, 0); 0.04 turns per input turn relative to rollArm (Built, follow); child of rollArm (at [0, 0, 0] in the rollArm frame); its origin is 0 mm from the rollArm axis; local +Z points +Z",
+    "lens: world centre (0, 40, 0) mm, size 22 x 2 x 22 mm; fixed to its parent, moves with cam; child of cam (at [0, 0, 0] in the cam frame); its origin is 0 mm from the cam axis; local +Z points +Z",
+    "imu: world centre (-12, -4, 22) mm, size 16 x 16 x 4 mm; fixed to its parent, moves with cam; child of cam (at [0, 0, 0] in the cam frame); its origin is 0 mm from the cam axis; local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "showOnly" : [
+
+  ],
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 39,
+          "text" : "dim.fwd = 39 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "dim.fwd"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 20,
+          "text" : "dim.up = 20 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "dim.up"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 39,
+          "text" : "dim.fwd = 39 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "dim.fwd"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 20,
+          "text" : "dim.up = 20 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "dim.up"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 39,
+          "text" : "dim.fwd = 39 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "dim.fwd"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 20,
+          "text" : "dim.up = 20 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "dim.up"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 39,
+          "text" : "dim.fwd = 39 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "dim.fwd"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 20,
+          "text" : "dim.up = 20 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "dim.up"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "A three-axis gimbal holds a drone's camera steady. Here the drone pitches, rolls and yaws at once. The camera keeps its direction.",
+    "Three motors hold the camera: yaw, roll and pitch. Their axes meet at the camera. A motion sensor on the camera measures how the camera turns.",
+    "Yaw: the drone turns to the left. The yaw motor turns the blue arm to the right by the same angle, so the camera still points the same way.",
+    "Roll: the drone tips to the right. The roll motor turns the orange arm back by the same angle, so the camera stays level.",
+    "Pitch: the drone's nose goes down. The pitch motor tilts the camera back up by the same angle.",
+    "All three at once. The engine measured two camera dimensions at this pose only: the lens axis along the forward line and the camera top along the vertical. Both keep their level values.",
+    "The controller repeats this many times each second: the sensor measures a small turn of the camera, and the motors cancel it.",
+    "Limits: a gimbal holds the camera's direction. It does not remove movement up, down or sideways. In this model the drone turns about the camera's centre, and the author set the motor angles; the engine did not solve a control loop."
+  ],
+  "stepTiers" : [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "stepViews" : [
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 1
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 2
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "drone",
+        "yawArm"
+      ],
+      "poseReadBack" : [
+        "drone: world centre (0, 0, 114) mm, size 139 x 163 x 88 mm; local +Z points +Z; posed placement at [0, 0, 0] in the pivotR frame",
+        "arms: world centre (0, 0, 140) mm, size 322 x 322 x 12 mm; local +Z points +Z; moves with drone",
+        "pods: world centre (0, 0, 143) mm, size 340 x 340 x 18 mm; local +Z points +Z; moves with drone",
+        "prop1: world centre (42.1, 157, 153) mm, size 154 x 88.7 x 12.7 mm; local +Z points +Z; moves with drone",
+        "prop2: world centre (-42.1, -157, 153) mm, size 154 x 88.7 x 12.7 mm; local +Z points +Z; moves with drone",
+        "prop3: world centre (-157, 42.1, 153) mm, size 148 x 98.2 x 12.7 mm; local +Z points +Z; moves with drone",
+        "prop4: world centre (157, -42.1, 153) mm, size 148 x 98.2 x 12.7 mm; local +Z points +Z; moves with drone"
+      ],
+      "step" : 3
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "pivotR",
+        "rollArm"
+      ],
+      "poseReadBack" : [
+        "pivotR: world centre (0, 0, 0) mm, size 37.9 x 38 x 37.9 mm; local +Z points (0.34, 0, 0.94); posed placement at [0, 0, 0] in the pivotP frame",
+        "drone: world centre (47.9, 5.5, 112) mm, size 85.1 x 161 x 95.4 mm; local +Z points (0.34, 0, 0.94); moves with pivotR",
+        "arms: world centre (47.9, 0, 132) mm, size 228 x 242 x 91.5 mm; local +Z points (0.34, 0, 0.94); moves with drone",
+        "pods: world centre (48.9, 0, 134) mm, size 247 x 256 x 104 mm; local +Z points (0.34, 0, 0.94); moves with drone",
+        "prop1: world centre (161, 115, 107) mm, size 158 x 34.4 x 59.1 mm; local +Z points (0.34, 0, 0.94); moves with drone",
+        "prop2: world centre (-55, -115, 185) mm, size 158 x 34.4 x 59.1 mm; local +Z points (0.34, 0, 0.94); moves with drone",
+        "prop3: world centre (-55, 115, 185) mm, size 158 x 34.4 x 59.1 mm; local +Z points (0.34, 0, 0.94); moves with drone",
+        "prop4: world centre (161, -115, 107) mm, size 158 x 34.4 x 59.1 mm; local +Z points (0.34, 0, 0.94); moves with drone",
+        "yawArm: world centre (16.8, -28, 41) mm, size 65.5 x 90 x 114 mm; local +Z points (0.34, 0, 0.94); moves with drone"
+      ],
+      "step" : 4
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "pivotP",
+        "cam"
+      ],
+      "poseReadBack" : [
+        "pivotP: world centre (0, 0, 0) mm, size 38 x 37.9 x 37.9 mm; local +Z points (0, 0.34, 0.94); posed placement at [0, 0, 0] in the world frame",
+        "pivotR: world centre (0, 0, 0) mm, size 38 x 37.9 x 37.9 mm; local +Z points (0, 0.34, 0.94); moves with pivotP",
+        "drone: world centre (0, 51.9, 118) mm, size 84 x 155 x 107 mm; local +Z points (0, 0.34, 0.94); moves with pivotR",
+        "arms: world centre (0, 47.9, 132) mm, size 242 x 228 x 91.5 mm; local +Z points (0, 0.34, 0.94); moves with drone",
+        "pods: world centre (0, 48.9, 134) mm, size 256 x 247 x 104 mm; local +Z points (0, 0.34, 0.94); moves with drone",
+        "prop1: world centre (115, 158, 102) mm, size 168 x 32.4 x 19.8 mm; local +Z points (0, 0.34, 0.94); moves with drone",
+        "prop2: world centre (-115, -58, 181) mm, size 168 x 32.4 x 19.8 mm; local +Z points (0, 0.34, 0.94); moves with drone",
+        "prop3: world centre (-115, 158, 102) mm, size 168 x 32.4 x 19.8 mm; local +Z points (0, 0.34, 0.94); moves with drone",
+        "prop4: world centre (115, -58, 181) mm, size 168 x 32.4 x 19.8 mm; local +Z points (0, 0.34, 0.94); moves with drone",
+        "yawArm: world centre (0, -11.5, 56.1) mm, size 34 x 122 x 106 mm; local +Z points (0, 0.34, 0.94); moves with drone",
+        "rollArm: world centre (18, -20.6, 9.58) mm, size 68 x 69.3 x 47.2 mm; local +Z points (0, 0.34, 0.94); moves with yawArm"
+      ],
+      "step" : 5
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "pivotP",
+        "pivotR",
+        "drone",
+        "yawArm",
+        "rollArm",
+        "cam"
+      ],
+      "poseReadBack" : [
+        "pivotP: world centre (0, 0, 0) mm, size 38 x 37.7 x 37.7 mm; local +Z points (0, 0.28, 0.96); posed placement at [0, 0, 0] in the world frame",
+        "pivotR: world centre (0, 0, 0) mm, size 37.8 x 37.6 x 37.9 mm; local +Z points (0.31, 0.26, 0.91); posed placement at [0, 0, 0] in the pivotP frame",
+        "drone: world centre (43.3, 36.7, 113) mm, size 135 x 163 x 101 mm; local +Z points (0.31, 0.26, 0.91); posed placement at [0, 0, 0] in the pivotR frame",
+        "arms: world centre (43.3, 36.7, 128) mm, size 305 x 300 x 127 mm; local +Z points (0.31, 0.26, 0.91); moves with drone",
+        "pods: world centre (44.2, 37.5, 131) mm, size 326 x 321 x 141 mm; local +Z points (0.31, 0.26, 0.91); moves with drone",
+        "prop1: world centre (92.9, 186, 85.3) mm, size 148 x 68 x 67.1 mm; local +Z points (0.31, 0.26, 0.91); moves with drone",
+        "prop2: world centre (2.47, -105, 199) mm, size 148 x 68 x 67.1 mm; local +Z points (0.31, 0.26, 0.91); moves with drone",
+        "prop3: world centre (-99.8, 99.4, 175) mm, size 144 x 77.7 x 68.2 mm; local +Z points (0.31, 0.26, 0.91); moves with drone",
+        "prop4: world centre (196, -18.5, 108) mm, size 144 x 77.7 x 68.2 mm; local +Z points (0.31, 0.26, 0.91); moves with drone",
+        "yawArm: world centre (15.2, -15.8, 51.3) mm, size 62.4 x 116 x 104 mm; local +Z points (0.31, 0.26, 0.91); posed placement at [0, 0, 0] in the drone frame",
+        "rollArm: world centre (18, -20.7, 8.01) mm, size 68 x 69.3 x 44 mm; local +Z points (0, 0.28, 0.96); posed placement at [0, 0, 0] in the yawArm frame",
+        "cam: world centre (4, 9, 0) mm, size 64 x 60 x 40 mm; local +Z points +Z; posed placement at [0, 0, 0] in the rollArm frame",
+        "lens: world centre (0, 40, 0) mm, size 22 x 2 x 22 mm; local +Z points +Z; moves with cam",
+        "imu: world centre (-12, -4, 22) mm, size 16 x 16 x 4 mm; local +Z points +Z; moves with cam"
+      ],
+      "step" : 6
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 7
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 8
+    }
+  ],
+  "stillPlacements" : [
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.48039356694362845,
+            0.21829329885582704
+          ],
+          "box" : [
+            0.25051395348464595,
+            0.16933325148519643,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lYaw",
+          "kind" : "label",
+          "leader" : [
+            0.48039356694362845,
+            0.20858325148519644
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Yaw motor turns the blue arm"
+        },
+        {
+          "anchor" : [
+            0.40823173475102853,
+            0.59023740255659651
+          ],
+          "box" : [
+            0.39385778019878903,
+            0.53949427002138384,
+            0.26221875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lRoll",
+          "kind" : "label",
+          "leader" : [
+            0.40823173475102853,
+            0.57874427002138373
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Roll motor turns the orange arm"
+        },
+        {
+          "anchor" : [
+            0.47660636299396864,
+            0.5933833766176636
+          ],
+          "box" : [
+            0.30325913985259179,
+            0.61933079855951478,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "lPitch",
+          "kind" : "label",
+          "leader" : [
+            0.47660636299396864,
+            0.61933079855951478
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pitch motor tilts the camera"
+        },
+        {
+          "anchor" : [
+            0.62558787957166651,
+            0.63550310912736807
+          ],
+          "box" : [
+            0.637351605151253,
+            0.64168298460900597,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lCam",
+          "kind" : "label",
+          "leader" : [
+            0.637351605151253,
+            0.64168298460900597
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Camera"
+        },
+        {
+          "anchor" : [
+            0.55770948091393213,
+            0.51807881213280449
+          ],
+          "box" : [
+            0.54417649791322309,
+            0.466100956330393,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lImu",
+          "kind" : "label",
+          "leader" : [
+            0.55770948091393213,
+            0.50535095633039295
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Motion sensor on the camera"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.49461597290375903,
+            0.39241346000255961
+          ],
+          "box" : [
+            0.48674598807774316,
+            0.40212330973043031,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lYaw",
+          "kind" : "label",
+          "leader" : [
+            0.49461597290375903,
+            0.40212330973043031
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Yaw motor turns the blue arm"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.47108262507022475,
+            0.65506291734743682
+          ],
+          "box" : [
+            0.48460194178863014,
+            0.64843451473253433,
+            0.26221875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lRoll",
+          "kind" : "label",
+          "leader" : [
+            0.48460194178863014,
+            0.65506291734743682
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Roll motor turns the orange arm"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.40241277777833373,
+            0.66071061492877969
+          ],
+          "box" : [
+            0.39640293374033908,
+            0.6126886142557435,
+            0.23774999999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lPitch",
+          "kind" : "label",
+          "leader" : [
+            0.40241277777833373,
+            0.65193861425574351
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Pitch motor tilts the camera"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.5528243526836808,
+            0.60972393893768317
+          ],
+          "box" : [
+            0.55086949492159754,
+            0.56278353622666055,
+            0.21328125000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "fwd",
+          "kind" : "dimension",
+          "leader" : [
+            0.5528243526836808,
+            0.60203353622666056
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Lens axis, forward: 39 mm"
+        },
+        {
+          "anchor" : [
+            0.48949497754845234,
+            0.67800202038758539
+          ],
+          "box" : [
+            0.32192532779092276,
+            0.62333771183538378,
+            0.18065624999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "up",
+          "kind" : "dimension",
+          "leader" : [
+            0.48949497754845234,
+            0.6625877118353839
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Camera top, up: 20 mm"
+        }
+      ],
+      "step" : 6
+    }
+  ],
+  "strict" : true,
+  "title" : "How a three-axis gimbal keeps a drone camera steady",
+  "triangles" : 21296,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

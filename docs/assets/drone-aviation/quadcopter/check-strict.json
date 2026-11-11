@@ -1,0 +1,2728 @@
+{
+  "anchorIssues" : [
+
+  ],
+  "anchorUntested" : [
+
+  ],
+  "annotations" : [
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          159.09999999999999,
+          50
+        ]
+      ],
+      "id" : "lM1",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "M1 front right",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          50
+        ]
+      ],
+      "id" : "lM2",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "M2 rear left",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          50
+        ]
+      ],
+      "id" : "lM3",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "M3 front left",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          50
+        ]
+      ],
+      "id" : "lM4",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "M4 rear right",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          86,
+          11
+        ]
+      ],
+      "id" : "lFront",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Front",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          84.849999999999994,
+          84.849999999999994,
+          17
+        ]
+      ],
+      "id" : "lEsc",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Speed controller (ESC), one per motor",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          26.971,
+          -45.476999999999997,
+          23.363
+        ]
+      ],
+      "id" : "lBatt",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : true,
+      "text" : "Battery",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          22,
+          62.5
+        ]
+      ],
+      "id" : "lFc",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Flight controller",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          -38,
+          120.5
+        ]
+      ],
+      "id" : "lGps",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "GPS and compass",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          49.081000000000003,
+          66.325000000000003,
+          10.867000000000001
+        ]
+      ],
+      "id" : "lTwist",
+      "kind" : "label",
+      "meaning" : null,
+      "occludedAtDefaultCamera" : false,
+      "text" : "Reaction torque on the frame: clockwise",
+      "tier" : null,
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          159.09999999999999,
+          17
+        ]
+      ],
+      "id" : "t1",
+      "kind" : "arrow",
+      "meaning" : "motion",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "solved",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          17
+        ]
+      ],
+      "id" : "t2",
+      "kind" : "arrow",
+      "meaning" : "motion",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "solved",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          17
+        ]
+      ],
+      "id" : "t3",
+      "kind" : "arrow",
+      "meaning" : "motion",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "solved",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          17
+        ]
+      ],
+      "id" : "t4",
+      "kind" : "arrow",
+      "meaning" : "motion",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "solved",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          159.09999999999999,
+          148
+        ]
+      ],
+      "id" : "f1",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          148
+        ]
+      ],
+      "id" : "f2",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          148
+        ]
+      ],
+      "id" : "f3",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          148
+        ]
+      ],
+      "id" : "f4",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          159.09999999999999,
+          188
+        ]
+      ],
+      "id" : "b1",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "More thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          -159.09999999999999,
+          188
+        ]
+      ],
+      "id" : "b2",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "More thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          188
+        ]
+      ],
+      "id" : "b3",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          188
+        ]
+      ],
+      "id" : "b4",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          159.09999999999999,
+          103
+        ]
+      ],
+      "id" : "s1",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Less thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          58
+        ],
+        [
+          -159.09999999999999,
+          159.09999999999999,
+          103
+        ]
+      ],
+      "id" : "s3",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : null,
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          58
+        ],
+        [
+          159.09999999999999,
+          -159.09999999999999,
+          103
+        ]
+      ],
+      "id" : "s4",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Less thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          0,
+          150
+        ],
+        [
+          150,
+          0,
+          150
+        ]
+      ],
+      "id" : "side",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Sideways part of the thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          0,
+          0,
+          150
+        ],
+        [
+          0,
+          150,
+          150
+        ]
+      ],
+      "id" : "fwd",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : false,
+      "text" : "Forward part of the thrust",
+      "tier" : "described",
+      "value" : null
+    },
+    {
+      "anchorsWorld" : [
+        [
+          -1.1546319456101628e-14,
+          2.388474445283296,
+          9.0227063050512726
+        ],
+        [
+          -1.1546319456101628e-14,
+          2.388474445283296,
+          -170.97729369494874
+        ]
+      ],
+      "id" : "w",
+      "kind" : "arrow",
+      "meaning" : "force",
+      "occludedAtDefaultCamera" : true,
+      "text" : "Weight",
+      "tier" : "solved",
+      "value" : null
+    }
+  ],
+  "arrowIssues" : [
+
+  ],
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "engine" : {
+    "assemblyVersions" : [
+      1,
+      2
+    ],
+    "executableSHA256" : "21b76c201f144fd2d618d89e84cc3b8ccc4d275c316bb9960ed78f6669e6bc40",
+    "name" : "MartyGraphics",
+    "reportFormat" : 1,
+    "snapshotFormats" : [
+      "martygraphics.solid.snapshot\/1",
+      "martygraphics.solid.snapshot\/2"
+    ],
+    "version" : "unreleased"
+  },
+  "facts" : {
+    "prop1.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop1.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop2.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop2.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "prop3.speed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    },
+    "prop3.worldSpeed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    },
+    "prop4.speed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    },
+    "prop4.worldSpeed" : {
+      "source" : "input",
+      "text" : "-1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -1
+    }
+  },
+  "file" : {
+    "lines" : 152,
+    "sha256" : "129cda759420dba6b549c6f27a9bca0a569256aeca78175e74330d7164108d33"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "prop1",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "prop2",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "prop3",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "prop4",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "t1",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Turn sense from the engine (motion of prop1)"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "t2",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Turn sense from the engine (motion of prop2)"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "t3",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Turn sense from the engine (motion of prop3)"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "t4",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Turn sense from the engine (motion of prop4)"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "f1",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "f2",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "f3",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "f4",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "b1",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "b2",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "b3",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "b4",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "s1",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "s3",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "s4",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "side",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Not checked",
+        "id" : "fwd",
+        "kind" : "annotation",
+        "tier" : "described",
+        "why" : "Direction and length as authored"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "w",
+        "kind" : "annotation",
+        "tier" : "solved",
+        "why" : "Direction checked against gravity; length not to scale"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.3.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: prop1.speed > 0"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.3.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: prop2.speed > 0"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.3.check.3",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: prop3.speed < 0"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.3.check.4",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: prop4.speed < 0"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.9.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: prop1.speed > 0"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.9.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: prop2.speed > 0"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.9.check.3",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: prop3.speed < 0"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.9.check.4",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: prop4.speed < 0"
+      }
+    ],
+    "described" : 13,
+    "note" : null,
+    "notes" : [
+      "Arrow lengths are not to scale"
+    ],
+    "shapes" : "Shapes as authored",
+    "solved" : 17,
+    "text" : "Solved 17 (4 animation ratios) · Not checked 13"
+  },
+  "motionTiers" : [
+    {
+      "badge" : "Solved",
+      "id" : "prop1",
+      "source" : "input",
+      "tier" : "solved"
+    },
+    {
+      "badge" : "Solved",
+      "id" : "prop2",
+      "source" : "input",
+      "tier" : "solved"
+    },
+    {
+      "badge" : "Solved",
+      "id" : "prop3",
+      "source" : "input",
+      "tier" : "solved"
+    },
+    {
+      "badge" : "Solved",
+      "id" : "prop4",
+      "source" : "input",
+      "tier" : "solved"
+    }
+  ],
+  "notChecked" : {
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 21,
+  "partTiers" : [
+    {
+      "base" : "pad",
+      "motion" : "static",
+      "part" : "pad",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "frame",
+      "motion" : "static",
+      "part" : "frame",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "deck",
+      "motion" : "static",
+      "part" : "deck",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "standoffs",
+      "motion" : "static",
+      "part" : "standoffs",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "battery",
+      "motion" : "static",
+      "part" : "battery",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "fc",
+      "motion" : "static",
+      "part" : "fc",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "gps",
+      "motion" : "static",
+      "part" : "gps",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "escs",
+      "motion" : "static",
+      "part" : "escs",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "ant",
+      "motion" : "static",
+      "part" : "ant",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "legs",
+      "motion" : "static",
+      "part" : "legs",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "cam",
+      "motion" : "static",
+      "part" : "cam",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "motors",
+      "motion" : "static",
+      "part" : "motors",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "stators",
+      "motion" : "static",
+      "part" : "stators",
+      "ridesOn" : null,
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "prop1",
+      "motion" : "own",
+      "part" : "prop1",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "solved"
+    },
+    {
+      "base" : "prop2",
+      "motion" : "own",
+      "part" : "prop2",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "solved"
+    },
+    {
+      "base" : "prop3",
+      "motion" : "own",
+      "part" : "prop3",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "solved"
+    },
+    {
+      "base" : "prop4",
+      "motion" : "own",
+      "part" : "prop4",
+      "ridesOn" : null,
+      "source" : "input",
+      "tier" : "solved"
+    },
+    {
+      "base" : "bell1",
+      "motion" : "rides",
+      "part" : "bell1",
+      "ridesOn" : "prop1",
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "bell2",
+      "motion" : "rides",
+      "part" : "bell2",
+      "ridesOn" : "prop2",
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "bell3",
+      "motion" : "rides",
+      "part" : "bell3",
+      "ridesOn" : "prop3",
+      "source" : null,
+      "tier" : null
+    },
+    {
+      "base" : "bell4",
+      "motion" : "rides",
+      "part" : "bell4",
+      "ridesOn" : "prop4",
+      "source" : null,
+      "tier" : null
+    }
+  ],
+  "placements" : [
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.57447299545160824,
+            0.42558209805224417
+          ],
+          "box" : [
+            0.51123942540652023,
+            0.44804775812214104,
+            0.31115624999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lEsc",
+          "kind" : "label",
+          "leader" : [
+            0.57447299545160824,
+            0.44804775812214104
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Speed controller (ESC), one per motor"
+        },
+        {
+          "anchor" : [
+            0.49918615238721398,
+            0.45630818080694352
+          ],
+          "box" : [
+            0.42811455249720387,
+            0.40265391595755878,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lBatt",
+          "kind" : "label",
+          "leader" : [
+            0.49458330249720389,
+            0.44190391595755879
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Battery"
+        },
+        {
+          "anchor" : [
+            0.50754408935317319,
+            0.38685321388975469
+          ],
+          "box" : [
+            0.50571180187259679,
+            0.33605833901350757,
+            0.14803125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lFc",
+          "kind" : "label",
+          "leader" : [
+            0.50754408935317319,
+            0.37530833901350752
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Flight controller"
+        },
+        {
+          "anchor" : [
+            0.48642584499666819,
+            0.35266529006414243
+          ],
+          "box" : [
+            0.3526532704688673,
+            0.30344261508922066,
+            0.13171875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lGps",
+          "kind" : "label",
+          "leader" : [
+            0.48437202046886724,
+            0.34269261508922066
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "GPS and compass"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.63923448957319728,
+            0.38492311651058175
+          ],
+          "box" : [
+            0.64900238281203515,
+            0.34252293749098295,
+            0.12356249999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lM1",
+          "kind" : "label",
+          "leader" : [
+            0.64900238281203515,
+            0.3817729374909829
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "M1 front right"
+        },
+        {
+          "anchor" : [
+            0.35364198823309112,
+            0.42979768094250642
+          ],
+          "box" : [
+            0.3637344246556477,
+            0.38663699921956562,
+            0.10725,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lM2",
+          "kind" : "label",
+          "leader" : [
+            0.3637344246556477,
+            0.42588699921956563
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "M2 rear left"
+        },
+        {
+          "anchor" : [
+            0.47026586883361132,
+            0.31914497865182201
+          ],
+          "box" : [
+            0.34652789639308568,
+            0.27451120803986923,
+            0.11540625,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lM3",
+          "kind" : "label",
+          "leader" : [
+            0.46193414639308567,
+            0.31376120803986923
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "M3 front left"
+        },
+        {
+          "anchor" : [
+            0.53693730120546057,
+            0.51569135041975478
+          ],
+          "box" : [
+            0.4131111732370466,
+            0.52097679118622242,
+            0.11540625,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lM4",
+          "kind" : "label",
+          "leader" : [
+            0.52851742323704665,
+            0.52097679118622242
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "M4 rear right"
+        },
+        {
+          "anchor" : [
+            0.52835615146390102,
+            0.41110755889520623
+          ],
+          "box" : [
+            0.54231550526328498,
+            0.41404218133600346,
+            0.050156249999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lFront",
+          "kind" : "label",
+          "leader" : [
+            0.54231550526328498,
+            0.41404218133600346
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Front"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.54874599826293791,
+            0.42976873322685405
+          ],
+          "box" : [
+            0.52061917275180236,
+            0.3769366864459528,
+            0.32746874999999998,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lTwist",
+          "kind" : "label",
+          "leader" : [
+            0.54874599826293791,
+            0.41618668644595275
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Reaction torque on the frame: clockwise"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.6411469694134575,
+            0.33513733124734435
+          ],
+          "box" : [
+            0.64787986710105672,
+            0.28264092332660323,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "f1",
+          "kind" : "arrow",
+          "leader" : [
+            0.64787986710105672,
+            0.32189092332660324
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Thrust"
+        },
+        {
+          "anchor" : [
+            0.50079578169277084,
+            0.52535958050548437
+          ],
+          "box" : [
+            0.50552674300727696,
+            0.47065723231059875,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.50552674300727696,
+            0.50990723231059876
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.36660096190501779,
+            0.32777344935469421
+          ],
+          "box" : [
+            0.37521270122197542,
+            0.28213186626980391,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "b2",
+          "kind" : "arrow",
+          "leader" : [
+            0.37521270122197542,
+            0.32138186626980392
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "More thrust"
+        },
+        {
+          "anchor" : [
+            0.64261217295360884,
+            0.41271014503157966
+          ],
+          "box" : [
+            0.53016310719011728,
+            0.3737544231157674,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "s1",
+          "kind" : "arrow",
+          "leader" : [
+            0.62925685719011726,
+            0.41271014503157966
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Less thrust"
+        },
+        {
+          "anchor" : [
+            0.5404770446801278,
+            0.54807379111068644
+          ],
+          "box" : [
+            0.42868184622241684,
+            0.54886644471743185,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "s4",
+          "kind" : "arrow",
+          "leader" : [
+            0.52777559622241688,
+            0.54886644471743185
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Less thrust"
+        },
+        {
+          "anchor" : [
+            0.49719469712685721,
+            0.53083010992631308
+          ],
+          "box" : [
+            0.43411993263802173,
+            0.47616024171498272,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.49243243263802172,
+            0.51541024171498273
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 6
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.64743874772275312,
+            0.39445116951443088
+          ],
+          "box" : [
+            0.66240469330290996,
+            0.39415689143024324,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "f1",
+          "kind" : "arrow",
+          "leader" : [
+            0.66240469330290996,
+            0.39445116951443088
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Thrust"
+        },
+        {
+          "anchor" : [
+            0.53685621739851108,
+            0.3292223896019848
+          ],
+          "box" : [
+            0.5358358626047599,
+            0.28361335288504036,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "side",
+          "kind" : "arrow",
+          "leader" : [
+            0.53685621739851108,
+            0.32286335288504037
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Sideways part of the thrust"
+        },
+        {
+          "anchor" : [
+            0.49719469712685721,
+            0.53083010992631308
+          ],
+          "box" : [
+            0.50195696161569259,
+            0.54624997813764342,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.50195696161569259,
+            0.54624997813764342
+          ],
+          "occluded" : true,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 7
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.36951107449124015,
+            0.30686346715637236
+          ],
+          "box" : [
+            0.37455960383440756,
+            0.2574227280616655,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "b2",
+          "kind" : "arrow",
+          "leader" : [
+            0.37455960383440756,
+            0.2966727280616655
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "More thrust"
+        },
+        {
+          "anchor" : [
+            0.64195562346644408,
+            0.40653540864060966
+          ],
+          "box" : [
+            0.5357616293273274,
+            0.41463184900952155,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "s1",
+          "kind" : "arrow",
+          "leader" : [
+            0.6348553793273275,
+            0.41463184900952155
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Less thrust"
+        },
+        {
+          "anchor" : [
+            0.52551467075863378,
+            0.29303679555766121
+          ],
+          "box" : [
+            0.52514885929405042,
+            0.24745947706848445,
+            0.22143750000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "fwd",
+          "kind" : "arrow",
+          "leader" : [
+            0.52551467075863378,
+            0.28670947706848443
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Forward part of the thrust"
+        },
+        {
+          "anchor" : [
+            0.50235142436532232,
+            0.53065444964338238
+          ],
+          "box" : [
+            0.50710662367814252,
+            0.47597724539734609,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.50710662367814252,
+            0.51522724539734599
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 8
+    },
+    {
+      "placement" : [
+        {
+          "anchor" : [
+            0.61725461329465214,
+            0.40081872048606643
+          ],
+          "box" : [
+            0.51697240351277274,
+            0.4144147614454044,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "b1",
+          "kind" : "arrow",
+          "leader" : [
+            0.61606615351277272,
+            0.4144147614454044
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "More thrust"
+        },
+        {
+          "anchor" : [
+            0.39247247426845561,
+            0.32673797713222674
+          ],
+          "box" : [
+            0.29243140898512665,
+            0.27369852643968778,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "b2",
+          "kind" : "arrow",
+          "leader" : [
+            0.39152515898512663,
+            0.31294852643968779
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "More thrust"
+        },
+        {
+          "anchor" : [
+            0.43818284866400592,
+            0.47841015365900508
+          ],
+          "box" : [
+            0.33900953414483836,
+            0.42469124840193045,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "s4",
+          "kind" : "arrow",
+          "leader" : [
+            0.4381032841448384,
+            0.46394124840193046
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Less thrust"
+        }
+      ],
+      "step" : 9
+    }
+  ],
+  "ratios" : {
+    "prop1" : 1,
+    "prop2" : 1,
+    "prop3" : -1,
+    "prop4" : -1
+  },
+  "readBack" : [
+    "pad: world centre (0, 0, -225) mm, size 524 x 524 x 0.4 mm; static; root (at [0, 0, -225] in the world frame); local +Z points +Z",
+    "frame: world centre (0, 0, 0) mm, size 337 x 337 x 22 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "deck: world centre (0, 0, 45) mm, size 84 x 124 x 3 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "standoffs: world centre (0, 0, 27.2) mm, size 74 x 110 x 32.5 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "battery: world centre (0, 0, 26) mm, size 54 x 100 x 28 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "fc: world centre (0, 22, 54.5) mm, size 44 x 64 x 16 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "gps: world centre (0, -38, 83.5) mm, size 64 x 64 x 74 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "escs: world centre (0, 0, 12.5) mm, size 215 x 215 x 9 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "ant: world centre (0, -58, 84) mm, size 131 x 3.2 x 76.6 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "legs: world centre (0, 0, -66.2) mm, size 159 x 190 x 113 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "cam: world centre (0, 105, -2) mm, size 34 x 34 x 26 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "motors: world centre (0, 0, 11.5) mm, size 358 x 358 x 11 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "stators: world centre (0, 0, 24.2) mm, size 341 x 341 x 14.5 mm; static; child of frame (at [0, 0, 0] in the frame frame); local +Z points +Z",
+    "prop1: world centre (159, 159, 37.5) mm, size 254 x 52 x 24 mm; turns about a vertical axis (+Z) through (159, 159, 17); 1 turn per input turn (Solved, input); child of frame (at [159, 159, 17] in the frame frame); local +Z points +Z",
+    "prop2: world centre (-159, -159, 37.5) mm, size 254 x 52 x 24 mm; turns about a vertical axis (+Z) through (-159, -159, 17); 1 turn per input turn (Solved, input); child of frame (at [-159, -159, 17] in the frame frame); local +Z points +Z",
+    "prop3: world centre (-159, 159, 37.5) mm, size 254 x 52 x 24 mm; turns about a vertical axis (+Z) through (-159, 159, 17); -1 turn per input turn (Solved, input); child of frame (at [-159, 159, 17] in the frame frame); local +Z points +Z",
+    "prop4: world centre (159, -159, 37.5) mm, size 254 x 52 x 24 mm; turns about a vertical axis (+Z) through (159, -159, 17); -1 turn per input turn (Solved, input); child of frame (at [159, -159, 17] in the frame frame); local +Z points +Z",
+    "bell1: world centre (159, 159, 27.5) mm, size 31 x 31 x 20 mm; fixed to its parent, moves with prop1; child of prop1 (at [0, 0, 0] in the prop1 frame); its origin is 0 mm from the prop1 axis; local +Z points +Z",
+    "bell2: world centre (-159, -159, 27.5) mm, size 31 x 31 x 20 mm; fixed to its parent, moves with prop2; child of prop2 (at [0, 0, 0] in the prop2 frame); its origin is 0 mm from the prop2 axis; local +Z points +Z",
+    "bell3: world centre (-159, 159, 27.5) mm, size 31 x 31 x 20 mm; fixed to its parent, moves with prop3; child of prop3 (at [0, 0, 0] in the prop3 frame); its origin is 0 mm from the prop3 axis; local +Z points +Z",
+    "bell4: world centre (159, -159, 27.5) mm, size 31 x 31 x 20 mm; fixed to its parent, moves with prop4; child of prop4 (at [0, 0, 0] in the prop4 frame); its origin is 0 mm from the prop4 axis; local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "showOnly" : [
+
+  ],
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "gt",
+          "target" : 0,
+          "text" : "prop1.speed > 0",
+          "tolerance" : null,
+          "value" : "prop1.speed"
+        },
+        {
+          "comparison" : "gt",
+          "target" : 0,
+          "text" : "prop2.speed > 0",
+          "tolerance" : null,
+          "value" : "prop2.speed"
+        },
+        {
+          "comparison" : "lt",
+          "target" : 0,
+          "text" : "prop3.speed < 0",
+          "tolerance" : null,
+          "value" : "prop3.speed"
+        },
+        {
+          "comparison" : "lt",
+          "target" : 0,
+          "text" : "prop4.speed < 0",
+          "tolerance" : null,
+          "value" : "prop4.speed"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "gt",
+          "target" : 0,
+          "text" : "prop1.speed > 0",
+          "tolerance" : null,
+          "value" : "prop1.speed"
+        },
+        {
+          "comparison" : "gt",
+          "target" : 0,
+          "text" : "prop2.speed > 0",
+          "tolerance" : null,
+          "value" : "prop2.speed"
+        },
+        {
+          "comparison" : "lt",
+          "target" : 0,
+          "text" : "prop3.speed < 0",
+          "tolerance" : null,
+          "value" : "prop3.speed"
+        },
+        {
+          "comparison" : "lt",
+          "target" : 0,
+          "text" : "prop4.speed < 0",
+          "tolerance" : null,
+          "value" : "prop4.speed"
+        }
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "This quadcopter has four motors on a rigid frame. Each motor turns one propeller with fixed blades.",
+    "The battery feeds four speed controllers (ESCs). The flight controller tells each ESC how fast to turn its motor.",
+    "Seen from above: M1 and M2 turn counter-clockwise, M3 and M4 turn clockwise. Each pair sits on one diagonal.",
+    "A motor turns its propeller one way. Each motor applies an opposite reaction torque to the frame. The clockwise and counter-clockwise reaction torques cancel when their totals are equal.",
+    "In a steady, level hover in still air, total thrust balances weight and the torques balance. The drone has no vertical acceleration or change in its turn rate. The arrows are schematic.",
+    "Roll: the left motors speed up and the right motors slow down. The left side rises, so the frame rolls to the right.",
+    "Now the thrust is tilted. Its sideways part pushes the drone to the right.",
+    "Pitch works the same way: the rear motors speed up and the front motors slow down. The nose goes down, and the forward part of the thrust moves the drone forward.",
+    "For a clockwise yaw turn, seen from above, the controller increases thrust from M1 and M2 and reduces thrust from M3 and M4. It can select these changes to keep total thrust nearly constant. The reaction torques no longer balance.",
+    "The engine checked the turn direction of each propeller and the weight direction. The weight arrow starts at the volume centre of all drawn parts, ground marking included. This is not the aircraft CG. Arrows and tilts are authored."
+  ],
+  "stepTiers" : [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "stepViews" : [
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 1
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 2
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 3
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 4
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 5
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "frame"
+      ],
+      "poseReadBack" : [
+        "frame: world centre (0, 0, 0) mm, size 321 x 337 x 116 mm; local +Z points (0.31, 0, 0.95); posed placement at [0, 0, 0] in the world frame",
+        "deck: world centre (13.9, 0, 42.8) mm, size 80.2 x 124 x 28.2 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "standoffs: world centre (8.42, 0, 25.9) mm, size 80.4 x 110 x 53.8 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "battery: world centre (8.03, 0, 24.7) mm, size 57.5 x 100 x 40.8 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "fc: world centre (16.8, 22, 51.8) mm, size 45.6 x 64 x 27.6 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "gps: world centre (35.4, -38, 83.6) mm, size 62.7 x 64 x 80 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "escs: world centre (3.86, 0, 11.9) mm, size 207 x 215 x 74.4 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "ant: world centre (37.3, -58, 85.6) mm, size 124 x 3.2 x 100 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "legs: world centre (-36.5, 0, -68) mm, size 152 x 190 x 144 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "cam: world centre (-0.62, 105, -1.9) mm, size 38.5 x 34 x 33.4 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "motors: world centre (2.47, 0, 10.2) mm, size 342 x 358 x 120 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "stators: world centre (7.49, 0, 23.1) mm, size 329 x 341 x 119 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "prop1: world centre (164, 159, -11) mm, size 242 x 52 x 81.1 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "prop2: world centre (-139, -159, 87.3) mm, size 242 x 52 x 81.1 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "prop3: world centre (-139, 159, 87.3) mm, size 242 x 52 x 81.1 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "prop4: world centre (164, -159, -11) mm, size 242 x 52 x 81.1 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "bell1: world centre (160, 159, -24) mm, size 35 x 31 x 26.7 mm; local +Z points (0.31, 0, 0.95); moves with prop1",
+        "bell2: world centre (-143, -159, 74.4) mm, size 35 x 31 x 26.7 mm; local +Z points (0.31, 0, 0.95); moves with prop2",
+        "bell3: world centre (-143, 159, 74.4) mm, size 35 x 31 x 26.7 mm; local +Z points (0.31, 0, 0.95); moves with prop3",
+        "bell4: world centre (160, -159, -24) mm, size 35 x 31 x 26.7 mm; local +Z points (0.31, 0, 0.95); moves with prop4"
+      ],
+      "step" : 6
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "frame"
+      ],
+      "poseReadBack" : [
+        "frame: world centre (0, 0, 0) mm, size 321 x 337 x 116 mm; local +Z points (0.31, 0, 0.95); posed placement at [0, 0, 0] in the world frame",
+        "deck: world centre (13.9, 0, 42.8) mm, size 80.2 x 124 x 28.2 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "standoffs: world centre (8.42, 0, 25.9) mm, size 80.4 x 110 x 53.8 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "battery: world centre (8.03, 0, 24.7) mm, size 57.5 x 100 x 40.8 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "fc: world centre (16.8, 22, 51.8) mm, size 45.6 x 64 x 27.6 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "gps: world centre (35.4, -38, 83.6) mm, size 62.7 x 64 x 80 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "escs: world centre (3.86, 0, 11.9) mm, size 207 x 215 x 74.4 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "ant: world centre (37.3, -58, 85.6) mm, size 124 x 3.2 x 100 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "legs: world centre (-36.5, 0, -68) mm, size 152 x 190 x 144 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "cam: world centre (-0.62, 105, -1.9) mm, size 38.5 x 34 x 33.4 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "motors: world centre (2.47, 0, 10.2) mm, size 342 x 358 x 120 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "stators: world centre (7.49, 0, 23.1) mm, size 329 x 341 x 119 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "prop1: world centre (164, 159, -11) mm, size 242 x 52 x 81.1 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "prop2: world centre (-139, -159, 87.3) mm, size 242 x 52 x 81.1 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "prop3: world centre (-139, 159, 87.3) mm, size 242 x 52 x 81.1 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "prop4: world centre (164, -159, -11) mm, size 242 x 52 x 81.1 mm; local +Z points (0.31, 0, 0.95); moves with frame",
+        "bell1: world centre (160, 159, -24) mm, size 35 x 31 x 26.7 mm; local +Z points (0.31, 0, 0.95); moves with prop1",
+        "bell2: world centre (-143, -159, 74.4) mm, size 35 x 31 x 26.7 mm; local +Z points (0.31, 0, 0.95); moves with prop2",
+        "bell3: world centre (-143, 159, 74.4) mm, size 35 x 31 x 26.7 mm; local +Z points (0.31, 0, 0.95); moves with prop3",
+        "bell4: world centre (160, -159, -24) mm, size 35 x 31 x 26.7 mm; local +Z points (0.31, 0, 0.95); moves with prop4"
+      ],
+      "step" : 7
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "frame"
+      ],
+      "poseReadBack" : [
+        "frame: world centre (0, 0, 0) mm, size 337 x 321 x 116 mm; local +Z points (0, 0.31, 0.95); posed placement at [0, 0, 0] in the world frame",
+        "deck: world centre (0, 13.9, 42.8) mm, size 84 x 118 x 40.6 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "standoffs: world centre (0, 8.42, 25.9) mm, size 74 x 115 x 64.9 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "battery: world centre (0, 8.03, 24.7) mm, size 54 x 101 x 55.1 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "fc: world centre (0, 37.8, 45) mm, size 44 x 64.6 x 33.8 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "gps: world centre (0, -0.76, 95.3) mm, size 64 x 62.7 x 80 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "escs: world centre (0, 3.86, 11.9) mm, size 215 x 207 x 74.4 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "ant: world centre (0, -29.2, 97.8) mm, size 131 x 26.3 x 73.1 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "legs: world centre (0, -36.5, -70.5) mm, size 159 x 183 x 151 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "cam: world centre (0, 99.1, -33.1) mm, size 34 x 38.2 x 30.9 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "motors: world centre (0, 2.47, 10.2) mm, size 358 x 342 x 120 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "stators: world centre (0, 7.49, 23.1) mm, size 341 x 329 x 119 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "prop1: world centre (159, 159, -16.7) mm, size 254 x 49.4 x 32.5 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "prop2: world centre (-159, -143, 81.6) mm, size 254 x 49.4 x 32.5 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "prop3: world centre (-159, 159, -16.7) mm, size 254 x 49.4 x 32.5 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "prop4: world centre (159, -143, 81.6) mm, size 254 x 49.4 x 32.5 mm; local +Z points (0, 0.31, 0.95); moves with frame",
+        "bell1: world centre (159, 160, -24) mm, size 31 x 35 x 26.7 mm; local +Z points (0, 0.31, 0.95); moves with prop1",
+        "bell2: world centre (-159, -143, 74.4) mm, size 31 x 35 x 26.7 mm; local +Z points (0, 0.31, 0.95); moves with prop2",
+        "bell3: world centre (-159, 160, -24) mm, size 31 x 35 x 26.7 mm; local +Z points (0, 0.31, 0.95); moves with prop3",
+        "bell4: world centre (159, -143, 74.4) mm, size 31 x 35 x 26.7 mm; local +Z points (0, 0.31, 0.95); moves with prop4"
+      ],
+      "step" : 8
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+        "frame"
+      ],
+      "poseReadBack" : [
+        "frame: world centre (0, 0, 0) mm, size 460 x 460 x 22 mm; local +Z points +Z; posed placement at [0, 0, 0] in the world frame",
+        "deck: world centre (0, 0, 45) mm, size 143 x 148 x 3 mm; local +Z points +Z; moves with frame",
+        "standoffs: world centre (0, 0, 27.2) mm, size 125 x 129 x 32.5 mm; local +Z points +Z; moves with frame",
+        "battery: world centre (0, 0, 26) mm, size 101 x 106 x 28 mm; local +Z points +Z; moves with frame",
+        "fc: world centre (14.1, 16.9, 54.5) mm, size 72.3 x 74.7 x 16 mm; local +Z points +Z; moves with frame",
+        "gps: world centre (-24.4, -29.1, 83.5) mm, size 64 x 64 x 74 mm; local +Z points +Z; moves with frame",
+        "escs: world centre (0, 0, 12.5) mm, size 285 x 285 x 9 mm; local +Z points +Z; moves with frame",
+        "ant: world centre (-37.3, -44.4, 84) mm, size 101 x 85.2 x 76.6 mm; local +Z points +Z; moves with frame",
+        "legs: world centre (0, 0, -66.2) mm, size 244 x 248 x 113 mm; local +Z points +Z; moves with frame",
+        "cam: world centre (65.4, 78.8, -2) mm, size 39.8 x 40.8 x 26 mm; local +Z points +Z; moves with frame",
+        "motors: world centre (0, 0, 11.5) mm, size 488 x 488 x 11 mm; local +Z points +Z; moves with frame",
+        "stators: world centre (0, 0, 24.2) mm, size 471 x 471 x 14.5 mm; local +Z points +Z; moves with frame",
+        "prop1: world centre (224, 19.6, 37.5) mm, size 200 x 183 x 24 mm; local +Z points +Z; moves with frame",
+        "prop2: world centre (-224, -19.6, 37.5) mm, size 200 x 183 x 24 mm; local +Z points +Z; moves with frame",
+        "prop3: world centre (-19.6, 224, 37.5) mm, size 211 x 170 x 24 mm; local +Z points +Z; moves with frame",
+        "prop4: world centre (19.6, -224, 37.5) mm, size 211 x 170 x 24 mm; local +Z points +Z; moves with frame",
+        "bell1: world centre (224, 19.6, 27.5) mm, size 31 x 31 x 20 mm; local +Z points +Z; moves with prop1",
+        "bell2: world centre (-224, -19.6, 27.5) mm, size 31 x 31 x 20 mm; local +Z points +Z; moves with prop2",
+        "bell3: world centre (-19.6, 224, 27.5) mm, size 31 x 31 x 20 mm; local +Z points +Z; moves with prop3",
+        "bell4: world centre (19.6, -224, 27.5) mm, size 31 x 31 x 20 mm; local +Z points +Z; moves with prop4"
+      ],
+      "step" : 9
+    },
+    {
+      "hidden" : [
+
+      ],
+      "posed" : [
+
+      ],
+      "poseReadBack" : [
+
+      ],
+      "step" : 10
+    }
+  ],
+  "stillPlacements" : [
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.49999999999999989,
+            0.69483735101008515
+          ],
+          "box" : [
+            0.22115327566096382,
+            0.71030252502646762,
+            0.31115624999999997,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lEsc",
+          "kind" : "label",
+          "leader" : [
+            0.49999999999999989,
+            0.71030252502646762
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Speed controller (ESC), one per motor"
+        },
+        {
+          "anchor" : [
+            0.4119010445728285,
+            0.47456558093470685
+          ],
+          "box" : [
+            0.42061769322444925,
+            0.42563398715265099,
+            0.066468749999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lBatt",
+          "kind" : "label",
+          "leader" : [
+            0.42061769322444925,
+            0.464883987152651
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Battery"
+        },
+        {
+          "anchor" : [
+            0.52859363209975474,
+            0.41073483895728968
+          ],
+          "box" : [
+            0.53067383257263023,
+            0.36272778044644405,
+            0.14803125,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "lFc",
+          "kind" : "label",
+          "leader" : [
+            0.53067383257263023,
+            0.401977780446444
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Flight controller"
+        },
+        {
+          "anchor" : [
+            0.45139472313721052,
+            0.2062869507150582
+          ],
+          "box" : [
+            0.45448353479713594,
+            0.21542467330705484,
+            0.13171875,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "lGps",
+          "kind" : "label",
+          "leader" : [
+            0.45448353479713594,
+            0.21542467330705484
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "GPS and compass"
+        }
+      ],
+      "step" : 2
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.58914304795593297,
+            0.31621831102243714
+          ],
+          "box" : [
+            0.58523240655336117,
+            0.33110316644399007,
+            0.12356249999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lM1",
+          "kind" : "label",
+          "leader" : [
+            0.58914304795593297,
+            0.33110316644399007
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "M1 front right"
+        },
+        {
+          "anchor" : [
+            0.39886081864154649,
+            0.620248966074752
+          ],
+          "box" : [
+            0.2931368978644841,
+            0.63507030873705284,
+            0.10725,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 0,
+          "id" : "lM2",
+          "kind" : "label",
+          "leader" : [
+            0.39886081864154649,
+            0.63507030873705284
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "M2 rear left"
+        },
+        {
+          "anchor" : [
+            0.3994349706010008,
+            0.31621831102243714
+          ],
+          "box" : [
+            0.39652237233580728,
+            0.26198346208352874,
+            0.11540625,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 2,
+          "id" : "lM3",
+          "kind" : "label",
+          "leader" : [
+            0.3994349706010008,
+            0.30123346208352875
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "M3 front left"
+        },
+        {
+          "anchor" : [
+            0.58965198884683212,
+            0.620248966074752
+          ],
+          "box" : [
+            0.47708086167445796,
+            0.56606586734621034,
+            0.11540625,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 4,
+          "id" : "lM4",
+          "kind" : "label",
+          "leader" : [
+            0.58965198884683212,
+            0.60531586734621035
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "M4 rear right"
+        },
+        {
+          "anchor" : [
+            0.4943934062236644,
+            0.38926661102876525
+          ],
+          "box" : [
+            0.4382278475133809,
+            0.33466077893105606,
+            0.050156249999999993,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "lFront",
+          "kind" : "label",
+          "leader" : [
+            0.48838409751338097,
+            0.37391077893105601
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Front"
+        }
+      ],
+      "step" : 3
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.6130487639767388,
+            0.23513582572641561
+          ],
+          "box" : [
+            0.30052396629237565,
+            0.18678020477287546,
+            0.32746874999999998,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 6,
+          "id" : "lTwist",
+          "kind" : "label",
+          "leader" : [
+            0.6130487639767388,
+            0.22603020477287547
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Reaction torque on the frame: clockwise"
+        }
+      ],
+      "step" : 4
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.50000000000000011,
+            0.28801979537175959
+          ],
+          "box" : [
+            0.50471858423621807,
+            0.30348496938814201,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "f1",
+          "kind" : "arrow",
+          "leader" : [
+            0.50471858423621807,
+            0.30348496938814201
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Thrust"
+        },
+        {
+          "anchor" : [
+            0.50190290053216569,
+            0.60368459482306158
+          ],
+          "box" : [
+            0.50663031537464664,
+            0.54897857061702671,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.50663031537464664,
+            0.5882285706170266
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 5
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.40458430170529713,
+            0.25692291437835901
+          ],
+          "box" : [
+            0.41549132822151558,
+            0.2142083898849744,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "b2",
+          "kind" : "arrow",
+          "leader" : [
+            0.41549132822151558,
+            0.25345838988497443
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "More thrust"
+        },
+        {
+          "anchor" : [
+            0.60458976801456343,
+            0.39496062716039387
+          ],
+          "box" : [
+            0.49382760073657439,
+            0.39734056464483863,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "s1",
+          "kind" : "arrow",
+          "leader" : [
+            0.59292135073657437,
+            0.39734056464483863
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Less thrust"
+        },
+        {
+          "anchor" : [
+            0.62609464676967763,
+            0.42728553868847707
+          ],
+          "box" : [
+            0.63785497939722968,
+            0.38579111780147857,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "s4",
+          "kind" : "arrow",
+          "leader" : [
+            0.63785497939722968,
+            0.42504111780147852
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Less thrust"
+        },
+        {
+          "anchor" : [
+            0.49615238160470143,
+            0.52828876618137388
+          ],
+          "box" : [
+            0.50088670202632035,
+            0.54373763186363389,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.50088670202632035,
+            0.54373763186363389
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 6
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.6171470402640592,
+            0.34547764681826143
+          ],
+          "box" : [
+            0.63093449911979305,
+            0.30385770735672257,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "f1",
+          "kind" : "arrow",
+          "leader" : [
+            0.63093449911979305,
+            0.34310770735672258
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Thrust"
+        },
+        {
+          "anchor" : [
+            0.54870892901314805,
+            0.23430251419548875
+          ],
+          "box" : [
+            0.52834395493192032,
+            0.17958734017910633,
+            0.22959374999999999,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "side",
+          "kind" : "arrow",
+          "leader" : [
+            0.54870892901314805,
+            0.21883734017910633
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Sideways part of the thrust"
+        },
+        {
+          "anchor" : [
+            0.49599311736429835,
+            0.51012435470139972
+          ],
+          "box" : [
+            0.50072806656445001,
+            0.5255725684285375,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.50072806656445001,
+            0.5255725684285375
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 7
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.42772417297258503,
+            0.25361804706862112
+          ],
+          "box" : [
+            0.4387080883223512,
+            0.21101012123862956,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "b2",
+          "kind" : "arrow",
+          "leader" : [
+            0.4387080883223512,
+            0.25026012123862956
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "More thrust"
+        },
+        {
+          "anchor" : [
+            0.63408219427113088,
+            0.42728553868847718
+          ],
+          "box" : [
+            0.52320233729375487,
+            0.42949177113028947,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "s1",
+          "kind" : "arrow",
+          "leader" : [
+            0.62229608729375485,
+            0.42949177113028947
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Less thrust"
+        },
+        {
+          "anchor" : [
+            0.55228313582289579,
+            0.27327550952032353
+          ],
+          "box" : [
+            0.53311261689964162,
+            0.28874068353670596,
+            0.22143750000000001,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "fwd",
+          "kind" : "arrow",
+          "leader" : [
+            0.55228313582289579,
+            0.28874068353670596
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Forward part of the thrust"
+        },
+        {
+          "anchor" : [
+            0.50487874855009418,
+            0.52948978061337293
+          ],
+          "box" : [
+            0.50961728670460782,
+            0.474795288591988,
+            0.058312500000000003,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 7,
+          "id" : "w",
+          "kind" : "arrow",
+          "leader" : [
+            0.50961728670460782,
+            0.51404528859198795
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Weight"
+        }
+      ],
+      "step" : 8
+    },
+    {
+      "beat" : null,
+      "placement" : [
+        {
+          "anchor" : [
+            0.3895384816198838,
+            0.37578983687564388
+          ],
+          "box" : [
+            0.39057391499006039,
+            0.38950884936110819,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 5,
+          "id" : "b1",
+          "kind" : "arrow",
+          "leader" : [
+            0.39057391499006039,
+            0.38950884936110819
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "More thrust"
+        },
+        {
+          "anchor" : [
+            0.58053509586692742,
+            0.23977192873948144
+          ],
+          "box" : [
+            0.48107343327566482,
+            0.25401786982692676,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 3,
+          "id" : "b2",
+          "kind" : "arrow",
+          "leader" : [
+            0.58016718327566486,
+            0.25401786982692676
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "More thrust"
+        },
+        {
+          "anchor" : [
+            0.3899391961433516,
+            0.28783705985275099
+          ],
+          "box" : [
+            0.28987057222211321,
+            0.2348196093132241,
+            0.099093749999999994,
+            0.03925
+          ],
+          "callout" : null,
+          "candidate" : 1,
+          "id" : "s4",
+          "kind" : "arrow",
+          "leader" : [
+            0.38896432222211319,
+            0.27406960931322411
+          ],
+          "occluded" : false,
+          "offView" : false,
+          "text" : "Less thrust"
+        }
+      ],
+      "step" : 9
+    }
+  ],
+  "strict" : true,
+  "title" : "How a quadcopter steers: four propellers, two spin directions",
+  "triangles" : 27180,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

@@ -9,6 +9,15 @@
   all shards pass) still runs on every pull request and push, but it is no longer a required merge check: the
   required checks are `hygiene` and `maintainer/local-validation`. A red `macos` after a merge is fixed or reverted
   at once.
+- **Drone and aviation explainers (docs only, no engine change).** `docs/assets/drone-aviation` adds five hand-built
+  explainers made with the engine as it is: quadcopter steering, payload position and centre of gravity, a brushless
+  outrunner motor, a three-axis camera gimbal and a landing gear over-centre lock. Each folder holds the document, the exact brief, every attempt
+  (39 in all: 14 refused, 2 of them deliberate negative controls), the strict check output, a story video and stills.
+  `FACTS.md` lists every claim with a source and what the engine checked. Two independent fact checks (Sol and
+  Gemini) found no wrong claim; all 16 fixes are applied to the captions, labels and `FACTS.md` (words only), with a
+  new render of the story videos and of the stills whose words changed.
+  `GAPS.md` lists what the frozen engine could not show (the helicopter swashplate topic was dropped), with exact
+  refusal texts. `docs/SHOWCASE.md` has a new section. Golden check files for the eleven new JSON files.
 
 ## v0.1.0 — 2026-11-11
 

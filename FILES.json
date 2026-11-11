@@ -35,7 +35,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "9270bec8359a8a5d60ca68804f4e02ed3d335db4fa684b92b2f5de7ea8728097"
+      "sha256": "a93d2d5f873bdf554dba754b3830ee8c2ca61b0865151d556cc626d3c9de608b"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -276,6 +276,94 @@
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-provenance.strict.json",
       "sha256": "9e6f86d2968291e5a726c4aa114eff13616d0d4e849da76842941a99c4628d15"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-brushless-motor-check-strict.check.json",
+      "sha256": "8a20a7b8c0c7c2250ceb3ec4f20514f133326d16bffd92ca5848bd625ce3700d"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-brushless-motor-check-strict.strict.json",
+      "sha256": "2d75b3d8b47d791eb3651ea164fc0062ccb3bc544398d4e9718de69fe252ef28"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-brushless-motor-motor.check.json",
+      "sha256": "1189cd626d24fa8e82688e0637dc396092968f97a20aab909d2c58feb5545900"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-brushless-motor-motor.strict.json",
+      "sha256": "8c2aa50467cbd32901d12152ef19018c7ac36e41a807f590d40024c6de51f1c3"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-gimbal-check-strict.check.json",
+      "sha256": "ca74a8f41e71f11da7531262f88f80b339802f1c8aa8c66dc5ce0a1f6ef00618"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-gimbal-check-strict.strict.json",
+      "sha256": "69cf1d25c2cefe2883702bc409494a19ea441db2e6836c018c13c8e0d79f41fa"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-gimbal-gimbal.check.json",
+      "sha256": "844b4e716065aa9b1704b20132e89547af64eab21c92389386a9ef1ced52b764"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-gimbal-gimbal.strict.json",
+      "sha256": "a38a92015f4a43c4ef0e2381f45093b800d0d6f60240d2816bc9a604699deaee"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-landing-gear-check-strict.check.json",
+      "sha256": "0db6d07e9039990ba10195c6c4e926a4bde43b26686edbfc53e3e449480c9bc4"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-landing-gear-check-strict.strict.json",
+      "sha256": "29e608c7eb0cc4d676d2f7ef5ed7bcd6f6d7104c5491ccb5cbb8ac25b5d4cd3f"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-landing-gear-landing-gear.check.json",
+      "sha256": "54865d447daf4efe2c59cb165329aa9e8eacfd65b56967eaa7aa6660afdee5ff"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-landing-gear-landing-gear.strict.json",
+      "sha256": "93f516a285cc266e849643e5ade43aff65b7cffa9c226ea7aabe21ee1f2a9d86"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-payload-cg-check-strict.check.json",
+      "sha256": "da3e58ae05edd103b920b6792a7e32ce9bf7c58c8daf4ec222ce6ac50ce30b68"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-payload-cg-check-strict.strict.json",
+      "sha256": "a01a13a5eaebb34b4ba96ee7dadc05861a853afb2a3a74a211036fc079665ff0"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-payload-cg-payload-cg.check.json",
+      "sha256": "e293083ac09ff872a45314ed0f43713ff19216c12f6995cff6701cc6c501c994"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-payload-cg-payload-cg.strict.json",
+      "sha256": "041b3f438b0f7a47249fffc51169008cb086e7ad0e9344ed67addce879f318ea"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-provenance.check.json",
+      "sha256": "13125c61ed08343eeac45ae25d68972a6856e5bd9a3a04d2843381c301686b87"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-provenance.strict.json",
+      "sha256": "402bef950c7f7380e40b64803a1c2450ca2561e37831166008c482d1403003ae"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-quadcopter-check-strict.check.json",
+      "sha256": "93c8c335ab14f29f3e4fad9253bdc1cc82082f9f74681d95e4aeafb5216422a1"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-quadcopter-check-strict.strict.json",
+      "sha256": "93c8c335ab14f29f3e4fad9253bdc1cc82082f9f74681d95e4aeafb5216422a1"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-quadcopter-quadcopter.check.json",
+      "sha256": "50a934b518ea9f971ac1ff0e83b99c77f0bd5620371b07ff1cfe71ee49e3c7a3"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-quadcopter-quadcopter.strict.json",
+      "sha256": "acbe48741cbbf19a753beb901b19ca34a75fda9f0f7923107a4313894f2498cb"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.check.json",
@@ -1711,7 +1799,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "6f7ba3e2e1a5e5d64c6be005f041b1bacbd7f4b2b0dfcf8424bbf9bcfad4d017"
+      "sha256": "a4539c77bbe128d62ee858921559ca212060d5eb55cca9927e4a0f17c2dfba60"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -1760,6 +1848,386 @@
     {
       "path": "docs/assets/cutaway/provenance.json",
       "sha256": "8e93869ae6f7dc27fec69502acf88f0a33de0e7522919678867482a0166072cf"
+    },
+    {
+      "path": "docs/assets/drone-aviation/FACTS.md",
+      "sha256": "d3f542fb7160988d9b6502e5995be7ba4b13d9b40120ab39c0f1cbdb2c24061e"
+    },
+    {
+      "path": "docs/assets/drone-aviation/GAPS.md",
+      "sha256": "d1e4429a9ee99f438a561d14b686644e2b07a1ef034efeb9785b7169eda53342"
+    },
+    {
+      "path": "docs/assets/drone-aviation/README.md",
+      "sha256": "7aa873c712ee9528d96218b9a5260606a3acf451758e3ff4718a326c2d3a4809"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/PROMPT.md",
+      "sha256": "52593ac2378ecd33401336cddd754ac769bb4e4f8925071a92c1045cedadb839"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/attempts.ndjson",
+      "sha256": "06666f03563b26beccbea39b245f5cb443d8542fafdc35183b0ec561208da79c"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/check-strict.json",
+      "sha256": "bb710cec7dd92c07a32ff9daa35e32e61fe28eb912e98835cf1b19aafceeb1d5"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/exploded.jpg",
+      "sha256": "f90743e313b60268bde013a52074712d2cfc778e259fbfd86f230293a32bd37b"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/hero.jpg",
+      "sha256": "5cf3483b67ce0903c3f4ae96b94dc77c75aa15bb8fb172a157ed557c673aafa5"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/loop.mp4",
+      "sha256": "79ec2dad9f0281dfd92061cf7568b372b6667e82fc2e05c720fce056a63ac638"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/motor.json",
+      "sha256": "9ad66aab88e16ab788e35aaf5a242cb15c75ab54517f795ce98760ac4a28f961"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/poster.jpg",
+      "sha256": "91b2b99423d8738d2c24948276b7c238c68d26b57daa99ece3f49428c864c919"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-1.jpg",
+      "sha256": "874a4ca5f034b7914b6fb94ebae2ef101bb56f03d67bba45bcf75444876de434"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-10.jpg",
+      "sha256": "66d219d37e8649944a385638120cf9b6bfd4a888c98585eea846dc9a3948c798"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-11.jpg",
+      "sha256": "3440b0809fda6073f6b2b167bec5b03d5ac0c9650dd49268014c3d7895ffef71"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-2.jpg",
+      "sha256": "91b2b99423d8738d2c24948276b7c238c68d26b57daa99ece3f49428c864c919"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-3.jpg",
+      "sha256": "244324d9c6d548c1493cf48c60a37fe1df5547a4cbfb1a0b4b0060266502e39a"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-4.jpg",
+      "sha256": "705ab426487ddc5d1cfe440bc979edbb9d17c6d37b7a2abb3886b86c2a4312a5"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-5.jpg",
+      "sha256": "bf47d005f5123b693e6dac3f2e43082912b899f55867502807cb745e307252a7"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-6.jpg",
+      "sha256": "d8163e35cc3da7ae7c5753d1b63511124de7c9ac0eea75ab46504c06f51aa2bf"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-7.jpg",
+      "sha256": "c6bb5dff76b217cf516d62479689a86dbec8334e0d6fb24c66a4124ff6f38ddf"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-8.jpg",
+      "sha256": "2657cfb65d038b24e41afe141f12788fdfeb88b910e35ae454e1a806457f0ae9"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/step-9.jpg",
+      "sha256": "df09975b3610fc82fc9295854bcb994a61b1724ad3592777b15e1452f592ea44"
+    },
+    {
+      "path": "docs/assets/drone-aviation/brushless-motor/story.mp4",
+      "sha256": "e483cfb608c6c2389240b17f3bb07ba8a24fcbe353151529328a1943d5bdd551"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/PROMPT.md",
+      "sha256": "52a325e0299a29310a4654e3971202e3417fa6c49ee027904def32c19a2ba360"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/attempts.ndjson",
+      "sha256": "d48126fe82f83d123cd3cc1c5bc65fa53cd381182124abcbe8c2c5e4b72a5330"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/check-strict.json",
+      "sha256": "c0b15249cb137e79b7320c6eed4de8c3394c02cd7e70ea906b913c9d249f82f1"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/exploded.jpg",
+      "sha256": "d420c9e7d06aec3d8c0ec16001e6b07e2dc26e048ca5feab8185572c057f7564"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/gimbal.json",
+      "sha256": "e8912667e2afd3229903e0b2a65a4c20cdb25fcbdcf563b1f0be6abaaeef9605"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/hero.jpg",
+      "sha256": "132b38816d92d984f55fa6e6f2ba3a1b8347aeb245786e39eea8052a3956b0b7"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/poster.jpg",
+      "sha256": "d5f29e2479e835fdb9694b17f608d256ee8a29ecace4e1e2af774406402f1000"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/step-1.jpg",
+      "sha256": "fa7da533e1ae07c3bc1936f17ee83ae485d069502b1dc7f9fa0845a7bb087441"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/step-2.jpg",
+      "sha256": "aacf0c419431036f02b48d644c899b48bd21210cb4c397d108b7af0f1507da9b"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/step-3.jpg",
+      "sha256": "da243d8390fd0c4c9c7a80f8e5ba7d28cc9c970f07a541c7b2cfa42ceb7eee98"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/step-4.jpg",
+      "sha256": "d9e1775c69d6ecf0f8d825981d20b2b8da705500f16052709d47c40443e969d1"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/step-5.jpg",
+      "sha256": "b46295a6d25e85fe819dfbb4700688f7f0c4aa32a4309b041748b3192e7c8e63"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/step-6.jpg",
+      "sha256": "d5f29e2479e835fdb9694b17f608d256ee8a29ecace4e1e2af774406402f1000"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/step-7.jpg",
+      "sha256": "5243cc05c05b379a1a35a5d86c9e27855f6047707d01d44e258b84a58f5269d0"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/step-8.jpg",
+      "sha256": "c753fba6fc09bcb57050d77680b5dc41aba5442ffe8e969cda04da7a64ac409f"
+    },
+    {
+      "path": "docs/assets/drone-aviation/gimbal/story.mp4",
+      "sha256": "b5e47530f34cd2142dab5b7add66eb8f5cc6406c46daa6b49a82b6c96bd565e4"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/PROMPT.md",
+      "sha256": "1e0680221942377657d0187e82e4f6a31eb9fca20ce416b14caa73ec92854685"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/attempts.ndjson",
+      "sha256": "8b228e2ef8f4ec8d91e3ed8f9b9789b89373d6b8803b5249f1e261f92b29e096"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/check-strict.json",
+      "sha256": "c9f4e7958d7c2313836a4ccccfe32de1ee3360f2057b31d65a1a340373572a7d"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/exploded.jpg",
+      "sha256": "ca98518d2409044bbf68951a15afbe4c7ee0081d324deace7759e11a67889cee"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/hero.jpg",
+      "sha256": "44157518ae2639f1c9d6a5996c5443dd896ec649fa94fae40e33b4b1b7840dbd"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/landing-gear.json",
+      "sha256": "c0c4e14b7de62481846952dd47ba9d03a816100c19950f11d1c5b1ee37d81e2d"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/poster.jpg",
+      "sha256": "0a60e9474615322a5c887dec4b8cb400a8ea374265b00dcc584aa4311a6ae980"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-1.jpg",
+      "sha256": "351366e2ad0a31580e57def51d4998b162606c12ec47120a7f4e0d53e1558135"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-10.jpg",
+      "sha256": "bfd3869f608481a96660e43082d9213ba4bab16933b5888702342cd1dc449dc9"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-11.jpg",
+      "sha256": "9c1fb489cda0f17c15811fb87ce9ec579ae9b3ace83ccc1a78f063560eb62ba1"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-2.jpg",
+      "sha256": "e0d2248745ebc9e11c084613a9e8c8cc426ad483e7d55b4e2b6dafa3aecb74bb"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-3.jpg",
+      "sha256": "0a60e9474615322a5c887dec4b8cb400a8ea374265b00dcc584aa4311a6ae980"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-4.jpg",
+      "sha256": "2174a9e16aceef64540af2dd4989e0fd1969e3e5e76f624f323ebc5af6a0218d"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-5.jpg",
+      "sha256": "d0ad4003baf54803fe53afaf14daa72dfa993e31151fb6c8e50baaa0b5941bcc"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-6.jpg",
+      "sha256": "1839292336dccd733bc3fbb2b8f3d70b40205b303cf2c0d96ef6c933c526abeb"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-7.jpg",
+      "sha256": "8cab57d431280271582f9a47816fcf6d7039569230481bbaba150f266b2cfc4e"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-8.jpg",
+      "sha256": "655f6cf75ce5f0317a4779753b5efdc5a0062c4749eeba10cc038621d5490e0f"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/step-9.jpg",
+      "sha256": "5f51dd7086eeb6a7f8d8129cf14476fb07dc8773b84b77792b45278ea7626faa"
+    },
+    {
+      "path": "docs/assets/drone-aviation/landing-gear/story.mp4",
+      "sha256": "136a8229ffea0a3e33801ede2ffed0759e9cde6e386637ca7936568f3139cc3e"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/PROMPT.md",
+      "sha256": "ee43016eb01a3227afb3043d1016e42753bfc93f699b9153b45998da9bb68758"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/attempts.ndjson",
+      "sha256": "b0dac226018f2bf2592fefb50e4363c52e1b39b9aff348ceb10aa2a50f450b1b"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/check-strict.json",
+      "sha256": "d6197e32a310244105a5642b08f0797f3ccb637c6c5f8f7faa492f940f67a0d3"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/exploded.jpg",
+      "sha256": "a3c42c3a01914e2f223411a142b963727a58faaf791aff207271dd20d1a76dd3"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/hero.jpg",
+      "sha256": "c6b4016f719cedba1a9a58b0ae6b2359028052a3efc9ed743c82b885bc2be3b7"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/payload-cg.json",
+      "sha256": "37659f53103ec6413428ffa600e453a2eaab8639f26ef9eacbdf795026b748ed"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/poster.jpg",
+      "sha256": "818a7f492b0d94ce624286b1838d2b3ff363f4d6f00c4be2e02c942663496132"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/step-1.jpg",
+      "sha256": "ff3a5753ce319b02148e319bc1b8bc1f6721d5a510c138700b8d3fb05265b1c9"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/step-2.jpg",
+      "sha256": "73dcfd7d04b3f939feb15a8b8cce6c6aaca485df0adf663f8798849b1bf4e79e"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/step-3.jpg",
+      "sha256": "03416a33e1e3b25807f0311339dc0fde83f0b26523addbe476011ab3e1f5a576"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/step-4.jpg",
+      "sha256": "e9e47492150fc608970d07e39733e67add4d7ac04aa9eac623b6f06d21e69340"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/step-5.jpg",
+      "sha256": "818a7f492b0d94ce624286b1838d2b3ff363f4d6f00c4be2e02c942663496132"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/step-6.jpg",
+      "sha256": "5fa0d89c53c2f06e45378e6969cafc38a888cc41abfc4c2c7ba9635b4ac2742a"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/step-7.jpg",
+      "sha256": "67ff813184685b7afea7e05063d68f81c82ec71ba9e993a62a3da5bb5b2bab92"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/step-8.jpg",
+      "sha256": "72c745c70982f9603ad128074908b2ada872d46532d6ae9a354712b00ca60e90"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/step-9.jpg",
+      "sha256": "ee6ffb186083895ec2ef2ca0a8786504d5b4a1eab7a456505a64d5c0df81b26f"
+    },
+    {
+      "path": "docs/assets/drone-aviation/payload-cg/story.mp4",
+      "sha256": "4a4c56e777c840379e0301dc9804c86c4467afaea27f86921b98041943ef38d8"
+    },
+    {
+      "path": "docs/assets/drone-aviation/provenance.json",
+      "sha256": "6dae686c096ec7645dcfe86719b88c882eb4fe6ecb50e45bec5a59b35d9b3dc4"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/PROMPT.md",
+      "sha256": "fa6c037256c4c32e6d667fd3b86768acab5cc7e485c0517d4093c803523d7e65"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/attempts.ndjson",
+      "sha256": "a95ade2a2bf99ce15a6c3e9937673a2969cd0f429d4c7d242b1ba6dda61c91fa"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/check-strict.json",
+      "sha256": "ba7f946f3c9decf066a9e7d078f9e562ad0b0110aaf04b6a7792e87fc8b1cb8c"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/exploded.jpg",
+      "sha256": "9a5e156c17b5926ef91c0acbb9d9d887fb79ce63465347a218332c264a8dcb94"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/hero.jpg",
+      "sha256": "c1a431584482ee6f05a6911c21c3e6d89c5366ebff12e1d48ff07644cb65895a"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/loop.mp4",
+      "sha256": "beb43009c149aa7d5bed0a2acb4bee42bc8d8b168d6ed366ede2c1e5d3ea0232"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/poster.jpg",
+      "sha256": "92bc99163997a84abd4f66b07567a480df0b6c94b9058ae11db81c1c985a5662"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/quadcopter.json",
+      "sha256": "129cda759420dba6b549c6f27a9bca0a569256aeca78175e74330d7164108d33"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-1.jpg",
+      "sha256": "92bc99163997a84abd4f66b07567a480df0b6c94b9058ae11db81c1c985a5662"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-10.jpg",
+      "sha256": "88d35eecf140b125f4ddf22db4816235bc22eb14a122f65894539223325e8d99"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-2.jpg",
+      "sha256": "2047ae56d1d21c625973228faff67b4ae930e2959c9667bbc6230ef02bdf98db"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-3.jpg",
+      "sha256": "c22956f254873428f8fc9e444077653ad0d78c634ca3b46ef1fec64717d72253"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-4.jpg",
+      "sha256": "29fa9e9b597310d72cc29266186a81b9889626a3c677cfbf2917ca3c023316e3"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-5.jpg",
+      "sha256": "f34b02801e78591e9f1a8c81d4723d54f0e35b8bfbca8b0caf35b797fc1dd187"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-6.jpg",
+      "sha256": "aad87dcfdb194192f0033b8f307fb7ea9a498d50f68fedf0393c47acab1c0b89"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-7.jpg",
+      "sha256": "2b39c3f54824aa06418a2518a81fa4ee3f7dadaeb2336a39a8b1a3575bb7a253"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-8.jpg",
+      "sha256": "cb09fb2ae4938cc18fa7ce0c86d234e3ebe45f5d4c0380b665f393256d8c7e54"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/step-9.jpg",
+      "sha256": "14d34da6df3c86d6099bde1796f991d34449b9098a739ed8c2c53929e60d62fb"
+    },
+    {
+      "path": "docs/assets/drone-aviation/quadcopter/story.mp4",
+      "sha256": "feb575ebc62792a56544f53a50c0fcb20653e97eff09c96e09443834ecca5779"
     },
     {
       "path": "docs/assets/explainer/gears-mixed-beat-1.png",

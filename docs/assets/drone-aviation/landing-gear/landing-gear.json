@@ -1,0 +1,80 @@
+{"v": 2, "kind": "assembly", "title": "How an over-centre brace locks a landing gear down", "units": "mm", "params": {"input": 0, "explode": 0},
+ "parts": [
+  {"id": "floor", "name": "Hangar floor (the aircraft is on jacks)", "material": "rubber", "at": [330, 0, -1103], "shape": {"box": {"size": [1560, 560, 8], "at": [0, 0, -4]}}},
+  {"id": "airframe", "name": "Aircraft structure", "material": "aluminum", "shape": [
+    {"box": {"size": [1560, 240, 70], "chamfer": 8, "at": [330, 0, 335]}},
+    {"box": {"size": [90, 14, 340], "chamfer": 3, "at": [0, 102, 150]}},
+    {"box": {"size": [90, 14, 340], "chamfer": 3, "at": [0, -102, 150]}},
+    {"box": {"size": [70, 14, 340], "chamfer": 3, "at": [450, -36, 150]}},
+    {"box": {"size": [60, 14, 240], "chamfer": 3, "at": [-400, 32, 200]}}]},
+  {"id": "leg", "name": "Shock strut (leg)", "material": "aluminum", "shape": [
+    {"shaft": {"radius": 26, "length": 236, "z0": -118, "chamfer": 3, "rot": [1, 0, 0, -90]}},
+    {"shaft": {"radius": 42, "length": 520, "z0": -520, "chamfer": 5}},
+    {"box": {"size": [44, 30, 150], "chamfer": 4, "at": [0, 0, 60]}},
+    {"shaft": {"radius": 20, "length": 76, "z0": -76, "rot": [1, 0, 0, -90], "at": [0, 0, -400]}},
+    {"shaft": {"radius": 22, "length": 150, "z0": -20, "rot": [1, 0, 0, -90], "at": [0, 0, -900]}}]},
+  {"id": "oleo", "name": "Shock strut piston", "parent": "leg", "material": "polishedSteel", "shape": {"shaft": {"radius": 30, "length": 420, "z0": -925, "chamfer": 3}}},
+  {"id": "scissors", "name": "Torque links", "parent": "leg", "material": "darkSteel", "shape": [
+    {"box": {"size": [139, 18, 14], "chamfer": 2, "at": [-65, 0, -540], "rot": [0, 1, 0, 120.3]}},
+    {"box": {"size": [141, 18, 14], "chamfer": 2, "at": [-63, 0, -660], "rot": [0, 1, 0, 58.3]}}]},
+  {"id": "tire", "name": "Tyre", "parent": "leg", "material": "rubber", "at": [0, 95, -900], "rot": [1, 0, 0, -90],
+   "shape": {"revolvedProfile": {"closed": true, "points": [[125, -52], [188, -52], [203, -30], [203, 30], [188, 52], [125, 52]]}}},
+  {"id": "hub", "name": "Wheel", "parent": "leg", "material": "aluminum", "at": [0, 95, -900], "rot": [1, 0, 0, -90],
+   "shape": [{"shaft": {"radius": 125, "length": 80, "z0": -40, "chamfer": 6}}, {"shaft": {"radius": 40, "length": 96, "z0": -48}}]},
+  {"id": "upper", "name": "Upper brace link", "parent": "airframe", "material": "anodized.orange", "at": [450, -55, 0], "rot": [0, 1, 0, 130.36425569309682], "shape": [
+    {"box": {"size": [304, 28, 44], "chamfer": 5, "at": [152, 0, 0]}},
+    {"shaft": {"radius": 26, "length": 34, "z0": -17, "rot": [1, 0, 0, -90]}},
+    {"shaft": {"radius": 26, "length": 34, "z0": -17, "rot": [1, 0, 0, -90], "at": [304, 0, 0]}},
+    {"box": {"size": [48, 28, 10], "chamfer": 1.5, "at": [325.94, 0, -32.30], "rot": [0, 1, 0, 16.0044]}}]},
+  {"id": "lower", "name": "Lower brace link", "parent": "upper", "material": "anodized.blue", "at": [304, 0, 0], "rot": [0, 1, 0, 16.00440994066598], "shape": [
+    {"box": {"size": [304, 24, 40], "chamfer": 5, "at": [152, 0, 0]}},
+    {"shaft": {"radius": 24, "length": 30, "z0": -15, "rot": [1, 0, 0, -90], "at": [304, 0, 0]}}]},
+  {"id": "barrel", "name": "Retract actuator (cylinder)", "parent": "airframe", "material": "anodized.green", "at": [-400, 0, 100], "rot": [0, 1, 0, -2.8624052261117474], "shape": [
+    {"tube": {"inner": 15, "outer": 24, "length": 266, "z0": 14, "rot": [0, 1, 0, 90]}},
+    {"shaft": {"radius": 24, "length": 14, "z0": 0, "rot": [0, 1, 0, 90]}},
+    {"shaft": {"radius": 20, "length": 50, "z0": -25, "rot": [1, 0, 0, -90]}}]},
+  {"id": "rod", "name": "Retract actuator (rod)", "parent": "leg", "material": "polishedSteel", "at": [0, 0, 120], "rot": [0, 1, 0, 177.13759477388825], "shape": [
+    {"shaft": {"radius": 11, "length": 280, "z0": 0, "rot": [0, 1, 0, 90]}},
+    {"shaft": {"radius": 17, "length": 40, "z0": -20, "rot": [1, 0, 0, -90]}}]}
+ ],
+ "annotations": {
+  "labels": [
+   {"id": "lTrunnion", "at": {"part": "leg", "offset": [0, -118, 0]}, "text": "Trunnion: the leg turns here"},
+   {"id": "lLeg", "at": {"part": "leg", "offset": [0, -42, -250]}, "text": "Shock strut (leg)"},
+   {"id": "lUpper", "at": {"part": "upper", "offset": [120, -14, 0]}, "text": "Upper brace link"},
+   {"id": "lLower", "at": {"part": "lower", "offset": [180, -12, 0]}, "text": "Lower brace link"},
+   {"id": "lAct", "at": {"part": "barrel", "offset": [140, -24, 0]}, "text": "Retract actuator"},
+   {"id": "lKnee", "at": {"part": "upper", "offset": [304, -17, 0]}, "text": "Knee joint: past the straight line"},
+   {"id": "lStop", "at": {"part": "upper", "offset": [331.94, -14, -32.30]}, "text": "Stop"}],
+  "arrows": [
+   {"id": "aLoad", "meaning": "force", "from": {"world": [-230, -40, -1040]}, "to": {"world": [-50, -40, -1040]}, "text": "Side load on the wheel"},
+   {"id": "aSqueezeA", "meaning": "force", "from": {"part": "upper", "offset": [20, -14, 60]}, "to": {"part": "upper", "offset": [150, -14, 60]}, "text": "Squeeze"},
+   {"id": "aSqueezeB", "meaning": "force", "from": {"part": "lower", "offset": [284, -12, 60]}, "to": {"part": "lower", "offset": [154, -12, 60]}},
+   {"id": "aKnee", "meaning": "force", "from": {"part": "lower", "offset": [-4, -12, -50]}, "to": {"part": "lower", "offset": [-4, -12, -150]}, "text": "Knee pushed onto its stop"},
+   {"id": "aUnlock", "meaning": "force", "from": {"part": "lower", "offset": [0, -40, -45]}, "to": {"part": "lower", "offset": [0, -40, -155]}, "text": "Unlock actuator pulls here"}],
+  "dimensions": [
+   {"id": "pinA", "a": {"part": "lower", "offset": [304, 0, 0]}, "b": {"part": "leg", "offset": [100, -55, -400]}, "text": "Pin to leg point: {dim.pinA}"},
+   {"id": "pinB", "a": {"part": "lower", "offset": [304, 0, 0]}, "b": {"part": "leg", "offset": [0, -55, -900]}, "text": "Pin to axle line: {dim.pinB}"}]},
+ "steps": [
+  {"say": "A retractable main landing gear, shown with the aircraft on jacks. The leg turns about the trunnion. A folding side brace holds it down.", "camera": "front", "orbit": -18,
+   "focus": ["airframe", "leg", "tire"], "annotate": ["lTrunnion", "lLeg", "lUpper", "lLower", "lAct"]},
+  {"say": "The side brace has two links. With the gear down, the knee joint between them sits a little past the straight line and rests on a stop. This is the over-centre lock.", "camera": "front",
+   "focus": ["upper", "lower"], "annotate": ["lKnee", "lStop"]},
+  {"say": "A side load on the wheel tries to fold the gear, and it squeezes the brace. The knee is already past the straight line, so the squeeze pushes it harder onto the stop. The gear cannot fold.", "camera": "front",
+   "focus": ["airframe", "leg", "tire"], "highlight": ["upper", "lower"], "annotate": ["aLoad", "aSqueezeA", "aSqueezeB", "aKnee"]},
+  {"say": "The pin at the end of the lower link joins the leg. The engine checked these two pin-to-leg distances at each shown pose.", "camera": "front",
+   "focus": ["leg", "tire"], "annotate": ["pinA", "pinB"], "check": [{"value": "dim.pinA", "eq": 100, "tol": 1e-6}, {"value": "dim.pinB", "eq": 500, "tol": 1e-6}]},
+  {"say": "In this example, an unlock actuator (not shown) moves the knee back through centre before retraction. Here the brace is exactly straight.", "camera": "front",
+   "pose": {"leg": {"rot": [0, -1, 0, -1.140261279901256]}, "upper": {"rot": [0, 1, 0, 138.87040034696608]}, "lower": {"rot": [0, 1, 0, 0.0]}, "barrel": {"rot": [0, 1, 0, -2.842070816572106]}, "rod": {"rot": [0, 1, 0, 176.01766790352667]}}, "focus": ["upper", "lower"], "annotate": ["aUnlock"], "check": [{"value": "dim.pinA", "eq": 100, "tol": 1e-6}, {"value": "dim.pinB", "eq": 500, "tol": 1e-6}]},
+  {"say": "Then the retract actuator shortens. It pulls the lever at the top of the leg.", "camera": "front", "orbit": -18,
+   "pose": {"leg": {"rot": [0, -1, 0, 12.0]}, "upper": {"rot": [0, 1, 0, 161.25499429952717]}, "lower": {"rot": [0, 1, 0, -56.20053713455545]}, "barrel": {"rot": [0, 1, 0, -2.652863268103815]}, "rod": {"rot": [0, 1, 0, 189.3471367318962]}}, "check": [{"value": "dim.pinA", "eq": 100, "tol": 1e-6}, {"value": "dim.pinB", "eq": 500, "tol": 1e-6}]},
+  {"say": "The leg swings up about the trunnion, and the brace folds at the knee.", "camera": "front", "orbit": -18,
+   "pose": {"leg": {"rot": [0, -1, 0, 30.0]}, "upper": {"rot": [0, 1, 0, 171.17898173150616]}, "lower": {"rot": [0, 1, 0, -90.72291217412514]}, "barrel": {"rot": [0, 1, 0, -0.6610710147230169]}, "rod": {"rot": [0, 1, 0, 209.33892898527697]}}, "check": [{"value": "dim.pinA", "eq": 100, "tol": 1e-6}, {"value": "dim.pinB", "eq": 500, "tol": 1e-6}]},
+  {"say": "The knee moves up into the wheel well.", "camera": "front", "orbit": -18,
+   "pose": {"leg": {"rot": [0, -1, 0, 50.0]}, "upper": {"rot": [0, 1, 0, 180.21016143387692]}, "lower": {"rot": [0, 1, 0, -122.05922140000814]}, "barrel": {"rot": [0, 1, 0, 4.244744253431465]}, "rod": {"rot": [0, 1, 0, -125.75525574656855]}}, "check": [{"value": "dim.pinA", "eq": 100, "tol": 1e-6}, {"value": "dim.pinB", "eq": 500, "tol": 1e-6}]},
+  {"say": "The brace is almost folded flat.", "camera": "front", "orbit": -18,
+   "pose": {"leg": {"rot": [0, -1, 0, 68.0]}, "upper": {"rot": [0, 1, 0, 191.65408929899723]}, "lower": {"rot": [0, 1, 0, -147.6343623243669]}, "barrel": {"rot": [0, 1, 0, 10.793777445209685]}, "rod": {"rot": [0, 1, 0, -101.20622255479032]}}, "check": [{"value": "dim.pinA", "eq": 100, "tol": 1e-6}, {"value": "dim.pinB", "eq": 500, "tol": 1e-6}]},
+  {"say": "Gear up. The folded brace lies above the leg.", "camera": "front", "orbit": -18,
+   "pose": {"leg": {"rot": [0, -1, 0, 85.0]}, "upper": {"rot": [0, 1, 0, 230.04326879147612]}, "lower": {"rot": [0, 1, 0, -168.25480898076384]}, "barrel": {"rot": [0, 1, 0, 17.70670808981445]}, "rod": {"rot": [0, 1, 0, -77.29329191018556]}}, "check": [{"value": "dim.pinA", "eq": 100, "tol": 1e-6}, {"value": "dim.pinB", "eq": 500, "tol": 1e-6}]},
+  {"say": "The engine checked the two pin-to-leg distances at each shown pose, not the blend, loads or hydraulics. Real designs can use lock links, springs and actuators. Use the aircraft maintenance manual for its geometry and adjustments.", "camera": "front", "orbit": -18}
+ ]}
