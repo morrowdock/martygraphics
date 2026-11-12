@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Proposed live benchmark adapters.** Add isolated Codex CLI transport,
+  durable receipts, exact-session fix-up, fake CLI tests and a quota-free dry
+  self-test command. Antigravity remains UNVERIFIED and fails closed; the full
+  live runner is not ready. Replace test reads of registered keys with
+  synthetic metadata. No model call or registered benchmark run was made.
+
 - **Benchmark harness: scoring and analysis (draft for review).** `benchmark/mechanisms-v1/harness/` adds the
   primary scoring and grade-merge code that the protocol requires before run 1, and the whole analysis plan:
   - the per-check merge of the two graders;

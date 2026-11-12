@@ -13,7 +13,8 @@ protocol's open points are in [AMENDMENTS.md](../AMENDMENTS.md); the options are
 | [blinding.py](blinding.py) | Section 8 tokens, sides and the commitment, with the A-09 encoding. |
 | [agreement.py](agreement.py) | Krippendorff's alpha (interval), Spearman's rho, Cohen's kappa (unweighted and quadratic) and percent agreement, plus their bootstrap forms. |
 | [pack.py](pack.py) | Proposed masking, normalization, packet builder and deterministic grader order; Apple framework IO in `native/media.swift`. |
-| [grading_runner.py](grading_runner.py) | Proposed section 6 session driver; only a recorded adapter, with public-commitment and durable-preference gates. |
+| [grading_runner.py](grading_runner.py) | Proposed section 6 driver, with offline replay and fail-closed live selection, public-commitment and durable-preference gates. |
+| [LIVE-ADAPTERS.md](LIVE-ADAPTERS.md) | CLI evidence, isolation limits, dry self-test commands, recovery and remaining live-use gates. |
 | [PACKING.md](PACKING.md) | Packer inputs, CLI, trust boundaries, review choices and pending macOS validation. |
 | [tests/](tests/test_score.py) | Synthetic tests only (see below). |
 
@@ -41,7 +42,12 @@ The tests cover:
 - the record and timing conditions;
 - the blinding vectors;
 - agreement against published values;
-- an end-to-end run through the command line on the real key's 20 question ids.
+- an end-to-end CLI run with an original synthetic key and 20 public numbered ids;
+- fake CLI processes for isolation, exact-session fix-up, receipts, timeout and crash recovery.
+
+The tests do not open either registered question file. The rubric's published
+format examples use synthetic key metadata. Fake CLI process tests require
+Linux bubblewrap; they skip if it is absent. They never start a real model.
 
 The fixtures are built by [tests/support.py](tests/support.py), and every fixture reply passes the validator.
 

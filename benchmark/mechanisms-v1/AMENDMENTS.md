@@ -242,3 +242,45 @@ pipeline is tested with original synthetic data. Apple-framework compilation
 and native synthetic media checks are **pending** on macOS, followed by the
 registered dry run. Only a fake/recorded model adapter is shipped. Live grader
 adapters, their isolation and tool pins remain pending. RUN-LOCK stays DRAFT.
+
+## A-15 — Live CLI adapter proposal (PROPOSED; not accepted)
+
+Date: 2026-11-12. Base: `9e95ad3d69a54bce75b1a86d5b136734fb3ddb84`.
+Sources: LOCK.json grader pins, PROTOCOL sections 6 and 9, the merged runner's
+`Adapter.open/resume` contract, local help/version output, and
+`harness/LIVE-ADAPTERS.md`. Review and coordinator acceptance are pending.
+
+G1 has a proposed Codex subprocess adapter with explicit packet text and image
+attachments, a fresh private home, no inherited environment or host config,
+disabled agent web/execution tools, and bubblewrap filesystem isolation.
+Only that session's home is retained for its one parse-error fix-up. Exact
+reply bytes, wire output, UTC times, tool version, binary hash, session id
+and request intent are durable. Timeout, process failure, unknown transport
+events, changed session storage and missing completion are uncertain. They
+never authorize a replacement request. Interrupted runner receipt creation
+still needs reviewed recovery with independently retained evidence.
+
+G2 provides only a fail-closed adapter and a help-confirmed invocation plan.
+Antigravity 1.5.6 does not document enough controls in its help to establish
+the required isolation or attachment/result contract. It is UNVERIFIED. No
+unsupported flags, invented wire schema or alternate provider are presented
+as a working implementation. `--live` stops before reading the pack while
+this gate is open. See OQ-14 for the exact remaining work.
+
+Local CLI observations: Codex `codex-cli 0.167.2`; Antigravity and its `agy`
+alias `1.5.6`. Only help/version commands ran against those CLIs. The Codex
+version query also succeeded inside the proposed filesystem sandbox. No
+benchmark or synthetic prompt was sent to a real model. The optional
+self-test defaults to dry mode and requires explicit `--run` to spend quota.
+An `OK` reply alone cannot prove a model has no hidden capabilities.
+
+Existing test dependencies on the registered keys are replaced with original
+synthetic metadata. Public numbered ids and registered-order vectors remain.
+The production validator, arithmetic, prompts, rubric, protocol, LOCK.json,
+and registered question/key files are unchanged. Question/key bytes were not
+opened or copied in this work. FILES.json retains their prior digest entries.
+
+Effect: evidence transport and isolation can affect grades; no claim of zero
+score effect is made. Arithmetic is unchanged. New hashes are proposed only
+under `RUN-LOCK.json.draftProposals.liveAdapters`; existing accepted/draft
+historical pins are not silently replaced. RUN-LOCK remains DRAFT.

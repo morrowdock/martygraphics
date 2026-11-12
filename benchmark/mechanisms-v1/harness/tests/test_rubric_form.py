@@ -12,8 +12,12 @@ import rubric_form as form
 RUBRIC = (BENCH / "RUBRIC.md").read_text(encoding="utf-8")
 EXAMPLES = re.findall(r"```json\n(.*?)\n```", RUBRIC, re.S)
 SCORE_EXAMPLE, PREFERENCE_EXAMPLE = EXAMPLES[0], EXAMPLES[1]
-QUESTIONS = {q["id"]: q for q in json.loads((BENCH / "QUESTIONS.json").read_text(encoding="utf-8"))["questions"]}
-VIEW = {q["id"]: q for q in json.loads((BENCH / "GRADER-QUESTIONS.json").read_text(encoding="utf-8"))["questions"]}
+EXAMPLE_KEY = copy.deepcopy(SYNTHETIC_KEY["questions"][0])
+EXAMPLE_KEY["id"] = "MECH-01"
+EXAMPLE_KEY["keyFacts"].append({"id": "K4", "core": True, "appliesTo": ["all"]})
+QUESTIONS = {"MECH-01": EXAMPLE_KEY}
+VIEW = copy.deepcopy(QUESTIONS)
+del VIEW["MECH-01"]["category"]
 SYN = {q["id"]: q for q in SYNTHETIC_KEY["questions"]}
 # Built at run time: a long literal assigned to a TOKEN name looks like a credential to secret scanners.
 # The value is the synthetic packet id 0123456789ab, the same as before.
@@ -31,7 +35,7 @@ def problems(mutate, question="Q1", config=None):
 
 
 class RubricExampleTest(unittest.TestCase):
-    """The rubric's own answer formats are valid, with both views of the key."""
+    """The rubric's formats are valid against original synthetic key metadata."""
 
     def test_score_example(self):
         for view in (QUESTIONS, VIEW):

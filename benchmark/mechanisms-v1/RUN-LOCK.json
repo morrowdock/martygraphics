@@ -56,6 +56,46 @@
         "harness/tests/test_runner_recovery.py": "c0855f8fca4d2a440d0f191a5311be7dc908f3a85d1c1da72e21ae8e12c9f4c9"
       },
       "recoveryReview": "PROPOSED 2026-11-12: P2 recovery correction to 34463c556accac9b6bdd39697567cd7732f1f062; independent re-review pending; no live or benchmark run"
+    },
+    "liveAdapters": {
+      "status": "PROPOSED 2026-11-12: review pending; G2 UNVERIFIED and disabled; not approved run pins",
+      "baseCommit": "9e95ad3d69a54bce75b1a86d5b136734fb3ddb84",
+      "amendment": "A-15 (proposed); OQ-14 remains open",
+      "source": "harness/LIVE-ADAPTERS.md; local native --help/--version output on 2026-11-12",
+      "toolObservations": {
+        "G1": {
+          "status": "VERIFIED version/help only; real-model acceptance PENDING",
+          "version": "codex-cli 0.167.2",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "binarySha256": "a9672d0fa0dd8fcf8cad136fa0d056b914bc046f5ac3d78f4a5cf390655af56b"
+        },
+        "G2": {
+          "status": "UNVERIFIED isolation and transport contract; dispatch DISABLED",
+          "version": "1.5.6",
+          "model": "gemini-4-argon",
+          "effort": "high",
+          "binarySha256": "7e5bbdcbf689354300500ba22d55c2ff1497e185ae18407325d480577a87db5d"
+        },
+        "bubblewrap": {
+          "status": "VERIFIED with fake CLIs only",
+          "version": "0.13.1"
+        }
+      },
+      "validation": "Original synthetic fixtures and fake CLIs only. No benchmark input or model prompt dispatched. Real-model self-test NOT RUN. Existing historical pins above are retained.",
+      "files": {
+        "harness/grading_runner.py": "f7a163576000b2c269526df13fc7dc35eacffb814da869537be689696b72e95c",
+        "harness/tests/test_runner_recovery.py": "a890ddd05e315f79488cc9237ed8d9e3b11dd34b3d9559e7ae9d9e9e4078a6e7",
+        "harness/tests/support.py": "c0d1555a7d64ddf77ab8452705a48de07bb99a5eee28165224c6ef7a3203815b",
+        "harness/tests/test_end_to_end.py": "99cce9a6f281bb1f8aec7b7d1534e8e28b1cd583faa24ec6dd20d54e1eb0d907",
+        "harness/tests/test_rubric_form.py": "25f773a356b2e9450581ba93b405975609ae190921bd88490f0d4ca872f84b14",
+        "harness/tests/test_score.py": "60abed07665779c61f6966834e5b46fb0c60446d43b4d03d80e6ded45cf91080",
+        "harness/README.md": "66c11ae4a4af861e00c0a32a3d6040b9b72963b7adf7aa621caa12e8595486a0",
+        "harness/PACKING.md": "425f60660c2514d3ff17f6f61370abcfc4d97a231dc7fe0b148c621a9c6e9b51",
+        "harness/OPEN-QUESTIONS.md": "d7f2d555f5069466bea42042c2ccf82af599cae973009191dc604f9ad4fded2c",
+        "harness/LIVE-ADAPTERS.md": "c4e590a50a041bf5b8794fea41b804833da3b5b8407243bee481c6ba4b6c086c",
+        "AMENDMENTS.md": "dcfe2e87943105775dce4c422886b5a5539f2796749cb9f0c3ad22a86cfd7b64"
+      }
     }
   }
 }

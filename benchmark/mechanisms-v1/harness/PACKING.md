@@ -12,8 +12,11 @@ paid service or model call was used to write or test this code.
 - `native/media.swift` performs Apple Vision OCR and AVFoundation media IO. It is
   a local NDJSON worker. It does not load any model service or use a network.
 - `grading_runner.py` writes the exact `RECORD.json` consumed by `score.py`. It
-  uses `check_text` and `next_step` after every reply. It ships only the offline
-  `RecordedAdapter`. No live grader adapter or credentials are included.
+  uses `check_text` and `next_step` after every reply. It supports offline
+  `RecordedAdapter` and a proposed `--live` selector. Live selection fails before
+  reading the pack because G2 isolation is UNVERIFIED. No credentials are included.
+  See [LIVE-ADAPTERS.md](LIVE-ADAPTERS.md) and proposed A-15 for the Codex transport,
+  the blocked Antigravity interface, receipts and synthetic-only self-test.
 - `tests/test_pack_runner.py` uses original synthetic questions, pixels and reply
   text. Its 20-question integration test executes the real Python packer and
   runner and the unchanged `score.analyse`. Only native media IO and the public

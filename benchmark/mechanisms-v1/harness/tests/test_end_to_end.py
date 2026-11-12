@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""End to end on SYNTHETIC grader replies: the real key's 20 question ids x 3 runs x 2 arms, then the verdict.
+"""End to end on an original synthetic key and replies: 20 ids x 3 runs x 2 arms.
 
 No real output is read or made. The input folder (runs, seed, mapping, dated record, every reply) is generated from
 a plan, run through the command line, and the expected M(q, a), d(q), sign test and verdict are computed here from
@@ -18,9 +18,9 @@ import tempfile
 import unittest
 
 import support as S
-from support import BENCH, NO_JUDGED, Plan, prefix, reply, score
+from support import NO_JUDGED, Plan, prefix, reply, score
 
-QUESTIONS = json.loads((BENCH / "QUESTIONS.json").read_text(encoding="utf-8"))
+QUESTIONS = S.registered_shape_key()
 IDS = [q["id"] for q in QUESTIONS["questions"]]
 CORE_ALL = {q["id"]: [f["id"] for f in q["keyFacts"] if f["core"] and "all" in f["appliesTo"]]
             for q in QUESTIONS["questions"]}
@@ -41,7 +41,7 @@ def make(flip_q14_to_tie=False, mirror=False):
                 table[(q, arm, run)] = ("both", n, min(5, n + run % 2))                 # G2 is sometimes kinder
     table[(IDS[0], 2, 3)] = ("failed",)
     table[(IDS[1], 1, 2)] = ("ungraded",)
-    table[(IDS[5], 1, 1)] = ("none",)                 # MECH-06, variant reversing-motor: no judged check
+    table[(IDS[5], 1, 1)] = ("none",)
     table[(IDS[3], 2, 1)] = ("one", 2)                # G2's call is exhausted
     table[(IDS[4], 1, 3)] = ("both", 5, 1)            # strong disagreement
     table[(IDS[15], 1, 1)] = ("failed",)
@@ -59,7 +59,7 @@ def make(flip_q14_to_tie=False, mirror=False):
             plan.scores[("G1", slot)] = plan.scores[("G2", slot)] = "exhausted"
         elif entry[0] == "none":
             for g in score.GRADERS:
-                plan.scores[(g, slot)] = reply(slot, NO_JUDGED, configuration="reversing-motor", covered=covered)
+                plan.scores[(g, slot)] = reply(slot, NO_JUDGED, configuration="synthetic-variant", covered=covered)
         elif entry[0] == "one":
             plan.scores[("G1", slot)] = reply(slot, prefix(entry[1]), covered=covered)
             plan.scores[("G2", slot)] = "exhausted"
@@ -109,7 +109,8 @@ class EndToEndTest(unittest.TestCase):
         out = self.tmp.name + "/result.json"
         printed = io.StringIO()
         with contextlib.redirect_stdout(printed), contextlib.redirect_stderr(printed):
-            code = score.main([str(folder), "--out", out])
+            key = S.write_key(folder, plan.key_doc)
+            code = score.main([str(folder), "--questions", str(key), "--out", out])
         if code != 0:
             return code, printed.getvalue(), None
         with open(out, encoding="utf-8") as stream:

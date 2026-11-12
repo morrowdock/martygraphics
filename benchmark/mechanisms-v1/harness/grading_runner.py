@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Offline-capable section 6 session driver. Ships ONLY RecordedAdapter.
+"""Crash-safe section 6 session driver with offline and proposed live adapters.
 
 An adapter sees an anonymous packet, the locked prompt and its own session handle.
 It never receives the seed, mapping, run id, other replies or operator directory.
-Production model adapters are deliberately not included. See PACKING.md.
+Live use is fail-closed until both CLI isolation contracts are verified.
 """
 import argparse
 import fcntl
@@ -14,9 +14,11 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import uuid
 from typing import Protocol
 
 import blinding
@@ -494,12 +496,525 @@ def _run_locked(root, adapter, prompts, clock, doc, seed, questions, calls, push
     return record
 
 
+MODELS = {"G1": "gpt-6.1-sol", "G2": "gemini-4-argon"}
+VERSIONS = {"G1": "codex-cli 0.167.2", "G2": "1.5.6"}
+G2_BLOCKER = (
+    "UNVERIFIED G2: Antigravity 1.5.6 documents --print, --model, --effort, "
+    "--conversation and --sandbox, but its help does not establish a deny-all "
+    "web/tool policy, disabled memory/customizations, image attachment format, "
+    "or durable JSON session/result schema. Live dispatch is disabled."
+)
+DISABLED = (
+    "shell_tool", "unified_exec", "apply_patch_freeform", "view_image", "js_repl",
+    "code_mode", "code_mode_host", "multi_agent", "collab", "apps", "plugins",
+    "codex_hooks", "plugin_hooks", "memories", "memory_tool", "skill_search",
+    "skill_mcp_dependency_install", "web_search", "web_search_cached",
+    "web_search_request", "standalone_web_search", "browser_use", "computer_use",
+    "image_generation", "imagegenext", "search_tool", "tool_search", "tool_suggest",
+    "remote_control", "remote_plugin", "shell_snapshot", "request_permissions_tool",
+    "request_rule", "exec_permission_approvals", "experimental_use_unified_exec_tool",
+)
+CODEX_CONFIG = [
+    'model_reasoning_effort="high"', 'web_search="disabled"',
+    'approval_policy="never"', 'project_doc_max_bytes=0',
+    'developer_instructions=""', 'mcp_servers={}',
+    'memories.use_memories=false', 'memories.generate_memories=false',
+    'skills.include_instructions=false', 'features.skip_host_skill_discovery=true',
+    'features.omit_skill_descriptions=true', 'check_for_update_on_startup=false',
+    'include_environment_context=false', 'include_environment_context_time=false',
+    'shell_environment_policy.inherit="none"',
+] + [f"features.{name}=false" for name in DISABLED]
+ENV = {
+    "PATH": "/usr/bin:/bin", "HOME": "/home/grader", "CODEX_HOME": "/home/grader/codex",
+    "XDG_CONFIG_HOME": "/home/grader/config", "XDG_DATA_HOME": "/home/grader/data",
+    "XDG_CACHE_HOME": "/home/grader/cache", "TMPDIR": "/tmp", "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8", "TZ": "UTC", "NO_COLOR": "1",
+}
+
+
+class Uncertain(ValueError):
+    """The request may have reached a provider. Never automatically send it again."""
+
+
+def utc():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def packet_hashes(packet):
+    """Read only an anonymous packet; refuse links, special files and extra names."""
+    packet = Path(packet)
+    if packet.is_symlink() or not packet.is_dir():
+        raise ValueError("packet must be a real directory")
+    hashes = {}
+    for path in sorted(packet.rglob("*")):
+        relative = path.relative_to(packet).as_posix()
+        if path.is_symlink():
+            raise ValueError("packet symlinks are forbidden")
+        if path.is_dir():
+            if relative not in {"output", "A", "B", "output/sheets", "A/sheets", "B/sheets"}:
+                raise ValueError("unexpected packet directory")
+            continue
+        if not path.is_file() or not re.fullmatch(
+                r"question\.json|RUBRIC\.md|(?:output|A|B)/(?:TEXT\.txt|still-[1-5]\.png|sheets/sheet-[0-9]{2}\.png)",
+                relative):
+            raise ValueError("unexpected packet file")
+        hashes[relative] = digest(path)
+    if not {"question.json", "RUBRIC.md"} <= hashes.keys():
+        raise ValueError("packet is missing its question or rubric")
+    return hashes
+
+
+def prompt_bytes(packet, message):
+    pieces = [message]
+    for path in sorted(Path(packet).rglob("*")):
+        if path.is_file() and path.suffix in (".json", ".md", ".txt"):
+            pieces.append("\n--- " + path.relative_to(packet).as_posix() + " ---\n" +
+                          path.read_text(encoding="utf-8"))
+    images = [path.relative_to(packet).as_posix() for path in sorted(Path(packet).rglob("*.png"))]
+    if images:
+        pieces.append("\nAttached images, in order:\n" + "\n".join(images))
+    return "\n".join(pieces).encode("utf-8"), images
+
+
+def codex_argv(images=(), remote_id=None):
+    args = ["/tool", "exec"]
+    if remote_id is not None:
+        args.append("resume")
+    args += ["--model", MODELS["G1"], "--json", "--color", "never"] if remote_id is None else [
+        "--model", MODELS["G1"], "--json"]
+    args += ["--strict-config", "--ignore-user-config", "--ignore-rules", "--skip-git-repo-check",
+             "--output-last-message", "/out/reply.bin"]
+    for value in CODEX_CONFIG:
+        args += ["-c", value]
+    if remote_id is None:
+        args += ["--sandbox", "read-only", "--cd", "/packet"]
+        for name in images:
+            args += ["--image", "/packet/" + name]
+    else:
+        args += ["-c", 'sandbox_mode="read-only"', remote_id]
+    return args + ["-"]
+
+
+def antigravity_argv(remote_id=None):
+    """Only help-confirmed flags; NOT a claim of a safe or verified transport."""
+    args = ["/tool", "--print", "--model", MODELS["G2"], "--effort", "high",
+            "--output-format", "json", "--disable-slash-commands", "--sandbox"]
+    if remote_id is not None:
+        args += ["--conversation", remote_id]
+    return args
+
+
+class Bubblewrap:
+    """Expose runtime files, one packet and one private home, never the host home.
+
+    Provider HTTPS needs network access. Model web and execution tools are disabled
+    separately. This is not an assertion that provider HTTPS is disconnected.
+    """
+    def __init__(self, binary, executable="bwrap"):
+        self.binary = Path(shutil.which(str(binary)) or binary).resolve(strict=True)
+        self.executable = shutil.which(executable)
+        if not self.executable:
+            raise ValueError("Linux bubblewrap is required; no unsandboxed fallback")
+
+    def command(self, home, packet, output, args):
+        argv = [self.executable, "--die-with-parent", "--new-session", "--unshare-all",
+                "--share-net", "--cap-drop", "ALL", "--clearenv"]
+        for name in ("/usr", "/bin", "/lib", "/lib64"):
+            if Path(name).exists():
+                argv += ["--ro-bind", name, name]
+        for name in ("/etc/resolv.conf", "/etc/hosts", "/etc/ssl/certs"):
+            if Path(name).exists():
+                argv += ["--ro-bind", name, name]
+        argv += ["--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
+                 "--ro-bind", str(self.binary), "/tool",
+                 "--bind", str(home), "/home/grader", "--ro-bind", str(packet), "/packet",
+                 "--bind", str(output), "/out", "--chdir", "/packet"]
+        for name, value in sorted(ENV.items()):
+            argv += ["--setenv", name, value]
+        return argv + ["--"] + list(args)
+
+    def invoke(self, home, packet, output, args, message, timeout):
+        argv = self.command(home, packet, output, args)
+        with (output / "stdout.bin").open("xb") as stdout, (output / "stderr.bin").open("xb") as stderr:
+            process = subprocess.Popen(argv, cwd=packet, env=ENV, stdin=subprocess.PIPE,
+                                       stdout=stdout, stderr=stderr, start_new_session=True)
+            try:
+                process.communicate(message, timeout=timeout)
+            except BaseException:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+                raise
+            finally:
+                for stream in (stdout, stderr):
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                sync_directory(output)
+        if process.returncode:
+            raise Uncertain("CLI exited without a complete reply; see private stderr.bin")
+
+
+def codex_result(output, expected_id=None):
+    remote_id = None
+    completed = False
+    messages = []
+    for line in (output / "stdout.bin").read_bytes().splitlines():
+        event = json.loads(line)
+        kind = event.get("type")
+        if kind == "thread.started":
+            if remote_id is not None:
+                raise Uncertain("multiple sessions in CLI output")
+            remote_id = str(uuid.UUID(event["thread_id"]))
+        elif kind in ("item.started", "item.updated", "item.completed"):
+            item = event["item"]
+            if item.get("type") not in ("agent_message", "reasoning"):
+                raise Uncertain("unexpected tool use; isolation acceptance failed")
+            if kind == "item.completed" and item["type"] == "agent_message":
+                messages.append(item["text"])
+        elif kind == "turn.completed":
+            if completed:
+                raise Uncertain("multiple turns in one request")
+            completed = True
+        elif kind != "turn.started":
+            raise Uncertain("unknown or failed CLI event; operator recovery required")
+    if not completed or not remote_id or not messages or (expected_id and remote_id != expected_id):
+        raise Uncertain("missing completion or exact session identity")
+    raw = (output / "reply.bin").read_bytes()
+    if not raw or raw not in (messages[-1].encode("utf-8"), (messages[-1] + "\n").encode("utf-8")):
+        raise Uncertain("final reply file differs from CLI event")
+    return remote_id, raw
+
+
+def home_hashes(home, *, sync=False):
+    hashes = {}
+    for path in sorted(home.rglob("*")):
+        if path.is_symlink() or (not path.is_file() and not path.is_dir()):
+            raise Uncertain("unexpected special file in isolated CLI home")
+        if path.is_file():
+            if sync:
+                with path.open("rb") as stream:
+                    os.fsync(stream.fileno())
+            hashes[path.relative_to(home).as_posix()] = digest(path)
+    if sync:
+        for path in sorted([home] + [p for p in home.rglob("*") if p.is_dir()], reverse=True):
+            sync_directory(path)
+    return hashes
+
+
+class CodexAdapter:
+    grader = "G1"
+
+    def __init__(self, root, binary, *, auth=None, timeout=300):
+        self.root = Path(root).resolve()
+        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        if self.root.stat().st_mode & 0o077:
+            raise ValueError("adapter state directory must be private (mode 0700)")
+        self.sandbox = Bubblewrap(binary)
+        self.auth = Path(auth).resolve(strict=True) if auth else None
+        self.timeout = timeout
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        self.binary_hash = digest(self.sandbox.binary)
+
+    def preflight(self):
+        """Version query only, inside an empty isolated home. No model prompt."""
+        with tempfile.TemporaryDirectory(dir=self.root) as temp:
+            root = Path(temp)
+            for name in ("home", "packet", "out"):
+                (root / name).mkdir()
+            self.sandbox.invoke(root / "home", root / "packet", root / "out",
+                                ["/tool", "--version"], b"", 15)
+            version = (root / "out/stdout.bin").read_text().strip()
+            if version != VERSIONS[self.grader]:
+                raise ValueError("CLI version changed; review invocation and isolation again")
+        return version
+
+    def open(self, grader, kind, packet, *, session_id):
+        if grader != self.grader or kind not in ("score", "preference", "guess"):
+            raise ValueError("wrong grader or call kind")
+        if not re.fullmatch(r"[0-9a-f]{64}", session_id):
+            raise ValueError("expected opaque session id")
+        hashes = packet_hashes(packet)
+        self.preflight()
+        path = self.root / session_id
+        path.mkdir(mode=0o700)
+        sync_directory(self.root)
+        home = path / "home"
+        home.mkdir(mode=0o700)
+        (home / "codex").mkdir(mode=0o700)
+        if self.auth:
+            auth = home / "codex/auth.json"
+            durable_bytes(auth, self.auth.read_bytes())
+            auth.chmod(0o600)
+        shutil.copytree(packet, path / "packet")
+        if packet_hashes(path / "packet") != hashes:
+            raise ValueError("packet changed while copying")
+        home_hashes(path / "packet", sync=True)
+        state = {"kind": "mechanisms-v1.live-session/1", "sessionId": session_id,
+                 "grader": grader, "callKind": kind, "packetHashes": hashes,
+                 "model": MODELS[grader], "effort": "high", "toolVersion": VERSIONS[grader],
+                 "binarySha256": self.binary_hash, "policySha256": policy_hash(),
+                 "startedUTC": utc(), "remoteSessionId": None, "replies": [], "phase": "ready",
+                 "homeHashes": home_hashes(home, sync=True)}
+        durable_json(path / "state.json", state)
+        sync_directory(path)
+        return LiveSession(self, path)
+
+    def resume(self, grader, kind, packet, *, session_id, received):
+        if not re.fullmatch(r"[0-9a-f]{64}", session_id):
+            raise ValueError("expected opaque session id")
+        path = self.root / session_id
+        state = json.loads((path / "state.json").read_text())
+        if (state["grader"], state["callKind"], state["sessionId"], state["packetHashes"],
+                state["binarySha256"], state["policySha256"]) != (
+                grader, kind, session_id, packet_hashes(packet), self.binary_hash, policy_hash()):
+            raise Uncertain("session binding changed; operator recovery required")
+        if state["phase"] != "ready" or len(state["replies"]) != received:
+            raise Uncertain("uncertain request or reply count; never resend")
+        if received and not state["remoteSessionId"]:
+            raise Uncertain("no exact session id to resume")
+        if home_hashes(path / "home") != state["homeHashes"]:
+            raise Uncertain("exact session storage changed")
+        for number, receipt in enumerate(state["replies"], 1):
+            output = path / str(number)
+            if json.loads((output / "receipt.json").read_text()) != receipt or \
+                    (output / "reply.bin").read_bytes() != bytes.fromhex(receipt["rawHex"]) or \
+                    digest(output / "stdout.bin") != receipt["stdoutSha256"] or \
+                    digest(output / "stderr.bin") != receipt["stderrSha256"]:
+                raise Uncertain("durable adapter receipt changed")
+        return LiveSession(self, path)
+
+
+class LiveSession:
+    def __init__(self, adapter, path):
+        self.adapter = adapter
+        self.path = path
+
+    def reply(self, message):
+        with (self.path / "LOCK").open("a+b") as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise Uncertain("session already active") from error
+            return self._reply(message)
+
+    def _reply(self, message):
+        path = self.path
+        state = json.loads((path / "state.json").read_text())
+        if state["phase"] != "ready":
+            raise Uncertain("uncertain request; never resend")
+        if len(state["replies"]) >= 2:
+            raise ValueError("section 6 permits only one fix-up per session")
+        if packet_hashes(path / "packet") != state["packetHashes"]:
+            raise ValueError("session packet changed")
+        if digest(self.adapter.sandbox.binary) != state["binarySha256"]:
+            raise ValueError("CLI binary changed")
+        if home_hashes(path / "home") != state["homeHashes"]:
+            raise Uncertain("exact session storage changed")
+        if state["replies"]:
+            if not message.startswith("The reply is invalid"):
+                raise ValueError("only a parse-error fix-up may resume this session")
+            payload, images = message.encode("utf-8"), []
+        else:
+            payload, images = prompt_bytes(path / "packet", message)
+        args = codex_argv(images, state["remoteSessionId"])
+        output = path / str(len(state["replies"]) + 1)
+        output.mkdir(mode=0o700)
+        sync_directory(path)
+        request = {"sessionId": state["sessionId"], "remoteSessionId": state["remoteSessionId"],
+                   "startedUTC": utc(), "toolVersion": state["toolVersion"],
+                   "argv": self.adapter.sandbox.command(path / "home", path / "packet", output, args),
+                   "env": ENV, "stdinSha256": hashlib.sha256(payload).hexdigest()}
+        durable_json(output / "request.json", request)
+        state["phase"] = "sending"
+        durable_json(path / "state.json", state)
+        try:
+            self.adapter.sandbox.invoke(path / "home", path / "packet", output, args,
+                                        payload, self.adapter.timeout)
+            received = utc()
+            remote_id, raw = codex_result(output, state["remoteSessionId"])
+            if state["remoteSessionId"] is None:
+                registry = self.adapter.root / "remote-ids"
+                registry.mkdir(mode=0o700, exist_ok=True)
+                with (registry / remote_id).open("xb") as claim:
+                    claim.write(state["sessionId"].encode("ascii"))
+                    claim.flush()
+                    os.fsync(claim.fileno())
+                sync_directory(registry)
+                sync_directory(self.adapter.root)
+            if received < request["startedUTC"]:
+                raise Uncertain("clock moved backwards")
+            receipt = {"sessionId": state["sessionId"], "remoteSessionId": remote_id,
+                       "startedUTC": request["startedUTC"], "receivedUTC": received,
+                       "toolVersion": state["toolVersion"], "binarySha256": state["binarySha256"],
+                       "rawHex": raw.hex(), "stdoutSha256": digest(output / "stdout.bin"),
+                       "stderrSha256": digest(output / "stderr.bin")}
+            durable_bytes(output / "reply.bin", raw)
+            durable_json(output / "receipt.json", receipt)
+            state["homeHashes"] = home_hashes(path / "home", sync=True)
+            state["remoteSessionId"] = remote_id
+            state["replies"].append(receipt)
+            state["phase"] = "ready"
+            durable_json(path / "state.json", state)
+            return raw
+        except Exception as error:
+            state["phase"] = "uncertain"
+            durable_json(path / "state.json", state)
+            durable_json(output / "uncertain.json", {
+                "sessionId": state["sessionId"], "remoteSessionId": state["remoteSessionId"],
+                "startedUTC": request["startedUTC"], "receivedUTC": None, "stoppedUTC": utc(),
+                "toolVersion": state["toolVersion"], "errorType": type(error).__name__,
+                "status": "uncertain; partial wire output is not a completed reply",
+            })
+            raise Uncertain("uncertain CLI request; retained bytes need operator recovery") from error
+
+    def close(self):
+        """Keep this session's home for an exact, completed-turn fix-up only."""
+
+
+class AntigravityAdapter:
+    """Documented invocation proposal; deliberately no unsafe execution switch."""
+    def preflight(self):
+        raise ValueError(G2_BLOCKER)
+
+    def open(self, grader, kind, packet, *, session_id):
+        self.preflight()
+
+    def resume(self, grader, kind, packet, *, session_id, received):
+        raise Uncertain(G2_BLOCKER + " Exact reattachment cannot be established.")
+
+
+class LiveAdapter:
+    def __init__(self, root, binary, *, auth=None, timeout=300):
+        self.adapters = {"G1": CodexAdapter(root, binary, auth=auth, timeout=timeout),
+                         "G2": AntigravityAdapter()}
+
+    def preflight(self):
+        self.adapters["G2"].preflight()
+        self.adapters["G1"].preflight()
+
+    def open(self, grader, kind, packet, *, session_id):
+        return self.adapters[grader].open(grader, kind, packet, session_id=session_id)
+
+    def resume(self, grader, kind, packet, *, session_id, received):
+        return self.adapters[grader].resume(grader, kind, packet, session_id=session_id, received=received)
+
+
+def policy_hash():
+    return hashlib.sha256(json.dumps([CODEX_CONFIG, ENV, digest(__file__)], sort_keys=True).encode()).hexdigest()
+
+
+def self_test(args):
+    """No benchmark inputs. Dry mode does not execute even --version."""
+    root = args.work.resolve()
+    root.mkdir(mode=0o700)
+    sandbox = Bubblewrap(args.binary)
+    plans = []
+    for number in (1, 2):
+        folder = root / str(number)
+        for name in ("home/codex", "packet", "out"):
+            (folder / name).mkdir(parents=True, mode=0o700)
+        command = codex_argv() if args.grader == "G1" else antigravity_argv()
+        plans.append({"argv": sandbox.command(folder / "home", folder / "packet", folder / "out", command),
+                      "env": ENV, "cwd": str(folder / "packet"), "stdin": "reply with the word OK"})
+    if not args.run:
+        print(json.dumps({"status": "DRY; no CLI executed", "plans": plans,
+                          "blocker": G2_BLOCKER if args.grader == "G2" else None}, indent=2))
+        return 0
+    if args.grader == "G2":
+        raise ValueError(G2_BLOCKER)
+    if not args.auth:
+        raise ValueError("self-test --run requires an explicit auth-only file")
+    ids = []
+    sentinel = root / "outside-secret"
+    durable_bytes(sentinel, os.urandom(32))
+    for number, plan in enumerate(plans, 1):
+        folder = root / str(number)
+        probe = folder / "probe"
+        probe.mkdir()
+        sandbox.invoke(folder / "home", folder / "packet", probe,
+                       ["/bin/sh", "-c", 'test ! -e "$1" && test ! -e /etc/codex && test ! -e /repo',
+                        "probe", str(sentinel)], b"", 15)
+        version = folder / "version"
+        version.mkdir()
+        sandbox.invoke(folder / "home", folder / "packet", version, ["/tool", "--version"], b"", 15)
+        if (version / "stdout.bin").read_text().strip() != VERSIONS["G1"]:
+            raise ValueError("CLI version changed")
+        durable_bytes(folder / "home/codex/auth.json", args.auth.read_bytes())
+        (folder / "home/codex/auth.json").chmod(0o600)
+        started = utc()
+        sandbox.invoke(folder / "home", folder / "packet", folder / "out",
+                       codex_argv(), plan["stdin"].encode(), args.timeout)
+        received = utc()
+        remote_id, raw = codex_result(folder / "out")
+        if raw.strip() != b"OK" or remote_id in ids:
+            raise ValueError("synthetic reply or fresh session check failed")
+        ids.append(remote_id)
+        durable_json(folder / "out/receipt.json", {"remoteSessionId": remote_id, "rawHex": raw.hex(),
+                     "startedUTC": started, "receivedUTC": received, "toolVersion": VERSIONS["G1"]})
+    durable_json(root / "SELF-TEST.json", {
+        "status": "synthetic smoke passed; coordinator review still required",
+        "remoteSessionIds": ids, "binarySha256": digest(args.binary), "policySha256": policy_hash(),
+        "checkedUTC": utc(), "noWeb": "web and execution tools disabled; no tool events observed",
+        "filesystem": "outside sentinel absent; only explicit runtime and task mounts exposed",
+        "limits": "Not proof of provider-side behavior or multimodal fidelity. No benchmark readiness grant."
+    })
+    print("Synthetic smoke passed. Review SELF-TEST.json; benchmark live mode remains blocked by G2.")
+    return 0
+
+
+def self_test_main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("command", choices=["self-test"])
+    parser.add_argument("--grader", choices=["G1", "G2"], required=True)
+    parser.add_argument("--binary", type=Path, required=True, help="native CLI executable, not a mise shim")
+    parser.add_argument("--work", type=Path, required=True, help="new private directory; never inside the repo")
+    parser.add_argument("--auth", type=Path, help="explicit auth-only file; never printed or used in dry mode")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--run", action="store_true", help="SPENDS QUOTA: two harmless OK prompts")
+    mode.add_argument("--dry", action="store_true", help="default: print exact argv/env, no process starts")
+    parser.add_argument("--timeout", type=float, default=300)
+    args = parser.parse_args(argv)
+    try:
+        return self_test(args)
+    except (ValueError, OSError, subprocess.SubprocessError) as error:
+        parser.exit(2, str(error) + "\n")
+
+
 def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["self-test"]:
+        return self_test_main(argv)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("pack", type=Path)
-    parser.add_argument("--recorded", type=Path, required=True, help="offline reply sessions; no live adapter is shipped")
+    adapters = parser.add_mutually_exclusive_group(required=True)
+    adapters.add_argument("--recorded", type=Path, help="offline reply sessions")
+    adapters.add_argument("--live", action="store_true", help="proposed live adapters; fail-closed while G2 is unverified")
+    parser.add_argument("--adapter-state", type=Path, help="private durable CLI state outside packets and repo")
+    parser.add_argument("--codex-bin", type=Path, help="native Codex executable, not a shim")
+    parser.add_argument("--codex-auth", type=Path, help="explicit auth-only file; never inherited from host config")
+    parser.add_argument("--timeout", type=float, default=300)
     parser.add_argument("--public-branch", required=True, help="read-only public commitment verification")
     args = parser.parse_args(argv)
+    if args.live:
+        if not args.adapter_state or not args.codex_bin:
+            parser.error("--live needs --adapter-state and --codex-bin")
+        try:
+            adapter = LiveAdapter(args.adapter_state, args.codex_bin, auth=args.codex_auth, timeout=args.timeout)
+            adapter.preflight()
+        except (ValueError, OSError, subprocess.SubprocessError) as error:
+            parser.exit(2, str(error) + "\n")
+    else:
+        try:
+            adapter = RecordedAdapter(json.loads(args.recorded.read_text()))
+        except (ValueError, OSError) as error:
+            parser.exit(2, str(error) + "\n")
     bench = Path(__file__).resolve().parent.parent
     lock = json.loads((bench / "LOCK.json").read_text())
     prompts = {}
@@ -511,7 +1026,7 @@ def main(argv=None):
         prompts[kind] = path.read_text(encoding="utf-8")
     try:
         doc, _, _, _, _ = load_pack(args.pack, allow_released=True)
-        run(args.pack, RecordedAdapter(json.loads(args.recorded.read_text())),
+        run(args.pack, adapter,
             PublicCommitment(args.public_branch, dry_run=doc["scope"] == "dry-run"), prompts)
     except (ValueError, OSError, subprocess.SubprocessError, StopIteration) as error:
         parser.exit(2, str(error) + "\n")

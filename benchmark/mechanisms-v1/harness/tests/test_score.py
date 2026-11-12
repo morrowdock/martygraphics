@@ -515,7 +515,7 @@ class DesignRecordTest(Case):
         self.assertEqual(self.reasons(plan), ["1 run slots are not generated"])
 
     def test_registered_order(self):
-        plan = Plan(json.loads((S.BENCH / "QUESTIONS.json").read_text(encoding="utf-8")))
+        plan = Plan(S.registered_shape_key())
         order = [score.slot_id(*s) for s in plan.slots()]
         random.Random(20261111).shuffle(order)
         self.assertEqual(order[:5], FIRST_FIVE)

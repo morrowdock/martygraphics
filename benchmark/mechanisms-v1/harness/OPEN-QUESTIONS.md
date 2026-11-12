@@ -93,3 +93,35 @@ with `(kind, anonymous token)` as the canonical sort key. Guess calls follow
 only durably stored preferences; they are not independent shuffle entries.
 The vector and interpretation are in A-14. Tests verify the vector, input-order
 independence and separate grader orders. **This is not a coordinator decision.**
+
+**OQ-14. Live grader transport and isolation. PROPOSED, 2026-11-12.**
+Base: `9e95ad3d69a54bce75b1a86d5b136734fb3ddb84`. Sources: local CLI help/version
+evidence and [LIVE-ADAPTERS.md](LIVE-ADAPTERS.md); proposed A-15.
+
+The G1 proposal uses Codex CLI 0.167.2, `gpt-6.1-sol`, reasoning high, a new
+private home for each session, explicit images and packet text, disabled web
+and execution tools, and Linux bubblewrap. A completed reply can get its one
+parse-error fix-up with `exec resume <exact-id>`. It never uses `--last` and
+never resends an uncertain turn. CLI receipts remain separate from runner
+receipts. A reviewer must approve any manual reconciliation.
+
+G2 is **UNVERIFIED and disabled**. Antigravity 1.5.6 help documents `--print`,
+`--model`, `--effort high`, `--conversation`, and `--sandbox`. It does not
+establish the required web/tool deny policy, no memory/customizations,
+multimodal input format, or durable result/session schema. The documented
+argv is available in dry mode; no guessed settings or alternate Gemini tool
+are used. Both graders are required, so `--live` refuses the whole run before
+any publication check or model call.
+
+Pending: coordinator-run G1 synthetic acceptance and image-fidelity checks;
+documented G2 controls and schema, implementation and synthetic acceptance;
+model availability; reviewed tool/binary/host pins. The harmless `OK` smoke
+checks observable session and boundary properties, not hidden provider
+behavior. A success is not proof of absolute isolation or run readiness.
+Runtime and TLS/DNS files must be readable by the CLI; only agent file/web
+tools are disabled. Provider HTTPS remains available. These limits require
+review, not a claim that the whole process has no network or runtime access.
+
+This can change the evidence a grader receives and verdict eligibility.
+Scoring arithmetic is unchanged. No model call, benchmark packet dispatch,
+or registered dry run has been performed. RUN-LOCK stays DRAFT.

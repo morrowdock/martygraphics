@@ -50,6 +50,16 @@ def many_questions(n):
                            "mechanismChecks": [{"id": c} for c in CHECKS]} for i in range(n)]}
 
 
+def registered_shape_key():
+    """Original synthetic metadata with only the public design's numbered ids."""
+    key = many_questions(20)
+    for index, question in enumerate(key["questions"], 1):
+        question["id"] = "MECH-%02d" % index
+        question["nearShipped"] = question["id"] in score.NEAR_SHIPPED
+    key["questions"][5]["acceptedVariants"] = [{"id": "synthetic-variant"}]
+    return key
+
+
 def write_key(folder, doc):
     path = Path(folder) / "KEY.json"
     path.parent.mkdir(parents=True, exist_ok=True)
