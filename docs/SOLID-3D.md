@@ -2139,8 +2139,9 @@ the camera (`focus`, `model`, `modelFitted`). `marty-solid render` writes that r
 ### Looks and quality
 
 Two optional knobs change how the built-in renderer draws a solid. Both change pixels only: no geometry, motion,
-camera, framing, check or reason, and no byte of a check report, a `snapshot.json` or a decided `manifest.json`
-(a test renders one model with every look and compares them). The design is in [VISUAL-STYLE.md](VISUAL-STYLE.md).
+camera, framing, check or reason, and no byte of a check report or a `snapshot.json`. The render `manifest.json`
+names the look the images were drawn with (`"look": "studio"`, provenance of the pixels) and is otherwise the same
+for every look (a test renders one model with every look and compares them). The design is in [VISUAL-STYLE.md](VISUAL-STYLE.md).
 
 ![The classic, studio and paper looks on five documents](assets/visual-quality/looks-contact-sheet.jpg)
 

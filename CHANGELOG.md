@@ -9,7 +9,8 @@
   `classic` (the default) is the renderer as it was. `MGSolidQuality` (`interactive`, `balanced`, `still`) sets the
   cost of a frame through `MGStudioOptions(quality:)`; `still` equals `MGStudioOptions()`. The explainer view takes
   both (`MGExplainerController.solidLook`, `solidQuality`, default `balanced`: 16 shadow samples instead of 24). No
-  check report, snapshot or decided manifest changes for any look (tested). Design:
+  check report or snapshot changes for any look (tested). The render `manifest.json` gains one member, `look` (the
+  look the images were drawn with), so the four render goldens gain the line `"look" : "classic"` and nothing else. Design:
   [docs/VISUAL-STYLE.md](docs/VISUAL-STYLE.md); details: [docs/SOLID-3D.md](docs/SOLID-3D.md#looks-and-quality).
 - **Transcript export (v0.2 G2).** `marty-solid transcript FILE.json [--strict]` and `MGTranscript` print every
   caption, every shown label, arrow and dimension text, and every board table, per beat, as plain reflowable text for

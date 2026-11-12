@@ -762,7 +762,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     try MGSolidRenderPlan.snapshot(doc).jsonData().write(to: out.appendingPathComponent("snapshot.json"))
     try record("snapshot.json", [:])
     let manifest = try MGSolidRenderPlan.manifest(doc, sourceName: sourceName, source: src.source, framesRendered: frames,
-                                              secondsPerFrame: frames > 0 ? seconds / Double(frames) : 0, outputs: files, engine: engine)
+                                              secondsPerFrame: frames > 0 ? seconds / Double(frames) : 0, outputs: files, engine: engine, look: look.name)
     try Data(json(manifest).utf8).write(to: out.appendingPathComponent("manifest.json"))
     finished = true
     print(json(stamped(["ok": .bool(true), "output": .string(out.path), "files": .array(names.map { .string($0) })])))
@@ -1168,6 +1168,7 @@ struct ExplainerBeatShot {
     let manifest: MGJSON = .object([
         "source": .object(["file": .string(sourceName), "lines": .number(Double(source.lines)), "sha256": .string(source.sha256)]),
         "kind": .string("explainer"), "title": .string(title), "legend": .string(legend.text), "captions": .array(captions),
+        "look": .string(look.name),
         "framesRendered": .number(Double(frames)), "renderSecondsPerFrame": frames > 0 ? .number(seconds / Double(frames)) : .number(0),
         "outputs": .array(files), "engine": engine])
     try Data(json(manifest).utf8).write(to: out.appendingPathComponent("manifest.json"))

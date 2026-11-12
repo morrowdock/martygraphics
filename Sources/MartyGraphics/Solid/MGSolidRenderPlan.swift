@@ -124,7 +124,8 @@ public struct MGSolidRenderPlan: Equatable, Sendable {
     /// for an unusable `engine` and `report.encoding` for outputs that are not finite or nest deeper than 8 levels,
     /// before it reads them.
     public static func manifest(_ doc: MGSolidDocument, sourceName: String, source: MGSolidSource, framesRendered: Int,
-                                secondsPerFrame: Double, outputs: [MGJSON], engine: MGJSON? = MGEngine.identity) throws -> MGJSON {
+                                secondsPerFrame: Double, outputs: [MGJSON], engine: MGJSON? = MGEngine.identity,
+                                look: String? = nil) throws -> MGJSON {
         if MGSolidReport.badEngine(engine) { throw MGSolidIssue("report.engine") }
         for o in outputs {
             let m = o.measure(stopAbove: MGSolidLimits.bytes)
@@ -138,6 +139,8 @@ public struct MGSolidRenderPlan: Equatable, Sendable {
                                    "renderSecondsPerFrame": secondsPerFrame.isFinite ? .number(secondsPerFrame) : .null,
                                    "outputs": .array(outputs)]
         if let engine { o["engine"] = engine }
+        // Provenance of the pixels: the renderer look the images were drawn with (`MGSolidLook.name`).
+        if let look { o["look"] = .string(look) }
         return .object(o)
     }
 }

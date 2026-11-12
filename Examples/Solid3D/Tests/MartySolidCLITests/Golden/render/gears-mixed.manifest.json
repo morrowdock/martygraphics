@@ -19,6 +19,7 @@
   "framesRendered" : 73,
   "kind" : "explainer",
   "legend" : "Solved 6 (2 animation ratios)",
+  "look" : "classic",
   "outputs" : [
     {
       "file" : "board-0.png",

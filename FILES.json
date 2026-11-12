@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "eeaebcd56db1484b83c219e247347f2ffa98cb0d5f33767d1bf8af2bfc187050"
+      "sha256": "3c22ff6559c550ccbf816e267f5c868b6b92e7342116e73fa54325affbe1300a"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -235,7 +235,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "8f49e46cfac1edd8e0acdf5dd0af5f2a9f2a6038cc307571b2932252eb7b6b80"
+      "sha256": "5a37085ffb7777437ecf3ca0924cede59c2e9ea43d2eede7f91a49c649f697a7"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
@@ -599,19 +599,19 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/gears-mixed.manifest.json",
-      "sha256": "3afae0acba78fd131f8c6bc43a6152ffa346e0da12ef2d0df96c2997a82cf08d"
+      "sha256": "e9071c05dcf0d72ce2234966b8cf60f06d37143dca3ec521f12b4c1a0dffee20"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/jet-suit-ai-lesson.manifest.json",
-      "sha256": "dadfb89baa7cb0621848f20cd0dee0bc77cc8e3d22e481bcb9847edb15072841"
+      "sha256": "0ba60554684ef3f787403fd61b1efee5aedfc179d622506cf6e25458b9584865"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/planetary-components.manifest.json",
-      "sha256": "8dea25cbd47d00b22f29c0c6fa3bfbffec6935ee016f37be24f147ee925e0e6f"
+      "sha256": "f9c09b1ef3efc1d75009f91954f0426aa744d669b1162b9b7459ebf5f49abdb1"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/render/robot-joint-gearbox.manifest.json",
-      "sha256": "97f17c2481bf4be53bfe7b244f0a662ba40751772bd7bf9ae3b5879c49bb354a"
+      "sha256": "796ca89f37d006269ececad9420b837822d8a20c6566efbb3269d572e1d6768c"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/synthetic-idle.check.json",
@@ -631,7 +631,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/LookTests.swift",
-      "sha256": "5370c0fae3ea25d203de8b55659692de7133627d5b363b4879694d97577d490a"
+      "sha256": "24ece3b9b957e5b4cf7a706eb04fe56e0c59b1df11ed77a282a3f1497dcf2023"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
@@ -951,7 +951,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift",
-      "sha256": "65155baa62612c9028ed9f29d72be770306972618c9284d86ca76894f2fe0274"
+      "sha256": "f8e042c423705ea231e58a5dafb90b440ecbf0486168c9cfe66d6801d03e295a"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
@@ -1855,7 +1855,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "6888339852039b614f52ade355bd5cb4f304712960b511de3916796d82676b9b"
+      "sha256": "7547cd16cb192dcd3f361b0930d5dc1eadb23df4fbb0344d2157ea152a67f884"
     },
     {
       "path": "docs/THIRD-PARTY.md",
