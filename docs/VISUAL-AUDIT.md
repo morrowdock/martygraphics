@@ -6,6 +6,21 @@ Date: 2026-11-11. Base: `72843fb` (main). Scope: what the built-in renderer draw
 The work that follows is cosmetic only. It changes pixels and nothing else: no geometry, motion, solved value, check,
 reason code or JSON vocabulary, and no byte of a `check` report, a `snapshot.json` or a decided `manifest.json`.
 
+## First evidence
+
+![Before and after: classic, studio and paper looks on three documents](assets/visual-quality/round-0-contact-sheet.jpg)
+
+A quick prototype of the backdrop, tone and fill only (no material, label or motion work yet), rendered by the
+`Showcase` workflow on a hosted Mac (run 43126446831) from a prototype branch that is not kept. Left: `classic`, the renderer on main. Middle: the `studio` look. Right: the `paper` look, an
+early variant. Rows: the turbofan, the robot-joint gearbox and step 4 of the quadcopter explainer, 1280 × 800 each.
+The prototype is not proposed for merge; pull request (a) builds the look properly.
+
+What the sheet shows: dark parts keep their outline, shadows land on a floor, and whites keep their form. What it
+also shows: the fuller environment flattens the metals (the fan blades read grey, not metallic). The path-traced
+turbofan in [assets/turbofan](assets/turbofan/pathtraced-hero.png) gets its metal from high-contrast reflections, so
+the next round keeps the lit backdrop and returns contrast to the environment. Bands, labels and the legend are
+untouched here and now look heavy against the new backdrop (T3, T4).
+
 ## What is already there
 
 The renderer is not on SceneKit defaults. `MGSolidRenderer` already has physically based materials, a procedural

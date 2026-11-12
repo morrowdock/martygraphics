@@ -1855,7 +1855,7 @@
     },
     {
       "path": "docs/VISUAL-AUDIT.md",
-      "sha256": "f0c6f60cf8288387e3a0f141bf787228a912649fa86bead8a6105b3ed42c0bdb"
+      "sha256": "b2b02e7668798e63e25747c889d6ca7d18af6f87a27c5c40b953ffd0bfa73637"
     },
     {
       "path": "docs/VISUAL-STYLE.md",
@@ -2592,6 +2592,10 @@
     {
       "path": "docs/assets/turbofan/turbofan-loop.gif",
       "sha256": "12d9f93fec8cd20a950ff3a5e4b91b9a81a82ca60fe7de45914d28674aa7c994"
+    },
+    {
+      "path": "docs/assets/visual-quality/round-0-contact-sheet.jpg",
+      "sha256": "80eb69104bb32e724460ed28c7ae507ee17c86f2e1add9e057d6dd753e2dfe77"
     },
     {
       "path": "docs/fixtures/anchor-suggest/README.md",
