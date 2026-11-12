@@ -302,7 +302,8 @@ if __name__ == "__main__":
 class FramesIdentityTests(unittest.TestCase):
     """--resume keeps only frames of the same verified export and pixel settings (review of 41b55f66)."""
     CHECKED = {"glb_sha256": "a" * 64, "scene_id": "gearbox", "engine_commit": "c" * 40, "fps": 24, "frame_count": 48}
-    SETTINGS = {"preset": "preview", "resolution": [960, 540], "samples_max": 64, "motion_blur": True}
+    SETTINGS = {"preset": "preview", "resolution": [960, 540], "samples_max": 64, "motion_blur": True,
+                "lighting": {"fallback": "procedural-world/1"}}
 
     def ident(self, **change):
         checked = dict(self.CHECKED, **{k: v for k, v in change.items() if k in self.CHECKED})
@@ -339,6 +340,23 @@ class FramesIdentityTests(unittest.TestCase):
                 self.assertIsNotNone(reason)
                 self.assertIn("another export or other settings", reason)
                 self.assertEqual(Path(d, "frame_0000.png").read_bytes(), b"png")  # never deleted or changed
+
+    def test_resume_refuses_a_change_of_lighting_source(self):
+        hdri = frames.lighting_identity("/assets/studio.hdr", lambda path: "h" * 64)
+        fallback = frames.lighting_identity(None, lambda path: self.fail("no hash without an HDRI"))
+        self.assertEqual(fallback, {"fallback": frames.PROCEDURAL_WORLD})
+        other_hdri = frames.lighting_identity("/assets/studio.hdr", lambda path: "i" * 64)
+        for before, after in ((fallback, hdri), (hdri, fallback), (hdri, other_hdri)):
+            with self.subTest(before=before, after=after):
+                d = self.folder()
+                frames.prepare(d, self.ident(lighting=before), resume=False)
+                Path(d, "frame_0000.png").write_bytes(b"png")
+                self.assertIn("another export or other settings",
+                              frames.prepare(d, self.ident(lighting=after), resume=True))
+        d = self.folder()
+        frames.prepare(d, self.ident(lighting=hdri), resume=False)
+        Path(d, "frame_0000.png").write_bytes(b"png")
+        self.assertIsNone(frames.prepare(d, self.ident(lighting=dict(hdri)), resume=True))
 
     def test_frames_without_a_record_are_never_adopted(self):
         d = self.folder()

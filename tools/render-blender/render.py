@@ -450,7 +450,7 @@ def run(argv):
                 "adaptive_threshold": scene.cycles.adaptive_threshold, "denoiser": scene.cycles.denoiser,
                 "view_transform": scene.view_settings.view_transform, "look": scene.view_settings.look,
                 "motion_blur": args["motion_blur"], "backdrop": args["backdrop"], "camera": args["camera"],
-                "blender": bpy.app.version_string}
+                "blender": bpy.app.version_string, "lighting": frames.lighting_identity(hdri, sha)}
     reason = frames.prepare(frames_dir, frames.identity(checked, sha(checked["manifest_path"]), settings),
                             args["resume"])
     if reason:

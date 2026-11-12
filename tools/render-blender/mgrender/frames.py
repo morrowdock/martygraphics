@@ -13,6 +13,15 @@ RECORD = "FRAMES-IDENTITY.json"
 KIND = "martygraphics.render-frames/1"
 
 
+PROCEDURAL_WORLD = "procedural-world/1"
+
+
+def lighting_identity(hdri_path, hasher):
+    """The effective lighting source: the HDRI's SHA-256, or the fixed id of the procedural fallback world. A resume
+    must not mix frames lit by different worlds (re-check of 6f8a98fb)."""
+    return {"hdri_sha256": hasher(hdri_path)} if hdri_path else {"fallback": PROCEDURAL_WORLD}
+
+
 def identity(checked, manifest_sha256, settings):
     """The identity of a frame set: the verified export plus the pixel-affecting settings (a dict of JSON values)."""
     return {"kind": KIND, "glb_sha256": checked["glb_sha256"], "manifest_sha256": manifest_sha256,
