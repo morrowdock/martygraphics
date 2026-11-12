@@ -2818,6 +2818,10 @@
       "sha256": "82382d7d5315452369bdb3c77baa745746b82b49042f31d6af88b92bc66c5b0d"
     },
     {
+      "path": "tools/render-blender/mgrender/frames.py",
+      "sha256": "55cc5a216c4fc2bcf872954531407269b7a3857ebbce6d44508fb8d71cde8660"
+    },
+    {
       "path": "tools/render-blender/mgrender/gpu_probe.py",
       "sha256": "dcfea2da1743818409a49b87a3a920364c586dd73d1d3c01e8074afa882ce866"
     },
@@ -2835,7 +2839,7 @@
     },
     {
       "path": "tools/render-blender/render.py",
-      "sha256": "b118c504afb95a5823a2bc3855acbbb132886d9ab990ec17948efcf43678092d"
+      "sha256": "60f3ce9607e984d27d93eb9409764185968c393134f4a77a2c3c6e77a857b332"
     },
     {
       "path": "tools/render-blender/selftest.sh",
@@ -2847,7 +2851,7 @@
     },
     {
       "path": "tools/render-blender/setup.sh",
-      "sha256": "2277e24cc4cab746a41fe8532e2729446d829a387f9659306f0ff97097225016"
+      "sha256": "dd89abbc510d8d464a499f2f2aebec3cfd7ae58bf90899f371411b8f577ecbaa"
     },
     {
       "path": "tools/showcase.sh",
@@ -2863,7 +2867,7 @@
     },
     {
       "path": "tools/tests/test_render_blender.py",
-      "sha256": "673d5fda86077a80d55790eaa7dad586193cbdff1dc8d2bd887d33f622a360ba"
+      "sha256": "60b38526e8059445df097d62de220847ce4ee49a06b76340f23e7d9d926ae5c3"
     },
     {
       "path": "tools/validate_local.py",

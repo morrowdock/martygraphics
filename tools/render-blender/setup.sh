@@ -22,6 +22,15 @@ SOURCES=(
   "https://mirror.clarkson.edu/blender/release/Blender$SERIES"
 )
 MIN_AGREEING_SOURCES=2
+# The committed pin (ASSETS.md). A version without a pin is refused: mirror agreement alone is not enough,
+# because mirrors can serve a changed archive and a matching checksum file together.
+pinned_sha256() {
+  case "$1" in
+    5.2.4) echo "2fd14c50987426897ba60237ee996edf2b4151f4b1a72a460ca20be58c1d2d86" ;;
+    *) echo "" ;;
+  esac
+}
+PINNED="$(pinned_sha256 "$BLENDER_VERSION")"
 
 say() { printf 'setup: %s\n' "$*"; }
 die() { printf 'setup: ERROR: %s\n' "$*" >&2; exit 2; }
@@ -31,6 +40,7 @@ for tool in curl sha256sum tar xz; do command -v "$tool" >/dev/null || die "$too
 fetch() { curl -fsSL --retry 2 --connect-timeout 20 --max-time "${2:-60}" -o "$3" "$1"; }
 
 install_blender() {
+  [[ "$PINNED" =~ ^[0-9a-f]{64}$ ]] || die "no committed SHA-256 pin for Blender $BLENDER_VERSION (add it to setup.sh and ASSETS.md)"
   if [ -x "$PREFIX/blender" ] && [ -f "$PREFIX/INSTALL-RECORD.json" ]; then
     say "Blender $BLENDER_VERSION is already installed in $PREFIX (record: INSTALL-RECORD.json)"
     return
@@ -53,6 +63,7 @@ install_blender() {
     fi
   done
   [ "$agree" -ge "$MIN_AGREEING_SOURCES" ] || die "need $MIN_AGREEING_SOURCES agreeing checksum sources, got $agree"
+  [ "$expected" = "$PINNED" ] || die "published checksum $expected is not the committed pin ${PINNED:-<none for $BLENDER_VERSION>}"
   # 2. The tarball from the first source that serves it.
   local url=""
   for src in "${SOURCES[@]}"; do
@@ -61,7 +72,7 @@ install_blender() {
   done
   [ -n "$url" ] || die "no source served $TARBALL"
   local actual; actual="$(sha256sum "$dl/$TARBALL" | awk '{print $1}')"
-  [ "$actual" = "$expected" ] || die "SHA-256 mismatch: got $actual, published $expected"
+  [ "$actual" = "$expected" ] && [ "$actual" = "$PINNED" ] || die "SHA-256 mismatch: got $actual, published $expected, pinned $PINNED"
   say "SHA-256 OK: $actual"
   # 3. Extract to a staging directory, then move it in place.
   mkdir -p "$dl/x"

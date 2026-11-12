@@ -5,6 +5,9 @@ import json
 import math
 import os
 from pathlib import Path
+import re
+import shutil
+import subprocess
 import struct
 import sys
 import tempfile
@@ -12,7 +15,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "render-blender"))
 
-from mgrender import busyguard, faststart, presets  # noqa: E402
+from mgrender import busyguard, faststart, frames, presets  # noqa: E402
 from mgrender import manifest as mf  # noqa: E402
 
 FPS = 24
@@ -294,3 +297,83 @@ class PresetTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FramesIdentityTests(unittest.TestCase):
+    """--resume keeps only frames of the same verified export and pixel settings (review of 41b55f66)."""
+    CHECKED = {"glb_sha256": "a" * 64, "scene_id": "gearbox", "engine_commit": "c" * 40, "fps": 24, "frame_count": 48}
+    SETTINGS = {"preset": "preview", "resolution": [960, 540], "samples_max": 64, "motion_blur": True}
+
+    def ident(self, **change):
+        checked = dict(self.CHECKED, **{k: v for k, v in change.items() if k in self.CHECKED})
+        settings = dict(self.SETTINGS, **{k: v for k, v in change.items() if k in self.SETTINGS})
+        return frames.identity(checked, change.get("manifest", "m" * 64), settings)
+
+    def folder(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        return tmp.name
+
+    def test_new_folder_writes_the_record(self):
+        d = self.folder()
+        self.assertIsNone(frames.prepare(d, self.ident(), resume=False))
+        with open(os.path.join(d, frames.RECORD), encoding="utf-8") as f:
+            self.assertEqual(json.load(f), self.ident())
+
+    def test_resume_keeps_frames_of_the_same_identity(self):
+        d = self.folder()
+        frames.prepare(d, self.ident(), resume=False)
+        Path(d, "frame_0000.png").write_bytes(b"png")
+        self.assertIsNone(frames.prepare(d, self.ident(), resume=True))
+        self.assertEqual(Path(d, "frame_0000.png").read_bytes(), b"png")
+
+    def test_other_export_or_settings_are_refused(self):
+        for change in ({"glb_sha256": "b" * 64}, {"manifest": "n" * 64}, {"scene_id": "turbofan"},
+                       {"fps": 30}, {"frame_count": 49}, {"preset": "hero"}, {"resolution": [1920, 1080]},
+                       {"motion_blur": False}):
+            with self.subTest(change=change):
+                d = self.folder()
+                frames.prepare(d, self.ident(), resume=False)
+                Path(d, "frame_0000.png").write_bytes(b"png")
+                reason = frames.prepare(d, self.ident(**change), resume=True)
+                self.assertIsNotNone(reason)
+                self.assertIn("another export or other settings", reason)
+                self.assertEqual(Path(d, "frame_0000.png").read_bytes(), b"png")  # never deleted or changed
+
+    def test_frames_without_a_record_are_never_adopted(self):
+        d = self.folder()
+        Path(d, "frame_0000.png").write_bytes(b"png")
+        self.assertIn("without a readable", frames.prepare(d, self.ident(), resume=True))
+        Path(d, frames.RECORD).write_text("{not json", encoding="utf-8")
+        self.assertIn("without a readable", frames.prepare(d, self.ident(), resume=True))
+
+    def test_existing_frames_without_resume_are_refused(self):
+        d = self.folder()
+        frames.prepare(d, self.ident(), resume=False)
+        Path(d, "frame_0000.png").write_bytes(b"png")
+        self.assertIn("use --resume", frames.prepare(d, self.ident(), resume=False))
+
+
+class SetupPinTests(unittest.TestCase):
+    """setup.sh enforces the committed Blender SHA-256, not only mirror agreement (review of 41b55f66)."""
+    HERE = Path(__file__).resolve().parents[1] / "render-blender"
+
+    def test_setup_pin_equals_assets_md(self):
+        setup = (self.HERE / "setup.sh").read_text(encoding="utf-8")
+        assets = (self.HERE / "ASSETS.md").read_text(encoding="utf-8")
+        pin = re.search(r'5\.2\.4\) echo "([0-9a-f]{64})"', setup)
+        self.assertIsNotNone(pin)
+        self.assertIn(pin.group(1), assets)
+        self.assertIn('[ "$expected" = "$PINNED" ]', setup)          # the mirrors must agree with the pin
+        self.assertIn('[ "$actual" = "$PINNED" ]', setup)            # and so must the downloaded archive
+
+    @unittest.skipUnless(all(shutil.which(t) for t in ("bash", "curl", "sha256sum", "tar", "xz")),
+                         "setup.sh tools not installed")
+    def test_version_without_a_pin_is_refused_before_any_download(self):
+        with tempfile.TemporaryDirectory() as opt:
+            run = subprocess.run(["bash", str(self.HERE / "setup.sh")], capture_output=True, text=True, timeout=60,
+                                 env=dict(os.environ, BLENDER_VERSION="9.9.9", OPT_DIR=opt,
+                                          MG_RENDER_ASSETS=os.path.join(opt, "assets")))
+            self.assertEqual(run.returncode, 2)
+            self.assertIn("no committed SHA-256 pin", run.stderr)
+            self.assertEqual(os.listdir(opt), [])                     # nothing downloaded or extracted

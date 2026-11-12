@@ -42,7 +42,7 @@ sys.path.insert(0, HERE)
 import bpy  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
-from mgrender import busyguard, device, faststart, lookdev  # noqa: E402
+from mgrender import busyguard, device, faststart, frames, lookdev  # noqa: E402
 from mgrender import manifest as mf  # noqa: E402
 
 ASSET_DIR = os.environ.get("MG_RENDER_ASSETS") or os.path.join(
@@ -357,9 +357,8 @@ def run(argv):
     out = os.path.abspath(args["out"])
     frames_dir = os.path.join(out, "frames")
     os.makedirs(frames_dir, exist_ok=True)
-    existing = [n for n in os.listdir(frames_dir) if n.endswith(".png")]
-    if existing and not args["resume"]:
-        raise Refused(2, f"{frames_dir} already holds {len(existing)} PNG frames; use --resume or a new out-dir")
+    if any(n.endswith(".png") for n in os.listdir(frames_dir)) and not args["resume"]:
+        raise Refused(2, f"{frames_dir} already holds PNG frames; use --resume or a new out-dir")
 
     preset = lookdev.PRESETS[args["preset"]]
     resolution = args["resolution"] or preset["resolution"]
@@ -446,6 +445,16 @@ def run(argv):
     first, last = args["frames"] or (0, count - 1)
     if not (0 <= first <= last < count):
         raise Refused(2, f"--frames must be within 0-{count - 1}")
+    # A resumed run keeps only frames of this exact export and these pixel settings (frames.py).
+    settings = {"preset": args["preset"], "resolution": list(resolution), "samples_max": scene.cycles.samples,
+                "adaptive_threshold": scene.cycles.adaptive_threshold, "denoiser": scene.cycles.denoiser,
+                "view_transform": scene.view_settings.view_transform, "look": scene.view_settings.look,
+                "motion_blur": args["motion_blur"], "backdrop": args["backdrop"], "camera": args["camera"],
+                "blender": bpy.app.version_string}
+    reason = frames.prepare(frames_dir, frames.identity(checked, sha(checked["manifest_path"]), settings),
+                            args["resume"])
+    if reason:
+        raise Refused(2, reason)
     times = {}
     for f in range(first, last + 1):
         path = os.path.join(frames_dir, f"frame_{f:04d}.png")
