@@ -19,7 +19,7 @@ own pull request with before and after images; the knobs named here are document
 | Knob | Values | Default | What it sets |
 | --- | --- | --- | --- |
 | Look (`MGSolidLook`, `marty-solid render --look`) | `classic`, `studio`, `paper` | `classic` until the new looks are accepted, then `studio` | Backdrop, exposure and tone, environment fill, shadow strength, ink and plate colours |
-| Quality (`MGSolidQuality`) | `interactive`, `balanced`, `still` | `interactive` in the SwiftUI views, `still` in `marty-solid render` | Shadow map size and samples, occlusion, bloom, supersampling, jitter, depth of field |
+| Quality (`MGSolidQuality`) | `interactive`, `balanced`, `still` | `balanced` in the explainer view (until the levels are measured on an iPad), `still` in `marty-solid render` | Shadow map size and samples, occlusion, bloom, supersampling, jitter, depth of field |
 
 `classic` is the renderer as it was, pixel for pixel in intent, and stays available.
 
@@ -33,8 +33,8 @@ The Blender path uses a neutral studio bowl with AgX; these looks sit beside it 
 
 | Token | `studio` (dark) | `paper` (light) | Use |
 | --- | --- | --- | --- |
-| Pool | `#4D515B` | `#F6F7F9` | Backdrop under the subject |
-| Edge | `#121318` | `#CCCFD5` | Backdrop far from the subject |
+| Pool | `#454953` | `#EDEEF1` | Backdrop under the subject |
+| Edge | `#0D0E12` | `#B8BDC4` | Backdrop far from the subject |
 | Surface | `#0E1320` | `#FFFFFF` | Frame behind panes, bands |
 | Plate | `#0A0F1F` at 86 % | `#FFFFFF` at 92 % | Label and legend plates |
 | Ink | `#EEF2FF` | `#141A2B` | Text, leader lines |
@@ -74,10 +74,9 @@ lighter and matte, so a cut reads as a cut.
   fill from the right, rim from behind). A look scales them: a little less key, a little more fill.
 - **Shadows.** A soft key shadow on a shadow catcher plus a contact shadow under the subject, both visible on the lit
   floor. Strength per look (`studio` 0.50 and 0.55, `paper` 0.30 and 0.30).
-- **Ambient occlusion.** Screen space, intensity 0.6 to 0.7, radius tied to the camera distance.
-- **Tone.** HDR rendering in linear light, then SceneKit's tone mapping with a white point above 1 (1.6 to 1.8) so
-  whites roll off, a small exposure offset, contrast +0.06 and saturation 1.04. Bloom is 0.06 or less: a hint on
-  emitters only. Output is sRGB; videos are tagged BT.709.
+- **Ambient occlusion.** Screen space, intensity 0.45 to 0.6, radius tied to the camera distance.
+- **Tone.** HDR rendering in linear light, then SceneKit's tone mapping with a white point above 1 (1.4 to 1.5) so
+  whites roll off, a small exposure offset, contrast +0.10 and saturation 1.04. The new looks use no bloom. Output is sRGB; videos are tagged BT.709.
 - **Anti-aliasing.** 4× multisampling everywhere; 2× supersampling at `still`; jitter on a resting live view.
 - **Depth of field.** Stills only, at `still`, and only on a hero shot with no labels. Never in a step still or a
   video: every labelled part stays sharp.

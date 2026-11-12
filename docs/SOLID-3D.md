@@ -2136,6 +2136,47 @@ reads `MGSolidFraming.framing(_:shot:aspect:…)`, which also returns the rule t
 the camera (`focus`, `model`, `modelFitted`). `marty-solid render` writes that rule as
 `framing` in each still's manifest record.
 
+### Looks and quality
+
+Two optional knobs change how the built-in renderer draws a solid. Both change pixels only: no geometry, motion,
+camera, framing, check or reason, and no byte of a check report, a `snapshot.json` or a decided `manifest.json`
+(a test renders one model with every look and compares them). The design is in [VISUAL-STYLE.md](VISUAL-STYLE.md).
+
+**Look** (`MGSolidLook`): the backdrop, exposure and tone, how full the studio environment is, and how strong the
+shadows are.
+
+| Look | Backdrop | Use |
+| --- | --- | --- |
+| `classic` (default) | near-black radial | the renderer as it was before looks |
+| `studio` | graphite sweep with a pool of light under the subject | dark pages, video |
+| `paper` | near-white sweep | light pages, print |
+
+- `marty-solid render FILE.json NEW_DIR --look studio` (assemblies and explainers; any other name is a usage error,
+  exit 2, and nothing is written).
+- In code: `MGSolidRenderer(document:look:)` and `MGSolidRenderer(assembly:look:)`; in the explainer view, set
+  `MGExplainerController.solidLook` before a document loads. The live pane takes a look's light and tone now; the
+  backdrop is drawn by the offscreen render (`render(width:height:)`) only, until the live backdrop lands.
+
+A look scales the light rig inside the renderer: the same lights, directions and soft boxes
+(`MGSolidLook.lighting(_:)`). `snapshot.json` records `MGStudioLighting.studio` for every look, so another renderer
+reads the same rig. The `studio` and `paper` backdrops are computed per pixel on the CPU
+(`MGSolidLook.backdrop(width:height:pool:)`) with a fixed half-level dither: they do not band and are byte-identical
+in every run. The pool of light follows the ground point under the subject (`MGSolidRenderer.backdropPool`). These
+looks vignette the backdrop, not the subject, raise the white point so white parts keep their form, and use no
+bloom.
+
+**Quality** (`MGSolidQuality`, as `MGStudioOptions(quality:)`): what a frame costs.
+
+| Level | Shadow map, samples | Ambient occlusion | Bloom | Supersampling | Default of |
+| --- | --- | --- | --- | --- | --- |
+| `interactive` | 2048, 8 | off | off | 1× | none |
+| `balanced` | 4096, 16 | on | on | 1× | the explainer view (`MGExplainerController.solidQuality`) |
+| `still` | 4096, 24 | on | on | 2× | `MGStudioOptions()`, `marty-solid render` |
+
+`still` is exactly `MGStudioOptions()`, so `marty-solid render` and every host that passes no options draw as before.
+`interactive` is for a live view where the frame rate matters more than occlusion and bloom. The frame rate of the
+levels on an iPad has not been measured yet.
+
 ### Title backdrop
 
 Every still and every story frame draws a dark backdrop behind the title band: black at

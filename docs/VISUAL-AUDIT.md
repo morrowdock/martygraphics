@@ -69,6 +69,7 @@ anti-aliasing, (b) materials, (c) background, shadows and occlusion, (d) labels,
 | B2 | Shadows do not show. The shadow catcher and the contact shadow darken a floor that is already black, so the model floats. | `updateGround` | The lit floor makes both visible. Their strength is set per look. | c |
 | B3 | Occlusion at 0.9 speckles rough plastics (the blue motor in the quadcopter stills). | camera setup | Lower intensity per look; more samples at still quality. | c |
 | B4 | The model and its shadow are clipped at the safe window with a hard edge. On a black floor this is hidden; on a lit floor it would show. | `render(width:height:clip:)` | Feather the clip edge over a few pixels, under the band scrims. | c |
+| B5 | Curved surfaces show faint concentric ripples (the side of the brushless motor's bell, the ring gears of the robot joint), in every look. The likely cause is the shadow map's self-shadowing on curved faces. | `buildLights` (shadow bias, map fit) | Fit the shadow frustum to the view and set the bias from the texel size; confirm with a showcase run. | c |
 
 ### Materials
 

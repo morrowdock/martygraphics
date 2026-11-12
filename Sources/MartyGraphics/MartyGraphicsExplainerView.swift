@@ -63,6 +63,11 @@ public final class MGExplainerController: ObservableObject {
     /// (`MGSolidRenderer(document:)`, `setDocument(_:)`), shows each beat with `show(document:view:)` (so annotations
     /// pass #31's one gate) and draws highlights with `.strong` emphasis.
     public private(set) var renderer: MGSolidRenderer?
+    /// The look and the quality level of the solid pane (pixels only; docs/VISUAL-STYLE.md). Set them before a
+    /// document loads: they are read when the pane's renderer is made. `balanced` keeps ambient occlusion and bloom
+    /// with fewer shadow samples; use `interactive` where the frame rate matters more than those.
+    public var solidLook = MGSolidLook.classic
+    public var solidQuality = MGSolidQuality.balanced
     /// The annotation overlay record (labels, leaders, value texts, callouts) of the solid pane at the pose shown now;
     /// nil without annotations or before the pane has a size. It comes from `MGSolidAnnotations.frame`, through
     /// `checkedAnnotations`.
@@ -275,7 +280,7 @@ public final class MGExplainerController: ObservableObject {
         var fresh = false
         if let src = session.solidSource, src != shownSolid, let doc = session.solid {
             let interval = signposter.beginInterval("solidCompile", id: signposter.makeSignpostID())
-            let r = MGSolidRenderer(document: doc)
+            let r = MGSolidRenderer(document: doc, options: MGStudioOptions(quality: solidQuality), look: solidLook)
             r.emphasis = .strong
             renderer = r
             signposter.endInterval("solidCompile", interval)

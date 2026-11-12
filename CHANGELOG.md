@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Looks and quality levels for the built-in renderer (pixels only).** `marty-solid render --look
+  classic|studio|paper` and `MGSolidRenderer(document:look:)` choose how a solid is presented: `studio` is a graphite
+  studio sweep with a pool of light under the subject, `paper` a near-white one; both make shadows land on a floor,
+  keep the outline of dark parts and the form of white parts, and use a dithered backdrop that does not band.
+  `classic` (the default) is the renderer as it was. `MGSolidQuality` (`interactive`, `balanced`, `still`) sets the
+  cost of a frame through `MGStudioOptions(quality:)`; `still` equals `MGStudioOptions()`. The explainer view takes
+  both (`MGExplainerController.solidLook`, `solidQuality`, default `balanced`: 16 shadow samples instead of 24). No
+  check report, snapshot or decided manifest changes for any look (tested). Design:
+  [docs/VISUAL-STYLE.md](docs/VISUAL-STYLE.md); details: [docs/SOLID-3D.md](docs/SOLID-3D.md#looks-and-quality).
 - **Transcript export (v0.2 G2).** `marty-solid transcript FILE.json [--strict]` and `MGTranscript` print every
   caption, every shown label, arrow and dimension text, and every board table, per beat, as plain reflowable text for
   screen readers, large text and a static equivalent ([docs/EXPLAINER.md](docs/EXPLAINER.md#transcript)). The format is

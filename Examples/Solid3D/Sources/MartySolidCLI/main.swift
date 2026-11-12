@@ -19,7 +19,7 @@ enum CLIError: Error, CustomStringConvertible {
         case .usage: return """
             Usage: marty-solid check FILE.json [--strict] [--patch PATCH.json] [--component C.json ...]
                    marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--no-story] [--story-fps 10|30]
-                                      [--snapshots] [--component C.json ...]
+                                      [--snapshots] [--look classic|studio|paper] [--component C.json ...]
                    marty-solid snapshot check SNAPSHOT.json [--component C.json ...]
                    marty-solid transcript FILE.json [--strict] [--component C.json ...]
                    marty-solid components [--component C.json ...]
@@ -538,11 +538,11 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
 /// manifest. Cameras come from the plan (`MGSolidRenderPlan.cameras`, the `MGSolidFraming` rule).
 @MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool, loopRate: Int = 10,
                        story: Bool = true, storyRate: Int = MGStoryTiming.defaultRate,
-                       snapshots: Bool = false, library lib: MGSolidLibrary) throws -> Int32 {
+                       snapshots: Bool = false, look: MGSolidLook = .classic, library lib: MGSolidLibrary) throws -> Int32 {
     let document = try loadDocument(path)
     switch document.kind {
     case "explainer"?: return try renderExplainer(path, document.data, outPath, width: width, height: height, loop: loop, loopRate: loopRate,
-                                                  story: story, storyRate: storyRate, snapshots: snapshots, library: lib)
+                                                  story: story, storyRate: storyRate, snapshots: snapshots, look: look, library: lib)
     case "lesson"?: return unsupportedKind()
     default: break
     }
@@ -569,7 +569,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     var finished = false
     defer { if !finished { try? FileManager.default.removeItem(at: out) } }  // never leave a half-written result
     _ = NSApplication.shared
-    let r = MGSolidRenderer(document: doc)
+    let r = MGSolidRenderer(document: doc, look: look)
     let sourceName = URL(fileURLWithPath: path).lastPathComponent
     let plan = MGSolidRenderPlan(doc, sourceName: sourceName, source: src.source, loop: loop, loopRate: loopRate)
     let cameras = plan.cameras(doc, width: Double(width), height: Double(height))
@@ -845,7 +845,7 @@ struct ExplainerBeatShot {
 /// with `--snapshots`, and `manifest.json`.
 @MainActor func renderExplainer(_ path: String, _ data: Data, _ outPath: String, width: Int, height: Int, loop: Bool, loopRate: Int = 10,
                                 story: Bool = true, storyRate: Int = MGStoryTiming.defaultRate,
-                                snapshots: Bool, library lib: MGSolidLibrary) throws -> Int32 {
+                                snapshots: Bool, look: MGSolidLook = .classic, library lib: MGSolidLibrary) throws -> Int32 {
     let source = MGSolidSource(data: data)
     if let big = explainerTooLarge(path, data) {
         print(json(MGExplainerReport.refused(big, profile: nil, source: nil, engine: engine).json)); return 1
@@ -899,7 +899,7 @@ struct ExplainerBeatShot {
     let title = session.title ?? ""
     let solidDoc = session.solid
     let renderer = solidDoc.map { d -> MGSolidRenderer in
-        let r = MGSolidRenderer(document: d)   // annotations draw only for this document, through the one gate
+        let r = MGSolidRenderer(document: d, look: look)   // annotations draw only for this document, through the one gate
         r.emphasis = .strong   // a highlight must read at a glance in a still, as on the 2D board
         return r
     }
@@ -1248,6 +1248,7 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                 exit(try componentCheck(a[2], lib, with: values))
             case "render"? where a.count >= 3 && !a[1].hasPrefix("--") && !a[2].hasPrefix("--"):
                 var w = 1280, h = 800, loop = true, rate = 10, snapshots = false, story = true, storyRate = MGStoryTiming.defaultRate
+                var look = MGSolidLook.classic
                 var rest = Array(a.dropFirst(3))
                 while let flag = rest.first {
                     rest.removeFirst()
@@ -1259,6 +1260,10 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                         rest.removeFirst()
                         storyRate = r
                     case "--snapshots": snapshots = true
+                    case "--look":
+                        guard let v = rest.first, let l = MGSolidLook.named(v) else { throw CLIError.usage }
+                        rest.removeFirst()
+                        look = l
                     case "--loop-fps":
                         guard let v = rest.first, let r = Int(v), MGSolidRenderPlan.loopRates.contains(r) else { throw CLIError.usage }
                         rest.removeFirst()
@@ -1273,7 +1278,7 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                     }
                 }
                 exit(try render(a[1], a[2], width: w, height: h, loop: loop, loopRate: rate, story: story, storyRate: storyRate,
-                                snapshots: snapshots, library: lib))
+                                snapshots: snapshots, look: look, library: lib))
             default: throw CLIError.usage
             }
         } catch {

@@ -27,14 +27,32 @@ public struct MGStudioOptions: Equatable, Sendable {
     public var sectionParts: Set<String> = []
     /// Draw the contact shadow and soft ground shadow.
     public var ground = true
+    /// The key light's shadow map (pixels per side) and its soft-shadow samples. Read when the renderer is made.
+    public var shadowMapSize = 4096
+    public var shadowSamples = 24
     public init() {}
+
+    /// The options of a quality level (`MGSolidQuality`): `still` is `MGStudioOptions()`.
+    public init(quality: MGSolidQuality) {
+        switch quality {
+        case .still: break
+        case .balanced: supersample = 1; shadowSamples = 16
+        case .interactive: supersample = 1; shadowSamples = 8; shadowMapSize = 2048; ambientOcclusion = false; bloom = false
+        }
+    }
 
     public static func == (a: MGStudioOptions, b: MGStudioOptions) -> Bool {
         a.shadows == b.shadows && a.ambientOcclusion == b.ambientOcclusion && a.bloom == b.bloom && a.supersample == b.supersample
             && a.section?.normal == b.section?.normal && a.section?.offset == b.section?.offset && a.sectionParts == b.sectionParts
-            && a.ground == b.ground
+            && a.ground == b.ground && a.shadowMapSize == b.shadowMapSize && a.shadowSamples == b.shadowSamples
     }
 }
+
+/// How much the renderer spends on a frame. `interactive` keeps a live view smooth on an iPad (a smaller shadow map
+/// with fewer samples, no ambient occlusion, no bloom, no supersampling); `balanced` suits a live view on a Mac or a
+/// recent iPad; `still` is the offline quality of `marty-solid render` and the default of `MGStudioOptions()`.
+/// A level changes pixels only. See docs/VISUAL-STYLE.md.
+public enum MGSolidQuality: String, CaseIterable, Sendable { case interactive, balanced, still }
 
 /// How a solid renderer draws highlighted parts (`MGSolidRenderer.emphasis`).
 public enum MGSolidEmphasis: Equatable, Sendable { case subtle, strong }
@@ -46,6 +64,11 @@ public final class MGSolidRenderer {
     public let scene = SCNScene()
     public private(set) var assembly: MGAssembly
     public let lighting: MGStudioLighting
+    /// The presentation (backdrop, tone, fill, shadow strength); pixels only. See `MGSolidLook`.
+    public let look: MGSolidLook
+    /// The rig as the look lights it (the same lights and directions, scaled).
+    private let lit: MGStudioLighting
+    private var backdropCache: (key: [Double], image: CGImage)?
     public var options: MGStudioOptions { didSet { restyleAll() } }
     public let cameraNode = SCNNode()
     private let stageNode = SCNNode()
@@ -89,8 +112,10 @@ public final class MGSolidRenderer {
     private lazy var unitCylinder = MGSolidRenderer.geometry(MGAnnotationPrimitive(shape: .cylinder, start: .zero, end: .unitZ, radius: 1, hidden: false).renderMesh)
     private lazy var unitCone = MGSolidRenderer.geometry(MGAnnotationPrimitive(shape: .cone, start: .zero, end: .unitZ, radius: 1, hidden: false).renderMesh)
 
-    public init(assembly: MGAssembly, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
+    public init(assembly: MGAssembly, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions(),
+                look: MGSolidLook = .classic) {
         self.assembly = assembly; self.lighting = lighting; self.options = options
+        self.look = look; lit = look.lighting(lighting)
         view = MGSolidView(assembly)
         camera = MGSolidCamera(target: .zero, yaw: 30, pitch: 25, distance: 300)
         scene.rootNode.addChildNode(stageNode)
@@ -101,16 +126,23 @@ public final class MGSolidRenderer {
         buildLights()
         let cam = SCNCamera()
         cam.wantsHDR = true
-        cam.exposureOffset = CGFloat(lighting.exposure)
+        cam.exposureOffset = CGFloat(lighting.exposure + look.exposure)
         cam.wantsExposureAdaptation = false
-        cam.bloomIntensity = options.bloom ? 0.22 : 0
+        cam.bloomIntensity = options.bloom ? CGFloat(look.bloom) : 0
         cam.bloomThreshold = 0.92
         cam.bloomBlurRadius = 10
-        cam.vignettingIntensity = 0.35
-        cam.vignettingPower = 1.2
+        if look == .classic {
+            cam.vignettingIntensity = 0.35
+            cam.vignettingPower = 1.2
+        } else {
+            // The backdrop carries the vignette; the subject keeps its exposure to the frame's edge.
+            cam.whitePoint = CGFloat(look.whitePoint)
+            cam.contrast = CGFloat(look.contrast)
+            cam.saturation = CGFloat(look.saturation)
+        }
         cam.projectionDirection = .vertical
         if options.ambientOcclusion {
-            cam.screenSpaceAmbientOcclusionIntensity = 0.9
+            cam.screenSpaceAmbientOcclusionIntensity = CGFloat(look.occlusion)
             cam.screenSpaceAmbientOcclusionRadius = 5
             cam.screenSpaceAmbientOcclusionBias = 0.03
             cam.screenSpaceAmbientOcclusionDepthThreshold = 0.2
@@ -197,8 +229,9 @@ public final class MGSolidRenderer {
     /// The renderer shows a document: its assembly, with no step view (`setAssembly`), and it remembers the document's
     /// fingerprint so `show(document:view:)` can draw its annotations.
     /// The parts start at the document's default pose.
-    public convenience init(document: MGSolidDocument, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions()) {
-        self.init(assembly: document.assembly, lighting: lighting, options: options)
+    public convenience init(document: MGSolidDocument, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions(),
+                            look: MGSolidLook = .classic) {
+        self.init(assembly: document.assembly, lighting: lighting, options: options, look: look)
         loadedFingerprint = document.checkedFingerprint
         apply(document.defaults)
     }
@@ -466,7 +499,10 @@ public final class MGSolidRenderer {
         #else
         guard let raw = snapshot.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
         #endif
-        return MGSolidRenderer.composite(raw, width: width, height: height, background: lighting.background, clip: clip)
+        guard look != .classic else {
+            return MGSolidRenderer.composite(raw, width: width, height: height, background: lighting.background, clip: clip)
+        }
+        return MGSolidRenderer.composite(raw, over: backdrop(width: width, height: height), width: width, height: height, clip: clip)
         #else
         return nil
         #endif
@@ -489,6 +525,52 @@ public final class MGSolidRenderer {
     public func worldPoint(part id: String, local: MGVec3, params: MGPoseParameters) -> MGVec3 {
         let t = MGSolidStage.zUpToYUp * (assembly.pose(params).world[id] ?? .identity)
         return t.apply(local)
+    }
+
+    // MARK: Backdrop
+
+    /// The look's light pool for the current camera: centred where the ground under the subject projects, as wide as
+    /// `look.poolRadius` projected subject radii, and flattened as the camera lowers (a floor seen at a low angle).
+    public func backdropPool(width: Int, height: Int) -> MGSolidLook.Pool {
+        let b = worldBounds(MGPoseParameters())
+        guard !b.isEmpty, let c = project(MGVec3(b.center.x, b.min.y, b.center.z), width: width, height: height),
+              c.x.isFinite, c.y.isFinite else { return .centred(width: width, height: height) }
+        let f = 1 / tan(camera.fieldOfView * .pi / 360)
+        let r = max(1e-6, b.radius) / max(1e-6, camera.distance) * f * Double(height) / 2
+        let rx = max(r * look.poolRadius, Double(max(width, height)) * 0.26)
+        let flat = max(0.42, min(1, sin(abs(camera.pitch) * .pi / 180) + 0.25))
+        return MGSolidLook.Pool(x: Double(c.x), y: Double(c.y), rx: rx, ry: rx * flat)
+    }
+
+    /// The look's backdrop for the current camera (kept until the size or the pool changes).
+    private func backdrop(width: Int, height: Int) -> CGImage? {
+        let p = backdropPool(width: width, height: height)
+        let key = [Double(width), Double(height), p.x.rounded(), p.y.rounded(), p.rx.rounded(), p.ry.rounded()]
+        if let hit = backdropCache, hit.key == key { return hit.image }
+        let q = MGSolidLook.Pool(x: key[2], y: key[3], rx: key[4], ry: key[5])
+        let bytes = look.backdrop(width: width, height: height, pool: q)
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB), let provider = CGDataProvider(data: Data(bytes) as CFData),
+              let image = CGImage(width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: width * 4, space: space,
+                                  bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue), provider: provider,
+                                  decode: nil, shouldInterpolate: false, intent: .defaultIntent) else { return nil }
+        backdropCache = (key, image)
+        return image
+    }
+
+    /// Downsamples the supersampled render and composites it over a look's backdrop.
+    static func composite(_ img: CGImage, over backdrop: CGImage?, width: Int, height: Int, clip: MGSolidFraming.Window? = nil) -> CGImage? {
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: space,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        let rect = CGRect(x: 0, y: 0, width: width, height: height)
+        if let backdrop {
+            ctx.interpolationQuality = .none
+            ctx.draw(backdrop, in: rect)
+        }
+        ctx.interpolationQuality = .high
+        if let r = MGSolidRenderer.clipRect(clip, width: width, height: height) { ctx.clip(to: r) }
+        ctx.draw(img, in: rect)
+        return ctx.makeImage()
     }
 
     // MARK: Materials
@@ -583,13 +665,13 @@ public final class MGSolidRenderer {
     // MARK: Environment, lights, ground
 
     private func buildEnvironment() {
-        scene.lightingEnvironment.contents = MGSolidRenderer.environmentImage(lighting.environment, width: 1024, height: 512)
-        scene.lightingEnvironment.intensity = CGFloat(lighting.environment.intensity)
+        scene.lightingEnvironment.contents = MGSolidRenderer.environmentImage(lit.environment, width: 1024, height: 512)
+        scene.lightingEnvironment.intensity = CGFloat(lit.environment.intensity)
         scene.background.contents = CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0)
     }
 
     private func buildLights() {
-        for l in lighting.lights {
+        for l in lit.lights {
             let light = SCNLight()
             light.type = .directional
             light.color = CGColor(srgbRed: l.color[0], green: l.color[1], blue: l.color[2], alpha: 1)
@@ -597,10 +679,10 @@ public final class MGSolidRenderer {
             if l.castsShadow && options.shadows {
                 light.castsShadow = true
                 light.shadowMode = .forward
-                light.shadowSampleCount = 24
-                light.shadowRadius = CGFloat(l.softness * 1.6)
-                light.shadowMapSize = CGSize(width: 4096, height: 4096)
-                light.shadowColor = CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.62)
+                light.shadowSampleCount = max(1, options.shadowSamples)
+                light.shadowRadius = CGFloat(l.softness * 1.6 * look.shadowSoftness)
+                light.shadowMapSize = CGSize(width: max(256, options.shadowMapSize), height: max(256, options.shadowMapSize))
+                light.shadowColor = CGColor(srgbRed: 0, green: 0, blue: 0, alpha: CGFloat(look.shadow))
                 light.automaticallyAdjustsShadowProjection = false
                 light.forcesBackFaceCasters = true
             }
@@ -656,6 +738,7 @@ public final class MGSolidRenderer {
         blobNode.simdPosition = simd_float3(Float(b.center.x), y + 0.02, Float(b.center.z))
         blobNode.castsShadow = false
         blobNode.renderingOrder = 5
+        if look != .classic { blobNode.opacity = CGFloat(look.contact) }
         scene.rootNode.addChildNode(blobNode); groundNodes.append(blobNode)
     }
 
