@@ -747,6 +747,48 @@ The 3D pane's pixels are identical within one renderer instance; between process
 shading can change them (per still the largest difference has median 3 levels, and a median 0.23 % of the pixels differ; a few local spots reach 99 levels).
 The measurements and the test are in [SOLID-3D.md](SOLID-3D.md#determinism).
 
+## Transcript
+
+`marty-solid transcript FILE.json [--strict] [--component C.json ...]` (`MGTranscript.make(data:file:library:profile:)`)
+prints every word a learner is shown, per beat, as plain reflowable text: for a screen reader, for large text on a
+small screen, and as a static equivalent of the story. It reads the document and changes no check, report or render
+output.
+
+The document is checked first, with the same profile as `check` (`--strict` for the strict set). A refused document
+prints exactly its `check` report (exit 1) and no transcript. A lesson is `kind.unsupported`. Exit codes: 0 transcript,
+1 refused, 2 usage or I/O.
+
+The output is the format of the hand-written course transcripts (`morrowdock-explainer-transcript`, version 1), as one
+JSON object with sorted keys, byte-identical in every run:
+
+| Key | Content |
+| --- | --- |
+| `format`, `version` | `"morrowdock-explainer-transcript"`, 1 |
+| `explainer` | the input's file name |
+| `title` | the filled title (null when the document has none) |
+| `about` | one fixed sentence that says what the file holds |
+| `beats` | one entry per kept beat in beat order (an assembly: one per step) |
+
+Each beat is `{"beat", "caption", "captionNote"?, "onScreen", "tables", "highlight"}`:
+
+* `beat`: the 1-based beat (or step) number.
+* `caption`: the caption the learner reads, placeholders filled from the engine's values. `captionNote`: the beat's
+  `unchecked` reason, only when it has one (the caption shows as "Not checked").
+* `onScreen`: the annotations the beat displays, in the beat's `annotate` order (the list the overlay draws; an
+  assembly without `annotate` shows every annotation in every step), each `{"id", "kind", "text", "note"?}` with `kind`
+  `label`, `arrow` or `dimension`, the filled text, and the annotation's `unchecked` reason as `note`. An arrow without
+  text has no words and is left out; in an explainer, so is an arrow the beat drops
+  ([arrow drop](SOLID-3D.md#arrow-drop)).
+* `tables`: every board table with a data row as the beat leaves the board (the settled state), keyed by id:
+  `{"header", "rows", "source"?, "note"?}`. `header` is the first row when the table sets `header`, else empty;
+  `rows` are the other rows, each cell as displayed. The table's note is `source` (a `basis` note) or `note` (an
+  `unchecked` note). A header-only table is left out (see [Empty tables](#empty-tables)). An assembly has no board, so
+  its `tables` is `{}`.
+* `highlight`: the beat's `highlight` ids as authored (2D items, table rows such as `t.r1`, and 3D parts).
+
+Not in the transcript: 2D items other than tables (text, vectors, plots), the legend line, and what the engine checked
+(the `check` report has the tiers and the legend).
+
 ## What is not checked
 
 * Words. A caption or a 2D text is checked for numbers only, not for meaning.

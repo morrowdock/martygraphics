@@ -1,0 +1,47 @@
+{
+  "about" : "Every caption, every on-screen label and arrow text, and the table rows, as plain text. Generated from the explainer JSON; the words are the document's own.",
+  "beats" : [
+    {
+      "beat" : 1,
+      "caption" : "Venus and Earth are almost the same width.",
+      "highlight" : [
+        "t.r2",
+        "t.r3"
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+        "t" : {
+          "header" : [
+            "Planet",
+            "km"
+          ],
+          "rows" : [
+            [
+              "Mercury",
+              "4879"
+            ],
+            [
+              "Venus",
+              "12104"
+            ],
+            [
+              "Earth",
+              "12756"
+            ],
+            [
+              "Mars",
+              "6792"
+            ]
+          ],
+          "source" : "NASA fact sheet"
+        }
+      }
+    }
+  ],
+  "explainer" : "planets-2d.explainer.json",
+  "format" : "morrowdock-explainer-transcript",
+  "title" : "Inner planets by width",
+  "version" : 1
+}

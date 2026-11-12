@@ -1,0 +1,213 @@
+{
+  "about" : "Every caption, every on-screen label and arrow text, and the table rows, as plain text. Generated from the explainer JSON; the words are the document's own.",
+  "beats" : [
+    {
+      "beat" : 1,
+      "caption" : "This quadcopter carries a payload on a rail under its frame. The payload can sit in the middle, forward or aft. The black camera marks the front.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lPayload",
+          "kind" : "label",
+          "text" : "Payload"
+        },
+        {
+          "id" : "lRail",
+          "kind" : "label",
+          "text" : "Rail: the payload can sit forward or aft"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 2,
+      "caption" : "For this ideal hover example, assume the aircraft CG is exactly below the centre of the four propellers. Four equal thrusts can then balance weight without a pitch or roll moment. The weight marker is not this CG.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "f1",
+          "kind" : "arrow",
+          "text" : "Thrust"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 3,
+      "caption" : "Move the payload forward. The centre of gravity moves forward with it, so the weight now acts ahead of the centre of the propellers.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "tC",
+          "kind" : "arrow",
+          "text" : "Total of four equal thrusts"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 4,
+      "caption" : "The total of four equal thrusts acts at the centre of the propellers. The weight ahead of it turns the nose down.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "tC",
+          "kind" : "arrow",
+          "text" : "Total of four equal thrusts"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 5,
+      "caption" : "With enough thrust available, the flight controller can correct the nose-down turn. In a steady, level hover with this forward CG, the front pair must keep producing more thrust than the rear pair.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "bF1",
+          "kind" : "arrow",
+          "text" : "Front motors: more thrust"
+        },
+        {
+          "id" : "sR4",
+          "kind" : "arrow",
+          "text" : "Rear motors: less thrust"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 6,
+      "caption" : "In this steady, level hover, the resultant thrust line passes through the aircraft CG. The torques balance. The front motors produce more thrust than the rear motors, so they have less additional thrust available before their upper limit.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "tW",
+          "kind" : "arrow",
+          "text" : "Total thrust (placed by the author)"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 7,
+      "caption" : "Move the payload aft and the opposite occurs: the weight acts behind the centre, and the rear motors must work harder.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "bR4",
+          "kind" : "arrow",
+          "text" : "Rear motors: more thrust"
+        },
+        {
+          "id" : "sF1",
+          "kind" : "arrow",
+          "text" : "Front motors: less thrust"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 8,
+      "caption" : "An assumed limit case. If the thrust needed for a steady, level hover is outside the motor-thrust limits, that hover is not possible. At a limit, less control is available in one direction.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "xR4",
+          "kind" : "arrow",
+          "text" : "Rear motors at full power (assumed limit)"
+        },
+        {
+          "id" : "sF1",
+          "kind" : "arrow",
+          "text" : "Front motors: less thrust"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 9,
+      "caption" : "The engine finds the volume centre of all drawn parts, including the ground marking. This is not the aircraft CG. The force arrows and tilts are authored. The engine does not calculate the thrust balance or margin. No flight is simulated.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    }
+  ],
+  "explainer" : "payload-cg.json",
+  "format" : "morrowdock-explainer-transcript",
+  "title" : "Payload position and centre of gravity on a quadcopter",
+  "version" : 1
+}

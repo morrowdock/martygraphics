@@ -1,0 +1,261 @@
+{
+  "about" : "Every caption, every on-screen label and arrow text, and the table rows, as plain text. Generated from the explainer JSON; the words are the document's own.",
+  "beats" : [
+    {
+      "beat" : 1,
+      "caption" : "This quadcopter has four motors on a rigid frame. Each motor turns one propeller with fixed blades.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 2,
+      "caption" : "The battery feeds four speed controllers (ESCs). The flight controller tells each ESC how fast to turn its motor.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lEsc",
+          "kind" : "label",
+          "text" : "Speed controller (ESC), one per motor"
+        },
+        {
+          "id" : "lBatt",
+          "kind" : "label",
+          "text" : "Battery"
+        },
+        {
+          "id" : "lFc",
+          "kind" : "label",
+          "text" : "Flight controller"
+        },
+        {
+          "id" : "lGps",
+          "kind" : "label",
+          "text" : "GPS and compass"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 3,
+      "caption" : "Seen from above: M1 and M2 turn counter-clockwise, M3 and M4 turn clockwise. Each pair sits on one diagonal.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lM1",
+          "kind" : "label",
+          "text" : "M1 front right"
+        },
+        {
+          "id" : "lM2",
+          "kind" : "label",
+          "text" : "M2 rear left"
+        },
+        {
+          "id" : "lM3",
+          "kind" : "label",
+          "text" : "M3 front left"
+        },
+        {
+          "id" : "lM4",
+          "kind" : "label",
+          "text" : "M4 rear right"
+        },
+        {
+          "id" : "lFront",
+          "kind" : "label",
+          "text" : "Front"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 4,
+      "caption" : "A motor turns its propeller one way. Each motor applies an opposite reaction torque to the frame. The clockwise and counter-clockwise reaction torques cancel when their totals are equal.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lTwist",
+          "kind" : "label",
+          "text" : "Reaction torque on the frame: clockwise"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 5,
+      "caption" : "In a steady, level hover in still air, total thrust balances weight and the torques balance. The drone has no vertical acceleration or change in its turn rate. The arrows are schematic.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "f1",
+          "kind" : "arrow",
+          "text" : "Thrust"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 6,
+      "caption" : "Roll: the left motors speed up and the right motors slow down. The left side rises, so the frame rolls to the right.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "b2",
+          "kind" : "arrow",
+          "text" : "More thrust"
+        },
+        {
+          "id" : "s1",
+          "kind" : "arrow",
+          "text" : "Less thrust"
+        },
+        {
+          "id" : "s4",
+          "kind" : "arrow",
+          "text" : "Less thrust"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 7,
+      "caption" : "Now the thrust is tilted. Its sideways part pushes the drone to the right.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "f1",
+          "kind" : "arrow",
+          "text" : "Thrust"
+        },
+        {
+          "id" : "side",
+          "kind" : "arrow",
+          "text" : "Sideways part of the thrust"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 8,
+      "caption" : "Pitch works the same way: the rear motors speed up and the front motors slow down. The nose goes down, and the forward part of the thrust moves the drone forward.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "b2",
+          "kind" : "arrow",
+          "text" : "More thrust"
+        },
+        {
+          "id" : "s1",
+          "kind" : "arrow",
+          "text" : "Less thrust"
+        },
+        {
+          "id" : "fwd",
+          "kind" : "arrow",
+          "text" : "Forward part of the thrust"
+        },
+        {
+          "id" : "w",
+          "kind" : "arrow",
+          "text" : "Weight"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 9,
+      "caption" : "For a clockwise yaw turn, seen from above, the controller increases thrust from M1 and M2 and reduces thrust from M3 and M4. It can select these changes to keep total thrust nearly constant. The reaction torques no longer balance.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "b1",
+          "kind" : "arrow",
+          "text" : "More thrust"
+        },
+        {
+          "id" : "b2",
+          "kind" : "arrow",
+          "text" : "More thrust"
+        },
+        {
+          "id" : "s4",
+          "kind" : "arrow",
+          "text" : "Less thrust"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 10,
+      "caption" : "The engine checked the turn direction of each propeller and the weight direction. The weight arrow starts at the volume centre of all drawn parts, ground marking included. This is not the aircraft CG. Arrows and tilts are authored.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    }
+  ],
+  "explainer" : "quadcopter.json",
+  "format" : "morrowdock-explainer-transcript",
+  "title" : "How a quadcopter steers: four propellers, two spin directions",
+  "version" : 1
+}

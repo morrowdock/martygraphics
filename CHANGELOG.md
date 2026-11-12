@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Transcript export (v0.2 G2).** `marty-solid transcript FILE.json [--strict]` and `MGTranscript` print every
+  caption, every shown label, arrow and dimension text, and every board table, per beat, as plain reflowable text for
+  screen readers, large text and a static equivalent ([docs/EXPLAINER.md](docs/EXPLAINER.md#transcript)). The format is
+  the one the Part 107 course transcripts were written in by hand (`morrowdock-explainer-transcript` v1), so the
+  engine now makes them. The document is checked first; a refused document prints its check report. Read-only: no
+  check, report or render output changes. Golden transcripts for the five drone explainers, the jet-suit lesson and a
+  board-only explainer. Closes the transcript workaround of a recorded course gap (no label size key).
 - **Faster CI that does not block merges.** The hosted macOS tests now run in four shards on four `macos-26`
   runners at the same time (about 13 minutes instead of about 43). Every split is a `--filter` shard plus a `--skip`
   shard with the same pattern, so no test is dropped; a filter shard that runs no test fails. No test changed, tests

@@ -1,0 +1,419 @@
+{
+  "about" : "Every caption, every on-screen label and arrow text, and the table rows, as plain text. Generated from the explainer JSON; the words are the document's own.",
+  "beats" : [
+    {
+      "beat" : 1,
+      "caption" : "A pilot wears small jet engines on each forearm and on the back, all nozzles pointing down. This is the Daedalus layout; the newer suit differs.",
+      "highlight" : [
+        "eL1",
+        "eL2",
+        "eR1",
+        "eR2",
+        "eB"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lSuit",
+          "kind" : "label",
+          "note" : "F5 The Manual 2018, claimed",
+          "text" : "Daedalus suit 2018, claimed: two per arm, one on back"
+        },
+        {
+          "id" : "lMk4",
+          "kind" : "label",
+          "note" : "F1 F3 Gravity Industries, claimed",
+          "text" : "Mk4 (claimed latest): three back turbines"
+        },
+        {
+          "id" : "lMk4arm",
+          "kind" : "label",
+          "note" : "F4 not found in this search",
+          "text" : "Mk4 engines per arm: not found in this search"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 2,
+      "caption" : "Each jet pushes its engine up, and gravity pulls the pilot, suit and fuel down. In a hover the upward parts of the thrusts balance the weight, and side forces and turning moments balance.",
+      "highlight" : [
+        "eL1",
+        "eL2",
+        "eR1",
+        "eR2",
+        "eB"
+      ],
+      "onScreen" : [
+        {
+          "id" : "aW",
+          "kind" : "arrow",
+          "text" : "Weight of pilot, suit and fuel"
+        },
+        {
+          "id" : "lThrust",
+          "kind" : "label",
+          "text" : "Up arrows: thrust of each engine (no value)"
+        },
+        {
+          "id" : "lTotal",
+          "kind" : "label",
+          "note" : "F17 not found in this search",
+          "text" : "Total thrust: not found in this search"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 3,
+      "caption" : "The table gives claimed figures for the current suit, which is not the layout shown here.",
+      "highlight" : [
+        "t.r1",
+        "t.r2"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lMk4",
+          "kind" : "label",
+          "note" : "F1 F3 Gravity Industries, claimed",
+          "text" : "Mk4 (claimed latest): three back turbines"
+        },
+        {
+          "id" : "lSuit",
+          "kind" : "label",
+          "note" : "F5 The Manual 2018, claimed",
+          "text" : "Daedalus suit 2018, claimed: two per arm, one on back"
+        }
+      ],
+      "tables" : {
+        "t" : {
+          "header" : [
+            "Item",
+            "Value",
+            "Source"
+          ],
+          "rows" : [
+            [
+              "Dry wt kg",
+              "27",
+              "F11 IntEng"
+            ],
+            [
+              "Flight min",
+              "3",
+              "F12 IntEng"
+            ]
+          ],
+          "source" : "F11 F12 Interesting Engineering 2026, claimed"
+        }
+      }
+    },
+    {
+      "beat" : 4,
+      "caption" : "To steer, the pilot moves one arm, and the forearm engines fixed to it tilt their thrust. The forces no longer balance, so the body moves that way.",
+      "highlight" : [
+        "pilot.upperArmL",
+        "pilot.lowerArmL",
+        "eL1",
+        "eL2"
+      ],
+      "onScreen" : [
+        {
+          "id" : "aSteer",
+          "kind" : "arrow",
+          "note" : "F9 Interesting Engineering 2026",
+          "text" : "Arm moved to aim thrust, claimed (schematic)"
+        },
+        {
+          "id" : "lThrust",
+          "kind" : "label",
+          "text" : "Up arrows: thrust of each engine (no value)"
+        }
+      ],
+      "tables" : {
+        "t" : {
+          "header" : [
+            "Item",
+            "Value",
+            "Source"
+          ],
+          "rows" : [
+            [
+              "Dry wt kg",
+              "27",
+              "F11 IntEng"
+            ],
+            [
+              "Flight min",
+              "3",
+              "F12 IntEng"
+            ]
+          ],
+          "source" : "F11 F12 Interesting Engineering 2026, claimed"
+        }
+      }
+    },
+    {
+      "beat" : 5,
+      "caption" : "From behind: the back engine pushes near the body's centre line. How the load is shared between arm and back engines was not found in this search.",
+      "highlight" : [
+        "eB"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lFuel",
+          "kind" : "label",
+          "note" : "F10 Interesting Engineering 2026",
+          "text" : "Fuel, claimed: Jet A-1 or diesel in a back bladder"
+        },
+        {
+          "id" : "lShare",
+          "kind" : "label",
+          "note" : "F18 not found in this search",
+          "text" : "Arm and back thrust split: not found in this search"
+        }
+      ],
+      "tables" : {
+        "t" : {
+          "header" : [
+            "Item",
+            "Value",
+            "Source"
+          ],
+          "rows" : [
+            [
+              "Dry wt kg",
+              "27",
+              "F11 IntEng"
+            ],
+            [
+              "Flight min",
+              "3",
+              "F12 IntEng"
+            ]
+          ],
+          "source" : "F11 F12 Interesting Engineering 2026, claimed"
+        }
+      }
+    },
+    {
+      "beat" : 6,
+      "caption" : "Cut open one arm engine: air enters the intake, and the spinning compressor wheel flings it outward into the diffuser, which squeezes it.",
+      "highlight" : [
+        "eR1.impeller",
+        "eR1.diffuser"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lExample",
+          "kind" : "label",
+          "note" : "Not confirmed Gravity hardware",
+          "text" : "Micro gas turbine-style engine (example)"
+        },
+        {
+          "id" : "lIntake",
+          "kind" : "label",
+          "text" : "Intake"
+        },
+        {
+          "id" : "lComp",
+          "kind" : "label",
+          "text" : "Compressor wheel"
+        },
+        {
+          "id" : "lDiff",
+          "kind" : "label",
+          "text" : "Diffuser"
+        },
+        {
+          "id" : "aAirIn",
+          "kind" : "arrow",
+          "text" : "Air in"
+        }
+      ],
+      "tables" : {
+        "t" : {
+          "header" : [
+            "Item",
+            "Value",
+            "Source"
+          ],
+          "rows" : [
+            [
+              "Dry wt kg",
+              "27",
+              "F11 IntEng"
+            ],
+            [
+              "Flight min",
+              "3",
+              "F12 IntEng"
+            ]
+          ],
+          "source" : "F11 F12 Interesting Engineering 2026, claimed"
+        }
+      }
+    },
+    {
+      "beat" : 7,
+      "caption" : "Fuel burns with the oxygen in the squeezed air. The hot gas spins the turbine at 1 turn per input turn, the same as the compressor, because one shaft joins them.",
+      "highlight" : [
+        "eR1.combustor",
+        "eR1.turbineWheel",
+        "eR1.shaft"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lComb",
+          "kind" : "label",
+          "text" : "Combustor: fuel burns here"
+        },
+        {
+          "id" : "lTurb",
+          "kind" : "label",
+          "text" : "Turbine wheel"
+        },
+        {
+          "id" : "lFuel",
+          "kind" : "label",
+          "note" : "F10 Interesting Engineering 2026",
+          "text" : "Fuel, claimed: Jet A-1 or diesel in a back bladder"
+        }
+      ],
+      "tables" : {
+        "t" : {
+          "header" : [
+            "Item",
+            "Value",
+            "Source"
+          ],
+          "rows" : [
+            [
+              "Dry wt kg",
+              "27",
+              "F11 IntEng"
+            ],
+            [
+              "Flight min",
+              "3",
+              "F12 IntEng"
+            ]
+          ],
+          "source" : "F11 F12 Interesting Engineering 2026, claimed"
+        }
+      }
+    },
+    {
+      "beat" : 8,
+      "caption" : "The hot gas speeds up through the nozzle. Thrust is the reaction to that gas being pushed out fast.",
+      "highlight" : [
+        "eR1.nozzle"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lNoz",
+          "kind" : "label",
+          "text" : "Nozzle"
+        },
+        {
+          "id" : "aJet",
+          "kind" : "arrow",
+          "text" : "Hot jet out"
+        },
+        {
+          "id" : "lF19",
+          "kind" : "label",
+          "note" : "F19 plausible, likely",
+          "text" : "Engines likely micro gas turbines"
+        },
+        {
+          "id" : "lExample",
+          "kind" : "label",
+          "note" : "Not confirmed Gravity hardware",
+          "text" : "Micro gas turbine-style engine (example)"
+        }
+      ],
+      "tables" : {
+        "t" : {
+          "header" : [
+            "Item",
+            "Value",
+            "Source"
+          ],
+          "rows" : [
+            [
+              "Dry wt kg",
+              "27",
+              "F11 IntEng"
+            ],
+            [
+              "Flight min",
+              "3",
+              "F12 IntEng"
+            ]
+          ],
+          "source" : "F11 F12 Interesting Engineering 2026, claimed"
+        }
+      }
+    },
+    {
+      "beat" : 9,
+      "caption" : "Limits: only the shaft turning is solved. Airflow, burning fuel and thrust are not simulated, so the force arrows carry no value.",
+      "highlight" : [
+        "eL1",
+        "eL2",
+        "eR1",
+        "eR2",
+        "eB"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lLimit",
+          "kind" : "label",
+          "text" : "Solved: shaft turning only; thrust not simulated"
+        },
+        {
+          "id" : "lSuit",
+          "kind" : "label",
+          "note" : "F5 The Manual 2018, claimed",
+          "text" : "Daedalus suit 2018, claimed: two per arm, one on back"
+        },
+        {
+          "id" : "lTotal",
+          "kind" : "label",
+          "note" : "F17 not found in this search",
+          "text" : "Total thrust: not found in this search"
+        }
+      ],
+      "tables" : {
+        "t" : {
+          "header" : [
+            "Item",
+            "Value",
+            "Source"
+          ],
+          "rows" : [
+            [
+              "Dry wt kg",
+              "27",
+              "F11 IntEng"
+            ],
+            [
+              "Flight min",
+              "3",
+              "F12 IntEng"
+            ]
+          ],
+          "source" : "F11 F12 Interesting Engineering 2026, claimed"
+        }
+      }
+    }
+  ],
+  "explainer" : "lesson.json",
+  "format" : "morrowdock-explainer-transcript",
+  "title" : "Gravity jet suit, Daedalus layout: how small jets lift a pilot (schematic)",
+  "version" : 1
+}

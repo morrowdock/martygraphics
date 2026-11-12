@@ -1,0 +1,158 @@
+{
+  "about" : "Every caption, every on-screen label and arrow text, and the table rows, as plain text. Generated from the explainer JSON; the words are the document's own.",
+  "beats" : [
+    {
+      "beat" : 1,
+      "caption" : "A three-axis gimbal holds a drone's camera steady. Here the drone pitches, rolls and yaws at once. The camera keeps its direction.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 2,
+      "caption" : "Three motors hold the camera: yaw, roll and pitch. Their axes meet at the camera. A motion sensor on the camera measures how the camera turns.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lYaw",
+          "kind" : "label",
+          "text" : "Yaw motor turns the blue arm"
+        },
+        {
+          "id" : "lRoll",
+          "kind" : "label",
+          "text" : "Roll motor turns the orange arm"
+        },
+        {
+          "id" : "lPitch",
+          "kind" : "label",
+          "text" : "Pitch motor tilts the camera"
+        },
+        {
+          "id" : "lCam",
+          "kind" : "label",
+          "text" : "Camera"
+        },
+        {
+          "id" : "lImu",
+          "kind" : "label",
+          "text" : "Motion sensor on the camera"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 3,
+      "caption" : "Yaw: the drone turns to the left. The yaw motor turns the blue arm to the right by the same angle, so the camera still points the same way.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lYaw",
+          "kind" : "label",
+          "text" : "Yaw motor turns the blue arm"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 4,
+      "caption" : "Roll: the drone tips to the right. The roll motor turns the orange arm back by the same angle, so the camera stays level.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lRoll",
+          "kind" : "label",
+          "text" : "Roll motor turns the orange arm"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 5,
+      "caption" : "Pitch: the drone's nose goes down. The pitch motor tilts the camera back up by the same angle.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lPitch",
+          "kind" : "label",
+          "text" : "Pitch motor tilts the camera"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 6,
+      "caption" : "All three at once. The engine measured two camera dimensions at this pose only: the lens axis along the forward line and the camera top along the vertical. Both keep their level values.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "fwd",
+          "kind" : "dimension",
+          "text" : "Lens axis, forward: 39 mm"
+        },
+        {
+          "id" : "up",
+          "kind" : "dimension",
+          "text" : "Camera top, up: 20 mm"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 7,
+      "caption" : "The controller repeats this many times each second: the sensor measures a small turn of the camera, and the motors cancel it.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 8,
+      "caption" : "Limits: a gimbal holds the camera's direction. It does not remove movement up, down or sideways. In this model the drone turns about the camera's centre, and the author set the motor angles; the engine did not solve a control loop.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    }
+  ],
+  "explainer" : "gimbal.json",
+  "format" : "morrowdock-explainer-transcript",
+  "title" : "How a three-axis gimbal keeps a drone camera steady",
+  "version" : 1
+}

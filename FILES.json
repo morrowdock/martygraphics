@@ -35,7 +35,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "a93d2d5f873bdf554dba754b3830ee8c2ca61b0865151d556cc626d3c9de608b"
+      "sha256": "f6cbbebcde41c2491a7894d0def83d8bd08b3388452d45a66377b29e5ce23f90"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -231,7 +231,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "ea2b98dbeb795564361af42be820495dc95bbe5b8fc32488389f3135a9f95d22"
+      "sha256": "93e74386bb510464b2acecb9b007043eb455c00fbe17de25b888425f52f8ea68"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
@@ -244,6 +244,34 @@
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/strict-at-main.json",
       "sha256": "a96154d87e504cae3032a1864f9999cc77bc71a0df5d98c68c9c18c2b81157e9"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/Transcripts/docs-assets-drone-aviation-brushless-motor-motor.json",
+      "sha256": "2bdcdb3f036464e46e315a5ed803f0f8f42110ab2f14d71410a9574aa5abdc43"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/Transcripts/docs-assets-drone-aviation-gimbal-gimbal.json",
+      "sha256": "f21540d7eee31b85033bb6dd598b440b426ef03cb705a078a82a709016d7c3a0"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/Transcripts/docs-assets-drone-aviation-landing-gear-landing-gear.json",
+      "sha256": "02604513f5ddac24403da1ee7ee34a7f30a63ef04297f0cc37e8f20c154d9462"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/Transcripts/docs-assets-drone-aviation-payload-cg-payload-cg.json",
+      "sha256": "7cff9768f657ee307e2776321c891d3fead84ef5298a35f7b4d1b92495436611"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/Transcripts/docs-assets-drone-aviation-quadcopter-quadcopter.json",
+      "sha256": "13ecfa4d6b7ca2afba2a51dc4e7ef0252646acf7697b6701b6fa3394c05a11a2"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/Transcripts/docs-assets-jet-suit-ai-lesson.json",
+      "sha256": "29d5561f25a08f76ead215d627ac0c21b81e10f7b9956a95fda75b97bbc5c806"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/Transcripts/examples-explainers-planets-2d.json",
+      "sha256": "e335bd6f550a0deed9e98d1db408fbef8f46fe04eb1effad65f9171aedb0a0d4"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-annotations-check-strict.check.json",
@@ -599,7 +627,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "d838cd4a6e456d9b12f416023edcab73adab82c462006777a99a4a7a77476233"
+      "sha256": "143ea42fd6cf434ee64f0d8773be07f4cfe19a8a7cf7d8736d477491dfaa4de7"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
@@ -692,6 +720,10 @@
     {
       "path": "Sources/MartyGraphics/Explainer/MGPaneSlide.swift",
       "sha256": "a06a3a3576da1edefb3c0bf498e9488b1428967a575eb289455216aa83b247f5"
+    },
+    {
+      "path": "Sources/MartyGraphics/Explainer/MGTranscript.swift",
+      "sha256": "a0bf14403a192f7511e93e2a206b27b0cb4f2911d04c54569f2167cec2c50250"
     },
     {
       "path": "Sources/MartyGraphics/MG3DInteraction.swift",
@@ -1088,6 +1120,10 @@
     {
       "path": "Tests/MartyGraphicsTests/ExplainerThirdCheckTests.swift",
       "sha256": "787a1faf6c9e61a5063eb2312cf521a0c65c40f2870f0eed3e34b90ab3c9f742"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/ExplainerTranscriptTests.swift",
+      "sha256": "a4be8b67b9b765fb07dfed8ad9040a94ef2ac2ca99cc30e255a84c53fcbd8714"
     },
     {
       "path": "Tests/MartyGraphicsTests/HighlightReferenceTests.swift",
@@ -1755,7 +1791,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "f945b65fef09018d15b364167bd28df9a628d469e6b5837d51f152cc5483b536"
+      "sha256": "99887634835ab7d13b1e2a10cdf5ad73dccebc5c7be8d121aa8809883c4855ea"
     },
     {
       "path": "docs/EXPORT.json",

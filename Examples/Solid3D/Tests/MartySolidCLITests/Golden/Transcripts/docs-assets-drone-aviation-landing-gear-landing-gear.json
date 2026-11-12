@@ -1,0 +1,213 @@
+{
+  "about" : "Every caption, every on-screen label and arrow text, and the table rows, as plain text. Generated from the explainer JSON; the words are the document's own.",
+  "beats" : [
+    {
+      "beat" : 1,
+      "caption" : "A retractable main landing gear, shown with the aircraft on jacks. The leg turns about the trunnion. A folding side brace holds it down.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lTrunnion",
+          "kind" : "label",
+          "text" : "Trunnion: the leg turns here"
+        },
+        {
+          "id" : "lLeg",
+          "kind" : "label",
+          "text" : "Shock strut (leg)"
+        },
+        {
+          "id" : "lUpper",
+          "kind" : "label",
+          "text" : "Upper brace link"
+        },
+        {
+          "id" : "lLower",
+          "kind" : "label",
+          "text" : "Lower brace link"
+        },
+        {
+          "id" : "lAct",
+          "kind" : "label",
+          "text" : "Retract actuator"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 2,
+      "caption" : "The side brace has two links. With the gear down, the knee joint between them sits a little past the straight line and rests on a stop. This is the over-centre lock.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lKnee",
+          "kind" : "label",
+          "text" : "Knee joint: past the straight line"
+        },
+        {
+          "id" : "lStop",
+          "kind" : "label",
+          "text" : "Stop"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 3,
+      "caption" : "A side load on the wheel tries to fold the gear, and it squeezes the brace. The knee is already past the straight line, so the squeeze pushes it harder onto the stop. The gear cannot fold.",
+      "highlight" : [
+        "upper",
+        "lower"
+      ],
+      "onScreen" : [
+        {
+          "id" : "aLoad",
+          "kind" : "arrow",
+          "text" : "Side load on the wheel"
+        },
+        {
+          "id" : "aSqueezeA",
+          "kind" : "arrow",
+          "text" : "Squeeze"
+        },
+        {
+          "id" : "aKnee",
+          "kind" : "arrow",
+          "text" : "Knee pushed onto its stop"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 4,
+      "caption" : "The pin at the end of the lower link joins the leg. The engine checked these two pin-to-leg distances at each shown pose.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "pinA",
+          "kind" : "dimension",
+          "text" : "Pin to leg point: 100 mm"
+        },
+        {
+          "id" : "pinB",
+          "kind" : "dimension",
+          "text" : "Pin to axle line: 500 mm"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 5,
+      "caption" : "In this example, an unlock actuator (not shown) moves the knee back through centre before retraction. Here the brace is exactly straight.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "aUnlock",
+          "kind" : "arrow",
+          "text" : "Unlock actuator pulls here"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 6,
+      "caption" : "Then the retract actuator shortens. It pulls the lever at the top of the leg.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 7,
+      "caption" : "The leg swings up about the trunnion, and the brace folds at the knee.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 8,
+      "caption" : "The knee moves up into the wheel well.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 9,
+      "caption" : "The brace is almost folded flat.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 10,
+      "caption" : "Gear up. The folded brace lies above the leg.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 11,
+      "caption" : "The engine checked the two pin-to-leg distances at each shown pose, not the blend, loads or hydraulics. Real designs can use lock links, springs and actuators. Use the aircraft maintenance manual for its geometry and adjustments.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    }
+  ],
+  "explainer" : "landing-gear.json",
+  "format" : "morrowdock-explainer-transcript",
+  "title" : "How an over-centre brace locks a landing gear down",
+  "version" : 1
+}

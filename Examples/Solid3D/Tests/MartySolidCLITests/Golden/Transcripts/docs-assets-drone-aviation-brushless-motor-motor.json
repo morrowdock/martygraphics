@@ -1,0 +1,229 @@
+{
+  "about" : "Every caption, every on-screen label and arrow text, and the table rows, as plain text. Generated from the explainer JSON; the words are the document's own.",
+  "beats" : [
+    {
+      "beat" : 1,
+      "caption" : "A brushless outrunner motor. The outer shell, called the bell, turns with the propeller. The middle part is fixed to the drone.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lBell",
+          "kind" : "label",
+          "text" : "Bell: turns with the propeller"
+        },
+        {
+          "id" : "lWires",
+          "kind" : "label",
+          "text" : "Three wires from the speed controller (ESC)"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 2,
+      "caption" : "Cut the bell open. Permanent magnets line the inside of the bell. The fixed stator in the middle carries coils of copper wire.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lMag",
+          "kind" : "label",
+          "text" : "Permanent magnets inside the bell"
+        },
+        {
+          "id" : "lCoil",
+          "kind" : "label",
+          "text" : "Coil of copper wire on each tooth"
+        },
+        {
+          "id" : "lStator",
+          "kind" : "label",
+          "text" : "Stator: fixed iron core"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 3,
+      "caption" : "The parts, pulled apart along the shaft. Two bearings hold the shaft, so the bell turns freely round the stator.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lBell",
+          "kind" : "label",
+          "text" : "Bell: turns with the propeller"
+        },
+        {
+          "id" : "lMag",
+          "kind" : "label",
+          "text" : "Permanent magnets inside the bell"
+        },
+        {
+          "id" : "lShaft",
+          "kind" : "label",
+          "text" : "Shaft"
+        },
+        {
+          "id" : "lStator",
+          "kind" : "label",
+          "text" : "Stator: fixed iron core"
+        },
+        {
+          "id" : "lCoil",
+          "kind" : "label",
+          "text" : "Coil of copper wire on each tooth"
+        },
+        {
+          "id" : "lBearing",
+          "kind" : "label",
+          "text" : "Two bearings hold the shaft"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 4,
+      "caption" : "This stator has 12 coils, one on each tooth. The bell has 7 magnets with the north pole facing in and 7 with the south pole facing in. They alternate round the ring.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 5,
+      "caption" : "The coils are joined in three groups, called phases. This is phase A: two pairs of neighbouring coils on opposite sides. In each pair, the two coils are wound in opposite directions.",
+      "highlight" : [
+        "coil1",
+        "coil2",
+        "coil7",
+        "coil8"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lA",
+          "kind" : "label",
+          "text" : "Phase A"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 6,
+      "caption" : "Phase B is the next two pairs.",
+      "highlight" : [
+        "coil3",
+        "coil4",
+        "coil9",
+        "coil10"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lB",
+          "kind" : "label",
+          "text" : "Phase B"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 7,
+      "caption" : "Phase C is the last two pairs. Current in a phase makes its coils electromagnets. In each pair, one coil face is north and one is south. They pull unlike magnet poles and push like poles.",
+      "highlight" : [
+        "coil5",
+        "coil6",
+        "coil11",
+        "coil12"
+      ],
+      "onScreen" : [
+        {
+          "id" : "lC",
+          "kind" : "label",
+          "text" : "Phase C"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 8,
+      "caption" : "In six-step control, the speed controller energizes two phases at a time and changes the pair in a repeating order. The stator's magnetic field turns, and the magnets follow it.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 9,
+      "caption" : "Seen from above without the bell: the ring of magnets turns round the fixed coils. One turn of the bell takes 7 electrical cycles, one for each pair of magnets.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 10,
+      "caption" : "Swap any two of the three wires and the order reverses: the motor turns the other way.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+        {
+          "id" : "lWires",
+          "kind" : "label",
+          "text" : "Three wires from the speed controller (ESC)"
+        }
+      ],
+      "tables" : {
+
+      }
+    },
+    {
+      "beat" : 11,
+      "caption" : "What the engine checked: the turning of the bell, and the counts of coils and magnets. Currents, magnetic forces and torque are not computed.",
+      "highlight" : [
+
+      ],
+      "onScreen" : [
+
+      ],
+      "tables" : {
+
+      }
+    }
+  ],
+  "explainer" : "motor.json",
+  "format" : "morrowdock-explainer-transcript",
+  "title" : "Inside a drone's brushless motor (outrunner)",
+  "version" : 1
+}

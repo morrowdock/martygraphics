@@ -168,6 +168,71 @@ final class MartySolidCLITests: XCTestCase {
         }
     }
 
+    // MARK: Transcript
+
+    /// `transcript` inputs: the five drone and aviation explainers (assemblies), the jet-suit lesson (an explainer with
+    /// a board table and 3D annotations) and a board-only explainer. Golden name to path.
+    func transcriptInputs() -> [(String, String)] {
+        let drone = repo.appendingPathComponent("docs/assets/drone-aviation")
+        var out = [("quadcopter", "quadcopter"), ("payload-cg", "payload-cg"), ("brushless-motor", "motor"), ("gimbal", "gimbal"),
+                   ("landing-gear", "landing-gear")].map { ("docs-assets-drone-aviation-\($0.0)-\($0.1)", drone.appendingPathComponent("\($0.0)/\($0.1).json").path) }
+        out.append(("docs-assets-jet-suit-ai-lesson", repo.appendingPathComponent("docs/assets/jet-suit-ai/lesson.json").path))
+        out.append(("examples-explainers-planets-2d", repo.appendingPathComponent("Examples/Explainers/planets-2d.explainer.json").path))
+        return out
+    }
+
+    /// The transcript of every input is byte-identical to its golden file, in two fresh processes, with and without
+    /// `--strict` (all inputs pass both), and holds exactly the shape of the course transcripts
+    /// (`morrowdock-explainer-transcript` v1).
+    func testTranscriptOutputIsByteIdenticalToTheGoldenFiles() throws {
+        let dir = golden.appendingPathComponent("Transcripts")
+        let inputs = transcriptInputs()
+        XCTAssertEqual(Set(try FileManager.default.contentsOfDirectory(atPath: dir.path).filter { $0.hasSuffix(".json") }),
+                       Set(inputs.map { "\($0.0).json" }), "one golden file per input")
+        for (name, path) in inputs {
+            let want = try String(contentsOf: dir.appendingPathComponent("\(name).json"), encoding: .utf8)
+            for args in [["transcript", path], ["transcript", "--strict", path], ["transcript", path]] {
+                let got = try run(args)
+                XCTAssertEqual(got.status, 0, "\(name) \(args)")
+                XCTAssertEqual(got.text, want, "\(name) \(args)")
+            }
+            let t = try XCTUnwrap(try run(["transcript", path]).json, name)
+            XCTAssertEqual(Set(t.keys), ["format", "version", "explainer", "title", "about", "beats"], name)
+            XCTAssertEqual(t["format"] as? String, "morrowdock-explainer-transcript")
+            XCTAssertEqual(t["version"] as? Int, 1)
+            XCTAssertEqual(t["explainer"] as? String, URL(fileURLWithPath: path).lastPathComponent)
+            for (k, beat) in (t["beats"] as? [[String: Any]] ?? []).enumerated() {
+                XCTAssertEqual(beat["beat"] as? Int, k + 1, name)
+                XCTAssertTrue(Set(beat.keys).isSubset(of: ["beat", "caption", "captionNote", "onScreen", "tables", "highlight"]), name)
+                for item in beat["onScreen"] as? [[String: Any]] ?? [] {
+                    XCTAssertTrue(["label", "arrow", "dimension"].contains(item["kind"] as? String ?? ""), name)
+                    XCTAssertFalse((item["text"] as? String ?? "").isEmpty, name)
+                }
+            }
+        }
+    }
+
+    /// The transcript only follows a passing check: a refused document prints exactly what `check` prints with the same
+    /// profile (exit 1), a lesson is `kind.unsupported`, and a wrong command line is a usage error (exit 2).
+    func testTranscriptOfARefusedDocumentIsItsCheckReport() throws {
+        let idle = try write(#"{"v":2,"kind":"assembly","parts":[{"id":"disc","shape":{"shaft":{"radius":20,"length":5}},"joint":{"revolute":[0,0,1]}}],"steps":[{"say":"A disc on a joint."}]}"#, "idle-transcript.json")
+        XCTAssertEqual(try run(["transcript", idle]).status, 0)   // the normal check only warns (`joint.idle.disc`)
+        let refused = try run(["transcript", "--strict", idle])
+        XCTAssertEqual(refused.status, 1)
+        XCTAssertEqual(refused.json?["reason"] as? String, "joint.idle.disc")
+        XCTAssertEqual(refused.text, try run(["check", "--strict", idle]).text)
+        let badExplainer = try write(#"{"v":1,"kind":"explainer","title":"T","beats":[{"say":"It weighs 5 kg."}]}"#, "bad-explainer-transcript.json")
+        let e = try run(["transcript", badExplainer])
+        XCTAssertEqual(e.status, 1)
+        XCTAssertEqual(e.json?["kind"] as? String, "explainer")
+        XCTAssertEqual(e.text, try run(["check", badExplainer]).text)
+        let lesson = try write(#"{"v":1,"kind":"lesson","steps":[]}"#, "lesson-transcript.json")
+        XCTAssertEqual(try run(["transcript", lesson]).json?["reason"] as? String, "kind.unsupported")
+        XCTAssertEqual(try run(["transcript"]).status, 2)
+        XCTAssertEqual(try run(["transcript", idle, idle]).status, 2)
+        XCTAssertEqual(try run(["transcript", "--strict", "--strict", idle]).status, 2)
+    }
+
     /// Framing alone never refuses a shipped document (PR #51 re-check): every golden input that passed
     /// `check --strict` at main (a13f1f1; `Fixtures/strict-at-main.json`, generated from main's strict goldens) still
     /// passes at head, and its warnings only grow: every warning it had at main is still there, and every added one is

@@ -21,6 +21,7 @@ enum CLIError: Error, CustomStringConvertible {
                    marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--no-story] [--story-fps 10|30]
                                       [--snapshots] [--component C.json ...]
                    marty-solid snapshot check SNAPSHOT.json [--component C.json ...]
+                   marty-solid transcript FILE.json [--strict] [--component C.json ...]
                    marty-solid components [--component C.json ...]
                    marty-solid component check C.json [--component OTHER.json ...] [--with NAME=VALUE ...]
                    marty-solid reasons
@@ -187,6 +188,33 @@ func check(_ path: String, patch patchPath: String?, _ lib: MGSolidLibrary, stri
     }
     print(report.text)
     return report.exitCode
+}
+
+/// The transcript (`MGTranscript`): every caption, shown annotation text and board table per beat, as plain text. The
+/// document is checked first with the same profile as `check`; a refused document prints its check report (exit 1).
+func transcript(_ path: String, _ lib: MGSolidLibrary, strict: Bool) throws -> Int32 {
+    let profile: MGSolidProfile = strict ? .strict : .standard
+    let doc = try loadDocument(path)
+    let name = URL(fileURLWithPath: path).lastPathComponent
+    switch doc.kind {
+    case "explainer"?:
+        if let big = explainerTooLarge(path, doc.data) {
+            print(json(MGExplainerReport.refused(big, profile: nil, source: nil, engine: engine).json)); return 1
+        }
+        let t = MGTranscript.explainer(data: doc.data, file: name, library: lib, profile: profile, engine: engine)
+        print(t.text)
+        return t.exitCode
+    case "lesson"?: return unsupportedKind()
+    default: break
+    }
+    let src: Loaded
+    do { src = try load(path) } catch let big as TooLarge {
+        print(json(MGSolidReport.refused(MGSolidIssue("assembly.bytes", limit: big.detail(limit: MGSolidLimits.bytes)), engine: engine).json))
+        return 1
+    }
+    let t = MGTranscript.assembly(data: src.data, file: name, library: lib, profile: profile, engine: engine)
+    print(t.text)
+    return t.exitCode
 }
 
 /// The catalog as one line of JSON: ids, one-line descriptions, parameters with defaults and ranges, inner parts, anchors.
@@ -1197,6 +1225,11 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                 let paths = rest.filter { $0 != "--strict" }
                 guard paths.count == 1, !paths[0].hasPrefix("--"), rest.count - paths.count <= 1 else { throw CLIError.usage }
                 exit(try check(paths[0], patch: patch, lib, strict: rest.contains("--strict")))
+            case "transcript"? where a.count >= 2:
+                let rest = Array(a.dropFirst())
+                let paths = rest.filter { $0 != "--strict" }
+                guard paths.count == 1, !paths[0].hasPrefix("--"), rest.count - paths.count <= 1 else { throw CLIError.usage }
+                exit(try transcript(paths[0], lib, strict: rest.contains("--strict")))
             case "components"? where a.count == 1: exit(components(lib))
             case "snapshot"? where a.count == 3 && a[1] == "check" && !a[2].hasPrefix("--"): exit(try snapshotCheck(a[2], lib))
             case "reasons"? where a.count == 1 && files.isEmpty: print(json(MGSolidReasons.json)); exit(0)
