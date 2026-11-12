@@ -478,22 +478,29 @@ extension MGSolidGLTF {
             guard Set(stillNames).count == stillNames.count, !stillNames.contains(t.cameraName) || t.cameras.isEmpty else {
                 throw MGSolidGLTF.Refusal("gltf.nodeName", part: t.cameraName)
             }
-            var cameraTracks: [(name: String, track: Track, fov: Double, animated: Bool)] = []
+            // The near plane follows the engine renderer's rule (MGSolidFraming.nearPlane, millimetres) at the camera's
+            // closest frame, in metres, so a small scene is not clipped (Sol review of 83df9c63: a fixed 0.01 m was 20x
+            // the engine's 0.5 mm minimum).
+            func near(_ cs: [MGSolidCamera]) -> Double {
+                let closest = cs.map(\.distance).min() ?? 0
+                return MGSolidFraming.nearPlane(distance: closest) * MGSolidGLTF.metresPerMillimetre
+            }
+            var cameraTracks: [(name: String, track: Track, fov: Double, animated: Bool, near: Double)] = []
             if !t.cameras.isEmpty {
                 var tr = Track()
                 for c in t.cameras { append(MGSolidGLTF.cameraTransform(c), to: &tr) }
                 tr.moving = moves(tr)
-                cameraTracks.append((t.cameraName, tr, t.cameras[0].fieldOfView, tr.moving))
+                cameraTracks.append((t.cameraName, tr, t.cameras[0].fieldOfView, tr.moving, near(t.cameras)))
             }
             for still in t.stills {
                 var tr = Track()
                 append(MGSolidGLTF.cameraTransform(still.camera), to: &tr)
-                cameraTracks.append((still.name, tr, still.camera.fieldOfView, false))
+                cameraTracks.append((still.name, tr, still.camera.fieldOfView, false, near([still.camera])))
             }
             for (k, c) in cameraTracks.enumerated() {
                 cameras.append(.object([("name", .string(c.name)), ("type", .string("perspective")),
                                         ("perspective", .object([("aspectRatio", .double(t.aspect)), ("yfov", .double(c.fov * .pi / 180)),
-                                                                 ("zfar", .double(1000)), ("znear", .double(0.01))]))]))
+                                                                 ("zfar", .double(1000)), ("znear", .double(c.near))]))]))
                 nodes.append(.object(node(name: "camera." + c.name, track: c.track, extra: [("camera", .int(k))])))
                 cameraRecords.append(.object(["name": .string("camera." + c.name), "node": .number(Double(nodes.count - 1)), "animated": .bool(c.animated),
                                               "fieldOfViewDegrees": .number(c.fov), "aspect": .number(t.aspect)]))

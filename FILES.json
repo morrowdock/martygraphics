@@ -239,7 +239,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift",
-      "sha256": "f5ff301c4854250c045923a94eaa96f84886dfc9a1d1d09e2b382255cd3ad0ac"
+      "sha256": "d4ea4b0a34be2716df8a8b28b81fac5a6bcf6d199a04d51c06f18ba340fc9751"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
@@ -655,7 +655,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidGLTFTests/MartySolidGLTFTests.swift",
-      "sha256": "2f8aef4900bcd42c9ce4b762a496012121007fb707b8b06df90a59a2634cc4ff"
+      "sha256": "1e5545649dd71258c6220c2df1dffa866be0cb6d230e645ef0b1a680490e7231"
     },
     {
       "path": "Examples/Turbofan/Package.swift",

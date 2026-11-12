@@ -32,18 +32,21 @@ final class MartySolidGLTFTests: XCTestCase {
 
     // MARK: Independent GLB reader
 
+    /// An invalid GLB is a test FAILURE, never a skip (Sol review of 83df9c63: XCTSkip let broken output pass).
+    enum GLBError: Error { case invalid(String) }
+
     struct GLB {
         let json: [String: Any]
         let bin: Data
 
         init(_ d: Data) throws {
             func u32(_ at: Int) -> Int { Int(d[at]) | Int(d[at + 1]) << 8 | Int(d[at + 2]) << 16 | Int(d[at + 3]) << 24 }
-            guard d.count >= 28, u32(0) == 0x4654_6C67, u32(4) == 2, u32(8) == d.count else { throw XCTSkip("not a GLB 2 file") }
+            guard d.count >= 28, u32(0) == 0x4654_6C67, u32(4) == 2, u32(8) == d.count else { throw GLBError.invalid("not a GLB 2 file") }
             let jl = u32(12)
-            guard u32(16) == 0x4E4F_534A, jl % 4 == 0 else { throw XCTSkip("bad JSON chunk") }
+            guard u32(16) == 0x4E4F_534A, jl % 4 == 0 else { throw GLBError.invalid("bad JSON chunk") }
             json = try XCTUnwrap(JSONSerialization.jsonObject(with: d.subdata(in: 20..<(20 + jl))) as? [String: Any])
             let b = 20 + jl
-            guard u32(b + 4) == 0x004E_4942, u32(b) % 4 == 0, b + 8 + u32(b) == d.count else { throw XCTSkip("bad BIN chunk") }
+            guard u32(b + 4) == 0x004E_4942, u32(b) % 4 == 0, b + 8 + u32(b) == d.count else { throw GLBError.invalid("bad BIN chunk") }
             bin = d.subdata(in: (b + 8)..<(b + 8 + u32(b)))
         }
 
@@ -235,6 +238,29 @@ final class MartySolidGLTFTests: XCTestCase {
         XCTAssertTrue(used.contains("KHR_lights_punctual"))
         let lights = ((g.json["extensions"] as? [String: Any])?["KHR_lights_punctual"] as? [String: Any])?["lights"] as? [[String: Any]]
         XCTAssertEqual(lights?.map { $0["name"] as! String }, ["key", "fill", "rim"])
+    }
+
+    /// Each camera's near plane is the engine renderer's (MGSolidFraming.nearPlane at the closest frame), in metres,
+    /// so the glTF camera cuts nothing the engine shows (Sol review of 83df9c63: a fixed 0.01 m clipped small scenes).
+    func testCameraNearPlaneFollowsTheEngine() throws {
+        let (_, t, o) = try export()
+        let g = try GLB(o.glb)
+        let cams = g.array("cameras")
+        var expected: [Double] = []
+        if !t.cameras.isEmpty { expected.append(t.cameras.map(\.distance).min()!) }
+        expected += t.stills.map(\.camera.distance)
+        XCTAssertEqual(cams.count, expected.count)
+        for (cam, distance) in zip(cams, expected) {
+            let znear = try XCTUnwrap((cam["perspective"] as? [String: Any])?["znear"] as? Double)
+            XCTAssertEqual(znear, MGSolidFraming.nearPlane(distance: distance) * 0.001, accuracy: 1e-12)
+            XCTAssertGreaterThanOrEqual(znear, MGSolidFraming.nearMinimum * 0.001 - 1e-12)
+        }
+    }
+
+    func testInvalidGLBFailsInsteadOfSkipping() {
+        XCTAssertThrowsError(try GLB(Data(repeating: 0, count: 40))) { error in
+            XCTAssertTrue(error is GLBError, "an invalid GLB must raise GLBError, not XCTSkip")
+        }
     }
 
     func testRefusedDocumentsNeverReachTheExporter() throws {
