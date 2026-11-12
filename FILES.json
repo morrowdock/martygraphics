@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "6c572fc5e8b0c44264ae9f1d2b617f59e270ee6d2d9d57bd978a088f3e8762af"
+      "sha256": "7f008f5cb609fdfd9ed1f3589fd5e1c95f37e834b16a288e46f9e4e1af066a64"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1362,6 +1362,10 @@
       "sha256": "86d275df67ba367b90319ffdda0ddb9ce7223034e95a6743580d6470af359745"
     },
     {
+      "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
+      "sha256": "dae77ac1ef09de6a70262f8164b6c101ca1e7d78547b22fc76170772e341df74"
+    },
+    {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
       "sha256": "2255053a66094ca2e46f0922ce02aa17ea9811be71b557b13de38dd2110c763a"
     },
@@ -1395,39 +1399,55 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
-      "sha256": "995f46a5ad97d2cc43acbf461aef345e89df50858bcb913066ad9ea34005ea02"
+      "sha256": "a3e7923e06353ec0043651304c8010e3870dffdeb113a43b35252943871c80cd"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
-      "sha256": "f8a012207d3caee9016a3808752dc40d68b16419876fee3d2983b4f0e1ebd5bc"
+      "sha256": "b8a1b5a44b7d3543edebb07842f4f0b56f21d224b00140620f31f4d60144dfb0"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/README.md",
-      "sha256": "b79becf4732820f1ebef4c8a1d00b93a9e48aa597eb1886ea59b24e5443325cf"
+      "sha256": "38500a5ca73c7547aa9632a33f81bfff6e4ec93c5ba286f0f0dec8558561055f"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/agreement.py",
-      "sha256": "2e972d68d19940fd174fbaa5905ce6810235fb0f76d8330a8159bb91896b5998"
+      "sha256": "8dd676e135d12993fcf7e2e4170d8e91412d06e07f302ae1425e55d86000580d"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/blinding.py",
+      "sha256": "3008a855e2fdd350da7137a273d83233eee01a1108c8925e72c11ae5d1bcc93d"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/rubric_form.py",
+      "sha256": "890eedddddf6b8b1335f3cb57fbd9d5ce6661284f689bad8f57fde2a16764e74"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/score.py",
-      "sha256": "cdc885a20e7edcf798635c98f3e8ccccc188971b04594cbd836ff00f0b53ab04"
+      "sha256": "380ca913f43f8e5c0024cc12c8c65d6530b1716815c53c952f2b1d6741904ced"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/support.py",
-      "sha256": "43144caf3bc2ebc043d397cee8ab50469e0b7ad062720dfcb5343ba90f443db6"
+      "sha256": "b303f5d991c435e49e9ee9f41c9bd753d63c0b6598cbc6d7f8fa3274bd50a7ff"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_agreement.py",
-      "sha256": "01822adbcefaa5908f96f3f20a520841daf0ea95f666fecd39663d34569796b9"
+      "sha256": "35d944c4dd987ed00f6d8662a258f1465436a20ed31eac035971d4ae8a9daaa2"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_blinding.py",
+      "sha256": "eacde1c4dccfaf80cb0bad46fa8788db7f035e47bc6e4f4dd317ff8e3590281b"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_end_to_end.py",
-      "sha256": "f7e553eacf0f2cc5845dffc3cc454a5f92aab7951306ea5c471b623d9ecac30d"
+      "sha256": "2ed0d3c57d48728233b5b69e06edc4b1c4651bacd8a56fc63eeae56c45721bf0"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_rubric_form.py",
+      "sha256": "25c94fdc5627b7f83affe631686c04fd6c1bbe66226af74aeaf9b7934ac21a34"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_score.py",
-      "sha256": "0e95b0d1644981fbfca530382c83cbd4eebe0b6126537bdd3e65bc6e99904667"
+      "sha256": "4623b813e65c21f8a528c998cf250fe4aa7d4bb91bcf449b4e7c6e3b2f335b25"
     },
     {
       "path": "benchmark/mechanisms-v1/prompts/ARM2-REPAIR.txt",

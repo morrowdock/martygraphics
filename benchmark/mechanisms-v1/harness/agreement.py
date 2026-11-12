@@ -8,6 +8,11 @@
 Every function returns None when its denominator is 0 (section 11, "Zero denominators"): the caller reports the
 statistic as undefined, with its counts. Alpha and kappa are exact fractions when the inputs are integers or
 fractions; rho is a float (it needs a square root).
+
+The *_weighted functions compute the same statistics for many bootstrap resamples at once (NumPy, imported only
+when they are called): `weights` is a (resamples, items) array of how often each item is in each resample. With
+integer weights they equal the plain functions applied to the expanded data (tested). They return NaN where a
+resample's denominator is 0.
 """
 
 from fractions import Fraction
@@ -135,3 +140,87 @@ def cohen_kappa(x, y, categories, weights=None):
     if disagree_expected == 0:
         return None
     return 1 - disagree_observed / disagree_expected
+
+
+# ------------------------------------------------------------------------------------ bootstrap (NumPy) forms
+
+def _np():
+    import numpy
+    return numpy
+
+
+def alpha_interval_weighted(a, b, weights):
+    """Krippendorff's interval alpha for two coders, per resample. a, b: float arrays, NaN for a missing value.
+
+    For two coders and pairable units only, D_o = mean (a - b)^2 and D_e = 2 SS / (2N - 1), where SS is the sum of
+    squares of the 2N pooled values around their mean (the coincidence-matrix form reduced to two coders)."""
+    np = _np()
+    mask = ~(np.isnan(a) | np.isnan(b))
+    a, b, w = a[mask], b[mask], weights[:, mask]
+    units = w.sum(axis=1)
+    values = 2 * units
+    with np.errstate(divide="ignore", invalid="ignore"):
+        observed = (w @ (a - b) ** 2) / units
+        centre = (w @ (a + b)) / values
+        squares = w @ (a ** 2 + b ** 2) - values * centre ** 2
+        expected = 2 * squares / (values - 1)
+        alpha = 1 - observed / expected
+    return np.where((units >= 1) & (expected > 1e-12), alpha, np.nan)
+
+
+def spearman_weighted(a, b, weights):
+    """Spearman's rho per resample: weighted mean ranks (ties and repeated items share their mean rank)."""
+    np = _np()
+    mask = ~(np.isnan(a) | np.isnan(b))
+    a, b, w = a[mask], b[mask], weights[:, mask]
+
+    def ranks(x):
+        less = (x[None, :] < x[:, None]).astype(float)
+        equal = (x[None, :] == x[:, None]).astype(float)
+        return w @ less.T + (w @ equal.T + 1) / 2
+    ra, rb = ranks(a), ranks(b)
+    total = w.sum(axis=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ma = (w * ra).sum(axis=1) / total
+        mb = (w * rb).sum(axis=1) / total
+        da, db = ra - ma[:, None], rb - mb[:, None]
+        sab, saa, sbb = (w * da * db).sum(axis=1), (w * da * da).sum(axis=1), (w * db * db).sum(axis=1)
+        rho = sab / np.sqrt(saa * sbb)
+    return np.where((total >= 2) & (saa > 1e-12) & (sbb > 1e-12), rho, np.nan)
+
+
+def cells(pairs_per_item, k):
+    """(items, k, k) counts of rating pairs (category indices) per item; an item may hold several pairs."""
+    np = _np()
+    out = np.zeros((len(pairs_per_item), k, k))
+    for n, pairs in enumerate(pairs_per_item):
+        for i, j in pairs:
+            out[n, i, j] += 1
+    return out
+
+
+def kappa_weighted(item_cells, weights, kind=None):
+    """Cohen's kappa per resample from per-item rating-pair counts; kind None (unweighted) or "quadratic"."""
+    np = _np()
+    n, k, _ = item_cells.shape
+    counts = (weights @ item_cells.reshape(n, k * k)).reshape(-1, k, k)
+    total = counts.sum(axis=(1, 2))
+    i, j = np.meshgrid(np.arange(k), np.arange(k), indexing="ij")
+    w = (i != j).astype(float) if kind is None else ((i - j) ** 2) / float((k - 1) ** 2)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        p = counts / total[:, None, None]
+        observed = (p * w).sum(axis=(1, 2))
+        expected = (p.sum(axis=2)[:, :, None] * p.sum(axis=1)[:, None, :] * w).sum(axis=(1, 2))
+        kappa = 1 - observed / expected
+    return np.where((total > 0) & (expected > 1e-12), kappa, np.nan)
+
+
+def agreement_weighted(item_cells, weights):
+    """Percent agreement per resample from per-item rating-pair counts."""
+    np = _np()
+    n, k, _ = item_cells.shape
+    counts = (weights @ item_cells.reshape(n, k * k)).reshape(-1, k, k)
+    total = counts.sum(axis=(1, 2))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        share = np.trace(counts, axis1=1, axis2=2) / total
+    return np.where(total > 0, share, np.nan)

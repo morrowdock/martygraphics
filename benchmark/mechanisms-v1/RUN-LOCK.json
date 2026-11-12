@@ -1,23 +1,30 @@
 {
   "kind": "martygraphics.benchmark.run-lock/1",
   "benchmark": "mechanisms-v1",
-  "status": "DRAFT: not reviewed. Not valid for run 1 until the harness review passes, every item in harness/OPEN-QUESTIONS.md is decided, and every pending field below is filled.",
+  "status": "DRAFT: not reviewed. Not valid for run 1 until the harness review passes and every pending field below is filled. The decided open points are in AMENDMENTS.md.",
   "createdUTC": "2026-11-11",
   "protocol": "PROTOCOL.md section 2.1 (what RUN-LOCK.json adds) and section 11 (the primary scoring and grade-merge code is reviewed and hash-pinned here before run 1; a later change is a recorded deviation in AMENDMENTS.md)",
   "lockSha256": "1a176911a3d339804307f9c080aa6d70b81f0e915ccfb7e61bb0d30017fc3afa",
   "harness": {
     "commit": "pending: the main commit that merges the reviewed harness",
     "scoring": {
-      "harness/score.py": "cdc885a20e7edcf798635c98f3e8ccccc188971b04594cbd836ff00f0b53ab04",
-      "harness/agreement.py": "2e972d68d19940fd174fbaa5905ce6810235fb0f76d8330a8159bb91896b5998",
-      "harness/tests/support.py": "43144caf3bc2ebc043d397cee8ab50469e0b7ad062720dfcb5343ba90f443db6",
-      "harness/tests/test_score.py": "0e95b0d1644981fbfca530382c83cbd4eebe0b6126537bdd3e65bc6e99904667",
-      "harness/tests/test_agreement.py": "01822adbcefaa5908f96f3f20a520841daf0ea95f666fecd39663d34569796b9",
-      "harness/tests/test_end_to_end.py": "f7e553eacf0f2cc5845dffc3cc454a5f92aab7951306ea5c471b623d9ecac30d"
+      "harness/score.py": "380ca913f43f8e5c0024cc12c8c65d6530b1716815c53c952f2b1d6741904ced",
+      "harness/rubric_form.py": "890eedddddf6b8b1335f3cb57fbd9d5ce6661284f689bad8f57fde2a16764e74",
+      "harness/blinding.py": "3008a855e2fdd350da7137a273d83233eee01a1108c8925e72c11ae5d1bcc93d",
+      "harness/agreement.py": "8dd676e135d12993fcf7e2e4170d8e91412d06e07f302ae1425e55d86000580d",
+      "harness/tests/support.py": "b303f5d991c435e49e9ee9f41c9bd753d63c0b6598cbc6d7f8fa3274bd50a7ff",
+      "harness/tests/test_score.py": "4623b813e65c21f8a528c998cf250fe4aa7d4bb91bcf449b4e7c6e3b2f335b25",
+      "harness/tests/test_rubric_form.py": "25c94fdc5627b7f83affe631686c04fd6c1bbe66226af74aeaf9b7934ac21a34",
+      "harness/tests/test_blinding.py": "eacde1c4dccfaf80cb0bad46fa8788db7f035e47bc6e4f4dd317ff8e3590281b",
+      "harness/tests/test_agreement.py": "35d944c4dd987ed00f6d8662a258f1465436a20ed31eac035971d4ae8a9daaa2",
+      "harness/tests/test_end_to_end.py": "2ed0d3c57d48728233b5b69e06edc4b1c4651bacd8a56fc63eeae56c45721bf0"
     },
-    "python": "pending: the exact Python version used for the result",
-    "numpy": "pending: the exact NumPy version used for the effect-size bootstrap (harness/OPEN-QUESTIONS.md OQ-05)",
-    "decisions": "pending: the reviewed values of score.DECISIONS (harness/OPEN-QUESTIONS.md OQ-01 to OQ-03)"
+    "amendments": {
+      "path": "AMENDMENTS.md",
+      "sha256": "dae77ac1ef09de6a70262f8164b6c101ca1e7d78547b22fc76170772e341df74"
+    },
+    "numpy": "2.5.4",
+    "python": "pending: the exact version used for the result (3.11 or later; the result records it)"
   },
   "pendingBeforeRun1": {
     "martySolidSha256": "pending: SHA-256 of the marty-solid binary built from engine 38f3863d5ed27c94fccf44b5f117a43938b79455",
@@ -26,6 +33,7 @@
     "generatorCliSha256": "pending: SHA-256 of the Claude Code 2.1.322 binary (LOCK.json generator.cliRule)",
     "host": "pending: hardware and macOS version of the run host",
     "dryRun": "pending: the dry-run evidence (PROTOCOL.md section 2.4)",
-    "packer": "pending: the masking, normalisation and packing code and the HMAC key encoding (harness/OPEN-QUESTIONS.md OQ-09)"
+    "packer": "pending: the masking, normalisation and packing code, and the order permutation of section 8 step 4 (harness/OPEN-QUESTIONS.md OQ-13)",
+    "gradingRunner": "pending: the grading runner; it must use harness/rubric_form.py (next_step) and write RECORD.json as harness/README.md describes"
   }
 }

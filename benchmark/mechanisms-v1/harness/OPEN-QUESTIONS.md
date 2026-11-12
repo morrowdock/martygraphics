@@ -1,117 +1,89 @@
 # Open questions: mechanisms-v1 harness
 
-Status: **open, 2026-11-11.** These are places where [PROTOCOL.md](../PROTOCOL.md) and [RUBRIC.md](../RUBRIC.md) leave
-a choice to the scoring code. The harness does not choose silently. Each item names the options and the
-**provisional** choice in [score.py](score.py) (the `DECISIONS` table, or the named function). This file changes no
-question, key fact, check, prompt, rubric or protocol text. The owner's review decides every item before
-[RUN-LOCK.json](../RUN-LOCK.json) stops being a draft. If an answer needs a protocol change, it goes to
-`AMENDMENTS.md` under section 13 (before run 1, only what section 13 allows) or to a `mechanisms-v2`.
+Status: **OQ-01 to OQ-12 decided, 2026-11-11, before run 1** (by the coordinator, following the independent review at
+`58d23865`). The decisions and their labels are in [AMENDMENTS.md](../AMENDMENTS.md). **OQ-13 is still open**; it is a
+packer question with no effect on the scoring code. This file records the options that were considered. It changes
+no question, key fact, check, prompt, rubric or protocol text.
 
-Items OQ-01 to OQ-04 can change a run score. OQ-05 can change only the reported interval. The other items change
-reporting or input handling only; none can change the primary verdict.
+Each item names what it can change. The four effect classes are kept apart:
 
-## Can change a score
+- **run score:** the merged mechanism score, errors, coverage, clarity or defects of one run;
+- **aggregate:** a mean, rate or count over runs or questions (including M(q, a) and d(q));
+- **interval:** a bootstrap interval only;
+- **verdict eligibility:** whether the result may carry the registered verdict, not what the verdict is.
 
-**OQ-01. Which core facts are "applicable" in one grader's coverage fraction?** Section 10 (b) divides covered
-applicable core facts by applicable core facts. RUBRIC.md has the grader name a configuration and also list
-`notApplicableFacts`. The two can disagree.
+| Item | Can change | Decision | Amendment |
+| --- | --- | --- | --- |
+| OQ-01 applicable core facts | run score (coverage) | A: from the named configuration | A-01, score-affecting |
+| OQ-02 E_fail without a graded output | run score (errors), aggregate | B: undefined, left out, counted | A-02, score-affecting |
+| OQ-03 the rubric's form | run score (which grade is stored) | strict form with evidence; identity from the mapping; missing only when exhausted | A-03 conformance; A-03b score-affecting |
+| OQ-04 N/A under the conventional configuration | run score (mechanism) | C: invalid, retried | A-04, conformance |
+| OQ-05 primary bootstrap | interval | the provisional algorithm; NumPy required and pinned | A-05, no score effect |
+| OQ-06 agreement bootstrap | interval | section 11 settings; outputs as items; pairs for the preference kappa | A-06, no score effect |
+| OQ-07 completed design | verdict eligibility | a dated completion and call record | A-07, no score effect |
+| OQ-08 FAIL against NOT SHOWN | nothing | NOT PASS; raw judgments kept | A-08, no score effect |
+| OQ-09 HMAC encoding | nothing in the scoring | 32 raw seed bytes, UTF-8 messages, test vectors | A-09, no score effect |
+| OQ-10 HASHES.txt wording | nothing | the registration snapshot | A-10, no score effect |
+| OQ-11 exploratory analyses | aggregate (coverage), exploratory estimates | coverage = mean of per-run fractions; the rest completed in this pull request | A-11a score-affecting; A-11b no score effect |
+| OQ-12 no sign-test sample | nothing (no conclusion either way) | p = 1 with an explicit empty-sample report | A-12, no score effect |
+| OQ-13 order permutation | nothing in the scoring | **open** (packer) | — |
 
-- A (provisional, `DECISIONS["applicableCoreFacts"] = "configuration"`): the core facts whose `appliesTo` holds `all`
-  or the configuration the grader names (`unclear` or an unknown name counts as `conventional`, as the rubric says).
-  The grader's `notApplicableFacts` list is checked against it, and a difference is a warning. Section 10's sentence
-  "Every configuration in the key has at least 2 applicable core facts" only guards the denominator under this
-  reading.
-- B (`"grader-list"`): all core facts minus the ones the grader lists in `notApplicableFacts`. A grader could then
-  make the denominator 0 by listing every core fact.
+## The options that were considered
+
+**OQ-01. Which core facts are applicable in one grader's coverage fraction?**
+- A: the facts for the configuration the grader names. **Chosen.**
+- B: the core facts minus the grader's `notApplicableFacts`.
 - C: the intersection of A and B.
 
-In every option only applicable core facts enter the numerator. A non-core, unknown or N/A id in `coveredFacts` is
-ignored and raises a warning.
+Under A, every covered fact that the fraction ignores gets a warning. Unknown or non-core ids in `coveredFacts` make
+the reply invalid (A-03), so they are never silently ignored.
 
-**OQ-02. E_fail(q) when question q has no graded output in either arm** (all 6 runs failed or ungraded). Section 11:
-1 + the largest merged error count of any graded output of q, and that set is empty.
+**OQ-02. E_fail(q) when q has no graded output.**
+- A: E_fail(q) = 1.
+- B: undefined. **Chosen.**
 
-- A (provisional, `efailWithoutGradedOutput = 1`): the largest count over no output is 0, so E_fail(q) = 1.
-- B (`None`): E_fail(q) is undefined, and those failed runs leave the error means (reported).
+**OQ-03. "Valid JSON in the rubric's form".** The alternatives were:
+- a looser form without evidence;
+- stopping the analysis on a stored invalid reply.
 
-This affects only the exploratory error analyses, never the mechanism score.
+Chosen: the strict form, including evidence and identity. A grade counts as missing only after the section 6
+attempts are recorded (exhausted). The rubric conflicts with itself on the evidence for a CANNOT JUDGE (general rule
+5 against its own example and definition); that is resolved in A-03b.
 
-**OQ-03. What is "valid JSON in the rubric's form" (section 6), and what does a stored invalid reply mean?** The
-grading runner must use the same validator for its retry loop (one fix-up message, then up to 2 new sessions).
+**OQ-04. N/A under the conventional configuration.**
+- A: accept it, with a warning.
+- B: count it as unjudged.
+- C: treat the reply as invalid. **Chosen.**
 
-- Form (provisional, `validate_score_reply`): an object with every key the rubric's example shows (`question`,
-  `output`, `configuration`, `mechanism`, `errors`, `unsure`, `coveredFacts`, `notApplicableFacts`, `clarity`,
-  `clarityReason`, `defects`) with the right JSON types; `question` equals the packet's question id; `M1` to `M5`
-  each one of the five results, with `CANNOT JUDGE` only on `M3` and `M4`; every error has a type `K`, `N`, `L` or
-  `O`; every defect has a type `D1` to `D6` and a severity `major` or `minor`; `clarity` an integer from 1 to 5 (not
-  `4.0`, not `true`). **Not** required: the `evidence` texts of rule 5, the error and defect `time` and text fields.
-  Extra keys are allowed. Contradictions (a fact both covered and N/A, unknown fact ids) are warnings, not invalid.
-  The alternative is a stricter form that also requires evidence for every FAIL, CANNOT JUDGE, error and defect.
-- Stored invalid reply (provisional, `invalidStoredReply = "missing"`): the final stored reply of a grader that is
-  still invalid is a missing grade, as section 6 says after the third session, and it is listed in `invalidGrades`.
-  The alternative is to stop the analysis, so that a runner that skipped its retries cannot pass unnoticed.
-- The output token in a reply is not checked against the seed (score.py works on unblinded file names). The
-  alternative is to require the seed and recompute it (see OQ-09).
+**OQ-05. Primary bootstrap.** The alternatives were the draw (`rng.choice` or separate calls), the percentile
+method, one shared generator, and running without NumPy. Chosen: `rng.integers`, linear percentile, a fresh
+generator per analysis, and NumPy pinned.
 
-**OQ-04. A check answered N/A while the grader names the conventional configuration.** RUBRIC.md allows N/A only when
-the explainer shows an accepted variant, and every check of a question without variants applies.
+**OQ-06. Agreement bootstrap.** The alternative was a new stated seed, or checks as items. Chosen: the section 11
+settings, with outputs (and pairs) as items.
 
-- A (provisional): take the answer as given (N/A leaves the numerator and the denominator) and report a warning.
-- B: report it as unjudged instead of N/A. The score is the same as in A; only the reported counts differ.
-- C: treat the reply as not in the rubric's form (OQ-03), which starts the retry loop.
+**OQ-07. Completed design.** The alternative was an operator attestation flag. Chosen: the dated record, verified.
 
-## Can change only the reported interval
+**OQ-08.** The alternative was FAIL ranked stricter than NOT SHOWN. Chosen: NOT PASS (no score effect).
 
-**OQ-05. The effect-size bootstrap (section 11).** "Resample the questions with replacement, 10 000 resamples, NumPy
-`default_rng(20261111)`" leaves open:
+**OQ-09.** The alternative was the 64-character hex string as the key. Chosen: the 32 raw bytes.
 
-- the draw (provisional: `rng.integers(0, n, size=(10000, n))`; alternatives `rng.choice(values, size=(10000, n))`
-  or 10 000 separate calls, each a different stream of numbers);
-- the percentile method (provisional: `np.percentile(means, [2.5, 97.5])` with NumPy's default linear method);
-- the population (provisional: the defined d(q), zeros included; it is the same set as the reported mean);
-- one generator per analysis (provisional: a fresh `default_rng(20261111)` for each of the primary analysis, the
-  sensitivity analysis and each exploratory analysis) or one shared stream in a fixed order;
-- NumPy itself. It is the only non-standard-library dependency. Without it, score.py reports the interval as "not
-  computed" and every other number is the same. RUN-LOCK.json must pin the NumPy version used for the result.
+**OQ-10.** The alternative was to edit HASHES.txt. Chosen: keep HASHES.txt as the registration snapshot, with a
+clarification.
 
-## Reporting and input handling only
+**OQ-11.** The alternatives were a pooled coverage ratio, and leaving analyses for a later pull request. Chosen: the
+mean of per-run fractions, and everything completed here.
 
-**OQ-06. Bootstrap intervals for the agreement statistics (section 10).** "Each with a 95 % bootstrap interval over
-items" names no seed, no resample count and no item for the check statistics (output or check). Provisional: the point
-estimates are computed and the intervals are reported as not computed. Options: the section 11 settings
-(10 000, `default_rng(20261111)`) with outputs as items, or a new stated seed.
+**OQ-12.** The alternative was p undefined. Chosen: p = 1 with an explicit empty-sample report.
 
-**OQ-07. The completed-design condition (section 11).** The 21-day limit, "every grading call made under section 6"
-and a withdrawn model cannot be read from the grade files. Provisional: the verdict is withheld unless the operator
-passes `--attest-within-21-days`; missing run slots and more than 5 % ungraded rendered outputs are checked from the
-data (exactly 5 % still allows the verdict: "more than"). Option: a dated record file (run 1 start, last grading call,
-grading-call log) that score.py checks instead of an attestation flag.
+## Still open
 
-**OQ-08. The merged result of two judged checks that are not both PASS.** Section 10 says "stricter wins", but does not
-order FAIL and NOT SHOWN. Only PASS against not PASS enters the score. Provisional: the merged state is `NOT PASS`, and
-both raw grades are kept per grader. Option: FAIL is stricter than NOT SHOWN. No score effect.
+**OQ-13. The order permutation of section 8, step 4.** "Each grader's order of calls is a permutation from
+HMAC-SHA256(seed, "order:" + grader id)" does not say how a digest becomes a permutation. Two possible
+constructions:
 
-**OQ-09. The HMAC inputs of section 8** (for the packer, not for score.py). "HMAC-SHA256(seed, ...)" does not say
-whether the key is the 64-character hex string (as ASCII bytes) or the 32 raw bytes, and does not name the message
-encoding (UTF-8 is the obvious one). score.py takes the arm sides from the committed mapping (`pair-sides.csv`), so
-it is not affected. The packer must fix one choice and publish it with RUN-LOCK.json.
+- seed `random.Random` with the digest as a big-endian integer, then shuffle the sorted call list;
+- sort the calls by HMAC(seed, "order:<grader>:<call id>").
 
-**OQ-10. HASHES.txt says "SHA-256 of every other file in this folder."** This pull request adds `harness/`,
-`RUN-LOCK.json` and this file to the folder, and does not edit HASHES.txt, which is a registration file. `shasum -a 256
--c HASHES.txt` still passes. RUN-LOCK.json pins the harness files. Options: leave HASHES.txt as the registration
-record (provisional), or record an `AMENDMENTS.md` entry that says the sentence means the registration files.
-
-**OQ-11. Exploratory analyses that are not implemented yet.** Section 11 says "the analysis script lands with the
-harness and is tested on synthetic data before run 1". This pull request implements the primary analysis, the
-sensitivity analysis, per-arm counts (CANNOT JUDGE, unjudged and N/A per check; configurations and their agreement;
-ungraded, failed, mechanism N/A and coverage N/A lists), success rates, pooled per-arm means, question-level
-differences for errors, clarity and coverage, preference win rates (graded, and with automatic preferences), the
-primary analysis for each grader alone and the agreement point estimates. **Not yet:** errors only on pairs where
-both rendered (1), the question-level winner by pair wins (2), question-level defect means (4), per-question success
-rates (5), cost of the route (8), the per-category table (9), the blinding check and its binomial test (11), and the
-optional generator and human graders (12). Options: a follow-up pull request before run 1 (a separate analysis
-module, so that the pinned primary code stays unchanged), or this pull request. Coverage (6) is a mean of per-run
-fractions here; the alternative is a pooled ratio (all covered over all applicable).
-
-**OQ-12. No question with a defined d(q).** Provisional: p = 1 (vacuously "every defined d(q) is 0"), mean
-undefined, no conclusion. Section 11 would make such a result descriptive in practice.
+This belongs to the packer and must be fixed, with test vectors, before packing. It cannot change a score: every
+call is made, and each call is a fresh session.

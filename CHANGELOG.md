@@ -3,14 +3,23 @@
 ## Unreleased
 
 - **Benchmark harness: scoring and analysis (draft for review).** `benchmark/mechanisms-v1/harness/` adds the
-  primary scoring and grade-merge code that the protocol requires before run 1: the per-check merge of the two
-  graders, the mechanism score (N/A when no check is judged), coverage, errors, clarity and defects, failed-run
-  scores with E_fail(q), ungraded outputs listed and left out, M(q, a) and the exact sign test with the
-  15-of-20 boundary, all in exact fractions. `agreement.py` adds Krippendorff's alpha (interval), Spearman's rho and
-  Cohen's kappa, tested against published values. Python standard library only (NumPy only for the bootstrap
-  interval). The tests use synthetic data only. `RUN-LOCK.json` is a draft with the harness hashes, and
-  `harness/OPEN-QUESTIONS.md` lists 12 places where the protocol leaves a choice open, for the owner to decide.
-  No question, key fact, check, prompt, rubric or protocol text changed, and nothing outside `benchmark/` changed
+  primary scoring and grade-merge code that the protocol requires before run 1, and the whole analysis plan:
+  - the per-check merge of the two graders;
+  - the mechanism score (N/A when no check is judged), coverage, errors, clarity and defects;
+  - failed-run scores with E_fail(q) (undefined without a graded output);
+  - ungraded outputs, listed and left out;
+  - M(q, a) and the exact sign test with the 15-of-20 boundary, all in exact fractions;
+  - every exploratory analysis and the agreement statistics, with their bootstrap intervals.
+
+  One validator (`rubric_form.py`) defines a valid grader reply for both the grading runner and the scorer. That
+  covers the evidence rules, conventional-configuration N/A, reply identity from the published mapping, and the
+  section 6 attempts. A dated `RECORD.json` of every grading attempt and the run timing decides whether a result may
+  carry the registered verdict. `agreement.py` is tested against published values.
+
+  NumPy is required at the version RUN-LOCK.json pins (2.5.4); everything else is the standard library. The tests
+  use synthetic data only. `RUN-LOCK.json` is a draft with the harness hashes. `AMENDMENTS.md` records the decided
+  open points with honest labels, and `harness/OPEN-QUESTIONS.md` records the options that were considered. No
+  question, key fact, check, prompt, rubric or protocol text changed, and nothing outside `benchmark/` changed
   except this file and `FILES.json`.
 - **`studio` is the default look, and live views draw its backdrop (pixels only).** `marty-solid render`,
   `MGSolidRenderer` and the explainer view now use `studio` unless told otherwise; pass `--look classic` (or

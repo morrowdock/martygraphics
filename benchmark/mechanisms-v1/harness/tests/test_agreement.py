@@ -116,5 +116,82 @@ class KappaTest(unittest.TestCase):
             agreement.cohen_kappa(["y"], ["maybe"], ["y", "n"])
 
 
+class WeightedFormsTest(unittest.TestCase):
+    """The bootstrap (weighted) forms equal the plain functions on the expanded data, row by row."""
+
+    @classmethod
+    def setUpClass(cls):
+        import numpy as np
+        import random
+        cls.np = np
+        rng = random.Random(7)
+        cls.a = [rng.choice([0, 1, 2, F(5, 3), 3, 5, None]) for _ in range(14)]
+        cls.b = [rng.choice([0, 1, 2, F(10, 3), 4, 5, None]) for _ in range(14)]
+        cls.rows = [[rng.randint(0, 3) for _ in range(14)] for _ in range(6)] + [[1] * 14, [5] + [0] * 13]
+
+    def expand(self, row, *columns):
+        return [[c[i] for i, w in enumerate(row) for _ in range(w)] for c in columns]
+
+    def floats(self, values):
+        return self.np.array([self.np.nan if v is None else float(v) for v in values])
+
+    def test_alpha(self):
+        weights = self.np.array(self.rows, dtype=float)
+        got = agreement.alpha_interval_weighted(self.floats(self.a), self.floats(self.b), weights)
+        for row, value in zip(self.rows, got):
+            x, y = self.expand(row, self.a, self.b)
+            expected = agreement.krippendorff_alpha(list(zip(x, y)), "interval")
+            if expected is None:
+                self.assertTrue(self.np.isnan(value))
+            else:
+                self.assertAlmostEqual(value, float(expected), places=10)
+
+    def test_spearman(self):
+        weights = self.np.array(self.rows, dtype=float)
+        got = agreement.spearman_weighted(self.floats(self.a), self.floats(self.b), weights)
+        for row, value in zip(self.rows, got):
+            x, y = self.expand(row, self.a, self.b)
+            expected = agreement.spearman_rho(x, y)
+            if expected is None:
+                self.assertTrue(self.np.isnan(value))
+            else:
+                self.assertAlmostEqual(value, expected, places=10)
+
+    def test_kappa_and_agreement(self):
+        cats = [1, 2, 3, 4, 5]
+        x = [1, 2, 2, 3, 5, 4, 4, 1, 3, 5]
+        y = [1, 3, 2, 3, 4, 4, 5, 2, 3, 5]
+        item_cells = agreement.cells([[(cats.index(a), cats.index(b))] for a, b in zip(x, y)], 5)
+        rows = [r[:10] for r in self.rows]
+        weights = self.np.array(rows, dtype=float)
+        for kind in (None, "quadratic"):
+            got = agreement.kappa_weighted(item_cells, weights, kind)
+            for row, value in zip(rows, got):
+                ex, ey = self.expand(row, x, y)
+                expected = agreement.cohen_kappa(ex, ey, cats, weights=kind) if ex else None
+                if expected is None:
+                    self.assertTrue(self.np.isnan(value))
+                else:
+                    self.assertAlmostEqual(value, float(expected), places=10)
+        got = agreement.agreement_weighted(item_cells, weights)
+        for row, value in zip(rows, got):
+            ex, ey = self.expand(row, x, y)
+            self.assertAlmostEqual(value, float(agreement.percent_agreement(ex, ey)), places=12)
+
+    def test_several_pairs_per_item(self):
+        pairs = [[(0, 0), (0, 1)], [(1, 1)], [], [(1, 0), (0, 0), (1, 1)]]
+        item_cells = agreement.cells(pairs, 2)
+        got = agreement.kappa_weighted(item_cells, self.np.array([[1, 2, 5, 1]], dtype=float))[0]
+        flat = [p for p in pairs[0]] + [p for p in pairs[1]] * 2 + [p for p in pairs[3]]
+        expected = agreement.cohen_kappa([a for a, _ in flat], [b for _, b in flat], [0, 1])
+        self.assertAlmostEqual(got, float(expected), places=12)
+
+    def test_undefined_rows_are_nan(self):
+        weights = self.np.array([[0, 0, 0], [3, 0, 0]], dtype=float)
+        values = self.np.array([1.0, 2.0, 3.0])
+        self.assertTrue(self.np.isnan(agreement.alpha_interval_weighted(values, values, weights)).all())
+        self.assertTrue(self.np.isnan(agreement.spearman_weighted(values, values, weights)).all())
+
+
 if __name__ == "__main__":
     unittest.main()
