@@ -88,16 +88,27 @@ class ScoreFormTest(unittest.TestCase):
         self.assertEqual(problems(fail("t=6.0 s: the gears are on different shafts")), [])
         self.assertEqual(problems(fail("still-3 shows a gap")), [])
         # A location alone is not evidence: rule 5 asks for the place AND one sentence (re-check 2026-11-12).
-        for bare in ("6.0 s", "still-3", "t=6.0 s", "  12 s  ", "still 2, 4.5 s",
-                     "still-3.png", "6.0 s bad", "see still-2.png", "frames/still-4.jpg 7 s"):
+        refused = ("6.0 s", "still-3", "t=6.0 s", "  12 s  ", "still 2, 4.5 s", "t=6.0 s, t=7.0 s", "T = 6 s",
+                   "still-3.png", "see-still-2.png 4 s", "frames/still-4.jpg 7 s", '6.0 s: "frames/gear contact shot.png"',
+                   "6.0 s 🙂", "6.0 s 123 456", "6.0 s ... !!")
+        for bare in refused:
             with self.subTest(evidence=bare):
                 self.assertTrue(problems(fail(bare)))
-        # Any script: Devanagari combining marks stay inside a word; Han and kana count from three characters.
-        for sentence in ("6.0 s: गियर नहीं घूमता।", "6.0 s : l'engrenage ne tourne pas", "6.0 s：齿轮不转",
-                         "6.0 s: الترس لا يدور", "still-3：歯車が回らない", "still-3.png shows a gap",
-                         "6.0 s: gears slip"):
+        # Any script, and one-word sentences (A-13): the validator checks there is evidence, not its style.
+        accepted = ("6.0 s: गियर नहीं घूमता।", "6.0 s : l'engrenage ne tourne pas", "6.0 s：齿轮不转",
+                    "6.0 s：齿轮没有转动（still-3.png）。", "6.0 s: الترس لا يدور", "6.0 s: يصطدمان.", "4 s: Chocan.",
+                    "still-3：歯車が回らない", "still-3.png shows a gap", "t=6.0 s bad", "6.0 s: gears slip")
+        for sentence in accepted:
             with self.subTest(evidence=sentence):
                 self.assertEqual(problems(fail(sentence)), [])
+
+    def test_evidence_check_is_fast_on_long_text(self):
+        import time
+        for text in ("6.0 s " + "a" * 1_000_000, "6.0 s " + "a." * 500_000, '6.0 s "' + "b" * 1_000_000):
+            started = time.monotonic()
+            problems(lambda r: r["mechanism"].update(M2="FAIL", evidence={"M2": text}))
+            self.assertLess(time.monotonic() - started, 3.0)
+
         self.assertTrue(problems(lambda r: r["mechanism"].update(M3="CANNOT JUDGE", evidence={})))
         self.assertEqual(problems(lambda r: r["mechanism"].update(M3="CANNOT JUDGE",
                                                                   evidence={"M3": "too fast"})), [])

@@ -46,35 +46,37 @@ def _text(value):
     return isinstance(value, str) and value.strip() != ""
 
 
-# Words of evidence (rule 5) are counted after the still, time and file-name references are removed. A word is a
-# run of letters and combining marks (so Devanagari vowel signs do not split a word). Scripts that are written
-# without spaces between words (Han, kana, Thai, Lao, Khmer, Myanmar) count as a sentence from 3 such characters.
-FILE_REF = re.compile(r"\S*\.(?:png|jpe?g|webp|gif|tiff?|bmp|mp4|mov|webm|json|txt)\b", re.IGNORECASE)
-NO_SPACE_SCRIPTS = ("CJK", "HIRAGANA", "KATAKANA", "THAI", "LAO", "KHMER", "MYANMAR")
+# Rule 5 evidence (A-13): after the still, time and file references are removed, at least one word must remain.
+# A word is a run of Unicode letters and combining marks, so every script counts (Devanagari vowel signs stay
+# inside their word). Whether that text is a good sentence is for the grader and the audit, not this validator.
+EXT = r"(?:png|jpe?g|webp|gif|tiff?|bmp|mp4|mov|webm|json|txt)"
+FILE_REF = re.compile(
+    r'"[^"\n]*\.' + EXT + r'"|\'[^\'\n]*\.' + EXT + r"'|\u201c[^\u201d\n]*\." + EXT + r"\u201d"
+    # An unquoted path is ASCII and starts at a token boundary: adjacent prose in any script is kept, and the scan
+    # stays linear on long text.
+    r"|(?<![A-Za-z0-9_./\\-])[A-Za-z0-9_./\\-]+\." + EXT + r"(?![A-Za-z0-9])", re.IGNORECASE)
+TIME_PREFIX = re.compile(r"(?<![A-Za-z])t\s*=\s*(?=\d)", re.IGNORECASE)
 
 
 def _words(text):
-    words, current, unspaced = [], "", 0
+    words, current = [], ""
     for char in text + " ":
         category = unicodedata.category(char)
         if category[0] == "L" or (category[0] == "M" and current):
             current += char
-            if category[0] == "L" and unicodedata.name(char, "").startswith(NO_SPACE_SCRIPTS):
-                unspaced += 1
         else:
             if current:
                 words.append(current)
             current = ""
-    return words, unspaced
+    return words
 
 
 def _evidence(value):
-    """A still or time AND a sentence (rule 5: "the still or the frame time and one sentence of evidence"):
-    at least two words, or three characters of a script written without spaces, beyond the references."""
+    """A still or time AND evidence beyond it (rule 5; A-13 says how much the validator can check)."""
     if not (_text(value) and WHERE.search(value)):
         return False
-    words, unspaced = _words(WHERE.sub(" ", FILE_REF.sub(" ", value)))
-    return len(words) >= 2 or unspaced >= 3
+    rest = WHERE.sub(" ", TIME_PREFIX.sub(" ", FILE_REF.sub(" ", value)))
+    return len(_words(rest)) >= 1
 
 
 def parse(text):

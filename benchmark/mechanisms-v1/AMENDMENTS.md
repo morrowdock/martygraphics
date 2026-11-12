@@ -159,10 +159,12 @@ fixed before run 1, so they are not deviations:
 - *Malformed fact ids.* rubric_form.py raised `TypeError` for unhashable entries in `coveredFacts`,
   `notApplicableFacts` or an error's `keyFact`, so the retry workflow never saw the reply. These are now validation
   problems, which `next_step` handles as any other invalid reply.
-- *Evidence.* A FAIL with only a still or a time (for example `"6.0 s"`) was accepted. RUBRIC.md rule 5 and A-03 ask
-  for the place **and** one sentence. The validator now needs a still or time plus a sentence: after the still,
-  time and file-name references (for example `still-3.png`) are removed, at least two words remain, or at least
-  three characters of a script written without spaces (Han, kana, Thai, Lao, Khmer, Myanmar). A word is a run of
-  letters and combining marks, so scripts such as Devanagari count correctly.
+- *Evidence.* A FAIL with only a still or a time (for example `"6.0 s"`) was accepted. RUBRIC.md rule 5 asks for
+  the place **and** one sentence of evidence. A program cannot decide in every language whether a text is a good
+  sentence (`Chocan.` and `يصطدمان.` are one-word sentences), so this is the machine rule: after the still and time
+  references (with an optional `t=`) and file references (`still-3.png`, `frames/x.jpg`, quoted paths) are removed,
+  at least **one word** must remain. A word is a run of Unicode letters and combining marks, in any script. Emoji,
+  numbers and punctuation alone are refused. Whether the evidence is a good sentence (for example `"6.0 s bad"` is
+  accepted by the validator) is left to the grader instructions and the audit; it is not a validity test.
 
 *Effect:* stricter validation and timing only; scoring arithmetic is unchanged. The scoring hashes below are updated.
