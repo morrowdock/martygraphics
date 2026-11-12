@@ -284,3 +284,26 @@ Effect: evidence transport and isolation can affect grades; no claim of zero
 score effect is made. Arithmetic is unchanged. New hashes are proposed only
 under `RUN-LOCK.json.draftProposals.liveAdapters`; existing accepted/draft
 historical pins are not silently replaced. RUN-LOCK remains DRAFT.
+
+### A-15 correction — native G1 no-tool policy (PROPOSED; 2026-11-12)
+
+Baseline: `d6b1cb0ab0a56a4caa2d787c4f3d4e6b3f5b43b4`. Source:
+`harness/LIVE-ADAPTERS.md`, native Codex 0.167.2 offline diagnostics and the
+upstream `rust-v0.167.2` model/tool implementation cited there.
+
+**VERIFIED offline:** the original feature-only configuration still exposed
+eleven tool definitions, including delegation, execution, user-input and sleep.
+Its no-tool claim is superseded. The correction uses explicit disable switches
+plus a static G1 catalog that removes model-metadata tool overrides. All other
+bundled model metadata is retained. Native preflight and regression tests
+require the exact allowed tool-definition set `[]` before a model request.
+Diagnostic subprocesses have no network or auth. They use the same effective
+configuration, environment and filesystem sandbox as the adapter; documented
+debug/exec transport-only differences do not select model tools.
+
+No protocol tool exception is requested: packet contents are attached by the
+driver. This configuration change can affect model behavior, so its acceptance
+is **PENDING**, not an assertion of zero score effect. Fresh homes, durable
+transport, exact-session fix-up, uncertain-call refusal and the G2 blocker
+remain. No model prompt or quota was used. The protocol, registered keys and
+accepted pins are unchanged. RUN-LOCK remains DRAFT.

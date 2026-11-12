@@ -61,10 +61,10 @@
       "status": "PROPOSED 2026-11-12: review pending; G2 UNVERIFIED and disabled; not approved run pins",
       "baseCommit": "9e95ad3d69a54bce75b1a86d5b136734fb3ddb84",
       "amendment": "A-15 (proposed); OQ-14 remains open",
-      "source": "harness/LIVE-ADAPTERS.md; local native --help/--version output on 2026-11-12",
+      "source": "harness/LIVE-ADAPTERS.md; native offline help/version, debug models and debug prompt-input on 2026-11-12",
       "toolObservations": {
         "G1": {
-          "status": "VERIFIED version/help only; real-model acceptance PENDING",
+          "status": "VERIFIED native offline version and empty tool definitions; real-model acceptance PENDING",
           "version": "codex-cli 0.167.2",
           "model": "gpt-6.1-sol",
           "effort": "high",
@@ -78,14 +78,14 @@
           "binarySha256": "7e5bbdcbf689354300500ba22d55c2ff1497e185ae18407325d480577a87db5d"
         },
         "bubblewrap": {
-          "status": "VERIFIED with fake CLIs only",
+          "status": "VERIFIED with fake CLIs and network-unshared native Codex diagnostics",
           "version": "0.13.1"
         }
       },
-      "validation": "Original synthetic fixtures and fake CLIs only. No benchmark input or model prompt dispatched. Real-model self-test NOT RUN. Existing historical pins above are retained.",
+      "validation": "VERIFIED 2026-11-12: NumPy 2.5.4; harness 187 tests (184 passed, 3 macOS-only skips); tools 52 passed. Native G1 tests ran, not skipped. No credentials or model request. Real-model acceptance PENDING. Historical pins above are retained.",
       "files": {
-        "harness/grading_runner.py": "f7a163576000b2c269526df13fc7dc35eacffb814da869537be689696b72e95c",
-        "harness/tests/test_runner_recovery.py": "a890ddd05e315f79488cc9237ed8d9e3b11dd34b3d9559e7ae9d9e9e4078a6e7",
+        "harness/grading_runner.py": "1085435c5f9e6e119be5ccea569a4fb4956e6b07fc45d4fed8f0760e30fc0416",
+        "harness/tests/test_runner_recovery.py": "83b739e4464d9cbd91aabb42d2dd921f96f4a8f6b7a48d90f0ac2dceb51e0a09",
         "harness/tests/support.py": "c0d1555a7d64ddf77ab8452705a48de07bb99a5eee28165224c6ef7a3203815b",
         "harness/tests/test_end_to_end.py": "99cce9a6f281bb1f8aec7b7d1534e8e28b1cd583faa24ec6dd20d54e1eb0d907",
         "harness/tests/test_rubric_form.py": "25f773a356b2e9450581ba93b405975609ae190921bd88490f0d4ca872f84b14",
@@ -93,8 +93,22 @@
         "harness/README.md": "66c11ae4a4af861e00c0a32a3d6040b9b72963b7adf7aa621caa12e8595486a0",
         "harness/PACKING.md": "425f60660c2514d3ff17f6f61370abcfc4d97a231dc7fe0b148c621a9c6e9b51",
         "harness/OPEN-QUESTIONS.md": "d7f2d555f5069466bea42042c2ccf82af599cae973009191dc604f9ad4fded2c",
-        "harness/LIVE-ADAPTERS.md": "c4e590a50a041bf5b8794fea41b804833da3b5b8407243bee481c6ba4b6c086c",
-        "AMENDMENTS.md": "dcfe2e87943105775dce4c422886b5a5539f2796749cb9f0c3ad22a86cfd7b64"
+        "harness/LIVE-ADAPTERS.md": "e13272e20b69479e13cba86560aa9063bc8244d4c065d2399eccc8e2d21ef54a",
+        "AMENDMENTS.md": "8940cfa2f054d2737266b9a3148af7fb15c058054ddb5ef7f56f04b0d13170de"
+      },
+      "noToolsCorrection": {
+        "status": "PROPOSED 2026-11-12: independent review pending; native offline tool set VERIFIED",
+        "reviewedHead": "d6b1cb0ab0a56a4caa2d787c4f3d4e6b3f5b43b4",
+        "rebasedMain": "b45439311ad732652002a26145f86dea46469c93",
+        "allowedToolDefinitions": [],
+        "modelMetadataPolicy": {
+          "tool_mode": "direct",
+          "multi_agent_version": null,
+          "experimental_supported_tools": [],
+          "apply_patch_tool_type": null
+        },
+        "boundary": "Exact shared exec/resume -c configuration and ENV in the same filesystem sandbox; diagnostic verb replaces exec transport flags and disables network. Codex debug does not support --strict-config. See LIVE-ADAPTERS.md.",
+        "G2": "UNVERIFIED; dispatch remains DISABLED"
       }
     }
   }

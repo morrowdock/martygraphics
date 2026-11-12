@@ -30,7 +30,8 @@ Codex documents `exec`, `--model`, `--json`, `--image`,
 `--output-last-message`, `--ignore-user-config`, `--ignore-rules`,
 `--strict-config`, `--skip-git-repo-check`, and `exec resume <session-id>`.
 The fresh command selects `gpt-6.1-sol`, `model_reasoning_effort="high"`, and
-`--sandbox read-only`. It reads the prompt from stdin (`-`). Fix-up uses the
+`sandbox_mode="read-only"` through the shared `-c` configuration. It reads the
+prompt from stdin (`-`). Fix-up uses the
 exact stored UUID, not `--last`, `fork`, a thread name, or a new session.
 Resume is a new turn in a **completed** conversation, not a way to query or
 retry an outstanding request. There is no blind recovery send.
@@ -42,11 +43,80 @@ Official references checked on 2026-11-12:
 - https://developers.openai.com/codex/config-schema.json
 
 The schema documents the web, memory, skills and tool feature switches used
-in `CODEX_CONFIG`. Live compatibility of their combined effect remains
-**pending**. Help and a version query do not verify model availability,
+in `CODEX_CONFIG`. The initial feature-only configuration was insufficient;
+the native correction below supersedes its tool-disable claim. Help and a
+version query do not verify model availability,
 image fidelity, backend settings, session persistence or isolation against
 a real model. The adapter uses strict config parsing and fails on unknown
 transport events instead of guessing.
+
+## Native no-tool correction (PROPOSED; 2026-11-12)
+
+Baseline reviewed: `d6b1cb0ab0a56a4caa2d787c4f3d4e6b3f5b43b4`.
+**VERIFIED offline** with native `codex-cli 0.167.2`: the original adapter
+configuration exposed these exact tool definitions, not just instructions:
+
+```text
+clock.sleep
+collaboration.followup_task
+collaboration.interrupt_agent
+collaboration.list_agents
+collaboration.send_message
+collaboration.spawn_agent
+collaboration.wait_agent
+functions.exec
+functions.request_user_input
+functions.request_user_input_async
+functions.wait
+```
+
+The corrected exact allowed definition set is **`[]`**. Packet text and
+images are supplied by the adapter, so no packet-reading tool is necessary.
+No exception to PROTOCOL section 9 is proposed.
+
+`agents.enabled=false` and the V2, code-mode-only, sleep, user-input and plan
+switches are explicit. Feature flags alone are not sufficient. The bundled
+G1 metadata selects `tool_mode=code_mode_only`, `multi_agent_version=v2`,
+experimental clock/user-message tools and the freeform patch tool. Preflight
+reads that catalog with quota-free `codex debug models` in an empty,
+network-unshared sandbox. It selects only the registered G1 model and changes
+exactly four fields: `tool_mode="direct"`, `multi_agent_version=null`,
+`experimental_supported_tools=[]`, and `apply_patch_tool_type=null`.
+All other model metadata, including model instructions, image modalities and
+reasoning settings, is retained. The generated catalog is private runtime
+state, not a new checked-in instruction file.
+
+`model_catalog_json` selects this static catalog for both fresh and fix-up
+commands. It does not use a mutable server catalog: Codex's static manager
+ignores refresh strategies. The same catalog is copied into each fresh home,
+included in durable home hashes, and required unchanged on reattachment.
+The binary and adapter-policy checks still apply. Unknown tools or diagnostic
+failures stop preflight before credentials are copied or a model call starts.
+
+The native regression and preflight use `codex debug prompt-input`. They use
+the adapter's exact `-c` argv values, environment, filesystem mounts and cwd;
+the diagnostic additionally removes network access. Model and sandbox
+selection are in the shared `-c` values for both exec and resume. The command
+verb and exec-only transport flags cannot be identical: Codex 0.167.2 rejects
+`--strict-config` for `debug`, and `debug` does not implement exec's
+`--ignore-user-config`, `--ignore-rules`, JSON-result, final-message or resume
+flags. The empty home and absent host config/rules provide the same discovery
+boundary. The diagnostic does not resume or send a turn. Tests assert that
+every effective configuration argument is carried over verbatim, test fresh
+and fix-up configurations, and reject any nonempty definition set. A negative
+native test restores model overrides and proves that preflight rejects them.
+This is prevention at configuration time; event rejection remains defense
+in depth, not the no-tool guarantee.
+
+Sources checked at upstream tag `rust-v0.167.2` on 2026-11-12:
+
+- `openai/codex`, `codex-rs/core/src/tools/mod.rs`: model `tool_mode` takes precedence.
+- `openai/codex`, `codex-rs/protocol/src/openai_models.rs`: model tool selectors.
+- `openai/codex`, `codex-rs/models-manager/src/manager.rs`: static catalog refresh behavior.
+- Official config schema, native `debug models` and `debug prompt-input` output.
+
+**PENDING:** independent review and real-model acceptance. No real model
+prompt, credentials or quota were used for this correction. G2 stays blocked.
 
 ## Isolation design and limits
 
@@ -67,9 +137,9 @@ Host `/etc/codex`, home configuration, MCP servers, plugins, agent rules and
 repository instructions are not mounted. Prompt discovery is also disabled.
 The parent environment, proxy settings and API keys are not inherited.
 
-**This is not a network-disconnected process.** Provider HTTPS must work.
-Web search, shell, image-view, browser, code execution, agent, memory and
-extension features are disabled in the Codex proposal. Images arrive as
+**Live requests are not network-disconnected.** Provider HTTPS must work.
+Offline policy checks are network-unshared. The native check requires zero
+model-visible tool definitions under the static catalog policy. Images arrive as
 attachments, so image-view tools are not needed. Unknown tool events stop
 acceptance and leave the request uncertain. Event checking is detection,
 not a substitute for preventing a tool from running. The current proposal
@@ -136,8 +206,9 @@ python benchmark/mechanisms-v1/harness/grading_runner.py self-test \
 
 **This spends quota on two prompts. It was not run against a real CLI.**
 Both prompts are exactly `reply with the word OK`, with no packet or rubric.
-Before sending, the tool runs a filesystem sentinel probe and `--version`
-inside each sandbox. It then checks distinct session UUIDs, exact `OK`
+Before sending, the tool runs a filesystem sentinel probe, `--version`, and
+the offline catalog/tool-definition preflight inside each sandbox. It then
+checks distinct session UUIDs, exact `OK`
 responses, no unexpected tool events, and records times and bytes. It retains
 `SELF-TEST.json` and the wire output for review. Tests exercise this path only
 with fake executables on PATH. An `OK` response alone is not an isolation
@@ -182,13 +253,19 @@ python3 -m unittest discover -s tools/tests
 ```
 
 Use NumPy **2.5.4** for the harness. Fake process tests require bubblewrap.
+Native G1 regression tests execute the installed Codex binary, not a fake.
+Set `CODEX_NATIVE_BINARY` to its absolute path if necessary; mise shims are
+resolved to the native executable. These tests skip only if Codex is absent,
+with an explicit reason. A missing sandbox, wrong version or diagnostic failure
+is a failure, not a skip. They enforce no network, no credentials, no prompt,
+and only `--version`, `debug models`, or `debug prompt-input` subprocesses.
 They exercise success, invalid grades, corrupt envelopes, timeout, process
 exit after send, retained receipts, exact resume, packet rejection, filesystem
 and env boundaries, runner fix-up, and refusal to resend after a crash.
 The old test reads of the two registered keys were replaced with synthetic
 metadata. Production keys, prompts and scoring arithmetic are unchanged.
 
-Pending gates: real G1 synthetic acceptance, authoritative tool capability
-review, image ordering/fidelity checks, G2 safe contract and implementation,
+Pending gates: real G1 synthetic acceptance, independent review of the native
+tool policy, image ordering/fidelity checks, G2 safe contract and implementation,
 both exact model/effort settings, reviewed binary and host pins, macOS native
 media validation and the registered dry run. RUN-LOCK is still DRAFT.

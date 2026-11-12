@@ -280,6 +280,18 @@ behaviour = BEHAVIOUR
 if "--version" in sys.argv:
     print("codex-cli 0.167.2")
     sys.exit(0)
+if sys.argv[1:3] == ["debug", "models"]:
+    print(json.dumps({"models": [{"slug": "gpt-6.1-sol", "tool_mode": "code_mode_only",
+          "multi_agent_version": "v2", "experimental_supported_tools": ["clock"],
+          "apply_patch_tool_type": "freeform"}]}))
+    sys.exit(0)
+if sys.argv[1:3] == ["debug", "prompt-input"]:
+    if behaviour == "exposed_tools":
+        print(json.dumps([{"type": "additional_tools", "tools": [
+              {"type": "function", "name": "unexpected_tool"}]}]))
+    else:
+        print(json.dumps([{"type": "message", "role": "developer", "content": []}]))
+    sys.exit(0)
 home = pathlib.Path(os.environ["HOME"])
 packet = pathlib.Path("/packet")
 output = pathlib.Path("/out")
@@ -366,6 +378,12 @@ class AdapterTest(PipelineFixture):
     def packet(self):
         out, doc = self.build()
         return out / "packets" / doc["calls"][0]["token"]
+
+    def test_preflight_rejects_tools_before_session_or_auth(self):
+        adapter = self.adapter("exposed_tools")
+        with self.assertRaisesRegex(ValueError, "model-visible tools must be empty"):
+            adapter.open("G1", "score", self.packet(), session_id="a" * 64)
+        self.assertFalse((adapter.root / ("a" * 64)).exists())
 
     def test_bytes_receipt_isolation_and_fresh_session(self):
         packet = self.packet()
@@ -570,7 +588,107 @@ class AdapterTest(PipelineFixture):
         self.assertEqual(len(set(proof["remoteSessionIds"])), 2)
 
 
+class NativeCodexToolsTest(unittest.TestCase):
+    """Real Codex only; no credentials, model requests or network namespace."""
+
+    def setUp(self):
+        binary = os.environ.get("CODEX_NATIVE_BINARY") or shutil.which("codex")
+        if binary is None:
+            self.skipTest("Codex is not installed; native offline tool diagnostic unavailable")
+        if Path(binary).resolve().name == "mise":
+            binary = subprocess.check_output(["mise", "which", "codex"], text=True).strip()
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.adapter = live.CodexAdapter(self.root / "state", binary)
+        invoke = self.adapter.sandbox.invoke
+        def offline_only(home, packet, output, args, message, timeout, *, network=True):
+            self.assertFalse(network, "native regression must never enable network")
+            self.assertEqual(message, b"", "native regression must not submit a prompt")
+            self.assertTrue(args == ["/tool", "--version"] or args[1:3] in (
+                ["debug", "models"], ["debug", "prompt-input"]), args)
+            return invoke(home, packet, output, args, message, timeout, network=False)
+        self.guard = patch.object(self.adapter.sandbox, "invoke", side_effect=offline_only)
+        self.guard.start()
+        self.addCleanup(self.guard.stop)
+        for name in ("home/codex", "packet", "out"):
+            (self.root / name).mkdir(parents=True)
+
+    def diagnostic(self, name, args):
+        output = self.root / name
+        output.mkdir()
+        sandbox = self.adapter.sandbox
+        command = sandbox.command(self.root / "home", self.root / "packet", output, args,
+                                  network=False)
+        self.assertNotIn("--share-net", command)
+        for key, value in live.ENV.items():
+            self.assertIn(["--setenv", key, value], [command[index:index + 3]
+                          for index in range(len(command) - 2)])
+        sandbox.invoke(self.root / "home", self.root / "packet", output, args, b"", 30,
+                       network=False)
+        return (output / "stdout.bin").read_bytes()
+
+    def test_native_exact_fresh_and_fixup_configuration_has_no_tools(self):
+        self.assertEqual(self.adapter.preflight(), live.VERSIONS["G1"])
+        live.durable_json(self.root / "home/codex/grader-model.json", self.adapter.catalog)
+        (self.root / "packet/output").mkdir()
+        live.pack.png(self.root / "packet/output/still-1.png", bytes((80, 90, 100)) * 4,
+                      width=2, height=2)
+        for remote_id in (None, "11111111-1111-1111-1111-111111111111"):
+            with self.subTest(remote_id=remote_id):
+                images = ["output/still-1.png"] if remote_id is None else []
+                argv = live.codex_argv(images, remote_id)
+                diagnostic = live.codex_diagnostic_argv(argv)
+                config = [argv[index + 1] for index, arg in enumerate(argv) if arg == "-c"]
+                self.assertEqual(config, live.CODEX_CONFIG)
+                self.assertEqual(diagnostic, ["/tool", "debug", "prompt-input"] +
+                                 [part for value in config for part in ("-c", value)] +
+                                 [part for image in images for part in ("--image", "/packet/" + image)])
+                raw = self.diagnostic("fresh" if remote_id is None else "fixup", diagnostic)
+                self.assertEqual(live.codex_tool_definitions(raw), [])
+                self.assertFalse(any(item.get("tools") for item in json.loads(raw)))
+
+    def test_native_metadata_override_is_removed_not_just_feature_disabled(self):
+        raw = self.diagnostic("bundled", ["/tool", "debug", "models"])
+        original = next(model for model in json.loads(raw)["models"]
+                        if model["slug"] == live.MODELS["G1"])
+        self.assertEqual(original["tool_mode"], "code_mode_only")
+        self.assertEqual(original["multi_agent_version"], "v2")
+        self.assertIn("clock", original["experimental_supported_tools"])
+        home = self.root / "home"
+        live.durable_json(home / "codex/grader-model.json", {"models": [original]})
+        diagnostic = live.codex_diagnostic_argv(live.codex_argv())
+        exposed = live.codex_tool_definitions(self.diagnostic("exposed", diagnostic))
+        self.assertIn("functions.exec", exposed)
+        sanitized = live.prepare_codex_policy(self.adapter.sandbox, home,
+                                             self.root / "packet", self.root / "out")
+        expected = dict(original)
+        expected.update(live.CODEX_MODEL_POLICY)
+        self.assertEqual(sanitized, {"models": [expected]})
+        self.assertEqual(live.codex_tool_definitions(self.diagnostic("sanitized", diagnostic)), [])
+        effective = json.loads(self.diagnostic("static", ["/tool", "debug", "models", "-c",
+                              'model_catalog_json="/home/grader/codex/grader-model.json"']))
+        for field, value in live.CODEX_MODEL_POLICY.items():
+            self.assertEqual(effective["models"][0].get(field), value)
+            if value is None and field not in effective["models"][0]:
+                del expected[field]
+        self.assertEqual(effective, {"models": [expected]})
+
+    def test_native_preflight_fails_closed_if_metadata_sanitizer_regresses(self):
+        with patch.object(live, "CODEX_MODEL_POLICY", {}):
+            with self.assertRaisesRegex(ValueError, "model-visible tools must be empty"):
+                self.adapter.preflight()
+
+
 class BlockedTest(unittest.TestCase):
+    def test_tool_diagnostic_rejects_unknown_and_empty_output(self):
+        for raw in (b"[]", b"{}", b'[{"type":"unknown"}]', b'[{"type":"additional_tools"}]'):
+            with self.subTest(raw=raw), self.assertRaises((ValueError, KeyError)):
+                live.codex_tool_definitions(raw)
+        self.assertEqual(live.codex_tool_definitions(json.dumps([
+            {"type": "additional_tools", "tools": [{"type": "namespace", "name": "outer",
+             "tools": [{"type": "function", "name": "spawn"}]}]}])), ["outer.spawn"])
+
     def test_antigravity_proposal_never_spawns(self):
         adapter = live.AntigravityAdapter()
         with patch.object(subprocess, "Popen", side_effect=AssertionError("unsafe G2 dispatch")):

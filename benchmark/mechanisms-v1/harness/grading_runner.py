@@ -506,7 +506,8 @@ G2_BLOCKER = (
 )
 DISABLED = (
     "shell_tool", "unified_exec", "apply_patch_freeform", "view_image", "js_repl",
-    "code_mode", "code_mode_host", "multi_agent", "collab", "apps", "plugins",
+    "code_mode", "code_mode_only", "code_mode_host", "multi_agent", "multi_agent_v2",
+    "collab", "apps", "plugins", "sleep_tool", "default_mode_request_user_input",
     "codex_hooks", "plugin_hooks", "memories", "memory_tool", "skill_search",
     "skill_mcp_dependency_install", "web_search", "web_search_cached",
     "web_search_request", "standalone_web_search", "browser_use", "computer_use",
@@ -515,6 +516,10 @@ DISABLED = (
     "request_rule", "exec_permission_approvals", "experimental_use_unified_exec_tool",
 )
 CODEX_CONFIG = [
+    f'model="{MODELS["G1"]}"', 'sandbox_mode="read-only"',
+    'model_catalog_json="/home/grader/codex/grader-model.json"',
+    'agents.enabled=false', 'tools.experimental_request_user_input.enabled=false',
+    'tools.update_plan.enabled=false',
     'model_reasoning_effort="high"', 'web_search="disabled"',
     'approval_policy="never"', 'project_doc_max_bytes=0',
     'developer_instructions=""', 'mcp_servers={}',
@@ -524,6 +529,10 @@ CODEX_CONFIG = [
     'include_environment_context=false', 'include_environment_context_time=false',
     'shell_environment_policy.inherit="none"',
 ] + [f"features.{name}=false" for name in DISABLED]
+CODEX_MODEL_POLICY = {
+    "tool_mode": "direct", "multi_agent_version": None,
+    "experimental_supported_tools": [], "apply_patch_tool_type": None,
+}
 ENV = {
     "PATH": "/usr/bin:/bin", "HOME": "/home/grader", "CODEX_HOME": "/home/grader/codex",
     "XDG_CONFIG_HOME": "/home/grader/config", "XDG_DATA_HOME": "/home/grader/data",
@@ -584,19 +593,79 @@ def codex_argv(images=(), remote_id=None):
     args = ["/tool", "exec"]
     if remote_id is not None:
         args.append("resume")
-    args += ["--model", MODELS["G1"], "--json", "--color", "never"] if remote_id is None else [
-        "--model", MODELS["G1"], "--json"]
+    args += ["--json", "--color", "never"] if remote_id is None else ["--json"]
     args += ["--strict-config", "--ignore-user-config", "--ignore-rules", "--skip-git-repo-check",
              "--output-last-message", "/out/reply.bin"]
     for value in CODEX_CONFIG:
         args += ["-c", value]
     if remote_id is None:
-        args += ["--sandbox", "read-only", "--cd", "/packet"]
+        args += ["--cd", "/packet"]
         for name in images:
             args += ["--image", "/packet/" + name]
     else:
-        args += ["-c", 'sandbox_mode="read-only"', remote_id]
+        args.append(remote_id)
     return args + ["-"]
+
+
+def codex_diagnostic_argv(adapter_argv):
+    """Project the exact exec/resume configuration into the offline diagnostic.
+
+    Codex debug rejects --strict-config and has no exec transport/resume flags.
+    The sandbox supplies the same empty config/rules boundary and packet cwd.
+    All -c values (including model, sandbox and catalog) are retained verbatim.
+    """
+    args = ["/tool", "debug", "prompt-input"]
+    for position, value in enumerate(adapter_argv):
+        if value in ("-c", "--image"):
+            args += [value, adapter_argv[position + 1]]
+    return args
+
+
+def codex_tool_definitions(raw):
+    """Read the native diagnostic, not event output after possible execution."""
+    items = json.loads(raw)
+    if not isinstance(items, list) or not items:
+        raise ValueError("missing native prompt-input diagnostic")
+    names = []
+    def collect(tools, prefix=""):
+        if not isinstance(tools, list):
+            raise ValueError("invalid native tool definitions")
+        for tool in tools:
+            name = prefix + tool.get("name", tool["type"])
+            if tool["type"] == "namespace" and tool.get("tools"):
+                collect(tool["tools"], name + ".")
+            else:
+                names.append(name)
+    for item in items:
+        if item["type"] == "additional_tools":
+            collect(item["tools"])
+        elif item["type"] != "message":
+            raise ValueError("unknown native prompt-input item")
+    return sorted(names)
+
+
+def prepare_codex_policy(sandbox, home, packet, output):
+    """Pin bundled model metadata and prove an empty tool set without network."""
+    catalog_output = output / "catalog"
+    catalog_output.mkdir()
+    sandbox.invoke(home, packet, catalog_output, ["/tool", "debug", "models"], b"", 30,
+                   network=False)
+    models = json.loads((catalog_output / "stdout.bin").read_bytes())["models"]
+    selected = [model for model in models if model["slug"] == MODELS["G1"]]
+    if len(selected) != 1:
+        raise ValueError("expected exactly one bundled G1 model")
+    model = dict(selected[0])
+    model.update(CODEX_MODEL_POLICY)
+    catalog = {"models": [model]}
+    durable_json(home / "codex/grader-model.json", catalog)
+    diagnostic = output / "tools"
+    diagnostic.mkdir()
+    sandbox.invoke(home, packet, diagnostic, codex_diagnostic_argv(codex_argv()), b"", 30,
+                   network=False)
+    tools = codex_tool_definitions((diagnostic / "stdout.bin").read_bytes())
+    if tools:
+        raise ValueError("G1 model-visible tools must be empty: " + ", ".join(tools))
+    return catalog
 
 
 def antigravity_argv(remote_id=None):
@@ -620,9 +689,11 @@ class Bubblewrap:
         if not self.executable:
             raise ValueError("Linux bubblewrap is required; no unsandboxed fallback")
 
-    def command(self, home, packet, output, args):
-        argv = [self.executable, "--die-with-parent", "--new-session", "--unshare-all",
-                "--share-net", "--cap-drop", "ALL", "--clearenv"]
+    def command(self, home, packet, output, args, *, network=True):
+        argv = [self.executable, "--die-with-parent", "--new-session", "--unshare-all"]
+        if network:
+            argv.append("--share-net")
+        argv += ["--cap-drop", "ALL", "--clearenv"]
         for name in ("/usr", "/bin", "/lib", "/lib64"):
             if Path(name).exists():
                 argv += ["--ro-bind", name, name]
@@ -637,8 +708,8 @@ class Bubblewrap:
             argv += ["--setenv", name, value]
         return argv + ["--"] + list(args)
 
-    def invoke(self, home, packet, output, args, message, timeout):
-        argv = self.command(home, packet, output, args)
+    def invoke(self, home, packet, output, args, message, timeout, *, network=True):
+        argv = self.command(home, packet, output, args, network=network)
         with (output / "stdout.bin").open("xb") as stdout, (output / "stderr.bin").open("xb") as stderr:
             process = subprocess.Popen(argv, cwd=packet, env=ENV, stdin=subprocess.PIPE,
                                        stdout=stdout, stderr=stderr, start_new_session=True)
@@ -723,16 +794,19 @@ class CodexAdapter:
         self.binary_hash = digest(self.sandbox.binary)
 
     def preflight(self):
-        """Version query only, inside an empty isolated home. No model prompt."""
+        """Native version/catalog/tool checks, no network or model request."""
         with tempfile.TemporaryDirectory(dir=self.root) as temp:
             root = Path(temp)
             for name in ("home", "packet", "out"):
                 (root / name).mkdir()
+            (root / "home/codex").mkdir()
             self.sandbox.invoke(root / "home", root / "packet", root / "out",
-                                ["/tool", "--version"], b"", 15)
+                                ["/tool", "--version"], b"", 15, network=False)
             version = (root / "out/stdout.bin").read_text().strip()
             if version != VERSIONS[self.grader]:
                 raise ValueError("CLI version changed; review invocation and isolation again")
+            self.catalog = prepare_codex_policy(self.sandbox, root / "home", root / "packet",
+                                                root / "out")
         return version
 
     def open(self, grader, kind, packet, *, session_id):
@@ -748,6 +822,7 @@ class CodexAdapter:
         home = path / "home"
         home.mkdir(mode=0o700)
         (home / "codex").mkdir(mode=0o700)
+        durable_json(home / "codex/grader-model.json", self.catalog)
         if self.auth:
             auth = home / "codex/auth.json"
             durable_bytes(auth, self.auth.read_bytes())
@@ -946,6 +1021,7 @@ def self_test(args):
         sandbox.invoke(folder / "home", folder / "packet", version, ["/tool", "--version"], b"", 15)
         if (version / "stdout.bin").read_text().strip() != VERSIONS["G1"]:
             raise ValueError("CLI version changed")
+        prepare_codex_policy(sandbox, folder / "home", folder / "packet", version)
         durable_bytes(folder / "home/codex/auth.json", args.auth.read_bytes())
         (folder / "home/codex/auth.json").chmod(0o600)
         started = utc()

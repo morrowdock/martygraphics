@@ -1375,7 +1375,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
-      "sha256": "dcfe2e87943105775dce4c422886b5a5539f2796749cb9f0c3ad22a86cfd7b64"
+      "sha256": "8940cfa2f054d2737266b9a3148af7fb15c058054ddb5ef7f56f04b0d13170de"
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
@@ -1411,11 +1411,11 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
-      "sha256": "1d13f4e235cf89020f98a1dff24cb908e1e2eb2fb811b73dcfe3c9370863f95f"
+      "sha256": "f2c20c18028f1360c031d139fd80aaa846458aa90132e3cfec667ac7a859f270"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/LIVE-ADAPTERS.md",
-      "sha256": "c4e590a50a041bf5b8794fea41b804833da3b5b8407243bee481c6ba4b6c086c"
+      "sha256": "e13272e20b69479e13cba86560aa9063bc8244d4c065d2399eccc8e2d21ef54a"
     },
     {
       "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.FACTCHECK-2.md",
@@ -1455,7 +1455,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/grading_runner.py",
-      "sha256": "f7a163576000b2c269526df13fc7dc35eacffb814da869537be689696b72e95c"
+      "sha256": "1085435c5f9e6e119be5ccea569a4fb4956e6b07fc45d4fed8f0760e30fc0416"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/native/media.swift",
@@ -1503,7 +1503,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_runner_recovery.py",
-      "sha256": "a890ddd05e315f79488cc9237ed8d9e3b11dd34b3d9559e7ae9d9e9e4078a6e7"
+      "sha256": "83b739e4464d9cbd91aabb42d2dd921f96f4a8f6b7a48d90f0ac2dceb51e0a09"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_score.py",
