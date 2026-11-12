@@ -85,7 +85,7 @@
       "validation": "VERIFIED 2026-11-12: NumPy 2.5.4; harness 187 tests (184 passed, 3 macOS-only skips); tools 52 passed. Native G1 tests ran, not skipped. No credentials or model request. Real-model acceptance PENDING. Historical pins above are retained.",
       "files": {
         "harness/grading_runner.py": "1085435c5f9e6e119be5ccea569a4fb4956e6b07fc45d4fed8f0760e30fc0416",
-        "harness/tests/test_runner_recovery.py": "83b739e4464d9cbd91aabb42d2dd921f96f4a8f6b7a48d90f0ac2dceb51e0a09",
+        "harness/tests/test_runner_recovery.py": "9bf7ccae850c7d9e7ad46b4b4413498f5e9be3bf9a1c5ea98c7e5a52d075ee5b",
         "harness/tests/support.py": "c0d1555a7d64ddf77ab8452705a48de07bb99a5eee28165224c6ef7a3203815b",
         "harness/tests/test_end_to_end.py": "99cce9a6f281bb1f8aec7b7d1534e8e28b1cd583faa24ec6dd20d54e1eb0d907",
         "harness/tests/test_rubric_form.py": "25f773a356b2e9450581ba93b405975609ae190921bd88490f0d4ca872f84b14",

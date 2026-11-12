@@ -1411,7 +1411,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
-      "sha256": "f2c20c18028f1360c031d139fd80aaa846458aa90132e3cfec667ac7a859f270"
+      "sha256": "1f4612efefb06973800a3c801f20b31ba5b7dd8b2eafe79944b332a55b76e675"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/LIVE-ADAPTERS.md",
