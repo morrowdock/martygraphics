@@ -90,6 +90,8 @@ class ScoreFormTest(unittest.TestCase):
         # A location alone is not evidence: rule 5 asks for the place AND one sentence (re-check 2026-11-12).
         refused = ("6.0 s", "still-3", "t=6.0 s", "  12 s  ", "still 2, 4.5 s", "t=6.0 s, t=7.0 s", "T = 6 s",
                    "still-3.png", "see-still-2.png 4 s", "frames/still-4.jpg 7 s", '6.0 s: "frames/gear contact shot.png"',
+                   "6.0 s: \u2018frames/gear contact snapshot.png\u2019", "6.0 s: \u201cframes/a b.png\u201d",
+                   "6.0 s: 'frames/a b.png'", "6.0 s: \u00abframes/a b.png\u00bb",
                    "6.0 s 🙂", "6.0 s 123 456", "6.0 s ... !!")
         for bare in refused:
             with self.subTest(evidence=bare):
@@ -103,8 +105,12 @@ class ScoreFormTest(unittest.TestCase):
                 self.assertEqual(problems(fail(sentence)), [])
 
     def test_evidence_check_is_fast_on_long_text(self):
+        # Linear, not quadratic: at 200,000 characters a quadratic scan would take hours; linear takes well under 1 s.
         import time
-        for text in ("6.0 s " + "a" * 1_000_000, "6.0 s " + "a." * 500_000, '6.0 s "' + "b" * 1_000_000):
+        n = 200_000
+        for text in ("6.0 s " + "a" * n, "6.0 s " + "a." * (n // 2), '6.0 s "' + "b" * n,
+                     "6.0 s: " + "\u201c" * n, "6.0 s: " + "\u201c" * (n // 2) + "\u201d",
+                     "6.0 s: " + "'" * n, "6.0 s: " + "\u2018a\n" * (n // 3) + "\u2019"):
             started = time.monotonic()
             problems(lambda r: r["mechanism"].update(M2="FAIL", evidence={"M2": text}))
             self.assertLess(time.monotonic() - started, 3.0)

@@ -50,11 +50,37 @@ def _text(value):
 # A word is a run of Unicode letters and combining marks, so every script counts (Devanagari vowel signs stay
 # inside their word). Whether that text is a good sentence is for the grader and the audit, not this validator.
 EXT = r"(?:png|jpe?g|webp|gif|tiff?|bmp|mp4|mov|webm|json|txt)"
-FILE_REF = re.compile(
-    r'"[^"\n]*\.' + EXT + r'"|\'[^\'\n]*\.' + EXT + r"'|\u201c[^\u201d\n]*\." + EXT + r"\u201d"
-    # An unquoted path is ASCII and starts at a token boundary: adjacent prose in any script is kept, and the scan
-    # stays linear on long text.
-    r"|(?<![A-Za-z0-9_./\\-])[A-Za-z0-9_./\\-]+\." + EXT + r"(?![A-Za-z0-9])", re.IGNORECASE)
+# An unquoted path is ASCII and starts at a token boundary: adjacent prose in any script is kept, and the scan stays
+# linear on long text. Quoted paths (which may contain spaces) are removed by _strip_quoted_paths.
+FILE_REF = re.compile(r"(?<![A-Za-z0-9_./\\-])[A-Za-z0-9_./\\-]+\." + EXT + r"(?![A-Za-z0-9])", re.IGNORECASE)
+QUOTES = {'"': '"', "'": "'", "\u201c": "\u201d", "\u2018": "\u2019", "\u00ab": "\u00bb", "\u2039": "\u203a"}
+QUOTED_END = re.compile(r"\." + EXT + r"\Z", re.IGNORECASE)
+
+
+def _strip_quoted_paths(text):
+    """Remove every quoted span on one line that ends in a file extension. Linear: each closing quote and newline
+    position is looked up once and reused, so unmatched or repeated opening quotes cannot cause rescanning."""
+    out, i, next_close, next_newline = [], 0, {}, -1
+    while i < len(text):
+        close = QUOTES.get(text[i])
+        if close is not None:
+            j = next_close.get(close, 0)
+            if j is not None and j <= i:
+                j = text.find(close, i + 1)
+                next_close[close] = j if j >= 0 else None
+            if j is not None and j > i:
+                if next_newline != len(text) and next_newline <= i:
+                    found = text.find("\n", i + 1)
+                    next_newline = found if found >= 0 else len(text)
+                if next_newline > j and QUOTED_END.search(text[max(i + 1, j - 8):j]):
+                    out.append(" ")
+                    i = j + 1
+                    continue
+        out.append(text[i])
+        i += 1
+    return "".join(out)
+
+
 TIME_PREFIX = re.compile(r"(?<![A-Za-z])t\s*=\s*(?=\d)", re.IGNORECASE)
 
 
@@ -75,7 +101,7 @@ def _evidence(value):
     """A still or time AND evidence beyond it (rule 5; A-13 says how much the validator can check)."""
     if not (_text(value) and WHERE.search(value)):
         return False
-    rest = WHERE.sub(" ", TIME_PREFIX.sub(" ", FILE_REF.sub(" ", value)))
+    rest = WHERE.sub(" ", TIME_PREFIX.sub(" ", FILE_REF.sub(" ", _strip_quoted_paths(value))))
     return len(_words(rest)) >= 1
 
 

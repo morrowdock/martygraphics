@@ -1399,7 +1399,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
-      "sha256": "e1536f288e7c154f86d6ec3d53c74319b4599759a090e46e64a835b818132078"
+      "sha256": "d6d9956b05c29bbbbd55bfaa9c1672a8c93415afb5b29d5d4ff5255b24bfed6c"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
@@ -1419,7 +1419,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/rubric_form.py",
-      "sha256": "1d8b0f524ea140eb26dd3fa49f0dd327c759570c49aad103bc472b856f6c1d71"
+      "sha256": "ecaf6c44fb0f5378ccac3467a6dc7bf3e723cd302781c8a8df37eaa552755619"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/score.py",
@@ -1443,7 +1443,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_rubric_form.py",
-      "sha256": "089fe19d41159e4f70cea77e5b18b3fed89d6e3295d3d0a0986e71b0a214d84d"
+      "sha256": "ff1031decef76ef852d85a9b7d05e347494e8821eac764b1879449f747b48312"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_score.py",
