@@ -318,13 +318,20 @@ final class SolidHardeningTests: XCTestCase {
         options.section = (normal: MGVec3(1, 0, 0), offset: 12)
         options.sectionParts = ["b"]
         r.options = options
-        XCTAssertNotNil(material("b").shaderModifiers)
+        // The cut is the fragment modifier; a look's surface finish (turning marks on machined metals) is another entry
+        // and is not a cut.
+        XCTAssertNotNil(material("b").shaderModifiers?[.fragment])
         XCTAssertFalse(material("b") === material("c"))
-        XCTAssertNil(material("c").shaderModifiers, "the shared bronze material must not be cut")
-        XCTAssertNil(material("a").shaderModifiers)
+        XCTAssertNil(material("c").shaderModifiers?[.fragment], "the shared bronze material must not be cut")
+        XCTAssertNil(material("a").shaderModifiers?[.fragment])
         r.highlight(["c"])
-        XCTAssertNotNil(material("b").shaderModifiers)
-        XCTAssertNil(material("c").shaderModifiers)
+        XCTAssertNotNil(material("b").shaderModifiers?[.fragment])
+        XCTAssertNil(material("c").shaderModifiers?[.fragment])
+        // The cut part keeps its surface finish, and removing the cut leaves the finish in place.
+        XCTAssertNotNil(material("b").shaderModifiers?[.surface])
+        r.options = MGStudioOptions()
+        XCTAssertNil(material("b").shaderModifiers?[.fragment])
+        XCTAssertNotNil(material("b").shaderModifiers?[.surface])
     }
 
     // MARK: Snapshot and decoders

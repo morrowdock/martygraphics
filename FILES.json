@@ -1279,7 +1279,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidHardeningTests.swift",
-      "sha256": "d8bac27b0c0ebf6cec14107cd8bec8a7562c2f532b50858a77c7a2f8758d6205"
+      "sha256": "d81fe69ff94dc2fdfa08589428baa8b37c53e186474701d58b2b7b820571cae8"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidHonestyTests.swift",
