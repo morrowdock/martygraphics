@@ -682,9 +682,28 @@ final class MartySolidCLITests: XCTestCase {
         // Determinism: a fresh process gives the same story record (holds, paths, cameras, layout) and the same stills.
         // Known pre-existing issue (not this fixture): with highlighted beats and an open board pane, SceneKit's bloom
         // pass can change a few pixels by one level between processes; main a13f1f1 shows it too (PR #51 re-check).
-        let (_, beats2, stills2) = try render(doc)
+        // The stills hold a 3D view, so between fresh processes they are compared with the documented pixel bounds, not
+        // by hash (docs/SOLID-3D.md, "Determinism"): with the default look's glossy finishes the split-layout beats
+        // differ by a few pixels between processes, as the issue above already did for bloom.
+        let (out2, beats2, stills2) = try render(doc)
         XCTAssertEqual(beats2 as NSArray, beats as NSArray)
-        XCTAssertEqual(stills2.map { $0["sha256"] as? String }, stills.map { $0["sha256"] as? String })
+        XCTAssertEqual(stills2.map { $0["file"] as? String }, stills.map { $0["file"] as? String })
+        for still in stills {
+            let file = try XCTUnwrap(still["file"] as? String)
+            let a = try pngPixels(out.appendingPathComponent(file), width: 640, height: 400)
+            let b = try pngPixels(out2.appendingPathComponent(file), width: 640, height: 400)
+            var total = 0, above16 = 0, differing = 0, worst = 0
+            for j in stride(from: 0, to: a.count, by: 4) {
+                let d = (0..<3).map { abs(Int(a[j + $0]) - Int(b[j + $0])) }.max()!
+                if d > 0 { differing += 1; total += d; worst = max(worst, d) }
+                if d > 16 { above16 += 1 }
+            }
+            let n = Double(640 * 400)
+            print("pane-slide \(file) between processes: max \(worst), mean \(Double(total) / n), above 16 \(above16), differing \(differing)")
+            XCTAssertLessThanOrEqual(Double(total) / n, Self.crossProcessMaxMeanDifference, "\(file): mean difference")
+            XCTAssertLessThanOrEqual(Double(above16) * 100 / n, Self.crossProcessMaxPercentAbove16, "\(file): \(above16) pixels above 16 levels")
+            XCTAssertLessThanOrEqual(Double(differing) * 100 / n, Self.crossProcessMaxDifferingPercent, "\(file): differing pixels \(differing)")
+        }
     }
 
     /// Pixel bounds between fresh processes (docs/SOLID-3D.md, "Determinism"). A pixel's difference is the largest
