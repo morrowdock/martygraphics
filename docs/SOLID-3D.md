@@ -2190,8 +2190,9 @@ renderer reads the same rig and the same materials.
   bias). The `studio` and `paper` backdrops are computed per pixel on the CPU
 (`MGSolidLook.backdrop(width:height:pool:)`) with a fixed half-level dither: they do not band and are byte-identical
 in every run. The pool of light follows the ground point under the subject (`MGSolidRenderer.backdropPool`). These
-looks vignette the backdrop, not the subject, raise the white point so white parts keep their form, and use no
-bloom.
+looks vignette the backdrop, not the subject, and raise the white point so white parts keep their form. Their bloom
+starts above what a lit surface reaches (`bloomThreshold` 1.3; `classic` blooms from 0.92), so a part's own light
+still glows in its colour and white parts get no halo.
 
 **Quality** (`MGSolidQuality`, as `MGStudioOptions(quality:)`): what a frame costs.
 

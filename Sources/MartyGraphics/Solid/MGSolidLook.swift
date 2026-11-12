@@ -87,19 +87,21 @@ public struct MGSolidLook: Equatable, Sendable {
     }
 
     /// Graphite studio (dark): a lit floor pool on a graphite sweep, so dark parts keep their outline and shadows
-    /// show; parts reflect a product studio, lit more by its soft boxes than by the key light; no bloom and a high
-    /// white point so whites keep their form; coated plastics and machined metals.
+    /// show; parts reflect a product studio, lit more by its soft boxes than by the key light; a high white point so
+    /// whites keep their form, and bloom only above what a lit surface reaches, so a part's own light glows in its
+    /// colour and white parts stay clean; coated plastics and machined metals.
     public static let studio: MGSolidLook = {
         var l = MGSolidLook(
             name: "studio", pool: [0.270, 0.288, 0.325], edge: [0.050, 0.055, 0.070], poolRadius: 1.8, vignette: 0.30,
             envZenith: 1, envHorizon: 1, envFloor: 1, envIntensity: 1, softboxes: 1, key: 0.5, fill: 1.25, rim: 0.9,
-            exposure: -0.15, whitePoint: 1.8, contrast: 0.10, saturation: 1.04, bloom: 0, occlusion: 0.6, shadow: 0.50,
+            exposure: -0.15, whitePoint: 1.8, contrast: 0.10, saturation: 1.04, bloom: 0.35, occlusion: 0.6, shadow: 0.50,
             contact: 0.55, shadowSoftness: 1.5)
         l.environment = productStudio(gain: 2.4)
         l.boxFeather = 0.5
         l.occlusionBias = 0.0006
         l.plasticCoat = 0.8; l.plasticCoatRoughness = 0.06
         l.machining = 0.6
+        l.bloomThreshold = 1.3
         l.plate = [10.0 / 255, 15.0 / 255, 31.0 / 255, 0.86]
         l.surface = [0.043, 0.051, 0.071]
         l.modernOverlay = true
@@ -111,13 +113,14 @@ public struct MGSolidLook: Equatable, Sendable {
         var l = MGSolidLook(
             name: "paper", pool: [0.930, 0.935, 0.945], edge: [0.720, 0.740, 0.770], poolRadius: 2.6, vignette: 0.10,
             envZenith: 1, envHorizon: 1, envFloor: 1, envIntensity: 1, softboxes: 1, key: 0.5, fill: 1.2, rim: 0.6,
-            exposure: -0.30, whitePoint: 1.8, contrast: 0.16, saturation: 1.05, bloom: 0, occlusion: 0.45, shadow: 0.30,
+            exposure: -0.30, whitePoint: 1.8, contrast: 0.16, saturation: 1.05, bloom: 0.2, occlusion: 0.45, shadow: 0.30,
             contact: 0.30, shadowSoftness: 1.6)
         l.environment = productStudio(gain: 1.5, room: 6)
         l.boxFeather = 0.5
         l.occlusionBias = 0.0006
         l.plasticCoat = 0.8; l.plasticCoatRoughness = 0.06
         l.machining = 0.6
+        l.bloomThreshold = 1.3
         l.ink = [20.0 / 255, 26.0 / 255, 43.0 / 255]
         l.plate = [1, 1, 1, 0.92]
         l.casing = [1, 1, 1, 0.7]

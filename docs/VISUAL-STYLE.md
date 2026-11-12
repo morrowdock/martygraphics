@@ -76,7 +76,7 @@ lighter and matte, so a cut reads as a cut.
   floor. Strength per look (`studio` 0.50 and 0.55, `paper` 0.30 and 0.30).
 - **Ambient occlusion.** Screen space, intensity 0.45 to 0.6, radius tied to the camera distance.
 - **Tone.** HDR rendering in linear light, then SceneKit's tone mapping with a white point above 1 (1.4 to 1.5) so
-  whites roll off, a small exposure offset, contrast +0.10 and saturation 1.04. The new looks use no bloom. Output is sRGB; videos are tagged BT.709.
+  whites roll off, a small exposure offset, contrast +0.10 and saturation 1.04. Bloom starts above what a lit surface reaches, so only a part's own light glows. Output is sRGB; videos are tagged BT.709.
 - **Anti-aliasing.** 4× multisampling everywhere; 2× supersampling at `still`; jitter on a resting live view.
 - **Depth of field.** Stills only, at `still`, and only on a hero shot with no labels. Never in a step still or a
   video: every labelled part stays sharp.

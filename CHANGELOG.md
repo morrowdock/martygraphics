@@ -8,6 +8,11 @@
   background (`MGSolidRenderer.liveBackdropSize`), so the app matches the exported stills and videos. The four
   render goldens change one line (`"look" : "studio"`). Check reports and `snapshot.json` are unchanged. The
   published images under `docs/assets` were rendered with `classic` and are regenerated separately.
+- **Story and loop videos carry colour tags.** The MP4 files are tagged sRGB with BT.709 primaries and matrix (they
+  were untagged). A player that assumed a BT.709 transfer function and converted for the display showed the middle
+  tones several levels off the stills; on the `studio` backdrop that was visible. The frames written are the same.
+- **A part's own light still glows in `studio` and `paper`.** Their bloom starts above what a lit surface reaches
+  (`MGSolidLook.bloomThreshold`), so emitters keep their coloured glow and white parts get no halo.
 - **v0.2 plan (docs only).** [docs/V0.2-PLAN.md](docs/V0.2-PLAN.md) ranks the engine changes that real authoring
   runs recorded as gaps (drone and aviation explainers, Part 107 Nights 1 and 2): a label size key, a transcript
   export, a feet display unit, declared phrase names, a pin closure check and three smaller items. Each item is its
