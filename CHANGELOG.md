@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **v0.2 plan (docs only).** [docs/V0.2-PLAN.md](docs/V0.2-PLAN.md) ranks the engine changes that real authoring
+  runs recorded as gaps (drone and aviation explainers, Part 107 Nights 1 and 2): a label size key, a transcript
+  export, a feet display unit, declared phrase names, a pin closure check and three smaller items. Each item is its
+  own pull request after the owner's go.
 - **The `studio` and `paper` looks draw modern type, plates and bands (pixels only).** No black title or caption
   bars: text sits on the look's own backdrop in the look's ink, with measured contrast of at least 4.5:1. Label
   plates are rounded with a hairline edge and a tier bar; leaders have a casing and a ringed anchor; every drawn

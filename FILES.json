@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "71a1db1af8552b9546fbb6a4692e80eeeac0c6faa35a3ff88d59afcf921e85e7"
+      "sha256": "59b917b6495073a7553cb76871d2de15e351ddf020868bbc51e43186679000db"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1864,6 +1864,10 @@
     {
       "path": "docs/THIRD-PARTY.md",
       "sha256": "973c5b0827dbfc841e5b043c6f753f98dae92c9c1b129f893f41481b58043de6"
+    },
+    {
+      "path": "docs/V0.2-PLAN.md",
+      "sha256": "d016508379002ae557e8810e39e312c873afc0639e5538ecd7673f64f4e05541"
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
