@@ -52,6 +52,9 @@ public struct MGSolidLook: Equatable, Sendable {
     public var plasticCoat: Double? = nil
     public var plasticCoatRoughness = 0.1
     public var machining = 0.0
+    /// The brightness above which bloom starts. `classic` blooms every bright surface (0.92). A look that keeps whites
+    /// clean sets it above what a lit surface reaches, so only a part's own light glows in its colour.
+    public var bloomThreshold = 0.92
     /// Type and plates over the picture (sRGB): text and leader ink, the label plate (with its opacity), the dark or
     /// light casing drawn under a leader so it reads over any part, and the frame behind an explainer's panes.
     public var ink: [Double] = [238.0 / 255, 242.0 / 255, 1]

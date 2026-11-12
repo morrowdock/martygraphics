@@ -235,7 +235,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "09d8e805a50616ee7fd78da929cd7e88ed7b702fc7ce9ea2e9f32cfc012192fe"
+      "sha256": "609e4219d54043f2e286c30dc37490d30523e2ba5aff9a6895f0e96395381217"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
@@ -923,7 +923,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidLook.swift",
-      "sha256": "c76c9dea8fd50dee674a62dbbd9720514a8ed35c9ee2331b3f60b03e9e8c3264"
+      "sha256": "d900794c7420c4578e29a27db0fd89b0a76e1b09b5a03c87c187f89ea3947f4c"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidMath.swift",
@@ -959,7 +959,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
-      "sha256": "e5653bc03d63802ca6665b05c81a7e1833c16bae04f960c86b8f1a73f763883c"
+      "sha256": "3918c15bf5294205100624bb18c053b8f4211ad03d3ec0cf59d6ef3b6e4c2d0c"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",

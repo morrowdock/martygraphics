@@ -510,6 +510,12 @@ final class MovieWriter {
         let bitrate = max(2_000_000, min(40_000_000, Int(Double(self.width * self.height) * Double(fps) * 0.2)))
         input = AVAssetWriterInput(mediaType: .video, outputSettings: [
             AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: self.width, AVVideoHeightKey: self.height,
+            // The frames are sRGB pixels: say so, with BT.709 primaries and matrix. An untagged file leaves a player to
+            // guess the transfer function; one that assumes BT.709 and converts to the display shows the middle tones
+            // several levels off the stills.
+            AVVideoColorPropertiesKey: [AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
+                                        AVVideoTransferFunctionKey: kCVImageBufferTransferFunction_sRGB as String,
+                                        AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2],
             // No frame reordering (no B-frames): every sample's presentation time is its decode time, frame k at k / fps.
             AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: bitrate, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
                                               AVVideoMaxKeyFrameIntervalKey: Int(fps) * 2, AVVideoAllowFrameReorderingKey: false],

@@ -139,7 +139,7 @@ public final class MGSolidRenderer {
         cam.exposureOffset = CGFloat(lighting.exposure + look.exposure)
         cam.wantsExposureAdaptation = false
         cam.bloomIntensity = options.bloom ? CGFloat(look.bloom) : 0
-        cam.bloomThreshold = 0.92
+        cam.bloomThreshold = CGFloat(look.bloomThreshold)
         cam.bloomBlurRadius = 10
         if look == .classic {
             cam.vignettingIntensity = 0.35
