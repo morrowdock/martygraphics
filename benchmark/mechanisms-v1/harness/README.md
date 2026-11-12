@@ -12,6 +12,9 @@ protocol's open points are in [AMENDMENTS.md](../AMENDMENTS.md); the options are
 | [rubric_form.py](rubric_form.py) | The one validator of "valid JSON in the rubric's form", plus the section 6 attempt rule (`call_status`, and `next_step` for the grading runner). |
 | [blinding.py](blinding.py) | Section 8 tokens, sides and the commitment, with the A-09 encoding. |
 | [agreement.py](agreement.py) | Krippendorff's alpha (interval), Spearman's rho, Cohen's kappa (unweighted and quadratic) and percent agreement, plus their bootstrap forms. |
+| [pack.py](pack.py) | Proposed masking, normalization, packet builder and deterministic grader order; Apple framework IO in `native/media.swift`. |
+| [grading_runner.py](grading_runner.py) | Proposed section 6 session driver; only a recorded adapter, with public-commitment and durable-preference gates. |
+| [PACKING.md](PACKING.md) | Packer inputs, CLI, trust boundaries, review choices and pending macOS validation. |
 | [tests/](tests/test_score.py) | Synthetic tests only (see below). |
 
 **Requirements:** Python 3.11 or later, and **NumPy at the version that RUN-LOCK.json pins** (`harness.numpy`,
@@ -104,3 +107,13 @@ Without `RECORD.json` nothing is scored.
   defects undefined.
 - **The test.** An exact two-sided binomial sign test over the defined d(q) that are not 0. p is an exact fraction;
   a win or a loss needs p < 0.05.
+
+## Proposed packing and runner tests
+
+`tests/test_pack_runner.py` adds original synthetic questions, frames and replies.
+It runs the Python packer, fake grading and unchanged analysis on a 20-question
+design. It expects a registered win at 15 positive and 5 negative questions,
+with exact sign-test p = 5425/131072. Other cases cover masking, metadata, order,
+failed partners, retries and exhaustion, durable preference storage, publication,
+clock, integrity and adapter refusals. The native Apple helper still needs macOS
+validation. See [PACKING.md](PACKING.md); RUN-LOCK remains DRAFT.

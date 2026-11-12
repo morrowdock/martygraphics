@@ -35,5 +35,25 @@
     "dryRun": "pending: the dry-run evidence (PROTOCOL.md section 2.4)",
     "packer": "pending: the masking, normalisation and packing code, and the order permutation of section 8 step 4 (harness/OPEN-QUESTIONS.md OQ-13)",
     "gradingRunner": "pending: the grading runner; it must use harness/rubric_form.py (next_step) and write RECORD.json as harness/README.md describes"
+  },
+  "draftProposals": {
+    "packerRunner": {
+      "status": "PROPOSED 2026-11-12: review pending; not approved pins; does not make run 1 ready",
+      "baseCommit": "09506df11dff29f28fce51ac06ee57434404f8f5",
+      "amendment": "A-14 (proposed)",
+      "nativeValidation": "PENDING: compile and run native synthetic tests on macOS, pin native binary and host, then complete the registered dry run",
+      "liveAdapter": "PENDING: only offline RecordedAdapter is included; live model isolation needs separate review",
+      "files": {
+        "harness/pack.py": "5ec54c199494e3c577f6b796ba3fa55352304f2c8f2887dc258a705bd3abe600",
+        "harness/grading_runner.py": "80d1fe99ebbeb6c1908cb78e5bbb0d207844392b34ed77c5f88e6b8b36d46851",
+        "harness/native/media.swift": "09594dfcd72e270bca3bf483094595532bd063a61cff98ab3d8cc3416406f3f1",
+        "harness/tests/test_pack_runner.py": "96111f4530a5600a826a9e7b7f1ef99b1287b03408597855e1e268cffe07e275",
+        "harness/tests/test_native_media.py": "80d4adca38b097c436a35c067a183cda943fbfdf6eaba90d323772820621ca04",
+        "harness/PACKING.md": "b75febc61f58b432f83d0c41da61cc3bd7edf128e50008e2316df737fcd69603",
+        "harness/README.md": "1c95b80217e18b8a5349bacffcf4b97c1d2513fc24b0fade1b14accb16aa2661",
+        "harness/OPEN-QUESTIONS.md": "5d80fcf705d004e57b37b36358dbcf52fc34bf7a4ed479546e0a5d2ecd8f8828",
+        "AMENDMENTS.md": "eeb96e02adea8dbd44f21c9f6b0a021b02d2e706bb040783abb8314b85fd1c6a"
+      }
+    }
   }
 }

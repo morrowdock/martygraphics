@@ -1375,7 +1375,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
-      "sha256": "a8efb07f1b2f749a0a64901c5e2dc65874c9c3bba3637c5650ba4fa4d511511a"
+      "sha256": "eeb96e02adea8dbd44f21c9f6b0a021b02d2e706bb040783abb8314b85fd1c6a"
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
@@ -1411,15 +1411,19 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
-      "sha256": "d6d9956b05c29bbbbd55bfaa9c1672a8c93415afb5b29d5d4ff5255b24bfed6c"
+      "sha256": "b2871e05988feb94423ed696151a43e7f1f5aa39a9fee0550ac7d44756e09192"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
-      "sha256": "b8a1b5a44b7d3543edebb07842f4f0b56f21d224b00140620f31f4d60144dfb0"
+      "sha256": "5d80fcf705d004e57b37b36358dbcf52fc34bf7a4ed479546e0a5d2ecd8f8828"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/PACKING.md",
+      "sha256": "b75febc61f58b432f83d0c41da61cc3bd7edf128e50008e2316df737fcd69603"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/README.md",
-      "sha256": "38500a5ca73c7547aa9632a33f81bfff6e4ec93c5ba286f0f0dec8558561055f"
+      "sha256": "1c95b80217e18b8a5349bacffcf4b97c1d2513fc24b0fade1b14accb16aa2661"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/agreement.py",
@@ -1428,6 +1432,18 @@
     {
       "path": "benchmark/mechanisms-v1/harness/blinding.py",
       "sha256": "3008a855e2fdd350da7137a273d83233eee01a1108c8925e72c11ae5d1bcc93d"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/grading_runner.py",
+      "sha256": "80d1fe99ebbeb6c1908cb78e5bbb0d207844392b34ed77c5f88e6b8b36d46851"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/native/media.swift",
+      "sha256": "09594dfcd72e270bca3bf483094595532bd063a61cff98ab3d8cc3416406f3f1"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/pack.py",
+      "sha256": "5ec54c199494e3c577f6b796ba3fa55352304f2c8f2887dc258a705bd3abe600"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/rubric_form.py",
@@ -1452,6 +1468,14 @@
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_end_to_end.py",
       "sha256": "2ed0d3c57d48728233b5b69e06edc4b1c4651bacd8a56fc63eeae56c45721bf0"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_native_media.py",
+      "sha256": "80d4adca38b097c436a35c067a183cda943fbfdf6eaba90d323772820621ca04"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_pack_runner.py",
+      "sha256": "96111f4530a5600a826a9e7b7f1ef99b1287b03408597855e1e268cffe07e275"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_rubric_form.py",

@@ -168,3 +168,63 @@ fixed before run 1, so they are not deviations:
   accepted by the validator) is left to the grader instructions and the audit; it is not a validity test.
 
 *Effect:* stricter validation and timing only; scoring arithmetic is unchanged. The scoring hashes below are updated.
+
+**A-14. Packer and grading driver (2026-11-12; PROPOSED, review pending).** New
+code: `harness/pack.py`, `harness/grading_runner.py`,
+`harness/native/media.swift`, and synthetic tests in
+`harness/tests/test_pack_runner.py` and `harness/tests/test_native_media.py`.
+These files have no old hash. Their proposed
+new hashes, and the updated documentation hashes, are recorded only in
+`RUN-LOCK.json.draftProposals.packerRunner`; no existing scoring pin or registered
+input is changed. The previous AMENDMENTS.md hash remains in `harness.amendments`
+until the coordinator accepts the proposal. It is not silently promoted.
+
+*Decided rules reused:* A-03's validator and section 6 attempts, A-09's seed and
+HMAC encoding, and A-13's guess-session timing. No scoring, rubric or analysis
+rule is changed. The driver stores exact replies in the existing record format.
+Native media uses Apple Vision and AVFoundation with the locked MovieWriter
+settings, not an alternate OCR implementation or encoder.
+
+*Proposed implementation choices (not yet decided):*
+
+- **OQ-13:** sort primary calls lexicographically by `(kind, anonymous token)`,
+  with kind `preference` or `score`. Seed Python `random.Random` with the
+  big-endian integer of HMAC-SHA256(seed, `order:` + grader id), then shuffle once.
+  A valid, stored preference inserts its separate guess call immediately after
+  it. Guesses are conditional follow-ups, not independently permuted primary
+  calls; this construction enforces A-13. Each grader has its own permutation.
+  Fixed vector: raw seed `000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f`,
+  `order:G1` digest `9d5446cd87fc9d514cc822e34c1d179ed399cda2e7aff600b138ec8575e15acb`.
+  For each kind paired with tokens `0`, `1`, `2`, the order is score/1,
+  preference/1, preference/2, preference/0, score/2, score/0.
+- Source duration is the count of decoded 30 fps frames. L is clamped to 300–1800
+  frames. T is the larger L of rendered partners; the last frame is held. Still
+  indices are `floor(Lframes * fraction)` at fractions 0.1, 0.3, 0.5, 0.7, 0.9.
+  Frame-strip indices are 0, 3, 6, … below T. Text sampling uses 0, 15, 30, … below
+  T. These rounding and endpoint choices need review; the evidence rates do not
+  change.
+- Mask box edges round outwards before padding. The ring is outside the padded,
+  frame-clipped box. The median is per channel; a half-integer median rounds
+  down. All overlapping masks sample the original pixels and are applied in
+  sorted box/color order. F1 treats a token as whitespace-delimited, ending
+  exactly in `.json` or `.html`; punctuation after the suffix is not part of
+  this rule. Missing Vision range boxes stop packing, rather than hiding the
+  entire line. Remaining still matches are logged outside packets.
+- The section 2.4 dry-run path has one pair and an explicit `dry-run` scope. It
+  needs a separately reviewed bicycle grader-view key, and uses its own public
+  commitment under `results/dry-run/`. It cannot satisfy the primary completed
+  design. No dry run has been performed.
+- The public-branch observation time is used as a conservative publication-time
+  upper bound in `commitmentPushedUTC`. The driver fetches and checks the actual
+  public commitment before opening any session. It does not assert that Git
+  supplied a server push timestamp. Failure or restart after a session starts
+  needs review; automatic recovery is deliberately refused.
+
+*Effect and limits:* the order and record plumbing do not change registered
+scoring arithmetic. OCR, masking, image sampling and session ordering can affect
+what a grader sees, so these implementation choices must be reviewed before
+run 1; they are not labelled as proven to have no score effect. The Python
+pipeline is tested with original synthetic data. Apple-framework compilation
+and native synthetic media checks are **pending** on macOS, followed by the
+registered dry run. Only a fake/recorded model adapter is shipped. Live grader
+adapters, their isolation and tool pins remain pending. RUN-LOCK stays DRAFT.

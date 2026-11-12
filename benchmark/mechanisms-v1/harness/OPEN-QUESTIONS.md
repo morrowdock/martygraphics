@@ -1,7 +1,7 @@
 # Open questions: mechanisms-v1 harness
 
 Status: **OQ-01 to OQ-12 decided, 2026-11-11, before run 1** (by the coordinator, following the independent review at
-`58d23865`). The decisions and their labels are in [AMENDMENTS.md](../AMENDMENTS.md). **OQ-13 is still open**; it is a
+`58d23865`). The decisions and their labels are in [AMENDMENTS.md](../AMENDMENTS.md). **OQ-13 has an implemented proposal, pending review (A-14)**; it is a
 packer question with no effect on the scoring code. This file records the options that were considered. It changes
 no question, key fact, check, prompt, rubric or protocol text.
 
@@ -26,7 +26,7 @@ Each item names what it can change. The four effect classes are kept apart:
 | OQ-10 HASHES.txt wording | nothing | the registration snapshot | A-10, no score effect |
 | OQ-11 exploratory analyses | aggregate (coverage), exploratory estimates | coverage = mean of per-run fractions; the rest completed in this pull request | A-11a score-affecting; A-11b no score effect |
 | OQ-12 no sign-test sample | nothing (no conclusion either way) | p = 1 with an explicit empty-sample report | A-12, no score effect |
-| OQ-13 order permutation | nothing in the scoring | **open** (packer) | — |
+| OQ-13 order permutation | nothing in scoring arithmetic; call order | **proposed, review pending**: digest-seeded shuffle of sorted kind/token calls, dependent guesses | A-14 |
 
 ## The options that were considered
 
@@ -76,7 +76,7 @@ mean of per-run fractions, and everything completed here.
 
 **OQ-12.** The alternative was p undefined. Chosen: p = 1 with an explicit empty-sample report.
 
-## Still open
+## Proposed implementation, decision still open
 
 **OQ-13. The order permutation of section 8, step 4.** "Each grader's order of calls is a permutation from
 HMAC-SHA256(seed, "order:" + grader id)" does not say how a digest becomes a permutation. Two possible
@@ -87,3 +87,9 @@ constructions:
 
 This belongs to the packer and must be fixed, with test vectors, before packing. It cannot change a score: every
 call is made, and each call is a fresh session.
+
+Implementation proposal, 2026-11-12: `pack.call_order` uses the first construction,
+with `(kind, anonymous token)` as the canonical sort key. Guess calls follow
+only durably stored preferences; they are not independent shuffle entries.
+The vector and interpretation are in A-14. Tests verify the vector, input-order
+independence and separate grader orders. **This is not a coordinator decision.**
