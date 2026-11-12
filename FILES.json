@@ -1854,6 +1854,14 @@
       "sha256": "eb8a68a7909553220b80007fed7fe9bacd6b692e28e94f7b2381fe69c21e8eb5"
     },
     {
+      "path": "docs/VISUAL-AUDIT.md",
+      "sha256": "f0c6f60cf8288387e3a0f141bf787228a912649fa86bead8a6105b3ed42c0bdb"
+    },
+    {
+      "path": "docs/VISUAL-STYLE.md",
+      "sha256": "f42c17bd0f55d8eb182686fc5d1f3237edc8f8c112693010891366e5202ccec3"
+    },
+    {
       "path": "docs/assets/annotations/check-strict.json",
       "sha256": "c36577ad05f6ff280c0529ded54b63eacf6e4f89c86173f9ee957eacf705e720"
     },
