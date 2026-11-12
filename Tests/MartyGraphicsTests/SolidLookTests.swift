@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import Foundation
+import SceneKit
 import XCTest
 @testable import MartyGraphics
 
@@ -17,7 +18,7 @@ final class SolidLookTests: XCTestCase {
         XCTAssertEqual(MGSolidLook.classic.lighting(.studio), .studio)
     }
 
-    /// A look scales the rig; it never moves, adds, removes or renames a light or a soft box.
+    /// A look scales the rig's lights; it never moves, adds, removes or renames one. It may reflect its own room.
     func testALookKeepsTheRigsShape() {
         let rig = MGStudioLighting.studio
         for look in [MGSolidLook.studio, .paper] {
@@ -25,8 +26,10 @@ final class SolidLookTests: XCTestCase {
             XCTAssertEqual(lit.lights.map(\.name), rig.lights.map(\.name), look.name)
             XCTAssertEqual(lit.lights.map(\.direction), rig.lights.map(\.direction), look.name)
             XCTAssertEqual(lit.lights.map(\.castsShadow), rig.lights.map(\.castsShadow), look.name)
-            XCTAssertEqual(lit.environment.softboxes.count, rig.environment.softboxes.count, look.name)
-            for (a, b) in zip(lit.environment.softboxes, rig.environment.softboxes) { XCTAssertEqual(Array(a[0..<7]), Array(b[0..<7]), look.name) }
+            // The room the parts reflect is the look's own; every soft box has its eight finite numbers.
+            if let room = look.environment { XCTAssertEqual(lit.environment, room, look.name) }
+            XCTAssertFalse(lit.environment.softboxes.isEmpty, look.name)
+            for box in lit.environment.softboxes { XCTAssertTrue(box.count == 8 && box.allSatisfy(\.isFinite) && box[7] > 0, look.name) }
             XCTAssertEqual(lit.background, rig.background, look.name)
             for v in lit.environment.zenith + lit.environment.horizon + lit.environment.floor { XCTAssertTrue(v.isFinite && v >= 0 && v <= 0.9, look.name) }
             for l in lit.lights { XCTAssertTrue(l.intensity.isFinite && l.intensity > 0, look.name) }
@@ -77,6 +80,45 @@ final class SolidLookTests: XCTestCase {
     func testAnEmptyOrTinyFrameStillGivesPixels() {
         XCTAssertEqual(MGSolidLook.studio.backdrop(width: 0, height: 0, pool: .centred(width: 0, height: 0)).count, 4)
         XCTAssertEqual(MGSolidLook.paper.backdrop(width: 3, height: 2, pool: MGSolidLook.Pool(x: .nan, y: 0, rx: 0, ry: 0)).count, 24)
+    }
+
+    /// A look's room is a valid environment that survives the snapshot's validating decoder (same record type).
+    func testTheProductStudioIsAValidEnvironment() throws {
+        for (gain, room) in [(1.0, 1.0), (2.4, 1.0), (1.5, 6.0), (1.0, 1000.0)] {
+            let e = MGSolidLook.productStudio(gain: gain, room: room)
+            let back = try JSONDecoder().decode(MGStudioLighting.Environment.self, from: JSONEncoder().encode(e))
+            XCTAssertEqual(back, e)
+            for v in e.zenith + e.horizon + e.floor { XCTAssertTrue(v >= 0 && v <= 0.9) }
+        }
+    }
+
+    /// Classic materials are the presets as before; a look finishes plastics and machined metals in the renderer and
+    /// leaves the exported parameters alone.
+    func testALookFinishesSurfacesInTheRendererOnly() {
+        let before = MGMaterialPreset.plastic(.blue).parameters
+        let classic = MGSolidRenderer.scnMaterial(.plastic(.blue)), studio = MGSolidRenderer.scnMaterial(.plastic(.blue), look: .studio)
+        XCTAssertEqual((classic.clearCoat.contents as? NSNumber)?.doubleValue, before.clearcoat)
+        XCTAssertEqual((studio.clearCoat.contents as? NSNumber)?.doubleValue, MGSolidLook.studio.plasticCoat)
+        XCTAssertEqual(MGMaterialPreset.plastic(.blue).parameters, before)
+        XCTAssertNil(MGSolidRenderer.scnMaterial(.titanium).shaderModifiers)
+        XCTAssertNotNil(MGSolidRenderer.scnMaterial(.titanium, look: .studio).shaderModifiers?[.surface])
+        // Brushed steel keeps its classic roughness texture in `classic` and takes the per-fragment marks in a look.
+        XCTAssertNil(MGSolidRenderer.scnMaterial(.brushedSteel).shaderModifiers)
+        XCTAssertNotNil(MGSolidRenderer.scnMaterial(.brushedSteel, look: .studio).shaderModifiers?[.surface])
+        XCTAssertTrue(MGSolidRenderer.scnMaterial(.brushedSteel, look: .studio).roughness.contents is NSNumber)
+        for preset in [MGMaterialPreset.polishedSteel, .rubber, .glass, .plastic(.red), .composite, .ceramic, .blackOxide] {
+            XCTAssertFalse(MGSolidRenderer.isMachined(preset), preset.id)
+            XCTAssertNil(MGSolidRenderer.scnMaterial(preset, look: .studio).shaderModifiers, preset.id)
+        }
+    }
+
+    /// The rig's soft boxes are unchanged by the feather parameter's default (0.25).
+    func testTheEnvironmentImageKeepsItsSize() {
+        let e = MGStudioLighting.studio.environment
+        for feather in [0.25, 0.5, 0, 2] {
+            let image = MGSolidRenderer.environmentImage(e, width: 64, height: 32, feather: feather)
+            XCTAssertEqual(image?.width, 64); XCTAssertEqual(image?.height, 32)
+        }
     }
 
     func testQualityLevels() {

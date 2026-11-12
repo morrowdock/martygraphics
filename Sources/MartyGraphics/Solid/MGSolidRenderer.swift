@@ -76,6 +76,9 @@ public final class MGSolidRenderer {
     /// Current preset of every part node (kept in step with `assembly`).
     private(set) var partMaterials: [String: MGMaterialPreset] = [:]
     private var materialCache: [String: SCNMaterial] = [:]
+    /// Turning-mark rings per millimetre of each part (`look.machining`): about `machiningRings` across its size.
+    private var partRings: [String: Double] = [:]
+    static let machiningRings = 110.0
     private var keyLight: SCNNode?
     private var groundNodes: [SCNNode] = []
     private var renderer: SCNRenderer?
@@ -201,6 +204,7 @@ public final class MGSolidRenderer {
     private func makeNode(_ p: MGPart) -> SCNNode {
         let g = MGSolidRenderer.geometry(p.mesh.renderMesh(creaseAngle: p.creaseAngle))
         plainGeometry[p.id] = g
+        partRings[p.id] = MGSolidRenderer.machiningRings / max(1e-6, p.mesh.bounds.size.length)
         let node = SCNNode(geometry: g)
         node.name = p.id
         partNodes[p.id] = node
@@ -381,12 +385,19 @@ public final class MGSolidRenderer {
         let preset = partMaterials[id] ?? .brushedSteel
         let pv = view.part(id)
         let light = pv.emission.flatMap { $0.intensity > 0 ? $0 : nil }
-        let base = material(for: preset, emission: light)
+        let rings = look.machining > 0 && MGSolidRenderer.isMachined(preset) ? partRings[id] : nil
+        let base = material(for: preset, emission: light, rings: rings)
         let dim = !highlighted.isEmpty && dimOthers && !highlighted.contains(id)
         let emphasise = highlighted.contains(id)
         let seeThrough = pv.opacity < 1
         var m = base
-        if !highlighted.isEmpty || seeThrough || sectionApplies(id) { m = base.copy() as! SCNMaterial }
+        if !highlighted.isEmpty || seeThrough || sectionApplies(id) {
+            m = base.copy() as! SCNMaterial
+            if let rings {
+                m.setValue(NSNumber(value: rings), forKey: "mgRings")
+                m.setValue(NSNumber(value: look.machining), forKey: "mgMachining")
+            }
+        }
         if dim {
             m.multiply.contents = emphasis == .strong ? CGColor(srgbRed: 0.20, green: 0.21, blue: 0.25, alpha: 1)
                                                       : CGColor(srgbRed: 0.30, green: 0.32, blue: 0.38, alpha: 1)
@@ -465,6 +476,11 @@ public final class MGSolidRenderer {
         if !b.isEmpty { for p in b.corners { far = max(far, (p - pos).length * 1.05) } }
         cameraNode.camera?.zFar = far
         cameraNode.camera?.screenSpaceAmbientOcclusionRadius = CGFloat(max(2, c.distance * 0.012))
+        if look.occlusionBias > 0 {
+            // The bias and the depth threshold follow the scene's size, so a curved face does not occlude itself.
+            cameraNode.camera?.screenSpaceAmbientOcclusionBias = CGFloat(c.distance * look.occlusionBias)
+            cameraNode.camera?.screenSpaceAmbientOcclusionDepthThreshold = CGFloat(c.distance * 0.02)
+        }
         updateGround()
     }
 
@@ -575,10 +591,12 @@ public final class MGSolidRenderer {
 
     // MARK: Materials
 
-    private func material(for preset: MGMaterialPreset, emission: MGEmission?) -> SCNMaterial {
-        let key = preset.id + (emission.map { "+" + $0.id } ?? "")
+    private func material(for preset: MGMaterialPreset, emission: MGEmission?, rings: Double? = nil) -> SCNMaterial {
+        // Parts of one preset share a material; machined parts of different sizes each get their own ring spacing.
+        let key = preset.id + (emission.map { "+" + $0.id } ?? "") + (rings.map { "@\($0)" } ?? "")
         if let m = materialCache[key] { return m }
-        let m = MGSolidRenderer.scnMaterial(preset)
+        let m = MGSolidRenderer.scnMaterial(preset, look: look)
+        if let rings { m.setValue(NSNumber(value: rings), forKey: "mgRings") }
         if let e = emission {
             // HDR emission that the camera's bloom picks up above intensity 1.
             m.emission.contents = CGColor(srgbRed: e.color[0], green: e.color[1], blue: e.color[2], alpha: 1)
@@ -588,7 +606,35 @@ public final class MGSolidRenderer {
         return m
     }
 
-    public static func scnMaterial(_ preset: MGMaterialPreset) -> SCNMaterial {
+    /// The metals a lathe or mill leaves fine concentric marks on (`MGSolidLook.machining`).
+    static func isMachined(_ preset: MGMaterialPreset) -> Bool {
+        switch preset {
+        case .brushedSteel, .aluminum, .titanium, .brass, .bronze, .nickelAlloy, .darkSteel: return true
+        default: return false
+        }
+    }
+
+    /// Fine turning marks: each ring about the part's local Z axis takes a slightly different roughness, computed per
+    /// fragment from the part-local position (so it has no seam, needs no texture coordinates and stays put as the
+    /// part moves). Rings finer than a pixel fade out instead of shimmering. `mgRings` is rings per millimetre.
+    static let machiningModifier = """
+        #pragma arguments
+        float mgRings;
+        float mgMachining;
+        #pragma body
+        float4 mgP = scn_node.inverseModelViewTransform * float4(_surface.position, 1.0);
+        float mgR = length(mgP.xy) * mgRings;
+        float mgFade = clamp(1.0 - fwidth(mgR) * 1.2, 0.0, 1.0) * mgMachining;
+        float mgH = fract(sin(floor(mgR) * 12.9898) * 43758.5453);
+        float mgK = fract(sin(floor(mgR * 0.31) * 78.233) * 12543.123);
+        _surface.roughness = clamp(_surface.roughness + ((mgH - 0.5) * 0.10 + (mgK - 0.5) * 0.03) * mgFade, 0.03, 1.0);
+        """
+
+    public static func scnMaterial(_ preset: MGMaterialPreset) -> SCNMaterial { scnMaterial(preset, look: .classic) }
+
+    /// A preset's material as a look finishes it. The preset's exported parameters (`MGMaterialPreset.parameters`) do
+    /// not change; a look adds a clear coat and a calibrated colour to plastics and turning marks to machined metals.
+    public static func scnMaterial(_ preset: MGMaterialPreset, look: MGSolidLook) -> SCNMaterial {
         let p = preset.parameters
         let m = SCNMaterial()
         m.lightingModel = .physicallyBased
@@ -599,12 +645,22 @@ public final class MGSolidRenderer {
             m.clearCoat.contents = NSNumber(value: p.clearcoat)
             m.clearCoatRoughness.contents = NSNumber(value: p.clearcoatRoughness)
         }
-        switch preset {
-        case .brushedSteel:
+        if look.machining > 0, isMachined(preset) {
+            m.shaderModifiers = [.surface: machiningModifier]
+            m.setValue(NSNumber(value: look.machining), forKey: "mgMachining")
+            m.setValue(NSNumber(value: 0.5), forKey: "mgRings")
+        } else if preset == .brushedSteel {
             // Fine anisotropic-looking streaks via a procedural roughness variation.
             m.roughness.contents = brushedRoughness(base: p.roughness)
             m.roughness.wrapS = .repeat; m.roughness.wrapT = .repeat
-        default: break
+        }
+        if case .plastic = preset, let coat = look.plasticCoat {
+            // A moulded part: the role's hue a little deeper and less saturated, under a glossy clear coat.
+            let c = p.baseColor, grey = (c[0] + c[1] + c[2]) / 3
+            let q = c.map { ($0 * 0.9 + grey * 0.1) * 0.86 }
+            m.diffuse.contents = CGColor(srgbRed: q[0], green: q[1], blue: q[2], alpha: 1)
+            m.clearCoat.contents = NSNumber(value: coat)
+            m.clearCoatRoughness.contents = NSNumber(value: look.plasticCoatRoughness)
         }
         if p.transmission > 0 {
             m.transparency = CGFloat(p.opacity)
@@ -644,19 +700,22 @@ public final class MGSolidRenderer {
 
     private func applySection(to m: SCNMaterial, id: String) {
         guard let s = options.section, sectionApplies(id) else {
-            if m.shaderModifiers != nil {
-                m.shaderModifiers = nil
+            if m.shaderModifiers?[.fragment] != nil {
+                m.shaderModifiers?[.fragment] = nil
                 m.isDoubleSided = (partMaterials[id]?.parameters.transmission ?? 0) > 0
             }
             return
         }
-        m.shaderModifiers = [.fragment: """
+        // The section is a fragment modifier; a surface modifier (turning marks) stays.
+        var modifiers = m.shaderModifiers ?? [:]
+        modifiers[.fragment] = """
             #pragma arguments
             float4 mgSection;
             #pragma body
             float4 mgWorld = scn_frame.inverseViewTransform * float4(_surface.position, 1.0);
             if (dot(mgWorld.xyz, mgSection.xyz) > mgSection.w) { discard_fragment(); }
-            """]
+            """
+        m.shaderModifiers = modifiers
         m.isDoubleSided = true
         m.setValue(NSValue(scnVector4: SCNVector4(Float(s.normal.x), Float(s.normal.y), Float(s.normal.z), Float(s.offset))), forKey: "mgSection")
     }
@@ -665,7 +724,7 @@ public final class MGSolidRenderer {
     // MARK: Environment, lights, ground
 
     private func buildEnvironment() {
-        scene.lightingEnvironment.contents = MGSolidRenderer.environmentImage(lit.environment, width: 1024, height: 512)
+        scene.lightingEnvironment.contents = MGSolidRenderer.environmentImage(lit.environment, width: 1024, height: 512, feather: look.boxFeather)
         scene.lightingEnvironment.intensity = CGFloat(lit.environment.intensity)
         scene.background.contents = CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0)
     }
@@ -745,7 +804,9 @@ public final class MGSolidRenderer {
     // MARK: Image helpers
 
     /// Procedural equirectangular studio environment (float RGBA, linear-ish values above 1 for soft boxes).
-    public static func environmentImage(_ e: MGStudioLighting.Environment, width w: Int, height h: Int) -> CGImage? {
+    /// `feather`: the share of a soft box's half-size that is its soft edge (0.25 = the rig's boxes).
+    public static func environmentImage(_ e: MGStudioLighting.Environment, width w: Int, height h: Int, feather: Double = 0.25) -> CGImage? {
+        let soft = min(1, max(0.01, feather)), hard = 1 - soft
         var px = [Float](repeating: 0, count: w * h * 4)
         func mix(_ a: [Double], _ b: [Double], _ t: Double) -> [Double] { (0..<3).map { a[$0] + (b[$0] - a[$0]) * t } }
         func smooth(_ x: Double) -> Double { let t = min(1, max(0, x)); return t * t * (3 - 2 * t) }
@@ -758,8 +819,8 @@ public final class MGSolidRenderer {
                 for s in e.softboxes where s.count >= 8 {
                     var daz = abs(az - s[0]); if daz > 180 { daz = 360 - daz }
                     let del = abs(el - s[1])
-                    let fx = 1 - smooth((daz - s[2] / 2 * 0.75) / (s[2] / 2 * 0.25 + 1e-6))
-                    let fy = 1 - smooth((del - s[3] / 2 * 0.75) / (s[3] / 2 * 0.25 + 1e-6))
+                    let fx = 1 - smooth((daz - s[2] / 2 * hard) / (s[2] / 2 * soft + 1e-6))
+                    let fy = 1 - smooth((del - s[3] / 2 * hard) / (s[3] / 2 * soft + 1e-6))
                     let f = fx * fy * s[7]
                     if f > 0 { c = (0..<3).map { c[$0] + s[4 + $0] * f } }
                 }

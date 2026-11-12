@@ -919,7 +919,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidLook.swift",
-      "sha256": "4ae9855b511be22e517e9a97377ed6b4fae6905da72ed9202a4dacbfdaf45286"
+      "sha256": "df5a1a2a1b8cf61cb59c56cc5728735be54b5ae2258de2513921c466f7a0fc58"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidMath.swift",
@@ -955,7 +955,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
-      "sha256": "887a8fa964f791bf519f17017b4f3e889a556ec9ef5f309e62d26531998d0014"
+      "sha256": "2d0204b3ba8529e161ef5949c38a1dd7694b6331d4f25b07b7b9829c3519fa9a"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
@@ -1287,7 +1287,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidLookTests.swift",
-      "sha256": "d946158b7ade67e118f22ed67ae3e3215d5bba826c7fe0d43b4acef4b64c453e"
+      "sha256": "3908b67d531ec2e5334afe64fcd01f17bffa3998656bc0945787b5c1014e02cd"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReasonCatalogTests.swift",
