@@ -1,5 +1,11 @@
 # Proposed live grader adapters
 
+**2026-11-12 route update:** A-16 replaces G2 agy with Gemini CLI 0.68.0.
+See [GEMINI-CLI.md](GEMINI-CLI.md) for the implementation, model difference,
+quota-free evidence and remaining gates. The agy sections below are historical;
+their invocation and blocker class remain only for compatibility tests.
+RUN-LOCK is still DRAFT.
+
 Status: **PROPOSED, 2026-11-12. Not run-ready. G2 is UNVERIFIED and blocked.**
 Base: `9e95ad3d69a54bce75b1a86d5b136734fb3ddb84`.
 Sources: `LOCK.json`, `PROTOCOL.md` sections 6 and 9, `grading_runner.py`, the

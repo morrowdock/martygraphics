@@ -307,3 +307,46 @@ is **PENDING**, not an assertion of zero score effect. Fresh homes, durable
 transport, exact-session fix-up, uncertain-call refusal and the G2 blocker
 remain. No model prompt or quota was used. The protocol, registered keys and
 accepted pins are unchanged. RUN-LOCK remains DRAFT.
+
+## A-16 — G2 route changed to Gemini CLI (owner-approved 2026-11-12)
+
+Owner: Collin. Date: 2026-11-12, before run 1. Base:
+`7332c125b83c94fd93acfbd1e77645d978e6ce87`. Source: the owner's route decision
+and verified official Gemini CLI 0.68.0 help, package documentation and native
+offline evidence detailed in [GEMINI-CLI.md](harness/GEMINI-CLI.md).
+
+**Accepted route decision:** replace Antigravity `agy` 1.5.6 with Google's
+`@google/gemini-cli` **0.68.0**, using the owner's Google account subscription.
+No paid API key or AI-credit overage is allowed. The reason is that agy could
+not be shown to meet sections 6 and 9: image input, tool/web denial, and the
+fresh-session contract were not established. The historical `LOCK.json` entry
+is unchanged. This is a **substantive grader-route change**, recorded before
+run 1; it can change grades and verdict eligibility. It is not labelled as
+having zero score effect. Scoring arithmetic is unchanged.
+
+**Model finding and proposed run pin:** the CLI does not expose the registered
+`gemini-4-argon` in its bundled definitions. The closest shipped Pro candidate
+is `gemini-3.1-pro-preview`, with `thinkingLevel: "HIGH"`. The adapter explicitly
+selects that ID and HIGH; this changes model identity, not just spelling.
+The owner approved the CLI route. Acceptance of this specific model change
+and the complete effective request remain **PENDING before run 1**, not implied
+by the route decision. The adapter prevents local Auto/2.5 remapping and
+fallback chains as documented in GEMINI-CLI.md; it rejects differing actual
+model usage. Subscription availability is unverified and must never be
+inferred from a local catalog.
+
+**VERIFIED implementation evidence:** fresh bubblewrap homes, an auth-only
+runtime copy, packet-only attachment references, durable raw replies/receipts,
+exact saved-UUID fix-up and uncertain-turn no-resend behavior have synthetic
+process tests. Native, network-disabled, auth-free library probes establish
+an empty constructed tool registry and user-memory discovery, HIGH thinking,
+fixed model resolution and synthetic text/PNG decoding. Negative probes
+reject tool, memory and model-policy regressions. Gemini has no documented
+auth-free full request dump; the probe is narrower than G1's diagnostic.
+Built-in system/environment context remains. Post-auth remote settings,
+model access, full multimodal fidelity and real resume behavior remain pending.
+
+No benchmark packet, rubric, real prompt, OAuth flow or model quota was used.
+Auth needs the owner's one-time Login with Google. Implementation acceptance,
+model acceptance and all other run gates remain open. RUN-LOCK stays DRAFT;
+new observations and file pins are under `draftProposals.g2GeminiCli`.

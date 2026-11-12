@@ -123,3 +123,8 @@ with exact sign-test p = 5425/131072. Other cases cover masking, metadata, order
 failed partners, retries and exhaustion, durable preference storage, publication,
 clock, integrity and adapter refusals. The native Apple helper still needs macOS
 validation. See [PACKING.md](PACKING.md); RUN-LOCK remains DRAFT.
+
+G2 route update (owner-approved 2026-11-12, A-16): see [GEMINI-CLI.md](GEMINI-CLI.md)
+for the proposed Gemini CLI 0.68.0 adapter, exact draft model and thinking pins,
+quota-free checks and the one-time owner sign-in. Historical agy blockers are
+superseded by that route decision; model and run acceptance remain pending.

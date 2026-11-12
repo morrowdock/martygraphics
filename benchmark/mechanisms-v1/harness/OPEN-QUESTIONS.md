@@ -125,3 +125,28 @@ review, not a claim that the whole process has no network or runtime access.
 This can change the evidence a grader receives and verdict eligibility.
 Scoring arithmetic is unchanged. No model call, benchmark packet dispatch,
 or registered dry run has been performed. RUN-LOCK stays DRAFT.
+
+### OQ-14 update — owner-approved G2 route, implementation proposed (2026-11-12)
+
+A-16 supersedes the agy-only route blocker above. Base:
+`7332c125b83c94fd93acfbd1e77645d978e6ce87`. Source:
+[GEMINI-CLI.md](GEMINI-CLI.md), pinned official 0.68.0 help/docs/source and
+native quota-free tests. G2 now has a Gemini CLI `Adapter.open/resume`
+implementation with the same durable recovery contract as G1. Fake CLIs test
+success, exact fix-up, crash/timeout, malformed envelopes, tool/unknown events,
+wrong model/id, altered storage and fresh isolation.
+
+The owner approved Gemini CLI 0.68.0 with Google subscription auth, no paid API.
+The registered `gemini-4-argon` is absent from bundled model definitions;
+`gemini-3.1-pro-preview` plus `thinkingLevel: HIGH` is the **proposed replacement
+model**, explicitly different and still pending acceptance before run 1.
+Local model-routing overrides prevent silent Auto/2.5 fallback. Native probes
+verify an empty constructed tool registry and memory discovery, but no native
+CLI diagnostic proves the complete post-auth request. Built-in system and
+environment context remain. These limits must be reviewed, not hidden.
+
+Pending: owner sign-in, replacement-model acceptance and subscription access,
+full CLI/post-auth policy and image fidelity acceptance, exact-session live
+acceptance, reviewed host pins and all existing benchmark gates. The only
+requested owner action is the sign-in command in GEMINI-CLI.md; no model call
+or new run approval is requested here. RUN-LOCK remains DRAFT.

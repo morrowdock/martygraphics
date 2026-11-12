@@ -29,7 +29,7 @@
   "pendingBeforeRun1": {
     "martySolidSha256": "pending: SHA-256 of the marty-solid binary built from engine 38f3863d5ed27c94fccf44b5f117a43938b79455",
     "arm2Renderer": "pending: R-WK or R-CR and its version, chosen after the dry run (PROTOCOL.md section 5)",
-    "graderTools": "pending: the OpenAI Codex CLI and Antigravity versions",
+    "graderTools": "pending review: Codex CLI 0.167.2 and Gemini CLI 0.68.0 (A-16 replaces agy); exact G2 model acceptance and account access pending",
     "generatorCliSha256": "pending: SHA-256 of the Claude Code 2.1.322 binary (LOCK.json generator.cliRule)",
     "host": "pending: hardware and macOS version of the run host",
     "dryRun": "pending: the dry-run evidence (PROTOCOL.md section 2.4)",
@@ -109,6 +109,49 @@
         },
         "boundary": "Exact shared exec/resume -c configuration and ENV in the same filesystem sandbox; diagnostic verb replaces exec transport flags and disables network. Codex debug does not support --strict-config. See LIVE-ADAPTERS.md.",
         "G2": "UNVERIFIED; dispatch remains DISABLED"
+      },
+      "supersededG2By": "A-16; draftProposals.g2GeminiCli. Prior G2 observations are historical."
+    },
+    "g2GeminiCli": {
+      "status": "PROPOSED implementation; owner-approved CLI route 2026-11-12. Not approved run pins. DRAFT remains.",
+      "baseCommit": "7332c125b83c94fd93acfbd1e77645d978e6ce87",
+      "amendment": "A-16",
+      "source": "harness/GEMINI-CLI.md; official pinned package help/docs/source; network-disabled native checks 2026-11-12",
+      "package": "@google/gemini-cli",
+      "version": "0.68.0",
+      "npmTarballSha256": "325099ddcb56937c27d119e7297bfa8a5e29b529bae3c92fdf3b71a36d5fa006",
+      "entryPointSha256": "fcc38edd4f864c2f5fa582d7d133c19b1a04c697ad3143ab8045f92b77644c68",
+      "packageTreeSha256": "6597de6c1c6ed400d17320b07f1feff7bd20676d270e8092dd55069533709bc4",
+      "nodeVersion": "v26.13.0",
+      "nodeSha256": "0adde40d1b7dfa57c8bc83cbc319758c3ec6ebba21363bb2fa752ea6b267ad1b",
+      "runtimeSha256": "67b5048aef821db4682ec9b6fc7cd61b0bfd2fd2df827c82bf41ffce6f968b32",
+      "registeredModel": "gemini-4-argon",
+      "registeredModelExposed": false,
+      "proposedModel": "gemini-3.1-pro-preview",
+      "thinkingLevel": "HIGH",
+      "modelAcceptance": "PENDING before run 1; not an alias for Argon. Owner approved route; account model access unverified.",
+      "auth": "owner action needed: run the pinned CLI once and choose Login with Google; no OAuth attempted",
+      "payment": "oauth-personal only; no inherited API keys; billing.overageStrategy=never",
+      "nativeEvidence": {
+        "network": false,
+        "authCopied": false,
+        "modelCalls": 0,
+        "constructedToolDefinitions": [],
+        "discoveredUserMemory": "",
+        "boundary": "Pinned native core library with mapped Config fields, empty filesystem, native text/PNG decoder and model resolver. Not a full CLI settings-loader or post-auth request dump.",
+        "remainingContext": "CLI built-in system/environment context; no supported offline complete-request diagnostic"
+      },
+      "validation": "VERIFIED 2026-11-12: NumPy 2.5.4; harness 202 tests (199 passed, 3 macOS-only skips), tools 52 passed. Native G1 and G2 checks ran, not skipped. G2 includes 15 dedicated tests. No model call or OAuth flow.",
+      "files": {
+        "harness/grading_runner.py": "12b8564d777da499f171881725e383d2f1058632b4c60d32c7c1dcb8bb53d941",
+        "harness/gemini_adapter.py": "9facd78154049632e97320738a2f2b02b3702771ee97dcefb7416125acbe1c90",
+        "harness/native/gemini_probe.mjs": "9a06e7fdc218e954c4eddaafe398a4f65b8f46e523e716b3c4cb9c7ea444623b",
+        "harness/tests/test_gemini_adapter.py": "88a3e6b12949a61c05748144314e02cb6dd7bd75cc12ce448a48b898a0dbbbbf",
+        "harness/GEMINI-CLI.md": "0fec8ece933ec1cd6f5c445918a1014808eb98a4aac2b70ac9818b92df7730aa",
+        "harness/LIVE-ADAPTERS.md": "b4cbbb413bf561d798a4371848427c789dc609836416170fdbae4bf3e8939cb1",
+        "harness/OPEN-QUESTIONS.md": "ae14e1d1e1b9e49bde21e5a108ff78052e769408a009d2e9ae0e96012d129085",
+        "harness/README.md": "0bdb1db3859bfe6814a85c48d7e7e1fc9db35c7b19c6fe04ddc4d61433020d63",
+        "AMENDMENTS.md": "12677a4a708603bc191153da7077e6ce287c9a9abe7c82eed5846bb2570f449c"
       }
     }
   }

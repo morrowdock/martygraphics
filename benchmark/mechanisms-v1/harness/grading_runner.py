@@ -496,8 +496,8 @@ def _run_locked(root, adapter, prompts, clock, doc, seed, questions, calls, push
     return record
 
 
-MODELS = {"G1": "gpt-6.1-sol", "G2": "gemini-4-argon"}
-VERSIONS = {"G1": "codex-cli 0.167.2", "G2": "1.5.6"}
+MODELS = {"G1": "gpt-6.1-sol", "G2": "gemini-3.1-pro-preview"}
+VERSIONS = {"G1": "codex-cli 0.167.2", "G2": "0.68.0"}
 G2_BLOCKER = (
     "UNVERIFIED G2: Antigravity 1.5.6 documents --print, --model, --effort, "
     "--conversation and --sandbox, but its help does not establish a deny-all "
@@ -670,7 +670,7 @@ def prepare_codex_policy(sandbox, home, packet, output):
 
 def antigravity_argv(remote_id=None):
     """Only help-confirmed flags; NOT a claim of a safe or verified transport."""
-    args = ["/tool", "--print", "--model", MODELS["G2"], "--effort", "high",
+    args = ["/tool", "--print", "--model", "gemini-4-argon", "--effort", "high",
             "--output-format", "json", "--disable-slash-commands", "--sandbox"]
     if remote_id is not None:
         args += ["--conversation", remote_id]
@@ -791,7 +791,27 @@ class CodexAdapter:
         self.timeout = timeout
         if timeout <= 0:
             raise ValueError("timeout must be positive")
-        self.binary_hash = digest(self.sandbox.binary)
+        self.binary_hash = self.binary_digest()
+
+    def binary_digest(self):
+        return digest(self.sandbox.binary)
+
+    def policy_digest(self):
+        return policy_hash()
+
+    def initialize_home(self, home):
+        (home / "codex").mkdir(mode=0o700)
+        durable_json(home / "codex/grader-model.json", self.catalog)
+        if self.auth:
+            auth = home / "codex/auth.json"
+            durable_bytes(auth, self.auth.read_bytes())
+            auth.chmod(0o600)
+
+    def transport(self, payload, images, remote_id, output):
+        return codex_argv(images, remote_id), payload
+
+    def result(self, output, expected_id):
+        return codex_result(output, expected_id)
 
     def preflight(self):
         """Native version/catalog/tool checks, no network or model request."""
@@ -821,12 +841,7 @@ class CodexAdapter:
         sync_directory(self.root)
         home = path / "home"
         home.mkdir(mode=0o700)
-        (home / "codex").mkdir(mode=0o700)
-        durable_json(home / "codex/grader-model.json", self.catalog)
-        if self.auth:
-            auth = home / "codex/auth.json"
-            durable_bytes(auth, self.auth.read_bytes())
-            auth.chmod(0o600)
+        self.initialize_home(home)
         shutil.copytree(packet, path / "packet")
         if packet_hashes(path / "packet") != hashes:
             raise ValueError("packet changed while copying")
@@ -834,7 +849,7 @@ class CodexAdapter:
         state = {"kind": "mechanisms-v1.live-session/1", "sessionId": session_id,
                  "grader": grader, "callKind": kind, "packetHashes": hashes,
                  "model": MODELS[grader], "effort": "high", "toolVersion": VERSIONS[grader],
-                 "binarySha256": self.binary_hash, "policySha256": policy_hash(),
+                 "binarySha256": self.binary_hash, "policySha256": self.policy_digest(),
                  "startedUTC": utc(), "remoteSessionId": None, "replies": [], "phase": "ready",
                  "homeHashes": home_hashes(home, sync=True)}
         durable_json(path / "state.json", state)
@@ -848,7 +863,7 @@ class CodexAdapter:
         state = json.loads((path / "state.json").read_text())
         if (state["grader"], state["callKind"], state["sessionId"], state["packetHashes"],
                 state["binarySha256"], state["policySha256"]) != (
-                grader, kind, session_id, packet_hashes(packet), self.binary_hash, policy_hash()):
+                grader, kind, session_id, packet_hashes(packet), self.binary_hash, self.policy_digest()):
             raise Uncertain("session binding changed; operator recovery required")
         if state["phase"] != "ready" or len(state["replies"]) != received:
             raise Uncertain("uncertain request or reply count; never resend")
@@ -858,6 +873,8 @@ class CodexAdapter:
             raise Uncertain("exact session storage changed")
         for number, receipt in enumerate(state["replies"], 1):
             output = path / str(number)
+            if receipt.get("inputSha256") and digest(output / "input.txt") != receipt["inputSha256"]:
+                raise Uncertain("durable adapter input changed")
             if json.loads((output / "receipt.json").read_text()) != receipt or \
                     (output / "reply.bin").read_bytes() != bytes.fromhex(receipt["rawHex"]) or \
                     digest(output / "stdout.bin") != receipt["stdoutSha256"] or \
@@ -888,7 +905,7 @@ class LiveSession:
             raise ValueError("section 6 permits only one fix-up per session")
         if packet_hashes(path / "packet") != state["packetHashes"]:
             raise ValueError("session packet changed")
-        if digest(self.adapter.sandbox.binary) != state["binarySha256"]:
+        if self.adapter.binary_digest() != state["binarySha256"]:
             raise ValueError("CLI binary changed")
         if home_hashes(path / "home") != state["homeHashes"]:
             raise Uncertain("exact session storage changed")
@@ -898,14 +915,16 @@ class LiveSession:
             payload, images = message.encode("utf-8"), []
         else:
             payload, images = prompt_bytes(path / "packet", message)
-        args = codex_argv(images, state["remoteSessionId"])
         output = path / str(len(state["replies"]) + 1)
         output.mkdir(mode=0o700)
         sync_directory(path)
+        args, payload = self.adapter.transport(payload, images, state["remoteSessionId"], output)
         request = {"sessionId": state["sessionId"], "remoteSessionId": state["remoteSessionId"],
                    "startedUTC": utc(), "toolVersion": state["toolVersion"],
                    "argv": self.adapter.sandbox.command(path / "home", path / "packet", output, args),
-                   "env": ENV, "stdinSha256": hashlib.sha256(payload).hexdigest()}
+                   "env": getattr(self.adapter.sandbox, "env", ENV), "stdinSha256": hashlib.sha256(payload).hexdigest()}
+        if (output / "input.txt").exists():
+            request["inputSha256"] = digest(output / "input.txt")
         durable_json(output / "request.json", request)
         state["phase"] = "sending"
         durable_json(path / "state.json", state)
@@ -913,7 +932,7 @@ class LiveSession:
             self.adapter.sandbox.invoke(path / "home", path / "packet", output, args,
                                         payload, self.adapter.timeout)
             received = utc()
-            remote_id, raw = codex_result(output, state["remoteSessionId"])
+            remote_id, raw = self.adapter.result(output, state["remoteSessionId"])
             if state["remoteSessionId"] is None:
                 registry = self.adapter.root / "remote-ids"
                 registry.mkdir(mode=0o700, exist_ok=True)
@@ -930,6 +949,8 @@ class LiveSession:
                        "toolVersion": state["toolVersion"], "binarySha256": state["binarySha256"],
                        "rawHex": raw.hex(), "stdoutSha256": digest(output / "stdout.bin"),
                        "stderrSha256": digest(output / "stderr.bin")}
+            if "inputSha256" in request:
+                receipt["inputSha256"] = request["inputSha256"]
             durable_bytes(output / "reply.bin", raw)
             durable_json(output / "receipt.json", receipt)
             state["homeHashes"] = home_hashes(path / "home", sync=True)
@@ -966,9 +987,12 @@ class AntigravityAdapter:
 
 
 class LiveAdapter:
-    def __init__(self, root, binary, *, auth=None, timeout=300):
+    def __init__(self, root, binary, *, auth=None, timeout=300, gemini_bin=None, gemini_auth=None):
+        from gemini_adapter import GeminiAdapter
+        if gemini_bin is None:
+            raise ValueError("--gemini-bin is required for G2")
         self.adapters = {"G1": CodexAdapter(root, binary, auth=auth, timeout=timeout),
-                         "G2": AntigravityAdapter()}
+                         "G2": GeminiAdapter(Path(root) / "g2", gemini_bin, auth=gemini_auth, timeout=timeout)}
 
     def preflight(self):
         self.adapters["G2"].preflight()
@@ -987,6 +1011,9 @@ def policy_hash():
 
 def self_test(args):
     """No benchmark inputs. Dry mode does not execute even --version."""
+    if args.grader == "G2":
+        from gemini_adapter import self_test as gemini_self_test
+        return gemini_self_test(args)
     root = args.work.resolve()
     root.mkdir(mode=0o700)
     sandbox = Bubblewrap(args.binary)
@@ -1071,9 +1098,11 @@ def main(argv=None):
     parser.add_argument("pack", type=Path)
     adapters = parser.add_mutually_exclusive_group(required=True)
     adapters.add_argument("--recorded", type=Path, help="offline reply sessions")
-    adapters.add_argument("--live", action="store_true", help="proposed live adapters; fail-closed while G2 is unverified")
+    adapters.add_argument("--live", action="store_true", help="proposed live adapters; requires reviewed runtime pins and owner OAuth")
     parser.add_argument("--adapter-state", type=Path, help="private durable CLI state outside packets and repo")
     parser.add_argument("--codex-bin", type=Path, help="native Codex executable, not a shim")
+    parser.add_argument("--gemini-bin", type=Path, help="pinned official Gemini CLI bundle/gemini.js")
+    parser.add_argument("--gemini-auth", type=Path, help="owner OAuth-only JSON; defaults to ~/.gemini/oauth_creds.json")
     parser.add_argument("--codex-auth", type=Path, help="explicit auth-only file; never inherited from host config")
     parser.add_argument("--timeout", type=float, default=300)
     parser.add_argument("--public-branch", required=True, help="read-only public commitment verification")
@@ -1082,7 +1111,8 @@ def main(argv=None):
         if not args.adapter_state or not args.codex_bin:
             parser.error("--live needs --adapter-state and --codex-bin")
         try:
-            adapter = LiveAdapter(args.adapter_state, args.codex_bin, auth=args.codex_auth, timeout=args.timeout)
+            adapter = LiveAdapter(args.adapter_state, args.codex_bin, auth=args.codex_auth, timeout=args.timeout,
+                                  gemini_bin=args.gemini_bin, gemini_auth=args.gemini_auth)
             adapter.preflight()
         except (ValueError, OSError, subprocess.SubprocessError) as error:
             parser.exit(2, str(error) + "\n")
