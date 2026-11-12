@@ -25,27 +25,48 @@
   },
   "artifacts": {
     "closed.png": {
-      "sha256": "7b4bec33e31a6512290c0d9ca5852cf962901b9805232bf8cdd7b8324bf894c5",
-      "bytes": 1064758,
-      "from": "render step-1 (step-1.png)",
-      "pixels": "1280x800"
+      "sha256": "1f7f82f50b6c56b4f1c9590d270fd65328901f8706d9b8f178fcf630d6685e6e",
+      "bytes": 876342,
+      "from": "OUT/cutaway/step-1.png, SHA-256 1f7f82f50b6c56b4f1c9590d270fd65328901f8706d9b8f178fcf630d6685e6e; MartyGraphics render, no pixel edits",
+      "pixels": "1280x800",
+      "capture": "studioRerender"
     },
     "cut.png": {
-      "sha256": "96dabfcb37877242b3330344375c086c36b52afe2d575f212fd8a22d59dd6a26",
-      "bytes": 1090443,
-      "from": "render step-2 (step-2.png)",
-      "pixels": "1280x800"
+      "sha256": "fd683db425339f55b557c0fc7c7e4dad2b7dc11ace78efc08f67ea79a36cee95",
+      "bytes": 959375,
+      "from": "OUT/cutaway/step-2.png, SHA-256 fd683db425339f55b557c0fc7c7e4dad2b7dc11ace78efc08f67ea79a36cee95; MartyGraphics render, no pixel edits",
+      "pixels": "1280x800",
+      "capture": "studioRerender"
     },
     "ghost.png": {
-      "sha256": "c15d924592e38a30ffaebe42e7ba8eaf518a3f7b90430e51399f9d4b38d5ceab",
-      "bytes": 947217,
-      "from": "render step-6 (step-6.png)",
-      "pixels": "1280x800"
+      "sha256": "82bb7a5d23f6484c2439bac8a42259ec005bbb4d8424465543683d1763dc5881",
+      "bytes": 912616,
+      "from": "OUT/cutaway/step-6.png, SHA-256 82bb7a5d23f6484c2439bac8a42259ec005bbb4d8424465543683d1763dc5881; MartyGraphics render, no pixel edits",
+      "pixels": "1280x800",
+      "capture": "studioRerender"
     },
     "check-strict.json": {
       "sha256": "ec3242f6391faf85f4c2a361d91b494cb38c366e0c27aa1887ef38cdc3b879d8",
       "bytes": 8041,
       "from": "marty-solid check --strict (stdout re-serialised with sorted keys and 2-space indent; same content)"
+    }
+  },
+  "studioRerender": {
+    "status": "verified",
+    "capturedUTC": "2026-11-12",
+    "engineCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+    "look": "studio",
+    "renderer": "MartyGraphics built-in SceneKit renderer; not Blender, not a hand-made image.",
+    "engineExecutableSHA256": "59549186a4e10e55734422cb9f239827f72a4ed972c5929535d08f1cbbcbb5a1",
+    "historicalScope": "The existing source, capture, run, render, check and review records describe the earlier capture. They do not claim a new review or check of the refreshed images. Artifact entries marked capture=studioRerender describe the current images. Other artifacts, including videos and check reports, are unchanged.",
+    "previousArtifacts": "Original artifact records are in this file at engine commit fb60455674808362c64b5600687d77b9f9b77c2c; old and new image hashes are also listed in docs/assets/STUDIO-RERENDER.md.",
+    "commands": {
+      "cutaway": {
+        "command": "marty-solid render Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json OUT/cutaway --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "c3faf35ff6a1c5cc6057621431c91d7f5135facfc2b40f0dd883861d9dee6953",
+        "document": "Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json",
+        "documentSHA256": "edc650a25a1e6ab0e22f865d39449388b10b985769c32a7e2d3f1649853ba957"
+      }
     }
   }
 }

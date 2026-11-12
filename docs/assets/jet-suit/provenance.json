@@ -44,75 +44,83 @@
   },
   "artifacts": {
     "hero.png": {
-      "sha256": "526756cbe98d7f33c5b2abf6e0e3bf2f4388c889aa810a2478756d13db4f53f7",
-      "bytes": 802528,
-      "from": "render hero.png, unedited",
-      "pixels": "1280x800",
-      "framing": "modelFitted"
-    },
-    "step-1.png": {
-      "sha256": "ce203eb673be94e8688f8ffba048dd892deb07485970b72364db6f7dfa882049",
-      "bytes": 687224,
-      "from": "render step 1 (step-1.png), unedited",
-      "pixels": "1280x800",
-      "framing": "focus",
-      "offView": 0,
-      "occluded": 0
-    },
-    "step-2.png": {
-      "sha256": "a827b6f6c46469ce18b3edb2cb7784e58f6167a781890c0c7afb57aa1fc3e76c",
-      "bytes": 707631,
-      "from": "render step 2 (step-2.png), unedited",
-      "pixels": "1280x800",
-      "framing": "focus",
-      "offView": 0,
-      "occluded": 0
-    },
-    "step-3.png": {
-      "sha256": "3acc2dde40c5499e6fcce23b3dd6f1b399d78c7a7080dc6400363466cd29896b",
-      "bytes": 684494,
-      "from": "render step 3 (step-3.png), unedited",
-      "pixels": "1280x800",
-      "framing": "focus",
-      "offView": 0,
-      "occluded": 0
-    },
-    "step-4.png": {
-      "sha256": "9e952baf5335d903596ed409fce5917685edb5f9308e6926520fbdd9e27a1f31",
-      "bytes": 691287,
-      "from": "render step 4 (step-4.png), unedited",
+      "sha256": "59c60a8c792a3aec7678918b934327e9284b4bbb9b3e38e514553ef3c2d6c20e",
+      "bytes": 917776,
+      "from": "OUT/jet-suit/hero.png, SHA-256 59c60a8c792a3aec7678918b934327e9284b4bbb9b3e38e514553ef3c2d6c20e; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
       "framing": "modelFitted",
-      "offView": 0
+      "capture": "studioRerender"
+    },
+    "step-1.png": {
+      "sha256": "28d6421123ba67531f312f3d07e54256cbe4aae3862f537c415bedfb47883c92",
+      "bytes": 904936,
+      "from": "OUT/jet-suit/step-1.png, SHA-256 28d6421123ba67531f312f3d07e54256cbe4aae3862f537c415bedfb47883c92; MartyGraphics render, no pixel edits",
+      "pixels": "1280x800",
+      "framing": "focus",
+      "offView": 0,
+      "occluded": 0,
+      "capture": "studioRerender"
+    },
+    "step-2.png": {
+      "sha256": "44c361228671c146dbe44e8d46ee78eff985f92f432664c7f7f9d3b7cb8a2d8f",
+      "bytes": 919096,
+      "from": "OUT/jet-suit/step-2.png, SHA-256 44c361228671c146dbe44e8d46ee78eff985f92f432664c7f7f9d3b7cb8a2d8f; MartyGraphics render, no pixel edits",
+      "pixels": "1280x800",
+      "framing": "focus",
+      "offView": 0,
+      "occluded": 0,
+      "capture": "studioRerender"
+    },
+    "step-3.png": {
+      "sha256": "91ddfaa767dff4d1b360bf89d9ec5238934ad5795a56b97bc6fc7be064392578",
+      "bytes": 899775,
+      "from": "OUT/jet-suit/step-3.png, SHA-256 91ddfaa767dff4d1b360bf89d9ec5238934ad5795a56b97bc6fc7be064392578; MartyGraphics render, no pixel edits",
+      "pixels": "1280x800",
+      "framing": "focus",
+      "offView": 0,
+      "occluded": 0,
+      "capture": "studioRerender"
+    },
+    "step-4.png": {
+      "sha256": "9f46f62fbc144e9299e0dbd0a1e011b927122d024938a38cf47a10052f994fa6",
+      "bytes": 916586,
+      "from": "OUT/jet-suit/step-4.png, SHA-256 9f46f62fbc144e9299e0dbd0a1e011b927122d024938a38cf47a10052f994fa6; MartyGraphics render, no pixel edits",
+      "pixels": "1280x800",
+      "framing": "modelFitted",
+      "offView": 0,
+      "capture": "studioRerender"
     },
     "step-5.png": {
-      "sha256": "73a8a6e01b0f6dda0958b83ddc22661ffd9b7e2ede0b74dab291710e71fd6d97",
-      "bytes": 671872,
-      "from": "render step 5 (step-5.png), unedited",
+      "sha256": "941686ba282b1eaab43ff994956a85103188289dc177cc50323b58bebb333590",
+      "bytes": 888314,
+      "from": "OUT/jet-suit/step-5.png, SHA-256 941686ba282b1eaab43ff994956a85103188289dc177cc50323b58bebb333590; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
-      "occluded": 0
+      "occluded": 0,
+      "capture": "studioRerender"
     },
     "step-6.png": {
-      "sha256": "e8222f33787ad5888420d058a75dc8e89b2012dd7b3f68fdcd6c769218aaf767",
-      "bytes": 720872,
-      "from": "render step 6 (step-6.png), unedited",
+      "sha256": "3f68b279e58a96a64b4bbb8b0a419f89bdf1f5d9c8f26cfab2b4f1fff54db01a",
+      "bytes": 882949,
+      "from": "OUT/jet-suit/step-6.png, SHA-256 3f68b279e58a96a64b4bbb8b0a419f89bdf1f5d9c8f26cfab2b4f1fff54db01a; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
       "occluded": 0,
-      "facesCut": true
+      "facesCut": true,
+      "capture": "studioRerender"
     },
     "step-7.png": {
-      "sha256": "29b44f44f2ba08052cc09befeea88c74cb13d22fcf8f99b0a32be9f39b5d58d0",
-      "bytes": 681777,
-      "from": "render step 7 (step-7.png), unedited",
+      "sha256": "9618176479e08f959efae896484253c00be25def443f443427b056e401db8684",
+      "bytes": 874237,
+      "from": "OUT/jet-suit/step-7.png, SHA-256 9618176479e08f959efae896484253c00be25def443f443427b056e401db8684; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
       "framing": "focus",
       "offView": 0,
       "occluded": 0,
-      "facesCut": true
+      "facesCut": true,
+      "capture": "studioRerender"
     },
     "story.mp4": {
       "sha256": "4213b901c7452e58246cc16927fa054662c23af09e3246d0b50e9ef1b2481d06",
@@ -132,10 +140,11 @@
       "inspected": "Frames were extracted from this file with AVAssetImageGenerator (zero time tolerance): the 7 hold frames at 5, 14, 23, 32, 41, 50 and 59 s were compared with the step stills (CoreGraphics RGB: at most 0.12 % of pixels differ by more than 24/255, scattered encoder noise) and viewed; the step 2 hold shows aTL2 with its head in front of the arm. The move into step 2 at 9.33 s (arrows drawn, no labels or caption) and the move out of step 5 at 45.33 s (only the engine is shown, no labels or caption; the legend stays) were viewed."
     },
     "poster.jpg": {
-      "sha256": "206800feb81e1e623ae40381cab55f632a7ed5dfa4d47866d13c9d057d8f4f8e",
-      "bytes": 93154,
-      "from": "step-2.png of this build converted to JPEG (macOS sips, quality 82); pixels not edited",
-      "pixels": "1280x800"
+      "sha256": "dcdc72d7c9361027d1b69ab1e6a105c78d3192b4b2d995e32f5f136ce1e76618",
+      "bytes": 95902,
+      "from": "OUT/jet-suit/step-2.png, SHA-256 44c361228671c146dbe44e8d46ee78eff985f92f432664c7f7f9d3b7cb8a2d8f; MartyGraphics render, no pixel edits; converted to JPEG only",
+      "pixels": "1280x800",
+      "capture": "studioRerender"
     },
     "check-strict.json": {
       "sha256": "178bc48d0cef698344851d6081c998fd8c3e3dd634940940d3bf8263bfc60b14",
@@ -158,5 +167,23 @@
       "summary": "The routed-moves and arrow-visibility pull request moved arrow aTL2 by the check's suggested move (its head was behind the pack in step 2) and made all assets again with one build.",
       "previousSHA256": "aa5078775cbb66f30be98b873c608dcb6500ee1d14aee164cd26a799460366b7"
     }
-  ]
+  ],
+  "studioRerender": {
+    "status": "verified",
+    "capturedUTC": "2026-11-12",
+    "engineCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+    "look": "studio",
+    "renderer": "MartyGraphics built-in SceneKit renderer; not Blender, not a hand-made image.",
+    "engineExecutableSHA256": "59549186a4e10e55734422cb9f239827f72a4ed972c5929535d08f1cbbcbb5a1",
+    "historicalScope": "The existing source, capture, run, render, check and review records describe the earlier capture. They do not claim a new review or check of the refreshed images. Artifact entries marked capture=studioRerender describe the current images. Other artifacts, including videos and check reports, are unchanged.",
+    "previousArtifacts": "Original artifact records are in this file at engine commit fb60455674808362c64b5600687d77b9f9b77c2c; old and new image hashes are also listed in docs/assets/STUDIO-RERENDER.md.",
+    "commands": {
+      "jet-suit": {
+        "command": "marty-solid render docs/assets/jet-suit/jet-suit.json OUT/jet-suit --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "26d7b708837d476c551f02d5996de26b261b7c0422ad45527332afec6d40395d",
+        "document": "docs/assets/jet-suit/jet-suit.json",
+        "documentSHA256": "75c9a9eb8b5cd372acf01d1bbc06d47a823b0fec97b6572f676b9e5611c24b66"
+      }
+    }
+  }
 }

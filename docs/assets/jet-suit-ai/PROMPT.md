@@ -54,14 +54,15 @@ Total: **4 runs, 3 accepted, 1 refused; 12 author and repair tries.** **1 of the
 
 ## Render
 
-The lesson was rendered with `marty-solid` built from the engine at `dfc521a` (release build), one render, no
-changes. The published render and check are at engine `dfc521a`; newer engines (PR #49) drop two beat-4 thrust arrows
-(`aL1`, `aR2`) whose engines are hidden in that view.
+The original lesson capture used `marty-solid` built from engine `dfc521a` (release build), one render, no
+changes. The published video and check remain at that engine. On 2026-11-12 the stills were re-rendered with
+`--look studio` at engine `fb604556`, from the unchanged `lesson.json`. This engine drops two beat-4 thrust arrows
+(`aL1`, `aR2`) whose engines are hidden in that view. The lesson words and their errors are unchanged.
+See the [refresh commands and hashes](../STUDIO-RERENDER.md).
 
 ```
 marty-solid render accepted-document.json <OUT> --size 1280x800 --loop-fps 30
 ```
 
-The stills say "Rendered by the MartyGraphics engine from accepted-document.json (769 lines)". That is the run's file
-name. Here the same bytes are in [lesson.json](lesson.json). Hashes of every file are in
-[provenance.json](provenance.json).
+The original stills named `accepted-document.json` (769 lines), the run's file name. The refreshed stills name
+[lesson.json](lesson.json), which has the same source bytes. Hashes of every file are in [provenance.json](provenance.json).

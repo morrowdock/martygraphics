@@ -77,72 +77,82 @@
       "result": "ok true, strict true, warnings empty, anchorIssues empty, arrowIssues empty"
     },
     "beat-1.png": {
-      "sha256": "44cdca04833a119dd76b54558418f52bb62e50f0699d3e47300063388df17e69",
-      "bytes": 535923,
-      "from": "render beat-1.png, byte-identical; not edited",
+      "sha256": "52e888160fbdf0ba9961868e58b29cd5cb3f06b5d890387062033e0daecb4ff8",
+      "bytes": 644927,
+      "from": "OUT/jet-suit-ai/beat-1.png, SHA-256 52e888160fbdf0ba9961868e58b29cd5cb3f06b5d890387062033e0daecb4ff8; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
-      "camera": "hero"
+      "camera": "hero",
+      "capture": "studioRerender"
     },
     "beat-2.png": {
-      "sha256": "c9c1e671f6510966c234e708a4e4ffcfe7c280572d51e67890c6dd530fa26272",
-      "bytes": 549286,
-      "from": "render beat-2.png, byte-identical; not edited",
+      "sha256": "fd9b239d5f65a6a6da430aa78783209409a5ec423c9f6f53b39661a2477b8967",
+      "bytes": 667099,
+      "from": "OUT/jet-suit-ai/beat-2.png, SHA-256 fd9b239d5f65a6a6da430aa78783209409a5ec423c9f6f53b39661a2477b8967; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
-      "camera": "iso"
+      "camera": "iso",
+      "capture": "studioRerender"
     },
     "beat-3.png": {
-      "sha256": "d00a72a1e14a4ed72d05e6245b2992f2c44641e7a6e6c6d5aa1caec695889eeb",
-      "bytes": 587393,
-      "from": "render beat-3.png, byte-identical; not edited",
+      "sha256": "63d02e0d7ffc553cf978c650ef39898aab4f401bfcebfa9ac595eeedf9e8143d",
+      "bytes": 588196,
+      "from": "OUT/jet-suit-ai/beat-3.png, SHA-256 63d02e0d7ffc553cf978c650ef39898aab4f401bfcebfa9ac595eeedf9e8143d; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
-      "camera": "hero"
+      "camera": "hero",
+      "capture": "studioRerender"
     },
     "beat-4.png": {
-      "sha256": "e255ab9d0e1ffa50a9aecb83995d85225ab99ade93820606d47e01711e522911",
-      "bytes": 547538,
-      "from": "render beat-4.png, byte-identical; not edited",
+      "sha256": "1d36ec82a64e00fc9c51e7e2700cb8d0fc49cdaf5d17c25b1bfb12c9540de4e5",
+      "bytes": 554400,
+      "from": "OUT/jet-suit-ai/beat-4.png, SHA-256 1d36ec82a64e00fc9c51e7e2700cb8d0fc49cdaf5d17c25b1bfb12c9540de4e5; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
-      "camera": "front"
+      "camera": "front",
+      "capture": "studioRerender"
     },
     "beat-5.png": {
-      "sha256": "e898400b95d357b299272ae72433e438b4d4010b5d8692a8fd506bbf46d3e8cf",
-      "bytes": 538829,
-      "from": "render beat-5.png, byte-identical; not edited",
+      "sha256": "600d9d1be19a8b123753049c59b1dc5736e06b493989a668fb8822451ad2a5b6",
+      "bytes": 550503,
+      "from": "OUT/jet-suit-ai/beat-5.png, SHA-256 600d9d1be19a8b123753049c59b1dc5736e06b493989a668fb8822451ad2a5b6; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
-      "camera": "back"
+      "camera": "back",
+      "capture": "studioRerender"
     },
     "beat-6.png": {
-      "sha256": "4c85c841ef39eb40084a6fbf0f7f7f2b1f75bd09caad0c0946e58bdaa5ec468e",
-      "bytes": 549955,
-      "from": "render beat-6.png, byte-identical; not edited",
+      "sha256": "307375f6ece2ecc3a0a136ff5ab8c4107b0ae46396d14dee7a7616afea720a64",
+      "bytes": 544214,
+      "from": "OUT/jet-suit-ai/beat-6.png, SHA-256 307375f6ece2ecc3a0a136ff5ab8c4107b0ae46396d14dee7a7616afea720a64; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
-      "camera": "front, focus on one arm engine, cut open"
+      "camera": "front, focus on one arm engine, cut open",
+      "capture": "studioRerender"
     },
     "beat-7.png": {
-      "sha256": "5f3cdde1b93e0c34bd210b420505e2ef7a7b93a9f1d7df0c4014daf3f82f5d54",
-      "bytes": 566293,
-      "from": "render beat-7.png, byte-identical; not edited",
+      "sha256": "bf3c496bbd84440385c784876eac5d530fbc123b01dc5fa35c20bde78871aefd",
+      "bytes": 554240,
+      "from": "OUT/jet-suit-ai/beat-7.png, SHA-256 bf3c496bbd84440385c784876eac5d530fbc123b01dc5fa35c20bde78871aefd; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
-      "camera": "front, focus on one arm engine, cut open"
+      "camera": "front, focus on one arm engine, cut open",
+      "capture": "studioRerender"
     },
     "beat-8.png": {
-      "sha256": "2f041c0fd695db738efbd28638eab0ca740a1f5f1bf96158a3e4de955dc3115a",
-      "bytes": 548201,
-      "from": "render beat-8.png, byte-identical; not edited",
+      "sha256": "22608f684840722eb954cd847c7b54d4091800a52d57108de7556f3b93d24113",
+      "bytes": 512725,
+      "from": "OUT/jet-suit-ai/beat-8.png, SHA-256 22608f684840722eb954cd847c7b54d4091800a52d57108de7556f3b93d24113; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
-      "camera": "front, focus on one arm engine, cut open"
+      "camera": "front, focus on one arm engine, cut open",
+      "capture": "studioRerender"
     },
     "beat-9.png": {
-      "sha256": "aade8c7972c6c82eeb60ac9d51ffb487346cca1585147bceec8519c7c7d197a1",
-      "bytes": 541933,
-      "from": "render beat-9.png, byte-identical; not edited",
+      "sha256": "ab5ead49e9c01c53bbbf28bdcc25bd945de77e195182c8bf98def1c78bbc82d9",
+      "bytes": 554292,
+      "from": "OUT/jet-suit-ai/beat-9.png, SHA-256 ab5ead49e9c01c53bbbf28bdcc25bd945de77e195182c8bf98def1c78bbc82d9; MartyGraphics render, no pixel edits",
       "pixels": "1280x800",
-      "camera": "hero"
+      "camera": "hero",
+      "capture": "studioRerender"
     },
     "poster.png": {
-      "sha256": "c9c1e671f6510966c234e708a4e4ffcfe7c280572d51e67890c6dd530fa26272",
-      "bytes": 549286,
-      "from": "a byte-identical copy of beat-2.png (the iso view that shows all five engines, five thrust arrows and the weight arrow); not edited, not converted"
+      "sha256": "fd9b239d5f65a6a6da430aa78783209409a5ec423c9f6f53b39661a2477b8967",
+      "bytes": 667099,
+      "from": "OUT/jet-suit-ai/beat-2.png, SHA-256 fd9b239d5f65a6a6da430aa78783209409a5ec423c9f6f53b39661a2477b8967; MartyGraphics render, no pixel edits",
+      "capture": "studioRerender"
     },
     "story.mp4": {
       "sha256": "04e9b2dc44797e00c787ac7d9c8c1f442da16f2b027b00dc8fb2c044e9942ce3",
@@ -172,6 +182,24 @@
       "sha256": "8fb3ce0fd22f83cc29f4333423a66ae9394c1f158b3aec71c8bd4e9cef55bf38",
       "bytes": 6285,
       "from": "the merged independent fact check (corrections C1-C13), shortened only in its header; every correction kept"
+    }
+  },
+  "studioRerender": {
+    "status": "verified",
+    "capturedUTC": "2026-11-12",
+    "engineCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+    "look": "studio",
+    "renderer": "MartyGraphics built-in SceneKit renderer; not Blender, not a hand-made image.",
+    "engineExecutableSHA256": "59549186a4e10e55734422cb9f239827f72a4ed972c5929535d08f1cbbcbb5a1",
+    "historicalScope": "The existing source, capture, run, render, check and review records describe the earlier capture. They do not claim a new review or check of the refreshed images. Artifact entries marked capture=studioRerender describe the current images. Other artifacts, including videos and check reports, are unchanged.",
+    "previousArtifacts": "Original artifact records are in this file at engine commit fb60455674808362c64b5600687d77b9f9b77c2c; old and new image hashes are also listed in docs/assets/STUDIO-RERENDER.md.",
+    "commands": {
+      "jet-suit-ai": {
+        "command": "marty-solid render docs/assets/jet-suit-ai/lesson.json OUT/jet-suit-ai --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "685bbb29ddc68829c3aea043e2d307402544a5a8082920f3453480e468b2daab",
+        "document": "docs/assets/jet-suit-ai/lesson.json",
+        "documentSHA256": "bb8f1893d90b869103fe84993a41585c5eaf8b73be2e8889a8cfe8f7f04b7df7"
+      }
     }
   }
 }

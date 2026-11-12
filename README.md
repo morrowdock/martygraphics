@@ -17,6 +17,10 @@ motion and layout. In the strict check, the labels and arrows that a view shows 
 a force or flow arrow whose part is hidden in a view is dropped from that view and reported as a warning.
 **What it does not check:** whether the words are true. It checks motion and layout, not the truth of text claims.
 
+**Image refresh (2026-11-12).** The built-in 3D stills and GIF previews now use the default `studio` look at engine
+`fb604556`. They are MartyGraphics renders, not Blender output or hand-made images. Source documents are unchanged.
+MP4 videos keep their original captures. [Commands, hashes and exceptions](docs/assets/STUDIO-RERENDER.md).
+
 <p align="center">
   <a href="docs/assets/turbofan/exploded.png"><img src="docs/assets/turbofan/exploded.png" width="840" alt="Exploded schematic two-spool turbofan, step 8 of 8: the 20-blade fan at the left; below, the 3-stage LP compressor, the 6-stage HP compressor, the 2-stage HP turbine and the 4-stage LP turbine stay on the blue LP shaft and the orange HP shaft beside the exhaust cone; above, the fixed vanes and the annular combustor float. Caption: the casings lift away."></a>
 </p>

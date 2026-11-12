@@ -111,36 +111,64 @@
   },
   "artifacts": {
     "exploded-labelled.png": {
-      "bytes": 917596,
-      "sha256": "a3f02275fa20512ccc3f592666670287fda8dddf52c9c4d1627010bfced44109",
+      "bytes": 947867,
+      "sha256": "eef1803d4721c589976afc93cc3994aacfabefd073ef20472bbcf9fa8435900e",
       "width": 1280,
-      "height": 800
+      "height": 800,
+      "capture": "studioRerender",
+      "from": "OUT/solid/exploded-labelled.png, SHA-256 eef1803d4721c589976afc93cc3994aacfabefd073ef20472bbcf9fa8435900e; MartyGraphics render, no pixel edits"
     },
     "hero.png": {
-      "bytes": 946810,
-      "sha256": "fd521558fd1825038249a76ebfed7044e5d752e2f9c3d873557bc69f1eb64467",
+      "bytes": 919466,
+      "sha256": "17543f41bbb486bf4339a91a2d5ceebfc63118def73c603510221756ccdd5913",
       "width": 1280,
-      "height": 800
+      "height": 800,
+      "capture": "studioRerender",
+      "from": "OUT/solid/hero.png, SHA-256 17543f41bbb486bf4339a91a2d5ceebfc63118def73c603510221756ccdd5913; MartyGraphics render, no pixel edits"
     },
     "planetary-loop.gif": {
-      "bytes": 2625137,
-      "sha256": "89eeab02e5cb0cdaa4ded8cafcd7010ae3d780b0fd497d3e67d78b8b6a0a6a96",
+      "bytes": 3496183,
+      "sha256": "5a2c09d6592899530dafe03d09a6e138ed72c71609a2c219c50d2dc4f5e47939",
       "width": 480,
       "height": 300,
       "frames": 120,
       "storedDelaySeconds": 0.1,
       "loopSeconds": 12.0,
-      "note": "downscaled companion of the 1280x800, 30 fps, 360-frame planetary-loop.mp4 (not in the repository)"
+      "note": "downscaled companion of the 1280x800, 30 fps, 360-frame planetary-loop.mp4 (not in the repository)",
+      "capture": "studioRerender",
+      "from": "OUT/solid/planetary-loop.gif, SHA-256 5a2c09d6592899530dafe03d09a6e138ed72c71609a2c219c50d2dc4f5e47939; MartyGraphics render, no pixel edits"
     },
     "slider-crank-section.png": {
-      "bytes": 801523,
-      "sha256": "87926b2fa7bbcea44343a72143c1ac061ff623ef870204dd7f2d8913d079f7d8",
+      "bytes": 897383,
+      "sha256": "9c13720bb13f7905497b1f7ffce38bb50b8739fc4ebb9e19623a731c895d59ee",
       "width": 1280,
-      "height": 800
+      "height": 800,
+      "capture": "studioRerender",
+      "from": "OUT/solid/slider-crank-section.png, SHA-256 9c13720bb13f7905497b1f7ffce38bb50b8739fc4ebb9e19623a731c895d59ee; MartyGraphics render, no pixel edits"
     }
   },
   "review": {
     "visual": "Hero, labelled exploded view and slider-crank section inspected: clean silhouettes, no z-fighting, readable callouts.",
     "limits": "Schematic teaching models, not validated mechanics. Tooth checks are 2D at sampled angles. Section cut faces are not capped. Built and rendered on macOS only."
+  },
+  "studioRerender": {
+    "status": "verified",
+    "capturedUTC": "2026-11-12",
+    "engineCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+    "look": "studio",
+    "renderer": "MartyGraphics built-in SceneKit renderer; not Blender, not a hand-made image.",
+    "engineExecutableSHA256": "94f0b48b58649b3a821a6296f5fb548615ec7369e8ece963e0f15b5cf211c074",
+    "historicalScope": "The existing source, capture, run, render, check and review records describe the earlier capture. They do not claim a new review or check of the refreshed images. Artifact entries marked capture=studioRerender describe the current images. Other artifacts, including videos and check reports, are unchanged.",
+    "previousArtifacts": "Original artifact records are in this file at engine commit fb60455674808362c64b5600687d77b9f9b77c2c; old and new image hashes are also listed in docs/assets/STUDIO-RERENDER.md.",
+    "commands": {
+      "solid": {
+        "command": "marty-solid3d --export OUT/solid",
+        "manifestSHA256": "2616acb5dbf12cd9c3c24f1890d6456b4a5f8205df5b725c2e12a72abe514309",
+        "document": "Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json",
+        "documentSHA256": "2658695a2b221af1078982934b3893c236ea944101ff1c00fde7ef06cbba8755",
+        "lookSelection": "MGSolidRenderer default studio; this existing example exporter has no --look flag and keeps its own overlay and camera.",
+        "sliderCrankSource": "Sources/MartyGraphics/Solid/MGSolidModels.swift: MGSolidModels.sliderCrank(), at engineCommit; the existing exporter builds this model in Swift, not from planetary.json."
+      }
+    }
   }
 }

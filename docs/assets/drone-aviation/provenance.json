@@ -72,82 +72,95 @@
       "renderManifestSHA256": "b5a0f129b38fa6a510c9d9e9f966c00a24f5408b2fd3169c656907b41f646dcd",
       "artifacts": {
         "hero.jpg": {
-          "sha256": "c1a431584482ee6f05a6911c21c3e6d89c5366ebff12e1d48ff07644cb65895a",
-          "bytes": 116249,
+          "sha256": "eb238decf161440ab3d7cb67d04ed2027425382cdd81fd3a93c26ecb818883ce",
+          "bytes": 117694,
           "pixels": "1280x800",
-          "from": "render hero.png (SHA-256 59ebf006acc0886437c3c99d4f467194b733fed5fea8d6788463a4af640de153), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/hero.png, SHA-256 c3dde79a5e99941de2b87aaf9633af644332b4ff34294a17890ee87fe096e5b2; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "exploded.jpg": {
-          "sha256": "9a5e156c17b5926ef91c0acbb9d9d887fb79ce63465347a218332c264a8dcb94",
-          "bytes": 116695,
+          "sha256": "626c482f1b1d2bd4ec3ed4d2824f6842d102ca76af46b3b46f5af5179a637c6d",
+          "bytes": 118227,
           "pixels": "1280x800",
-          "from": "render exploded.png (SHA-256 a9be634d514650be33b84c762fd085d9077a68bb762513f257d17e82d09f2901), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/exploded.png, SHA-256 c0ad8da80601444398c78255f399c56584f8571bd5d1acc7731f969c04140a9b; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-1.jpg": {
-          "sha256": "92bc99163997a84abd4f66b07567a480df0b6c94b9058ae11db81c1c985a5662",
-          "bytes": 115721,
+          "sha256": "2ad9a627c19d52dd0555ca08e470f7d513c16c196e76ec79eb897769af1b30fd",
+          "bytes": 121061,
           "pixels": "1280x800",
-          "from": "render step-1.png (SHA-256 cc075901786d39e7672124616522108cc8369563b008811373f84bd705a057d6), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-1.png, SHA-256 999dda08c1d098ad6316c646fd262b024f36003ccf7f5ad38e0de5bc3d592f43; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-2.jpg": {
-          "sha256": "2047ae56d1d21c625973228faff67b4ae930e2959c9667bbc6230ef02bdf98db",
-          "bytes": 159398,
+          "sha256": "8b870c81efa6b76080f24d55398962a2e76df7d266f51aec83d60dc673d06062",
+          "bytes": 150268,
           "pixels": "1280x800",
-          "from": "render step-2.png (SHA-256 61bac5db7670c6a8a7f9857c2e4791f925cb6ee3697b5423db798543603b25e1), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-2.png, SHA-256 2618b34cfc4e4d973df6134ed9c76a5aeec842fc16956d16622e7ac8f962d36e; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-3.jpg": {
-          "sha256": "c22956f254873428f8fc9e444077653ad0d78c634ca3b46ef1fec64717d72253",
-          "bytes": 146028,
+          "sha256": "13c71746ffc4204bfbc2a11a250c82286819883f87558a87e6d4ea23b120e506",
+          "bytes": 147227,
           "pixels": "1280x800",
-          "from": "render step-3.png (SHA-256 ed4e4f2761e8eea2ca7a874301f5e8ee9123463d1c4f17e803d3547393d0b0b7), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-3.png, SHA-256 b7985a778a8eeb79cc0c123b6236754484fa849c81af10f6b562ab8520bba9c5; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-4.jpg": {
-          "sha256": "29fa9e9b597310d72cc29266186a81b9889626a3c677cfbf2917ca3c023316e3",
-          "bytes": 173604,
+          "sha256": "c209eee84c1a84ffcc1a702938dd4e0a9e4a51208a256f0a9949e9d3ee6b39e7",
+          "bytes": 160386,
           "pixels": "1280x800",
-          "from": "fact-fix render step-4.png (SHA-256 6a45deceb6de5a70d29df58927bd99ee042a7af60c700d39b05f72169542dd99), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-4.png, SHA-256 b7653179846689646fa5a65620550d8c722c0bbb07862dcb2964483929d2ccf9; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-5.jpg": {
-          "sha256": "f34b02801e78591e9f1a8c81d4723d54f0e35b8bfbca8b0caf35b797fc1dd187",
-          "bytes": 139633,
+          "sha256": "e9a9dbc2f0d34ceb0902a162401ca0e3d18bc9a3f06aefd90eb58199c1f656d4",
+          "bytes": 139014,
           "pixels": "1280x800",
-          "from": "fact-fix render step-5.png (SHA-256 2b2781e8bbafe258159835d8be30eec904d0330ee59580b3ff995a26363c7d3c), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-5.png, SHA-256 1501d61f77bcb3c5df6d3d00428be362028ce85ae1b515dbd56d430e49f80495; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-6.jpg": {
-          "sha256": "aad87dcfdb194192f0033b8f307fb7ea9a498d50f68fedf0393c47acab1c0b89",
-          "bytes": 127475,
+          "sha256": "ae58b20d42f2b755f43b60b8c218272819c7ef6837e10656d557c447eecbe053",
+          "bytes": 133637,
           "pixels": "1280x800",
-          "from": "render step-6.png (SHA-256 c4d2dccc3cb2abaac1a0e55ef79dc39c8f3a05edb560bd3d941a765b1f51edf0), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-6.png, SHA-256 3cc148767a46346fa9c1a66737ee1dec457abe33b3b1f39007ea8f83976d6b94; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-7.jpg": {
-          "sha256": "2b39c3f54824aa06418a2518a81fa4ee3f7dadaeb2336a39a8b1a3575bb7a253",
-          "bytes": 129910,
+          "sha256": "a817589c59f4458b91d419f750d2f37efde507c9a0d10811b860eaeb90f0dd85",
+          "bytes": 135298,
           "pixels": "1280x800",
-          "from": "render step-7.png (SHA-256 ed832d5753694f05b796e0eb7d87187e3cf8543f79c99e51597c0b853316d4c8), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-7.png, SHA-256 1c4810e2b60b8de0150fefd069c455d548c18923fe52ca34f712e1de596919b3; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-8.jpg": {
-          "sha256": "cb09fb2ae4938cc18fa7ce0c86d234e3ebe45f5d4c0380b665f393256d8c7e54",
-          "bytes": 134372,
+          "sha256": "112085cf1dc2bf8da2c94b3b167350268d70d9e33daea7bcc5a5707752c8b206",
+          "bytes": 140224,
           "pixels": "1280x800",
-          "from": "render step-8.png (SHA-256 7ed43cb5bb0113c9f3d65ae231fdde8fec9b7bcda53f36fe317f0d40ca8f4ef3), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-8.png, SHA-256 78bf3bee02f332fb0d3a770a59039a2514a4933065f27bfa717b9884ea5fc2d8; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-9.jpg": {
-          "sha256": "14d34da6df3c86d6099bde1796f991d34449b9098a739ed8c2c53929e60d62fb",
-          "bytes": 143342,
+          "sha256": "eb7bd1fd4ca978644fa82a2720abf622ce98d399442dde9675da0d0c90ecd63d",
+          "bytes": 146159,
           "pixels": "1280x800",
-          "from": "fact-fix render step-9.png (SHA-256 ea5269a65f3768de154adfb67ebfa79fa0e670245febf4eff1610a445323de15), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-9.png, SHA-256 12840135ef922d0cc2a7a454cc120b6584f96dc5257437db5be99812de11eed7; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-10.jpg": {
-          "sha256": "88d35eecf140b125f4ddf22db4816235bc22eb14a122f65894539223325e8d99",
-          "bytes": 134706,
+          "sha256": "a1758f608b1314ffb78482d5df6f520bf133655797b0f1ded54f79e24236b5e5",
+          "bytes": 138028,
           "pixels": "1280x800",
-          "from": "fact-fix render step-10.png (SHA-256 34f0d5e2e8db0a3f33f7a8b6c4123cd1e4a97a0f9299dba7460ce72f7c8115dd), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/quadcopter/step-10.png, SHA-256 9951ab8a863ac075c378cb77912369560ad7bbad519fa2086eae65dfe8b50dce; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "poster.jpg": {
-          "sha256": "92bc99163997a84abd4f66b07567a480df0b6c94b9058ae11db81c1c985a5662",
-          "bytes": 115721,
+          "sha256": "2ad9a627c19d52dd0555ca08e470f7d513c16c196e76ec79eb897769af1b30fd",
+          "bytes": 121061,
           "pixels": "1280x800",
-          "from": "a copy of step-1.jpg"
+          "from": "OUT/quadcopter/step-1.png, SHA-256 999dda08c1d098ad6316c646fd262b024f36003ccf7f5ad38e0de5bc3d592f43; MartyGraphics render, no pixel edits; converted to JPEG only; same conversion as step-1.jpg",
+          "capture": "studioRerender"
         },
         "story.mp4": {
           "sha256": "feb575ebc62792a56544f53a50c0fcb20653e97eff09c96e09443834ecca5779",
@@ -271,88 +284,102 @@
       "renderManifestSHA256": "3d7e709fa8f57c12e6fedb4f8098daec02a96607185e8c7407e6032d6438d0ed",
       "artifacts": {
         "hero.jpg": {
-          "sha256": "5cf3483b67ce0903c3f4ae96b94dc77c75aa15bb8fb172a157ed557c673aafa5",
-          "bytes": 101098,
+          "sha256": "52708c586aaf0ab3c0d6babff27bea6a53fabbb2c9520347a8d58db236acc6dd",
+          "bytes": 98893,
           "pixels": "1280x800",
-          "from": "render hero.png (SHA-256 218afdec36d08e853cedd051e4e061c9ca6a522336badf8abe949329fdf0e707), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/hero.png, SHA-256 2c2a16dc08e6711a1b7e55dbfae77b1a131072f878b45167b3f72ad3ed0b881e; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "exploded.jpg": {
-          "sha256": "f90743e313b60268bde013a52074712d2cfc778e259fbfd86f230293a32bd37b",
-          "bytes": 100905,
+          "sha256": "bed7fbecc8b7698a45b8546cf37b67e438a34884bff8865d6bb597c742702740",
+          "bytes": 93329,
           "pixels": "1280x800",
-          "from": "render exploded.png (SHA-256 f0d9645257c083dea16c41da2abdebb7b81708cedc494d05b54d09f8dfe23232), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/exploded.png, SHA-256 4e98d807b7e853c95064ed137602fac661c6737b1572e85685f581a583011500; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-1.jpg": {
-          "sha256": "874a4ca5f034b7914b6fb94ebae2ef101bb56f03d67bba45bcf75444876de434",
-          "bytes": 131422,
+          "sha256": "a2353c7ef5085c7d0b26a6d9fbed4988a5a4f455e54a15454de90201d6a3d380",
+          "bytes": 130966,
           "pixels": "1280x800",
-          "from": "render step-1.png (SHA-256 5b9e32fc619d1a2cafd13c1d62f42dba6717d7b2c841304f528cc7dfae66933a), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-1.png, SHA-256 eb9f322bfd46afb57a8c7ea6f85797762b255a0c6aa2ab01cce8aa23422270d9; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-2.jpg": {
-          "sha256": "91b2b99423d8738d2c24948276b7c238c68d26b57daa99ece3f49428c864c919",
-          "bytes": 134205,
+          "sha256": "ce6fdb24f3138fdb3d6d06f1eeabaac09f84beff86ece4f3a03a19227abd85b6",
+          "bytes": 139851,
           "pixels": "1280x800",
-          "from": "render step-2.png (SHA-256 1601a5b397741cb69742a7b292603d1e5bad3550e1046a0b8947b072bfb1ed2a), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-2.png, SHA-256 4e829ba5bb71261ba8cb05cff770cf4b9c54f1235b81975a492dbe91569f57e8; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-3.jpg": {
-          "sha256": "244324d9c6d548c1493cf48c60a37fe1df5547a4cbfb1a0b4b0060266502e39a",
-          "bytes": 124274,
+          "sha256": "ef801726c2f72fc407e6e20b9dcce80e820fae9ab9f2c1840f4a6f8de9c1a60a",
+          "bytes": 128596,
           "pixels": "1280x800",
-          "from": "render step-3.png (SHA-256 170ca54efe779adaee0f2516ba7e1f3b948a56cbfff2258c8e92fce7b2ffe714), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-3.png, SHA-256 86baccce40d684a64786f5174d36f021c9689eeed5c15776608c53aea1366500; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-4.jpg": {
-          "sha256": "705ab426487ddc5d1cfe440bc979edbb9d17c6d37b7a2abb3886b86c2a4312a5",
-          "bytes": 134683,
+          "sha256": "8fd57dd5a1bd7990564de6166146c8bcf902937936d542af3dc89625a9fb45a1",
+          "bytes": 139729,
           "pixels": "1280x800",
-          "from": "render step-4.png (SHA-256 29518b62d458300955b7665916b591b932f52c6e9236d9defef430dd61acb971), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-4.png, SHA-256 c1fafc7166d0e6008bad8dc919cc555d6e41dda05a6846ad3048c6ba51d8c583; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-5.jpg": {
-          "sha256": "bf47d005f5123b693e6dac3f2e43082912b899f55867502807cb745e307252a7",
-          "bytes": 121890,
+          "sha256": "7510af4cf3b198fbaa00953fdd833cb28e612e3df3ef02054422a997240a1d9e",
+          "bytes": 135394,
           "pixels": "1280x800",
-          "from": "fact-fix render step-5.png (SHA-256 ae17fdca0b00ccc4c800cbeb3019719dbd8db0df1e8a2f75fae82953b51ead14), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-5.png, SHA-256 da6122c3bc7aca04e53a2274c83751d87f84a7e16d8c52df7ea0bb677229c3ef; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-6.jpg": {
-          "sha256": "d8163e35cc3da7ae7c5753d1b63511124de7c9ac0eea75ab46504c06f51aa2bf",
-          "bytes": 99984,
+          "sha256": "b53598a39f0276b3d7e8df0ad75ad5c1f896ca802a8fd2a1223f86e56834c698",
+          "bytes": 116241,
           "pixels": "1280x800",
-          "from": "render step-6.png (SHA-256 a5da9ee5054345ceec6a491d0627e6ed3910472238002f312e9d3823f093f6f9), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-6.png, SHA-256 f21598980c5bf9d465fd828467c3be0c2d7a527bd86e24876084ad584ac89d06; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-7.jpg": {
-          "sha256": "c6bb5dff76b217cf516d62479689a86dbec8334e0d6fb24c66a4124ff6f38ddf",
-          "bytes": 121953,
+          "sha256": "58fdbec6c99263bf56108fdf15e3c37310b65a81f56df5b3e993f570ceb6de1b",
+          "bytes": 135795,
           "pixels": "1280x800",
-          "from": "fact-fix render step-7.png (SHA-256 8405a672ff1cec7f10cb7702731c9d2cfbb79566521eae48747e5231ec7cce99), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-7.png, SHA-256 e45e5d46c423258a03dcbd96f458cb7b0ff19d9672036f306bba5044fd6d312e; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-8.jpg": {
-          "sha256": "2657cfb65d038b24e41afe141f12788fdfeb88b910e35ae454e1a806457f0ae9",
-          "bytes": 135373,
+          "sha256": "aca859c12d73670a404e2f3f74a269e6e41399a3e19634c74fb3fed39cd152d9",
+          "bytes": 138547,
           "pixels": "1280x800",
-          "from": "fact-fix render step-8.png (SHA-256 bcfdce1f33a7ab3aedc0f00bbd9b783a2ab9ed534825830737ae803c8a61980f), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-8.png, SHA-256 ed43e1f8317f5ebf163b2c28fe5b6e01c36682ff1b842d820fec43b512708bf4; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-9.jpg": {
-          "sha256": "df09975b3610fc82fc9295854bcb994a61b1724ad3592777b15e1452f592ea44",
-          "bytes": 133926,
+          "sha256": "e3b1cda42458ea22355c40980b249ecdfca1c27be7be6ca46320513c0cff8506",
+          "bytes": 138996,
           "pixels": "1280x800",
-          "from": "render step-9.png (SHA-256 d19ae60dcf7bca9a5b4ef899b2273861c74b7a67d04d2439feeb6d2b1741b952), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-9.png, SHA-256 e08b8762814927e380c2401d70e9731e774d3aefe2965a9299f58fde514956ad; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-10.jpg": {
-          "sha256": "66d219d37e8649944a385638120cf9b6bfd4a888c98585eea846dc9a3948c798",
-          "bytes": 117289,
+          "sha256": "506234b9e8a768ea75de1329f20d07da49fcca2c3745e8eb4e81690697bb0b7f",
+          "bytes": 126096,
           "pixels": "1280x800",
-          "from": "render step-10.png (SHA-256 df223324c266493c3aa0247842a518bae45a1926c3887e862ad32a71e47cf360), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-10.png, SHA-256 ba4a1559a2c76795411a95ddd837ab0cc48816aa54a7d35e14f9b73021293459; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-11.jpg": {
-          "sha256": "3440b0809fda6073f6b2b167bec5b03d5ac0c9650dd49268014c3d7895ffef71",
-          "bytes": 121536,
+          "sha256": "174071b9eb3bea95c7ab16c1acf4a9f8fb9a7fd820145d819371d40e264749c4",
+          "bytes": 126429,
           "pixels": "1280x800",
-          "from": "render step-11.png (SHA-256 aca62bb426d4e1d301c518af03b9313725a080cee771a3567ceba32ef1d08d85), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/brushless-motor/step-11.png, SHA-256 4f3d4ee22b5157e6604246e71228e7b1d90850da0a8f059b1dc10b6fca5bc392; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "poster.jpg": {
-          "sha256": "91b2b99423d8738d2c24948276b7c238c68d26b57daa99ece3f49428c864c919",
-          "bytes": 134205,
+          "sha256": "ce6fdb24f3138fdb3d6d06f1eeabaac09f84beff86ece4f3a03a19227abd85b6",
+          "bytes": 139851,
           "pixels": "1280x800",
-          "from": "a copy of step-2.jpg"
+          "from": "OUT/brushless-motor/step-2.png, SHA-256 4e829ba5bb71261ba8cb05cff770cf4b9c54f1235b81975a492dbe91569f57e8; MartyGraphics render, no pixel edits; converted to JPEG only; same conversion as step-2.jpg",
+          "capture": "studioRerender"
         },
         "story.mp4": {
           "sha256": "e483cfb608c6c2389240b17f3bb07ba8a24fcbe353151529328a1943d5bdd551",
@@ -466,70 +493,81 @@
       "renderManifestSHA256": "4b5edc4a6723aa16312dbce2c7be96f9fa9279e4279dd07a962efd7e62cff8ee",
       "artifacts": {
         "hero.jpg": {
-          "sha256": "132b38816d92d984f55fa6e6f2ba3a1b8347aeb245786e39eea8052a3956b0b7",
-          "bytes": 93898,
+          "sha256": "4cde946b12de0dc343712707354698678086547d86324454b58390a877b03eac",
+          "bytes": 96954,
           "pixels": "1280x800",
-          "from": "render hero.png (SHA-256 c45749f1074ae47237f4bbdd931c8675d2ca0e1ee0f2f6af80cda363603d4526), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/hero.png, SHA-256 18afb29d80fe6d7503b059bbe414da9ed587ddec628fe9afed30e9cd2a35e0b0; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "exploded.jpg": {
-          "sha256": "d420c9e7d06aec3d8c0ec16001e6b07e2dc26e048ca5feab8185572c057f7564",
-          "bytes": 96386,
+          "sha256": "291aed765fe1dac36cc68d13f6c8ed6d29887f65525c48dc76b21ed0919d6734",
+          "bytes": 99129,
           "pixels": "1280x800",
-          "from": "render exploded.png (SHA-256 70ce8adfed70cae8c5b8a06a8e26cc544d8c541d5ef019e9cbbd5a56d4688347), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/exploded.png, SHA-256 32ea66eed38485392a3d62434ff98899fbbbfa3127402d62de89de5b782066f9; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-1.jpg": {
-          "sha256": "fa7da533e1ae07c3bc1936f17ee83ae485d069502b1dc7f9fa0845a7bb087441",
-          "bytes": 115999,
+          "sha256": "39025aa0af39246f1d0a2f22bdcd5aaf4eb500206a16f0e9f08f5de32563ca98",
+          "bytes": 112760,
           "pixels": "1280x800",
-          "from": "render step-1.png (SHA-256 347445c5d9040652ff3e963dfbf6c86dbc6bd186c7fa5c1c20b875640a9e560a), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/step-1.png, SHA-256 1799a21e4d2bf93ba861fb1bd6356a8242bdeb1dc7a5432398bb2eae49f4d109; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-2.jpg": {
-          "sha256": "aacf0c419431036f02b48d644c899b48bd21210cb4c397d108b7af0f1507da9b",
-          "bytes": 120609,
+          "sha256": "e9d5cf4f24503ba8a8f5b67f859f5f7cc5c940752da6cfa07e9e330747e3482d",
+          "bytes": 115644,
           "pixels": "1280x800",
-          "from": "render step-2.png (SHA-256 d0fad9e82e01169688fdf24566cfd0ee6637646f5445e785f6d7a64dc4b9e606), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/step-2.png, SHA-256 842ea60937f77b9869ef586a30fb0ab4879dbda981f217963810baf0684fb9f9; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-3.jpg": {
-          "sha256": "da243d8390fd0c4c9c7a80f8e5ba7d28cc9c970f07a541c7b2cfa42ceb7eee98",
-          "bytes": 119307,
+          "sha256": "2852feb8c4d54a135a2a62559d24d6e67df57c6da52c94fb32d7b48665047a10",
+          "bytes": 113619,
           "pixels": "1280x800",
-          "from": "render step-3.png (SHA-256 0744e81a020dbdacf09bd7ea030912371dd1ec82df997965c0d366629104abe2), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/step-3.png, SHA-256 f2a1f63d04ce91a687d50dc7a7962dc2c2bed149a727bc9cce04d9797d1fa418; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-4.jpg": {
-          "sha256": "d9e1775c69d6ecf0f8d825981d20b2b8da705500f16052709d47c40443e969d1",
-          "bytes": 126516,
+          "sha256": "4be2936f288b912cff7e0b6f6e1c1cf349f5d8f8ae6f3182fef380ae0d0cf655",
+          "bytes": 120727,
           "pixels": "1280x800",
-          "from": "render step-4.png (SHA-256 6738f873457882b4200f73405685f40bf3da38254595fb963bcf989f062f2fbe), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/step-4.png, SHA-256 4fa2a0581345f750bea49fab5bf50ce67d89772d299a0ceac17bab2c165a7156; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-5.jpg": {
-          "sha256": "b46295a6d25e85fe819dfbb4700688f7f0c4aa32a4309b041748b3192e7c8e63",
-          "bytes": 126034,
+          "sha256": "dc6986792743a35bc6f873a7fd86deff97db48dfc9f07f55c2eef946ee3ec14e",
+          "bytes": 119343,
           "pixels": "1280x800",
-          "from": "render step-5.png (SHA-256 132ed0e5903a4c4f6d210d4f14af37be983b9025e2dae4780143346018c6bbca), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/step-5.png, SHA-256 293c434d99a0b02bbbfd70196bd6e93bd157b19d81f1259afe734fea9fcb8158; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-6.jpg": {
-          "sha256": "d5f29e2479e835fdb9694b17f608d256ee8a29ecace4e1e2af774406402f1000",
-          "bytes": 147154,
+          "sha256": "549be824eb627cb7b0473b50bb37983b9c3e5f030f5015a2d1a59d5076bf5ef9",
+          "bytes": 139074,
           "pixels": "1280x800",
-          "from": "fact-fix render step-6.png (SHA-256 05efc08ca776de635eb73ee562b7807760874953d49c3b4a1bec344855933c0e), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/step-6.png, SHA-256 0ed4a98341f07dde6cd2171dc8ce2f57354514a9c0971b948a9e7c02a4b4dd68; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-7.jpg": {
-          "sha256": "5243cc05c05b379a1a35a5d86c9e27855f6047707d01d44e258b84a58f5269d0",
-          "bytes": 105577,
+          "sha256": "3b06bd6934b18c2125fedabbee22b1eb32ddcce2a89a974a0eabb0d4f019c6b9",
+          "bytes": 106840,
           "pixels": "1280x800",
-          "from": "render step-7.png (SHA-256 9e0e771c7f4412b3a869d7f5d60e2ed94e7062a4e2cf7b91263a8cbfbda0df52), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/step-7.png, SHA-256 d470112688caccc2dba44e786ae51c527fdc32a5c4d0ec34d8cad627236dc78b; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-8.jpg": {
-          "sha256": "c753fba6fc09bcb57050d77680b5dc41aba5442ffe8e969cda04da7a64ac409f",
-          "bytes": 130261,
+          "sha256": "6eece406ba9db4cc9c487152b32f48e7c5794e9ad01f6575592337a40fe53b97",
+          "bytes": 125497,
           "pixels": "1280x800",
-          "from": "render step-8.png (SHA-256 64b9245fb017a7de6660b190563176d9dbe67707b33c31f3c061641bf5dfb254), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/gimbal/step-8.png, SHA-256 94aac9d7683ab79e34530a9fad09d73f97eb832a9f5b1cb6656e0e0aef6ac539; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "poster.jpg": {
-          "sha256": "d5f29e2479e835fdb9694b17f608d256ee8a29ecace4e1e2af774406402f1000",
-          "bytes": 147154,
+          "sha256": "549be824eb627cb7b0473b50bb37983b9c3e5f030f5015a2d1a59d5076bf5ef9",
+          "bytes": 139074,
           "pixels": "1280x800",
-          "from": "a copy of step-6.jpg"
+          "from": "OUT/gimbal/step-6.png, SHA-256 0ed4a98341f07dde6cd2171dc8ce2f57354514a9c0971b948a9e7c02a4b4dd68; MartyGraphics render, no pixel edits; converted to JPEG only; same conversion as step-6.jpg",
+          "capture": "studioRerender"
         },
         "story.mp4": {
           "sha256": "b5e47530f34cd2142dab5b7add66eb8f5cc6406c46daa6b49a82b6c96bd565e4",
@@ -634,88 +672,102 @@
       "renderManifestSHA256": "cf7fb51663cfafefaa784e5128e552ef598975c202baa3cbc46080c39c7eeede",
       "artifacts": {
         "hero.jpg": {
-          "sha256": "44157518ae2639f1c9d6a5996c5443dd896ec649fa94fae40e33b4b1b7840dbd",
-          "bytes": 76303,
+          "sha256": "9a285bf663c26960b6ba410d0871da8bb9645ae0f36ed45d5badd3a368958b34",
+          "bytes": 83938,
           "pixels": "1280x800",
-          "from": "render hero.png (SHA-256 8e77048da6e8f3052bd8822bd950cf47c097cd969b1ed0989810d8f5d713a559), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/hero.png, SHA-256 5471d64000f698629eb165d70196ddb7715e0c9736e820fc1730c253bde7ea8a; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "exploded.jpg": {
-          "sha256": "ca98518d2409044bbf68951a15afbe4c7ee0081d324deace7759e11a67889cee",
-          "bytes": 78760,
+          "sha256": "9d547d422782071df31f0e4c8b4af838237f6bbd6647e887bf87681de2c9bdd5",
+          "bytes": 86276,
           "pixels": "1280x800",
-          "from": "render exploded.png (SHA-256 000f90dac3f918e7be3381bbfda0be1fee90784e591e6110725568409ee7418f), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/exploded.png, SHA-256 e59a4f5718825cef1ee732dd5c877e12ae34a8884f649a969a4a0afdf2c888e1; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-1.jpg": {
-          "sha256": "351366e2ad0a31580e57def51d4998b162606c12ec47120a7f4e0d53e1558135",
-          "bytes": 113440,
+          "sha256": "fb9057fbe9087adbe2ad00da94291e83df71a4619dcc45a77aeeeb6dbe12c05b",
+          "bytes": 122020,
           "pixels": "1280x800",
-          "from": "render step-1.png (SHA-256 e7c84f48e37ea77a96eba570a09efd030306d9cb8c9fea49f9146afbf94904b2), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-1.png, SHA-256 675302a471a0cea7deb3e9957351c8deb26e0695e16181778b3196a0e0dca954; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-2.jpg": {
-          "sha256": "e0d2248745ebc9e11c084613a9e8c8cc426ad483e7d55b4e2b6dafa3aecb74bb",
-          "bytes": 110070,
+          "sha256": "07938af3ac5edfae55f622df4a15504e9ea28f3ad1e5d16f378e9e30d8f2119d",
+          "bytes": 110250,
           "pixels": "1280x800",
-          "from": "render step-2.png (SHA-256 3ef2e3a5893417461a11907db804c3adae470d59b7060e5251851036ea3da054), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-2.png, SHA-256 4923b113a3c53e149e4c0acc0710d018790447b95b4290861e37ca92f321a792; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-3.jpg": {
-          "sha256": "0a60e9474615322a5c887dec4b8cb400a8ea374265b00dcc584aa4311a6ae980",
-          "bytes": 111695,
+          "sha256": "45b466cc29df9b5c3acafc4814e73a02d6ee7378076d558f5aa0faf5131b09d1",
+          "bytes": 122590,
           "pixels": "1280x800",
-          "from": "render step-3.png (SHA-256 c5d92228918f712ac85f0923b518d244df96a9086c6d948119b6d90aadd7951a), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-3.png, SHA-256 d23c5d4936956a22dc39f75ac713f5b0ac39865eaeb95bc6868bb7809504c4fe; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-4.jpg": {
-          "sha256": "2174a9e16aceef64540af2dd4989e0fd1969e3e5e76f624f323ebc5af6a0218d",
-          "bytes": 103146,
+          "sha256": "cea89ce1e1d0dd26819f531c90c646d1e9a4aa775ce37f107e833f5d5ec38533",
+          "bytes": 110217,
           "pixels": "1280x800",
-          "from": "fact-fix render step-4.png (SHA-256 e461cdec10c110a9d4efe67b4b43a62bfc16d860d8f4c5a0c92f8f7ee4fb92b8), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-4.png, SHA-256 f47a2e21ab6258509c99f919fd6024f8fe08676b0522ef3d02183b2a6a56e49a; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-5.jpg": {
-          "sha256": "d0ad4003baf54803fe53afaf14daa72dfa993e31151fb6c8e50baaa0b5941bcc",
-          "bytes": 107023,
+          "sha256": "425c9fd7e0d896b0781d712416adaa028cc083758047f0814d4cc4eaaeaab467",
+          "bytes": 106727,
           "pixels": "1280x800",
-          "from": "fact-fix render step-5.png (SHA-256 c3c66f7847613fd875b09480b21109b2a3a7c364f84c9c85320a1b4fec9ed9e7), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-5.png, SHA-256 d5e04695e17445d99cd38c98e026bc6a10185136afeaca4b9139f870958f1aad; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-6.jpg": {
-          "sha256": "1839292336dccd733bc3fbb2b8f3d70b40205b303cf2c0d96ef6c933c526abeb",
-          "bytes": 81707,
+          "sha256": "83b0a8f5b7d8a2732f8f6bc650f174309c0cec1eef5e8ca95ffd7e105619fd37",
+          "bytes": 92069,
           "pixels": "1280x800",
-          "from": "render step-6.png (SHA-256 9c5f5522a093e860332b987207cdb00c0ecc2611d10e06311b10d5c47ca1aeb5), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-6.png, SHA-256 73b1e901ccedeff469dac49b47358aee94fe3317e2129ac272048796e4a79075; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-7.jpg": {
-          "sha256": "8cab57d431280271582f9a47816fcf6d7039569230481bbaba150f266b2cfc4e",
-          "bytes": 81380,
+          "sha256": "09b7921637afadf353d8aebb3eeae2f16e7f58c27226e0566fa6cbd8ef01fef7",
+          "bytes": 92084,
           "pixels": "1280x800",
-          "from": "render step-7.png (SHA-256 b2a582a85c4f103c5e4378b0978c02570650e1ca1339b698bd799de7676d98d5), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-7.png, SHA-256 6d64e846cd748716294527e2f6e91681c9644799886836c6218b52482475a7fc; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-8.jpg": {
-          "sha256": "655f6cf75ce5f0317a4779753b5efdc5a0062c4749eeba10cc038621d5490e0f",
-          "bytes": 76715,
+          "sha256": "6041360c9696604e1b0510793cf9d6ae1692c890a762a5030ba5162e15bf4f5c",
+          "bytes": 88071,
           "pixels": "1280x800",
-          "from": "render step-8.png (SHA-256 89f622af9abef62df554d3658f4aadb10ce4a831eb4def529a025a1d92056a0c), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-8.png, SHA-256 278d363d540159f73886a1d0f75fe5a8892e5e07ad35f58ae9ad3d886974b745; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-9.jpg": {
-          "sha256": "5f51dd7086eeb6a7f8d8129cf14476fb07dc8773b84b77792b45278ea7626faa",
-          "bytes": 75587,
+          "sha256": "c0c9a246e57a8cd83dcaade500f9f7caf626d1a38e36176d457b2d3c4b19c1ab",
+          "bytes": 87106,
           "pixels": "1280x800",
-          "from": "render step-9.png (SHA-256 3a40015c5eb6b32b80658e0d26d382cc730085b87815adf52146cc159e7824e5), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-9.png, SHA-256 80e3da3f8d54ad4480593c6d8b4eab03d6c733af8ff3fdd185eec206c0f06973; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-10.jpg": {
-          "sha256": "bfd3869f608481a96660e43082d9213ba4bab16933b5888702342cd1dc449dc9",
-          "bytes": 76998,
+          "sha256": "cac439fcd2f2f4ecb971629530c9944f5f9847ae04a2773541f89b988261a16e",
+          "bytes": 88028,
           "pixels": "1280x800",
-          "from": "render step-10.png (SHA-256 04a4fc9b1fedb3a4c36321cd8427fb066ae25a1ff18df9635acc8f6c81640cb1), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-10.png, SHA-256 cef8aa5bf17e4761e256f193fdb2b0f03057ee8a0e672f10df30d8948b0c82b8; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-11.jpg": {
-          "sha256": "9c1fb489cda0f17c15811fb87ce9ec579ae9b3ace83ccc1a78f063560eb62ba1",
-          "bytes": 104514,
+          "sha256": "5290db6564bd0b3a28ba6322234e68773c960e88fa0d699d88c021449ffbf1c5",
+          "bytes": 112580,
           "pixels": "1280x800",
-          "from": "fact-fix render step-11.png (SHA-256 c3af9f79870899b540056a8b189b6e9eff94ba5205fee8ea3e67d1c2c9197405), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/landing-gear/step-11.png, SHA-256 027e6a50d4bcde61ad35d22d150d9a88d4b27b33d6cd990ee96a24a157c8434f; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "poster.jpg": {
-          "sha256": "0a60e9474615322a5c887dec4b8cb400a8ea374265b00dcc584aa4311a6ae980",
-          "bytes": 111695,
+          "sha256": "45b466cc29df9b5c3acafc4814e73a02d6ee7378076d558f5aa0faf5131b09d1",
+          "bytes": 122590,
           "pixels": "1280x800",
-          "from": "a copy of step-3.jpg"
+          "from": "OUT/landing-gear/step-3.png, SHA-256 d23c5d4936956a22dc39f75ac713f5b0ac39865eaeb95bc6868bb7809504c4fe; MartyGraphics render, no pixel edits; converted to JPEG only; same conversion as step-3.jpg",
+          "capture": "studioRerender"
         },
         "story.mp4": {
           "sha256": "136a8229ffea0a3e33801ede2ffed0759e9cde6e386637ca7936568f3139cc3e",
@@ -815,76 +867,88 @@
       "renderManifestSHA256": "19c76b6833f04ddb2becafdb94abf9fd48d14bae1a5b3a0c2ca7fb708295d8a4",
       "artifacts": {
         "hero.jpg": {
-          "sha256": "c6b4016f719cedba1a9a58b0ae6b2359028052a3efc9ed743c82b885bc2be3b7",
-          "bytes": 116386,
+          "sha256": "3ede961196bbef7863407ffc0e640086cfd041e5347948dbf7384f1e61df3f5e",
+          "bytes": 117364,
           "pixels": "1280x800",
-          "from": "render hero.png (SHA-256 a660b5eb8bc3b0d95f76971232ce7627b342534284e4f2191dcb49c5bde30f7d), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/hero.png, SHA-256 6dab849bc6035d46bc7f699d5cc21dac10bac6c552014ba1b10cb198580b64f1; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "exploded.jpg": {
-          "sha256": "a3c42c3a01914e2f223411a142b963727a58faaf791aff207271dd20d1a76dd3",
-          "bytes": 115921,
+          "sha256": "54af7cb08654036bf52c757040c6e0712a1daa2a6a97415f2c4cd577616f715a",
+          "bytes": 117432,
           "pixels": "1280x800",
-          "from": "render exploded.png (SHA-256 43b21ece044b5dc85aa739da0c3e35870cf785ff74510cbb7dd595a6500389d6), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/exploded.png, SHA-256 c34b95c3ea590f8cc4efa3b599793b1d7d7f46f5248fb3cabac4ee7fc34b89ef; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-1.jpg": {
-          "sha256": "ff3a5753ce319b02148e319bc1b8bc1f6721d5a510c138700b8d3fb05265b1c9",
-          "bytes": 173064,
+          "sha256": "fe7256e34b479f83d330c602601424c41db0d31d857e3cb0c54cfbf630e932b0",
+          "bytes": 155239,
           "pixels": "1280x800",
-          "from": "render step-1.png (SHA-256 514558491c4402f31137c38561e1a5648411e932e2f5489ee26fc418c65c7764), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/step-1.png, SHA-256 3ab14a9c40bdd53e6c058bfc7fc0a8ebe46cb70ba158ad6bf321375c5ad5af52; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-2.jpg": {
-          "sha256": "73dcfd7d04b3f939feb15a8b8cce6c6aaca485df0adf663f8798849b1bf4e79e",
-          "bytes": 149337,
+          "sha256": "9b366bbb7777a5477e4e82e68437da70a69fc311f019d1da94242adc1d2e9e0c",
+          "bytes": 148369,
           "pixels": "1280x800",
-          "from": "fact-fix render step-2.png (SHA-256 64be7cc4f25f6d9d8003b298790c44246c17e35bccb1d4de508475a7b7006af2), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/step-2.png, SHA-256 acd5947859f755ec0f69c9772692d236269c4ac9614897bce37e1d25fe561b50; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-3.jpg": {
-          "sha256": "03416a33e1e3b25807f0311339dc0fde83f0b26523addbe476011ab3e1f5a576",
-          "bytes": 119745,
+          "sha256": "031280d0d0bfa00285af4ef96ccf4f92bcf8bd4f79700ad68dcec6dc651ac7f3",
+          "bytes": 123998,
           "pixels": "1280x800",
-          "from": "render step-3.png (SHA-256 6c024f42cee5eb3e1cb2c8f027cc42edce5a78649111f564b45c0919eed96f3e), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/step-3.png, SHA-256 bf48ba6135e3c0423803dc0d2b8a825e72547e5c911f49d085168004f3319417; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-4.jpg": {
-          "sha256": "e9e47492150fc608970d07e39733e67add4d7ac04aa9eac623b6f06d21e69340",
-          "bytes": 117740,
+          "sha256": "db60507c925c6aa383bd9a41637dd7cd25ad32962a304d8a3fa6660bbc6adf23",
+          "bytes": 123401,
           "pixels": "1280x800",
-          "from": "render step-4.png (SHA-256 ae3236a3321587d3bc88a6ab0a5a831f70b9fc64709eb4432daf5f328871f681), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/step-4.png, SHA-256 fd8168e430e5257379beca37920f68fa1fb416624fd46dc24b8cd54cb46551ab; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-5.jpg": {
-          "sha256": "818a7f492b0d94ce624286b1838d2b3ff363f4d6f00c4be2e02c942663496132",
-          "bytes": 147401,
+          "sha256": "9932097996efd6b94233832378c8664226430364cb0a7409a7a2984c5f6884b1",
+          "bytes": 147475,
           "pixels": "1280x800",
-          "from": "fact-fix render step-5.png (SHA-256 3554d39c6f2f6d378848e565de28fb916ce782a9b267219cad271a356994d22e), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/step-5.png, SHA-256 07abbe79ce9339bb1ad4c4a3effbe03e1d4820462243636c61e91f85720a28bf; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-6.jpg": {
-          "sha256": "5fa0d89c53c2f06e45378e6969cafc38a888cc41abfc4c2c7ba9635b4ac2742a",
-          "bytes": 136208,
+          "sha256": "62dee78003d3d117ff3b33bfa8403cf31348074ccb82eace7b600b02c6acb40e",
+          "bytes": 138533,
           "pixels": "1280x800",
-          "from": "fact-fix render step-6.png (SHA-256 b7472f10a4d57ff25054bd4507ab03a6ddaad7ad3a3b61ac0f87eefbe996cdc4), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/step-6.png, SHA-256 189d423c321cd24fed977901c6dfd97b32aa8006e1a1ff531c0f9d2f7bb5a5fb; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-7.jpg": {
-          "sha256": "67ff813184685b7afea7e05063d68f81c82ec71ba9e993a62a3da5bb5b2bab92",
-          "bytes": 134001,
+          "sha256": "e1729817c99d22822dbd86fb75db9e39079c37304937203d28478484ece1514e",
+          "bytes": 136817,
           "pixels": "1280x800",
-          "from": "render step-7.png (SHA-256 68015acdcf1f92e39af5798df9a4fda394adabc6f0423727375a4fe4a3d36e72), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/step-7.png, SHA-256 e2158af1efa3809ba3290fbe8ab5c7e8d871a2babe401f356c5f17a22d26625f; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-8.jpg": {
-          "sha256": "72c745c70982f9603ad128074908b2ada872d46532d6ae9a354712b00ca60e90",
-          "bytes": 153975,
+          "sha256": "78e25fd9736d79551c89139140f86ae75301106a3c79fae3bedbd2aa1bbc616c",
+          "bytes": 154267,
           "pixels": "1280x800",
-          "from": "fact-fix render step-8.png (SHA-256 dd0163607995a07ba9df2b774c80dc1894e18fca1eeb5ca2735d66ebbd71be71), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/step-8.png, SHA-256 bb234d17b2bc2cb55db2886377b1e4a8b422d02d28ca31179fe4d220c1755246; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "step-9.jpg": {
-          "sha256": "ee6ffb186083895ec2ef2ca0a8786504d5b4a1eab7a456505a64d5c0df81b26f",
-          "bytes": 133986,
+          "sha256": "25775cb21045a8e470b59d35e9b4cbeca539eb9ce699f981b91364708e2212f1",
+          "bytes": 138721,
           "pixels": "1280x800",
-          "from": "fact-fix render step-9.png (SHA-256 55549f36771fca8af0e886cfcde88f2ec7ce9596aac26e4ac8e3350b5c7e639c), converted to JPEG (ImageIO, quality 0.85); pixels not edited"
+          "from": "OUT/payload-cg/step-9.png, SHA-256 93d21566e9dc1505c96e953d62c5d1f3841a31fbef929f2202eaf2fe76c28212; MartyGraphics render, no pixel edits; converted to JPEG only",
+          "capture": "studioRerender"
         },
         "poster.jpg": {
-          "sha256": "818a7f492b0d94ce624286b1838d2b3ff363f4d6f00c4be2e02c942663496132",
-          "bytes": 147401,
+          "sha256": "9932097996efd6b94233832378c8664226430364cb0a7409a7a2984c5f6884b1",
+          "bytes": 147475,
           "pixels": "1280x800",
-          "from": "a copy of step-5.jpg"
+          "from": "OUT/payload-cg/step-5.png, SHA-256 07abbe79ce9339bb1ad4c4a3effbe03e1d4820462243636c61e91f85720a28bf; MartyGraphics render, no pixel edits; converted to JPEG only; same conversion as step-5.jpg",
+          "capture": "studioRerender"
         },
         "story.mp4": {
           "sha256": "4a4c56e777c840379e0301dc9804c86c4467afaea27f86921b98041943ef38d8",
@@ -1097,6 +1161,53 @@
         "storyBytes": 6551444,
         "seconds": 80.7,
         "cuts": []
+      }
+    }
+  },
+  "studioRerender": {
+    "status": "verified",
+    "capturedUTC": "2026-11-12",
+    "engineCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+    "look": "studio",
+    "renderer": "MartyGraphics built-in SceneKit renderer; not Blender, not a hand-made image.",
+    "engineExecutableSHA256": "59549186a4e10e55734422cb9f239827f72a4ed972c5929535d08f1cbbcbb5a1",
+    "historicalScope": "The existing source, capture, run, render, check and review records describe the earlier capture. They do not claim a new review or check of the refreshed images. Artifact entries marked capture=studioRerender describe the current images. Other artifacts, including videos and check reports, are unchanged.",
+    "previousArtifacts": "Original artifact records are in this file at engine commit fb60455674808362c64b5600687d77b9f9b77c2c; old and new image hashes are also listed in docs/assets/STUDIO-RERENDER.md.",
+    "commands": {
+      "quadcopter": {
+        "command": "marty-solid render docs/assets/drone-aviation/quadcopter/quadcopter.json OUT/quadcopter --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "bc4347306fec1d3b5dda76de26ab911c5bbc2127562e68bfdb9a489b0dd0d617",
+        "document": "docs/assets/drone-aviation/quadcopter/quadcopter.json",
+        "documentSHA256": "129cda759420dba6b549c6f27a9bca0a569256aeca78175e74330d7164108d33",
+        "jpeg": "sips -s format jpeg -s formatOptions 85 OUT/quadcopter/<still>.png --out <published>.jpg"
+      },
+      "brushless-motor": {
+        "command": "marty-solid render docs/assets/drone-aviation/brushless-motor/motor.json OUT/brushless-motor --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "1704b745cf22552268ac56a3018fc095b4f1eafa415e7a6c545110afaa116dd1",
+        "document": "docs/assets/drone-aviation/brushless-motor/motor.json",
+        "documentSHA256": "9ad66aab88e16ab788e35aaf5a242cb15c75ab54517f795ce98760ac4a28f961",
+        "jpeg": "sips -s format jpeg -s formatOptions 85 OUT/brushless-motor/<still>.png --out <published>.jpg"
+      },
+      "gimbal": {
+        "command": "marty-solid render docs/assets/drone-aviation/gimbal/gimbal.json OUT/gimbal --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "77c3225931867b26056702a5db5d61e64f552d18bb010f67076fce18cffe1a49",
+        "document": "docs/assets/drone-aviation/gimbal/gimbal.json",
+        "documentSHA256": "e8912667e2afd3229903e0b2a65a4c20cdb25fcbdcf563b1f0be6abaaeef9605",
+        "jpeg": "sips -s format jpeg -s formatOptions 85 OUT/gimbal/<still>.png --out <published>.jpg"
+      },
+      "landing-gear": {
+        "command": "marty-solid render docs/assets/drone-aviation/landing-gear/landing-gear.json OUT/landing-gear --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "c84a612c6ce915c2c11279c121f316e2fc7e5256c3b13c0888ea6877179c4cec",
+        "document": "docs/assets/drone-aviation/landing-gear/landing-gear.json",
+        "documentSHA256": "c0c4e14b7de62481846952dd47ba9d03a816100c19950f11d1c5b1ee37d81e2d",
+        "jpeg": "sips -s format jpeg -s formatOptions 85 OUT/landing-gear/<still>.png --out <published>.jpg"
+      },
+      "payload-cg": {
+        "command": "marty-solid render docs/assets/drone-aviation/payload-cg/payload-cg.json OUT/payload-cg --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "195ccd8b92ebea0937dfff37dd1b8415038105caa06c81538ff4f4a1a31569b2",
+        "document": "docs/assets/drone-aviation/payload-cg/payload-cg.json",
+        "documentSHA256": "37659f53103ec6413428ffa600e453a2eaab8639f26ef9eacbdf795026b748ed",
+        "jpeg": "sips -s format jpeg -s formatOptions 85 OUT/payload-cg/<still>.png --out <published>.jpg"
       }
     }
   }

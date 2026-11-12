@@ -26,21 +26,41 @@
   },
   "artifacts": {
     "winch-lift.png": {
-      "sha256": "d3a2181ef34927b247879c135fcf319e6227e5a02939c9fed815dc0887fb411c",
-      "bytes": 994486,
-      "from": "render step 5 (step-5.png)",
-      "pixels": "1280x800"
+      "sha256": "232f4c22463bf94d09e93160718b7059060cdd5cbb01dc4f47b67164e6085af4",
+      "bytes": 892139,
+      "from": "OUT/annotations/step-5.png, SHA-256 232f4c22463bf94d09e93160718b7059060cdd5cbb01dc4f47b67164e6085af4; MartyGraphics render, no pixel edits",
+      "pixels": "1280x800",
+      "capture": "studioRerender"
     },
     "winch-dimension.png": {
-      "sha256": "c268f068cb84568032e0e855610a58bf2601ec1b54b6ff8c1308d18d6e83f8aa",
-      "bytes": 818595,
-      "from": "render step 3 (step-3.png)",
-      "pixels": "1280x800"
+      "sha256": "ee4dc881ae939def98a67e7dc5b8ff3e85dfc5f67b4c2eb8c164c85eb2129845",
+      "bytes": 851647,
+      "from": "OUT/annotations/step-3.png, SHA-256 ee4dc881ae939def98a67e7dc5b8ff3e85dfc5f67b4c2eb8c164c85eb2129845; MartyGraphics render, no pixel edits",
+      "pixels": "1280x800",
+      "capture": "studioRerender"
     },
     "check-strict.json": {
       "sha256": "c36577ad05f6ff280c0529ded54b63eacf6e4f89c86173f9ee957eacf705e720",
       "bytes": 14885,
       "from": "marty-solid check --strict (stdout re-serialised with sorted keys and 2-space indent; same content)"
+    }
+  },
+  "studioRerender": {
+    "status": "verified",
+    "capturedUTC": "2026-11-12",
+    "engineCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+    "look": "studio",
+    "renderer": "MartyGraphics built-in SceneKit renderer; not Blender, not a hand-made image.",
+    "engineExecutableSHA256": "59549186a4e10e55734422cb9f239827f72a4ed972c5929535d08f1cbbcbb5a1",
+    "historicalScope": "The existing source, capture, run, render, check and review records describe the earlier capture. They do not claim a new review or check of the refreshed images. Artifact entries marked capture=studioRerender describe the current images. Other artifacts, including videos and check reports, are unchanged.",
+    "previousArtifacts": "Original artifact records are in this file at engine commit fb60455674808362c64b5600687d77b9f9b77c2c; old and new image hashes are also listed in docs/assets/STUDIO-RERENDER.md.",
+    "commands": {
+      "annotations": {
+        "command": "marty-solid render Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json OUT/annotations --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "1bb0166aa5d01157789291c59297718a0a4eb492909167f6a3e5c581df023a6b",
+        "document": "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json",
+        "documentSHA256": "aa3e8c5f7419b4f50ff1af88661a3431d124466a74b871b4a740b1e532966f74"
+      }
     }
   }
 }

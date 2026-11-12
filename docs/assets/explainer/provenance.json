@@ -38,11 +38,14 @@
   "artifacts": {
     "docs/assets/explainer/gears-mixed-beat-1.png": {
       "renderedAs": "beat-1.png",
-      "sha256": "719994caa0d4ff42e938f76ea57e1626e0fc3dac62728340dddfeac40a1a2076",
+      "sha256": "24e965599ac234283221caeb241a9c09752d6ae53ae4503d48d4c3d6093959c6",
       "size": [
         1280,
         800
-      ]
+      ],
+      "bytes": 572822,
+      "capture": "studioRerender",
+      "from": "OUT/explainer/beat-1.png, SHA-256 24e965599ac234283221caeb241a9c09752d6ae53ae4503d48d4c3d6093959c6; MartyGraphics render, no pixel edits"
     }
   },
   "render": {
@@ -55,5 +58,23 @@
     ],
     "highlight": "3D parts highlighted with MGSolidRenderer.emphasis = .strong (the 2D emphasis colour as a glow; other parts dimmed)"
   },
-  "notChecked": "Pixel output is not deterministic across runs (soft shadows); the engine numbers, captions and legend are. No device timing."
+  "notChecked": "Pixel output is not deterministic across runs (soft shadows); the engine numbers, captions and legend are. No device timing.",
+  "studioRerender": {
+    "status": "verified",
+    "capturedUTC": "2026-11-12",
+    "engineCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+    "look": "studio",
+    "renderer": "MartyGraphics built-in SceneKit renderer; not Blender, not a hand-made image.",
+    "engineExecutableSHA256": "59549186a4e10e55734422cb9f239827f72a4ed972c5929535d08f1cbbcbb5a1",
+    "historicalScope": "The existing source, capture, run, render, check and review records describe the earlier capture. They do not claim a new review or check of the refreshed images. Artifact entries marked capture=studioRerender describe the current images. Other artifacts, including videos and check reports, are unchanged.",
+    "previousArtifacts": "Original artifact records are in this file at engine commit fb60455674808362c64b5600687d77b9f9b77c2c; old and new image hashes are also listed in docs/assets/STUDIO-RERENDER.md.",
+    "commands": {
+      "explainer": {
+        "command": "marty-solid render Examples/Explainers/gears-mixed.explainer.json OUT/explainer --size 1280x800 --look studio --no-story --no-loop",
+        "manifestSHA256": "3077d3747f3ce08c5a32749c7607fb223d62be6169a5d7721bf3b3e90d0d7568",
+        "document": "Examples/Explainers/gears-mixed.explainer.json",
+        "documentSHA256": "4e50e1861827b37999b535454cfb63625dec0d749c7f0cc2fb899d19152b6506"
+      }
+    }
+  }
 }

@@ -143,36 +143,29 @@
       "note": "title and footer drawn over the render by the exporter"
     },
     "labelled.png": {
-      "bytes": 993843,
-      "sha256": "c12d119f2ed6165eee636ceaf642143bd01ed6c390a38c0c6b911e40fbd13b9e",
+      "bytes": 993830,
+      "sha256": "c3a0bbcdd027808fc17f41b38496a199da258378365144e47e2d3a10df2b5573",
       "width": 1280,
       "height": 800,
-      "note": "solid engine cutaway; 11 labels projected from points on the named parts"
+      "note": "solid engine cutaway; 11 labels projected from points on the named parts",
+      "capture": "studioRerender",
+      "from": "OUT/turbofan/labelled.png, SHA-256 c3a0bbcdd027808fc17f41b38496a199da258378365144e47e2d3a10df2b5573; MartyGraphics render, no pixel edits"
     },
     "exploded.png": {
-      "bytes": 953242,
-      "sha256": "8d4d8fbb78198e2d69696390ae0c7e5a3ba41eb09f9cc2cb19a8af65c9be4506",
+      "bytes": 1021356,
+      "sha256": "7fa610b379d5c2c7b47cc71cc38d57d9acc2b22b2217cd7430db293c355e7421",
       "width": 1280,
       "height": 800,
-      "captureCommit": "f75f540b165a49edbafa82b136958a9ebaddc1b2",
-      "note": "step 8 of the authored steps (step-8.png), re-rendered from a clean tree at f75f540b165a49edbafa82b136958a9ebaddc1b2 after its caption was corrected to say the spinning parts stay below beside the fixed exhaust cone",
-      "sourceFilesChangedSinceMainCapture": {
-        "Examples/Turbofan/README.md": "0a58cfb329f0848a535c29abd81c48b25dbff9492a82bff561be443f745ea402",
-        "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift": "2e351af484c0bebce2a202f9b2ea9ae68f0e2de3c6583189a6cc70891f44c1ed",
-        "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json": "14db9715f7a80e3fdc431cd7e1a38c79cfa6e88bd6f3fdc875bbce14ccfb4112",
-        "Examples/Turbofan/Sources/TurbofanKit/TurbofanChecks.swift": "ecabd815312be94ec7230bf5a8baead2333aabc1ab2a21a2c41b023492eeef53",
-        "Examples/Turbofan/Tests/TurbofanTests/TurbofanTests.swift": "912a0447d7a6bbdc80384c130bdd5226ea058f139b49e3a51f0e99cef07a5a43",
-        "Sources/MartyGraphics/Solid/MGSolidShapes.swift": "918086d8ddc6868a73eb054f546114974a9f25f6c1536b0f3087d81b6052e014",
-        "Sources/MartyGraphics/Solid/MGSolidTurbo.swift": "510fb6fdcc2f5a8f9a19f997a7e463ee9666df40b03d1c015129ce45e1aa245d",
-        "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "8f9d0053f2527d69e05d6c328b3ab687edecbf38a6fd1132846d414864e5cdce",
-        "Tests/MartyGraphicsTests/SolidTurboTests.swift": "dc7e09bedc2fb69ec560b55994adb0562d8e57a24dd7a91839b87ae68cf27025"
-      },
+      "captureCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+      "note": "Step 8 of the authored steps (step-8.png), refreshed with the original example exporter; spinning parts stay below beside the fixed exhaust cone.",
       "command": "marty-turbofan --export <NEW_DIR> (exit 0)",
-      "sourceFilesChangedSinceMainCaptureAtCommit": "f75f540b (re-render commit, before the rebase onto main); hashes describe that commit, not the head"
+      "sourceFilesChangedSinceMainCaptureAtCommit": "f75f540b (re-render commit, before the rebase onto main); hashes describe that commit, not the head",
+      "capture": "studioRerender",
+      "from": "OUT/turbofan/step-8.png, SHA-256 7fa610b379d5c2c7b47cc71cc38d57d9acc2b22b2217cd7430db293c355e7421; MartyGraphics render, no pixel edits"
     },
     "turbofan-loop.gif": {
-      "bytes": 5422629,
-      "sha256": "12d9f93fec8cd20a950ff3a5e4b91b9a81a82ca60fe7de45914d28674aa7c994",
+      "bytes": 6500104,
+      "sha256": "e68bee482a1d07b3a23022a0e86b1bb366ad2beead0062c373c7f2d2bd2c7d92",
       "width": 640,
       "height": 400,
       "frames": 120,
@@ -181,12 +174,44 @@
       ],
       "loopSeconds": 12.0,
       "loopCount": 0,
-      "note": "every 3rd frame of the 1280x800, 30 fps, 12.0 s loop, downscaled; 120 delays of 10 hundredths sum to 12.00 s"
+      "note": "every 3rd frame of the 1280x800, 30 fps, 12.0 s loop, downscaled; 120 delays of 10 hundredths sum to 12.00 s",
+      "capture": "studioRerender",
+      "from": "OUT/turbofan/turbofan-loop.gif, SHA-256 e68bee482a1d07b3a23022a0e86b1bb366ad2beead0062c373c7f2d2bd2c7d92; MartyGraphics render, no pixel edits"
     }
   },
   "review": {
     "visual": "Every artifact inspected: capped cut faces with no holes or z-fighting, clean silhouettes, labels on their parts, title clear of the model.",
     "limits": "Schematic teaching model, not a real or validated engine design and not based on any manufacturer's engine. No air flow, pressure, temperature or thrust is simulated. Clearance is a true lower bound (4.52 mm at the fan tips): the 1 mm grid only decides where to look; exact distances between inward-grown projected triangles give the bound. Shafts are colour coded (anodised blue LP, orange HP) for teaching.",
     "rerenderCheck": "At f75f540b165a49edbafa82b136958a9ebaddc1b2 the exporter's hero-snapshot.json (posed geometry, camera and materials) is byte-identical to the main capture's, so the geometry is unchanged and the path-traced hero is unaffected (the path tracer is seeded and unchanged). Re-rendered labelled and hero stills differ from the main capture only by SceneKit run-to-run noise (at most 5 to 6 of 255 levels on under 1% of pixels, none above 8), so the committed labelled.png and turbofan-loop.gif were kept."
+  },
+  "studioRerender": {
+    "status": "verified",
+    "capturedUTC": "2026-11-12",
+    "engineCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+    "look": "studio",
+    "renderer": "MartyGraphics built-in SceneKit renderer; not Blender, not a hand-made image.",
+    "engineExecutableSHA256": "830a01e8210f6a87139af8bed65980a95bc393fdba9677b7f7449c050308aa9c",
+    "historicalScope": "The existing source, capture, run, render, check and review records describe the earlier capture. They do not claim a new review or check of the refreshed images. Artifact entries marked capture=studioRerender describe the current images. Other artifacts, including videos and check reports, are unchanged.",
+    "previousArtifacts": "Original artifact records are in this file at engine commit fb60455674808362c64b5600687d77b9f9b77c2c; old and new image hashes are also listed in docs/assets/STUDIO-RERENDER.md.",
+    "commands": {
+      "turbofan": {
+        "command": "marty-turbofan --export OUT/turbofan",
+        "manifestSHA256": "8229f4744c5a341c8f52873f7a2f8161c0ba4450f4fe53fbf7c9d4798f4cef68",
+        "document": "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json",
+        "documentSHA256": "14db9715f7a80e3fdc431cd7e1a38c79cfa6e88bd6f3fdc875bbce14ccfb4112",
+        "lookSelection": "MGSolidRenderer default studio; this existing example exporter has no --look flag and keeps its own overlay and camera."
+      }
+    },
+    "previousExplodedSourceFilesChangedSinceMainCapture": {
+      "Examples/Turbofan/README.md": "0a58cfb329f0848a535c29abd81c48b25dbff9492a82bff561be443f745ea402",
+      "Examples/Turbofan/Sources/MartyTurbofan/Turbofan.swift": "2e351af484c0bebce2a202f9b2ea9ae68f0e2de3c6583189a6cc70891f44c1ed",
+      "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json": "14db9715f7a80e3fdc431cd7e1a38c79cfa6e88bd6f3fdc875bbce14ccfb4112",
+      "Examples/Turbofan/Sources/TurbofanKit/TurbofanChecks.swift": "ecabd815312be94ec7230bf5a8baead2333aabc1ab2a21a2c41b023492eeef53",
+      "Examples/Turbofan/Tests/TurbofanTests/TurbofanTests.swift": "912a0447d7a6bbdc80384c130bdd5226ea058f139b49e3a51f0e99cef07a5a43",
+      "Sources/MartyGraphics/Solid/MGSolidShapes.swift": "918086d8ddc6868a73eb054f546114974a9f25f6c1536b0f3087d81b6052e014",
+      "Sources/MartyGraphics/Solid/MGSolidTurbo.swift": "510fb6fdcc2f5a8f9a19f997a7e463ee9666df40b03d1c015129ce45e1aa245d",
+      "Tests/MartyGraphicsTests/SolidHardeningTests.swift": "8f9d0053f2527d69e05d6c328b3ab687edecbf38a6fd1132846d414864e5cdce",
+      "Tests/MartyGraphicsTests/SolidTurboTests.swift": "dc7e09bedc2fb69ec560b55994adb0562d8e57a24dd7a91839b87ae68cf27025"
+    }
   }
 }

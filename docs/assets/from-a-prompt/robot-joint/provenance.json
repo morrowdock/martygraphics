@@ -61,36 +61,46 @@
     "command": "marty-solid render robot-joint-gearbox.json OUT (same checker binary)",
     "artifacts": {
       "hero.png": {
-        "bytes": 977242,
+        "bytes": 929882,
         "height": 800,
-        "sha256": "adcdf503bfd406c85752d0fbaf9f2615a147d376a5cd41982c82e048ce269f6d",
-        "width": 1280
+        "sha256": "1d43417d6b380f623bbbd1366c9e211fcc465fd666691989f249939b9cf8d9a2",
+        "width": 1280,
+        "capture": "studioRerender",
+        "from": "OUT/robot-joint/hero.png, SHA-256 1d43417d6b380f623bbbd1366c9e211fcc465fd666691989f249939b9cf8d9a2; MartyGraphics render, no pixel edits"
       },
       "exploded.png": {
-        "bytes": 975497,
+        "bytes": 939731,
         "height": 800,
-        "sha256": "271415abcd5eeafecfd3db61ea2d1d7a28179aa69c27d51f0fb6d7c58a6c07c5",
-        "width": 1280
+        "sha256": "fe4f44deab447e056c4f50550669de809eb0a52c1f4db32d2cb3be671df51e8e",
+        "width": 1280,
+        "capture": "studioRerender",
+        "from": "OUT/robot-joint/exploded.png, SHA-256 fe4f44deab447e056c4f50550669de809eb0a52c1f4db32d2cb3be671df51e8e; MartyGraphics render, no pixel edits"
       },
       "loop.gif": {
-        "bytes": 3662895,
+        "bytes": 4162214,
         "delaySeconds": 0.1,
         "frames": 120,
         "loopSeconds": 12,
-        "sha256": "4ac7f1ebed15ea8bfa8dc8c32938c5af0ff850ea7988d2dad8a86a979bbed698",
-        "width": 640
+        "sha256": "0813d27895c8933fc5403fc43b270bbbce74e9e6b92647688bf8852fb837f968",
+        "width": 640,
+        "capture": "studioRerender",
+        "from": "OUT/robot-joint/loop.gif, SHA-256 0813d27895c8933fc5403fc43b270bbbce74e9e6b92647688bf8852fb837f968; MartyGraphics render, no pixel edits"
       },
       "step-3.png": {
-        "bytes": 867008,
+        "bytes": 899657,
         "height": 800,
-        "sha256": "0c4feee9a48e6c72347e245d3432d7a752e460f883e51641ae4d5df11f94f542",
-        "width": 1280
+        "sha256": "56ed1b3a7a3faa29453ce0cc3cff0c0475800c47a1dd4c606f4c659a2a5c4360",
+        "width": 1280,
+        "capture": "studioRerender",
+        "from": "OUT/robot-joint/step-3.png, SHA-256 56ed1b3a7a3faa29453ce0cc3cff0c0475800c47a1dd4c606f4c659a2a5c4360; MartyGraphics render, no pixel edits"
       },
       "step-5.png": {
-        "bytes": 866315,
+        "bytes": 885848,
         "height": 800,
-        "sha256": "a99f4f3c535b332670358f53846cc58e88e45174e390ac7770ccfbba8cdaf978",
-        "width": 1280
+        "sha256": "d8e5cdbd19bbd04683382ab63351734837c4c1fc79eea41043e17d92e2f10898",
+        "width": 1280,
+        "capture": "studioRerender",
+        "from": "OUT/robot-joint/step-5.png, SHA-256 d8e5cdbd19bbd04683382ab63351734837c4c1fc79eea41043e17d92e2f10898; MartyGraphics render, no pixel edits"
       }
     }
   },
@@ -111,5 +121,23 @@
       "outOfScopeHonest": "9/10"
     }
   },
-  "license": "Apache-2.0, as the rest of the repository"
+  "license": "Apache-2.0, as the rest of the repository",
+  "studioRerender": {
+    "status": "verified",
+    "capturedUTC": "2026-11-12",
+    "engineCommit": "fb60455674808362c64b5600687d77b9f9b77c2c",
+    "look": "studio",
+    "renderer": "MartyGraphics built-in SceneKit renderer; not Blender, not a hand-made image.",
+    "engineExecutableSHA256": "59549186a4e10e55734422cb9f239827f72a4ed972c5929535d08f1cbbcbb5a1",
+    "historicalScope": "The existing source, capture, run, render, check and review records describe the earlier capture. They do not claim a new review or check of the refreshed images. Artifact entries marked capture=studioRerender describe the current images. Other artifacts, including videos and check reports, are unchanged.",
+    "previousArtifacts": "Original artifact records are in this file at engine commit fb60455674808362c64b5600687d77b9f9b77c2c; old and new image hashes are also listed in docs/assets/STUDIO-RERENDER.md.",
+    "commands": {
+      "robot-joint": {
+        "command": "marty-solid render docs/assets/from-a-prompt/robot-joint/robot-joint-gearbox.json OUT/robot-joint --size 1280x800 --look studio --no-story",
+        "manifestSHA256": "770906197458059e5967704a75ad13eb7d2b3896d0aa7c58e720476d06b134c9",
+        "document": "docs/assets/from-a-prompt/robot-joint/robot-joint-gearbox.json",
+        "documentSHA256": "6811dc65bdfba3ad9b21fda1139c89bde04357ef704f5245abdf68cc8060fdca"
+      }
+    }
+  }
 }

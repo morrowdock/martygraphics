@@ -291,11 +291,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-annotations-provenance.check.json",
-      "sha256": "f6ef7912da3a9393bed87d5176d345e2431e58eeba21bc2a97e1d39fb2ff7b82"
+      "sha256": "1dcf39cfdb179138567bbcbb9882f70e16f0cfd67d5ba354eebda04badcb44de"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-annotations-provenance.strict.json",
-      "sha256": "205c95f27ad6b831451711bfbc077c7be133f7ffd1efaca914f5795821073e0f"
+      "sha256": "834f412253e6d8a677b37f573adf37f52d0d946f0f528b2e9e1f9f9fe52838fc"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-check-strict.check.json",
@@ -307,11 +307,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-provenance.check.json",
-      "sha256": "d7c674720d02dbd0a7bbaa55289c7603ef8daa392793f54deb08feedc297a16b"
+      "sha256": "037c1cd93386b9517693fb05ca86035746e31fe4ca5b7163d3e3b1d658f17b7b"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-cutaway-provenance.strict.json",
-      "sha256": "9e6f86d2968291e5a726c4aa114eff13616d0d4e849da76842941a99c4628d15"
+      "sha256": "1f3e90258305878a6c39b74fff1c278f2771753b1b901b44b65cd3a98fabdb08"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-brushless-motor-check-strict.check.json",
@@ -379,11 +379,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-provenance.check.json",
-      "sha256": "13125c61ed08343eeac45ae25d68972a6856e5bd9a3a04d2843381c301686b87"
+      "sha256": "3dba3406406a99ba6141ee9169ad3a45bb45cb8a3a7c57777ae859f12e80ffcc"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-provenance.strict.json",
-      "sha256": "402bef950c7f7380e40b64803a1c2450ca2561e37831166008c482d1403003ae"
+      "sha256": "15bf7c4e5ceeba3148c39f70d5ca33d900978b0450c571cca386b45944147490"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-drone-aviation-quadcopter-check-strict.check.json",
@@ -403,11 +403,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.check.json",
-      "sha256": "096a0fd26225904a62e012d26f6490e81bb8942081cf5c049de73a8cf16f5779"
+      "sha256": "ca838f73c821ff27b758530d7272e711c8cc67a9ca48c312223ef0ad0900b037"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-explainer-provenance.strict.json",
-      "sha256": "ea017f5d02e50b2071f4ab0257484bdfcb6bc0451f7fc2115a30098bbc80ea33"
+      "sha256": "47f4877ad98ea3b6c6729d8bbf41440a92682886f5dc71bcaf595594003ad590"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-attempt-1-refused.check.json",
@@ -427,11 +427,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-provenance.check.json",
-      "sha256": "84bbed43f3f02c20ccca6e18afe59317560bc5bf510353448571c8815f599404"
+      "sha256": "792e4b079e7a1d34e5ce4b76d54c3382d33e475983d30ac94a0126560b2770c8"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-provenance.strict.json",
-      "sha256": "2a15b94375dd583fad235a8149baad428968417e8e255f6cd73f188392f2029a"
+      "sha256": "30bac956fe764bfca2ed1b4a76ae40848e53416f2a1c91962baca928529390f9"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-from-a-prompt-robot-joint-robot-joint-gearbox.check.json",
@@ -459,11 +459,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-ai-provenance.check.json",
-      "sha256": "934f7a18986be54ab079f49ad0eef3cbaa761de660a65d07d3f7ddad3b18d5c2"
+      "sha256": "578a6292a2ef65fd5ca46356c04c12e58c1a9645d9bcaa92464e31cbf4434cd6"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-ai-provenance.strict.json",
-      "sha256": "13c1ef51797f755036dac466c060de601faaf2ce2e259bb3a577e5a6fc3a3d6b"
+      "sha256": "2d4c0b7a5d43dfbcc0cd880dff338f3409ac84370f9ae0e9a1aa81ca4146db63"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-check-strict.check.json",
@@ -483,11 +483,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.check.json",
-      "sha256": "bfe0fdd08234a308057b813b28803b7544e70e051753b6785378aeb380e119fe"
+      "sha256": "e0694b82d7dea27aa0eb227056346a0eaa928c9c2757cd1aebb4f3ef9c40ac05"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-jet-suit-provenance.strict.json",
-      "sha256": "1d4bf6fd43943dea919d5217b0b6aa31e4f01c9671b277cd873a529c224d3f1a"
+      "sha256": "2f948d19af5c82bfb601f460ae7f6f464049f1d2c96e59879f0e46bd79deb147"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-lessons-provenance.check.json",
@@ -523,19 +523,19 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-solid-provenance.check.json",
-      "sha256": "7b8df1940b78d71d5dcaaedfc6c3cf6d24f3a9a44d6641232f218f7f7e3e07ae"
+      "sha256": "c8057da7843d188e3aa09b0c28e1a7cd1ed59e09d8fcf4d1400ebaaf2baa85b6"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-solid-provenance.strict.json",
-      "sha256": "e1e307dffa8d59d564ee1b64a5556c558a300e4e61af15e4e78d73631f4a24bd"
+      "sha256": "e739dd03911b922703063ca368dd0225cc9bee1d4f02d7d8d96434b4abb1316b"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-turbofan-provenance.check.json",
-      "sha256": "468f0194005d29788c88a9ca4ac87b32dadeb073d259a3768bfe13e8a9501322"
+      "sha256": "a16db069661bf901ad6c6fa1b6ee9d2dec0469260c673cc03e3ea0c1b5c31fa6"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-turbofan-provenance.strict.json",
-      "sha256": "7f7a46332c1a9e3b4956f6924ff2810ef2398380584fe45853e84ddc660e1b7e"
+      "sha256": "0a623b435aca0c44d059809a56c4621a2843fe39dd0e2c2105f1dce824e385f1"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-annotated-winch.check.json",
@@ -711,7 +711,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "66f9b0128f3e9501703b4468bbace04f6d6cb3e4a276dc457ecf556c0a89c915"
+      "sha256": "21b358cccb69d1d3c6a401ae84f4ee567970a925aedf42f19ab08dbe1075db40"
     },
     {
       "path": "SECURITY.md",
@@ -1927,7 +1927,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "a4539c77bbe128d62ee858921559ca212060d5eb55cca9927e4a0f17c2dfba60"
+      "sha256": "db95601dd9655f0676cda9047f39c529d60c51138602e516bbe820582d6bc97a"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -1954,20 +1954,24 @@
       "sha256": "4a52c324655b69e02eaeaae786b7e95cda7693f2385cbc52201d638b910ae88c"
     },
     {
+      "path": "docs/assets/STUDIO-RERENDER.md",
+      "sha256": "c2191a09dab0102b2450be33786292983b1c6124b8c043ad29fa417f72eaac54"
+    },
+    {
       "path": "docs/assets/annotations/check-strict.json",
       "sha256": "c36577ad05f6ff280c0529ded54b63eacf6e4f89c86173f9ee957eacf705e720"
     },
     {
       "path": "docs/assets/annotations/provenance.json",
-      "sha256": "306aa9b76f098bd7b3ec60edbfa22da6e64d0a11c3ecd283ecfe0556d4559547"
+      "sha256": "004181d7a832919502abc7b79a9216a624476d33ead5a9131caadda5adbaf235"
     },
     {
       "path": "docs/assets/annotations/winch-dimension.png",
-      "sha256": "c268f068cb84568032e0e855610a58bf2601ec1b54b6ff8c1308d18d6e83f8aa"
+      "sha256": "ee4dc881ae939def98a67e7dc5b8ff3e85dfc5f67b4c2eb8c164c85eb2129845"
     },
     {
       "path": "docs/assets/annotations/winch-lift.png",
-      "sha256": "d3a2181ef34927b247879c135fcf319e6227e5a02939c9fed815dc0887fb411c"
+      "sha256": "232f4c22463bf94d09e93160718b7059060cdd5cbb01dc4f47b67164e6085af4"
     },
     {
       "path": "docs/assets/cutaway/check-strict.json",
@@ -1975,19 +1979,19 @@
     },
     {
       "path": "docs/assets/cutaway/closed.png",
-      "sha256": "7b4bec33e31a6512290c0d9ca5852cf962901b9805232bf8cdd7b8324bf894c5"
+      "sha256": "1f7f82f50b6c56b4f1c9590d270fd65328901f8706d9b8f178fcf630d6685e6e"
     },
     {
       "path": "docs/assets/cutaway/cut.png",
-      "sha256": "96dabfcb37877242b3330344375c086c36b52afe2d575f212fd8a22d59dd6a26"
+      "sha256": "fd683db425339f55b557c0fc7c7e4dad2b7dc11ace78efc08f67ea79a36cee95"
     },
     {
       "path": "docs/assets/cutaway/ghost.png",
-      "sha256": "c15d924592e38a30ffaebe42e7ba8eaf518a3f7b90430e51399f9d4b38d5ceab"
+      "sha256": "82bb7a5d23f6484c2439bac8a42259ec005bbb4d8424465543683d1763dc5881"
     },
     {
       "path": "docs/assets/cutaway/provenance.json",
-      "sha256": "8e93869ae6f7dc27fec69502acf88f0a33de0e7522919678867482a0166072cf"
+      "sha256": "3dc399eb27f82786007a174bb381ccad45309b7e810620666b1ff14a19035230"
     },
     {
       "path": "docs/assets/drone-aviation/FACTS.md",
@@ -1999,7 +2003,7 @@
     },
     {
       "path": "docs/assets/drone-aviation/README.md",
-      "sha256": "7aa873c712ee9528d96218b9a5260606a3acf451758e3ff4718a326c2d3a4809"
+      "sha256": "f41604791d5726f0bc8b47589fd2255284497f23567ca27b77e889e0e9151991"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/PROMPT.md",
@@ -2015,11 +2019,11 @@
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/exploded.jpg",
-      "sha256": "f90743e313b60268bde013a52074712d2cfc778e259fbfd86f230293a32bd37b"
+      "sha256": "bed7fbecc8b7698a45b8546cf37b67e438a34884bff8865d6bb597c742702740"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/hero.jpg",
-      "sha256": "5cf3483b67ce0903c3f4ae96b94dc77c75aa15bb8fb172a157ed557c673aafa5"
+      "sha256": "52708c586aaf0ab3c0d6babff27bea6a53fabbb2c9520347a8d58db236acc6dd"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/loop.mp4",
@@ -2031,51 +2035,51 @@
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/poster.jpg",
-      "sha256": "91b2b99423d8738d2c24948276b7c238c68d26b57daa99ece3f49428c864c919"
+      "sha256": "ce6fdb24f3138fdb3d6d06f1eeabaac09f84beff86ece4f3a03a19227abd85b6"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-1.jpg",
-      "sha256": "874a4ca5f034b7914b6fb94ebae2ef101bb56f03d67bba45bcf75444876de434"
+      "sha256": "a2353c7ef5085c7d0b26a6d9fbed4988a5a4f455e54a15454de90201d6a3d380"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-10.jpg",
-      "sha256": "66d219d37e8649944a385638120cf9b6bfd4a888c98585eea846dc9a3948c798"
+      "sha256": "506234b9e8a768ea75de1329f20d07da49fcca2c3745e8eb4e81690697bb0b7f"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-11.jpg",
-      "sha256": "3440b0809fda6073f6b2b167bec5b03d5ac0c9650dd49268014c3d7895ffef71"
+      "sha256": "174071b9eb3bea95c7ab16c1acf4a9f8fb9a7fd820145d819371d40e264749c4"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-2.jpg",
-      "sha256": "91b2b99423d8738d2c24948276b7c238c68d26b57daa99ece3f49428c864c919"
+      "sha256": "ce6fdb24f3138fdb3d6d06f1eeabaac09f84beff86ece4f3a03a19227abd85b6"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-3.jpg",
-      "sha256": "244324d9c6d548c1493cf48c60a37fe1df5547a4cbfb1a0b4b0060266502e39a"
+      "sha256": "ef801726c2f72fc407e6e20b9dcce80e820fae9ab9f2c1840f4a6f8de9c1a60a"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-4.jpg",
-      "sha256": "705ab426487ddc5d1cfe440bc979edbb9d17c6d37b7a2abb3886b86c2a4312a5"
+      "sha256": "8fd57dd5a1bd7990564de6166146c8bcf902937936d542af3dc89625a9fb45a1"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-5.jpg",
-      "sha256": "bf47d005f5123b693e6dac3f2e43082912b899f55867502807cb745e307252a7"
+      "sha256": "7510af4cf3b198fbaa00953fdd833cb28e612e3df3ef02054422a997240a1d9e"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-6.jpg",
-      "sha256": "d8163e35cc3da7ae7c5753d1b63511124de7c9ac0eea75ab46504c06f51aa2bf"
+      "sha256": "b53598a39f0276b3d7e8df0ad75ad5c1f896ca802a8fd2a1223f86e56834c698"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-7.jpg",
-      "sha256": "c6bb5dff76b217cf516d62479689a86dbec8334e0d6fb24c66a4124ff6f38ddf"
+      "sha256": "58fdbec6c99263bf56108fdf15e3c37310b65a81f56df5b3e993f570ceb6de1b"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-8.jpg",
-      "sha256": "2657cfb65d038b24e41afe141f12788fdfeb88b910e35ae454e1a806457f0ae9"
+      "sha256": "aca859c12d73670a404e2f3f74a269e6e41399a3e19634c74fb3fed39cd152d9"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/step-9.jpg",
-      "sha256": "df09975b3610fc82fc9295854bcb994a61b1724ad3592777b15e1452f592ea44"
+      "sha256": "e3b1cda42458ea22355c40980b249ecdfca1c27be7be6ca46320513c0cff8506"
     },
     {
       "path": "docs/assets/drone-aviation/brushless-motor/story.mp4",
@@ -2095,7 +2099,7 @@
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/exploded.jpg",
-      "sha256": "d420c9e7d06aec3d8c0ec16001e6b07e2dc26e048ca5feab8185572c057f7564"
+      "sha256": "291aed765fe1dac36cc68d13f6c8ed6d29887f65525c48dc76b21ed0919d6734"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/gimbal.json",
@@ -2103,43 +2107,43 @@
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/hero.jpg",
-      "sha256": "132b38816d92d984f55fa6e6f2ba3a1b8347aeb245786e39eea8052a3956b0b7"
+      "sha256": "4cde946b12de0dc343712707354698678086547d86324454b58390a877b03eac"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/poster.jpg",
-      "sha256": "d5f29e2479e835fdb9694b17f608d256ee8a29ecace4e1e2af774406402f1000"
+      "sha256": "549be824eb627cb7b0473b50bb37983b9c3e5f030f5015a2d1a59d5076bf5ef9"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/step-1.jpg",
-      "sha256": "fa7da533e1ae07c3bc1936f17ee83ae485d069502b1dc7f9fa0845a7bb087441"
+      "sha256": "39025aa0af39246f1d0a2f22bdcd5aaf4eb500206a16f0e9f08f5de32563ca98"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/step-2.jpg",
-      "sha256": "aacf0c419431036f02b48d644c899b48bd21210cb4c397d108b7af0f1507da9b"
+      "sha256": "e9d5cf4f24503ba8a8f5b67f859f5f7cc5c940752da6cfa07e9e330747e3482d"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/step-3.jpg",
-      "sha256": "da243d8390fd0c4c9c7a80f8e5ba7d28cc9c970f07a541c7b2cfa42ceb7eee98"
+      "sha256": "2852feb8c4d54a135a2a62559d24d6e67df57c6da52c94fb32d7b48665047a10"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/step-4.jpg",
-      "sha256": "d9e1775c69d6ecf0f8d825981d20b2b8da705500f16052709d47c40443e969d1"
+      "sha256": "4be2936f288b912cff7e0b6f6e1c1cf349f5d8f8ae6f3182fef380ae0d0cf655"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/step-5.jpg",
-      "sha256": "b46295a6d25e85fe819dfbb4700688f7f0c4aa32a4309b041748b3192e7c8e63"
+      "sha256": "dc6986792743a35bc6f873a7fd86deff97db48dfc9f07f55c2eef946ee3ec14e"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/step-6.jpg",
-      "sha256": "d5f29e2479e835fdb9694b17f608d256ee8a29ecace4e1e2af774406402f1000"
+      "sha256": "549be824eb627cb7b0473b50bb37983b9c3e5f030f5015a2d1a59d5076bf5ef9"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/step-7.jpg",
-      "sha256": "5243cc05c05b379a1a35a5d86c9e27855f6047707d01d44e258b84a58f5269d0"
+      "sha256": "3b06bd6934b18c2125fedabbee22b1eb32ddcce2a89a974a0eabb0d4f019c6b9"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/step-8.jpg",
-      "sha256": "c753fba6fc09bcb57050d77680b5dc41aba5442ffe8e969cda04da7a64ac409f"
+      "sha256": "6eece406ba9db4cc9c487152b32f48e7c5794e9ad01f6575592337a40fe53b97"
     },
     {
       "path": "docs/assets/drone-aviation/gimbal/story.mp4",
@@ -2159,11 +2163,11 @@
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/exploded.jpg",
-      "sha256": "ca98518d2409044bbf68951a15afbe4c7ee0081d324deace7759e11a67889cee"
+      "sha256": "9d547d422782071df31f0e4c8b4af838237f6bbd6647e887bf87681de2c9bdd5"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/hero.jpg",
-      "sha256": "44157518ae2639f1c9d6a5996c5443dd896ec649fa94fae40e33b4b1b7840dbd"
+      "sha256": "9a285bf663c26960b6ba410d0871da8bb9645ae0f36ed45d5badd3a368958b34"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/landing-gear.json",
@@ -2171,51 +2175,51 @@
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/poster.jpg",
-      "sha256": "0a60e9474615322a5c887dec4b8cb400a8ea374265b00dcc584aa4311a6ae980"
+      "sha256": "45b466cc29df9b5c3acafc4814e73a02d6ee7378076d558f5aa0faf5131b09d1"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-1.jpg",
-      "sha256": "351366e2ad0a31580e57def51d4998b162606c12ec47120a7f4e0d53e1558135"
+      "sha256": "fb9057fbe9087adbe2ad00da94291e83df71a4619dcc45a77aeeeb6dbe12c05b"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-10.jpg",
-      "sha256": "bfd3869f608481a96660e43082d9213ba4bab16933b5888702342cd1dc449dc9"
+      "sha256": "cac439fcd2f2f4ecb971629530c9944f5f9847ae04a2773541f89b988261a16e"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-11.jpg",
-      "sha256": "9c1fb489cda0f17c15811fb87ce9ec579ae9b3ace83ccc1a78f063560eb62ba1"
+      "sha256": "5290db6564bd0b3a28ba6322234e68773c960e88fa0d699d88c021449ffbf1c5"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-2.jpg",
-      "sha256": "e0d2248745ebc9e11c084613a9e8c8cc426ad483e7d55b4e2b6dafa3aecb74bb"
+      "sha256": "07938af3ac5edfae55f622df4a15504e9ea28f3ad1e5d16f378e9e30d8f2119d"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-3.jpg",
-      "sha256": "0a60e9474615322a5c887dec4b8cb400a8ea374265b00dcc584aa4311a6ae980"
+      "sha256": "45b466cc29df9b5c3acafc4814e73a02d6ee7378076d558f5aa0faf5131b09d1"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-4.jpg",
-      "sha256": "2174a9e16aceef64540af2dd4989e0fd1969e3e5e76f624f323ebc5af6a0218d"
+      "sha256": "cea89ce1e1d0dd26819f531c90c646d1e9a4aa775ce37f107e833f5d5ec38533"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-5.jpg",
-      "sha256": "d0ad4003baf54803fe53afaf14daa72dfa993e31151fb6c8e50baaa0b5941bcc"
+      "sha256": "425c9fd7e0d896b0781d712416adaa028cc083758047f0814d4cc4eaaeaab467"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-6.jpg",
-      "sha256": "1839292336dccd733bc3fbb2b8f3d70b40205b303cf2c0d96ef6c933c526abeb"
+      "sha256": "83b0a8f5b7d8a2732f8f6bc650f174309c0cec1eef5e8ca95ffd7e105619fd37"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-7.jpg",
-      "sha256": "8cab57d431280271582f9a47816fcf6d7039569230481bbaba150f266b2cfc4e"
+      "sha256": "09b7921637afadf353d8aebb3eeae2f16e7f58c27226e0566fa6cbd8ef01fef7"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-8.jpg",
-      "sha256": "655f6cf75ce5f0317a4779753b5efdc5a0062c4749eeba10cc038621d5490e0f"
+      "sha256": "6041360c9696604e1b0510793cf9d6ae1692c890a762a5030ba5162e15bf4f5c"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/step-9.jpg",
-      "sha256": "5f51dd7086eeb6a7f8d8129cf14476fb07dc8773b84b77792b45278ea7626faa"
+      "sha256": "c0c9a246e57a8cd83dcaade500f9f7caf626d1a38e36176d457b2d3c4b19c1ab"
     },
     {
       "path": "docs/assets/drone-aviation/landing-gear/story.mp4",
@@ -2235,11 +2239,11 @@
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/exploded.jpg",
-      "sha256": "a3c42c3a01914e2f223411a142b963727a58faaf791aff207271dd20d1a76dd3"
+      "sha256": "54af7cb08654036bf52c757040c6e0712a1daa2a6a97415f2c4cd577616f715a"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/hero.jpg",
-      "sha256": "c6b4016f719cedba1a9a58b0ae6b2359028052a3efc9ed743c82b885bc2be3b7"
+      "sha256": "3ede961196bbef7863407ffc0e640086cfd041e5347948dbf7384f1e61df3f5e"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/payload-cg.json",
@@ -2247,43 +2251,43 @@
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/poster.jpg",
-      "sha256": "818a7f492b0d94ce624286b1838d2b3ff363f4d6f00c4be2e02c942663496132"
+      "sha256": "9932097996efd6b94233832378c8664226430364cb0a7409a7a2984c5f6884b1"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/step-1.jpg",
-      "sha256": "ff3a5753ce319b02148e319bc1b8bc1f6721d5a510c138700b8d3fb05265b1c9"
+      "sha256": "fe7256e34b479f83d330c602601424c41db0d31d857e3cb0c54cfbf630e932b0"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/step-2.jpg",
-      "sha256": "73dcfd7d04b3f939feb15a8b8cce6c6aaca485df0adf663f8798849b1bf4e79e"
+      "sha256": "9b366bbb7777a5477e4e82e68437da70a69fc311f019d1da94242adc1d2e9e0c"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/step-3.jpg",
-      "sha256": "03416a33e1e3b25807f0311339dc0fde83f0b26523addbe476011ab3e1f5a576"
+      "sha256": "031280d0d0bfa00285af4ef96ccf4f92bcf8bd4f79700ad68dcec6dc651ac7f3"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/step-4.jpg",
-      "sha256": "e9e47492150fc608970d07e39733e67add4d7ac04aa9eac623b6f06d21e69340"
+      "sha256": "db60507c925c6aa383bd9a41637dd7cd25ad32962a304d8a3fa6660bbc6adf23"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/step-5.jpg",
-      "sha256": "818a7f492b0d94ce624286b1838d2b3ff363f4d6f00c4be2e02c942663496132"
+      "sha256": "9932097996efd6b94233832378c8664226430364cb0a7409a7a2984c5f6884b1"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/step-6.jpg",
-      "sha256": "5fa0d89c53c2f06e45378e6969cafc38a888cc41abfc4c2c7ba9635b4ac2742a"
+      "sha256": "62dee78003d3d117ff3b33bfa8403cf31348074ccb82eace7b600b02c6acb40e"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/step-7.jpg",
-      "sha256": "67ff813184685b7afea7e05063d68f81c82ec71ba9e993a62a3da5bb5b2bab92"
+      "sha256": "e1729817c99d22822dbd86fb75db9e39079c37304937203d28478484ece1514e"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/step-8.jpg",
-      "sha256": "72c745c70982f9603ad128074908b2ada872d46532d6ae9a354712b00ca60e90"
+      "sha256": "78e25fd9736d79551c89139140f86ae75301106a3c79fae3bedbd2aa1bbc616c"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/step-9.jpg",
-      "sha256": "ee6ffb186083895ec2ef2ca0a8786504d5b4a1eab7a456505a64d5c0df81b26f"
+      "sha256": "25775cb21045a8e470b59d35e9b4cbeca539eb9ce699f981b91364708e2212f1"
     },
     {
       "path": "docs/assets/drone-aviation/payload-cg/story.mp4",
@@ -2291,7 +2295,7 @@
     },
     {
       "path": "docs/assets/drone-aviation/provenance.json",
-      "sha256": "6dae686c096ec7645dcfe86719b88c882eb4fe6ecb50e45bec5a59b35d9b3dc4"
+      "sha256": "ceffa9ee7c59fcd550e2e2d9141c75f26bfcfa22e081fc79b0ade4f750ec60a0"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/PROMPT.md",
@@ -2307,11 +2311,11 @@
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/exploded.jpg",
-      "sha256": "9a5e156c17b5926ef91c0acbb9d9d887fb79ce63465347a218332c264a8dcb94"
+      "sha256": "626c482f1b1d2bd4ec3ed4d2824f6842d102ca76af46b3b46f5af5179a637c6d"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/hero.jpg",
-      "sha256": "c1a431584482ee6f05a6911c21c3e6d89c5366ebff12e1d48ff07644cb65895a"
+      "sha256": "eb238decf161440ab3d7cb67d04ed2027425382cdd81fd3a93c26ecb818883ce"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/loop.mp4",
@@ -2319,7 +2323,7 @@
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/poster.jpg",
-      "sha256": "92bc99163997a84abd4f66b07567a480df0b6c94b9058ae11db81c1c985a5662"
+      "sha256": "2ad9a627c19d52dd0555ca08e470f7d513c16c196e76ec79eb897769af1b30fd"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/quadcopter.json",
@@ -2327,43 +2331,43 @@
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-1.jpg",
-      "sha256": "92bc99163997a84abd4f66b07567a480df0b6c94b9058ae11db81c1c985a5662"
+      "sha256": "2ad9a627c19d52dd0555ca08e470f7d513c16c196e76ec79eb897769af1b30fd"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-10.jpg",
-      "sha256": "88d35eecf140b125f4ddf22db4816235bc22eb14a122f65894539223325e8d99"
+      "sha256": "a1758f608b1314ffb78482d5df6f520bf133655797b0f1ded54f79e24236b5e5"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-2.jpg",
-      "sha256": "2047ae56d1d21c625973228faff67b4ae930e2959c9667bbc6230ef02bdf98db"
+      "sha256": "8b870c81efa6b76080f24d55398962a2e76df7d266f51aec83d60dc673d06062"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-3.jpg",
-      "sha256": "c22956f254873428f8fc9e444077653ad0d78c634ca3b46ef1fec64717d72253"
+      "sha256": "13c71746ffc4204bfbc2a11a250c82286819883f87558a87e6d4ea23b120e506"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-4.jpg",
-      "sha256": "29fa9e9b597310d72cc29266186a81b9889626a3c677cfbf2917ca3c023316e3"
+      "sha256": "c209eee84c1a84ffcc1a702938dd4e0a9e4a51208a256f0a9949e9d3ee6b39e7"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-5.jpg",
-      "sha256": "f34b02801e78591e9f1a8c81d4723d54f0e35b8bfbca8b0caf35b797fc1dd187"
+      "sha256": "e9a9dbc2f0d34ceb0902a162401ca0e3d18bc9a3f06aefd90eb58199c1f656d4"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-6.jpg",
-      "sha256": "aad87dcfdb194192f0033b8f307fb7ea9a498d50f68fedf0393c47acab1c0b89"
+      "sha256": "ae58b20d42f2b755f43b60b8c218272819c7ef6837e10656d557c447eecbe053"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-7.jpg",
-      "sha256": "2b39c3f54824aa06418a2518a81fa4ee3f7dadaeb2336a39a8b1a3575bb7a253"
+      "sha256": "a817589c59f4458b91d419f750d2f37efde507c9a0d10811b860eaeb90f0dd85"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-8.jpg",
-      "sha256": "cb09fb2ae4938cc18fa7ce0c86d234e3ebe45f5d4c0380b665f393256d8c7e54"
+      "sha256": "112085cf1dc2bf8da2c94b3b167350268d70d9e33daea7bcc5a5707752c8b206"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/step-9.jpg",
-      "sha256": "14d34da6df3c86d6099bde1796f991d34449b9098a739ed8c2c53929e60d62fb"
+      "sha256": "eb7bd1fd4ca978644fa82a2720abf622ce98d399442dde9675da0d0c90ecd63d"
     },
     {
       "path": "docs/assets/drone-aviation/quadcopter/story.mp4",
@@ -2371,11 +2375,11 @@
     },
     {
       "path": "docs/assets/explainer/gears-mixed-beat-1.png",
-      "sha256": "719994caa0d4ff42e938f76ea57e1626e0fc3dac62728340dddfeac40a1a2076"
+      "sha256": "24e965599ac234283221caeb241a9c09752d6ae53ae4503d48d4c3d6093959c6"
     },
     {
       "path": "docs/assets/explainer/provenance.json",
-      "sha256": "46c36a880f524d5a9eaadade38e0c97bae7e29c3a63884f7aa7a479fe705e8ff"
+      "sha256": "64e3afa891a851ffee06b9015f6f6fd6b3c1760778e527f13f8b9dd42952908d"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json",
@@ -2387,19 +2391,19 @@
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/exploded.png",
-      "sha256": "271415abcd5eeafecfd3db61ea2d1d7a28179aa69c27d51f0fb6d7c58a6c07c5"
+      "sha256": "fe4f44deab447e056c4f50550669de809eb0a52c1f4db32d2cb3be671df51e8e"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/hero.png",
-      "sha256": "adcdf503bfd406c85752d0fbaf9f2615a147d376a5cd41982c82e048ce269f6d"
+      "sha256": "1d43417d6b380f623bbbd1366c9e211fcc465fd666691989f249939b9cf8d9a2"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/loop.gif",
-      "sha256": "4ac7f1ebed15ea8bfa8dc8c32938c5af0ff850ea7988d2dad8a86a979bbed698"
+      "sha256": "0813d27895c8933fc5403fc43b270bbbce74e9e6b92647688bf8852fb837f968"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/provenance.json",
-      "sha256": "4424651ec530f1fe5bfaff2aa1b53713e0c51fc3f6432246de99b497457ddaae"
+      "sha256": "cdd55f738c9e1d3530700f26b39f3f5a9ea19154c7839a30f44431a06f4d42b3"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/robot-joint-gearbox.json",
@@ -2407,11 +2411,11 @@
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/step-3.png",
-      "sha256": "0c4feee9a48e6c72347e245d3432d7a752e460f883e51641ae4d5df11f94f542"
+      "sha256": "56ed1b3a7a3faa29453ce0cc3cff0c0475800c47a1dd4c606f4c659a2a5c4360"
     },
     {
       "path": "docs/assets/from-a-prompt/robot-joint/step-5.png",
-      "sha256": "a99f4f3c535b332670358f53846cc58e88e45174e390ac7770ccfbba8cdaf978"
+      "sha256": "d8e5cdbd19bbd04683382ab63351734837c4c1fc79eea41043e17d92e2f10898"
     },
     {
       "path": "docs/assets/jet-suit-ai/FACT-CHECK.md",
@@ -2419,43 +2423,43 @@
     },
     {
       "path": "docs/assets/jet-suit-ai/PROMPT.md",
-      "sha256": "b9dd9936f3bd17b1858fdb7af82ffd23213e8e0a3ac0fe0cc91fb0542e550e25"
+      "sha256": "57feeb1e64a515c68dffd29f02e142c4c30b911c903f2f8cf5804d23d428afae"
     },
     {
       "path": "docs/assets/jet-suit-ai/beat-1.png",
-      "sha256": "44cdca04833a119dd76b54558418f52bb62e50f0699d3e47300063388df17e69"
+      "sha256": "52e888160fbdf0ba9961868e58b29cd5cb3f06b5d890387062033e0daecb4ff8"
     },
     {
       "path": "docs/assets/jet-suit-ai/beat-2.png",
-      "sha256": "c9c1e671f6510966c234e708a4e4ffcfe7c280572d51e67890c6dd530fa26272"
+      "sha256": "fd9b239d5f65a6a6da430aa78783209409a5ec423c9f6f53b39661a2477b8967"
     },
     {
       "path": "docs/assets/jet-suit-ai/beat-3.png",
-      "sha256": "d00a72a1e14a4ed72d05e6245b2992f2c44641e7a6e6c6d5aa1caec695889eeb"
+      "sha256": "63d02e0d7ffc553cf978c650ef39898aab4f401bfcebfa9ac595eeedf9e8143d"
     },
     {
       "path": "docs/assets/jet-suit-ai/beat-4.png",
-      "sha256": "e255ab9d0e1ffa50a9aecb83995d85225ab99ade93820606d47e01711e522911"
+      "sha256": "1d36ec82a64e00fc9c51e7e2700cb8d0fc49cdaf5d17c25b1bfb12c9540de4e5"
     },
     {
       "path": "docs/assets/jet-suit-ai/beat-5.png",
-      "sha256": "e898400b95d357b299272ae72433e438b4d4010b5d8692a8fd506bbf46d3e8cf"
+      "sha256": "600d9d1be19a8b123753049c59b1dc5736e06b493989a668fb8822451ad2a5b6"
     },
     {
       "path": "docs/assets/jet-suit-ai/beat-6.png",
-      "sha256": "4c85c841ef39eb40084a6fbf0f7f7f2b1f75bd09caad0c0946e58bdaa5ec468e"
+      "sha256": "307375f6ece2ecc3a0a136ff5ab8c4107b0ae46396d14dee7a7616afea720a64"
     },
     {
       "path": "docs/assets/jet-suit-ai/beat-7.png",
-      "sha256": "5f3cdde1b93e0c34bd210b420505e2ef7a7b93a9f1d7df0c4014daf3f82f5d54"
+      "sha256": "bf3c496bbd84440385c784876eac5d530fbc123b01dc5fa35c20bde78871aefd"
     },
     {
       "path": "docs/assets/jet-suit-ai/beat-8.png",
-      "sha256": "2f041c0fd695db738efbd28638eab0ca740a1f5f1bf96158a3e4de955dc3115a"
+      "sha256": "22608f684840722eb954cd847c7b54d4091800a52d57108de7556f3b93d24113"
     },
     {
       "path": "docs/assets/jet-suit-ai/beat-9.png",
-      "sha256": "aade8c7972c6c82eeb60ac9d51ffb487346cca1585147bceec8519c7c7d197a1"
+      "sha256": "ab5ead49e9c01c53bbbf28bdcc25bd945de77e195182c8bf98def1c78bbc82d9"
     },
     {
       "path": "docs/assets/jet-suit-ai/check-strict.json",
@@ -2471,11 +2475,11 @@
     },
     {
       "path": "docs/assets/jet-suit-ai/poster.png",
-      "sha256": "c9c1e671f6510966c234e708a4e4ffcfe7c280572d51e67890c6dd530fa26272"
+      "sha256": "fd9b239d5f65a6a6da430aa78783209409a5ec423c9f6f53b39661a2477b8967"
     },
     {
       "path": "docs/assets/jet-suit-ai/provenance.json",
-      "sha256": "88b0ddaed74caa511b3c7a2d0d5637ea74da1cf8fec2834534adb0e82d03bd38"
+      "sha256": "464ccfc7de141fc87053b85bc46e2c07b3cfab6eb87074e83353b4addbb5e45b"
     },
     {
       "path": "docs/assets/jet-suit-ai/story.mp4",
@@ -2491,7 +2495,7 @@
     },
     {
       "path": "docs/assets/jet-suit/hero.png",
-      "sha256": "526756cbe98d7f33c5b2abf6e0e3bf2f4388c889aa810a2478756d13db4f53f7"
+      "sha256": "59c60a8c792a3aec7678918b934327e9284b4bbb9b3e38e514553ef3c2d6c20e"
     },
     {
       "path": "docs/assets/jet-suit/jet-suit.json",
@@ -2499,39 +2503,39 @@
     },
     {
       "path": "docs/assets/jet-suit/poster.jpg",
-      "sha256": "206800feb81e1e623ae40381cab55f632a7ed5dfa4d47866d13c9d057d8f4f8e"
+      "sha256": "dcdc72d7c9361027d1b69ab1e6a105c78d3192b4b2d995e32f5f136ce1e76618"
     },
     {
       "path": "docs/assets/jet-suit/provenance.json",
-      "sha256": "ce9aa2e2172ea6bffad110efa36cec0808030b5cba65788f90e894b976e85238"
+      "sha256": "4c97efbd4f9d05f24474c8e2a9d9ff3c990cbcafe46616fd9104f5a58076d388"
     },
     {
       "path": "docs/assets/jet-suit/step-1.png",
-      "sha256": "ce203eb673be94e8688f8ffba048dd892deb07485970b72364db6f7dfa882049"
+      "sha256": "28d6421123ba67531f312f3d07e54256cbe4aae3862f537c415bedfb47883c92"
     },
     {
       "path": "docs/assets/jet-suit/step-2.png",
-      "sha256": "a827b6f6c46469ce18b3edb2cb7784e58f6167a781890c0c7afb57aa1fc3e76c"
+      "sha256": "44c361228671c146dbe44e8d46ee78eff985f92f432664c7f7f9d3b7cb8a2d8f"
     },
     {
       "path": "docs/assets/jet-suit/step-3.png",
-      "sha256": "3acc2dde40c5499e6fcce23b3dd6f1b399d78c7a7080dc6400363466cd29896b"
+      "sha256": "91ddfaa767dff4d1b360bf89d9ec5238934ad5795a56b97bc6fc7be064392578"
     },
     {
       "path": "docs/assets/jet-suit/step-4.png",
-      "sha256": "9e952baf5335d903596ed409fce5917685edb5f9308e6926520fbdd9e27a1f31"
+      "sha256": "9f46f62fbc144e9299e0dbd0a1e011b927122d024938a38cf47a10052f994fa6"
     },
     {
       "path": "docs/assets/jet-suit/step-5.png",
-      "sha256": "73a8a6e01b0f6dda0958b83ddc22661ffd9b7e2ede0b74dab291710e71fd6d97"
+      "sha256": "941686ba282b1eaab43ff994956a85103188289dc177cc50323b58bebb333590"
     },
     {
       "path": "docs/assets/jet-suit/step-6.png",
-      "sha256": "e8222f33787ad5888420d058a75dc8e89b2012dd7b3f68fdcd6c769218aaf767"
+      "sha256": "3f68b279e58a96a64b4bbb8b0a419f89bdf1f5d9c8f26cfab2b4f1fff54db01a"
     },
     {
       "path": "docs/assets/jet-suit/step-7.png",
-      "sha256": "29b44f44f2ba08052cc09befeea88c74cb13d22fcf8f99b0a32be9f39b5d58d0"
+      "sha256": "9618176479e08f959efae896484253c00be25def443f443427b056e401db8684"
     },
     {
       "path": "docs/assets/jet-suit/story.mp4",
@@ -2647,31 +2651,31 @@
     },
     {
       "path": "docs/assets/solid/exploded-labelled.png",
-      "sha256": "a3f02275fa20512ccc3f592666670287fda8dddf52c9c4d1627010bfced44109"
+      "sha256": "eef1803d4721c589976afc93cc3994aacfabefd073ef20472bbcf9fa8435900e"
     },
     {
       "path": "docs/assets/solid/hero.png",
-      "sha256": "fd521558fd1825038249a76ebfed7044e5d752e2f9c3d873557bc69f1eb64467"
+      "sha256": "17543f41bbb486bf4339a91a2d5ceebfc63118def73c603510221756ccdd5913"
     },
     {
       "path": "docs/assets/solid/planetary-loop.gif",
-      "sha256": "89eeab02e5cb0cdaa4ded8cafcd7010ae3d780b0fd497d3e67d78b8b6a0a6a96"
+      "sha256": "5a2c09d6592899530dafe03d09a6e138ed72c71609a2c219c50d2dc4f5e47939"
     },
     {
       "path": "docs/assets/solid/provenance.json",
-      "sha256": "0ce8a55d8c6768c06aa76a385727a6c5333cd7ec43b6b1cd5cbc2f9ef5b02584"
+      "sha256": "e918d44df72190419547eb8cbd05bb1935fa14a03cd21e4cda7233fb42e28eef"
     },
     {
       "path": "docs/assets/solid/slider-crank-section.png",
-      "sha256": "87926b2fa7bbcea44343a72143c1ac061ff623ef870204dd7f2d8913d079f7d8"
+      "sha256": "9c13720bb13f7905497b1f7ffce38bb50b8739fc4ebb9e19623a731c895d59ee"
     },
     {
       "path": "docs/assets/turbofan/exploded.png",
-      "sha256": "8d4d8fbb78198e2d69696390ae0c7e5a3ba41eb09f9cc2cb19a8af65c9be4506"
+      "sha256": "7fa610b379d5c2c7b47cc71cc38d57d9acc2b22b2217cd7430db293c355e7421"
     },
     {
       "path": "docs/assets/turbofan/labelled.png",
-      "sha256": "c12d119f2ed6165eee636ceaf642143bd01ed6c390a38c0c6b911e40fbd13b9e"
+      "sha256": "c3a0bbcdd027808fc17f41b38496a199da258378365144e47e2d3a10df2b5573"
     },
     {
       "path": "docs/assets/turbofan/pathtraced-hero.png",
@@ -2679,11 +2683,11 @@
     },
     {
       "path": "docs/assets/turbofan/provenance.json",
-      "sha256": "96092bcb96fc9b0f1f8ed37431f53a93c4c907759c07883f6c51703727fb3868"
+      "sha256": "6edcd49a098aef34acff61fafee4b4794c02a336e8b4c3644103cb73719aee68"
     },
     {
       "path": "docs/assets/turbofan/turbofan-loop.gif",
-      "sha256": "12d9f93fec8cd20a950ff3a5e4b91b9a81a82ca60fe7de45914d28674aa7c994"
+      "sha256": "e68bee482a1d07b3a23022a0e86b1bb366ad2beead0062c373c7f2d2bd2c7d92"
     },
     {
       "path": "docs/assets/visual-quality/looks-contact-sheet.jpg",

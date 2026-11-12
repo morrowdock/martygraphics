@@ -6,6 +6,11 @@ attempt and rendered the accepted file. **Two independent fact checks (Sol and G
 claim; Claude Opus 5.5 applied all 16 fixes (one more counted attempt for each document, then a new render of the
 story videos and of the stills whose words changed): see [FACTS.md](FACTS.md).**
 
+**Image refresh (2026-11-12).** All 64 JPEG stills now use the `studio` look at engine `fb604556`.
+The documents, attempts, fact checks, check reports and MP4 videos are unchanged. These are MartyGraphics renders,
+converted to JPEG at quality 85 with no other pixel edits. Posters match their refreshed step stills, not the old
+video frames. [Commands, hashes and exceptions](../STUDIO-RERENDER.md).
+
 | Explainer | Document | Attempts | Engine result | Story video | Engine checked |
 | --- | --- | --- | --- | --- | --- |
 | [Quadcopter steering](quadcopter/PROMPT.md) | [quadcopter.json](quadcopter/quadcopter.json) (152 lines, 21 parts, 10 steps) | 11: 5 refused, 6 accepted | Refusal, then repair: `annotation.unused.s2`, then four hidden label anchors (`annotation.anchor.hidden.<id>`); three were repaired with the engine's own suggested anchors | [story.mp4](quadcopter/story.mp4), 87 s, 10 beats · [loop.mp4](quadcopter/loop.mp4) | The turn direction of each propeller (4 turn arrows, 8 checks) and the weight direction |

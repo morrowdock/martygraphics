@@ -12,6 +12,12 @@ two independent fact checks found no wrong claim and asked for 16 fixes, which a
 Other parts of the repository are at the end, under [Also in this repo](#also-in-this-repo). None of the examples
 implies a curriculum or a running service.
 
+**Image refresh (2026-11-12).** The built-in 3D stills and GIF previews were re-rendered with `studio` at engine
+`fb604556`. They are MartyGraphics renders, not Blender output or hand-made images. The source documents and their
+words are unchanged. The older MP4 videos and check reports keep their original capture commits; a refreshed poster
+or GIF is not from the same run as its linked video. Path-traced images, 2D captures and historical look comparisons
+are unchanged. [Every command, old and new hash, and exception](assets/STUDIO-RERENDER.md).
+
 > **About the 3D loops on this page.** GitHub shows them as GIF images, not video. A GIF
 > has at most 256 colours, and these previews are 480 to 640 pixels wide at 10 to 12 frames per
 > second, so they look rougher and less smooth than the real output. The turbofan source video is
@@ -123,14 +129,14 @@ by hand for these docs. It is not the output of an AI model from a prompt.** The
 
 [![Step 5: the big drum gear has a green turn arrow. A second green arrow on the drum is labelled "Rope side moves up". A short orange arrow under the blue weight is labelled "Weight". The corner note reads "Arrow lengths are not to scale".](assets/annotations/winch-lift.png)](assets/annotations/winch-lift.png)
 
-[![Step 3: the front view with the labels "Pinion: 14 teeth" and "Drum gear: 42 teeth" and a measured line labelled "Centres 56 mm" between the two gear centres. The labels overlap a little.](assets/annotations/winch-dimension.png)](assets/annotations/winch-dimension.png)
+[![Step 3: the front view with the labels "Pinion: 14 teeth" and "Drum gear: 42 teeth" and a measured line labelled "Centres 56 mm" between the two gear centres.](assets/annotations/winch-dimension.png)](assets/annotations/winch-dimension.png)
 
 Step 5 is the first still. Step 3 is the second still. The pinion's turn arrow shows in step 1 (not kept here).
 [Check output](assets/annotations/check-strict.json) · [Capture receipt](assets/annotations/provenance.json)
 
-Archival note: these stills and the check output were rendered at commit `35b9e0a` (after PR #31). The current engine
-sizes motion arrows to the step's focus, so it draws a shorter "Rope side moves up" arrow in step 5 (about 22 mm instead
-of 40 mm), and its check output places that arrow's text a little differently (`placements`, step 5).
+Capture note: the stills now use `studio` at `fb604556`. The check output remains the historical report at `35b9e0a`
+(after PR #31). The current engine sizes motion arrows to the step's focus, so the refreshed step 5 draws a shorter
+"Rope side moves up" arrow (about 22 mm instead of 40 mm) and places its text a little differently.
 
 **How a hand winch works.** You turn the crank, and the small pinion (14 teeth) turns with it. The pinion meshes with the
 larger drum gear (42 teeth), so the drum turns slower and the other way: `pinion.speed` is 1 (source `input`) and
@@ -185,8 +191,9 @@ The labelled exploded view shows each part, in the order they stack on the shaft
 **Asked: "How does the Gravity jet suit work?" — an AI wrote this lesson; the engine rendered it.** Claude Opus 5.5,
 through the [Marty](https://github.com/morrowdock/marty) app with web research on, wrote the lesson JSON. MartyGraphics
 refused its first two tries, each with one reason, and accepted the third. Then the engine rendered 9 beats and a
-78-second story video. **The lesson is shown unedited, with its errors listed.** Nobody changed the JSON, the stills
-or the video. An independent fact check found 1 wrong sentence and 12 other corrections; they are in the
+78-second story video. **The lesson JSON is shown unedited, with its errors listed.** The stills were re-rendered
+with `studio` at `fb604556`, without pixel edits; the video is the original capture. An independent fact check of the
+original capture found 1 wrong sentence and 12 other corrections; they are in the
 [panel below](#independent-fact-check), not fixed in the lesson. We asked the same question in 4 runs: 3 lessons were
 accepted, and **1 of the 4 runs met our showcase bar** (this one).
 
@@ -199,7 +206,7 @@ accepted, and **1 of the 4 runs met our showcase bar** (this one).
 | Engine | MartyGraphics `dfc521a` (PR #46), strict check, at most 3 repairs |
 | Research | On: web search and web fetch, 12 turns, quote check on |
 | Tries | 3: refused `text.number.beat.1`; refused `annotation.anchor.hidden.lShaft` (after 4 engine suggestions were applied); accepted |
-| Check | `marty-solid check --strict` passes at `dfc521a` ([check output](assets/jet-suit-ai/check-strict.json)) and again at main `5bae049`, with no warnings. The published render and check are at engine `dfc521a`; newer engines drop two beat-4 arrows whose engines are hidden. |
+| Check | `marty-solid check --strict` passes at `dfc521a` ([historical check output](assets/jet-suit-ai/check-strict.json)) and again at main `5bae049`, with no warnings. The video and published check remain at `dfc521a`; the refreshed stills at `fb604556` drop two hidden beat-4 thrust arrows. |
 
 [Story video (MP4)](assets/jet-suit-ai/story.mp4): 78 seconds, 9 beats, 1280×800 at 30 frames per second, H.264,
 17.4 MB, the engine's file byte for byte (not re-encoded). GitHub does not play it inside this page; click to open it.
@@ -233,7 +240,7 @@ Fact check: the checkers found the hover balance correct. Total thrust is public
 Fact check: the sources do not name a suit version, so these are not "current suit" figures. Readable source cells:
 "About 27 kg before fuel — Interesting Engineering, 28 Oct 2026" and "About 3 min — Gravity, Defence page" (C5).
 
-[![Beat 4, front view: the pilot's left arm is raised and highlighted; its engine and its thrust arrow tilt. A pointer "Arm moved to aim thrust, claimed (schematic)" ends at the hand. One thrust arrow sits at the hip.](assets/jet-suit-ai/beat-4.png)](assets/jet-suit-ai/beat-4.png)
+[![Beat 4, front view: the pilot's left arm is raised and highlighted. A pointer "Arm moved to aim thrust, claimed (schematic)" ends at the hand. The current engine omits two hidden thrust arrows.](assets/jet-suit-ai/beat-4.png)](assets/jet-suit-ai/beat-4.png)
 
 **Beat 4.** "To steer, the pilot moves one arm, and the forearm engines fixed to it tilt their thrust. The forces no
 longer balance, so the body moves that way."
@@ -491,16 +498,17 @@ links, springs and actuators; use the aircraft maintenance manual for its geomet
 engine's AI loop).** The lesson explains the classic five-engine Gravity jet suit, as described 2020–2022, in 7
 steps. The current Mk4 has three back turbines and is not shown. The model is
 [`jet-suit.json`](assets/jet-suit/jet-suit.json), 59 lines, 76 parts. The stills and the story video are unedited
-output of `marty-solid render` at 1280×800; `marty-solid check --strict` passes with no warnings
-([check output](assets/jet-suit/check-strict.json)).
+output of `marty-solid render` at 1280×800. The original `marty-solid check --strict` passed with no warnings
+([historical check output](assets/jet-suit/check-strict.json)); the current check passes with six small-subject
+framing warnings, listed in the [image refresh record](assets/STUDIO-RERENDER.md).
 
 This is the sixth version of the lesson. Step 5 now poses the pilot: both arms swing back, and the engines move with
 them. Exhaust plumes (an illustration, not measured) show only in steps 2 and 5. Highlights take whole engines, the
 exploded view moves whole engines, the helmet and the packs, long labels take two lines, and step 7 has a turn arrow
 on the shaft. It keeps the two label anchors that the strict anchor check (every label dot must land on its part and show in its
 still) moved on 2026-11-08: step 6's "Combustion chamber" dot is inside the chamber, and step 1's "Schematic pilot"
-dot is on the back of the helmet. The 7 stills, the hero still, the poster, the story video and the check output come
-from one build (see the [render receipt](assets/jet-suit/provenance.json)).
+dot is on the back of the helmet. The 7 stills, the hero still and the poster now use `studio` at `fb604556`.
+The story video and check output retain the original build (see the [render receipt](assets/jet-suit/provenance.json)).
 
 [![Hero still: the schematic pilot from the front, with the helmet, a blue chest pack, the back engine and two engines on each forearm. Title: How the classic five-engine Gravity jet suit flies (schematic).](assets/jet-suit/hero.png)](assets/jet-suit/hero.png)
 
@@ -555,7 +563,8 @@ kgf stay separate reports, a claimed thrust loss at altitude was removed, the cu
 still. It checked the story video at its 7 hold frames and at one frame of the move into step 5; two frames of the
 move out of step 5 were checked after it. It did not check every transition frame. That review saw renders with the
 two earlier label anchors; the published files use the moved anchors (see the
-[render receipt](assets/jet-suit/provenance.json)). The exploded view is not published.
+[render receipt](assets/jet-suit/provenance.json)). That review predates the studio image refresh and does not review
+its new pixels. The exploded view is not published.
 
 ## Also in this repo
 
