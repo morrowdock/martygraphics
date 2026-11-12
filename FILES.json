@@ -1335,7 +1335,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SubjectFramingTests.swift",
-      "sha256": "fe6bc02a7ace1d46f77e9575c8f0886e420aa868259783974ce038568424f0f1"
+      "sha256": "8e233fa992e6d74f5fe528f83b93e222ab0cccf7caebda2c3dc031273a1f47ec"
     },
     {
       "path": "Tests/MartyGraphicsTests/TableRegionCodeTests.swift",

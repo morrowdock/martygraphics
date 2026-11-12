@@ -392,7 +392,8 @@ final class SubjectFramingTests: XCTestCase {
         XCTAssertNil(MGSolidRenderer.clipRect(MGSolidFraming.Window(titleBand: 0, captionBand: 0), width: 1280, height: 800))
         let doc = try compile(Self.assembly())
         let f = try XCTUnwrap(doc.framedStills().first)
-        let renderer = MGSolidRenderer(document: doc)
+        // The classic backdrop (the look this test's backdrop comparison was written for).
+        let renderer = MGSolidRenderer(document: doc, look: .classic)
         renderer.show(document: doc, view: f.still.view)
         renderer.apply(f.still.params)
         renderer.setCamera(f.still.camera)
@@ -401,6 +402,7 @@ final class SubjectFramingTests: XCTestCase {
         }
         guard let backdrop = MGSolidRenderer.composite(Self.clear(320, 200), width: 320, height: 200, background: renderer.lighting.background)
         else { return XCTFail("backdrop") }
+        try studioBandsHoldOnlyTheBackdrop(doc, f.still, w, bands)
         let c = Self.rgba(clipped), o = Self.rgba(open), bg = Self.rgba(backdrop)
         let bandRows = Array(0..<Int(200 * bands.title)) + Array(Int(200 * (1 - bands.caption)) + 1..<200)
         var differsOpen = 0
@@ -410,6 +412,32 @@ final class SubjectFramingTests: XCTestCase {
             if Array(o[i..<i + 3]) != Array(bg[i..<i + 3]) { differsOpen += 1 }
         } }
         XCTAssertGreaterThan(differsOpen, 100, "without the clip, the cut head is drawn in the title band")
+    }
+
+    /// The default look (`studio`): the bands of a clipped render hold exactly the look's backdrop (the cut's fade lies
+    /// inside the safe window), and without the clip the cut head is drawn there.
+    func studioBandsHoldOnlyTheBackdrop(_ doc: MGSolidDocument, _ still: MGAnnotationAnchorView, _ w: MGSolidFraming.Window,
+                                        _ bands: (title: Double, caption: Double)) throws {
+        let renderer = MGSolidRenderer(document: doc)
+        XCTAssertEqual(renderer.look, .studio)
+        renderer.show(document: doc, view: still.view)
+        renderer.apply(still.params)
+        renderer.setCamera(still.camera)
+        guard let clipped = renderer.render(width: 320, height: 200, clip: w), let open = renderer.render(width: 320, height: 200) else {
+            throw XCTSkip("no Metal device")
+        }
+        let p = renderer.backdropPool(width: 320, height: 200)
+        let bg = renderer.look.backdrop(width: 320, height: 200, pool: MGSolidLook.Pool(x: p.x.rounded(), y: p.y.rounded(), rx: p.rx.rounded(), ry: p.ry.rounded()))
+        let c = Self.rgba(clipped), o = Self.rgba(open)
+        let bandRows = Array(0..<Int(200 * bands.title)) + Array(Int(200 * (1 - bands.caption)) + 1..<200)
+        var differsOpen = 0, differsClipped = 0
+        for y in bandRows { for x in 0..<320 {
+            let i = (y * 320 + x) * 4
+            if Array(c[i..<i + 3]) != Array(bg[i..<i + 3]) { differsClipped += 1 }
+            if Array(o[i..<i + 3]) != Array(bg[i..<i + 3]) { differsOpen += 1 }
+        } }
+        XCTAssertEqual(differsClipped, 0, "studio: the bands hold only the backdrop")
+        XCTAssertGreaterThan(differsOpen, 100, "studio: without the clip, the cut head is drawn in the title band")
     }
 
     static func clear(_ w: Int, _ h: Int) -> CGImage {
