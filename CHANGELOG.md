@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **The `studio` and `paper` looks finish surfaces (pixels only).** Parts reflect a procedural product studio with
+  soft-edged boxes, so metals show gradients; plastics get a glossy clear coat and a calibrated colour of the same
+  hue; machined metals get fine per-fragment turning marks; ambient occlusion no longer draws faint rings on curved
+  faces; the radial streaks on flat gear faces are gone in these looks. `classic` is unchanged, and so are the
+  exported material parameters, the rig in `snapshot.json` and every check report.
+  [docs/SOLID-3D.md](docs/SOLID-3D.md#looks-and-quality) has the before and after.
 - **Looks and quality levels for the built-in renderer (pixels only).** `marty-solid render --look
   classic|studio|paper` and `MGSolidRenderer(document:look:)` choose how a solid is presented: `studio` is a graphite
   studio sweep with a pool of light under the subject, `paper` a near-white one; both make shadows land on a floor,

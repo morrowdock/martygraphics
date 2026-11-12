@@ -2162,9 +2162,28 @@ shadows are.
   `MGExplainerController.solidLook` before a document loads. The live pane takes a look's light and tone now; the
   backdrop is drawn by the offscreen render (`render(width:height:)`) only, until the live backdrop lands.
 
-A look scales the light rig inside the renderer: the same lights, directions and soft boxes
-(`MGSolidLook.lighting(_:)`). `snapshot.json` records `MGStudioLighting.studio` for every look, so another renderer
-reads the same rig. The `studio` and `paper` backdrops are computed per pixel on the CPU
+A look scales the rig's lights inside the renderer and keeps their directions (`MGSolidLook.lighting(_:)`).
+`snapshot.json` records `MGStudioLighting.studio` and each part's `MGMaterialParameters` for every look, so another
+renderer reads the same rig and the same materials.
+
+`studio` and `paper` also finish what the parts look like, in the renderer only:
+
+![Before and after on the turbofan, the gearbox, the motor and the gimbal](assets/visual-quality/materials-contact-sheet.jpg)
+
+- **A room to reflect.** Parts reflect a procedural product studio (`MGSolidLook.productStudio`: a dim room with a
+  large overhead soft box, two tall strips, a rim band and a low front card; generated, no image file), with long
+  soft edges on the boxes (`boxFeather`). The soft boxes light the parts more than the key light does, so metals
+  show gradients and flat faces keep their form.
+- **Coated plastics.** A `plastic` part keeps its role's hue, a little deeper and less saturated, under a glossy
+  clear coat (`plasticCoat`).
+- **Machined metals.** Brushed steel, aluminium, titanium, brass, bronze, nickel alloy and dark steel get fine
+  concentric turning marks about the part's local Z axis (`machining`): a small roughness change per ring, computed
+  per fragment from the part-local position, about 110 rings across the part. They have no seam, need no texture
+  coordinates and fade out where a ring is finer than a pixel. `classic` keeps its roughness texture, whose
+  per-vertex coordinates smear into radial streaks on flat gear faces; the looks do not use it.
+- **Ambient occlusion without rings.** The occlusion bias and depth threshold follow the camera distance
+  (`occlusionBias`), so a curved face no longer occludes itself in faint concentric rings (`classic` keeps the fixed
+  bias). The `studio` and `paper` backdrops are computed per pixel on the CPU
 (`MGSolidLook.backdrop(width:height:pool:)`) with a fixed half-level dither: they do not band and are byte-identical
 in every run. The pool of light follows the ground point under the subject (`MGSolidRenderer.backdropPool`). These
 looks vignette the backdrop, not the subject, raise the white point so white parts keep their form, and use no

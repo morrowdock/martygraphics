@@ -111,6 +111,18 @@ Softer light, visible contact shadows and occlusion remove most of the harshness
 | A4 | The loop GIF's palette bands a smooth backdrop. | loop writer | Check after the backdrop lands; dither if needed. | e |
 | A5 | The live view does not refine a still frame. | `SceneView` options | Jittered anti-aliasing when the camera rests. | a, e |
 
+## Findings since round 0
+
+- **M1 and M2 are one defect.** A diagnostic render without texture coordinates removed the radial streaks on the
+  gear faces: they come from the brushed-steel roughness texture and its per-vertex angle coordinates, not from the
+  normals. The looks replace the texture with per-fragment turning marks; `renderMesh` is untouched.
+- **B5 is ambient occlusion, not the shadow map.** The rings on curved faces stayed with shadows off and went with
+  occlusion off. A bias that follows the camera distance removes them.
+- **A floor reflection** (a mirror floor added over the backdrop) did not composite with a transparent background
+  and is dropped for now.
+- **Environment levels alone barely change metals.** What works is a room with strong soft boxes that light the
+  parts more than the key light does.
+
 ## Open questions
 
 None of these is done until answered.

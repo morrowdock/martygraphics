@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "3c22ff6559c550ccbf816e267f5c868b6b92e7342116e73fa54325affbe1300a"
+      "sha256": "226647d6ef4181885d0355ed308c898c200459c2f7c3ab85d6c15488837bf8f1"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1855,7 +1855,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "7547cd16cb192dcd3f361b0930d5dc1eadb23df4fbb0344d2157ea152a67f884"
+      "sha256": "251661ddf00e2001db29d9c7290733c9eaaef9756b208d125b993a7084c7d9e4"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -1867,7 +1867,7 @@
     },
     {
       "path": "docs/VISUAL-AUDIT.md",
-      "sha256": "03d4c8a20992bd5c7fb16830e3e3d004f480ec5d927a726b66072f9b8167b3b5"
+      "sha256": "5b8910f050c387d7a9b69d93af81fb3953bf77b38e4ceec0796da8c91c604a5d"
     },
     {
       "path": "docs/VISUAL-STYLE.md",
@@ -2608,6 +2608,10 @@
     {
       "path": "docs/assets/visual-quality/looks-contact-sheet.jpg",
       "sha256": "308a5c50563f559b7ae863d329abe8b741fa7e0741696d7f96209106631777c4"
+    },
+    {
+      "path": "docs/assets/visual-quality/materials-contact-sheet.jpg",
+      "sha256": "7ccd645c44149e0acb7af6272101fac50f04c16c6608fe3f604ee0833222bd0f"
     },
     {
       "path": "docs/assets/visual-quality/round-0-contact-sheet.jpg",
