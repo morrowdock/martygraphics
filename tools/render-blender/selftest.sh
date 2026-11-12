@@ -17,8 +17,8 @@ die() { printf 'selftest: FAIL: %s\n' "$*" >&2; exit 1; }
 [ -x "$BLENDER" ] || die "Blender not found at $BLENDER (run setup.sh)"
 mkdir -p "$WORK"
 
-# Simulator priority: never start a heavy render while the landing-lab simulator runs.
-(cd "$HERE" && python3 -E -s -m mgrender.simguard) || die "landing-lab simulator is running; try again later"
+# Optional busy guard (off unless BUSY_LOCK_PATH, BUSY_PROCESS_PATTERN or BUSY_COMMAND is set; see README).
+(cd "$HERE" && python3 -E -s -m mgrender.busyguard) || die "host busy (busy guard) or bad busy-guard setting; try again later"
 
 say "1. build and export the test mechanism"
 nice -n 10 "$BLENDER" -b --factory-startup -P "$HERE/selftest_scene.py" -- "$EXPORT" >"$WORK/export.log" 2>&1 \
@@ -72,7 +72,7 @@ PY
 tamper sha sha; tamper fps fps; tamper frames frames
 
 say "4. full pipeline, preview preset"
-(cd "$HERE" && python3 -E -s -m mgrender.simguard) || die "landing-lab simulator started; stopping before the render"
+(cd "$HERE" && python3 -E -s -m mgrender.busyguard) || die "host became busy (busy guard); stopping before the render"
 nice -n 10 "$BLENDER" -b --factory-startup -P "$HERE/render.py" -- "$MANIFEST" "$OUT" --preset preview --camera auto \
   2>&1 | tee "$WORK/render.log" | grep -E '^render: (PASS|motion|look-dev|Cycles|DONE|poster|frames|time)|REFUSED|FAILED' || true
 grep -q '^MG_RENDER_REPORT ' "$WORK/render.log" || die "render did not finish (see $WORK/render.log)"

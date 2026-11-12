@@ -15,11 +15,16 @@ Options:
   --no-burn-in                no burned-in provenance caption on the MP4 and poster
   --poster-frame N            poster frame (default: manifest posterFrame, else the middle frame)
   --resume                    keep frames that already exist in <out-dir>/frames
-  --wait-for-simulator SEC    wait up to SEC seconds for the landing-lab simulator to stop (default 0: refuse)
+  --busy-lock PATH            optional busy guard: busy while a process holds a lock on PATH (repeatable; Linux)
+  --busy-process REGEX        optional busy guard: busy while a process command line matches REGEX (Linux)
+  --wait-for-command CMD      optional busy guard: busy while the shell command CMD exits 0 (any OS)
+  --busy-wait SEC             wait up to SEC seconds for a busy host to become clear (default 0: refuse)
+                              (the guard is off unless one of these or BUSY_LOCK_PATH, BUSY_PROCESS_PATTERN,
+                              BUSY_COMMAND is set; see README)
   --allow-cpu                 render on the CPU when no OptiX/CUDA device exists
 
 Exit codes: 0 done, 1 export refused (manifest/SHA-256/fps/frames), 2 usage,
-3 simulator running, 4 motion check failed, 5 render/encode failure.
+3 host busy (optional busy guard), 4 motion check failed, 5 render/encode failure.
 
 The render is cosmetic. The script never changes exported motion, timing or
 geometry, and proves that: it compares every imported object's world matrix at
@@ -37,7 +42,7 @@ sys.path.insert(0, HERE)
 import bpy  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
-from mgrender import device, faststart, lookdev, simguard  # noqa: E402
+from mgrender import busyguard, device, faststart, lookdev  # noqa: E402
 from mgrender import manifest as mf  # noqa: E402
 
 ASSET_DIR = os.environ.get("MG_RENDER_ASSETS") or os.path.join(
@@ -62,7 +67,8 @@ def parse_args(argv):
         raise Refused(2, "usage: blender -b -P render.py -- <manifest.json> <out-dir> [--preset hero|preview] ...")
     a = {"manifest": argv[0], "out": argv[1], "preset": "preview", "resolution": None, "samples": None,
          "camera": None, "backdrop": "studio", "frames": None, "motion_blur": True, "burn_in": True,
-         "resume": False, "wait": 0, "allow_cpu": False, "poster_frame": None}
+         "resume": False, "wait": 0, "allow_cpu": False, "poster_frame": None,
+         "busy_locks": [], "busy_process": None, "busy_command": None}
     it = iter(argv[2:])
     for opt in it:
         def val():
@@ -101,8 +107,14 @@ def parse_args(argv):
             a["burn_in"] = False
         elif opt == "--resume":
             a["resume"] = True
-        elif opt == "--wait-for-simulator":
+        elif opt == "--busy-wait":
             a["wait"] = int(val())
+        elif opt == "--busy-lock":
+            a["busy_locks"].append(val())
+        elif opt == "--busy-process":
+            a["busy_process"] = val()
+        elif opt == "--wait-for-command":
+            a["busy_command"] = val()
         elif opt == "--poster-frame":
             a["poster_frame"] = int(val())
         elif opt == "--allow-cpu":
@@ -119,17 +131,26 @@ def parse_args(argv):
     return a
 
 
-# ----------------------------------------------------------------- simulator priority
-def wait_for_simulator(max_wait, phase):
+# ----------------------------------------------------------------- optional busy guard
+def busy_config(args):
+    cfg = busyguard.Config.from_env(args["busy_locks"], args["busy_process"], args["busy_command"])
+    bad = cfg.problems()
+    if bad:
+        raise Refused(2, "busy guard: " + "; ".join(bad))
+    return cfg
+
+
+def wait_until_clear(cfg, max_wait, phase):
+    if not cfg.enabled:
+        return
     deadline = time.time() + max_wait
     while True:
-        clear, reasons = simguard.status()
+        clear, reasons = busyguard.status(cfg)
         if clear:
             return
         if time.time() >= deadline:
-            raise Refused(3, f"landing-lab simulator is running ({phase}); render not started/continued: "
-                          + "; ".join(reasons[:3]))
-        log(f"simulator running ({reasons[0]}); waiting ...")
+            raise Refused(3, f"host busy ({phase}); render not started/continued: " + "; ".join(reasons[:3]))
+        log(f"host busy ({reasons[0]}); waiting ...")
         time.sleep(min(30, max(1, deadline - time.time())))
 
 
@@ -329,7 +350,9 @@ def run(argv):
     label = mf.provenance_label(checked)
     log(f"PASS export check: scene {checked['scene_id']}, engine {checked['engine_commit']}, "
         f"{checked['frame_count']} frames at {checked['fps']} fps, glb {checked['glb_sha256'][:16]}...")
-    wait_for_simulator(args["wait"], "before start")
+    guard = busy_config(args)
+    log(f"busy guard {guard.describe()}")
+    wait_until_clear(guard, args["wait"], "before start")
 
     out = os.path.abspath(args["out"])
     frames_dir = os.path.join(out, "frames")
@@ -428,7 +451,7 @@ def run(argv):
         path = os.path.join(frames_dir, f"frame_{f:04d}.png")
         if args["resume"] and os.path.isfile(path):
             continue
-        wait_for_simulator(args["wait"] if f == first else max(args["wait"], 3600), f"frame {f}")
+        wait_until_clear(guard, args["wait"] if f == first else max(args["wait"], 3600), f"frame {f}")
         scene.frame_set(f)
         scene.render.filepath = path
         t0 = time.time()

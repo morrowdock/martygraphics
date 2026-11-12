@@ -20,16 +20,24 @@ export in Blender Cycles for film-quality output. The render is cosmetic.
    - MP4 and poster: burned-in caption at the bottom of the image (turn off with `--no-burn-in`
      only for a separate edit that adds the label itself).
    - `PROVENANCE.txt` in the output directory and in `frames/`, and `render-report.json`.
-4. **The simulator has priority.** On the render laptop the landing-lab simulator
-   (ArduPilot SITL, Gazebo, MAVProxy, the lab runner, `scripts/sitl-up`) comes first.
-   `render.py` and `selftest.sh` check for those processes and for a held
-   `sitl-up.lock` before they start. When the simulator runs, the render does
-   not start (exit code 3) unless you give `--wait-for-simulator SEC`. A
-   simulator that starts during a render pauses the render between frames (up to
-   one hour, then exit 3; continue later with `--resume`). The guard only reads
-   `/proc`: it never signals, locks or changes the simulator. Renders run with
+4. **Optional busy guard.** A render host may run other work that must keep the
+   GPU first (for example a simulator). The guard is **off** unless you configure
+   at least one check; the host is busy while any configured check says so:
+
+   | Environment variable | `render.py` option | Busy while | Platform |
+   | --- | --- | --- | --- |
+   | `BUSY_LOCK_PATH` (paths separated by `:`; `;` on Windows) | `--busy-lock PATH` (repeatable) | some process holds a lock on the file (read from `/proc/locks`) | Linux |
+   | `BUSY_PROCESS_PATTERN` | `--busy-process REGEX` | a process command line matches the regular expression (read from `/proc`) | Linux |
+   | `BUSY_COMMAND` | `--wait-for-command CMD` | the shell command `CMD` exits with status 0 (its first output line is the reason) | any |
+
+   Options add to the environment settings. When the host is busy, the render
+   does not start (exit code 3) unless you give `--busy-wait SEC`. If the host
+   becomes busy during a render, the render pauses between frames (up to one
+   hour, then exit 3; continue later with `--resume`). A lock or process check
+   on a system without `/proc` is refused (exit 2), never ignored. The guard only
+   reads: it never signals, locks or changes another process. Renders run with
    `nice -n 10` (the script also raises its own niceness to 10) and on the GPU.
-   Check by hand with `python3 -m mgrender.simguard` in this directory.
+   Check by hand with `python3 -m mgrender.busyguard` in this directory.
 
 ## Setup (user space, no sudo)
 
@@ -83,9 +91,10 @@ Options:
 | `--no-motion-blur` | Frame-exact stills. |
 | `--poster-frame N` | Poster frame (default: manifest `posterFrame`, else the middle frame); must be inside `--frames`. |
 | `--resume` | Keep frames that exist in `<out>/frames`. |
-| `--wait-for-simulator SEC` | Wait up to SEC seconds for the simulator to stop before the start. |
+| `--busy-lock PATH`, `--busy-process REGEX`, `--wait-for-command CMD` | Optional busy guard (see rule 4). |
+| `--busy-wait SEC` | Wait up to SEC seconds for a busy host to become clear before the start. |
 
-Exit codes: 0 done, 1 export refused, 2 usage, 3 simulator running,
+Exit codes: 0 done, 1 export refused, 2 usage, 3 host busy (busy guard),
 4 motion check failed, 5 render or encode failure.
 
 ### Materials
@@ -191,7 +200,7 @@ them as `.glb` + manifest (48 frames at 24 fps), checks the 2:1 ratio from the
 are refused, and then renders the full preview pipeline. The fixture uses the
 engine commit `0000000`: it is a pipeline test, not a MartyGraphics-verified mechanism.
 
-Result on the render laptop (2026-11-11, RTX 3060 Laptop GPU 6 GB, OptiX, Blender 5.2.4):
+Result on a test host (2026-11-11, RTX 3060 Laptop GPU 6 GB, OptiX, Blender 5.2.4):
 preview 1280x720 48 frames, first frame 1.7 s, then 1.1 s per frame, 57 s in total
 with encode; motion check max error 3e-7 m (tolerance 4e-6 m), look-dev drift 0.
 A 3-frame hero smoke test (1920x1080, 512 samples): about 30 s per frame.

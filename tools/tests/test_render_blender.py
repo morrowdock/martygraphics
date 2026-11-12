@@ -12,7 +12,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "render-blender"))
 
-from mgrender import faststart, presets, simguard  # noqa: E402
+from mgrender import busyguard, faststart, presets  # noqa: E402
 from mgrender import manifest as mf  # noqa: E402
 
 FPS = 24
@@ -186,30 +186,54 @@ class FaststartTests(unittest.TestCase):
         self.assertIs(faststart.faststart_bytes(out), out)
 
 
-class SimguardTests(unittest.TestCase):
-    def test_detects_simulator_processes(self):
+class BusyguardTests(unittest.TestCase):
+    def test_off_unless_configured(self):
+        cfg = busyguard.Config.from_env(env={})
+        self.assertFalse(cfg.enabled)
+        self.assertEqual(busyguard.status(cfg), (True, []))
+
+    def test_env_and_options_combine(self):
+        env = {"BUSY_LOCK_PATH": os.pathsep.join(["/a.lock", "/b.lock"]), "BUSY_PROCESS_PATTERN": "x"}
+        cfg = busyguard.Config.from_env(["/c.lock"], None, "true", env=env)
+        self.assertEqual(cfg.locks, ["/a.lock", "/b.lock", "/c.lock"])
+        self.assertEqual((cfg.pattern, cfg.command), ("x", "true"))
+
+    def test_detects_matching_processes(self):
         with tempfile.TemporaryDirectory() as proc:
-            for pid, cmd in ((101, b"/home/u/src/ardupilot/build/sitl/bin/arducopter\0--model\0+"),
-                             (102, b"python3\0/usr/bin/mavproxy.py\0--master=udpin:127.0.0.1:14550"),
-                             (103, b"gz\0sim\0-s\0world.sdf"),
-                             (104, b"blender\0-b\0-P\0render.py"),
-                             (105, b"grep\0-rn\0arducopter_notes")):
+            for pid, cmd in ((101, b"/opt/sim/bin/heavy-sim\0--world\0a"),
+                             (102, b"python3\0/usr/lib/heavy-sim/runner.py\0--fast"),
+                             (103, b"blender\0-b\0-P\0render.py"),
+                             (104, b"grep\0-rn\0heavy-simulation-notes")):
                 os.makedirs(f"{proc}/{pid}")
                 Path(f"{proc}/{pid}/cmdline").write_bytes(cmd)
-            pids = sorted(p for p, _ in simguard.running_simulators(proc))
-            self.assertEqual(pids, [101, 102, 103])
+            pids = sorted(p for p, _ in busyguard.running_processes(r"(^|/)heavy-sim(/|\b(?!-))", proc))
+            self.assertEqual(pids, [101, 102])
 
     def test_reads_held_lock_without_locking(self):
         with tempfile.TemporaryDirectory() as tmp:
-            lock = Path(tmp) / "sitl-up.lock"
+            lock = Path(tmp) / "busy.lock"
             lock.write_text("")
             st = os.stat(lock)
             dev = f"{os.major(st.st_dev):02x}:{os.minor(st.st_dev):02x}:{st.st_ino}"
             table = Path(tmp) / "locks"
             table.write_text(f"1: FLOCK  ADVISORY  WRITE 4242 {dev} 0 EOF\n")
-            self.assertEqual(simguard.held_locks([str(lock)], str(table)), [str(lock)])
+            self.assertEqual(busyguard.held_locks([str(lock)], str(table)), [str(lock)])
             table.write_text("1: FLOCK  ADVISORY  WRITE 4242 00:01:1 0 EOF\n")
-            self.assertEqual(simguard.held_locks([str(lock)], str(table)), [])
+            self.assertEqual(busyguard.held_locks([str(lock)], str(table)), [])
+
+    def test_command_exit_status(self):
+        busy, why = busyguard.command_busy(f"{sys.executable} -c \"print('job running')\"")
+        self.assertTrue(busy)
+        self.assertIn("job running", why)
+        busy, _ = busyguard.command_busy(f"{sys.executable} -c \"import sys; sys.exit(1)\"")
+        self.assertFalse(busy)
+
+    def test_bad_settings_are_refused_not_ignored(self):
+        self.assertTrue(busyguard.Config(pattern="(").problems())
+        with tempfile.TemporaryDirectory() as tmp:
+            no_proc = os.path.join(tmp, "missing")
+            self.assertTrue(busyguard.Config(locks=["/x.lock"]).problems(proc=no_proc))
+            self.assertEqual(busyguard.Config(command="true").problems(proc=no_proc), [])
 
 
 class PresetTests(unittest.TestCase):

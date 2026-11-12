@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "2559e76d9b9bcb21091cc762b3f21816c866fc10fdd0654b4dff40dcfc4b3e7e"
+      "sha256": "a8a0913c71b40014eed0e57e03bb6ad26c0b64bd490c5ff07e4679e6f65ebc96"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -2795,7 +2795,7 @@
     },
     {
       "path": "tools/render-blender/README.md",
-      "sha256": "5f29c049ee3c8749bb583f7acfbfeda604481b45acfd02d6efe036f939811784"
+      "sha256": "24eb23ef31c4f97d1bad853b7d4a595f04b83c2ad25d546644f58258e10886eb"
     },
     {
       "path": "tools/render-blender/assets.lock.json",
@@ -2804,6 +2804,10 @@
     {
       "path": "tools/render-blender/mgrender/__init__.py",
       "sha256": "a3fb699ae711b8347000b7b7f5d30babd8ab9e58145e9b3930e817d67a175aac"
+    },
+    {
+      "path": "tools/render-blender/mgrender/busyguard.py",
+      "sha256": "c71864af7cf8d34382f8b52a567019808bf0d0647d501096c07f407202d49c24"
     },
     {
       "path": "tools/render-blender/mgrender/device.py",
@@ -2830,16 +2834,12 @@
       "sha256": "85c94e7ee138fa3282ce1e45af0f4d7a3abd333e73282e51eebfc7241b92a613"
     },
     {
-      "path": "tools/render-blender/mgrender/simguard.py",
-      "sha256": "109f0e07bef62a96b069265d0a515ed057b20669ab0c56e239d3603b0cb895ea"
-    },
-    {
       "path": "tools/render-blender/render.py",
-      "sha256": "16009ecdee4c10903525876f42e9a798e6d5d1d64fc3b64ee7d127643f6982f4"
+      "sha256": "b118c504afb95a5823a2bc3855acbbb132886d9ab990ec17948efcf43678092d"
     },
     {
       "path": "tools/render-blender/selftest.sh",
-      "sha256": "c19190836206d6f1a1ef7c2ccb48b54f02b76441a1274e457c4d84f9a8e7f0e3"
+      "sha256": "9f076211b7f21882c2b94600be53c06185183928e07b07e86c503d287ae61f6a"
     },
     {
       "path": "tools/render-blender/selftest_scene.py",
@@ -2863,7 +2863,7 @@
     },
     {
       "path": "tools/tests/test_render_blender.py",
-      "sha256": "759817f6642ea88d966f8cb53c5df4842e9e7196f23ba12bcfe3bdea8059aaf6"
+      "sha256": "673d5fda86077a80d55790eaa7dad586193cbdff1dc8d2bd887d33f622a360ba"
     },
     {
       "path": "tools/validate_local.py",

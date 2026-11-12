@@ -36,8 +36,9 @@
   lighting, a studio or shadow-catcher backdrop, material presets, an export or auto-orbit camera, depth of field,
   motion blur, AgX, adaptive sampling and denoising, to a PNG sequence, a fast-start H.264 MP4 and a poster. It refuses
   an export whose `.glb` SHA-256, fps or frame count differs from the manifest, proves that imported and look-dev
-  motion equal the glTF evaluation at every frame, labels every output with its provenance, and does not start while
-  the landing-lab simulator runs. `selftest.sh` checks the whole path on a 2:1 gear pair without an export.
+  motion equal the glTF evaluation at every frame, labels every output with its provenance, and has an optional,
+  read-only busy guard (lock file, process pattern or command; off unless configured) that keeps it from starting or
+  continuing while the host is busy. `selftest.sh` checks the whole path on a 2:1 gear pair without an export.
 - **`studio` is the default look, and live views draw its backdrop (pixels only).** `marty-solid render`,
   `MGSolidRenderer` and the explainer view now use `studio` unless told otherwise; pass `--look classic` (or
   `look: .classic`) for the renderer as it was. The explainer's live 3D pane draws the look's backdrop as the scene
