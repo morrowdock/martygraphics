@@ -1375,7 +1375,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
-      "sha256": "63b6d64d4670cf3c0971f588c3cc1976c7b1c8d796c352a09db89545b7e18dee"
+      "sha256": "f8dbd7dd017cfa24ede5a28dcbb249d0766b59082e498359700df82c4697469f"
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
@@ -1439,7 +1439,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
-      "sha256": "99edbfc9953e233fe42d9107292cf2811714dcd26dd640bac571e97768bc3fd2"
+      "sha256": "c76b57f0d0d5e72d0716f4cd6daa3a634b333012b19eec3768b2dbf7f6f9e94d"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/PACKING.md",
@@ -1447,7 +1447,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/README.md",
-      "sha256": "0bdb1db3859bfe6814a85c48d7e7e1fc9db35c7b19c6fe04ddc4d61433020d63"
+      "sha256": "b7701943a0f3af25a35154fb5dab26a26fe797fdd5b6919455573e75711c55b6"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/agreement.py",
@@ -1495,7 +1495,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/support.py",
-      "sha256": "c0d1555a7d64ddf77ab8452705a48de07bb99a5eee28165224c6ef7a3203815b"
+      "sha256": "2953ed424e4d34a0f7065ef2df6941fa20dc577ec6711114da11c561215b89a0"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_agreement.py",
@@ -1523,7 +1523,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_rubric_form.py",
-      "sha256": "25f773a356b2e9450581ba93b405975609ae190921bd88490f0d4ca872f84b14"
+      "sha256": "cc5481e4766a11392b6172d3839aee4ec0c5e608d443fe8837f24132970dd8ea"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_runner_recovery.py",
@@ -2956,6 +2956,46 @@
     {
       "path": "benchmark/mechanisms-v1/harness/native/gemini_guard.mjs",
       "sha256": "a0a259d37893ef24d28f78d3d5b971c523cf65b20d370dfb5e04dfa4ecbaaa77"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/arm2/README.md",
+      "sha256": "c9226cb2228daedfd38b6faedf71a9875cee823a19d6538880ab77189fd216a6"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/arm2/SYNTHETIC-VALIDATION.md",
+      "sha256": "d74d3c84af3f3eadf846b09196aca248a9dc73384911d66857c7ab74599690e0"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/arm2/driver.py",
+      "sha256": "c61a27265b057ed341e74752dd8b48c90dec4b832faac9c7e9361d04efacf056"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/arm2/render.swift",
+      "sha256": "4094e26ec1c859d5d330c923c83499b838c04dc58be1324edd531ef829eaabbd"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/shim/record.py",
+      "sha256": "2a068629e0001c3cc2348c5ada9e20a34ccc10bcd12dd2152dd0b82b719468c2"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/cube.html",
+      "sha256": "09949864433d9f91e137c1b3b7d94d49d815d920b6edf6e311cfbdd043484c7d"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/network.html",
+      "sha256": "c5f4214b42a83a14a1056a3e12e2c12ce8c5d28ce3a11ec358a973a60485073d"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/never-ready.html",
+      "sha256": "4581df68eaff5ac7392cdb1fb7ff1762873b8472091a482367ef48f8dabefacd"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_renderer.py",
+      "sha256": "4b4cf08d3dcbc56b422c7a16eefed8d259a8319d06b6b4fde31e3a74ed72b66e"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_shim.py",
+      "sha256": "4a8fa0aec40458ff821521291b075b4d5f13e48b7d279209eca25d02e26bb574"
     }
   ]
 }

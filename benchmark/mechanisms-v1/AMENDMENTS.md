@@ -366,3 +366,47 @@ No benchmark packet, rubric, real prompt, OAuth flow or model quota was used.
 Auth needs the owner's one-time Login with Google. Implementation acceptance,
 model acceptance and all other run gates remain open. RUN-LOCK stays DRAFT;
 new observations and file pins are under `draftProposals.g2GeminiCli`.
+
+**A-17. Arm 2 and recording shim (2026-11-12; PROPOSED, review pending).**
+Source baseline: `9e95ad3d69a54bce75b1a86d5b136734fb3ddb84`, PROTOCOL sections
+3–6 and 8 and LOCK.json. New code is in `harness/arm2/` and `harness/shim/`.
+The locked generator, CLI, prompts and three.js archive are unchanged.
+`RUN-LOCK.json` is unchanged and stays DRAFT. FILES.json records implementation
+hashes; it does not promote any draft pin or amend the registered inputs.
+
+The implementation makes one author call and at most three repair calls.
+Each HTML reply is rendered, including try four; there is no fifth acceptance
+call. `ACCEPT` on call four accepts rendered try three. The exact first question
+text and locked prompts are supplied through an isolated, recorded CLI process.
+The recorder also installs as Marty's `claude` command without changing Marty.
+Only fake CLI processes are used in tests. Real Marty-receipt equality and live
+subscription behavior remain dry-run checks, not claims from synthetic tests.
+
+**Interpretations that need review (OQ-15):** if a try has no HTML or cannot
+produce a requested still, the repair still has five image blocks. Each missing
+image is a white 1280 × 800 placeholder, explicitly labelled in the render
+report. It is never a successful capture. The alternative is to stop the run
+instead of offering repair. The driver uses integer k below 30 × clamped
+duration (rounding the total count up) and floors each still index at the
+registered fraction. These choices can affect repairs and images; no claim of
+no score effect is made. The author-call maximum remains 900 seconds.
+
+R-WK checks the archive and core-module hashes, serves only the pinned core and
+addon JavaScript, blocks other resources, awaits readiness and two animation
+frames per capture, and records console events. Native synthetic tests check
+WebGL capture, missing readiness and blocked network access. The result must be
+reviewed before selecting a renderer in RUN-LOCK. R-CR is not implemented or
+selected. See `harness/arm2/README.md` for use, evidence and limits.
+
+Legacy tests now generate synthetic keys rather than loading registered question
+files. The fixed run-order identifiers are retained, without their question
+text or facts. Scoring code, scoring arithmetic and the locked files are not
+changed. This work runs no benchmark, no dry run and no model.
+
+The proposed offscreen tool uses the guarded WebKit scheduling selector
+`_setWindowOcclusionDetectionEnabled:` and disables App Nap during capture.
+WebKitTestRunner uses the same selector at WebKit commit
+`fe9858364feb0372faa158caf596ae74c9c9ced0` (checked 2026-11-12). This underscored
+API and the host OS/WebKit version need review and pinning. A missing selector
+is a harness error. Synthetic capture evidence is not a renderer selection or
+permission to run the benchmark.

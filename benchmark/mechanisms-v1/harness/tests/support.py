@@ -18,6 +18,16 @@ HARNESS = Path(__file__).resolve().parents[1]
 BENCH = HARNESS.parent
 sys.path.insert(0, str(HARNESS))
 
+
+def deny_registered_question_reads(event, arguments):
+    if event == "open" and isinstance(arguments[0], (str, bytes)):
+        raw = arguments[0].decode() if isinstance(arguments[0], bytes) else arguments[0]
+        if Path(raw).resolve() in {BENCH / "QUESTIONS.json", BENCH / "GRADER-QUESTIONS.json"}:
+            raise AssertionError("registered question inputs are forbidden in synthetic tests")
+
+
+sys.addaudithook(deny_registered_question_reads)
+
 import blinding  # noqa: E402
 import score  # noqa: E402
 
@@ -58,6 +68,16 @@ def registered_shape_key():
         question["nearShipped"] = question["id"] in score.NEAR_SHIPPED
     key["questions"][5]["acceptedVariants"] = [{"id": "synthetic-variant"}]
     return key
+
+
+def synthetic_design():
+    document = many_questions(20)
+    for index, question in enumerate(document["questions"], 1):
+        question["id"] = "MECH-%02d" % index
+        question["question"] = "Synthetic object %02d: describe the colored blocks." % index
+        question["nearShipped"] = question["id"] in score.NEAR_SHIPPED
+        question["acceptedVariants"] = [{"id": "reversing-motor"}]
+    return document
 
 
 def write_key(folder, doc):

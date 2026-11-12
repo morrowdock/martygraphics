@@ -16,6 +16,7 @@ protocol's open points are in [AMENDMENTS.md](../AMENDMENTS.md); the options are
 | [grading_runner.py](grading_runner.py) | Proposed section 6 driver, with offline replay and fail-closed live selection, public-commitment and durable-preference gates. |
 | [LIVE-ADAPTERS.md](LIVE-ADAPTERS.md) | CLI evidence, isolation limits, dry self-test commands, recovery and remaining live-use gates. |
 | [PACKING.md](PACKING.md) | Packer inputs, CLI, trust boundaries, review choices and pending macOS validation. |
+| [arm2/README.md](arm2/README.md) | PROPOSED Arm 2 driver, offline R-WK renderer, shared byte-recording shim and synthetic acceptance tests. |
 | [tests/](tests/test_score.py) | Synthetic tests only (see below). |
 
 **Requirements:** Python 3.11 or later, and **NumPy at the version that RUN-LOCK.json pins** (`harness.numpy`,
@@ -37,19 +38,24 @@ The tests cover:
 - every zero-denominator case for both arms;
 - failed, ungraded and all-failed designs;
 - ties and the 15-of-20 boundary;
-- the validator, using the rubric's own example replies;
+- the validator, using synthetic replies in the rubric's form;
 - the attempt rule;
 - the record and timing conditions;
 - the blinding vectors;
 - agreement against published values;
 - an end-to-end CLI run with an original synthetic key and 20 public numbered ids;
-- fake CLI processes for isolation, exact-session fix-up, receipts, timeout and crash recovery.
+- fake CLI processes for isolation, exact-session fix-up, receipts, timeout and crash recovery;
+- the recording shim and Arm 2 flow with fake Claude replies; native R-WK tests
+  when the locked archive is supplied (see `arm2/README.md`).
 
-The tests do not open either registered question file. The rubric's published
-format examples use synthetic key metadata. Fake CLI process tests require
+The tests do not open either registered question file. Rubric-form examples
+and key metadata are synthetic. Fake CLI process tests require
 Linux bubblewrap; they skip if it is absent. They never start a real model.
 
 The fixtures are built by [tests/support.py](tests/support.py), and every fixture reply passes the validator.
+Test discovery does not open the registered question files. The synthetic design
+retains identifier-shaped slots needed for the fixed order test, but has no
+registered question text or answer key.
 
 ## Score a result
 

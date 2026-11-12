@@ -155,3 +155,15 @@ acceptance, reviewed host pins and all existing benchmark gates. GEMINI-CLI.md
 separates quota-free auth-check from the explicit human-run
 model-access-check, which was not run with the real CLI. No new benchmark run
 approval is requested here. RUN-LOCK remains DRAFT.
+
+**OQ-15. Arm 2 repair evidence and frame indices (2026-11-12; PROPOSED).**
+Source: PROTOCOL section 5 and LOCK.json at
+`9e95ad3d69a54bce75b1a86d5b136734fb3ddb84`; implementation proposal A-17.
+The protocol requires five images after a rendered try, but does not specify
+images for missing HTML, readiness failure or incomplete captures. The proposed
+driver uses explicitly reported white placeholders for missing stills so repair
+remains possible. The alternative is to fail without a repair call. Review is
+required because this can change the repair result. The proposed integer rule
+is k < 30 × clamped duration, with each still index floored at its fraction.
+These are implementation proposals, not coordinator decisions. RUN-LOCK stays
+DRAFT.

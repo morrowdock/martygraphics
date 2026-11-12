@@ -1,0 +1,8 @@
+<!doctype html><html><head><style>body{background:white;color:black;font:40px system-ui}</style></head>
+<body><div id="caption">Synthetic network test</div><script>
+window.benchDuration = 10;
+window.benchFrame = async time => { document.getElementById('caption').textContent = 'Blocked network; frame time '+time; };
+fetch('NETWORK_URL').then(() => console.error('NETWORK ESCAPED')).catch(() => {
+  console.warn('synthetic fetch blocked'); window.benchReady = true;
+});
+</script></body></html>

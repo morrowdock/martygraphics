@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#101010;overflow:hidden}canvas{display:block}</style></head>
+<body><script type="module">
+import * as THREE from 'three';
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(1);
+renderer.setSize(1280,800);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x101010);
+const camera = new THREE.PerspectiveCamera(40,1280/800,0.1,100);
+camera.position.set(0,0,5);
+const colors = [0xff2255,0x22ffaa,0x3355ff,0xffcc22,0xcc33ff,0x22ccff];
+const cube = new THREE.Mesh(new THREE.BoxGeometry(1.6,1.6,1.6),colors.map(color=>new THREE.MeshBasicMaterial({color})));
+scene.add(cube);
+window.benchDuration = 10;
+window.benchFrame = async time => {
+  cube.rotation.set(0.4,time*Math.PI/2,0.2);
+  renderer.render(scene,camera);
+};
+console.warn('synthetic cube ready');
+window.benchReady = true;
+</script></body></html>
