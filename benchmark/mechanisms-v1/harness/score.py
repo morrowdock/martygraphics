@@ -375,6 +375,7 @@ def read_record(folder, runs, key, tokens, sides):
             raise InputError("RECORD.json needs the list %s" % name)
     commitment_time = parse_time(record.get("commitmentPushedUTC"), "RECORD.json commitmentPushedUTC")
     calls = {}
+    session_starts = {}
     grades = {kind: {g: {} for g in GRADERS} for kind in ("score", "preference", "guess")}
     invalid, timing = [], []
     reply_times = []
@@ -393,11 +394,12 @@ def read_record(folder, runs, key, tokens, sides):
                 raise InputError("RECORD.json: a %s call for %s, which is not a pair of two rendered outputs"
                                  % (kind, cid))
             question, token = key[cid.rpartition("-r")[0]]["raw"], sides[cid][0]
-        sessions, validity, texts, previous = call.get("sessions"), [], [], None
+        sessions, validity, texts, previous, starts = call.get("sessions"), [], [], None, []
         if not isinstance(sessions, list):
             raise InputError("RECORD.json: call %s %s %s has no sessions list" % (grader, kind, cid))
         for s, session in enumerate(sessions, 1):
             started = parse_time(session.get("startedUTC"), "%s %s %s session %d" % (grader, kind, cid, s))
+            starts.append(started)
             if previous is not None and started < previous:
                 timing.append("%s %s %s: session %d starts before the previous reply" % (grader, kind, cid, s))
             previous = started
@@ -424,6 +426,7 @@ def read_record(folder, runs, key, tokens, sides):
         calls[(grader, kind, cid)] = {"grader": grader, "kind": kind, "id": cid, "status": status,
                                       "attempts": sum(len(r) for r in validity), "acceptedUTC": previous
                                       if status == "completed" else None}
+        session_starts[(grader, kind, cid)] = starts
         if status == "completed":
             grades[kind][grader][cid] = [t for t in texts if t is not None][-1]
     for (grader, kind, cid), call in calls.items():
@@ -431,8 +434,10 @@ def read_record(folder, runs, key, tokens, sides):
             pref = calls.get((grader, "preference", cid))
             if pref is None or pref["status"] != "completed":
                 raise InputError("RECORD.json: a guess call %s %s without a stored preference" % (grader, cid))
-            if call["status"] == "completed" and call["acceptedUTC"] < pref["acceptedUTC"]:
-                timing.append("%s guess %s: before the preference was stored" % (grader, cid))
+            # Every guess session, also an exhausted one, must START after the preference was stored:
+            # a guess begun earlier could have shaped the preference (re-check 2026-11-12).
+            if any(started < pref["acceptedUTC"] for started in session_starts[(grader, kind, cid)]):
+                timing.append("%s guess %s: a guess session started before the preference was stored" % (grader, cid))
     return {"commitment": commitment_time, "withdrawnModels": record["withdrawnModels"],
             "humanGraders": record["humanGraders"], "calls": calls, "grades": grades, "invalidReplies": invalid,
             "timing": timing, "lastReply": max(reply_times) if reply_times else None}

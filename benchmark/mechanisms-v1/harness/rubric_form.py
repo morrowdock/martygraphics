@@ -45,6 +45,12 @@ def _text(value):
     return isinstance(value, str) and value.strip() != ""
 
 
+def _evidence(value):
+    """A still or time AND words beyond it (rule 5: "the still or the frame time and one sentence of evidence")."""
+    return _text(value) and WHERE.search(value) is not None and \
+        re.search(r"[^\W\d_]{3,}", WHERE.sub(" ", value)) is not None
+
+
 def parse(text):
     """(object, problems). The reply must be exactly one JSON object with no duplicate key."""
     if isinstance(text, bytes):
@@ -109,8 +115,8 @@ def validate_score(reply, question, token):
             problems.append("%s cannot be CANNOT JUDGE (only M3 and M4)" % check)
         if value == "N/A" and configuration not in variants:
             problems.append("%s is N/A, but N/A needs an accepted variant as the configuration" % check)
-        if value == "FAIL" and not (_text(evidence.get(check)) and WHERE.search(evidence[check])):
-            problems.append("%s is FAIL without evidence that names a still or a time" % check)
+        if value == "FAIL" and not _evidence(evidence.get(check)):
+            problems.append("%s is FAIL without evidence that names a still or a time and says what is wrong" % check)
         if value == "CANNOT JUDGE" and not _text(evidence.get(check)):
             problems.append("%s is CANNOT JUDGE without a reason in the evidence" % check)
     for n, item in enumerate(reply["errors"], 1):
@@ -122,7 +128,7 @@ def validate_score(reply, question, token):
         for field in ("text", "reason"):
             if not _text(item.get(field)):
                 problems.append("error %d has no %s" % (n, field))
-        if item["type"] == "K" and item.get("keyFact") not in facts:
+        if item["type"] == "K" and not (isinstance(item.get("keyFact"), str) and item["keyFact"] in facts):
             problems.append("error %d is a key-fact error without a key fact of this question" % n)
     for n, item in enumerate(reply["defects"], 1):
         if not isinstance(item, dict) or item.get("type") not in DEFECT_TYPES or item.get("severity") not in SEVERITIES:
@@ -132,17 +138,19 @@ def validate_score(reply, question, token):
             problems.append("defect %d has no still or time" % n)
         if not _text(item.get("evidence")):
             problems.append("defect %d has no evidence" % n)
+    lists_ok = True
     for name, core_only in (("coveredFacts", True), ("notApplicableFacts", False)):
         ids = reply[name]
         if not all(isinstance(x, str) for x in ids) or len(set(ids)) != len(ids):
             problems.append(name + " must list distinct fact ids")
+            lists_ok = False
             continue
         unknown = [x for x in ids if x not in facts]
         if unknown:
             problems.append("%s names facts not in this question: %s" % (name, ", ".join(unknown)))
         if core_only and any(x in facts and not facts[x]["core"] for x in ids):
             problems.append("coveredFacts lists a fact that is not core")
-    if not set(reply["coveredFacts"]).isdisjoint(reply["notApplicableFacts"]):
+    if lists_ok and not set(reply["coveredFacts"]).isdisjoint(reply["notApplicableFacts"]):
         problems.append("a fact is both covered and N/A")
     if not 1 <= reply["clarity"] <= 5:
         problems.append("clarity %r is not 1 to 5" % reply["clarity"])

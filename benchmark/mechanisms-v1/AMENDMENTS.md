@@ -147,3 +147,18 @@ refused until their separate analysis exists. *Effect:* exploratory estimates an
 
 **A-12. No sign-test sample.** Applies OQ-12. When every defined d(q) is 0, or no d(q) is defined, p = 1. The report
 then says which one it is (`emptySample`). *Effect:* none (this is no conclusion either way).
+
+**A-13. Re-check fixes before run 1 (2026-11-12).** An independent re-check of the harness found three defects. All are
+fixed before run 1, so they are not deviations:
+
+- *Guess timing.* score.py compared the guess's accepted reply with the stored preference. A guess session that
+  started before the preference was stored, with a later reply, still allowed the registered verdict. Now every
+  guess session, also an exhausted one, must start after the preference was stored; otherwise the timing check
+  fails and the result is descriptive only.
+- *Malformed fact ids.* rubric_form.py raised `TypeError` for unhashable entries in `coveredFacts`,
+  `notApplicableFacts` or an error's `keyFact`, so the retry workflow never saw the reply. These are now validation
+  problems, which `next_step` handles as any other invalid reply.
+- *Evidence.* A FAIL with only a still or a time (for example `"6.0 s"`) was accepted. RUBRIC.md rule 5 and A-03 ask
+  for the place **and** one sentence. The validator now needs a still or time plus words beyond it.
+
+*Effect:* stricter validation and timing only; scoring arithmetic is unchanged. The scoring hashes below are updated.

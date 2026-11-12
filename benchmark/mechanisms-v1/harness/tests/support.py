@@ -145,6 +145,7 @@ class Plan:
         self.swap_order = False
         self.overlap = False
         self.long_run = None      # slot that takes 61 min
+        self.guess_early = False  # every guess session starts 1 s before its preference was stored
         self.costs = {}           # slot -> (tries, costUsd)
 
     def slots(self):
@@ -200,11 +201,15 @@ def build(folder, plan):
         return clock[0].isoformat()
 
     calls = []
+    last_reply = [None]
 
-    def record(grader, kind, cid, sessions):
+    def record(grader, kind, cid, sessions, start_before=None):
         entry = {"grader": grader, "kind": kind, "id": cid, "sessions": []}
         for s, texts in enumerate(sessions, 1):
-            session = {"startedUTC": tick(), "replies": []}
+            started = tick()
+            if start_before is not None and s == 1:
+                started = (datetime.fromisoformat(start_before) - timedelta(seconds=1)).isoformat()
+            session = {"startedUTC": started, "replies": []}
             for n, text in enumerate(texts, 1):
                 rel = "replies/%s/%s/%s/%d-%d.txt" % (grader, kind, cid, s, n)
                 path = folder / rel
@@ -214,6 +219,8 @@ def build(folder, plan):
             entry["sessions"].append(session)
         calls.append(entry)
         status, _ = score.form.call_status([[isinstance(t, dict) for t in texts] for texts in sessions])
+        entry_last = entry["sessions"][-1]["replies"][-1]["receivedUTC"] if entry["sessions"][-1]["replies"] else None
+        last_reply[0] = entry_last
         return status
 
     for slot in sorted(rendered):
@@ -235,7 +242,8 @@ def build(folder, plan):
             if record(g, "preference", score.pair_id(q, r), sessions) == "completed":
                 engine = plan.guesses.get((g, (q, r)), "cannot tell")
                 if engine is not None:
-                    record(g, "guess", score.pair_id(q, r), [[guess(engine)]])
+                    stored = last_reply[0] if plan.guess_early else None
+                    record(g, "guess", score.pair_id(q, r), [[guess(engine)]], start_before=stored)
     doc = {"kind": "mechanisms-v1.record/1", "commitmentPushedUTC": commitment.isoformat(),
            "withdrawnModels": plan.withdrawn, "humanGraders": [], "calls": calls}
     (folder / "RECORD.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")

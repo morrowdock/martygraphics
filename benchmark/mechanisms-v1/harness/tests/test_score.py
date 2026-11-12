@@ -493,7 +493,10 @@ class DesignRecordTest(Case):
                 ("reply", lambda p: setattr(p, "reply_before_commit", True), "timing"),
                 ("order", lambda p: setattr(p, "swap_order", True), "timing"),
                 ("overlap", lambda p: setattr(p, "overlap", True), "timing"),
-                ("long", lambda p: setattr(p, "long_run", ("Q1", 1, 1)), "timing")):
+                ("long", lambda p: setattr(p, "long_run", ("Q1", 1, 1)), "timing"),
+                # Re-check 2026-11-12: a guess that STARTED before the preference was stored, even though its
+                # reply came later, must block the registered verdict.
+                ("guess", lambda p: setattr(p, "guess_early", True), "timing")):
             with self.subTest(name):
                 plan = Plan()
                 setup(plan)

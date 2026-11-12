@@ -87,6 +87,10 @@ class ScoreFormTest(unittest.TestCase):
         self.assertTrue(problems(fail("the gears are on different shafts")))      # no still and no time
         self.assertEqual(problems(fail("t=6.0 s: the gears are on different shafts")), [])
         self.assertEqual(problems(fail("still-3 shows a gap")), [])
+        # A location alone is not evidence: rule 5 asks for the place AND one sentence (re-check 2026-11-12).
+        for bare in ("6.0 s", "still-3", "t=6.0 s", "  12 s  ", "still 2, 4.5 s"):
+            with self.subTest(evidence=bare):
+                self.assertTrue(problems(fail(bare)))
         self.assertTrue(problems(lambda r: r["mechanism"].update(M3="CANNOT JUDGE", evidence={})))
         self.assertEqual(problems(lambda r: r["mechanism"].update(M3="CANNOT JUDGE",
                                                                   evidence={"M3": "too fast"})), [])
@@ -123,6 +127,17 @@ class ScoreFormTest(unittest.TestCase):
             item = dict(full)
             item.pop(field)
             self.assertTrue(problems(lambda r: r.update(defects=[item])), field)
+
+    def test_malformed_ids_are_problems_not_crashes(self):
+        # Re-check 2026-11-12: unhashable ids raised TypeError instead of returning problems.
+        for change in (lambda r: r.update(coveredFacts=[{"id": "K1"}]),
+                       lambda r: r.update(notApplicableFacts=[["K1"]]),
+                       lambda r: r.update(coveredFacts=[["K1"]], notApplicableFacts=[{"id": "K1"}]),
+                       lambda r: r.update(errors=[{"type": "K", "keyFact": ["K1"], "time": "1.0 s",
+                                                   "text": "q", "reason": "r"}]),
+                       lambda r: r.update(errors=[{"type": "K", "keyFact": {"id": "K1"}, "time": "1.0 s",
+                                                   "text": "q", "reason": "r"}])):
+            self.assertTrue(problems(change))
 
     def test_fact_lists(self):
         self.assertTrue(problems(lambda r: r.update(coveredFacts=["K3"])))         # not core
