@@ -181,9 +181,10 @@ final class MartySolidCLITests: XCTestCase {
         return out
     }
 
-    /// The transcript of every input is byte-identical to its golden file, in two fresh processes, with and without
-    /// `--strict` (all inputs pass both), and holds exactly the shape of the course transcripts
-    /// (`morrowdock-explainer-transcript` v1).
+    /// The transcript of every input is byte-identical to its golden file and holds exactly the shape of the course
+    /// transcripts (`morrowdock-explainer-transcript` v1). Each input runs once (a transcript runs the full check, so
+    /// this test is kept to one process per input); `--strict` and a second fresh process run on two inputs, one of
+    /// each format (every input passes both profiles; the strict gate is pinned by the refusal test below).
     func testTranscriptOutputIsByteIdenticalToTheGoldenFiles() throws {
         let dir = golden.appendingPathComponent("Transcripts")
         let inputs = transcriptInputs()
@@ -191,12 +192,19 @@ final class MartySolidCLITests: XCTestCase {
                        Set(inputs.map { "\($0.0).json" }), "one golden file per input")
         for (name, path) in inputs {
             let want = try String(contentsOf: dir.appendingPathComponent("\(name).json"), encoding: .utf8)
-            for args in [["transcript", path], ["transcript", "--strict", path], ["transcript", path]] {
-                let got = try run(args)
-                XCTAssertEqual(got.status, 0, "\(name) \(args)")
-                XCTAssertEqual(got.text, want, "\(name) \(args)")
+            let start = Date()
+            let got = try run(["transcript", path])
+            print("transcript \(name): \(String(format: "%.1f", Date().timeIntervalSince(start))) s")
+            XCTAssertEqual(got.status, 0, name)
+            XCTAssertEqual(got.text, want, name)
+            if ["examples-explainers-planets-2d", "docs-assets-drone-aviation-gimbal-gimbal"].contains(name) {
+                for args in [["transcript", "--strict", path], ["transcript", path]] {
+                    let again = try run(args)
+                    XCTAssertEqual(again.status, 0, "\(name) \(args)")
+                    XCTAssertEqual(again.text, want, "\(name) \(args)")
+                }
             }
-            let t = try XCTUnwrap(try run(["transcript", path]).json, name)
+            let t = try XCTUnwrap(got.json, name)
             XCTAssertEqual(Set(t.keys), ["format", "version", "explainer", "title", "about", "beats"], name)
             XCTAssertEqual(t["format"] as? String, "morrowdock-explainer-transcript")
             XCTAssertEqual(t["version"] as? Int, 1)

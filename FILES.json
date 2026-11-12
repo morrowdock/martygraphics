@@ -627,7 +627,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "143ea42fd6cf434ee64f0d8773be07f4cfe19a8a7cf7d8736d477491dfaa4de7"
+      "sha256": "9143fde5c7b21534fb155b42c694e7e6595f667ca09a13016287d7fe0004f57f"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
