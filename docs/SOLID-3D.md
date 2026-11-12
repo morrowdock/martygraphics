@@ -2201,6 +2201,26 @@ bloom.
 `interactive` is for a live view where the frame rate matters more than occlusion and bloom. The frame rate of the
 levels on an iPad has not been measured yet.
 
+**Type, plates and bands.** `classic` draws the overlay and the bands as before. `studio` and `paper` draw them from
+the look's colours (`MGSolidLook.ink`, `plate`, `casing`, `surface`):
+
+- **No black bars.** The model is clipped to the safe window, so a band holds only the look's own backdrop (or an
+  explainer's frame), and the title, the legend line and the caption sit on it in the look's ink. A hairline marks
+  the caption band. Tests measure at least 4.5:1 for the title, the legend line, the caption and its step number
+  against the brightest (or, for `paper`, the least favourable) backdrop the look can draw under them. Where a tall
+  frame puts the legend corner below the band, that part gets the look's plate.
+- **The same places.** Band sizes, the safe window, the framing, the font sizes and the caption's line breaks do not
+  change, so no text moves and nothing new is hidden. The step number is the same glyphs in a quieter ink.
+- **Label plates.** In the layout's own boxes: a corner radius of `0.45 f`, a hairline edge, and the tier mark as a
+  rounded bar on the leading edge (`f` is the label font size, `MGAnnotationLayout.fontSize`). Leaders are a light
+  line over a casing so they read over white and black parts, with a ringed anchor dot; callout discs have a radius
+  of `0.7 f`. Every drawn metric is a multiple of `f` (`MGSolidOverlay.Metrics`), so a larger label size scales
+  them together. The box sizes and the placement records are the layout's and are unchanged.
+- **A soft cut.** Where the safe window cuts the model under a band, the cut fades into the backdrop over 3 % of
+  the frame height.
+- `MGSolidOverlay.draw(_:document:legend:in:width:height:look:)` and `MGSolidOverlayView(frame:document:legend:look:)`
+  take the look; the explainer view passes `MGExplainerController.solidLook`.
+
 ### Title backdrop
 
 Every still and every story frame draws a dark backdrop behind the title band: black at

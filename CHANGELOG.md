@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **The `studio` and `paper` looks draw modern type, plates and bands (pixels only).** No black title or caption
+  bars: text sits on the look's own backdrop in the look's ink, with measured contrast of at least 4.5:1. Label
+  plates are rounded with a hairline edge and a tier bar; leaders have a casing and a ringed anchor; every drawn
+  metric is a multiple of the label font size. The model's cut at a band fades into the backdrop. Band sizes, the
+  safe window, framing, font sizes, line breaks, label boxes and every JSON output are unchanged; `classic` draws as
+  before. Turning marks on machined metals are a little fainter.
 - **The `studio` and `paper` looks finish surfaces (pixels only).** Parts reflect a procedural product studio with
   soft-edged boxes, so metals show gradients; plastics get a glossy clear coat and a calibrated colour of the same
   hue; machined metals get fine per-fragment turning marks; ambient occlusion no longer draws faint rings on curved

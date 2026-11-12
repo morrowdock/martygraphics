@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "226647d6ef4181885d0355ed308c898c200459c2f7c3ab85d6c15488837bf8f1"
+      "sha256": "71a1db1af8552b9546fbb6a4692e80eeeac0c6faa35a3ff88d59afcf921e85e7"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -923,7 +923,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidLook.swift",
-      "sha256": "9c023849ee77b5e690677e56acd1b766be54aad0b63775fd7bbd9bf251585558"
+      "sha256": "3ca1b372ad217bf4b957e92fe8b0e2259416a2caca46d353a286546e3de6032f"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidMath.swift",
@@ -959,7 +959,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
-      "sha256": "2d0204b3ba8529e161ef5949c38a1dd7694b6331d4f25b07b7b9829c3519fa9a"
+      "sha256": "7e4a408bddf42a6bb06a655ecb93e9aa0fc6e47fb76a53431cfc3f2bbc10faaf"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
@@ -1859,7 +1859,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "251661ddf00e2001db29d9c7290733c9eaaef9756b208d125b993a7084c7d9e4"
+      "sha256": "0ee6de9e117fe729b3bcc6768a157fda7c1d85934e8794982afd06edf6a55ca1"
     },
     {
       "path": "docs/THIRD-PARTY.md",

@@ -96,7 +96,7 @@ public struct MGSolidLook: Equatable, Sendable {
         l.boxFeather = 0.5
         l.occlusionBias = 0.0006
         l.plasticCoat = 0.8; l.plasticCoatRoughness = 0.06
-        l.machining = 1
+        l.machining = 0.6
         l.plate = [10.0 / 255, 15.0 / 255, 31.0 / 255, 0.86]
         l.surface = [0.043, 0.051, 0.071]
         l.modernOverlay = true
@@ -114,7 +114,7 @@ public struct MGSolidLook: Equatable, Sendable {
         l.boxFeather = 0.5
         l.occlusionBias = 0.0006
         l.plasticCoat = 0.8; l.plasticCoatRoughness = 0.06
-        l.machining = 1
+        l.machining = 0.6
         l.ink = [20.0 / 255, 26.0 / 255, 43.0 / 255]
         l.plate = [1, 1, 1, 0.92]
         l.casing = [1, 1, 1, 0.7]

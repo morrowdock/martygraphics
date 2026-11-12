@@ -584,8 +584,36 @@ public final class MGSolidRenderer {
             ctx.draw(backdrop, in: rect)
         }
         ctx.interpolationQuality = .high
-        if let r = MGSolidRenderer.clipRect(clip, width: width, height: height) { ctx.clip(to: r) }
+        let window = MGSolidRenderer.clipRect(clip, width: width, height: height)
+        ctx.saveGState()
+        if let window { ctx.clip(to: window) }
         ctx.draw(img, in: rect)
+        ctx.restoreGState()
+        // Where the safe window cuts the model (under a title or caption band), the cut fades into the backdrop over
+        // a few pixels instead of ending on a hard line.
+        if let window, let backdrop {
+            let fade = max(2, CGFloat(height) * 0.03)
+            ctx.interpolationQuality = .none
+            for top in [false, true] {
+                let edge = top ? window.maxY : window.minY
+                guard edge > 0.5, edge < CGFloat(height) - 0.5, let mask = MGSolidRenderer.edgeMask(opaqueAtTop: top) else { continue }
+                ctx.saveGState()
+                ctx.clip(to: CGRect(x: 0, y: top ? edge - fade : edge, width: CGFloat(width), height: fade), mask: mask)
+                ctx.draw(backdrop, in: rect)
+                ctx.restoreGState()
+            }
+        }
+        return ctx.makeImage()
+    }
+
+    /// A 1 × 64 grey ramp used as a clip mask: white (paint) at one end, black (keep) at the other.
+    static func edgeMask(opaqueAtTop: Bool) -> CGImage? {
+        guard let ctx = CGContext(data: nil, width: 1, height: 64, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceGray(),
+                                  bitmapInfo: CGImageAlphaInfo.none.rawValue),
+              let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceGray(),
+                                 colors: [CGColor(gray: opaqueAtTop ? 0 : 1, alpha: 1), CGColor(gray: opaqueAtTop ? 1 : 0, alpha: 1)] as CFArray,
+                                 locations: [0, 1]) else { return nil }
+        ctx.drawLinearGradient(g, start: CGPoint(x: 0, y: 0), end: CGPoint(x: 0, y: 64), options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
         return ctx.makeImage()
     }
 
