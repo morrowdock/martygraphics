@@ -1,0 +1,59 @@
+name: Showcase
+# Evidence for visual-quality work, never a gate: renders the fixed showcase set
+# (tools/showcase.sh) on a hosted Mac and uploads the stills as an artifact. It is
+# not a required check and does not run on pull requests or on main.
+#
+# Run it by hand (Actions, "Run workflow", or `gh workflow run showcase.yml --ref
+# BRANCH -f looks="classic studio"`), or push a branch named `showcase/...`: a
+# deliberate opt-in for look development. Download with `gh run download`.
+#
+# Safety: no secrets, a read-only token, no caches, no persisted credentials; the
+# `looks` input is passed through the environment and matched against a fixed
+# pattern before use.
+on:
+  workflow_dispatch:
+    inputs:
+      looks:
+        description: Looks to render, separated by spaces (empty = the renderer's default)
+        required: false
+        default: ""
+  push:
+    branches: ["showcase/**"]
+permissions:
+  contents: read
+concurrency:
+  group: showcase-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  render:
+    name: showcase-render
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          swift --version
+      - name: Build marty-solid
+        run: swift build -c release --jobs 2 --package-path Examples/Solid3D --product marty-solid
+      - name: Render the showcase set
+        shell: bash
+        env:
+          LOOKS: ${{ inputs.looks }}
+        run: |
+          set -euo pipefail
+          # A branch may name its own looks in tools/showcase.looks (one line, space separated).
+          if [ -z "${LOOKS:-}" ] && [ -f tools/showcase.looks ]; then LOOKS=$(head -n 1 tools/showcase.looks); fi
+          [[ "${LOOKS:-}" =~ ^[a-z0-9\ -]*$ ]] || { echo "::error::looks: lower-case names separated by spaces"; exit 1; }
+          # shellcheck disable=SC2086
+          tools/showcase.sh showcase $LOOKS
+      - name: Upload stills
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: showcase-${{ github.sha }}
+          path: showcase/
+          if-no-files-found: warn

@@ -30,6 +30,10 @@
       "sha256": "a5e4b2c8854803eff45f3a98a8638ab3aaabbc775389866bf6f06c1842fbb674"
     },
     {
+      "path": ".github/workflows/showcase.yml",
+      "sha256": "bbf0155967f7cc44d920e2565dcbe679a172146a1717376772ec7da3af5e0461"
+    },
+    {
       "path": ".gitignore",
       "sha256": "98f276d1503b9e2b5b3213d298e24146d314d0010f91d4f84e1430c5f9aba08a"
     },
@@ -2668,6 +2672,10 @@
     {
       "path": "tools/check_dco.py",
       "sha256": "d6f3693eebbc82a50402b89e4cbab9c3f8c73deae45fc30109cb4b10cfe1141f"
+    },
+    {
+      "path": "tools/showcase.sh",
+      "sha256": "40223b9dc40b4d0f025f6e15cc7c66f85b6de1091edcb3cc8a064891b2ff1425"
     },
     {
       "path": "tools/tests/test_check_dco.py",
