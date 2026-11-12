@@ -1,0 +1,143 @@
+{
+  "kind": "grader-questions/2",
+  "questions": [
+    {
+      "id": "DRY-BICYCLE",
+      "question": "How do a bicycle's chain and sprockets transmit pedalling to the rear wheel, and how does the gear ratio change cadence and wheel torque?",
+      "conventional": "A chain-driven bicycle with a crank-mounted chainring, a rear derailleur selecting a rear sprocket, and a rear freewheel or freehub that engages to drive the wheel; one or several front chainrings are acceptable.",
+      "acceptedVariants": [
+        {
+          "id": "single-speed-freewheel",
+          "description": "One chainring and one rear sprocket with a freewheel; no derailleur or gear change while riding is required. Compare alternative sprocket sizes to explain different gear ratios."
+        },
+        {
+          "id": "hub-gear",
+          "description": "One chainring and one rear sprocket drive a coasting, internally geared rear hub. The internal setting changes the wheel-to-sprocket speed ratio h without moving the chain between rear sprockets; include h in wheel-speed and torque calculations."
+        },
+        {
+          "id": "fixed-gear",
+          "description": "One chainring and one rear sprocket drive the rear wheel without a freewheel. The pedals must turn when the rear wheel turns; coasting with stationary pedals is not possible. Compare alternative sprocket sizes rather than requiring a gear change while riding."
+        }
+      ],
+      "keyFacts": [
+        {
+          "id": "K1",
+          "fact": "Pedalling turns the crank-mounted chainring. The chain's links and rollers engage the sprocket teeth, so motion of the chain turns the rear sprocket and transmits drive to the rear wheel through the engaged rear drive, or directly in the fixed-gear variant.",
+          "core": true,
+          "appliesTo": ["all"],
+          "acceptedWordings": [
+            "The front sprocket pulls the chain, which pulls the rear sprocket and drives the wheel.",
+            "Chainring, front sprocket and front cog are acceptable names here; rear sprocket and rear cog are equivalent."
+          ]
+        },
+        {
+          "id": "K2",
+          "fact": "During normal forward pedalling under drive load, the upper chain run is the tighter, driving run. The chain transmits force by tension, not by pushing as a rigid rod. The lower return run need not have zero tension; a derailleur can tension it. This description is not a rule for coasting or fixed-gear braking.",
+          "core": true,
+          "appliesTo": ["all"],
+          "acceptedWordings": [
+            "The top run pulls on the rear sprocket.",
+            "Tight side and slack side are acceptable relative descriptions; slack does not mean zero tension."
+          ]
+        },
+        {
+          "id": "K3",
+          "fact": "Let Nf be the selected chainring's tooth count and Nr the selected rear sprocket's tooth count. With the chain engaged and not skipping, the external speed ratio is R = Nf / Nr: the rear sprocket makes R revolutions per crank revolution, measured over complete revolutions. This external ratio alone is not necessarily the wheel-to-crank ratio of an internally geared hub.",
+          "core": true,
+          "appliesTo": ["all"],
+          "acceptedWordings": [
+            "Front teeth divided by rear teeth gives rear sprocket turns per pedal turn.",
+            "A reciprocal ratio convention is acceptable if it is explicitly defined and all speed and torque statements use it consistently."
+          ]
+        },
+        {
+          "id": "K4",
+          "fact": "With the rear drive engaged and the tyre rolling without slipping, distance per crank revolution is R times the wheel's rolling circumference for a direct rear drive. For an internally geared hub it is R times h times that circumference, where h is wheel revolutions per rear sprocket revolution in the selected hub gear; h = 1 for a direct rear drive. At a fixed gear setting, travel speed equals this distance times crank cadence, with consistent time units.",
+          "core": true,
+          "appliesTo": ["all"],
+          "acceptedWordings": [
+            "Development or rollout is wheel circumference times wheel turns per crank turn.",
+            "At the same gear setting, doubling pedalling cadence doubles travel speed in this no-slip model."
+          ]
+        },
+        {
+          "id": "K5",
+          "fact": "In the ideal lossless steady-drive model, wheel torque per unit crank torque is 1 / (R times h), with h = 1 for a direct rear drive. At fixed chainring, wheel size and hub setting, a larger rear sprocket lowers R: it gives more wheel torque for the same crank torque, less travel speed at the same cadence, and a higher required cadence at the same travel speed. Gearing trades speed for torque; it does not create power. Real losses reduce the ideal torque output.",
+          "core": true,
+          "appliesTo": ["all"],
+          "acceptedWordings": [
+            "A larger back cog is a lower or easier gear, but the rider must pedal faster to maintain the same road speed.",
+            "For a direct drive, ideal rear-wheel torque is crank torque times rear teeth divided by front teeth."
+          ]
+        },
+        {
+          "id": "K6",
+          "fact": "A freewheel or freehub engages to transmit forward pedalling drive but permits the wheel to overrun the chain drive when coasting, so the wheel can keep turning while the crank and chain are stationary. A freewheel is not a requirement of the fixed-gear variant.",
+          "core": false,
+          "appliesTo": ["conventional", "single-speed-freewheel", "hub-gear"],
+          "acceptedWordings": [
+            "A one-way clutch allows coasting without turning the pedals.",
+            "A threaded freewheel or a cassette on a freehub is acceptable; they place the ratcheting mechanism in different assemblies."
+          ]
+        },
+        {
+          "id": "K7",
+          "fact": "A rear derailleur changes the selected external ratio by guiding the moving chain between rear sprockets with different tooth counts. It changes which sprocket engages the chain; it does not change a sprocket's diameter or tooth count.",
+          "core": false,
+          "appliesTo": ["conventional"],
+          "acceptedWordings": [
+            "The derailleur shifts the chain onto another rear cog.",
+            "An internally geared hub can change ratio internally instead; a derailleur is not required for that variant."
+          ]
+        },
+        {
+          "id": "K8",
+          "fact": "Effective chainline concerns the relative lateral positions of the front and rear sprockets. A derailleur drivetrain need not keep every selected front and rear sprocket exactly coplanar; some lateral chain angle is compatible with correct operation. Do not treat all such angles as an impossible connection.",
+          "core": false,
+          "appliesTo": ["all"],
+          "acceptedWordings": [
+            "Front-to-rear alignment matters, but a derailleur chain can run at a lateral angle.",
+            "A straight chainline for a single-speed or fixed-gear example is acceptable without claiming that every derailleur combination is straight."
+          ]
+        },
+        {
+          "id": "K9",
+          "fact": "A fixed-gear bicycle has no freewheel between the rear sprocket and wheel. With its chain engaged, rear-wheel rotation requires crank rotation, so it cannot coast with stationary pedals.",
+          "core": false,
+          "appliesTo": ["fixed-gear"],
+          "acceptedWordings": [
+            "Fixed gear means the wheel and pedals remain coupled, not merely that the bicycle has one selectable ratio.",
+            "Single-speed does not by itself mean fixed gear."
+          ]
+        }
+      ],
+      "mechanismChecks": [
+        {
+          "id": "M1",
+          "kind": "parts",
+          "pass": "The crank and chainring, chain, selected rear sprocket, and rear wheel are present and recognisable. For conventional, the rear derailleur is also recognisable; for hub-gear, the rear hub is recognisable. Do not require a derailleur for the other accepted variants, or a freewheel for fixed-gear. Text naming a part without drawing it is NOT SHOWN."
+        },
+        {
+          "id": "M2",
+          "kind": "connections",
+          "pass": "The crank drives the chainring, and a continuous chain engages the chainring and selected rear sprocket in a settled gear. The rear sprocket drives the wheel through an engaged freewheel/freehub or internal hub drive, or through the fixed coupling for fixed-gear. Conventional includes a guided chain path through the rear derailleur. An internal hub need not be cut open to prove hidden connections. A correctly shown shift is not a broken connection merely because engagement changes during the shift."
+        },
+        {
+          "id": "M3",
+          "kind": "direction",
+          "pass": "During forward pedalling, the uncrossed chain makes the chainring and rear sprocket rotate in the same sense when viewed from the same side, and the driven wheel turns forward. The upper run travels from the rear sprocket toward the front chainring; the lower run returns toward the rear. If coasting is shown, an accepted freewheel configuration may keep the wheel turning with stationary crank and chain, but fixed-gear may not. Frame and axle stay fixed if shown. Judge direction only with resolved features within the rubric's sampling limit; motion that exceeds that limit is CANNOT JUDGE, not FAIL."
+        },
+        {
+          "id": "M4",
+          "kind": "ratio or timing",
+          "pass": "Over complete turns with drive engaged, rear sprocket turns per crank turn follow R = Nf / Nr, and wheel turns follow R for direct drive or R times h for hub-gear. Where alternative sprocket sizes are compared at fixed chainring and hub setting, a larger rear sprocket gives less wheel speed at the same cadence, or requires greater cadence at the same wheel speed. Stated rollout and ideal torque values agree with K4 and K5. Apply the 10 percent measurement tolerance only to resolved teeth, turns or time; otherwise use the rubric's sign-and-order rule. Torque magnitude is NOT SHOWN without readable values or calibrated graphics. Exclude that invisible clause when visible ratio clauses can be judged. Missing motion is NOT SHOWN; unresolved or undersampled moving ratios are CANNOT JUDGE."
+        },
+        {
+          "id": "M5",
+          "kind": "geometry",
+          "pass": "The chain is a continuous articulated loop: links keep their length, bend at joints around sprockets, and do not visibly pass through solid teeth or other parts. Chain and tooth spacing are compatible where resolved. Sprockets and wheel have physical support, not floating drive connections. Allow the lateral chain angles used by a derailleur; do not demand perfect coplanarity in every gear. Do not infer a collision from a two-dimensional crossing or a disconnection from a hidden connection."
+        }
+      ]
+    }
+  ]
+}

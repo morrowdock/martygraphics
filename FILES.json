@@ -1414,6 +1414,18 @@
       "sha256": "5ba74eb24d23c500c46e9deb10904da665e9df8ca330f6d346452a30dd524891"
     },
     {
+      "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.FACTCHECK.md",
+      "sha256": "59924f1e31eb1dd732007652965e4ea73ae362ad57b21155b67e47a69cfc29d0"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.SOURCES.md",
+      "sha256": "218b296d0d881508b63ef367b001f23d923615ddca6c748d1b4950ae2bf43642"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.grader.json",
+      "sha256": "b912ca539769b424494c2c6cc3cea3f4c25bad52cef645d0e4742f0127036ab0"
+    },
+    {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
       "sha256": "5d80fcf705d004e57b37b36358dbcf52fc34bf7a4ed479546e0a5d2ecd8f8828"
     },
