@@ -192,7 +192,7 @@ class PipelineTest(PipelineFixture):
         base = runner.RecordedAdapter(entries(doc))
         opens = []
         class Audit:
-            def open(inner, grader, kind, packet):
+            def open(inner, grader, kind, packet, *, session_id):
                 record = json.loads((out / "RECORD.json").read_text())
                 entry = record["calls"][-1]
                 self.assertEqual(entry["kind"], kind)
@@ -207,7 +207,7 @@ class PipelineTest(PipelineFixture):
                 self.assertFalse(any(p.name in ("PRIVATE.json", "RECORD.json", "video.mp4") for p in files))
                 self.assertEqual(list(packet.parent.iterdir()), [packet])
                 opens.append((grader, kind))
-                return base.open(grader, kind, packet)
+                return base.open(grader, kind, packet, session_id=session_id)
         runner.run(out, Audit(), Publication(), PROMPTS, self.clock)
         self.assertEqual(len(opens), 24)
 
@@ -287,14 +287,14 @@ class PipelineTest(PipelineFixture):
         with self.assertRaisesRegex(ValueError, "extra"): runner.load_pack(out)
 
     def test_unpublished_commitment_never_opens_session(self):
-        out, _ = self.build()
+        out, doc = self.build()
         pub, adapter = unittest.mock.Mock(), unittest.mock.Mock()
         pub.verify.side_effect = ValueError("not publicly committed")
         with self.assertRaisesRegex(ValueError, "publicly"):
             runner.run(out, adapter, pub, PROMPTS, self.clock)
         adapter.open.assert_not_called()
-        with self.assertRaisesRegex(ValueError, "already started"):
-            runner.run(out, adapter, Publication(), PROMPTS, self.clock)
+        self.assertFalse((out / "RUNNER-STARTED").exists())
+        runner.run(out, runner.RecordedAdapter(entries(doc)), Publication(), PROMPTS, self.clock)
 
     def test_clock_regression_stops_before_session(self):
         out, _ = self.build()
@@ -314,7 +314,7 @@ class PipelineTest(PipelineFixture):
         self.assertFalse((out / "BLINDING-SEED.txt").exists())
         adapter.open.assert_called_once()
         adapter.open.return_value.close.assert_called_once()
-        with self.assertRaisesRegex(ValueError, "already started"):
+        with self.assertRaisesRegex(ValueError, "uncertain request"):
             runner.run(out, adapter, Publication(), PROMPTS, self.clock)
 
 
@@ -471,9 +471,9 @@ class RefusalTest(PipelineFixture):
         guess_opened = []
         clock = self.clock
         class Audit:
-            def open(inner, g, kind, packet):
+            def open(inner, g, kind, packet, *, session_id):
                 if kind == "guess": guess_opened.append(1)
-                handle = base.open(g, kind, packet)
+                handle = base.open(g, kind, packet, session_id=session_id)
                 original_close = handle.close
                 def close():
                     original_close()
@@ -590,9 +590,9 @@ class MediaBoundaryTest(unittest.TestCase):
 
     def test_recorded_adapter_wrong_identity_and_reply_token(self):
         adapter = runner.RecordedAdapter([{"grader": "G1", "kind": "score", "token": "known", "replies": ["{}"]}])
-        with self.assertRaisesRegex(ValueError, "grader and kind"): adapter.open("G2", "score", Path("unused"))
+        with self.assertRaisesRegex(ValueError, "grader and kind"): adapter.open("G2", "score", Path("unused"), session_id=runner.session_key("G1", "score", "known", 1))
         adapter = runner.RecordedAdapter([{"grader": "G1", "kind": "score", "token": "known", "replies": ["{}"]}])
-        handle = adapter.open("G1", "score", Path("unused"))
+        handle = adapter.open("G1", "score", Path("unused"), session_id=runner.session_key("G1", "score", "known", 1))
         with self.assertRaisesRegex(ValueError, "token mismatch"): handle.reply("wrong token")
 
 class AdditionalRefusalTest(PipelineFixture):
@@ -600,8 +600,8 @@ class AdditionalRefusalTest(PipelineFixture):
         out, doc = self.build()
         base = runner.RecordedAdapter(entries(doc))
         class Change:
-            def open(inner, g, kind, packet):
-                handle = base.open(g, kind, packet)
+            def open(inner, g, kind, packet, *, session_id):
+                handle = base.open(g, kind, packet, session_id=session_id)
                 # Alter every staged packet after the first copied session starts.
                 for path in (out / "packets").rglob("TEXT.txt"):
                     path.write_text("changed")
@@ -656,8 +656,8 @@ class RecordGuardTest(PipelineFixture):
         base = runner.RecordedAdapter(entries(doc))
         clock = self.clock
         class Backwards:
-            def open(inner, g, kind, packet):
-                handle = base.open(g, kind, packet)
+            def open(inner, g, kind, packet, *, session_id):
+                handle = base.open(g, kind, packet, session_id=session_id)
                 original = handle.reply
                 def reply(message):
                     raw = original(message)

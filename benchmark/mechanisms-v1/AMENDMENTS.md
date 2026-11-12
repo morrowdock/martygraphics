@@ -217,8 +217,22 @@ settings, not an alternate OCR implementation or encoder.
 - The public-branch observation time is used as a conservative publication-time
   upper bound in `commitmentPushedUTC`. The driver fetches and checks the actual
   public commitment before opening any session. It does not assert that Git
-  supplied a server push timestamp. Failure or restart after a session starts
-  needs review; automatic recovery is deliberately refused.
+  supplied a server push timestamp. The claim is created only after verification
+  succeeds. Failed verification permits retry without an attempt.
+- **P2 recovery correction (2026-11-12; proposed, review pending):** the driver
+  journals session preparation, opening, request intent, exact reply bytes and
+  receipt time. It resumes known attempts through `rubric_form.next_step`,
+  reattaches the same session for a fix-up, and reconciles durable receipts into
+  `RECORD.json` without changing their `receivedUTC`. Publication, prompt and
+  pack bindings, the prior timestamp floor, and A-13's preference-before-guess
+  gate survive restart. Completed runs are idempotent. An interrupted open or
+  request with no durable reply is uncertain and needs operator evidence; it
+  is never resent automatically. An OS lock prevents concurrent drivers. This
+  corrects the restart refusal in PR #72 head
+  `34463c556accac9b6bdd39697567cd7732f1f062`; scoring arithmetic is unchanged.
+  New synthetic interruption coverage is in `harness/tests/test_runner_recovery.py`.
+  Equality with an uninterrupted record is tested with matching event times;
+  real downtime can advance later timestamps, never the stored receipt time.
 
 *Effect and limits:* the order and record plumbing do not change registered
 scoring arithmetic. OCR, masking, image sampling and session ordering can affect

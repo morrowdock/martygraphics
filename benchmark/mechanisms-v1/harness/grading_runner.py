@@ -6,6 +6,8 @@ It never receives the seed, mapping, run id, other replies or operator directory
 Production model adapters are deliberately not included. See PACKING.md.
 """
 import argparse
+import fcntl
+import hashlib
 from datetime import datetime, timezone
 import json
 import os
@@ -29,30 +31,51 @@ class Session(Protocol):
 
 
 class Adapter(Protocol):
-    def open(self, grader: str, kind: str, packet: Path) -> Session:
-        """Fresh isolated session. No previous conversation, network, or other files."""
+    def open(self, grader: str, kind: str, packet: Path, *, session_id: str) -> Session:
+        """Open and durably bind a fresh isolated session to this opaque id."""
+        ...
+
+    def resume(self, grader: str, kind: str, packet: Path, *, session_id: str,
+               received: int) -> Session:
+        """Reattach the SAME session; never resend prompts or create a replacement.
+
+        received is the number of durable replies. Fail if the adapter cannot
+        establish this exact conversation and reply count. No model call here.
+        """
         ...
 
 
-class RecordedAdapter:
-    """Replay bytes only, in requested order. No processes, models or network.
+def session_key(grader, kind, token, number):
+    return hashlib.sha256(f"{grader}:{kind}:{token}:{number}".encode()).hexdigest()
 
-    Entries are {grader, kind, token, replies: [text, ...]}. Each entry is one
-    session; a second reply is read only when the validator asks for a fix-up.
+
+class RecordedAdapter:
+    """Offline replay indexed by opaque session id, including process restarts.
+
+    Entries are {grader, kind, token, replies: [text, ...]}. Supply the same full
+    file on resume. No processes, models or network; resume skips durable replies.
     """
     def __init__(self, entries):
-        self.entries = iter(entries)
+        self.entries = {}
         self.messages = []
+        counts = {}
+        for entry in entries:
+            key = entry["grader"], entry["kind"], entry["token"]
+            counts[key] = counts.get(key, 0) + 1
+            self.entries[session_key(*key, counts[key])] = entry
 
-    def open(self, grader, kind, packet):
-        entry = next(self.entries)
+    def open(self, grader, kind, packet, *, session_id):
+        return self.resume(grader, kind, packet, session_id=session_id, received=0)
+
+    def resume(self, grader, kind, packet, *, session_id, received):
+        entry = self.entries[session_id]
         if (entry["grader"], entry["kind"]) != (grader, kind):
             raise ValueError("recorded session does not match requested grader and kind")
-        replies = iter(entry["replies"])
+        replies = iter(entry["replies"][received:])
         messages = self.messages
         class Replay:
             def reply(self, message):
-                if not messages or not message.startswith("The reply is invalid"):
+                if not message.startswith("The reply is invalid"):
                     if kind != "guess" and entry["token"] not in message:
                         raise ValueError("recorded session token mismatch")
                 messages.append(message)
@@ -99,30 +122,45 @@ class PublicCommitment:
                     "branch": self.branch, "path": path, "commitment": commitment}
 
 
-def durable_json(path, doc):
-    """Atomic replace plus fsync file and directory, before any dependent call."""
-    temporary = path.with_suffix(".tmp")
-    with temporary.open("x", encoding="utf-8") as f:
-        json.dump(doc, f, indent=2, ensure_ascii=False)
-        f.write("\n")
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(temporary, path)
-    fd = os.open(path.parent, os.O_RDONLY)
+def sync_directory(path):
+    fd = os.open(path, os.O_RDONLY)
     try:
         os.fsync(fd)
     finally:
         os.close(fd)
 
 
-def load_pack(root):
+def durable_bytes(path, raw):
+    """Atomic replace plus fsync. Abandoned temp files cannot block recovery."""
+    fd, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(raw)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temporary, path)
+        sync_directory(path.parent)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def json_bytes(doc):
+    return (json.dumps(doc, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+
+
+def durable_json(path, doc):
+    durable_bytes(path, json_bytes(doc))
+
+
+def load_pack(root, *, allow_released=False):
     doc = json.loads((root / "PRIVATE.json").read_text(encoding="utf-8"))
     if doc.get("kind") != "mechanisms-v1.pack/1":
         raise ValueError("not a completed pack")
     seed = blinding.parse_seed(doc["seed"])
     if (root / "BLINDING-COMMITMENT.txt").read_text().strip() != blinding.commitment(seed):
         raise ValueError("commitment mismatch")
-    if (root / "BLINDING-SEED.txt").exists():
+    if (root / "BLINDING-SEED.txt").exists() and not allow_released:
         raise ValueError("seed already released; cannot grade again")
     questions = pack.check_questions(doc["questions"])
     if doc.get("scope") not in ("primary", "dry-run"):
@@ -180,30 +218,93 @@ def load_pack(root):
     return doc, seed, questions, calls, packed
 
 
-def run(root, adapter, publication, prompts, clock=pack.utc):
-    """Single-use run. Fail closed on IO, adapter or clock errors; never auto-rerun.
+def run(root, adapter, publication, prompts, clock=pack.utc, *, _checkpoint=lambda stage: None):
+    """Resume durable attempts; stop on uncertain adapter calls, never resend them.
 
-    A crash leaves RECORD.json incomplete for audit. Restart is refused because a
-    session may already have received a prompt. Recovery requires separate review.
+    RUNNER-STATE.json is the write-ahead state; RECORD.json remains the scoring
+    format. A receipt atomically binds exact reply bytes to their receivedUTC.
+    The private checkpoint hook is only for synthetic interruption tests.
     """
     root = Path(root).resolve()
-    doc, seed, questions, calls, packed = load_pack(root)
+    doc, seed, questions, calls, packed = load_pack(root, allow_released=True)
     if set(prompts) != {"score", "preference", "guess"}:
         raise ValueError("all three prompts are required")
-    if (root / "RECORD.json").exists() or (root / "RUNNER-STARTED").exists():
-        raise ValueError("grading already started; no automatic resume or rerun")
-    # Exclusive claim is retained on failures, including a failed publication check.
-    with (root / "RUNNER-STARTED").open("x") as f:
-        f.write("single-use grading claim\n")
-    proof = publication.verify(blinding.commitment(seed), packed, clock)
+    claim = root / "RUNNER-STARTED"
+    proof_path = root / "PUBLICATION.json"
+    # Failed verification creates no claim. A stored proof is reused, never
+    # replaced with a later observation that would postdate existing attempts.
+    if claim.exists() and proof_path.exists():
+        proof = json.loads(proof_path.read_text())
+    else:
+        proof = publication.verify(blinding.commitment(seed), packed, clock)
     pushed = score.parse_time(proof["observedUTC"], "publication observation")
     if pushed < packed or proof["commitment"] != blinding.commitment(seed):
         raise ValueError("invalid publication proof")
-    durable_json(root / "PUBLICATION.json", proof)
-    record = {"kind": "mechanisms-v1.record/1", "commitmentPushedUTC": pushed.isoformat(),
-              "withdrawnModels": [], "humanGraders": [], "calls": []}
-    durable_json(root / "RECORD.json", record)
+    _checkpoint("before-claim")
+    # flock releases on process death; the durable claim is not a stale mutex.
+    with claim.open("a+b") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise ValueError("grading is active in another process") from error
+        # Re-read under the lock in case another starter has just finished.
+        if proof_path.exists():
+            proof = json.loads(proof_path.read_text())
+            pushed = score.parse_time(proof["observedUTC"], "publication observation")
+            if pushed < packed or proof["commitment"] != blinding.commitment(seed):
+                raise ValueError("invalid publication proof")
+        else:
+            durable_json(proof_path, proof)
+        sync_directory(root)
+        _checkpoint("after-claim")
+        return _run_locked(root, adapter, prompts, clock, doc, seed, questions,
+                           calls, pushed, _checkpoint)
+
+
+def _run_locked(root, adapter, prompts, clock, doc, seed, questions, calls, pushed, checkpoint):
+    state_path = root / "RUNNER-STATE.json"
+    record_path = root / "RECORD.json"
+    binding = {"pack": pack.digest(root / "PRIVATE.json"),
+               "prompts": hashlib.sha256(json_bytes(prompts)).hexdigest(),
+               "publication": pack.digest(root / "PUBLICATION.json")}
+    if state_path.exists():
+        state = json.loads(state_path.read_text())
+        if state["binding"] != binding:
+            raise ValueError("pack, prompts or publication changed across resume")
+    else:
+        if record_path.exists() or (root / "replies").exists() or (root / "BLINDING-SEED.txt").exists():
+            raise ValueError("legacy or unjournaled grading requires operator recovery")
+        state = {"binding": binding, "record": {
+            "kind": "mechanisms-v1.record/1", "commitmentPushedUTC": pushed.isoformat(),
+            "withdrawnModels": [], "humanGraders": [], "calls": []},
+            "active": None, "completed": False, "previousRecordHash": None}
+        durable_json(state_path, state)
+    record = state["record"]
+    if record["commitmentPushedUTC"] != pushed.isoformat():
+        raise ValueError("record publication time differs from proof")
+
+    def mirror():
+        expected = hashlib.sha256(json_bytes(record)).hexdigest()
+        if record_path.exists() and pack.digest(record_path) not in (expected, state["previousRecordHash"]):
+            raise ValueError("RECORD.json differs from journal; operator recovery required")
+        durable_json(record_path, record)
+
+    def save():
+        state["previousRecordHash"] = pack.digest(record_path) if record_path.exists() else None
+        durable_json(state_path, state)
+        mirror()
+
+    mirror()
     previous = pushed
+    # Check all restored times, including accepted preferences, before any call.
+    for entry in record["calls"]:
+        for session in entry["sessions"]:
+            for stamp in [session["startedUTC"]] + [r["receivedUTC"] for r in session["replies"]]:
+                now = score.parse_time(stamp, "restored grading timestamp")
+                if now < previous:
+                    raise ValueError("restored grading clock moved backwards")
+                previous = now
+
     def tick():
         nonlocal previous
         now = clock()
@@ -212,17 +313,98 @@ def run(root, adapter, publication, prompts, clock=pack.utc):
         previous = now
         return now.isoformat()
 
+    def check_clock():
+        nonlocal previous
+        now = clock()
+        if now.tzinfo is None or now < previous:
+            raise ValueError("clock moved backwards or has no timezone")
+        previous = now
+
+    def reconcile():
+        nonlocal previous
+        active = state["active"]
+        if active is None or active["phase"] != "sending":
+            return
+        receipt_path = root / active["file"].replace(".txt", ".receipt.json")
+        if not receipt_path.exists():
+            raise ValueError("uncertain request without durable reply; operator recovery required")
+        receipt = json.loads(receipt_path.read_text())
+        if receipt["sessionId"] != active["sessionId"] or receipt["file"] != active["file"]:
+            raise ValueError("reply receipt identity mismatch; operator recovery required")
+        raw = bytes.fromhex(receipt["rawHex"])
+        received = score.parse_time(receipt["receivedUTC"], "reply receipt")
+        if received < previous:
+            raise ValueError("reply receipt predates session or stored preference")
+        path = root / active["file"]
+        if path.exists() and path.read_bytes() != raw:
+            raise ValueError("saved reply differs from receipt; operator recovery required")
+        durable_bytes(path, raw)
+        checkpoint("after-reply-file")
+        session = record["calls"][active["call"]]["sessions"][-1]
+        session["replies"].append({"file": active["file"], "receivedUTC": receipt["receivedUTC"]})
+        previous = received
+        active["phase"] = "ready"
+        save()
+
+    reconcile()
+    if state["active"] and state["active"]["phase"] == "opening":
+        raise ValueError("uncertain session open; operator recovery required")
+    if (root / "BLINDING-SEED.txt").exists() and not state["completed"]:
+        raise ValueError("seed released before completed journal")
+    cursor = 0
+
     def drive(grader, call, kind):
-        entry = {"grader": grader, "kind": kind, "id": call["id"], "sessions": []}
-        record["calls"].append(entry)
+        nonlocal cursor
+        index = cursor
+        cursor += 1
+        identity = {"grader": grader, "kind": kind, "id": call["id"]}
+        if index < len(record["calls"]):
+            entry = record["calls"][index]
+            if {k: entry[k] for k in identity} != identity:
+                raise ValueError("record call order differs from prescribed order")
+        else:
+            entry = dict(identity, sessions=[])
+            record["calls"].append(entry)
         validity, problems = [], []
+        for number, session in enumerate(entry["sessions"], 1):
+            results = []
+            for attempt, reply in enumerate(session["replies"], 1):
+                expected_file = f"replies/{grader}/{kind}/{call['id']}/{number}-{attempt}.txt"
+                if reply["file"] != expected_file:
+                    raise ValueError("record reply path differs from prescribed attempt")
+                raw = (root / expected_file).read_bytes()
+                receipt = json.loads((root / expected_file).with_suffix(".receipt.json").read_text())
+                if (receipt["sessionId"] != session_key(grader, kind, call["token"], number) or
+                        receipt["file"] != expected_file or receipt["receivedUTC"] != reply["receivedUTC"] or
+                        bytes.fromhex(receipt["rawHex"]) != raw):
+                    raise ValueError("recorded reply differs from receipt; operator recovery required")
+                _, problems = form.check_text(kind, raw,
+                                              questions[call["question"]], call["token"])
+                results.append(not problems)
+            if results:
+                validity.append(results)
         while True:
             step = form.next_step(validity)
             if step in ("accept", "missing"):
                 return step
-            if step != "new-session":
+            if state["completed"]:
+                raise ValueError("completed journal contains unfinished attempts")
+            if step not in ("new-session", "fix-up") or (step == "fix-up" and not validity):
                 raise ValueError("unexpected state before opening session")
-            # Only packet bytes enter this new directory; no symlinks, seed or grades.
+            active = state["active"]
+            pending_empty = (active and active["call"] == index and
+                             not entry["sessions"][-1]["replies"])
+            if step == "new-session" and not pending_empty:
+                session = {"startedUTC": tick(), "replies": []}
+                entry["sessions"].append(session)
+                state["active"] = {"call": index, "phase": "prepared", "sessionId": session_key(
+                    grader, kind, call["token"], len(entry["sessions"]))}
+                save()
+            else:
+                session = entry["sessions"][-1]
+            active = state["active"]
+            if not active or active["call"] != index:
+                raise ValueError("session journal does not match pending call")
             with tempfile.TemporaryDirectory(prefix="grader-") as temp:
                 packet = Path(temp) / "packet"
                 source = root / "packets" / call["token"]
@@ -237,55 +419,78 @@ def run(root, adapter, publication, prompts, clock=pack.utc):
                         os.utime(p, (0, 0))
                 for p in [packet] + [p for p in packet.rglob("*") if p.is_dir()]:
                     os.utime(p, (0, 0))
-                session = {"startedUTC": tick(), "replies": []}
-                entry["sessions"].append(session)
-                # Persist start BEFORE adapter.open (which might itself start a model).
-                durable_json(root / "RECORD.json", record)
-                handle = adapter.open(grader, kind, packet)
-                validity.append([])
+                check_clock()
+                if active["phase"] == "prepared":
+                    checkpoint("before-open")
+                    active["phase"] = "opening"
+                    save()
+                    handle = adapter.open(grader, kind, packet, session_id=active["sessionId"])
+                    active["phase"] = "ready"
+                    save()
+                    validity.append([])
+                else:
+                    handle = adapter.resume(grader, kind, packet, session_id=active["sessionId"],
+                                            received=len(session["replies"]))
+                    if not session["replies"]:
+                        validity.append([])
                 try:
-                    message = prompts[kind].replace("{token}", call["token"])
                     while True:
-                        raw = handle.reply(message)
-                        if not isinstance(raw, bytes):
-                            raise ValueError("adapter must return exact reply bytes")
+                        message = ("The reply is invalid:\n" + "\n".join(problems)) if session["replies"] else \
+                                  prompts[kind].replace("{token}", call["token"])
                         relative = Path("replies") / grader / kind / call["id"] / ("%d-%d.txt" % (
-                            len(validity), len(validity[-1]) + 1))
+                            len(entry["sessions"]), len(session["replies"]) + 1))
                         path = root / relative
                         path.parent.mkdir(parents=True, exist_ok=True)
-                        with path.open("xb") as f:
-                            f.write(raw); f.flush(); os.fsync(f.fileno())
                         for parent in path.parents:
                             if not parent.is_relative_to(root):
                                 break
-                            directory = os.open(parent, os.O_RDONLY)
-                            try:
-                                os.fsync(directory)
-                            finally:
-                                os.close(directory)
-                        # A clock failure still leaves the exact raw reply for audit.
-                        received = tick()
-                        session["replies"].append({"file": relative.as_posix(), "receivedUTC": received})
-                        # The exact raw reply AND its record are durable before acceptance.
-                        durable_json(root / "RECORD.json", record)
+                            sync_directory(parent)
+                        check_clock()
+                        checkpoint("before-send")
+                        active.update(phase="sending", file=relative.as_posix())
+                        save()
+                        raw = handle.reply(message)
+                        checkpoint("after-send")
+                        if not isinstance(raw, bytes):
+                            raise ValueError("adapter must return exact reply bytes")
+                        # Timestamp and bytes share ONE atomic receipt. Never infer
+                        # receipt time from mtime or use the later recovery clock.
+                        try:
+                            received = tick()
+                        except ValueError:
+                            # Keep bytes for audit, but do not invent a valid
+                            # timestamp. This remains an uncertain request.
+                            durable_bytes(path, raw)
+                            raise
+                        receipt = {"sessionId": active["sessionId"], "file": active["file"],
+                                   "receivedUTC": received, "rawHex": raw.hex()}
+                        durable_json(path.with_suffix(".receipt.json"), receipt)
+                        checkpoint("after-receipt")
+                        reconcile()
+                        checkpoint("after-record")
                         _, problems = form.check_text(kind, raw, questions[call["question"]], call["token"])
                         validity[-1].append(not problems)
-                        step = form.next_step(validity)  # every reply goes through the shared state machine
+                        step = form.next_step(validity)
                         if step != "fix-up":
                             break
-                        message = "The reply is invalid:\n" + "\n".join(problems)
                 finally:
                     handle.close()
 
     for grader in score.GRADERS:
         for call in pack.call_order(seed, grader, calls):
-            state = drive(grader, call, call["kind"])
-            # No public 'guess' entry point. Accepted preference has been fsynced.
-            if call["kind"] == "preference" and state == "accept":
+            result = drive(grader, call, call["kind"])
+            if call["kind"] == "preference" and result == "accept":
                 drive(grader, call, "guess")
-    # Reveal locally only after every required call completed or exhausted.
-    with (root / "BLINDING-SEED.txt").open("x", encoding="ascii") as f:
-        f.write(seed.hex() + "\n"); f.flush(); os.fsync(f.fileno())
+    if cursor != len(record["calls"]):
+        raise ValueError("extra calls in grading record")
+    state.update(completed=True, active=None)
+    save()
+    # Completion is durable before release, so a crash here can finish release
+    # without opening a session. A completed invocation is an idempotent read.
+    released = root / "BLINDING-SEED.txt"
+    if released.exists() and released.read_text().strip() != seed.hex():
+        raise ValueError("released seed differs from pack")
+    durable_bytes(released, (seed.hex() + "\n").encode("ascii"))
     return record
 
 
@@ -305,7 +510,7 @@ def main(argv=None):
             parser.error("registered prompt hash mismatch")
         prompts[kind] = path.read_text(encoding="utf-8")
     try:
-        doc, _, _, _, _ = load_pack(args.pack)
+        doc, _, _, _, _ = load_pack(args.pack, allow_released=True)
         run(args.pack, RecordedAdapter(json.loads(args.recorded.read_text())),
             PublicCommitment(args.public_branch, dry_run=doc["scope"] == "dry-run"), prompts)
     except (ValueError, OSError, subprocess.SubprocessError, StopIteration) as error:

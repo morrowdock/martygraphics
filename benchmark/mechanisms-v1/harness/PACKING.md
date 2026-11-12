@@ -129,8 +129,14 @@ as the registered partial-blinding design states.
 
 ## Session and publication gates
 
-A future live adapter must implement `Adapter.open(grader, kind, packet)` and
-return a fresh `Session` with `reply(message) -> bytes` and `close()`. Opening
+A future live adapter must implement `Adapter.open(grader, kind, packet, session_id=...)` and
+return a fresh `Session` with `reply(message) -> bytes` and `close()`. The opaque
+session id must durably identify that exact conversation. `close()` releases the
+local handle without deleting the conversation. `Adapter.resume(grader, kind,
+packet, session_id=..., received=...)` must reattach the same session and verify
+the durable reply count. It must not send a prompt or create a replacement.
+If that cannot be established, it must fail closed. The adapter receives only
+its own opaque id and reply count in addition to its packet. Opening
 must use the locked model/tool/settings in a fresh isolated session: packet
 files only, no web, tools other than reading those files, memory, custom
 instructions, other sessions or operator directories. The interface does not
@@ -155,10 +161,18 @@ The observation must follow generation and packing. No user-supplied
 a synthetic publication verifier; the CLI has no bypass flag.
 
 Before any adapter opens, the runner verifies the full design, mapping and
-packet hashes, takes an exclusive single-use claim, checks publication, and
-persists `RECORD.json`. A new session starts only after that check. Each raw
-reply is saved unchanged and fsynced, and the record is atomically replaced and
-fsynced. Every reply goes through the existing rubric validator and `next_step`:
+packet hashes, checks publication, then takes the `RUNNER-STARTED` claim and an
+OS exclusive lock. A failed publication check leaves no claim. The lock is
+released on process exit; a second driver cannot make calls concurrently.
+`PUBLICATION.json` is reused on restart, so later observation times cannot
+replace the proof that preceded the calls. `RUNNER-STATE.json` binds the pack,
+prompts and publication and journals each session and request before adapter IO.
+The runner persists `RECORD.json` before a session opens. Each reply's exact
+bytes (hex encoded) and original `receivedUTC` are saved in one atomic, fsynced
+`replies/.../*.receipt.json` file. Then the exact `.txt` bytes and record are
+written and fsynced. The state is written before the scoring record, so recovery
+can finish an interrupted record replacement. Saved files are checked against
+their receipts. Abandoned temporary files never count as durable replies. Every reply goes through the existing rubric validator and `next_step`:
 one parse-error fix-up in the same session, at most two new sessions, acceptance
 at the first valid reply, missing only after all six replies are invalid.
 The runner sends only the validator's errors as feedback.
@@ -169,10 +183,32 @@ exhausted preference gets no guess. Every session and reply timestamp must be
 nondecreasing; equal instants are permitted by A-13. A backwards clock stops
 continuation before another adapter call. Guesses use the same retry state machine.
 
-Adapter/IO failures stop the driver. It leaves all started sessions and received
-replies for audit, does not invent an invalid reply, does not release the seed,
-and refuses restart. This fail-closed crash policy needs operational review;
-there is no automatic recovery that could secretly repeat a model call. After
-all required calls finish or exhaust their attempts, the runner writes
+Adapter/IO failures stop the driver and retain evidence. Rerun the same command
+with the **same complete recorded-session file** to resume. The offline adapter
+indexes sessions and skips only their durable replies. A prepared session can
+open; an opened session can reattach; a reply receipt can be reconciled even if
+its `.txt` export or `RECORD.json` was not yet written. `next_step` selects the
+same-session fix-up, new session, acceptance or exhaustion from the saved bytes.
+No attempt is dropped or repeated. The timestamp floor includes every restored
+session and reply, including the preference before a guess. No clock regression
+can start or send another call. Completed invocations verify and return the
+record without opening any adapter. Completion is persisted before seed release,
+so interruption during release is also recoverable.
+
+An interrupted adapter open, or a request intent with **no complete durable
+receipt**, is uncertain. The runner stops with an operator-recovery error and
+never retries that call. Do not delete the claim, state, record or reply files
+to force a restart. Recovery needs an independent adapter audit: retain the
+exact session/request identity, bytes and real receipt time. If an exact reply
+and time were independently retained, a reviewed operator can restore its
+missing `.receipt.json` (`sessionId`, `file`, `receivedUTC`, `rawHex`) for the
+pending request; the runner checks its identity and time before reconciliation.
+Never invent a receipt time, substitute a new reply, or mark an unknown request
+as unstarted. Uncertain opening requires separate adapter-specific review; no
+generic bypass or live recovery tool is shipped. Clock failure after a reply
+keeps raw bytes for audit but leaves the request uncertain without a valid time.
+Legacy records without a journal require review rather than inferred attempts.
+
+After all required calls finish or exhaust their attempts, the runner writes
 `BLINDING-SEED.txt` locally. Publication still needs the operator's reviewed
 publication step. It never commits or pushes results.

@@ -1375,7 +1375,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
-      "sha256": "eeb96e02adea8dbd44f21c9f6b0a021b02d2e706bb040783abb8314b85fd1c6a"
+      "sha256": "a2faa1a809346ea97975c28678f19a164521e0bad95d42cc2debcffea8ee4b51"
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
@@ -1411,7 +1411,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
-      "sha256": "b2871e05988feb94423ed696151a43e7f1f5aa39a9fee0550ac7d44756e09192"
+      "sha256": "5ba74eb24d23c500c46e9deb10904da665e9df8ca330f6d346452a30dd524891"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
@@ -1419,7 +1419,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/PACKING.md",
-      "sha256": "b75febc61f58b432f83d0c41da61cc3bd7edf128e50008e2316df737fcd69603"
+      "sha256": "7e75c545787fed04a2144f9ad935e80a895a403e220c93d2c43ffa111d6a6259"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/README.md",
@@ -1435,7 +1435,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/grading_runner.py",
-      "sha256": "80d1fe99ebbeb6c1908cb78e5bbb0d207844392b34ed77c5f88e6b8b36d46851"
+      "sha256": "debdc1937feaf9adc36dd640f1a2dd7b24f2209422a4d4de8da7e7f8fb6670ee"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/native/media.swift",
@@ -1475,11 +1475,15 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_pack_runner.py",
-      "sha256": "96111f4530a5600a826a9e7b7f1ef99b1287b03408597855e1e268cffe07e275"
+      "sha256": "8ce412c0505e993ee0b2e5a48bd0914a6b34a7a0d84170e58080dabbbcb04303"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_rubric_form.py",
       "sha256": "ff1031decef76ef852d85a9b7d05e347494e8821eac764b1879449f747b48312"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_runner_recovery.py",
+      "sha256": "c0855f8fca4d2a440d0f191a5311be7dc908f3a85d1c1da72e21ae8e12c9f4c9"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_score.py",
