@@ -635,7 +635,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/LookTypeTests.swift",
-      "sha256": "4dc8f244092d67ce35ef26e00c9e9dc82423759a95a1798c04d46773ff0bccec"
+      "sha256": "8959e14ebbbc17585719f1dfe826ab1f1c059442f8df67e8603098797c15d606"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
@@ -1859,7 +1859,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "0ee6de9e117fe729b3bcc6768a157fda7c1d85934e8794982afd06edf6a55ca1"
+      "sha256": "bdf64e5a920b39d1d2eab5c613967a8046fe9723e524464140cf034a69edc002"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -2620,6 +2620,10 @@
     {
       "path": "docs/assets/visual-quality/round-0-contact-sheet.jpg",
       "sha256": "80eb69104bb32e724460ed28c7ae507ee17c86f2e1add9e057d6dd753e2dfe77"
+    },
+    {
+      "path": "docs/assets/visual-quality/type-contact-sheet.jpg",
+      "sha256": "693f6bd52b06fb6ae1ac767cf0926707b767b817dac91f4d8dcb3d256b6d451e"
     },
     {
       "path": "docs/fixtures/anchor-suggest/README.md",

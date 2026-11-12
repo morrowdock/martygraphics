@@ -2204,6 +2204,8 @@ levels on an iPad has not been measured yet.
 **Type, plates and bands.** `classic` draws the overlay and the bands as before. `studio` and `paper` draw them from
 the look's colours (`MGSolidLook.ink`, `plate`, `casing`, `surface`):
 
+![Before and after: type, plates and bands](assets/visual-quality/type-contact-sheet.jpg)
+
 - **No black bars.** The model is clipped to the safe window, so a band holds only the look's own backdrop (or an
   explainer's frame), and the title, the legend line and the caption sit on it in the look's ink. A hairline marks
   the caption band. Tests measure at least 4.5:1 for the title, the legend line, the caption and its step number

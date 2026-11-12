@@ -74,19 +74,14 @@ final class LookTypeTests: XCTestCase {
         XCTAssertTrue(rows(numbered).contains(true))
     }
 
-    /// The label overlay's drawn metrics are multiples of the font size, so a larger label size scales them together.
-    func testOverlayMetricsScaleWithTheFont() {
-        // Checked through the public drawer: a doubled frame height (a doubled font, within the 11...20 px range's
-        // slope) draws a plate edge and a leader about twice as wide; here only that drawing does not fail on any
-        // look at the smallest and largest frames.
+    /// The legend draws in every look at the smallest and the largest frames (the public drawer the stills use).
+    func testTheLegendDrawsInEveryLookAtEverySize() throws {
+        let doc = try MGSolidParser.document(data: Data(#"{"v":2,"kind":"assembly","title":"T","parts":[{"id":"p","shape":{"box":{"size":[10,10,10]}}}]}"#.utf8)).get()
         for look in [MGSolidLook.classic, .studio, .paper] {
             for (w, h) in [(320, 200), (1280, 800), (3840, 2160), (800, 2160)] {
                 let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                                     bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
-                let f = MGAnnotationLayout.fontSize(height: Double(h))
-                let frame = MGAnnotationFrame(width: Double(w), height: Double(h), fontSize: f, placement: [], anchors: [], refusal: nil)
-                let doc = try? MGSolidParser.document(data: Data(#"{"v":2,"kind":"assembly","title":"T","parts":[{"id":"p","shape":{"box":{"size":[10,10,10]}}}]}"#.utf8)).get()
-                if let doc { MGSolidOverlay.draw(frame, document: doc, legend: true, in: ctx, width: w, height: h, look: look) }
+                MGSolidOverlay.drawLegend(document: doc, in: ctx, width: w, height: h, look: look)
                 XCTAssertNotNil(ctx.makeImage(), "\(look.name) \(w)x\(h)")
             }
         }
