@@ -1855,7 +1855,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "d91cc1e6d00b316aee14678f6bfc925a0276d4dfb32792a284aa6ff6a8bbbd97"
+      "sha256": "6888339852039b614f52ade355bd5cb4f304712960b511de3916796d82676b9b"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -2604,6 +2604,10 @@
     {
       "path": "docs/assets/turbofan/turbofan-loop.gif",
       "sha256": "12d9f93fec8cd20a950ff3a5e4b91b9a81a82ca60fe7de45914d28674aa7c994"
+    },
+    {
+      "path": "docs/assets/visual-quality/looks-contact-sheet.jpg",
+      "sha256": "308a5c50563f559b7ae863d329abe8b741fa7e0741696d7f96209106631777c4"
     },
     {
       "path": "docs/assets/visual-quality/round-0-contact-sheet.jpg",

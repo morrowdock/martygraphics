@@ -2142,6 +2142,10 @@ Two optional knobs change how the built-in renderer draws a solid. Both change p
 camera, framing, check or reason, and no byte of a check report, a `snapshot.json` or a decided `manifest.json`
 (a test renders one model with every look and compares them). The design is in [VISUAL-STYLE.md](VISUAL-STYLE.md).
 
+![The classic, studio and paper looks on five documents](assets/visual-quality/looks-contact-sheet.jpg)
+
+The same five documents in each look (Showcase run 43129086157, hosted macOS, 1280 × 800 stills).
+
 **Look** (`MGSolidLook`): the backdrop, exposure and tone, how full the studio environment is, and how strong the
 shadows are.
 
