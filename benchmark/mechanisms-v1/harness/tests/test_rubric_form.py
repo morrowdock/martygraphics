@@ -88,9 +88,16 @@ class ScoreFormTest(unittest.TestCase):
         self.assertEqual(problems(fail("t=6.0 s: the gears are on different shafts")), [])
         self.assertEqual(problems(fail("still-3 shows a gap")), [])
         # A location alone is not evidence: rule 5 asks for the place AND one sentence (re-check 2026-11-12).
-        for bare in ("6.0 s", "still-3", "t=6.0 s", "  12 s  ", "still 2, 4.5 s"):
+        for bare in ("6.0 s", "still-3", "t=6.0 s", "  12 s  ", "still 2, 4.5 s",
+                     "still-3.png", "6.0 s bad", "see still-2.png", "frames/still-4.jpg 7 s"):
             with self.subTest(evidence=bare):
                 self.assertTrue(problems(fail(bare)))
+        # Any script: Devanagari combining marks stay inside a word; Han and kana count from three characters.
+        for sentence in ("6.0 s: गियर नहीं घूमता।", "6.0 s : l'engrenage ne tourne pas", "6.0 s：齿轮不转",
+                         "6.0 s: الترس لا يدور", "still-3：歯車が回らない", "still-3.png shows a gap",
+                         "6.0 s: gears slip"):
+            with self.subTest(evidence=sentence):
+                self.assertEqual(problems(fail(sentence)), [])
         self.assertTrue(problems(lambda r: r["mechanism"].update(M3="CANNOT JUDGE", evidence={})))
         self.assertEqual(problems(lambda r: r["mechanism"].update(M3="CANNOT JUDGE",
                                                                   evidence={"M3": "too fast"})), [])

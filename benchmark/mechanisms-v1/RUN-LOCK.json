@@ -9,19 +9,19 @@
     "commit": "pending: the main commit that merges the reviewed harness",
     "scoring": {
       "harness/score.py": "af39630cd50e7db95b19ee7f273a8cef2bc937fae565d368fca99aa53655218a",
-      "harness/rubric_form.py": "817dddb7c8c43a48622c54d2a9965f16b86f5284221272f45c923abc28c241ef",
+      "harness/rubric_form.py": "513f2c4199163b20978e7c6d04c5af54d0f9f4ff24bc9e57e6ec06c6cb78fb21",
       "harness/blinding.py": "3008a855e2fdd350da7137a273d83233eee01a1108c8925e72c11ae5d1bcc93d",
       "harness/agreement.py": "8dd676e135d12993fcf7e2e4170d8e91412d06e07f302ae1425e55d86000580d",
       "harness/tests/support.py": "9c34c95d8053878e1114a316c11c3393d62ec6c7b7b6097a1dd8b8d7cbc09f6c",
       "harness/tests/test_score.py": "c5ada1d555685e4765fbda390445abb3fd6dc0b0f07fc79994ea94a968f70870",
-      "harness/tests/test_rubric_form.py": "9de4aba9a341036c30fa68dcdcc4e5816564419eeb22a81ca07d293dda909dbc",
+      "harness/tests/test_rubric_form.py": "7af7ba1192e87f06dbe60ec8a54ed6f333638d41b45fee12ff70af6b4e2cb361",
       "harness/tests/test_blinding.py": "eacde1c4dccfaf80cb0bad46fa8788db7f035e47bc6e4f4dd317ff8e3590281b",
       "harness/tests/test_agreement.py": "35d944c4dd987ed00f6d8662a258f1465436a20ed31eac035971d4ae8a9daaa2",
       "harness/tests/test_end_to_end.py": "2ed0d3c57d48728233b5b69e06edc4b1c4651bacd8a56fc63eeae56c45721bf0"
     },
     "amendments": {
       "path": "AMENDMENTS.md",
-      "sha256": "4125b49dbf263c28a88709eed6aeb86dddbd303f32e4511376539f3799312b56"
+      "sha256": "84bdb0cf2e16667f3b3a727a1aad576d641da5d24d0668642e84538623c9c939"
     },
     "numpy": "2.5.4",
     "python": "pending: the exact version used for the result (3.11 or later; the result records it)"

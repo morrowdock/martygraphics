@@ -22,6 +22,7 @@ feature to follow"), so a CANNOT JUDGE needs a reason, not a time. Python standa
 
 import json
 import re
+import unicodedata
 
 CHECKS = ("M1", "M2", "M3", "M4", "M5")
 CANNOT_JUDGE_CHECKS = ("M3", "M4")
@@ -45,10 +46,35 @@ def _text(value):
     return isinstance(value, str) and value.strip() != ""
 
 
+# Words of evidence (rule 5) are counted after the still, time and file-name references are removed. A word is a
+# run of letters and combining marks (so Devanagari vowel signs do not split a word). Scripts that are written
+# without spaces between words (Han, kana, Thai, Lao, Khmer, Myanmar) count as a sentence from 3 such characters.
+FILE_REF = re.compile(r"\S*\.(?:png|jpe?g|webp|gif|tiff?|bmp|mp4|mov|webm|json|txt)\b", re.IGNORECASE)
+NO_SPACE_SCRIPTS = ("CJK", "HIRAGANA", "KATAKANA", "THAI", "LAO", "KHMER", "MYANMAR")
+
+
+def _words(text):
+    words, current, unspaced = [], "", 0
+    for char in text + " ":
+        category = unicodedata.category(char)
+        if category[0] == "L" or (category[0] == "M" and current):
+            current += char
+            if category[0] == "L" and unicodedata.name(char, "").startswith(NO_SPACE_SCRIPTS):
+                unspaced += 1
+        else:
+            if current:
+                words.append(current)
+            current = ""
+    return words, unspaced
+
+
 def _evidence(value):
-    """A still or time AND words beyond it (rule 5: "the still or the frame time and one sentence of evidence")."""
-    return _text(value) and WHERE.search(value) is not None and \
-        re.search(r"[^\W\d_]{3,}", WHERE.sub(" ", value)) is not None
+    """A still or time AND a sentence (rule 5: "the still or the frame time and one sentence of evidence"):
+    at least two words, or three characters of a script written without spaces, beyond the references."""
+    if not (_text(value) and WHERE.search(value)):
+        return False
+    words, unspaced = _words(WHERE.sub(" ", FILE_REF.sub(" ", value)))
+    return len(words) >= 2 or unspaced >= 3
 
 
 def parse(text):
