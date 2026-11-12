@@ -198,6 +198,7 @@ public final class MGExplainerController: ObservableObject {
     public func setSolidSize(_ size: CGSize) {
         guard size.width > 0, size.height > 0, size != solidSize else { return }
         solidSize = size
+        renderer?.liveBackdropSize = size
         setSolidAspect(Double(size.width / size.height))
         applyPose()
     }
@@ -282,6 +283,8 @@ public final class MGExplainerController: ObservableObject {
             let interval = signposter.beginInterval("solidCompile", id: signposter.makeSignpostID())
             let r = MGSolidRenderer(document: doc, options: MGStudioOptions(quality: solidQuality), look: solidLook)
             r.emphasis = .strong
+            // The pane is a live view: the look's backdrop is the scene background (no compositing step).
+            if solidSize.width > 0 { r.liveBackdropSize = solidSize }
             renderer = r
             signposter.endInterval("solidCompile", interval)
             shownSolid = src; shownFingerprint = doc.checkedFingerprint; fresh = true

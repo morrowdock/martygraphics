@@ -835,7 +835,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsExplainerView.swift",
-      "sha256": "6763d4075e91c47e1f2e96002bf9278b81ba0cdce23b3daeadbbb32218e5fe34"
+      "sha256": "e9a8423eb73323ec9ebe69a7e09db17e5d2c5257bd68a708d86e524489612987"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsLessonView.swift",
@@ -959,7 +959,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
-      "sha256": "7e4a408bddf42a6bb06a655ecb93e9aa0fc6e47fb76a53431cfc3f2bbc10faaf"
+      "sha256": "30198393a9b162e8f7672152db9e46a5993b31201c04c07fab7e8d497354196e"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",

@@ -69,6 +69,13 @@ public final class MGSolidRenderer {
     /// The rig as the look lights it (the same lights and directions, scaled).
     private let lit: MGStudioLighting
     private var backdropCache: (key: [Double], image: CGImage)?
+    /// A live view (`SCNView`, `SceneView`) draws the scene itself, with no compositing step. Set the view's size
+    /// here and the look's backdrop is drawn as the scene background, its pool following the camera as in a still.
+    /// Nil (the default) leaves the scene background clear, which the offscreen render composites over the backdrop.
+    /// `classic` has no backdrop of its own and ignores it.
+    public var liveBackdropSize: CGSize? { didSet { liveKey = []; updateLiveBackdrop() } }
+    private var liveKey: [Double] = []
+    private var liveShown = false
     public var options: MGStudioOptions { didSet { restyleAll() } }
     public let cameraNode = SCNNode()
     private let stageNode = SCNNode()
@@ -475,6 +482,7 @@ public final class MGSolidRenderer {
         let b = worldBounds(posed)
         if !b.isEmpty { for p in b.corners { far = max(far, (p - pos).length * 1.05) } }
         cameraNode.camera?.zFar = far
+        updateLiveBackdrop()
         cameraNode.camera?.screenSpaceAmbientOcclusionRadius = CGFloat(max(2, c.distance * 0.012))
         if look.occlusionBias > 0 {
             // The bias and the depth threshold follow the scene's size, so a curved face does not occlude itself.
@@ -504,6 +512,10 @@ public final class MGSolidRenderer {
             renderer = r
         }
         guard let r = renderer else { return nil }
+        // The offscreen render composites over the backdrop itself: a live backdrop steps aside for the snapshot.
+        let live: Any? = liveShown ? scene.background.contents : nil
+        if live != nil { scene.background.contents = CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0) }
+        defer { if let live { scene.background.contents = live } }
         r.pointOfView = cameraNode
         // Offscreen exports never return to the run loop, so commit implicit scene-graph changes explicitly.
         SCNTransaction.flush()
@@ -556,6 +568,32 @@ public final class MGSolidRenderer {
         let rx = max(r * look.poolRadius, Double(max(width, height)) * 0.26)
         let flat = max(0.42, min(1, sin(abs(camera.pitch) * .pi / 180) + 0.25))
         return MGSolidLook.Pool(x: Double(c.x), y: Double(c.y), rx: rx, ry: rx * flat)
+    }
+
+    /// The live backdrop: at most 1024 pixels wide in the view's aspect (the gradient is slow, so the view scales it
+    /// up cleanly), drawn again only when the pool has moved by more than 1/64 of the frame.
+    private func updateLiveBackdrop() {
+        guard look != .classic else { return }
+        guard let size = liveBackdropSize, size.width >= 1, size.height >= 1 else {
+            if liveShown { scene.background.contents = CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0); liveShown = false }
+            return
+        }
+        let scale = min(1, 1024 / Double(max(size.width, size.height)))
+        let w = max(2, Int((Double(size.width) * scale).rounded())), h = max(2, Int((Double(size.height) * scale).rounded()))
+        let p = backdropPool(width: w, height: h)
+        let step = Double(max(w, h)) / 64
+        let key = [Double(w), Double(h), (p.x / step).rounded(), (p.y / step).rounded(), (p.rx / step).rounded(), (p.ry / step).rounded()]
+        guard key != liveKey else { return }
+        liveKey = key; liveShown = true
+        scene.background.contents = MGSolidRenderer.backdropImage(look, width: w, height: h, pool: p)
+    }
+
+    static func backdropImage(_ look: MGSolidLook, width: Int, height: Int, pool: MGSolidLook.Pool) -> CGImage? {
+        let bytes = look.backdrop(width: width, height: height, pool: pool)
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB), let provider = CGDataProvider(data: Data(bytes) as CFData) else { return nil }
+        return CGImage(width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: width * 4, space: space,
+                       bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue), provider: provider,
+                       decode: nil, shouldInterpolate: true, intent: .defaultIntent)
     }
 
     /// The look's backdrop for the current camera (kept until the size or the pool changes).
