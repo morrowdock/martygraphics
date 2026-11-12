@@ -234,12 +234,8 @@
       "sha256": "190f7bdcd539f888061f506039c8c2b66c9b478d0eb8c024dd60c932ab62c958"
     },
     {
-      "path": "Examples/Solid3D/Sources/MartySolidCLI/ExportGLTF.swift",
-      "sha256": "dd644e807129b373f8192ac92705ea821f90a64c40c13fdb9e935d70eab3d79a"
-    },
-    {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "70b79abc2b48584da8a31c4ca64e0da2d9805cfccc30605744043e8d258a7512"
+      "sha256": "c8ef0e035b888cc717939219bc5fb47ba0b17f7320add9f3139c4ed83d9b8bd1"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift",
