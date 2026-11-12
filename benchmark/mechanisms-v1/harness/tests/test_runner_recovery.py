@@ -6,6 +6,7 @@ import io
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import json
 import shutil
@@ -595,6 +596,9 @@ class NativeCodexToolsTest(unittest.TestCase):
         binary = os.environ.get("CODEX_NATIVE_BINARY") or shutil.which("codex")
         if binary is None:
             self.skipTest("Codex is not installed; native offline tool diagnostic unavailable")
+        if sys.platform != "linux" or shutil.which("bwrap") is None:
+            # The G1 adapter runs only inside Linux bubblewrap (no unsandboxed fallback by design).
+            self.skipTest("Linux bubblewrap is not available; the G1 sandbox runs only on Linux")
         if Path(binary).resolve().name == "mise":
             binary = subprocess.check_output(["mise", "which", "codex"], text=True).strip()
         self.temp = tempfile.TemporaryDirectory()

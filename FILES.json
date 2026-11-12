@@ -1503,7 +1503,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_runner_recovery.py",
-      "sha256": "83b739e4464d9cbd91aabb42d2dd921f96f4a8f6b7a48d90f0ac2dceb51e0a09"
+      "sha256": "9bf7ccae850c7d9e7ad46b4b4413498f5e9be3bf9a1c5ea98c7e5a52d075ee5b"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_score.py",
