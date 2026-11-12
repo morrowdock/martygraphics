@@ -123,7 +123,7 @@ public final class MGSolidRenderer {
     private lazy var unitCone = MGSolidRenderer.geometry(MGAnnotationPrimitive(shape: .cone, start: .zero, end: .unitZ, radius: 1, hidden: false).renderMesh)
 
     public init(assembly: MGAssembly, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions(),
-                look: MGSolidLook = .classic) {
+                look: MGSolidLook = .studio) {
         self.assembly = assembly; self.lighting = lighting; self.options = options
         self.look = look; lit = look.lighting(lighting)
         view = MGSolidView(assembly)
@@ -241,7 +241,7 @@ public final class MGSolidRenderer {
     /// fingerprint so `show(document:view:)` can draw its annotations.
     /// The parts start at the document's default pose.
     public convenience init(document: MGSolidDocument, lighting: MGStudioLighting = .studio, options: MGStudioOptions = MGStudioOptions(),
-                            look: MGSolidLook = .classic) {
+                            look: MGSolidLook = .studio) {
         self.init(assembly: document.assembly, lighting: lighting, options: options, look: look)
         loadedFingerprint = document.checkedFingerprint
         apply(document.defaults)

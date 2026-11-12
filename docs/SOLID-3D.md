@@ -2152,15 +2152,19 @@ shadows are.
 
 | Look | Backdrop | Use |
 | --- | --- | --- |
-| `classic` (default) | near-black radial | the renderer as it was before looks |
-| `studio` | graphite sweep with a pool of light under the subject | dark pages, video |
+| `studio` (default) | graphite sweep with a pool of light under the subject | dark pages, video, the app |
+| `classic` | near-black radial | the renderer as it was before looks |
 | `paper` | near-white sweep | light pages, print |
 
 - `marty-solid render FILE.json NEW_DIR --look studio` (assemblies and explainers; any other name is a usage error,
   exit 2, and nothing is written).
 - In code: `MGSolidRenderer(document:look:)` and `MGSolidRenderer(assembly:look:)`; in the explainer view, set
-  `MGExplainerController.solidLook` before a document loads. The live pane takes a look's light and tone now; the
-  backdrop is drawn by the offscreen render (`render(width:height:)`) only, until the live backdrop lands.
+  `MGExplainerController.solidLook` before a document loads.
+- **Live views.** A live view (`SCNView`, `SceneView`) draws the scene itself, so there is no compositing step: set
+  `MGSolidRenderer.liveBackdropSize` to the view's size and the look's backdrop is the scene background, its pool
+  following the camera as in a still (the explainer pane does this). The offscreen render clears it for its own
+  snapshot. In `studio` the live backdrop matches the composited one within a few levels; in `paper` the camera's
+  tone mapping draws it about a fifth darker (a light grey, not near-white).
 
 A look scales the rig's lights inside the renderer and keeps their directions (`MGSolidLook.lighting(_:)`).
 `snapshot.json` records `MGStudioLighting.studio` and each part's `MGMaterialParameters` for every look, so another

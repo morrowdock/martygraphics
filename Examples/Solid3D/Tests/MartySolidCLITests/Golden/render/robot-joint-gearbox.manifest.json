@@ -24,7 +24,7 @@
     "version" : "unreleased"
   },
   "framesRendered" : 506,
-  "look" : "classic",
+  "look" : "studio",
   "outputs" : [
     {
       "file" : "hero.png",

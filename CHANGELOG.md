@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **`studio` is the default look, and live views draw its backdrop (pixels only).** `marty-solid render`,
+  `MGSolidRenderer` and the explainer view now use `studio` unless told otherwise; pass `--look classic` (or
+  `look: .classic`) for the renderer as it was. The explainer's live 3D pane draws the look's backdrop as the scene
+  background (`MGSolidRenderer.liveBackdropSize`), so the app matches the exported stills and videos. The four
+  render goldens change one line (`"look" : "studio"`). Check reports and `snapshot.json` are unchanged. The
+  published images under `docs/assets` were rendered with `classic` and are regenerated separately.
 - **v0.2 plan (docs only).** [docs/V0.2-PLAN.md](docs/V0.2-PLAN.md) ranks the engine changes that real authoring
   runs recorded as gaps (drone and aviation explainers, Part 107 Nights 1 and 2): a label size key, a transcript
   export, a feet display unit, declared phrase names, a pin closure check and three smaller items. Each item is its

@@ -121,6 +121,35 @@ final class SolidLookTests: XCTestCase {
         }
     }
 
+    /// A live view has no compositing step: with the view's size set, the look's backdrop is the scene background, in
+    /// the view's aspect; without it the background is clear. `classic` has no backdrop of its own. The default look
+    /// is `studio`.
+    func testTheLiveBackdropIsTheSceneBackground() throws {
+        let text = #"{"v": 2, "kind": "assembly", "title": "Block", "parts": [{"id": "box", "shape": {"box": {"size": [10, 10, 10]}}}]}"#
+        let doc = try MGSolidParser.document(data: Data(text.utf8)).get()
+        func image(_ r: MGSolidRenderer) -> CGImage? {
+            guard let c = r.scene.background.contents, CFGetTypeID(c as CFTypeRef) == CGImage.typeID else { return nil }
+            return (c as! CGImage)
+        }
+        let r = MGSolidRenderer(document: doc)
+        XCTAssertEqual(r.look, .studio)
+        XCTAssertNil(image(r))
+        r.liveBackdropSize = CGSize(width: 2000, height: 1000)
+        let wide = try XCTUnwrap(image(r))
+        XCTAssertEqual(wide.width, 1024); XCTAssertEqual(wide.height, 512)
+        r.liveBackdropSize = CGSize(width: 300, height: 600)
+        let tall = try XCTUnwrap(image(r))
+        XCTAssertEqual(tall.width, 300); XCTAssertEqual(tall.height, 600)
+        // A camera change keeps a backdrop in place.
+        r.frame(MGPoseParameters(), yaw: 80, pitch: 10, aspect: 0.5)
+        XCTAssertNotNil(image(r))
+        r.liveBackdropSize = nil
+        XCTAssertNil(image(r))
+        let classic = MGSolidRenderer(document: doc, look: .classic)
+        classic.liveBackdropSize = CGSize(width: 800, height: 500)
+        XCTAssertNil(image(classic))
+    }
+
     func testQualityLevels() {
         XCTAssertEqual(MGStudioOptions(quality: .still), MGStudioOptions())
         let balanced = MGStudioOptions(quality: .balanced), interactive = MGStudioOptions(quality: .interactive)

@@ -23,7 +23,7 @@ extension MartySolidCLITests {
             XCTAssertEqual(r.status, 0, r.text)
             // The manifest names the look it was rendered with (provenance); every other decided member is the same.
             var m = try XCTUnwrap(try JSONSerialization.jsonObject(with: Self.decidedManifest(out.appendingPathComponent("manifest.json"))) as? [String: Any])
-            XCTAssertEqual(m["look"] as? String, look ?? "classic")
+            XCTAssertEqual(m["look"] as? String, look ?? "studio")
             m["look"] = nil
             manifests.append(try JSONSerialization.data(withJSONObject: m, options: [.sortedKeys]))
             snapshots.append(try Data(contentsOf: out.appendingPathComponent("snapshot.json")))
@@ -31,7 +31,9 @@ extension MartySolidCLITests {
         }
         XCTAssertEqual(Set(manifests).count, 1, "the decided manifest, without `look`, is the same for every look")
         XCTAssertEqual(Set(snapshots).count, 1, "snapshot.json is the same for every look")
-        // The new looks draw a different picture (the two classic renders may differ by SceneKit's bounded noise).
+        // Each look draws a different picture (the default is `studio`; two renders of one look may differ by SceneKit's
+        // bounded noise, so those are not compared).
         XCTAssertNotEqual(heroes[2], heroes[1]); XCTAssertNotEqual(heroes[3], heroes[1]); XCTAssertNotEqual(heroes[2], heroes[3])
+        XCTAssertNotEqual(heroes[0], heroes[1]); XCTAssertNotEqual(heroes[0], heroes[3])
     }
 }

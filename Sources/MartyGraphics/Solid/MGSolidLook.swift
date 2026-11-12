@@ -5,7 +5,7 @@ import Foundation
 ///
 /// A look is pixels only. It never changes geometry, motion, cameras, framing, checks or any JSON the engine writes:
 /// `snapshot.json` keeps `MGStudioLighting.studio` and each part's material parameters (what other renderers read);
-/// a look scales that rig, reflects its own room and finishes surfaces inside this renderer only. `classic` is the renderer as it was before looks existed, unchanged.
+/// a look scales that rig, reflects its own room and finishes surfaces inside this renderer only. `studio` is the default; `classic` is the renderer as it was before looks existed, unchanged.
 /// See docs/VISUAL-STYLE.md.
 public struct MGSolidLook: Equatable, Sendable {
     public var name: String

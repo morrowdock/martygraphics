@@ -56,7 +56,7 @@ B=$(swift build -c release --package-path Examples/Solid3D --show-bin-path)
 $B/marty-solid check my-model.json             # JSON report; exit 0 accepted, 1 refused
 $B/marty-solid check --strict my-model.json    # model-harness profile: also refuses idle joints and off-axis turns
 $B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF and MP4, snapshot
-$B/marty-solid render my-model.json NEW_DIR --look studio  # another look (classic, studio, paper): pixels only
+$B/marty-solid render my-model.json NEW_DIR --look paper   # another look (studio is the default; paper, classic): pixels only
 $B/marty-solid check base.json --patch fix.json # report on base.json with the patch applied
 $B/marty-solid reasons                         # JSON catalog of every stable reason
 $B/marty-solid version                         # engine name, version and this binary's SHA-256

@@ -18,7 +18,7 @@ own pull request with before and after images; the knobs named here are document
 
 | Knob | Values | Default | What it sets |
 | --- | --- | --- | --- |
-| Look (`MGSolidLook`, `marty-solid render --look`) | `classic`, `studio`, `paper` | `classic` until the new looks are accepted, then `studio` | Backdrop, exposure and tone, environment fill, shadow strength, ink and plate colours |
+| Look (`MGSolidLook`, `marty-solid render --look`) | `studio`, `paper`, `classic` | `studio` | Backdrop, exposure and tone, environment fill, shadow strength, ink and plate colours |
 | Quality (`MGSolidQuality`) | `interactive`, `balanced`, `still` | `balanced` in the explainer view (until the levels are measured on an iPad), `still` in `marty-solid render` | Shadow map size and samples, occlusion, bloom, supersampling, jitter, depth of field |
 
 `classic` is the renderer as it was, pixel for pixel in intent, and stays available.

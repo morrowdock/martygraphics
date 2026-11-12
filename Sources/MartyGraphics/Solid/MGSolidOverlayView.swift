@@ -211,7 +211,7 @@ public struct MGSolidOverlayView: View {
     /// The ink, plate and casing colours and the overlay style (`MGSolidOverlay.draw(_:document:legend:in:width:height:look:)`).
     public let look: MGSolidLook
 
-    public init(frame: MGAnnotationFrame, document: MGSolidDocument, legend: Bool = true, look: MGSolidLook = .classic) {
+    public init(frame: MGAnnotationFrame, document: MGSolidDocument, legend: Bool = true, look: MGSolidLook = .studio) {
         self.frame = frame; self.document = document; self.legend = legend; self.look = look
     }
 

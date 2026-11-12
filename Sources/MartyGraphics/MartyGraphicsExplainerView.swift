@@ -66,7 +66,7 @@ public final class MGExplainerController: ObservableObject {
     /// The look and the quality level of the solid pane (pixels only; docs/VISUAL-STYLE.md). Set them before a
     /// document loads: they are read when the pane's renderer is made. `balanced` keeps ambient occlusion and bloom
     /// with fewer shadow samples; use `interactive` where the frame rate matters more than those.
-    public var solidLook = MGSolidLook.classic
+    public var solidLook = MGSolidLook.studio
     public var solidQuality = MGSolidQuality.balanced
     /// The annotation overlay record (labels, leaders, value texts, callouts) of the solid pane at the pose shown now;
     /// nil without annotations or before the pane has a size. It comes from `MGSolidAnnotations.frame`, through

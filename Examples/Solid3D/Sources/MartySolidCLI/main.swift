@@ -269,7 +269,8 @@ func componentCheck(_ path: String, _ base: MGSolidLibrary, with values: [String
 // MARK: render
 
 /// The look of the render in progress (`render --look`): the overlay, the bands and the frame draw with its ink, plate
-/// and surface colours. `classic` (the default) draws every band and plate as before.
+/// and surface colours (`studio` unless `--look` names another). It starts as `classic`, which draws every band and
+/// plate as before, so code that draws without a render in progress keeps the classic bands.
 var currentLook = MGSolidLook.classic
 
 func cg(_ c: [Double], _ alpha: Double? = nil) -> CGColor {
@@ -617,7 +618,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
 /// manifest. Cameras come from the plan (`MGSolidRenderPlan.cameras`, the `MGSolidFraming` rule).
 @MainActor func render(_ path: String, _ outPath: String, width: Int, height: Int, loop: Bool, loopRate: Int = 10,
                        story: Bool = true, storyRate: Int = MGStoryTiming.defaultRate,
-                       snapshots: Bool = false, look: MGSolidLook = .classic, library lib: MGSolidLibrary) throws -> Int32 {
+                       snapshots: Bool = false, look: MGSolidLook = .studio, library lib: MGSolidLibrary) throws -> Int32 {
     let document = try loadDocument(path)
     switch document.kind {
     case "explainer"?: return try renderExplainer(path, document.data, outPath, width: width, height: height, loop: loop, loopRate: loopRate,
@@ -926,7 +927,7 @@ struct ExplainerBeatShot {
 /// with `--snapshots`, and `manifest.json`.
 @MainActor func renderExplainer(_ path: String, _ data: Data, _ outPath: String, width: Int, height: Int, loop: Bool, loopRate: Int = 10,
                                 story: Bool = true, storyRate: Int = MGStoryTiming.defaultRate,
-                                snapshots: Bool, look: MGSolidLook = .classic, library lib: MGSolidLibrary) throws -> Int32 {
+                                snapshots: Bool, look: MGSolidLook = .studio, library lib: MGSolidLibrary) throws -> Int32 {
     let source = MGSolidSource(data: data)
     if let big = explainerTooLarge(path, data) {
         print(json(MGExplainerReport.refused(big, profile: nil, source: nil, engine: engine).json)); return 1
@@ -1330,7 +1331,8 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                 exit(try componentCheck(a[2], lib, with: values))
             case "render"? where a.count >= 3 && !a[1].hasPrefix("--") && !a[2].hasPrefix("--"):
                 var w = 1280, h = 800, loop = true, rate = 10, snapshots = false, story = true, storyRate = MGStoryTiming.defaultRate
-                var look = MGSolidLook.classic
+                var look = MGSolidLook.studio
+                currentLook = look
                 var rest = Array(a.dropFirst(3))
                 while let flag = rest.first {
                     rest.removeFirst()
