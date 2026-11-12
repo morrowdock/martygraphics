@@ -67,18 +67,32 @@ public enum MGSolidOverlay {
 
     /// Draws only the document legend (its text and notes) in the legend corner, with no labels: for frames that show
     /// no labels but must keep the legend (`story.mp4` during a camera move).
-    public static func drawLegend(document doc: MGSolidDocument, in ctx: CGContext, width: Int, height: Int) {
+    public static func drawLegend(document doc: MGSolidDocument, in ctx: CGContext, width: Int, height: Int, look: MGSolidLook = .classic) {
         let empty = MGAnnotationFrame(width: Double(width), height: Double(height), fontSize: MGAnnotationLayout.fontSize(height: Double(height)),
                                       placement: [], anchors: [], refusal: nil)
-        draw(empty, document: doc, legend: true, in: ctx, width: width, height: height)
+        draw(empty, document: doc, legend: true, in: ctx, width: width, height: height, look: look)
+    }
+
+    /// The drawn metrics of the modern overlay, every one a multiple of the font size `f`, so a larger label size
+    /// scales plates, strokes and leaders together. The text box itself is the layout's and does not change.
+    struct Metrics {
+        var radius: Double, hairline: Double, barWidth: Double, barInset: Double, leader: Double, casing: Double, dot: Double, disc: Double
+        init(_ f: Double) {
+            radius = 0.45 * f; hairline = max(1, 0.06 * f); barWidth = 0.17 * f; barInset = 0.1 * f
+            leader = max(1.2, 0.09 * f); casing = max(2.6, 0.22 * f); dot = 0.3 * f; disc = 0.7 * f
+        }
     }
 
     /// Draws a frame's overlay into a CoreGraphics context of `width` × `height` pixels (bottom-left origin, as
     /// `CGContext` bitmaps are). `legend`: also draw the document legend in the legend corner.
-    public static func draw(_ frame: MGAnnotationFrame, document doc: MGSolidDocument, legend: Bool, in ctx: CGContext, width: Int, height: Int) {
+    /// `look`: the ink, plate and casing colours; a look with `modernOverlay` draws the plates, leaders and callouts of
+    /// docs/VISUAL-STYLE.md in the same boxes, `classic` (the default) draws as before.
+    public static func draw(_ frame: MGAnnotationFrame, document doc: MGSolidDocument, legend: Bool, in ctx: CGContext, width: Int, height: Int,
+                            look: MGSolidLook = .classic) {
         let w = Double(width), h = Double(height)
         guard w > 0, h > 0 else { return }
         let f = MGAnnotationLayout.fontSize(height: h)
+        let ink = look.ink, fill = look.plate, modern = look.modernOverlay, m = Metrics(f)
         ctx.saveGState()
         // Work in top-left coordinates; text is drawn with its own unflipped matrix.
         ctx.translateBy(x: 0, y: CGFloat(h)); ctx.scaleBy(x: 1, y: -1)
@@ -111,6 +125,44 @@ public enum MGSolidOverlay {
         let shapes = frame.placement.compactMap { Shape($0, w, h) }
         for (p, s) in zip(frame.placement, shapes) {
             let tierColor = chip(tier(doc, p.id))
+            if modern {
+                let casing = color(look.casing, look.casing.count > 3 ? look.casing[3] : 0.55)
+                if s.callout == nil, let a = s.anchor, let e = s.leaderEnd {
+                    // A casing under the line, so it reads over a white part and over a black one.
+                    let dash: [CGFloat] = s.occluded == true ? [CGFloat(0.35 * f), CGFloat(0.25 * f)] : []
+                    ctx.setLineCap(.round)
+                    ctx.setStrokeColor(casing); ctx.setLineWidth(CGFloat(m.casing))
+                    ctx.move(to: a); ctx.addLine(to: e); ctx.strokePath()
+                    ctx.setStrokeColor(color(ink, 0.95)); ctx.setLineWidth(CGFloat(m.leader)); ctx.setLineDash(phase: 0, lengths: dash)
+                    ctx.move(to: a); ctx.addLine(to: e); ctx.strokePath()
+                    ctx.setLineDash(phase: 0, lengths: []); ctx.setLineCap(.butt)
+                    if s.kind == "label" {
+                        let d = CGFloat(m.dot), ring = CGFloat(m.casing - m.leader) / 2
+                        ctx.setFillColor(casing); ctx.fillEllipse(in: CGRect(x: a.x - d - ring, y: a.y - d - ring, width: 2 * (d + ring), height: 2 * (d + ring)))
+                        let dot = CGRect(x: a.x - d, y: a.y - d, width: 2 * d, height: 2 * d)
+                        if s.occluded == true { ctx.setStrokeColor(color(ink)); ctx.setLineWidth(CGFloat(m.leader * 1.3)); ctx.strokeEllipse(in: dot.insetBy(dx: 1, dy: 1)) }
+                        else { ctx.setFillColor(color(ink)); ctx.fillEllipse(in: dot) }
+                    }
+                }
+                if let n = s.callout, let a = s.anchor {
+                    let d = CGFloat(m.disc)
+                    let r = CGRect(x: a.x - d, y: a.y - d, width: 2 * d, height: 2 * d)
+                    ctx.setFillColor(color(fill, min(1, fill[3] + 0.08))); ctx.fillEllipse(in: r)
+                    ctx.setStrokeColor(color(tierColor)); ctx.setLineWidth(CGFloat(max(1.5, 0.1 * f))); ctx.strokeEllipse(in: r)
+                    text("\(n + 1)", in: r.insetBy(dx: -6, dy: 0), size: 0.7 * f)
+                }
+                let radius = CGFloat(min(m.radius, Double(s.box.height) / 2, Double(s.box.width) / 2))
+                let path = CGPath(roundedRect: s.box, cornerWidth: radius, cornerHeight: radius, transform: nil)
+                ctx.addPath(path); ctx.setFillColor(color(fill, fill[3])); ctx.fillPath()
+                ctx.addPath(path); ctx.setStrokeColor(color(ink, 0.16)); ctx.setLineWidth(CGFloat(m.hairline)); ctx.strokePath()
+                // The tier mark: a rounded bar inside the leading edge (it ends before the text's 6 px inset).
+                let bar = CGRect(x: s.box.minX + CGFloat(m.barInset), y: s.box.minY + CGFloat(0.22 * f), width: CGFloat(m.barWidth),
+                                 height: max(0, s.box.height - CGFloat(0.44 * f)))
+                ctx.addPath(CGPath(roundedRect: bar, cornerWidth: bar.width / 2, cornerHeight: min(bar.width, bar.height) / 2, transform: nil))
+                ctx.setFillColor(color(tierColor)); ctx.fillPath()
+                block(s.text, in: s.box, size: f)
+                continue
+            }
             if s.callout == nil, let a = s.anchor, let e = s.leaderEnd {
                 ctx.setStrokeColor(color(ink, 0.8)); ctx.setLineWidth(1.2)
                 ctx.setLineDash(phase: 0, lengths: s.occluded == true ? [4, 3] : [])
@@ -156,9 +208,11 @@ public struct MGSolidOverlayView: View {
     public let frame: MGAnnotationFrame
     public let document: MGSolidDocument
     public let legend: Bool
+    /// The ink, plate and casing colours and the overlay style (`MGSolidOverlay.draw(_:document:legend:in:width:height:look:)`).
+    public let look: MGSolidLook
 
-    public init(frame: MGAnnotationFrame, document: MGSolidDocument, legend: Bool = true) {
-        self.frame = frame; self.document = document; self.legend = legend
+    public init(frame: MGAnnotationFrame, document: MGSolidDocument, legend: Bool = true, look: MGSolidLook = .classic) {
+        self.frame = frame; self.document = document; self.legend = legend; self.look = look
     }
 
     public var body: some View {
@@ -166,16 +220,17 @@ public struct MGSolidOverlayView: View {
             let w = Double(size.width), h = Double(size.height)
             guard w > 0, h > 0 else { return }
             let f = MGAnnotationLayout.fontSize(height: h)
+            let ink = look.ink, fill = look.plate, m = MGSolidOverlay.Metrics(f)
             func color(_ c: [Double], _ a: Double = 1) -> Color { Color(.sRGB, red: c[0], green: c[1], blue: c[2], opacity: a) }
             /// Draws text inside a box: starts from the CoreText fit, then shrinks until the resolved text fits.
             func text(_ s: String, in box: CGRect, size: Double, alignRight: Bool = false) {
                 let room = Double(box.width) - 12
                 var fs = MGSolidOverlay.fit(s, width: room, fontSize: size).size
-                var resolved = ctx.resolve(Text(s).font(.system(size: CGFloat(fs))).foregroundColor(color(MGSolidOverlay.ink, 0.96)))
+                var resolved = ctx.resolve(Text(s).font(.system(size: CGFloat(fs))).foregroundColor(color(ink, 0.96)))
                 var measured = Double(resolved.measure(in: CGSize(width: 10_000, height: 1_000)).width)
                 while measured > room, fs > MGSolidOverlay.minimumFont {
                     fs = max(MGSolidOverlay.minimumFont, fs * 0.95)
-                    resolved = ctx.resolve(Text(s).font(.system(size: CGFloat(fs))).foregroundColor(color(MGSolidOverlay.ink, 0.96)))
+                    resolved = ctx.resolve(Text(s).font(.system(size: CGFloat(fs))).foregroundColor(color(ink, 0.96)))
                     measured = Double(resolved.measure(in: CGSize(width: 10_000, height: 1_000)).width)
                 }
                 let x = alignRight ? box.maxX - 6 : box.minX + 6
@@ -194,24 +249,58 @@ public struct MGSolidOverlayView: View {
             for p in frame.placement {
                 guard let s = MGSolidOverlay.Shape(p, w, h) else { continue }
                 let tierColor = MGSolidOverlay.chip(MGSolidOverlay.tier(document, p.id))
+                if look.modernOverlay {
+                    let casing = color(look.casing, look.casing.count > 3 ? look.casing[3] : 0.55)
+                    let cf = CGFloat(f), leader = CGFloat(m.leader), casingWidth = CGFloat(m.casing)
+                    if s.callout == nil, let a = s.anchor, let e = s.leaderEnd {
+                        var line = Path(); line.move(to: a); line.addLine(to: e)
+                        let dash: [CGFloat] = s.occluded == true ? [0.35 * cf, 0.25 * cf] : []
+                        ctx.stroke(line, with: .color(casing), style: StrokeStyle(lineWidth: casingWidth, lineCap: .round))
+                        ctx.stroke(line, with: .color(color(ink, 0.95)), style: StrokeStyle(lineWidth: leader, lineCap: .round, dash: dash))
+                        if s.kind == "label" {
+                            let d = CGFloat(m.dot), ring = (casingWidth - leader) / 2
+                            let outer = CGRect(x: a.x - d - ring, y: a.y - d - ring, width: 2 * (d + ring), height: 2 * (d + ring))
+                            ctx.fill(Path(ellipseIn: outer), with: .color(casing))
+                            let dot = CGRect(x: a.x - d, y: a.y - d, width: 2 * d, height: 2 * d)
+                            if s.occluded == true { ctx.stroke(Path(ellipseIn: dot.insetBy(dx: 1, dy: 1)), with: .color(color(ink)), lineWidth: leader * 1.3) }
+                            else { ctx.fill(Path(ellipseIn: dot), with: .color(color(ink))) }
+                        }
+                    }
+                    if let n = s.callout, let a = s.anchor {
+                        let d = CGFloat(m.disc)
+                        let r = CGRect(x: a.x - d, y: a.y - d, width: 2 * d, height: 2 * d)
+                        ctx.fill(Path(ellipseIn: r), with: .color(color(fill, min(1, fill[3] + 0.08))))
+                        ctx.stroke(Path(ellipseIn: r), with: .color(color(tierColor)), lineWidth: max(1.5, 0.1 * cf))
+                        text("\(n + 1)", in: r.insetBy(dx: -6, dy: 0), size: 0.7 * f)
+                    }
+                    let radius = min(CGFloat(m.radius), s.box.height / 2, s.box.width / 2)
+                    let box = Path(roundedRect: s.box, cornerRadius: radius)
+                    ctx.fill(box, with: .color(color(fill, fill[3])))
+                    ctx.stroke(box, with: .color(color(ink, 0.16)), lineWidth: CGFloat(m.hairline))
+                    let bar = CGRect(x: s.box.minX + CGFloat(m.barInset), y: s.box.minY + 0.22 * cf, width: CGFloat(m.barWidth),
+                                     height: max(0, s.box.height - 0.44 * cf))
+                    ctx.fill(Path(roundedRect: bar, cornerRadius: min(bar.width, bar.height) / 2), with: .color(color(tierColor)))
+                    block(s.text, in: s.box, size: f)
+                    continue
+                }
                 if s.callout == nil, let a = s.anchor, let e = s.leaderEnd {
                     var line = Path(); line.move(to: a); line.addLine(to: e)
-                    ctx.stroke(line, with: .color(color(MGSolidOverlay.ink, 0.8)),
+                    ctx.stroke(line, with: .color(color(ink, 0.8)),
                                style: StrokeStyle(lineWidth: 1.2, dash: s.occluded == true ? [4, 3] : []))
                     if s.kind == "label" {
                         let dot = Path(ellipseIn: CGRect(x: a.x - 4, y: a.y - 4, width: 8, height: 8))
-                        if s.occluded == true { ctx.stroke(dot, with: .color(color(MGSolidOverlay.ink)), lineWidth: 1.5) }
-                        else { ctx.fill(dot, with: .color(color(MGSolidOverlay.ink))) }
+                        if s.occluded == true { ctx.stroke(dot, with: .color(color(ink)), lineWidth: 1.5) }
+                        else { ctx.fill(dot, with: .color(color(ink))) }
                     }
                 }
                 if let n = s.callout, let a = s.anchor {
                     let r = CGRect(x: a.x - 9, y: a.y - 9, width: 18, height: 18)
-                    ctx.fill(Path(ellipseIn: r), with: .color(color(MGSolidOverlay.fill, MGSolidOverlay.fill[3])))
+                    ctx.fill(Path(ellipseIn: r), with: .color(color(fill, fill[3])))
                     ctx.stroke(Path(ellipseIn: r), with: .color(color(tierColor)), lineWidth: 1.5)
                     text("\(n + 1)", in: r.insetBy(dx: -6, dy: 0), size: 0.7 * f)
                 }
                 let box = Path(roundedRect: s.box, cornerRadius: 4)
-                ctx.fill(box, with: .color(color(MGSolidOverlay.fill, MGSolidOverlay.fill[3])))
+                ctx.fill(box, with: .color(color(fill, fill[3])))
                 ctx.stroke(box, with: .color(color(tierColor, 0.9)), lineWidth: 1)
                 ctx.fill(Path(CGRect(x: s.box.minX + 1, y: s.box.minY + 3, width: 3, height: max(0, s.box.height - 6))), with: .color(color(tierColor)))
                 block(s.text, in: s.box, size: f)

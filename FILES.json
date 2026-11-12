@@ -235,7 +235,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "5a37085ffb7777437ecf3ca0924cede59c2e9ea43d2eede7f91a49c649f697a7"
+      "sha256": "c27250c7c78662ce7b9388e5aea29a74447a6d6ae978ead2e98e75fb99f35b51"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
@@ -634,6 +634,10 @@
       "sha256": "24ece3b9b957e5b4cf7a706eb04fe56e0c59b1df11ed77a282a3f1497dcf2023"
     },
     {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/LookTypeTests.swift",
+      "sha256": "4dc8f244092d67ce35ef26e00c9e9dc82423759a95a1798c04d46773ff0bccec"
+    },
+    {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
       "sha256": "9143fde5c7b21534fb155b42c694e7e6595f667ca09a13016287d7fe0004f57f"
     },
@@ -831,7 +835,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsExplainerView.swift",
-      "sha256": "78367efcdc5d517c50118a05e13f31de4598184d128b61e0f1a07c70fdead5e5"
+      "sha256": "6763d4075e91c47e1f2e96002bf9278b81ba0cdce23b3daeadbbb32218e5fe34"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsLessonView.swift",
@@ -919,7 +923,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidLook.swift",
-      "sha256": "df5a1a2a1b8cf61cb59c56cc5728735be54b5ae2258de2513921c466f7a0fc58"
+      "sha256": "9c023849ee77b5e690677e56acd1b766be54aad0b63775fd7bbd9bf251585558"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidMath.swift",
@@ -935,7 +939,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidOverlayView.swift",
-      "sha256": "05c63b5a507c173ab818b3457591070a2aa8062c1810a312bbf6f2c88eaa0a57"
+      "sha256": "12cc8bb341e614b4e66c786648fa617ba0ccc1cd0c42d755bfd62bb60636cd2d"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidParser.swift",

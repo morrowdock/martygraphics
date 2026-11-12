@@ -52,6 +52,15 @@ public struct MGSolidLook: Equatable, Sendable {
     public var plasticCoat: Double? = nil
     public var plasticCoatRoughness = 0.1
     public var machining = 0.0
+    /// Type and plates over the picture (sRGB): text and leader ink, the label plate (with its opacity), the dark or
+    /// light casing drawn under a leader so it reads over any part, and the frame behind an explainer's panes.
+    public var ink: [Double] = [238.0 / 255, 242.0 / 255, 1]
+    public var plate: [Double] = [10.0 / 255, 15.0 / 255, 31.0 / 255, 0.82]
+    public var casing: [Double] = [10.0 / 255, 15.0 / 255, 31.0 / 255, 0.55]
+    public var surface: [Double] = [0.05, 0.07, 0.10]
+    /// True for the looks that draw the modern overlay (plates, leaders and bands of docs/VISUAL-STYLE.md); `classic`
+    /// keeps the overlay as it was.
+    public var modernOverlay = false
 
     /// The renderer before looks existed: a near-black radial backdrop. Every pixel is as it was.
     public static let classic = MGSolidLook(
@@ -88,6 +97,9 @@ public struct MGSolidLook: Equatable, Sendable {
         l.occlusionBias = 0.0006
         l.plasticCoat = 0.8; l.plasticCoatRoughness = 0.06
         l.machining = 1
+        l.plate = [10.0 / 255, 15.0 / 255, 31.0 / 255, 0.86]
+        l.surface = [0.043, 0.051, 0.071]
+        l.modernOverlay = true
         return l
     }()
 
@@ -103,6 +115,11 @@ public struct MGSolidLook: Equatable, Sendable {
         l.occlusionBias = 0.0006
         l.plasticCoat = 0.8; l.plasticCoatRoughness = 0.06
         l.machining = 1
+        l.ink = [20.0 / 255, 26.0 / 255, 43.0 / 255]
+        l.plate = [1, 1, 1, 0.92]
+        l.casing = [1, 1, 1, 0.7]
+        l.surface = [0.86, 0.87, 0.89]
+        l.modernOverlay = true
         return l
     }()
 

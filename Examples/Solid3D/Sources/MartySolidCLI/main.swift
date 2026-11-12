@@ -268,6 +268,14 @@ func componentCheck(_ path: String, _ base: MGSolidLibrary, with values: [String
 
 // MARK: render
 
+/// The look of the render in progress (`render --look`): the overlay, the bands and the frame draw with its ink, plate
+/// and surface colours. `classic` (the default) draws every band and plate as before.
+var currentLook = MGSolidLook.classic
+
+func cg(_ c: [Double], _ alpha: Double? = nil) -> CGColor {
+    CGColor(srgbRed: CGFloat(c[0]), green: CGFloat(c[1]), blue: CGFloat(c[2]), alpha: CGFloat(alpha ?? (c.count > 3 ? c[3] : 1)))
+}
+
 /// Opacity of the dark backdrop behind the title band (title, legend line and the overlay's legend corner).
 /// Chosen so that every stroke row of thin anti-aliased text keeps at least 4.5:1 over a pure white or emissive render.
 /// The caption band uses `captionBackdropOpacity` for the same reason.
@@ -282,7 +290,11 @@ let titleBackdropFadePixels: CGFloat = 28
 /// legend corner, whose whole rectangle is covered also where a tall frame puts it below the band), so geometry that
 /// reaches into the band never washes the text out: white title text keeps a contrast
 /// of at least 4.5:1 even over a pure white render. Loop frames draw no title or legend text and get none.
-func titleBackdrop(_ image: CGImage) -> CGImage {
+///
+/// A look with the modern overlay needs no bar: the model is clipped to the safe window, so the band holds only the
+/// look's own backdrop (or an explainer's frame), which the look's ink is chosen against. Only the part of the legend
+/// corner that reaches below the band, where a tall frame puts it over the picture, gets the look's plate.
+func titleBackdrop(_ image: CGImage, look: MGSolidLook = currentLook) -> CGImage {
     let w = image.width, h = image.height
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
@@ -290,6 +302,17 @@ func titleBackdrop(_ image: CGImage) -> CGImage {
     let s = CGFloat(w) / 1280
     let band = CGFloat(MGSolidRenderPlan.titleBandPixels) * s, fade = titleBackdropFadePixels * s
     let top = CGFloat(h)
+    if look.modernOverlay {
+        let r = MGAnnotationLayout.legendRect(width: Double(w), height: Double(h))
+        let legendBottom = CGFloat(r.y + r.height)
+        if legendBottom > band {
+            let plate = CGRect(x: CGFloat(r.x), y: top - legendBottom, width: CGFloat(r.width), height: legendBottom - band)
+            let radius = min(8 * s, plate.width / 2, plate.height / 2)
+            ctx.addPath(CGPath(roundedRect: plate, cornerWidth: radius, cornerHeight: radius, transform: nil))
+            ctx.setFillColor(cg(look.plate)); ctx.fillPath()
+        }
+        return ctx.makeImage()!
+    }
     ctx.setFillColor(CGColor(gray: 0, alpha: titleBackdropOpacity))
     ctx.fill(CGRect(x: 0, y: top - band, width: CGFloat(w), height: band))
     let colors = [CGColor(gray: 0, alpha: titleBackdropOpacity), CGColor(gray: 0, alpha: 0)] as CFArray
@@ -320,11 +343,17 @@ func titleBackdrop(_ image: CGImage) -> CGImage {
 /// Draws the title, the caption band, the footer (legend) line and the board line over `image`. Callers pass an image
 /// that already has its title backdrop (`titleBackdrop`), drawn before any overlay text. `boardLineOpacity`: the board
 /// line's opacity (with its backdrop); below 1 only while a story's board pane opens (`MGPaneSlide`).
-func caption(_ image: CGImage, title: String, text: String?, footer: String, boardLine: String? = nil, boardLineOpacity: CGFloat = 1) -> CGImage {
+func caption(_ image: CGImage, title: String, text: String?, footer: String, boardLine: String? = nil, boardLineOpacity: CGFloat = 1,
+             look: MGSolidLook = currentLook) -> CGImage {
     let w = image.width, h = image.height
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+    if look.modernOverlay {
+        modernCaption(ctx, width: w, height: h, title: title, text: text, footer: footer, boardLine: boardLine,
+                      boardLineOpacity: boardLineOpacity, look: look)
+        return ctx.makeImage()!
+    }
     func draw(_ s: String, _ size: CGFloat, _ weight: NSFont.Weight, x: CGFloat, y: CGFloat, alpha: CGFloat, maxWidth: CGFloat? = nil) {
         let font = NSFont.systemFont(ofSize: size, weight: weight) as CTFont
         let attr = NSAttributedString(string: s, attributes: [.font: font, .foregroundColor: NSColor(white: 1, alpha: alpha).cgColor])
@@ -377,6 +406,56 @@ func caption(_ image: CGImage, title: String, text: String?, footer: String, boa
     return ctx.makeImage()!
 }
 
+/// The title, the caption, the legend line and the board line of a look with the modern overlay: the same places,
+/// sizes and line breaks as the classic bands (so no text moves or wraps differently), in the look's ink, with no
+/// black bar. The caption band is marked by a hairline; the step number is set back so the sentence leads.
+func modernCaption(_ ctx: CGContext, width w: Int, height h: Int, title: String, text: String?, footer: String, boardLine: String?,
+                   boardLineOpacity: CGFloat, look: MGSolidLook) {
+    let s = CGFloat(w) / 1280
+    let ink = look.ink
+    func line(_ string: String, size: CGFloat, weight: NSFont.Weight, alpha: Double, kern: CGFloat = 0) -> CTLine {
+        let font = NSFont.systemFont(ofSize: size, weight: weight) as CTFont
+        let attr = NSAttributedString(string: string, attributes: [.font: font, .foregroundColor: cg(ink, alpha), .kern: kern])
+        let dots = CTLineCreateWithAttributedString(NSAttributedString(string: "…", attributes: [.font: font, .foregroundColor: cg(ink, alpha)]))
+        let full = CTLineCreateWithAttributedString(attr)
+        return CTLineCreateTruncatedLine(full, Double(CGFloat(w) - 80 * s), .end, dots) ?? full
+    }
+    ctx.textPosition = CGPoint(x: 40 * s, y: CGFloat(h) - 64 * s)
+    CTLineDraw(line(title, size: 28 * s, weight: .semibold, alpha: 1, kern: -0.2 * s), ctx)
+    ctx.textPosition = CGPoint(x: 40 * s, y: CGFloat(h) - 92 * s)
+    CTLineDraw(line(footer, size: 12 * s, weight: .medium, alpha: 0.85), ctx)
+    if let t = text {
+        let band = CGFloat(MGSolidRenderPlan.captionBandPixels) * s
+        ctx.setFillColor(cg(ink, 0.14))
+        ctx.fill(CGRect(x: 40 * s, y: band - max(1, s), width: CGFloat(w) - 80 * s, height: max(1, s)))
+        // Same font, origin and width as the classic caption, so the lines break where they did. The step number
+        // ("4. ") is the same glyphs in a quieter ink.
+        let font = NSFont.systemFont(ofSize: 20 * s, weight: .regular) as CTFont
+        let attr = NSMutableAttributedString(string: t, attributes: [.font: font, .foregroundColor: cg(ink, 0.96)])
+        let digits = t.prefix { $0.isASCII && $0.isNumber }
+        if !digits.isEmpty, t.dropFirst(digits.count).hasPrefix(". ") {
+            attr.addAttribute(.foregroundColor, value: cg(ink, 0.72), range: NSRange(location: 0, length: digits.utf16.count + 1))
+        }
+        let setter = CTFramesetterCreateWithAttributedString(attr)
+        let path = CGPath(rect: CGRect(x: 40 * s, y: 30 * s, width: CGFloat(w) - 80 * s, height: 20 * s * 4), transform: nil)
+        CTFrameDraw(CTFramesetterCreateFrame(setter, CFRange(location: 0, length: 0), path, nil), ctx)
+    }
+    if let board = boardLine, boardLineOpacity > 0 {
+        ctx.saveGState(); defer { ctx.restoreGState() }
+        if boardLineOpacity < 1 { ctx.setAlpha(boardLineOpacity) }
+        let fitted = line(board, size: 15 * s, weight: .semibold, alpha: 1)
+        let base = CGPoint(x: 40 * s, y: CGFloat(h) - 118 * s)
+        var ascent: CGFloat = 0, descent: CGFloat = 0, leading: CGFloat = 0
+        let width = CGFloat(CTLineGetTypographicBounds(fitted, &ascent, &descent, &leading))
+        let pad = 6 * s
+        let plate = CGRect(x: base.x - pad, y: base.y - descent - pad, width: width + 2 * pad, height: ascent + descent + 2 * pad)
+        let radius = min(6 * s, plate.width / 2, plate.height / 2)
+        ctx.addPath(CGPath(roundedRect: plate, cornerWidth: radius, cornerHeight: radius, transform: nil))
+        ctx.setFillColor(cg(look.plate)); ctx.fillPath()
+        ctx.textPosition = base; CTLineDraw(fitted, ctx)
+    }
+}
+
 func writePNG(_ image: CGImage, _ url: URL) throws {
     guard let d = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil) else { throw CLIError.invalid("png") }
     CGImageDestinationAddImage(d, image, nil)
@@ -389,7 +468,7 @@ func legendOnly(_ image: CGImage, _ doc: MGSolidDocument) -> CGImage {
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
-    MGSolidOverlay.drawLegend(document: doc, in: ctx, width: w, height: h)
+    MGSolidOverlay.drawLegend(document: doc, in: ctx, width: w, height: h, look: currentLook)
     return ctx.makeImage()!
 }
 
@@ -399,7 +478,7 @@ func overlaid(_ image: CGImage, _ frame: MGAnnotationFrame, _ doc: MGSolidDocume
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
-    MGSolidOverlay.draw(frame, document: doc, legend: true, in: ctx, width: w, height: h)
+    MGSolidOverlay.draw(frame, document: doc, legend: true, in: ctx, width: w, height: h, look: currentLook)
     return ctx.makeImage()!
 }
 
@@ -802,7 +881,9 @@ func composite(width w: Int, height h: Int, board: CGImage?, solid: CGImage?, re
                boardOpacity: CGFloat = 1, boardLineOpacity: CGFloat = 1) -> CGImage {
     let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
-    ctx.setFillColor(CGColor(red: 0.05, green: 0.07, blue: 0.10, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
+    // The frame behind the panes: the classic dark board, or the look's surface.
+    ctx.setFillColor(currentLook.modernOverlay ? cg(currentLook.surface, 1) : CGColor(red: 0.05, green: 0.07, blue: 0.10, alpha: 1))
+    ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
     for (img, rect, opacity) in [(board, rects.board, boardOpacity), (solid, rects.solid, 1)] {
         guard let img, let rect, rect.width > 0, rect.height > 0, opacity > 0 else { continue }
         ctx.saveGState()
@@ -962,7 +1043,7 @@ struct ExplainerBeatShot {
         let ctx = CGContext(data: nil, width: img.width, height: img.height, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
         ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
-        MGSolidOverlay.draw(frame, document: d, legend: false, in: ctx, width: img.width, height: img.height)
+        MGSolidOverlay.draw(frame, document: d, legend: false, in: ctx, width: img.width, height: img.height, look: currentLook)
         return ctx.makeImage()!
     }
     func record(_ name: String, _ fields: [String: MGJSON]) throws {
@@ -1265,6 +1346,7 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
                         guard let v = rest.first, let l = MGSolidLook.named(v) else { throw CLIError.usage }
                         rest.removeFirst()
                         look = l
+                        currentLook = l
                     case "--loop-fps":
                         guard let v = rest.first, let r = Int(v), MGSolidRenderPlan.loopRates.contains(r) else { throw CLIError.usage }
                         rest.removeFirst()

@@ -457,7 +457,7 @@ public struct MartyGraphicsExplainerView: View {
                     SceneView(scene: r.scene, pointOfView: r.cameraNode, options: annotated ? [] : [.allowsCameraControl], delegate: frameDelegate)
                         .id(annotated ? 0 : controller.cameraReset)
                         .overlay {
-                            if let f = controller.annotationFrame, let d = s.solid { MGSolidOverlayView(frame: f, document: d, legend: false).allowsHitTesting(false) }
+                            if let f = controller.annotationFrame, let d = s.solid { MGSolidOverlayView(frame: f, document: d, legend: false, look: controller.solidLook).allowsHitTesting(false) }
                         }
                         .onAppear { controller.setSolidSize(g.size) }
                         .onChange(of: g.size) { _, size in controller.setSolidSize(size) }
