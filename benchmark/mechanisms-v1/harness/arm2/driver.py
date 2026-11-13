@@ -35,6 +35,28 @@ def reply_text(data):
     return results[0]["result"]
 
 
+def html_block(text):
+    lines = re.findall(r"[^\r\n]*(?:\r\n|\r|\n|$)", text)
+    index = 0
+    while index < len(lines):
+        opening = re.fullmatch(r"( {0,3})(`{3,}|~{3,})([^\r\n]*)(?:\r\n|\r|\n)?", lines[index])
+        index += 1
+        if not opening:
+            continue
+        indent, fence, info = opening.groups()
+        if fence[0] == "`" and "`" in info:
+            continue
+        closing = re.compile(r" {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}[ \t]*(?:\r\n|\r|\n)?")
+        content = []
+        while index < len(lines) and not closing.fullmatch(lines[index]):
+            content.append(re.sub(r"^ {0," + str(len(indent)) + "}", "", lines[index]))
+            index += 1
+        index += 1
+        if info.strip().split()[:1] == ["html"]:
+            return "".join(content)
+    return None
+
+
 class Author:
     def __init__(self, executable, root, system, model):
         self.executable, self.root, self.system, self.model = executable, root, system, model
@@ -67,9 +89,14 @@ class Renderer:
         self.binary, self.tarball = str(Path(binary).resolve()), str(Path(tarball).resolve())
 
     def __call__(self, html, output, timeout):
-        result = subprocess.run([self.binary, "--html", str(html), "--out", str(output),
-                                 "--three-tarball", self.tarball, "--lock", str(BENCH / "LOCK.json")],
-                                capture_output=True, timeout=timeout)
+        try:
+            result = subprocess.run([self.binary, "--html", str(html), "--out", str(output),
+                                     "--three-tarball", self.tarball, "--lock", str(BENCH / "LOCK.json")],
+                                    capture_output=True, timeout=timeout)
+        except subprocess.TimeoutExpired as error:
+            for name, data in (("stdout", error.stdout), ("stderr", error.stderr)):
+                (output.parent / ("renderer." + name)).write_bytes(data.encode("utf-8") if isinstance(data, str) else data or b"")
+            raise
         (output.parent / "renderer.stdout").write_bytes(result.stdout)
         (output.parent / "renderer.stderr").write_bytes(result.stderr)
         if result.returncode == 124:
@@ -145,11 +172,11 @@ def run(question, root, author, renderer, repair, clock=time.monotonic):
             attempt = root / ("try-" + str(number))
             attempt.mkdir()
             output = attempt / "render"
-            matches = re.findall(r"```html\s*\n(.*?)```", text, flags=re.S)
-            html = matches[0] if matches else ""
+            extracted = html_block(text)
+            html = extracted if extracted is not None else ""
             source = attempt / "page.html"
             source.write_bytes(html.encode("utf-8"))
-            if not matches:
+            if extracted is None:
                 final = error_report("No ```html code block found.", output)
             else:
                 try:

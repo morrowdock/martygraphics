@@ -13,6 +13,38 @@ func sha256(_ data: Data) -> String {
     SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
 }
 
+func insertingHeadContent(_ insertion: String, into source: String) -> String {
+    var cursor = source.startIndex
+    if source.first == "\u{FEFF}" { cursor = source.index(after: cursor) }
+    while cursor < source.endIndex {
+        if " \t\n\r\u{000C}".contains(source[cursor]) {
+            cursor = source.index(after: cursor)
+            continue
+        }
+        let remaining = cursor..<source.endIndex
+        if source[cursor...].hasPrefix("<!--") {
+            guard let end = source.range(of: "--!?>", options: .regularExpression, range: remaining) else { break }
+            cursor = end.upperBound
+            continue
+        }
+        if let declaration = source.range(of: "<!doctype(?=[\\s>])(?:\"[^\"]*\"|'[^']*'|[^'\">])*>",
+                                          options: [.regularExpression, .caseInsensitive, .anchored], range: remaining) {
+            cursor = declaration.upperBound
+            continue
+        }
+        if let tag = source.range(of: "<(?:html|head)(?=[\\s/>])(?:\"[^\"]*\"|'[^']*'|[^'\">])*>",
+                                  options: [.regularExpression, .caseInsensitive, .anchored], range: remaining) {
+            if source[tag].prefix(5).lowercased() == "<head" {
+                return String(source[..<tag.upperBound]) + insertion + String(source[tag.upperBound...])
+            }
+            cursor = tag.upperBound
+            continue
+        }
+        break
+    }
+    return String(source[..<cursor]) + "<head>" + insertion + "</head>" + String(source[cursor...])
+}
+
 func arguments() throws -> [String: String] {
     let values = Array(CommandLine.arguments.dropFirst())
     guard values.count == 8 else { throw RenderError.invalid("need --html FILE --out DIR --three-tarball FILE --lock FILE") }
@@ -49,11 +81,7 @@ final class OfflineFiles: NSObject, WKURLSchemeHandler {
         sourceHash = sha256(Data(source.utf8))
         let policy = "default-src 'none'; script-src bench: 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
         let insertion = "<meta http-equiv=\"Content-Security-Policy\" content=\"\(policy)\"><script type=\"importmap\">{\"imports\":{\"three\":\"bench://local/build/three.module.min.js\",\"three/addons/\":\"bench://local/examples/jsm/\"}}</script>"
-        if let head = source.range(of: "<head(?:\\s[^>]*)?>", options: [.regularExpression, .caseInsensitive]) {
-            html = Data((String(source[..<head.upperBound]) + insertion + String(source[head.upperBound...])).utf8)
-        } else {
-            html = Data(("<!doctype html><head>" + insertion + "</head>" + source).utf8)
-        }
+        html = Data(insertingHeadContent(insertion, into: source).utf8)
         super.init()
         _ = try resource("build/three.module.min.js")
     }
@@ -138,9 +166,31 @@ final class Renderer: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         config.websiteDataStore = .nonPersistent()
         config.setURLSchemeHandler(offline, forURLScheme: "bench")
         config.preferences.javaScriptCanOpenWindowsAutomatically = false
+        let setPeerConnection = NSSelectorFromString("_setPeerConnectionEnabled:")
+        let getPeerConnection = NSSelectorFromString("_peerConnectionEnabled")
+        guard config.preferences.responds(to: setPeerConnection), config.preferences.responds(to: getPeerConnection) else {
+            fail("R-WK offline peer-connection preferences are unavailable")
+            return
+        }
+        let disablePeerConnection = unsafeBitCast(config.preferences.method(for: setPeerConnection),
+            to: (@convention(c) (AnyObject, Selector, Bool) -> Void).self)
+        let peerConnectionEnabled = unsafeBitCast(config.preferences.method(for: getPeerConnection),
+            to: (@convention(c) (AnyObject, Selector) -> Bool).self)
+        disablePeerConnection(config.preferences, setPeerConnection, false)
+        guard !peerConnectionEnabled(config.preferences, getPeerConnection) else {
+            fail("R-WK could not disable peer connections")
+            return
+        }
         config.userContentController.add(self, name: "benchLog")
         let script = """
         (() => {
+          const rtcNames = new Set(['RTCPeerConnection', 'webkitRTCPeerConnection', 'RTCDataChannel',
+            'RTCIceCandidate', 'RTCSessionDescription', 'RTCRtpSender', 'RTCRtpReceiver', 'RTCRtpTransceiver',
+            'RTCDtlsTransport', 'RTCIceTransport', 'RTCSctpTransport',
+            ...Object.getOwnPropertyNames(window).filter(name => /^(?:webkit)?RTC/.test(name))]);
+          for (const name of rtcNames) {
+            Object.defineProperty(window, name, {value: undefined, writable: false, configurable: false});
+          }
           const send = (kind, value) => window.webkit.messageHandlers.benchLog.postMessage({kind, value: String(value)});
           for (const kind of ['error', 'warn']) {
             const original = console[kind];

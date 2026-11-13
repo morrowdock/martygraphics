@@ -2959,19 +2959,19 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/arm2/README.md",
-      "sha256": "c9226cb2228daedfd38b6faedf71a9875cee823a19d6538880ab77189fd216a6"
+      "sha256": "0897d21a51f9d3911334f27b4d565e5a74ba9afa5854b3ec75c35c0bf089552f"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/arm2/SYNTHETIC-VALIDATION.md",
-      "sha256": "d74d3c84af3f3eadf846b09196aca248a9dc73384911d66857c7ab74599690e0"
+      "sha256": "a9ba920f60fb38a0db11ffb81a48b43a44a167886e262f6d02ef2d120453eb08"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/arm2/driver.py",
-      "sha256": "c61a27265b057ed341e74752dd8b48c90dec4b832faac9c7e9361d04efacf056"
+      "sha256": "4ecf799c7ba7e193a1a544ebc062729c283ebfb09d0d83b265eef28df9099d9a"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/arm2/render.swift",
-      "sha256": "4094e26ec1c859d5d330c923c83499b838c04dc58be1324edd531ef829eaabbd"
+      "sha256": "15bc155865688b18a269af38d5c1bef6e03b72e7e58027d9d559ae75a447168b"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/shim/record.py",
@@ -2983,7 +2983,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/network.html",
-      "sha256": "c5f4214b42a83a14a1056a3e12e2c12ce8c5d28ce3a11ec358a973a60485073d"
+      "sha256": "1b0bc2dee96b43d42a80b6ece12bf6d204b6472c9bdc6b237250270044ea2a2e"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/never-ready.html",
@@ -2991,11 +2991,11 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_renderer.py",
-      "sha256": "4b4cf08d3dcbc56b422c7a16eefed8d259a8319d06b6b4fde31e3a74ed72b66e"
+      "sha256": "a5c219f4a0dab7a86f2623f5fdb08cadf5edc6ba3d8c8a74589c63b618f70a18"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_shim.py",
-      "sha256": "4a8fa0aec40458ff821521291b075b4d5f13e48b7d279209eca25d02e26bb574"
+      "sha256": "4d9fe38482c3c62904a7c7e233c858726c028943edd9cdd0e473a2fc551a98d5"
     }
   ]
 }

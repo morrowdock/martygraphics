@@ -2,7 +2,26 @@
 <body><div id="caption">Synthetic network test</div><script>
 window.benchDuration = 10;
 window.benchFrame = async time => { document.getElementById('caption').textContent = 'Blocked network; frame time '+time; };
-fetch('NETWORK_URL').then(() => console.error('NETWORK ESCAPED')).catch(() => {
-  console.warn('synthetic fetch blocked'); window.benchReady = true;
-});
+const probes = {
+  fetch: () => fetch('NETWORK_URL'),
+  XHR: () => new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.onload = resolve; request.onerror = reject;
+    request.open('GET', 'NETWORK_URL'); request.send();
+  }),
+  WebSocket: () => new Promise((resolve, reject) => {
+    const connection = new WebSocket('NETWORK_URL'.replace('http:', 'ws:'));
+    connection.onopen = resolve; connection.onerror = reject;
+  }),
+  image: () => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = resolve; image.onerror = reject; image.src = 'NETWORK_URL';
+    document.body.appendChild(image);
+  }),
+  'dynamic-import': () => import('NETWORK_URL')
+};
+Promise.all(Object.entries(probes).map(async ([name, probe]) => {
+  try { await probe(); console.error('NETWORK ESCAPED: ' + name); }
+  catch { console.warn('synthetic ' + name + ' blocked'); }
+})).then(() => { window.benchReady = true; });
 </script></body></html>

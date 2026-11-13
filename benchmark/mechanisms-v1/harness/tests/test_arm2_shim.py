@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import support as S
 sys.path.insert(0, str(S.HARNESS / "shim"))
@@ -138,6 +139,62 @@ class ShimTest(FakeCase):
 
 class DriverTest(FakeCase):
     HTML = "```html\n<!doctype html><head></head><body>Synthetic blocks</body>\n```"
+
+    def test_backticks_in_javascript_do_not_truncate_html(self):
+        html = '<script>const marker = "```";</script>\n<body>Synthetic blocks</body>\n'
+        result = self.flow(["```html\n" + html + "```", "ACCEPT"])
+        self.assertEqual(result["status"], "rendered")
+        self.assertEqual(self.render_calls[0][0].read_text(), html)
+
+    def test_commonmark_closing_fences(self):
+        for opening, closing, content in (
+                ("````html", "`````", "```\n<body>synthetic</body>\n"),
+                ("~~~html", "   ~~~~ \t", "```\n<body>synthetic</body>\n"),
+                ("```html", " ```\t", "~~~\n``` trailing text\n    ```\n<body>synthetic</body>\n"),
+                ("   ```html", "```", "   <body>synthetic</body>\n")):
+            with self.subTest(opening=opening, closing=closing):
+                expected = content.removeprefix("   ") if opening.startswith("   ") else content
+                self.assertEqual(driver.html_block(opening + "\n" + content + closing + "\nafter"), expected)
+        self.assertEqual(driver.html_block("```html\r\n<body>synthetic</body>\r\n```\r\n"),
+                         "<body>synthetic</body>\r\n")
+        self.assertEqual(driver.html_block("```html\r<body>synthetic</body>\r```\r"),
+                         "<body>synthetic</body>\r")
+        self.assertEqual(driver.html_block('```html\n<script>const marker = "\u2028```\u2028";</script>\n```'),
+                         '<script>const marker = "\u2028```\u2028";</script>\n')
+        self.assertEqual(driver.html_block("```html\n<body>synthetic</body>"), "<body>synthetic</body>")
+        self.assertIsNone(driver.html_block("prefix ```html\n<body>synthetic</body>\n```"))
+        self.assertIsNone(driver.html_block("~~~~markdown\n```html\nnot HTML\n```\n~~~~"))
+
+    def test_renderer_timeout_preserves_streams_before_fallback(self):
+        binary = self.root / "slow-renderer"
+        binary.write_text("#!" + sys.executable + "\nimport os, time\n"
+                          "os.write(1, b'partial stdout\\x00\\xff\\n')\n"
+                          "os.write(2, b'partial stderr\\x00\\xfe\\n')\n"
+                          "time.sleep(60)\n")
+        binary.chmod(0o700)
+        renderer = driver.Renderer(binary, self.root / "unused.tgz")
+        replies = iter([self.HTML, "ACCEPT"])
+        destination = self.root / "timeout-run"
+        result = driver.run("synthetic", destination, lambda blocks, timeout: next(replies),
+                            lambda source, output, timeout: renderer(source, output, 0.5), "synthetic repair")
+        self.assertEqual(result["status"], "failed")
+        attempt = destination / "try-1"
+        self.assertEqual((attempt / "renderer.stdout").read_bytes(), b"partial stdout\x00\xff\n")
+        self.assertEqual((attempt / "renderer.stderr").read_bytes(), b"partial stderr\x00\xfe\n")
+        report = json.loads((attempt / "render" / "report.json").read_bytes())
+        self.assertFalse(report["complete"])
+        self.assertIn("timeout", report["harnessErrors"][0])
+
+    def test_renderer_timeout_optional_and_text_streams(self):
+        renderer = driver.Renderer(self.root / "unused", self.root / "unused.tgz")
+        for stdout, stderr, expected_stdout, expected_stderr in (
+                (None, None, b"", b""), ("synthetic \u2603", "error", "synthetic \u2603".encode(), b"error")):
+            error = subprocess.TimeoutExpired("synthetic", 0.1, output=stdout, stderr=stderr)
+            with self.subTest(stdout=stdout), patch.object(driver.subprocess, "run", side_effect=error):
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    renderer(self.root / "page.html", self.root / "render", 0.1)
+            self.assertEqual((self.root / "renderer.stdout").read_bytes(), expected_stdout)
+            self.assertEqual((self.root / "renderer.stderr").read_bytes(), expected_stderr)
 
     def flow(self, replies, render_error=None, blank=False, clock=None):
         self.configure(replies=replies)

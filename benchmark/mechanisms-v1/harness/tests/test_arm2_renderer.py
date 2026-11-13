@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import socket
 import struct
 import subprocess
 import sys
@@ -87,7 +88,7 @@ class WKRendererTest(unittest.TestCase):
         self.assertIn("error: synthetic readiness error", report["console"])
         self.assertEqual(len(report["stills"]), 5)
 
-    def test_fetch_blocked_without_request_reaching_server(self):
+    def test_network_probes_blocked_without_request_reaching_server(self):
         hits = []
 
         class Handler(BaseHTTPRequestHandler):
@@ -111,9 +112,114 @@ class WKRendererTest(unittest.TestCase):
             thread.join()
         self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
         self.assertEqual(hits, [])
-        self.assertIn("warn: synthetic fetch blocked", report["console"])
+        for probe in ("fetch", "XHR", "WebSocket", "image", "dynamic-import"):
+            self.assertIn("warn: synthetic " + probe + " blocked", report["console"])
         self.assertFalse(report["allBlank"])
         self.assertEqual(len(report["frames"]), 300)
+
+    def test_webrtc_main_and_iframe_send_no_udp(self):
+        datagrams = []
+        stopped = threading.Event()
+        listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        listener.bind(("127.0.0.1", 0))
+        listener.settimeout(0.1)
+
+        def listen():
+            while not stopped.is_set():
+                try:
+                    datagrams.append(listener.recvfrom(65535))
+                except socket.timeout:
+                    pass
+
+        thread = threading.Thread(target=listen, daemon=True)
+        thread.start()
+        probe = """
+        async function probe(scope, label) {
+          console.warn('synthetic WebRTC attempted: ' + label);
+          for (const name of ['RTCPeerConnection', 'webkitRTCPeerConnection']) {
+            if (typeof scope[name] !== 'function') continue;
+            console.error('WebRTC exposed: ' + label + ' ' + name);
+            try {
+              const peer = new scope[name]({iceServers: [{urls: 'stun:127.0.0.1:UDP_PORT'}]});
+              scope.syntheticPeer = peer;
+              peer.createDataChannel('synthetic');
+              await peer.setLocalDescription(await peer.createOffer());
+            } catch (error) { console.warn('synthetic WebRTC error: ' + error); }
+          }
+        }
+        """.replace("UDP_PORT", str(listener.getsockname()[1]))
+        srcdoc = "<script>" + probe + "probe(window, 'srcdoc-execution');</script>"
+        source = """<!doctype html><html><head></head><body>
+        <div style="background:black;color:white;font:40px system-ui">Synthetic offline WebRTC</div>
+        <script>""" + probe + """
+        (async () => {
+          await probe(window, 'main');
+          for (const name of ['RTCPeerConnection', 'webkitRTCPeerConnection', 'RTCDataChannel', 'RTCIceCandidate']) {
+            try { Object.defineProperty(window, name, {value: function restored() {}}); } catch {}
+            const descriptor = Object.getOwnPropertyDescriptor(window, name);
+            if (!descriptor || descriptor.value !== undefined || descriptor.writable || descriptor.configurable)
+              console.error('WebRTC binding not locked: ' + name);
+          }
+          const blank = document.createElement('iframe');
+          document.body.appendChild(blank);
+          await probe(blank.contentWindow, 'iframe');
+          const frame = document.createElement('iframe');
+          frame.srcdoc = SRCDOC;
+          document.body.appendChild(frame);
+          await probe(frame.contentWindow, 'iframe/srcdoc');
+          window.benchDuration = 10;
+          window.benchFrame = async () => {};
+          window.benchReady = true;
+        })();
+        </script></body></html>""".replace("SRCDOC", json.dumps(srcdoc).replace("</", "<\\/"))
+        try:
+            result, report, output = self.render("webrtc", source)
+        finally:
+            stopped.set()
+            thread.join()
+            listener.close()
+        self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
+        self.assertTrue(report["complete"], report)
+        self.assertEqual(len(report["frames"]), 300)
+        self.assertEqual(datagrams, [], "WebRTC sent UDP despite offline policy")
+        for label in ("main", "iframe", "iframe/srcdoc"):
+            self.assertIn("warn: synthetic WebRTC attempted: " + label, report["console"])
+        self.assertFalse(any("WebRTC exposed:" in line or "WebRTC binding not locked:" in line
+                             for line in report["console"]), report["console"])
+        self.assertTrue(any("srcdoc" in line and ("blocked" in line or "srcdoc-execution" in line)
+                            for line in report["console"]), report["console"])
+
+    def assert_head_injection(self, name, prefix):
+        source = prefix + """<body><div style="background:black;color:white;font:40px system-ui">Synthetic head</div>
+        <script type="module">
+        import {REVISION} from 'three';
+        if (REVISION !== '170') throw Error('wrong module');
+        const policy = document.head.querySelector('meta[http-equiv="Content-Security-Policy"]');
+        if (!policy || !policy.content.includes("connect-src 'none'")) throw Error('missing CSP');
+        console.warn('synthetic head and import map ready');
+        window.benchDuration = 10; window.benchFrame = async () => {}; window.benchReady = true;
+        </script></body></html>"""
+        result, report, output = self.render(name, source)
+        self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
+        self.assertTrue(report["complete"], report)
+        self.assertEqual(len(report["frames"]), 300)
+        self.assertIn("warn: synthetic head and import map ready", report["console"])
+        self.assertFalse(report["allBlank"])
+
+    def test_comment_before_head(self):
+        self.assert_head_injection("comment-head", '<!doctype html><!-- mentions <head> --><html><head></head>')
+
+    def test_head_in_script_string(self):
+        self.assert_head_injection("script-head", '<!doctype html><html><script>const marker = "<head>";</script><head></head>')
+
+    def test_head_in_style_text(self):
+        self.assert_head_injection("style-head", '<!doctype html><html><style>body::before {content:"<head>"}</style><head></head>')
+
+    def test_missing_head(self):
+        self.assert_head_injection("no-head", '<!doctype html><html>')
+
+    def test_uppercase_head_with_attributes(self):
+        self.assert_head_injection("uppercase-head", '<!DOCTYPE html><HTML lang="en"><HEAD data-note="quoted > <head>"></HEAD>')
 
     def test_bad_archive_hash_is_refused(self):
         archive = self.root / "bad.tgz"

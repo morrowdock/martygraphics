@@ -35,6 +35,12 @@ allowlist come from Marty `Sources/MartyLoop/Model.swift` at locked commit
   repeats it; the outer slot coordinator must audit infrastructure evidence.
 - A new output directory is mandatory. Exact CLI bytes and parsed reply text,
   every authored page, all captures, console reports, and `run.json` are kept.
+  Renderer stdout and stderr are also retained when the subprocess times out,
+  before the driver creates its fallback report. HTML fences close only on a
+  standalone fence line of the same character and at least the opening length,
+  with up to three spaces of indentation; embedded JavaScript backticks do not
+  terminate the source. Both backtick and tilde fences are supported, including
+  CommonMark's end-of-input termination for an unclosed block.
   The final `source` object can be used as the packer's captures source. The
   packer, not this renderer, performs the registered H.264 intermediate encode,
   masking and partial blinding. Raw captures are not grader packets.
@@ -72,9 +78,25 @@ hash. No npm installation or unpinned three.js copy is used. The archive is a
 local operator input, not a network dependency at render time.
 
 An import map and restrictive CSP are inserted at the start of the head.
+The before-head scanner skips whitespace, comments and quoted doctypes/HTML
+attributes. It recognizes an explicit head case-insensitively or inserts an
+implicit head before the first content token. In particular, script/style
+content is never searched for head-like text, and no author script runs before
+the injected policy and import map, even when the author omitted the head.
 WK content rules block every other URL scheme; navigation policy denies
 external pages. CSP denies connections, frames, workers, external fonts and
-other resource types. JavaScript cannot browse the operator's files. These
+other resource types. Before creating the view, R-WK disables peer connections
+through the guarded WKPreferences `_setPeerConnectionEnabled:` SPI and checks
+the `_peerConnectionEnabled` readback. Missing selectors or a true readback
+fail closed. This page-wide native preference cannot be restored by page
+JavaScript, including newly created iframe realms. As defense in depth, an
+all-frame document-start user script installs non-writable, non-configurable
+undefined bindings for the RTC constructors (including the webkit alias).
+The native preference is essential: CSP/content rules alone do not stop STUN.
+The SPI is declared and implemented in WebKit's
+`Source/WebKit/UIProcess/API/Cocoa/WKPreferencesPrivate.h` and `WKPreferences.mm`
+at commit `fe9858364feb0372faa158caf596ae74c9c9ced0` (checked 2026-11-12).
+JavaScript cannot browse the operator's files. These
 controls use WebKit's process sandbox; this is not a VM for hostile exploits
 against WebKit itself. Keep the renderer, archive and output directory under
 operator control. Retain the binary and OS/WebKit versions for RUN-LOCK review.
