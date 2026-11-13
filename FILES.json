@@ -3008,6 +3008,10 @@
     {
       "path": "benchmark/mechanisms-v1/harness/G2-REGISTERED-MODEL-VALIDATION.md",
       "sha256": "3da1f8679ecd0da0821b0955f645ab768dfa61bbbc523adaa9c3fc4b16fac219"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/DRY-RUN-RUNBOOK.md",
+      "sha256": "97d6d9619fd5e5739a76287b1f75fb171fd405ce0afbc3b0fde908783c175d2b"
     }
   ]
 }
