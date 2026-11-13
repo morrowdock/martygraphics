@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "768b989ed5fdb22b477f225a1b9ca6a1a667a56f5128ab5cf406d5f8087aff87"
+      "sha256": "403b78b4a2a6e59aa2eda22f8729ce005c98ba6879df841dea53202a8e8cc380"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1375,7 +1375,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
-      "sha256": "12677a4a708603bc191153da7077e6ce287c9a9abe7c82eed5846bb2570f449c"
+      "sha256": "e45ea89559877756bb3582b9702eea7ea0d01d04776e706b8135a32478ef92d2"
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
@@ -1411,7 +1411,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
-      "sha256": "32c571bfbaeabcdcad59d40071a7f528dd15af9753e68f337490442923707311"
+      "sha256": "20ceb19c37d1a71d5585a714a8a0fc7e1f376edbe413edb9efdd1c9aaabdd1a6"
     },
     {
       "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.FACTCHECK-2.md",
@@ -1431,7 +1431,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/GEMINI-CLI.md",
-      "sha256": "0fec8ece933ec1cd6f5c445918a1014808eb98a4aac2b70ac9818b92df7730aa"
+      "sha256": "b21e51bbddaa2e5f192930e945b27487020f67efe7c240de983cf70e960ae1df"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/LIVE-ADAPTERS.md",
@@ -1439,7 +1439,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
-      "sha256": "ae14e1d1e1b9e49bde21e5a108ff78052e769408a009d2e9ae0e96012d129085"
+      "sha256": "99edbfc9953e233fe42d9107292cf2811714dcd26dd640bac571e97768bc3fd2"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/PACKING.md",
@@ -1459,7 +1459,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/gemini_adapter.py",
-      "sha256": "9facd78154049632e97320738a2f2b02b3702771ee97dcefb7416125acbe1c90"
+      "sha256": "8534b8e83d8836770733279a99dadb6a3dd5810032ea8b1ccfba9a8ef932f986"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/grading_runner.py",
@@ -1467,7 +1467,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/native/gemini_probe.mjs",
-      "sha256": "9a06e7fdc218e954c4eddaafe398a4f65b8f46e523e716b3c4cb9c7ea444623b"
+      "sha256": "a847f0a954e6f7fe89178ffd150de65afcf9bf612efeccee37764d68f1b3c76b"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/native/media.swift",
@@ -1503,7 +1503,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_gemini_adapter.py",
-      "sha256": "88a3e6b12949a61c05748144314e02cb6dd7bd75cc12ce448a48b898a0dbbbbf"
+      "sha256": "33708e51adaf023be85f3b887c7d2517cd9e968de3f0e266c57dd98685920608"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_native_media.py",
@@ -2944,6 +2944,10 @@
     {
       "path": "tools/verify_release_install.py",
       "sha256": "3d87164ec0d1a6de154d86957970d91645c36f4d63b411f0d5a597fb0629777a"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/native/gemini_guard.mjs",
+      "sha256": "95754165cce67ef7d7c8c200baf0d90da2cff3edd12c59f97aa93e3150aaac74"
     }
   ]
 }

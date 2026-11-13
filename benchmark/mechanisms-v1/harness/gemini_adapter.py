@@ -20,8 +20,6 @@ POLICY = '[[rule]]\ntoolName = "*"\ndecision = "deny"\npriority = 999\n'
 SETTINGS = {
     "security": {"auth": {"selectedType": "oauth-personal", "enforcedType": "oauth-personal"}},
     "tools": {"core": [], "useRipgrep": False, "disableLLMCorrection": True},
-    "admin": {"extensions": {"enabled": False}, "mcp": {"enabled": False},
-              "skills": {"enabled": False}},
     "mcpServers": {}, "skills": {"enabled": False}, "hooksConfig": {"enabled": False},
     "context": {"includeDirectoryTree": False, "includeDirectories": [],
                 "loadMemoryFromIncludeDirectories": False, "memoryBoundaryMarkers": []},
@@ -34,10 +32,11 @@ SETTINGS = {
                      "agentSessionInteractiveEnabled": False, "agentSessionSubagentEnabled": False}},
     "model": {"name": MODEL, "maxSessionTurns": 1, "skipNextSpeakerCheck": True},
     "modelConfigs": {
-        "customOverrides": [{"match": {"model": MODEL}, "modelConfig": {
-            "generateContentConfig": {"thinkingConfig": {"thinkingLevel": "HIGH"}}}}],
+        "customOverrides": [{"match": {"model": model}, "modelConfig": {
+            "generateContentConfig": {"thinkingConfig": {"thinkingLevel": "HIGH"}}}}
+                            for model in (MODEL, REGISTERED_MODEL)],
         # Remove the built-in access/customtools remapping of this exact id.
-        "modelIdResolutions": {MODEL: {"default": MODEL}},
+        "modelIdResolutions": {MODEL: {"default": MODEL, "contexts": []}},
         # This local routing bit suppresses a hard-coded downgrade to Auto when
         # signed-in preview access is absent. It does NOT grant server access or
         # claim that this preview model is GA. An access failure must stay one.
@@ -52,7 +51,8 @@ SETTINGS = {
     "advanced": {"autoConfigureMemory": False},
 }
 ENV = dict(live.ENV, GEMINI_CLI_NO_RELAUNCH="1", NO_BROWSER="1",
-           GEMINI_FORCE_ENCRYPTED_FILE_STORAGE="false")
+           GEMINI_FORCE_ENCRYPTED_FILE_STORAGE="false",
+           MARTYGRAPHICS_GEMINI_MODEL=MODEL)
 ENV.pop("CODEX_HOME")
 
 
@@ -125,7 +125,12 @@ class GeminiBubblewrap(live.Bubblewrap):
         for name, value in sorted(self.env.items()):
             argv += ["--setenv", name, value]
         if args and args[0] == "/tool":
-            args = ["/node", "/gemini/bundle/gemini.js", *args[1:]]
+            if "--prompt" in args:
+                guard = Path(__file__).parent / "native/gemini_guard.mjs"
+                argv += ["--ro-bind", str(guard), "/dispatch-guard.mjs"]
+                args = ["/node", "--import", "/dispatch-guard.mjs", "/gemini/bundle/gemini.js", *args[1:]]
+            else:
+                args = ["/node", "/gemini/bundle/gemini.js", *args[1:]]
         return argv + ["--", *args]
 
 
@@ -193,7 +198,7 @@ class GeminiAdapter(live.CodexAdapter):
                                              "node": live.digest(self.sandbox.node)})).hexdigest()
 
     def policy_digest(self):
-        return hashlib.sha256(live.json_bytes([live.policy_hash(), live.digest(__file__), live.digest(Path(__file__).parent / "native/gemini_probe.mjs"), SETTINGS, ENV, POLICY])).hexdigest()
+        return hashlib.sha256(live.json_bytes([live.policy_hash(), live.digest(__file__), live.digest(Path(__file__).parent / "native/gemini_probe.mjs"), live.digest(Path(__file__).parent / "native/gemini_guard.mjs"), SETTINGS, ENV, POLICY])).hexdigest()
 
     def native_check(self):
         """Version/catalog only: CLI has no effective tool/context diagnostic."""
@@ -218,7 +223,7 @@ class GeminiAdapter(live.CodexAdapter):
                     "packageSha256": package_digest(self.sandbox.package),
                     "nodeSha256": live.digest(self.sandbox.node),
                     "runtimeSha256": self.binary_hash, "network": False, "authCopied": False,
-                    "effectiveToolContextDiagnostic": "unavailable in this CLI; source-reviewed settings only",
+                    "effectiveToolContextDiagnostic": "full offline request dump unavailable; real settings-loader probe plus live dispatch guard",
                     "modelAccess": "PENDING; no model request"}
 
     def library_check(self):
@@ -233,13 +238,18 @@ class GeminiAdapter(live.CodexAdapter):
             live.durable_bytes(root / "packet/probe.png", base64.b64decode(
                 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aE1sAAAAASUVORK5CYII="))
             shutil.copyfile(Path(__file__).parent / "native/gemini_probe.mjs", root / "out/probe.mjs")
+            shutil.copyfile(Path(__file__).parent / "native/gemini_guard.mjs", root / "out/guard.mjs")
             self.sandbox.invoke(root / "home", root / "packet", root / "out",
                                 ["/node", "/out/probe.mjs"], b"", 30, network=False)
             report = json.loads((root / "out/stdout.bin").read_bytes())
             if (report["toolDefinitions"] != [] or report["loadedMemory"] != "" or
                     report["modelWithoutPreviewAccess"] != MODEL or
-                    report["modelWithPreviewAccess"] != MODEL or
+                    any(item["resolved"] != MODEL for item in report["modelConditions"]) or
+                    report["registeredModelThinking"].get("thinkingLevel") != "HIGH" or
                     report["thinking"].get("thinkingLevel") != "HIGH" or
+                    report["isolationSettings"] != {"core": [], "mcpServers": {}, "skills": False,
+                                                    "hooks": False, "agents": False} or
+                    report["dispatchGuard"] != {"generateContent": True, "generateContentStream": True} or
                     not report["textExact"] or not report["imageExact"] or
                     report["imageMime"] != "image/png"):
                 raise ValueError("Gemini native library policy/input check failed")
@@ -317,21 +327,65 @@ def self_test(args):
     return 0
 
 
+def model_access_check(adapter):
+    """Human-invoked, one minimal generation attempt. Never used by preflight."""
+    receipt = adapter.root / "MODEL-ACCESS-CHECK.json"
+    if receipt.exists():
+        raise ValueError("model-access-check already attempted; use a fresh private --work directory")
+    adapter.preflight()
+    folder = adapter.root / "model-access"
+    folder.mkdir(mode=0o700)
+    for name in ("home", "packet", "out"):
+        (folder / name).mkdir(mode=0o700)
+    adapter.initialize_home(folder / "home")
+    command, payload = adapter.transport(b"Reply OK.", [], None, folder / "out")
+    report = {"model": MODEL, "startedUTC": live.utc(), "outcome": "uncertain",
+              "phase": "sending", "generationAttemptLimit": 1,
+              "runtimeSha256": adapter.binary_hash,
+              "scope": "CLI request acceptance only; refusal does not prove model unavailability"}
+    live.durable_json(receipt, report)
+    try:
+        adapter.sandbox.invoke(folder / "home", folder / "packet", folder / "out",
+                               command, payload, adapter.timeout)
+        gemini_result(folder / "out")
+        report["outcome"] = "accepted"
+    except Exception:
+        # Never infer account denial from a timeout, missing completion or auth
+        # failure. A terminal native error is a refused CLI request, not proof
+        # that this model ID does not exist. Raw details remain private.
+        try:
+            events = [json.loads(line) for line in (folder / "out/stdout.bin").read_bytes().splitlines()]
+            if events and events[-1].get("type") == "result" and events[-1].get("status") == "error":
+                report["outcome"] = "refused"
+        except (OSError, ValueError, AttributeError):
+            pass
+    report.update(phase="finished", finishedUTC=live.utc())
+    live.durable_json(receipt, report)
+    print(json.dumps(report, indent=2))
+    return 0 if report["outcome"] == "accepted" else 1
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["check", "auth-check"])
+    parser.add_argument("command", choices=["check", "auth-check", "model-access-check"])
     parser.add_argument("--binary", type=Path)
     parser.add_argument("--work", type=Path)
     parser.add_argument("--auth", type=Path, default=Path.home() / ".gemini/oauth_creds.json")
+    parser.add_argument("--confirm-model-request", action="store_true",
+                        help="human confirmation: model-access-check spends quota on one minimal request")
     args = parser.parse_args(argv)
     if args.command == "auth-check":
         present = auth_present(args.auth)
         print("Local OAuth credentials present; account validity/access unverified (no network)." if present else
               "Owner action needed: run the pinned Gemini CLI and select Login with Google.")
         return 0 if present else 1
+    if args.command == "model-access-check" and not args.confirm_model_request:
+        parser.error("human-run model-access-check requires --confirm-model-request after sign-in")
     if not args.binary or not args.work:
-        parser.error("check requires --binary and --work (private, outside repository)")
+        parser.error("check/model-access-check requires --binary and --work (private, outside repository)")
     adapter = GeminiAdapter(args.work, args.binary, auth=args.auth)
+    if args.command == "model-access-check":
+        return model_access_check(adapter)
     report = adapter.native_check()
     report["libraryProbe"] = adapter.library_check()
     live.durable_json(adapter.root / "NATIVE-CHECK.json", report)

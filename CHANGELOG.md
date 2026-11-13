@@ -5,8 +5,12 @@
 - **Proposed G2 Gemini CLI adapter.** Record the owner-approved change from agy
   to Gemini CLI 0.68.0. Add isolated OAuth transport, durable exact-session
   recovery, synthetic failure tests and quota-free native library checks.
-  The unavailable Argon model, proposed Pro preview replacement and incomplete
-  post-auth proof are explicit. No model call was made; RUN-LOCK stays DRAFT.
+  Argon is unlisted; account access unverified. The Pro preview fallback remains
+  proposed and requires owner approval. Real settings-loader checks, explicit
+  empty remap contexts, model-specific HIGH overrides and a final tool-registry
+  dispatch guard correct the initial isolation claims. A separate human-run
+  model-access check records one minimal request; auth-check stays quota-free.
+  No model call was made; RUN-LOCK stays DRAFT.
 
 - **Proposed live benchmark adapters.** Add isolated Codex CLI transport,
   durable receipts, exact-session fix-up, fake CLI tests and a quota-free dry

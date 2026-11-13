@@ -137,16 +137,21 @@ success, exact fix-up, crash/timeout, malformed envelopes, tool/unknown events,
 wrong model/id, altered storage and fresh isolation.
 
 The owner approved Gemini CLI 0.68.0 with Google subscription auth, no paid API.
-The registered `gemini-4-argon` is absent from bundled model definitions;
+The registered `gemini-4-argon` is unlisted; arbitrary model IDs pass through
+the CLI, and account access remains PENDING a signed-in check;
 `gemini-3.1-pro-preview` plus `thinkingLevel: HIGH` is the **proposed replacement
 model**, explicitly different and still pending acceptance before run 1.
-Local model-routing overrides prevent silent Auto/2.5 fallback. Native probes
-verify an empty constructed tool registry and memory discovery, but no native
+Local model-routing overrides prevent silent Auto/2.5 fallback. Real
+settings-loader probes
+verify all eight model conditions, explicit HIGH for Argon, an empty constructed
+tool registry and memory discovery. A pre-dispatch guard refuses a nonempty
+final registry after startup/auth, but no offline native
 CLI diagnostic proves the complete post-auth request. Built-in system and
 environment context remain. These limits must be reviewed, not hidden.
 
 Pending: owner sign-in, replacement-model acceptance and subscription access,
 full CLI/post-auth policy and image fidelity acceptance, exact-session live
-acceptance, reviewed host pins and all existing benchmark gates. The only
-requested owner action is the sign-in command in GEMINI-CLI.md; no model call
-or new run approval is requested here. RUN-LOCK remains DRAFT.
+acceptance, reviewed host pins and all existing benchmark gates. GEMINI-CLI.md
+separates quota-free auth-check from the explicit human-run
+model-access-check, which was not run with the real CLI. No new benchmark run
+approval is requested here. RUN-LOCK remains DRAFT.

@@ -324,27 +324,43 @@ is unchanged. This is a **substantive grader-route change**, recorded before
 run 1; it can change grades and verdict eligibility. It is not labelled as
 having zero score effect. Scoring arithmetic is unchanged.
 
-**Model finding and proposed run pin:** the CLI does not expose the registered
-`gemini-4-argon` in its bundled definitions. The closest shipped Pro candidate
-is `gemini-3.1-pro-preview`, with `thinkingLevel: "HIGH"`. The adapter explicitly
-selects that ID and HIGH; this changes model identity, not just spelling.
-The owner approved the CLI route. Acceptance of this specific model change
-and the complete effective request remain **PENDING before run 1**, not implied
-by the route decision. The adapter prevents local Auto/2.5 remapping and
-fallback chains as documented in GEMINI-CLI.md; it rejects differing actual
-model usage. Subscription availability is unverified and must never be
-inferred from a local catalog.
+**Model finding and proposed run pin (corrected 2026-11-12):** Argon is
+unlisted in Gemini CLI 0.68.0; account access is **PENDING a signed-in check**.
+The CLI passes arbitrary `--model` IDs through, so absence from bundled
+models is not unavailability. `gemini-3.1-pro-preview` remains strictly a
+**PROPOSED fallback requiring owner approval**; its existing adapter pin is
+unchanged. No model change is authorized by the CLI route decision. Unknown
+IDs do not receive HIGH automatically: a proposed exact-match override for
+`gemini-4-argon` explicitly sets `thinkingConfig.thinkingLevel="HIGH"` and is
+verified through the native loader without selecting it or sending a request.
 
-**VERIFIED implementation evidence:** fresh bubblewrap homes, an auth-only
-runtime copy, packet-only attachment references, durable raw replies/receipts,
-exact saved-UUID fix-up and uncertain-turn no-resend behavior have synthetic
-process tests. Native, network-disabled, auth-free library probes establish
-an empty constructed tool registry and user-memory discovery, HIGH thinking,
-fixed model resolution and synthetic text/PNG decoding. Negative probes
-reject tool, memory and model-policy regressions. Gemini has no documented
-auth-free full request dump; the probe is narrower than G1's diagnostic.
-Built-in system/environment context remains. Post-auth remote settings,
-model access, full multimodal fidelity and real resume behavior remain pending.
+**Review correction against `2c17874dfa26cb86f08455c767fb9808f32445af`:** the
+initial raw-settings probe missed deep-merged conditional model remaps and
+ineffective user `admin.*` disables. Those earlier isolation claims are
+**STALE**. Explicit `contexts: []` now removes the remaps; all eight resolver
+conditions use the unchanged pin. User and system admin fields are replaced
+by schema defaults plus remote settings and are not claimed as disable
+controls. Honored controls are `tools.core=[]`, `--extensions none`, empty MCP
+configuration, disabled skills/hooks/agents and the isolated filesystem.
+
+**VERIFIED offline implementation evidence:** the probe uses the CLI's real
+`loadSettings().merged`, then maps reviewed Config fields. It checks empty
+constructed tools and memory, both exact-model HIGH overrides, all access and
+customtools conditions, and synthetic text/PNG decoding. Negative probes
+reject tool, memory, missing-context and model-policy regressions. Synthetic
+process tests cover durable exact-session replies and uncertain no-resend
+behavior. A read-only preload checks the final registry and request immediately
+before generation, after auth/startup; either generation method refuses tools,
+wrong model/thinking, incomplete startup/auth or a second attempt. Its lifecycle
+tests are synthetic, with no real auth or model method called.
+
+**PENDING:** genuine post-auth request, remote-admin behavior, signed-in model
+access, full multimodal fidelity and real resume acceptance. Built-in
+system/environment context remains. `auth-check` stays quota-free; the separate
+human-confirmed `model-access-check` sends one minimal request to the pinned
+ID and records acceptance/refusal/uncertainty. It was **NOT RUN with the real
+CLI** during this correction. Sources: pinned package loader/core and
+[GEMINI-CLI.md](harness/GEMINI-CLI.md), checked 2026-11-12 UTC.
 
 No benchmark packet, rubric, real prompt, OAuth flow or model quota was used.
 Auth needs the owner's one-time Login with Google. Implementation acceptance,

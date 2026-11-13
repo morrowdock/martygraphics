@@ -2,7 +2,8 @@
 
 Status: **PROPOSED implementation; owner-approved route change on 2026-11-12.
 Not run-ready.** Checked: 2026-11-12 UTC. Base:
-`7332c125b83c94fd93acfbd1e77645d978e6ce87`. See A-16 in
+`7332c125b83c94fd93acfbd1e77645d978e6ce87`; review corrections against
+`2c17874dfa26cb86f08455c767fb9808f32445af` on 2026-11-12 UTC. See A-16 in
 [AMENDMENTS.md](../AMENDMENTS.md). No benchmark packet, rubric or synthetic
 prompt was sent to a model. No OAuth flow was started.
 
@@ -54,7 +55,7 @@ or API calls are used.
 | JSON and identity | `bundle/docs/cli/headless.md`: `json` and `stream-json`. We use JSONL `stream-json` to see tool events, plus `--raw-output --accept-raw-output-risk` to preserve reply text without ANSI stripping. Wire data is stored, not rendered. `init.session_id` and `init.model`, assistant message deltas, and final `result.status/stats` are checked. |
 | Resume | `bundle/docs/cli/session-management.md` documents a full UUID with `--resume`. Only the saved complete conversation's UUID is used. Session history keeps user content parts, including images (`convertSessionToClientHistory`). No `latest`, index, fork or retry of an outstanding turn. |
 | Tools, shell, search | `tools.core=[]` is a real empty allowlist in `Config.createToolRegistry`. An admin-tier TOML rule denies `toolName="*"`, priority 999. No agent shell/file/web/search definitions are allowed. Client-side attachment reading is deliberate, not a model tool. |
-| MCP, extensions, skills, hooks | `admin.mcp.enabled=false`, empty `mcpServers`, `admin.extensions.enabled=false`, `--extensions none`, disabled skills, agents and hooks. Host config and extension directories are absent. |
+| MCP, extensions, skills, hooks | `tools.core=[]`, empty `mcpServers`, `--extensions none`, `skills.enabled=false`, `experimental.enableAgents=false`, and `hooksConfig.enabled=false`. Host config and extension directories are absent. User/system `admin.*` values are not disable controls: the loader replaces them with schema defaults plus remote admin settings. |
 | Memory and custom context | No host home, workspace config, rules, sessions or memory are mounted. Packet names are strictly allowlisted. New homes contain only generated settings/policy and the OAuth file. Auto-memory and directory-tree context are disabled. Resume refuses any Markdown file in the private home. |
 | Checkpointing | `general.checkpointing.enabled=false`. Session recording remains available for exact resume; it is separate from file-edit checkpointing. |
 | Payment | OAuth personal auth is selected and enforced; API-key/proxy/cloud env is not inherited. `billing.overageStrategy="never"` disables AI-credit overages. |
@@ -77,11 +78,20 @@ the private home and confirms rejection.
 ## Model and thinking (VERIFIED locally; account access PENDING)
 
 `gemini-4-argon` does not appear in the shipped model definitions or signed-out
-catalog. The closest shipped Pro candidate is **`gemini-3.1-pro-preview`**.
+catalog. The CLI accepts arbitrary `--model` IDs and passes unknown IDs through;
+absence
+from a catalog does **not** establish unavailability. Argon account access is
+**PENDING a human-run signed-in check**. **`gemini-3.1-pro-preview` is only a
+PROPOSED fallback requiring owner approval**, not an approved replacement.
 This changes the model identity as well as the CLI route; it is not an alias
-or a claim of equivalence. The adapter and draft pins select that exact ID.
-The bundled model config uses `thinkingLevel: "HIGH"`; an explicit custom
-override retains it. This is the documented mapping for registered "thinking
+or a claim of equivalence. The existing adapter pin remains that preview ID
+unchanged for review.
+The bundled preview model config uses `thinkingLevel: "HIGH"`; an explicit
+model-matched override retains it. Unknown IDs do not automatically get HIGH.
+A separate exact-match override for `gemini-4-argon` explicitly sets
+`thinkingConfig.thinkingLevel="HIGH"` and is tested through the loader. It
+only applies if that ID is selected after review; it does not switch the pin.
+This is the documented mapping for registered "thinking
 high", not evidence that Argon's behavior is reproduced.
 
 Signed-out `models list --output-format json` shows stable model choices,
@@ -93,10 +103,15 @@ access. No claim of `gemini-4-argon` availability is made.
 
 The CLI otherwise downgrades a preview model to Auto/2.5 when preview access
 is absent and can select a fallback chain. The adapter enables documented
-dynamic model configuration, gives this ID an identity resolution, sets its
+dynamic model configuration, gives this ID an identity resolution with explicit
+`contexts: []`, sets its
 **local routing** `isPreview` bit to false, and empties the `preview` and
-`default` fallback chains. The native probe checks resolution with and without
-preview access. The original package definition stays unchanged and still says
+`default` fallback chains. The real settings loader deep-merges bundled
+defaults: specifying only
+`default` retained conditional remaps in the initial implementation. Explicit
+empty contexts remove them. The native probe checks all eight combinations of
+`useGemini3_1`, `useCustomTools`, and `hasAccessToPreview` after loading settings.
+The original package definition stays unchanged and still says
 preview. This local routing override does not grant provider access or make
 the model GA: an unavailable model must fail. Init and final per-model usage
 must name only the selected model. Any other model makes the turn uncertain.
@@ -149,24 +164,48 @@ python benchmark/mechanisms-v1/harness/gemini_adapter.py check \
 **VERIFIED, quota-free:** native `--version`, `models list`, and the checked-in
 `native/gemini_probe.mjs` run in bubblewrap with no network or auth. The probe
 imports the installed core library; it does not replace it. It constructs
-Config with the adapter's corresponding settings and directly checks:
+Config from `loadSettings("/packet").merged` using the same settings loader as
+the CLI (`chunk-VFM6AETN.js`), and directly checks:
 
 - zero registered function definitions and empty discovered user memory;
-- exact model resolution and HIGH thinking;
+- exact model resolution across all eight access/customtools combinations,
+  HIGH thinking for both the pinned ID and the exact-match Argon override;
+- merged isolation settings, including the true admin defaults (not treated as disables);
+- the dispatch guard with synthetic auth/startup and a native registry: late
+  tools, incomplete startup/auth, wrong model/thinking/request tools, and second
+  generation attempts refuse before either generator method runs;
 - a synthetic text file and a one-pixel PNG as exact native file content.
 
-Negative native tests expose a shell tool, insert memory, and remove the model
-routing override. Each fails the check. No model method, `refreshAuth` or full
-`Config.initialize` is invoked. Storage initialization is local only.
+Negative native tests expose a shell tool, insert memory, remove the routing
+override or explicit empty contexts, and remove the Argon HIGH override. Each
+fails the check. No real model method, native `refreshAuth` or full
+`Config.initialize` is invoked. Guard lifecycle tests use synthetic methods
+only. Storage initialization is local only.
 
 **LIMIT:** Gemini 0.68.0 offers no documented offline complete request/tool
 configuration dump. `/tools` is an interactive command after CLI auth startup,
 not an auth-free diagnostic. Our library probe maps the relevant Config fields
-from the documented settings and reviewed `loadCliConfig` code; it does **not**
-exercise the full CLI settings loader, post-auth remote admin controls, model
-service or final request assembly. It is narrower than G1's native
+from the **merged** settings and reviewed `loadCliConfig` code. It exercises
+the real CLI settings loader, but not full CLI startup, post-auth remote admin
+controls or final request assembly. It is narrower than G1's native
 `debug prompt-input` check. It must not be represented as proof of the complete
 post-auth effective request.
+
+**PROPOSED live dispatch enforcement:** Node preloads the read-only
+`native/gemini_guard.mjs` before the untouched pinned CLI entry point. It wraps
+the Config content generator assignment before auth, including cached
+BaseLlmClient references. Both generation methods refuse unless auth returned,
+startup completed and the final registry has no tools or declarations. The
+guard rechecks each dispatch, including late/remote additions; it also checks
+the pinned model, HIGH thinking and empty request tools (the native empty
+`functionDeclarations` wrapper is allowed). A second generation attempt in the
+same process is refused, including retries/fallbacks. No installed package
+bytes are modified. The guard is included in the adapter policy digest.
+
+Offline synthetic lifecycle checks verify these refusals; a genuine signed-in
+post-auth request remains **PENDING**. Remote admin defaults may be enabled;
+we rely on honored settings, the filesystem boundary and this runtime check,
+not on user or system `admin.*` overrides.
 
 The CLI also adds its built-in system prompt and environment context (date,
 Linux and the private temporary path). These are not disabled by
@@ -175,9 +214,11 @@ user/repository/memory/extension context, not an empty system prompt. Provider
 hidden capabilities, subscription access, remote controls, full multimodal
 fidelity and real exact-session fix-up remain **PENDING**. RUN-LOCK stays DRAFT.
 
-## Owner sign-in: the only owner action
+## Owner sign-in and separate model-access check
 
-Auth state on 2026-11-12: **owner action needed**, no local OAuth file found.
+Historical initial implementation observation on 2026-11-12: **owner action
+needed**, no local OAuth file found. This review-fix task did not inspect auth
+files or attempt sign-in; current auth state is unverified.
 Run this one command on this laptop:
 
 ```sh
@@ -195,6 +236,24 @@ python benchmark/mechanisms-v1/harness/gemini_adapter.py auth-check
 This reports only whether a private OAuth file has a refresh credential. It
 prints no token and makes no network request. It cannot prove the credential
 is still valid or that the account can use the selected model.
+
+After sign-in, a human may explicitly run this **quota-consuming** command.
+It is never part of `check`, `auth-check`, preflight or automated tests:
+
+```sh
+python benchmark/mechanisms-v1/harness/gemini_adapter.py model-access-check \
+  --binary "$HOME/.local/share/martygraphics-gemini-cli-0.68.0/node_modules/.bin/gemini" \
+  --work /absolute/new/private/directory/outside/git --confirm-model-request
+```
+
+It sends only `Reply OK.` to the unchanged pinned model, with one generation
+attempt and no retry/fallback. It writes private `MODEL-ACCESS-CHECK.json` with
+`accepted`, `refused` (a terminal CLI error), or `uncertain` (e.g. timeout, auth
+failure or missing completion). A refusal is **not proof of model
+unavailability**; review the private diagnostics to distinguish account access,
+policy and transport failures. A repeated attempt in the same work directory is
+refused. This command was **NOT RUN with the real CLI** by the implementation
+agent. It does not test Argon while the pin selects the proposed preview ID.
 
 The existing `grading_runner.py self-test --grader G2 --binary ... --work ...
 --dry` now prints the Gemini plan without reading auth or spawning a process.

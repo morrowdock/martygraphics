@@ -21,7 +21,13 @@ import crypto from 'node:crypto';
 const args = process.argv.slice(2), mode = BEHAVIOUR;
 if (args.includes('--version')) { console.log('0.68.0'); process.exit(0); }
 if (args[0] === 'models') { console.log(JSON.stringify([{id:'gemini-3.1-pro-preview'}])); process.exit(0); }
+const {Config} = await import('./chunk-RCB6BI5H.js');
+const config = new Config();
+await config.refreshAuth();
+config.contentGenerator.generateContent({model:'gemini-3.1-pro-preview',
+  config:{thinkingConfig:{thinkingLevel:'HIGH'},tools:[]}});
 const emit = x => console.log(JSON.stringify(x));
+if (mode === 'refused') { emit({type:'result',status:'error'}); process.exit(1); }
 const saved = '/home/grader/session.json';
 const resumed = args.includes('--resume');
 let state;
@@ -78,6 +84,22 @@ class GeminiTest(unittest.TestCase):
         (package / 'bundle').mkdir(parents=True, exist_ok=True)
         (package / 'package.json').write_text(json.dumps({'name':'@google/gemini-cli', 'version':g2.VERSION, 'type':'module'}))
         binary = package / 'bundle/gemini.js'
+        (package / 'bundle/chunk-RCB6BI5H.js').write_text("""
+import fs from 'node:fs';
+export class Config {
+  async refreshAuth() {
+    this.contentGenerator = {
+      generateContent: () => fs.writeFileSync('/out/dispatched.json', '{}'),
+      generateContentStream: () => { throw new Error('unused synthetic stream'); },
+    };
+  }
+  isInitialized() { return true; }
+  getModel() { return 'gemini-3.1-pro-preview'; }
+  getToolRegistry() { return {
+    getAllTools: () => TOOLS, getFunctionDeclarations: () => [],
+  }; }
+}
+""".replace('TOOLS', "[{name:'late_mcp_tool'}]" if behaviour == 'late-tool' else '[]'))
         binary.write_text(FAKE.replace('BEHAVIOUR', repr(behaviour)).replace('HOST', repr(str(self.root / 'host-secret'))))
         adapter = g2.GeminiAdapter(self.root / ('state-' + behaviour), binary, auth=self.auth, **kwargs)
         # Only native library diagnostics are mocked; CLI execution still uses
@@ -241,6 +263,38 @@ class GeminiTest(unittest.TestCase):
                 g2.gemini_result(handle.path/'1')
 
 
+    def test_post_startup_tool_refused_before_generation(self):
+        adapter = self.adapter('late-tool')
+        handle = self.open(adapter)
+        with self.assertRaises(live.Uncertain):
+            handle.reply('Synthetic prompt')
+        self.assertFalse((handle.path / '1/dispatched.json').exists())
+        self.assertIn('final tool registry', (handle.path / '1/stderr.bin').read_text())
+
+    def test_model_access_requires_explicit_confirmation_without_reading_auth(self):
+        with patch.object(g2, 'auth_present', side_effect=AssertionError('auth read')), \
+                patch.object(subprocess, 'Popen', side_effect=AssertionError('process')), \
+                contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            g2.main(['model-access-check'])
+
+    def test_model_access_records_accept_refuse_uncertain_once_with_fake_cli(self):
+        for mode, outcome in [('success', 'accepted'), ('refused', 'refused'), ('crash', 'uncertain')]:
+            with self.subTest(mode=mode):
+                adapter = self.adapter(mode)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    status = g2.model_access_check(adapter)
+                report = json.loads((adapter.root / 'MODEL-ACCESS-CHECK.json').read_text())
+                self.assertEqual(report['outcome'], outcome)
+                self.assertEqual(status, 0 if outcome == 'accepted' else 1)
+                self.assertEqual(report['generationAttemptLimit'], 1)
+                observed = adapter.root / 'model-access/out/input.txt'
+                self.assertEqual(observed.read_text(), 'Reply OK.')
+                self.assertNotIn('synthetic-not-a-token', json.dumps(report))
+                with patch.object(adapter.sandbox, 'invoke', side_effect=AssertionError('retry')):
+                    with self.assertRaisesRegex(ValueError, 'already attempted'):
+                        g2.model_access_check(adapter)
+
+
 class NativeGeminiTest(unittest.TestCase):
     def test_quota_free_installed_version_catalog_and_boundary(self):
         binary = os.environ.get('GEMINI_NATIVE_BINARY') or shutil.which('gemini')
@@ -267,6 +321,12 @@ class NativeGeminiTest(unittest.TestCase):
             self.assertEqual(library['loadedMemory'], '')
             self.assertTrue(library['bundledModel']['isPreview'])
             self.assertFalse(report['registeredModelListed'])
+            self.assertEqual(len(library['modelConditions']), 8)
+            self.assertTrue(all(item['resolved'] == g2.MODEL for item in library['modelConditions']))
+            self.assertEqual(library['registeredModelThinking']['thinkingLevel'], 'HIGH')
+            for name in ('mcp', 'extensions', 'skills'):
+                self.assertTrue(library['mergedAdmin'][name]['enabled'])
+            self.assertTrue(all(library['dispatchGuard'].values()))
             self.assertIn('unavailable',report['effectiveToolContextDiagnostic'])
 
     def test_native_rejects_tool_memory_and_model_policy_regressions(self):
@@ -276,7 +336,9 @@ class NativeGeminiTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             adapter = g2.GeminiAdapter(Path(temp)/'state', binary)
             for target, replacement in ((g2.SETTINGS['tools'], {'core':['run_shell_command']}),
-                                        (g2.SETTINGS['modelConfigs'], {'modelDefinitions':{}})):
+                                        (g2.SETTINGS['modelConfigs'], {'modelDefinitions':{}}),
+                                        (g2.SETTINGS['modelConfigs'], {'modelIdResolutions':{g2.MODEL:{'default':g2.MODEL}}}),
+                                        (g2.SETTINGS['modelConfigs'], {'customOverrides':[]})):
                 with self.subTest(replacement=replacement), patch.dict(target, replacement):
                     with self.assertRaisesRegex(ValueError, 'native library policy/input check failed'):
                         adapter.library_check()
