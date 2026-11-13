@@ -1414,6 +1414,10 @@
       "sha256": "2ad031d28a9872fcda8dc3e415757e8bc0dbdee9f953d8a302b154bd5d558a12"
     },
     {
+      "path": "benchmark/mechanisms-v1/harness/LIVE-ADAPTERS.md",
+      "sha256": "b4cbbb413bf561d798a4371848427c789dc609836416170fdbae4bf3e8939cb1"
+    },
+    {
       "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.FACTCHECK-2.md",
       "sha256": "498fa9e20ccd7901c741cfcac4fa649e7debf86ca42701dd13291149d4000e7e"
     },
@@ -1431,11 +1435,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/GEMINI-CLI.md",
-      "sha256": "551373f88cfb5d4df75358e43754e67d4a91f466a9b2ad32b82341855491a62b"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/LIVE-ADAPTERS.md",
-      "sha256": "b4cbbb413bf561d798a4371848427c789dc609836416170fdbae4bf3e8939cb1"
+      "sha256": "19a9f68d79158d748753f38ad7bd0ca9484ca5a983c953f92ddd4626e3f72c9d"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
@@ -1459,7 +1459,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/gemini_adapter.py",
-      "sha256": "8534b8e83d8836770733279a99dadb6a3dd5810032ea8b1ccfba9a8ef932f986"
+      "sha256": "991dd9f8b90c15be5d26f1acf400e232c327f7db990c70dac0aff568b45ba0e4"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/grading_runner.py",
@@ -1486,6 +1486,14 @@
       "sha256": "af39630cd50e7db95b19ee7f273a8cef2bc937fae565d368fca99aa53655218a"
     },
     {
+      "path": "benchmark/mechanisms-v1/harness/tests/gemini_startup_stub.mjs",
+      "sha256": "4c1e9ed13046131b11254aadeb64c09d2df4388d95b2b75b5061a1ef20a1bf95"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/gemini_transport_probe.mjs",
+      "sha256": "8831ca180df6e765c74696f2c24a61b464de026e03cc537d9cae09bea2ff2e50"
+    },
+    {
       "path": "benchmark/mechanisms-v1/harness/tests/support.py",
       "sha256": "c0d1555a7d64ddf77ab8452705a48de07bb99a5eee28165224c6ef7a3203815b"
     },
@@ -1503,7 +1511,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_gemini_adapter.py",
-      "sha256": "33708e51adaf023be85f3b887c7d2517cd9e968de3f0e266c57dd98685920608"
+      "sha256": "21cad17ea46a68c695ecfb57cdfd552909bb521ae92075686bbe8dba5d440201"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_native_media.py",
@@ -2947,7 +2955,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/native/gemini_guard.mjs",
-      "sha256": "95754165cce67ef7d7c8c200baf0d90da2cff3edd12c59f97aa93e3150aaac74"
+      "sha256": "a0a259d37893ef24d28f78d3d5b971c523cf65b20d370dfb5e04dfa4ecbaaa77"
     }
   ]
 }

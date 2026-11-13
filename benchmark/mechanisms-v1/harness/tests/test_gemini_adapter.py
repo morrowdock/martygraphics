@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Synthetic G2 transport tests. Native tests never authenticate or send prompts."""
+"""Synthetic G2 tests. Native startup uses stub auth, never credentials or network."""
 import contextlib
 import io
 import json
@@ -86,6 +86,7 @@ class GeminiTest(unittest.TestCase):
         binary = package / 'bundle/gemini.js'
         (package / 'bundle/chunk-RCB6BI5H.js').write_text("""
 import fs from 'node:fs';
+export class CodeAssistServer {}
 export class Config {
   async refreshAuth() {
     this.contentGenerator = {
@@ -296,6 +297,117 @@ export class Config {
 
 
 class NativeGeminiTest(unittest.TestCase):
+    def native_adapter(self, root):
+        binary = os.environ.get('GEMINI_NATIVE_BINARY') or shutil.which('gemini')
+        if not binary:
+            self.skipTest('Gemini CLI absent; set GEMINI_NATIVE_BINARY to the pinned installed bundle')
+        return g2.GeminiAdapter(root / 'state', binary)
+
+    def test_full_startup_trust_is_scoped_to_sandbox_packet(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            adapter = self.native_adapter(root)
+            for trusted in (False, True):
+                with self.subTest(trusted=trusted):
+                    folder = root / str(trusted)
+                    for name in ('home', 'packet', 'out'):
+                        (folder / name).mkdir(parents=True)
+                    home, packet, output = (folder / name for name in ('home', 'packet', 'out'))
+                    g2.write_settings(home)
+                    trust_file = home / '.gemini/trustedFolders.json'
+                    self.assertEqual(json.loads(trust_file.read_text()), {'/packet': 'TRUST_FOLDER'})
+                    if not trusted:
+                        trust_file.unlink()
+                    command, message = adapter.transport(b'Synthetic offline startup fixture', [], None, output)
+                    self.assertEqual(command, g2.gemini_argv())
+                    self.assertEqual(message, b'')
+                    shutil.copyfile(Path(__file__).with_name('gemini_startup_stub.mjs'), output / 'startup.mjs')
+                    guard = Path(g2.__file__).parent / 'native/gemini_guard.mjs'
+                    shutil.copyfile(guard, output / 'guard.mjs')
+                    original = adapter.sandbox.command
+                    def with_stub(home, packet, output, args, *, network=True):
+                        self.assertFalse(network)
+                        argv = original(home, packet, output, args, network=network)
+                        self.assertEqual(argv.count(str(guard)), 1)
+                        argv[argv.index(str(guard))] = str(output / 'startup.mjs')
+                        return argv
+                    with patch.object(adapter.sandbox, 'command', side_effect=with_stub), \
+                            patch.object(g2, 'auth_present', side_effect=AssertionError('auth read')):
+                        with self.assertRaises(live.Uncertain):
+                            adapter.sandbox.invoke(home, packet, output, command, message, 30, network=False)
+                    stderr = (output / 'stderr.bin').read_text()
+                    if trusted:
+                        self.assertTrue((output / 'initialized.json').exists(), stderr)
+                        self.assertEqual(json.loads((output / 'initialized.json').read_text()),
+                                         {'initialized': True, 'trusted': True, 'tools': 0})
+                        self.assertTrue((output / 'synthetic-auth.json').exists())
+                        events = [json.loads(line) for line in (output / 'stdout.bin').read_bytes().splitlines()]
+                        self.assertTrue(any(event.get('type') == 'init' for event in events))
+                        self.assertEqual(json.loads((output / 'generation-refused.json').read_text()),
+                                         {'outcome': 'refused'})
+                        self.assertNotIn('not running in a trusted directory', stderr)
+                    else:
+                        self.assertIn('not running in a trusted directory', stderr)
+                        self.assertFalse((output / 'initialized.json').exists())
+                    self.assertFalse((home / '.gemini/oauth_creds.json').exists())
+
+    def transport_probe(self, adapter, folder, method, status, mode):
+        for name in ('home', 'packet', 'out'):
+            (folder / name).mkdir(parents=True)
+        home, packet, output = (folder / name for name in ('home', 'packet', 'out'))
+        g2.write_settings(home)
+        shutil.copyfile(Path(__file__).with_name('gemini_transport_probe.mjs'), output / 'transport.mjs')
+        shutil.copyfile(Path(g2.__file__).parent / 'native/gemini_guard.mjs', output / 'guard.mjs')
+        with patch.object(g2, 'auth_present', side_effect=AssertionError('auth read')):
+            with self.assertRaises(live.Uncertain):
+                adapter.sandbox.invoke(home, packet, output,
+                                       ['/node', '/out/transport.mjs', method, str(status), mode],
+                                       b'', 30, network=False)
+        report = json.loads((output / 'transport-result.json').read_text())
+        self.assertEqual(report['outcome'], 'refused')
+        self.assertFalse((home / '.gemini/oauth_creds.json').exists())
+        return report
+
+    def test_native_oauth_transport_refuses_401_403_generation_replays(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            adapter = self.native_adapter(root)
+            for method in ('generateContent', 'generateContentStream'):
+                for status in (401, 403):
+                    with self.subTest(method=method, status=status):
+                        baseline = self.transport_probe(adapter, root / f'{method}-{status}-baseline',
+                                                        method, status, 'baseline')
+                        self.assertEqual(baseline['generationPosts'], 2)
+                        self.assertEqual(baseline['refreshes'], 1)
+                        self.assertEqual(baseline['posts'][0]['body'], baseline['posts'][1]['body'])
+                        guarded = self.transport_probe(adapter, root / f'{method}-{status}-guarded',
+                                                       method, status, 'guarded')
+                        self.assertEqual(guarded['generationPosts'], 1)
+                        self.assertEqual(guarded['refreshes'], 1)
+                        self.assertIn('second generation POST', guarded['reason'])
+
+    def test_native_oauth_transport_allows_refresh_before_first_post(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            adapter = self.native_adapter(root)
+            for method in ('generateContent', 'generateContentStream'):
+                with self.subTest(method=method):
+                    report = self.transport_probe(adapter, root / method, method, 401, 'expired')
+                    self.assertEqual(report['generationPosts'], 1)
+                    self.assertEqual(report['refreshes'], 1)
+                    self.assertEqual(report['posts'][0]['refreshesBeforeDispatch'], 1)
+
+    def test_native_oauth_transport_budget_spans_clients_and_methods(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            adapter = self.native_adapter(root)
+            for method in ('generateContent', 'generateContentStream'):
+                with self.subTest(method=method):
+                    report = self.transport_probe(adapter, root / method, method, 503, 'second-client')
+                    self.assertEqual(report['generationPosts'], 1)
+                    self.assertEqual(report['refreshes'], 0)
+                    self.assertIn('second generation POST', report['secondRefusal'])
+
     def test_quota_free_installed_version_catalog_and_boundary(self):
         binary = os.environ.get('GEMINI_NATIVE_BINARY') or shutil.which('gemini')
         if not binary:

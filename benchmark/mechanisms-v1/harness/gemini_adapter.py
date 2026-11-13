@@ -85,6 +85,7 @@ def write_settings(home):
     target = home / ".gemini"
     target.mkdir(mode=0o700, exist_ok=True)
     live.durable_json(target / "settings.json", SETTINGS)
+    live.durable_json(target / "trustedFolders.json", {"/packet": "TRUST_FOLDER"})
     live.durable_bytes(target / "deny.toml", POLICY.encode())
 
 

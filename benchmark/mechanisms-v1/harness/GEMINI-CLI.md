@@ -3,7 +3,8 @@
 Status: **PROPOSED implementation; owner-approved route change on 2026-11-12.
 Not run-ready.** Checked: 2026-11-12 UTC. Base:
 `7332c125b83c94fd93acfbd1e77645d978e6ce87`; review corrections against
-`2c17874dfa26cb86f08455c767fb9808f32445af` on 2026-11-13 UTC. See A-16 in
+`2c17874dfa26cb86f08455c767fb9808f32445af` on 2026-11-13 UTC; re-check corrections
+against `fa2bb645d38ce8d4b125d35ba1c27c62f7689903` on 2026-11-13 UTC. See A-16 in
 [AMENDMENTS.md](../AMENDMENTS.md). No benchmark packet, rubric or synthetic
 prompt was sent to a model. No OAuth flow was started.
 
@@ -178,9 +179,26 @@ the CLI (`chunk-VFM6AETN.js`), and directly checks:
 
 Negative native tests expose a shell tool, insert memory, remove the routing
 override or explicit empty contexts, and remove the Argon HIGH override. Each
-fails the check. No real model method, native `refreshAuth` or full
+fails the check. In this library probe, no real model method, native `refreshAuth` or full
 `Config.initialize` is invoked. Guard lifecycle tests use synthetic methods
 only. Storage initialization is local only.
+
+**VERIFIED, offline full-startup regression:**
+`test_full_startup_trust_is_scoped_to_sandbox_packet` runs the untouched installed
+CLI entry point with the adapter's exact CLI arguments, environment and empty
+stdin, with network unshared. Only the test preload is substituted: it stubs
+the early OAuth getter and `Config.refreshAuth`, then imports the real dispatch
+guard. No credential file is created or read. The real CLI settings/trust loader,
+`Config.initialize` and headless startup run. Without the trust record, startup
+refuses the untrusted directory; with it, initialization completes with zero
+tools and a native `init` event, then synthetic generation is deliberately
+refused. This is not a successful provider reply or real-auth acceptance test.
+
+`write_settings` creates `trustedFolders.json` containing only
+`{"/packet":"TRUST_FOLDER"}` in the isolated home. The native trust loader
+confirms `/packet` is trusted while `/home/grader` and `/input` are not. No
+parent, host folder, real-home trust record or global trust environment override
+is used.
 
 **LIMIT:** Gemini 0.68.0 offers no documented offline complete request/tool
 configuration dump. `/tools` is an interactive command after CLI auth startup,
@@ -199,8 +217,28 @@ startup completed and the final registry has no tools or declarations. The
 guard rechecks each dispatch, including late/remote additions; it also checks
 the pinned model, HIGH thinking and empty request tools (the native empty
 `functionDeclarations` wrapper is allowed). A second generation attempt in the
-same process is refused, including retries/fallbacks. No installed package
-bytes are modified. The guard is included in the adapter policy digest.
+same process is refused, including retries/fallbacks. That outer limit alone
+does **not** stop the bundled OAuth2 client's internal HTTP 401/403 refresh and
+replay (including streaming with `retry:false`). The guard additionally wraps
+the CodeAssist auth client's transporter before requests. Its process-wide
+budget permits at most one generation POST across both methods and clients;
+an OAuth replay is refused before a second transport dispatch. Generation
+options disable Gaxios retries and redirects as well. Token refresh before the
+first POST remains possible. No installed package bytes are modified. The guard
+is included in the adapter policy digest.
+
+**VERIFIED, offline transport regressions:**
+`test_native_oauth_transport_refuses_401_403_generation_replays` exercises the
+pinned bundled OAuth2 client and `CodeAssistServer` with an in-memory failing
+transport for both generation methods and both statuses. Unguarded controls
+record two identical generation POSTs plus one refresh; guarded cases record
+exactly one POST plus one refresh and a refused replay outcome. A test-only
+loader exposes the bundled OAuth2 constructor without calling native auth.
+`test_native_oauth_transport_allows_refresh_before_first_post` verifies an
+expired synthetic token refreshes before the single POST, and
+`test_native_oauth_transport_budget_spans_clients_and_methods` verifies the
+budget cannot reset by switching clients or methods. All run in network-disabled
+sandboxes with synthetic tokens held in memory, never real credentials.
 
 Offline synthetic lifecycle checks verify these refusals; a genuine signed-in
 post-auth request remains **PENDING**. Remote admin defaults may be enabled;
@@ -246,8 +284,11 @@ python benchmark/mechanisms-v1/harness/gemini_adapter.py model-access-check \
   --work /absolute/new/private/directory/outside/git --confirm-model-request
 ```
 
-It sends only `Reply OK.` to the unchanged pinned model, with one generation
-attempt and no retry/fallback. It writes private `MODEL-ACCESS-CHECK.json` with
+It sends only `Reply OK.` to the unchanged pinned model, with at most one
+generation POST enforced at the auth transport boundary, in addition to the
+outer generation-attempt limit. No generation replay, transport retry, redirect
+or model fallback is permitted; token refresh before the first dispatch is
+allowed. It writes private `MODEL-ACCESS-CHECK.json` with
 `accepted`, `refused` (a terminal CLI error), or `uncertain` (e.g. timeout, auth
 failure or missing completion). A refusal is **not proof of model
 unavailability**; review the private diagnostics to distinguish account access,

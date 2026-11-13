@@ -1,6 +1,36 @@
 // SPDX-License-Identifier: Apache-2.0
 // Loaded by Node --import before the untouched pinned CLI entry point.
-import {Config} from '/gemini/bundle/chunk-RCB6BI5H.js';
+import {Config, CodeAssistServer} from '/gemini/bundle/chunk-RCB6BI5H.js';
+
+export function installTransportGuard(ServerClass) {
+  const protectedTransports = new WeakSet();
+  let generationPosts = 0;
+  for (const method of ['requestPost', 'requestStreamingPost']) {
+    const original = ServerClass.prototype[method];
+    ServerClass.prototype[method] = function (...args) {
+      const transport = this.client?.transporter;
+      if (!transport || typeof transport.request !== 'function') {
+        throw new Error('G2 dispatch refused: unsupported auth transport');
+      }
+      if (!protectedTransports.has(transport)) {
+        const request = transport.request.bind(transport);
+        transport.request = options => {
+          const path = new URL(options.url).pathname;
+          if (/:(?:generateContent|streamGenerateContent)$/.test(path)) {
+            if (options.method !== 'POST' || generationPosts++ !== 0) {
+              throw new Error('G2 dispatch refused: second generation POST or unsupported method');
+            }
+            options = {...options, retry: false, retryConfig: {retry: 0},
+              redirect: 'error', maxRedirects: 0};
+          }
+          return request(options);
+        };
+        protectedTransports.add(transport);
+      }
+      return original.apply(this, args);
+    };
+  }
+}
 
 export function assertDispatchAllowed(config, request, model, authenticated) {
   const registry = config.getToolRegistry();
@@ -63,3 +93,4 @@ export function installDispatchGuard(ConfigClass, model) {
 }
 
 installDispatchGuard(Config, process.env.MARTYGRAPHICS_GEMINI_MODEL);
+installTransportGuard(CodeAssistServer);
