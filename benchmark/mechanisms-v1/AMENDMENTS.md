@@ -543,3 +543,38 @@ VERIFIED 2026-11-13 UTC: these hashes were calculated only for the explicitly
 listed implementation, test and control files. Neither registered question
 file was opened or rehashed. The new CLI test file is identified relative to
 the baseline, even though it already existed at review head `4e7ab025`.
+
+**A-20. Controlled dry-input symlink-loop refusal (2026-11-13 UTC; PROPOSED,
+review pending). NO SCORE EFFECT.** Addresses review P3 of #79. The dry-mode
+alias guard converts metadata-resolution `RuntimeError` and `OSError` failures
+(including `ELOOP`) into the same `ValueError` refusal path as other unsafe
+inputs. The CLI reports that it cannot safely resolve the dry-run input and
+exits 2 without a traceback. This applies to registered-path resolution as
+well as supplied paths and entries found while walking directories; primary
+mode is unchanged.
+
+**VERIFIED synthetic:** CLI regressions cover a self-referential symlink, a
+two-link cycle and a loop nested in a walked directory across every dry CLI
+input argument. Injected `RuntimeError` and `OSError(ELOOP)` cover both supplied
+and registered paths. Temporary benchmark roots use mode-000 registered-file
+sentinels; refusal assertions require exit 2, a clear message, no traceback,
+no output directory and no Python file-open calls during preflight.
+
+Implementation and test SHA-256 (old = baseline
+`695795b09aa5f976979e2cab588f8cace824afab`; new = final file bytes in the commit
+containing this correction):
+
+| File | Old SHA-256 | New SHA-256 |
+| --- | --- | --- |
+| `harness/pack.py` | `9cc0f31567a3f1bca72fdca4bf87e207b6e836c344bc5dbac998b0f4eafb3195` | `994bcfece74b0fcf075f2b986f768b71c112808113e36dedc54899aa2803aa3f` |
+| `harness/tests/test_pack_cli.py` | `caa20b8dfd6d82ba543c2e9ac2fdd617f742dd6b483351a4a388ae2758d4bc98` | `0373316db50ef264182be221fcade6d0a658cbd9ac8addc6e70bd81619cd0be4` |
+| `LOCK.json` | `1a176911a3d339804307f9c080aa6d70b81f0e915ccfb7e61bb0d30017fc3afa` | `1a176911a3d339804307f9c080aa6d70b81f0e915ccfb7e61bb0d30017fc3afa` |
+| `RUN-LOCK.json` | `899033b2cc452c6f77cd11b78e91f6cff9f6e36b9ddaa7167ce43a39ef97441c` | `899033b2cc452c6f77cd11b78e91f6cff9f6e36b9ddaa7167ce43a39ef97441c` |
+
+VERIFIED 2026-11-13 UTC: only the listed implementation, test and control files
+were hashed for this amendment. Neither registered question file was opened,
+read or rehashed. LOCK.json and RUN-LOCK.json are byte-identical to the baseline;
+RUN-LOCK.json remains DRAFT. FILES.json is updated in place for the changed
+implementation, test and amendment only, preserving all other entries. No
+model calls or native media acceptance run were performed; operational
+acceptance remains **PENDING**. This amendment does not approve a benchmark run.

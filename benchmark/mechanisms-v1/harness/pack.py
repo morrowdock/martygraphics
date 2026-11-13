@@ -61,6 +61,12 @@ class DryRunInputGuard:
         _INPUT_GUARD.reset(self.token)
 
     def check(self, path, *, opening=False):
+        try:
+            return self._check(path, opening=opening)
+        except (RuntimeError, OSError) as error:
+            raise ValueError("cannot safely resolve dry-run input: " + str(path) + ": " + str(error)) from error
+
+    def _check(self, path, *, opening=False):
         for registered in self.registered:
             self.registered_paths.update((registered.absolute(), registered.resolve()))
             try:

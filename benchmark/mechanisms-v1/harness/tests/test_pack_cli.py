@@ -3,6 +3,7 @@
 import builtins
 from contextlib import ExitStack, redirect_stderr
 import csv
+import errno
 from datetime import timedelta
 import hashlib
 import io
@@ -101,6 +102,7 @@ class CLITest(unittest.TestCase):
             pack.main(self.argv)
         self.assertEqual(error.exception.code, 2)
         self.assertIn(message, stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
         self.assertFalse(self.out.exists())
 
     def test_dry_cli_never_opens_registered_inputs(self):
@@ -158,6 +160,63 @@ class CLITest(unittest.TestCase):
         self.argv[-1] = str(alias)
         self.forbid_registered()
         self.refused("dry-run input must not be a registered question file")
+        self.assertEqual(self.attempts, [])
+
+    def check_loop_refusal(self, path):
+        original = self.argv[:]
+        for index in (0, 1, 3, 5, 9):
+            with self.subTest(argument=original[index]):
+                self.argv = original[:]
+                self.argv[index] = str(path)
+                with patch("builtins.open") as builtin_open, patch("io.open") as io_open:
+                    self.refused("cannot safely resolve dry-run input")
+                    builtin_open.assert_not_called()
+                    io_open.assert_not_called()
+        self.assertEqual(self.attempts, [])
+
+    def test_dry_cli_refuses_self_loop_before_open(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        loop = self.root / "self-loop"
+        loop.symlink_to(loop.name)
+        self.check_loop_refusal(loop)
+
+    def test_dry_cli_refuses_two_link_loop_before_open(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        first = self.root / "first-link"
+        second = self.root / "second-link"
+        first.symlink_to(second.name)
+        second.symlink_to(first.name)
+        self.check_loop_refusal(first)
+
+    def test_dry_cli_refuses_loop_inside_walked_directory_before_open(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        directory = self.root / "input-directory"
+        nested = directory / "nested"
+        nested.mkdir(parents=True)
+        loop = nested / "self-loop"
+        loop.symlink_to(loop.name)
+        self.check_loop_refusal(directory)
+
+    def test_dry_cli_refuses_resolution_errors_before_open(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        resolve = Path.resolve
+        for target in (self.dry_key, self.bench / "QUESTIONS.json"):
+            for error in (RuntimeError("synthetic symlink loop"),
+                          OSError(errno.ELOOP, "synthetic symlink loop")):
+                with self.subTest(target=target, error=type(error).__name__):
+                    def failing_resolve(path, *args, **kwargs):
+                        if path == target:
+                            raise error
+                        return resolve(path, *args, **kwargs)
+                    with patch.object(Path, "resolve", failing_resolve), \
+                            patch("builtins.open") as builtin_open, patch("io.open") as io_open:
+                        self.refused("cannot safely resolve dry-run input")
+                        builtin_open.assert_not_called()
+                        io_open.assert_not_called()
         self.assertEqual(self.attempts, [])
 
     def registered_aliases(self):

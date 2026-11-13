@@ -1375,7 +1375,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
-      "sha256": "fa24118a8fae0896b5aec3c9bba8ef3bbbd94cd1b99cdb10b1bcc007ec6f7c44"
+      "sha256": "9055615a9c9c3e36948d867341a4c98a7068f2a2eb2304ff045eff2958638bf9"
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
@@ -1475,7 +1475,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/pack.py",
-      "sha256": "9cc0f31567a3f1bca72fdca4bf87e207b6e836c344bc5dbac998b0f4eafb3195"
+      "sha256": "994bcfece74b0fcf075f2b986f768b71c112808113e36dedc54899aa2803aa3f"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/rubric_form.py",
@@ -3015,7 +3015,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_pack_cli.py",
-      "sha256": "caa20b8dfd6d82ba543c2e9ac2fdd617f742dd6b483351a4a388ae2758d4bc98"
+      "sha256": "0373316db50ef264182be221fcade6d0a658cbd9ac8addc6e70bd81619cd0be4"
     }
   ]
 }
