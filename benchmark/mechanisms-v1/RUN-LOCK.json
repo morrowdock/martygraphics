@@ -146,17 +146,18 @@
       "validation": "VERIFIED 2026-11-13 UTC Linux: Python 3.12.16 venv, NumPy 2.5.4; harness 205 tests (202 passed, 3 macOS-only skips); tools 52 passed. Native G1/G2 tests ran. G2 has 18 dedicated tests; shipped quota-free native check passed. Model-access-check tested only with synthetic CLIs. No real model call, Google network call, OAuth flow or owner credential read/copy.",
       "files": {
         "harness/grading_runner.py": "12b8564d777da499f171881725e383d2f1058632b4c60d32c7c1dcb8bb53d941",
-        "harness/gemini_adapter.py": "8534b8e83d8836770733279a99dadb6a3dd5810032ea8b1ccfba9a8ef932f986",
+        "harness/gemini_adapter.py": "991dd9f8b90c15be5d26f1acf400e232c327f7db990c70dac0aff568b45ba0e4",
         "harness/native/gemini_probe.mjs": "a847f0a954e6f7fe89178ffd150de65afcf9bf612efeccee37764d68f1b3c76b",
-        "harness/tests/test_gemini_adapter.py": "33708e51adaf023be85f3b887c7d2517cd9e968de3f0e266c57dd98685920608",
-        "harness/GEMINI-CLI.md": "551373f88cfb5d4df75358e43754e67d4a91f466a9b2ad32b82341855491a62b",
+        "harness/tests/test_gemini_adapter.py": "21cad17ea46a68c695ecfb57cdfd552909bb521ae92075686bbe8dba5d440201",
+        "harness/GEMINI-CLI.md": "19a9f68d79158d748753f38ad7bd0ca9484ca5a983c953f92ddd4626e3f72c9d",
         "harness/LIVE-ADAPTERS.md": "b4cbbb413bf561d798a4371848427c789dc609836416170fdbae4bf3e8939cb1",
         "harness/OPEN-QUESTIONS.md": "99edbfc9953e233fe42d9107292cf2811714dcd26dd640bac571e97768bc3fd2",
         "harness/README.md": "0bdb1db3859bfe6814a85c48d7e7e1fc9db35c7b19c6fe04ddc4d61433020d63",
         "AMENDMENTS.md": "63b6d64d4670cf3c0971f588c3cc1976c7b1c8d796c352a09db89545b7e18dee",
-        "harness/native/gemini_guard.mjs": "95754165cce67ef7d7c8c200baf0d90da2cff3edd12c59f97aa93e3150aaac74"
+        "harness/native/gemini_guard.mjs": "a0a259d37893ef24d28f78d3d5b971c523cf65b20d370dfb5e04dfa4ecbaaa77"
       },
-      "reviewedHead": "2c17874dfa26cb86f08455c767fb9808f32445af",
+      "reviewedHead": "622f16dea04a81f250585a737a6a102f66f9ea32",
+      "reviewHistory": "PROPOSED record. The file hashes above are the source at 622f16de (independent re-check 2, 2026-11-13: trust, OAuth single-POST and manifest-order findings resolved; harness 204 passed + 5 skipped, tools 52). Earlier evidence is historical: first review at 2c17874d (FIX-FIRST), re-check 1 at fa2bb645 (FIX-FIRST).",
       "registeredModelListed": false,
       "notRun": [
         "Real model-access-check",
