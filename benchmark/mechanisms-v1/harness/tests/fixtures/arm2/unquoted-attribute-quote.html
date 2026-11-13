@@ -1,0 +1,32 @@
+<!doctype html><html data-note=a" >
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<script>
+window.firstScriptPolicy = new Promise((resolve, reject) => {
+  const timer = setTimeout(() => reject(Error('first authored script: no CSP evidence')), 3000);
+  document.addEventListener('securitypolicyviolation', event => {
+    if (event.isTrusted && event.blockedURI === 'data' &&
+        event.effectiveDirective === 'connect-src' && event.disposition === 'enforce' &&
+        event.originalPolicy.includes("connect-src 'none'") &&
+        event.originalPolicy.includes("frame-src 'none'") &&
+        event.originalPolicy.includes("worker-src 'none'")) {
+      clearTimeout(timer);
+      console.warn('first authored script: CSP blocked fetch');
+      resolve();
+    }
+  }, {capture: true});
+  fetch('data:text/plain,first-authored-script').then(() => {
+    console.warn('POLICY BYPASS');
+    reject(Error('first authored script: policy bypass'));
+  }, () => {});
+});
+</script><!--" --><head></head><body>
+<div style="background:black;color:white;font:40px system-ui">First-script response policy</div>
+<script type="module">
+import {REVISION} from 'three';
+await window.firstScriptPolicy;
+if (REVISION !== '170') throw Error('first module import map missing');
+console.warn('first authored module: three ' + REVISION);
+window.benchDuration = 10;
+window.benchFrame = async () => {};
+window.benchReady = true;
+</script></body></html>

@@ -4,6 +4,12 @@
 Status: **VERIFIED synthetic checks only. Renderer selection and A-17 remain
 PROPOSED. No benchmark or section 2.4 dry run was performed.**
 
+The earlier sections are historical evidence at their stated baselines. Their
+HTML-scanner design/security claims are **STALE**, superseded by the
+2026-11-13 response-policy revision at the end of this document. The third
+independent re-check found that the scanner could allow an authored script to
+execute before configuration despite a later successful checkpoint.
+
 Checked: 2026-11-12T21:38:47Z, on the Mac mini, arm64.
 Protocol baseline: `9e95ad3d69a54bce75b1a86d5b136734fb3ddb84`.
 Sources: this directory's renderer and driver, `../shim/record.py`, the synthetic
@@ -210,3 +216,113 @@ full engine/app builds, and the whole-tree manifest checker that would open
 forbidden inputs. RUN-LOCK remains DRAFT and byte-unchanged; locked inputs and
 prompts remain unchanged. FILES.json updates are limited to explicitly changed
 files, preserving all other entries and their order.
+
+## PR 75 response-policy revision: 2026-11-13 UTC
+
+Status: **VERIFIED focused and full-suite synthetic checks.
+Independent review and renderer selection remain PENDING.**
+Checked: 2026-11-13T07:15:25Z on the Mac mini.
+Source baseline: `b62f542b7c902e0b209c294f65107d10c6f35872`; implementation and
+test source SHA-256 values:
+
+- `render.swift`: `493bcbc157e62925209ffb357892770fa16855fee85bfc70cd94ff3a1f6652ca`
+- `../tests/test_arm2_renderer.py`: `7465a55098817c0f8469db8470d065b9cfd954c4900c0b9778738039b9dbc427`
+- `../tests/arm2_tokenizer_cases.py`: `1f8243739c1a736ba6fcace8e3dbc7cbc7dbf613710169e4c0f9bcb90eb12304`
+- `../tests/fixtures/arm2/unquoted-attribute-quote.html`: `3f0894e823cef0ee3be93525964579f8cc2704e699a109de915aa1412e715f79`
+- Renderer executable: `b90a03eb78642ef7537fd0781cc2cc3b69296707e7c0153cca455a8446007e64`
+
+The existing custom-scheme handler now delivers the exact previous CSP string
+as the document's `Content-Security-Policy` HTTP response header. It serves
+authored UTF-8 bytes unchanged; loaded/source hashes match. The scanner and
+HTML policy/map/checkpoint insertion have been deleted. The import map is
+inserted by a main-frame document-start `WKUserScript` in the isolated client
+world directly under the document element, without finding or creating a head.
+On this host, WebKit honors that map for the first authored module's static
+`import {REVISION} from 'three'`: revision 170 loads successfully. The
+byte-zero response-body fallback was therefore not needed or implemented.
+
+A document-start `data:` script canary requires a trusted enforcing CSP
+violation with the exact policy and script directive. Its asynchronous evidence
+and the exact connected map must pass an isolated native post-load check before
+capture; absent evidence fails within five seconds. The legacy invariant report
+fields are retained, with the document-start field set when that canary completes,
+not claimed to be an event delivered before authored code. A DOM mutation
+observer also checks the map after verification. Header policy is independent
+of subsequent head edits. WebRTC native disable/readback, frame/worker
+restrictions, readiness/render timeouts, frame counts and reports are retained.
+
+The focused gated run passed **5 methods in 33.501 seconds**: WebGL cube,
+the unquoted-attribute-quote first-script regression, map removal and two
+fault-injected builds (missing response header; missing map insertion).
+Both successful pages rendered **300 frames**. The first authored classic
+script attempts a `data:` fetch and records a trusted `connect-src` violation;
+this is distinct from the native script canary and cannot pass on that canary's
+event. The first authored module resolves pinned three.js. All three refusal
+cases returned **0 frames** and the explicit error
+`head invariant: response CSP canary or document-start import map missing/changed`.
+The fault pages also attempt to spoof the verifier and dispatch an exact-policy
+but untrusted CSP event; neither bypasses the native gate.
+
+Focused log SHA-256: `f1e1e934bad73ccb5b8988f5d5cf5bd6539bf96a227ef24fd39d44ca2a3a176b`.
+Host: Mac mini, macOS 27.2 build 26B123, WebKit `22625.2.8.11.9`;
+Python 3.14.10 and NumPy 2.5.4. Compilation, renderer runs and the harness suite
+use the shared mini heavy-job gate, including its queue waits.
+
+The 21 existing head cases remain. The reviewer's 39 tokenizer prefixes are
+retained in `arm2_tokenizer_cases.py`; their page-side probes now check the
+document-start map and actual module resolution, not a CSP meta element that
+no longer exists. The separate first-script regression checks real CSP
+enforcement rather than the presence of a DOM node.
+
+The final gated full harness discovery ran **252 tests: 213 passed, 39 skipped,
+zero failures/errors, 846.182 seconds**. The baseline was 249 (210 passed and
+the same 39 skips); three new test methods cover the matrix and the two
+configuration-omission builds. The first-script regression replaces the old
+scanner-misplacement refusal test; the map-removal test replaces DOM policy
+removal, since a response header is not removable through the DOM.
+
+- All **21 original head cases** rendered **300 frames**, with both invariant
+  fields true and pinned static module imports resolved.
+- The **39-case reviewer matrix** produced **37 complete 300-frame renders**
+  and **2 explicit zero-frame readiness timeouts** for unterminated comments
+  that consume the authored readiness script. All 39 reports verified policy
+  and map at document start and after load. The legacy `later-remove-policy`
+  page records an authored null-node exception because its old meta node no
+  longer exists; it still renders under the immutable response policy.
+- The first-script quote regression again rendered **300 frames** and recorded
+  the distinct trusted `connect-src` block before readiness. Map removal and
+  both omitted-configuration builds again refused with **0 frames** and the
+  explicit invariant error, not a successful partial render.
+- The offline-network regression and matrix listeners recorded **0 accepted
+  TCP connections and 0 HTTP requests**. The WebRTC regression recorded
+  **0 UDP datagrams**, with main-frame, iframe and srcdoc probes retained.
+- The WebGL cube rendered **300 frames** with distinct frame-0/frame-30 pixel
+  payloads and sampled non-modal fractions of **17.17–19.38%**.
+- Tools discovery: **52 tests, 51 passed, 1 skipped**, **2.635 seconds**.
+  This lightweight suite does not invoke a real compiler or renderer.
+
+The 39 harness skips are unchanged host/dependency limits: 16 require Linux
+bubblewrap and node, 14 require bubblewrap for isolated fake CLIs, 3 require
+the Linux G1 sandbox, and 6 lack the pinned Gemini CLI. The tools skip is
+`setup.sh tools not installed`. Every macOS renderer/native-media test ran.
+The existing multithreaded `fork()` DeprecationWarning remains visible; its
+test passes. No skipped test is counted as a pass.
+
+Full harness log SHA-256:
+`e407f1c613e015dac29bf80f54bbb1be2b3951d9eaa7ad5fa18feb27e9b7e609`.
+Tools log SHA-256:
+`897491c07a774c9151cab02cb600bda266a43a80f9db9c2229b3ca64413a1da3`.
+Static audit log SHA-256:
+`88b234417fe377aea1d1a8de0f59dd2ed373300389a4b972180a64f3aae36b4e`.
+That audit compares the exact policy/import-map strings, WebRTC preference
+block, asset loader and capture/report implementation to the source baseline,
+and confirms all 39 reviewer prefixes are unchanged with a common early-script
+substitution. The policy/map strings and those unrelated implementation blocks
+are byte-identical; no scanner/meta insertion remains.
+
+NOT RUN: live model calls or paid APIs, registered question inputs, the
+registered benchmark or section 2.4 dry run, alternate OS/WebKit hosts,
+full engine/app builds, and the whole-tree manifest checker that would open
+forbidden inputs. RUN-LOCK remains DRAFT and byte-unchanged. Locked inputs and
+prompts are unchanged. FILES.json changes only explicit changed-path hashes
+and appends new paths without reordering or rewriting other entries.

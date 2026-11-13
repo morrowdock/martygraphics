@@ -78,32 +78,36 @@ archive, through `bench://local/`; addon integrity follows from the archive
 hash. No npm installation or unpinned three.js copy is used. The archive is a
 local operator input, not a network dependency at render time.
 
-An import map and restrictive CSP are inserted at the start of the head.
-The before-head scanner uses only HTML ASCII whitespace (TAB, LF, FF, CR and
-SPACE), including the boundary after an HTML/head tag name; NBSP and vertical
-tab do not delimit a tag name. HTML attributes retain quote-aware scanning.
-DOCTYPE scanning ends at the first `>`, including inside quoted PUBLIC/SYSTEM
-identifiers: the HTML tokenizer emits the token on an abrupt identifier end,
-not at a later quote-balanced delimiter. It recognizes an explicit head
-case-insensitively or inserts an implicit head before the first content token.
-Script/style content is never searched for head-like text.
+The custom `bench://local/` scheme handler serves the authored document bytes
+unchanged in an `HTTPURLResponse`. Its `Content-Security-Policy` response header
+contains the same restrictive policy previously supplied by a meta element,
+including `frame-src 'none'` and `worker-src 'none'`. This applies before HTML
+parsing and cannot be removed by editing the DOM. The HTML head scanner, meta
+insertion and parser-dependent checkpoint are gone. Local asset serving remains
+limited to the pinned core module and addons; arbitrary neighboring files are
+not exposed.
 
-Before parsing authored scripts, a main-frame document-start user script
-installs an invariant checker in WebKit's isolated client content world. The
-head is not yet parsed at document start, so a renderer-injected synchronous
-checkpoint immediately after the CSP/import map invokes that checker before
-authored scripts. A per-render UUID marks the injected nodes and checkpoint.
-Both nodes must be direct children of the real `document.head`, have the exact
-expected type/content and occur exactly once. Failure stops loading and sends
-a clear `head invariant` harness error, with no captured frames. The checkpoint
-also stops loading if its event is not acknowledged by the isolated checker.
-An isolated mutation observer latches subsequent removal/replacement/content
-changes as failures; author-world globals cannot spoof the checker. Native code
-checks it again after load and will not start readiness polling or capture
-without both checks. A missing/swallowed checkpoint is refused by that native
-check. Reports record `headInvariantAtStart` and `headInvariantAfterLoad`.
-The scanner is not a general HTML parser: malformed-attribute disagreements are
-deliberately tested as fail-closed refusals, not accepted as secure renders.
+A main-frame `WKUserScript` at document start inserts the import map directly
+under the document element, before authored scripts or the first module load.
+It does not create or search for a head, alter the source bytes, or wait for a
+parser token. The script and verifier use WebKit's isolated client content
+world. A per-render UUID marks the map. Verification requires its exact identity,
+type and text, a unique marker and a connected node, not a particular head.
+
+The document-start script also attempts to load a harmless `data:` script.
+Only a trusted, enforcing `securitypolicyviolation` event naming the exact
+response policy and blocked script directive satisfies this canary. The data
+URL never needs TCP or UDP. A missing event is a clear `head invariant` error
+after five seconds. Native code awaits the isolated verifier after page load
+before readiness polling or any capture. Missing policy/map or changed map at
+this pre-capture check therefore refuses with zero frames. A mutation observer
+checks the map after verification; replacing author-world globals or dispatching
+an untrusted event cannot satisfy the isolated check. Header policy remains active independently
+of the DOM. The legacy report keys `headInvariantAtStart` and
+`headInvariantAfterLoad` are retained: the first records completion of the
+document-start canary/map check (the event is asynchronous), the second the
+native post-load check. See `SYNTHETIC-VALIDATION.md` for host-specific import-map
+and first-authored-script evidence, not a claim about every WebKit version.
 WK content rules block every other URL scheme; navigation policy denies
 external pages. CSP denies connections, frames, workers, external fonts and
 other resource types. Before creating the view, R-WK disables peer connections

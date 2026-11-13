@@ -17,6 +17,7 @@ import unittest
 import zlib
 
 import support as S
+from arm2_tokenizer_cases import tokenizer_cases
 
 
 def image_payload(path):
@@ -47,13 +48,13 @@ class WKRendererTest(unittest.TestCase):
         cls.tarball = Path(os.environ["ARM2_THREE_TARBALL"])
         cls.fixtures = S.HARNESS / "tests" / "fixtures" / "arm2"
 
-    def render(self, name, source=None, tarball=None):
+    def render(self, name, source=None, tarball=None, binary=None):
         page = self.fixtures / (name + ".html")
         if source is not None:
             page = self.root / (name + ".html")
             page.write_text(source)
         output = self.root / name
-        result = subprocess.run([str(self.binary), "--html", str(page), "--out", str(output),
+        result = subprocess.run([str(binary or self.binary), "--html", str(page), "--out", str(output),
                                  "--three-tarball", str(tarball or self.tarball), "--lock", str(S.BENCH / "LOCK.json")],
                                 capture_output=True, timeout=310)
         (self.root / (name + ".stderr")).write_bytes(result.stderr)
@@ -199,28 +200,36 @@ class WKRendererTest(unittest.TestCase):
         self.assertTrue(any("srcdoc" in line and ("blocked" in line or "srcdoc-execution" in line)
                             for line in report["console"]), report["console"])
 
-    def assert_head_injection(self, name, prefix):
+    def assert_head_injection(self, name, prefix, expect_timeout=False):
         source = prefix + """<body><div style="background:black;color:white;font:40px system-ui">Synthetic head</div>
         <script type="module">
         import {REVISION} from 'three';
         if (REVISION !== '170') throw Error('wrong module');
-        const policy = document.head.querySelector('meta[http-equiv="Content-Security-Policy"]');
-        const map = document.head.querySelector('script[type="importmap"]');
-        if (!policy || policy.parentNode !== document.head || !policy.content.includes("connect-src 'none'")) throw Error('missing CSP');
-        if (!map || map.parentNode !== document.head || map.dataset.benchImportmap !== policy.dataset.benchCsp) throw Error('missing import map');
+        const map = document.querySelector('script[data-bench-importmap]');
+        if (!map || map.type !== 'importmap') throw Error('missing import map');
         console.warn('synthetic head and import map ready');
         window.benchDuration = 10; window.benchFrame = async () => {}; window.benchReady = true;
         </script></body></html>"""
         result, report, output = self.render(name, source)
+        if expect_timeout:
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(report["frames"], [])
+            self.assertIn("benchReady timeout (30 s)", report["harnessErrors"])
+            self.assertTrue(report["headInvariantAtStart"], report)
+            self.assertTrue(report["headInvariantAfterLoad"], report)
+            return
         self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
         self.assertTrue(report["complete"], report)
         self.assertEqual(len(report["frames"]), 300)
         self.assertIn("warn: synthetic head and import map ready", report["console"])
+        if "EARLY-AUTHOR" in prefix:
+            self.assertIn("warn: EARLY-AUTHOR map=true", report["console"])
         self.assertFalse(report["allBlank"])
         self.assertTrue(report["headInvariantAtStart"], report)
         self.assertTrue(report["headInvariantAfterLoad"], report)
         events = [json.loads(line) for line in (output / "events.ndjson").read_text().splitlines()]
-        self.assertEqual(events[0], {"kind": "head-invariant", "value": "verified"})
+        self.assertIn({"kind": "head-invariant", "value": "verified"}, events)
+        self.assertEqual(report["htmlLoadedSha256"], report["htmlSourceSha256"])
 
     def test_comment_before_head(self):
         self.assert_head_injection("comment-head", '<!doctype html><!-- mentions <head> --><html><head></head>')
@@ -267,23 +276,22 @@ class WKRendererTest(unittest.TestCase):
                 with self.subTest(name=name):
                     self.assert_head_injection(name, '<!doctype html ' + keyword + ' ' + quote + '<head>' + quote + ' "about:legacy-compat"><html><head></head>')
 
-    def test_head_invariant_refuses_misplaced_injection_before_page_script(self):
-        source = '''<!doctype html><html data-note=a"<head>"><head></head>
-        <script>console.warn('authored script must not run');
-        window.benchDuration=10; window.benchFrame=async () => {}; window.benchReady=true;</script>'''
-        result, report, output = self.render("head-invariant-misplaced", source)
-        self.assertEqual(result.returncode, 1, result.stderr.decode(errors="replace"))
-        self.assertFalse(report["complete"])
-        self.assertEqual(report["frames"], [])
-        self.assertTrue(any("head invariant" in error for error in report["harnessErrors"]), report)
-        self.assertFalse(report["headInvariantAtStart"])
-        self.assertFalse(report["headInvariantAfterLoad"])
-        self.assertFalse(any("authored script must not run" in line for line in report["console"]), report)
+    def test_unquoted_attribute_quote_first_script_has_policy(self):
+        source = (self.fixtures / "unquoted-attribute-quote.html").read_text()
+        result, report, output = self.render("unquoted-attribute-quote", source)
+        self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
+        self.assertTrue(report["complete"], report)
+        self.assertEqual(len(report["frames"]), 300)
+        self.assertTrue(report["headInvariantAtStart"], report)
+        self.assertTrue(report["headInvariantAfterLoad"], report)
+        self.assertIn("warn: first authored script: CSP blocked fetch", report["console"])
+        self.assertIn("warn: first authored module: three 170", report["console"])
+        self.assertFalse(any("POLICY BYPASS" in line for line in report["console"]), report)
 
-    def test_head_invariant_refuses_removed_policy(self):
+    def test_head_invariant_refuses_removed_import_map(self):
         source = '''<!doctype html><html><head></head><body><script>
         window.__benchVerifyHead = () => true;
-        document.head.querySelector('meta[http-equiv="Content-Security-Policy"]').remove();
+        document.querySelector('script[data-bench-importmap]').remove();
         window.benchDuration=10; window.benchFrame=async () => {}; window.benchReady=true;
         </script></body></html>'''
         result, report, output = self.render("head-invariant-removed", source)
@@ -291,8 +299,82 @@ class WKRendererTest(unittest.TestCase):
         self.assertFalse(report["complete"])
         self.assertEqual(report["frames"], [])
         self.assertTrue(any("head invariant" in error for error in report["harnessErrors"]), report)
-        self.assertTrue(report["headInvariantAtStart"])
         self.assertFalse(report["headInvariantAfterLoad"])
+
+    def test_reviewer_tokenizer_matrix(self):
+        hits, connections = [], []
+
+        class Server(ThreadingHTTPServer):
+            def get_request(self):
+                connection, address = super().get_request()
+                connections.append(address)
+                return connection, address
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                hits.append(self.path)
+                self.send_response(200)
+                self.end_headers()
+
+            def log_message(self, *arguments):
+                pass
+
+        server = Server(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        early = '''<script>
+        console.warn('EARLY-AUTHOR map=' + !!document.querySelector('[data-bench-importmap]'));
+        try { window.earlySocket = new WebSocket('ws://127.0.0.1:PORT/early-socket'); } catch(error) {}
+        fetch('http://127.0.0.1:PORT/early-fetch').catch(() => {});
+        </script>'''.replace("PORT", str(server.server_port))
+        cases = tokenizer_cases(early)
+        self.assertEqual(len(cases), 39)
+        try:
+            for name, prefix in cases.items():
+                with self.subTest(name=name):
+                    self.assert_head_injection("matrix-" + name, prefix,
+                                               expect_timeout=name in {"unterminated-comment", "unterminated-comment-dashes"})
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+        self.assertEqual(connections, [])
+        self.assertEqual(hits, [])
+        (self.root / "matrix-network-evidence.json").write_text(json.dumps({
+            "cases": len(cases), "tcpConnections": len(connections), "httpRequests": len(hits)}) + "\n")
+
+    def assert_configuration_fault_refused(self, name, original, replacement):
+        source = (S.HARNESS / "arm2" / "render.swift").read_text()
+        self.assertEqual(source.count(original), 1)
+        policy = source.split('let policy = "', 1)[1].split('"', 1)[0]
+        swift = self.root / (name + ".swift")
+        swift.write_text(source.replace(original, replacement))
+        binary = self.root / (name + "-r-wk")
+        subprocess.run(["swiftc", "-O", str(swift), "-o", str(binary)],
+                       check=True, capture_output=True, timeout=180)
+        page = '''<!doctype html><html><script>
+        window.__benchVerifyHead = () => true;
+        document.dispatchEvent(new SecurityPolicyViolationEvent('securitypolicyviolation', {
+          originalPolicy: POLICY, disposition: 'enforce', blockedURI: 'data', effectiveDirective: 'script-src-elem'
+        }));
+        window.benchDuration=10; window.benchFrame=async () => {}; window.benchReady=true;
+        </script></html>'''.replace("POLICY", json.dumps(policy))
+        result, report, output = self.render(name, page, binary=binary)
+        self.assertEqual(result.returncode, 1, result.stderr.decode(errors="replace"))
+        self.assertFalse(report["complete"], report)
+        self.assertEqual(report["frames"], [])
+        self.assertTrue(any("head invariant" in error for error in report["harnessErrors"]), report)
+        self.assertFalse(report["headInvariantAfterLoad"], report)
+
+    def test_missing_response_policy_refused(self):
+        self.assert_configuration_fault_refused("missing-response-policy",
+                                               'headers["Content-Security-Policy"] = policy',
+                                               'headers["X-Synthetic-Omitted-Policy"] = policy')
+
+    def test_missing_document_start_map_refused(self):
+        self.assert_configuration_fault_refused("missing-document-start-map",
+                                               'document.documentElement.appendChild(map);',
+                                               'void map;')
 
     def test_bad_archive_hash_is_refused(self):
         archive = self.root / "bad.tgz"

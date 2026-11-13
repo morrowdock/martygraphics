@@ -13,38 +13,6 @@ func sha256(_ data: Data) -> String {
     SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
 }
 
-func insertingHeadContent(_ insertion: String, into source: String) -> String {
-    var cursor = source.startIndex
-    if source.first == "\u{FEFF}" { cursor = source.index(after: cursor) }
-    while cursor < source.endIndex {
-        if " \t\n\r\u{000C}".contains(source[cursor]) {
-            cursor = source.index(after: cursor)
-            continue
-        }
-        let remaining = cursor..<source.endIndex
-        if source[cursor...].hasPrefix("<!--") {
-            guard let end = source.range(of: "--!?>", options: .regularExpression, range: remaining) else { break }
-            cursor = end.upperBound
-            continue
-        }
-        if let declaration = source.range(of: "<!doctype[^>]*>",
-                                          options: [.regularExpression, .caseInsensitive, .anchored], range: remaining) {
-            cursor = declaration.upperBound
-            continue
-        }
-        if let tag = source.range(of: "<(?:html|head)(?=[\\t\\n\\f\\r />])(?:\"[^\"]*\"|'[^']*'|[^'\">])*>",
-                                  options: [.regularExpression, .caseInsensitive, .anchored], range: remaining) {
-            if source[tag].prefix(5).lowercased() == "<head" {
-                return String(source[..<tag.upperBound]) + insertion + String(source[tag.upperBound...])
-            }
-            cursor = tag.upperBound
-            continue
-        }
-        break
-    }
-    return String(source[..<cursor]) + "<head>" + insertion + "</head>" + String(source[cursor...])
-}
-
 func arguments() throws -> [String: String] {
     let values = Array(CommandLine.arguments.dropFirst())
     guard values.count == 8 else { throw RenderError.invalid("need --html FILE --out DIR --three-tarball FILE --lock FILE") }
@@ -80,12 +48,9 @@ final class OfflineFiles: NSObject, WKURLSchemeHandler {
         guard sha256(try Data(contentsOf: archive)) == expected else { throw RenderError.invalid("three.js tarball SHA-256 mismatch") }
         archiveHash = expected
         coreHash = core
-        let source = try String(contentsOfFile: options["--html"]!, encoding: .utf8)
-        sourceHash = sha256(Data(source.utf8))
-        let insertion = """
-        <meta data-bench-csp="\(headNonce)" http-equiv="Content-Security-Policy" content="\(policy)"><script data-bench-importmap="\(headNonce)" type="importmap">\(importMap)</script><script data-bench-check="\(headNonce)">if (document.dispatchEvent(new Event('bench-head-\(headNonce)', {cancelable:true}))) { window.stop(); throw Error('R-WK head invariant checkpoint refused'); }</script>
-        """
-        html = Data(insertingHeadContent(insertion, into: source).utf8)
+        html = try Data(contentsOf: URL(fileURLWithPath: options["--html"]!))
+        guard String(data: html, encoding: .utf8) != nil else { throw RenderError.invalid("HTML must be UTF-8") }
+        sourceHash = sha256(html)
         super.init()
         _ = try resource("build/three.module.min.js")
     }
@@ -117,8 +82,12 @@ final class OfflineFiles: NSObject, WKURLSchemeHandler {
             guard let url = task.request.url, url.scheme == "bench", url.host == "local",
                   url.query == nil, task.request.httpMethod == "GET" else { throw RenderError.invalid("offline URL denied") }
             let data = url.path == "/index.html" ? html : try resource(String(url.path.dropFirst()))
-            let response = URLResponse(url: url, mimeType: url.path == "/index.html" ? "text/html" : "text/javascript",
-                                       expectedContentLength: data.count, textEncodingName: "utf-8")
+            var headers = ["Content-Type": url.path == "/index.html" ? "text/html; charset=utf-8" : "text/javascript; charset=utf-8",
+                           "Content-Length": String(data.count)]
+            if url.path == "/index.html" { headers["Content-Security-Policy"] = policy }
+            guard let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: headers) else {
+                throw RenderError.invalid("offline response construction failed")
+            }
             task.didReceive(response)
             task.didReceive(data)
             task.didFinish()
@@ -193,39 +162,48 @@ final class Renderer: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         (() => {
           const nonce = '\(offline.headNonce)';
           const send = value => window.webkit.messageHandlers.benchHead.postMessage({kind:'head-invariant', value});
-          let verified = false, refused = false, originalPolicy, originalMap;
+          let verified = false, refused = false;
+          const map = document.createElement('script');
+          map.type = 'importmap';
+          map.dataset.benchImportmap = nonce;
+          map.textContent = '\(offline.importMap)';
           const refuse = () => {
             if (!refused) {
               refused = true;
-              send('CSP/import map must be unchanged direct children of document.head');
+              send('response CSP canary or document-start import map missing/changed');
               window.stop();
             }
             return false;
           };
           const verify = () => {
             if (refused) return false;
-            const policies = document.querySelectorAll('[data-bench-csp="' + nonce + '"]');
             const maps = document.querySelectorAll('[data-bench-importmap="' + nonce + '"]');
-            const policy = policies[0], map = maps[0];
-            if (policies.length !== 1 || maps.length !== 1 || !document.head ||
-                policy.parentNode !== document.head || map.parentNode !== document.head ||
-                policy.localName !== 'meta' || policy.httpEquiv !== 'Content-Security-Policy' ||
-                policy.content !== "\(offline.policy)" || map.localName !== 'script' ||
-                map.type !== 'importmap' || map.textContent !== '\(offline.importMap)' ||
-                (verified && (policy !== originalPolicy || map !== originalMap))) return refuse();
-            originalPolicy = policy;
-            originalMap = map;
+            if (maps.length !== 1 || maps[0] !== map || !map.isConnected ||
+                map.type !== 'importmap' || map.textContent !== '\(offline.importMap)') return refuse();
             return true;
           };
-          document.addEventListener('bench-head-' + nonce, event => {
-            if (!verify()) return;
-            verified = true;
-            event.preventDefault();
-            send('verified');
-          }, {once:true, capture:true});
+          let resolvePolicy;
+          const policyReady = new Promise(resolve => { resolvePolicy = resolve; });
+          document.addEventListener('securitypolicyviolation', event => {
+            if (!event.isTrusted || event.originalPolicy !== "\(offline.policy)" ||
+                event.disposition !== 'enforce' || event.blockedURI !== 'data' ||
+                !event.effectiveDirective.startsWith('script-src')) return;
+            if (!verified && verify()) {
+              verified = true;
+              send('verified');
+              resolvePolicy(true);
+            }
+          }, true);
+          if (!document.documentElement) { refuse(); resolvePolicy(false); return; }
+          document.documentElement.appendChild(map);
+          const canary = document.createElement('script');
+          canary.src = 'data:text/javascript,void%200';
+          document.documentElement.appendChild(canary);
+          canary.remove();
           new MutationObserver(() => { if (verified) verify(); })
             .observe(document, {subtree:true, childList:true, attributes:true, characterData:true});
-          globalThis.__benchVerifyHead = () => verified && verify();
+          setTimeout(() => { if (!verified) { refuse(); resolvePolicy(false); } }, 5000);
+          globalThis.__benchVerifyHead = async () => await policyReady && verify();
         })();
         """
         config.userContentController.addUserScript(WKUserScript(source: headScript, injectionTime: .atDocumentStart,

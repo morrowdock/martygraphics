@@ -392,9 +392,10 @@ registered fraction. These choices can affect repairs and images; no claim of
 no score effect is made. The author-call maximum remains 900 seconds.
 
 R-WK checks the archive and core-module hashes, serves only the pinned core and
-addon JavaScript, blocks other resources, awaits readiness and two animation
-frames per capture, and records console events. Native synthetic tests check
-WebGL capture, missing readiness and blocked network access. The result must be
+addon JavaScript alongside the authored document, blocks other resources,
+awaits readiness and two animation frames per capture, and records console
+events. Native synthetic tests check WebGL capture, missing readiness and blocked
+network access. The result must be
 reviewed before selecting a renderer in RUN-LOCK. R-CR is not implemented or
 selected. See `harness/arm2/README.md` for use, evidence and limits.
 
@@ -410,3 +411,14 @@ WebKitTestRunner uses the same selector at WebKit commit
 API and the host OS/WebKit version need review and pinning. A missing selector
 is a harness error. Synthetic capture evidence is not a renderer selection or
 permission to run the benchmark.
+
+**2026-11-13 response-policy revision (PROPOSED; review pending).** Based on
+`b62f542b7c902e0b209c294f65107d10c6f35872`, R-WK removes HTML head scanning and
+serves the unchanged document through its custom scheme with the existing CSP
+string in an HTTP response header, including frame/worker restrictions. A
+main-frame document-start user script installs the import map before authored
+scripts. An isolated blocked-request canary proves policy enforcement, and a
+native post-load check refuses missing policy/map before capture. WebRTC
+disable/readback, frame counts, timeout and report behavior remain in place.
+The README and synthetic validation document the built design and actual host
+evidence; no renderer approval, live call or registered run is implied.
