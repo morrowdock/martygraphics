@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
 # Arm 2 and the recording shim
 
 Status: **PROPOSED, 2026-11-12; review pending. Not a benchmark run.**
@@ -78,11 +79,31 @@ hash. No npm installation or unpinned three.js copy is used. The archive is a
 local operator input, not a network dependency at render time.
 
 An import map and restrictive CSP are inserted at the start of the head.
-The before-head scanner skips whitespace, comments and quoted doctypes/HTML
-attributes. It recognizes an explicit head case-insensitively or inserts an
-implicit head before the first content token. In particular, script/style
-content is never searched for head-like text, and no author script runs before
-the injected policy and import map, even when the author omitted the head.
+The before-head scanner uses only HTML ASCII whitespace (TAB, LF, FF, CR and
+SPACE), including the boundary after an HTML/head tag name; NBSP and vertical
+tab do not delimit a tag name. HTML attributes retain quote-aware scanning.
+DOCTYPE scanning ends at the first `>`, including inside quoted PUBLIC/SYSTEM
+identifiers: the HTML tokenizer emits the token on an abrupt identifier end,
+not at a later quote-balanced delimiter. It recognizes an explicit head
+case-insensitively or inserts an implicit head before the first content token.
+Script/style content is never searched for head-like text.
+
+Before parsing authored scripts, a main-frame document-start user script
+installs an invariant checker in WebKit's isolated client content world. The
+head is not yet parsed at document start, so a renderer-injected synchronous
+checkpoint immediately after the CSP/import map invokes that checker before
+authored scripts. A per-render UUID marks the injected nodes and checkpoint.
+Both nodes must be direct children of the real `document.head`, have the exact
+expected type/content and occur exactly once. Failure stops loading and sends
+a clear `head invariant` harness error, with no captured frames. The checkpoint
+also stops loading if its event is not acknowledged by the isolated checker.
+An isolated mutation observer latches subsequent removal/replacement/content
+changes as failures; author-world globals cannot spoof the checker. Native code
+checks it again after load and will not start readiness polling or capture
+without both checks. A missing/swallowed checkpoint is refused by that native
+check. Reports record `headInvariantAtStart` and `headInvariantAfterLoad`.
+The scanner is not a general HTML parser: malformed-attribute disagreements are
+deliberately tested as fail-closed refusals, not accepted as secure renders.
 WK content rules block every other URL scheme; navigation policy denies
 external pages. CSP denies connections, frames, workers, external fonts and
 other resource types. Before creating the view, R-WK disables peer connections

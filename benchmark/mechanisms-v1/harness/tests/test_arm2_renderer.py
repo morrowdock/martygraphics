@@ -90,6 +90,13 @@ class WKRendererTest(unittest.TestCase):
 
     def test_network_probes_blocked_without_request_reaching_server(self):
         hits = []
+        connections = []
+
+        class Server(ThreadingHTTPServer):
+            def get_request(self):
+                connection, address = super().get_request()
+                connections.append(address)
+                return connection, address
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self):
@@ -100,7 +107,7 @@ class WKRendererTest(unittest.TestCase):
             def log_message(self, *args):
                 pass
 
-        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        server = Server(("127.0.0.1", 0), Handler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:
@@ -112,6 +119,8 @@ class WKRendererTest(unittest.TestCase):
             thread.join()
         self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
         self.assertEqual(hits, [])
+        self.assertEqual(connections, [], "offline probes opened a TCP connection")
+        (self.root / "network-evidence.json").write_text(json.dumps({"tcpConnections": len(connections), "httpRequests": len(hits)}) + "\n")
         for probe in ("fetch", "XHR", "WebSocket", "image", "dynamic-import"):
             self.assertIn("warn: synthetic " + probe + " blocked", report["console"])
         self.assertFalse(report["allBlank"])
@@ -182,6 +191,7 @@ class WKRendererTest(unittest.TestCase):
         self.assertTrue(report["complete"], report)
         self.assertEqual(len(report["frames"]), 300)
         self.assertEqual(datagrams, [], "WebRTC sent UDP despite offline policy")
+        (self.root / "webrtc-evidence.json").write_text(json.dumps({"udpDatagrams": len(datagrams)}) + "\n")
         for label in ("main", "iframe", "iframe/srcdoc"):
             self.assertIn("warn: synthetic WebRTC attempted: " + label, report["console"])
         self.assertFalse(any("WebRTC exposed:" in line or "WebRTC binding not locked:" in line
@@ -195,7 +205,9 @@ class WKRendererTest(unittest.TestCase):
         import {REVISION} from 'three';
         if (REVISION !== '170') throw Error('wrong module');
         const policy = document.head.querySelector('meta[http-equiv="Content-Security-Policy"]');
-        if (!policy || !policy.content.includes("connect-src 'none'")) throw Error('missing CSP');
+        const map = document.head.querySelector('script[type="importmap"]');
+        if (!policy || policy.parentNode !== document.head || !policy.content.includes("connect-src 'none'")) throw Error('missing CSP');
+        if (!map || map.parentNode !== document.head || map.dataset.benchImportmap !== policy.dataset.benchCsp) throw Error('missing import map');
         console.warn('synthetic head and import map ready');
         window.benchDuration = 10; window.benchFrame = async () => {}; window.benchReady = true;
         </script></body></html>"""
@@ -205,6 +217,10 @@ class WKRendererTest(unittest.TestCase):
         self.assertEqual(len(report["frames"]), 300)
         self.assertIn("warn: synthetic head and import map ready", report["console"])
         self.assertFalse(report["allBlank"])
+        self.assertTrue(report["headInvariantAtStart"], report)
+        self.assertTrue(report["headInvariantAfterLoad"], report)
+        events = [json.loads(line) for line in (output / "events.ndjson").read_text().splitlines()]
+        self.assertEqual(events[0], {"kind": "head-invariant", "value": "verified"})
 
     def test_comment_before_head(self):
         self.assert_head_injection("comment-head", '<!doctype html><!-- mentions <head> --><html><head></head>')
@@ -220,6 +236,63 @@ class WKRendererTest(unittest.TestCase):
 
     def test_uppercase_head_with_attributes(self):
         self.assert_head_injection("uppercase-head", '<!DOCTYPE html><HTML lang="en"><HEAD data-note="quoted > <head>"></HEAD>')
+
+    def test_additional_head_baseline_cases(self):
+        cases = {
+            "head-tab": '<!doctype html><html><head\tdata-note="tab"></head>',
+            "head-lf": '<!doctype html><html><head\ndata-note="lf"></head>',
+            "head-ff": '<!doctype html><html><head\fdata-note="ff"></head>',
+            "head-cr": '<!doctype html><html><head\rdata-note="cr"></head>',
+            "head-space": '<!doctype html><html><head data-note="space"></head>',
+            "head-bom": '\ufeff \t\r\n<!doctype html><html><head></head>',
+            "head-no-html": '<!doctype html><head></head>',
+            "head-self-closing": '<!doctype html><html><head/></head>',
+            "head-html-attributes": '<!doctype html><html data-note="quoted > <head>"><head></head>',
+            "head-comment-bang": '<!doctype html><!-- <head> --!><html><head></head>',
+        }
+        for name, prefix in cases.items():
+            with self.subTest(name=name):
+                self.assert_head_injection(name, prefix)
+
+    def test_nbsp_head_is_not_a_head_tag(self):
+        self.assert_head_injection("head-nbsp", '<!doctype html><html><head\u00a0data-note="nbsp"></head>')
+
+    def test_vertical_tab_head_is_not_a_head_tag(self):
+        self.assert_head_injection("head-vt", '<!doctype html><html><head\vdata-note="vt"></head>')
+
+    def test_doctype_quoted_head_ends_at_first_greater_than(self):
+        for keyword in ("PUBLIC", "SYSTEM"):
+            for quote in ('"', "'"):
+                name = "doctype-" + keyword.lower() + ("-double" if quote == '"' else "-single")
+                with self.subTest(name=name):
+                    self.assert_head_injection(name, '<!doctype html ' + keyword + ' ' + quote + '<head>' + quote + ' "about:legacy-compat"><html><head></head>')
+
+    def test_head_invariant_refuses_misplaced_injection_before_page_script(self):
+        source = '''<!doctype html><html data-note=a"<head>"><head></head>
+        <script>console.warn('authored script must not run');
+        window.benchDuration=10; window.benchFrame=async () => {}; window.benchReady=true;</script>'''
+        result, report, output = self.render("head-invariant-misplaced", source)
+        self.assertEqual(result.returncode, 1, result.stderr.decode(errors="replace"))
+        self.assertFalse(report["complete"])
+        self.assertEqual(report["frames"], [])
+        self.assertTrue(any("head invariant" in error for error in report["harnessErrors"]), report)
+        self.assertFalse(report["headInvariantAtStart"])
+        self.assertFalse(report["headInvariantAfterLoad"])
+        self.assertFalse(any("authored script must not run" in line for line in report["console"]), report)
+
+    def test_head_invariant_refuses_removed_policy(self):
+        source = '''<!doctype html><html><head></head><body><script>
+        window.__benchVerifyHead = () => true;
+        document.head.querySelector('meta[http-equiv="Content-Security-Policy"]').remove();
+        window.benchDuration=10; window.benchFrame=async () => {}; window.benchReady=true;
+        </script></body></html>'''
+        result, report, output = self.render("head-invariant-removed", source)
+        self.assertEqual(result.returncode, 1, result.stderr.decode(errors="replace"))
+        self.assertFalse(report["complete"])
+        self.assertEqual(report["frames"], [])
+        self.assertTrue(any("head invariant" in error for error in report["harnessErrors"]), report)
+        self.assertTrue(report["headInvariantAtStart"])
+        self.assertFalse(report["headInvariantAfterLoad"])
 
     def test_bad_archive_hash_is_refused(self):
         archive = self.root / "bad.tgz"

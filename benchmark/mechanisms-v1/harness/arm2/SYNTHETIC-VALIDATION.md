@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
 # Synthetic validation: Arm 2 and recording shim
 
 Status: **VERIFIED synthetic checks only. Renderer selection and A-17 remain
@@ -140,3 +141,72 @@ instead, manifest updates use its SHA-256 algorithm on only the explicit changed
 paths, preserving all other entries and their order. RUN-LOCK remains DRAFT;
 the locked inputs and prompts are untouched. No renderer-selection approval
 or real benchmark acceptance is implied.
+
+## PR 75 CSP/head-invariant re-check: 2026-11-13 UTC
+
+Status: **VERIFIED synthetic checks; independent re-review PENDING.
+Not a benchmark run.** Checked: 2026-11-13T02:37:09Z on the Mac mini.
+Source baseline: `add494d86153bd6ff026f3e4a048bc17b97ba3d4`, plus the changes
+identified by these tested source SHA-256 values:
+
+- `render.swift`: `48ca361b5778acae7629de72e003c6fd98e1299b194e184e0ae91ea120db7be4`
+- `../tests/test_arm2_renderer.py`: `4aa5024022980b2c3daf8fb3617b0f41c18d96221dedd85aeffe47002e7c6114`
+- Renderer executable: `79d67f4ceaef777a30aede6eede62aea72aa9401df888f6359c33e606af83fa6`
+
+The scanner now uses only HTML ASCII whitespace at tag-name boundaries.
+DOCTYPEs terminate at the first `>`, including an abrupt end inside quoted
+PUBLIC/SYSTEM identifiers, rather than quote-balancing past that delimiter.
+A main-frame document-start user script installs an isolated-world invariant
+checker; a nonce-marked synchronous checkpoint after the injected policy/map
+calls it before authored scripts. It verifies unique, exact nodes directly
+under the real head. An isolated mutation observer latches changes, and the
+native post-load check must pass before readiness polling or capture.
+
+The initial seven-method focused run passed the malformed-head/DOCTYPE and
+network cases but failed two refusal assertions: one proposed malformed-comment
+fixture actually parsed safely, and stopping loading before posting the error
+let a generic navigation-cancel error win. The refusal fixture now uses a
+malformed unquoted HTML attribute that genuinely misplaces the injection, and
+the checker posts its specific error before stopping loading. No failure was
+silently counted as a pass.
+
+The final focused refusal/baseline run passed **3 test methods**, including
+10 baseline head subcases, in **107.337 seconds**. Both refusal cases returned
+exit 1, `complete: false`, **0 frames**, and
+`head invariant: CSP/import map must be unchanged direct children of document.head`.
+The misplaced-injection case also proves the following authored script did
+not execute. The policy-removal case proves that a page-world replacement for
+the verification function cannot spoof the isolated checker.
+Focused log SHA-256: `3abaf99b52c25b0c6cd62b4fa05ac3d050853739b325ffe911a3ac9de43a3979`.
+
+All builds and renderer runs use the shared mini heavy-job gate, including
+waiting behind app builds/UI tests. The Python interpreter is 3.14.10 with
+NumPy 2.5.4. The final suite reused the gated renderer executable pinned above.
+Host: macOS 27.2 build 26B123; WebKit `22625.2.8.11.9`.
+
+- Full harness discovery: **206 passed**, no skips, **390.386 seconds**.
+  This is the single final full-harness run after the focused fixes.
+- Tools discovery: **52 run, 51 passed, 1 skipped**, **2.187 seconds**.
+  The existing skip is `setup.sh tools not installed`.
+- All **21 head cases** completed **300 frames** with both invariant report
+  fields true, strict direct-child CSP/map probes and resolved pinned imports.
+  These comprise the five previously committed cases, ten additional baseline
+  cases (a 15-case baseline matrix), NBSP, VT and four quoted PUBLIC/SYSTEM
+  cases covering both quote styles. The specific reported PUBLIC example is
+  included.
+- Both refusal regressions again returned **0 frames** and the specific head
+  invariant error. The misplaced-injection case did not run authored code.
+- WebRTC and network probes each completed **300 frames**. Local listeners
+  recorded **0 UDP datagrams, 0 accepted TCP connections and 0 HTTP requests**.
+  The TCP test now counts connections, not just HTTP handler invocations.
+- The existing recovery-test multithreaded `fork()` DeprecationWarning remains
+  visible; the test passes.
+- Full harness log SHA-256: `41ffc58fa06e209c4fb6b8c48ba85793544298790a14a8718c1894726dc4cadf`.
+- Tools log SHA-256: `743be9f004f7ad3ae49f59b701e24f5eba0b77af554613eabbae8ed7f78b8fe2`.
+
+NOT RUN: live Claude/Marty calls or paid APIs, registered question inputs,
+the registered benchmark or section 2.4 dry run, alternate OS/WebKit hosts,
+full engine/app builds, and the whole-tree manifest checker that would open
+forbidden inputs. RUN-LOCK remains DRAFT and byte-unchanged; locked inputs and
+prompts remain unchanged. FILES.json updates are limited to explicitly changed
+files, preserving all other entries and their order.

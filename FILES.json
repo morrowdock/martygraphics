@@ -2959,11 +2959,11 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/arm2/README.md",
-      "sha256": "0897d21a51f9d3911334f27b4d565e5a74ba9afa5854b3ec75c35c0bf089552f"
+      "sha256": "759364b3bfd7c67b11bbba546ede561e42226cbf9be73e3d69e00ae7bf8c625a"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/arm2/SYNTHETIC-VALIDATION.md",
-      "sha256": "a9ba920f60fb38a0db11ffb81a48b43a44a167886e262f6d02ef2d120453eb08"
+      "sha256": "a2db793e5f65f6a0a13788cde146c1e6511e5fd5de536c9d0a4e715d249b2d18"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/arm2/driver.py",
@@ -2971,7 +2971,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/arm2/render.swift",
-      "sha256": "15bc155865688b18a269af38d5c1bef6e03b72e7e58027d9d559ae75a447168b"
+      "sha256": "48ca361b5778acae7629de72e003c6fd98e1299b194e184e0ae91ea120db7be4"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/shim/record.py",
@@ -2991,7 +2991,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_renderer.py",
-      "sha256": "a5c219f4a0dab7a86f2623f5fdb08cadf5edc6ba3d8c8a74589c63b618f70a18"
+      "sha256": "4aa5024022980b2c3daf8fb3617b0f41c18d96221dedd85aeffe47002e7c6114"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_shim.py",

@@ -27,12 +27,12 @@ func insertingHeadContent(_ insertion: String, into source: String) -> String {
             cursor = end.upperBound
             continue
         }
-        if let declaration = source.range(of: "<!doctype(?=[\\s>])(?:\"[^\"]*\"|'[^']*'|[^'\">])*>",
+        if let declaration = source.range(of: "<!doctype[^>]*>",
                                           options: [.regularExpression, .caseInsensitive, .anchored], range: remaining) {
             cursor = declaration.upperBound
             continue
         }
-        if let tag = source.range(of: "<(?:html|head)(?=[\\s/>])(?:\"[^\"]*\"|'[^']*'|[^'\">])*>",
+        if let tag = source.range(of: "<(?:html|head)(?=[\\t\\n\\f\\r />])(?:\"[^\"]*\"|'[^']*'|[^'\">])*>",
                                   options: [.regularExpression, .caseInsensitive, .anchored], range: remaining) {
             if source[tag].prefix(5).lowercased() == "<head" {
                 return String(source[..<tag.upperBound]) + insertion + String(source[tag.upperBound...])
@@ -63,6 +63,9 @@ final class OfflineFiles: NSObject, WKURLSchemeHandler {
     let archiveHash: String
     let sourceHash: String
     let html: Data
+    let headNonce = UUID().uuidString
+    let policy = "default-src 'none'; script-src bench: 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    let importMap = "{\"imports\":{\"three\":\"bench://local/build/three.module.min.js\",\"three/addons/\":\"bench://local/examples/jsm/\"}}"
     var cache: [String: Data] = [:]
 
     init(options: [String: String]) throws {
@@ -79,8 +82,9 @@ final class OfflineFiles: NSObject, WKURLSchemeHandler {
         coreHash = core
         let source = try String(contentsOfFile: options["--html"]!, encoding: .utf8)
         sourceHash = sha256(Data(source.utf8))
-        let policy = "default-src 'none'; script-src bench: 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
-        let insertion = "<meta http-equiv=\"Content-Security-Policy\" content=\"\(policy)\"><script type=\"importmap\">{\"imports\":{\"three\":\"bench://local/build/three.module.min.js\",\"three/addons/\":\"bench://local/examples/jsm/\"}}</script>"
+        let insertion = """
+        <meta data-bench-csp="\(headNonce)" http-equiv="Content-Security-Policy" content="\(policy)"><script data-bench-importmap="\(headNonce)" type="importmap">\(importMap)</script><script data-bench-check="\(headNonce)">if (document.dispatchEvent(new Event('bench-head-\(headNonce)', {cancelable:true}))) { window.stop(); throw Error('R-WK head invariant checkpoint refused'); }</script>
+        """
         html = Data(insertingHeadContent(insertion, into: source).utf8)
         super.init()
         _ = try resource("build/three.module.min.js")
@@ -149,6 +153,8 @@ final class Renderer: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
     var notes: [String] = []
     var viewport: [String: Any] = [:]
     var activity: NSObjectProtocol?
+    var headInvariantAtStart = false
+    var headInvariantAfterLoad = false
 
     init(options: [String: String]) throws {
         output = URL(fileURLWithPath: options["--out"]!, isDirectory: true)
@@ -182,6 +188,48 @@ final class Renderer: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
             return
         }
         config.userContentController.add(self, name: "benchLog")
+        config.userContentController.add(self, contentWorld: .defaultClient, name: "benchHead")
+        let headScript = """
+        (() => {
+          const nonce = '\(offline.headNonce)';
+          const send = value => window.webkit.messageHandlers.benchHead.postMessage({kind:'head-invariant', value});
+          let verified = false, refused = false, originalPolicy, originalMap;
+          const refuse = () => {
+            if (!refused) {
+              refused = true;
+              send('CSP/import map must be unchanged direct children of document.head');
+              window.stop();
+            }
+            return false;
+          };
+          const verify = () => {
+            if (refused) return false;
+            const policies = document.querySelectorAll('[data-bench-csp="' + nonce + '"]');
+            const maps = document.querySelectorAll('[data-bench-importmap="' + nonce + '"]');
+            const policy = policies[0], map = maps[0];
+            if (policies.length !== 1 || maps.length !== 1 || !document.head ||
+                policy.parentNode !== document.head || map.parentNode !== document.head ||
+                policy.localName !== 'meta' || policy.httpEquiv !== 'Content-Security-Policy' ||
+                policy.content !== "\(offline.policy)" || map.localName !== 'script' ||
+                map.type !== 'importmap' || map.textContent !== '\(offline.importMap)' ||
+                (verified && (policy !== originalPolicy || map !== originalMap))) return refuse();
+            originalPolicy = policy;
+            originalMap = map;
+            return true;
+          };
+          document.addEventListener('bench-head-' + nonce, event => {
+            if (!verify()) return;
+            verified = true;
+            event.preventDefault();
+            send('verified');
+          }, {once:true, capture:true});
+          new MutationObserver(() => { if (verified) verify(); })
+            .observe(document, {subtree:true, childList:true, attributes:true, characterData:true});
+          globalThis.__benchVerifyHead = () => verified && verify();
+        })();
+        """
+        config.userContentController.addUserScript(WKUserScript(source: headScript, injectionTime: .atDocumentStart,
+            forMainFrameOnly: true, in: .defaultClient))
         let script = """
         (() => {
           const rtcNames = new Set(['RTCPeerConnection', 'webkitRTCPeerConnection', 'RTCDataChannel',
@@ -249,6 +297,12 @@ final class Renderer: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
             try eventLog.write(contentsOf: line)
             try eventLog.synchronize()
         } catch { fail("console recording: \(error)"); return }
+        if message.name == "benchHead" {
+            guard message.frameInfo.isMainFrame else { fail("head invariant: unexpected frame"); return }
+            if value == "verified" { headInvariantAtStart = true }
+            else { fail("head invariant: " + value) }
+            return
+        }
         if data["kind"] == "exception" { exceptions.append(value) } else { console.append(value) }
     }
 
@@ -259,7 +313,18 @@ final class Renderer: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         decisionHandler(allowed ? .allow : .cancel)
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { pollReady() }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        guard !finished else { return }
+        view.callAsyncJavaScript("return globalThis.__benchVerifyHead();", arguments: [:], in: nil, in: .defaultClient) { result in
+            guard !self.finished else { return }
+            guard case .success(let value) = result, value as? Bool == true, self.headInvariantAtStart else {
+                self.fail("head invariant: document-start checkpoint or native post-load verification failed")
+                return
+            }
+            self.headInvariantAfterLoad = true
+            self.pollReady()
+        }
+    }
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { fail("navigation: \(error)") }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { fail("navigation: \(error)") }
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { fail("WebContent process terminated") }
@@ -388,6 +453,7 @@ final class Renderer: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
             let report: [String: Any] = ["kind": "mechanisms-v1.r-wk/1", "renderer": "R-WK", "complete": frames.count == frameCount && errors.isEmpty,
                 "duration": duration, "fps": 30, "width": 1280, "height": 800, "scale": 1,
                 "observedViewport": viewport,
+                "headInvariantAtStart": headInvariantAtStart, "headInvariantAfterLoad": headInvariantAfterLoad,
                 "frames": frames, "stills": stills, "stillIndices": stillIndices, "nonModalPixelFractions": fractions,
                 "allBlank": fractions.allSatisfy { $0 < 0.005 }, "placeholderStills": placeholders,
                 "harnessErrors": errors, "exceptions": exceptions, "console": console, "notes": notes,
