@@ -3,7 +3,7 @@
 Status: **PROPOSED implementation; owner-approved route change on 2026-11-12.
 Not run-ready.** Checked: 2026-11-12 UTC. Base:
 `7332c125b83c94fd93acfbd1e77645d978e6ce87`; review corrections against
-`2c17874dfa26cb86f08455c767fb9808f32445af` on 2026-11-12 UTC. See A-16 in
+`2c17874dfa26cb86f08455c767fb9808f32445af` on 2026-11-13 UTC. See A-16 in
 [AMENDMENTS.md](../AMENDMENTS.md). No benchmark packet, rubric or synthetic
 prompt was sent to a model. No OAuth flow was started.
 

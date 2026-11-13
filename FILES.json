@@ -1375,7 +1375,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
-      "sha256": "e45ea89559877756bb3582b9702eea7ea0d01d04776e706b8135a32478ef92d2"
+      "sha256": "63b6d64d4670cf3c0971f588c3cc1976c7b1c8d796c352a09db89545b7e18dee"
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
@@ -1411,7 +1411,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
-      "sha256": "20ceb19c37d1a71d5585a714a8a0fc7e1f376edbe413edb9efdd1c9aaabdd1a6"
+      "sha256": "2ad031d28a9872fcda8dc3e415757e8bc0dbdee9f953d8a302b154bd5d558a12"
     },
     {
       "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.FACTCHECK-2.md",
@@ -1431,7 +1431,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/GEMINI-CLI.md",
-      "sha256": "b21e51bbddaa2e5f192930e945b27487020f67efe7c240de983cf70e960ae1df"
+      "sha256": "551373f88cfb5d4df75358e43754e67d4a91f466a9b2ad32b82341855491a62b"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/LIVE-ADAPTERS.md",

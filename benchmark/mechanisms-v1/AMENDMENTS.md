@@ -324,7 +324,7 @@ is unchanged. This is a **substantive grader-route change**, recorded before
 run 1; it can change grades and verdict eligibility. It is not labelled as
 having zero score effect. Scoring arithmetic is unchanged.
 
-**Model finding and proposed run pin (corrected 2026-11-12):** Argon is
+**Model finding and proposed run pin (corrected 2026-11-13 UTC):** Argon is
 unlisted in Gemini CLI 0.68.0; account access is **PENDING a signed-in check**.
 The CLI passes arbitrary `--model` IDs through, so absence from bundled
 models is not unavailability. `gemini-3.1-pro-preview` remains strictly a
@@ -360,7 +360,7 @@ system/environment context remains. `auth-check` stays quota-free; the separate
 human-confirmed `model-access-check` sends one minimal request to the pinned
 ID and records acceptance/refusal/uncertainty. It was **NOT RUN with the real
 CLI** during this correction. Sources: pinned package loader/core and
-[GEMINI-CLI.md](harness/GEMINI-CLI.md), checked 2026-11-12 UTC.
+[GEMINI-CLI.md](harness/GEMINI-CLI.md), checked 2026-11-13 UTC.
 
 No benchmark packet, rubric, real prompt, OAuth flow or model quota was used.
 Auth needs the owner's one-time Login with Google. Implementation acceptance,

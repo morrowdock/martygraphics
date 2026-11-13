@@ -113,10 +113,10 @@
       "supersededG2By": "A-16; draftProposals.g2GeminiCli. Prior G2 observations are historical."
     },
     "g2GeminiCli": {
-      "status": "PROPOSED implementation and review corrections 2026-11-12; owner-approved CLI route only. Preview fallback needs owner approval. Not approved run pins. DRAFT remains.",
+      "status": "PROPOSED implementation and review corrections 2026-11-13 UTC; owner-approved CLI route only. Preview fallback needs owner approval. Not approved run pins. DRAFT remains.",
       "baseCommit": "7332c125b83c94fd93acfbd1e77645d978e6ce87",
       "amendment": "A-16",
-      "source": "harness/GEMINI-CLI.md and A-16; pinned 0.68.0 real settings loader/core; network-disabled native check and synthetic tests 2026-11-12",
+      "source": "harness/GEMINI-CLI.md and A-16; pinned 0.68.0 real settings loader/core; network-disabled native check and synthetic tests 2026-11-13 UTC",
       "package": "@google/gemini-cli",
       "version": "0.68.0",
       "npmTarballSha256": "325099ddcb56937c27d119e7297bfa8a5e29b529bae3c92fdf3b71a36d5fa006",
@@ -143,17 +143,17 @@
         "modelThinking": "VERIFIED exact-match HIGH overrides resolve for the unchanged pin and gemini-4-argon; Argon was not selected or requested.",
         "dispatchGuard": "VERIFIED synthetic startup/auth lifecycle and native registry: incomplete startup/auth, late tools, declarations, wrong request model/thinking/tools and second attempts refuse before either generator method. Genuine post-auth acceptance PENDING."
       },
-      "validation": "VERIFIED 2026-11-12 Linux: Python 3.12.16 venv, NumPy 2.5.4; harness 205 tests (202 passed, 3 macOS-only skips); tools 52 passed. Native G1/G2 tests ran. G2 has 18 dedicated tests; shipped quota-free native check passed. Model-access-check tested only with synthetic CLIs. No real model call, Google network call, OAuth flow or owner credential read/copy.",
+      "validation": "VERIFIED 2026-11-13 UTC Linux: Python 3.12.16 venv, NumPy 2.5.4; harness 205 tests (202 passed, 3 macOS-only skips); tools 52 passed. Native G1/G2 tests ran. G2 has 18 dedicated tests; shipped quota-free native check passed. Model-access-check tested only with synthetic CLIs. No real model call, Google network call, OAuth flow or owner credential read/copy.",
       "files": {
         "harness/grading_runner.py": "12b8564d777da499f171881725e383d2f1058632b4c60d32c7c1dcb8bb53d941",
         "harness/gemini_adapter.py": "8534b8e83d8836770733279a99dadb6a3dd5810032ea8b1ccfba9a8ef932f986",
         "harness/native/gemini_probe.mjs": "a847f0a954e6f7fe89178ffd150de65afcf9bf612efeccee37764d68f1b3c76b",
         "harness/tests/test_gemini_adapter.py": "33708e51adaf023be85f3b887c7d2517cd9e968de3f0e266c57dd98685920608",
-        "harness/GEMINI-CLI.md": "b21e51bbddaa2e5f192930e945b27487020f67efe7c240de983cf70e960ae1df",
+        "harness/GEMINI-CLI.md": "551373f88cfb5d4df75358e43754e67d4a91f466a9b2ad32b82341855491a62b",
         "harness/LIVE-ADAPTERS.md": "b4cbbb413bf561d798a4371848427c789dc609836416170fdbae4bf3e8939cb1",
         "harness/OPEN-QUESTIONS.md": "99edbfc9953e233fe42d9107292cf2811714dcd26dd640bac571e97768bc3fd2",
         "harness/README.md": "0bdb1db3859bfe6814a85c48d7e7e1fc9db35c7b19c6fe04ddc4d61433020d63",
-        "AMENDMENTS.md": "e45ea89559877756bb3582b9702eea7ea0d01d04776e706b8135a32478ef92d2",
+        "AMENDMENTS.md": "63b6d64d4670cf3c0971f588c3cc1976c7b1c8d796c352a09db89545b7e18dee",
         "harness/native/gemini_guard.mjs": "95754165cce67ef7d7c8c200baf0d90da2cff3edd12c59f97aa93e3150aaac74"
       },
       "reviewedHead": "2c17874dfa26cb86f08455c767fb9808f32445af",
