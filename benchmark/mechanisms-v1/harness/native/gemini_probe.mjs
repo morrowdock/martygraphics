@@ -96,7 +96,7 @@ writeReport(JSON.stringify({
   registeredModelThinking: config.getModelConfigService().getResolvedConfig({
     model: 'gemini-4-argon', isChatModel: true}).generateContentConfig?.thinkingConfig,
   thinking: resolved.generateContentConfig?.thinkingConfig,
-  bundledModel: DEFAULT_MODEL_CONFIGS.modelDefinitions[model],
+  bundledModel: DEFAULT_MODEL_CONFIGS.modelDefinitions[model] ?? null,
   registeredModelBundled: Object.hasOwn(DEFAULT_MODEL_CONFIGS.modelDefinitions, 'gemini-4-argon'),
   textExact: text.llmContent === fs.readFileSync('/packet/probe.txt', 'utf8') && !text.isTruncated,
   imageExact: image.llmContent?.inlineData?.data === fs.readFileSync('/packet/probe.png').toString('base64'),

@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "403b78b4a2a6e59aa2eda22f8729ce005c98ba6879df841dea53202a8e8cc380"
+      "sha256": "7b653f6bf0e0e8c2686c5a03feb229efa92dd153875bd46fb612ae3b026fe870"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1375,7 +1375,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
-      "sha256": "0282396884204448f7763f1aa62def2409e8ef83fba601ca75993b2c3196d8b3"
+      "sha256": "afde00991aaada026070702866cbf204eb093c3d15a08769b186cb80cf6a4ff5"
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
@@ -1411,7 +1411,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/RUN-LOCK.json",
-      "sha256": "c5422196c25fe3373848636ebeb152583f497ba2088db5ae3d4e0f525b884642"
+      "sha256": "899033b2cc452c6f77cd11b78e91f6cff9f6e36b9ddaa7167ce43a39ef97441c"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/LIVE-ADAPTERS.md",
@@ -1423,11 +1423,11 @@
     },
     {
       "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.FACTCHECK.md",
-      "sha256": "59924f1e31eb1dd732007652965e4ea73ae362ad57b21155b67e47a69cfc29d0"
+      "sha256": "bcb235cc0f1f4346a20f04a9abf929228678f5132c0e1b66acf9ef5ca3a1e853"
     },
     {
       "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.SOURCES.md",
-      "sha256": "218b296d0d881508b63ef367b001f23d923615ddca6c748d1b4950ae2bf43642"
+      "sha256": "bf1d6c42c867617f636a7e6d84ab30a408cd1b26f15fb5f1f043cfb5e67fd683"
     },
     {
       "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.grader.json",
@@ -1435,15 +1435,15 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/GEMINI-CLI.md",
-      "sha256": "19a9f68d79158d748753f38ad7bd0ca9484ca5a983c953f92ddd4626e3f72c9d"
+      "sha256": "2d9a3ac8be4a9a39a3bebe1a2e5c5e4540a57700626c7d62d7ae00357ffe38ed"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
-      "sha256": "c76b57f0d0d5e72d0716f4cd6daa3a634b333012b19eec3768b2dbf7f6f9e94d"
+      "sha256": "408e277bb23ea79aeda95d5511120563d65dcdc8efc759d1bca54dce9e13652f"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/PACKING.md",
-      "sha256": "425f60660c2514d3ff17f6f61370abcfc4d97a231dc7fe0b148c621a9c6e9b51"
+      "sha256": "837342ad95b845d2f6ef654661db7122eb50601ac553beb503d4ab025dcab62a"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/README.md",
@@ -1459,15 +1459,15 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/gemini_adapter.py",
-      "sha256": "991dd9f8b90c15be5d26f1acf400e232c327f7db990c70dac0aff568b45ba0e4"
+      "sha256": "7a6b5507abc20c32dd6bf11b24bed8e3493812b4d7f87fb31cea408df480f8f5"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/grading_runner.py",
-      "sha256": "12b8564d777da499f171881725e383d2f1058632b4c60d32c7c1dcb8bb53d941"
+      "sha256": "aad0a4991705292301a22c7f770cc874e2e32e679cc846c390874a9bb8cb0945"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/native/gemini_probe.mjs",
-      "sha256": "a847f0a954e6f7fe89178ffd150de65afcf9bf612efeccee37764d68f1b3c76b"
+      "sha256": "0077e60f7d000842f662498ab6a908baae5c60fb441af45a5c20f65248927945"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/native/media.swift",
@@ -1511,7 +1511,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_gemini_adapter.py",
-      "sha256": "21cad17ea46a68c695ecfb57cdfd552909bb521ae92075686bbe8dba5d440201"
+      "sha256": "1e1ec71c415cdfb87d98ac3ff2fa45603edca95cd02f7ed3766fa96a0dccba6a"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_native_media.py",
@@ -3004,6 +3004,10 @@
     {
       "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/unquoted-attribute-quote.html",
       "sha256": "3f0894e823cef0ee3be93525964579f8cc2704e699a109de915aa1412e715f79"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/G2-REGISTERED-MODEL-VALIDATION.md",
+      "sha256": "3da1f8679ecd0da0821b0955f645ab768dfa61bbbc523adaa9c3fc4b16fac219"
     }
   ]
 }

@@ -41,8 +41,8 @@
       "status": "PROPOSED 2026-11-12: review pending; not approved pins; does not make run 1 ready",
       "baseCommit": "09506df11dff29f28fce51ac06ee57434404f8f5",
       "amendment": "A-14 (proposed)",
-      "nativeValidation": "PENDING: compile and run native synthetic tests on macOS, pin native binary and host, then complete the registered dry run",
-      "liveAdapter": "PENDING: only offline RecordedAdapter is included; live model isolation needs separate review",
+      "nativeValidation": "VERIFIED historical macOS synthetic native-media run, refreshed 2026-11-13: harness/arm2/SYNTHETIC-VALIDATION.md response-policy full suite; #72 merged 9e95ad3d69a54bce75b1a86d5b136734fb3ddb84 (2026-11-12), #75 merged 5ff24e627339d99156fda4507da6c783fb878957 (2026-11-13). Native/host pins and registered dry run remain PENDING.",
+      "liveAdapter": "VERIFIED implementation exists as of 5ff24e627339d99156fda4507da6c783fb878957; refreshed 2026-11-13: live Codex/Gemini CLI adapters, A-15/A-16/A-18. Live model acceptance PENDING.",
       "files": {
         "harness/pack.py": "5ec54c199494e3c577f6b796ba3fa55352304f2c8f2887dc258a705bd3abe600",
         "harness/grading_runner.py": "debdc1937feaf9adc36dd640f1a2dd7b24f2209422a4d4de8da7e7f8fb6670ee",
@@ -128,7 +128,7 @@
       "registeredModel": "gemini-4-argon",
       "proposedModel": "gemini-3.1-pro-preview",
       "thinkingLevel": "HIGH",
-      "modelAcceptance": "PENDING: Argon account access requires a signed-in check; gemini-3.1-pro-preview remains a PROPOSED fallback requiring owner approval. Existing adapter pin unchanged.",
+      "modelAcceptance": "PENDING human signed-in Argon access. VERIFIED implementation correction 2026-11-13, A-18: selected model gemini-4-argon; proposed gemini-3.1-pro-preview fallback DISABLED without explicit recorded owner approval. No approval added.",
       "auth": "PENDING current auth state; no auth files inspected during review corrections. Human sign-in and any model-access-check remain separate.",
       "payment": "oauth-personal only; no inherited API keys; billing.overageStrategy=never",
       "nativeEvidence": {
@@ -137,10 +137,10 @@
         "modelCalls": 0,
         "constructedToolDefinitions": [],
         "discoveredUserMemory": "",
-        "boundary": "VERIFIED real loadSettings().merged plus mapped Config fields, native text/PNG decoder and model resolver. All eight useGemini3_1/useCustomTools/hasAccessToPreview conditions preserve the pin. Not full CLI startup or a genuine post-auth request dump.",
+        "boundary": "Historical preview-pin evidence at 622f16de; superseded for model selection by A-18 (2026-11-13). Real loadSettings().merged plus mapped Config fields; not full CLI startup or a genuine post-auth request dump.",
         "remainingContext": "CLI built-in system/environment context; no supported offline complete-request diagnostic",
         "adminControls": "VERIFIED loader returns enabled:true for MCP/extensions/skills; user/system admin fields are not disable controls. Use empty core/MCP config, --extensions none, disabled skills/hooks/agents and final registry guard.",
-        "modelThinking": "VERIFIED exact-match HIGH overrides resolve for the unchanged pin and gemini-4-argon; Argon was not selected or requested.",
+        "modelThinking": "Historical exact-match HIGH overrides for preview and Argon; A-18 selects registered Argon. Account access and genuine request acceptance PENDING.",
         "dispatchGuard": "VERIFIED synthetic startup/auth lifecycle and native registry: incomplete startup/auth, late tools, declarations, wrong request model/thinking/tools and second attempts refuse before either generator method. Genuine post-auth acceptance PENDING."
       },
       "validation": "VERIFIED 2026-11-13 UTC Linux: Python 3.12.16 venv, NumPy 2.5.4; harness 205 tests (202 passed, 3 macOS-only skips); tools 52 passed. Native G1/G2 tests ran. G2 has 18 dedicated tests; shipped quota-free native check passed. Model-access-check tested only with synthetic CLIs. No real model call, Google network call, OAuth flow or owner credential read/copy.",
@@ -164,10 +164,10 @@
         "Owner auth-check/sign-in or credential inspection",
         "Genuine post-auth/remote-admin request acceptance",
         "Live multimodal and resume acceptance",
-        "macOS native media tests",
         "Registered benchmark"
       ],
-      "arbitraryModelIdsPassThrough": true
+      "arbitraryModelIdsPassThrough": true,
+      "nativeMediaRecord": "VERIFIED historical macOS run; refreshed 2026-11-13 from harness/arm2/SYNTHETIC-VALIDATION.md and #72/#75 merge records (9e95ad3d69a54bce75b1a86d5b136734fb3ddb84 / 5ff24e627339d99156fda4507da6c783fb878957). Not rerun on this Linux host."
     }
   }
 }

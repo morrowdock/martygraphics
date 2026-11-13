@@ -13,10 +13,11 @@ paid service or model call was used to write or test this code.
   a local NDJSON worker. It does not load any model service or use a network.
 - `grading_runner.py` writes the exact `RECORD.json` consumed by `score.py`. It
   uses `check_text` and `next_step` after every reply. It supports offline
-  `RecordedAdapter` and a proposed `--live` selector. Live selection fails before
-  reading the pack because G2 isolation is UNVERIFIED. No credentials are included.
-  See [LIVE-ADAPTERS.md](LIVE-ADAPTERS.md) and proposed A-15 for the Codex transport,
-  the blocked Antigravity interface, receipts and synthetic-only self-test.
+  `RecordedAdapter` and live Codex/Gemini CLI adapters through `--live`.
+  VERIFIED implementation as of 2026-11-13 at `5ff24e627339d99156fda4507da6c783fb878957`;
+  A-16 supersedes the historical agy blocker. No credentials are included.
+  See [LIVE-ADAPTERS.md](LIVE-ADAPTERS.md), [GEMINI-CLI.md](GEMINI-CLI.md) and A-18
+  for the registered G2 model correction. Live model acceptance remains PENDING.
 - `tests/test_pack_runner.py` uses original synthetic questions, pixels and reply
   text. Its 20-question integration test executes the real Python packer and
   runner and the unchanged `score.analyse`. Only native media IO and the public
@@ -25,12 +26,17 @@ paid service or model call was used to write or test this code.
   compile the worker and test synthetic video orientation, actual Vision range
   masking, metadata cleanup and native refusals. They skip on Linux.
 
-The native helper **has not been compiled or run on macOS in this change**. The
-implementation host is Linux and has neither Apple frameworks nor a Swift
-compiler. Native compilation, real synthetic Vision character-box checks,
-orientation/color checks, actual MP4 metadata inspection, and the registered
-bicycle dry run remain required before run 1. Python tests do not establish
-native framework correctness. RUN-LOCK stays DRAFT.
+**VERIFIED record refresh, 2026-11-13:** native synthetic media tests ran on
+macOS, including compilation, Vision character-box masking, orientation/color
+and MP4 metadata checks. Source: [Arm 2 synthetic validation](arm2/SYNTHETIC-VALIDATION.md),
+including its 2026-11-13 response-policy full-suite result: every macOS
+renderer/native-media test ran. Merge provenance:
+[#72](https://github.com/morrowdock/martygraphics/pull/72),
+`9e95ad3d69a54bce75b1a86d5b136734fb3ddb84` (2026-11-12), and
+[#75](https://github.com/morrowdock/martygraphics/pull/75),
+`5ff24e627339d99156fda4507da6c783fb878957` (2026-11-13).
+These are historical Mac results, not new Linux native-media runs. Native/host
+pin review and the registered bicycle dry run remain PENDING. RUN-LOCK stays DRAFT.
 
 ## Input and command line
 
@@ -132,7 +138,7 @@ as the registered partial-blinding design states.
 
 ## Session and publication gates
 
-A future live adapter must implement `Adapter.open(grader, kind, packet, session_id=...)` and
+Live adapters implement `Adapter.open(grader, kind, packet, session_id=...)` and
 return a fresh `Session` with `reply(message) -> bytes` and `close()`. The opaque
 session id must durably identify that exact conversation. `close()` releases the
 local handle without deleting the conversation. `Adapter.resume(grader, kind,
@@ -143,8 +149,9 @@ its own opaque id and reply count in addition to its packet. Opening
 must use the locked model/tool/settings in a fresh isolated session: packet
 files only, no web, tools other than reading those files, memory, custom
 instructions, other sessions or operator directories. The interface does not
-sandbox a hostile adapter. **Only the recorded adapter is shipped**, so a live
-adapter requires its own implementation and review before real grading.
+sandbox a hostile adapter. **Recorded and live Codex/Gemini CLI adapters are
+shipped** (record refreshed 2026-11-13; A-15/A-16/A-18). Synthetic implementation
+evidence does not complete signed-in model, multimodal or resume acceptance.
 
 The supplied runner CLI replays recorded reply sessions:
 

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Registered G2 model correction (2026-11-13, A-18).** Select `gemini-4-argon`
+  with exact-id HIGH throughout the Gemini adapter and grading runner. Keep the
+  named preview fallback disabled without recorded owner approval. Restrict
+  `model-access-check --model` and record the tested ID; explicit human quota
+  confirmation and the one-attempt limit remain. Refresh stale readiness records.
+  No model call was made; RUN-LOCK stays DRAFT.
+
 - **Proposed G2 Gemini CLI adapter.** Record the owner-approved change from agy
   to Gemini CLI 0.68.0. Add isolated OAuth transport, durable exact-session
   recovery, synthetic failure tests and quota-free native library checks.

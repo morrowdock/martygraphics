@@ -496,7 +496,7 @@ def _run_locked(root, adapter, prompts, clock, doc, seed, questions, calls, push
     return record
 
 
-MODELS = {"G1": "gpt-6.1-sol", "G2": "gemini-3.1-pro-preview"}
+MODELS = {"G1": "gpt-6.1-sol", "G2": "gemini-4-argon"}
 VERSIONS = {"G1": "codex-cli 0.167.2", "G2": "0.68.0"}
 G2_BLOCKER = (
     "UNVERIFIED G2: Antigravity 1.5.6 documents --print, --model, --effort, "

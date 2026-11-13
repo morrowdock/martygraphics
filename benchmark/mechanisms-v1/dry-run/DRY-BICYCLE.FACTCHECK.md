@@ -1,6 +1,8 @@
 # DRY-BICYCLE first fact check
 
-Status: proposed dry-run key; first source check complete; independent second-model check pending.
+Status: first source check complete; independent second check PASS. Refreshed: 2026-11-13 UTC.
+Source: [FACTCHECK-2](DRY-BICYCLE.FACTCHECK-2.md), checked 2026-11-12 at
+`9bfa0746a4bdbee738361b5b8531741faa00da08`: 19 PASS, 0 FIX.
 
 Checked: 2026-11-12 UTC. Base: `9e95ad3d69a54bce75b1a86d5b136734fb3ddb84`.
 
@@ -8,8 +10,8 @@ Sources: [source record](DRY-BICYCLE.SOURCES.md), [grader view](DRY-BICYCLE.grad
 [rubric](../RUBRIC.md), [protocol](../PROTOCOL.md), `../harness/score.py`,
 `../harness/rubric_form.py`, and `../tools/grader_questions.py`.
 
-This is the research author's own check, not a second independent review and not completion
-of a two-model gate. The coordinator must add the second check before relying on this key.
+This file remains the research author's first check. The independent second
+check is now recorded separately in [FACTCHECK-2](DRY-BICYCLE.FACTCHECK-2.md).
 The full two-arm dry run required by PROTOCOL section 2.4 has not been run by this task.
 
 ## Scope and isolation

@@ -139,8 +139,10 @@ wrong model/id, altered storage and fresh isolation.
 The owner approved Gemini CLI 0.68.0 with Google subscription auth, no paid API.
 The registered `gemini-4-argon` is unlisted; arbitrary model IDs pass through
 the CLI, and account access remains PENDING a signed-in check;
-`gemini-3.1-pro-preview` plus `thinkingLevel: HIGH` is the **proposed replacement
-model**, explicitly different and still pending acceptance before run 1.
+**2026-11-13 correction (A-18; baseline `5ff24e627339d99156fda4507da6c783fb878957`):**
+the selected model is registered `gemini-4-argon` with exact-id HIGH.
+`gemini-3.1-pro-preview` is a **DISABLED proposed fallback** requiring explicit
+recorded owner approval; none exists.
 Local model-routing overrides prevent silent Auto/2.5 fallback. Real
 settings-loader probes
 verify all eight model conditions, explicit HIGH for Argon, an empty constructed
@@ -149,7 +151,7 @@ final registry after startup/auth, but no offline native
 CLI diagnostic proves the complete post-auth request. Built-in system and
 environment context remain. These limits must be reviewed, not hidden.
 
-Pending: owner sign-in, replacement-model acceptance and subscription access,
+Pending: owner sign-in, registered-model acceptance and subscription access,
 full CLI/post-auth policy and image fidelity acceptance, exact-session live
 acceptance, reviewed host pins and all existing benchmark gates. GEMINI-CLI.md
 separates quota-free auth-check from the explicit human-run

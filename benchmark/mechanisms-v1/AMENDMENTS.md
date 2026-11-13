@@ -422,3 +422,64 @@ native post-load check refuses missing policy/map before capture. WebRTC
 disable/readback, frame counts, timeout and report behavior remain in place.
 The README and synthetic validation document the built design and actual host
 evidence; no renderer approval, live call or registered run is implied.
+
+
+**A-18. Registered G2 model conformance and document-start import-map placement
+(2026-11-13 UTC; PROPOSED implementation/record correction, review pending).**
+Source baseline: `5ff24e627339d99156fda4507da6c783fb878957` (main, merged
+[#75](https://github.com/morrowdock/martygraphics/pull/75) on 2026-11-13).
+No run 1 or model call is performed by this change. Sources: PROTOCOL sections
+3, 5 and 13, LOCK.json's G2 registration, A-16/A-17, and
+[harness/G2-REGISTERED-MODEL-VALIDATION.md](harness/G2-REGISTERED-MODEL-VALIDATION.md).
+
+**CONFORMANCE — G2 model identity.** A-16 approved the CLI route, not a model
+substitution. Its historical statement that the adapter retains the preview
+pin is superseded: both live selections now use registered `gemini-4-argon`
+and the exact-id HIGH thinking override. `gemini-3.1-pro-preview` remains only
+a named **DISABLED proposed fallback**. The owner-approval amendment flag is
+unset; no approval is created here. A future reviewed change must record
+explicit owner approval before enabling it. It is never an automatic fallback.
+This restores the registered model; it does not assert model equivalence or
+account access. Grading with a different model can change scores; no zero-score-
+effect claim is made for the erroneous preview selection.
+
+The separate human-confirmed `model-access-check --model` accepts only the
+registered ID (default) or that named proposal, refuses the unapproved proposal
+before auth/state/process work, and records the tested ID with the existing
+one-attempt limit. All access-selection tests are synthetic. Real signed-in
+Argon access and full post-auth request acceptance remain **PENDING**.
+
+**Placement interpretation — A-17 response-policy revision.** The already
+merged renderer installs the unchanged import-map payload at **document start**,
+not at the start of `<head>` as section 5 describes. A main-frame document-start
+user script prepends it to the document element without finding/creating a head;
+it precedes authored scripts. The unchanged CSP string is an HTTP response
+header. This records the implementation difference explicitly rather than
+silently treating the placements as identical. Rationale: HTML tokenization
+made head scanning unsafe; immutable response policy plus a document-start map
+and native post-load checks fail closed. See
+[harness/arm2/SYNTHETIC-VALIDATION.md](harness/arm2/SYNTHETIC-VALIDATION.md),
+2026-11-13 response-policy revision: first authored static module import resolves
+pinned three.js; map removal and omitted configurations refuse with zero frames.
+This can affect rendering and repair acceptance; **no score-effect equivalence
+is claimed**. Renderer/run approval remains pending. No renderer bytes change
+in this PR. PROTOCOL.md is preserved; this dated amendment records the difference
+under section 13, without changing questions, prompts, rubric or scoring.
+
+Implementation SHA-256 (old = baseline above; new = this correction):
+
+| File | Old SHA-256 | New SHA-256 |
+| --- | --- | --- |
+| `harness/gemini_adapter.py` | `991dd9f8b90c15be5d26f1acf400e232c327f7db990c70dac0aff568b45ba0e4` | `7a6b5507abc20c32dd6bf11b24bed8e3493812b4d7f87fb31cea408df480f8f5` |
+| `harness/grading_runner.py` | `12b8564d777da499f171881725e383d2f1058632b4c60d32c7c1dcb8bb53d941` | `aad0a4991705292301a22c7f770cc874e2e32e679cc846c390874a9bb8cb0945` |
+| `harness/native/gemini_probe.mjs` | `a847f0a954e6f7fe89178ffd150de65afcf9bf612efeccee37764d68f1b3c76b` | `0077e60f7d000842f662498ab6a908baae5c60fb441af45a5c20f65248927945` |
+| `harness/tests/test_gemini_adapter.py` | `21cad17ea46a68c695ecfb57cdfd552909bb521ae92075686bbe8dba5d440201` | `1e1ec71c415cdfb87d98ac3ff2fa45603edca95cd02f7ed3766fa96a0dccba6a` |
+| `PROTOCOL.md` | `3c59e19e757daeaa68eba030da7d979bfc3d6d1fef409de51864cf1a43b38c9b` | `3c59e19e757daeaa68eba030da7d979bfc3d6d1fef409de51864cf1a43b38c9b` |
+| `LOCK.json` | `1a176911a3d339804307f9c080aa6d70b81f0e915ccfb7e61bb0d30017fc3afa` | `1a176911a3d339804307f9c080aa6d70b81f0e915ccfb7e61bb0d30017fc3afa` |
+
+Historical A-17 response-policy renderer transition, already merged in #75:
+`harness/arm2/render.swift` at `b62f542b7c902e0b209c294f65107d10c6f35872`
+SHA-256 `48ca361b5778acae7629de72e003c6fd98e1299b194e184e0ae91ea120db7be4` -> at the baseline above
+`493bcbc157e62925209ffb357892770fa16855fee85bfc70cd94ff3a1f6652ca` (unchanged by A-18).
+FILES.json carries current changed-file hashes in existing order; new paths are
+appended. RUN-LOCK stays DRAFT. Its historical pins are not reconciled here.

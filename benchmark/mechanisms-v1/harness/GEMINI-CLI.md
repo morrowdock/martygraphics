@@ -78,45 +78,27 @@ the private home and confirms rejection.
 
 ## Model and thinking (VERIFIED locally; account access PENDING)
 
-`gemini-4-argon` does not appear in the shipped model definitions or signed-out
-catalog. The CLI accepts arbitrary `--model` IDs and passes unknown IDs through;
-absence
-from a catalog does **not** establish unavailability. Argon account access is
-**PENDING a human-run signed-in check**. **`gemini-3.1-pro-preview` is only a
-PROPOSED fallback requiring owner approval**, not an approved replacement.
-This changes the model identity as well as the CLI route; it is not an alias
-or a claim of equivalence. The existing adapter pin remains that preview ID
-unchanged for review.
-The bundled preview model config uses `thinkingLevel: "HIGH"`; an explicit
-model-matched override retains it. Unknown IDs do not automatically get HIGH.
-A separate exact-match override for `gemini-4-argon` explicitly sets
-`thinkingConfig.thinkingLevel="HIGH"` and is tested through the loader. It
-only applies if that ID is selected after review; it does not switch the pin.
-This is the documented mapping for registered "thinking
-high", not evidence that Argon's behavior is reproduced.
+**VERIFIED implementation correction, 2026-11-13 (A-18; baseline
+`5ff24e627339d99156fda4507da6c783fb878957`):** the adapter and grading runner
+select the registered `gemini-4-argon`. The exact-id override sets
+`thinkingConfig.thinkingLevel="HIGH"`; unknown IDs do not inherit HIGH by default.
+The native probe uses the installed CLI's real settings loader and checks all
+eight `useGemini3_1` / `useCustomTools` / `hasAccessToPreview` combinations.
+This is local routing evidence; signed-in model access remains **PENDING**.
 
-Signed-out `models list --output-format json` shows stable model choices,
-including `gemini-2.5-pro` and `gemini-3.5-flash`. It hides the 3.1 Pro preview
-without account launch/access metadata. The library probe separately verifies
-that the 3.1 Pro preview definition exists, is multimodal, and is marked as a
-preview in the untouched package. A local listing cannot prove subscription
-access. No claim of `gemini-4-argon` availability is made.
+Argon is absent from the bundled definitions and signed-out catalog. The CLI
+passes arbitrary IDs through; absence does not prove unavailability. No local
+model-family or capability metadata is invented for Argon. Identity resolutions
+use explicit `contexts: []`, and preview/default fallback chains are empty.
+Init and final per-model usage must name only the selected ID.
 
-The CLI otherwise downgrades a preview model to Auto/2.5 when preview access
-is absent and can select a fallback chain. The adapter enables documented
-dynamic model configuration, gives this ID an identity resolution with explicit
-`contexts: []`, sets its
-**local routing** `isPreview` bit to false, and empties the `preview` and
-`default` fallback chains. The real settings loader deep-merges bundled
-defaults: specifying only
-`default` retained conditional remaps in the initial implementation. Explicit
-empty contexts remove them. The native probe checks all eight combinations of
-`useGemini3_1`, `useCustomTools`, and `hasAccessToPreview` after loading settings.
-The original package definition stays unchanged and still says
-preview. This local routing override does not grant provider access or make
-the model GA: an unavailable model must fail. Init and final per-model usage
-must name only the selected model. Any other model makes the turn uncertain.
-These behavior changes need review before run 1.
+`PROPOSED_FALLBACK_MODEL = "gemini-3.1-pro-preview"` is **DISABLED**.
+`FALLBACK_OWNER_APPROVAL_AMENDMENT = None` records the absence of approval.
+Only a future reviewed code change citing an explicit owner-approved amendment
+may enable that proposal; neither quota confirmation nor an environment setting
+is model-change approval. No approval is added here. The fallback retains its
+exact HIGH override and local preview routing override, without claiming GA or
+provider access. There is no automatic model fallback.
 
 ## Isolation, input and durable state
 
@@ -170,15 +152,15 @@ the CLI (`chunk-VFM6AETN.js`), and directly checks:
 
 - zero registered function definitions and empty discovered user memory;
 - exact model resolution across all eight access/customtools combinations,
-  HIGH thinking for both the pinned ID and the exact-match Argon override;
+  HIGH thinking for the selected registered Argon ID;
 - merged isolation settings, including the true admin defaults (not treated as disables);
 - the dispatch guard with synthetic auth/startup and a native registry: late
   tools, incomplete startup/auth, wrong model/thinking/request tools, and second
   generation attempts refuse before either generator method runs;
 - a synthetic text file and a one-pixel PNG as exact native file content.
 
-Negative native tests expose a shell tool, insert memory, remove the routing
-override or explicit empty contexts, and remove the Argon HIGH override. Each
+Negative native tests expose a shell tool, insert memory, remap the selected
+ID, and remove the Argon HIGH override. Each
 fails the check. In this library probe, no real model method, native `refreshAuth` or full
 `Config.initialize` is invoked. Guard lifecycle tests use synthetic methods
 only. Storage initialization is local only.
@@ -281,20 +263,25 @@ It is never part of `check`, `auth-check`, preflight or automated tests:
 ```sh
 python benchmark/mechanisms-v1/harness/gemini_adapter.py model-access-check \
   --binary "$HOME/.local/share/martygraphics-gemini-cli-0.68.0/node_modules/.bin/gemini" \
-  --work /absolute/new/private/directory/outside/git --confirm-model-request
+  --work /absolute/new/private/directory/outside/git --model gemini-4-argon --confirm-model-request
 ```
 
-It sends only `Reply OK.` to the unchanged pinned model, with at most one
+The optional `--model` accepts only `gemini-4-argon` (default) or the named
+proposed fallback. The latter is refused before auth/state/process work while
+owner approval is absent. Human `--confirm-model-request` remains mandatory.
+It sends only `Reply OK.` to the selected model, with at most one
 generation POST enforced at the auth transport boundary, in addition to the
 outer generation-attempt limit. No generation replay, transport retry, redirect
 or model fallback is permitted; token refresh before the first dispatch is
-allowed. It writes private `MODEL-ACCESS-CHECK.json` with
+allowed. It writes private `MODEL-ACCESS-CHECK.json` with the tested `model`, any
+`ownerApprovalAmendment`, and
 `accepted`, `refused` (a terminal CLI error), or `uncertain` (e.g. timeout, auth
 failure or missing completion). A refusal is **not proof of model
 unavailability**; review the private diagnostics to distinguish account access,
 policy and transport failures. A repeated attempt in the same work directory is
 refused. This command was **NOT RUN with the real CLI** by the implementation
-agent. It does not test Argon while the pin selects the proposed preview ID.
+agent. Offline selection/receipt tests use only synthetic CLIs and mocked approval;
+they do not record or grant owner approval.
 
 The existing `grading_runner.py self-test --grader G2 --binary ... --work ...
 --dry` now prints the Gemini plan without reading auth or spawning a process.

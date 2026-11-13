@@ -19,12 +19,13 @@ FAKE = r'''
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 const args = process.argv.slice(2), mode = BEHAVIOUR;
+const model = process.env.MARTYGRAPHICS_GEMINI_MODEL;
 if (args.includes('--version')) { console.log('0.68.0'); process.exit(0); }
-if (args[0] === 'models') { console.log(JSON.stringify([{id:'gemini-3.1-pro-preview'}])); process.exit(0); }
+if (args[0] === 'models') { console.log(JSON.stringify([{id:model}])); process.exit(0); }
 const {Config} = await import('./chunk-RCB6BI5H.js');
 const config = new Config();
 await config.refreshAuth();
-config.contentGenerator.generateContent({model:'gemini-3.1-pro-preview',
+config.contentGenerator.generateContent({model:model,
   config:{thinkingConfig:{thinkingLevel:'HIGH'},tools:[]}});
 const emit = x => console.log(JSON.stringify(x));
 if (mode === 'refused') { emit({type:'result',status:'error'}); process.exit(1); }
@@ -46,7 +47,7 @@ fs.writeFileSync('/out/observed.json', JSON.stringify({args, input, env:process.
   hostVisible: fs.existsSync(HOST), packetFiles:fs.readdirSync('/packet'),
   settings:JSON.parse(fs.readFileSync('/home/grader/.gemini/settings.json'))}));
 emit({type:'init', session_id:mode === 'mismatch' && resumed ? crypto.randomUUID() : state.id,
-      model:mode === 'wrong-model' ? 'other-model' : 'gemini-3.1-pro-preview'});
+      model:mode === 'wrong-model' ? 'other-model' : model});
 emit({type:'message', role:'user', content:prompt});
 if (mode === 'timeout') await new Promise(r => setTimeout(r, 10000));
 if (mode === 'crash') process.exit(73);
@@ -55,7 +56,7 @@ if (mode === 'tool') { emit({type:'tool_use',tool_name:'web_search'}); process.e
 if (mode === 'unknown') { emit({type:'future-event'}); process.exit(0); }
 emit({type:'message', role:'assistant', delta:true, content:resumed ? 'OK' : 'not json: café\n'});
 if (mode !== 'missing-result') emit({type:'result', status:'success',
-  stats:{tool_calls:0,models:{'gemini-3.1-pro-preview':{total_tokens:1}}}});
+  stats:{tool_calls:0,models:{[model]:{total_tokens:1}}}});
 if (mode === 'trailing') emit({type:'message',role:'assistant',delta:true,content:'late'});
 '''
 
@@ -95,7 +96,7 @@ export class Config {
     };
   }
   isInitialized() { return true; }
-  getModel() { return 'gemini-3.1-pro-preview'; }
+  getModel() { return process.env.MARTYGRAPHICS_GEMINI_MODEL; }
   getToolRegistry() { return {
     getAllTools: () => TOOLS, getFunctionDeclarations: () => [],
   }; }
@@ -278,6 +279,61 @@ export class Config {
                 contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             g2.main(['model-access-check'])
 
+    def test_fallback_disabled_before_state_auth_or_process(self):
+        self.assertIsNone(g2.FALLBACK_OWNER_APPROVAL_AMENDMENT)
+        with patch.object(g2, 'auth_present', side_effect=AssertionError('auth read')), \
+                patch.object(subprocess, 'Popen', side_effect=AssertionError('process')):
+            with self.assertRaisesRegex(ValueError, 'fallback DISABLED'):
+                g2.GeminiAdapter(self.root / 'forbidden-state', '/missing', model=g2.PROPOSED_FALLBACK_MODEL)
+            self.assertFalse((self.root / 'forbidden-state').exists())
+            with self.assertRaisesRegex(ValueError, 'fallback DISABLED'):
+                g2.gemini_argv(model=g2.PROPOSED_FALLBACK_MODEL)
+            with self.assertRaisesRegex(ValueError, 'fallback DISABLED'):
+                g2.write_settings(self.root, g2.PROPOSED_FALLBACK_MODEL)
+            with contextlib.redirect_stderr(io.StringIO()) as stderr, self.assertRaises(SystemExit):
+                g2.main(['model-access-check', '--model', g2.PROPOSED_FALLBACK_MODEL,
+                         '--binary', '/missing', '--work', str(self.root / 'forbidden-state'),
+                         '--confirm-model-request'])
+            self.assertIn('fallback DISABLED', stderr.getvalue())
+
+    def test_access_cli_model_selection_and_allowlist(self):
+        # Synthetic handler only: no actual access-check command or auth.
+        for selection in ([], ['--model', g2.REGISTERED_MODEL]):
+            with patch.object(g2, 'GeminiAdapter') as factory, \
+                    patch.object(g2, 'model_access_check', return_value=0) as check:
+                self.assertEqual(g2.main(['model-access-check', '--binary', '/synthetic',
+                    '--work', str(self.root / 'synthetic'), '--confirm-model-request', *selection]), 0)
+                self.assertEqual(factory.call_args.kwargs['model'], 'gemini-4-argon')
+                check.assert_called_once_with(factory.return_value)
+        for extra in (['--model', 'arbitrary-model', '--confirm-model-request'],
+                      ['--model', g2.REGISTERED_MODEL], ['--model', g2.PROPOSED_FALLBACK_MODEL]):
+            with patch.object(g2, 'GeminiAdapter', side_effect=AssertionError('adapter')), \
+                    contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                g2.main(['model-access-check', '--binary', '/missing', '--work', str(self.root), *extra])
+
+    def test_synthetic_approved_fallback_selection_and_recording(self):
+        # An in-memory mock exercises the future gate; no approval is recorded
+        # in the repo and the production constant remains None.
+        with patch.object(g2, 'FALLBACK_OWNER_APPROVAL_AMENDMENT', 'SYNTHETIC-TEST-ONLY'):
+            adapter = self.adapter(model=g2.PROPOSED_FALLBACK_MODEL)
+            with patch.object(g2, 'GeminiAdapter', return_value=adapter), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                status = g2.main(['model-access-check', '--model', g2.PROPOSED_FALLBACK_MODEL,
+                                 '--binary', str(adapter.sandbox.binary), '--work', str(adapter.root),
+                                 '--confirm-model-request'])
+            self.assertEqual(status, 0)
+            report = json.loads((adapter.root / 'MODEL-ACCESS-CHECK.json').read_text())
+            self.assertEqual(report['model'], g2.PROPOSED_FALLBACK_MODEL)
+            self.assertEqual(report['ownerApprovalAmendment'], 'SYNTHETIC-TEST-ONLY')
+            observed = json.loads((adapter.root / 'model-access/out/observed.json').read_text())
+            self.assertEqual(observed['args'][observed['args'].index('--model') + 1], g2.PROPOSED_FALLBACK_MODEL)
+            self.assertEqual(observed['settings']['model']['name'], g2.PROPOSED_FALLBACK_MODEL)
+            self.assertEqual(observed['env']['MARTYGRAPHICS_GEMINI_MODEL'], g2.PROPOSED_FALLBACK_MODEL)
+            with self.assertRaisesRegex(ValueError, 'already attempted'):
+                g2.model_access_check(adapter)
+        with self.assertRaisesRegex(ValueError, 'fallback DISABLED'):
+            g2.model_access_check(adapter)
+
     def test_model_access_records_accept_refuse_uncertain_once_with_fake_cli(self):
         for mode, outcome in [('success', 'accepted'), ('refused', 'refused'), ('crash', 'uncertain')]:
             with self.subTest(mode=mode):
@@ -288,6 +344,8 @@ export class Config {
                 self.assertEqual(report['outcome'], outcome)
                 self.assertEqual(status, 0 if outcome == 'accepted' else 1)
                 self.assertEqual(report['generationAttemptLimit'], 1)
+                self.assertEqual(report['model'], 'gemini-4-argon')
+                self.assertIsNone(report['ownerApprovalAmendment'])
                 observed = adapter.root / 'model-access/out/input.txt'
                 self.assertEqual(observed.read_text(), 'Reply OK.')
                 self.assertNotIn('synthetic-not-a-token', json.dumps(report))
@@ -431,10 +489,14 @@ class NativeGeminiTest(unittest.TestCase):
             self.assertIn('gemini-2.5-pro',report['listedModelIds'])
             self.assertEqual(library['toolDefinitions'], [])
             self.assertEqual(library['loadedMemory'], '')
-            self.assertTrue(library['bundledModel']['isPreview'])
+            self.assertIsNone(library['bundledModel'])
+            self.assertEqual(report['selectedModel'], 'gemini-4-argon')
+            self.assertEqual(g2.MODEL, 'gemini-4-argon')
+            self.assertEqual(live.MODELS['G2'], 'gemini-4-argon')
+            self.assertEqual(library['thinking']['thinkingLevel'], 'HIGH')
             self.assertFalse(report['registeredModelListed'])
             self.assertEqual(len(library['modelConditions']), 8)
-            self.assertTrue(all(item['resolved'] == g2.MODEL for item in library['modelConditions']))
+            self.assertTrue(all(item['resolved'] == 'gemini-4-argon' for item in library['modelConditions']))
             self.assertEqual(library['registeredModelThinking']['thinkingLevel'], 'HIGH')
             for name in ('mcp', 'extensions', 'skills'):
                 self.assertTrue(library['mergedAdmin'][name]['enabled'])
@@ -448,16 +510,15 @@ class NativeGeminiTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             adapter = g2.GeminiAdapter(Path(temp)/'state', binary)
             for target, replacement in ((g2.SETTINGS['tools'], {'core':['run_shell_command']}),
-                                        (g2.SETTINGS['modelConfigs'], {'modelDefinitions':{}}),
-                                        (g2.SETTINGS['modelConfigs'], {'modelIdResolutions':{g2.MODEL:{'default':g2.MODEL}}}),
+                                        (g2.SETTINGS['modelConfigs'], {'modelIdResolutions':{g2.MODEL:{'default':'other-model', 'contexts':[]}}}),
                                         (g2.SETTINGS['modelConfigs'], {'customOverrides':[]})):
                 with self.subTest(replacement=replacement), patch.dict(target, replacement):
                     with self.assertRaisesRegex(ValueError, 'native library policy/input check failed'):
                         adapter.library_check()
 
             original = g2.write_settings
-            def contaminated(home):
-                original(home)
+            def contaminated(home, model=g2.MODEL):
+                original(home, model)
                 (home/'.gemini/GEMINI.md').write_text('SYNTHETIC unwanted memory')
             with patch.object(g2, 'write_settings', side_effect=contaminated):
                 with self.assertRaisesRegex(ValueError, 'native library policy/input check failed'):

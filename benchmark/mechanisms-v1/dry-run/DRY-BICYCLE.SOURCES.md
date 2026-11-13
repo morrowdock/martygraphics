@@ -1,6 +1,8 @@
 # DRY-BICYCLE source record
 
-Status: verified source excerpts and proposed dry-run key; second-model review pending.
+Status: verified source excerpts; independent second check PASS. Refreshed: 2026-11-13 UTC.
+Source: [FACTCHECK-2](DRY-BICYCLE.FACTCHECK-2.md), checked 2026-11-12 at
+`9bfa0746a4bdbee738361b5b8531741faa00da08`: 19 PASS, 0 FIX. The full dry run remains pending.
 
 Fetched: 2026-11-12 UTC. Base: `9e95ad3d69a54bce75b1a86d5b136734fb3ddb84`.
 
