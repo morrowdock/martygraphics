@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "7b653f6bf0e0e8c2686c5a03feb229efa92dd153875bd46fb612ae3b026fe870"
+      "sha256": "b4c275fb392d6157e24b310267225f693c27c3cea73b68e75d400ce4481b2fd6"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1375,7 +1375,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/AMENDMENTS.md",
-      "sha256": "afde00991aaada026070702866cbf204eb093c3d15a08769b186cb80cf6a4ff5"
+      "sha256": "5679c3921d8a56198e6f5be97d6d1f9b850c640a09c396876da1a29548b712e9"
     },
     {
       "path": "benchmark/mechanisms-v1/FACTCHECK.md",
@@ -1443,7 +1443,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/PACKING.md",
-      "sha256": "837342ad95b845d2f6ef654661db7122eb50601ac553beb503d4ab025dcab62a"
+      "sha256": "6930d85ce10726b5e0fafb50fb59f3cdcdc4fb7da188a399f5b7bf900cc58ad1"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/README.md",
@@ -1475,7 +1475,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/pack.py",
-      "sha256": "5ec54c199494e3c577f6b796ba3fa55352304f2c8f2887dc258a705bd3abe600"
+      "sha256": "f96d6d2e8629d82836e62ed72abfd440bd36510e7f4f5ae2d2caafe88ae2d0a2"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/rubric_form.py",
@@ -1519,7 +1519,7 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_pack_runner.py",
-      "sha256": "8ce412c0505e993ee0b2e5a48bd0914a6b34a7a0d84170e58080dabbbcb04303"
+      "sha256": "6a52a3d0498a43dd465c5e6ac1c402e0eea934078d89cd3e185dbc280f1e3c4e"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_rubric_form.py",
@@ -3011,7 +3011,11 @@
     },
     {
       "path": "benchmark/mechanisms-v1/harness/DRY-RUN-RUNBOOK.md",
-      "sha256": "97d6d9619fd5e5739a76287b1f75fb171fd405ce0afbc3b0fde908783c175d2b"
+      "sha256": "4cf3b60e62d844ef501bca23da2f9b2d80a6615e166dd1ee7cfa23b372a5d934"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_pack_cli.py",
+      "sha256": "d9ed317390fdf19e9868b23a28d2f58be3f010bb54d97c818be5d9fe9ecbd682"
     }
   ]
 }

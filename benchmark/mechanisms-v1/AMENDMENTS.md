@@ -483,3 +483,35 @@ SHA-256 `48ca361b5778acae7629de72e003c6fd98e1299b194e184e0ae91ea120db7be4` -> at
 `493bcbc157e62925209ffb357892770fa16855fee85bfc70cd94ff3a1f6652ca` (unchanged by A-18).
 FILES.json carries current changed-file hashes in existing order; new paths are
 appended. RUN-LOCK stays DRAFT. Its historical pins are not reconciled here.
+
+
+**A-19. Dry packing without registered-key reads (2026-11-13 UTC; PROPOSED
+harness narrowing, review pending).** Source baseline:
+`9c22a5a50cc37ff7717c68f5be5f7a42af1d0c1f`, A-14, PROTOCOL sections 2.4 and 13,
+and [the operator issue](harness/DRY-RUN-RUNBOOK.md).
+
+Dry CLI packing now hashes only RUBRIC.md against LOCK.json and takes all
+question/key data from the supplied bicycle grader view. It does not open, hash
+or parse either registered question file; registered paths and symlink/hard-link
+aliases are refused as dry keys. The exact bicycle question and `DRY-BICYCLE` ID
+are required. PRIVATE.json gains `registeredQuestionFilesRead: false` only in
+dry scope; primary outputs and integrity checks are unchanged.
+
+The old collision check read registered IDs. Its replacement deliberately
+narrows accepted dry IDs to `DRY-BICYCLE`, disjoint from the public fixed set
+`MECH-01` through `MECH-20` recorded in the baseline runbook OPERATOR ISSUE and
+`harness/tests/support.py::registered_shape_key`. This is non-blinded provenance,
+not a fresh validation against registered contents. Dry mode consequently
+cannot detect corrupted registered keys or an incompatible future namespace.
+The rubric check, full generation-table checks, timing, media normalization,
+masking, packets, primary scoring and primary hash/parse path are retained.
+
+**VERIFIED synthetic:** the CLI succeeds with both registered paths guarded by
+open-denying sentinels under a temporary benchmark root. Negative tests cover
+dry IDs/question/private fields, rubric integrity and registered-path aliases.
+Primary synthetic output matches the pre-change baseline golden digest over
+every output file; primary key/rubric hash refusals remain. No real key was read
+and no model call or native dry run was performed. Full operational acceptance
+is **PENDING**. RUN-LOCK.json remains unchanged and DRAFT; LOCK.json is unchanged.
+FILES.json preserves existing entry order and blinded-file digests, updating
+only changed/new files. This amendment does not approve a benchmark run.

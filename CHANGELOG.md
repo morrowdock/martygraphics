@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Dry packing without blinded-key access (2026-11-13, A-19).** Use only the
+  reviewed bicycle key with dedicated `DRY-BICYCLE` ID in dry mode, preserve
+  the rubric hash gate, and record that registered question files were not read.
+  Primary packing behavior remains unchanged. Synthetic CLI regression/golden
+  tests cover the boundary; operational acceptance remains pending.
+
 - **Registered G2 model correction (2026-11-13, A-18).** Select `gemini-4-argon`
   with exact-id HIGH throughout the Gemini adapter and grading runner. Keep the
   named preview fallback disabled without recorded owner approval. Restrict

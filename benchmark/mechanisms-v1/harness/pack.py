@@ -344,12 +344,13 @@ def check_questions(doc):
     return questions
 
 
-def check_dry_run_view(view, registered_ids):
+def check_dry_run_view(view):
     questions = check_questions(view)
     if len(questions) != 1 or next(iter(questions.values()))["question"] != DRY_RUN_QUESTION:
         raise ValueError("dry-run key must contain only the section 2.4 bicycle question")
-    if set(questions) & set(registered_ids):
-        raise ValueError("dry-run question id must not be a registered question id")
+    # Dedicated dry namespace; see A-19 for the non-blinded ID record/trade-off.
+    if set(questions) != {"DRY-BICYCLE"}:
+        raise ValueError("dry-run question id must be DRY-BICYCLE")
 
 
 def complete_runs(path, questions, dry_run=False):
@@ -459,7 +460,8 @@ def build(runs_path, sources, question_doc, rubric, seed, destination, media, cl
         "orders": {g: [c["token"] for c in call_order(seed, g, calls)] for g in score.GRADERS},
         "reports": reports, "packetHashes": tree_hashes(destination / "packets"),
         "runsSha256": digest(destination / "runs.csv"),
-        "mappingHashes": {p: digest(destination / p) for p in ("output-tokens.csv", "pair-sides.csv")}})
+        "mappingHashes": {p: digest(destination / p) for p in ("output-tokens.csv", "pair-sides.csv")},
+        **({"registeredQuestionFilesRead": False} if dry_run else {})})
     return destination
 
 
@@ -474,15 +476,22 @@ def main(argv=None):
     args = parser.parse_args(argv)
     bench = Path(__file__).resolve().parent.parent
     lock = json.loads((bench / "LOCK.json").read_text())
-    for name in ("GRADER-QUESTIONS.json", "RUBRIC.md"):
+    inputs = ("RUBRIC.md",) if args.dry_run_questions else ("GRADER-QUESTIONS.json", "RUBRIC.md")
+    for name in inputs:
         if digest(bench / name) != lock["inputs"][name]:
             parser.error("registered input hash mismatch: " + name)
     media = AppleMedia(args.native)
     try:
+        if args.dry_run_questions:
+            # Resolve aliases/stat hard links without opening either registered file.
+            for name in ("QUESTIONS.json", "GRADER-QUESTIONS.json"):
+                registered = bench / name
+                if (args.dry_run_questions.resolve() == registered.resolve()
+                        or (registered.exists() and args.dry_run_questions.samefile(registered))):
+                    raise ValueError("dry-run key must not be a registered question file")
         view = json.loads((args.dry_run_questions or (bench / "GRADER-QUESTIONS.json")).read_text())
         if args.dry_run_questions:
-            registered = json.loads((bench / "GRADER-QUESTIONS.json").read_text())
-            check_dry_run_view(view, [q["id"] for q in registered["questions"]])
+            check_dry_run_view(view)
         build(args.runs, json.loads(args.sources.read_text()), view,
               (bench / "RUBRIC.md").read_bytes(), blinding.parse_seed(args.seed.read_text()) if args.seed else None, args.out, media, dry_run=bool(args.dry_run_questions))
     except (ValueError, OSError, subprocess.SubprocessError) as error:

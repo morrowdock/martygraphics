@@ -707,8 +707,9 @@ class DryRunViewTest(unittest.TestCase):
         _, view = questions(1)
         with patch.object(pack, "DRY_RUN_QUESTION", "Synthetic dry run"):
             with self.assertRaisesRegex(ValueError, "bicycle question"):
-                pack.check_dry_run_view(view, [])
+                pack.check_dry_run_view(view)
             view["questions"][0]["question"] = "Synthetic dry run"
-            with self.assertRaisesRegex(ValueError, "registered question id"):
-                pack.check_dry_run_view(view, ["Q00"])
-            pack.check_dry_run_view(view, ["OTHER"])
+            with self.assertRaisesRegex(ValueError, "DRY-BICYCLE"):
+                pack.check_dry_run_view(view)
+            view["questions"][0]["id"] = "DRY-BICYCLE"
+            pack.check_dry_run_view(view)

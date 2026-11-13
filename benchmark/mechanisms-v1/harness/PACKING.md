@@ -86,13 +86,31 @@ replace a packet set after grading has begun. The packer refuses an existing
 output directory and writes its completion manifest last. A failed pack is not
 gradable.
 
-For section 2.4, add `--dry-run-questions REVIEWED-DRY-KEY.json`. This input must
-be a grader-view document with exactly the registered bicycle question and an
-id outside the 20 registered ids. Its facts/checks need review before the dry
-run; no such key is invented here. This mode requires one run per arm, marks the
-pack `scope: dry-run`, and uses a separate `results/dry-run/` commitment path.
-It is excluded from the primary full-design gate. The same media, packet,
-retry and timing code applies. The test uses an original synthetic question.
+For section 2.4, add `--dry-run-questions REVIEWED-DRY-KEY.json`, using the
+reviewed `dry-run/DRY-BICYCLE.grader.json` (or its reviewed operator copy). The
+view must contain exactly the section 2.4 bicycle question with ID `DRY-BICYCLE`.
+Its facts/checks still need review before use. This mode takes all question/key
+data from that view, hash-checks only RUBRIC.md against LOCK.json, and never
+opens, hashes or parses registered QUESTIONS.json or GRADER-QUESTIONS.json.
+It refuses either registered path as the dry key, including symlink/hard-link
+aliases. Keep the operator inputs stable while packing.
+
+The dedicated ID replaces the content-based registered-ID collision check.
+The non-blinded fixed-ID record (`DRY-RUN-RUNBOOK.md`, OPERATOR ISSUE, and
+`tests/support.py::registered_shape_key` at baseline
+`9c22a5a50cc37ff7717c68f5be5f7a42af1d0c1f`) lists `MECH-01` through `MECH-20`.
+`DRY-BICYCLE` is disjoint. This is a proposed narrowing under A-19, not a new
+inspection of the blinded inputs: dry mode cannot detect registered-key
+corruption or a future incompatible ID namespace. Primary mode retains its
+registered-key hash/parse checks and byte-identical synthetic golden output.
+
+Dry mode requires one run per arm and writes `scope: dry-run` plus
+`registeredQuestionFilesRead: false` in PRIVATE.json. The marker records the
+packer's read policy, not a registered-input integrity verification. The
+commitment uses a separate `results/dry-run/` path, excluded from the primary
+full-design gate. Media, packet, retry and timing code remains shared. CLI
+tests use only synthetic keys in a temporary benchmark root, with registered
+opens denied. No model or real dry-run packing is part of those tests.
 
 ## Output and file hygiene
 

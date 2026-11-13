@@ -232,39 +232,40 @@ Sources: `PROTOCOL.md:35-47,93-97`; `harness/PACKING.md:89-95`;
    to obtain a full pair. Sources: `PROTOCOL.md:188-200,376-377`;
    `harness/PACKING.md:51-55`; `harness/README.md:68-75`.
 
-## OPERATOR ISSUE — pack.py reads the registered grader key
+## OPERATOR ISSUE — registered-key reads removed from dry packing
 
-**VERIFIED by source inspection, not by executing packing:** the loop starting
-at `harness/pack.py:477` hashes registered `GRADER-QUESTIONS.json` even with
-`--dry-run-questions`; line 484 then parses it to obtain registered IDs. Thus
-this is both a hash-by-reading and a parse, not an isolated bicycle-only CLI.
-The parse itself is at line 484, not line 477. The documented dry-key option
-alone does not satisfy a no-read boundary. Sources: `harness/pack.py:466-487`;
-`harness/PACKING.md:82-95`; `AMENDMENTS.md:213-216`.
+**Historical issue (VERIFIED at baseline
+`9c22a5a50cc37ff7717c68f5be5f7a42af1d0c1f`):** pack.py hashed registered
+GRADER-QUESTIONS.json and parsed it for IDs even with `--dry-run-questions`.
+The former no-read blocker is addressed by the A-19 implementation below;
+its review/acceptance is **PENDING**. Checked 2026-11-13 UTC.
 
-**STOP before packing under this task's restrictions.** An authorized operator
-whose separate scope permits that registered-key read must perform the existing
-command, or a separately reviewed code change must land first. This runbook
-neither grants access nor implements a workaround.
+**VERIFIED with synthetic CLI tests:** dry mode branches before the
+registered-key hash/parse. It still verifies RUBRIC.md against LOCK.json,
+loads only the supplied dry grader view, and requires the exact section 2.4
+bicycle question and dedicated `DRY-BICYCLE` ID. Registered paths and their
+symlink/hard-link aliases are refused as the dry key without opening them.
+PRIVATE.json records `scope: dry-run` and `registeredQuestionFilesRead: false`.
+All media, timing, masking and packet checks remain. Primary hash refusals and
+a byte-for-byte golden output from the baseline remain covered on synthetic
+fixtures. Sources: `pack.py::main`, `pack.py::check_dry_run_view`,
+`tests/test_pack_cli.py`, and [PACKING.md](PACKING.md).
 
-**PROPOSED minimal change; NOT IMPLEMENTED, NOT VERIFIED:** branch on
-`--dry-run-questions` before hashing/loading the registered grader key. Keep the
-primary branch's existing registered-key hash and parse unchanged. In the dry
-branch still hash-check RUBRIC.md, load only the reviewed bicycle key, require
-its exact question and the dedicated `DRY-BICYCLE` id, and reject registered IDs
-using the public fixed identifier set (`MECH-01` through `MECH-20`) without
-opening their question files. Retain all media, timing, masking, pack and retry
-checks. Review this narrowing explicitly under A-14 and PROTOCOL section 13;
-add a CLI regression that forbids opening either registered question file and
-proves the dry branch succeeds with a synthetic reviewed view, plus negative
-id/question/rubric cases and unchanged primary hash refusal. Do not simply skip
-all integrity checks or call an internal function to evade the CLI gate.
-Sources: `harness/pack.py:347-352,466-487`; `AMENDMENTS.md:213-216,277-281,402-405`;
-`PROTOCOL.md:431-439`.
+**Trade-off (PROPOSED, review pending):** exact `DRY-BICYCLE` replaces reading
+the registered IDs. The non-blinded fixed-ID record in this runbook's baseline
+OPERATOR ISSUE and `tests/support.py::registered_shape_key` lists `MECH-01`
+through `MECH-20`, disjoint from `DRY-BICYCLE`. Dry packing does not revalidate
+that record against blinded contents and cannot detect registered-key
+corruption or a future namespace change. This does not grant access to either
+registered question file. See A-19 in [AMENDMENTS.md](../AMENDMENTS.md).
+
+**Before operational use:** land/review this change and satisfy the owner gates
+above. Synthetic verification is not real native packing or dry-run acceptance;
+those remain **NOT RUN** by this change. RUN-LOCK remains DRAFT.
 
 ## 4. Normalize, mask and pack on the Mac mini
 
-1. **Only after resolving the OPERATOR ISSUE**, create `SOURCES.json` keyed by
+1. **Only after the OPERATOR ISSUE change is reviewed and landed**, create `SOURCES.json` keyed by
    `DRY-BICYCLE-r1-arm1` and `DRY-BICYCLE-r1-arm2` for rendered slots only. Arm 1
    uses `{"kind":"video","path":"/absolute/path/to/story.mp4"}` (loop only
    if no story). Arm 2 uses `{"kind":"captures","paths":[...]}` with every
@@ -285,7 +286,8 @@ Sources: `harness/pack.py:347-352,466-487`; `AMENDMENTS.md:213-216,277-281,402-4
      --dry-run-questions "$PRIVATE_RUN/DRY-BICYCLE-KEY.json"
    ```
 
-3. Check completion (`PRIVATE.json` written last, `scope: dry-run`), pack inventory
+3. Check completion (`PRIVATE.json` written last, `scope: dry-run`,
+   `registeredQuestionFilesRead: false`), pack inventory
    and normalization reports without hand-editing images. Arm 2 first gets the
    engine-matched H.264 intermediate, retained under `originals/`. Both arms then
    decode at 30 fps, require 1280×800, clamp L to 10–60 seconds and hold to pair T.
