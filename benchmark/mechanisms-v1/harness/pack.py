@@ -6,6 +6,8 @@ Native IO uses Apple's frameworks; all selection, masking and packet decisions a
 here. See PACKING.md for the trust boundary and the proposed rounding/order rules.
 """
 import argparse
+from contextlib import nullcontext
+from contextvars import ContextVar
 import csv
 from datetime import datetime, timezone
 import hashlib
@@ -18,6 +20,7 @@ import selectors
 import re
 import shutil
 import statistics
+import stat
 import struct
 import subprocess
 import sys
@@ -35,6 +38,90 @@ PATTERNS = {
     "B1": r"(?i)(?<!\w)(?:MartyGraphics|Marty|three\.js|threejs|WebGL|Claude)(?!\w)",
     "F1": r"(?i)(?<!\S)\S+\.(?:json|html)(?=\s|$)",
 }
+
+
+_INPUT_GUARD = ContextVar("pack_input_guard", default=None)
+
+
+class DryRunInputGuard:
+    """Metadata-only refusal for Python IO and explicitly checked native inputs."""
+
+    def __init__(self, bench):
+        self.registered = tuple(bench / name for name in ("QUESTIONS.json", "GRADER-QUESTIONS.json"))
+        self.opened_paths = set()
+        self.opened_inodes = set()
+        self.registered_paths = set()
+        self.registered_inodes = set()
+
+    def __enter__(self):
+        self.token = _INPUT_GUARD.set(self)
+        return self
+
+    def __exit__(self, *exc):
+        _INPUT_GUARD.reset(self.token)
+
+    def check(self, path, *, opening=False):
+        for registered in self.registered:
+            self.registered_paths.update((registered.absolute(), registered.resolve()))
+            try:
+                info = registered.stat()
+            except FileNotFoundError:
+                continue
+            self.registered_inodes.add((info.st_dev, info.st_ino))
+        if isinstance(path, int):
+            resolved, info = None, os.fstat(path)
+        else:
+            path = Path(os.fsdecode(path))
+            resolved = path.resolve()
+            if path.absolute() in self.registered_paths or resolved in self.registered_paths:
+                raise ValueError("dry-run input must not be a registered question file: " + str(path))
+            try:
+                info = path.lstat()
+                if stat.S_ISLNK(info.st_mode):
+                    info = path.stat()
+            except FileNotFoundError:
+                info = None
+        identity = (info.st_dev, info.st_ino) if info is not None else None
+        if identity in self.registered_inodes:
+            raise ValueError("dry-run input must not be a registered question file: " + str(path))
+        if opening:
+            self.opened_paths.add(resolved)
+            self.opened_inodes.add(identity)
+        return info
+
+    def tree(self, path, seen=None):
+        info = self.check(path)
+        if info is None or not stat.S_ISDIR(info.st_mode):
+            return
+        seen = set() if seen is None else seen
+        identity = (info.st_dev, info.st_ino)
+        if identity in seen:
+            return
+        seen.add(identity)
+        with os.scandir(path) as entries:
+            for entry in entries:
+                self.tree(entry.path, seen)
+
+    def media_inputs(self, request):
+        for path in ([request["path"]] if "path" in request else []) + list(request.get("paths", [])):
+            self.tree(path)
+
+    def receipt(self):
+        if _INPUT_GUARD.get() is not self:
+            raise ValueError("dry-run receipt requires an active input guard")
+        return bool(self.opened_paths & self.registered_paths or self.opened_inodes & self.registered_inodes)
+
+
+def guard_input_event(event, arguments):
+    guard = _INPUT_GUARD.get()
+    if guard is not None:
+        if event in ("open", "os.scandir", "os.listdir"):
+            guard.check(arguments[0] if arguments[0] is not None else ".", opening=event == "open")
+        elif event == "subprocess.Popen":
+            guard.tree(arguments[0])
+
+
+sys.addaudithook(guard_input_event)
 
 
 def digest(path):
@@ -220,6 +307,10 @@ class AppleMedia:
         self.process = None
 
     def invoke(self, **request):
+        guard = _INPUT_GUARD.get()
+        if guard is not None:
+            guard.tree(self.executable)
+            guard.media_inputs(request)
         if self.process is None:
             self.process = subprocess.Popen([self.executable], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                             stderr=subprocess.DEVNULL)
@@ -378,6 +469,14 @@ def tree_hashes(path):
 
 
 def build(runs_path, sources, question_doc, rubric, seed, destination, media, clock=utc, *, dry_run=False):
+    guard = _INPUT_GUARD.get()
+    if dry_run and guard is None:
+        with DryRunInputGuard(Path(__file__).resolve().parent.parent):
+            return build(runs_path, sources, question_doc, rubric, seed, destination, media, clock, dry_run=True)
+    if guard is not None:
+        guard.tree(runs_path)
+        for source in sources.values():
+            guard.media_inputs(source)
     questions = check_questions(question_doc)
     runs = complete_runs(runs_path, questions, dry_run)
     rendered = {sid: r for sid, r in runs.items() if r["status"] == "rendered"}
@@ -416,6 +515,10 @@ def build(runs_path, sources, question_doc, rubric, seed, destination, media, cl
                         work = Path(temp) / str(run["arm"])
                         work.mkdir()
                         decoded[run["id"]] = media.prepare(sources[run["id"]], run["arm"], work)
+                        if guard is not None:
+                            for frame in decoded[run["id"]]:
+                                guard.tree(frame)
+                            guard.tree(work / "intermediate.mp4")
                         if (work / "intermediate.mp4").exists():
                             original = destination / "originals" / run["id"]
                             original.mkdir()
@@ -461,7 +564,7 @@ def build(runs_path, sources, question_doc, rubric, seed, destination, media, cl
         "reports": reports, "packetHashes": tree_hashes(destination / "packets"),
         "runsSha256": digest(destination / "runs.csv"),
         "mappingHashes": {p: digest(destination / p) for p in ("output-tokens.csv", "pair-sides.csv")},
-        **({"registeredQuestionFilesRead": False} if dry_run else {})})
+        **({"registeredQuestionFilesRead": guard.receipt()} if dry_run else {})})
     return destination
 
 
@@ -475,29 +578,30 @@ def main(argv=None):
     parser.add_argument("--dry-run-questions", type=Path, help="reviewed grader-view key for the registered bicycle dry run only")
     args = parser.parse_args(argv)
     bench = Path(__file__).resolve().parent.parent
-    lock = json.loads((bench / "LOCK.json").read_text())
-    inputs = ("RUBRIC.md",) if args.dry_run_questions else ("GRADER-QUESTIONS.json", "RUBRIC.md")
-    for name in inputs:
-        if digest(bench / name) != lock["inputs"][name]:
-            parser.error("registered input hash mismatch: " + name)
-    media = AppleMedia(args.native)
+    media = None
     try:
-        if args.dry_run_questions:
-            # Resolve aliases/stat hard links without opening either registered file.
-            for name in ("QUESTIONS.json", "GRADER-QUESTIONS.json"):
-                registered = bench / name
-                if (args.dry_run_questions.resolve() == registered.resolve()
-                        or (registered.exists() and args.dry_run_questions.samefile(registered))):
-                    raise ValueError("dry-run key must not be a registered question file")
-        view = json.loads((args.dry_run_questions or (bench / "GRADER-QUESTIONS.json")).read_text())
-        if args.dry_run_questions:
-            check_dry_run_view(view)
-        build(args.runs, json.loads(args.sources.read_text()), view,
-              (bench / "RUBRIC.md").read_bytes(), blinding.parse_seed(args.seed.read_text()) if args.seed else None, args.out, media, dry_run=bool(args.dry_run_questions))
+        with DryRunInputGuard(bench) if args.dry_run_questions else nullcontext() as guard:
+            if guard is not None:
+                for path in (bench / "LOCK.json", bench / "RUBRIC.md", args.runs, args.sources,
+                             args.seed, args.native, args.dry_run_questions):
+                    if path is not None:
+                        guard.tree(path)
+            lock = json.loads((bench / "LOCK.json").read_text())
+            inputs = ("RUBRIC.md",) if args.dry_run_questions else ("GRADER-QUESTIONS.json", "RUBRIC.md")
+            for name in inputs:
+                if digest(bench / name) != lock["inputs"][name]:
+                    parser.error("registered input hash mismatch: " + name)
+            media = AppleMedia(args.native)
+            view = json.loads((args.dry_run_questions or (bench / "GRADER-QUESTIONS.json")).read_text())
+            if args.dry_run_questions:
+                check_dry_run_view(view)
+            build(args.runs, json.loads(args.sources.read_text()), view,
+                  (bench / "RUBRIC.md").read_bytes(), blinding.parse_seed(args.seed.read_text()) if args.seed else None, args.out, media, dry_run=bool(args.dry_run_questions))
     except (ValueError, OSError, subprocess.SubprocessError) as error:
         parser.exit(2, str(error) + "\n")
     finally:
-        media.close()
+        if media is not None:
+            media.close()
     return 0
 
 

@@ -7,6 +7,7 @@ from datetime import timedelta
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import random
 import tempfile
@@ -31,6 +32,7 @@ class CLITest(unittest.TestCase):
         self.stack.enter_context(patch.object(pack, "normalise", fixture_normalise))
         media = Media()
         media.close = lambda: None
+        self.native_media = pack.AppleMedia
         self.stack.enter_context(patch.object(pack, "AppleMedia", return_value=media))
         clock = self.stack.enter_context(patch.object(pack, "datetime"))
         clock.now.return_value = S.BASE + timedelta(days=3)
@@ -72,10 +74,20 @@ class CLITest(unittest.TestCase):
 
     def forbid_registered(self):
         blocked = {self.bench / name for name in ("QUESTIONS.json", "GRADER-QUESTIONS.json")}
+        for path in blocked:
+            if not path.exists():
+                path.write_bytes(b"Synthetic unreadable sentinel\n")
+            path.chmod(0)
+        identities = {(path.stat().st_dev, path.stat().st_ino) for path in blocked}
         self.attempts = []
         def guard(original):
             def opened(path, *args, **kwargs):
-                if not isinstance(path, int) and Path(path).resolve() in blocked:
+                try:
+                    info = os.fstat(path) if isinstance(path, int) else Path(path).stat()
+                except FileNotFoundError:
+                    info = None
+                if ((not isinstance(path, int) and Path(path).resolve() in blocked)
+                        or (info is not None and (info.st_dev, info.st_ino) in identities)):
                     self.attempts.append(str(path))
                     raise PermissionError("synthetic registered input sentinel")
                 return original(path, *args, **kwargs)
@@ -136,7 +148,7 @@ class CLITest(unittest.TestCase):
             for path in (target, alias):
                 with self.subTest(path=path):
                     self.argv[-1] = str(path)
-                    self.refused("dry-run key must not be a registered question file")
+                    self.refused("dry-run input must not be a registered question file")
         self.assertEqual(self.attempts, [])
 
     def test_dry_cli_refuses_registered_hard_link(self):
@@ -145,7 +157,162 @@ class CLITest(unittest.TestCase):
         alias.hardlink_to(self.bench / "GRADER-QUESTIONS.json")
         self.argv[-1] = str(alias)
         self.forbid_registered()
-        self.refused("dry-run key must not be a registered question file")
+        self.refused("dry-run input must not be a registered question file")
+        self.assertEqual(self.attempts, [])
+
+    def registered_aliases(self):
+        for name in ("QUESTIONS.json", "GRADER-QUESTIONS.json"):
+            target = self.bench / name
+            symbolic = self.root / (name + ".symlink")
+            symbolic.symlink_to(target)
+            hard = self.root / (name + ".hardlink")
+            hard.hardlink_to(target)
+            yield from (target, symbolic, hard, Path(os.path.relpath(target)))
+
+    def test_dry_cli_guards_every_argument_route_and_alias(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        original = self.argv[:]
+        for path in self.registered_aliases():
+            for index in (0, 1, 3, 5, 9):
+                with self.subTest(path=path, argument=original[index]):
+                    self.argv = original[:]
+                    self.argv[index] = str(path)
+                    self.refused("dry-run input must not be a registered question file")
+        self.assertEqual(self.attempts, [])
+
+    def test_dry_cli_guards_nested_files_before_walking_argument_directories(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        original = self.argv[:]
+        directory = self.root / "input-directory"
+        nested = directory / "one" / "two"
+        nested.mkdir(parents=True)
+        for target in self.registered_aliases():
+            for link in ("symlink", "hardlink"):
+                alias = nested / "sentinel"
+                if link == "symlink":
+                    alias.symlink_to(target.absolute())
+                else:
+                    alias.hardlink_to(target)
+                try:
+                    for index in (0, 1, 3, 5, 9):
+                        with self.subTest(target=target, link=link, argument=original[index]):
+                            self.argv = original[:]
+                            self.argv[index] = str(directory)
+                            self.refused("dry-run input must not be a registered question file")
+                finally:
+                    alias.unlink()
+        self.assertEqual(self.attempts, [])
+
+    def test_dry_cli_guards_media_paths_and_nested_capture_files(self):
+        self.prepare(dry=True)
+        sources = json.loads(self.sources.read_text())
+        output = next(iter(sources))
+        self.forbid_registered()
+        directory = self.root / "captures"
+        (directory / "nested").mkdir(parents=True)
+        for target in self.registered_aliases():
+            alias = directory / "nested" / "frame.png"
+            alias.symlink_to(target.absolute())
+            try:
+                for path in (target, directory):
+                    for field in ("path", "paths"):
+                        with self.subTest(target=target, path=path, field=field):
+                            sources[output] = {"kind": "video" if field == "path" else "captures",
+                                               field: str(path) if field == "path" else [str(path)]}
+                            pack.write_json(self.sources, sources)
+                            self.refused("dry-run input must not be a registered question file")
+            finally:
+                alias.unlink()
+        self.assertEqual(self.attempts, [])
+
+    def test_dry_cli_guards_lock_and_rubric_aliases(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        for name in ("LOCK.json", "RUBRIC.md"):
+            path = self.bench / name
+            original = path.read_bytes()
+            for target in self.registered_aliases():
+                with self.subTest(name=name, target=target):
+                    path.unlink()
+                    path.symlink_to(target.absolute())
+                    self.refused("dry-run input must not be a registered question file")
+                    path.unlink()
+                    path.write_bytes(original)
+            for alias in self.root.glob("*.symlink"):
+                alias.unlink()
+            for alias in self.root.glob("*.hardlink"):
+                alias.unlink()
+        self.assertEqual(self.attempts, [])
+
+    def test_dry_cli_guards_frames_returned_by_media(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        target = self.bench / "GRADER-QUESTIONS.json"
+        media = pack.AppleMedia.return_value
+        with patch.object(media, "prepare", return_value=[str(target)]):
+            stderr = io.StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as error:
+                pack.main(self.argv)
+        self.assertEqual(error.exception.code, 2)
+        self.assertIn("dry-run input must not be a registered question file", stderr.getvalue())
+        self.assertFalse((self.out / "PRIVATE.json").exists())
+        self.assertEqual(self.attempts, [])
+
+    def test_dry_cli_guards_intermediate_media_before_copy(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        media = pack.AppleMedia.return_value
+        prepare = media.prepare
+        def aliased_intermediate(source, arm, work):
+            frames = prepare(source, arm, work)
+            (work / "intermediate.mp4").hardlink_to(self.bench / "QUESTIONS.json")
+            return frames
+        with patch.object(media, "prepare", side_effect=aliased_intermediate):
+            stderr = io.StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as error:
+                pack.main(self.argv)
+        self.assertEqual(error.exception.code, 2)
+        self.assertIn("dry-run input must not be a registered question file", stderr.getvalue())
+        self.assertFalse((self.out / "PRIVATE.json").exists())
+        self.assertEqual(self.attempts, [])
+
+    def test_native_requests_refuse_aliases_before_starting_helper(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        media = self.native_media(self.root / "unused-synthetic-helper")
+        with pack.DryRunInputGuard(self.bench), \
+                patch.object(pack.subprocess, "Popen", side_effect=AssertionError("helper started")):
+            for target in self.registered_aliases():
+                for request in ({"op": "prepare", "kind": "video", "path": str(target)},
+                                {"op": "prepare", "kind": "captures", "paths": [str(target)]},
+                                {"op": "ocr", "path": str(target)},
+                                {"op": "thumbnail", "path": str(target)},
+                                {"op": "encode", "paths": [str(target)]}):
+                    with self.subTest(target=target, request=request):
+                        with self.assertRaisesRegex(ValueError, "registered question file"):
+                            media.invoke(**request)
+        self.assertEqual(self.attempts, [])
+
+    def test_guard_catches_late_alias_before_open_and_tracks_receipt(self):
+        self.prepare(dry=True)
+        self.forbid_registered()
+        alias = self.root / "late-alias"
+        alias.write_bytes(b"Synthetic safe input")
+        with pack.DryRunInputGuard(self.bench) as guard:
+            guard.tree(alias)
+            alias.read_bytes()
+            self.assertTrue(guard.opened_paths)
+            self.assertFalse(guard.receipt())
+            alias.unlink()
+            alias.hardlink_to(self.bench / "QUESTIONS.json")
+            with self.assertRaisesRegex(ValueError, "registered question file"):
+                os.open(alias, os.O_RDONLY)
+            guard.opened_inodes.add((alias.stat().st_dev, alias.stat().st_ino))
+            self.assertTrue(guard.receipt())
+        with self.assertRaisesRegex(ValueError, "active input guard"):
+            guard.receipt()
         self.assertEqual(self.attempts, [])
 
     def test_registered_cli_keeps_hash_refusal(self):

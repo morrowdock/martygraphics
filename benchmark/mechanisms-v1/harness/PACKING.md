@@ -92,8 +92,14 @@ view must contain exactly the section 2.4 bicycle question with ID `DRY-BICYCLE`
 Its facts/checks still need review before use. This mode takes all question/key
 data from that view, hash-checks only RUBRIC.md against LOCK.json, and never
 opens, hashes or parses registered QUESTIONS.json or GRADER-QUESTIONS.json.
-It refuses either registered path as the dry key, including symlink/hard-link
-aliases. Keep the operator inputs stable while packing.
+It refuses either registered path through every dry input route, including
+relative paths and symlink/hard-link aliases. Metadata-only checks cover the
+key, sources, runs, seed, lock, rubric, native helper and media paths, including
+every entry in input directories before native processing. An active Python
+audit guard rechecks opens and directory walks throughout packing; native
+requests and returned frame/intermediate paths are checked explicitly. Keep
+the operator inputs stable while packing: these checks are not a sandbox for
+an untrusted native executable or concurrent filesystem mutation.
 
 The dedicated ID replaces the content-based registered-ID collision check.
 The non-blinded fixed-ID record (`DRY-RUN-RUNBOOK.md`, OPERATOR ISSUE, and
@@ -106,11 +112,13 @@ registered-key hash/parse checks and byte-identical synthetic golden output.
 
 Dry mode requires one run per arm and writes `scope: dry-run` plus
 `registeredQuestionFilesRead: false` in PRIVATE.json. The marker records the
-packer's read policy, not a registered-input integrity verification. The
+active guard's checked-open path/inode record, not a registered-input integrity
+verification; it is not a hard-coded assertion. The
 commitment uses a separate `results/dry-run/` path, excluded from the primary
 full-design gate. Media, packet, retry and timing code remains shared. CLI
 tests use only synthetic keys in a temporary benchmark root, with registered
-opens denied. No model or real dry-run packing is part of those tests.
+paths set to mode 000 and opens denied, including inode aliases. No model or
+real dry-run packing is part of those tests.
 
 ## Output and file hygiene
 

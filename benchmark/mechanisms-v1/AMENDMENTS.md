@@ -492,10 +492,18 @@ and [the operator issue](harness/DRY-RUN-RUNBOOK.md).
 
 Dry CLI packing now hashes only RUBRIC.md against LOCK.json and takes all
 question/key data from the supplied bicycle grader view. It does not open, hash
-or parse either registered question file; registered paths and symlink/hard-link
-aliases are refused as dry keys. The exact bicycle question and `DRY-BICYCLE` ID
-are required. PRIVATE.json gains `registeredQuestionFilesRead: false` only in
-dry scope; primary outputs and integrity checks are unchanged.
+or parse either registered question file. Review correction: metadata-only
+guards now refuse registered paths, relative paths and symlink/hard-link
+aliases through every dry input route, not just the dry key. This includes
+sources, runs, seed, lock, rubric, helper/media paths and nested directory
+entries. An active Python audit guard rechecks opens and directory walks;
+native request paths and returned frame/intermediate paths are checked before
+use. Inputs must remain stable and the native helper must be trusted; this is
+not a filesystem sandbox. The exact bicycle question and `DRY-BICYCLE` ID are
+required. PRIVATE.json gains `registeredQuestionFilesRead` only in dry scope,
+computed from the active guard's checked-open path/inode record rather than a
+constant. Successful guarded dry packing records false; primary outputs and
+integrity checks are unchanged.
 
 The old collision check read registered IDs. Its replacement deliberately
 narrows accepted dry IDs to `DRY-BICYCLE`, disjoint from the public fixed set
@@ -507,11 +515,31 @@ The rubric check, full generation-table checks, timing, media normalization,
 masking, packets, primary scoring and primary hash/parse path are retained.
 
 **VERIFIED synthetic:** the CLI succeeds with both registered paths guarded by
-open-denying sentinels under a temporary benchmark root. Negative tests cover
-dry IDs/question/private fields, rubric integrity and registered-path aliases.
+mode-000, open-denying sentinels under a temporary benchmark root. Negative
+tests cover dry IDs/question/private fields, rubric integrity, every input
+route and alias form, nested directory entries, native requests and returned
+media paths. A late hard-link substitution is refused at the Python open
+boundary; the receipt requires an active guard and reflects its inode record.
 Primary synthetic output matches the pre-change baseline golden digest over
 every output file; primary key/rubric hash refusals remain. No real key was read
 and no model call or native dry run was performed. Full operational acceptance
 is **PENDING**. RUN-LOCK.json remains unchanged and DRAFT; LOCK.json is unchanged.
 FILES.json preserves existing entry order and blinded-file digests, updating
 only changed/new files. This amendment does not approve a benchmark run.
+
+Implementation and test SHA-256 (old = baseline
+`9c22a5a50cc37ff7717c68f5be5f7a42af1d0c1f`; new = the final file bytes in the
+commit containing this review correction):
+
+| File | Old SHA-256 | New SHA-256 |
+| --- | --- | --- |
+| `harness/pack.py` | `5ec54c199494e3c577f6b796ba3fa55352304f2c8f2887dc258a705bd3abe600` | `9cc0f31567a3f1bca72fdca4bf87e207b6e836c344bc5dbac998b0f4eafb3195` |
+| `harness/tests/test_pack_runner.py` | `8ce412c0505e993ee0b2e5a48bd0914a6b34a7a0d84170e58080dabbbcb04303` | `6a52a3d0498a43dd465c5e6ac1c402e0eea934078d89cd3e185dbc280f1e3c4e` |
+| `harness/tests/test_pack_cli.py` | NEW FILE (absent at baseline) | `caa20b8dfd6d82ba543c2e9ac2fdd617f742dd6b483351a4a388ae2758d4bc98` |
+| `PROTOCOL.md` | `3c59e19e757daeaa68eba030da7d979bfc3d6d1fef409de51864cf1a43b38c9b` | `3c59e19e757daeaa68eba030da7d979bfc3d6d1fef409de51864cf1a43b38c9b` |
+| `LOCK.json` | `1a176911a3d339804307f9c080aa6d70b81f0e915ccfb7e61bb0d30017fc3afa` | `1a176911a3d339804307f9c080aa6d70b81f0e915ccfb7e61bb0d30017fc3afa` |
+
+VERIFIED 2026-11-13 UTC: these hashes were calculated only for the explicitly
+listed implementation, test and control files. Neither registered question
+file was opened or rehashed. The new CLI test file is identified relative to
+the baseline, even though it already existed at review head `4e7ab025`.
