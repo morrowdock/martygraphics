@@ -47,7 +47,7 @@
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256": "982a29d0184cd4bf90a341419ab74db03dbac69022b955c82f3f3052b5f49ae8"
+      "sha256": "9709bf59f1b4f0549a74b0d3e2b9fad4bc3554f93d87a211109c6083653954d9"
     },
     {
       "path": "DCO",
@@ -3016,6 +3016,10 @@
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_pack_cli.py",
       "sha256": "0373316db50ef264182be221fcade6d0a658cbd9ac8addc6e70bd81619cd0be4"
+    },
+    {
+      "path": ".github/workflows/changelog.yml",
+      "sha256": "3e2fa3a4756e8c92cc41bb9aefe6f7075ef650099ee73af1a58b435e3f1f66fe"
     }
   ]
 }
