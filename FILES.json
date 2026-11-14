@@ -47,7 +47,7 @@
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256": "9709bf59f1b4f0549a74b0d3e2b9fad4bc3554f93d87a211109c6083653954d9"
+      "sha256": "4e2fb1d5baea5fe1a65741e05d42677ee0d6dadae321a6cf671976e0c8603ac8"
     },
     {
       "path": "DCO",
@@ -3019,7 +3019,11 @@
     },
     {
       "path": ".github/workflows/changelog.yml",
-      "sha256": "3e2fa3a4756e8c92cc41bb9aefe6f7075ef650099ee73af1a58b435e3f1f66fe"
+      "sha256": "d4d519023959cad9d1e04047e662733a348c5d5d06a51bbf1a9597bb345618b9"
+    },
+    {
+      "path": ".github/tests/changelog.test.cjs",
+      "sha256": "a69e67f7fbf841bbafba429289770a49a94a017d203d86c611ea0403053bfa81"
     }
   ]
 }
