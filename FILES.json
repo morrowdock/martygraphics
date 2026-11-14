@@ -3019,11 +3019,11 @@
     },
     {
       "path": ".github/workflows/changelog.yml",
-      "sha256": "d4d519023959cad9d1e04047e662733a348c5d5d06a51bbf1a9597bb345618b9"
+      "sha256": "56e0532cf6ac072965ea8fa221295a6e564c78aec30d01c54c55086df43e3dc0"
     },
     {
       "path": ".github/tests/changelog.test.cjs",
-      "sha256": "a69e67f7fbf841bbafba429289770a49a94a017d203d86c611ea0403053bfa81"
+      "sha256": "a341d4084b9a30f0d83f7d3fd1aaebcaaae0c7c53c8bb5f18b03e402736cfb59"
     }
   ]
 }
