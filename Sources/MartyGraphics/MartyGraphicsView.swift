@@ -312,7 +312,7 @@ struct MGSceneHost: View {
 
     /// Finite motion: after `loops` cycles, rest on the end of the last cycle (not snapped back to the start).
     private func finishLoops(_ scene: MGScene) async {
-        guard let loops = teaching.loops, playing, !teaching.holdsMotion, scene.animates, let cycle = MGTimeline.cycle(scene) else { return }
+        guard let loops = scene.layer2d == nil ? teaching.loops : 1, playing, !teaching.holdsMotion, scene.animates, let cycle = MGTimeline.cycle(scene) else { return }
         let end = cycle * Double(loops)
         let remaining = end - controller.presentationDate().timeIntervalSince(epoch)
         if remaining > 0 { try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000)) }

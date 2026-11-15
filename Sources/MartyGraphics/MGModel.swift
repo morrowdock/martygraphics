@@ -166,7 +166,7 @@ public struct MGScene: Equatable, Sendable {
     public internal(set) var builtValues: Set<String> = []
 
     public func item(_ id: String) -> MGItem? { items.first { $0.id == id } }
-    public var animates: Bool { motion != .none || items.contains { $0.num["moveT"] != nil } }
+    public var animates: Bool { layer2d != nil || motion != .none || items.contains { $0.num["moveT"] != nil } }
 }
 
 /// Minimal immutable JSON value so scenes stay Equatable/Sendable and canonical-encodable.

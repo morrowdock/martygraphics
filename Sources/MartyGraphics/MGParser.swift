@@ -59,6 +59,7 @@ public enum MGParser {
         guard data.count <= 65536 else { return .failure(MGError("video2d.budget.bytes")) }
         if let reason = MGJSON.dataRefusal(data, json: "json", depth: "scene.depth") { return .failure(MGError(reason)) }
         guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(MGError("json")) }
+        if (object as? [String: Any])?["layer2d"] == nil { return scene(data: data) }
         return scene(object: object, programmaticVideo: true)
     }
 

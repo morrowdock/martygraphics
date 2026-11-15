@@ -94,8 +94,9 @@ assumptions and approximation. Any later computed-fact binding must preserve exi
 
 ### Proposed public Swift API sketch
 
-These names are illustrative, **not existing declarations**. Value types contain bounded declarative data;
-constructors do not bypass checks. The checked-plan initializer is engine-private.
+This is the original illustrative sketch, not the exact phase 1 signature list (see the protocol section linked
+above for implemented APIs). Value types contain bounded declarative data; constructors do not bypass checks.
+The checked-plan initializer is engine-private.
 
 ```swift
 public struct MGProgrammaticVideoOptions: Sendable {

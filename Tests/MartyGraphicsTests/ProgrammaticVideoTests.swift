@@ -29,6 +29,10 @@ final class ProgrammaticVideoTests: XCTestCase {
     }
 
     func testOptInAndLegacyCorpusCompatibility() throws {
+        for fixture in MGFixtures.all {
+            let data = Data(fixture.json.utf8)
+            XCTAssertEqual(try MGParser.scene(data: data).get(), try MGParser.scene(data: data, programmaticVideo: false).get(), fixture.id)
+        }
         var count = 0
         let directories = ["Tests/MartyGraphicsTests", "docs/fixtures", "Examples/Explainers"]
         for directory in directories {
@@ -128,6 +132,68 @@ final class ProgrammaticVideoTests: XCTestCase {
         XCTAssertEqual(literal.elements[4].lines?[0], "if i < n: {literal}")
     }
 
+    func testTrackCaptionAndPrimitiveBounds() throws {
+        try refuse { layer in
+            let tracks = layer["tracks"] as! [[String: Any]]
+            layer["tracks"] = Array(repeating: tracks[0], count: 65)
+        }
+        try refuse { layer in
+            var tracks = layer["tracks"] as! [[String: Any]]
+            tracks[0]["keyframes"] = Array(repeating: ["frame": 0, "opacity": 1], count: 121)
+            layer["tracks"] = tracks
+        }
+        try refuse { layer in layer["captions"] = Array(repeating: ["startFrame": 0, "endFrame": 1, "text": "Caption"], count: 61) }
+        try refuse({ layer in
+            var tracks = layer["tracks"] as! [[String: Any]]
+            tracks[0]["keyframes"] = [["frame": 1, "opacity": 0], ["frame": 1, "opacity": 1]]
+            layer["tracks"] = tracks
+        }, family: "video2d.frame")
+        try refuse { layer in
+            var tracks = layer["tracks"] as! [[String: Any]]
+            tracks[0]["keyframes"] = [["frame": 0], ["frame": 1]]
+            layer["tracks"] = tracks
+        }
+        let primitives: [[String: Any]] = [
+            ["kind": "arrow", "to": [400, 300], "strokeWidth": 17],
+            ["kind": "label", "text": String(repeating: "x", count: 161), "fontSize": 24],
+            ["kind": "label", "text": "Text", "fontSize": 11],
+            ["kind": "axes", "size": [400, 200], "xRange": [0, 1], "yRange": [0, 1], "ticks": 21],
+            ["kind": "axes", "size": [400, 200], "xRange": [1, 0], "yRange": [0, 1], "ticks": 5],
+            ["kind": "numberLine", "length": 100, "range": [-10001, 1], "ticks": 5],
+            ["kind": "numberLine", "length": 1, "range": [0, 10000], "ticks": 20],
+            ["kind": "code", "lines": Array(repeating: "code", count: 25), "fontSize": 24, "highlightLine": 1],
+            ["kind": "code", "lines": ["code"], "fontSize": 41, "highlightLine": 1],
+        ]
+        for primitive in primitives {
+            try refuse { layer in
+                var element = primitive
+                element["id"] = "primitive"; element["at"] = [300, 300]; element["color"] = "#276EF1"
+                layer["elements"] = [element]; layer["tracks"] = []
+            }
+        }
+    }
+
+    func testSparseKeyframesAndHoldHighlight() throws {
+        for interpolation in ["linear", "hold"] {
+            let checked = try plan(changed { layer in
+                layer["tracks"] = [["target": "three", "interpolation": interpolation, "keyframes": [
+                    ["frame": 0, "opacity": 0.5], ["frame": 30, "at": [400, 300]],
+                    ["frame": 60, "at": [500, 300]], ["frame": 90, "opacity": 1],
+                ]]]
+            })
+            XCTAssertEqual(try MGTimeline.videoFrame(15, in: checked)[0].at, [300, 300])
+            XCTAssertEqual(try MGTimeline.videoFrame(45, in: checked)[0].at, [interpolation == "linear" ? 450 : 400, 300])
+            XCTAssertEqual(try MGTimeline.videoFrame(119, in: checked)[0].at, [500, 300])
+            XCTAssertEqual(try MGTimeline.videoFrame(45, in: checked)[0].opacity, interpolation == "linear" ? 0.75 : 0.5)
+        }
+        let sorting = try plan(example())
+        XCTAssertEqual(try MGTimeline.videoFrame(29, in: sorting)[4].highlightLine, 1)
+        XCTAssertEqual(try MGTimeline.videoFrame(30, in: sorting)[4].highlightLine, 2)
+        let git = try plan(example("git-flow"))
+        XCTAssertEqual(try MGTimeline.videoFrame(0, in: git)[2].opacity, 0)
+        XCTAssertEqual(try MGTimeline.videoFrame(119, in: git)[2].opacity, 1)
+    }
+
     func testPreflightChecksEveryFrameAndCaptionLayout() throws {
         try refuse({ layer in
             var tracks = layer["tracks"] as! [[String: Any]]
@@ -145,6 +211,9 @@ final class ProgrammaticVideoTests: XCTestCase {
 
     func testTimelineStructuralGoldenAndRaster() throws {
         let checked = try plan(example())
+        let scene = try MGParser.scene(data: example(), programmaticVideo: true).get()
+        XCTAssertTrue(scene.animates)
+        XCTAssertEqual(MGTimeline.cycle(scene), 4)
         let first = try MGTimeline.videoFrame(0, in: checked)
         let middle = try MGTimeline.videoFrame(45, in: checked)
         let last = try MGTimeline.videoFrame(119, in: checked)
@@ -213,6 +282,25 @@ final class ProgrammaticVideoTests: XCTestCase {
         }
     }
 
+    func testMaximumMP4DimensionsAndRoundedSRT() async throws {
+        let checked = try plan(changed { layer in
+            layer["canvas"] = ["width": 1920, "height": 1080]
+            layer["durationFrames"] = 3; layer["tracks"] = []
+            layer["captions"] = [["startFrame": 1, "endFrame": 2, "text": "One frame"]]
+        })
+        XCTAssertTrue(MGProgrammaticVideo.srt(checked).contains("00:00:00,033 --> 00:00:00,067"))
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("mg-pv-1080-\(UUID()).mp4")
+        defer { try? FileManager.default.removeItem(at: destination) }
+        let receipt = try await MGProgrammaticVideo.export(checked, to: destination, options: .init(writeSRT: false), programmaticVideo: true)
+        XCTAssertEqual(receipt.width, 1920); XCTAssertEqual(receipt.height, 1080)
+        XCTAssertEqual(receipt.frameCount, 3); XCTAssertEqual(receipt.durationSeconds, 0.1)
+        XCTAssertNil(receipt.subtitles)
+        let asset = AVURLAsset(url: destination)
+        let track = try XCTUnwrap(asset.tracks(withMediaType: .video).first)
+        XCTAssertEqual(track.naturalSize, CGSize(width: 1920, height: 1080))
+        XCTAssertEqual(track.timeRange.duration.seconds, 0.1, accuracy: 1e-8)
+    }
+
     func testCancellationAndExportRefusalsRemovePartialFiles() async throws {
         let checked = try plan(example())
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("mg-pv-cancel-\(UUID())")
@@ -221,13 +309,15 @@ final class ProgrammaticVideoTests: XCTestCase {
         let destination = folder.appendingPathComponent("cancel.mp4")
         do { _ = try await MGProgrammaticVideo.export(checked, to: destination); XCTFail("Missing opt-in") }
         catch { XCTAssertEqual((error as? MGError)?.reason, "video2d.optIn") }
-        let task = Task {
-            try await MGProgrammaticVideo.export(checked, to: destination, programmaticVideo: true) { index, _ in
-                if index == 3 { withUnsafeCurrentTask { $0?.cancel() } }
+        for format in [MGVideoExportOptions.Format.mp4, .gif] {
+            let task = Task {
+                try await MGProgrammaticVideo.export(checked, to: destination, options: .init(format: format), programmaticVideo: true) { index, _ in
+                    if index == 3 { withUnsafeCurrentTask { $0?.cancel() } }
+                }
             }
+            do { _ = try await task.value; XCTFail("Cancellation ignored") } catch is CancellationError {} catch { XCTFail("\(error)") }
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [])
         }
-        do { _ = try await task.value; XCTFail("Cancellation ignored") } catch is CancellationError {} catch { XCTFail("\(error)") }
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [])
         let odd = try plan(changed { $0["canvas"] = ["width": 1279, "height": 720] })
         do { _ = try await MGProgrammaticVideo.export(odd, to: destination, programmaticVideo: true); XCTFail("Odd MP4 dimensions accepted") }
         catch { XCTAssertEqual((error as? MGError)?.reason, "video2d.export.evenDimensions") }

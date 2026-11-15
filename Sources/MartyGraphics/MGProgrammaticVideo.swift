@@ -125,9 +125,11 @@ public enum MGProgrammaticVideo {
                 let bounds = MGVideoDrawing.bounds(element)
                 let area = CGRect(x: 8, y: 96, width: plan.canvas.width - 16, height: plan.canvas.height - 104)
                 guard area.contains(bounds) else { throw MGError("video2d.layout.elements.\(element.id).frame.\(index)") }
-                if ["label", "code"].contains(element.kind), (element.opacity ?? 1) > 0 {
-                    guard !texts.contains(where: { $0.1.intersects(bounds) }) else { throw MGError("video2d.layout.textOverlap.\(element.id).frame.\(index)") }
-                    texts.append((element.id, bounds))
+                if (element.opacity ?? 1) > 0 {
+                    for textBounds in MGVideoDrawing.textBounds(element) {
+                        guard !texts.contains(where: { $0.1.intersects(textBounds) }) else { throw MGError("video2d.layout.textOverlap.\(element.id).frame.\(index)") }
+                        texts.append((element.id, textBounds))
+                    }
                 }
                 if element.kind == "shape", (element.opacity ?? 1) > 0 {
                     for (id, other) in shapes where other.intersects(bounds) { overlaps.insert("video2d.overlap.\(id).\(element.id)") }
@@ -176,8 +178,13 @@ enum MGVideoSchema {
             try validate(value, schema: definition, root: root, path: path); return
         }
         if case .array(let choices)? = rules["oneOf"] {
-            let matches = choices.filter { (try? validate(value, schema: $0, root: root, path: path)) != nil }
-            guard matches.count == 1 else { try refuse() }; return
+            guard case .object(let element) = value, let kind = element["kind"],
+                  let choice = choices.first(where: { choice in
+                      guard case .object(let schema) = choice, case .object(let properties)? = schema["properties"],
+                            case .object(let discriminator)? = properties["kind"] else { return false }
+                      return discriminator["const"] == kind
+                  }) else { throw MGError("video2d.schema.\(path).kind") }
+            try validate(value, schema: choice, root: root, path: path); return
         }
         if let constant = rules["const"], value != constant { try refuse() }
         if case .array(let choices)? = rules["enum"], !choices.contains(value) { try refuse() }
@@ -204,7 +211,8 @@ enum MGVideoSchema {
         case .string("integer"), .string("number"):
             guard case .number(let scalar) = value, scalar.isFinite, scalar >= number("minimum", -.infinity), scalar <= number("maximum", .infinity) else { try refuse() }
             if rules["type"] == .string("integer"), scalar.rounded() != scalar { try refuse() }
-        default: break
+        case nil: break
+        default: throw MGError("video2d.schema.resource.type")
         }
     }
 }

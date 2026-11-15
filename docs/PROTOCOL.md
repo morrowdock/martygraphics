@@ -39,7 +39,8 @@ duration. Captions are ordered, nonoverlapping half-open frame intervals.
 Parsing preflights every source frame before a checked plan can escape. Measured
 text, arrow extents and tick labels must fit with 8-pixel margins outside the bottom
 96-pixel caption/provenance band. Captions wrap to at most 52 pixels of height;
-the generated-media label is always visible. Shape overlaps are warnings, not
+the generated-media label is always visible. Text/tick collisions refuse; text
+draws above geometry on a contrasting backing. Shape overlaps are warnings, not
 algorithmic errors. Checks prove bounded structure/layout, not educational truth.
 Stable refusal families are `video2d.schema.<JSON path>`, `video2d.version`,
 `video2d.target`, `video2d.frame`, `video2d.range`, `video2d.highlight`,

@@ -799,7 +799,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGModel.swift",
-      "sha256": "3b6667bb7ea4db7602b84088fe41381ad80aeb021b8bd6c6356c31c9b4942455"
+      "sha256": "55e4a285154376c8ea277d465d9f4036130eb0680caaec448550261d2e0b3eb8"
     },
     {
       "path": "Sources/MartyGraphics/MGPack.swift",
@@ -807,7 +807,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "7296bda04f91c07e252e51cd6a7ed095c33b0f8b58ed2f7543d3194718fdca71"
+      "sha256": "4709c30274f9ef653501ccb591d94c95694c61232233e5d3e69b0945bb3b975c"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -839,7 +839,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTimeline.swift",
-      "sha256": "a45dc062044d8a70c00b7e033020b9ad539591beef96eab75b224a504219aad4"
+      "sha256": "d8de59ec7d3b5150bae3eaa1ad23ab8dc92db941a11bc4c6713ab057e21dcb25"
     },
     {
       "path": "Sources/MartyGraphics/MGTween.swift",
@@ -855,7 +855,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "55691f38e7c198d34cd017f67b1fe526f9bc837d76323ef0b25e8950044e955e"
+      "sha256": "fb4a051161ce40eb29f5da378bb19efdce70e117b59cd413fe49b0d7f35f3f16"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -1983,7 +1983,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "d5da42580e1d556f5582570b22cd1c24e47b9abeddfb4ad02321ec0dc3930dbb"
+      "sha256": "278630501c8db2089d292d8d6a57ce84e085944b1741c842ca8c5940d5ffeb6a"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -3027,7 +3027,7 @@
     },
     {
       "path": "docs/proposals/programmatic-video.md",
-      "sha256": "1d476a019c4cc89d75f7d9ea853110603a28f0568536be46d65d09f07e91487f"
+      "sha256": "9069d6e25c1362bc846f030ec7b22c36d13629043e5055ad565e68d4c1990b2f"
     },
     {
       "path": "docs/schemas/scene-2d-layer.draft.schema.json",
@@ -3047,15 +3047,15 @@
     },
     {
       "path": "Sources/MartyGraphics/MGMovieWriter.swift",
-      "sha256": "ee0df14f2e28d54d20f1f82973dfac51a33b9e78248e1df0be816b6d137b9489"
+      "sha256": "288fd522c98bbeb13ed9de6f060786fd141146f502de3c9d15bfa593f81d8831"
     },
     {
       "path": "Sources/MartyGraphics/MGProgrammaticVideo.swift",
-      "sha256": "ad56e348eba34543dfe4ba62671416869c79849c5c883463527620436a974b2b"
+      "sha256": "d09ade1388078251ef1dcaa97cceddd5eee97456cb34c0f27d5669edc53fbebd"
     },
     {
       "path": "Sources/MartyGraphics/MGVideoDrawing.swift",
-      "sha256": "28b4822bb1b9ca1f41e405bb18d5ad3d7ddc5ff21620b7fcc76f2bfef68890fe"
+      "sha256": "05d3fe6133aca80ddf1a6b908781c44936f15a2d180c22929948ff57a4da5c50"
     },
     {
       "path": "Sources/MartyGraphics/MGVideoExport.swift",
@@ -3067,7 +3067,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
-      "sha256": "5633963dcba51df0ffc750fcea8b48d6959eb274b047691e849639c98b561862"
+      "sha256": "c81d79d616af06bdccf29f67b59e3b4efb49e24bab783524013099fbf2d1be03"
     }
   ]
 }

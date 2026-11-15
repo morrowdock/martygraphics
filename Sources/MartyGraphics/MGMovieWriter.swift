@@ -114,9 +114,11 @@ public final class MGMovieWriter {
         input.markAsFinished()
         writer.endSession(atSourceTime: CMTime(value: frames, timescale: fps))
         let done = DispatchSemaphore(value: 0)
+        let deadline = Date().addingTimeInterval(Self.readyTimeout)
         writer.finishWriting { done.signal() }
         while done.wait(timeout: .now() + 0.05) == .timedOut {
             do { try Task.checkCancellation() } catch { throw abandon(error) }
+            guard Date() < deadline else { throw abandon(MGError("mp4: finish timed out")) }
         }
         guard writer.status == .completed else { throw MGError("mp4: \(writer.error.map { "\($0)" } ?? "failed")") }
     }

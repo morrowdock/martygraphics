@@ -79,20 +79,40 @@ enum MGVideoDrawing {
         }
     }
 
+    static func textBounds(_ element: MGVideoElement) -> [CGRect] {
+        if ["label", "code"].contains(element.kind) { return [bounds(element)] }
+        return ticks(element).map { string, point in
+            let size = textSize(string, size: 14)
+            return CGRect(x: point.x - size.width / 2, y: point.y - size.height / 2, width: size.width, height: size.height)
+        }
+    }
+
     static func draw(_ elements: [MGVideoElement], plan: MGCheckedVideoPlan, frame: Int, burnCaptions: Bool) throws -> CGImage {
         guard let context = CGContext(data: nil, width: plan.canvas.width, height: plan.canvas.height, bitsPerComponent: 8, bytesPerRow: 0,
                                       space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { throw MGError("video2d.budget.raster") }
-        context.setFillColor(CGColor(red: 0.035, green: 0.05, blue: 0.09, alpha: 1))
+        let background = CGColor(red: 0.035, green: 0.05, blue: 0.09, alpha: 1)
+        context.setFillColor(background)
         context.fill(CGRect(x: 0, y: 0, width: plan.canvas.width, height: plan.canvas.height))
-        func text(_ string: String, at point: CGPoint, size: Double, color: CGColor, code: Bool = false, centered: Bool = true) {
+        func text(_ string: String, at point: CGPoint, size: Double, color: CGColor, code: Bool = false, centered: Bool = true, backdrop: Bool = true) {
             let measured = textSize(string, size: size, code: code)
-            context.textPosition = CGPoint(x: point.x - (centered ? measured.width / 2 : 0), y: point.y - size * 0.3)
-            CTLineDraw(line(string, size: size, color: color, code: code), context)
+            let left = point.x - (centered ? measured.width / 2 : 0)
+            let rendered = line(string, size: size, color: color, code: code)
+            var ascent: CGFloat = 0, descent: CGFloat = 0
+            _ = CTLineGetTypographicBounds(rendered, &ascent, &descent, nil)
+            if backdrop {
+                context.setFillColor(background)
+                context.fill(CGRect(x: left - 2, y: point.y - measured.height / 2, width: measured.width + 4, height: measured.height))
+            }
+            context.textPosition = CGPoint(x: left, y: point.y - (ascent - descent) / 2)
+            CTLineDraw(rendered, context)
         }
         func segment(_ start: CGPoint, _ end: CGPoint) {
             context.move(to: start); context.addLine(to: end); context.strokePath()
         }
-        for element in elements {
+        let geometry = elements.filter { ["shape", "arrow"].contains($0.kind) }
+        let axes = elements.filter { ["axes", "numberLine"].contains($0.kind) }
+        let labels = elements.filter { ["label", "code"].contains($0.kind) }
+        for element in geometry + axes + labels {
             context.saveGState()
             context.setAlpha(element.opacity ?? 1)
             let rgb = UInt32(element.color.dropFirst(), radix: 16)!
@@ -113,13 +133,14 @@ enum MGVideoDrawing {
             case "label": text(element.text!, at: origin, size: element.fontSize!, color: color)
             case "code":
                 let size = element.fontSize!
+                context.setFillColor(background); context.fill(bounds(element))
                 for (index, string) in element.lines!.enumerated() {
                     let point = CGPoint(x: origin.x, y: origin.y - Double(index + 1) * size * 1.4 + size * 0.4)
                     if element.highlightLine == index + 1 {
                         context.setFillColor(CGColor(red: 0.9, green: 0.7, blue: 0.1, alpha: 0.3))
                         context.fill(CGRect(x: origin.x - 4, y: point.y - size * 0.5, width: bounds(element).width, height: size * 1.4))
                     }
-                    text(string, at: point, size: size, color: color, code: true, centered: false)
+                    text(string, at: point, size: size, color: color, code: true, centered: false, backdrop: false)
                 }
             default:
                 let width = element.length ?? element.size![0]

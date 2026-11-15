@@ -172,6 +172,7 @@ extension MGScene {
 extension MGTimeline {
     /// Length of one motion loop in seconds, or nil when nothing moves.
     public static func cycle(_ scene: MGScene) -> Double? {
+        if let plan = scene.layer2d { return Double(plan.durationFrames) / 30 }
         switch scene.motion {
         case .slide(_, let travel, let hold): return travel + hold
         case .orbit(_, _, let period, _): return period
