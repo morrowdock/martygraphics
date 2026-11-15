@@ -3055,7 +3055,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGVideoDrawing.swift",
-      "sha256": "b530271540d54b4d73300aa7bcd7554696a07e11630e6c6e9abb39f62448ea7b"
+      "sha256": "788f05ccd120d4466404e463e513879a67d478f50a22339330847b8c7026514f"
     },
     {
       "path": "Sources/MartyGraphics/MGVideoExport.swift",
@@ -3067,7 +3067,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
-      "sha256": "c81d79d616af06bdccf29f67b59e3b4efb49e24bab783524013099fbf2d1be03"
+      "sha256": "0bf8134f8134f6474a1a3d9c2a4548862f0bc244366e39a2fc9698395053bb02"
     }
   ]
 }

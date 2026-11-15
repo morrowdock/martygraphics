@@ -133,6 +133,8 @@ final class ProgrammaticVideoTests: XCTestCase {
     }
 
     func testTrackCaptionAndPrimitiveBounds() throws {
+        XCTAssertEqual(MGVideoDrawing.tick(-0.0), "0")
+        XCTAssertEqual(MGVideoDrawing.tick(0.0000001), "1e-07")
         try refuse { layer in
             let tracks = layer["tracks"] as! [[String: Any]]
             layer["tracks"] = Array(repeating: tracks[0], count: 65)

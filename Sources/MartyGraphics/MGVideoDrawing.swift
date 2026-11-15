@@ -33,7 +33,7 @@ enum MGVideoDrawing {
     }
 
     static func tick(_ value: Double) -> String {
-        String(format: "%.4g", locale: Locale(identifier: "en_US_POSIX"), abs(value) < 0.000001 ? 0 : value)
+        String(format: "%.4g", locale: Locale(identifier: "en_US_POSIX"), value == 0 ? 0 : value)
     }
 
     static func ticks(_ element: MGVideoElement) -> [(String, CGPoint)] {
