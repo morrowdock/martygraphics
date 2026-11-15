@@ -121,4 +121,3 @@ public final class MGMovieWriter {
         guard writer.status == .completed else { throw MGError("mp4: \(writer.error.map { "\($0)" } ?? "failed")") }
     }
 }
-
