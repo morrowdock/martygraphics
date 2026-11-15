@@ -116,7 +116,7 @@ enum MGVideoDrawing {
             context.saveGState()
             context.setAlpha(element.opacity ?? 1)
             let rgb = UInt32(element.color.dropFirst(), radix: 16)!
-            let color = CGColor(red: Double((rgb >> 16) & 255) / 255, green: Double((rgb >> 8) & 255) / 255, blue: Double(rgb & 255) / 255, alpha: 1)
+            let color = CGColor(colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!, components: [Double((rgb >> 16) & 255) / 255, Double((rgb >> 8) & 255) / 255, Double(rgb & 255) / 255, 1])!
             context.setFillColor(color); context.setStrokeColor(color); context.setLineWidth(element.strokeWidth ?? 2)
             let origin = CGPoint(x: element.at[0], y: element.at[1])
             switch element.kind {
