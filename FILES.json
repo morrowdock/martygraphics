@@ -1311,7 +1311,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidReportTests.swift",
-      "sha256": "5cd92b8ea83dff2409d87394584ba61609fc507cf90f961061d974ab709062e2"
+      "sha256": "cd0b566581ddc91b4db931cbf2d0c6bc412b16f3742e46812bb242e856abca6a"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidSectionTests.swift",
@@ -3067,7 +3067,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
-      "sha256": "0bf8134f8134f6474a1a3d9c2a4548862f0bc244366e39a2fc9698395053bb02"
+      "sha256": "39091f45e01f809cace904a29c873236dc0d7eac84f2016060218e6d82e3914d"
     }
   ]
 }

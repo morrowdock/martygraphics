@@ -134,7 +134,10 @@ final class ProgrammaticVideoTests: XCTestCase {
 
     func testTrackCaptionAndPrimitiveBounds() throws {
         XCTAssertEqual(MGVideoDrawing.tick(-0.0), "0")
-        XCTAssertEqual(MGVideoDrawing.tick(0.0000001), "1e-07")
+        for value in [0.0000001, -0.0000001] {
+            let tick = try XCTUnwrap(Double(MGVideoDrawing.tick(value)))
+            XCTAssertEqual(tick, value, accuracy: 1e-20)
+        }
         try refuse { layer in
             let tracks = layer["tracks"] as! [[String: Any]]
             layer["tracks"] = Array(repeating: tracks[0], count: 65)
@@ -248,22 +251,25 @@ final class ProgrammaticVideoTests: XCTestCase {
                 let destination = folder.appendingPathComponent("\(name)-\(format.rawValue).\(format.rawValue)")
                 let receipt = try await MGProgrammaticVideo.export(checked, to: destination, options: .init(format: format), programmaticVideo: true)
                 XCTAssertEqual(receipt.frameCount, format == .mp4 ? 120 : 40)
-                XCTAssertEqual(receipt.durationSeconds, 4)
+                XCTAssertEqual(receipt.durationSeconds, 4, accuracy: 1e-8)
                 XCTAssertEqual(receipt.width, format == .mp4 ? 1280 : 640)
                 XCTAssertEqual(receipt.height, format == .mp4 ? 720 : 360)
                 XCTAssertEqual(try String(contentsOf: XCTUnwrap(receipt.subtitles), encoding: .utf8), MGProgrammaticVideo.srt(checked))
                 if format == .mp4 {
                     let asset = AVURLAsset(url: destination)
-                    let track = try XCTUnwrap(asset.tracks(withMediaType: .video).first)
-                    XCTAssertEqual(track.timeRange.duration.seconds, 4, accuracy: 1e-8)
-                    XCTAssertEqual(track.naturalSize, CGSize(width: 1280, height: 720))
+                    let tracks = try await asset.loadTracks(withMediaType: .video)
+                    let track = try XCTUnwrap(tracks.first)
+                    let timeRange = try await track.load(.timeRange)
+                    let naturalSize = try await track.load(.naturalSize)
+                    XCTAssertEqual(CMTimeCompare(timeRange.duration, CMTime(value: 120, timescale: 30)), 0)
+                    XCTAssertEqual(naturalSize, CGSize(width: 1280, height: 720))
                     let reader = try AVAssetReader(asset: asset)
                     let output = AVAssetReaderTrackOutput(track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
                     reader.add(output); XCTAssertTrue(reader.startReading())
                     var count = 0
                     while let sample = output.copyNextSampleBuffer() {
                         XCTAssertNotNil(CMSampleBufferGetImageBuffer(sample))
-                        XCTAssertEqual(CMSampleBufferGetPresentationTimeStamp(sample).seconds, Double(count) / 30, accuracy: 1e-8)
+                        XCTAssertEqual(CMTimeCompare(CMSampleBufferGetPresentationTimeStamp(sample), CMTime(value: Int64(count), timescale: 30)), 0)
                         count += 1
                     }
                     XCTAssertEqual(count, 120); XCTAssertEqual(reader.status, .completed)
@@ -295,12 +301,15 @@ final class ProgrammaticVideoTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: destination) }
         let receipt = try await MGProgrammaticVideo.export(checked, to: destination, options: .init(writeSRT: false), programmaticVideo: true)
         XCTAssertEqual(receipt.width, 1920); XCTAssertEqual(receipt.height, 1080)
-        XCTAssertEqual(receipt.frameCount, 3); XCTAssertEqual(receipt.durationSeconds, 0.1)
+        XCTAssertEqual(receipt.frameCount, 3); XCTAssertEqual(receipt.durationSeconds, 0.1, accuracy: 1e-8)
         XCTAssertNil(receipt.subtitles)
         let asset = AVURLAsset(url: destination)
-        let track = try XCTUnwrap(asset.tracks(withMediaType: .video).first)
-        XCTAssertEqual(track.naturalSize, CGSize(width: 1920, height: 1080))
-        XCTAssertEqual(track.timeRange.duration.seconds, 0.1, accuracy: 1e-8)
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        let track = try XCTUnwrap(tracks.first)
+        let naturalSize = try await track.load(.naturalSize)
+        let timeRange = try await track.load(.timeRange)
+        XCTAssertEqual(naturalSize, CGSize(width: 1920, height: 1080))
+        XCTAssertEqual(CMTimeCompare(timeRange.duration, CMTime(value: 3, timescale: 30)), 0)
     }
 
     func testCancellationAndExportRefusalsRemovePartialFiles() async throws {

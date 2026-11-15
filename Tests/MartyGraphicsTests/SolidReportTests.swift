@@ -146,7 +146,10 @@ final class SolidReportTests: XCTestCase {
 
     func testEngineIdentityMatchesTheChangelog() throws {
         let changelog = try String(contentsOf: Self.root.appendingPathComponent("CHANGELOG.md"), encoding: .utf8)
-        let heading = changelog.split(separator: "\n").first { $0.hasPrefix("## ") }.map { String($0.dropFirst(3)) }
+        let heading = changelog.split(separator: "\n").first { $0.hasPrefix("## ") }.map { line in
+            let title = line.dropFirst(3)
+            return String(title.hasPrefix("[") && title.hasSuffix("]") ? title.dropFirst().dropLast() : title)
+        }
         XCTAssertEqual(heading?.lowercased(), MGEngine.version.lowercased())
         XCTAssertEqual(MGEngine.identity["name"], .string("MartyGraphics"))
         XCTAssertEqual(MGEngine.identity["reportFormat"], .number(1))
