@@ -26,6 +26,14 @@
       "sha256": "8f48dedc65f7485cae1b48cd7dc55995b0e6980e3d75ed02ae700a3d4b8e4fb1"
     },
     {
+      "path": ".github/tests/changelog.test.cjs",
+      "sha256": "456befe1c91904a07bedb720c346d352374de237845d51d48281b506644a72db"
+    },
+    {
+      "path": ".github/workflows/changelog.yml",
+      "sha256": "175c0a148dbf33effdbc0c6cf10ed4356e73ca0d04e4232254fe9d58a18e9196"
+    },
+    {
       "path": ".github/workflows/ci.yml",
       "sha256": "a5e4b2c8854803eff45f3a98a8638ab3aaabbc775389866bf6f06c1842fbb674"
     },
@@ -39,7 +47,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "b4c275fb392d6157e24b310267225f693c27c3cea73b68e75d400ce4481b2fd6"
+      "sha256": "ea97e989742d5787e3b914f29481e722695d9a48557d1163c0d5f65ac3a85a83"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -235,7 +243,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "c8ef0e035b888cc717939219bc5fb47ba0b17f7320add9f3139c4ed83d9b8bd1"
+      "sha256": "cb03e06534477830d752d3a76d966e46d53314cc84681cc0a43785f2f5f8ad0f"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift",
@@ -707,7 +715,7 @@
     },
     {
       "path": "Package.swift",
-      "sha256": "8eddf7fb91cf8d90fbeb6c5589dd16925078a4c7bd89aa92b476c3f3baedb00f"
+      "sha256": "1087ebf13f9189855ed760764a3dcb6844c3cfce5a2c706ac03bf855ae63136e"
     },
     {
       "path": "README.md",
@@ -759,7 +767,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
-      "sha256": "674dc4f62478eef54c42f7e245eeba1a96f35b3b26e807392c127b1b5c2fb018"
+      "sha256": "5af81841f9fb3d89d3859ce5035f7a7e2784cd940eedc1f7dfd99376d7ef73fa"
     },
     {
       "path": "Sources/MartyGraphics/MGEngine.swift",
@@ -799,7 +807,11 @@
     },
     {
       "path": "Sources/MartyGraphics/MGModel.swift",
-      "sha256": "9b28d93fea15ff973f699fc2c9a25cf48d8bbcd59f614549a8883a43ce4b7c84"
+      "sha256": "3b6667bb7ea4db7602b84088fe41381ad80aeb021b8bd6c6356c31c9b4942455"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGMovieWriter.swift",
+      "sha256": "b4e9b22bb26d2bd6b901ee55aa1ad8fe8938ce8b70a1f45fbcbe6f0ff779cc14"
     },
     {
       "path": "Sources/MartyGraphics/MGPack.swift",
@@ -807,7 +819,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "b044697663f9669aa7e1fa7cb032a7f56b580c680faa451059442146775a87c8"
+      "sha256": "7296bda04f91c07e252e51cd6a7ed095c33b0f8b58ed2f7543d3194718fdca71"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -816,6 +828,10 @@
     {
       "path": "Sources/MartyGraphics/MGPhysics.swift",
       "sha256": "aa34cc3c370af27112759a5dc1cd439ce7afb3ed2d4997fa2b68c367816316b7"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGProgrammaticVideo.swift",
+      "sha256": "ad56e348eba34543dfe4ba62671416869c79849c5c883463527620436a974b2b"
     },
     {
       "path": "Sources/MartyGraphics/MGRenderPolicy.swift",
@@ -839,11 +855,19 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTimeline.swift",
-      "sha256": "93d5c5624fd1bc4a55d1f1c36cf0b94c3fe56dc5b96571665f79e028f4f66862"
+      "sha256": "a45dc062044d8a70c00b7e033020b9ad539591beef96eab75b224a504219aad4"
     },
     {
       "path": "Sources/MartyGraphics/MGTween.swift",
       "sha256": "cc6e8348a2e80b3c248ae87bb1300a5f916778fa40e8a58644ea89c1ff0698dd"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGVideoDrawing.swift",
+      "sha256": "28b4822bb1b9ca1f41e405bb18d5ad3d7ddc5ff21620b7fcc76f2bfef68890fe"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGVideoExport.swift",
+      "sha256": "8abcd379ce9d9906321e3826879d7014ba77012f2fb22e57aa20727915b39148"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsExplainerView.swift",
@@ -856,6 +880,10 @@
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
       "sha256": "55691f38e7c198d34cd017f67b1fe526f9bc837d76323ef0b25e8950044e955e"
+    },
+    {
+      "path": "Sources/MartyGraphics/Resources/scene-2d-layer.draft.schema.json",
+      "sha256": "a488b63b6a89457667ccd7fde1cc4df88c0bce6902e231fe5cffee6126209194"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -1218,6 +1246,10 @@
       "sha256": "05659ae157ff2a076283633902cbeb5fe63f699a29fda175f20f00aaadcaa9cc"
     },
     {
+      "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
+      "sha256": "5633963dcba51df0ffc750fcea8b48d6959eb274b047691e849639c98b561862"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/ProtocolFixtureTests.swift",
       "sha256": "47d029b7ac09655c790a3d73dd252e198be2d857c211deecd0ad83ac9485e563"
     },
@@ -1414,10 +1446,6 @@
       "sha256": "899033b2cc452c6f77cd11b78e91f6cff9f6e36b9ddaa7167ce43a39ef97441c"
     },
     {
-      "path": "benchmark/mechanisms-v1/harness/LIVE-ADAPTERS.md",
-      "sha256": "b4cbbb413bf561d798a4371848427c789dc609836416170fdbae4bf3e8939cb1"
-    },
-    {
       "path": "benchmark/mechanisms-v1/dry-run/DRY-BICYCLE.FACTCHECK-2.md",
       "sha256": "498fa9e20ccd7901c741cfcac4fa649e7debf86ca42701dd13291149d4000e7e"
     },
@@ -1434,8 +1462,20 @@
       "sha256": "b912ca539769b424494c2c6cc3cea3f4c25bad52cef645d0e4742f0127036ab0"
     },
     {
+      "path": "benchmark/mechanisms-v1/harness/DRY-RUN-RUNBOOK.md",
+      "sha256": "4cf3b60e62d844ef501bca23da2f9b2d80a6615e166dd1ee7cfa23b372a5d934"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/G2-REGISTERED-MODEL-VALIDATION.md",
+      "sha256": "3da1f8679ecd0da0821b0955f645ab768dfa61bbbc523adaa9c3fc4b16fac219"
+    },
+    {
       "path": "benchmark/mechanisms-v1/harness/GEMINI-CLI.md",
       "sha256": "2d9a3ac8be4a9a39a3bebe1a2e5c5e4540a57700626c7d62d7ae00357ffe38ed"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/LIVE-ADAPTERS.md",
+      "sha256": "b4cbbb413bf561d798a4371848427c789dc609836416170fdbae4bf3e8939cb1"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/OPEN-QUESTIONS.md",
@@ -1454,6 +1494,22 @@
       "sha256": "8dd676e135d12993fcf7e2e4170d8e91412d06e07f302ae1425e55d86000580d"
     },
     {
+      "path": "benchmark/mechanisms-v1/harness/arm2/README.md",
+      "sha256": "5500ed18fd40a07a4e5a21d1a02d2a00b925e42f42ba738a6711656b62158f31"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/arm2/SYNTHETIC-VALIDATION.md",
+      "sha256": "9e1b8f2980bd6c5f66a1bac363da9b598731f3bb8ef3f97964eed90ccaa95eb0"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/arm2/driver.py",
+      "sha256": "4ecf799c7ba7e193a1a544ebc062729c283ebfb09d0d83b265eef28df9099d9a"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/arm2/render.swift",
+      "sha256": "493bcbc157e62925209ffb357892770fa16855fee85bfc70cd94ff3a1f6652ca"
+    },
+    {
       "path": "benchmark/mechanisms-v1/harness/blinding.py",
       "sha256": "3008a855e2fdd350da7137a273d83233eee01a1108c8925e72c11ae5d1bcc93d"
     },
@@ -1464,6 +1520,10 @@
     {
       "path": "benchmark/mechanisms-v1/harness/grading_runner.py",
       "sha256": "aad0a4991705292301a22c7f770cc874e2e32e679cc846c390874a9bb8cb0945"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/native/gemini_guard.mjs",
+      "sha256": "a0a259d37893ef24d28f78d3d5b971c523cf65b20d370dfb5e04dfa4ecbaaa77"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/native/gemini_probe.mjs",
@@ -1486,6 +1546,30 @@
       "sha256": "af39630cd50e7db95b19ee7f273a8cef2bc937fae565d368fca99aa53655218a"
     },
     {
+      "path": "benchmark/mechanisms-v1/harness/shim/record.py",
+      "sha256": "2a068629e0001c3cc2348c5ada9e20a34ccc10bcd12dd2152dd0b82b719468c2"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/arm2_tokenizer_cases.py",
+      "sha256": "1f8243739c1a736ba6fcace8e3dbc7cbc7dbf613710169e4c0f9bcb90eb12304"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/cube.html",
+      "sha256": "09949864433d9f91e137c1b3b7d94d49d815d920b6edf6e311cfbdd043484c7d"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/network.html",
+      "sha256": "1b0bc2dee96b43d42a80b6ece12bf6d204b6472c9bdc6b237250270044ea2a2e"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/never-ready.html",
+      "sha256": "4581df68eaff5ac7392cdb1fb7ff1762873b8472091a482367ef48f8dabefacd"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/unquoted-attribute-quote.html",
+      "sha256": "3f0894e823cef0ee3be93525964579f8cc2704e699a109de915aa1412e715f79"
+    },
+    {
       "path": "benchmark/mechanisms-v1/harness/tests/gemini_startup_stub.mjs",
       "sha256": "4c1e9ed13046131b11254aadeb64c09d2df4388d95b2b75b5061a1ef20a1bf95"
     },
@@ -1502,6 +1586,14 @@
       "sha256": "35d944c4dd987ed00f6d8662a258f1465436a20ed31eac035971d4ae8a9daaa2"
     },
     {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_renderer.py",
+      "sha256": "7465a55098817c0f8469db8470d065b9cfd954c4900c0b9778738039b9dbc427"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_shim.py",
+      "sha256": "4d9fe38482c3c62904a7c7e233c858726c028943edd9cdd0e473a2fc551a98d5"
+    },
+    {
       "path": "benchmark/mechanisms-v1/harness/tests/test_blinding.py",
       "sha256": "eacde1c4dccfaf80cb0bad46fa8788db7f035e47bc6e4f4dd317ff8e3590281b"
     },
@@ -1516,6 +1608,10 @@
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_native_media.py",
       "sha256": "80d4adca38b097c436a35c067a183cda943fbfdf6eaba90d323772820621ca04"
+    },
+    {
+      "path": "benchmark/mechanisms-v1/harness/tests/test_pack_cli.py",
+      "sha256": "0373316db50ef264182be221fcade6d0a658cbd9ac8addc6e70bd81619cd0be4"
     },
     {
       "path": "benchmark/mechanisms-v1/harness/tests/test_pack_runner.py",
@@ -1983,7 +2079,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "d86fcac1b230f023b023ed52f27c4a457dbd9f6157f25925ddb33a6c4c480cb0"
+      "sha256": "d5da42580e1d556f5582570b22cd1c24e47b9abeddfb4ad02321ec0dc3930dbb"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -2778,6 +2874,18 @@
       "sha256": "693f6bd52b06fb6ae1ac767cf0926707b767b817dac91f4d8dcb3d256b6d451e"
     },
     {
+      "path": "docs/examples/programmatic-video/git-flow.json",
+      "sha256": "9e6f890de039be5dddaee1d7215db7264db4202fd5d2dd558f1f2afd910b5be1"
+    },
+    {
+      "path": "docs/examples/programmatic-video/projectile.json",
+      "sha256": "fa32f7a91489ba8ffc05bcde568b92680ab2141d9d82ab335b382be17d50d717"
+    },
+    {
+      "path": "docs/examples/programmatic-video/sorting.json",
+      "sha256": "09240b484a40ae9b299fb3ea0eff466c056432c97fdae307acd82cf339227c14"
+    },
+    {
       "path": "docs/fixtures/anchor-suggest/README.md",
       "sha256": "cb63fff44ae9298cf635a9acd8544a208dde86465a47024c3606ad5bfb57245b"
     },
@@ -2840,6 +2948,14 @@
     {
       "path": "docs/fixtures/v1/unknown-key.scene.json",
       "sha256": "b721cc2f2562268e8fc65c84d60c1bb594eaa416a4c1f39ccc99c47030244c8e"
+    },
+    {
+      "path": "docs/proposals/programmatic-video.md",
+      "sha256": "1d476a019c4cc89d75f7d9ea853110603a28f0568536be46d65d09f07e91487f"
+    },
+    {
+      "path": "docs/schemas/scene-2d-layer.draft.schema.json",
+      "sha256": "a488b63b6a89457667ccd7fde1cc4df88c0bce6902e231fe5cffee6126209194"
     },
     {
       "path": "tools/SceneValidator/Package.swift",
@@ -2952,98 +3068,6 @@
     {
       "path": "tools/verify_release_install.py",
       "sha256": "3d87164ec0d1a6de154d86957970d91645c36f4d63b411f0d5a597fb0629777a"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/native/gemini_guard.mjs",
-      "sha256": "a0a259d37893ef24d28f78d3d5b971c523cf65b20d370dfb5e04dfa4ecbaaa77"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/arm2/README.md",
-      "sha256": "5500ed18fd40a07a4e5a21d1a02d2a00b925e42f42ba738a6711656b62158f31"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/arm2/SYNTHETIC-VALIDATION.md",
-      "sha256": "9e1b8f2980bd6c5f66a1bac363da9b598731f3bb8ef3f97964eed90ccaa95eb0"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/arm2/driver.py",
-      "sha256": "4ecf799c7ba7e193a1a544ebc062729c283ebfb09d0d83b265eef28df9099d9a"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/arm2/render.swift",
-      "sha256": "493bcbc157e62925209ffb357892770fa16855fee85bfc70cd94ff3a1f6652ca"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/shim/record.py",
-      "sha256": "2a068629e0001c3cc2348c5ada9e20a34ccc10bcd12dd2152dd0b82b719468c2"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/cube.html",
-      "sha256": "09949864433d9f91e137c1b3b7d94d49d815d920b6edf6e311cfbdd043484c7d"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/network.html",
-      "sha256": "1b0bc2dee96b43d42a80b6ece12bf6d204b6472c9bdc6b237250270044ea2a2e"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/never-ready.html",
-      "sha256": "4581df68eaff5ac7392cdb1fb7ff1762873b8472091a482367ef48f8dabefacd"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_renderer.py",
-      "sha256": "7465a55098817c0f8469db8470d065b9cfd954c4900c0b9778738039b9dbc427"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/tests/test_arm2_shim.py",
-      "sha256": "4d9fe38482c3c62904a7c7e233c858726c028943edd9cdd0e473a2fc551a98d5"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/tests/arm2_tokenizer_cases.py",
-      "sha256": "1f8243739c1a736ba6fcace8e3dbc7cbc7dbf613710169e4c0f9bcb90eb12304"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/tests/fixtures/arm2/unquoted-attribute-quote.html",
-      "sha256": "3f0894e823cef0ee3be93525964579f8cc2704e699a109de915aa1412e715f79"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/G2-REGISTERED-MODEL-VALIDATION.md",
-      "sha256": "3da1f8679ecd0da0821b0955f645ab768dfa61bbbc523adaa9c3fc4b16fac219"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/DRY-RUN-RUNBOOK.md",
-      "sha256": "4cf3b60e62d844ef501bca23da2f9b2d80a6615e166dd1ee7cfa23b372a5d934"
-    },
-    {
-      "path": "benchmark/mechanisms-v1/harness/tests/test_pack_cli.py",
-      "sha256": "0373316db50ef264182be221fcade6d0a658cbd9ac8addc6e70bd81619cd0be4"
-    },
-    {
-      "path": ".github/workflows/changelog.yml",
-      "sha256": "175c0a148dbf33effdbc0c6cf10ed4356e73ca0d04e4232254fe9d58a18e9196"
-    },
-    {
-      "path": ".github/tests/changelog.test.cjs",
-      "sha256": "456befe1c91904a07bedb720c346d352374de237845d51d48281b506644a72db"
-    },
-    {
-      "path": "docs/proposals/programmatic-video.md",
-      "sha256": "c9faa9123ab492c4cbb27ddf2d89abcf192fabad9516ff2b4db009411de99234"
-    },
-    {
-      "path": "docs/schemas/scene-2d-layer.draft.schema.json",
-      "sha256": "a488b63b6a89457667ccd7fde1cc4df88c0bce6902e231fe5cffee6126209194"
-    },
-    {
-      "path": "docs/examples/programmatic-video/sorting.json",
-      "sha256": "09240b484a40ae9b299fb3ea0eff466c056432c97fdae307acd82cf339227c14"
-    },
-    {
-      "path": "docs/examples/programmatic-video/projectile.json",
-      "sha256": "fa32f7a91489ba8ffc05bcde568b92680ab2141d9d82ab335b382be17d50d717"
-    },
-    {
-      "path": "docs/examples/programmatic-video/git-flow.json",
-      "sha256": "9e6f890de039be5dddaee1d7215db7264db4202fd5d2dd558f1f2afd910b5be1"
     }
   ]
 }

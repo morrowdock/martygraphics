@@ -10,7 +10,7 @@ let package = Package(
     platforms: [.macOS(.v14), .iOS(.v17)],
     products: [.library(name: "MartyGraphics", targets: ["MartyGraphics"]),
                .library(name: "MartyGraphicsPathTracer", targets: ["MartyGraphicsPathTracer"])],
-    targets: [.target(name: "MartyGraphics"),
+    targets: [.target(name: "MartyGraphics", resources: [.process("Resources")]),
               .testTarget(name: "MartyGraphicsTests", dependencies: ["MartyGraphics"]),
               .target(name: "MartyGraphicsPathTracer"),
               .testTarget(name: "MartyGraphicsPathTracerTests", dependencies: ["MartyGraphicsPathTracer"])],

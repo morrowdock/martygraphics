@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Experimental, opt-in `layer2d` programmatic video: checked native 2D keyframes,
+  shared library H.264 MP4 and bounded GIF export, captions and SRT sidecars.
+  Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
+
 ## Unreleased
 
 - **Dry packing without blinded-key access (2026-11-13, A-19).** Use only the

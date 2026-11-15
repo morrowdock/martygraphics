@@ -143,6 +143,7 @@ public enum MGMotion: Equatable, Sendable {
 
 /// A validated, resolved scene: everything a renderer needs. Create with `MGScene.parse` or `MGTemplates`.
 public struct MGScene: Equatable, Sendable {
+    public internal(set) var layer2d: MGCheckedVideoPlan? = nil
     /// Canonical JSON of the validated wire scene. Patches rewrite this and re-validate from scratch.
     public let source: MGJSON
     public let template: String?

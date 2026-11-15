@@ -1,6 +1,11 @@
 # Programmatic video: learn it, build it, teach it
 
-Status: proposal. All new format fields, APIs, limits, UI and release dates below are **proposed**, not shipped features.
+Status: phase 1 implemented on this branch; experimental and still opt-in. No release tag or app integration.
+The design below remains a proposal for later phases; the implementation contract and evidence limits are in
+[the protocol section](../PROTOCOL.md#experimental-opt-in-layer2d-programmatic-video).
+
+Phase 1 source status: **implemented**, pending CI and maintainer review on this branch. The three original draft
+examples are retained byte-for-byte. iPad performance/memory acceptance targets remain **pending**, not verified.
 
 Checked: 2026-11-15 UTC. Verified source baseline: `3ce64d3dd15fb35a73ee79e65ba6730be5b94d86`.
 Owner-approved goal and priority: 2026-11-15, “sooner”. Learners, lessons and the Marty agent should make short

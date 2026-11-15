@@ -3,6 +3,31 @@ import Foundation
 
 /// Step state, motion frames and patch blending. Pure functions of (scene, step, time) so renderers and tests agree.
 public enum MGTimeline {
+    public static func videoFrame(_ index: Int, in plan: MGCheckedVideoPlan) throws -> [MGVideoElement] {
+        guard (0..<plan.durationFrames).contains(index) else { throw MGError("video2d.frame") }
+        return plan.elements.map { element in
+            guard let track = plan.tracks.first(where: { $0.target == element.id }) else { return element }
+            var result = element
+            let positions = track.keyframes.filter { $0.at != nil }
+            let opacities = track.keyframes.filter { $0.opacity != nil }
+            let highlights = track.keyframes.filter { $0.highlightLine != nil }
+            func pair(_ keys: [MGVideoKeyframe]) -> (MGVideoKeyframe, MGVideoKeyframe, Double)? {
+                guard let first = keys.first, index >= first.frame else { return nil }
+                let left = keys.last(where: { $0.frame <= index }) ?? first
+                let right = keys.first(where: { $0.frame > index }) ?? left
+                let progress = track.interpolation == "hold" || left.frame == right.frame ? 0 : Double(index - left.frame) / Double(right.frame - left.frame)
+                return (left, right, progress)
+            }
+            if let (left, right, progress) = pair(positions), let start = left.at, let end = right.at {
+                result.at = zip(start, end).map { $0 + ($1 - $0) * progress }
+            }
+            if let (left, right, progress) = pair(opacities), let start = left.opacity, let end = right.opacity {
+                result.opacity = start + (end - start) * progress
+            }
+            if let key = highlights.last(where: { $0.frame <= index }) { result.highlightLine = key.highlightLine }
+            return result
+        }
+    }
     /// Index of the first step that lists each item in `show`. Items never listed are always visible.
     public static func firstShown(_ scene: MGScene) -> [String: Int] {
         var out: [String: Int] = [:]

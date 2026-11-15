@@ -54,6 +54,27 @@ struct MGContext {
 /// text must be short plain text; ids must be unique and every reference must resolve. Any violation rejects the whole
 /// scene (the caller keeps whatever it showed before).
 public enum MGParser {
+    public static func scene(data: Data, programmaticVideo: Bool) -> Result<MGScene, MGError> {
+        guard programmaticVideo else { return scene(data: data) }
+        guard data.count <= 65536 else { return .failure(MGError("video2d.budget.bytes")) }
+        if let reason = MGJSON.dataRefusal(data, json: "json", depth: "scene.depth") { return .failure(MGError(reason)) }
+        guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(MGError("json")) }
+        return scene(object: object, programmaticVideo: true)
+    }
+
+    public static func scene(object: Any, programmaticVideo: Bool) -> Result<MGScene, MGError> {
+        guard programmaticVideo else { return scene(object: object) }
+        guard let json = MGJSON(any: object) else { return .failure(MGError("json")) }
+        return scene(json: json, programmaticVideo: true)
+    }
+
+    public static func scene(json: MGJSON, programmaticVideo: Bool) -> Result<MGScene, MGError> {
+        guard programmaticVideo, case .object(let object) = json, object["layer2d"] != nil else { return scene(json: json) }
+        do { return .success(try MGProgrammaticVideo.parse(json)) }
+        catch let error as MGError { return .failure(error) }
+        catch { return .failure(MGError("video2d.schema")) }
+    }
+
     static let topKeys: Set<String> = ["v", "template", "params", "title", "dim", "world", "items", "steps", "camera", "hide", "over"]
 
     public static func scene(data: Data) -> Result<MGScene, MGError> {

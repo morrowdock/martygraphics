@@ -35,6 +35,13 @@ public enum MGCanvasRenderer {
                                        .pulley: 3, .edge: 3, .body: 4, .node: 4, .array: 4, .vector: 5, .highlight: 6, .text: 7, .table: 4, .region: 0]
 
     public static func draw(_ input: MGRenderInput, in ctx: GraphicsContext) {
+        if let plan = input.scene.layer2d {
+            let frame = input.time.isFinite ? min(plan.durationFrames - 1, max(0, Int((min(60, max(0, input.time)) * 30).rounded(.down)))) : 0
+            if let image = try? MGProgrammaticVideo.frame(frame, in: plan) {
+                ctx.draw(Image(decorative: image, scale: 1), in: CGRect(origin: .zero, size: input.viewport.size))
+            }
+            return
+        }
         let vp = input.viewport, theme = input.theme, size = vp.size
         // Board.
         let rect = CGRect(origin: .zero, size: size)
