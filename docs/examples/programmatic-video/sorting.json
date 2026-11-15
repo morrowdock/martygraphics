@@ -1,0 +1,187 @@
+{
+  "v": 1,
+  "dim": "2d",
+  "title": "Proposed sorting: one adjacent swap",
+  "items": [],
+  "layer2d": {
+    "status": "proposed",
+    "version": "0.1.0-draft",
+    "fps": 30,
+    "durationFrames": 120,
+    "canvas": {
+      "width": 1280,
+      "height": 720
+    },
+    "elements": [
+      {
+        "id": "three",
+        "kind": "shape",
+        "at": [
+          300,
+          300
+        ],
+        "color": "#276EF1",
+        "shape": "rect",
+        "size": [
+          100,
+          180
+        ]
+      },
+      {
+        "id": "one",
+        "kind": "shape",
+        "at": [
+          480,
+          300
+        ],
+        "color": "#276EF1",
+        "shape": "rect",
+        "size": [
+          100,
+          60
+        ]
+      },
+      {
+        "id": "three-label",
+        "kind": "label",
+        "at": [
+          300,
+          410
+        ],
+        "color": "#276EF1",
+        "text": "3",
+        "fontSize": 32
+      },
+      {
+        "id": "one-label",
+        "kind": "label",
+        "at": [
+          480,
+          350
+        ],
+        "color": "#276EF1",
+        "text": "1",
+        "fontSize": 32
+      },
+      {
+        "id": "listing",
+        "kind": "code",
+        "at": [
+          760,
+          450
+        ],
+        "color": "#276EF1",
+        "lines": [
+          "if left > right:",
+          "    swap(left, right)"
+        ],
+        "fontSize": 24,
+        "highlightLine": 1
+      }
+    ],
+    "tracks": [
+      {
+        "target": "three",
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": [
+              300,
+              300
+            ]
+          },
+          {
+            "frame": 89,
+            "at": [
+              480,
+              300
+            ]
+          }
+        ]
+      },
+      {
+        "target": "one",
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": [
+              480,
+              300
+            ]
+          },
+          {
+            "frame": 89,
+            "at": [
+              300,
+              300
+            ]
+          }
+        ]
+      },
+      {
+        "target": "three-label",
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": [
+              300,
+              410
+            ]
+          },
+          {
+            "frame": 89,
+            "at": [
+              480,
+              410
+            ]
+          }
+        ]
+      },
+      {
+        "target": "one-label",
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": [
+              480,
+              350
+            ]
+          },
+          {
+            "frame": 89,
+            "at": [
+              300,
+              350
+            ]
+          }
+        ]
+      },
+      {
+        "target": "listing",
+        "interpolation": "hold",
+        "keyframes": [
+          {
+            "frame": 0,
+            "highlightLine": 1
+          },
+          {
+            "frame": 30,
+            "highlightLine": 2
+          }
+        ]
+      }
+    ],
+    "captions": [
+      {
+        "startFrame": 0,
+        "endFrame": 120,
+        "text": "Compare 3 and 1, then swap this pair. This is one sorting step."
+      }
+    ],
+    "generatedMediaLabel": "Generated educational animation"
+  }
+}

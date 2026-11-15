@@ -1,0 +1,163 @@
+{
+  "v": 1,
+  "dim": "2d",
+  "title": "Proposed Git: branch and merge",
+  "items": [],
+  "layer2d": {
+    "status": "proposed",
+    "version": "0.1.0-draft",
+    "fps": 30,
+    "durationFrames": 120,
+    "canvas": {
+      "width": 1280,
+      "height": 720
+    },
+    "elements": [
+      {
+        "id": "time",
+        "kind": "numberLine",
+        "at": [
+          180,
+          180
+        ],
+        "color": "#276EF1",
+        "length": 800,
+        "range": [
+          0,
+          3
+        ],
+        "ticks": 4
+      },
+      {
+        "id": "branch",
+        "kind": "arrow",
+        "at": [
+          300,
+          300
+        ],
+        "color": "#276EF1",
+        "to": [
+          600,
+          450
+        ]
+      },
+      {
+        "id": "merge",
+        "kind": "arrow",
+        "at": [
+          600,
+          450
+        ],
+        "color": "#276EF1",
+        "to": [
+          900,
+          300
+        ],
+        "opacity": 0
+      },
+      {
+        "id": "base",
+        "kind": "shape",
+        "at": [
+          300,
+          300
+        ],
+        "color": "#276EF1",
+        "shape": "ellipse",
+        "size": [
+          30,
+          30
+        ]
+      },
+      {
+        "id": "feature",
+        "kind": "shape",
+        "at": [
+          600,
+          450
+        ],
+        "color": "#276EF1",
+        "shape": "ellipse",
+        "size": [
+          30,
+          30
+        ]
+      },
+      {
+        "id": "joined",
+        "kind": "shape",
+        "at": [
+          900,
+          300
+        ],
+        "color": "#276EF1",
+        "shape": "ellipse",
+        "size": [
+          30,
+          30
+        ],
+        "opacity": 0
+      },
+      {
+        "id": "main-label",
+        "kind": "label",
+        "at": [
+          260,
+          250
+        ],
+        "color": "#276EF1",
+        "text": "main",
+        "fontSize": 24
+      },
+      {
+        "id": "feature-label",
+        "kind": "label",
+        "at": [
+          600,
+          510
+        ],
+        "color": "#276EF1",
+        "text": "feature",
+        "fontSize": 24
+      }
+    ],
+    "tracks": [
+      {
+        "target": "merge",
+        "interpolation": "hold",
+        "keyframes": [
+          {
+            "frame": 0,
+            "opacity": 0
+          },
+          {
+            "frame": 60,
+            "opacity": 1
+          }
+        ]
+      },
+      {
+        "target": "joined",
+        "interpolation": "hold",
+        "keyframes": [
+          {
+            "frame": 0,
+            "opacity": 0
+          },
+          {
+            "frame": 60,
+            "opacity": 1
+          }
+        ]
+      }
+    ],
+    "captions": [
+      {
+        "startFrame": 0,
+        "endFrame": 120,
+        "text": "A feature branches from main, then merges back. Arrows show teaching order, not Git parent-pointer direction."
+      }
+    ],
+    "generatedMediaLabel": "Generated educational animation"
+  }
+}

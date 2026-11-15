@@ -3024,6 +3024,26 @@
     {
       "path": ".github/tests/changelog.test.cjs",
       "sha256": "456befe1c91904a07bedb720c346d352374de237845d51d48281b506644a72db"
+    },
+    {
+      "path": "docs/proposals/programmatic-video.md",
+      "sha256": "c9faa9123ab492c4cbb27ddf2d89abcf192fabad9516ff2b4db009411de99234"
+    },
+    {
+      "path": "docs/schemas/scene-2d-layer.draft.schema.json",
+      "sha256": "a488b63b6a89457667ccd7fde1cc4df88c0bce6902e231fe5cffee6126209194"
+    },
+    {
+      "path": "docs/examples/programmatic-video/sorting.json",
+      "sha256": "09240b484a40ae9b299fb3ea0eff466c056432c97fdae307acd82cf339227c14"
+    },
+    {
+      "path": "docs/examples/programmatic-video/projectile.json",
+      "sha256": "fa32f7a91489ba8ffc05bcde568b92680ab2141d9d82ab335b382be17d50d717"
+    },
+    {
+      "path": "docs/examples/programmatic-video/git-flow.json",
+      "sha256": "9e6f890de039be5dddaee1d7215db7264db4202fd5d2dd558f1f2afd910b5be1"
     }
   ]
 }

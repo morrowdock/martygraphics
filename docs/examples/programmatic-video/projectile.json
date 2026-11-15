@@ -1,0 +1,116 @@
+{
+  "v": 1,
+  "dim": "2d",
+  "title": "Proposed projectile: sampled ideal motion",
+  "items": [],
+  "layer2d": {
+    "status": "proposed",
+    "version": "0.1.0-draft",
+    "fps": 30,
+    "durationFrames": 120,
+    "canvas": {
+      "width": 1280,
+      "height": 720
+    },
+    "elements": [
+      {
+        "id": "axes",
+        "kind": "axes",
+        "at": [
+          180,
+          180
+        ],
+        "color": "#276EF1",
+        "size": [
+          800,
+          350
+        ],
+        "xRange": [
+          0,
+          20
+        ],
+        "yRange": [
+          0,
+          10
+        ],
+        "ticks": 5
+      },
+      {
+        "id": "ball",
+        "kind": "shape",
+        "at": [
+          180,
+          180
+        ],
+        "color": "#276EF1",
+        "shape": "ellipse",
+        "size": [
+          24,
+          24
+        ]
+      },
+      {
+        "id": "model",
+        "kind": "label",
+        "at": [
+          700,
+          600
+        ],
+        "color": "#276EF1",
+        "text": "Ideal model: no air resistance; metres and seconds",
+        "fontSize": 24
+      }
+    ],
+    "tracks": [
+      {
+        "target": "ball",
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": [
+              180,
+              180.0
+            ]
+          },
+          {
+            "frame": 30,
+            "at": [
+              220.0,
+              308.625
+            ]
+          },
+          {
+            "frame": 60,
+            "at": [
+              260,
+              351.5
+            ]
+          },
+          {
+            "frame": 90,
+            "at": [
+              300.0,
+              308.625
+            ]
+          },
+          {
+            "frame": 119,
+            "at": [
+              340,
+              180.0
+            ]
+          }
+        ]
+      }
+    ],
+    "captions": [
+      {
+        "startFrame": 0,
+        "endFrame": 120,
+        "text": "Ideal projectile: vx = 2 m/s, vy initially 9.8 m/s, g = 9.8 m/s². Linear segments approximate sampled positions."
+      }
+    ],
+    "generatedMediaLabel": "Generated educational animation"
+  }
+}
