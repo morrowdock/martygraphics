@@ -7,6 +7,12 @@
   shared library H.264 MP4 and bounded GIF export, captions and SRT sidecars.
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
 
+### Fixed
+- Include measured code text and line highlights in shared preview/preflight bounds,
+  so accepted layouts cannot draw code into the reserved caption band.
+- Hide mutable movie encoder internals behind append/finish/cancel operations;
+  the shared low-level writer requires an explicit experimental SPI import.
+
 ## Unreleased
 
 - **Dry packing without blinded-key access (2026-11-13, A-19).** Use only the

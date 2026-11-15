@@ -52,6 +52,39 @@ enum MGVideoDrawing {
         return output
     }
 
+    struct TextLayout {
+        let line: CTLine
+        let baseline: CGPoint
+        let bounds: CGRect
+    }
+
+    static func textLayout(_ string: String, at point: CGPoint, size: Double, color: CGColor = CGColor(gray: 1, alpha: 1), code: Bool = false, centered: Bool = true) -> TextLayout {
+        let measured = textSize(string, size: size, code: code)
+        let rendered = line(string, size: size, color: color, code: code)
+        var ascent: CGFloat = 0, descent: CGFloat = 0
+        _ = CTLineGetTypographicBounds(rendered, &ascent, &descent, nil)
+        let baseline = CGPoint(x: point.x - (centered ? measured.width / 2 : 0), y: point.y - (ascent - descent) / 2)
+        let measuredBounds = CGRect(x: baseline.x, y: point.y - measured.height / 2, width: measured.width, height: measured.height)
+        let glyphBounds = CTLineGetBoundsWithOptions(rendered, .useGlyphPathBounds).offsetBy(dx: baseline.x, dy: baseline.y)
+        return TextLayout(line: rendered, baseline: baseline, bounds: measuredBounds.union(glyphBounds))
+    }
+
+    static func codeLayout(_ element: MGVideoElement, color: CGColor = CGColor(gray: 1, alpha: 1)) -> (bounds: CGRect, lines: [TextLayout], highlight: CGRect?) {
+        let origin = CGPoint(x: element.at[0], y: element.at[1])
+        let size = element.fontSize!
+        let lines = element.lines!.enumerated().map { index, string in
+            textLayout(string, at: CGPoint(x: origin.x, y: origin.y - Double(index + 1) * size * 1.4 + size * 0.4), size: size, color: color, code: true, centered: false)
+        }
+        var bounds = CGRect(x: origin.x, y: origin.y - Double(lines.count) * size * 1.4, width: 0, height: Double(lines.count) * size * 1.4 + 4)
+        for layout in lines { bounds = bounds.union(layout.bounds) }
+        bounds = bounds.insetBy(dx: -4, dy: 0)
+        let highlight = element.highlightLine.map { index in
+            CGRect(x: bounds.minX, y: origin.y - Double(index) * size * 1.4 - size * 0.1, width: bounds.width, height: size * 1.4)
+        }
+        if let highlight { bounds = bounds.union(highlight) }
+        return (bounds, lines, highlight)
+    }
+
     static func bounds(_ element: MGVideoElement) -> CGRect {
         let origin = CGPoint(x: element.at[0], y: element.at[1])
         switch element.kind {
@@ -65,9 +98,7 @@ enum MGVideoDrawing {
             let size = textSize(element.text!, size: element.fontSize!)
             return CGRect(x: origin.x - size.width / 2, y: origin.y - size.height / 2, width: size.width, height: size.height)
         case "code":
-            let size = element.fontSize!, lines = element.lines!
-            let width = lines.map { textSize($0, size: size, code: true).width }.max() ?? 0
-            return CGRect(x: origin.x - 4, y: origin.y - Double(lines.count) * size * 1.4, width: width + 8, height: Double(lines.count) * size * 1.4 + 4)
+            return codeLayout(element).bounds
         default:
             let width = element.length ?? element.size![0], height = element.size?[1] ?? 0
             var rect = CGRect(x: origin.x, y: origin.y, width: width, height: max(1, height)).insetBy(dx: -4, dy: -4)
@@ -94,17 +125,13 @@ enum MGVideoDrawing {
         context.setFillColor(background)
         context.fill(CGRect(x: 0, y: 0, width: plan.canvas.width, height: plan.canvas.height))
         func text(_ string: String, at point: CGPoint, size: Double, color: CGColor, code: Bool = false, centered: Bool = true, backdrop: Bool = true) {
-            let measured = textSize(string, size: size, code: code)
-            let left = point.x - (centered ? measured.width / 2 : 0)
-            let rendered = line(string, size: size, color: color, code: code)
-            var ascent: CGFloat = 0, descent: CGFloat = 0
-            _ = CTLineGetTypographicBounds(rendered, &ascent, &descent, nil)
+            let layout = textLayout(string, at: point, size: size, color: color, code: code, centered: centered)
             if backdrop {
                 context.setFillColor(background)
-                context.fill(CGRect(x: left - 2, y: point.y - measured.height / 2, width: measured.width + 4, height: measured.height))
+                context.fill(layout.bounds.insetBy(dx: -2, dy: 0))
             }
-            context.textPosition = CGPoint(x: left, y: point.y - (ascent - descent) / 2)
-            CTLineDraw(rendered, context)
+            context.textPosition = layout.baseline
+            CTLineDraw(layout.line, context)
         }
         func segment(_ start: CGPoint, _ end: CGPoint) {
             context.move(to: start); context.addLine(to: end); context.strokePath()
@@ -132,15 +159,15 @@ enum MGVideoDrawing {
                 context.closePath(); context.fillPath()
             case "label": text(element.text!, at: origin, size: element.fontSize!, color: color)
             case "code":
-                let size = element.fontSize!
-                context.setFillColor(background); context.fill(bounds(element))
-                for (index, string) in element.lines!.enumerated() {
-                    let point = CGPoint(x: origin.x, y: origin.y - Double(index + 1) * size * 1.4 + size * 0.4)
-                    if element.highlightLine == index + 1 {
-                        context.setFillColor(CGColor(red: 0.9, green: 0.7, blue: 0.1, alpha: 0.3))
-                        context.fill(CGRect(x: origin.x - 4, y: point.y - size * 0.5, width: bounds(element).width, height: size * 1.4))
-                    }
-                    text(string, at: point, size: size, color: color, code: true, centered: false, backdrop: false)
+                let layout = codeLayout(element, color: color)
+                context.setFillColor(background); context.fill(layout.bounds)
+                if let highlight = layout.highlight {
+                    context.setFillColor(CGColor(red: 0.9, green: 0.7, blue: 0.1, alpha: 0.3))
+                    context.fill(highlight)
+                }
+                for line in layout.lines {
+                    context.textPosition = line.baseline
+                    CTLineDraw(line.line, context)
                 }
             default:
                 let width = element.length ?? element.size![0]

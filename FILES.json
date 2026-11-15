@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "ea97e989742d5787e3b914f29481e722695d9a48557d1163c0d5f65ac3a85a83"
+      "sha256": "8929dd89709b3f208eeeda5f34a4abd65424c48b4b2d1b0e7b2b71b725914c9f"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -235,7 +235,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "cb03e06534477830d752d3a76d966e46d53314cc84681cc0a43785f2f5f8ad0f"
+      "sha256": "71645beb89d67f858df286124506bf5c50dcbd3f3c064b313486af168135a09b"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift",
@@ -647,7 +647,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
-      "sha256": "b5d8abf95df22b80def8aec4c43b7d5c3ac84a67a0b66dd308cc479760ac8459"
+      "sha256": "49b10829442882e7bf54d49c5fcb53b3bc66690b2796e8d2a7bb9d8450817ac1"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/TitleBackdropTests.swift",
@@ -3027,7 +3027,7 @@
     },
     {
       "path": "docs/proposals/programmatic-video.md",
-      "sha256": "9069d6e25c1362bc846f030ec7b22c36d13629043e5055ad565e68d4c1990b2f"
+      "sha256": "626360dc551ac6d7d9574f69797f3e2d64cc1a4779b6b1f4e8544e6e8802f1b6"
     },
     {
       "path": "docs/schemas/scene-2d-layer.draft.schema.json",
@@ -3047,7 +3047,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGMovieWriter.swift",
-      "sha256": "288fd522c98bbeb13ed9de6f060786fd141146f502de3c9d15bfa593f81d8831"
+      "sha256": "54195e69be7c442c0e07e4e74c5c601df6cd992965427e1cf83dfc28c5bc62d1"
     },
     {
       "path": "Sources/MartyGraphics/MGProgrammaticVideo.swift",
@@ -3055,11 +3055,11 @@
     },
     {
       "path": "Sources/MartyGraphics/MGVideoDrawing.swift",
-      "sha256": "788f05ccd120d4466404e463e513879a67d478f50a22339330847b8c7026514f"
+      "sha256": "228d188586c4643df9e439befd9edf81431ab79bd073beb8199e58719509714d"
     },
     {
       "path": "Sources/MartyGraphics/MGVideoExport.swift",
-      "sha256": "8abcd379ce9d9906321e3826879d7014ba77012f2fb22e57aa20727915b39148"
+      "sha256": "b6e03f3c9bc6d415c112b562d6de3cc161618017506078719230e6bbc9dab274"
     },
     {
       "path": "Sources/MartyGraphics/Resources/scene-2d-layer.draft.schema.json",
@@ -3067,7 +3067,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
-      "sha256": "39091f45e01f809cace904a29c873236dc0d7eac84f2016060218e6d82e3914d"
+      "sha256": "c71f14c2afa6a6e17678250be85834fbc45762191195ab83d1d65317ccbd8f76"
     }
   ]
 }

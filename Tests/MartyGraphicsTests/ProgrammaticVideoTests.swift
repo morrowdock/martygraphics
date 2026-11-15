@@ -2,7 +2,7 @@
 import XCTest
 import AVFoundation
 import ImageIO
-@testable import MartyGraphics
+@_spi(Experimental) @testable import MartyGraphics
 
 final class ProgrammaticVideoTests: XCTestCase {
     let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
@@ -239,6 +239,36 @@ final class ProgrammaticVideoTests: XCTestCase {
         let without = try MGProgrammaticVideo.frame(0, in: checked, burnCaptions: false)
         XCTAssertNotEqual(pixels, try XCTUnwrap(without.dataProvider?.data) as Data)
         XCTAssertTrue(MGProgrammaticVideo.srt(checked).contains("00:00:00,000 --> 00:00:04,000"))
+    }
+
+    func testCodeHighlightDrawingBoundsAtReservedBand() throws {
+        try refuse({ layer in
+            layer["elements"] = [["id": "code", "kind": "code", "at": [100, 152], "color": "#FFFFFF", "fontSize": 40, "lines": ["code"], "highlightLine": 1]]
+            layer["tracks"] = []; layer["captions"] = []
+        }, family: "video2d.layout.elements.code.frame.0")
+        for lines in [["code"], ["code", "print(value)"], ["Åg_j"]] {
+            let initial = try plan(changed { layer in
+                layer["elements"] = [["id": "code", "kind": "code", "at": [100, 300], "color": "#FFFFFF", "fontSize": 40, "lines": lines, "highlightLine": lines.count]]
+                layer["tracks"] = []; layer["captions"] = []
+            })
+            let boundary = 300 - floor(MGVideoDrawing.bounds(initial.elements[0]).minY - 96)
+            let checked = try plan(changed { layer in
+                layer["elements"] = [["id": "code", "kind": "code", "at": [100, boundary], "color": "#FFFFFF", "fontSize": 40, "lines": lines, "highlightLine": lines.count]]
+                layer["tracks"] = []; layer["captions"] = []
+            })
+            let layout = MGVideoDrawing.codeLayout(checked.elements[0])
+            XCTAssertGreaterThanOrEqual(layout.bounds.minY, 96)
+            XCTAssertLessThan(layout.bounds.minY, 97)
+            XCTAssertTrue(layout.bounds.contains(try XCTUnwrap(layout.highlight)))
+            for line in layout.lines { XCTAssertTrue(layout.bounds.contains(line.bounds)) }
+            let image = try MGProgrammaticVideo.frame(0, in: checked, burnCaptions: false)
+            let empty = try MGVideoDrawing.draw([], plan: checked, frame: 0, burnCaptions: false)
+            let pixels = try XCTUnwrap(image.dataProvider?.data) as Data
+            let background = try XCTUnwrap(empty.dataProvider?.data) as Data
+            XCTAssertNotEqual(pixels, background)
+            let band = ((image.height - 96) * image.bytesPerRow)..<(image.height * image.bytesPerRow)
+            XCTAssertTrue(pixels[band] == background[band], "Code or highlight entered the reserved band")
+        }
     }
 
     func testExampleMP4AndGIFExportsDecode() async throws {

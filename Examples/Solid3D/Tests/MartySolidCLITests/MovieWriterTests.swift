@@ -2,6 +2,7 @@
 import AVFoundation
 import Foundation
 import XCTest
+@_spi(Experimental) @testable import MartyGraphics
 @testable import MartySolidCLI
 
 /// The `loop.mp4` writer stops instead of hanging when AVFoundation stops: a failed or cancelled writer, and a writer
@@ -40,7 +41,8 @@ final class MovieWriterTests: XCTestCase {
     func testCancelledWriterThrowsInsteadOfHanging() throws {
         let movie = try MovieWriter(url: try temp("loop.mp4"), width: 64, height: 48, fps: 10)
         try movie.append(frame(64, 48))
-        movie.writer.cancelWriting()
+        movie.cancel()
+        movie.cancel()
         let t0 = Date()
         XCTAssertThrowsError(try movie.append(frame(64, 48)))
         XCTAssertThrowsError(try movie.finish())
@@ -59,6 +61,7 @@ final class MovieWriterTests: XCTestCase {
         XCTAssertEqual(movie.width, 64); XCTAssertEqual(movie.height, 48)
         for _ in 0..<5 { try movie.append(frame(65, 49)) }
         try movie.finish()
+        movie.cancel()
         let asset = AVURLAsset(url: url)
         let track = try XCTUnwrap(asset.tracks(withMediaType: .video).first)
         XCTAssertEqual(CMTimeGetSeconds(track.timeRange.duration), 0.5, accuracy: 1e-9)

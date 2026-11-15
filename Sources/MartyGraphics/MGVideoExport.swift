@@ -69,7 +69,7 @@ extension MGProgrammaticVideo {
             guard let gif else { throw MGError("video2d.export.gifWriter") }
             CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
         }
-        defer { if let movie, movie.writer.status == .writing { movie.writer.cancelWriting() } }
+        defer { movie?.cancel() }
         progress?(0, count)
         for outputIndex in 0..<count {
             try Task.checkCancellation()

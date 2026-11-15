@@ -10,7 +10,7 @@ import CryptoKit
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
-import MartyGraphics
+@_spi(Experimental) import MartyGraphics
 import MartySolidGLTF
 
 enum CLIError: Error, CustomStringConvertible {

@@ -3,10 +3,12 @@ import AVFoundation
 import Foundation
 
 /// H.264 MP4 writer (AVFoundation, no installs): frames at a fixed rate, presentation time = frame index / rate.
+/// Experimental SPI: import with `@_spi(Experimental) import MartyGraphics`. Use from one serial caller only.
+@_spi(Experimental)
 public final class MGMovieWriter {
-    public let writer: AVAssetWriter
-    public let input: AVAssetWriterInput
-    public let adaptor: AVAssetWriterInputPixelBufferAdaptor
+    private let writer: AVAssetWriter
+    private let input: AVAssetWriterInput
+    private let adaptor: AVAssetWriterInputPixelBufferAdaptor
     public let width: Int, height: Int, fps: Int32
     private let maxBufferedFrames: Int?
     public private(set) var frames: Int64 = 0
@@ -47,11 +49,11 @@ public final class MGMovieWriter {
     }
 
     /// Longest wait for the encoder to take a frame (seconds).
-    public static let readyTimeout = 60.0
+    static let readyTimeout = 60.0
 
     /// Waits until `ready()`; throws as soon as `status()` is `.failed` or `.cancelled` (disk full, a cancel) and after
     /// `timeout` seconds, so a stopped writer never hangs the render.
-    public static func waitUntilReady(timeout: Double = MGMovieWriter.readyTimeout, ready: () -> Bool, status: () -> AVAssetWriter.Status,
+    static func waitUntilReady(timeout: Double = MGMovieWriter.readyTimeout, ready: () -> Bool, status: () -> AVAssetWriter.Status,
                                error: () -> Error? = { nil }) throws {
         let start = Date()
         try Task.checkCancellation()
@@ -69,11 +71,17 @@ public final class MGMovieWriter {
 
     /// Stops the file (no partial MP4 is finished) and returns the error to throw; the render then removes its directory.
     private func abandon(_ e: Error) -> Error {
-        if writer.status == .writing { writer.cancelWriting() }
+        cancel()
         return e
     }
 
+    /// Cancels an unfinished file. Repeated calls, including after successful finish, have no effect.
+    public func cancel() {
+        if writer.status == .writing { writer.cancelWriting() }
+    }
+
     public func append(_ image: CGImage) throws {
+        guard writer.status == .writing else { throw MGError("mp4: writer stopped before append (\(writer.status.rawValue))") }
         do {
             try MGMovieWriter.waitUntilReady(ready: { input.isReadyForMoreMediaData }, status: { writer.status }, error: { writer.error })
         } catch { throw abandon(error) }

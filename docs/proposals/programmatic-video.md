@@ -7,6 +7,11 @@ The design below remains a proposal for later phases; the implementation contrac
 Phase 1 source status: **implemented**, pending CI and maintainer review on this branch. The three original draft
 examples are retained byte-for-byte. iPad performance/memory acceptance targets remain **pending**, not verified.
 
+The shared low-level `MGMovieWriter` is experimental SPI, accessed with
+`@_spi(Experimental) import MartyGraphics`. Its encoder objects are private; callers
+use `append`, `finish`, and idempotent `cancel` from one serial caller. Code preflight
+and drawing share measured glyph/text and highlight bounds, including the last line.
+
 Checked: 2026-11-15 UTC. Verified source baseline: `3ce64d3dd15fb35a73ee79e65ba6730be5b94d86`.
 Owner-approved goal and priority: 2026-11-15, “sooner”. Learners, lessons and the Marty agent should make short
 animated explainers from code or data, then export MP4/GIF offline on iPad and Mac. This public document contains
