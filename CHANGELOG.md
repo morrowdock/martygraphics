@@ -8,6 +8,8 @@
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
 
 ### Fixed
+- Reduce programmatic MP4 export stalls under encoder buffer pressure with an
+  eight-buffer pool and shorter, monotonic readiness and allocation timeouts.
 - Format programmatic-video zero tick labels with a floating-point argument,
   avoiding format-type warnings and normalizing negative zero to `0`.
 - Include measured code text and line highlights in shared preview/preflight bounds,

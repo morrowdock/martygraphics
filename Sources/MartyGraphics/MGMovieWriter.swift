@@ -49,13 +49,14 @@ public final class MGMovieWriter {
     }
 
     /// Longest wait for the encoder to take a frame (seconds).
-    static let readyTimeout = 60.0
+    static let readyTimeout = 10.0
+    static let finishTimeout = 60.0
 
     /// Waits until `ready()`; throws as soon as `status()` is `.failed` or `.cancelled` (disk full, a cancel) and after
     /// `timeout` seconds, so a stopped writer never hangs the render.
     static func waitUntilReady(timeout: Double = MGMovieWriter.readyTimeout, ready: () -> Bool, status: () -> AVAssetWriter.Status,
                                error: () -> Error? = { nil }) throws {
-        let start = Date()
+        let deadline = DispatchTime.now() + timeout
         try Task.checkCancellation()
         while !ready() {
             try Task.checkCancellation()
@@ -64,7 +65,7 @@ public final class MGMovieWriter {
             case .cancelled: throw MGError("mp4: writer cancelled")
             default: break
             }
-            guard Date().timeIntervalSince(start) < timeout else { throw MGError("mp4: writer not ready after \(timeout) s") }
+            guard DispatchTime.now() < deadline else { throw MGError("mp4: writer stalled") }
             Thread.sleep(forTimeInterval: 0.002)
         }
     }
@@ -122,7 +123,7 @@ public final class MGMovieWriter {
         input.markAsFinished()
         writer.endSession(atSourceTime: CMTime(value: frames, timescale: fps))
         let done = DispatchSemaphore(value: 0)
-        let deadline = Date().addingTimeInterval(Self.readyTimeout)
+        let deadline = Date().addingTimeInterval(Self.finishTimeout)
         writer.finishWriting { done.signal() }
         while done.wait(timeout: .now() + 0.05) == .timedOut {
             do { try Task.checkCancellation() } catch { throw abandon(error) }

@@ -292,6 +292,30 @@ final class ProgrammaticVideoTests: XCTestCase {
         }
     }
 
+    func testSortingMP4ExportDecodes() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("mg-pv-mp4-\(UUID())")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let destination = folder.appendingPathComponent("sorting.mp4")
+        let receipt = try await MGProgrammaticVideo.export(plan(example()), to: destination, programmaticVideo: true)
+        XCTAssertEqual(receipt.frameCount, 120)
+        let asset = AVURLAsset(url: destination)
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        let track = try XCTUnwrap(tracks.first)
+        let size = try await track.load(.naturalSize)
+        let duration = try await track.load(.timeRange).duration
+        XCTAssertEqual(size, CGSize(width: 1280, height: 720))
+        XCTAssertEqual(CMTimeCompare(duration, CMTime(value: 120, timescale: 30)), 0)
+        let reader = try AVAssetReader(asset: asset)
+        let output = AVAssetReaderTrackOutput(track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
+        reader.add(output)
+        XCTAssertTrue(reader.startReading())
+        var count = 0
+        while output.copyNextSampleBuffer() != nil { count += 1 }
+        XCTAssertEqual(count, 120)
+        XCTAssertEqual(reader.status, .completed)
+    }
+
     func testExampleMP4AndGIFExportsDecode() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("mg-pv-tests-\(UUID())")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -393,6 +417,10 @@ final class ProgrammaticVideoTests: XCTestCase {
         for status in [AVAssetWriter.Status.failed, .cancelled] {
             XCTAssertThrowsError(try MGMovieWriter.waitUntilReady(ready: { false }, status: { status }))
         }
-        XCTAssertThrowsError(try MGMovieWriter.waitUntilReady(timeout: 0.01, ready: { false }, status: { .writing }))
+        let start = DispatchTime.now()
+        XCTAssertThrowsError(try MGMovieWriter.waitUntilReady(timeout: 0.01, ready: { false }, status: { .writing })) {
+            XCTAssertEqual(($0 as? MGError)?.reason, "mp4: writer stalled")
+        }
+        XCTAssertLessThan(DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds, 2_000_000_000)
     }
 }

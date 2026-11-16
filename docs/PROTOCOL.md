@@ -64,7 +64,9 @@ There is no app feature, new template, remote renderer or code execution.
 
 MP4 uses H.264 at 30 fps and integer `CMTime(frame, timescale: 30)`, even canvas
 dimensions (odd sizes refuse), tagged sRGB/BT.709, readiness timeout/backpressure,
-and a three-buffer pixel pool allocation limit. `MGMovieWriter` is shared with
+and an eight-buffer pixel pool allocation limit. Encoder readiness and pool
+allocation waits time out after 10 seconds with `mp4: writer stalled`; failed
+exports cancel the writer and remove their partial files. `MGMovieWriter` is shared with
 the Solid3D CLI (its existing even-size rounding and frame rates are retained).
 GIF samples every third source frame at 10 fps, limits duration to 450 source
 frames divisible by three, and scales the longest edge to at most 640 pixels.

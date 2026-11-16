@@ -63,7 +63,7 @@ extension MGProgrammaticVideo {
         let count = plan.durationFrames / stride
         var movie: MGMovieWriter?
         var gif: CGImageDestination?
-        if options.format == .mp4 { movie = try MGMovieWriter(url: partial, width: width, height: height, fps: 30, maxBufferedFrames: 3) }
+        if options.format == .mp4 { movie = try MGMovieWriter(url: partial, width: width, height: height, fps: 30, maxBufferedFrames: 8) }
         else {
             gif = CGImageDestinationCreateWithURL(partial as CFURL, UTType.gif.identifier as CFString, count, nil)
             guard let gif else { throw MGError("video2d.export.gifWriter") }
