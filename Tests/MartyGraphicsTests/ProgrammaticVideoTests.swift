@@ -132,6 +132,27 @@ final class ProgrammaticVideoTests: XCTestCase {
         XCTAssertEqual(literal.elements[4].lines?[0], "if i < n: {literal}")
     }
 
+    func testTickFormattingUsesDoubleAndNormalizesZero() {
+        XCTAssertEqual(MGVideoDrawing.tick(0), "0")
+        XCTAssertEqual(MGVideoDrawing.tick(-0.0), "0")
+        XCTAssertEqual(MGVideoDrawing.tick(2.5), "2.5")
+        XCTAssertEqual(MGVideoDrawing.tick(12345), "1.234E+04")
+    }
+
+    func testAxesAndNumberLineZeroTickLabels() throws {
+        let checked = try plan(changed { layer in
+            layer["elements"] = [
+                ["id": "axes", "kind": "axes", "at": [300, 300], "color": "#276EF1",
+                 "size": [400, 200], "xRange": [-1, 1], "yRange": [-1, 1], "ticks": 3],
+                ["id": "number-line", "kind": "numberLine", "at": [300, 200], "color": "#276EF1",
+                 "length": 400, "range": [-1, 1], "ticks": 3],
+            ]
+            layer["tracks"] = []
+        })
+        XCTAssertEqual(MGVideoDrawing.ticks(checked.elements[0]).map { $0.0 }, ["-1", "-1", "0", "0", "1", "1"])
+        XCTAssertEqual(MGVideoDrawing.ticks(checked.elements[1]).map { $0.0 }, ["-1", "0", "1"])
+    }
+
     func testTrackCaptionAndPrimitiveBounds() throws {
         XCTAssertEqual(MGVideoDrawing.tick(-0.0), "0")
         for value in [0.0000001, -0.0000001] {

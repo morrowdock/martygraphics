@@ -8,6 +8,8 @@
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
 
 ### Fixed
+- Format programmatic-video zero tick labels with a floating-point argument,
+  avoiding format-type warnings and normalizing negative zero to `0`.
 - Include measured code text and line highlights in shared preview/preflight bounds,
   so accepted layouts cannot draw code into the reserved caption band.
 - Hide mutable movie encoder internals behind append/finish/cancel operations;

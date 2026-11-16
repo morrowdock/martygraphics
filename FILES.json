@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "8929dd89709b3f208eeeda5f34a4abd65424c48b4b2d1b0e7b2b71b725914c9f"
+      "sha256": "6668b9480bc667089aeff0e5634f1b2e69b1e27d73cb038890bedde7398c3f4e"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -3055,7 +3055,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGVideoDrawing.swift",
-      "sha256": "228d188586c4643df9e439befd9edf81431ab79bd073beb8199e58719509714d"
+      "sha256": "7db6d27238c1b0dd79472478dd64d500f3550ce4abcf7d905c7fada883d4003d"
     },
     {
       "path": "Sources/MartyGraphics/MGVideoExport.swift",
@@ -3067,7 +3067,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
-      "sha256": "c71f14c2afa6a6e17678250be85834fbc45762191195ab83d1d65317ccbd8f76"
+      "sha256": "b8d8dc673cacac35f0df1e274af677cc9446cf10352cfda7e7ae2517c894537b"
     }
   ]
 }
