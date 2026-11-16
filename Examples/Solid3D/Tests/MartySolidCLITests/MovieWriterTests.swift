@@ -32,7 +32,7 @@ final class MovieWriterTests: XCTestCase {
         }
         let t0 = Date()
         XCTAssertThrowsError(try MovieWriter.waitUntilReady(timeout: 0.05, ready: { false }, status: { .writing })) { e in
-            XCTAssertTrue("\(e)".contains("not ready"), "\(e)")
+            XCTAssertTrue("\(e)".contains("writer stalled"), "\(e)")
         }
         XCTAssertLessThan(Date().timeIntervalSince(t0), 2)
     }
