@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+- Docs: clarify that a coding agent wrote the turbofan JSON directly in the documented
+  format, consistently with the site, showcase and provenance receipt.
+
 ### Added
 - Experimental, opt-in `layer2d` programmatic video: checked native 2D keyframes,
   shared library H.264 MP4 and bounded GIF export, captions and SRT sidecars.

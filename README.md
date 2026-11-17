@@ -28,8 +28,9 @@ MP4 videos keep their original captures. [Commands, hashes and exceptions](docs/
 **A turbofan cutaway, exploded here, from 38 lines of JSON.** The solid engine builds every blade row, casing and shaft of this
 schematic two-spool turbofan. The HP spool turns three times for each turn of the fan; that ratio is authored as two
 input drives, not solved from gears. The example's own check confirms that both spools turn about one axis and that
-every rotor keeps at least 4.52 mm from the parts that do not turn with it. The JSON was written by hand in the
-documented format, not from a prompt. A teaching model, not a real engine design. The labelled cutaway and the loop
+every rotor keeps at least 4.52 mm from the parts that do not turn with it.
+A coding agent wrote the JSON for this example directly in the documented format;
+it is not the output of a prompt run. A teaching model, not a real engine design. The labelled cutaway and the loop
 name the spool speeds with the pilots' terms N1 (LP spool) and N2 (HP spool).
 [Labelled cutaway](docs/assets/turbofan/labelled.png) · [Turning loop (GIF)](docs/assets/turbofan/turbofan-loop.gif) ·
 [Video (MP4)](https://morrowdock.app/mg/turbofan/turbofan-loop.mp4) · [Its JSON](Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json) ·

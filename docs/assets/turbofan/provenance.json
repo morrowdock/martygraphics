@@ -4,7 +4,7 @@
     "captureCommit": "d6b461dd2c365511e1e66d34d1f9976d7ac1a225",
     "note": "captureCommit d6b461dd2c365511e1e66d34d1f9976d7ac1a225 is a local commit made before the branch was rebased onto public main (it is not on the remote; its rebased equivalent is c25687a). The sourceFiles hashes, not the commit id, are the link between these renders and the source: the pathtraced-hero.png, labelled.png and turbofan-loop.gif bytes were rendered from exactly those files. exploded.png was re-rendered later; see artifacts.exploded.png.",
     "model": "Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json (38 lines, 23 parts, 8 steps); sha256 at the main capture f669f81f848bb9ef186fe5571c2fb45284b2c04f925b2e20b019d02deb8b7db3; the exploded step text was corrected afterwards (see artifacts.exploded.png)",
-    "authoring": "The JSON was written for this example in the documented solid assembly format; a small scratch script (not in the repository) computed the wall offsets and blade-row radii. It is not the output of a prompt run.",
+    "authoring": "A coding agent wrote the JSON for this example directly in the documented format; it is not the output of a prompt run. A small scratch script (not in the repository) computed the wall offsets and blade-row radii.",
     "license": "Apache-2.0; procedural geometry and lighting, no images, models or stock assets",
     "sourceFiles": {
       "Examples/Turbofan/Package.swift": "a0aebee38f1d4f526aa14d578929b797a20bc82deef1c0cc7647075c3060ddeb",

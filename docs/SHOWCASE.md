@@ -29,8 +29,9 @@ are unchanged. [Every command, old and new hash, and exception](assets/STUDIO-RE
 A schematic two-spool, high-bypass turbofan built and rendered by the solid engine from
 [38 lines of JSON](../Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json): a 20-blade
 fan, 3 LP and 6 HP compressor stages, an annular combustor, 2 HP and 4 LP turbine stages, and
-an LP shaft (blue) inside the HP shaft (orange). The model is JSON written for this example in
-the documented format, not the output of a prompt run. It is a teaching model, not a real
+an LP shaft (blue) inside the HP shaft (orange).
+A coding agent wrote the JSON for this example directly in the documented format;
+it is not the output of a prompt run. It is a teaching model, not a real
 engine design.
 
 The HP spool turns three times for each turn of the fan. That ratio is authored as two input drives, not solved from

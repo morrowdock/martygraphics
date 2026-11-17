@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "d4484761c820546022ccb63ce063ad15a3e20f5b1fc0fc4d129be5962eea8c26"
+      "sha256": "6d9b6f6685ec95c01a891e2b8ed2cf63262abdfe20beb4bc6c3ce5cbfcb05361"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -711,7 +711,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "21b358cccb69d1d3c6a401ae84f4ee567970a925aedf42f19ab08dbe1075db40"
+      "sha256": "71a7ac59d84172714136037603a3ade9a9b4194d2b1c1c7ddd3a8dd1b556ce5f"
     },
     {
       "path": "SECURITY.md",
@@ -1999,7 +1999,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "db95601dd9655f0676cda9047f39c529d60c51138602e516bbe820582d6bc97a"
+      "sha256": "c3f7ea783ee80d38865b593b8e0d844dda7961c584b42c02b6d619000e0213f3"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -2755,7 +2755,7 @@
     },
     {
       "path": "docs/assets/turbofan/provenance.json",
-      "sha256": "6edcd49a098aef34acff61fafee4b4794c02a336e8b4c3644103cb73719aee68"
+      "sha256": "2827106dc221993a2323f7327eaa44f01415a76be2b33b2b7b719338b7428a2b"
     },
     {
       "path": "docs/assets/turbofan/turbofan-loop.gif",
