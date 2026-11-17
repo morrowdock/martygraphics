@@ -531,11 +531,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-turbofan-provenance.check.json",
-      "sha256": "a16db069661bf901ad6c6fa1b6ee9d2dec0469260c673cc03e3ea0c1b5c31fa6"
+      "sha256": "364f25b75a6a2fd17db558da3508538d82b7bf4cc94086f289d023a8287fe17f"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/docs-assets-turbofan-provenance.strict.json",
-      "sha256": "0a623b435aca0c44d059809a56c4621a2843fe39dd0e2c2105f1dce824e385f1"
+      "sha256": "13d08de5bcc2bc25f043179b3b417f3f8752dc1017578e2731a42f4b64aad2a5"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-annotated-winch.check.json",
