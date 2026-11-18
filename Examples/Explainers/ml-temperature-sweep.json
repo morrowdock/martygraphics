@@ -1,0 +1,41 @@
+{
+  "v": 1,
+  "kind": "ml-explainer",
+  "title": "Same logits, different odds",
+  "items": [
+    {
+      "id": "sweep",
+      "kind": "nextTokenProbabilities",
+      "tokens": [
+        "The",
+        "dog",
+        "is"
+      ],
+      "candidates": [
+        {
+          "token": "playing",
+          "logit": 2.5
+        },
+        {
+          "token": "resting",
+          "logit": 1.2
+        },
+        {
+          "token": "running",
+          "logit": 0.5
+        },
+        {
+          "token": "waiting",
+          "logit": -0.1
+        }
+      ],
+      "temperatures": [
+        0.5,
+        1,
+        2,
+        4
+      ],
+      "chosen": "playing"
+    }
+  ]
+}

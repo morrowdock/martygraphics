@@ -47,6 +47,7 @@ counts, and the layout remains illustrative with a citation.
 | `candidates` | 2–8 `{"token","logit"}` objects. Unique 1–16-scalar tokens. Finite logits in −1,000,000…1,000,000. |
 | `chosen` | One candidate token with positive probability after all enabled stages. |
 | `temperature` | Optional finite number in 0.01…100. |
+| `temperatures` | Optional sweep of 2–4 distinct temperatures in 0.01…100, played in authored order. This mode excludes `temperature`, `topK` and `topP`. |
 | `topK` | Optional integer from 1 to the candidate count. |
 | `topP` | Optional finite number greater than 0 and at most 1. |
 
@@ -55,7 +56,71 @@ logits divided by the temperature. Top-k keeps the k highest-ranked candidates. 
 highest-ranked prefix that reaches its threshold in the preceding distribution. A threshold of 1 keeps the entire
 positive support. Ranking ties follow input order. Each filter renormalizes its retained entries. All computed
 distributions must sum to 1 within an absolute tolerance of 10⁻¹². Probabilities in the report are unrounded.
-The chart rounds its labels to one decimal place, animates the enabled steps and highlights the supplied choice.
+The chart rounds percentages to two decimals and uses three significant digits for positive values below 0.05%.
+A sweep recomputes softmax independently for each temperature using the same logits. Bars tween between checked
+distributions. The outgoing label and percentages stay visible until the bars settle. The supplied choice is
+highlighted once the last stage settles.
+
+## Meaning map
+
+Provide exactly one of these arrays. Each contains 3–12 entries with a unique `label` of 1–16 Unicode scalars.
+
+| Key | Rule |
+| --- | --- |
+| `points` | Entries contain a `label` and a two-number `position`. The board always displays “illustrative positions”. |
+| `vectors` | Entries contain a `label` and a `vector` of 3–32 numbers. Every vector has the same length. The board displays “2D projection (PCA) of the given vectors”. |
+| `imagePNG` | Optional thumbnail inside a point or vector entry, in the same PNG format as picture to numbers. |
+| `vectorCitation` | Optional source for supplied vectors, 1–120 Unicode scalars. Otherwise the board labels the vectors illustrative. |
+| `nearestNeighbors` | Optional boolean. Links use cosine similarity between the original inputs, before centering or projection. A zero vector has no cosine similarity and is refused when links are enabled. |
+| `cluster` | Optional nonempty list of distinct labels present on the map. These markers share a highlight. |
+
+Coordinates are finite and in −10¹²…10¹². The PCA centers the vectors and computes the two leading axes
+from the symmetric Gram matrix using deterministic Jacobi rotations. An axis sign puts its largest-magnitude
+loading on the positive side. Effectively zero eigenvalues produce zero coordinates. The map scales both axes
+equally to fit. Nearest-neighbor ties use input order, and reciprocal links are drawn once.
+
+## Picture to numbers
+
+| Key | Rule |
+| --- | --- |
+| `imagePNG` | Base64 of one opaque 8-bit grayscale or RGB PNG, at most 64 × 64 pixels. The document's 16 KiB limit still applies. |
+| `patchSize` | Integer edge in pixels, from 1 to 64. It must divide both image dimensions. |
+| `highlight` | A zero-based `[column, row]` reference into the derived patch grid, counted from the top left. |
+| `caption` | Required text of 1–100 Unicode scalars. |
+| `presentation` | Optional `both` (default), `grid` (build the grid), or `pixels` (start at the grid and reveal the selected patch). |
+
+The engine reads the PNG, draws its actual pixels, derives the patch grid and shows the selected patch's channel
+values. It flattens in top-to-bottom, left-to-right order with RGB channels interleaved, and reports its length
+as patch edge squared times channel count. Larger patches display values over multiple pages.
+
+## Generation loop
+
+| Key | Rule |
+| --- | --- |
+| `prompt` | 1–12 prompt tokens, each 1–16 Unicode scalars. |
+| `stepCount`, `steps` | A count from 1 to 8 and exactly that many step objects. Each step has 2–8 distinct `candidates` with a token and a finite logit, using the next-token rules. |
+| `temperature` | Optional per-step number in 0.01…100. Omission uses 1. |
+| `selection` | `greedy` or `sample`. |
+| `seed` | Required with `sample`, an integer from 0 to 4,294,967,295. |
+| `chosen` | Optional per-step assertion. It must match the computed choice. |
+
+Each step shows its logits, then softmax odds, then the chosen token, and appends it to the strip. Greedy
+selection chooses the highest logit with ties in input order. Sampling uses one SplitMix64 draw per step
+and selects by cumulative probability in candidate order. The strict report includes the distribution,
+the choice and the strip after each append. The logits are supplied teaching inputs.
+
+## Simplified attention
+
+| Key | Rule |
+| --- | --- |
+| `imagePNG`, `patchSize` | Use the picture-to-numbers format. The derived grid must contain 2–64 patches. |
+| `query` | A zero-based `[column, row]` reference into that grid, counted from the top left. |
+| `scores` | One finite score in −1,000,000…1,000,000 for every other patch in row-major order. |
+
+The board displays “Simplified attention · illustrative scores”. It computes softmax over the supplied scores,
+checks the sum to within 10⁻¹² of 1 and reports the unrounded weights. Link opacity is the weight divided by the
+largest weight, and the heat tint uses a fixed fraction of that intensity. The board shows the checked sum
+and the strongest weight.
 
 ## Agent loop
 
@@ -92,5 +157,6 @@ The output must be new and its parent must exist. The tool prints a JSON receipt
 count and transparency. It exits 0 on success, 1 on a refused document, 2 on usage error and 3 on I/O or export failure.
 
 In Swift, call `MGMLKit.check(data:mlKit: true)`, then `MGMLDocument.frame(_:size:theme:transparent:)` or
-`MGMLDocument.export(to:size:format:theme:)` on the checked result. The board uses `MGTheme.board` unless a
-theme is supplied. Any export error leaves the destination unpublished.
+`MGMLDocument.export(to:size:format:theme:)` on the checked result. The board uses `MGTheme.mlBoard` unless a
+theme is supplied. Pass `composition: .rightColumn` to the Swift frame or export overload to reserve
+the left 45% of a landscape canvas for a camera overlay. Any export error leaves the destination unpublished.

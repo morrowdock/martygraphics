@@ -31,6 +31,26 @@ public enum MGMLReason: String, Error, CaseIterable, Sendable {
     case topP = "ml.prob.topP"
     case sum = "ml.prob.sum"
     case chosen = "ml.prob.chosen"
+    case sweep = "ml.prob.sweep"
+    case mapCount = "ml.map.count"
+    case mapDuplicate = "ml.map.word.duplicate"
+    case mapCoordinates = "ml.map.coordinates"
+    case mapLengths = "ml.map.vector.length"
+    case mapCosine = "ml.map.cosine"
+    case mapCluster = "ml.map.cluster"
+    case pictureCaption = "ml.picture.caption"
+    case picturePNG = "ml.picture.png"
+    case pictureSize = "ml.picture.size"
+    case picturePatch = "ml.picture.patch.division"
+    case pictureSelection = "ml.picture.patch.selection"
+    case picturePresentation = "ml.picture.presentation"
+    case generationCount = "ml.generation.count"
+    case generationLogits = "ml.generation.logits"
+    case generationSelection = "ml.generation.selection"
+    case generationChosen = "ml.generation.chosen"
+    case attentionGrid = "ml.attention.grid"
+    case attentionQuery = "ml.attention.query"
+    case attentionScores = "ml.attention.scores"
     case states = "ml.agent.states"
     case review = "ml.agent.review"
     case stop = "ml.agent.stop"
@@ -90,6 +110,10 @@ public enum MGMLKit {
                 case .visionPipeline: return try MLItem(id: id, content: .vision(MLVision(object)))
                 case .nextTokenProbabilities: return try MLItem(id: id, content: .probabilities(MLProbabilities(object)))
                 case .agentLoop: return try MLItem(id: id, content: .agent(MLAgent(object)))
+                case .pictureToNumbers: return try MLItem(id: id, content: .picture(MLPicture(object)))
+                case .meaningMap: return try MLItem(id: id, content: .meaningMap(MLMeaningMap(object)))
+                case .generationLoop: return try MLItem(id: id, content: .generation(MLGeneration(object)))
+                case .attention: return try MLItem(id: id, content: .attention(MLAttention(object)))
                 }
             }
             return .success(MGMLDocument(title: title, items: items))
@@ -118,7 +142,7 @@ public enum MGMLKit {
 }
 
 enum MLKind: String, Sendable {
-    case visionPipeline, nextTokenProbabilities, agentLoop
+    case visionPipeline, nextTokenProbabilities, agentLoop, pictureToNumbers, meaningMap, generationLoop, attention
 
     var keys: Set<String> {
         switch self {
@@ -126,7 +150,15 @@ enum MLKind: String, Sendable {
             return ["caption", "citation", "imageSize", "patchSize", "embeddingWidth",
                     "embeddingWidthCitation", "projectorLabel", "languageModelLabel", "textTokens"]
         case .nextTokenProbabilities:
-            return ["tokens", "candidates", "chosen", "temperature", "topK", "topP"]
+            return ["tokens", "candidates", "chosen", "temperature", "topK", "topP", "temperatures"]
+        case .pictureToNumbers:
+            return ["caption", "imagePNG", "patchSize", "highlight", "presentation"]
+        case .meaningMap:
+            return ["points", "vectors", "nearestNeighbors", "cluster", "vectorCitation"]
+        case .generationLoop:
+            return ["prompt", "stepCount", "steps", "selection", "seed"]
+        case .attention:
+            return ["imagePNG", "patchSize", "query", "scores"]
         case .agentLoop:
             return ["states", "requiresReview", "stepBudget"]
         }
@@ -138,6 +170,10 @@ struct MLItem: Equatable, Sendable {
         case vision(MLVision)
         case probabilities(MLProbabilities)
         case agent(MLAgent)
+        case picture(MLPicture)
+        case meaningMap(MLMeaningMap)
+        case generation(MLGeneration)
+        case attention(MLAttention)
     }
 
     let id: String
@@ -150,6 +186,10 @@ struct MLItem: Equatable, Sendable {
         case .vision(let vision): (kind, facts) = (.visionPipeline, vision.facts)
         case .probabilities(let probabilities): (kind, facts) = (.nextTokenProbabilities, probabilities.facts)
         case .agent(let agent): (kind, facts) = (.agentLoop, agent.facts)
+        case .picture(let picture): (kind, facts) = (.pictureToNumbers, picture.facts)
+        case .meaningMap(let map): (kind, facts) = (.meaningMap, map.facts)
+        case .generation(let generation): (kind, facts) = (.generationLoop, generation.facts)
+        case .attention(let attention): (kind, facts) = (.attention, attention.facts)
         }
         return .object(["id": .string(id), "kind": .string(kind.rawValue), "facts": .object(facts)])
     }

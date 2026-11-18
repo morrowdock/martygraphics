@@ -1,0 +1,89 @@
+{
+  "v": 1,
+  "kind": "ml-explainer",
+  "title": "One piece at a time",
+  "items": [
+    {
+      "id": "answer",
+      "kind": "generationLoop",
+      "prompt": [
+        "Describe",
+        "the",
+        "image"
+      ],
+      "stepCount": 4,
+      "selection": "greedy",
+      "steps": [
+        {
+          "candidates": [
+            {
+              "token": "A",
+              "logit": 2.3
+            },
+            {
+              "token": "The",
+              "logit": 1.4
+            },
+            {
+              "token": "Some",
+              "logit": 0.1
+            }
+          ],
+          "chosen": "A"
+        },
+        {
+          "candidates": [
+            {
+              "token": "dog",
+              "logit": 2.9
+            },
+            {
+              "token": "cat",
+              "logit": 1.1
+            },
+            {
+              "token": "person",
+              "logit": 0.4
+            }
+          ],
+          "chosen": "dog"
+        },
+        {
+          "candidates": [
+            {
+              "token": "on",
+              "logit": 1.8
+            },
+            {
+              "token": "near",
+              "logit": 1.4
+            },
+            {
+              "token": "by",
+              "logit": 0.1
+            }
+          ],
+          "chosen": "on"
+        },
+        {
+          "candidates": [
+            {
+              "token": "grass",
+              "logit": 2.6
+            },
+            {
+              "token": "sand",
+              "logit": 1.2
+            },
+            {
+              "token": "snow",
+              "logit": 0.5
+            }
+          ],
+          "temperature": 1.25,
+          "chosen": "grass"
+        }
+      ]
+    }
+  ]
+}

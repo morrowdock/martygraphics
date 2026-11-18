@@ -7,6 +7,9 @@
   format, consistently with the site, showcase and provenance receipt.
 
 ### Added
+- Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,
+  seeded or greedy token generation, temperature sweeps, and simplified patch attention.
+  Add a camera-right landscape composition for MLKit frame and export calls.
 - Render checked Blender exports as landscape, square, and portrait video with an
   optional 360° camera orbit and a transparent PNG or ProRes 4444 compositing master.
   The variant wrapper uses `--no-burn-in`. Provenance stays in the MP4 metadata,

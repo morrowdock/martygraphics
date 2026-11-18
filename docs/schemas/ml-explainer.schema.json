@@ -33,6 +33,18 @@
           },
           {
             "$ref": "#/$defs/agentLoop"
+          },
+          {
+            "$ref": "#/$defs/meaningMap"
+          },
+          {
+            "$ref": "#/$defs/pictureToNumbers"
+          },
+          {
+            "$ref": "#/$defs/generationLoop"
+          },
+          {
+            "$ref": "#/$defs/attention"
           }
         ]
       },
@@ -150,35 +162,13 @@
           "$ref": "#/$defs/tokens"
         },
         "candidates": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "token",
-              "logit"
-            ],
-            "properties": {
-              "token": {
-                "$ref": "#/$defs/token"
-              },
-              "logit": {
-                "type": "number",
-                "minimum": -1000000,
-                "maximum": 1000000
-              }
-            }
-          },
-          "minItems": 2,
-          "maxItems": 8
+          "$ref": "#/$defs/candidates"
         },
         "chosen": {
           "$ref": "#/$defs/token"
         },
         "temperature": {
-          "type": "number",
-          "minimum": 0.01,
-          "maximum": 100
+          "$ref": "#/$defs/temperature"
         },
         "topK": {
           "type": "integer",
@@ -189,6 +179,41 @@
           "type": "number",
           "exclusiveMinimum": 0,
           "maximum": 1
+        },
+        "temperatures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/temperature"
+          },
+          "minItems": 2,
+          "maxItems": 4,
+          "uniqueItems": true
+        }
+      },
+      "if": {
+        "required": [
+          "temperatures"
+        ]
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "temperature"
+              ]
+            },
+            {
+              "required": [
+                "topK"
+              ]
+            },
+            {
+              "required": [
+                "topP"
+              ]
+            }
+          ]
         }
       }
     },
@@ -233,6 +258,338 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 32
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token",
+          "logit"
+        ],
+        "properties": {
+          "token": {
+            "$ref": "#/$defs/token"
+          },
+          "logit": {
+            "type": "number",
+            "minimum": -1000000,
+            "maximum": 1000000
+          }
+        }
+      },
+      "minItems": 2,
+      "maxItems": 8
+    },
+    "temperature": {
+      "type": "number",
+      "minimum": 0.01,
+      "maximum": 100
+    },
+    "imagePNG": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "contentEncoding": "base64",
+      "contentMediaType": "image/png",
+      "pattern": "^[A-Za-z0-9+/]+={0,2}$"
+    },
+    "patchIndex": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 63
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "positionPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "position"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/token"
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": -1000000000000.0,
+            "maximum": 1000000000000.0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "imagePNG": {
+          "$ref": "#/$defs/imagePNG"
+        }
+      }
+    },
+    "vectorPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "vector"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/token"
+        },
+        "vector": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": -1000000000000.0,
+            "maximum": 1000000000000.0
+          },
+          "minItems": 3,
+          "maxItems": 32
+        },
+        "imagePNG": {
+          "$ref": "#/$defs/imagePNG"
+        }
+      }
+    },
+    "meaningMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "meaningMap"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/positionPoint"
+          },
+          "minItems": 3,
+          "maxItems": 12
+        },
+        "vectors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/vectorPoint"
+          },
+          "minItems": 3,
+          "maxItems": 12
+        },
+        "nearestNeighbors": {
+          "type": "boolean"
+        },
+        "cluster": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/token"
+          },
+          "minItems": 1,
+          "maxItems": 12,
+          "uniqueItems": true
+        },
+        "vectorCitation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "points"
+          ],
+          "not": {
+            "required": [
+              "vectorCitation"
+            ]
+          }
+        },
+        {
+          "required": [
+            "vectors"
+          ]
+        }
+      ]
+    },
+    "pictureToNumbers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "caption",
+        "imagePNG",
+        "patchSize",
+        "highlight"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "pictureToNumbers"
+        },
+        "caption": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "imagePNG": {
+          "$ref": "#/$defs/imagePNG"
+        },
+        "patchSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "highlight": {
+          "$ref": "#/$defs/patchIndex"
+        },
+        "presentation": {
+          "enum": [
+            "both",
+            "grid",
+            "pixels"
+          ]
+        }
+      }
+    },
+    "generationStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidates"
+      ],
+      "properties": {
+        "candidates": {
+          "$ref": "#/$defs/candidates"
+        },
+        "temperature": {
+          "$ref": "#/$defs/temperature"
+        },
+        "chosen": {
+          "$ref": "#/$defs/token"
+        }
+      }
+    },
+    "generationLoop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "prompt",
+        "stepCount",
+        "steps",
+        "selection"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "generationLoop"
+        },
+        "prompt": {
+          "$ref": "#/$defs/tokens"
+        },
+        "stepCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/generationStep"
+          },
+          "minItems": 1,
+          "maxItems": 8
+        },
+        "selection": {
+          "enum": [
+            "greedy",
+            "sample"
+          ]
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        }
+      },
+      "if": {
+        "properties": {
+          "selection": {
+            "const": "sample"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "seed"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "seed"
+          ]
+        }
+      }
+    },
+    "attention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "imagePNG",
+        "patchSize",
+        "query",
+        "scores"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "attention"
+        },
+        "imagePNG": {
+          "$ref": "#/$defs/imagePNG"
+        },
+        "patchSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "query": {
+          "$ref": "#/$defs/patchIndex"
+        },
+        "scores": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": -1000000,
+            "maximum": 1000000
+          },
+          "minItems": 1,
+          "maxItems": 63
         }
       }
     }

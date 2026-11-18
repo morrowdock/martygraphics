@@ -28,7 +28,7 @@ The 3D example in the open-vocabulary spec also shows a motion arrow and a centr
 
 ## ML explainer examples
 
-These four 2D lessons use the [opt-in ML format](../../docs/ML-EXPLAINER.md).
+These 2D lessons use the [opt-in ML format](../../docs/ML-EXPLAINER.md).
 The vision example includes a paper citation and labels the embedding width and layout as illustrative.
 
 | File | What it shows |
@@ -37,6 +37,13 @@ The vision example includes a paper citation and labels the embedding width and 
 | [Next-token probabilities](ml-next-token-probabilities.json) | Logits, softmax, temperature, top-k, top-p and the chosen token. |
 | [Agent loop](ml-agent-loop.json) | Tool result, human review, approval, rejection and the step budget. |
 | [Combined](ml-combined.json) | An illustrative vision pipeline followed by the probability and agent-loop boards. |
+| [Meaning map](ml-meaning-map.json) | Illustrative positions for words and a dog thumbnail, with cosine neighbor links. |
+| [Picture to numbers](ml-picture-to-numbers.json) | The patch grid, decoded RGB values of a highlighted patch and its flattened length. |
+| [Generation loop](ml-generation-loop.json) | Iterative logits, softmax, greedy picks and an appended answer. |
+| [Temperature sweep](ml-temperature-sweep.json) | One set of logits at four temperatures, with labels held through each tween. |
+| [Simplified attention](ml-attention.json) | A query patch with weight-proportional attention links. |
+
+See [ML sample artwork](ML-ASSETS.md) for image provenance and licensing.
 
 To use the bundled sample typography, set `MARTY_ML_FONT_DIR` to the absolute path
 of `Examples/Explainers/MLFonts` before running `marty-ml-render`. The fonts and

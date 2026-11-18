@@ -174,7 +174,8 @@ extension MLBoard {
     }
 
     func probabilities(_ item: MLProbabilities, frame: Int) {
-        let top = panel.minY + 86
+        if item.isSweep { simplified("Simplified · illustrative logits") }
+        let top = panel.minY + (item.isSweep ? 112 : 86)
         text("Context tokens", x: panel.midX, y: top, size: MLStyle.heading, maxWidth: panel.width)
         let chipHeight = tokens(item.tokens, in: CGRect(x: panel.minX, y: top + 20,
                                                        width: panel.width, height: MLStyle.tokenHeight), role: .teal)

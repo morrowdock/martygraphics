@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "kind": "ml-explainer",
+  "title": "Which pieces matter?",
+  "items": [
+    {
+      "id": "attention",
+      "kind": "attention",
+      "imagePNG": "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAACzklEQVR42u2S309SURzA+Wdab229MJ2G1gSXBYSoF4WJAt7x4yL+QJ2GildEhwh6JX8QGSoiNVE0Fup0De2hraXO1kqLar601dZLj730dcfdXS9Xc0ltbW6f3Z2dc+/ns3PO5bmTqb8K7yJwEfgHgWBiDZH5wEJs+l2gOjVejoDxZGjCPng/M4FnERetRmx7SqzCq+a8Kza787yBmXgcSR2VAj8hROMJ/DrYAUth9nkDz8MkGA9C2gohv7UsBwXIO3wUABzBxT8PtPgXEl7tj007zbcn9R8DStoOnP0mOAJZly8pC/jMAPB9uZkZOPs1cAQ+xJq+rLSxAgC64Qwc0d7GaLoddjCozKEDQ+ONvghJha09UaIrVsuEXLI54i7AuRzuXZ3jCFDJt7vJQGoQ37FiX+fN8NxpxN44SlfbbyM7KeUn7VKaFaf8EaUcCuGsEoL7L1p6OrdPafY96p+vW/bcqi2r9P2w8lOwOmi+2a/IXbOJmQGaRTc2MKtnB4ipPtviEiuQiIcOIgQnu75KTjtivV3c148dC2hGTUCNv6FhdqQzvtK7tn2eAADHxRFgQT0wnRR45a04PRD1lv8+YBwz7c9y2D+HjZukjKmbtwgB5gzrtrkDgCvAsYmXbgXTlWgpCmoEAAwOL6Bbdm9Sx77kdLXaZ1D068R2lZFUbgRwpE5NG7aG1azTiNWLUOBhrajrrrzUqdaO4R1R84mB4p6q/Hp5ll7C4sWAClFMSLR1Epv1CI/pKEDUiNCbuWaZhFQ1zphaH5sbQkTdFMErceuQnVPNCrDm8ZpCFIABc/6apbjSZ0Ba3q2eKplLq6L0pwRCDgXY4cmaF+jFfk0eAAPmPOwDtGUevHrEeBigKWgrh7X0gNwiozoxeKYvgZpph89BwnQeCyCKutWiDtWNZiy/qQw2C2QbpelqmESr8Bq8DJ/Ah+k2jkBm+f8DvwBVH+Z5NsaUtQAAAABJRU5ErkJggg==",
+      "patchSize": 8,
+      "query": [
+        1,
+        1
+      ],
+      "scores": [
+        -1.3,
+        -0.1,
+        -2.6,
+        -2.9,
+        1.8,
+        0.8,
+        -2.7,
+        -0.4,
+        1.3,
+        0.35,
+        -2.4,
+        -2.5,
+        -1.7,
+        -2.4,
+        -2.6
+      ]
+    }
+  ]
+}

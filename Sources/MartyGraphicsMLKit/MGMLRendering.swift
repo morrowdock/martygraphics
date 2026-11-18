@@ -14,6 +14,12 @@ public enum MGMLSize: String, CaseIterable, Sendable {
     public var height: Int { self == .portrait ? 1920 : 1080 }
 }
 
+public enum MGMLComposition: Sendable {
+    case fullFrame
+    /// On a landscape canvas, reserve the left 45% for an editor's camera.
+    case rightColumn
+}
+
 extension MGMLDocument {
     public static let framesPerSecond = 30
 
@@ -21,8 +27,14 @@ extension MGMLDocument {
 
     /// Draws a checked frame. The alpha option keeps the canvas clear for compositing.
     public func frame(_ index: Int, size: MGMLSize, theme: MGTheme = .mlBoard, transparent: Bool = false) throws -> CGImage {
+        try frame(index, size: size, theme: theme, transparent: transparent, composition: .fullFrame)
+    }
+
+    public func frame(_ index: Int, size: MGMLSize, theme: MGTheme = .mlBoard, transparent: Bool = false,
+                      composition: MGMLComposition) throws -> CGImage {
         let frame = try locate(index)
-        return try draw(frame.item, at: frame.offset, size: size, theme: theme, transparent: transparent)
+        return try draw(frame.item, at: frame.offset, size: size, theme: theme, transparent: transparent,
+                        composition: composition)
     }
 
     func locate(_ index: Int) throws -> (item: MLItem, offset: Int) {
@@ -35,14 +47,19 @@ extension MGMLDocument {
         throw MGMLReason.frame
     }
 
-    func draw(_ item: MLItem, at frame: Int, size: MGMLSize, theme: MGTheme, transparent: Bool) throws -> CGImage {
-        let board = try MLBoard(size: size, theme: theme, transparent: transparent)
+    func draw(_ item: MLItem, at frame: Int, size: MGMLSize, theme: MGTheme, transparent: Bool,
+              composition: MGMLComposition) throws -> CGImage {
+        let board = try MLBoard(size: size, theme: theme, transparent: transparent, composition: composition)
         board.text(title, x: board.panel.midX, y: board.panel.minY + MLStyle.titleOffset,
                    size: MLStyle.title, maxWidth: board.panel.width)
         switch item.content {
         case .vision(let vision): board.vision(vision)
         case .probabilities(let probabilities): board.probabilities(probabilities, frame: frame)
         case .agent(let agent): board.agent(agent)
+        case .picture(let picture): board.picture(picture, frame: frame)
+        case .meaningMap(let map): board.meaningMap(map, frame: frame)
+        case .generation(let generation): board.generation(generation, frame: frame)
+        case .attention(let attention): board.attention(attention, frame: frame)
         }
         guard let image = board.context.makeImage() else { throw MGMLReason.raster }
         return image
@@ -53,14 +70,25 @@ extension MLItem.Content {
     var frameCount: Int {
         switch self {
         case .vision, .agent: return 90
+        case .meaningMap: return 150
+        case .generation(let generation): return generation.frameCount
+        case .attention: return MLAttention.frameCount
+        case .picture(let picture): return picture.frameCount
         case .probabilities(let probabilities): return probabilities.frameCount
         }
     }
 
     /// A key for consecutive frames with identical pixels, to avoid redrawing static holds.
     func imageKey(_ offset: Int) -> Int {
-        guard case .probabilities(let probabilities) = self else { return 0 }
-        return probabilities.imageKey(offset)
+        switch self {
+        case .probabilities(let probabilities): return probabilities.imageKey(offset)
+        case .picture(let picture): return picture.imageKey(offset)
+        case .meaningMap: return offset >= 63 ? 99 : max(0, offset - 12) / 4
+        case .generation(let generation): return generation.imageKey(offset)
+        case .attention: return min(max(offset, MLAttention.revealFrame),
+                                    MLAttention.revealFrame + MLAttention.transitionFrames)
+        default: return 0
+        }
     }
 }
 
@@ -149,7 +177,7 @@ final class MLBoard {
     let subtle: CGColor
     private var colors: [MGColorRole: CGColor] = [:]
 
-    init(size: MGMLSize, theme: MGTheme, transparent: Bool) throws {
+    init(size: MGMLSize, theme: MGTheme, transparent: Bool, composition: MGMLComposition = .fullFrame) throws {
         guard let space = CGColorSpace(name: CGColorSpace.sRGB),
               let context = CGContext(data: nil, width: size.width, height: size.height, bitsPerComponent: 8,
                                       bytesPerRow: 0, space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
@@ -164,7 +192,8 @@ final class MLBoard {
         let inset = size == .portrait ? 64.0 / scale : MLStyle.inset
         let top = size == .portrait ? 220.0 / scale : 0
         let bottom = size == .portrait ? 1500.0 / scale : height
-        panel = CGRect(x: inset, y: top, width: width - inset * 2, height: bottom - top)
+        let left = size == .landscape && composition == .rightColumn ? width * 0.45 + inset : inset
+        panel = CGRect(x: left, y: top, width: width - inset - left, height: bottom - top)
         let canvas = CGRect(x: 0, y: 0, width: size.width, height: size.height)
         if transparent {
             context.clear(canvas)
@@ -285,7 +314,7 @@ final class MLBoard {
     private static let chipGap = 8.0
     private static let chipPadding = 22.0 / 1.5
 
-    private func chipWidth(_ token: String) -> Double {
+    func chipWidth(_ token: String) -> Double {
         ceil(textWidth(token, size: MLStyle.detail, face: .label)) + 2 * Self.chipPadding
     }
 

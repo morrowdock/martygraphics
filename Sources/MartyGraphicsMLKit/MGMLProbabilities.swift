@@ -31,22 +31,11 @@ struct MLProbabilities: Equatable, Sendable {
     let candidates: [Candidate]
     let chosen: Int
     let distributions: [Distribution]
+    let isSweep: Bool
 
     init(_ input: MLObject) throws {
         tokens = try input.tokens("tokens")
-        guard case .array(let raw)? = input.values["candidates"], (2...8).contains(raw.count) else {
-            throw input.issue(.candidates, "candidates")
-        }
-        var seen = Set<String>()
-        let candidates = try raw.enumerated().map { index, value in
-            let candidate = try MLObject(value, path: "\(input.path).candidates[\(index)]", keys: ["token", "logit"])
-            let token = try candidate.text("token", max: 16, reason: .candidates)
-            guard seen.insert(token).inserted else { throw candidate.issue(.candidates, "token") }
-            guard case .number(let logit)? = candidate.values["logit"], abs(logit) <= 1_000_000 else {
-                throw candidate.issue(.logit, "logit")
-            }
-            return Candidate(token: token, logit: logit)
-        }
+        let candidates = try Self.readCandidates(input)
         self.candidates = candidates
         let choice = try input.text("chosen", max: 16, reason: .chosen)
         guard let chosen = candidates.firstIndex(where: { $0.token == choice }) else {
@@ -59,15 +48,31 @@ struct MLProbabilities: Equatable, Sendable {
             try Self.normalize(weights, stage: stage, parameter: parameter, removed: removed, issue: input.issue(.sum, "candidates"))
         }
         let logits = candidates.map(\.logit)
-        let maximum = logits.max() ?? 0
-        let relative = logits.map { $0 - maximum }
-        var current = try normalized(relative.map { exp($0) }, stage: .softmax)
+        let sumIssue = input.issue(.sum, "candidates")
+        isSweep = input.values["temperatures"] != nil
+        if isSweep {
+            guard case .array(let values)? = input.values["temperatures"], (2...4).contains(values.count),
+                  ["temperature", "topK", "topP"].allSatisfy({ input.values[$0] == nil }) else {
+                throw input.issue(.sweep, "temperatures")
+            }
+            var seen = Set<Double>()
+            distributions = try values.enumerated().map { index, value in
+                guard let temperature = Self.temperature(value), seen.insert(temperature).inserted else {
+                    throw input.issue(.sweep, "temperatures[\(index)]")
+                }
+                return try Self.softmax(logits, temperature: temperature, issue: sumIssue)
+            }
+            guard let final = distributions.last, final.probabilities[chosen] > 0 else {
+                throw input.issue(.chosen, "chosen")
+            }
+            return
+        }
+
+        var current = try Self.softmax(logits, temperature: nil, issue: sumIssue)
         var distributions = [current]
         if let value = input.values["temperature"] {
-            guard case .number(let temperature) = value, (0.01...100).contains(temperature) else {
-                throw input.issue(.temperature, "temperature")
-            }
-            current = try normalized(relative.map { exp($0 / temperature) }, stage: .temperature, parameter: temperature)
+            guard let temperature = Self.temperature(value) else { throw input.issue(.temperature, "temperature") }
+            current = try Self.softmax(logits, temperature: temperature, issue: sumIssue)
             distributions.append(current)
         }
 
@@ -100,6 +105,39 @@ struct MLProbabilities: Equatable, Sendable {
         }
         guard current.probabilities[chosen] > 0 else { throw input.issue(.chosen, "chosen") }
         self.distributions = distributions
+    }
+
+    static func readCandidates(_ input: MLObject, listReason: MGMLReason = .candidates,
+                               logitReason: MGMLReason = .logit) throws -> [Candidate] {
+        guard case .array(let raw)? = input.values["candidates"], (2...8).contains(raw.count) else {
+            throw input.issue(listReason, "candidates")
+        }
+        var seen = Set<String>()
+        return try raw.enumerated().map { index, value in
+            let candidate = try MLObject(value, path: "\(input.path).candidates[\(index)]", keys: ["token", "logit"])
+            let token = try candidate.text("token", max: 16, reason: listReason)
+            guard seen.insert(token).inserted else { throw candidate.issue(listReason, "token") }
+            guard let logit = Self.logit(candidate.values["logit"]) else {
+                throw candidate.issue(logitReason, "logit")
+            }
+            return Candidate(token: token, logit: logit)
+        }
+    }
+
+    static func logit(_ value: MGJSON?) -> Double? {
+        guard case .number(let logit)? = value, abs(logit) <= 1_000_000 else { return nil }
+        return logit
+    }
+
+    static func temperature(_ value: MGJSON) -> Double? {
+        guard case .number(let temperature) = value, (0.01...100).contains(temperature) else { return nil }
+        return temperature
+    }
+
+    static func softmax(_ logits: [Double], temperature: Double?, issue: MGMLIssue) throws -> Distribution {
+        guard let maximum = logits.max() else { throw issue }
+        return try normalize(logits.map { exp(($0 - maximum) / (temperature ?? 1)) },
+                             stage: temperature == nil ? .softmax : .temperature, parameter: temperature, issue: issue)
     }
 
     static func normalize(_ weights: [Double], stage: Stage, parameter: Double?,

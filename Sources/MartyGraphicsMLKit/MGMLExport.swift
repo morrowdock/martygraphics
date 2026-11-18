@@ -22,6 +22,11 @@ extension MGMLDocument {
     /// Writes one silent H.264 movie or a directory of zero-based RGBA PNG frames at 30 fps.
     public func export(to destination: URL, size: MGMLSize, format: MGMLExportFormat = .mp4,
                        theme: MGTheme = .mlBoard) throws -> MGMLExportReceipt {
+        try export(to: destination, size: size, format: format, theme: theme, composition: .fullFrame)
+    }
+
+    public func export(to destination: URL, size: MGMLSize, format: MGMLExportFormat = .mp4,
+                       theme: MGTheme = .mlBoard, composition: MGMLComposition) throws -> MGMLExportReceipt {
         guard destination.isFileURL else { throw MGMLReason.destination }
         try Task.checkCancellation()
         let manager = FileManager.default
@@ -55,7 +60,8 @@ extension MGMLDocument {
                     if key == lastKey, let cached {
                         image = cached
                     } else {
-                        image = try draw(item, at: frame, size: size, theme: theme, transparent: transparent)
+                        image = try draw(item, at: frame, size: size, theme: theme, transparent: transparent,
+                                         composition: composition)
                         cached = image
                         lastKey = key
                     }

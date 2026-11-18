@@ -756,6 +756,26 @@ The strict report gives the first reason and its document location.
 - `ml.prob.topP` — Top-p must be greater than 0 and at most 1.
 - `ml.prob.sum` — The computed distribution is invalid or its sum is outside tolerance.
 - `ml.prob.chosen` — The chosen token is missing, unknown or has zero final probability.
+- `ml.prob.sweep` — A sweep needs 2–4 distinct valid temperatures and no other temperature or filter.
+- `ml.map.count` — A map needs 3–12 entries.
+- `ml.map.word.duplicate` — A map label was already used.
+- `ml.map.coordinates` — The coordinate mode, label, citation, numeric input or PCA result is invalid.
+- `ml.map.vector.length` — A position is not a pair, a vector has fewer than 3 or more than 32 components, or a vector length differs.
+- `ml.map.cosine` — The neighbor flag is invalid, or a zero vector makes cosine similarity undefined.
+- `ml.map.cluster` — A cluster is empty, repeats a label or refers to an absent label.
+- `ml.picture.caption` — The picture caption is missing or invalid.
+- `ml.picture.png` — The image is absent or cannot be decoded as one opaque 8-bit grayscale or RGB PNG.
+- `ml.picture.size` — A PNG side is outside 1–64 pixels.
+- `ml.picture.patch.division` — The patch edge is invalid or does not divide both image sides.
+- `ml.picture.patch.selection` — The highlighted cell is outside the patch grid or invalid.
+- `ml.picture.presentation` — The picture presentation mode is unknown or invalid.
+- `ml.generation.count` — The step count is missing or outside 1–8.
+- `ml.generation.logits` — The step list does not match the count, or a step has missing or invalid candidates or logits.
+- `ml.generation.selection` — The selection mode or its seed is invalid.
+- `ml.generation.chosen` — The chosen assertion is invalid, unknown or differs from the computed choice.
+- `ml.attention.grid` — The derived attention grid has fewer than 2 or more than 64 patches.
+- `ml.attention.query` — The query cell is outside the patch grid or invalid.
+- `ml.attention.scores` — The scores are invalid or do not cover each non-query cell exactly once.
 - `ml.agent.states` — The state set is invalid, incomplete or contains an unreachable revise state.
 - `ml.agent.review` — The review flag is invalid or a required review gate is absent.
 - `ml.agent.stop` — The state set has no terminal stop.
