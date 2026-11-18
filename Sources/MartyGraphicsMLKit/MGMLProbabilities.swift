@@ -16,6 +16,14 @@ struct MLProbabilities: Equatable, Sendable {
         let stage: Stage
         let parameter: Double?
         let probabilities: [Double]
+        var removed: Set<Int> = []
+
+        func percentageLabel(at index: Int) -> String {
+            if removed.contains(index) { return "removed" }
+            let percent = probabilities[index] * 100
+            return MLBoard.number(percent, precision: percent > 0 && percent < 0.05 ? "%.3g" : "%.2f") + "%"
+        }
+
         var sum: Double { probabilities.reduce(0, +) }
     }
 
@@ -46,8 +54,9 @@ struct MLProbabilities: Equatable, Sendable {
         }
         self.chosen = chosen
 
-        func normalized(_ weights: [Double], stage: Stage, parameter: Double? = nil) throws -> Distribution {
-            try Self.normalize(weights, stage: stage, parameter: parameter, issue: input.issue(.sum, "candidates"))
+        func normalized(_ weights: [Double], stage: Stage, parameter: Double? = nil,
+                        removed: Set<Int> = []) throws -> Distribution {
+            try Self.normalize(weights, stage: stage, parameter: parameter, removed: removed, issue: input.issue(.sum, "candidates"))
         }
         let logits = candidates.map(\.logit)
         let maximum = logits.max() ?? 0
@@ -70,7 +79,8 @@ struct MLProbabilities: Equatable, Sendable {
             let k = try input.integer("topK", in: 1...candidates.count, reason: .topK)
             let retained = Set(ranked.prefix(k))
             let weights = logits.indices.map { retained.contains($0) ? current.probabilities[$0] : 0 }
-            current = try normalized(weights, stage: .topK, parameter: Double(k))
+            current = try normalized(weights, stage: .topK, parameter: Double(k),
+                                     removed: Set(logits.indices).subtracting(retained))
             distributions.append(current)
         }
         if let value = input.values["topP"] {
@@ -84,17 +94,19 @@ struct MLProbabilities: Equatable, Sendable {
                 if p < 1, cumulative >= p { break }
             }
             let weights = logits.indices.map { retained.contains($0) ? current.probabilities[$0] : 0 }
-            current = try normalized(weights, stage: .topP, parameter: p)
+            current = try normalized(weights, stage: .topP, parameter: p,
+                                     removed: Set(logits.indices).subtracting(retained))
             distributions.append(current)
         }
         guard current.probabilities[chosen] > 0 else { throw input.issue(.chosen, "chosen") }
         self.distributions = distributions
     }
 
-    static func normalize(_ weights: [Double], stage: Stage, parameter: Double?, issue: MGMLIssue) throws -> Distribution {
+    static func normalize(_ weights: [Double], stage: Stage, parameter: Double?,
+                          removed: Set<Int> = [], issue: MGMLIssue) throws -> Distribution {
         let total = weights.reduce(0, +)
         guard total.isFinite, total > 0 else { throw issue }
-        let distribution = Distribution(stage: stage, parameter: parameter, probabilities: weights.map { $0 / total })
+        let distribution = Distribution(stage: stage, parameter: parameter, probabilities: weights.map { $0 / total }, removed: removed)
         try checkSum(distribution, issue: issue)
         return distribution
     }

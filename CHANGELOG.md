@@ -17,6 +17,7 @@
   loop closure.
 - Add the opt-in `MartyGraphicsMLKit` library with checked vision-to-language, next-token probability
   and agent-loop items. Export silent MP4 or transparent PNG frames in landscape, square and portrait.
+  The probability board keeps stage labels steady as bars animate and identifies filtered-out candidates.
 - Experimental, opt-in `layer2d` programmatic video: checked native 2D keyframes,
   shared library H.264 MP4 and bounded GIF export, captions and SRT sidecars.
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.

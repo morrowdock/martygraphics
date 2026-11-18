@@ -128,6 +128,31 @@ final class MLKitTests: XCTestCase {
         XCTAssertGreaterThan(try XCTUnwrap(full.distributions.last).probabilities[1], 0)
     }
 
+    func testTransitionKeepsPreviousStageLabelsUntilBarsSettle() throws {
+        let input = next.merging(["topK": 2]) { _, new in new }
+        guard case .probabilities(let item) = try checked(input) else { return XCTFail("Wrong item") }
+        let start = MLProbabilities.introFrames + MLProbabilities.stageFrames
+        let middle = try XCTUnwrap(item.displayed(at: start + MLProbabilities.transitionFrames / 2))
+        XCTAssertEqual(middle.stage.stage, .softmax)
+        XCTAssertEqual(middle.stage.percentageLabel(at: 2), "33.33%")
+        XCTAssertLessThan(middle.values[2], middle.stage.probabilities[2])
+        let settled = try XCTUnwrap(item.displayed(at: start + MLProbabilities.transitionFrames - 1))
+        XCTAssertEqual(settled.stage.stage, .topK)
+        XCTAssertEqual(settled.stage.percentageLabel(at: 2), "removed")
+        XCTAssertEqual(settled.values, settled.stage.probabilities)
+    }
+
+    func testPercentageLabelDistinguishesTinyKeptAndRemovedTokens() throws {
+        let input = next.merging([
+            "topK": 2,
+            "candidates": [["token": "A", "logit": 0], ["token": "B", "logit": -9], ["token": "C", "logit": -10]]
+        ]) { _, new in new }
+        guard case .probabilities(let item) = try checked(input) else { return XCTFail("Wrong item") }
+        let stage = try XCTUnwrap(item.distributions.last)
+        XCTAssertEqual(stage.percentageLabel(at: 1), "0.0123%")
+        XCTAssertEqual(stage.percentageLabel(at: 2), "removed")
+    }
+
     func testProbabilityRefusals() throws {
         expect(.tokens, "items[0].tokens", try changed(next, "tokens", []))
         expect(.candidates, "items[0].candidates", try changed(next, "candidates", []))

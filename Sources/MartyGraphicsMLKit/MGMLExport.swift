@@ -21,7 +21,7 @@ public struct MGMLExportReceipt: Codable, Equatable, Sendable {
 extension MGMLDocument {
     /// Writes one silent H.264 movie or a directory of zero-based RGBA PNG frames at 30 fps.
     public func export(to destination: URL, size: MGMLSize, format: MGMLExportFormat = .mp4,
-                       theme: MGTheme = .board) throws -> MGMLExportReceipt {
+                       theme: MGTheme = .mlBoard) throws -> MGMLExportReceipt {
         guard destination.isFileURL else { throw MGMLReason.destination }
         try Task.checkCancellation()
         let manager = FileManager.default

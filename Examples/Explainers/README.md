@@ -37,3 +37,7 @@ The vision example includes a paper citation and labels the embedding width and 
 | [Next-token probabilities](ml-next-token-probabilities.json) | Logits, softmax, temperature, top-k, top-p and the chosen token. |
 | [Agent loop](ml-agent-loop.json) | Tool result, human review, approval, rejection and the step budget. |
 | [Combined](ml-combined.json) | An illustrative vision pipeline followed by the probability and agent-loop boards. |
+
+To use the bundled sample typography, set `MARTY_ML_FONT_DIR` to the absolute path
+of `Examples/Explainers/MLFonts` before running `marty-ml-render`. The fonts and
+their SIL OFL 1.1 licenses live alongside the samples.

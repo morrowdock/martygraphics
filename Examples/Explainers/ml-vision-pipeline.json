@@ -7,7 +7,7 @@
       "id": "vision",
       "kind": "visionPipeline",
       "caption": "Simplified · LLaVA-1.5-style",
-      "citation": "Liu et al., CVPR 2024 (arXiv 2310.03744)",
+      "citation": "Vision encoder features · CLIP ViT-L · patch 14 · 336 px · Liu et al., CVPR 2024 (arXiv 2310.03744)",
       "imageSize": [
         336,
         336

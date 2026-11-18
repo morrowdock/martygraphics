@@ -1,7 +1,7 @@
 # Third-party inventory
 
 This source package declares **no external package dependencies** and vendors
-no third-party source, fonts, images, model weights, or binary assets; the one derived
+no third-party code, images, or model weights. The only vendored fonts are sample render resources. The derived
 data table (Unicode numeric scalar ranges) is listed below. The committed
 PNG/GIF showcase assets are original synthetic renders of this package, under
 Apache-2.0; their source and hashes are in [the capture receipt](assets/native/provenance.json).
@@ -14,12 +14,12 @@ Apache-2.0; their source and hashes are in [the capture receipt](assets/native/p
 | Python 3 standard library | DCO, local validation and optional post-release install verification | PSF-2.0; https://docs.python.org/3/license.html |
 | actions/checkout | CI only | MIT; https://github.com/actions/checkout/blob/main/LICENSE |
 | Unicode Character Database 18.0.0, `DerivedNumericType.txt` | Numeric_Type ranges (2,348 scalars) derived into `Sources/MartyGraphics/Solid/MGSolidNumericScalars.swift` for the solid caption number rule | Unicode License v3; https://www.unicode.org/license.txt ; data © Unicode, Inc. |
+| Bricolage Grotesque and DM Mono | Optional ML explainer sample render fonts | SIL Open Font License 1.1; [Bricolage Grotesque](../Examples/Explainers/MLFonts/BricolageGrotesque-OFL.txt), [DM Mono](../Examples/Explainers/MLFonts/DMMono-OFL.txt) |
 | Contributor Covenant 2.1 | CODE_OF_CONDUCT.md | CC-BY-4.0; https://github.com/ContributorCovenant/contributor_covenant/blob/91532d80ea5f39b6685aff4892bc6854bf2f6d6f/LICENSE.md ; attribution retained in the document |
 
 CI actions are pinned to immutable commit SHAs in the workflow. Apple frameworks
 are platform dependencies, not separately licensed open-source redistributions.
 No GPL, AGPL, or MPL package is included. Package.swift has no dependencies list.
-No third-party binary redistribution has been approved by this source inventory.
 
 Contributor Covenant 2.1 was taken from the CC-BY-4.0 snapshot 91532d80ea5f39b6685aff4892bc6854bf2f6d6f
 (before the website repository changed its license). Only the enforcement contact
