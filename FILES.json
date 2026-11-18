@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "6d9b6f6685ec95c01a891e2b8ed2cf63262abdfe20beb4bc6c3ce5cbfcb05361"
+      "sha256": "82f73c4f24a9656a69eb369efd71ed257943b687297c77a0992c288ca2c4c631"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -2871,7 +2871,7 @@
     },
     {
       "path": "tools/render-blender/README.md",
-      "sha256": "24eb23ef31c4f97d1bad853b7d4a595f04b83c2ad25d546644f58258e10886eb"
+      "sha256": "60696e9ea89eb368456e479fe57048e22c0dd0d36733c63a56ee35b554978e7b"
     },
     {
       "path": "tools/render-blender/assets.lock.json",
@@ -2903,7 +2903,7 @@
     },
     {
       "path": "tools/render-blender/mgrender/lookdev.py",
-      "sha256": "8411cd1f55cb1e0f117cacd1f9efe87108090d6ca5ef3ab87724cb39a43c7288"
+      "sha256": "18ae40a3c5ac941bcbf187d127ef8da76906b516d379ed21c128b3fd3fb2a82c"
     },
     {
       "path": "tools/render-blender/mgrender/manifest.py",
@@ -2915,11 +2915,11 @@
     },
     {
       "path": "tools/render-blender/render.py",
-      "sha256": "271864ac2c8b5c44425f731804170f12a79d38652142478e4b4082c81ef53f2e"
+      "sha256": "3ade5eed65fcca9e274481cb5f76f077527ed019d18fc081c089fbd6019a254e"
     },
     {
       "path": "tools/render-blender/selftest.sh",
-      "sha256": "9f076211b7f21882c2b94600be53c06185183928e07b07e86c503d287ae61f6a"
+      "sha256": "d9bcb248289049f01ff2118929e0e5545b77eb97e0e831b1d8274b88d23e4791"
     },
     {
       "path": "tools/render-blender/selftest_scene.py",
@@ -3026,6 +3026,42 @@
       "sha256": "456befe1c91904a07bedb720c346d352374de237845d51d48281b506644a72db"
     },
     {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/cam-follower.json",
+      "sha256": "8b268d5ea893927f84935e9f8005797dc8832899b777ac057d8993cb171dcf4e"
+    },
+    {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/drone-motor-propeller.json",
+      "sha256": "d9a77d8d22be28fffffa785db65aafccc2999be74c36ba607d89ec2a4f3139ad"
+    },
+    {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/four-bar-linkage.json",
+      "sha256": "088c35856f9ccc54390e6e8aaa7aeb7c7c15fa5c3e3d85ffb1ed42e6109bb8fd"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-cam-follower.check.json",
+      "sha256": "7265ecdd617d78e59be2ab2c18adfd090a1b4ed979c36b4c6ea0ec16d995ab81"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-cam-follower.strict.json",
+      "sha256": "f597c5abaa400d23a2ef85a40b22a45f4f46344a05d335fa680cd1922831f542"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-drone-motor-propeller.check.json",
+      "sha256": "6361dcffd1b14a24d1a4bdb20f50c9dc85ad8f267c2573ab6c9943f55ca79ffa"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-drone-motor-propeller.strict.json",
+      "sha256": "09e5fa87321ab99f2765c0e4e825200e2480a52df360664b1a56170b4751d675"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-four-bar-linkage.check.json",
+      "sha256": "cc34403c605450ea5f70d59eb2dcafb84efae821b4764d5d2323cdd69bec54b2"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-four-bar-linkage.strict.json",
+      "sha256": "8e6d8458b3f2142f0fc614eef146ff6f375641add6a288fb6c1c630383dcf0b9"
+    },
+    {
       "path": "docs/proposals/programmatic-video.md",
       "sha256": "626360dc551ac6d7d9574f69797f3e2d64cc1a4779b6b1f4e8544e6e8802f1b6"
     },
@@ -3068,6 +3104,10 @@
     {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
       "sha256": "b545f55b32eccaf93397daa7890fb1dc04b5c1a4a47f2b58e8ae9bac1064b15c"
+    },
+    {
+      "path": "tools/render-blender/render_variants.py",
+      "sha256": "d400f3204e4fd8d9443f1fea03ae6765b2ecc1ab931b5e4aa436cdbdfc44c7e8"
     }
   ]
 }
