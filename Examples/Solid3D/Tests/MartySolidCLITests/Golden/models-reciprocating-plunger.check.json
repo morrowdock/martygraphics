@@ -1,0 +1,162 @@
+{
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+    "crank.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "crank.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "plunger.crankRadius" : {
+      "source" : "crankSlider",
+      "text" : "15 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 15
+    },
+    "plunger.rodLength" : {
+      "source" : "crankSlider",
+      "text" : "58 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 58
+    },
+    "plunger.travel" : {
+      "source" : "crankSlider",
+      "text" : "30 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 30
+    }
+  },
+  "file" : {
+    "lines" : 15,
+    "sha256" : "e10a8b10f07a9aea9a49e9a49894b1da33137c4656756d7d687ed33c1c5dd874"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "crank",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "plunger",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by crankSlider"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "rod",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by crankRod"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.2",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.2.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: plunger.travel = 30 ± 1e-09"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 5,
+    "text" : "Solved 5 (3 animation ratios)"
+  },
+  "notChecked" : {
+    "crankRod" : [
+      "forces and dynamics",
+      "joint clearance"
+    ],
+    "crankSlider" : [
+      "forces and dynamics",
+      "joint clearance"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 5,
+  "ratios" : {
+    "crank" : 1
+  },
+  "readBack" : [
+    "base: world centre (48, 0, -14) mm, size 164 x 49 x 6 mm; static; root (at [48, 0, -14] in the world frame); local +Z points +Z",
+    "crank: world centre (0, 0, 0) mm, size 42 x 42 x 14 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "plunger: world centre (97.5, 0, 4) mm, size 49 x 12 x 12 mm; slides along +X; travel 30 mm per input turn (Solved, crankSlider); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "rod: world centre (42.5, 0, 3.5) mm, size 67 x 10 x 3 mm; turns about a vertical axis (+Z) through (73, 0, 0); angle from crankRod relative to plunger (Solved, crankRod); child of plunger (at [0, 0, 0] in the plunger frame); local +Z points +Z",
+    "guide: world centre (89, 0, 4) mm, size 18 x 22 x 22 mm; static; root (at [80, 0, 4] in the world frame); local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 30,
+          "text" : "plunger.travel = 30 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "plunger.travel"
+        }
+      ],
+      "facts" : [
+        "plunger.travel"
+      ]
+    }
+  ],
+  "steps" : [
+    "The crank-slider drives compute the rod angle and the plunger motion. The guide and pump stand are schematic.",
+    "The solved plunger stroke is 30 mm. Fluid flow is outside the model."
+  ],
+  "stepTiers" : [
+    null,
+    "solved"
+  ],
+  "strict" : false,
+  "title" : "Crank-driven reciprocating plunger",
+  "triangles" : 988,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

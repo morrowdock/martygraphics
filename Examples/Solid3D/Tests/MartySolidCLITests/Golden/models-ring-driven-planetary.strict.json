@@ -1,0 +1,318 @@
+{
+  "checks" : {
+    "gearPairs" : 6,
+    "gearsEngage" : true,
+    "maxPenetrationMM" : -0.21520590891047675,
+    "meshesClosed" : true,
+    "minClearanceMM" : 0.21520590891047675,
+    "openMeshes" : [
+
+    ],
+    "toleranceMM" : 0.02
+  },
+  "facts" : {
+    "carrier.speed" : {
+      "source" : "gearMesh",
+      "text" : "0.71",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.71428571428571419
+    },
+    "carrier.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "0.71",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.71428571428571419
+    },
+    "count.pin" : {
+      "source" : "repeat",
+      "text" : "3",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 3
+    },
+    "count.planet" : {
+      "source" : "repeat",
+      "text" : "3",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 3
+    },
+    "planet.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "planet.speed" : {
+      "source" : "gearMesh",
+      "text" : "0.95",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.95238095238095233
+    },
+    "planet.teeth" : {
+      "source" : "shape",
+      "text" : "18",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 18
+    },
+    "planet.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "1.67",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1.6666666666666665
+    },
+    "planet1.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "planet1.speed" : {
+      "source" : "gearMesh",
+      "text" : "0.95",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.95238095238095233
+    },
+    "planet1.teeth" : {
+      "source" : "shape",
+      "text" : "18",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 18
+    },
+    "planet1.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "1.67",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1.6666666666666665
+    },
+    "planet2.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "planet2.speed" : {
+      "source" : "gearMesh",
+      "text" : "0.95",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.95238095238095233
+    },
+    "planet2.teeth" : {
+      "source" : "shape",
+      "text" : "18",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 18
+    },
+    "planet2.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "1.67",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1.6666666666666665
+    },
+    "planet3.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "planet3.speed" : {
+      "source" : "gearMesh",
+      "text" : "0.95",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.95238095238095233
+    },
+    "planet3.teeth" : {
+      "source" : "shape",
+      "text" : "18",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 18
+    },
+    "planet3.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "1.67",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1.6666666666666665
+    },
+    "ring.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "ring.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "ring.teeth" : {
+      "source" : "shape",
+      "text" : "60",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 60
+    },
+    "ring.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "sun.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "sun.teeth" : {
+      "source" : "shape",
+      "text" : "24",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 24
+    }
+  },
+  "file" : {
+    "lines" : 16,
+    "sha256" : "3a1bd86c44857ea72bec6bcf8c5d9102f38be7550e597a7080acd2575a2aca49"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "ring",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "carrier",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "planet",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.2",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.2.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: carrier.speed = 0.7142857142857143 ± 1e-09"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 5,
+    "text" : "Solved 5 (3 animation ratios)"
+  },
+  "notChecked" : {
+    "gearMesh" : [
+      "3D tooth contact",
+      "load, strength and wear",
+      "friction and efficiency"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 9,
+  "ratios" : {
+    "carrier" : 0.71428571428571419,
+    "planet1" : 0.95238095238095233,
+    "planet2" : 0.95238095238095233,
+    "planet3" : 0.95238095238095233,
+    "ring" : 1
+  },
+  "readBack" : [
+    "ring: world centre (0, 0, 6.25) mm, size 138 x 138 x 15.5 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "sun: world centre (0, 0, 4.5) mm, size 51.7 x 51.7 x 9 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "carrier: world centre (10.5, 0, 19.5) mm, size 77 x 86.8 x 5 mm; turns about a vertical axis (+Z) through (0, 0, 0); 0.71 turns per input turn (Solved, gearMesh); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "planet1: world centre (42, 0, 4.5) mm, size 40 x 39.6 x 9 mm; turns about a vertical axis (+Z) through (42, 0, 0); 0.95 turns per input turn relative to carrier (Solved, gearMesh); copy 1 of 3 (repeat of planet); child of carrier (at [42, 0, 0] in the carrier frame); its origin is 42 mm from the carrier axis; local +Z points +Z",
+    "planet2: world centre (-21, 36.4, 4.5) mm, size 40 x 39.6 x 9 mm; turns about a vertical axis (+Z) through (-21, 36.4, 0); 0.95 turns per input turn relative to carrier (Solved, gearMesh); copy 2 of 3 (repeat of planet); child of carrier (at [-21, 36.4, 0] in the carrier frame); its origin is 42 mm from the carrier axis; local +Z points +Z",
+    "planet3: world centre (-21, -36.4, 4.5) mm, size 40 x 39.6 x 9 mm; turns about a vertical axis (+Z) through (-21, -36.4, 0); 0.95 turns per input turn relative to carrier (Solved, gearMesh); copy 3 of 3 (repeat of planet); child of carrier (at [-21, -36.4, 0] in the carrier frame); its origin is 42 mm from the carrier axis; local +Z points +Z",
+    "pin1: world centre (42, 0, 8) mm, size 9.8 x 9.8 x 18 mm; fixed to its parent, moves with carrier; copy 1 of 3 (repeat of pin); child of carrier (at [42, 0, 0] in the carrier frame); its origin is 42 mm from the carrier axis; local +Z points +Z",
+    "pin2: world centre (-21, 36.4, 8) mm, size 9.8 x 9.8 x 18 mm; fixed to its parent, moves with carrier; copy 2 of 3 (repeat of pin); child of carrier (at [-21, 36.4, 0] in the carrier frame); its origin is 42 mm from the carrier axis; local +Z points +Z",
+    "pin3: world centre (-21, -36.4, 8) mm, size 9.8 x 9.8 x 18 mm; fixed to its parent, moves with carrier; copy 3 of 3 (repeat of pin); child of carrier (at [-21, -36.4, 0] in the carrier frame); its origin is 42 mm from the carrier axis; local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 0.7142857142857143,
+          "text" : "carrier.speed = 0.7142857142857143 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "carrier.speed"
+        }
+      ],
+      "facts" : [
+        "carrier.speed"
+      ]
+    }
+  ],
+  "steps" : [
+    "With the sun fixed and the ring driven, the engine checks both meshes at each planet. Carrier pins are schematic.",
+    "The meshes solve the carrier speed to 5\/7 of ring speed."
+  ],
+  "stepTiers" : [
+    null,
+    "solved"
+  ],
+  "strict" : true,
+  "title" : "Ring-driven planetary with a fixed sun",
+  "triangles" : 49916,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

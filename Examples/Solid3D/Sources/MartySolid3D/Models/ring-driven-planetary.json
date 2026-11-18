@@ -1,0 +1,16 @@
+{"v": 2, "kind": "assembly", "title": "Ring-driven planetary with a fixed sun", "units": "mm",
+ "parts": [
+  {"id": "ring", "name": "Ring input", "material": "brass", "shape": {"ringGear": {"teeth": 60, "module": 2, "width": 15.5, "chamfer": 0.4, "outer": 68.9, "z0": -1.5}}, "at": [0, 0, 0], "drive": {"input": 1}, "joint": {"revolute": [0, 0, 1]}},
+  {"id": "sun", "name": "Fixed sun", "material": "darkSteel", "shape": {"gear": {"teeth": 24, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [0, 0, 0]},
+  {"id": "carrier", "name": "Output carrier", "material": "anodized.orange", "shape": {"carrier": {"arms": 3, "radius": 42, "hub": 11, "boss": 7, "armWidth": 8, "thickness": 5, "z0": 17, "chamfer": 0.6}}, "joint": {"revolute": [0, 0, 1]}},
+  {"id": "planet", "name": "Planet", "material": "brushedSteel", "shape": {"gear": {"teeth": 18, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [42, 0, 0], "parent": "carrier", "repeat": {"count": 3, "axis": [0, 0, 1]}, "joint": {"revolute": [0, 0, 1]}},
+  {"id": "pin", "name": "Schematic planet pin", "material": "darkSteel", "shape": {"shaft": {"radius": 4.9, "length": 18, "z0": -1}}, "at": [42, 0, 0], "parent": "carrier", "repeat": {"count": 3, "axis": [0, 0, 1]}}
+ ],
+ "constraints": [
+  {"gearMesh": {"a": "ring", "b": "planet", "carrier": "carrier"}},
+  {"gearMesh": {"a": "sun", "b": "planet", "carrier": "carrier"}}
+ ],
+ "steps": [
+  {"say": "With the sun fixed and the ring driven, the engine checks both meshes at each planet. Carrier pins are schematic.", "camera": "hero", "highlight": ["sun", "ring", "planet"], "spin": 1},
+  {"say": "The meshes solve the carrier speed to {carrier.speed|frac} of ring speed.", "camera": "hero", "highlight": ["carrier"], "spin": 1, "check": [{"value": "carrier.speed", "eq": 0.7142857142857143, "tol": 1e-09}]}
+ ]}

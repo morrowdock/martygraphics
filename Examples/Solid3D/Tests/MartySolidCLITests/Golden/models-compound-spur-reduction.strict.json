@@ -1,0 +1,230 @@
+{
+  "checks" : {
+    "gearPairs" : 2,
+    "gearsEngage" : true,
+    "maxPenetrationMM" : -0.21437562069649019,
+    "meshesClosed" : true,
+    "minClearanceMM" : 0.21437562069649019,
+    "openMeshes" : [
+
+    ],
+    "toleranceMM" : 0.02
+  },
+  "facts" : {
+    "input.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "input.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "input.teeth" : {
+      "source" : "shape",
+      "text" : "18",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 18
+    },
+    "input.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "output.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "output.speed" : {
+      "source" : "gearMesh",
+      "text" : "0.25",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.25
+    },
+    "output.teeth" : {
+      "source" : "shape",
+      "text" : "36",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 36
+    },
+    "output.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "0.25",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.25
+    },
+    "pinion.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "pinion.teeth" : {
+      "source" : "shape",
+      "text" : "18",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 18
+    },
+    "wheel.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "wheel.speed" : {
+      "source" : "gearMesh",
+      "text" : "-0.5",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.5
+    },
+    "wheel.teeth" : {
+      "source" : "shape",
+      "text" : "36",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 36
+    },
+    "wheel.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "-0.5",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.5
+    }
+  },
+  "file" : {
+    "lines" : 18,
+    "sha256" : "07720431c3711d96072058dbf36ee9b85406a564d7a6076de05ce3bfad68206b"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "input",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "wheel",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "output",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.2",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.2.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: output.speed = 0.25 ± 1e-09"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 5,
+    "text" : "Solved 5 (3 animation ratios)"
+  },
+  "notChecked" : {
+    "gearMesh" : [
+      "3D tooth contact",
+      "load, strength and wear",
+      "friction and efficiency"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 7,
+  "ratios" : {
+    "input" : 1,
+    "output" : 0.25,
+    "wheel" : -0.5
+  },
+  "readBack" : [
+    "input: world centre (0, 0, 4.5) mm, size 40 x 39.6 x 9 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "wheel: world centre (54, 0, 4.5) mm, size 75.8 x 75.8 x 9 mm; turns about a vertical axis (+Z) through (54, 0, 0); -0.5 turns per input turn (Solved, gearMesh); root (at [54, 0, 0] in the world frame); local +Z points +Z",
+    "pinion: world centre (54, 0, 18.5) mm, size 39.9 x 39.9 x 9 mm; fixed to its parent, moves with wheel; child of wheel (at [0, 0, 14] in the wheel frame); its origin is 0 mm from the wheel axis; local +Z points +Z",
+    "output: world centre (54, 54, 18.5) mm, size 76 x 76 x 9 mm; turns about a vertical axis (+Z) through (54, 54, 14); 0.25 turns per input turn (Solved, gearMesh); root (at [54, 54, 14] in the world frame); local +Z points +Z",
+    "inputShaft: world centre (0, 0, 5) mm, size 9.8 x 9.8 x 16 mm; fixed to its parent, moves with input; child of input (at [0, 0, 0] in the input frame); its origin is 0 mm from the input axis; local +Z points +Z",
+    "countershaft: world centre (54, 0, 12) mm, size 9.76 x 9.76 x 30 mm; fixed to its parent, moves with wheel; child of wheel (at [0, 0, 0] in the wheel frame); its origin is 0 mm from the wheel axis; local +Z points +Z",
+    "outputShaft: world centre (54, 54, 19) mm, size 9.72 x 9.72 x 16 mm; fixed to its parent, moves with output; child of output (at [0, 0, 0] in the output frame); its origin is 0 mm from the output axis; local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : 0.25,
+          "text" : "output.speed = 0.25 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "output.speed"
+        }
+      ],
+      "facts" : [
+        "output.speed"
+      ]
+    }
+  ],
+  "steps" : [
+    "The engine checks both spur meshes. The intermediate pinion rides on its wheel. The shafts are schematic.",
+    "The two meshes give the output 1\/4 turn per input turn, in the same direction."
+  ],
+  "stepTiers" : [
+    null,
+    "solved"
+  ],
+  "strict" : true,
+  "title" : "Compound spur reduction",
+  "triangles" : 39168,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

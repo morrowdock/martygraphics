@@ -1,0 +1,18 @@
+{"v": 2, "kind": "assembly", "title": "Compound spur reduction", "units": "mm",
+ "parts": [
+  {"id": "input", "name": "Input pinion", "material": "brass", "shape": {"gear": {"teeth": 18, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [0, 0, 0], "drive": {"input": 1}, "joint": {"revolute": [0, 0, 1]}},
+  {"id": "wheel", "name": "Intermediate wheel", "material": "anodized.blue", "shape": {"gear": {"teeth": 36, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [54, 0, 0], "joint": {"revolute": [0, 0, 1]}},
+  {"id": "pinion", "name": "Intermediate pinion", "material": "anodized.blue", "shape": {"gear": {"teeth": 18, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [0, 0, 14], "parent": "wheel"},
+  {"id": "output", "name": "Output wheel", "material": "bronze", "shape": {"gear": {"teeth": 36, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [54, 54, 14], "joint": {"revolute": [0, 0, 1]}},
+  {"id": "inputShaft", "name": "Schematic shaft", "material": "brushedSteel", "shape": {"shaft": {"radius": 4.9, "length": 16, "z0": -3, "chamfer": 0.5}}, "parent": "input"},
+  {"id": "countershaft", "name": "Schematic shaft", "material": "brushedSteel", "shape": {"shaft": {"radius": 4.9, "length": 30, "z0": -3, "chamfer": 0.5}}, "parent": "wheel"},
+  {"id": "outputShaft", "name": "Schematic shaft", "material": "brushedSteel", "shape": {"shaft": {"radius": 4.9, "length": 16, "z0": -3, "chamfer": 0.5}}, "parent": "output"}
+ ],
+ "constraints": [
+  {"gearMesh": {"a": "input", "b": "wheel"}},
+  {"gearMesh": {"a": "pinion", "b": "output"}}
+ ],
+ "steps": [
+  {"say": "The engine checks both spur meshes. The intermediate pinion rides on its wheel. The shafts are schematic.", "camera": "hero", "highlight": ["wheel", "pinion"], "spin": 1},
+  {"say": "The two meshes give the output {output.speed|frac} turn per input turn, in the same direction.", "camera": "hero", "highlight": ["input", "output"], "spin": 1, "check": [{"value": "output.speed", "eq": 0.25, "tol": 1e-09}]}
+ ]}

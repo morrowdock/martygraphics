@@ -1,0 +1,107 @@
+{
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+    "count.blade" : {
+      "source" : "repeat",
+      "text" : "2",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 2
+    },
+    "rotor.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "rotor.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    }
+  },
+  "file" : {
+    "lines" : 15,
+    "sha256" : "fe60b8193ad3d54627ddbba81182bb54334dec8f92a9091202467b854d87f577"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "rotor",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 1,
+    "text" : "Solved 1 (animation ratio)"
+  },
+  "notChecked" : {
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 6,
+  "ratios" : {
+    "rotor" : 1
+  },
+  "readBack" : [
+    "arm: world centre (-38.5, 0, -7.5) mm, size 107 x 30 x 5 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "stator: world centre (0, 0, -1) mm, size 22 x 22 x 8 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "rotor: world centre (0, 0, 3) mm, size 28 x 28 x 16 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "hub: world centre (0, 0, 10.5) mm, size 16 x 16 x 5 mm; fixed to its parent, moves with rotor; child of rotor (at [0, 0, 10] in the rotor frame); its origin is 0 mm from the rotor axis; local +Z points +Z",
+    "blade1: world centre (35.5, 3.27, 8.26) mm, size 55 x 13.1 x 7.43 mm; fixed to its parent, moves with rotor; copy 1 of 2 (repeat of blade); child of hub (at [0, 0, 0] in the hub frame); local +Z points +Z",
+    "blade2: world centre (-35.5, -3.27, 8.26) mm, size 55 x 13.1 x 7.43 mm; fixed to its parent, moves with rotor; copy 2 of 2 (repeat of blade); child of hub (at [0, 0, 0] in the hub frame); local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "The engine checks the rotor axis and computes the revolute motion carried by the hub and blades. The arm and motor are schematic.",
+    "The propeller follows the authored motor drive. Thrust and motor performance are outside the model."
+  ],
+  "stepTiers" : [
+    null,
+    null
+  ],
+  "strict" : true,
+  "title" : "Quadcopter arm with direct-drive propeller",
+  "triangles" : 5252,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

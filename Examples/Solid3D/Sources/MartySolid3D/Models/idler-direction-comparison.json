@@ -1,0 +1,16 @@
+{"v": 2, "kind": "assembly", "title": "Spur gear drive with and without an idler", "units": "mm",
+ "parts": [
+  {"id": "input", "name": "Shared input", "material": "brass", "shape": {"gear": {"teeth": 20, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [0, 0, 0], "drive": {"input": 1}, "joint": {"revolute": [0, 0, 1]}},
+  {"id": "direct", "name": "Direct output", "material": "anodized.orange", "shape": {"gear": {"teeth": 28, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [-48, 0, 0], "joint": {"revolute": [0, 0, 1]}},
+  {"id": "idler", "name": "Idler", "material": "brushedSteel", "shape": {"gear": {"teeth": 22, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [42, 0, 0], "joint": {"revolute": [0, 0, 1]}},
+  {"id": "indirect", "name": "Output through the idler", "material": "anodized.blue", "shape": {"gear": {"teeth": 28, "module": 2, "width": 9, "chamfer": 0.45, "bore": 5}}, "at": [42, 50, 0], "joint": {"revolute": [0, 0, 1]}}
+ ],
+ "constraints": [
+  {"gearMesh": {"a": "input", "b": "direct"}},
+  {"gearMesh": {"a": "input", "b": "idler"}},
+  {"gearMesh": {"a": "idler", "b": "indirect"}}
+ ],
+ "steps": [
+  {"say": "The engine checks all spur meshes. This is an open layout with schematic mounting.", "camera": "hero", "highlight": ["input", "idler"], "spin": 1},
+  {"say": "The direct output turns at {direct.speed|frac} of input speed. The idler branch turns at {indirect.speed|frac}. The signs show opposite directions.", "camera": "hero", "highlight": ["direct", "indirect"], "spin": 1, "check": [{"value": "direct.speed", "eq": -0.7142857142857143, "tol": 1e-09}, {"value": "indirect.speed", "eq": 0.7142857142857143, "tol": 1e-09}]}
+ ]}

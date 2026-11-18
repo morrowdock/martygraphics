@@ -1,0 +1,15 @@
+{"v": 2, "kind": "assembly", "title": "Crank-driven reciprocating plunger", "units": "mm",
+ "parts": [
+  {"id": "base", "name": "Pump stand", "material": "darkSteel", "shape": {"box": {"size": [164, 49, 6], "chamfer": 1}}, "at": [48, 0, -14]},
+  {"id": "crank", "name": "Crank disc and pin", "material": "brass", "shape": [{"shaft": {"radius": 21, "length": 7, "z0": -7}}, {"shaft": {"radius": 3.3, "length": 7, "z0": 0, "at": [15, 0, 0]}}], "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}},
+  {"id": "plunger", "name": "Plunger", "material": "brushedSteel", "shape": {"shaft": {"radius": 6, "length": 49, "z0": 0, "at": [0, 0, 4], "rot": [0, 1, 0, 90]}}, "joint": {"prismatic": [1, 0, 0]}, "drive": {"crankSlider": {"crank": "crank", "radius": 15, "rod": 58}}},
+  {"id": "rod", "name": "Connecting rod", "material": "anodized.orange", "shape": {"extrudedProfile": {"points": [[-64, -5], [3, -5], [3, 5], [-64, 5]], "holes": [[[-62, 0], [-60.83, -2.83], [-58, -4], [-55.17, -2.83], [-54, 0], [-55.17, 2.83], [-58, 4], [-60.83, 2.83]]], "depth": 3, "z0": 2}}, "parent": "plunger", "joint": {"revolute": [0, 0, 1]}, "drive": {"crankRod": {"crank": "crank", "radius": 15, "rod": 58}}},
+  {"id": "guide", "name": "Schematic guide sleeve", "material": "anodized.blue", "shape": {"tube": {"inner": 6.5, "outer": 11, "length": 18, "z0": 0, "rot": [0, 1, 0, 90]}}, "at": [80, 0, 4]}
+ ],
+ "constraints": [
+
+ ],
+ "steps": [
+  {"say": "The crank-slider drives compute the rod angle and the plunger motion. The guide and pump stand are schematic.", "camera": "hero", "highlight": ["crank", "rod", "plunger"], "spin": 1},
+  {"say": "The solved plunger stroke is {plunger.travel}. Fluid flow is outside the model.", "camera": "hero", "highlight": ["guide", "plunger"], "spin": 1, "check": [{"value": "plunger.travel", "eq": 30, "tol": 1e-09}]}
+ ]}

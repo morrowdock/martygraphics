@@ -1,0 +1,15 @@
+{"v": 2, "kind": "assembly", "title": "Quadcopter arm with direct-drive propeller", "units": "mm",
+ "parts": [
+  {"id": "arm", "name": "Schematic arm and motor mount", "material": "darkSteel", "shape": [{"box": {"size": [78, 14, 3], "chamfer": 1, "at": [-53, 0, -7.5]}}, {"shaft": {"radius": 15, "length": 5, "z0": -10}}]},
+  {"id": "stator", "name": "Fixed motor stator", "material": "brass", "shape": {"tube": {"inner": 4, "outer": 11, "length": 8, "z0": -5}}},
+  {"id": "rotor", "name": "Rotor bell and drive shaft", "material": "anodized.blue", "shape": [{"tube": {"inner": 11.5, "outer": 14, "length": 9, "z0": -5}}, {"shaft": {"radius": 14, "length": 2, "z0": 4, "chamfer": 0.4}}, {"shaft": {"radius": 3, "length": 5, "z0": 6}}], "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}, "expect": {"axisWorld": [0, 0, 1]}},
+  {"id": "hub", "name": "Propeller hub", "material": "darkSteel", "shape": {"tube": {"inner": 3.05, "outer": 8, "length": 5, "z0": -2}}, "at": [0, 0, 10], "parent": "rotor"},
+  {"id": "blade", "name": "Propeller blade", "material": "aluminum", "shape": {"blade": {"span": 55, "chord": 15, "tipChord": 7, "pitch": -29, "twist": 18, "root": 8}}, "parent": "hub", "repeat": {"count": 2, "axis": [0, 0, 1]}}
+ ],
+ "constraints": [
+
+ ],
+ "steps": [
+  {"say": "The engine checks the rotor axis and computes the revolute motion carried by the hub and blades. The arm and motor are schematic.", "camera": "hero", "highlight": ["rotor", "hub", "blade"], "spin": 1},
+  {"say": "The propeller follows the authored motor drive. Thrust and motor performance are outside the model.", "camera": "hero", "highlight": ["arm", "blade"], "spin": 1}
+ ]}

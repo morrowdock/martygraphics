@@ -1,0 +1,264 @@
+{
+  "checks" : {
+    "gearPairs" : 3,
+    "gearsEngage" : true,
+    "maxPenetrationMM" : -0.21814709639815177,
+    "meshesClosed" : true,
+    "minClearanceMM" : 0.21814709639815177,
+    "openMeshes" : [
+
+    ],
+    "toleranceMM" : 0.02
+  },
+  "facts" : {
+    "direct.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "direct.speed" : {
+      "source" : "gearMesh",
+      "text" : "-0.71",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.7142857142857143
+    },
+    "direct.teeth" : {
+      "source" : "shape",
+      "text" : "28",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 28
+    },
+    "direct.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "-0.71",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.7142857142857143
+    },
+    "idler.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "idler.speed" : {
+      "source" : "gearMesh",
+      "text" : "-0.91",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.90909090909090906
+    },
+    "idler.teeth" : {
+      "source" : "shape",
+      "text" : "22",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 22
+    },
+    "idler.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "-0.91",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : -0.90909090909090906
+    },
+    "indirect.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "indirect.speed" : {
+      "source" : "gearMesh",
+      "text" : "0.71",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.7142857142857143
+    },
+    "indirect.teeth" : {
+      "source" : "shape",
+      "text" : "28",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 28
+    },
+    "indirect.worldSpeed" : {
+      "source" : "gearMesh",
+      "text" : "0.71",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 0.7142857142857143
+    },
+    "input.module" : {
+      "source" : "shape",
+      "text" : "2 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 2
+    },
+    "input.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "input.teeth" : {
+      "source" : "shape",
+      "text" : "20",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 20
+    },
+    "input.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    }
+  },
+  "file" : {
+    "lines" : 16,
+    "sha256" : "559c1491a4da1bf33044ee8113c42282109b1bbacfe4abce4e7858d275f4950b"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "input",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "direct",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "idler",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "indirect",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by gearMesh"
+      },
+      {
+        "badge" : "Numbers solved",
+        "id" : "step.2",
+        "kind" : "caption",
+        "tier" : "solved",
+        "why" : "Its numbers are engine facts; its words are not checked"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.2.check.1",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: direct.speed = -0.7142857142857143 ± 1e-09"
+      },
+      {
+        "badge" : "Checked",
+        "id" : "step.2.check.2",
+        "kind" : "check",
+        "tier" : "solved",
+        "why" : "Checked: indirect.speed = 0.7142857142857143 ± 1e-09"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 7,
+    "text" : "Solved 7 (4 animation ratios)"
+  },
+  "notChecked" : {
+    "gearMesh" : [
+      "3D tooth contact",
+      "load, strength and wear",
+      "friction and efficiency"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 4,
+  "ratios" : {
+    "direct" : -0.7142857142857143,
+    "idler" : -0.90909090909090906,
+    "indirect" : 0.7142857142857143,
+    "input" : 1
+  },
+  "readBack" : [
+    "input: world centre (0, 0, 4.5) mm, size 44 x 44 x 9 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "direct: world centre (-48, 0, 4.5) mm, size 59.8 x 59.8 x 9 mm; turns about a vertical axis (+Z) through (-48, 0, 0); -0.71 turns per input turn (Solved, gearMesh); root (at [-48, 0, 0] in the world frame); local +Z points +Z",
+    "idler: world centre (42, 0, 4.5) mm, size 47.7 x 48 x 9 mm; turns about a vertical axis (+Z) through (42, 0, 0); -0.91 turns per input turn (Solved, gearMesh); root (at [42, 0, 0] in the world frame); local +Z points +Z",
+    "indirect: world centre (42, 50, 4.5) mm, size 59.8 x 59.8 x 9 mm; turns about a vertical axis (+Z) through (42, 50, 0); 0.71 turns per input turn (Solved, gearMesh); root (at [42, 50, 0] in the world frame); local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    },
+    {
+      "checks" : [
+        {
+          "comparison" : "eq",
+          "target" : -0.7142857142857143,
+          "text" : "direct.speed = -0.7142857142857143 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "direct.speed"
+        },
+        {
+          "comparison" : "eq",
+          "target" : 0.7142857142857143,
+          "text" : "indirect.speed = 0.7142857142857143 ± 1e-09",
+          "tolerance" : 1.0000000000000001e-09,
+          "value" : "indirect.speed"
+        }
+      ],
+      "facts" : [
+        "direct.speed",
+        "indirect.speed"
+      ]
+    }
+  ],
+  "steps" : [
+    "The engine checks all spur meshes. This is an open layout with schematic mounting.",
+    "The direct output turns at -5\/7 of input speed. The idler branch turns at 5\/7. The signs show opposite directions."
+  ],
+  "stepTiers" : [
+    null,
+    "solved"
+  ],
+  "strict" : false,
+  "title" : "Spur gear drive with and without an idler",
+  "triangles" : 35232,
+  "version" : 2,
+  "warnings" : [
+
+  ]
+}

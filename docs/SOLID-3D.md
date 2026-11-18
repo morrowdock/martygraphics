@@ -1706,6 +1706,23 @@ them also pass `check --strict` with no warnings.
   [`slider-crank-component.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/slider-crank-component.json)
   (8 lines): the same two teaching models built from [components](#components).
 
+* [`compound-spur-reduction.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/compound-spur-reduction.json)
+  (18 lines): Two spur meshes on separate planes. The solver propagates the ratio through a rigid compound pair. Shafts are schematic.
+* [`idler-direction-comparison.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/idler-direction-comparison.json)
+  (16 lines): A shared pinion drives matched outputs through a direct mesh and through an idler. The engine checks all meshes and solves the opposite output directions. Mounting is schematic.
+* [`ring-driven-planetary.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/ring-driven-planetary.json)
+  (16 lines): The ring drives a carrier around a fixed sun. The engine checks the internal and external meshes and solves the carrier speed. Pins are schematic.
+* [`reciprocating-plunger.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/reciprocating-plunger.json)
+  (15 lines): The crank drives a rod and prismatic plunger. The engine computes their motion and checks the stroke. The guide and stand are schematic.
+* [`quadcopter-arm-drive.json`](../Examples/Solid3D/Sources/MartySolid3D/Models/quadcopter-arm-drive.json)
+  (15 lines): The engine checks the rotor axis and computes the propeller motion from the authored drive. The motor and arm are schematic, with no aerodynamic or electrical simulation.
+
+The gallery examples use the existing motion solver. A rack and pinion and a belt
+drive would need new contact constraints. A Scotch yoke would need a pin-in-slot
+drive. A bevel differential would need bevel meshes. The planetary example has a
+fixed sun and illustrates a single driven operating mode. A landing-gear linkage
+would need a loop-closure check to verify its deployment geometry.
+
 ## Components
 
 A component is a reusable, parameterised group of parts. An assembly uses it with
