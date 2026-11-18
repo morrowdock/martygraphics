@@ -33,7 +33,7 @@ final class MLKitV2Tests: XCTestCase {
         return ["id": "map", "kind": "meaningMap", vectors ? "vectors" : "points": points]
     }
 
-    func testMeaningMapCosineUsesOriginalInputsAndStableTies() throws {
+    func testMeaningMapUsesEuclideanDistanceAndStableTies() throws {
         var input = meaning([[2, 1], [4, 2], [-2, -1], [6, 3]])
         input["nearestNeighbors"] = true
         input["cluster"] = ["dog", "cat"]
@@ -42,9 +42,30 @@ final class MLKitV2Tests: XCTestCase {
         XCTAssertEqual(map.label, "illustrative positions")
         XCTAssertEqual(map.points.map(\.position), [[2, 1], [4, 2], [-2, -1], [6, 3]])
         XCTAssertEqual(map.cluster, ["dog", "cat"])
-        XCTAssertEqual(map.neighbors.map(\.to), [1, 0, 0, 0])
-        XCTAssertEqual(map.neighbors[0].cosine, 1, accuracy: 1e-14)
-        XCTAssertEqual(map.neighbors[2].cosine, -1, accuracy: 1e-14)
+        XCTAssertEqual(map.neighbors.map(\.to), [1, 0, 0, 1])
+        XCTAssertEqual(try XCTUnwrap(map.neighbors.first { $0.from == 2 }).value, sqrt(20), accuracy: 1e-14)
+        XCTAssertEqual(try XCTUnwrap(map.neighbors.first { $0.from == 3 }).value, sqrt(5), accuracy: 1e-14)
+    }
+
+    func testMeaningMapAcceptsTheOriginWithLinks() throws {
+        var input = meaning([[0, 0], [0, 1], [-1, 0]])
+        input["nearestNeighbors"] = true
+        let document = try check(input).get()
+        guard case .meaningMap(let map) = document.items[0].content else { return XCTFail("Expected a map") }
+        XCTAssertEqual(map.neighbors.map(\.to), [1, 0, 0])
+    }
+
+    func testMeaningMapVectorLinksRequirePositiveCosineBeforeProjection() throws {
+        var input = meaning([[-2, 0, 0], [2, 1, 0], [4, 2, 0], [0, 0, 1]], vectors: true)
+        input["nearestNeighbors"] = true
+        let document = try check(input).get()
+        guard case .meaningMap(let map) = document.items[0].content else { return XCTFail("Expected a map") }
+        XCTAssertEqual(map.neighbors.map(\.from), [1, 2])
+        XCTAssertEqual(map.neighbors.map(\.to), [2, 1])
+        for edge in map.neighbors {
+            XCTAssertEqual(edge.value, 1, accuracy: 1e-14)
+        }
+        _ = try document.frame(document.frameCount - 1, size: .portrait, transparent: true)
     }
 
     func testPCAProjectsCenteredVectorsOntoTwoLeadingAxes() throws {
@@ -76,7 +97,9 @@ final class MLKitV2Tests: XCTestCase {
         try expect(.mapCoordinates, valid.merging(["vectors": []]) { _, new in new }, "points")
         try expect(.mapCoordinates, valid.merging(["vectorCitation": "Unexpected"]) { _, new in new }, "vectorCitation")
         try expect(.mapCluster, valid.merging(["cluster": ["missing"]]) { _, new in new }, "cluster")
-        try expect(.mapCosine, meaning([[0, 0], [0, 1], [-1, 0]]).merging(["nearestNeighbors": true]) { _, n in n }, "points")
+        var zeroVector = meaning([[0, 0, 0], [0, 1, 0], [-1, 0, 0]], vectors: true)
+        zeroVector["nearestNeighbors"] = true
+        try expect(.mapCosine, zeroVector, "vectors")
 
         var duplicate = valid
         var entries = try XCTUnwrap(valid["points"] as? [[String: Any]])
@@ -132,6 +155,23 @@ final class MLKitV2Tests: XCTestCase {
         try expect(.pictureSelection, picture(rgb).merging(["highlight": [0, 1]]) { _, new in new }, "highlight")
         try expect(.pictureCaption, picture(rgb).filter { $0.key != "caption" }, "caption")
         try expect(.picturePresentation, picture(rgb).merging(["presentation": "photo"]) { _, new in new }, "presentation")
+    }
+
+    func testPictureRefusesPNGColorMetadata() throws {
+        // The RGB fixture with one color metadata chunk inserted after IHDR.
+        let fixtures = [
+            "gAMA": "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAABGdBTUEAALGPC/xhBQAAABZJREFUeJxjYBD8r+3fznCEY6mxsjgAHMYD8EUhl44AAAAASUVORK5CYII=",
+            "iCCP": "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFWlDQ1BUZXN0AAB4nCsoyk/LzEkFAAv+AvJK9b7sAAAAFklEQVR4nGNgEPyv7d/OcIRjqbGyOAAcxgPwRSGXjgAAAABJRU5ErkJggg==",
+            "sRGB": "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAAXNSR0IArs4c6QAAABZJREFUeJxjYBD8r+3fznCEY6mxsjgAHMYD8EUhl44AAAAASUVORK5CYII=",
+            "cHRM": "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAAWSURBVHicY2AQ/K/t385whGOpsbI4ABzGA/BFIZeOAAAAAElFTkSuQmCC"
+        ]
+        for (chunk, png) in fixtures {
+            guard case .failure(let issue) = try check(picture(png)) else {
+                XCTFail("Accepted PNG with \(chunk)")
+                continue
+            }
+            XCTAssertEqual(issue, .init(reason: .pictureColorMetadata, path: "items[0].imagePNG"), chunk)
+        }
     }
 
     private func generation(selection: String = "greedy") -> [String: Any] {
@@ -272,6 +312,10 @@ final class MLKitV2Tests: XCTestCase {
         for source in sources {
             let data = try Data(contentsOf: directory.appendingPathComponent("ml-\(source).json"))
             let doc = try MGMLKit.check(data: data, mlKit: true).get()
+            if case .meaningMap(let map) = doc.items[0].content {
+                XCTAssertEqual(map.neighbors.map(\.from), [0, 1, 2, 3, 4, 5])
+                XCTAssertEqual(map.neighbors.map(\.to), [1, 0, 3, 2, 5, 4])
+            }
             if ["meaning-map", "picture-to-numbers", "attention"].contains(source) {
                 XCTAssertTrue(String(decoding: data, as: UTF8.self).contains(asset.base64EncodedString()))
             }

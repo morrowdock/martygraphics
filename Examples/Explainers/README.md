@@ -37,7 +37,7 @@ The vision example includes a paper citation and labels the embedding width and 
 | [Next-token probabilities](ml-next-token-probabilities.json) | Logits, softmax, temperature, top-k, top-p and the chosen token. |
 | [Agent loop](ml-agent-loop.json) | Tool result, human review, approval, rejection and the step budget. |
 | [Combined](ml-combined.json) | An illustrative vision pipeline followed by the probability and agent-loop boards. |
-| [Meaning map](ml-meaning-map.json) | Illustrative positions for words and a dog thumbnail, with cosine neighbor links. |
+| [Meaning map](ml-meaning-map.json) | Illustrative positions for words and a dog thumbnail, with links based on distance on the map. |
 | [Picture to numbers](ml-picture-to-numbers.json) | The patch grid, decoded RGB values of a highlighted patch and its flattened length. |
 | [Generation loop](ml-generation-loop.json) | Iterative logits, softmax, greedy picks and an appended answer. |
 | [Temperature sweep](ml-temperature-sweep.json) | One set of logits at four temperatures, with labels held through each tween. |

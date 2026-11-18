@@ -41,6 +41,7 @@ public enum MGMLReason: String, Error, CaseIterable, Sendable {
     case mapCluster = "ml.map.cluster"
     case pictureCaption = "ml.picture.caption"
     case picturePNG = "ml.picture.png"
+    case pictureColorMetadata = "ml.picture.png.colorMetadata"
     case pictureSize = "ml.picture.size"
     case picturePatch = "ml.picture.patch.division"
     case pictureSelection = "ml.picture.patch.selection"

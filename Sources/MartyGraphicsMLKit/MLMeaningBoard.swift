@@ -17,7 +17,7 @@ extension MLBoard {
         }
         if frame >= 63 {
             for edge in item.neighbors {
-                let reverse = item.neighbors[edge.to].to == edge.from
+                let reverse = item.neighbors.contains { $0.from == edge.to && $0.to == edge.from }
                 if reverse && edge.to < edge.from { continue }
                 let good = item.cluster.contains(item.points[edge.from].label) && item.cluster.contains(item.points[edge.to].label)
                 line([labels[edge.from].center, labels[edge.to].center],

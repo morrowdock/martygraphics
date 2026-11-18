@@ -11,17 +11,28 @@ struct MLPixels: Equatable, Sendable {
     /// Top to bottom, left to right, with interleaved channels.
     let values: [UInt8]
 
-    init(_ value: MGJSON?, invalid: MGMLIssue, size: MGMLIssue) throws {
+    init(_ value: MGJSON?, invalid: MGMLIssue, size: MGMLIssue, colorMetadata: MGMLIssue? = nil) throws {
         guard case .string(let encoded)? = value,
               let png = Data(base64Encoded: encoded), png.count >= 33,
               png.prefix(16) == Data([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]) else {
             throw invalid
         }
-        func dimension(at offset: Int) -> Int {
+        func readUInt32(at offset: Int) -> Int {
             png[offset..<offset + 4].reduce(0) { ($0 << 8) | Int($1) }
         }
-        let width = dimension(at: 16), height = dimension(at: 20)
+        let width = readUInt32(at: 16), height = readUInt32(at: 20)
         guard (1...64).contains(width), (1...64).contains(height) else { throw size }
+        if let colorMetadata {
+            var offset = 33  // Immediately after IHDR.
+            while offset <= png.count - 12 {
+                let length = readUInt32(at: offset)
+                guard length <= png.count - offset - 12 else { throw invalid }
+                let type = String(decoding: png[(offset + 4)..<(offset + 8)], as: UTF8.self)
+                if ["gAMA", "iCCP", "sRGB", "cHRM"].contains(type) { throw colorMetadata }
+                if type == "IEND" { break }
+                offset += length + 12
+            }
+        }
         let grayscale = png[25] == 0
         guard png[24] == 8, grayscale || png[25] == 2,
               let source = CGImageSourceCreateWithData(png as CFData, nil),
@@ -83,7 +94,8 @@ struct MLPicture: Equatable, Sendable {
     init(_ input: MLObject) throws {
         let caption = try input.text("caption", max: 100, reason: .pictureCaption)
         let image = try MLPixels(input.values["imagePNG"], invalid: input.issue(.picturePNG, "imagePNG"),
-                                 size: input.issue(.pictureSize, "imagePNG"))
+                                 size: input.issue(.pictureSize, "imagePNG"),
+                                 colorMetadata: input.issue(.pictureColorMetadata, "imagePNG"))
         let patchSize = try input.integer("patchSize", in: 1...64, reason: .picturePatch)
         guard image.width.isMultiple(of: patchSize), image.height.isMultiple(of: patchSize) else {
             throw input.issue(.picturePatch, "patchSize")

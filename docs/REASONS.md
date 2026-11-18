@@ -766,6 +766,7 @@ The strict report gives the first reason and its document location.
 - `ml.map.cluster` — A cluster is empty, repeats a label or refers to an absent label.
 - `ml.picture.caption` — The picture caption is missing or invalid.
 - `ml.picture.png` — The image is absent or cannot be decoded as one opaque 8-bit grayscale or RGB PNG.
+- `ml.picture.png.colorMetadata` — A picture-to-numbers PNG contains a gAMA, iCCP, sRGB or cHRM chunk.
 - `ml.picture.size` — A PNG side is outside 1–64 pixels.
 - `ml.picture.patch.division` — The patch edge is invalid or does not divide both image sides.
 - `ml.picture.patch.selection` — The highlighted cell is outside the patch grid or invalid.

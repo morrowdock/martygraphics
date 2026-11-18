@@ -12,7 +12,7 @@ struct MLMeaningMap: Equatable, Sendable {
     struct Neighbor: Equatable, Sendable {
         let from: Int
         let to: Int
-        let cosine: Double
+        let value: Double
     }
 
     let points: [Point]
@@ -70,7 +70,8 @@ struct MLMeaningMap: Equatable, Sendable {
         if let setting = input.values["nearestNeighbors"] {
             guard case .bool(let enabled) = setting else { throw input.issue(.mapCosine, "nearestNeighbors") }
             if enabled {
-                links = try Self.nearest(vectors, issue: input.issue(.mapCosine, key))
+                links = explicit ? Self.nearestPoints(positions)
+                    : try Self.nearestVectors(vectors, issue: input.issue(.mapCosine, key))
             }
         }
         neighbors = links
@@ -92,23 +93,37 @@ struct MLMeaningMap: Equatable, Sendable {
         zip(a, b).reduce(0) { $0 + $1.0 * $1.1 }
     }
 
-    private static func nearest(_ vectors: [[Double]], issue: MGMLIssue) throws -> [Neighbor] {
+    private static func nearestPoints(_ positions: [[Double]]) -> [Neighbor] {
+        positions.indices.map { from in
+            let point = positions[from]
+            var best = Neighbor(from: from, to: from, value: .infinity)
+            for to in positions.indices where to != from {
+                let distance = hypot(point[0] - positions[to][0], point[1] - positions[to][1])
+                if distance < best.value {
+                    best = Neighbor(from: from, to: to, value: distance)
+                }
+            }
+            return best
+        }
+    }
+
+    private static func nearestVectors(_ vectors: [[Double]], issue: MGMLIssue) throws -> [Neighbor] {
         let normalized = try vectors.map { vector in
             guard let scale = vector.map(abs).max(), scale > 0 else { throw issue }
             let scaled = vector.map { $0 / scale }
             let norm = sqrt(dot(scaled, scaled))
             return scaled.map { $0 / norm }
         }
-        return normalized.indices.map { from in
+        return normalized.indices.compactMap { from in
             var best: Neighbor?
             for to in normalized.indices where from != to {
                 let cosine = max(-1, min(1, dot(normalized[from], normalized[to])))
-                if best.map({ cosine > $0.cosine }) ?? true {
-                    best = Neighbor(from: from, to: to, cosine: cosine)
+                guard cosine > 0 else { continue }
+                if best.map({ cosine > $0.value }) ?? true {
+                    best = Neighbor(from: from, to: to, value: cosine)
                 }
             }
-            // The point count was checked before computing neighbors.
-            return best!
+            return best
         }
     }
 
@@ -157,10 +172,12 @@ struct MLMeaningMap: Equatable, Sendable {
             if !rotated { break }
         }
 
-        let leading = (0..<count).sorted {
-            matrix[$0][$0] == matrix[$1][$1] ? $0 < $1 : matrix[$0][$0] > matrix[$1][$1]
+        let leading = (0..<count).sorted { left, right in
+            let leftEigenvalue = matrix[left][left]
+            let rightEigenvalue = matrix[right][right]
+            return leftEigenvalue == rightEigenvalue ? left < right : leftEigenvalue > rightEigenvalue
         }.prefix(2)
-        let axes = try leading.map { column -> [Double] in
+        let axes: [[Double]] = try leading.map { column in
             let eigenvalue = matrix[column][column]
             guard eigenvalue > epsilon else { return Array(repeating: 0, count: count) }
             let eigenvector = basis.map { $0[column] }
@@ -187,7 +204,7 @@ struct MLMeaningMap: Equatable, Sendable {
             "cluster": .array(points.filter { cluster.contains($0.label) }.map { .string($0.label) }),
             "nearestNeighbors": .array(neighbors.map {
                 .object(["from": .string(points[$0.from].label), "to": .string(points[$0.to].label),
-                         "cosine": .number($0.cosine)])
+                         (dimension == 2 ? "distance" : "cosine"): .number($0.value)])
             })
         ]
     }

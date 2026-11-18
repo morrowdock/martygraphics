@@ -70,21 +70,22 @@ Provide exactly one of these arrays. Each contains 3–12 entries with a unique 
 | --- | --- |
 | `points` | Entries contain a `label` and a two-number `position`. The board always displays “illustrative positions”. |
 | `vectors` | Entries contain a `label` and a `vector` of 3–32 numbers. Every vector has the same length. The board displays “2D projection (PCA) of the given vectors”. |
-| `imagePNG` | Optional thumbnail inside a point or vector entry, in the same PNG format as picture to numbers. It replaces the visible text marker. The entry's `label` remains its identifier for links and clusters. |
+| `imagePNG` | Optional thumbnail inside a point or vector entry, as an opaque 8-bit grayscale or RGB PNG of at most 64 × 64 pixels. It replaces the visible text marker. The entry's `label` remains its identifier for links and clusters. |
 | `vectorCitation` | Optional source for supplied vectors, 1–120 Unicode scalars. Otherwise the board labels the vectors illustrative. |
-| `nearestNeighbors` | Optional boolean. Links use cosine similarity between the original inputs, before centering or projection. A zero vector has no cosine similarity and is refused when links are enabled. |
+| `nearestNeighbors` | Optional boolean. Links use Euclidean distance for hand-placed points and cosine similarity before projection for vectors. Vectors link only to a positive cosine match, and a zero vector is refused when links are enabled. |
 | `cluster` | Optional nonempty list of distinct labels present on the map. These markers share a highlight. |
 
 Coordinates are finite and in −10¹²…10¹². The PCA centers the vectors and computes the two leading axes
 from the symmetric Gram matrix using deterministic Jacobi rotations. An axis sign puts its largest-magnitude
 loading on the positive side. Effectively zero eigenvalues produce zero coordinates. The map scales both axes
-equally to fit. Nearest-neighbor ties use input order, and reciprocal links are drawn once.
+equally to fit. Nearest-neighbor ties use input order, and reciprocal links are drawn once. The strict report
+includes the Euclidean distance for point links and cosine similarity for vector links.
 
 ## Picture to numbers
 
 | Key | Rule |
 | --- | --- |
-| `imagePNG` | Base64 of one opaque 8-bit grayscale or RGB PNG, at most 64 × 64 pixels. The document's 16 KiB limit still applies. |
+| `imagePNG` | Base64 of one opaque 8-bit grayscale or RGB PNG, at most 64 × 64 pixels. The PNG must omit the `gAMA`, `iCCP`, `sRGB` and `cHRM` chunks. The document's 16 KiB limit still applies. |
 | `patchSize` | Integer edge in pixels, from 1 to 64. It must divide both image dimensions. |
 | `highlight` | A zero-based `[column, row]` reference into the derived patch grid, counted from the top left. |
 | `caption` | Required text of 1–100 Unicode scalars. |
@@ -114,9 +115,11 @@ the choice and the strip after each append. The logits are supplied teaching inp
 
 | Key | Rule |
 | --- | --- |
-| `imagePNG`, `patchSize` | Use the picture-to-numbers format. The derived grid must contain 2–64 patches. |
+| `imagePNG`, `patchSize` | Use an opaque 8-bit grayscale or RGB PNG of at most 64 × 64 pixels and a patch size that divides both sides. The derived grid must contain 2–64 patches. |
 | `query` | A zero-based `[column, row]` reference into that grid, counted from the top left. |
 | `scores` | One finite score in −1,000,000…1,000,000 for every other patch in row-major order. |
+
+The query patch is excluded from its own softmax in this simplified view, while standard self-attention includes it.
 
 The board displays “Simplified attention · illustrative scores”. It computes softmax over the supplied scores,
 checks the sum to within 10⁻¹² of 1 and reports the unrounded weights. Link opacity is the weight divided by the

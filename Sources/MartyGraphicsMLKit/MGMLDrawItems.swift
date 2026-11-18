@@ -243,7 +243,7 @@ extension MLBoard {
                      maxWidth: percentageWidth, color: tint, face: .mono, alignment: .right)
             }
         }
-        if display?.selection == true {
+        if !item.isSweep, display?.selection == true {
             text("Chosen token · " + item.candidates[item.chosen].token, x: panel.midX, y: firstRow + Double(item.candidates.count - 1) * pitch + 48,
                  size: MLStyle.heading, maxWidth: panel.width, color: color(.good))
         }

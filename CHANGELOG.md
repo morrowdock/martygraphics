@@ -26,6 +26,8 @@
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
 
 ### Fixed
+- Use map distance for hand-placed ML points and draw vector links only for positive cosine matches.
+  Remove the chosen-token caption from temperature sweeps and refuse color metadata in pixel-value PNGs.
 - Reduce programmatic MP4 export stalls under encoder buffer pressure with an
   eight-buffer pool and shorter, monotonic readiness and allocation timeouts.
 - Format programmatic-video zero tick labels with a floating-point argument,
