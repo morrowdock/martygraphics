@@ -140,6 +140,24 @@ final class MLKitTests: XCTestCase {
         XCTAssertEqual(settled.stage.stage, .topK)
         XCTAssertEqual(settled.stage.percentageLabel(at: 2), "removed")
         XCTAssertEqual(settled.values, settled.stage.probabilities)
+
+        let document = try MGMLKit.check(data: data([input]), mlKit: true).get()
+        let before = try document.frame(start - 1, size: .portrait)
+        let during = try document.frame(start + MLProbabilities.transitionFrames / 2, size: .portrait)
+        let after = try document.frame(start + MLProbabilities.transitionFrames - 1, size: .portrait)
+        let percentageColumn = CGRect(x: 850, y: 490, width: 166, height: 325)
+        func pixels(_ image: CGImage) throws -> Data {
+            let crop = try XCTUnwrap(image.cropping(to: percentageColumn))
+            let context = try XCTUnwrap(CGContext(data: nil, width: crop.width, height: crop.height,
+                                                  bitsPerComponent: 8, bytesPerRow: 0,
+                                                  space: CGColorSpaceCreateDeviceRGB(),
+                                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+            context.draw(crop, in: CGRect(x: 0, y: 0, width: crop.width, height: crop.height))
+            let data = try XCTUnwrap(context.data)
+            return Data(bytes: data, count: context.bytesPerRow * crop.height)
+        }
+        XCTAssertEqual(try pixels(during), try pixels(before))
+        XCTAssertNotEqual(try pixels(after), try pixels(during))
     }
 
     func testPercentageLabelDistinguishesTinyKeptAndRemovedTokens() throws {
