@@ -247,8 +247,10 @@ poster and sequence retain clean pixels, with provenance in the sidecar files.
 
 The Solid3D models include a parallelogram four-bar with equal input and output
 cranks, an eccentric disk cam with a guided roller, and a small outrunner motor
-with a two-blade propeller. The four-bar uses authored relative rotations to
-keep the coupler parallel to ground. The eccentric cam uses the in-line
+with a two-blade propeller. The four-bar is a driven schematic. Authored rotation
+ratios keep the coupler parallel to ground and give exact motion for this
+parallelogram. The engine has no four-bar solver and does not check loop closure.
+The eccentric cam uses the in-line
 crank-slider equation with the sum of the disk and roller radii as the effective
 rod length. The motor model demonstrates which parts rotate together.
 

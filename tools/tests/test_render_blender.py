@@ -12,9 +12,11 @@ import struct
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "render-blender"))
 
+import render_variants  # noqa: E402
 from mgrender import busyguard, faststart, frames, presets  # noqa: E402
 from mgrender import manifest as mf  # noqa: E402
 
@@ -70,6 +72,78 @@ class ExportFixture:
         self.path = self.dir / "scene.manifest.json"
         self.path.write_text(json.dumps(self.manifest))
         return str(self.path)
+
+
+class RenderArgsTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # The entry point imports Blender modules, but parse_args does not use them.
+        modules = {"bpy": mock.Mock(), "mathutils": mock.Mock()}
+        with mock.patch.dict(sys.modules, modules):
+            import render
+        cls.render = render
+
+    def test_turntable_refuses_non_auto_cameras(self):
+        for camera in ("export", "hero"):
+            with self.subTest(camera=camera):
+                with self.assertRaisesRegex(self.render.Refused, "requires an automatic camera") as error:
+                    self.render.parse_args(["scene.json", "out", "--turntable", "--camera", camera])
+                self.assertEqual(error.exception.code, 2)
+
+    def test_alpha_refuses_shadow_backdrop(self):
+        with self.assertRaisesRegex(self.render.Refused, "without a shadow catcher") as error:
+            self.render.parse_args(["scene.json", "out", "--alpha", "--backdrop", "shadow"])
+        self.assertEqual(error.exception.code, 2)
+
+    def test_alpha_refuses_nvenc(self):
+        with self.assertRaisesRegex(self.render.Refused, "cannot be combined with --nvenc") as error:
+            self.render.parse_args(["scene.json", "out", "--alpha", "--nvenc"])
+        self.assertEqual(error.exception.code, 2)
+
+    def test_alpha_sets_no_backdrop(self):
+        self.assertEqual(self.render.parse_args(["scene.json", "out", "--alpha"])["backdrop"], "none")
+
+
+class RenderVariantsTests(unittest.TestCase):
+    def test_commands_use_nvenc_for_opaque_aspects_and_alpha_for_portrait_master(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = ExportFixture(tmp)
+            out = Path(tmp) / "out"
+            argv = ["render_variants.py", str(fixture.path), str(out), "--blender", "test-blender",
+                    "--ffmpeg", "test-ffmpeg", "--preset", "hero", "--samples", "8", "--busy-wait", "30",
+                    "--turntable", "--alpha", "--resume", "--no-motion-blur"]
+            probe = subprocess.CompletedProcess([], 0, " V....D h264_nvenc NVIDIA H.264")
+            success = subprocess.CompletedProcess([], 0)
+            with mock.patch.object(sys, "argv", argv), mock.patch.object(
+                    subprocess, "run", side_effect=[probe, success, success, success, success]) as run:
+                self.assertEqual(render_variants.main(), 0)
+
+            render = Path(render_variants.__file__).with_name("render.py").resolve()
+            prefix = ["test-blender", "-b", "--factory-startup", "-P", str(render), "--",
+                      str(fixture.path.resolve())]
+            options = ["--preset", "hero", "--camera", "auto", "--no-burn-in", "--ffmpeg", "test-ffmpeg",
+                       "--samples", "8", "--busy-wait", "30", "--turntable", "--resume", "--no-motion-blur"]
+            expected = [mock.call(["test-ffmpeg", "-hide_banner", "-encoders"],
+                                  capture_output=True, text=True, check=True)]
+            for name, resolution, flag in (("16x9", "1080p", "--nvenc"), ("1x1", "1:1", "--nvenc"),
+                                           ("9x16", "9:16", "--nvenc"), ("alpha", "9:16", "--alpha")):
+                expected.append(mock.call(prefix + [str(out.resolve() / name), "--resolution", resolution, flag]
+                                          + options))
+            self.assertEqual(run.call_args_list, expected)
+
+    def test_refuses_missing_nvenc_before_launching_blender(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = ExportFixture(tmp)
+            argv = ["render_variants.py", str(fixture.path), str(Path(tmp) / "out")]
+            probe = subprocess.CompletedProcess([], 0, " V....D prores_ks ProRes")
+            with mock.patch.object(sys, "argv", argv), mock.patch.object(
+                    subprocess, "run", return_value=probe) as run, mock.patch("sys.stderr") as stderr:
+                with self.assertRaises(SystemExit) as error:
+                    render_variants.main()
+            self.assertEqual(error.exception.code, 1)
+            self.assertIn("h264_nvenc", stderr.write.call_args.args[0])
+            run.assert_called_once_with(["ffmpeg", "-hide_banner", "-encoders"],
+                                        capture_output=True, text=True, check=True)
 
 
 class ManifestTests(unittest.TestCase):

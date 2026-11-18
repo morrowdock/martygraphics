@@ -52,7 +52,7 @@
   },
   "file" : {
     "lines" : 23,
-    "sha256" : "088c35856f9ccc54390e6e8aaa7aeb7c7c15fa5c3e3d85ffb1ed42e6109bb8fd"
+    "sha256" : "7a0dabda97b5c0bb570b300010159f517eefd2f9debe4f908efaf2b1e079e48e"
   },
   "legend" : {
     "built" : 2,
@@ -101,9 +101,9 @@
     "crank" : 1
   },
   "readBack" : [
-    "base: world centre (24, 0, 0.25) mm, size 66 x 14 x 19.5 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "base: world centre (24, 0, 1) mm, size 66 x 14 x 21 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
     "crank: world centre (8, 0, 8) mm, size 23 x 9 x 10 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
-    "rocker: world centre (56, 0, 11) mm, size 23 x 9 x 4 mm; turns about a vertical axis (+Z) through (48, 0, 0); 1 turn per input turn (Built, follow); root (at [48, 0, 0] in the world frame); local +Z points +Z",
+    "rocker: world centre (56, 0, 11) mm, size 23 x 9 x 7 mm; turns about a vertical axis (+Z) through (48, 0, 0); 1 turn per input turn (Built, follow); root (at [48, 0, 0] in the world frame); local +Z points +Z",
     "coupler: world centre (40, 0, 9) mm, size 54 x 7 x 3 mm; turns about a vertical axis (+Z) through (16, 0, 0); -1 turn per input turn relative to crank (Built, follow); child of crank (at [16, 0, 0] in the crank frame); its origin is 16 mm from the crank axis; local +Z points +Z"
   ],
   "reason" : null,
@@ -119,13 +119,13 @@
     }
   ],
   "steps" : [
-    "Equal cranks turn together. The coupler stays parallel to the ground link."
+    "Authored ratios turn the equal cranks together and keep the coupler parallel to ground. This motion is exact for this parallelogram."
   ],
   "stepTiers" : [
     null
   ],
   "strict" : false,
-  "title" : "Parallelogram four-bar linkage",
+  "title" : "Driven parallelogram four-bar schematic",
   "triangles" : 1008,
   "version" : 1,
   "warnings" : [

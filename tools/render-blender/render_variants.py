@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 
 from mgrender import manifest
+from mgrender.ffmpeg import supports_encoder
 
 
 def main():
@@ -26,6 +27,8 @@ def main():
         manifest.verify(args.manifest)
     except (manifest.ExportError, OSError, ValueError, KeyError) as exc:
         parser.exit(1, f"export refused: {exc}\n")
+    if not supports_encoder(args.ffmpeg, "h264_nvenc"):
+        parser.exit(1, f"NVENC unavailable: {args.ffmpeg} must expose the h264_nvenc encoder\n")
     render = Path(__file__).with_name("render.py").resolve()
     command = [args.blender, "-b", "--factory-startup", "-P", str(render), "--", str(args.manifest.resolve())]
     options = ["--preset", args.preset, "--camera", "auto", "--no-burn-in", "--ffmpeg", args.ffmpeg]

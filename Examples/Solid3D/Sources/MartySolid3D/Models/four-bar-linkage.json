@@ -1,23 +1,23 @@
 {
-  "v": 1, "kind": "assembly", "title": "Parallelogram four-bar linkage", "units": "mm",
+  "v": 1, "kind": "assembly", "title": "Driven parallelogram four-bar schematic", "units": "mm",
   "parts": [
     {"id": "base", "name": "Ground link and pivot supports", "material": "darkSteel",
      "shape": [{"box": {"size": [66, 14, 5], "chamfer": 0.8, "at": [24, 0, -7]}},
                {"shaft": {"radius": 4, "length": 9, "z0": -5, "chamfer": 0.5}},
-               {"shaft": {"radius": 4, "length": 15, "z0": -5, "chamfer": 0.5, "at": [48, 0, 0]}}]},
+               {"shaft": {"radius": 4, "length": 16.5, "z0": -5, "chamfer": 0.5, "at": [48, 0, 0]}}]},
     {"id": "crank", "name": "Input crank", "material": "anodized.blue",
      "shape": [{"box": {"size": [23, 9, 4], "chamfer": 0.8, "at": [8, 0, 5]}},
                {"shaft": {"radius": 3, "length": 7, "z0": 6, "chamfer": 0.5, "at": [16, 0, 0]}}],
      "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}},
     {"id": "rocker", "name": "Output crank", "material": "anodized.orange", "at": [48, 0, 0],
-     "shape": [{"box": {"size": [23, 9, 4], "chamfer": 0.8, "at": [8, 0, 11]}},
-               {"shaft": {"radius": 3, "length": 3, "z0": 9, "chamfer": 0.5, "at": [16, 0, 0]}}],
+     "shape": [{"box": {"size": [23, 9, 4], "chamfer": 0.8, "at": [8, 0, 12.5]}},
+               {"shaft": {"radius": 3, "length": 6, "z0": 7.5, "chamfer": 0.5, "at": [16, 0, 0]}}],
      "joint": {"revolute": [0, 0, 1]}, "drive": {"follow": {"source": "crank", "ratio": 1}}},
     {"id": "coupler", "name": "Parallel coupler", "material": "brass", "parent": "crank", "at": [16, 0, 0],
      "shape": {"box": {"size": [54, 7, 3], "chamfer": 0.8, "at": [24, 0, 9]}},
      "joint": {"revolute": [0, 0, 1]}, "drive": {"follow": {"source": "crank", "ratio": -1}}}
   ],
   "steps": [
-    {"say": "Equal cranks turn together. The coupler stays parallel to the ground link.", "camera": "hero", "spin": 1}
+    {"say": "Authored ratios turn the equal cranks together and keep the coupler parallel to ground. This motion is exact for this parallelogram.", "camera": "hero", "spin": 1}
   ]
 }

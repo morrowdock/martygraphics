@@ -9,8 +9,12 @@
 ### Added
 - Render checked Blender exports as landscape, square, and portrait video with an
   optional 360° camera orbit and a transparent PNG or ProRes 4444 compositing master.
-- Add checked four-bar linkage, eccentric cam and follower, and drone motor with
-  propeller example models.
+  The variant wrapper uses `--no-burn-in`. Provenance stays in the MP4 metadata,
+  `PROVENANCE.txt`, and `render-report.json`.
+- Add a driven parallelogram four-bar schematic, an eccentric cam and follower,
+  and a drone motor with propeller. Authored rotation ratios give exact motion
+  for this parallelogram. The engine has no four-bar solver and does not check
+  loop closure.
 - Experimental, opt-in `layer2d` programmatic video: checked native 2D keyframes,
   shared library H.264 MP4 and bounded GIF export, captions and SRT sidecars.
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.

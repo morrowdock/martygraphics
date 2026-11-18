@@ -48,7 +48,8 @@ sys.path.insert(0, HERE)
 import bpy  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
-from mgrender import busyguard, device, faststart, frames, lookdev  # noqa: E402
+from mgrender import busyguard, device, faststart, frames, lookdev
+from mgrender.ffmpeg import supports_encoder  # noqa: E402
 from mgrender import manifest as mf  # noqa: E402
 
 ASSET_DIR = os.environ.get("MG_RENDER_ASSETS") or os.path.join(
@@ -144,6 +145,10 @@ def parse_args(argv):
         raise Refused(2, "--turntable requires an automatic camera")
     if a["alpha"] and a["backdrop"] == "shadow":
         raise Refused(2, "--alpha uses a transparent film without a shadow catcher")
+    if a["alpha"] and a["nvenc"]:
+        raise Refused(2, "--alpha cannot be combined with --nvenc")
+    if a["alpha"]:
+        a["backdrop"] = "none"
     w, h = a["resolution"] or lookdev.PRESETS[a["preset"]]["resolution"]
     if w % 2 or h % 2 or w < 16 or h < 16:
         raise Refused(2, "resolution must be even and at least 16x16 (H.264 yuv420p)")
@@ -346,14 +351,6 @@ def encode_external(ffmpeg, frames_dir, first, count, fps, path, options, label)
         raise Refused(5, f"ffmpeg encode failed: {exc}") from exc
 
 
-def supports_prores(ffmpeg):
-    try:
-        result = subprocess.run([ffmpeg, "-hide_banner", "-encoders"], capture_output=True, text=True, check=True)
-    except (OSError, subprocess.CalledProcessError):
-        return False
-    return any(line.split()[1:2] == ["prores_ks"] for line in result.stdout.splitlines())
-
-
 def write_poster(enc, path, frame_index):
     """Render one encode-scene frame to path. A still render of a scene that is not the
     context scene uses the context scene's frame, so render a one-frame animation instead."""
@@ -535,7 +532,7 @@ def run(argv):
     if args["alpha"]:
         shutil.copyfile(os.path.join(frames_dir, f"frame_{poster_frame:04d}.png"), poster)
         outputs["prores_4444"] = None
-        if supports_prores(args["ffmpeg"]):
+        if supports_encoder(args["ffmpeg"], "prores_ks"):
             mov = stem + "-alpha.mov"
             encode_external(args["ffmpeg"], frames_dir, first, len(frame_files), fps, mov,
                             ["-c:v", "prores_ks", "-profile:v", "4444", "-pix_fmt", "yuva444p10le"], label)
@@ -561,6 +558,8 @@ def run(argv):
                 input_first = 1
             encode_external(args["ffmpeg"], input_dir, input_first, len(frame_files), fps, mp4,
                             ["-c:v", "h264_nvenc", "-preset", "p5", "-pix_fmt", "yuv420p",
+                             "-vf", "scale=out_color_matrix=bt709", "-colorspace", "bt709",
+                             "-color_primaries", "bt709", "-color_trc", "bt709",
                              "-g", str(fps), "-movflags", "+faststart"], label)
             with open(mp4, "rb") as f:
                 if not faststart.is_faststart(f.read()):
