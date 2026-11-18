@@ -1,0 +1,97 @@
+{
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+    "count.blade" : {
+      "source" : "repeat",
+      "text" : "2",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 2
+    },
+    "rotor.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "rotor.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    }
+  },
+  "file" : {
+    "lines" : 22,
+    "sha256" : "d9a77d8d22be28fffffa785db65aafccc2999be74c36ba607d89ec2a4f3139ad"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "rotor",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 1,
+    "text" : "Solved 1 (animation ratio)"
+  },
+  "notChecked" : {
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 6,
+  "ratios" : {
+    "rotor" : 1
+  },
+  "readBack" : [
+    "base: world centre (0, 0, -8.5) mm, size 36 x 36 x 3 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "stator: world centre (0, 0, -3) mm, size 24 x 24 x 8 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "rotor: world centre (0, 0, 2.5) mm, size 28 x 28 x 19 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "hub: world centre (0, 0, 10.5) mm, size 16 x 16 x 5 mm; fixed to its parent, moves with rotor; child of rotor (at [0, 0, 10] in the rotor frame); its origin is 0 mm from the rotor axis; local +Z points +Z",
+    "blade1: world centre (38, 3.27, 8.29) mm, size 62 x 13.1 x 7.48 mm; fixed to its parent, moves with rotor; copy 1 of 2 (repeat of blade); child of hub (at [0, 0, 0] in the hub frame); local +Z points +Z",
+    "blade2: world centre (-38, -3.27, 8.29) mm, size 62 x 13.1 x 7.48 mm; fixed to its parent, moves with rotor; copy 2 of 2 (repeat of blade); child of hub (at [0, 0, 0] in the hub frame); local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "The rotor bell turns around the fixed stator and carries both propeller blades."
+  ],
+  "stepTiers" : [
+    null
+  ],
+  "strict" : true,
+  "title" : "Small drone motor and two-blade propeller",
+  "triangles" : 5656,
+  "version" : 1,
+  "warnings" : [
+
+  ]
+}

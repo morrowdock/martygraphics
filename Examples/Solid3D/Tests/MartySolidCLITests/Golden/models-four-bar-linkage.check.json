@@ -1,0 +1,134 @@
+{
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+    "coupler.speed" : {
+      "source" : "follow",
+      "text" : "-1",
+      "tier" : "built",
+      "unit" : "",
+      "value" : -1
+    },
+    "coupler.worldSpeed" : {
+      "source" : "follow",
+      "text" : "0",
+      "tier" : "built",
+      "unit" : "",
+      "value" : 0
+    },
+    "crank.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "crank.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "rocker.speed" : {
+      "source" : "follow",
+      "text" : "1",
+      "tier" : "built",
+      "unit" : "",
+      "value" : 1
+    },
+    "rocker.worldSpeed" : {
+      "source" : "follow",
+      "text" : "1",
+      "tier" : "built",
+      "unit" : "",
+      "value" : 1
+    }
+  },
+  "file" : {
+    "lines" : 23,
+    "sha256" : "088c35856f9ccc54390e6e8aaa7aeb7c7c15fa5c3e3d85ffb1ed42e6109bb8fd"
+  },
+  "legend" : {
+    "built" : 2,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "crank",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "rocker",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Moved by follow, from a speed or ratio the author set"
+      },
+      {
+        "badge" : "Schematic motion",
+        "id" : "coupler",
+        "kind" : "motion",
+        "tier" : "built",
+        "why" : "Moved by follow, from a speed or ratio the author set"
+      }
+    ],
+    "described" : 0,
+    "note" : "Some motion is schematic",
+    "shapes" : "Shapes as authored",
+    "solved" : 1,
+    "text" : "Solved 1 (animation ratio) · Schematic 2"
+  },
+  "notChecked" : {
+    "follow" : [
+      "the mechanism that keeps the authored ratio",
+      "slip"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 4,
+  "ratios" : {
+    "crank" : 1
+  },
+  "readBack" : [
+    "base: world centre (24, 0, 0.25) mm, size 66 x 14 x 19.5 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "crank: world centre (8, 0, 8) mm, size 23 x 9 x 10 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "rocker: world centre (56, 0, 11) mm, size 23 x 9 x 4 mm; turns about a vertical axis (+Z) through (48, 0, 0); 1 turn per input turn (Built, follow); root (at [48, 0, 0] in the world frame); local +Z points +Z",
+    "coupler: world centre (40, 0, 9) mm, size 54 x 7 x 3 mm; turns about a vertical axis (+Z) through (16, 0, 0); -1 turn per input turn relative to crank (Built, follow); child of crank (at [16, 0, 0] in the crank frame); its origin is 16 mm from the crank axis; local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "Equal cranks turn together. The coupler stays parallel to the ground link."
+  ],
+  "stepTiers" : [
+    null
+  ],
+  "strict" : false,
+  "title" : "Parallelogram four-bar linkage",
+  "triangles" : 1008,
+  "version" : 1,
+  "warnings" : [
+
+  ]
+}

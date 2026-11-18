@@ -48,7 +48,7 @@ sys.exit(0 if worst < 1e-4 else 1)
 PY
 
 say "3. tampered exports must be refused"
-T="$WORK/tamper"; rm -rf "$T"; mkdir -p "$T"
+T="$WORK/tamper"; mkdir "$T" || die "use a fresh self-test directory"
 tamper() { # name, python edit of the manifest dict m / glb bytes
   local d="$T/$1"; mkdir -p "$d"; cp "$EXPORT"/* "$d/"
   python3 -I - "$d/selftest-gears.manifest.json" "$2" <<'PY'
@@ -73,7 +73,11 @@ tamper sha sha; tamper fps fps; tamper frames frames
 
 say "4. full pipeline, preview preset"
 (cd "$HERE" && python3 -E -s -m mgrender.busyguard) || die "host became busy (busy guard); stopping before the render"
-nice -n 10 "$BLENDER" -b --factory-startup -P "$HERE/render.py" -- "$MANIFEST" "$OUT" --preset preview --camera auto \
+ENCODE=()
+if [[ -n "${FFMPEG:-}" ]]; then
+  ENCODE=(--nvenc --ffmpeg "$FFMPEG" --no-burn-in)
+fi
+nice -n 10 "$BLENDER" -b --factory-startup -P "$HERE/render.py" -- "$MANIFEST" "$OUT" --preset preview --camera auto "${ENCODE[@]}" \
   2>&1 | tee "$WORK/render.log" | grep -E '^render: (PASS|motion|look-dev|Cycles|DONE|poster|frames|time)|REFUSED|FAILED' || true
 grep -q '^MG_RENDER_REPORT ' "$WORK/render.log" || die "render did not finish (see $WORK/render.log)"
 REPORT="$(sed -n 's/^MG_RENDER_REPORT //p' "$WORK/render.log")"
@@ -96,4 +100,30 @@ bad = {k: (mats.get(k), v) for k, v in want.items() if mats.get(k) != v}
 print(f"selftest: material presets (manifest, gltfMaterial, label): {'OK' if not bad else 'WRONG ' + str(bad)}")
 sys.exit(1 if bad else 0)
 PY
-say "PASS. outputs in $OUT"
+say "5. portrait, turntable and transparent film"
+ALPHA="$WORK/render-alpha"
+nice -n 10 "$BLENDER" -b --factory-startup -P "$HERE/render.py" -- "$MANIFEST" "$ALPHA" \
+  --resolution 9:16 --turntable --alpha --ffmpeg "${FFMPEG:-ffmpeg}" --frames 0-1 --samples 4 --no-motion-blur \
+  >"$WORK/alpha.log" 2>&1 || { tail -20 "$WORK/alpha.log"; die "alpha render failed"; }
+python3 -I - "$ALPHA" <<'PY' || die "portrait/alpha report check failed"
+import json, struct, sys
+from pathlib import Path
+out = Path(sys.argv[1])
+report = json.loads((out / "render-report.json").read_text())
+assert report["resolution"] == [1080, 1920]
+assert report["turntable"] and report["camera"]["sweep_deg"] == 360
+assert report["alpha"] and report["motion_check"]["lookdev_drift"] == 0
+assert report["frames_rendered"] == [0, 1] and "mp4" not in report["outputs"]
+assert (out / "PROVENANCE.txt").read_bytes() == (out / "frames" / "PROVENANCE.txt").read_bytes()
+for name in ("frame_0000.png", "frame_0001.png"):
+    with (out / "frames" / name).open("rb") as f:
+        header = f.read(26)
+    assert struct.unpack(">IIBB", header[16:26]) == (1080, 1920, 8, 6)
+PY
+if nice -n 10 "$BLENDER" -b --factory-startup -P "$HERE/render.py" -- "$MANIFEST" "$ALPHA" \
+    --resolution 9:16 --alpha --resume --frames 0-1 --samples 4 --no-motion-blur >"$WORK/resume.log" 2>&1; then
+  die "resume accepted frames rendered with a different camera preset"
+fi
+grep -q 'other settings (settings)' "$WORK/resume.log" \
+  || { tail -10 "$WORK/resume.log"; die "resume failed for another reason"; }
+say "PASS. outputs in $OUT and $ALPHA"

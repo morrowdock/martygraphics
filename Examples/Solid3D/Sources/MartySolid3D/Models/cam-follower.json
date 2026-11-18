@@ -1,0 +1,19 @@
+{
+  "v": 1, "kind": "assembly", "title": "Eccentric disk cam and roller follower", "units": "mm",
+  "parts": [
+    {"id": "base", "name": "Cam base and follower guide", "material": "darkSteel",
+     "shape": [{"box": {"size": [100, 20, 5], "chamfer": 0.8, "at": [25, 0, -11]}},
+               {"box": {"size": [38, 7, 6], "chamfer": 0.8, "at": [53, 0, -5]}}]},
+    {"id": "cam", "name": "Eccentric disk cam", "material": "anodized.orange",
+     "shape": [{"shaft": {"radius": 18, "length": 6, "z0": -3, "chamfer": 0.5, "at": [6, 0, 0]}},
+               {"shaft": {"radius": 4, "length": 5, "z0": -8, "chamfer": 0.5}}],
+     "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}},
+    {"id": "follower", "name": "Guided roller follower", "material": "brushedSteel",
+     "shape": [{"shaft": {"radius": 7, "length": 6, "z0": -3, "chamfer": 0.5}},
+               {"box": {"size": [34, 5, 4], "chamfer": 0.8, "at": [22, 0, 0]}}],
+     "joint": {"prismatic": [1, 0, 0]}, "drive": {"crankSlider": {"crank": "cam", "radius": 6, "rod": 25}}}
+  ],
+  "steps": [
+    {"say": "An eccentric disk pushes a guided roller. The model assumes preload keeps the roller in contact.", "camera": "hero", "spin": 1}
+  ]
+}

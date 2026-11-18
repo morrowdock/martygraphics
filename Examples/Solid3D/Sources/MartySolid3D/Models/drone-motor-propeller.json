@@ -1,0 +1,22 @@
+{
+  "v": 1, "kind": "assembly", "title": "Small drone motor and two-blade propeller", "units": "mm",
+  "parts": [
+    {"id": "base", "name": "Motor mount", "material": "darkSteel",
+     "shape": {"shaft": {"radius": 18, "length": 3, "z0": -10, "chamfer": 0.5}}},
+    {"id": "stator", "name": "Motor stator", "material": "brass",
+     "shape": {"tube": {"inner": 4, "outer": 12, "length": 8, "z0": -7}}},
+    {"id": "rotor", "name": "Outrunner rotor bell and shaft", "material": "anodized.blue",
+     "shape": [{"tube": {"inner": 12.8, "outer": 14, "length": 10, "z0": -7}},
+               {"shaft": {"radius": 14, "length": 2, "z0": 3, "chamfer": 0.5}},
+               {"shaft": {"radius": 3, "length": 14, "z0": -2, "chamfer": 0.5}}],
+     "joint": {"revolute": [0, 0, 1]}, "drive": {"input": 1}},
+    {"id": "hub", "name": "Propeller hub", "material": "darkSteel", "parent": "rotor", "at": [0, 0, 10],
+     "shape": {"shaft": {"radius": 8, "length": 5, "z0": -2, "chamfer": 0.5}}},
+    {"id": "blade", "name": "Propeller blade", "material": "aluminum", "parent": "hub",
+     "shape": {"blade": {"span": 62, "chord": 15, "tipChord": 7, "pitch": -29, "twist": 18, "root": 7, "camber": 0.03}},
+     "repeat": {"count": 2, "axis": [0, 0, 1]}}
+  ],
+  "steps": [
+    {"say": "The rotor bell turns around the fixed stator and carries both propeller blades.", "camera": "hero", "spin": 1}
+  ]
+}

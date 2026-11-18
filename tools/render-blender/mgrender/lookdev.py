@@ -18,7 +18,8 @@ PRESETS = {
              "look": "AgX - Medium High Contrast", "orbit_degrees": 40.0, "elevation_deg": 22.0, "lens_mm": 65.0,
              "shutter": 0.5, "bounces": 12, "transmission_bounces": 12},
 }
-RESOLUTIONS = {"720p": (1280, 720), "1080p": (1920, 1080), "1440p": (2560, 1440), "4k": (3840, 2160)}
+RESOLUTIONS = {"720p": (1280, 720), "1080p": (1920, 1080), "1440p": (2560, 1440), "4k": (3840, 2160),
+               "1:1": (1080, 1080), "9:16": (1080, 1920)}
 
 from .presets import MATERIAL_PRESETS, NAME_RULES, choose_preset, part_material  # noqa: F401 (re-exported)
 
@@ -370,7 +371,7 @@ def fit_distance(lo, hi, hfov, vfov, elev, azimuths, fill=0.86):
     return b
 
 
-def auto_orbit_camera(scene, lo, hi, frame_start, frame_end, preset):
+def auto_orbit_camera(scene, lo, hi, frame_start, frame_end, preset, turntable=False):
     center = (lo + hi) / 2
     radius = max((hi - lo).length / 2, 1e-4)
     res_x, res_y = scene.render.resolution_x, scene.render.resolution_y
@@ -382,8 +383,10 @@ def auto_orbit_camera(scene, lo, hi, frame_start, frame_end, preset):
     vfov = 2 * math.atan(math.tan(hfov / 2) * res_y / res_x)
     elev = math.radians(preset["elevation_deg"])
     start_az = math.radians(-35.0)
-    sweep = math.radians(preset["orbit_degrees"])
-    azimuths = [start_az + sweep * i / 8 for i in range(9)]
+    sweep_deg = 360.0 if turntable else preset["orbit_degrees"]
+    sweep = math.radians(sweep_deg)
+    segments = 72 if turntable else 8
+    azimuths = [start_az + sweep * i / segments for i in range(segments + 1)]
     distance = fit_distance(lo, hi, hfov, vfov, elev, azimuths)
     data.clip_start = max(distance - 4 * radius, distance * 0.01)
     data.clip_end = distance + 60 * radius
@@ -399,7 +402,7 @@ def auto_orbit_camera(scene, lo, hi, frame_start, frame_end, preset):
     pivot.rotation_euler = (0, 0, start_az)
     pivot.keyframe_insert("rotation_euler", index=2, frame=frame_start)
     pivot.rotation_euler = (0, 0, start_az + sweep)
-    pivot.keyframe_insert("rotation_euler", index=2, frame=max(frame_end, frame_start + 1))
+    pivot.keyframe_insert("rotation_euler", index=2, frame=max(frame_end + int(turntable), frame_start + 1))
     _linear(pivot)
     scene.camera = cam
     focus = _link(scene, bpy.data.objects.new("mg_focus", None))
@@ -409,7 +412,7 @@ def auto_orbit_camera(scene, lo, hi, frame_start, frame_end, preset):
     data.dof.aperture_fstop = _focus_fstop(data.lens, distance, 1.3 * 2 * radius)
     view_dir = (center - (Matrix.Rotation(start_az, 4, "Z") @ Vector(cam.location) + center)).normalized()
     return cam, {"mode": "auto-orbit", "distance_m": distance, "fstop": data.dof.aperture_fstop,
-                 "lens_mm": data.lens, "sweep_deg": preset["orbit_degrees"]}, view_dir
+                 "lens_mm": data.lens, "sweep_deg": sweep_deg}, view_dir
 
 
 def _linear(ob):

@@ -213,3 +213,45 @@ Unit tests for the Blender-free parts run in CI: `python3 -m unittest discover -
 - The auto orbit frames the axis-aligned motion bounds; very long, thin subjects get extra margin.
 - The importer applies a fixed axis correction to cameras and lights, so the motion check
   compares their positions only.
+
+## Social video and compositing
+
+Render three full-size MP4s from the GLB named by a verified manifest:
+
+```sh
+python3 tools/render-blender/render_variants.py scene.manifest.json out \
+  --blender "$BLENDER" --turntable --alpha
+```
+
+The wrapper renders 1920×1080, 1080×1080 and 1080×1920 to `16x9/`, `1x1/` and
+`9x16/` using Cycles on the GPU and silent H.264 via NVENC. Supply an ffmpeg build
+with `h264_nvenc` on PATH or pass `--ffmpeg PATH`. The wrapper uses a fitted camera
+and clean video, with provenance and the render report beside each variant. It
+honors the existing busy-guard environment variables and stops on the first failure.
+Use `--resume` to continue with matching inputs and pixel settings.
+
+For a single aspect, pass `--resolution 9:16` or `--resolution 1:1` to `render.py`.
+Portrait selects an automatic fitted camera by default. An explicit export camera
+retains its authored framing. `--turntable` uses the automatic camera to make one
+constant-speed revolution around the full motion bounds over the export timeline.
+The orbit is sampled without duplicating the first view at the end. A frame-range
+render retains the corresponding portion of that same orbit.
+
+Pass `--alpha` to render RGBA PNGs with transparent Cycles film and no backdrop.
+The wrapper adds this as a portrait variant under `alpha/`. For Remotion, use the
+numbered PNGs under `frames/` at the fps in `render-report.json`. When ffmpeg exposes
+`prores_ks`, the renderer also delivers a ProRes 4444 MOV with alpha. The RGBA
+poster and sequence retain clean pixels, with provenance in the sidecar files.
+
+### Example mechanisms
+
+The Solid3D models include a parallelogram four-bar with equal input and output
+cranks, an eccentric disk cam with a guided roller, and a small outrunner motor
+with a two-blade propeller. The four-bar uses authored relative rotations to
+keep the coupler parallel to ground. The eccentric cam uses the in-line
+crank-slider equation with the sum of the disk and roller radii as the effective
+rod length. The motor model demonstrates which parts rotate together.
+
+A bevel pair requires tapered teeth and intersecting axes. The existing gear
+primitives extrude a constant tooth profile and the mesh check uses a common
+axis, so these examples omit the bevel pair.

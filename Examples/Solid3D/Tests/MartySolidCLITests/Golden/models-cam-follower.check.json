@@ -1,0 +1,119 @@
+{
+  "checks" : {
+    "gearPairs" : 0,
+    "meshesClosed" : true,
+    "openMeshes" : [
+
+    ]
+  },
+  "facts" : {
+    "cam.speed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "cam.worldSpeed" : {
+      "source" : "input",
+      "text" : "1",
+      "tier" : "solved",
+      "unit" : "",
+      "value" : 1
+    },
+    "follower.crankRadius" : {
+      "source" : "crankSlider",
+      "text" : "6 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 6
+    },
+    "follower.rodLength" : {
+      "source" : "crankSlider",
+      "text" : "25 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 25
+    },
+    "follower.travel" : {
+      "source" : "crankSlider",
+      "text" : "12 mm",
+      "tier" : "solved",
+      "unit" : "mm",
+      "value" : 12
+    }
+  },
+  "file" : {
+    "lines" : 19,
+    "sha256" : "8b268d5ea893927f84935e9f8005797dc8832899b777ac057d8993cb171dcf4e"
+  },
+  "legend" : {
+    "built" : 0,
+    "claims" : [
+      {
+        "badge" : "Solved",
+        "id" : "cam",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by input"
+      },
+      {
+        "badge" : "Solved",
+        "id" : "follower",
+        "kind" : "motion",
+        "tier" : "solved",
+        "why" : "Moved by crankSlider"
+      }
+    ],
+    "described" : 0,
+    "note" : null,
+    "shapes" : "Shapes as authored",
+    "solved" : 2,
+    "text" : "Solved 2 (animation ratios)"
+  },
+  "notChecked" : {
+    "crankSlider" : [
+      "forces and dynamics",
+      "joint clearance"
+    ],
+    "input" : [
+      "what drives the input",
+      "power and torque"
+    ]
+  },
+  "ok" : true,
+  "parts" : 3,
+  "ratios" : {
+    "cam" : 1
+  },
+  "readBack" : [
+    "base: world centre (25, 0, -7.75) mm, size 100 x 20 x 11.5 mm; static; root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "cam: world centre (6, 0, -2.5) mm, size 36 x 36 x 11 mm; turns about a vertical axis (+Z) through (0, 0, 0); 1 turn per input turn (Solved, input); root (at [0, 0, 0] in the world frame); local +Z points +Z",
+    "follower: world centre (47, 0, 0) mm, size 46 x 14 x 6 mm; slides along +X; travel 12 mm per input turn (Solved, crankSlider); root (at [0, 0, 0] in the world frame); local +Z points +Z"
+  ],
+  "reason" : null,
+  "sectionTriangles" : 0,
+  "stepFacts" : [
+    {
+      "checks" : [
+
+      ],
+      "facts" : [
+
+      ]
+    }
+  ],
+  "steps" : [
+    "An eccentric disk pushes a guided roller. The model assumes preload keeps the roller in contact."
+  ],
+  "stepTiers" : [
+    null
+  ],
+  "strict" : false,
+  "title" : "Eccentric disk cam and roller follower",
+  "triangles" : 1172,
+  "version" : 1,
+  "warnings" : [
+
+  ]
+}

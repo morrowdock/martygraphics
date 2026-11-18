@@ -7,6 +7,10 @@
   format, consistently with the site, showcase and provenance receipt.
 
 ### Added
+- Render checked Blender exports as landscape, square, and portrait video with an
+  optional 360° camera orbit and a transparent PNG or ProRes 4444 compositing master.
+- Add checked four-bar linkage, eccentric cam and follower, and drone motor with
+  propeller example models.
 - Experimental, opt-in `layer2d` programmatic video: checked native 2D keyframes,
   shared library H.264 MP4 and bounded GIF export, captions and SRT sidecars.
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.

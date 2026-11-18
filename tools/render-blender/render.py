@@ -5,10 +5,14 @@
 
 Options:
   --preset preview|hero       preview: 720p, low samples. hero: 1080p, high samples (default preview)
-  --resolution 720p|1080p|1440p|4k|WxH   override the preset resolution (hero 4K: --resolution 4k)
+  --resolution 720p|1080p|1440p|4k|1:1|9:16|WxH   override the preset resolution (hero 4K: --resolution 4k)
   --samples N                 override the preset maximum samples
   --camera auto|export|NAME   auto: hero orbit; export: first manifest camera; NAME: that camera.
                               Default: export when the manifest lists a camera, else auto
+  --turntable                 360-degree camera orbit, independent of exported motion
+  --alpha                     transparent RGBA PNGs and optional ProRes 4444
+  --ffmpeg PATH               ffmpeg executable for NVENC or ProRes (default ffmpeg on PATH)
+  --nvenc                     encode opaque MP4 with h264_nvenc
   --backdrop studio|shadow    studio cyclorama (default) or a shadow catcher over a plain background
   --frames A-B                render only frames A..B (inclusive); the whole export is still verified
   --no-motion-blur            frame-exact stills (motion blur is on by default)
@@ -33,6 +37,8 @@ every frame with the glTF evaluation, and again after look-dev.
 import hashlib
 import json
 import os
+import shutil
+import subprocess
 import sys
 import time
 
@@ -68,6 +74,7 @@ def parse_args(argv):
     a = {"manifest": argv[0], "out": argv[1], "preset": "preview", "resolution": None, "samples": None,
          "camera": None, "backdrop": "studio", "frames": None, "motion_blur": True, "burn_in": True,
          "resume": False, "wait": 0, "allow_cpu": False, "poster_frame": None,
+         "alpha": False, "turntable": False, "nvenc": False, "ffmpeg": "ffmpeg",
          "busy_locks": [], "busy_process": None, "busy_command": None}
     it = iter(argv[2:])
     for opt in it:
@@ -90,6 +97,14 @@ def parse_args(argv):
                 a["resolution"] = (w, h)
         elif opt == "--samples":
             a["samples"] = int(val())
+        elif opt == "--turntable":
+            a["turntable"] = True
+        elif opt == "--alpha":
+            a["alpha"] = True
+        elif opt == "--nvenc":
+            a["nvenc"] = True
+        elif opt == "--ffmpeg":
+            a["ffmpeg"] = val()
         elif opt == "--camera":
             a["camera"] = val()
         elif opt == "--backdrop":
@@ -125,6 +140,10 @@ def parse_args(argv):
         raise Refused(2, f"--preset must be one of {sorted(lookdev.PRESETS)}")
     if a["backdrop"] not in ("studio", "shadow"):
         raise Refused(2, "--backdrop must be studio or shadow")
+    if a["turntable"] and a["camera"] not in (None, "auto"):
+        raise Refused(2, "--turntable requires an automatic camera")
+    if a["alpha"] and a["backdrop"] == "shadow":
+        raise Refused(2, "--alpha uses a transparent film without a shadow catcher")
     w, h = a["resolution"] or lookdev.PRESETS[a["preset"]]["resolution"]
     if w % 2 or h % 2 or w < 16 or h < 16:
         raise Refused(2, "resolution must be even and at least 16x16 (H.264 yuv420p)")
@@ -155,6 +174,8 @@ def wait_until_clear(cfg, max_wait, phase):
 
 
 def be_nice():
+    if not hasattr(os, "nice"):
+        return None
     try:
         current = os.nice(0)
         if current < 10:
@@ -315,6 +336,24 @@ def encode_mp4(enc, path, fps):
     return changed
 
 
+def encode_external(ffmpeg, frames_dir, first, count, fps, path, options, label):
+    command = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-framerate", str(fps),
+               "-start_number", str(first), "-i", os.path.join(frames_dir, "frame_%04d.png"),
+               "-frames:v", str(count), "-an", "-metadata", "comment=" + label, *options, path]
+    try:
+        subprocess.run(command, check=True)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise Refused(5, f"ffmpeg encode failed: {exc}") from exc
+
+
+def supports_prores(ffmpeg):
+    try:
+        result = subprocess.run([ffmpeg, "-hide_banner", "-encoders"], capture_output=True, text=True, check=True)
+    except (OSError, subprocess.CalledProcessError):
+        return False
+    return any(line.split()[1:2] == ["prores_ks"] for line in result.stdout.splitlines())
+
+
 def write_poster(enc, path, frame_index):
     """Render one encode-scene frame to path. A still render of a scene that is not the
     context scene uses the context scene's frame, so render a one-frame animation instead."""
@@ -393,7 +432,7 @@ def run(argv):
 
     # Look-dev (cosmetic only).
     stride = max(1, count // 120)
-    lo, hi = lookdev.subject_bounds(imported, scene, all_frames[::stride] + [count - 1])
+    lo, hi = lookdev.subject_bounds(imported, scene, all_frames)
     size = (hi - lo).length
     scene.render.resolution_x, scene.render.resolution_y = resolution
     hdri = os.path.join(ASSET_DIR, "studio_small_09_2k.hdr")
@@ -403,17 +442,23 @@ def run(argv):
     parts = {p["name"]: p for p in checked["manifest"].get("parts", [])}
     mat_report = lookdev.assign_materials(imported, parts, size)
 
-    cam_choice = args["camera"] or ("export" if checked["manifest"].get("cameras") else "auto")
+    prefer_auto = args["turntable"] or resolution[0] < resolution[1]
+    cam_choice = args["camera"] or ("export" if not prefer_auto and checked["manifest"].get("cameras") else "auto")
     cams = {ob.name: ob for ob in imported if ob.type == "CAMERA"}
     if cam_choice == "auto":
-        cam, cam_info, view_dir = lookdev.auto_orbit_camera(scene, lo, hi, 0, count - 1, preset)
+        cam, cam_info, view_dir = lookdev.auto_orbit_camera(scene, lo, hi, 0, count - 1, preset, args["turntable"])
     else:
         name = (checked["manifest"].get("cameras") or [{}])[0].get("name") if cam_choice == "export" else cam_choice
         if name not in cams:
             raise Refused(2, f"camera '{name}' is not an imported export camera (have {sorted(cams)})")
         cam, cam_info, view_dir = lookdev.export_camera(scene, cams[name], lo, hi)
 
-    if args["backdrop"] == "studio":
+    if args["alpha"]:
+        lookdev.setup_world(scene, hdri, BACKDROP, hide_hdri_from_camera=False)
+        scene.render.film_transparent = True
+        scene.cycles.film_transparent_glass = True
+        encode_bg = None
+    elif args["backdrop"] == "studio":
         lookdev.setup_world(scene, hdri, BACKDROP, hide_hdri_from_camera=True)
         cam_path = lookdev.camera_positions(scene, cam, all_frames[::stride] + [count - 1])
         _, cam_info["backdrop"] = lookdev.cyclorama(scene, lo, hi, BACKDROP, cam_path)
@@ -450,6 +495,7 @@ def run(argv):
                 "adaptive_threshold": scene.cycles.adaptive_threshold, "denoiser": scene.cycles.denoiser,
                 "view_transform": scene.view_settings.view_transform, "look": scene.view_settings.look,
                 "motion_blur": args["motion_blur"], "backdrop": args["backdrop"], "camera": args["camera"],
+                "turntable": args["turntable"], "alpha": args["alpha"], "framing_version": 2,
                 "blender": bpy.app.version_string, "lighting": frames.lighting_identity(hdri, sha)}
     reason = frames.prepare(frames_dir, frames.identity(checked, sha(checked["manifest_path"]), settings),
                             args["resume"])
@@ -476,16 +522,56 @@ def run(argv):
 
     # Encode MP4 and poster from the master frames (no re-render).
     t_enc = time.time()
-    enc = build_encode_scene(scene, frames_dir, frame_files, label, args["burn_in"], encode_bg)
+    wait_until_clear(guard, args["wait"], "before encode")
     sid = checked["scene_id"]
-    mp4 = os.path.join(out, f"{sid}-{args['preset']}.mp4")
-    rewrote = encode_mp4(enc, mp4, fps)
+    stem = os.path.join(out, f"{sid}-{args['preset']}")
     wanted = checked["poster_frame"] if args["poster_frame"] is None else args["poster_frame"]
     if args["poster_frame"] is not None and not (first <= wanted <= last):
         raise Refused(2, f"--poster-frame {wanted} is outside the rendered frames {first}-{last}")
     poster_frame = min(max(wanted, first), last)
-    poster = os.path.join(out, f"{sid}-{args['preset']}-poster.png")
-    write_poster(enc, poster, poster_frame - first + 1)
+    poster = stem + "-poster.png"
+    outputs = {"frames_dir": "frames", "poster": os.path.basename(poster), "poster_frame": poster_frame}
+    delivered = [poster]
+    if args["alpha"]:
+        shutil.copyfile(os.path.join(frames_dir, f"frame_{poster_frame:04d}.png"), poster)
+        outputs["prores_4444"] = None
+        if supports_prores(args["ffmpeg"]):
+            mov = stem + "-alpha.mov"
+            encode_external(args["ffmpeg"], frames_dir, first, len(frame_files), fps, mov,
+                            ["-c:v", "prores_ks", "-profile:v", "4444", "-pix_fmt", "yuva444p10le"], label)
+            outputs["prores_4444"] = os.path.basename(mov)
+            delivered.append(mov)
+        else:
+            log("ProRes 4444 encoder unavailable; keeping the RGBA PNG sequence")
+    else:
+        enc = build_encode_scene(scene, frames_dir, frame_files, label, args["burn_in"], encode_bg)
+        mp4 = stem + ".mp4"
+        if args["nvenc"]:
+            # Preserve the existing compositor when the caller requests a caption or shadow background.
+            input_dir = frames_dir
+            input_first = first
+            if args["burn_in"] or encode_bg is not None:
+                input_dir = os.path.join(out, "encode-frames")
+                os.makedirs(input_dir, exist_ok=True)
+                enc.render.image_settings.media_type = "IMAGE"
+                enc.render.image_settings.file_format = "PNG"
+                enc.render.image_settings.color_mode = "RGB"
+                enc.render.filepath = os.path.join(input_dir, "frame_####.png")
+                bpy.ops.render.render(animation=True, scene=enc.name)
+                input_first = 1
+            encode_external(args["ffmpeg"], input_dir, input_first, len(frame_files), fps, mp4,
+                            ["-c:v", "h264_nvenc", "-preset", "p5", "-pix_fmt", "yuv420p",
+                             "-g", str(fps), "-movflags", "+faststart"], label)
+            with open(mp4, "rb") as f:
+                if not faststart.is_faststart(f.read()):
+                    raise Refused(5, "NVENC MP4 is not fast start")
+            rewrote = False
+        else:
+            rewrote = encode_mp4(enc, mp4, fps)
+        write_poster(enc, poster, poster_frame - first + 1)
+        delivered.append(mp4)
+        outputs.update(mp4=os.path.basename(mp4), mp4_faststart_rewritten=rewrote)
+    outputs["sha256"] = {os.path.basename(path): sha(path) for path in delivered}
     t_enc = time.time() - t_enc
 
     rendered = sorted(times)
@@ -504,20 +590,19 @@ def run(argv):
         "samples_max": scene.cycles.samples, "adaptive_threshold": scene.cycles.adaptive_threshold,
         "denoiser": scene.cycles.denoiser, "view_transform": scene.view_settings.view_transform,
         "look": scene.view_settings.look, "motion_blur": args["motion_blur"], "backdrop": args["backdrop"],
+        "alpha": args["alpha"], "turntable": args["turntable"],
         "camera": cam_info, "materials": mat_report, "motion_check": motion,
         "timing_s": {"per_frame": {str(k): round(v, 3) for k, v in times.items()},
                      "first_frame": round(times[rendered[0]], 3) if rendered else None,
                      "mean_after_first": round(sum(steady) / len(steady), 3) if steady else None,
                      "encode": round(t_enc, 2), "total": round(time.time() - t_start, 2)},
-        "outputs": {"frames_dir": "frames", "mp4": os.path.basename(mp4), "mp4_faststart_rewritten": rewrote,
-                    "poster": os.path.basename(poster), "poster_frame": poster_frame,
-                    "sha256": {os.path.basename(p): sha(p) for p in (mp4, poster)}},
+        "outputs": outputs,
     }
     with open(os.path.join(out, "render-report.json"), "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
     with open(os.path.join(out, "PROVENANCE.txt"), "w", encoding="utf-8") as f:
         f.write(label + "\n")
-    log(f"DONE {mp4}")
+    log(f"DONE {out}")
     log(f"poster {poster}")
     log(f"frames {frames_dir} ({len(frame_files)} PNG)")
     if rendered:
