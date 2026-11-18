@@ -1,0 +1,14 @@
+{
+  "gears-3d": {
+    "check": "dfce72763448fc75dbbfc5b7361fd46bfde9e1171437a12b3a9c40b085a88d46",
+    "strict": "4ce77eb15c06d6d7b559d4f239828b580e30f26c3322a757f3eff99e8d9f7a28"
+  },
+  "gears-mixed": {
+    "check": "9f787b8a59f0ac0adeb3c1ec0c824a49005f583f0681f753bacbf4642c91336c",
+    "strict": "667a41b7ae4cfb304e13784b0a5d6a5a39946949d51bb0aab4a3b1c78bc84c30"
+  },
+  "planets-2d": {
+    "check": "b12ababee9944c0fad4c8ded95fb0b87d92c8a653031d3ec5769810a4690fd09",
+    "strict": "6da1dbe1480da28f0c304a81fe84fe83cb558264db689e47f4681849b1d5ceaf"
+  }
+}

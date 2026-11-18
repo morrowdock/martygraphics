@@ -1,0 +1,90 @@
+{
+  "captions": [
+    "Count the teeth: 15 and 30.",
+    "So the big gear turns 1/2 of a turn."
+  ],
+  "engine": {
+    "assemblyVersions": [
+      1,
+      2
+    ],
+    "name": "MartyGraphics",
+    "reportFormat": 1,
+    "snapshotFormats": [
+      "martygraphics.solid.snapshot/1",
+      "martygraphics.solid.snapshot/2"
+    ],
+    "version": "unreleased"
+  },
+  "framesRendered": 3,
+  "kind": "explainer",
+  "legend": "Solved 6 (2 animation ratios)",
+  "look": "studio",
+  "outputs": [
+    {
+      "file": "board-0.png",
+      "height": 400,
+      "width": 640
+    },
+    {
+      "file": "solid-0.png",
+      "framing": "model",
+      "height": 400,
+      "width": 640
+    },
+    {
+      "boardPane": true,
+      "boardShare": 0.27960526315789475,
+      "camera": {
+        "distance": 185.26140245085952,
+        "fieldOfView": 30,
+        "pitch": 28,
+        "target": [
+          31.708132950645666,
+          4,
+          0
+        ],
+        "yaw": 32
+      },
+      "file": "beat-1.png",
+      "framing": "model",
+      "height": 400,
+      "width": 640
+    },
+    {
+      "bytes": 1160740,
+      "file": "snapshot-beat-1.json",
+      "sha256": "ee5cdb8c248b275352ca53178d1a78c1fcf610f03a13cd16c42924e3a24900c1"
+    },
+    {
+      "boardPane": true,
+      "boardShare": 0.27960526315789475,
+      "camera": {
+        "distance": 185.26140245085952,
+        "fieldOfView": 30,
+        "pitch": 28,
+        "target": [
+          31.708132950645663,
+          4,
+          0
+        ],
+        "yaw": 32
+      },
+      "file": "beat-2.png",
+      "framing": "model",
+      "height": 400,
+      "width": 640
+    },
+    {
+      "bytes": 1160740,
+      "file": "snapshot-beat-2.json",
+      "sha256": "a20df6be56fa73acb6cda2cdd1c0ed92c6217f93e51fc6681cb36b146e97dd2c"
+    }
+  ],
+  "source": {
+    "file": "gears-mixed.explainer.json",
+    "lines": 10,
+    "sha256": "4e50e1861827b37999b535454cfb63625dec0d749c7f0cc2fb899d19152b6506"
+  },
+  "title": "Tooth counts set the speed"
+}

@@ -1,0 +1,22 @@
+{
+  "v": 1,
+  "kind": "ml-explainer",
+  "title": "Human review in an agent loop",
+  "items": [
+    {
+      "id": "loop",
+      "kind": "agentLoop",
+      "states": [
+        "plan",
+        "toolCall",
+        "toolResult",
+        "review",
+        "act",
+        "revise",
+        "stop"
+      ],
+      "requiresReview": true,
+      "stepBudget": 12
+    }
+  ]
+}

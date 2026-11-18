@@ -1,0 +1,27 @@
+{
+  "v": 1,
+  "kind": "ml-explainer",
+  "title": "From image to output tokens",
+  "items": [
+    {
+      "id": "vision",
+      "kind": "visionPipeline",
+      "caption": "Simplified · LLaVA-1.5-style",
+      "citation": "Liu et al., CVPR 2024 (arXiv 2310.03744)",
+      "imageSize": [
+        336,
+        336
+      ],
+      "patchSize": 14,
+      "embeddingWidth": 256,
+      "projectorLabel": "2-layer MLP",
+      "languageModelLabel": "Vicuna v1.5",
+      "textTokens": [
+        "What",
+        "is",
+        "shown",
+        "?"
+      ]
+    }
+  ]
+}

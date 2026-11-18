@@ -72,6 +72,12 @@ many of its claims are animation ratios (Solved motion claims; docs/SOLID-3D.md,
 
 ![Beat 1 of the mixed example: the table rows and both gears highlighted together](assets/explainer/gears-mixed-beat-1.png)
 
+## ML explainer kit
+
+The optional [ML explainer format](ML-EXPLAINER.md) uses the separate `MartyGraphicsMLKit` library
+and `marty-scene-validate --ml-kit --strict`. It includes checked patch grids, token probabilities
+and review-gated agent diagrams.
+
 ## Document
 
 ```json

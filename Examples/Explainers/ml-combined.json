@@ -1,0 +1,74 @@
+{
+  "v": 1,
+  "kind": "ml-explainer",
+  "title": "From an image to a reviewed action",
+  "items": [
+    {
+      "id": "vision",
+      "kind": "visionPipeline",
+      "caption": "Simplified · illustrative vision-to-language pipeline",
+      "imageSize": [
+        120,
+        80
+      ],
+      "patchSize": 20,
+      "embeddingWidth": 64,
+      "textTokens": [
+        "What",
+        "is",
+        "shown",
+        "?"
+      ]
+    },
+    {
+      "id": "probabilities",
+      "kind": "nextTokenProbabilities",
+      "tokens": [
+        "The",
+        "diagram",
+        "shows"
+      ],
+      "candidates": [
+        {
+          "token": "gears",
+          "logit": 2.4
+        },
+        {
+          "token": "motors",
+          "logit": 1.7
+        },
+        {
+          "token": "levers",
+          "logit": 0.9
+        },
+        {
+          "token": "wires",
+          "logit": 0.1
+        },
+        {
+          "token": "pulleys",
+          "logit": -0.4
+        }
+      ],
+      "temperature": 0.9,
+      "topK": 3,
+      "topP": 0.85,
+      "chosen": "motors"
+    },
+    {
+      "id": "loop",
+      "kind": "agentLoop",
+      "states": [
+        "plan",
+        "toolCall",
+        "toolResult",
+        "review",
+        "act",
+        "revise",
+        "stop"
+      ],
+      "requiresReview": true,
+      "stepBudget": 12
+    }
+  ]
+}

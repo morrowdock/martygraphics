@@ -1,0 +1,8 @@
+{
+  "kind" : "ml-explainer",
+  "location" : "items[0].caption",
+  "ok" : false,
+  "reason" : "ml.vision.caption",
+  "strict" : true,
+  "version" : 1
+}

@@ -1,0 +1,38 @@
+{
+  "items" : [
+    {
+      "facts" : {
+        "architectureBasis" : "illustrative",
+        "caption" : "Illustrative input",
+        "citation" : null,
+        "embeddingWidth" : 64,
+        "embeddingWidthBasis" : "illustrative",
+        "embeddingWidthCitation" : null,
+        "illustrativeJoinedTokenCount" : 28,
+        "illustrativeVisualTokenCount" : 24,
+        "imageSize" : [
+          120,
+          80
+        ],
+        "languageModelLabel" : null,
+        "layoutBasis" : "illustrative",
+        "patchCount" : 24,
+        "patchCountBasis" : "derived",
+        "patchGrid" : [
+          6,
+          4
+        ],
+        "patchSize" : 20,
+        "projectorLabel" : null,
+        "textTokenCount" : 4
+      },
+      "id" : "vision",
+      "kind" : "visionPipeline"
+    }
+  ],
+  "kind" : "ml-explainer",
+  "ok" : true,
+  "strict" : true,
+  "title" : "Synthetic",
+  "version" : 1
+}

@@ -1,0 +1,83 @@
+{
+  "captions": [
+    "The small gear has 15 teeth; the big gear has 30.",
+    "The big gear turns 1/2 of a turn, the other way."
+  ],
+  "engine": {
+    "assemblyVersions": [
+      1,
+      2
+    ],
+    "name": "MartyGraphics",
+    "reportFormat": 1,
+    "snapshotFormats": [
+      "martygraphics.solid.snapshot/1",
+      "martygraphics.solid.snapshot/2"
+    ],
+    "version": "unreleased"
+  },
+  "framesRendered": 3,
+  "kind": "explainer",
+  "legend": "Solved 5 (2 animation ratios)",
+  "look": "studio",
+  "outputs": [
+    {
+      "file": "solid-0.png",
+      "framing": "model",
+      "height": 400,
+      "width": 640
+    },
+    {
+      "boardPane": false,
+      "camera": {
+        "distance": 185.26140245085952,
+        "fieldOfView": 30,
+        "pitch": 28,
+        "target": [
+          31.708132950645666,
+          4,
+          0
+        ],
+        "yaw": 32
+      },
+      "file": "beat-1.png",
+      "framing": "model",
+      "height": 400,
+      "width": 640
+    },
+    {
+      "bytes": 1160740,
+      "file": "snapshot-beat-1.json",
+      "sha256": "ee5cdb8c248b275352ca53178d1a78c1fcf610f03a13cd16c42924e3a24900c1"
+    },
+    {
+      "boardPane": false,
+      "camera": {
+        "distance": 185.26140245085952,
+        "fieldOfView": 30,
+        "pitch": 28,
+        "target": [
+          31.708132950645663,
+          4,
+          0
+        ],
+        "yaw": 32
+      },
+      "file": "beat-2.png",
+      "framing": "model",
+      "height": 400,
+      "width": 640
+    },
+    {
+      "bytes": 1160740,
+      "file": "snapshot-beat-2.json",
+      "sha256": "a20df6be56fa73acb6cda2cdd1c0ed92c6217f93e51fc6681cb36b146e97dd2c"
+    }
+  ],
+  "source": {
+    "file": "gears-3d.explainer.json",
+    "lines": 8,
+    "sha256": "345a80fb1aa314bb1bd216c0dd4cd1abd0aa7c4df044674c03e0a660da02f14b"
+  },
+  "title": "A small gear turns a big gear"
+}

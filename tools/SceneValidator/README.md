@@ -126,3 +126,10 @@ spaces, help-argument ordering, bidirectional-character escaping and JSON path
 roundtripping, the JSON report, and the built executable's exit codes including
 closed stdout and stderr. Interrupted and partial output writes are handled in
 the implementation but do not have injected-failure regression tests.
+
+## ML explainers (opt-in)
+
+`marty-scene-validate --ml-kit --strict FILE` checks one
+[ML document](../../docs/ML-EXPLAINER.md) and prints its strict JSON report. The companion
+`marty-ml-render` executable exports checked documents to MP4 or RGBA PNG frames. Both
+commands require an explicit `--ml-kit` flag.

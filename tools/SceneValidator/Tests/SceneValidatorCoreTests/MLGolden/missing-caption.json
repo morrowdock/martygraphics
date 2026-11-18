@@ -1,0 +1,1 @@
+{"v":1,"kind":"ml-explainer","title":"Synthetic","items":[{"id":"vision","kind":"visionPipeline","imageSize":[120,80],"patchSize":20,"embeddingWidth":64,"textTokens":["What","is","shown","?"]}]}

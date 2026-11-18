@@ -1,0 +1,41 @@
+{
+  "captions": [
+    "Venus and Earth are almost the same width."
+  ],
+  "engine": {
+    "assemblyVersions": [
+      1,
+      2
+    ],
+    "name": "MartyGraphics",
+    "reportFormat": 1,
+    "snapshotFormats": [
+      "martygraphics.solid.snapshot/1",
+      "martygraphics.solid.snapshot/2"
+    ],
+    "version": "unreleased"
+  },
+  "framesRendered": 0,
+  "kind": "explainer",
+  "legend": "Given 1",
+  "look": "studio",
+  "outputs": [
+    {
+      "file": "board-0.png",
+      "height": 400,
+      "width": 640
+    },
+    {
+      "boardPane": true,
+      "file": "beat-1.png",
+      "height": 400,
+      "width": 640
+    }
+  ],
+  "source": {
+    "file": "planets-2d.explainer.json",
+    "lines": 4,
+    "sha256": "a72890a46aa23e3730ddc686e8bf148b8876aaea35f75027ddc685d06fc00fed"
+  },
+  "title": "Inner planets by width"
+}

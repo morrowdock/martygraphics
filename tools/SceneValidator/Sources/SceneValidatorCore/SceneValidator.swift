@@ -2,6 +2,7 @@
 import Darwin
 import Foundation
 import MartyGraphics
+import MartyGraphicsMLKit
 
 /// Checks scene JSON files with the same `MGParser.scene(data:)` call an app uses before drawing.
 /// It only reads regular files named on the command line: no stdin, directory walking, network or rendering.
@@ -39,6 +40,7 @@ public enum SceneValidator {
 
     public static let usage = """
     Usage: \(toolName) [--json] [--] FILE...
+           \(toolName) --ml-kit --strict FILE
            \(toolName) --help
 
     Checks each MartyGraphics scene JSON file with MGParser.scene(data:), the
@@ -47,6 +49,8 @@ public enum SceneValidator {
 
     Options:
       --json    Print one machine-readable JSON report instead of text lines.
+      --ml-kit --strict
+                Check one opt-in ML explainer and print its strict JSON report.
       -h, --help
                 Print this help and exit 0; must be used alone.
       --        Treat every later argument as a file, even if it starts with '-'.
@@ -74,6 +78,8 @@ public enum SceneValidator {
             return Report(status: .valid, stdout: usage, stderr: "")
         }
         var json = false
+        var mlKit = false
+        var strict = false
         var files: [String] = []
         var operandsOnly = false
         for argument in arguments {
@@ -82,6 +88,8 @@ public enum SceneValidator {
             case "--": operandsOnly = true
             case "-h", "--help": return usageError("help must be used alone")
             case "--json": json = true
+            case "--ml-kit": mlKit = true
+            case "--strict": strict = true
             case "-": return usageError("reading standard input is not supported; name a file")
             default:
                 if argument.hasPrefix("-") {
@@ -90,6 +98,21 @@ public enum SceneValidator {
                 files.append(argument)
             }
         }
+        if mlKit {
+            guard strict, files.count == 1 else { return usageError("--ml-kit requires --strict and one file") }
+            switch readMLKit(path: files[0]) {
+            case .unreadable(let reason):
+                return Report(status: .unreadable, stdout: "", stderr: "\(toolName): \(reason)\n")
+            case .checked(let result):
+                let status: Status
+                switch result {
+                case .success: status = .valid
+                case .failure: status = .invalid
+                }
+                return Report(status: status, stdout: MGMLKit.report(result), stderr: "")
+            }
+        }
+        if strict { return usageError("unknown option '--strict'") }
         guard !files.isEmpty else { return usageError("no scene files given") }
 
         let results = files.map { ($0, check(path: $0)) }
@@ -153,6 +176,22 @@ public enum SceneValidator {
         }
     }
 
+    public enum MLKitInput: Sendable {
+        case checked(Result<MGMLDocument, MGMLIssue>)
+        case unreadable(reason: String)
+    }
+
+    /// Shared by the two opt-in tools, with the same regular-file and byte checks as the legacy validator.
+    public static func readMLKit(path: String) -> MLKitInput {
+        switch readBounded(path: path, maximumBytes: MGMLKit.maximumInputBytes) {
+        case .failure(let failure):
+            if case .unreadable(let reason, _) = failure.outcome { return .unreadable(reason: reason) }
+            return .unreadable(reason: "read-error")
+        case .success(let data):
+            return .checked(MGMLKit.check(data: data, mlKit: true))
+        }
+    }
+
     // MARK: bounded reading
 
     /// Follows symlinks, refuses non-regular files before opening them, re-checks the opened descriptor
@@ -160,7 +199,7 @@ public enum SceneValidator {
     /// past the parser limit.
     struct ReadFailure: Error { let outcome: Outcome }
 
-    static func readBounded(path: String) -> Result<Data, ReadFailure> {
+    static func readBounded(path: String, maximumBytes: Int = maximumInputBytes) -> Result<Data, ReadFailure> {
         var before = stat()
         guard stat(path, &before) == 0 else { return .failure(ReadFailure(outcome: openFailure(errno))) }
         guard isRegular(before.st_mode) else { return .failure(ReadFailure(outcome: notRegular(before.st_mode))) }
@@ -176,7 +215,7 @@ public enum SceneValidator {
             return .failure(ReadFailure(outcome: .unreadable(reason: "read-error", detail: "file changed while opening")))
         }
 
-        let limit = maximumInputBytes + 1
+        let limit = maximumBytes + 1
         var buffer = [UInt8](repeating: 0, count: limit)
         var total = 0
         while total < limit {

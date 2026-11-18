@@ -25,3 +25,15 @@ The still above is `beat-1.png` of `marty-solid render` on `gears-mixed.explaine
 The 3D example in the open-vocabulary spec also shows a motion arrow and a centre-distance dimension. 3D annotations
 (open-vocabulary PR 3a) now work in explainers; this card example keeps its facts in captions so the card stays small
 (tests cover an explainer with a label and a dimension).
+
+## ML explainer examples
+
+These four 2D lessons use the [opt-in ML format](../../docs/ML-EXPLAINER.md).
+The vision example includes a paper citation and labels the embedding width and layout as illustrative.
+
+| File | What it shows |
+| --- | --- |
+| [Vision pipeline](ml-vision-pipeline.json) | Image patches, visual and text tokens, and the route through the language model. |
+| [Next-token probabilities](ml-next-token-probabilities.json) | Logits, softmax, temperature, top-k, top-p and the chosen token. |
+| [Agent loop](ml-agent-loop.json) | Tool result, human review, approval, rejection and the step budget. |
+| [Combined](ml-combined.json) | An illustrative vision pipeline followed by the probability and agent-loop boards. |

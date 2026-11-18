@@ -6,12 +6,16 @@ import PackageDescription
 let package = Package(
     name: "MartySceneValidator",
     platforms: [.macOS(.v14)],
-    products: [.executable(name: "marty-scene-validate", targets: ["MartySceneValidate"])],
+    products: [.executable(name: "marty-scene-validate", targets: ["MartySceneValidate"]),
+               .executable(name: "marty-ml-render", targets: ["MartyMLRender"])],
     dependencies: [.package(name: "MartyGraphics", path: "../..")],
     targets: [
         .target(name: "SceneValidatorCore",
-                dependencies: [.product(name: "MartyGraphics", package: "MartyGraphics")]),
+                dependencies: [.product(name: "MartyGraphics", package: "MartyGraphics"),
+                               .product(name: "MartyGraphicsMLKit", package: "MartyGraphics")]),
         .executableTarget(name: "MartySceneValidate", dependencies: ["SceneValidatorCore"]),
+        .executableTarget(name: "MartyMLRender", dependencies: ["SceneValidatorCore",
+                          .product(name: "MartyGraphicsMLKit", package: "MartyGraphics")]),
         .testTarget(name: "SceneValidatorCoreTests",
                     dependencies: ["SceneValidatorCore", "MartySceneValidate",
                                    .product(name: "MartyGraphics", package: "MartyGraphics")])
