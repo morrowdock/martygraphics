@@ -729,41 +729,39 @@ passes inner scene, lesson and assembly reasons through unchanged.
 These tokens belong to the [opt-in ML kit](ML-EXPLAINER.md). In Swift, use `MGMLReason`.
 The strict report gives the first reason and its document location.
 
-| Reason | Meaning |
-| --- | --- |
-| `ml.optIn` | The caller did not opt into the kit. |
-| `ml.bytes` | The file exceeds 16 KiB. |
-| `ml.json` | The data cannot be read as bounded UTF-8 JSON. |
-| `ml.object` | The document, item or candidate is not an object. |
-| `ml.unknown` | A closed object has an extra key. |
-| `ml.version` | The document version must be 1. |
-| `ml.kind` | The document kind must be `ml-explainer`. |
-| `ml.title` | The title is missing or invalid. |
-| `ml.items` | The item list is missing or outside its count limit. |
-| `ml.item.kind` | The item kind is missing or unknown. |
-| `ml.item.id` | The item id is missing or invalid. |
-| `ml.item.id.duplicate` | An item id was already used. |
-| `ml.vision.caption` | The required vision caption is missing or invalid. |
-| `ml.vision.citation` | A supplied citation is invalid. |
-| `ml.vision.size` | An image dimension or patch edge is missing or outside its integer range. |
-| `ml.vision.patch.division` | The patch edge does not divide both image sides. |
-| `ml.vision.patch.count` | The derived grid exceeds a row, column or total patch limit. |
-| `ml.vision.embeddingWidth` | The width is missing or outside its integer range. |
-| `ml.vision.label` | A supplied model or projector label is invalid. |
-| `ml.tokens` | A text or context token list or one of its strings is invalid. |
-| `ml.prob.candidates` | The candidate list or token is invalid, or a token is repeated. |
-| `ml.prob.logit` | A candidate logit is missing or outside its finite range. |
-| `ml.prob.temperature` | Temperature is outside its positive range. |
-| `ml.prob.topK` | Top-k is outside the candidate count or is not an integer. |
-| `ml.prob.topP` | Top-p must be greater than 0 and at most 1. |
-| `ml.prob.sum` | The computed distribution is invalid or its sum is outside tolerance. |
-| `ml.prob.chosen` | The chosen token is missing, unknown or has zero final probability. |
-| `ml.agent.states` | The state set is invalid, incomplete or contains an unreachable revise state. |
-| `ml.agent.review` | The review flag is invalid or a required review gate is absent. |
-| `ml.agent.stop` | The state set has no terminal stop. |
-| `ml.agent.budget` | The budget is out of range or cannot cover an approval pass. |
-| `ml.render.frame` | The frame index is outside the checked document. |
-| `ml.render.raster` | CoreGraphics could not allocate or produce a frame. |
-| `ml.export.destination` | The destination is not a file URL. |
-| `ml.export.exists` | The destination already exists. |
-| `ml.export.png` | ImageIO could not write a PNG frame. |
+- `ml.optIn` ? The caller did not opt into the kit.
+- `ml.bytes` ? The file exceeds 16 KiB.
+- `ml.json` ? The data cannot be read as bounded UTF-8 JSON.
+- `ml.object` ? The document, item or candidate is not an object.
+- `ml.unknown` ? A closed object has an extra key.
+- `ml.version` ? The document version must be 1.
+- `ml.kind` ? The document kind must be `ml-explainer`.
+- `ml.title` ? The title is missing or invalid.
+- `ml.items` ? The item list is missing or outside its count limit.
+- `ml.item.kind` ? The item kind is missing or unknown.
+- `ml.item.id` ? The item id is missing or invalid.
+- `ml.item.id.duplicate` ? An item id was already used.
+- `ml.vision.caption` ? The required vision caption is missing or invalid.
+- `ml.vision.citation` ? A supplied citation is invalid.
+- `ml.vision.size` ? An image dimension or patch edge is missing or outside its integer range.
+- `ml.vision.patch.division` ? The patch edge does not divide both image sides.
+- `ml.vision.patch.count` ? The derived grid exceeds a row, column or total patch limit.
+- `ml.vision.embeddingWidth` ? The width is missing or outside its integer range.
+- `ml.vision.label` ? A supplied model or projector label is invalid.
+- `ml.tokens` ? A text or context token list or one of its strings is invalid.
+- `ml.prob.candidates` ? The candidate list or token is invalid, or a token is repeated.
+- `ml.prob.logit` ? A candidate logit is missing or outside its finite range.
+- `ml.prob.temperature` ? Temperature is outside its positive range.
+- `ml.prob.topK` ? Top-k is outside the candidate count or is not an integer.
+- `ml.prob.topP` ? Top-p must be greater than 0 and at most 1.
+- `ml.prob.sum` ? The computed distribution is invalid or its sum is outside tolerance.
+- `ml.prob.chosen` ? The chosen token is missing, unknown or has zero final probability.
+- `ml.agent.states` ? The state set is invalid, incomplete or contains an unreachable revise state.
+- `ml.agent.review` ? The review flag is invalid or a required review gate is absent.
+- `ml.agent.stop` ? The state set has no terminal stop.
+- `ml.agent.budget` ? The budget is out of range or cannot cover an approval pass.
+- `ml.render.frame` ? The frame index is outside the checked document.
+- `ml.render.raster` ? CoreGraphics could not allocate or produce a frame.
+- `ml.export.destination` ? The destination is not a file URL.
+- `ml.export.exists` ? The destination already exists.
+- `ml.export.png` ? ImageIO could not write a PNG frame.
