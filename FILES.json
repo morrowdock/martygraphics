@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "1e2016473f2149e0be6c8e2e7c3ad833329b59bc4f0a686f7af5711bdefe22cb"
+      "sha256": "12f05166cd5d10a37ec869e5a22576f281ff8e567d7c7ce2c7ae6632d58d96e7"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -55,7 +55,7 @@
     },
     {
       "path": "Examples/Explainers/README.md",
-      "sha256": "737b222b6e12f91d0be24284d312a713650b663a94b3a6fbfdac99eda0674ec2"
+      "sha256": "4f5322b6105643130561b3c6e3d75ec589460a38241c8e08cd3f7c1f446d10ca"
     },
     {
       "path": "Examples/Explainers/gears-3d.explainer.json",
@@ -1995,7 +1995,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "3fce6f34badf7110d847736420d0309623202d82899b60b76cf8f2073a8dc1e8"
+      "sha256": "f951862f9f529cdebfb9aedf7c3fc4e7801c54d32eb0cd010e8d0f92824ae0b5"
     },
     {
       "path": "docs/SHOWCASE.md",
@@ -3187,7 +3187,7 @@
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLDrawItems.swift",
-      "sha256": "3f8d2bcc9203144d8de3837f7eabd07ec1d845d2a8d1282613aa48d69bc7c41c"
+      "sha256": "a73e17b7d4954db4c1d64db12c4ece568f3b7b1a157f7fe3ddd6a7b752fa0695"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLExport.swift",
@@ -3195,7 +3195,7 @@
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLKit.swift",
-      "sha256": "f2c8f1d0e6b23e71998d75e7ac235ae2668a2e6fed1b7e955aa1ddd8fb872ac5"
+      "sha256": "797781b55ddba9b8c7d736d5c725bfa185f9980bdd2fa8019af1302b1bfe2361"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLProbabilities.swift",
@@ -3227,15 +3227,15 @@
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MLMeaningBoard.swift",
-      "sha256": "f8393844f3d1eb6e734dcbe7dc248e679fdca06d1870990ee39ade2d9f450e79"
+      "sha256": "e65dce36a4809c2b7662843ee1bfacdbce6a35bf4dadfda49ff9f92bf0e6e109"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MLMeaningMap.swift",
-      "sha256": "458f875f2a28087809068eff09aafd65f9968c091358022a8e5768829dc4c74e"
+      "sha256": "ad93d5f407cc10e3c01acd80bca81ccc4481e21b0439d5c8a9ec323862b2a3a1"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MLPicture.swift",
-      "sha256": "d1a88e927cd49fdd4a1b758c0b1c8cf7bcf7b558586c6d742f1e25937f7538b8"
+      "sha256": "d590c3579863b396b9ffd95e3f71fe73b8a1d70fbf0b0264707dcf0fc29873d8"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MLPictureBoard.swift",
@@ -3247,7 +3247,7 @@
     },
     {
       "path": "Tests/MartyGraphicsMLKitTests/MLKitV2Tests.swift",
-      "sha256": "9d5840d68d0b42fda384aeb103e58eabca509dc03b7156c43841ae82178c764d"
+      "sha256": "2d49d0060af7b0b24731d147f19a47c460ef7e186c01b1bffda527114a6fc60c"
     },
     {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
@@ -3255,7 +3255,7 @@
     },
     {
       "path": "docs/ML-EXPLAINER.md",
-      "sha256": "c5f05c84ce8f800146a9f5d755251f6de86425805677534e2349c1c9a3a7e291"
+      "sha256": "492355e6b5aef98e1ddf9b789bf3596f8c28cad8cde384f6c36952fbadea3df3"
     },
     {
       "path": "docs/schemas/ml-explainer.schema.json",
