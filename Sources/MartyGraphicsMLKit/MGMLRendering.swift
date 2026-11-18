@@ -92,27 +92,6 @@ extension MLProbabilities {
     }
 }
 
-/// Theme and layout defaults for every item.
-enum MLStyle {
-    static let shortSide = 720.0
-    static let inset = 36.0
-    static let boardHeight = 880.0
-    static let titleOffset = 52.0
-    static let title = 34.0
-    static let heading = 22.0
-    static let body = 18.0
-    static let detail = 15.0
-    static let radius = 12.0
-    static let gap = 26.0
-    static let stroke = 2.0
-    static let arrowhead = 8.0
-    static let cardOpacity = 0.14
-    static let emphasisOpacity = 0.34
-    static let trackOpacity = 0.18
-    static let tokenHeight = 24.0
-    static let font = "Helvetica"
-}
-
 final class MLBoard {
     let context: CGContext
     let panel: CGRect

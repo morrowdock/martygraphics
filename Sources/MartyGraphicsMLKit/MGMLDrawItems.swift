@@ -2,6 +2,27 @@
 import CoreGraphics
 import Foundation
 
+/// Theme and layout defaults for every item.
+enum MLStyle {
+    static let shortSide = 720.0
+    static let inset = 36.0
+    static let boardHeight = 880.0
+    static let titleOffset = 52.0
+    static let title = 34.0
+    static let heading = 22.0
+    static let body = 18.0
+    static let detail = 15.0
+    static let radius = 12.0
+    static let gap = 26.0
+    static let stroke = 2.0
+    static let arrowhead = 8.0
+    static let cardOpacity = 0.14
+    static let emphasisOpacity = 0.34
+    static let trackOpacity = 0.18
+    static let tokenHeight = 24.0
+    static let font = "Helvetica"
+}
+
 extension MLBoard {
     func vision(_ vision: MLVision) {
         let gap = MLStyle.gap
@@ -26,7 +47,7 @@ extension MLBoard {
         thumbnail(in: upper[1], vision: vision, grid: true)
         foot("\(vision.imageSize[0]) × \(vision.imageSize[1]) px", in: upper[0], offset: 20)
         foot("\(vision.patchSize) px per edge", in: upper[1], offset: 38)
-        foot("\(vision.columns) × \(vision.rows) = \(vision.patchCount) (derived)", in: upper[1], offset: 18)
+        foot("\(vision.columns) × \(vision.rows) = \(vision.patchCount) patches (derived)", in: upper[1], offset: 18)
         symbol(in: upper[2], count: 4, dot: false)
         foot("Width \(vision.embeddingWidth) · \(vision.embeddingWidthCitation == nil ? "illustrative" : "cited")", in: upper[2], offset: 20)
         symbol(in: upper[3], count: 3, dot: true)

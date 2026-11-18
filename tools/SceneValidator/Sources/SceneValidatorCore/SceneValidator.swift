@@ -176,13 +176,13 @@ public enum SceneValidator {
         }
     }
 
-    public enum MLKitInput: Sendable {
+    package enum MLKitInput: Sendable {
         case checked(Result<MGMLDocument, MGMLIssue>)
         case unreadable(reason: String)
     }
 
     /// Shared by the two opt-in tools, with the same regular-file and byte checks as the legacy validator.
-    public static func readMLKit(path: String) -> MLKitInput {
+    package static func readMLKit(path: String) -> MLKitInput {
         switch readBounded(path: path, maximumBytes: MGMLKit.maximumInputBytes) {
         case .failure(let failure):
             if case .unreadable(let reason, _) = failure.outcome { return .unreadable(reason: reason) }
