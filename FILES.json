@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "6ad4ccee6093a67c81dc6c36a48d35fa52bac8d433fdecaf501c9f5d21857811"
+      "sha256": "5f275fee9c12e8e54e9d98271a88fbb2ddeb2944fc65a5f6e5f33a19db030ebe"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -55,7 +55,7 @@
     },
     {
       "path": "Examples/Explainers/README.md",
-      "sha256": "8c3c57eb92163e915022d57dac0165203972eff7a0c157e99402b8e1db9af15d"
+      "sha256": "361b32f0078ad51b16b13404ca9f4671b78a4929ed53c85728b872cb3a909ff7"
     },
     {
       "path": "Examples/Explainers/gears-3d.explainer.json",
@@ -703,11 +703,11 @@
     },
     {
       "path": "NOTICE",
-      "sha256": "0805a8f435fb77cf7be3e1670d4d155b47e76261ec7788f4f8c8596367ab5fc5"
+      "sha256": "9dcf77ad6bc160ae6cd877d3830dcba2c29663bbfad376085f291824844cabbc"
     },
     {
       "path": "Package.swift",
-      "sha256": "1087ebf13f9189855ed760764a3dcb6844c3cfce5a2c706ac03bf855ae63136e"
+      "sha256": "e943866e8370c8066b393c566e197bf5eb5abecb80aefc1fa61a7cb676cf85d6"
     },
     {
       "path": "README.md",
@@ -1951,7 +1951,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "99887634835ab7d13b1e2a10cdf5ad73dccebc5c7be8d121aa8809883c4855ea"
+      "sha256": "0298fc3a7fd4998ec1f471e3c980cb1e88d697337e265fdbb55705fde7424f66"
     },
     {
       "path": "docs/EXPORT.json",
@@ -1995,7 +1995,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "042cf26b091a7330668a0a8b79b3a0dd871e7f83fd2b7b35fb0018423644e57f"
+      "sha256": "675b2574bf712885c20ed202b4d70faf6658fcef5a512db9f141f9e061a29163"
     },
     {
       "path": "docs/SHOWCASE.md",
@@ -2007,7 +2007,7 @@
     },
     {
       "path": "docs/THIRD-PARTY.md",
-      "sha256": "973c5b0827dbfc841e5b043c6f753f98dae92c9c1b129f893f41481b58043de6"
+      "sha256": "bd8595d3d202dc2383802daff7a369d0986747d7f10eadace7e10d26344d5cef"
     },
     {
       "path": "docs/V0.2-PLAN.md",
@@ -2843,11 +2843,11 @@
     },
     {
       "path": "tools/SceneValidator/Package.swift",
-      "sha256": "7592208fa0b82b5a6c016d6ca15aebf6738f689ed863abb2eb84b1ab21c6d30d"
+      "sha256": "609435058e8b2ae85652dff3d455dde4779a980e9c8cc77df80e90a0e5a5f2d1"
     },
     {
       "path": "tools/SceneValidator/README.md",
-      "sha256": "fa4b3992a343ccedb77861491a1c196af05bceacb5762d6d087bef40a5ad3da6"
+      "sha256": "fc5558970dc61822030fdd29e6013661ff18be19fe620f69d18ad3a05934d8c2"
     },
     {
       "path": "tools/SceneValidator/Sources/MartySceneValidate/main.swift",
@@ -2855,7 +2855,7 @@
     },
     {
       "path": "tools/SceneValidator/Sources/SceneValidatorCore/SceneValidator.swift",
-      "sha256": "b0ae47ad9138e8985723c2d62e8bde08b3309ccdc872070c806a31107ff1cf61"
+      "sha256": "40ede675981b6bd22e42ac0f79ddee700b0a1e58921c15eefd6ac84ff7c28b90"
     },
     {
       "path": "tools/SceneValidator/Tests/SceneValidatorCoreTests/SceneValidatorTests.swift",
@@ -3026,6 +3026,38 @@
       "sha256": "456befe1c91904a07bedb720c346d352374de237845d51d48281b506644a72db"
     },
     {
+      "path": "Examples/Explainers/MLFonts/BricolageGrotesque-OFL.txt",
+      "sha256": "46ba5f18ee20ea529f21d96c0ef8637a8314c1a5cfb2aa84018bc8157cbeff41"
+    },
+    {
+      "path": "Examples/Explainers/MLFonts/BricolageGrotesque.ttf",
+      "sha256": "413e7357809ddd12fd80a96a8a396de0e401638d4acd3cb3e37532f0472ac682"
+    },
+    {
+      "path": "Examples/Explainers/MLFonts/DMMono-OFL.txt",
+      "sha256": "f5898de81851415b71431c1a8ea527c88a4e79caeb23936483428d2e911af40c"
+    },
+    {
+      "path": "Examples/Explainers/MLFonts/DMMono-Regular.ttf",
+      "sha256": "55b4c98f123daebb3ed27947ba47b2af00554fc6284d639a540bcef5e6258ad2"
+    },
+    {
+      "path": "Examples/Explainers/ml-agent-loop.json",
+      "sha256": "336ec2c4cc467ec60f09bd187f68c3e759f2f7173fd371d591e3bbd1d9cdcb59"
+    },
+    {
+      "path": "Examples/Explainers/ml-combined.json",
+      "sha256": "864d6f0a7b9070c302b1e22118bdbe5f7b56e05e7c5a650b4eb5471fd68904fc"
+    },
+    {
+      "path": "Examples/Explainers/ml-next-token-probabilities.json",
+      "sha256": "4fdc26044e3746d8f6a6fa7324d2c98ed601285cd4fa5fcaa2a9c6d1e99a84cb"
+    },
+    {
+      "path": "Examples/Explainers/ml-vision-pipeline.json",
+      "sha256": "f91d6acb9ac00d890b10f54e38e09221c2c70dbb76947234323938a6e219d63d"
+    },
+    {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/cam-follower.json",
       "sha256": "ee5fa50b9ab2d067b7f23781e7ae58558f70743ad2499b5e753833a9b40c9a55"
     },
@@ -3060,6 +3092,26 @@
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-four-bar-linkage.strict.json",
       "sha256": "65e26bc398f5c0859bc882cf86b38aeb4b85977c04fc5d2a0874b39365fb8bb9"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/LegacyExplainerIsolationTests.swift",
+      "sha256": "160099386ace0a8bd9d90d16a7c6ef9c442af13e72a12951e7176da0b50c318c"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/LegacyExplainers/check-digests.json",
+      "sha256": "e12887c5d6bc06de3afd85324844d85df3255cf742487b2cc48a047796c06f55"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/LegacyExplainers/gears-3d.manifest.json",
+      "sha256": "94098cea49b006c666c5aaf019a6b7902de5d83f43ef069598a2a234cc988136"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/LegacyExplainers/gears-mixed.manifest.json",
+      "sha256": "2929b538c3239fee5d500b44d46bb32cb59a9ee97216645593a46fdffa628d9c"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/LegacyExplainers/planets-2d.manifest.json",
+      "sha256": "103ed34990895f1adee8bea9437c0c025297f92f0bd03dea0f4c30532b20f8ed"
     },
     {
       "path": "docs/proposals/programmatic-video.md",
@@ -3102,8 +3154,72 @@
       "sha256": "a488b63b6a89457667ccd7fde1cc4df88c0bce6902e231fe5cffee6126209194"
     },
     {
+      "path": "Sources/MartyGraphicsMLKit/MGMLAgent.swift",
+      "sha256": "377879a0bd70a0b9f0cf962209d3d7af2f880903439c6eb86cbede20f43ffb8f"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MGMLDrawItems.swift",
+      "sha256": "6c6a3cb2f0965c51fc94a21aca7a8b7e505f199235f36fcd37ea6d2aec06d604"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MGMLExport.swift",
+      "sha256": "1ddfc5d0cca023c51e9bc0592118af83c741e8f2ee2a529f2e143f6c97b2691a"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MGMLKit.swift",
+      "sha256": "fbd25b39ea8e737c0ce69304df02d53bb683c1473c72c19ab1408ad6b35c380c"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MGMLProbabilities.swift",
+      "sha256": "36eac72c67d787aced00ea77945150b83b06967a29811a6f4f76619fbdaa4884"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MGMLRendering.swift",
+      "sha256": "33bc68ea3ba51d124156c5f58206d56c5a1f1cd08d3fbb1c5ee20359b173d8e6"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MGMLVision.swift",
+      "sha256": "f4bb4f99aaae4a3c383d6da98945e1943e052f2df0a6786b7c10664278cdd59d"
+    },
+    {
+      "path": "Tests/MartyGraphicsMLKitTests/MLKitTests.swift",
+      "sha256": "11aec7cfb7de4bd5f36de70a6ec0994a5b2a160fbb1e99a1d5a87b25d2dbf3b2"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
       "sha256": "b545f55b32eccaf93397daa7890fb1dc04b5c1a4a47f2b58e8ae9bac1064b15c"
+    },
+    {
+      "path": "docs/ML-EXPLAINER.md",
+      "sha256": "f8b433aaeb511e5c912a6598dc22c8e11a2690bc88ad22d81203b53aec8a3537"
+    },
+    {
+      "path": "docs/schemas/ml-explainer.schema.json",
+      "sha256": "8f79e1cd5f6a0567b45d3517b4d5c3772227dfd835d7a90cf0ac83709836be0e"
+    },
+    {
+      "path": "tools/SceneValidator/Sources/MartyMLRender/main.swift",
+      "sha256": "3d376dac6d975f4daaef836ab90116d5cbe5e7b4846d312a3cc01e2ee25fe51f"
+    },
+    {
+      "path": "tools/SceneValidator/Tests/SceneValidatorCoreTests/MLGolden/missing-caption.json",
+      "sha256": "3597cb32bff697cc0285d65f6b7aa068cbb3fb2670bb9322fb4322ed4681b19b"
+    },
+    {
+      "path": "tools/SceneValidator/Tests/SceneValidatorCoreTests/MLGolden/missing-caption.strict.json",
+      "sha256": "837dc3eae4178403d406887846886ded7813a7b0ae26e2c169da462ed7666f60"
+    },
+    {
+      "path": "tools/SceneValidator/Tests/SceneValidatorCoreTests/MLGolden/vision.json",
+      "sha256": "89c88de5ecc631b510fbba104e7ecf9939009744b24c9928d05b88ac21fcc40b"
+    },
+    {
+      "path": "tools/SceneValidator/Tests/SceneValidatorCoreTests/MLGolden/vision.strict.json",
+      "sha256": "10c0db0248f892c666adfd1fc85ecedfdd4f426c92ad8301858a089f9ed52f17"
+    },
+    {
+      "path": "tools/SceneValidator/Tests/SceneValidatorCoreTests/MLKitValidatorTests.swift",
+      "sha256": "c90fbd64d7cdd24f9501e898835051764faba039320e9c28346f27f7c97f1727"
     },
     {
       "path": "tools/render-blender/mgrender/ffmpeg.py",
