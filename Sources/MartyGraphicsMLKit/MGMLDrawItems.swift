@@ -75,7 +75,13 @@ extension MLBoard {
         thumbnail(in: upper[0], vision: vision, grid: false)
         thumbnail(in: upper[1], vision: vision, grid: true)
         foot("\(vision.imageSize[0]) × \(vision.imageSize[1]) px", in: upper[0], offset: 20)
-        foot("\(vision.patchSize) px per edge", in: upper[1], offset: snake ? 40 : 53)
+        if size == .square {
+            let grid = upper[1]
+            text("\(vision.patchSize) px per edge", x: grid.midX + 27, y: grid.minY + 62,
+                 size: MLStyle.detail, maxWidth: grid.width - 100, color: subtle, face: .mono)
+        } else {
+            foot("\(vision.patchSize) px per edge", in: upper[1], offset: snake ? 40 : 53)
+        }
         foot("\(vision.columns) × \(vision.rows) = \(vision.patchCount) patches (derived)", in: upper[1], offset: snake ? 16 : 20, tracking: -1.3)
         symbol(in: upper[2], count: 4, dot: false)
         foot("Width \(vision.embeddingWidth) · \(vision.embeddingWidthCitation == nil ? "illustrative" : "cited")", in: upper[2], offset: 20)
@@ -92,7 +98,7 @@ extension MLBoard {
         let chipY = joined.minY + (sideBySide ? 48 : 44)
         let chip = CGRect(x: chipX, y: chipY, width: chipWidth, height: MLStyle.tokenHeight)
         card(chip, role: .purple)
-        text(visual, x: chip.midX, y: chip.midY, size: MLStyle.detail, maxWidth: chip.width - 44 / 1.5, face: .mono)
+        text(visual, x: chip.midX, y: chip.midY, size: MLStyle.detail, maxWidth: chip.width - 44 / 1.5, face: .mono, lineSpacing: 0.94)
         let joinedTokens = CGRect(x: sideBySide ? chip.maxX + 8 : joined.minX + 12,
                                   y: sideBySide ? chipY : chip.maxY + 8,
                                   width: sideBySide ? tokenWidth : available, height: MLStyle.tokenHeight)
@@ -121,10 +127,12 @@ extension MLBoard {
     private func thumbnail(in card: CGRect, vision: MLVision, grid: Bool) {
         let availableWidth = card.width - 20
         let artTop = 40.0 / 1.5 + MLStyle.heading / 2 + 18.0 / 1.5
-        let availableHeight = card.height - artTop - (grid ? (size == .landscape ? 70 : 52) : 32)
+        let compactGrid = grid && size == .square
+        let availableHeight = compactGrid ? 36 : card.height - artTop - (grid ? (size == .landscape ? 70 : 52) : 32)
+        let centerX = compactGrid ? card.minX + 52 : card.midX
         let scale = min(availableWidth / Double(vision.columns), availableHeight / Double(vision.rows))
         let width = Double(vision.columns) * scale, height = Double(vision.rows) * scale
-        let rect = CGRect(x: card.midX - width / 2, y: card.minY + artTop + (availableHeight - height) / 2, width: width, height: height)
+        let rect = CGRect(x: centerX - width / 2, y: card.minY + artTop + (availableHeight - height) / 2, width: width, height: height)
         fill(rect, color: color(.blue))
         let sun = min(width, height) * 0.19
         context.setFillColor(color(.yellow))
@@ -140,23 +148,27 @@ extension MLBoard {
         context.fillPath()
         guard grid else { return }
         let gridColor = ink.copy(alpha: 0.77) ?? ink
+        let gridStroke = min(0.75, scale * 0.22)
         for column in 1..<vision.columns {
             let x = rect.minX + Double(column) * scale
-            line([CGPoint(x: x, y: rect.minY), CGPoint(x: x, y: rect.maxY)], color: gridColor, width: 0.75)
+            line([CGPoint(x: x, y: rect.minY), CGPoint(x: x, y: rect.maxY)], color: gridColor, width: gridStroke)
         }
         for row in 1..<vision.rows {
             let y = rect.minY + Double(row) * scale
-            line([CGPoint(x: rect.minX, y: y), CGPoint(x: rect.maxX, y: y)], color: gridColor, width: 0.75)
+            line([CGPoint(x: rect.minX, y: y), CGPoint(x: rect.maxX, y: y)], color: gridColor, width: gridStroke)
         }
     }
 
     private func symbol(in rect: CGRect, count: Int, dot: Bool) {
-        let side = min(rect.width * 0.13, 32)
+        let artTop = rect.minY + 40 / 1.5 + MLStyle.heading / 2 + 18 / 1.5
+        let artBottom = rect.maxY - 32
+        let aspect = dot ? 1.0 : 2.15
+        let side = min(rect.width * 0.13, 32, (artBottom - artTop) / aspect)
         let spacing = side * 1.35
         for index in 0..<count {
             let x = rect.midX + (Double(index) - Double(count - 1) / 2) * spacing - side / 2
-            let height = dot ? side : side * 2.15
-            let icon = CGRect(x: x, y: rect.midY - height / 2, width: side, height: height)
+            let height = side * aspect
+            let icon = CGRect(x: x, y: (artTop + artBottom - height) / 2, width: side, height: height)
             fill(icon, color: color(index.isMultiple(of: 2) ? .accent : .teal), radius: dot ? side / 2 : 4)
         }
     }

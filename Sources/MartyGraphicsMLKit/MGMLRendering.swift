@@ -205,7 +205,8 @@ final class MLBoard {
     }
 
     func text(_ label: String, x: Double, y: Double, size: Double, maxWidth: Double, color: CGColor? = nil,
-              face: MLTextFace? = nil, alignment: MLTextAlignment = .center, tracking: Double = 0) {
+              face: MLTextFace? = nil, alignment: MLTextAlignment = .center, tracking: Double = 0,
+              lineSpacing: Double = 1.12) {
         let face = face ?? (size >= MLStyle.heading ? .heading : .label)
         let naturalWidth = textWidth(label, size: size, face: face, tracking: tracking)
         let fittedSize = max(MLStyle.minimumText, size * min(1, maxWidth / max(1, naturalWidth)))
@@ -218,7 +219,7 @@ final class MLBoard {
             lines.append(CTTypesetterCreateLine(typesetter, CFRange(location: offset, length: count)))
             offset += count
         }
-        let pitch = fittedSize * 1.12
+        let pitch = fittedSize * lineSpacing
         for (index, line) in lines.enumerated() {
             var ascent: CGFloat = 0, descent: CGFloat = 0
             let width = CTLineGetTypographicBounds(line, &ascent, &descent, nil) - CTLineGetTrailingWhitespaceWidth(line)
