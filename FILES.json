@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "12f05166cd5d10a37ec869e5a22576f281ff8e567d7c7ce2c7ae6632d58d96e7"
+      "sha256": "f622b86f8e24212ecfb252abd74926a21b0f9e3e3155b6ac341e9da27408c0b3"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -2003,7 +2003,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "3a3002ecf58c25c9bccee43a46e50bdc6bc7afeee05593e766f893f4cb762826"
+      "sha256": "3cff6c6ab0ffbc149a9cd1c793e8cbee1c87e4a0e6a3cd2ddad69f48a82f9f9f"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -3090,6 +3090,10 @@
       "sha256": "ee5fa50b9ab2d067b7f23781e7ae58558f70743ad2499b5e753833a9b40c9a55"
     },
     {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/compound-spur-reduction.json",
+      "sha256": "07720431c3711d96072058dbf36ee9b85406a564d7a6076de05ce3bfad68206b"
+    },
+    {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/drone-motor-propeller.json",
       "sha256": "d9a77d8d22be28fffffa785db65aafccc2999be74c36ba607d89ec2a4f3139ad"
     },
@@ -3098,12 +3102,36 @@
       "sha256": "7a0dabda97b5c0bb570b300010159f517eefd2f9debe4f908efaf2b1e079e48e"
     },
     {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/idler-direction-comparison.json",
+      "sha256": "559c1491a4da1bf33044ee8113c42282109b1bbacfe4abce4e7858d275f4950b"
+    },
+    {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/quadcopter-arm-drive.json",
+      "sha256": "fe60b8193ad3d54627ddbba81182bb54334dec8f92a9091202467b854d87f577"
+    },
+    {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/reciprocating-plunger.json",
+      "sha256": "e10a8b10f07a9aea9a49e9a49894b1da33137c4656756d7d687ed33c1c5dd874"
+    },
+    {
+      "path": "Examples/Solid3D/Sources/MartySolid3D/Models/ring-driven-planetary.json",
+      "sha256": "3a1bd86c44857ea72bec6bcf8c5d9102f38be7550e597a7080acd2575a2aca49"
+    },
+    {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-cam-follower.check.json",
       "sha256": "8a7b59403cb106569c3db045801e3e3a1d03244bbc9df664122a81345a246c01"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-cam-follower.strict.json",
       "sha256": "d7941001a8d05d53efb947155fe0f412fd993b8c4c34e6a632d9b9ff57cbef2f"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-compound-spur-reduction.check.json",
+      "sha256": "f395e27689af6bfc7afd0ce9c394e2deed0f29e170a0c3fec062f64a5506ae7b"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-compound-spur-reduction.strict.json",
+      "sha256": "a0c772fe8cf03b23f74d66e3036bd93b3c7c0bd7f93cf8bf139bfe6513a0c262"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-drone-motor-propeller.check.json",
@@ -3120,6 +3148,38 @@
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-four-bar-linkage.strict.json",
       "sha256": "65e26bc398f5c0859bc882cf86b38aeb4b85977c04fc5d2a0874b39365fb8bb9"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-idler-direction-comparison.check.json",
+      "sha256": "2bffd92f43c4adb2256fc3898686dc1edd1d129da8012a499869b749d160dc2a"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-idler-direction-comparison.strict.json",
+      "sha256": "ea5de81f49125b84aea4bfd85f0e981e894c8ab7a6b5a15b24e6cf62b4adefdc"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-quadcopter-arm-drive.check.json",
+      "sha256": "720c219642659042d72144f7d1d8c65d3fe2aec9ed441138abbea122bb9e26f8"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-quadcopter-arm-drive.strict.json",
+      "sha256": "521f6ecf1b8cd7375a3eea5fab26d7c8704bfc3b4897255b3750c327cbd7580e"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-reciprocating-plunger.check.json",
+      "sha256": "ac8d339c5a4839ab568cfca331bc85ac5b70d826765fe6956e8daa29470e8792"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-reciprocating-plunger.strict.json",
+      "sha256": "cb403be07474cbd950380ff0a24e93a519e0bd4f22fb047e0699ee5aeb6f8a83"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-ring-driven-planetary.check.json",
+      "sha256": "c89fd9a6469d7baf84619be22f40e905cd0690819a247460e5c663b1b9709299"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/Golden/models-ring-driven-planetary.strict.json",
+      "sha256": "4e4a2f2f34e696b0d6ada96d1acc40c0b995e011c3a7db6cee00f918660a75c4"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/LegacyExplainerIsolationTests.swift",
