@@ -39,9 +39,7 @@ course/proprietary prompt can become public just by changing its title or number
 
 Prioritize reproducible gaps: starter usability, domain breadth supported by the
 public primitives, text/layout quality, accessibility, frame cost and integration.
-Use bounded proposals and measurements, not novelty, superiority or competitor
-implementation guesses. A competitor's platforms or overlay demo does not
-establish its internal engine architecture.
+Use bounded proposals and measurements. Make no novelty or superiority claims.
 
 Announcements and outreach require owner review of the actual launch kit.
 Check platform/community rules at posting time; this process authorizes no posts.

@@ -17,7 +17,7 @@ pack, proposed screen or browser recreation does not expand the public API.
 | Templates and packs | Public constructors, validated registry, BST and two pointers; record-list parameters and an opt-in `shortest_path` graph pack | No downloadable catalog, premium/course pack, package signing or trust service. The graph pack is unregistered by default and not visually or accessibility accepted. |
 | Model-assisted generation | No model/provider integration or prompts bundled | Optional host choice; scene validation still applies to every provider. |
 | Learning workflows and content | Synthetic examples only | Curriculum, learner state, study scheduling, private sources and app adapters are outside this package. |
-| Desktop overlays or computer control | Not implemented by this library | Not implied by the scene renderer or any other product's overlay demo. |
+| Desktop overlays or computer control | Not implemented by this library | Not implied by the scene renderer. |
 | Web/Windows/Linux rendering | Not implemented in this package | [Portable-core/browser proposal](PORTABILITY-PROPOSAL.md); no rewrite or delivery promise. |
 
 The current **renderers** use SwiftUI, CoreGraphics, SceneKit and related Apple

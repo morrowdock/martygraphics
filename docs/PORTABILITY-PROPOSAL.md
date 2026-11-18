@@ -51,16 +51,3 @@ The first implementation proposal should choose a small module/API seam, list
 affected consumers, show shared-fixture tests and state a rollback path. It needs
 independent integration review before a scoped forward-port. Source ownership and
 license/privacy exclusions still apply; no automatic private mirror is introduced.
-
-## External comparison: facts and unknowns
-
-[HeyClicky's official about page](https://www.heyclicky.com/about) advertises
-macOS 14.2+ and Windows 10/11. Its [official changelog](https://www.heyclicky.com/changelog)
-documents 2D/3D screen drawings in the October 23, 2026 Mac/Windows releases.
-Those product-level facts do **not** establish its current internal renderer stack.
-That architecture is unverified here; no inference from its historical code or
-platform list is used as an implementation requirement.
-
-The useful response is to document our own platform contract and demonstrate
-quality/parity with evidence. No first-of-kind, uniqueness, superiority, learning
-outcome or performance claim follows from the comparison.

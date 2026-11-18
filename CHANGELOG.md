@@ -5,6 +5,9 @@
 ### Changed
 - Docs: clarify that a coding agent wrote the turbofan JSON directly in the documented
   format, consistently with the site, showcase and provenance receipt.
+- Docs: describe the opt-in ML explainer kit and the Blender video tool (16:9, 1:1 and 9:16,
+  turntable, transparent 9:16 frames) in the README; tighten wording in the portability
+  proposal, capabilities table and public-sync notes.
 
 ### Added
 - Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,

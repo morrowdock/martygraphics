@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f622b86f8e24212ecfb252abd74926a21b0f9e3e3155b6ac341e9da27408c0b3"
+      "sha256": "77b727b882b14acd57e1d69fba510f8e358131e8cdd6bb847152f37a4ffe8fec"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -711,7 +711,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "71a7ac59d84172714136037603a3ade9a9b4194d2b1c1c7ddd3a8dd1b556ce5f"
+      "sha256": "3a1bf2bc2d458008d27ac47c06c337e22fe7b284c1ed3ba461372c99a64fbad8"
     },
     {
       "path": "SECURITY.md",
@@ -1943,7 +1943,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "8cde204a4e381319a1f9df45b155c89033e4a08eb774d6b88d8f5bead208f20c"
+      "sha256": "f2678f5bc4ad63f7ede5c828d4d10e9d01d50b50eb8487f2460926979cf8e0c8"
     },
     {
       "path": "docs/DISTRIBUTION.md",
@@ -1979,7 +1979,7 @@
     },
     {
       "path": "docs/PORTABILITY-PROPOSAL.md",
-      "sha256": "cf6aa4e7a281943f57885b21a3719c281d726730dc4e192f1832cb80cc750acf"
+      "sha256": "4cd08d476c93e2af2e571f0967385e5d216fb150fbab77f80b3ceba893c80823"
     },
     {
       "path": "docs/PROTOCOL.md",
@@ -1987,7 +1987,7 @@
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
-      "sha256": "1767ce34139a6ee26dda3892e66700d9271af110875715882a46e8012f714238"
+      "sha256": "79b3a3645edc3f650c44a8f6efd7fb86787fcae568f74abbe65c96222e6129bb"
     },
     {
       "path": "docs/QUALITY.md",

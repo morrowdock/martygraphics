@@ -147,6 +147,14 @@ hosted runners cannot give.
 - **2D scene engine and packs:** trees, arrays, diagrams, plots and the opt-in shortest-path graph pack
   ([native scenes](docs/SHOWCASE.md#native-scenes), [tutorial](docs/GETTING-STARTED.md), [protocol](docs/PROTOCOL.md))
 - **Beat-by-beat lessons:** [lesson format](docs/LESSONS.md) · [rotation lesson](docs/SHOWCASE.md#beat-by-beat-lessons)
+- **ML explainer kit (2D, opt-in):** the separate `MartyGraphicsMLKit` library draws checked learning visuals for how
+  AI models generally work: vision to language, next-token probabilities, a meaning map, picture to numbers, the
+  generation loop, simplified attention and an agent loop. Each document is strictly checked before it renders (shape,
+  arithmetic and references, not the truth of the words); it renders to MP4 or transparent PNG frames
+  ([format](docs/ML-EXPLAINER.md), [examples](Examples/Explainers/README.md))
+- **Video from a verified export:** a Blender Cycles tool (GPU render, NVIDIA NVENC encode) renders a verified glTF
+  export as 16:9, 1:1 and 9:16 MP4s, with an optional camera turntable and an optional transparent 9:16 PNG sequence
+  for compositing (for example in Remotion). The render is cosmetic; the motion comes from the engine ([render tool](tools/render-blender/README.md#social-video-and-compositing))
 - **Path tracer:** a separate `MartyGraphicsPathTracer` library ([gearbox example](docs/SHOWCASE.md#path-traced-gearbox))
 - **3D inspection:** select, dim and orbit parts ([key switch example](Examples/KeySwitch3D/README.md))
 - **Tools and process:** [scene file validator](tools/SceneValidator/README.md) · [source provenance](docs/EXPORT.json) ·
