@@ -23,6 +23,7 @@ public enum MGMLReason: String, Error, CaseIterable, Sendable {
     case patchCount = "ml.vision.patch.count"
     case embeddingWidth = "ml.vision.embeddingWidth"
     case visionLabel = "ml.vision.label"
+    case visionFocus = "ml.vision.stageFocus"
     case tokens = "ml.tokens"
     case candidates = "ml.prob.candidates"
     case logit = "ml.prob.logit"
@@ -148,7 +149,7 @@ enum MLKind: String, Sendable {
         switch self {
         case .visionPipeline:
             return ["caption", "citation", "imageSize", "patchSize", "embeddingWidth",
-                    "embeddingWidthCitation", "projectorLabel", "languageModelLabel", "textTokens"]
+                    "embeddingWidthCitation", "projectorLabel", "languageModelLabel", "textTokens", "stageFocus"]
         case .nextTokenProbabilities:
             return ["tokens", "candidates", "chosen", "temperature", "topK", "topP", "temperatures"]
         case .pictureToNumbers:

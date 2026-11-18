@@ -229,6 +229,41 @@ final class MLKitV2Tests: XCTestCase {
         try expect(.attentionScores, attention.merging(["scores": [0, 1, 1_000_001]]) { _, new in new }, "scores[2]")
     }
 
+    func testImageMarkerIdentifierRemainsInvisible() throws {
+        var input = meaning([[2, 1], [3, 1.4], [-2, 1]])
+        var points = try XCTUnwrap(input["points"] as? [[String: Any]])
+        points[1]["imagePNG"] = rgb
+        input["points"] = points
+        let first = try check(input).get()
+        points[1]["label"] = "Another key"
+        input["points"] = points
+        let second = try check(input).get()
+        let imageA = try first.frame(first.frameCount - 1, size: .portrait, transparent: true)
+        let imageB = try second.frame(second.frameCount - 1, size: .portrait, transparent: true)
+        XCTAssertEqual(try XCTUnwrap(imageA.dataProvider?.data) as Data,
+                       try XCTUnwrap(imageB.dataProvider?.data) as Data)
+    }
+
+    func testVisionStageFocusChangesPlaybackWithoutChangingTheFacts() throws {
+        let base: [String: Any] = [
+            "id": "vision", "kind": "visionPipeline", "caption": "Illustrative diagram",
+            "imageSize": [120, 80], "patchSize": 20, "embeddingWidth": 64, "textTokens": ["Test"]
+        ]
+        let standard = try check(base)
+        let staged = try check(base.merging(["stageFocus": true]) { _, new in new })
+        XCTAssertEqual(MGMLKit.report(standard), MGMLKit.report(staged))
+        XCTAssertEqual(try standard.get().frameCount, 90)
+        let document = try staged.get()
+        XCTAssertEqual(document.frameCount, 180)
+        guard case .vision(let vision) = document.items[0].content else { return XCTFail("Expected vision") }
+        XCTAssertEqual([0, 40, 80, 120].compactMap { vision.focus(at: $0)?.stage }, [0, 1, 2, 3])
+        let first = try document.frame(12, size: .landscape, transparent: true, composition: .rightColumn)
+        let second = try document.frame(52, size: .landscape, transparent: true, composition: .rightColumn)
+        XCTAssertNotEqual(try XCTUnwrap(first.dataProvider?.data) as Data,
+                          try XCTUnwrap(second.dataProvider?.data) as Data)
+        try expect(.visionFocus, base.merging(["stageFocus": "true"]) { _, new in new }, "stageFocus")
+    }
+
     func testNewSamplesAndSafeTransparentCompositions() throws {
         let directory = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Examples/Explainers")

@@ -748,6 +748,7 @@ The strict report gives the first reason and its document location.
 - `ml.vision.patch.count` — The derived grid exceeds a row, column or total patch limit.
 - `ml.vision.embeddingWidth` — The width is missing or outside its integer range.
 - `ml.vision.label` — A supplied model or projector label is invalid.
+- `ml.vision.stageFocus` — The stage focus flag is not a boolean.
 - `ml.tokens` — A text or context token list or one of its strings is invalid.
 - `ml.prob.candidates` — The candidate list or token is invalid, or a token is repeated.
 - `ml.prob.logit` — A candidate logit is missing or outside its finite range.

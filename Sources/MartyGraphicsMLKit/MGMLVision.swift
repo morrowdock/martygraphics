@@ -13,6 +13,7 @@ struct MLVision: Equatable, Sendable {
     let textTokens: [String]
     let columns: Int
     let rows: Int
+    let stageFocus: Bool
     var patchCount: Int { rows * columns }
 
     init(_ input: MLObject) throws {
@@ -38,6 +39,33 @@ struct MLVision: Equatable, Sendable {
         projectorLabel = try input.optionalText("projectorLabel", max: 32, reason: .visionLabel)
         languageModelLabel = try input.optionalText("languageModelLabel", max: 32, reason: .visionLabel)
         textTokens = try input.tokens("textTokens")
+        if let value = input.values["stageFocus"] {
+            guard case .bool(let enabled) = value else { throw input.issue(.visionFocus, "stageFocus") }
+            stageFocus = enabled
+        } else {
+            stageFocus = false
+        }
+    }
+
+    static let focusFrames = 40
+    var frameCount: Int { stageFocus ? 180 : 90 }
+
+    struct Focus {
+        let stage: Int
+        let accent: Double
+    }
+
+    func focus(at frame: Int) -> Focus? {
+        guard stageFocus else { return nil }
+        let stage = frame / Self.focusFrames
+        let offset = frame % Self.focusFrames
+        return Focus(stage: stage, accent: stage >= 3 ? 0.55 : 0.4 + 0.6 * min(1, Double(offset) / 9))
+    }
+
+    func imageKey(_ offset: Int) -> Int {
+        guard stageFocus else { return 0 }
+        let stage = offset / Self.focusFrames
+        return stage >= 3 ? 3 * Self.focusFrames : stage * Self.focusFrames + min(9, offset % Self.focusFrames)
     }
 
     var facts: [String: MGJSON] {

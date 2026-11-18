@@ -21,12 +21,13 @@ enum MLStyle {
 }
 
 extension MLBoard {
-    func vision(_ vision: MLVision) {
-        let snake = size != .landscape
+    func vision(_ vision: MLVision, frame: Int) {
+        let narrow = size == .square || (size == .landscape && panel.width < 900)
+        let snake = size == .portrait || narrow
         let gap = snake ? 40.0 / 1.5 : 26.0
         let width = (panel.width - (snake ? gap : 3 * gap)) / (snake ? 2 : 4)
-        let cardHeight = (size == .portrait ? 230.0 : size == .square ? 170.0 : 320.0) / 1.5
-        let rowGap = (size == .square ? 40.0 : 48.0) / 1.5
+        let cardHeight = (size == .portrait ? 230.0 : narrow ? 170.0 : 320.0) / 1.5
+        let rowGap = (narrow ? 40.0 : 48.0) / 1.5
         let top = panel.minY + 62
         func box(_ column: Int, _ y: Double, width cardWidth: Double, height: Double) -> CGRect {
             CGRect(x: panel.minX + Double(column) * (width + gap), y: y, width: cardWidth, height: height)
@@ -43,11 +44,25 @@ extension MLBoard {
         let model = box(snake ? 0 : 1, lastY, width: width, height: cardHeight)
         let output = box(snake ? 1 : 0, lastY, width: width, height: cardHeight)
 
-        for (rect, label) in zip(upper + [joined, model, output],
-                                 ["Image", "Patch grid", "Patch embeddings", "Projector",
-                                  "Joined token sequence", "Language model", "Output tokens"]) {
+        let cards = upper + [joined, model, output]
+        let labels = ["Image", "Patch grid", "Patch embeddings", "Projector",
+                      "Joined token sequence", "Language model", "Output tokens"]
+        for (index, rect) in cards.enumerated() {
             card(rect)
-            text(label, x: rect.midX, y: rect.minY + 40 / 1.5, size: MLStyle.heading, maxWidth: rect.width - 16)
+            if let focus = vision.focus(at: frame) {
+                let stage = index < 3 ? 0 : index < 5 ? 1 : 2
+                if focus.stage == stage || focus.stage >= 3 {
+                    let tint = color(stage == 0 ? .teal : stage == 1 ? .yellow : .good)
+                    let fillColor = tint.copy(alpha: focus.accent * 0.20) ?? tint
+                    fill(rect, color: fillColor, radius: MLStyle.radius)
+                    context.setStrokeColor(tint.copy(alpha: focus.accent) ?? tint)
+                    context.setLineWidth(2.4)
+                    context.addPath(CGPath(roundedRect: rect, cornerWidth: MLStyle.radius,
+                                           cornerHeight: MLStyle.radius, transform: nil))
+                    context.strokePath()
+                }
+            }
+            text(labels[index], x: rect.midX, y: rect.minY + 40 / 1.5, size: MLStyle.heading, maxWidth: rect.width - 16)
         }
         let clearance = 8.0 / 1.5
         func horizontal(_ from: CGRect, _ to: CGRect) {
@@ -75,7 +90,7 @@ extension MLBoard {
         thumbnail(in: upper[0], vision: vision, grid: false)
         thumbnail(in: upper[1], vision: vision, grid: true)
         foot("\(vision.imageSize[0]) × \(vision.imageSize[1]) px", in: upper[0], offset: 20)
-        if size == .square {
+        if narrow {
             let grid = upper[1]
             text("\(vision.patchSize) px per edge", x: grid.midX + 27, y: grid.minY + 62,
                  size: MLStyle.detail, maxWidth: grid.width - 100, color: subtle, face: .mono)
@@ -127,7 +142,7 @@ extension MLBoard {
     private func thumbnail(in card: CGRect, vision: MLVision, grid: Bool) {
         let availableWidth = card.width - 20
         let artTop = 40.0 / 1.5 + MLStyle.heading / 2 + 18.0 / 1.5
-        let compactGrid = grid && size == .square
+        let compactGrid = grid && (size == .square || (size == .landscape && panel.width < 900))
         let availableHeight = compactGrid ? 36 : card.height - artTop - (grid ? (size == .landscape ? 70 : 52) : 32)
         let centerX = compactGrid ? card.minX + 52 : card.midX
         let scale = min(availableWidth / Double(vision.columns), availableHeight / Double(vision.rows))

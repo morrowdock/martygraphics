@@ -53,7 +53,7 @@ extension MGMLDocument {
         board.text(title, x: board.panel.midX, y: board.panel.minY + MLStyle.titleOffset,
                    size: MLStyle.title, maxWidth: board.panel.width)
         switch item.content {
-        case .vision(let vision): board.vision(vision)
+        case .vision(let vision): board.vision(vision, frame: frame)
         case .probabilities(let probabilities): board.probabilities(probabilities, frame: frame)
         case .agent(let agent): board.agent(agent)
         case .picture(let picture): board.picture(picture, frame: frame)
@@ -69,7 +69,8 @@ extension MGMLDocument {
 extension MLItem.Content {
     var frameCount: Int {
         switch self {
-        case .vision, .agent: return 90
+        case .vision(let vision): return vision.frameCount
+        case .agent: return 90
         case .meaningMap: return 150
         case .generation(let generation): return generation.frameCount
         case .attention: return MLAttention.frameCount
@@ -81,6 +82,7 @@ extension MLItem.Content {
     /// A key for consecutive frames with identical pixels, to avoid redrawing static holds.
     func imageKey(_ offset: Int) -> Int {
         switch self {
+        case .vision(let vision): return vision.imageKey(offset)
         case .probabilities(let probabilities): return probabilities.imageKey(offset)
         case .picture(let picture): return picture.imageKey(offset)
         case .meaningMap: return offset >= 63 ? 99 : max(0, offset - 12) / 4

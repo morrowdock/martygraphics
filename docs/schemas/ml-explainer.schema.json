@@ -138,6 +138,9 @@
         },
         "textTokens": {
           "$ref": "#/$defs/tokens"
+        },
+        "stageFocus": {
+          "type": "boolean"
         }
       }
     },

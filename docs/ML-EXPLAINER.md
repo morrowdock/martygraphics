@@ -32,6 +32,7 @@ and references. Text is plain, single-line and bounded. Objects have closed keys
 | `citation` | Optional. 1–120 Unicode scalars. Author's source for the image dimensions, patch edge and named projector and language model. Without it, those inputs are marked illustrative. |
 | `embeddingWidthCitation` | Optional. 1–120 Unicode scalars. Author's source for the embedding width. |
 | `projectorLabel`, `languageModelLabel` | Optional. 1–32 Unicode scalars each. |
+| `stageFocus` | Optional boolean. When true, six seconds of sequential highlights group the existing cards into vision, projector and language stages. Labels and facts stay the same. |
 
 The drawing uses a procedural image and draws every grid division. Columns = image width ÷ patch edge. Rows =
 image height ÷ patch edge. Their product is shown as derived. The embedding and projector icons are schematic.
@@ -69,7 +70,7 @@ Provide exactly one of these arrays. Each contains 3–12 entries with a unique 
 | --- | --- |
 | `points` | Entries contain a `label` and a two-number `position`. The board always displays “illustrative positions”. |
 | `vectors` | Entries contain a `label` and a `vector` of 3–32 numbers. Every vector has the same length. The board displays “2D projection (PCA) of the given vectors”. |
-| `imagePNG` | Optional thumbnail inside a point or vector entry, in the same PNG format as picture to numbers. |
+| `imagePNG` | Optional thumbnail inside a point or vector entry, in the same PNG format as picture to numbers. It replaces the visible text marker. The entry's `label` remains its identifier for links and clusters. |
 | `vectorCitation` | Optional source for supplied vectors, 1–120 Unicode scalars. Otherwise the board labels the vectors illustrative. |
 | `nearestNeighbors` | Optional boolean. Links use cosine similarity between the original inputs, before centering or projection. A zero vector has no cosine similarity and is refused when links are enabled. |
 | `cluster` | Optional nonempty list of distinct labels present on the map. These markers share a highlight. |

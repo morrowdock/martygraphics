@@ -28,8 +28,10 @@ extension MLBoard {
             let point = item.points[index]
             let highlight = item.cluster.contains(point.label)
             let markerTint = highlight ? color(.good) : color(.accent)
-            line([label.center, CGPoint(x: label.box.midX, y: label.box.midY)],
-                 color: markerTint.copy(alpha: 0.70) ?? markerTint, width: 1)
+            if let box = label.box {
+                line([label.center, CGPoint(x: box.midX, y: box.midY)],
+                     color: markerTint.copy(alpha: 0.70) ?? markerTint, width: 1)
+            }
             if let image = point.image {
                 card(label.marker, role: highlight ? .good : .accent, emphasized: true, radius: 7)
                 pixelImage(image, in: label.marker.insetBy(dx: 3, dy: 3))
@@ -38,9 +40,10 @@ extension MLBoard {
             }
         }
         for (index, label) in visible.enumerated() {
+            guard let box = label.box else { continue }
             let point = item.points[index]
             let highlight = item.cluster.contains(point.label)
-            text(point.label, x: label.box.midX, y: label.box.midY, size: MLStyle.body, maxWidth: label.box.width,
+            text(point.label, x: box.midX, y: box.midY, size: MLStyle.body, maxWidth: box.width,
                  color: highlight ? color(.good) : ink)
         }
         text(item.label, x: panel.midX, y: panel.maxY - 56, size: MLStyle.body, maxWidth: panel.width)
@@ -53,7 +56,7 @@ extension MLBoard {
     private struct MeaningLabel {
         let center: CGPoint
         let marker: CGRect
-        let box: CGRect
+        let box: CGRect?
     }
 
     private func meaningLabels(_ item: MLMeaningMap, in plot: CGRect) -> [MeaningLabel] {
@@ -71,8 +74,8 @@ extension MLBoard {
             let edge = point.image == nil ? 13.0 : 63.0
             return CGRect(x: center.x - edge / 2, y: center.y - edge / 2, width: edge, height: edge)
         }
-        var boxes: [CGRect] = []
-        for (index, point) in item.points.enumerated() {
+        var boxes: [Int: CGRect] = [:]
+        for (index, point) in item.points.enumerated() where point.image == nil {
             let marker = markers[index], center = centers[index]
             let width = min(188, ceil(textWidth(point.label, size: MLStyle.body, face: .label)) + 14)
             let height = width == 188 ? 52.0 : 28.0
@@ -85,10 +88,10 @@ extension MLBoard {
                 CGPoint(x: center.x + side, y: center.y - vertical), CGPoint(x: center.x - side, y: center.y + vertical)
             ].map { self.labelBox($0, width: width, height: height, in: plot) }
             let fallback = proportionedLabelBoxes(width: width, height: height, in: plot, around: center)
-            let occupied = boxes + markers.map { $0.insetBy(dx: -4, dy: -4) }
+            let occupied = Array(boxes.values) + markers.map { $0.insetBy(dx: -4, dy: -4) }
             let box = (options + fallback).first { candidate in !occupied.contains { $0.intersects(candidate) } }
                 ?? options[0]
-            boxes.append(box)
+            boxes[index] = box
         }
         return centers.indices.map { MeaningLabel(center: centers[$0], marker: markers[$0], box: boxes[$0]) }
     }
