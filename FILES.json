@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "5f275fee9c12e8e54e9d98271a88fbb2ddeb2944fc65a5f6e5f33a19db030ebe"
+      "sha256": "1e2016473f2149e0be6c8e2e7c3ad833329b59bc4f0a686f7af5711bdefe22cb"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -55,7 +55,7 @@
     },
     {
       "path": "Examples/Explainers/README.md",
-      "sha256": "361b32f0078ad51b16b13404ca9f4671b78a4929ed53c85728b872cb3a909ff7"
+      "sha256": "737b222b6e12f91d0be24284d312a713650b663a94b3a6fbfdac99eda0674ec2"
     },
     {
       "path": "Examples/Explainers/gears-3d.explainer.json",
@@ -1995,7 +1995,7 @@
     },
     {
       "path": "docs/REASONS.md",
-      "sha256": "675b2574bf712885c20ed202b4d70faf6658fcef5a512db9f141f9e061a29163"
+      "sha256": "3fce6f34badf7110d847736420d0309623202d82899b60b76cf8f2073a8dc1e8"
     },
     {
       "path": "docs/SHOWCASE.md",
@@ -3026,6 +3026,10 @@
       "sha256": "456befe1c91904a07bedb720c346d352374de237845d51d48281b506644a72db"
     },
     {
+      "path": "Examples/Explainers/ML-ASSETS.md",
+      "sha256": "182612b60342effc5eea7ef648914045d5b14890b777c3a11d1fd481bd0275a7"
+    },
+    {
       "path": "Examples/Explainers/MLFonts/BricolageGrotesque-OFL.txt",
       "sha256": "46ba5f18ee20ea529f21d96c0ef8637a8314c1a5cfb2aa84018bc8157cbeff41"
     },
@@ -3046,12 +3050,36 @@
       "sha256": "336ec2c4cc467ec60f09bd187f68c3e759f2f7173fd371d591e3bbd1d9cdcb59"
     },
     {
+      "path": "Examples/Explainers/ml-attention.json",
+      "sha256": "d81d5f579d3e2026f2895500b1616a3273826d34ca59554a1beea587b37460df"
+    },
+    {
       "path": "Examples/Explainers/ml-combined.json",
       "sha256": "864d6f0a7b9070c302b1e22118bdbe5f7b56e05e7c5a650b4eb5471fd68904fc"
     },
     {
+      "path": "Examples/Explainers/ml-dog.png",
+      "sha256": "3bac016aa3453bcf02bc93de2433cacb132f9ff4c6938c7f6b76a1c4dfc8852e"
+    },
+    {
+      "path": "Examples/Explainers/ml-generation-loop.json",
+      "sha256": "9ac34a51ba42148fe66490607a627b27ebe623755a9d4a422f576ceaf7dbe6bd"
+    },
+    {
+      "path": "Examples/Explainers/ml-meaning-map.json",
+      "sha256": "cae43e513c9934d0245527ece64f82ddd3a095f3f401c81877dcd06ffc48d1e4"
+    },
+    {
       "path": "Examples/Explainers/ml-next-token-probabilities.json",
       "sha256": "4fdc26044e3746d8f6a6fa7324d2c98ed601285cd4fa5fcaa2a9c6d1e99a84cb"
+    },
+    {
+      "path": "Examples/Explainers/ml-picture-to-numbers.json",
+      "sha256": "fa5b69153c84e6e35f7f9dcde89a9a21db1061fa7b5c1aaad3e9143c5a87897f"
+    },
+    {
+      "path": "Examples/Explainers/ml-temperature-sweep.json",
+      "sha256": "4e292496842f7dcd99271cecada672feec35bd64097d095f5b67440b055f7bbf"
     },
     {
       "path": "Examples/Explainers/ml-vision-pipeline.json",
@@ -3159,31 +3187,67 @@
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLDrawItems.swift",
-      "sha256": "6c6a3cb2f0965c51fc94a21aca7a8b7e505f199235f36fcd37ea6d2aec06d604"
+      "sha256": "3f8d2bcc9203144d8de3837f7eabd07ec1d845d2a8d1282613aa48d69bc7c41c"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLExport.swift",
-      "sha256": "1ddfc5d0cca023c51e9bc0592118af83c741e8f2ee2a529f2e143f6c97b2691a"
+      "sha256": "db693fed63fc39ff26f392344edef48cc005f65d699a46ca4dfcded92710fa39"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLKit.swift",
-      "sha256": "fbd25b39ea8e737c0ce69304df02d53bb683c1473c72c19ab1408ad6b35c380c"
+      "sha256": "f2c8f1d0e6b23e71998d75e7ac235ae2668a2e6fed1b7e955aa1ddd8fb872ac5"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLProbabilities.swift",
-      "sha256": "36eac72c67d787aced00ea77945150b83b06967a29811a6f4f76619fbdaa4884"
+      "sha256": "23c8253bd430c071307403970fb433e56a0ff18b9f78845567fd1b63b6cde22d"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLRendering.swift",
-      "sha256": "33bc68ea3ba51d124156c5f58206d56c5a1f1cd08d3fbb1c5ee20359b173d8e6"
+      "sha256": "5b054fb5f1e54e279f28421c2b0f80a0031ae6befe0fa48e5beeadff3356de7d"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLVision.swift",
-      "sha256": "f4bb4f99aaae4a3c383d6da98945e1943e052f2df0a6786b7c10664278cdd59d"
+      "sha256": "e327e943a19d0ed12204c8b64d1d4299e9abee21a8869f6810aba1b6f62c2e6c"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MLAttention.swift",
+      "sha256": "bdf89bbd54fd95c36960737d7771f0b86991746ca90b0bff2a920f7629301adb"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MLAttentionBoard.swift",
+      "sha256": "9a7fce26178207a29c98be2556ad389e935a761de59e4e3fe5defddefc05ec4a"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MLGeneration.swift",
+      "sha256": "5a8a60fb04879ba828f0bd5a01e2a3857f97e1b0acb106922dade51c9c393bda"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MLGenerationBoard.swift",
+      "sha256": "4804669b66c7174c8c4a45297593e28cb9b9468b10ed1ed11e01906333619ecc"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MLMeaningBoard.swift",
+      "sha256": "f8393844f3d1eb6e734dcbe7dc248e679fdca06d1870990ee39ade2d9f450e79"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MLMeaningMap.swift",
+      "sha256": "458f875f2a28087809068eff09aafd65f9968c091358022a8e5768829dc4c74e"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MLPicture.swift",
+      "sha256": "d1a88e927cd49fdd4a1b758c0b1c8cf7bcf7b558586c6d742f1e25937f7538b8"
+    },
+    {
+      "path": "Sources/MartyGraphicsMLKit/MLPictureBoard.swift",
+      "sha256": "c4625662bd105409171b32334fb33f6d1887a6d0a21093f0c5e2fd3bac7a17e1"
     },
     {
       "path": "Tests/MartyGraphicsMLKitTests/MLKitTests.swift",
       "sha256": "11aec7cfb7de4bd5f36de70a6ec0994a5b2a160fbb1e99a1d5a87b25d2dbf3b2"
+    },
+    {
+      "path": "Tests/MartyGraphicsMLKitTests/MLKitV2Tests.swift",
+      "sha256": "9d5840d68d0b42fda384aeb103e58eabca509dc03b7156c43841ae82178c764d"
     },
     {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
@@ -3191,11 +3255,11 @@
     },
     {
       "path": "docs/ML-EXPLAINER.md",
-      "sha256": "f8b433aaeb511e5c912a6598dc22c8e11a2690bc88ad22d81203b53aec8a3537"
+      "sha256": "c5f05c84ce8f800146a9f5d755251f6de86425805677534e2349c1c9a3a7e291"
     },
     {
       "path": "docs/schemas/ml-explainer.schema.json",
-      "sha256": "8f79e1cd5f6a0567b45d3517b4d5c3772227dfd835d7a90cf0ac83709836be0e"
+      "sha256": "8c3f4f861f43cb2f1b18c7b5938daa556486cd14a388fb546c4f8ba03fc66619"
     },
     {
       "path": "tools/SceneValidator/Sources/MartyMLRender/main.swift",
