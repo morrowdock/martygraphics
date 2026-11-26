@@ -10,9 +10,15 @@ import unicodedata
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "docs/schemas/scene-v1.draft.schema.json").read_text(encoding="utf-8"))
+ENVELOPE = {
+    "required": SCHEMA["required"],
+    "additionalProperties": SCHEMA["additionalProperties"],
+    "properties": {key: rule if key in ("v", "dim") else {} for key, rule in SCHEMA["properties"].items()},
+}
 SCENE_BYTES = 8192
 INPUT_BYTES = 2 * SCENE_BYTES
-KNOWN_TEMPLATES = {"bst", "two_pointers", "shortest_path"}
+KNOWN_TEMPLATES = {"bst", "two_pointers"}
+PACK_TEMPLATES = {"graphs": {"shortest_path"}}
 
 
 class Invalid(ValueError):
@@ -47,7 +53,7 @@ def shape(value, rule, path=()):
         "array": lambda: isinstance(value, list),
         "string": lambda: isinstance(value, str),
         "number": lambda: number(value),
-        "integer": lambda: number(value) and int(value) == value,
+        "integer": lambda: number(value),
         "boolean": lambda: isinstance(value, bool),
     }
     if "type" in rule and not types[rule["type"]]():
@@ -76,13 +82,19 @@ def shape(value, rule, path=()):
         prefix = rule.get("prefixItems", ())
         for index, entry in enumerate(value):
             shape(entry, prefix[index] if index < len(prefix) else rule.get("items", True), (*path, index))
-    if isinstance(value, str) and "pattern" in rule and not re.search(rule["pattern"], value):
-        raise ShapeError(path, "pattern")
+    if isinstance(value, str) and "pattern" in rule:
+        pattern = rule["pattern"]
+        if pattern.endswith("$"):
+            pattern = pattern[:-1] + r"\Z"
+        if not re.search(pattern, value):
+            raise ShapeError(path, "pattern")
     if number(value) and (
         value < rule.get("minimum", -math.inf) or value > rule.get("maximum", math.inf)
         or value <= rule.get("exclusiveMinimum", -math.inf) or value >= rule.get("exclusiveMaximum", math.inf)
     ):
         raise ShapeError(path, "range")
+    if rule.get("type") == "integer" and int(value) != value:
+        raise ShapeError(path, "integer")
 
     # Selecting the item branch by its required discriminator preserves its field diagnostic.
     if rule is SCHEMA["$defs"]["item"]:
@@ -112,6 +124,39 @@ def matches(value, rule):
     return True
 
 
+def closed_reason(name, error):
+    if error.keyword == "required":
+        return name + ".missing"
+    if error.keyword == "additionalProperties":
+        return name + ".unknown." + ",".join(error.keys)
+    return name
+
+
+def parameter_reason(scene, path, error):
+    if len(path) == 1:
+        if error.keyword == "additionalProperties":
+            return "template.params.unknown"
+        if error.keyword != "required":
+            return "template.params"
+        name = error.keys[0]
+        suffix = "" if name in ("values", "vals") else ".missing"
+        return f"template.{name}{suffix}"
+
+    name = path[1]
+    reason = f"template.{name}"
+    if scene.get("template") == "shortest_path" and name in ("edges", "at"):
+        if len(path) == 2 and error.keyword == "length":
+            return reason + ".count"
+        if len(path) == 3 or error.keyword == "false":
+            return reason + ".arity"
+        if len(path) == 4:
+            fields = ("a", "b", "w") if name == "edges" else ("x", "y")
+            reason += "." + fields[path[3]]
+    if error.keyword == "integer":
+        reason += ".integer"
+    return reason
+
+
 def shape_reason(scene, error):
     path = error.path
     if not path:
@@ -119,21 +164,11 @@ def shape_reason(scene, error):
             return "scene.unknown." + ",".join(error.keys)
         if error.keyword == "required":
             return {"v": "scene.missing", "items": "scene.items.required", "params": "template.params"}[error.keys[0]]
-        if "template" in scene:
-            return "template.world"
-        key = next(key for key in ("params", "hide", "over") if key in scene)
-        return f"scene.{key}.without.template"
     field = path[0]
     if field == "v":
         return "scene.version"
     if field == "params":
-        if len(path) > 1:
-            return f"template.{path[1]}"
-        if error.keyword == "additionalProperties":
-            return "template.params.unknown"
-        if error.keyword == "required":
-            return f"template.{error.keys[0]}.missing"
-        return "template.params"
+        return parameter_reason(scene, path, error)
     if field in ("dim", "template"):
         return {"dim": "scene.dim", "template": "template.unknown"}[field]
     if field == "items" and len(path) > 1:
@@ -144,13 +179,25 @@ def shape_reason(scene, error):
                 return f"3d.kind.{kind}"
             if len(path) == 2 and kind == "vector":
                 if error.keyword == "oneOf":
-                    return "vector.anchor" if ("from" in item) == ("on" in item) else "vector.dir"
+                    if ("from" in item) == ("on" in item):
+                        return "vector.anchor"
+                    return "vector.dir" if "dir" in item else "vector.angle"
                 if error.keyword == "not":
                     return "vector.dir"
             if len(path) == 2 and error.keyword == "not" and kind == "text":
                 return "3d.text.code"
             if len(path) > 2 and path[2] != "k":
                 key = path[2]
+                if kind == "array" and key == "vals" and len(path) > 3:
+                    return "array.val"
+                if kind == "table" and key == "cells" and len(path) > 4:
+                    return "table.cell"
+                if (kind, key) in (("bars", "bars"), ("array", "ptrs")) and len(path) > 3:
+                    entry = "bars.bar" if kind == "bars" else "array.ptr"
+                    if len(path) == 4:
+                        return closed_reason(entry, error)
+                    prefix = "bars" if kind == "bars" else entry
+                    return f"{prefix}.{path[4]}"
                 return f"item.{key}" if key in ("id", "color", "label") else f"{kind}.{key}"
             if len(path) == 2 and error.keyword in ("required", "additionalProperties"):
                 suffix = "missing" if error.keyword == "required" else "unknown." + ",".join(error.keys)
@@ -158,7 +205,13 @@ def shape_reason(scene, error):
         return "item.kind"
     if field == "items" and error.keyword == "length":
         return "items.count"
+    if field == "world" and len(path) == 1:
+        return closed_reason("world", error)
+    if path[:1] == ("over",) and len(path) == 3 and path[-1] == "key":
+        return "edit.key"
     if field == "steps" and len(path) > 2:
+        if len(path) == 5 and path[2] == "do" and path[-1] == "key":
+            return "edit.key"
         return f"step.{path[2]}"
     return ".".join(part for part in path if isinstance(part, str))
 
@@ -175,11 +228,23 @@ def text_rules(value, reason, template, code=False):
                 raise Invalid(reason)
     elif "<" in value or ">" in value:
         raise Invalid(reason)
-    remainder = re.sub(r"\{[A-Za-z0-9]{1,16}\}", "", value)
-    if "{" in remainder or "}" in remainder:
+    name = None
+    for char in value:
+        if name is not None:
+            if char == "}":
+                if not template:
+                    raise Invalid(f"{reason}.placeholder.{name}")
+                name = None
+            elif char.isascii() and char.isalnum() and len(name) < 16:
+                name += char
+            else:
+                raise Invalid(reason + ".placeholder")
+        elif char == "{":
+            name = ""
+        elif char == "}":
+            raise Invalid(reason + ".brace")
+    if name is not None:
         raise Invalid(reason + ".brace")
-    if not template and remainder != value:
-        raise Invalid(reason + ".placeholder")
 
 
 def cell_text(value, limit, reason, template, allow_empty=False):
@@ -375,7 +440,31 @@ def scene_rules(scene):
             references(items, template)
 
 
-def check(data):
+def check_depth(source):
+    """Mirror Swift's UTF-8 text preflight before the JSON decoder recurses."""
+    if "\x00" in source:
+        raise Invalid("json")
+    depth = 0
+    in_string = escaped = False
+    for char in source:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char in "{[":
+            depth += 1
+            if depth > 64:
+                raise Invalid("scene.depth")
+        elif char in "}]":
+            depth -= 1
+
+
+def check(data, *, packs=()):
     """Check UTF-8 scene bytes. Return the template name if expansion is deferred."""
     if len(data) > INPUT_BYTES:
         raise Invalid("input.too-large")
@@ -384,21 +473,23 @@ def check(data):
         raise Invalid("json")
 
     try:
-        scene = json.loads(data.decode("utf-8-sig"), parse_constant=refuse_constant)
+        source = data.decode("utf-8-sig")
+    except UnicodeError as error:
+        raise Invalid("json") from error
+    check_depth(source)
+    try:
+        scene = json.loads(source, parse_constant=refuse_constant)
     except (UnicodeError, ValueError, RecursionError) as error:
         raise Invalid("json") from error
     if not isinstance(scene, (dict, list)):
         raise Invalid("json")
     if isinstance(scene, list):
         raise Invalid("scene.object")
-    pending = [(scene, 0)]
+    pending = [scene]
     while pending:
-        value, depth = pending.pop()
+        value = pending.pop()
         if isinstance(value, (list, dict)):
-            if depth >= 64:
-                raise Invalid("scene.depth")
-            children = value.values() if isinstance(value, dict) else value
-            pending.extend((child, depth + 1) for child in children)
+            pending.extend(value.values() if isinstance(value, dict) else value)
         elif isinstance(value, float) and not math.isfinite(value):
             raise Invalid("scene.number")
     try:
@@ -407,13 +498,26 @@ def check(data):
         raise Invalid("json") from error
     if len(canonical) > SCENE_BYTES:
         raise Invalid("scene.bytes")
+    # Check the root envelope before the registry, as Swift does.
+    try:
+        shape(scene, ENVELOPE)
+    except ShapeError as error:
+        raise Invalid(shape_reason(scene, error)) from error
+    template = scene.get("template")
+    if "template" in scene:
+        known_templates = KNOWN_TEMPLATES.union(*(PACK_TEMPLATES[pack] for pack in packs))
+        if not isinstance(template, str) or template not in known_templates:
+            raise Invalid("template.unknown")
+        if "world" in scene:
+            raise Invalid("template.world")
+    else:
+        for key in ("params", "hide", "over"):
+            if key in scene:
+                raise Invalid(f"scene.{key}.without.template")
     try:
         shape(scene, SCHEMA)
     except ShapeError as error:
         raise Invalid(shape_reason(scene, error)) from error
-    template = scene.get("template")
-    if template is not None and template not in KNOWN_TEMPLATES:
-        raise Invalid("template.unknown")
     if template:
         template_rules(template, scene["params"], scene.get("dim", "2d"))
     scene_rules(scene)
@@ -423,12 +527,15 @@ def check(data):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path", type=Path, help="path to a UTF-8 scene JSON file")
-    path = parser.parse_args().path
+    parser.add_argument("--pack", action="append", choices=PACK_TEMPLATES, default=[],
+                        help="enable templates from an opt-in pack")
+    args = parser.parse_args()
+    path = args.path
     try:
         if not path.is_file():
             raise OSError("expected a regular file")
         with path.open("rb") as stream:
-            template = check(stream.read(INPUT_BYTES + 1))
+            template = check(stream.read(INPUT_BYTES + 1), packs=args.pack)
     except OSError as error:
         print(f"{str(path)!a}: unreadable: {str(error)!a}")
         return 3

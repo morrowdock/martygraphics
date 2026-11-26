@@ -86,7 +86,7 @@
     }
   ],
   "$defs": {
-    "id": {"type":"string","minLength":1,"maxLength":24,"pattern":"^[A-Za-z][A-Za-z0-9_]*(?![\\s\\S])"},
+    "id": {"type":"string","minLength":1,"maxLength":24,"pattern":"^[A-Za-z][A-Za-z0-9_]*$"},
     "label": {"type":"string","minLength":1,"maxLength":40},
     "color": {
       "enum": [

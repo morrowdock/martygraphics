@@ -54,23 +54,32 @@ against 16 KiB. Apple's JSONSerialization can spell numbers differently from
 Python, so compare borderline canonical sizes with Swift. Python's Unicode
 whitespace and markup decisions and numeric formatting can also differ from
 Foundation. Cumulative edits replay against authored JSON, so differences in
-Swift wire normalization and defaults can affect acceptance. Diagnostics can
-differ when a scene violates several rules.
+Swift wire normalization and defaults can affect acceptance. The Python tests
+pin the reviewed single-rule diagnostics to Swift source. Other diagnostics
+can still differ. For example, Swift can report `template.at.gap` or
+`template.at.crossing` during graph layout checks beyond Python preflight.
+The first reported reason can also differ when an input violates several
+rules. Swift reports a missing BST list as `template.values`. The
+`.missing` suffix applies to required scalar and record parameters such as
+`template.n.missing` and `template.edges.missing`. The schema uses a portable
+`$` ID anchor. Python uses `\Z` for strict end-of-string matching.
 
 Template input gets structural validation, selected parameter checks and
 checks for references and cycles among explicit items. The draft checker
-recognizes the two built-ins and `shortest_path` for Showcase, where the graph
-pack is registered. Swift must still expand templates, check their
-dimension-specific output, world and layout, fill placeholders, apply hide
+recognizes Swift's two built-ins by default. Use `--pack graphs` for
+`shortest_path` scenes from Showcase, which registers that pack. Swift must
+still expand templates, check their dimension-specific output, world and
+layout, fill placeholders, apply hide
 and overrides, and validate generated items and steps. Registered custom
 packs require the host that registered them.
 
 ## Fixture accounting and native follow-up
 
 The valid corpus is three standalone protocol fixtures and seven Showcase
-scenes. Four inputs name templates and pass draft preflight with expansion
-deferred. The lesson, patches and NDJSON in the fixture directory use separate
-entry points. The two protocol negatives retain their original expected
+scenes. The two `shortest_path` inputs require `--pack graphs`. Four inputs
+name templates and pass draft preflight with expansion deferred when their
+pack is enabled. The lesson, patches and NDJSON in the fixture directory use
+separate entry points. The two protocol negatives retain their original expected
 reasons in [ProtocolFixtureTests](../../Tests/MartyGraphicsTests/ProtocolFixtureTests.swift).
 
 The [ported case manifest](../fixtures/v1/invalid/swift-cases.json) contains
@@ -89,8 +98,19 @@ and were excluded. Filesystem refusals, symlinks, permissions, command-line
 formatting and closed descriptors check the Swift CLI harness outside the
 scene corpus.
 
-Follow-up on a Mac: run the [Swift CLI suite](../../tools/SceneValidator/README.md)
+See the [Swift and Python parity evidence](evidence/scene-v1/SWIFT-PARITY.md).
+On a Mac, run the [Swift CLI suite](../../tools/SceneValidator/README.md)
 and compare the original byte inputs and reasons against the draft checker.
 Register the graph pack when running `shortest_path` scenes through the
 parser, as Showcase does. Compare near-limit UTF-8 and numeric scenes on
 both platforms before relying on Python's size result as a gate.
+Python strips a leading UTF-8 BOM and keeps the last value for duplicate
+JSON object keys. Both behaviors are unverified against Swift and still
+need to be checked on a Mac. The Python textual nesting check follows
+[Swift's preflight](../../Sources/MartyGraphics/MGModel.swift#L250) before
+decoding, including inputs deeper than 1,000 levels. A native comparison at
+that depth remains pending.
+
+The [schema drift test](../../Tests/MartyGraphicsTests/SceneV1SchemaDriftTests.swift)
+compares version, scene keys, colors and item fields with `MGGrammar.document()`.
+Run `swift test --filter SceneV1SchemaDriftTests` on a Mac.

@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "d5df0ef5885ad365d78eeded4612f0546ed322104823403d662a7eefa45e7f64"
+      "sha256": "cc8a9e60719679d90c1da5a95114ab5d5fd3ff4a5fa1b96489f0b8cb97ce1353"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1218,6 +1218,10 @@
       "sha256": "05659ae157ff2a076283633902cbeb5fe63f699a29fda175f20f00aaadcaa9cc"
     },
     {
+      "path": "Tests/MartyGraphicsTests/SceneV1SchemaDriftTests.swift",
+      "sha256": "e0d655619d263152e682178ebbd20c30870f90439b71659931c7f3d8d4bbf3fa"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/ProtocolFixtureTests.swift",
       "sha256": "47d029b7ac09655c790a3d73dd252e198be2d857c211deecd0ad83ac9485e563"
     },
@@ -1983,7 +1987,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "d73a15b14ec960e660e526e7ab0dd6538fcb522ad9c6d864c956659b00878e3a"
+      "sha256": "4ebc479a6eeae907b6fc7effa95c8653126edcac76df860cf21b75e3217f426f"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -3402,28 +3406,28 @@
       "sha256": "420229f81289495fa0996f1403c3f06f6355cef687d7c3b4025319dab6f94b84"
     },
     {
+      "path": "docs/schemas/evidence/scene-v1/SWIFT-PARITY.md",
+      "sha256": "0ced98e24f61571f842b02cc8460f7c19ed47b5103d784d3e2e0aecd6ef31ee2"
+    },
+    {
       "path": "docs/schemas/scene-v1.draft.schema.json",
-      "sha256": "414d9b3657796d8fccc2cf0d3ad21e1a1ee8079c45932d11a3b9ffd6bf832b31"
+      "sha256": "e96efa7404cb760fd319173182cec2b00a15dad9fbdad38855ae39172dcf2728"
     },
     {
       "path": "docs/schemas/scene-v1.schema-notes.md",
-      "sha256": "8879c7ced2ae3138f3c5ae9848db04653600f67eeaa4f368a58f085ea6242b41"
+      "sha256": "66f2072a63d9ce5ab87d5608fe0083db90dc8576c25e8a24111e81b596524911"
     },
     {
-      "path": "evidence/scene-v1/studio-draft-check.txt",
-      "sha256": "feef82892811e7cc660f742c3acdd77839069ede85ae2deb907832bbec15bda6"
-    },
-    {
-      "path": "evidence/scene-v1/studio-draft.json",
+      "path": "docs/schemas/evidence/scene-v1/studio-draft.json",
       "sha256": "7fea18ba9cf9500d1973ffebe036aee54812f02c6043e5473c6017e2d6aa026b"
     },
     {
       "path": "tools/scene_v1_check.py",
-      "sha256": "6c99b3a5b1eecb5b590ca85e4a906f7042e3ec9cd1d2c1712339004853380a93"
+      "sha256": "1fbd61679c5899b1b78dfa3e2b32c14c1bd5ca499e916d8fec976fbfc2c79d9b"
     },
     {
       "path": "tools/tests/test_scene_v1_schema.py",
-      "sha256": "809777b386eb07fb7768be98f51a2477b0f78c244d248398629936d21320ee37"
+      "sha256": "aec132125c90202e759512593f626e12c422de736b75f09688c8806c23dc85e5"
     }
   ]
 }

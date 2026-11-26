@@ -10,7 +10,7 @@
   proposal, capabilities table and public-sync notes.
 
 ### Added
-- Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes.
+- Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes. Swift remains the authority.
 - Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,
   seeded or greedy token generation, temperature sweeps, and simplified patch attention.
   Add a camera-right landscape composition and optional sequential highlights for the vision pipeline.

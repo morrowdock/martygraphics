@@ -9,6 +9,7 @@ The default parser entry points and an explicit `false` take the original code p
 their precedence). Opt-in scenes without `layer2d` also use the legacy parser.
 
 The closed envelope and field bounds are the [draft schema](schemas/scene-2d-layer.draft.schema.json).
+Standalone core v1 scenes are described by the [core scene draft schema](schemas/scene-v1.draft.schema.json).
 Phase 1 accepts only that minimal envelope: `v: 1`, `dim: "2d"`, a title of 1–80
 Unicode scalars, empty `items`, and `layer2d`. It does not compose legacy items,
 templates, world, camera or steps. Unknown versions fail closed. Status remains

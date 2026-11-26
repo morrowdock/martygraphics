@@ -4,22 +4,22 @@ On 2026-11-26, the standalone Swift SceneValidator and Python draft preflight
 agreed on **38 of 40 inputs**, including the rejection reason where both
 rejected. The only differences are the two opt-in `shortest_path` scenes.
 
-## Run
+## Original run
 
 - Source commit `2c92469b521e4d7bcf7ea44db9a508544e8e46ce` on `feat/scene-v1-json-schema`.
-- A Git bundle from StarkPC was copied over SSH and cloned into the new Mac mini
-  run directory. The build used Apple Swift 6.4.2 on arm64 and
-  `swift build -j 2 --package-path tools/SceneValidator --scratch-path /Volumes/MartyData/builds/mg-scene-parity-20261126/swiftpm --product marty-scene-validate`.
-- Both validators ran on the mini. Swift ran with `--json --` and Python ran
+- The macOS build used Apple Swift 6.4.2 on arm64 and
+  `swift build -j 2 --package-path tools/SceneValidator --product marty-scene-validate`.
+- Both validators ran on macOS. Swift ran with `--json --` and Python ran
   `python3 tools/scene_v1_check.py` once per input. Swift reported zero unreadable
-  files. Two rejections match only when their reason codes agree.
+  files. Python version on macOS was not recorded. Two rejections match only
+  when their reason codes agree.
 - The table includes every regular file under `docs/fixtures/v1` (including
   patches, the lesson, statement streams, and the case manifest as standalone
   scene inputs), seven Showcase scenes, the Studio draft, five inputs
   materialized from the manifest, the 16,384-byte padded test scene, and
   three canonical-size boundary cases.
-- StarkPC WSL verification with
-  `python3 -m unittest discover -s tools/tests -v` passed all 64 tests.
+- The [Studio draft](studio-draft.json) is original synthetic content authored
+  for this branch.
 
 ## Differences
 
@@ -28,10 +28,14 @@ rejected. The only differences are the two opt-in `shortest_path` scenes.
   both received Swift `template.unknown` and Python draft acceptance with
   expansion deferred. The standalone CLI leaves the graph pack unregistered.
   Showcase registers it in
-  [Showcase.swift](../../Examples/Showcase/Sources/MartyShowcase/Showcase.swift#L199),
-  and the [draft checker](../../tools/scene_v1_check.py#L15) deliberately
-  recognizes its schema. The documented scope accounts for both differences,
-  so the checker and schema required no fix.
+  [Showcase.swift](../../../../Examples/Showcase/Sources/MartyShowcase/Showcase.swift#L199).
+  The current [draft checker](../../../../tools/scene_v1_check.py) returns
+  `template.unknown` for both inputs by default and accepts them with
+  `--pack graphs`, with expansion deferred to Swift.
+
+The updated Python checker was replayed in WSL against the 40 recorded Swift
+results. All 40 matched in default mode, including rejection reasons. Both
+`shortest_path` inputs passed Python preflight with `--pack graphs`.
 
 ## Byte boundaries
 
@@ -48,7 +52,7 @@ Both accepted 8,192 ASCII bytes and rejected 8,193 ASCII bytes with
 count was below 8,192. Both accepted the 16,384-byte space-padded scene and
 rejected the 16,385-byte raw input with `input.too-large`.
 
-## Results
+## Original results
 
 | File | Input bytes | Swift result | Python result | Match? |
 | --- | ---: | --- | --- | --- |
@@ -82,7 +86,7 @@ rejected the 16,385-byte raw input with `input.too-large`.
 | `Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json` | 251 | Reject `template.unknown` | Accept | No |
 | `Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json` | 163 | Accept | Accept | Yes |
 | `Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json` | 174 | Accept | Accept | Yes |
-| `evidence/scene-v1/studio-draft.json` | 808 | Accept | Accept | Yes |
+| `docs/schemas/evidence/scene-v1/studio-draft.json` | 808 | Accept | Accept | Yes |
 | `generated-parity/truncated.json` | 16 | Reject `json` | Reject `json` | Yes |
 | `generated-parity/empty.json` | 0 | Reject `json` | Reject `json` | Yes |
 | `generated-parity/not-json.json` | 8 | Reject `json` | Reject `json` | Yes |
@@ -92,10 +96,3 @@ rejected the 16,385-byte raw input with `input.too-large`.
 | `generated-parity/canonical-8192.json` | 8192 | Accept | Accept | Yes |
 | `generated-parity/canonical-8193.json` | 8193 | Reject `scene.bytes` | Reject `scene.bytes` | Yes |
 | `generated-parity/canonical-8193-multibyte.json` | 8193 | Reject `scene.bytes` | Reject `scene.bytes` | Yes |
-
-## Mac mini at completion
-
-At 12:11:16 ET, `mini-mem.sh` reported GREEN, with 425.56 MiB swap used,
-pressure level 1, and 51% free. The gate lock and the alternate lock path
-were absent, and the run directory had been removed. SwiftPM was the only
-build used. No simulator, GUI, or mini agent was started.

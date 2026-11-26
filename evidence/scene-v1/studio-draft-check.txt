@@ -1,3 +1,0 @@
-Command: python tools/scene_v1_check.py evidence/scene-v1/studio-draft.json
-'evidence\\scene-v1\\studio-draft.json': PASS (draft preflight)
-Exit code: 0
