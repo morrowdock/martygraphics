@@ -3,6 +3,38 @@ import Foundation
 import XCTest
 @testable import MartyGraphics
 
+final class SceneTextParityTests: XCTestCase {
+    func testDiagnosticNamesAreBounded() throws {
+        let longName = "extraConfigurationSetting"
+        let fields: [String: MGJSON] = ["width": .number(4), "color": .string("blue"),
+                                        "angle": .number(10), "label": .string("Dot"), longName: .number(1)]
+        XCTAssertThrowsError(try MGParser.closed(fields, required: [], optional: [], "scene")) {
+            XCTAssertEqual(($0 as? MGError)?.reason, "scene.unknown.angle,color,?,label")
+        }
+
+        let scene = try MGRegression.scene(#"{"v":1,"items":[{"id":"dot","k":"body","at":[3,4]}]}"#)
+        let context = MGContext(width: scene.width, height: scene.height, is3D: scene.is3D, values: scene.values)
+        let edit = MGEdit(id: "dot", key: longName, value: .number(1))
+        XCTAssertThrowsError(try MGParser.apply(edit, to: scene.items, context)) {
+            XCTAssertEqual(($0 as? MGError)?.reason, "edit.key.?")
+        }
+    }
+
+    func testTextAndNarrationKeepLineFeeds() throws {
+        let source = #"{"v":1,"title":"Two lines","items":[{"id":"caption","k":"text","at":[2,2],"text":"First line\nSecond line"}],"steps":[{"say":"Read the first line.\nRead the second line."}]}"#
+        let scene = try MGRegression.scene(source)
+        XCTAssertEqual(scene.title, "Two lines")
+        XCTAssertEqual(scene.item("caption")?.text, "First line\nSecond line")
+        XCTAssertEqual(scene.steps.first?.say, "Read the first line.\nRead the second line.")
+
+        var lesson = MGLessonSession()
+        let board = #"{"scene":{"v":1,"items":[{"id":"dot","k":"body","at":[3,4]}]}}"#
+        XCTAssertTrue(lesson.feed(board + "\n").contains(.accepted(statement: 0)))
+        let narration = #"{"say":"Read the first line.\nRead the second line."}"#
+        XCTAssertTrue(lesson.feed(narration + "\n").contains(.accepted(statement: 1)))
+    }
+}
+
 final class PlotRangeRegressionTests: XCTestCase {
     func testMinimumPlotRangeBoundary() throws {
         let json = #"{"v":1,"items":[{"id":"curve","k":"plot","at":[2,2],"w":4,"h":3,"xr":[0,1e-6],"yr":[0,1e-6],"pts":[[0,0],[1e-6,1e-6]]}]}"#

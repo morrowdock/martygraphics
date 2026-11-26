@@ -487,7 +487,8 @@ public struct MGLessonSession {
         // Placeholder names are checked against the values at the end of the beat before (the new beat's start).
         let base = projectedIfClosed
         let ctx = MGContext(width: base.scene.width, height: base.scene.height, is3D: base.scene.is3D, values: base.scene.values, env: env)
-        do { _ = try MGParser.text(value, MGLimits.say, ctx, "stmt.say") } catch { return refuse(Self.issue(error, statement: index)) }
+        do { _ = try MGParser.text(value, MGLimits.say, ctx, "stmt.say", multiline: true) }
+        catch { return refuse(Self.issue(error, statement: index)) }
         // The queue budget is checked on what closing the open beat would leave, before anything changes.
         var usage = queueUsage
         if let b = openBeat { usage += closing(pending[b], rest: usage - pending[b].bytes).beat.bytes - pending[b].bytes }

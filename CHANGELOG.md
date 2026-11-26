@@ -32,6 +32,7 @@
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
 
 ### Fixed
+- Keep scene diagnostics short and reserve line feeds for text items and narration.
 - Bound stream buffers and preview validation work, guarantee forward progress, and restore the
   committed scene when restarting a stream. Require a minimum plot range span.
 - Use map distance for hand-placed ML points and draw vector links only for positive cosine matches.

@@ -187,7 +187,7 @@ public enum MGParser {
 
         // Template walkthroughs skip anything the model hid (e.g. "hide the components").
         var steps = try (build?.steps ?? []).map { st -> MGStep in
-            var st = st; st.say = try text(.string(st.say), MGLimits.say, ctx, "template.say")
+            var st = st; st.say = try text(.string(st.say), MGLimits.say, ctx, "template.say", multiline: true)
             if let c = st.camera { st.camera = try self.camera(c.wire(), ctx) }
             st.show = st.show.filter(ids.contains); if let f = st.focus, !ids.contains(f) { st.focus = nil }
             return st
@@ -273,7 +273,7 @@ public enum MGParser {
     static func step(_ json: MGJSON, _ ctx: MGContext) throws -> MGStep {
         guard let o = json.objectValue else { throw MGError("step") }
         try closed(o, required: ["say"], optional: ["show", "focus", "cam", "do"], "step")
-        var s = MGStep(say: try text(o["say"], MGLimits.say, ctx, "step.say"))
+        var s = MGStep(say: try text(o["say"], MGLimits.say, ctx, "step.say", multiline: true))
         if let raw = o["show"] {
             guard case .array(let list) = raw, list.count <= MGLimits.showPerStep else { throw MGError("step.show") }
             s.show = try list.map { try identifier($0, "step.show") }
@@ -311,7 +311,7 @@ public enum MGParser {
     static func apply(_ e: MGEdit, to items: [MGItem], _ ctx: MGContext) throws -> [MGItem] {
         guard let index = items.firstIndex(where: { $0.id == e.id }) else { throw MGError("edit.ref") }
         var wire = items[index].wire()
-        guard allowedKeys(items[index].kind).contains(e.key) else { throw MGError("edit.key.\(e.key)") }
+        guard allowedKeys(items[index].kind).contains(e.key) else { throw MGError("edit.key.\(reasonKeys([e.key]))") }
         wire[e.key] = e.value
         // Changing one end of an either/or pair removes the other.
         if e.key == "on" { wire["from"] = nil }; if e.key == "from" && items[index].kind == .vector { wire["on"] = nil }
@@ -463,7 +463,7 @@ public enum MGParser {
             // Text is checked before style, as before `code` existed, so older invalid documents keep their reason.
             // `code` keeps leading spaces and allows comparison signs; markup-like tags stay refused.
             let isCode = o["style"] == .string("code")
-            it.text = try text(o["text"], MGLimits.text, ctx, "text.text", code: isCode)
+            it.text = try text(o["text"], MGLimits.text, ctx, "text.text", code: isCode, multiline: true)
             switch o["style"] {
             case nil, .string("label"): break
             case .string("callout"): it.flags.insert("callout")
@@ -579,7 +579,23 @@ public enum MGParser {
     static func closed(_ o: [String: MGJSON], required: Set<String>, optional: Set<String>, _ what: String) throws {
         let keys = Set(o.keys)
         guard required.isSubset(of: keys) else { throw MGError("\(what).missing") }
-        guard keys.isSubset(of: required.union(optional)) else { throw MGError("\(what).unknown.\(keys.subtracting(required.union(optional)).sorted().joined(separator: ","))") }
+        let unknown = keys.subtracting(required.union(optional))
+        guard unknown.isEmpty else {
+            let ordered = unknown.sorted { lhs, rhs in
+                lhs.unicodeScalars.lexicographicallyPrecedes(rhs.unicodeScalars, by: { $0.value < $1.value })
+            }
+            throw MGError("\(what).unknown.\(reasonKeys(ordered))")
+        }
+    }
+
+    private static func reasonKeys(_ keys: [String]) -> String {
+        keys.prefix(4).map { key in
+            let scalars = key.unicodeScalars
+            guard (1...24).contains(scalars.count), scalars.allSatisfy({
+                $0.isASCII && (CharacterSet.alphanumerics.contains($0) || $0 == "_")
+            }) else { return "?" }
+            return key
+        }.joined(separator: ",")
     }
     static func num(_ v: MGJSON?, _ range: ClosedRange<Double>, _ what: String) throws -> Double {
         guard case .number(let d)? = v, d.isFinite, range.contains(d) else { throw MGError(what) }
@@ -617,8 +633,9 @@ public enum MGParser {
 
     /// Short plain text with `{name}` placeholders filled from locally computed values. Rejects markup, code fences,
     /// URLs, control characters and unknown placeholders. `code` text (text style `code`) keeps leading spaces and may
-    /// hold `<` and `>` as long as nothing looks like a markup tag; every other rule is the same.
-    static func text(_ v: MGJSON?, _ max: Int, _ ctx: MGContext, _ what: String, code: Bool = false) throws -> String {
+    /// hold `<` and `>` as long as nothing looks like a markup tag. Text items and narration may contain line feeds.
+    static func text(_ v: MGJSON?, _ max: Int, _ ctx: MGContext, _ what: String, code: Bool = false,
+                     multiline: Bool = false) throws -> String {
         guard case .string(let s)? = v else { throw MGError(what) }
         let t = s.trimmingCharacters(in: code ? .newlines : .whitespacesAndNewlines)
         // Inside an explainer the limit applies to the filled text (a 3D fact can be shorter or longer than its name);
@@ -626,7 +643,10 @@ public enum MGParser {
         let rawLimit = ctx.env == nil ? max : 4 * max
         guard !t.isEmpty, !(code && t.allSatisfy(\.isWhitespace)), s.unicodeScalars.count <= rawLimit,
               code ? !looksLikeMarkup(s) : (!s.contains("<") && !s.contains(">")), !s.contains("```"), !s.contains("://"),
-              !s.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) && $0 != "\n" }) else { throw MGError(what) }
+              !s.unicodeScalars.contains(where: { scalar in
+                  if multiline && scalar == "\n" { return false }
+                  return CharacterSet.controlCharacters.contains(scalar) || scalar.value == 0x2028 || scalar.value == 0x2029
+              }) else { throw MGError(what) }
         let filled = try fill(t, ctx.values, what, env: ctx.env)
         if ctx.env != nil, filled.unicodeScalars.count > max { throw MGError(what) }
         return filled
