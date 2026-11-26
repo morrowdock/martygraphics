@@ -3,6 +3,15 @@ import Foundation
 import XCTest
 @testable import MartyGraphics
 
+final class PlotRangeRegressionTests: XCTestCase {
+    func testMinimumPlotRangeBoundary() throws {
+        let json = #"{"v":1,"items":[{"id":"curve","k":"plot","at":[2,2],"w":4,"h":3,"xr":[0,1e-6],"yr":[0,1e-6],"pts":[[0,0],[1e-6,1e-6]]}]}"#
+        let plot = try XCTUnwrap(MGRegression.scene(json).item("curve"))
+        XCTAssertEqual(plot.n("x1") - plot.n("x0"), 1e-6)
+        XCTAssertEqual(plot.n("y1") - plot.n("y0"), 1e-6)
+    }
+}
+
 /// Malformed-input regressions for the strict scene parser: every violation rejects the whole scene with a
 /// stable developer reason, never a partial scene or a trap.
 final class ParserRegressionTests: XCTestCase {

@@ -611,7 +611,7 @@ public enum MGParser {
     static func range(_ v: MGJSON?, _ what: String) throws -> (Double, Double) {
         guard case .array(let a)? = v, a.count == 2 else { throw MGError(what) }
         let lo = try num(a[0], -1e6...1e6, what), hi = try num(a[1], -1e6...1e6, what)
-        guard lo < hi else { throw MGError(what) }
+        guard hi - lo >= 1e-6 else { throw MGError(what) }
         return (lo, hi)
     }
 

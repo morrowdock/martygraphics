@@ -397,11 +397,13 @@ public enum MGCanvasRenderer {
         let mapped = item.pts.dropFirst().map { q in
             CGPoint(x: frame.minX + frame.width * CGFloat((q.x - x0) / (x1 - x0)), y: frame.maxY - frame.height * CGFloat((q.y - y0) / (y1 - y0)))
         }
-        var line = Path(); line.addLines(mapped)
-        var clip = ctx; clip.clip(to: Path(frame.insetBy(dx: -2, dy: -2)))
-        clip.drawLayer { l in
-            l.addFilter(.shadow(color: color.opacity(0.7), radius: 5))
-            l.stroke(line.trimmedPath(from: 0, to: p), with: .color(color), style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
+        if mapped.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) {
+            var line = Path(); line.addLines(mapped)
+            var clip = ctx; clip.clip(to: Path(frame.insetBy(dx: -2, dy: -2)))
+            clip.drawLayer { l in
+                l.addFilter(.shadow(color: color.opacity(0.7), radius: 5))
+                l.stroke(line.trimmedPath(from: 0, to: p), with: .color(color), style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
+            }
         }
         let f = { (v: Double) in MGPhysics.format(v, unit: "") }
         small(ctx, f(x0), at: CGPoint(x: frame.minX, y: frame.maxY + 9), color: theme.subtleInk, anchor: .leading)

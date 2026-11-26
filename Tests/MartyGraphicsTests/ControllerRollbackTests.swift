@@ -50,6 +50,21 @@ final class ControllerRollbackTests: XCTestCase {
         XCTAssertEqual(controller.scene?.items, strict.items)
     }
 
+    @MainActor func testBeginningAnotherStreamRestoresTheCommittedScene() throws {
+        let controller = MGSceneController(scene: try R.scene(R.patchBase))
+        let committed = controller.scene
+        controller.beginStream()
+        controller.feed(R.edgeFirst)
+        XCTAssertNotEqual(controller.scene, committed)
+
+        controller.beginStream()
+        XCTAssertTrue(controller.isStreaming)
+        XCTAssertEqual(controller.scene, committed)
+        controller.feed(R.allKinds)
+        XCTAssertTrue(controller.endStream())
+        XCTAssertEqual(controller.scene?.source, try R.scene(R.allKinds).source)
+    }
+
     @MainActor func testFailedStreamRestoresTheExactPreStreamScene() throws {
         let controller = MGSceneController(scene: try R.scene(R.patchBase))
         let before = controller.scene

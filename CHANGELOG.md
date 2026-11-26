@@ -32,6 +32,8 @@
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
 
 ### Fixed
+- Bound stream buffers and preview validation work, guarantee forward progress, and restore the
+  committed scene when restarting a stream. Require a minimum plot range span.
 - Use map distance for hand-placed ML points and draw vector links only for positive cosine matches.
   Remove the chosen-token caption from temperature sweeps and refuse color metadata in pixel-value PNGs.
 - Reduce programmatic MP4 export stalls under encoder buffer pressure with an

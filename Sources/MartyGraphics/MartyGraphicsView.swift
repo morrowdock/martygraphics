@@ -77,7 +77,19 @@ public final class MGSceneController: ObservableObject {
 
     // MARK: streaming
 
-    public func beginStream() { stream = MGStreamParser(); beforeStream = scene; isStreaming = true }
+    /// Start a stream. Restarting an active stream discards its preview and restores the last committed scene.
+    public func beginStream() {
+        if stream == nil {
+            beforeStream = scene
+        } else if scene != beforeStream {
+            transition = .blend
+            drawsOn = true
+            scene = beforeStream
+            revision &+= 1
+        }
+        stream = MGStreamParser()
+        isStreaming = true
+    }
     public func feed(_ chunk: String) {
         guard var s = stream else { return }
         if let preview = s.feed(chunk) { transition = .blend; drawsOn = true; scene = stamped(preview); revision &+= 1 }

@@ -125,4 +125,64 @@ final class StreamRegressionTests: XCTestCase {
         XCTAssertNil(MGStreamParser.valueEnd(Array(#""abc\"#.utf8), 0))
         XCTAssertEqual(MGStreamParser.valueEnd(Array(#""a\"b","#.utf8), 0), 6)
     }
+
+    func testScannerReturnsCompleteNonemptyValuesInOrder() throws {
+        let tokens = ["0", "false", "\"\"", #"{"a":1}"#, "null"]
+        let bytes = Array(("[" + tokens.joined(separator: ",") + "]").utf8)
+        var cursor = 1
+        for token in tokens {
+            let end = try XCTUnwrap(MGStreamParser.valueEnd(bytes, cursor))
+            XCTAssertGreaterThan(end, cursor)
+            XCTAssertEqual(String(decoding: bytes[cursor..<end], as: UTF8.self), token)
+            cursor = end + 1
+        }
+        XCTAssertEqual(cursor, bytes.count)
+        XCTAssertEqual(MGStreamParser.elements(bytes).map { String(decoding: $0, as: UTF8.self) }, tokens)
+        XCTAssertEqual(MGStreamParser.elements(bytes, limit: 2).map { String(decoding: $0, as: UTF8.self) },
+                       Array(tokens.prefix(2)))
+    }
+
+    func testTextBudgetAcceptsExactLimitAndRefusesFurtherInput() throws {
+        let json = R.edgeFirst
+        let padded = json + String(repeating: " ", count: MGLimits.sceneBytes * 2 - json.utf8.count)
+        var parser = MGStreamParser()
+        XCTAssertNotNil(parser.feed(padded))
+        XCTAssertEqual(try parser.finish().get(), try R.scene(json))
+        XCTAssertNil(parser.feed(" "))
+        XCTAssertEqual(parser.text, padded)
+        XCTAssertNil(parser.feed(" "))
+        XCTAssertEqual(parser.text, padded)
+        XCTAssertEqual(R.reason(parser.finish()), "json")
+    }
+
+    func testPreviewItemBudgetAtBoundary() throws {
+        let items = (1...MGLimits.items + 1).map { id in
+            #"{"id":"dot\#(id)","k":"body","at":[3,4]}"#
+        }
+        func scene(_ items: ArraySlice<String>) -> String {
+            #"{"v":1,"items":["# + items.joined(separator: ",") + "]}"
+        }
+        var atLimit = MGStreamParser()
+        XCTAssertEqual(atLimit.feed(scene(items.prefix(MGLimits.items)))?.items.count, MGLimits.items)
+        XCTAssertEqual(try atLimit.finish().get().items.count, MGLimits.items)
+
+        var beyondLimit = MGStreamParser()
+        XCTAssertNil(beyondLimit.feed(scene(items[...])))
+        XCTAssertEqual(beyondLimit.candidateValidationCount, 0)
+        XCTAssertEqual(R.reason(beyondLimit.finish()), "items.count")
+    }
+
+    func testWhitespaceFeedsDoNotRetryWaitingCandidates() throws {
+        var parser = MGStreamParser()
+        XCTAssertNil(parser.feed(#"{"v":1,"items":[{"id":"ab","k":"edge","a":"na","b":"nb"},"#))
+        let attempts = parser.candidateValidationCount
+        XCTAssertEqual(attempts, 1)
+        for _ in 0..<32 { XCTAssertNil(parser.feed(" ")) }
+        XCTAssertEqual(parser.candidateValidationCount, attempts)
+
+        let preview = try XCTUnwrap(parser.feed(#"{"id":"na","k":"node","at":[2,3],"text":"A"},{"id":"nb","k":"node","at":[4,3],"text":"B"}]}"#))
+        XCTAssertEqual(Set(preview.items.map(\.id)), ["ab", "na", "nb"])
+        XCTAssertLessThanOrEqual(parser.candidateValidationCount, 5)
+        XCTAssertEqual(try parser.finish().get().items.count, 3)
+    }
 }

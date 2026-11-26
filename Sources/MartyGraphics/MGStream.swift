@@ -8,20 +8,33 @@ import Foundation
 /// item (each complete item is validated on its own and shown once its references resolve). Steps join when complete.
 /// `finish()` runs the strict parser on the whole text, so the final scene is exactly what a non-streamed parse gives.
 /// If the final parse fails, callers must drop the preview (fail safe).
+/// The stream accepts up to 16 KiB of UTF-8, matching the strict parser's input limit. After an overflow,
+/// `finish()` refuses the stream and a new parser is needed. Preview candidates are limited to `MGLimits.items`.
 ///
 /// Recommended field order for early previews: v, template, params | dim, world, title, items, steps.
 public struct MGStreamParser {
+    private static let inputBytes = MGLimits.sceneBytes * 2
     public private(set) var text = ""
+    private var overflowed = false
+    private var previewItemLimitExceeded = false
     private var accepted: [MGJSON] = []
     private var pending: [MGJSON] = []
     private var seenItems = 0
+    private var trialRoot: [String: MGJSON]?
+    private(set) var candidateValidationCount = 0
     private var lastPreview: MGJSON?
     public init() {}
 
     /// Returns a new preview when the renderable part changed, else nil.
     public mutating func feed(_ chunk: String) -> MGScene? {
+        guard !overflowed else { return nil }
+        guard chunk.utf8.count <= Self.inputBytes - text.utf8.count else {
+            overflowed = true
+            pending.removeAll()
+            return nil
+        }
         text += chunk
-        guard text.utf8.count <= MGLimits.sceneBytes * 2 else { return nil }
+        guard !previewItemLimitExceeded else { return nil }
         let members = Self.members(Array(text.utf8))
         var root: [String: MGJSON] = [:]
         var itemsRaw: [UInt8]?
@@ -34,25 +47,41 @@ public struct MGStreamParser {
         // Only version 1 previews; any other complete version is refused by `finish()`, so never preview it.
         if let v = root["v"], v != .number(1) { return nil }
         root["v"] = .number(1)
-        if let itemsRaw {
-            let elements = Self.elements(itemsRaw)
-            if elements.count > seenItems {
-                for e in elements[seenItems...] { if let j = Self.json(e) { pending.append(j) } }
-                seenItems = elements.count
-            }
-        }
         if root["template"] != nil {
             guard root["params"] != nil else { return nil }
             root["items"] = nil
             root["steps"] = root["steps"]  // only present once complete
         } else {
-            // Grow the accepted list: an item is accepted once the scene parses with it (references resolved).
-            var progress = true
-            while progress {
-                progress = false
-                for (k, candidate) in pending.enumerated() {
-                    var trial = root; trial["items"] = .array(accepted + [candidate]); trial["steps"] = nil
-                    if case .success = MGParser.scene(json: .object(trial)) { accepted.append(candidate); pending.remove(at: k); progress = true; break }
+            let previousPendingCount = pending.count
+            if let itemsRaw {
+                let elements = Self.elements(itemsRaw, limit: MGLimits.items + 1)
+                guard elements.count <= MGLimits.items else {
+                    previewItemLimitExceeded = true
+                    pending.removeAll()
+                    return nil
+                }
+                if elements.count > seenItems {
+                    for element in elements[seenItems...] {
+                        if let candidate = Self.json(element), case .object = candidate { pending.append(candidate) }
+                    }
+                    seenItems = elements.count
+                }
+            }
+            var trial = root
+            trial["steps"] = nil
+            // Only new candidates need checking while the trial context and accepted items stay the same.
+            var index = trialRoot == trial ? previousPendingCount : 0
+            trialRoot = trial
+            while index < pending.count {
+                let candidate = pending[index]
+                trial["items"] = .array(accepted + [candidate])
+                candidateValidationCount += 1
+                if case .success = MGParser.scene(json: .object(trial)) {
+                    accepted.append(candidate)
+                    pending.remove(at: index)
+                    index = 0  // The new item may resolve earlier references.
+                } else {
+                    index += 1
                 }
             }
             guard !accepted.isEmpty else { return nil }
@@ -66,7 +95,10 @@ public struct MGStreamParser {
     }
 
     /// Strict final parse of everything received.
-    public func finish() -> Result<MGScene, MGError> { MGParser.scene(data: Data(text.utf8)) }
+    public func finish() -> Result<MGScene, MGError> {
+        guard !overflowed else { return .failure(.init("json")) }
+        return MGParser.scene(data: Data(text.utf8))
+    }
 
     // MARK: tolerant scanning (never trusted for the final result)
 
@@ -87,19 +119,19 @@ public struct MGStreamParser {
             ws(); guard i < b.count, b[i] == UInt8(ascii: ":") else { return out }; i += 1; ws()
             guard i < b.count else { return out }
             let start = i
-            if let end = valueEnd(b, i) { out.append(.init(key: key, raw: Array(b[start..<end]), complete: true)); i = end }
+            if let end = valueEnd(b, i), end > i { out.append(.init(key: key, raw: Array(b[start..<end]), complete: true)); i = end }
             else { out.append(.init(key: key, raw: Array(b[start...]), complete: false)); return out }
         }
     }
 
     /// Complete elements of a possibly truncated JSON array.
-    static func elements(_ b: [UInt8]) -> [[UInt8]] {
+    static func elements(_ b: [UInt8], limit: Int = MGLimits.items + 1) -> [[UInt8]] {
         var i = 0, out: [[UInt8]] = []
         guard !b.isEmpty, b[0] == UInt8(ascii: "[") else { return [] }; i = 1
-        while i < b.count {
+        while i < b.count, out.count < limit {
             while i < b.count, [0x20, 0x0A, 0x0D, 0x09, UInt8(ascii: ",")].contains(b[i]) { i += 1 }
             guard i < b.count, b[i] != UInt8(ascii: "]") else { break }
-            guard let end = valueEnd(b, i) else { break }
+            guard let end = valueEnd(b, i), end > i else { break }
             out.append(Array(b[i..<end])); i = end
         }
         return out
