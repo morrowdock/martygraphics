@@ -85,6 +85,10 @@ pack is enabled. The lesson, patches and NDJSON in the fixture directory use
 separate entry points. The two protocol negatives retain their original expected
 reasons in [ProtocolFixtureTests](../../Tests/MartyGraphicsTests/ProtocolFixtureTests.swift).
 
+The [math-label fixture](../fixtures/v1/math-label.scene.json) covers the
+precomposed operator. The decomposed companion remains pending under the
+defensive-only verification scope.
+
 The [ported case manifest](../fixtures/v1/invalid/swift-cases.json) contains
 16 distinct invalid core inputs from [SceneValidatorTests](../../tools/SceneValidator/Tests/SceneValidatorCoreTests/SceneValidatorTests.swift#L62).
 It covers malformed JSON (lines 62–71), reason codes (75–94), item rules

@@ -1,8 +1,25 @@
 # Swift and Python scene v1 parity
 
-On 2026-11-26, the standalone Swift SceneValidator and Python draft preflight
-agreed on **38 of 40 inputs**, including the rejection reason where both
-rejected. The only differences are the two opt-in `shortest_path` scenes.
+In the original run on 2026-11-26, the standalone Swift SceneValidator and
+Python draft preflight agreed on **38 of 40 inputs**, including the rejection
+reason where both rejected. The two differences involved opt-in
+`shortest_path` scenes. The updated checker subsequently matched all 40
+recorded Swift results in default mode.
+
+## Current follow-up
+
+On 2026-11-26, the Python checks below used Windows Python **3.12.13** and
+WSL Python **3.10.12**. The decoder policies for a UTF-8 byte-order mark and
+duplicate keys come from static inspection of the current Python checker.
+Those rows have no runtime evidence from this pass.
+
+| Case | Input bytes | Swift evidence | Current Python evidence |
+| --- | ---: | --- | --- |
+| [Math label](../../../fixtures/v1/math-label.scene.json) | 105 | Native check pending | Accepted on both Python versions |
+| `scene.json` with `"v":1` | 77 | Accepted in the original run | Accepted on both Python versions |
+| Same scene with `"v":1.0` | 79 | Native check pending | Accepted on both Python versions, with integer spelling for size accounting |
+| UTF-8 byte-order mark | — | Unmeasured | Policy rejects with `json` |
+| Duplicate object keys | — | Unmeasured | Policy rejects with `json` |
 
 ## Original run
 
