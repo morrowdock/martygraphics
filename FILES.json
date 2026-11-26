@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "6fd9b276a5e83fdb67c1d56a86ed6648b4c845dcdeeb356df22b8f32555f72c9"
+      "sha256": "78e0768496753668973a250cee67cef8ec03212c13f2ba87e1cba355bcdcccec"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -791,7 +791,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGLessonSession.swift",
-      "sha256": "d059e370025e413758b991a10e5988e3abda761a58ffa50be212ab9ae62a2022"
+      "sha256": "82cbd8f7d982ae643cfa93b9aa5631a5c3254c36b1dd10a3e154809c3fa13b33"
     },
     {
       "path": "Sources/MartyGraphics/MGLessonSnapshot.swift",
@@ -807,7 +807,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "d62a516358aa2878c504654ae425710107d781479c9087ff892f735904872633"
+      "sha256": "c7393c2a69ea83e5d2a4f6d266c3505c7cc9c115e3aef9695f5b2efcbbc84dc5"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -1207,7 +1207,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ParserRegressionTests.swift",
-      "sha256": "ce44cd6d1e66bd5b8b07cf02990c74b42dadf3f0e20b487b21c80687685fe2c1"
+      "sha256": "dc58fb72ce54df3cb451a654896d8f7a960194ff3478d146d38912f3c71b5982"
     },
     {
       "path": "Tests/MartyGraphicsTests/PatchAtomicityTests.swift",
