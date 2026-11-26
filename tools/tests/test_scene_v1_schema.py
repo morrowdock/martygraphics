@@ -2,9 +2,11 @@
 """Exercise the draft schema and preflight against documented scene inputs."""
 
 import json
+import os
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
 from tools import scene_v1_check as checker
 
@@ -126,6 +128,41 @@ class SceneV1Tests(unittest.TestCase):
     def test_input_limit_allows_padding_up_to_boundary(self):
         scene = b'{"v":1,"title":"Synthetic dot","items":[{"id":"dot","k":"body","at":[3,4]}]}'
         self.assertIsNone(checker.check(scene.ljust(checker.INPUT_BYTES, b" ")))
+
+    def test_plot_minimum_span_on_both_axes(self):
+        plot = {"id": "curve", "k": "plot", "at": [2, 2], "w": 4, "h": 3,
+                "xr": [0, 1e-6], "yr": [0, 1e-6], "pts": [[0, 0], [1e-6, 1e-6]]}
+        self.assertEqual(checker.MIN_PLOT_SPAN, 1e-6)
+        self.assertIsNone(checker.check(json.dumps({"v": 1, "items": [plot]}).encode()))
+
+    def test_unknown_and_edit_reasons_use_short_names(self):
+        names = ("color", "height", "label", "width", "angle")
+        self.assertEqual(checker.reason_keys(names), "color,height,label,width")
+        self.assertEqual(checker.reason_keys(("extraConfigurationSetting",)), "?")
+        self.assertEqual(checker.reason_keys(("line_width",)), "line_width")
+
+    def test_math_label_scalar_parity(self):
+        data = (FIXTURES / "math-label.scene.json").read_bytes()
+        self.assertIsNone(checker.check(data))
+        self.assertEqual(json.loads(data)["items"][0]["text"], "x \u226e y")
+
+    def test_text_and_narration_accept_line_breaks(self):
+        item = {"id": "caption", "k": "text", "at": [2, 2], "text": "First line\nSecond line"}
+        base = {"v": 1, "title": "Line breaks", "items": [item], "steps": [{"say": "First line\nSecond line"}]}
+        self.assertIsNone(checker.check(json.dumps(base).encode()))
+
+    def test_scene_number_spelling_and_unique_fields(self):
+        self.assertIs(type(checker.scene_float("3.0")), int)
+        self.assertEqual(checker.scene_float("-0.0"), 0)
+        self.assertEqual(checker.scene_float("3.25"), 3.25)
+        self.assertEqual(checker.unique_object([("v", 1), ("title", "Plot")]), {"v": 1, "title": "Plot"})
+
+    def test_cli_checks_open_file_descriptor(self):
+        with patch.object(sys, "argv", ["scene_v1_check.py", str(FIXTURES / "scene.json")]), \
+                patch.object(os, "fstat", wraps=os.fstat) as fstat, patch("builtins.print"):
+            self.assertEqual(checker.main(), 0)
+        fstat.assert_called_once()
+        self.assertIsInstance(fstat.call_args.args[0], int)
 
     def test_schema_rejects_wrong_type_count_dimension_and_item_keys(self):
         base = {"v": 1, "items": [{"id": "dot", "k": "body", "at": [3, 4]}]}

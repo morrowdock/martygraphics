@@ -47,11 +47,14 @@ compare arbitrary instance values or execute Swift. Coordinate, camera and
 size bounds that depend on the world use the broadest possible numeric range
 in the schema. The Python checker tightens them for literal scenes. It also
 checks resolved IDs, highlight cycles, cumulative literal edits, range
-ordering, cell shape and indexing, displayed number length, and text rules.
+ordering with a minimum plot span of `1e-6` on each axis, cell shape and indexing,
+displayed number length, and text rules. Line feeds are allowed in text items
+and step narration.
 
 The checker measures compact UTF-8 JSON against 8 KiB and measures raw input
-against 16 KiB. Apple's JSONSerialization can spell numbers differently from
-Python, so compare borderline canonical sizes with Swift. Python's Unicode
+against 16 KiB. Whole-number decimal values use integer spelling for the
+Python size check. Apple's JSONSerialization can spell other numbers differently,
+so compare borderline canonical sizes with Swift. Python's Unicode
 whitespace and markup decisions and numeric formatting can also differ from
 Foundation. Cumulative edits replay against authored JSON, so differences in
 Swift wire normalization and defaults can affect acceptance. The Python tests
@@ -75,7 +78,7 @@ packs require the host that registered them.
 
 ## Fixture accounting and native follow-up
 
-The valid corpus is three standalone protocol fixtures and seven Showcase
+The valid corpus is four standalone protocol fixtures and seven Showcase
 scenes. The two `shortest_path` inputs require `--pack graphs`. Four inputs
 name templates and pass draft preflight with expansion deferred when their
 pack is enabled. The lesson, patches and NDJSON in the fixture directory use
@@ -104,9 +107,9 @@ and compare the original byte inputs and reasons against the draft checker.
 Register the graph pack when running `shortest_path` scenes through the
 parser, as Showcase does. Compare near-limit UTF-8 and numeric scenes on
 both platforms before relying on Python's size result as a gate.
-Python strips a leading UTF-8 BOM and keeps the last value for duplicate
-JSON object keys. Both behaviors are unverified against Swift and still
-need to be checked on a Mac. The Python textual nesting check follows
+The Python checker requires UTF-8 without a leading BOM and unique object
+keys. Compare those acceptance rules with Swift before treating them as engine
+requirements. The Python textual nesting check follows
 [Swift's preflight](../../Sources/MartyGraphics/MGModel.swift#L250) before
 decoding, including inputs deeper than 1,000 levels. A native comparison at
 that depth remains pending.

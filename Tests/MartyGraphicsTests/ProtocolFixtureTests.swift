@@ -37,4 +37,9 @@ final class ProtocolFixtureTests: XCTestCase {
         let same = MGFixtures.all.first { $0.id == "cells" }?.scene
         XCTAssertEqual(scene, same, "the documentation fixture equals the built-in `cells` fixture")
     }
+
+    func testMathLabelDocumentationFixture() throws {
+        let scene = try MGParser.scene(data: fixture("math-label.scene.json")).get()
+        XCTAssertEqual(scene.item("caption")?.text, "x ≮ y")
+    }
 }

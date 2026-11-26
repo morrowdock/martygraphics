@@ -4,8 +4,10 @@
 import argparse
 import json
 import math
+import os
 from pathlib import Path
 import re
+import stat
 import unicodedata
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +19,7 @@ ENVELOPE = {
 }
 SCENE_BYTES = 8192
 INPUT_BYTES = 2 * SCENE_BYTES
+MIN_PLOT_SPAN = 1e-6
 KNOWN_TEMPLATES = {"bst", "two_pointers"}
 PACK_TEMPLATES = {"graphs": {"shortest_path"}}
 
@@ -124,11 +127,15 @@ def matches(value, rule):
     return True
 
 
+def reason_keys(keys):
+    return ",".join(key if re.fullmatch(r"[A-Za-z0-9_]{1,24}", key) else "?" for key in keys[:4])
+
+
 def closed_reason(name, error):
     if error.keyword == "required":
         return name + ".missing"
     if error.keyword == "additionalProperties":
-        return name + ".unknown." + ",".join(error.keys)
+        return name + ".unknown." + reason_keys(error.keys)
     return name
 
 
@@ -161,7 +168,7 @@ def shape_reason(scene, error):
     path = error.path
     if not path:
         if error.keyword == "additionalProperties":
-            return "scene.unknown." + ",".join(error.keys)
+            return "scene.unknown." + reason_keys(error.keys)
         if error.keyword == "required":
             return {"v": "scene.missing", "items": "scene.items.required", "params": "template.params"}[error.keys[0]]
     field = path[0]
@@ -200,8 +207,7 @@ def shape_reason(scene, error):
                     return f"{prefix}.{path[4]}"
                 return f"item.{key}" if key in ("id", "color", "label") else f"{kind}.{key}"
             if len(path) == 2 and error.keyword in ("required", "additionalProperties"):
-                suffix = "missing" if error.keyword == "required" else "unknown." + ",".join(error.keys)
-                return f"item.{kind}.{suffix}"
+                return closed_reason(f"item.{kind}", error)
         return "item.kind"
     if field == "items" and error.keyword == "length":
         return "items.count"
@@ -216,10 +222,11 @@ def shape_reason(scene, error):
     return ".".join(part for part in path if isinstance(part, str))
 
 
-def text_rules(value, reason, template, code=False):
+def text_rules(value, reason, template, *, code=False, multiline=False):
     if not value.strip() or "://" in value or "\x60\x60\x60" in value:
         raise Invalid(reason)
-    if any(unicodedata.category(char) in ("Cc", "Cf") and char != "\n" for char in value):
+    if any(unicodedata.category(char) in ("Cc", "Cf", "Zl", "Zp")
+           and not (multiline and char == "\n") for char in value):
         raise Invalid(reason)
     if code:
         for index, char in enumerate(value[:-1]):
@@ -281,7 +288,9 @@ def item_rules(item, dimensions, template):
         text_rules(item["label"], "item.label", template)
     for key in ("xl", "yl", "unit", "text"):
         if key in item:
-            text_rules(item[key], f"{kind}.{key}", template, item.get("style") == "code")
+            multiline = kind == "text" and key == "text"
+            text_rules(item[key], f"{kind}.{key}", template,
+                       code=multiline and item.get("style") == "code", multiline=multiline)
 
     if dimensions:
         span = max(dimensions)
@@ -316,7 +325,8 @@ def item_rules(item, dimensions, template):
         raise Invalid("edge.self")
     if kind == "plot":
         for key in ("xr", "yr"):
-            if item[key][0] >= item[key][1]:
+            low, high = item[key]
+            if high - low < MIN_PLOT_SPAN:
                 raise Invalid(f"plot.{key}")
     if kind == "bars":
         for bar in item["bars"]:
@@ -411,7 +421,7 @@ def scene_rules(scene):
     camera_rules(scene.get("camera", {}), dimensions)
     references(items, template)
     for step in scene.get("steps", ()):
-        text_rules(step["say"], "step.say", template)
+        text_rules(step["say"], "step.say", template, multiline=True)
         camera_rules(step.get("cam", {}), dimensions)
         for ref in step.get("show", ()):
             if ref not in items and not template:
@@ -426,7 +436,7 @@ def scene_rules(scene):
                 raise Invalid("edit.ref")
             current = items[identifier]
             if key not in SCHEMA["$defs"][current["k"]]["properties"]:
-                raise Invalid("edit.key." + key)
+                raise Invalid("edit.key." + reason_keys((key,)))
             updated = {**current, key: edit["value"]}
             if current["k"] == "vector" and key in ("on", "from"):
                 updated.pop("from" if key == "on" else "on", None)
@@ -464,6 +474,18 @@ def check_depth(source):
             depth -= 1
 
 
+def unique_object(pairs):
+    obj = dict(pairs)
+    if len(obj) != len(pairs):
+        raise Invalid("json")
+    return obj
+
+
+def scene_float(token):
+    value = float(token)
+    return int(value) if value.is_integer() else value
+
+
 def check(data, *, packs=()):
     """Check UTF-8 scene bytes. Return the template name if expansion is deferred."""
     if len(data) > INPUT_BYTES:
@@ -473,12 +495,13 @@ def check(data, *, packs=()):
         raise Invalid("json")
 
     try:
-        source = data.decode("utf-8-sig")
+        source = data.decode("utf-8")
     except UnicodeError as error:
         raise Invalid("json") from error
     check_depth(source)
     try:
-        scene = json.loads(source, parse_constant=refuse_constant)
+        scene = json.loads(source, parse_constant=refuse_constant,
+                           object_pairs_hook=unique_object, parse_float=scene_float)
     except (UnicodeError, ValueError, RecursionError) as error:
         raise Invalid("json") from error
     if not isinstance(scene, (dict, list)):
@@ -524,6 +547,10 @@ def check(data, *, packs=()):
     return template
 
 
+def open_input(path, flags):
+    return os.open(path, flags | getattr(os, "O_NONBLOCK", 0))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path", type=Path, help="path to a UTF-8 scene JSON file")
@@ -532,9 +559,9 @@ def main():
     args = parser.parse_args()
     path = args.path
     try:
-        if not path.is_file():
-            raise OSError("expected a regular file")
-        with path.open("rb") as stream:
+        with open(path, "rb", opener=open_input) as stream:
+            if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                raise OSError("expected a regular file")
             template = check(stream.read(INPUT_BYTES + 1), packs=args.pack)
     except OSError as error:
         print(f"{str(path)!a}: unreadable: {str(error)!a}")
