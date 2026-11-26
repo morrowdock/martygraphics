@@ -1223,7 +1223,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ProtocolFixtureTests.swift",
-      "sha256": "47d029b7ac09655c790a3d73dd252e198be2d857c211deecd0ad83ac9485e563"
+      "sha256": "bac219c05e2a981fc96dff3a491ebe46112ab1dc26c305683522901382e5547c"
     },
     {
       "path": "Tests/MartyGraphicsTests/PublicEngineTests.swift",
@@ -3415,7 +3415,7 @@
     },
     {
       "path": "docs/schemas/scene-v1.schema-notes.md",
-      "sha256": "66f2072a63d9ce5ab87d5608fe0083db90dc8576c25e8a24111e81b596524911"
+      "sha256": "1f3acd3fb751de2d4d4b8c6799480d41403a3401b378411d5b1d1793cf3a52ec"
     },
     {
       "path": "docs/schemas/evidence/scene-v1/studio-draft.json",
@@ -3423,11 +3423,15 @@
     },
     {
       "path": "tools/scene_v1_check.py",
-      "sha256": "1fbd61679c5899b1b78dfa3e2b32c14c1bd5ca499e916d8fec976fbfc2c79d9b"
+      "sha256": "0d479ba05beb1c7d19763799c33214f8de03e878963e4a5e27e0f289cf7e7e48"
     },
     {
       "path": "tools/tests/test_scene_v1_schema.py",
-      "sha256": "aec132125c90202e759512593f626e12c422de736b75f09688c8806c23dc85e5"
+      "sha256": "631c37f38551d0ba7805fc1b36a21da53be6c60bba109e6f6801de802477b1e6"
+    },
+    {
+      "path": "docs/fixtures/v1/math-label.scene.json",
+      "sha256": "422b5a77298ab74b56ab9c82e4f3d46381183f4031f13850b5ec1a574cb053d6"
     }
   ]
 }
