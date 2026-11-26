@@ -1,0 +1,57 @@
+{
+  "version.json": {
+    "reason": "scene.version"
+  },
+  "duplicate.json": {
+    "reason": "id.duplicate.dot"
+  },
+  "unknown-key.json": {
+    "reason": "scene.unknown.unknown"
+  },
+  "array.json": {
+    "reason": "scene.object"
+  },
+  "template.json": {
+    "reason": "template.unknown"
+  },
+  "ragged.json": {
+    "reason": "table.cells"
+  },
+  "region.json": {
+    "reason": "region.pts"
+  },
+  "table3d.json": {
+    "reason": "3d.kind.table"
+  },
+  "markup.json": {
+    "reason": "text.text"
+  },
+  "missing-version.json": {
+    "reason": "scene.missing"
+  },
+  "report-version.json": {
+    "reason": "scene.version"
+  },
+  "truncated.json": {
+    "reason": "json",
+    "raw": "{\"v\":1,\"items\":["
+  },
+  "empty.json": {
+    "reason": "json",
+    "raw": ""
+  },
+  "not-json.json": {
+    "reason": "json",
+    "raw": "not json"
+  },
+  "over-limit.json": {
+    "reason": "input.too-large",
+    "raw": "{\"v\":1,\"title\":\"Synthetic dot\",\"items\":[{\"id\":\"dot\",\"k\":\"body\",\"at\":[3,4]}]}",
+    "padToBytes": 16385
+  },
+  "huge.json": {
+    "reason": "input.too-large",
+    "raw": "",
+    "padToBytes": 1048576
+  }
+}
