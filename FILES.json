@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "77b727b882b14acd57e1d69fba510f8e358131e8cdd6bb847152f37a4ffe8fec"
+      "sha256": "6fd9b276a5e83fdb67c1d56a86ed6648b4c845dcdeeb356df22b8f32555f72c9"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -759,7 +759,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
-      "sha256": "5af81841f9fb3d89d3859ce5035f7a7e2784cd940eedc1f7dfd99376d7ef73fa"
+      "sha256": "8c86444de2103a70d492962161a9fe812da0c023be326fb039e1cee981c1a843"
     },
     {
       "path": "Sources/MartyGraphics/MGEngine.swift",
@@ -807,7 +807,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "4709c30274f9ef653501ccb591d94c95694c61232233e5d3e69b0945bb3b975c"
+      "sha256": "d62a516358aa2878c504654ae425710107d781479c9087ff892f735904872633"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -827,7 +827,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGStream.swift",
-      "sha256": "a42a0420d61baa97e0f5492ed75c404383dd302b3e13640668167c4d96024198"
+      "sha256": "e1f70f0a9ff36ee0114fd8c05c5e5a59d5665a5b2892cbe3c357563268caea8a"
     },
     {
       "path": "Sources/MartyGraphics/MGTemplates.swift",
@@ -855,7 +855,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "fb4a051161ce40eb29f5da378bb19efdce70e117b59cd413fe49b0d7f35f3f16"
+      "sha256": "49dd38c61ca8b0a1b5f9dab61279af2ef3d8fb3f417750ef26e3b84889066950"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -1067,7 +1067,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ControllerRollbackTests.swift",
-      "sha256": "202f79c774741652978088d71d31b6e1b67001db487cd239912f0a242be694c7"
+      "sha256": "11ff15dd648cc86f29c06484eb9ec122496bc7d87266050b6d3dcf7ae310423c"
     },
     {
       "path": "Tests/MartyGraphicsTests/DeclaredNamesTests.swift",
@@ -1207,7 +1207,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ParserRegressionTests.swift",
-      "sha256": "c54ab443df334ceb9685e356e935afb97eb33e2f70a0965af8c865481070eca8"
+      "sha256": "ce44cd6d1e66bd5b8b07cf02990c74b42dadf3f0e20b487b21c80687685fe2c1"
     },
     {
       "path": "Tests/MartyGraphicsTests/PatchAtomicityTests.swift",
@@ -1343,7 +1343,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/StreamRegressionTests.swift",
-      "sha256": "28919e07cdd0db92814bcc3769e3146113974e92f89f1d886ea6ebee2a1e0544"
+      "sha256": "5fb0232c7acbe0c540b9f13373c6553c9bfb6da0b8c6a635e07c410a7c079d1b"
     },
     {
       "path": "Tests/MartyGraphicsTests/SubjectFramingTests.swift",
