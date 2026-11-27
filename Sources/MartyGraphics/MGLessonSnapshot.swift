@@ -19,10 +19,13 @@ extension MGLessonSession {
         // baseline, so restoring rebuilds the same projection, queued text and checks.
         if let first = pending.first { o["baseline"] = .object(Self.wire(first.start)) }
         o["next"] = .object(["statement": .number(Double(nextStatement)), "beat": .number(Double(nextBeat))])
-        o["stream"] = .object(["started": .bool(stream.started), "scene": .bool(stream.hasScene), "keep": .bool(stream.keep),
-                               "ended": .bool(stream.ended), "header": .bool(stream.header), "exhausted": .bool(stream.exhausted),
-                               "beats": .number(Double(stream.beats)), "statements": .number(Double(stream.statements)),
-                               "bytes": .number(Double(stream.bytes - unfinishedInput.count))])
+        var st: [String: MGJSON] = ["started": .bool(stream.started), "scene": .bool(stream.hasScene), "keep": .bool(stream.keep),
+                                    "ended": .bool(stream.ended), "header": .bool(stream.header), "exhausted": .bool(stream.exhausted),
+                                    "beats": .number(Double(stream.beats)), "statements": .number(Double(stream.statements)),
+                                    "bytes": .number(Double(stream.bytes - unfinishedInput.count))]
+        // Written only when the stream holds an `animate`, so a snapshot without one is unchanged.
+        if stream.animates > 0 { st["animates"] = .number(Double(stream.animates)) }
+        o["stream"] = .object(st)
         o["pending"] = .array(pending.map(Self.wire))
         if let openLine { o["line"] = .number(Double(openLine)) }
         let now = clock.now
@@ -153,7 +156,22 @@ extension MGLessonSession {
                                       header: try flag(st["header"], "snapshot.stream"),
                                       beats: try int(st["beats"], "snapshot.stream"), statements: try int(st["statements"], "snapshot.stream"),
                                       bytes: try int(st["bytes"], "snapshot.stream"), exhausted: try flag(st["exhausted"], "snapshot.stream"))
+        // Optional (absent: 0): the stream's `animate` count, within its cap.
+        if let a = st["animates"] {
+            let n = try int(a, "snapshot.stream")
+            guard (0...MGLessonLimits.animatesPerStream).contains(n) else { throw MGError("snapshot.stream") }
+            session.stream.animates = n
+        }
         guard case .array(let pending)? = o["pending"] else { throw MGError("snapshot.pending") }
+        // Every `animate` the waiting beats hold, counted before any of them runs: together at most one stream's
+        // (`snapshot.pending`; a live session never queues more, see `queuedAnimates`). The stream count is at least
+        // that many, also when the snapshot stores none (one written before the count was kept).
+        let waitingAnimates = pending.reduce(0) { n, entry in
+            guard entry["refused"] != .bool(true), case .array(let commands)? = entry["commands"] else { return n }
+            return n + commands.lazy.filter { MGLessonEngine.isAnimate($0["s"] ?? .null) }.count
+        }
+        guard waitingAnimates <= MGLessonLimits.animatesPerStream else { throw MGError("snapshot.pending") }
+        session.stream.animates = max(session.stream.animates, waitingAnimates)
         for entry in pending {
             guard let p = entry.objectValue, let start = session.projected else { throw MGError("snapshot.pending") }
             let k = try int(p["beat"], "snapshot.pending")
@@ -164,10 +182,11 @@ extension MGLessonSession {
             if !beat.refused {
                 beat.end.beat = k
                 guard case .array(let commands)? = p["commands"], case .array(let checks)? = p["checks"],
-                      commands.count <= MGLessonLimits.commandsPerBeat, checks.count <= MGLessonLimits.checksPerBeat else { throw MGError("snapshot.pending") }
+                      commands.count <= MGLessonLimits.commandsPerBeat, checks.count <= MGLessonLimits.checksPerBeat,
+                      MGLessonEngine.excessAnimate(commands.map { $0["s"] ?? .null }) == nil else { throw MGError("snapshot.pending") }
                 for c in commands {
                     let r = try MGLessonEngine.run(c["s"] ?? .null, on: beat.end, origin: .script, beat: k, env: env)
-                    beat.end = r.state; beat.commands.append((try int(c["i"], "snapshot.pending"), c["s"]!)); beat.transitions.append(r.transition)
+                    beat.end = r.state; beat.commands.append((try int(c["i"], "snapshot.pending"), c["s"]!)); beat.transitions.append(queued(r.transition))
                 }
                 for c in checks {
                     let check = try MGCheck.parse(c["s"] ?? .null)

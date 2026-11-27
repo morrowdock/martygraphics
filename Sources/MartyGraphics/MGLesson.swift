@@ -18,6 +18,13 @@ public enum MGLessonLimits {
     public static let history = 4096
     public static let animateDuration: ClosedRange<Double> = 0.2...6
     public static let defaultAnimateDuration = 1.5
+    /// `animate` commands per beat (also per host `apply` batch) and per stream, set-up commands included
+    /// (`lesson.animate.count`). The stream's count takes each `animate` before it runs, so a refused one counts too,
+    /// and a `keep` stream starts from the `animate` commands its waiting beats still hold: at most `animatesPerStream`
+    /// ever wait. Each `animate` parses the scene once per keyframe (up to `MGTween.maxFrames`) when it is validated and
+    /// again when its beat is presented, so these caps bound the parse work one stream causes to
+    /// 2 × `animatesPerStream` × `MGTween.maxFrames` scene parses. A waiting beat keeps its commands, not keyframes.
+    public static let animatesPerBeat = 2, animatesPerStream = 24
     /// Estimated line length for `.estimate` pacing, in seconds.
     public static let lineSeconds: ClosedRange<Double> = 1...12
     /// Canonical JSON bytes that beats received but not shown yet may take in a snapshot (`pending`), across every
@@ -482,6 +489,32 @@ enum MGLessonEngine {
         out.builtValues = scene.builtValues
         out.alt = scene.alt
         return out
+    }
+
+    /// An `animate` command (counted against `MGLessonLimits.animatesPerBeat` and `animatesPerStream`).
+    static func isAnimate(_ command: MGJSON) -> Bool { command["op"] == .string("animate") }
+
+    /// Index of the first `animate` in `commands` that one beat may not hold (past `MGLessonLimits.animatesPerBeat`), or
+    /// that would take `used` (the stream's count so far) past `animatesPerStream`; nil when all fit.
+    static func excessAnimate(_ commands: [MGJSON], used: Int = 0) -> Int? {
+        var count = 0
+        for (i, c) in commands.enumerated() where isAnimate(c) {
+            count += 1
+            if count > MGLessonLimits.animatesPerBeat || used + count > MGLessonLimits.animatesPerStream { return i }
+        }
+        return nil
+    }
+
+    /// Throws `lesson.animate.count` when `excessAnimate` finds one. Counted before any command runs.
+    static func checkAnimateCount(_ commands: [MGJSON], used: Int = 0) throws {
+        if excessAnimate(commands, used: used) != nil { throw MGError("lesson.animate.count") }
+    }
+
+    /// A script replayed from a saved explainer: its set-up commands hold at most one stream's `animate` commands and
+    /// each beat at most one beat's (`lesson.animate.count`), checked before any command runs.
+    static func checkReplayAnimates(setup: [MGJSON], beats: [[MGJSON]]) throws {
+        guard setup.filter(isAnimate).count <= MGLessonLimits.animatesPerStream else { throw MGError("lesson.animate.count") }
+        for ops in beats { try checkAnimateCount(ops) }
     }
 
     /// `{"op":"params","params":{param: value}}`: the one command a learner control sends.

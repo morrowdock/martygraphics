@@ -9,6 +9,10 @@ The check refuses (raises ExportError) when the .glb SHA-256, the fps or the
 frame count do not match the manifest, or when the baked animation is not on
 the frame grid. It also evaluates the glTF node world matrices at any frame, so
 render.py can prove that Blender shows the exported motion unchanged.
+
+Every size the check reads is bounded before it is read (the limits below), and
+any other failure on a malformed export is a refusal (ExportError), never a
+traceback, so render.py reports it as a refused export.
 """
 import hashlib
 import json
@@ -24,6 +28,12 @@ CHUNK_JSON = 0x4E4F534A
 CHUNK_BIN = 0x004E4942
 GRID_TOLERANCE = 1e-3          # frames; a baked key must sit on t = k / fps
 NAME_LIMIT = 63                 # Blender object-name byte limit
+MAX_FRAMES = 14_400             # frames per export: the exporter's cap (60 s at 240 fps)
+MAX_GLB_BYTES = 512 * 1024 * 1024   # .glb size, checked before the file is hashed or read
+MAX_MANIFEST_BYTES = 1024 * 1024    # manifest JSON size, checked before it is parsed
+MAX_KEYS = MAX_FRAMES           # keys per animation sampler (one key per frame)
+TRS_PATHS = ("translation", "rotation", "scale")
+_PATH_TYPES = {"translation": "VEC3", "rotation": "VEC4", "scale": "VEC3"}
 
 
 class ExportError(ValueError):
@@ -69,24 +79,70 @@ _CTYPES = {5126: ("f", 4, None), 5120: ("b", 1, 127.0), 5121: ("B", 1, 255.0),
            5122: ("h", 2, 32767.0), 5123: ("H", 2, 65535.0)}
 
 
-def read_accessor(gltf, binary, index):
-    """Return the accessor as a list of tuples of floats (normalized ints decoded)."""
-    acc = gltf["accessors"][index]
-    if "sparse" in acc or "bufferView" not in acc:
+def _count(value):
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _item(seq, i, what):
+    """`seq[i]` for a glTF index, which must be an integer in 0..len(seq)-1.
+
+    Python would read a negative index from the end of the list (and a bool as 0 or 1), so an index is checked
+    before it is used.
+    """
+    if not isinstance(seq, list) or not _count(i) or not 0 <= i < len(seq):
+        raise ExportError(f"{what} {i!r:.40} does not exist")
+    return seq[i]
+
+
+def read_accessor(gltf, binary, index, max_count=None):
+    """Return the accessor as a list of tuples of floats (normalized ints decoded).
+
+    The element count must be at least 1 (and at most `max_count` when given). Every element must lie inside the
+    accessor's bufferView, and the bufferView inside buffer 0 as its `byteLength` declares it. That buffer is the GLB
+    binary chunk: its `byteLength` is at most the chunk length, and the chunk adds only its 0-3 padding bytes. So the
+    work is bounded by the file size before any element is decoded, and no element is read from the padding.
+    """
+    acc = _item(gltf.get("accessors"), index, "accessor")
+    if not isinstance(acc, dict) or "sparse" in acc or "bufferView" not in acc:
         raise ExportError(f"accessor {index}: sparse or bufferless accessors are not supported")
-    view = gltf["bufferViews"][acc["bufferView"]]
-    if view.get("buffer", 0) != 0 or "uri" in gltf["buffers"][view.get("buffer", 0)]:
-        raise ExportError(f"accessor {index}: data must be in the GLB binary chunk")
+    view = _item(gltf.get("bufferViews"), acc["bufferView"], f"accessor {index}: bufferView")
+    buffers = gltf.get("buffers")
+    buffer = view.get("buffer") if isinstance(view, dict) else None
+    if not _count(buffer) or buffer != 0 or not isinstance(buffers, list) or not buffers \
+            or not isinstance(buffers[0], dict) or "uri" in buffers[0]:
+        raise ExportError(f"accessor {index}: data must be in the GLB binary chunk (buffer 0)")
+    buffer_length = buffers[0].get("byteLength")
+    if not _count(buffer_length) or buffer_length < 1 or not 0 <= len(binary) - buffer_length <= 3:
+        raise ExportError(f"accessor {index}: buffer 0 byteLength {buffer_length!r:.40} does not match the GLB binary "
+                          f"chunk ({len(binary)} bytes; the chunk may only add 0-3 padding bytes)")
     fmt, size, norm = _CTYPES.get(acc["componentType"], (None, 0, None))
     if fmt is None:
         raise ExportError(f"accessor {index}: unsupported component type {acc['componentType']}")
     if norm is not None and not acc.get("normalized", False):
         raise ExportError(f"accessor {index}: integer data must be normalized")
+    if acc.get("type") not in _COMPONENTS:
+        raise ExportError(f"accessor {index}: unsupported type")
     n = _COMPONENTS[acc["type"]]
-    stride = view.get("byteStride") or n * size
-    base = view.get("byteOffset", 0) + acc.get("byteOffset", 0)
+    count = acc.get("count")
+    if not _count(count) or count < 1 or (max_count is not None and count > max_count):
+        limit = "" if max_count is None else f" (at most {max_count})"
+        raise ExportError(f"accessor {index}: count must be a positive integer{limit}")
+    view_offset, view_length = view.get("byteOffset", 0), view.get("byteLength")
+    if not (_count(view_offset) and _count(view_length)) or view_offset < 0 or view_length < 1 \
+            or view_offset + view_length > buffer_length:
+        raise ExportError(f"accessor {index}: bufferView {acc['bufferView']} lies outside buffer 0")
+    # Packed elements only when byteStride is absent; an explicit one must be valid glTF (4..252, a multiple of 4).
+    stride = view["byteStride"] if "byteStride" in view else n * size
+    if "byteStride" in view and (not _count(stride) or not 4 <= stride <= 252 or stride % 4):
+        raise ExportError(f"accessor {index}: bufferView {acc['bufferView']} byteStride {stride!r:.40} must be an "
+                          f"integer 4..252 and a multiple of 4")
+    offset = acc.get("byteOffset", 0)
+    if not (_count(stride) and _count(offset)) or stride < n * size or offset < 0 \
+            or offset + (count - 1) * stride + n * size > view_length:
+        raise ExportError(f"accessor {index}: elements lie outside bufferView {acc['bufferView']}")
+    base = view_offset + offset
     out = []
-    for i in range(acc["count"]):
+    for i in range(count):
         vals = struct.unpack_from("<" + fmt * n, binary, base + i * stride)
         out.append(tuple(max(v / norm, -1.0) if norm else float(v) for v in vals))
     return out
@@ -137,29 +193,55 @@ def _slerp(a, b, u):
 
 
 class Animation:
-    """One glTF animation, decoded: per node, per path, (times, values, interpolation)."""
+    """One glTF animation, decoded: per node, per path, (times, values, interpolation).
+
+    Each node has at most one channel per path (so at most 3), and each accessor is decoded once however many
+    channels name it, so the work is bounded by the node count and the accessor sizes.
+    """
 
     def __init__(self, gltf, binary, index):
         anim = gltf["animations"][index]
         self.name = anim.get("name", f"animation_{index}")
         self.channels = {}
         self.times = set()
-        for ch in anim["channels"]:
+        node_count = len(gltf.get("nodes", []))
+        channels = anim["channels"]
+        if len(channels) > len(TRS_PATHS) * node_count:
+            raise ExportError(f"animation '{self.name}': more than {len(TRS_PATHS)} channels per node")
+        decoded = {}
+
+        def accessor(i, max_count):
+            if i not in decoded:
+                decoded[i] = read_accessor(gltf, binary, i, max_count)
+            return decoded[i]
+
+        for ch in channels:
             target = ch["target"]
             path = target.get("path")
-            if "node" not in target or path not in ("translation", "rotation", "scale"):
+            if "node" not in target or path not in TRS_PATHS:
                 raise ExportError(f"animation '{self.name}': only node TRS channels are supported (got {path})")
-            sampler = anim["samplers"][ch["sampler"]]
+            node = target["node"]
+            if not _count(node) or not 0 <= node < node_count:
+                raise ExportError(f"animation '{self.name}': a channel targets a node that does not exist")
+            if path in self.channels.get(node, {}):
+                raise ExportError(f"animation '{self.name}': node {node} has two {path} channels")
+            sampler = _item(anim.get("samplers"), ch.get("sampler"), f"animation '{self.name}': sampler")
             interp = sampler.get("interpolation", "LINEAR")
-            times = [v[0] for v in read_accessor(gltf, binary, sampler["input"])]
-            values = read_accessor(gltf, binary, sampler["output"])
+            if interp not in ("LINEAR", "STEP", "CUBICSPLINE"):
+                raise ExportError(f"animation '{self.name}': unsupported interpolation")
+            inp = _item(gltf.get("accessors"), sampler.get("input"), f"animation '{self.name}': input accessor")
+            outp = _item(gltf.get("accessors"), sampler.get("output"), f"animation '{self.name}': output accessor")
+            if inp.get("type") != "SCALAR" or outp.get("type") != _PATH_TYPES[path]:
+                raise ExportError(f"animation '{self.name}': a {path} sampler has the wrong accessor types")
+            times = [v[0] for v in accessor(sampler["input"], MAX_KEYS)]
+            values = accessor(sampler["output"], 3 * MAX_KEYS)
             if interp == "CUBICSPLINE":
                 values = values[1::3]   # keep the value, drop the tangents
             if len(values) != len(times) or not times:
                 raise ExportError(f"animation '{self.name}': sampler key/value count mismatch")
             if any(b < a for a, b in zip(times, times[1:])):
                 raise ExportError(f"animation '{self.name}': key times are not increasing")
-            self.channels.setdefault(target["node"], {})[path] = (times, values, interp)
+            self.channels.setdefault(node, {})[path] = (times, values, interp)
             self.times.update(times)
 
     def sample(self, node, path, t):
@@ -195,17 +277,60 @@ def local_matrix(gltf, node_index, anim=None, t=0.0):
     return trs_matrix(trs["translation"], trs["rotation"], trs["scale"])
 
 
+def check_hierarchy(gltf):
+    """Check the node hierarchy of the whole file and return the root nodes of the default scene.
+
+    Every node is checked, in any scene or in none: each `children` entry names an existing node, no node has two
+    parents (or appears twice in one list), no node is its own ancestor, and every scene lists existing root nodes,
+    each once. So the hierarchy is a forest, and a walk from any roots visits each node at most once. The work is
+    linear in the node and child counts. Without `scenes` (or scene `nodes`), the roots are the nodes without a parent.
+    """
+    nodes = gltf.get("nodes", [])
+    _require(isinstance(nodes, list) and all(isinstance(n, dict) for n in nodes), "GLB nodes must be a list of objects")
+    parent = [None] * len(nodes)
+    for i, node in enumerate(nodes):
+        children = node.get("children", [])
+        _require(isinstance(children, list), f"GLB node {i}: children must be a list")
+        for c in children:
+            _item(nodes, c, f"GLB node {i}: child node")
+            _require(parent[c] is None, f"GLB node hierarchy is not a tree (node {c} has two parents)")
+            parent[c] = i
+    # Each node has at most one parent here, so a node that no walk from a parentless node reaches lies on a cycle.
+    roots = [i for i, p in enumerate(parent) if p is None]
+    reached, stack = 0, list(roots)
+    while stack:
+        reached += 1
+        stack.extend(nodes[stack.pop()].get("children", []))
+    _require(reached == len(nodes), "GLB node hierarchy is not a tree (a children cycle)")
+    scenes = gltf.get("scenes")
+    if scenes is None:
+        return roots
+    _require(isinstance(scenes, list) and all(isinstance(s, dict) for s in scenes), "GLB scenes must be a list of objects")
+    for s, scene in enumerate(scenes):
+        listed = scene.get("nodes", [])
+        _require(isinstance(listed, list), f"GLB scene {s}: nodes must be a list")
+        for r in listed:
+            _item(nodes, r, f"GLB scene {s}: node")
+            _require(parent[r] is None, f"GLB node hierarchy is not a tree (scene {s} lists node {r}, which has a parent)")
+        _require(len(set(listed)) == len(listed), f"GLB node hierarchy is not a tree (scene {s} lists a node twice)")
+    if not scenes:
+        return roots
+    return list(_item(scenes, gltf.get("scene", 0), "GLB scene").get("nodes", roots))
+
+
 def world_matrices(gltf, anim=None, t=0.0):
-    """Return {node index: 4x4 world matrix in glTF space} for the default scene."""
-    scene = gltf.get("scenes", [{}])[gltf.get("scene", 0)] if gltf.get("scenes") else {}
-    roots = scene.get("nodes", list(range(len(gltf.get("nodes", [])))))
-    out, stack = {}, [(r, None) for r in roots]
+    """Return {node index: 4x4 world matrix in glTF space} for the default scene.
+
+    `check_hierarchy` checks every node first, so the walk visits each node at most once.
+    """
+    nodes = gltf.get("nodes", [])
+    out, stack = {}, [(r, None) for r in check_hierarchy(gltf)]
     identity = trs_matrix((0, 0, 0), (0, 0, 0, 1), (1, 1, 1))
     while stack:
         idx, parent = stack.pop()
         m = mat_mul(parent if parent else identity, local_matrix(gltf, idx, anim, t))
         out[idx] = m
-        stack.extend((c, m) for c in gltf["nodes"][idx].get("children", []))
+        stack.extend((c, m) for c in nodes[idx].get("children", []))
     return out
 
 
@@ -216,6 +341,7 @@ def _require(cond, message):
 
 
 def load_manifest(path):
+    _require(os.path.getsize(path) <= MAX_MANIFEST_BYTES, f"manifest is larger than {MAX_MANIFEST_BYTES} bytes")
     with open(path, encoding="utf-8") as f:
         m = json.load(f)
     _require(isinstance(m, dict), "manifest is not a JSON object")
@@ -229,7 +355,7 @@ def load_manifest(path):
     _require(isinstance(m.get("fps"), int) and not isinstance(m.get("fps"), bool) and 1 <= m["fps"] <= 240,
              "manifest fps must be an integer 1..240")
     _require(isinstance(m.get("frameCount"), int) and not isinstance(m.get("frameCount"), bool)
-             and m["frameCount"] >= 1, "manifest frameCount must be a positive integer")
+             and 1 <= m["frameCount"] <= MAX_FRAMES, f"manifest frameCount must be an integer 1..{MAX_FRAMES}")
     glb = m.get("glb") or {}
     rel = str(glb.get("file", ""))
     _require(rel and not os.path.isabs(rel) and ".." not in rel.replace("\\", "/").split("/"),
@@ -259,11 +385,26 @@ def _check_part(p):
 
 
 def verify(manifest_path):
-    """Check the export. Return a dict that render.py uses. Raise ExportError on any mismatch."""
+    """Check the export. Return a dict that render.py uses. Raise ExportError on any mismatch.
+
+    Any other exception on a malformed export (a wrong type, a missing key, an index out of range, unreadable bytes)
+    becomes an ExportError that names its type, so a bad export is always a refusal with a reason.
+    """
+    try:
+        return _verify(manifest_path)
+    except ExportError:
+        raise
+    except Exception as e:  # noqa: BLE001 - every failure on untrusted input is a refusal
+        detail = "".join(c if c.isprintable() else "?" for c in str(e))[:160]
+        raise ExportError(f"malformed export ({type(e).__name__}: {detail})") from e
+
+
+def _verify(manifest_path):
     manifest_path = os.path.abspath(manifest_path)
     m = load_manifest(manifest_path)
     glb_path = os.path.join(os.path.dirname(manifest_path), m["glb"]["file"])
     _require(os.path.isfile(glb_path), f"GLB not found next to the manifest: {m['glb']['file']}")
+    _require(os.path.getsize(glb_path) <= MAX_GLB_BYTES, f"GLB is larger than {MAX_GLB_BYTES} bytes")
     actual = sha256_file(glb_path)
     _require(actual == m["glb"]["sha256"],
              f"GLB SHA-256 mismatch: file {actual}, manifest {m['glb']['sha256']}")
@@ -315,6 +456,11 @@ def verify(manifest_path):
         _require(hit and "camera" in hit[0], f"manifest camera '{c.get('name')}' is not a GLB camera node")
     poster = m.get("posterFrame", count // 2)
     _require(isinstance(poster, int) and 0 <= poster < count, "manifest posterFrame is outside the frames")
+    # The hierarchy of every node, then every transform of the default scene at the first and the last key, so
+    # render.py's per-frame evaluation cannot meet a malformed node later.
+    check_hierarchy(gltf)
+    world_matrices(gltf, anim, times[0])
+    world_matrices(gltf, anim, times[-1])
 
     return {"manifest": m, "manifest_path": manifest_path, "glb_path": glb_path, "glb_sha256": actual,
             "gltf": gltf, "binary": binary, "animation": anim, "animation_index": anim_index,

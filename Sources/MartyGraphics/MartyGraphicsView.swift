@@ -25,8 +25,14 @@ public final class MGSceneController: ObservableObject {
     /// Scene revisions handed out by this controller only ever increase, so a replacement scene never reuses the
     /// revision of the scene it replaced and an old patch can never match it.
     public private(set) var nextSceneRevision = 0
+    /// The visible items of the shown step, kept between frames (`MGTimelineCache`). Every scene this controller holds
+    /// carries a revision it never reuses (`stamped`), so the cache key names one scene.
+    let timeline = MGTimelineCache()
 
     public init(scene: MGScene? = nil) { self.scene = scene.map(stamped) }
+
+    /// `MGTimeline.items(scene, step:)` for a scene this controller holds, computed once per (revision, step).
+    func timelineItems(_ scene: MGScene, step: Int) -> [MGItem] { timeline.items(scene, step: step) }
 
     /// The time base of the board's transitions (keyframes, blends, draw-on, motion). nil (the default) keeps the wall
     /// clock (`Date()`), as before. A lesson or explainer host sets its session's monotonic clock here, so the frame the
@@ -289,7 +295,7 @@ struct MGSceneHost: View {
     private func board(_ scene: MGScene) -> some View {
         Group {
             if scene.is3D && teaching.concealed.isEmpty {
-                MG3DView(scene: scene, items: MGTimeline.items(scene, step: step), playing: MGRenderPolicy.sceneKitPlaying(renderState(scene)),
+                MG3DView(scene: scene, items: controller.timelineItems(scene, step: step), playing: MGRenderPolicy.sceneKitPlaying(renderState(scene)),
                          teaching: teaching, readOnly: readOnly)
                     .overlay(alignment: .bottomTrailing) {
                         Label("Drag to turn", systemImage: "hand.draw").font(.caption2).foregroundStyle(theme.subtleInk).padding(8)
@@ -313,7 +319,7 @@ struct MGSceneHost: View {
         .accessibilityElement()
         .accessibilityLabel(scene.title.isEmpty ? "Marty's sketch" : scene.title)
         .accessibilityValue(teaching.summary ?? MGDescribe.accessibilityValue(scene, step: step, describing: teaching.describes,
-                                                                               hiding: teaching.concealed))
+                                                                               hiding: teaching.concealed) { controller.timelineItems(scene, step: step) })
     }
 
     // MARK: teaching hooks
@@ -383,12 +389,12 @@ struct MGSceneHost: View {
 
     private func go(_ scene: MGScene, _ next: Int) {
         guard scene.steps.indices.contains(next) else { return }
-        let before = Set(MGTimeline.items(scene, step: step).map(\.id))
+        let before = Set(controller.timelineItems(scene, step: step).map(\.id))
         cameraFrom = scene.steps[step].camera ?? scene.camera; cameraStart = controller.presentationDate()
-        blendFrom = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: time(controller.presentationDate())); blendStart = controller.presentationDate()
+        blendFrom = MGTimeline.frame(scene, items: controller.timelineItems(scene, step: step), time: time(controller.presentationDate())); blendStart = controller.presentationDate()
         step = next; bumpTransient()
         let now = controller.presentationDate()
-        for id in MGTimeline.items(scene, step: next).map(\.id) where !before.contains(id) { appearStart[id] = now }
+        for id in controller.timelineItems(scene, step: next).map(\.id) where !before.contains(id) { appearStart[id] = now }
     }
 
     /// New scene or patched scene. `.blend`: blend from what is on screen now; new items draw on. `.direct`: no blend
@@ -442,7 +448,7 @@ struct MGSceneHost: View {
         let keyT = keyframeClock.elapsed(at: now)
         let playsKeyframes = !keyframes.isEmpty && keyT < keyframeDuration && !reduceMotion
         var items = MGTimeline.frame(scene, items: playsKeyframes ? MGTween.sample(keyframes, at: keyT)
-                                                                  : MGTimeline.items(scene, step: step), time: t)
+                                                                  : controller.timelineItems(scene, step: step), time: t)
         if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
         let blendT = now.timeIntervalSince(blendStart)
         if let from = blendFrom, blendT < 1.2, !reduceMotion { items = MGTimeline.blend(from: from, to: items, t: MGTimeline.spring(blendT)) }

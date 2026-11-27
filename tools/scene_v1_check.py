@@ -425,7 +425,9 @@ def scene_rules(scene):
     world = scene.get("world", {"w": 12, "h": 8})
     dimensions = None if template else (world["w"], world["h"])
     items = {}
-    if sum(item["k"] in ("func", "field") for item in scene.get("items", ())) > mg_expr.EXPR_ITEMS:
+    graphs = [item for item in scene.get("items", ()) if item["k"] in ("func", "field")]
+    # Each graph item counts once and each step edit of one once more (Swift `MGLimits.exprItems`).
+    if len(graphs) + mg_expr.graph_edits(scene, {item["id"] for item in graphs}) > mg_expr.EXPR_ITEMS:
         raise Invalid("items.expr")
     for item in scene.get("items", ()):
         item_rules(item, dimensions, template)

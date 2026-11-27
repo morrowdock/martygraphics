@@ -169,6 +169,10 @@ public struct MGLessonSession {
         var bytes = 0
         /// The stream hit its byte or statement budget: input is counted but no longer scanned until the stream ends.
         var exhausted = false
+        /// `animate` commands this stream has run, accepted or refused (each is counted before it runs), plus those its
+        /// waiting beats held when it began with `keep` (`MGLessonLimits.animatesPerStream`). It is never below
+        /// `queuedAnimates`.
+        var animates = 0
     }
 
     struct PendingBeat {
@@ -179,6 +183,8 @@ public struct MGLessonSession {
         var checks: [(statement: Int, check: MGCheck, json: MGJSON)] = []
         var start: MGLessonState
         var end: MGLessonState
+        /// One per command, without keyframe scenes (`queued(_:)`): a beat with an `animate` builds its keyframes when
+        /// it is presented.
         var transitions: [MGTransition] = []
         var complete = false
         var refused = false
@@ -282,6 +288,10 @@ public struct MGLessonSession {
         outbox = []
         guard var s = state else { return refuseDirect(MGLessonIssue("lesson.empty", origin: origin)) }
         guard (1...MGLessonLimits.commandsPerBeat).contains(commands.count) else { return refuseDirect(MGLessonIssue("beat.ops.count", origin: origin)) }
+        // A batch holds at most one beat's `animate` commands (a learner batch never reaches `animate`: `control.op`).
+        if origin == .script, let i = MGLessonEngine.excessAnimate(commands) {
+            return refuseDirect(MGLessonIssue("lesson.animate.count", command: i, origin: origin))
+        }
         let before = s.scene.items
         var transitions: [MGTransition] = []
         for (i, command) in commands.enumerated() {
@@ -425,6 +435,8 @@ public struct MGLessonSession {
             guard value == .bool(true) else { return refuse("stmt.kind", index) }
             guard !stream.started, state != nil else { return refuse("stmt.order", index) }
             stream.started = true; stream.keep = true
+            // Beats that still wait from an earlier stream keep their `animate` commands: they count toward this one.
+            stream.animates = max(stream.animates, queuedAnimates)
             reopenPlayback()
             if pending.isEmpty { projected = state }
             emit(.accepted(statement: index))
@@ -522,12 +534,18 @@ public struct MGLessonSession {
             guard !pending[b].refused else { return refuse(MGLessonIssue("beat.refused", beat: k, statement: index)) }
             guard pending[b].commands.count < MGLessonLimits.commandsPerBeat else { return refuse(MGLessonIssue("beat.ops.count", beat: k, statement: index)) }
             do {
+                // Counted before the command runs: the beat's own `animate` commands, and the stream's. The stream count
+                // takes the `animate` now, before its keyframes are built, and keeps it if a check or the queue budget
+                // refuses it below, so validation work stays within the cap.
+                let earlier = pending[b].commands.map { $0.json }
+                try MGLessonEngine.checkAnimateCount(earlier + [json], used: stream.animates - earlier.filter(MGLessonEngine.isAnimate).count)
+                if MGLessonEngine.isAnimate(json) { stream.animates += 1 }
                 let r = try MGLessonEngine.run(json, on: pending[b].end, origin: .script, beat: k, env: env)
                 // Checks are claims about what the learner sees at the end of the beat: a later command may not make an
                 // accepted check false. Such a command is refused alone; the beat and its proven claims stay.
                 if let broken = pending[b].checks.lazy.compactMap({ $0.check.failure(in: r.state.scene) }).first { throw MGError(broken) }
                 var next = pending[b]
-                next.end = r.state; next.commands.append((index, json)); next.transitions.append(r.transition)
+                next.end = r.state; next.commands.append((index, json)); next.transitions.append(Self.queued(r.transition))
                 next = Self.measured(next)
                 guard queueUsage - pending[b].bytes + next.bytes <= MGLessonLimits.queueBytes else { throw MGError("lesson.queue.bytes") }
                 pending[b] = next
@@ -541,6 +559,8 @@ public struct MGLessonSession {
             // Setup commands between the scene and the first `say` are presented with the scene.
             do {
                 let before = p.scene.items
+                try MGLessonEngine.checkAnimateCount([json], used: stream.animates)
+                if MGLessonEngine.isAnimate(json) { stream.animates += 1 }   // taken before it runs, as above
                 let r = try MGLessonEngine.run(json, on: p, origin: .script, beat: nil, env: env)
                 state = r.state; projected = r.state
                 shown(r.state)
@@ -673,6 +693,18 @@ public struct MGLessonSession {
         return (b, nil)
     }
 
+    /// What a waiting beat keeps of a command's transition: no keyframe scenes (one `animate` makes up to
+    /// `MGTween.maxFrames` of them). `present` runs a beat with an `animate` again, which builds its keyframes then.
+    static func queued(_ t: MGTransition) -> MGTransition {
+        if case .keyframes = t { return .blend }
+        return t
+    }
+
+    /// `animate` commands the waiting beats will run when they are presented (a refused beat runs none).
+    var queuedAnimates: Int {
+        pending.reduce(0) { n, b in b.refused ? n : n + b.commands.lazy.filter { MGLessonEngine.isAnimate($0.json) }.count }
+    }
+
     /// Canonical bytes of the `pending` array in a snapshot: `[`, the entries with commas between them, `]`.
     var queueUsage: Int { pending.isEmpty ? 2 : pending.reduce(1) { $0 + $1.bytes + 1 } }
 
@@ -727,12 +759,14 @@ public struct MGLessonSession {
         let k = beat.index
         var transitions: [MGTransition] = []
         var applied: [MGLessonLogEntry] = []
-        if s == beat.start {
+        if s == beat.start, !beat.commands.contains(where: { MGLessonEngine.isAnimate($0.json) }) {
             s = beat.end; transitions = beat.transitions
             applied = beat.commands.map { MGLessonLogEntry(command: $0.json, origin: .script, beat: k, statement: $0.statement) }
         } else {
-            // The learner changed something since this beat was validated: re-apply its commands to what is shown.
-            // A command that no longer validates is refused alone; a check that no longer holds refuses the beat.
+            // The learner changed something since this beat was validated, or the beat animates (a waiting beat keeps no
+            // keyframes): re-apply its commands to what is shown, which builds each `animate`'s keyframes now. The
+            // engine is deterministic, so an unchanged state gives the validated result again. A command that no
+            // longer validates is refused alone; a check that no longer holds refuses the beat.
             for (i, c) in beat.commands.enumerated() {
                 do {
                     let r = try MGLessonEngine.run(c.json, on: s, origin: .script, beat: k, env: env)

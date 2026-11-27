@@ -158,6 +158,9 @@ Slider ──value v──► MGLessonController.control("angle", v)      (snaps
   At a beat's due time the engine applies its commands again to the presented state. A command that no longer validates is
   refused alone. A check that no longer holds refuses the beat. Beats that make value claims should set the value
   (the demonstration's last beat animates to 180° and then checks).
+- A beat that waits keeps its commands, not keyframes. A beat with an `animate` always runs its commands again when it
+  is presented, which builds the keyframes then (the engine is deterministic, so an unchanged state gives the result
+  that was validated).
 - The transition depends on the origin: learner → `direct` (no blend, no draw-on replay); script → `blend`; `animate` → `keyframes`.
 
 ## Spoken beats and timing events
@@ -219,6 +222,7 @@ beat fits the queue; otherwise that `say` is refused with `lesson.queue.bytes` f
 | Scene source | 8 KiB canonical JSON (`MGLimits.sceneBytes`) | the scene parser, after every command | `scene.bytes` / the same |
 | Queued beats not shown yet, all streams | 96 KiB canonical JSON | `say`, command, check, beat close | `lesson.queue.bytes` / `snapshot.pending` |
 | Commands / checks per queued beat | 12 / 8 | stream | `beat.ops.count`, `beat.checks.count` / `snapshot.pending` |
+| `animate` commands per queued beat / per stream (also all waiting beats) | 2 / 24 | stream (also through `load`), host `apply` (per batch) | `lesson.animate.count` / `snapshot.pending`, `snapshot.stream` |
 | Id history (removed ids included) | 1024 ids, each an item id | every command, also `apply` and learner values | `lesson.ids.count` / `snapshot.kinds`, `snapshot.introduced` |
 | One control | 1 KiB canonical JSON, at most 4 controls | `bind` on every path | `control.bytes`, `control.count` / the same (restore binds again) |
 | Caption and every filled line | 2 KiB canonical JSON | beat close and presentation | `stmt.say.bytes` / `snapshot.caption` |
@@ -367,6 +371,8 @@ Limits (owner decision D5; scene limits in `MGLimits` do not change):
 | Bound controls | 4 | `control.count` |
 | `animate` duration | 0.2–6 s | `animate.dur` |
 | Keyframes per `animate` | 72 (360°) | `animate.to` |
+| `animate` commands per beat (also per host `apply` batch) | 2 | `lesson.animate.count` |
+| `animate` commands per stream, set-up commands included | 24 | `lesson.animate.count` |
 | Queued beats not shown yet (canonical JSON, all streams) | 96 KiB | `lesson.queue.bytes` |
 | Id history (removed ids included) | 1024 | `lesson.ids.count` |
 | Filled line (queued text, due text, caption) | 2 KiB | `stmt.say.bytes` |
@@ -394,12 +400,30 @@ Unsupported operation names outside 1–24 ASCII letters, digits or underscores 
 `animate.param`, `animate.to`, `animate.dur`, `animate.step`, `animate.frame`, `check.object`, `check.missing`, `check.unknown.<keys|name>`,
 `check.value`, `check.comparison`, `check.eq`, `check.lt`, `check.gt`, `check.tol`, `check.<name>`, `text.literal`,
 `snapshot.<field>` (including `snapshot.bytes` and `snapshot.depth`), `lesson.number`, `snapshot.number`,
-`lesson.queue.bytes`, `lesson.ids.count`, `stmt.say.bytes`, `control.bytes`, `lesson.depth`.
+`lesson.queue.bytes`, `lesson.ids.count`, `stmt.say.bytes`, `control.bytes`, `lesson.depth`, `lesson.animate.count`.
 
 `lesson.number` and `snapshot.number` refuse an `MGJSON` value built in code that holds NaN or an infinity (JSON has
 no form for them): a lesson document in `MGLesson.parse(json:)`, any statement in `load` (with its index in
 `.statement`), and a command in `apply`. A snapshot with such a value is refused whole by `restore`. Parsed text and
 streamed bytes cannot hold them.
+
+`lesson.animate.count` refuses an `animate` command over the cap of its beat (2) or of its stream (24, set-up
+commands included), and a host `apply` batch with more than 2. It is counted before the command runs, and the stream
+count keeps it even when a check or the queue budget then refuses it. A `keep` stream starts from the `animate`
+commands that beats from earlier streams still hold while they wait, so at most 24 ever wait. Each `animate` parses
+the scene once per keyframe when it is validated and again when its beat is presented, so the caps bound the
+`animate` work one stream causes to 2 × 24 × 72 scene parses. A snapshot of a stream that holds an `animate` stores
+the stream's count (`stream.animates`, 0–24; absent means 0). `restore` counts the `animate` commands of all waiting
+beats before it runs any of them: it refuses a waiting beat with more than 2, and more than 24 in all
+(`snapshot.pending`), and a stored count outside 0–24 (`snapshot.stream`). The restored count is at least the number
+the waiting beats hold, also when the snapshot stores none.
+
+**Breaking, on purpose.** Both rules below are deliberate, so that at most 24 `animate` commands ever wait:
+
+- A `keep` stream counts the `animate` commands still waiting from earlier streams. An `animate` that fit the old
+  per-stream limit of 24 can now be refused with `lesson.animate.count`.
+- `restore` refuses a snapshot whose waiting beats hold more than 24 `animate` commands across streams
+  (`snapshot.pending`), even when no single stream had more than 24.
 
 `lesson.depth` refuses a statement or command that nests deeper than 59 levels, and a lesson document deeper than 63
 levels. It is checked before anything else reads, parses or walks the value: on text before the system parser, and on

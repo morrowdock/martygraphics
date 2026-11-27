@@ -88,6 +88,11 @@
       {"id": "f5", "k": "func", "at": [1, 1], "w": 2, "h": 2, "xr": [-1, 1], "yr": [-1, 1], "y": "x"},
       {"id": "f6", "k": "func", "at": [1, 1], "w": 2, "h": 2, "xr": [-1, 1], "yr": [-1, 1], "y": "x"},
       {"id": "v7", "k": "field", "at": [1, 1], "w": 2, "h": 2, "xr": [-1, 1], "yr": [-1, 1], "dx": "1", "dy": "0"}]}, "reason": "items.expr"},
+    {"name": "one graph and six step edits of it", "scene": {"v": 1, "items": [
+      {"id": "f", "k": "func", "at": [1, 1], "w": 6, "h": 4, "xr": [-3, 3], "yr": [-2, 2], "y": "a*x/10", "a": 1}], "steps": [
+      {"say": "Start."},
+      {"say": "One.", "do": [{"id": "f", "key": "a", "value": 2}, {"id": "f", "key": "a", "value": 3}, {"id": "f", "key": "a", "value": 4}]},
+      {"say": "Two.", "do": [{"id": "f", "key": "a", "value": 5}, {"id": "f", "key": "a", "value": 6}, {"id": "f", "key": "a", "value": 7}]}]}, "reason": "items.expr"},
     {"name": "field grid too small", "scene": {"v": 1, "items": [{"id": "v", "k": "field", "at": [1, 1], "w": 6, "h": 4, "xr": [-2, 2], "yr": [-2, 2], "dx": "1", "dy": "0", "n": [1, 4]}]}, "reason": "field.n"},
     {"name": "field grid too large", "scene": {"v": 1, "items": [{"id": "v", "k": "field", "at": [1, 1], "w": 6, "h": 4, "xr": [-2, 2], "yr": [-2, 2], "dx": "1", "dy": "0", "n": [17, 4]}]}, "reason": "field.n"},
     {"name": "field grid not whole", "scene": {"v": 1, "items": [{"id": "v", "k": "field", "at": [1, 1], "w": 6, "h": 4, "xr": [-2, 2], "yr": [-2, 2], "dx": "1", "dy": "0", "n": [2.5, 3]}]}, "reason": "field.n"},

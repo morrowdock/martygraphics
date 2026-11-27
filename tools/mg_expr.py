@@ -734,6 +734,22 @@ def round_half_away(value):
     return math.floor(value + 0.5) if value >= 0 else math.ceil(value - 0.5)
 
 
+def graph_edits(scene, graph_ids):
+    """Step edits that check a graph item again (Swift `MGParser.graphEdits`; malformed entries are not counted).
+
+    A template's own items and steps, and `over` (which may only name template items), stay with Swift: no Python
+    template builds a `func` or `field` item.
+    """
+    count = 0
+    steps = scene.get("steps")
+    for step in steps if isinstance(steps, list) else ():
+        edits = step.get("do") if isinstance(step, dict) else None
+        for edit in edits if isinstance(edits, list) else ():
+            if isinstance(edit, dict) and isinstance(edit.get("id"), str) and edit["id"] in graph_ids:
+                count += 1
+    return count
+
+
 def check_scene(scene):
     """The new rules on a scene object: the `alt` keys, the `items.expr` count and every `func` / `field` item.
 
@@ -753,7 +769,9 @@ def check_scene(scene):
         world = (_num(raw["w"], WORLD[0], WORLD[1], "world.w"), _num(raw["h"], WORLD[0], WORLD[1], "world.h"))
     items = scene.get("items", [])
     graphs = [item for item in items if isinstance(item, dict) and item.get("k") in ("func", "field")]
-    if len(graphs) > EXPR_ITEMS:
+    # Each graph item counts once and each step edit of one once more: an edit checks the whole item again.
+    graph_ids = {item["id"] for item in graphs if isinstance(item.get("id"), str)}
+    if len(graphs) + graph_edits(scene, graph_ids) > EXPR_ITEMS:
         raise Refusal("items.expr")
     summaries = {}
     for item in graphs:

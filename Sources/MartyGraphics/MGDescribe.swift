@@ -13,7 +13,12 @@ public enum MGDescribe {
     /// described as one sentence, for example "A graph of y = sin(x) for x from -3 to 3 and y from -1.5 to 1.5; the
     /// text “Sine”." An empty board is "The board is empty."
     public static func board(_ scene: MGScene, step: Int = 0, hiding: Set<String> = []) -> String {
-        let items = MGTimeline.items(scene, step: step).filter { !hiding.contains($0.id) }
+        board(stepItems: MGTimeline.items(scene, step: step), hiding: hiding)
+    }
+
+    /// `board(_:step:hiding:)` from the step's items (`MGTimeline.items`), for a view that keeps them (`MGTimelineCache`).
+    static func board(stepItems: [MGItem], hiding: Set<String>) -> String {
+        let items = stepItems.filter { !hiding.contains($0.id) }
         let phrases = items.map { item($0, in: items) }
         guard let first = phrases.first else { return "The board is empty." }
         return ([capitalized(first)] + phrases.dropFirst()).joined(separator: "; ") + "."
@@ -23,9 +28,14 @@ public enum MGDescribe {
     /// (else the scene's), else, when `describing`, `board(scene, step:hiding:)`. Without `alt` text and without
     /// `describing` it is the narration alone (empty for a scene without steps), as before `alt` existed.
     public static func accessibilityValue(_ scene: MGScene, step: Int, describing: Bool = false, hiding: Set<String> = []) -> String {
+        accessibilityValue(scene, step: step, describing: describing, hiding: hiding) { MGTimeline.items(scene, step: step) }
+    }
+
+    /// `accessibilityValue(_:step:describing:hiding:)` with the step's items from the caller (read only when needed).
+    static func accessibilityValue(_ scene: MGScene, step: Int, describing: Bool, hiding: Set<String>, stepItems: () -> [MGItem]) -> String {
         let current = scene.steps.indices.contains(step) ? scene.steps[step] : nil
         let alt = current?.alt ?? scene.alt
-        let text = alt ?? (describing ? board(scene, step: step, hiding: hiding) : nil)
+        let text = alt ?? (describing ? board(stepItems: stepItems(), hiding: hiding) : nil)
         return [current?.say ?? "", text ?? ""].filter { !$0.isEmpty }.joined(separator: " ")
     }
 

@@ -34,10 +34,14 @@ public enum MGLimits {
     /// parentheses, so one evaluation runs at most `exprTokens` operations. These bounds, like the others in this
     /// group, apply to the new kinds only; no existing limit changes.
     public static let exprLength = 80, exprTokens = 48, exprDepth = 8
-    /// At most this many `func` and `field` items in one resolved scene (`items.expr`). A `func` costs at most 7,169
+    /// At most this many graph checks in one resolved scene (`items.expr`). Each `func` and `field` item counts once, and
+    /// each step or `over` edit that targets one counts once more, because an edit checks the whole item again
+    /// (`MGParser.apply`). Both are counted before any wire item is evaluated. A `func` check costs at most 7,169
     /// evaluations per checked instant (257 samples, 512 gap probes, 768 × 8 bisection steps, 256 midpoints); a moving
-    /// one is checked at 4 instants plus 2 × 257 loop values (29,190). Six moving graphs are at most 175,140 evaluations
-    /// of at most 48 operations each; a typical smooth graph needs 513 per instant. A `field` costs 2 per arrow (≤ 384).
+    /// one is checked at 4 instants plus 2 × 257 loop values (29,190). So one parse of a scene, its edits included, is at
+    /// most 175,140 evaluations of at most 48 operations each; a typical smooth graph needs 513 per instant. A `field`
+    /// costs 2 per arrow (≤ 384). A patch or a lesson command parses the whole scene again, with the same bound per
+    /// parse. A view keeps the items of the shown step (`MGTimelineCache`), so a drawn frame does not apply the edits again.
     public static let exprItems = 6
     /// A `func` is sampled on this many equal intervals (257 samples) and may break into at most `funcBreaks + 1` pieces.
     public static let funcIntervals = 256, funcBreaks = 16
@@ -180,17 +184,20 @@ public enum MGParser {
 
         // Template output goes through the same item validator as model-written items (fail safe on template bugs too).
         var items = try (build?.items ?? []).map { try item(.object($0.wire()), ctx) }
-        // Function graphs and vector fields evaluate expressions; count them before evaluating any wire item.
-        var graphs = items.filter { $0.kind == .function || $0.kind == .field }.count
+        // Function graphs and vector fields evaluate expressions; count them, and the edits that check one again, before
+        // evaluating any wire item (`MGLimits.exprItems`).
+        let templateGraphs = items.filter { $0.kind == .function || $0.kind == .field }
+        var graphs = templateGraphs.count
+        let edits = graphEdits(o, templateGraphs: Set(templateGraphs.map(\.id)), templateSteps: build?.steps ?? [])
         if let raw = o["items"] {
             guard case .array(let list) = raw else { throw MGError("items") }
             let limit = build == nil ? MGLimits.items : MGLimits.templateExtras
             guard (build == nil ? 1 : 0)...limit ~= list.count else { throw MGError("items.count") }
-            graphs += list.filter { $0["k"] == .string(MGKind.function.rawValue) || $0["k"] == .string(MGKind.field.rawValue) }.count
-            guard graphs <= MGLimits.exprItems else { throw MGError("items.expr") }
+            graphs += list.filter(isGraphEntry).count
+            guard graphs + edits <= MGLimits.exprItems else { throw MGError("items.expr") }
             for entry in list { items.append(try item(entry, ctx)) }
         }
-        guard graphs <= MGLimits.exprItems else { throw MGError("items.expr") }
+        guard graphs + edits <= MGLimits.exprItems else { throw MGError("items.expr") }
         var ids = Set<String>()
         for i in items { guard ids.insert(i.id).inserted else { throw MGError("id.duplicate.\(i.id)") } }
 
@@ -243,6 +250,36 @@ public enum MGParser {
         scene.builtValues = (build?.builtValues ?? []).intersection(ctx.values.keys)
         scene.alt = alt
         return scene
+    }
+
+    /// A wire item entry of kind `func` or `field` (read before the entry is validated).
+    static func isGraphEntry(_ entry: MGJSON) -> Bool {
+        entry["k"] == .string(MGKind.function.rawValue) || entry["k"] == .string(MGKind.field.rawValue)
+    }
+
+    /// Edits that check a `func` or `field` item again: wire step edits (or, without wire steps, the template's own
+    /// step edits) that name a graph item, and `over` edits that name a template graph item (`over` may only name
+    /// template items). Read from the raw object before any wire item is evaluated; a malformed entry is not counted
+    /// here, the strict parse refuses it later. The scene is at most `MGLimits.sceneBytes`, so this walk is bounded.
+    static func graphEdits(_ o: [String: MGJSON], templateGraphs: Set<String>, templateSteps: [MGStep]) -> Int {
+        var graphIDs = templateGraphs
+        if case .array(let list)? = o["items"] {
+            for entry in list where isGraphEntry(entry) { if case .string(let id)? = entry["id"] { graphIDs.insert(id) } }
+        }
+        func names(_ edit: MGJSON, _ ids: Set<String>) -> Bool {
+            if case .string(let id)? = edit["id"] { return ids.contains(id) }
+            return false
+        }
+        var count = 0
+        if case .array(let over)? = o["over"] { count += over.filter { names($0, templateGraphs) }.count }
+        if let raw = o["steps"] {
+            if case .array(let steps) = raw {
+                for step in steps { if case .array(let list)? = step["do"] { count += list.filter { names($0, graphIDs) }.count } }
+            }
+        } else {
+            for step in templateSteps { count += step.edits.filter { graphIDs.contains($0.id) }.count }
+        }
+        return count
     }
 
     /// The timeline uses the authored move duration bounds for active template motion as well.

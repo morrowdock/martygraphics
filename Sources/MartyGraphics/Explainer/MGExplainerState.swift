@@ -900,6 +900,8 @@ extension MGExplainerSession {
     /// The script from the board: the set-up commands, then each kept beat's commands, its 2D checks on the beat's end
     /// state and its caption, with the explainer's rules (rule N1, one namespace) and the lesson engine. Sets `captions`.
     mutating func replayScript(env: MGParseEnvironment) throws {
+        // The lesson's `animate` caps hold for a replayed script too, before anything runs.
+        try MGLessonEngine.checkReplayAnimates(setup: setupOps, beats: beats.values.filter { !$0.dropped }.map(\.ops))
         var st: MGLessonState
         if let b = board {
             st = MGLessonState(scene: MGLessonEngine.lessonScene(try MGParser.scene(json: b, extraTemplates: [], env: env).get()))

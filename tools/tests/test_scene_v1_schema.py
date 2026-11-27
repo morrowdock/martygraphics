@@ -203,12 +203,17 @@ class SceneV1Tests(unittest.TestCase):
                  "dx": "-y", "dy": "x"}
         self.assertIsNone(checker.check(json.dumps({"v": 1, "alt": "A curve and a field.", "items": [graph, field],
                                                     "steps": [{"say": "Look.", "alt": "A sine curve."}]}).encode()))
+        # One graph and five edits of it: six graph checks, the limit (one more is `items.expr` below).
+        self.assertIsNone(checker.check(json.dumps({"v": 1, "items": [{**graph, "y": "a*sin(x)", "a": 1}], "steps": [
+            {"say": "Go.", "do": [{"id": "g", "key": "a", "value": k} for k in range(2, 7)]}]}).encode()))
         variants = [
             ({"items": [{**graph, "y": "sin(x"}]}, "func.y.syntax"),
             ({"items": [{**graph, "y": "a*x"}]}, "func.y.var.a"),
             ({"items": [{**graph, "period": 4}]}, "func.period"),
             ({"items": [{**graph, "w": 20}]}, "func.w"),
             ({"items": [{**graph, "id": f"g{i}"} for i in range(7)]}, "items.expr"),
+            ({"items": [{**graph, "y": "a*sin(x)", "a": 1}],
+              "steps": [{"say": "Go.", "do": [{"id": "g", "key": "a", "value": k} for k in range(2, 8)]}]}, "items.expr"),
             ({"items": [{**field, "n": [1, 4]}]}, "field.n"),
             ({"items": [{**field, "style": "wavy"}]}, "field.style"),
             ({"items": [graph], "alt": "a <b>"}, "alt"),

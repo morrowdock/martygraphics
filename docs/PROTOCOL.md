@@ -199,15 +199,19 @@ through a `dim` patch or a step edit); `alt` works in 2D and 3D.
   without a value stays empty. Reasons: `field.n`, `field.style`, `field.dx…` /
   `field.dy…` (the expression reasons above) and `field.empty` (no cell with a
   nonzero value).
-- At most 6 `func` and `field` items per resolved scene (`items.expr`), counted
-  before any is evaluated. The parse cost is bounded by construction (see
-  `MGLimits.exprItems`: at most 7,169 evaluations of at most 48 operations per
-  checked instant); typical graphs need about 513. Measurements on a Mac are
-  pending.
+- At most 6 graph checks per resolved scene (`items.expr`): each `func` and
+  `field` item counts once, and each step or `over` edit that names one counts
+  once more, because an edit checks the whole item again. So one graph can take
+  up to five step edits. All are counted before any item is evaluated. The parse
+  cost is bounded by construction (see `MGLimits.exprItems`: at most 7,169
+  evaluations of at most 48 operations per checked instant, and at most 175,140
+  per parse); typical graphs need about 513. Measurements on a Mac are pending.
 - Step edits and `set` patches change these items like any other (for example
   `{"id":"wave","key":"a","value":1.5}`); the item is re-sampled and re-checked,
   and a refused value refuses the whole scene. Two graphs with the same number of
   samples blend point by point, so a step change morphs the curve.
+  `MartyGraphicsView` keeps the items of the shown step for each scene revision
+  and step, so drawing a frame does not apply the edits again.
 
 The expression grammar is closed and evaluated by a small stack machine, never by
 the host: no `NSExpression` (whose `FUNCTION` form can invoke arbitrary methods),
@@ -515,7 +519,7 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `3d.text.code` | `code` text in a 3D scene | Use plain text in 3D, or keep the scene 2D. |
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |
-| `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph items | Change the range, the expression or the keys named by the reason. |
+| `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs or fewer edits of them. |
 | `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
 | `vector.on`, `edge.nodes`, `highlight.target` | Reference is absent, has the wrong kind, or highlights itself | Fix references before applying the scene. |
 | `highlight.cycle` | An indirect highlight chain loops | Make the chain terminate; [negative fixture](fixtures/v1/highlight-cycle.scene.json). |
@@ -547,9 +551,10 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | Text lengths | Title 60, label 40, text 120, narration 200 |
 | Geometry | Plot/path points up to 64; rope points up to 6 |
 | Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text; table 8 rows × 6 columns / cells up to 12 characters; region 3–64 points |
-| Graphs (new kinds only) | 6 `func` / `field` items per scene; expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters |
+| Graphs (new kinds only) | 6 graph checks per scene (each `func` / `field` item, and each step or `over` edit of one); expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters |
 | Raw template params | 4 KiB canonical `params` object |
 | Nesting (arrays and objects on one path) | 64 levels (`MGLimits.depth`); lessons 59 per statement |
+| Lesson `animate` | 2 per beat and per host `apply` batch, 24 per stream (`lesson.animate.count`); see [lessons](LESSONS.md#limits-and-reasons) |
 
 Preserve bounds and rollback. Expansions need an actual use case, boundary/failure
 tests and measurements; see the [limits rationale](CAPABILITIES.md#bounds-are-part-of-the-contract).

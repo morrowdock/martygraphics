@@ -63,6 +63,7 @@ public enum MGTimeline {
     }
 
     /// Motion applied at `time` seconds. Vectors with `on` get an absolute tail at their body's current centre.
+    /// Callers that draw every frame pass the cached step items (`MGTimelineCache`), not a fresh `items(_:step:)`.
     public static func frame(_ scene: MGScene, items: [MGItem], time: Double) -> [MGItem] {
         var offsets: [String: MGPoint] = [:]
         var vectorOverride: [String: (angle: Double, len: Double)] = [:]
@@ -209,5 +210,26 @@ extension MGTimeline {
         case .projectile(_, _, _, _, _, let visual, _, _, _, _): return before + visual
         default: return cycle * Double(max(1, loops))
         }
+    }
+}
+
+/// The visible items of one (scene revision, step), kept between frames. `MGTimeline.items` applies every edit of steps
+/// `0...step` again, and an edit of a `func` or `field` item checks the whole graph again, so a view that draws many
+/// frames of one step asks this cache instead. `items` is a pure function of the scene and the step; the key is the
+/// scene's `revision` and the step, so a cache may only be shared by scenes whose revisions name them uniquely.
+/// `MGSceneController` stamps every scene it holds with a revision it never reuses and owns one cache for its views.
+/// One entry: a step change or a new scene computes the items once, then every frame of that step reuses them.
+final class MGTimelineCache {
+    private var key: (revision: Int, step: Int)?
+    private var cached: [MGItem] = []
+    /// How often `items` computed the items (tests).
+    private(set) var computed = 0
+
+    func items(_ scene: MGScene, step: Int) -> [MGItem] {
+        if let key, key.revision == scene.revision, key.step == step { return cached }
+        cached = MGTimeline.items(scene, step: step)
+        key = (scene.revision, step)
+        computed += 1
+        return cached
     }
 }

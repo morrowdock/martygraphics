@@ -22,8 +22,22 @@ public struct MGStreamParser {
     private var seenItems = 0
     private var trialRoot: [String: MGJSON]?
     private(set) var candidateValidationCount = 0
+    /// Full parses of a preview root (the `steps` trial and the preview itself), for tests.
+    private(set) var previewValidationCount = 0
     private var lastPreview: MGJSON?
+    /// The complete top-level members and the number of complete `items` elements of the last call. A chunk that
+    /// completes nothing new (white space, part of a value) cannot change the preview, so `feed` stops there.
+    private var lastShape: Shape?
+    /// The last root the `steps` trial ran on, and whether it passed.
+    private var stepsTrial: (root: MGJSON, passed: Bool)?
+    /// The last preview root that did not parse, so the same root is not parsed again.
+    private var refusedPreview: MGJSON?
     public init() {}
+
+    struct Shape: Equatable {
+        let members: [Member]
+        let items: Int
+    }
 
     /// Returns a new preview when the renderable part changed, else nil.
     public mutating func feed(_ chunk: String) -> MGScene? {
@@ -36,6 +50,12 @@ public struct MGStreamParser {
         text += chunk
         guard !previewItemLimitExceeded else { return nil }
         let members = Self.members(Array(text.utf8))
+        // Nothing new completed since the last call: the preview is what that call computed (shown, or refused).
+        let itemsMember = members.last { $0.key == "items" }
+        let shape = Shape(members: members.filter { $0.complete && $0.key != "items" },
+                          items: itemsMember.map { Self.elements($0.raw, limit: MGLimits.items + 1).count } ?? -1)
+        if shape == lastShape { return nil }
+        lastShape = shape
         var root: [String: MGJSON] = [:]
         var itemsRaw: [UInt8]?
         for m in members {
@@ -82,10 +102,22 @@ public struct MGStreamParser {
             }
             guard !accepted.isEmpty else { return nil }
             root["items"] = .array(accepted)
-            if root["steps"] != nil, case .failure = MGParser.scene(json: .object(root)) { root["steps"] = nil }
+            if root["steps"] != nil {
+                // Once `steps` is complete, the trial runs again only when the root it checks changed.
+                let candidate = MGJSON.object(root)
+                let passed: Bool
+                if let t = stepsTrial, t.root == candidate { passed = t.passed } else {
+                    previewValidationCount += 1
+                    if case .success = MGParser.scene(json: candidate) { passed = true } else { passed = false }
+                    stepsTrial = (candidate, passed)
+                }
+                if !passed { root["steps"] = nil }
+            }
         }
         let preview = MGJSON.object(root)
-        guard preview != lastPreview, case .success(let scene) = MGParser.scene(json: preview) else { return nil }
+        guard preview != lastPreview, preview != refusedPreview else { return nil }
+        previewValidationCount += 1
+        guard case .success(let scene) = MGParser.scene(json: preview) else { refusedPreview = preview; return nil }
         lastPreview = preview
         return scene
     }
@@ -98,7 +130,7 @@ public struct MGStreamParser {
 
     // MARK: tolerant scanning (never trusted for the final result)
 
-    struct Member { let key: String; let raw: [UInt8]; let complete: Bool }
+    struct Member: Equatable { let key: String; let raw: [UInt8]; let complete: Bool }
 
     /// Top-level members of a possibly truncated JSON object, with each value's raw bytes and whether it closed.
     static func members(_ b: [UInt8]) -> [Member] {

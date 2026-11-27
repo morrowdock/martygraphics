@@ -170,6 +170,25 @@ Requirements that the check enforces:
   whose `baseColor` is 3 numbers in 0..1.
 - `posterFrame` (optional) is in `0..frameCount-1`.
 
+Size and count limits, each checked before the data it bounds is read:
+
+| Limit | Value | Refusal message starts with |
+| --- | --- | --- |
+| `frameCount` | 1..14400 (the exporter's cap: 60 s at 240 fps) | `manifest frameCount must be an integer 1..14400` |
+| Manifest file | 1 MiB | `manifest is larger than` |
+| `.glb` file | 512 MiB, before it is hashed or read | `GLB is larger than` |
+| Accessor elements | at least 1, every element inside the accessor's bufferView, and the bufferView inside buffer 0 as its `byteLength` declares it (never in the chunk's padding) | `accessor N: count must be a positive integer`, `accessor N: elements lie outside bufferView V`, `accessor N: bufferView V lies outside buffer 0` |
+| Buffer 0 | the GLB binary chunk (`buffer` 0, no `uri`); `byteLength` a positive integer, at most the chunk length, and the chunk adds only its 0–3 padding bytes | `accessor N: data must be in the GLB binary chunk (buffer 0)`, `accessor N: buffer 0 byteLength ... does not match the GLB binary chunk` |
+| `byteStride` | absent (packed elements), or an integer 4..252 and a multiple of 4; an explicit `0`, `false`, `null` or negative value is refused, not defaulted | `accessor N: bufferView V byteStride ... must be an integer 4..252` |
+| Indices (accessor, bufferView, sampler, node, child, scene) | an integer in 0..count-1, checked before it is used (a negative index is refused, not read from the end of a list) | `<accessor, sampler, ...> N does not exist`, after the accessor or animation it belongs to |
+| Keys per animation sampler | 14400 (3 x 14400 values for `CUBICSPLINE`) | `accessor N: count must be a positive integer (at most ...)` |
+| Animation channels | one per node and path (so at most 3 per node); key times `SCALAR`, values `VEC3` or `VEC4` by path | `more than 3 channels per node`, `node N has two ... channels`, `wrong accessor types` |
+| Node hierarchy | a forest over every node, in any scene or in none: one parent at most, no cycle, and each scene lists root nodes, each once | `GLB node hierarchy is not a tree` |
+
+Any other failure on a malformed export (a wrong type, a missing key, an index out of range) is also a refused
+export, exit code 1, with `malformed export (<error type>: ...)`; never a traceback. Each accessor is decoded once,
+however many channels name it.
+
 `parts`, `cameras`, `posterFrame` and `animation` are optional. Unknown keys are ignored.
 
 ## What the checks prove

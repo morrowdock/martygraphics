@@ -23,8 +23,14 @@ from mgrender import manifest as mf  # noqa: E402
 FPS = 24
 
 
-def make_glb(times, angles, extra_animation=False, child=True):
-    """One parent node turning about +Y (glTF up) with an optional child offset along +X."""
+def make_glb(times, angles, extra_animation=False, child=True, value_count=None, channels=None, roots=None,
+             gltf_edit=None):
+    """One parent node turning about +Y (glTF up) with an optional child offset along +X.
+
+    `value_count` overrides the rotation accessor's count, `channels` the animation's channel list and `roots` the scene's
+    root nodes; `gltf_edit(gltf)` changes the glTF JSON before it is packed (ordinary malformed exports for the
+    checker's bounds).
+    """
     tbytes = struct.pack(f"<{len(times)}f", *times)
     rbytes = b"".join(struct.pack("<4f", 0.0, math.sin(a / 2), 0.0, math.cos(a / 2)) for a in angles)
     binary = tbytes + rbytes
@@ -32,18 +38,20 @@ def make_glb(times, angles, extra_animation=False, child=True):
     if child:
         nodes.append({"name": "tooth_marker", "translation": [1.0, 0.0, 0.0]})
     anim = {"name": "mechanism", "samplers": [{"input": 0, "output": 1, "interpolation": "LINEAR"}],
-            "channels": [{"sampler": 0, "target": {"node": 0, "path": "rotation"}}]}
+            "channels": channels or [{"sampler": 0, "target": {"node": 0, "path": "rotation"}}]}
     gltf = {
         "asset": {"version": "2.0"},
-        "scene": 0, "scenes": [{"nodes": [0]}], "nodes": nodes,
+        "scene": 0, "scenes": [{"nodes": roots or [0]}], "nodes": nodes,
         "buffers": [{"byteLength": len(binary)}],
         "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": len(tbytes)},
                         {"buffer": 0, "byteOffset": len(tbytes), "byteLength": len(rbytes)}],
         "accessors": [{"bufferView": 0, "componentType": 5126, "count": len(times), "type": "SCALAR",
                        "min": [min(times)], "max": [max(times)]},
-                      {"bufferView": 1, "componentType": 5126, "count": len(angles), "type": "VEC4"}],
+                      {"bufferView": 1, "componentType": 5126, "count": value_count or len(angles), "type": "VEC4"}],
         "animations": [anim] + ([dict(anim, name="other")] if extra_animation else []),
     }
+    if gltf_edit:
+        gltf_edit(gltf)
     js = json.dumps(gltf).encode()
     js += b" " * (-len(js) % 4)
     binary += b"\0" * (-len(binary) % 4)
@@ -236,6 +244,198 @@ class ManifestTests(unittest.TestCase):
         m = mf.trs_matrix((1.0, 2.0, 3.0), (0, 0, 0, 1), (1, 1, 1))
         b = mf.to_blender(m)
         self.assertEqual([b[i][3] for i in range(3)], [1.0, -3.0, 2.0])
+
+
+class ManifestBoundsTests(unittest.TestCase):
+    """Size and count bounds of the export check, with ordinary exports at and just over each limit."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+
+    def test_frame_count_is_at_most_the_exporter_cap(self):
+        fx = ExportFixture(self.tmp.name)
+        fx.manifest["frameCount"] = mf.MAX_FRAMES          # inside the cap: the GLB check runs (and differs)
+        with self.assertRaisesRegex(mf.ExportError, "frame count mismatch"):
+            mf.verify(fx.write())
+        fx.manifest["frameCount"] = mf.MAX_FRAMES + 1
+        with self.assertRaisesRegex(mf.ExportError, f"frameCount must be an integer 1..{mf.MAX_FRAMES}"):
+            mf.verify(fx.write())
+        self.assertEqual(mf.MAX_FRAMES, 14_400)
+
+    def test_glb_and_manifest_sizes_are_checked_before_reading(self):
+        fx = ExportFixture(self.tmp.name)
+        size = fx.glb.stat().st_size
+        with mock.patch.object(mf, "MAX_GLB_BYTES", size):
+            mf.verify(fx.write())
+        with mock.patch.object(mf, "MAX_GLB_BYTES", size - 1), \
+                mock.patch.object(mf, "sha256_file", side_effect=AssertionError("read before the size check")):
+            with self.assertRaisesRegex(mf.ExportError, "GLB is larger than"):
+                mf.verify(fx.write())
+        path = fx.write()
+        with mock.patch.object(mf, "MAX_MANIFEST_BYTES", os.path.getsize(path) - 1):
+            with self.assertRaisesRegex(mf.ExportError, "manifest is larger than"):
+                mf.verify(path)
+
+    def test_accessor_elements_lie_inside_their_buffer_view(self):
+        fx = ExportFixture(self.tmp.name, value_count=6)    # 5 rotations stored, 6 declared
+        with self.assertRaisesRegex(mf.ExportError, "accessor 1: elements lie outside bufferView 1"):
+            mf.verify(fx.write())
+
+        def times_view_one_key_short(gltf):                 # the next 4 bytes are inside the chunk, but not the view
+            gltf["bufferViews"][0]["byteLength"] -= 4
+        fx = ExportFixture(self.tmp.name, gltf_edit=times_view_one_key_short)
+        with self.assertRaisesRegex(mf.ExportError, "accessor 0: elements lie outside bufferView 0"):
+            mf.verify(fx.write())
+
+        def rotation_view_past_the_chunk(gltf):
+            gltf["bufferViews"][1]["byteLength"] += 16
+        fx = ExportFixture(self.tmp.name, gltf_edit=rotation_view_past_the_chunk)
+        with self.assertRaisesRegex(mf.ExportError, "accessor 1: bufferView 1 lies outside buffer 0"):
+            mf.verify(fx.write())
+
+        def rotation_accessor_offset(gltf):                 # the view holds exactly 5 rotations from its start
+            gltf["accessors"][1]["byteOffset"] = 16
+        fx = ExportFixture(self.tmp.name, gltf_edit=rotation_accessor_offset)
+        with self.assertRaisesRegex(mf.ExportError, "accessor 1: elements lie outside bufferView 1"):
+            mf.verify(fx.write())
+
+    def test_buffer_views_lie_inside_the_declared_buffer(self):
+        # The fixture's binary is 100 bytes (5 times, 5 rotations), so its BIN chunk has no padding.
+        def three_padding_bytes_then_a_view_into_them(g):   # 97 declared: the chunk adds 3 padding bytes (allowed),
+            g["buffers"][0]["byteLength"] = 97              # but the rotation view ends at byte 100
+        fx = ExportFixture(self.tmp.name, gltf_edit=three_padding_bytes_then_a_view_into_them)
+        with self.assertRaisesRegex(mf.ExportError, "accessor 1: bufferView 1 lies outside buffer 0"):
+            mf.verify(fx.write())
+        for name, length in {"larger than the chunk": 104, "4 bytes short (more than padding)": 96, "zero": 0,
+                             "true": True, "a string": "100"}.items():
+            with self.subTest(name):
+                fx = ExportFixture(self.tmp.name, gltf_edit=lambda g: g["buffers"][0].update(byteLength=length))
+                message = r"accessor 0: buffer 0 byteLength .* does not match the GLB binary chunk \(100 bytes"
+                with self.assertRaisesRegex(mf.ExportError, message):
+                    mf.verify(fx.write())
+        fx = ExportFixture(self.tmp.name, gltf_edit=lambda g: g["buffers"][0].pop("byteLength"))
+        with self.assertRaisesRegex(mf.ExportError, "buffer 0 byteLength None does not match"):
+            mf.verify(fx.write())
+
+    def test_an_explicit_byte_stride_must_be_valid(self):
+        fx = ExportFixture(self.tmp.name, gltf_edit=lambda g: g["bufferViews"][1].update(byteStride=16))
+        mf.verify(fx.write())                               # the packed stride, given explicitly
+        for stride in (0, False, -16, None, 2, 18, 256):
+            with self.subTest(stride=stride):
+                fx = ExportFixture(self.tmp.name, gltf_edit=lambda g: g["bufferViews"][1].update(byteStride=stride))
+                with self.assertRaisesRegex(mf.ExportError, re.escape(
+                        f"accessor 1: bufferView 1 byteStride {stride!r} must be an integer 4..252")):
+                    mf.verify(fx.write())
+
+    def test_buffer_views_name_the_binary_chunk(self):
+        cases = {
+            "no buffer": lambda g: g["bufferViews"][1].pop("buffer"),
+            "buffer 1": lambda g: g["bufferViews"][1].update(buffer=1),
+            "buffer false": lambda g: g["bufferViews"][1].update(buffer=False),
+            "external buffer": lambda g: g["buffers"][0].update(uri="scene.bin"),
+            "no buffers": lambda g: g.pop("buffers"),
+        }
+        for name, edit in cases.items():
+            with self.subTest(name):
+                fx = ExportFixture(self.tmp.name, gltf_edit=edit)
+                with self.assertRaisesRegex(mf.ExportError, r"data must be in the GLB binary chunk \(buffer 0\)"):
+                    mf.verify(fx.write())
+
+    def test_indices_are_checked_before_they_are_used(self):
+        # Each index below except the last two would read another, existing entry if Python indexed with it (a
+        # negative index counts from the end of the list), so the export would pass.
+        cases = {
+            "sampler": (lambda g: g["animations"][0]["channels"][0].update(sampler=-1), "sampler -1 does not exist"),
+            "input accessor": (lambda g: g["animations"][0]["samplers"][0].update(input=-2),
+                               "input accessor -2 does not exist"),
+            "output accessor": (lambda g: g["animations"][0]["samplers"][0].update(output=-1),
+                                "output accessor -1 does not exist"),
+            "bufferView": (lambda g: g["accessors"][1].update(bufferView=-1), "accessor 1: bufferView -1 does not exist"),
+            "scene": (lambda g: g.update(scene=-1), "GLB scene -1 does not exist"),
+            "child": (lambda g: g["nodes"][0].update(children=[-1]), "GLB node 0: child node -1 does not exist"),
+            "sampler past the end": (lambda g: g["animations"][0]["channels"][0].update(sampler=1),
+                                     "sampler 1 does not exist"),
+            "sampler true": (lambda g: g["animations"][0]["channels"][0].update(sampler=True),
+                             "sampler True does not exist"),
+        }
+        for name, (edit, message) in cases.items():
+            with self.subTest(name):
+                fx = ExportFixture(self.tmp.name, gltf_edit=edit)
+                with self.assertRaisesRegex(mf.ExportError, re.escape(message)):
+                    mf.verify(fx.write())
+
+    def test_keys_per_sampler_are_bounded(self):
+        fx = ExportFixture(self.tmp.name)
+        with mock.patch.object(mf, "MAX_KEYS", 5):
+            mf.verify(fx.write())
+        with mock.patch.object(mf, "MAX_KEYS", 4):
+            with self.assertRaisesRegex(mf.ExportError, r"count must be a positive integer \(at most 4\)"):
+                mf.verify(fx.write())
+
+    def test_channels_are_one_per_node_and_path(self):
+        rotation = {"sampler": 0, "target": {"node": 0, "path": "rotation"}}
+        fx = ExportFixture(self.tmp.name, channels=[rotation, rotation])
+        with self.assertRaisesRegex(mf.ExportError, "node 0 has two rotation channels"):
+            mf.verify(fx.write())
+        fx = ExportFixture(self.tmp.name, channels=[rotation] * 7)     # 2 nodes: at most 6 channels
+        with self.assertRaisesRegex(mf.ExportError, "more than 3 channels per node"):
+            mf.verify(fx.write())
+        fx = ExportFixture(self.tmp.name, channels=[{"sampler": 0, "target": {"node": 0, "path": "translation"}}])
+        with self.assertRaisesRegex(mf.ExportError, "wrong accessor types"):
+            mf.verify(fx.write())
+
+    def test_each_node_has_one_parent(self):
+        fx = ExportFixture(self.tmp.name, roots=[0, 1])     # node 1 is a root and also node 0's child
+        with self.assertRaisesRegex(mf.ExportError, r"not a tree \(scene 0 lists node 1, which has a parent\)"):
+            mf.verify(fx.write())
+
+    def test_hierarchy_check_covers_every_node(self):
+        def two_nodes_outside_any_scene_in_a_cycle(g):
+            g["nodes"] += [{"name": "a", "children": [3]}, {"name": "b", "children": [2]}]
+
+        def a_node_outside_any_scene_that_is_its_own_child(g):
+            g["nodes"].append({"name": "a", "children": [2]})
+
+        def another_scenes_root_claims_a_child(g):
+            g["nodes"].append({"name": "a", "children": [1]})
+            g["scenes"].append({"nodes": [2]})
+
+        def another_scene_lists_a_child(g):
+            g["scenes"].append({"nodes": [1]})
+
+        def another_scene_lists_a_root_twice(g):
+            g["scenes"].append({"nodes": [0, 0]})
+
+        cases = {
+            two_nodes_outside_any_scene_in_a_cycle: "a children cycle",
+            a_node_outside_any_scene_that_is_its_own_child: "a children cycle",
+            another_scenes_root_claims_a_child: "node 1 has two parents",
+            another_scene_lists_a_child: "scene 1 lists node 1, which has a parent",
+            another_scene_lists_a_root_twice: "scene 1 lists a node twice",
+        }
+        for edit, message in cases.items():
+            with self.subTest(edit.__name__):
+                fx = ExportFixture(self.tmp.name, gltf_edit=edit)
+                with self.assertRaisesRegex(mf.ExportError, re.escape(f"GLB node hierarchy is not a tree ({message})")):
+                    mf.verify(fx.write())
+
+    def test_a_forest_across_scenes_passes(self):
+        def forest(g):        # a second tree outside the default scene, and a second scene that holds it
+            g["nodes"] += [{"name": "a", "children": [3]}, {"name": "b"}]
+            g["scenes"].append({"nodes": [2]})
+        mf.verify(ExportFixture(self.tmp.name, gltf_edit=forest).write())
+        # Without scenes, the roots are the nodes without a parent.
+        gltf = {"nodes": [{"children": [2]}, {}, {}]}
+        self.assertEqual(sorted(mf.check_hierarchy(gltf)), [0, 1])
+        self.assertEqual(sorted(mf.world_matrices(gltf)), [0, 1, 2])
+
+    def test_any_other_failure_is_a_refusal_with_a_reason(self):
+        fx = ExportFixture(self.tmp.name)
+        for error in (TypeError("unexpected type"), IndexError("index"), AttributeError("attribute"), struct.error("unpack")):
+            with self.subTest(error=type(error).__name__), mock.patch.object(mf, "_verify", side_effect=error):
+                with self.assertRaisesRegex(mf.ExportError, f"malformed export \\({type(error).__name__}"):
+                    mf.verify(fx.write())
 
 
 def box(kind, payload):

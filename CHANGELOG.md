@@ -6,6 +6,30 @@
 - Docs: the scene v1 schema notes and the Swift parity evidence link Swift sources by file and name the symbol
   (for example `MGParser.step(_:_:)`) instead of linking line numbers, which had drifted 26 to 28 lines.
   `validate_local.py --check-files` now refuses a relative `#L<digits>` link in `docs/`.
+- Hardening: tighter work and size bounds. A step or `over` edit of a `func` or `field` item now counts toward the
+  six graph checks per scene (`items.expr`), because an edit checks the whole item again; one graph can take five
+  edits. `tools/mg_expr.py` and `tools/scene_v1_check.py` count step edits the same way.
+- Hardening: lessons take at most 2 `animate` commands per beat (and per host `apply` batch) and 24 per stream,
+  set-up commands included (`lesson.animate.count`; on restore `snapshot.pending` and `snapshot.stream`). The count
+  takes an `animate` before it runs, so a refused one counts too, and a `keep` stream starts from the `animate`
+  commands still waiting. A beat that waits keeps its commands but no keyframe scenes; an `animate` builds its
+  keyframes when its beat is presented. A snapshot of a stream with an `animate` stores the stream's count
+  (`stream.animates`); `restore` holds all waiting beats to 24 together and restores at least their count.
+- **Breaking:** at most 24 `animate` commands ever wait in a lesson session, across streams. A continuation (`keep`
+  stream) now counts the `animate` commands still waiting from earlier streams, so an `animate` that fit the old
+  per-stream limit can be refused (`lesson.animate.count`), and `restore` refuses a snapshot with more than 24
+  waiting `animate` commands across streams (`snapshot.pending`). Both are deliberate. See docs/LESSONS.md.
+- Hardening: `MartyGraphicsView` keeps the visible items of the shown step for each scene revision and step, so a
+  drawn frame no longer applies the step edits again. The stream parser does not parse the preview again while a
+  chunk completes nothing new, and runs its `steps` trial again only when the scene it checks changed. No public API
+  changes.
+- Hardening: the Blender render path's export check caps `frameCount` at 14,400 (the exporter's cap), the `.glb` at
+  512 MiB and the manifest at 1 MiB before reading them. It keeps each accessor inside its bufferView and each
+  bufferView inside buffer 0 as its `byteLength` declares it (at most the binary chunk, which may add only 0–3
+  padding bytes), refuses an explicit `byteStride` that is not 4–252 and a multiple of 4, checks every index before using it (no negative index), bounds keys
+  per sampler, allows one channel per node and path, and requires the hierarchy of every node, in any scene or none,
+  to be a forest. Any other failure on a malformed export is a refused export with a reason (exit 1). See
+  tools/render-blender/README.md.
 - Docs: rewrite the README around a short description, one example image, a quick start that draws a first
   scene to a PNG, and a capability table with honest status and what is in `v0.1.0`. Add Concepts, Cookbook
   (ten scenes in `docs/cookbook`), Gallery, FAQ and For teachers pages. Correct stale release and "unreleased"

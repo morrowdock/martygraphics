@@ -95,6 +95,23 @@ class GraphCases(unittest.TestCase):
                     mg_expr.check_scene(case["scene"])
                 self.assertEqual(raised.exception.reason, case["reason"])
 
+    def test_graph_edits_count_against_the_graph_budget(self):
+        # Each graph item counts once and each step edit of one once more (Swift MGLimits.exprItems).
+        graph = {"id": "f", "k": "func", "at": [1, 1], "w": 6, "h": 4, "xr": [-3, 3], "yr": [-2, 2], "y": "a*x/10", "a": 1}
+        text = {"id": "t", "k": "text", "at": [8, 6], "text": "Slope"}
+
+        def scene(graph_edits, text_edits=0):
+            edits = [{"id": "f", "key": "a", "value": k + 2} for k in range(graph_edits)]
+            edits += [{"id": "t", "key": "text", "value": f"Slope {k}"} for k in range(text_edits)]
+            steps = [{"say": "Start."}] + [{"say": f"Step {k}.", "do": [e]} for k, e in enumerate(edits)]
+            return {"v": 1, "items": [graph, text], "steps": steps}
+
+        self.assertTrue(mg_expr.check_scene(scene(mg_expr.EXPR_ITEMS - 1)))
+        self.assertTrue(mg_expr.check_scene(scene(mg_expr.EXPR_ITEMS - 1, text_edits=2)))
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_scene(scene(mg_expr.EXPR_ITEMS))
+        self.assertEqual(raised.exception.reason, "items.expr")
+
     def test_documentation_scenes_pass(self):
         for name in ["graphs.scene.json", "wave.scene.json"]:
             with self.subTest(name=name):
