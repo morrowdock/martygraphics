@@ -617,8 +617,9 @@ final class BoardTransitionHostTests: XCTestCase {
         try assertSplit(rig, "first frame")
 
         // Ticks: the live layer redraws with the motion and the draw-on, the base never does. (Mac run #25: a base that
-        // had cached the zone and the floor mid-draw-on differed here by 3 levels on average.) Both canvases read the
-        // step's items from the controller (`MGTimelineCache`): no tick, repartition or base redraw computes them again.
+        // had cached the zone and the floor mid-draw-on differed here by 3 levels on average.) Both canvases draw the
+        // step's items the board's evaluation read from the controller (`MGSceneController.boardFrames`,
+        // `MGTimelineCache`): no tick, repartition or base redraw computes them again.
         let live = rig.probe.liveDraws
         let computed = rig.controller.timeline.computed
         for _ in 0..<12 { rig.advance(1.0 / 30); rig.settle(0.05) }
@@ -693,6 +694,48 @@ final class BoardTransitionHostTests: XCTestCase {
         let dot = try XCTUnwrap(try item("dot", f).pts.first)
         tap(f.viewport.point(dot), tapSize)
         XCTAssertEqual(rig.selection, "dot", "a live-layer item is selected through the split")
+    }
+
+    /// The board draws from the step items its evaluation read (`MGSceneController.boardFrames`), never from the
+    /// controller's cache: after other views on the controller push the board's step out of the cache, its ticks
+    /// compute nothing. A new revision fills the board's step exactly once, and the ticks after it compute nothing.
+    @MainActor func testTheBoardsDrawsNeverFillTheCacheAfterItsStepIsEvicted() throws {
+        // The rig's scene with four more steps, so other views can read 4 steps the board does not show.
+        let json = Self.json.replacingOccurrences(of: #"{"say":"Second step.","cam":{"zoom":1.5}}]"#,
+                                                  with: #"{"say":"Second step.","cam":{"zoom":1.5}},{"say":"Three."},{"say":"Four."},"#
+                                                    + #"{"say":"Five."},{"say":"Six."}]"#)
+        let scene = try MGParser.scene(data: Data(json.utf8)).get()
+        XCTAssertEqual(scene.steps.count, 6)
+        let rig = BoardRig(scene)
+        defer { rig.close() }
+        rig.settle(2.4)
+        for _ in 0..<30 { rig.advance(1.0 / 30); rig.settle(0.05) }   // past the first appearance's draw-on (0.95 s)
+        rig.settle(0.6)
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true))
+        try evictAndTick(rig, "first revision")
+        // A new revision that moves a base item: the board's evaluation for it fills its step once (the blend computes
+        // the step it leaves outside the cache).
+        let before = rig.controller.timeline.computed
+        try rig.patch(#"{"v":1,"ops":[{"op":"set","id":"floor","key":"to","value":[11,2]}]}"#)
+        rig.settle(2.4)
+        tick(rig, 1.5)
+        rig.settle(0.6)
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "split again after the revision")
+        XCTAssertEqual(rig.controller.timeline.computed, before + 1, "the new revision's step is filled exactly once")
+        try evictAndTick(rig, "new revision")
+    }
+
+    /// Other views on the controller read steps 1–4 of the board's scene, which pushes the board's step 0 out of the
+    /// cache, then the board ticks: the live layer draws, the board is not evaluated again (no base redraw), and no
+    /// draw fills the cache.
+    @MainActor func evictAndTick(_ rig: BoardRig, _ what: String, file: StaticString = #filePath, line: UInt = #line) throws {
+        let scene = try XCTUnwrap(rig.controller.scene, file: file, line: line)
+        for step in 1...4 { _ = rig.controller.timelineItems(scene, step: step) }
+        let computed = rig.controller.timeline.computed, base = rig.probe.baseDraws, live = rig.probe.liveDraws
+        for _ in 0..<12 { rig.advance(1.0 / 30); rig.settle(0.05) }
+        XCTAssertGreaterThan(rig.probe.liveDraws, live + 3, "\(what): the live layer ticks", file: file, line: line)
+        XCTAssertEqual(rig.probe.baseDraws, base, "\(what): a tick evaluated the board again", file: file, line: line)
+        XCTAssertEqual(rig.controller.timeline.computed, computed, "\(what): a draw read the evicted step from the cache", file: file, line: line)
     }
 
     /// A `.bounded` board: a leaving item fades out from opacity 1, which `MGCanvasLayers.settling` does not count, so

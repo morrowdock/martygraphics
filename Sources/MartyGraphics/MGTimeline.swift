@@ -220,14 +220,16 @@ extension MGTimeline {
 /// scene's `revision` and the step, so a cache may only be shared by scenes whose revisions name them uniquely.
 /// `MGSceneController` stamps every scene it holds with a revision it never reuses and owns one cache for its views.
 /// It keeps the last `capacity` steps read, least recently used out first, so views that share a controller and show
-/// different steps (two boards, or a board changing step) each compute a step's items once, then every frame reuses
-/// them. All entries share one revision: a read of another revision (a new scene) drops them all. So a step's
-/// readouts are computed once per cache fill: a read of one of the last `capacity` steps read of the same revision
-/// hits the cache and computes none, and a step pushed out by newer steps is computed again when it is next read.
+/// different steps (two boards, or a board changing step) each compute a step's items once. All entries share one
+/// revision: a read of another revision (a new scene) drops them all. So a step's readouts are computed once per
+/// cache fill: a read of one of the last `capacity` steps read of the same revision hits the cache and computes none,
+/// and a step pushed out by newer steps is computed again when it is next read. No draw reads the cache: a 2D board
+/// reads its step once each time it is evaluated and draws every frame from those items (`MGBoardFrames`), so a step
+/// pushed out while the board shows it is read again only by the board's next evaluation.
 final class MGTimelineCache {
-    /// Most steps kept. A board reads only its shown step every frame (a step change also reads the step it leaves,
-    /// once), so two boards on one controller need 2; 4 leaves room for a third view, or for a board changing step,
-    /// without evicting a step another board still draws every frame. Each entry is one array of at most
+    /// Most steps kept. A board reads only its shown step, once each time it is evaluated (a step change also reads the
+    /// step it leaves, once), so two boards on one controller need 2; 4 leaves room for a third view, or for a board
+    /// changing step, without evicting a step another board shows. Each entry is one array of at most
     /// `MGLimits.resolvedItems` (40) items, and an item the step's edits left alone shares its points, lists and values
     /// with the scene's own item (copy on write): 4 entries cost at most 160 item values plus the points of the items
     /// those steps' edits rebuilt (a `func` or `field` edit samples its graph again).
@@ -260,5 +262,23 @@ final class MGTimelineCache {
     func peek(_ scene: MGScene, step: Int) -> [MGItem] {
         if revision == scene.revision, let kept = entries.last(where: { $0.step == step }) { return kept.items }
         return MGTimeline.items(scene, step: step)
+    }
+}
+
+/// The step items one evaluation of a 2D board draws from (`MGSceneController.boardFrames`): read through the
+/// controller's cache once, when the board is evaluated, and held by value, so the board's draws (every canvas, every
+/// frame-loop tick) and its tap handler only read these. A draw never fills the cache, also when other views on the
+/// controller have pushed the step out of it since; the board's next evaluation (a new revision, a step change, any
+/// other change of its state) reads it again.
+struct MGBoardFrames {
+    let scene: MGScene
+    let step: Int
+    /// `MGTimeline.items(scene, step: step)`, as the cache gave it when the board was evaluated.
+    let items: [MGItem]
+
+    /// The items of a frame at `time`: the engine keyframes in flight (`MGTween.sample`), else the step's items, with
+    /// motion applied (`MGTimeline.frame`).
+    func frame(time: Double, keyframes: [MGItem]? = nil) -> [MGItem] {
+        MGTimeline.frame(scene, items: keyframes ?? items, time: time)
     }
 }

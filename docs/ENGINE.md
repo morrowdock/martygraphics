@@ -131,9 +131,9 @@ rank of any live item. A static item at or above that rank is drawn in the live 
 items' labels included), the emphasis rings, the markers and the focus ring. The base canvas sits outside the
 `TimelineView`, so frame-loop ticks never redraw it; SwiftUI redraws it whenever the board view is evaluated again,
 which is any change of the board's state (scene revision, step, size, theme, teaching modifiers). Each canvas draws
-for its own size, so both layers share one viewport. Both canvases read the current step's items from the
-controller's cache, which computes them once per scene revision and step (`MGSceneController.timelineItems`,
-`MGTimelineCache`), so no tick, repartition or base redraw applies the step edits again. The cache keeps the last 4
+for its own size, so both layers share one viewport. Both canvases draw the current step's items that the board
+read from the controller's cache when it was evaluated (`MGSceneController.boardFrames`, `MGTimelineCache`), so no
+tick, repartition or base redraw applies the step edits again, and no draw reads the cache. The cache keeps the last 4
 steps read (least recently used out first; at most 4 × 40 item values, items a step left unedited sharing storage
 with the scene), so boards that share one controller and show different steps keep their own entries; a new scene
 revision drops every entry of the old one.

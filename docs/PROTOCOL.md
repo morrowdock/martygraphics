@@ -573,9 +573,15 @@ model never writes these numbers itself.
   which keeps the last 4 steps read of one scene revision, least recently used
   out first. So the readouts of a step are computed once per cache fill: a
   revisit of one of the last 4 steps read of the same revision hits the cache
-  and computes none, and a drawn frame computes none. A step pushed out by 4
-  newer steps, or any step of a new revision, is computed again when it is next
-  read. A moving graph, the only kind sampled again per frame, has no readouts.
+  and computes none. A step pushed out by 4 newer steps, or any step of a new
+  revision, is computed again when it is next read. A 2D board reads its step
+  once each time the board is evaluated (a new revision, a step change, any
+  other change of its state) and draws every frame from those items
+  (`MGSceneController.boardFrames`), so a drawn frame never reads the cache and
+  computes none, also when other views on the controller pushed the step out
+  of it. A blend into a new scene computes the step it leaves once more,
+  outside the cache. A moving graph, the only kind sampled again per frame,
+  has no readouts.
   `MGDescribe` speaks the numbers ("… shaded from x = 0 to 3.14 (signed area 2),
   marking the point (1, 0.84) where the slope is 0.54"), and
   `MGGrammar.document()` lists the names under `expression.readouts`.

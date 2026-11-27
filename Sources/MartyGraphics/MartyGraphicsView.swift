@@ -36,6 +36,12 @@ public final class MGSceneController: ObservableObject {
     /// that step stays among the last `MGTimelineCache.capacity` steps read.
     func timelineItems(_ scene: MGScene, step: Int) -> [MGItem] { timeline.items(scene, step: step) }
 
+    /// What one evaluation of a 2D board draws from: the step's items read now, once (`timelineItems`), and held by
+    /// value (`MGBoardFrames`), so none of the board's draws reads the cache.
+    func boardFrames(_ scene: MGScene, step: Int) -> MGBoardFrames {
+        MGBoardFrames(scene: scene, step: step, items: timelineItems(scene, step: step))
+    }
+
     /// The time base of the board's transitions (keyframes, blends, draw-on, motion). nil (the default) keeps the wall
     /// clock (`Date()`), as before. A lesson or explainer host sets its session's monotonic clock here, so the frame the
     /// board draws and the session's settle time come from ONE clock: a wall-clock jump can never show an earlier
@@ -421,10 +427,14 @@ struct MGSceneHost: View {
         let splits = MGRenderPolicy.layered(state) && scene.layer2d == nil
         let phase = transitionPhase(at: now)
         let layered = splits && phase != .moving
+        // The board's items, read here once per evaluation of the board (`boardItems`: the learner's once a slider sits
+        // at a non-default value, else the step's items from the controller's cache): every canvas, tick and tap of this
+        // evaluation uses them, so no draw reads the cache (`MGBoardFrames`).
+        let frames = MGBoardFrames(scene: scene, step: step, items: boardItems(scene, step: step))
         if let probe = teaching.probe {
             probe.decided(MGBoardProbe.Decision(running: running, layered: layered))
-            probe.frame = { now, size in input(scene, now: now, size: size) }
-            probe.tap = { point, size in select(scene, at: point, size: size) }
+            probe.frame = { now, size in input(frames, now: now, size: size) }
+            probe.tap = { point, size in select(frames, at: point, size: size) }
             probe.go = { next in go(scene, next) }
             probe.slide = { param, value in changeSliders { $0.set(param, nearest: value) } }
             probe.resetSliders = { changeSliders { $0.reset(); return true } }
@@ -432,40 +442,40 @@ struct MGSceneHost: View {
         return GeometryReader { geo in
             ZStack {
                 if layered {
-                    layeredCanvases(scene, size: geo.size, running: running, now: now, phase: phase)
+                    layeredCanvases(frames, size: geo.size, running: running, now: now, phase: phase)
                 } else {
-                    liveCanvas(scene, running: running, layer: nil, watching: splits ? phase : nil)
+                    liveCanvas(frames, running: running, layer: nil, watching: splits ? phase : nil)
                 }
             }
             .contentShape(Rectangle())
-            .gesture(SpatialTapGesture().onEnded { value in select(scene, at: value.location, size: geo.size) },
+            .gesture(SpatialTapGesture().onEnded { value in select(frames, at: value.location, size: geo.size) },
                      including: teaching.selection != nil && !readOnly ? .all : .none)
         }
     }
 
-    @ViewBuilder private func layeredCanvases(_ scene: MGScene, size: CGSize, running: Bool, now: Date, phase: MGBoardTransition.Phase) -> some View {
-        let still = input(scene, now: now, size: size)
+    @ViewBuilder private func layeredCanvases(_ frames: MGBoardFrames, size: CGSize, running: Bool, now: Date, phase: MGBoardTransition.Phase) -> some View {
+        let still = input(frames, now: now, size: size)
         // Items still drawing on or fading are live too: ticks never redraw the base (`MGCanvasLayers.settling`).
-        let live = MGCanvasLayers.live(scene, items: still.items).union(MGCanvasLayers.settling(appear: still.appear, opacity: still.opacity))
+        let live = MGCanvasLayers.live(frames.scene, items: still.items).union(MGCanvasLayers.settling(appear: still.appear, opacity: still.opacity))
         let base = MGCanvasLayers.base(still.items, live: live)
         Canvas(rendersAsynchronously: false) { ctx, size in
             // The base frame at this evaluation's time for the canvas's own size, as the live canvas draws for its own
             // size, so both layers always draw with one viewport (the reader's size is used only to choose the items).
-            let frame = input(scene, now: now, size: size)
+            let frame = input(frames, now: now, size: size)
             MGCanvasRenderer.draw(frame, in: ctx, layer: .base(base))
             teaching.probe?.drew(frame, .base(base), size)
         }
-        liveCanvas(scene, running: running, layer: .live(base), watching: phase)
+        liveCanvas(frames, running: running, layer: .live(base), watching: phase)
     }
 
     /// `watching`: the phase of the board's transitions that the board was split for, or would have been but for a
     /// blend or camera move (nil: the board cannot split now). When a tick finds another phase on the board's clock,
     /// the canvas asks for one more evaluation of the board (`repartitions`), so it splits for the new phase: one base
     /// redraw when the last draw-on ends, and the first split once a blend or camera move has ended.
-    private func liveCanvas(_ scene: MGScene, running: Bool, layer: MGCanvasLayer?, watching: MGBoardTransition.Phase?) -> some View {
+    private func liveCanvas(_ frames: MGBoardFrames, running: Bool, layer: MGCanvasLayer?, watching: MGBoardTransition.Phase?) -> some View {
         TimelineView(.animation(minimumInterval: MGRenderPolicy.frameInterval, paused: !running)) { tl in
             Canvas(rendersAsynchronously: false) { ctx, size in
-                let frame = input(scene, now: running && controller.presentationClock == nil ? tl.date : controller.presentationDate(), size: size)
+                let frame = input(frames, now: running && controller.presentationClock == nil ? tl.date : controller.presentationDate(), size: size)
                 MGCanvasRenderer.draw(frame, in: ctx, layer: layer ?? .all)
                 teaching.probe?.drew(frame, layer ?? .all, size)
             }
@@ -478,10 +488,10 @@ struct MGSceneHost: View {
     // MARK: teaching hooks
 
     /// Tap → the smallest selectable footprint under the finger (12 pt slop); empty space clears the selection.
-    private func select(_ scene: MGScene, at point: CGPoint, size: CGSize) {
+    private func select(_ frames: MGBoardFrames, at point: CGPoint, size: CGSize) {
         guard let binding = teaching.selection else { return }
         // Use the drawing's frame calculation, including in-flight item and camera blends.
-        let frame = input(scene, now: controller.presentationDate(), size: size)
+        let frame = input(frames, now: controller.presentationDate(), size: size)
         let selectable = teaching.markers.isEmpty ? nil : Set(teaching.markers.keys)
         binding.wrappedValue = frame.hit(point, among: selectable)?.id
     }
@@ -708,15 +718,18 @@ struct MGSceneHost: View {
                      drawingOn: !MGBoardTransition.appear(appearStart, at: now, reduceMotion: reduceMotion).isEmpty, reduceMotion: reduceMotion)
     }
 
-    private func input(_ scene: MGScene, now: Date, size: CGSize) -> MGRenderInput {
+    /// The frame the board draws at `now` for a canvas of `size`, from the step's items the board's evaluation read
+    /// (`MGBoardFrames`): drawing a frame never reads the controller's cache.
+    private func input(_ frames: MGBoardFrames, now: Date, size: CGSize) -> MGRenderInput {
+        let scene = frames.scene, step = frames.step
         let t = reduceMotion ? 0 : time(now)
         // Step and patch transitions (`MGBoardMotion.frame`, `MGBoardTransition`): by default the board's spring within
         // the 1.2 s window and nothing with Reduce Motion, exactly as before; a `.bounded` board eases with no overshoot,
-        // fades leaving items out and dissolves with Reduce Motion (`MGStepTransition`). The live items are the
-        // learner's once a slider sits at a non-default value, else the cached step items (`boardItems`), read only
-        // when no keyframes supply the frame.
+        // fades leaving items out and dissolves with Reduce Motion (`MGStepTransition`). The live items are the ones
+        // this evaluation of the board read (`MGBoardFrames`): the learner's once a slider sits at a non-default value,
+        // else the cached step items (`boardItems`).
         let style = teaching.transitionStyle
-        let blend = motion.frame(scene, live: boardItems(scene, step: step), style: style, now: now, time: t,
+        let blend = motion.frame(scene, live: frames.items, style: style, now: now, time: t,
                                  hiding: teaching.concealed, reduceMotion: reduceMotion)
         let items = blend.items
         let camera = scene.steps.indices.contains(step) ? (scene.steps[step].camera ?? scene.camera) : scene.camera

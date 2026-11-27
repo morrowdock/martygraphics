@@ -185,9 +185,10 @@ final class EngineBoundsTests: XCTestCase {
                        ["tf"])
     }
 
-    /// The view draws every frame from `MGSceneController.timelineItems`: the step's items, and so its readouts, are
-    /// computed once per cache fill. A revisit of one of the last 4 steps read of the same revision hits the cache; a
-    /// step pushed out by 4 newer steps is computed again. Never per frame.
+    /// A board reads its step's items through `MGSceneController.timelineItems` once per evaluation
+    /// (`boardFrames`) and draws every frame from them: the step's items, and so its readouts, are computed once per
+    /// cache fill. A revisit of one of the last 4 steps read of the same revision hits the cache; a step pushed out by
+    /// 4 newer steps is computed again when it is next read. Never per frame.
     @MainActor
     func testTheFramePathComputesReadoutsOncePerCacheFill() throws {
         let probe = MGReadout.Probe()
@@ -199,14 +200,15 @@ final class EngineBoundsTests: XCTestCase {
             let controller = MGSceneController(scene: parsed)
             let scene = try XCTUnwrap(controller.scene)
             var slopes = Set<Double>()
+            let board = controller.boardFrames(scene, step: 1)
             for frame in 0..<120 {
-                let items = MGTimeline.frame(scene, items: controller.timelineItems(scene, step: 1), time: Double(frame) / 60)
-                slopes.insert(try XCTUnwrap(items.first { $0.id == "g" }?.num[MGReadout.slope.key]))
+                slopes.insert(try XCTUnwrap(board.frame(time: Double(frame) / 60).first { $0.id == "g" }?.num[MGReadout.slope.key]))
             }
             XCTAssertEqual(slopes, [cos(1)])
             XCTAssertEqual(controller.timeline.computed, 1)
             XCTAssertEqual(probe.count, 3, "one cache fill applies the yr edit; 120 frames compute nothing")
-            for frame in 0..<60 { _ = MGTimeline.frame(scene, items: controller.timelineItems(scene, step: 0), time: Double(frame) / 60) }
+            let start = controller.boardFrames(scene, step: 0)
+            for frame in 0..<60 { _ = start.frame(time: Double(frame) / 60) }
             XCTAssertEqual(controller.timeline.computed, 2)
             XCTAssertEqual(probe.count, 3, "step 0 applies no edit")
             // 1 -> 0 -> 1: the revisit of step 1 hits the cache.
@@ -234,6 +236,87 @@ final class EngineBoundsTests: XCTestCase {
             XCTAssertEqual(try XCTUnwrap(controller.timelineItems(scene, step: 2).first { $0.id == "g" }?.num[MGReadout.slope.key]),
                            cos(1))
         }
+    }
+
+    /// The board's draw path (`MGSceneHost`): each evaluation of the board reads its step's items once
+    /// (`MGSceneController.boardFrames`, in `board2D`), and every canvas, frame-loop tick and tap of that evaluation
+    /// draws from them (`MGBoardFrames.frame`). Here other views on the controller push the board's step out of the
+    /// cache after the board was evaluated, also between its frames: no draw fills the cache or computes a readout. A
+    /// new revision fills the same step exactly once, at the board's next evaluation, and its draws compute nothing.
+    @MainActor
+    func testDrawsAfterTheirStepIsEvictedComputeNoReadout() throws {
+        let probe = MGReadout.Probe()
+        try MGReadout.$probe.withValue(probe) {
+            // Steps 0, 1 (the yr edit, a readout input) and 2–5 (no edit of their own): a fill of steps 1–5 computes the
+            // readouts once.
+            let parsed = try MGParser.scene(data: Data(Self.readoutScene(edits: [Self.range], quiet: 4).utf8)).get()
+            XCTAssertEqual(probe.count, 2)
+            let controller = MGSceneController(scene: parsed)
+            let scene = try XCTUnwrap(controller.scene)
+            // The board shows step 1: its evaluation fills the step once.
+            let board = controller.boardFrames(scene, step: 1)
+            XCTAssertEqual(controller.timeline.computed, 1)
+            XCTAssertEqual(probe.count, 3)
+            // Other views read steps 2–5: the cache keeps 2, 3, 4 and 5, not the board's step.
+            for step in 2...5 { _ = controller.timelineItems(scene, step: step) }
+            XCTAssertEqual(controller.timeline.computed, 5)
+            XCTAssertEqual(probe.count, 7)
+            XCTAssertEqual(controller.timeline.kept, MGTimelineCache.capacity)
+            // 120 frames of the board, the other views reading their steps again every 30 frames.
+            var slopes = Set<Double>()
+            for frame in 0..<120 {
+                if frame % 30 == 0 { for step in 2...5 { _ = controller.timelineItems(scene, step: step) } }
+                slopes.insert(try XCTUnwrap(board.frame(time: Double(frame) / 60).first { $0.id == "g" }?.num[MGReadout.slope.key]))
+            }
+            XCTAssertEqual(slopes, [cos(1)])
+            XCTAssertEqual(controller.timeline.computed, 5, "a draw filled the evicted step")
+            XCTAssertEqual(probe.count, 7, "a draw computed the evicted step's readouts")
+            // A new revision of the scene (a blend back to it has a revision of its own): the board's next evaluation
+            // fills step 1 exactly once, and its draws compute nothing, also after other views push the step out again.
+            controller.show(parsed)
+            let next = try XCTUnwrap(controller.scene)
+            XCTAssertNotEqual(next.revision, scene.revision)
+            let again = controller.boardFrames(next, step: 1)
+            XCTAssertEqual(controller.timeline.computed, 6, "the new revision's step is filled once")
+            XCTAssertEqual(probe.count, 8, "the fill computes the readouts once")
+            for step in 2...5 { _ = controller.timelineItems(next, step: step) }
+            XCTAssertEqual(controller.timeline.computed, 10)
+            XCTAssertEqual(probe.count, 12)
+            for frame in 0..<120 {
+                if frame % 30 == 0 { for step in 2...5 { _ = controller.timelineItems(next, step: step) } }
+                _ = again.frame(time: Double(frame) / 60)
+            }
+            XCTAssertEqual(controller.timeline.computed, 10, "a draw filled the new revision's evicted step")
+            XCTAssertEqual(probe.count, 12, "a draw computed readouts")
+            // The boards drew the step's own items (computed here once more, outside the cache).
+            XCTAssertEqual(board.items, MGTimeline.items(scene, step: 1))
+            XCTAssertEqual(again.items, MGTimeline.items(next, step: 1))
+        }
+    }
+
+    /// The draw path in the view's source (the view needs SwiftUI; `BoardTransitionHostTests` draws it in a window):
+    /// `board2D` reads the step's items once per evaluation of the board, and the frame function, both canvases (a
+    /// frame-loop tick runs `liveCanvas`'s `TimelineView` content and a draw runs a `Canvas` closure) and the tap
+    /// handler only take the `MGBoardFrames` it read, so none of them can read the controller's cache.
+    func testTheBoardsDrawPathTakesItsStepItemsFromTheBoardsEvaluation() throws {
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Sources/MartyGraphics/MartyGraphicsView.swift")
+        let source = try String(contentsOf: url, encoding: .utf8)
+        // A member of `MGSceneHost`: from its declaration to its closing brace at member indentation.
+        func member(_ head: String) throws -> Substring {
+            let start = try XCTUnwrap(source.range(of: head), head)
+            let end = try XCTUnwrap(source.range(of: "\n    }\n", range: start.upperBound..<source.endIndex), head)
+            return source[start.lowerBound..<end.upperBound]
+        }
+        let reads = ["timelineItems(", "boardFrames(", ".timeline.", "MGTimeline.items("]
+        for head in ["private func input(_ frames: MGBoardFrames,", "private func layeredCanvases(_ frames: MGBoardFrames,",
+                     "private func liveCanvas(_ frames: MGBoardFrames,", "private func select(_ frames: MGBoardFrames,"] {
+            let body = try member(head)
+            for read in reads { XCTAssertFalse(body.contains(read), "\(head) reads the step's items: \(read)") }
+        }
+        let board = try member("private func board2D(")
+        XCTAssertEqual(board.components(separatedBy: "controller.boardFrames(scene, step: step)").count, 2, "one read per evaluation")
+        for read in ["timelineItems(", ".timeline.", "MGTimeline.items("] { XCTAssertFalse(board.contains(read), "board2D: \(read)") }
     }
 
     func testAColourEditKeepsTheReadoutsWithoutComputingThem() throws {

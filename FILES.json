@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "585763c45377ed62c1e5af50e9dc0ea40268983495f7be501ddd19aed28e7d66"
+      "sha256": "b6c3cb85517c1ad37fdaee2ac474ad571bb9240673956ce4a5c84dea4c163432"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -807,7 +807,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "4c65c89655695cdc5fb5d113d887c3b185fd1b500879a47315659cda1ec01762"
+      "sha256": "ce75de9d72a0d21606053bb31b2fc32fa875ddaec2f3c8b4c832a019695ba41d"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -839,7 +839,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTimeline.swift",
-      "sha256": "193d8af1b509d532896ac6446e553ec36588bfe92849367532cb2886a1b08b46"
+      "sha256": "f853922a904af7db623c31a18304939d3e5a5ed0141f67d4aef1aa3e1b609463"
     },
     {
       "path": "Sources/MartyGraphics/MGTween.swift",
@@ -855,7 +855,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "e7f7fa9ade73568f986bfaf56f89c78856013d802ba364c9c0050cb6e0aeb62d"
+      "sha256": "2a445e79d7896a6aa82f7666163491a931ad9ab1a8d6fff6eee6de0a0e55c529"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -1987,7 +1987,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "afc0754dfa766ed59320efec099a62b4f624de2d700acb3e12ece06ea99a7a58"
+      "sha256": "b58c851ebe8ac87c69cd1a2c5bd789ccd5a270fd200ab92842ebecc9341ce8a2"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -4139,7 +4139,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineBoundsTests.swift",
-      "sha256": "1195a66fef55b3d02fde071bfb581ba0cbfdc16545426c063930cc270d3753b0"
+      "sha256": "c8cd99bcd0b7e2d23ce329ba553c20b0d41f4d9dd343b98abf6e3860bc2df0e0"
     },
     {
       "path": "Sources/MartyGraphics/MGRepairHint.swift",
@@ -4943,7 +4943,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/BoardTransitionTests.swift",
-      "sha256": "7e028d5edad55683941bf2974bcd153ed3b4300d8380230af6e7d23843239ff8"
+      "sha256": "a27885b457214bcff6b4705d16073a0d816b169a0d65c3e9bf5e8288bbfc8af2"
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineStillsTests.swift",
@@ -4967,7 +4967,7 @@
     },
     {
       "path": "docs/ENGINE.md",
-      "sha256": "3416904fee44505434b7629593212fa257f10dc97b40f0f931fb48aee8fb66c4"
+      "sha256": "94ce7d8c4071f08d43e32f61aaa27b54918823bb7fd1aa8ce1edfc4331a45a12"
     },
     {
       "path": "tools/render-blender/mgrender/loop.py",
