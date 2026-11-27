@@ -223,9 +223,10 @@ extension MGTimeline {
 /// different steps (two boards, or a board changing step) each compute a step's items once. All entries share one
 /// revision: a read of another revision (a new scene) drops them all. So a step's readouts are computed once per
 /// cache fill: a read of one of the last `capacity` steps read of the same revision hits the cache and computes none,
-/// and a step pushed out by newer steps is computed again when it is next read. No draw reads the cache: a 2D board
-/// reads its step once each time it is evaluated and draws every frame from those items (`MGBoardFrames`), so a step
-/// pushed out while the board shows it is read again only by the board's next evaluation.
+/// and a step pushed out by newer steps is computed again when it is next read. No draw and no accessibility read
+/// reads the cache: a board reads its step once each time it is evaluated, and its draws, tap handler, description and
+/// audio graph use those items (`MGBoardFrames`), so a step pushed out while the board shows it is read again only by
+/// the board's next evaluation.
 final class MGTimelineCache {
     /// Most steps kept. A board reads only its shown step, once each time it is evaluated (a step change also reads the
     /// step it leaves, once), so two boards on one controller need 2; 4 leaves room for a third view, or for a board
@@ -239,10 +240,13 @@ final class MGTimelineCache {
     private var entries: [(step: Int, items: [MGItem])] = []
     /// How often `items` computed the items (tests).
     private(set) var computed = 0
+    /// How often `items` was called, hit or fill (tests).
+    private(set) var reads = 0
     /// Steps kept now (tests).
     var kept: Int { entries.count }
 
     func items(_ scene: MGScene, step: Int) -> [MGItem] {
+        reads += 1
         if revision != scene.revision { entries.removeAll(); revision = scene.revision }
         if let i = entries.firstIndex(where: { $0.step == step }) {
             if i != entries.count - 1 { entries.append(entries.remove(at: i)) }
@@ -265,11 +269,12 @@ final class MGTimelineCache {
     }
 }
 
-/// The step items one evaluation of a 2D board draws from (`MGSceneController.boardFrames`): read through the
-/// controller's cache once, when the board is evaluated, and held by value, so the board's draws (every canvas, every
-/// frame-loop tick) and its tap handler only read these. A draw never fills the cache, also when other views on the
-/// controller have pushed the step out of it since; the board's next evaluation (a new revision, a step change, any
-/// other change of its state) reads it again.
+/// The step items one evaluation of a board uses (`MGSceneController.boardFrames`): read through the controller's
+/// cache once, when the board is evaluated, and held by value, so a 2D board's draws (every canvas, every frame-loop
+/// tick) and its tap handler, the board's description and its audio graph (`chart`, in MGAudioGraph.swift), and a 3D
+/// board's view only read these. Neither a draw nor an accessibility read fills the cache, also when other views on
+/// the controller have pushed the step out of it since; the board's next evaluation (a new revision, a step change,
+/// any other change of its state) reads it again.
 struct MGBoardFrames {
     let scene: MGScene
     let step: Int

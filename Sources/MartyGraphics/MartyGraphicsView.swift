@@ -36,8 +36,8 @@ public final class MGSceneController: ObservableObject {
     /// that step stays among the last `MGTimelineCache.capacity` steps read.
     func timelineItems(_ scene: MGScene, step: Int) -> [MGItem] { timeline.items(scene, step: step) }
 
-    /// What one evaluation of a 2D board draws from: the step's items read now, once (`timelineItems`), and held by
-    /// value (`MGBoardFrames`), so none of the board's draws reads the cache.
+    /// What one evaluation of a board uses: the step's items read now, once (`timelineItems`), and held by value
+    /// (`MGBoardFrames`), so none of the board's draws, taps or accessibility reads reads the cache.
     func boardFrames(_ scene: MGScene, step: Int) -> MGBoardFrames {
         MGBoardFrames(scene: scene, step: step, items: timelineItems(scene, step: step))
     }
@@ -238,9 +238,9 @@ struct MGBoardTeaching {
     var holdsMotion: Bool { !concealed.isEmpty }
 }
 
-/// Test seam (internal; a host never sets one, `MartyGraphicsView.boardProbe(_:)`): what a 2D board decided and drew,
-/// and the board's own frame function, tap handler and step handler from its latest evaluation, so a test drives the
-/// real board through its entry points in a window. Main thread only.
+/// Test seam (internal; a host never sets one, `MartyGraphicsView.boardProbe(_:)`): what a 2D board decided, drew and
+/// attached as its audio graph, and the board's own frame function, tap handler and step handler from its latest
+/// evaluation, so a test drives the real board through its entry points in a window. Main thread only.
 final class MGBoardProbe {
     struct Draw {
         let input: MGRenderInput
@@ -257,6 +257,9 @@ final class MGBoardProbe {
     private(set) var draws: [Draw] = []
     /// The frame-loop decision of every evaluation of the board.
     private(set) var decisions: [Decision] = []
+    /// The audio graph the board attached at every evaluation, in order (nil: none), from that evaluation's items
+    /// (`MGBoardFrames.chart`): the step's items, or the learner's slider items.
+    private(set) var charts: [MGAudioGraph.Chart?] = []
     /// The frame the board's Canvas draws at a time and size (`MGSceneHost.input`).
     var frame: ((Date, CGSize) -> MGRenderInput)?
     /// The board's tap handler (what its `SpatialTapGesture` calls), at a point in a board of a size.
@@ -267,8 +270,6 @@ final class MGBoardProbe {
     /// and reset every slider (the Reset sliders button). They do nothing on a board that shows no sliders.
     var slide: ((String, Double) -> Void)?
     var resetSliders: (() -> Void)?
-    /// The audio graph of every evaluation of the board (`MGAudioGraph.chart` of the items it charts), in order.
-    private(set) var charts: [MGAudioGraph.Chart?] = []
     /// The board's transition window after every change of it, in order: when it ends on the board's clock
     /// (`MGTransientWindow.until`), or `Date.distantPast` once its task has closed it.
     private(set) var windows: [Date] = []
@@ -384,30 +385,36 @@ struct MGSceneHost: View {
     }
 
     private func board(_ scene: MGScene) -> some View {
+        // The board's items, read here once per evaluation of the board (`boardItems`: the learner's once a slider sits
+        // at a non-default value, else the step's items from the controller's cache): the 3D view, every canvas, tick
+        // and tap of the 2D board, the description and the audio graph of this evaluation use them, so no draw and no
+        // accessibility read reads the cache (`MGBoardFrames`).
+        let frames = MGBoardFrames(scene: scene, step: step, items: boardItems(scene, step: step))
         // VoiceOver audio graph of the visible plot, func or bars items (none otherwise; concealed items never count),
-        // built from the items the board draws now: with the learner's slider values when the scene shows sliders.
-        let chart = MGAudioGraph.chart(scene, items: boardItems(scene, step: step), hiding: teaching.concealed)
+        // built now from those items, so it plays the learner's slider values too: it never computes `MGTimeline.items`
+        // again, and VoiceOver reads only this value.
+        let chart = frames.chart(hiding: teaching.concealed)
         teaching.probe?.charted(chart)
         return Group {
             if scene.is3D && teaching.concealed.isEmpty {
-                MG3DView(scene: scene, items: controller.timelineItems(scene, step: step), playing: MGRenderPolicy.sceneKitPlaying(renderState(scene)),
+                MG3DView(scene: scene, items: frames.items, playing: MGRenderPolicy.sceneKitPlaying(renderState(scene)),
                          teaching: teaching, readOnly: readOnly)
                     .overlay(alignment: .bottomTrailing) {
                         Label("Drag to turn", systemImage: "hand.draw").font(.caption2).foregroundStyle(theme.subtleInk).padding(8)
                     }
             } else {
-                board2D(scene)
+                board2D(frames)
             }
         }
         .aspectRatio(scene.width / scene.height, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement()
         .accessibilityLabel(scene.title.isEmpty ? "Marty's sketch" : scene.title)
-        // At the slider defaults the value is the authored one, read from the cached step items like the board.
+        // At the slider defaults the value is the authored one, from the items this evaluation read, like the board.
         .accessibilityValue(teaching.summary
                             ?? sliders(scene).flatMap { $0.isAtDefaults ? nil : $0.accessibilityValue(describing: teaching.describes, hiding: teaching.concealed) }
                             ?? MGDescribe.accessibilityValue(scene, step: step, describing: teaching.describes,
-                                                       hiding: teaching.concealed) { controller.timelineItems(scene, step: step) })
+                                                       hiding: teaching.concealed) { frames.items })
         .modifier(MGAudioGraphModifier(chart: chart))
     }
 
@@ -417,7 +424,9 @@ struct MGSceneHost: View {
     /// The split also follows the board's own clock (`MGBoardTransition.phase`): while a blend, a camera move or
     /// keyframes still change the frame there is one canvas, and the base is chosen for the phase now. When a tick
     /// finds that phase over (the blend or the last draw-on has ended), the board splits once more for the new one.
-    private func board2D(_ scene: MGScene) -> some View {
+    /// `frames`: the step's items this evaluation of the board read (`board`).
+    private func board2D(_ frames: MGBoardFrames) -> some View {
+        let scene = frames.scene
         let state = renderState(scene)
         // Reduce Motion: a `.spring` board snaps (no loop); a `.bounded` board dissolves, so the loop runs for that
         // transition only (`MGBoardTransition.runsLoop`).
@@ -427,10 +436,6 @@ struct MGSceneHost: View {
         let splits = MGRenderPolicy.layered(state) && scene.layer2d == nil
         let phase = transitionPhase(at: now)
         let layered = splits && phase != .moving
-        // The board's items, read here once per evaluation of the board (`boardItems`: the learner's once a slider sits
-        // at a non-default value, else the step's items from the controller's cache): every canvas, tick and tap of this
-        // evaluation uses them, so no draw reads the cache (`MGBoardFrames`).
-        let frames = MGBoardFrames(scene: scene, step: step, items: boardItems(scene, step: step))
         if let probe = teaching.probe {
             probe.decided(MGBoardProbe.Decision(running: running, layered: layered))
             probe.frame = { now, size in input(frames, now: now, size: size) }

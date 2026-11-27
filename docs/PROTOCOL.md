@@ -311,6 +311,13 @@ so tests check it without VoiceOver:
   slider values (`MGAudioGraph.chart(scene, items:hiding:)` with the items the
   board draws, see "Learner sliders"), and leaves out concealed items, as
   `MGDescribe` does.
+- Work: the board builds its chart each time it is evaluated, from the items
+  that evaluation read once and draws (`MGBoardFrames.chart`): the step's items
+  from its controller's cache, or the learner's items while a slider sits at a
+  non-default value. So the chart never computes `MGTimeline.items` again and
+  never reads the cache itself. VoiceOver reads the chart the board attached, a
+  value: an accessibility read reads no cache, also when other views on the
+  controller have pushed the step out of it.
 - Motion and Reduce Motion: the chart is the motion's first frame (t = 0), so the
   samples of a moving `func` as parsed and spring energy bars at their first
   values. The board shows that frame when Reduce Motion is on. The chart never
@@ -574,13 +581,14 @@ model never writes these numbers itself.
   out first. So the readouts of a step are computed once per cache fill: a
   revisit of one of the last 4 steps read of the same revision hits the cache
   and computes none. A step pushed out by 4 newer steps, or any step of a new
-  revision, is computed again when it is next read. A 2D board reads its step
+  revision, is computed again when it is next read. A board reads its step
   once each time the board is evaluated (a new revision, a step change, any
-  other change of its state) and draws every frame from those items
-  (`MGSceneController.boardFrames`), so a drawn frame never reads the cache and
-  computes none, also when other views on the controller pushed the step out
-  of it. A blend into a new scene computes the step it leaves once more,
-  outside the cache. A moving graph, the only kind sampled again per frame,
+  other change of its state), draws every frame from those items and builds its
+  description and audio graph from them (`MGSceneController.boardFrames`), so
+  neither a drawn frame nor an accessibility read reads the cache or computes a
+  readout, also when other views on the controller pushed the step out of it. A
+  blend into a new scene computes the step it leaves once more, outside the
+  cache. A moving graph, the only kind sampled again per frame,
   has no readouts.
   `MGDescribe` speaks the numbers ("… shaded from x = 0 to 3.14 (signed area 2),
   marking the point (1, 0.84) where the slope is 0.54"), and

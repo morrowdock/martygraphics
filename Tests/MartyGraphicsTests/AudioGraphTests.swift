@@ -244,23 +244,26 @@ final class AudioGraphTests: XCTestCase {
         XCTAssertNotEqual(values, try XCTUnwrap(MGTimeline.frame(spring, items: spring.items, time: 0.5).first { $0.id == "e" }).bars.map(\.value))
     }
 
-    /// The board charts the step items it keeps between frames (`MGTimelineCache`): the same chart as from the scene
-    /// and step, at every step, with and without concealed items, and the items are computed once per step.
-    func testTheChartFromTheBoardsCachedItemsIsTheStepChart() throws {
+    /// The board charts the step items its evaluation read from the controller's cache (`MGSceneController.boardFrames`,
+    /// `MGBoardFrames.chart`): the same chart as from the scene and step, at every step, with and without concealed
+    /// items; the items are computed once per step, and a chart reads no cache.
+    @MainActor func testTheChartFromTheBoardsCachedItemsIsTheStepChart() throws {
         let json = #"""
         {"v":1,"items":[{"id":"g","k":"func","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-4,4],"y":"a*x","a":1},
           {"id":"b","k":"bars","at":[7,1],"w":6,"h":6,"bars":[{"label":"A","value":2}]}],
          "steps":[{"say":"One."},{"say":"Two.","do":[{"id":"g","key":"a","value":2}]},{"say":"Three.","show":["b"]}]}
         """#
-        let s = try scene(json)
-        let cache = MGTimelineCache()
+        let controller = MGSceneController(scene: try scene(json))
+        let s = try XCTUnwrap(controller.scene)
         for step in s.steps.indices {
+            let board = controller.boardFrames(s, step: step)
             for hiding in [Set<String>(), ["g"]] {
-                XCTAssertEqual(MGAudioGraph.chart(s, items: cache.items(s, step: step), hiding: hiding),
-                               MGAudioGraph.chart(s, step: step, hiding: hiding), "step \(step) hiding \(hiding)")
+                XCTAssertEqual(board.chart(hiding: hiding), MGAudioGraph.chart(s, step: step, hiding: hiding), "step \(step) hiding \(hiding)")
+                XCTAssertEqual(board.chart(hiding: hiding), MGAudioGraph.chart(s, items: board.items, hiding: hiding))
             }
         }
-        XCTAssertEqual(cache.computed, s.steps.count)
+        XCTAssertEqual(controller.timeline.computed, s.steps.count)
+        XCTAssertEqual(controller.timeline.reads, s.steps.count, "one read per board evaluation; the charts read nothing")
         XCTAssertNotEqual(MGAudioGraph.chart(s, step: 0), MGAudioGraph.chart(s, step: 1), "the step edit moves the graph")
         XCTAssertNil(MGAudioGraph.chart(s, items: [], hiding: []))
     }

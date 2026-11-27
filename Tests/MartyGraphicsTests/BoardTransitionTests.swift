@@ -696,44 +696,85 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertEqual(rig.selection, "dot", "a live-layer item is selected through the split")
     }
 
-    /// The board draws from the step items its evaluation read (`MGSceneController.boardFrames`), never from the
-    /// controller's cache: after other views on the controller push the board's step out of the cache, its ticks, its
-    /// frame function and its tap handler fill nothing, and the taps still hit what the board draws. A new revision
-    /// fills the board's step exactly once, and nothing after it fills the step again.
-    @MainActor func testTheBoardsDrawsNeverFillTheCacheAfterItsStepIsEvicted() throws {
-        // The rig's scene with four more steps, so other views can read 4 steps the board does not show.
+    /// The rig's scene with four more steps, so other views can read 4 steps the board does not show, and a static
+    /// `func` with readouts, so the board has an audio graph whose summary speaks them.
+    static func evictionScene() throws -> MGScene {
         let json = Self.json.replacingOccurrences(of: #"{"say":"Second step.","cam":{"zoom":1.5}}]"#,
                                                   with: #"{"say":"Second step.","cam":{"zoom":1.5}},{"say":"Three."},{"say":"Four."},"#
                                                     + #"{"say":"Five."},{"say":"Six."}]"#)
-        let scene = try MGParser.scene(data: Data(json.utf8)).get()
+            .replacingOccurrences(of: #"{"id":"note","#,
+                                  with: #"{"id":"g","k":"func","at":[8,4.6],"w":3.5,"h":2.6,"xr":[-1,1],"yr":[-1,1],"y":"x^2","mark":0.5,"#
+                                    + #""readouts":["value","slope"]},{"id":"note","#)
+        return try MGParser.scene(data: Data(json.utf8)).get()
+    }
+
+    /// The board draws from the step items its evaluation read (`MGSceneController.boardFrames`), never from the
+    /// controller's cache: after other views on the controller push the board's step out of the cache, its ticks, its
+    /// frame function and its tap handler fill nothing, and the taps still hit what the board draws. Its audio graph
+    /// comes from the same read: each evaluation of the board reads the cache exactly once and attaches the step's
+    /// chart, so VoiceOver reads a value and no cache. A new revision fills the board's step exactly once, and nothing
+    /// after it fills the step again.
+    @MainActor func testTheBoardsDrawsNeverFillTheCacheAfterItsStepIsEvicted() throws {
+        let scene = try Self.evictionScene()
         XCTAssertEqual(scene.steps.count, 6)
+        XCTAssertTrue(try XCTUnwrap(MGAudioGraph.chart(scene)).summary.contains("slope is 1"), "the chart speaks the readouts")
         let rig = BoardRig(scene)
         defer { rig.close() }
         rig.settle(2.4)
         for _ in 0..<30 { rig.advance(1.0 / 30); rig.settle(0.05) }   // past the first appearance's draw-on (0.95 s)
         rig.settle(0.6)
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true))
+        try assertOneReadPerEvaluation(rig, since: BoardCounts(), "first revision")
         try evictAndTick(rig, "first revision")
         // A new revision that moves a base item: the board's evaluation for it fills its step once (the blend computes
         // the step it leaves outside the cache).
-        let before = rig.controller.timeline.computed
+        let before = rig.controller.timeline.computed, counts = BoardCounts(rig)
         try rig.patch(#"{"v":1,"ops":[{"op":"set","id":"floor","key":"to","value":[11,2]}]}"#)
         rig.settle(2.4)
         tick(rig, 1.5)
         rig.settle(0.6)
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "split again after the revision")
         XCTAssertEqual(rig.controller.timeline.computed, before + 1, "the new revision's step is filled exactly once")
+        try assertOneReadPerEvaluation(rig, since: counts, "new revision")
         try evictAndTick(rig, "new revision")
+    }
+
+    /// The rig's cache reads (`MGTimelineCache.reads`), evaluations of the board (one frame-loop decision each) and
+    /// audio graphs the board attached (`MGBoardProbe.charts`).
+    struct BoardCounts {
+        var reads = 0, evaluations = 0, charts = 0
+        init() {}
+        @MainActor init(_ rig: BoardRig) {
+            reads = rig.controller.timeline.reads; evaluations = rig.probe.decisions.count; charts = rig.probe.charts.count
+        }
+    }
+
+    /// Since `start`, the board was evaluated, and each evaluation read the step from the cache exactly once (its draws,
+    /// taps, description and audio graph share that read; nothing else on the rig reads the cache) and attached one
+    /// audio graph. The last is the chart of the step's items, computed here outside the cache.
+    @MainActor func assertOneReadPerEvaluation(_ rig: BoardRig, since start: BoardCounts, _ what: String,
+                                              file: StaticString = #filePath, line: UInt = #line) throws {
+        let now = BoardCounts(rig), evaluations = now.evaluations - start.evaluations
+        XCTAssertGreaterThan(evaluations, 0, "\(what): the board was not evaluated", file: file, line: line)
+        XCTAssertEqual(now.reads - start.reads, evaluations,
+                       "\(what): the board read the cache more often than it was evaluated (a second read in an evaluation, or a draw)",
+                       file: file, line: line)
+        XCTAssertEqual(now.charts - start.charts, evaluations, "\(what): one audio graph per evaluation", file: file, line: line)
+        let scene = try XCTUnwrap(rig.controller.scene, file: file, line: line)
+        let chart = try XCTUnwrap(rig.probe.charts.last.flatMap { $0 }, "\(what): the board has no audio graph", file: file, line: line)
+        XCTAssertEqual(chart, MGAudioGraph.chart(scene, step: 0), "\(what): the audio graph is the step's chart", file: file, line: line)
     }
 
     /// Other views on the controller read steps 1–4 of the board's scene, which pushes the board's step 0 out of the
     /// cache, then the board ticks: the live layer draws, the board is not evaluated again (no base redraw), and no
     /// draw fills the cache. Then the board's own frame function and tap handler (what its tap gesture calls), from
     /// the same evaluation: they fill nothing either, and a tap on a base item and on the moving body selects each.
+    /// Nothing read the cache at all (no hit either), and the board kept the audio graph of its last evaluation.
     @MainActor func evictAndTick(_ rig: BoardRig, _ what: String, file: StaticString = #filePath, line: UInt = #line) throws {
         let scene = try XCTUnwrap(rig.controller.scene, file: file, line: line)
         for step in 1...4 { _ = rig.controller.timelineItems(scene, step: step) }
         let computed = rig.controller.timeline.computed, base = rig.probe.baseDraws, live = rig.probe.liveDraws
+        let counts = BoardCounts(rig)
         for _ in 0..<12 { rig.advance(1.0 / 30); rig.settle(0.05) }
         XCTAssertGreaterThan(rig.probe.liveDraws, live + 3, "\(what): the live layer ticks", file: file, line: line)
         XCTAssertEqual(rig.probe.baseDraws, base, "\(what): a tick evaluated the board again", file: file, line: line)
@@ -750,6 +791,11 @@ final class BoardTransitionHostTests: XCTestCase {
         tap(f.viewport.point(dot), size)
         XCTAssertEqual(rig.selection, "dot", "\(what): a tap on the moving dot (a live item) after the eviction", file: file, line: line)
         XCTAssertEqual(rig.controller.timeline.computed, computed, "\(what): a tap read the evicted step from the cache", file: file, line: line)
+        XCTAssertEqual(rig.controller.timeline.reads, counts.reads, "\(what): a draw, the frame function or a tap read the cache",
+                       file: file, line: line)
+        XCTAssertEqual(rig.probe.charts.count, counts.charts, "\(what): the board built an audio graph during the ticks", file: file, line: line)
+        XCTAssertEqual(rig.probe.charts.last.flatMap { $0 }, MGAudioGraph.chart(scene, step: 0), "\(what): the board's audio graph",
+                       file: file, line: line)
         // The board has not been evaluated since the taps, so it never saw the selection: clear it, so the rest of the
         // test runs with no selection change.
         rig.selection = nil

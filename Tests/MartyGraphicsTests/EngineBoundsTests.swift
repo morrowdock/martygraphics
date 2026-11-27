@@ -239,13 +239,14 @@ final class EngineBoundsTests: XCTestCase {
     }
 
     /// The board's frame path (`MGSceneHost`): each evaluation of the board reads its step's items once
-    /// (`MGSceneController.boardFrames`, in `board2D`), and every canvas, frame-loop tick and tap of that evaluation
-    /// draws from them (`MGBoardFrames.frame`, which the board's frame function calls). Here other views on the
-    /// controller push the board's step out of the cache after the board was evaluated, also between its frames: no
-    /// frame fills the cache or computes a readout. A new revision fills the same step exactly once, at the board's
+    /// (`MGSceneController.boardFrames`, in `board`), and every canvas, frame-loop tick and tap of that evaluation
+    /// draws from them (`MGBoardFrames.frame`, which the board's frame function calls); its audio graph is built from
+    /// them too (`MGBoardFrames.chart`, what the board attaches for VoiceOver). Here other views on the controller push
+    /// the board's step out of the cache after the board was evaluated, also between its frames: no frame and no audio
+    /// graph fills the cache or computes a readout. A new revision fills the same step exactly once, at the board's
     /// next evaluation, and its frames compute nothing. The view itself needs SwiftUI:
     /// `BoardTransitionHostTests.testTheBoardsDrawsNeverFillTheCacheAfterItsStepIsEvicted` drives its ticks, frame
-    /// function and tap handler in a window.
+    /// function, tap handler and audio graph in a window.
     @MainActor
     func testDrawsAfterTheirStepIsEvictedComputeNoReadout() throws {
         let probe = MGReadout.Probe()
@@ -274,6 +275,16 @@ final class EngineBoundsTests: XCTestCase {
             XCTAssertEqual(slopes, [cos(1)])
             XCTAssertEqual(controller.timeline.computed, 5, "a draw filled the evicted step")
             XCTAssertEqual(probe.count, 7, "a draw computed the evicted step's readouts")
+            // The board's audio graph from the same evaluation, built after the eviction, with and without a concealed
+            // item: it reads no cache and computes no readout, and its summary speaks the engine's slope.
+            let reads = controller.timeline.reads
+            let chart = try XCTUnwrap(board.chart(), "the graph is charted")
+            let hidden = board.chart(hiding: ["g"])
+            XCTAssertEqual(controller.timeline.reads, reads, "the audio graph read the cache")
+            XCTAssertEqual(controller.timeline.computed, 5, "the audio graph filled the evicted step")
+            XCTAssertEqual(probe.count, 7, "the audio graph computed the evicted step's readouts")
+            XCTAssertTrue(chart.summary.contains("slope is 0.54"), chart.summary)
+            XCTAssertNil(hidden, "a concealed graph is not charted")
             // A new revision of the scene (a blend back to it has a revision of its own): the board's next evaluation
             // fills step 1 exactly once, and its draws compute nothing, also after other views push the step out again.
             controller.show(parsed)
@@ -291,9 +302,11 @@ final class EngineBoundsTests: XCTestCase {
             }
             XCTAssertEqual(controller.timeline.computed, 10, "a draw filled the new revision's evicted step")
             XCTAssertEqual(probe.count, 12, "a draw computed readouts")
-            // The boards drew the step's own items (computed here once more, outside the cache).
+            // The boards drew the step's own items (computed here once more, outside the cache), and charted them.
             XCTAssertEqual(board.items, MGTimeline.items(scene, step: 1))
             XCTAssertEqual(again.items, MGTimeline.items(next, step: 1))
+            XCTAssertEqual(chart, MGAudioGraph.chart(scene, step: 1))
+            XCTAssertEqual(again.chart(), MGAudioGraph.chart(next, step: 1))
         }
     }
 

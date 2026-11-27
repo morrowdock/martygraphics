@@ -104,9 +104,10 @@ public enum MGAudioGraph {
     }
 
     /// The audio graph of `items`, the board's items now (`MGTimeline.items(scene, step:)`, or `MGSliderState.items`
-    /// with the learner's slider values), without the `hiding` items. `MartyGraphicsView` passes the items it draws
-    /// (the step items it keeps between frames, `MGTimelineCache`, or the slider state's), so the chart follows the
-    /// sliders and never computes the items again; the scene gives the 3D flag and the title.
+    /// with the learner's slider values), without the `hiding` items. `MartyGraphicsView` passes the items its
+    /// evaluation read (`MGBoardFrames.chart`): the step items from the controller's cache, or the slider state's. So
+    /// the chart follows the sliders, never computes the items again and reads no cache; the scene gives the 3D flag
+    /// and the title.
     public static func chart(_ scene: MGScene, items: [MGItem], hiding: Set<String> = []) -> Chart? {
         guard !scene.is3D, items.contains(where: { kinds.contains($0.kind) }) else { return nil }
         let visible = items.filter { !hiding.contains($0.id) }
@@ -219,4 +220,10 @@ public enum MGAudioGraph {
     static func sharesFrame(_ a: MGItem, _ b: MGItem) -> Bool {
         a.pts.first == b.pts.first && ["w", "h", "x0", "x1", "y0", "y1"].allSatisfy { a.num[$0] == b.num[$0] }
     }
+}
+
+extension MGBoardFrames {
+    /// The board's audio graph (`MGAudioGraph.chart(_:items:hiding:)`) from the step items this evaluation of the board
+    /// read: what `MartyGraphicsView` attaches for VoiceOver. It reads no cache and never computes `MGTimeline.items`.
+    func chart(hiding: Set<String> = []) -> MGAudioGraph.Chart? { MGAudioGraph.chart(scene, items: items, hiding: hiding) }
 }
