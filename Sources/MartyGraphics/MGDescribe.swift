@@ -76,6 +76,8 @@ public enum MGDescribe {
         case .orbit: return named("a circular path")
         case .text:
             let text = i.text ?? ""
+            // Math text is read in its engine-written spoken form (MGMathText), never as markup.
+            if i.has("math"), let math = try? MGMathText.parse(text) { return "the formula “\(math.spoken)”" }
             return i.has("code") ? "the code “\(text)”" : i.has("title") ? "the title “\(text)”" : "the text “\(text)”"
         case .highlight: return named("a highlight on \(name(of: i.ref))")
         case .bars:

@@ -30,6 +30,10 @@ public enum MGGrammar {
             "sliders": ["keys": MGParser.sliderKeys.sorted(), "params": ["a", "b", "c"], "kinds": [MGKind.function.rawValue],
                         "maxSliders": MGLimits.sliders, "maxSteps": MGLimits.sliderSteps,
                         "maxBindings": MGLimits.sliderBindings] as [String: Any],
+            // The closed vocabulary of math text (text style `math`, MGMathText): names only; the parser checks the rest.
+            "math": ["functions": MGExpression.Function.allCases.map(\.rawValue), "greek": MGMathText.greek.map(\.0),
+                     "constants": ["inf"], "units": MGMathText.units.map(\.name),
+                     "maxLength": MGLimits.mathLength, "maxTokens": MGLimits.mathTokens, "maxDepth": MGLimits.mathDepth] as [String: Any],
             "templates": MGPacks.all.flatMap(\.templates).map { template -> [String: Any] in
                 var entry: [String: Any] = ["name": template.name, "parameters": template.params.map(\.name)]
                 // Only templates with record-list parameters gain this key, so the default document is unchanged.

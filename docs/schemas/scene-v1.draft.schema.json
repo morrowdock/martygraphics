@@ -42,7 +42,7 @@
           "items": {
             "items": {
               "properties": {"k":{"enum":["body","incline","line","vector","axes","orbit","text","highlight","path"]}},
-              "not": {"required":["k","style"],"properties":{"k":{"const":"text"},"style":{"const":"code"}}}
+              "not": {"required":["k","style"],"properties":{"k":{"const":"text"},"style":{"enum":["code","math"]}}}
             }
           }
         }
@@ -394,7 +394,7 @@
         "color": {"$ref":"#/$defs/color"},
         "at": {"$ref":"#/$defs/point"},
         "text": {"type":"string","minLength":1,"maxLength":120},
-        "style": {"enum":["label","callout","title","code"]}
+        "style": {"enum":["label","callout","title","code","math"]}
       },
       "required": ["id","k","at","text"],
       "additionalProperties": false

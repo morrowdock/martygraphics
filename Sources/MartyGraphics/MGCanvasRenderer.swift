@@ -41,6 +41,36 @@ public enum MGCanvasRenderer {
                                        .pulley: 3, .edge: 3, .body: 4, .node: 4, .array: 4, .vector: 5, .highlight: 6, .text: 7, .table: 4, .region: 0,
                                        .function: 0, .field: 0, .curve: 0]
 
+    /// Math text (MGMathText) typeset centred at `at`: each run drawn with its baseline where the layout puts it
+    /// (variables and lower-case Greek italic, the rest upright, scripts smaller), and the layout's strokes (fraction
+    /// bars, root signs, tall parentheses, absolute-value bars) in the item's colour. Returns the drawn box.
+    static func mathText(_ ctx: GraphicsContext, _ math: MGMathText, at: CGPoint, color: Color, opacity: Double) -> CGRect {
+        var resolved: [String: GraphicsContext.ResolvedText] = [:]
+        func run(_ text: String, _ size: Double, _ italic: Bool) -> GraphicsContext.ResolvedText {
+            let key = "\(italic ? 1 : 0) \(size) \(text)"
+            if let r = resolved[key] { return r }
+            var t = Text(text).font(.system(size: CGFloat(size), weight: .regular, design: .serif))
+            if italic { t = t.italic() }
+            let r = ctx.resolve(t.foregroundColor(color))
+            resolved[key] = r
+            return r
+        }
+        let room = CGSize(width: 2000, height: 400)
+        let layout = math.layout(size: MGMathText.boardSize) { text, size, italic in Double(run(text, size, italic).measure(in: room).width) }
+        let origin = CGPoint(x: at.x - CGFloat(layout.width) / 2, y: at.y + CGFloat(layout.ascent - layout.descent) / 2)
+        var c = ctx; c.opacity *= opacity
+        for r in layout.runs {
+            let t = run(r.text, r.size, r.italic)
+            c.draw(t, at: CGPoint(x: origin.x + CGFloat(r.x), y: origin.y + CGFloat(r.y) - t.firstBaseline(in: room)), anchor: .topLeading)
+        }
+        for s in layout.strokes where s.points.count > 1 {
+            var path = Path()
+            path.addLines(s.points.map { CGPoint(x: origin.x + CGFloat($0.x), y: origin.y + CGFloat($0.y)) })
+            c.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: CGFloat(s.width), lineCap: .round, lineJoin: .round))
+        }
+        return CGRect(x: origin.x, y: origin.y - CGFloat(layout.ascent), width: CGFloat(layout.width), height: CGFloat(layout.ascent + layout.descent))
+    }
+
     /// Draw order rank of an item (lower first).
     static func rank(_ item: MGItem) -> Int { layer[item.kind] ?? 0 }
 
@@ -233,6 +263,8 @@ public enum MGCanvasRenderer {
                     c.fill(Path(CGRect(x: box.minX + 6, y: box.minY + 7, width: 3, height: box.height - 14)), with: .color(color))
                     c.draw(t, in: CGRect(x: at.x - m.width / 2 + 2, y: at.y - m.height / 2, width: m.width + 2, height: m.height))
                     obstacles.append(box)
+                } else if item.has("math"), let math = try? MGMathText.parse(s) {
+                    obstacles.append(mathText(ctx, math, at: at, color: color, opacity: opacity))
                 } else if item.has("code") {
                     // Monospaced and left-aligned at `at`, so indented lines stack into a readable listing.
                     let t = ctx.resolve(Text(s).font(.system(size: 14, weight: .medium, design: .monospaced)).foregroundColor(color))

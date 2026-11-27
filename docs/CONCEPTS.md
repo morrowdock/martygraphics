@@ -50,7 +50,7 @@ An item is one thing on the board. Every item has:
 | `pulley` | A pulley wheel | `at`, `r` |
 | `rope` | A rope through up to 6 points | `pts` |
 | `orbit` | A circular orbit | `at`, `r` |
-| `text` | Text: `label`, `callout`, `title` or `code` style | `at`, `text` |
+| `text` | Text: `label`, `callout`, `title`, `code` or `math` style | `at`, `text` |
 | `highlight` | A glow on another item | `target` |
 | `bars` | A bar chart of up to 6 bars | `at`, `w`, `h`, `bars` |
 | `path` | A line through up to 64 points | `pts` |

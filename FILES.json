@@ -3999,7 +3999,7 @@
     },
     {
       "path": "docs/CONCEPTS.md",
-      "sha256": "da55af4a869fd1c4e43967923e5e6dee7136af144e7474d109b6b51104198628"
+      "sha256": "8565bf402c7e377b3a06c47881bfb10f6735480bc4445c94e9de24faea02c8a9"
     },
     {
       "path": "docs/COOKBOOK.md",
@@ -4922,6 +4922,10 @@
       "sha256": "a9f154574492c95f2df120a87b0a096758351e1239e34788a81e7fd7a87c86ab"
     },
     {
+      "path": "Sources/MartyGraphics/MGMathText.swift",
+      "sha256": "0f5087f0601a58f738196e4892581240c00b385f860d4c0803b8ee5056e77a57"
+    },
+    {
       "path": "Sources/MartyGraphics/Solid/MGSolidLoop.swift",
       "sha256": "68d9bb2a74299d4e7c0d193cd1f123d5a24e47d7843791308b72dace6d9e093c"
     },
@@ -4936,6 +4940,10 @@
     {
       "path": "Tests/MartyGraphicsTests/ExportDecodeTests.swift",
       "sha256": "d2090129f63ad433bbd2efdf7a68f79f8f1933ee127a0797d7700397138ccf1c"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/MathTextTests.swift",
+      "sha256": "0221be917e6dc7eacea2dd977a752cb97d1f896c2098d0dfbbb6168a21ec7a59"
     },
     {
       "path": "Tests/MartyGraphicsTests/RenderQualityTests.swift",
@@ -4954,8 +4962,20 @@
       "sha256": "9ccd9e78f2f7d888c50335ebaef6034b3d989c8fbda5726fd00cbcab4af7dd26"
     },
     {
+      "path": "docs/fixtures/v1/math.cases.json",
+      "sha256": "878b5bfff01889a8d1862287d0789e05cc930969613fca3e7ad2a75d139551d8"
+    },
+    {
+      "path": "tools/mg_math.py",
+      "sha256": "7114bb03dac86e376176364bb2b285339d0687d4a27c1b01fd552eb317d4fe32"
+    },
+    {
       "path": "tools/render-blender/mgrender/loop.py",
       "sha256": "f7eecf402b762eee41387b7bb23447584002a96377d4c449a2b30b026ba7608e"
+    },
+    {
+      "path": "tools/tests/test_mg_math.py",
+      "sha256": "bfe52e9f57756821c87a25f0024307084447109e137f8768fb793ca658f75aa3"
     },
     {
       "path": "tools/tests/test_render_loop.py",

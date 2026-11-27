@@ -134,6 +134,19 @@
   snapshots for two shipped documents in `docs/fixtures/captions`; a test checks every story frame against the cues.
   `--size` for `render`, `export-captions` and `export-gltf` now takes exactly two whole numbers (`640xx400` is a
   usage error). Check, report and render outputs are otherwise unchanged.
+- Add the `math` text style (roadmap item 8; the drawing is pending Mac verification): a `text` item's text is a
+  small closed markup (`x^2 + 2 x`, `1/2`, `sqrt(x)`, `x_1`, `theta`, `±`, `·`, `×`, units in brackets such as
+  `9.8 [m/s^2]`), parsed by the engine (`MGMathText`, never a host evaluator; no LaTeX, no HTML). The 2D canvas
+  draws it as typeset runs: smaller raised and lowered scripts, stacked fractions over a bar, stroked root signs,
+  upright units and italic variables. The engine also writes a deterministic spoken form ("x squared plus 2 x",
+  "one half", "the square root of x"), which `MGDescribe` reads ("the formula “…”"), so VoiceOver and any export
+  built on `MGDescribe.board` hear it instead of the markup; `MGMathText.spoken(_:)` gives it to a host. New
+  bounds for the style only (`MGLimits.mathLength` 80, `mathTokens` 48, `mathDepth` 4) and new reasons
+  `text.math`, `text.math.syntax`, `.tokens`, `.depth`, `.name`, `.unit` and `3d.text.math` (math text is 2D
+  only), each with a repair hint. The grammar document gains a `math` inventory (new hash `4752519927b685c0`).
+  `tools/mg_math.py` mirrors the parser and spoken form for `tools/scene_v1_check.py`; both implementations check
+  the shared cases in `docs/fixtures/v1/math.cases.json` (74 spoken forms, 50 refusals). Scenes that parsed before
+  parse to the same result.
 - Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes. Swift remains the authority.
 - Portability step 1, inventory and tests only (no file moves, no API change, no support claim
   for Windows, Linux or browsers): `docs/PORTABILITY-MAP.md` maps the imports of each source file,

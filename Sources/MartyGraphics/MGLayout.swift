@@ -76,6 +76,12 @@ public enum MGLayout {
                 let s = CGSize(width: CGFloat(text.count) * 14 * 0.6 + 4, height: 14 * 1.35 + 4)
                 return CGRect(x: c.x, y: c.y - s.height / 2, width: s.width, height: s.height)
             }
+            if item.has("math"), let math = try? MGMathText.parse(item.text ?? "") {
+                // Drawn centred at `at` (MGCanvasRenderer); rough run widths, as `textSize` uses.
+                let m = math.layout(size: MGMathText.boardSize, measure: MGMathText.roughWidth)
+                let c = vp.point(p), w = CGFloat(m.width) + 8, h = CGFloat(m.ascent + m.descent) + 6
+                return CGRect(x: c.x - w / 2, y: c.y - h / 2, width: w, height: h)
+            }
             let s = textSize(item.text ?? "", font: item.has("title") ? 20 : 14)
             let c = vp.point(p); return CGRect(x: c.x - s.width / 2, y: c.y - s.height / 2, width: s.width, height: s.height)
         case .highlight:

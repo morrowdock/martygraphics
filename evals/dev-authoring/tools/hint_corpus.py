@@ -4,8 +4,8 @@
     python3 evals/dev-authoring/tools/hint_corpus.py           # check docs/fixtures/repair-hints/corpus.json
     python3 evals/dev-authoring/tools/hint_corpus.py --write   # rewrite it from the Python mirror
 
-The corpus holds every scene reason sample token (every kind's computed missing/unknown hints included), the graph
-and expression reasons outside MGParser.swift, cases where several patterns match and the first one must win,
+The corpus holds every scene reason sample token (every kind's computed missing/unknown hints included), the graph,
+expression and math text reasons outside MGParser.swift, cases where several patterns match and the first one must win,
 reasons with no hint, and every ML reason. Python asserts it in tools/tests/test_repair_hints.py;
 `RepairHintCorpusTests` (MartyGraphicsTests) and `MLRepairHintCorpusTests` (MartyGraphicsMLKitTests) assert the same
 file against Swift on a Mac.
@@ -50,6 +50,8 @@ GRAPH_REASONS = ["func.detail", "func.breaks", "func.empty", "func.loop", "func.
                  "func.readouts.mark", "func.readouts.shade", "func.readouts.slope", "func.readouts.area",
                  "func.readouts.view", "func.readouts.edit", "curve.detail", "curve.breaks", "curve.empty", "curve.loop",
                  "curve.x.var.t", "curve.r.syntax", "curve.y.tokens", "curve.x.depth", "curve.r.name", "curve.y.arity"]
+# Math text reasons outside MGParser.swift: the markup checks of MGMathText.parse (text style `math`).
+MATH_REASONS = ["text.math", "text.math.syntax", "text.math.name", "text.math.unit", "text.math.tokens", "text.math.depth"]
 # Reasons without a hint: neither a computed hint nor any pattern applies.
 UNKNOWN = ["not.a.reason", "", "body.atx", "item.nokind.missing", "item.body", "lesson.op.add", "mp4: writer failed",
            "patch.stale", "items.count.extra", "sliders.count", "slider.a.mid.func.detail"]
@@ -58,7 +60,8 @@ ML_UNKNOWN = ["ml.not.a.reason", "ml", "json"]
 
 def build():
     scene = []
-    reasons = set(inventory.scene_reason_sample()) | set(PRECEDENCE) | set(HELPER_REASONS) | set(GRAPH_REASONS)
+    reasons = (set(inventory.scene_reason_sample()) | set(PRECEDENCE) | set(HELPER_REASONS) | set(GRAPH_REASONS)
+               | set(MATH_REASONS))
     for reason in sorted(reasons) + UNKNOWN:
         scene.append({"reason": reason, "hint": hints.scene_hint(reason)})
     ml = [{"reason": reason, "hint": hints.ml_hint(reason) or None} for reason in inventory.ml_reasons() + ML_UNKNOWN]

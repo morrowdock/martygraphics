@@ -8,6 +8,7 @@
  "tokens": [
   "3d.kind.table",
   "3d.text.code",
+  "3d.text.math",
   "array.at",
   "array.cell",
   "array.marked",

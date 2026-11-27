@@ -254,6 +254,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/MGLesson.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGLessonSession.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGLessonSnapshot.swift` | Foundation-only | Foundation | — | — |
+| `Sources/MartyGraphics/MGMathText.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGModel.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGMovieWriter.swift` | other | AVFoundation, Foundation | — | CoreGraphics: `CGBitmapInfo`, `CGColor`, `CGColorSpace` +5; AVFoundation/ImageIO/UTType: `AVAssetWriter`, `AVAssetWriterInput`, `AVAssetWriterInputPixelBufferAdaptor` +18 |
 | `Sources/MartyGraphics/MGPack.swift` | Foundation-only | Foundation | — | — |
@@ -353,6 +354,7 @@ Python files under `tools/` are listed with their static Python imports.
 | --- | --- |
 | `tools/check_dco.py` | re, subprocess, sys |
 | `tools/mg_expr.py` | fractions, math, unicodedata |
+| `tools/mg_math.py` | mg_expr, sys, tools |
 | `tools/portability_map.py` | argparse, ast, collections, pathlib, re, sys |
 | `tools/render-blender/mgrender/__init__.py` | — |
 | `tools/render-blender/mgrender/busyguard.py` | os, re, subprocess, sys |
@@ -369,10 +371,11 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/render-blender/render_variants.py` | argparse, mgrender, os, pathlib, subprocess |
 | `tools/render-blender/selftest_scene.py` | bmesh, bpy, hashlib, json, math, os, sys |
 | `tools/scene_lint.py` | json, math, pathlib, sys |
-| `tools/scene_v1_check.py` | argparse, json, math, mg_expr, os, pathlib, re, stat, tools, unicodedata |
+| `tools/scene_v1_check.py` | argparse, json, math, mg_expr, mg_math, os, pathlib, re, stat, tools, unicodedata |
 | `tools/semantic_fixtures.py` | argparse, json, math, pathlib, scene_v1_check, sys |
 | `tools/tests/test_check_dco.py` | os, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_mg_expr.py` | fractions, json, math, mg_expr, pathlib, sys, unittest |
+| `tools/tests/test_mg_math.py` | json, mg_math, pathlib, scene_v1_check, sys, unittest |
 | `tools/tests/test_portability_tools.py` | copy, importlib, json, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_release_install.py` | argparse, contextlib, importlib, io, json, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_render_blender.py` | hashlib, json, math, mgrender, os, pathlib, re, render, render_variants, shutil, struct, subprocess, sys, tempfile, unittest |

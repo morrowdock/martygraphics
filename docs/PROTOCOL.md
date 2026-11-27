@@ -37,10 +37,10 @@ Kinds: body, incline, line, vector, axes, plot, spring, pulley, rope, orbit,
 text, highlight, bars, path, array, node, edge, table, region, func, field, curve. The
 model types expose their geometry. In 3D the supported subset is body, incline,
 line, vector, axes, orbit, text, highlight, path. Text styles are `label`
-(default), `callout`, `title` and `code`. See [tables, regions and code text](#tables-regions-and-code-text),
+(default), `callout`, `title` `code` and `math`. See [tables, regions and code text](#tables-regions-and-code-text),
 [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives),
 [learner sliders](#learner-sliders) and [parametric and polar curves](#parametric-and-polar-curves) for the newest
-additions.
+additions, including [math text](#math-text).
 
 Drawing conventions of the 2D renderer that the keys alone do not show: a vector `angle` is degrees
 counter-clockwise from +x (0 right, 90 up); an incline's `at` is its bottom-left vertex and the slope rises to
@@ -745,6 +745,96 @@ closed forms (circle, ellipse, cardioid, roses, Lissajous, cycloid, spiral) and
 the refusals; `CurveCaseTests` checks them against the parser and
 `tools/tests/test_mg_expr.py` against the mirror.
 
+## Math text
+
+An additive, unreleased change to the unversioned preview. The parser, the spoken form and the layout geometry were
+tested on Linux (Swift 6.4.3, Foundation only); the drawing in the SwiftUI canvas is **pending Mac verification**.
+Wire `v: 1` is unchanged and every scene that parsed before parses to the same result (the style name `math` was
+refused before). Math text is 2D only: in a 3D scene it fails with `3d.text.math` (also through a `dim` patch or a
+step edit).
+
+```json
+{"id":"roots","k":"text","at":[6,6.6],"style":"math","text":"x = (-b ± sqrt(b^2 - 4 a c))/(2 a)"}
+```
+
+- A `text` item with `"style": "math"`. Its text is a small closed markup, not LaTeX and not HTML: the engine parses
+  it, never a host evaluator. The plain-text rules of every text run first (`text.text`: no `<` or `>`, URLs, code
+  fences or control characters), then the markup rules below. Math text has no placeholders: a brace is refused
+  (`text.math`), because a filled value is not math. Put an engine number in a plain `text` item beside it.
+- Drawn by the 2D canvas as typeset runs centred at `at`, at a base size of 17 points in a serif face: variables and
+  lower-case Greek letters italic, numbers, units, function names and capital Greek letters upright; superscripts and
+  subscripts at 0.7 of the size (never below half the base size), raised or lowered; a fraction stacked over a bar on
+  the maths axis; a root drawn as a stroked sign with a bar over the radicand; `abs(x)` between bars; parentheses
+  around a fraction drawn as tall strokes. `MGMathText.layout(size:measure:)` gives the runs and strokes, so another
+  renderer can draw the same layout.
+- A spoken form written by the engine, read wherever the board is described: `MGDescribe` names the item "the formula
+  “x squared plus 2 x”" (so `MartyGraphicsView` reads it to VoiceOver when it describes the board, and so does any export that
+  describes boards with `MGDescribe.board`), and `MGMathText.spoken(_:)` gives it to a host. The markup itself is never
+  read aloud.
+
+```text
+math     := relation
+relation := sum (("=" | "≠" | "≈" | "≤" | "≥") sum)*
+sum      := sign? product (("+" | "-" | "±") product)*            sign := "+" | "-" | "±"
+product  := factor ((("*" | "·" | "×") sign? factor) | factor)*     two factors side by side multiply
+factor   := script ("/" script)?                                    a stacked fraction
+script   := primary ("_" sub)? ("^" sign? sup)?
+primary  := number "°"? | name | name "(" list ")" | "(" list ")" | "[" unit "]"
+list     := relation ("," relation)*
+```
+
+| Write | Drawn | Spoken |
+| --- | --- | --- |
+| `x^2 + 2 x` | x² + 2x | x squared plus 2 x |
+| `1/2 m v^2` | ½ m v² (stacked) | one half m v squared |
+| `sqrt(x^2 + 1)` | √(x² + 1) under a bar | the square root of x squared plus 1 end root |
+| `y = a sin x` | y = a sin x | y equals a sine of x |
+| `x_1 + x_2`, `v_max` | x₁ + x₂, v with an upright "max" below | x sub 1 plus x sub 2, v sub max |
+| `theta = 30°`, `Delta x` | θ = 30°, Δx | theta equals 30 degrees, capital delta x |
+| `v = 9.8 [m/s^2]` | v = 9.8 m/s² | v equals 9.8 metres per second squared |
+| `f(x) = x^2`, `a (b + c)` | f(x) = x², a(b + c) | f of x equals x squared, a open paren b plus c close paren |
+| `e^(-x^2/2)` | e raised to −x²/2 | e to the power minus the fraction with numerator x squared and denominator 2 end power |
+
+- Numbers are decimal as written (`2`, `0.5`, `.5`; at most 12 characters, as in expressions). `30°` is a number
+  with a degree sign. `-` and `−` are minus; `+-` and `±` are plus or minus; `*` and `·` draw `·`, `×` draws `×`,
+  and both are read "times"; two factors side by side (`2 x`, `m a`, `2 pi r`) multiply without a sign.
+- Names: one ASCII letter is a variable (`ma` is refused: write `m a`); the Greek letter names `alpha` … `omega` and
+  `Gamma`, `Delta`, `Theta`, `Lambda`, `Xi`, `Pi`, `Sigma`, `Upsilon`, `Phi`, `Psi`, `Omega`, or the Greek letters
+  themselves; `inf` (∞); the expression functions `sin cos tan asin acos atan sinh cosh tanh exp ln log` (written
+  `sin x` or `sin(x)`) and `sqrt abs min max` (parentheses required; `min` and `max` take two arguments). A letter
+  written directly before `(` is a function application (`f(x)`, read "f of x"); a space makes a product.
+- A subscript is a number, a letter, a Greek letter, a word (`v_max`, drawn upright) or a parenthesised list; a
+  superscript is a number, a name, a function with parentheses or a parenthesised list, with an optional sign
+  (`x^-1`). Parentheses around a fraction's numerator or denominator, or around a script, group only and are not
+  drawn or read. `a/b/c` is refused (write `(a/b)/c`), and so is a second superscript (`x^2^3`).
+- Units go in brackets: `[m/s^2]`, `[N·m]`, `[J/(kg K)]`, drawn upright with `·` between units. The unit names are
+  `m cm mm km nm s ms min h kg g mg N kN J kJ eV W kW Pa kPa Hz kHz V mV A mA C ohm T K degC deg rad mol L mL percent`
+  (`ohm` draws Ω, `degC` °C, `deg` °, `percent` %), each with an optional power `^2` or `^3`, and at most one `/`.
+  A unit is read in the plural ("9.8 metres per second squared") except after the number 1 ("1 metre"); powers
+  above the bar are read "square" and "cubic", below it "squared" and "cubed".
+- Spoken form, deterministic: operators as words ("plus", "minus", "plus or minus", "times", "equals", "is not
+  equal to", "is approximately equal to", "is less than or equal to", "is greater than or equal to"); `^2` and `^3`
+  as "squared" and "cubed", other powers "to the power n"; subscripts "sub"; fractions of whole numbers 1–9 over 2–10
+  in words ("one half", "three quarters"), "a over b" for two single symbols, otherwise "the fraction with numerator
+  … and denominator …"; parentheses "open paren … close paren" around anything longer than one symbol; capital Greek
+  letters "capital delta". A power, subscript, root or absolute value longer than one symbol ends with "end power",
+  "end sub", "end root" or "end absolute value", so the reader hears where it stops.
+- Bounds (`MGLimits`, new style only): at most 80 Unicode scalars (`mathLength`) and 48 tokens (`mathTokens`), and
+  fractions, scripts, roots, function arguments and parentheses nested at most 4 deep (`mathDepth`). Reasons, first
+  match wins: `text.math` (empty, too long, or a character outside the alphabet: ASCII letters, digits, spaces,
+  `. + - * / ^ _ ( ) [ ] , =`, `± · × − ≤ ≥ ≠ ≈ °` and the Greek letters; braces and line breaks included),
+  `text.math.syntax` (a malformed number), `text.math.tokens`, `text.math.depth` (parentheses), then left to right
+  `text.math.syntax`, `text.math.name` (an unknown name) and `text.math.unit` (anything wrong inside `[ ]`), and
+  last `text.math.depth` (the nesting).
+
+`MGGrammar.document()` lists the vocabulary under `math`. The [math cases](fixtures/v1/math.cases.json) hold the
+golden spoken forms and refusals; XCTest checks them against the parser and
+[`tools/mg_math.py`](../tools/mg_math.py), an offline mirror that `tools/scene_v1_check.py` uses, checks them in
+the hosted `hygiene` job.
+
+Not checked: whether a formula is correct mathematics, how the drawn runs look on a Mac or a device (pending the
+Mac run), and how VoiceOver pronounces the spoken form on a device.
+
 ## Explainer boards
 
 An [explainer document](EXPLAINER.md) embeds a v1 scene as its `board`. The wire format does not change: a board is
@@ -1030,6 +1120,8 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `scene.depth`, `patch.depth`, `template.params.depth` | JSON text or a value built in code nests deeper than `MGLimits.depth` (64 levels) | Send a flatter value; real scenes and patches nest 6 to 15 levels. |
 | `scene.key.duplicate.<path>` | An object in the scene text repeats a key; `<path>` names it from the root (`items.1.at`) | Keep one value for each key; `MGRepairHint.text(for:)` gives a one-line fix. |
 | `3d.text.code` | `code` text in a 3D scene | Use plain text in 3D, or keep the scene 2D. |
+| `3d.text.math` | `math` text in a 3D scene | Write the formula as plain text in 3D, or keep the scene 2D. |
+| `text.math`, `text.math.syntax` / `.tokens` / `.depth` / `.name` / `.unit` | Math text is empty, too long, outside the alphabet (braces included), malformed, over its bounds, names an unknown name, or has an unknown unit | See [math text](#math-text). |
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |
 | `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them; a `curve`, and each edit of it, counts 2, and so do a `func` with readouts and each edit of it that can change one) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs, fewer edits of them or fewer readouts, or split the board. |
@@ -1080,6 +1172,7 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text; table 8 rows × 6 columns / cells up to 12 characters; region 3–64 points |
 | Graphs (new kinds only) | 6 graph checks per scene (each `func` / `field` / `curve` item, and each step or `over` edit of one; 2 for a `curve` and each edit of it, and for a `func` with readouts and each edit of it that can change one); expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `curve` 257 samples of `theta`, a span of 0.001–100 within ±1,000, 16 breaks, 1 % of the frame's shorter side; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters; `func` readouts 3, an area on 128 panels (962 evaluations), at most 3 readout computations per parse |
 | Sliders (new key only) | 3 per scene; range within ±1,000; at most 100 steps; 6 slider-graph pairs; labels 40 characters |
+| Math text (the `math` style only) | 80 scalars / 48 tokens / 4 nested levels (fractions, scripts, roots, arguments, parentheses) |
 | Raw template params | 4 KiB canonical `params` object |
 | Nesting (arrays and objects on one path) | 64 levels (`MGLimits.depth`); lessons 59 per statement |
 | Lesson `animate` | 2 per beat and per host `apply` batch, 24 per stream (`lesson.animate.count`); see [lessons](LESSONS.md#limits-and-reasons) |

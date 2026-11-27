@@ -93,7 +93,7 @@ the closed-key, number and text helpers or from a parameter, a func id or a func
 more: 3 static reasons (`curve.form`, `curve.theta`, `curve.period`; the last two are also kind–field families), the
 kind's missing and unknown families and 16 kind–field families, each with its own hint. Their meeting with the
 readouts and the sliders adds 2 more static reasons (`curve.readouts`: readouts are `func` numbers; `slider.curve`: a
-slider may not drive a curve), each with its own hint. The baseline validator printed
+slider may not drive a curve), each with its own hint. Math text adds its 3D refusal and raw text reason. The baseline validator printed
 extra detail text for 3 of them (`SceneValidator.swift:153`, `:167` and `:172` at 5e4952e).
 
 **Lint on the frozen baseline outputs.** `tools/scene_lint.py` gives 10 findings in 7 of 32 scenes: 4 warnings

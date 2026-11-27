@@ -10,6 +10,10 @@
    "hint": "code text is 2D only; use plain text in 3D"
   },
   {
+   "reason": "3d.text.math",
+   "hint": "math text is 2D only; in 3D write the formula as plain text"
+  },
+  {
    "reason": "alt",
    "hint": "alt: 1-200 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences"
   },
@@ -1190,8 +1194,32 @@
    "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
   },
   {
+   "reason": "text.math",
+   "hint": "math text is 1-80 characters: ASCII letters, digits, spaces, . + - * / ^ _ ( ) [ ] , = and ± · × − ≤ ≥ ≠ ≈ ° and Greek letters; no braces (placeholders) and no line breaks"
+  },
+  {
+   "reason": "text.math.depth",
+   "hint": "fractions, scripts, roots, function arguments and parentheses nest at most 4 deep"
+  },
+  {
+   "reason": "text.math.name",
+   "hint": "a name is one letter (write m a, not ma), a Greek letter name such as theta or Delta, inf, or one of the functions sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, exp, ln, log, sqrt, abs, min, max; put units in brackets: 9.8 [m/s^2]"
+  },
+  {
+   "reason": "text.math.syntax",
+   "hint": "the math is malformed: close each parenthesis and bracket, give ^ and _ something to raise or lower, write (a/b)/c rather than a/b/c, put parentheses after sqrt, abs, min and max (min and max take two arguments), and write numbers like 2, 0.5 or .5"
+  },
+  {
+   "reason": "text.math.tokens",
+   "hint": "math text has at most 48 tokens (numbers, names and symbols); shorten it or split it into two text items"
+  },
+  {
+   "reason": "text.math.unit",
+   "hint": "units go in brackets, from m, cm, mm, km, nm, s, ms, min, h, kg, g, mg, N, kN, J, kJ, eV, W, kW, Pa, kPa, Hz, kHz, V, mV, A, mA, C, ohm, T, K, degC, deg, rad, mol, L, mL, percent, with powers ^2 or ^3 and at most one /, as in [m/s^2] or [J/(kg K)]"
+  },
+  {
    "reason": "text.style",
-   "hint": "style is label, callout, title or code"
+   "hint": "style is label, callout, title, code or math"
   },
   {
    "reason": "text.text",

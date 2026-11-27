@@ -11,9 +11,10 @@ import stat
 import unicodedata
 
 try:
-    from tools import mg_expr
+    from tools import mg_expr, mg_math
 except ImportError:  # run as tools/scene_v1_check.py
     import mg_expr
+    import mg_math
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "docs/schemas/scene-v1.draft.schema.json").read_text(encoding="utf-8"))
@@ -197,7 +198,7 @@ def shape_reason(scene, error):
                 if error.keyword == "not":
                     return "vector.dir"
             if len(path) == 2 and error.keyword == "not" and kind == "text":
-                return "3d.text.code"
+                return "3d.text.math" if item.get("style") == "math" else "3d.text.code"
             if len(path) > 2 and path[2] != "k":
                 key = path[2]
                 if kind == "array" and key == "vals" and len(path) > 3:
@@ -318,6 +319,13 @@ def item_rules(item, dimensions, template, readouts=None):
             multiline = kind == "text" and key == "text"
             text_rules(item[key], f"{kind}.{key}", template,
                        code=multiline and item.get("style") == "code", multiline=multiline, readouts=readouts)
+    if kind == "text" and item.get("style") == "math":
+        # The markup rules mirrored in tools/mg_math.py, on the raw text (a placeholder brace is not math). A 3D scene
+        # was refused by the schema already (3d.text.math).
+        try:
+            mg_math.check_text_item(item)
+        except mg_math.Refusal as refusal:
+            raise Invalid(refusal.reason) from refusal
 
     if dimensions:
         span = max(dimensions)

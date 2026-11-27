@@ -106,6 +106,10 @@ public enum MGLimits {
     /// measured, so one readout computation cost at most about a third of a check (29,190 evaluations) there
     /// (docs/PROTOCOL.md, "Readouts: slopes and areas").
     public static let readoutWeight = 2
+    /// Math text (`MGMathText`, text style `math`): at most this many Unicode scalars and tokens, and fractions,
+    /// scripts, roots, function arguments and parentheses nested at most `mathDepth` deep. Like the bounds above,
+    /// these apply to the new style only; no existing limit changes.
+    public static let mathLength = 80, mathTokens = 48, mathDepth = 4
 }
 
 public struct MGError: Error, Equatable, CustomStringConvertible {
@@ -761,6 +765,12 @@ public enum MGParser {
                 // The 3D view draws text centred and proportional, so it cannot show a code listing faithfully.
                 guard !ctx.is3D else { throw MGError("3d.text.code") }
                 it.flags.insert("code")
+            case .string("math"):
+                // Typeset by the 2D canvas from the markup (MGMathText), with an engine-written spoken form. The raw text
+                // is parsed, so a template placeholder (a brace) is refused: a filled value is not math.
+                guard !ctx.is3D else { throw MGError("3d.text.math") }
+                if case .string(let raw)? = o["text"] { _ = try MGMathText.parse(raw.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                it.flags.insert("math")
             default: throw MGError("text.style")
             }
         case .highlight:
@@ -1168,7 +1178,7 @@ extension MGItem {
         case .text:
             o["at"] = pt(at(0)); o["text"] = .string(text ?? "")
             if has("callout") { o["style"] = .string("callout") }; if has("title") { o["style"] = .string("title") }
-            if has("code") { o["style"] = .string("code") }
+            if has("code") { o["style"] = .string("code") }; if has("math") { o["style"] = .string("math") }
         case .highlight: o["target"] = .string(ref ?? "")
         case .bars:
             o["at"] = pt(at(0)); put("w"); put("h"); if let text { o["unit"] = .string(text) }
