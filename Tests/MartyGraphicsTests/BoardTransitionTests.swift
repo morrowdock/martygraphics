@@ -617,8 +617,10 @@ final class BoardTransitionHostTests: XCTestCase {
         try assertSplit(rig, "first frame")
 
         // Ticks: the live layer redraws with the motion and the draw-on, the base never does. (Mac run #25: a base that
-        // had cached the zone and the floor mid-draw-on differed here by 3 levels on average.)
+        // had cached the zone and the floor mid-draw-on differed here by 3 levels on average.) Both canvases read the
+        // step's items from the controller (`MGTimelineCache`): no tick, repartition or base redraw computes them again.
         let live = rig.probe.liveDraws
+        let computed = rig.controller.timeline.computed
         for _ in 0..<12 { rig.advance(1.0 / 30); rig.settle(0.05) }
         XCTAssertEqual(rig.probe.baseDraws, base, "a tick redrew the base")
         XCTAssertGreaterThan(rig.probe.liveDraws, live + 3, "the live layer ticks")
@@ -639,12 +641,16 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertGreaterThan(rig.probe.liveDraws, afterDrawOn + 3, "the live layer ticks")
         XCTAssertEqual(rig.probe.draws.last?.layer, .live(["zone", "floor"]), "each tick draws the live layer without the static prefix")
         try assertSplit(rig, "ticks after the draw-on")
+        XCTAssertEqual(rig.controller.timeline.computed, computed, "a tick or the repartition computed the step's items again")
 
         // A new revision that moves a base item. Until the board's clock runs the blend, the board draws one canvas;
         // then the base is drawn again with the floor where the revision put it.
         try rig.patch(#"{"v":1,"ops":[{"op":"set","id":"floor","key":"to","value":[11,2]}]}"#)
         assertOneCanvasUntilTheBoardsClockMoves(rig, "revision")
+        let afterRevision = rig.controller.timeline.computed
+        XCTAssertGreaterThan(afterRevision, computed, "revision: the new revision's items were never computed")
         try settleSplit(rig, "revision", baseDraws: &base, advance: 1.5)
+        XCTAssertEqual(rig.controller.timeline.computed, afterRevision, "revision: a tick or the split computed the step's items again")
         let revised = try lastBaseDraw(rig)
         XCTAssertEqual(revised.ids, ["zone", "floor"], "revision: the static prefix is in the base")
         XCTAssertEqual(try item("floor", revised.draw.input).pts.last, MGPoint(11, 2), "revision: the base has the revised floor")
@@ -652,7 +658,10 @@ final class BoardTransitionHostTests: XCTestCase {
         // then a base drawn with the step's camera.
         try XCTUnwrap(rig.probe.go)(1)
         assertOneCanvasUntilTheBoardsClockMoves(rig, "step")
+        let afterStep = rig.controller.timeline.computed
+        XCTAssertGreaterThan(afterStep, afterRevision, "step: the step's items were never computed")
         try settleSplit(rig, "step", baseDraws: &base, advance: 1.5)
+        XCTAssertEqual(rig.controller.timeline.computed, afterStep, "step: a tick or the split computed the step's items again")
         let stepped = try lastBaseDraw(rig)
         let s = try XCTUnwrap(rig.controller.scene)
         let size = stepped.draw.size

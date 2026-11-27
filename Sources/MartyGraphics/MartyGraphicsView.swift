@@ -282,8 +282,6 @@ struct MGSceneHost: View {
     @State private var cameraFrom: MGCamera?
     @State private var cameraStart = Date.distantPast
     @State private var shownScene: MGScene?
-    /// The current step's items, kept until the scene or step changes (not rebuilt from the step edits every frame).
-    @State private var stepItems = MGStepItemsCache()
     /// Engine keyframe segments being played, on a clock that a lesson pause can hold.
     @State private var keyframes: [MGAdoption.Segment] = []
     @State private var keyframeClock = MGTransitionClock(start: .distantPast)

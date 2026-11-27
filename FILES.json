@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f371c583af85874f8c06bec5eee7d976039903bc6860005d68f74a560b5a1ebf"
+      "sha256": "0efe9af478169de2ebcc53299be74a6ec2588c11d1240207be3e254d57609390"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -855,7 +855,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "cb0c1b15eff9906a91d398386cced638c0bc4579cfdd7828f549fad900b5597a"
+      "sha256": "d3adf71c0a6c05c91197fb8f2e8d120274572131cce1c07ae06f45597ddacf29"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -4923,7 +4923,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCanvasLayers.swift",
-      "sha256": "f23c49e20e684f7985ef76024492c415ae213a1fe6a2fd7642794788a4a27691"
+      "sha256": "88819122e4ae9791bbe25b862543a6aed821ad8bb281121dc6ab7278d7215597"
     },
     {
       "path": "Sources/MartyGraphics/MGEasing.swift",
@@ -4943,7 +4943,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/BoardTransitionTests.swift",
-      "sha256": "7cc5141c65f181966ce3651ee689ad0b3c3074370f66f0b880cc54e9fd3b6c8e"
+      "sha256": "cfaf67ab796e7574aeece4c7eeba2571490a3d8a9adebd3cde03116a426276f9"
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineStillsTests.swift",
@@ -4955,7 +4955,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/RenderQualityTests.swift",
-      "sha256": "2d6cbd35760e761b828b561ade4db1329e34622050ac737950f765c2b99b6192"
+      "sha256": "7066a7e0a48d68caf7919ea519df9b8f904972ee9bea7e2de04d79812467ddb3"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidGroundCacheTests.swift",
@@ -4967,7 +4967,7 @@
     },
     {
       "path": "docs/ENGINE.md",
-      "sha256": "aef2417091616ac1bc6fe31be07373e3d9298e33524e5d3b9bb5e0674f14143e"
+      "sha256": "9c211eea25606d93d3783cb7a2ce937dc253af4dcf67c456c42ccf4f18e6d971"
     },
     {
       "path": "tools/render-blender/mgrender/loop.py",

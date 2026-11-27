@@ -87,21 +87,3 @@ public enum MGCanvasLayers {
         return Set(items.filter { !live.contains($0.id) && MGCanvasRenderer.rank($0) < lowest }.map(\.id))
     }
 }
-
-/// The items of a scene at one step (`MGTimeline.items`), kept until the scene or the step changes: a live 2D board
-/// otherwise re-applies every step's edits to the scene on every frame. Keyed by the controller that stamped the scene,
-/// its revision and the step; a controller's revisions only increase, so one key never names two scenes. Main thread
-/// only (the board's Canvas draws synchronously).
-final class MGStepItemsCache {
-    private struct Key: Equatable { let controller: ObjectIdentifier; let revision: Int; let step: Int }
-    private var key: Key?
-    private var cached: [MGItem] = []
-
-    func items(_ scene: MGScene, step: Int, controller: AnyObject) -> [MGItem] {
-        let k = Key(controller: ObjectIdentifier(controller), revision: scene.revision, step: step)
-        if k == key { return cached }
-        cached = MGTimeline.items(scene, step: step)
-        key = k
-        return cached
-    }
-}

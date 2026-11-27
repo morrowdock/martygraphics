@@ -285,19 +285,29 @@ final class RenderQualityTests: XCTestCase {
         XCTAssertNotEqual(try bytes(try render(.base(base))), one, "the base alone is not the frame")
     }
 
+    /// The 2D board, both canvases of a split board included, reads the step's items from its controller
+    /// (`MGSceneController.timelineItems`, `MGTimelineCache`): once per scene revision and step, never per frame.
     @MainActor func testStepItemsAreCachedPerSceneRevisionAndStep() throws {
         let scene = try XCTUnwrap(MGFixtures.all.first { $0.id == "cells" }?.scene)
         let controller = MGSceneController(scene: scene)
-        let cache = MGStepItemsCache()
         let first = try XCTUnwrap(controller.scene)
-        XCTAssertEqual(cache.items(first, step: 0, controller: controller), MGTimeline.items(first, step: 0))
-        XCTAssertEqual(cache.items(first, step: 1, controller: controller), MGTimeline.items(first, step: 1))
-        XCTAssertEqual(cache.items(first, step: 1, controller: controller), MGTimeline.items(first, step: 1))
+        XCTAssertEqual(controller.timelineItems(first, step: 0), MGTimeline.items(first, step: 0))
+        XCTAssertEqual(controller.timelineItems(first, step: 1), MGTimeline.items(first, step: 1))
+        let computed = controller.timeline.computed
+        XCTAssertEqual(controller.timelineItems(first, step: 1), MGTimeline.items(first, step: 1))
+        XCTAssertEqual(controller.timeline.computed, computed, "another frame of the step reuses its items")
         let patch = try MGPatch.parse(data: Data(#"{"v":1,"ops":[{"op":"set","id":"grid","key":"marked","value":[[1,1]]}]}"#.utf8)).get()
         XCTAssertTrue(controller.apply(patch: patch))
         let next = try XCTUnwrap(controller.scene)
         XCTAssertNotEqual(next.revision, first.revision)
-        XCTAssertEqual(cache.items(next, step: 1, controller: controller), MGTimeline.items(next, step: 1), "a new revision is not served stale")
+        XCTAssertEqual(controller.timelineItems(next, step: 1), MGTimeline.items(next, step: 1), "a new revision is not served stale")
+        XCTAssertEqual(controller.timeline.computed, computed + 1)
+        // A replacement scene equal to the first one (a blend back to it) still has a revision of its own.
+        controller.show(scene)
+        let shown = try XCTUnwrap(controller.scene)
+        XCTAssertNotEqual(shown.revision, next.revision)
+        XCTAssertEqual(controller.timelineItems(shown, step: 1), MGTimeline.items(shown, step: 1), "a replacement scene is not served stale")
+        XCTAssertEqual(controller.timeline.computed, computed + 2)
     }
 
     // MARK: Export presets

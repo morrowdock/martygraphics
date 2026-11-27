@@ -17,7 +17,7 @@ vectors (the robot joint's seamless manifest) for a later Python parity test.
 
 ```text
 2D board (live view, lessons, explainer board pane)
-  scene JSON ─ MGParser ─► MGScene ─ MGTimeline.items(step) ─ MGStepItemsCache (once per scene revision and step)
+  scene JSON ─ MGParser ─► MGScene ─ MGTimeline.items(step) ─ MGTimelineCache (once per scene revision and step)
       ─ MGTimeline.frame(time)  motion: slide, orbit, projectile, oscillate, move
       ─ MGTween.sample          engine keyframes (true rotations, ≤ 5° apart)
       ─ MGBoardTransition       step and patch changes by MGTransitionStyle: .spring (the default, unchanged)
@@ -131,8 +131,9 @@ rank of any live item. A static item at or above that rank is drawn in the live 
 items' labels included), the emphasis rings, the markers and the focus ring. The base canvas sits outside the
 `TimelineView`, so frame-loop ticks never redraw it; SwiftUI redraws it whenever the board view is evaluated again,
 which is any change of the board's state (scene revision, step, size, theme, teaching modifiers). Each canvas draws
-for its own size, so both layers share one viewport. The current step's items are kept per controller, scene
-revision and step (`MGStepItemsCache`).
+for its own size, so both layers share one viewport. Both canvases read the current step's items from the
+controller's cache, which computes them once per scene revision and step (`MGSceneController.timelineItems`,
+`MGTimelineCache`), so no tick, repartition or base redraw applies the step edits again.
 
 The split also follows the board's own clock, which a lesson or explainer host sets (`presentationClock`), while the
 transition window ends on a wall-clock wait. `MGBoardTransition.phase` says where the step and patch transitions stand
@@ -295,7 +296,7 @@ Findings at `5e4952e` (`file:line` there), with what this branch did.
 | 4 | Timing | Items that leave a step vanish at once; with Reduce Motion there is no transition at all and the frame loop never runs. | `Sources/MartyGraphics/MartyGraphicsView.swift:429`; `Sources/MartyGraphics/MGRenderPolicy.swift:26` | Opt-in: fade out and the Reduce Motion dissolve (`MGRenderPolicy.dissolving`) on a `.bounded` board; the default board still snaps |
 | 5 | Text | Greedy placement with a least-overlap fallback and no leader lines: a pushed-away label loses its anchor; boxes sit on fractional points. | `Sources/MartyGraphics/MGLayout.swift:122`; `Sources/MartyGraphics/MGCanvasRenderer.swift:299` | Fixed: `MGLabelLayout` |
 | 6 | Arrows | The head (7...14 points) is longer than a short arrow, so while an arrow draws on its head reaches behind the tail and the shaft is stroked backwards; a dashed shaft can end in a gap; 2D-video shafts are stroked to the tip, so the line end shows past the sharp head. | `Sources/MartyGraphics/MGCanvasRenderer.swift:345`, `:347`, `:355`; `Sources/MartyGraphics/MGVideoDrawing.swift:155` | Fixed: `MGArrowGeometry`, a shorter video shaft (default output change) |
-| 7 | Performance | Every 2D frame re-applies every step's edits, and the whole board (gradient, dot grid, every item with its shadow layers) redraws at 60 Hz while anything moves. | `Sources/MartyGraphics/MartyGraphicsView.swift:426`, `:282`; `Sources/MartyGraphics/MGTimeline.swift:44` | Fixed: `MGStepItemsCache`, a base canvas outside the frame loop (live-board check pending) |
+| 7 | Performance | Every 2D frame re-applies every step's edits, and the whole board (gradient, dot grid, every item with its shadow layers) redraws at 60 Hz while anything moves. | `Sources/MartyGraphics/MartyGraphicsView.swift:426`, `:282`; `Sources/MartyGraphics/MGTimeline.swift:44` | Fixed: the step's items come from the controller's `MGTimelineCache` (on main); a base canvas outside the frame loop (live-board check pending) |
 | 8 | Performance | `setCamera` rebuilds the ground, the contact blob and two 256 × 256 alpha images on every call, so once per loop and story frame, although they depend only on the default pose. | `Sources/MartyGraphics/Solid/MGSolidRenderer.swift:492`, `:824`, `:855` | Fixed: the ground is rebuilt only when the rest bounds change; the key light's frustum is refitted on its own inputs |
 | 9 | Export | One H.264 profile (0.2 bit per pixel, 2 s key frames) tagged with the sRGB transfer function only: no destination presets, no BT.709 or P3 option, no alpha; pooled buffers are drawn over without clearing. | `Sources/MartyGraphics/MGMovieWriter.swift:27`, `:34`, `:38`, `:112` | Fixed: `MGExportPreset` (tags requested; decoded check pending), buffers cleared (default output change) |
 | 10 | Hairlines | 1-point lines and 2-point dots at fractional positions blur at 1x and 3x (table grid, plot grid, label borders, board dots). | `Sources/MartyGraphics/MGCanvasRenderer.swift:468`, `:394`, `:304`, `:336` | Fixed: half-point lines, whole-point dots and boxes |
