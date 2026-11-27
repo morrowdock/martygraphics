@@ -469,3 +469,50 @@ class SetupPinTests(unittest.TestCase):
             self.assertEqual(run.returncode, 2)
             self.assertIn("no committed SHA-256 pin", run.stderr)
             self.assertEqual(os.listdir(opt), [])                     # nothing downloaded or extracted
+
+
+class SelftestPinTests(unittest.TestCase):
+    """selftest.sh attests to the pinned Blender: 127 without an executable, 3 for any other version."""
+    HERE = Path(__file__).resolve().parents[1] / "render-blender"
+
+    def test_selftest_pin_is_the_setup_pin(self):
+        selftest = (self.HERE / "selftest.sh").read_text(encoding="utf-8")
+        setup = (self.HERE / "setup.sh").read_text(encoding="utf-8")
+        pin = re.search(r'^PINNED_BLENDER_VERSION="([0-9.]+)"$', selftest, re.M).group(1)
+        self.assertIn('BLENDER_VERSION="${BLENDER_VERSION:-%s}"' % pin, setup)
+        self.assertIn("| %s LTS" % pin, (self.HERE / "ASSETS.md").read_text(encoding="utf-8"))
+
+    def run_selftest(self, home, fake=None, version=None, **env):
+        """Run selftest.sh with a fake `blender` at `fake` that reports `version` and fails everything else."""
+        if fake:
+            fake.parent.mkdir(parents=True, exist_ok=True)
+            fake.write_text('#!/bin/sh\n[ "$1" = --version ] && { echo "Blender %s"; exit 0; }\nexit 1\n' % version)
+            fake.chmod(0o755)
+        environment = {k: v for k, v in os.environ.items() if not k.startswith(("BLENDER", "BUSY_"))}
+        environment.update(HOME=str(home), **env)
+        return subprocess.run(["bash", str(self.HERE / "selftest.sh"), str(home / "work")], capture_output=True,
+                              text=True, timeout=60, env=environment)
+
+    @unittest.skipUnless(os.name == "posix" and shutil.which("bash") and shutil.which("python3"), "needs bash")
+    def test_missing_and_wrong_blender_fail_with_their_own_codes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            default = home / "opt" / "blender-5.2.4" / "blender"
+            missing = self.run_selftest(home)
+            self.assertEqual(missing.returncode, 127, missing.stderr)
+            self.assertIn("Blender not found", missing.stderr)
+            other = home / "other" / "blender"
+            newer = home / "opt" / "blender-5.3.0" / "blender"
+            for fake, version, env in [(default, "5.2.3 LTS", {}), (default, "unparsable", {}),
+                                       (other, "5.2.40", {"BLENDER": str(other)}),
+                                       (newer, "5.3.0 LTS", {"BLENDER_VERSION": "5.3.0"})]:
+                with self.subTest(version=version, env=env):
+                    run = self.run_selftest(home, fake, version, **env)
+                    self.assertEqual(run.returncode, 3, run.stderr)
+                    self.assertIn("not the pinned 5.2.4", run.stderr)
+            for fake, env in [(default, {}), (other, {"BLENDER": str(other)})]:
+                with self.subTest(pinned=str(fake)):
+                    run = self.run_selftest(home, fake, "5.2.4 LTS", **env)
+                    self.assertEqual(run.returncode, 1, run.stderr)  # past the pin check; the fake cannot export
+                    self.assertIn("Blender 5.2.4 (the pinned version)", run.stdout)
+                    self.assertIn("export failed", run.stderr)

@@ -216,6 +216,10 @@
   says how to make a new receipt. `.build` folders and the `vendor` and `third_party` roots are not packages. The new
   `tools/write_native_receipt.py` runs the Mac package commands with the same package discovery and writes the
   receipt outside a clean checkout.
+- Native receipt reuse also reads `Package@swift-*.swift` manifests and the target of a `.swift` symlink, and refuses
+  reuse when a submodule sits in a covered path or package. `tools/render-blender/selftest.sh` checks that
+  `blender --version` is the pinned 5.2.4, even with `BLENDER` or `BLENDER_VERSION` set, and exits 127 without a
+  Blender executable and 3 for another version.
 - Changelog: there is one `[Unreleased]` section. The entries of a second, unbracketed `Unreleased` section moved
   into it under standard categories, with their text unchanged.
 - Changelog correction: the "Looks and quality levels" entry under Added says `classic` (the default). Since "`studio`

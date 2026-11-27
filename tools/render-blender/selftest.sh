@@ -8,13 +8,22 @@
 # Usage: tools/render-blender/selftest.sh [work-dir]   (default: a new temporary directory)
 set -euo pipefail
 
+# Exit codes: 127 = no Blender executable, 3 = Blender is not the pinned version, 1 = any other failure.
+
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BLENDER="${BLENDER:-$HOME/opt/blender-${BLENDER_VERSION:-5.2.4}/blender}"
+# The documented pin (ASSETS.md, setup.sh). A pass attests to this version, so BLENDER and BLENDER_VERSION only say
+# where to find it: `blender --version` must report it either way.
+PINNED_BLENDER_VERSION="5.2.4"
+BLENDER="${BLENDER:-$HOME/opt/blender-${BLENDER_VERSION:-$PINNED_BLENDER_VERSION}/blender}"
+say() { printf 'selftest: %s\n' "$*"; }
+die() { printf 'selftest: FAIL: %s\n' "$1" >&2; exit "${2:-1}"; }
+[ -x "$BLENDER" ] || die "Blender not found at $BLENDER (run setup.sh)" 127
+FOUND="$("$BLENDER" --version 2>/dev/null | sed -n '1s/^Blender \([0-9][0-9.]*\).*/\1/p' || true)"
+[ "$FOUND" = "$PINNED_BLENDER_VERSION" ] \
+  || die "Blender at $BLENDER reports version ${FOUND:-unknown}, not the pinned $PINNED_BLENDER_VERSION" 3
+say "Blender $FOUND (the pinned version) at $BLENDER"
 WORK="${1:-$(mktemp -d "${TMPDIR:-/tmp}/mg-render-selftest.XXXXXX")}"
 EXPORT="$WORK/export"; OUT="$WORK/render-preview"
-say() { printf 'selftest: %s\n' "$*"; }
-die() { printf 'selftest: FAIL: %s\n' "$*" >&2; exit 1; }
-[ -x "$BLENDER" ] || die "Blender not found at $BLENDER (run setup.sh)"
 mkdir -p "$WORK"
 
 # Optional busy guard (off unless BUSY_LOCK_PATH, BUSY_PROCESS_PATTERN or BUSY_COMMAND is set; see README).

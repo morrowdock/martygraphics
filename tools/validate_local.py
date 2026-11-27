@@ -34,6 +34,8 @@ SWIFT_PATH_LITERAL = re.compile(r'"([A-Za-z0-9_.+-][A-Za-z0-9_./+-]*)')
 MANIFEST_LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
 MANIFEST_PATH_ARGUMENT = re.compile(r'\bpath\s*:\s*"((?:[^"\\\n]|\\.)*)"')
 SYMLINK_MODE = "120000"
+GITLINK_MODE = "160000"
+REGULAR_MODES = ("100644", "100755")
 
 
 def git(*args, cwd=None):
@@ -273,19 +275,26 @@ def native_scope(trees, blobs):
     `trees` maps a label to {path: (mode, oid)}; `blobs` maps an object id to its bytes. Swift sources and package
     manifests come from these trees only. A covered symlink adds its tracked target as an input (as many times as
     needed to reach a fixed point); a covered symlink whose target leaves the repository or does not exist in its
-    tree is a problem."""
+    tree is a problem. A `.swift` symlink is scanned as the text of its target, whatever that is called. A submodule
+    (gitlink) at or under a covered path or a package folder is a problem: its files are not in either tree."""
     union = set().union(*(set(t) for t in trees.values()))
     packages = native_packages(union)
     swift, manifests, external = [], [], set()
     for entries in trees.values():
+        folders = folders_of(entries)
         for path, (mode, oid) in entries.items():
-            if mode == SYMLINK_MODE:
+            if mode == SYMLINK_MODE and path.endswith(".swift"):
+                oid = swift_link_target(path, entries, folders, blobs)
+                if oid:
+                    swift.append(blobs[oid].decode("utf-8", "replace"))
+                continue
+            if mode not in REGULAR_MODES:
                 continue
             if path.endswith(".swift"):
                 swift.append(blobs[oid].decode("utf-8", "replace"))
-            folder = path.rpartition("/")[0] or "."
-            if path.rpartition("/")[2] == "Package.swift" and folder in packages:
-                manifests.append((folder, blobs[oid].decode("utf-8", "replace")))
+            folder, _, name = path.rpartition("/")
+            if (name == "Package.swift" or ROOT_MANIFEST.fullmatch(name)) and (folder or ".") in packages:
+                manifests.append((folder or ".", blobs[oid].decode("utf-8", "replace")))
     for package, manifest in manifests:
         external |= manifest_inputs(package, manifest, union, packages)[1]
     inputs = set(native_inputs(union, swift, packages, manifests))
@@ -303,16 +312,35 @@ def native_scope(trees, blobs):
                     inputs.update([p for p in via + [target] if p and not covers(p, packages, inputs)])
         inputs = set(dedupe(inputs, packages))
     problems |= {"%s (dependency outside the repository)" % e for e in external}
+    for label, entries in trees.items():
+        problems |= {"%s (submodule; its files are not in the tree at %s)" % (path, label)
+                     for path, (mode, _) in entries.items() if mode == GITLINK_MODE and (
+                         covers(path, packages, inputs) or any(path == p or path.startswith(p + "/") or p == "."
+                                                               for p in packages))}
     return {"packages": packages, "inputs": sorted(inputs), "problems": sorted(problems)}
 
 
+def swift_link_target(path, entries, folders, blobs):
+    """The object id of the regular file a `.swift` symlink resolves to in its tree, or None."""
+    target = resolve_link(path, entries, folders, blobs)[0]
+    entry = entries.get(target)
+    return entry[1] if entry and entry[0] in REGULAR_MODES else None
+
+
 def scope_blobs(trees, root):
-    """Every blob native_scope reads: Swift sources, package manifests and symlink targets."""
+    """Every blob native_scope reads: Swift sources, package manifests, symlinks and what `.swift` symlinks name."""
     wanted = []
     for entries in trees.values():
         wanted += [oid for path, (mode, oid) in entries.items()
-                   if mode == SYMLINK_MODE or path.endswith(".swift")]
-    return read_blobs(wanted, root)
+                   if mode == SYMLINK_MODE or (mode in REGULAR_MODES and path.endswith(".swift"))]
+    blobs = read_blobs(wanted, root)
+    targets = []
+    for entries in trees.values():
+        folders = folders_of(entries)
+        targets += [swift_link_target(path, entries, folders, blobs) for path, (mode, _) in entries.items()
+                    if mode == SYMLINK_MODE and path.endswith(".swift")]
+    blobs.update(read_blobs([t for t in targets if t and t not in blobs], root))
+    return blobs
 
 
 def head_scope(sha, root=None):

@@ -52,8 +52,11 @@ It refuses a checkout with any change or untracked file and pins the full
 `HEAD` SHA as `"source"`. It finds the packages with the same rule (and the same
 code) as the reuse check in `validate_local.py`, runs the commands above for each
 package in order, and records the exit code of each package's first failing
-command, or 0 when all of them pass; a command that cannot start (no `swift`, or
-no Blender for `tools/render-blender`) counts as 127. It refuses to write a
+command, or 0 when all of them pass; a command that cannot start (no `swift`)
+counts as 127. `tools/render-blender/selftest.sh` exits 127 when there is no
+Blender executable, and 3 when `blender --version` does not report the pinned
+5.2.4, even when `BLENDER` or `BLENDER_VERSION` points elsewhere; either one is a
+failed package, never a skip. It refuses to write a
 receipt when the commands changed `HEAD` or `git status --porcelain`, and it
 exits non-zero when any package failed. Keep its complete output and exit code
 beside the receipt.

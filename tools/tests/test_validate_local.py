@@ -307,6 +307,36 @@ class ManifestAndSymlinkTests(FixtureRepo):
         self.assertEqual(len(result["links"]), 4)
         self.assertEqual(result["status"], "FAIL")
 
+    def test_version_specific_manifest_names_inputs(self):
+        manifest = ('let package = Package(name: "Fixture", targets: [\n'
+                    '    .target(name: "MartyGraphics", resources: [.copy("../../Bundled/table.json")])])\n')
+        plain = self.commit({"Bundled/table.json": "{}\n"})
+        result = self.reuse(self.commit({"Bundled/table.json": "[]\n"}), source=plain)
+        self.assertEqual((result["changed"], result["status"]), ([], "PASS"))
+        source = self.commit({"Package@swift-6.0.swift": manifest})
+        result = self.reuse(self.commit({"Bundled/table.json": "[1]\n"}), source=source)
+        self.assertIn("Bundled/table.json", result["inputs"])
+        self.assertEqual((result["changed"], result["status"]), (["Bundled/table.json"], "FAIL"))
+
+    def test_swift_symlink_is_scanned_as_its_target(self):
+        self.commit({"shared/paths.txt": 'let guide = "docs/GUIDE.md"\n'})
+        self.stage_link("notes/Paths.swift", "../shared/paths.txt")
+        source = self.commit_index()
+        result = self.reuse(self.commit({"docs/GUIDE.md": "# Changed\n"}), source=source)
+        self.assertIn("docs/GUIDE.md", result["inputs"])
+        self.assertEqual((result["changed"], result["status"]), (["docs/GUIDE.md"], "FAIL"))
+
+    def test_submodule_refuses_reuse(self):
+        for path in ["Examples/Solid3D/Deps/Lib", "docs/assets/sub", "external/Lib"]:
+            with self.subTest(path=path):
+                self.git("update-index", "--add", "--cacheinfo", "160000,%s,%s" % (self.source, path))
+                source = self.commit_index()
+                result = self.reuse(self.commit({"README.md": "# x\n"}), source=source)
+                self.assertEqual(result["links"], ["%s (submodule; its files are not in the tree at %s)" % (path, label)
+                                                   for label in ("head", "source")])
+                self.assertEqual(result["status"], "FAIL")
+                self.git("reset", "-q", self.source)
+
     def test_uncovered_link_is_documentation(self):
         source = self.linked_source({"docs/GUIDE-link.md": "/opt/elsewhere"})
         result = self.reuse(self.commit({"README.md": "# x\n"}), source=source)

@@ -116,15 +116,18 @@ when, between `TESTED_NATIVE_SOURCE_SHA` and `HEAD_SHA`:
   outside them: every `Examples/` folder without a `Package.swift` (such as
   `Examples/Explainers`), `docs/fixtures`, each existing file or folder that a
   Swift string literal in either commit names from the repository root (for
-  example `docs/assets`, `docs/REASONS.md` and `CHANGELOG.md`), each folder or file
-  a package manifest names outside the package's default layout (custom target
-  paths, resources and local dependencies, vendored ones too), and the tracked
-  target of every covered symlink. An input folder covers **every** file in it,
+  example `docs/assets`, `docs/REASONS.md` and `CHANGELOG.md`; a `.swift` symlink
+  is read as its target), each folder or file a package manifest (`Package.swift`
+  or any `Package@swift-*.swift`) names outside the package's default layout
+  (custom target paths, resources and local dependencies, vendored ones too), and
+  the tracked target of every covered symlink. An input folder covers **every** file in it,
   Markdown too. Additions, removals and renames (case-only ones too) count, so a
   receipt from before a package or file existed cannot vouch for it. Other
   Markdown in a package outside its `Sources/` and `Tests/` is documentation;
 - no covered symlink points outside the repository or at a path missing from its
-  commit, and no manifest names a dependency outside the repository;
+  commit, no manifest names a dependency outside the repository, and no submodule
+  sits at or under a covered path or a package folder (the root package's folder
+  is the whole checkout, so any submodule refuses reuse);
 - the receipt names **exactly** the packages present at `HEAD_SHA` (same spelling,
   no extra entries), each with exit 0. Byte equality alone cannot establish that a
   package's tests were run.
