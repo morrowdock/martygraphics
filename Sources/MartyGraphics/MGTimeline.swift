@@ -218,18 +218,35 @@ extension MGTimeline {
 /// frames of one step asks this cache instead. `items` is a pure function of the scene and the step; the key is the
 /// scene's `revision` and the step, so a cache may only be shared by scenes whose revisions name them uniquely.
 /// `MGSceneController` stamps every scene it holds with a revision it never reuses and owns one cache for its views.
-/// One entry: a step change or a new scene computes the items once, then every frame of that step reuses them.
+/// It keeps the last `capacity` steps read, least recently used out first, so views that share a controller and show
+/// different steps (two boards, or a board changing step) each compute a step's items once, then every frame reuses
+/// them. All entries share one revision: a read of another revision (a new scene) drops them all.
 final class MGTimelineCache {
-    private var key: (revision: Int, step: Int)?
-    private var cached: [MGItem] = []
+    /// Most steps kept. A board reads only its shown step every frame (a step change also reads the step it leaves,
+    /// once), so two boards on one controller need 2; 4 leaves room for a third view, or for a board changing step,
+    /// without evicting a step another board still draws every frame. Each entry is one array of at most
+    /// `MGLimits.resolvedItems` (40) items, and an item the step's edits left alone shares its points, lists and values
+    /// with the scene's own item (copy on write): 4 entries cost at most 160 item values plus the points of the items
+    /// those steps' edits rebuilt (a `func` or `field` edit samples its graph again).
+    static let capacity = 4
+    private var revision: Int?
+    /// Least recently used first.
+    private var entries: [(step: Int, items: [MGItem])] = []
     /// How often `items` computed the items (tests).
     private(set) var computed = 0
+    /// Steps kept now (tests).
+    var kept: Int { entries.count }
 
     func items(_ scene: MGScene, step: Int) -> [MGItem] {
-        if let key, key.revision == scene.revision, key.step == step { return cached }
-        cached = MGTimeline.items(scene, step: step)
-        key = (scene.revision, step)
+        if revision != scene.revision { entries.removeAll(); revision = scene.revision }
+        if let i = entries.firstIndex(where: { $0.step == step }) {
+            if i != entries.count - 1 { entries.append(entries.remove(at: i)) }
+            return entries[entries.count - 1].items
+        }
+        let items = MGTimeline.items(scene, step: step)
+        if entries.count == Self.capacity { entries.removeFirst() }
+        entries.append((step, items))
         computed += 1
-        return cached
+        return items
     }
 }

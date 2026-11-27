@@ -310,6 +310,25 @@ final class RenderQualityTests: XCTestCase {
         XCTAssertEqual(controller.timeline.computed, computed + 2)
     }
 
+    /// Two boards on one controller showing different steps read their own step every frame, alternately. The
+    /// controller's cache keeps both steps, so after the first read of each no frame computes the step's items again.
+    @MainActor func testTwoBoardsOnOneControllerAlternatingStepsComputeEachStepOnce() throws {
+        let json = #"{"v":1,"items":[{"id":"b","k":"body","at":[2,2]},{"id":"t","k":"text","at":[6,5],"text":"Start"}],"#
+            + #""steps":[{"say":"One."},{"say":"Two.","do":[{"id":"b","key":"at","value":[5,3]},"#
+            + #"{"id":"t","key":"text","value":"Moved"}]}]}"#
+        let controller = MGSceneController(scene: try MGParser.scene(data: Data(json.utf8)).get())
+        let scene = try XCTUnwrap(controller.scene)
+        let shown = [0, 1]  // the step each board shows
+        XCTAssertNotEqual(MGTimeline.items(scene, step: 0), MGTimeline.items(scene, step: 1), "the two steps differ")
+        let start = controller.timeline.computed
+        for frame in 0..<64 {
+            let step = shown[frame % 2]
+            XCTAssertEqual(controller.timelineItems(scene, step: step), MGTimeline.items(scene, step: step))
+            if frame == 1 { XCTAssertEqual(controller.timeline.computed, start + 2, "the first read of each step computes it") }
+        }
+        XCTAssertEqual(controller.timeline.computed, start + 2, "alternating frames of the two boards computed a step again")
+    }
+
     // MARK: Export presets
 
     func testPresetsAreWritableAndTaggedForTheirDestination() {

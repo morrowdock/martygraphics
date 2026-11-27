@@ -25,13 +25,15 @@ public final class MGSceneController: ObservableObject {
     /// Scene revisions handed out by this controller only ever increase, so a replacement scene never reuses the
     /// revision of the scene it replaced and an old patch can never match it.
     public private(set) var nextSceneRevision = 0
-    /// The visible items of the shown step, kept between frames (`MGTimelineCache`). Every scene this controller holds
-    /// carries a revision it never reuses (`stamped`), so the cache key names one scene.
+    /// The visible items of the steps its boards show, kept between frames (`MGTimelineCache`: the last 4 steps read,
+    /// so boards sharing this controller on different steps do not evict each other). Every scene this controller
+    /// holds carries a revision it never reuses (`stamped`), so the cache key names one scene.
     let timeline = MGTimelineCache()
 
     public init(scene: MGScene? = nil) { self.scene = scene.map(stamped) }
 
-    /// `MGTimeline.items(scene, step:)` for a scene this controller holds, computed once per (revision, step).
+    /// `MGTimeline.items(scene, step:)` for a scene this controller holds, computed once per (revision, step) while
+    /// that step stays among the last `MGTimelineCache.capacity` steps read.
     func timelineItems(_ scene: MGScene, step: Int) -> [MGItem] { timeline.items(scene, step: step) }
 
     /// The time base of the board's transitions (keyframes, blends, draw-on, motion). nil (the default) keeps the wall

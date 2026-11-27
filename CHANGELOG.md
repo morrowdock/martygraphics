@@ -45,10 +45,12 @@
   spring pops, leaving items vanish, Reduce Motion snaps with no frame loop).
 - Engine: while motion plays, the 2D board draws its board, grid and static prefix (static items ranked below every
   moving item) in a base canvas outside the frame loop and redraws only the live layer each tick; both read the
-  current step's items from the controller's cache. Items still drawing on or fading stay in the live layer, and
-  each canvas draws for its own size. The board draws one canvas until its blends and camera moves have ended on its
-  own clock (the lesson's presentation clock, when set), and splits once more when its last draw-on ends, so the
-  items drawn in full move into the base. The live-board check of the split is pending Mac verification.
+  current step's items from the controller's cache, which keeps the last 4 steps read (least recently used out
+  first), so boards sharing one controller on different steps each compute a step's items once. Items still drawing
+  on or fading stay in the live layer, and each canvas draws for its own size. The board draws one canvas until its
+  blends and camera moves have ended on its own clock (the lesson's presentation clock, when set), and splits once
+  more when its last draw-on ends, so the items drawn in full move into the base. The live-board check of the split is
+  pending Mac verification.
 - Engine: the solid renderer builds its ground and contact shadow once per rest bounds instead of once per frame,
   and refits the key light's shadow frustum whenever the exploded extent or the light changes.
 - Engine, intentional default output changes (pure fixes, on by default; comparison stills and the list in

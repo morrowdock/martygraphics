@@ -65,6 +65,28 @@ final class EngineBoundsTests: XCTestCase {
         XCTAssertEqual(MGDescribe.board(stepItems: cache.items(scene, step: 1), hiding: []), MGDescribe.board(scene, step: 1))
     }
 
+    func testTimelineCacheKeepsTheLastFewStepsOfTheNewestRevision() throws {
+        var scene = try MGParser.scene(data: Data(Self.scene(graphEdits: 5).utf8)).get()
+        let cache = MGTimelineCache(), n = MGTimelineCache.capacity
+        XCTAssertEqual(n, 4)
+        for step in 0..<n { XCTAssertEqual(cache.items(scene, step: step), MGTimeline.items(scene, step: step)) }
+        XCTAssertEqual(cache.computed, n)
+        // Step 0 read again becomes the most recent, so the next new step evicts step 1, the least recently used.
+        XCTAssertEqual(cache.items(scene, step: 0), MGTimeline.items(scene, step: 0))
+        XCTAssertEqual(cache.items(scene, step: n), MGTimeline.items(scene, step: n))
+        XCTAssertEqual(cache.computed, n + 1)
+        XCTAssertEqual(cache.kept, n, "the cache never holds more than its bound")
+        for step in [0, 2, 3, n] { XCTAssertEqual(cache.items(scene, step: step), MGTimeline.items(scene, step: step)) }
+        XCTAssertEqual(cache.computed, n + 1, "the kept steps are served without computing")
+        XCTAssertEqual(cache.items(scene, step: 1), MGTimeline.items(scene, step: 1))
+        XCTAssertEqual(cache.computed, n + 2, "the least recently used step was evicted")
+        // A new revision drops every entry of the old one.
+        scene.revision += 1
+        XCTAssertEqual(cache.items(scene, step: 2), MGTimeline.items(scene, step: 2))
+        XCTAssertEqual(cache.computed, n + 3)
+        XCTAssertEqual(cache.kept, 1, "the old revision's steps were dropped")
+    }
+
     // MARK: stream preview
 
     func testStreamPreviewIsNotParsedAgainWhileNothingNewCompletes() throws {

@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "0efe9af478169de2ebcc53299be74a6ec2588c11d1240207be3e254d57609390"
+      "sha256": "fd077ea39934b43847f2471b0deed215dca0380733928289b979437756afc412"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -807,7 +807,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "5268377f87ac75fce6d882415b3fe8cc68a9a403532b9d0724e859a9d5715433"
+      "sha256": "2916ac4adf2f5ff0b64798fce63d2d4e0d5589e2de5a74ae7cfe3c67f07f80a2"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -839,7 +839,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTimeline.swift",
-      "sha256": "1daff018336eee2d2dd173b8758dbc0e891f71616d9fa2c8ab66cb9197800ad4"
+      "sha256": "23df31e0caeb0f504a81935bb12816011a25123666d646322e4eb7c1f9d40583"
     },
     {
       "path": "Sources/MartyGraphics/MGTween.swift",
@@ -855,7 +855,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "d3adf71c0a6c05c91197fb8f2e8d120274572131cce1c07ae06f45597ddacf29"
+      "sha256": "7684c1dd878dbcca11b39f82d892ecd431f3f8ebcde4017c62de573ef0dcb791"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -4139,7 +4139,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineBoundsTests.swift",
-      "sha256": "2e297fc64d1b3586e932b9634effe15a45726085f7372bb6accf6e377954d940"
+      "sha256": "acee074cfe8c38608e7664bbdb218372a58288efabfade0446d4cac96bd92904"
     },
     {
       "path": "Sources/MartyGraphics/MGRepairHint.swift",
@@ -4955,7 +4955,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/RenderQualityTests.swift",
-      "sha256": "7066a7e0a48d68caf7919ea519df9b8f904972ee9bea7e2de04d79812467ddb3"
+      "sha256": "b480307d77db79b7cc862be2b8c3843b9559df8230df26b067f5fa9f4e448d37"
     },
     {
       "path": "Tests/MartyGraphicsTests/SolidGroundCacheTests.swift",
@@ -4967,7 +4967,7 @@
     },
     {
       "path": "docs/ENGINE.md",
-      "sha256": "9c211eea25606d93d3783cb7a2ce937dc253af4dcf67c456c42ccf4f18e6d971"
+      "sha256": "3416904fee44505434b7629593212fa257f10dc97b40f0f931fb48aee8fb66c4"
     },
     {
       "path": "tools/render-blender/mgrender/loop.py",

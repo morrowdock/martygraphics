@@ -41,7 +41,8 @@ public enum MGLimits {
     /// one is checked at 4 instants plus 2 × 257 loop values (29,190). So one parse of a scene, its edits included, is at
     /// most 175,140 evaluations of at most 48 operations each; a typical smooth graph needs 513 per instant. A `field`
     /// costs 2 per arrow (≤ 384). A patch or a lesson command parses the whole scene again, with the same bound per
-    /// parse. A view keeps the items of the shown step (`MGTimelineCache`), so a drawn frame does not apply the edits again.
+    /// parse. A controller keeps the items of the last 4 steps its views read (`MGTimelineCache`), so a drawn frame
+    /// does not apply the edits again, even with two boards on one controller showing different steps.
     public static let exprItems = 6
     /// A `func` is sampled on this many equal intervals (257 samples) and may break into at most `funcBreaks + 1` pieces.
     public static let funcIntervals = 256, funcBreaks = 16
