@@ -317,6 +317,10 @@ enum MGLessonEngine {
         let extra = keys.subtracting(required.union(optional))
         guard extra.isEmpty else { throw MGError("\(what).unknown.\(segments(extra))") }
     }
+    /// Lesson, explainer and snapshot reasons keep this rule instead of `MGParser.reasonKeys`. `LESSONS.md` and
+    /// `EXPLAINER.md` document it (other characters become `_`, at most 32 characters per key), and lesson tests pin
+    /// reasons such as `lesson.unknown.t_i` that `reasonKeys` would spell `lesson.unknown.?`. Both rules give one token;
+    /// `MGLessonIssue.token` caps the whole reason at 96 characters.
     static func segments(_ keys: Set<String>) -> String { keys.map(MGLessonIssue.segment).sorted().joined(separator: ",") }
 
     static func refuseForbidden(_ op: MGJSON) throws {

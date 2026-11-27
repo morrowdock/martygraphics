@@ -52,6 +52,7 @@
   all shards pass) still runs on every pull request and push, but it is no longer a required merge check: the
   required checks are `hygiene` and `maintainer/local-validation`. A red `macos` after a merge is fixed or reverted
   at once.
+- Note in the source why lesson and explainer reasons keep their own unknown-key rule.
 
 ### Added
 - Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes. Swift remains the authority.

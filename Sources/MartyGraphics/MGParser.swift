@@ -613,6 +613,8 @@ public enum MGParser {
         }
     }
 
+    /// Reason names for scene, item, `edit.key` and `patch.op` reasons: at most 4 names, and any name that is not 1–24
+    /// ASCII letters, digits or `_` becomes `?`. Lesson-owned reasons use `MGLessonEngine.segments`.
     static func reasonKeys(_ keys: [String]) -> String {
         keys.prefix(4).map { key in
             let scalars = key.unicodeScalars
