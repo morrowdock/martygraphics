@@ -11,7 +11,22 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from grammar_doc import COMMON, KINDS  # noqa: E402
+from grammar_doc import COMMON, KINDS as BASELINE_KINDS  # noqa: E402
+
+# `MGParser.allowedKeys(_:)` extras and `MGParser.required(_:)` per `MGKind` case. grammar_doc.py keeps the eval's
+# baseline grammar (main 5e4952e); main later added the `func` and `field` kinds, listed here.
+KINDS = BASELINE_KINDS + [
+    ("function", ["at", "w", "h", "xr", "yr", "y", "a", "b", "c", "period", "shade", "mark", "xl", "yl", "label"],
+     ["at", "w", "h", "xr", "yr", "y"]),
+    ("field", ["at", "w", "h", "xr", "yr", "dx", "dy", "a", "b", "c", "n", "style", "xl", "yl", "label"],
+     ["at", "w", "h", "xr", "yr", "dx", "dy"]),
+]
+# The wire "k" of a kind whose `MGKind` case name differs from it. Reasons use the wire name (`item.func.missing`).
+WIRE = {"function": "func"}
+
+
+def wire(name):
+    return WIRE.get(name, name)
 
 SCENE_HINTS = [
     ("json", "send one complete UTF-8 JSON object, at most 16384 raw bytes, without comments, trailing commas, NaN or Infinity"),
@@ -23,7 +38,7 @@ SCENE_HINTS = [
     ("video2d.*", "opt-in layer2d video follows its own draft schema (docs/schemas/scene-2d-layer.draft.schema.json); fix the part the reason names"),
     ("scene.missing", "add \"v\": 1 at the top level"),
     ("scene.version", "set \"v\": 1"),
-    ("scene.unknown.*", "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, and template, params, hide, over for template scenes"),
+    ("scene.unknown.*", "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, alt, and template, params, hide, over for template scenes"),
     ("scene.dim", "dim is \"2d\" (the default) or \"3d\""),
     ("scene.items.required", "a scene without a template needs \"items\": a list of 1 to 24 items"),
     ("scene.*.without.template", "params, hide and over belong to template scenes only; remove them or add \"template\""),
@@ -40,7 +55,7 @@ SCENE_HINTS = [
     ("items", "items must be a list"),
     ("items.count", "a scene has 1 to 24 items (a template scene 0 to 10 extra items)"),
     ("items.total", "at most 40 items after template expansion, and at least one"),
-    ("item.kind", "each item needs \"k\": one of body, incline, line, vector, axes, plot, spring, pulley, rope, orbit, text, highlight, bars, path, array, node, edge, table, region"),
+    ("item.kind", "each item needs \"k\": one of body, incline, line, vector, axes, plot, spring, pulley, rope, orbit, text, highlight, bars, path, array, node, edge, table, region, func, field"),
     ("item.id", "an id is 1-24 ASCII letters, digits or _, starting with a letter"),
     ("id.duplicate.*", "item ids must be unique; rename one of the two"),
     ("item.color", "color is one of force, normal, friction, gravity, tension, velocity, accel, energy, kinetic, potential, accent, muted, good, warn, blue, red, green, orange, purple, yellow, teal, white"),
@@ -104,12 +119,49 @@ SCENE_HINTS = [
     ("table.marked", "marked holds [row, column] pairs inside the table (row 0 is the first row)"),
     ("table.cw", "cw is 0.3 to a third of the world's larger side"),
     ("table.rh", "rh is 0.3 to a sixth of the world's larger side"),
+    ("items.expr", "a scene has at most 6 func and field items in all, template items included"),
+    ("func.y.var.*", "y may read x, the parameters a, b and c that the item sets, and t only when the item has a period"),
+    ("field.d*.var.*", "dx and dy may read x, y and the parameters a, b and c that the item sets; a field has no t"),
+    ("func.y.syntax", "the expression is malformed: write every multiplication (2*x, not 2x), close each parenthesis, put a comma between the two arguments of min and max, and write numbers like 2, 0.5 or .5 (no exponent, at most 12 characters)"),
+    ("field.d*.syntax", "the expression is malformed: write every multiplication (2*x, not 2x), close each parenthesis, put a comma between the two arguments of min and max, and write numbers like 2, 0.5 or .5 (no exponent, at most 12 characters)"),
+    ("func.y.tokens", "an expression has at most 48 tokens (numbers, names and symbols); simplify it"),
+    ("field.d*.tokens", "an expression has at most 48 tokens (numbers, names and symbols); simplify it"),
+    ("func.y.depth", "an expression nests at most 8 parentheses"),
+    ("field.d*.depth", "an expression nests at most 8 parentheses"),
+    ("func.y.name", "a name is x, y, t, a, b, c, pi, e or one of the functions sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, exp, ln, log, sqrt, abs, min, max"),
+    ("field.d*.name", "a name is x, y, t, a, b, c, pi, e or one of the functions sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, exp, ln, log, sqrt, abs, min, max"),
+    ("func.y.arity", "min and max take two arguments; every other function takes one"),
+    ("field.d*.arity", "min and max take two arguments; every other function takes one"),
+    ("func.y", "y is an expression in x: text of 1-80 characters made only of ASCII letters, digits, spaces and . + - * / ^ ( ) ,"),
+    ("field.d*", "dx and dy are expressions in x and y: text of 1-80 characters made only of ASCII letters, digits, spaces and . + - * / ^ ( ) ,"),
+    ("func.xr", "xr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart"),
+    ("func.yr", "yr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart"),
+    ("field.xr", "xr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart"),
+    ("field.yr", "yr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart"),
+    ("func.a", "a, b and c are parameters from -1000 to 1000"),
+    ("func.b", "a, b and c are parameters from -1000 to 1000"),
+    ("func.c", "a, b and c are parameters from -1000 to 1000"),
+    ("field.a", "a, b and c are parameters from -1000 to 1000"),
+    ("field.b", "a, b and c are parameters from -1000 to 1000"),
+    ("field.c", "a, b and c are parameters from -1000 to 1000"),
+    ("func.period", "period is 0.5 to 20 seconds, and a graph with a period must read t in y"),
+    ("func.shade", "shade is [x0, x1] with x0 < x1 inside xr, and the curve must not break between them"),
+    ("func.mark", "mark is an x inside xr where the function has a value inside yr"),
+    ("func.detail", "the curve changes too fast to draw within 1% of the frame height from 256 intervals; narrow xr or use a smoother expression"),
+    ("func.breaks", "the curve breaks (gaps or poles) more than 16 times inside xr; narrow xr"),
+    ("func.empty", "no part of the curve lies inside yr; change yr, xr or the expression"),
+    ("func.loop", "at t = period a moving graph must match t = 0, with the same gaps; make y repeat in t with that period"),
+    ("field.n", "n is [columns, rows]: whole numbers, 2 to 16 columns and 2 to 12 rows"),
+    ("field.style", "style is arrows (the default), unit or slope"),
+    ("field.empty", "no cell has a nonzero vector; change dx, dy, xr or yr"),
+    ("alt", "alt: 1-200 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences"),
     ("steps", "a scene has 1 to 8 steps"),
     ("step.say", "narration: 1-200 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences"),
     ("step.show", "show lists at most 16 ids, each naming an item in this scene"),
     ("step.focus", "focus names one item in this scene"),
     ("step.do", "do holds 1 to 6 edits"),
-    ("step*", "a step is {\"say\": text} with optional show, focus, cam and do"),
+    ("step.alt", "a step's alt: 1-200 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences"),
+    ("step*", "a step is {\"say\": text} with optional show, focus, cam, do and alt"),
     ("camera.x", "camera x is 0 to the world width"),
     ("camera.y", "camera y is 0 to the world height"),
     ("camera.zoom", "zoom is 0.5 to 4"),
@@ -218,7 +270,7 @@ def matches(pattern, text):
 def scene_hint(reason):
     """MGRepairHint.text(for:): the item missing/unknown hints come from the kind tables, then the first pattern."""
     parts = reason.split(".")
-    kinds = {name: (extra, required) for name, extra, required in KINDS}
+    kinds = {wire(name): (extra, required) for name, extra, required in KINDS}
     if len(parts) >= 3 and parts[0] == "item" and parts[1] in kinds:
         extra, required = kinds[parts[1]]
         if len(parts) == 3 and parts[2] == "missing":

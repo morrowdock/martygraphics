@@ -4,10 +4,11 @@
     python3 evals/dev-authoring/tools/hint_corpus.py           # check docs/fixtures/repair-hints/corpus.json
     python3 evals/dev-authoring/tools/hint_corpus.py --write   # rewrite it from the Python mirror
 
-The corpus holds every scene reason sample token (every kind's computed missing/unknown hints included), cases
-where several patterns match and the first one must win, reasons with no hint, and every ML reason. Python asserts
-it in tools/tests/test_repair_hints.py; `RepairHintCorpusTests` (MartyGraphicsTests) and `MLRepairHintCorpusTests`
-(MartyGraphicsMLKitTests) assert the same file against Swift on a Mac.
+The corpus holds every scene reason sample token (every kind's computed missing/unknown hints included), the graph
+and expression reasons outside MGParser.swift, cases where several patterns match and the first one must win,
+reasons with no hint, and every ML reason. Python asserts it in tools/tests/test_repair_hints.py;
+`RepairHintCorpusTests` (MartyGraphicsTests) and `MLRepairHintCorpusTests` (MartyGraphicsMLKitTests) assert the same
+file against Swift on a Mac.
 """
 
 import json
@@ -36,7 +37,12 @@ PRECEDENCE = [
 ]
 # Reasons built by helpers (MGModel bounds, identifier and text checks, templates, camera) rather than MGError literals.
 HELPER_REASONS = ["scene.number", "scene.depth", "scene.bytes", "template.check", "item.id", "item.label", "title",
-                  "bars.label", "bars.value", "array.ptr.label", "step.say", "camera.x", "camera.y"]
+                  "bars.label", "bars.value", "array.ptr.label", "step.say", "camera.x", "camera.y", "alt", "step.alt"]
+# Graph reasons outside MGParser.swift: the drawing checks (MGGraph.checkFunction) and the expression compiler's
+# suffixes (MGExpression.compile), one sample per pattern for each of the func and field keys.
+GRAPH_REASONS = ["func.detail", "func.breaks", "func.empty", "func.loop", "func.y.var.t", "field.dx.var.t",
+                 "func.y.syntax", "field.dy.syntax", "func.y.tokens", "field.dx.tokens", "func.y.depth", "field.dy.depth",
+                 "func.y.name", "field.dx.name", "func.y.arity", "field.dy.arity"]
 # Reasons without a hint: neither a computed hint nor any pattern applies.
 UNKNOWN = ["not.a.reason", "", "body.atx", "item.nokind.missing", "item.body", "lesson.op.add", "mp4: writer failed",
            "patch.stale", "items.count.extra"]
@@ -45,7 +51,8 @@ ML_UNKNOWN = ["ml.not.a.reason", "ml", "json"]
 
 def build():
     scene = []
-    for reason in sorted(set(inventory.scene_reason_sample()) | set(PRECEDENCE) | set(HELPER_REASONS)) + UNKNOWN:
+    reasons = set(inventory.scene_reason_sample()) | set(PRECEDENCE) | set(HELPER_REASONS) | set(GRAPH_REASONS)
+    for reason in sorted(reasons) + UNKNOWN:
         scene.append({"reason": reason, "hint": hints.scene_hint(reason)})
     ml = [{"reason": reason, "hint": hints.ml_hint(reason) or None} for reason in inventory.ml_reasons() + ML_UNKNOWN]
     return {

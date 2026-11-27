@@ -46,6 +46,7 @@ def scene_reason_sample():
     parser = (ROOT / "Sources/MartyGraphics/MGParser.swift").read_text(encoding="utf-8")
     reasons = set(re.findall(r'MGError\("([a-z0-9.\-]+)"\)', parser)) | {"json", "input.too-large", "scene.missing"}
     for name, extra, _ in hints.KINDS:
+        name = hints.wire(name)
         reasons |= {f"item.{name}.missing", f"item.{name}.unknown.zz"}
         reasons |= {f"{name}.{key}" for key in extra if key != "label"}
     return sorted(reasons | set(DYNAMIC_SAMPLES))

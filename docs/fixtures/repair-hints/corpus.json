@@ -10,6 +10,10 @@
    "hint": "code text is 2D only; use plain text in 3D"
   },
   {
+   "reason": "alt",
+   "hint": "alt: 1-200 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences"
+  },
+  {
    "reason": "array.at",
    "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
   },
@@ -198,6 +202,186 @@
    "hint": "an edit is {\"id\": item id, \"key\": field, \"value\": new value}; the value replaces the whole field"
   },
   {
+   "reason": "field.a",
+   "hint": "a, b and c are parameters from -1000 to 1000"
+  },
+  {
+   "reason": "field.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "field.b",
+   "hint": "a, b and c are parameters from -1000 to 1000"
+  },
+  {
+   "reason": "field.c",
+   "hint": "a, b and c are parameters from -1000 to 1000"
+  },
+  {
+   "reason": "field.dx",
+   "hint": "dx and dy are expressions in x and y: text of 1-80 characters made only of ASCII letters, digits, spaces and . + - * / ^ ( ) ,"
+  },
+  {
+   "reason": "field.dx.name",
+   "hint": "a name is x, y, t, a, b, c, pi, e or one of the functions sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, exp, ln, log, sqrt, abs, min, max"
+  },
+  {
+   "reason": "field.dx.tokens",
+   "hint": "an expression has at most 48 tokens (numbers, names and symbols); simplify it"
+  },
+  {
+   "reason": "field.dx.var.t",
+   "hint": "dx and dy may read x, y and the parameters a, b and c that the item sets; a field has no t"
+  },
+  {
+   "reason": "field.dy",
+   "hint": "dx and dy are expressions in x and y: text of 1-80 characters made only of ASCII letters, digits, spaces and . + - * / ^ ( ) ,"
+  },
+  {
+   "reason": "field.dy.arity",
+   "hint": "min and max take two arguments; every other function takes one"
+  },
+  {
+   "reason": "field.dy.depth",
+   "hint": "an expression nests at most 8 parentheses"
+  },
+  {
+   "reason": "field.dy.syntax",
+   "hint": "the expression is malformed: write every multiplication (2*x, not 2x), close each parenthesis, put a comma between the two arguments of min and max, and write numbers like 2, 0.5 or .5 (no exponent, at most 12 characters)"
+  },
+  {
+   "reason": "field.empty",
+   "hint": "no cell has a nonzero vector; change dx, dy, xr or yr"
+  },
+  {
+   "reason": "field.h",
+   "hint": "h is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "field.n",
+   "hint": "n is [columns, rows]: whole numbers, 2 to 16 columns and 2 to 12 rows"
+  },
+  {
+   "reason": "field.style",
+   "hint": "style is arrows (the default), unit or slope"
+  },
+  {
+   "reason": "field.w",
+   "hint": "w is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "field.xl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "field.xr",
+   "hint": "xr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart"
+  },
+  {
+   "reason": "field.yl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "field.yr",
+   "hint": "yr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart"
+  },
+  {
+   "reason": "func.a",
+   "hint": "a, b and c are parameters from -1000 to 1000"
+  },
+  {
+   "reason": "func.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "func.b",
+   "hint": "a, b and c are parameters from -1000 to 1000"
+  },
+  {
+   "reason": "func.breaks",
+   "hint": "the curve breaks (gaps or poles) more than 16 times inside xr; narrow xr"
+  },
+  {
+   "reason": "func.c",
+   "hint": "a, b and c are parameters from -1000 to 1000"
+  },
+  {
+   "reason": "func.detail",
+   "hint": "the curve changes too fast to draw within 1% of the frame height from 256 intervals; narrow xr or use a smoother expression"
+  },
+  {
+   "reason": "func.empty",
+   "hint": "no part of the curve lies inside yr; change yr, xr or the expression"
+  },
+  {
+   "reason": "func.h",
+   "hint": "h is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "func.loop",
+   "hint": "at t = period a moving graph must match t = 0, with the same gaps; make y repeat in t with that period"
+  },
+  {
+   "reason": "func.mark",
+   "hint": "mark is an x inside xr where the function has a value inside yr"
+  },
+  {
+   "reason": "func.period",
+   "hint": "period is 0.5 to 20 seconds, and a graph with a period must read t in y"
+  },
+  {
+   "reason": "func.shade",
+   "hint": "shade is [x0, x1] with x0 < x1 inside xr, and the curve must not break between them"
+  },
+  {
+   "reason": "func.w",
+   "hint": "w is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "func.xl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "func.xr",
+   "hint": "xr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart"
+  },
+  {
+   "reason": "func.y",
+   "hint": "y is an expression in x: text of 1-80 characters made only of ASCII letters, digits, spaces and . + - * / ^ ( ) ,"
+  },
+  {
+   "reason": "func.y.arity",
+   "hint": "min and max take two arguments; every other function takes one"
+  },
+  {
+   "reason": "func.y.depth",
+   "hint": "an expression nests at most 8 parentheses"
+  },
+  {
+   "reason": "func.y.name",
+   "hint": "a name is x, y, t, a, b, c, pi, e or one of the functions sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, exp, ln, log, sqrt, abs, min, max"
+  },
+  {
+   "reason": "func.y.syntax",
+   "hint": "the expression is malformed: write every multiplication (2*x, not 2x), close each parenthesis, put a comma between the two arguments of min and max, and write numbers like 2, 0.5 or .5 (no exponent, at most 12 characters)"
+  },
+  {
+   "reason": "func.y.tokens",
+   "hint": "an expression has at most 48 tokens (numbers, names and symbols); simplify it"
+  },
+  {
+   "reason": "func.y.var.t",
+   "hint": "y may read x, the parameters a, b and c that the item sets, and t only when the item has a period"
+  },
+  {
+   "reason": "func.yl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "func.yr",
+   "hint": "yr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart"
+  },
+  {
    "reason": "hide",
    "hint": "hide lists at most 16 ids of the template's own items"
   },
@@ -290,6 +474,22 @@
    "hint": "remove unknown keys; a edge allows a, b, color, dir, id, k, label"
   },
   {
+   "reason": "item.field.missing",
+   "hint": "a field needs at, dx, dy, h, id, k, w, xr, yr"
+  },
+  {
+   "reason": "item.field.unknown.zz",
+   "hint": "remove unknown keys; a field allows a, at, b, c, color, dx, dy, h, id, k, label, n, style, w, xl, xr, yl, yr"
+  },
+  {
+   "reason": "item.func.missing",
+   "hint": "a func needs at, h, id, k, w, xr, y, yr"
+  },
+  {
+   "reason": "item.func.unknown.zz",
+   "hint": "remove unknown keys; a func allows a, at, b, c, color, h, id, k, label, mark, period, shade, w, xl, xr, y, yl, yr"
+  },
+  {
    "reason": "item.highlight.missing",
    "hint": "a highlight needs id, k, target"
   },
@@ -311,7 +511,7 @@
   },
   {
    "reason": "item.kind",
-   "hint": "each item needs \"k\": one of body, incline, line, vector, axes, plot, spring, pulley, rope, orbit, text, highlight, bars, path, array, node, edge, table, region"
+   "hint": "each item needs \"k\": one of body, incline, line, vector, axes, plot, spring, pulley, rope, orbit, text, highlight, bars, path, array, node, edge, table, region, func, field"
   },
   {
    "reason": "item.label",
@@ -428,6 +628,10 @@
   {
    "reason": "items.count",
    "hint": "a scene has 1 to 24 items (a template scene 0 to 10 extra items)"
+  },
+  {
+   "reason": "items.expr",
+   "hint": "a scene has at most 6 func and field items in all, template items included"
   },
   {
    "reason": "items.total",
@@ -575,11 +779,11 @@
   },
   {
    "reason": "scene.unknown.layer2d",
-   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, and template, params, hide, over for template scenes"
+   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, alt, and template, params, hide, over for template scenes"
   },
   {
    "reason": "scene.unknown.zz",
-   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, and template, params, hide, over for template scenes"
+   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, alt, and template, params, hide, over for template scenes"
   },
   {
    "reason": "scene.version",
@@ -599,11 +803,15 @@
   },
   {
    "reason": "step",
-   "hint": "a step is {\"say\": text} with optional show, focus, cam and do"
+   "hint": "a step is {\"say\": text} with optional show, focus, cam, do and alt"
+  },
+  {
+   "reason": "step.alt",
+   "hint": "a step's alt: 1-200 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences"
   },
   {
    "reason": "step.cam",
-   "hint": "a step is {\"say\": text} with optional show, focus, cam and do"
+   "hint": "a step is {\"say\": text} with optional show, focus, cam, do and alt"
   },
   {
    "reason": "step.do",
@@ -627,7 +835,7 @@
   },
   {
    "reason": "step.unknown.zz",
-   "hint": "a step is {\"say\": text} with optional show, focus, cam and do"
+   "hint": "a step is {\"say\": text} with optional show, focus, cam, do and alt"
   },
   {
    "reason": "steps",

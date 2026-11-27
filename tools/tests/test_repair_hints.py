@@ -100,8 +100,10 @@ class RepairHintMirror(unittest.TestCase):
     def test_corpus_covers_computed_hints_patterns_and_unknowns(self):
         scene = {entry["reason"]: entry["hint"] for entry in self.corpus["scene"]}
         for name, _, _ in self.hints.KINDS:
+            name = self.hints.wire(name)
             self.assertTrue(scene[f"item.{name}.missing"].startswith(f"a {name} needs "))
             self.assertTrue(scene[f"item.{name}.unknown.zz"].startswith(f"remove unknown keys; a {name} allows "))
+        self.assertEqual(scene["item.func.missing"], "a func needs at, h, id, k, w, xr, y, yr")
         self.assertEqual(scene["item.body.missing"], "a body needs at, id, k")
         self.assertEqual(scene["item.edge.unknown.c"], "remove unknown keys; a edge allows a, b, color, dir, id, k, label")
         # Every table row is the first match of at least one corpus reason, so precedence is exercised row by row.
@@ -147,7 +149,7 @@ class RepairHintMirror(unittest.TestCase):
         sample = self.inventory.scene_reason_sample()
         checked_in = json.loads((ROOT / "evals/dev-authoring/inventories/scene-reasons.json").read_text(encoding="utf-8"))
         self.assertEqual(checked_in["tokens"], sample, "run inventory.py --write")
-        self.assertEqual(len(sample), 161)
+        self.assertEqual(len(sample), 195)
         self.assertEqual([r for r in sample if not self.hints.scene_hint(r)], [])
 
     def test_wildcards(self):
