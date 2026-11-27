@@ -68,15 +68,15 @@ directory) and asserted by `tools/test_inventory.py`.
 
 | Measure | Baseline (main 5e4952e) | This branch |
 | --- | --- | --- |
-| Conventions the 40 correct answers depend on that the prose states ([17 conventions](inventories/conventions.json)) | 1 | 17 |
+| Matches to 17 text probes selected from the new guide ([probes](inventories/conventions.json)) | 1 / 17 | 17 / 17 |
 | Scene refusal reasons with extra text ([160 sample tokens](inventories/scene-reasons.json)) | 3, as details, not fix hints (`input.too-large`, `json`, `template.unknown`) | 160 with a fix hint |
 | ML kit refusal reasons with a fix hint (every `MGMLReason`) | 0 / 58 | 58 / 58 |
 
-The [conventions inventory](inventories/conventions.json) lists each convention, its probes and the baseline
-evidence (file and line at 5e4952e). The probes are text patterns written against the new guide, so this branch's
-column is 17 by construction. The baseline column is the informative one: only the table anchor
-(PROTOCOL.md:178) was stated; the other 16, among them the vector angle sense, incline orientation, step timing
-and `show` semantics, were not stated in the baseline prose.
+The [probe list](inventories/conventions.json) gives each convention the 40 correct answers depend on, its text
+patterns and notes on related baseline text (file and line at 5e4952e). The patterns follow the new guide's
+wording, so the current prose matches 17 of 17 by construction. In the 5e4952e prose only the table-anchor probe
+matches (PROTOCOL.md:178). A probe that does not match is not proof that the baseline lacks the convention: it
+may be stated in other words or shown only by an example, and the notes do not claim to be complete.
 
 The [reason sample](inventories/scene-reasons.json) has 160 tokens: the 58 static `MGError` literals in
 `MGParser.swift`, `json`, `input.too-large` and `scene.missing`, the item missing and unknown families of the 19
@@ -133,5 +133,3 @@ Each must fail its targeted check, and the unmutated scene must pass it. All do.
    unsupported-feature requests.
 4. **Solid 3D**, where the public failures live: the same checklist and hint approach for constraint reasons
    such as `constraint.gearMesh.phase`, and a disclosure check for substituted gear types.
-5. **Policy.** CONTRIBUTING asks not to submit "generation instructions". The maintainer should decide whether
-   `docs/AUTHORING.md` (format conventions, checklist and examples, not a prompt) belongs in the public repo.

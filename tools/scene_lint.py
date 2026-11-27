@@ -11,8 +11,9 @@ Findings come in two classes. A *warning* is a mechanical fact (an item off the 
 digits). A *review cue* (`REVIEW_CUES`) is a pattern that is often a mistake but can be intended, such as edits in
 step 0 or the hatching side of a ground line; read the scene before changing it.
 
-Supported subset: full 2D scenes. Layout, plot and number checks run on every step as it is shown: the edits of
-steps 0..k applied in order, and only the items that are visible at step k (`show`). Box rotation and a body's
+Supported subset: full 2D scenes. Every check except the step 0 and focus checks runs on each step as it is shown,
+as MGTimeline.items resolves it: the edits of steps 0..k applied in order, items first shown later left out, and a
+vector, highlight or edge whose anchor is hidden left out too. Box rotation and a body's
 `move` target count towards its extent. Not checked, and reported under "not checked": template scenes (the
 template builds its own items), 3D scenes, the drawn width of text items (only their anchor point is checked) and
 the drawn position of vectors anchored with `on` (it depends on the anchor's edge and the renderer's fan-out).
@@ -116,12 +117,37 @@ def apply_edit(item, key, value):
     return out
 
 
+def anchors(item):
+    """The ids an item needs visible to be drawn (MGTimeline.items: vector `on`, highlight target, edge ends)."""
+    if item["k"] == "vector":
+        return [item["on"]] if "on" in item else []
+    if item["k"] == "highlight":
+        return [item.get("target")]
+    if item["k"] == "edge":
+        return [item.get("a"), item.get("b")]
+    return []
+
+
+def visible(items):
+    """Drop, transitively, every vector, highlight or edge whose anchor is not visible (MGTimeline.items)."""
+    while True:
+        ids = {item["id"] for item in items}
+        kept = [item for item in items if all(a in ids for a in anchors(item))]
+        if len(kept) == len(items):
+            return kept
+        items = kept
+
+
 def shown_states(scene):
-    """(step index, visible items) for each frame the viewer sees; (None, items) for a scene without steps."""
+    """(step index, visible items) for each frame the viewer sees; (None, items) for a scene without steps.
+
+    Mirrors MGTimeline.items(_:step:): the edits of steps 0...k applied in order, items first listed in a later
+    `show` removed, then items whose anchor is hidden removed too.
+    """
     items = scene["items"]
     steps = scene.get("steps", [])
     if not steps:
-        return [(None, list(items))]
+        return [(None, visible(list(items)))]
     first = {}
     for index, step in enumerate(steps):
         for identifier in step.get("show", []):
@@ -132,7 +158,7 @@ def shown_states(scene):
         for edit in step.get("do", []):
             if edit["id"] in current:
                 current[edit["id"]] = apply_edit(current[edit["id"]], edit["key"], edit["value"])
-        states.append((index, [item for item in current.values() if first.get(item["id"], 0) <= index]))
+        states.append((index, visible([item for item in current.values() if first.get(item["id"], 0) <= index])))
     return states
 
 
@@ -168,6 +194,7 @@ def report(scene):
                    "make step 0 edit-free if the starting state should be seen")
 
     seen = set()
+    texts, anchored = {}, {}  # ordered sets of ids drawn at some step
     for index, state in shown_states(scene):
         for item in state:
             kind = item["k"]
@@ -202,22 +229,28 @@ def report(scene):
                 seen.add((item["id"], "layout"))
                 out.append(f"layout.outside: {item['id']} ({kind}) extends outside the {w:g} x {h:g} world{at_step(index)}")
 
-    for item in items:
-        kind = item["k"]
-        if kind == "line" and item.get("style") == "ground":
-            (ax, ay), (bx, by) = item["from"][:2], item["to"][:2]
-            length = math.hypot(bx - ax, by - ay) or 1
-            side = ((by - ay) / length, -(bx - ax) / length)
-            others = [c for c in (centre(o) for o in items if o is not item and o["k"] not in ("highlight", "edge")) if c]
-            facing = [c for c in others if (c[0] - ax) * side[0] + (c[1] - ay) * side[1] > 0.05]
-            if others and len(facing) > len(others) / 2:
-                out.append(f"line.ground.side: {item['id']} hatches toward most of the scene; if it is a ceiling, swap "
-                           "from and to so the hatching faces away (draw a ceiling right to left)")
-        if kind == "vector" and item.get("len", 0) == 0:
-            out.append(f"vector.zero: {item['id']} has len 0 and is not drawn")
-        if kind == "body" and "move" in item:
-            out.append(f"body.move: {item['id']} glides in a straight line to move.to and back, forever; "
-                       "say so if the request implies real motion")
+            if kind == "line" and item.get("style") == "ground" and (item["id"], "ground") not in seen:
+                (ax, ay), (bx, by) = item["from"][:2], item["to"][:2]
+                length = math.hypot(bx - ax, by - ay) or 1
+                side = ((by - ay) / length, -(bx - ax) / length)
+                others = [c for c in (centre(o) for o in state if o is not item and o["k"] not in ("highlight", "edge"))
+                          if c]
+                facing = [c for c in others if (c[0] - ax) * side[0] + (c[1] - ay) * side[1] > 0.05]
+                if others and len(facing) > len(others) / 2:
+                    seen.add((item["id"], "ground"))
+                    out.append(f"line.ground.side: {item['id']} hatches toward most of the scene{at_step(index)}; if it "
+                               "is a ceiling, swap from and to so the hatching faces away (draw a ceiling right to left)")
+            if kind == "vector" and item.get("len", 0) == 0 and (item["id"], "zero") not in seen:
+                seen.add((item["id"], "zero"))
+                out.append(f"vector.zero: {item['id']} has len 0{at_step(index)} and is not drawn")
+            if kind == "body" and "move" in item and (item["id"], "move") not in seen:
+                seen.add((item["id"], "move"))
+                out.append(f"body.move: {item['id']} glides in a straight line to move.to and back, forever; "
+                           "say so if the request implies real motion")
+            if kind == "text":
+                texts.setdefault(item["id"])
+            if kind == "vector" and "on" in item:
+                anchored.setdefault(item["id"])
 
     for index, step in enumerate(steps):
         focus = step.get("focus")
@@ -227,10 +260,8 @@ def report(scene):
 
     for finding in out:
         found["cues" if finding.split(":", 1)[0] in REVIEW_CUES else "warnings"].append(finding)
-    texts = [item["id"] for item in items if item["k"] == "text"]
     if texts:
         found["skipped"].append(f"the drawn width of text {', '.join(texts)} (only the anchor point is checked)")
-    anchored = [item["id"] for item in items if item["k"] == "vector" and "on" in item]
     if anchored:
         found["skipped"].append(f"the drawn position of vectors on an item: {', '.join(anchored)}")
     return found

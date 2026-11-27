@@ -26,13 +26,13 @@ class AuthorIndependentCounts(unittest.TestCase):
         counts = self.summary["conventions"]
         self.assertEqual((counts["total"], counts["current"]), (17, 17))
         data = json.loads(inventory.CONVENTIONS.read_text(encoding="utf-8"))
-        recorded = sum(c["baselineStated"] for c in data["conventions"])
+        recorded = sum(c["baselineProbeMatch"] for c in data["conventions"])
         self.assertEqual(recorded, 1)
         if counts["baseline"] is None:
             self.skipTest("no git history: the baseline prose at the base commit cannot be read")
         base = inventory.baseline_text(data)
-        self.assertEqual(inventory.stated(data, base), {c["id"]: c["baselineStated"] for c in data["conventions"]})
-        self.assertIn("| 1 | 17 |", self.results)
+        self.assertEqual(inventory.probe_matches(data, base), {c["id"]: c["baselineProbeMatch"] for c in data["conventions"]})
+        self.assertIn("| 1 / 17 | 17 / 17 |", self.results)
 
     def test_reasons(self):
         self.assertEqual(self.summary["sceneReasons"], {"tokens": 160, "baselineDetails": 3, "hinted": 160})

@@ -6,8 +6,9 @@
 
 The counts do not depend on who authored the runs:
 
-- conventions: the probes in `inventories/conventions.json` against the baseline prose (read with `git show` at the
-  recorded base and checked against `guidance/baseline/MANIFEST.json`) and against the current prose;
+- conventions: matches of the 17 text probes in `inventories/conventions.json` against the baseline prose (read
+  with `git show` at the recorded base and checked against `guidance/baseline/MANIFEST.json`) and against the
+  current prose. A probe miss does not prove that a convention is absent;
 - scene reasons: the sample tokens in `inventories/scene-reasons.json` (every static `MGParser` reason, the item
   missing/unknown families of every kind, every kind-field family and ten dynamic forms), how many the baseline
   validator gave extra text, and how many have a fix hint now;
@@ -81,7 +82,7 @@ def current_text(inventory):
     return normalise("\n".join((ROOT / path).read_text(encoding="utf-8") for path in inventory["currentDocs"]))
 
 
-def stated(inventory, text):
+def probe_matches(inventory, text):
     return {c["id"]: any(re.search(p, text) for p in c["probes"]) for c in inventory["conventions"]}
 
 
@@ -117,8 +118,8 @@ def summary():
     return {
         "conventions": {
             "total": len(inventory["conventions"]),
-            "baseline": None if base is None else sum(stated(inventory, base).values()),
-            "current": sum(stated(inventory, current_text(inventory)).values()),
+            "baseline": None if base is None else sum(probe_matches(inventory, base).values()),
+            "current": sum(probe_matches(inventory, current_text(inventory)).values()),
         },
         "sceneReasons": {
             "tokens": len(sample),

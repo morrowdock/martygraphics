@@ -95,6 +95,43 @@ class SceneLint(unittest.TestCase):
                             {"say": "Two values.", "show": ["a"]}]}
         self.assertEqual(codes(hidden), {"step0.edits"})
 
+    def test_vector_length_and_anchor_follow_the_shown_steps(self):
+        # Authored with len 0 but given a length in step 0: it is drawn from the first frame, so no vector.zero.
+        grows = {"v": 1, "items": [{"id": "b", "k": "body", "at": [6, 4]},
+                                   {"id": "F", "k": "vector", "from": [6, 4], "angle": 0, "len": 0}],
+                 "steps": [{"say": "The push.", "do": [{"id": "F", "key": "len", "value": 2}]}]}
+        # Drawn at step 0, then set to zero at step 1: not drawn from step 1, so it is flagged at that step.
+        retired = {"v": 1, "items": [{"id": "b", "k": "body", "at": [6, 4]},
+                                     {"id": "F", "k": "vector", "from": [6, 4], "angle": 0, "len": 2}],
+                   "steps": [{"say": "The push."}, {"say": "The push stops.", "do": [{"id": "F", "key": "len", "value": 0}]}]}
+        # Authored with from, moved onto the body by a later edit: its drawn position is reported as not checked.
+        switched = {"v": 1, "items": [{"id": "b", "k": "body", "at": [6, 4]},
+                                      {"id": "F", "k": "vector", "from": [2, 4], "angle": 0, "len": 2}],
+                    "steps": [{"say": "A force."}, {"say": "It acts on the block.", "do": [{"id": "F", "key": "on", "value": "b"}]}]}
+        for scene in (grows, retired, switched):
+            scene_v1_check.check(json.dumps(scene).encode())
+        self.assertNotIn("vector.zero", codes(grows))
+        self.assertIn("vector.zero: F has len 0 at step 1 and is not drawn", scene_lint.lint(retired))
+        self.assertEqual(scene_lint.report(switched)["skipped"], ["the drawn position of vectors on an item: F"])
+        self.assertEqual(scene_lint.lint(switched), [])
+
+    def test_ground_and_move_use_the_shown_state(self):
+        # The floor hatches below a left-to-right line; the block is edited from below the line to above it in step 0.
+        floor = {"v": 1, "items": [{"id": "g", "k": "line", "from": [1, 3], "to": [11, 3], "style": "ground"},
+                                   {"id": "b", "k": "body", "at": [6, 1]}],
+                 "steps": [{"say": "A block on the floor.", "do": [{"id": "b", "key": "at", "value": [6, 3.5]}]}]}
+        self.assertEqual(codes(floor), {"step0.edits"})
+        # A move added by a later edit is still a review cue.
+        glide = {"v": 1, "items": [{"id": "b", "k": "body", "at": [2, 4]}],
+                 "steps": [{"say": "Still."}, {"say": "Moving.", "do": [{"id": "b", "key": "move", "value": {"to": [8, 4], "t": 2}}]}]}
+        self.assertEqual(codes(glide), {"body.move"})
+        # A vector on a hidden body is hidden too (MGTimeline): W is checked only from step 1, when b is shown.
+        hidden = {"v": 1, "items": [{"id": "b", "k": "body", "at": [6, 4]}, {"id": "c", "k": "body", "at": [2, 4]},
+                                    {"id": "W", "k": "vector", "on": "b", "angle": 270, "len": 0}],
+                  "steps": [{"say": "One body.", "show": ["c"]}, {"say": "Another.", "show": ["b"]}]}
+        found = scene_lint.report(hidden)
+        self.assertEqual(found["warnings"], ["vector.zero: W has len 0 at step 1 and is not drawn"])
+
     def test_skipped_inputs_are_reported(self):
         template = {"v": 1, "template": "bst", "params": {"values": [5, 3, 8]},
                     "items": [{"id": "note", "k": "text", "at": [2, 1], "text": "Insert 5, 3, 8."}]}
