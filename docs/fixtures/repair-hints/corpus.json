@@ -319,7 +319,7 @@
   },
   {
    "reason": "func.loop",
-   "hint": "at t = period a moving graph must match t = 0, with the same gaps; make y repeat in t with that period"
+   "hint": "at t = 0 and t = period, each grid sample across xr must be finite at both or at neither, and the two values, clipped to yr, must be within 1% of the yr height; make y repeat in t with that period"
   },
   {
    "reason": "func.mark",

@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "0a2b9b9513da2d23fc9658470ea11aabcccff3665551a71072e51c9f96117479"
+      "sha256": "2727aaf63e2ae8e6cc2a6d0fa8fc0f04a65483bcf5c7deb6bc4146b58095b27c"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1979,7 +1979,7 @@
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
-      "sha256": "a31db17d0184957316dcafd6f66e96786439613766c568eb6ceb670cab455dbe"
+      "sha256": "7892a27fe80fd9eceb9c70bf3f22a49a0701fdddd205d936ca18ad0109890dd9"
     },
     {
       "path": "docs/PORTABILITY-PROPOSAL.md",
@@ -2951,7 +2951,7 @@
     },
     {
       "path": "tools/validate_local.py",
-      "sha256": "26f08bd6692108fe92e0dce22e56dfc567348a0c8cfe4ed1c4dd7929a119c59d"
+      "sha256": "944e2a098ab2b56a1104d1028cfb4b6398782fbbcb2dcf4afb8a0d70450e48b6"
     },
     {
       "path": "tools/verify_release_install.py",
@@ -3407,7 +3407,7 @@
     },
     {
       "path": "docs/schemas/evidence/scene-v1/SWIFT-PARITY.md",
-      "sha256": "98efa59f4f8c7bb93062fa7daea4826747a39cd7b88151d7c67b963b2fe82dc4"
+      "sha256": "dc29ba2a65575e31d0bf3ad3f3c024f7a6a1faf659dd805794529f475b63577d"
     },
     {
       "path": "docs/schemas/scene-v1.draft.schema.json",
@@ -3415,7 +3415,7 @@
     },
     {
       "path": "docs/schemas/scene-v1.schema-notes.md",
-      "sha256": "2830ee67bb106e3ad96893f9aa516671b10523bbe003077fd6753d76d545b003"
+      "sha256": "eda04300f6abca45a5cad4472831fde0631628ce73deb16e2bfcad717dc91564"
     },
     {
       "path": "docs/schemas/evidence/scene-v1/studio-draft.json",
@@ -3439,7 +3439,7 @@
     },
     {
       "path": "docs/PORTABILITY-MAP.md",
-      "sha256": "e09fa1aa6a8108c496bc95c05d42dc193a382de548f829de805f8207918bae2b"
+      "sha256": "494769bc727b8e80c71b48f717fae0d1a6d55c3c86469816c89efc518cd2f5be"
     },
     {
       "path": "docs/fixtures/semantics/README.md",
@@ -4075,7 +4075,7 @@
     },
     {
       "path": "tools/tests/test_validate_local.py",
-      "sha256": "429c658568a4ea6d5e338af096ac8d78563aa4c0f5d0627fe7c9987f54d31519"
+      "sha256": "2a33506036facace9f022ddb8ce2105f8b297688888bac933921ed19f890b5e3"
     },
     {
       "path": "tools/write_native_receipt.py",
@@ -4139,7 +4139,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGRepairHint.swift",
-      "sha256": "8a22b0c63590d17f34c03bfff59b8d62358ba877b7a1436b701ed676840a121d"
+      "sha256": "0fcdc58a66e05131bbedb8e308857d3adb1934161017a444c357e17299027dc3"
     },
     {
       "path": "Tests/MartyGraphicsMLKitTests/MLRepairHintCorpusTests.swift",
@@ -4155,7 +4155,7 @@
     },
     {
       "path": "docs/fixtures/repair-hints/corpus.json",
-      "sha256": "6421c3637440cb748eba5f3ee33d17a68a85fd8c354384a97ad01717c9052cbc"
+      "sha256": "f597eab1c6bbfc96f93a1c658d3170b8453e7f9bc7aa738a3a2f557a2d3a6dcf"
     },
     {
       "path": "evals/dev-authoring/FREEZE.json",
@@ -4871,7 +4871,7 @@
     },
     {
       "path": "evals/dev-authoring/tools/hints.py",
-      "sha256": "bb7bdaad19f216ea3d02139505d6fe6c67a01306eb712798557e5a03a944b65d"
+      "sha256": "50e9a1402078877e2b1489b96639bdd0c36da26b2849022bb72cfb96c79d8afd"
     },
     {
       "path": "evals/dev-authoring/tools/inventory.py",

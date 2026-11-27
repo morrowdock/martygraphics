@@ -161,7 +161,7 @@ public enum MGRepairHint {
         ("func.detail", "the curve changes too fast to draw within 1% of the frame height from 256 intervals; narrow xr or use a smoother expression"),
         ("func.breaks", "the curve breaks (gaps or poles) more than 16 times inside xr; narrow xr"),
         ("func.empty", "no part of the curve lies inside yr; change yr, xr or the expression"),
-        ("func.loop", "at t = period a moving graph must match t = 0, with the same gaps; make y repeat in t with that period"),
+        ("func.loop", "at t = 0 and t = period, each grid sample across xr must be finite at both or at neither, and the two values, clipped to yr, must be within 1% of the yr height; make y repeat in t with that period"),
         ("field.n", "n is [columns, rows]: whole numbers, 2 to 16 columns and 2 to 12 rows"),
         ("field.style", "style is arrows (the default), unit or slope"),
         ("field.empty", "no cell has a nonzero vector; change dx, dy, xr or yr"),
