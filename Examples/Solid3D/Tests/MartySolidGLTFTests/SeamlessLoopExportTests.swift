@@ -89,9 +89,11 @@ final class SeamlessLoopExportTests: XCTestCase {
                     let f = g.floats(a).map(Double.init), material = prim["material"] as? Int ?? -1
                     for k in stride(from: 0, to: f.count - 2, by: 3) {
                         let x: [Double] = [f[k], f[k + 1], f[k + 2]]
-                        var p: [Double] = w.t
+                        var p = [Double](repeating: 0, count: 3)
                         for r in 0..<3 {
-                            for c in 0..<3 { p[r] += w.r[r][c] * x[c] }
+                            var dot: Double = 0
+                            for c in 0..<3 { dot += w.r[r][c] * x[c] }
+                            p[r] = w.t[r] + dot
                         }
                         out.append((p: p, material: material))
                     }

@@ -4915,7 +4915,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidGLTFTests/SeamlessLoopExportTests.swift",
-      "sha256": "927b7f89d0d304292aa7d5836ed12d39f824208577bc723546ef0a9241c46c35"
+      "sha256": "d69f659c180cde4179aa116b44e345340fcc601c3154f8fa67e112792446ee32"
     },
     {
       "path": "Sources/MartyGraphics/MGArrowGeometry.swift",
