@@ -460,17 +460,19 @@ final class LessonCoreTests: LessonTestCase {
         // FNV-1a 64 of the canonical default grammar document. Its inputs (MGGrammar, MGParser key tables, MGKind,
         // MGColorRole, core templates, MGLimits) match origin/main 6211345 except for the additive `table` and `region`
         // kinds (two more `kinds` entries) and the additive `func` and `field` kinds, `alt` scene key and `expression`
-        // inventory (docs/PROTOCOL.md, "Function graphs, vector fields and text alternatives"), and the additive
-        // `sliders` scene key and `sliders` inventory (docs/PROTOCOL.md, "Learner sliders"); lessons add nothing to
-        // the default document. The new value was computed offline by rebuilding the document in Python, which
-        // reproduced the previous values (96001c839d70324d, 2,700 bytes; 675bf2bec0e2e9a3, 3,343 bytes) exactly;
-        // pending Mac verification.
+        // inventory (docs/PROTOCOL.md, "Function graphs, vector fields and text alternatives"), the additive `sliders`
+        // scene key and `sliders` inventory (docs/PROTOCOL.md, "Learner sliders"), and the additive `func` `readouts`
+        // key and `expression.readouts` names ("Readouts: slopes and areas"); lessons add nothing to the default
+        // document. The value with both was printed by this test in a Linux build (corelibs JSONSerialization); the
+        // value with the sliders alone (af91f9b7e06389ad, 3,505 bytes) and with the readouts alone (87c82e737378c1a6,
+        // 3,390 bytes) were computed offline by rebuilding the document in Python, which reproduced the previous
+        // values (96001c839d70324d, 2,700 bytes; 675bf2bec0e2e9a3, 3,343 bytes) exactly; pending Mac verification.
         var hash: UInt64 = 0xcbf29ce484222325
         for b in data { hash = (hash ^ UInt64(b)) &* 0x100000001b3 }
         XCTAssertEqual(String(hash, radix: 16), Self.grammarHash, "byte count \(data.count)")
         XCTAssertEqual(data.count, Self.grammarBytes)
         XCTAssertFalse(MGTemplates.library.keys.contains("rotate2d"), "the geometry pack is opt-in")
     }
-    static let grammarHash = "af91f9b7e06389ad"
-    static let grammarBytes = 3505
+    static let grammarHash = "90c90ae261b9fb9c"
+    static let grammarBytes = 3552
 }

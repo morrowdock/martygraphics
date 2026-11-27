@@ -410,6 +410,94 @@ Not checked: whether a range teaches anything, interior values at parse time
 (only the ends and the default are checked; other positions are checked when the
 learner reaches them), and VoiceOver, Dynamic Type and the adjustable action on a
 device.
+## Readouts: slopes and areas
+
+Additive, unreleased, **pending Mac verification** (written and checked offline:
+the Python mirror ran, and so did a Linux build of the Foundation-only engine
+with its XCTests; the Mac run has not). A `func` item may ask the engine for
+calculus numbers, and any text of the scene names them as placeholders, so the
+model never writes these numbers itself.
+
+```json
+{"id":"wave","k":"func","at":[1,1.2],"w":10,"h":5,"xr":[-3.2,3.2],"yr":[-1.6,1.6],"y":"sin(x)","shade":[0,3.14159],"mark":1,"readouts":["value","slope","area"],"label":"slope {wave.slope}"}
+```
+
+- `readouts`: 1 to 3 distinct names (`func.readouts`). `value` is f(m) at the
+  marked x (`mark`), `slope` the derivative f′(m) there (the slope of the
+  tangent), and `area` the signed area ∫ f(x) dx over the shaded interval
+  (`shade`; parts below y = 0 count as negative). `value` and `slope` need a
+  `mark` (`func.readouts.mark`) and `area` a `shade` (`func.readouts.shade`). A
+  moving graph (`period`) has no readouts (`func.readouts.period`): its numbers
+  would change while the text stays. These are checked before anything is
+  sampled; the drawing checks (`func.detail`, `func.shade`, `func.mark`, …) run
+  next, then the readouts in the order `value`, `slope`, `area`.
+- Placeholders: `{<id>.<readout>}`, for example `{wave.slope}`, in the title,
+  `alt`, step `say` and `alt`, text items, labels (the graph's own too), and lesson
+  and explainer lines. Each `func` item that lists readouts is checked first,
+  without its texts, so a text may come before the graph in `items`. The number
+  is written as the engine writes every number (`MGPhysics.format`: two decimals
+  below 10, one below 100, whole numbers from 100, no trailing zeros), so
+  `{wave.slope}` above is `0.54` and `{wave.area}` is `2`. The values are also in
+  `MGScene.values` under the same names, without a unit. A readout that the item
+  does not list, or of an item that does not exist, is
+  `<text reason>.placeholder.readout` (for example `text.text.placeholder.readout`);
+  any other dotted name keeps its old reason (`text.text.placeholder`; in an
+  explainer it is a 3D fact, as before).
+- `slope` is exact: forward-mode differentiation applies the closed-form rule of
+  each operation of the expression (d sin u = cos u du, d uᵛ = v uᵛ⁻¹ du for a
+  constant v, d uᵛ = uᵛ (v′ ln u + v u′ / u) otherwise, …) in double precision.
+  Where a rule has no value at the mark (0/0 or 0 × ∞, as `sqrt(x^4)` or
+  `x*abs(x)` at 0), second-order one-sided differences on each side are used
+  instead, with steps of 1/64 and 1/128 of a sampling interval (7 evaluations).
+  The two sides must approach each other as the step halves, so a corner never
+  passes however small it is, and the error estimate (the larger change of each
+  side between the two steps, and the gap between the sides) must be at most
+  half of the last shown digit. `func.readouts.slope` refuses a mark that is not
+  on one drawn piece with a value one probe (1/1024 of a sampling interval) on
+  each side, an infinite derivative (a vertical tangent: `sqrt(x)` at 0), a
+  corner (`abs(x)`, `min(x, 0)` or `sqrt(x^2)` at 0) and a size above 10¹². A mark
+  a hair from a corner gets the slope of the side it lies on (`abs(sin(x))` at
+  3.14159 has slope -1): the number is the derivative at the x as written.
+- `area` is numerical: the composite 5-point Gauss–Legendre rule (exact for
+  polynomials up to degree 9 on each panel) on 128 equal panels of the shaded
+  interval. Its error estimate is the difference from the same rule on 64 panels,
+  and `func.readouts.area` refuses it unless the estimate is at most half of the
+  last shown digit, the same two rules applied to |f| agree to that or to 1/1024
+  of their result, whichever is larger (a pole whose sides cancel, as `1/x` over
+  [−1, 1] with a y range so tall that the sampler joins it, converges for f but
+  not for |f|), f has a value at every node and at both ends, and the size is at
+  most 10¹². The sampler's break detection has already run: a gap or pole it
+  finds inside the shaded interval is `func.shade`. Last, `func.readouts.view`
+  refuses an area whose shaded band is not the region measured: y = 0, or the
+  curve at an end or a node of the finer rule, outside the y range, where the
+  drawn band is clipped.
+- Accuracy: a shown readout is within one unit of its last shown digit of the
+  exact value (the exact slope's only error is double rounding). For `area` and
+  the one-sided `slope` this rests on an error estimate, a rule that agrees with
+  itself at two resolutions, not on a proof: a feature narrower than a panel can
+  be missed, as the drawing checks can miss detail narrower than a sampling
+  interval. The golden cases include one whose real error is known: `sqrt(x)` on
+  [0, 4], an endpoint with a vertical tangent, is off by about 3.5 × 10⁻⁶ with an
+  estimate of 6.4 × 10⁻⁶.
+- Step edits re-check the item as before, and an edit may change anything
+  (colour, labels, even `a`) as long as every readout the scene names keeps its
+  number (`func.readouts.edit`), because the text is filled once. A `set` patch
+  parses the whole scene again, so the readouts and every text that names them
+  are computed again.
+- Cost: an area is 962 evaluations, a slope one forward-mode evaluation and at
+  most 9 more, so six graphs with every readout add at most 5,838 evaluations to a
+  parse and nothing per frame (`MGLimits.readouts`, `MGLimits.readoutPanels`).
+  `MGDescribe` speaks the numbers ("… shaded from x = 0 to 3.14 (signed area 2),
+  marking the point (1, 0.84) where the slope is 0.54"), and
+  `MGGrammar.document()` lists the names under `expression.readouts`.
+
+[Copy the calculus scene](fixtures/v1/calculus.scene.json). The
+[readout cases](fixtures/v1/readouts.cases.json) hold closed-form derivatives and
+readouts, refusals and filled texts; `ReadoutCaseTests` checks them against the
+parser and `tools/tests/test_mg_expr.py` against the offline mirror.
+
+Not checked: whether a readout is the number a lesson needs, or the words around
+it. No tangent line is drawn: the numbers go into text only.
 
 ## Explainer boards
 
@@ -672,6 +760,7 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |
 | `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs or fewer edits of them. |
+| `func.readouts`, `func.readouts.period` / `.mark` / `.shade` / `.slope` / `.area` / `.view` / `.edit`, `<text>.placeholder.readout` | A readout list is malformed, asked of a moving graph or without its `mark` or `shade`; a slope has no finite value or is a corner; an area cannot be computed to its shown digits or its band is clipped; a step edit changes a readout the text names; a text names a readout the scene does not compute | See [readouts](#readouts-slopes-and-areas). |
 | `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
 | `sliders`, `slider`, `slider.missing`, `slider.unknown.<keys>`, `slider.param`, `slider.duplicate.<p>`, `slider.min`, `slider.max`, `slider.range`, `slider.step`, `slider.step.count`, `slider.grid`, `slider.default`, `slider.label`, `slider.label.placeholder` | A slider list or slider is out of shape, or its range or step is out of bounds; a stop's label (an end's included) does not read back as exactly the value the engine would get, or its stops are too close to tell apart (`slider.grid`); its default is not exactly the value of a stop (`slider.default`); or its label is not fixed plain text | See [learner sliders](#learner-sliders); `MGRepairHint.text(for:)` gives a one-line fix. |
 | `slider.unbound`, `slider.field`, `slider.default.<id>`, `slider.edit`, `sliders.bindings`, `slider.<p>.min.<reason>`, `slider.<p>.max.<reason>` | No `func` sets the parameter, a `field` or a step edit sets it, a `func` sets another value, too many slider-graph pairs, or a driven graph fails a check at an end of the range | Set the parameter on the graphs to the default, remove the conflicting key, or narrow the range. |
@@ -705,7 +794,7 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | Text lengths | Title 60, label 40, text 120, narration 200 |
 | Geometry | Plot/path points up to 64; rope points up to 6 |
 | Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text; table 8 rows × 6 columns / cells up to 12 characters; region 3–64 points |
-| Graphs (new kinds only) | 6 graph checks per scene (each `func` / `field` item, and each step or `over` edit of one); expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters |
+| Graphs (new kinds only) | 6 graph checks per scene (each `func` / `field` item, and each step or `over` edit of one); expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters; `func` readouts 3, an area on 128 panels (962 evaluations) |
 | Sliders (new key only) | 3 per scene; range within ±1,000; at most 100 steps; 6 slider-graph pairs; labels 40 characters |
 | Raw template params | 4 KiB canonical `params` object |
 | Nesting (arrays and objects on one path) | 64 levels (`MGLimits.depth`); lessons 59 per statement |

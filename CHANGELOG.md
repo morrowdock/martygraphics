@@ -161,6 +161,16 @@
   drop scene sliders, as they drop scene steps. Scenes without `sliders` are unchanged. The grammar
   document lists the key (`sceneKeys`) and the slider shape (`sliders`); the draft schema, the preflight
   and `tools/mg_expr.py` know the key, and `docs/fixtures/v1/sliders.cases.json` holds shared cases.
+- Add `func` readouts (pending Mac verification): `"readouts": ["value", "slope", "area"]` asks the engine for
+  f(m) and the exact derivative f′(m) at the marked point (forward-mode differentiation of the closed grammar;
+  one-sided differences where a rule has no value, and corners refused) and the signed area of the shaded band
+  (composite Gauss–Legendre on 128 panels, refused unless its error estimate is below the last shown digit).
+  Any text of the scene names them as `{<id>.slope}`-style placeholders, written as every engine number is.
+  Refusals: `func.readouts`, `func.readouts.period`, `.mark`, `.shade`, `.slope`, `.area`, `.view`, `.edit` and
+  `<text>.placeholder.readout`. New bounds `MGLimits.readouts` and `MGLimits.readoutPanels`; the default grammar
+  document lists the key and `expression.readouts`. Shared golden cases (docs/fixtures/v1/readouts.cases.json) run
+  in XCTest and in `tools/mg_expr.py`; the draft schema and `tools/scene_v1_check.py` accept the key and the
+  placeholders.
 - Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).
 - The draft scene v1 schema and `tools/scene_v1_check.py` accept `func`, `field` and the scene and step `alt`
   keys. For literal scenes, the preflight runs the `tools/mg_expr.py` rules on each graph and field item.

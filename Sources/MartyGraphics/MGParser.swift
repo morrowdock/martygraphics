@@ -61,6 +61,12 @@ public enum MGLimits {
     /// scene's parse runs at most 2 × `sliderBindings` = 12 extra `func` checks (at most 12 × 29,190 evaluations for
     /// moving graphs; typically 2 × 513). These bounds apply to the new key only; no existing limit changes.
     public static let sliders = 3, sliderSteps = 100, sliderBindings = 6
+    /// `func` readouts (`MGReadout`, wire `readouts`): at most one of each of the 3 names. An area runs the composite
+    /// 5-point Gauss-Legendre rule on `readoutPanels` panels and on half as many (960 evaluations, plus 2 at the ends
+    /// of the interval); a slope runs one forward-mode evaluation (about twice the work of one evaluation) and at most
+    /// 9 more (2 probes and 7 for the one-sided differences). So six graphs with every readout add at most 5,838
+    /// evaluations, and none per frame: a moving graph has no readouts. These bounds apply to the new key only.
+    public static let readouts = 3, readoutPanels = 128
 }
 
 public struct MGError: Error, Equatable, CustomStringConvertible {
@@ -187,7 +193,7 @@ public enum MGParser {
             try closed(wo, required: ["w", "h"], optional: [], "world")
             width = try num(wo["w"], MGLimits.worldRange, "world.w"); height = try num(wo["h"], MGLimits.worldRange, "world.h")
         }
-        let ctx = MGContext(width: width, height: height, is3D: is3D, values: build?.values ?? [:], env: env)
+        var ctx = MGContext(width: width, height: height, is3D: is3D, values: build?.values ?? [:], env: env)
 
         // Template output goes through the same item validator as model-written items (fail safe on template bugs too).
         var items = try (build?.items ?? []).map { try item(.object($0.wire()), ctx) }
@@ -202,7 +208,22 @@ public enum MGParser {
             guard (build == nil ? 1 : 0)...limit ~= list.count else { throw MGError("items.count") }
             graphs += list.filter(isGraphEntry).count
             guard graphs + edits <= MGLimits.exprItems else { throw MGError("items.expr") }
-            for entry in list { items.append(try item(entry, ctx)) }
+            // Readouts (docs/PROTOCOL.md, "Readouts: slopes and areas") are computed before any text is filled, so every
+            // text of the scene can name them: each `func` item that lists them is checked first, without its texts,
+            // and the rest of the scene is parsed with their values.
+            var early: [Int: MGItem] = [:]
+            for (k, entry) in list.enumerated() {
+                guard let e = entry.objectValue, e["k"] == .string(MGKind.function.rawValue), e["readouts"] != nil else { continue }
+                early[k] = try item(.object(e.filter { !MGReadout.textKeys.contains($0.key) }), ctx)
+            }
+            let readouts = MGReadout.values(list.indices.compactMap { early[$0] })
+            if !readouts.isEmpty {
+                ctx = MGContext(width: ctx.width, height: ctx.height, is3D: ctx.is3D,
+                                values: ctx.values.merging(readouts) { old, _ in old }, env: ctx.env)
+            }
+            for (k, entry) in list.enumerated() {
+                if let core = early[k], let e = entry.objectValue { items.append(try functionTexts(core, e, ctx)) } else { items.append(try item(entry, ctx)) }
+            }
         }
         guard graphs + edits <= MGLimits.exprItems else { throw MGError("items.expr") }
         var ids = Set<String>()
@@ -343,6 +364,7 @@ public enum MGParser {
             if let f = s.focus { guard byID[f] != nil else { throw MGError("step.focus") } }
             for e in s.edits {
                 current = try apply(e, to: current, ctx)
+                try MGReadout.checkEdit(e.id, current, ctx.values)
                 try checkItemReferences(current)
             }
         }
@@ -448,7 +470,7 @@ public enum MGParser {
         case .edge: extra = ["a", "b", "dir", "label"]
         case .table: extra = ["at", "cells", "header", "cw", "rh", "marked", "label"]
         case .region: extra = ["pts", "dashed", "label"]
-        case .function: extra = ["at", "w", "h", "xr", "yr", "y", "a", "b", "c", "period", "shade", "mark", "xl", "yl", "label"]
+        case .function: extra = ["at", "w", "h", "xr", "yr", "y", "a", "b", "c", "period", "shade", "mark", "readouts", "xl", "yl", "label"]
         case .field: extra = ["at", "w", "h", "xr", "yr", "dx", "dy", "a", "b", "c", "n", "style", "xl", "yl", "label"]
         }
         return common.union(extra)
@@ -698,9 +720,14 @@ public enum MGParser {
                 it.num["s0"] = s0; it.num["s1"] = s1
             }
             if let m = try opt("mark", xr.0...xr.1) { it.num["mark"] = m }
+            if let raw = o["readouts"] {
+                let list = try MGReadout.parse(raw)
+                try MGReadout.checkKeys(list, it)
+                for r in list { it.flags.insert(r.key) }
+            }
             try MGGraph.checkFunction(&it, expr)
-            it.list = [try o["xl"].map { try text($0, MGLimits.label, ctx, "func.xl") } ?? "",
-                       try o["yl"].map { try text($0, MGLimits.label, ctx, "func.yl") } ?? ""]
+            try MGReadout.compute(&it, expr)
+            it.list = try functionLabels(o, ctx)
         case .field:
             // Arrows of (dx, dy) at the centres of a grid of cells, evaluated by the engine.
             it.pts = [try p("at")]
@@ -735,6 +762,21 @@ public enum MGParser {
             it.pts += sampled.vectors
             it.marked = sampled.missing
         }
+        return it
+    }
+
+    /// The axis labels of a `func` item (`xl`, `yl`; empty when not set).
+    static func functionLabels(_ o: [String: MGJSON], _ ctx: MGContext) throws -> [String] {
+        [try o["xl"].map { try text($0, MGLimits.label, ctx, "func.xl") } ?? "",
+         try o["yl"].map { try text($0, MGLimits.label, ctx, "func.yl") } ?? ""]
+    }
+
+    /// A `func` item parsed without its texts (`MGReadout.textKeys`), with its label and axis labels from `o` added: the
+    /// same item as `item(.object(o), ctx)`.
+    static func functionTexts(_ core: MGItem, _ o: [String: MGJSON], _ ctx: MGContext) throws -> MGItem {
+        var it = core
+        if let l = o["label"] { it.label = try text(l, MGLimits.label, ctx, "item.label") }
+        it.list = try functionLabels(o, ctx)
         return it
     }
 
@@ -859,10 +901,19 @@ public enum MGParser {
     }
 
     static func fill(_ s: String, _ values: [String: MGValue], _ what: String, env: MGParseEnvironment? = nil) throws -> String {
-        let scalars = s.unicodeScalars
+        let scalars = Array(s.unicodeScalars)
         guard scalars.contains("{") || scalars.contains("}") else { return s }
         var out = "", name = "", inside = false
-        for ch in scalars {
+        var i = 0
+        while i < scalars.count {
+            let ch = scalars[i]
+            i += 1
+            if !inside, ch == "{", let end = scalars[i...].firstIndex(of: "}"), let readout = MGReadout.placeholder(scalars[i..<end]) {
+                // A readout of a `func` item (`{wave.area}`, MGReadout), filled from the engine's value. Without one, an
+                // explainer looks the name up as a 3D fact as before; a plain scene refuses it.
+                if let v = values[readout] { out += v.text; i = end + 1; continue }
+                if env == nil { throw MGError("\(what).placeholder.readout") }
+            }
             if inside {
                 if ch == "}" {
                     if let env, name.contains(".") || name.contains("|") {
@@ -954,6 +1005,8 @@ extension MGItem {
             o["y"] = .string(text ?? "")
             for key in ["a", "b", "c", "period", "mark"] { put(key) }
             if let s0 = num["s0"], let s1 = num["s1"] { o["shade"] = .array([.number(s0), .number(s1)]) }
+            let readouts = MGReadout.requested(self)
+            if !readouts.isEmpty { o["readouts"] = .array(readouts.map { .string($0.rawValue) }) }
             if list.count >= 2 { if !list[0].isEmpty { o["xl"] = .string(list[0]) }; if !list[1].isEmpty { o["yl"] = .string(list[1]) } }
         case .field:
             // `list` is [x label, y label, dx, dy]; the arrows are derived and never serialised.

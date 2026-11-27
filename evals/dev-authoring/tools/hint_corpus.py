@@ -33,17 +33,19 @@ PRECEDENCE = [
     "edit.key.radius", "edit.key", "edit.value", "steps", "step.show", "step.cam", "world.w", "world.unknown.d",
     "camera.zoom", "camera.yaw", "edge.dir", "vector.dir", "plot.pts", "rope.pts", "path.pts", "line.pts",
     "body.at", "line.to", "vector.from", "id.duplicate.dot", "3d.kind.table", "3d.text.code", "video2d.schema",
-    "hide.ref", "over.ref", "slider.label.placeholder", "slider.a.min.func.at", "slider.b.max.func.w",
-    "slider.c.min.func.y.var.t", "slider.default.min", "slider.step.count", "sliders.bindings",
+    "hide.ref", "over.ref", "text.text.placeholder.readout", "slider.label.placeholder", "slider.a.min.func.at",
+    "slider.b.max.func.w", "slider.c.min.func.y.var.t", "slider.default.min", "slider.step.count", "sliders.bindings",
 ]
 # Reasons built by helpers (MGModel bounds, identifier and text checks, templates, camera) rather than MGError literals.
 HELPER_REASONS = ["scene.number", "scene.depth", "scene.bytes", "template.check", "item.id", "item.label", "title",
                   "bars.label", "bars.value", "array.ptr.label", "step.say", "camera.x", "camera.y", "alt", "step.alt"]
-# Graph reasons outside MGParser.swift: the drawing checks (MGGraph.checkFunction) and the expression compiler's
-# suffixes (MGExpression.compile), one sample per pattern for each of the func and field keys.
+# Graph reasons outside MGParser.swift: the drawing checks (MGGraph.checkFunction), the readouts (MGReadout) and the
+# expression compiler's suffixes (MGExpression.compile), one sample per pattern for each of the func and field keys.
 GRAPH_REASONS = ["func.detail", "func.breaks", "func.empty", "func.loop", "func.y.var.t", "field.dx.var.t",
                  "func.y.syntax", "field.dy.syntax", "func.y.tokens", "field.dx.tokens", "func.y.depth", "field.dy.depth",
-                 "func.y.name", "field.dx.name", "func.y.arity", "field.dy.arity"]
+                 "func.y.name", "field.dx.name", "func.y.arity", "field.dy.arity", "func.readouts.period",
+                 "func.readouts.mark", "func.readouts.shade", "func.readouts.slope", "func.readouts.area",
+                 "func.readouts.view", "func.readouts.edit"]
 # Reasons without a hint: neither a computed hint nor any pattern applies.
 UNKNOWN = ["not.a.reason", "", "body.atx", "item.nokind.missing", "item.body", "lesson.op.add", "mp4: writer failed",
            "patch.stale", "items.count.extra", "sliders.count", "slider.a.mid.func.detail"]

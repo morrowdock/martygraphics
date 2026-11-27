@@ -24,6 +24,8 @@ final class MGRepairHintTests: XCTestCase {
         (#"{"v":1,"items":[{"id":"g","k":"func","at":[1,1],"w":6,"h":4,"xr":[0,6],"yr":[-2,2],"y":"2x"}]}"#, "func.y.syntax"),
         (#"{"v":1,"items":[{"id":"g","k":"func","at":[1,1],"w":6,"h":4,"xr":[0,6],"yr":[-2,2],"y":"sin(x - t)"}]}"#, "func.y.var.t"),
         (#"{"v":1,"items":[{"id":"f","k":"field","at":[1,1],"w":6,"h":4,"xr":[-2,2],"yr":[-2,2],"dx":"-y","dy":"x","style":"dots"}]}"#, "field.style"),
+        (#"{"v":1,"items":[{"id":"g","k":"func","at":[1,1],"w":6,"h":4,"xr":[0,6],"yr":[-2,2],"y":"sin(x)","readouts":["slope"]}]}"#, "func.readouts.mark"),
+        (#"{"v":1,"items":[{"id":"g","k":"func","at":[1,1],"w":6,"h":4,"xr":[0,6],"yr":[-2,2],"y":"sin(x)"},{"id":"t","k":"text","at":[8,6],"text":"{g.slope}"}]}"#, "text.text.placeholder.readout"),
     ]
 
     func testEveryCommonMistakeGetsAHint() throws {
@@ -109,7 +111,7 @@ final class RepairHintCorpusTests: XCTestCase {
         let url = XFix.root.appendingPathComponent("docs/fixtures/repair-hints/corpus.json")
         let corpus = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
         let scene = try XCTUnwrap(corpus["scene"] as? [[String: Any]])
-        XCTAssertEqual(scene.count, 284)
+        XCTAssertEqual(scene.count, 293)
         for entry in scene {
             let reason = try XCTUnwrap(entry["reason"] as? String)
             XCTAssertEqual(MGRepairHint.text(for: reason), entry["hint"] as? String, reason)

@@ -232,7 +232,9 @@ def shape_reason(scene, error):
     return ".".join(part for part in path if isinstance(part, str))
 
 
-def text_rules(value, reason, template, *, code=False, multiline=False):
+def text_rules(value, reason, template, *, code=False, multiline=False, readouts=None):
+    """`readouts`: the `{<id>.<readout>}` names the scene's `func` items fill (tools/mg_expr.py); a readout name
+    outside them is `<reason>.placeholder.readout` in a literal scene. Template scenes defer every placeholder."""
     if not value.strip() or "://" in value or "\x60\x60\x60" in value:
         raise Invalid(reason)
     if any(unicodedata.category(char) in ("Cc", "Cf", "Zl", "Zp")
@@ -246,7 +248,17 @@ def text_rules(value, reason, template, *, code=False, multiline=False):
     elif "<" in value or ">" in value:
         raise Invalid(reason)
     name = None
-    for char in value:
+    index = 0
+    while index < len(value):
+        char = value[index]
+        index += 1
+        if name is None and char == "{":
+            end = value.find("}", index)
+            if end >= 0 and mg_expr.readout_placeholder(value[index:end]) is not None:
+                if not template and value[index:end] not in (readouts or {}):
+                    raise Invalid(reason + ".placeholder.readout")
+                index = end + 1
+                continue
         if name is not None:
             if char == "}":
                 if not template:
@@ -292,15 +304,17 @@ def camera_rules(camera, dimensions):
                 raise Invalid(f"camera.{axis}")
 
 
-def item_rules(item, dimensions, template):
+def item_rules(item, dimensions, template, readouts=None):
+    """Returns the tools/mg_expr.py summary of a literal scene's `func` or `field` item, else None."""
     kind = item["k"]
+    summary = None
     if "label" in item:
-        text_rules(item["label"], "item.label", template)
+        text_rules(item["label"], "item.label", template, readouts=readouts)
     for key in ("xl", "yl", "unit", "text"):
         if key in item:
             multiline = kind == "text" and key == "text"
             text_rules(item[key], f"{kind}.{key}", template,
-                       code=multiline and item.get("style") == "code", multiline=multiline)
+                       code=multiline and item.get("style") == "code", multiline=multiline, readouts=readouts)
 
     if dimensions:
         span = max(dimensions)
@@ -334,7 +348,7 @@ def item_rules(item, dimensions, template):
             # The sampling, expression and drawing rules mirrored in tools/mg_expr.py. A template scene's world
             # is known only after Swift expands it, so these rules run for literal scenes only.
             try:
-                mg_expr.check_graph_item(item, dimensions)
+                summary = mg_expr.check_graph_item(item, dimensions, values=readouts)
             except mg_expr.Refusal as refusal:
                 raise Invalid(refusal.reason) from refusal
 
@@ -370,6 +384,7 @@ def item_rules(item, dimensions, template):
         marked = item.get("marked", ())
         if len(marked) > len(rows) * columns or any(r >= len(rows) or c >= columns for r, c in marked):
             raise Invalid("table.marked")
+    return summary
 
 
 def references(items, template):
@@ -434,21 +449,33 @@ def scene_rules(scene):
     # Each graph item counts once and each step edit of one once more (Swift `MGLimits.exprItems`).
     if len(graphs) + mg_expr.graph_edits(scene, {item["id"] for item in graphs}) > mg_expr.EXPR_ITEMS:
         raise Invalid("items.expr")
+    # Readouts: Swift computes each `func` item's readouts before any text is filled (MGParser.parseScene), so every
+    # text of the scene can name them. For literal scenes only, as the other graph rules.
+    readouts = {}
+    if dimensions:
+        for item in scene.get("items", ()):
+            if item["k"] == "func" and "readouts" in item:
+                try:
+                    summary = mg_expr.check_graph_item(item, dimensions, texts=False)
+                except mg_expr.Refusal as refusal:
+                    raise Invalid(refusal.reason) from refusal
+                for name, value in summary["readouts"].items():
+                    readouts.setdefault(item["id"] + "." + name, value)
     for item in scene.get("items", ()):
-        item_rules(item, dimensions, template)
+        item_rules(item, dimensions, template, readouts)
         if item["id"] in items:
             raise Invalid("id.duplicate." + item["id"])
         items[item["id"]] = item
     if "title" in scene:
-        text_rules(scene["title"], "title", template)
+        text_rules(scene["title"], "title", template, readouts=readouts)
     if "alt" in scene:
-        text_rules(scene["alt"], "alt", template)
+        text_rules(scene["alt"], "alt", template, readouts=readouts)
     camera_rules(scene.get("camera", {}), dimensions)
     references(items, template)
     for step in scene.get("steps", ()):
-        text_rules(step["say"], "step.say", template, multiline=True)
+        text_rules(step["say"], "step.say", template, multiline=True, readouts=readouts)
         if "alt" in step:
-            text_rules(step["alt"], "step.alt", template)
+            text_rules(step["alt"], "step.alt", template, readouts=readouts)
         camera_rules(step.get("cam", {}), dimensions)
         for ref in step.get("show", ()):
             if ref not in items and not template:
@@ -472,14 +499,20 @@ def scene_rules(scene):
                 shape({"v": 1, "dim": scene.get("dim", "2d"), "items": [updated]}, SCHEMA)
             except ShapeError as error:
                 raise Invalid(shape_reason({"dim": scene.get("dim"), "items": [updated]}, error)) from error
-            item_rules(updated, dimensions, template)
+            summary = item_rules(updated, dimensions, template, readouts)
+            # A readout is filled into the text once, so a step edit may not change it (`func.readouts.edit`).
+            for name in mg_expr.READOUTS:
+                published = readouts.get(identifier + "." + name)
+                if published is not None and (summary or {}).get("readouts", {}).get(name) != published:
+                    raise Invalid("func.readouts.edit")
             items[identifier] = updated
             references(items, template)
     if "sliders" in scene:
         # After every item and step, as in Swift. A template scene's items are known only after Swift expands it, so
         # there only each slider's own rules run (tools/mg_expr.py, check_sliders).
         try:
-            mg_expr.check_sliders(scene, dimensions or (12, 8), scene.get("dim") == "3d", literal=not template)
+            mg_expr.check_sliders(scene, dimensions or (12, 8), scene.get("dim") == "3d", literal=not template,
+                                  values=readouts)
         except mg_expr.Refusal as refusal:
             raise Invalid(refusal.reason) from refusal
 

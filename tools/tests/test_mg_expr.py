@@ -113,7 +113,7 @@ class GraphCases(unittest.TestCase):
         self.assertEqual(raised.exception.reason, "items.expr")
 
     def test_documentation_scenes_pass(self):
-        for name in ["graphs.scene.json", "wave.scene.json"]:
+        for name in ["graphs.scene.json", "wave.scene.json", "calculus.scene.json"]:
             with self.subTest(name=name):
                 summaries = mg_expr.check_scene(load(name))
                 self.assertTrue(summaries)
@@ -352,6 +352,96 @@ class SliderCases(unittest.TestCase):
                             self.assertEqual(mg_expr.check_slider(dict(slider, default=values[i]))[6], i)
                         checked += 1
         self.assertGreater(checked, 1000)
+
+
+def near(actual, expected, tolerance=1e-12):
+    """A closed-form readout: within `tolerance` relative (absolute below 1)."""
+    return math.isfinite(actual) and abs(actual - expected) <= tolerance * max(1.0, abs(expected))
+
+
+class ReadoutCases(unittest.TestCase):
+    """The shared readout cases (docs/fixtures/v1/readouts.cases.json); ReadoutCaseTests.swift checks the same file."""
+
+    def test_derivatives_match_the_closed_forms(self):
+        cases = load("readouts.cases.json")["derivatives"]
+        self.assertGreater(len(cases), 35)
+        for case in cases:
+            with self.subTest(text=case["text"], x=case["x"]):
+                expr = mg_expr.compile_expression(case["text"], set(mg_expr.VARIABLES), "func.y")
+                inputs = {k: case[k] for k in mg_expr.VARIABLES if k in case}
+                value, slope = expr.value_and_slope(**inputs)
+                self.assertTrue(same(value, case["value"]), (value, case["value"]))
+                self.assertTrue(same(slope, case["slope"]), (slope, case["slope"]))
+                # The value comes from the same operations as `value`.
+                plain = expr.value(**inputs)
+                self.assertTrue(value == plain or (math.isnan(value) and math.isnan(plain)))
+
+    def test_the_dual_value_is_the_plain_value_for_every_expression_case(self):
+        for case in load("expressions.cases.json")["values"]:
+            with self.subTest(text=case["text"]):
+                expr = mg_expr.compile_expression(case["text"], set(mg_expr.VARIABLES), "func.y")
+                inputs = {k: case[k] for k in mg_expr.VARIABLES if k in case}
+                value, plain = expr.value_and_slope(**inputs)[0], expr.value(**inputs)
+                self.assertTrue(value == plain or (math.isnan(value) and math.isnan(plain)), (value, plain))
+
+    def test_accepted_items_give_the_closed_forms(self):
+        cases = load("readouts.cases.json")["accepted"]
+        self.assertGreater(len(cases), 15)
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                readouts = mg_expr.check_graph_item(case["item"])["readouts"]
+                self.assertEqual(sorted(readouts), sorted(case["readouts"]))
+                for name, expected in case["readouts"].items():
+                    tolerance = case.get("tolerance", {}).get(name, 1e-12)
+                    self.assertTrue(near(readouts[name], expected, tolerance), (name, readouts[name], expected))
+                    self.assertEqual(mg_expr.format_number(readouts[name]), case["shown"][name], name)
+
+    def test_refused_scenes(self):
+        cases = load("readouts.cases.json")["refused"]
+        self.assertGreater(len(cases), 25)
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                with self.assertRaises(mg_expr.Refusal) as raised:
+                    mg_expr.check_scene(case["scene"])
+                self.assertEqual(raised.exception.reason, case["reason"])
+
+    def test_filled_texts(self):
+        limits = {"title": (60, False), "alt": (mg_expr.SAY, False), "say": (mg_expr.SAY, True),
+                  "text": (120, True), "label": (mg_expr.LABEL, False)}
+        for case in load("readouts.cases.json")["filled"]:
+            with self.subTest(case=case["name"]):
+                scene = case["scene"]
+                summaries = mg_expr.check_scene(scene)
+                values = {f"{i}.{name}": v for i, summary in summaries.items()
+                          for name, v in summary.get("readouts", {}).items()}
+                for path, expected in case["texts"].items():
+                    parts = path.split(".")
+                    if parts[0] == "items":
+                        raw = next(item for item in scene["items"] if item["id"] == parts[1])[parts[2]]
+                    elif parts[0] == "steps":
+                        raw = scene["steps"][int(parts[1])][parts[2]]
+                    else:
+                        raw = scene[parts[0]]
+                    limit, multiline = limits[parts[-1]]
+                    self.assertEqual(mg_expr.text_rules(raw, limit, path, values, multiline), expected, path)
+
+    def test_the_bounds_are_the_documented_ones(self):
+        self.assertEqual((mg_expr.READOUTS, mg_expr.READOUT_PANELS), (("value", "slope", "area"), 128))
+        self.assertAlmostEqual(sum(mg_expr.GAUSS_WEIGHTS), 2.0, places=15)
+        # 5 points integrate x^8 exactly on [-1, 1].
+        self.assertAlmostEqual(sum(w * x ** 8 for x, w in zip(mg_expr.GAUSS_NODES, mg_expr.GAUSS_WEIGHTS)), 2 / 9, places=15)
+
+    def test_the_numbers_are_shown_as_the_engine_shows_them(self):
+        for value, shown in [(0.375, "0.38"), (2.0, "2"), (-0.004, "0"), (12.34, "12.3"), (-1000.4, "-1000"),
+                             (99.96, "100"), (1e12, "1000000000000"), (math.nan, "\u2014")]:
+            with self.subTest(value=value):
+                self.assertEqual(mg_expr.format_number(value), shown)
+
+    def test_a_readout_placeholder_needs_an_id_and_a_known_name(self):
+        self.assertEqual(mg_expr.readout_placeholder("wave.area"), "wave.area")
+        for name in ["wave.areas", "wave", ".area", "1w.area", "a-b.area", "wave.area.x", "w" * 25 + ".area"]:
+            with self.subTest(name=name):
+                self.assertIsNone(mg_expr.readout_placeholder(name))
 
 
 if __name__ == "__main__":

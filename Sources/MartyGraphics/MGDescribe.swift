@@ -104,7 +104,9 @@ public enum MGDescribe {
             let pieces = MGGraph.pieces(i.pts.count - 1, starts: i.marked).count
             if pieces > 1 { s += ", in \(pieces) pieces" }
             if let s0 = i.num["s0"], let s1 = i.num["s1"] { s += ", shaded from x = \(f(s0)) to \(f(s1))" }
+            if let a = i.num[MGReadout.area.key] { s += " (signed area \(f(a)))" }
             if let m = i.num["mark"], let y = i.num["my"] { s += ", marking the point (\(f(m)), \(f(y)))" }
+            if let k = i.num[MGReadout.slope.key] { s += " where the slope is \(f(k))" }
             return s
         case .field:
             let dx = i.list.count == 4 ? i.list[2] : "", dy = i.list.count == 4 ? i.list[3] : ""

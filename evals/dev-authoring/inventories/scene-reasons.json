@@ -66,6 +66,7 @@
   "func.h",
   "func.mark",
   "func.period",
+  "func.readouts",
   "func.shade",
   "func.w",
   "func.xl",

@@ -149,7 +149,7 @@ class RepairHintMirror(unittest.TestCase):
         sample = self.inventory.scene_reason_sample()
         checked_in = json.loads((ROOT / "evals/dev-authoring/inventories/scene-reasons.json").read_text(encoding="utf-8"))
         self.assertEqual(checked_in["tokens"], sample, "run inventory.py --write")
-        self.assertEqual(len(sample), 217)
+        self.assertEqual(len(sample), 218)
         self.assertEqual([r for r in sample if not self.hints.scene_hint(r)], [])
 
     def test_slider_reasons_get_the_slider_rows(self):

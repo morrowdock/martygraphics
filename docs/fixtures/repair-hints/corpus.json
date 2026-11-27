@@ -330,6 +330,38 @@
    "hint": "period is 0.5 to 20 seconds, and a graph with a period must read t in y"
   },
   {
+   "reason": "func.readouts",
+   "hint": "readouts lists 1 to 3 distinct names from value, slope and area"
+  },
+  {
+   "reason": "func.readouts.area",
+   "hint": "the area is not certified: shade an interval where the curve is continuous and inside yr, and write the expression without cancelling large terms (x + 1, not ((10^20 + x) - 10^20) + 1)"
+  },
+  {
+   "reason": "func.readouts.edit",
+   "hint": "a step edit may not change a readout that a text names; edit another key or remove the placeholder"
+  },
+  {
+   "reason": "func.readouts.mark",
+   "hint": "value and slope readouts need a mark: an x inside xr"
+  },
+  {
+   "reason": "func.readouts.period",
+   "hint": "a moving graph (with a period) has no readouts; remove period or readouts"
+  },
+  {
+   "reason": "func.readouts.shade",
+   "hint": "an area readout needs a shade: [x0, x1] inside xr"
+  },
+  {
+   "reason": "func.readouts.slope",
+   "hint": "the slope at mark is not proven: move mark more than 1/1024 of a sampling interval (the xr width / 256) from every corner, pole and domain edge of the curve"
+  },
+  {
+   "reason": "func.readouts.view",
+   "hint": "the shaded curve must stay inside yr and yr must hold 0: widen yr or shade less"
+  },
+  {
    "reason": "func.shade",
    "hint": "shade is [x0, x1] with x0 < x1 inside xr, and the curve must not break between them"
   },
@@ -487,7 +519,7 @@
   },
   {
    "reason": "item.func.unknown.zz",
-   "hint": "remove unknown keys; a func allows a, at, b, c, color, h, id, k, label, mark, period, shade, w, xl, xr, y, yl, yr"
+   "hint": "remove unknown keys; a func allows a, at, b, c, color, h, id, k, label, mark, period, readouts, shade, w, xl, xr, y, yl, yr"
   },
   {
    "reason": "item.highlight.missing",
@@ -1032,6 +1064,10 @@
   {
    "reason": "text.text.placeholder.n",
    "hint": "braces mark a template placeholder and this scene has no value with that name; remove the braces"
+  },
+  {
+   "reason": "text.text.placeholder.readout",
+   "hint": "a {id.value}, {id.slope} or {id.area} placeholder needs a func item with that id that lists the readout in readouts; otherwise remove the braces"
   },
   {
    "reason": "title",

@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Offline reference for the scene v1 `func` and `field` kinds, the `alt` text keys and the `sliders` key.
+"""Offline reference for the scene v1 `func` and `field` kinds, the `func` readouts, the `alt` text keys and the
+`sliders` key.
 
-Swift is authoritative: `MGExpression`, `MGGraph`, `MGParser` and `MGParser.sliders` (MGSliders.swift) in
+Swift is authoritative: `MGExpression`, `MGGraph`, `MGReadout`, `MGParser` and `MGParser.sliders` (MGSliders.swift) in
 Sources/MartyGraphics. This module mirrors their rules operation for operation, so an offline preflight (for example
 tools/scene_v1_check.py) can give the same reasons, and so the shared golden cases in
-docs/fixtures/v1/expressions.cases.json, docs/fixtures/v1/graphs.cases.json and docs/fixtures/v1/sliders.cases.json
-run in Python as well as in XCTest. Standard library only; never imports or
+docs/fixtures/v1/expressions.cases.json, docs/fixtures/v1/graphs.cases.json, docs/fixtures/v1/readouts.cases.json and
+docs/fixtures/v1/sliders.cases.json run in Python as well as in XCTest. Standard library only; never imports or
 evaluates scene text as Python.
 
 Floating-point note: Python's math functions raise where C returns a value (log(0), sqrt(-1), overflow). The wrappers
@@ -35,6 +36,13 @@ SLIDERS = 3
 SLIDER_STEPS = 100
 SLIDER_BINDINGS = 6
 SLIDER_KEYS = ("param", "min", "max", "step", "default", "label")
+READOUTS = ("value", "slope", "area")
+READOUT_PANELS = 128
+# Gauss-Legendre nodes on [-1, 1] and their weights (5 points), as in `MGReadout`.
+GAUSS_NODES = (-0.906179845938664, -0.5384693101056831, 0.0, 0.5384693101056831, 0.906179845938664)
+GAUSS_WEIGHTS = (0.23692688505618908, 0.47862867049936647, 0.5688888888888889, 0.47862867049936647,
+                 0.23692688505618908)
+LN10 = 2.302585092994046
 
 VARIABLES = ("x", "y", "t", "a", "b", "c")
 FUNCTIONS = ("sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh",
@@ -144,6 +152,73 @@ def _combine(op, left, right):
         return math.nan if math.isnan(left) or math.isnan(right) else (right if right < left else left)
     if op == "max":
         return math.nan if math.isnan(left) or math.isnan(right) else (right if right > left else left)
+    return math.nan
+
+
+def _slope1(name, u, du):
+    """Mirror of `MGExpression.slope(_:_:_:)`: the derivative of name(u) for u' = du."""
+    if name == "sin":
+        return _apply("cos", u) * du
+    if name == "cos":
+        return -_apply("sin", u) * du
+    if name == "tan":
+        c = _apply("cos", u)
+        return _divide(du, c * c)
+    if name == "asin":
+        return _divide(du, _apply("sqrt", 1 - u * u))
+    if name == "acos":
+        return _divide(-du, _apply("sqrt", 1 - u * u))
+    if name == "atan":
+        return _divide(du, 1 + u * u)
+    if name == "sinh":
+        return _apply("cosh", u) * du
+    if name == "cosh":
+        return _apply("sinh", u) * du
+    if name == "tanh":
+        t = _apply("tanh", u)
+        return (1 - t * t) * du
+    if name == "exp":
+        return _apply("exp", u) * du
+    if name == "ln":
+        return _divide(du, u)
+    if name == "log":
+        return _divide(du, u * LN10)
+    if name == "sqrt":
+        return _divide(du, 2 * _apply("sqrt", u))
+    if name == "abs":
+        if math.isnan(u):
+            return math.nan
+        if u > 0:
+            return du
+        if u < 0:
+            return -du
+        return 0.0 if du == 0 else math.nan
+    return math.nan
+
+
+def _slope2(op, left, dl, right, dr):
+    """Mirror of `MGExpression.slope(_:_:_:_:_:)`: the derivative of `left op right`."""
+    if op == "+":
+        return dl + dr
+    if op == "-":
+        return dl - dr
+    if op == "*":
+        return dl * right + left * dr
+    if op == "/":
+        return _divide(dl - _divide(left, right) * dr, right)
+    if op == "^":
+        p = _power(left, right)
+        if dr == 0:
+            return right * _power(left, right - 1) * dl
+        if dl == 0:
+            return p * _log(math.log, left) * dr
+        return p * (dr * _log(math.log, left) + _divide(right * dl, left))
+    if op in ("min", "max"):
+        if math.isnan(left) or math.isnan(right):
+            return math.nan
+        if left == right:
+            return dl if dl == dr else math.nan
+        return dl if (left < right) == (op == "min") else dr
     return math.nan
 
 
@@ -320,6 +395,33 @@ class Expression:
                 right = stack.pop()
                 stack[-1] = _combine(value, stack[-1], right)
         return stack[0] if len(stack) == 1 else math.nan
+
+    def value_and_slope(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
+        """Mirror of `MGExpression.valueAndSlope`: the value and the exact derivative with respect to x."""
+        inputs = {"x": x, "y": y, "t": t, "a": a, "b": b, "c": c}
+        stack = []
+        for kind, value in self.program:
+            if kind == "number":
+                stack.append((value, 0.0))
+            elif kind == "variable":
+                stack.append((float(inputs[value]), 1.0 if value == "x" else 0.0))
+            elif kind == "negate":
+                if not stack:
+                    return math.nan, math.nan
+                v, d = stack[-1]
+                stack[-1] = (-v, -d)
+            elif kind == "call" and value not in ("min", "max"):
+                if not stack:
+                    return math.nan, math.nan
+                v, d = stack[-1]
+                stack[-1] = (_apply(value, v), _slope1(value, v, d))
+            else:
+                if len(stack) < 2:
+                    return math.nan, math.nan
+                right, dr = stack.pop()
+                left, dl = stack[-1]
+                stack[-1] = (_combine(value, left, right), _slope2(value, left, dl, right, dr))
+        return stack[0] if len(stack) == 1 else (math.nan, math.nan)
 
 
 def compile_expression(text, allowed, reason):
@@ -537,6 +639,131 @@ def check_function(expr, x0, x1, y0, y1, params=None, period=None, shade=None, m
     return first, marked
 
 
+# MARK: readouts (MGReadout)
+
+
+def resolution(value):
+    """Mirror of `MGReadout.resolution`: the step between two numbers as the engine shows `value`."""
+    magnitude = abs(value)
+    return 1.0 if magnitude >= 100 else 0.1 if magnitude >= 10 else 0.01
+
+
+def format_number(value):
+    """Mirror of `MGPhysics.format(value, unit: "")`: 2 decimals below 10, 1 below 100, whole numbers above, no
+    trailing zeros, never "-0"."""
+    if not math.isfinite(value):
+        return "\u2014"
+    magnitude = abs(value)
+    digits = 0 if magnitude >= 100 else 1 if magnitude >= 10 else 2
+    shown = "%.*f" % (digits, value)
+    if "." in shown:
+        shown = shown.rstrip("0")
+        if shown.endswith("."):
+            shown = shown[:-1]
+    return "0" if shown == "-0" else shown
+
+
+def fallback_slope(f, m, h):
+    """Mirror of `MGReadout.fallbackSlope`: one-sided second-order differences at steps h and h / 2."""
+    refuse = Refusal("func.readouts.slope")
+    f0 = f(m)
+    p1, p2, p4 = f(m + h / 2), f(m + h), f(m + 2 * h)
+    m1, m2, m4 = f(m - h / 2), f(m - h), f(m - 2 * h)
+    values = [f0, p1, p2, p4, m1, m2, m4]
+    if not all(math.isfinite(v) for v in values):
+        raise refuse
+    right_fine, right_coarse = (-3 * f0 + 4 * p1 - p2) / h, (-3 * f0 + 4 * p2 - p4) / (2 * h)
+    left_fine, left_coarse = (3 * f0 - 4 * m1 + m2) / h, (3 * f0 - 4 * m2 + m4) / (2 * h)
+    s = (right_fine + left_fine) / 2
+    gap, coarse_gap = abs(right_fine - left_fine), abs(right_coarse - left_coarse)
+    noise = max(abs(v) for v in values) / h * 2.0 ** -40
+    if not (gap <= noise or gap <= coarse_gap / 2):
+        raise refuse
+    error = max(abs(right_fine - right_coarse), abs(left_fine - left_coarse), gap)
+    if not error <= resolution(s) / 2:
+        raise refuse
+    return s
+
+
+def slope_readout(expr, params, m, x0, x1, drawn):
+    """Mirror of `MGReadout.slope`: f'(m) at the marked x, exact where the rules allow it."""
+    refuse = Refusal("func.readouts.slope")
+
+    def f(x):
+        return expr.value(x=x, **params)
+    probe = (x1 - x0) / FUNC_INTERVALS / 1024
+    if not (drawn.covers(m, m) and math.isfinite(f(m - probe)) and math.isfinite(f(m + probe))):
+        raise refuse
+    s = expr.value_and_slope(x=m, **params)[1]
+    if math.isnan(s):
+        s = fallback_slope(f, m, (x1 - x0) / (FUNC_INTERVALS * 64))
+    if not (math.isfinite(s) and abs(s) <= MAGNITUDE):
+        raise refuse
+    return s
+
+
+def gauss(f, a, b, panels, values):
+    """Mirror of `MGReadout.gauss`: the composite 5-point Gauss-Legendre rule for f and |f|."""
+    total, total_abs = 0.0, 0.0
+    for k in range(panels):
+        lo = a + (b - a) * k / panels
+        hi = b if k == panels - 1 else a + (b - a) * (k + 1) / panels
+        mid, half = (lo + hi) / 2, (hi - lo) / 2
+        s, t = 0.0, 0.0
+        for node, weight in zip(GAUSS_NODES, GAUSS_WEIGHTS):
+            y = f(mid + half * node)
+            values.append(y)
+            s += weight * y
+            t += weight * abs(y)
+        total += half * s
+        total_abs += half * t
+    return total, total_abs
+
+
+def area_readout(f, s0, s1, y0, y1):
+    """Mirror of `MGReadout.area`: the signed area over [s0, s1] with its error estimate and view checks."""
+    refuse = Refusal("func.readouts.area")
+    fine, coarse = [], []
+    a_sum, a_abs = gauss(f, s0, s1, READOUT_PANELS, fine)
+    b_sum, b_abs = gauss(f, s0, s1, READOUT_PANELS // 2, coarse)
+    ends = [f(s0), f(s1)]
+    if not all(math.isfinite(v) for v in fine + coarse + ends):
+        raise refuse
+    tolerance = resolution(a_sum) / 2
+    if not (abs(a_sum - b_sum) <= tolerance and abs(a_abs - b_abs) <= max(tolerance, a_abs / 1024)
+            and abs(a_sum) <= MAGNITUDE):
+        raise refuse
+    if not (y0 <= 0 and y1 >= 0 and all(y0 <= v <= y1 for v in ends + fine)):
+        raise Refusal("func.readouts.view")
+    return a_sum
+
+
+def parse_readouts(raw):
+    """Mirror of `MGReadout.parse`: 1 to 3 distinct readout names."""
+    if not isinstance(raw, list) or not 1 <= len(raw) <= len(READOUTS):
+        raise Refusal("func.readouts")
+    out = []
+    for entry in raw:
+        if not isinstance(entry, str) or entry not in READOUTS or entry in out:
+            raise Refusal("func.readouts")
+        out.append(entry)
+    return out
+
+
+def readout_placeholder(name):
+    """Mirror of `MGReadout.placeholder`: `<id>.<readout>` with an id `MGParser.identifier` takes, else None."""
+    if "." not in name:
+        return None
+    identifier, readout = name.split(".", 1)
+    if readout not in READOUTS:
+        return None
+    try:
+        _identifier(identifier, "id")
+    except Refusal:
+        return None
+    return name
+
+
 def field_vectors(dx, dy, x0, x1, y0, y1, cols, rows, params=None):
     """Mirror of `MGGraph.fieldVectors`: (vectors row by row from the bottom left, cells without a finite vector)."""
     params = params or {}
@@ -586,8 +813,9 @@ def _trim(value):
     return value[start:end]
 
 
-def text_rules(value, limit, reason):
-    """The plain-text rules of `MGParser.text` for a scene without template values."""
+def text_rules(value, limit, reason, values=None, multiline=False):
+    """The plain-text rules of `MGParser.text` for a scene without template values. `values` maps the scene's readout
+    placeholders (`<id>.<readout>`) to their numbers; returns the filled text."""
     if not isinstance(value, str):
         raise Refusal(reason)
     trimmed = _trim(value)
@@ -595,10 +823,23 @@ def text_rules(value, limit, reason):
         raise Refusal(reason)
     # Swift's `CharacterSet.controlCharacters` (general categories Cc and Cf) and U+2028 / U+2029 (Zl, Zp). Labels and
     # `alt` are single-line text, so a line feed is refused too; only text items and narration may break lines.
-    if any(unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp") for ch in value):
+    if any(unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp") and not (multiline and ch == "\n") for ch in value):
         raise Refusal(reason)
-    name = None
-    for ch in trimmed:
+    values = values or {}
+    out, name, i = [], None, 0
+    while i < len(trimmed):
+        ch = trimmed[i]
+        i += 1
+        if name is None and ch == "{":
+            end = trimmed.find("}", i)
+            readout = readout_placeholder(trimmed[i:end]) if end >= 0 else None
+            if readout is not None:
+                # A `func` readout (`MGReadout`): filled from the engine's value, else refused.
+                if readout not in values:
+                    raise Refusal(reason + ".placeholder.readout")
+                out.append(format_number(values[readout]))
+                i = end + 1
+                continue
         if name is not None:
             if ch == "}":
                 raise Refusal(reason + ".placeholder." + name)
@@ -609,9 +850,14 @@ def text_rules(value, limit, reason):
             name = ""
         elif ch == "}":
             raise Refusal(reason + ".brace")
+        else:
+            out.append(ch)
     if name is not None:
         raise Refusal(reason + ".brace")
-    return trimmed
+    filled = "".join(out)
+    if len(filled) > limit:
+        raise Refusal(reason)
+    return filled
 
 
 def _range(value, reason):
@@ -635,7 +881,9 @@ def _point(value, world, reason, is3d=False):
     return x, y, z
 
 
-FUNC_KEYS = {"id", "k", "color", "at", "w", "h", "xr", "yr", "y", "a", "b", "c", "period", "shade", "mark", "xl", "yl", "label"}
+FUNC_KEYS = {"id", "k", "color", "at", "w", "h", "xr", "yr", "y", "a", "b", "c", "period", "shade", "mark", "readouts",
+             "xl", "yl", "label"}
+TEXT_KEYS = ("label", "xl", "yl")
 FUNC_REQUIRED = {"id", "k", "at", "w", "h", "xr", "yr", "y"}
 FIELD_KEYS = {"id", "k", "color", "at", "w", "h", "xr", "yr", "dx", "dy", "a", "b", "c", "n", "style", "xl", "yl", "label"}
 FIELD_REQUIRED = {"id", "k", "at", "w", "h", "xr", "yr", "dx", "dy"}
@@ -661,12 +909,13 @@ def _parameters(item, kind):
     return allowed, params
 
 
-def check_graph_item(item, world=(12, 8), is3d=False):
+def check_graph_item(item, world=(12, 8), is3d=False, values=None, texts=True):
     """The `func` / `field` rules of `MGParser.item` in Swift's order: closed keys, id, color, label, then the kind's
     keys. `is3d`: the scene is 3D, so `at` may have three coordinates, as `MGParser.point` allows; the item is then
-    refused as `3d.kind.<kind>` by `check_scene` after every item has been checked, as in Swift.
+    refused as `3d.kind.<kind>` by `check_scene` after every item has been checked, as in Swift. `values`: the scene's
+    readout values for the texts. `texts=False` skips `label`, `xl` and `yl`, as Swift's readout pass does.
 
-    Returns a summary dict; raises Refusal with the Swift reason.
+    Returns a summary dict (a `func` also lists its `readouts` by name); raises Refusal with the Swift reason.
     """
     kind = item["k"]
     keys, required = (FUNC_KEYS, FUNC_REQUIRED) if kind == "func" else (FIELD_KEYS, FIELD_REQUIRED)
@@ -678,8 +927,8 @@ def check_graph_item(item, world=(12, 8), is3d=False):
     _identifier(item["id"], "item.id")
     if "color" in item and (not isinstance(item["color"], str) or item["color"] not in COLORS):
         raise Refusal("item.color")
-    if "label" in item:
-        text_rules(item["label"], LABEL, "item.label")
+    if texts and "label" in item:
+        text_rules(item["label"], LABEL, "item.label", values)
     span = max(world)
     _point(item["at"], world, kind + ".at", is3d)
     w = _num(item["w"], 0.5, span * 1.25, kind + ".w")
@@ -704,11 +953,30 @@ def check_graph_item(item, world=(12, 8), is3d=False):
             if not shade[0] < shade[1]:
                 raise Refusal("func.shade")
         mark = _num(item["mark"], x0, x1, "func.mark") if "mark" in item else None
+        requested = []
+        if "readouts" in item:
+            # Mirror of `MGReadout.parse` and `checkKeys`, before anything is sampled.
+            requested = parse_readouts(item["readouts"])
+            if period is not None:
+                raise Refusal("func.readouts.period")
+            if any(r != "area" for r in requested) and mark is None:
+                raise Refusal("func.readouts.mark")
+            if "area" in requested and shade is None:
+                raise Refusal("func.readouts.shade")
         first, marked = check_function(expr, x0, x1, y0, y1, params, period, shade, mark, width=w, height=h)
-        for key in ("xl", "yl"):
-            if key in item:
-                text_rules(item[key], LABEL, "func." + key)
-        return {"samples": len(first.samples), "starts": list(first.starts), "mark": marked}
+        readouts = {}
+        for name in READOUTS:
+            if name not in requested:
+                continue
+            if name == "value":
+                readouts[name] = marked
+            elif name == "slope":
+                readouts[name] = slope_readout(expr, params, mark, x0, x1, first)
+            else:
+                readouts[name] = area_readout(lambda x: expr.value(x=x, **params), shade[0], shade[1], y0, y1)
+        if texts:
+            graph_texts(item, values)
+        return {"samples": len(first.samples), "starts": list(first.starts), "mark": marked, "readouts": readouts}
     allowed.add("y")
     if "n" in item:
         grid = item["n"]
@@ -725,9 +993,8 @@ def check_graph_item(item, world=(12, 8), is3d=False):
         raise Refusal("field.style")
     dx = compile_expression(item["dx"], allowed, "field.dx")
     dy = compile_expression(item["dy"], allowed, "field.dy")
-    for key in ("xl", "yl"):
-        if key in item:
-            text_rules(item[key], LABEL, "field." + key)
+    if texts:
+        graph_texts(item, values)
     vectors, missing = field_vectors(dx, dy, x0, x1, y0, y1, int(cols), int(rows), params)
     if not any(u != 0 or v != 0 for u, v in vectors):
         raise Refusal("field.empty")
@@ -902,12 +1169,13 @@ def check_slider(entry, seen=()):
     return param, lo, hi, step, initial, int(count), int(at)
 
 
-def check_sliders(scene, world=(12.0, 8.0), is3d=False, literal=True):
+def check_sliders(scene, world=(12.0, 8.0), is3d=False, literal=True, values=None):
     """Mirror of `MGParser.sliders` on a scene whose items and steps passed their own rules.
 
     `literal`: the scene lists its own items. A template scene's items are known only after Swift expands it, so then
-    only each slider's own rules run (the binding rules need the items). Returns one summary dict per slider
-    (param, steps, defaultStop, items); raises Refusal with the Swift reason.
+    only each slider's own rules run (the binding rules need the items). `values`: the scene's readout values, for
+    the texts of a driven item checked at the ends of the range (Swift checks the item with its texts filled). Returns
+    one summary dict per slider (param, steps, defaultStop, items); raises Refusal with the Swift reason.
     """
     raw = scene["sliders"]
     if not isinstance(raw, list) or not 1 <= len(raw) <= SLIDERS:
@@ -946,11 +1214,26 @@ def check_sliders(scene, world=(12.0, 8.0), is3d=False, literal=True):
                 if value == initial:
                     continue
                 try:
-                    check_graph_item({**item, param: value}, world, is3d)
+                    check_graph_item({**item, param: value}, world, is3d, values)
                 except Refusal as refusal:
                     raise Refusal(f"slider.{param}.{end}.{refusal.reason}") from refusal
         summary["items"] = [item["id"] for item in driven]
     return out
+
+
+def graph_texts(item, values=None):
+    """The axis labels of a graph item (and, for `func` checked without texts, its label too: `MGParser.functionTexts`
+    sets the label first). Returns nothing; raises Refusal."""
+    for key in ("xl", "yl"):
+        if key in item:
+            text_rules(item[key], LABEL, item["k"] + "." + key, values)
+
+
+def _reason_key(key):
+    """Mirror of `MGParser.reasonKeys` for one key."""
+    if isinstance(key, str) and 1 <= len(key) <= 24 and key.isascii() and all(ch.isalnum() or ch == "_" for ch in key):
+        return key
+    return "?"
 
 
 def round_half_away(value):
@@ -998,19 +1281,75 @@ def check_scene(scene):
     graph_ids = {item["id"] for item in graphs if isinstance(item.get("id"), str)}
     if len(graphs) + graph_edits(scene, graph_ids) > EXPR_ITEMS:
         raise Refusal("items.expr")
+    # Readouts first, as `MGParser.parseScene` computes them: each `func` that lists them is checked without its
+    # texts, in order, and every text of the scene can then name them.
+    early = {}
+    for index, item in enumerate(items):
+        if isinstance(item, dict) and item.get("k") == "func" and "readouts" in item:
+            early[index] = check_graph_item(item, world, is3d, texts=False)
+    values = readout_values(items, early)
     summaries = {}
-    for item in graphs:
-        # check_graph_item refuses a missing id (`item.<kind>.missing`) or a malformed one (`item.id`) first, so the
-        # summary key is always a valid id.
-        summary = check_graph_item(item, world, is3d)
+    for index, item in enumerate(items):
+        if not (isinstance(item, dict) and item.get("k") in ("func", "field")):
+            continue
+        if index in early:
+            # `MGParser.functionTexts`: the label, then the axis labels.
+            summary = early[index]
+            if "label" in item:
+                text_rules(item["label"], LABEL, "item.label", values)
+            graph_texts(item, values)
+        else:
+            # check_graph_item refuses a missing id (`item.<kind>.missing`) or a malformed one (`item.id`) first, so
+            # the summary key is always a valid id.
+            summary = check_graph_item(item, world, is3d, values)
         summaries[item["id"]] = summary
     for step in scene.get("steps", []):
         if isinstance(step, dict) and "alt" in step:
-            text_rules(step["alt"], SAY, "step.alt")
+            text_rules(step["alt"], SAY, "step.alt", values)
     if "alt" in scene:
-        text_rules(scene["alt"], SAY, "alt")
+        text_rules(scene["alt"], SAY, "alt", values)
     if is3d and graphs:
         raise Refusal("3d.kind." + graphs[0]["k"])
+    check_graph_edits(scene, world, is3d, values)
     if "sliders" in scene:
-        check_sliders(scene, world, is3d)
+        check_sliders(scene, world, is3d, values=values)
     return summaries
+
+
+def readout_values(items, summaries):
+    """Mirror of `MGReadout.values`: `<id>.<readout>` for the readouts of the checked items (`summaries` by index), in
+    order; the first item with an id wins."""
+    values = {}
+    for index in sorted(summaries):
+        for name, value in summaries[index].get("readouts", {}).items():
+            values.setdefault(items[index]["id"] + "." + name, value)
+    return values
+
+
+def check_graph_edits(scene, world, is3d, values):
+    """The step edits of graph items, cumulatively, as `MGParser.checkReferences` applies them: the key must be one
+    the kind allows (`edit.key.<key>`), the edited item must pass, and an edit may not change a readout the scene's
+    text names (`func.readouts.edit`). Edits of other kinds are left to Swift."""
+    current = {item["id"]: item for item in scene.get("items", []) if isinstance(item, dict) and "id" in item}
+    for step in scene.get("steps", []):
+        if not isinstance(step, dict):
+            continue
+        for edit in step.get("do", []):
+            if not isinstance(edit, dict):
+                continue
+            item = current.get(edit.get("id"))
+            if not isinstance(item, dict) or item.get("k") not in ("func", "field"):
+                continue
+            key = edit.get("key")
+            if not isinstance(key, str) or key in ("id", "k"):
+                continue  # `edit.key`, refused when Swift parses the step
+            if key not in (FUNC_KEYS if item["k"] == "func" else FIELD_KEYS):
+                raise Refusal("edit.key." + _reason_key(key))
+            updated = dict(item)
+            updated[key] = edit.get("value")
+            summary = check_graph_item(updated, world, is3d, values)
+            for name in READOUTS:
+                published = values.get(item["id"] + "." + name)
+                if published is not None and summary.get("readouts", {}).get(name) != published:
+                    raise Refusal("func.readouts.edit")
+            current[item["id"]] = updated

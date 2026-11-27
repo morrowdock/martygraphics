@@ -615,6 +615,7 @@
           "items": false
         },
         "mark": {"type":"number","minimum":-1000000,"maximum":1000000},
+        "readouts": {"type":"array","items":{"enum":["value","slope","area"]},"minItems":1,"maxItems":3},
         "xl": {"$ref":"#/$defs/label"},
         "yl": {"$ref":"#/$defs/label"},
         "label": {"$ref":"#/$defs/label"}

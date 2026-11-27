@@ -69,7 +69,7 @@ directory) and asserted by `tools/test_inventory.py`.
 | Measure | Baseline (main 5e4952e) | This branch |
 | --- | --- | --- |
 | Matches to 17 text probes selected from the new guide ([probes](inventories/conventions.json)) | 1 / 17 | 17 / 17 |
-| Scene refusal reasons with extra text ([217 sample tokens](inventories/scene-reasons.json)) | 3, as details, not fix hints (`input.too-large`, `json`, `template.unknown`) | 217 with a fix hint |
+| Scene refusal reasons with extra text ([218 sample tokens](inventories/scene-reasons.json)) | 3, as details, not fix hints (`input.too-large`, `json`, `template.unknown`) | 218 with a fix hint |
 | ML kit refusal reasons with a fix hint (every `MGMLReason`) | 0 / 58 | 58 / 58 |
 
 The [probe list](inventories/conventions.json) gives each convention the 40 correct answers depend on, its text
@@ -78,7 +78,7 @@ wording, so the current prose matches 17 of 17 by construction. In the 5e4952e p
 matches (PROTOCOL.md:178). A probe that does not match is not proof that the baseline lacks the convention: it
 may be stated in other words or shown only by an example, and the notes do not claim to be complete.
 
-The [reason sample](inventories/scene-reasons.json) has 217 tokens: the 65 static `MGError` literals in
+The [reason sample](inventories/scene-reasons.json) has 218 tokens: the 65 static `MGError` literals in
 `MGParser.swift` and the 13 in its `sliders` extension (`MGSliders.swift`), `json`, `input.too-large` and `scene.missing`, the item missing and unknown families of the 21
 kinds, every kind–field family, ten dynamic forms and nine slider forms with one sample each. An earlier draft of this file said 148
 tokens; that number could not be reproduced. At 5e4952e the sample had 160 tokens; main later added
@@ -86,7 +86,8 @@ tokens; that number could not be reproduced. At 5e4952e the sample had 160 token
 kinds: 34 more tokens (6 static reasons, the two kinds' missing and unknown families and 24 more kind–field
 families), each with its own hint. Learner sliders add 22 more: the 13 static slider reasons and 9 forms built by
 the closed-key, number and text helpers or from a parameter, a func id or a func reason (`slider.unknown.zz`,
-`slider.a.min.func.detail`), each with its own hint. The baseline validator printed
+`slider.a.min.func.detail`), each with its own hint. The `func` readouts add one more kind–field family
+(`func.readouts`), with its own hint. The baseline validator printed
 extra detail text for 3 of them (`SceneValidator.swift:153`, `:167` and `:172` at 5e4952e).
 
 **Lint on the frozen baseline outputs.** `tools/scene_lint.py` gives 10 findings in 7 of 32 scenes: 4 warnings

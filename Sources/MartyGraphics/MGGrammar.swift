@@ -18,9 +18,11 @@ public enum MGGrammar {
                  "requiredKeys": MGParser.required(kind).union(["id", "k"]).sorted()]
             },
             "colors": MGColorRole.allCases.map(\.rawValue),
-            // The closed `func` / `field` expression vocabulary (MGExpression); the parser checks everything else.
+            // The closed `func` / `field` expression vocabulary (MGExpression) and the `func` readouts (MGReadout, filled
+            // into text as `{<id>.<readout>}`); the parser checks everything else.
             "expression": ["functions": MGExpression.Function.allCases.map(\.rawValue), "constants": ["e", "pi"],
                            "variables": ["func": ["x", "t", "a", "b", "c"], "field": ["x", "y", "a", "b", "c"]],
+                           "readouts": MGReadout.allCases.map(\.rawValue),
                            "maxLength": MGLimits.exprLength, "maxTokens": MGLimits.exprTokens, "maxDepth": MGLimits.exprDepth] as [String: Any],
             // Learner sliders (the `sliders` scene key): the closed slider keys, the parameters a slider may drive, the
             // kinds it drives and its count bounds; ranges and the grid rule stay in MGParser.sliders.
