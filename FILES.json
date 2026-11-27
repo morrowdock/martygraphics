@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "2727aaf63e2ae8e6cc2a6d0fa8fc0f04a65483bcf5c7deb6bc4146b58095b27c"
+      "sha256": "b2d9d33901a3de42293b4eba0fd5c135bc912fa2366829553c520b7fb1af2f45"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -2019,7 +2019,7 @@
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
-      "sha256": "a59f6651d3b3f21aa54f54feaf60013df710691cef1372f417bfd39894c96e15"
+      "sha256": "e576fd505f04bf1ec76497750c7a9e1f5dec6685726d0816000b1bf3351aa617"
     },
     {
       "path": "docs/VISUAL-AUDIT.md",
@@ -4075,11 +4075,11 @@
     },
     {
       "path": "tools/tests/test_validate_local.py",
-      "sha256": "2a33506036facace9f022ddb8ce2105f8b297688888bac933921ed19f890b5e3"
+      "sha256": "1215576d02321f63a96fd5d08884f0e3ce7dc59e3538ad1ebce1eb4a8208935d"
     },
     {
       "path": "tools/write_native_receipt.py",
-      "sha256": "68b60775a49f001c147248dc3c02839710c364395adfea3a183f9c1fdded1241"
+      "sha256": "8e54a3205b1287e9044c45bd0aa3b49a77e33f06b64a6ae8577c6ecb9c07434b"
     },
     {
       "path": "Sources/MartyGraphics/MGDescribe.swift",

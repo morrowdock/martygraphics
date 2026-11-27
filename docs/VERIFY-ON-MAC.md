@@ -25,7 +25,9 @@ folder of the checkout with a `Package.swift` is a package, except under a
 These are the native commands of every package, in order, under a `#` line
 naming the package. They are `PACKAGE_COMMANDS` in `tools/validate_local.py`,
 which the receipt writer runs; a test keeps the two identical. `NEW_EXPORT_DIR`
-is a new directory outside the checkout (export refuses an existing one). A
+is a new directory outside the checkout (export refuses an existing one). It may
+appear only as the argument right after `--export` in `Examples/Showcase`; the
+receipt writer refuses to run anything when it appears anywhere else. A
 package that is not listed yet runs `swift test --jobs 2 --package-path P` when
 `P/Tests` exists and `swift build --jobs 2 --package-path P` otherwise, with `P`
 as one argument even when it contains a space (quote it in a shell); add it here

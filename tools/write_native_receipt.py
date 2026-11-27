@@ -2,7 +2,8 @@
 """Run the native checks of docs/VERIFY-ON-MAC.md for every package of a clean checkout and write the v2 native
 receipt {"version": 2, "source", "commands_sha256", "packages": [{"path", "exit", "commands"}]} to a new path outside
 the checkout; "commands" are the argv lists run, with NEW_EXPORT_DIR left as that token. The showcase export goes to a
-new directory beside the receipt, named after it with "-showcase-export".
+new directory beside the receipt, named after it with "-showcase-export": only the argument right after `--export` in
+the Examples/Showcase commands is replaced, and the writer refuses to run anything when the token appears elsewhere.
 
 The packages come from validate_local.native_packages, the same discovery that checks receipt reuse. Each package
 records the exit code of its first failing command, or 0 when all its commands pass. Exits non-zero when any
@@ -21,6 +22,8 @@ ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("validate_local_for_native_receipt", Path(__file__).with_name("validate_local.py"))
 validate_local = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(validate_local)
+# The one package whose `--export` operand may be NEW_EXPORT_DIR (docs/VERIFY-ON-MAC.md).
+SHOWCASE = "Examples/Showcase"
 
 
 def run_package(commands, root, run):
@@ -34,6 +37,24 @@ def run_package(commands, root, run):
         if code != 0:
             return code
     return 0
+
+
+def with_export_dir(package, recorded, export_dir):
+    """The argv lists to run for a package: the NEW_EXPORT_DIR token becomes export_dir only as the operand of
+    `--export` in the Showcase package. Raises ValueError, before anything runs, for the token anywhere else."""
+    planned = []
+    for command in recorded:
+        argv = list(command)
+        for i, argument in enumerate(argv):
+            if argument != validate_local.EXPORT_DIR:
+                continue
+            if package != SHOWCASE or i == 0 or argv[i - 1] != "--export":
+                raise ValueError("%s may only be the operand of `--export` in %s, but %s has it at argument %d of: %s;"
+                                 " no command was run" % (validate_local.EXPORT_DIR, SHOWCASE, package, i,
+                                                          shlex.join(command)))
+            argv[i] = str(export_dir)
+        planned.append(argv)
+    return planned
 
 
 def checkout_state(root):
@@ -58,9 +79,13 @@ def main(argv=None, root=None, run=subprocess.run):
     if dirty:
         parser.error("Checkout must be clean, including untracked files")
     commands = validate_local.head_scope(head, root)
+    try:
+        planned = {package: with_export_dir(package, recorded, export_dir) for package, recorded in commands.items()}
+    except ValueError as error:
+        parser.error(str(error))
     packages = []
     for package, recorded in commands.items():
-        package_commands = [[str(export_dir) if a == validate_local.EXPORT_DIR else a for a in c] for c in recorded]
+        package_commands = planned[package]
         print("== %s: %s" % (package, " && ".join(shlex.join(c) for c in package_commands)), flush=True)
         packages.append({"path": package, "exit": run_package(package_commands, root, run), "commands": recorded})
     if checkout_state(root) != (head, b""):

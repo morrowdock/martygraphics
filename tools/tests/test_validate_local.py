@@ -504,6 +504,62 @@ class NativeReceiptWriterTests(FixtureRepo):
         self.assertEqual((status, calls, again.exists()), (2, [], False))
         self.assertIn("showcase export directory", err)
 
+    def test_only_the_showcase_export_operand_becomes_the_export_folder(self):
+        token, export = validate_local.EXPORT_DIR, Path("/evidence/receipt-showcase-export")
+        recorded = validate_local.PACKAGE_COMMANDS[writer.SHOWCASE]
+        planned = writer.with_export_dir(writer.SHOWCASE, recorded, export)
+        self.assertEqual(planned[:-1], recorded[:-1])
+        self.assertEqual(planned[-1], recorded[-1][:-1] + [str(export)])
+        self.assertEqual(recorded[-1][-2:], ["--export", token])  # the table itself still holds the token
+        self.assertEqual(writer.with_export_dir("Examples/Turbofan", [["swift", "test"]], export), [["swift", "test"]])
+
+    def test_the_token_anywhere_else_is_refused_before_anything_runs(self):
+        token = validate_local.EXPORT_DIR
+        export = ["swift", "run", "--skip-build", "--package-path", "Examples/Showcase", "marty-showcase", "--export"]
+        cases = {
+            "another showcase argument": {writer.SHOWCASE: [["swift", "build", "--package-path", token]]},
+            "a second showcase command": {writer.SHOWCASE: [export + [token], ["cp", "-R", token, "/tmp/copy"]]},
+            "the showcase argv's first word": {writer.SHOWCASE: [[token, "--export", token]]},
+            "after another option": {writer.SHOWCASE: [export[:-1] + ["--verify", token]]},
+            "another package's --export": {"Examples/Turbofan": [["marty-turbofan", "--export", token]]},
+        }
+        self.source = self.commit({"Examples/Showcase/Package.swift": "// showcase\n",
+                                   "Examples/Showcase/Sources/MartyShowcase/Showcase.swift": "let s = 1\n"})
+        for name, table in cases.items():
+            with self.subTest(case=name):
+                path = self.receipt_path()
+                with mock.patch.dict(writer.validate_local.PACKAGE_COMMANDS, table):
+                    status, calls, err = self.write(path)
+                self.assertEqual((status, calls, path.exists()), (2, [], False))
+                self.assertFalse(path.with_name("receipt-showcase-export").exists())
+                self.assertIn("may only be the operand of `--export` in Examples/Showcase", err)
+                self.assertIn("no command was run", err)
+        # An unlisted package whose folder is named like the token: its default command names the folder, so it is
+        # refused rather than pointed at the export folder.
+        self.source = self.commit({token + "/Package.swift": "// kit\n"})
+        path = self.receipt_path()
+        status, calls, err = self.write(path)
+        self.assertEqual((status, calls, path.exists()), (2, [], False))
+        self.assertIn("but %s has it at argument 5" % token, err)
+
+    def test_receipts_keep_the_token_and_still_parse(self):
+        """The receipt format is unchanged: a receipt written now is byte for byte what the writer wrote before the
+        substitution was narrowed (the token in "commands"), and such a receipt is read and reused as before."""
+        self.source = self.commit({"Examples/Showcase/Package.swift": "// showcase\n",
+                                   "Examples/Showcase/Sources/MartyShowcase/Showcase.swift": "let s = 1\n"})
+        scope = validate_local.head_scope(self.source, self.repo)
+        earlier = {"version": 2, "source": self.source, "commands_sha256": validate_local.commands_sha256(scope),
+                   "packages": [{"path": p, "exit": 0, "commands": c} for p, c in scope.items()]}
+        path = self.receipt_path()
+        self.assertEqual(self.write(path)[0], 0)
+        self.assertEqual(path.read_text(encoding="utf-8"), json.dumps(earlier, indent=2) + "\n")
+        old = path.with_name("written-before.json")
+        old.write_text(json.dumps(earlier, indent=2) + "\n", encoding="utf-8")
+        receipt = validate_local.read_native_receipt(old, self.source)
+        self.assertEqual(receipt["commands"][writer.SHOWCASE][-1][-2:], ["--export", validate_local.EXPORT_DIR])
+        reuse = self.reuse(self.source, receipt)
+        self.assertEqual((reuse["commands"], reuse["status"]), ([], "PASS"))
+
     def test_an_unlisted_package_runs_test_or_build(self):
         with_tests = ["Examples/NewKit/Package.swift", "Examples/NewKit/Tests/KitTests/KitTests.swift"]
         self.assertEqual(validate_local.native_commands("Examples/NewKit", with_tests),

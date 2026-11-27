@@ -145,6 +145,9 @@
 - `tools/portability_map.py` skips files under hidden folders, so the generated Swift that SwiftPM leaves in a built
   package's `.build` no longer makes `--check` fail on a Mac. A validate_local test fixture no longer uses two
   folders that differ only by case, which a case-insensitive file system merges.
+- `tools/write_native_receipt.py` replaces `NEW_EXPORT_DIR` with the new showcase export folder only where it is the
+  argument right after `--export` in `Examples/Showcase`, and refuses to run any command when the token appears in
+  another argument or another package. The receipt format is unchanged: `commands` still records the token.
 
 ### Earlier entries (not sorted by type)
 
