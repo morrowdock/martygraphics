@@ -119,6 +119,12 @@ public struct MGMathText: Equatable, Sendable {
     static let symbols: Set<Unicode.Scalar> = [" ", ".", "+", "-", "*", "/", "^", "_", "(", ")", "[", "]", ",", "=",
                                                "±", "·", "×", "−", "≤", "≥", "≠", "≈", "°"]
 
+    /// Refused in a scene's math text before the plain-text rules run (`MGParser`, reason `text.math`): a placeholder
+    /// brace or a line break (LF, VT, FF, CR, NEL, U+2028, U+2029), wherever it is.
+    static func refusedInScene(_ s: Unicode.Scalar) -> Bool {
+        s == "{" || s == "}" || (0x0A...0x0D).contains(s.value) || s.value == 0x85 || s.value == 0x2028 || s.value == 0x2029
+    }
+
     static func inAlphabet(_ s: Unicode.Scalar) -> Bool {
         MGExpression.isLetter(s) || MGExpression.isDigit(s) || symbols.contains(s) || greekName[s] != nil
     }
@@ -547,67 +553,113 @@ public struct MGMathText: Equatable, Sendable {
         return words
     }
 
+    /// A spoken phrase, and whether it ends on a part that a pause began: an end word (", end fraction", ", end root",
+    /// ", end absolute value", ", end power", ", end sub") or a script read after a pause ("sine of x, squared").
+    /// Whatever follows a closed phrase is read after a pause too ("…, end fraction, plus z").
+    struct Phrase {
+        var text: String
+        var closed = false
+    }
+
+    /// `p`, then `words`: after a pause when `p` is closed.
+    static func then(_ p: Phrase, _ words: String) -> String { p.text + (p.closed ? ", " : " ") + words }
+
+    /// "open paren a comma b close paren".
+    static func parenthesised(_ parts: [Node]) -> String {
+        var p = speech(parts[0])
+        p.text = "open paren " + p.text
+        for part in parts.dropFirst() {
+            let q = speech(part)
+            p = Phrase(text: then(p, "comma " + q.text), closed: q.closed)
+        }
+        return then(p, "close paren")
+    }
+
     /// Function arguments: one simple argument as itself, otherwise in spoken parentheses.
     static func arguments(_ parts: [Node]) -> String {
         if parts.count == 1, simple(parts[0]) { return speak(parts[0]) }
-        return "open paren " + parts.map(speak).joined(separator: " comma ") + " close paren"
+        return parenthesised(parts)
     }
 
-    static func speak(_ n: Node) -> String {
+    static func speak(_ n: Node) -> String { speech(n).text }
+
+    /// The spoken form. Every compound part that could otherwise run into what follows ends with an end word, so the
+    /// listener hears where it stops: a fraction in the long form ("the fraction with numerator … and denominator …,
+    /// end fraction"), a root or absolute value of more than one symbol, a power or subscript of more than one symbol.
+    /// A power or subscript of a function is read after a pause ("sine of x, squared" for `sin(x)^2`, against "sine of
+    /// x squared" for `sin x^2`), and `min` and `max` of anything longer than one symbol read their arguments in spoken
+    /// parentheses.
+    static func speech(_ n: Node) -> Phrase {
         switch n {
-        case .number(let s): return s
-        case .degree(let s): return s + (s == "1" ? " degree" : " degrees")
-        case .variable(let v): return v
+        case .number(let s): return Phrase(text: s)
+        case .degree(let s): return Phrase(text: s + (s == "1" ? " degree" : " degrees"))
+        case .variable(let v): return Phrase(text: v)
         case .greek(let g):
-            guard let first = g.unicodeScalars.first, first.properties.isUppercase else { return g }
-            return "capital " + g.lowercased()
-        case .infinity: return "infinity"
-        case .word(let w): return w
-        case .unit(let top, let bottom): return unitWords(top, bottom, plural: true)
+            guard let first = g.unicodeScalars.first, first.properties.isUppercase else { return Phrase(text: g) }
+            return Phrase(text: "capital " + g.lowercased())
+        case .infinity: return Phrase(text: "infinity")
+        case .word(let w): return Phrase(text: w)
+        case .unit(let top, let bottom): return Phrase(text: unitWords(top, bottom, plural: true))
         case .group(let parts):
-            if parts.count == 1, simple(parts[0]) { return speak(parts[0]) }
-            return "open paren " + parts.map(speak).joined(separator: " comma ") + " close paren"
+            if parts.count == 1, simple(parts[0]) { return speech(parts[0]) }
+            return Phrase(text: parenthesised(parts))
         case .function(let f, let parts, let parens):
             let name = function(f).spoken
             switch f {
-            case .sqrt: return name + " of " + speak(parts[0]) + (simple(parts[0]) ? "" : " end root")
-            case .abs: return name + " of " + speak(parts[0]) + (simple(parts[0]) ? "" : " end absolute value")
-            case .min, .max: return name + " of " + speak(parts[0]) + " and " + speak(parts[1])
-            default: return name + " of " + (parens ? arguments(parts) : speak(parts[0]))
+            case .sqrt, .abs:
+                let x = speech(parts[0])
+                if simple(parts[0]) { return Phrase(text: name + " of " + x.text) }
+                return Phrase(text: name + " of " + x.text + (f == .sqrt ? ", end root" : ", end absolute value"), closed: true)
+            case .min, .max:
+                if simple(parts[0]), simple(parts[1]) { return Phrase(text: name + " of " + speak(parts[0]) + " and " + speak(parts[1])) }
+                return Phrase(text: name + " of " + parenthesised(parts))
+            default:
+                if parens { return Phrase(text: name + " of " + arguments(parts)) }
+                let x = speech(parts[0])
+                return Phrase(text: name + " of " + x.text, closed: x.closed)
             }
-        case .apply(let f, let parts): return f + " of " + arguments(parts)
+        case .apply(let f, let parts): return Phrase(text: f + " of " + arguments(parts))
         case .script(let base, let sub, let sup):
-            var s = speak(base)
-            if let sub { s += " sub " + speak(sub) + (simple(sub) ? "" : " end sub") }
+            var p = speech(base)
+            switch base {
+            case .function, .apply: p.closed = true
+            default: break
+            }
+            if let sub {
+                p = Phrase(text: then(p, "sub " + speak(sub)) + (simple(sub) ? "" : ", end sub"), closed: p.closed || !simple(sub))
+            }
             if let sup {
-                if sup == .number("2") { s += " squared" }
-                else if sup == .number("3") { s += " cubed" }
+                if sup == .number("2") { p.text = then(p, "squared") }
+                else if sup == .number("3") { p.text = then(p, "cubed") }
                 else {
                     var plain = simple(sup)
                     if case .sign(_, let x) = sup, simple(x) { plain = true }
-                    s += " to the power " + speak(sup) + (plain ? "" : " end power")
+                    p = Phrase(text: then(p, "to the power " + speak(sup)) + (plain ? "" : ", end power"), closed: p.closed || !plain)
                 }
             }
-            return s
+            return p
         case .fraction(let a, let b):
-            if let words = fractionWords(a, b) { return words }
-            if simple(a), simple(b) { return speak(a) + " over " + speak(b) }
-            return "the fraction with numerator " + speak(a) + " and denominator " + speak(b)
-        case .sign(let op, let x): return op.spoken + " " + speak(x)
+            if let words = fractionWords(a, b) { return Phrase(text: words) }
+            if simple(a), simple(b) { return Phrase(text: speak(a) + " over " + speak(b)) }
+            return Phrase(text: "the fraction with numerator " + then(speech(a), "and denominator " + speak(b)) + ", end fraction",
+                          closed: true)
+        case .sign(let op, let x):
+            let q = speech(x)
+            return Phrase(text: op.spoken + " " + q.text, closed: q.closed)
         case .row(let first, let links):
-            var s = speak(first)
+            var p = speech(first)
             var previous = first
             for link in links {
-                let part: String
+                let q: Phrase
                 if link.op == .implicit, case .unit(let top, let bottom) = link.node {
-                    part = unitWords(top, bottom, plural: previous != .number("1"))
+                    q = Phrase(text: unitWords(top, bottom, plural: previous != .number("1")))
                 } else {
-                    part = speak(link.node)
+                    q = speech(link.node)
                 }
-                s += link.op == .implicit ? " " + part : " " + link.op.spoken + " " + part
+                p = Phrase(text: then(p, link.op == .implicit ? q.text : link.op.spoken + " " + q.text), closed: q.closed)
                 previous = link.node
             }
-            return s
+            return p
         }
     }
 }
@@ -634,6 +686,19 @@ public struct MGMathLayout: Equatable, Sendable {
     public var width = 0.0, ascent = 0.0, descent = 0.0
 }
 
+/// Where a formula goes across the canvas (`MGMathText.fit`), in canvas points.
+public struct MGMathFit: Equatable, Sendable {
+    /// The factor applied to the layout at `MGMathText.boardSize`: 1 when it fits, never below
+    /// `minimumSize / boardSize`.
+    public var scale: Double
+    /// The x of the left end of the baseline.
+    public var left: Double
+    /// The drawn width: the scaled layout width, or the room left between the margins when `clipped`.
+    public var width: Double
+    /// True when the formula is wider than the canvas even at `minimumSize`, so its right end is cut off.
+    public var clipped: Bool
+}
+
 extension MGMathText {
     /// A text run's height above and below the baseline, as fractions of its size.
     static let ascentRatio = 0.72, descentRatio = 0.22
@@ -642,6 +707,30 @@ extension MGMathText {
 
     /// The base size, in points, at which the 2D canvas draws math text (plain text labels are 14).
     public static let boardSize = 17.0
+
+    /// The smallest base size a formula is scaled down to so that it fits across the canvas (`fit`).
+    public static let minimumSize = 11.0
+    /// The margin kept clear at each side of the canvas when a formula is fitted (`fit`).
+    public static let fitMargin = 8.0
+
+    /// Fits a formula across a canvas `canvas` points wide, for the renderer and `MGLayout.bounds` alike. `width` is the
+    /// layout width at `boardSize` and `centre` the x of the item's `at`. A formula that fits in the canvas less
+    /// `fitMargin` at each side keeps its size and is centred on `at`, moved inward only as far as it must be to stay
+    /// inside. A wider one is scaled down uniformly (runs, gaps and strokes alike) until it fits, but never below
+    /// `minimumSize`. Wider than the room even at that size, it is drawn at `minimumSize` from the left margin and
+    /// clipped at the right margin: `clipped` is true and `width` is the clipped width, so the drawn box never claims
+    /// more than is shown. The spoken form is the whole formula either way.
+    public static func fit(width: Double, centre: Double, canvas: Double) -> MGMathFit {
+        let natural = width.isFinite ? Swift.max(0, width) : 0
+        let room = canvas.isFinite ? Swift.max(0, canvas - 2 * fitMargin) : 0
+        let lowest = minimumSize / boardSize
+        let scale = natural <= room ? 1 : Swift.max(lowest, room / natural)
+        let drawn = natural * scale
+        guard drawn <= room + 1e-9 else { return MGMathFit(scale: scale, left: fitMargin, width: room, clipped: true) }
+        let middle = centre.isFinite ? centre : canvas / 2
+        let left = Swift.min(Swift.max(middle - drawn / 2, fitMargin), Swift.max(fitMargin, canvas - fitMargin - drawn))
+        return MGMathFit(scale: scale, left: left, width: drawn, clipped: false)
+    }
 
     /// A rough width for a run (`MGLayout.textSize` uses the same 0.56 em per character): bounds without a font.
     public static func roughWidth(_ text: String, _ size: Double, _ italic: Bool) -> Double {

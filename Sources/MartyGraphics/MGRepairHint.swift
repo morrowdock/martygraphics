@@ -137,7 +137,7 @@ public enum MGRepairHint {
         ("text.math.unit", "units go in brackets, from m, cm, mm, km, nm, s, ms, min, h, kg, g, mg, N, kN, J, kJ, eV, W, kW, Pa, kPa, Hz, kHz, V, mV, A, mA, C, ohm, T, K, degC, deg, rad, mol, L, mL, percent, with powers ^2 or ^3 and at most one /, as in [m/s^2] or [J/(kg K)]"),
         ("text.math.tokens", "math text has at most 48 tokens (numbers, names and symbols); shorten it or split it into two text items"),
         ("text.math.depth", "fractions, scripts, roots, function arguments and parentheses nest at most 4 deep"),
-        ("text.math", "math text is 1-80 characters: ASCII letters, digits, spaces, . + - * / ^ _ ( ) [ ] , = and ± · × − ≤ ≥ ≠ ≈ ° and Greek letters; no braces (placeholders) and no line breaks"),
+        ("text.math", "math text is 1-80 characters, padding spaces included: ASCII letters, digits, spaces, . + - * / ^ _ ( ) [ ] , = and ± · × − ≤ ≥ ≠ ≈ ° and Greek letters; no braces (math text has no placeholders: put an engine value in a plain text item beside it) and no line breaks, not even a trailing one"),
         ("highlight.target", "target must name another item in this scene, not the highlight itself"),
         ("highlight.cycle", "a chain of highlights must end at an item that is not a highlight"),
         ("bars.bars", "bars holds 1 to 6 bars"),

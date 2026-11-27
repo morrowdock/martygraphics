@@ -138,14 +138,20 @@
   small closed markup (`x^2 + 2 x`, `1/2`, `sqrt(x)`, `x_1`, `theta`, `±`, `·`, `×`, units in brackets such as
   `9.8 [m/s^2]`), parsed by the engine (`MGMathText`, never a host evaluator; no LaTeX, no HTML). The 2D canvas
   draws it as typeset runs: smaller raised and lowered scripts, stacked fractions over a bar, stroked root signs,
-  upright units and italic variables. The engine also writes a deterministic spoken form ("x squared plus 2 x",
-  "one half", "the square root of x"), which `MGDescribe` reads ("the formula “…”"), so VoiceOver and any export
+  upright units and italic variables, scaled down to fit a narrow canvas (never below 11 points; clipped at the
+  right margin below that, `MGMathText.fit`). The engine also writes a deterministic spoken form ("x squared plus 2
+  x", "one half", "the square root of x") in which grouping is heard: long-form fractions, and roots, powers and
+  subscripts of more than one symbol, end with an end word and a pause ("…and denominator y, end fraction, plus z"),
+  and a power of a function is read after a pause ("sine of x, squared" against "sine of x squared" for `sin x^2`).
+  `MGDescribe` reads it ("the formula “…”"), so VoiceOver and any export
   built on `MGDescribe.board` hear it instead of the markup; `MGMathText.spoken(_:)` gives it to a host. New
   bounds for the style only (`MGLimits.mathLength` 80, `mathTokens` 48, `mathDepth` 4) and new reasons
   `text.math`, `text.math.syntax`, `.tokens`, `.depth`, `.name`, `.unit` and `3d.text.math` (math text is 2D
-  only), each with a repair hint. The grammar document gains a `math` inventory (new hash `4752519927b685c0`).
+  only), each with a repair hint. A scene checks math text for 3D first, then for a brace or a line break anywhere
+  in the raw text (`text.math`, before placeholders and trimming), then the plain-text rules, then the untrimmed
+  markup. The grammar document gains a `math` inventory (new hash `4752519927b685c0`).
   `tools/mg_math.py` mirrors the parser and spoken form for `tools/scene_v1_check.py`; both implementations check
-  the shared cases in `docs/fixtures/v1/math.cases.json` (74 spoken forms, 50 refusals). Scenes that parsed before
+  the shared cases in `docs/fixtures/v1/math.cases.json` (86 spoken forms, 50 refusals, 9 fit cases). Scenes that parsed before
   parse to the same result.
 - Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes. Swift remains the authority.
 - Portability step 1, inventory and tests only (no file moves, no API change, no support claim

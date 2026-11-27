@@ -43,8 +43,10 @@ public enum MGCanvasRenderer {
 
     /// Math text (MGMathText) typeset centred at `at`: each run drawn with its baseline where the layout puts it
     /// (variables and lower-case Greek italic, the rest upright, scripts smaller), and the layout's strokes (fraction
-    /// bars, root signs, tall parentheses, absolute-value bars) in the item's colour. Returns the drawn box.
-    static func mathText(_ ctx: GraphicsContext, _ math: MGMathText, at: CGPoint, color: Color, opacity: Double) -> CGRect {
+    /// bars, root signs, tall parentheses, absolute-value bars) in the item's colour. `MGMathText.fit` keeps it inside
+    /// a canvas `canvas` wide: scaled down as a whole to fit, never below `MGMathText.minimumSize`, and clipped at the
+    /// right margin below that. Returns the drawn box (the clipped one when clipped), which `MGLayout.bounds` matches.
+    static func mathText(_ ctx: GraphicsContext, _ math: MGMathText, at: CGPoint, canvas: CGSize, color: Color, opacity: Double) -> CGRect {
         var resolved: [String: GraphicsContext.ResolvedText] = [:]
         func run(_ text: String, _ size: Double, _ italic: Bool) -> GraphicsContext.ResolvedText {
             let key = "\(italic ? 1 : 0) \(size) \(text)"
@@ -57,18 +59,26 @@ public enum MGCanvasRenderer {
         }
         let room = CGSize(width: 2000, height: 400)
         let layout = math.layout(size: MGMathText.boardSize) { text, size, italic in Double(run(text, size, italic).measure(in: room).width) }
-        let origin = CGPoint(x: at.x - CGFloat(layout.width) / 2, y: at.y + CGFloat(layout.ascent - layout.descent) / 2)
+        let fit = MGMathText.fit(width: layout.width, centre: Double(at.x), canvas: Double(canvas.width))
+        let scale = CGFloat(fit.scale)
+        let origin = CGPoint(x: CGFloat(fit.left), y: at.y + CGFloat(layout.ascent - layout.descent) * scale / 2)
+        let box = CGRect(x: origin.x, y: origin.y - CGFloat(layout.ascent) * scale, width: CGFloat(fit.width),
+                         height: CGFloat(layout.ascent + layout.descent) * scale)
         var c = ctx; c.opacity *= opacity
+        if fit.clipped { c.clip(to: Path(box.insetBy(dx: 0, dy: -4))) }
+        // Layout coordinates from here: the baseline's left end at the origin, scaled as a whole.
+        c.translateBy(x: origin.x, y: origin.y)
+        c.scaleBy(x: scale, y: scale)
         for r in layout.runs {
             let t = run(r.text, r.size, r.italic)
-            c.draw(t, at: CGPoint(x: origin.x + CGFloat(r.x), y: origin.y + CGFloat(r.y) - t.firstBaseline(in: room)), anchor: .topLeading)
+            c.draw(t, at: CGPoint(x: CGFloat(r.x), y: CGFloat(r.y) - t.firstBaseline(in: room)), anchor: .topLeading)
         }
         for s in layout.strokes where s.points.count > 1 {
             var path = Path()
-            path.addLines(s.points.map { CGPoint(x: origin.x + CGFloat($0.x), y: origin.y + CGFloat($0.y)) })
+            path.addLines(s.points.map { CGPoint(x: CGFloat($0.x), y: CGFloat($0.y)) })
             c.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: CGFloat(s.width), lineCap: .round, lineJoin: .round))
         }
-        return CGRect(x: origin.x, y: origin.y - CGFloat(layout.ascent), width: CGFloat(layout.width), height: CGFloat(layout.ascent + layout.descent))
+        return box
     }
 
     /// Draw order rank of an item (lower first).
@@ -264,7 +274,7 @@ public enum MGCanvasRenderer {
                     c.draw(t, in: CGRect(x: at.x - m.width / 2 + 2, y: at.y - m.height / 2, width: m.width + 2, height: m.height))
                     obstacles.append(box)
                 } else if item.has("math"), let math = try? MGMathText.parse(s) {
-                    obstacles.append(mathText(ctx, math, at: at, color: color, opacity: opacity))
+                    obstacles.append(mathText(ctx, math, at: at, canvas: vp.size, color: color, opacity: opacity))
                 } else if item.has("code") {
                     // Monospaced and left-aligned at `at`, so indented lines stack into a readable listing.
                     let t = ctx.resolve(Text(s).font(.system(size: 14, weight: .medium, design: .monospaced)).foregroundColor(color))

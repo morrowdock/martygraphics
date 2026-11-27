@@ -1195,7 +1195,7 @@
   },
   {
    "reason": "text.math",
-   "hint": "math text is 1-80 characters: ASCII letters, digits, spaces, . + - * / ^ _ ( ) [ ] , = and ± · × − ≤ ≥ ≠ ≈ ° and Greek letters; no braces (placeholders) and no line breaks"
+   "hint": "math text is 1-80 characters, padding spaces included: ASCII letters, digits, spaces, . + - * / ^ _ ( ) [ ] , = and ± · × − ≤ ≥ ≠ ≈ ° and Greek letters; no braces (math text has no placeholders: put an engine value in a plain text item beside it) and no line breaks, not even a trailing one"
   },
   {
    "reason": "text.math.depth",

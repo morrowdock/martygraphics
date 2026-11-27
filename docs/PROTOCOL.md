@@ -758,15 +758,26 @@ step edit).
 ```
 
 - A `text` item with `"style": "math"`. Its text is a small closed markup, not LaTeX and not HTML: the engine parses
-  it, never a host evaluator. The plain-text rules of every text run first (`text.text`: no `<` or `>`, URLs, code
-  fences or control characters), then the markup rules below. Math text has no placeholders: a brace is refused
-  (`text.math`), because a filled value is not math. Put an engine number in a plain `text` item beside it.
+  it, never a host evaluator. Math text has no placeholders, because a filled value is not math: put an engine number
+  in a plain `text` item beside it. A scene checks a math text item in this order, in `MGParser` and in
+  `tools/scene_v1_check.py` alike: `3d.text.math` in a 3D scene; `text.math` for a brace (`{` or `}`) or a line break
+  (LF, VT, FF, CR, NEL, U+2028, U+2029) anywhere in the raw text, before any placeholder is looked up and before
+  anything is trimmed, so `x = {v}` and a trailing line feed are both `text.math`; then the plain-text rules of
+  every text (`text.text`: no `<` or `>`, URLs, code fences or control characters); then the markup rules below on
+  the raw text, untrimmed, so only plain spaces may pad it and they count toward its length.
 - Drawn by the 2D canvas as typeset runs centred at `at`, at a base size of 17 points in a serif face: variables and
   lower-case Greek letters italic, numbers, units, function names and capital Greek letters upright; superscripts and
   subscripts at 0.7 of the size (never below half the base size), raised or lowered; a fraction stacked over a bar on
   the maths axis; a root drawn as a stroked sign with a bar over the radicand; `abs(x)` between bars; parentheses
   around a fraction drawn as tall strokes. `MGMathText.layout(size:measure:)` gives the runs and strokes, so another
   renderer can draw the same layout.
+- Fitted across the canvas (`MGMathText.fit`, mirrored by `fit` in `tools/mg_math.py`): a formula that fits between
+  8-point margins (`fitMargin`) keeps its size and is centred on `at`, moved inward only as far as it must be to stay
+  on the canvas. A wider one is scaled down as a whole, runs, gaps and strokes alike, but never below 11 points
+  (`minimumSize`). If it is still too wide at 11 points it is drawn at 11 points from the left margin and clipped at
+  the right margin, and the drawn box `MGLayout.bounds` reports is the clipped one. A formula at the 48-token bound can be
+  over 600 points wide at 17 points, so on a phone-width canvas it may be clipped. The spoken form is always the whole
+  formula.
 - A spoken form written by the engine, read wherever the board is described: `MGDescribe` names the item "the formula
   “x squared plus 2 x”" (so `MartyGraphicsView` reads it to VoiceOver when it describes the board, and so does any export that
   describes boards with `MGDescribe.board`), and `MGMathText.spoken(_:)` gives it to a host. The markup itself is never
@@ -787,13 +798,16 @@ list     := relation ("," relation)*
 | --- | --- | --- |
 | `x^2 + 2 x` | x² + 2x | x squared plus 2 x |
 | `1/2 m v^2` | ½ m v² (stacked) | one half m v squared |
-| `sqrt(x^2 + 1)` | √(x² + 1) under a bar | the square root of x squared plus 1 end root |
+| `sqrt(x^2 + 1)` | √(x² + 1) under a bar | the square root of x squared plus 1, end root |
 | `y = a sin x` | y = a sin x | y equals a sine of x |
 | `x_1 + x_2`, `v_max` | x₁ + x₂, v with an upright "max" below | x sub 1 plus x sub 2, v sub max |
 | `theta = 30°`, `Delta x` | θ = 30°, Δx | theta equals 30 degrees, capital delta x |
 | `v = 9.8 [m/s^2]` | v = 9.8 m/s² | v equals 9.8 metres per second squared |
 | `f(x) = x^2`, `a (b + c)` | f(x) = x², a(b + c) | f of x equals x squared, a open paren b plus c close paren |
-| `e^(-x^2/2)` | e raised to −x²/2 | e to the power minus the fraction with numerator x squared and denominator 2 end power |
+| `e^(-x^2/2)` | e raised to −x²/2 | e to the power minus the fraction with numerator x squared and denominator 2, end fraction, end power |
+| `(x+1)/y + z` | (x + 1)/y stacked, then + z | the fraction with numerator x plus 1 and denominator y, end fraction, plus z |
+| `(x+1)/(y+z)` | (x + 1)/(y + z) stacked | the fraction with numerator x plus 1 and denominator y plus z, end fraction |
+| `sin(x)^2`, `sin x^2` | sin(x)², sin x² | sine of x, squared; sine of x squared |
 
 - Numbers are decimal as written (`2`, `0.5`, `.5`; at most 12 characters, as in expressions). `30°` is a number
   with a degree sign. `-` and `−` are minus; `+-` and `±` are plus or minus; `*` and `·` draw `·`, `×` draws `×`,
@@ -816,13 +830,23 @@ list     := relation ("," relation)*
   equal to", "is approximately equal to", "is less than or equal to", "is greater than or equal to"); `^2` and `^3`
   as "squared" and "cubed", other powers "to the power n"; subscripts "sub"; fractions of whole numbers 1–9 over 2–10
   in words ("one half", "three quarters"), "a over b" for two single symbols, otherwise "the fraction with numerator
-  … and denominator …"; parentheses "open paren … close paren" around anything longer than one symbol; capital Greek
-  letters "capital delta". A power, subscript, root or absolute value longer than one symbol ends with "end power",
-  "end sub", "end root" or "end absolute value", so the reader hears where it stops.
+  … and denominator …, end fraction"; parentheses "open paren … close paren" around anything longer than one symbol;
+  capital Greek letters "capital delta". The grouping is always heard, by three rules:
+  - End words. A long-form fraction always ends with ", end fraction"; a power, subscript, root or absolute value of
+    more than one symbol ends with ", end power", ", end sub", ", end root" or ", end absolute value". Nested parts
+    close one by one ("…, end fraction, end power"), so `(x+1)/y + z` ("…and denominator y, end fraction, plus z")
+    and `(x+1)/(y+z)` ("…and denominator y plus z, end fraction") differ.
+  - Pauses. After an end word, whatever follows is read after a comma pause (", plus z", ", and denominator", ",
+    squared").
+  - Function scope. A power or subscript of a function or a function application is read after a pause: `sin(x)^2`
+    is "sine of x, squared", `sin x^2` (the sine of x²) is "sine of x squared", and `sin(x^2)` is "sine of open
+    paren x squared close paren"; `sqrt(x)^2` is "the square root of x, squared". `min` and `max` of anything longer
+    than one symbol read their arguments in parentheses ("the maximum of open paren a comma b plus c close paren").
 - Bounds (`MGLimits`, new style only): at most 80 Unicode scalars (`mathLength`) and 48 tokens (`mathTokens`), and
   fractions, scripts, roots, function arguments and parentheses nested at most 4 deep (`mathDepth`). Reasons, first
-  match wins: `text.math` (empty, too long, or a character outside the alphabet: ASCII letters, digits, spaces,
-  `. + - * / ^ _ ( ) [ ] , =`, `± · × − ≤ ≥ ≠ ≈ °` and the Greek letters; braces and line breaks included),
+  match wins (after the scene order above): `text.math` (empty, too long, or a character outside the alphabet: ASCII
+  letters, digits, spaces, `. + - * / ^ _ ( ) [ ] , =`, `± · × − ≤ ≥ ≠ ≈ °` and the Greek letters; braces and line
+  breaks included),
   `text.math.syntax` (a malformed number), `text.math.tokens`, `text.math.depth` (parentheses), then left to right
   `text.math.syntax`, `text.math.name` (an unknown name) and `text.math.unit` (anything wrong inside `[ ]`), and
   last `text.math.depth` (the nesting).
@@ -1121,7 +1145,7 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `scene.key.duplicate.<path>` | An object in the scene text repeats a key; `<path>` names it from the root (`items.1.at`) | Keep one value for each key; `MGRepairHint.text(for:)` gives a one-line fix. |
 | `3d.text.code` | `code` text in a 3D scene | Use plain text in 3D, or keep the scene 2D. |
 | `3d.text.math` | `math` text in a 3D scene | Write the formula as plain text in 3D, or keep the scene 2D. |
-| `text.math`, `text.math.syntax` / `.tokens` / `.depth` / `.name` / `.unit` | Math text is empty, too long, outside the alphabet (braces included), malformed, over its bounds, names an unknown name, or has an unknown unit | See [math text](#math-text). |
+| `text.math`, `text.math.syntax` / `.tokens` / `.depth` / `.name` / `.unit` | Math text is empty, too long (padding spaces count), outside the alphabet, holds a brace or a line break anywhere (checked before placeholders and trimming), malformed, over its bounds, names an unknown name, or has an unknown unit | See [math text](#math-text). |
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |
 | `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them; a `curve`, and each edit of it, counts 2, and so do a `func` with readouts and each edit of it that can change one) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs, fewer edits of them or fewer readouts, or split the board. |

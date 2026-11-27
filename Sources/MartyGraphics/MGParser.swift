@@ -756,6 +756,15 @@ public enum MGParser {
             // Text is checked before style, as before `code` existed, so older invalid documents keep their reason.
             // `code` keeps leading spaces and allows comparison signs; markup-like tags stay refused.
             let isCode = o["style"] == .string("code")
+            if o["style"] == .string("math") {
+                // Math text, in this order: 2D only; no placeholders and no line breaks, checked on the raw text before
+                // anything is trimmed or filled (a brace or a line break anywhere, trailing too, is `text.math`); then
+                // the plain-text rules; then the markup itself, untrimmed, after the switch below.
+                guard !ctx.is3D else { throw MGError("3d.text.math") }
+                if case .string(let raw)? = o["text"], raw.unicodeScalars.contains(where: MGMathText.refusedInScene) {
+                    throw MGError("text.math")
+                }
+            }
             it.text = try text(o["text"], MGLimits.text, ctx, "text.text", code: isCode, multiline: true)
             switch o["style"] {
             case nil, .string("label"): break
@@ -766,10 +775,10 @@ public enum MGParser {
                 guard !ctx.is3D else { throw MGError("3d.text.code") }
                 it.flags.insert("code")
             case .string("math"):
-                // Typeset by the 2D canvas from the markup (MGMathText), with an engine-written spoken form. The raw text
-                // is parsed, so a template placeholder (a brace) is refused: a filled value is not math.
-                guard !ctx.is3D else { throw MGError("3d.text.math") }
-                if case .string(let raw)? = o["text"] { _ = try MGMathText.parse(raw.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                // Typeset by the 2D canvas from the markup (MGMathText), with an engine-written spoken form. The raw,
+                // untrimmed text is parsed (3D, braces and line breaks were refused above): a filled value is not math,
+                // and only plain spaces may pad it.
+                if case .string(let raw)? = o["text"] { _ = try MGMathText.parse(raw) }
                 it.flags.insert("math")
             default: throw MGError("text.style")
             }

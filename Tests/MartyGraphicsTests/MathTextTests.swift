@@ -56,6 +56,29 @@ final class MathTextTests: XCTestCase {
                        ["text.math", "text.math.syntax", "text.math.tokens", "text.math.depth", "text.math.name", "text.math.unit"])
     }
 
+    /// Formulas that differ only in grouping are heard differently: a compound part ends with an end word before what
+    /// follows, and a power or subscript of a function is read after a pause.
+    func testGroupingIsHeard() throws {
+        let pairs = [("(x + 1)/y + z", "(x + 1)/(y + z)"), ("a/b + c", "a/(b + c)"), ("sin(x)^2", "sin x^2"),
+                     ("sin(x)^2", "sin(x^2)"), ("sin x^2", "sin(x^2)"), ("sqrt(x)^2", "sqrt(x^2)"), ("sqrt(x) + 1", "sqrt(x + 1)"),
+                     ("abs(x) - 1", "abs(x - 1)"), ("f(x)^2", "f(x^2)"), ("max(a, b) + c", "max(a, b + c)"),
+                     ("x^(n + 1) + 2", "x^(n + 1 + 2)"), ("x_(n + 1) + 2", "x_(n + 1 + 2)"),
+                     ("(a/(b + c))/d", "a/((b + c)/d)"), ("sin(x)_1", "sin(x_1)")]
+        for (a, b) in pairs {
+            XCTAssertNotEqual(try MGMathText.parse(a).spoken, try MGMathText.parse(b).spoken, "\(a) against \(b)")
+        }
+        XCTAssertEqual(try MGMathText.parse("(x + 1)/y + z").spoken,
+                       "the fraction with numerator x plus 1 and denominator y, end fraction, plus z")
+        XCTAssertEqual(try MGMathText.parse("sin(x)^2").spoken, "sine of x, squared")
+        XCTAssertEqual(try MGMathText.parse("sin x^2").spoken, "sine of x squared")
+        // Every long-form fraction in the goldens is closed.
+        let spoken = try XCTUnwrap(Self.cases()["spoken"] as? [[String: String]]).compactMap { $0["spoken"] }
+        for s in spoken {
+            XCTAssertEqual(s.components(separatedBy: "the fraction with numerator").count,
+                           s.components(separatedBy: ", end fraction").count, s)
+        }
+    }
+
     // MARK: limits
 
     func testLimitsAreTheDocumentedOnes() {
@@ -109,7 +132,7 @@ final class MathTextTests: XCTestCase {
     // MARK: scenes
 
     func testSceneAcceptsMathStyleAndRoundTrips() throws {
-        let parsed = try scene(Self.math("  y = a sin x\n")).get()
+        let parsed = try scene(Self.math("  y = a sin x  ")).get()
         let item = try XCTUnwrap(parsed.item("eq"))
         XCTAssertTrue(item.has("math"))
         XCTAssertEqual(item.text, "y = a sin x")
@@ -124,12 +147,36 @@ final class MathTextTests: XCTestCase {
         XCTAssertEqual(sceneReason(Self.math("ma")), "text.math.name")
         XCTAssertEqual(sceneReason(Self.math("[kgs]")), "text.math.unit")
         XCTAssertEqual(sceneReason(Self.math("x^")), "text.math.syntax")
-        // The plain-text rules run first, as for every style.
-        XCTAssertEqual(sceneReason(Self.math("x < 1")), "text.text")
-        XCTAssertEqual(sceneReason(Self.math("x = {v}")), "text.text.placeholder.v")
-        XCTAssertEqual(sceneReason(Self.math("x\ny")), "text.math", "a line feed is plain text but not math")
         XCTAssertEqual(sceneReason(Self.math("x^2"), extra: #","dim":"3d""#), "3d.text.math")
         XCTAssertEqual(sceneReason(#"{"id":"eq","k":"text","at":[6,4],"style":"maths","text":"x"}"#), "text.style")
+    }
+
+    /// The documented order for math text: `3d.text.math`; `text.math` for a brace or a line break anywhere in the raw
+    /// text; the plain-text rules (`text.text`); then the markup of the raw, untrimmed text.
+    func testSceneRefusalOrder() {
+        // Math text has no placeholders: a brace is `text.math` before any placeholder is looked up or filled.
+        XCTAssertEqual(sceneReason(Self.math("x = {v}")), "text.math", "a placeholder")
+        XCTAssertEqual(sceneReason(Self.math("x = {")), "text.math", "an unclosed brace")
+        XCTAssertEqual(sceneReason(Self.math("x = }")), "text.math", "a stray brace")
+        XCTAssertEqual(sceneReason(Self.math("x < {v}")), "text.math", "braces before the plain-text rules")
+        // Line breaks anywhere, also leading and trailing ones that trimming would have removed.
+        XCTAssertEqual(sceneReason(Self.math("x\ny")), "text.math")
+        XCTAssertEqual(sceneReason(Self.math("x^2\n")), "text.math", "a trailing line feed")
+        XCTAssertEqual(sceneReason(Self.math("\nx^2")), "text.math", "a leading line feed")
+        XCTAssertEqual(sceneReason(Self.math("x^2\r")), "text.math", "a carriage return")
+        XCTAssertEqual(sceneReason(Self.math("x^2" + String(Character(Unicode.Scalar(0x2028)!)))), "text.math", "a line separator")
+        // Then the plain-text rules, then the markup, untrimmed: only plain spaces may pad it.
+        XCTAssertEqual(sceneReason(Self.math("x < 1")), "text.text")
+        XCTAssertEqual(sceneReason(Self.math("x^2\t")), "text.text", "a tab is a control character")
+        XCTAssertEqual(sceneReason(Self.math("x^2" + String(Character(Unicode.Scalar(0xa0)!)))), "text.math",
+                       "a trailing no-break space is not trimmed away")
+        XCTAssertNil(sceneReason(Self.math("  x^2  ")))
+        // 3D first: a 3D scene refuses math text whatever its text.
+        XCTAssertEqual(sceneReason(Self.math("x = {v}"), extra: #","dim":"3d""#), "3d.text.math")
+        XCTAssertEqual(sceneReason(Self.math("x < 1"), extra: #","dim":"3d""#), "3d.text.math")
+        // Other styles are unchanged: plain text keeps its placeholder reasons and its trimming.
+        XCTAssertEqual(sceneReason(#"{"id":"t","k":"text","at":[6,4],"text":"x = {v}"}"#), "text.text.placeholder.v")
+        XCTAssertNil(sceneReason(#"{"id":"t","k":"text","at":[6,4],"text":"x^2\n"}"#))
     }
 
     func testStepEditsAreCheckedAsMath() {
@@ -302,6 +349,81 @@ final class MathTextTests: XCTestCase {
         let m = try MGMathText.parse("1/2 m v^2").layout(size: MGMathText.boardSize, measure: MGMathText.roughWidth)
         XCTAssertEqual(Double(box.width), m.width + 8, accuracy: 1e-6)
         XCTAssertEqual(Double(box.height), m.ascent + m.descent + 6, accuracy: 1e-6)
+    }
+
+    // MARK: fitting across the canvas
+
+    /// The fit rule on plain numbers, from the shared cases (tools/tests/test_mg_math.py checks the same rows).
+    func testFitGoldens() throws {
+        XCTAssertEqual(MGMathText.minimumSize, 11)
+        XCTAssertEqual(MGMathText.fitMargin, 8)
+        let rows = try XCTUnwrap(Self.cases()["fit"] as? [[String: Any]])
+        XCTAssertGreaterThanOrEqual(rows.count, 8)
+        func number(_ row: [String: Any], _ key: String) throws -> Double { try XCTUnwrap((row[key] as? NSNumber)?.doubleValue, key) }
+        for row in rows {
+            let fit = MGMathText.fit(width: try number(row, "width"), centre: try number(row, "centre"), canvas: try number(row, "canvas"))
+            let label = "\(row)"
+            XCTAssertEqual(fit.scale, try number(row, "scale"), accuracy: 1e-12, label)
+            XCTAssertEqual(fit.left, try number(row, "left"), accuracy: 1e-9, label)
+            XCTAssertEqual(fit.width, try number(row, "drawn"), accuracy: 1e-9, label)
+            XCTAssertEqual(fit.clipped, try XCTUnwrap(row["clipped"] as? Bool), label)
+        }
+        XCTAssertEqual(Set(rows.compactMap { $0["clipped"] as? Bool }), [true, false], "both outcomes are covered")
+    }
+
+    func testFitRuleProperties() {
+        let lowest = MGMathText.minimumSize / MGMathText.boardSize
+        for canvas in [0.0, 10, 100, 236, 320, 480, 1280] {
+            for width in [0.0, 1, 50, 199.5, 304, 400, 640, 2000, .nan, .infinity] {
+                for centre in [-50.0, 0, canvas / 2, canvas, canvas + 50] {
+                    let fit = MGMathText.fit(width: width, centre: centre, canvas: canvas)
+                    let room = Swift.max(0, canvas - 2 * MGMathText.fitMargin)
+                    let label = "width \(width) centre \(centre) canvas \(canvas)"
+                    XCTAssertTrue(fit.scale <= 1 && fit.scale >= lowest - 1e-12, label)
+                    XCTAssertGreaterThanOrEqual(fit.left, MGMathText.fitMargin - 1e-9, label)
+                    XCTAssertLessThanOrEqual(fit.width, room + 1e-9, label)
+                    if room > 0 { XCTAssertLessThanOrEqual(fit.left + fit.width, canvas - MGMathText.fitMargin + 1e-9, label) }
+                    if fit.clipped {
+                        XCTAssertEqual(fit.scale, lowest, accuracy: 1e-12, label)
+                        XCTAssertEqual(fit.width, room, accuracy: 1e-9, label)
+                    } else if width.isFinite {
+                        XCTAssertEqual(fit.width, width * fit.scale, accuracy: 1e-9, label)
+                    }
+                }
+            }
+        }
+    }
+
+    /// A valid formula at the token bound stays inside a narrow canvas: scaled down, or clipped honestly below the
+    /// minimum size. Checked on `MGLayout.bounds`, which uses the same fit as the renderer, so nothing is drawn.
+    func testLongFormulasStayInsideNarrowCanvases() throws {
+        let longest = String(repeating: "x+", count: 23) + "2 x"
+        for text in [longest, "x = (-b ± sqrt(b^2 - 4 a c))/(2 a)", "1/2 m v^2"] {
+            for (x, canvas) in [(6.0, 1280.0), (6, 640), (6, 480), (6, 320), (6, 200), (0.2, 1280), (11.8, 640)] {
+                let parsed = try scene(Self.math(text).replacingOccurrences(of: "[6,4]", with: "[\(x),4]")).get()
+                let item = try XCTUnwrap(parsed.item("eq"))
+                let vp = MGViewport(size: CGSize(width: canvas, height: 720), width: 12, height: 8, camera: nil)
+                let box = try XCTUnwrap(MGLayout.bounds(item, in: parsed.items, vp))
+                let label = "\(text) at x \(x) on \(canvas)"
+                // The box is the drawn box with 4 points of padding at each side.
+                XCTAssertGreaterThanOrEqual(Double(box.minX), MGMathText.fitMargin - 4 - 1e-6, label)
+                XCTAssertLessThanOrEqual(Double(box.maxX), canvas - MGMathText.fitMargin + 4 + 1e-6, label)
+                let m = try MGMathText.parse(text).layout(size: MGMathText.boardSize, measure: MGMathText.roughWidth)
+                let fit = MGMathText.fit(width: m.width, centre: Double(vp.point(item.pts[0]).x), canvas: canvas)
+                XCTAssertEqual(Double(box.width), fit.width + 8, accuracy: 1e-6, label)
+                XCTAssertEqual(Double(box.height), (m.ascent + m.descent) * fit.scale + 6, accuracy: 1e-6, label)
+                if m.width <= canvas - 2 * MGMathText.fitMargin { XCTAssertEqual(fit.scale, 1, label) }
+            }
+        }
+        // The longest formula is about 640 points wide at the board size: it keeps its size on a 1280 canvas, is
+        // scaled down on 640 and 480, and is clipped at the minimum size on 320.
+        let m = try MGMathText.parse(longest).layout(size: MGMathText.boardSize, measure: MGMathText.roughWidth)
+        XCTAssertEqual(MGMathText.fit(width: m.width, centre: 640, canvas: 1280).scale, 1)
+        let mid = MGMathText.fit(width: m.width, centre: 240, canvas: 480)
+        XCTAssertTrue(mid.scale < 1 && !mid.clipped, "\(m.width) \(mid)")
+        let narrow = MGMathText.fit(width: m.width, centre: 160, canvas: 320)
+        XCTAssertTrue(narrow.clipped, "\(m.width) \(narrow)")
+        XCTAssertEqual(narrow.scale * MGMathText.boardSize, MGMathText.minimumSize, accuracy: 1e-9)
     }
 
     func testUnmeasurableRunsDoNotBreakTheLayout() throws {

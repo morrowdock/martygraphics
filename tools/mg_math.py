@@ -2,7 +2,8 @@
 """Offline reference for math text: the `math` style of a scene v1 `text` item.
 
 Swift is authoritative: `MGMathText` in Sources/MartyGraphics/MGMathText.swift. This module mirrors its tokenizer,
-parser, refusal order and spoken form rule for rule (not its layout, which only the renderers need), so an offline
+parser, refusal order and spoken form rule for rule (not its layout, which only the renderers need, apart from the
+rule that fits a formula across the canvas, `fit`), so an offline
 preflight (tools/scene_v1_check.py) gives the same reasons, and the shared golden cases in
 docs/fixtures/v1/math.cases.json run in Python as well as in XCTest. Standard library only; never imports or evaluates
 scene text as Python.
@@ -10,6 +11,7 @@ scene text as Python.
     python3 tools/mg_math.py "x^2 + 2 x"     # prints the spoken form, or the refusal reason
 """
 
+import math
 import sys
 
 try:
@@ -445,82 +447,115 @@ def _unit_words(top, bottom, plural):
     return text
 
 
+def _then(phrase, words):
+    """`phrase` (text, closed), then `words`: after a pause when the phrase is closed (`MGMathText.then`)."""
+    text, closed = phrase
+    return text + (", " if closed else " ") + words
+
+
+def _parenthesised(parts):
+    text, closed = _speech(parts[0])
+    phrase = ("open paren " + text, closed)
+    for part in parts[1:]:
+        text, closed = _speech(part)
+        phrase = (_then(phrase, "comma " + text), closed)
+    return _then(phrase, "close paren")
+
+
 def _arguments(parts):
     if len(parts) == 1 and _simple(parts[0]):
         return speak(parts[0])
-    return "open paren " + " comma ".join(speak(p) for p in parts) + " close paren"
+    return _parenthesised(parts)
 
 
 def speak(node):
+    return _speech(node)[0]
+
+
+def _speech(node):
+    """The spoken form and whether it is closed (`MGMathText.speech`): a compound part ends with an end word, and
+    whatever follows a closed phrase is read after a pause."""
     kind = node[0]
     if kind == "number":
-        return node[1]
+        return node[1], False
     if kind == "degree":
-        return node[1] + (" degree" if node[1] == "1" else " degrees")
+        return node[1] + (" degree" if node[1] == "1" else " degrees"), False
     if kind == "variable":
-        return node[1]
+        return node[1], False
     if kind == "greek":
         name = node[1]
-        return "capital " + name.lower() if name[0].isupper() else name
+        return ("capital " + name.lower() if name[0].isupper() else name), False
     if kind == "infinity":
-        return "infinity"
+        return "infinity", False
     if kind == "word":
-        return node[1]
+        return node[1], False
     if kind == "unit":
-        return _unit_words(node[1], node[2], True)
+        return _unit_words(node[1], node[2], True), False
     if kind == "group":
         parts = node[1]
         if len(parts) == 1 and _simple(parts[0]):
-            return speak(parts[0])
-        return "open paren " + " comma ".join(speak(p) for p in parts) + " close paren"
+            return _speech(parts[0])
+        return _parenthesised(parts), False
     if kind == "function":
         _, name, parts, parens = node
         word = FUNCTIONS[name]
-        if name == "sqrt":
-            return word + " of " + speak(parts[0]) + ("" if _simple(parts[0]) else " end root")
-        if name == "abs":
-            return word + " of " + speak(parts[0]) + ("" if _simple(parts[0]) else " end absolute value")
+        if name in ("sqrt", "abs"):
+            text = speak(parts[0])
+            if _simple(parts[0]):
+                return word + " of " + text, False
+            return word + " of " + text + (", end root" if name == "sqrt" else ", end absolute value"), True
         if name in ("min", "max"):
-            return word + " of " + speak(parts[0]) + " and " + speak(parts[1])
-        return word + " of " + (_arguments(parts) if parens else speak(parts[0]))
+            if _simple(parts[0]) and _simple(parts[1]):
+                return word + " of " + speak(parts[0]) + " and " + speak(parts[1]), False
+            return word + " of " + _parenthesised(parts), False
+        if parens:
+            return word + " of " + _arguments(parts), False
+        text, closed = _speech(parts[0])
+        return word + " of " + text, closed
     if kind == "apply":
-        return node[1] + " of " + _arguments(node[2])
+        return node[1] + " of " + _arguments(node[2]), False
     if kind == "script":
         _, base, sub, sup = node
-        text = speak(base)
+        text, closed = _speech(base)
+        if base[0] in ("function", "apply"):
+            closed = True
         if sub is not None:
-            text += " sub " + speak(sub) + ("" if _simple(sub) else " end sub")
+            text = _then((text, closed), "sub " + speak(sub)) + ("" if _simple(sub) else ", end sub")
+            closed = closed or not _simple(sub)
         if sup is not None:
             if sup == ("number", "2"):
-                text += " squared"
+                text = _then((text, closed), "squared")
             elif sup == ("number", "3"):
-                text += " cubed"
+                text = _then((text, closed), "cubed")
             else:
                 plain = _simple(sup) or (sup[0] == "sign" and _simple(sup[2]))
-                text += " to the power " + speak(sup) + ("" if plain else " end power")
-        return text
+                text = _then((text, closed), "to the power " + speak(sup)) + ("" if plain else ", end power")
+                closed = closed or not plain
+        return text, closed
     if kind == "fraction":
         _, top, bottom = node
         words = _fraction_words(top, bottom)
         if words is not None:
-            return words
+            return words, False
         if _simple(top) and _simple(bottom):
-            return speak(top) + " over " + speak(bottom)
-        return "the fraction with numerator " + speak(top) + " and denominator " + speak(bottom)
+            return speak(top) + " over " + speak(bottom), False
+        return "the fraction with numerator " + _then(_speech(top), "and denominator " + speak(bottom)) \
+            + ", end fraction", True
     if kind == "sign":
-        return SPOKEN_OPS[node[1]] + " " + speak(node[2])
+        text, closed = _speech(node[2])
+        return SPOKEN_OPS[node[1]] + " " + text, closed
     if kind == "row":
         _, first, links = node
-        text = speak(first)
+        phrase = _speech(first)
         previous = first
         for op, part in links:
             if op == "implicit" and part[0] == "unit":
-                spoken = _unit_words(part[1], part[2], previous != ("number", "1"))
+                spoken = (_unit_words(part[1], part[2], previous != ("number", "1")), False)
             else:
-                spoken = speak(part)
-            text += " " + spoken if op == "implicit" else " " + SPOKEN_OPS[op] + " " + spoken
+                spoken = _speech(part)
+            phrase = (_then(phrase, spoken[0] if op == "implicit" else SPOKEN_OPS[op] + " " + spoken[0]), spoken[1])
             previous = part
-        return text
+        return phrase
     raise AssertionError(kind)
 
 
@@ -555,12 +590,46 @@ def spoken(text):
     return speak(parse(text))
 
 
+BOARD_SIZE = 17.0
+MINIMUM_SIZE = 11.0
+FIT_MARGIN = 8.0
+
+
+def fit(width, centre, canvas):
+    """Where a formula goes across a canvas (`MGMathText.fit`): `(scale, left, width, clipped)` for a layout `width`
+    points wide at the board size, centred at x `centre` on a canvas `canvas` points wide. Kept at its size and moved
+    inward only as far as needed when it fits between the margins; otherwise scaled down, never below the minimum
+    size; still too wide, drawn from the left margin and clipped at the right one."""
+    natural = max(0.0, width) if math.isfinite(width) else 0.0
+    room = max(0.0, canvas - 2 * FIT_MARGIN) if math.isfinite(canvas) else 0.0
+    lowest = MINIMUM_SIZE / BOARD_SIZE
+    scale = 1.0 if natural <= room else max(lowest, room / natural)
+    drawn = natural * scale
+    if drawn > room + 1e-9:
+        return scale, FIT_MARGIN, room, True
+    middle = centre if math.isfinite(centre) else canvas / 2
+    left = min(max(middle - drawn / 2, FIT_MARGIN), max(FIT_MARGIN, canvas - FIT_MARGIN - drawn))
+    return scale, left, drawn, False
+
+
+SCENE_REFUSED = frozenset("{}\n\x0b\x0c\r\x85\u2028\u2029")
+
+
+def refused_in_scene(text):
+    """True when a scene's math text holds a placeholder brace or a line break anywhere (`MGMathText.refusedInScene`):
+    `MGParser` refuses it with `text.math` before the plain-text rules, on the raw text, so nothing is trimmed away."""
+    return isinstance(text, str) and any(ch in SCENE_REFUSED for ch in text)
+
+
 def check_text_item(item, is3d=False):
-    """The `math` style rules of `MGParser.item` for a text item, after the plain-text rules: `3d.text.math`, then
-    the markup of the trimmed raw text (a placeholder brace is outside the alphabet)."""
+    """The `math` style rules of `MGParser.item` for a text item, in its order: `3d.text.math`; `text.math` for a
+    brace or a line break (`refused_in_scene`, before the plain-text rules); then, after the plain-text rules, the
+    markup of the raw, untrimmed text."""
     if is3d:
         raise Refusal("3d.text.math")
-    return spoken(mg_expr._trim(item["text"]))
+    if refused_in_scene(item["text"]):
+        raise Refusal(REASON)
+    return spoken(item["text"])
 
 
 def main(argv):

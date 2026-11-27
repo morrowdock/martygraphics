@@ -44,6 +44,35 @@ class MathCases(unittest.TestCase):
         self.assertEqual(reasons, {"text.math", "text.math.syntax", "text.math.tokens", "text.math.depth",
                                    "text.math.name", "text.math.unit"})
 
+    def test_grouping_is_heard(self):
+        pairs = [("(x + 1)/y + z", "(x + 1)/(y + z)"), ("a/b + c", "a/(b + c)"), ("sin(x)^2", "sin x^2"),
+                 ("sin(x)^2", "sin(x^2)"), ("sin x^2", "sin(x^2)"), ("sqrt(x)^2", "sqrt(x^2)"),
+                 ("sqrt(x) + 1", "sqrt(x + 1)"), ("abs(x) - 1", "abs(x - 1)"), ("f(x)^2", "f(x^2)"),
+                 ("max(a, b) + c", "max(a, b + c)"), ("x^(n + 1) + 2", "x^(n + 1 + 2)"),
+                 ("x_(n + 1) + 2", "x_(n + 1 + 2)"), ("(a/(b + c))/d", "a/((b + c)/d)"), ("sin(x)_1", "sin(x_1)")]
+        for a, b in pairs:
+            with self.subTest(a=a, b=b):
+                self.assertNotEqual(mg_math.spoken(a), mg_math.spoken(b))
+        for case in CASES["spoken"]:
+            spoken = case["spoken"]
+            self.assertEqual(spoken.count("the fraction with numerator"), spoken.count(", end fraction"), spoken)
+
+    def test_fit(self):
+        self.assertEqual((mg_math.BOARD_SIZE, mg_math.MINIMUM_SIZE, mg_math.FIT_MARGIN), (17, 11, 8))
+        self.assertGreaterEqual(len(CASES["fit"]), 8)
+        self.assertEqual({row["clipped"] for row in CASES["fit"]}, {True, False})
+        for row in CASES["fit"]:
+            with self.subTest(row=row):
+                scale, left, width, clipped = mg_math.fit(row["width"], row["centre"], row["canvas"])
+                self.assertAlmostEqual(scale, row["scale"], places=12)
+                self.assertAlmostEqual(left, row["left"], places=9)
+                self.assertAlmostEqual(width, row["drawn"], places=9)
+                self.assertEqual(clipped, row["clipped"])
+        source = (ROOT / "Sources/MartyGraphics/MGMathText.swift").read_text(encoding="utf-8")
+        self.assertIn("public static let minimumSize = 11.0", source)
+        self.assertIn("public static let fitMargin = 8.0", source)
+        self.assertIn("public static let boardSize = 17.0", source)
+
     def test_limits(self):
         self.assertEqual((mg_math.MATH_LENGTH, mg_math.MATH_TOKENS, mg_math.MATH_DEPTH), (80, 48, 4))
         texts = {case["text"] for case in CASES["spoken"]}
@@ -74,9 +103,8 @@ class MathInScenes(unittest.TestCase):
 
     def test_accepted_and_refused_math_text(self):
         self.assertIsNone(self.reason(scene("y = a sin(x)")))
-        self.assertIsNone(self.reason(scene("  v = 9.8 [m/s^2]\n")))
+        self.assertIsNone(self.reason(scene("  v = 9.8 [m/s^2]  ")))
         self.assertEqual(self.reason(scene("ma")), "text.math.name")
-        self.assertEqual(self.reason(scene("x = {v}")), "text.text.placeholder.v")
         self.assertEqual(self.reason(scene("[kgs]")), "text.math.unit")
         self.assertEqual(self.reason(scene("x < 1")), "text.text")
         self.assertEqual(self.reason(scene("x^2", dim="3d")), "3d.text.math")
@@ -86,6 +114,28 @@ class MathInScenes(unittest.TestCase):
         misspelt = scene("x^2")
         misspelt["items"][0]["style"] = "maths"
         self.assertEqual(self.reason(misspelt), "text.style")
+
+
+    def test_refusal_order(self):
+        """`3d.text.math`; `text.math` for a brace or a line break in the raw text; the plain-text rules; the markup of
+        the raw, untrimmed text (MathTextTests.testSceneRefusalOrder)."""
+        nl, cr, tab, nbsp, ls = chr(10), chr(13), chr(9), chr(0xA0), chr(0x2028)
+        cases = [
+            ("x = {v}", "text.math"), ("x = {", "text.math"), ("x = }", "text.math"), ("x < {v}", "text.math"),
+            ("x" + nl + "y", "text.math"), ("x^2" + nl, "text.math"), (nl + "x^2", "text.math"),
+            ("x^2" + cr, "text.math"), ("x^2" + ls, "text.math"),
+            ("x < 1", "text.text"), ("x^2" + tab, "text.text"), ("x^2" + nbsp, "text.math"), ("  x^2  ", None),
+        ]
+        for text, reason in cases:
+            with self.subTest(text=text):
+                self.assertEqual(self.reason(scene(text)), reason)
+        self.assertEqual(self.reason(scene("x = {v}", dim="3d")), "3d.text.math")
+        self.assertEqual(self.reason(scene("x < 1", dim="3d")), "3d.text.math")
+        plain = scene("x = {v}")
+        del plain["items"][0]["style"]
+        self.assertEqual(self.reason(plain), "text.text.placeholder.v")
+        plain["items"][0]["text"] = "x^2" + nl
+        self.assertIsNone(self.reason(plain))
 
 
 if __name__ == "__main__":

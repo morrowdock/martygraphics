@@ -316,12 +316,16 @@ def item_rules(item, dimensions, template, readouts=None):
         text_rules(item["label"], "item.label", template, readouts=readouts)
     for key in ("xl", "yl", "unit", "text"):
         if key in item:
+            if kind == "text" and key == "text" and item.get("style") == "math":
+                # Math text: braces and line breaks first, on the raw text (MGParser); 3D was refused by the schema.
+                if mg_math.refused_in_scene(item[key]):
+                    raise Invalid("text.math")
             multiline = kind == "text" and key == "text"
             text_rules(item[key], f"{kind}.{key}", template,
                        code=multiline and item.get("style") == "code", multiline=multiline, readouts=readouts)
     if kind == "text" and item.get("style") == "math":
-        # The markup rules mirrored in tools/mg_math.py, on the raw text (a placeholder brace is not math). A 3D scene
-        # was refused by the schema already (3d.text.math).
+        # The markup rules mirrored in tools/mg_math.py, on the raw, untrimmed text. A 3D scene was refused by the
+        # schema already (3d.text.math), and braces and line breaks above.
         try:
             mg_math.check_text_item(item)
         except mg_math.Refusal as refusal:
