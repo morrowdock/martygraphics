@@ -539,37 +539,43 @@ model never writes these numbers itself.
   keeps them without computing them again; any other key computes them again.
   A `set` patch parses the whole scene again, so the readouts and every text
   that names them are computed again.
-- Cost: one computation of an item's readouts is at most 258 interval passes
-  (an area certifies the curve in at most 256 enclosures, one interval pass of
-  the expression each, and a slope runs two), 962 evaluations (the area's two
-  Gauss rules and the two ends) and one forward-mode pass at the mark (the
-  slope). An interval pass is a bounded multiple of an evaluation: a product or
-  quotient rounds its four corners both ways (eight operations with a fused
-  multiply-add each), and a whole power squares once per bit of its exponent, at
-  most 54 times, because a whole exponent above 2⁵³ takes the bound of `pow`,
-  widened like the other library functions (`MGExpression.squaringLimit`). On a
-  Linux release build an interval pass cost 4 to 34 evaluations of the same
-  expression for the expressions measured (library functions, a 24-factor
-  product, `min`, `max` and `abs`, varying and whole powers, huge whole
-  exponents), and the forward-mode pass 3 to 10, so one readout computation cost
-  at most a third of one graph check (29,190 evaluations). It is priced as a
-  whole one: a `func` item that computes readouts weighs 2 of the 6 graph checks
-  (`items.expr`, `MGLimits.readoutWeight`), and so does each step or `over`
-  edit of it that can change a readout: an edit of `y`, `a`, `b`, `c`,
-  `period`, `xr`, `yr`, `mark`, `shade` or `readouts` (`MGReadout.inputKeys`;
-  an edit that gives a graph readouts makes it such a graph). An edit of any
-  other key weighs 1. So a parse computes readouts at most 3 times (774
-  interval passes, 2,886 evaluations and 3 forward-mode passes), and its graph
-  checks stay within 175,140 evaluations: a graph with readouts has no period,
-  so its own check is at most 7,169 (`MGLimits.readouts`,
-  `MGLimits.readoutPanels`, `MGReadout.certifyBudget`).
+- Cost: the bounds are counts of the readouts' own operations, separate from
+  the graph checks' evaluation bound. A parse computes readouts at most 3 times
+  (`MGLimits.readouts`), and one computation is at most 258 interval passes (an
+  area certifies the curve in at most 256 enclosures, one interval pass of the
+  expression each, and a slope runs two), 962 evaluations (the area's two Gauss
+  rules and the two ends) and 1 forward-mode pass at the mark (the slope): at
+  most 774 interval passes, 2,886 evaluations and 3 forward-mode passes per
+  parse (`MGLimits.readoutPanels`, `MGReadout.certifyBudget`). An interval pass
+  is itself bounded: a product or quotient rounds its four corners both ways
+  (eight operations with a fused multiply-add each), and a whole power squares
+  once per bit of its exponent, at most 54 times, because a whole exponent
+  above 2⁵³ takes the bound of `pow`, widened like the other library functions
+  (`MGExpression.squaringLimit`). The limit of 3 comes from the graph checks: a
+  `func` item that computes readouts weighs 2 of the 6 (`items.expr`,
+  `MGLimits.readoutWeight`), and so does each step or `over` edit of it that
+  can change a readout: an edit of `y`, `a`, `b`, `c`, `period`, `xr`, `yr`,
+  `mark`, `shade` or `readouts` (`MGReadout.inputKeys`; an edit that gives a
+  graph readouts makes it such a graph). An edit of any other key weighs 1. The
+  graph checks themselves stay within 175,140 evaluations: a graph with
+  readouts has no period, so its own check is at most 7,169.
+- Measured, not a bound: on one machine (x86-64 Linux, AMD Ryzen 9 5900X, WSL2
+  Ubuntu 22.04, Swift 6.4.3 release build) an interval pass cost 4 to 34
+  evaluations of the same expression for the expressions measured (library
+  functions, a 24-factor product, `min`, `max` and `abs`, varying and whole
+  powers, huge whole exponents), and the forward-mode pass 3 to 10, so one
+  readout computation cost at most about a third of one graph check (29,190
+  evaluations) there. Other machines and builds were not measured.
 - Frames: `MGTimeline.items` applies the step edits again, at most the parse
   bound, and an edit that changes no readout input (`MGReadout.inputKeys`)
-  computes no readout. `MartyGraphicsView` keeps the items of the shown step
-  per scene revision and step (`MGTimelineCache`), so the readouts of a step
-  are computed at most once per scene revision and step, and a drawn frame
-  computes none. A moving graph, the only kind sampled again per frame, has no
-  readouts.
+  computes no readout. `MartyGraphicsView` reads a step's items through its
+  controller's cache (`MGSceneController.timelineItems`, `MGTimelineCache`),
+  which keeps the last 4 steps read of one scene revision, least recently used
+  out first. So the readouts of a step are computed once per cache fill: a
+  revisit of one of the last 4 steps read of the same revision hits the cache
+  and computes none, and a drawn frame computes none. A step pushed out by 4
+  newer steps, or any step of a new revision, is computed again when it is next
+  read. A moving graph, the only kind sampled again per frame, has no readouts.
   `MGDescribe` speaks the numbers ("… shaded from x = 0 to 3.14 (signed area 2),
   marking the point (1, 0.84) where the slope is 0.54"), and
   `MGGrammar.document()` lists the names under `expression.readouts`.

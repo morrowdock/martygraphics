@@ -116,14 +116,15 @@ final class EngineBoundsTests: XCTestCase {
 
     // MARK: readouts
 
-    /// A `func` item `g` with every readout, `plain` more graphs without readouts, a text naming `g`'s slope, and one
-    /// step per edit after a first step without edits.
-    static func readoutScene(edits: [String] = [], plain: Int = 0) -> String {
+    /// A `func` item `g` with every readout, `plain` more graphs without readouts, a text naming `g`'s slope, one step
+    /// per edit after a first step without edits, then `quiet` more steps without edits.
+    static func readoutScene(edits: [String] = [], plain: Int = 0, quiet: Int = 0) -> String {
         let g = #"{"id":"g","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"sin(x)","mark":1,"shade":[0,1.5],"#
             + #""readouts":["value","slope","area"]}"#
         let others = (0..<plain).map { #",{"id":"p\#($0)","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"x/\#($0 + 2)"}"# }
         let text = #",{"id":"t","k":"text","at":[8,6],"text":"Slope {g.slope}"}"#
         let steps = [#"{"say":"Start."}"#] + edits.enumerated().map { #"{"say":"Step \#($0.offset + 1).","do":[\#($0.element)]}"# }
+            + (0..<quiet).map { #"{"say":"Quiet \#($0 + 1)."}"# }
         return #"{"v":1,"items":["# + g + others.joined() + text + #"],"steps":["# + steps.joined(separator: ",") + "]}"
     }
 
@@ -185,12 +186,15 @@ final class EngineBoundsTests: XCTestCase {
     }
 
     /// The view draws every frame from `MGSceneController.timelineItems`: the step's items, and so its readouts, are
-    /// computed once per (scene revision, step), never per frame.
+    /// computed once per cache fill. A revisit of one of the last 4 steps read of the same revision hits the cache; a
+    /// step pushed out by 4 newer steps is computed again. Never per frame.
     @MainActor
-    func testTheFramePathComputesReadoutsOncePerRevisionAndStep() throws {
+    func testTheFramePathComputesReadoutsOncePerCacheFill() throws {
         let probe = MGReadout.Probe()
         try MGReadout.$probe.withValue(probe) {
-            let parsed = try MGParser.scene(data: Data(Self.readoutScene(edits: [Self.range]).utf8)).get()
+            // Steps 0 (no edit), 1 (the yr edit) and 2–5 (no edit of their own): every fill of steps 1–5 applies the yr
+            // edit, so it computes the readouts once; a fill of step 0 computes none.
+            let parsed = try MGParser.scene(data: Data(Self.readoutScene(edits: [Self.range], quiet: 4).utf8)).get()
             XCTAssertEqual(probe.count, 2, "the graph, then the yr edit (a readout input) when the steps are checked")
             let controller = MGSceneController(scene: parsed)
             let scene = try XCTUnwrap(controller.scene)
@@ -205,6 +209,30 @@ final class EngineBoundsTests: XCTestCase {
             for frame in 0..<60 { _ = MGTimeline.frame(scene, items: controller.timelineItems(scene, step: 0), time: Double(frame) / 60) }
             XCTAssertEqual(controller.timeline.computed, 2)
             XCTAssertEqual(probe.count, 3, "step 0 applies no edit")
+            // 1 -> 0 -> 1: the revisit of step 1 hits the cache.
+            _ = controller.timelineItems(scene, step: 1)
+            XCTAssertEqual(controller.timeline.computed, 2)
+            XCTAssertEqual(probe.count, 3, "the revisit of step 1 computes nothing")
+            // Kept, least recently used first: 0, 1. Steps 2–5 are 4 new fills, one readout computation each, and
+            // push out 0 and 1: kept 2, 3, 4, 5.
+            for step in 2...5 { _ = controller.timelineItems(scene, step: step) }
+            XCTAssertEqual(controller.timeline.computed, 6)
+            XCTAssertEqual(controller.timeline.kept, MGTimelineCache.capacity)
+            XCTAssertEqual(probe.count, 7, "4 fills, 1 readout computation each")
+            // Step 1 was pushed out: it is computed again, and pushes out step 2 (kept 3, 4, 5, 1).
+            _ = controller.timelineItems(scene, step: 1)
+            XCTAssertEqual(controller.timeline.computed, 7)
+            XCTAssertEqual(probe.count, 8, "an evicted step computes its readouts again")
+            // Step 5 is still kept; step 2 is not.
+            _ = controller.timelineItems(scene, step: 5)
+            XCTAssertEqual(controller.timeline.computed, 7)
+            XCTAssertEqual(probe.count, 8, "a kept step computes nothing")
+            _ = controller.timelineItems(scene, step: 2)
+            XCTAssertEqual(controller.timeline.computed, 8)
+            // Every fill of steps 1–5 (7 of the 8 fills) computed the readouts once, plus the parse's 2.
+            XCTAssertEqual(probe.count, 2 + 7)
+            XCTAssertEqual(try XCTUnwrap(controller.timelineItems(scene, step: 2).first { $0.id == "g" }?.num[MGReadout.slope.key]),
+                           cos(1))
         }
     }
 
@@ -257,6 +285,39 @@ final class EngineBoundsTests: XCTestCase {
         let bounds = e?.enclosure(MGExpression.Inputs(), 0.3, 0.31)
         XCTAssertEqual(bounds?.lo, 0)
         XCTAssertEqual(bounds.map { $0.hi.isFinite && $0.hi >= 0 }, true)
+    }
+
+    /// Independent of `pow`: for large even exponents, on both sides of the squaring limit, an enclosure of x^n holds
+    /// the powers that are exact doubles: 0ⁿ = 0, 1ⁿ = 1 and (−1)ⁿ = 1, alone and inside wider ranges.
+    func testWholePowerEnclosuresHoldTheExactPowersOfLargeEvenExponents() throws {
+        // 2⁵² + 2 squares; the others take the library bound. Each exponent is an exact double, even, and its own
+        // enclosure is that one double.
+        let exponents: [(text: String, n: Double)] = [
+            ("(2^52+2)", 0x1p52 + 2), ("2^54", 0x1p54), ("2^60", 0x1p60),
+            ("(2^60+2^8)", 0x1p60 + 256), ("10^17", 1e17),
+        ]
+        for (text, n) in exponents {
+            XCTAssertEqual(n.truncatingRemainder(dividingBy: 2), 0, text)
+            let exponent = try MGExpression.compile(text, allowed: [], reason: "func.y")
+            XCTAssertEqual(exponent.enclosure(MGExpression.Inputs(), 0, 0)?.lo, n, text)
+            XCTAssertEqual(exponent.enclosure(MGExpression.Inputs(), 0, 0)?.hi, n, text)
+            let e = try MGExpression.compile("x^" + text, allowed: [.x], reason: "func.y")
+            // (range of x, exact powers it must hold)
+            let cases: [(Double, Double, [Double])] = [
+                (0, 0, [0]), (1, 1, [1]), (-1, -1, [1]), (-1, 1, [0, 1]), (-1, 0, [0, 1]), (0, 1, [0, 1]),
+                (-0.5, 0.5, [0]), (0.5, 1, [1]), (-1, -0.5, [1]),
+            ]
+            for (a, b, exact) in cases {
+                let bounds = try XCTUnwrap(e.enclosure(MGExpression.Inputs(), a, b), "\(text) over [\(a), \(b)]")
+                for v in exact {
+                    XCTAssertLessThanOrEqual(bounds.lo, v, "\(text) over [\(a), \(b)]")
+                    XCTAssertGreaterThanOrEqual(bounds.hi, v, "\(text) over [\(a), \(b)]")
+                }
+                XCTAssertGreaterThanOrEqual(bounds.lo, 0, "an even power is never negative")
+            }
+            // A base above 1 overflows: no enclosure, so the graph is refused rather than drawn from a wrong bound.
+            XCTAssertNil(e.enclosure(MGExpression.Inputs(), 1, 2), text)
+        }
     }
 }
 

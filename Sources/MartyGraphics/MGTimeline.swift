@@ -221,7 +221,9 @@ extension MGTimeline {
 /// `MGSceneController` stamps every scene it holds with a revision it never reuses and owns one cache for its views.
 /// It keeps the last `capacity` steps read, least recently used out first, so views that share a controller and show
 /// different steps (two boards, or a board changing step) each compute a step's items once, then every frame reuses
-/// them. All entries share one revision: a read of another revision (a new scene) drops them all.
+/// them. All entries share one revision: a read of another revision (a new scene) drops them all. So a step's
+/// readouts are computed once per cache fill: a read of one of the last `capacity` steps read of the same revision
+/// hits the cache and computes none, and a step pushed out by newer steps is computed again when it is next read.
 final class MGTimelineCache {
     /// Most steps kept. A board reads only its shown step every frame (a step change also reads the step it leaves,
     /// once), so two boards on one controller need 2; 4 leaves room for a third view, or for a board changing step,

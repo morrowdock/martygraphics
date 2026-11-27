@@ -170,6 +170,27 @@ class GraphCases(unittest.TestCase):
         self.assertEqual(mg_expr._whole_power(2.0, 1000.0, False), 2.0 ** 1000)
         self.assertEqual(mg_expr._whole_power(2.0, 1000.0, True), 2.0 ** 1000)
 
+    def test_whole_power_enclosures_hold_the_exact_powers_of_large_even_exponents(self):
+        # Swift EngineBoundsTests.testWholePowerEnclosuresHoldTheExactPowersOfLargeEvenExponents: independent of pow,
+        # 0^n = 0, 1^n = 1 and (-1)^n = 1 for even n on both sides of the squaring limit.
+        exponents = [("(2^52+2)", 2.0 ** 52 + 2), ("2^54", 2.0 ** 54),
+                     ("2^60", 2.0 ** 60), ("(2^60+2^8)", 2.0 ** 60 + 256),
+                     ("10^17", 1e17)]
+        cases = [(0.0, 0.0, [0.0]), (1.0, 1.0, [1.0]), (-1.0, -1.0, [1.0]), (-1.0, 1.0, [0.0, 1.0]),
+                 (-1.0, 0.0, [0.0, 1.0]), (0.0, 1.0, [0.0, 1.0]), (-0.5, 0.5, [0.0]), (0.5, 1.0, [1.0]),
+                 (-1.0, -0.5, [1.0])]
+        for text, n in exponents:
+            self.assertEqual(mg_expr.compile_expression(text, set(), "func.y").enclosure(0.0, 0.0), (n, n))
+            self.assertEqual(n % 2, 0)
+            expr = mg_expr.compile_expression("x^" + text, {"x"}, "func.y")
+            for a, b, exact in cases:
+                with self.subTest(n=text, a=a, b=b):
+                    lo, hi = expr.enclosure(a, b)
+                    self.assertGreaterEqual(lo, 0.0)
+                    for v in exact:
+                        self.assertTrue(lo <= v <= hi, (lo, v, hi))
+            self.assertIsNone(expr.enclosure(1.0, 2.0), text)
+
     def test_documentation_scenes_pass(self):
         for name in ["graphs.scene.json", "wave.scene.json", "calculus.scene.json"]:
             with self.subTest(name=name):

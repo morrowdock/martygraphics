@@ -45,7 +45,7 @@ public enum MGLimits {
     /// parses the whole scene again, with the same bound per parse. `MGTimeline.items` applies the step edits again, at
     /// most that bound. A controller keeps the items of the last 4 steps its views read (`MGTimelineCache`), so a drawn
     /// frame does not apply the edits again and computes no readout, even with two boards on one controller showing
-    /// different steps.
+    /// different steps: readouts are computed once per cache fill.
     public static let exprItems = 6
     /// A `func` is sampled on this many equal intervals (257 samples) and may break into at most `funcBreaks + 1` pieces.
     public static let funcIntervals = 256, funcBreaks = 16
@@ -65,21 +65,24 @@ public enum MGLimits {
     /// moving graphs; typically 2 × 513). These bounds apply to the new key only; no existing limit changes.
     public static let sliders = 3, sliderSteps = 100, sliderBindings = 6
     /// `func` readouts (`MGReadout`, wire `readouts`): at most one of each of the 3 names, on a graph without a period.
-    /// One computation of them is at most 258 interval passes (an area certifies the curve in at most
-    /// `MGReadout.certifyBudget`, a slope runs two), 962 evaluations (the composite 5-point Gauss-Legendre rule on
-    /// `readoutPanels` panels and on half as many, and the two ends) and one forward-mode pass (the slope). A graph that
-    /// computes them weighs `readoutWeight` graph checks, and so does each edit of it that can change one (a key in
-    /// `MGReadout.inputKeys`); any other edit keeps the item's readouts, computes none and weighs 1. So a parse
-    /// computes readouts at most 3 times: at most 774 interval passes, 2,886 evaluations and 3 forward-mode passes
-    /// besides its graph checks. These bounds apply to the new key only.
+    /// Their bounds are counts of their own operations, independent of the graph checks' evaluation bound: a parse
+    /// computes readouts at most 3 times, and one computation is at most 258 interval passes (an area certifies the
+    /// curve in at most `MGReadout.certifyBudget`, a slope runs two), 962 evaluations (the composite 5-point
+    /// Gauss-Legendre rule on `readoutPanels` panels and on half as many, and the two ends) and 1 forward-mode pass (the
+    /// slope). So a parse spends at most 774 interval passes, 2,886 evaluations and 3 forward-mode passes on readouts,
+    /// besides its graph checks. A graph that computes them weighs `readoutWeight` graph checks, and so does each edit
+    /// of it that can change one (a key in `MGReadout.inputKeys`); any other edit keeps the item's readouts, computes
+    /// none and weighs 1. These bounds apply to the new key only.
     public static let readouts = 3, readoutPanels = 128
     /// Graph checks (`exprItems`) that a `func` item computing readouts weighs, and each step or `over` edit of it that
-    /// can change a readout (`MGParser.editWeight`): one for its check and one for its readouts. A readout computation is priced as a whole check (29,190 evaluations of
-    /// the same expression). Its interval passes are bounded by construction (at most 54 squarings per whole power,
-    /// `MGExpression.squaringLimit`), and on a Linux release build an interval pass cost 4 to 34 evaluations of the same
-    /// expression for the expressions measured (docs/PROTOCOL.md, "Readouts: slopes and areas"), which puts a readout
-    /// computation at no more than a third of a check. The graph's own check is at most 7,169 evaluations, as it has no period. So the 175,140-evaluation bound of
-    /// a parse also covers its readouts, with room to spare.
+    /// can change a readout (`MGParser.editWeight`): one for its check and one for its readouts. The weight is what
+    /// limits a parse to `readouts` (3) readout computations, each bounded by the operation counts above; an interval
+    /// pass squares at most 54 times per whole power (`MGExpression.squaringLimit`). The 175,140-evaluation bound counts
+    /// graph checks only, and still holds: a graph with readouts has no period, so its own check is at most 7,169
+    /// evaluations. Measured, not a bound: on one machine (x86-64 Linux, AMD Ryzen 9 5900X, WSL2 Ubuntu 22.04, Swift
+    /// 6.4.3 release build) an interval pass cost 4 to 34 evaluations of the same expression for the expressions
+    /// measured, so one readout computation cost at most about a third of a check (29,190 evaluations) there
+    /// (docs/PROTOCOL.md, "Readouts: slopes and areas").
     public static let readoutWeight = 2
 }
 

@@ -179,9 +179,10 @@
   weighs two of the six, and so does each step or `over` edit of it that can change one (`MGLimits.readoutWeight`,
   `MGParser.exprWeight`, `MGParser.editWeight`), so a parse computes readouts at most three times. An edit that
   changes no readout input (colour, labels, position, size) weighs one, keeps the readouts without computing them,
-  and a view computes the readouts of a
-  step at most once per scene revision and step, never per frame (the previous scene's blend reads the cached step
-  items too). In interval arithmetic a whole exponent above 2⁵³ takes the bound of `pow`
+  and a view computes a step's readouts once per fill of its controller's timeline cache: a revisit of one of the
+  last 4 steps read of the same revision computes none, and no drawn frame does (the previous scene's blend reads the
+  cached step items too). A readout computation is bounded by its own operation counts (at most 258 interval passes,
+  962 evaluations and 1 forward-mode pass, 3 per parse), not by the graph checks' evaluation bound. In interval arithmetic a whole exponent above 2⁵³ takes the bound of `pow`
   (`MGExpression.squaringLimit`), so an interval pass squares at most 54 times per power. `tools/mg_expr.py` and
   `tools/scene_v1_check.py` count the same way, and the `items.expr` repair hint states the weight.
 - Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).
