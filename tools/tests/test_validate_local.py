@@ -7,6 +7,8 @@ import io
 import json
 import os
 from pathlib import Path
+import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -318,6 +320,23 @@ class ManifestAndSymlinkTests(FixtureRepo):
         self.assertIn("Bundled/table.json", result["inputs"])
         self.assertEqual((result["changed"], result["status"]), (["Bundled/table.json"], "FAIL"))
 
+    def test_symlinked_manifest_is_read_in_the_links_package(self):
+        manifest = ('let package = Package(name: "Demo", targets: [\n'
+                    '    .target(name: "Demo", path: "../../Shared")])\n')
+        self.commit({"Examples/Demo/Package.swift": "// demo\n", "Examples/Demo/Sources/Demo/Demo.swift": "1\n",
+                     "templates/Demo.manifest.swift": manifest, "Shared/table.json": "{}\n"})
+        self.stage_link("Examples/Demo/Package@swift-6.0.swift", "../../templates/Demo.manifest.swift")
+        source = self.commit_index()
+        receipt = dict({p: 0 for p in PACKAGES}, **{"Examples/Demo": 0})
+        result = self.reuse(self.commit({"README.md": "# x\n"}), receipt, source=source)
+        self.assertTrue({"Shared", "templates/Demo.manifest.swift"} <= set(result["inputs"]))
+        self.assertEqual((result["links"], result["status"]), ([], "PASS"))
+        for name in ["Shared/table.json", "Shared/new.json", "templates/Demo.manifest.swift"]:
+            with self.subTest(name=name):
+                result = self.reuse(self.commit({name: "changed\n"}), receipt, source=source)
+                self.assertEqual((result["changed"], result["status"]), ([name], "FAIL"))
+                self.git("reset", "-q", source)  # index only: the link is never created on disk
+
     def test_swift_symlink_is_scanned_as_its_target(self):
         self.commit({"shared/paths.txt": 'let guide = "docs/GUIDE.md"\n'})
         self.stage_link("notes/Paths.swift", "../shared/paths.txt")
@@ -380,15 +399,42 @@ class NativeReceiptWriterTests(FixtureRepo):
         status, calls, _ = self.write(path)
         self.assertEqual(status, 0)
         self.assertEqual(calls, [["swift", "build"], ["swift", "test"],
-                                 ["swift", "build", "--jobs", "2", "--package-path", "Examples/Solid3D"],
+                                 ["swift", "test", "--jobs", "2", "--package-path", "Examples/Solid3D"],
                                  ["swift", "test", "--jobs", "2", "--package-path", "Examples/Turbofan"],
-                                 ["swift", "build", "--jobs", "2", "--package-path", "tools/SceneValidator"],
+                                 ["swift", "test", "--jobs", "2", "--package-path", "tools/SceneValidator"],
                                  ["swift", "build", "-c", "release", "--jobs", "2", "--package-path", "tools/SceneValidator"],
                                  ["tools/render-blender/selftest.sh"]])
         receipt = json.loads(path.read_text())
         self.assertEqual(receipt, {"source": self.source, "packages": [{"path": p, "exit": 0} for p in PACKAGES]})
         reuse = self.reuse(self.source, validate_local.read_native_receipt(path, self.source))
         self.assertEqual(reuse["status"], "PASS")
+
+    def test_showcase_verifies_and_exports_to_a_new_folder_beside_the_receipt(self):
+        self.source = self.commit({"Examples/Showcase/Package.swift": "// showcase\n",
+                                   "Examples/Showcase/Sources/MartyShowcase/Showcase.swift": "let s = 1\n"})
+        path = self.receipt_path()
+        export = path.with_name("receipt-showcase-export")
+        status, calls, _ = self.write(path)
+        self.assertEqual(status, 0)
+        showcase = [c for c in calls if "Examples/Showcase" in c]
+        self.assertEqual(showcase, [
+            ["swift", "build", "--jobs", "2", "--package-path", "Examples/Showcase"],
+            ["swift", "run", "--skip-build", "--package-path", "Examples/Showcase", "marty-showcase", "--verify"],
+            ["swift", "run", "--skip-build", "--package-path", "Examples/Showcase", "marty-showcase", "--export",
+             str(export)]])
+        self.assertIn({"path": "Examples/Showcase", "exit": 0}, json.loads(path.read_text())["packages"])
+        again = path.with_name("again.json")
+        again.with_name("again-showcase-export").mkdir()
+        status, calls, err = self.write(again)
+        self.assertEqual((status, calls, again.exists()), (2, [], False))
+        self.assertIn("showcase export directory", err)
+
+    def test_an_unlisted_package_runs_test_or_build(self):
+        with_tests = ["Examples/NewKit/Package.swift", "Examples/NewKit/Tests/KitTests/KitTests.swift"]
+        self.assertEqual(validate_local.native_commands("Examples/NewKit", with_tests),
+                         [["swift", "test", "--jobs", "2", "--package-path", "Examples/NewKit"]])
+        self.assertEqual(validate_local.native_commands("Examples/NewKit", with_tests[:1]),
+                         [["swift", "build", "--jobs", "2", "--package-path", "Examples/NewKit"]])
 
     def test_first_failing_exit_is_recorded_and_fails_the_writer(self):
         path = self.receipt_path()
@@ -548,8 +594,33 @@ class RepositoryCoverageTests(unittest.TestCase):
                 command = "python3 tools/write_native_receipt.py /absolute/path/native-receipt.json"
                 self.assertTrue(command in text, command)
         self.assertTrue("--native-receipt" in docs["docs/LOCAL-VALIDATION.md"])
-        for name in validate_local.VENDOR_ROOTS + (".build",) + validate_local.RELEASE_BUILDS:
+        for name in validate_local.VENDOR_ROOTS + (".build", "PACKAGE_COMMANDS", validate_local.EXPORT_DIR):
             self.assertTrue("`%s`" % name in docs["docs/VERIFY-ON-MAC.md"], name)
+
+    def test_documented_commands_are_the_code_commands_for_every_package(self):
+        """The `# <package>` command block of docs/VERIFY-ON-MAC.md is PACKAGE_COMMANDS, which covers every package
+        of this repository, and each one is what native_commands returns for it."""
+        text = (validate_local.ROOT / "docs/VERIFY-ON-MAC.md").read_text(encoding="utf-8")
+        block = re.search(r"```sh\n(# \.\n.*?)```", text, re.S).group(1)
+        documented, package = {}, None
+        for line in block.splitlines():
+            if line.startswith("# "):
+                package = line[2:]
+                documented[package] = []
+            else:
+                documented[package].append(line)
+        self.assertEqual(documented, validate_local.PACKAGE_COMMANDS)
+        entries = validate_local.tree_entries("HEAD")
+        packages = validate_local.native_packages(entries)
+        self.assertEqual(sorted(documented), packages)
+        for package in packages:
+            with self.subTest(package=package):
+                self.assertEqual(validate_local.native_commands(package, entries),
+                                 [shlex.split(c) for c in documented[package]])
+                if package not in (".",) + validate_local.NATIVE_TOOLS:  # starts with `swift test` iff it has tests
+                    self.assertEqual(documented[package][0], validate_local.default_command(package, entries))
+        self.assertEqual([c.split()[-2:] for c in documented["Examples/Showcase"][1:]],
+                         [["marty-showcase", "--verify"], ["--export", validate_local.EXPORT_DIR]])
 
 
 if __name__ == "__main__":

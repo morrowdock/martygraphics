@@ -18,10 +18,17 @@ BLENDER="${BLENDER:-$HOME/opt/blender-${BLENDER_VERSION:-$PINNED_BLENDER_VERSION
 say() { printf 'selftest: %s\n' "$*"; }
 die() { printf 'selftest: FAIL: %s\n' "$1" >&2; exit "${2:-1}"; }
 [ -x "$BLENDER" ] || die "Blender not found at $BLENDER (run setup.sh)" 127
-FOUND="$("$BLENDER" --version 2>/dev/null | sed -n '1s/^Blender \([0-9][0-9.]*\).*/\1/p' || true)"
-[ "$FOUND" = "$PINNED_BLENDER_VERSION" ] \
-  || die "Blender at $BLENDER reports version ${FOUND:-unknown}, not the pinned $PINNED_BLENDER_VERSION" 3
-say "Blender $FOUND (the pinned version) at $BLENDER"
+# Only the release itself: the first line of `blender --version` is exactly "Blender 5.2.4" or "Blender 5.2.4 LTS".
+VERSION_STATUS=0
+VERSION_TEXT="$("$BLENDER" --version 2>/dev/null)" || VERSION_STATUS=$?
+[ "$VERSION_STATUS" -eq 0 ] \
+  || die "\`$BLENDER --version\` exited $VERSION_STATUS, so it is not the pinned $PINNED_BLENDER_VERSION" 3
+FOUND="${VERSION_TEXT%%$'\n'*}"
+case "$FOUND" in
+  "Blender $PINNED_BLENDER_VERSION" | "Blender $PINNED_BLENDER_VERSION LTS") ;;
+  *) die "Blender at $BLENDER reports \"${FOUND:-nothing}\", not the pinned $PINNED_BLENDER_VERSION release" 3 ;;
+esac
+say "Blender $PINNED_BLENDER_VERSION (the pinned version) at $BLENDER"
 WORK="${1:-$(mktemp -d "${TMPDIR:-/tmp}/mg-render-selftest.XXXXXX")}"
 EXPORT="$WORK/export"; OUT="$WORK/render-preview"
 mkdir -p "$WORK"

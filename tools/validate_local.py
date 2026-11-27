@@ -9,6 +9,7 @@ from pathlib import Path
 import platform
 import posixpath
 import re
+import shlex
 import socket
 import subprocess
 import sys
@@ -16,11 +17,28 @@ from urllib.parse import unquote, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
-# Natively verified tools without a Package.swift (docs/LOCAL-VALIDATION.md, "Native evidence"), with the command
-# that verifies each one.
-NATIVE_TOOLS = {"tools/render-blender": [["tools/render-blender/selftest.sh"]]}
-# Packages that also get a release build (docs/VERIFY-ON-MAC.md).
-RELEASE_BUILDS = ("tools/SceneValidator",)
+# Natively verified tools without a Package.swift (docs/LOCAL-VALIDATION.md, "Native evidence").
+NATIVE_TOOLS = ("tools/render-blender",)
+# The native command sequence of each package, in order. docs/VERIFY-ON-MAC.md quotes this table verbatim and
+# tools/write_native_receipt.py runs it. A package missing from it runs `swift test --jobs 2 --package-path P` when it
+# has a Tests/ folder and `swift build --jobs 2 --package-path P` otherwise. EXPORT_DIR stands for a new directory
+# outside the checkout.
+EXPORT_DIR = "NEW_EXPORT_DIR"
+PACKAGE_COMMANDS = {
+    ".": ["swift build", "swift test"],
+    "Examples/KeySwitch3D": ["swift test --jobs 2 --package-path Examples/KeySwitch3D"],
+    "Examples/LessonDemo": ["swift test --jobs 2 --package-path Examples/LessonDemo"],
+    "Examples/PathTrace": ["swift build --jobs 2 --package-path Examples/PathTrace"],
+    "Examples/Showcase": ["swift build --jobs 2 --package-path Examples/Showcase",
+                          "swift run --skip-build --package-path Examples/Showcase marty-showcase --verify",
+                          "swift run --skip-build --package-path Examples/Showcase marty-showcase --export "
+                          + EXPORT_DIR],
+    "Examples/Solid3D": ["swift test --jobs 2 --package-path Examples/Solid3D"],
+    "Examples/Turbofan": ["swift test --jobs 2 --package-path Examples/Turbofan"],
+    "tools/SceneValidator": ["swift test --jobs 2 --package-path tools/SceneValidator",
+                             "swift build -c release --jobs 2 --package-path tools/SceneValidator"],
+    "tools/render-blender": ["tools/render-blender/selftest.sh"],
+}
 # Top-level folders of third-party code. A Package.swift there is not one of this repository's packages, and neither
 # is one under a `.build` folder. A package that depends on vendored code still covers it (see manifest_inputs).
 VENDOR_ROOTS = ("vendor", "third_party")
@@ -128,17 +146,14 @@ def native_packages(paths):
     return sorted(packages)
 
 
-def native_commands(package, paths):
-    """The documented command sequence (docs/VERIFY-ON-MAC.md) for one package of a tree with these paths."""
-    if package in NATIVE_TOOLS:
-        return [list(c) for c in NATIVE_TOOLS[package]]
-    if package == ".":
-        return [["swift", "build"], ["swift", "test"]]
+def default_command(package, paths):
     verb = "test" if any(p.startswith(package + "/Tests/") for p in paths) else "build"
-    commands = [["swift", verb, "--jobs", "2", "--package-path", package]]
-    if package in RELEASE_BUILDS:
-        commands.append(["swift", "build", "-c", "release", "--jobs", "2", "--package-path", package])
-    return commands
+    return "swift %s --jobs 2 --package-path %s" % (verb, package)
+
+
+def native_commands(package, paths):
+    """The documented command sequence (PACKAGE_COMMANDS) for one package of a tree with these paths."""
+    return [shlex.split(c) for c in PACKAGE_COMMANDS.get(package, [default_command(package, paths)])]
 
 
 def literal_inputs(paths, swift_sources):
@@ -275,29 +290,32 @@ def native_scope(trees, blobs):
     `trees` maps a label to {path: (mode, oid)}; `blobs` maps an object id to its bytes. Swift sources and package
     manifests come from these trees only. A covered symlink adds its tracked target as an input (as many times as
     needed to reach a fixed point); a covered symlink whose target leaves the repository or does not exist in its
-    tree is a problem. A `.swift` symlink is scanned as the text of its target, whatever that is called. A submodule
+    tree is a problem. A `.swift` symlink is scanned as the text of its target, whatever that is called; a symlinked
+    manifest is read as a manifest of the link's package, and its target file is an input. A submodule
     (gitlink) at or under a covered path or a package folder is a problem: its files are not in either tree."""
     union = set().union(*(set(t) for t in trees.values()))
     packages = native_packages(union)
-    swift, manifests, external = [], [], set()
+    swift, manifests, external, linked_manifests = [], [], set(), set()
     for entries in trees.values():
         folders = folders_of(entries)
         for path, (mode, oid) in entries.items():
-            if mode == SYMLINK_MODE and path.endswith(".swift"):
-                oid = swift_link_target(path, entries, folders, blobs)
-                if oid:
-                    swift.append(blobs[oid].decode("utf-8", "replace"))
-                continue
-            if mode not in REGULAR_MODES:
-                continue
-            if path.endswith(".swift"):
-                swift.append(blobs[oid].decode("utf-8", "replace"))
             folder, _, name = path.rpartition("/")
-            if (name == "Package.swift" or ROOT_MANIFEST.fullmatch(name)) and (folder or ".") in packages:
-                manifests.append((folder or ".", blobs[oid].decode("utf-8", "replace")))
+            manifest = (name == "Package.swift" or ROOT_MANIFEST.fullmatch(name)) and (folder or ".") in packages
+            if mode == SYMLINK_MODE and path.endswith(".swift"):
+                target, oid = swift_link_target(path, entries, folders, blobs)
+                if not oid:
+                    continue
+                if manifest:  # SwiftPM evaluates a linked manifest in the link's package folder
+                    linked_manifests.add(target)
+            elif mode not in REGULAR_MODES or not path.endswith(".swift"):
+                continue
+            text = blobs[oid].decode("utf-8", "replace")
+            swift.append(text)
+            if manifest:
+                manifests.append((folder or ".", text))
     for package, manifest in manifests:
         external |= manifest_inputs(package, manifest, union, packages)[1]
-    inputs = set(native_inputs(union, swift, packages, manifests))
+    inputs = set(native_inputs(union, swift, packages, manifests)) | linked_manifests
     problems, seen = set(), None
     while seen != inputs:
         seen = set(inputs)
@@ -321,10 +339,10 @@ def native_scope(trees, blobs):
 
 
 def swift_link_target(path, entries, folders, blobs):
-    """The object id of the regular file a `.swift` symlink resolves to in its tree, or None."""
+    """(path, object id) of the regular file a `.swift` symlink resolves to in its tree, or (None, None)."""
     target = resolve_link(path, entries, folders, blobs)[0]
     entry = entries.get(target)
-    return entry[1] if entry and entry[0] in REGULAR_MODES else None
+    return (target, entry[1]) if entry and entry[0] in REGULAR_MODES else (None, None)
 
 
 def scope_blobs(trees, root):
@@ -337,7 +355,7 @@ def scope_blobs(trees, root):
     targets = []
     for entries in trees.values():
         folders = folders_of(entries)
-        targets += [swift_link_target(path, entries, folders, blobs) for path, (mode, _) in entries.items()
+        targets += [swift_link_target(path, entries, folders, blobs)[1] for path, (mode, _) in entries.items()
                     if mode == SYMLINK_MODE and path.endswith(".swift")]
     blobs.update(read_blobs([t for t in targets if t and t not in blobs], root))
     return blobs

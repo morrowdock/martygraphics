@@ -18,26 +18,42 @@ The root package test run does not build or test the other packages. Every
 folder of the checkout with a `Package.swift` is a package, except under a
 `.build` folder (at any depth) or under the vendor roots `vendor` and
 `third_party` at the top of the checkout; list them with
-`git ls-files '*Package.swift'` and drop those. For each package `P` other than
-the root, run `swift test --jobs 2 --package-path P` when `P/Tests` exists, and
-`swift build --jobs 2 --package-path P` otherwise; `tools/SceneValidator` also
-gets `swift build -c release --jobs 2 --package-path tools/SceneValidator`. At
-the time of writing:
+`git ls-files '*Package.swift'` and drop those. `tools/render-blender` has no
+`Package.swift` but is verified natively too, on a host with the pinned Blender
+([setup](../tools/render-blender/README.md)).
+
+These are the native commands of every package, in order, under a `#` line
+naming the package. They are `PACKAGE_COMMANDS` in `tools/validate_local.py`,
+which the receipt writer runs; a test keeps the two identical. `NEW_EXPORT_DIR`
+is a new directory outside the checkout (export refuses an existing one). A
+package that is not listed yet runs `swift test --jobs 2 --package-path P` when
+`P/Tests` exists and `swift build --jobs 2 --package-path P` otherwise; add it
+here and to `PACKAGE_COMMANDS`.
 
 ```sh
-swift test --jobs 2 --package-path Examples/Solid3D
-swift test --jobs 2 --package-path Examples/Turbofan
+# .
+swift build
+swift test
+# Examples/KeySwitch3D
 swift test --jobs 2 --package-path Examples/KeySwitch3D
+# Examples/LessonDemo
 swift test --jobs 2 --package-path Examples/LessonDemo
+# Examples/PathTrace
+swift build --jobs 2 --package-path Examples/PathTrace
+# Examples/Showcase
+swift build --jobs 2 --package-path Examples/Showcase
+swift run --skip-build --package-path Examples/Showcase marty-showcase --verify
+swift run --skip-build --package-path Examples/Showcase marty-showcase --export NEW_EXPORT_DIR
+# Examples/Solid3D
+swift test --jobs 2 --package-path Examples/Solid3D
+# Examples/Turbofan
+swift test --jobs 2 --package-path Examples/Turbofan
+# tools/SceneValidator
 swift test --jobs 2 --package-path tools/SceneValidator
 swift build -c release --jobs 2 --package-path tools/SceneValidator
-swift build --jobs 2 --package-path Examples/Showcase
-swift build --jobs 2 --package-path Examples/PathTrace
+# tools/render-blender
+tools/render-blender/selftest.sh
 ```
-
-`tools/render-blender` has no `Package.swift` but is verified natively too: run
-`tools/render-blender/selftest.sh` on a host with the pinned Blender
-([setup](../tools/render-blender/README.md)).
 
 Record each present package's results separately in the exact-source receipt,
 in the [native receipt](LOCAL-VALIDATION.md#native-evidence-and-publishing)
@@ -51,7 +67,8 @@ python3 tools/write_native_receipt.py /absolute/path/native-receipt.json
 It refuses a checkout with any change or untracked file and pins the full
 `HEAD` SHA as `"source"`. It finds the packages with the same rule (and the same
 code) as the reuse check in `validate_local.py`, runs the commands above for each
-package in order, and records the exit code of each package's first failing
+package in order (`NEW_EXPORT_DIR` becomes a new `-showcase-export` folder named
+after the receipt, beside it), and records the exit code of each package's first failing
 command, or 0 when all of them pass; a command that cannot start (no `swift`)
 counts as 127. `tools/render-blender/selftest.sh` exits 127 when there is no
 Blender executable, and 3 when `blender --version` does not report the pinned

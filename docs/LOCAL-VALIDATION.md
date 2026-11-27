@@ -84,9 +84,9 @@ their metadata separately; retain that evidence beside the receipt.
 
 ## Native evidence and publishing
 
-Run the [Mac commands](VERIFY-ON-MAC.md) plus showcase `--verify` and `--export`
-on an approved native execution lane, and `tools/render-blender/selftest.sh` on a
-host with the pinned Blender. The native receipt is a private JSON file that names
+Run the [Mac commands](VERIFY-ON-MAC.md), which include showcase `--verify` and
+`--export` and `tools/render-blender/selftest.sh` (on a host with the pinned
+Blender), on an approved native execution lane. The native receipt is a private JSON file that names
 the exact source and **each package** it built and tested, with that package's
 overall exit code:
 

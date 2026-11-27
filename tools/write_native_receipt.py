@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Run the native checks of docs/VERIFY-ON-MAC.md for every package of a clean checkout and write the v1 native
-receipt {"source", "packages": [{"path", "exit"}]} to a new path outside the checkout.
+receipt {"source", "packages": [{"path", "exit"}]} to a new path outside the checkout. The showcase export goes to a
+new directory beside the receipt, named after it with "-showcase-export".
 
 The packages come from validate_local.native_packages, the same discovery that checks receipt reuse. Each package
 records the exit code of its first failing command, or 0 when all its commands pass. Exits non-zero when any
@@ -48,12 +49,17 @@ def main(argv=None, root=None, run=subprocess.run):
     receipt_path = args.receipt.resolve()
     if receipt_path.is_relative_to(root) or receipt_path.exists():
         parser.error("Native receipt must be a new path outside the checkout")
+    export_dir = receipt_path.with_name(receipt_path.stem + "-showcase-export")
+    if export_dir.resolve().is_relative_to(root) or export_dir.exists():
+        parser.error("The showcase export directory %s must be new and outside the checkout" % export_dir)
     head, dirty = checkout_state(root)
     if dirty:
         parser.error("Checkout must be clean, including untracked files")
     commands = validate_local.head_scope(head, root)
     packages = []
     for package, package_commands in commands.items():
+        package_commands = [[str(export_dir) if a == validate_local.EXPORT_DIR else a for a in c]
+                            for c in package_commands]
         print("== %s: %s" % (package, " && ".join(" ".join(c) for c in package_commands)), flush=True)
         packages.append({"path": package, "exit": run_package(package_commands, root, run)})
     if checkout_state(root) != (head, b""):

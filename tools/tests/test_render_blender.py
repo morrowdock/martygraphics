@@ -482,11 +482,13 @@ class SelftestPinTests(unittest.TestCase):
         self.assertIn('BLENDER_VERSION="${BLENDER_VERSION:-%s}"' % pin, setup)
         self.assertIn("| %s LTS" % pin, (self.HERE / "ASSETS.md").read_text(encoding="utf-8"))
 
-    def run_selftest(self, home, fake=None, version=None, **env):
-        """Run selftest.sh with a fake `blender` at `fake` that reports `version` and fails everything else."""
+    def run_selftest(self, home, fake=None, version=None, status=0, **env):
+        """Run selftest.sh with a fake `blender` at `fake` whose `--version` prints `version` and exits `status`;
+        everything else fails."""
         if fake:
             fake.parent.mkdir(parents=True, exist_ok=True)
-            fake.write_text('#!/bin/sh\n[ "$1" = --version ] && { echo "Blender %s"; exit 0; }\nexit 1\n' % version)
+            fake.write_text('#!/bin/sh\n[ "$1" = --version ] && { echo "Blender %s"; exit %d; }\nexit 1\n'
+                            % (version, status))
             fake.chmod(0o755)
         environment = {k: v for k, v in os.environ.items() if not k.startswith(("BLENDER", "BUSY_"))}
         environment.update(HOME=str(home), **env)
@@ -503,16 +505,21 @@ class SelftestPinTests(unittest.TestCase):
             self.assertIn("Blender not found", missing.stderr)
             other = home / "other" / "blender"
             newer = home / "opt" / "blender-5.3.0" / "blender"
-            for fake, version, env in [(default, "5.2.3 LTS", {}), (default, "unparsable", {}),
-                                       (other, "5.2.40", {"BLENDER": str(other)}),
-                                       (newer, "5.3.0 LTS", {"BLENDER_VERSION": "5.3.0"})]:
-                with self.subTest(version=version, env=env):
-                    run = self.run_selftest(home, fake, version, **env)
+            for fake, version, status, env in [
+                    (default, "5.2.3 LTS", 0, {}), (default, "unparsable", 0, {}),
+                    (default, "5.2.4 Alpha", 0, {}), (default, "5.2.4 Beta", 0, {}), (default, "5.2.4 RC1", 0, {}),
+                    (default, "5.2.4 LTS (hash cd5dc428cce1)", 0, {}), (default, "5.2.4-cd5dc428cce1", 0, {}),
+                    (default, "5.2.4 LTS", 1, {}), (default, "5.2.4", 2, {}),
+                    (other, "5.2.40", 0, {"BLENDER": str(other)}),
+                    (newer, "5.3.0 LTS", 0, {"BLENDER_VERSION": "5.3.0"})]:
+                with self.subTest(version=version, status=status, env=env):
+                    run = self.run_selftest(home, fake, version, status, **env)
                     self.assertEqual(run.returncode, 3, run.stderr)
                     self.assertIn("not the pinned 5.2.4", run.stderr)
-            for fake, env in [(default, {}), (other, {"BLENDER": str(other)})]:
-                with self.subTest(pinned=str(fake)):
-                    run = self.run_selftest(home, fake, "5.2.4 LTS", **env)
+            for fake, version, env in [(default, "5.2.4 LTS", {}), (default, "5.2.4", {}),
+                                       (other, "5.2.4 LTS", {"BLENDER": str(other)})]:
+                with self.subTest(pinned=str(fake), version=version):
+                    run = self.run_selftest(home, fake, version, **env)
                     self.assertEqual(run.returncode, 1, run.stderr)  # past the pin check; the fake cannot export
                     self.assertIn("Blender 5.2.4 (the pinned version)", run.stdout)
                     self.assertIn("export failed", run.stderr)

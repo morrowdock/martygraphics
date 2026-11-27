@@ -220,6 +220,11 @@
   reuse when a submodule sits in a covered path or package. `tools/render-blender/selftest.sh` checks that
   `blender --version` is the pinned 5.2.4, even with `BLENDER` or `BLENDER_VERSION` set, and exits 127 without a
   Blender executable and 3 for another version.
+- A symlinked package manifest is read in the link's package folder, and its target file is a native input. The
+  native commands of every package, now including the showcase `--verify` and `--export` runs, are one table in
+  `tools/validate_local.py` that the receipt writer runs and docs/VERIFY-ON-MAC.md quotes, checked by a test. The
+  Blender self-test accepts only a "Blender 5.2.4" or "Blender 5.2.4 LTS" release line and exits 3 when
+  `blender --version` fails.
 - Changelog: there is one `[Unreleased]` section. The entries of a second, unbracketed `Unreleased` section moved
   into it under standard categories, with their text unchanged.
 - Changelog correction: the "Looks and quality levels" entry under Added says `classic` (the default). Since "`studio`
