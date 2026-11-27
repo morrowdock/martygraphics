@@ -323,8 +323,11 @@ final class AudioGraphTests: XCTestCase {
         // interval midpoints: 256 grid values, 1 probe and 16 × 2 probes.
         let grid = (0...MGLimits.funcIntervals).map { MGGraph.gridX($0, -1, 1) }
         let gaps = Set(stride(from: 8, to: 8 + 16 * 15, by: 15).map { (grid[$0] + grid[$0 + 1]) / 2 })
-        let worst = MGGraph.curve({ $0 == grid[0] || gaps.contains($0) ? .nan : 0.5 * sin(3 * $0) },
-                                  x0: -1, x1: 1, y0: -1, y1: 1, measure: false)
+        let wave: (Double) -> Double = { x in
+            if x == grid[0] || gaps.contains(x) { return .nan }
+            return 0.5 * sin(3 * x)
+        }
+        let worst = MGGraph.curve(wave, x0: -1, x1: 1, y0: -1, y1: 1, measure: false)
         XCTAssertEqual(worst.starts.count, MGLimits.funcBreaks)
         XCTAssertEqual(worst.samples.count, MGAudioGraph.maxSamples)
         // With its marked point that fills one series exactly, and nothing is cut.

@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "a00a1b8ce7be561654af20ef5b20937bd9088b0109d10af9c516e81ea48aa431"
+      "sha256": "8e3be740602b4bbf37d517f8e7fb8d8bdc1b80695670c798656a0bddb4fec76e"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -4915,7 +4915,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidGLTFTests/SeamlessLoopExportTests.swift",
-      "sha256": "8958cca21df8333015e4249074161065387d3aa3bc5aa1606f53ac5a6b201015"
+      "sha256": "927b7f89d0d304292aa7d5836ed12d39f824208577bc723546ef0a9241c46c35"
     },
     {
       "path": "Sources/MartyGraphics/MGArrowGeometry.swift",
@@ -4987,7 +4987,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/AudioGraphTests.swift",
-      "sha256": "8c20596765f5fbc91e4db1f81806206d1ac05c8d5d0fa72a0dbcbe45d4d3cd9f"
+      "sha256": "764636a7758a5173200d397462754ca50b52a802528e1c71a50d2cf5625c4cfe"
     },
     {
       "path": "Sources/MartyGraphics/MGSliders.swift",
