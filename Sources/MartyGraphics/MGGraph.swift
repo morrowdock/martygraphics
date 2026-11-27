@@ -206,7 +206,8 @@ enum MGGraph {
     }
 
     /// Closed fill polygons (data coordinates) between the drawn curve and y = 0 (clamped to the y range) from `s0` to
-    /// `s1`, one per piece that overlaps the interval; curve values are clamped to the y range.
+    /// `s1`, one per piece that overlaps the interval; curve values are clamped to the y range. A clipped,
+    /// piecewise-linear picture of the region: the `area` readout integrates the analytic curve (`MGReadout.area`).
     static func shadeBands(_ samples: [MGPoint], starts: [Int], _ s0: Double, _ s1: Double, y0: Double, y1: Double) -> [[MGPoint]] {
         let base = clip(0, y0, y1)
         var out: [[MGPoint]] = []

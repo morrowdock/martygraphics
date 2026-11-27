@@ -61,11 +61,12 @@ public enum MGLimits {
     /// scene's parse runs at most 2 × `sliderBindings` = 12 extra `func` checks (at most 12 × 29,190 evaluations for
     /// moving graphs; typically 2 × 513). These bounds apply to the new key only; no existing limit changes.
     public static let sliders = 3, sliderSteps = 100, sliderBindings = 6
-    /// `func` readouts (`MGReadout`, wire `readouts`): at most one of each of the 3 names. An area runs the composite
-    /// 5-point Gauss-Legendre rule on `readoutPanels` panels and on half as many (960 evaluations, plus 2 at the ends
-    /// of the interval); a slope runs one forward-mode evaluation (about twice the work of one evaluation) and at most
-    /// 9 more (2 probes and 7 for the one-sided differences). So six graphs with every readout add at most 5,838
-    /// evaluations, and none per frame: a moving graph has no readouts. These bounds apply to the new key only.
+    /// `func` readouts (`MGReadout`, wire `readouts`): at most one of each of the 3 names. An area certifies the curve
+    /// in at most `MGReadout.certifyBudget` interval passes, then runs the composite 5-point Gauss-Legendre rule on
+    /// `readoutPanels` panels and on half as many (962 evaluations with the two ends); a slope runs one forward-mode
+    /// pass and two interval passes. So six graphs with every readout add at most 1,548 interval passes and 5,790
+    /// evaluations' work to a parse (docs/PROTOCOL.md), and a timeline that replays a step edit of such a graph
+    /// computes them again. These bounds apply to the new key only.
     public static let readouts = 3, readoutPanels = 128
 }
 

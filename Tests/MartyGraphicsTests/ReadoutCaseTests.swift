@@ -213,25 +213,162 @@ final class ReadoutCaseTests: XCTestCase {
     // MARK: methods and bounds
 
     func testTheEvaluationCountsAreTheDocumentedOnes() throws {
-        var n = 0
-        _ = try MGReadout.area({ n += 1; return $0 }, 0, 1, y0: -1, y1: 2)
+        var n = 0, e = 0
+        _ = try MGReadout.area({ n += 1; return $0 }, enclose: { e += 1; return ($0, $1) }, 0, 1, y0: -1, y1: 2)
         XCTAssertEqual(n, 962)
+        XCTAssertEqual(e, 1)
         XCTAssertEqual(MGLimits.readoutPanels, 128)
         XCTAssertEqual(MGLimits.readouts, MGReadout.allCases.count)
-        n = 0
-        _ = try MGReadout.fallbackSlope({ n += 1; return $0 * Swift.abs($0) }, at: 0, step: 1.0 / 4096)
-        XCTAssertEqual(n, 7)
+        XCTAssertEqual(MGReadout.certifyDepth, 10)
+        XCTAssertEqual(MGReadout.certifyBudget, 256)
     }
 
-    func testTheFallbackRunsOnlyWhereTheRuleHasNoValue() throws {
-        let rule = try MGExpression.compile("x*abs(x)", allowed: [.x], reason: "func.y")
-        XCTAssertTrue(rule.valueAndSlope(MGExpression.Inputs(x: 0)).slope.isNaN)
-        XCTAssertEqual(rule.valueAndSlope(MGExpression.Inputs(x: 0.5)).slope, 1)
-        XCTAssertEqual(try MGReadout.fallbackSlope({ $0 * Swift.abs($0) }, at: 0, step: 1.0 / 4096), 0)
-        // A corner never passes, however small.
-        for scale in [1.0, 1e-3, 1e-6] {
-            XCTAssertThrowsError(try MGReadout.fallbackSlope({ scale * Swift.abs($0) }, at: 0, step: 1.0 / 4096), "\(scale)")
+    func local(_ text: String, _ x: Double) throws -> MGExpression.Local {
+        try MGExpression.compile(text, allowed: Set(MGExpression.Variable.allCases), reason: "func.y").local(MGExpression.Inputs(x: x))
+    }
+
+    func testTheOneSidedRules() throws {
+        // Both sides of a smooth composition are the same number; a corner's are not, however small it is.
+        XCTAssertEqual(try local("x*abs(x)", 0).left, 0)
+        XCTAssertEqual(try local("x*abs(x)", 0).right, 0)
+        XCTAssertEqual(try local("abs(x)", 0).left, -1)
+        XCTAssertEqual(try local("abs(x)", 0).right, 1)
+        XCTAssertEqual(try local("min(x, x^3)", 1).left, 3)
+        XCTAssertEqual(try local("min(x, x^3)", 1).right, 1)
+        for scale in ["1", "0.001", "0.000001", "0.0000000001"] {
+            let l = try local(scale + "*abs(x)", 0)
+            XCTAssertNotEqual(l.left, l.right, scale)
         }
+        // A power's exponent is constant only when it does not read x, never because its derivative is 0 at a point.
+        XCTAssertEqual(try local("(x - 1)^2", 0).left, -2)
+        XCTAssertEqual(try local("(x - 1)^2", 0).right, -2)
+        XCTAssertTrue(try local("(x - 1)^(2 + x^2)", 0).right.isNaN)
+        // The sides of the kinks, poles and domain edges, in program order (x, 1, -, abs: the abs is at its kink).
+        XCTAssertEqual(try local("abs(x - 1)", 1).sides, [0, 0, 0, 0])
+        XCTAssertEqual(try local("abs(x - 1)", 1.5).sides, [0, 0, 0, 1])
+        XCTAssertNil(try local("sqrt(x)^0", -1).sides)
+    }
+
+    func testTheViewCheckReadsEverySample() {
+        // f leaves the y range only at the first node of the coarser rule: the band would be clipped there.
+        let node = 1.0 / 128 + 1.0 / 128 * MGReadout.nodes[0]
+        XCTAssertThrowsError(try MGReadout.area({ $0 == node ? 1 : 0 }, enclose: { _, _ in (0, 0) }, 0, 1, y0: -0.5, y1: 0.5)) {
+            XCTAssertEqual(($0 as? MGError)?.reason, "func.readouts.view")
+        }
+    }
+
+    func testTheCertificationIsBounded() {
+        func run(_ enclose: @escaping (Double, Double) -> (lo: Double, hi: Double)?) -> (String?, Int) {
+            var used = 0
+            do {
+                try MGReadout.certify({ used += 1; return enclose($0, $1) }, 0, 1, y0: -1, y1: 1)
+            } catch {
+                return ((error as? MGError)?.reason, used)
+            }
+            return (nil, used)
+        }
+        func check(_ got: (String?, Int), _ reason: String?, _ count: Int, line: UInt = #line) {
+            XCTAssertEqual(got.0, reason, line: line)
+            XCTAssertEqual(got.1, count, line: line)
+        }
+        // Depth first: a cell that never certifies is refused after `certifyDepth` halvings (11 enclosures).
+        check(run { _, _ in nil }, "func.readouts.area", 11)
+        check(run { _, _ in (5, 6) }, "func.readouts.view", 11)
+        // Within the drawing tolerance (1 % of the y range) a cell is certified.
+        check(run { _, _ in (-1.02, 1.02) }, nil, 1)
+        check(run { _, _ in (-1.03, 1) }, "func.readouts.view", 11)
+        // Cells of 1/512 and narrower certify: 1,023 cells would be needed, so the budget refuses it after 256.
+        check(run { $1 - $0 <= 1.0 / 512 ? (0, 0) : nil }, "func.readouts.area", MGReadout.certifyBudget)
+        check(run { $1 - $0 <= 1.0 / 64 ? (0, 0) : nil }, nil, 127)
+    }
+
+    func testEnclosuresHoldEveryValue() throws {
+        let cases: [(String, Double, Double)] = [
+            ("x^3 - 2*x", -2, 2.5), ("sin(x) + cos(3*x)", -4, 4), ("abs(x - 1)*exp(-x)", -1, 3), ("tan(x)", -1.5, 1.5),
+            ("min(x, x^2) - max(x, 0.5)", -2, 2), ("(x + 3)^x", 0, 2), ("x^4 - x^2", -1.5, 1.5),
+            ("sqrt(x) + ln(x + 1)", 0, 4), ("cosh(x) - 2", -2, 2),
+        ]
+        for (text, x0, x1) in cases {
+            let expr = try MGExpression.compile(text, allowed: [.x], reason: "func.y")
+            for k in 0..<16 {
+                let a = x0 + (x1 - x0) * Double(k) / 16, b = x0 + (x1 - x0) * Double(k + 1) / 16
+                let e = try XCTUnwrap(expr.enclosure(MGExpression.Inputs(), a, b), "\(text) \(k)")
+                for j in 0...32 {
+                    let v = expr.value(MGExpression.Inputs(x: a + (b - a) * Double(j) / 32))
+                    XCTAssertTrue(v >= e.lo && v <= e.hi, "\(text) \(k): \(v) not in \(e)")
+                }
+            }
+        }
+        let pole = try MGExpression.compile("1/(x - 0.3)", allowed: [.x], reason: "func.y")
+        XCTAssertNil(pole.enclosure(MGExpression.Inputs(), 0.25, 0.5))
+        XCTAssertNotNil(pole.enclosure(MGExpression.Inputs(), 0.31, 0.5))
+    }
+
+    func testEnclosuresRoundOutward() throws {
+        func enclosure(_ text: String, _ a: Double, _ b: Double) throws -> MGExpression.Bounds? {
+            try MGExpression.compile(text, allowed: [.x], reason: "func.y").enclosure(MGExpression.Inputs(), a, b)
+        }
+        // In double precision (10^20 + x) - 10^20 is 0 for |x| < 8192. The enclosure still holds the analytic x, so the
+        // divisor x + 1 below has no enclosure over [-2, 2]: it is 0 at -1.
+        let cancel = try XCTUnwrap(try enclosure("(10^20 + x) - 10^20", -2, 2))
+        XCTAssertLessThanOrEqual(cancel.lo, -2)
+        XCTAssertGreaterThanOrEqual(cancel.hi, 2)
+        XCTAssertNil(try enclosure("1/(((10^20+x)-10^20)+1)", -2, 2))
+        // An inexact result is bounded by the doubles on either side of it: 0.1 + 0.2 and 3 × 0.1 are both exactly
+        // 0.3000000000000000166…, between 0.3 and 0.30000000000000004.
+        for text in ["x + 0.2", "3*x"] {
+            let e = try XCTUnwrap(try enclosure(text, 0.1, 0.1), text)
+            XCTAssertEqual(e.lo, 0.3, text)
+            XCTAssertEqual(e.hi, 0.30000000000000004, text)
+        }
+        // An exact result stays exact, so a domain edge at an end of the interval is still inside the domain.
+        let shifted = try XCTUnwrap(try enclosure("x - 1", 1, 2))
+        XCTAssertEqual(shifted.lo, 0)
+        XCTAssertEqual(shifted.hi, 1)
+        let cap = try XCTUnwrap(try enclosure("1 - x^2", -1, 1))
+        XCTAssertEqual(cap.lo, 0)
+        XCTAssertEqual(cap.hi, 1)
+        XCTAssertEqual(try XCTUnwrap(try enclosure("sqrt(1 - x^2)", -1, 1)).lo, 0)
+        XCTAssertNotNil(try enclosure("asin(x/2)", -2, 2))
+        // A library function widens by `libraryUlps` to each side.
+        let v = exp(1.0), e = try XCTUnwrap(try enclosure("exp(x)", 1, 1))
+        XCTAssertEqual(MGExpression.libraryUlps, 4)
+        XCTAssertEqual(e.lo, v - 4 * v.ulp)
+        XCTAssertEqual(e.hi, v + 4 * v.ulp)
+        // Whole powers by repeated squaring: 0.1 × 0.1 is exactly 0.0100000000000000011102…, between 0.01 and
+        // 0.010000000000000002.
+        XCTAssertEqual(MGExpression.wholePower(3, 5, up: false), 243)
+        XCTAssertEqual(MGExpression.wholePower(0.1, 2, up: false), 0.01)
+        XCTAssertEqual(MGExpression.wholePower(0.1, 2, up: true), 0.010000000000000002)
+    }
+
+    func testPolesAndPeaksCountWhenTheyMayBeInside() {
+        // tan's pole at 22.5π lies between these two adjacent doubles; the plain double-precision test misses it.
+        let a = 70.68583470577035, b = 70.68583470577036
+        XCTAssertEqual(a.nextUp, b)
+        XCTAssertFalse(((a - .pi / 2) / .pi).rounded(.up) <= ((b - .pi / 2) / .pi).rounded(.down))
+        XCTAssertTrue(MGExpression.mayHold(a, b, .pi / 2, period: .pi))
+        XCTAssertNil(MGExpression.enclose(.tan, a, b))
+        XCTAssertNotNil(MGExpression.enclose(.tan, 70, 70.6))
+        XCTAssertFalse(MGExpression.mayHold(0, 1.5, .pi / 2, period: .pi))
+    }
+
+    func testTheSlopeCertifiesBothHalvesOfTheProbeInterval() throws {
+        let probe = 4.0 / Double(MGLimits.funcIntervals) / 1024  // xr [-2, 2]
+        let twice = try MGExpression.compile("abs((x-0.000003)*(x-0.000006))", allowed: [.x], reason: "func.y")
+        // The abs argument is on the same side at the mark and at both probes, where the old three-point check looked…
+        for x in [-probe, 0, probe] { XCTAssertEqual(twice.local(MGExpression.Inputs(x: x)).sides?.last, 1) }
+        // …but crosses 0 twice in between: its enclosure over [0, probe] holds both signs.
+        let left = try XCTUnwrap(twice.intervals(MGExpression.Inputs(), -probe, 0)).edges
+        let right = try XCTUnwrap(twice.intervals(MGExpression.Inputs(), 0, probe)).edges
+        XCTAssertEqual(MGExpression.strictSide(try XCTUnwrap(left.last ?? nil)), 1)
+        XCTAssertEqual(MGExpression.strictSide(try XCTUnwrap(right.last ?? nil)), 0)
+        // x*abs(x) at 0: the abs is at its kink at the mark and on one side of it over each half (x, x, abs, *).
+        let corner = try MGExpression.compile("x*abs(x)", allowed: [.x], reason: "func.y")
+        let edges = try XCTUnwrap(corner.intervals(MGExpression.Inputs(), 0, probe)).edges
+        XCTAssertEqual(edges.map { $0 == nil }, [true, true, false, true])
+        XCTAssertEqual(edges[2]?.lo, 0)
+        XCTAssertEqual(edges[2]?.hi, probe)
     }
 
     func testTheAreaEstimateCoversTheRealErrorOfAnEndpointSingularity() throws {

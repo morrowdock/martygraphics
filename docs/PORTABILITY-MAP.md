@@ -348,7 +348,7 @@ Python files under `tools/` are listed with their static Python imports.
 | File | Imports |
 | --- | --- |
 | `tools/check_dco.py` | re, subprocess, sys |
-| `tools/mg_expr.py` | math, unicodedata |
+| `tools/mg_expr.py` | fractions, math, unicodedata |
 | `tools/portability_map.py` | argparse, ast, collections, pathlib, re, sys |
 | `tools/render-blender/mgrender/__init__.py` | — |
 | `tools/render-blender/mgrender/busyguard.py` | os, re, subprocess, sys |
@@ -368,7 +368,7 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/scene_v1_check.py` | argparse, json, math, mg_expr, os, pathlib, re, stat, tools, unicodedata |
 | `tools/semantic_fixtures.py` | argparse, json, math, pathlib, scene_v1_check, sys |
 | `tools/tests/test_check_dco.py` | os, pathlib, subprocess, sys, tempfile, unittest |
-| `tools/tests/test_mg_expr.py` | json, math, mg_expr, pathlib, sys, unittest |
+| `tools/tests/test_mg_expr.py` | fractions, json, math, mg_expr, pathlib, sys, unittest |
 | `tools/tests/test_portability_tools.py` | copy, importlib, json, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_release_install.py` | argparse, contextlib, importlib, io, json, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_render_blender.py` | hashlib, json, math, mgrender, os, pathlib, re, render, render_variants, shutil, struct, subprocess, sys, tempfile, unittest |

@@ -15,6 +15,7 @@ below return the IEEE 754 / C99 value instead, so values match Apple's libm up t
 
 import math
 import unicodedata
+from fractions import Fraction
 
 EXPR_LENGTH = 80
 EXPR_TOKENS = 48
@@ -38,6 +39,9 @@ SLIDER_BINDINGS = 6
 SLIDER_KEYS = ("param", "min", "max", "step", "default", "label")
 READOUTS = ("value", "slope", "area")
 READOUT_PANELS = 128
+# `MGReadout.certifyDepth` and `certifyBudget`: the bounded subdivision of an area readout.
+CERTIFY_DEPTH = 10
+CERTIFY_BUDGET = 256
 # Gauss-Legendre nodes on [-1, 1] and their weights (5 points), as in `MGReadout`.
 GAUSS_NODES = (-0.906179845938664, -0.5384693101056831, 0.0, 0.5384693101056831, 0.906179845938664)
 GAUSS_WEIGHTS = (0.23692688505618908, 0.47862867049936647, 0.5688888888888889, 0.47862867049936647,
@@ -155,8 +159,39 @@ def _combine(op, left, right):
     return math.nan
 
 
+def _sign(value):
+    return 1 if value > 0 else -1 if value < 0 else 0
+
+
+def _whole(value):
+    """Swift's `v.rounded() == v`: true for a whole number and for an infinity."""
+    return math.isinf(value) or (math.isfinite(value) and value.is_integer())
+
+
+def _side1(name, u):
+    """Mirror of `MGExpression.side(_:_:)`: the side of the kink or domain edge of a function that u is on."""
+    if name in ("abs", "sqrt", "ln", "log"):
+        return _sign(u)
+    if name in ("asin", "acos"):
+        return _sign(1 - abs(u))
+    if name == "tan":
+        return _sign(_apply("cos", u))
+    return 0
+
+
+def _side2(op, left, right, constant):
+    """Mirror of `MGExpression.side(_:_:_:constant:)`: the divisor's sign, a min/max pair's order, a power's base."""
+    if op == "/":
+        return _sign(right)
+    if op == "^":
+        return 0 if constant and right >= 0 and _whole(right) else _sign(left)
+    if op in ("min", "max"):
+        return _sign(left - right)
+    return 0
+
+
 def _slope1(name, u, du):
-    """Mirror of `MGExpression.slope(_:_:_:)`: the derivative of name(u) for u' = du."""
+    """Mirror of `MGExpression.slope(_:_:_:)`: the derivative of name(u) along a direction in which u changes by du."""
     if name == "sin":
         return _apply("cos", u) * du
     if name == "cos":
@@ -165,9 +200,9 @@ def _slope1(name, u, du):
         c = _apply("cos", u)
         return _divide(du, c * c)
     if name == "asin":
-        return _divide(du, _apply("sqrt", 1 - u * u))
+        return _divide(du, _apply("sqrt", 1 - u * u)) if abs(u) < 1 else math.nan
     if name == "acos":
-        return _divide(-du, _apply("sqrt", 1 - u * u))
+        return _divide(-du, _apply("sqrt", 1 - u * u)) if abs(u) < 1 else math.nan
     if name == "atan":
         return _divide(du, 1 + u * u)
     if name == "sinh":
@@ -180,24 +215,24 @@ def _slope1(name, u, du):
     if name == "exp":
         return _apply("exp", u) * du
     if name == "ln":
-        return _divide(du, u)
+        return _divide(du, u) if u > 0 else math.nan
     if name == "log":
-        return _divide(du, u * LN10)
+        return _divide(du, u * LN10) if u > 0 else math.nan
     if name == "sqrt":
-        return _divide(du, 2 * _apply("sqrt", u))
+        return _divide(du, 2 * _apply("sqrt", u)) if u > 0 else math.nan
     if name == "abs":
-        if math.isnan(u):
-            return math.nan
         if u > 0:
             return du
         if u < 0:
             return -du
-        return 0.0 if du == 0 else math.nan
+        # The kink: the one-sided rule |du|.
+        return abs(du) if u == 0 else math.nan
     return math.nan
 
 
-def _slope2(op, left, dl, right, dr):
-    """Mirror of `MGExpression.slope(_:_:_:_:_:)`: the derivative of `left op right`."""
+def _slope2(op, left, dl, right, dr, constant):
+    """Mirror of `MGExpression.slope(_:_:_:_:_:constant:)`: the derivative of `left op right` along a direction.
+    `constant`: the exponent of a power does not read x."""
     if op == "+":
         return dl + dr
     if op == "-":
@@ -207,19 +242,261 @@ def _slope2(op, left, dl, right, dr):
     if op == "/":
         return _divide(dl - _divide(left, right) * dr, right)
     if op == "^":
-        p = _power(left, right)
-        if dr == 0:
-            return right * _power(left, right - 1) * dl
-        if dl == 0:
-            return p * _log(math.log, left) * dr
-        return p * (dr * _log(math.log, left) + _divide(right * dl, left))
+        if constant:
+            if right == 0:
+                return 0.0
+            return right * _power(left, right - 1) * dl if _whole(right) or left > 0 else math.nan
+        if not left > 0:
+            return math.nan
+        return _power(left, right) * (dr * _log(math.log, left) + _divide(right * dl, left))
     if op in ("min", "max"):
-        if math.isnan(left) or math.isnan(right):
+        if any(math.isnan(v) for v in (left, right, dl, dr)):
             return math.nan
         if left == right:
-            return dl if dl == dr else math.nan
+            # The kink: the smaller (larger) of the two derivatives.
+            return (dr if dr < dl else dl) if op == "min" else (dr if dr > dl else dl)
         return dl if (left < right) == (op == "min") else dr
     return math.nan
+
+
+# MARK: outward rounding (mirror of the `MGExpression` enclosure helpers)
+
+# `MGExpression.libraryUlps`: doubles by which a library function's bounds are widened to each side.
+LIBRARY_ULPS = 4
+# `MGExpression.exactLimit`: below it, except at 0, a product or quotient is moved outward without looking at it.
+EXACT_LIMIT = 2.0 ** -960
+
+
+def _outward(v, error, up):
+    """Mirror of `MGExpression.outward`: v as a bound on an exact result whose difference from v has the sign of
+    `error`, moved to the next double down (up False) or up when the exact result is on the other side."""
+    if up:
+        return math.nextafter(v, math.inf) if error > 0 else v
+    return math.nextafter(v, -math.inf) if error < 0 else v
+
+
+def _sum(left, right, up):
+    """Mirror of `MGExpression.sum`: left + right rounded down or up (Knuth's TwoSum gives the error exactly)."""
+    s = left + right
+    if not math.isfinite(s):
+        return s
+    t = s - left
+    return _outward(s, (left - (s - t)) + (right - t), up)
+
+
+def _product(left, right, up):
+    """Mirror of `MGExpression.product`: left * right rounded down or up. Swift finds the sign of the rounding error
+    with a fused multiply-add; this computes it exactly with fractions (the same sign above EXACT_LIMIT)."""
+    p = left * right
+    if not math.isfinite(p):
+        return p
+    if p == 0:
+        return _outward(p, 0 if left == 0 or right == 0 else 1 if (left < 0) == (right < 0) else -1, up)
+    if abs(p) < EXACT_LIMIT:
+        return _outward(p, 1 if up else -1, up)
+    return _outward(p, _sign(Fraction(left) * Fraction(right) - Fraction(p)), up)
+
+
+def _quotient(left, right, up):
+    """Mirror of `MGExpression.quotient`: left / right rounded down or up, for right != 0."""
+    q = _divide(left, right)
+    if not math.isfinite(q):
+        return q
+    if q == 0:
+        return _outward(q, 0 if left == 0 else 1 if (left < 0) == (right < 0) else -1, up)
+    if abs(q) < EXACT_LIMIT or abs(left) < EXACT_LIMIT:
+        return _outward(q, 1 if up else -1, up)
+    return _outward(q, _sign(Fraction(left) / Fraction(right) - Fraction(q)), up)
+
+
+def _whole_power(u, n, up):
+    """Mirror of `MGExpression.wholePower`: u ** n for a finite u >= 0 and a whole n >= 1, by repeated squaring with
+    every product rounded down or up."""
+    result, square, k = 1.0, u, n
+    while True:
+        if math.fmod(k, 2) == 1:
+            result = max(0.0, _product(result, square, up))
+        k = float(math.floor(k / 2))
+        if not (k >= 1 and math.isfinite(result)):
+            return result
+        square = max(0.0, _product(square, square, up))
+
+
+def _widened(v, up):
+    """Mirror of `MGExpression.widened`: v moved LIBRARY_ULPS doubles down or up; nan when v is not finite."""
+    if not math.isfinite(v):
+        return math.nan
+    for _ in range(LIBRARY_ULPS):
+        v = math.nextafter(v, math.inf if up else -math.inf)
+    return v
+
+
+def _library_hull(values, lo=-math.inf, hi=math.inf):
+    """Mirror of `MGExpression.libraryHull`: the hull of a library function's values, widened by LIBRARY_ULPS and kept
+    within [lo, hi]; None when one is not finite."""
+    span = _hull(values)
+    if span is None or not (math.isfinite(span[0]) and math.isfinite(span[1])):
+        return None
+    return max(lo, _widened(span[0], False)), min(hi, _widened(span[1], True))
+
+
+def _hull(values):
+    """Mirror of `MGExpression.hull`: the smallest and largest of `values`, or None when one is not a number."""
+    if any(math.isnan(v) for v in values):
+        return None
+    return min(values), max(values)
+
+
+def _may_hold(a, b, at, period):
+    """Mirror of `MGExpression.mayHold`: some at + k * period (multiples of the real pi) may lie in [a, b]."""
+    slack = (abs(a) + abs(b) + 4) * 1e-15
+    return math.ceil((a - at) / period - slack) <= math.floor((b - at) / period + slack)
+
+
+def _magnitude(a, b):
+    """Mirror of `MGExpression.magnitude`: |u| over [a, b], exactly."""
+    if a >= 0:
+        return a, b
+    return (-b, -a) if b <= 0 else (0.0, max(-a, b))
+
+
+def _enclose1(name, a, b):
+    """Mirror of `MGExpression.enclose(_:_:_:)`: name over [a, b], rounded outward, or None where it may not be
+    continuous there."""
+    ends = [_apply(name, a), _apply(name, b)]
+    if name in ("sin", "cos"):
+        if b - a >= 2 * math.pi:
+            return -1.0, 1.0
+        span = _library_hull(ends, -1.0, 1.0)
+        if span is None:
+            return None
+        peak = math.pi / 2 if name == "sin" else 0.0
+        return (-1.0 if _may_hold(a, b, peak + math.pi, 2 * math.pi) else span[0],
+                1.0 if _may_hold(a, b, peak, 2 * math.pi) else span[1])
+    if name == "tan":
+        if not b - a < math.pi or _may_hold(a, b, math.pi / 2, math.pi):
+            return None
+        return _library_hull(ends)
+    if name == "asin":
+        return _library_hull(ends) if a >= -1 and b <= 1 else None
+    if name == "acos":
+        return _library_hull(ends, 0.0) if a >= -1 and b <= 1 else None
+    if name in ("atan", "sinh"):
+        return _library_hull(ends)
+    if name == "tanh":
+        return _library_hull(ends, -1.0, 1.0)
+    if name == "exp":
+        return _library_hull(ends, 0.0)
+    if name == "cosh":
+        if not (a < 0 and b > 0):
+            return _library_hull(ends, 1.0)
+        return 1.0, _widened(max(ends), True)
+    if name in ("ln", "log"):
+        return _library_hull(ends) if a > 0 else None
+    if name == "sqrt":
+        return _library_hull(ends, 0.0) if a >= 0 else None
+    if name == "abs":
+        return _magnitude(a, b)
+    return None
+
+
+def _corners(left, right, function):
+    """Mirror of `MGExpression.corners`: the smallest of `function` rounded down and the largest rounded up at the four
+    corners of two ranges."""
+    (l0, l1), (r0, r1) = left, right
+    pairs = [(l0, r0), (l0, r1), (l1, r0), (l1, r1)]
+    low = _hull([function(u, v, False) for u, v in pairs])
+    high = _hull([function(u, v, True) for u, v in pairs])
+    if low is None or high is None:
+        return None
+    return low[0], high[1]
+
+
+def _enclose_power(left, right):
+    """Mirror of `MGExpression.power`: the base range to the power of the exponent range, rounded outward, or None
+    outside the domain."""
+    (l0, l1), (r0, r1) = left, right
+    if r0 != r1:
+        # A varying exponent: the corners bound u^v for u > 0.
+        if not l0 > 0:
+            return None
+        return _library_hull([_power(l0, r0), _power(l0, r1), _power(l1, r0), _power(l1, r1)], 0.0)
+    w = r0
+    if w == 0:
+        return 1.0, 1.0
+    if _whole(w):
+        if w < 0 and l0 <= 0 <= l1:
+            return None
+        n = abs(w)
+        odd = math.fmod(n, 2) == 1
+        if l0 >= 0:
+            m = (_whole_power(l0, n, False), _whole_power(l1, n, True))
+        elif l1 <= 0:
+            m = ((-_whole_power(-l0, n, True), -_whole_power(-l1, n, False)) if odd
+                 else (_whole_power(-l1, n, False), _whole_power(-l0, n, True)))
+        else:
+            m = ((-_whole_power(-l0, n, True), _whole_power(l1, n, True)) if odd
+                 else (0.0, max(_whole_power(-l0, n, True), _whole_power(l1, n, True))))
+        if not (math.isfinite(m[0]) and math.isfinite(m[1])):
+            return None
+        return m if w > 0 else _enclose2("/", (1.0, 1.0), m)
+    if not (l0 >= 0 if w > 0 else l0 > 0):
+        return None
+    return _library_hull([_power(l0, w), _power(l1, w)], 0.0)
+
+
+def _enclose2(op, left, right):
+    """Mirror of `MGExpression.enclose(_:_:_:)` for `left op right` over two ranges, rounded outward, or None where it
+    may not be continuous there."""
+    (l0, l1), (r0, r1) = left, right
+    if op == "+":
+        return _sum(l0, r0, False), _sum(l1, r1, True)
+    if op == "-":
+        return _sum(l0, -r1, False), _sum(l1, -r0, True)
+    if op == "*":
+        return _corners(left, right, _product)
+    if op == "/":
+        if not (r0 > 0 or r1 < 0):
+            return None
+        return _corners(left, right, _quotient)
+    if op == "^":
+        return _enclose_power(left, right)
+    if op == "min":
+        return min(l0, r0), min(l1, r1)
+    if op == "max":
+        return max(l0, r0), max(l1, r1)
+    return None
+
+
+def _edge1(name, u):
+    """Mirror of `MGExpression.edge(_:_:)`: what the kink, pole or domain edge of a function is measured by over the
+    argument range u, or None for a function that has none."""
+    if name in ("abs", "sqrt", "ln", "log"):
+        return u
+    if name in ("asin", "acos"):
+        m0, m1 = _magnitude(*u)
+        return _sum(1.0, -m1, False), _sum(1.0, -m0, True)
+    if name == "tan":
+        return _enclose1("cos", *u) or (-math.inf, math.inf)
+    return None
+
+
+def _edge2(op, left, right, constant):
+    """Mirror of `MGExpression.edge(_:_:_:constant:)`: the divisor, a power's base (none for a constant whole exponent
+    of 0 or more) and l - r for min and max; None for the other operations."""
+    if op == "/":
+        return right
+    if op == "^":
+        r0, r1 = right
+        return None if constant and r0 == r1 and r0 >= 0 and _whole(r0) else left
+    if op in ("min", "max"):
+        return _sum(left[0], -right[1], False), _sum(left[1], -right[0], True)
+    return None
+
+
+def _strict_side(e):
+    """Mirror of `MGExpression.strictSide`: 1 or -1 when every value in e is above or below 0, else 0."""
+    return 1 if e[0] > 0 else -1 if e[1] < 0 else 0
 
 
 # MARK: grammar
@@ -396,32 +673,108 @@ class Expression:
                 stack[-1] = _combine(value, stack[-1], right)
         return stack[0] if len(stack) == 1 else math.nan
 
-    def value_and_slope(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
-        """Mirror of `MGExpression.valueAndSlope`: the value and the exact derivative with respect to x."""
+    def local(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
+        """Mirror of `MGExpression.local`: (value, slope from the left, slope from the right, sides), by forward mode
+        along +x and along -x. `sides` lists the side of each operation's kink, pole or domain edge (-1, 0 or 1), or is
+        None when some operation has no finite value; the slopes are then not numbers."""
         inputs = {"x": x, "y": y, "t": t, "a": a, "b": b, "c": c}
-        stack = []
+        broken = (math.nan, math.nan, math.nan, None)
+        stack = []  # (value, derivative along +x, derivative along -x, reads x)
+        sides, finite = [], True
         for kind, value in self.program:
+            side = 0
             if kind == "number":
-                stack.append((value, 0.0))
+                stack.append((value, 0.0, 0.0, False))
             elif kind == "variable":
-                stack.append((float(inputs[value]), 1.0 if value == "x" else 0.0))
+                is_x = value == "x"
+                stack.append((float(inputs[value]), 1.0 if is_x else 0.0, -1.0 if is_x else 0.0, is_x))
             elif kind == "negate":
                 if not stack:
-                    return math.nan, math.nan
-                v, d = stack[-1]
-                stack[-1] = (-v, -d)
+                    return broken
+                v, p, q, reads = stack[-1]
+                stack[-1] = (-v, -p, -q, reads)
             elif kind == "call" and value not in ("min", "max"):
                 if not stack:
-                    return math.nan, math.nan
-                v, d = stack[-1]
-                stack[-1] = (_apply(value, v), _slope1(value, v, d))
+                    return broken
+                u, p, q, reads = stack[-1]
+                side = _side1(value, u)
+                stack[-1] = (_apply(value, u), _slope1(value, u, p), _slope1(value, u, q), reads)
             else:
                 if len(stack) < 2:
-                    return math.nan, math.nan
-                right, dr = stack.pop()
-                left, dl = stack[-1]
-                stack[-1] = (_combine(value, left, right), _slope2(value, left, dl, right, dr))
-        return stack[0] if len(stack) == 1 else (math.nan, math.nan)
+                    return broken
+                right, rp, rq, right_reads = stack.pop()
+                left, lp, lq, left_reads = stack[-1]
+                constant = not right_reads
+                side = _side2(value, left, right, constant)
+                stack[-1] = (_combine(value, left, right), _slope2(value, left, lp, right, rp, constant),
+                             _slope2(value, left, lq, right, rq, constant), left_reads or right_reads)
+            if not math.isfinite(stack[-1][0]):
+                finite = False
+            sides.append(side)
+        if len(stack) != 1:
+            return broken
+        v, p, q, _ = stack[0]
+        if not finite:
+            return v, math.nan, math.nan, None
+        return v, -q, p, sides
+
+    def value_and_slope(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
+        """Mirror of `MGExpression.valueAndSlope`: the value, and the derivative where both one-sided ones agree."""
+        v, left, right, _ = self.local(x, y, t, a, b, c)
+        return v, (right if left == right else math.nan)
+
+    def enclosure(self, lo, hi, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
+        """Mirror of `MGExpression.enclosure`: (low, high) bounds of the analytic value over x in [lo, hi], or None
+        where interval arithmetic cannot show the expression continuous there."""
+        result = self.intervals(lo, hi, y, t, a, b, c)
+        return None if result is None else result[0]
+
+    def intervals(self, lo, hi, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
+        """Mirror of `MGExpression.intervals`: one interval pass over x in [lo, hi], rounded outward. Returns the
+        enclosure and, per operation in program order, the enclosure of what its kink, pole or domain edge is measured
+        by (None for an operation that has none); None when some operation has no enclosure."""
+        if not lo <= hi:
+            return None
+        inputs = {"y": y, "t": t, "a": a, "b": b, "c": c}
+        stack = []  # (low, high, reads x)
+        edges = []
+        for kind, value in self.program:
+            edge = None
+            if kind == "number":
+                stack.append((value, value, False))
+            elif kind == "variable":
+                stack.append((lo, hi, True) if value == "x" else (float(inputs[value]), float(inputs[value]), False))
+            elif kind == "negate":
+                if not stack:
+                    return None
+                low, high, reads = stack[-1]
+                stack[-1] = (-high, -low, reads)
+            elif kind == "call" and value not in ("min", "max"):
+                if not stack:
+                    return None
+                low, high, reads = stack[-1]
+                edge = _edge1(value, (low, high))
+                result = _enclose1(value, low, high)
+                if result is None:
+                    return None
+                stack[-1] = (result[0], result[1], reads)
+            else:
+                if len(stack) < 2:
+                    return None
+                r0, r1, right_reads = stack.pop()
+                l0, l1, left_reads = stack[-1]
+                edge = _edge2(value, (l0, l1), (r0, r1), not right_reads)
+                result = _enclose2(value, (l0, l1), (r0, r1))
+                if result is None:
+                    return None
+                stack[-1] = (result[0], result[1], left_reads or right_reads)
+            low, high, _ = stack[-1]
+            if not (math.isfinite(low) and math.isfinite(high) and low <= high):
+                return None
+            edges.append(edge)
+        if len(stack) != 1:
+            return None
+        return (stack[0][0], stack[0][1]), edges
 
 
 def compile_expression(text, allowed, reason):
@@ -663,43 +1016,33 @@ def format_number(value):
     return "0" if shown == "-0" else shown
 
 
-def fallback_slope(f, m, h):
-    """Mirror of `MGReadout.fallbackSlope`: one-sided second-order differences at steps h and h / 2."""
-    refuse = Refusal("func.readouts.slope")
-    f0 = f(m)
-    p1, p2, p4 = f(m + h / 2), f(m + h), f(m + 2 * h)
-    m1, m2, m4 = f(m - h / 2), f(m - h), f(m - 2 * h)
-    values = [f0, p1, p2, p4, m1, m2, m4]
-    if not all(math.isfinite(v) for v in values):
-        raise refuse
-    right_fine, right_coarse = (-3 * f0 + 4 * p1 - p2) / h, (-3 * f0 + 4 * p2 - p4) / (2 * h)
-    left_fine, left_coarse = (3 * f0 - 4 * m1 + m2) / h, (3 * f0 - 4 * m2 + m4) / (2 * h)
-    s = (right_fine + left_fine) / 2
-    gap, coarse_gap = abs(right_fine - left_fine), abs(right_coarse - left_coarse)
-    noise = max(abs(v) for v in values) / h * 2.0 ** -40
-    if not (gap <= noise or gap <= coarse_gap / 2):
-        raise refuse
-    error = max(abs(right_fine - right_coarse), abs(left_fine - left_coarse), gap)
-    if not error <= resolution(s) / 2:
-        raise refuse
-    return s
-
-
 def slope_readout(expr, params, m, x0, x1, drawn):
-    """Mirror of `MGReadout.slope`: f'(m) at the marked x, exact where the rules allow it."""
+    """Mirror of `MGReadout.slope`: f'(m) at the marked x when it is proven, else func.readouts.slope."""
     refuse = Refusal("func.readouts.slope")
-
-    def f(x):
-        return expr.value(x=x, **params)
     probe = (x1 - x0) / FUNC_INTERVALS / 1024
-    if not (drawn.covers(m, m) and math.isfinite(f(m - probe)) and math.isfinite(f(m + probe))):
+    if not drawn.covers(m, m):
         raise refuse
-    s = expr.value_and_slope(x=m, **params)[1]
-    if math.isnan(s):
-        s = fallback_slope(f, m, (x1 - x0) / (FUNC_INTERVALS * 64))
-    if not (math.isfinite(s) and abs(s) <= MAGNITUDE):
+    _, left, right, sides = expr.local(x=m, **params)
+    if sides is None:
         raise refuse
-    return s
+    # Interval passes over each half, [m - probe, m] and [m, m + probe], rounded outward.
+    before = expr.intervals(_sum(m, -probe, False), m, **params)
+    after = expr.intervals(m, _sum(m, probe, True), **params)
+    if before is None or after is None or len(before[1]) != len(sides) or len(after[1]) != len(sides):
+        raise refuse
+    for side, l, r in zip(sides, before[1], after[1]):
+        if l is None or r is None:
+            continue
+        if side != 0:
+            # Off its kink or edge at m: strictly on the same side over both halves.
+            if _strict_side(l) != side or _strict_side(r) != side:
+                raise refuse
+        elif not ((l[0] >= 0 or l[1] <= 0) and (r[0] >= 0 or r[1] <= 0)):
+            # At its kink at m: never across it within either half, so m is its only crossing.
+            raise refuse
+    if not (left == right and math.isfinite(right) and abs(right) <= MAGNITUDE):
+        raise refuse
+    return right
 
 
 def gauss(f, a, b, panels, values):
@@ -720,22 +1063,45 @@ def gauss(f, a, b, panels, values):
     return total, total_abs
 
 
-def area_readout(f, s0, s1, y0, y1):
-    """Mirror of `MGReadout.area`: the signed area over [s0, s1] with its error estimate and view checks."""
+def area_readout(f, enclose, s0, s1, y0, y1):
+    """Mirror of `MGReadout.area`: certify, then the signed area over [s0, s1] with its error estimate and the view
+    checks on every sampled value."""
     refuse = Refusal("func.readouts.area")
+    certify_area(enclose, s0, s1, y0, y1)
     fine, coarse = [], []
     a_sum, a_abs = gauss(f, s0, s1, READOUT_PANELS, fine)
     b_sum, b_abs = gauss(f, s0, s1, READOUT_PANELS // 2, coarse)
-    ends = [f(s0), f(s1)]
-    if not all(math.isfinite(v) for v in fine + coarse + ends):
+    samples = fine + coarse + [f(s0), f(s1)]
+    if not all(math.isfinite(v) for v in samples):
         raise refuse
     tolerance = resolution(a_sum) / 2
     if not (abs(a_sum - b_sum) <= tolerance and abs(a_abs - b_abs) <= max(tolerance, a_abs / 1024)
             and abs(a_sum) <= MAGNITUDE):
         raise refuse
-    if not (y0 <= 0 and y1 >= 0 and all(y0 <= v <= y1 for v in ends + fine)):
+    if not (y0 <= 0 and y1 >= 0 and all(y0 <= v <= y1 for v in samples)):
         raise Refusal("func.readouts.view")
     return a_sum
+
+
+def certify_area(enclose, s0, s1, y0, y1):
+    """Mirror of `MGReadout.certify`: bounded subdivision (CERTIFY_DEPTH halvings, CERTIFY_BUDGET enclosures) that
+    proves f continuous on [s0, s1] and inside the y range, to the drawing tolerance."""
+    slack = FUNC_TOLERANCE * (y1 - y0)
+    cells = [(s0, s1, 0)]
+    used = 0
+    while cells:
+        a, b, depth = cells.pop()
+        used += 1
+        if used > CERTIFY_BUDGET:
+            raise Refusal("func.readouts.area")
+        e = enclose(a, b)
+        if e is not None and e[0] >= y0 - slack and e[1] <= y1 + slack:
+            continue
+        if depth >= CERTIFY_DEPTH:
+            raise Refusal("func.readouts.area" if e is None else "func.readouts.view")
+        mid = a + (b - a) / 2
+        cells.append((mid, b, depth + 1))
+        cells.append((a, mid, depth + 1))
 
 
 def parse_readouts(raw):
@@ -973,7 +1339,9 @@ def check_graph_item(item, world=(12, 8), is3d=False, values=None, texts=True):
             elif name == "slope":
                 readouts[name] = slope_readout(expr, params, mark, x0, x1, first)
             else:
-                readouts[name] = area_readout(lambda x: expr.value(x=x, **params), shade[0], shade[1], y0, y1)
+                readouts[name] = area_readout(lambda x: expr.value(x=x, **params),
+                                              lambda lo, hi: expr.enclosure(lo, hi, **params),
+                                              shade[0], shade[1], y0, y1)
         if texts:
             graph_texts(item, values)
         return {"samples": len(first.samples), "starts": list(first.starts), "mark": marked, "readouts": readouts}

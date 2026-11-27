@@ -467,8 +467,10 @@ final class LessonCoreTests: LessonTestCase {
         // value with the sliders alone (af91f9b7e06389ad, 3,505 bytes) and with the readouts alone (87c82e737378c1a6,
         // 3,390 bytes) were computed offline by rebuilding the document in Python, which reproduced the previous
         // values (96001c839d70324d, 2,700 bytes; 675bf2bec0e2e9a3, 3,343 bytes) exactly; pending Mac verification.
+        // The printed line is what docs/VERIFY-ON-MAC.md records from a Mac run, pass or fail.
         var hash: UInt64 = 0xcbf29ce484222325
         for b in data { hash = (hash ^ UInt64(b)) &* 0x100000001b3 }
+        print("grammar digest \(String(hash, radix: 16)) byte count \(data.count)")
         XCTAssertEqual(String(hash, radix: 16), Self.grammarHash, "byte count \(data.count)")
         XCTAssertEqual(data.count, Self.grammarBytes)
         XCTAssertFalse(MGTemplates.library.keys.contains("rotate2d"), "the geometry pack is opt-in")

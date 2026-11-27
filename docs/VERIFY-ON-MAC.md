@@ -17,24 +17,35 @@ git status --porcelain
 ### Default grammar digest under Darwin Foundation
 
 `LessonCoreTests.testU16DefaultGrammarDocumentIsUnchanged`
-(`Tests/MartyGraphicsTests/LessonCoreTests.swift`) pins the FNV-1a 64 digest
-and the byte count of the canonical default grammar document
-(`grammarHash`, `grammarBytes`). Each change to the grammar so far computed the
-new pin offline (a Python rebuild of the document, and Linux
-`JSONSerialization`), never under Darwin Foundation, whose `JSONSerialization`
-writes the bytes on a Mac. Run it on its own and record what it reports:
+(`Tests/MartyGraphicsTests/LessonCoreTests.swift`) recomputes the FNV-1a 64
+digest and the byte count of the canonical default grammar document
+(`MGGrammar.document()` written by `JSONSerialization` with sorted keys and
+unescaped slashes), prints them, and compares them with the pin (`grammarHash`,
+`grammarBytes`). The pin was computed offline (a Python rebuild of the
+document, and Linux `JSONSerialization`), never under Darwin Foundation, whose
+`JSONSerialization` writes the bytes on a Mac. Recompute it on the Mac, on its
+own, from the clean checkout above (the log goes outside the checkout):
 
 ```sh
-swift test --filter 'MartyGraphicsTests.LessonCoreTests/testU16DefaultGrammarDocumentIsUnchanged'
+swift test --filter 'MartyGraphicsTests.LessonCoreTests/testU16DefaultGrammarDocumentIsUnchanged' 2>&1 \
+  | tee "${TMPDIR:-/tmp}/mg-grammar.log" | grep -E 'grammar digest|byte count|Executed'
 ```
 
-Record the commit, the pinned digest and byte count, and the result. On a
-failure the message gives the Darwin digest and `byte count N`: record both.
-When the reviewed Darwin result differs from the pin, update `grammarHash` and
-`grammarBytes` to the Darwin values in a reviewed commit, note the old and the
-new values in its message, and run the step again; do not change the pin
-without that review. The full `swift test` run below covers the same test, so
-this step only makes its digest part of the record.
+Expected with the learner sliders (main) and the `func` readouts: the line
+`grammar digest 90c90ae261b9fb9c byte count 3552`, and the test passes.
+Record the commit, that line and the result. A different digest or byte count
+fails the test, and its message repeats them. Then update `grammarHash` and
+`grammarBytes` to the Darwin values in a reviewed commit that names the old and
+the new values, and run the step again; never change the pin without that
+review. The full `swift test` run below covers the same test, so this step only
+puts the digest in the record.
+
+Sibling branches change the same document, so an expected value belongs to one
+commit: the parametric and polar curves (`feat/param-polar`) pin
+`9e03a7f5a9064722` against an older main. Branches land one at a time, and each
+lands with its pin recomputed for the document as merged (offline first, then by
+this step on the Mac), never with a value copied from another branch: the value
+above is the document with the learner sliders (#107) and the readouts.
 
 The root package test run does not build or test the other packages. Every
 folder of the checkout with a `Package.swift` is a package, except under a

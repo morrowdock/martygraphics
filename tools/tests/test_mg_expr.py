@@ -7,6 +7,7 @@ GraphCaseTests.swift; together the two runs show the mirror and the engine give 
 
 import json
 import math
+from fractions import Fraction
 from pathlib import Path
 import sys
 import unittest
@@ -425,8 +426,142 @@ class ReadoutCases(unittest.TestCase):
                     limit, multiline = limits[parts[-1]]
                     self.assertEqual(mg_expr.text_rules(raw, limit, path, values, multiline), expected, path)
 
+    def test_the_one_sided_rules(self):
+        def local(text, x):
+            return mg_expr.compile_expression(text, set(mg_expr.VARIABLES), "func.y").local(x=x)
+        # Both sides of a smooth composition are the same number; a corner's are not, however small it is.
+        self.assertEqual(local("x*abs(x)", 0)[1:3], (0.0, 0.0))
+        self.assertEqual(local("abs(x)", 0)[1:3], (-1.0, 1.0))
+        self.assertEqual(local("min(x, x^3)", 1)[1:3], (3.0, 1.0))
+        for scale in ("1", "0.001", "0.000001", "0.0000000001"):
+            with self.subTest(scale=scale):
+                _, left, right, _ = local(scale + "*abs(x)", 0)
+                self.assertNotEqual(left, right)
+        # A power's exponent is constant only when it does not read x, never because its derivative is 0 at a point.
+        self.assertEqual(local("(x - 1)^2", 0)[1:3], (-2.0, -2.0))
+        self.assertTrue(math.isnan(local("(x - 1)^(2 + x^2)", 0)[2]))
+        # The sides of the kinks, poles and domain edges, in program order (x, 1, -, abs: the abs is at its kink).
+        self.assertEqual(local("abs(x - 1)", 1)[3], [0, 0, 0, 0])
+        self.assertEqual(local("abs(x - 1)", 1.5)[3], [0, 0, 0, 1])
+        self.assertIsNone(local("sqrt(x)^0", -1)[3])
+
+    def test_the_view_check_reads_every_sample(self):
+        # f leaves the y range only at the first node of the coarser rule: the band would be clipped there.
+        node = 1 / 128 + 1 / 128 * mg_expr.GAUSS_NODES[0]
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.area_readout(lambda x: 1.0 if x == node else 0.0, lambda a, b: (0.0, 0.0), 0.0, 1.0, -0.5, 0.5)
+        self.assertEqual(raised.exception.reason, "func.readouts.view")
+
+    def test_the_certification_is_bounded(self):
+        def run(enclose):
+            used = []
+
+            def counted(a, b):
+                used.append(b - a)
+                return enclose(a, b)
+            try:
+                mg_expr.certify_area(counted, 0.0, 1.0, -1.0, 1.0)
+            except mg_expr.Refusal as refusal:
+                return refusal.reason, len(used)
+            return None, len(used)
+        # Depth first: a cell that never certifies is refused after CERTIFY_DEPTH halvings (11 enclosures).
+        self.assertEqual(run(lambda a, b: None), ("func.readouts.area", 11))
+        self.assertEqual(run(lambda a, b: (5.0, 6.0)), ("func.readouts.view", 11))
+        # Within the drawing tolerance (1 % of the y range) a cell is certified.
+        self.assertEqual(run(lambda a, b: (-1.02, 1.02)), (None, 1))
+        self.assertEqual(run(lambda a, b: (-1.03, 1.0)), ("func.readouts.view", 11))
+        # Cells of 1/512 and narrower certify: 1,023 cells would be needed, so the budget refuses it after 256.
+        self.assertEqual(run(lambda a, b: (0.0, 0.0) if b - a <= 1 / 512 else None),
+                         ("func.readouts.area", mg_expr.CERTIFY_BUDGET))
+        self.assertEqual(run(lambda a, b: (0.0, 0.0) if b - a <= 1 / 64 else None), (None, 127))
+
+    def test_enclosures_hold_every_value(self):
+        cases = [("x^3 - 2*x", -2.0, 2.5), ("sin(x) + cos(3*x)", -4.0, 4.0), ("abs(x - 1)*exp(-x)", -1.0, 3.0),
+                 ("tan(x)", -1.5, 1.5), ("min(x, x^2) - max(x, 0.5)", -2.0, 2.0), ("(x + 3)^x", 0.0, 2.0),
+                 ("x^4 - x^2", -1.5, 1.5), ("sqrt(x) + ln(x + 1)", 0.0, 4.0), ("cosh(x) - 2", -2.0, 2.0)]
+        for text, x0, x1 in cases:
+            expr = mg_expr.compile_expression(text, set(mg_expr.VARIABLES), "func.y")
+            for k in range(16):
+                a, b = x0 + (x1 - x0) * k / 16, x0 + (x1 - x0) * (k + 1) / 16
+                lo, hi = expr.enclosure(a, b)
+                with self.subTest(text=text, cell=k):
+                    for j in range(33):
+                        v = expr.value(x=a + (b - a) * j / 32)
+                        self.assertTrue(lo <= v <= hi, (v, lo, hi))
+        expr = mg_expr.compile_expression("1/(x - 0.3)", {"x"}, "func.y")
+        self.assertIsNone(expr.enclosure(0.25, 0.5))
+        self.assertIsNotNone(expr.enclosure(0.31, 0.5))
+
+    def test_enclosures_round_outward(self):
+        def enclosure(text, a, b):
+            return mg_expr.compile_expression(text, {"x"}, "func.y").enclosure(a, b)
+        # In double precision (10^20 + x) - 10^20 is 0 for |x| < 8192. The enclosure still holds the analytic x, so the
+        # divisor x + 1 below has no enclosure over [-2, 2]: it is 0 at -1.
+        lo, hi = enclosure("(10^20 + x) - 10^20", -2.0, 2.0)
+        self.assertTrue(lo <= -2 and hi >= 2, (lo, hi))
+        self.assertIsNone(enclosure("1/(((10^20+x)-10^20)+1)", -2.0, 2.0))
+        # An inexact result is bounded by the doubles on either side of it: 0.1 + 0.2 and 3 * 0.1 are both exactly
+        # 0.3000000000000000166..., between 0.3 and 0.30000000000000004.
+        for text in ("x + 0.2", "3*x"):
+            self.assertEqual(enclosure(text, 0.1, 0.1), (0.3, 0.30000000000000004), text)
+        # An exact result stays exact, so a domain edge at an end of the interval is still inside the domain.
+        self.assertEqual(enclosure("x - 1", 1.0, 2.0), (0.0, 1.0))
+        self.assertEqual(enclosure("1 - x^2", -1.0, 1.0), (0.0, 1.0))
+        self.assertEqual(enclosure("sqrt(1 - x^2)", -1.0, 1.0)[0], 0.0)
+        self.assertIsNotNone(enclosure("asin(x/2)", -2.0, 2.0))
+        # A library function widens by LIBRARY_ULPS to each side.
+        v = math.exp(1.0)
+        self.assertEqual(enclosure("exp(x)", 1.0, 1.0), (v - 4 * math.ulp(v), v + 4 * math.ulp(v)))
+
+    def test_the_directed_operations_bound_the_exact_result(self):
+        values = [0.1, 0.2, 0.3, 1.0, 3.0, -0.7, 1e-300, 1e300, 2.0 ** -1000, 123456.789, -2.5e-8, 7.0]
+        operations = [(mg_expr._sum, lambda u, v: Fraction(u) + Fraction(v)),
+                      (mg_expr._product, lambda u, v: Fraction(u) * Fraction(v)),
+                      (mg_expr._quotient, lambda u, v: Fraction(u) / Fraction(v))]
+        for left in values:
+            for right in values:
+                for function, exact in operations:
+                    lo, hi = function(left, right, False), function(left, right, True)
+                    if not (math.isfinite(lo) and math.isfinite(hi)):
+                        continue
+                    with self.subTest(function=function.__name__, left=left, right=right):
+                        self.assertTrue(Fraction(lo) <= exact(left, right) <= Fraction(hi), (lo, hi))
+                        if abs(lo) >= mg_expr.EXACT_LIMIT and abs(left) >= mg_expr.EXACT_LIMIT:
+                            # Tight: the rounded result and its neighbour on the side of the exact result, or one
+                            # double when it is exact. Below EXACT_LIMIT both bounds move outward.
+                            self.assertIn(hi, (lo, math.nextafter(lo, math.inf)))
+        self.assertEqual(mg_expr._whole_power(3.0, 5.0, False), 243.0)
+        # 0.1 * 0.1 is exactly 0.0100000000000000011102..., between 0.01 and 0.010000000000000002.
+        self.assertEqual(mg_expr._whole_power(0.1, 2.0, False), 0.01)
+        self.assertEqual(mg_expr._whole_power(0.1, 2.0, True), 0.010000000000000002)
+
+    def test_poles_and_peaks_count_when_they_may_be_inside(self):
+        # tan's pole at 22.5 pi lies between these two adjacent doubles; the plain double-precision test misses it.
+        a, b = 70.68583470577035, 70.68583470577036
+        self.assertEqual(math.nextafter(a, math.inf), b)
+        self.assertFalse(math.ceil((a - math.pi / 2) / math.pi) <= math.floor((b - math.pi / 2) / math.pi))
+        self.assertTrue(mg_expr._may_hold(a, b, math.pi / 2, math.pi))
+        self.assertIsNone(mg_expr._enclose1("tan", a, b))
+        self.assertIsNotNone(mg_expr._enclose1("tan", 70.0, 70.6))
+        self.assertFalse(mg_expr._may_hold(0.0, 1.5, math.pi / 2, math.pi))
+
+    def test_the_slope_certifies_both_halves_of_the_probe_interval(self):
+        probe = 4 / mg_expr.FUNC_INTERVALS / 1024  # xr [-2, 2]
+        expr = mg_expr.compile_expression("abs((x-0.000003)*(x-0.000006))", {"x"}, "func.y")
+        # The abs argument is on the same side at the mark and at both probes, where the old three-point check looked...
+        for x in (-probe, 0.0, probe):
+            self.assertEqual(expr.local(x=x)[3][-1], 1)
+        # ...but crosses 0 twice in between: its enclosure over [0, probe] holds both signs.
+        self.assertEqual(mg_expr._strict_side(expr.intervals(-probe, 0.0)[1][-1]), 1)
+        self.assertEqual(mg_expr._strict_side(expr.intervals(0.0, probe)[1][-1]), 0)
+        # x*abs(x) at 0: the abs is at its kink at the mark and on one side of it over each half (x, x, abs, *).
+        expr = mg_expr.compile_expression("x*abs(x)", {"x"}, "func.y")
+        self.assertEqual(expr.intervals(-probe, 0.0)[1], [None, None, (-probe, 0.0), None])
+        self.assertEqual(expr.intervals(0.0, probe)[1], [None, None, (0.0, probe), None])
+
     def test_the_bounds_are_the_documented_ones(self):
         self.assertEqual((mg_expr.READOUTS, mg_expr.READOUT_PANELS), (("value", "slope", "area"), 128))
+        self.assertEqual((mg_expr.CERTIFY_DEPTH, mg_expr.CERTIFY_BUDGET), (10, 256))
         self.assertAlmostEqual(sum(mg_expr.GAUSS_WEIGHTS), 2.0, places=15)
         # 5 points integrate x^8 exactly on [-1, 1].
         self.assertAlmostEqual(sum(w * x ** 8 for x, w in zip(mg_expr.GAUSS_NODES, mg_expr.GAUSS_WEIGHTS)), 2 / 9, places=15)

@@ -162,9 +162,13 @@
   document lists the key (`sceneKeys`) and the slider shape (`sliders`); the draft schema, the preflight
   and `tools/mg_expr.py` know the key, and `docs/fixtures/v1/sliders.cases.json` holds shared cases.
 - Add `func` readouts (pending Mac verification): `"readouts": ["value", "slope", "area"]` asks the engine for
-  f(m) and the exact derivative f′(m) at the marked point (forward-mode differentiation of the closed grammar;
-  one-sided differences where a rule has no value, and corners refused) and the signed area of the shaded band
-  (composite Gauss–Legendre on 128 panels, refused unless its error estimate is below the last shown digit).
+  f(m) and the derivative f′(m) at the marked point (both one-sided derivatives by forward-mode differentiation of
+  the closed grammar, and refused unless they are the same finite number with every kink, pole and domain edge
+  certified by interval arithmetic across a probe to each side: corners, cusps, poles and domain edges never get a
+  number) and the signed area of the analytic curve over the shaded interval (interval arithmetic, rounded outward,
+  first certifies the analytic curve continuous and inside the y range by bounded subdivision, at most 10 halvings
+  and 256 enclosures; then composite Gauss–Legendre on 128 panels, refused unless its error estimate is below the
+  last shown digit; the drawn band is a clipped, piecewise-linear picture).
   Any text of the scene names them as `{<id>.slope}`-style placeholders, written as every engine number is.
   Refusals: `func.readouts`, `func.readouts.period`, `.mark`, `.shade`, `.slope`, `.area`, `.view`, `.edit` and
   `<text>.placeholder.readout`. New bounds `MGLimits.readouts` and `MGLimits.readoutPanels`; the default grammar

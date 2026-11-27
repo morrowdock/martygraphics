@@ -443,50 +443,106 @@ model never writes these numbers itself.
   `<text reason>.placeholder.readout` (for example `text.text.placeholder.readout`);
   any other dotted name keeps its old reason (`text.text.placeholder`; in an
   explainer it is a 3D fact, as before).
-- `slope` is exact: forward-mode differentiation applies the closed-form rule of
-  each operation of the expression (d sin u = cos u du, d uᵛ = v uᵛ⁻¹ du for a
-  constant v, d uᵛ = uᵛ (v′ ln u + v u′ / u) otherwise, …) in double precision.
-  Where a rule has no value at the mark (0/0 or 0 × ∞, as `sqrt(x^4)` or
-  `x*abs(x)` at 0), second-order one-sided differences on each side are used
-  instead, with steps of 1/64 and 1/128 of a sampling interval (7 evaluations).
-  The two sides must approach each other as the step halves, so a corner never
-  passes however small it is, and the error estimate (the larger change of each
-  side between the two steps, and the gap between the sides) must be at most
-  half of the last shown digit. `func.readouts.slope` refuses a mark that is not
-  on one drawn piece with a value one probe (1/1024 of a sampling interval) on
-  each side, an infinite derivative (a vertical tangent: `sqrt(x)` at 0), a
-  corner (`abs(x)`, `min(x, 0)` or `sqrt(x^2)` at 0) and a size above 10¹². A mark
-  a hair from a corner gets the slope of the side it lies on (`abs(sin(x))` at
-  3.14159 has slope -1): the number is the derivative at the x as written.
-- `area` is numerical: the composite 5-point Gauss–Legendre rule (exact for
-  polynomials up to degree 9 on each panel) on 128 equal panels of the shaded
-  interval. Its error estimate is the difference from the same rule on 64 panels,
-  and `func.readouts.area` refuses it unless the estimate is at most half of the
-  last shown digit, the same two rules applied to |f| agree to that or to 1/1024
-  of their result, whichever is larger (a pole whose sides cancel, as `1/x` over
-  [−1, 1] with a y range so tall that the sampler joins it, converges for f but
-  not for |f|), f has a value at every node and at both ends, and the size is at
-  most 10¹². The sampler's break detection has already run: a gap or pole it
-  finds inside the shaded interval is `func.shade`. Last, `func.readouts.view`
-  refuses an area whose shaded band is not the region measured: y = 0, or the
-  curve at an end or a node of the finer rule, outside the y range, where the
-  drawn band is clipped.
-- Accuracy: a shown readout is within one unit of its last shown digit of the
-  exact value (the exact slope's only error is double rounding). For `area` and
-  the one-sided `slope` this rests on an error estimate, a rule that agrees with
-  itself at two resolutions, not on a proof: a feature narrower than a panel can
-  be missed, as the drawing checks can miss detail narrower than a sampling
-  interval. The golden cases include one whose real error is known: `sqrt(x)` on
-  [0, 4], an endpoint with a vertical tangent, is off by about 3.5 × 10⁻⁶ with an
-  estimate of 6.4 × 10⁻⁶.
+- `slope` is proven, never estimated. Forward-mode differentiation applies the
+  closed-form rule of each operation of the expression (d sin u = cos u du,
+  d uᵛ = v uᵛ⁻¹ du when the exponent v does not read x, d uᵛ = uᵛ (v′ ln u +
+  v u′ / u) for u > 0 otherwise, …) in double precision, once along +x and once
+  along −x, which gives both one-sided derivatives. At the kink of `abs`, `min`
+  or `max` it applies the one-sided rule (|u′|; the smaller or the larger of the
+  two derivatives), which is exact for a function made of smooth pieces, so
+  `x*abs(x)` has slope 0 at 0. An exponent counts as constant only when it does
+  not read x, never because its derivative happens to be 0 at the mark.
+  `func.readouts.slope` refuses, in this order: a mark that is not on one drawn
+  piece; a mark where some operation has no finite value; a kink, pole or domain
+  edge within a probe (1/1024 of a sampling interval) of the mark; and one-sided
+  derivatives that are not the same finite number of at most 10¹² in size. The
+  probe check is certified, not sampled. Interval arithmetic, rounded outward as
+  for an area, runs over each half of the probe interval, [m − probe, m] and
+  [m, m + probe], and must enclose every operation there. What each kink, pole
+  or domain edge is measured by (an `abs` argument, the difference of a
+  `min`/`max` pair, a divisor, a `sqrt`, `ln` or `log` argument, 1 − |u| for
+  `asin` and `acos`, cos u for `tan`, the base of a power) must stay strictly on
+  its side at the mark over both halves. So a corner or pole within a probe is
+  refused even when the curve is back on the same side at both probes:
+  `abs(sin(x))` at 3.14159, and `1/(x - 0.00001)` and
+  `abs((x - 0.000003)*(x - 0.000006))` at 0. An operation exactly at its kink at
+  the mark must not cross it within either half, so the mark is its only
+  crossing there, and the one-sided rules decide: `x*abs(x)` at 0 passes,
+  `x*abs(x*(x - 0.000003))` at 0 does not. The derivative rule refuses every
+  corner, however small (`abs(x)` or `100 + abs(x)/10000000` at 0,
+  `min(x, x^3)` at 1), a cusp (`sqrt(abs(x))` at 0), a vertical tangent
+  (`sqrt(x)` at 0) and the edge of a domain, where no first-order rule applies:
+  `sqrt(x^4)` and `(x^2)^1.5` at 0 are refused although their slope there is 0.
+- `area` is the signed integral of the analytic curve, ∫ f(x) dx over the shaded
+  interval. First, interval arithmetic certifies that f is continuous on the
+  whole interval and stays in the y range. A cell is certified when an enclosure
+  of f over it exists (no divisor range that holds 0, no pole of `tan`, no
+  argument outside a domain) and lies within the y range widened by 1 % of its
+  height: the drawing tolerance (`MGLimits.funcTolerance`), which also keeps a
+  curve that touches the edge of the range from being refused for the overestimate
+  of interval arithmetic. Any other cell is halved, depth first, at most 10 times
+  (cells down to 1/1024 of the interval), within a budget of 256 enclosures per
+  area (`MGReadout.certifyDepth`, `MGReadout.certifyBudget`). A cell still not
+  certified is `func.readouts.area` when it has no enclosure (a singularity, even
+  one between every sample, as `0.000001/(x - 0.3)` over [0, 1]) and
+  `func.readouts.view` when its enclosure leaves the range (a spike between
+  samples); running out of budget is `func.readouts.area`. A removable
+  singularity (`sin(x)/x` over an interval that holds 0) cannot be certified and
+  is refused too. Every interval operation rounds outward, so an enclosure holds
+  the analytic curve (its literals, `pi` and `e` being the doubles they parse
+  to), not only its evaluation in double precision. `+`, `−`, `×`, `÷` and whole
+  powers move a bound to the next double outward exactly when the bound is not
+  exact (TwoSum and a fused multiply-add find the rounding error), so an exact
+  bound stays exact and `sqrt(1 - x^2)` over [−1, 1] still certifies. A library
+  function's bounds widen by 4 ulps (`MGExpression.libraryUlps`), a margin over
+  its 1–2 ulp error, within the function's range. An interval that may hold a
+  pole of `tan` or a peak of `sin` or `cos`, allowing for the rounding of π,
+  counts as holding it, and a bound that is not finite refuses. So
+  `1/(((10^20 + x) - 10^20) + 1)`, which is 1 everywhere in double precision,
+  is refused over [−2, 2]: its analytic divisor x + 1 is 0 at −1. Then the
+  composite 5-point Gauss–Legendre rule (exact for polynomials up to degree 9 on
+  each panel) on 128 equal panels of the shaded interval. Its error estimate is
+  the difference from the same rule on 64 panels, and `func.readouts.area`
+  refuses it unless the estimate is at most half of the last shown digit, the
+  same two rules applied to |f| agree to that or to 1/1024 of their result,
+  whichever is larger, f has a value at every node and at both ends, and the size
+  is at most 10¹². The sampler's break detection has already run: a gap or pole
+  it finds inside the shaded interval is `func.shade`. Last, `func.readouts.view`
+  refuses an area when y = 0, or any sampled value (every node of both rules and
+  both ends), is outside the y range, where the drawn band would be clipped.
+- The drawn band is an approximation of the region measured, not the region
+  itself: it fills between y = 0 and the sampled polyline, clipped to the y
+  range (`MGGraph.shadeBands`), so it is a clipped, piecewise-linear picture of
+  the analytic curve the readout integrates. The certification keeps the curve
+  within the drawing tolerance of the range, and `func.detail` keeps the
+  polyline within 1 % of the frame height of the curve at every sampling
+  midpoint.
+- Accuracy: a shown slope is the derivative at the mark up to double rounding.
+  A shown area is within one unit of its last shown digit of the exact value as
+  far as its error estimate holds: on a certified continuous curve, two rules
+  that agree can still both miss a feature narrower than a panel. The golden
+  cases include one whose real error is known: `sqrt(x)` on [0, 4], an endpoint
+  with a vertical tangent, is off by about 3.5 × 10⁻⁶ with an estimate of
+  6.4 × 10⁻⁶. The rule's samples are values in double precision, like the drawn
+  curve: the certification bounds the analytic curve but not their rounding
+  error, so where an expression cancels catastrophically inside the y range
+  (`(10^20 + x) - 10^20` with a y range of ±20,000) the area shown is that of
+  the curve as drawn.
 - Step edits re-check the item as before, and an edit may change anything
   (colour, labels, even `a`) as long as every readout the scene names keeps its
   number (`func.readouts.edit`), because the text is filled once. A `set` patch
   parses the whole scene again, so the readouts and every text that names them
   are computed again.
-- Cost: an area is 962 evaluations, a slope one forward-mode evaluation and at
-  most 9 more, so six graphs with every readout add at most 5,838 evaluations to a
-  parse and nothing per frame (`MGLimits.readouts`, `MGLimits.readoutPanels`).
+- Cost: an area is at most 256 enclosures (one interval pass of the expression
+  each) and 962 evaluations; a slope is one forward-mode pass at the mark (about
+  three evaluations' work) and two interval passes. An interval pass is a
+  bounded multiple of an evaluation: a product or quotient rounds its four
+  corners both ways (eight operations with a fused multiply-add each), and a
+  whole power squares once per bit of its exponent (at most about 1,100 times).
+  So six graphs with every readout add at most 6 × 258 = 1,548 interval passes
+  and 6 × 965 = 5,790 evaluations' work to a parse (`MGLimits.readouts`,
+  `MGLimits.readoutPanels`, `MGReadout.certifyBudget`). A moving graph has no
+  readouts; replaying a step edit of a graph that has them computes them again.
   `MGDescribe` speaks the numbers ("… shaded from x = 0 to 3.14 (signed area 2),
   marking the point (1, 0.84) where the slope is 0.54"), and
   `MGGrammar.document()` lists the names under `expression.readouts`.
@@ -760,7 +816,7 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |
 | `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs or fewer edits of them. |
-| `func.readouts`, `func.readouts.period` / `.mark` / `.shade` / `.slope` / `.area` / `.view` / `.edit`, `<text>.placeholder.readout` | A readout list is malformed, asked of a moving graph or without its `mark` or `shade`; a slope has no finite value or is a corner; an area cannot be computed to its shown digits or its band is clipped; a step edit changes a readout the text names; a text names a readout the scene does not compute | See [readouts](#readouts-slopes-and-areas). |
+| `func.readouts`, `func.readouts.period` / `.mark` / `.shade` / `.slope` / `.area` / `.view` / `.edit`, `<text>.placeholder.readout` | A readout list is malformed, asked of a moving graph or without its `mark` or `shade`; a slope is not proven (a corner, cusp, vertical tangent, pole or domain edge at the mark or anywhere within a probe of it, even one the curve crosses back over before the probe); an area's analytic curve cannot be certified continuous and inside the y range within its budget (outward-rounded interval arithmetic, so a pole that cancellation hides in double precision counts), or the area cannot be computed to its shown digits, or a sample of it is outside the y range; a step edit changes a readout the text names; a text names a readout the scene does not compute | Move the `mark` more than a probe (1/1024 of a sampling interval) from every corner, pole and domain edge; shade an interval where the analytic curve is continuous and inside the y range (or widen `yr`), and write the expression without cancelling large terms (`x + 1`, not `((10^20 + x) - 10^20) + 1`); see [readouts](#readouts-slopes-and-areas). |
 | `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
 | `sliders`, `slider`, `slider.missing`, `slider.unknown.<keys>`, `slider.param`, `slider.duplicate.<p>`, `slider.min`, `slider.max`, `slider.range`, `slider.step`, `slider.step.count`, `slider.grid`, `slider.default`, `slider.label`, `slider.label.placeholder` | A slider list or slider is out of shape, or its range or step is out of bounds; a stop's label (an end's included) does not read back as exactly the value the engine would get, or its stops are too close to tell apart (`slider.grid`); its default is not exactly the value of a stop (`slider.default`); or its label is not fixed plain text | See [learner sliders](#learner-sliders); `MGRepairHint.text(for:)` gives a one-line fix. |
 | `slider.unbound`, `slider.field`, `slider.default.<id>`, `slider.edit`, `sliders.bindings`, `slider.<p>.min.<reason>`, `slider.<p>.max.<reason>` | No `func` sets the parameter, a `field` or a step edit sets it, a `func` sets another value, too many slider-graph pairs, or a driven graph fails a check at an end of the range | Set the parameter on the graphs to the default, remove the conflicting key, or narrow the range. |
