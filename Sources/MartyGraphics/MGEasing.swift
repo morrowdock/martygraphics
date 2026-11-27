@@ -158,6 +158,41 @@ enum MGBoardTransition {
     }
 }
 
+/// The 2D board's transition window (`MGRenderPolicy.State.transientActive`): open until `until` on the board's clock.
+/// Every change that opens or ends it early gives it a new `token`, which restarts the host's task that waits for it
+/// (`.task(id:)`). SwiftUI cancels the old task only at its next update, so the old task can wake after a change and
+/// before that update. A task keeps the token it was started for: it reads the deadline only while that token is
+/// current (`deadline(for:)`) and closes the window only if nothing changed it since (`close(_:)`), so a stale task
+/// never closes a window that a later step or patch opened.
+struct MGTransientWindow: Equatable, Sendable {
+    /// When the window ends on the board's clock; `Date.distantPast` while it is closed.
+    private(set) var until = Date.distantPast
+    private(set) var token = 0
+
+    func active(at now: Date) -> Bool { now < until }
+    /// Keep the window open at least `seconds` past `now` (an open window never ends earlier for it), with a new token.
+    mutating func keepOpen(from now: Date, for seconds: Double) {
+        until = max(until, now.addingTimeInterval(seconds)); token &+= 1
+    }
+    /// End the window at `end` when that is earlier, with a new token. False, and nothing changes, when it already
+    /// ends by then.
+    @discardableResult mutating func end(by end: Date) -> Bool {
+        guard end < until else { return false }
+        until = end; token &+= 1
+        return true
+    }
+    /// The deadline that the task started for `token` waits for; nil once a later change has given the window a new
+    /// token.
+    func deadline(for token: Int) -> Date? { token == self.token ? until : nil }
+    /// The task started for `token` has waited out its deadline: close the window, unless a change since gave it a new
+    /// token. Returns whether it closed.
+    @discardableResult mutating func close(_ token: Int) -> Bool {
+        guard token == self.token else { return false }
+        until = .distantPast
+        return true
+    }
+}
+
 /// The 2D board's in-flight item transitions: engine keyframes (on a clock a lesson pause can hold) and the blend from
 /// the items that were on screen, in the board's `MGTransitionStyle` (`MGBoardTransition`). `frame` gives what a frame
 /// draws and `phase` where the transitions stand (the board's split, `MGBoardTransition.phase`), both from this state,

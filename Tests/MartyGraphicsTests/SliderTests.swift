@@ -735,6 +735,57 @@ final class SliderTests: XCTestCase {
         XCTAssertEqual(MGBoardTransition.windowEnd(stepWindow, settledAt: moved, cameraStart: t0, reduceMotion: true), moved)
     }
 
+    /// The board's transition window and the task that waits for it (`MGTransientWindow`, the host's `.task(id:)`):
+    /// every change gives the window a new token, and SwiftUI cancels the task of an old token only at its next update.
+    /// A task that wakes in that gap neither reads the newer deadline nor closes the window, so a stale task cannot
+    /// close a window that a later step opened; only the task of the current token closes it.
+    func testAStaleWindowTaskNeverClosesANewerWindow() {
+        let t0 = Date(timeIntervalSinceReferenceDate: 1_000)
+        func at(_ t: Double) -> Date { t0.addingTimeInterval(t) }
+        var window = MGTransientWindow()
+        XCTAssertFalse(window.active(at: t0))
+        // A step opens the window until 1.6 s (`go`); its task starts for that token.
+        window.keepOpen(from: t0, for: MGRenderPolicy.transientSeconds)
+        let stepTask = window.token
+        XCTAssertEqual(window.deadline(for: stepTask), at(1.6))
+        // A slider change ends it with the camera move (`windowEnd`): a new token, so the step's task is stale.
+        XCTAssertTrue(window.end(by: at(MGBoardTransition.cameraWindow)))
+        let sliderTask = window.token
+        XCTAssertNotEqual(sliderTask, stepTask)
+        XCTAssertNil(window.deadline(for: stepTask), "a stale task read the newer deadline")
+        XCTAssertEqual(window.deadline(for: sliderTask), at(1.0))
+        // The slider's task closes the window; the step's task then wakes before SwiftUI has cancelled it.
+        XCTAssertTrue(window.close(sliderTask))
+        XCTAssertEqual(window.until, .distantPast)
+        XCTAssertFalse(window.close(stepTask))
+        // The next step opens the window at 1.2 s, until 2.8 s. Both old tasks wake before SwiftUI cancels them: neither
+        // reads the new deadline or closes the new window.
+        window.keepOpen(from: at(1.2), for: MGRenderPolicy.transientSeconds)
+        let nextTask = window.token, opened = window.until
+        XCTAssertEqual(opened.timeIntervalSince(t0), 2.8, accuracy: 1e-9)
+        for (what, stale) in [("step", stepTask), ("slider", sliderTask)] {
+            XCTAssertNil(window.deadline(for: stale), "the \(what) task read the next step's deadline")
+            XCTAssertFalse(window.close(stale), "the \(what) task closed the next step's window")
+            XCTAssertEqual(window.until, opened, what)
+            XCTAssertEqual(window.token, nextTask, what)
+        }
+        XCTAssertTrue(window.active(at: at(2.7)), "the next step's window closed early")
+        // Only the next step's task closes it.
+        XCTAssertEqual(window.deadline(for: nextTask), opened)
+        XCTAssertTrue(window.close(nextTask))
+        XCTAssertFalse(window.active(at: at(1.3)))
+        // An open window never ends earlier for a shorter change; ending it later changes nothing and keeps the token,
+        // so the task that waits for it is not restarted.
+        window.keepOpen(from: at(3), for: 1.6)
+        let long = window.until
+        window.keepOpen(from: at(3), for: 0.1)
+        XCTAssertEqual(window.until, long)
+        let kept = window.token
+        XCTAssertFalse(window.end(by: at(5)))
+        XCTAssertEqual(window.token, kept)
+        XCTAssertEqual(window.until, long)
+    }
+
     /// While engine keyframes supply the frame, `MGBoardMotion.frame` never reads the live items, so a keyframe frame
     /// never asks the controller's cache for the step items; once the keyframes end or are settled, and with Reduce
     /// Motion (no keyframes play), each frame reads them once.
@@ -891,9 +942,10 @@ final class SliderTests: XCTestCase {
 /// Learner sliders on a real split board (`BoardRig`: `MartyGraphicsView(controller:)` in a window, on a manual clock,
 /// with a probe; `SliderTests.splitBoard`). A slider change while the board is split: the next frame draws the items
 /// the audio graph charts, the base is drawn once more against them and is the current frame, and no evaluation draws
-/// one canvas for it. During a step, the board splits as soon as the step's camera move ends, while the step's own
-/// transition window would still be open. Each chart is checked against what a draw renders. At the defaults a split
-/// board reads the step items only from the controller's cache (`MGTimelineCache`).
+/// one canvas for it. During a step, the slider change ends the step's transition window with the camera move (the
+/// probe records each new deadline, `MGBoardProbe.windows`), and the board splits as soon as that move ends. Each chart
+/// is checked against what a draw renders. At the defaults a split board reads the step items only from the
+/// controller's cache (`MGTimelineCache`).
 final class SliderBoardHostTests: XCTestCase {
     /// Room for the slider panel and the caption below the board, so the board's size never follows their text.
     static let window = CGSize(width: 560, height: 900)
@@ -956,9 +1008,12 @@ final class SliderBoardHostTests: XCTestCase {
         defer { rig.close() }
         let scene = try XCTUnwrap(rig.controller.scene)
         // The board's Next button: the step narrows the graph's y range, zooms the camera and opens the step's transition
-        // window (`MGRenderPolicy.transientSeconds`: 1.6 s on the board's clock, waited for on the wall clock).
-        let start = rig.now, wall = Date()
+        // window until go + 1.6 s on the board's clock (`MGRenderPolicy.transientSeconds`; its task waits on the wall
+        // clock). The probe records the window's deadline whenever it changes.
+        let start = rig.now
         try XCTUnwrap(rig.probe.go)(1)
+        let opened = try XCTUnwrap(rig.probe.windows.last, "the step opened no transition window")
+        XCTAssertEqual(opened.timeIntervalSince(start), MGRenderPolicy.transientSeconds, accuracy: 1e-6, "the step's window ends at go + 1.6 s")
         rig.settle(0.1)
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: false), "the step: one canvas")
         // The slider moves 0.8 s into the step on the board's clock, while the step's window, its blend and its camera
@@ -969,8 +1024,14 @@ final class SliderBoardHostTests: XCTestCase {
         var want = MGSliderState(scene: scene, step: 1)
         XCTAssertTrue(want.set("a", nearest: 1.5))
         let moved = want.items.first { $0.id == "g" }
-        let base = rig.probe.baseDraws
+        let base = rig.probe.baseDraws, windowed = rig.probe.windows.count
+        XCTAssertEqual(rig.probe.windows.last, opened, "the step's window had closed before the slider moved (its wait on the wall clock ran out)")
         try XCTUnwrap(rig.probe.slide)("a", 1.5)
+        // The slider change ends the step's window with the camera move: its deadline moves from go + 1.6 s to
+        // go + 1.0 s on the board's clock (`MGBoardTransition.windowEnd`).
+        let changes = rig.probe.windows[windowed...].map { $0.timeIntervalSince(start) }
+        XCTAssertEqual(changes.first ?? .infinity, MGBoardTransition.cameraWindow, accuracy: 1e-6,
+                       "the slider change ends the step's window with the camera move (deadlines since go: \(changes))")
         rig.settle(0.1)
         // The camera still moves: one canvas, which draws the slider's graph already (the change settled the blend).
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: false), "split while the camera moves")
@@ -983,13 +1044,14 @@ final class SliderBoardHostTests: XCTestCase {
         XCTAssertEqual(one.layer, .all, "one canvas")
         XCTAssertEqual(MGAudioGraph.chart(scene, items: one.input.items), chart, "the one canvas draws the charted graph")
         // At 1.1 s on the board's clock the camera move has ended (1.0 s), while the default spring blend (1.2 s) and the
-        // step's window (1.6 s, on both clocks) would still run: the slider change ended the window with the camera
-        // move, so the board has split once, with the slider's graph and the step's camera in the base.
+        // step's window (1.6 s) would still run: the slider change ended the window with the camera move, and nothing
+        // opened it again, so the board has split once, with the slider's graph and the step's camera in the base.
         rig.advance(0.3)
         rig.settle(0.3)
         XCTAssertEqual(rig.now.timeIntervalSince(start), 1.1, accuracy: 1e-6)
-        XCTAssertLessThan(Date().timeIntervalSince(wall), MGRenderPolicy.transientSeconds,
-                          "the step's window had ended on the wall clock before the check, so the check proves nothing")
+        let since = rig.probe.windows[windowed...].map { $0.timeIntervalSince(start) }
+        XCTAssertTrue(since.allSatisfy { $0 <= MGBoardTransition.cameraWindow + 1e-6 },
+                      "the window was opened past the camera move after the slider change: \(since)")
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "the board splits once the camera move ends")
         XCTAssertEqual(rig.probe.baseDraws, base + 1, "one base draw for the split")
         let last = try lastBaseDraw(rig)

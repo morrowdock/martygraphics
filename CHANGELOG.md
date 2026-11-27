@@ -241,6 +241,9 @@
 - `tools/write_native_receipt.py` replaces `NEW_EXPORT_DIR` with the new showcase export folder only where it is the
   argument right after `--export` in `Examples/Showcase`, and refuses to run any command when the token appears in
   another argument or another package. The receipt format is unchanged: `commands` still records the token.
+- A stale wait no longer closes the 2D board's transition window (pending Mac verification). The task that waits
+  for the window keeps the token of the change it was started for. A task that wakes after a later step or patch,
+  before SwiftUI cancels it, no longer closes the window that change opened, which ended its frame loop early.
 
 ### Earlier entries (not sorted by type)
 

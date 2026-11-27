@@ -263,10 +263,14 @@ final class MGBoardProbe {
     var resetSliders: (() -> Void)?
     /// The audio graph of every evaluation of the board (`MGAudioGraph.chart` of the items it charts), in order.
     private(set) var charts: [MGAudioGraph.Chart?] = []
+    /// The board's transition window after every change of it, in order: when it ends on the board's clock
+    /// (`MGTransientWindow.until`), or `Date.distantPast` once its task has closed it.
+    private(set) var windows: [Date] = []
 
     func drew(_ input: MGRenderInput, _ layer: MGCanvasLayer, _ size: CGSize) { draws.append(Draw(input: input, layer: layer, size: size)) }
     func decided(_ d: Decision) { decisions.append(d) }
     func charted(_ chart: MGAudioGraph.Chart?) { charts.append(chart) }
+    func windowed(_ until: Date) { windows.append(until) }
     /// Draws of the cached base canvas.
     var baseDraws: Int { draws.filter { if case .base = $0.layer { return true }; return false }.count }
     /// Draws of the one canvas or of the live canvas (one per frame-loop tick while the loop runs).
@@ -302,25 +306,29 @@ struct MGSceneHost: View {
     // Render gating: the frame loop runs only for real motion or a short transition on a visible board.
     @Environment(\.scenePhase) private var scenePhase
     @State private var visible = false
-    @State private var transientUntil = Date.distantPast
-    @State private var transientToken = 0
+    @State private var transient = MGTransientWindow()
     /// Bumped by the live canvas when a tick finds the board's transitions past the phase it was split for
     /// (`MGBoardTransition.phase`), so the board is evaluated once more and splits for the new phase.
     @State private var repartitions = 0
 
     private func renderState(_ scene: MGScene) -> MGRenderPolicy.State {
-        .init(motionPlaying: playing && scene.animates && !teaching.holdsMotion, transientActive: controller.presentationDate() < transientUntil,
+        .init(motionPlaying: playing && scene.animates && !teaching.holdsMotion, transientActive: transient.active(at: controller.presentationDate()),
               visible: visible, sceneActive: scenePhase == .active, reduceMotion: reduceMotion)
     }
     /// Keep the 2D loop alive just long enough for a transition, then settle on a final static frame.
     private func bumpTransient(_ seconds: Double = MGRenderPolicy.transientSeconds) {
-        transientUntil = max(transientUntil, controller.presentationDate().addingTimeInterval(seconds)); transientToken &+= 1
+        changeTransient { $0.keepOpen(from: controller.presentationDate(), for: seconds) }
     }
     /// End the transition window at `end` (board clock) when that is earlier, and wait for the new end instead of the
     /// old one (the window's task restarts), so the board is evaluated again as soon as the window ends.
     private func endTransient(by end: Date) {
-        guard end < transientUntil else { return }
-        transientUntil = end; transientToken &+= 1
+        changeTransient { _ = $0.end(by: end) }
+    }
+    /// Every change of the window goes through here, so a probe sees each new deadline (`MGBoardProbe.windows`).
+    private func changeTransient(_ change: (inout MGTransientWindow) -> Void) {
+        let was = transient.until
+        change(&transient)
+        if transient.until != was { teaching.probe?.windowed(transient.until) }
     }
 
     var body: some View {
@@ -336,10 +344,14 @@ struct MGSceneHost: View {
             .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
             .onAppear { visible = true; adopt(scene, animated: false, drawsOn: controller.drawsOn) }
             .onDisappear { visible = false }
-            .task(id: transientToken) {
-                let wait = max(0, transientUntil.timeIntervalSince(controller.presentationDate()))
+            .task(id: transient.token) { [token = transient.token] in
+                // The token this task was started for: once a later change gives the window a new one, this task neither
+                // reads nor closes that window, even if it wakes before SwiftUI cancels it (`MGTransientWindow`).
+                guard let until = transient.deadline(for: token) else { return }
+                let wait = max(0, until.timeIntervalSince(controller.presentationDate()))
                 try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
-                if !Task.isCancelled { transientUntil = .distantPast }   // state change → one settled redraw, loop paused
+                // State change → one settled redraw, loop paused.
+                if !Task.isCancelled { changeTransient { _ = $0.close(token) } }
             }
             .onChange(of: controller.revision) { _, _ in if let s = controller.scene { adopt(s, animated: true, transition: controller.transition, drawsOn: controller.drawsOn) } }
             .onChange(of: controller.transitionsPaused) { _, paused in holdTransitions(paused) }
@@ -611,7 +623,7 @@ struct MGSceneHost: View {
             motion.settle()
             if motionPlays {
                 let now = controller.presentationDate()
-                endTransient(by: MGBoardTransition.windowEnd(transientUntil, settledAt: now, cameraStart: cameraStart, reduceMotion: reduceMotion))
+                endTransient(by: MGBoardTransition.windowEnd(transient.until, settledAt: now, cameraStart: cameraStart, reduceMotion: reduceMotion))
             }
         }
         if !motionPlays { bumpTransient(0.1) }
