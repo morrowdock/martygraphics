@@ -56,7 +56,8 @@ public enum MGCanvasRenderer {
 
         // Parallel arrows on one body fan out sideways so they never hide each other.
         var fan: [String: CGFloat] = [:]
-        let groups = Dictionary(grouping: input.items.filter { $0.kind == .vector && $0.ref != nil }) { "\($0.ref!)|\(Int((($0.n("angle").truncatingRemainder(dividingBy: 360)) + 360).truncatingRemainder(dividingBy: 360).rounded()))" }
+        let fanned = input.items.compactMap { i in i.kind == .vector && i.ref != nil ? fanAngle(i.n("angle")).map { (i, $0) } : nil }
+        let groups = Dictionary(grouping: fanned) { "\($0.0.ref!)|\($0.1)" }.mapValues { $0.map(\.0) }
         for (_, g) in groups where g.count > 1 { for (k, v) in g.enumerated() { fan[v.id] = (CGFloat(k) - CGFloat(g.count - 1) / 2) * 11 } }
 
         for item in input.items.sorted(by: { (layer[$0.kind] ?? 0) < (layer[$1.kind] ?? 0) }) {
@@ -114,7 +115,7 @@ public enum MGCanvasRenderer {
                 let path2 = path.trimmedPath(from: 0, to: p)
                 if item.has("ground") {
                     ctx.stroke(path2, with: .color(color.opacity(0.9)), lineWidth: 3)
-                    let n = Int(hypot(b.x - a.x, b.y - a.y) / 14)
+                    let n = hatchCount(length: hypot(b.x - a.x, b.y - a.y)) ?? 0
                     if n > 0, p >= 1 {
                         var hatch = Path(); let len = hypot(b.x - a.x, b.y - a.y), ux = (b.x - a.x) / len, uy = (b.y - a.y) / len
                         let nx = uy, ny = -ux  // screen normal: below a left-to-right line
@@ -148,11 +149,13 @@ public enum MGCanvasRenderer {
                 }
             case .plot:
                 plot(ctx, item, vp, theme, color, p)
-                label(item.label, at: vp.point(item.pts[0] + MGPoint(item.n("w") / 2, item.n("h"))), dir: CGVector(dx: 0, dy: -1))
+                if let o = item.pts.first { label(item.label, at: vp.point(o + MGPoint(item.n("w") / 2, item.n("h"))), dir: CGVector(dx: 0, dy: -1)) }
                 obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
             case .spring:
                 guard item.pts.count == 2 else { continue }
-                coil(ctx, from: vp.point(item.pts[0]), to: vp.point(item.pts[1]), coils: Int(item.n("coils", 8)), amplitude: vp.length(0.28), color: color)
+                if let coils = coilCount(item) {
+                    coil(ctx, from: vp.point(item.pts[0]), to: vp.point(item.pts[1]), coils: coils, amplitude: vp.length(0.28), color: color)
+                }
                 obstacles.append((MGLayout.bounds(item, in: input.items, vp) ?? .null).insetBy(dx: 0, dy: -vp.length(0.3)))
                 let mid = vp.point(item.pts[0].lerp(item.pts[1], 0.5))
                 label(item.label, at: CGPoint(x: mid.x, y: mid.y - vp.length(0.3)), dir: CGVector(dx: 0, dy: -1))
@@ -362,6 +365,28 @@ public enum MGCanvasRenderer {
         ctx.draw(Text(s).font(.system(size: 12, weight: .medium)).foregroundColor(color), at: p, anchor: anchor)
     }
 
+    // Items built through the public API skip the parser. These conversions return nil instead of trapping and use
+    // only the parser's own rules, so parsed items draw exactly as before.
+
+    /// Fan-out group angle in whole degrees, 0...360; nil for a non-finite angle.
+    static func fanAngle(_ angle: Double) -> Int? {
+        Int(exactly: ((angle.truncatingRemainder(dividingBy: 360) + 360).truncatingRemainder(dividingBy: 360)).rounded())
+    }
+    /// Ground hatch marks for a line of `length` points: one per 14 points; nil when the count is not a valid `Int`.
+    static func hatchCount(length: CGFloat) -> Int? {
+        Int(exactly: (Double(length) / 14).rounded(.down))
+    }
+    /// Spring coils, default 8. A blended value between two accepted counts is truncated as before; a value outside
+    /// the parser's `MGLimits.springCoils` range draws no coil.
+    static func coilCount(_ item: MGItem) -> Int? {
+        let coils = item.n("coils", 8)
+        guard MGLimits.springCoils.contains(coils) else { return nil }
+        return Int(exactly: coils.rounded(.towardZero))
+    }
+    /// Cell slot of an array pointer, rounded as before; nil when it is not a valid `Int`. A blended pointer may sit
+    /// past the target list, so the slot is not range-checked here.
+    static func pointerSlot(_ index: Double) -> Int? { Int(exactly: index.rounded()) }
+
     static func coil(_ ctx: GraphicsContext, from a: CGPoint, to b: CGPoint, coils: Int, amplitude: CGFloat, color: Color) {
         let d = hypot(b.x - a.x, b.y - a.y); guard d > 1 else { return }
         let ux = (b.x - a.x) / d, uy = (b.y - a.y) / d, nx = -uy, ny = ux
@@ -513,7 +538,8 @@ public enum MGCanvasRenderer {
         var stack: [Int: Int] = [:]
         let accent = theme.color(.yellow)
         for ptr in item.pointers {
-            let slot = Int(ptr.index.rounded()), level = stack[slot, default: 0]; stack[slot] = level + 1
+            guard let slot = pointerSlot(ptr.index) else { continue }
+            let level = stack[slot, default: 0]; stack[slot] = level + 1
             let x = left.x + side * (CGFloat(ptr.index) + 0.5), y = left.y + side / 2 + 6 + CGFloat(level) * 22
             var tri = Path(); tri.move(to: CGPoint(x: x, y: y)); tri.addLine(to: CGPoint(x: x - 7, y: y + 10)); tri.addLine(to: CGPoint(x: x + 7, y: y + 10)); tri.closeSubpath()
             ctx.drawLayer { l in l.addFilter(.shadow(color: accent.opacity(0.8), radius: 5)); l.fill(tri, with: .color(accent)) }

@@ -66,4 +66,38 @@ final class SceneRobustnessTests: XCTestCase {
             XCTAssertNotEqual(frame.first?.pts.first, start)
         }
     }
+
+    func testRendererConversionsMatchParsedItems() throws {
+        let source = #"{"v":1,"items":[{"id":"b","k":"body","at":[3,3]},"# +
+            #"{"id":"up","k":"vector","on":"b","angle":-90,"len":1},{"id":"down","k":"vector","on":"b","angle":270,"len":1},"# +
+            #"{"id":"s","k":"spring","from":[1,6],"to":[5,6],"coils":12},{"id":"d","k":"spring","from":[1,7],"to":[5,7]},"# +
+            #"{"id":"a","k":"array","at":[8,4],"vals":[1,2,3],"ptrs":[{"i":0,"label":"lo"},{"i":2,"label":"hi"}]}]}"#
+        let scene = try MGParser.scene(data: Data(source.utf8)).get()
+        let byID = Dictionary(uniqueKeysWithValues: scene.items.map { ($0.id, $0) })
+        let up = try XCTUnwrap(byID["up"]), down = try XCTUnwrap(byID["down"])
+        XCTAssertEqual(MGCanvasRenderer.fanAngle(up.n("angle")), 270)
+        XCTAssertEqual(MGCanvasRenderer.fanAngle(down.n("angle")), 270)
+        XCTAssertEqual(MGCanvasRenderer.fanAngle(0), 0)
+        XCTAssertEqual(MGCanvasRenderer.coilCount(try XCTUnwrap(byID["s"])), 12)
+        XCTAssertEqual(MGCanvasRenderer.coilCount(try XCTUnwrap(byID["d"])), 8)
+        XCTAssertEqual(try XCTUnwrap(byID["a"]).pointers.map { MGCanvasRenderer.pointerSlot($0.index) }, [0, 2])
+        XCTAssertEqual(MGCanvasRenderer.hatchCount(length: 140), 10)
+        XCTAssertEqual(MGCanvasRenderer.hatchCount(length: 13), 0)
+    }
+
+    func testRendererCoilCountUsesTheParserRange() {
+        func spring(_ coils: Double?) -> MGItem {
+            var item = MGItem(id: "s", kind: .spring, color: .blue)
+            item.pts = [MGPoint(1, 1), MGPoint(4, 1)]
+            if let coils { item.num["coils"] = coils }
+            return item
+        }
+        XCTAssertEqual(MGCanvasRenderer.coilCount(spring(nil)), 8)
+        XCTAssertEqual(MGCanvasRenderer.coilCount(spring(MGLimits.springCoils.lowerBound)), 3)
+        XCTAssertEqual(MGCanvasRenderer.coilCount(spring(MGLimits.springCoils.upperBound)), 24)
+        XCTAssertEqual(MGCanvasRenderer.coilCount(spring(10.5)), 10, "a blended count is truncated as before")
+        XCTAssertNil(MGCanvasRenderer.coilCount(spring(MGLimits.springCoils.upperBound + 1)))
+        XCTAssertNil(MGCanvasRenderer.coilCount(spring(MGLimits.springCoils.lowerBound - 1)))
+        XCTAssertEqual(MGCanvasRenderer.pointerSlot(1.4), 1, "a blended pointer rounds as before")
+    }
 }

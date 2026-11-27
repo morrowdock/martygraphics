@@ -12,6 +12,8 @@ public enum MGLimits {
     public static let points = 64, ropePoints = 6, cells = 16, cellText = 6, pointers = 4, bars = 6, barLabel = 16, nodeText = 8
     public static let worldRange: ClosedRange<Double> = 2...100
     static let bodyMoveTime: ClosedRange<Double> = 0.3...10
+    /// Whole coils a `spring` may draw.
+    static let springCoils: ClosedRange<Double> = 3...24
     /// Template record-list parameters: at most this many records of at most this many numeric fields. These bounds
     /// apply to the record-list shape only; no existing limit changes.
     public static let records = 32, recordFields = 6
@@ -472,7 +474,7 @@ public enum MGParser {
             it.list = [try o["xl"].map { try text($0, MGLimits.label, ctx, "plot.xl") } ?? "", try o["yl"].map { try text($0, MGLimits.label, ctx, "plot.yl") } ?? ""]
         case .spring:
             it.pts = [try p("from"), try p("to")]
-            let coils = try opt("coils", 3...24) ?? 8
+            let coils = try opt("coils", MGLimits.springCoils) ?? 8
             guard coils.rounded() == coils else { throw MGError("spring.coils") }; it.num["coils"] = coils
         case .pulley:
             it.pts = [try p("at")]; it.num["r"] = try n("r", 0.05...(span / 4))
