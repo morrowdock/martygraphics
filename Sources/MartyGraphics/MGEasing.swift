@@ -39,8 +39,72 @@ public enum MGEasing {
     public static let settleRate = 8.0
 }
 
-/// How a board moves from one step's state to the next (docs/ENGINE.md, "Transitions"): bounded, deterministic, and
-/// with a reduced-motion path.
+/// How a 2D board moves between steps and patches (`MartyGraphicsView.transitionStyle(_:)`, docs/ENGINE.md,
+/// "Transitions"). `.spring` is the default and keeps the board exactly as it was; `.bounded` is opt-in.
+public enum MGTransitionStyle: String, CaseIterable, Sendable {
+    /// The default, unchanged: step and patch blends and camera moves follow `MGTimeline.spring` (it overshoots by
+    /// about 12 % and settles at 1.2 s), body and node pops use the same spring, items that leave a step vanish at
+    /// once, and with Reduce Motion the board snaps to the new state with no transition and no frame loop.
+    case spring
+    /// Opt-in: `MGStepTransition` (bounded easing over 0.6 s, no value past either step), leaving items fade out, a
+    /// step's camera moves over 0.8 s, pops land exactly on their size (`MGEasing.Curve.settle`), and with Reduce
+    /// Motion the board dissolves (nothing moves; the frame loop runs for the dissolve only, `MGRenderPolicy.dissolving`).
+    case bounded
+}
+
+/// The 2D board's transition decisions for one `MGTransitionStyle`. `MGSceneHost` and `MGCanvasRenderer` call these
+/// on every frame; pure, so tests check both styles without a window.
+enum MGBoardTransition {
+    /// Seconds after a step or patch change in which the board blends (both styles; `.bounded` settles at 0.6 s).
+    static let blendWindow = 1.2
+    /// Seconds after a step change in which the board's camera moves (both styles; `.bounded` settles at 0.8 s).
+    static let cameraWindow = 1.0
+
+    /// The items to draw `elapsed` seconds after a change from `from` (nil: no blend) to `to`, and the opacity of
+    /// every item that is not opaque. `.spring` is the board before `MGTransitionStyle` existed: `MGTimeline.blend` at
+    /// `MGTimeline.spring(elapsed)`, nothing fades, and no blend at all with Reduce Motion. `.bounded`:
+    /// `MGStepTransition`, a dissolve with Reduce Motion.
+    static func items(_ style: MGTransitionStyle, from: [MGItem]?, to: [MGItem], elapsed: Double, reduceMotion: Bool) -> MGStepTransition.Frame {
+        guard let from, elapsed < blendWindow else { return MGStepTransition.Frame(items: to, opacity: [:]) }
+        switch style {
+        case .spring:
+            guard !reduceMotion else { return MGStepTransition.Frame(items: to, opacity: [:]) }
+            return MGStepTransition.Frame(items: MGTimeline.blend(from: from, to: to, t: MGTimeline.spring(elapsed)), opacity: [:])
+        case .bounded:
+            return MGStepTransition(reduceMotion: reduceMotion).frame(from: from, to: to, elapsed: elapsed)
+        }
+    }
+
+    /// How far a step's camera move has gone `elapsed` seconds after the step changed; nil when the board shows the
+    /// step's camera as it is (after the window, and always with Reduce Motion). `.spring`: `MGTimeline.spring`, as
+    /// before; `.bounded`: 0.8 s on `MGStepTransition`'s curve.
+    static func cameraProgress(_ style: MGTransitionStyle, elapsed: Double, reduceMotion: Bool) -> Double? {
+        guard elapsed < cameraWindow, !reduceMotion else { return nil }
+        switch style {
+        case .spring: return MGTimeline.spring(elapsed)
+        case .bounded: return MGStepTransition(duration: MGStepTransition.cameraSeconds).progress(elapsed)
+        }
+    }
+
+    /// The size factor of a body or the radius factor of a node at eased draw-on progress `p` (1 once drawn).
+    /// `.spring`: `MGTimeline.spring(p · 0.9)` as before (it overshoots while it draws on and rests just under the
+    /// size); `.bounded`: `MGEasing.Curve.settle` (no overshoot, exactly the size at 1).
+    static func pop(_ style: MGTransitionStyle, _ p: Double) -> Double {
+        switch style {
+        case .spring: return MGTimeline.spring(p * 0.9)
+        case .bounded: return MGEasing.Curve.settle.at(p)
+        }
+    }
+
+    /// True while the 2D frame loop runs: `MGRenderPolicy.continuous`, and for `.bounded` also the Reduce Motion
+    /// dissolve (`MGRenderPolicy.dissolving`). With Reduce Motion a `.spring` board never runs the loop: it snaps.
+    static func runsLoop(_ style: MGTransitionStyle, _ s: MGRenderPolicy.State) -> Bool {
+        MGRenderPolicy.continuous(s) || (style == .bounded && MGRenderPolicy.dissolving(s))
+    }
+}
+
+/// How a board that opts in (`MGTransitionStyle.bounded`) moves from one step's state to the next (docs/ENGINE.md,
+/// "Transitions"): bounded, deterministic, and with a reduced-motion path. The default board keeps its spring.
 ///
 /// Shared items (same id and kind) move with `MGTimeline.blend` at the eased progress, so every coordinate stays
 /// between its two step values and an angle takes the short way round. Items only in the new step enter; items only in

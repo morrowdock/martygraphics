@@ -62,6 +62,78 @@ final class SeamlessLoopExportTests: XCTestCase {
         XCTAssertEqual(again.manifestText, o.manifestText)
     }
 
+    /// The closing key on the exported file (docs/ENGINE.md, "Verify on a Mac"): re-read with the independent GLB
+    /// reader, key `frames` (490 for the robot joint) shows what key 0 shows. Every mesh vertex at the closing key lies
+    /// on a vertex of the same material at key 0 (the turning parts moved by whole symmetry steps, so the scene looks
+    /// the same although their transforms differ), and every camera node is where it was at key 0.
+    func testTheClosingKeyLooksLikeKeyZero() throws {
+        let c = try checked()
+        let t = try MGSolidGLTF.seamlessLoop(c, fps: 30)
+        let loop = try XCTUnwrap(t.loop)
+        XCTAssertEqual(loop.frames, 490)
+        let o = try MGSolidGLTF.export(c, timeline: t, sourceID: "robot-joint-gearbox", glbName: "robot-joint-gearbox.glb",
+                                       engineCommit: MartySolidGLTFTests.commit)
+        let g = try MartySolidGLTFTests.GLB(o.glb)
+        let first = MartySolidGLTFTests.nodeWorlds(g, MartySolidGLTFTests.nodeLocals(g, frame: 0))
+        let closing = MartySolidGLTFTests.nodeWorlds(g, MartySolidGLTFTests.nodeLocals(g, frame: loop.frames))
+        let nodes = g.array("nodes"), meshes = g.array("meshes")
+
+        // World-space vertices (metres) of every mesh node at one key, with their material.
+        func vertices(_ world: [MartySolidGLTFTests.Rigid]) -> [(p: [Double], material: Int)] {
+            var out: [(p: [Double], material: Int)] = []
+            for (i, n) in nodes.enumerated() {
+                guard let m = n["mesh"] as? Int, let primitives = meshes[m]["primitives"] as? [[String: Any]] else { continue }
+                let w = world[i]
+                for prim in primitives {
+                    guard let attributes = prim["attributes"] as? [String: Any], let a = attributes["POSITION"] as? Int else { continue }
+                    let f = g.floats(a).map(Double.init), material = prim["material"] as? Int ?? -1
+                    for k in stride(from: 0, to: f.count - 2, by: 3) {
+                        let x = [f[k], f[k + 1], f[k + 2]]
+                        out.append(((0..<3).map { r in w.t[r] + (0..<3).map { w.r[r][$0] * x[$0] }.reduce(0, +) }, material))
+                    }
+                }
+            }
+            return out
+        }
+        let a = vertices(first), b = vertices(closing)
+        XCTAssertEqual(a.count, b.count)
+        XCTAssertGreaterThan(a.count, 1000, "the gearbox's meshes")
+        var lo = [Double](repeating: .infinity, count: 3), hi = [Double](repeating: -.infinity, count: 3)
+        for v in a { for r in 0..<3 { lo[r] = min(lo[r], v.p[r]); hi[r] = max(hi[r], v.p[r]) } }
+        let size = zip(lo, hi).map { $1 - $0 }.max() ?? 1
+        let tolerance = max(1e-7, size * 1e-5)
+
+        // Key-0 vertices hashed on a grid of twice the tolerance: a match lies in one of the 27 cells around a query.
+        struct Cell: Hashable { let m: Int, x: Int, y: Int, z: Int }
+        let cell = 2 * tolerance
+        func key(_ p: [Double], _ m: Int, _ d: (Int, Int, Int) = (0, 0, 0)) -> Cell {
+            Cell(m: m, x: Int((p[0] / cell).rounded(.down)) + d.0, y: Int((p[1] / cell).rounded(.down)) + d.1, z: Int((p[2] / cell).rounded(.down)) + d.2)
+        }
+        var grid: [Cell: [[Double]]] = [:]
+        for v in a { grid[key(v.p, v.material), default: []].append(v.p) }
+        var unmatched = 0, worst = 0.0
+        for v in b {
+            var best = Double.infinity
+            for dx in -1...1 { for dy in -1...1 { for dz in -1...1 {
+                for q in grid[key(v.p, v.material, (dx, dy, dz))] ?? [] {
+                    best = min(best, zip(q, v.p).map { ($0 - $1) * ($0 - $1) }.reduce(0, +).squareRoot())
+                }
+            } } }
+            if best > tolerance { unmatched += 1; worst = max(worst, best) }
+        }
+        XCTAssertEqual(unmatched, 0, "\(unmatched) closing-key vertices are off every key-0 vertex (worst \(worst) m, tolerance \(tolerance) m)")
+
+        // The camera nodes close the loop too.
+        var cameras = 0
+        for (i, n) in nodes.enumerated() where n["camera"] != nil {
+            let e = MartySolidGLTFTests.Rigid.error(first[i], closing[i])
+            XCTAssertLessThan(e.angle, 1e-5, "camera node \(i) turns at the wrap")
+            XCTAssertLessThan(e.distance, 1e-6 * max(1, first[i].t.map(abs).max() ?? 1), "camera node \(i) moves at the wrap")
+            cameras += 1
+        }
+        XCTAssertGreaterThan(cameras, 0)
+    }
+
     func testASeamlessLoopThatCannotFitIsRefusedWithAReason() throws {
         let c = try checked()
         var options = MGSolidLoop.Options()

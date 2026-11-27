@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Seamless loops in the Blender render path (tools/render-blender/mgrender/loop.py), without Blender."""
+"""Seamless loops in the Blender render path (tools/render-blender/mgrender/loop.py), without Blender.
+
+The manifest records here are built by hand and the expectations are analytic: these tests do not read output of
+the Swift exporter, so they are not a parity check of `MGSolidGLTF.seamlessLoop`. docs/ENGINE.md ("Verify on a Mac")
+generates the Swift vectors (the robot joint's seamless `loop` record) for a later parity test.
+"""
 import math
 from pathlib import Path
 import sys
@@ -14,6 +19,7 @@ from test_render_blender import ExportFixture  # noqa: E402
 
 
 def record(frames=4, closing=True, **extra):
+    """A hand-built manifest `loop` record in the shape the Swift exporter writes (not Swift output)."""
     loop = {"seamless": True, "frames": frames, "inputTurns": "49/6"}
     if closing:
         loop["closingFrame"] = frames

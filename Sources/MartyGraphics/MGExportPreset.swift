@@ -14,16 +14,19 @@ public struct MGExportPreset: Equatable, Sendable {
         case proRes4444
     }
 
-    /// How the engine's sRGB pixels are encoded and tagged.
+    /// The colour space frames are drawn in and the tags the file asks for (docs/ENGINE.md, "Export presets"). The
+    /// writer tags every source pixel buffer with the space it was drawn in. The decoded check is pending: until the
+    /// Mac test that decodes colour patches has run, these are the tags requested, not tags proven on decoded frames.
     public enum ColorSpace: String, Sendable {
-        /// sRGB pixels tagged with BT.709 primaries and matrix and the sRGB transfer function: an Apple player shows
-        /// them as the stills look (the engine's own loop and story MP4s).
+        /// Drawn in sRGB; the file asks for BT.709 primaries and matrix and the sRGB transfer function, so an Apple
+        /// player can show it as the stills look (the engine's own loop and story MP4s).
         case srgb
-        /// sRGB pixels tagged BT.709 throughout (primaries, transfer function and matrix, "1-1-1"): the tags that
-        /// upload transcoders (YouTube, X) read. The pixel values are not changed.
+        /// Drawn in sRGB; the file asks for BT.709 throughout (primaries, transfer function and matrix, "1-1-1"), the
+        /// tags upload transcoders (YouTube, X) read. The source buffers say sRGB, so an encoder that colour-matches
+        /// converts the transfer function on the way; whether it does is part of the pending decoded check.
         case rec709
-        /// Pixels converted to Display P3 (P3-D65 primaries, sRGB transfer function, BT.709 matrix) for wide colour on
-        /// Apple devices. sRGB content keeps its look; only content drawn in P3 gains colours.
+        /// Drawn in Display P3 (an sRGB image is converted when drawn); the file asks for P3-D65 primaries, the sRGB
+        /// transfer function and the BT.709 matrix. sRGB content keeps its look; only content drawn in P3 gains colours.
         case displayP3
     }
 
@@ -144,12 +147,20 @@ public struct MGExportPreset: Equatable, Sendable {
         CGColorSpace(name: colorSpace == .displayP3 ? CGColorSpace.displayP3 : CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
     }
 
-    /// The AVFoundation colour tags.
+    /// The sRGB transfer function tag: AVFoundation's documented `AVVideoTransferFunction_IEC_sRGB` where the OS has
+    /// it (macOS 15, iOS 18), else Core Video's `kCVImageBufferTransferFunction_sRGB`, the same "IEC_sRGB" tag that the
+    /// engine's own MP4s have always used.
+    public static var srgbTransferFunction: String {
+        if #available(macOS 15.0, iOS 18.0, *) { return AVVideoTransferFunction_IEC_sRGB }
+        return kCVImageBufferTransferFunction_sRGB as String
+    }
+
+    /// The AVFoundation colour tags the file asks for (tags requested; decoded check pending, see `ColorSpace`).
     public var colorProperties: [String: Any] {
         switch colorSpace {
         case .srgb:
             return [AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
-                    AVVideoTransferFunctionKey: kCVImageBufferTransferFunction_sRGB as String,
+                    AVVideoTransferFunctionKey: MGExportPreset.srgbTransferFunction,
                     AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2]
         case .rec709:
             return [AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
@@ -157,9 +168,26 @@ public struct MGExportPreset: Equatable, Sendable {
                     AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2]
         case .displayP3:
             return [AVVideoColorPrimariesKey: AVVideoColorPrimaries_P3_D65,
-                    AVVideoTransferFunctionKey: kCVImageBufferTransferFunction_sRGB as String,
+                    AVVideoTransferFunctionKey: MGExportPreset.srgbTransferFunction,
                     AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2]
         }
+    }
+
+    /// The Core Video attachments of every source pixel buffer: the space the frame was actually drawn in
+    /// (`drawingSpace`: sRGB, or Display P3 for `displayP3`) as primaries, transfer function and colour space, and for
+    /// an alpha preset how the alpha is stored (straight or premultiplied).
+    var sourceAttachments: [String: Any] {
+        var a: [String: Any] = [
+            kCVImageBufferColorPrimariesKey as String: (colorSpace == .displayP3 ? kCVImageBufferColorPrimaries_P3_D65 : kCVImageBufferColorPrimaries_ITU_R_709_2) as String,
+            kCVImageBufferTransferFunctionKey as String: kCVImageBufferTransferFunction_sRGB as String,
+            kCVImageBufferCGColorSpaceKey as String: drawingSpace,
+        ]
+        switch alpha {
+        case .none: break
+        case .straight: a[kCVImageBufferAlphaChannelModeKey as String] = kCVImageBufferAlphaChannelMode_StraightAlpha as String
+        case .premultiplied: a[kCVImageBufferAlphaChannelModeKey as String] = kCVImageBufferAlphaChannelMode_PremultipliedAlpha as String
+        }
+        return a
     }
 
     /// The `AVAssetWriterInput` output settings. H.264 and HEVC: the bit rate, the key-frame interval and no frame

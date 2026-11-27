@@ -90,6 +90,14 @@ public final class MGSolidRenderer {
     private var groundNodes: [SCNNode] = []
     /// The default-pose bounds the ground was built for (`updateGround`): the ground does not follow the camera.
     private var groundKey: [Double] = []
+    /// What the key light's shadow frustum was last fitted to (`fitKeyLight`): the light node, its direction and the
+    /// exploded bounds. Kept apart from `groundKey`: the exploded extent can change while the rest bounds do not.
+    private var keyLightKey: KeyLightFit?
+    private struct KeyLightFit: Equatable {
+        let light: ObjectIdentifier
+        let front: SIMD3<Float>
+        let bounds: [Double]
+    }
     private var renderer: SCNRenderer?
     public private(set) var camera: MGSolidCamera
     private var highlighted: Set<String> = []
@@ -824,29 +832,22 @@ public final class MGSolidRenderer {
     }
 
     private func updateGround() {
-        // The ground, the contact shadow and the key light's shadow frustum depend on the default pose's bounds and the
-        // ground option only, not on the camera: `setCamera` (every loop and story frame) rebuilds them only when those
-        // change, instead of making two planes, two materials and two alpha images per frame.
+        // The ground and the contact shadow depend on the default pose's bounds and the ground option only, not on the
+        // camera: `setCamera` (every loop and story frame) rebuilds them only when those change, instead of making two
+        // planes, two materials and two alpha images per frame. The key light's shadow frustum has inputs of its own
+        // (the exploded extent and the light), so it is fitted separately, whenever those change (`fitKeyLight`).
         let b = worldBounds(MGPoseParameters())
-        let key = options.ground && !b.isEmpty ? [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z] : []
+        let builds = options.ground && !b.isEmpty
+        // As before, the frustum is fitted only while there is a ground to catch the shadow.
+        if builds { fitKeyLight() }
+        let key = builds ? [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z] : []
         guard key != groundKey || (key.isEmpty != groundNodes.isEmpty) else { return }
         groundKey = key
         groundNodes.forEach { $0.removeFromParentNode() }
         groundNodes = []
-        guard options.ground else { return }
-        guard !b.isEmpty else { return }
+        guard builds else { return }
         let r = max(b.size.x, b.size.z)
         let y = Float(b.min.y - 0.05)
-        // Fit the key light's orthographic shadow frustum around the model (exploded extent included).
-        if let key = keyLight, let light = key.light {
-            let wide = worldBounds(MGPoseParameters(), explodeRange: [1])
-            let radius = max(1, wide.radius)
-            let dir = key.simdWorldFront
-            let c = simd_float3(Float(wide.center.x), Float(wide.center.y), Float(wide.center.z))
-            key.simdPosition = c - dir * Float(radius * 3)
-            light.orthographicScale = CGFloat(radius * 1.25)
-            light.zNear = CGFloat(radius * 0.5); light.zFar = CGFloat(radius * 6)
-        }
         // Shadow catcher: only the key light's soft shadow shows, composited over the backdrop.
         let plane = SCNPlane(width: CGFloat(r * 8), height: CGFloat(r * 8))
         let sm = SCNMaterial(); sm.lightingModel = .shadowOnly; sm.writesToDepthBuffer = false
@@ -873,6 +874,30 @@ public final class MGSolidRenderer {
         blobNode.renderingOrder = 5
         if look != .classic { blobNode.opacity = CGFloat(look.contact) }
         scene.rootNode.addChildNode(blobNode); groundNodes.append(blobNode)
+    }
+
+    /// Fits the key light's orthographic shadow frustum around the model, exploded extent included, when the light,
+    /// its direction or the exploded bounds differ from the last fit.
+    private func fitKeyLight() {
+        guard let key = keyLight, let light = key.light else { keyLightKey = nil; return }
+        let wide = worldBounds(MGPoseParameters(), explodeRange: [1])
+        let dir = key.simdWorldFront
+        let fit = KeyLightFit(light: ObjectIdentifier(key), front: dir,
+                              bounds: [wide.min.x, wide.min.y, wide.min.z, wide.max.x, wide.max.y, wide.max.z])
+        guard fit != keyLightKey else { return }
+        keyLightKey = fit
+        let radius = max(1, wide.radius)
+        let c = simd_float3(Float(wide.center.x), Float(wide.center.y), Float(wide.center.z))
+        key.simdPosition = c - dir * Float(radius * 3)
+        light.orthographicScale = CGFloat(radius * 1.25)
+        light.zNear = CGFloat(radius * 0.5); light.zFar = CGFloat(radius * 6)
+    }
+
+    /// Test hooks (internal): the ground's nodes, and the key light's shadow fit (orthographic scale, near and far).
+    var groundNodeIdentities: [ObjectIdentifier] { groundNodes.map { ObjectIdentifier($0) } }
+    var keyLightShadowFit: (scale: Double, near: Double, far: Double)? {
+        guard let light = keyLight?.light else { return nil }
+        return (Double(light.orthographicScale), Double(light.zNear), Double(light.zFar))
     }
 
     // MARK: Image helpers

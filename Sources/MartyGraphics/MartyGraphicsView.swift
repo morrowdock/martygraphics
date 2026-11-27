@@ -119,7 +119,8 @@ public struct MartyGraphicsView: View {
     private let initial: MGScene?
     private let showsControls: Bool
     private let readOnly: Bool
-    private var teaching = MGBoardTeaching()
+    /// The teaching hooks the modifiers set (internal read for tests).
+    private(set) var teaching = MGBoardTeaching()
 
     /// `readOnly`: presentation only (e.g. submitted exam work). The finished walkthrough is shown with no step,
     /// play or replay controls and no element interaction. Animation still plays unless Reduce Motion is on.
@@ -165,6 +166,15 @@ public struct MartyGraphicsView: View {
     /// 3D only, opt-in: let the existing `selection`, `markers` and `emphasis` modifiers act on a 3D board.
     /// Without this modifier a 3D board ignores them exactly as before. See `MG3DInspection` for each option.
     public func inspects3D(_ options: MG3DInspection) -> Self { var v = self; v.teaching.inspection3D = options; return v }
+    /// 2D: how the board moves between steps and patches. `.spring` (the default, the board as it always was): blends
+    /// and camera moves follow the board's spring, leaving items vanish, and with Reduce Motion the board snaps with
+    /// no transition. `.bounded` (opt-in): bounded easing with no overshoot, fading exits, pops that land on their size,
+    /// and with Reduce Motion a dissolve with no motion (`MGTransitionStyle`, `MGStepTransition`).
+    public func transitionStyle(_ style: MGTransitionStyle) -> Self { var v = self; v.teaching.transitionStyle = style; return v }
+    /// Test seam (internal): record what the 2D board decides and draws, and expose its own handlers (`MGBoardProbe`).
+    func boardProbe(_ probe: MGBoardProbe?) -> Self { var v = self; v.teaching.probe = probe; return v }
+    /// Test seam (internal): use this Reduce Motion setting instead of the system's (nil: the system's).
+    func boardReduceMotion(_ on: Bool?) -> Self { var v = self; v.teaching.reduceMotion = on; return v }
 
     public var body: some View {
         MGSceneHost(controller: external ?? own, showsControls: showsControls, readOnly: readOnly, teaching: teaching)
@@ -209,8 +219,47 @@ struct MGBoardTeaching {
     var cameraReset: Int?
     /// Opt-in 3D hooks (`inspects3D`); empty keeps the original 3D behaviour.
     var inspection3D: MG3DInspection = []
+    /// 2D step and patch transitions (`transitionStyle`); `.spring` keeps the board as it was.
+    var transitionStyle: MGTransitionStyle = .spring
+    /// Test seams (internal, never set by a host): a probe of the 2D board, and a Reduce Motion override.
+    var probe: MGBoardProbe?
+    var reduceMotion: Bool?
     /// Motion stays on its first frame while anything is concealed (it can show the answer), then plays from the start.
     var holdsMotion: Bool { !concealed.isEmpty }
+}
+
+/// Test seam (internal; a host never sets one, `MartyGraphicsView.boardProbe(_:)`): what a 2D board decided and drew,
+/// and the board's own frame function, tap handler and step handler from its latest evaluation, so a test drives the
+/// real board through its entry points in a window. Main thread only.
+final class MGBoardProbe {
+    struct Draw {
+        let input: MGRenderInput
+        let layer: MGCanvasLayer
+        let size: CGSize
+    }
+    struct Decision: Equatable {
+        /// The frame loop runs (the TimelineView is not paused).
+        let running: Bool
+        /// The board draws a cached base canvas under a live one.
+        let layered: Bool
+    }
+    /// Every Canvas draw, in order: the one canvas, or a layered board's base and live canvases.
+    private(set) var draws: [Draw] = []
+    /// The frame-loop decision of every evaluation of the board.
+    private(set) var decisions: [Decision] = []
+    /// The frame the board's Canvas draws at a time and size (`MGSceneHost.input`).
+    var frame: ((Date, CGSize) -> MGRenderInput)?
+    /// The board's tap handler (what its `SpatialTapGesture` calls), at a point in a board of a size.
+    var tap: ((CGPoint, CGSize) -> Void)?
+    /// The board's step handler (what its Previous and Next buttons call).
+    var go: ((Int) -> Void)?
+
+    func drew(_ input: MGRenderInput, _ layer: MGCanvasLayer, _ size: CGSize) { draws.append(Draw(input: input, layer: layer, size: size)) }
+    func decided(_ d: Decision) { decisions.append(d) }
+    /// Draws of the cached base canvas.
+    var baseDraws: Int { draws.filter { if case .base = $0.layer { return true }; return false }.count }
+    /// Draws of the one canvas or of the live canvas (one per frame-loop tick while the loop runs).
+    var liveDraws: Int { draws.count - baseDraws }
 }
 
 struct MGSceneHost: View {
@@ -219,7 +268,9 @@ struct MGSceneHost: View {
     var readOnly = false
     var teaching = MGBoardTeaching()
     @Environment(\.mgTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    /// The system's Reduce Motion setting (a test may override it, `MGBoardTeaching.reduceMotion`).
+    private var reduceMotion: Bool { teaching.reduceMotion ?? systemReduceMotion }
 
     @State private var step = 0
     @State private var playing = true
@@ -319,9 +370,16 @@ struct MGSceneHost: View {
     /// draws; the base (board, grid and the static items below every moving item) is drawn once, outside the timeline.
     private func board2D(_ scene: MGScene) -> some View {
         let state = renderState(scene)
-        // Reduce Motion: a step change dissolves (no motion), so the loop runs for that transition only.
-        let running = MGRenderPolicy.continuous(state) || MGRenderPolicy.dissolving(state)
+        // Reduce Motion: a `.spring` board snaps (no loop); a `.bounded` board dissolves, so the loop runs for that
+        // transition only (`MGBoardTransition.runsLoop`).
+        let running = MGBoardTransition.runsLoop(teaching.transitionStyle, state)
         let layered = MGRenderPolicy.layered(state) && scene.layer2d == nil
+        if let probe = teaching.probe {
+            probe.decided(MGBoardProbe.Decision(running: running, layered: layered))
+            probe.frame = { now, size in input(scene, now: now, size: size) }
+            probe.tap = { point, size in select(scene, at: point, size: size) }
+            probe.go = { next in go(scene, next) }
+        }
         return GeometryReader { geo in
             ZStack {
                 if layered { layeredCanvases(scene, size: geo.size, running: running) } else { liveCanvas(scene, running: running, layer: nil) }
@@ -335,7 +393,10 @@ struct MGSceneHost: View {
     @ViewBuilder private func layeredCanvases(_ scene: MGScene, size: CGSize, running: Bool) -> some View {
         let still = input(scene, now: controller.presentationDate(), size: size)
         let base = MGCanvasLayers.base(still.items, live: MGCanvasLayers.live(scene, items: still.items))
-        Canvas(rendersAsynchronously: false) { ctx, _ in MGCanvasRenderer.draw(still, in: ctx, layer: .base(base)) }
+        Canvas(rendersAsynchronously: false) { ctx, size in
+            MGCanvasRenderer.draw(still, in: ctx, layer: .base(base))
+            teaching.probe?.drew(still, .base(base), size)
+        }
         liveCanvas(scene, running: running, layer: .live(base))
     }
 
@@ -344,6 +405,7 @@ struct MGSceneHost: View {
             Canvas(rendersAsynchronously: false) { ctx, size in
                 let frame = input(scene, now: running && controller.presentationClock == nil ? tl.date : controller.presentationDate(), size: size)
                 MGCanvasRenderer.draw(frame, in: ctx, layer: layer ?? .all)
+                teaching.probe?.drew(frame, layer ?? .all, size)
             }
         }
     }
@@ -476,28 +538,27 @@ struct MGSceneHost: View {
         var items = MGTimeline.frame(scene, items: playsKeyframes ? MGTween.sample(keyframes, at: keyT)
                                                                   : controller.timelineItems(scene, step: step), time: t)
         if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
-        // Step and patch transitions: bounded easing (no overshoot past either state), leaving items fade out, and
-        // with Reduce Motion a dissolve with no motion (`MGStepTransition`). Settled well inside the 1.2 s blend window.
-        let blendT = now.timeIntervalSince(blendStart)
-        var opacity: [String: Double] = [:]
-        if let from = blendFrom, blendT < 1.2 {
-            let frame = MGStepTransition(reduceMotion: reduceMotion).frame(from: from, to: items, elapsed: blendT)
-            items = frame.items; opacity = frame.opacity
-            if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
-        }
+        // Step and patch transitions (`MGBoardTransition`): by default the board's spring within the 1.2 s window and
+        // nothing with Reduce Motion, exactly as before; a `.bounded` board eases with no overshoot, fades leaving
+        // items out and dissolves with Reduce Motion (`MGStepTransition`).
+        let style = teaching.transitionStyle
+        let blend = MGBoardTransition.items(style, from: blendFrom, to: items, elapsed: now.timeIntervalSince(blendStart), reduceMotion: reduceMotion)
+        items = blend.items
+        // Leaving items come from the previous frame (`.bounded` only): a concealed id stays hidden while it fades.
+        if style == .bounded, !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
         let camera = scene.steps.indices.contains(step) ? (scene.steps[step].camera ?? scene.camera) : scene.camera
         let fit = teaching.fitSize ?? size
         var vp = MGViewport(size: fit, width: scene.width, height: scene.height, camera: camera).resized(to: size)
-        let camT = now.timeIntervalSince(cameraStart)
-        if camT < 1.0, !reduceMotion {
+        if let progress = MGBoardTransition.cameraProgress(style, elapsed: now.timeIntervalSince(cameraStart), reduceMotion: reduceMotion) {
             let from = MGViewport(size: fit, width: scene.width, height: scene.height, camera: cameraFrom).resized(to: size)
-            vp = from.lerp(vp, CGFloat(MGStepTransition(duration: MGStepTransition.cameraSeconds).progress(camT)))
+            vp = from.lerp(vp, CGFloat(progress))
         }
         var appear: [String: Double] = [:]
         if !reduceMotion { for (id, start) in appearStart { let p = now.timeIntervalSince(start) / 0.55; if p < 1 { appear[id] = max(0, p) } } }
         let focus = scene.steps.indices.contains(step) ? scene.steps[step].focus : nil
         var out = MGRenderInput(scene: scene, items: items, viewport: vp, theme: theme, appear: appear, focus: focus, time: t)
-        out.opacity = opacity
+        out.opacity = blend.opacity
+        out.transitionStyle = style
         out.emphasis = teaching.emphasis.union(teaching.selection?.wrappedValue.map { [$0] } ?? [])
         out.markers = teaching.markers
         out.tableRows = teaching.tableRows

@@ -49,6 +49,23 @@
   its ground and contact shadow once per pose instead of once per frame.
 - Engine: arrowheads keep their proportions on short arrows and while an arrow draws on, dashed shafts end on a
   whole dash, and 1-point lines, label borders and grid dots sit on the pixel grid.
+- Engine: the 2D board keeps its spring step and patch transitions by default (spring blends and camera moves,
+  spring pops, leaving items vanish, Reduce Motion snaps with no frame loop).
+- Engine: while motion plays, the 2D board draws its board, grid and static prefix (static items ranked below every
+  moving item) in a base canvas outside the frame loop and redraws only the live layer each tick; the current step's
+  items are kept instead of being rebuilt every frame. The live-board check of the split is pending Mac verification.
+- Engine: the solid renderer builds its ground and contact shadow once per rest bounds instead of once per frame,
+  and refits the key light's shadow frustum whenever the exploded extent or the light changes.
+- Engine, intentional default output changes (pure fixes, on by default; comparison stills and the list in
+  docs/ENGINE.md, "Default output changes"):
+  - label placement: 2D board labels are placed by `MGLabelLayout` (72 positions, whole-point boxes, a leader line
+    for a label pushed away from its anchor), so crowded boards place labels differently;
+  - arrow shaft shortening: a board vector's head keeps its proportions on short and drawing-on arrows and its shaft
+    ends under the head, a dashed shaft ends on a whole dash, and a 2D video arrow's shaft stops inside its head;
+  - pixel alignment: grid dots, 1-point table, plot-grid and label-border lines and table cell edges sit on the
+    pixel grid at 1x, 2x and 3x;
+  - cleared pooled buffer: every movie writer, the engine's own H.264 writer included, clears each pooled pixel
+    buffer before drawing a frame.
 - Docs: clarify that a coding agent wrote the turbofan JSON directly in the documented
   format, consistently with the site, showcase and provenance receipt.
 - Docs: describe the opt-in ML explainer kit and the Blender video tool (16:9, 1:1 and 9:16,
@@ -141,9 +158,14 @@
   and plans a loop with no jump at the wrap (the robot-joint gearbox: 49/6 input turns instead of one).
   `marty-solid export-gltf --seamless` writes that loop with a closing frame and a manifest `loop` object, and the
   Blender render path renders it with a forward shutter and a closing turntable or camera sway.
+- Opt-in bounded transitions for the 2D board: `MartyGraphicsView.transitionStyle(.bounded)` (`MGTransitionStyle`)
+  eases step and patch changes over 0.6 s with no value past either step (`MGStepTransition`), fades leaving items
+  out, lands body and node pops on their size and, with Reduce Motion, dissolves instead of snapping.
 - Export presets for YouTube Shorts (1080×1920), X (1920×1080) and lessons (1920×1200) with BT.709, sRGB or
-  Display P3 colour handling and ProRes 4444 straight-alpha masters: `MGExportPreset`,
-  `MGMovieWriter(url:preset:)` and `MGVideoExportOptions(preset:)`.
+  Display P3 colour tags (tags requested; decoded check pending) and ProRes 4444 straight-alpha masters:
+  `MGExportPreset`, `MGMovieWriter(url:preset:)` and `MGVideoExportOptions(preset:)`. Preset writers tag each source
+  pixel buffer with the space it was drawn in and how its alpha is stored, and a 2D video exported with an alpha
+  preset is clear where nothing is drawn (decoded check pending).
 - Leader lines for 2D board labels: `MGLabelLayout` places labels deterministically and connects a label that had
   to move away from its anchor back to it.
 - Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,
@@ -175,8 +197,8 @@
 - Bound stream buffers and preview validation work, guarantee forward progress, and restore the
   committed scene when restarting a stream. Require a minimum plot range span.
 - The movie writer clears each pooled pixel buffer before it draws a frame, so a frame with transparent pixels no
-  longer shows the frame before it.
-- The shaft of a 2D video arrow no longer shows past the arrowhead's tip.
+  longer shows the frame before it (a default output change, listed above).
+- The shaft of a 2D video arrow no longer shows past the arrowhead's tip (a default output change, listed above).
 - Use map distance for hand-placed ML points and draw vector links only for positive cosine matches.
   Remove the chosen-token caption from temperature sweeps and refuse color metadata in pixel-value PNGs.
 - Reduce programmatic MP4 export stalls under encoder buffer pressure with an

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import Foundation
 
-/// Which part of a frame `MGCanvasRenderer.draw(_:in:layer:)` draws (docs/ENGINE.md, "Layers").
+/// Which part of a frame `MGCanvasRenderer.draw(_:in:layer:)` draws (docs/ENGINE.md, "Layers and caches").
 public enum MGCanvasLayer: Equatable, Sendable {
     /// The whole frame (`MGCanvasRenderer.draw(_:in:)`).
     case all

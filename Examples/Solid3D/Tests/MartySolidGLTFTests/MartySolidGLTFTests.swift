@@ -105,7 +105,8 @@ final class MartySolidGLTFTests: XCTestCase {
     }
 
     /// Each node's local transform at frame `k`: its animation keys where it has them, else its rest transform.
-    func locals(_ g: GLB, frame k: Int) -> [Rigid] {
+    func locals(_ g: GLB, frame k: Int) -> [Rigid] { Self.nodeLocals(g, frame: k) }
+    static func nodeLocals(_ g: GLB, frame k: Int) -> [Rigid] {
         var keyed: [Int: (t: [Double]?, q: [Double]?)] = [:]
         if let anim = g.array("animations").first, let channels = anim["channels"] as? [[String: Any]],
            let samplers = anim["samplers"] as? [[String: Any]] {
@@ -124,7 +125,8 @@ final class MartySolidGLTFTests: XCTestCase {
     }
 
     /// World transforms from the node hierarchy (parents from `children`).
-    func worlds(_ g: GLB, _ locals: [Rigid]) -> [Rigid] {
+    func worlds(_ g: GLB, _ locals: [Rigid]) -> [Rigid] { Self.nodeWorlds(g, locals) }
+    static func nodeWorlds(_ g: GLB, _ locals: [Rigid]) -> [Rigid] {
         var parent: [Int: Int] = [:]
         for (i, n) in g.array("nodes").enumerated() { for c in n["children"] as? [Int] ?? [] { parent[c] = i } }
         var memo: [Int: Rigid] = [:]

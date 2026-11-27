@@ -119,12 +119,17 @@ enum MGVideoDrawing {
         }
     }
 
-    static func draw(_ elements: [MGVideoElement], plan: MGCheckedVideoPlan, frame: Int, burnCaptions: Bool) throws -> CGImage {
+    /// One frame. `opaque: false` (an alpha export preset) leaves the canvas clear where nothing is drawn instead of
+    /// filling it with the board colour; label and code backdrops are drawn either way (they keep text readable over
+    /// whatever the frame is composited on).
+    static func draw(_ elements: [MGVideoElement], plan: MGCheckedVideoPlan, frame: Int, burnCaptions: Bool, opaque: Bool = true) throws -> CGImage {
         guard let context = CGContext(data: nil, width: plan.canvas.width, height: plan.canvas.height, bitsPerComponent: 8, bytesPerRow: 0,
                                       space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { throw MGError("video2d.budget.raster") }
         let background = CGColor(red: 0.035, green: 0.05, blue: 0.09, alpha: 1)
-        context.setFillColor(background)
-        context.fill(CGRect(x: 0, y: 0, width: plan.canvas.width, height: plan.canvas.height))
+        if opaque {
+            context.setFillColor(background)
+            context.fill(CGRect(x: 0, y: 0, width: plan.canvas.width, height: plan.canvas.height))
+        }
         func text(_ string: String, at point: CGPoint, size: Double, color: CGColor, code: Bool = false, centered: Bool = true, backdrop: Bool = true) {
             let layout = textLayout(string, at: point, size: size, color: color, code: code, centered: centered)
             if backdrop {

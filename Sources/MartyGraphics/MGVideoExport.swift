@@ -11,7 +11,8 @@ public struct MGVideoExportOptions: Sendable {
     public var writeSRT: Bool
     /// `mp4` only: write with a delivery preset (`MGExportPreset`: Shorts, X, lessons): its frame (the plan's frame is
     /// fitted, centred), codec (a ProRes 4444 preset writes a QuickTime file), bit rate, key frames, colour handling and
-    /// alpha. nil keeps the plan's own frame and the engine's H.264 settings. Refusals: `video2d.export.preset` (the
+    /// alpha (an alpha preset leaves the canvas clear where nothing is drawn: no board colour, no letterbox). nil keeps
+    /// the plan's own frame and the engine's H.264 settings. Refusals: `video2d.export.preset` (the
     /// preset cannot be written), `video2d.export.presetRate` (not 30 fps, the plan's rate), `video2d.export.presetDuration`
     /// (longer than the preset's `maxSeconds`).
     public var preset: MGExportPreset?
@@ -86,11 +87,13 @@ extension MGProgrammaticVideo {
             CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
         }
         defer { movie?.cancel() }
+        // An alpha preset gets frames that are clear where nothing is drawn; every other output keeps the board colour.
+        let opaque = options.format == .gif || (options.preset.map { $0.alpha == MGExportPreset.Alpha.none } ?? true)
         progress?(0, count)
         for outputIndex in 0..<count {
             try Task.checkCancellation()
             try autoreleasepool {
-                let image = try frame(outputIndex * stride, in: plan, burnCaptions: options.burnCaptions)
+                let image = try frame(outputIndex * stride, in: plan, burnCaptions: options.burnCaptions, opaque: opaque)
                 if let movie { try movie.append(image) }
                 else if let gif {
                     guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { throw MGError("video2d.budget.raster") }

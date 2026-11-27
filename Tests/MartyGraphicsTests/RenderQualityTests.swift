@@ -6,9 +6,11 @@ import SwiftUI
 import XCTest
 @_spi(Experimental) @testable import MartyGraphics
 
-/// The render-quality layer (docs/ENGINE.md): bounded easing and step transitions with a reduced-motion dissolve, label
-/// placement with leader lines, arrowhead geometry, the cached base layer, and the export presets. Numeric goldens; the
-/// one pixel check compares the two layers with the one-Canvas frame they replace.
+/// The render-quality layer (docs/ENGINE.md): bounded easing and the opt-in step transitions with a reduced-motion
+/// dissolve (`MGTransitionStyle.bounded`; the default board keeps its spring, `BoardTransitionTests`), label placement
+/// with leader lines, arrowhead geometry, the cached base layer, and the export presets. Numeric goldens; the one pixel
+/// check here compares the two layers with the one-Canvas frame they replace for one input (the hosted multi-tick check
+/// is `BoardTransitionHostTests`).
 final class RenderQualityTests: XCTestCase {
     static let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
 
@@ -276,11 +278,22 @@ final class RenderQualityTests: XCTestCase {
         XCTAssertEqual(MGExportPreset.named("x"), MGExportPreset.x)
         XCTAssertNil(MGExportPreset.named("tiktok"))
         XCTAssertEqual(MGExportPreset.shorts.colorProperties[AVVideoTransferFunctionKey] as? String, AVVideoTransferFunction_ITU_R_709_2)
-        XCTAssertEqual(MGExportPreset.lesson.colorProperties[AVVideoTransferFunctionKey] as? String, kCVImageBufferTransferFunction_sRGB as String)
+        XCTAssertEqual(MGExportPreset.lesson.colorProperties[AVVideoTransferFunctionKey] as? String, MGExportPreset.srgbTransferFunction)
+        // AVFoundation's documented sRGB constant (macOS 15, iOS 18) is the same tag as Core Video's.
+        XCTAssertEqual(MGExportPreset.srgbTransferFunction, kCVImageBufferTransferFunction_sRGB as String)
+        // Source buffers say what was drawn: sRGB (BT.709 primaries, sRGB transfer) for `srgb` and `rec709`.
+        let source = MGExportPreset.shorts.sourceAttachments
+        XCTAssertEqual(source[kCVImageBufferColorPrimariesKey as String] as? String, kCVImageBufferColorPrimaries_ITU_R_709_2 as String)
+        XCTAssertEqual(source[kCVImageBufferTransferFunctionKey as String] as? String, kCVImageBufferTransferFunction_sRGB as String)
+        XCTAssertNil(source[kCVImageBufferAlphaChannelModeKey as String], "an opaque preset says nothing about alpha")
+        XCTAssertEqual(MGExportPreset.lessonAlpha.sourceAttachments[kCVImageBufferAlphaChannelModeKey as String] as? String,
+                       kCVImageBufferAlphaChannelMode_StraightAlpha as String)
         var p3 = MGExportPreset.lesson
         p3.colorSpace = .displayP3
         XCTAssertEqual(p3.colorProperties[AVVideoColorPrimariesKey] as? String, AVVideoColorPrimaries_P3_D65)
         XCTAssertEqual(p3.drawingSpace.name as String?, CGColorSpace.displayP3 as String)
+        XCTAssertEqual(p3.sourceAttachments[kCVImageBufferColorPrimariesKey as String] as? String, kCVImageBufferColorPrimaries_P3_D65 as String,
+                       "P3 frames are drawn in P3 and their buffers say so")
         let compression = MGExportPreset.x.outputSettings[AVVideoCompressionPropertiesKey] as? [String: Any]
         XCTAssertEqual(compression?[AVVideoAverageBitRateKey] as? Int, 16_000_000)
         XCTAssertEqual(compression?[AVVideoMaxKeyFrameIntervalKey] as? Int, 30)

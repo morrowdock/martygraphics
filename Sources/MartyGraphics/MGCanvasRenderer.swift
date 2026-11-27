@@ -20,8 +20,11 @@ public struct MGRenderInput {
     public var tableRows: [String: Set<Int>] = [:]
     public var tableCells: [String: Set<Int>] = [:]
     /// Opacity per item id, 0...1 (a step transition fading items in or out, `MGStepTransition`); missing means
-    /// opaque. It multiplies the item's marks and its label.
+    /// opaque. It multiplies the item's marks and its label. Only a board that opts in to `.bounded` sets it.
     public var opacity: [String: Double] = [:]
+    /// How bodies and nodes pop while they draw on (`MGTransitionStyle`): `.spring` (the default) keeps the board's
+    /// spring, `.bounded` lands on the size with no overshoot.
+    public var transitionStyle: MGTransitionStyle = .spring
     /// Selection uses the same resolved positions and viewport that are handed to the renderer.
     func hit(_ point: CGPoint, among selectable: Set<String>? = nil) -> MGItem? {
         MGLayout.hit(point, items: items, viewport: viewport, among: selectable)
@@ -108,8 +111,8 @@ public enum MGCanvasRenderer {
             switch item.kind {
             case .body:
                 guard let c = item.pts.first.map(vp.point) else { continue }
-                // Bounded pop (no overshoot) that lands exactly on the body's size.
-                let pop = CGFloat(MGEasing.Curve.settle.at(p))
+                // The draw-on pop: the board's spring by default, a bounded settle when the board opts in.
+                let pop = CGFloat(MGBoardTransition.pop(input.transitionStyle, p))
                 let side = vp.length(item.n("size", 1)) * max(0.01, pop)
                 var body = ctx
                 body.translateBy(x: c.x, y: c.y); body.rotate(by: .degrees(-item.n("angle")))
@@ -292,7 +295,7 @@ public enum MGCanvasRenderer {
                 obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
             case .node:
                 guard let c = item.pts.first.map(vp.point) else { continue }
-                let r = vp.length(item.n("r", 0.5)) * CGFloat(MGEasing.Curve.settle.at(p))   // bounded pop
+                let r = vp.length(item.n("r", 0.5)) * CGFloat(MGBoardTransition.pop(input.transitionStyle, p))   // draw-on pop
                 let disc = Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
                 ctx.drawLayer { l in
                     l.addFilter(.shadow(color: color.opacity(0.5), radius: 8))

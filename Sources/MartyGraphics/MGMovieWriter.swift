@@ -17,6 +17,9 @@ public final class MGMovieWriter {
     private let space: CGColorSpace
     private let alpha: MGExportPreset.Alpha
     private let fits: Bool
+    /// Preset writers: the Core Video attachments each source buffer gets (`MGExportPreset.sourceAttachments`, the
+    /// space the frame was drawn in). nil for the engine's own H.264 writer, which is unchanged.
+    private let sourceAttachments: [String: Any]?
     public private(set) var frames: Int64 = 0
 
     /// H.264 4:2:0 needs even sizes: an odd width or height is written one pixel smaller (the frame is scaled).
@@ -41,28 +44,30 @@ public final class MGMovieWriter {
                                               AVVideoMaxKeyFrameIntervalKey: Int(fps) * 2, AVVideoAllowFrameReorderingKey: false],
         ]
         try self.init(url: url, fileType: .mp4, settings: settings, width: w, height: h, fps: fps, maxBufferedFrames: maxBufferedFrames,
-                      space: CGColorSpace(name: CGColorSpace.sRGB)!, alpha: .none, fits: false)
+                      space: CGColorSpace(name: CGColorSpace.sRGB)!, alpha: .none, fits: false, sourceAttachments: nil)
     }
 
     /// A writer for an export preset: its frame size, rate, codec, bit rate, key frames, colour tags and alpha
     /// (`MGExportPreset.outputSettings`), in an MP4 (H.264, HEVC) or a QuickTime file (ProRes 4444). Frames are drawn
     /// in the preset's colour space (an sRGB image is converted to Display P3 for `displayP3`), a frame of another
     /// size is fitted into the preset's frame (centred, over black, or clear with alpha), and `alpha: .straight` divides
-    /// the colours by alpha before encoding. Throws `mp4: preset <problems>` for a preset that cannot be written.
+    /// the colours by alpha before encoding. Every source buffer is tagged with the space it was drawn in and, with
+    /// alpha, how its alpha is stored (`MGExportPreset.sourceAttachments`). Throws `mp4: preset <problems>` for a preset
+    /// that cannot be written.
     public convenience init(url: URL, preset: MGExportPreset, maxBufferedFrames: Int? = nil) throws {
         let problems = preset.problems
         guard problems.isEmpty else { throw MGError("mp4: preset " + problems.joined(separator: ",")) }
         guard maxBufferedFrames.map({ (1...8).contains($0) }) ?? true else { throw MGError("mp4: buffer limit") }
         try self.init(url: url, fileType: preset.codec == .proRes4444 ? .mov : .mp4, settings: preset.outputSettings,
                       width: preset.width, height: preset.height, fps: Int32(preset.fps), maxBufferedFrames: maxBufferedFrames,
-                      space: preset.drawingSpace, alpha: preset.alpha, fits: true)
+                      space: preset.drawingSpace, alpha: preset.alpha, fits: true, sourceAttachments: preset.sourceAttachments)
     }
 
     private init(url: URL, fileType: AVFileType, settings: [String: Any], width: Int, height: Int, fps: Int32, maxBufferedFrames: Int?,
-                 space: CGColorSpace, alpha: MGExportPreset.Alpha, fits: Bool) throws {
+                 space: CGColorSpace, alpha: MGExportPreset.Alpha, fits: Bool, sourceAttachments: [String: Any]?) throws {
         self.maxBufferedFrames = maxBufferedFrames
         self.width = width; self.height = height; self.fps = fps
-        self.space = space; self.alpha = alpha; self.fits = fits
+        self.space = space; self.alpha = alpha; self.fits = fits; self.sourceAttachments = sourceAttachments
         writer = try AVAssetWriter(outputURL: url, fileType: fileType)
         input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
         input.expectsMediaDataInRealTime = false
@@ -146,6 +151,9 @@ public final class MGMovieWriter {
             MGVideoPixels.unpremultiply(base.assumingMemoryBound(to: UInt8.self), width: width, height: height, bytesPerRow: bytesPerRow)
         }
         CVPixelBufferUnlockBaseAddress(pb, [])
+        // A preset writer says what the buffer holds: the space it was drawn in and how its alpha is stored, so the
+        // encoder never has to guess (the file's own tags are the preset's `colorProperties`).
+        if let sourceAttachments { CVBufferSetAttachments(pb, sourceAttachments as CFDictionary, .shouldPropagate) }
         guard adaptor.append(pb, withPresentationTime: CMTime(value: frames, timescale: fps)) else {
             throw abandon(MGError("mp4 frame \(frames): \(writer.error.map { "\($0)" } ?? "\(writer.status.rawValue)")"))
         }

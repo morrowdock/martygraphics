@@ -165,8 +165,13 @@ public enum MGProgrammaticVideo {
     }
 
     public static func frame(_ index: Int, in plan: MGCheckedVideoPlan, burnCaptions: Bool = true) throws -> CGImage {
+        try frame(index, in: plan, burnCaptions: burnCaptions, opaque: true)
+    }
+
+    /// `opaque: false`: the frame for an alpha export preset, clear where nothing is drawn (`MGVideoDrawing.draw`).
+    static func frame(_ index: Int, in plan: MGCheckedVideoPlan, burnCaptions: Bool, opaque: Bool) throws -> CGImage {
         let elements = try MGTimeline.videoFrame(index, in: plan)
-        return try MGVideoDrawing.draw(elements, plan: plan, frame: index, burnCaptions: burnCaptions)
+        return try MGVideoDrawing.draw(elements, plan: plan, frame: index, burnCaptions: burnCaptions, opaque: opaque)
     }
 }
 
