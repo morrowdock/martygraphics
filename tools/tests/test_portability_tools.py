@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -38,6 +39,21 @@ class PortabilityMapTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(TOOLS / "portability_map.py"), "--check"],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_build_outputs_are_not_scanned(self):
+        # A Mac run builds tools/SceneValidator before this suite; SwiftPM leaves generated Swift (resource accessors,
+        # test runners) in its .build folder. Hidden folders are build outputs or environments, never sources.
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name in ["Sources/Kit/Kit.swift", "tools/Pkg/Sources/Tool/main.swift", "tools/run.py",
+                         "tools/Pkg/.build/debug/Kit.build/DerivedSources/resource_bundle_accessor.swift",
+                         "tools/Pkg/.swiftpm/xcode/Generated.swift", "tools/.venv/lib/site.py"]:
+                (root / name).parent.mkdir(parents=True, exist_ok=True)
+                (root / name).write_bytes(b"import Foundation\n" if name.endswith(".swift") else b"import os\n")
+            with patch.object(portability_map, "ROOT", root):
+                self.assertEqual([portability_map.rel(p) for p in portability_map.swift_files()],
+                                 ["Sources/Kit/Kit.swift", "tools/Pkg/Sources/Tool/main.swift"])
+                self.assertEqual([path for path, _ in portability_map.python_rows()], ["tools/run.py"])
 
     def test_strip_hides_comments_and_strings(self):
         code = portability_map.strip_swift('let a = "CGFloat" // CGPoint\n/* SCNNode */ let b: CGSize\n')

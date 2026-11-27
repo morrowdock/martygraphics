@@ -128,9 +128,16 @@ def strip_swift(source):
     return "".join(out)
 
 
+def scanned(path):
+    """False under a hidden folder: build outputs such as the generated Swift that `swift build --package-path
+    tools/SceneValidator` leaves in tools/SceneValidator/.build, or a virtual environment. They are not sources, and
+    counting them makes `--check` fail in any checkout where a package was built."""
+    return not any(part.startswith(".") for part in path.relative_to(ROOT).parts[:-1])
+
+
 def swift_files():
     # Sort by the POSIX path string: Windows Path ordering ignores case, which would change the output.
-    return sorted((p for top in SCAN for p in (ROOT / top).rglob("*.swift")), key=rel)
+    return sorted((p for top in SCAN for p in (ROOT / top).rglob("*.swift") if scanned(p)), key=rel)
 
 
 def rel(path):
@@ -261,7 +268,7 @@ def closure(start, by_path):
 
 def python_rows():
     rows = []
-    for path in sorted((ROOT / "tools").rglob("*.py"), key=rel):
+    for path in sorted((p for p in (ROOT / "tools").rglob("*.py") if scanned(p)), key=rel):
         code = ast.parse(path.read_text(encoding="utf-8"), filename=rel(path))
         names = set()
         for node in ast.walk(code):

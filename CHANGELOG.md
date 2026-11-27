@@ -142,6 +142,9 @@
   so accepted layouts cannot draw code into the reserved caption band.
 - Hide mutable movie encoder internals behind append/finish/cancel operations;
   the shared low-level writer requires an explicit experimental SPI import.
+- `tools/portability_map.py` skips files under hidden folders, so the generated Swift that SwiftPM leaves in a built
+  package's `.build` no longer makes `--check` fail on a Mac. A validate_local test fixture no longer uses two
+  folders that differ only by case, which a case-insensitive file system merges.
 
 ### Earlier entries (not sorted by type)
 

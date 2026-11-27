@@ -99,7 +99,18 @@ class FixtureRepo(unittest.TestCase):
             self.git("rm", "-r", "-q", name)
         if files:
             self.git("add", "--", *files)
+            self.assert_case_distinct()
         return self.commit_index()
+
+    def assert_case_distinct(self):
+        """Tracked paths must differ by more than case: a case-insensitive file system (APFS's default) merges two
+        folders that differ only by case, so such a fixture would test something else on a Mac than on Linux."""
+        seen = {}
+        for path in self.git("ls-files").splitlines():
+            parts = path.split("/")
+            for i in range(1, len(parts) + 1):
+                prefix = "/".join(parts[:i])
+                self.assertEqual(seen.setdefault(prefix.lower(), prefix), prefix, "fixture paths differ only by case")
 
     def commit_index(self):
         self.git("commit", "-q", "--allow-empty", "-m", "fixture")
@@ -345,17 +356,19 @@ class ManifestAndSymlinkTests(FixtureRepo):
         self.assertEqual((result["changed"], result["status"]), (["Bundled/table.json"], "FAIL"))
 
     def test_symlinked_manifest_is_read_in_the_links_package(self):
+        # The target folder is `Common`: a `Shared` folder beside FIXTURE's `shared` is the same folder on a
+        # case-insensitive file system (APFS's default), where git then tracks `shared/table.json`.
         manifest = ('let package = Package(name: "Demo", targets: [\n'
-                    '    .target(name: "Demo", path: "../../Shared")])\n')
+                    '    .target(name: "Demo", path: "../../Common")])\n')
         self.commit({"Examples/Demo/Package.swift": "// demo\n", "Examples/Demo/Sources/Demo/Demo.swift": "1\n",
-                     "templates/Demo.manifest.swift": manifest, "Shared/table.json": "{}\n"})
+                     "templates/Demo.manifest.swift": manifest, "Common/table.json": "{}\n"})
         self.stage_link("Examples/Demo/Package@swift-6.0.swift", "../../templates/Demo.manifest.swift")
         source = self.commit_index()
         receipt = dict({p: 0 for p in PACKAGES}, **{"Examples/Demo": 0})
         result = self.reuse(self.commit({"README.md": "# x\n"}), receipt, source=source)
-        self.assertTrue({"Shared", "templates/Demo.manifest.swift"} <= set(result["inputs"]))
+        self.assertTrue({"Common", "templates/Demo.manifest.swift"} <= set(result["inputs"]))
         self.assertEqual((result["links"], result["status"]), ([], "PASS"))
-        for name in ["Shared/table.json", "Shared/new.json", "templates/Demo.manifest.swift"]:
+        for name in ["Common/table.json", "Common/new.json", "templates/Demo.manifest.swift"]:
             with self.subTest(name=name):
                 result = self.reuse(self.commit({name: "changed\n"}), receipt, source=source)
                 self.assertEqual((result["changed"], result["status"]), ([name], "FAIL"))
