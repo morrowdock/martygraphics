@@ -25,6 +25,8 @@ enum CLIError: Error, CustomStringConvertible {
                                            [--component C.json ...]
                    marty-solid snapshot check SNAPSHOT.json [--component C.json ...]
                    marty-solid transcript FILE.json [--strict] [--component C.json ...]
+                   marty-solid export-captions FILE.json --format vtt|srt|txt [--size WxH] [--story-fps 10|30] [--strict]
+                                               [--component C.json ...]
                    marty-solid components [--component C.json ...]
                    marty-solid component check C.json [--component OTHER.json ...] [--with NAME=VALUE ...]
                    marty-solid reasons
@@ -218,6 +220,33 @@ func transcript(_ path: String, _ lib: MGSolidLibrary, strict: Bool) throws -> I
     let t = MGTranscript.assembly(data: src.data, file: name, library: lib, profile: profile, engine: engine)
     print(t.text)
     return t.exitCode
+}
+
+/// `export-captions`: the story video's captions (`MGCaptionExport`) as WebVTT, SubRip or a plain-text transcript on
+/// standard output (UTF-8, no byte order mark), timed as `render` times `story.mp4` at the same `--size` and
+/// `--story-fps`. The document is checked first, as for `transcript`: a refused document prints its check report.
+func exportCaptions(_ path: String, format: MGCaptionExport.Format, width: Int, height: Int, storyRate: Int, _ lib: MGSolidLibrary,
+                    strict: Bool) throws -> Int32 {
+    let profile: MGSolidProfile = strict ? .strict : .standard
+    let doc = try loadDocument(path)
+    var data = doc.data
+    switch doc.kind {
+    case "explainer"?:
+        if let big = explainerTooLarge(path, doc.data) {
+            print(json(MGExplainerReport.refused(big, profile: nil, source: nil, engine: engine).json)); return 1
+        }
+    case "lesson"?: return unsupportedKind()
+    default:
+        do { data = try load(path).data } catch let big as TooLarge {
+            print(json(MGSolidReport.refused(MGSolidIssue("assembly.bytes", limit: big.detail(limit: MGSolidLimits.bytes)), engine: engine).json))
+            return 1
+        }
+    }
+    let out = MGCaptionExport.make(data: data, format: format, library: lib, profile: profile, width: width, height: height, fps: storyRate,
+                                   engine: engine)
+    guard out.ok else { print(out.text); return out.exitCode }
+    FileHandle.standardOutput.write(Data(out.text.utf8))
+    return 0
 }
 
 /// The catalog as one line of JSON: ids, one-line descriptions, parameters with defaults and ranges, inner parts, anchors.
@@ -1276,6 +1305,30 @@ func exportGLTF(_ path: String, _ outPath: String, fps: Int, width: Int, height:
                 let paths = rest.filter { $0 != "--strict" }
                 guard paths.count == 1, !paths[0].hasPrefix("--"), rest.count - paths.count <= 1 else { throw CLIError.usage }
                 exit(try transcript(paths[0], lib, strict: rest.contains("--strict")))
+            case "export-captions"? where a.count >= 2 && !a[1].hasPrefix("--"):
+                var format: MGCaptionExport.Format?, w = 1280, h = 800, storyRate = MGStoryTiming.defaultRate, strict = false
+                var rest = Array(a.dropFirst(2))
+                while let flag = rest.first {
+                    rest.removeFirst()
+                    if flag == "--strict", !strict { strict = true; continue }
+                    guard let v = rest.first else { throw CLIError.usage }
+                    rest.removeFirst()
+                    switch flag {
+                    case "--format":
+                        guard format == nil, let f = MGCaptionExport.Format(rawValue: v) else { throw CLIError.usage }
+                        format = f
+                    case "--story-fps":
+                        guard let r = Int(v), MGStoryTiming.rates.contains(r) else { throw CLIError.usage }
+                        storyRate = r
+                    case "--size":
+                        let p = v.split(separator: "x").compactMap { Int($0) }
+                        guard p.count == 2, (320...3840).contains(p[0]), (200...2160).contains(p[1]) else { throw CLIError.usage }
+                        w = p[0]; h = p[1]
+                    default: throw CLIError.usage
+                    }
+                }
+                guard let format else { throw CLIError.usage }
+                exit(try exportCaptions(a[1], format: format, width: w, height: h, storyRate: storyRate, lib, strict: strict))
             case "components"? where a.count == 1: exit(components(lib))
             case "snapshot"? where a.count == 3 && a[1] == "check" && !a[2].hasPrefix("--"): exit(try snapshotCheck(a[2], lib))
             case "reasons"? where a.count == 1 && files.isEmpty: print(json(MGSolidReasons.json)); exit(0)

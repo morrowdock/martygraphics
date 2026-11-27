@@ -114,6 +114,14 @@
 - Note in the source why lesson and explainer reasons keep their own unknown-key rule.
 
 ### Added
+- **Captions and transcript export.** `marty-solid export-captions FILE.json --format vtt|srt|txt` and the library API
+  `MGCaptionExport` print the story video's captions as WebVTT or SubRip, or a plain-text transcript (narration, and
+  the board's `alt` text or engine description per beat), for assemblies and explainers. Cues are timed from the same
+  plan `render` uses for `story.mp4` (`--size`, `--story-fps`): each starts on the first frame of its beat's hold and
+  ends with the beat, in whole frames. At most 2 lines of 42 characters per cue, 1 s minimum, more cues past 7 s;
+  the narration's words are never rewritten; WebVTT escapes `&`, `<` and `>`; UTF-8 without a byte order mark,
+  deterministic. Golden files for two shipped documents in `docs/fixtures/captions`; a test checks every story frame
+  against the cues. Check, report and render outputs are unchanged.
 - Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes. Swift remains the authority.
 - Portability step 1, inventory and tests only (no file moves, no API change, no support claim
   for Windows, Linux or browsers): `docs/PORTABILITY-MAP.md` maps the imports of each source file,

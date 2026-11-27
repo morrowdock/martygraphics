@@ -795,6 +795,34 @@ Each beat is `{"beat", "caption", "captionNote"?, "onScreen", "tables", "highlig
 Not in the transcript: 2D items other than tables (text, vectors, plots), the legend line, and what the engine checked
 (the `check` report has the tiers and the legend).
 
+## Captions and transcript export
+
+`marty-solid export-captions FILE.json --format vtt|srt|txt [--size WxH] [--story-fps 10|30] [--strict] [--component C.json ...]`
+(`MGCaptionExport.make(data:format:library:profile:width:height:fps:)`) prints the captions of the story video
+(`story.mp4`) as WebVTT (`vtt`) or SubRip (`srt`), or a plain-text transcript (`txt`), for captions in a video player
+(WCAG 1.2.2) and a text version of the video. It reads the document and changes no check, report or render output.
+The document is checked first, as for `transcript`: a refused document prints its `check` report (exit 1), a lesson is
+`kind.unsupported`, and a story `render` would refuse gives the same `story.…` reason. Exit codes: 0, 1, 2 (usage or I/O).
+
+* **Timing.** The engine plans the story as `render` does at the same `--size` (default 1280x800) and `--story-fps`
+  (default 30): the same beats, still cameras and camera moves, so each caption appears when the video's caption
+  does, after the camera move into its beat (0.6 s; 1.0 s for a routed move; none after a cut), and ends with its
+  beat. Frame `i` plays at `i / fps` seconds; cue times are those frame times in whole milliseconds, rounded down, so
+  a player shows each cue on exactly the frames whose caption band shows it.
+* **Cues.** At most 2 lines of at most 42 characters, broken at spaces (a no-break space keeps a number with its unit).
+  A beat gets as many cues as its words need, more when one cue would last over 7 s and the words fill more full lines;
+  the words are spread over the cues in balanced lines. Each cue lasts at least 1 s, and the cues share the beat by
+  their length.
+* **Words.** The caption the video shows (placeholders filled by the engine), with the words unchanged and in order,
+  without the beat number. WebVTT writes `&`, `<` and `>` as `&amp;`, `&lt;` and `&gt;`; SubRip has no escapes, so
+  `MGCaptionExport` refuses narration with `<`, `>` or a control character (`captions.text`; checked captions never
+  have them).
+* **Transcript.** The title, then per beat `[HH:MM:SS.mmm] n. caption` (when the caption appears) and, for an
+  explainer with a board, `Text alternative: …` (the board's `alt`) or `Board (engine description): …`
+  (`MGDescribe.board` of the settled board).
+* **Files.** UTF-8 without a byte order mark, `\n` line ends, byte-identical in every run. The golden files for
+  two shipped documents are in [`docs/fixtures/captions`](fixtures/captions/README.md).
+
 ## What is not checked
 
 * Words. A caption or a 2D text is checked for numbers only, not for meaning.

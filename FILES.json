@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f07dc3ecf22ad3da9bf1cf53dc89815e28fe4b53abd798d1badb33775b3f0f35"
+      "sha256": "629208334dbe3b178952e0ed612613b9890ee8804ff968a4f55fa7ce85a708df"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -235,7 +235,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "c8813b8b050b59ff6c1d09a8c2a7aba32b46633605de6fd0b28ef2ede2863cec"
+      "sha256": "a46e0561265e2117405083160099fbb049a8910d2fdab325137f6536d72226f4"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift",
@@ -1955,7 +1955,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "0298fc3a7fd4998ec1f471e3c980cb1e88d697337e265fdbb55705fde7424f66"
+      "sha256": "4ad67f670b7abdaeba79be29eeaeca5a19ac2d0a2efb42efd2c3158b0e14bd79"
     },
     {
       "path": "docs/EXPORT.json",
@@ -3439,7 +3439,7 @@
     },
     {
       "path": "docs/PORTABILITY-MAP.md",
-      "sha256": "b6e59748e40d7b5122b0dcd51756bbfd3186d0cc13204c4f7786bd0fa1938a9b"
+      "sha256": "178f217329048abb937d74ab83e86155d8d902bfe53922352d80233167714a5f"
     },
     {
       "path": "docs/fixtures/semantics/README.md",
@@ -4007,11 +4007,11 @@
     },
     {
       "path": "docs/FAQ.md",
-      "sha256": "41e01803e04e9770c43b710e5826a5b1f2ae0e04faf9b6694b07cda368de5371"
+      "sha256": "873c8e80d10063d40e28b2854979c3b45845525dfba2466a6328b24c5a3d5879"
     },
     {
       "path": "docs/FOR-TEACHERS.md",
-      "sha256": "97c2d4bd7e64d762cc0030fa4862647cd802e33c5bc88c536b08babc2668a810"
+      "sha256": "f738c175b785ab1908625b292d4bf748b7c5e23a48f6ff2174f9926bf4ca91da"
     },
     {
       "path": "docs/GALLERY.md",
@@ -4111,7 +4111,7 @@
     },
     {
       "path": "docs/proposals/ROADMAP-VNEXT.md",
-      "sha256": "8c02e73ca8461d259d89d799e0dff9090fdce12491bee05b081e3e0fad2d4304"
+      "sha256": "164ab3a686713b9dbf29e25d24987b2ce291490438b3fb4b71ec64a2d7987205"
     },
     {
       "path": "tools/mg_expr.py",
@@ -4974,6 +4974,14 @@
       "sha256": "275cb02e3ab4659d6e0adcfe5efce64f05b0d768685470b5f4a24b0d59a56f52"
     },
     {
+      "path": "Examples/Solid3D/Tests/MartySolidCLITests/CaptionExportCLITests.swift",
+      "sha256": "97f23a4e1a4f9e906f67d2c9c853b7a2e550174a1d3c212ba5555b493e4ac337"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGCaptionExport.swift",
+      "sha256": "e742a9f86171b7850d20a95e2241967fb5da6c00d37fd5cb94ed437b8aef30cf"
+    },
+    {
       "path": "Sources/MartyGraphics/MGPlanarCurve.swift",
       "sha256": "22b805ef7bde2b03b7e43378c3b9790b0c9f7dc352a566d7c1be1b87c7d76a6f"
     },
@@ -4984,6 +4992,10 @@
     {
       "path": "Sources/MartyGraphics/MGSliders.swift",
       "sha256": "3f8377b0ec12cf8b4c09bb94565c6cd98da15f1a44f58baeb39cbe9227027830"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/CaptionExportTests.swift",
+      "sha256": "4abd09edea978e9ed391c86e494191a420450ed5dd8fbc9e788f8e933d3dadf7"
     },
     {
       "path": "Tests/MartyGraphicsTests/CurveCaseTests.swift",
@@ -5004,6 +5016,34 @@
     {
       "path": "Tests/MartyGraphicsTests/SliderTests.swift",
       "sha256": "73ae11dd0f1a5de6313307c06fb134ba489098b0c660faaeb0cca9f8e2507f1a"
+    },
+    {
+      "path": "docs/fixtures/captions/README.md",
+      "sha256": "afe24acb471f7b1916ffbad7b4d4f31554049e95e6e43ace65a481662621b4c1"
+    },
+    {
+      "path": "docs/fixtures/captions/gears-mixed.srt",
+      "sha256": "5b429e9fe686db404ca86079be0565cbd94f3c738808708eeff6816830c1240e"
+    },
+    {
+      "path": "docs/fixtures/captions/gears-mixed.txt",
+      "sha256": "857c5d337603c5c1caf3fc5fbbe75819d56ef3462b91ad67805e9be9e0e5afb7"
+    },
+    {
+      "path": "docs/fixtures/captions/gears-mixed.vtt",
+      "sha256": "e31647ee29f7ffc1e4ede2970827ed46ee6c1fdafa4fbfec2adeead6e54bc72e"
+    },
+    {
+      "path": "docs/fixtures/captions/slider-crank.srt",
+      "sha256": "6aaee4f118070996cdcd2921dd0763b01ef0411c78be6738786e4d3eed2a6de3"
+    },
+    {
+      "path": "docs/fixtures/captions/slider-crank.txt",
+      "sha256": "7f76893c9c6cd4a731237c11839916eb204a8d43344c15153cb966705af1b5f8"
+    },
+    {
+      "path": "docs/fixtures/captions/slider-crank.vtt",
+      "sha256": "afcef6dd493625df56bc271920756abf101f5a1737eae090743bbba450eefc76"
     },
     {
       "path": "docs/fixtures/semantics/parser/reject-duplicate-key.expected.json",

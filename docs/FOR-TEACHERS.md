@@ -59,7 +59,9 @@ something wrong if its words are wrong.
 - **Keep the words in sync.** If you change a value, change the sentence that quotes it. The engine will not.
 - **Give the words as text too.** Some learners cannot see the board. Provide the narration in your own materials.
   For 3D assemblies and explainer documents, `marty-solid transcript FILE.json` prints JSON with the captions, the
-  visible annotation text and the board table rows ([transcript](EXPLAINER.md#transcript)).
+  visible annotation text and the board table rows ([transcript](EXPLAINER.md#transcript)), and
+  `marty-solid export-captions FILE.json --format vtt` writes captions for the story video
+  ([captions and transcript export](EXPLAINER.md#captions-and-transcript-export)).
 
 ## AI-written boards
 

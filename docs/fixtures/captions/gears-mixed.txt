@@ -1,0 +1,7 @@
+Tooth counts set the speed
+
+[00:00:00.000] 1. Count the teeth: 15 and 30.
+Board (engine description): A table of 3 rows and 3 columns: gear, teeth, turns; small, 15, 1; big, 30, -0.5.
+
+[00:00:03.600] 2. So the big gear turns 1/2 of a turn.
+Board (engine description): A table of 3 rows and 3 columns: gear, teeth, turns; small, 15, 1; big, 30, -0.5.

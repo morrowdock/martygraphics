@@ -82,6 +82,9 @@ and measurements; see [bounds are part of the contract](CAPABILITIES.md#bounds-a
   ([glTF export](GLTF-EXPORT.md)).
 - **Text:** `marty-solid transcript FILE.json` prints JSON with the captions, the visible annotation text and the
   board table rows ([transcript](EXPLAINER.md#transcript)).
+- **Captions:** `marty-solid export-captions FILE.json --format vtt|srt|txt` prints the story video's captions as
+  WebVTT or SubRip, timed to its frames, or a plain-text transcript
+  ([captions and transcript export](EXPLAINER.md#captions-and-transcript-export)).
 - **ML explainer boards:** `marty-ml-render` writes MP4 or transparent PNG frames ([ML explainers](ML-EXPLAINER.md)).
 - **Programmatic 2D video** (`layer2d`): experimental and opt-in ([protocol](PROTOCOL.md)).
 
