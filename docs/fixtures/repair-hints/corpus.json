@@ -663,7 +663,7 @@
   },
   {
    "reason": "items.expr",
-   "hint": "a scene has at most 6 func and field items in all, template items included"
+   "hint": "a scene has at most 6 graph checks: each func and field item counts 1, and each step or over edit of one 1 more; a func with readouts counts 2, and so does each edit of its y, a, b, c, period, xr, yr, mark, shade or readouts; use fewer graphs, edits or readouts"
   },
   {
    "reason": "items.total",

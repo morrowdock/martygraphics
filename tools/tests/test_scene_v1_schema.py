@@ -238,6 +238,10 @@ class SceneV1Tests(unittest.TestCase):
             ({"items": [graph], "dim": "3d"}, "3d.kind.func"),
             ({"items": [{**graph, "y": "a*sin(x)", "a": 1}],
               "steps": [{"say": "Go.", "do": [{"id": "g", "key": "a", "value": 5000}]}]}, "func.a"),
+            # A graph with readouts weighs two checks, and so does each edit of a readout input: 2 + 3 x 2 is over six.
+            ({"items": [{**graph, "mark": 1, "readouts": ["value"]}],
+              "steps": [{"say": "Go.", "do": [{"id": "g", "key": "mark", "value": m} for m in (0.5, 1.5, 2)]}]},
+             "items.expr"),
         ]
         for update, reason in variants:
             with self.subTest(reason=reason):

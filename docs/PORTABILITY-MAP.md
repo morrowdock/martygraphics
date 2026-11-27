@@ -153,7 +153,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 
 | Module | Public declarations | Name platform types | Name `Any` |
 | --- | ---: | ---: | ---: |
-| MartyGraphics | 2654 | 78 | 10 |
+| MartyGraphics | 2655 | 78 | 10 |
 | MartyGraphicsMLKit | 31 | 2 | 0 |
 | MartyGraphicsPathTracer | 158 | 59 | 0 |
 

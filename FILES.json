@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "e6598175d9acacb0d6e55efcd33b94ac94fb2b4f397a76405bc5b6e76a545b5c"
+      "sha256": "cbea2a1b44890e8e6b5bcd5554c65a1fa54fd97c28905584f7a8d4265b4d2e91"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -807,7 +807,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "d7feaabdeeb85b33fda87baf8924c472fcf6111b6583764af2a54b8f0557eae1"
+      "sha256": "2b6b8390f5b138d1926986c5964cbca557f4863de031881e5053690fe39e0466"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -839,7 +839,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTimeline.swift",
-      "sha256": "b5ee29ed61bc4905375a0ccd2c5f69f1d1cd1b90d3303bb685eb3fde2f27c087"
+      "sha256": "1d9ea219aeb4867d98b0b8901e759a902bfcec2b421404c200bc4d8f5305ad9e"
     },
     {
       "path": "Sources/MartyGraphics/MGTween.swift",
@@ -1947,7 +1947,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "202e0ccb3ca061746e1ad32ac32e57836454c310d274ce2418ba42de89f29ad7"
+      "sha256": "b09098d487155e4bee5514a42ff6b747289a8de02f5c602a45b29b16b37838a7"
     },
     {
       "path": "docs/DISTRIBUTION.md",
@@ -1987,7 +1987,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "4ea267820c179497b8610086e9c272892eb1ba22cca885898fceaeb0f6d37a40"
+      "sha256": "504ffb8b18c2d36c5a39375267d8e2e6c9f1bff1d3e60071944c4c7904fc90d8"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -3415,7 +3415,7 @@
     },
     {
       "path": "docs/schemas/scene-v1.schema-notes.md",
-      "sha256": "d1e6f153386a1f5ff7db6b266561e7ca679ee717752710b4f4c540e803bc0895"
+      "sha256": "692f4b7ad981b9202b9552c764f7303b27f624436e2c944378fa5294def9ea8b"
     },
     {
       "path": "docs/schemas/evidence/scene-v1/studio-draft.json",
@@ -3423,11 +3423,11 @@
     },
     {
       "path": "tools/scene_v1_check.py",
-      "sha256": "360827cc1ba521dd504cca760ffb0339076a1c4e661968d72d39f00b325280d7"
+      "sha256": "5bb3c7511d1e3b01458917dab4ec8e60ddcbf3eb5dd606e800abc8a54ca4edd5"
     },
     {
       "path": "tools/tests/test_scene_v1_schema.py",
-      "sha256": "a9d184fe5bdd0af7cdee8248ec6cfd09fefc4b5340b92bfd1eed2806999d7781"
+      "sha256": "5d323708e4f9d22466a7561827474d2c3caf9b352ac75ec35a0a7df78dccede6"
     },
     {
       "path": "docs/fixtures/v1/math-label.scene.json",
@@ -3439,7 +3439,7 @@
     },
     {
       "path": "docs/PORTABILITY-MAP.md",
-      "sha256": "0be6b14a5dad0680c9302d0a615f58978eb51f9d447558659a46215fe3dcaeb2"
+      "sha256": "e1e0c3f14f1c38c27596961668fed7804f5a3cf34f19bb96d911a55c1b0b2a77"
     },
     {
       "path": "docs/fixtures/semantics/README.md",
@@ -4131,19 +4131,19 @@
     },
     {
       "path": "tools/mg_expr.py",
-      "sha256": "9cf58e84ba0b54ef3c53ac706bfe18831638d4d54e974106cff307faa236a6d0"
+      "sha256": "5dd136d25753cc873906f895f0165dc3950b7168f1ce19c7a33cbe0b52f22ae4"
     },
     {
       "path": "tools/tests/test_mg_expr.py",
-      "sha256": "18c513ed6fd605e3dfc162575fe839beb54783f8e918f3fd5c794fe2aca8c451"
+      "sha256": "71a0ac7e51a34c6aac5290302e4b06f96ed7004fe631cd1f0f09429054a0269f"
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineBoundsTests.swift",
-      "sha256": "acee074cfe8c38608e7664bbdb218372a58288efabfade0446d4cac96bd92904"
+      "sha256": "c0b52d2526ae7dcb8d3e9b1690a88cfd306da362b0120a3ee36af6fb2a39e7c2"
     },
     {
       "path": "Sources/MartyGraphics/MGRepairHint.swift",
-      "sha256": "b64ed7f0b2142298f9b572fda6dbb3afda1d6b74b3b65195d3e1456efe3a1a11"
+      "sha256": "8c66eb56f82b264aee728ccfd73e5e4f2563ab02f9fb40e172e5c0c3dab15e84"
     },
     {
       "path": "Tests/MartyGraphicsMLKitTests/MLRepairHintCorpusTests.swift",
@@ -4159,7 +4159,7 @@
     },
     {
       "path": "docs/fixtures/repair-hints/corpus.json",
-      "sha256": "0cc56844aa326a41aa4a13900c2306862e2f97e788da90c1fb01cfabcfc67106"
+      "sha256": "b43a7961e1c2a844949fcd3385904ff015c1fb1b8d524705637d087dc8a6f4f0"
     },
     {
       "path": "evals/dev-authoring/FREEZE.json",
@@ -4875,7 +4875,7 @@
     },
     {
       "path": "evals/dev-authoring/tools/hints.py",
-      "sha256": "aa05018c8b6fe741a0e87e73b433f9fb1bf9adcc2d2228e22f15cdc39223536d"
+      "sha256": "27745ffd6f85e92a362741997de7ed312a76811c8f7a9e6bd6ba9080bf35a330"
     },
     {
       "path": "evals/dev-authoring/tools/inventory.py",
@@ -4907,7 +4907,7 @@
     },
     {
       "path": "tools/tests/test_repair_hints.py",
-      "sha256": "ca3bce0ef6590741d4ab55b0ad17e072a777fb2cddcbae6a188a5ca3492adf72"
+      "sha256": "a3dbbfeaf75287710cbae4031d0f2d0a39babee8e3ab5c9a3547beb041fbae1b"
     },
     {
       "path": "tools/tests/test_scene_lint.py",
@@ -4991,7 +4991,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGReadout.swift",
-      "sha256": "2ed9dd8299677d80b8a281a26c5b8e6662985d45cd8f8eb8cd85ac64f243d321"
+      "sha256": "421f7be76b184c0c48b612c031513131cc43afabadeea5b5b1e170d9180f5894"
     },
     {
       "path": "Sources/MartyGraphics/MGSliders.swift",

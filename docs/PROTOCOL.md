@@ -202,7 +202,10 @@ through a `dim` patch or a step edit); `alt` works in 2D and 3D.
 - At most 6 graph checks per resolved scene (`items.expr`): each `func` and
   `field` item counts once, and each step or `over` edit that names one counts
   once more, because an edit checks the whole item again. So one graph can take
-  up to five step edits. All are counted before any item is evaluated. The parse
+  up to five step edits. A `func` item that computes readouts counts twice, and
+  so does each edit of it that can change a readout
+  ([readouts](#readouts-slopes-and-areas)). All are counted before any item is
+  evaluated. The parse
   cost is bounded by construction (see `MGLimits.exprItems`: at most 7,169
   evaluations of at most 48 operations per checked instant, and at most 175,140
   per parse); typical graphs need about 513. Measurements on a Mac are pending.
@@ -211,7 +214,8 @@ through a `dim` patch or a step edit); `alt` works in 2D and 3D.
   and a refused value refuses the whole scene. Two graphs with the same number of
   samples blend point by point, so a step change morphs the curve.
   `MartyGraphicsView` keeps the items of the shown step for each scene revision
-  and step, so drawing a frame does not apply the edits again.
+  and step, so drawing a frame does not apply the edits again (nor computes a
+  readout).
 
 The expression grammar is closed and evaluated by a small stack machine, never by
 the host: no `NSExpression` (whose `FUNCTION` form can invoke arbitrary methods),
@@ -530,19 +534,42 @@ model never writes these numbers itself.
   the curve as drawn.
 - Step edits re-check the item as before, and an edit may change anything
   (colour, labels, even `a`) as long as every readout the scene names keeps its
-  number (`func.readouts.edit`), because the text is filled once. A `set` patch
-  parses the whole scene again, so the readouts and every text that names them
-  are computed again.
-- Cost: an area is at most 256 enclosures (one interval pass of the expression
-  each) and 962 evaluations; a slope is one forward-mode pass at the mark (about
-  three evaluations' work) and two interval passes. An interval pass is a
-  bounded multiple of an evaluation: a product or quotient rounds its four
-  corners both ways (eight operations with a fused multiply-add each), and a
-  whole power squares once per bit of its exponent (at most about 1,100 times).
-  So six graphs with every readout add at most 6 × 258 = 1,548 interval passes
-  and 6 × 965 = 5,790 evaluations' work to a parse (`MGLimits.readouts`,
-  `MGLimits.readoutPanels`, `MGReadout.certifyBudget`). A moving graph has no
-  readouts; replaying a step edit of a graph that has them computes them again.
+  number (`func.readouts.edit`), because the text is filled once. An edit of a
+  key the readouts do not read (`color`, `label`, `xl`, `yl`, `at`, `w`, `h`)
+  keeps them without computing them again; any other key computes them again.
+  A `set` patch parses the whole scene again, so the readouts and every text
+  that names them are computed again.
+- Cost: one computation of an item's readouts is at most 258 interval passes
+  (an area certifies the curve in at most 256 enclosures, one interval pass of
+  the expression each, and a slope runs two), 962 evaluations (the area's two
+  Gauss rules and the two ends) and one forward-mode pass at the mark (the
+  slope). An interval pass is a bounded multiple of an evaluation: a product or
+  quotient rounds its four corners both ways (eight operations with a fused
+  multiply-add each), and a whole power squares once per bit of its exponent, at
+  most 54 times, because a whole exponent above 2⁵³ takes the bound of `pow`,
+  widened like the other library functions (`MGExpression.squaringLimit`). On a
+  Linux release build an interval pass cost 4 to 34 evaluations of the same
+  expression for the expressions measured (library functions, a 24-factor
+  product, `min`, `max` and `abs`, varying and whole powers, huge whole
+  exponents), and the forward-mode pass 3 to 10, so one readout computation cost
+  at most a third of one graph check (29,190 evaluations). It is priced as a
+  whole one: a `func` item that computes readouts weighs 2 of the 6 graph checks
+  (`items.expr`, `MGLimits.readoutWeight`), and so does each step or `over`
+  edit of it that can change a readout: an edit of `y`, `a`, `b`, `c`,
+  `period`, `xr`, `yr`, `mark`, `shade` or `readouts` (`MGReadout.inputKeys`;
+  an edit that gives a graph readouts makes it such a graph). An edit of any
+  other key weighs 1. So a parse computes readouts at most 3 times (774
+  interval passes, 2,886 evaluations and 3 forward-mode passes), and its graph
+  checks stay within 175,140 evaluations: a graph with readouts has no period,
+  so its own check is at most 7,169 (`MGLimits.readouts`,
+  `MGLimits.readoutPanels`, `MGReadout.certifyBudget`).
+- Frames: `MGTimeline.items` applies the step edits again, at most the parse
+  bound, and an edit that changes no readout input (`MGReadout.inputKeys`)
+  computes no readout. `MartyGraphicsView` keeps the items of the shown step
+  per scene revision and step (`MGTimelineCache`), so the readouts of a step
+  are computed at most once per scene revision and step, and a drawn frame
+  computes none. A moving graph, the only kind sampled again per frame, has no
+  readouts.
   `MGDescribe` speaks the numbers ("… shaded from x = 0 to 3.14 (signed area 2),
   marking the point (1, 0.84) where the slope is 0.54"), and
   `MGGrammar.document()` lists the names under `expression.readouts`.
@@ -815,7 +842,7 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `3d.text.code` | `code` text in a 3D scene | Use plain text in 3D, or keep the scene 2D. |
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |
-| `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs or fewer edits of them. |
+| `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them; a `func` with readouts, and each edit of it that can change one, count 2) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs, fewer edits of them or fewer readouts. |
 | `func.readouts`, `func.readouts.period` / `.mark` / `.shade` / `.slope` / `.area` / `.view` / `.edit`, `<text>.placeholder.readout` | A readout list is malformed, asked of a moving graph or without its `mark` or `shade`; a slope is not proven (a corner, cusp, vertical tangent, pole or domain edge at the mark or anywhere within a probe of it, even one the curve crosses back over before the probe); an area's analytic curve cannot be certified continuous and inside the y range within its budget (outward-rounded interval arithmetic, so a pole that cancellation hides in double precision counts), or the area cannot be computed to its shown digits, or a sample of it is outside the y range; a step edit changes a readout the text names; a text names a readout the scene does not compute | Move the `mark` more than a probe (1/1024 of a sampling interval) from every corner, pole and domain edge; shade an interval where the analytic curve is continuous and inside the y range (or widen `yr`), and write the expression without cancelling large terms (`x + 1`, not `((10^20 + x) - 10^20) + 1`); see [readouts](#readouts-slopes-and-areas). |
 | `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
 | `sliders`, `slider`, `slider.missing`, `slider.unknown.<keys>`, `slider.param`, `slider.duplicate.<p>`, `slider.min`, `slider.max`, `slider.range`, `slider.step`, `slider.step.count`, `slider.grid`, `slider.default`, `slider.label`, `slider.label.placeholder` | A slider list or slider is out of shape, or its range or step is out of bounds; a stop's label (an end's included) does not read back as exactly the value the engine would get, or its stops are too close to tell apart (`slider.grid`); its default is not exactly the value of a stop (`slider.default`); or its label is not fixed plain text | See [learner sliders](#learner-sliders); `MGRepairHint.text(for:)` gives a one-line fix. |
@@ -850,7 +877,7 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | Text lengths | Title 60, label 40, text 120, narration 200 |
 | Geometry | Plot/path points up to 64; rope points up to 6 |
 | Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text; table 8 rows × 6 columns / cells up to 12 characters; region 3–64 points |
-| Graphs (new kinds only) | 6 graph checks per scene (each `func` / `field` item, and each step or `over` edit of one); expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters; `func` readouts 3, an area on 128 panels (962 evaluations) |
+| Graphs (new kinds only) | 6 graph checks per scene (each `func` / `field` item, and each step or `over` edit of one; 2 for a `func` with readouts and each edit of it that can change one); expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters; `func` readouts 3, an area on 128 panels (962 evaluations), at most 3 readout computations per parse |
 | Sliders (new key only) | 3 per scene; range within ±1,000; at most 100 steps; 6 slider-graph pairs; labels 40 characters |
 | Raw template params | 4 KiB canonical `params` object |
 | Nesting (arrays and objects on one path) | 64 levels (`MGLimits.depth`); lessons 59 per statement |

@@ -36,13 +36,16 @@ public enum MGLimits {
     public static let exprLength = 80, exprTokens = 48, exprDepth = 8
     /// At most this many graph checks in one resolved scene (`items.expr`). Each `func` and `field` item counts once, and
     /// each step or `over` edit that targets one counts once more, because an edit checks the whole item again
-    /// (`MGParser.apply`). Both are counted before any wire item is evaluated. A `func` check costs at most 7,169
+    /// (`MGParser.apply`); a `func` item that computes readouts, and each such edit of it that can change one, counts
+    /// `readoutWeight` (`MGParser.exprWeight`, `editWeight`). All are counted before any wire item is evaluated. A `func` check costs at most 7,169
     /// evaluations per checked instant (257 samples, 512 gap probes, 768 × 8 bisection steps, 256 midpoints); a moving
     /// one is checked at 4 instants plus 2 × 257 loop values (29,190). So one parse of a scene, its edits included, is at
-    /// most 175,140 evaluations of at most 48 operations each; a typical smooth graph needs 513 per instant. A `field`
-    /// costs 2 per arrow (≤ 384). A patch or a lesson command parses the whole scene again, with the same bound per
-    /// parse. A controller keeps the items of the last 4 steps its views read (`MGTimelineCache`), so a drawn frame
-    /// does not apply the edits again, even with two boards on one controller showing different steps.
+    /// most 175,140 evaluations of at most 48 operations each, plus at most 3 readout computations (`readouts`); a
+    /// typical smooth graph needs 513 per instant. A `field` costs 2 per arrow (≤ 384). A patch or a lesson command
+    /// parses the whole scene again, with the same bound per parse. `MGTimeline.items` applies the step edits again, at
+    /// most that bound. A controller keeps the items of the last 4 steps its views read (`MGTimelineCache`), so a drawn
+    /// frame does not apply the edits again and computes no readout, even with two boards on one controller showing
+    /// different steps.
     public static let exprItems = 6
     /// A `func` is sampled on this many equal intervals (257 samples) and may break into at most `funcBreaks + 1` pieces.
     public static let funcIntervals = 256, funcBreaks = 16
@@ -61,13 +64,23 @@ public enum MGLimits {
     /// scene's parse runs at most 2 × `sliderBindings` = 12 extra `func` checks (at most 12 × 29,190 evaluations for
     /// moving graphs; typically 2 × 513). These bounds apply to the new key only; no existing limit changes.
     public static let sliders = 3, sliderSteps = 100, sliderBindings = 6
-    /// `func` readouts (`MGReadout`, wire `readouts`): at most one of each of the 3 names. An area certifies the curve
-    /// in at most `MGReadout.certifyBudget` interval passes, then runs the composite 5-point Gauss-Legendre rule on
-    /// `readoutPanels` panels and on half as many (962 evaluations with the two ends); a slope runs one forward-mode
-    /// pass and two interval passes. So six graphs with every readout add at most 1,548 interval passes and 5,790
-    /// evaluations' work to a parse (docs/PROTOCOL.md), and a timeline that replays a step edit of such a graph
-    /// computes them again. These bounds apply to the new key only.
+    /// `func` readouts (`MGReadout`, wire `readouts`): at most one of each of the 3 names, on a graph without a period.
+    /// One computation of them is at most 258 interval passes (an area certifies the curve in at most
+    /// `MGReadout.certifyBudget`, a slope runs two), 962 evaluations (the composite 5-point Gauss-Legendre rule on
+    /// `readoutPanels` panels and on half as many, and the two ends) and one forward-mode pass (the slope). A graph that
+    /// computes them weighs `readoutWeight` graph checks, and so does each edit of it that can change one (a key in
+    /// `MGReadout.inputKeys`); any other edit keeps the item's readouts, computes none and weighs 1. So a parse
+    /// computes readouts at most 3 times: at most 774 interval passes, 2,886 evaluations and 3 forward-mode passes
+    /// besides its graph checks. These bounds apply to the new key only.
     public static let readouts = 3, readoutPanels = 128
+    /// Graph checks (`exprItems`) that a `func` item computing readouts weighs, and each step or `over` edit of it that
+    /// can change a readout (`MGParser.editWeight`): one for its check and one for its readouts. A readout computation is priced as a whole check (29,190 evaluations of
+    /// the same expression). Its interval passes are bounded by construction (at most 54 squarings per whole power,
+    /// `MGExpression.squaringLimit`), and on a Linux release build an interval pass cost 4 to 34 evaluations of the same
+    /// expression for the expressions measured (docs/PROTOCOL.md, "Readouts: slopes and areas"), which puts a readout
+    /// computation at no more than a third of a check. The graph's own check is at most 7,169 evaluations, as it has no period. So the 175,140-evaluation bound of
+    /// a parse also covers its readouts, with room to spare.
+    public static let readoutWeight = 2
 }
 
 public struct MGError: Error, Equatable, CustomStringConvertible {
@@ -199,15 +212,18 @@ public enum MGParser {
         // Template output goes through the same item validator as model-written items (fail safe on template bugs too).
         var items = try (build?.items ?? []).map { try item(.object($0.wire()), ctx) }
         // Function graphs and vector fields evaluate expressions; count them, and the edits that check one again, before
-        // evaluating any wire item (`MGLimits.exprItems`).
+        // evaluating any wire item (`MGLimits.exprItems`). A graph that computes readouts weighs more (`exprWeight`).
         let templateGraphs = items.filter { $0.kind == .function || $0.kind == .field }
-        var graphs = templateGraphs.count
-        let edits = graphEdits(o, templateGraphs: Set(templateGraphs.map(\.id)), templateSteps: build?.steps ?? [])
+        let readoutIDs = readoutGraphs(o, templateItems: templateGraphs, templateSteps: build?.steps ?? [])
+        var graphs = templateGraphs.reduce(0) { $0 + (readoutIDs.contains($1.id) ? MGLimits.readoutWeight : 1) }
+        let edits = graphEdits(o, templateGraphs: Set(templateGraphs.map(\.id)), templateSteps: build?.steps ?? []) {
+            editWeight($0, key: $1, readouts: readoutIDs)
+        }
         if let raw = o["items"] {
             guard case .array(let list) = raw else { throw MGError("items") }
             let limit = build == nil ? MGLimits.items : MGLimits.templateExtras
             guard (build == nil ? 1 : 0)...limit ~= list.count else { throw MGError("items.count") }
-            graphs += list.filter(isGraphEntry).count
+            graphs += list.reduce(0) { $0 + exprWeight($1, readouts: readoutIDs) }
             guard graphs + edits <= MGLimits.exprItems else { throw MGError("items.expr") }
             // Readouts (docs/PROTOCOL.md, "Readouts: slopes and areas") are computed before any text is filled, so every
             // text of the scene can name them: each `func` item that lists them is checked first, without its texts,
@@ -290,27 +306,81 @@ public enum MGParser {
         entry["k"] == .string(MGKind.function.rawValue) || entry["k"] == .string(MGKind.field.rawValue)
     }
 
+    /// The graph checks a wire item entry weighs (`MGLimits.exprItems`): 0 unless it is a graph entry,
+    /// `MGLimits.readoutWeight` for a `func` entry that computes readouts (it lists `readouts`, or an edit gives it them:
+    /// `readoutGraphs`), else 1.
+    static func exprWeight(_ entry: MGJSON, readouts: Set<String>) -> Int {
+        guard isGraphEntry(entry) else { return 0 }
+        guard entry["k"] == .string(MGKind.function.rawValue) else { return 1 }
+        if entry["readouts"] != nil { return MGLimits.readoutWeight }
+        if case .string(let id)? = entry["id"], readouts.contains(id) { return MGLimits.readoutWeight }
+        return 1
+    }
+
+    /// The graph checks one edit of graph item `id` weighs (`MGLimits.exprItems`): `MGLimits.readoutWeight` when the
+    /// graph computes readouts (`readouts`, from `readoutGraphs`) and the edit can change one (its key is in
+    /// `MGReadout.inputKeys`, or is not a string), else 1: an edit of any other key keeps the readouts (`MGReadout.kept`)
+    /// and checks only the graph.
+    static func editWeight(_ id: String, key: String?, readouts: Set<String>) -> Int {
+        guard readouts.contains(id) else { return 1 }
+        return key.map { MGReadout.inputKeys.contains($0) } ?? true ? MGLimits.readoutWeight : 1
+    }
+
+    /// The ids of the `func` items that may compute readouts: a template `func` item that requests them, a wire `func`
+    /// entry that lists `readouts`, and a `func` item that a step or `over` edit gives `readouts` (the edits
+    /// `graphEdits` counts). Read from the raw object before any wire item is evaluated, like `graphEdits`.
+    static func readoutGraphs(_ o: [String: MGJSON], templateItems: [MGItem], templateSteps: [MGStep]) -> Set<String> {
+        let templateFuncs = Set(templateItems.filter { $0.kind == .function }.map(\.id))
+        var funcs = templateFuncs
+        var out = Set(templateItems.filter { $0.kind == .function && !MGReadout.requested($0).isEmpty }.map(\.id))
+        if case .array(let list)? = o["items"] {
+            for entry in list where entry["k"] == .string(MGKind.function.rawValue) {
+                guard case .string(let id)? = entry["id"] else { continue }
+                funcs.insert(id)
+                if entry["readouts"] != nil { out.insert(id) }
+            }
+        }
+        // The `func` item an edit gives readouts, among `ids` (`over` names template items only).
+        func gives(_ edit: MGJSON, _ ids: Set<String>) -> String? {
+            guard case .string(let id)? = edit["id"], edit["key"] == .string("readouts"), ids.contains(id) else { return nil }
+            return id
+        }
+        if case .array(let over)? = o["over"] { out.formUnion(over.compactMap { gives($0, templateFuncs) }) }
+        if let raw = o["steps"] {
+            if case .array(let steps) = raw {
+                for step in steps { if case .array(let list)? = step["do"] { out.formUnion(list.compactMap { gives($0, funcs) }) } }
+            }
+        } else {
+            for step in templateSteps { for e in step.edits where e.key == "readouts" && funcs.contains(e.id) { out.insert(e.id) } }
+        }
+        return out
+    }
+
     /// Edits that check a `func` or `field` item again: wire step edits (or, without wire steps, the template's own
     /// step edits) that name a graph item, and `over` edits that name a template graph item (`over` may only name
-    /// template items). Read from the raw object before any wire item is evaluated; a malformed entry is not counted
-    /// here, the strict parse refuses it later. The scene is at most `MGLimits.sceneBytes`, so this walk is bounded.
-    static func graphEdits(_ o: [String: MGJSON], templateGraphs: Set<String>, templateSteps: [MGStep]) -> Int {
+    /// template items), each counted with its `weight` (the graph it names and its key, if a string; 1 unless the parse
+    /// passes `editWeight`). Read from the raw object before any wire item is evaluated; a malformed entry is not
+    /// counted here, the strict parse refuses it later. The scene is at most `MGLimits.sceneBytes`, so this walk is
+    /// bounded.
+    static func graphEdits(_ o: [String: MGJSON], templateGraphs: Set<String>, templateSteps: [MGStep],
+                           weight: (_ id: String, _ key: String?) -> Int = { _, _ in 1 }) -> Int {
         var graphIDs = templateGraphs
         if case .array(let list)? = o["items"] {
             for entry in list where isGraphEntry(entry) { if case .string(let id)? = entry["id"] { graphIDs.insert(id) } }
         }
-        func names(_ edit: MGJSON, _ ids: Set<String>) -> Bool {
-            if case .string(let id)? = edit["id"] { return ids.contains(id) }
-            return false
+        func cost(_ edit: MGJSON, _ ids: Set<String>) -> Int {
+            guard case .string(let id)? = edit["id"], ids.contains(id) else { return 0 }
+            if case .string(let key)? = edit["key"] { return weight(id, key) }
+            return weight(id, nil)
         }
         var count = 0
-        if case .array(let over)? = o["over"] { count += over.filter { names($0, templateGraphs) }.count }
+        if case .array(let over)? = o["over"] { count += over.reduce(0) { $0 + cost($1, templateGraphs) } }
         if let raw = o["steps"] {
             if case .array(let steps) = raw {
-                for step in steps { if case .array(let list)? = step["do"] { count += list.filter { names($0, graphIDs) }.count } }
+                for step in steps { if case .array(let list)? = step["do"] { count += list.reduce(0) { $0 + cost($1, graphIDs) } } }
             }
         } else {
-            for step in templateSteps { count += step.edits.filter { graphIDs.contains($0.id) }.count }
+            for step in templateSteps { count += step.edits.reduce(0) { $0 + (graphIDs.contains($1.id) ? weight($1.id, $1.key) : 0) } }
         }
         return count
     }
@@ -435,7 +505,9 @@ public enum MGParser {
         return MGEdit(id: id, key: key, value: o["value"]!)
     }
 
-    /// Re-encodes the item, changes one key and re-validates it with the same rules as the wire format.
+    /// Re-encodes the item, changes one key and re-validates it with the same rules as the wire format. An edit of a
+    /// `func` item that changes no readout input (`MGReadout.inputKeys`: its colour, labels, position or size) checks
+    /// the item without its readouts and keeps their values, which `MGReadout.compute` would give again (`kept`).
     static func apply(_ e: MGEdit, to items: [MGItem], _ ctx: MGContext) throws -> [MGItem] {
         guard let index = items.firstIndex(where: { $0.id == e.id }) else { throw MGError("edit.ref") }
         var wire = items[index].wire()
@@ -443,7 +515,14 @@ public enum MGParser {
         wire[e.key] = e.value
         // Changing one end of an either/or pair removes the other.
         if e.key == "on" { wire["from"] = nil }; if e.key == "from" && items[index].kind == .vector { wire["on"] = nil }
-        var out = items; out[index] = try item(.object(wire), ctx); return out
+        var out = items
+        if let kept = MGReadout.kept(items[index], editing: e.key) {
+            wire["readouts"] = nil
+            out[index] = MGReadout.restored(try item(.object(wire), ctx), kept)
+        } else {
+            out[index] = try item(.object(wire), ctx)
+        }
+        return out
     }
 
     // MARK: items

@@ -53,11 +53,47 @@ enum MGReadout: String, CaseIterable, Sendable {
     /// The readouts a parsed item requested, in `allCases` order.
     static func requested(_ item: MGItem) -> [MGReadout] { allCases.filter { item.has($0.key) } }
 
+    /// The keys of a `func` item that its readouts depend on: the curve (`y`, `a`, `b`, `c`, `period`), its ranges
+    /// (`xr` and `yr`, which also fix the samples and pieces the slope reads), `mark`, `shade` and `readouts`. The other
+    /// keys (`at`, `w`, `h`, `color`, `label`, `xl`, `yl`) only place, size, colour or name the graph.
+    static let inputKeys: Set<String> = ["y", "a", "b", "c", "period", "xr", "yr", "mark", "shade", "readouts"]
+
+    /// The requested readouts of `item` and their values when an edit of `key` cannot change them (a key outside
+    /// `inputKeys`), else nil (also for an item without readouts, or one whose values are missing).
+    static func kept(_ item: MGItem, editing key: String) -> [(MGReadout, Double)]? {
+        guard item.kind == .function, !inputKeys.contains(key) else { return nil }
+        let list = requested(item)
+        let values = list.compactMap { r in item.num[r.key].map { (r, $0) } }
+        guard !list.isEmpty, values.count == list.count else { return nil }
+        return values
+    }
+
+    /// `item`, the edited item checked without its `readouts` key, with the `kept` readouts requested again and their
+    /// values: what `compute` gives, since none of its inputs changed.
+    static func restored(_ item: MGItem, _ kept: [(MGReadout, Double)]) -> MGItem {
+        var it = item
+        for (r, v) in kept { it.flags.insert(r.key); it.num[r.key] = v }
+        return it
+    }
+
+    /// Counts readout computations (`compute` of an item that requests readouts) while a test binds it
+    /// (`MGReadout.$probe.withValue(MGReadout.Probe()) { … }`); nil, and nothing counted, otherwise.
+    @TaskLocal static var probe: Probe?
+
+    /// A counter for `probe`, safe to share between threads.
+    final class Probe: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = 0
+        var count: Int { lock.lock(); defer { lock.unlock() }; return value }
+        func add() { lock.lock(); value += 1; lock.unlock() }
+    }
+
     /// Computes the requested readouts of a checked `func` item (after `MGGraph.checkFunction`, which stores the
     /// samples, the piece starts and the marked value) into `num`.
     static func compute(_ item: inout MGItem, _ expr: MGExpression) throws {
         let list = requested(item)
         guard !list.isEmpty else { return }
+        probe?.add()
         let x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
         let base = MGGraph.inputs(item)
         let drawn = MGCurve(samples: Array(item.pts.dropFirst()), starts: item.marked)
@@ -538,9 +574,22 @@ extension MGExpression {
         return outward(q, r > 0 ? remainder : -remainder, up: up)
     }
 
+    /// Whole exponents up to this (2⁵³: every whole number below it is a double) are raised by exact repeated squaring
+    /// (`wholePower`), at most 54 squarings per bound. A larger one, always an even number, takes the library bound of
+    /// `pow` instead, so the cost of an interval pass does not grow with the exponent (`x^(2^1000)` would square 1,000
+    /// times per bound).
+    static let squaringLimit = 0x1p53
+
     /// uⁿ for a finite u ≥ 0 and a whole n ≥ 1, by repeated squaring with every product rounded down (`up` false) or
-    /// up: a bound on the exact power, which is the power itself when every product is exact.
+    /// up: a bound on the exact power, which is the power itself when every product is exact. Above `squaringLimit`,
+    /// `pow` widened by `libraryUlps` (0 and 1 stay exact), and not finite when it overflows.
     static func wholePower(_ u: Double, _ n: Double, up: Bool) -> Double {
+        if n > squaringLimit {
+            if u == 0 || u == 1 { return u }
+            let p = pow(u, n)
+            guard p.isFinite else { return p }
+            return Swift.max(0, widened(p, up: up))
+        }
         var result = 1.0, square = u, k = n
         while true {
             if k.truncatingRemainder(dividingBy: 2) == 1 { result = Swift.max(0, product(result, square, up: up)) }

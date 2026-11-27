@@ -131,6 +131,11 @@ class RepairHintMirror(unittest.TestCase):
         self.assertIn("outside xr and yr are accepted", hint("plot.pts"))
         self.assertIn("remove angle", hint("vector.dir"))
         self.assertIn("three numbers from -1 to 1 with length above 0.01", hint("vector.dir"))
+        # items.expr: the graph checks as MGParser counts them, the readout weight (MGLimits.readoutWeight) included.
+        self.assertIn("at most 6 graph checks", hint("items.expr"))
+        self.assertIn("each step or over edit of one 1 more", hint("items.expr"))
+        self.assertIn("a func with readouts counts 2, and so does each edit of its y, a, b, c, period, xr, yr, mark, shade "
+                      "or readouts", hint("items.expr"))
 
     def test_motion_hint_states_the_parser_motion_bounds(self):
         # MGParser.validateMotion: travel, period and visual in MGLimits.bodyMoveTime (0.3...10), hold in 0...10,

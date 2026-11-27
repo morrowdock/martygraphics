@@ -53,3 +53,7 @@ Likewise the `func` and `field` kinds add bounds for the new shapes only
 `funcIntervals`, `funcBreaks`, `funcTolerance`, `funcPeriod`, `fieldCols`, `fieldRows`),
 each with its derivation in the source; a 24-item scene of existing kinds parses exactly
 as before. Their worst-case evaluation counts are computed, not yet measured on a Mac.
+The `func` readouts add `MGLimits.readouts`, `readoutPanels` and `readoutWeight` (a `func`
+with readouts, and each edit of it that can change one, weighs two of the six graph checks),
+with their work counted in
+[PROTOCOL](PROTOCOL.md#readouts-slopes-and-areas).

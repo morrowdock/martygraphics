@@ -175,6 +175,15 @@
   document lists the key and `expression.readouts`. Shared golden cases (docs/fixtures/v1/readouts.cases.json) run
   in XCTest and in `tools/mg_expr.py`; the draft schema and `tools/scene_v1_check.py` accept the key and the
   placeholders.
+- `func` readouts count toward the graph checks of a scene (`items.expr`): a `func` item that computes readouts
+  weighs two of the six, and so does each step or `over` edit of it that can change one (`MGLimits.readoutWeight`,
+  `MGParser.exprWeight`, `MGParser.editWeight`), so a parse computes readouts at most three times. An edit that
+  changes no readout input (colour, labels, position, size) weighs one, keeps the readouts without computing them,
+  and a view computes the readouts of a
+  step at most once per scene revision and step, never per frame (the previous scene's blend reads the cached step
+  items too). In interval arithmetic a whole exponent above 2⁵³ takes the bound of `pow`
+  (`MGExpression.squaringLimit`), so an interval pass squares at most 54 times per power. `tools/mg_expr.py` and
+  `tools/scene_v1_check.py` count the same way, and the `items.expr` repair hint states the weight.
 - Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).
 - The draft scene v1 schema and `tools/scene_v1_check.py` accept `func`, `field` and the scene and step `alt`
   keys. For literal scenes, the preflight runs the `tools/mg_expr.py` rules on each graph and field item.

@@ -113,6 +113,63 @@ class GraphCases(unittest.TestCase):
             mg_expr.check_scene(scene(mg_expr.EXPR_ITEMS))
         self.assertEqual(raised.exception.reason, "items.expr")
 
+    def test_a_graph_with_readouts_and_each_edit_that_can_change_them_weigh_two(self):
+        # Swift MGLimits.readoutWeight and MGParser.exprWeight (EngineBoundsTests has the same scenes).
+        self.assertEqual(mg_expr.READOUT_WEIGHT, 2)
+        graph = {"id": "g", "k": "func", "at": [1, 1], "w": 6, "h": 4, "xr": [-3, 3], "yr": [-2, 2], "y": "sin(x)",
+                 "mark": 1, "shade": [0, 1.5], "readouts": ["value", "slope", "area"]}
+        text = {"id": "t", "k": "text", "at": [8, 6], "text": "Slope {g.slope}"}
+        colour, yr = {"id": "g", "key": "color", "value": "red"}, {"id": "g", "key": "yr", "value": [-3, 3]}
+
+        def scene(edits=(), plain=0, readouts=True):
+            g = graph if readouts else {k: v for k, v in graph.items() if k != "readouts"}
+            others = [{"id": f"p{k}", "k": "func", "at": [1, 1], "w": 6, "h": 4, "xr": [-3, 3], "yr": [-2, 2],
+                       "y": f"x/{k + 2}"} for k in range(plain)]
+            steps = [{"say": "Start."}] + [{"say": f"Step {k}.", "do": [e]} for k, e in enumerate(edits)]
+            return {"v": 1, "items": [g, *others, text if readouts else {**text, "text": "Slope"}], "steps": steps}
+
+        # Two edits of a readout input weigh 2 each; a colour edit keeps the readouts and weighs 1.
+        self.assertEqual(mg_expr.graph_checks(scene([yr, yr])), 6)
+        self.assertEqual(mg_expr.graph_checks(scene([colour] * 4)), 6)
+        self.assertTrue(mg_expr.check_scene(scene([yr, yr])))
+        self.assertTrue(mg_expr.check_scene(scene([colour] * 4)))
+        self.assertTrue(mg_expr.check_scene(scene(plain=4)))
+        for over in (scene([yr, yr, colour]), scene([colour] * 5), scene(plain=5)):
+            with self.assertRaises(mg_expr.Refusal) as raised:
+                mg_expr.check_scene(over)
+            self.assertEqual(raised.exception.reason, "items.expr")
+        for key in mg_expr.FUNC_KEYS - {"id", "k"}:
+            self.assertEqual(mg_expr.edit_weight("g", key, {"g"}), 2 if key in mg_expr.READOUT_INPUT_KEYS else 1, key)
+        self.assertEqual(mg_expr.edit_weight("g", None, {"g"}), 2)
+        self.assertEqual(mg_expr.edit_weight("g", "y", set()), 1)
+        # Without readouts the same scenes fit.
+        self.assertEqual(mg_expr.graph_checks(scene([yr, yr, colour], readouts=False)), 4)
+        self.assertEqual(mg_expr.graph_checks(scene(plain=5, readouts=False)), 6)
+        # An edit that gives a graph readouts makes it, and every edit of it, weigh two; a field never has readouts.
+        raw = {"v": 1, "items": [{"id": "p", "k": "func"}, {"id": "q", "k": "func"}, {"id": "w", "k": "field"},
+                                 {"id": "b", "k": "body"}],
+               "steps": [{"say": "A.", "do": [{"id": "p", "key": "readouts", "value": ["area"]},
+                                              {"id": "w", "key": "readouts", "value": ["area"]},
+                                              {"id": "q", "key": "color", "value": "red"}]}]}
+        self.assertEqual(mg_expr.readout_graphs(raw), {"p"})
+        self.assertEqual([mg_expr.expr_weight(i, {"p"}) for i in raw["items"]], [2, 1, 1, 0])
+        self.assertEqual(mg_expr.graph_checks(raw), 4 + 4)
+
+    def test_whole_powers_above_the_squaring_limit_take_the_library_bound(self):
+        # Swift MGExpression.squaringLimit (EngineBoundsTests.testAWholePowerAboveTheSquaringLimitTakesTheLibraryBound).
+        n = 2.0 ** 60
+        self.assertGreater(n, mg_expr.SQUARING_LIMIT)
+        self.assertEqual(mg_expr._whole_power(0.0, n, True), 0.0)
+        self.assertEqual(mg_expr._whole_power(1.0, n, False), 1.0)
+        self.assertEqual(mg_expr._whole_power(1.5, n, True), math.inf)
+        for u in (0.5, 1 - 2.0 ** -52, 1 + 2.0 ** -52):
+            p = mg_expr._power(u, n)
+            lo, hi = mg_expr._whole_power(u, n, False), mg_expr._whole_power(u, n, True)
+            self.assertTrue(0 <= lo <= p <= hi, (u, lo, p, hi))
+            self.assertEqual(hi, mg_expr._widened(p, True))
+        self.assertEqual(mg_expr._whole_power(2.0, 1000.0, False), 2.0 ** 1000)
+        self.assertEqual(mg_expr._whole_power(2.0, 1000.0, True), 2.0 ** 1000)
+
     def test_documentation_scenes_pass(self):
         for name in ["graphs.scene.json", "wave.scene.json", "calculus.scene.json"]:
             with self.subTest(name=name):

@@ -215,7 +215,8 @@ extension MGTimeline {
 
 /// The visible items of one (scene revision, step), kept between frames. `MGTimeline.items` applies every edit of steps
 /// `0...step` again, and an edit of a `func` or `field` item checks the whole graph again, so a view that draws many
-/// frames of one step asks this cache instead. `items` is a pure function of the scene and the step; the key is the
+/// frames of one step asks this cache instead (a `func` edit that changes a readout input computes its readouts
+/// again, `MGReadout.inputKeys`). `items` is a pure function of the scene and the step; the key is the
 /// scene's `revision` and the step, so a cache may only be shared by scenes whose revisions name them uniquely.
 /// `MGSceneController` stamps every scene it holds with a revision it never reuses and owns one cache for its views.
 /// It keeps the last `capacity` steps read, least recently used out first, so views that share a controller and show

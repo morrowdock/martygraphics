@@ -39,6 +39,10 @@ SLIDER_BINDINGS = 6
 SLIDER_KEYS = ("param", "min", "max", "step", "default", "label")
 READOUTS = ("value", "slope", "area")
 READOUT_PANELS = 128
+# `MGLimits.readoutWeight`: graph checks a `func` item that computes readouts weighs, and each edit of it that can change
+# a readout: one of `MGReadout.inputKeys`.
+READOUT_WEIGHT = 2
+READOUT_INPUT_KEYS = frozenset({"y", "a", "b", "c", "period", "xr", "yr", "mark", "shade", "readouts"})
 # `MGReadout.certifyDepth` and `certifyBudget`: the bounded subdivision of an area readout.
 CERTIFY_DEPTH = 10
 CERTIFY_BUDGET = 256
@@ -265,6 +269,8 @@ def _slope2(op, left, dl, right, dr, constant):
 LIBRARY_ULPS = 4
 # `MGExpression.exactLimit`: below it, except at 0, a product or quotient is moved outward without looking at it.
 EXACT_LIMIT = 2.0 ** -960
+# `MGExpression.squaringLimit`: whole exponents above it take pow's bound instead of repeated squaring.
+SQUARING_LIMIT = 2.0 ** 53
 
 
 def _outward(v, error, up):
@@ -311,7 +317,15 @@ def _quotient(left, right, up):
 
 def _whole_power(u, n, up):
     """Mirror of `MGExpression.wholePower`: u ** n for a finite u >= 0 and a whole n >= 1, by repeated squaring with
-    every product rounded down or up."""
+    every product rounded down or up. Above SQUARING_LIMIT, pow widened by LIBRARY_ULPS (0 and 1 stay exact), and not
+    finite when it overflows."""
+    if n > SQUARING_LIMIT:
+        if u == 0 or u == 1:
+            return u
+        p = _power(u, n)
+        if not math.isfinite(p):
+            return p
+        return max(0.0, _widened(p, up))
     result, square, k = 1.0, u, n
     while True:
         if math.fmod(k, 2) == 1:
@@ -1609,20 +1623,73 @@ def round_half_away(value):
     return math.floor(value + 0.5) if value >= 0 else math.ceil(value - 0.5)
 
 
-def graph_edits(scene, graph_ids):
-    """Step edits that check a graph item again (Swift `MGParser.graphEdits`; malformed entries are not counted).
+def _step_edits(scene):
+    """The step edits of a scene object that are objects (malformed entries are left to the strict parse)."""
+    steps = scene.get("steps")
+    for step in steps if isinstance(steps, list) else ():
+        edits = step.get("do") if isinstance(step, dict) else None
+        for edit in edits if isinstance(edits, list) else ():
+            if isinstance(edit, dict):
+                yield edit
+
+
+def edit_weight(graph_id, key, readout_ids):
+    """Mirror of `MGParser.editWeight`: READOUT_WEIGHT for an edit of a graph that computes readouts whose key can change
+    one (in READOUT_INPUT_KEYS, or not a string), else 1."""
+    if graph_id not in readout_ids:
+        return 1
+    return READOUT_WEIGHT if not isinstance(key, str) or key in READOUT_INPUT_KEYS else 1
+
+
+def graph_edits(scene, graph_ids, readout_ids=frozenset()):
+    """Step edits that check a graph item again (Swift `MGParser.graphEdits`; malformed entries are not counted), each
+    counted with its `edit_weight`.
 
     A template's own items and steps, and `over` (which may only name template items), stay with Swift: no Python
     template builds a `func` or `field` item.
     """
     count = 0
-    steps = scene.get("steps")
-    for step in steps if isinstance(steps, list) else ():
-        edits = step.get("do") if isinstance(step, dict) else None
-        for edit in edits if isinstance(edits, list) else ():
-            if isinstance(edit, dict) and isinstance(edit.get("id"), str) and edit["id"] in graph_ids:
-                count += 1
+    for edit in _step_edits(scene):
+        if isinstance(edit.get("id"), str) and edit["id"] in graph_ids:
+            count += edit_weight(edit["id"], edit.get("key"), readout_ids)
     return count
+
+
+def readout_graphs(scene):
+    """Mirror of `MGParser.readoutGraphs` for a literal scene: the ids of the `func` items that list `readouts` or that
+    a step edit gives `readouts`."""
+    items = scene.get("items")
+    funcs, out = set(), set()
+    for item in items if isinstance(items, list) else ():
+        if isinstance(item, dict) and item.get("k") == "func" and isinstance(item.get("id"), str):
+            funcs.add(item["id"])
+            if "readouts" in item:
+                out.add(item["id"])
+    for edit in _step_edits(scene):
+        if edit.get("key") == "readouts" and isinstance(edit.get("id"), str) and edit["id"] in funcs:
+            out.add(edit["id"])
+    return out
+
+
+def expr_weight(item, readout_ids):
+    """Mirror of `MGParser.exprWeight`: the graph checks a wire item weighs; 0 unless it is a `func` or `field` item,
+    READOUT_WEIGHT for a `func` item that computes readouts, else 1."""
+    if not (isinstance(item, dict) and item.get("k") in ("func", "field")):
+        return 0
+    if item["k"] == "func" and ("readouts" in item or (isinstance(item.get("id"), str) and item["id"] in readout_ids)):
+        return READOUT_WEIGHT
+    return 1
+
+
+def graph_checks(scene):
+    """The graph checks of a literal scene that `MGLimits.exprItems` bounds (`items.expr`): each `func` and `field`
+    item and each step edit of one, a `func` that computes readouts (and each edit of it that can change one) weighing
+    READOUT_WEIGHT."""
+    items = scene.get("items")
+    items = items if isinstance(items, list) else []
+    readout_ids = readout_graphs(scene)
+    graph_ids = {item["id"] for item in items if expr_weight(item, readout_ids) and isinstance(item.get("id"), str)}
+    return sum(expr_weight(item, readout_ids) for item in items) + graph_edits(scene, graph_ids, readout_ids)
 
 
 def check_scene(scene):
@@ -1645,9 +1712,9 @@ def check_scene(scene):
         world = (_num(raw["w"], WORLD[0], WORLD[1], "world.w"), _num(raw["h"], WORLD[0], WORLD[1], "world.h"))
     items = scene.get("items", [])
     graphs = [item for item in items if isinstance(item, dict) and item.get("k") in ("func", "field")]
-    # Each graph item counts once and each step edit of one once more: an edit checks the whole item again.
-    graph_ids = {item["id"] for item in graphs if isinstance(item.get("id"), str)}
-    if len(graphs) + graph_edits(scene, graph_ids) > EXPR_ITEMS:
+    # Each graph item counts once and each step edit of one once more: an edit checks the whole item again. A `func`
+    # that computes readouts, and each edit of it that can change one, counts READOUT_WEIGHT.
+    if graph_checks(scene) > EXPR_ITEMS:
         raise Refusal("items.expr")
     # Readouts first, as `MGParser.parseScene` computes them: each `func` that lists them is checked without its
     # texts, in order, and every text of the scene can then name them.

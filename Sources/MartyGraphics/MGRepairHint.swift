@@ -155,7 +155,7 @@ public enum MGRepairHint {
         ("table.marked", "marked holds [row, column] pairs inside the table (row 0 is the first row)"),
         ("table.cw", "cw is 0.3 to a third of the world's larger side"),
         ("table.rh", "rh is 0.3 to a sixth of the world's larger side"),
-        ("items.expr", "a scene has at most 6 func and field items in all, template items included"),
+        ("items.expr", "a scene has at most 6 graph checks: each func and field item counts 1, and each step or over edit of one 1 more; a func with readouts counts 2, and so does each edit of its y, a, b, c, period, xr, yr, mark, shade or readouts; use fewer graphs, edits or readouts"),
         ("func.y.var.*", "y may read x, the parameters a, b and c that the item sets, and t only when the item has a period"),
         ("field.d*.var.*", "dx and dy may read x, y and the parameters a, b and c that the item sets; a field has no t"),
         ("func.y.syntax", "the expression is malformed: write every multiplication (2*x, not 2x), close each parenthesis, put a comma between the two arguments of min and max, and write numbers like 2, 0.5 or .5 (no exponent, at most 12 characters)"),

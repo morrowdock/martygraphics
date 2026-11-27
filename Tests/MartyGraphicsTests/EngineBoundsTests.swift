@@ -3,8 +3,9 @@ import Foundation
 import XCTest
 @testable import MartyGraphics
 
-/// Work bounds of the 2D engine: graph checks per scene (`items.expr` counts graph edits), the timeline items cache and
-/// the stream preview. Ordinary scenes at and just over each limit.
+/// Work bounds of the 2D engine: graph checks per scene (`items.expr` counts graph edits, and a graph with readouts
+/// weighs more), the timeline items cache, readouts on the frame path and the stream preview. Ordinary scenes at and
+/// just over each limit.
 final class EngineBoundsTests: XCTestCase {
     static func json(_ s: String) -> MGJSON { MGJSON(any: try! JSONSerialization.jsonObject(with: Data(s.utf8)))! }
 
@@ -111,6 +112,151 @@ final class EngineBoundsTests: XCTestCase {
         let second = try XCTUnwrap(parser.feed(#"{"id":"c","k":"body","at":[6,4]}]}"#))
         XCTAssertEqual(second.steps.count, 1)
         XCTAssertEqual(Set(second.items.map(\.id)), ["b", "c"])
+    }
+
+    // MARK: readouts
+
+    /// A `func` item `g` with every readout, `plain` more graphs without readouts, a text naming `g`'s slope, and one
+    /// step per edit after a first step without edits.
+    static func readoutScene(edits: [String] = [], plain: Int = 0) -> String {
+        let g = #"{"id":"g","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"sin(x)","mark":1,"shade":[0,1.5],"#
+            + #""readouts":["value","slope","area"]}"#
+        let others = (0..<plain).map { #",{"id":"p\#($0)","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"x/\#($0 + 2)"}"# }
+        let text = #",{"id":"t","k":"text","at":[8,6],"text":"Slope {g.slope}"}"#
+        let steps = [#"{"say":"Start."}"#] + edits.enumerated().map { #"{"say":"Step \#($0.offset + 1).","do":[\#($0.element)]}"# }
+        return #"{"v":1,"items":["# + g + others.joined() + text + #"],"steps":["# + steps.joined(separator: ",") + "]}"
+    }
+
+    static let colour = #"{"id":"g","key":"color","value":"red"}"#
+    /// An edit of a readout input (`MGReadout.inputKeys`) that leaves every readout as it was.
+    static let range = #"{"id":"g","key":"yr","value":[-3,3]}"#
+
+    func testAGraphWithReadoutsAndEachEditThatCanChangeThemWeighTwoGraphChecks() throws {
+        XCTAssertEqual(MGLimits.readoutWeight, 2)
+        // The graph and two edits of a readout input, 2 each: six checks, the limit. One more edit is over it.
+        XCTAssertNoThrow(try MGParser.scene(data: Data(Self.readoutScene(edits: [Self.range, Self.range]).utf8)).get())
+        XCTAssertEqual(Self.reason(Self.readoutScene(edits: [Self.range, Self.range, Self.colour])), "items.expr")
+        // A colour edit keeps the readouts and weighs 1: the graph and four of them are six, five are over.
+        XCTAssertNoThrow(try MGParser.scene(data: Data(Self.readoutScene(edits: Array(repeating: Self.colour, count: 4)).utf8)).get())
+        XCTAssertEqual(Self.reason(Self.readoutScene(edits: Array(repeating: Self.colour, count: 5))), "items.expr")
+        // The graph (2) and four plain graphs (1 each) are six; five plain graphs are over.
+        XCTAssertNoThrow(try MGParser.scene(data: Data(Self.readoutScene(plain: 4).utf8)).get())
+        XCTAssertEqual(Self.reason(Self.readoutScene(plain: 5)), "items.expr")
+        // Without readouts the same scenes fit (1 + 3 edits; 1 + 5 graphs).
+        let bare = { (s: String) in s.replacingOccurrences(of: #","readouts":["value","slope","area"]"#, with: "")
+            .replacingOccurrences(of: "Slope {g.slope}", with: "Slope") }
+        XCTAssertNoThrow(try MGParser.scene(data: Data(bare(Self.readoutScene(edits: [Self.range, Self.range, Self.colour])).utf8)).get())
+        XCTAssertNoThrow(try MGParser.scene(data: Data(bare(Self.readoutScene(plain: 5)).utf8)).get())
+        // Every key a `func` allows: the ones the readouts read weigh 2, the others 1, and a graph without readouts 1.
+        for key in MGParser.allowedKeys(.function) {
+            XCTAssertEqual(MGParser.editWeight("g", key: key, readouts: ["g"]), MGReadout.inputKeys.contains(key) ? 2 : 1, key)
+            XCTAssertEqual(MGParser.editWeight("g", key: key, readouts: []), 1, key)
+        }
+        XCTAssertEqual(MGParser.editWeight("g", key: nil, readouts: ["g"]), 2, "a key that is not a string counts as an input")
+        // The refusal comes with a repair hint that states the weight.
+        let hint = try XCTUnwrap(MGRepairHint.text(for: "items.expr"))
+        XCTAssertTrue(hint.contains("a func with readouts counts 2"), hint)
+    }
+
+    func testReadoutGraphsAndExprWeightReadTheRawScene() {
+        let o = Self.json(#"{"v":1,"items":[{"id":"g","k":"func","readouts":["value"]},{"id":"p","k":"func"},"#
+            + #"{"id":"q","k":"func"},{"id":"w","k":"field"},{"id":"b","k":"body"}],"#
+            + #""steps":[{"say":"A.","do":[{"id":"p","key":"readouts","value":["area"]},{"id":"w","key":"readouts","value":["area"]},"#
+            + #"{"id":"q","key":"color","value":"red"},{"id":"g","key":"label","value":"G"}]}]}"#).objectValue!
+        // `g` lists readouts and an edit gives `p` them; a field never has readouts.
+        let ids = MGParser.readoutGraphs(o, templateItems: [], templateSteps: [])
+        XCTAssertEqual(ids, ["g", "p"])
+        guard case .array(let items)? = o["items"] else { return XCTFail("items") }
+        XCTAssertEqual(items.map { MGParser.exprWeight($0, readouts: ids) }, [2, 2, 1, 1, 0])
+        // An edit weighs 2 when its graph computes readouts and its key can change one: p's readouts 2, w 1, q 1 and
+        // g's label 1 (a label keeps the readouts).
+        XCTAssertEqual(MGParser.graphEdits(o, templateGraphs: [], templateSteps: []) { MGParser.editWeight($0, key: $1, readouts: ids) }, 5)
+        XCTAssertEqual(MGParser.graphEdits(o, templateGraphs: [], templateSteps: []), 4)
+        // A template `func` item that requests readouts, and one a template step edit gives them.
+        var withReadouts = MGItem(id: "tg", kind: .function, color: .accent); withReadouts.flags.insert(MGReadout.area.key)
+        var step = MGStep(say: "A."); step.edits = [MGEdit(id: "tf", key: "readouts", value: .array([.string("value")]))]
+        XCTAssertEqual(MGParser.readoutGraphs([:], templateItems: [withReadouts, MGItem(id: "tf", kind: .function, color: .accent)], templateSteps: [step]),
+                       ["tg", "tf"])
+        // `over` names template items only, as `graphEdits` counts it.
+        let over = Self.json(#"{"over":[{"id":"tf","key":"readouts","value":["value"]},{"id":"g","key":"readouts","value":["value"]}],"#
+            + #""items":[{"id":"g","k":"func"}]}"#).objectValue!
+        XCTAssertEqual(MGParser.readoutGraphs(over, templateItems: [MGItem(id: "tf", kind: .function, color: .accent)], templateSteps: []),
+                       ["tf"])
+    }
+
+    /// The view draws every frame from `MGSceneController.timelineItems`: the step's items, and so its readouts, are
+    /// computed once per (scene revision, step), never per frame.
+    @MainActor
+    func testTheFramePathComputesReadoutsOncePerRevisionAndStep() throws {
+        let probe = MGReadout.Probe()
+        try MGReadout.$probe.withValue(probe) {
+            let parsed = try MGParser.scene(data: Data(Self.readoutScene(edits: [Self.range]).utf8)).get()
+            XCTAssertEqual(probe.count, 2, "the graph, then the yr edit (a readout input) when the steps are checked")
+            let controller = MGSceneController(scene: parsed)
+            let scene = try XCTUnwrap(controller.scene)
+            var slopes = Set<Double>()
+            for frame in 0..<120 {
+                let items = MGTimeline.frame(scene, items: controller.timelineItems(scene, step: 1), time: Double(frame) / 60)
+                slopes.insert(try XCTUnwrap(items.first { $0.id == "g" }?.num[MGReadout.slope.key]))
+            }
+            XCTAssertEqual(slopes, [cos(1)])
+            XCTAssertEqual(controller.timeline.computed, 1)
+            XCTAssertEqual(probe.count, 3, "one cache fill applies the yr edit; 120 frames compute nothing")
+            for frame in 0..<60 { _ = MGTimeline.frame(scene, items: controller.timelineItems(scene, step: 0), time: Double(frame) / 60) }
+            XCTAssertEqual(controller.timeline.computed, 2)
+            XCTAssertEqual(probe.count, 3, "step 0 applies no edit")
+        }
+    }
+
+    func testAColourEditKeepsTheReadoutsWithoutComputingThem() throws {
+        let probe = MGReadout.Probe()
+        try MGReadout.$probe.withValue(probe) {
+            let scene = try MGParser.scene(data: Data(Self.readoutScene(edits: [Self.colour]).utf8)).get()
+            XCTAssertEqual(probe.count, 1, "the graph's own check; the colour edit computes no readout")
+            let cache = MGTimelineCache()
+            for _ in 0..<60 { _ = cache.items(scene, step: 1) }
+            XCTAssertEqual(cache.computed, 1)
+            XCTAssertEqual(probe.count, 1, "nor does the cache fill that applies it")
+            // The kept readouts are exactly what a full check of the edited item gives.
+            let edited = try XCTUnwrap(cache.items(scene, step: 1).first { $0.id == "g" })
+            XCTAssertEqual(edited.color, .red)
+            var wire = try XCTUnwrap(scene.item("g")).wire()
+            wire["color"] = .string("red")
+            let ctx = MGContext(width: scene.width, height: scene.height, is3D: scene.is3D, values: scene.values)
+            XCTAssertEqual(edited, try MGParser.item(.object(wire), ctx))
+            XCTAssertEqual(probe.count, 2, "the full check computes them")
+            // Every key outside `MGReadout.inputKeys` keeps them; every input key computes them again.
+            let original = try XCTUnwrap(scene.item("g"))
+            for key in MGParser.allowedKeys(.function) {
+                XCTAssertEqual(MGReadout.kept(original, editing: key) == nil, MGReadout.inputKeys.contains(key), key)
+            }
+            XCTAssertEqual(MGReadout.inputKeys.subtracting(MGParser.allowedKeys(.function)), [])
+        }
+    }
+
+    func testAWholePowerAboveTheSquaringLimitTakesTheLibraryBound() {
+        let n = 0x1p60
+        XCTAssertGreaterThan(n, MGExpression.squaringLimit)
+        // 0 and 1 stay exact; an overflow is not finite, as for repeated squaring.
+        XCTAssertEqual(MGExpression.wholePower(0, n, up: true), 0)
+        XCTAssertEqual(MGExpression.wholePower(1, n, up: false), 1)
+        XCTAssertEqual(MGExpression.wholePower(1.5, n, up: true), .infinity)
+        // A bound on each side of pow, at most `libraryUlps` doubles from it, never below 0.
+        for u in [0.5, 1 - 0x1p-52, 1 + 0x1p-52] {
+            let p = pow(u, n), lo = MGExpression.wholePower(u, n, up: false), hi = MGExpression.wholePower(u, n, up: true)
+            XCTAssertLessThanOrEqual(lo, p); XCTAssertGreaterThanOrEqual(hi, p); XCTAssertGreaterThanOrEqual(lo, 0)
+            XCTAssertEqual(hi, MGExpression.widened(p, up: true))
+        }
+        // Up to the limit, repeated squaring as before: exact bounds stay exact.
+        XCTAssertEqual(MGExpression.wholePower(2, 1000, up: false), 0x1p1000)
+        XCTAssertEqual(MGExpression.wholePower(2, 1000, up: true), 0x1p1000)
+        XCTAssertEqual(MGExpression.wholePower(0.5, 3, up: false), 0.125)
+        XCTAssertEqual(MGExpression.wholePower(0.5, 3, up: true), 0.125)
+        // An enclosure of x^(2^60) over [0.3, 0.31] holds 0 and is finite.
+        let e = try? MGExpression.compile("x^(2^60)", allowed: [.x], reason: "func.y")
+        let bounds = e?.enclosure(MGExpression.Inputs(), 0.3, 0.31)
+        XCTAssertEqual(bounds?.lo, 0)
+        XCTAssertEqual(bounds.map { $0.hi.isFinite && $0.hi >= 0 }, true)
     }
 }
 

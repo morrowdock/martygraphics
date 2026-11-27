@@ -445,9 +445,9 @@ def scene_rules(scene):
     world = scene.get("world", {"w": 12, "h": 8})
     dimensions = None if template else (world["w"], world["h"])
     items = {}
-    graphs = [item for item in scene.get("items", ()) if item["k"] in ("func", "field")]
-    # Each graph item counts once and each step edit of one once more (Swift `MGLimits.exprItems`).
-    if len(graphs) + mg_expr.graph_edits(scene, {item["id"] for item in graphs}) > mg_expr.EXPR_ITEMS:
+    # Each graph item counts once and each step edit of one once more, a `func` with readouts (and each edit of it that
+    # can change one) READOUT_WEIGHT (Swift `MGLimits.exprItems`, `MGParser.exprWeight`, `MGParser.editWeight`).
+    if mg_expr.graph_checks(scene) > mg_expr.EXPR_ITEMS:
         raise Invalid("items.expr")
     # Readouts: Swift computes each `func` item's readouts before any text is filled (MGParser.parseScene), so every
     # text of the scene can name them. For literal scenes only, as the other graph rules.
