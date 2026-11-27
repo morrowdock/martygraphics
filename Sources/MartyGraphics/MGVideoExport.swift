@@ -13,7 +13,8 @@ public struct MGVideoExportOptions: Sendable {
     /// fitted, centred), codec (a ProRes 4444 preset writes a QuickTime file), bit rate, key frames, colour handling and
     /// alpha (an alpha preset leaves the canvas clear where nothing is drawn: no board colour, no letterbox). nil keeps
     /// the plan's own frame and the engine's H.264 settings. Refusals: `video2d.export.preset` (the
-    /// preset cannot be written), `video2d.export.presetRate` (not 30 fps, the plan's rate), `video2d.export.presetDuration`
+    /// preset cannot be written), `video2d.export.presetAlpha` (a preset with alpha before macOS 15 and iOS 18, where
+    /// Core Video cannot state the alpha mode), `video2d.export.presetRate` (not 30 fps, the plan's rate), `video2d.export.presetDuration`
     /// (longer than the preset's `maxSeconds`).
     public var preset: MGExportPreset?
     public init(format: Format = .mp4, burnCaptions: Bool = true, writeSRT: Bool = true, preset: MGExportPreset? = nil) {
@@ -45,6 +46,12 @@ extension MGProgrammaticVideo {
 
     public static func export(_ plan: MGCheckedVideoPlan, to destination: URL, options: MGVideoExportOptions = .init(),
                               programmaticVideo: Bool = false, progress: (@Sendable (Int, Int) -> Void)? = nil) async throws -> MGVideoExportReceipt {
+        try await export(plan, to: destination, options: options, programmaticVideo: programmaticVideo, system: .current, progress: progress)
+    }
+
+    /// `export(_:to:options:programmaticVideo:progress:)` on `system` (tests pass an older system to check its refusal).
+    static func export(_ plan: MGCheckedVideoPlan, to destination: URL, options: MGVideoExportOptions, programmaticVideo: Bool,
+                       system: MGExportSystem, progress: (@Sendable (Int, Int) -> Void)?) async throws -> MGVideoExportReceipt {
         guard programmaticVideo else { throw MGError("video2d.optIn") }
         try Task.checkCancellation()
         guard destination.isFileURL else { throw MGError("video2d.export.destination") }
@@ -57,6 +64,7 @@ extension MGProgrammaticVideo {
         case .mp4:
             if let preset = options.preset {
                 guard preset.problems.isEmpty else { throw MGError("video2d.export.preset") }
+                guard preset.problems(on: system).isEmpty else { throw MGError("video2d.export.presetAlpha") }
                 guard preset.fps == 30 else { throw MGError("video2d.export.presetRate") }
                 guard preset.maxSeconds.map({ Double(plan.durationFrames) / 30 <= $0 + 1e-9 }) ?? true else { throw MGError("video2d.export.presetDuration") }
                 width = preset.width; height = preset.height
@@ -78,7 +86,7 @@ extension MGProgrammaticVideo {
         var movie: MGMovieWriter?
         var gif: CGImageDestination?
         if options.format == .mp4 {
-            if let preset = options.preset { movie = try MGMovieWriter(url: partial, preset: preset, maxBufferedFrames: 8) }
+            if let preset = options.preset { movie = try MGMovieWriter(url: partial, preset: preset, maxBufferedFrames: 8, system: system) }
             else { movie = try MGMovieWriter(url: partial, width: width, height: height, fps: 30, maxBufferedFrames: 8) }
         }
         else {

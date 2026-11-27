@@ -23,7 +23,9 @@ public struct MGExportPreset: Equatable, Sendable {
         case srgb
         /// Drawn in sRGB; the file asks for BT.709 throughout (primaries, transfer function and matrix, "1-1-1"), the
         /// tags upload transcoders (YouTube, X) read. The source buffers say sRGB, so an encoder that colour-matches
-        /// converts the transfer function on the way; whether it does is part of the pending decoded check.
+        /// converts the transfer function on the way; whether it does is part of the pending decoded check. If that
+        /// check finds sRGB samples under the BT.709 tags, the planned resolution is to draw these frames in
+        /// `CGColorSpace.itur_709`, so the samples match the tags.
         case rec709
         /// Drawn in Display P3 (an sRGB image is converted when drawn); the file asks for P3-D65 primaries, the sRGB
         /// transfer function and the BT.709 matrix. sRGB content keeps its look; only content drawn in P3 gains colours.
@@ -147,20 +149,13 @@ public struct MGExportPreset: Equatable, Sendable {
         CGColorSpace(name: colorSpace == .displayP3 ? CGColorSpace.displayP3 : CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
     }
 
-    /// The sRGB transfer function tag: AVFoundation's documented `AVVideoTransferFunction_IEC_sRGB` where the OS has
-    /// it (macOS 15, iOS 18), else Core Video's `kCVImageBufferTransferFunction_sRGB`, the same "IEC_sRGB" tag that the
-    /// engine's own MP4s have always used.
-    public static var srgbTransferFunction: String {
-        if #available(macOS 15.0, iOS 18.0, *) { return AVVideoTransferFunction_IEC_sRGB }
-        return kCVImageBufferTransferFunction_sRGB as String
-    }
-
-    /// The AVFoundation colour tags the file asks for (tags requested; decoded check pending, see `ColorSpace`).
+    /// The AVFoundation colour tags the file asks for (tags requested; decoded check pending, see `ColorSpace`). The
+    /// sRGB transfer function is AVFoundation's documented `AVVideoTransferFunction_IEC_sRGB` (macOS 10.15, iOS 13).
     public var colorProperties: [String: Any] {
         switch colorSpace {
         case .srgb:
             return [AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
-                    AVVideoTransferFunctionKey: MGExportPreset.srgbTransferFunction,
+                    AVVideoTransferFunctionKey: AVVideoTransferFunction_IEC_sRGB,
                     AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2]
         case .rec709:
             return [AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
@@ -168,26 +163,37 @@ public struct MGExportPreset: Equatable, Sendable {
                     AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2]
         case .displayP3:
             return [AVVideoColorPrimariesKey: AVVideoColorPrimaries_P3_D65,
-                    AVVideoTransferFunctionKey: MGExportPreset.srgbTransferFunction,
+                    AVVideoTransferFunctionKey: AVVideoTransferFunction_IEC_sRGB,
                     AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2]
         }
     }
 
     /// The Core Video attachments of every source pixel buffer: the space the frame was actually drawn in
     /// (`drawingSpace`: sRGB, or Display P3 for `displayP3`) as primaries, transfer function and colour space, and for
-    /// an alpha preset how the alpha is stored (straight or premultiplied).
+    /// an alpha preset how the alpha is stored (straight or premultiplied). Core Video can state the alpha mode
+    /// (`kCVImageBufferAlphaChannelModeKey`) from macOS 15 and iOS 18 only; before that an alpha preset is refused
+    /// (`problems(on:)`), so no alpha buffer is ever written without it.
     var sourceAttachments: [String: Any] {
         var a: [String: Any] = [
             kCVImageBufferColorPrimariesKey as String: (colorSpace == .displayP3 ? kCVImageBufferColorPrimaries_P3_D65 : kCVImageBufferColorPrimaries_ITU_R_709_2) as String,
             kCVImageBufferTransferFunctionKey as String: kCVImageBufferTransferFunction_sRGB as String,
             kCVImageBufferCGColorSpaceKey as String: drawingSpace,
         ]
-        switch alpha {
-        case .none: break
-        case .straight: a[kCVImageBufferAlphaChannelModeKey as String] = kCVImageBufferAlphaChannelMode_StraightAlpha as String
-        case .premultiplied: a[kCVImageBufferAlphaChannelModeKey as String] = kCVImageBufferAlphaChannelMode_PremultipliedAlpha as String
+        if alpha != .none {
+            if #available(macOS 15.0, iOS 18.0, *) {
+                a[kCVImageBufferAlphaChannelModeKey as String] = (alpha == .straight ? kCVImageBufferAlphaChannelMode_StraightAlpha
+                                                                                     : kCVImageBufferAlphaChannelMode_PremultipliedAlpha) as String
+            }
         }
         return a
+    }
+
+    /// What stops the preset from being written on `system`: `problems`, then `alphaMode` for a preset with alpha on a
+    /// system that cannot state how a source buffer's alpha is stored (before macOS 15 and iOS 18). Without that tag
+    /// the encoder would have to guess whether the colours are straight or premultiplied, so the alpha master is
+    /// refused there instead of written with alpha that may be read wrongly.
+    func problems(on system: MGExportSystem) -> [String] {
+        problems + (alpha != .none && !system.tagsAlphaMode ? ["alphaMode"] : [])
     }
 
     /// The `AVAssetWriterInput` output settings. H.264 and HEVC: the bit rate, the key-frame interval and no frame
@@ -209,6 +215,18 @@ public struct MGExportPreset: Equatable, Sendable {
             o[AVVideoCodecKey] = AVVideoCodecType.proRes4444
         }
         return o
+    }
+}
+
+/// What the running system can tag on an export (internal; tests pass an older system to check its refusals).
+struct MGExportSystem: Equatable, Sendable {
+    /// Core Video can state a pixel buffer's alpha mode (`kCVImageBufferAlphaChannelModeKey`: macOS 15, iOS 18).
+    var tagsAlphaMode: Bool
+
+    /// The system this code runs on.
+    static var current: MGExportSystem {
+        if #available(macOS 15.0, iOS 18.0, *) { return MGExportSystem(tagsAlphaMode: true) }
+        return MGExportSystem(tagsAlphaMode: false)
     }
 }
 

@@ -10,8 +10,9 @@ import XCTest
 /// Decoded checks of the export presets (docs/ENGINE.md, "Export presets"). A ProRes 4444 alpha master of a 2D video
 /// is decoded and checked for its codec, a fully clear region, a half-transparent shape and antialiased edges
 /// composited over light and dark. Colour patches written with the BT.709, sRGB and Display P3 presets are decoded and
-/// the track's colour tags read; one P3 patch lies outside sRGB. Until these run on a Mac, the docs say "tags
-/// requested; decoded check pending".
+/// the track's colour tags read; one P3 patch lies outside sRGB. Before macOS 15 and iOS 18 an alpha preset is refused
+/// (Core Video cannot state the alpha mode there). Until these run on a Mac, the docs say "tags requested; decoded
+/// check pending".
 final class ExportDecodeTests: XCTestCase {
     func temporaryFolder() throws -> URL {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("mg-decode-\(UUID().uuidString)")
@@ -24,7 +25,8 @@ final class ExportDecodeTests: XCTestCase {
     struct Frame {
         let width: Int, height: Int, bytesPerRow: Int
         let bytes: [UInt8]
-        /// The decoder says its colours are multiplied by alpha (`kCVImageBufferAlphaChannelModeKey`).
+        /// The decoder says its colours are multiplied by alpha (`kCVImageBufferAlphaChannelModeKey`, macOS 15 and
+        /// iOS 18; false where the system cannot say).
         let premultiplied: Bool
 
         /// The pixel at canvas point (x, y), y counted up from the bottom as the drawing was (buffer rows run down).
@@ -44,8 +46,11 @@ final class ExportDecodeTests: XCTestCase {
 
     func decode(_ url: URL) async throws -> (frames: [Frame], description: CMFormatDescription) {
         let asset = AVURLAsset(url: url)
-        let track = try XCTUnwrap(try await asset.loadTracks(withMediaType: .video).first)
-        let description = try XCTUnwrap(try await track.load(.formatDescriptions).first)
+        // `XCTUnwrap` takes a synchronous autoclosure: await first, then unwrap.
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        let track = try XCTUnwrap(tracks.first, "no video track")
+        let descriptions = try await track.load(.formatDescriptions)
+        let description = try XCTUnwrap(descriptions.first, "no format description")
         let reader = try AVAssetReader(asset: asset)
         let output = AVAssetReaderTrackOutput(track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
         reader.add(output)
@@ -60,11 +65,14 @@ final class ExportDecodeTests: XCTestCase {
                 bytes = Array(UnsafeBufferPointer(start: base.assumingMemoryBound(to: UInt8.self), count: row * h))
             }
             CVPixelBufferUnlockBaseAddress(pb, .readOnly)
-            let attachments = CVBufferCopyAttachments(pb, .shouldPropagate) as? [String: Any]
-            let mode = attachments?[kCVImageBufferAlphaChannelModeKey as String] as? String
+            var premultiplied = false
+            if #available(macOS 15.0, iOS 18.0, *) {
+                let attachments = CVBufferCopyAttachments(pb, .shouldPropagate) as? [String: Any]
+                let mode = attachments?[kCVImageBufferAlphaChannelModeKey as String] as? String
+                premultiplied = mode == kCVImageBufferAlphaChannelMode_PremultipliedAlpha as String
+            }
             XCTAssertEqual(bytes.count, row * h, "frame \(frames.count) has no pixels")
-            frames.append(Frame(width: w, height: h, bytesPerRow: row, bytes: bytes,
-                                premultiplied: mode == kCVImageBufferAlphaChannelMode_PremultipliedAlpha as String))
+            frames.append(Frame(width: w, height: h, bytesPerRow: row, bytes: bytes, premultiplied: premultiplied))
         }
         XCTAssertEqual(reader.status, .completed)
         return (frames, description)
@@ -76,14 +84,32 @@ final class ExportDecodeTests: XCTestCase {
     /// rectangle at 50 % opacity; the rest of the canvas is empty.
     static let alphaPlan = #"{"v":1,"dim":"2d","title":"Alpha check","items":[],"layer2d":{"status":"proposed","version":"0.1.0-draft","fps":30,"durationFrames":3,"canvas":{"width":320,"height":180},"elements":[{"id":"solid","kind":"shape","at":[90,130],"color":"#E03C28","shape":"ellipse","size":[61,41]},{"id":"glass","kind":"shape","at":[230,130],"color":"#2878F0","shape":"rect","size":[60,40],"opacity":0.5}],"tracks":[],"captions":[],"generatedMediaLabel":"Generated educational animation"}}"#
 
-    func testTheAlphaMasterIsClearWhereNothingIsDrawn() async throws {
+    func alphaCheckPlan() throws -> MGCheckedVideoPlan {
         let scene = try MGParser.scene(data: Data(Self.alphaPlan.utf8), programmaticVideo: true).get()
-        let plan = try MGProgrammaticVideo.check(scene, programmaticVideo: true)
+        return try MGProgrammaticVideo.check(scene, programmaticVideo: true)
+    }
+
+    /// `lesson-alpha` at the plan's 320 × 180 frame, so nothing is scaled.
+    var smallAlpha: MGExportPreset {
         var preset = MGExportPreset.lessonAlpha
         preset.width = 320; preset.height = 180
+        return preset
+    }
+
+    func testTheAlphaMasterIsClearWhereNothingIsDrawn() async throws {
+        let plan = try alphaCheckPlan()
+        let preset = smallAlpha
         let url = try temporaryFolder().appendingPathComponent("alpha.mov")
-        let receipt = try await MGProgrammaticVideo.export(plan, to: url, options: .init(burnCaptions: false, writeSRT: false, preset: preset),
-                                                           programmaticVideo: true)
+        let options = MGVideoExportOptions(burnCaptions: false, writeSRT: false, preset: preset)
+        guard MGExportSystem.current.tagsAlphaMode else {
+            // Before macOS 15 and iOS 18 there is no alpha master to decode: the export is refused with its reason.
+            do {
+                _ = try await MGProgrammaticVideo.export(plan, to: url, options: options, programmaticVideo: true)
+                XCTFail("an alpha preset is refused where Core Video cannot state the alpha mode")
+            } catch { XCTAssertEqual((error as? MGError)?.reason, "video2d.export.presetAlpha") }
+            return
+        }
+        let receipt = try await MGProgrammaticVideo.export(plan, to: url, options: options, programmaticVideo: true)
         XCTAssertEqual(receipt.frameCount, 3)
         let (frames, description) = try await decode(url)
         XCTAssertEqual(CMFormatDescriptionGetMediaSubType(description), kCMVideoCodecType_AppleProRes4444, "the codec is ap4h")
@@ -123,6 +149,42 @@ final class ExportDecodeTests: XCTestCase {
             }
         }
         XCTAssertGreaterThan(edges, 0, "the ellipse has antialiased edge pixels on its middle row")
+    }
+
+    /// Where Core Video cannot state the alpha mode (before macOS 15 and iOS 18), every alpha preset is refused, by the
+    /// writer before it creates a file and by the 2D video export before it creates its folder.
+    func testAlphaPresetsAreRefusedWhereTheAlphaModeCannotBeStated() async throws {
+        let older = MGExportSystem(tagsAlphaMode: false), newer = MGExportSystem(tagsAlphaMode: true)
+        if #available(macOS 15.0, iOS 18.0, *) {
+            XCTAssertEqual(MGExportSystem.current, newer)
+        } else {
+            XCTAssertEqual(MGExportSystem.current, older)
+        }
+        for p in MGExportPreset.all {
+            XCTAssertEqual(p.problems(on: newer), [], p.name)
+            XCTAssertEqual(p.problems(on: older), p.alpha == .none ? [] : ["alphaMode"], p.name)
+        }
+        var premultiplied = MGExportPreset.lessonAlpha
+        premultiplied.alpha = .premultiplied
+        XCTAssertEqual(premultiplied.problems(on: older), ["alphaMode"])
+
+        let folder = try temporaryFolder()
+        let url = folder.appendingPathComponent("refused.mov")
+        XCTAssertThrowsError(try MGMovieWriter(url: url, preset: smallAlpha, maxBufferedFrames: nil, system: older)) {
+            XCTAssertEqual(($0 as? MGError)?.reason, "mp4: preset alphaMode")
+        }
+        XCTAssertNoThrow(try MGMovieWriter(url: try temporaryFolder().appendingPathComponent("opaque.mp4"), preset: .lesson, maxBufferedFrames: nil,
+                                           system: older).cancel(), "an opaque preset is written on the older system")
+        let destination = folder.appendingPathComponent("refused-video.mov")
+        do {
+            _ = try await MGProgrammaticVideo.export(try alphaCheckPlan(), to: destination,
+                                                     options: MGVideoExportOptions(burnCaptions: false, writeSRT: false, preset: smallAlpha),
+                                                     programmaticVideo: true, system: older, progress: nil)
+            XCTFail("an alpha preset is refused where Core Video cannot state the alpha mode")
+        } catch { XCTAssertEqual((error as? MGError)?.reason, "video2d.export.presetAlpha") }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path), "the writer made no file")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: destination.path), "the export made no video")
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [], "no partial export folder is left")
     }
 
     func assertNear(_ p: (r: Int, g: Int, b: Int, a: Int), _ want: (Int, Int, Int), _ tolerance: Int, _ what: String,
@@ -172,17 +234,24 @@ final class ExportDecodeTests: XCTestCase {
             try movie.finish()
             let (frames, description) = try await decode(url)
             XCTAssertEqual(frames.count, 4)
-            // The track carries the tags the preset asked for.
-            let tags: [(String, CFString)] = [(AVVideoColorPrimariesKey, kCMFormatDescriptionExtension_ColorPrimaries),
-                                              (AVVideoTransferFunctionKey, kCMFormatDescriptionExtension_TransferFunction),
-                                              (AVVideoYCbCrMatrixKey, kCMFormatDescriptionExtension_YCbCrMatrix)]
-            for (key, ext) in tags {
-                XCTAssertEqual(CMFormatDescriptionGetExtension(description, extensionKey: ext) as? String, preset.colorProperties[key] as? String,
-                               "\(space.rawValue): \(key)")
+            // The track carries the tags each colour space stands for. The values are written out here (the Core Video
+            // and Core Media tag strings), not read from `colorProperties`, so a preset regression fails this test.
+            let expected: (primaries: String, transfer: String, matrix: String)
+            switch space {
+            case .srgb: expected = ("ITU_R_709_2", "IEC_sRGB", "ITU_R_709_2")
+            case .rec709: expected = ("ITU_R_709_2", "ITU_R_709_2", "ITU_R_709_2")
+            case .displayP3: expected = ("P3_D65", "IEC_sRGB", "ITU_R_709_2")
             }
+            XCTAssertEqual(CMFormatDescriptionGetExtension(description, extensionKey: kCMFormatDescriptionExtension_ColorPrimaries) as? String,
+                           expected.primaries, "\(space.rawValue): colour primaries")
+            XCTAssertEqual(CMFormatDescriptionGetExtension(description, extensionKey: kCMFormatDescriptionExtension_TransferFunction) as? String,
+                           expected.transfer, "\(space.rawValue): transfer function")
+            XCTAssertEqual(CMFormatDescriptionGetExtension(description, extensionKey: kCMFormatDescriptionExtension_YCbCrMatrix) as? String,
+                           expected.matrix, "\(space.rawValue): YCbCr matrix")
             // The decoded patches are what those tags say: sRGB values for `srgb`, P3 values for `displayP3` (the sRGB
             // colours converted, and the wide red kept), and BT.709-encoded values of the drawn sRGB colours for
-            // `rec709`. If `rec709` decodes to the sRGB values instead, its pixels and its tags disagree.
+            // `rec709`. A `rec709` file whose samples are the sRGB values carries BT.709 tags over sRGB samples and
+            // fails here; the planned resolution is to draw `rec709` frames in `CGColorSpace.itur_709`.
             let f = try XCTUnwrap(frames.last)
             for (k, c) in Self.srgbPatches.enumerated() {
                 let want: [Double]
@@ -198,7 +267,14 @@ final class ExportDecodeTests: XCTestCase {
                 }
                 let got = f.pixel(32 + 64 * k, 64)
                 assertNear(got, (Int((want[0] * 255).rounded()), Int((want[1] * 255).rounded()), Int((want[2] * 255).rounded())),
-                           space == .rec709 ? 8 : 5, "\(space.rawValue) patch \(k)")
+                           space == .rec709 ? 6 : 5, "\(space.rawValue) patch \(k)")
+            }
+            if space == .rec709 {
+                // Mid grey tells the two apart: sRGB 128, BT.709-encoded 115. Samples within 6 of 128 are sRGB samples
+                // under BT.709 tags.
+                let grey = f.pixel(32, 64)
+                XCTAssertEqual(Int((Self.bt709(Self.srgbToLinear(0.5)) * 255).rounded()), 115)
+                XCTAssertGreaterThan(abs(grey.g - 128), 6, "rec709: BT.709 tags over sRGB samples (grey \(grey.g), sRGB 128, BT.709 115)")
             }
         }
     }

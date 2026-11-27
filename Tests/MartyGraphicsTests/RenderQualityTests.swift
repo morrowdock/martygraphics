@@ -278,16 +278,22 @@ final class RenderQualityTests: XCTestCase {
         XCTAssertEqual(MGExportPreset.named("x"), MGExportPreset.x)
         XCTAssertNil(MGExportPreset.named("tiktok"))
         XCTAssertEqual(MGExportPreset.shorts.colorProperties[AVVideoTransferFunctionKey] as? String, AVVideoTransferFunction_ITU_R_709_2)
-        XCTAssertEqual(MGExportPreset.lesson.colorProperties[AVVideoTransferFunctionKey] as? String, MGExportPreset.srgbTransferFunction)
-        // AVFoundation's documented sRGB constant (macOS 15, iOS 18) is the same tag as Core Video's.
-        XCTAssertEqual(MGExportPreset.srgbTransferFunction, kCVImageBufferTransferFunction_sRGB as String)
+        XCTAssertEqual(MGExportPreset.lesson.colorProperties[AVVideoTransferFunctionKey] as? String, "IEC_sRGB")
+        // AVFoundation's documented sRGB constant (macOS 10.15, iOS 13) is the same "IEC_sRGB" tag as Core Video's.
+        XCTAssertEqual(AVVideoTransferFunction_IEC_sRGB, "IEC_sRGB")
+        XCTAssertEqual(kCVImageBufferTransferFunction_sRGB as String, "IEC_sRGB")
         // Source buffers say what was drawn: sRGB (BT.709 primaries, sRGB transfer) for `srgb` and `rec709`.
         let source = MGExportPreset.shorts.sourceAttachments
         XCTAssertEqual(source[kCVImageBufferColorPrimariesKey as String] as? String, kCVImageBufferColorPrimaries_ITU_R_709_2 as String)
         XCTAssertEqual(source[kCVImageBufferTransferFunctionKey as String] as? String, kCVImageBufferTransferFunction_sRGB as String)
-        XCTAssertNil(source[kCVImageBufferAlphaChannelModeKey as String], "an opaque preset says nothing about alpha")
-        XCTAssertEqual(MGExportPreset.lessonAlpha.sourceAttachments[kCVImageBufferAlphaChannelModeKey as String] as? String,
-                       kCVImageBufferAlphaChannelMode_StraightAlpha as String)
+        if #available(macOS 15.0, iOS 18.0, *) {
+            XCTAssertNil(source[kCVImageBufferAlphaChannelModeKey as String], "an opaque preset says nothing about alpha")
+            XCTAssertEqual(MGExportPreset.lessonAlpha.sourceAttachments[kCVImageBufferAlphaChannelModeKey as String] as? String,
+                           kCVImageBufferAlphaChannelMode_StraightAlpha as String)
+        } else {
+            // No alpha mode can be stated before macOS 15 and iOS 18; such a system refuses alpha presets instead.
+            XCTAssertEqual(MGExportPreset.lessonAlpha.sourceAttachments.count, source.count)
+        }
         var p3 = MGExportPreset.lesson
         p3.colorSpace = .displayP3
         XCTAssertEqual(p3.colorProperties[AVVideoColorPrimariesKey] as? String, AVVideoColorPrimaries_P3_D65)

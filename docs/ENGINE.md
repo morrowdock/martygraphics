@@ -95,7 +95,8 @@ solid tests in `Tests/MartyGraphicsTests/SolidLoopTests.swift`, export tests in
   divides every colour by its alpha. Frame k is presented at k / fps. Colour: **tags requested; decoded check
   pending** (`testColourPatchesDecodeAsTheirTagsSay`). Alpha: the 2D alpha export leaves the canvas clear where
   nothing is drawn; that the decoded ProRes 4444 is `ap4h`, clear there and correctly straight on half-transparent
-  shapes and edges is pending (`testTheAlphaMasterIsClearWhereNothingIsDrawn`).
+  shapes and edges is pending (`testTheAlphaMasterIsClearWhereNothingIsDrawn`). Before macOS 15 and iOS 18 alpha
+  presets are refused (`testAlphaPresetsAreRefusedWhereTheAlphaModeCannotBeStated`).
   (`testPresetsAreWritableAndTaggedForTheirDestination`, `testAPresetWriterWritesItsFrameRateAndTags`,
   `testStraightAlphaUndoesPremultiplication`, `testA2DVideoExportsWithAPreset`)
 - **Outputs.** The 2D board's transitions, the default render loop, `marty-solid render`, the default `export-gltf`
@@ -208,17 +209,24 @@ Display P3 (an sRGB image is converted when drawn). Every source pixel buffer is
 (primaries, transfer function and colour space, `MGExportPreset.sourceAttachments`). The file asks for BT.709 primaries
 and matrix with the sRGB transfer function (`srgb`, so Apple players show the video as the stills), BT.709 throughout
 (`rec709`, the tags upload transcoders read), or P3-D65 primaries with the sRGB transfer function (`displayP3`). The
-sRGB transfer tag is AVFoundation's `AVVideoTransferFunction_IEC_sRGB` where the OS has it (macOS 15, iOS 18), else
-Core Video's `kCVImageBufferTransferFunction_sRGB`, the same tag. Whether the encoder converts `rec709` frames from
-the sRGB their buffers declare, and whether every file decodes to what its tags say, is what
-`testColourPatchesDecodeAsTheirTagsSay` checks; until it has run, the tags are requested, not proven.
+sRGB transfer tag is AVFoundation's documented `AVVideoTransferFunction_IEC_sRGB` (macOS 10.15, iOS 13), the same
+"IEC_sRGB" tag as Core Video's `kCVImageBufferTransferFunction_sRGB`. Whether the encoder converts `rec709` frames
+from the sRGB their buffers declare, and whether every file decodes to what its tags say, is what
+`testColourPatchesDecodeAsTheirTagsSay` checks against tag values written out in the test (not read from the preset);
+until it has run, the tags are requested, not proven. That test fails if a `rec709` file carries BT.709 tags over
+sRGB samples. **Planned resolution** if it does: draw `rec709` frames in `CGColorSpace.itur_709`, so the samples match
+the tags.
 
 Alpha: H.264 and HEVC carry none. ProRes 4444 stores straight alpha (`straight`, what most editors read) or the
-buffer's premultiplied colours (`premultiplied`), and the source buffers say which. A 2D video exported with an alpha
-preset is clear where nothing is drawn: the board colour and the letterbox are left out (label and code backdrops stay,
-so text stays readable on any footage). The decoded check (`ap4h`, a clear region, a half-transparent shape, edge
-colours over light and dark) is pending. No preset reorders frames, so frame k is presented at k / fps and a video of
-n frames lasts exactly n / fps.
+buffer's premultiplied colours (`premultiplied`), and the source buffers say which (`kCVImageBufferAlphaChannelModeKey`).
+Core Video can state that alpha mode from macOS 15 and iOS 18 only; the package also runs on macOS 14 and iOS 17,
+where an encoder would have to guess whether the colours are straight or premultiplied. There an alpha preset is
+refused before anything is written: `MGMovieWriter(url:preset:)` throws `mp4: preset alphaMode` and the 2D video
+export throws `video2d.export.presetAlpha` (`testAlphaPresetsAreRefusedWhereTheAlphaModeCannotBeStated`); opaque
+presets are unaffected. A 2D video exported with an alpha preset is clear where nothing is drawn: the board colour and
+the letterbox are left out (label and code backdrops stay, so text stays readable on any footage). The decoded check
+(`ap4h`, a clear region, a half-transparent shape, edge colours over light and dark) is pending. No preset reorders
+frames, so frame k is presented at k / fps and a video of n frames lasts exactly n / fps.
 
 ## Default output changes
 
