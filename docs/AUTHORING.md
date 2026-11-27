@@ -1,34 +1,37 @@
-# Authoring scenes: conventions, checklist and worked examples
+# Authoring scenes: conventions, checks and worked examples
 
-This guide is for anyone who writes [v1 scene](PROTOCOL.md) JSON or [ML explainer](ML-EXPLAINER.md) documents
-from a plain-language request: a person, a coding agent or a model in a host app. The parser decides what is
-*valid*. This guide covers what makes a valid scene *mechanically correct*: the right items, numbers that agree
-with each other, directions and positions that follow the engine's conventions, and steps in the right order.
-Every convention below comes from the Swift sources (`MGParser`, `MGTimeline`, `MGLayout`, `MGCanvasRenderer`).
+This guide is for anyone who writes or reviews [v1 scene](PROTOCOL.md) JSON or [ML explainer](ML-EXPLAINER.md)
+documents. The parser decides what is *valid*. This guide covers what makes a valid scene *mechanically correct*:
+the right items, numbers that agree with each other, directions and positions that follow the engine's
+conventions, and steps in the right order. It describes the **2D renderer** (`MGCanvasRenderer`); 3D scenes
+(`"dim": "3d"`) are drawn by the 3D renderer and are not covered here. The conventions come from the Swift sources
+(`MGParser`, `MGTimeline`, `MGLayout`, `MGCanvasRenderer`). Notes marked *renderer behaviour* describe how the
+current 2D renderer draws; they are not part of the wire format.
 
-## The loop
+## Checking a scene
 
-1. Fill the [spec checklist](#spec-checklist) before writing JSON.
-2. Write the scene.
-3. Check it: `marty-scene-validate --hints FILE` (scenes) or `marty-scene-validate --ml-kit --strict --hints FILE`
+1. Validate it: `marty-scene-validate --hints FILE` (scenes) or `marty-scene-validate --ml-kit --strict --hints FILE`
    (ML documents). A refusal names one reason token and a fix hint ([hint table](#repair-hints)).
-4. Lint it: `python3 tools/scene_lint.py FILE` lists [common mistakes](#common-mistakes) the parser accepts.
-5. Repair and check again. Three repairs are usually enough; if the same reason repeats, re-read its row below.
+2. Lint it: `python3 tools/scene_lint.py FILE` lists [common mistakes](#common-mistakes) the parser accepts, review
+   cues to look at, and the inputs the lint did not check.
+3. Optionally, review the finished scene with the [review checklist](#review-checklist).
+4. Repair and check again. If the same reason repeats, re-read its row in the hint table.
 
-## Spec checklist
+## Review checklist
 
-Write these eight lines before the JSON. Every number and angle in the JSON should be copied from them.
+These checks are optional. They help when reviewing a finished scene against its request.
 
 ```text
-1. Must show:   every item the request names, with kind and id (W: vector, ramp: incline, ...).
-2. Must compute: each quantity = formula = value with units; how it will be displayed (see "Numbers").
-3. Directions:  each vector's physical direction → angle in degrees (0 right, 90 up, 180 left, 270 down).
+1. Items:       every item the request names is present, with the right kind.
+2. Values:      check computed values against the request: formula, value, units and how each is
+                displayed (see "Text and numbers").
+3. Directions:  check each vector's angle against its physical direction (0 right, 90 up, 180 left, 270 down).
 4. Scale:       one world-units-per-unit factor per quantity type; each len = value × factor.
-5. Layout:      world w × h; each item's anchor (centre or lower-left, see the table); all of it inside the world.
-6. Steps:       for each step: what it says, what it reveals (show), focuses and edits. Step 0 edits apply
-                before the first frame, so keep step 0 edit-free when the starting state must be seen.
-7. Not supported: anything approximated (pie chart, arc, curved motion) and the sentence that says so.
-8. Text:        no < > { }; lengths within limits; every number in text appears in line 2.
+5. Layout:      each item's anchor (centre or lower-left, see the table) and its extent lie inside the world.
+6. Steps:       each step's narration, reveals (show), focus and edits come in the intended order. Step 0
+                edits apply before the first frame, so the starting state is seen only when step 0 is edit-free.
+7. Not supported: anything approximated (pie chart, arc, curved motion) is said so in the narration.
+8. Text:        no < > { }; lengths within limits; every number in text matches a computed value.
 ```
 
 ## Coordinates and drawing conventions
@@ -40,17 +43,17 @@ every `max(1, round(w / 24))` world units. Points may lie from −25 % to 125 % 
 
 | Kind | Anchor and geometry | Notes |
 | --- | --- | --- |
-| `body` | `at` is the centre. A box has side `size`; a ball (`shape: "ball"`) has diameter `size` (default 1). `angle` rotates counter-clockwise in degrees. | A label that fits is drawn inside, otherwise below. `move: {to, t}` glides in a straight line to `to` and back, forever: it is not physics. |
+| `body` | `at` is the centre. A box has side `size`; a ball (`shape: "ball"`) has diameter `size` (default 1). `angle` rotates the box counter-clockwise about its centre, in degrees, so a rotated box reaches up to `size`/√2 from `at`. | *Renderer behaviour:* a label that fits is drawn inside, otherwise below. `move: {to, t}` glides in a straight line to `to` and back, forever: it is not physics. |
 | `incline` | `at` is the bottom-left (acute) vertex. The base runs right by `base`; the vertical side is at the right end, height `base · tan(angle)`. The slope always rises to the right. | Slope direction = `angle`; outward normal = `angle + 90`; down-slope = `angle + 180`. |
-| `vector` | `from: [x, y]` is the tail, or `on: "<body or node id>"` anchors it to that item's centre. `angle` is degrees counter-clockwise from +x; `len` is the drawn length in world units. | A vector `on` an item starts at the item's edge and runs `len` from there; a `from` vector starts exactly at its point (use `from` for head-to-tail diagrams). Arrows with the same angle on one body fan out sideways. The label sits at the tip. `len: 0` draws nothing. `dir` is 3D only. |
+| `vector` | `from: [x, y]` is the tail, or `on: "<body or node id>"` anchors it to that item's centre. `angle` is degrees counter-clockwise from +x; `len` is the drawn length in world units. | A vector `on` an item starts at the item's edge and runs `len` from there; a `from` vector starts exactly at its point (use `from` for head-to-tail diagrams). `len: 0` draws nothing. *Renderer behaviour:* arrows with the same angle on one body fan out sideways, and the label sits at the tip. The vector field `dir` (a 3D direction `[x, y, z]`) is 3D only; an edge's `dir` is a different, Boolean field. |
 | `line` | `from` → `to`. `style`: `solid`, `dashed` or `ground`. | `ground` hatches the right-hand side of the direction of travel: below a left-to-right line, above a right-to-left one (draw a ceiling right to left). |
 | `axes` | `at` is the origin; arrows run `w` along +x and `h` along +y only (an L shape). | For axes through a centre (four quadrants), draw two lines. |
-| `plot` | `at` is the lower-left corner of a `w` × `h` frame; `xr` and `yr` are the data ranges; `pts` are **data** coordinates. A data point (x, y) is drawn at `at + (w·(x − x0)/(x1 − x0), h·(y − y0)/(y1 − y0))`. | One polyline per plot; points outside the ranges are clipped. Tick labels show only x0, x1, y0, y1. To overlay series, give several plots the same `at`, `w`, `h`, `xr`, `yr`. |
+| `plot` | `at` is the lower-left corner of a `w` × `h` frame; `xr` and `yr` are the data ranges; `pts` are **data** coordinates. A data point (x, y) is drawn at `at + (w·(x − x0)/(x1 − x0), h·(y − y0)/(y1 − y0))`. | One polyline per plot. *Renderer behaviour:* points outside the ranges are drawn up to 2 screen points past the frame, then clipped. Tick labels show only x0, x1, y0, y1. To overlay series, give several plots the same `at`, `w`, `h`, `xr`, `yr`. |
 | `bars` | `at` is the lower-left corner of the `w` × `h` frame. | Heights are scaled to the largest \|value\| (so bars are proportional); a negative value is drawn as a positive height. Each value is printed above its bar with `unit`. |
-| `array` | `at` is the centre of the row; each cell is `cell` wide (default min(1, span / 4)). | Index numbers are drawn above the cells, pointers below (several on one cell stack), `marked` cells are tinted, the label sits above. |
-| `table` | `at` is the centre; `cw` × `rh` per cell. | Row 0 is tinted when `header` is true. `marked` holds `[row, column]` pairs counted from the first row (the header is row 0). |
+| `array` | `at` is the centre of the row; each cell is `cell` wide (default min(1, span / 4)). | *Renderer behaviour:* index numbers are drawn above the cells, pointers below (several on one cell stack), `marked` cells are tinted, the label sits above. |
+| `table` | `at` is the centre; `cw` × `rh` per cell. | Row 0 is tinted when `header` is true. `marked` holds `[row, column]` pairs counted from the first row (the header is row 0). *Renderer behaviour:* a table whose data cells (the rows after the header, or every row without `header`) are all empty is not drawn, so a header-only table appears once a data cell is filled. |
 | `node` | `at` is the centre, `r` the radius (default min(0.5, span / 6)); `text` (≤ 8 characters) is drawn inside. | |
-| `edge` | Joins nodes `a` and `b`; `dir: true` draws an arrow from `a` to `b`. | The label sits at the midpoint. |
+| `edge` | Joins nodes `a` and `b`; the Boolean `dir: true` draws an arrow from `a` to `b`. | *Renderer behaviour:* the label sits at the midpoint. |
 | `text` | `at` is the centre (`label`, `title`, `callout`); `code` text starts at `at` and is left-aligned. | |
 | `highlight` | A pulsing ring around `target`'s footprint. Move it with an edit of `target`. | |
 | `orbit`, `pulley` | `at` is the centre, `r` the radius. An orbit is a dashed circle; it does not move anything. | |
@@ -61,8 +64,8 @@ every `max(1, round(w / 24))` world units. Points may lie from −25 % to 125 % 
 - The first frame is step 0 **with step 0's edits already applied**; the authored state is never shown on its
   own when step 0 edits it. To show a starting state, make step 0 edit-free.
 - `show` reveals: an item first listed at step k is hidden before step k and visible from then on. Items never
-  listed in any `show` are visible from step 0. Nothing can be hidden again; to retire a vector, edit its `len`
-  to 0.
+  listed in any `show` are visible from step 0. `show` only reveals items; later edits can still stop an item
+  from drawing (a vector edited to `len: 0`, a table whose data cells are all emptied).
 - A vector, edge or highlight whose anchor is hidden is hidden too.
 - `focus` draws a pulsing ring around one item (not around a highlight item).
 - `do` holds 1–6 edits `{"id", "key", "value"}`. Edits accumulate across steps. The value replaces the whole field
@@ -81,12 +84,12 @@ every `max(1, round(w / 24))` world units. Points may lie from −25 % to 125 % 
 - Numbers in array cells, table cells and bar values are displayed with the engine format: no decimals from 100,
   one decimal from 10, two below 10, trailing zeros dropped. `0.375` shows as `0.38`, `36.75` as `36.8`. Use a text
   cell, or scale the value (12.5 %), when the exact digits matter, and quote the displayed digits in narration.
-- A number in narration should be one of the numbers computed in checklist line 2, rounded the same way
+- A number in narration should match a computed value (review checklist line 2), rounded the same way
   everywhere it appears.
 
 ## Worked examples
 
-Each example is valid; the comments outside the JSON show the checklist arithmetic.
+Each example is valid; the text outside the JSON shows the arithmetic behind its numbers.
 
 **Forces on an incline.** A 3 kg block slides down a 20° slope with kinetic friction μ = 0.2, g = 9.8:
 W = 29.4 N (angle 270), N = 29.4 cos 20° = 27.6 N (angle 20 + 90 = 110), friction = 0.2 × 27.6 = 5.53 N up the
@@ -125,7 +128,7 @@ whole fields.
 ```
 
 **A structure that changes.** Removing the middle node of 1 → 2 → 3: re-point an arrow with an edit of `b`, and
-mute the removed node (nothing can be hidden again).
+mute the removed node (`show` only reveals items, so it cannot hide the node).
 
 ```json
 {"v":1,"items":[{"id":"n1","k":"node","at":[2,5],"text":"1"},{"id":"n2","k":"node","at":[5,5],"text":"2"},
@@ -155,19 +158,19 @@ divide both image sides.
 
 | Mistake | Guard |
 | --- | --- |
-| Step 0 edits a field, so the starting state is never shown. | lint `step0.edits` |
+| Step 0 edits a field, so the starting state is never shown. | lint review cue `step0.edits` |
 | `<` or `>` in a label or narration; braces in plain text. | refusal `*.text`, `step.say`, `item.label` with hint |
-| A vector angle measured from vertical, or clockwise. | checklist line 3 |
-| A normal force drawn vertical on a slope; friction not along the slope. | checklist line 3, incline row above |
+| A vector angle measured from vertical, or clockwise. | review checklist line 3 |
+| A normal force drawn vertical on a slope; friction not along the slope. | review checklist line 3, incline row above |
 | Plot points written in world units, or outside `xr` / `yr`. | lint `plot.outside` |
-| A marker placed by guessing instead of the plot mapping formula. | checklist line 5 |
+| A marker placed by guessing instead of the plot mapping formula. | review checklist line 5 |
 | A displayed number rounds away from the narrated value (0.375 → 0.38). | lint `display.rounding` |
 | Shrinking an array before moving its pointers or marks. | refusal `array.ptr.i`, `array.marked` with hint |
-| A ceiling drawn left to right with `ground` style (hatching faces down). | lint `line.ground.side` |
-| An array, table, plot or text wider than the world. | lint `layout.outside` |
+| A ceiling drawn left to right with `ground` style (hatching faces down). | lint review cue `line.ground.side` |
+| An item outside the world, also after a later edit or a rotation. | lint `layout.outside` (text width is not measured) |
 | `focus` on a highlight item (no ring is drawn). | lint `focus.highlight` |
 | Negative bar values (drawn as positive heights). | lint `bars.negative` |
-| An unsupported feature replaced silently. | checklist line 7 |
+| An unsupported feature replaced silently. | review checklist line 7 |
 | Unsorted `two_pointers` values or repeated `bst` values. | refusal `template.check` with hint |
 
 ## Repair hints

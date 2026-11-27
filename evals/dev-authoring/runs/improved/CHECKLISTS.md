@@ -1,6 +1,7 @@
 # Improved pass: spec checklists
 
-Filled before each scene was written, following the [authoring guide](../../../../docs/AUTHORING.md#spec-checklist).
+Filled before each scene was written, following the spec checklist of the authoring guide as of b02d9bd (since
+recast as the optional [review checklist](../../../../docs/AUTHORING.md#review-checklist)).
 Lines: 1 show · 2 compute · 3 directions · 4 scale · 5 layout · 6 steps · 7 not supported · 8 text.
 
 ## Physics

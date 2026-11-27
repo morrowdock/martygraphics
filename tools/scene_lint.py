@@ -3,15 +3,27 @@
 
     python3 tools/scene_lint.py FILE...
 
-Run it on scenes that already validate (`marty-scene-validate --hints`). Each warning is `code: message`; the codes
+Run it on scenes that already validate (`marty-scene-validate --hints`). Each finding is `code: message`; the codes
 are listed in docs/AUTHORING.md under "Common mistakes". The lint never refuses a scene and always exits 0 for
-readable files. Geometry follows the engine's conventions (MGLayout, MGCanvasRenderer, MGTimeline).
+readable files. Geometry follows the 2D engine's conventions (MGLayout, MGCanvasRenderer, MGTimeline).
+
+Findings come in two classes. A *warning* is a mechanical fact (an item off the board, a number drawn with other
+digits). A *review cue* (`REVIEW_CUES`) is a pattern that is often a mistake but can be intended, such as edits in
+step 0 or the hatching side of a ground line; read the scene before changing it.
+
+Supported subset: full 2D scenes. Layout, plot and number checks run on every step as it is shown: the edits of
+steps 0..k applied in order, and only the items that are visible at step k (`show`). Box rotation and a body's
+`move` target count towards its extent. Not checked, and reported under "not checked": template scenes (the
+template builds its own items), 3D scenes, the drawn width of text items (only their anchor point is checked) and
+the drawn position of vectors anchored with `on` (it depends on the anchor's edge and the renderer's fan-out).
 """
 
 import json
 import math
 from pathlib import Path
 import sys
+
+REVIEW_CUES = {"step0.edits", "line.ground.side", "body.move"}
 
 
 def fmt(value):
@@ -32,13 +44,24 @@ def number(value):
     return type(value) in (int, float)
 
 
+def box(x, y, half, angle=0.0):
+    """Axis-aligned bounds of a square of half side `half` centred at (x, y), rotated by `angle` degrees."""
+    a = math.radians(angle)
+    reach = half * (abs(math.cos(a)) + abs(math.sin(a)))
+    return [(x - reach, y - reach), (x + reach, y + reach)]
+
+
 def extents(item, span):
-    """World-space points an item covers, for the outside-the-world check."""
+    """World-space points an item covers, for the outside-the-world check. Empty when the lint does not place it."""
     kind = item["k"]
     if kind == "body":
         x, y = item["at"][:2]
         half = item.get("size", 1) / 2
-        return [(x - half, y - half), (x + half, y + half)]
+        angle = 0 if item.get("shape") == "ball" else item.get("angle", 0)
+        pts = box(x, y, half, angle)
+        if "move" in item:
+            pts += box(item["move"]["to"][0], item["move"]["to"][1], half, angle)
+        return pts
     if kind == "node":
         x, y = item["at"][:2]
         r = item.get("r", min(0.5, span / 6))
@@ -83,10 +106,54 @@ def centre(item):
     return (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
 
 
-def lint(scene):
-    """Return a list of `code: message` warnings for one parsed scene."""
-    if "items" not in scene or "template" in scene:
-        return []
+def apply_edit(item, key, value):
+    """MGParser.applying: the value replaces the whole field; a vector's `on` and `from` exclude each other."""
+    out = {**item, key: value}
+    if item["k"] == "vector" and key == "on":
+        out.pop("from", None)
+    if item["k"] == "vector" and key == "from":
+        out.pop("on", None)
+    return out
+
+
+def shown_states(scene):
+    """(step index, visible items) for each frame the viewer sees; (None, items) for a scene without steps."""
+    items = scene["items"]
+    steps = scene.get("steps", [])
+    if not steps:
+        return [(None, list(items))]
+    first = {}
+    for index, step in enumerate(steps):
+        for identifier in step.get("show", []):
+            first.setdefault(identifier, index)
+    current = {item["id"]: item for item in items}
+    states = []
+    for index, step in enumerate(steps):
+        for edit in step.get("do", []):
+            if edit["id"] in current:
+                current[edit["id"]] = apply_edit(current[edit["id"]], edit["key"], edit["value"])
+        states.append((index, [item for item in current.values() if first.get(item["id"], 0) <= index]))
+    return states
+
+
+def at_step(index):
+    return "" if index is None else f" at step {index}"
+
+
+def report(scene):
+    """Return {"warnings", "cues", "skipped"}: lists of `code: message` findings and of inputs not checked."""
+    found = {"warnings": [], "cues": [], "skipped": []}
+    if "template" in scene:
+        found["skipped"].append("template scene: the template builds its own items and steps, so neither they nor "
+                                "any extra items are checked")
+        return found
+    if scene.get("dim") == "3d":
+        found["skipped"].append("3D scene: the lint checks 2D geometry only")
+        return found
+    if not isinstance(scene.get("items"), list):
+        found["skipped"].append("no items list: not a full scene")
+        return found
+
     out = []
     world = scene.get("world", {"w": 12, "h": 8})
     w, h = world["w"], world["h"]
@@ -98,29 +165,23 @@ def lint(scene):
     if steps and steps[0].get("do"):
         edited = sorted({edit["id"] for edit in steps[0]["do"]})
         out.append(f"step0.edits: step 0 edits {', '.join(edited)}, so their authored state is never shown; "
-                   "make step 0 edit-free to show the starting state")
-
-    states = [items]
-    current = dict(by_id)
-    for step in steps:
-        for edit in step.get("do", []):
-            if edit["id"] in current:
-                current = {**current, edit["id"]: {**current[edit["id"]], edit["key"]: edit["value"]}}
-        states.append(list(current.values()))
+                   "make step 0 edit-free if the starting state should be seen")
 
     seen = set()
-    for state in states:
+    for index, state in shown_states(scene):
         for item in state:
+            kind = item["k"]
             values = []
-            if item["k"] == "bars":
+            if kind == "bars":
                 values = [(b["value"], f"bar {b['label']!r}") for b in item["bars"]]
                 for b in item["bars"]:
                     if number(b["value"]) and b["value"] < 0 and (item["id"], "neg") not in seen:
                         seen.add((item["id"], "neg"))
-                        out.append(f"bars.negative: {item['id']} has a negative value, drawn as a positive height")
-            elif item["k"] == "array":
+                        out.append(f"bars.negative: {item['id']} has a negative value{at_step(index)}, "
+                                   "drawn as a positive height")
+            elif kind == "array":
                 values = [(v, f"cell {i}") for i, v in enumerate(item["vals"])]
-            elif item["k"] == "table":
+            elif kind == "table":
                 values = [(v, f"cell [{r}, {c}]") for r, row in enumerate(item["cells"]) for c, v in enumerate(row)]
             for value, where in values:
                 if number(value) and not isinstance(value, bool) and fmt(value) != shortest(value):
@@ -128,18 +189,21 @@ def lint(scene):
                     if key not in seen:
                         seen.add(key)
                         out.append(f"display.rounding: {item['id']} {where} {shortest(value)} is drawn as {fmt(value)}")
+            if kind == "plot" and (item["id"], "plot") not in seen:
+                (x0, x1), (y0, y1) = item["xr"], item["yr"]
+                outside = [p for p in item["pts"] if not (x0 <= p[0] <= x1 and y0 <= p[1] <= y1)]
+                if outside:
+                    seen.add((item["id"], "plot"))
+                    out.append(f"plot.outside: {item['id']} has {len(outside)} point(s) outside xr/yr{at_step(index)}; "
+                               "they are clipped (pts are data coordinates)")
+            pts = extents(item, span)
+            if (item["id"], "layout") not in seen and any(
+                    not (-1e-9 <= x <= w + 1e-9 and -1e-9 <= y <= h + 1e-9) for x, y in pts):
+                seen.add((item["id"], "layout"))
+                out.append(f"layout.outside: {item['id']} ({kind}) extends outside the {w:g} x {h:g} world{at_step(index)}")
 
     for item in items:
         kind = item["k"]
-        if kind == "plot":
-            (x0, x1), (y0, y1) = item["xr"], item["yr"]
-            outside = [p for p in item["pts"] if not (x0 <= p[0] <= x1 and y0 <= p[1] <= y1)]
-            if outside:
-                out.append(f"plot.outside: {item['id']} has {len(outside)} point(s) outside xr/yr; they are clipped "
-                           "(pts are data coordinates)")
-        pts = extents(item, span)
-        if any(not (-1e-9 <= x <= w + 1e-9 and -1e-9 <= y <= h + 1e-9) for x, y in pts):
-            out.append(f"layout.outside: {item['id']} ({kind}) extends outside the {w:g} x {h:g} world")
         if kind == "line" and item.get("style") == "ground":
             (ax, ay), (bx, by) = item["from"][:2], item["to"][:2]
             length = math.hypot(bx - ax, by - ay) or 1
@@ -147,8 +211,8 @@ def lint(scene):
             others = [c for c in (centre(o) for o in items if o is not item and o["k"] not in ("highlight", "edge")) if c]
             facing = [c for c in others if (c[0] - ax) * side[0] + (c[1] - ay) * side[1] > 0.05]
             if others and len(facing) > len(others) / 2:
-                out.append(f"line.ground.side: {item['id']} hatches toward most of the scene; swap from and to so the "
-                           "hatching faces away (draw a ceiling right to left)")
+                out.append(f"line.ground.side: {item['id']} hatches toward most of the scene; if it is a ceiling, swap "
+                           "from and to so the hatching faces away (draw a ceiling right to left)")
         if kind == "vector" and item.get("len", 0) == 0:
             out.append(f"vector.zero: {item['id']} has len 0 and is not drawn")
         if kind == "body" and "move" in item:
@@ -160,7 +224,22 @@ def lint(scene):
         if focus in by_id and by_id[focus]["k"] == "highlight":
             out.append(f"focus.highlight: step {index} focuses highlight {focus}, which draws no focus ring; "
                        "focus its target instead")
-    return out
+
+    for finding in out:
+        found["cues" if finding.split(":", 1)[0] in REVIEW_CUES else "warnings"].append(finding)
+    texts = [item["id"] for item in items if item["k"] == "text"]
+    if texts:
+        found["skipped"].append(f"the drawn width of text {', '.join(texts)} (only the anchor point is checked)")
+    anchored = [item["id"] for item in items if item["k"] == "vector" and "on" in item]
+    if anchored:
+        found["skipped"].append(f"the drawn position of vectors on an item: {', '.join(anchored)}")
+    return found
+
+
+def lint(scene):
+    """All findings (warnings, then review cues) as `code: message` strings, for one parsed scene."""
+    found = report(scene)
+    return found["warnings"] + found["cues"]
 
 
 def main(argv):
@@ -176,10 +255,17 @@ def main(argv):
             print(f"{name}: unreadable: {error}")
             status = 3
             continue
-        warnings = lint(scene)
-        print(f"{name}: " + ("no warnings" if not warnings else f"{len(warnings)} warning(s)"))
-        for warning in warnings:
-            print("  " + warning)
+        found = report(scene)
+        counts = [f"{len(found['warnings'])} warning(s)", f"{len(found['cues'])} review cue(s)"]
+        if found["skipped"]:
+            counts.append(f"{len(found['skipped'])} not checked")
+        print(f"{name}: " + ", ".join(counts))
+        for warning in found["warnings"]:
+            print("  warning: " + warning)
+        for cue in found["cues"]:
+            print("  review cue: " + cue)
+        for skipped in found["skipped"]:
+            print("  not checked: " + skipped)
     return status
 
 

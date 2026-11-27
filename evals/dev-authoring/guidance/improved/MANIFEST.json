@@ -124,6 +124,6 @@
  ],
  "notes": {
   "validator": "Core scenes: 'invalid: <reason> (<hint>)', as marty-scene-validate --hints prints. ML documents: the strict report with 'hint'. Lint warnings from tools/scene_lint.py on valid scenes; they may trigger a repair within the same limit of 3.",
-  "hashes": "Recorded when the improved pass started. Afterwards only the text.text hint was reworded (MGRepairHint.swift, tools/hints.py); the pass had no refusals, so no hint was shown."
+  "hashes": "Recorded when the improved pass started. Afterwards only the text.text hint was reworded (MGRepairHint.swift, tools/hints.py); the pass had no refusals, so no hint was shown. The fix round after b02d9bd edited docs/AUTHORING.md, docs/PROTOCOL.md, docs/GETTING-STARTED.md, tools/scene_lint.py, tools/hints.py and MGRepairHint.swift again; the improved pass used the versions these hashes name (see b02d9bd)."
  }
 }

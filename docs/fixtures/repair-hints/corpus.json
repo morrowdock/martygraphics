@@ -1,0 +1,1063 @@
+{
+ "about": "Shared repair-hint corpus: MGRepairHint.text(for:) and the Python mirror must return hint for reason (null: no hint); MGMLReason(rawValue: reason)?.hint likewise. Rebuilt by evals/dev-authoring/tools/hint_corpus.py --write.",
+ "scene": [
+  {
+   "reason": "3d.kind.table",
+   "hint": "this kind is 2D only; in 3D use body, incline, line, vector, axes, orbit, text, highlight or path, or keep the scene 2D"
+  },
+  {
+   "reason": "3d.text.code",
+   "hint": "code text is 2D only; use plain text in 3D"
+  },
+  {
+   "reason": "array.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "array.cell",
+   "hint": "cell is 0.3 to a quarter of the world's larger side"
+  },
+  {
+   "reason": "array.marked",
+   "hint": "marked holds whole-number indices inside vals; when an edit shortens vals, edit marked first"
+  },
+  {
+   "reason": "array.ptr",
+   "hint": "a pointer is {\"i\": index, \"label\": text}"
+  },
+  {
+   "reason": "array.ptr.i",
+   "hint": "a pointer index is a whole number inside vals; when an edit shortens vals, edit ptrs first"
+  },
+  {
+   "reason": "array.ptr.label",
+   "hint": "a pointer label is 1-8 characters of plain text"
+  },
+  {
+   "reason": "array.ptrs",
+   "hint": "ptrs holds at most 4 pointers"
+  },
+  {
+   "reason": "array.val",
+   "hint": "a cell is 1-6 characters of text, or a number whose displayed text fits 6 characters"
+  },
+  {
+   "reason": "array.vals",
+   "hint": "vals holds 1 to 16 cells"
+  },
+  {
+   "reason": "axes.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "axes.h",
+   "hint": "h is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "axes.w",
+   "hint": "w is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "axes.xl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "axes.yl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "bars.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "bars.bar",
+   "hint": "each bar is {\"label\": text, \"value\": number} with an optional color"
+  },
+  {
+   "reason": "bars.bars",
+   "hint": "bars holds 1 to 6 bars"
+  },
+  {
+   "reason": "bars.color",
+   "hint": "a bar color is one of the item colors"
+  },
+  {
+   "reason": "bars.h",
+   "hint": "h is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "bars.label",
+   "hint": "a bar label is 1-16 characters of plain text"
+  },
+  {
+   "reason": "bars.unit",
+   "hint": "unit is 1-8 characters of plain text"
+  },
+  {
+   "reason": "bars.value",
+   "hint": "a bar value is a finite number within -1e7..1e7"
+  },
+  {
+   "reason": "bars.w",
+   "hint": "w is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "body.angle",
+   "hint": "angle is -360 to 360 degrees, counter-clockwise"
+  },
+  {
+   "reason": "body.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "body.move",
+   "hint": "move is {\"to\": [x, y], \"t\": seconds}: a straight glide there and back, forever"
+  },
+  {
+   "reason": "body.move.t",
+   "hint": "move.t is 0.3 to 10 seconds"
+  },
+  {
+   "reason": "body.move.to",
+   "hint": "move is {\"to\": [x, y], \"t\": seconds}: a straight glide there and back, forever"
+  },
+  {
+   "reason": "body.shape",
+   "hint": "shape is \"box\" (the default) or \"ball\""
+  },
+  {
+   "reason": "body.size",
+   "hint": "size is 0.1 to half the world's larger side (box side or ball diameter)"
+  },
+  {
+   "reason": "camera",
+   "hint": "a camera has x, y, zoom, yaw (-180..180) and pitch (-89..89)"
+  },
+  {
+   "reason": "camera.unknown.zz",
+   "hint": "a camera has x, y, zoom, yaw (-180..180) and pitch (-89..89)"
+  },
+  {
+   "reason": "camera.x",
+   "hint": "camera x is 0 to the world width"
+  },
+  {
+   "reason": "camera.y",
+   "hint": "camera y is 0 to the world height"
+  },
+  {
+   "reason": "camera.yaw",
+   "hint": "a camera has x, y, zoom, yaw (-180..180) and pitch (-89..89)"
+  },
+  {
+   "reason": "camera.zoom",
+   "hint": "zoom is 0.5 to 4"
+  },
+  {
+   "reason": "edge.a",
+   "hint": "a is the id of the edge's first node"
+  },
+  {
+   "reason": "edge.b",
+   "hint": "b is the id of the edge's second node"
+  },
+  {
+   "reason": "edge.dir",
+   "hint": "dir is true or false"
+  },
+  {
+   "reason": "edge.nodes",
+   "hint": "an edge's a and b must name node items in this scene"
+  },
+  {
+   "reason": "edge.self",
+   "hint": "an edge joins two different nodes"
+  },
+  {
+   "reason": "edit",
+   "hint": "an edit is {\"id\": item id, \"key\": field, \"value\": new value}; the value replaces the whole field"
+  },
+  {
+   "reason": "edit.key",
+   "hint": "an edit cannot change id or k"
+  },
+  {
+   "reason": "edit.key.radius",
+   "hint": "that key is not a field of the edited item's kind"
+  },
+  {
+   "reason": "edit.key.zz",
+   "hint": "that key is not a field of the edited item's kind"
+  },
+  {
+   "reason": "edit.ref",
+   "hint": "an edit's id must name an item in this scene"
+  },
+  {
+   "reason": "edit.value",
+   "hint": "an edit is {\"id\": item id, \"key\": field, \"value\": new value}; the value replaces the whole field"
+  },
+  {
+   "reason": "hide",
+   "hint": "hide lists at most 16 ids of the template's own items"
+  },
+  {
+   "reason": "hide.ref",
+   "hint": "hide lists at most 16 ids of the template's own items"
+  },
+  {
+   "reason": "highlight.cycle",
+   "hint": "a chain of highlights must end at an item that is not a highlight"
+  },
+  {
+   "reason": "highlight.target",
+   "hint": "target must name another item in this scene, not the highlight itself"
+  },
+  {
+   "reason": "id.duplicate.a",
+   "hint": "item ids must be unique; rename one of the two"
+  },
+  {
+   "reason": "id.duplicate.dot",
+   "hint": "item ids must be unique; rename one of the two"
+  },
+  {
+   "reason": "incline.angle",
+   "hint": "angle is 0 to 80 degrees; the slope rises from at (the bottom-left vertex) to the right"
+  },
+  {
+   "reason": "incline.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "incline.base",
+   "hint": "base is 0.5 to 1.25 times the world width"
+  },
+  {
+   "reason": "input.too-large",
+   "hint": "the file is over 16384 bytes; shorten text and remove items"
+  },
+  {
+   "reason": "item.array.missing",
+   "hint": "a array needs at, id, k, vals"
+  },
+  {
+   "reason": "item.array.unknown.zz",
+   "hint": "remove unknown keys; a array allows at, cell, color, id, k, label, marked, ptrs, vals"
+  },
+  {
+   "reason": "item.axes.missing",
+   "hint": "a axes needs at, h, id, k, w"
+  },
+  {
+   "reason": "item.axes.unknown.zz",
+   "hint": "remove unknown keys; a axes allows at, color, h, id, k, w, xl, yl"
+  },
+  {
+   "reason": "item.bars.missing",
+   "hint": "a bars needs at, bars, h, id, k, w"
+  },
+  {
+   "reason": "item.bars.unknown.zz",
+   "hint": "remove unknown keys; a bars allows at, bars, color, h, id, k, label, unit, w"
+  },
+  {
+   "reason": "item.body.missing",
+   "hint": "a body needs at, id, k"
+  },
+  {
+   "reason": "item.body.unknown.radius",
+   "hint": "remove unknown keys; a body allows angle, at, color, id, k, label, move, shape, size"
+  },
+  {
+   "reason": "item.body.unknown.zz",
+   "hint": "remove unknown keys; a body allows angle, at, color, id, k, label, move, shape, size"
+  },
+  {
+   "reason": "item.color",
+   "hint": "color is one of force, normal, friction, gravity, tension, velocity, accel, energy, kinetic, potential, accent, muted, good, warn, blue, red, green, orange, purple, yellow, teal, white"
+  },
+  {
+   "reason": "item.edge.missing",
+   "hint": "a edge needs a, b, id, k"
+  },
+  {
+   "reason": "item.edge.unknown.c",
+   "hint": "remove unknown keys; a edge allows a, b, color, dir, id, k, label"
+  },
+  {
+   "reason": "item.edge.unknown.zz",
+   "hint": "remove unknown keys; a edge allows a, b, color, dir, id, k, label"
+  },
+  {
+   "reason": "item.highlight.missing",
+   "hint": "a highlight needs id, k, target"
+  },
+  {
+   "reason": "item.highlight.unknown.zz",
+   "hint": "remove unknown keys; a highlight allows color, id, k, label, target"
+  },
+  {
+   "reason": "item.id",
+   "hint": "an id is 1-24 ASCII letters, digits or _, starting with a letter"
+  },
+  {
+   "reason": "item.incline.missing",
+   "hint": "a incline needs angle, at, base, id, k"
+  },
+  {
+   "reason": "item.incline.unknown.zz",
+   "hint": "remove unknown keys; a incline allows angle, at, base, color, id, k, label"
+  },
+  {
+   "reason": "item.kind",
+   "hint": "each item needs \"k\": one of body, incline, line, vector, axes, plot, spring, pulley, rope, orbit, text, highlight, bars, path, array, node, edge, table, region"
+  },
+  {
+   "reason": "item.label",
+   "hint": "label: 1-40 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences"
+  },
+  {
+   "reason": "item.label.placeholder",
+   "hint": "braces mark a template placeholder (ASCII letters and digits, up to 16); remove them from plain text"
+  },
+  {
+   "reason": "item.line.missing",
+   "hint": "a line needs from, id, k, to"
+  },
+  {
+   "reason": "item.line.unknown.zz",
+   "hint": "remove unknown keys; a line allows color, from, id, k, style, to"
+  },
+  {
+   "reason": "item.node.missing",
+   "hint": "a node needs at, id, k, text"
+  },
+  {
+   "reason": "item.node.unknown.zz",
+   "hint": "remove unknown keys; a node allows at, color, id, k, r, text"
+  },
+  {
+   "reason": "item.orbit.missing",
+   "hint": "a orbit needs at, id, k, r"
+  },
+  {
+   "reason": "item.orbit.unknown.zz",
+   "hint": "remove unknown keys; a orbit allows at, color, id, k, label, r"
+  },
+  {
+   "reason": "item.path.missing",
+   "hint": "a path needs id, k, pts"
+  },
+  {
+   "reason": "item.path.unknown.zz",
+   "hint": "remove unknown keys; a path allows color, dashed, id, k, pts"
+  },
+  {
+   "reason": "item.plot.missing",
+   "hint": "a plot needs at, h, id, k, pts, w, xr, yr"
+  },
+  {
+   "reason": "item.plot.unknown.zz",
+   "hint": "remove unknown keys; a plot allows at, color, h, id, k, label, pts, w, xl, xr, yl, yr"
+  },
+  {
+   "reason": "item.pulley.missing",
+   "hint": "a pulley needs at, id, k, r"
+  },
+  {
+   "reason": "item.pulley.unknown.zz",
+   "hint": "remove unknown keys; a pulley allows at, color, id, k, r"
+  },
+  {
+   "reason": "item.region.missing",
+   "hint": "a region needs id, k, pts"
+  },
+  {
+   "reason": "item.region.unknown.zz",
+   "hint": "remove unknown keys; a region allows color, dashed, id, k, label, pts"
+  },
+  {
+   "reason": "item.rope.missing",
+   "hint": "a rope needs id, k, pts"
+  },
+  {
+   "reason": "item.rope.unknown.zz",
+   "hint": "remove unknown keys; a rope allows color, id, k, pts"
+  },
+  {
+   "reason": "item.spring.missing",
+   "hint": "a spring needs from, id, k, to"
+  },
+  {
+   "reason": "item.spring.unknown.zz",
+   "hint": "remove unknown keys; a spring allows coils, color, from, id, k, label, to"
+  },
+  {
+   "reason": "item.table.missing",
+   "hint": "a table needs at, cells, id, k"
+  },
+  {
+   "reason": "item.table.unknown.a,b",
+   "hint": "remove unknown keys; a table allows at, cells, color, cw, header, id, k, label, marked, rh"
+  },
+  {
+   "reason": "item.table.unknown.zz",
+   "hint": "remove unknown keys; a table allows at, cells, color, cw, header, id, k, label, marked, rh"
+  },
+  {
+   "reason": "item.text.missing",
+   "hint": "a text needs at, id, k, text"
+  },
+  {
+   "reason": "item.text.unknown.zz",
+   "hint": "remove unknown keys; a text allows at, color, id, k, style, text"
+  },
+  {
+   "reason": "item.vector.missing",
+   "hint": "a vector needs id, k, len"
+  },
+  {
+   "reason": "item.vector.unknown.zz",
+   "hint": "remove unknown keys; a vector allows angle, color, dashed, dir, from, id, k, label, len, on"
+  },
+  {
+   "reason": "items",
+   "hint": "items must be a list"
+  },
+  {
+   "reason": "items.count",
+   "hint": "a scene has 1 to 24 items (a template scene 0 to 10 extra items)"
+  },
+  {
+   "reason": "items.total",
+   "hint": "at most 40 items after template expansion, and at least one"
+  },
+  {
+   "reason": "json",
+   "hint": "send one complete UTF-8 JSON object, at most 16384 raw bytes, without comments, trailing commas, NaN or Infinity"
+  },
+  {
+   "reason": "line.from",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "line.pts",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "line.style",
+   "hint": "style is solid, dashed or ground"
+  },
+  {
+   "reason": "line.to",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "node.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "node.r",
+   "hint": "r is 0.2 to a sixth of the world's larger side"
+  },
+  {
+   "reason": "node.text",
+   "hint": "node text is 1-8 characters of plain text"
+  },
+  {
+   "reason": "orbit.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "orbit.r",
+   "hint": "r is 0.1 to half the world's larger side"
+  },
+  {
+   "reason": "over",
+   "hint": "over lists at most 16 edits of the template's own items"
+  },
+  {
+   "reason": "over.ref",
+   "hint": "over lists at most 16 edits of the template's own items"
+  },
+  {
+   "reason": "path.dashed",
+   "hint": "dashed is true or false"
+  },
+  {
+   "reason": "path.pts",
+   "hint": "a path has 2 to 64 points"
+  },
+  {
+   "reason": "plot.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "plot.h",
+   "hint": "h is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "plot.pts",
+   "hint": "pts holds 2-64 data points, each [x, y] with both numbers from -1e6 to 1e6 (data units; points outside xr and yr are accepted and clipped)"
+  },
+  {
+   "reason": "plot.w",
+   "hint": "w is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "plot.xl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "plot.xr",
+   "hint": "xr is [lo, hi] with lo < hi, both from -1e6 to 1e6"
+  },
+  {
+   "reason": "plot.yl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "plot.yr",
+   "hint": "yr is [lo, hi] with lo < hi, both from -1e6 to 1e6"
+  },
+  {
+   "reason": "pulley.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "pulley.r",
+   "hint": "r is 0.05 to a quarter of the world's larger side"
+  },
+  {
+   "reason": "region.dashed",
+   "hint": "dashed is true or false"
+  },
+  {
+   "reason": "region.pts",
+   "hint": "a region has 3 to 64 points"
+  },
+  {
+   "reason": "rope.pts",
+   "hint": "a rope has 2 to 6 points"
+  },
+  {
+   "reason": "scene.bytes",
+   "hint": "compact JSON must fit 8192 bytes: shorten text, round numbers or remove items"
+  },
+  {
+   "reason": "scene.depth",
+   "hint": "nest at most 64 levels; real scenes nest 6 to 15"
+  },
+  {
+   "reason": "scene.dim",
+   "hint": "dim is \"2d\" (the default) or \"3d\""
+  },
+  {
+   "reason": "scene.items.required",
+   "hint": "a scene without a template needs \"items\": a list of 1 to 24 items"
+  },
+  {
+   "reason": "scene.missing",
+   "hint": "add \"v\": 1 at the top level"
+  },
+  {
+   "reason": "scene.number",
+   "hint": "every number must be finite"
+  },
+  {
+   "reason": "scene.object",
+   "hint": "the top level must be one object such as {\"v\":1,\"items\":[...]}, not an array or a transport wrapper"
+  },
+  {
+   "reason": "scene.params.without.template",
+   "hint": "params, hide and over belong to template scenes only; remove them or add \"template\""
+  },
+  {
+   "reason": "scene.unknown.layer2d",
+   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, and template, params, hide, over for template scenes"
+  },
+  {
+   "reason": "scene.unknown.zz",
+   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, and template, params, hide, over for template scenes"
+  },
+  {
+   "reason": "scene.version",
+   "hint": "set \"v\": 1"
+  },
+  {
+   "reason": "spring.coils",
+   "hint": "coils is a whole number from 3 to 24"
+  },
+  {
+   "reason": "spring.from",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "spring.to",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "step",
+   "hint": "a step is {\"say\": text} with optional show, focus, cam and do"
+  },
+  {
+   "reason": "step.cam",
+   "hint": "a step is {\"say\": text} with optional show, focus, cam and do"
+  },
+  {
+   "reason": "step.do",
+   "hint": "do holds 1 to 6 edits"
+  },
+  {
+   "reason": "step.focus",
+   "hint": "focus names one item in this scene"
+  },
+  {
+   "reason": "step.say",
+   "hint": "narration: 1-200 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences"
+  },
+  {
+   "reason": "step.say.brace",
+   "hint": "unbalanced { or }; braces are template placeholders, so remove them from plain text"
+  },
+  {
+   "reason": "step.show",
+   "hint": "show lists at most 16 ids, each naming an item in this scene"
+  },
+  {
+   "reason": "step.unknown.zz",
+   "hint": "a step is {\"say\": text} with optional show, focus, cam and do"
+  },
+  {
+   "reason": "steps",
+   "hint": "a scene has 1 to 8 steps"
+  },
+  {
+   "reason": "table.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "table.cell",
+   "hint": "a cell is up to 12 characters of plain text, an empty string, or a number below 1e6"
+  },
+  {
+   "reason": "table.cells",
+   "hint": "cells holds 1-8 rows of 1-6 cells, every row the same length"
+  },
+  {
+   "reason": "table.cw",
+   "hint": "cw is 0.3 to a third of the world's larger side"
+  },
+  {
+   "reason": "table.header",
+   "hint": "header is true or false"
+  },
+  {
+   "reason": "table.marked",
+   "hint": "marked holds [row, column] pairs inside the table (row 0 is the first row)"
+  },
+  {
+   "reason": "table.rh",
+   "hint": "rh is 0.3 to a sixth of the world's larger side"
+  },
+  {
+   "reason": "template.bst.values",
+   "hint": "check the template parameter named in the reason: its type, count and range (bst values: 1-15 distinct integers -999..999; two_pointers vals: 2-12 sorted integers)"
+  },
+  {
+   "reason": "template.bst.values.missing",
+   "hint": "add the template parameter named in the reason"
+  },
+  {
+   "reason": "template.build",
+   "hint": "the template could not build a scene from these parameters; check them against its rules"
+  },
+  {
+   "reason": "template.check",
+   "hint": "bst values must be distinct; two_pointers vals must be sorted ascending"
+  },
+  {
+   "reason": "template.params",
+   "hint": "params must be an object with only the template's parameters: bst takes values and find, two_pointers takes vals and target"
+  },
+  {
+   "reason": "template.params.depth",
+   "hint": "params must be an object with only the template's parameters: bst takes values and find, two_pointers takes vals and target"
+  },
+  {
+   "reason": "template.steps",
+   "hint": "check the template parameter named in the reason: its type, count and range (bst values: 1-15 distinct integers -999..999; two_pointers vals: 2-12 sorted integers)"
+  },
+  {
+   "reason": "template.two_pointers.target.integer",
+   "hint": "this template parameter must be a whole number"
+  },
+  {
+   "reason": "template.unknown",
+   "hint": "built-in templates are bst and two_pointers; otherwise write the items yourself"
+  },
+  {
+   "reason": "template.world",
+   "hint": "a template scene takes its world from the template; remove \"world\""
+  },
+  {
+   "reason": "text.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "text.style",
+   "hint": "style is label, callout, title or code"
+  },
+  {
+   "reason": "text.text",
+   "hint": "text: 1-120 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences; code-style text may use < and > in comparisons but not tags"
+  },
+  {
+   "reason": "text.text.placeholder.n",
+   "hint": "braces mark a template placeholder and this scene has no value with that name; remove the braces"
+  },
+  {
+   "reason": "title",
+   "hint": "title: 1-60 characters of plain text only: no < or > (write the symbols ≤ ≥ → or words), no { } outside template placeholders, no URLs or code fences"
+  },
+  {
+   "reason": "title.placeholder.n",
+   "hint": "braces mark a template placeholder and this scene has no value with that name; remove the braces"
+  },
+  {
+   "reason": "vector.anchor",
+   "hint": "give exactly one anchor: \"from\": [x, y] or \"on\": the id of a body or node"
+  },
+  {
+   "reason": "vector.angle",
+   "hint": "angle is -360 to 360 degrees counter-clockwise from +x: 0 right, 90 up, 180 left, 270 down"
+  },
+  {
+   "reason": "vector.dashed",
+   "hint": "dashed is true or false"
+  },
+  {
+   "reason": "vector.dir",
+   "hint": "dir is the 3D direction: in a \"dim\": \"3d\" scene remove angle and give [x, y, z], three numbers from -1 to 1 with length above 0.01; in 2D remove dir and use angle (degrees counter-clockwise: 0 right, 90 up, 270 down)"
+  },
+  {
+   "reason": "vector.from",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "vector.len",
+   "hint": "len is 0 to the world's larger side, in world units"
+  },
+  {
+   "reason": "vector.on",
+   "hint": "on must name a body or node in this scene"
+  },
+  {
+   "reason": "video2d.budget.bytes",
+   "hint": "opt-in layer2d video follows its own draft schema (docs/schemas/scene-2d-layer.draft.schema.json); fix the part the reason names"
+  },
+  {
+   "reason": "video2d.schema",
+   "hint": "opt-in layer2d video follows its own draft schema (docs/schemas/scene-2d-layer.draft.schema.json); fix the part the reason names"
+  },
+  {
+   "reason": "world",
+   "hint": "world is {\"w\": 2-100, \"h\": 2-100}; the default is 12 by 8"
+  },
+  {
+   "reason": "world.unknown.d",
+   "hint": "world is {\"w\": 2-100, \"h\": 2-100}; the default is 12 by 8"
+  },
+  {
+   "reason": "world.unknown.zz",
+   "hint": "world is {\"w\": 2-100, \"h\": 2-100}; the default is 12 by 8"
+  },
+  {
+   "reason": "world.w",
+   "hint": "world is {\"w\": 2-100, \"h\": 2-100}; the default is 12 by 8"
+  },
+  {
+   "reason": "not.a.reason",
+   "hint": null
+  },
+  {
+   "reason": "",
+   "hint": null
+  },
+  {
+   "reason": "body.atx",
+   "hint": null
+  },
+  {
+   "reason": "item.nokind.missing",
+   "hint": null
+  },
+  {
+   "reason": "item.body",
+   "hint": null
+  },
+  {
+   "reason": "lesson.op.add",
+   "hint": null
+  },
+  {
+   "reason": "mp4: writer failed",
+   "hint": null
+  },
+  {
+   "reason": "patch.stale",
+   "hint": null
+  },
+  {
+   "reason": "items.count.extra",
+   "hint": null
+  }
+ ],
+ "ml": [
+  {
+   "reason": "ml.optIn",
+   "hint": "pass the explicit ML kit opt-in (--ml-kit)"
+  },
+  {
+   "reason": "ml.bytes",
+   "hint": "the file must be at most 16384 bytes"
+  },
+  {
+   "reason": "ml.json",
+   "hint": "send one bounded UTF-8 JSON object"
+  },
+  {
+   "reason": "ml.object",
+   "hint": "the document, each item and each candidate must be a JSON object"
+  },
+  {
+   "reason": "ml.unknown",
+   "hint": "remove keys this object does not have; the location names the object"
+  },
+  {
+   "reason": "ml.version",
+   "hint": "set \"v\": 1"
+  },
+  {
+   "reason": "ml.kind",
+   "hint": "set \"kind\": \"ml-explainer\""
+  },
+  {
+   "reason": "ml.title",
+   "hint": "title: 1-64 characters of plain single-line text, no < > or URLs"
+  },
+  {
+   "reason": "ml.items",
+   "hint": "items holds 1 to 4 items"
+  },
+  {
+   "reason": "ml.item.kind",
+   "hint": "kind is visionPipeline, nextTokenProbabilities, meaningMap, pictureToNumbers, generationLoop, attention or agentLoop"
+  },
+  {
+   "reason": "ml.item.id",
+   "hint": "an id is 1-24 ASCII letters, digits or _, starting with a letter"
+  },
+  {
+   "reason": "ml.item.id.duplicate",
+   "hint": "item ids must be unique"
+  },
+  {
+   "reason": "ml.vision.caption",
+   "hint": "caption: 1-100 characters of plain single-line text (required)"
+  },
+  {
+   "reason": "ml.vision.citation",
+   "hint": "a citation is 1-120 characters of plain single-line text"
+  },
+  {
+   "reason": "ml.vision.size",
+   "hint": "imageSize is [width, height] and patchSize one edge, whole numbers from 1 to 8192"
+  },
+  {
+   "reason": "ml.vision.patch.division",
+   "hint": "patchSize must divide both image sides exactly"
+  },
+  {
+   "reason": "ml.vision.patch.count",
+   "hint": "the patch grid allows at most 128 columns, 128 rows and 4096 patches; use a bigger patch"
+  },
+  {
+   "reason": "ml.vision.embeddingWidth",
+   "hint": "embeddingWidth is a whole number from 1 to 65536"
+  },
+  {
+   "reason": "ml.vision.label",
+   "hint": "a projector or language model label is 1-32 characters of plain text"
+  },
+  {
+   "reason": "ml.vision.stageFocus",
+   "hint": "stageFocus is true or false"
+  },
+  {
+   "reason": "ml.tokens",
+   "hint": "a token list holds 1-12 strings of 1-16 characters of plain text"
+  },
+  {
+   "reason": "ml.prob.candidates",
+   "hint": "candidates holds 2-8 objects {\"token\", \"logit\"} with distinct tokens of 1-16 characters"
+  },
+  {
+   "reason": "ml.prob.logit",
+   "hint": "a logit is a finite number within -1000000..1000000"
+  },
+  {
+   "reason": "ml.prob.temperature",
+   "hint": "temperature is a number from 0.01 to 100"
+  },
+  {
+   "reason": "ml.prob.topK",
+   "hint": "topK is a whole number from 1 to the number of candidates"
+  },
+  {
+   "reason": "ml.prob.topP",
+   "hint": "topP is greater than 0 and at most 1"
+  },
+  {
+   "reason": "ml.prob.sum",
+   "hint": "the logits must give a valid distribution; keep them finite and within range"
+  },
+  {
+   "reason": "ml.prob.chosen",
+   "hint": "chosen must be a candidate token that keeps a positive probability after temperature, topK and topP"
+  },
+  {
+   "reason": "ml.prob.sweep",
+   "hint": "temperatures holds 2-4 distinct values from 0.01 to 100, without temperature, topK or topP"
+  },
+  {
+   "reason": "ml.map.count",
+   "hint": "a map holds 3 to 12 entries"
+  },
+  {
+   "reason": "ml.map.word.duplicate",
+   "hint": "map labels must be unique"
+  },
+  {
+   "reason": "ml.map.coordinates",
+   "hint": "give exactly one of points or vectors, finite numbers within 1e12, labels of 1-16 characters; vectorCitation only with vectors"
+  },
+  {
+   "reason": "ml.map.vector.length",
+   "hint": "a position is [x, y]; every vector has the same length, 3 to 32 numbers"
+  },
+  {
+   "reason": "ml.map.cosine",
+   "hint": "nearestNeighbors is true or false, and a zero vector cannot be linked"
+  },
+  {
+   "reason": "ml.map.cluster",
+   "hint": "cluster lists distinct labels that are on the map"
+  },
+  {
+   "reason": "ml.picture.caption",
+   "hint": "caption: 1-100 characters of plain single-line text (required)"
+  },
+  {
+   "reason": "ml.picture.png",
+   "hint": "imagePNG is base64 of one opaque 8-bit grayscale or RGB PNG"
+  },
+  {
+   "reason": "ml.picture.png.colorMetadata",
+   "hint": "remove the gAMA, iCCP, sRGB and cHRM chunks from the PNG"
+  },
+  {
+   "reason": "ml.picture.size",
+   "hint": "each PNG side is 1 to 64 pixels"
+  },
+  {
+   "reason": "ml.picture.patch.division",
+   "hint": "patchSize is a whole number from 1 to 64 that divides both PNG sides"
+  },
+  {
+   "reason": "ml.picture.patch.selection",
+   "hint": "highlight is a zero-based [column, row] inside the patch grid"
+  },
+  {
+   "reason": "ml.picture.presentation",
+   "hint": "presentation is both, grid or pixels"
+  },
+  {
+   "reason": "ml.generation.count",
+   "hint": "stepCount is a whole number from 1 to 8"
+  },
+  {
+   "reason": "ml.generation.logits",
+   "hint": "steps must hold exactly stepCount steps, each with 2-8 distinct candidates and finite logits"
+  },
+  {
+   "reason": "ml.generation.selection",
+   "hint": "selection is greedy (no seed) or sample with a seed from 0 to 4294967295"
+  },
+  {
+   "reason": "ml.generation.chosen",
+   "hint": "remove chosen or set it to the computed token; greedy picks the highest logit, ties to the earlier candidate"
+  },
+  {
+   "reason": "ml.attention.grid",
+   "hint": "the patch grid must hold 2 to 64 patches"
+  },
+  {
+   "reason": "ml.attention.query",
+   "hint": "query is a zero-based [column, row] inside the patch grid"
+  },
+  {
+   "reason": "ml.attention.scores",
+   "hint": "scores holds one finite number for every patch except the query, in row-major order"
+  },
+  {
+   "reason": "ml.agent.states",
+   "hint": "states are distinct names from plan, toolCall, toolResult, review, act, revise, stop; plan, toolCall, toolResult and act are required, and revise needs review"
+  },
+  {
+   "reason": "ml.agent.review",
+   "hint": "requiresReview is true or false, and true needs the review state"
+  },
+  {
+   "reason": "ml.agent.stop",
+   "hint": "add the terminal stop state"
+  },
+  {
+   "reason": "ml.agent.budget",
+   "hint": "stepBudget is a whole number from 1 to 32, at least 4 (5 with review) to reach stop"
+  },
+  {
+   "reason": "ml.render.frame",
+   "hint": "the frame index is outside the checked document"
+  },
+  {
+   "reason": "ml.render.raster",
+   "hint": "the frame could not be drawn; try a supported size"
+  },
+  {
+   "reason": "ml.export.destination",
+   "hint": "the destination must be a file URL"
+  },
+  {
+   "reason": "ml.export.exists",
+   "hint": "choose a new destination; existing files are never overwritten"
+  },
+  {
+   "reason": "ml.export.png",
+   "hint": "the PNG frame could not be written; check the destination"
+  },
+  {
+   "reason": "ml.not.a.reason",
+   "hint": null
+  },
+  {
+   "reason": "ml",
+   "hint": null
+  },
+  {
+   "reason": "json",
+   "hint": null
+  }
+ ]
+}

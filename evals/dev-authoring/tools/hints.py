@@ -2,7 +2,8 @@
 """Python mirror of the repair hints: `MGRepairHint.text(for:)` (scenes) and `MGMLReason.hint` (ML kit).
 
 `marty-scene-validate --hints` prints the same text. `tools/tests/test_repair_hints.py` compares these tables
-with the Swift sources, so a change to one side must be made on both.
+with the Swift sources and checks the outputs against the shared corpus (docs/fixtures/repair-hints/corpus.json),
+which Swift tests assert too. A change to one side must be made on both, then `hint_corpus.py --write`.
 """
 
 from pathlib import Path
@@ -59,12 +60,12 @@ SCENE_HINTS = [
     ("line.style", "style is solid, dashed or ground"),
     ("vector.anchor", "give exactly one anchor: \"from\": [x, y] or \"on\": the id of a body or node"),
     ("vector.on", "on must name a body or node in this scene"),
-    ("vector.dir", "dir is for 3D scenes only; in 2D use angle (degrees counter-clockwise: 0 right, 90 up, 270 down)"),
+    ("vector.dir", "dir is the 3D direction: in a \"dim\": \"3d\" scene remove angle and give [x, y, z], three numbers from -1 to 1 with length above 0.01; in 2D remove dir and use angle (degrees counter-clockwise: 0 right, 90 up, 270 down)"),
     ("vector.angle", "angle is -360 to 360 degrees counter-clockwise from +x: 0 right, 90 up, 180 left, 270 down"),
     ("vector.len", "len is 0 to the world's larger side, in world units"),
-    ("plot.xr", "xr is [min, max] with min below max (span at least 1e-6) inside -1e6..1e6"),
-    ("plot.yr", "yr is [min, max] with min below max (span at least 1e-6) inside -1e6..1e6"),
-    ("plot.pts", "pts holds 2-64 data points [x, y] in data units, inside xr and yr"),
+    ("plot.xr", "xr is [lo, hi] with lo < hi, both from -1e6 to 1e6"),
+    ("plot.yr", "yr is [lo, hi] with lo < hi, both from -1e6 to 1e6"),
+    ("plot.pts", "pts holds 2-64 data points, each [x, y] with both numbers from -1e6 to 1e6 (data units; points outside xr and yr are accepted and clipped)"),
     ("*.w", "w is 0.5 to 1.25 times the world's larger side"),
     ("*.h", "h is 0.5 to 1.25 times the world's larger side"),
     ("spring.coils", "coils is a whole number from 3 to 24"),

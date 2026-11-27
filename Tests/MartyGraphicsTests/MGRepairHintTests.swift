@@ -14,6 +14,8 @@ final class MGRepairHintTests: XCTestCase {
         (#"{"v":1,"items":[{"id":"a","k":"text","at":[1,1],"text":"{n} apples"}]}"#, "text.text.placeholder.n"),
         (#"{"v":1,"items":[{"id":"a","k":"vector","from":[1,1],"on":"a","angle":0,"len":1}]}"#, "vector.anchor"),
         (#"{"v":1,"items":[{"id":"a","k":"vector","from":[1,1],"dir":[1,0,0],"len":1}]}"#, "vector.dir"),
+        (#"{"v":1,"dim":"3d","items":[{"id":"a","k":"vector","from":[1,1,0],"dir":[0,0,0],"len":1}]}"#, "vector.dir"),
+        (#"{"v":1,"items":[{"id":"p","k":"plot","at":[1,1],"w":6,"h":4,"xr":[2,2],"yr":[0,1],"pts":[[2,0],[2,1]]}]}"#, "plot.xr"),
         (#"{"v":1,"items":[{"id":"a","k":"incline","at":[1,1],"base":4,"angle":85}]}"#, "incline.angle"),
         (#"{"v":1,"items":[{"id":"a","k":"array","at":[6,4],"vals":[1,2],"ptrs":[{"i":1,"label":"top"}]}],"steps":[{"say":"Pop.","do":[{"id":"a","key":"vals","value":[1]}]}]}"#, "array.ptr.i"),
         (#"{"v":1,"items":[{"id":"a","k":"body","at":[1,1]}],"steps":[{"say":"x","do":[{"id":"a","key":"radius","value":1}]}]}"#, "edit.key.radius"),
@@ -39,5 +41,21 @@ final class MGRepairHintTests: XCTestCase {
         XCTAssertTrue(MGRepairHint.matches("item.*.unknown.*", "item.body.unknown.a,b"))
         XCTAssertFalse(MGRepairHint.matches("*.at", "body.atx"))
         XCTAssertFalse(MGRepairHint.matches("items", "items.count"))
+    }
+}
+
+/// The shared corpus (docs/fixtures/repair-hints/corpus.json) holds the exact hint for every scene reason sample,
+/// every kind's computed missing/unknown hint, pattern-precedence cases and reasons with no hint. The Python mirror
+/// asserts the same file (tools/tests/test_repair_hints.py), so the two implementations are compared by output.
+final class RepairHintCorpusTests: XCTestCase {
+    func testSceneHintsMatchTheSharedCorpus() throws {
+        let url = XFix.root.appendingPathComponent("docs/fixtures/repair-hints/corpus.json")
+        let corpus = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        let scene = try XCTUnwrap(corpus["scene"] as? [[String: Any]])
+        XCTAssertEqual(scene.count, 203)
+        for entry in scene {
+            let reason = try XCTUnwrap(entry["reason"] as? String)
+            XCTAssertEqual(MGRepairHint.text(for: reason), entry["hint"] as? String, reason)
+        }
     }
 }

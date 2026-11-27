@@ -148,6 +148,6 @@ Prefer a full scene for a one-off explanation; do not publish a course-derived
 walkthrough just to fill a template slot. The [public sync process](PUBLIC-SYNC.md)
 also applies to externally contributed packs.
 
-For complete fields, limits and transport wrappers, use [PROTOCOL.md](PROTOCOL.md). To write a scene from a
-plain-language request, follow the [authoring guide](AUTHORING.md): drawing conventions, a checklist, worked
-examples and `marty-scene-validate --hints`.
+For complete fields, limits and transport wrappers, use [PROTOCOL.md](PROTOCOL.md). The
+[authoring guide](AUTHORING.md) gives the 2D drawing conventions, an optional review checklist, worked examples
+and `marty-scene-validate --hints`.

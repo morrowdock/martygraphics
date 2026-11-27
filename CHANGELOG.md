@@ -90,18 +90,20 @@
 - Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).
 - The draft scene v1 schema and `tools/scene_v1_check.py` accept `func`, `field` and the scene and step `alt`
   keys. For literal scenes, the preflight runs the `tools/mg_expr.py` rules on each graph and field item.
-- Add an authoring guide for writing scenes from a plain-language request (`docs/AUTHORING.md`): the drawing
-  conventions the keys alone do not show (vector angles, incline geometry, plot, bars, array and table anchors,
-  step timing and `show`), a pre-flight spec checklist, worked examples and a common-mistakes table.
+- Add an authoring guide for the 2D renderer (`docs/AUTHORING.md`): the drawing conventions the keys alone do
+  not show (vector angles, incline geometry, plot, bars, array and table anchors, step timing and `show`), an
+  optional review checklist, worked examples and a common-mistakes table.
 - Add a one-line fix hint for every scene and ML refusal reason: `MGRepairHint.text(for:)`, `MGMLReason.hint` and
   `marty-scene-validate --hints` (also with `--ml-kit --strict`). Reasons and the default output are unchanged.
   The Swift changes are pending Mac verification.
-- Add `tools/scene_lint.py`, an authoring lint for mistakes the parser accepts: a starting state hidden by step 0
-  edits, displayed numbers that round away, clipped plot points, items outside the world, ceiling hatching,
-  focus on a highlight and negative bars.
-- Add a dev authoring eval (`evals/dev-authoring`): 40 original requests with machine-checkable specs frozen
-  before authoring, a grader, Python mirrors of the validators, and baseline and improved runs (39/40 and 40/40
-  mechanically correct with one author that also designed the specs; an independent author run is pending).
+- Add `tools/scene_lint.py`, an authoring lint for 2D scenes: warnings for displayed numbers that round away,
+  clipped plot points, items outside the world (rotated boxes and every shown step included), focus on a
+  highlight and negative bars; review cues for step 0 edits, ground hatching and `move`. It reports what it does
+  not check (template and 3D scenes, text width, vectors anchored with `on`).
+- Add a dev authoring eval (`evals/dev-authoring`): 40 original requests with machine-checkable specs, a grader,
+  Python mirrors of the validators, baseline and improved runs by one author that also designed the specs, and
+  checked-in inventories for the author-independent counts. It does not measure an accuracy change; an
+  independent author run is pending.
 - Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,
   seeded or greedy token generation, temperature sweeps, and simplified patch attention.
   Add a camera-right landscape composition and optional sequential highlights for the vision pipeline.

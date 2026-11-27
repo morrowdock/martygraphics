@@ -41,12 +41,12 @@ line, vector, axes, orbit, text, highlight, path. Text styles are `label`
 and [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives)
 for the newest additions.
 
-Drawing conventions that the keys alone do not show: a vector `angle` is degrees counter-clockwise from +x
-(0 right, 90 up); an incline's `at` is its bottom-left vertex and the slope rises to the right; `plot`, `axes`
-and `bars` anchor at their lower-left corner, `array` and `table` at their centre; plot `pts` are data
-coordinates inside `xr` and `yr`. In steps, an item first listed in a `show` appears at that step, and the
-first frame already applies step 0's edits. The [authoring guide](AUTHORING.md) lists every convention, a
-checklist and worked examples.
+Drawing conventions of the 2D renderer that the keys alone do not show: a vector `angle` is degrees
+counter-clockwise from +x (0 right, 90 up); an incline's `at` is its bottom-left vertex and the slope rises to
+the right; `plot`, `axes` and `bars` anchor at their lower-left corner, `array` and `table` at their centre;
+plot `pts` are data coordinates, mapped through `xr` and `yr`. In steps, an item first listed in a `show`
+appears at that step, and the first frame already applies step 0's edits. The [authoring guide](AUTHORING.md)
+lists the 2D conventions, an optional review checklist and worked examples.
 
 The engine rejects unknown keys, broken references, invalid parameter ranges,
 invalid text, duplicate identifiers, and unsupported kinds. Limits include

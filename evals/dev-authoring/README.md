@@ -8,7 +8,8 @@ uses none of that benchmark's question, grader-question or acceptance files, and
   sees only this file and the guidance.
 - [specs.json](specs.json): one machine-checkable spec per request (expected items, numeric relations, step
   order), with the semantics fixed in [SPEC-CONTRACT.md](SPEC-CONTRACT.md).
-- [FREEZE.json](FREEZE.json): SHA-256 of those three files, committed before any scene was authored.
+- [FREEZE.json](FREEZE.json): SHA-256 of those three files and the reported freeze time. The hashes prove byte
+  identity only; they record the reported order (freeze before authoring) but do not prove it.
 
 ## Protocol
 
@@ -37,6 +38,8 @@ reported separately.
 | [tools/hints.py](tools/hints.py) | Python mirror of `MGRepairHint` and `MGMLReason.hint` ([drift test](../../tools/tests/test_repair_hints.py)). |
 | [tools/grade.py](tools/grade.py) | Grades a run against the specs with the engine's conventions; writes `results/RUN.json`. |
 | [tools/test_grader.py](tools/test_grader.py) | 29 mutation cases: injected mistakes must fail their check. |
+| [tools/inventory.py](tools/inventory.py) | Recomputes the author-independent counts in RESULTS from the [inventories](inventories/conventions.json); [test_inventory.py](tools/test_inventory.py) asserts them. |
+| [tools/hint_corpus.py](tools/hint_corpus.py) | Builds the shared [repair-hint corpus](../../docs/fixtures/repair-hints/corpus.json) that Python and Swift tests assert. |
 
 Results: [RESULTS.md](RESULTS.md). Outputs and logs: `runs/baseline`, `runs/improved` (with the filled
 [checklists](runs/improved/CHECKLISTS.md)).
@@ -62,5 +65,6 @@ python -m unittest discover -s tools -p "test_*.py"
 ## Limits
 
 The author and the grader designer were the same model in the first run, so the result can be biased toward the
-author. The specs were frozen before authoring to limit that, but an independent author is still needed. See
+author. The specs were reported frozen before authoring to limit that (FREEZE.json records the order but cannot
+prove it), and an independent author is still needed. See
 [RESULTS.md](RESULTS.md#limits-stated-plainly).

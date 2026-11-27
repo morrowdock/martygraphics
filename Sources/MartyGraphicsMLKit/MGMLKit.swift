@@ -66,7 +66,8 @@ public enum MGMLReason: String, Error, CaseIterable, Sendable {
 
 extension MGMLReason {
     /// A one-line fix hint for an author repairing a refused document. The reason stays the authority. The Python
-    /// mirror in `evals/dev-authoring/tools/hints.py` must match; `tools/tests/test_repair_hints.py` compares them.
+    /// mirror in `evals/dev-authoring/tools/hints.py` must match; both are checked against the shared corpus
+    /// `docs/fixtures/repair-hints/corpus.json` (`MLRepairHintCorpusTests`, `tools/tests/test_repair_hints.py`).
     public var hint: String {
         switch self {
         case .optIn: return "pass the explicit ML kit opt-in (--ml-kit)"
