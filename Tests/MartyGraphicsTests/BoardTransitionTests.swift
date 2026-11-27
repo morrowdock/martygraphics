@@ -685,13 +685,13 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertEqual(rig.probe.draws.last(where: { if case .live = $0.layer { return true }; return false })?.input.markers, ["zone": 1, "dot": 2])
 
         // Taps across the split, through the board's own tap handler: a base item and a live item.
-        let size = try XCTUnwrap(rig.probe.draws.last?.size)
-        let f = try rig.frame(size)
+        let tapSize = try XCTUnwrap(rig.probe.draws.last?.size)
+        let f = try rig.frame(tapSize)
         let tap = try XCTUnwrap(rig.probe.tap)
-        tap(f.viewport.point(MGPoint(3, 2.5)), size)
+        tap(f.viewport.point(MGPoint(3, 2.5)), tapSize)
         XCTAssertEqual(rig.selection, "zone", "a base-layer item is selected through the split")
         let dot = try XCTUnwrap(try item("dot", f).pts.first)
-        tap(f.viewport.point(dot), size)
+        tap(f.viewport.point(dot), tapSize)
         XCTAssertEqual(rig.selection, "dot", "a live-layer item is selected through the split")
     }
 

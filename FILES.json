@@ -4943,7 +4943,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/BoardTransitionTests.swift",
-      "sha256": "cfaf67ab796e7574aeece4c7eeba2571490a3d8a9adebd3cde03116a426276f9"
+      "sha256": "7e028d5edad55683941bf2974bcd153ed3b4300d8380230af6e7d23843239ff8"
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineStillsTests.swift",
