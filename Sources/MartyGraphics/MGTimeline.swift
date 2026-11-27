@@ -134,18 +134,19 @@ public enum MGTimeline {
     /// Damped spring from 0 to 1 over about 0.8 s with a little overshoot. Game feel, not physics. A negative elapsed
     /// time (a frame stamped before the transition started) counts as 0, so the curve never runs backward past its start.
     public static func spring(_ elapsed: Double) -> Double {
-        let elapsed = max(0, elapsed)
-        guard elapsed < 1.2 else { return 1 }
+        guard elapsed < 1.2 else { return 1 }   // first, so NaN still settles at 1
+        let elapsed = blendProgress(elapsed)
         return 1 - exp(-6.5 * elapsed) * cos(8.5 * elapsed)
     }
 
-    /// Blend progress limited to 0...1: a blend shows `from`, `to` or geometry between them, never beyond either.
-    static func blendProgress(_ t: Double) -> Double { min(1, max(0, t)) }
+    /// Lower clamp for blend progress and elapsed time: a value below 0 counts as the start. Callers check the upper
+    /// bound first (`t < 1`, `elapsed < 1.2`), which also sends NaN to the settled result as before.
+    static func blendProgress(_ t: Double) -> Double { max(0, t) }
 
     /// Geometry of `to`, starting from `from` where the same id and kind exist. New items come in as-is (they draw on).
     public static func blend(from: [MGItem], to: [MGItem], t: Double) -> [MGItem] {
+        guard t < 1 else { return to }   // first, so NaN still returns the target
         let t = blendProgress(t)
-        guard t < 1 else { return to }
         let old = Dictionary(from.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         return to.map { target in
             guard let prev = old[target.id], prev.kind == target.kind else { return target }

@@ -111,8 +111,13 @@ final class SceneRobustnessTests: XCTestCase {
             MGCanvasRenderer.coilCount(try XCTUnwrap(MGTimeline.blend(from: few, to: many, t: t).first))
         }
         XCTAssertEqual(try coils(MGTimeline.spring(0)), 3)
+        // A frame stamped just before the transition started shows the starting geometry.
+        XCTAssertEqual(MGTimeline.spring(-0.1), 0)
+        XCTAssertEqual(try coils(MGTimeline.spring(-0.1)), 3)
+        XCTAssertEqual(try coils(-0.1), 3)
         XCTAssertEqual(try coils(0.5), 13)
         XCTAssertEqual(try coils(1), 24)
+        XCTAssertEqual(MGTimeline.blendProgress(-0.1), 0)
         XCTAssertEqual(MGTimeline.blendProgress(0), 0)
         XCTAssertEqual(MGTimeline.blendProgress(0.5), 0.5)
         XCTAssertEqual(MGTimeline.blendProgress(1), 1)
