@@ -678,6 +678,10 @@
    "hint": "bst values must be distinct; two_pointers vals must be sorted ascending"
   },
   {
+   "reason": "template.motion",
+   "hint": "check the template parameter named in the reason: its type, count and range (bst values: 1-15 distinct integers -999..999; two_pointers vals: 2-12 sorted integers)"
+  },
+  {
    "reason": "template.params",
    "hint": "params must be an object with only the template's parameters: bst takes values and find, two_pointers takes vals and target"
   },

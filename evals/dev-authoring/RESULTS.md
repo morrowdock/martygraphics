@@ -69,7 +69,7 @@ directory) and asserted by `tools/test_inventory.py`.
 | Measure | Baseline (main 5e4952e) | This branch |
 | --- | --- | --- |
 | Matches to 17 text probes selected from the new guide ([probes](inventories/conventions.json)) | 1 / 17 | 17 / 17 |
-| Scene refusal reasons with extra text ([160 sample tokens](inventories/scene-reasons.json)) | 3, as details, not fix hints (`input.too-large`, `json`, `template.unknown`) | 160 with a fix hint |
+| Scene refusal reasons with extra text ([161 sample tokens](inventories/scene-reasons.json)) | 3, as details, not fix hints (`input.too-large`, `json`, `template.unknown`) | 161 with a fix hint |
 | ML kit refusal reasons with a fix hint (every `MGMLReason`) | 0 / 58 | 58 / 58 |
 
 The [probe list](inventories/conventions.json) gives each convention the 40 correct answers depend on, its text
@@ -78,11 +78,12 @@ wording, so the current prose matches 17 of 17 by construction. In the 5e4952e p
 matches (PROTOCOL.md:178). A probe that does not match is not proof that the baseline lacks the convention: it
 may be stated in other words or shown only by an example, and the notes do not claim to be complete.
 
-The [reason sample](inventories/scene-reasons.json) has 160 tokens: the 58 static `MGError` literals in
+The [reason sample](inventories/scene-reasons.json) has 161 tokens: the 59 static `MGError` literals in
 `MGParser.swift`, `json`, `input.too-large` and `scene.missing`, the item missing and unknown families of the 19
 kinds, every kind–field family, and ten dynamic forms with one sample each. An earlier draft of this file said 148
-tokens; that number could not be reproduced and is replaced by 160. The baseline validator printed extra detail
-text for 3 of them (`SceneValidator.swift:153`, `:167` and `:172` at 5e4952e).
+tokens; that number could not be reproduced. At 5e4952e the sample had 160 tokens; main later added
+`template.motion`, which takes the general `template.*` hint. The baseline validator printed extra detail text for
+3 of them (`SceneValidator.swift:153`, `:167` and `:172` at 5e4952e).
 
 **Lint on the frozen baseline outputs.** `tools/scene_lint.py` gives 10 findings in 7 of 32 scenes: 4 warnings
 (all in M09) and 6 review cues. It skips the 2 template scenes (C02, C03) and says so. Read by hand:

@@ -113,7 +113,7 @@ The second count is every file importing the group at all.
 
 | Group | Sources (primary) | Sources (any import) | tools (primary) | tools (any import) |
 | --- | ---: | ---: | ---: | ---: |
-| Foundation-only | 71 | 84 | 0 | 5 |
+| Foundation-only | 72 | 85 | 0 | 5 |
 | CoreGraphics | 11 | 15 | 0 | 0 |
 | SwiftUI | 7 | 9 | 0 | 0 |
 | SceneKit | 1 | 3 | 0 | 0 |
@@ -122,7 +122,7 @@ The second count is every file importing the group at all.
 | Combine | 0 | 3 | 0 | 0 |
 | other | 5 | 12 | 6 | 6 |
 
-Swift files scanned: 101 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
+Swift files scanned: 102 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
 
 ### Core candidates
 
@@ -153,13 +153,13 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 
 | Module | Public declarations | Name platform types | Name `Any` |
 | --- | ---: | ---: | ---: |
-| MartyGraphics | 2414 | 52 | 8 |
-| MartyGraphicsMLKit | 30 | 2 | 0 |
+| MartyGraphics | 2416 | 52 | 8 |
+| MartyGraphicsMLKit | 31 | 2 | 0 |
 | MartyGraphicsPathTracer | 158 | 59 | 0 |
 
 #### MartyGraphics: public scopes with matching signatures
 
-323 scope/file pairs scanned, of which 22 match.
+324 scope/file pairs scanned, of which 22 match.
 
 | Type (scope) | File | Public decls | Platform tokens | Untyped |
 | --- | --- | ---: | --- | --- |
@@ -247,6 +247,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/MGPhysics.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGProgrammaticVideo.swift` | CoreGraphics | CoreGraphics, CoreText, Foundation | — | CoreGraphics: `CGImage`, `CGRect` |
 | `Sources/MartyGraphics/MGRenderPolicy.swift` | SwiftUI | SwiftUI | — | — |
+| `Sources/MartyGraphics/MGRepairHint.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGSceneDiff.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGStream.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGTemplates.swift` | Foundation-only | Foundation | — | — |
@@ -321,7 +322,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `tools/SceneValidator/Sources/MartyMLRender/main.swift` | other | Darwin, Foundation, MartyGraphicsMLKit, SceneValidatorCore | — | — |
 | `tools/SceneValidator/Sources/MartySceneValidate/main.swift` | other | Darwin, Foundation, SceneValidatorCore | — | — |
 | `tools/SceneValidator/Sources/SceneValidatorCore/SceneValidator.swift` | other | Darwin, Foundation, MartyGraphics, MartyGraphicsMLKit | — | — |
-| `tools/SceneValidator/Tests/SceneValidatorCoreTests/MLKitValidatorTests.swift` | other | Foundation, SceneValidatorCore, XCTest | — | — |
+| `tools/SceneValidator/Tests/SceneValidatorCoreTests/MLKitValidatorTests.swift` | other | Foundation, MartyGraphicsMLKit, SceneValidatorCore, XCTest | — | — |
 | `tools/SceneValidator/Tests/SceneValidatorCoreTests/SceneValidatorTests.swift` | other | Darwin, Foundation, MartyGraphics, SceneValidatorCore, XCTest | — | — |
 
 ### Python tooling imports
@@ -346,6 +347,7 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/render-blender/render.py` | bpy, hashlib, json, mathutils, mgrender, os, shutil, subprocess, sys, time, traceback |
 | `tools/render-blender/render_variants.py` | argparse, mgrender, os, pathlib, subprocess |
 | `tools/render-blender/selftest_scene.py` | bmesh, bpy, hashlib, json, math, os, sys |
+| `tools/scene_lint.py` | json, math, pathlib, sys |
 | `tools/scene_v1_check.py` | argparse, json, math, mg_expr, os, pathlib, re, stat, tools, unicodedata |
 | `tools/semantic_fixtures.py` | argparse, json, math, pathlib, scene_v1_check, sys |
 | `tools/tests/test_check_dco.py` | os, pathlib, subprocess, sys, tempfile, unittest |
@@ -353,6 +355,8 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/tests/test_portability_tools.py` | copy, importlib, json, pathlib, subprocess, sys, unittest |
 | `tools/tests/test_release_install.py` | argparse, contextlib, importlib, io, json, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_render_blender.py` | hashlib, json, math, mgrender, os, pathlib, re, render, render_variants, shutil, struct, subprocess, sys, tempfile, unittest |
+| `tools/tests/test_repair_hints.py` | importlib, json, pathlib, re, sys, unittest |
+| `tools/tests/test_scene_lint.py` | json, pathlib, re, scene_lint, scene_v1_check, sys, unittest |
 | `tools/tests/test_scene_v1_schema.py` | json, os, subprocess, sys, tools, unittest |
 | `tools/tests/test_validate_local.py` | contextlib, hashlib, importlib, io, json, os, pathlib, re, shlex, subprocess, sys, tempfile, unittest |
 | `tools/validate_local.py` | argparse, datetime, hashlib, json, pathlib, platform, posixpath, re, socket, subprocess, sys, urllib |
