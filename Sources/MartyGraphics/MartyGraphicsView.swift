@@ -391,11 +391,17 @@ struct MGSceneHost: View {
     }
 
     @ViewBuilder private func layeredCanvases(_ scene: MGScene, size: CGSize, running: Bool) -> some View {
-        let still = input(scene, now: controller.presentationDate(), size: size)
-        let base = MGCanvasLayers.base(still.items, live: MGCanvasLayers.live(scene, items: still.items))
+        let now = controller.presentationDate()
+        let still = input(scene, now: now, size: size)
+        // Items still drawing on or fading are live too: ticks never redraw the base (`MGCanvasLayers.settling`).
+        let live = MGCanvasLayers.live(scene, items: still.items).union(MGCanvasLayers.settling(appear: still.appear, opacity: still.opacity))
+        let base = MGCanvasLayers.base(still.items, live: live)
         Canvas(rendersAsynchronously: false) { ctx, size in
-            MGCanvasRenderer.draw(still, in: ctx, layer: .base(base))
-            teaching.probe?.drew(still, .base(base), size)
+            // The base frame at this evaluation's time for the canvas's own size, as the live canvas draws for its own
+            // size, so both layers always draw with one viewport (the reader's size is used only to choose the items).
+            let frame = input(scene, now: now, size: size)
+            MGCanvasRenderer.draw(frame, in: ctx, layer: .base(base))
+            teaching.probe?.drew(frame, .base(base), size)
         }
         liveCanvas(scene, running: running, layer: .live(base))
     }

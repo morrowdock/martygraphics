@@ -4,6 +4,7 @@ import AppKit
 #endif
 import CoreGraphics
 import Foundation
+import ImageIO
 import SwiftUI
 import XCTest
 @testable import MartyGraphics
@@ -353,14 +354,109 @@ final class BoardTransitionHostTests: XCTestCase {
                 r.scale = scale
                 return try XCTUnwrap(r.cgImage)
             }
-            let one = try Self.rgba(try render(liveDraw.input, .all))
-            let split = try Self.rgba(try render(liveDraw.input, .live(liveBase)), over: try render(baseDraw.input, .base(baseIDs)))
+            let oneImage = try render(liveDraw.input, .all)
+            let liveImage = try render(liveDraw.input, .live(liveBase)), baseImage = try render(baseDraw.input, .base(baseIDs))
+            let one = try Self.rgba(oneImage)
+            let split = try Self.rgba(liveImage, over: baseImage)
             XCTAssertEqual(one.count, split.count, file: file, line: line)
             var worst = 0, total = 0
             for (x, y) in zip(one, split) { let d = abs(Int(x) - Int(y)); worst = max(worst, d); total += d }
             XCTAssertLessThanOrEqual(worst, 6, "\(what) at \(scale)x: the split differs from the one-canvas frame", file: file, line: line)
             XCTAssertLessThan(Double(total) / Double(max(1, one.count)), 0.5, "\(what) at \(scale)x", file: file, line: line)
+            // Diagnostics only (printed after the checks above; they assert nothing): where a failing split differs.
+            if worst > 6 || Double(total) / Double(max(1, one.count)) >= 0.5 {
+                Self.reportSplit(what, scale: scale, base: baseDraw, live: liveDraw, baseIDs: baseIDs,
+                                 images: (one: oneImage, base: baseImage, live: liveImage), one: one, split: split)
+            }
         }
+    }
+
+    /// The items the last base draw cached (nil: the board never drew a base).
+    @MainActor func lastBase(_ rig: BoardRig) -> Set<String>? {
+        guard case .base(let ids)? = rig.probe.draws.last(where: { if case .base = $0.layer { return true }; return false })?.layer else { return nil }
+        return ids
+    }
+
+    /// Diagnostics for a split that differs from the one-canvas frame, printed on lines that start with `SPLIT-DIFF`
+    /// (nothing here asserts): how many pixels differ by more than 6 and where (bounding box, and how many on each
+    /// outer row and column), the first and the worst of them with the RGBA of the one-canvas frame, the composite,
+    /// the base alone and the live layer alone, the items whose footprint (`MGLayout.bounds` widened by 14 points for
+    /// glows and shadows) covers that point in each draw's viewport, and both draws' sizes, viewports, times, draw-on
+    /// and fade maps. With `MG_STILLS_DIR` set, the four images are also written there as PNGs.
+    static func reportSplit(_ what: String, scale: Double, base: MGBoardProbe.Draw, live: MGBoardProbe.Draw, baseIDs: Set<String>,
+                            images: (one: CGImage, base: CGImage, live: CGImage), one: [UInt8], split: [UInt8]) {
+        let w = images.one.width, h = images.one.height, tag = "SPLIT-DIFF \(what) at \(scale)x"
+        guard w > 0, h > 0, one.count == w * h * 4, split.count == one.count,
+              let baseBytes = try? rgba(images.base), let liveBytes = try? rgba(images.live),
+              baseBytes.count == one.count, liveBytes.count == one.count else {
+            return print("\(tag): no pixel report (the images have different sizes)")
+        }
+        var count = 0, first: Int?, worstAt = 0, worst = -1
+        var minX = Int.max, minY = Int.max, maxX = -1, maxY = -1, top = 0, bottom = 0, left = 0, right = 0
+        for p in 0..<(w * h) {
+            var d = 0
+            for c in 0..<4 { d = max(d, abs(Int(one[4 * p + c]) - Int(split[4 * p + c]))) }
+            if d > worst { worst = d; worstAt = p }
+            guard d > 6 else { continue }
+            let x = p % w, y = p / w
+            count += 1
+            if first == nil { first = p }
+            minX = min(minX, x); maxX = max(maxX, x); minY = min(minY, y); maxY = max(maxY, y)
+            if y == 0 { top += 1 }
+            if y == h - 1 { bottom += 1 }
+            if x == 0 { left += 1 }
+            if x == w - 1 { right += 1 }
+        }
+        func n(_ v: Double) -> String { String(format: "%.3f", v) }
+        func bytes(_ b: [UInt8], _ p: Int) -> String { "\(b[4 * p]) \(b[4 * p + 1]) \(b[4 * p + 2]) \(b[4 * p + 3])" }
+        func rect(_ r: CGRect) -> String { "x \(n(Double(r.minX)))...\(n(Double(r.maxX))) y \(n(Double(r.minY)))...\(n(Double(r.maxY)))" }
+        func map(_ m: [String: Double]) -> String { m.isEmpty ? "none" : m.sorted { $0.key < $1.key }.map { "\($0.key) \(n($0.value))" }.joined(separator: ", ") }
+        func covering(_ point: CGPoint) -> String {
+            [("live draw", live), ("base draw", base)].map { name, draw in
+                let vp = draw.input.viewport
+                let hits = draw.input.items.compactMap { item -> String? in
+                    guard let r = MGLayout.bounds(item, in: draw.input.items, vp), r.insetBy(dx: -14, dy: -14).contains(point) else { return nil }
+                    return "\(item.id) (\(item.kind.rawValue), \(baseIDs.contains(item.id) ? "base" : "live") layer, \(rect(r)))"
+                }
+                let board = CGRect(origin: .zero, size: vp.size)
+                let edge = board.insetBy(dx: 1, dy: 1).contains(point) ? "" : board.contains(point) ? ", within 1 pt of the board's edge" : ", outside the board"
+                return "\(name): \(hits.isEmpty ? "no item" : hits.joined(separator: ", "))\(edge)"
+            }.joined(separator: " | ")
+        }
+        func pixel(_ label: String, _ p: Int) -> String {
+            let x = p % w, y = p / w, point = CGPoint(x: (Double(x) + 0.5) / scale, y: (Double(y) + 0.5) / scale)
+            return "\(tag):   \(label) pixel (\(x), \(y)) = point (\(n(Double(point.x))), \(n(Double(point.y)))): one \(bytes(one, p)), "
+                + "split \(bytes(split, p)), base alone \(bytes(baseBytes, p)), live alone \(bytes(liveBytes, p)); covering it: \(covering(point))"
+        }
+        func drawText(_ name: String, _ d: MGBoardProbe.Draw) -> String {
+            let vp = d.input.viewport
+            return "\(tag):   \(name) draw: canvas \(n(Double(d.size.width))) x \(n(Double(d.size.height))), viewport \(n(Double(vp.size.width))) x "
+                + "\(n(Double(vp.size.height))) scale \(n(Double(vp.scale))) centre (\(n(vp.center.x)), \(n(vp.center.y))), time \(n(d.input.time)), "
+                + "draw-on \(map(d.input.appear)), fades \(map(d.input.opacity))"
+        }
+        print("\(tag): \(count) of \(w * h) pixels (image \(w) x \(h)) differ by more than 6, worst \(worst); "
+              + (count > 0 ? "box x \(minX)...\(maxX) y \(minY)...\(maxY); on the top row \(top), bottom row \(bottom), left column \(left), right column \(right)" : "none over 6"))
+        if let first { print(pixel("first", first)) }
+        print(pixel("worst", worstAt))
+        print(drawText("live", live))
+        print(drawText("base", base))
+        print("\(tag):   base items \(baseIDs.sorted()), live draw items \(live.input.items.map(\.id))")
+        guard let dir = ProcessInfo.processInfo.environment["MG_STILLS_DIR"], !dir.isEmpty else { return }
+        let stem = "split-" + what.replacingOccurrences(of: " ", with: "-") + "@\(Int(scale))x"
+        let composite = CGDataProvider(data: Data(split) as CFData).flatMap {
+            CGImage(width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: w * 4, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                    bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue), provider: $0, decode: nil,
+                    shouldInterpolate: false, intent: .defaultIntent)
+        }
+        try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        let outputs: [(String, CGImage?)] = [("one", images.one), ("base", images.base), ("live", images.live), ("split", composite)]
+        for (name, image) in outputs {
+            guard let image, let out = CGImageDestinationCreateWithURL(URL(fileURLWithPath: dir).appendingPathComponent("\(stem)-\(name).png") as CFURL,
+                                                                       "public.png" as CFString, 1, nil) else { continue }
+            CGImageDestinationAddImage(out, image, nil)
+            _ = CGImageDestinationFinalize(out)
+        }
+        print("\(tag):   PNGs: \(dir)/\(stem)-{one,base,live,split}.png")
     }
 
     /// After a change: wait for its transition (if any) to end, then the board is split again, its base was redrawn
@@ -381,18 +477,27 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true))
         var base = rig.probe.baseDraws
         XCTAssertGreaterThan(base, 0)
+        // Real time passes in `settle`, the board's own time does not: every item is still at the start of its
+        // draw-on, so the base caches no item yet (`MGCanvasLayers.settling`), only the board and the grid.
+        XCTAssertEqual(try XCTUnwrap(lastBase(rig)), [], "first frame: an item still drawing on is in the base")
         try assertSplit(rig, "first frame")
 
-        // Ticks: the live layer redraws with the motion, the base never does.
+        // Ticks: the live layer redraws with the motion and the draw-on, the base never does. (Mac run #25: a base that
+        // had cached the zone and the floor mid-draw-on differed here by 3 levels on average.)
         let live = rig.probe.liveDraws
         for _ in 0..<12 { rig.advance(1.0 / 30); rig.settle(0.05) }
         XCTAssertEqual(rig.probe.baseDraws, base, "a tick redrew the base")
         XCTAssertGreaterThan(rig.probe.liveDraws, live + 3, "the live layer ticks")
         try assertSplit(rig, "after ticks")
+        // Ticks past the end of the first appearance's draw-on (the last item ends 0.95 s in).
+        for _ in 0..<18 { rig.advance(1.0 / 30); rig.settle(0.05) }
+        XCTAssertEqual(rig.probe.baseDraws, base, "a tick redrew the base")
+        try assertSplit(rig, "after the draw-on")
 
-        // A new revision that moves a base item.
+        // A new revision that moves a base item. The base is drawn again, now with the items drawn in full.
         try rig.patch(#"{"v":1,"ops":[{"op":"set","id":"floor","key":"to","value":[11,2]}]}"#)
         try settleSplit(rig, "revision", baseDraws: &base)
+        XCTAssertEqual(try XCTUnwrap(lastBase(rig)), ["zone", "floor"], "revision: the static prefix is in the base")
         // A step (the board's Next button), which zooms the camera.
         try XCTUnwrap(rig.probe.go)(1)
         try settleSplit(rig, "step", baseDraws: &base)

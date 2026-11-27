@@ -69,6 +69,15 @@ public enum MGCanvasLayers {
         }
     }
 
+    /// Ids whose marks still change on the board's own time base outside the motion: an item still drawing on
+    /// (`MGRenderInput.appear` below 1) or fading in or out (`MGRenderInput.opacity` below 1, a `.bounded`
+    /// transition). The base canvas is not redrawn on ticks, so the board adds these ids to the live set and the base
+    /// caches only items drawn in full. The transition window usually outlasts both, but not always: a draw-on start
+    /// still pending when a lesson pauses moves later by the length of the pause.
+    public static func settling(appear: [String: Double], opacity: [String: Double]) -> Set<String> {
+        Set(appear.filter { $0.value < 1 }.keys).union(opacity.filter { $0.value < 1 }.keys)
+    }
+
     /// The base: the items that are not live and are drawn before every live item (a lower layer rank than the
     /// lowest live rank, `MGCanvasRenderer.layer`), so drawing the base under the rest keeps the order of one frame.
     /// No live item: every item.

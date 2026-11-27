@@ -231,6 +231,26 @@ final class RenderQualityTests: XCTestCase {
         XCTAssertFalse(MGCanvasLayers.base(items, live: live).contains("wave"))
     }
 
+    /// Mac run #25: a base drawn while the zone and the floor were still drawing on kept them at that progress while
+    /// ticks went on (`testTheSplitBoardStaysExactAcrossTicksAndChanges`, "after ticks"). An item drawing on or fading
+    /// is live until it is drawn in full, so the base caches only finished items.
+    func testItemsStillDrawingOnOrFadingStayOutOfTheBase() throws {
+        let scene = try MGParser.scene(data: Data(Self.layered.utf8)).get()
+        let items = MGTimeline.frame(scene, items: scene.items, time: 0.5)
+        let moving = MGCanvasLayers.live(scene, items: items)
+        XCTAssertEqual(MGCanvasLayers.settling(appear: ["zone": 0, "floor": 0.4, "dot": 0.99], opacity: [:]), ["zone", "floor", "dot"])
+        XCTAssertEqual(MGCanvasLayers.settling(appear: [:], opacity: ["note": 0.3, "floor": 1]), ["note"], "an opaque item is settled")
+        XCTAssertEqual(MGCanvasLayers.settling(appear: ["zone": 1], opacity: [:]), [], "drawn in full")
+        func base(appear: [String: Double], opacity: [String: Double] = [:]) -> Set<String> {
+            MGCanvasLayers.base(items, live: moving.union(MGCanvasLayers.settling(appear: appear, opacity: opacity)))
+        }
+        XCTAssertEqual(base(appear: [:]), ["zone", "floor"], "drawn in full: the static prefix")
+        XCTAssertEqual(base(appear: ["floor": 0.2]), ["zone"], "the floor draws on: the zone below it stays cached")
+        XCTAssertEqual(base(appear: ["zone": 0]), [], "the lowest item draws on: only the board and grid are cached")
+        XCTAssertEqual(base(appear: ["zone": 0, "floor": 0, "dot": 0, "push": 0, "note": 0]), [], "a first appearance")
+        XCTAssertEqual(base(appear: [:], opacity: ["floor": 0.5]), ["zone"], "a fading item is live")
+    }
+
     /// RGBA bytes of an image drawn into an sRGB context of its size, with `over` drawn first when given.
     func bytes(_ image: CGImage, over: CGImage? = nil) throws -> [UInt8] {
         let w = image.width, h = image.height

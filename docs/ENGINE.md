@@ -84,7 +84,7 @@ solid tests in `Tests/MartyGraphicsTests/SolidLoopTests.swift`, export tests in
   two layers keep one frame's draw order and composite to that frame within rounding
   (`testTheBaseLayerIsTheStaticPrefixOfTheDrawOrder`, `testTheTwoLayersCompositeToTheOneCanvasFrame`). That this
   holds on a live board across ticks and changes is what `testTheSplitBoardStaysExactAcrossTicksAndChanges` checks;
-  until it has run on a Mac, no more than the one-input claim is made.
+  until it passes on a Mac, no more than the one-input claim is made.
 - **Seamless loops.** A seamless loop plays the exact period of the motion: every driven joint turns a whole number
   of the symmetry steps of what it carries, measured on the meshes (never assumed) and checked on every moving part's
   vertices. The change from the last frame to the first equals the motion's own step (within 1e-7°), the loop camera
@@ -125,18 +125,29 @@ default board, so they keep the spring too.
 While motion plays and no transition runs (`MGRenderPolicy.layered`), a 2D board without a `layer2d` plan draws two
 canvases. The **base** holds the board gradient, the dot grid and the static prefix: the items that are not live
 (`MGCanvasLayers.live`: what the motion moves, bodies with `move`, what is attached to them, vectors and edges on them,
-every highlight, every moving function graph) and whose layer rank (`MGCanvasRenderer.layer`) is lower than the lowest rank of any live item. A
-static item at or above that rank is drawn in the live layer, and so are every label (base items' labels included),
-the emphasis rings, the markers and the focus ring. The base canvas sits outside the `TimelineView`, so frame-loop
-ticks never redraw it; SwiftUI redraws it whenever the board view is evaluated again, which is any change of the
-board's state (scene revision, step, size, theme, teaching modifiers). The current step's items are kept per
-controller, scene revision and step (`MGStepItemsCache`).
+every highlight, every moving function graph), that are drawn in full (`MGCanvasLayers.settling`: an item still
+drawing on or fading is live until it ends) and whose layer rank (`MGCanvasRenderer.layer`) is lower than the lowest
+rank of any live item. A static item at or above that rank is drawn in the live layer, and so are every label (base
+items' labels included), the emphasis rings, the markers and the focus ring. The base canvas sits outside the
+`TimelineView`, so frame-loop ticks never redraw it; SwiftUI redraws it whenever the board view is evaluated again,
+which is any change of the board's state (scene revision, step, size, theme, teaching modifiers). Each canvas draws
+for its own size, so both layers share one viewport. The current step's items are kept per controller, scene
+revision and step (`MGStepItemsCache`).
 
 What is claimed until the Mac run: for one input the split composites to the one-canvas frame within rounding. What
 `testTheSplitBoardStaysExactAcrossTicksAndChanges` checks on a live board in a window, at 1x and 2x: base redraws are
-counted (none on ticks); after a new revision, a step, a resized viewport, a theme and new markers, the last base under
-the last live layer still matches the one-canvas frame; and taps on a base item and on a live item select through the
-board's own tap handler. `testTheSplitBoardIsOneAccessibilityElement` checks that the split board stays one
+counted (none on ticks); while the first appearance draws on, the base holds no item; after ticks during and after
+the draw-on, a new revision (the base then holds the static prefix), a step, a resized viewport, a theme and new
+markers, the last base under the last live layer still matches the one-canvas frame; and taps on a base item and on
+a live item select through the board's own tap handler. When a split differs, the test prints where, on lines
+starting `SPLIT-DIFF` (the first and the worst differing pixel, their RGBA in each image, the items covering them,
+both draws' viewports) and, with `MG_STILLS_DIR` set, writes the images. Mac run #25 was the first in which the
+hosted board split. Two things differed. A base drawn while the zone and the floor were drawing on kept them at that
+progress through the ticks (mean difference 3.1); `MGCanvasLayers.settling` now prevents that. And the first-frame,
+revision and step checks differed by 66 levels at 1x and 216 at 2x at the first window size (by the layout, a board
+532 points wide and 354.67 high), while every check after the resize to 672 by 448 passed. The base frame was the only input made for another size (the reader's,
+not the canvas's); each canvas now draws for its own size, and the next run shows whether that was the cause.
+`testTheSplitBoardIsOneAccessibilityElement` checks that the split board stays one
 accessibility element whose value follows a step and a rebuild with markers (accessibility properties only, no
 VoiceOver run). Mac run #23 found no element under the hosting view, so the test also hosts a plain `Text` with an
 accessibility label as a control: it skips, saying so, only when that control is missing (no accessibility tree at
