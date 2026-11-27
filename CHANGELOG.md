@@ -116,12 +116,19 @@
 ### Added
 - **Captions and transcript export.** `marty-solid export-captions FILE.json --format vtt|srt|txt` and the library API
   `MGCaptionExport` print the story video's captions as WebVTT or SubRip, or a plain-text transcript (narration, and
-  the board's `alt` text or engine description per beat), for assemblies and explainers. Cues are timed from the same
-  plan `render` uses for `story.mp4` (`--size`, `--story-fps`): each starts on the first frame of its beat's hold and
-  ends with the beat, in whole frames. At most 2 lines of 42 characters per cue, 1 s minimum, more cues past 7 s;
-  the narration's words are never rewritten; WebVTT escapes `&`, `<` and `>`; UTF-8 without a byte order mark,
-  deterministic. Golden files for two shipped documents in `docs/fixtures/captions`; a test checks every story frame
-  against the cues. Check, report and render outputs are unchanged.
+  the board's `alt` text or engine description per beat), for assemblies and explainers, on standard output. `render`
+  and the export share one story plan (`MGStoryShots`, `MGExplainerStory`; `--size`, `--story-fps`), and the
+  transcript, the export and the story read the same settled beats (`MGExplainerSession.settledBeats`). A beat can
+  have several cues: its first cue starts on the first frame of its hold and its last cue ends with the beat, in whole
+  frames. At 10 and 30 fps each cue's millisecond interval contains the presentation timestamps of its own planned
+  frame range (tested against the story plan; the real-render test is not yet verified on a Mac). At most 2 lines of
+  42 characters per cue, 1 s minimum, more cues past 7 s; the narration's words are never rewritten. Text rules apply
+  per format: cue line breaks become spaces; WebVTT escapes `&`, `<` and `>` per Unicode scalar; only SubRip refuses
+  `<`, `>` and the control characters left after cue layout (`captions.text`; tabs are wrapped as whitespace); the
+  transcript keeps the narration as written. UTF-8 without a byte order mark, deterministic. Generated golden
+  snapshots for two shipped documents in `docs/fixtures/captions`; a test checks every story frame against the cues.
+  `--size` for `render`, `export-captions` and `export-gltf` now takes exactly two whole numbers (`640xx400` is a
+  usage error). Check, report and render outputs are otherwise unchanged.
 - Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes. Swift remains the authority.
 - Portability step 1, inventory and tests only (no file moves, no API change, no support claim
   for Windows, Linux or browsers): `docs/PORTABILITY-MAP.md` maps the imports of each source file,

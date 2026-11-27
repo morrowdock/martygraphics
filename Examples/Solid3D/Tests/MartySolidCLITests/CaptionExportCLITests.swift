@@ -53,6 +53,13 @@ extension MartySolidCLITests {
                     ["export-captions", "--format", "vtt"]] {
             XCTAssertEqual(try run(bad).status, 2, "\(bad)")
         }
+        // `--size` is exactly two integers around one `x`, both parsed before the bounds are checked.
+        for size in ["640xx400", "640x400x1", "640x", "x400", "+640x400", "640x400 "] {
+            let r = try run(["export-captions", path, "--format", "vtt", "--size", size])
+            XCTAssertEqual(r.status, 2, size)
+            XCTAssertFalse(r.text.hasPrefix("WEBVTT"), size)
+        }
+        XCTAssertEqual(try run(["export-captions", path, "--format", "vtt", "--size", "640x400"]).status, 0)
     }
 
     func testExportCaptionsMatchTheRenderedStoryVideo() throws {
@@ -61,7 +68,9 @@ extension MartySolidCLITests {
             let out = FileManager.default.temporaryDirectory.appendingPathComponent("captions-\(name)-\(UUID().uuidString)")
             defer { try? FileManager.default.removeItem(at: out) }
             let r = try renderOrSkip(["render", path, out.path, "--size", "\(size.w)x\(size.h)", "--no-loop", "--story-fps", "\(fps)"])
-            XCTAssertEqual(r.status, 0, r.text)
+            // A Metal device exists here (`renderOrSkip` skipped otherwise), so any exit but 0 is a failure, including 3
+            // (the stills and the story plan present different beats); the manifest is read only after a 0.
+            _ = try XCTUnwrap(r.status == 0 ? r.json : nil, "render exit \(r.status): \(r.text)")
             let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: out.appendingPathComponent("manifest.json"))) as? [String: Any]
             let story = try XCTUnwrap((manifest?["outputs"] as? [[String: Any]])?.first { $0["file"] as? String == "story.mp4" })
             let beats = try XCTUnwrap(story["beats"] as? [[String: Any]])

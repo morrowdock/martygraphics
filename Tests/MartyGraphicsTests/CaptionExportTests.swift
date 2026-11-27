@@ -65,23 +65,89 @@ final class CaptionExportTests: XCTestCase {
         let e = try one("Tom & Jerry say “hi” — 5\u{00A0}kg, naïve café.")
         // 42 characters: one line.
         XCTAssertTrue(e.webVTT.hasSuffix(" --> 00:00:03.866\nTom &amp; Jerry say “hi” — 5\u{00A0}kg, naïve café.\n"), e.webVTT)
-        XCTAssertTrue(e.subRip.hasSuffix(" --> 00:00:03,866\nTom & Jerry say “hi” — 5\u{00A0}kg, naïve café.\n"), e.subRip)
+        let srt = try e.subRip
+        XCTAssertTrue(srt.hasSuffix(" --> 00:00:03,866\nTom & Jerry say “hi” — 5\u{00A0}kg, naïve café.\n"), srt)
         XCTAssertTrue(e.transcript.contains("1. Tom & Jerry say “hi” — 5\u{00A0}kg, naïve café.\n"), "the transcript keeps the narration")
         XCTAssertTrue(e.webVTT.hasPrefix("WEBVTT\n\n1\n00:00:00.000 --> "))
-        XCTAssertTrue(e.subRip.hasPrefix("1\n00:00:00,000 --> "))
+        XCTAssertTrue(srt.hasPrefix("1\n00:00:00,000 --> "))
         // No cue text can close a cue or read as a timing line.
-        for text in [e.webVTT, e.subRip] { XCTAssertFalse(text.contains("\n\n\n")) }
-        // SubRip cannot escape a tag: such narration is refused (the engine's own captions never have `<` or `>`).
-        for bad in ["if a < b", "x > 0", "bell\u{07}", "<i>"] {
-            XCTAssertThrowsError(try one(bad)) { XCTAssertEqual(($0 as? MGError)?.reason, "captions.text") }
-        }
+        for text in [e.webVTT, srt] { XCTAssertFalse(text.contains("\n\n\n")) }
         // Tabs and line breaks are only spaces between words.
         XCTAssertEqual(try one("one\ttwo\nthree\r\nfour").cues.flatMap(\.lines), ["one two three four"])
     }
 
+    /// Each format applies its own text rules when it is written: SubRip cannot escape a tag or an arrow, so writing it
+    /// refuses `<`, `>` and control characters (`captions.text`); the same captions are written as WebVTT (escaped) and
+    /// as the transcript (the narration exactly as written). Making the export refuses nothing.
+    func testOnlySubRipRefusesWhatItCannotHold() throws {
+        for bad in ["if a < b", "x > 0", "bell\u{07}", "<i>", "a --> b"] {
+            let e = try one(bad)
+            XCTAssertThrowsError(try e.subRip, bad) { XCTAssertEqual(($0 as? MGError)?.reason, "captions.text") }
+            XCTAssertThrowsError(try e.text(.srt), bad)
+            XCTAssertNoThrow(try e.text(.vtt), bad)
+            XCTAssertEqual(try e.text(.vtt), e.webVTT)
+            XCTAssertFalse(e.webVTT.contains("<"), bad)
+            XCTAssertEqual(try e.text(.txt), e.transcript)
+            XCTAssertTrue(e.transcript.hasSuffix("1. \(bad)\n"), bad)
+        }
+        XCTAssertEqual(try one("if a < b").webVTT.components(separatedBy: "\n").last(where: { !$0.isEmpty }), "if a &lt; b")
+        XCTAssertEqual(try one("a --> b").webVTT.components(separatedBy: "\n").last(where: { !$0.isEmpty }), "a --&gt; b")
+        // Format characters (a zero-width joiner, a bidi mark) are not control characters: SubRip keeps them.
+        XCTAssertEqual(try MGCaptionExport.subRipPayload(["Tom & Jerry", "zero\u{200D}width, bidi\u{200E}mark"]),
+                       "Tom & Jerry\nzero\u{200D}width, bidi\u{200E}mark")
+    }
+
+    /// The transcript keeps the narration exactly as written, line breaks and all; the timed cues never hold one.
+    func testTheTranscriptKeepsTheNarrationAsWritten() throws {
+        let narration = "Line one\nline two\u{2028}three\u{2029}four\r\nfive <b> & bell\u{07}"
+        let e = try one(narration)
+        XCTAssertEqual(e.beats[0].narration, narration)
+        XCTAssertTrue(e.transcript.hasSuffix("] 1. \(narration)\n"), e.transcript)
+        XCTAssertEqual(e.cues.flatMap(\.lines).joined(separator: " "), "Line one line two three four five <b> & bell\u{07}")
+        let vtt = e.webVTT.components(separatedBy: "\n").dropFirst(4).filter { !$0.isEmpty }
+        XCTAssertEqual(vtt.joined(separator: " "), "Line one line two three four five &lt;b&gt; &amp; bell\u{07}")
+    }
+
+    /// WebVTT escapes one Unicode scalar at a time: an escapable scalar followed by a combining mark (one grapheme
+    /// cluster, so not equal to the bare character) is still escaped, and the mark is kept after the reference.
+    func testWebVTTEscapesScalarsInsideGraphemeClusters() throws {
+        XCTAssertEqual(MGCaptionExport.escapeVTT("<\u{0338}"), "&lt;\u{0338}")
+        XCTAssertEqual(MGCaptionExport.escapeVTT(">\u{0301}x"), "&gt;\u{0301}x")
+        XCTAssertEqual(MGCaptionExport.escapeVTT("&\u{20DD}"), "&amp;\u{20DD}")
+        XCTAssertEqual(MGCaptionExport.escapeVTT("--\u{0300}>"), "--\u{0300}&gt;")
+        XCTAssertEqual(MGCaptionExport.escapeVTT("-->\u{0301}"), "--&gt;\u{0301}")
+        // Characters that only look alike are not escaped: only U+0026, U+003C and U+003E are.
+        XCTAssertEqual(MGCaptionExport.escapeVTT("\u{FF1C}\u{2039}\u{FE64}"), "\u{FF1C}\u{2039}\u{FE64}")
+        XCTAssertEqual(MGCaptionExport.escapeVTT(""), "")
+        let e = try one("a <\u{0338} b")
+        XCTAssertTrue(e.webVTT.hasSuffix("\na &lt;\u{0338} b\n"), e.webVTT)
+        XCTAssertFalse(e.webVTT.unicodeScalars.contains("<"))
+    }
+
+    /// Timed cue payloads (WebVTT and SubRip) never hold a line terminator: every run of LF, CR, VT, FF, NEL, U+2028 and
+    /// U+2029 (CR LF is one run) becomes one space, so a written cue always keeps its own lines and never ends early.
+    func testCuePayloadsNormaliseLineTerminators() throws {
+        XCTAssertEqual(MGCaptionExport.payloadLine("a\nb"), "a b")
+        XCTAssertEqual(MGCaptionExport.payloadLine("a\r\nb"), "a b")
+        XCTAssertEqual(MGCaptionExport.payloadLine("a\rb"), "a b")
+        XCTAssertEqual(MGCaptionExport.payloadLine("a\u{2028}b\u{2029}c"), "a b c")
+        XCTAssertEqual(MGCaptionExport.payloadLine("a\u{85}b\u{0B}c\u{0C}d"), "a b c d")
+        XCTAssertEqual(MGCaptionExport.payloadLine("a\n\n\u{2028}\r\nb"), "a b", "a run is one space")
+        XCTAssertEqual(MGCaptionExport.payloadLine("\na"), " a")
+        XCTAssertEqual(MGCaptionExport.payloadLine("a\tb c"), "a\tb c", "other whitespace stays")
+        XCTAssertEqual(MGCaptionExport.webVTTPayload(["a\n\nb <", "c\u{2028}&"]), "a b &lt;\nc &amp;")
+        XCTAssertEqual(try MGCaptionExport.subRipPayload(["a\n\nb", "c\u{2029}d"]), "a b\nc d")
+        XCTAssertThrowsError(try MGCaptionExport.subRipPayload(["a\n<b"]))
+        for payload in [MGCaptionExport.webVTTPayload(["x\r\n\r\ny", "z\u{2028}\u{2028}w"]), try MGCaptionExport.subRipPayload(["x\r\n\r\ny", "z\u{2028}\u{2028}w"])] {
+            XCTAssertEqual(payload.components(separatedBy: "\n").count, 2, payload)
+            XCTAssertFalse(payload.unicodeScalars.contains { MGCaptionExport.payloadBreaks.contains($0) && $0 != "\n" }, payload)
+        }
+    }
+
     func testEmptyAndUnequalInputs() throws {
         let empty = try MGCaptionExport(plan: nil, beats: [], title: "T")
-        XCTAssertEqual(empty.webVTT, "WEBVTT\n"); XCTAssertEqual(empty.subRip, ""); XCTAssertEqual(empty.transcript, "T\n")
+        let emptySRT = try empty.subRip
+        XCTAssertEqual(empty.webVTT, "WEBVTT\n"); XCTAssertEqual(emptySRT, ""); XCTAssertEqual(empty.transcript, "T\n")
         let plan = try MGStoryPlan(captions: ["1. A."], spins: [0])
         XCTAssertThrowsError(try MGCaptionExport(plan: plan, beats: [])) { XCTAssertEqual(($0 as? MGSolidIssue)?.reason, "story.beats") }
         XCTAssertThrowsError(try MGCaptionExport(plan: nil, beats: [.init(narration: "A.")]))
@@ -156,6 +222,21 @@ final class CaptionExportTests: XCTestCase {
         XCTAssertEqual(MGCaptionExport.balancedLines("", count: 2), [])
     }
 
+    /// `--size WxH` (`render`, `export-captions`, `export-gltf`): exactly two fields of ASCII digits around one `x`,
+    /// both parsed before the bounds are checked.
+    func testFrameSizeIsExactlyTwoIntegers() {
+        XCTAssertEqual(MGStoryShots.size("640x400").map { [$0.width, $0.height] }, [640, 400])
+        XCTAssertEqual(MGStoryShots.size("1280x800").map { [$0.width, $0.height] }, [1280, 800])
+        XCTAssertEqual(MGStoryShots.size("320x200").map { [$0.width, $0.height] }, [320, 200])
+        XCTAssertEqual(MGStoryShots.size("3840x2160").map { [$0.width, $0.height] }, [3840, 2160])
+        XCTAssertEqual(MGStoryShots.size("0640x0400").map { [$0.width, $0.height] }, [640, 400], "leading zeros are digits")
+        for bad in ["640xx400", "640x400x", "x640x400", "640x", "x400", "x", "", "640", "640x400x1", "640X400", "+640x400", "640x-400",
+                    " 640x400", "640x400 ", "640 x 400", "6４0x400", "640x400\n", "319x400", "640x199", "3841x400", "640x2161",
+                    "99999999999999999999x400", "640.0x400", "0x0"] {
+            XCTAssertNil(MGStoryShots.size(bad), bad)
+        }
+    }
+
     func testTimestamps() {
         XCTAssertEqual(MGCaptionExport.timestamp(frame: 0, fps: 30), "00:00:00.000")
         XCTAssertEqual(MGCaptionExport.timestamp(frame: 2, fps: 30), "00:00:00.066")   // 66.7 ms, rounded down
@@ -179,17 +260,22 @@ final class CaptionExportTests: XCTestCase {
                     let input = try data(path)
                     let e = try XCTUnwrap(try export(path, width: w, height: h, fps: fps), label)
                     let plan = try XCTUnwrap(e.plan)
-                    XCTAssertEqual(plan, try reference(input, width: w, height: h, fps: fps), "\(label): the render tool's plan")
+                    XCTAssertEqual(plan, try shared(input, width: w, height: h, fps: fps), "\(label): the plan the render tool plays")
+                    XCTAssertEqual(plan, try reference(input, width: w, height: h, fps: fps), "\(label): an independent rebuild of the plan")
                     let format = MGCaptionExport.make(data: input, format: .vtt, width: w, height: h, fps: fps, engine: nil)
                     XCTAssertEqual(format.text, e.webVTT, label)
-                    for (text, sep) in [(e.webVTT, "."), (e.subRip, ",")] {
+                    for (text, sep) in [(e.webVTT, "."), (try e.subRip, ",")] {
                         let cues = parse(text, separator: sep)
                         XCTAssertEqual(cues.count, e.cues.count, label)
                         for i in 0..<plan.frameCount {
                             let shown = plan.caption(frame: i, cuts: plan.cuts) != nil
                             let hit = cues.indices.filter { cues[$0].start * fps <= i * 1000 && i * 1000 < cues[$0].end * fps }
                             XCTAssertEqual(hit.count, shown ? 1 : 0, "\(label) frame \(i)")
-                            if let c = hit.first { XCTAssertEqual(e.cues[c].beat, plan.frame(i).beat, "\(label) frame \(i)") }
+                            if let c = hit.first {
+                                XCTAssertEqual(e.cues[c].beat, plan.frame(i).beat, "\(label) frame \(i)")
+                                // The one cue whose interval holds this frame's time is the cue planned for this frame.
+                                XCTAssertTrue((e.cues[c].startFrame..<e.cues[c].endFrame).contains(i), "\(label) frame \(i) cue \(c + 1)")
+                            }
                         }
                     }
                     guard case .array(let beats)? = plan.manifestFields(cuts: plan.cuts)["beats"] else { return XCTFail(label) }
@@ -204,6 +290,23 @@ final class CaptionExportTests: XCTestCase {
                     }
                 }
             }
+        }
+    }
+
+    /// The story video, the caption export and the transcript read the same settled beats
+    /// (`MGExplainerSession.settledBeats`): for shipped explainers (a board and a solid; a board only) the story's beat
+    /// captions are the transcript's captions, in order, and the export's narration is the story's.
+    func testTheStoryAndTheTranscriptReadTheSameBeats() throws {
+        for path in [Self.inputs[1].1, "Examples/Explainers/planets-2d.explainer.json"] {
+            let input = try data(path)
+            let story = try XCTUnwrap(try MGExplainerStory(try MGExplainer.parse(data: input).get()), path)
+            let t = MGTranscript.make(data: input, file: "x.json", engine: nil)
+            XCTAssertTrue(t.ok, t.text)
+            guard case .array(let beats)? = t.json.objectValue?["beats"] else { return XCTFail(path) }
+            let captions = beats.map { b -> String in if case .string(let c)? = b.objectValue?["caption"] { return c }; return "" }
+            XCTAssertFalse(captions.isEmpty, path)
+            XCTAssertEqual(captions, story.beats.map(\.caption), path)
+            XCTAssertEqual(try XCTUnwrap(try export(path)).beats.map(\.narration), captions, path)
         }
     }
 
@@ -238,8 +341,21 @@ final class CaptionExportTests: XCTestCase {
         }
     }
 
-    /// The story plan as `marty-solid render` builds it (Examples/Solid3D/Sources/MartySolidCLI/main.swift, `render` and
-    /// `renderExplainer`), written out separately here.
+    /// The story plan `marty-solid render` plays (main.swift, `render` and `renderExplainer`): `MGStoryShots` from the
+    /// render plan's stills and cameras (with its loop, as `render` builds it), or `MGExplainerStory`.
+    func shared(_ data: Data, width w: Int, height h: Int, fps: Int) throws -> MGStoryPlan {
+        if case .string("explainer")? = MGExplainer.topLevelKind(data) {
+            let story = try XCTUnwrap(try MGExplainerStory(try MGExplainer.parse(data: data).get(), width: w, height: h, fps: fps))
+            return try XCTUnwrap(story.story?.plan)
+        }
+        let doc = try MGSolidParser.document(data: data).get()
+        let plan = MGSolidRenderPlan(doc, sourceName: "x.json", source: MGSolidSource(data: data), loop: true, loopRate: 10)
+        let shots = try MGStoryShots(assembly: doc, stills: plan, cameras: plan.cameras(doc, width: Double(w), height: Double(h)), fps: fps)
+        return try XCTUnwrap(shots?.plan)
+    }
+
+    /// The story plan built the way `marty-solid render` built it before the shared builder (`MGStoryShots`,
+    /// `MGExplainerStory`), written out separately here from the engine pieces: an independent check of the builder.
     func reference(_ data: Data, width w: Int, height h: Int, fps: Int) throws -> MGStoryPlan {
         if case .string("explainer")? = MGExplainer.topLevelKind(data) {
             let doc = try MGExplainer.parse(data: data).get()

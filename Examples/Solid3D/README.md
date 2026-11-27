@@ -62,6 +62,7 @@ $B/marty-solid check --strict my-model.json    # model-harness profile: also ref
 $B/marty-solid render my-model.json NEW_DIR    # stills, one per step, loop GIF and MP4, snapshot
 $B/marty-solid render my-model.json NEW_DIR --look paper   # another look (studio is the default; paper, classic): pixels only
 $B/marty-solid check base.json --patch fix.json # report on base.json with the patch applied
+$B/marty-solid export-captions my-model.json --format vtt > my-model.vtt   # story captions (vtt, srt or txt) on stdout
 $B/marty-solid reasons                         # JSON catalog of every stable reason
 $B/marty-solid version                         # engine name, version and this binary's SHA-256
 ```
@@ -90,6 +91,17 @@ $B/marty-solid version                         # engine name, version and this b
 - `check BASE --patch PATCH` applies the patch (`MGSolidParser.applying`) and prints
   the same report for the result, plus `patch` with the fields the patch sets and the
   ones it changed, or `refusedAt` (`base` or `patch`) with the reason.
+- `export-captions FILE.json --format vtt|srt|txt [--size WxH] [--story-fps 10|30] [--strict]` prints the captions
+  of the story video as WebVTT or SubRip, or a plain-text transcript, on standard output only (it writes no file;
+  redirect it). Use the same `--size` and `--story-fps` as `render` for the same timing:
+
+  ```sh
+  $B/marty-solid render my-model.json NEW_DIR --size 640x400 --story-fps 10
+  $B/marty-solid export-captions my-model.json --format srt --size 640x400 --story-fps 10 > NEW_DIR/story.srt
+  ```
+
+  A refused document prints its `check` report instead (exit 1). See
+  [captions and transcript export](../../docs/EXPLAINER.md#captions-and-transcript-export).
 - `reasons` prints the catalog of every stable reason: pattern, one-line meaning and
   where it applies ([docs/REASONS.md](../../docs/REASONS.md)).
 - `render` writes `hero.png`, `exploded.png`, one captioned `step-N.png` per authored

@@ -3,6 +3,7 @@ import AVFoundation
 import CryptoKit
 import Foundation
 import ImageIO
+import Metal
 import XCTest
 
 /// `marty-solid` in fresh processes. Each process has its own hash seed, so a refusal chosen by dictionary order
@@ -477,10 +478,11 @@ final class MartySolidCLITests: XCTestCase {
         XCTAssertEqual((refused.json?["location"] as? [String: Any])?["view"] as? String, "board")
     }
 
+    /// Runs `marty-solid render`, skipping only when this host has no Metal device, checked here and not inferred from
+    /// the exit code: on a host with a device every exit code is returned, and callers require 0.
     func renderOrSkip(_ args: [String]) throws -> (status: Int32, json: [String: Any]?, text: String) {
-        let r = try run(args)
-        if r.status == 2 { throw XCTSkip("render failed (no Metal device on this host?)") }
-        return r
+        try XCTSkipIf(MTLCreateSystemDefaultDevice() == nil, "no Metal device on this host")
+        return try run(args)
     }
 
     // C5: `render` on the mixed example writes every output, and the manifest hashes match the files.

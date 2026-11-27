@@ -578,11 +578,14 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     case .failure(let issue): print(json(MGSolidReport.refused(issue, engine: engine).json)); return 1
     case .success(let d): doc = d
     }
-    // The story video's plan (one beat per step), before anything is written: a story over the frame cap is refused
-    // and no directory is made.
-    var storyPlan: MGStoryPlan?
-    if story, !doc.steps.isEmpty {
-        do { storyPlan = try MGStoryPlan(captions: doc.steps.indices.map { "\($0 + 1). \(doc.steps[$0].say)" }, spins: doc.steps.map(\.spin), fps: storyRate) }
+    let sourceName = URL(fileURLWithPath: path).lastPathComponent
+    let plan = MGSolidRenderPlan(doc, sourceName: sourceName, source: src.source, loop: loop, loopRate: loopRate)
+    let cameras = plan.cameras(doc, width: Double(width), height: Double(height))
+    // The story video (one beat per step, `MGStoryShots`: the same plan `export-captions` times its cues by), before
+    // anything is written: a story over the frame cap is refused and no directory is made.
+    var storyShots: MGStoryShots?
+    if story {
+        do { storyShots = try MGStoryShots(assembly: doc, stills: plan, cameras: cameras, fps: storyRate) }
         catch let e as MGSolidIssue { print(json(stamped(["ok": .bool(false), "reason": .string(e.reason)]))); return 1 }
     }
     let out = URL(fileURLWithPath: outPath, isDirectory: true)
@@ -593,9 +596,6 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
     defer { if !finished { try? FileManager.default.removeItem(at: out) } }  // never leave a half-written result
     _ = NSApplication.shared
     let r = MGSolidRenderer(document: doc, look: look)
-    let sourceName = URL(fileURLWithPath: path).lastPathComponent
-    let plan = MGSolidRenderPlan(doc, sourceName: sourceName, source: src.source, loop: loop, loopRate: loopRate)
-    let cameras = plan.cameras(doc, width: Double(width), height: Double(height))
     var files: [MGJSON] = []
     var names: [String] = []
     var seconds = 0.0, frames = 0
@@ -690,7 +690,7 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
                                 "frames": .number(Double(movie.frames)), "fps": .number(Double(plan.loopRate)),
                                 "loopSeconds": .number(Double(movie.frames) / Double(plan.loopRate)), "framingScale": .number(cameras.loopScale)])
     }
-    if let unrouted = storyPlan {
+    if let shots = storyShots {
         // The steps in order, each with its caption, view (cuts, ghosts), highlight, annotations and camera; the camera
         // moves from the previous step's camera at the start of each step, and the step's spin plays as in the view.
         let stepStill = Dictionary(uniqueKeysWithValues: plan.stills.indices.compactMap { k in plan.stills[k].step.map { ($0, k) } })
@@ -698,27 +698,23 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
         // during camera moves, while arrows are drawn and labels are not); otherwise in the footer line.
         let annotated = !doc.annotations.isEmpty
         let footer = annotated ? plan.footer : "\(doc.legend.text) · \(plan.footer)"
-        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(unrouted.fps))
+        // The story plan (`MGStoryShots`): a camera move that would pass through a part the move draws takes a routed
+        // path (pull back, arc, both), or cuts when no path is clear (`MGStoryPlan.routes`).
+        let story = shots.plan, cuts = story.cuts, moves = story.moves
+        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(story.fps))
         // During a step's hold the camera is exactly the step still's camera; only the move at the start of a step is in
         // between, and labels are hidden during that move.
-        let beatCameras: [MGSolidCamera?] = doc.steps.indices.map { k in stepStill[k].map { cameras.stills[$0] } }
+        let beatCameras = shots.shots.map(\.camera)
         let beatClear: [Int: MGSolidClearView] = Dictionary(uniqueKeysWithValues: doc.steps.indices.compactMap { k in
             stepStill[k].map { (k, cameras.clear[$0]) }
         })
         // Each step's view with its still's automatic ghosts (the hold), and the view its camera move draws: the same,
-        // with the parts the previous step ghosts drawn as ghosts too (`MGSolidView.moving(from:_:)`).
-        let holdViews = doc.steps.indices.map { k in beatClear[k]?.view(doc.view(step: k)) ?? doc.view(step: k) }
-        let moveViews = doc.steps.indices.map { k in k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], doc.assembly) }
-        // A camera move that would pass through a part the move draws takes a routed path (pull back, arc, both), or
-        // cuts when no path is clear (`MGStoryPlan.routes`).
-        // The move frames' poses come from the same shots (`MGStoryPlan.movePose`), so the router tests the parts
-        // where the frames draw them.
-        let routeShots = doc.steps.indices.map { k in
-            MGStoryBeatShot(camera: beatCameras[k], params: MGSolidShot.step(doc, k)?.params ?? doc.defaults, view: moveViews[k], step: doc.steps[k])
-        }
-        let moves = MGStoryPlan.routes(doc, beats: routeShots, plan: unrouted)
-        let story = unrouted.routed(moves)
-        let cuts = story.cuts
+        // with the parts the previous step ghosts drawn as ghosts too (`MGSolidView.moving(from:_:)`). The move
+        // frames' poses come from the same shots (`MGStoryPlan.movePose`), so the router tested the parts where the
+        // frames draw them.
+        let holdViews = shots.holdViews
+        let routeShots = shots.shots
+        let moveViews = routeShots.indices.map { k in routeShots[k].view ?? holdViews[k] }
         var shownView: MGSolidView?, settledStep: Int?
         var holdCamera: [Int: MGSolidCamera] = [:], holdOffView: [Int: Int] = [:]
         for i in 0..<story.frameCount {
@@ -885,24 +881,13 @@ struct ExplainerBeatShot {
     if case .failure(let issue) = session.load(doc) {
         print(json(MGExplainerReport.refused(issue, profile: nil, source: nil, engine: engine).json)); return 1
     }
-    // The story video's plan, before anything is written: a dry run of the beats on a separate session and clock gives
-    // each beat's caption and spin; a story over the frame cap is refused and no directory is made.
-    var storyPlan: MGStoryPlan?
+    // The story video's plan, before anything is written (`MGExplainerStory`: the beats played on a separate session
+    // and clock, their cameras and routed moves; the same plan `export-captions` times its cues by); a story over the
+    // frame cap is refused and no directory is made.
+    var explainerStory: MGExplainerStory?
     if story {
-        let dryClock = MGManualClock()
-        var dry = MGExplainerSession(pacing: .speech, clock: dryClock, library: lib)
-        _ = dry.load(doc)
-        var captions: [String] = [], spins: [Double] = []
-        while let beat = dry.presented.beat, beat == captions.count {
-            dryClock.advance(by: dry.motionRemaining)
-            _ = dry.tick()
-            captions.append("\(beat + 1). \(dry.caption ?? "")"); spins.append(dry.presented.step?.spin ?? 0)
-            _ = dry.lineEnded(beat)
-        }
-        if !captions.isEmpty {
-            do { storyPlan = try MGStoryPlan(captions: captions, spins: spins, fps: storyRate) }
-            catch let e as MGSolidIssue { print(json(stamped(["ok": .bool(false), "reason": .string(e.reason)]))); return 1 }
-        }
+        do { explainerStory = try MGExplainerStory(doc, library: lib, width: width, height: height, fps: storyRate) }
+        catch let e as MGSolidIssue { print(json(stamped(["ok": .bool(false), "reason": .string(e.reason)]))); return 1 }
     }
     // The views before the first beat: every statement up to the first `say`.
     var before = MGExplainerSession(pacing: .speech, clock: MGManualClock(), library: lib)
@@ -1096,16 +1081,24 @@ struct ExplainerBeatShot {
                                 "frames": .number(Double(movie.frames)), "fps": .number(Double(plan.loopRate)),
                                 "loopSeconds": .number(Double(movie.frames) / Double(plan.loopRate)), "framingScale": .number(cameras.loopScale)])
     }
-    if let unrouted = storyPlan {
-        // The dry run and the stills run the same session rules on the same document, so they present the same beats.
-        guard unrouted.beats.count == shots.count, zip(unrouted.beats, shots).allSatisfy({ $0.caption == $1.caption }) else {
-            throw CLIError.invalid("story: the beats differ from the stills")
+    if let planned = explainerStory?.story {
+        let story = planned.plan, cuts = story.cuts, moves = story.moves
+        // The story plan and the stills each run the settled beat traversal on the same document, separately, so they
+        // must present the same beats with the same hold cameras. Counts are compared before any `zip`. With a solid the
+        // plan has one routed shot per beat whose camera must equal the still's; a board-only explainer has no shots.
+        let camerasMatch = solidDoc == nil
+            ? planned.shots.isEmpty
+            : planned.shots.count == shots.count && zip(planned.shots, shots).allSatisfy({ $0.camera == $1.camera })
+        guard story.beats.count == shots.count, zip(story.beats, shots).allSatisfy({ $0.caption == $1.caption }), camerasMatch else {
+            // Exit 3: an internal inconsistency, apart from usage and I/O errors (2). The deferred cleanup removes the directory.
+            FileHandle.standardError.write(Data("story: the beats differ from the stills\n".utf8))
+            return 3
         }
         // The beats in order: each frame is a real composite of the beat's board (its settled state, as in its still),
         // the solid at the beat's view, highlight and annotations, the caption and the legend line. During a beat's hold
         // the camera is exactly the beat's still camera (same layout, same pane pixels); only in the camera move at the
         // start of a beat is it in between, and labels are hidden during that move. The beat's spin plays.
-        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(unrouted.fps))
+        let movie = try MovieWriter(url: out.appendingPathComponent("story.mp4"), width: width, height: height, fps: Int32(story.fps))
         let beatCameras = shots.map(\.camera)
         // A beat whose pane layout differs from the previous beat's (the board pane opens, closes or changes width)
         // slides the pane boundary between the two layouts over its camera move (`MGPaneSlide`): the solid pane eases
@@ -1117,19 +1110,11 @@ struct ExplainerBeatShot {
             slides[k] = MGPaneSlide(from: (a.board.map(frameRect), a.solid.map(frameRect)), to: (b.board.map(frameRect), b.solid.map(frameRect)))
         }
         // A camera move that would pass through a part the move draws takes a routed path (pull back, arc, both), or
-        // cuts when no path is clear (`MGStoryPlan.routes`). The move draws the beat's view with its automatic ghosts.
-        // Each beat's solid view with its still's automatic ghosts (the hold); the move into a beat draws it with the
-        // previous beat's ghosts too (`MGSolidView.moving(from:_:)`).
-        let holdViews = solidDoc.map { d in shots.map { s in s.clear?.view(s.view.solid ?? d.view(step: nil)) ?? (s.view.solid ?? d.view(step: nil)) } } ?? []
-        let routeShots = solidDoc.map { d in
-            shots.indices.map { k in
-                MGStoryBeatShot(camera: shots[k].camera, params: MGExplainerFrame.pose(d, view: shots[k].view),
-                                view: k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], d.assembly), step: shots[k].view.step)
-            }
-        } ?? []
-        let moves = solidDoc.map { d in MGStoryPlan.routes(d, beats: routeShots, plan: unrouted) } ?? [:]
-        let story = unrouted.routed(moves)
-        let cuts = story.cuts
+        // cuts when no path is clear (`MGStoryPlan.routes`, in `MGExplainerStory`). The move draws the beat's view with
+        // its automatic ghosts. Each beat's solid view with its still's automatic ghosts (the hold); the move into a
+        // beat draws it with the previous beat's ghosts too (`MGSolidView.moving(from:_:)`).
+        let holdViews = planned.holdViews
+        let routeShots = planned.shots
         // An opening board pane shows the previous beat's board state during the move, as every move does (the beat's
         // own board and its claims appear when its hold starts), drawn for the new pane at the new layout's scale.
         var openingBoards: [Int: CGImage] = [:]
@@ -1321,9 +1306,8 @@ func exportGLTF(_ path: String, _ outPath: String, fps: Int, width: Int, height:
                         guard let r = Int(v), MGStoryTiming.rates.contains(r) else { throw CLIError.usage }
                         storyRate = r
                     case "--size":
-                        let p = v.split(separator: "x").compactMap { Int($0) }
-                        guard p.count == 2, (320...3840).contains(p[0]), (200...2160).contains(p[1]) else { throw CLIError.usage }
-                        w = p[0]; h = p[1]
+                        guard let size = MGStoryShots.size(v) else { throw CLIError.usage }
+                        w = size.width; h = size.height
                     default: throw CLIError.usage
                     }
                 }
@@ -1372,9 +1356,8 @@ func exportGLTF(_ path: String, _ outPath: String, fps: Int, width: Int, height:
                     case "--size":
                         guard let v = rest.first else { throw CLIError.usage }
                         rest.removeFirst()
-                        let p = v.split(separator: "x").compactMap { Int($0) }
-                        guard p.count == 2, (320...3840).contains(p[0]), (200...2160).contains(p[1]) else { throw CLIError.usage }
-                        w = p[0]; h = p[1]
+                        guard let size = MGStoryShots.size(v) else { throw CLIError.usage }
+                        w = size.width; h = size.height
                     default: throw CLIError.usage
                     }
                 }
@@ -1395,9 +1378,8 @@ func exportGLTF(_ path: String, _ outPath: String, fps: Int, width: Int, height:
                         guard let r = Int(v), MGSolidRenderPlan.loopRates.contains(r) else { throw CLIError.usage }
                         fps = r
                     case "--size":
-                        let p = v.split(separator: "x").compactMap { Int($0) }
-                        guard p.count == 2, (320...3840).contains(p[0]), (200...2160).contains(p[1]) else { throw CLIError.usage }
-                        w = p[0]; h = p[1]
+                        guard let size = MGStoryShots.size(v) else { throw CLIError.usage }
+                        w = size.width; h = size.height
                     case "--engine-commit": commit = v
                     default: throw CLIError.usage
                     }

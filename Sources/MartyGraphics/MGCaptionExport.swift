@@ -9,9 +9,11 @@ import Foundation
 /// the frames where the video shows that beat's caption, with the beat's narration words exactly as written.
 ///
 /// Timing. A beat's caption shows from the first frame of its hold (after the camera move into it,
-/// `MGStoryPlan.holdStartFrame`) to the beat's last frame, as in `story.mp4`. Frame `i` is shown at `i / fps` seconds
-/// (`MGMovieWriter`), so every cue boundary is a frame boundary, written in whole milliseconds rounded down: a cue
-/// covers exactly the frames whose presentation time it contains.
+/// `MGStoryPlan.holdStartFrame`) to the beat's last frame, as in `story.mp4`. Frame `i` is stamped at `i / fps` seconds
+/// (`MGMovieWriter`), so every cue boundary is a frame boundary, written in whole milliseconds rounded down. At the
+/// story rates (`MGStoryTiming.rates`, under 1000 fps) a cue's millisecond interval `[start, end)` contains exactly the
+/// presentation times `i / fps` of its own frames. That is the property the tests check; how a player maps cue times
+/// to the frames it shows is the player's.
 ///
 /// Line rules. A cue has at most `maxLines` lines of at most `maxLineCharacters` characters (grapheme clusters). Lines
 /// break at spaces only; a word longer than a line is cut into line-length pieces. A beat gets as many cues as its
@@ -22,6 +24,11 @@ import Foundation
 /// Words. The cue lines hold the narration's words in order, unchanged: only the whitespace between two words becomes
 /// one space or a line break. A no-break space (U+00A0, U+2007, U+202F) never breaks a line. The transcript keeps
 /// the narration exactly as written.
+///
+/// Text rules, applied when each format is written: a timed cue payload (WebVTT and SubRip) never holds a line
+/// terminator (`payloadLine`); WebVTT escapes `&`, `<` and `>` one Unicode scalar at a time (`escapeVTT`); SubRip has
+/// no escapes, so writing it refuses a cue with `<`, `>` or a control character (`captions.text`). WebVTT and the
+/// transcript are written for any narration.
 public struct MGCaptionExport: Equatable, Sendable {
     /// `vtt` (WebVTT), `srt` (SubRip) or `txt` (the plain-text transcript).
     public enum Format: String, CaseIterable, Sendable { case vtt, srt, txt }
@@ -58,17 +65,11 @@ public struct MGCaptionExport: Equatable, Sendable {
     public let beats: [Beat]
     public let cues: [Cue]
 
-    /// Captions for `plan` (routed as the video plays it) with one entry in `beats` per plan beat. Refusals:
-    /// `story.beats` (a plan without the same number of beats, or beats without a plan) and `captions.text` (a
-    /// narration with `<`, `>` or a control character other than a line break or tab: SubRip has no escape for them,
-    /// and the engine's own captions never have them).
+    /// Captions for `plan` (routed as the video plays it) with one entry in `beats` per plan beat. Refusal:
+    /// `story.beats` (a plan without the same number of beats, or beats without a plan). The words are not refused
+    /// here: each format applies its own text rules when it is written (`text(_:)`).
     public init(plan: MGStoryPlan?, beats: [Beat], title: String? = nil) throws {
         guard (plan?.beats.count ?? 0) == beats.count else { throw MGSolidIssue("story.beats") }
-        for b in beats {
-            guard !b.narration.unicodeScalars.contains(where: { s in
-                s == "<" || s == ">" || (CharacterSet.controlCharacters.contains(s) && !CharacterSet.whitespacesAndNewlines.contains(s))
-            }) else { throw MGError("captions.text") }
-        }
         self.title = title; self.plan = plan; self.beats = beats
         var cues: [Cue] = []
         if let plan {
@@ -164,49 +165,92 @@ public struct MGCaptionExport: Equatable, Sendable {
         return "\(two(ms / 3_600_000)):\(two((ms / 60_000) % 60)):\(two((ms / 1000) % 60))\(separator)\(m3)"
     }
 
-    /// WebVTT cue text: `&`, `<` and `>` as character references (so no text reads as a tag or a `-->` arrow).
+    /// WebVTT cue text: `&`, `<` and `>` as character references, so no text reads as a tag, a character reference or
+    /// a `-->` arrow. Escaped one Unicode scalar at a time: a `<` followed by a combining mark (one grapheme cluster)
+    /// is still escaped, and the mark is kept.
     public static func escapeVTT(_ s: String) -> String {
-        var out = ""
-        for ch in s {
-            switch ch {
-            case "&": out += "&amp;"
-            case "<": out += "&lt;"
-            case ">": out += "&gt;"
-            default: out.append(ch)
+        var out = String.UnicodeScalarView()
+        for u in s.unicodeScalars {
+            switch u {
+            case "&": out.append(contentsOf: "&amp;".unicodeScalars)
+            case "<": out.append(contentsOf: "&lt;".unicodeScalars)
+            case ">": out.append(contentsOf: "&gt;".unicodeScalars)
+            default: out.append(u)
             }
         }
-        return out
+        return String(out)
+    }
+
+    /// The line terminators a timed cue payload never holds: LF, CR, VT, FF, NEL, U+2028 LINE SEPARATOR and U+2029
+    /// PARAGRAPH SEPARATOR. In a payload one would start a new payload line, or end the cue at a blank line.
+    public static let payloadBreaks: Set<Unicode.Scalar> = ["\n", "\r", "\u{0B}", "\u{0C}", "\u{85}", "\u{2028}", "\u{2029}"]
+
+    /// One payload line of a timed cue (WebVTT, SubRip): every run of line terminators (`payloadBreaks`; CR LF is one
+    /// run) becomes one space. Line breaks in the narration already end words, so a cue line built from the narration
+    /// never holds one; this rule keeps every written cue to its own lines whatever its text.
+    public static func payloadLine(_ s: String) -> String {
+        var out = String.UnicodeScalarView(), breaking = false
+        for u in s.unicodeScalars {
+            if payloadBreaks.contains(u) {
+                if !breaking { out.append(" ") }
+                breaking = true
+            } else {
+                out.append(u); breaking = false
+            }
+        }
+        return String(out)
+    }
+
+    /// A WebVTT cue payload: each line with its line terminators normalised (`payloadLine`), then escaped (`escapeVTT`).
+    public static func webVTTPayload(_ lines: [String]) -> String {
+        lines.map { escapeVTT(payloadLine($0)) }.joined(separator: "\n")
+    }
+
+    /// A SubRip cue payload: each line with its line terminators normalised (`payloadLine`). SubRip has no escapes, so
+    /// a line with `<`, `>` (a tag, or a `-->` arrow) or a control character (general category Cc) is refused
+    /// (`captions.text`). The engine's checked captions never have them.
+    public static func subRipPayload(_ lines: [String]) throws -> String {
+        let out = lines.map(payloadLine)
+        for line in out where line.unicodeScalars.contains(where: { $0 == "<" || $0 == ">" || $0.properties.generalCategory == .control }) {
+            throw MGError("captions.text")
+        }
+        return out.joined(separator: "\n")
     }
 
     /// The export in `format`: UTF-8 text without a byte order mark, `\n` line ends, ending in one line break (an
-    /// empty SubRip file is empty). Byte-identical in every run.
-    public func text(_ format: Format) -> String {
+    /// empty SubRip file is empty). Byte-identical in every run. Each format's text rules apply here; only SubRip
+    /// refuses (`captions.text`, `subRip`).
+    public func text(_ format: Format) throws -> String {
         switch format {
         case .vtt: return webVTT
-        case .srt: return subRip
+        case .srt: return try subRip
         case .txt: return transcript
         }
     }
 
-    /// `WEBVTT`, then per cue its number, `start --> end` and its lines (escaped), each block after a blank line.
+    /// `WEBVTT`, then per cue its number, `start --> end` and its payload (`webVTTPayload`), each block after a blank
+    /// line.
     public var webVTT: String {
         let fps = plan?.fps ?? 1
         var out = "WEBVTT\n"
         for (i, c) in cues.enumerated() {
             out += "\n\(i + 1)\n\(Self.timestamp(frame: c.startFrame, fps: fps)) --> \(Self.timestamp(frame: c.endFrame, fps: fps))\n"
-            out += c.lines.map(Self.escapeVTT).joined(separator: "\n") + "\n"
+            out += Self.webVTTPayload(c.lines) + "\n"
         }
         return out
     }
 
-    /// Per cue its number, `start --> end` (comma before the milliseconds) and its lines, blocks separated by a blank
-    /// line. SubRip has no escapes: the lines are the narration's words as they are.
+    /// Per cue its number, `start --> end` (comma before the milliseconds) and its payload (`subRipPayload`), blocks
+    /// separated by a blank line. SubRip has no escapes: the lines are the narration's words as they are, and a cue
+    /// SubRip cannot hold is refused (`captions.text`).
     public var subRip: String {
-        let fps = plan?.fps ?? 1
-        return cues.enumerated().map { i, c in
-            "\(i + 1)\n\(Self.timestamp(frame: c.startFrame, fps: fps, separator: ",")) --> \(Self.timestamp(frame: c.endFrame, fps: fps, separator: ","))\n"
-                + c.lines.joined(separator: "\n") + "\n"
-        }.joined(separator: "\n")
+        get throws {
+            let fps = plan?.fps ?? 1
+            return try cues.enumerated().map { i, c in
+                "\(i + 1)\n\(Self.timestamp(frame: c.startFrame, fps: fps, separator: ",")) --> \(Self.timestamp(frame: c.endFrame, fps: fps, separator: ","))\n"
+                    + (try Self.subRipPayload(c.lines)) + "\n"
+            }.joined(separator: "\n")
+        }
     }
 
     /// The plain-text transcript: the title, then per beat `[time] n. narration` (the time its caption appears; the
@@ -228,79 +272,28 @@ public struct MGCaptionExport: Equatable, Sendable {
 // MARK: The story of a document
 
 extension MGCaptionExport {
-    /// Captions of an assembly's story video at `width` × `height` and `fps`, planned as `marty-solid render` plans
-    /// `story.mp4`: one beat per step (caption `n. say`, the step's spin), the still cameras of `MGSolidRenderPlan`,
-    /// and the routed camera moves (`MGStoryPlan.routes`), which decide when each caption appears. An assembly without
-    /// steps has no story and no cues. Throws the plan's refusals (`story.rate`, `story.beats`, `story.frames`).
+    /// Captions of an assembly's story video at `width` × `height` and `fps`: the story `marty-solid render` plays as
+    /// `story.mp4` (`MGStoryShots`: one beat per step, caption `n. say`, the step stills' cameras, the routed camera
+    /// moves, which decide when each caption appears). An assembly without steps has no story and no cues. Throws the
+    /// plan's refusals (`story.rate`, `story.beats`, `story.frames`).
     public init(assembly doc: MGSolidDocument, source: MGSolidSource, width: Int = 1280, height: Int = 800,
                 fps: Int = MGStoryTiming.defaultRate) throws {
-        guard !doc.steps.isEmpty else { try self.init(plan: nil, beats: [], title: doc.title); return }
-        let unrouted = try MGStoryPlan(captions: doc.steps.indices.map { "\($0 + 1). \(doc.steps[$0].say)" }, spins: doc.steps.map(\.spin), fps: fps)
-        let still = MGSolidRenderPlan(doc, sourceName: "", source: source, loop: false)
-        let cameras = still.cameras(doc, width: Double(width), height: Double(height))
-        var stepStill: [Int: Int] = [:]
-        for k in still.stills.indices { if let s = still.stills[k].step, stepStill[s] == nil { stepStill[s] = k } }
-        let holdViews = doc.steps.indices.map { k in stepStill[k].map { cameras.clear[$0].view(doc.view(step: k)) } ?? doc.view(step: k) }
-        let shots = doc.steps.indices.map { k in
-            MGStoryBeatShot(camera: stepStill[k].map { cameras.stills[$0] }, params: MGSolidShot.step(doc, k)?.params ?? doc.defaults,
-                            view: k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], doc.assembly), step: doc.steps[k])
-        }
-        let plan = unrouted.routed(MGStoryPlan.routes(doc, beats: shots, plan: unrouted))
-        try self.init(plan: plan, beats: doc.steps.map { Beat(narration: $0.say) }, title: doc.title)
+        let story = try MGStoryShots(assembly: doc, source: source, width: width, height: height, fps: fps)
+        try self.init(plan: story?.plan, beats: story == nil ? [] : doc.steps.map { Beat(narration: $0.say) }, title: doc.title)
     }
 
-    /// Captions of an explainer's story video at `width` × `height` and `fps`, planned as `marty-solid render` plans
-    /// `story.mp4`: a session with speech pacing plays the beats in order, each settled (caption `n. caption`, the
-    /// solid step's spin), the panes of each still (`MGExplainerFrame.panes`, the adaptive board pane and its width),
-    /// the solid pane's camera (`MGExplainerFrame.solidClearView`), and the routed camera moves. Each beat's board
-    /// text: the board's `alt`, else `MGDescribe.board`. Nil when the document does not load; an explainer without
-    /// beats has no cues. Throws the plan's refusals.
+    /// Captions of an explainer's story video at `width` × `height` and `fps`: the beats and story `marty-solid render`
+    /// plays as `story.mp4` (`MGExplainerStory`: each beat settled, its panes and solid camera, the routed camera
+    /// moves). Each beat's board text: the board's `alt`, else `MGDescribe.board` of the settled board. Nil when the
+    /// document does not load; an explainer without beats has no cues. Throws the plan's refusals.
     public init?(explainer doc: MGExplainer, library: MGSolidLibrary = .builtIn, width: Int = 1280, height: Int = 800,
                  fps: Int = MGStoryTiming.defaultRate) throws {
-        let clock = MGManualClock()
-        var s = MGExplainerSession(pacing: .speech, clock: clock, library: library)
-        guard case .success = s.load(doc) else { return nil }
-        let solid = s.solid
-        let primarySolid = (s.primary ?? (solid != nil ? "solid" : "board")) == "solid"
-        var beats: [Beat] = [], captions: [String] = [], spins: [Double] = []
-        var cameras: [MGSolidCamera?] = [], holdViews: [MGSolidView] = [], views: [MGExplainerBeatView] = []
-        while let beat = s.presented.beat, beat == beats.count {
-            clock.advance(by: s.motionRemaining)
-            _ = s.tick()
-            let view = s.presented, caption = s.caption ?? ""
-            let pane = s.boardPane
-            let share = pane.shown && solid != nil ? MGExplainerFrame.boardShare(scene: s.state?.scene, width: width, height: height, primarySolid: primarySolid) : nil
-            let rects = MGExplainerFrame.panes(width: width, height: height, board: pane.shown, solid: solid != nil, primarySolid: primarySolid, boardShare: share)
-            var camera: MGSolidCamera?
-            if let d = solid {
-                let base = view.solid ?? d.view(step: nil)
-                if let r = rects.solid {
-                    let clear = MGExplainerFrame.solidClearView(d, view: view, stepIndex: s.solidStep(forBeat: beat), pane: r)
-                    camera = clear.camera
-                    holdViews.append(clear.view(base))
-                } else { holdViews.append(base) }
-            }
-            var alt: String?, description: String?
-            if doc.board != nil, let scene = s.state?.scene {
-                alt = scene.alt
-                if alt == nil { description = MGDescribe.board(scene) }
-            }
-            beats.append(Beat(narration: caption, alt: alt, description: description))
-            captions.append("\(beat + 1). \(caption)"); spins.append(view.step?.spin ?? 0)
-            cameras.append(camera); views.append(view)
-            _ = s.lineEnded(beat)
+        guard let e = try MGExplainerStory(doc, library: library, width: width, height: height, fps: fps) else { return nil }
+        let beats = e.beats.map { b -> Beat in
+            guard doc.board != nil, let scene = b.scene else { return Beat(narration: b.caption) }
+            return Beat(narration: b.caption, alt: scene.alt, description: scene.alt == nil ? MGDescribe.board(scene) : nil)
         }
-        guard !beats.isEmpty else { try self.init(plan: nil, beats: [], title: s.title); return }
-        let unrouted = try MGStoryPlan(captions: captions, spins: spins, fps: fps)
-        var plan = unrouted
-        if let d = solid {
-            let shots = views.indices.map { k in
-                MGStoryBeatShot(camera: cameras[k], params: MGExplainerFrame.pose(d, view: views[k]),
-                                view: k == 0 ? holdViews[0] : holdViews[k].moving(from: holdViews[k - 1], d.assembly), step: views[k].step)
-            }
-            plan = unrouted.routed(MGStoryPlan.routes(d, beats: shots, plan: unrouted))
-        }
-        try self.init(plan: plan, beats: beats, title: s.title)
+        try self.init(plan: e.story?.plan, beats: beats, title: e.title)
     }
 }
 
@@ -337,11 +330,12 @@ extension MGCaptionExport {
                     return refused(MGExplainerReport.check(data: data, library: library, profile: profile, engine: engine).json)
                 }
                 guard let e = try MGCaptionExport(explainer: doc, library: library, width: width, height: height, fps: fps) else { return refused(gate.json) }
-                return Output(ok: true, text: e.text(format))
+                return Output(ok: true, text: try e.text(format))
             }
             let report = MGSolidReport.check(data: data, library: library, profile: profile, engine: engine)
             guard report.ok, case .success(let doc) = MGSolidParser.document(data: data, library: library) else { return refused(report.json) }
-            return Output(ok: true, text: try MGCaptionExport(assembly: doc, source: MGSolidSource(data: data), width: width, height: height, fps: fps).text(format))
+            return Output(ok: true, text: try MGCaptionExport(assembly: doc, source: MGSolidSource(data: data), width: width, height: height, fps: fps)
+                .text(format))
         } catch let e as MGSolidIssue {
             return story(e.reason)
         } catch let e as MGError {

@@ -45,19 +45,13 @@ public struct MGTranscript: Equatable, Sendable {
         var s = MGExplainerSession(pacing: .speech, clock: clock, library: library)
         guard case .success = s.load(doc) else { return MGTranscript(ok: false, json: gate.json) }
         var beats: [MGJSON] = []
-        var k = 0
-        // Present each beat in turn, as the beat stills are made (`MGExplainerFrame.beatPanes`): the board settles, the
-        // caption is due, and the beat's view is the one the learner sees.
-        while k < MGExplainerLimits.beats, let beat = s.presented.beat, beat == k {
-            clock.advance(by: s.motionRemaining)
-            _ = s.tick()
-            if let info = s.beats[k] {
-                let shown = s.solid.map { d in s.displayedAnnotations(beat: k).compactMap { onScreen($0, d) } } ?? []
-                beats.append(entry(beat: k + 1, caption: s.captions[k] ?? s.caption ?? info.say, note: info.unchecked, onScreen: shown,
-                                   tables: tables(s.state?.scene, notes: s.notes), highlight: info.highlight ?? []))
-            }
-            _ = s.lineEnded(k)
-            k += 1
+        // Present each beat in turn, as the beat stills and the story video show it (`MGExplainerSession.settledBeats`):
+        // the board settles, the caption is due, and the beat's view is the one the learner sees.
+        MGExplainerSession.settledBeats(&s, clock: clock) { s, k in
+            guard let info = s.beats[k] else { return }
+            let shown = s.solid.map { d in s.displayedAnnotations(beat: k).compactMap { onScreen($0, d) } } ?? []
+            beats.append(entry(beat: k + 1, caption: s.captions[k] ?? s.caption ?? info.say, note: info.unchecked, onScreen: shown,
+                               tables: tables(s.state?.scene, notes: s.notes), highlight: info.highlight ?? []))
         }
         return MGTranscript(ok: true, json: document(file: file, title: s.title, beats: beats))
     }

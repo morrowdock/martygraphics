@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "629208334dbe3b178952e0ed612613b9890ee8804ff968a4f55fa7ce85a708df"
+      "sha256": "6dc2c0a8672c0e53a4e25d7cfc3211051eecee6237748101a3c5464186d21c6d"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -195,7 +195,7 @@
     },
     {
       "path": "Examples/Solid3D/README.md",
-      "sha256": "10af5241be21413c6cf78607be08ad70a0f0ba6a6255357f237eb0d4fb321578"
+      "sha256": "01fa4f5a43ab391419613fe34902ecf27143d3188ac843e99170d8e49cf9c37a"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json",
@@ -235,7 +235,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "a46e0561265e2117405083160099fbb049a8910d2fdab325137f6536d72226f4"
+      "sha256": "802719988ddda1539cfb779c338d8cc9e35e6a2e7c258bde0dfe3206cc858c0b"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift",
@@ -643,7 +643,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MartySolidCLITests.swift",
-      "sha256": "e3842150c88cc43a846a29185f84f662d645e5d2d4d1bf65fc5acefab6741f63"
+      "sha256": "4f9c5270e2d4f990cced23ff6bda9fb14ce69cd1d0441da2e3ced98e258fc0d1"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/MovieWriterTests.swift",
@@ -747,7 +747,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Explainer/MGTranscript.swift",
-      "sha256": "a0bf14403a192f7511e93e2a206b27b0cb4f2911d04c54569f2167cec2c50250"
+      "sha256": "4f7cac75712ef6b658d830f4b2d26a0b423b47b2499949babe009039951a1557"
     },
     {
       "path": "Sources/MartyGraphics/MG3DInteraction.swift",
@@ -1955,7 +1955,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "4ad67f670b7abdaeba79be29eeaeca5a19ac2d0a2efb42efd2c3158b0e14bd79"
+      "sha256": "ad8f9e49565da98e5b11a08e3e903cb69036911f427bf5e7b2a7725a5339ea9c"
     },
     {
       "path": "docs/EXPORT.json",
@@ -3439,7 +3439,7 @@
     },
     {
       "path": "docs/PORTABILITY-MAP.md",
-      "sha256": "178f217329048abb937d74ab83e86155d8d902bfe53922352d80233167714a5f"
+      "sha256": "dd67035532bdcc5af878040ac22f0236582133d3567ae0725dc414c3e4aac790"
     },
     {
       "path": "docs/fixtures/semantics/README.md",
@@ -4975,11 +4975,11 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/CaptionExportCLITests.swift",
-      "sha256": "97f23a4e1a4f9e906f67d2c9c853b7a2e550174a1d3c212ba5555b493e4ac337"
+      "sha256": "e13fa1f771b1e59a884b1a749b4fb052b0f249005421b603995e95f381b693b2"
     },
     {
       "path": "Sources/MartyGraphics/MGCaptionExport.swift",
-      "sha256": "e742a9f86171b7850d20a95e2241967fb5da6c00d37fd5cb94ed437b8aef30cf"
+      "sha256": "301fba15e5840313412c6582cf797f13570766bb85ca798e21c8c2a8eca12472"
     },
     {
       "path": "Sources/MartyGraphics/MGPlanarCurve.swift",
@@ -4994,8 +4994,12 @@
       "sha256": "3f8377b0ec12cf8b4c09bb94565c6cd98da15f1a44f58baeb39cbe9227027830"
     },
     {
+      "path": "Sources/MartyGraphics/MGStoryShots.swift",
+      "sha256": "9352a7fd60dca4b53f5b6d8eff54f9c0ca77f39d68ce0e91c7166291cd891e26"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/CaptionExportTests.swift",
-      "sha256": "4abd09edea978e9ed391c86e494191a420450ed5dd8fbc9e788f8e933d3dadf7"
+      "sha256": "ed5954e9c58804dad1fdfda70d4e4b2c6edf120ca87fe62789e3ab820f2f3f1a"
     },
     {
       "path": "Tests/MartyGraphicsTests/CurveCaseTests.swift",
@@ -5019,7 +5023,7 @@
     },
     {
       "path": "docs/fixtures/captions/README.md",
-      "sha256": "afe24acb471f7b1916ffbad7b4d4f31554049e95e6e43ace65a481662621b4c1"
+      "sha256": "62380ecbfc0c26cb6f38163b9cc3c83fa8f48eec7255e1a9bd79b21520406849"
     },
     {
       "path": "docs/fixtures/captions/gears-mixed.srt",
