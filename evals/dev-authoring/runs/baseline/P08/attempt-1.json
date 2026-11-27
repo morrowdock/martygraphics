@@ -1,0 +1,9 @@
+{"v":1,"title":"Energy of a falling ball","items":[
+{"id":"energy","k":"bars","at":[2,1.5],"w":8,"h":5,"unit":"J",
+ "bars":[{"label":"Kinetic","value":0,"color":"kinetic"},{"label":"Potential","value":98,"color":"potential"}]}],
+"steps":[
+{"say":"At the top, 5 m up, the 2 kg ball has potential energy mgh = 2 × 9.8 × 5 = 98 J and no kinetic energy.","focus":"energy"},
+{"say":"Halfway down, at 2.5 m, it has 49 J of potential energy and 49 J of kinetic energy.","focus":"energy",
+ "do":[{"id":"energy","key":"bars","value":[{"label":"Kinetic","value":49,"color":"kinetic"},{"label":"Potential","value":49,"color":"potential"}]}]},
+{"say":"Just before it lands, all 98 J is kinetic and the potential energy is 0 J. The total stays 98 J.","focus":"energy",
+ "do":[{"id":"energy","key":"bars","value":[{"label":"Kinetic","value":98,"color":"kinetic"},{"label":"Potential","value":0,"color":"potential"}]}]}]}

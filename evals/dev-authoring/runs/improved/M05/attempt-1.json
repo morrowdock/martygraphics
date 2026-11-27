@@ -1,0 +1,10 @@
+{"v":1,"title":"Four left rectangles under y = x²","items":[
+{"id":"curve","k":"plot","at":[1.5,1.2],"w":8,"h":5.6,"xr":[0,2],"yr":[0,4],
+ "pts":[[0,0],[0.25,0.0625],[0.5,0.25],[0.75,0.5625],[1,1],[1.25,1.5625],[1.5,2.25],[1.75,3.0625],[2,4]],"xl":"x","yl":"f(x) = x²"},
+{"id":"rect2","k":"region","pts":[[3.5,1.2],[5.5,1.2],[5.5,1.55],[3.5,1.55]],"color":"orange"},
+{"id":"rect3","k":"region","pts":[[5.5,1.2],[7.5,1.2],[7.5,2.6],[5.5,2.6]],"color":"orange"},
+{"id":"rect4","k":"region","pts":[[7.5,1.2],[9.5,1.2],[9.5,4.35],[7.5,4.35]],"color":"orange"}],
+"steps":[
+{"say":"Split [0, 2] into four strips of width 0.5. Each rectangle takes the curve's height at its left end.","focus":"curve"},
+{"say":"The heights are f(0) = 0 (a flat rectangle, not drawn), f(0.5) = 0.25, f(1) = 1 and f(1.5) = 2.25.","focus":"rect4"},
+{"say":"Area ≈ 0.5 × (0 + 0.25 + 1 + 2.25) = 1.75. The exact area is 8/3 ≈ 2.667, so left ends underestimate here.","focus":"curve"}]}

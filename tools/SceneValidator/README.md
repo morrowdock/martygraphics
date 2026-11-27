@@ -40,13 +40,15 @@ read bound is exceeded, before invoking the parser.
 ## Usage
 
 ```text
-marty-scene-validate [--json] [--] FILE...
+marty-scene-validate [--json] [--hints] [--] FILE...
+marty-scene-validate --ml-kit --strict [--hints] FILE
 marty-scene-validate --help
 ```
 
 | Option | Meaning |
 | --- | --- |
 | `--json` | Print one JSON report (sorted keys, one line) instead of text lines. |
+| `--hints` | Add a one-line fix hint (`MGRepairHint.text(for:)`) to each refusal's detail, for an author repairing the file. Without it the output is unchanged. |
 | `-h`, `--help` | Print help and exit 0; must be used alone. |
 | `--` | Treat every later argument as a file, even one starting with `-`. Recommended in scripts. |
 
@@ -130,6 +132,7 @@ the implementation but do not have injected-failure regression tests.
 ## ML explainers (opt-in)
 
 `marty-scene-validate --ml-kit --strict FILE` checks one
-[ML document](../../docs/ML-EXPLAINER.md) and prints its strict JSON report. The companion
+[ML document](../../docs/ML-EXPLAINER.md) and prints its strict JSON report. With `--hints`, a refusal's
+report also carries `hint` (`MGMLReason.hint`). The companion
 `marty-ml-render` executable exports checked documents to MP4 or RGBA PNG frames. Both
 commands require an explicit `--ml-kit` flag.

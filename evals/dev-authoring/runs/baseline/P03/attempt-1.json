@@ -1,0 +1,10 @@
+{"v":1,"title":"A block hanging from a spring","items":[
+{"id":"ceiling","k":"line","from":[3.5,7.2],"to":[8.5,7.2],"style":"ground"},
+{"id":"spring","k":"spring","from":[6,7.2],"to":[6,4.6],"coils":10,"label":"k = 250 N/m"},
+{"id":"block","k":"body","at":[6,4],"size":1.2,"label":"2 kg"},
+{"id":"W","k":"vector","on":"block","angle":270,"len":1.96,"label":"W = 19.6 N","color":"gravity"},
+{"id":"S","k":"vector","on":"block","angle":90,"len":1.96,"label":"spring force = 19.6 N","color":"tension"}],
+"steps":[
+{"say":"The 2 kg block weighs W = mg = 2 × 9.8 = 19.6 N, pulling down.","focus":"W"},
+{"say":"At rest the spring pulls up with an equal 19.6 N, so the forces balance.","focus":"S"},
+{"say":"Hooke's law gives the stretch: x = F / k = 19.6 / 250 = 0.0784 m = 7.84 cm.","focus":"spring"}]}

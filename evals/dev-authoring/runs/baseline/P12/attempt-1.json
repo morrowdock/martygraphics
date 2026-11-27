@@ -1,0 +1,9 @@
+{"v":1,"title":"A car over a hilltop","items":[
+{"id":"hill","k":"path","pts":[[1,2.4],[2.5,3.6],[4,4.3],[6,4.6],[8,4.3],[9.5,3.6],[11,2.4]]},
+{"id":"car","k":"body","at":[6,5.1],"size":1,"label":"1000 kg"},
+{"id":"W","k":"vector","on":"car","angle":270,"len":2.45,"label":"W = 9800 N","color":"gravity"},
+{"id":"N","k":"vector","on":"car","angle":90,"len":1.2,"label":"N = 4800 N","color":"normal"}],
+"steps":[
+{"say":"At the top of the hill the car's weight is W = mg = 1000 × 9.8 = 9800 N, pointing down.","focus":"W"},
+{"say":"Moving in a circle needs a net downward force m v² / r = 1000 × 100 / 20 = 5000 N.","focus":"car"},
+{"say":"So the road pushes up with only N = 9800 − 5000 = 4800 N.","focus":"N"}]}

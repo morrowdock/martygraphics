@@ -1,0 +1,11 @@
+{"v":1,"title":"Bubble sort, first pass","items":[
+{"id":"arr","k":"array","at":[6,4],"vals":[5,1,4,2,8],"cell":1.2}],
+"steps":[
+{"say":"Compare 5 and 1: 5 is larger, so swap them.","focus":"arr",
+ "do":[{"id":"arr","key":"marked","value":[0,1]},{"id":"arr","key":"vals","value":[1,5,4,2,8]}]},
+{"say":"Compare 5 and 4: 5 is larger, so swap.","focus":"arr",
+ "do":[{"id":"arr","key":"marked","value":[1,2]},{"id":"arr","key":"vals","value":[1,4,5,2,8]}]},
+{"say":"Compare 5 and 2: 5 is larger, so swap.","focus":"arr",
+ "do":[{"id":"arr","key":"marked","value":[2,3]},{"id":"arr","key":"vals","value":[1,4,2,5,8]}]},
+{"say":"Compare 5 and 8: already in order, no swap. The largest value, 8, is in its final place.","focus":"arr",
+ "do":[{"id":"arr","key":"marked","value":[3,4]}]}]}

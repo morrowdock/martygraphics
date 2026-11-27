@@ -1,0 +1,13 @@
+{"v":1,"title":"The slope of a line","items":[
+{"id":"graph","k":"plot","at":[1.5,1.2],"w":9,"h":6,"xr":[0,5],"yr":[0,10],
+ "pts":[[0,0],[1,2],[2,4],[3,6],[4,8],[5,10]],"xl":"x","yl":"y"},
+{"id":"A","k":"body","at":[3.3,2.4],"shape":"ball","size":0.3,"color":"red"},
+{"id":"B","k":"body","at":[8.7,6],"shape":"ball","size":0.3,"color":"red"},
+{"id":"run","k":"line","from":[3.3,2.4],"to":[8.7,2.4],"style":"dashed"},
+{"id":"rise","k":"line","from":[8.7,2.4],"to":[8.7,6],"style":"dashed"},
+{"id":"runText","k":"text","at":[6,2],"text":"run = 3"},
+{"id":"riseText","k":"text","at":[9.6,4.2],"text":"rise = 6"}],
+"steps":[
+{"say":"The line passes through (1, 2) and (4, 8).","focus":"graph"},
+{"say":"From (1, 2) to (4, 8): the run is 4 − 1 = 3 and the rise is 8 − 2 = 6.","focus":"rise"},
+{"say":"Slope = rise / run = 6 / 3 = 2. The line also passes through (0, 0), so its equation is y = 2x.","focus":"graph"}]}

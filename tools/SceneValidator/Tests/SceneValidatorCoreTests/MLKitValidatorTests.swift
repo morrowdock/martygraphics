@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import Foundation
+import MartyGraphicsMLKit
 import XCTest
 import SceneValidatorCore
 
@@ -38,6 +39,19 @@ final class MLKitValidatorTests: XCTestCase {
             XCTAssertEqual(first.1, expected, golden)
             XCTAssertEqual(second.1, first.1, golden)
         }
+    }
+
+    /// `--hints` adds the reason's fix hint to a refusal; the default report stays byte-identical to its golden.
+    func testMLKitStrictHintsAreOptIn() throws {
+        let input = fixtures.appendingPathComponent("missing-caption.json").path
+        let plain = SceneValidator.run(arguments: ["--ml-kit", "--strict", input])
+        XCTAssertEqual(Data(plain.stdout.utf8), try Data(contentsOf: fixtures.appendingPathComponent("missing-caption.strict.json")))
+        let hinted = SceneValidator.run(arguments: ["--ml-kit", "--strict", "--hints", input])
+        XCTAssertEqual(hinted.status, .invalid)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(hinted.stdout.utf8)) as? [String: Any])
+        XCTAssertEqual(object["reason"] as? String, "ml.vision.caption")
+        XCTAssertEqual(object["hint"] as? String, MGMLReason.caption.hint)
+        XCTAssertTrue(MGMLReason.allCases.allSatisfy { !$0.hint.isEmpty && $0.hint.allSatisfy(\.isASCII) })
     }
 
     func testMLKitSamplesRequireOptInAndOutputIsDeterministic() throws {

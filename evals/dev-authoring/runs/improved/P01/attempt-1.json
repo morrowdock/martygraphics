@@ -1,0 +1,10 @@
+{"v":1,"title":"Forces on a box at rest on a 30° ramp","items":[
+{"id":"ramp","k":"incline","at":[1,1],"base":9,"angle":30,"label":"30°"},
+{"id":"box","k":"body","at":[5.03,4.02],"size":1.2,"angle":30,"label":"5 kg"},
+{"id":"W","k":"vector","on":"box","angle":270,"len":2.45,"label":"W = 49 N","color":"gravity"},
+{"id":"N","k":"vector","on":"box","angle":120,"len":2.12,"label":"N = 42.4 N","color":"normal"},
+{"id":"f","k":"vector","on":"box","angle":30,"len":1.225,"label":"f = 24.5 N","color":"friction"}],
+"steps":[
+{"say":"Weight acts straight down: W = mg = 5 × 9.8 = 49 N.","show":["ramp","box","W"],"focus":"W"},
+{"say":"The ramp pushes perpendicular to its surface: N = mg cos 30° = 42.4 N.","show":["N"],"focus":"N"},
+{"say":"Static friction points up the slope and balances mg sin 30° = 24.5 N, so the box stays at rest.","show":["f"],"focus":"f"}]}

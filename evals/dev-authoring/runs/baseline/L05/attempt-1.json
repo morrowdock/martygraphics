@@ -1,0 +1,4 @@
+{"v":1,"kind":"ml-explainer","title":"One set of logits, three temperatures","items":[
+{"id":"sweep","kind":"nextTokenProbabilities","tokens":["The","weather","is"],
+ "candidates":[{"token":"sunny","logit":2.0},{"token":"rainy","logit":1.0},{"token":"windy","logit":0.0}],
+ "temperatures":[0.5,1,2],"chosen":"sunny"}]}

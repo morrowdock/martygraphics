@@ -1,0 +1,10 @@
+{"v":1,"title":"Uniform circular motion","items":[
+{"id":"path","k":"orbit","at":[6,4],"r":2.5,"label":"r = 2 m"},
+{"id":"centre","k":"body","at":[6,4],"shape":"ball","size":0.2,"color":"muted"},
+{"id":"ball","k":"body","at":[8.5,4],"shape":"ball","size":0.5,"label":"0.3 kg"},
+{"id":"v","k":"vector","on":"ball","angle":90,"len":2,"label":"v = 4 m/s","color":"velocity"},
+{"id":"a","k":"vector","on":"ball","angle":180,"len":1.6,"label":"a = 8 m/s²","color":"accel"}],
+"steps":[
+{"say":"The ball moves at a constant 4 m/s; its velocity is always tangent to the circle.","focus":"v"},
+{"say":"Its direction keeps turning, so it accelerates toward the centre: a = v² / r = 16 / 2 = 8 m/s².","focus":"a"},
+{"say":"That needs a centripetal force F = m a = 0.3 × 8 = 2.4 N, pointing at the centre.","focus":"a"}]}

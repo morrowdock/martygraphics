@@ -1,0 +1,9 @@
+{"v":1,"title":"Energy of a dropped ball","items":[
+{"id":"chart","k":"bars","at":[2,1.5],"w":8,"h":5,"unit":"J",
+ "bars":[{"label":"Kinetic","value":0,"color":"kinetic"},{"label":"Potential","value":98,"color":"potential"}]}],
+"steps":[
+{"say":"At the top, 5 m up, the 2 kg ball has potential energy mgh = 2 × 9.8 × 5 = 98 J and 0 J of kinetic energy.","focus":"chart"},
+{"say":"Halfway down, 2.5 m up: 49 J potential and 49 J kinetic.","focus":"chart",
+ "do":[{"id":"chart","key":"bars","value":[{"label":"Kinetic","value":49,"color":"kinetic"},{"label":"Potential","value":49,"color":"potential"}]}]},
+{"say":"Just before landing: 98 J kinetic and 0 J potential. The total stays 98 J.","focus":"chart",
+ "do":[{"id":"chart","key":"bars","value":[{"label":"Kinetic","value":98,"color":"kinetic"},{"label":"Potential","value":0,"color":"potential"}]}]}]}

@@ -1,0 +1,9 @@
+{"v":1,"title":"Adding vectors head to tail","items":[
+{"id":"grid","k":"axes","at":[1,1],"w":10,"h":6.5,"xl":"x","yl":"y"},
+{"id":"a","k":"vector","from":[2,2],"angle":18.43,"len":4.74,"label":"a = (3, 1)","color":"blue"},
+{"id":"b","k":"vector","from":[6.5,3.5],"angle":63.43,"len":3.35,"label":"b = (1, 2)","color":"green"},
+{"id":"r","k":"vector","from":[2,2],"angle":36.87,"len":7.5,"label":"a + b = (4, 3)","color":"red"}],
+"steps":[
+{"say":"Draw a = (3, 1) from the starting point.","show":["grid","a"],"focus":"a"},
+{"say":"Draw b = (1, 2) starting at the head of a.","show":["grid","a","b"],"focus":"b"},
+{"say":"The resultant runs from the start of a to the head of b: a + b = (4, 3), with length √(4² + 3²) = 5.","show":["grid","a","b","r"],"focus":"r"}]}

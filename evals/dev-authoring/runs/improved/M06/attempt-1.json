@@ -1,0 +1,9 @@
+{"v":1,"title":"Adding a and b head to tail","items":[
+{"id":"axes","k":"axes","at":[1,1],"w":10,"h":6.5,"xl":"x","yl":"y"},
+{"id":"a","k":"vector","from":[2,2],"angle":18.43,"len":4.74,"label":"a = (3, 1)","color":"blue"},
+{"id":"b","k":"vector","from":[6.5,3.5],"angle":63.43,"len":3.35,"label":"b = (1, 2)","color":"green"},
+{"id":"sum","k":"vector","from":[2,2],"angle":36.87,"len":7.5,"label":"a + b = (4, 3)","color":"red"}],
+"steps":[
+{"say":"Draw a = (3, 1) from the starting point.","show":["axes","a"],"focus":"a"},
+{"say":"Draw b = (1, 2) starting where a ends.","show":["b"],"focus":"b"},
+{"say":"The resultant goes from the start of a to the head of b: a + b = (3 + 1, 1 + 2) = (4, 3), with length √(16 + 9) = 5.","show":["sum"],"focus":"sum"}]}

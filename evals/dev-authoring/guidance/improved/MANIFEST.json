@@ -1,0 +1,129 @@
+{
+ "about": "Improved authoring guidance: the baseline files (PROTOCOL.md, GETTING-STARTED.md and ML-EXPLAINER.md now carry short convention sections and links), plus the authoring guide with its checklist, worked examples and common mistakes, the repair hints and the authoring lint.",
+ "files": [
+  {
+   "path": "evals/dev-authoring/guidance/baseline/grammar.json",
+   "sha256": "4c528a9bafde485411784a411a02922486d69f3ae818247e926fc0791c1ae8d1"
+  },
+  {
+   "path": "docs/PROTOCOL.md",
+   "sha256": "2e893d2dbd32b2bbd69342d90335a13c7cdac7834616395b7beda979da4f77af"
+  },
+  {
+   "path": "docs/GETTING-STARTED.md",
+   "sha256": "0898db5a5f0ca188e870136bf2c061cc74c861363d087b6b2ebe01f87a3b6339"
+  },
+  {
+   "path": "docs/ML-EXPLAINER.md",
+   "sha256": "c943e558e762996465ed1522b947bfeed61d2c6b72a127d1868bf84c3c3d6a9b"
+  },
+  {
+   "path": "docs/REASONS.md",
+   "sha256": "f951862f9f529cdebfb9aedf7c3fc4e7801c54d32eb0cd010e8d0f92824ae0b5"
+  },
+  {
+   "path": "docs/schemas/ml-explainer.schema.json",
+   "sha256": "8c3f4f861f43cb2f1b18c7b5938daa556486cd14a388fb546c4f8ba03fc66619"
+  },
+  {
+   "path": "docs/fixtures/v1/scene.json",
+   "sha256": "e8c2066276a8528e05366051d93cc0b749decdf9282adde7aff6120fb48abe36"
+  },
+  {
+   "path": "docs/fixtures/v1/table-region-code.scene.json",
+   "sha256": "bc932f373931606ebd5603af5b34036caf82762f0902b6a5452951383513e8ce"
+  },
+  {
+   "path": "docs/fixtures/v1/shortest-path.scene.json",
+   "sha256": "fb93122e400a3fc9d78d664c8b80d83f397e89ef9758975c1c3771afb05ec472"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json",
+   "sha256": "a6a1b0e131c283cacf32065912503d4b7f89df224566613781623f7558b83044"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/function.json",
+   "sha256": "5780c901a82094acf5493bc2eada710a3291d42cecb8612a9addde4a2f021adf"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json",
+   "sha256": "371331217d608cba703574eced35b13deb754904fcbb63bcdfd96acfdb1f41e4"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json",
+   "sha256": "6c33055288b7f9c1bf0ced961e9e5e88489f71666df889abdc00a38e5fd5483b"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json",
+   "sha256": "7416462045dcbbc444dec94a687384c3cd9ebce973ab81ae9009e4765f05e421"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json",
+   "sha256": "3287602d73813243f78f92a952385d4bef952821249bc46a5465102b244c9f0a"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json",
+   "sha256": "99eef56a6ad9f2149ec2df6b37e9f41b248c8ef102519e70d63b81ab9ae71a31"
+  },
+  {
+   "path": "Examples/Explainers/ml-agent-loop.json",
+   "sha256": "336ec2c4cc467ec60f09bd187f68c3e759f2f7173fd371d591e3bbd1d9cdcb59"
+  },
+  {
+   "path": "Examples/Explainers/ml-attention.json",
+   "sha256": "d81d5f579d3e2026f2895500b1616a3273826d34ca59554a1beea587b37460df"
+  },
+  {
+   "path": "Examples/Explainers/ml-combined.json",
+   "sha256": "864d6f0a7b9070c302b1e22118bdbe5f7b56e05e7c5a650b4eb5471fd68904fc"
+  },
+  {
+   "path": "Examples/Explainers/ml-generation-loop.json",
+   "sha256": "9ac34a51ba42148fe66490607a627b27ebe623755a9d4a422f576ceaf7dbe6bd"
+  },
+  {
+   "path": "Examples/Explainers/ml-meaning-map.json",
+   "sha256": "cae43e513c9934d0245527ece64f82ddd3a095f3f401c81877dcd06ffc48d1e4"
+  },
+  {
+   "path": "Examples/Explainers/ml-next-token-probabilities.json",
+   "sha256": "4fdc26044e3746d8f6a6fa7324d2c98ed601285cd4fa5fcaa2a9c6d1e99a84cb"
+  },
+  {
+   "path": "Examples/Explainers/ml-picture-to-numbers.json",
+   "sha256": "fa5b69153c84e6e35f7f9dcde89a9a21db1061fa7b5c1aaad3e9143c5a87897f"
+  },
+  {
+   "path": "Examples/Explainers/ml-temperature-sweep.json",
+   "sha256": "4e292496842f7dcd99271cecada672feec35bd64097d095f5b67440b055f7bbf"
+  },
+  {
+   "path": "Examples/Explainers/ml-vision-pipeline.json",
+   "sha256": "f91d6acb9ac00d890b10f54e38e09221c2c70dbb76947234323938a6e219d63d"
+  },
+  {
+   "path": "docs/AUTHORING.md",
+   "sha256": "76fbc03bf2ddb9b8e9e2a3d81fa9c10b73392827b11b14130dd97b05704e5ed4"
+  },
+  {
+   "path": "tools/scene_lint.py",
+   "sha256": "2674371f9058c94e40329c666b6c028e4bf01313146471467445c1868caaecac"
+  },
+  {
+   "path": "evals/dev-authoring/tools/hints.py",
+   "sha256": "66b44fed897fa9ce9f06f06bb6a9a7e07cfe5e0a4f8c55dbca8033aacf5eedfc"
+  },
+  {
+   "path": "Sources/MartyGraphics/MGRepairHint.swift",
+   "sha256": "ddcf17d64ccc2d6ee133861c74c6e2bf1775080f79600b10d55f284f1420be26"
+  },
+  {
+   "path": "tools/SceneValidator/README.md",
+   "sha256": "0e0ccae65f856317bc69bd198bf7096c3db899e9dbee2c9109c19961222cc375"
+  }
+ ],
+ "notes": {
+  "validator": "Core scenes: 'invalid: <reason> (<hint>)', as marty-scene-validate --hints prints. ML documents: the strict report with 'hint'. Lint warnings from tools/scene_lint.py on valid scenes; they may trigger a repair within the same limit of 3.",
+  "hashes": "Recorded when the improved pass started. Afterwards only the text.text hint was reworded (MGRepairHint.swift, tools/hints.py); the pass had no refusals, so no hint was shown."
+ }
+}

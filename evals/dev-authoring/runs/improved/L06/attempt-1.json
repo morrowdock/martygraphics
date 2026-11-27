@@ -1,0 +1,5 @@
+{"v":1,"kind":"ml-explainer","title":"Fruits here, vehicles there","items":[
+{"id":"words","kind":"meaningMap","points":[
+ {"label":"apple","position":[-2.2,1.6]},{"label":"banana","position":[-1.4,2.1]},{"label":"cherry","position":[-2.4,2.6]},
+ {"label":"bus","position":[1.8,-1.2]},{"label":"train","position":[2.7,-1.6]},{"label":"bicycle","position":[1.6,-2.2]}],
+ "nearestNeighbors":true,"cluster":["apple","banana","cherry"]}]}

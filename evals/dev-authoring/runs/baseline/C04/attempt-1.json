@@ -1,0 +1,11 @@
+{"v":1,"title":"Pushing and popping a stack","items":[
+{"id":"stack","k":"array","at":[6,4],"vals":["empty"],"cell":1.2,"label":"stack (bottom at left)"}],
+"steps":[
+{"say":"The stack starts empty. Push 5: it becomes the top.","focus":"stack",
+ "do":[{"id":"stack","key":"vals","value":[5]},{"id":"stack","key":"ptrs","value":[{"i":0,"label":"top"}]}]},
+{"say":"Push 8 on top of 5.","focus":"stack",
+ "do":[{"id":"stack","key":"vals","value":[5,8]},{"id":"stack","key":"ptrs","value":[{"i":1,"label":"top"}]}]},
+{"say":"Pop removes the top value, 8. Now 5 is on top again.","focus":"stack",
+ "do":[{"id":"stack","key":"ptrs","value":[{"i":0,"label":"top"}]},{"id":"stack","key":"vals","value":[5]}]},
+{"say":"Push 2: the stack holds 5 and 2, with 2 on top.","focus":"stack",
+ "do":[{"id":"stack","key":"vals","value":[5,2]},{"id":"stack","key":"ptrs","value":[{"i":1,"label":"top"}]}]}]}

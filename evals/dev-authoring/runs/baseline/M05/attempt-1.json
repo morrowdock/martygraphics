@@ -1,0 +1,10 @@
+{"v":1,"title":"Left Riemann sum for x² on [0, 2]","items":[
+{"id":"curve","k":"plot","at":[1.5,1.2],"w":8,"h":5.6,"xr":[0,2],"yr":[0,4],
+ "pts":[[0,0],[0.25,0.0625],[0.5,0.25],[0.75,0.5625],[1,1],[1.25,1.5625],[1.5,2.25],[1.75,3.0625],[2,4]],"xl":"x","yl":"f(x)"},
+{"id":"r2","k":"region","pts":[[3.5,1.2],[5.5,1.2],[5.5,1.55],[3.5,1.55]],"color":"orange"},
+{"id":"r3","k":"region","pts":[[5.5,1.2],[7.5,1.2],[7.5,2.6],[5.5,2.6]],"color":"orange"},
+{"id":"r4","k":"region","pts":[[7.5,1.2],[9.5,1.2],[9.5,4.35],[7.5,4.35]],"color":"orange"}],
+"steps":[
+{"say":"Four rectangles of width 0.5 use the left endpoints 0, 0.5, 1 and 1.5; the first has height f(0) = 0.","focus":"curve"},
+{"say":"Their heights are 0, 0.25, 1 and 2.25, so the area is about 0.5 × (0 + 0.25 + 1 + 2.25) = 1.75.","focus":"r4"},
+{"say":"The exact area is 8/3 ≈ 2.667, so left endpoints underestimate this rising curve.","focus":"curve"}]}

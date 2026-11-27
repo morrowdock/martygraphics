@@ -1,0 +1,412 @@
+{
+  "about": "Grading specs for requests.json. Frozen before authoring; semantics in SPEC-CONTRACT.md. Never shown to the author.",
+  "specs": {
+    "P01": {
+      "bind": {"ramp": {"kind": ["incline"]}, "box": {"kind": ["body"]}, "W": {"kind": ["vector"]}, "N": {"kind": ["vector"]}, "F": {"kind": ["vector"]}},
+      "checks": [
+        {"t": "field", "cat": "data", "b": "ramp", "key": "angle", "eq": 30, "tol": 0.5},
+        {"t": "on_incline", "cat": "geometry", "body": "box", "incline": "ramp"},
+        {"t": "anchored", "cat": "geometry", "vec": "W", "to": "box"},
+        {"t": "anchored", "cat": "geometry", "vec": "N", "to": "box"},
+        {"t": "anchored", "cat": "geometry", "vec": "F", "to": "box"},
+        {"t": "dir", "cat": "direction", "vec": "W", "deg": 270, "tol": 5},
+        {"t": "dir_rel", "cat": "direction", "vec": "N", "rel": "incline_normal", "ref": "ramp", "tol": 5},
+        {"t": "dir_rel", "cat": "direction", "vec": "F", "rel": "incline_up", "ref": "ramp", "tol": 5},
+        {"t": "len_ratio", "cat": "magnitude", "a": "N", "b": "W", "ratio": 0.866, "rtol": 0.06},
+        {"t": "len_ratio", "cat": "magnitude", "a": "F", "b": "W", "ratio": 0.5, "rtol": 0.06},
+        {"t": "num", "cat": "numbers", "scope": "label:W", "values": [49], "rtol": 0.015},
+        {"t": "num", "cat": "numbers", "scope": "label:N", "values": [42.4], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "label:F", "values": [24.5], "rtol": 0.01},
+        {"t": "order", "cat": "order", "seq": ["W", "N", "F"]},
+        {"t": "steps", "cat": "order", "min": 3}
+      ]
+    },
+    "P02": {
+      "bind": {"traj": {"kind": ["plot"]}},
+      "checks": [
+        {"t": "plot_fn", "cat": "data", "b": "traj", "fn": "x - 0.0245*x**2", "atol": 0.3, "min_pts": 9, "x_span": [0, 40.82], "span_tol": 0.8},
+        {"t": "plot_box", "cat": "data", "b": "traj", "x": [0, 40.8], "y": [0, 10.2]},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [40.8], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [10.2], "rtol": 0.01}
+      ]
+    },
+    "P03": {
+      "bind": {"spring": {"kind": ["spring"]}, "block": {"kind": ["body"]}, "ceil": {"kind": ["line"]}, "W": {"kind": ["vector"]}, "S": {"kind": ["vector"]}},
+      "checks": [
+        {"t": "horizontal", "cat": "geometry", "b": "ceil", "tol": 5},
+        {"t": "above", "cat": "geometry", "a": "ceil", "b": "block"},
+        {"t": "spring_connects", "cat": "geometry", "spring": "spring", "top": "ceil", "bottom": "block"},
+        {"t": "anchored", "cat": "geometry", "vec": "W", "to": "block"},
+        {"t": "anchored", "cat": "geometry", "vec": "S", "to": "block"},
+        {"t": "dir", "cat": "direction", "vec": "W", "deg": 270, "tol": 5},
+        {"t": "dir", "cat": "direction", "vec": "S", "deg": 90, "tol": 5},
+        {"t": "len_ratio", "cat": "magnitude", "a": "S", "b": "W", "ratio": 1.0, "rtol": 0.03},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [7.84], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [19.6], "rtol": 0.01}
+      ]
+    },
+    "P04": {
+      "bind": {"pul": {"kind": ["pulley"]}, "m3": {"kind": ["body"], "label_re": "\\b3\\s*kg"}, "m5": {"kind": ["body"], "label_re": "\\b5\\s*kg"}, "a3": {"kind": ["vector"]}, "a5": {"kind": ["vector"]}},
+      "checks": [
+        {"t": "left_right", "cat": "geometry", "left": "m3", "mid": "pul", "right": "m5"},
+        {"t": "below", "cat": "geometry", "a": "m3", "b": "pul"},
+        {"t": "below", "cat": "geometry", "a": "m5", "b": "pul"},
+        {"t": "rope_attached", "cat": "geometry", "to": ["m3", "m5"], "kinds": ["rope", "line", "path"]},
+        {"t": "anchored", "cat": "geometry", "vec": "a3", "to": "m3"},
+        {"t": "anchored", "cat": "geometry", "vec": "a5", "to": "m5"},
+        {"t": "dir", "cat": "direction", "vec": "a3", "deg": 90, "tol": 5},
+        {"t": "dir", "cat": "direction", "vec": "a5", "deg": 270, "tol": 5},
+        {"t": "len_ratio", "cat": "magnitude", "a": "a3", "b": "a5", "ratio": 1.0, "rtol": 0.03},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [2.45], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [36.75], "rtol": 0.005}
+      ]
+    },
+    "P05": {
+      "bind": {"path": {"kind": ["orbit"]}, "ball": {"kind": ["body"]}, "v": {"kind": ["vector"]}, "a": {"kind": ["vector"]}},
+      "checks": [
+        {"t": "on_circle", "cat": "geometry", "item": "ball", "circle": "path", "rtol": 0.1},
+        {"t": "anchored", "cat": "geometry", "vec": "v", "to": "ball"},
+        {"t": "anchored", "cat": "geometry", "vec": "a", "to": "ball"},
+        {"t": "dir_rel", "cat": "direction", "vec": "v", "rel": "tangent", "ref": "path", "tol": 6},
+        {"t": "dir_rel", "cat": "direction", "vec": "a", "rel": "toward_center", "ref": "path", "tol": 6},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [8], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [2.4], "rtol": 0.01}
+      ]
+    },
+    "P06": {
+      "bind": {"vt": {"kind": ["plot"]}},
+      "checks": [
+        {"t": "plot_fn", "cat": "data", "b": "vt", "fn": "min(4*x, 20)", "atol": 0.3, "min_pts": 3, "x_span": [0, 10], "span_tol": 0.2},
+        {"t": "plot_has_points", "cat": "data", "b": "vt", "points": [[0, 0], [5, 20], [10, 20]], "tol": 0.15},
+        {"t": "plot_box", "cat": "data", "b": "vt", "x": [0, 10], "y": [0, 20]},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [4], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [150], "rtol": 0.01},
+        {"t": "steps", "cat": "order", "min": 2}
+      ]
+    },
+    "P07": {
+      "bind": {},
+      "checks": [
+        {"t": "count", "cat": "items", "kind": "body", "min": 2},
+        {"t": "vec_states", "cat": "magnitude", "dir": 0, "tol": 5, "ratio": 0.75, "rtol": 0.05},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [6], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [3], "rtol": 0.01},
+        {"t": "steps", "cat": "order", "min": 2}
+      ]
+    },
+    "P08": {
+      "bind": {},
+      "checks": [
+        {"t": "bars_states", "cat": "order", "roles": {"KE": "kinetic|\\bKE\\b|\\bEk\\b|\\bK\\b", "PE": "potential|\\bPE\\b|\\bEp\\b|\\bU\\b"}, "states": [{"KE": 0, "PE": 98}, {"KE": 49, "PE": 49}, {"KE": 98, "PE": 0}], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [98], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [49], "rtol": 0.01},
+        {"t": "steps", "cat": "order", "min": 3}
+      ]
+    },
+    "P09": {
+      "bind": {"heavy": {"kind": ["body"]}, "light": {"kind": ["body"]}, "wh": {"kind": ["vector"]}, "wl": {"kind": ["vector"]}},
+      "checks": [
+        {"t": "seesaw_dist", "cat": "geometry", "heavy": "heavy", "light": "light", "ratio": 0.6667, "rtol": 0.05},
+        {"t": "anchored", "cat": "geometry", "vec": "wh", "to": "heavy"},
+        {"t": "anchored", "cat": "geometry", "vec": "wl", "to": "light"},
+        {"t": "dir", "cat": "direction", "vec": "wh", "deg": 270, "tol": 5},
+        {"t": "dir", "cat": "direction", "vec": "wl", "deg": 270, "tol": 5},
+        {"t": "len_ratio", "cat": "magnitude", "a": "wh", "b": "wl", "ratio": 1.5, "rtol": 0.05},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [588], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [3], "rtol": 0.01}
+      ]
+    },
+    "P10": {
+      "bind": {},
+      "checks": [
+        {"t": "snell_setup", "cat": "items"},
+        {"t": "snell_angles", "cat": "direction", "incident": 40, "refracted": 28.9, "tol": 1.5},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [28.9], "atol": 0.05}
+      ]
+    },
+    "P11": {
+      "bind": {},
+      "checks": [
+        {"t": "pend_string_attached", "cat": "geometry"},
+        {"t": "pend_rest_first", "cat": "order", "tol": 2},
+        {"t": "pend_extremes", "cat": "geometry", "deg": 20, "tol": 2},
+        {"t": "pend_length_constant", "cat": "magnitude", "rtol": 0.04},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [6.03], "atol": 0.06},
+        {"t": "steps", "cat": "order", "min": 3}
+      ]
+    },
+    "P12": {
+      "bind": {"car": {"kind": ["body"]}, "W": {"kind": ["vector"]}, "N": {"kind": ["vector"]}},
+      "checks": [
+        {"t": "anchored", "cat": "geometry", "vec": "W", "to": "car"},
+        {"t": "anchored", "cat": "geometry", "vec": "N", "to": "car"},
+        {"t": "dir", "cat": "direction", "vec": "W", "deg": 270, "tol": 5},
+        {"t": "dir", "cat": "direction", "vec": "N", "deg": 90, "tol": 5},
+        {"t": "len_ratio", "cat": "magnitude", "a": "N", "b": "W", "ratio": 0.49, "rtol": 0.05},
+        {"t": "num", "cat": "numbers", "scope": "any", "values": [4800], "rtol": 0.01}
+      ]
+    },
+    "M01": {
+      "bind": {"circ": {"kind": ["orbit"]}},
+      "checks": [
+        {"t": "circle_point", "cat": "geometry", "circle": "circ", "kinds": ["body", "node"], "deg": 60, "rtol": 0.08},
+        {"t": "segment", "cat": "geometry", "circle": "circ", "a": "center", "b": "P", "kinds": ["line", "vector", "path"], "dist_frac": 0.1},
+        {"t": "segment", "cat": "geometry", "circle": "circ", "a": "P", "b": "projx", "kinds": ["line", "vector", "path"], "dashed": true, "dist_frac": 0.1},
+        {"t": "segment", "cat": "geometry", "circle": "circ", "a": "P", "b": "projy", "kinds": ["line", "vector", "path"], "dashed": true, "dist_frac": 0.1},
+        {"t": "axes_at_center", "cat": "geometry", "circle": "circ", "tol_frac": 0.15},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [0.5], "rtol": 0.005},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [0.866], "atol": 0.0006}
+      ]
+    },
+    "M02": {
+      "bind": {"s": {"kind": ["plot"]}},
+      "checks": [
+        {"t": "plot_fn", "cat": "data", "b": "s", "fn": "sin(x)", "atol": 0.02, "min_pts": 13, "x_span": [0, 6.2832], "span_tol": 0.05},
+        {"t": "plot_box", "cat": "data", "b": "s", "x": [0, 6.28], "y": [-1, 1]},
+        {"t": "near_plot_point", "cat": "geometry", "plot": "s", "xy": [1.5708, 1], "kinds": ["text", "body", "node"], "dist": 1.0},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [1.5708], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [4.7124], "rtol": 0.01}
+      ]
+    },
+    "M03": {
+      "bind": {},
+      "checks": [
+        {"t": "triangle", "cat": "geometry", "sides": [3, 4, 5], "rtol": 0.03, "right_tol": 2},
+        {"t": "side_labels", "cat": "numbers", "values": [3, 4, 5], "dist": 1.5},
+        {"t": "right_angle_mark", "cat": "items", "dist": 0.8},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [25], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [5], "rtol": 0.01}
+      ]
+    },
+    "M04": {
+      "bind": {"ln": {"kind": ["plot"]}},
+      "checks": [
+        {"t": "plot_fn", "cat": "data", "b": "ln", "fn": "2*x", "atol": 0.05, "min_pts": 2, "x_span": [1, 4], "span_tol": 0.05},
+        {"t": "plot_box", "cat": "data", "b": "ln", "x": [1, 4], "y": [2, 8]},
+        {"t": "near_plot_point", "cat": "geometry", "plot": "ln", "xy": [1, 2], "kinds": ["body", "node", "text"], "dist": 0.5},
+        {"t": "near_plot_point", "cat": "geometry", "plot": "ln", "xy": [4, 8], "kinds": ["body", "node", "text"], "dist": 0.5},
+        {"t": "plot_segment", "cat": "geometry", "plot": "ln", "from": [1, 2], "to": [4, 2], "kinds": ["line", "path", "vector"], "dist": 0.4},
+        {"t": "plot_segment", "cat": "geometry", "plot": "ln", "from": [4, 2], "to": [4, 8], "kinds": ["line", "path", "vector"], "dist": 0.4},
+        {"t": "regex", "cat": "numbers", "scope": "say", "pattern": "y\\s*=\\s*2\\s*x"},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [6], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [3], "rtol": 0.01}
+      ]
+    },
+    "M05": {
+      "bind": {"curve": {"kind": ["plot"]}},
+      "checks": [
+        {"t": "plot_fn", "cat": "data", "b": "curve", "fn": "x**2", "atol": 0.05, "min_pts": 5, "x_span": [0, 2], "span_tol": 0.05},
+        {"t": "rects", "cat": "data", "heights": [0, 0.25, 1, 2.25], "rtol": 0.02},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [1.75], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [2.6667], "rtol": 0.002}
+      ]
+    },
+    "M06": {
+      "bind": {"a": {"kind": ["vector"]}, "b": {"kind": ["vector"]}, "r": {"kind": ["vector"]}},
+      "checks": [
+        {"t": "dir", "cat": "direction", "vec": "a", "deg": 18.43, "tol": 2},
+        {"t": "dir", "cat": "direction", "vec": "b", "deg": 63.43, "tol": 2},
+        {"t": "dir", "cat": "direction", "vec": "r", "deg": 36.87, "tol": 2},
+        {"t": "len_ratio", "cat": "magnitude", "a": "b", "b": "a", "ratio": 0.7071, "rtol": 0.03},
+        {"t": "len_ratio", "cat": "magnitude", "a": "r", "b": "a", "ratio": 1.5811, "rtol": 0.03},
+        {"t": "head_to_tail", "cat": "geometry", "first": "a", "second": "b", "tol_frac": 0.1},
+        {"t": "same_tail", "cat": "geometry", "a": "r", "b": "a", "tol_frac": 0.1},
+        {"t": "same_head", "cat": "geometry", "a": "r", "b": "b", "tol_frac": 0.1},
+        {"t": "regex", "cat": "numbers", "scope": "say", "pattern": "\\(\\s*4\\s*,\\s*3\\s*\\)|4\\s+and\\s+3"},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [5], "rtol": 0.01},
+        {"t": "order", "cat": "order", "seq": ["a", "b", "r"]}
+      ]
+    },
+    "M07": {
+      "bind": {"row": {"kind": ["array"]}},
+      "checks": [
+        {"t": "array_vals", "cat": "data", "b": "row", "vals": [-2, -1, 0, 1, 2, 3, 4, 5, 6], "when": "any"},
+        {"t": "marked_final", "cat": "data", "b": "row", "set": [0, 1, 2, 3, 4, 5, 6]},
+        {"t": "regex", "cat": "numbers", "scope": "say", "pattern": "x\\s*≤\\s*4|at most 4|less than or equal to 4|4 or (less|fewer|smaller|below)", "i": true},
+        {"t": "steps", "cat": "order", "min": 2}
+      ]
+    },
+    "M08": {
+      "bind": {},
+      "checks": [
+        {"t": "pie", "cat": "data", "shares": [50, 30, 20], "deg_tol": 4, "bars_rtol": 0.02, "disclosure_re": "bar chart|bars? (instead|in place)|no pie|not a pie|cannot (draw|show) a pie|can't (draw|show) a pie|pie charts? (is|are)n?'?t|without a pie|stands? in for|in place of a pie"},
+        {"t": "regex", "cat": "numbers", "scope": "say", "pattern": "apples?.{0,40}(most|largest|biggest|half|50)|(most|largest|biggest|favou?rite).{0,40}apples?", "i": true}
+      ]
+    },
+    "M09": {
+      "bind": {"chart": {"kind": ["bars"]}},
+      "checks": [
+        {"t": "bars_values", "cat": "data", "b": "chart", "values": [1, 3, 3, 1], "mode": "proportional", "rtol": 0.02},
+        {"t": "bars_labels_order", "cat": "data", "b": "chart", "tokens": ["0", "1", "2", "3"]},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [0.375, 37.5], "rtol": 0.001}
+      ]
+    },
+    "M10": {
+      "bind": {"arr": {"kind": ["array"]}},
+      "checks": [
+        {"t": "array_vals", "cat": "data", "b": "arr", "vals": [2, 4, 4, 5, 7, 9, 11], "when": "any"},
+        {"t": "ptr_states", "cat": "data", "b": "arr", "roles": {"med": "median|med|m"}, "states": [{"med": 3}]},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [5], "rtol": 0.01},
+        {"t": "num", "cat": "numbers", "scope": "say", "values": [6], "rtol": 0.01}
+      ]
+    },
+    "C01": {
+      "bind": {"arr": {"kind": ["array"]}},
+      "checks": [
+        {"t": "array_vals", "cat": "data", "b": "arr", "vals": [3, 8, 15, 23, 42, 57, 61], "when": "any"},
+        {"t": "ptr_states", "cat": "order", "b": "arr", "roles": {"lo": "lo|low|l", "hi": "hi|high|h", "mid": "mid|m"}, "states": [{"lo": 0, "hi": 6, "mid": 3}, {"lo": 0, "hi": 2, "mid": 1}, {"lo": 2, "hi": 2, "mid": 2}]},
+        {"t": "regex", "cat": "numbers", "scope": "say_last", "pattern": "found", "i": true},
+        {"t": "steps", "cat": "order", "min": 3}
+      ]
+    },
+    "C02": {
+      "bind": {},
+      "checks": [
+        {"t": "template", "cat": "data", "name": "bst", "params": {"values": [50, 30, 70, 20, 40, 60, 80], "find": 60}}
+      ]
+    },
+    "C03": {
+      "bind": {},
+      "checks": [
+        {"t": "template", "cat": "data", "name": "two_pointers", "params": {"vals": [1, 3, 4, 6, 8, 11], "target": 10}}
+      ]
+    },
+    "C04": {
+      "bind": {"st": {"kind": ["array"]}},
+      "checks": [
+        {"t": "stack_states", "cat": "order", "b": "st", "top_re": "top", "states": [[5], [5, 8], [5], [5, 2]]},
+        {"t": "steps", "cat": "order", "min": 4}
+      ]
+    },
+    "C05": {
+      "bind": {},
+      "checks": [
+        {"t": "graph_edges", "cat": "data", "edges": [["A", "B"], ["A", "C"], ["B", "D"], ["C", "D"], ["C", "E"], ["D", "F"]], "directed": false, "when": "final", "exact": true},
+        {"t": "visit_order", "cat": "order", "nodes": ["A", "B", "C", "D", "E", "F"]},
+        {"t": "regex", "cat": "numbers", "scope": "say", "pattern": "A\\W+B\\W+C\\W+D\\W+E\\W+F"},
+        {"t": "steps", "cat": "order", "min": 6}
+      ]
+    },
+    "C06": {
+      "bind": {"arr": {"kind": ["array"]}},
+      "checks": [
+        {"t": "array_states", "cat": "order", "b": "arr", "states": [[5, 1, 4, 2, 8], [1, 5, 4, 2, 8], [1, 4, 5, 2, 8], [1, 4, 2, 5, 8]], "exact_final": true},
+        {"t": "array_states", "cat": "data", "b": "arr", "states": [[5, 1, 4, 2, 8], [1, 5, 4, 2, 8], [1, 4, 5, 2, 8], [1, 4, 2, 5, 8]], "only": true},
+        {"t": "marked_states", "cat": "order", "b": "arr", "sets": [[0, 1], [1, 2], [2, 3], [3, 4]]},
+        {"t": "steps", "cat": "order", "min": 4}
+      ]
+    },
+    "C07": {
+      "bind": {"t": {"kind": ["table"]}},
+      "checks": [
+        {"t": "table_rows", "cat": "data", "b": "t", "header_re": ["^A$", "^B$", "XOR|⊕|out"], "rows": [["0", "0", "0"], ["0", "1", "1"], ["1", "0", "1"], ["1", "1", "0"]], "ordered": false},
+        {"t": "table_marked_rows", "cat": "data", "b": "t", "marked": [["0", "1", "1"], ["1", "0", "1"]], "unmarked": [["0", "0", "0"], ["1", "1", "0"]]}
+      ]
+    },
+    "C08": {
+      "bind": {},
+      "checks": [
+        {"t": "hash_final", "cat": "data", "n": 7, "buckets": {"1": [22], "3": [10, 31], "4": [4]}},
+        {"t": "hash_order", "cat": "order", "n": 7, "keys": [10, 22, 31, 4]},
+        {"t": "regex", "cat": "numbers", "scope": "say", "pattern": "collid|collision", "i": true},
+        {"t": "steps", "cat": "order", "min": 4}
+      ]
+    },
+    "C09": {
+      "bind": {},
+      "checks": [
+        {"t": "graph_edges", "cat": "data", "edges": [["4", "9"], ["9", "15"]], "directed": true, "when": "first", "exact": true},
+        {"t": "graph_edges", "cat": "data", "edges": [["4", "9"], ["9", "12"], ["12", "15"]], "directed": true, "when": "final", "exact": true},
+        {"t": "edge_order", "cat": "order", "first": ["12", "15"], "then": ["9", "12"]},
+        {"t": "steps", "cat": "order", "min": 4}
+      ]
+    },
+    "C10": {
+      "bind": {"chart": {"kind": ["bars"]}},
+      "checks": [
+        {"t": "bars_labeled_values", "cat": "data", "b": "chart", "classes": [{"re": "^\\W*O?\\W*log", "v": 4}, {"re": "^\\W*O?\\W*n\\W*$", "v": 16}, {"re": "n\\s*·?\\s*log", "v": 64}, {"re": "n\\s*(²|\\^\\s*2|\\*\\*\\s*2)|\\bn2\\b|n squared", "v": 256}], "rtol": 0.005},
+        {"t": "regex", "cat": "numbers", "scope": "say", "pattern": "\\b4\\s*(times|×|x\\b)|four times|factor of 4", "i": true}
+      ]
+    },
+    "L01": {
+      "checks": [
+        {"t": "ml_kind", "cat": "items", "kind": "visionPipeline"},
+        {"t": "ml_field", "cat": "data", "key": "imageSize", "eq": [224, 224]},
+        {"t": "ml_field", "cat": "data", "key": "patchSize", "eq": 16},
+        {"t": "ml_field", "cat": "data", "key": "embeddingWidth", "eq": 768},
+        {"t": "ml_field", "cat": "data", "key": "textTokens", "eq": ["Describe", "this", "photo"]},
+        {"t": "ml_fact", "cat": "data", "key": "patchCount", "eq": 196}
+      ]
+    },
+    "L02": {
+      "checks": [
+        {"t": "ml_kind", "cat": "items", "kind": "nextTokenProbabilities"},
+        {"t": "ml_field", "cat": "data", "key": "tokens", "eq": ["The", "pet", "is", "a"]},
+        {"t": "ml_candidates", "cat": "data", "map": {"cat": 2.0, "dog": 1.5, "bird": 0.3, "fish": -1.0}},
+        {"t": "ml_field", "cat": "data", "key": "temperature", "eq": 0.5},
+        {"t": "ml_absent", "cat": "data", "keys": ["topK", "topP", "temperatures"]},
+        {"t": "ml_field", "cat": "data", "key": "chosen", "eq": "cat"}
+      ]
+    },
+    "L03": {
+      "checks": [
+        {"t": "ml_kind", "cat": "items", "kind": "nextTokenProbabilities"},
+        {"t": "ml_field", "cat": "data", "key": "tokens", "eq": ["I", "drink", "my", "coffee"]},
+        {"t": "ml_candidates", "cat": "data", "map": {"black": 3.1, "hot": 2.4, "cold": 1.0, "slowly": 0.2, "sweet": 0.8}},
+        {"t": "ml_field", "cat": "data", "key": "topK", "eq": 2},
+        {"t": "ml_absent", "cat": "data", "keys": ["topP", "temperatures"]},
+        {"t": "ml_optional_eq", "cat": "data", "key": "temperature", "eq": 1},
+        {"t": "ml_field", "cat": "data", "key": "chosen", "eq": "hot"}
+      ]
+    },
+    "L04": {
+      "checks": [
+        {"t": "ml_kind", "cat": "items", "kind": "nextTokenProbabilities"},
+        {"t": "ml_field", "cat": "data", "key": "tokens", "eq": ["Once", "upon", "a"]},
+        {"t": "ml_candidates", "cat": "data", "map": {"time": 4.0, "hill": 1.5, "day": 1.2, "star": 0.5}},
+        {"t": "ml_field", "cat": "data", "key": "topP", "eq": 0.8},
+        {"t": "ml_absent", "cat": "data", "keys": ["topK", "temperatures"]},
+        {"t": "ml_optional_eq", "cat": "data", "key": "temperature", "eq": 1},
+        {"t": "ml_field", "cat": "data", "key": "chosen", "eq": "time"},
+        {"t": "ml_fact", "cat": "data", "key": "retained", "eq": ["time"]}
+      ]
+    },
+    "L05": {
+      "checks": [
+        {"t": "ml_kind", "cat": "items", "kind": "nextTokenProbabilities"},
+        {"t": "ml_field", "cat": "data", "key": "tokens", "eq": ["The", "weather", "is"]},
+        {"t": "ml_candidates", "cat": "data", "map": {"sunny": 2.0, "rainy": 1.0, "windy": 0.0}},
+        {"t": "ml_field", "cat": "data", "key": "temperatures", "eq": [0.5, 1, 2]},
+        {"t": "ml_absent", "cat": "data", "keys": ["temperature", "topK", "topP"]},
+        {"t": "ml_field", "cat": "data", "key": "chosen", "eq": "sunny"}
+      ]
+    },
+    "L06": {
+      "checks": [
+        {"t": "ml_kind", "cat": "items", "kind": "meaningMap"},
+        {"t": "ml_points_labels", "cat": "data", "eq": ["apple", "banana", "cherry", "bus", "train", "bicycle"]},
+        {"t": "ml_field", "cat": "data", "key": "nearestNeighbors", "eq": true},
+        {"t": "ml_cluster", "cat": "data", "eq": ["apple", "banana", "cherry"]},
+        {"t": "ml_map_groups", "cat": "geometry", "groups": [["apple", "banana", "cherry"], ["bus", "train", "bicycle"]]}
+      ]
+    },
+    "L07": {
+      "checks": [
+        {"t": "ml_kind", "cat": "items", "kind": "generationLoop"},
+        {"t": "ml_field", "cat": "data", "key": "prompt", "eq": ["The", "sky", "is"]},
+        {"t": "ml_field", "cat": "data", "key": "selection", "eq": "greedy"},
+        {"t": "ml_field", "cat": "data", "key": "stepCount", "eq": 3},
+        {"t": "ml_steps_candidates", "cat": "data", "count": 3},
+        {"t": "ml_fact", "cat": "order", "key": "generated", "eq": ["blue", "and", "clear"]}
+      ]
+    },
+    "L08": {
+      "checks": [
+        {"t": "ml_kind", "cat": "items", "kind": "agentLoop"},
+        {"t": "ml_states", "cat": "data", "eq": ["plan", "toolCall", "toolResult", "review", "act", "revise", "stop"]},
+        {"t": "ml_field", "cat": "data", "key": "requiresReview", "eq": true},
+        {"t": "ml_field", "cat": "data", "key": "stepBudget", "eq": 10}
+      ]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+ "frozenUTC": "2026-11-27T03:02:30+00:00",
+ "rule": "Requests, specs and contract are frozen before any scene is authored. A later spec change must be logged in results with its reason and applied to every run alike.",
+ "files": {
+  "requests.json": "dc0b0c19a6fc816b41ef91c62fb80d1ab107568143cc76bbd909917b82fe2848",
+  "specs.json": "f282418227f0172e62b1d6a11f034ab7a306aaaa3e2f8685af7e82dd4c91f4dd",
+  "SPEC-CONTRACT.md": "3a3736df80111806f3a5bc3265a01e895fe9e0a8a92bda0cec40a387203bd6d0"
+ }
+}

@@ -1,0 +1,6 @@
+{"v":1,"title":"Median and mean of seven values","items":[
+{"id":"sorted","k":"array","at":[6,4],"vals":[2,4,4,5,7,9,11],"cell":1.1,"ptrs":[{"i":3,"label":"median"}],"label":"sorted values"}],
+"steps":[
+{"say":"Sorted, the values are 2, 4, 4, 5, 7, 9 and 11.","focus":"sorted"},
+{"say":"There are 7 values, so the median is the 4th: 5.","focus":"sorted"},
+{"say":"The mean is the total 42 divided by 7, which is 6.","focus":"sorted"}]}

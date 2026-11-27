@@ -1,0 +1,3 @@
+{"v":1,"kind":"ml-explainer","title":"An image becomes patch tokens","items":[
+{"id":"pipeline","kind":"visionPipeline","caption":"Illustrative: 224 × 224 pixels in 16 × 16 patches, 196 tokens",
+ "imageSize":[224,224],"patchSize":16,"embeddingWidth":768,"textTokens":["Describe","this","photo"]}]}

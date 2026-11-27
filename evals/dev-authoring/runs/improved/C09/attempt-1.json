@@ -1,0 +1,14 @@
+{"v":1,"title":"Inserting 12 into a linked list","items":[
+{"id":"n4","k":"node","at":[2,5],"text":"4"},
+{"id":"n9","k":"node","at":[5,5],"text":"9"},
+{"id":"n15","k":"node","at":[9.5,5],"text":"15"},
+{"id":"n12","k":"node","at":[7.25,2.5],"text":"12","color":"green"},
+{"id":"next4","k":"edge","a":"n4","b":"n9","dir":true},
+{"id":"next9","k":"edge","a":"n9","b":"n15","dir":true},
+{"id":"next12","k":"edge","a":"n12","b":"n15","dir":true}],
+"steps":[
+{"say":"The list: 4 → 9 → 15.","show":["n4","n9","n15","next4","next9"]},
+{"say":"Create the new node 12.","show":["n12"],"focus":"n12"},
+{"say":"Point 12's next at 15 first, so the rest of the list stays reachable.","show":["next12"],"focus":"n12"},
+{"say":"Then point 9's next at 12. The list is now 4 → 9 → 12 → 15.","focus":"n9",
+ "do":[{"id":"next9","key":"b","value":"n12"}]}]}

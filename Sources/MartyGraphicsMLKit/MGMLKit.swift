@@ -64,6 +64,73 @@ public enum MGMLReason: String, Error, CaseIterable, Sendable {
     case png = "ml.export.png"
 }
 
+extension MGMLReason {
+    /// A one-line fix hint for an author repairing a refused document. The reason stays the authority. The Python
+    /// mirror in `evals/dev-authoring/tools/hints.py` must match; `tools/tests/test_repair_hints.py` compares them.
+    public var hint: String {
+        switch self {
+        case .optIn: return "pass the explicit ML kit opt-in (--ml-kit)"
+        case .bytes: return "the file must be at most 16384 bytes"
+        case .json: return "send one bounded UTF-8 JSON object"
+        case .object: return "the document, each item and each candidate must be a JSON object"
+        case .unknown: return "remove keys this object does not have; the location names the object"
+        case .version: return "set \"v\": 1"
+        case .kind: return "set \"kind\": \"ml-explainer\""
+        case .title: return "title: 1-64 characters of plain single-line text, no < > or URLs"
+        case .items: return "items holds 1 to 4 items"
+        case .itemKind: return "kind is visionPipeline, nextTokenProbabilities, meaningMap, pictureToNumbers, generationLoop, attention or agentLoop"
+        case .id: return "an id is 1-24 ASCII letters, digits or _, starting with a letter"
+        case .duplicateID: return "item ids must be unique"
+        case .caption: return "caption: 1-100 characters of plain single-line text (required)"
+        case .citation: return "a citation is 1-120 characters of plain single-line text"
+        case .visionSize: return "imageSize is [width, height] and patchSize one edge, whole numbers from 1 to 8192"
+        case .patchDivision: return "patchSize must divide both image sides exactly"
+        case .patchCount: return "the patch grid allows at most 128 columns, 128 rows and 4096 patches; use a bigger patch"
+        case .embeddingWidth: return "embeddingWidth is a whole number from 1 to 65536"
+        case .visionLabel: return "a projector or language model label is 1-32 characters of plain text"
+        case .visionFocus: return "stageFocus is true or false"
+        case .tokens: return "a token list holds 1-12 strings of 1-16 characters of plain text"
+        case .candidates: return "candidates holds 2-8 objects {\"token\", \"logit\"} with distinct tokens of 1-16 characters"
+        case .logit: return "a logit is a finite number within -1000000..1000000"
+        case .temperature: return "temperature is a number from 0.01 to 100"
+        case .topK: return "topK is a whole number from 1 to the number of candidates"
+        case .topP: return "topP is greater than 0 and at most 1"
+        case .sum: return "the logits must give a valid distribution; keep them finite and within range"
+        case .chosen: return "chosen must be a candidate token that keeps a positive probability after temperature, topK and topP"
+        case .sweep: return "temperatures holds 2-4 distinct values from 0.01 to 100, without temperature, topK or topP"
+        case .mapCount: return "a map holds 3 to 12 entries"
+        case .mapDuplicate: return "map labels must be unique"
+        case .mapCoordinates: return "give exactly one of points or vectors, finite numbers within 1e12, labels of 1-16 characters; vectorCitation only with vectors"
+        case .mapLengths: return "a position is [x, y]; every vector has the same length, 3 to 32 numbers"
+        case .mapCosine: return "nearestNeighbors is true or false, and a zero vector cannot be linked"
+        case .mapCluster: return "cluster lists distinct labels that are on the map"
+        case .pictureCaption: return "caption: 1-100 characters of plain single-line text (required)"
+        case .picturePNG: return "imagePNG is base64 of one opaque 8-bit grayscale or RGB PNG"
+        case .pictureColorMetadata: return "remove the gAMA, iCCP, sRGB and cHRM chunks from the PNG"
+        case .pictureSize: return "each PNG side is 1 to 64 pixels"
+        case .picturePatch: return "patchSize is a whole number from 1 to 64 that divides both PNG sides"
+        case .pictureSelection: return "highlight is a zero-based [column, row] inside the patch grid"
+        case .picturePresentation: return "presentation is both, grid or pixels"
+        case .generationCount: return "stepCount is a whole number from 1 to 8"
+        case .generationLogits: return "steps must hold exactly stepCount steps, each with 2-8 distinct candidates and finite logits"
+        case .generationSelection: return "selection is greedy (no seed) or sample with a seed from 0 to 4294967295"
+        case .generationChosen: return "remove chosen or set it to the computed token; greedy picks the highest logit, ties to the earlier candidate"
+        case .attentionGrid: return "the patch grid must hold 2 to 64 patches"
+        case .attentionQuery: return "query is a zero-based [column, row] inside the patch grid"
+        case .attentionScores: return "scores holds one finite number for every patch except the query, in row-major order"
+        case .states: return "states are distinct names from plan, toolCall, toolResult, review, act, revise, stop; plan, toolCall, toolResult and act are required, and revise needs review"
+        case .review: return "requiresReview is true or false, and true needs the review state"
+        case .stop: return "add the terminal stop state"
+        case .budget: return "stepBudget is a whole number from 1 to 32, at least 4 (5 with review) to reach stop"
+        case .frame: return "the frame index is outside the checked document"
+        case .raster: return "the frame could not be drawn; try a supported size"
+        case .destination: return "the destination must be a file URL"
+        case .exists: return "choose a new destination; existing files are never overwritten"
+        case .png: return "the PNG frame could not be written; check the destination"
+        }
+    }
+}
+
 public struct MGMLIssue: Error, Equatable, Sendable {
     public let reason: MGMLReason
     public let path: String
@@ -126,8 +193,9 @@ public enum MGMLKit {
         }
     }
 
-    /// The sorted, deterministic JSON written by the opt-in strict check.
-    public static func report(_ result: Result<MGMLDocument, MGMLIssue>) -> String {
+    /// The sorted, deterministic JSON written by the opt-in strict check. With `hints`, a refusal also carries the
+    /// reason's fix hint under `hint`; without it the output is unchanged.
+    public static func report(_ result: Result<MGMLDocument, MGMLIssue>, hints: Bool = false) -> String {
         var fields: [String: MGJSON] = ["kind": .string("ml-explainer"), "version": .number(1), "strict": .bool(true)]
         switch result {
         case .success(let document):
@@ -138,6 +206,7 @@ public enum MGMLKit {
             fields["ok"] = .bool(false)
             fields["reason"] = .string(issue.reason.rawValue)
             fields["location"] = issue.path.isEmpty ? .null : .string(issue.path)
+            if hints { fields["hint"] = .string(issue.reason.hint) }
         }
         return MGSolidReport.text(.object(fields)) + "\n"
     }

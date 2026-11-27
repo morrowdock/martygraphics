@@ -1,0 +1,7 @@
+{"v":1,"title":"Solving 2x + 3 ≤ 11","items":[
+{"id":"row","k":"array","at":[6,4],"vals":[-2,-1,0,1,2,3,4,5,6],"cell":1,"label":"integers −2 to 6"}],
+"steps":[
+{"say":"Start with 2x + 3 ≤ 11. Subtract 3 from both sides: 2x ≤ 8.","focus":"row"},
+{"say":"Divide both sides by 2: x ≤ 4.","focus":"row"},
+{"say":"So the integers −2, −1, 0, 1, 2, 3 and 4 satisfy the inequality; 5 and 6 do not.","focus":"row",
+ "do":[{"id":"row","key":"marked","value":[0,1,2,3,4,5,6]}]}]}

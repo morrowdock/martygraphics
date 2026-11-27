@@ -1,0 +1,5 @@
+{"v":1,"kind":"ml-explainer","title":"Greedy generation, one token at a time","items":[
+{"id":"gen","kind":"generationLoop","prompt":["The","sky","is"],"stepCount":3,"selection":"greedy","steps":[
+ {"candidates":[{"token":"blue","logit":2.5},{"token":"clear","logit":1.2},{"token":"dark","logit":0.6}],"chosen":"blue"},
+ {"candidates":[{"token":"and","logit":1.9},{"token":"today","logit":1.4},{"token":".","logit":0.7}],"chosen":"and"},
+ {"candidates":[{"token":"clear","logit":2.2},{"token":"bright","logit":1.5},{"token":"calm","logit":0.4}],"chosen":"clear"}]}]}

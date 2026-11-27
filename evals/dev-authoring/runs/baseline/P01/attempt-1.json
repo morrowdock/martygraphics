@@ -1,0 +1,10 @@
+{"v":1,"title":"A box at rest on a 30° ramp","items":[
+{"id":"ramp","k":"incline","at":[1,1],"base":9,"angle":30,"label":"30° ramp"},
+{"id":"box","k":"body","at":[5.46,4.27],"size":1.2,"angle":30,"label":"5 kg"},
+{"id":"W","k":"vector","on":"box","angle":270,"len":2.45,"label":"W = 49 N","color":"gravity"},
+{"id":"N","k":"vector","on":"box","angle":120,"len":2.12,"label":"N = 42.4 N","color":"normal"},
+{"id":"F","k":"vector","on":"box","angle":30,"len":1.225,"label":"f = 24.5 N","color":"friction"}],
+"steps":[
+{"say":"Weight pulls the 5 kg box straight down: W = mg = 5 × 9.8 = 49 N.","show":["ramp","box","W"],"focus":"W"},
+{"say":"The ramp pushes back perpendicular to its surface: N = mg cos 30° = 49 × 0.866 ≈ 42.4 N.","show":["ramp","box","W","N"],"focus":"N"},
+{"say":"Static friction acts up the slope and cancels the downhill pull: f = mg sin 30° = 24.5 N, so the box stays put.","show":["ramp","box","W","N","F"],"focus":"F"}]}

@@ -1,0 +1,9 @@
+{"v":1,"title":"A car at the top of a hill","items":[
+{"id":"hill","k":"path","pts":[[1,2.2],[2.5,3.5],[4,4.25],[6,4.6],[8,4.25],[9.5,3.5],[11,2.2]]},
+{"id":"car","k":"body","at":[6,5.1],"size":1,"label":"1000 kg"},
+{"id":"W","k":"vector","on":"car","angle":270,"len":2.45,"label":"W = 9800 N","color":"gravity"},
+{"id":"N","k":"vector","on":"car","angle":90,"len":1.2,"label":"N = 4800 N","color":"normal"}],
+"steps":[
+{"say":"The car's weight is W = mg = 1000 × 9.8 = 9800 N, straight down.","focus":"W"},
+{"say":"Going over the top of a 20 m hill at 10 m/s needs a net downward force m v² / r = 1000 × 100 / 20 = 5000 N.","focus":"car"},
+{"say":"So the road pushes up with N = 9800 − 5000 = 4800 N, less than the weight.","focus":"N"}]}

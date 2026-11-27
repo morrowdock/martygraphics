@@ -1,0 +1,14 @@
+{"v":1,"title":"Inserting into a linked list","items":[
+{"id":"n4","k":"node","at":[2,5],"text":"4"},
+{"id":"n9","k":"node","at":[5,5],"text":"9"},
+{"id":"n15","k":"node","at":[9.5,5],"text":"15"},
+{"id":"n12","k":"node","at":[7.25,2.5],"text":"12","color":"green"},
+{"id":"e1","k":"edge","a":"n4","b":"n9","dir":true},
+{"id":"e2","k":"edge","a":"n9","b":"n15","dir":true},
+{"id":"e3","k":"edge","a":"n12","b":"n15","dir":true}],
+"steps":[
+{"say":"The list is 4 → 9 → 15.","show":["n4","n9","n15","e1","e2"]},
+{"say":"Create a new node holding 12.","show":["n4","n9","n15","e1","e2","n12"],"focus":"n12"},
+{"say":"Point 12's next at 15 first, so the rest of the list is not lost.","show":["n4","n9","n15","e1","e2","n12","e3"],"focus":"e3"},
+{"say":"Then point 9's next at 12. The list is now 4 → 9 → 12 → 15.","show":["n4","n9","n15","e1","e2","n12","e3"],"focus":"e2",
+ "do":[{"id":"e2","key":"b","value":"n12"}]}]}

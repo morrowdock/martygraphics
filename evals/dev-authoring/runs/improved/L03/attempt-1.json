@@ -1,0 +1,4 @@
+{"v":1,"kind":"ml-explainer","title":"Top-k keeps the two best","items":[
+{"id":"coffee","kind":"nextTokenProbabilities","tokens":["I","drink","my","coffee"],
+ "candidates":[{"token":"black","logit":3.1},{"token":"hot","logit":2.4},{"token":"cold","logit":1.0},{"token":"slowly","logit":0.2},{"token":"sweet","logit":0.8}],
+ "topK":2,"chosen":"hot"}]}

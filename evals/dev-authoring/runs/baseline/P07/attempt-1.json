@@ -1,0 +1,9 @@
+{"v":1,"title":"A sticky collision","items":[
+{"id":"track","k":"line","from":[0.5,2.4],"to":[11.5,2.4],"style":"ground"},
+{"id":"A","k":"body","at":[2.5,3],"size":1.2,"label":"1.5 kg"},
+{"id":"B","k":"body","at":[6.5,2.9],"size":1,"label":"0.5 kg"},
+{"id":"vA","k":"vector","on":"A","angle":0,"len":2,"label":"4 m/s","color":"velocity"}],
+"steps":[
+{"say":"Before: the 1.5 kg cart moves right at 4 m/s toward the 0.5 kg cart at rest. Total momentum p = 1.5 × 4 = 6 kg·m/s.","focus":"vA"},
+{"say":"After: the carts stick and move together. Momentum is conserved, so v = 6 / (1.5 + 0.5) = 3 m/s.","focus":"vA",
+ "do":[{"id":"A","key":"at","value":[5.4,3]},{"id":"vA","key":"len","value":1.5},{"id":"vA","key":"label","value":"3 m/s"}]}]}

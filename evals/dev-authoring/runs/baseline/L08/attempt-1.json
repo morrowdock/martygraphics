@@ -1,0 +1,2 @@
+{"v":1,"kind":"ml-explainer","title":"An agent loop with human review","items":[
+{"id":"loop","kind":"agentLoop","states":["plan","toolCall","toolResult","review","act","revise","stop"],"requiresReview":true,"stepBudget":10}]}

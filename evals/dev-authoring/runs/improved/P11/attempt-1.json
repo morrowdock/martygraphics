@@ -1,0 +1,11 @@
+{"v":1,"title":"A pendulum at rest and at its extremes","items":[
+{"id":"ceiling","k":"line","from":[7.5,7],"to":[4.5,7],"style":"ground"},
+{"id":"plumb","k":"line","from":[6,7],"to":[6,2.4],"style":"dashed"},
+{"id":"string","k":"line","from":[6,7],"to":[6,3]},
+{"id":"bob","k":"body","at":[6,3],"shape":"ball","size":0.5}],
+"steps":[
+{"say":"At rest the bob hangs straight down on its 1 m string.","focus":"bob"},
+{"say":"At the left extreme the string is 20° from vertical; the bob is h = 1 m × (1 − cos 20°) = 0.060 m, about 6.0 cm, above its lowest point.","focus":"bob",
+ "do":[{"id":"bob","key":"at","value":[4.63,3.24]},{"id":"string","key":"to","value":[4.63,3.24]}]},
+{"say":"At the right extreme, 20° the other way, it is again 6.0 cm above its lowest point.","focus":"bob",
+ "do":[{"id":"bob","key":"at","value":[7.37,3.24]},{"id":"string","key":"to","value":[7.37,3.24]}]}]}

@@ -1,0 +1,10 @@
+{"v":1,"title":"The class's favourite fruits","items":[
+{"id":"apples","k":"region","color":"red","pts":[[6,4.2],[6,7.2],[5.224,7.098],[4.5,6.798],[3.879,6.321],[3.402,5.7],[3.102,4.976],[3,4.2],[3.102,3.424],[3.402,2.7],[3.879,2.079],[4.5,1.602],[5.224,1.302],[6,1.2]]},
+{"id":"bananas","k":"region","color":"yellow","pts":[[6,4.2],[6,1.2],[6.776,1.302],[7.5,1.602],[8.121,2.079],[8.598,2.7],[8.898,3.424],[9,4.2],[8.898,4.976],[8.853,5.127]]},
+{"id":"cherries","k":"region","color":"purple","pts":[[6,4.2],[8.853,5.127],[8.598,5.7],[8.121,6.321],[7.5,6.798],[6.776,7.098],[6,7.2]]},
+{"id":"appleText","k":"text","at":[4.6,4.2],"text":"Apples 50%"},
+{"id":"bananaText","k":"text","at":[7.6,3],"text":"Bananas 30%"},
+{"id":"cherryText","k":"text","at":[7.4,6.1],"text":"Cherries 20%"}],
+"steps":[
+{"say":"A pie chart, drawn as three polygon slices: apples 50% (180°), bananas 30% (108°), cherries 20% (72°).","focus":"apples"},
+{"say":"Apples are the most popular fruit: half of the class chose them.","focus":"apples"}]}

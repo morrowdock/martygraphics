@@ -1,0 +1,5 @@
+{"v":1,"kind":"ml-explainer","title":"Greedy decoding, three tokens","items":[
+{"id":"sky","kind":"generationLoop","prompt":["The","sky","is"],"stepCount":3,"selection":"greedy","steps":[
+ {"candidates":[{"token":"blue","logit":2.6},{"token":"clear","logit":1.3},{"token":"grey","logit":0.5}],"chosen":"blue"},
+ {"candidates":[{"token":"and","logit":2.1},{"token":"today","logit":1.5},{"token":".","logit":0.9}],"chosen":"and"},
+ {"candidates":[{"token":"clear","logit":2.4},{"token":"cold","logit":1.4},{"token":"bright","logit":0.8}],"chosen":"clear"}]}]}

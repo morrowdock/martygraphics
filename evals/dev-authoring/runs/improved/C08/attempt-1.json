@@ -1,0 +1,12 @@
+{"v":1,"title":"Hashing four keys into 7 buckets","items":[
+{"id":"table","k":"array","at":[6,4],"vals":["-","-","-","-","-","-","-"],"cell":1.2,"label":"buckets, h(k) = k mod 7"}],
+"steps":[
+{"say":"Seven empty buckets, numbered 0 to 6.","focus":"table"},
+{"say":"Insert 10: 10 mod 7 = 3, so it goes in bucket 3.","focus":"table",
+ "do":[{"id":"table","key":"vals","value":["-","-","-","10","-","-","-"]},{"id":"table","key":"marked","value":[3]}]},
+{"say":"Insert 22: 22 mod 7 = 1, bucket 1.","focus":"table",
+ "do":[{"id":"table","key":"vals","value":["-","22","-","10","-","-","-"]},{"id":"table","key":"marked","value":[1]}]},
+{"say":"Insert 31: 31 mod 7 = 3, a collision with 10. Separate chaining adds 31 to bucket 3's chain.","focus":"table",
+ "do":[{"id":"table","key":"vals","value":["-","22","-","10,31","-","-","-"]},{"id":"table","key":"marked","value":[3]}]},
+{"say":"Insert 4: 4 mod 7 = 4, bucket 4.","focus":"table",
+ "do":[{"id":"table","key":"vals","value":["-","22","-","10,31","4","-","-"]},{"id":"table","key":"marked","value":[4]}]}]}

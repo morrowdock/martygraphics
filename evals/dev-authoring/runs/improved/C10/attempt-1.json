@@ -1,0 +1,6 @@
+{"v":1,"title":"Steps for n = 16 by growth class","items":[
+{"id":"steps","k":"bars","at":[1.5,1.5],"w":9,"h":5,"unit":"steps",
+ "bars":[{"label":"O(log n)","value":4},{"label":"O(n)","value":16},{"label":"O(n log n)","value":64},{"label":"O(n²)","value":256}]}],
+"steps":[
+{"say":"With n = 16 and log base 2: log n = 4, n = 16, n log n = 16 × 4 = 64 and n² = 256 steps.","focus":"steps"},
+{"say":"n² takes 256 / 64 = 4 times more steps than n log n, and the gap widens as n grows.","focus":"steps"}]}

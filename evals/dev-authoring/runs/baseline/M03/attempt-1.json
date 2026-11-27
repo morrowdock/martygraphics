@@ -1,0 +1,10 @@
+{"v":1,"title":"A 3-4-5 right triangle","items":[
+{"id":"tri","k":"region","pts":[[2,1.5],[8,1.5],[2,6]],"color":"teal"},
+{"id":"corner","k":"region","pts":[[2,1.5],[2.4,1.5],[2.4,1.9],[2,1.9]],"color":"muted"},
+{"id":"la","k":"text","at":[1.5,3.75],"text":"3"},
+{"id":"lb","k":"text","at":[5,1],"text":"4"},
+{"id":"lc","k":"text","at":[5.4,4.3],"text":"5"}],
+"steps":[
+{"say":"The legs are 3 and 4, meeting at a right angle in the corner.","focus":"tri"},
+{"say":"Pythagoras: a² + b² = c², so 3² + 4² = 9 + 16 = 25.","focus":"corner"},
+{"say":"The hypotenuse is c = √25 = 5.","focus":"lc"}]}

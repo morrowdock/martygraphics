@@ -1,0 +1,21 @@
+{"v":1,"title":"Breadth-first search from A","items":[
+{"id":"A","k":"node","at":[1.8,4],"text":"A"},
+{"id":"B","k":"node","at":[4.5,6],"text":"B"},
+{"id":"C","k":"node","at":[4.5,2],"text":"C"},
+{"id":"D","k":"node","at":[7.5,6],"text":"D"},
+{"id":"E","k":"node","at":[7.5,2],"text":"E"},
+{"id":"F","k":"node","at":[10.2,6],"text":"F"},
+{"id":"eAB","k":"edge","a":"A","b":"B"},
+{"id":"eAC","k":"edge","a":"A","b":"C"},
+{"id":"eBD","k":"edge","a":"B","b":"D"},
+{"id":"eCD","k":"edge","a":"C","b":"D"},
+{"id":"eCE","k":"edge","a":"C","b":"E"},
+{"id":"eDF","k":"edge","a":"D","b":"F"},
+{"id":"visit","k":"highlight","target":"A","label":"visiting"}],
+"steps":[
+{"say":"Start at A and queue its neighbours B and C.","focus":"A","do":[{"id":"A","key":"color","value":"good"}]},
+{"say":"Visit B, the first in the queue; queue its new neighbour D.","focus":"B","do":[{"id":"visit","key":"target","value":"B"},{"id":"B","key":"color","value":"good"}]},
+{"say":"Visit C; D is already queued, so queue E.","focus":"C","do":[{"id":"visit","key":"target","value":"C"},{"id":"C","key":"color","value":"good"}]},
+{"say":"Visit D and queue its new neighbour F.","focus":"D","do":[{"id":"visit","key":"target","value":"D"},{"id":"D","key":"color","value":"good"}]},
+{"say":"Visit E; it has no unvisited neighbours.","focus":"E","do":[{"id":"visit","key":"target","value":"E"},{"id":"E","key":"color","value":"good"}]},
+{"say":"Visit F. The breadth-first order is A, B, C, D, E, F.","focus":"F","do":[{"id":"visit","key":"target","value":"F"},{"id":"F","key":"color","value":"good"}]}]}

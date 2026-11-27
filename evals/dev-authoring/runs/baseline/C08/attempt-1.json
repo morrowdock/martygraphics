@@ -1,0 +1,11 @@
+{"v":1,"title":"Hashing with k mod 7","items":[
+{"id":"buckets","k":"array","at":[6,4],"vals":["-","-","-","-","-","-","-"],"cell":1.2,"label":"buckets 0 to 6"}],
+"steps":[
+{"say":"Insert 10: 10 mod 7 = 3, so 10 goes in bucket 3.","focus":"buckets",
+ "do":[{"id":"buckets","key":"vals","value":["-","-","-","10","-","-","-"]},{"id":"buckets","key":"marked","value":[3]}]},
+{"say":"Insert 22: 22 mod 7 = 1, bucket 1.","focus":"buckets",
+ "do":[{"id":"buckets","key":"vals","value":["-","22","-","10","-","-","-"]},{"id":"buckets","key":"marked","value":[1]}]},
+{"say":"Insert 31: 31 mod 7 = 3, a collision with 10. Chaining adds 31 to bucket 3's list.","focus":"buckets",
+ "do":[{"id":"buckets","key":"vals","value":["-","22","-","10,31","-","-","-"]},{"id":"buckets","key":"marked","value":[3]}]},
+{"say":"Insert 4: 4 mod 7 = 4, bucket 4.","focus":"buckets",
+ "do":[{"id":"buckets","key":"vals","value":["-","22","-","10,31","4","-","-"]},{"id":"buckets","key":"marked","value":[4]}]}]}

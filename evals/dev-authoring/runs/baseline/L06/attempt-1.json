@@ -1,0 +1,5 @@
+{"v":1,"kind":"ml-explainer","title":"Fruits and vehicles","items":[
+{"id":"map","kind":"meaningMap","points":[
+ {"label":"apple","position":[-2,1.5]},{"label":"banana","position":[-1.5,2]},{"label":"cherry","position":[-2.3,2.4]},
+ {"label":"bus","position":[2,-1]},{"label":"train","position":[2.6,-1.6]},{"label":"bicycle","position":[1.6,-2]}],
+ "nearestNeighbors":true,"cluster":["apple","banana","cherry"]}]}

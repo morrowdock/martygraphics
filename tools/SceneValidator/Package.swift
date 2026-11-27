@@ -18,7 +18,8 @@ let package = Package(
                           .product(name: "MartyGraphicsMLKit", package: "MartyGraphics")]),
         .testTarget(name: "SceneValidatorCoreTests",
                     dependencies: ["SceneValidatorCore", "MartySceneValidate",
-                                   .product(name: "MartyGraphics", package: "MartyGraphics")])
+                                   .product(name: "MartyGraphics", package: "MartyGraphics"),
+                                   .product(name: "MartyGraphicsMLKit", package: "MartyGraphics")])
     ],
     swiftLanguageModes: [.v5]
 )

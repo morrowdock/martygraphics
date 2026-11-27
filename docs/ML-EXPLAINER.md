@@ -150,7 +150,8 @@ $B/marty-ml-render --ml-kit --size 1080x1080 --png-sequence "$F" combined-alpha
 ```
 
 The strict check accepts one file. It prints sorted JSON with `ok`, `kind`, `version`, `strict` and either the
-checked items or the first `reason` and its `location` (a document path or null). It exits 0 on acceptance,
+checked items or the first `reason` and its `location` (a document path or null). Add `--hints` to include a
+one-line fix `hint` with a refusal; see the [authoring guide](AUTHORING.md) for worked ML examples. It exits 0 on acceptance,
 1 on refusal, 2 on usage error and 3 on unreadable input. Two processes with the same build and input print
 byte-identical JSON.
 

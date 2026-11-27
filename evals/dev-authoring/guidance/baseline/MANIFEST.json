@@ -1,0 +1,112 @@
+{
+ "about": "Baseline authoring guidance: the existing public grammar, protocol docs and worked examples at main 5e4952e, plus the existing validator messages. The baseline author used only these.",
+ "base": "5e4952ef0edb3dbcb83941620d366547d496e3b1",
+ "files": [
+  {
+   "path": "evals/dev-authoring/guidance/baseline/grammar.json",
+   "sha256": "4c528a9bafde485411784a411a02922486d69f3ae818247e926fc0791c1ae8d1"
+  },
+  {
+   "path": "docs/PROTOCOL.md",
+   "sha256": "d73a15b14ec960e660e526e7ab0dd6538fcb522ad9c6d864c956659b00878e3a"
+  },
+  {
+   "path": "docs/GETTING-STARTED.md",
+   "sha256": "3df018e9a1c8cb61ed47048ba156f5bb8b985f1a5a79e20d17b0852e4755330a"
+  },
+  {
+   "path": "docs/ML-EXPLAINER.md",
+   "sha256": "492355e6b5aef98e1ddf9b789bf3596f8c28cad8cde384f6c36952fbadea3df3"
+  },
+  {
+   "path": "docs/REASONS.md",
+   "sha256": "f951862f9f529cdebfb9aedf7c3fc4e7801c54d32eb0cd010e8d0f92824ae0b5"
+  },
+  {
+   "path": "docs/schemas/ml-explainer.schema.json",
+   "sha256": "8c3f4f861f43cb2f1b18c7b5938daa556486cd14a388fb546c4f8ba03fc66619"
+  },
+  {
+   "path": "docs/fixtures/v1/scene.json",
+   "sha256": "e8c2066276a8528e05366051d93cc0b749decdf9282adde7aff6120fb48abe36"
+  },
+  {
+   "path": "docs/fixtures/v1/table-region-code.scene.json",
+   "sha256": "bc932f373931606ebd5603af5b34036caf82762f0902b6a5452951383513e8ce"
+  },
+  {
+   "path": "docs/fixtures/v1/shortest-path.scene.json",
+   "sha256": "fb93122e400a3fc9d78d664c8b80d83f397e89ef9758975c1c3771afb05ec472"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json",
+   "sha256": "a6a1b0e131c283cacf32065912503d4b7f89df224566613781623f7558b83044"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/function.json",
+   "sha256": "5780c901a82094acf5493bc2eada710a3291d42cecb8612a9addde4a2f021adf"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/handoff.json",
+   "sha256": "371331217d608cba703574eced35b13deb754904fcbb63bcdfd96acfdb1f41e4"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/motion.json",
+   "sha256": "6c33055288b7f9c1bf0ced961e9e5e88489f71666df889abdc00a38e5fd5483b"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json",
+   "sha256": "7416462045dcbbc444dec94a687384c3cd9ebce973ab81ae9009e4765f05e421"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/tree.json",
+   "sha256": "3287602d73813243f78f92a952385d4bef952821249bc46a5465102b244c9f0a"
+  },
+  {
+   "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/two-pointers.json",
+   "sha256": "99eef56a6ad9f2149ec2df6b37e9f41b248c8ef102519e70d63b81ab9ae71a31"
+  },
+  {
+   "path": "Examples/Explainers/ml-agent-loop.json",
+   "sha256": "336ec2c4cc467ec60f09bd187f68c3e759f2f7173fd371d591e3bbd1d9cdcb59"
+  },
+  {
+   "path": "Examples/Explainers/ml-attention.json",
+   "sha256": "d81d5f579d3e2026f2895500b1616a3273826d34ca59554a1beea587b37460df"
+  },
+  {
+   "path": "Examples/Explainers/ml-combined.json",
+   "sha256": "864d6f0a7b9070c302b1e22118bdbe5f7b56e05e7c5a650b4eb5471fd68904fc"
+  },
+  {
+   "path": "Examples/Explainers/ml-generation-loop.json",
+   "sha256": "9ac34a51ba42148fe66490607a627b27ebe623755a9d4a422f576ceaf7dbe6bd"
+  },
+  {
+   "path": "Examples/Explainers/ml-meaning-map.json",
+   "sha256": "cae43e513c9934d0245527ece64f82ddd3a095f3f401c81877dcd06ffc48d1e4"
+  },
+  {
+   "path": "Examples/Explainers/ml-next-token-probabilities.json",
+   "sha256": "4fdc26044e3746d8f6a6fa7324d2c98ed601285cd4fa5fcaa2a9c6d1e99a84cb"
+  },
+  {
+   "path": "Examples/Explainers/ml-picture-to-numbers.json",
+   "sha256": "fa5b69153c84e6e35f7f9dcde89a9a21db1061fa7b5c1aaad3e9143c5a87897f"
+  },
+  {
+   "path": "Examples/Explainers/ml-temperature-sweep.json",
+   "sha256": "4e292496842f7dcd99271cecada672feec35bd64097d095f5b67440b055f7bbf"
+  },
+  {
+   "path": "Examples/Explainers/ml-vision-pipeline.json",
+   "sha256": "f91d6acb9ac00d890b10f54e38e09221c2c70dbb76947234323938a6e219d63d"
+  }
+ ],
+ "notes": {
+  "REASONS.md": "Only the 'ML explainer reasons' section applies to these documents; the rest covers Solid 3D.",
+  "grammar.json": "MGGrammar.document() mirrored by tools/grammar_doc.py (no Swift toolchain on this host).",
+  "validator": "Core scenes: 'invalid: <reason>' with the two existing details (json, template.unknown), as marty-scene-validate prints. ML documents: the strict report's reason and location.",
+  "hashes": "Recorded at main (base). This branch later edits docs/PROTOCOL.md, docs/GETTING-STARTED.md and docs/ML-EXPLAINER.md; the baseline author used the main versions."
+ }
+}

@@ -1,0 +1,413 @@
+{
+ "colors": [
+  "force",
+  "normal",
+  "friction",
+  "gravity",
+  "tension",
+  "velocity",
+  "accel",
+  "energy",
+  "kinetic",
+  "potential",
+  "accent",
+  "muted",
+  "good",
+  "warn",
+  "blue",
+  "red",
+  "green",
+  "orange",
+  "purple",
+  "yellow",
+  "teal",
+  "white"
+ ],
+ "kinds": [
+  {
+   "allowedKeys": [
+    "angle",
+    "at",
+    "color",
+    "id",
+    "k",
+    "label",
+    "move",
+    "shape",
+    "size"
+   ],
+   "name": "body",
+   "requiredKeys": [
+    "at",
+    "id",
+    "k"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "angle",
+    "at",
+    "base",
+    "color",
+    "id",
+    "k",
+    "label"
+   ],
+   "name": "incline",
+   "requiredKeys": [
+    "angle",
+    "at",
+    "base",
+    "id",
+    "k"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "color",
+    "from",
+    "id",
+    "k",
+    "style",
+    "to"
+   ],
+   "name": "line",
+   "requiredKeys": [
+    "from",
+    "id",
+    "k",
+    "to"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "angle",
+    "color",
+    "dashed",
+    "dir",
+    "from",
+    "id",
+    "k",
+    "label",
+    "len",
+    "on"
+   ],
+   "name": "vector",
+   "requiredKeys": [
+    "id",
+    "k",
+    "len"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "at",
+    "color",
+    "h",
+    "id",
+    "k",
+    "w",
+    "xl",
+    "yl"
+   ],
+   "name": "axes",
+   "requiredKeys": [
+    "at",
+    "h",
+    "id",
+    "k",
+    "w"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "at",
+    "color",
+    "h",
+    "id",
+    "k",
+    "label",
+    "pts",
+    "w",
+    "xl",
+    "xr",
+    "yl",
+    "yr"
+   ],
+   "name": "plot",
+   "requiredKeys": [
+    "at",
+    "h",
+    "id",
+    "k",
+    "pts",
+    "w",
+    "xr",
+    "yr"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "coils",
+    "color",
+    "from",
+    "id",
+    "k",
+    "label",
+    "to"
+   ],
+   "name": "spring",
+   "requiredKeys": [
+    "from",
+    "id",
+    "k",
+    "to"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "at",
+    "color",
+    "id",
+    "k",
+    "r"
+   ],
+   "name": "pulley",
+   "requiredKeys": [
+    "at",
+    "id",
+    "k",
+    "r"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "color",
+    "id",
+    "k",
+    "pts"
+   ],
+   "name": "rope",
+   "requiredKeys": [
+    "id",
+    "k",
+    "pts"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "at",
+    "color",
+    "id",
+    "k",
+    "label",
+    "r"
+   ],
+   "name": "orbit",
+   "requiredKeys": [
+    "at",
+    "id",
+    "k",
+    "r"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "at",
+    "color",
+    "id",
+    "k",
+    "style",
+    "text"
+   ],
+   "name": "text",
+   "requiredKeys": [
+    "at",
+    "id",
+    "k",
+    "text"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "color",
+    "id",
+    "k",
+    "label",
+    "target"
+   ],
+   "name": "highlight",
+   "requiredKeys": [
+    "id",
+    "k",
+    "target"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "at",
+    "bars",
+    "color",
+    "h",
+    "id",
+    "k",
+    "label",
+    "unit",
+    "w"
+   ],
+   "name": "bars",
+   "requiredKeys": [
+    "at",
+    "bars",
+    "h",
+    "id",
+    "k",
+    "w"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "color",
+    "dashed",
+    "id",
+    "k",
+    "pts"
+   ],
+   "name": "path",
+   "requiredKeys": [
+    "id",
+    "k",
+    "pts"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "at",
+    "cell",
+    "color",
+    "id",
+    "k",
+    "label",
+    "marked",
+    "ptrs",
+    "vals"
+   ],
+   "name": "array",
+   "requiredKeys": [
+    "at",
+    "id",
+    "k",
+    "vals"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "at",
+    "color",
+    "id",
+    "k",
+    "r",
+    "text"
+   ],
+   "name": "node",
+   "requiredKeys": [
+    "at",
+    "id",
+    "k",
+    "text"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "a",
+    "b",
+    "color",
+    "dir",
+    "id",
+    "k",
+    "label"
+   ],
+   "name": "edge",
+   "requiredKeys": [
+    "a",
+    "b",
+    "id",
+    "k"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "at",
+    "cells",
+    "color",
+    "cw",
+    "header",
+    "id",
+    "k",
+    "label",
+    "marked",
+    "rh"
+   ],
+   "name": "table",
+   "requiredKeys": [
+    "at",
+    "cells",
+    "id",
+    "k"
+   ]
+  },
+  {
+   "allowedKeys": [
+    "color",
+    "dashed",
+    "id",
+    "k",
+    "label",
+    "pts"
+   ],
+   "name": "region",
+   "requiredKeys": [
+    "id",
+    "k",
+    "pts"
+   ]
+  }
+ ],
+ "limits": {
+  "items": 24,
+  "patchBytes": 4096,
+  "sceneBytes": 8192,
+  "steps": 8,
+  "templateSteps": 48
+ },
+ "sceneKeys": [
+  "camera",
+  "dim",
+  "hide",
+  "items",
+  "over",
+  "params",
+  "steps",
+  "template",
+  "title",
+  "v",
+  "world"
+ ],
+ "templates": [
+  {
+   "name": "bst",
+   "parameters": [
+    "values",
+    "find"
+   ]
+  },
+  {
+   "name": "two_pointers",
+   "parameters": [
+    "vals",
+    "target"
+   ]
+  }
+ ],
+ "version": 1
+}

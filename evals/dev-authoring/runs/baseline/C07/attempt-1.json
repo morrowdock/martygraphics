@@ -1,0 +1,5 @@
+{"v":1,"title":"Truth table for A XOR B","items":[
+{"id":"tt","k":"table","at":[6,4],"cells":[["A","B","A XOR B"],[0,0,0],[0,1,1],[1,0,1],[1,1,0]],"header":true,"cw":1.8,"marked":[[2,2],[3,2]]}],
+"steps":[
+{"say":"XOR is 1 when exactly one input is 1.","focus":"tt"},
+{"say":"The marked rows, A = 0 with B = 1 and A = 1 with B = 0, give output 1.","focus":"tt"}]}

@@ -1,0 +1,9 @@
+[
+ {
+  "attempt": 1,
+  "valid": true,
+  "reason": null,
+  "message": "valid (2d, 7 items, 4 steps)",
+  "lint": []
+ }
+]

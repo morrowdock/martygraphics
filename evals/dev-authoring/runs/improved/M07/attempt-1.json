@@ -1,0 +1,7 @@
+{"v":1,"title":"Integer solutions of 2x + 3 ≤ 11","items":[
+{"id":"ints","k":"array","at":[6,4],"vals":[-2,-1,0,1,2,3,4,5,6],"cell":1.1,"label":"integers from −2 to 6"}],
+"steps":[
+{"say":"Which integers from −2 to 6 satisfy 2x + 3 ≤ 11?","focus":"ints"},
+{"say":"Subtract 3 from both sides: 2x ≤ 8. Divide both sides by 2: x ≤ 4.","focus":"ints"},
+{"say":"The marked integers −2, −1, 0, 1, 2, 3 and 4 satisfy it; 5 and 6 do not.","focus":"ints",
+ "do":[{"id":"ints","key":"marked","value":[0,1,2,3,4,5,6]}]}]}

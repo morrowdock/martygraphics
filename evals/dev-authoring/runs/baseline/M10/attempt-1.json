@@ -1,0 +1,6 @@
+{"v":1,"title":"Median and mean","items":[
+{"id":"data","k":"array","at":[6,4],"vals":[2,4,4,5,7,9,11],"cell":1.1,"ptrs":[{"i":3,"label":"median"}],"label":"sorted data"}],
+"steps":[
+{"say":"Sorted, the data are 2, 4, 4, 5, 7, 9, 11.","focus":"data"},
+{"say":"With 7 values the median is the 4th one: 5.","focus":"data"},
+{"say":"The mean is the sum 42 divided by 7, which is 6.","focus":"data"}]}

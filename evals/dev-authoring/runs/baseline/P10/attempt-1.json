@@ -1,0 +1,12 @@
+{"v":1,"title":"Refraction from air into water","items":[
+{"id":"water","k":"region","pts":[[1,1],[11,1],[11,4],[1,4]],"color":"blue","label":"water n = 1.33"},
+{"id":"surface","k":"line","from":[1,4],"to":[11,4]},
+{"id":"normal","k":"line","from":[6,7],"to":[6,1],"style":"dashed"},
+{"id":"incoming","k":"vector","from":[3.75,6.68],"angle":310,"len":3.5,"label":"incident ray","color":"yellow"},
+{"id":"refracted","k":"vector","from":[6,4],"angle":298.9,"len":3,"label":"refracted ray","color":"orange"},
+{"id":"t1","k":"text","at":[5.5,6.2],"text":"40°"},
+{"id":"t2","k":"text","at":[6.5,2.3],"text":"28.9°"}],
+"steps":[
+{"say":"Light in air (n = 1.00) meets the water surface at 40° from the normal.","focus":"incoming"},
+{"say":"Snell's law: 1.00 × sin 40° = 1.33 × sin θ, so sin θ = 0.643 / 1.33 = 0.483.","focus":"normal"},
+{"say":"The ray bends toward the normal: the refraction angle is θ = 28.9°.","focus":"refracted"}]}

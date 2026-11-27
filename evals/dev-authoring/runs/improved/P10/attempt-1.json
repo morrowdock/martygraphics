@@ -1,0 +1,12 @@
+{"v":1,"title":"Light bending into water","items":[
+{"id":"water","k":"region","pts":[[1,0.8],[11,0.8],[11,4],[1,4]],"color":"blue","label":"water, n = 1.33"},
+{"id":"surface","k":"line","from":[1,4],"to":[11,4]},
+{"id":"normal","k":"line","from":[6,7.2],"to":[6,0.8],"style":"dashed"},
+{"id":"incident","k":"vector","from":[3.75,6.68],"angle":310,"len":3.5,"label":"incident ray","color":"yellow"},
+{"id":"refracted","k":"vector","from":[6,4],"angle":298.9,"len":3,"label":"refracted ray","color":"orange"},
+{"id":"a1","k":"text","at":[5.55,6.3],"text":"40°"},
+{"id":"a2","k":"text","at":[6.45,2.4],"text":"28.9°"}],
+"steps":[
+{"say":"Light in air (n = 1.00) strikes the surface 40° from the normal.","focus":"incident"},
+{"say":"Snell's law: 1.00 × sin 40° = 1.33 × sin θ, so sin θ = 0.643 / 1.33 = 0.483.","focus":"normal"},
+{"say":"The refracted ray bends toward the normal, at θ = 28.9°.","focus":"refracted"}]}

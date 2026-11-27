@@ -1,0 +1,13 @@
+{"v":1,"title":"A balanced seesaw","items":[
+{"id":"beam","k":"line","from":[1,4],"to":[11,4]},
+{"id":"pivot","k":"region","pts":[[5.5,2.8],[6.5,2.8],[6,4]],"color":"muted"},
+{"id":"heavy","k":"body","at":[3,4.5],"size":1,"label":"30 kg"},
+{"id":"light","k":"body","at":[10.5,4.4],"size":0.8,"label":"20 kg"},
+{"id":"wh","k":"vector","on":"heavy","angle":270,"len":1.8,"label":"294 N","color":"gravity"},
+{"id":"wl","k":"vector","on":"light","angle":270,"len":1.2,"label":"196 N","color":"gravity"},
+{"id":"d1","k":"text","at":[4.5,3.4],"text":"2 m"},
+{"id":"d2","k":"text","at":[8.25,3.4],"text":"3 m"}],
+"steps":[
+{"say":"The 30 kg child sits 2 m left of the pivot: torque = 30 × 9.8 × 2 = 588 N·m.","focus":"heavy"},
+{"say":"To balance, the 20 kg child needs the same torque: 20 × 9.8 × d = 588 N·m, so d = 3 m.","focus":"light"},
+{"say":"Equal and opposite torques about the pivot mean the seesaw balances.","focus":"pivot"}]}

@@ -1,0 +1,4 @@
+{"v":1,"kind":"ml-explainer","title":"Nucleus filtering at p = 0.8","items":[
+{"id":"story","kind":"nextTokenProbabilities","tokens":["Once","upon","a"],
+ "candidates":[{"token":"time","logit":4.0},{"token":"hill","logit":1.5},{"token":"day","logit":1.2},{"token":"star","logit":0.5}],
+ "topP":0.8,"chosen":"time"}]}

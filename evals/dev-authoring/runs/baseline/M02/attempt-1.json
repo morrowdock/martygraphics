@@ -1,0 +1,10 @@
+{"v":1,"title":"y = sin x from 0 to 2π","items":[
+{"id":"wave","k":"plot","at":[1.2,1.2],"w":9.6,"h":5.6,"xr":[0,6.2832],"yr":[-1.2,1.2],
+ "pts":[[0,0],[0.3927,0.3827],[0.7854,0.7071],[1.1781,0.9239],[1.5708,1],[1.9635,0.9239],[2.3562,0.7071],[2.7489,0.3827],[3.1416,0],[3.5343,-0.3827],[3.927,-0.7071],[4.3197,-0.9239],[4.7124,-1],[5.1051,-0.9239],[5.4978,-0.7071],[5.8905,-0.3827],[6.2832,0]],
+ "xl":"x","yl":"sin x"},
+{"id":"peak","k":"body","at":[3.6,6.33],"shape":"ball","size":0.25,"color":"red"},
+{"id":"peaklabel","k":"text","at":[3.6,6.85],"text":"maximum (π/2, 1)"}],
+"steps":[
+{"say":"Seventeen points trace one full period of y = sin x, from 0 to 2π.","focus":"wave"},
+{"say":"The maximum value 1 occurs at x = π/2 ≈ 1.571.","focus":"peak"},
+{"say":"The minimum value −1 occurs at x = 3π/2 ≈ 4.712.","focus":"wave"}]}

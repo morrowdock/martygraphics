@@ -1,0 +1,2021 @@
+{
+ "summary": {
+  "run": "improved",
+  "requests": 40,
+  "valid": 40,
+  "firstTryValid": 40,
+  "correct": 40,
+  "checksPassed": 215,
+  "checksTotal": 215,
+  "byDomain": {
+   "physics": {
+    "requests": 12,
+    "correct": 12,
+    "checksPassed": 85,
+    "checksTotal": 85
+   },
+   "math": {
+    "requests": 10,
+    "correct": 10,
+    "checksPassed": 54,
+    "checksTotal": 54
+   },
+   "cs": {
+    "requests": 10,
+    "correct": 10,
+    "checksPassed": 28,
+    "checksTotal": 28
+   },
+   "ml": {
+    "requests": 8,
+    "correct": 8,
+    "checksPassed": 48,
+    "checksTotal": 48
+   }
+  },
+  "byCategory": {
+   "data": {
+    "passed": 68,
+    "total": 68,
+    "requestsWithFailure": 0
+   },
+   "geometry": {
+    "passed": 40,
+    "total": 40,
+    "requestsWithFailure": 0
+   },
+   "direction": {
+    "passed": 17,
+    "total": 17,
+    "requestsWithFailure": 0
+   },
+   "magnitude": {
+    "passed": 10,
+    "total": 10,
+    "requestsWithFailure": 0
+   },
+   "numbers": {
+    "passed": 45,
+    "total": 45,
+    "requestsWithFailure": 0
+   },
+   "order": {
+    "passed": 24,
+    "total": 24,
+    "requestsWithFailure": 0
+   },
+   "items": {
+    "passed": 11,
+    "total": 11,
+    "requestsWithFailure": 0
+   }
+  },
+  "byCheckType": {
+   "field": {
+    "passed": 1,
+    "total": 1
+   },
+   "on_incline": {
+    "passed": 1,
+    "total": 1
+   },
+   "anchored": {
+    "passed": 13,
+    "total": 13
+   },
+   "dir": {
+    "passed": 12,
+    "total": 12
+   },
+   "dir_rel": {
+    "passed": 4,
+    "total": 4
+   },
+   "len_ratio": {
+    "passed": 8,
+    "total": 8
+   },
+   "num": {
+    "passed": 36,
+    "total": 36
+   },
+   "order": {
+    "passed": 2,
+    "total": 2
+   },
+   "steps": {
+    "passed": 12,
+    "total": 12
+   },
+   "plot_fn": {
+    "passed": 5,
+    "total": 5
+   },
+   "plot_box": {
+    "passed": 4,
+    "total": 4
+   },
+   "horizontal": {
+    "passed": 1,
+    "total": 1
+   },
+   "above": {
+    "passed": 1,
+    "total": 1
+   },
+   "spring_connects": {
+    "passed": 1,
+    "total": 1
+   },
+   "left_right": {
+    "passed": 1,
+    "total": 1
+   },
+   "below": {
+    "passed": 2,
+    "total": 2
+   },
+   "rope_attached": {
+    "passed": 1,
+    "total": 1
+   },
+   "on_circle": {
+    "passed": 1,
+    "total": 1
+   },
+   "plot_has_points": {
+    "passed": 1,
+    "total": 1
+   },
+   "count": {
+    "passed": 1,
+    "total": 1
+   },
+   "vec_states": {
+    "passed": 1,
+    "total": 1
+   },
+   "bars_states": {
+    "passed": 1,
+    "total": 1
+   },
+   "seesaw_dist": {
+    "passed": 1,
+    "total": 1
+   },
+   "snell_setup": {
+    "passed": 1,
+    "total": 1
+   },
+   "snell_angles": {
+    "passed": 1,
+    "total": 1
+   },
+   "pend_string_attached": {
+    "passed": 1,
+    "total": 1
+   },
+   "pend_rest_first": {
+    "passed": 1,
+    "total": 1
+   },
+   "pend_extremes": {
+    "passed": 1,
+    "total": 1
+   },
+   "pend_length_constant": {
+    "passed": 1,
+    "total": 1
+   },
+   "circle_point": {
+    "passed": 1,
+    "total": 1
+   },
+   "segment": {
+    "passed": 3,
+    "total": 3
+   },
+   "axes_at_center": {
+    "passed": 1,
+    "total": 1
+   },
+   "near_plot_point": {
+    "passed": 3,
+    "total": 3
+   },
+   "triangle": {
+    "passed": 1,
+    "total": 1
+   },
+   "side_labels": {
+    "passed": 1,
+    "total": 1
+   },
+   "right_angle_mark": {
+    "passed": 1,
+    "total": 1
+   },
+   "plot_segment": {
+    "passed": 2,
+    "total": 2
+   },
+   "regex": {
+    "passed": 8,
+    "total": 8
+   },
+   "rects": {
+    "passed": 1,
+    "total": 1
+   },
+   "head_to_tail": {
+    "passed": 1,
+    "total": 1
+   },
+   "same_tail": {
+    "passed": 1,
+    "total": 1
+   },
+   "same_head": {
+    "passed": 1,
+    "total": 1
+   },
+   "array_vals": {
+    "passed": 3,
+    "total": 3
+   },
+   "marked_final": {
+    "passed": 1,
+    "total": 1
+   },
+   "pie": {
+    "passed": 1,
+    "total": 1
+   },
+   "bars_values": {
+    "passed": 1,
+    "total": 1
+   },
+   "bars_labels_order": {
+    "passed": 1,
+    "total": 1
+   },
+   "ptr_states": {
+    "passed": 2,
+    "total": 2
+   },
+   "template": {
+    "passed": 2,
+    "total": 2
+   },
+   "stack_states": {
+    "passed": 1,
+    "total": 1
+   },
+   "graph_edges": {
+    "passed": 3,
+    "total": 3
+   },
+   "visit_order": {
+    "passed": 1,
+    "total": 1
+   },
+   "array_states": {
+    "passed": 2,
+    "total": 2
+   },
+   "marked_states": {
+    "passed": 1,
+    "total": 1
+   },
+   "table_rows": {
+    "passed": 1,
+    "total": 1
+   },
+   "table_marked_rows": {
+    "passed": 1,
+    "total": 1
+   },
+   "hash_final": {
+    "passed": 1,
+    "total": 1
+   },
+   "hash_order": {
+    "passed": 1,
+    "total": 1
+   },
+   "edge_order": {
+    "passed": 1,
+    "total": 1
+   },
+   "bars_labeled_values": {
+    "passed": 1,
+    "total": 1
+   },
+   "ml_kind": {
+    "passed": 8,
+    "total": 8
+   },
+   "ml_field": {
+    "passed": 22,
+    "total": 22
+   },
+   "ml_fact": {
+    "passed": 3,
+    "total": 3
+   },
+   "ml_candidates": {
+    "passed": 4,
+    "total": 4
+   },
+   "ml_absent": {
+    "passed": 4,
+    "total": 4
+   },
+   "ml_optional_eq": {
+    "passed": 2,
+    "total": 2
+   },
+   "ml_points_labels": {
+    "passed": 1,
+    "total": 1
+   },
+   "ml_cluster": {
+    "passed": 1,
+    "total": 1
+   },
+   "ml_map_groups": {
+    "passed": 1,
+    "total": 1
+   },
+   "ml_steps_candidates": {
+    "passed": 1,
+    "total": 1
+   },
+   "ml_states": {
+    "passed": 1,
+    "total": 1
+   }
+  }
+ },
+ "results": [
+  {
+   "id": "P01",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "ramp": "ramp",
+    "box": "box",
+    "W": "W",
+    "N": "N",
+    "F": "f"
+   },
+   "checks": [
+    {
+     "t": "field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "on_incline",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "dir_rel",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "dir_rel",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "len_ratio",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "len_ratio",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "order",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 15,
+   "total": 15,
+   "correct": true
+  },
+  {
+   "id": "P02",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "traj": "path"
+   },
+   "checks": [
+    {
+     "t": "plot_fn",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "plot_box",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "P03",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "spring": "spring",
+    "block": "block",
+    "ceil": "ceiling",
+    "W": "W",
+    "S": "Fs"
+   },
+   "checks": [
+    {
+     "t": "horizontal",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "above",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "spring_connects",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "len_ratio",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 10,
+   "total": 10,
+   "correct": true
+  },
+  {
+   "id": "P04",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "pul": "pulley",
+    "m3": "m3",
+    "m5": "m5",
+    "a3": "a3",
+    "a5": "a5"
+   },
+   "checks": [
+    {
+     "t": "left_right",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "below",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "below",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "rope_attached",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "len_ratio",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 11,
+   "total": 11,
+   "correct": true
+  },
+  {
+   "id": "P05",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "path": "circle",
+    "ball": "ball",
+    "v": "v",
+    "a": "a"
+   },
+   "checks": [
+    {
+     "t": "on_circle",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "dir_rel",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "dir_rel",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 7,
+   "total": 7,
+   "correct": true
+  },
+  {
+   "id": "P06",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "vt": "vt"
+   },
+   "checks": [
+    {
+     "t": "plot_fn",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "plot_has_points",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "plot_box",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 6,
+   "total": 6,
+   "correct": true
+  },
+  {
+   "id": "P07",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "count",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "vec_states",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 5,
+   "total": 5,
+   "correct": true
+  },
+  {
+   "id": "P08",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "bars_states",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "P09",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "heavy": "big",
+    "light": "small",
+    "wh": "wBig",
+    "wl": "wSmall"
+   },
+   "checks": [
+    {
+     "t": "seesaw_dist",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "len_ratio",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 8,
+   "total": 8,
+   "correct": true
+  },
+  {
+   "id": "P10",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "snell_setup",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "snell_angles",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 3,
+   "total": 3,
+   "correct": true
+  },
+  {
+   "id": "P11",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "pend_string_attached",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "pend_rest_first",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "pend_extremes",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "pend_length_constant",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 6,
+   "total": 6,
+   "correct": true
+  },
+  {
+   "id": "P12",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "car": "car",
+    "W": "W",
+    "N": "N"
+   },
+   "checks": [
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "anchored",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "len_ratio",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 6,
+   "total": 6,
+   "correct": true
+  },
+  {
+   "id": "M01",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "circ": "circle"
+   },
+   "checks": [
+    {
+     "t": "circle_point",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "segment",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "segment",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "segment",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "axes_at_center",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 7,
+   "total": 7,
+   "correct": true
+  },
+  {
+   "id": "M02",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "s": "sine"
+   },
+   "checks": [
+    {
+     "t": "plot_fn",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "plot_box",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "near_plot_point",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 5,
+   "total": 5,
+   "correct": true
+  },
+  {
+   "id": "M03",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "triangle",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "side_labels",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "right_angle_mark",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 5,
+   "total": 5,
+   "correct": true
+  },
+  {
+   "id": "M04",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "ln": "graph"
+   },
+   "checks": [
+    {
+     "t": "plot_fn",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "plot_box",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "near_plot_point",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "near_plot_point",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "plot_segment",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "plot_segment",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "regex",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 9,
+   "total": 9,
+   "correct": true
+  },
+  {
+   "id": "M05",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "curve": "curve"
+   },
+   "checks": [
+    {
+     "t": "plot_fn",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "rects",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "M06",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "a": "a",
+    "b": "b",
+    "r": "sum"
+   },
+   "checks": [
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "dir",
+     "cat": "direction",
+     "pass": true
+    },
+    {
+     "t": "len_ratio",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "len_ratio",
+     "cat": "magnitude",
+     "pass": true
+    },
+    {
+     "t": "head_to_tail",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "same_tail",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "same_head",
+     "cat": "geometry",
+     "pass": true
+    },
+    {
+     "t": "regex",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "order",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 11,
+   "total": 11,
+   "correct": true
+  },
+  {
+   "id": "M07",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "row": "ints"
+   },
+   "checks": [
+    {
+     "t": "array_vals",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "marked_final",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "regex",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "M08",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "pie",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "regex",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 2,
+   "total": 2,
+   "correct": true
+  },
+  {
+   "id": "M09",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "chart": "probs"
+   },
+   "checks": [
+    {
+     "t": "bars_values",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "bars_labels_order",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 3,
+   "total": 3,
+   "correct": true
+  },
+  {
+   "id": "M10",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "arr": "sorted"
+   },
+   "checks": [
+    {
+     "t": "array_vals",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ptr_states",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "num",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "C01",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "arr": "arr"
+   },
+   "checks": [
+    {
+     "t": "array_vals",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ptr_states",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "regex",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "C02",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "template",
+     "cat": "data",
+     "pass": true
+    }
+   ],
+   "passed": 1,
+   "total": 1,
+   "correct": true
+  },
+  {
+   "id": "C03",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "template",
+     "cat": "data",
+     "pass": true
+    }
+   ],
+   "passed": 1,
+   "total": 1,
+   "correct": true
+  },
+  {
+   "id": "C04",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "st": "stack"
+   },
+   "checks": [
+    {
+     "t": "stack_states",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 2,
+   "total": 2,
+   "correct": true
+  },
+  {
+   "id": "C05",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "graph_edges",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "visit_order",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "regex",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "C06",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "arr": "cells"
+   },
+   "checks": [
+    {
+     "t": "array_states",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "array_states",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "marked_states",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "C07",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "t": "truth"
+   },
+   "checks": [
+    {
+     "t": "table_rows",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "table_marked_rows",
+     "cat": "data",
+     "pass": true
+    }
+   ],
+   "passed": 2,
+   "total": 2,
+   "correct": true
+  },
+  {
+   "id": "C08",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "hash_final",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "hash_order",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "regex",
+     "cat": "numbers",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "C09",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "graph_edges",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "graph_edges",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "edge_order",
+     "cat": "order",
+     "pass": true
+    },
+    {
+     "t": "steps",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  },
+  {
+   "id": "C10",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {
+    "chart": "steps"
+   },
+   "checks": [
+    {
+     "t": "bars_labeled_values",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "regex",
+     "cat": "numbers",
+     "pass": true
+    }
+   ],
+   "passed": 2,
+   "total": 2,
+   "correct": true
+  },
+  {
+   "id": "L01",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "ml_kind",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_fact",
+     "cat": "data",
+     "pass": true
+    }
+   ],
+   "passed": 6,
+   "total": 6,
+   "correct": true
+  },
+  {
+   "id": "L02",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "ml_kind",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_candidates",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_absent",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    }
+   ],
+   "passed": 6,
+   "total": 6,
+   "correct": true
+  },
+  {
+   "id": "L03",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "ml_kind",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_candidates",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_absent",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_optional_eq",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    }
+   ],
+   "passed": 7,
+   "total": 7,
+   "correct": true
+  },
+  {
+   "id": "L04",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "ml_kind",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_candidates",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_absent",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_optional_eq",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_fact",
+     "cat": "data",
+     "pass": true
+    }
+   ],
+   "passed": 8,
+   "total": 8,
+   "correct": true
+  },
+  {
+   "id": "L05",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "ml_kind",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_candidates",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_absent",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    }
+   ],
+   "passed": 6,
+   "total": 6,
+   "correct": true
+  },
+  {
+   "id": "L06",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "ml_kind",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "ml_points_labels",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_cluster",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_map_groups",
+     "cat": "geometry",
+     "pass": true
+    }
+   ],
+   "passed": 5,
+   "total": 5,
+   "correct": true
+  },
+  {
+   "id": "L07",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "ml_kind",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_steps_candidates",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_fact",
+     "cat": "order",
+     "pass": true
+    }
+   ],
+   "passed": 6,
+   "total": 6,
+   "correct": true
+  },
+  {
+   "id": "L08",
+   "valid": true,
+   "attempts": 1,
+   "firstTryValid": true,
+   "reason": null,
+   "bindings": {},
+   "checks": [
+    {
+     "t": "ml_kind",
+     "cat": "items",
+     "pass": true
+    },
+    {
+     "t": "ml_states",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    },
+    {
+     "t": "ml_field",
+     "cat": "data",
+     "pass": true
+    }
+   ],
+   "passed": 4,
+   "total": 4,
+   "correct": true
+  }
+ ]
+}

@@ -1,0 +1,2 @@
+{"v":1,"kind":"ml-explainer","title":"An agent loop with a human review gate","items":[
+{"id":"agent","kind":"agentLoop","states":["plan","toolCall","toolResult","review","act","revise","stop"],"requiresReview":true,"stepBudget":10}]}

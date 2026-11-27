@@ -39,8 +39,8 @@ public enum SceneValidator {
     }
 
     public static let usage = """
-    Usage: \(toolName) [--json] [--] FILE...
-           \(toolName) --ml-kit --strict FILE
+    Usage: \(toolName) [--json] [--hints] [--] FILE...
+           \(toolName) --ml-kit --strict [--hints] FILE
            \(toolName) --help
 
     Checks each MartyGraphics scene JSON file with MGParser.scene(data:), the
@@ -49,6 +49,7 @@ public enum SceneValidator {
 
     Options:
       --json    Print one machine-readable JSON report instead of text lines.
+      --hints   Add a one-line fix hint to each refusal, for authors repairing a file.
       --ml-kit --strict
                 Check one opt-in ML explainer and print its strict JSON report.
       -h, --help
@@ -80,6 +81,7 @@ public enum SceneValidator {
         var json = false
         var mlKit = false
         var strict = false
+        var hints = false
         var files: [String] = []
         var operandsOnly = false
         for argument in arguments {
@@ -90,6 +92,7 @@ public enum SceneValidator {
             case "--json": json = true
             case "--ml-kit": mlKit = true
             case "--strict": strict = true
+            case "--hints": hints = true
             case "-": return usageError("reading standard input is not supported; name a file")
             default:
                 if argument.hasPrefix("-") {
@@ -109,13 +112,13 @@ public enum SceneValidator {
                 case .success: status = .valid
                 case .failure: status = .invalid
                 }
-                return Report(status: status, stdout: MGMLKit.report(result), stderr: "")
+                return Report(status: status, stdout: MGMLKit.report(result, hints: hints), stderr: "")
             }
         }
         if strict { return usageError("unknown option '--strict'") }
         guard !files.isEmpty else { return usageError("no scene files given") }
 
-        let results = files.map { ($0, check(path: $0)) }
+        let results = files.map { ($0, check(path: $0, hints: hints)) }
         let status = overallStatus(results.map(\.1))
         let stdout = json ? jsonReport(results, status: status) : textReport(results)
         return Report(status: status, stdout: stdout, stderr: "")
@@ -140,25 +143,34 @@ public enum SceneValidator {
 
     // MARK: checking one file
 
-    public static func check(path: String) -> Outcome {
+    public static func check(path: String, hints: Bool = false) -> Outcome {
         switch readBounded(path: path) {
         case .failure(let failure): return failure.outcome
-        case .success(let data): return check(data: data)
+        case .success(let data): return check(data: data, hints: hints)
         }
     }
 
-    /// Validates bytes already in memory. The size rule matches `MGParser.scene(data:)`.
-    public static func check(data: Data) -> Outcome {
+    /// Validates bytes already in memory. The size rule matches `MGParser.scene(data:)`. With `hints`, a refusal's
+    /// detail also carries `MGRepairHint.text(for:)`; the reason code is unchanged.
+    public static func check(data: Data, hints: Bool = false) -> Outcome {
         guard data.count <= maximumInputBytes else {
-            return .invalid(reason: "input.too-large", detail: "larger than \(maximumInputBytes) bytes")
+            let detail = "larger than \(maximumInputBytes) bytes"
+            return .invalid(reason: "input.too-large", detail: hints ? withHint(detail, "input.too-large") : detail)
         }
         switch MGParser.scene(data: data) {
         case .success(let scene):
             return .valid(dimension: scene.is3D ? "3d" : "2d", items: scene.items.count,
                           steps: scene.steps.count, template: scene.template)
         case .failure(let error):
-            return .invalid(reason: error.reason, detail: detail(for: error.reason, data: data))
+            let base = detail(for: error.reason, data: data)
+            return .invalid(reason: error.reason, detail: hints ? withHint(base, error.reason) : base)
         }
+    }
+
+    /// Joins the existing detail and the repair hint with "; ", keeping whichever exists.
+    static func withHint(_ detail: String?, _ reason: String) -> String? {
+        guard let hint = MGRepairHint.text(for: reason) else { return detail }
+        return detail.map { $0 + "; " + hint } ?? hint
     }
 
     /// Extra wording only; the reason code always comes from the parser unchanged.

@@ -97,6 +97,28 @@ final class SceneValidatorTests: XCTestCase {
                        + "app-registered packs are not loaded by this tool)")
     }
 
+    /// `--hints` appends `MGRepairHint.text(for:)` to the detail; the reason code and the default output are unchanged.
+    func testHintsFlagAddsFixHintsWithoutChangingReasons() throws {
+        try write("a.json", "{}")
+        try write("label.json", #"{"v":1,"items":[{"id":"t","k":"text","at":[3,4],"text":"x < 4"}]}"#)
+        try write("template.json", #"{"v":1,"template":"not_registered","params":{}}"#)
+        XCTAssertEqual(run("a.json").stdout.components(separatedBy: "\n").first, "a.json: invalid: scene.missing")
+        let report = run("--hints", "a.json", "label.json", "template.json")
+        XCTAssertEqual(report.status, .invalid)
+        let lines = report.stdout.components(separatedBy: "\n")
+        XCTAssertEqual(lines[0], "a.json: invalid: scene.missing (add \"v\": 1 at the top level)")
+        XCTAssertEqual(lines[1], "label.json: invalid: text.text (\(MGRepairHint.text(for: "text.text")!))")
+        XCTAssertEqual(lines[2], "template.json: invalid: template.unknown (not a built-in template; "
+                       + "app-registered packs are not loaded by this tool; built-in templates are bst and "
+                       + "two_pointers; otherwise write the items yourself)")
+        let json = run("--json", "--hints", "a.json").stdout
+        XCTAssertTrue(json.contains(#""detail":"add \"v\": 1 at the top level""#))
+        guard case .invalid(let reason, _) = SceneValidator.check(path: "label.json", hints: true) else {
+            return XCTFail("tool accepted label.json")
+        }
+        XCTAssertEqual(reason, "text.text")
+    }
+
     /// The additive kinds `table` and `region` and the text style `code` need no tool change: the tool calls the parser.
     func testTableRegionAndCodeScenesUseTheParserRules() throws {
         let valid = #"{"v":1,"items":[{"id":"t","k":"table","at":[6,4],"cells":[["a","b"],["c",1]],"header":true},"#

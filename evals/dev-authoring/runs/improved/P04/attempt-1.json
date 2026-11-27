@@ -1,0 +1,13 @@
+{"v":1,"title":"An Atwood machine","items":[
+{"id":"ceiling","k":"line","from":[7.5,7.9],"to":[4.5,7.9],"style":"ground"},
+{"id":"axle","k":"line","from":[6,7.9],"to":[6,6.6]},
+{"id":"pulley","k":"pulley","at":[6,6.6],"r":0.8},
+{"id":"rope","k":"rope","pts":[[5.2,4.3],[5.2,6.6],[6,7.4],[6.8,6.6],[6.8,3.4]]},
+{"id":"m3","k":"body","at":[5.2,3.8],"size":1,"label":"3 kg"},
+{"id":"m5","k":"body","at":[6.8,2.8],"size":1.2,"label":"5 kg"},
+{"id":"a3","k":"vector","on":"m3","angle":90,"len":1.2,"label":"a = 2.45 m/s²","color":"accel"},
+{"id":"a5","k":"vector","on":"m5","angle":270,"len":1.2,"label":"a = 2.45 m/s²","color":"accel"}],
+"steps":[
+{"say":"A light rope over a frictionless pulley holds 3 kg on the left and 5 kg on the right.","focus":"pulley"},
+{"say":"The 5 kg side goes down and the 3 kg side goes up with a = (5 − 3) × 9.8 / (3 + 5) = 2.45 m/s².","focus":"a5"},
+{"say":"The rope tension is T = 2 × 3 × 5 × 9.8 / (3 + 5) = 36.75 N.","focus":"rope"}]}

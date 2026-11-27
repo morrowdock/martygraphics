@@ -1,0 +1,9 @@
+{"v":1,"title":"Binary search for 15","items":[
+{"id":"arr","k":"array","at":[6,4],"vals":[3,8,15,23,42,57,61],"cell":1.1,
+ "ptrs":[{"i":0,"label":"low"},{"i":6,"label":"high"},{"i":3,"label":"mid"}],"marked":[3]}],
+"steps":[
+{"say":"Probe 1: low = 0, high = 6, mid = floor(6 / 2) = 3. a[3] = 23 is bigger than 15, so set high = mid − 1 = 2.","focus":"arr"},
+{"say":"Probe 2: low = 0, high = 2, mid = 1. a[1] = 8 is smaller than 15, so set low = mid + 1 = 2.","focus":"arr",
+ "do":[{"id":"arr","key":"ptrs","value":[{"i":0,"label":"low"},{"i":2,"label":"high"},{"i":1,"label":"mid"}]},{"id":"arr","key":"marked","value":[1]}]},
+{"say":"Probe 3: low = 2, high = 2, mid = 2. a[2] = 15: found at index 2.","focus":"arr",
+ "do":[{"id":"arr","key":"ptrs","value":[{"i":2,"label":"low"},{"i":2,"label":"high"},{"i":2,"label":"mid"}]},{"id":"arr","key":"marked","value":[2]}]}]}

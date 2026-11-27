@@ -1,0 +1,4 @@
+{"v":1,"kind":"ml-explainer","title":"Temperature 0.5 sharpens the odds","items":[
+{"id":"pet","kind":"nextTokenProbabilities","tokens":["The","pet","is","a"],
+ "candidates":[{"token":"cat","logit":2.0},{"token":"dog","logit":1.5},{"token":"bird","logit":0.3},{"token":"fish","logit":-1.0}],
+ "temperature":0.5,"chosen":"cat"}]}
