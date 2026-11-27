@@ -44,8 +44,12 @@ Replace the uppercase placeholders with literal full SHAs and local paths:
 ```sh
 python3 tools/validate_local.py --base BASE_SHA --head HEAD_SHA \
   --gitleaks /path/to/gitleaks --receipt /private/evidence/NEW-receipt.json \
-  --native-source TESTED_NATIVE_SOURCE_SHA
+  --native-source TESTED_NATIVE_SOURCE_SHA \
+  --native-receipt /private/evidence/NATIVE-receipt.json
 ```
+
+Leave out both `--native-*` arguments when no earlier native receipt is reused;
+the receipt then records `"nativeReuse": null`.
 
 On Windows, the equivalent entry point is `py -3.13 tools/validate_local.py` with
 the same arguments on one line and an installed portable Gitleaks `.exe` path.
@@ -62,8 +66,10 @@ python3 -m unittest discover -s tools/tests -v
 python3 tools/check_dco.py BASE_SHA HEAD_SHA
 python3 tools/validate_local.py --check-files
 gitleaks git . --log-opts=--all --redact --report-format json --report-path PRIVATE_NEW_REPORT
-git diff --exit-code TESTED_NATIVE_SOURCE_SHA HEAD_SHA -- Sources Tests Package.swift Examples/Showcase/Package.swift Examples/Showcase/Sources docs/fixtures Examples/UnitCircle/Package.swift Examples/UnitCircle/Sources tools/SceneValidator/Package.swift tools/SceneValidator/Sources tools/SceneValidator/Tests
 ```
+
+With `--native-source`, it also runs the native reuse check below and records
+the result as `nativeReuse` in the receipt.
 
 The DCO checker validates full SHA arguments, checks **every** commit in
 `BASE_SHA..HEAD_SHA` and does not skip contributor merge commits. Its regressions
@@ -79,16 +85,38 @@ their metadata separately; retain that evidence beside the receipt.
 ## Native evidence and publishing
 
 Run the [Mac commands](VERIFY-ON-MAC.md) plus showcase `--verify` and `--export`
-on an approved native execution lane. A prior exact-source receipt can be reused
-only when the final command above proves the engine, package definitions, tests,
-showcase tool, scene and documentation-fixture bytes, UnitCircle package and scenes, and scene-validator
-package, sources and tests unchanged. These checks include additions and removals,
-so a receipt from before a package existed cannot vouch for its addition. A reused
-receipt must actually cover every present package; byte equality alone cannot
-establish that its tests were run. README-only changes remain hygiene/review work.
-Preserve that original source SHA and
-asset digests; do not relabel an old execution as a new build. A documentation/CI
-change still needs its own local hygiene and independent scoped review.
+on an approved native execution lane, and `tools/render-blender/selftest.sh` on a
+host with the pinned Blender. The native receipt is a private JSON file that names
+the exact source and **each package** it built and tested, with that package's
+overall exit code:
+
+```json
+{"source": "TESTED_NATIVE_SOURCE_SHA",
+ "packages": [{"path": ".", "exit": 0}, {"path": "Examples/Solid3D", "exit": 0}]}
+```
+
+Keep the complete output beside it. `validate_local.py` takes the package set from
+the repository, not from a list: `.` (the root package), every other folder with a
+`Package.swift`, and `tools/render-blender`. A prior receipt can be reused only
+when, between `TESTED_NATIVE_SOURCE_SHA` and `HEAD_SHA`:
+
+- no native byte changed. Native bytes are the root `Package.swift`, `Sources/` and
+  `Tests/`; every file of the other packages and `tools/render-blender`; and the
+  inputs that native builds and tests read from outside them: every `Examples/`
+  folder without a `Package.swift` (such as `Examples/Explainers`), `docs/fixtures`,
+  and each existing file or folder named in a Swift string literal (for example
+  `docs/assets` and `docs/REASONS.md`). Additions and removals count, so a receipt
+  from before a package or file existed cannot vouch for it. Markdown outside
+  `Sources/` and `Tests/` is documentation, unless a Swift literal names that file;
+- the receipt names every package present at `HEAD_SHA`, with exit 0. Byte
+  equality alone cannot establish that a package's tests were run.
+
+The `nativeReuse` record lists the packages, the input paths, the changed native
+paths and the packages the receipt does not cover; either list being nonempty
+fails the run. Other changes (README and other documentation, CI, `tools/*.py`)
+remain hygiene/review work. Preserve that original source SHA and asset digests;
+do not relabel an old execution as a new build. A documentation/CI change still
+needs its own local hygiene and independent scoped review.
 
 The coordinator reviews the private receipt, Gitleaks/privacy results, native
 evidence, asset provenance and independent exact-head review, then rechecks the

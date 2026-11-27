@@ -14,26 +14,32 @@ swift build && swift test
 git status --porcelain
 ```
 
-When the checkout includes `Examples/UnitCircle`, also build it and run its
-geometry verification:
+The root package test run does not build or test the other packages. Every
+folder of the checkout with a `Package.swift` is a package; list them with
+`git ls-files '*Package.swift'`. For each package `P` other than the root, run
+`swift test --jobs 2 --package-path P` when `P/Tests` exists, and
+`swift build --jobs 2 --package-path P` otherwise. At the time of writing:
 
 ```sh
-swift build --jobs 2 --package-path Examples/UnitCircle
-swift run --skip-build --package-path Examples/UnitCircle unit-circle --verify
-```
-
-When it includes `tools/SceneValidator`, also run:
-
-```sh
+swift test --jobs 2 --package-path Examples/Solid3D
+swift test --jobs 2 --package-path Examples/Turbofan
+swift test --jobs 2 --package-path Examples/KeySwitch3D
+swift test --jobs 2 --package-path Examples/LessonDemo
 swift test --jobs 2 --package-path tools/SceneValidator
 swift build -c release --jobs 2 --package-path tools/SceneValidator
+swift build --jobs 2 --package-path Examples/Showcase
+swift build --jobs 2 --package-path Examples/PathTrace
 ```
 
-Record each present package's results separately in the exact-source receipt.
-The root package test run does not build or test these subpackages. A missing
-command or failed check cannot be replaced by an older receipt that only covered
-the engine. UnitCircle's geometry verification is not a visual or interaction
-check; those still require an approved native preview.
+`tools/render-blender` has no `Package.swift` but is verified natively too: run
+`tools/render-blender/selftest.sh` on a host with the pinned Blender
+([setup](../tools/render-blender/README.md)).
+
+Record each present package's results separately in the exact-source receipt,
+in the [native receipt](LOCAL-VALIDATION.md#native-evidence-and-publishing)
+format. A missing command or failed check cannot be replaced by an older receipt
+that did not cover that package. These builds and tests are not a visual or
+interaction check; those still require an approved native preview.
 
 Record the commit, macOS / Xcode / Swift versions, complete output, and exit
 codes with the release evidence. All tests must pass; do not replace failures
@@ -98,7 +104,7 @@ so a dispatch cannot publish its checks; its `pull_request` run does that. When
 `head_sha` differs from the dispatched ref's tip, the run still tests `head_sha`
 as evidence only, and the `hygiene` job writes a warning that its check runs are
 on the ref's tip. Use the actual
-PR head SHA, not the synthetic merge. The required `macos` check is a short
+PR head SHA, not the synthetic merge. The `macos` check is a short
 Ubuntu job that passes only when all four `macos-<shard>` jobs pass. The shards
 run at the same time on the free standard `macos-26` image (Xcode 26.6), each
 with `--jobs 2`:

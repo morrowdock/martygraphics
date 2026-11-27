@@ -16,6 +16,42 @@
   turntable, transparent 9:16 frames) in the README; tighten wording in the portability
   proposal, capabilities table and public-sync notes.
 - CI: the hosted `macos-engine-rest` shard now also runs the `Examples/LessonDemo` tests on macOS.
+- **Dry packing without blinded-key access (2026-11-13, A-19).** Use only the
+  reviewed bicycle key with dedicated `DRY-BICYCLE` ID in dry mode, preserve
+  the rubric hash gate, and record that registered question files were not read.
+  Primary packing behavior remains unchanged. Synthetic CLI regression/golden
+  tests cover the boundary; operational acceptance remains pending.
+- **Registered G2 model correction (2026-11-13, A-18).** Select `gemini-4-argon`
+  with exact-id HIGH throughout the Gemini adapter and grading runner. Keep the
+  named preview fallback disabled without recorded owner approval. Restrict
+  `model-access-check --model` and record the tested ID; explicit human quota
+  confirmation and the one-attempt limit remain. Refresh stale readiness records.
+  No model call was made; RUN-LOCK stays DRAFT.
+- **`studio` is the default look, and live views draw its backdrop (pixels only).** `marty-solid render`,
+  `MGSolidRenderer` and the explainer view now use `studio` unless told otherwise; pass `--look classic` (or
+  `look: .classic`) for the renderer as it was. The explainer's live 3D pane draws the look's backdrop as the scene
+  background (`MGSolidRenderer.liveBackdropSize`), so the app matches the exported stills and videos. The four
+  render goldens change one line (`"look" : "studio"`). Check reports and `snapshot.json` are unchanged. The
+  published images under `docs/assets` were rendered with `classic` and are regenerated separately.
+- **The `studio` and `paper` looks draw modern type, plates and bands (pixels only).** No black title or caption
+  bars: text sits on the look's own backdrop in the look's ink, with measured contrast of at least 4.5:1. Label
+  plates are rounded with a hairline edge and a tier bar; leaders have a casing and a ringed anchor; every drawn
+  metric is a multiple of the label font size. The model's cut at a band fades into the backdrop. Band sizes, the
+  safe window, framing, font sizes, line breaks, label boxes and every JSON output are unchanged; `classic` draws as
+  before. Turning marks on machined metals are a little fainter.
+- **The `studio` and `paper` looks finish surfaces (pixels only).** Parts reflect a procedural product studio with
+  soft-edged boxes, so metals show gradients; plastics get a glossy clear coat and a calibrated colour of the same
+  hue; machined metals get fine per-fragment turning marks; ambient occlusion no longer draws faint rings on curved
+  faces; the radial streaks on flat gear faces are gone in these looks. `classic` is unchanged, and so are the
+  exported material parameters, the rig in `snapshot.json` and every check report.
+  [docs/SOLID-3D.md](docs/SOLID-3D.md#looks-and-quality) has the before and after.
+- **Faster CI that does not block merges.** The hosted macOS tests now run in four shards on four `macos-26`
+  runners at the same time (about 13 minutes instead of about 43). Every split is a `--filter` shard plus a `--skip`
+  shard with the same pattern, so no test is dropped; a filter shard that runs no test fails. No test changed, tests
+  in one shard still run one at a time, and there are still no caches. `macos` (a short job that passes only when
+  all shards pass) still runs on every pull request and push, but it is no longer a required merge check: the
+  required checks are `hygiene` and `maintainer/local-validation`. A red `macos` after a merge is fixed or reverted
+  at once.
 
 ### Added
 - Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes. Swift remains the authority.
@@ -90,13 +126,11 @@
   dispatch guard correct the initial isolation claims. A separate human-run
   model-access check records one minimal request; auth-check stays quota-free.
   No model call was made; RUN-LOCK stays DRAFT.
-
 - **Proposed live benchmark adapters.** Add isolated Codex CLI transport,
   durable receipts, exact-session fix-up, fake CLI tests and a quota-free dry
   self-test command. Antigravity remains UNVERIFIED and fails closed; the full
   live runner is not ready. Replace test reads of registered keys with
   synthetic metadata. No model call or registered benchmark run was made.
-
 - **Benchmark harness: scoring and analysis (draft for review).** `benchmark/mechanisms-v1/harness/` adds the
   primary scoring and grade-merge code that the protocol requires before run 1, and the whole analysis plan:
   - the per-check merge of the two graders;
@@ -134,33 +168,10 @@
   motion equal the glTF evaluation at every frame, labels every output with its provenance, and has an optional,
   read-only busy guard (lock file, process pattern or command; off unless configured) that keeps it from starting or
   continuing while the host is busy. `selftest.sh` checks the whole path on a 2:1 gear pair without an export.
-- **`studio` is the default look, and live views draw its backdrop (pixels only).** `marty-solid render`,
-  `MGSolidRenderer` and the explainer view now use `studio` unless told otherwise; pass `--look classic` (or
-  `look: .classic`) for the renderer as it was. The explainer's live 3D pane draws the look's backdrop as the scene
-  background (`MGSolidRenderer.liveBackdropSize`), so the app matches the exported stills and videos. The four
-  render goldens change one line (`"look" : "studio"`). Check reports and `snapshot.json` are unchanged. The
-  published images under `docs/assets` were rendered with `classic` and are regenerated separately.
-- **Story and loop videos carry colour tags.** The MP4 files are tagged sRGB with BT.709 primaries and matrix (they
-  were untagged). A player that assumed a BT.709 transfer function and converted for the display showed the middle
-  tones several levels off the stills; on the `studio` backdrop that was visible. The frames written are the same.
-- **A part's own light still glows in `studio` and `paper`.** Their bloom starts above what a lit surface reaches
-  (`MGSolidLook.bloomThreshold`), so emitters keep their coloured glow and white parts get no halo.
 - **v0.2 plan (docs only).** [docs/V0.2-PLAN.md](docs/V0.2-PLAN.md) ranks the engine changes that real authoring
   runs recorded as gaps (drone and aviation explainers, Part 107 Nights 1 and 2): a label size key, a transcript
   export, a feet display unit, declared phrase names, a pin closure check and three smaller items. Each item is its
   own pull request after the owner's go.
-- **The `studio` and `paper` looks draw modern type, plates and bands (pixels only).** No black title or caption
-  bars: text sits on the look's own backdrop in the look's ink, with measured contrast of at least 4.5:1. Label
-  plates are rounded with a hairline edge and a tier bar; leaders have a casing and a ringed anchor; every drawn
-  metric is a multiple of the label font size. The model's cut at a band fades into the backdrop. Band sizes, the
-  safe window, framing, font sizes, line breaks, label boxes and every JSON output are unchanged; `classic` draws as
-  before. Turning marks on machined metals are a little fainter.
-- **The `studio` and `paper` looks finish surfaces (pixels only).** Parts reflect a procedural product studio with
-  soft-edged boxes, so metals show gradients; plastics get a glossy clear coat and a calibrated colour of the same
-  hue; machined metals get fine per-fragment turning marks; ambient occlusion no longer draws faint rings on curved
-  faces; the radial streaks on flat gear faces are gone in these looks. `classic` is unchanged, and so are the
-  exported material parameters, the rig in `snapshot.json` and every check report.
-  [docs/SOLID-3D.md](docs/SOLID-3D.md#looks-and-quality) has the before and after.
 - **Looks and quality levels for the built-in renderer (pixels only).** `marty-solid render --look
   classic|studio|paper` and `MGSolidRenderer(document:look:)` choose how a solid is presented: `studio` is a graphite
   studio sweep with a pool of light under the subject, `paper` a near-white one; both make shadows land on a floor,
@@ -178,13 +189,6 @@
   engine now makes them. The document is checked first; a refused document prints its check report. Read-only: no
   check, report or render output changes. Golden transcripts for the five drone explainers, the jet-suit lesson and a
   board-only explainer. Closes the transcript workaround of a recorded course gap (no label size key).
-- **Faster CI that does not block merges.** The hosted macOS tests now run in four shards on four `macos-26`
-  runners at the same time (about 13 minutes instead of about 43). Every split is a `--filter` shard plus a `--skip`
-  shard with the same pattern, so no test is dropped; a filter shard that runs no test fails. No test changed, tests
-  in one shard still run one at a time, and there are still no caches. `macos` (a short job that passes only when
-  all shards pass) still runs on every pull request and push, but it is no longer a required merge check: the
-  required checks are `hygiene` and `maintainer/local-validation`. A red `macos` after a merge is fixed or reverted
-  at once.
 - **Drone and aviation explainers (docs only, no engine change).** `docs/assets/drone-aviation` adds five hand-built
   explainers made with the engine as it is: quadcopter steering, payload position and centre of gravity, a brushless
   outrunner motor, a three-axis camera gimbal and a landing gear over-centre lock. Each folder holds the document, the exact brief, every attempt
@@ -194,6 +198,40 @@
   new render of the story videos and of the stills whose words changed.
   `GAPS.md` lists what the frozen engine could not show (the helicopter swashplate topic was dropped), with exact
   refusal texts. `docs/SHOWCASE.md` has a new section. Golden check files for the eleven new JSON files.
+
+### Fixed
+- Native receipt reuse in `tools/validate_local.py` takes the covered packages from the repository (`.` and every
+  other folder with a `Package.swift`, plus `tools/render-blender`) and the inputs their tests read from outside
+  them (such as `Examples/Explainers`, `docs/fixtures` and `docs/assets`). The old fixed list named a nonexistent
+  `Examples/UnitCircle` and missed Solid3D, Turbofan, Explainers, LessonDemo, KeySwitch3D, PathTrace and
+  render-blender. A reused native receipt (`--native-receipt`) must name each present package with exit 0, and any
+  changed, added or removed native file fails reuse. See [docs/LOCAL-VALIDATION.md](docs/LOCAL-VALIDATION.md).
+- Changelog: there is one `[Unreleased]` section. The entries of a second, unbracketed `Unreleased` section moved
+  into it under standard categories, with their text unchanged.
+- Changelog correction: the "Looks and quality levels" entry under Added says `classic` (the default). Since "`studio`
+  is the default look", the default is `studio`; pass `--look classic` (or `look: .classic`) for the classic look.
+- Changelog correction: the v0.1.0 notes say hosted CI (`hygiene`, `macos`) gates every merge. That held at the
+  release. Since "Faster CI that does not block merges", only the `hygiene` check and the
+  `maintainer/local-validation` status are required; `macos` runs on every pull request but does not block a merge.
+- Bound patch diagnostics, validate video text and full video and ML identifiers, and check template text and motion before preview. Template travel, visual duration and period are limited to 0.3–10 seconds, with holds up to 10 seconds.
+- Keep scene diagnostics short and reserve line feeds for text items and narration.
+- Bound stream buffers and preview validation work, guarantee forward progress, and restore the
+  committed scene when restarting a stream. Require a minimum plot range span.
+- Use map distance for hand-placed ML points and draw vector links only for positive cosine matches.
+  Remove the chosen-token caption from temperature sweeps and refuse color metadata in pixel-value PNGs.
+- Reduce programmatic MP4 export stalls under encoder buffer pressure with an
+  eight-buffer pool and shorter, monotonic readiness and allocation timeouts.
+- Format programmatic-video zero tick labels with a floating-point argument,
+  avoiding format-type warnings and normalizing negative zero to `0`.
+- Include measured code text and line highlights in shared preview/preflight bounds,
+  so accepted layouts cannot draw code into the reserved caption band.
+- Hide mutable movie encoder internals behind append/finish/cancel operations;
+  the shared low-level writer requires an explicit experimental SPI import.
+- **Story and loop videos carry colour tags.** The MP4 files are tagged sRGB with BT.709 primaries and matrix (they
+  were untagged). A player that assumed a BT.709 transfer function and converted for the display showed the middle
+  tones several levels off the stills; on the `studio` backdrop that was visible. The frames written are the same.
+- **A part's own light still glows in `studio` and `paper`.** Their bloom starts above what a lit surface reaches
+  (`MGSolidLook.bloomThreshold`), so emitters keep their coloured glow and white parts get no halo.
 
 ## v0.1.0 — 2026-11-11
 
