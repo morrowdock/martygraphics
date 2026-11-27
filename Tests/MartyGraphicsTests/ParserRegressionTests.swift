@@ -213,14 +213,13 @@ final class ParserRegressionTests: XCTestCase {
         check(title(#""   ""#), "title")
         check(title(#""a\u0007b""#), "title")
         check(title(#""a\tb""#), "title")
-        check(title(#""line\nbreak""#), nil)
+        check(title(#""line\nbreak""#), "title")  // line feeds are allowed only in text items and narration
         check(title(#""{x}""#), "title.placeholder.x")
         check(title(#""a}""#), "title.brace")
         check(title(#""{a""#), "title.brace")
         check(title(#""{a-b}""#), "title.placeholder")
         check(title("5"), "title")
         XCTAssertEqual(try R.scene(title(#""  padded  ""#)).title, "padded")
-        XCTAssertEqual(try R.scene(title(#""line\nbreak""#)).title, "line\nbreak")
     }
 
     func testTemplateEnvelopeParamsHideAndOverFailClosed() {

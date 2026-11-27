@@ -1207,7 +1207,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ParserRegressionTests.swift",
-      "sha256": "dc58fb72ce54df3cb451a654896d8f7a960194ff3478d146d38912f3c71b5982"
+      "sha256": "9b1b53049255b8dce77a3009952d8ffacf9e1b5d11529f2f21f96c08796147c4"
     },
     {
       "path": "Tests/MartyGraphicsTests/PatchAtomicityTests.swift",
