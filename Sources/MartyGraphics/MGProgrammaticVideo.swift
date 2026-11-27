@@ -207,7 +207,10 @@ enum MGVideoSchema {
             if let child = rules["items"] { for (index, item) in array.enumerated() { try validate(item, schema: child, root: root, path: "\(path)[\(index)]") } }
         case .string("string"):
             guard case .string(let string) = value, Double(string.unicodeScalars.count) >= number("minLength", 0), Double(string.unicodeScalars.count) <= number("maxLength", .infinity) else { try refuse() }
-            if case .string(let pattern)? = rules["pattern"], string.range(of: pattern, options: .regularExpression) == nil { try refuse() }
+            if case .string(let pattern)? = rules["pattern"] {
+                // The bundled identifier and color patterns describe the entire field.
+                guard string.range(of: pattern, options: .regularExpression) == (string.startIndex..<string.endIndex) else { try refuse() }
+            }
         case .string("integer"), .string("number"):
             guard case .number(let scalar) = value, scalar.isFinite, scalar >= number("minimum", -.infinity), scalar <= number("maximum", .infinity) else { try refuse() }
             if rules["type"] == .string("integer"), scalar.rounded() != scalar { try refuse() }

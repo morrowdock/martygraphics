@@ -62,6 +62,12 @@ final class ProgrammaticVideoTests: XCTestCase {
         XCTAssertEqual(try MGParser.scene(data: legacy).get(), try MGParser.scene(data: legacy, programmaticVideo: true).get())
     }
 
+    func testVideoIdentifiersAndTrackTargetsArePreserved() throws {
+        let checked = try plan(example())
+        XCTAssertTrue(checked.elements.contains { $0.id == "three-label" })
+        XCTAssertTrue(checked.tracks.contains { $0.target == "three-label" })
+    }
+
     func testDraftSchemaMatchesBundledResource() throws {
         let bundled = try XCTUnwrap(Bundle.module.url(forResource: "scene-2d-layer.draft.schema", withExtension: "json"))
         XCTAssertEqual(try Data(contentsOf: bundled), try Data(contentsOf: root.appendingPathComponent("docs/schemas/scene-2d-layer.draft.schema.json")))

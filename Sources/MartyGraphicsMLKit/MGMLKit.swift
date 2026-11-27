@@ -104,7 +104,7 @@ public enum MGMLKit {
                 } else { throw MGMLIssue(reason: .itemKind, path: path + ".kind") }
                 let object = try MLObject(value, path: path, keys: kind.keys.union(["id", "kind"]))
                 let id = try object.text("id", max: 24, reason: .id)
-                guard id.range(of: "^[A-Za-z][A-Za-z0-9_]*$", options: .regularExpression) != nil else {
+                guard id.range(of: #"\A[A-Za-z][A-Za-z0-9_]*\z"#, options: .regularExpression) != nil else {
                     throw object.issue(.id, "id")
                 }
                 guard ids.insert(id).inserted else { throw object.issue(.duplicateID, "id") }

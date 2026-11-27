@@ -62,6 +62,13 @@ final class MLKitTests: XCTestCase {
         expect(.unknown, "items[0]", try changed(vision, "claim", "typed"))
     }
 
+    func testMLIdentifierWithAsciiLettersDigitsAndUnderscore() throws {
+        var item = vision
+        item["id"] = "Vision_2"
+        let document = try MGMLKit.check(data: data([item]), mlKit: true).get()
+        XCTAssertEqual(document.items.first?.id, "Vision_2")
+    }
+
     func testVisionDerivesRectangularPatchGridAndTokenCount() throws {
         guard case .vision(let item) = try checked(vision) else { return XCTFail("Wrong item") }
         XCTAssertEqual(item.columns, 6)

@@ -54,6 +54,10 @@ public struct MGPatch: Equatable, Sendable {
         } catch let e as MGError { return .failure(e) } catch { return .failure(.init("patch")) }
     }
 
+    static func unsupportedOperation(_ name: String) -> MGError {
+        MGError("patch.op.\(MGParser.reasonKeys([name]))")
+    }
+
     static func shape(_ op: MGJSON) throws {
         guard let o = op.objectValue, case .string(let name)? = o["op"] else { throw MGError("patch.op") }
         let keys: Set<String>
@@ -67,7 +71,7 @@ public struct MGPatch: Equatable, Sendable {
         case "camera": keys = ["camera"]
         case "title": keys = ["title"]
         case "dim": keys = ["dim"]
-        default: throw MGError("patch.op.\(name)")
+        default: throw unsupportedOperation(name)
         }
         try MGParser.closed(o, required: keys.union(["op"]), optional: [], "patch.\(name)")
         if name == "step" {

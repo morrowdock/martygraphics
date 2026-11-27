@@ -4,7 +4,7 @@ import Foundation
 /// Progressive parser for a scene that is still streaming in from a fast model.
 ///
 /// Feed raw text chunks of the scene JSON as they arrive. As soon as something renderable is complete, `feed` returns a
-/// preview scene: a template scene renders in full the moment `template` and `params` close; a full scene grows item by
+/// preview scene: a template scene renders once `v`, `template` and `params` are complete; a full scene grows item by
 /// item (each complete item is validated on its own and shown once its references resolve). Steps join when complete.
 /// `finish()` runs the strict parser on the whole text, so the final scene is exactly what a non-streamed parse gives.
 /// If the final parse fails, callers must drop the preview (fail safe).
@@ -43,14 +43,10 @@ public struct MGStreamParser {
             guard m.complete, let j = Self.json(m.raw) else { continue }
             root[m.key] = j
         }
-        guard root["v"] != nil || root["template"] != nil else { return nil }
-        // Only version 1 previews; any other complete version is refused by `finish()`, so never preview it.
-        if let v = root["v"], v != .number(1) { return nil }
-        root["v"] = .number(1)
+        guard root["v"] == .number(1) else { return nil }
         if root["template"] != nil {
             guard root["params"] != nil else { return nil }
             root["items"] = nil
-            root["steps"] = root["steps"]  // only present once complete
         } else {
             let previousPendingCount = pending.count
             if let itemsRaw {

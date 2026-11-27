@@ -11,6 +11,7 @@ public enum MGLimits {
     public static let label = 40, text = 120, say = 200, title = 60
     public static let points = 64, ropePoints = 6, cells = 16, cellText = 6, pointers = 4, bars = 6, barLabel = 16, nodeText = 8
     public static let worldRange: ClosedRange<Double> = 2...100
+    static let bodyMoveTime: ClosedRange<Double> = 0.3...10
     /// Template record-list parameters: at most this many records of at most this many numeric fields. These bounds
     /// apply to the record-list shape only; no existing limit changes.
     public static let records = 32, recordFields = 6
@@ -44,8 +45,7 @@ public struct MGError: Error, Equatable, CustomStringConvertible {
 struct MGContext {
     let width: Double, height: Double, is3D: Bool
     let values: [String: MGValue]
-    /// Explainer documents only (internal): how `{…}` names with a dot or a modifier fill, and the filled-length rule.
-    /// nil on every other path, so plain scenes, patches and lessons parse exactly as before.
+    /// Explainer documents only (internal): how `{…}` names with a dot or a modifier fill.
     var env: MGParseEnvironment? = nil
     var span: Double { max(width, height) }
 }
@@ -204,12 +204,36 @@ public enum MGParser {
         if is3D { for i in items where !MGKind.in3D.contains(i.kind) { throw MGError("3d.kind.\(i.kind.rawValue)") } }
         try checkReferences(items: items, steps: steps, ctx)
 
+        let motion = build.map { prune($0.motion, ids) } ?? .none
+        try validateMotion(motion)
         let attachments = (build?.attachments ?? [:]).filter { ids.contains($0.key) && ids.contains($0.value) }
         var scene = MGScene(source: json, template: o["template"].flatMap { if case .string(let s) = $0 { return s }; return nil },
                             title: title, is3D: is3D, width: width, height: height, items: items, steps: steps, camera: camera,
-                            values: ctx.values, motion: build.map { prune($0.motion, ids) } ?? .none, attachments: attachments)
+                            values: ctx.values, motion: motion, attachments: attachments)
         scene.builtValues = (build?.builtValues ?? []).intersection(ctx.values.keys)
         return scene
+    }
+
+    /// The timeline uses the authored move duration bounds for active template motion as well.
+    private static func validateMotion(_ motion: MGMotion) throws {
+        let duration = MGLimits.bodyMoveTime
+        let valid: Bool
+        switch motion {
+        case .none:
+            return
+        case .slide(let entries, let travel, let hold):
+            valid = duration.contains(travel) && hold.isFinite && hold >= 0 && entries.allSatisfy {
+                [$0.dir.x, $0.dir.y, $0.dir.z, $0.accel].allSatisfy(\.isFinite)
+            }
+        case .orbit(_, let center, let period, _):
+            valid = duration.contains(period) && [center.x, center.y, center.z].allSatisfy(\.isFinite)
+        case .projectile(_, let vx, let vy, let gravity, let flight, let visual, let hold, _, _, let scale):
+            valid = duration.contains(visual) && hold.isFinite && hold >= 0 && flight > 0
+                && [vx, vy, gravity, flight, scale].allSatisfy(\.isFinite)
+        case .oscillate(_, let amplitude, let period, let energy, _, _, let length):
+            valid = duration.contains(period) && [amplitude, energy, length].allSatisfy(\.isFinite)
+        }
+        guard valid else { throw MGError("template.motion") }
     }
 
     /// Drop motion pieces for hidden items so the timeline never moves something that is not drawn.
@@ -408,7 +432,7 @@ public enum MGParser {
                 guard let mo = m.objectValue else { throw MGError("body.move") }
                 try closed(mo, required: ["to", "t"], optional: [], "body.move")
                 it.pts.append(try point(mo["to"], ctx, "body.move.to"))
-                it.num["moveT"] = try num(mo["t"], 0.3...10, "body.move.t")
+                it.num["moveT"] = try num(mo["t"], MGLimits.bodyMoveTime, "body.move.t")
             }
         case .incline:
             it.pts = [try p("at")]
@@ -588,7 +612,7 @@ public enum MGParser {
         }
     }
 
-    private static func reasonKeys(_ keys: [String]) -> String {
+    static func reasonKeys(_ keys: [String]) -> String {
         keys.prefix(4).map { key in
             let scalars = key.unicodeScalars
             guard (1...24).contains(scalars.count), scalars.allSatisfy({
@@ -638,34 +662,40 @@ public enum MGParser {
                      multiline: Bool = false) throws -> String {
         guard case .string(let s)? = v else { throw MGError(what) }
         let t = s.trimmingCharacters(in: code ? .newlines : .whitespacesAndNewlines)
-        // Inside an explainer the limit applies to the filled text (a 3D fact can be shorter or longer than its name);
-        // the raw text is capped at four times the limit.
+        // Explainers allow longer placeholder names. Filled text uses the same limit in every scene.
         let rawLimit = ctx.env == nil ? max : 4 * max
         guard !t.isEmpty, !(code && t.allSatisfy(\.isWhitespace)), s.unicodeScalars.count <= rawLimit,
-              code ? !looksLikeMarkup(s) : (!s.contains("<") && !s.contains(">")), !s.contains("```"), !s.contains("://"),
+              code ? !looksLikeMarkup(s) : (!s.unicodeScalars.contains("<") && !s.unicodeScalars.contains(">")),
+              s.range(of: "```", options: .literal) == nil, s.range(of: "://", options: .literal) == nil,
               !s.unicodeScalars.contains(where: { scalar in
                   if multiline && scalar == "\n" { return false }
                   return CharacterSet.controlCharacters.contains(scalar) || scalar.value == 0x2028 || scalar.value == 0x2029
               }) else { throw MGError(what) }
         let filled = try fill(t, ctx.values, what, env: ctx.env)
-        if ctx.env != nil, filled.unicodeScalars.count > max { throw MGError(what) }
+        guard filled.unicodeScalars.count <= max else { throw MGError(what) }
         return filled
     }
     /// True when `<` is directly followed by a letter, `/`, `!` or `?` and a `>` comes later (a tag, comment or
     /// processing instruction). Comparisons such as `i < n` or `a > b` are not tags.
     static func looksLikeMarkup(_ s: String) -> Bool {
-        let c = Array(s)
-        for (i, ch) in c.enumerated() where ch == "<" && i + 1 < c.count {
-            let n = c[i + 1]
-            if n.isLetter || n == "/" || n == "!" || n == "?", c[(i + 1)...].contains(">") { return true }
+        let scalars = s.unicodeScalars
+        guard let end = scalars.lastIndex(of: ">") else { return false }
+        let beforeClose = scalars[..<end]
+        for (lead, next) in zip(beforeClose, beforeClose.dropFirst()) where lead == "<" {
+            if next == "/" || next == "!" || next == "?" { return true }
+            switch next.properties.generalCategory {
+            case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter: return true
+            default: break
+            }
         }
         return false
     }
 
     static func fill(_ s: String, _ values: [String: MGValue], _ what: String, env: MGParseEnvironment? = nil) throws -> String {
-        guard s.contains("{") || s.contains("}") else { return s }
+        let scalars = s.unicodeScalars
+        guard scalars.contains("{") || scalars.contains("}") else { return s }
         var out = "", name = "", inside = false
-        for ch in s {
+        for ch in scalars {
             if inside {
                 if ch == "}" {
                     if let env, name.contains(".") || name.contains("|") {
@@ -678,14 +708,14 @@ public enum MGParser {
                     }
                     name = ""; inside = false
                 } else if env != nil {
-                    guard ch.isASCII, ch.isLetter || ch.isNumber || ch == "." || ch == "|" || ch == "_",
+                    guard ch.isASCII, CharacterSet.alphanumerics.contains(ch) || ch == "." || ch == "|" || ch == "_",
                           name.count < MGSolidFacts.nameLength + 8 * MGSolidFacts.modifiers else { throw MGError("\(what).placeholder") }
-                    name.append(ch)
+                    name.unicodeScalars.append(ch)
                 } else {
-                    guard ch.isASCII, ch.isLetter || ch.isNumber, name.count < 16 else { throw MGError("\(what).placeholder") }
-                    name.append(ch)
+                    guard ch.isASCII, CharacterSet.alphanumerics.contains(ch), name.count < 16 else { throw MGError("\(what).placeholder") }
+                    name.unicodeScalars.append(ch)
                 }
-            } else if ch == "{" { inside = true } else if ch == "}" { throw MGError("\(what).brace") } else { out.append(ch) }
+            } else if ch == "{" { inside = true } else if ch == "}" { throw MGError("\(what).brace") } else { out.unicodeScalars.append(ch) }
         }
         guard !inside else { throw MGError("\(what).brace") }
         return out

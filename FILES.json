@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "78e0768496753668973a250cee67cef8ec03212c13f2ba87e1cba355bcdcccec"
+      "sha256": "c81898af5bf71ad94b4bf8bb6ee0d0b78c0128c6bb20871f58d296a02736990b"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -807,11 +807,11 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "c7393c2a69ea83e5d2a4f6d266c3505c7cc9c115e3aef9695f5b2efcbbc84dc5"
+      "sha256": "ee042f4cecb47495a022ed2102838a308386ac22a6a112dbda33773fd35cabaf"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
-      "sha256": "40442accc0504741c72576ec06e27f07db0b3a1e88ef6a79be927a20d56e584a"
+      "sha256": "587e65b914c12445529245a9971e4633a4fedf681a0cd4aee96e98dfa85fc180"
     },
     {
       "path": "Sources/MartyGraphics/MGPhysics.swift",
@@ -827,7 +827,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGStream.swift",
-      "sha256": "e1f70f0a9ff36ee0114fd8c05c5e5a59d5665a5b2892cbe3c357563268caea8a"
+      "sha256": "bbfcbf71dfa381e47988e347e093b513b3be379564d99d3007b9ea156a195238"
     },
     {
       "path": "Sources/MartyGraphics/MGTemplates.swift",
@@ -1032,6 +1032,10 @@
     {
       "path": "Sources/MartyGraphicsPathTracer/MGRTShaderSource.swift",
       "sha256": "8c86d1cf4c17107a202c41e8d9a7b639816cc52089d95cf0509c9302d3b2c40d"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/SceneRobustnessTests.swift",
+      "sha256": "66e0b006360de6dc6afd238eb277988a42b9aff786506d3adab622c85b99b242"
     },
     {
       "path": "TRADEMARKS.md",
@@ -3227,7 +3231,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGProgrammaticVideo.swift",
-      "sha256": "d09ade1388078251ef1dcaa97cceddd5eee97456cb34c0f27d5669edc53fbebd"
+      "sha256": "4b6c2537de3e8fa28e9bd07d1d9fa0acf4c65dd37eecf4a74f7703f45b815d13"
     },
     {
       "path": "Sources/MartyGraphics/MGVideoDrawing.swift",
@@ -3255,7 +3259,7 @@
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLKit.swift",
-      "sha256": "797781b55ddba9b8c7d736d5c725bfa185f9980bdd2fa8019af1302b1bfe2361"
+      "sha256": "0fc3f31e869219c800e6caf650ffb4d9b6bfccab5167c0f8bc082d87ba982937"
     },
     {
       "path": "Sources/MartyGraphicsMLKit/MGMLProbabilities.swift",
@@ -3303,7 +3307,7 @@
     },
     {
       "path": "Tests/MartyGraphicsMLKitTests/MLKitTests.swift",
-      "sha256": "11aec7cfb7de4bd5f36de70a6ec0994a5b2a160fbb1e99a1d5a87b25d2dbf3b2"
+      "sha256": "44c192df024e1aec2ea0487a52b0149462d1ac13a77b7fba879a379eed0b827a"
     },
     {
       "path": "Tests/MartyGraphicsMLKitTests/MLKitV2Tests.swift",
@@ -3311,7 +3315,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ProgrammaticVideoTests.swift",
-      "sha256": "b545f55b32eccaf93397daa7890fb1dc04b5c1a4a47f2b58e8ae9bac1064b15c"
+      "sha256": "302952bc43292d0f8883eb7653de6ffbee70176a1ab2076fcc5ed147a160a5b3"
     },
     {
       "path": "docs/ML-EXPLAINER.md",
