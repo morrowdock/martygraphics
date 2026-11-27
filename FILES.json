@@ -27,7 +27,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "a5e4b2c8854803eff45f3a98a8638ab3aaabbc775389866bf6f06c1842fbb674"
+      "sha256": "9fff9a5f6f35bc60ac99f6fc7ea394a14661afeb5edbe9f74643192baa8e626d"
     },
     {
       "path": ".github/workflows/showcase.yml",
@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "ef471b55b150799fadb32aed7013d9ad408384600a8bf9ee65e3795eaf49778d"
+      "sha256": "7c3d6f11526e01e3aa3180771761074edaeca0a48cb89b36aef368abb9cfa78e"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -2019,7 +2019,7 @@
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
-      "sha256": "eb8a68a7909553220b80007fed7fe9bacd6b692e28e94f7b2381fe69c21e8eb5"
+      "sha256": "6d913d6899f12dc5b6440fc509005612a787bfceb194ee6d9ad5525eb4d736b3"
     },
     {
       "path": "docs/VISUAL-AUDIT.md",

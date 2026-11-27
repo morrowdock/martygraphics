@@ -106,7 +106,7 @@ with `--jobs 2`:
 | Shard | Runs |
 |---|---|
 | `engine-solid` | root package tests whose class starts with `Solid` (`--filter '^MartyGraphicsTests\.Solid'`) |
-| `engine-rest` | `swift build` of the root package and all other root tests (`--skip` with the same pattern) |
+| `engine-rest` | `swift build` of the root package, all other root tests (`--skip` with the same pattern) and the Examples/LessonDemo tests on macOS (its iPad-simulator run stays local) |
 | `solid3d-golden` | the Examples/Solid3D golden-file test alone |
 | `solid3d-rest` | the other Examples/Solid3D tests (`--skip` with the same pattern), tests for Examples/Turbofan, Examples/KeySwitch3D and tools/SceneValidator, and builds for Examples/Showcase and Examples/PathTrace |
 

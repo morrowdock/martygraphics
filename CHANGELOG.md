@@ -15,6 +15,7 @@
 - Docs: describe the opt-in ML explainer kit and the Blender video tool (16:9, 1:1 and 9:16,
   turntable, transparent 9:16 frames) in the README; tighten wording in the portability
   proposal, capabilities table and public-sync notes.
+- CI: the hosted `macos-engine-rest` shard now also runs the `Examples/LessonDemo` tests on macOS.
 
 ### Added
 - Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes. Swift remains the authority.

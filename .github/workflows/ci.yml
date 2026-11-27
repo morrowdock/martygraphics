@@ -173,7 +173,10 @@ jobs:
               ran root-test-solid ;;
             engine-rest)
               run root-build swift build --jobs 2
-              run root-test-rest swift test --jobs 2 --skip "$ENGINE" ;;
+              run root-test-rest swift test --jobs 2 --skip "$ENGINE"
+              # Here, not in solid3d-rest: this is the shortest shard, so the
+              # example's tests are expected not to lengthen the slowest shard.
+              run Examples-LessonDemo-test swift test --jobs 2 --package-path Examples/LessonDemo ;;
             solid3d-golden)
               run Examples-Solid3D-test-golden swift test --jobs 2 --package-path Examples/Solid3D --filter "$GOLDEN"
               ran Examples-Solid3D-test-golden ;;
