@@ -18,7 +18,11 @@ public enum MGDescribe {
 
     /// `board(_:step:hiding:)` from the step's items (`MGTimeline.items`), for a view that keeps them (`MGTimelineCache`).
     static func board(stepItems: [MGItem], hiding: Set<String>) -> String {
-        let items = stepItems.filter { !hiding.contains($0.id) }
+        sentence(stepItems.filter { !hiding.contains($0.id) })
+    }
+
+    /// `items` described as one sentence (the form of `board`); learner sliders describe the items they drew.
+    static func sentence(_ items: [MGItem]) -> String {
         let phrases = items.map { item($0, in: items) }
         guard let first = phrases.first else { return "The board is empty." }
         return ([capitalized(first)] + phrases.dropFirst()).joined(separator: "; ") + "."

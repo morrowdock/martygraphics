@@ -103,9 +103,10 @@ public enum MGAudioGraph {
         return chart(scene, items: MGTimeline.items(scene, step: step), hiding: hiding)
     }
 
-    /// The audio graph of `items`, the board's items now (`MGTimeline.items(scene, step:)`), without the `hiding`
-    /// items. `MartyGraphicsView` passes the step items it keeps between frames (`MGTimelineCache`), so the chart
-    /// never computes them again; the scene gives the 3D flag and the title.
+    /// The audio graph of `items`, the board's items now (`MGTimeline.items(scene, step:)`, or `MGSliderState.items`
+    /// with the learner's slider values), without the `hiding` items. `MartyGraphicsView` passes the items it draws
+    /// (the step items it keeps between frames, `MGTimelineCache`, or the slider state's), so the chart follows the
+    /// sliders and never computes the items again; the scene gives the 3D flag and the title.
     public static func chart(_ scene: MGScene, items: [MGItem], hiding: Set<String> = []) -> Chart? {
         guard !scene.is3D, items.contains(where: { kinds.contains($0.kind) }) else { return nil }
         let visible = items.filter { !hiding.contains($0.id) }

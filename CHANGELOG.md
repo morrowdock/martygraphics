@@ -140,6 +140,26 @@
   shows with Reduce Motion on. Boards without these items read exactly as before. No wire change.
 - Add `graphs` and `wave` fixtures, golden expression and graph cases, and `tools/mg_expr.py`, an offline
   mirror of the new rules for preflight tools, tested in the `hygiene` job.
+- Add learner sliders (pending Mac verification), an opt-in `sliders` scene key: up to 3 sliders, each
+  setting `a`, `b` or `c` on every `func` that sets it, over a range within ±1,000 in at most 100 equal
+  steps. The parser checks the default against each driven graph and both ends of the range through the
+  item rules, with one reason per failure (`slider.step`, `slider.unbound`, `slider.b.max.func.detail`,
+  …) and a one-line fix for each in `MGRepairHint`. `MGSliderState` re-parses the driven graphs for
+  every position, so every sample and readout number comes from the engine; a refused position keeps the
+  board and says why. `MartyGraphicsView` shows native sliders under the board with VoiceOver label,
+  value, hint and an adjustable action, Dynamic Type text and engine readouts; the board's audio graph is
+  built from the items at the slider values. A slider move ends any step, scene or keyframe transition in
+  flight, so the board and its audio graph show the same items. Values are written with the slider's own
+  precision, or with
+  significant digits where six places would not name the grid stop (a nonzero value never reads as `0`);
+  a grid whose stops are too close to tell apart is refused (`slider.grid`). The engine gets exactly the
+  shown value: at every stop, the ends and the default included, it is the number the label reads as; a grid
+  whose end or stop label does not read back exactly is refused (`slider.grid`), and a default that is not
+  exactly a stop's value is refused (`slider.default`).
+  Lessons and explainer boards
+  drop scene sliders, as they drop scene steps. Scenes without `sliders` are unchanged. The grammar
+  document lists the key (`sceneKeys`) and the slider shape (`sliders`); the draft schema, the preflight
+  and `tools/mg_expr.py` know the key, and `docs/fixtures/v1/sliders.cases.json` holds shared cases.
 - Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).
 - The draft scene v1 schema and `tools/scene_v1_check.py` accept `func`, `field` and the scene and step `alt`
   keys. For literal scenes, the preflight runs the `tools/mg_expr.py` rules on each graph and field item.

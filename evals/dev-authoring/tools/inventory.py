@@ -9,9 +9,10 @@ The counts do not depend on who authored the runs:
 - conventions: matches of the 17 text probes in `inventories/conventions.json` against the baseline prose (read
   with `git show` at the recorded base and checked against `guidance/baseline/MANIFEST.json`) and against the
   current prose. A probe miss does not prove that a convention is absent;
-- scene reasons: the sample tokens in `inventories/scene-reasons.json` (every static `MGParser` reason, the item
-  missing/unknown families of every kind, every kind-field family and ten dynamic forms), how many the baseline
-  validator gave extra text, and how many have a fix hint now;
+- scene reasons: the sample tokens in `inventories/scene-reasons.json` (every static `MGParser` reason, those of its
+  `sliders` extension in `MGSliders.swift` included, the item missing/unknown families of every kind, every
+  kind-field family, ten dynamic forms and the slider reasons built from a key, an id or a func reason), how many
+  the baseline validator gave extra text, and how many have a fix hint now;
 - ML reasons: every `MGMLReason` case, and how many have a hint;
 - lint: `tools/scene_lint.py` on the final scene of every run.
 """
@@ -39,17 +40,23 @@ SCENE_REASONS = EVAL / "inventories" / "scene-reasons.json"
 BASELINE_DETAILS = ["input.too-large", "json", "template.unknown"]
 DYNAMIC_SAMPLES = ["title.placeholder.n", "step.say.brace", "item.label.placeholder", "edit.key.zz", "id.duplicate.a",
                    "scene.unknown.zz", "world.unknown.zz", "step.unknown.zz", "camera.unknown.zz", "3d.kind.table"]
+# Slider reasons that are not `MGError` literals in MGSliders.swift: the closed-key, number and text helpers'
+# reasons, and the forms built from a parameter, a func id or a func reason (one sample each).
+SLIDER_SAMPLES = ["slider.missing", "slider.unknown.zz", "slider.duplicate.a", "slider.min", "slider.max", "slider.label",
+                  "slider.default.f", "slider.a.min.func.detail", "slider.b.max.func.mark"]
 
 
 def scene_reason_sample():
-    """The sample tokens: static parser reasons, per-kind families and dynamic forms (one sample each)."""
-    parser = (ROOT / "Sources/MartyGraphics/MGParser.swift").read_text(encoding="utf-8")
+    """The sample tokens: static parser reasons (MGParser.swift and its sliders extension), per-kind families and
+    dynamic forms (one sample each)."""
+    parser = "".join((ROOT / "Sources/MartyGraphics" / name).read_text(encoding="utf-8")
+                     for name in ("MGParser.swift", "MGSliders.swift"))
     reasons = set(re.findall(r'MGError\("([a-z0-9.\-]+)"\)', parser)) | {"json", "input.too-large", "scene.missing"}
     for name, extra, _ in hints.KINDS:
         name = hints.wire(name)
         reasons |= {f"item.{name}.missing", f"item.{name}.unknown.zz"}
         reasons |= {f"{name}.{key}" for key in extra if key != "label"}
-    return sorted(reasons | set(DYNAMIC_SAMPLES))
+    return sorted(reasons | set(DYNAMIC_SAMPLES) | set(SLIDER_SAMPLES))
 
 
 def ml_reasons():

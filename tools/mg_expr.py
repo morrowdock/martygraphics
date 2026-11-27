@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Offline reference for the scene v1 `func` and `field` kinds and the `alt` text keys.
+"""Offline reference for the scene v1 `func` and `field` kinds, the `alt` text keys and the `sliders` key.
 
-Swift is authoritative: `MGExpression`, `MGGraph` and `MGParser` in Sources/MartyGraphics. This module mirrors their
-rules operation for operation, so an offline preflight (for example tools/scene_v1_check.py on the schema branch) can
-give the same reasons, and so the shared golden cases in docs/fixtures/v1/expressions.cases.json and
-docs/fixtures/v1/graphs.cases.json run in Python as well as in XCTest. Standard library only; never imports or
+Swift is authoritative: `MGExpression`, `MGGraph`, `MGParser` and `MGParser.sliders` (MGSliders.swift) in
+Sources/MartyGraphics. This module mirrors their rules operation for operation, so an offline preflight (for example
+tools/scene_v1_check.py) can give the same reasons, and so the shared golden cases in
+docs/fixtures/v1/expressions.cases.json, docs/fixtures/v1/graphs.cases.json and docs/fixtures/v1/sliders.cases.json
+run in Python as well as in XCTest. Standard library only; never imports or
 evaluates scene text as Python.
 
 Floating-point note: Python's math functions raise where C returns a value (log(0), sqrt(-1), overflow). The wrappers
@@ -30,6 +31,10 @@ BISECTIONS = 8
 MAGNITUDE = 1e12
 SAY = 200
 LABEL = 40
+SLIDERS = 3
+SLIDER_STEPS = 100
+SLIDER_BINDINGS = 6
+SLIDER_KEYS = ("param", "min", "max", "step", "default", "label")
 
 VARIABLES = ("x", "y", "t", "a", "b", "c")
 FUNCTIONS = ("sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh",
@@ -729,6 +734,225 @@ def check_graph_item(item, world=(12, 8), is3d=False):
     return {"cols": int(cols), "rows": int(rows), "missing": missing, "vectors": vectors}
 
 
+def _reason_keys(keys):
+    """Mirror of `MGParser.reasonKeys`: at most four names, and a name that is not 1-24 ASCII letters, digits or `_`
+    becomes `?`. `keys` must already be in Swift's order (sorted by Unicode scalar)."""
+    return ",".join(key if 1 <= len(key) <= 24 and key.isascii() and all(_letter(ch) or _digit(ch) or ch == "_" for ch in key)
+                    else "?" for key in keys[:4])
+
+
+class SliderGrid:
+    """Mirror of `MGSlider`'s grid and number form: `value(at:)`, `stop(nearest:)`, `text`, `gridIsDistinct`.
+
+    Swift's `String(format: "%.Nf")` / `"%.Ne"` and `Double(text)` are C's printf and a correctly rounded parse, as are
+    Python's `%` formatting and `float`.
+    """
+
+    def __init__(self, lo, hi, step, steps, initial=None, default_stop=0):
+        self.lo, self.hi, self.step, self.steps = lo, hi, step, steps
+        self.initial = lo if initial is None else initial
+        self.default_stop = default_stop
+        self.decimals = slider_decimals([lo, step])
+
+    def candidate_at(self, stop):
+        """Mirror of `MGSlider.candidate(at:)`: min, max, else the interpolated stop snapped to `decimals` places."""
+        i = min(max(stop, 0), self.steps)
+        if i == 0:
+            return self.lo
+        if i == self.steps:
+            return self.hi
+        raw = self.lo + (self.hi - self.lo) * i / self.steps
+        snapped = float(_trimmed("%.*f" % (self.decimals, raw)))
+        return snapped if abs(snapped - raw) <= self.step * 1e-6 else raw
+
+    def value_at(self, stop):
+        """Mirror of `MGSlider.value(at:)`: the number the stop's label reads as, so the engine gets what is shown.
+        The default never stands in for a stop (the parser requires it to equal one exactly)."""
+        return float(self.text(self.candidate_at(stop)))
+
+    def stop_nearest(self, value):
+        if not math.isfinite(value):
+            return self.default_stop
+        q = round_half_away((value - self.lo) / self.step)
+        return int(min(max(q, 0), self.steps))
+
+    def names(self, text, value):
+        try:
+            read = float(text)
+        except ValueError:
+            return False
+        if read == 0 or value == 0:
+            return read == value
+        return abs(read - value) <= self.step * 1e-6
+
+    def text(self, value):
+        if not math.isfinite(value):
+            return "\u2014"
+        compact = _trimmed("%.*f" % (self.decimals, value))
+        if self.names(compact, value):
+            return compact
+        for digits in range(1, 18):
+            s = _significant(value, digits)
+            if self.names(s, value):
+                return s
+        return _significant(value, 17)
+
+    def is_distinct(self):
+        """Mirror of `MGSlider.gridIsDistinct`: each end reads back as exactly that end, and every stop's value is
+        exactly the number its label reads as, within min...max, above the stop before, with a label of its own."""
+        if self.value_at(0) != self.lo or self.value_at(self.steps) != self.hi:
+            return False
+        previous, labels = -math.inf, set()
+        for i in range(self.steps + 1):
+            v = self.value_at(i)
+            if not (v > previous and self.lo <= v <= self.hi):
+                return False
+            previous = v
+            label = self.text(v)
+            if float(label) != v or self.stop_nearest(v) != i or label in labels:
+                return False
+            labels.add(label)
+        return True
+
+    def stop_of(self, value):
+        """Mirror of `MGSlider.stop(exactly:)`: the stop whose value is exactly `value`, or None."""
+        return next((i for i in range(self.steps + 1) if self.value_at(i) == value), None)
+
+
+def _trimmed(text):
+    if "." in text:
+        text = text.rstrip("0")
+        if text.endswith("."):
+            text = text[:-1]
+    return "0" if text == "-0" else text
+
+
+def _significant(value, digits):
+    e = "%.*e" % (digits - 1, value)
+    mantissa, exponent = e.split("e")
+    rounded = float(e)
+    if rounded == 0:
+        return "0"
+    exponent = int(exponent)
+    if exponent >= -9:
+        return _trimmed("%.*f" % (max(0, digits - 1 - exponent), rounded))
+    return _trimmed(mantissa) + "e" + str(exponent)
+
+
+def slider_decimals(values):
+    """Mirror of `MGSlider.decimals`: the fewest places (0-6) that write every value exactly."""
+    out = 0
+    for v in values:
+        places = 0
+        while places < 6:
+            scaled = v * 10.0 ** places
+            if abs(scaled - round_half_away(scaled)) <= 1e-9 * max(1, abs(scaled)):
+                break
+            places += 1
+        out = max(out, places)
+    return out
+
+
+def check_slider(entry, seen=()):
+    """The rules of one slider that need no scene (`MGParser.sliders` up to the label), in Swift's order.
+
+    Returns (param, min, max, step, default, steps, default_stop); raises Refusal.
+    """
+    if not isinstance(entry, dict):
+        raise Refusal("slider")
+    if not set(SLIDER_KEYS) <= set(entry):
+        raise Refusal("slider.missing")
+    extra = set(entry) - set(SLIDER_KEYS)
+    if extra:
+        raise Refusal("slider.unknown." + _reason_keys(sorted(extra)))
+    param = entry["param"]
+    if not isinstance(param, str) or param not in ("a", "b", "c"):
+        raise Refusal("slider.param")
+    if param in seen:
+        raise Refusal("slider.duplicate." + param)
+    lo = _num(entry["min"], -EXPR_PARAMETER, EXPR_PARAMETER, "slider.min")
+    hi = _num(entry["max"], -EXPR_PARAMETER, EXPR_PARAMETER, "slider.max")
+    if not lo < hi:
+        raise Refusal("slider.range")
+    step = entry["step"]
+    # Swift: a number from the least positive double to max - min. An int is compared exactly before conversion.
+    if not _number(step) or not 0 < step <= hi - lo:
+        raise Refusal("slider.step")
+    step = float(step)
+    q = _divide(hi - lo, step)
+    if not q < SLIDER_STEPS + 0.5:
+        raise Refusal("slider.step.count")
+    count = round_half_away(q)
+    if not abs(q - count) <= 1e-9 * count:
+        raise Refusal("slider.step")
+    # The bare grid: every stop its own value and label.
+    grid = SliderGrid(lo, hi, step, int(count))
+    if not grid.is_distinct():
+        raise Refusal("slider.grid")
+    initial = _num(entry["default"], lo, hi, "slider.default")
+    # The default is a stop: exactly the number some stop's label reads as.
+    at = grid.stop_of(initial)
+    if at is None:
+        raise Refusal("slider.default")
+    label = entry["label"]
+    # A label is fixed text: an engine number filled in once would go stale when the slider moves.
+    if isinstance(label, str) and ("{" in label or "}" in label):
+        raise Refusal("slider.label.placeholder")
+    text_rules(label, LABEL, "slider.label")
+    return param, lo, hi, step, initial, int(count), int(at)
+
+
+def check_sliders(scene, world=(12.0, 8.0), is3d=False, literal=True):
+    """Mirror of `MGParser.sliders` on a scene whose items and steps passed their own rules.
+
+    `literal`: the scene lists its own items. A template scene's items are known only after Swift expands it, so then
+    only each slider's own rules run (the binding rules need the items). Returns one summary dict per slider
+    (param, steps, defaultStop, items); raises Refusal with the Swift reason.
+    """
+    raw = scene["sliders"]
+    if not isinstance(raw, list) or not 1 <= len(raw) <= SLIDERS:
+        raise Refusal("sliders")
+    listed = scene.get("items")
+    items = [item for item in listed if isinstance(item, dict)] if isinstance(listed, list) else []
+    graphs = {item.get("id") for item in items if item.get("k") in ("func", "field")}
+    seen, out, bindings = [], [], 0
+    for entry in raw:
+        param, lo, hi, _, initial, steps, default_stop = check_slider(entry, seen)
+        seen.append(param)
+        summary = {"param": param, "steps": steps, "defaultStop": default_stop, "items": []}
+        out.append(summary)
+        if not literal:
+            continue
+        driven = [item for item in items if item.get("k") == "func" and param in item]
+        if not driven:
+            raise Refusal("slider.unbound")
+        if any(item.get("k") == "field" and param in item for item in items):
+            raise Refusal("slider.field")
+        for item in driven:
+            if float(item[param]) != initial:
+                raise Refusal("slider.default." + item["id"])
+        bindings += len(driven)
+        if bindings > SLIDER_BINDINGS:
+            raise Refusal("sliders.bindings")
+        steps = scene.get("steps")
+        for step in steps if isinstance(steps, list) else []:
+            edits = step.get("do") if isinstance(step, dict) else None
+            for edit in edits if isinstance(edits, list) else []:
+                if isinstance(edit, dict) and edit.get("key") == param and edit.get("id") in graphs:
+                    raise Refusal("slider.edit")
+        # Both ends of the range, with every other parameter at its default, through the item rules.
+        for item in driven:
+            for end, value in (("min", lo), ("max", hi)):
+                if value == initial:
+                    continue
+                try:
+                    check_graph_item({**item, param: value}, world, is3d)
+                except Refusal as refusal:
+                    raise Refusal(f"slider.{param}.{end}.{refusal.reason}") from refusal
+        summary["items"] = [item["id"] for item in driven]
+    return out
+
+
 def round_half_away(value):
     """Swift's `rounded()` (to nearest, ties away from zero)."""
     return math.floor(value + 0.5) if value >= 0 else math.ceil(value - 0.5)
@@ -751,7 +975,8 @@ def graph_edits(scene, graph_ids):
 
 
 def check_scene(scene):
-    """The new rules on a scene object: the `alt` keys, the `items.expr` count and every `func` / `field` item.
+    """The new rules on a scene object: the `alt` keys, the `items.expr` count, every `func` / `field` item and the
+    `sliders` key.
 
     Other kinds and keys are not checked here (Swift and tools/scene_v1_check.py check them). Raises Refusal.
     """
@@ -786,4 +1011,6 @@ def check_scene(scene):
         text_rules(scene["alt"], SAY, "alt")
     if is3d and graphs:
         raise Refusal("3d.kind." + graphs[0]["k"])
+    if "sliders" in scene:
+        check_sliders(scene, world, is3d)
     return summaries

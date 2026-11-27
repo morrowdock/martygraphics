@@ -28,8 +28,8 @@ synthetic, Apache-2.0, and contain no transport/provider configuration.
 
 A scene requires `v: 1` and either a registered `template` with `params`, or an
 `items` array. Optional fields include `title`, `alt` (a text alternative for the
-whole board), `dim` (`2d` / `3d`), `world`, `camera`, and `steps`. Template scenes
-also support `hide` and `over`.
+whole board), `dim` (`2d` / `3d`), `world`, `camera`, `steps` and `sliders`
+(learner sliders for `func` parameters). Template scenes also support `hide` and `over`.
 World coordinates point right/up, with the origin at bottom-left; 3D adds z
 toward the viewer. The default world is 12 by 8.
 
@@ -37,9 +37,9 @@ Kinds: body, incline, line, vector, axes, plot, spring, pulley, rope, orbit,
 text, highlight, bars, path, array, node, edge, table, region, func, field. The
 model types expose their geometry. In 3D the supported subset is body, incline,
 line, vector, axes, orbit, text, highlight, path. Text styles are `label`
-(default), `callout`, `title` and `code`. See [tables, regions and code text](#tables-regions-and-code-text)
-and [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives)
-for the newest additions.
+(default), `callout`, `title` and `code`. See [tables, regions and code text](#tables-regions-and-code-text),
+[function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives)
+and [learner sliders](#learner-sliders) for the newest additions.
 
 Drawing conventions of the 2D renderer that the keys alone do not show: a vector `angle` is degrees
 counter-clockwise from +x (0 right, 90 up); an incline's `at` is its bottom-left vertex and the slope rises to
@@ -303,8 +303,10 @@ so tests check it without VoiceOver:
   later `plot` or `func` drawn in the same frame (same `at`, `w`, `h`, `xr` and
   `yr`) as more series. Another frame or another bar chart is left out and
   counted in the summary.
-- The chart follows the current step (its edits and `show`) and leaves out
-  concealed items, as `MGDescribe` does.
+- The chart follows the current step (its edits and `show`) and the learner's
+  slider values (`MGAudioGraph.chart(scene, items:hiding:)` with the items the
+  board draws, see "Learner sliders"), and leaves out concealed items, as
+  `MGDescribe` does.
 - Motion and Reduce Motion: the chart is the motion's first frame (t = 0), so the
   samples of a moving `func` as parsed and spring energy bars at their first
   values. The board shows that frame when Reduce Motion is on. The chart never
@@ -322,6 +324,92 @@ so tests check it without VoiceOver:
 Not checked: how VoiceOver plays and reads these charts on a device (needs a
 physical device; no device test has run) and whether the summary is enough for a
 given lesson.
+
+## Learner sliders
+
+Additive and opt-in, unreleased, **pending Mac verification**. It was written on
+a machine without the Apple toolchain. The Foundation-level engine code
+type-checked, and `SliderTests` passed, with a Linux Swift build in which
+Darwin-only calls were stubbed; the Python mirror passed too. The SwiftUI view,
+the Apple-platform build and VoiceOver have not run. A scene without `sliders`
+parses and draws exactly as before.
+
+```json
+"sliders":[{"param":"a","min":0,"max":2,"step":0.25,"default":1,"label":"Height a"}]
+```
+
+- `sliders` (scene key): 1 to 3 sliders. Each has exactly `param` (`a`, `b` or
+  `c`), `min` and `max` (within ±1,000, the `func` parameter bound, `min` below
+  `max`), `step` (above 0; it divides `max − min` into a whole number of steps,
+  at most 100, and every stop has a value and a label of its own, else
+  `slider.grid`), `default` (exactly the value of one stop, else
+  `slider.default`: `0.30000000000000004` is not the stop `0.3`, and `1e-12` is
+  not the stop `0`) and `label` (1–40 characters of plain text, without
+  placeholders: the board shows the value beside it). One slider per parameter.
+- The engine gets exactly the shown value. At every stop, both ends and the
+  default included, the number sent to the engine is exactly the number the
+  stop's label reads as (`MGSlider.value(at:)`). A grid where that cannot hold
+  is refused as `slider.grid`: an end whose label does not read back as exactly
+  that end (`min` 0, `max` 1.0000000002, `step` 1 would show the last stop as
+  `1`), or a stop whose label does not read back as exactly its value or whose
+  value falls outside `min…max`. The default never replaces a stop's value.
+- A slider drives every `func` that sets its parameter, so the board has one
+  value of `a`, as in a graphing calculator. At least one `func` must set it
+  (`slider.unbound`), and each must set it to the slider's `default`
+  (`slider.default.<id>`), so a host that shows no sliders draws the board at
+  the default. Sliders drive `func` items only: a `field` that sets the same
+  parameter is refused (`slider.field`), and so is a step edit of it
+  (`slider.edit`); the slider is the one source of the value. At most 6 pairs
+  of a slider and a `func` it drives (`sliders.bindings`).
+- Both ends of each range are checked at parse time with every other parameter
+  at its default, through the same item rules as a parse: a driven `func` that
+  refuses an end gives `slider.<param>.min.<reason>` or
+  `slider.<param>.max.<reason>`, for example `slider.b.max.func.detail` when
+  `sin(b*x)` aliases at the largest `b`. That adds at most 12 item checks to a
+  parse (`MGLimits.sliderBindings`).
+- Moving a slider re-parses each driven `func` with `MGParser.item`, the path of
+  a parse and a step edit (`MGSliderState`), so samples, pieces, the shaded band,
+  the marked point and every readout number come from the engine, never from the
+  model. A position whose graph fails a check (an interior value such as `a = 0`
+  in `x/a`, `func.empty`) is not shown: the board keeps the last accepted value
+  and says why ("a = 0 is not shown: nothing of the graph would be in view.").
+  A step whose own edits refuse the current values sends every slider back to its
+  default. Patches re-validate sliders with the rest of the scene; a patch cannot
+  change them (a `set` of a driven parameter is refused with
+  `slider.default.<id>`). While a scene streams, its sliders join the preview
+  once the graphs they drive have arrived, as steps do; the final parse is strict.
+- `MartyGraphicsView` shows the sliders under the board when it shows its
+  controls and is not read-only; a row is shown while a graph it drives is on the
+  board and not concealed. Each is a native slider with the label as its
+  VoiceOver label, the value as its value, the range and step as its hint, and an
+  adjustable action that moves one step per swipe, past any position the engine
+  refuses; a refused position is announced. One form writes each number (the
+  shown and spoken value, the hint, the readout and the refusal note,
+  `MGSlider.text`): the fewest places, up to 6, that write `min` and `step`
+  exactly, trailing zeros removed, while that names the value (read back, it is
+  within a millionth of a step of it, so neighbouring stops never share a label,
+  and a nonzero value never reads as `0`); otherwise the fewest significant
+  digits that do (`0.0000001`, `1.0000001`; below 10⁻⁹ as `1.5e-12`). Readouts under the sliders are
+  engine numbers (`y = a sin(bx) + c: a = 1.5, b = 2, c = 0.5, marked point (1.57,
+  0.5)`). The text uses Dynamic Type styles, and at accessibility sizes the label
+  and value stack. After a slider moves, the board's VoiceOver value reads the
+  engine's description of what is drawn instead of the authored `alt`, which
+  describes the default. The board's audio graph ("Audio graphs") is built from
+  the same items, so it plays the graph at the slider values, not the authored
+  default. Lessons and explainer boards drop a scene's sliders, as
+  they drop its steps: their own controls drive them.
+- `MGGrammar.document()` lists the key under `sceneKeys` and the slider shape
+  under `sliders`. Refusal reasons have one-line fixes in `MGRepairHint`.
+
+[Copy the slider scene](fixtures/v1/sliders.scene.json). The
+[slider cases](fixtures/v1/sliders.cases.json) hold accepted scenes and the
+reason of each refused one; XCTest (`SliderTests`) and the Python tools
+(`tools/mg_expr.py`, `tools/scene_v1_check.py`) check the same file.
+
+Not checked: whether a range teaches anything, interior values at parse time
+(only the ends and the default are checked; other positions are checked when the
+learner reaches them), and VoiceOver, Dynamic Type and the adjustable action on a
+device.
 
 ## Explainer boards
 
@@ -585,6 +673,8 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |
 | `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs or fewer edits of them. |
 | `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
+| `sliders`, `slider`, `slider.missing`, `slider.unknown.<keys>`, `slider.param`, `slider.duplicate.<p>`, `slider.min`, `slider.max`, `slider.range`, `slider.step`, `slider.step.count`, `slider.grid`, `slider.default`, `slider.label`, `slider.label.placeholder` | A slider list or slider is out of shape, or its range or step is out of bounds; a stop's label (an end's included) does not read back as exactly the value the engine would get, or its stops are too close to tell apart (`slider.grid`); its default is not exactly the value of a stop (`slider.default`); or its label is not fixed plain text | See [learner sliders](#learner-sliders); `MGRepairHint.text(for:)` gives a one-line fix. |
+| `slider.unbound`, `slider.field`, `slider.default.<id>`, `slider.edit`, `sliders.bindings`, `slider.<p>.min.<reason>`, `slider.<p>.max.<reason>` | No `func` sets the parameter, a `field` or a step edit sets it, a `func` sets another value, too many slider-graph pairs, or a driven graph fails a check at an end of the range | Set the parameter on the graphs to the default, remove the conflicting key, or narrow the range. |
 | `vector.on`, `edge.nodes`, `highlight.target` | Reference is absent, has the wrong kind, or highlights itself | Fix references before applying the scene. |
 | `highlight.cycle` | An indirect highlight chain loops | Make the chain terminate; [negative fixture](fixtures/v1/highlight-cycle.scene.json). |
 | `patch.stale`, `patch.rev` | Revision mismatches or is invalid | Rebase the intended change on the current scene revision; do not retry stale content blindly. |
@@ -616,6 +706,7 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | Geometry | Plot/path points up to 64; rope points up to 6 |
 | Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text; table 8 rows × 6 columns / cells up to 12 characters; region 3–64 points |
 | Graphs (new kinds only) | 6 graph checks per scene (each `func` / `field` item, and each step or `over` edit of one); expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters |
+| Sliders (new key only) | 3 per scene; range within ±1,000; at most 100 steps; 6 slider-graph pairs; labels 40 characters |
 | Raw template params | 4 KiB canonical `params` object |
 | Nesting (arrays and objects on one path) | 64 levels (`MGLimits.depth`); lessons 59 per statement |
 | Lesson `animate` | 2 per beat and per host `apply` batch, 24 per stream (`lesson.animate.count`); see [lessons](LESSONS.md#limits-and-reasons) |

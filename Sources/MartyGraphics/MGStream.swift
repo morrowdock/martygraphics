@@ -64,6 +64,9 @@ public struct MGStreamParser {
             root[m.key] = j
         }
         guard root["v"] == .number(1) else { return nil }
+        // Learner sliders bind to the board's graphs, so they join a preview only once the board they drive parses
+        // (like steps); until then every item is tried without them.
+        let sliders = root.removeValue(forKey: "sliders")
         if root["template"] != nil {
             guard root["params"] != nil else { return nil }
             root["items"] = nil
@@ -113,6 +116,10 @@ public struct MGStreamParser {
                 }
                 if !passed { root["steps"] = nil }
             }
+        }
+        if let sliders {
+            root["sliders"] = sliders
+            if case .failure = MGParser.scene(json: .object(root)) { root["sliders"] = nil }
         }
         let preview = MGJSON.object(root)
         guard preview != lastPreview, preview != refusedPreview else { return nil }

@@ -224,6 +224,11 @@ def shape_reason(scene, error):
         if len(path) == 5 and path[2] == "do" and path[-1] == "key":
             return "edit.key"
         return f"step.{path[2]}"
+    if field == "sliders":
+        # MGParser.sliders: `sliders` for the list, `slider…` for one entry and `slider.<key>` for one of its keys.
+        if len(path) == 1:
+            return "sliders"
+        return closed_reason("slider", error) if len(path) == 2 else f"slider.{path[2]}"
     return ".".join(part for part in path if isinstance(part, str))
 
 
@@ -470,6 +475,13 @@ def scene_rules(scene):
             item_rules(updated, dimensions, template)
             items[identifier] = updated
             references(items, template)
+    if "sliders" in scene:
+        # After every item and step, as in Swift. A template scene's items are known only after Swift expands it, so
+        # there only each slider's own rules run (tools/mg_expr.py, check_sliders).
+        try:
+            mg_expr.check_sliders(scene, dimensions or (12, 8), scene.get("dim") == "3d", literal=not template)
+        except mg_expr.Refusal as refusal:
+            raise Invalid(refusal.reason) from refusal
 
 
 def check_depth(source):

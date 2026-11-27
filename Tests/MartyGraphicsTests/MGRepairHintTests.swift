@@ -71,6 +71,34 @@ final class MGRepairHintTests: XCTestCase {
         XCTAssertFalse(MGRepairHint.matches("*.at", "body.atx"))
         XCTAssertFalse(MGRepairHint.matches("items", "items.count"))
     }
+
+    /// Slider reasons (MGSliders.swift) get the slider rows, which sit before the generic rows that would also match.
+    func testSliderReasonsGetTheSliderHints() throws {
+        let line = #"{"id":"f","k":"func","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-4,4],"y":"a*x","a":1}"#
+        let refused: [(String, String)] = [
+            (#"{"param":"a","min":0,"max":3,"step":0.5,"default":1,"label":"a = {a}"}"#, "slider.label.placeholder"),
+            (#"{"param":"a","min":0,"max":3,"step":0.5,"default":1,"label":"a < b"}"#, "slider.label"),
+            (#"{"param":"a","min":0,"max":3,"step":0.01,"default":1,"label":"a"}"#, "slider.step.count"),
+            (#"{"param":"a","min":0,"max":3,"step":0.4,"default":1,"label":"a"}"#, "slider.step"),
+            (#"{"param":"a","min":0,"max":3,"step":0.5,"default":1.25,"label":"a"}"#, "slider.default"),
+            (#"{"param":"b","min":0,"max":3,"step":0.5,"default":1,"label":"b"}"#, "slider.unbound"),
+        ]
+        func row(_ pattern: String) -> String? { MGRepairHint.table.first { $0.0 == pattern }?.1 }
+        for (slider, expected) in refused {
+            let json = #"{"v":1,"items":["# + line + #"],"sliders":["# + slider + "]}"
+            guard case .failure(let error) = MGParser.scene(data: Data(json.utf8)) else { XCTFail("accepted \(json)"); continue }
+            XCTAssertEqual(error.reason, expected, json)
+            XCTAssertEqual(MGRepairHint.text(for: error.reason), row(expected), json)
+        }
+        XCTAssertNotEqual(MGRepairHint.text(for: "slider.label.placeholder"), row("*.placeholder"))
+        XCTAssertEqual(MGRepairHint.text(for: "slider.a.min.func.at"), row("slider.*.min.*"))
+        XCTAssertNotEqual(MGRepairHint.text(for: "slider.a.min.func.at"), row("*.at"))
+        XCTAssertEqual(MGRepairHint.text(for: "slider.c.max.func.w"), row("slider.*.max.*"))
+        XCTAssertEqual(MGRepairHint.text(for: "slider.unknown.unit"), row("slider.unknown.*"))
+        XCTAssertNil(MGRepairHint.text(for: "sliders.count"))
+        XCTAssertTrue(MGRepairHint.text(for: "scene.unknown.zz")?.contains("alt, sliders,") ?? false)
+        XCTAssertTrue(MGParser.topKeys.contains("sliders"))
+    }
 }
 
 /// The shared corpus (docs/fixtures/repair-hints/corpus.json) holds the exact hint for every scene reason sample,
@@ -81,7 +109,7 @@ final class RepairHintCorpusTests: XCTestCase {
         let url = XFix.root.appendingPathComponent("docs/fixtures/repair-hints/corpus.json")
         let corpus = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
         let scene = try XCTUnwrap(corpus["scene"] as? [[String: Any]])
-        XCTAssertEqual(scene.count, 256)
+        XCTAssertEqual(scene.count, 284)
         for entry in scene {
             let reason = try XCTUnwrap(entry["reason"] as? String)
             XCTAssertEqual(MGRepairHint.text(for: reason), entry["hint"] as? String, reason)

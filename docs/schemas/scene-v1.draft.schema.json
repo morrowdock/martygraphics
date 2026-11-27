@@ -20,7 +20,8 @@
     "camera": {"$ref":"#/$defs/camera"},
     "hide": {"type":"array","items":{"$ref":"#/$defs/id"},"minItems":0,"maxItems":16},
     "over": {"type":"array","items":{"$ref":"#/$defs/edit"},"minItems":0,"maxItems":16},
-    "alt": {"type":"string","minLength":1,"maxLength":200}
+    "alt": {"type":"string","minLength":1,"maxLength":200},
+    "sliders": {"type":"array","items":{"$ref":"#/$defs/slider"},"minItems":1,"maxItems":3}
   },
   "required": ["v"],
   "additionalProperties": false,
@@ -153,6 +154,19 @@
         "alt": {"type":"string","minLength":1,"maxLength":200}
       },
       "required": ["say"],
+      "additionalProperties": false
+    },
+    "slider": {
+      "type": "object",
+      "properties": {
+        "param": {"enum":["a","b","c"]},
+        "min": {"type":"number","minimum":-1000,"maximum":1000},
+        "max": {"type":"number","minimum":-1000,"maximum":1000},
+        "step": {"type":"number","exclusiveMinimum":0,"maximum":2000},
+        "default": {"type":"number","minimum":-1000,"maximum":1000},
+        "label": {"$ref":"#/$defs/label"}
+      },
+      "required": ["param","min","max","step","default","label"],
       "additionalProperties": false
     },
     "item": {

@@ -125,6 +125,21 @@ class SceneV1Tests(unittest.TestCase):
                     data = (directory / name).read_bytes()
                 self.assert_invalid(data, case["reason"])
 
+    def test_slider_cases_match_swift(self):
+        # docs/fixtures/v1/sliders.cases.json: the same reasons as MGParser.sliders (SliderTests.swift).
+        cases = json.loads((FIXTURES / "sliders.cases.json").read_bytes())
+        for case in cases["accepted"]:
+            with self.subTest(case=case["name"]):
+                self.assertIsNone(checker.check(json.dumps(case["scene"]).encode()))
+        for case in cases["refused"]:
+            with self.subTest(case=case["name"]):
+                self.assert_invalid(json.dumps(case["scene"]).encode(), case["reason"])
+        # A template scene's sliders are checked on their own; the binding needs Swift's expansion.
+        slider = {"param": "a", "min": 0, "max": 1, "step": 0.5, "default": 0, "label": "a"}
+        template = {"v": 1, "template": "bst", "params": {"values": [1]}}
+        self.assertEqual(checker.check(json.dumps({**template, "sliders": [slider]}).encode()), "bst")
+        self.assert_invalid(json.dumps({**template, "sliders": [{**slider, "default": 0.25}]}).encode(), "slider.default")
+
     def test_input_limit_allows_padding_up_to_boundary(self):
         scene = b'{"v":1,"title":"Synthetic dot","items":[{"id":"dot","k":"body","at":[3,4]}]}'
         self.assertIsNone(checker.check(scene.ljust(checker.INPUT_BYTES, b" ")))

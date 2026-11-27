@@ -55,6 +55,12 @@ public enum MGLimits {
     public static let funcPeriod: ClosedRange<Double> = 0.5...20
     /// `field` grids: 2…`fieldCols` columns and 2…`fieldRows` rows of arrows.
     public static let fieldCols = 16, fieldRows = 12
+    /// Scene `sliders` (`MGSlider`): at most `sliders` sliders; each runs from `min` to `max` (both within
+    /// ±`exprParameter`) in at most `sliderSteps` equal steps; and a scene has at most `sliderBindings` pairs of a slider
+    /// and a `func` it drives. The parser checks each pair at the slider's `min` and `max` as well as its default, so a
+    /// scene's parse runs at most 2 × `sliderBindings` = 12 extra `func` checks (at most 12 × 29,190 evaluations for
+    /// moving graphs; typically 2 × 513). These bounds apply to the new key only; no existing limit changes.
+    public static let sliders = 3, sliderSteps = 100, sliderBindings = 6
 }
 
 public struct MGError: Error, Equatable, CustomStringConvertible {
@@ -103,7 +109,7 @@ public enum MGParser {
         catch { return .failure(MGError("video2d.schema")) }
     }
 
-    static let topKeys: Set<String> = ["v", "template", "params", "title", "dim", "world", "items", "steps", "camera", "hide", "over", "alt"]
+    static let topKeys: Set<String> = ["v", "template", "params", "title", "dim", "world", "items", "steps", "camera", "hide", "over", "alt", "sliders"]
 
     public static func scene(data: Data) -> Result<MGScene, MGError> {
         guard data.count <= MGLimits.sceneBytes * 2 else { return .failure(.init("json")) }
@@ -241,6 +247,9 @@ public enum MGParser {
         guard items.count <= MGLimits.resolvedItems, !items.isEmpty else { throw MGError("items.total") }
         if is3D { for i in items where !MGKind.in3D.contains(i.kind) { throw MGError("3d.kind.\(i.kind.rawValue)") } }
         try checkReferences(items: items, steps: steps, ctx)
+        // Learner sliders (docs/PROTOCOL.md, "Learner sliders"): after every item and step, because a slider binds to
+        // the parsed `func` items and refuses step edits of the parameter it drives.
+        let sliders = try o["sliders"].map { try self.sliders($0, items: items, steps: steps, ctx) } ?? []
 
         let motion = build.map { prune($0.motion, ids) } ?? .none
         try validateMotion(motion)
@@ -250,6 +259,7 @@ public enum MGParser {
                             values: ctx.values, motion: motion, attachments: attachments)
         scene.builtValues = (build?.builtValues ?? []).intersection(ctx.values.keys)
         scene.alt = alt
+        scene.sliders = sliders
         return scene
     }
 

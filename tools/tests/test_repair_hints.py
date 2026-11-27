@@ -149,8 +149,46 @@ class RepairHintMirror(unittest.TestCase):
         sample = self.inventory.scene_reason_sample()
         checked_in = json.loads((ROOT / "evals/dev-authoring/inventories/scene-reasons.json").read_text(encoding="utf-8"))
         self.assertEqual(checked_in["tokens"], sample, "run inventory.py --write")
-        self.assertEqual(len(sample), 195)
+        self.assertEqual(len(sample), 217)
         self.assertEqual([r for r in sample if not self.hints.scene_hint(r)], [])
+
+    def test_slider_reasons_get_the_slider_rows(self):
+        """Every refused case in the shared slider fixture is hinted by a slider row, never by a generic row."""
+        cases = json.loads((ROOT / "docs/fixtures/v1/sliders.cases.json").read_text(encoding="utf-8"))
+        reasons = sorted({case["reason"] for case in cases["refused"]})
+        self.assertGreaterEqual(len(reasons), 20)
+        patterns = [p for p, _ in self.hints.SCENE_HINTS]
+        first_generic = patterns.index("*.placeholder.*")
+        for reason in reasons + ["slider.a.min.func.at", "slider.b.max.func.w", "slider.c.min.func.y.var.t"]:
+            row = next(p for p in patterns if self.hints.matches(p, reason))
+            self.assertTrue(row.startswith("slider"), f"{reason} is hinted by {row}")
+            self.assertLess(patterns.index(row), first_generic, row)
+        row = dict(self.hints.SCENE_HINTS)
+        self.assertNotEqual(self.hints.scene_hint("slider.label.placeholder"), row["*.placeholder"])
+        self.assertEqual(self.hints.scene_hint("slider.a.min.func.at"), row["slider.*.min.*"])
+        self.assertIsNone(self.hints.scene_hint("sliders.count"))
+
+    def test_slider_hints_state_the_parser_bounds(self):
+        parser = (ROOT / "Sources/MartyGraphics/MGParser.swift").read_text(encoding="utf-8")
+        sliders = (ROOT / "Sources/MartyGraphics/MGSliders.swift").read_text(encoding="utf-8")
+        self.assertIn("public static let sliders = 3, sliderSteps = 100, sliderBindings = 6", parser)
+        self.assertIn("public static let exprParameter = 1000.0", parser)
+        self.assertIn("public static let label = 40,", parser)
+        self.assertIn('static let sliderKeys: Set<String> = ["param", "min", "max", "step", "default", "label"]', sliders)
+        self.assertIn('"sliders"', parser[parser.index("static let topKeys"):parser.index("\n", parser.index("static let topKeys"))])
+        hint = self.hints.scene_hint
+        self.assertIn("1 to 3 sliders", hint("sliders"))
+        self.assertIn("at most 100 steps", hint("slider.step.count"))
+        self.assertTrue(hint("sliders.bindings").startswith("at most 6 pairs"))
+        self.assertEqual(hint("slider.min"), "min is a number from -1000 to 1000")
+        self.assertEqual(hint("slider.max"), "max is a number from -1000 to 1000")
+        self.assertTrue(hint("slider.label").startswith("label: 1-40 characters of plain text on one line"))
+        self.assertEqual(hint("slider.missing"), "a slider needs all of param, min, max, step, default and label")
+        self.assertIn("alt, sliders,", hint("scene.unknown.zz"))
+        # The example in the hint is an accepted slider shape: every key, the default a stop of the grid.
+        example = json.loads(hint("sliders")[hint("sliders").index("{"):])
+        self.assertEqual(sorted(example), sorted(["param", "min", "max", "step", "default", "label"]))
+        self.assertEqual((example["default"] - example["min"]) % example["step"], 0)
 
     def test_wildcards(self):
         match = self.hints.matches

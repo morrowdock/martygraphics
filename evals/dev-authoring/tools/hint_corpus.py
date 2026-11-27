@@ -33,7 +33,8 @@ PRECEDENCE = [
     "edit.key.radius", "edit.key", "edit.value", "steps", "step.show", "step.cam", "world.w", "world.unknown.d",
     "camera.zoom", "camera.yaw", "edge.dir", "vector.dir", "plot.pts", "rope.pts", "path.pts", "line.pts",
     "body.at", "line.to", "vector.from", "id.duplicate.dot", "3d.kind.table", "3d.text.code", "video2d.schema",
-    "hide.ref", "over.ref",
+    "hide.ref", "over.ref", "slider.label.placeholder", "slider.a.min.func.at", "slider.b.max.func.w",
+    "slider.c.min.func.y.var.t", "slider.default.min", "slider.step.count", "sliders.bindings",
 ]
 # Reasons built by helpers (MGModel bounds, identifier and text checks, templates, camera) rather than MGError literals.
 HELPER_REASONS = ["scene.number", "scene.depth", "scene.bytes", "template.check", "item.id", "item.label", "title",
@@ -45,7 +46,7 @@ GRAPH_REASONS = ["func.detail", "func.breaks", "func.empty", "func.loop", "func.
                  "func.y.name", "field.dx.name", "func.y.arity", "field.dy.arity"]
 # Reasons without a hint: neither a computed hint nor any pattern applies.
 UNKNOWN = ["not.a.reason", "", "body.atx", "item.nokind.missing", "item.body", "lesson.op.add", "mp4: writer failed",
-           "patch.stale", "items.count.extra"]
+           "patch.stale", "items.count.extra", "sliders.count", "slider.a.mid.func.detail"]
 ML_UNKNOWN = ["ml.not.a.reason", "ml", "json"]
 
 

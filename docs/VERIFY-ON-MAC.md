@@ -14,6 +14,28 @@ swift build && swift test
 git status --porcelain
 ```
 
+### Default grammar digest under Darwin Foundation
+
+`LessonCoreTests.testU16DefaultGrammarDocumentIsUnchanged`
+(`Tests/MartyGraphicsTests/LessonCoreTests.swift`) pins the FNV-1a 64 digest
+and the byte count of the canonical default grammar document
+(`grammarHash`, `grammarBytes`). Each change to the grammar so far computed the
+new pin offline (a Python rebuild of the document, and Linux
+`JSONSerialization`), never under Darwin Foundation, whose `JSONSerialization`
+writes the bytes on a Mac. Run it on its own and record what it reports:
+
+```sh
+swift test --filter 'MartyGraphicsTests.LessonCoreTests/testU16DefaultGrammarDocumentIsUnchanged'
+```
+
+Record the commit, the pinned digest and byte count, and the result. On a
+failure the message gives the Darwin digest and `byte count N`: record both.
+When the reviewed Darwin result differs from the pin, update `grammarHash` and
+`grammarBytes` to the Darwin values in a reviewed commit, note the old and the
+new values in its message, and run the step again; do not change the pin
+without that review. The full `swift test` run below covers the same test, so
+this step only makes its digest part of the record.
+
 The root package test run does not build or test the other packages. Every
 folder of the checkout with a `Package.swift` is a package, except under a
 `.build` folder (at any depth) or under the vendor roots `vendor` and

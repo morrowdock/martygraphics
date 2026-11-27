@@ -215,5 +215,144 @@ class ItemRules(unittest.TestCase):
         self.assertTrue(mg_expr.check_scene({"v": 1, "world": {"w": 12, "h": 8}, "items": [dict(func, w=6, a=2)]}))
 
 
+class SliderCases(unittest.TestCase):
+    """The `sliders` key against docs/fixtures/v1/sliders.cases.json (Swift: Tests/MartyGraphicsTests/SliderTests.swift)."""
+
+    def test_limits_match_swift(self):
+        self.assertEqual((mg_expr.SLIDERS, mg_expr.SLIDER_STEPS, mg_expr.SLIDER_BINDINGS), (3, 100, 6))
+        self.assertEqual(sorted(mg_expr.SLIDER_KEYS), ["default", "label", "max", "min", "param", "step"])
+
+    def test_accepted_scenes(self):
+        cases = load("sliders.cases.json")["accepted"]
+        self.assertGreaterEqual(len(cases), 7)
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                mg_expr.check_scene(case["scene"])
+                self.assertEqual(mg_expr.check_sliders(case["scene"]), case["sliders"])
+
+    def test_refused_scenes(self):
+        cases = load("sliders.cases.json")["refused"]
+        self.assertGreaterEqual(len(cases), 41)
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                with self.assertRaises(mg_expr.Refusal) as raised:
+                    mg_expr.check_scene(case["scene"])
+                self.assertEqual(raised.exception.reason, case["reason"])
+
+    def test_documentation_scene_passes(self):
+        scene = load("sliders.scene.json")
+        self.assertEqual(mg_expr.check_scene(scene)["wave"]["samples"], 257)
+        self.assertEqual([s["param"] for s in mg_expr.check_sliders(scene)], ["a", "b", "c"])
+
+    def test_a_template_scene_checks_each_slider_alone(self):
+        slider = {"param": "a", "min": 0, "max": 1, "step": 0.5, "default": 0, "label": "a"}
+        scene = {"v": 1, "template": "bst", "params": {"values": [1]}, "sliders": [slider]}
+        self.assertEqual(mg_expr.check_sliders(scene, literal=False),
+                         [{"param": "a", "steps": 2, "defaultStop": 0, "items": []}])
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_sliders(dict(scene, sliders=[dict(slider, step=0.3)]), literal=False)
+        self.assertEqual(raised.exception.reason, "slider.step")
+
+    def test_huge_and_tiny_numbers_are_refusals(self):
+        slider = {"param": "a", "min": 0, "max": 1, "step": 0.5, "default": 0, "label": "a"}
+        for change, reason in [({"min": -10 ** 400}, "slider.min"), ({"step": 10 ** 400}, "slider.step"),
+                               ({"step": 5e-324}, "slider.step.count"), ({"default": 10 ** 400}, "slider.default"),
+                               ({"step": True}, "slider.step"), ({"label": 3}, "slider.label")]:
+            with self.subTest(reason=reason, change=str(change)[:40]):
+                with self.assertRaises(mg_expr.Refusal) as raised:
+                    mg_expr.check_slider(dict(slider, **change))
+                self.assertEqual(raised.exception.reason, reason)
+        # Unknown keys are named the way Swift names them: sorted, at most four, odd names as `?`.
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_slider(dict(slider, z=1, y=1, x=1, w=1, v=1))
+        self.assertEqual(raised.exception.reason, "slider.unknown.v,w,x,y")
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_slider(dict(slider, **{"a-b": 1}))
+        self.assertEqual(raised.exception.reason, "slider.unknown.?")
+
+    def test_stops_finer_than_the_doubles_are_refused(self):
+        # Four steps from 1 to the third double above it: stops 0 and 1 are both 1 (SliderTests, the same case).
+        slider = {"param": "a", "min": 1, "max": 1.0000000000000004, "step": 1.1102230246251565e-16, "default": 1,
+                  "label": "a"}
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_slider(slider)
+        self.assertEqual(raised.exception.reason, "slider.grid")
+
+    def test_a_nonzero_value_is_never_written_as_zero(self):
+        grid = mg_expr.SliderGrid(-1.0, 1.0, 1.0, 2)
+        self.assertEqual(grid.text(1e-12), "1e-12")
+        self.assertEqual(grid.text(-1e-12), "-1e-12")
+        self.assertEqual(grid.text(-0.0), "0")
+        # A default within tolerance of the stop 0 but not 0 is refused: it is not written as its stop is.
+        slider = {"param": "a", "min": -1, "max": 1, "step": 1, "default": 1e-12, "label": "a"}
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_slider(slider)
+        self.assertEqual(raised.exception.reason, "slider.default")
+        # A stop meant to be 0 is 0, not the 4.4e-16 that min + (max - min) * 26 / 52 gives.
+        wide = mg_expr.SliderGrid(-2.6, 2.6, 0.1, 52)
+        self.assertEqual(wide.value_at(26), 0.0)
+        self.assertEqual(wide.text(wide.value_at(26)), "0")
+        self.assertTrue(wide.is_distinct())
+
+    def test_an_end_the_slider_cannot_show_exactly_is_refused(self):
+        # Codex: 0 to 1.0000000002 in one step shows its last stop as `1`, so the engine would get 1.0000000002 under
+        # a label of 1. At exactly 1 the graph y = 0.0000000001/(a-1) is refused, at 1.0000000002 it is drawn.
+        grid = mg_expr.SliderGrid(0.0, 1.0000000002, 1.0, 1)
+        self.assertEqual(grid.text(1.0000000002), "1")
+        self.assertEqual(grid.value_at(1), 1.0)
+        self.assertFalse(grid.is_distinct())
+        graph = {"id": "f", "k": "func", "at": [1, 1], "w": 10, "h": 6, "xr": [-3, 3], "yr": [-4, 4],
+                 "y": "0.0000000001/(a-1)", "a": 0}
+        self.assertTrue(mg_expr.check_graph_item(dict(graph, a=1.0000000002), (12.0, 8.0), False))
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_graph_item(dict(graph, a=1), (12.0, 8.0), False)
+        self.assertEqual(raised.exception.reason, "func.empty")
+        # Refused whatever the default: a default of 1 (shown as max) no longer stands in for max.
+        for default in (0, 1):
+            with self.subTest(default=default):
+                with self.assertRaises(mg_expr.Refusal) as raised:
+                    mg_expr.check_slider({"param": "a", "min": 0, "max": 1.0000000002, "step": 1, "default": default,
+                                          "label": "a"})
+                self.assertEqual(raised.exception.reason, "slider.grid")
+
+    def test_the_default_is_exactly_a_stop_and_never_replaces_one(self):
+        slider = {"param": "a", "min": 0, "max": 1, "step": 0.1, "default": 0.30000000000000004, "label": "a"}
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_slider(slider)
+        self.assertEqual(raised.exception.reason, "slider.default")
+        self.assertEqual(mg_expr.check_slider(dict(slider, default=0.3))[5:], (10, 3))
+        # value_at never returns the default in place of the stop's own value.
+        grid = mg_expr.SliderGrid(0.0, 1.0, 0.1, 10, initial=0.30000000000000004, default_stop=3)
+        self.assertEqual(grid.value_at(3), 0.3)
+        self.assertEqual(mg_expr.SliderGrid(0.0, 1.0, 1.0, 1, initial=0.9999999999, default_stop=1).value_at(1), 1.0)
+
+    def test_the_engine_gets_exactly_the_shown_value_on_ordinary_grids(self):
+        # Every grid an author would write from these mins, steps and step counts (max written to six places):
+        # label -> float is the engine value, the stops rise strictly from exactly min to exactly max, and each stop
+        # is accepted as the default at its own position.
+        checked = 0
+        for lo in (-1000, -10, -3, -2.6, -1, -0.5, -0.3, 0, 0.1, 0.25, 1, 2.5, 100):
+            for step in (0.001, 0.01, 0.02, 0.05, 0.1, 0.125, 0.2, 0.25, 0.5, 1, 5, 20):
+                for n in (2, 3, 4, 5, 7, 10, 13, 30, 64, 100):
+                    hi = float("%.6f" % (lo + n * step))
+                    if hi > 1000:
+                        continue
+                    with self.subTest(lo=lo, hi=hi, step=step):
+                        slider = {"param": "a", "min": lo, "max": hi, "step": step, "default": lo, "label": "a"}
+                        steps = mg_expr.check_slider(slider)[5]
+                        self.assertEqual(steps, n)
+                        grid = mg_expr.SliderGrid(float(lo), hi, float(step), steps)
+                        values = [grid.value_at(i) for i in range(steps + 1)]
+                        self.assertEqual((values[0], values[-1]), (lo, hi))
+                        self.assertTrue(all(a < b for a, b in zip(values, values[1:])))
+                        for i, v in enumerate(values):
+                            self.assertEqual(float(grid.text(v)), v)
+                            self.assertEqual(grid.text(grid.candidate_at(i)), grid.text(v))
+                        for i in (0, n // 2, n):
+                            self.assertEqual(mg_expr.check_slider(dict(slider, default=values[i]))[6], i)
+                        checked += 1
+        self.assertGreater(checked, 1000)
+
+
 if __name__ == "__main__":
     unittest.main()

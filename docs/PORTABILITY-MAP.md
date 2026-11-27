@@ -113,7 +113,7 @@ The second count is every file importing the group at all.
 
 | Group | Sources (primary) | Sources (any import) | tools (primary) | tools (any import) |
 | --- | ---: | ---: | ---: | ---: |
-| Foundation-only | 76 | 92 | 0 | 5 |
+| Foundation-only | 77 | 93 | 0 | 5 |
 | CoreGraphics | 14 | 18 | 0 | 0 |
 | SwiftUI | 8 | 10 | 0 | 0 |
 | SceneKit | 1 | 3 | 0 | 0 |
@@ -122,7 +122,7 @@ The second count is every file importing the group at all.
 | Combine | 0 | 3 | 0 | 0 |
 | other | 5 | 14 | 6 | 6 |
 
-Swift files scanned: 110 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
+Swift files scanned: 111 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
 
 ### Core candidates
 
@@ -153,13 +153,13 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 
 | Module | Public declarations | Name platform types | Name `Any` |
 | --- | ---: | ---: | ---: |
-| MartyGraphics | 2605 | 78 | 10 |
+| MartyGraphics | 2653 | 78 | 10 |
 | MartyGraphicsMLKit | 31 | 2 | 0 |
 | MartyGraphicsPathTracer | 158 | 59 | 0 |
 
 #### MartyGraphics: public scopes with matching signatures
 
-355 scope/file pairs scanned, of which 28 match.
+359 scope/file pairs scanned, of which 28 match.
 
 | Type (scope) | File | Public decls | Platform tokens | Untyped |
 | --- | --- | ---: | --- | --- |
@@ -262,6 +262,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/MGRenderPolicy.swift` | SwiftUI | SwiftUI | — | — |
 | `Sources/MartyGraphics/MGRepairHint.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGSceneDiff.swift` | Foundation-only | Foundation | — | — |
+| `Sources/MartyGraphics/MGSliders.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGStream.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGTemplates.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGTheme.swift` | SwiftUI | SwiftUI | — | SwiftUI: `Color` |

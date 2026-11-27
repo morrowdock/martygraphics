@@ -177,6 +177,9 @@ public struct MGScene: Equatable, Sendable {
     /// Text alternative for the whole board (wire `alt`), for a reader who cannot see it. nil when not authored;
     /// `MGDescribe.board` gives an engine-written structural description instead.
     public internal(set) var alt: String? = nil
+    /// Learner sliders (wire `sliders`), each bound to the `func` items that set its parameter. Empty when not
+    /// authored; then nothing changes. `MGSliderState` applies slider positions through the parser.
+    public internal(set) var sliders: [MGSlider] = []
 
     public func item(_ id: String) -> MGItem? { items.first { $0.id == id } }
     public var animates: Bool {

@@ -146,6 +146,70 @@ enum MGBoardTransition {
     }
 }
 
+/// The 2D board's in-flight item transitions: engine keyframes (on a clock a lesson pause can hold) and the blend from
+/// the items that were on screen, in the board's `MGTransitionStyle` (`MGBoardTransition`). `frame` gives what a frame
+/// draws and `phase` where the transitions stand (the board's split, `MGBoardTransition.phase`), both from this state,
+/// so the SwiftUI host's canvases, its split and the tests agree. `settle()` ends both at once: the next frame draws
+/// the live items exactly (a learner slider change), and the board may split against them once its camera allows.
+struct MGBoardMotion: Equatable, Sendable {
+    private(set) var keyframes: [MGAdoption.Segment] = []
+    private(set) var clock = MGTransitionClock(start: .distantPast)
+    private(set) var keyframeDuration: Double = 0
+    private(set) var blendFrom: [MGItem]?
+    private(set) var blendStart = Date.distantPast
+
+    /// Blend from `items` (the frame on screen), starting `now`; nil: no blend.
+    mutating func blend(from items: [MGItem]?, at now: Date) {
+        blendFrom = items
+        if items != nil { blendStart = now }
+    }
+
+    /// Play `segments` (an `MGAdoption` plan's), starting `now`.
+    mutating func play(_ segments: [MGAdoption.Segment], duration: Double, at now: Date) {
+        keyframes = segments; clock = MGTransitionClock(start: now); keyframeDuration = duration
+    }
+
+    mutating func pause(at now: Date) { clock.pause(at: now) }
+    mutating func resume(at now: Date) { clock.resume(at: now) }
+    /// Keyframe seconds still to play.
+    func keyframesLeft(at now: Date) -> Double { max(0, keyframeDuration - clock.elapsed(at: now)) }
+
+    /// End every in-flight transition: no keyframes and no blend, so `frame` returns the live items' frame with nothing
+    /// fading, and `phase` no longer reports `.moving` for either.
+    mutating func settle() { keyframes = []; keyframeDuration = 0; blendFrom = nil }
+
+    /// True while engine keyframes play at `now` (a lesson pause holds their clock); never with Reduce Motion.
+    func keyframesPlay(at now: Date, reduceMotion: Bool) -> Bool {
+        !keyframes.isEmpty && clock.elapsed(at: now) < keyframeDuration && !reduceMotion
+    }
+
+    /// Seconds since the last blend began at `now`; nil when there is no blend.
+    func blendElapsed(at now: Date) -> Double? { blendFrom == nil ? nil : now.timeIntervalSince(blendStart) }
+
+    /// The frame drawn at `now`: the keyframes while they play, else `live` (the board's items at the shown step), with
+    /// motion at `time`, without `hiding`, then the step or patch blend of `style` (`MGBoardTransition.items`): by
+    /// default the board's spring within the 1.2 s window and nothing with Reduce Motion; a `.bounded` board eases with
+    /// no overshoot, fades leaving items out and dissolves with Reduce Motion (`MGStepTransition`). `opacity` holds the
+    /// items that are not opaque.
+    func frame(_ scene: MGScene, live: [MGItem], style: MGTransitionStyle, now: Date, time: Double, hiding: Set<String>,
+               reduceMotion: Bool) -> MGStepTransition.Frame {
+        var items = MGTimeline.frame(scene, items: keyframesPlay(at: now, reduceMotion: reduceMotion)
+                                     ? MGTween.sample(keyframes, at: clock.elapsed(at: now)) : live, time: time)
+        if !hiding.isEmpty { items.removeAll { hiding.contains($0.id) } }
+        var blend = MGBoardTransition.items(style, from: blendFrom, to: items, elapsed: now.timeIntervalSince(blendStart), reduceMotion: reduceMotion)
+        // Leaving items come from the previous frame (`.bounded` only): a concealed id stays hidden while it fades.
+        if style == .bounded, !hiding.isEmpty { blend.items.removeAll { hiding.contains($0.id) } }
+        return blend
+    }
+
+    /// Where the transitions stand at `now` (`MGBoardTransition.phase`): the blend and the keyframes are this state's,
+    /// the camera move (`cameraElapsed` seconds after it began) and the draw-on are the board's.
+    func phase(_ style: MGTransitionStyle, at now: Date, cameraElapsed: Double, drawingOn: Bool, reduceMotion: Bool) -> MGBoardTransition.Phase {
+        MGBoardTransition.phase(style, blendElapsed: blendElapsed(at: now), cameraElapsed: cameraElapsed,
+                                keyframes: keyframesPlay(at: now, reduceMotion: reduceMotion), drawingOn: drawingOn, reduceMotion: reduceMotion)
+    }
+}
+
 /// How a board that opts in (`MGTransitionStyle.bounded`) moves from one step's state to the next (docs/ENGINE.md,
 /// "Transitions"): bounded, deterministic, and with a reduced-motion path. The default board keeps its spring.
 ///

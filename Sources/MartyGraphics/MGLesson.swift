@@ -478,10 +478,11 @@ enum MGLessonEngine {
 
     /// Lesson policy for template walkthroughs: a lesson has one beat system, so a resolved scene's own `steps`
     /// (a template's built-in walkthrough) are dropped. Every resolved item is on the board from the start, and no step
-    /// edit applies, so the lesson state and the drawn board always hold the same items. Scenes outside lessons keep v1
+    /// edit applies, so the lesson state and the drawn board always hold the same items. For the same reason a scene's
+    /// learner `sliders` are dropped: a lesson's controls are its own (`bind`). Scenes outside lessons keep v1
     /// behaviour; the scene `source` is unchanged.
     static func lessonScene(_ scene: MGScene) -> MGScene {
-        guard !scene.steps.isEmpty || scene.startStep != 0 else { return scene }
+        guard !scene.steps.isEmpty || scene.startStep != 0 || !scene.sliders.isEmpty else { return scene }
         var out = MGScene(source: scene.source, template: scene.template, title: scene.title, is3D: scene.is3D, width: scene.width,
                           height: scene.height, items: scene.items, steps: [], camera: scene.camera, values: scene.values,
                           motion: scene.motion, attachments: scene.attachments)

@@ -115,6 +115,8 @@ public final class MGSceneController: ObservableObject {
 }
 
 /// Public entry point: `MartyGraphicsView(scene:)` or `MartyGraphicsView(controller:)` for live patches/streams.
+/// A scene with learner `sliders` shows them under the board when the view shows its controls and is not read-only
+/// (`MGSliderState`; docs/PROTOCOL.md, "Learner sliders").
 public struct MartyGraphicsView: View {
     @StateObject private var own: MGSceneController
     private let external: MGSceneController?
@@ -273,21 +275,22 @@ struct MGSceneHost: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     /// The system's Reduce Motion setting (a test may override it, `MGBoardTeaching.reduceMotion`).
     private var reduceMotion: Bool { teaching.reduceMotion ?? systemReduceMotion }
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var step = 0
+    /// Learner sliders (wire `sliders`): their positions and the items they give. Nil for a scene without sliders and
+    /// whenever the host hides the controls or the board is read-only, so such a board draws exactly as before.
+    @State private var sliderState: MGSliderState?
     @State private var playing = true
     @State private var epoch = Date()   // replaced on appear (`adopt`) by the board's time base
     @State private var pausedAt: Double = 0
     @State private var appearStart: [String: Date] = [:]
-    @State private var blendFrom: [MGItem]?
-    @State private var blendStart = Date.distantPast
+    /// Engine keyframe segments being played (on a clock that a lesson pause can hold) and the blend from what was on
+    /// screen. A slider change settles both (`changeSliders`).
+    @State private var motion = MGBoardMotion()
     @State private var cameraFrom: MGCamera?
     @State private var cameraStart = Date.distantPast
     @State private var shownScene: MGScene?
-    /// Engine keyframe segments being played, on a clock that a lesson pause can hold.
-    @State private var keyframes: [MGAdoption.Segment] = []
-    @State private var keyframeClock = MGTransitionClock(start: .distantPast)
-    @State private var keyframeDuration: Double = 0
     @State private var heldAt: Date?
     // Render gating: the frame loop runs only for real motion or a short transition on a visible board.
     @Environment(\.scenePhase) private var scenePhase
@@ -312,6 +315,7 @@ struct MGSceneHost: View {
             VStack(alignment: .leading, spacing: 12) {
                 header(scene)
                 board(scene)
+                if let state = sliders(scene), !state.sliders(hiding: teaching.concealed).isEmpty { sliderPanel(state) }
                 if showsControls, !scene.steps.isEmpty { caption(scene) }
             }
             .padding(14)
@@ -364,12 +368,14 @@ struct MGSceneHost: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement()
         .accessibilityLabel(scene.title.isEmpty ? "Marty's sketch" : scene.title)
-        .accessibilityValue(teaching.summary ?? MGDescribe.accessibilityValue(scene, step: step, describing: teaching.describes,
-                                                                               hiding: teaching.concealed) { controller.timelineItems(scene, step: step) })
-        // VoiceOver audio graph of the visible plot, func or bars items (none otherwise; concealed items never count).
-        // Built from the step items the board keeps between frames (`MGTimelineCache`), never computed again here.
-        .modifier(MGAudioGraphModifier(chart: MGAudioGraph.chart(scene, items: controller.timelineItems(scene, step: step),
-                                                                 hiding: teaching.concealed)))
+        // At the slider defaults the value is the authored one, read from the cached step items like the board.
+        .accessibilityValue(teaching.summary
+                            ?? sliders(scene).flatMap { $0.isAtDefaults ? nil : $0.accessibilityValue(describing: teaching.describes, hiding: teaching.concealed) }
+                            ?? MGDescribe.accessibilityValue(scene, step: step, describing: teaching.describes,
+                                                       hiding: teaching.concealed) { controller.timelineItems(scene, step: step) })
+        // VoiceOver audio graph of the visible plot, func or bars items (none otherwise; concealed items never count),
+        // built from the items the board draws now: with the learner's slider values when the scene shows sliders.
+        .modifier(MGAudioGraphModifier(chart: MGAudioGraph.chart(scene, items: boardItems(scene, step: step), hiding: teaching.concealed)))
     }
 
     /// The 2D board: one Canvas in a TimelineView, or, while motion plays and no transition runs, a cached base Canvas
@@ -496,6 +502,93 @@ struct MGSceneHost: View {
         .buttonStyle(.plain).disabled(!enabled).accessibilityLabel(label)
     }
 
+    // MARK: learner sliders
+
+    /// The slider state for `scene` at the current step, or nil when the scene shows no sliders.
+    private func sliders(_ scene: MGScene) -> MGSliderState? {
+        guard let s = sliderState, s.scene.revision == scene.revision, s.step == step else { return nil }
+        return s
+    }
+
+    /// The items at `step`, for the canvas and the audio graph alike: the learner's items once a slider sits at an
+    /// accepted non-default value, else `MGTimeline.items` through the controller's cache (also at the defaults), so a
+    /// frame never recomputes them (`MGSliderState.boardItems`).
+    private func boardItems(_ scene: MGScene, step: Int) -> [MGItem] {
+        MGSliderState.boardItems(scene, step: step, sliders: sliderState, cache: controller.timeline)
+    }
+
+    /// One row per slider that drives a graph on the board now, the engine's readout of the driven graphs, a note when
+    /// the engine refused a position, and a reset button. Text uses Dynamic Type styles and wraps.
+    private func sliderPanel(_ state: MGSliderState) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(state.sliders(hiding: teaching.concealed)) { s in sliderRow(s, state) }
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(Array(state.caption(hiding: teaching.concealed).enumerated()), id: \.offset) { _, line in
+                        Text(line).font(.callout.monospacedDigit()).foregroundStyle(theme.subtleInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let note = state.refusal?.text {
+                        Text(note).font(.callout).foregroundStyle(theme.color(.warn))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("board.slider.note")
+                    }
+                }
+                Spacer(minLength: 0)
+                control("arrow.uturn.backward", "Reset sliders", enabled: !state.isAtDefaults) { changeSliders { $0.reset(); return true } }
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    /// The label and the current value above a native slider. VoiceOver reads the slider itself (label, value, hint)
+    /// and adjusts it one step per swipe, past any position the engine refuses; the text above it is not read twice.
+    private func sliderRow(_ s: MGSlider, _ state: MGSliderState) -> some View {
+        let a11y = state.accessibility(s.param)
+        let name = Text(s.label).font(.subheadline.weight(.semibold)).foregroundStyle(theme.ink)
+        let shown = Text(a11y?.value ?? "").font(.subheadline.monospacedDigit()).foregroundStyle(theme.color(.accent))
+        return VStack(alignment: .leading, spacing: 4) {
+            Group {
+                if typeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 2) { name; shown }
+                } else {
+                    HStack { name; Spacer(minLength: 8); shown }
+                }
+            }
+            .accessibilityHidden(true)
+            Slider(value: Binding(get: { sliderState?.value(s.param) ?? s.defaultValue },
+                                  set: { v in changeSliders { $0.set(s.param, nearest: v) } }),
+                   in: s.min...s.max, step: s.step)
+                .tint(theme.color(.accent))
+                .accessibilityLabel(a11y?.label ?? s.label)
+                .accessibilityValue(a11y?.value ?? "")
+                .accessibilityHint(a11y?.hint ?? "")
+                .accessibilityIdentifier(a11y?.identifier ?? "board.slider." + s.param)
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment: changeSliders { $0.increment(s.param) }
+                    case .decrement: changeSliders { $0.decrement(s.param) }
+                    @unknown default: break
+                    }
+                }
+        }
+    }
+
+    /// Apply a slider change: the board follows at once (no blend, no draw-on), and a newly refused position is
+    /// announced to VoiceOver with the note the board shows. A change of the board's items settles any in-flight step,
+    /// scene or keyframe transition (`MGBoardMotion.settle`): from the next frame on the canvas draws the items the
+    /// audio graph charts, instead of finishing a blend or keyframes toward items the sliders have replaced.
+    private func changeSliders(_ change: (inout MGSliderState) -> Bool) {
+        guard var state = sliderState else { return }
+        let before = state.refusal
+        let shown = state.items
+        _ = change(&state)
+        sliderState = state
+        if state.items != shown { motion.settle() }
+        bumpTransient(0.1)
+        if let refusal = state.refusal, refusal != before { AccessibilityNotification.Announcement(refusal.text).post() }
+    }
+
     // MARK: state
 
     private func time(_ now: Date) -> Double { teaching.holdsMotion ? 0 : (playing ? now.timeIntervalSince(epoch) : pausedAt) }
@@ -509,8 +602,8 @@ struct MGSceneHost: View {
         guard scene.steps.indices.contains(next) else { return }
         let before = Set(controller.timelineItems(scene, step: step).map(\.id))
         cameraFrom = scene.steps[step].camera ?? scene.camera; cameraStart = controller.presentationDate()
-        blendFrom = MGTimeline.frame(scene, items: controller.timelineItems(scene, step: step), time: time(controller.presentationDate())); blendStart = controller.presentationDate()
-        step = next; bumpTransient()
+        motion.blend(from: MGTimeline.frame(scene, items: boardItems(scene, step: step), time: time(controller.presentationDate())), at: controller.presentationDate())
+        step = next; sliderState?.show(step: next); bumpTransient()
         let now = controller.presentationDate()
         for id in controller.timelineItems(scene, step: next).map(\.id) where !before.contains(id) { appearStart[id] = now }
     }
@@ -524,12 +617,12 @@ struct MGSceneHost: View {
         let plan = MGAdoption.plan(previous: animated ? previous?.items : nil, next: scene.items, transition: transition, step: step, drawsOn: drawsOn)
         if !drawsOn { appearStart.removeAll() }   // no draw-on left over from an earlier, interrupted transition
         if plan.blends, let previous {
-            blendFrom = MGTimeline.frame(previous, items: MGTimeline.items(previous, step: step), time: time(now)); blendStart = now
+            motion.blend(from: MGTimeline.frame(previous, items: boardItems(previous, step: step), time: time(now)), at: now)
         } else {
-            blendFrom = nil
+            motion.blend(from: nil, at: now)
         }
-        keyframes = plan.segments; keyframeClock = MGTransitionClock(start: now); keyframeDuration = plan.duration
-        if controller.transitionsPaused { keyframeClock.pause(at: now); heldAt = now }
+        motion.play(plan.segments, duration: plan.duration, at: now)
+        if controller.transitionsPaused { motion.pause(at: now); heldAt = now }
         for (id, delay) in plan.appear { appearStart[id] = now.addingTimeInterval(delay) }
         let sameScene = previous.map { $0.template == scene.template && $0.title == scene.title } ?? false
         if !sameScene { step = 0; epoch = now; pausedAt = 0 }
@@ -540,6 +633,9 @@ struct MGSceneHost: View {
         if readOnly { step = max(0, scene.steps.count - 1) }
         if scene.startStep > 0, let previous { cameraFrom = previous.steps.indices.contains(step) ? previous.steps[step].camera : previous.camera; cameraStart = now }
         shownScene = scene
+        // Sliders keep the learner's positions across updates of the same scene while they stay valid.
+        sliderState = showsControls && !readOnly && !scene.sliders.isEmpty
+            ? MGSliderState(scene: scene, step: step, keeping: sameScene ? sliderState?.values ?? [:] : [:]) : nil
         if case .direct = transition, animated, plan.appear.isEmpty { bumpTransient(0.1) }   // one settled redraw, no replay
         else { bumpTransient(max(MGRenderPolicy.transientSeconds, max(plan.duration, plan.appear.values.max() ?? 0) + 0.8)) }   // + draw-on 0.55 s
     }
@@ -548,47 +644,36 @@ struct MGSceneHost: View {
     private func holdTransitions(_ paused: Bool) {
         let now = controller.presentationDate()
         if paused {
-            keyframeClock.pause(at: now); heldAt = now
+            motion.pause(at: now); heldAt = now
         } else {
-            keyframeClock.resume(at: now)
+            motion.resume(at: now)
             if let held = heldAt {
                 let gap = now.timeIntervalSince(held)
                 for (id, start) in appearStart where start > held { appearStart[id] = start.addingTimeInterval(gap) }
             }
             heldAt = nil
-            let left = max(0, keyframeDuration - keyframeClock.elapsed(at: now))
+            let left = motion.keyframesLeft(at: now)
             if left > 0 { bumpTransient(left + 0.8) }
         }
     }
 
-    /// True while engine keyframes play at `now` (a lesson pause holds their clock).
-    private func keyframesPlay(at now: Date) -> Bool {
-        !keyframes.isEmpty && keyframeClock.elapsed(at: now) < keyframeDuration && !reduceMotion
-    }
-
     /// Where the board's step and patch transitions stand at `now` on its own clock (`MGBoardTransition.phase`), from
-    /// the same state `input` draws the blend, the camera move, the keyframes and the draw-on with.
+    /// the same state `input` draws with: the blend and the keyframes in `motion`, the camera move and the draw-on.
     private func transitionPhase(at now: Date) -> MGBoardTransition.Phase {
-        MGBoardTransition.phase(teaching.transitionStyle, blendElapsed: blendFrom == nil ? nil : now.timeIntervalSince(blendStart),
-                                cameraElapsed: now.timeIntervalSince(cameraStart), keyframes: keyframesPlay(at: now),
-                                drawingOn: !MGBoardTransition.appear(appearStart, at: now, reduceMotion: reduceMotion).isEmpty,
-                                reduceMotion: reduceMotion)
+        motion.phase(teaching.transitionStyle, at: now, cameraElapsed: now.timeIntervalSince(cameraStart),
+                     drawingOn: !MGBoardTransition.appear(appearStart, at: now, reduceMotion: reduceMotion).isEmpty, reduceMotion: reduceMotion)
     }
 
     private func input(_ scene: MGScene, now: Date, size: CGSize) -> MGRenderInput {
         let t = reduceMotion ? 0 : time(now)
-        let keyT = keyframeClock.elapsed(at: now)
-        var items = MGTimeline.frame(scene, items: keyframesPlay(at: now) ? MGTween.sample(keyframes, at: keyT)
-                                                                          : controller.timelineItems(scene, step: step), time: t)
-        if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
-        // Step and patch transitions (`MGBoardTransition`): by default the board's spring within the 1.2 s window and
-        // nothing with Reduce Motion, exactly as before; a `.bounded` board eases with no overshoot, fades leaving
-        // items out and dissolves with Reduce Motion (`MGStepTransition`).
+        // Step and patch transitions (`MGBoardMotion.frame`, `MGBoardTransition`): by default the board's spring within
+        // the 1.2 s window and nothing with Reduce Motion, exactly as before; a `.bounded` board eases with no overshoot,
+        // fades leaving items out and dissolves with Reduce Motion (`MGStepTransition`). The live items are the
+        // learner's once a slider sits at a non-default value, else the cached step items (`boardItems`).
         let style = teaching.transitionStyle
-        let blend = MGBoardTransition.items(style, from: blendFrom, to: items, elapsed: now.timeIntervalSince(blendStart), reduceMotion: reduceMotion)
-        items = blend.items
-        // Leaving items come from the previous frame (`.bounded` only): a concealed id stays hidden while it fades.
-        if style == .bounded, !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
+        let blend = motion.frame(scene, live: boardItems(scene, step: step), style: style, now: now, time: t,
+                                 hiding: teaching.concealed, reduceMotion: reduceMotion)
+        let items = blend.items
         let camera = scene.steps.indices.contains(step) ? (scene.steps[step].camera ?? scene.camera) : scene.camera
         let fit = teaching.fitSize ?? size
         var vp = MGViewport(size: fit, width: scene.width, height: scene.height, camera: camera).resized(to: size)

@@ -779,15 +779,119 @@
   },
   {
    "reason": "scene.unknown.layer2d",
-   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, alt, and template, params, hide, over for template scenes"
+   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, alt, sliders, and template, params, hide, over for template scenes"
   },
   {
    "reason": "scene.unknown.zz",
-   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, alt, and template, params, hide, over for template scenes"
+   "hint": "remove unknown top-level keys; a scene allows v, title, dim, world, camera, items, steps, alt, sliders, and template, params, hide, over for template scenes"
   },
   {
    "reason": "scene.version",
    "hint": "set \"v\": 1"
+  },
+  {
+   "reason": "slider",
+   "hint": "each slider is an object like {\"param\": \"a\", \"min\": 0, \"max\": 3, \"step\": 0.5, \"default\": 1, \"label\": \"Amplitude a\"}"
+  },
+  {
+   "reason": "slider.a.min.func.at",
+   "hint": "at the slider's min a func it drives fails the check named at the end of the reason: raise min, or change that func's range or expression"
+  },
+  {
+   "reason": "slider.a.min.func.detail",
+   "hint": "at the slider's min a func it drives fails the check named at the end of the reason: raise min, or change that func's range or expression"
+  },
+  {
+   "reason": "slider.b.max.func.mark",
+   "hint": "at the slider's max a func it drives fails the check named at the end of the reason: lower max, or change that func's range or expression"
+  },
+  {
+   "reason": "slider.b.max.func.w",
+   "hint": "at the slider's max a func it drives fails the check named at the end of the reason: lower max, or change that func's range or expression"
+  },
+  {
+   "reason": "slider.c.min.func.y.var.t",
+   "hint": "at the slider's min a func it drives fails the check named at the end of the reason: raise min, or change that func's range or expression"
+  },
+  {
+   "reason": "slider.default",
+   "hint": "default is a number from min to max that is exactly one of the slider's stops: min plus a whole number of steps, written as the slider shows it (0.3, not 0.30000000000000004; 0, not 1e-12)"
+  },
+  {
+   "reason": "slider.default.f",
+   "hint": "default must equal this parameter on every func the slider drives; the func named in the reason sets another value, so change one of them"
+  },
+  {
+   "reason": "slider.default.min",
+   "hint": "default must equal this parameter on every func the slider drives; the func named in the reason sets another value, so change one of them"
+  },
+  {
+   "reason": "slider.duplicate.a",
+   "hint": "one slider per parameter: remove the second slider for this parameter"
+  },
+  {
+   "reason": "slider.edit",
+   "hint": "no step edit may set a slider's parameter on a func or field; remove that edit (the learner sets the value with the slider)"
+  },
+  {
+   "reason": "slider.field",
+   "hint": "sliders drive func graphs only, and a field that sets the same parameter would not follow it: remove the parameter from the field, or remove the slider"
+  },
+  {
+   "reason": "slider.grid",
+   "hint": "the engine gets exactly the number each stop shows, so every stop, min and max included, must read back as exactly its value, each stop a different number: make max exactly min plus a whole number of steps (max 1.0000000002 with step 1 shows 1), and make step larger if neighbouring stops are too close to tell apart"
+  },
+  {
+   "reason": "slider.label",
+   "hint": "label: 1-40 characters of plain text on one line: no < or > (write the symbols ≤ ≥ → or words), no URLs or code fences"
+  },
+  {
+   "reason": "slider.label.placeholder",
+   "hint": "a slider label is fixed text: remove the braces (the board shows the current value beside the label)"
+  },
+  {
+   "reason": "slider.max",
+   "hint": "max is a number from -1000 to 1000"
+  },
+  {
+   "reason": "slider.min",
+   "hint": "min is a number from -1000 to 1000"
+  },
+  {
+   "reason": "slider.missing",
+   "hint": "a slider needs all of param, min, max, step, default and label"
+  },
+  {
+   "reason": "slider.param",
+   "hint": "param is the text \"a\", \"b\" or \"c\""
+  },
+  {
+   "reason": "slider.range",
+   "hint": "min must be below max"
+  },
+  {
+   "reason": "slider.step",
+   "hint": "step is a number above 0, at most max - min, that divides max - min into a whole number of steps, for example min 0, max 3, step 0.5"
+  },
+  {
+   "reason": "slider.step.count",
+   "hint": "at most 100 steps from min to max: make step larger or the range smaller"
+  },
+  {
+   "reason": "slider.unbound",
+   "hint": "no func sets this parameter: set it on the func the slider should drive (for example \"a\": 1, equal to the default), or remove the slider"
+  },
+  {
+   "reason": "slider.unknown.zz",
+   "hint": "remove unknown keys; a slider allows only param, min, max, step, default and label"
+  },
+  {
+   "reason": "sliders",
+   "hint": "sliders is a list of 1 to 3 sliders, each like {\"param\": \"a\", \"min\": 0, \"max\": 3, \"step\": 0.5, \"default\": 1, \"label\": \"Amplitude a\"}"
+  },
+  {
+   "reason": "sliders.bindings",
+   "hint": "at most 6 pairs of a slider and a func it drives in all: a slider drives every func that sets its parameter, so use fewer sliders or fewer graphs that set a slider's parameter"
   },
   {
    "reason": "spring.coils",
@@ -1023,6 +1127,14 @@
   },
   {
    "reason": "items.count.extra",
+   "hint": null
+  },
+  {
+   "reason": "sliders.count",
+   "hint": null
+  },
+  {
+   "reason": "slider.a.mid.func.detail",
    "hint": null
   }
  ],
