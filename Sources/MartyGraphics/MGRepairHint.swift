@@ -60,6 +60,7 @@ public enum MGRepairHint {
         ("template.params*", "params must be an object with only the template's parameters: bst takes values and find, two_pointers takes vals and target"),
         ("template.*.missing", "add the template parameter named in the reason"),
         ("template.*.integer", "this template parameter must be a whole number"),
+        ("template.motion", "the template built invalid motion; fix the template: slide travel, orbit and oscillate period and projectile visual are 0.3 to 10 seconds, hold is 0 to 10 seconds, projectile flight is above 0, and every other motion number is finite"),
         ("template.*", "check the template parameter named in the reason: its type, count and range (bst values: 1-15 distinct integers -999..999; two_pointers vals: 2-12 sorted integers)"),
         ("world*", "world is {\"w\": 2-100, \"h\": 2-100}; the default is 12 by 8"),
         ("items", "items must be a list"),

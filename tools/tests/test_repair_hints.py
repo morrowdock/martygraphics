@@ -130,6 +130,19 @@ class RepairHintMirror(unittest.TestCase):
         self.assertIn("remove angle", hint("vector.dir"))
         self.assertIn("three numbers from -1 to 1 with length above 0.01", hint("vector.dir"))
 
+    def test_motion_hint_states_the_parser_motion_bounds(self):
+        # MGParser.validateMotion: travel, period and visual in MGLimits.bodyMoveTime (0.3...10), hold in 0...10,
+        # flight > 0, every other motion number finite. It must not fall back to the template parameter hint.
+        hint = self.hints.scene_hint("template.motion")
+        parser = (ROOT / "Sources/MartyGraphics/MGParser.swift").read_text(encoding="utf-8")
+        self.assertIn("static let bodyMoveTime: ClosedRange<Double> = 0.3...10", parser)
+        self.assertIn("let holdDuration = 0...duration.upperBound", parser)
+        self.assertIn("flight > 0", parser)
+        self.assertNotEqual(hint, self.hints.scene_hint("template.values"))
+        self.assertEqual(hint, "the template built invalid motion; fix the template: slide travel, orbit and oscillate "
+                               "period and projectile visual are 0.3 to 10 seconds, hold is 0 to 10 seconds, projectile "
+                               "flight is above 0, and every other motion number is finite")
+
     def test_every_sample_reason_has_a_hint(self):
         sample = self.inventory.scene_reason_sample()
         checked_in = json.loads((ROOT / "evals/dev-authoring/inventories/scene-reasons.json").read_text(encoding="utf-8"))

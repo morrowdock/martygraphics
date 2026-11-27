@@ -82,8 +82,8 @@ The [reason sample](inventories/scene-reasons.json) has 161 tokens: the 59 stati
 `MGParser.swift`, `json`, `input.too-large` and `scene.missing`, the item missing and unknown families of the 19
 kinds, every kind–field family, and ten dynamic forms with one sample each. An earlier draft of this file said 148
 tokens; that number could not be reproduced. At 5e4952e the sample had 160 tokens; main later added
-`template.motion`, which takes the general `template.*` hint. The baseline validator printed extra detail text for
-3 of them (`SceneValidator.swift:153`, `:167` and `:172` at 5e4952e).
+`template.motion`, which has its own hint stating the parser's motion bounds. The baseline validator printed
+extra detail text for 3 of them (`SceneValidator.swift:153`, `:167` and `:172` at 5e4952e).
 
 **Lint on the frozen baseline outputs.** `tools/scene_lint.py` gives 10 findings in 7 of 32 scenes: 4 warnings
 (all in M09) and 6 review cues. It skips the 2 template scenes (C02, C03) and says so. Read by hand:

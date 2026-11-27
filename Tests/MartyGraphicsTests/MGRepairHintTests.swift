@@ -31,6 +31,32 @@ final class MGRepairHintTests: XCTestCase {
         }
     }
 
+    /// Invalid template motion has its own hint with the parser's motion bounds, not the general template parameter hint.
+    func testInvalidTemplateMotionGetsTheMotionHint() throws {
+        let data = Data(#"{"v":1,"template":"motion","params":{}}"#.utf8)
+        let bad: [MGMotion] = [
+            .slide([.init(id: "dot", dir: MGPoint(1, 0), accel: 1)], travel: 0.1, hold: 0),
+            .orbit(id: "dot", center: MGPoint(2, 4), period: 11, rotating: []),
+            .projectile(id: "dot", vx: 1, vy0: 2, g: 2, flight: 0, visual: 2, hold: 0,
+                        vxVector: nil, vyVector: nil, vectorScale: 1),
+            .oscillate(id: "dot", amplitude: .infinity, period: 2, energy: 2, bars: nil, vector: nil, vectorLength: 1)
+        ]
+        for motion in bad {
+            let template = MGTemplate(name: "motion", summary: "Motion", params: []) { _, _ in
+                MGTemplateBuild(title: "Motion", items: [MGMake.body("dot", MGPoint(3, 4))], motion: motion)
+            }
+            guard case .failure(let error) = MGParser.scene(data: data, extraTemplates: [template]) else {
+                return XCTFail("accepted \(motion)")
+            }
+            XCTAssertEqual(error.reason, "template.motion")
+        }
+        let hint = try XCTUnwrap(MGRepairHint.text(for: "template.motion"))
+        XCTAssertEqual(hint, "the template built invalid motion; fix the template: slide travel, orbit and oscillate period "
+                       + "and projectile visual are 0.3 to 10 seconds, hold is 0 to 10 seconds, projectile flight is above 0, "
+                       + "and every other motion number is finite")
+        XCTAssertNotEqual(hint, MGRepairHint.text(for: "template.values"))
+    }
+
     func testComputedAndPatternHints() {
         XCTAssertEqual(MGRepairHint.text(for: "item.body.missing"), "a body needs at, id, k")
         XCTAssertEqual(MGRepairHint.text(for: "item.edge.unknown.c"),
