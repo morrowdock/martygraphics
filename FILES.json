@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "8e3be740602b4bbf37d517f8e7fb8d8bdc1b80695670c798656a0bddb4fec76e"
+      "sha256": "c9f39949cdf69cf9bb8b24cebd6b9d1008b1c5a935a123a89102b1c783e3d3f2"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -4987,7 +4987,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/AudioGraphTests.swift",
-      "sha256": "764636a7758a5173200d397462754ca50b52a802528e1c71a50d2cf5625c4cfe"
+      "sha256": "d64db9f8390b5405ca83adc1991d7328eace962e615d46a574b015dd63f3c2bc"
     },
     {
       "path": "Sources/MartyGraphics/MGSliders.swift",

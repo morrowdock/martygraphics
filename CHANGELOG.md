@@ -216,7 +216,7 @@
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
 
 ### Fixed
-- Two test expressions (the seamless-loop vertex transform and the audio-graph worst-case sampler) are split into typed steps. On the hosted macOS runners (Xcode 26.6), the compiler timed out type-checking them, so the hosted macOS jobs had failed since #105.
+- Test expressions (the seamless-loop vertex transform and the audio-graph worst-case sampler's gap set) are split into typed steps. On the hosted macOS runners (Xcode 26.6), the compiler timed out type-checking them, so the hosted macOS jobs had failed since #105.
 - For items built in code, the renderer keeps its rounding and truncation and skips only a conversion whose result cannot be represented as an `Int`. For a vector angle this affects the fan-out grouping only. Spring coils are drawn only in the parser's 3–24 range, and a plot is labelled only when it has an origin point.
 - Item blends and the transition spring treat a negative elapsed time as the start of the transition, so a blend never extrapolates past its starting frame.
 - Bound patch diagnostics, validate video text and full video and ML identifiers, and check template text and motion before preview. Template travel, visual duration and period are limited to 0.3–10 seconds, with holds up to 10 seconds.

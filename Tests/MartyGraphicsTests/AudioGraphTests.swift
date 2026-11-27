@@ -322,7 +322,12 @@ final class AudioGraphTests: XCTestCase {
         // The sampler's worst case: a gap at the first grid value whose right probe opens the curve and a gap at 16
         // interval midpoints: 256 grid values, 1 probe and 16 × 2 probes.
         let grid = (0...MGLimits.funcIntervals).map { MGGraph.gridX($0, -1, 1) }
-        let gaps = Set(stride(from: 8, to: 8 + 16 * 15, by: 15).map { (grid[$0] + grid[$0 + 1]) / 2 })
+        let gapEnd: Int = 8 + 16 * 15
+        var gaps = Set<Double>()
+        for i in stride(from: 8, to: gapEnd, by: 15) {
+            let mid: Double = (grid[i] + grid[i + 1]) / 2
+            gaps.insert(mid)
+        }
         let wave: (Double) -> Double = { x in
             if x == grid[0] || gaps.contains(x) { return .nan }
             return 0.5 * sin(3 * x)
