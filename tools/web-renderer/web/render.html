@@ -1,0 +1,27 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MartyGraphics web renderer (prototype)</title>
+<style>html, body { margin: 0; background: #000; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="board" width="1" height="1"></canvas>
+<script type="module">
+import * as MG from "../dist/browser.js";
+import * as MGPixels from "./pixels.js";
+window.MGPixels = MGPixels;
+const canvas = document.getElementById("board");
+window.MGWeb = {
+  /** Validates and draws one frame; returns the result and, on success, the PNG as a data URL. */
+  render(req) {
+    const r = MG.render(canvas, req);
+    return r.ok ? { ...r, png: canvas.toDataURL("image/png") } : r;
+  },
+  MG,
+};
+window.MGWebReady = true;
+</script>
+</body>
+</html>

@@ -119,6 +119,7 @@
 - Note in the source why lesson and explainer reasons keep their own unknown-key rule.
 
 ### Added
+- Add a prototype TypeScript and Canvas renderer for 2D scene protocol v1 in 	ools/web-renderer.
 - **Captions and transcript export.** `marty-solid export-captions FILE.json --format vtt|srt|txt` and the library API
   `MGCaptionExport` print the story video's captions as WebVTT or SubRip, or a plain-text transcript (narration, and
   the board's `alt` text or engine description per beat), for assemblies and explainers, on standard output. `render`

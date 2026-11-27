@@ -1,0 +1,3775 @@
+{
+ "generated": "2026-11-27T03:49:17.934Z",
+ "references": "docs/assets/native (Swift MGCanvasRenderer via SwiftUI ImageRenderer, scale 1; see provenance.json)",
+ "tolerance": {
+  "meanAbsError": 6,
+  "recallWithin2px": 0.95,
+  "precisionWithin2px": 0.95,
+  "tilesWithin2px": 0.9
+ },
+ "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.8154.6 Safari/537.36",
+ "summary": {
+  "cases": 58,
+  "passed": 53,
+  "byReference": {
+   "tree.png": {
+    "frames": 1,
+    "passed": 1,
+    "worstMeanAbsError": 0.66,
+    "worstRecallWithin2px": 1,
+    "worstPrecisionWithin2px": 1,
+    "worstTilesWithin1px": 1,
+    "worstTilesWithin2px": 1,
+    "largestTileShiftPx": 0.42,
+    "focusRingTiles": 8,
+    "worstFocusRingWithin2px": 1
+   },
+   "two-pointers.png": {
+    "frames": 1,
+    "passed": 0,
+    "worstMeanAbsError": 1.109,
+    "worstRecallWithin2px": 0.997,
+    "worstPrecisionWithin2px": 0.9999,
+    "worstTilesWithin1px": 0.7222,
+    "worstTilesWithin2px": 0.8889,
+    "largestTileShiftPx": 3,
+    "focusRingTiles": 18,
+    "worstFocusRingWithin2px": 0.9444
+   },
+   "handoff.png": {
+    "frames": 1,
+    "passed": 1,
+    "worstMeanAbsError": 1.065,
+    "worstRecallWithin2px": 1,
+    "worstPrecisionWithin2px": 1,
+    "worstTilesWithin1px": 1,
+    "worstTilesWithin2px": 1,
+    "largestTileShiftPx": 1,
+    "focusRingTiles": 12,
+    "worstFocusRingWithin2px": 1
+   },
+   "function.png": {
+    "frames": 1,
+    "passed": 1,
+    "worstMeanAbsError": 1.111,
+    "worstRecallWithin2px": 0.9999,
+    "worstPrecisionWithin2px": 0.9993,
+    "worstTilesWithin1px": 1,
+    "worstTilesWithin2px": 1,
+    "largestTileShiftPx": 0.02,
+    "focusRingTiles": 48,
+    "worstFocusRingWithin2px": 0.4792
+   },
+   "counts.png": {
+    "frames": 1,
+    "passed": 1,
+    "worstMeanAbsError": 1.237,
+    "worstRecallWithin2px": 1,
+    "worstPrecisionWithin2px": 1,
+    "worstTilesWithin1px": 1,
+    "worstTilesWithin2px": 1,
+    "largestTileShiftPx": 1,
+    "focusRingTiles": 45,
+    "worstFocusRingWithin2px": 0.9778
+   },
+   "motion.png": {
+    "frames": 1,
+    "passed": 1,
+    "worstMeanAbsError": 0.52,
+    "worstRecallWithin2px": 1,
+    "worstPrecisionWithin2px": 1,
+    "worstTilesWithin1px": 1,
+    "worstTilesWithin2px": 1,
+    "largestTileShiftPx": 1,
+    "focusRingTiles": 8,
+    "worstFocusRingWithin2px": 1
+   },
+   "shortest-path.png": {
+    "frames": 1,
+    "passed": 1,
+    "worstMeanAbsError": 1.345,
+    "worstRecallWithin2px": 1,
+    "worstPrecisionWithin2px": 1,
+    "worstTilesWithin1px": 0.967,
+    "worstTilesWithin2px": 1,
+    "largestTileShiftPx": 2,
+    "focusRingTiles": 9,
+    "worstFocusRingWithin2px": 1
+   },
+   "two-pointers.gif": {
+    "frames": 4,
+    "passed": 0,
+    "worstMeanAbsError": 1.691,
+    "worstRecallWithin2px": 0.9971,
+    "worstPrecisionWithin2px": 0.9999,
+    "worstTilesWithin1px": 0.7222,
+    "worstTilesWithin2px": 0.8889,
+    "largestTileShiftPx": 3,
+    "focusRingTiles": 72,
+    "worstFocusRingWithin2px": 0.9444
+   },
+   "shortest-path.gif": {
+    "frames": 8,
+    "passed": 8,
+    "worstMeanAbsError": 1.946,
+    "worstRecallWithin2px": 1,
+    "worstPrecisionWithin2px": 1,
+    "worstTilesWithin1px": 0.956,
+    "worstTilesWithin2px": 1,
+    "largestTileShiftPx": 2,
+    "focusRingTiles": 63,
+    "worstFocusRingWithin2px": 0.8571
+   },
+   "motion.gif": {
+    "frames": 32,
+    "passed": 32,
+    "worstMeanAbsError": 1.119,
+    "worstRecallWithin2px": 1,
+    "worstPrecisionWithin2px": 0.9993,
+    "worstTilesWithin1px": 1,
+    "worstTilesWithin2px": 1,
+    "largestTileShiftPx": 1,
+    "focusRingTiles": 230,
+    "worstFocusRingWithin2px": 0.8571
+   },
+   "overview.png": {
+    "frames": 7,
+    "passed": 7,
+    "worstMeanAbsError": 2.044,
+    "worstRecallWithin2px": 0.9935,
+    "worstPrecisionWithin2px": 0.9984,
+    "worstTilesWithin1px": 0.5,
+    "worstTilesWithin2px": 1,
+    "largestTileShiftPx": 2,
+    "focusRingTiles": 93,
+    "worstFocusRingWithin2px": 0.3214
+   }
+  }
+ },
+ "results": [
+  {
+   "id": "tree.png",
+   "scene": "tree",
+   "reference": "tree.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 35,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 0.42,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 0.66,
+    "over32Share": 0.00177,
+    "foreground": {
+     "reference": 11288,
+     "ours": 11068,
+     "iou": 0.9666,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 959,
+      "ours": 879,
+      "countRatio": 0.917,
+      "centroidShift": 4.66,
+      "dx": 4.49,
+      "dy": -1.27
+     },
+     "muted": {
+      "reference": 774,
+      "ours": 843,
+      "countRatio": 1.089,
+      "centroidShift": 1.06,
+      "dx": 0.23,
+      "dy": -1.04
+     },
+     "ink": {
+      "reference": 393,
+      "ours": 304,
+      "countRatio": 0.774,
+      "centroidShift": 3.97,
+      "dx": 2.56,
+      "dy": -3.03
+     }
+    }
+   }
+  },
+  {
+   "id": "two-pointers.png",
+   "scene": "two-pointers",
+   "reference": "two-pointers.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": false,
+   "metrics": {
+    "tiles": {
+     "tiles": 18,
+     "within1px": 0.7222,
+     "within2px": 0.8889,
+     "maxShift": 3,
+     "outliers": [
+      {
+       "x": 320,
+       "y": 96,
+       "dx": 3,
+       "dy": 0,
+       "shift": 3,
+       "kind": "corner",
+       "ring": false
+      },
+      {
+       "x": 416,
+       "y": 96,
+       "dx": -3,
+       "dy": 0,
+       "shift": 2.16,
+       "kind": "edge",
+       "ring": false
+      }
+     ],
+     "focusRingTiles": 18,
+     "focusRingWithin2px": 0.9444
+    },
+    "meanAbsError": 1.109,
+    "over32Share": 0.00726,
+    "foreground": {
+     "reference": 9795,
+     "ours": 9620,
+     "iou": 0.8631,
+     "recallWithin2px": 0.997,
+     "precisionWithin2px": 0.9999
+    },
+    "colors": {
+     "blue": {
+      "reference": 356,
+      "ours": 290,
+      "countRatio": 0.815,
+      "centroidShift": 0.42,
+      "dx": 0,
+      "dy": 0.42
+     },
+     "yellow": {
+      "reference": 159,
+      "ours": 172,
+      "countRatio": 1.082,
+      "centroidShift": 2.31,
+      "dx": 2.26,
+      "dy": -0.49
+     },
+     "good": {
+      "reference": 348,
+      "ours": 300,
+      "countRatio": 0.862,
+      "centroidShift": 0.31,
+      "dx": -0.28,
+      "dy": 0.14
+     },
+     "warn": {
+      "reference": 256,
+      "ours": 222,
+      "countRatio": 0.867,
+      "centroidShift": 8.1,
+      "dx": -2.87,
+      "dy": 7.58
+     },
+     "muted": {
+      "reference": 129,
+      "ours": 136,
+      "countRatio": 1.054,
+      "centroidShift": 7.04,
+      "dx": 1.27,
+      "dy": -6.92
+     },
+     "ink": {
+      "reference": 512,
+      "ours": 401,
+      "countRatio": 0.783,
+      "centroidShift": 2.38,
+      "dx": 2.36,
+      "dy": -0.32
+     }
+    }
+   }
+  },
+  {
+   "id": "handoff.png",
+   "scene": "handoff",
+   "reference": "handoff.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 32,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 12,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.065,
+    "over32Share": 0.0065,
+    "foreground": {
+     "reference": 15932,
+     "ours": 15795,
+     "iou": 0.949,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 716,
+      "ours": 678,
+      "countRatio": 0.947,
+      "centroidShift": 3.47,
+      "dx": 3.44,
+      "dy": -0.48
+     },
+     "purple": {
+      "reference": 340,
+      "ours": 293,
+      "countRatio": 0.862,
+      "centroidShift": 1.73,
+      "dx": -0.08,
+      "dy": -1.73
+     },
+     "teal": {
+      "reference": 702,
+      "ours": 663,
+      "countRatio": 0.944,
+      "centroidShift": 3.96,
+      "dx": -3.93,
+      "dy": -0.46
+     },
+     "muted": {
+      "reference": 193,
+      "ours": 104,
+      "countRatio": 0.539,
+      "centroidShift": 19.88,
+      "dx": -19.78,
+      "dy": -1.99
+     },
+     "ink": {
+      "reference": 1100,
+      "ours": 993,
+      "countRatio": 0.903,
+      "centroidShift": 9.92,
+      "dx": 9.84,
+      "dy": -1.21
+     }
+    }
+   }
+  },
+  {
+   "id": "function.png",
+   "scene": "function",
+   "reference": "function.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 33,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 0.02,
+     "outliers": [],
+     "focusRingTiles": 48,
+     "focusRingWithin2px": 0.4792
+    },
+    "meanAbsError": 1.111,
+    "over32Share": 0.00539,
+    "foreground": {
+     "reference": 7881,
+     "ours": 7599,
+     "iou": 0.7302,
+     "recallWithin2px": 0.9999,
+     "precisionWithin2px": 0.9993
+    },
+    "colors": {
+     "teal": {
+      "reference": 1665,
+      "ours": 1560,
+      "countRatio": 0.937,
+      "centroidShift": 1.36,
+      "dx": 0.07,
+      "dy": -1.36
+     },
+     "muted": {
+      "reference": 145,
+      "ours": 123,
+      "countRatio": 0.848,
+      "centroidShift": 11.15,
+      "dx": 8.78,
+      "dy": 6.88
+     }
+    }
+   }
+  },
+  {
+   "id": "counts.png",
+   "scene": "counts",
+   "reference": "counts.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 41,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 45,
+     "focusRingWithin2px": 0.9778
+    },
+    "meanAbsError": 1.237,
+    "over32Share": 0.00626,
+    "foreground": {
+     "reference": 48987,
+     "ours": 48697,
+     "iou": 0.9609,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 5040,
+      "ours": 4894,
+      "countRatio": 0.971,
+      "centroidShift": 0.68,
+      "dx": 0,
+      "dy": -0.68
+     },
+     "purple": {
+      "reference": 8453,
+      "ours": 8234,
+      "countRatio": 0.974,
+      "centroidShift": 1.29,
+      "dx": -0.02,
+      "dy": -1.29
+     },
+     "teal": {
+      "reference": 7564,
+      "ours": 7246,
+      "countRatio": 0.958,
+      "centroidShift": 1.71,
+      "dx": 0.01,
+      "dy": -1.71
+     },
+     "muted": {
+      "reference": 398,
+      "ours": 395,
+      "countRatio": 0.992,
+      "centroidShift": 11.51,
+      "dx": -4.59,
+      "dy": -10.55
+     },
+     "ink": {
+      "reference": 337,
+      "ours": 275,
+      "countRatio": 0.816,
+      "centroidShift": 6.43,
+      "dx": -6.42,
+      "dy": -0.36
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.png",
+   "scene": "motion",
+   "reference": "motion.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 0.52,
+    "over32Share": 0.00098,
+    "foreground": {
+     "reference": 2858,
+     "ours": 2811,
+     "iou": 0.9055,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 457,
+      "ours": 436,
+      "countRatio": 0.954,
+      "centroidShift": 0.2,
+      "dx": -0.2,
+      "dy": -0.01
+     },
+     "muted": {
+      "reference": 436,
+      "ours": 365,
+      "countRatio": 0.837,
+      "centroidShift": 0.58,
+      "dx": -0.52,
+      "dy": 0.25
+     }
+    }
+   }
+  },
+  {
+   "id": "shortest-path.png",
+   "scene": "shortest-path",
+   "reference": "shortest-path.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 91,
+     "within1px": 0.967,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 9,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.345,
+    "over32Share": 0.00988,
+    "foreground": {
+     "reference": 26407,
+     "ours": 26161,
+     "iou": 0.9256,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "yellow": {
+      "reference": 610,
+      "ours": 716,
+      "countRatio": 1.174,
+      "centroidShift": 1.87,
+      "dx": -1.76,
+      "dy": 0.63
+     },
+     "good": {
+      "reference": 2470,
+      "ours": 2137,
+      "countRatio": 0.865,
+      "centroidShift": 12.09,
+      "dx": 0.25,
+      "dy": -12.09
+     },
+     "warn": {
+      "reference": 2,
+      "ours": 106,
+      "countRatio": 53,
+      "centroidShift": 269.11,
+      "dx": -106.66,
+      "dy": -247.07
+     },
+     "muted": {
+      "reference": 728,
+      "ours": 891,
+      "countRatio": 1.224,
+      "centroidShift": 17.16,
+      "dx": -1.62,
+      "dy": -17.08
+     },
+     "ink": {
+      "reference": 1078,
+      "ours": 830,
+      "countRatio": 0.77,
+      "centroidShift": 3.56,
+      "dx": -2.54,
+      "dy": -2.5
+     }
+    }
+   }
+  },
+  {
+   "id": "two-pointers.gif#0",
+   "scene": "two-pointers",
+   "reference": "two-pointers.gif",
+   "frame": 0,
+   "step": 0,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": false,
+   "metrics": {
+    "tiles": {
+     "tiles": 18,
+     "within1px": 0.7222,
+     "within2px": 0.8889,
+     "maxShift": 3,
+     "outliers": [
+      {
+       "x": 320,
+       "y": 96,
+       "dx": 3,
+       "dy": 0,
+       "shift": 3,
+       "kind": "corner",
+       "ring": false
+      },
+      {
+       "x": 416,
+       "y": 96,
+       "dx": -3,
+       "dy": 0,
+       "shift": 2.16,
+       "kind": "edge",
+       "ring": false
+      }
+     ],
+     "focusRingTiles": 18,
+     "focusRingWithin2px": 0.9444
+    },
+    "meanAbsError": 1.691,
+    "over32Share": 0.0073,
+    "foreground": {
+     "reference": 9774,
+     "ours": 9632,
+     "iou": 0.8633,
+     "recallWithin2px": 0.9971,
+     "precisionWithin2px": 0.9999
+    },
+    "colors": {
+     "blue": {
+      "reference": 720,
+      "ours": 527,
+      "countRatio": 0.732,
+      "centroidShift": 0.42,
+      "dx": -0.08,
+      "dy": 0.41
+     },
+     "yellow": {
+      "reference": 157,
+      "ours": 178,
+      "countRatio": 1.134,
+      "centroidShift": 3.34,
+      "dx": 3.3,
+      "dy": -0.54
+     },
+     "warn": {
+      "reference": 255,
+      "ours": 225,
+      "countRatio": 0.882,
+      "centroidShift": 10.77,
+      "dx": 3.41,
+      "dy": 10.22
+     },
+     "muted": {
+      "reference": 136,
+      "ours": 147,
+      "countRatio": 1.081,
+      "centroidShift": 13.31,
+      "dx": 1.95,
+      "dy": -13.16
+     },
+     "ink": {
+      "reference": 514,
+      "ours": 401,
+      "countRatio": 0.78,
+      "centroidShift": 2.24,
+      "dx": 2.2,
+      "dy": 0.45
+     }
+    }
+   }
+  },
+  {
+   "id": "two-pointers.gif#1",
+   "scene": "two-pointers",
+   "reference": "two-pointers.gif",
+   "frame": 1,
+   "step": 1,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": false,
+   "metrics": {
+    "tiles": {
+     "tiles": 18,
+     "within1px": 0.7222,
+     "within2px": 0.8889,
+     "maxShift": 3,
+     "outliers": [
+      {
+       "x": 320,
+       "y": 96,
+       "dx": 3,
+       "dy": 0,
+       "shift": 3,
+       "kind": "corner",
+       "ring": false
+      },
+      {
+       "x": 416,
+       "y": 96,
+       "dx": -3,
+       "dy": 0,
+       "shift": 2.16,
+       "kind": "edge",
+       "ring": false
+      }
+     ],
+     "focusRingTiles": 18,
+     "focusRingWithin2px": 0.9444
+    },
+    "meanAbsError": 1.69,
+    "over32Share": 0.0073,
+    "foreground": {
+     "reference": 9774,
+     "ours": 9625,
+     "iou": 0.8637,
+     "recallWithin2px": 0.9971,
+     "precisionWithin2px": 0.9999
+    },
+    "colors": {
+     "blue": {
+      "reference": 720,
+      "ours": 527,
+      "countRatio": 0.732,
+      "centroidShift": 0.42,
+      "dx": -0.08,
+      "dy": 0.41
+     },
+     "yellow": {
+      "reference": 154,
+      "ours": 172,
+      "countRatio": 1.117,
+      "centroidShift": 1.92,
+      "dx": 1.85,
+      "dy": -0.51
+     },
+     "warn": {
+      "reference": 257,
+      "ours": 212,
+      "countRatio": 0.825,
+      "centroidShift": 2.97,
+      "dx": -2.95,
+      "dy": -0.35
+     },
+     "muted": {
+      "reference": 136,
+      "ours": 147,
+      "countRatio": 1.081,
+      "centroidShift": 13.31,
+      "dx": 1.95,
+      "dy": -13.16
+     },
+     "ink": {
+      "reference": 514,
+      "ours": 401,
+      "countRatio": 0.78,
+      "centroidShift": 2.24,
+      "dx": 2.2,
+      "dy": 0.45
+     }
+    }
+   }
+  },
+  {
+   "id": "two-pointers.gif#2",
+   "scene": "two-pointers",
+   "reference": "two-pointers.gif",
+   "frame": 2,
+   "step": 2,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": false,
+   "metrics": {
+    "tiles": {
+     "tiles": 18,
+     "within1px": 0.7222,
+     "within2px": 0.8889,
+     "maxShift": 3,
+     "outliers": [
+      {
+       "x": 320,
+       "y": 96,
+       "dx": 3,
+       "dy": 0,
+       "shift": 3,
+       "kind": "corner",
+       "ring": false
+      },
+      {
+       "x": 416,
+       "y": 96,
+       "dx": -3,
+       "dy": 0,
+       "shift": 2.16,
+       "kind": "edge",
+       "ring": false
+      }
+     ],
+     "focusRingTiles": 18,
+     "focusRingWithin2px": 0.9444
+    },
+    "meanAbsError": 1.69,
+    "over32Share": 0.00729,
+    "foreground": {
+     "reference": 9777,
+     "ours": 9625,
+     "iou": 0.864,
+     "recallWithin2px": 0.9971,
+     "precisionWithin2px": 0.9999
+    },
+    "colors": {
+     "blue": {
+      "reference": 720,
+      "ours": 527,
+      "countRatio": 0.732,
+      "centroidShift": 0.42,
+      "dx": -0.08,
+      "dy": 0.41
+     },
+     "yellow": {
+      "reference": 160,
+      "ours": 172,
+      "countRatio": 1.075,
+      "centroidShift": 2.11,
+      "dx": 2.05,
+      "dy": -0.49
+     },
+     "warn": {
+      "reference": 256,
+      "ours": 222,
+      "countRatio": 0.867,
+      "centroidShift": 8.16,
+      "dx": -3.06,
+      "dy": 7.56
+     },
+     "muted": {
+      "reference": 136,
+      "ours": 147,
+      "countRatio": 1.081,
+      "centroidShift": 13.31,
+      "dx": 1.95,
+      "dy": -13.16
+     },
+     "ink": {
+      "reference": 514,
+      "ours": 401,
+      "countRatio": 0.78,
+      "centroidShift": 2.24,
+      "dx": 2.2,
+      "dy": 0.45
+     }
+    }
+   }
+  },
+  {
+   "id": "two-pointers.gif#3",
+   "scene": "two-pointers",
+   "reference": "two-pointers.gif",
+   "frame": 3,
+   "step": 3,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": false,
+   "metrics": {
+    "tiles": {
+     "tiles": 18,
+     "within1px": 0.7222,
+     "within2px": 0.8889,
+     "maxShift": 3,
+     "outliers": [
+      {
+       "x": 320,
+       "y": 96,
+       "dx": 3,
+       "dy": 0,
+       "shift": 3,
+       "kind": "corner",
+       "ring": false
+      },
+      {
+       "x": 416,
+       "y": 96,
+       "dx": -3,
+       "dy": 0,
+       "shift": 2.16,
+       "kind": "edge",
+       "ring": false
+      }
+     ],
+     "focusRingTiles": 18,
+     "focusRingWithin2px": 0.9444
+    },
+    "meanAbsError": 1.677,
+    "over32Share": 0.00729,
+    "foreground": {
+     "reference": 9778,
+     "ours": 9624,
+     "iou": 0.8638,
+     "recallWithin2px": 0.9971,
+     "precisionWithin2px": 0.9999
+    },
+    "colors": {
+     "blue": {
+      "reference": 360,
+      "ours": 290,
+      "countRatio": 0.806,
+      "centroidShift": 0.42,
+      "dx": 0,
+      "dy": 0.42
+     },
+     "yellow": {
+      "reference": 160,
+      "ours": 172,
+      "countRatio": 1.075,
+      "centroidShift": 2.11,
+      "dx": 2.05,
+      "dy": -0.49
+     },
+     "good": {
+      "reference": 364,
+      "ours": 300,
+      "countRatio": 0.824,
+      "centroidShift": 0.31,
+      "dx": -0.28,
+      "dy": 0.14
+     },
+     "warn": {
+      "reference": 256,
+      "ours": 222,
+      "countRatio": 0.867,
+      "centroidShift": 8.16,
+      "dx": -3.06,
+      "dy": 7.56
+     },
+     "muted": {
+      "reference": 121,
+      "ours": 136,
+      "countRatio": 1.124,
+      "centroidShift": 12.39,
+      "dx": 2.09,
+      "dy": -12.22
+     },
+     "ink": {
+      "reference": 521,
+      "ours": 401,
+      "countRatio": 0.77,
+      "centroidShift": 2.34,
+      "dx": 2.32,
+      "dy": -0.29
+     }
+    }
+   }
+  },
+  {
+   "id": "shortest-path.gif#0",
+   "scene": "shortest-path",
+   "reference": "shortest-path.gif",
+   "frame": 0,
+   "step": 0,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 94,
+     "within1px": 0.9574,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 0.8571
+    },
+    "meanAbsError": 1.885,
+    "over32Share": 0.0092,
+    "foreground": {
+     "reference": 26037,
+     "ours": 25790,
+     "iou": 0.9307,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 2349,
+      "ours": 1892,
+      "countRatio": 0.805,
+      "centroidShift": 18.42,
+      "dx": 3.53,
+      "dy": -18.08
+     },
+     "warn": {
+      "reference": 196,
+      "ours": 188,
+      "countRatio": 0.959,
+      "centroidShift": 1.17,
+      "dx": 1.16,
+      "dy": 0.19
+     },
+     "muted": {
+      "reference": 1521,
+      "ours": 1615,
+      "countRatio": 1.062,
+      "centroidShift": 18.21,
+      "dx": 8.86,
+      "dy": -15.91
+     },
+     "ink": {
+      "reference": 1030,
+      "ours": 785,
+      "countRatio": 0.762,
+      "centroidShift": 4.47,
+      "dx": -4.47,
+      "dy": -0.05
+     }
+    }
+   }
+  },
+  {
+   "id": "shortest-path.gif#1",
+   "scene": "shortest-path",
+   "reference": "shortest-path.gif",
+   "frame": 1,
+   "step": 1,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 94,
+     "within1px": 0.9574,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.88,
+    "over32Share": 0.00942,
+    "foreground": {
+     "reference": 26374,
+     "ours": 26071,
+     "iou": 0.9271,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 1721,
+      "ours": 1336,
+      "countRatio": 0.776,
+      "centroidShift": 20.99,
+      "dx": 9.7,
+      "dy": -18.61
+     },
+     "yellow": {
+      "reference": 83,
+      "ours": 90,
+      "countRatio": 1.084,
+      "centroidShift": 1.17,
+      "dx": 1.15,
+      "dy": -0.19
+     },
+     "good": {
+      "reference": 440,
+      "ours": 353,
+      "countRatio": 0.802,
+      "centroidShift": 18.89,
+      "dx": -8.41,
+      "dy": -16.92
+     },
+     "warn": {
+      "reference": 602,
+      "ours": 721,
+      "countRatio": 1.198,
+      "centroidShift": 9.11,
+      "dx": -6.81,
+      "dy": 6.05
+     },
+     "muted": {
+      "reference": 1152,
+      "ours": 1272,
+      "countRatio": 1.104,
+      "centroidShift": 15.75,
+      "dx": 4.59,
+      "dy": -15.06
+     },
+     "ink": {
+      "reference": 996,
+      "ours": 773,
+      "countRatio": 0.776,
+      "centroidShift": 6.04,
+      "dx": -5.58,
+      "dy": 2.31
+     }
+    }
+   }
+  },
+  {
+   "id": "shortest-path.gif#2",
+   "scene": "shortest-path",
+   "reference": "shortest-path.gif",
+   "frame": 2,
+   "step": 2,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 92,
+     "within1px": 0.9565,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 0.8571
+    },
+    "meanAbsError": 1.896,
+    "over32Share": 0.0099,
+    "foreground": {
+     "reference": 26319,
+     "ours": 26269,
+     "iou": 0.9302,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 1070,
+      "ours": 803,
+      "countRatio": 0.75,
+      "centroidShift": 15.82,
+      "dx": 11.41,
+      "dy": -10.97
+     },
+     "yellow": {
+      "reference": 88,
+      "ours": 90,
+      "countRatio": 1.023,
+      "centroidShift": 3.07,
+      "dx": -0.44,
+      "dy": -3.04
+     },
+     "good": {
+      "reference": 996,
+      "ours": 876,
+      "countRatio": 0.88,
+      "centroidShift": 22.55,
+      "dx": -8.58,
+      "dy": -20.85
+     },
+     "warn": {
+      "reference": 898,
+      "ours": 901,
+      "countRatio": 1.003,
+      "centroidShift": 1.83,
+      "dx": 0.11,
+      "dy": 1.83
+     },
+     "muted": {
+      "reference": 933,
+      "ours": 840,
+      "countRatio": 0.9,
+      "centroidShift": 15.22,
+      "dx": 7.68,
+      "dy": -13.14
+     },
+     "ink": {
+      "reference": 1009,
+      "ours": 785,
+      "countRatio": 0.778,
+      "centroidShift": 4.63,
+      "dx": -4.36,
+      "dy": 1.58
+     }
+    }
+   }
+  },
+  {
+   "id": "shortest-path.gif#3",
+   "scene": "shortest-path",
+   "reference": "shortest-path.gif",
+   "frame": 3,
+   "step": 3,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 92,
+     "within1px": 0.9565,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.891,
+    "over32Share": 0.00957,
+    "foreground": {
+     "reference": 26342,
+     "ours": 26153,
+     "iou": 0.9271,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 856,
+      "ours": 646,
+      "countRatio": 0.755,
+      "centroidShift": 19.74,
+      "dx": 13.85,
+      "dy": -14.07
+     },
+     "yellow": {
+      "reference": 87,
+      "ours": 88,
+      "countRatio": 1.011,
+      "centroidShift": 0.32,
+      "dx": -0.11,
+      "dy": -0.3
+     },
+     "good": {
+      "reference": 1528,
+      "ours": 1336,
+      "countRatio": 0.874,
+      "centroidShift": 20.18,
+      "dx": -6.34,
+      "dy": -19.16
+     },
+     "warn": {
+      "reference": 590,
+      "ours": 595,
+      "countRatio": 1.008,
+      "centroidShift": 1.98,
+      "dx": -0.76,
+      "dy": 1.84
+     },
+     "muted": {
+      "reference": 952,
+      "ours": 1113,
+      "countRatio": 1.169,
+      "centroidShift": 10.37,
+      "dx": -3.98,
+      "dy": -9.58
+     },
+     "ink": {
+      "reference": 1019,
+      "ours": 786,
+      "countRatio": 0.771,
+      "centroidShift": 4.53,
+      "dx": -4.49,
+      "dy": -0.6
+     }
+    }
+   }
+  },
+  {
+   "id": "shortest-path.gif#4",
+   "scene": "shortest-path",
+   "reference": "shortest-path.gif",
+   "frame": 4,
+   "step": 4,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 91,
+     "within1px": 0.956,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.946,
+    "over32Share": 0.01005,
+    "foreground": {
+     "reference": 26421,
+     "ours": 26157,
+     "iou": 0.9252,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 419,
+      "ours": 313,
+      "countRatio": 0.747,
+      "centroidShift": 3.37,
+      "dx": 1.17,
+      "dy": 3.16
+     },
+     "yellow": {
+      "reference": 88,
+      "ours": 89,
+      "countRatio": 1.011,
+      "centroidShift": 0.34,
+      "dx": -0.04,
+      "dy": -0.33
+     },
+     "good": {
+      "reference": 2079,
+      "ours": 1797,
+      "countRatio": 0.864,
+      "centroidShift": 20.89,
+      "dx": -5.44,
+      "dy": -20.17
+     },
+     "warn": {
+      "reference": 599,
+      "ours": 653,
+      "countRatio": 1.09,
+      "centroidShift": 3.21,
+      "dx": -0.98,
+      "dy": -3.05
+     },
+     "muted": {
+      "reference": 790,
+      "ours": 973,
+      "countRatio": 1.232,
+      "centroidShift": 12.21,
+      "dx": -2.2,
+      "dy": -12.01
+     },
+     "ink": {
+      "reference": 1053,
+      "ours": 836,
+      "countRatio": 0.794,
+      "centroidShift": 0.76,
+      "dx": -0.2,
+      "dy": 0.73
+     }
+    }
+   }
+  },
+  {
+   "id": "shortest-path.gif#5",
+   "scene": "shortest-path",
+   "reference": "shortest-path.gif",
+   "frame": 5,
+   "step": 5,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 93,
+     "within1px": 0.957,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 0.875
+    },
+    "meanAbsError": 1.914,
+    "over32Share": 0.00982,
+    "foreground": {
+     "reference": 26367,
+     "ours": 26150,
+     "iou": 0.926,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 205,
+      "ours": 157,
+      "countRatio": 0.766,
+      "centroidShift": 3.42,
+      "dx": -1.34,
+      "dy": 3.15
+     },
+     "yellow": {
+      "reference": 87,
+      "ours": 88,
+      "countRatio": 1.011,
+      "centroidShift": 0.3,
+      "dx": -0.01,
+      "dy": -0.3
+     },
+     "good": {
+      "reference": 2611,
+      "ours": 2260,
+      "countRatio": 0.866,
+      "centroidShift": 18.77,
+      "dx": -3.84,
+      "dy": -18.38
+     },
+     "warn": {
+      "reference": 305,
+      "ours": 354,
+      "countRatio": 1.161,
+      "centroidShift": 10.69,
+      "dx": -9.06,
+      "dy": 5.67
+     },
+     "muted": {
+      "reference": 776,
+      "ours": 916,
+      "countRatio": 1.18,
+      "centroidShift": 19.1,
+      "dx": -5.2,
+      "dy": -18.38
+     },
+     "ink": {
+      "reference": 1065,
+      "ours": 830,
+      "countRatio": 0.779,
+      "centroidShift": 2.81,
+      "dx": -1.98,
+      "dy": -2
+     }
+    }
+   }
+  },
+  {
+   "id": "shortest-path.gif#6",
+   "scene": "shortest-path",
+   "reference": "shortest-path.gif",
+   "frame": 6,
+   "step": 6,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 91,
+     "within1px": 0.956,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 9,
+     "focusRingWithin2px": 0.8889
+    },
+    "meanAbsError": 1.901,
+    "over32Share": 0.00969,
+    "foreground": {
+     "reference": 26372,
+     "ours": 26139,
+     "iou": 0.9263,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "yellow": {
+      "reference": 79,
+      "ours": 88,
+      "countRatio": 1.114,
+      "centroidShift": 1.27,
+      "dx": 1.26,
+      "dy": -0.18
+     },
+     "good": {
+      "reference": 3160,
+      "ours": 2778,
+      "countRatio": 0.879,
+      "centroidShift": 19.36,
+      "dx": 0.38,
+      "dy": -19.35
+     },
+     "muted": {
+      "reference": 789,
+      "ours": 917,
+      "countRatio": 1.162,
+      "centroidShift": 24.36,
+      "dx": -16.54,
+      "dy": -17.89
+     },
+     "ink": {
+      "reference": 1076,
+      "ours": 830,
+      "countRatio": 0.771,
+      "centroidShift": 4.18,
+      "dx": -3.79,
+      "dy": -1.77
+     }
+    }
+   }
+  },
+  {
+   "id": "shortest-path.gif#7",
+   "scene": "shortest-path",
+   "reference": "shortest-path.gif",
+   "frame": 7,
+   "step": 7,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 91,
+     "within1px": 0.956,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 9,
+     "focusRingWithin2px": 0.8889
+    },
+    "meanAbsError": 1.915,
+    "over32Share": 0.01003,
+    "foreground": {
+     "reference": 26376,
+     "ours": 26161,
+     "iou": 0.9257,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "yellow": {
+      "reference": 607,
+      "ours": 716,
+      "countRatio": 1.18,
+      "centroidShift": 1.41,
+      "dx": -1.02,
+      "dy": 0.97
+     },
+     "good": {
+      "reference": 2627,
+      "ours": 2137,
+      "countRatio": 0.813,
+      "centroidShift": 16.33,
+      "dx": 0.48,
+      "dy": -16.32
+     },
+     "warn": {
+      "reference": 0,
+      "ours": 106,
+      "countRatio": null,
+      "centroidShift": null,
+      "dx": null,
+      "dy": null
+     },
+     "muted": {
+      "reference": 789,
+      "ours": 917,
+      "countRatio": 1.162,
+      "centroidShift": 24.36,
+      "dx": -16.54,
+      "dy": -17.89
+     },
+     "ink": {
+      "reference": 1076,
+      "ours": 830,
+      "countRatio": 0.771,
+      "centroidShift": 4.18,
+      "dx": -3.79,
+      "dy": -1.77
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#0",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 0,
+   "step": 0,
+   "time": 0,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 12,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 0.8571
+    },
+    "meanAbsError": 1.105,
+    "over32Share": 0.00095,
+    "foreground": {
+     "reference": 2812,
+     "ours": 2863,
+     "iou": 0.8967,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 442,
+      "ours": 415,
+      "countRatio": 0.939,
+      "centroidShift": 0.17,
+      "dx": -0.05,
+      "dy": -0.17
+     },
+     "muted": {
+      "reference": 521,
+      "ours": 406,
+      "countRatio": 0.779,
+      "centroidShift": 18.15,
+      "dx": 18.13,
+      "dy": -0.74
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#1",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 1,
+   "step": 0,
+   "time": 0.125,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 12,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.112,
+    "over32Share": 0.00099,
+    "foreground": {
+     "reference": 2781,
+     "ours": 2845,
+     "iou": 0.8917,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 441,
+      "ours": 408,
+      "countRatio": 0.925,
+      "centroidShift": 0.23,
+      "dx": -0.18,
+      "dy": -0.14
+     },
+     "muted": {
+      "reference": 562,
+      "ours": 455,
+      "countRatio": 0.81,
+      "centroidShift": 11.93,
+      "dx": 11.92,
+      "dy": -0.51
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#2",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 2,
+   "step": 0,
+   "time": 0.25,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 12,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.114,
+    "over32Share": 0.00108,
+    "foreground": {
+     "reference": 2778,
+     "ours": 2826,
+     "iou": 0.8888,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 442,
+      "ours": 417,
+      "countRatio": 0.943,
+      "centroidShift": 0.19,
+      "dx": -0.17,
+      "dy": -0.08
+     },
+     "muted": {
+      "reference": 540,
+      "ours": 455,
+      "countRatio": 0.843,
+      "centroidShift": 4.65,
+      "dx": 4.64,
+      "dy": -0.22
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#3",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 3,
+   "step": 0,
+   "time": 0.375,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.119,
+    "over32Share": 0.00102,
+    "foreground": {
+     "reference": 2766,
+     "ours": 2824,
+     "iou": 0.8962,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 460,
+      "ours": 435,
+      "countRatio": 0.946,
+      "centroidShift": 0.17,
+      "dx": -0.17,
+      "dy": -0.03
+     },
+     "muted": {
+      "reference": 519,
+      "ours": 406,
+      "countRatio": 0.782,
+      "centroidShift": 13.34,
+      "dx": 13.34,
+      "dy": -0.15
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#4",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 4,
+   "step": 0,
+   "time": 0.5,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.117,
+    "over32Share": 0.0011,
+    "foreground": {
+     "reference": 2785,
+     "ours": 2843,
+     "iou": 0.8899,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 452,
+      "ours": 438,
+      "countRatio": 0.969,
+      "centroidShift": 0.11,
+      "dx": -0.11,
+      "dy": -0.03
+     },
+     "muted": {
+      "reference": 446,
+      "ours": 387,
+      "countRatio": 0.868,
+      "centroidShift": 0.21,
+      "dx": 0.11,
+      "dy": -0.17
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#5",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 5,
+   "step": 0,
+   "time": 0.625,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.118,
+    "over32Share": 0.00101,
+    "foreground": {
+     "reference": 2773,
+     "ours": 2843,
+     "iou": 0.8922,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 458,
+      "ours": 430,
+      "countRatio": 0.939,
+      "centroidShift": 0.15,
+      "dx": 0.02,
+      "dy": -0.15
+     },
+     "muted": {
+      "reference": 550,
+      "ours": 446,
+      "countRatio": 0.811,
+      "centroidShift": 6.97,
+      "dx": 6.97,
+      "dy": -0.22
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#6",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 6,
+   "step": 0,
+   "time": 0.75,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 0.875
+    },
+    "meanAbsError": 1.115,
+    "over32Share": 0.00101,
+    "foreground": {
+     "reference": 2762,
+     "ours": 2815,
+     "iou": 0.8989,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 445,
+      "ours": 421,
+      "countRatio": 0.946,
+      "centroidShift": 0.29,
+      "dx": -0.23,
+      "dy": -0.17
+     },
+     "muted": {
+      "reference": 559,
+      "ours": 451,
+      "countRatio": 0.807,
+      "centroidShift": 4.65,
+      "dx": 4.64,
+      "dy": -0.26
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#7",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 7,
+   "step": 0,
+   "time": 0.875,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.109,
+    "over32Share": 0.001,
+    "foreground": {
+     "reference": 2769,
+     "ours": 2819,
+     "iou": 0.8987,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 454,
+      "ours": 430,
+      "countRatio": 0.947,
+      "centroidShift": 0.17,
+      "dx": 0.03,
+      "dy": -0.17
+     },
+     "muted": {
+      "reference": 537,
+      "ours": 437,
+      "countRatio": 0.814,
+      "centroidShift": 1.96,
+      "dx": 1.95,
+      "dy": 0.15
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#8",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 8,
+   "step": 0,
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 0.875
+    },
+    "meanAbsError": 1.102,
+    "over32Share": 0.00098,
+    "foreground": {
+     "reference": 2763,
+     "ours": 2811,
+     "iou": 0.8979,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 455,
+      "ours": 436,
+      "countRatio": 0.958,
+      "centroidShift": 0.1,
+      "dx": -0.1,
+      "dy": 0.02
+     },
+     "muted": {
+      "reference": 500,
+      "ours": 365,
+      "countRatio": 0.73,
+      "centroidShift": 0.61,
+      "dx": -0.48,
+      "dy": 0.38
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#9",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 9,
+   "step": 0,
+   "time": 1.125,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.096,
+    "over32Share": 0.00098,
+    "foreground": {
+     "reference": 2755,
+     "ours": 2794,
+     "iou": 0.8964,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 454,
+      "ours": 428,
+      "countRatio": 0.943,
+      "centroidShift": 0.23,
+      "dx": -0.11,
+      "dy": -0.21
+     },
+     "muted": {
+      "reference": 431,
+      "ours": 370,
+      "countRatio": 0.858,
+      "centroidShift": 0.85,
+      "dx": -0.85,
+      "dy": -0.02
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#10",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 10,
+   "step": 0,
+   "time": 1.25,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.091,
+    "over32Share": 0.00094,
+    "foreground": {
+     "reference": 2758,
+     "ours": 2791,
+     "iou": 0.8958,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 446,
+      "ours": 419,
+      "countRatio": 0.939,
+      "centroidShift": 0.25,
+      "dx": 0.1,
+      "dy": -0.23
+     },
+     "muted": {
+      "reference": 427,
+      "ours": 374,
+      "countRatio": 0.876,
+      "centroidShift": 0.07,
+      "dx": 0.07,
+      "dy": 0.01
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#11",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 11,
+   "step": 0,
+   "time": 1.375,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.087,
+    "over32Share": 0.0009,
+    "foreground": {
+     "reference": 2755,
+     "ours": 2800,
+     "iou": 0.8927,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 458,
+      "ours": 434,
+      "countRatio": 0.948,
+      "centroidShift": 0.17,
+      "dx": 0.03,
+      "dy": -0.16
+     },
+     "muted": {
+      "reference": 421,
+      "ours": 373,
+      "countRatio": 0.886,
+      "centroidShift": 1.41,
+      "dx": 1.41,
+      "dy": -0.02
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#12",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 12,
+   "step": 0,
+   "time": 1.5,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.085,
+    "over32Share": 0.00084,
+    "foreground": {
+     "reference": 2774,
+     "ours": 2815,
+     "iou": 0.8907,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 455,
+      "ours": 434,
+      "countRatio": 0.954,
+      "centroidShift": 0.08,
+      "dx": -0.02,
+      "dy": -0.08
+     },
+     "muted": {
+      "reference": 420,
+      "ours": 370,
+      "countRatio": 0.881,
+      "centroidShift": 1.21,
+      "dx": 1.21,
+      "dy": 0
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#13",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 13,
+   "step": 0,
+   "time": 1.625,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.089,
+    "over32Share": 0.00092,
+    "foreground": {
+     "reference": 2751,
+     "ours": 2798,
+     "iou": 0.8926,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 459,
+      "ours": 439,
+      "countRatio": 0.956,
+      "centroidShift": 0.07,
+      "dx": -0.03,
+      "dy": 0.06
+     },
+     "muted": {
+      "reference": 419,
+      "ours": 365,
+      "countRatio": 0.871,
+      "centroidShift": 0.29,
+      "dx": -0.29,
+      "dy": 0
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#14",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 14,
+   "step": 0,
+   "time": 1.75,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.092,
+    "over32Share": 0.00093,
+    "foreground": {
+     "reference": 2775,
+     "ours": 2805,
+     "iou": 0.8928,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 449,
+      "ours": 417,
+      "countRatio": 0.929,
+      "centroidShift": 0.34,
+      "dx": -0.24,
+      "dy": -0.23
+     },
+     "muted": {
+      "reference": 430,
+      "ours": 378,
+      "countRatio": 0.879,
+      "centroidShift": 1.24,
+      "dx": 1.24,
+      "dy": 0
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#15",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 15,
+   "step": 0,
+   "time": 1.875,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 12,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.101,
+    "over32Share": 0.00093,
+    "foreground": {
+     "reference": 2794,
+     "ours": 2826,
+     "iou": 0.898,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 432,
+      "ours": 406,
+      "countRatio": 0.94,
+      "centroidShift": 0.27,
+      "dx": -0.04,
+      "dy": -0.27
+     },
+     "muted": {
+      "reference": 450,
+      "ours": 390,
+      "countRatio": 0.867,
+      "centroidShift": 1.11,
+      "dx": -1.11,
+      "dy": 0.02
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#16",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 16,
+   "step": 0,
+   "time": 2,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 12,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.106,
+    "over32Share": 0.00095,
+    "foreground": {
+     "reference": 2806,
+     "ours": 2851,
+     "iou": 0.8983,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 0.9993
+    },
+    "colors": {
+     "teal": {
+      "reference": 429,
+      "ours": 412,
+      "countRatio": 0.96,
+      "centroidShift": 0.33,
+      "dx": -0.24,
+      "dy": -0.23
+     },
+     "muted": {
+      "reference": 526,
+      "ours": 445,
+      "countRatio": 0.846,
+      "centroidShift": 4.86,
+      "dx": -4.86,
+      "dy": 0.04
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#17",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 17,
+   "step": 0,
+   "time": 2.125,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 12,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.114,
+    "over32Share": 0.00101,
+    "foreground": {
+     "reference": 2799,
+     "ours": 2839,
+     "iou": 0.8977,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 432,
+      "ours": 406,
+      "countRatio": 0.94,
+      "centroidShift": 0.27,
+      "dx": -0.04,
+      "dy": -0.27
+     },
+     "muted": {
+      "reference": 568,
+      "ours": 457,
+      "countRatio": 0.805,
+      "centroidShift": 13.39,
+      "dx": -13.38,
+      "dy": 0.41
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#18",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 18,
+   "step": 0,
+   "time": 2.25,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.116,
+    "over32Share": 0.00108,
+    "foreground": {
+     "reference": 2780,
+     "ours": 2823,
+     "iou": 0.8916,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 449,
+      "ours": 417,
+      "countRatio": 0.929,
+      "centroidShift": 0.34,
+      "dx": -0.24,
+      "dy": -0.23
+     },
+     "muted": {
+      "reference": 541,
+      "ours": 455,
+      "countRatio": 0.841,
+      "centroidShift": 5.33,
+      "dx": -5.33,
+      "dy": 0.06
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#19",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 19,
+   "step": 0,
+   "time": 2.375,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.119,
+    "over32Share": 0.00101,
+    "foreground": {
+     "reference": 2758,
+     "ours": 2825,
+     "iou": 0.8945,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 459,
+      "ours": 439,
+      "countRatio": 0.956,
+      "centroidShift": 0.07,
+      "dx": -0.03,
+      "dy": 0.06
+     },
+     "muted": {
+      "reference": 498,
+      "ours": 404,
+      "countRatio": 0.811,
+      "centroidShift": 9.11,
+      "dx": -9.08,
+      "dy": -0.66
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#20",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 20,
+   "step": 0,
+   "time": 2.5,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.117,
+    "over32Share": 0.00109,
+    "foreground": {
+     "reference": 2785,
+     "ours": 2853,
+     "iou": 0.8875,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 455,
+      "ours": 434,
+      "countRatio": 0.954,
+      "centroidShift": 0.08,
+      "dx": -0.02,
+      "dy": -0.08
+     },
+     "muted": {
+      "reference": 446,
+      "ours": 386,
+      "countRatio": 0.865,
+      "centroidShift": 1.19,
+      "dx": -1.19,
+      "dy": 0.04
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#21",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 21,
+   "step": 0,
+   "time": 2.625,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.117,
+    "over32Share": 0.00101,
+    "foreground": {
+     "reference": 2773,
+     "ours": 2831,
+     "iou": 0.892,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 458,
+      "ours": 434,
+      "countRatio": 0.948,
+      "centroidShift": 0.17,
+      "dx": 0.03,
+      "dy": -0.16
+     },
+     "muted": {
+      "reference": 556,
+      "ours": 456,
+      "countRatio": 0.82,
+      "centroidShift": 5.91,
+      "dx": -5.88,
+      "dy": 0.67
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#22",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 22,
+   "step": 0,
+   "time": 2.75,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.114,
+    "over32Share": 0.00101,
+    "foreground": {
+     "reference": 2764,
+     "ours": 2812,
+     "iou": 0.8992,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 446,
+      "ours": 419,
+      "countRatio": 0.939,
+      "centroidShift": 0.25,
+      "dx": 0.1,
+      "dy": -0.23
+     },
+     "muted": {
+      "reference": 555,
+      "ours": 450,
+      "countRatio": 0.811,
+      "centroidShift": 4.86,
+      "dx": -4.84,
+      "dy": 0.39
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#23",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 23,
+   "step": 0,
+   "time": 2.875,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.107,
+    "over32Share": 0.00099,
+    "foreground": {
+     "reference": 2758,
+     "ours": 2807,
+     "iou": 0.898,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 454,
+      "ours": 428,
+      "countRatio": 0.943,
+      "centroidShift": 0.23,
+      "dx": -0.11,
+      "dy": -0.21
+     },
+     "muted": {
+      "reference": 534,
+      "ours": 426,
+      "countRatio": 0.798,
+      "centroidShift": 3.5,
+      "dx": -3.5,
+      "dy": 0.04
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#24",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 24,
+   "step": 0,
+   "time": 3,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 0.875
+    },
+    "meanAbsError": 1.1,
+    "over32Share": 0.00098,
+    "foreground": {
+     "reference": 2763,
+     "ours": 2809,
+     "iou": 0.8978,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 455,
+      "ours": 436,
+      "countRatio": 0.958,
+      "centroidShift": 0.1,
+      "dx": -0.1,
+      "dy": 0.02
+     },
+     "muted": {
+      "reference": 434,
+      "ours": 365,
+      "countRatio": 0.841,
+      "centroidShift": 0.44,
+      "dx": -0.43,
+      "dy": 0.1
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#25",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 25,
+   "step": 0,
+   "time": 3.125,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.094,
+    "over32Share": 0.00098,
+    "foreground": {
+     "reference": 2763,
+     "ours": 2804,
+     "iou": 0.8981,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 454,
+      "ours": 430,
+      "countRatio": 0.947,
+      "centroidShift": 0.17,
+      "dx": 0.03,
+      "dy": -0.17
+     },
+     "muted": {
+      "reference": 425,
+      "ours": 369,
+      "countRatio": 0.868,
+      "centroidShift": 0.27,
+      "dx": -0.27,
+      "dy": -0.01
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#26",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 26,
+   "step": 0,
+   "time": 3.25,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 0.8571
+    },
+    "meanAbsError": 1.09,
+    "over32Share": 0.00093,
+    "foreground": {
+     "reference": 2757,
+     "ours": 2791,
+     "iou": 0.8955,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 445,
+      "ours": 421,
+      "countRatio": 0.946,
+      "centroidShift": 0.29,
+      "dx": -0.23,
+      "dy": -0.17
+     },
+     "muted": {
+      "reference": 430,
+      "ours": 374,
+      "countRatio": 0.87,
+      "centroidShift": 0.18,
+      "dx": -0.18,
+      "dy": 0
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#27",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 27,
+   "step": 0,
+   "time": 3.375,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.087,
+    "over32Share": 0.00089,
+    "foreground": {
+     "reference": 2752,
+     "ours": 2809,
+     "iou": 0.8909,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 458,
+      "ours": 430,
+      "countRatio": 0.939,
+      "centroidShift": 0.15,
+      "dx": 0.02,
+      "dy": -0.15
+     },
+     "muted": {
+      "reference": 419,
+      "ours": 370,
+      "countRatio": 0.883,
+      "centroidShift": 1.92,
+      "dx": -1.92,
+      "dy": 0
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#28",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 28,
+   "step": 0,
+   "time": 3.5,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.086,
+    "over32Share": 0.00084,
+    "foreground": {
+     "reference": 2775,
+     "ours": 2799,
+     "iou": 0.8946,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 452,
+      "ours": 438,
+      "countRatio": 0.969,
+      "centroidShift": 0.11,
+      "dx": -0.11,
+      "dy": -0.03
+     },
+     "muted": {
+      "reference": 421,
+      "ours": 372,
+      "countRatio": 0.884,
+      "centroidShift": 2.49,
+      "dx": -2.49,
+      "dy": 0
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#29",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 29,
+   "step": 0,
+   "time": 3.625,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.09,
+    "over32Share": 0.00092,
+    "foreground": {
+     "reference": 2757,
+     "ours": 2798,
+     "iou": 0.8959,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 460,
+      "ours": 435,
+      "countRatio": 0.946,
+      "centroidShift": 0.17,
+      "dx": -0.17,
+      "dy": -0.03
+     },
+     "muted": {
+      "reference": 419,
+      "ours": 369,
+      "countRatio": 0.881,
+      "centroidShift": 2.07,
+      "dx": -2.07,
+      "dy": -0.01
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#30",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 30,
+   "step": 0,
+   "time": 3.75,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 12,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.094,
+    "over32Share": 0.00092,
+    "foreground": {
+     "reference": 2772,
+     "ours": 2806,
+     "iou": 0.8902,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 442,
+      "ours": 417,
+      "countRatio": 0.943,
+      "centroidShift": 0.19,
+      "dx": -0.17,
+      "dy": -0.08
+     },
+     "muted": {
+      "reference": 431,
+      "ours": 378,
+      "countRatio": 0.877,
+      "centroidShift": 1.58,
+      "dx": -1.58,
+      "dy": 0
+     }
+    }
+   }
+  },
+  {
+   "id": "motion.gif#31",
+   "scene": "motion",
+   "reference": "motion.gif",
+   "frame": 31,
+   "step": 0,
+   "time": 3.875,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 12,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.102,
+    "over32Share": 0.00095,
+    "foreground": {
+     "reference": 2777,
+     "ours": 2836,
+     "iou": 0.8937,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 441,
+      "ours": 408,
+      "countRatio": 0.925,
+      "centroidShift": 0.23,
+      "dx": -0.18,
+      "dy": -0.14
+     },
+     "muted": {
+      "reference": 455,
+      "ours": 390,
+      "countRatio": 0.857,
+      "centroidShift": 2.2,
+      "dx": 2.2,
+      "dy": 0.2
+     }
+    }
+   }
+  },
+  {
+   "id": "overview.png#tree",
+   "scene": "tree",
+   "reference": "overview.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "size": [
+    500,
+    270
+   ],
+   "boardIndex": 0,
+   "board": {
+    "x": 56,
+    "y": 269
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 21,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 0,
+     "outliers": [],
+     "focusRingTiles": 4,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 0.745,
+    "over32Share": 0.00238,
+    "foreground": {
+     "reference": 5047,
+     "ours": 4909,
+     "iou": 0.9537,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 565,
+      "ours": 544,
+      "countRatio": 0.963,
+      "centroidShift": 1.82,
+      "dx": 1.82,
+      "dy": 0.14
+     },
+     "muted": {
+      "reference": 456,
+      "ours": 504,
+      "countRatio": 1.105,
+      "centroidShift": 1.66,
+      "dx": -0.96,
+      "dy": -1.36
+     },
+     "ink": {
+      "reference": 117,
+      "ours": 90,
+      "countRatio": 0.769,
+      "centroidShift": 7.38,
+      "dx": 7.29,
+      "dy": -1.17
+     }
+    }
+   }
+  },
+  {
+   "id": "overview.png#two-pointers",
+   "scene": "two-pointers",
+   "reference": "overview.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "size": [
+    500,
+    270
+   ],
+   "boardIndex": 1,
+   "board": {
+    "x": 616,
+    "y": 269
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 6,
+     "within1px": 0.5,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 16,
+     "focusRingWithin2px": 0.8125
+    },
+    "meanAbsError": 1.816,
+    "over32Share": 0.0141,
+    "foreground": {
+     "reference": 4166,
+     "ours": 4092,
+     "iou": 0.7378,
+     "recallWithin2px": 0.9935,
+     "precisionWithin2px": 0.9998
+    },
+    "colors": {
+     "blue": {
+      "reference": 188,
+      "ours": 128,
+      "countRatio": 0.681,
+      "centroidShift": 0.33,
+      "dx": 0,
+      "dy": 0.33
+     },
+     "yellow": {
+      "reference": 171,
+      "ours": 190,
+      "countRatio": 1.111,
+      "centroidShift": 1.94,
+      "dx": 1.86,
+      "dy": -0.55
+     },
+     "good": {
+      "reference": 196,
+      "ours": 132,
+      "countRatio": 0.673,
+      "centroidShift": 0.24,
+      "dx": 0,
+      "dy": 0.24
+     },
+     "warn": {
+      "reference": 243,
+      "ours": 108,
+      "countRatio": 0.444,
+      "centroidShift": 16.49,
+      "dx": -7.17,
+      "dy": 14.85
+     },
+     "muted": {
+      "reference": 133,
+      "ours": 115,
+      "countRatio": 0.865,
+      "centroidShift": 12.56,
+      "dx": -7.59,
+      "dy": -10
+     },
+     "ink": {
+      "reference": 311,
+      "ours": 248,
+      "countRatio": 0.797,
+      "centroidShift": 1.34,
+      "dx": 1.25,
+      "dy": 0.49
+     }
+    }
+   }
+  },
+  {
+   "id": "overview.png#handoff",
+   "scene": "handoff",
+   "reference": "overview.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "size": [
+    500,
+    270
+   ],
+   "boardIndex": 2,
+   "board": {
+    "x": 56,
+    "y": 745
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 19,
+     "within1px": 0.7368,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 7,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 1.792,
+    "over32Share": 0.01348,
+    "foreground": {
+     "reference": 7998,
+     "ours": 7847,
+     "iou": 0.9141,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 421,
+      "ours": 413,
+      "countRatio": 0.981,
+      "centroidShift": 0.77,
+      "dx": 0.69,
+      "dy": -0.34
+     },
+     "purple": {
+      "reference": 194,
+      "ours": 181,
+      "countRatio": 0.933,
+      "centroidShift": 0.78,
+      "dx": 0.78,
+      "dy": -0.03
+     },
+     "teal": {
+      "reference": 411,
+      "ours": 393,
+      "countRatio": 0.956,
+      "centroidShift": 1.47,
+      "dx": -1.44,
+      "dy": -0.31
+     },
+     "muted": {
+      "reference": 186,
+      "ours": 148,
+      "countRatio": 0.796,
+      "centroidShift": 22.48,
+      "dx": 22.27,
+      "dy": 3.11
+     },
+     "ink": {
+      "reference": 1121,
+      "ours": 983,
+      "countRatio": 0.877,
+      "centroidShift": 7.35,
+      "dx": 7.24,
+      "dy": -1.25
+     }
+    }
+   }
+  },
+  {
+   "id": "overview.png#function",
+   "scene": "function",
+   "reference": "overview.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "size": [
+    500,
+    270
+   ],
+   "boardIndex": 3,
+   "board": {
+    "x": 616,
+    "y": 745
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 28,
+     "focusRingWithin2px": 0.3214
+    },
+    "meanAbsError": 1.975,
+    "over32Share": 0.01767,
+    "foreground": {
+     "reference": 4517,
+     "ours": 5007,
+     "iou": 0.5776,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 0.9984
+    },
+    "colors": {
+     "teal": {
+      "reference": 964,
+      "ours": 882,
+      "countRatio": 0.915,
+      "centroidShift": 0.55,
+      "dx": -0.1,
+      "dy": -0.54
+     },
+     "muted": {
+      "reference": 156,
+      "ours": 126,
+      "countRatio": 0.808,
+      "centroidShift": 9.18,
+      "dx": -6.96,
+      "dy": -5.98
+     }
+    }
+   }
+  },
+  {
+   "id": "overview.png#counts",
+   "scene": "counts",
+   "reference": "overview.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "size": [
+    500,
+    270
+   ],
+   "boardIndex": 4,
+   "board": {
+    "x": 56,
+    "y": 1221
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 26,
+     "within1px": 0.8846,
+     "within2px": 1,
+     "maxShift": 2,
+     "outliers": [],
+     "focusRingTiles": 28,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 2.011,
+    "over32Share": 0.01409,
+    "foreground": {
+     "reference": 16675,
+     "ours": 16415,
+     "iou": 0.9157,
+     "recallWithin2px": 0.9999,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 1418,
+      "ours": 1367,
+      "countRatio": 0.964,
+      "centroidShift": 0.46,
+      "dx": -0.21,
+      "dy": -0.41
+     },
+     "purple": {
+      "reference": 2388,
+      "ours": 2320,
+      "countRatio": 0.972,
+      "centroidShift": 0.66,
+      "dx": 0.03,
+      "dy": -0.66
+     },
+     "teal": {
+      "reference": 2126,
+      "ours": 2038,
+      "countRatio": 0.959,
+      "centroidShift": 0.66,
+      "dx": 0.24,
+      "dy": -0.62
+     },
+     "muted": {
+      "reference": 408,
+      "ours": 379,
+      "countRatio": 0.929,
+      "centroidShift": 0.63,
+      "dx": 0.63,
+      "dy": 0
+     },
+     "ink": {
+      "reference": 340,
+      "ours": 276,
+      "countRatio": 0.812,
+      "centroidShift": 1.7,
+      "dx": -1.08,
+      "dy": -1.3
+     }
+    }
+   }
+  },
+  {
+   "id": "overview.png#motion",
+   "scene": "motion",
+   "reference": "overview.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "size": [
+    500,
+    270
+   ],
+   "boardIndex": 5,
+   "board": {
+    "x": 616,
+    "y": 1221
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 8,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 4,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 0.634,
+    "over32Share": 0.00197,
+    "foreground": {
+     "reference": 1354,
+     "ours": 1320,
+     "iou": 0.8391,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 131,
+      "ours": 127,
+      "countRatio": 0.969,
+      "centroidShift": 0.11,
+      "dx": -0.1,
+      "dy": 0.02
+     },
+     "muted": {
+      "reference": 243,
+      "ours": 228,
+      "countRatio": 0.938,
+      "centroidShift": 0.57,
+      "dx": 0.35,
+      "dy": 0.45
+     }
+    }
+   }
+  },
+  {
+   "id": "overview.png#shortest-path",
+   "scene": "shortest-path",
+   "reference": "overview.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "size": [
+    500,
+    270
+   ],
+   "boardIndex": 6,
+   "board": {
+    "x": 56,
+    "y": 1697
+   },
+   "pass": true,
+   "metrics": {
+    "tiles": {
+     "tiles": 45,
+     "within1px": 1,
+     "within2px": 1,
+     "maxShift": 1,
+     "outliers": [],
+     "focusRingTiles": 6,
+     "focusRingWithin2px": 1
+    },
+    "meanAbsError": 2.044,
+    "over32Share": 0.01749,
+    "foreground": {
+     "reference": 11007,
+     "ours": 10886,
+     "iou": 0.8826,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "yellow": {
+      "reference": 361,
+      "ours": 423,
+      "countRatio": 1.172,
+      "centroidShift": 2.2,
+      "dx": -1.86,
+      "dy": -1.18
+     },
+     "good": {
+      "reference": 1213,
+      "ours": 1083,
+      "countRatio": 0.893,
+      "centroidShift": 9.09,
+      "dx": -0.3,
+      "dy": -9.08
+     },
+     "muted": {
+      "reference": 556,
+      "ours": 492,
+      "countRatio": 0.885,
+      "centroidShift": 9.71,
+      "dx": 2.56,
+      "dy": -9.36
+     },
+     "ink": {
+      "reference": 545,
+      "ours": 446,
+      "countRatio": 0.818,
+      "centroidShift": 1.67,
+      "dx": -1.19,
+      "dy": 1.18
+     }
+    }
+   }
+  }
+ ]
+}

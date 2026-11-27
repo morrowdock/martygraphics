@@ -1,0 +1,26 @@
+{
+  "name": "@martygraphics/web-renderer-prototype",
+  "version": "0.0.0-prototype",
+  "private": true,
+  "description": "Prototype, not supported: a TypeScript/HTML canvas renderer for MartyGraphics 2D scene protocol v1.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test \"test/*.test.mjs\"",
+    "test:unit": "npm run build && node --test \"test/*.unit.test.mjs\"",
+    "test:render": "npm run build && node --test \"test/*.render.test.mjs\"",
+    "update-snapshots": "npm run build && node scripts/update-snapshots.mjs",
+    "render": "node render.mjs",
+    "python-results": "node scripts/capture-python-results.mjs",
+    "parity": "npm run build && node scripts/parity-native.mjs",
+    "contact-sheet": "npm run build && node scripts/contact-sheet.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.65.1",
+    "typescript": "5.9.3"
+  }
+}
