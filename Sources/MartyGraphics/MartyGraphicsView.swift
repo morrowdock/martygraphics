@@ -316,6 +316,12 @@ struct MGSceneHost: View {
     private func bumpTransient(_ seconds: Double = MGRenderPolicy.transientSeconds) {
         transientUntil = max(transientUntil, controller.presentationDate().addingTimeInterval(seconds)); transientToken &+= 1
     }
+    /// End the transition window at `end` (board clock) when that is earlier, and wait for the new end instead of the
+    /// old one (the window's task restarts), so the board is evaluated again as soon as the window ends.
+    private func endTransient(by end: Date) {
+        guard end < transientUntil else { return }
+        transientUntil = end; transientToken &+= 1
+    }
 
     var body: some View {
         if let scene = controller.scene {
@@ -590,17 +596,25 @@ struct MGSceneHost: View {
     /// scene or keyframe transition (`MGBoardMotion.settle`): from the next frame on the canvas draws the items the
     /// audio graph charts, instead of finishing a blend or keyframes toward items the sliders have replaced.
     /// A slider change is not a transition, so while motion plays it opens no transition window: a split board stays
-    /// split (`MGRenderPolicy.layered`) and draws its base once against the new items, or, while a step's camera still
-    /// moves, splits as soon as that move ends (`MGBoardTransition.phase`). A board with no motion playing runs its
-    /// paused frame loop for one settled redraw, as before.
+    /// split (`MGRenderPolicy.layered`) and draws its base once against the new items. A window still open for the
+    /// transitions it settled (a step's 1.6 s) now ends with the step's camera move (`MGBoardTransition.windowEnd`), so
+    /// the board splits as soon as that move ends (`MGBoardTransition.phase`). A board with no motion playing keeps its
+    /// window and runs its paused frame loop for one settled redraw, as before.
     private func changeSliders(_ change: (inout MGSliderState) -> Bool) {
         guard var state = sliderState else { return }
         let before = state.refusal
         let shown = state.items
         _ = change(&state)
         sliderState = state
-        if state.items != shown { motion.settle() }
-        if !renderState(state.scene).motionPlaying { bumpTransient(0.1) }
+        let motionPlays = renderState(state.scene).motionPlaying
+        if state.items != shown {
+            motion.settle()
+            if motionPlays {
+                let now = controller.presentationDate()
+                endTransient(by: MGBoardTransition.windowEnd(transientUntil, settledAt: now, cameraStart: cameraStart, reduceMotion: reduceMotion))
+            }
+        }
+        if !motionPlays { bumpTransient(0.1) }
         if let refusal = state.refusal, refusal != before { AccessibilityNotification.Announcement(refusal.text).post() }
     }
 
@@ -632,7 +646,10 @@ struct MGSceneHost: View {
         let plan = MGAdoption.plan(previous: animated ? previous?.items : nil, next: scene.items, transition: transition, step: step, drawsOn: drawsOn)
         if !drawsOn { appearStart.removeAll() }   // no draw-on left over from an earlier, interrupted transition
         if plan.blends, let previous {
-            motion.blend(from: MGTimeline.frame(previous, items: boardItems(previous, step: step), time: time(now)), at: now)
+            // What the board showed: the learner's items, or the outgoing step items read without filling the cache,
+            // which may already hold the incoming revision (`MGSliderState.leavingItems`).
+            let shown = MGSliderState.leavingItems(previous, step: step, sliders: sliderState, cache: controller.timeline)
+            motion.blend(from: MGTimeline.frame(previous, items: shown, time: time(now)), at: now)
         } else {
             motion.blend(from: nil, at: now)
         }
@@ -684,7 +701,8 @@ struct MGSceneHost: View {
         // Step and patch transitions (`MGBoardMotion.frame`, `MGBoardTransition`): by default the board's spring within
         // the 1.2 s window and nothing with Reduce Motion, exactly as before; a `.bounded` board eases with no overshoot,
         // fades leaving items out and dissolves with Reduce Motion (`MGStepTransition`). The live items are the
-        // learner's once a slider sits at a non-default value, else the cached step items (`boardItems`).
+        // learner's once a slider sits at a non-default value, else the cached step items (`boardItems`), read only
+        // when no keyframes supply the frame.
         let style = teaching.transitionStyle
         let blend = motion.frame(scene, live: boardItems(scene, step: step), style: style, now: now, time: t,
                                  hiding: teaching.concealed, reduceMotion: reduceMotion)

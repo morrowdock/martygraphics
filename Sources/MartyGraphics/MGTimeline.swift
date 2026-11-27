@@ -249,4 +249,13 @@ final class MGTimelineCache {
         computed += 1
         return items
     }
+
+    /// The items of `scene` at `step` without filling the cache: the kept entry when this revision's step is kept
+    /// (left where it is in the order), else `MGTimeline.items`, computed and not kept (`computed` does not count it).
+    /// For a scene a board is leaving (`MGSliderState.leavingItems`): the cache holds one revision, so `items` for the
+    /// outgoing revision would clear the entries of the incoming one that the board's frames read.
+    func peek(_ scene: MGScene, step: Int) -> [MGItem] {
+        if revision == scene.revision, let kept = entries.last(where: { $0.step == step }) { return kept.items }
+        return MGTimeline.items(scene, step: step)
+    }
 }

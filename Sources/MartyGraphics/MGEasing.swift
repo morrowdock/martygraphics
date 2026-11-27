@@ -144,13 +144,26 @@ enum MGBoardTransition {
         }
         return drawingOn ? .drawingOn : .settled
     }
+
+    /// When the board's transition window (`MGRenderPolicy.State.transientActive`, on the board's clock) ends once a
+    /// learner change has settled the board's blend and keyframes at `now` (`MGBoardMotion.settle`) while motion plays:
+    /// what is left of the window ending at `until`, but no later than the end of the camera move that began at
+    /// `cameraStart`, the one step transition a settle leaves running (`cameraProgress` is nil from `cameraWindow` on,
+    /// and always with Reduce Motion). The split (`MGRenderPolicy.layered`) waits for that window, so the board then
+    /// splits as soon as the camera move ends instead of when a step's 1.6 s window would have. Draw-ons need no window
+    /// while motion plays: the board splits with them in its live layer (`Phase.drawingOn`).
+    static func windowEnd(_ until: Date, settledAt now: Date, cameraStart: Date, reduceMotion: Bool) -> Date {
+        let cameraEnd = reduceMotion ? now : max(now, cameraStart.addingTimeInterval(cameraWindow))
+        return min(until, cameraEnd)
+    }
 }
 
 /// The 2D board's in-flight item transitions: engine keyframes (on a clock a lesson pause can hold) and the blend from
 /// the items that were on screen, in the board's `MGTransitionStyle` (`MGBoardTransition`). `frame` gives what a frame
 /// draws and `phase` where the transitions stand (the board's split, `MGBoardTransition.phase`), both from this state,
 /// so the SwiftUI host's canvases, its split and the tests agree. `settle()` ends both at once: the next frame draws
-/// the live items exactly (a learner slider change), and the board may split against them once its camera allows.
+/// the live items exactly (a learner slider change), and the board may split against them once its camera allows (the
+/// host ends its transition window with the camera move, `MGBoardTransition.windowEnd`).
 struct MGBoardMotion: Equatable, Sendable {
     private(set) var keyframes: [MGAdoption.Segment] = []
     private(set) var clock = MGTransitionClock(start: .distantPast)
@@ -190,11 +203,12 @@ struct MGBoardMotion: Equatable, Sendable {
     /// motion at `time`, without `hiding`, then the step or patch blend of `style` (`MGBoardTransition.items`): by
     /// default the board's spring within the 1.2 s window and nothing with Reduce Motion; a `.bounded` board eases with
     /// no overshoot, fades leaving items out and dissolves with Reduce Motion (`MGStepTransition`). `opacity` holds the
-    /// items that are not opaque.
-    func frame(_ scene: MGScene, live: [MGItem], style: MGTransitionStyle, now: Date, time: Double, hiding: Set<String>,
-               reduceMotion: Bool) -> MGStepTransition.Frame {
+    /// items that are not opaque. `live` is read only when no keyframes play, so a keyframe frame never asks the
+    /// controller's cache for the step items (`MGTimelineCache`).
+    func frame(_ scene: MGScene, live: @autoclosure () -> [MGItem], style: MGTransitionStyle, now: Date, time: Double,
+               hiding: Set<String>, reduceMotion: Bool) -> MGStepTransition.Frame {
         var items = MGTimeline.frame(scene, items: keyframesPlay(at: now, reduceMotion: reduceMotion)
-                                     ? MGTween.sample(keyframes, at: clock.elapsed(at: now)) : live, time: time)
+                                     ? MGTween.sample(keyframes, at: clock.elapsed(at: now)) : live(), time: time)
         if !hiding.isEmpty { items.removeAll { hiding.contains($0.id) } }
         var blend = MGBoardTransition.items(style, from: blendFrom, to: items, elapsed: now.timeIntervalSince(blendStart), reduceMotion: reduceMotion)
         // Leaving items come from the previous frame (`.bounded` only): a concealed id stays hidden while it fades.

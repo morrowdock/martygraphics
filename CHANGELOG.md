@@ -149,7 +149,8 @@
   board and says why. `MartyGraphicsView` shows native sliders under the board with VoiceOver label,
   value, hint and an adjustable action, Dynamic Type text and engine readouts; the board's audio graph is
   built from the items at the slider values. A slider move ends any step, scene or keyframe transition in
-  flight, so the board and its audio graph show the same items. Values are written with the slider's own
+  flight, so the board and its audio graph show the same items; while motion plays, a split board stays
+  split, and during a step it splits as soon as the camera move ends. Values are written with the slider's own
   precision, or with
   significant digits where six places would not name the grid stop (a nonzero value never reads as `0`);
   a grid whose stops are too close to tell apart is refused (`slider.grid`). The engine gets exactly the

@@ -374,6 +374,15 @@ public struct MGSliderState: Equatable, Sendable {
         return cache.items(scene, step: step)
     }
 
+    /// The items a board showed at `step` of a scene it is leaving (`MGSceneHost.adopt` blends from them): as
+    /// `boardItems`, but the step items are read without filling `cache` (`MGTimelineCache.peek`). The cache holds one
+    /// revision, and the board may already have read the incoming one, so filling it with the outgoing revision would
+    /// clear the entries the next frames read and make them compute the incoming step's items again.
+    static func leavingItems(_ scene: MGScene, step: Int, sliders: MGSliderState?, cache: MGTimelineCache) -> [MGItem] {
+        if let s = sliders, !s.isAtDefaults, s.scene.revision == scene.revision, s.step == step { return s.items }
+        return cache.peek(scene, step: step)
+    }
+
     /// Every slider back to its default.
     public mutating func reset() {
         stops = Self.defaults(scene); items = MGTimeline.items(scene, step: step); refusal = nil
