@@ -131,14 +131,20 @@ public enum MGTimeline {
 
     // MARK: patch blending
 
-    /// Damped spring from 0 to 1 over about 0.8 s with a little overshoot. Game feel, not physics.
+    /// Damped spring from 0 to 1 over about 0.8 s with a little overshoot. Game feel, not physics. A negative elapsed
+    /// time (a frame stamped before the transition started) counts as 0, so the curve never runs backward past its start.
     public static func spring(_ elapsed: Double) -> Double {
+        let elapsed = max(0, elapsed)
         guard elapsed < 1.2 else { return 1 }
         return 1 - exp(-6.5 * elapsed) * cos(8.5 * elapsed)
     }
 
+    /// Blend progress limited to 0...1: a blend shows `from`, `to` or geometry between them, never beyond either.
+    static func blendProgress(_ t: Double) -> Double { min(1, max(0, t)) }
+
     /// Geometry of `to`, starting from `from` where the same id and kind exist. New items come in as-is (they draw on).
     public static func blend(from: [MGItem], to: [MGItem], t: Double) -> [MGItem] {
+        let t = blendProgress(t)
         guard t < 1 else { return to }
         let old = Dictionary(from.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         return to.map { target in

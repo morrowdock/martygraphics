@@ -100,4 +100,23 @@ final class SceneRobustnessTests: XCTestCase {
         XCTAssertNil(MGCanvasRenderer.coilCount(spring(MGLimits.springCoils.lowerBound - 1)))
         XCTAssertEqual(MGCanvasRenderer.pointerSlot(1.4), 1, "a blended pointer rounds as before")
     }
+
+    func testBlendedSpringKeepsItsCoilsBetweenTwoValidScenes() throws {
+        func spring(_ coils: Int) throws -> [MGItem] {
+            let source = #"{"v":1,"items":[{"id":"s","k":"spring","from":[1,4],"to":[6,4],"coils":"# + "\(coils)}]}"
+            return try MGParser.scene(data: Data(source.utf8)).get().items
+        }
+        let few = try spring(3), many = try spring(24)
+        func coils(_ t: Double) throws -> Int? {
+            MGCanvasRenderer.coilCount(try XCTUnwrap(MGTimeline.blend(from: few, to: many, t: t).first))
+        }
+        XCTAssertEqual(try coils(MGTimeline.spring(0)), 3)
+        XCTAssertEqual(try coils(0.5), 13)
+        XCTAssertEqual(try coils(1), 24)
+        XCTAssertEqual(MGTimeline.blendProgress(0), 0)
+        XCTAssertEqual(MGTimeline.blendProgress(0.5), 0.5)
+        XCTAssertEqual(MGTimeline.blendProgress(1), 1)
+        XCTAssertEqual(MGTimeline.spring(0), 0)
+        XCTAssertEqual(MGTimeline.spring(1.2), 1)
+    }
 }
