@@ -5,7 +5,8 @@
 //
 // Objects are null-prototype records, so a key such as "__proto__" is an ordinary own key and can never reach a
 // prototype. Duplicate keys and a byte-order mark are refused with `json` (fail closed; the Python preflight does the
-// same, Swift's behaviour for them is not measured, see README "Known gaps").
+// same). Swift's behaviour for them is not measured, so both stay outside the parity claim (README "Parity" and
+// "Known gaps").
 
 export type JSONValue = null | boolean | number | string | JSONValue[] | JSONObject;
 export interface JSONObject {
@@ -92,7 +93,8 @@ export function utf8Text(bytes: Uint8Array): string | null {
 
 /**
  * `MGJSON.dataRefusal` followed by the system parser and `MGJSON(any:)`. Returns the decoded value or the refusal
- * reason: `json` for bytes that are not UTF-8 JSON, `depthReason` for textual nesting over 64.
+ * reason: `json` for bytes that are not UTF-8 JSON, `depthReason` for textual nesting over 64. A byte-order mark and
+ * duplicate object keys also give `json`; that is this port's fail-closed choice, not a measured Swift result.
  */
 export function decodeJSONBytes(bytes: Uint8Array, depthReason: string, jsonReason = "json"):
   { ok: true; value: JSONValue } | { ok: false; reason: string } {

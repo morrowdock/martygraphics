@@ -4,7 +4,7 @@
 
 import { MGError } from "./errors.js";
 import { type FrameOptions, loadScene, prepareFrame } from "./frame.js";
-import { setShadowBlurPerRadius } from "./gfx.js";
+import { SHADOW_BLUR_PER_RADIUS, setShadowBlurPerRadius } from "./gfx.js";
 import { draw } from "./renderer.js";
 
 export interface RenderRequest extends FrameOptions {
@@ -16,7 +16,10 @@ export interface RenderRequest extends FrameOptions {
   packs?: string[];
   /** Device pixels per point. The PNG is width*scale × height*scale. */
   scale?: number;
-  /** Overrides the shadow calibration (canvas blur per SwiftUI shadow radius). */
+  /**
+   * Overrides the shadow calibration (canvas blur per SwiftUI shadow radius) for this render only. The previous value
+   * is restored when the call returns, whether it draws or refuses.
+   */
   shadowBlurPerRadius?: number;
 }
 
@@ -27,6 +30,7 @@ export type RenderResult =
 const encoder = new TextEncoder();
 
 export function render(canvas: HTMLCanvasElement, req: RenderRequest): RenderResult {
+  const calibration = SHADOW_BLUR_PER_RADIUS;
   try {
     if (req.shadowBlurPerRadius !== undefined) setShadowBlurPerRadius(req.shadowBlurPerRadius);
     const scene = loadScene(encoder.encode(req.scene), (req.patches ?? []).map((p) => encoder.encode(p)), { packs: req.packs ?? [] });
@@ -41,6 +45,8 @@ export function render(canvas: HTMLCanvasElement, req: RenderRequest): RenderRes
   } catch (e) {
     if (e instanceof MGError) return { ok: false, reason: e.reason };
     return { ok: false, reason: `render.error: ${(e as Error)?.message ?? String(e)}` };
+  } finally {
+    setShadowBlurPerRadius(calibration);
   }
 }
 

@@ -281,3 +281,16 @@ test("every kind round-trips through its wire form, in 2D and 3D", () => {
   assert.equal(MG.KINDS.length, 19);
   assert.equal(MG.COLOR_ROLES.length, 22);
 });
+
+// MARK: render request scope
+
+test("a refused render request does not change the shadow calibration of later renders", async () => {
+  const { pathToFileURL } = await import("node:url");
+  const browser = await import(pathToFileURL(path.join(REPO_ROOT, "tools", "web-renderer", "dist", "browser.js")).href);
+  const gfx = await import(pathToFileURL(path.join(REPO_ROOT, "tools", "web-renderer", "dist", "gfx.js")).href);
+  const before = gfx.SHADOW_BLUR_PER_RADIUS;
+  assert.equal(before, 2);
+  const refused = browser.render({}, { scene: fixture("unknown-key.scene.json").toString("utf8"), width: 760, height: 440, shadowBlurPerRadius: 0.25 });
+  assert.equal(refused.ok, false);
+  assert.equal(gfx.SHADOW_BLUR_PER_RADIUS, before);
+});

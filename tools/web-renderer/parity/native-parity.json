@@ -1,16 +1,19 @@
 {
- "generated": "2026-11-27T03:49:17.934Z",
+ "generated": "2026-11-27T04:23:57.073Z",
  "references": "docs/assets/native (Swift MGCanvasRenderer via SwiftUI ImageRenderer, scale 1; see provenance.json)",
  "tolerance": {
   "meanAbsError": 6,
   "recallWithin2px": 0.95,
   "precisionWithin2px": 0.95,
-  "tilesWithin2px": 0.9
+  "tilesWithin2px": 0.9,
+  "minTileScore": 0.85
  },
  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.8154.6 Safari/537.36",
  "summary": {
   "cases": 58,
   "passed": 53,
+  "negativeControls": 2,
+  "negativeControlsFailed": 2,
   "byReference": {
    "tree.png": {
     "frames": 1,
@@ -18,8 +21,10 @@
     "worstMeanAbsError": 0.66,
     "worstRecallWithin2px": 1,
     "worstPrecisionWithin2px": 1,
+    "judgedTiles": 35,
     "worstTilesWithin1px": 1,
     "worstTilesWithin2px": 1,
+    "worstTileScore": 0.963,
     "largestTileShiftPx": 0.42,
     "focusRingTiles": 8,
     "worstFocusRingWithin2px": 1
@@ -30,11 +35,13 @@
     "worstMeanAbsError": 1.109,
     "worstRecallWithin2px": 0.997,
     "worstPrecisionWithin2px": 0.9999,
+    "judgedTiles": 18,
     "worstTilesWithin1px": 0.7222,
     "worstTilesWithin2px": 0.8889,
+    "worstTileScore": 0.8893,
     "largestTileShiftPx": 3,
     "focusRingTiles": 18,
-    "worstFocusRingWithin2px": 0.9444
+    "worstFocusRingWithin2px": 0.8889
    },
    "handoff.png": {
     "frames": 1,
@@ -42,8 +49,10 @@
     "worstMeanAbsError": 1.065,
     "worstRecallWithin2px": 1,
     "worstPrecisionWithin2px": 1,
+    "judgedTiles": 32,
     "worstTilesWithin1px": 1,
     "worstTilesWithin2px": 1,
+    "worstTileScore": 0.9519,
     "largestTileShiftPx": 1,
     "focusRingTiles": 12,
     "worstFocusRingWithin2px": 1
@@ -54,8 +63,10 @@
     "worstMeanAbsError": 1.111,
     "worstRecallWithin2px": 0.9999,
     "worstPrecisionWithin2px": 0.9993,
+    "judgedTiles": 33,
     "worstTilesWithin1px": 1,
     "worstTilesWithin2px": 1,
+    "worstTileScore": 0.9861,
     "largestTileShiftPx": 0.02,
     "focusRingTiles": 48,
     "worstFocusRingWithin2px": 0.4792
@@ -66,8 +77,10 @@
     "worstMeanAbsError": 1.237,
     "worstRecallWithin2px": 1,
     "worstPrecisionWithin2px": 1,
+    "judgedTiles": 41,
     "worstTilesWithin1px": 1,
     "worstTilesWithin2px": 1,
+    "worstTileScore": 0.9625,
     "largestTileShiftPx": 1,
     "focusRingTiles": 45,
     "worstFocusRingWithin2px": 0.9778
@@ -78,8 +91,10 @@
     "worstMeanAbsError": 0.52,
     "worstRecallWithin2px": 1,
     "worstPrecisionWithin2px": 1,
+    "judgedTiles": 11,
     "worstTilesWithin1px": 1,
     "worstTilesWithin2px": 1,
+    "worstTileScore": 1,
     "largestTileShiftPx": 1,
     "focusRingTiles": 8,
     "worstFocusRingWithin2px": 1
@@ -90,8 +105,10 @@
     "worstMeanAbsError": 1.345,
     "worstRecallWithin2px": 1,
     "worstPrecisionWithin2px": 1,
+    "judgedTiles": 91,
     "worstTilesWithin1px": 0.967,
     "worstTilesWithin2px": 1,
+    "worstTileScore": 0.953,
     "largestTileShiftPx": 2,
     "focusRingTiles": 9,
     "worstFocusRingWithin2px": 1
@@ -102,11 +119,13 @@
     "worstMeanAbsError": 1.691,
     "worstRecallWithin2px": 0.9971,
     "worstPrecisionWithin2px": 0.9999,
+    "judgedTiles": 72,
     "worstTilesWithin1px": 0.7222,
     "worstTilesWithin2px": 0.8889,
+    "worstTileScore": 0.8885,
     "largestTileShiftPx": 3,
     "focusRingTiles": 72,
-    "worstFocusRingWithin2px": 0.9444
+    "worstFocusRingWithin2px": 0.8889
    },
    "shortest-path.gif": {
     "frames": 8,
@@ -114,8 +133,10 @@
     "worstMeanAbsError": 1.946,
     "worstRecallWithin2px": 1,
     "worstPrecisionWithin2px": 1,
+    "judgedTiles": 738,
     "worstTilesWithin1px": 0.956,
     "worstTilesWithin2px": 1,
+    "worstTileScore": 0.8924,
     "largestTileShiftPx": 2,
     "focusRingTiles": 63,
     "worstFocusRingWithin2px": 0.8571
@@ -126,8 +147,10 @@
     "worstMeanAbsError": 1.119,
     "worstRecallWithin2px": 1,
     "worstPrecisionWithin2px": 0.9993,
+    "judgedTiles": 360,
     "worstTilesWithin1px": 1,
     "worstTilesWithin2px": 1,
+    "worstTileScore": 1,
     "largestTileShiftPx": 1,
     "focusRingTiles": 230,
     "worstFocusRingWithin2px": 0.8571
@@ -138,8 +161,10 @@
     "worstMeanAbsError": 2.044,
     "worstRecallWithin2px": 0.9935,
     "worstPrecisionWithin2px": 0.9984,
+    "judgedTiles": 136,
     "worstTilesWithin1px": 0.5,
     "worstTilesWithin2px": 1,
+    "worstTileScore": 0.8885,
     "largestTileShiftPx": 2,
     "focusRingTiles": 93,
     "worstFocusRingWithin2px": 0.3214
@@ -159,15 +184,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 35,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 0.42,
+     "minScore": 0.963,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9905
     },
     "meanAbsError": 0.66,
     "over32Share": 0.00177,
@@ -218,12 +247,16 @@
     "y": 128
    },
    "pass": false,
+   "failures": [
+    "tiles within 2 px 0.8889 < 0.9"
+   ],
    "metrics": {
     "tiles": {
      "tiles": 18,
      "within1px": 0.7222,
      "within2px": 0.8889,
      "maxShift": 3,
+     "minScore": 0.8893,
      "outliers": [
       {
        "x": 320,
@@ -231,6 +264,7 @@
        "dx": 3,
        "dy": 0,
        "shift": 3,
+       "score": 1,
        "kind": "corner",
        "ring": false
       },
@@ -240,12 +274,15 @@
        "dx": -3,
        "dy": 0,
        "shift": 2.16,
+       "score": 0.9737,
        "kind": "edge",
        "ring": false
       }
      ],
+     "unmatched": [],
      "focusRingTiles": 18,
-     "focusRingWithin2px": 0.9444
+     "focusRingWithin2px": 0.8889,
+     "focusRingMinScore": 0.7317
     },
     "meanAbsError": 1.109,
     "over32Share": 0.00726,
@@ -320,15 +357,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 32,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 0.9519,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 12,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9487
     },
     "meanAbsError": 1.065,
     "over32Share": 0.0065,
@@ -395,15 +436,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 33,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 0.02,
+     "minScore": 0.9861,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 48,
-     "focusRingWithin2px": 0.4792
+     "focusRingWithin2px": 0.4792,
+     "focusRingMinScore": 0.8632
     },
     "meanAbsError": 1.111,
     "over32Share": 0.00539,
@@ -446,15 +491,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 41,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 0.9625,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 45,
-     "focusRingWithin2px": 0.9778
+     "focusRingWithin2px": 0.9778,
+     "focusRingMinScore": 0.9833
     },
     "meanAbsError": 1.237,
     "over32Share": 0.00626,
@@ -521,15 +570,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9733
     },
     "meanAbsError": 0.52,
     "over32Share": 0.00098,
@@ -572,15 +625,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 91,
      "within1px": 0.967,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.953,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 9,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9432
     },
     "meanAbsError": 1.345,
     "over32Share": 0.00988,
@@ -647,12 +704,16 @@
     "y": 128
    },
    "pass": false,
+   "failures": [
+    "tiles within 2 px 0.8889 < 0.9"
+   ],
    "metrics": {
     "tiles": {
      "tiles": 18,
      "within1px": 0.7222,
      "within2px": 0.8889,
      "maxShift": 3,
+     "minScore": 0.8885,
      "outliers": [
       {
        "x": 320,
@@ -660,6 +721,7 @@
        "dx": 3,
        "dy": 0,
        "shift": 3,
+       "score": 0.9873,
        "kind": "corner",
        "ring": false
       },
@@ -669,12 +731,15 @@
        "dx": -3,
        "dy": 0,
        "shift": 2.16,
+       "score": 0.9737,
        "kind": "edge",
        "ring": false
       }
      ],
+     "unmatched": [],
      "focusRingTiles": 18,
-     "focusRingWithin2px": 0.9444
+     "focusRingWithin2px": 0.8889,
+     "focusRingMinScore": 0.7317
     },
     "meanAbsError": 1.691,
     "over32Share": 0.0073,
@@ -741,12 +806,16 @@
     "y": 128
    },
    "pass": false,
+   "failures": [
+    "tiles within 2 px 0.8889 < 0.9"
+   ],
    "metrics": {
     "tiles": {
      "tiles": 18,
      "within1px": 0.7222,
      "within2px": 0.8889,
      "maxShift": 3,
+     "minScore": 0.8885,
      "outliers": [
       {
        "x": 320,
@@ -754,6 +823,7 @@
        "dx": 3,
        "dy": 0,
        "shift": 3,
+       "score": 0.9873,
        "kind": "corner",
        "ring": false
       },
@@ -763,12 +833,15 @@
        "dx": -3,
        "dy": 0,
        "shift": 2.16,
+       "score": 0.9737,
        "kind": "edge",
        "ring": false
       }
      ],
+     "unmatched": [],
      "focusRingTiles": 18,
-     "focusRingWithin2px": 0.9444
+     "focusRingWithin2px": 0.8889,
+     "focusRingMinScore": 0.7317
     },
     "meanAbsError": 1.69,
     "over32Share": 0.0073,
@@ -835,12 +908,16 @@
     "y": 128
    },
    "pass": false,
+   "failures": [
+    "tiles within 2 px 0.8889 < 0.9"
+   ],
    "metrics": {
     "tiles": {
      "tiles": 18,
      "within1px": 0.7222,
      "within2px": 0.8889,
      "maxShift": 3,
+     "minScore": 0.8885,
      "outliers": [
       {
        "x": 320,
@@ -848,6 +925,7 @@
        "dx": 3,
        "dy": 0,
        "shift": 3,
+       "score": 0.9873,
        "kind": "corner",
        "ring": false
       },
@@ -857,12 +935,15 @@
        "dx": -3,
        "dy": 0,
        "shift": 2.16,
+       "score": 0.9737,
        "kind": "edge",
        "ring": false
       }
      ],
+     "unmatched": [],
      "focusRingTiles": 18,
-     "focusRingWithin2px": 0.9444
+     "focusRingWithin2px": 0.8889,
+     "focusRingMinScore": 0.7317
     },
     "meanAbsError": 1.69,
     "over32Share": 0.00729,
@@ -929,12 +1010,16 @@
     "y": 128
    },
    "pass": false,
+   "failures": [
+    "tiles within 2 px 0.8889 < 0.9"
+   ],
    "metrics": {
     "tiles": {
      "tiles": 18,
      "within1px": 0.7222,
      "within2px": 0.8889,
      "maxShift": 3,
+     "minScore": 0.8885,
      "outliers": [
       {
        "x": 320,
@@ -942,6 +1027,7 @@
        "dx": 3,
        "dy": 0,
        "shift": 3,
+       "score": 0.9873,
        "kind": "corner",
        "ring": false
       },
@@ -951,12 +1037,15 @@
        "dx": -3,
        "dy": 0,
        "shift": 2.16,
+       "score": 0.9737,
        "kind": "edge",
        "ring": false
       }
      ],
+     "unmatched": [],
      "focusRingTiles": 18,
-     "focusRingWithin2px": 0.9444
+     "focusRingWithin2px": 0.8889,
+     "focusRingMinScore": 0.7317
     },
     "meanAbsError": 1.677,
     "over32Share": 0.00729,
@@ -1031,15 +1120,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 94,
      "within1px": 0.9574,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.953,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 0.8571
+     "focusRingWithin2px": 0.8571,
+     "focusRingMinScore": 0.95
     },
     "meanAbsError": 1.885,
     "over32Share": 0.0092,
@@ -1098,15 +1191,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 94,
      "within1px": 0.9574,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.953,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.95
     },
     "meanAbsError": 1.88,
     "over32Share": 0.00942,
@@ -1181,15 +1278,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 92,
      "within1px": 0.9565,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.953,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 0.8571
+     "focusRingWithin2px": 0.8571,
+     "focusRingMinScore": 0.9574
     },
     "meanAbsError": 1.896,
     "over32Share": 0.0099,
@@ -1264,15 +1365,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 92,
      "within1px": 0.9565,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.953,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9167
     },
     "meanAbsError": 1.891,
     "over32Share": 0.00957,
@@ -1347,15 +1452,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 91,
      "within1px": 0.956,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.8924,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9333
     },
     "meanAbsError": 1.946,
     "over32Share": 0.01005,
@@ -1430,15 +1539,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 93,
      "within1px": 0.957,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.953,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 0.875
+     "focusRingWithin2px": 0.875,
+     "focusRingMinScore": 0.9206
     },
     "meanAbsError": 1.914,
     "over32Share": 0.00982,
@@ -1513,15 +1626,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 91,
      "within1px": 0.956,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.953,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 9,
-     "focusRingWithin2px": 0.8889
+     "focusRingWithin2px": 0.8889,
+     "focusRingMinScore": 0.8354
     },
     "meanAbsError": 1.901,
     "over32Share": 0.00969,
@@ -1580,15 +1697,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 91,
      "within1px": 0.956,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.953,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 9,
-     "focusRingWithin2px": 0.8889
+     "focusRingWithin2px": 0.8889,
+     "focusRingMinScore": 0.8354
     },
     "meanAbsError": 1.915,
     "over32Share": 0.01003,
@@ -1655,15 +1776,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 12,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 0.8571
+     "focusRingWithin2px": 0.8571,
+     "focusRingMinScore": 0.8929
     },
     "meanAbsError": 1.105,
     "over32Share": 0.00095,
@@ -1706,15 +1831,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 12,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9672
     },
     "meanAbsError": 1.112,
     "over32Share": 0.00099,
@@ -1757,15 +1886,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 12,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9933
     },
     "meanAbsError": 1.114,
     "over32Share": 0.00108,
@@ -1808,15 +1941,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.8966
     },
     "meanAbsError": 1.119,
     "over32Share": 0.00102,
@@ -1859,15 +1996,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9818
     },
     "meanAbsError": 1.117,
     "over32Share": 0.0011,
@@ -1910,15 +2051,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9688
     },
     "meanAbsError": 1.118,
     "over32Share": 0.00101,
@@ -1961,15 +2106,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 0.875
+     "focusRingWithin2px": 0.875,
+     "focusRingMinScore": 0.725
     },
     "meanAbsError": 1.115,
     "over32Share": 0.00101,
@@ -2012,15 +2161,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9793
     },
     "meanAbsError": 1.109,
     "over32Share": 0.001,
@@ -2063,15 +2216,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 0.875
+     "focusRingWithin2px": 0.875,
+     "focusRingMinScore": 0.7308
     },
     "meanAbsError": 1.102,
     "over32Share": 0.00098,
@@ -2114,15 +2271,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9388
     },
     "meanAbsError": 1.096,
     "over32Share": 0.00098,
@@ -2165,15 +2326,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9091
     },
     "meanAbsError": 1.091,
     "over32Share": 0.00094,
@@ -2216,15 +2381,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9236
     },
     "meanAbsError": 1.087,
     "over32Share": 0.0009,
@@ -2267,15 +2436,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.8992
     },
     "meanAbsError": 1.085,
     "over32Share": 0.00084,
@@ -2318,15 +2491,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.8772
     },
     "meanAbsError": 1.089,
     "over32Share": 0.00092,
@@ -2369,15 +2546,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.925
     },
     "meanAbsError": 1.092,
     "over32Share": 0.00093,
@@ -2420,15 +2601,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 12,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9259
     },
     "meanAbsError": 1.101,
     "over32Share": 0.00093,
@@ -2471,15 +2656,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 12,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.8871
     },
     "meanAbsError": 1.106,
     "over32Share": 0.00095,
@@ -2522,15 +2711,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 12,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9264
     },
     "meanAbsError": 1.114,
     "over32Share": 0.00101,
@@ -2573,15 +2766,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9837
     },
     "meanAbsError": 1.116,
     "over32Share": 0.00108,
@@ -2624,15 +2821,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.873
     },
     "meanAbsError": 1.119,
     "over32Share": 0.00101,
@@ -2675,15 +2876,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9775
     },
     "meanAbsError": 1.117,
     "over32Share": 0.00109,
@@ -2726,15 +2931,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9241
     },
     "meanAbsError": 1.117,
     "over32Share": 0.00101,
@@ -2777,15 +2986,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9673
     },
     "meanAbsError": 1.114,
     "over32Share": 0.00101,
@@ -2828,15 +3041,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9667
     },
     "meanAbsError": 1.107,
     "over32Share": 0.00099,
@@ -2879,15 +3096,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 0.875
+     "focusRingWithin2px": 0.875,
+     "focusRingMinScore": 0.76
     },
     "meanAbsError": 1.1,
     "over32Share": 0.00098,
@@ -2930,15 +3151,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9437
     },
     "meanAbsError": 1.094,
     "over32Share": 0.00098,
@@ -2981,15 +3206,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 0.8571
+     "focusRingWithin2px": 0.8571,
+     "focusRingMinScore": 0.697
     },
     "meanAbsError": 1.09,
     "over32Share": 0.00093,
@@ -3032,15 +3261,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9637
     },
     "meanAbsError": 1.087,
     "over32Share": 0.00089,
@@ -3083,15 +3316,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9329
     },
     "meanAbsError": 1.086,
     "over32Share": 0.00084,
@@ -3134,15 +3371,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9057
     },
     "meanAbsError": 1.09,
     "over32Share": 0.00092,
@@ -3185,15 +3426,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 12,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 8,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9514
     },
     "meanAbsError": 1.094,
     "over32Share": 0.00092,
@@ -3236,15 +3481,19 @@
     "y": 128
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 12,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9672
     },
     "meanAbsError": 1.102,
     "over32Share": 0.00095,
@@ -3292,15 +3541,19 @@
     "y": 269
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 21,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 0,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 4,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9933
     },
     "meanAbsError": 0.745,
     "over32Share": 0.00238,
@@ -3356,15 +3609,19 @@
     "y": 269
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 6,
      "within1px": 0.5,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.8885,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 16,
-     "focusRingWithin2px": 0.8125
+     "focusRingWithin2px": 0.8125,
+     "focusRingMinScore": 0.9643
     },
     "meanAbsError": 1.816,
     "over32Share": 0.0141,
@@ -3444,15 +3701,19 @@
     "y": 745
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 19,
      "within1px": 0.7368,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.9718,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 7,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9868
     },
     "meanAbsError": 1.792,
     "over32Share": 0.01348,
@@ -3524,15 +3785,19 @@
     "y": 745
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 11,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 0.9481,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 28,
-     "focusRingWithin2px": 0.3214
+     "focusRingWithin2px": 0.3214,
+     "focusRingMinScore": 0.863
     },
     "meanAbsError": 1.975,
     "over32Share": 0.01767,
@@ -3580,15 +3845,19 @@
     "y": 1221
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 26,
      "within1px": 0.8846,
      "within2px": 1,
      "maxShift": 2,
+     "minScore": 0.9009,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 28,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9277
     },
     "meanAbsError": 2.011,
     "over32Share": 0.01409,
@@ -3660,15 +3929,19 @@
     "y": 1221
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 8,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 1,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 4,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9855
     },
     "meanAbsError": 0.634,
     "over32Share": 0.00197,
@@ -3716,15 +3989,19 @@
     "y": 1697
    },
    "pass": true,
+   "failures": [],
    "metrics": {
     "tiles": {
      "tiles": 45,
      "within1px": 1,
      "within2px": 1,
      "maxShift": 1,
+     "minScore": 0.9833,
      "outliers": [],
+     "unmatched": [],
      "focusRingTiles": 6,
-     "focusRingWithin2px": 1
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9844
     },
     "meanAbsError": 2.044,
     "over32Share": 0.01749,
@@ -3767,6 +4044,192 @@
       "centroidShift": 1.67,
       "dx": -1.19,
       "dy": 1.18
+     }
+    }
+   }
+  }
+ ],
+ "negativeControls": [
+  {
+   "id": "control:motion.png-without-B",
+   "what": "the small \"B\" text item removed",
+   "scene": "motion",
+   "reference": "motion.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": false,
+   "failures": [
+    "tile (544,288) match score 0 < 0.85"
+   ],
+   "metrics": {
+    "tiles": {
+     "tiles": 11,
+     "within1px": 0.9091,
+     "within2px": 0.9091,
+     "maxShift": 3,
+     "minScore": 0,
+     "outliers": [
+      {
+       "x": 544,
+       "y": 288,
+       "dx": -2,
+       "dy": 3,
+       "shift": 3,
+       "score": 0,
+       "kind": "corner",
+       "ring": false
+      }
+     ],
+     "unmatched": [
+      {
+       "x": 544,
+       "y": 288,
+       "dx": -2,
+       "dy": 3,
+       "shift": 3,
+       "score": 0,
+       "kind": "corner",
+       "ring": false
+      }
+     ],
+     "focusRingTiles": 8,
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9733
+    },
+    "meanAbsError": 0.527,
+    "over32Share": 0.00096,
+    "foreground": {
+     "reference": 2858,
+     "ours": 2748,
+     "iou": 0.8933,
+     "recallWithin2px": 0.9748,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "teal": {
+      "reference": 457,
+      "ours": 436,
+      "countRatio": 0.954,
+      "centroidShift": 0.2,
+      "dx": -0.2,
+      "dy": -0.01
+     },
+     "muted": {
+      "reference": 436,
+      "ours": 365,
+      "countRatio": 0.837,
+      "centroidShift": 0.58,
+      "dx": -0.52,
+      "dy": 0.25
+     }
+    }
+   }
+  },
+  {
+   "id": "control:handoff.png-label-Queue-to-Store",
+   "what": "the node label \"Queue\" changed to \"Store\"",
+   "scene": "handoff",
+   "reference": "handoff.png",
+   "frame": 0,
+   "step": "last",
+   "time": 1,
+   "board": {
+    "x": 40,
+    "y": 128
+   },
+   "pass": false,
+   "failures": [
+    "tile (352,192) match score 0.8146 < 0.85"
+   ],
+   "metrics": {
+    "tiles": {
+     "tiles": 32,
+     "within1px": 0.9688,
+     "within2px": 0.9688,
+     "maxShift": 3,
+     "minScore": 0.8146,
+     "outliers": [
+      {
+       "x": 352,
+       "y": 192,
+       "dx": 3,
+       "dy": -3,
+       "shift": 3,
+       "score": 0.8146,
+       "kind": "corner",
+       "ring": false
+      }
+     ],
+     "unmatched": [
+      {
+       "x": 352,
+       "y": 192,
+       "dx": 3,
+       "dy": -3,
+       "shift": 3,
+       "score": 0.8146,
+       "kind": "corner",
+       "ring": false
+      }
+     ],
+     "focusRingTiles": 12,
+     "focusRingWithin2px": 1,
+     "focusRingMinScore": 0.9487
+    },
+    "meanAbsError": 1.103,
+    "over32Share": 0.00675,
+    "foreground": {
+     "reference": 15932,
+     "ours": 15795,
+     "iou": 0.949,
+     "recallWithin2px": 1,
+     "precisionWithin2px": 1
+    },
+    "colors": {
+     "blue": {
+      "reference": 716,
+      "ours": 678,
+      "countRatio": 0.947,
+      "centroidShift": 3.47,
+      "dx": 3.44,
+      "dy": -0.48
+     },
+     "purple": {
+      "reference": 340,
+      "ours": 293,
+      "countRatio": 0.862,
+      "centroidShift": 1.73,
+      "dx": -0.08,
+      "dy": -1.73
+     },
+     "teal": {
+      "reference": 702,
+      "ours": 663,
+      "countRatio": 0.944,
+      "centroidShift": 3.96,
+      "dx": -3.93,
+      "dy": -0.46
+     },
+     "muted": {
+      "reference": 193,
+      "ours": 143,
+      "countRatio": 0.741,
+      "centroidShift": 7.61,
+      "dx": -7.29,
+      "dy": -2.2
+     },
+     "ink": {
+      "reference": 1100,
+      "ours": 937,
+      "countRatio": 0.852,
+      "centroidShift": 10.63,
+      "dx": 10.56,
+      "dy": -1.21
      }
     }
    }

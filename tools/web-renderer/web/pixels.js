@@ -1,6 +1,41 @@
 // SPDX-License-Identifier: Apache-2.0
 // Page-side pixel helpers for the parity script and the snapshot tests: decode PNG/GIF (via ImageDecoder), find the
 // board inside a Showcase card capture, and compare two RGBA images with tolerant, structure-aware metrics.
+// `measureFrame` (page side) and `verdict` (page or Node) are the one metric and the one pass rule that the parity
+// report (scripts/parity-native.mjs), the contact sheet (scripts/contact-sheet.mjs) and the metric tests share.
+
+/**
+ * Pass thresholds (README "Parity"). A first per-colour centroid criterion was dropped after the first run: colours
+ * shared by text, dashes and shapes moved their centroids by font and dash differences, not by geometry. Per-colour
+ * counts stay in the report as information; local geometry is judged by tile alignment instead.
+ */
+export const TOLERANCE = {
+  meanAbsError: 6,
+  recallWithin2px: 0.95,
+  precisionWithin2px: 0.95,
+  tilesWithin2px: 0.9,
+  minTileScore: 0.85,
+};
+
+/**
+ * The pass rule. Every check must hold; a missing value (an empty mask, no judged tiles) is a failure, never a pass.
+ * Returns { pass, failures: [text] }.
+ */
+export function verdict(m, t = TOLERANCE) {
+  const failures = [];
+  const fg = m.foreground, tiles = m.tiles;
+  if (!(m.meanAbsError <= t.meanAbsError)) failures.push(`mean abs error ${m.meanAbsError} > ${t.meanAbsError}`);
+  if (fg.recallWithin2px === null) failures.push("reference has no drawn content");
+  else if (fg.recallWithin2px < t.recallWithin2px) failures.push(`recall ${fg.recallWithin2px} < ${t.recallWithin2px}`);
+  if (fg.precisionWithin2px === null) failures.push("nothing drawn");
+  else if (fg.precisionWithin2px < t.precisionWithin2px) failures.push(`precision ${fg.precisionWithin2px} < ${t.precisionWithin2px}`);
+  if (!tiles.tiles) failures.push("no judged tiles");
+  else {
+    if (tiles.within2px < t.tilesWithin2px) failures.push(`tiles within 2 px ${tiles.within2px} < ${t.tilesWithin2px}`);
+    for (const u of tiles.unmatched) failures.push(`tile (${u.x},${u.y}) match score ${u.score} < ${t.minTileScore}`);
+  }
+  return { pass: failures.length === 0, failures };
+}
 
 const BOARD_TOP = [17, 26, 51];
 const BOARD_BOTTOM = [10, 15, 31];
@@ -237,9 +272,10 @@ export function compare(a, b, excluded = null) {
     meanAbsError: +(sum / n).toFixed(3),
     over32Share: +(over32 / n).toFixed(5),
     foreground: {
-      reference: ca, ours: cb, iou: uni ? +(inter / uni).toFixed(4) : 1,
-      recallWithin2px: ca ? +(aInB / ca).toFixed(4) : 1,
-      precisionWithin2px: cb ? +(bInA / cb).toFixed(4) : 1,
+      // Null when a mask is empty: there is nothing to recall or nothing drawn, and the verdict fails the frame.
+      reference: ca, ours: cb, iou: uni ? +(inter / uni).toFixed(4) : null,
+      recallWithin2px: ca ? +(aInB / ca).toFixed(4) : null,
+      precisionWithin2px: cb ? +(bInA / cb).toFixed(4) : null,
     },
     colors,
   };
@@ -282,9 +318,11 @@ function onOutline(tx, ty, tile, r) {
  * (structure tensor: smaller eigenvalue under a tenth of the larger) only fixes the shift across that edge, so its
  * shift is measured along the edge normal. Tiles on `excluded` (the dashed focus ring, whose dash phase is a known
  * gap) are reported separately. The same geometry gives shifts of 0–1 px; a misplaced item shows up as a larger
- * shift in its tiles.
+ * shift in its tiles. The best shift alone says nothing about whether the content is the same (a tile whose content
+ * is missing from ours still has a "best" shift), so each tile also gets a match score (edge recall within 1 px at
+ * that shift): a tile counts as aligned only with shift ≤ k and score ≥ `minScore`, and is "unmatched" below it.
  */
-export function tileShifts(a, b, excluded = null, tile = 32, maxShift = 6, minEdges = 24) {
+export function tileShifts(a, b, excluded = null, { tile = 32, maxShift = 6, minEdges = 24, minScore = TOLERANCE.minTileScore } = {}) {
   const { width: w, height: h } = a;
   const la = luminance(a), lb = luminance(b);
   const ea = edges(la, w, h), eb = edges(lb, w, h);
@@ -330,20 +368,47 @@ export function tileShifts(a, b, excluded = null, tile = 32, maxShift = 6, minEd
         shift = Math.max(Math.abs(best.dx), Math.abs(best.dy));
         kind = "corner";
       }
-      shifts.push({ x: tx, y: ty, dx: best.dx, dy: best.dy, shift: +shift.toFixed(2), kind, ring: onOutline(tx, ty, tile, excluded) });
+      // Match score at the best shift: the share of the reference tile's edge pixels (strength 24 or more) that have
+      // an edge pixel of ours within 1 px. 1 means all of the reference structure is present; content missing from
+      // ours, or different glyphs, lower it.
+      let refEdges = 0, found = 0;
+      for (let y = ty; y < ty + tile; y++) {
+        for (let x = tx; x < tx + tile; x++) {
+          if (ea[y * w + x] < 24) continue;
+          refEdges++;
+          const bx = x + best.dx, by = y + best.dy;
+          search: for (let oy = -1; oy <= 1; oy++) {
+            for (let ox = -1; ox <= 1; ox++) {
+              const xx = bx + ox, yy = by + oy;
+              if (xx >= 0 && yy >= 0 && xx < w && yy < h && eb[yy * w + xx] >= 24) {
+                found++;
+                break search;
+              }
+            }
+          }
+        }
+      }
+      const score = refEdges ? found / refEdges : 1;
+      shifts.push({ x: tx, y: ty, dx: best.dx, dy: best.dy, shift: +shift.toFixed(2), score: +score.toFixed(4), kind, ring: onOutline(tx, ty, tile, excluded) });
     }
   }
   const judged = shifts.filter((s) => !s.ring);
   const ring = shifts.filter((s) => s.ring);
-  const share = (list, k) => (list.length ? +(list.filter((s) => s.shift <= k).length / list.length).toFixed(4) : 1);
+  // A tile is aligned within k px only when its best match also scores at least `minScore`. An empty list has no share
+  // (null), and the verdict treats a frame without judged tiles as a failure.
+  const aligned = (s, k) => s.shift <= k && s.score >= minScore;
+  const share = (list, k) => (list.length ? +(list.filter((s) => aligned(s, k)).length / list.length).toFixed(4) : null);
   return {
     tiles: judged.length,
     within1px: share(judged, 1),
     within2px: share(judged, 2),
-    maxShift: judged.length ? Math.max(...judged.map((s) => s.shift)) : 0,
-    outliers: judged.filter((s) => s.shift > 2),
+    maxShift: judged.length ? Math.max(...judged.map((s) => s.shift)) : null,
+    minScore: judged.length ? Math.min(...judged.map((s) => s.score)) : null,
+    outliers: judged.filter((s) => !aligned(s, 2)),
+    unmatched: judged.filter((s) => s.score < minScore),
     focusRingTiles: ring.length,
     focusRingWithin2px: share(ring, 2),
+    focusRingMinScore: ring.length ? Math.min(...ring.map((s) => s.score)) : null,
   };
 }
 
@@ -394,4 +459,41 @@ export function changedShare(a, b, tol) {
     if (d > tol) changed++;
   }
   return changed / (a.width * a.height);
+}
+
+const referenceFrames = new Map();
+
+/**
+ * The one metric collection for a frame with a Swift capture (page side; needs `MG`, the dist/browser.js module).
+ * Locates the board in the capture, renders the same scene, step, time and size, finds the focus ring's box (bounds of
+ * the focus item grown by 8 pt) so its dash-phase tiles are reported apart, and compares.
+ *
+ * req: { origin, scene, patches?, packs?, step, time, size?: [w, h], reference: { file, frame, boardIndex? },
+ *        shadowBlurPerRadius?, images?: boolean }
+ * Returns { board, ring, metrics, verdict, images? } or { error }.
+ */
+export async function measureFrame(MG, req) {
+  const { file, frame, boardIndex } = req.reference;
+  if (!referenceFrames.has(file)) referenceFrames.set(file, decodeFrames(`${req.origin}/docs/assets/native/${file}`));
+  const ref = (await referenceFrames.get(file))[frame];
+  if (!ref) return { error: `${file} has no frame ${frame}` };
+  const [w, h] = req.size ?? [760, 440];
+  const board = boardIndex === undefined ? findBoard(ref, w, h) : findBoards(ref, w, h, [56 + w / 2, 616 + w / 2])[boardIndex];
+  if (!board) return { error: "board not found" };
+  const native = crop(ref, board.x, board.y, w, h);
+  const canvas = canvasFor(w, h);
+  const res = MG.render(canvas, { scene: req.scene, patches: req.patches ?? [], packs: req.packs ?? [], step: req.step, time: req.time,
+    width: w, height: h, scale: 1, shadowBlurPerRadius: req.shadowBlurPerRadius });
+  if (!res.ok) return { error: res.reason };
+  const ours = canvas.getContext("2d").getImageData(0, 0, w, h);
+  const enc = new TextEncoder();
+  const prepared = MG.prepareFrame(MG.loadScene(enc.encode(req.scene), (req.patches ?? []).map((p) => enc.encode(p)), { packs: req.packs ?? [] }),
+    { step: req.step, time: req.time, width: w, height: h });
+  const target = prepared.input.items.find((i) => i.id === prepared.input.focus);
+  const fr = target ? MG.bounds(target, prepared.input.items, prepared.input.viewport) : null;
+  const ring = fr ? { x: fr.x - 8, y: fr.y - 8, w: fr.w + 16, h: fr.h + 16 } : null;
+  const metrics = compare(native, ours, ring);
+  const out = { board, ring, metrics, verdict: verdict(metrics) };
+  if (req.images) out.images = { native: toPNGDataURL(native), ours: canvas.toDataURL("image/png"), diff: toPNGDataURL(diffImage(native, ours)) };
+  return out;
 }

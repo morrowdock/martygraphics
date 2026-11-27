@@ -1,106 +1,170 @@
 [
  {
   "shadowBlurPerRadius": 0,
+  "boards": 14,
   "meanAbsError": 1.7959,
-  "perScene": {
-   "tree": 1.012,
-   "two-pointers": 1.895,
-   "handoff": 2.239,
-   "function": 2.476,
-   "counts": 3.652,
-   "motion": 0.797,
-   "shortest-path": 2.357
+  "perFrame": {
+   "tree.png": 0.955,
+   "two-pointers.png": 1.144,
+   "handoff.png": 1.544,
+   "function.png": 1.459,
+   "counts.png": 3.226,
+   "motion.png": 0.659,
+   "shortest-path.png": 1.727,
+   "overview.png#tree": 1.012,
+   "overview.png#two-pointers": 1.895,
+   "overview.png#handoff": 2.239,
+   "overview.png#function": 2.476,
+   "overview.png#counts": 3.652,
+   "overview.png#motion": 0.797,
+   "overview.png#shortest-path": 2.357
   }
  },
  {
   "shadowBlurPerRadius": 0.5,
+  "boards": 14,
   "meanAbsError": 1.4765,
-  "perScene": {
-   "tree": 0.897,
-   "two-pointers": 1.876,
-   "handoff": 1.906,
-   "function": 2.334,
-   "counts": 2.527,
-   "motion": 0.778,
-   "shortest-path": 2.228
+  "perFrame": {
+   "tree.png": 0.747,
+   "two-pointers.png": 1.136,
+   "handoff.png": 1.133,
+   "function.png": 1.381,
+   "counts.png": 1.652,
+   "motion.png": 0.629,
+   "shortest-path.png": 1.447,
+   "overview.png#tree": 0.897,
+   "overview.png#two-pointers": 1.876,
+   "overview.png#handoff": 1.906,
+   "overview.png#function": 2.334,
+   "overview.png#counts": 2.527,
+   "overview.png#motion": 0.778,
+   "overview.png#shortest-path": 2.228
   }
  },
  {
   "shadowBlurPerRadius": 0.75,
+  "boards": 14,
   "meanAbsError": 1.4256,
-  "perScene": {
-   "tree": 0.836,
-   "two-pointers": 1.857,
-   "handoff": 1.867,
-   "function": 2.219,
-   "counts": 2.423,
-   "motion": 0.736,
-   "shortest-path": 2.185
+  "perFrame": {
+   "tree.png": 0.711,
+   "two-pointers.png": 1.128,
+   "handoff.png": 1.108,
+   "function.png": 1.298,
+   "counts.png": 1.571,
+   "motion.png": 0.598,
+   "shortest-path.png": 1.421,
+   "overview.png#tree": 0.836,
+   "overview.png#two-pointers": 1.857,
+   "overview.png#handoff": 1.867,
+   "overview.png#function": 2.219,
+   "overview.png#counts": 2.423,
+   "overview.png#motion": 0.736,
+   "overview.png#shortest-path": 2.185
   }
  },
  {
   "shadowBlurPerRadius": 1,
+  "boards": 14,
   "meanAbsError": 1.3841,
-  "perScene": {
-   "tree": 0.786,
-   "two-pointers": 1.851,
-   "handoff": 1.832,
-   "function": 2.178,
-   "counts": 2.275,
-   "motion": 0.714,
-   "shortest-path": 2.146
+  "perFrame": {
+   "tree.png": 0.682,
+   "two-pointers.png": 1.125,
+   "handoff.png": 1.086,
+   "function.png": 1.268,
+   "counts.png": 1.454,
+   "motion.png": 0.582,
+   "shortest-path.png": 1.398,
+   "overview.png#tree": 0.786,
+   "overview.png#two-pointers": 1.851,
+   "overview.png#handoff": 1.832,
+   "overview.png#function": 2.178,
+   "overview.png#counts": 2.275,
+   "overview.png#motion": 0.714,
+   "overview.png#shortest-path": 2.146
   }
  },
  {
   "shadowBlurPerRadius": 1.25,
+  "boards": 14,
   "meanAbsError": 1.3563,
-  "perScene": {
-   "tree": 0.765,
-   "two-pointers": 1.839,
-   "handoff": 1.818,
-   "function": 2.093,
-   "counts": 2.229,
-   "motion": 0.682,
-   "shortest-path": 2.127
+  "perFrame": {
+   "tree.png": 0.67,
+   "two-pointers.png": 1.12,
+   "handoff.png": 1.078,
+   "function.png": 1.205,
+   "counts.png": 1.417,
+   "motion.png": 0.557,
+   "shortest-path.png": 1.388,
+   "overview.png#tree": 0.765,
+   "overview.png#two-pointers": 1.839,
+   "overview.png#handoff": 1.818,
+   "overview.png#function": 2.093,
+   "overview.png#counts": 2.229,
+   "overview.png#motion": 0.682,
+   "overview.png#shortest-path": 2.127
   }
  },
  {
   "shadowBlurPerRadius": 1.5,
+  "boards": 14,
   "meanAbsError": 1.3301,
-  "perScene": {
-   "tree": 0.752,
-   "two-pointers": 1.833,
-   "handoff": 1.801,
-   "function": 2.056,
-   "counts": 2.143,
-   "motion": 0.665,
-   "shortest-path": 2.09
+  "perFrame": {
+   "tree.png": 0.661,
+   "two-pointers.png": 1.117,
+   "handoff.png": 1.068,
+   "function.png": 1.178,
+   "counts.png": 1.347,
+   "motion.png": 0.544,
+   "shortest-path.png": 1.367,
+   "overview.png#tree": 0.752,
+   "overview.png#two-pointers": 1.833,
+   "overview.png#handoff": 1.801,
+   "overview.png#function": 2.056,
+   "overview.png#counts": 2.143,
+   "overview.png#motion": 0.665,
+   "overview.png#shortest-path": 2.09
   }
  },
  {
   "shadowBlurPerRadius": 2,
+  "boards": 14,
   "meanAbsError": 1.2903,
-  "perScene": {
-   "tree": 0.745,
-   "two-pointers": 1.816,
-   "handoff": 1.792,
-   "function": 1.975,
-   "counts": 2.011,
-   "motion": 0.634,
-   "shortest-path": 2.044
+  "perFrame": {
+   "tree.png": 0.66,
+   "two-pointers.png": 1.109,
+   "handoff.png": 1.065,
+   "function.png": 1.111,
+   "counts.png": 1.237,
+   "motion.png": 0.52,
+   "shortest-path.png": 1.345,
+   "overview.png#tree": 0.745,
+   "overview.png#two-pointers": 1.816,
+   "overview.png#handoff": 1.792,
+   "overview.png#function": 1.975,
+   "overview.png#counts": 2.011,
+   "overview.png#motion": 0.634,
+   "overview.png#shortest-path": 2.044
   }
  },
  {
   "shadowBlurPerRadius": 2.5,
+  "boards": 14,
   "meanAbsError": 1.3201,
-  "perScene": {
-   "tree": 0.768,
-   "two-pointers": 1.828,
-   "handoff": 1.827,
-   "function": 2.03,
-   "counts": 2.075,
-   "motion": 0.644,
-   "shortest-path": 2.082
+  "perFrame": {
+   "tree.png": 0.678,
+   "two-pointers.png": 1.115,
+   "handoff.png": 1.086,
+   "function.png": 1.146,
+   "counts.png": 1.299,
+   "motion.png": 0.528,
+   "shortest-path.png": 1.375,
+   "overview.png#tree": 0.768,
+   "overview.png#two-pointers": 1.828,
+   "overview.png#handoff": 1.827,
+   "overview.png#function": 2.03,
+   "overview.png#counts": 2.075,
+   "overview.png#motion": 0.644,
+   "overview.png#shortest-path": 2.082
   }
  }
 ]

@@ -15,8 +15,10 @@ export type Pt = { x: number; y: number };
 
 /**
  * Canvas `shadowBlur` per SwiftUI shadow-filter radius. Canvas blur b is a Gaussian with sigma b/2, so 2 means
- * sigma = radius (the CALayer shadowRadius convention). Chosen by sweeping 0–2.5 against the seven Swift stills in
- * docs/assets/native (`node scripts/parity-native.mjs --calibrate`): 2 gave the lowest mean error.
+ * sigma = radius (the CALayer shadowRadius convention). Chosen by sweeping 0–2.5 against the 14 PNG boards in
+ * docs/assets/native (the seven Showcase stills and the seven 500×270 boards of overview.png;
+ * `node scripts/parity-native.mjs --calibrate`): 2 gave the lowest mean error. `render` in browser.ts may override it
+ * for one call and restores it afterwards.
  */
 export let SHADOW_BLUR_PER_RADIUS = 2.0;
 export function setShadowBlurPerRadius(k: number): void {

@@ -2,8 +2,10 @@
 // Accept/reject and reason parity with the Python draft preflight (tools/scene_v1_check.py, branch
 // feat/scene-v1-json-schema), using the verdicts captured in test/expected/python-checker.json
 // (scripts/capture-python-results.mjs). The comparison uses the validator entry point, as the Python checker does
-// (`input.too-large` for raw inputs over 16 KiB). Where the two differ, Swift decides: every allowed divergence below
-// is a case whose Swift result is known (asserted by the Swift tests) and which this port reproduces.
+// (`input.too-large` for raw inputs over 16 KiB). The corpus has 247 inputs: 223 match the captured Python verdicts and
+// 24 differ. Where the two differ, the Swift expectation decides and this port must give it: 18 of the 24 are
+// ParserRegressionTests assertions, 1 is the TemplateExtensionTests reason table, and 5 are source-reading probes
+// (no Swift run or Swift test backs those). The Swift side was not run for this comparison.
 
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
@@ -16,7 +18,7 @@ import { MG } from "./helpers.mjs";
 const captured = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "test", "expected", "python-checker.json"), "utf8"));
 const sha256 = (b) => crypto.createHash("sha256").update(b).digest("hex");
 
-/** Documented divergences: the Python preflight is coarser or defers to Swift; Swift's asserted result wins. */
+/** Documented divergences: the Python preflight is coarser or defers to Swift; the Swift expectation wins. */
 const DIVERGENCES = {
   "mgfixtures/invalid/title_unknown_value": "python defers template expansion; Swift fills {total} from template values and refuses it",
   "parser-tests/testBytesAndEnvelopeFailClosed#23": "python reports the camera object (`camera`); Swift names the unknown key",
@@ -74,7 +76,7 @@ for (const c of cases) {
     }
     const why = DIVERGENCES[c.name];
     assert.ok(why, `${c.name}: TS ${label(ts)} vs Python ${label(py)} is not a documented divergence`);
-    assert.ok(c.swift, `${c.name}: a divergence needs a known Swift result`);
+    assert.ok(c.swift, `${c.name}: a divergence needs a Swift expectation`);
     const expected = c.swift.expect;
     const tsAtSwiftEntry = ts.status === "fail" ? ts.reason : "accept";
     assert.equal(tsAtSwiftEntry, expected, `${c.name}: diverges from Python but does not match Swift either`);
@@ -86,4 +88,14 @@ test("on every fixture, Showcase scene and schema-branch input the port and the 
   const scoped = cases.filter((c) => fixtureGroups.has(c.group));
   assert.ok(scoped.length >= 40);
   for (const c of scoped) assert.equal(label(tsVerdict(c)), label(captured.results[c.name]), c.name);
+});
+
+test("the documented divergences are 24: 18 ParserRegressionTests, 1 TemplateExtensionTests, 5 source-reading probes", () => {
+  const names = Object.keys(DIVERGENCES);
+  assert.equal(cases.length, 247);
+  assert.equal(names.length, 24);
+  const source = (n) => cases.find((c) => c.name === n).swift.source;
+  assert.equal(names.filter((n) => source(n).startsWith("ParserRegressionTests.")).length, 18);
+  assert.equal(names.filter((n) => source(n).startsWith("TemplateExtensionTests.")).length, 1);
+  assert.equal(names.filter((n) => source(n).includes("(source reading; not run on Swift)")).length, 5);
 });
