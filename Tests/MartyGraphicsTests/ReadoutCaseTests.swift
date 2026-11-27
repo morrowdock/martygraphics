@@ -79,7 +79,8 @@ final class ReadoutCaseTests: XCTestCase {
             let expected = try XCTUnwrap(c["readouts"] as? [String: Any], name)
             let shown = try XCTUnwrap(c["shown"] as? [String: String], name)
             let tolerance = c["tolerance"] as? [String: Any] ?? [:]
-            XCTAssertEqual(Set(MGReadout.requested(item).map(\.rawValue)), Set(expected.keys), name)
+            let requested: [String] = MGReadout.requested(item).map { $0.rawValue }
+            XCTAssertEqual(Set(requested), Set(expected.keys), name)
             for (key, closed) in expected {
                 let r = try XCTUnwrap(MGReadout(rawValue: key), name)
                 let got = try XCTUnwrap(item.num[r.key], "\(name) \(key)")
@@ -91,7 +92,8 @@ final class ReadoutCaseTests: XCTestCase {
             // The readouts survive the wire form (the numbers are derived again, never serialised).
             let ctx = MGContext(width: scene.width, height: scene.height, is3D: false, values: [:])
             XCTAssertEqual(try MGParser.item(.object(item.wire()), ctx), item, name)
-            XCTAssertEqual(item.wire()["readouts"], .array(MGReadout.requested(item).map { .string($0.rawValue) }), name)
+            let wireNames: [MGJSON] = MGReadout.requested(item).map { MGJSON.string($0.rawValue) }
+            XCTAssertEqual(item.wire()["readouts"], .array(wireNames), name)
         }
     }
 
@@ -113,7 +115,8 @@ final class ReadoutCaseTests: XCTestCase {
             let scene = try MGParser.scene(object: try XCTUnwrap(c["scene"], name)).get()
             let texts = try XCTUnwrap(c["texts"] as? [String: String], name)
             for (path, expected) in texts {
-                let parts = path.split(separator: ".").map(String.init)
+                let pieces: [Substring] = path.split(separator: ".")
+                let parts: [String] = pieces.map { String($0) }
                 let got: String?
                 switch parts[0] {
                 case "title": got = scene.title
@@ -158,13 +161,15 @@ final class ReadoutCaseTests: XCTestCase {
     }
 
     func testAPatchComputesTheReadoutsAgainAndFillsTheTextAgain() throws {
-        let s = try scene(#"{"v":1,"items":[{"id":"t","k":"text","at":[6,7],"text":"slope {f.slope}"},"# + Self.sine + #"]}"#)
+        let s = try scene(#"{"v":1,"items":[{"id":"t","k":"text","at":[6,7],"text":"slope {f.slope}"},\#(Self.sine)]}"#)
         XCTAssertEqual(s.item("t")?.text, "slope 0.54")
         let taller = try MGPatch.parse(data: Data(#"{"v":1,"rev":0,"ops":[{"op":"set","id":"f","key":"a","value":2}]}"#.utf8)).get()
         let next = try s.applying(taller).get()
         XCTAssertEqual(next.item("t")?.text, "slope 1.08")
-        XCTAssertEqual(try XCTUnwrap(next.values["f.slope"]?.value), 2 * cos(1), accuracy: 1e-12)
-        XCTAssertEqual(try XCTUnwrap(next.values["f.area"]?.value), 2 * (1 - cos(3.14159)), accuracy: 1e-12)
+        let slope: Double = 2 * cos(1.0)
+        let area: Double = 2 * (1 - cos(3.14159))
+        XCTAssertEqual(try XCTUnwrap(next.values["f.slope"]?.value), slope, accuracy: 1e-12)
+        XCTAssertEqual(try XCTUnwrap(next.values["f.area"]?.value), area, accuracy: 1e-12)
         // A patch that breaks a readout is refused as a whole, and the scene before it stays.
         let corner = try MGPatch.parse(data: Data(#"{"v":1,"ops":[{"op":"set","id":"f","key":"y","value":"abs(x - 1)"}]}"#.utf8)).get()
         guard case .failure(let e) = s.applying(corner) else { return XCTFail("a corner at the mark must not apply") }
@@ -173,7 +178,7 @@ final class ReadoutCaseTests: XCTestCase {
 
     func testAStepEditMayChangeEverythingButTheNumbers() throws {
         let edits = #"[{"id":"f","key":"color","value":"teal"},{"id":"f","key":"label","value":"m = {f.slope}"},{"id":"f","key":"yl","value":"y"}]"#
-        let s = try scene(#"{"v":1,"items":["# + Self.sine + #"],"steps":[{"say":"one {f.slope}"},{"say":"two","do":"# + edits + #"}]}"#)
+        let s = try scene(#"{"v":1,"items":[\#(Self.sine)],"steps":[{"say":"one {f.slope}"},{"say":"two","do":\#(edits)}]}"#)
         let last = try XCTUnwrap(MGTimeline.items(s, step: 1).first)
         XCTAssertEqual(last.color, .teal)
         XCTAssertEqual(last.label, "m = 0.54")
@@ -251,8 +256,14 @@ final class ReadoutCaseTests: XCTestCase {
 
     func testTheViewCheckReadsEverySample() {
         // f leaves the y range only at the first node of the coarser rule: the band would be clipped there.
-        let node = 1.0 / 128 + 1.0 / 128 * MGReadout.nodes[0]
-        XCTAssertThrowsError(try MGReadout.area({ $0 == node ? 1 : 0 }, enclose: { _, _ in (0, 0) }, 0, 1, y0: -0.5, y1: 0.5)) {
+        let cell: Double = 1.0 / 128
+        let node: Double = cell + cell * MGReadout.nodes[0]
+        let f: (Double) -> Double = { x in
+            if x == node { return 1 }
+            return 0
+        }
+        let enclose: (Double, Double) -> (lo: Double, hi: Double)? = { _, _ in (0, 0) }
+        XCTAssertThrowsError(try MGReadout.area(f, enclose: enclose, 0, 1, y0: -0.5, y1: 0.5)) {
             XCTAssertEqual(($0 as? MGError)?.reason, "func.readouts.view")
         }
     }
@@ -278,8 +289,14 @@ final class ReadoutCaseTests: XCTestCase {
         check(run { _, _ in (-1.02, 1.02) }, nil, 1)
         check(run { _, _ in (-1.03, 1) }, "func.readouts.view", 11)
         // Cells of 1/512 and narrower certify: 1,023 cells would be needed, so the budget refuses it after 256.
-        check(run { $1 - $0 <= 1.0 / 512 ? (0, 0) : nil }, "func.readouts.area", MGReadout.certifyBudget)
-        check(run { $1 - $0 <= 1.0 / 64 ? (0, 0) : nil }, nil, 127)
+        func upTo(_ width: Double) -> (Double, Double) -> (lo: Double, hi: Double)? {
+            return { a, b in
+                if b - a <= width { return (0, 0) }
+                return nil
+            }
+        }
+        check(run(upTo(1.0 / 512)), "func.readouts.area", MGReadout.certifyBudget)
+        check(run(upTo(1.0 / 64)), nil, 127)
     }
 
     func testEnclosuresHoldEveryValue() throws {
@@ -290,11 +307,14 @@ final class ReadoutCaseTests: XCTestCase {
         ]
         for (text, x0, x1) in cases {
             let expr = try MGExpression.compile(text, allowed: [.x], reason: "func.y")
+            let span: Double = x1 - x0
             for k in 0..<16 {
-                let a = x0 + (x1 - x0) * Double(k) / 16, b = x0 + (x1 - x0) * Double(k + 1) / 16
+                let a: Double = x0 + span * Double(k) / 16
+                let b: Double = x0 + span * Double(k + 1) / 16
                 let e = try XCTUnwrap(expr.enclosure(MGExpression.Inputs(), a, b), "\(text) \(k)")
                 for j in 0...32 {
-                    let v = expr.value(MGExpression.Inputs(x: a + (b - a) * Double(j) / 32))
+                    let x: Double = a + (b - a) * Double(j) / 32
+                    let v = expr.value(MGExpression.Inputs(x: x))
                     XCTAssertTrue(v >= e.lo && v <= e.hi, "\(text) \(k): \(v) not in \(e)")
                 }
             }
@@ -346,7 +366,10 @@ final class ReadoutCaseTests: XCTestCase {
         // tan's pole at 22.5π lies between these two adjacent doubles; the plain double-precision test misses it.
         let a = 70.68583470577035, b = 70.68583470577036
         XCTAssertEqual(a.nextUp, b)
-        XCTAssertFalse(((a - .pi / 2) / .pi).rounded(.up) <= ((b - .pi / 2) / .pi).rounded(.down))
+        let halfPi: Double = .pi / 2
+        let firstAbove: Double = ((a - halfPi) / .pi).rounded(.up)
+        let lastBelow: Double = ((b - halfPi) / .pi).rounded(.down)
+        XCTAssertFalse(firstAbove <= lastBelow)
         XCTAssertTrue(MGExpression.mayHold(a, b, .pi / 2, period: .pi))
         XCTAssertNil(MGExpression.enclose(.tan, a, b))
         XCTAssertNotNil(MGExpression.enclose(.tan, 70, 70.6))

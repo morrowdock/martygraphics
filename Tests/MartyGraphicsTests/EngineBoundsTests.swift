@@ -121,11 +121,16 @@ final class EngineBoundsTests: XCTestCase {
     static func readoutScene(edits: [String] = [], plain: Int = 0, quiet: Int = 0) -> String {
         let g = #"{"id":"g","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"sin(x)","mark":1,"shade":[0,1.5],"#
             + #""readouts":["value","slope","area"]}"#
-        let others = (0..<plain).map { #",{"id":"p\#($0)","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"x/\#($0 + 2)"}"# }
+        let others: [String] = (0..<plain).map { #",{"id":"p\#($0)","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"x/\#($0 + 2)"}"# }
         let text = #",{"id":"t","k":"text","at":[8,6],"text":"Slope {g.slope}"}"#
-        let steps = [#"{"say":"Start."}"#] + edits.enumerated().map { #"{"say":"Step \#($0.offset + 1).","do":[\#($0.element)]}"# }
-            + (0..<quiet).map { #"{"say":"Quiet \#($0 + 1)."}"# }
-        return #"{"v":1,"items":["# + g + others.joined() + text + #"],"steps":["# + steps.joined(separator: ",") + "]}"
+        let edited: [String] = edits.enumerated().map { #"{"say":"Step \#($0.offset + 1).","do":[\#($0.element)]}"# }
+        let quietSteps: [String] = (0..<quiet).map { #"{"say":"Quiet \#($0 + 1)."}"# }
+        var steps: [String] = [#"{"say":"Start."}"#]
+        steps.append(contentsOf: edited)
+        steps.append(contentsOf: quietSteps)
+        let items: String = g + others.joined() + text
+        let stepList: String = steps.joined(separator: ",")
+        return #"{"v":1,"items":[\#(items)],"steps":[\#(stepList)]}"#
     }
 
     static let colour = #"{"id":"g","key":"color","value":"red"}"#
@@ -150,7 +155,8 @@ final class EngineBoundsTests: XCTestCase {
         XCTAssertNoThrow(try MGParser.scene(data: Data(bare(Self.readoutScene(plain: 5)).utf8)).get())
         // Every key a `func` allows: the ones the readouts read weigh 2, the others 1, and a graph without readouts 1.
         for key in MGParser.allowedKeys(.function) {
-            XCTAssertEqual(MGParser.editWeight("g", key: key, readouts: ["g"]), MGReadout.inputKeys.contains(key) ? 2 : 1, key)
+            let weight: Int = MGReadout.inputKeys.contains(key) ? 2 : 1
+            XCTAssertEqual(MGParser.editWeight("g", key: key, readouts: ["g"]), weight, key)
             XCTAssertEqual(MGParser.editWeight("g", key: key, readouts: []), 1, key)
         }
         XCTAssertEqual(MGParser.editWeight("g", key: nil, readouts: ["g"]), 2, "a key that is not a string counts as an input")
@@ -168,7 +174,8 @@ final class EngineBoundsTests: XCTestCase {
         let ids = MGParser.readoutGraphs(o, templateItems: [], templateSteps: [])
         XCTAssertEqual(ids, ["g", "p"])
         guard case .array(let items)? = o["items"] else { return XCTFail("items") }
-        XCTAssertEqual(items.map { MGParser.exprWeight($0, readouts: ids) }, [2, 2, 1, 1, 0])
+        let weights: [Int] = items.map { MGParser.exprWeight($0, readouts: ids) }
+        XCTAssertEqual(weights, [2, 2, 1, 1, 0])
         // An edit weighs 2 when its graph computes readouts and its key can change one: p's readouts 2, w 1, q 1 and
         // g's label 1 (a label keeps the readouts).
         XCTAssertEqual(MGParser.graphEdits(o, templateGraphs: [], templateSteps: []) { MGParser.editWeight($0, key: $1, readouts: ids) }, 5)
@@ -202,9 +209,12 @@ final class EngineBoundsTests: XCTestCase {
             var slopes = Set<Double>()
             let board = controller.boardFrames(scene, step: 1)
             for frame in 0..<120 {
-                slopes.insert(try XCTUnwrap(board.frame(time: Double(frame) / 60).first { $0.id == "g" }?.num[MGReadout.slope.key]))
+                let time: Double = Double(frame) / 60
+                let g: MGItem? = board.frame(time: time).first { $0.id == "g" }
+                slopes.insert(try XCTUnwrap(g?.num[MGReadout.slope.key]))
             }
-            XCTAssertEqual(slopes, [cos(1)])
+            let slopeAtOne: Double = cos(1.0)
+            XCTAssertEqual(slopes, [slopeAtOne])
             XCTAssertEqual(controller.timeline.computed, 1)
             XCTAssertEqual(probe.count, 3, "one cache fill applies the yr edit; 120 frames compute nothing")
             let start = controller.boardFrames(scene, step: 0)
@@ -270,9 +280,12 @@ final class EngineBoundsTests: XCTestCase {
             var slopes = Set<Double>()
             for frame in 0..<120 {
                 if frame % 30 == 0 { for step in 2...5 { _ = controller.timelineItems(scene, step: step) } }
-                slopes.insert(try XCTUnwrap(board.frame(time: Double(frame) / 60).first { $0.id == "g" }?.num[MGReadout.slope.key]))
+                let time: Double = Double(frame) / 60
+                let g: MGItem? = board.frame(time: time).first { $0.id == "g" }
+                slopes.insert(try XCTUnwrap(g?.num[MGReadout.slope.key]))
             }
-            XCTAssertEqual(slopes, [cos(1)])
+            let slopeAtOne: Double = cos(1.0)
+            XCTAssertEqual(slopes, [slopeAtOne])
             XCTAssertEqual(controller.timeline.computed, 5, "a draw filled the evicted step")
             XCTAssertEqual(probe.count, 7, "a draw computed the evicted step's readouts")
             // The board's audio graph from the same evaluation, built after the eviction, with and without a concealed

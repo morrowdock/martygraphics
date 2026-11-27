@@ -4139,7 +4139,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineBoundsTests.swift",
-      "sha256": "83f2517b5c5885fd1f0f91c84c10654750f4475caeb80bb8a0eeec039a5732b1"
+      "sha256": "b274b7a2d3a3b5cb4bcb73a95708257721cf687a708d6f799470f95146f9a9b6"
     },
     {
       "path": "Sources/MartyGraphics/MGRepairHint.swift",
@@ -4999,11 +4999,11 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/ReadoutCaseTests.swift",
-      "sha256": "81355bc9671997d7c269099dfa3827f2d3c44cb9905484f3ed7fe918ab17eb16"
+      "sha256": "0bcb14e32c330c8866acd37792974bc2b2776601e092047d9210ffe53b5e4d3b"
     },
     {
       "path": "Tests/MartyGraphicsTests/SliderTests.swift",
-      "sha256": "a01d9a97b0701c9884bbbad69ba6c407afa59e34f47389f8d08a8fc85a7c1fe5"
+      "sha256": "73ae11dd0f1a5de6313307c06fb134ba489098b0c660faaeb0cca9f8e2507f1a"
     },
     {
       "path": "docs/fixtures/v1/calculus.scene.json",
