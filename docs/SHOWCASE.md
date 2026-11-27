@@ -171,7 +171,7 @@ drives the input (`notChecked`).
 
 ## Solid 3D from JSON
 
-A planetary gear set built and rendered in real time by the solid engine from
+A planetary gear set built and rendered by the solid engine from
 [53 lines of JSON](../Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json).
 
 [![Solid 3D planetary gear set exploded along its shaft with part labels.](assets/solid/exploded-labelled.png)](assets/solid/exploded-labelled.png)

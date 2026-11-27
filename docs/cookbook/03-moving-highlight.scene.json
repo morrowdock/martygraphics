@@ -1,0 +1,15 @@
+{"v": 1, "title": "The water cycle",
+ "items": [
+  {"id": "sea", "k": "node", "at": [2.5, 3], "text": "Sea", "r": 0.8, "color": "blue"},
+  {"id": "cloud", "k": "node", "at": [6, 6.3], "text": "Cloud", "r": 0.8, "color": "white"},
+  {"id": "rain", "k": "node", "at": [9.5, 3], "text": "Rain", "r": 0.8, "color": "teal"},
+  {"id": "up", "k": "edge", "a": "sea", "b": "cloud", "dir": true, "label": "evaporation", "color": "orange"},
+  {"id": "down", "k": "edge", "a": "cloud", "b": "rain", "dir": true, "label": "precipitation", "color": "blue"},
+  {"id": "back", "k": "edge", "a": "rain", "b": "sea", "dir": true, "label": "runoff", "color": "teal"},
+  {"id": "now", "k": "highlight", "target": "sea", "color": "yellow"}
+ ],
+ "steps": [
+  {"say": "The sun warms the sea, and some water evaporates.", "focus": "sea"},
+  {"say": "The water vapour cools and forms clouds.", "focus": "cloud", "do": [{"id": "now", "key": "target", "value": "cloud"}]},
+  {"say": "Water falls as rain and flows back to the sea.", "focus": "rain", "do": [{"id": "now", "key": "target", "value": "rain"}]}
+ ]}

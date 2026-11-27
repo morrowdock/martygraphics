@@ -3,6 +3,10 @@
 ## [Unreleased]
 
 ### Changed
+- Docs: rewrite the README around a short description, one example image, a quick start that draws a first
+  scene to a PNG, and a capability table with honest status and what is in `v0.1.0`. Add Concepts, Cookbook
+  (ten scenes in `docs/cookbook`), Gallery, FAQ and For teachers pages. Correct stale release and "unreleased"
+  statements in the tutorial, protocol, distribution, capabilities and quality pages.
 - Docs: clarify that a coding agent wrote the turbofan JSON directly in the documented
   format, consistently with the site, showcase and provenance receipt.
 - Docs: describe the opt-in ML explainer kit and the Blender video tool (16:9, 1:1 and 9:16,

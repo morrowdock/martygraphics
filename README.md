@@ -1,167 +1,228 @@
-<div align="center">
-
 # MartyGraphics
 
-### Kinematically verified mechanism explainers from a prompt
+MartyGraphics is a Swift package that draws teaching visuals from small JSON documents. It checks each document
+before it draws anything. A document that breaks a rule is refused with a short reason code, so a host app never
+shows half a picture.
 
-Gear trains, slider-crank linkages and engine cutaways, as 3D stills, loops and step-by-step videos.
+- **2D scenes:** diagrams, plots, bar charts, arrays, tables, trees and graphs, with step-by-step narration (SwiftUI).
+- **3D mechanisms:** gear trains, linkages and cutaways. The engine solves their motion and checks the gear meshes.
+- **It checks structure, motion and layout. It does not check facts.** The words in a document are the author's.
 
-**Early preview** · macOS 14+ and iOS 17+ · No external packages · [Apache-2.0](LICENSE)
+**Status: early preview.** The first tag is `v0.1.0` (2026-11-11); `main` has changed since then. The package is built
+and tested on macOS 14 or later. iOS 17 or later is declared in the package but not yet accepted on a device. Windows,
+Linux and web browsers are not supported. No external packages. [Apache-2.0](LICENSE).
 
-[Examples](docs/SHOWCASE.md) · [How it works](#how-it-works) · [Limits](#honesty-and-limits) · [Quick start](#quick-start) · [Contribute](CONTRIBUTING.md)
-
-</div>
-
-**What the engine checks:** gear meshing (tooth phase, centre distance and tooth interference), gear ratios, joint
-motion and layout. In the strict check, the labels and arrows that a view shows pass the anchor and visibility checks;
-a force or flow arrow whose part is hidden in a view is dropped from that view and reported as a warning.
-**What it does not check:** whether the words are true. It checks motion and layout, not the truth of text claims.
-
-**Image refresh (2026-11-12).** The built-in 3D stills and GIF previews now use the default `studio` look at engine
-`fb604556`. They are MartyGraphics renders, not Blender output or hand-made images. Source documents are unchanged.
-MP4 videos keep their original captures. [Commands, hashes and exceptions](docs/assets/STUDIO-RERENDER.md).
+[Quick start](#quick-start) · [Concepts](docs/CONCEPTS.md) · [Cookbook](docs/COOKBOOK.md) ·
+[Gallery](docs/GALLERY.md) · [FAQ](docs/FAQ.md) · [For teachers](docs/FOR-TEACHERS.md) · [Contribute](CONTRIBUTING.md)
 
 <p align="center">
   <a href="docs/assets/turbofan/exploded.png"><img src="docs/assets/turbofan/exploded.png" width="840" alt="Exploded schematic two-spool turbofan, step 8 of 8: the 20-blade fan at the left; below, the 3-stage LP compressor, the 6-stage HP compressor, the 2-stage HP turbine and the 4-stage LP turbine stay on the blue LP shaft and the orange HP shaft beside the exhaust cone; above, the fixed vanes and the annular combustor float. Caption: the casings lift away."></a>
 </p>
 
-**A turbofan cutaway, exploded here, from 38 lines of JSON.** The solid engine builds every blade row, casing and shaft of this
-schematic two-spool turbofan. The HP spool turns three times for each turn of the fan; that ratio is authored as two
-input drives, not solved from gears. The example's own check confirms that both spools turn about one axis and that
-every rotor keeps at least 4.52 mm from the parts that do not turn with it.
-A coding agent wrote the JSON for this example directly in the documented format;
-it is not the output of a prompt run. A teaching model, not a real engine design. The labelled cutaway and the loop
-name the spool speeds with the pilots' terms N1 (LP spool) and N2 (HP spool).
-[Labelled cutaway](docs/assets/turbofan/labelled.png) · [Turning loop (GIF)](docs/assets/turbofan/turbofan-loop.gif) ·
-[Video (MP4)](https://morrowdock.app/mg/turbofan/turbofan-loop.mp4) · [Its JSON](Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json) ·
-[Run it](Examples/Turbofan/README.md) · [Render receipt](docs/assets/turbofan/provenance.json)
-
-### Refused, then repaired: a robot-joint gearbox from a prompt
-
-<p align="center">
-  <a href="docs/assets/from-a-prompt/robot-joint/loop.gif"><img src="docs/assets/from-a-prompt/robot-joint/hero.png" width="640" alt="AI-written two-stage planetary reducer: a dark ring gear on an aluminium base, a brass sun gear, steel planets and an orange output carrier. Title: Two-stage planetary reducer, robot joint (schematic, 12.25:1)."></a>
-</p>
-
-| | |
-| --- | --- |
-| Prompt | *"Show a two-stage planetary gearbox like in a robot joint."* Claude Haiku 5.5, no tools, only the public docs and worked examples. |
-| Try 1 | Sun 20 teeth, three planets of 18, ring 56. |
-| Refused | `constraint.gearMesh.phase` on part `ring1`. Why: 20 + 56 = 76 does not divide by 3, so three equally spaced planets cannot mesh with both the sun and the ring. |
-| Try 2 | Sun 24, planets 18, ring 60: (24 + 60) ÷ 3 = 28. **Accepted.** This is the gear set of the worked planetary example in the docs that the model saw. |
-| Solved | 19 parts, 12 gear meshes, output 4/49 of the input speed (12.25:1). Two tries, 121 seconds. |
-
-The engine sent the model only the reason and the part; the "why" line is our note. At main `287bb17`,
-`marty-solid check` still refuses try 1 with the same reason and accepts try 2. The engine rendered every frame
-from the model's JSON, unedited. We picked this run after grading, from the runs that passed.
-[Turning loop](docs/assets/from-a-prompt/robot-joint/loop.gif) · [Exploded](docs/assets/from-a-prompt/robot-joint/exploded.png) ·
-[Refused first try](docs/assets/from-a-prompt/robot-joint/attempt-1-refused.json) ·
-[Accepted JSON](docs/assets/from-a-prompt/robot-joint/robot-joint-gearbox.json) · [Run receipt](docs/assets/from-a-prompt/robot-joint/provenance.json)
-
-## How it works
-
-1. **An AI model writes JSON.** One assembly document: parts, joints, gear meshes, teaching steps, labels and arrows.
-   MartyGraphics does not include a model; the host app or a harness calls one.
-2. **The engine checks it and refuses with an exact reason.** The JSON is strictly parsed and checked (motion and
-   layout, not content): closed keys, bounded sizes, no code. A refusal is one stable reason token and the part, for
-   example `constraint.gearMesh.phase` on `ring1`. Every reason is in the [reason catalog](docs/REASONS.md).
-3. **The model repairs the JSON.** It reads the reason and sends a new document. The test runs on this page allowed at
-   most three repairs.
-4. **The engine solves the motion and renders.** It renders stills, a loop and a story video. A caption takes its
-   numbers from the solved values: the engine writes "at 16/23 of the input speed" from the gear mesh. In the v2
-   format, a typed number in a caption is refused unless the caption is marked as not checked.
-
-The format: [Solid 3D](docs/SOLID-3D.md) · [Explainer documents](docs/EXPLAINER.md) · [`marty-solid` tool](Examples/Solid3D/README.md)
-
-## Honesty and limits
-
-**Early preview.** APIs and the wire format may change. The first tagged release is v0.1.0; see the [changelog](CHANGELOG.md).
-
-- **Reliability is not good enough yet.** In a 50-question test, Claude Haiku 5.5 got all 40 in-scope questions
-  accepted within three repairs, but only 29 of 40 were fully correct in mechanics, and 46 of 50 explanations had no
-  critical error (our target is 95%). [What the test found](docs/SHOWCASE.md#from-a-prompt)
-- **"Solved" means an animation ratio, not a verified fact.** The legend on each still (for example "Solved 9 (3
-  animation ratios)") counts what the engine computed from the model's joints, gears and drives. It is not a measured
-  fact about the real object. "Not checked" items are shown as the author wrote them.
-- **Not checked:** the meaning of words, strength, load, wear, friction, efficiency, air or gas flow, forces other than
-  the gravity direction, and collisions between parts. Gear contact is checked in 2D at sampled angles. Linkages are
-  limited to the slider-crank; there are no helical or bevel gears, belts or cams.
-  [Full list](docs/SOLID-3D.md#limits)
-- **Determinism.** In fresh processes with the same build and input, these are byte-identical: the parse and its
-  refusals, the solved facts, the check reports, the cameras, the label layout, the story plan and its timing, and
-  the snapshot JSON. The 3D pixels are not: SceneKit shading can differ a little between processes. Measured on
-  2026-11-10 over 164 stills, at most 5.02 % of the pixels in a still differed. A cross-process test keeps the
-  difference inside a measured bound.
-  [Measurements](docs/SOLID-3D.md#determinism)
-
-## An AI-written lesson, with its fact check
-
-<p align="center">
-  <a href="docs/assets/jet-suit-ai/story.mp4"><img src="docs/assets/jet-suit-ai/poster.png" width="640" alt="AI-written lesson, beat 2: a grey schematic pilot with two gold engines on each forearm and one on the back, a yellow up arrow on each engine and a down arrow labelled Weight of pilot, suit and fuel."></a>
-</p>
-
-**Asked: "How does the Gravity jet suit work?"** Claude Opus 5.5, through the [Marty](https://github.com/morrowdock/marty)
-app with web research on, wrote the lesson JSON. The engine refused its first two tries, each with one reason, accepted
-the third, and rendered 9 beats and a 78-second story video. **The lesson is shown unedited, with its errors listed.**
-An independent fact check by two AI models found **1 wrong sentence and 12 corrections**. The wrong sentence (beat 7)
-says the hot gas spins the turbine "at 1 turn per input turn". The engine solved only the 1:1 shaft link, not the gas
-flow, and it does not check what a sentence means. We asked the same question in 4 runs: 3 lessons were accepted, and
-1 of 4 met our showcase bar (this one).
-[Fact-check panel](docs/SHOWCASE.md#independent-fact-check) · [Fact check](docs/assets/jet-suit-ai/FACT-CHECK.md) ·
-[All 9 beats](docs/SHOWCASE.md#jet-suit-from-a-prompt-ai-written-unedited) · [Prompt and every try](docs/assets/jet-suit-ai/PROMPT.md) ·
-[Story video (MP4)](docs/assets/jet-suit-ai/story.mp4) · [Render receipt](docs/assets/jet-suit-ai/provenance.json)
+**A schematic turbofan from 38 lines of JSON.** The solid engine built every blade row, casing and shaft in this
+exploded view. The example's own check confirms that both spools turn about one axis and that every rotor stays at
+least 4.52 mm from the parts that do not turn with it. A coding agent wrote the JSON directly in the documented
+format; it is not the output of a prompt. It is a teaching model, not a real engine design.
+[Its JSON](Examples/Turbofan/Sources/TurbofanKit/Models/turbofan.json) · [Run it](Examples/Turbofan/README.md) ·
+[Render receipt](docs/assets/turbofan/provenance.json) · [More examples](docs/GALLERY.md)
 
 ## Quick start
 
-Use **Swift 6 on macOS 14+**. No external packages, credentials or network services are needed.
+You need a Mac with macOS 14 or later and a Swift 6 toolchain (for example, from Xcode). No account, key or network
+service is needed after the clone.
+
+### 1. See the examples
 
 ```sh
 git clone https://github.com/morrowdock/martygraphics.git
 cd martygraphics
-swift build && swift test
-swift build -c release --package-path Examples/Solid3D
-B=$(swift build -c release --package-path Examples/Solid3D --show-bin-path)
-$B/marty-solid check --strict Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json
-$B/marty-solid render Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json NEW_DIR
+swift run --package-path Examples/Showcase marty-showcase --preview
 ```
 
-`check` prints a JSON report: the solved ratios, the checks and the legend, or the refusal reason and part. `render`
-writes the stills, the loop and the story video. More commands: [`marty-solid`](Examples/Solid3D/README.md). To use
-the library in an app, add a local checkout as a path dependency; see the [tutorial](docs/GETTING-STARTED.md).
+A window opens with seven example boards: a search tree, an array walk, a flow diagram, a plot, a bar chart, a moving
+marker and a shortest-path graph. Pick one and use its step and play controls. `--verify` checks the seven scenes
+without opening a window. More: [showcase instructions](Examples/Showcase/README.md).
+
+### 2. Draw your own scene
+
+Make a new package next to the `martygraphics` folder:
+
+```sh
+cd ..
+mkdir -p FirstBoard/Sources/FirstBoard
+cd FirstBoard
+```
+
+Save this as `Package.swift`. It uses your local checkout, the same way the repository's own examples do:
+
+```swift
+// swift-tools-version: 6.0
+import PackageDescription
+
+let package = Package(
+    name: "FirstBoard",
+    platforms: [.macOS(.v14)],
+    dependencies: [.package(name: "MartyGraphics", path: "../martygraphics")],
+    targets: [.executableTarget(name: "FirstBoard",
+                                dependencies: [.product(name: "MartyGraphics", package: "MartyGraphics")])],
+    swiftLanguageModes: [.v5]
+)
+```
+
+Save this as `Sources/FirstBoard/RenderFirstBoard.swift`. It parses a two-item scene and saves step 0 as a PNG, with
+the same calls as the [showcase exporter](Examples/Showcase/Sources/MartyShowcase/Showcase.swift):
+
+```swift
+import AppKit
+import Foundation
+import ImageIO
+import MartyGraphics
+import SwiftUI
+import UniformTypeIdentifiers
+
+@main struct RenderFirstBoard {
+    static let sceneJSON = #"""
+    {"v": 1, "title": "My first board",
+     "items": [
+      {"id": "dot", "k": "body", "at": [4, 4], "shape": "ball", "size": 1, "color": "teal"},
+      {"id": "note", "k": "text", "at": [8, 4], "text": "A ball at x = 4, y = 4", "style": "callout"}
+     ]}
+    """#
+
+    @MainActor static func main() {
+        // 1. Check the scene. A refused scene draws nothing.
+        let scene: MGScene
+        switch MGParser.scene(data: Data(sceneJSON.utf8)) {
+        case .success(let checked): scene = checked
+        case .failure(let error):
+            print("The scene was refused: \(error.reason)")
+            return
+        }
+
+        // 2. Lay out step 0 at time 0 on a 600 × 400 point board.
+        let size = CGSize(width: 600, height: 400)
+        let items = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: 0), time: 0)
+        let viewport = MGViewport(size: size, width: scene.width, height: scene.height, camera: scene.camera)
+        let input = MGRenderInput(scene: scene, items: items, viewport: viewport)
+        let board = Canvas { context, _ in MGCanvasRenderer.draw(input, in: context) }
+            .frame(width: size.width, height: size.height)
+
+        // 3. Render offscreen and save a PNG.
+        _ = NSApplication.shared
+        let url = URL(fileURLWithPath: "first-board.png")
+        guard let image = ImageRenderer(content: board).cgImage,
+              let file = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil)
+        else { print("Could not render the board"); return }
+        CGImageDestinationAddImage(file, image, nil)
+        print(CGImageDestinationFinalize(file) ? "Wrote first-board.png" : "Could not write the PNG")
+    }
+}
+```
+
+Run it, then open the image:
+
+```sh
+swift run
+open first-board.png
+```
+
+Change `"at": [4, 4]` to `[40, 4]` and run again: the point is outside the board, so the parser refuses the scene
+and prints its reason, `body.at`, instead of drawing it. To show a scene in a SwiftUI app instead of a PNG, use `MartyGraphicsView(scene: scene)`; the
+[tutorial](docs/GETTING-STARTED.md) shows a complete host with live updates.
+
+**Using the tag instead of a checkout.** Replace the dependency with
+`.package(url: "https://github.com/morrowdock/martygraphics.git", exact: "0.1.0")` and the product with
+`.product(name: "MartyGraphics", package: "martygraphics")`. The project has not yet recorded a remote-install check
+at that tag ([release gates](docs/DISTRIBUTION.md)), and the tag does not include changes made on `main` since.
+
+### 3. Check scene files without an app
+
+```sh
+cd ../martygraphics
+swift build -c release --package-path tools/SceneValidator
+BIN="$(swift build -c release --package-path tools/SceneValidator --show-bin-path)"
+"$BIN/marty-scene-validate" -- docs/cookbook/*.scene.json
+```
+
+Each file prints `valid` or `invalid:` with the reason code. It runs the same parser an app runs
+([validator guide](tools/SceneValidator/README.md)). Next: [ten copyable recipes](docs/COOKBOOK.md).
+
+## How it is used
+
+1. **A person or an AI model writes the JSON.** MartyGraphics does not include a model; a host app or a script calls
+   one if it wants to.
+2. **The engine checks the document.** Keys are closed, sizes are bounded, references must exist, and no code runs. A
+   refusal is one stable reason, for example `bars.bars` (too many bars) or `constraint.gearMesh.phase` on part
+   `ring1` (gears that cannot mesh). See the [reason catalog](docs/REASONS.md).
+3. **The author repairs it,** using the reason.
+4. **The engine draws it:** a native SwiftUI board, or, for 3D documents, stills, a loop and a story video. In 3D
+   documents, a caption can take its numbers from solved values instead of typed text.
+
+## What it checks and what it does not
+
+- **Checked (2D scenes):** document shape, value ranges, unique ids, references between items, text rules (no markup,
+  no links) and size limits. See [Concepts](docs/CONCEPTS.md#limits).
+- **Checked (3D mechanisms):** gear meshing (tooth phase, centre distance and tooth interference in 2D at sampled
+  angles), gear ratios, joint motion, and that labels and arrows are visible in the steps that show them.
+- **Not checked:** whether the words are true; strength, load, wear, friction, efficiency, air or gas flow; forces
+  other than the gravity direction; collisions between parts. Linkages are limited to the slider-crank; there are no
+  helical or bevel gears, belts or cams ([full list](docs/SOLID-3D.md#limits)).
+- **"Solved" is not "verified".** A "Solved" count in a 3D legend counts values the engine computed from the author's
+  joints, gears and drives. It is not a measured fact about a real object.
+- **AI authoring is not reliable enough yet.** In a 50-question development test, Claude Haiku 5.5 got all 40 in-scope
+  questions accepted within three repairs, but only 29 of 40 were fully correct in mechanics, and 46 of 50 explanations
+  had no critical error (the target is 95 %). The set was used to tune the engine, so this is not held-out evidence
+  ([run receipt](docs/assets/from-a-prompt/robot-joint/provenance.json), [details](docs/SHOWCASE.md#from-a-prompt)).
+- **Determinism.** With the same build and input, parse results, refusals, check reports, layout and snapshots are
+  byte-identical across processes. 3D pixels are not: in a 2026-11-10 measurement over 164 stills, at most 5.02 % of the
+  pixels in a still differed ([measurements](docs/SOLID-3D.md#determinism)).
 
 ## Scope and status
 
-This is the engine, not a complete learning app or a course collection. The renderers need Apple frameworks; Windows,
-Linux and browser builds are not supported. No model, hosted generation API or code executor is bundled. See the
-[public versus app matrix](docs/CAPABILITIES.md) and the [quality plan](docs/QUALITY.md). Every pull request must
-pass the hosted `CI` check `hygiene`; the hosted `macos` tests run on every pull request too ([hosted CI](docs/VERIFY-ON-MAC.md#hosted-ci-required-merge-gate)).
-Use [local maintainer validation](docs/LOCAL-VALIDATION.md) for Gitleaks and receipts; the
-[Mac verification steps](docs/VERIFY-ON-MAC.md) cover Apple-framework builds and the local GPU and iOS receipts that
-hosted runners cannot give.
+This repository is the engine and its examples. It is not a learning app or a course collection. "Tested" below means
+the area has automated tests in this repository; they passed in the hosted `macos` CI run for `main` at `5e4952e`
+(2026-11-18). It does not mean device, accessibility or performance acceptance.
 
-## Also in this repo
+| Capability | Where | Status | In `v0.1.0` |
+| --- | --- | --- | --- |
+| 2D scenes: 19 item kinds, steps, camera | `MartyGraphics`: `MGParser`, `MartyGraphicsView`, `MGCanvasRenderer` | Tested. Offscreen exports in the [showcase](docs/SHOWCASE.md#native-scenes). Keyboard, VoiceOver and frame rate not accepted. | Yes |
+| Patches, revisions and streaming | `MGPatch`, `MGSceneController`, `MGStreamParser` | Tested. | Yes |
+| Templates | Built in: `bst`, `two_pointers`. Opt-in: `shortest_path` graph pack | Tested. The graph pack is off by default and has no visual or accessibility acceptance. | Yes |
+| 3D mechanisms (assemblies) | `marty-solid` ([Solid 3D](docs/SOLID-3D.md)) | Tested on macOS. Schematic models only. iOS rendering not checked. | Yes |
+| Explainer documents (2D board + 3D solid) | `MGExplainer` ([format](docs/EXPLAINER.md)) | Tested. | Yes |
+| Beat-by-beat lessons | `MGLesson` ([format](docs/LESSONS.md), [example](Examples/LessonDemo/README.md)) | Tested on macOS. The example documents an iPad simulator test run. No device timing. | Yes |
+| ML explainer boards (opt-in library) | `MartyGraphicsMLKit` ([format](docs/ML-EXPLAINER.md)) | Tested. 2D only. | No, `main` only |
+| Programmatic 2D video (`layer2d`) | `MGProgrammaticVideo` ([protocol](docs/PROTOCOL.md)) | Experimental and opt-in. | No, `main` only |
+| Path tracer (opt-in library) | `MartyGraphicsPathTracer` ([example](Examples/PathTrace/README.md)) | Example with a render receipt. Needs Apple-silicon Metal ray tracing. Not run on iOS. | Yes |
+| 3D tap selection and orbit | `inspects3D` ([example](Examples/KeySwitch3D/README.md)) | Checked by hand on macOS on 2026-11-06. iOS touch and VoiceOver not checked. | Yes |
+| glTF export and Blender video | `marty-solid export-gltf`, [render tool](tools/render-blender/README.md) | Tested exporter. The Blender render is cosmetic; the motion comes from the engine. | No, `main` only |
+| Scene file checker | `marty-scene-validate` ([guide](tools/SceneValidator/README.md)) | Tested. macOS only. Does not load opt-in packs. | Yes |
+| Remote SwiftPM install at `v0.1.0` | [Release gates](docs/DISTRIBUTION.md) | Not yet verified. | — |
+| AI model or hosted generation | — | Not included. | — |
+| Windows, Linux, web browser | [Portability proposal](docs/PORTABILITY-PROPOSAL.md) | Not supported. Planned, not started. | — |
 
-- **More mechanism examples (hand-built):** [idler gearbox cutaway with engine-filled numbers](docs/SHOWCASE.md#cutaways-and-honest-numbers) ·
-  [winch with measured dimensions](docs/SHOWCASE.md#labels-arrows-and-measured-dimensions) ·
-  [planetary gear set and slider-crank](docs/SHOWCASE.md#solid-3d-from-json) ·
-  [hand-built jet-suit lesson](docs/SHOWCASE.md#jet-suit-hand-built-fact-checked)
-- **2D scene engine and packs:** trees, arrays, diagrams, plots and the opt-in shortest-path graph pack
-  ([native scenes](docs/SHOWCASE.md#native-scenes), [tutorial](docs/GETTING-STARTED.md), [protocol](docs/PROTOCOL.md))
-- **Beat-by-beat lessons:** [lesson format](docs/LESSONS.md) · [rotation lesson](docs/SHOWCASE.md#beat-by-beat-lessons)
-- **ML explainer kit (2D, opt-in):** the separate `MartyGraphicsMLKit` library draws checked learning visuals for how
-  AI models generally work: vision to language, next-token probabilities, a meaning map, picture to numbers, the
-  generation loop, simplified attention and an agent loop. Each document is strictly checked before it renders (shape,
-  arithmetic and references, not the truth of the words); it renders to MP4 or transparent PNG frames
-  ([format](docs/ML-EXPLAINER.md), [examples](Examples/Explainers/README.md))
-- **Video from a verified export:** a Blender Cycles tool (GPU render, NVIDIA NVENC encode) renders a verified glTF
-  export as 16:9, 1:1 and 9:16 MP4s, with an optional camera turntable and an optional transparent 9:16 PNG sequence
-  for compositing (for example in Remotion). The render is cosmetic; the motion comes from the engine ([render tool](tools/render-blender/README.md#social-video-and-compositing))
-- **Path tracer:** a separate `MartyGraphicsPathTracer` library ([gearbox example](docs/SHOWCASE.md#path-traced-gearbox))
-- **3D inspection:** select, dim and orbit parts ([key switch example](Examples/KeySwitch3D/README.md))
-- **Tools and process:** [scene file validator](tools/SceneValidator/README.md) · [source provenance](docs/EXPORT.json) ·
-  [third-party inventory](docs/THIRD-PARTY.md) · [public sync](docs/PUBLIC-SYNC.md) · [distribution gates](docs/DISTRIBUTION.md) ·
-  [changelog](CHANGELOG.md)
+Every pull request must pass the hosted `CI` check `hygiene`; the hosted `macos` tests also run on every pull request
+([CI details](docs/VERIFY-ON-MAC.md#hosted-ci-required-merge-gate)). The [capability matrix](docs/CAPABILITIES.md)
+and the [quality plan](docs/QUALITY.md) list what is still pending.
+
+## Documentation
+
+- **Start here:** [Concepts](docs/CONCEPTS.md) · [Cookbook](docs/COOKBOOK.md) · [Gallery](docs/GALLERY.md) ·
+  [FAQ](docs/FAQ.md) · [For teachers](docs/FOR-TEACHERS.md)
+- **Build with it:** [Tutorial](docs/GETTING-STARTED.md) · [Scene protocol](docs/PROTOCOL.md) ·
+  [Reason catalog](docs/REASONS.md) · [Solid 3D](docs/SOLID-3D.md) · [Explainers](docs/EXPLAINER.md) ·
+  [Lessons](docs/LESSONS.md) · [ML explainers](docs/ML-EXPLAINER.md) · [glTF export](docs/GLTF-EXPORT.md) ·
+  [Visual style](docs/VISUAL-STYLE.md)
+- **Examples:** [Showcase](Examples/Showcase/README.md) · [Solid 3D](Examples/Solid3D/README.md) ·
+  [Turbofan](Examples/Turbofan/README.md) · [Explainers](Examples/Explainers/README.md) ·
+  [Lesson demo](Examples/LessonDemo/README.md) · [Key switch](Examples/KeySwitch3D/README.md) ·
+  [Path tracer](Examples/PathTrace/README.md) · [Full showcase page](docs/SHOWCASE.md)
+- **Project:** [Capabilities](docs/CAPABILITIES.md) · [Quality](docs/QUALITY.md) ·
+  [Distribution](docs/DISTRIBUTION.md) · [Local validation](docs/LOCAL-VALIDATION.md) ·
+  [Verify on Mac](docs/VERIFY-ON-MAC.md) · [Public sync](docs/PUBLIC-SYNC.md) · [Third-party inventory](docs/THIRD-PARTY.md) ·
+  [Source provenance](docs/EXPORT.json) · [Changelog](CHANGELOG.md) · [History](docs/HISTORY.md)
 - [Apache-2.0 license](LICENSE) · [Notice](NOTICE) · [Contributing and DCO](CONTRIBUTING.md) ·
-  [Code of conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md)
+  [Code of conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md) · [Trademarks](TRADEMARKS.md)
 
 [Morrowdock](https://morrowdock.app) is the host application's website. Its browser demonstrations are separate
 implementations, not this Swift package running in a browser.

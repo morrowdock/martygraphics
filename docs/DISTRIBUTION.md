@@ -1,5 +1,10 @@
 # Versioned installation and discovery
 
+**Current state (checked 2026-11-26):** the tag `v0.1.0` exists (tag object `940a122`, commit
+`449ce7a`) with a GitHub release dated 2026-11-11. The remote-consumer row below has no recorded
+receipt yet, so a remote SPM install at that tag is still unverified. The text below records the plan
+as it was written before the tag.
+
 Status: first release. The public baseline was
 `55c98121766c8a079006ee3106289ee97c30e7cd`. No package tag or GitHub release existed
 when checked on 2026-11-04. The first tag, `v0.1.0`, is made from the reviewed merge
@@ -130,8 +135,8 @@ Offline Python regressions check input bounds, missing/mismatched tags, bad
 resolved pins, refusal to overwrite/use an unsupported host, poisoned HOME/netrc/
 config/helper/tracing/PATH, trusted-path rejection and the environment contract
 through Python stand-ins for a Swift process and its Git child. They are
-**synthetic guard tests, not remote installation acceptance**. As of this
-checkpoint, no real tag exists and the real command remains unexecuted.
+**synthetic guard tests, not remote installation acceptance**. When this section was
+written, no real tag existed. The tag now exists; no receipt of the real command is recorded here.
 
 The local protocol fixture test checks the corresponding JSON and selected
 failure reasons. It does not replace the remote client's resolution/build/run.

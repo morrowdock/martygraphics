@@ -1,0 +1,5 @@
+{"v": 1, "title": "My first board",
+ "items": [
+  {"id": "dot", "k": "body", "at": [4, 4], "shape": "ball", "size": 1, "color": "teal"},
+  {"id": "note", "k": "text", "at": [8, 4], "text": "A ball at x = 4, y = 4", "style": "callout"}
+ ]}

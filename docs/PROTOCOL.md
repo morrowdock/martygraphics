@@ -1,91 +1,12 @@
 # Scene protocol v1
 
-## Experimental, opt-in `layer2d` programmatic video
+New to scenes? Read [Concepts](CONCEPTS.md) first, and copy a scene from the [cookbook](COOKBOOK.md).
+This page is the full reference.
 
-Phase 1 is implemented on this branch, not a released or stable protocol. Use
-`MGParser.scene(data:programmaticVideo:)` (also `object:` and `json:`) with `true`.
-The default parser entry points and an explicit `false` take the original code path:
-`layer2d` still refuses with `scene.unknown.layer2d` (existing size/depth checks retain
-their precedence). Opt-in scenes without `layer2d` also use the legacy parser.
-
-The closed envelope and field bounds are the [draft schema](schemas/scene-2d-layer.draft.schema.json).
-Standalone core v1 scenes are described by the [core scene draft schema](schemas/scene-v1.draft.schema.json).
-Phase 1 accepts only that minimal envelope: `v: 1`, `dim: "2d"`, a title of 1–80
-Unicode scalars, empty `items`, and `layer2d`. It does not compose legacy items,
-templates, world, camera or steps. Unknown versions fail closed. Status remains
-`proposed` and version `0.1.0-draft` to preserve the three original example files.
-The library bundles an identical schema resource and validates its supported
-schema vocabulary before decoding; a test compares both copies byte-for-byte.
-
-Bounds: UTF-8 and canonical JSON ≤64 KiB, nesting ≤16, 64 elements and tracks,
-120 keys/track, 1–1,800 source frames at exactly 30 fps, 60 captions, canvas
-320–1,920 × 180–1,080. Text work is capped at 8,192 authored Unicode scalars and
-4,000,000 scalar-frames. Schema bounds also apply to coordinates, colors, line
-counts, IDs, sizes, fonts, tick counts and strings. Text is literal, never evaluated
-or placeholder-expanded; URL schemes, markup and control/bidi characters refuse.
-Code allows comparisons and braces, but not markup. No files or URLs are read
-from scene fields. Local output destinations are supplied by the host, not JSON.
-
-Coordinates are canvas pixels, right/up, origin bottom-left. Shapes are centered;
-labels are centered; a code block starts at its top-left and extends down.
-Axes/number lines start at their lower-left, with uniformly spaced tick values
-including both endpoints. Tick numbers use a pinned POSIX formatter (4 significant
-digits). Axes ranges must increase. Code highlight is 1-based; 0 means none.
-`MGTimeline.videoFrame(_:in:)` resolves independent sparse position and opacity
-keys with linear or hold interpolation. Before a property's first key its element
-value is used; after its last key that value holds. Highlights always hold.
-Tracks have unique existing targets; keyframes strictly increase and precede
-duration. Captions are ordered, nonoverlapping half-open frame intervals.
-
-Parsing preflights every source frame before a checked plan can escape. Measured
-text, arrow extents and tick labels must fit with 8-pixel margins outside the bottom
-96-pixel caption/provenance band. Captions wrap to at most 52 pixels of height;
-the generated-media label is always visible. Text/tick collisions refuse; text
-draws above geometry on a contrasting backing. Shape overlaps are warnings, not
-algorithmic errors. Checks prove bounded structure/layout, not educational truth.
-Stable refusal families are `video2d.schema.<JSON path>`, `video2d.version`,
-`video2d.target`, `video2d.frame`, `video2d.range`, `video2d.highlight`,
-`video2d.text`, `video2d.layout`, `video2d.budget`, and `video2d.export`.
-
-```swift
-let scene = try MGParser.scene(data: data, programmaticVideo: true).get()
-let plan = try MGProgrammaticVideo.check(scene, programmaticVideo: true)
-let image = try MGProgrammaticVideo.frame(0, in: plan)
-let receipt = try await MGProgrammaticVideo.export(
-    plan, to: hostGrantedLocalURL,
-    options: MGVideoExportOptions(format: .mp4, burnCaptions: true, writeSRT: true),
-    programmaticVideo: true)
-```
-
-`MGCheckedVideoPlan` has no public constructor. The canvas renderer and library
-frame/export API share the checked native CoreGraphics/CoreText drawing path.
-`MGVideoExportReceipt` reports dimensions, fps, frame count, duration and overlap
-warnings. An optional host progress callback receives completed/total frames.
-There is no app feature, new template, remote renderer or code execution.
-
-MP4 uses H.264 at 30 fps and integer `CMTime(frame, timescale: 30)`, even canvas
-dimensions (odd sizes refuse), tagged sRGB/BT.709, readiness timeout/backpressure,
-and an eight-buffer pixel pool allocation limit. Encoder readiness and pool
-allocation waits time out after 10 seconds with `mp4: writer stalled`; failed
-exports cancel the writer and remove their partial files. `MGMovieWriter` is shared with
-the Solid3D CLI (its existing even-size rounding and frame rates are retained).
-GIF samples every third source frame at 10 fps, limits duration to 450 source
-frames divisible by three, and scales the longest edge to at most 640 pixels.
-ImageIO receives frames sequentially; no full-video frame array is built. Its
-internal buffering and iPad incremental memory/time targets are **not measured**.
-
-Both formats default to burned captions plus an SRT sidecar; either can be
-disabled independently. SRT endpoints round integer frame times to milliseconds.
-The generated-media label cannot be disabled. Export checks Swift task cancellation
-between frames and during MP4 backpressure/finalization; ImageIO finalization is
-synchronous and cancellation is checked immediately afterwards. A private partial
-directory on the destination volume is removed on failure/cancellation. Completed
-files publish by rename, never overwrite existing files, and roll back video if
-sidecar publication fails. Two-file publication is not a filesystem transaction.
-Use a background task from UI code; no simulator/signing or network is required.
-
-**Protocol version: 1. Package release: unversioned early preview.** This guide
-describes public baseline `55c98121766c8a079006ee3106289ee97c30e7cd`; a wire `v: 1`
+**Protocol version: 1. Package release: early preview (tag `v0.1.0`).** This guide was
+first written against public baseline `55c98121766c8a079006ee3106289ee97c30e7cd`. Tables, regions, code
+text, record-list parameters and the graph pack were added after it and are in `v0.1.0`; the experimental
+`layer2d` section at the end is on `main` only. A wire `v: 1`
 is not a package release tag or an API stability guarantee. Follow the
 [release/install gates](DISTRIBUTION.md) before claiming a versioned remote install.
 
@@ -165,7 +86,7 @@ templates are not included.
 
 ## Tables, regions and code text
 
-These are additive, unreleased changes to the unversioned preview. Wire `v: 1`
+These are additive changes, included in `v0.1.0`. Wire `v: 1`
 is unchanged and every scene that parsed before parses to the same result. All
 three are 2D only: in a 3D scene `table` and `region` fail with
 `3d.kind.table` / `3d.kind.region`, and `code` text fails with `3d.text.code`
@@ -212,8 +133,8 @@ explainer beat's `highlight` of `t.r2`); both are empty by default.
 
 ## Template parameters and what-if patches
 
-Record-list parameters and the opt-in `shortest_path` template are unreleased
-additions to the unversioned preview. Wire `v: 1` is unchanged: every shape
+Record-list parameters and the opt-in `shortest_path` template are additions
+included in `v0.1.0`. Wire `v: 1` is unchanged: every shape
 below is ordinary JSON inside the existing `params` object.
 
 | Shape | Declaration | Wire form | Absent key |
@@ -504,3 +425,87 @@ tests and measurements; see the [limits rationale](CAPABILITIES.md#bounds-are-pa
 The [public-versus-app matrix](CAPABILITIES.md) distinguishes engine primitives
 from hosted services, app content and browser recreations. SceneKit 3D has a
 bounded primitive subset; these 2D fixtures are not 3D quality evidence.
+
+## Experimental, opt-in `layer2d` programmatic video
+
+Phase 1 is on `main`. It is not in a tagged release and is not a stable protocol. Use
+`MGParser.scene(data:programmaticVideo:)` (also `object:` and `json:`) with `true`.
+The default parser entry points and an explicit `false` take the original code path:
+`layer2d` still refuses with `scene.unknown.layer2d` (existing size/depth checks retain
+their precedence). Opt-in scenes without `layer2d` also use the legacy parser.
+
+The closed envelope and field bounds are the [draft schema](schemas/scene-2d-layer.draft.schema.json).
+Standalone core v1 scenes are described by the [core scene draft schema](schemas/scene-v1.draft.schema.json).
+Phase 1 accepts only that minimal envelope: `v: 1`, `dim: "2d"`, a title of 1–80
+Unicode scalars, empty `items`, and `layer2d`. It does not compose legacy items,
+templates, world, camera or steps. Unknown versions fail closed. Status remains
+`proposed` and version `0.1.0-draft` to preserve the three original example files.
+The library bundles an identical schema resource and validates its supported
+schema vocabulary before decoding; a test compares both copies byte-for-byte.
+
+Bounds: UTF-8 and canonical JSON ≤64 KiB, nesting ≤16, 64 elements and tracks,
+120 keys/track, 1–1,800 source frames at exactly 30 fps, 60 captions, canvas
+320–1,920 × 180–1,080. Text work is capped at 8,192 authored Unicode scalars and
+4,000,000 scalar-frames. Schema bounds also apply to coordinates, colors, line
+counts, IDs, sizes, fonts, tick counts and strings. Text is literal, never evaluated
+or placeholder-expanded; URL schemes, markup and control/bidi characters refuse.
+Code allows comparisons and braces, but not markup. No files or URLs are read
+from scene fields. Local output destinations are supplied by the host, not JSON.
+
+Coordinates are canvas pixels, right/up, origin bottom-left. Shapes are centered;
+labels are centered; a code block starts at its top-left and extends down.
+Axes/number lines start at their lower-left, with uniformly spaced tick values
+including both endpoints. Tick numbers use a pinned POSIX formatter (4 significant
+digits). Axes ranges must increase. Code highlight is 1-based; 0 means none.
+`MGTimeline.videoFrame(_:in:)` resolves independent sparse position and opacity
+keys with linear or hold interpolation. Before a property's first key its element
+value is used; after its last key that value holds. Highlights always hold.
+Tracks have unique existing targets; keyframes strictly increase and precede
+duration. Captions are ordered, nonoverlapping half-open frame intervals.
+
+Parsing preflights every source frame before a checked plan can escape. Measured
+text, arrow extents and tick labels must fit with 8-pixel margins outside the bottom
+96-pixel caption/provenance band. Captions wrap to at most 52 pixels of height;
+the generated-media label is always visible. Text/tick collisions refuse; text
+draws above geometry on a contrasting backing. Shape overlaps are warnings, not
+algorithmic errors. Checks prove bounded structure/layout, not educational truth.
+Stable refusal families are `video2d.schema.<JSON path>`, `video2d.version`,
+`video2d.target`, `video2d.frame`, `video2d.range`, `video2d.highlight`,
+`video2d.text`, `video2d.layout`, `video2d.budget`, and `video2d.export`.
+
+```swift
+let scene = try MGParser.scene(data: data, programmaticVideo: true).get()
+let plan = try MGProgrammaticVideo.check(scene, programmaticVideo: true)
+let image = try MGProgrammaticVideo.frame(0, in: plan)
+let receipt = try await MGProgrammaticVideo.export(
+    plan, to: hostGrantedLocalURL,
+    options: MGVideoExportOptions(format: .mp4, burnCaptions: true, writeSRT: true),
+    programmaticVideo: true)
+```
+
+`MGCheckedVideoPlan` has no public constructor. The canvas renderer and library
+frame/export API share the checked native CoreGraphics/CoreText drawing path.
+`MGVideoExportReceipt` reports dimensions, fps, frame count, duration and overlap
+warnings. An optional host progress callback receives completed/total frames.
+There is no app feature, new template, remote renderer or code execution.
+
+MP4 uses H.264 at 30 fps and integer `CMTime(frame, timescale: 30)`, even canvas
+dimensions (odd sizes refuse), tagged sRGB/BT.709, readiness timeout/backpressure,
+and an eight-buffer pixel pool allocation limit. Encoder readiness and pool
+allocation waits time out after 10 seconds with `mp4: writer stalled`; failed
+exports cancel the writer and remove their partial files. `MGMovieWriter` is shared with
+the Solid3D CLI (its existing even-size rounding and frame rates are retained).
+GIF samples every third source frame at 10 fps, limits duration to 450 source
+frames divisible by three, and scales the longest edge to at most 640 pixels.
+ImageIO receives frames sequentially; no full-video frame array is built. Its
+internal buffering and iPad incremental memory/time targets are **not measured**.
+
+Both formats default to burned captions plus an SRT sidecar; either can be
+disabled independently. SRT endpoints round integer frame times to milliseconds.
+The generated-media label cannot be disabled. Export checks Swift task cancellation
+between frames and during MP4 backpressure/finalization; ImageIO finalization is
+synchronous and cancellation is checked immediately afterwards. A private partial
+directory on the destination volume is removed on failure/cancellation. Completed
+files publish by rename, never overwrite existing files, and roll back video if
+sidecar publication fails. Two-file publication is not a filesystem transaction.
+Use a background task from UI code; no simulator/signing or network is required.

@@ -2,13 +2,15 @@
 
 Start with the [runnable showcase](../Examples/Showcase/README.md). It has no remote
 dependency or credential requirement. The steps below explain the APIs it uses.
+For a shorter path to a first image, see the [quick start](../README.md#quick-start);
+for the parts of a scene, see [Concepts](CONCEPTS.md).
 
-No versioned package release exists yet. To try the engine in your own app now,
-depend on a local checkout the way the showcase does:
+The only tag is `v0.1.0` (2026-11-11), an early preview; `main` has changed since,
+and a remote install at the tag has no recorded check yet ([release gates](DISTRIBUTION.md)).
+To try the engine in your own app, depend on a local checkout the way the showcase does:
 `.package(name: "MartyGraphics", path: "PATH_TO_CHECKOUT")` and
 `.product(name: "MartyGraphics", package: "MartyGraphics")`. In Xcode, add the
-checkout as a local package. This is an unversioned early preview, not a
-release install; see [scope and status](../README.md#scope-and-status).
+checkout as a local package. See [scope and status](../README.md#scope-and-status).
 
 ## 1. Choose a scene
 

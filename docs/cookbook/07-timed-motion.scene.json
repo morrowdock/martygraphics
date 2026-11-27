@@ -1,0 +1,10 @@
+{"v": 1, "title": "A cart moves along a track",
+ "items": [
+  {"id": "track", "k": "line", "from": [1, 2], "to": [11, 2], "style": "ground", "color": "muted"},
+  {"id": "cart", "k": "body", "at": [2, 2.5], "size": 1, "color": "orange", "move": {"to": [10, 2.5], "t": 3}},
+  {"id": "start", "k": "text", "at": [2, 1.2], "text": "start", "color": "blue"},
+  {"id": "finish", "k": "text", "at": [10, 1.2], "text": "finish", "color": "purple"}
+ ],
+ "steps": [
+  {"say": "The cart glides from start to finish in 3 seconds, then back again, over and over. This is a timed animation, not a physics simulation.", "focus": "cart"}
+ ]}

@@ -1,0 +1,9 @@
+{"v": 1, "title": "Distance over time",
+ "items": [
+  {"id": "walk", "k": "plot", "at": [1.5, 1.4], "w": 9, "h": 5.4,
+   "xr": [0, 4], "yr": [0, 7], "pts": [[0, 0], [1, 1.5], [2, 3], [3, 4.5], [4, 6]],
+   "xl": "time (s)", "yl": "distance (m)", "color": "teal"}
+ ],
+ "steps": [
+  {"say": "Five supplied points lie on a straight line: the walker covers 1.5 m in every second.", "focus": "walk"}
+ ]}

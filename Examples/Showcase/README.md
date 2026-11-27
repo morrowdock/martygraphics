@@ -26,7 +26,7 @@ Edit one of the seven files in
 it does not rewrite authored text. The step's `say` still says Beta is largest,
 so update that sentence as well. Values, labels and narration are all authored data.
 
-To see validation work, add a seventh bar or misspell a key such as `"colour"`.
+To see validation work, add bars until there are seven, or misspell a key such as `"colour"`.
 `--verify` should then stop with a reason like `bars.bars` or
 `bars.bar.unknown.colour` instead of drawing a partial board. The reason names
 the rule, not the file, so undo your last edit to find it.

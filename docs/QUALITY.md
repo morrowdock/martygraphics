@@ -42,7 +42,7 @@ SceneKit renderer needs a separate interactive/device capture receipt.
 Preserve the current [bounds](CAPABILITIES.md#bounds-are-part-of-the-contract).
 Propose an expansion only when a real public example needs it; measure old and
 proposed maxima, add boundary/failure tests and review protocol compatibility.
-No limit, renderer behavior or private domain pack is changed by this showcase.
+Adding a showcase example does not change a limit, renderer behavior or private domain pack.
 
 ## Roadmap from gaps
 

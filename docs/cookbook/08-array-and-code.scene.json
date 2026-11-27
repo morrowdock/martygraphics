@@ -1,0 +1,14 @@
+{"v": 1, "title": "Find the largest value",
+ "items": [
+  {"id": "vals", "k": "array", "at": [3.5, 4.5], "vals": [4, 9, 2, 7], "ptrs": [{"i": 0, "label": "i"}], "marked": [0], "color": "blue"},
+  {"id": "c1", "k": "text", "at": [6.8, 6], "text": "best = vals[0]", "style": "code"},
+  {"id": "c2", "k": "text", "at": [6.8, 5.4], "text": "for x in vals:", "style": "code"},
+  {"id": "c3", "k": "text", "at": [6.8, 4.8], "text": "    if x > best:", "style": "code"},
+  {"id": "c4", "k": "text", "at": [6.8, 4.2], "text": "        best = x", "style": "code"}
+ ],
+ "steps": [
+  {"say": "Start at index 0. The largest value so far is 4.", "focus": "vals"},
+  {"say": "Index 1 holds 9. It is larger, so 9 becomes the largest so far.", "do": [{"id": "vals", "key": "ptrs", "value": [{"i": 1, "label": "i"}]}, {"id": "vals", "key": "marked", "value": [1]}]},
+  {"say": "Index 2 holds 2. The largest stays 9.", "do": [{"id": "vals", "key": "ptrs", "value": [{"i": 2, "label": "i"}]}]},
+  {"say": "Index 3 holds 7. The largest stays 9, so the answer is 9.", "do": [{"id": "vals", "key": "ptrs", "value": [{"i": 3, "label": "i"}]}]}
+ ]}

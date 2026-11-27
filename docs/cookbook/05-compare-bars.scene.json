@@ -1,0 +1,12 @@
+{"v": 1, "title": "Class pet poll",
+ "items": [
+  {"id": "poll", "k": "bars", "at": [1.5, 1.6], "w": 9, "h": 4.8, "unit": "votes",
+   "bars": [
+    {"label": "Fish", "value": 7, "color": "blue"},
+    {"label": "Cat", "value": 12, "color": "purple"},
+    {"label": "Dog", "value": 9, "color": "teal"}
+   ]}
+ ],
+ "steps": [
+  {"say": "Cat has the most votes in this invented poll: 12 of 28.", "focus": "poll"}
+ ]}

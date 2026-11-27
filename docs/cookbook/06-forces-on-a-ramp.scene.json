@@ -1,0 +1,13 @@
+{"v": 1, "title": "Forces on a block at rest",
+ "items": [
+  {"id": "ramp", "k": "incline", "at": [1.5, 1.5], "base": 8, "angle": 30, "color": "muted"},
+  {"id": "block", "k": "body", "at": [5.25, 4.25], "size": 1, "angle": 30, "color": "blue"},
+  {"id": "weight", "k": "vector", "on": "block", "angle": -90, "len": 2, "label": "weight", "color": "gravity"},
+  {"id": "normal", "k": "vector", "on": "block", "angle": 120, "len": 1.73, "label": "normal force", "color": "normal"},
+  {"id": "grip", "k": "vector", "on": "block", "angle": 30, "len": 1, "label": "friction", "color": "friction"}
+ ],
+ "steps": [
+  {"say": "A block rests on a 30 degree ramp. Its weight points straight down.", "show": ["ramp", "block", "weight"], "focus": "weight"},
+  {"say": "The ramp pushes back at a right angle to its surface: the normal force.", "show": ["normal"], "focus": "normal"},
+  {"say": "Friction points up the slope and stops the block from sliding. The arrow lengths are typed by the author.", "show": ["grip"], "focus": "grip"}
+ ]}

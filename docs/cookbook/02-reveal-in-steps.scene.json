@@ -1,0 +1,14 @@
+{"v": 1, "title": "Build a right triangle",
+ "items": [
+  {"id": "base", "k": "line", "from": [2, 2], "to": [8, 2], "color": "blue"},
+  {"id": "height", "k": "line", "from": [8, 2], "to": [8, 6.5], "color": "orange"},
+  {"id": "hyp", "k": "line", "from": [2, 2], "to": [8, 6.5], "style": "dashed", "color": "purple"},
+  {"id": "la", "k": "text", "at": [5, 1.4], "text": "a = 6", "color": "blue"},
+  {"id": "lb", "k": "text", "at": [9, 4.25], "text": "b = 4.5", "color": "orange"},
+  {"id": "lc", "k": "text", "at": [4.3, 5], "text": "c = 7.5", "color": "purple"}
+ ],
+ "steps": [
+  {"say": "Start with the base, a. It is 6 units long.", "show": ["base", "la"], "focus": "base"},
+  {"say": "Add the height, b, at a right angle to the base. It is 4.5 units long.", "show": ["height", "lb"], "focus": "height"},
+  {"say": "The longest side, c, is the hypotenuse. Check it: 6 squared plus 4.5 squared is 56.25, and 7.5 squared is 56.25.", "show": ["hyp", "lc"], "focus": "hyp"}
+ ]}
