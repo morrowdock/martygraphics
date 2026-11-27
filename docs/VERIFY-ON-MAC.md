@@ -15,10 +15,14 @@ git status --porcelain
 ```
 
 The root package test run does not build or test the other packages. Every
-folder of the checkout with a `Package.swift` is a package; list them with
-`git ls-files '*Package.swift'`. For each package `P` other than the root, run
-`swift test --jobs 2 --package-path P` when `P/Tests` exists, and
-`swift build --jobs 2 --package-path P` otherwise. At the time of writing:
+folder of the checkout with a `Package.swift` is a package, except under a
+`.build` folder (at any depth) or under the vendor roots `vendor` and
+`third_party` at the top of the checkout; list them with
+`git ls-files '*Package.swift'` and drop those. For each package `P` other than
+the root, run `swift test --jobs 2 --package-path P` when `P/Tests` exists, and
+`swift build --jobs 2 --package-path P` otherwise; `tools/SceneValidator` also
+gets `swift build -c release --jobs 2 --package-path tools/SceneValidator`. At
+the time of writing:
 
 ```sh
 swift test --jobs 2 --package-path Examples/Solid3D
@@ -37,7 +41,24 @@ swift build --jobs 2 --package-path Examples/PathTrace
 
 Record each present package's results separately in the exact-source receipt,
 in the [native receipt](LOCAL-VALIDATION.md#native-evidence-and-publishing)
-format. A missing command or failed check cannot be replaced by an older receipt
+format. The writer does all of this from a clean checkout and writes that
+receipt to a new path outside the checkout:
+
+```sh
+python3 tools/write_native_receipt.py /absolute/path/native-receipt.json
+```
+
+It refuses a checkout with any change or untracked file and pins the full
+`HEAD` SHA as `"source"`. It finds the packages with the same rule (and the same
+code) as the reuse check in `validate_local.py`, runs the commands above for each
+package in order, and records the exit code of each package's first failing
+command, or 0 when all of them pass; a command that cannot start (no `swift`, or
+no Blender for `tools/render-blender`) counts as 127. It refuses to write a
+receipt when the commands changed `HEAD` or `git status --porcelain`, and it
+exits non-zero when any package failed. Keep its complete output and exit code
+beside the receipt.
+
+A missing command or failed check cannot be replaced by an older receipt
 that did not cover that package. These builds and tests are not a visual or
 interaction check; those still require an approved native preview.
 

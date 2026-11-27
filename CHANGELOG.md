@@ -206,6 +206,16 @@
   `Examples/UnitCircle` and missed Solid3D, Turbofan, Explainers, LessonDemo, KeySwitch3D, PathTrace and
   render-blender. A reused native receipt (`--native-receipt`) must name each present package with exit 0, and any
   changed, added or removed native file fails reuse. See [docs/LOCAL-VALIDATION.md](docs/LOCAL-VALIDATION.md).
+- Native receipt reuse covers what it missed: every file of a folder that a Swift literal names, Markdown too; any
+  top-level path a literal names, so `CHANGELOG.md` (a root test reads it) is now an input and editing it needs a new
+  native receipt; custom target paths, resources and local dependencies that a package manifest names outside the
+  package; and the tracked targets of covered symlinks. Swift sources, manifests and links are read from the two
+  pinned commits, not the working tree, and renames (case-only ones too) count. A covered symlink or a manifest
+  dependency that leaves the repository or names nothing refuses reuse. A receipt must name exactly the present
+  packages, each with exit 0; `missing`, `unexpected` and `failed` entries are reported separately, and the refusal
+  says how to make a new receipt. `.build` folders and the `vendor` and `third_party` roots are not packages. The new
+  `tools/write_native_receipt.py` runs the Mac package commands with the same package discovery and writes the
+  receipt outside a clean checkout.
 - Changelog: there is one `[Unreleased]` section. The entries of a second, unbracketed `Unreleased` section moved
   into it under standard categories, with their text unchanged.
 - Changelog correction: the "Looks and quality levels" entry under Added says `classic` (the default). Since "`studio`

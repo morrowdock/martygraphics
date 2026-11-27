@@ -7,6 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 import platform
+import posixpath
 import re
 import socket
 import subprocess
@@ -15,12 +16,24 @@ from urllib.parse import unquote, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
-# Natively verified tools without a Package.swift (docs/LOCAL-VALIDATION.md, "Native evidence").
-NATIVE_TOOLS = ("tools/render-blender",)
-# What the root package builds and tests; its other top-level folders are not part of it.
+# Natively verified tools without a Package.swift (docs/LOCAL-VALIDATION.md, "Native evidence"), with the command
+# that verifies each one.
+NATIVE_TOOLS = {"tools/render-blender": [["tools/render-blender/selftest.sh"]]}
+# Packages that also get a release build (docs/VERIFY-ON-MAC.md).
+RELEASE_BUILDS = ("tools/SceneValidator",)
+# Top-level folders of third-party code. A Package.swift there is not one of this repository's packages, and neither
+# is one under a `.build` folder. A package that depends on vendored code still covers it (see manifest_inputs).
+VENDOR_ROOTS = ("vendor", "third_party")
+# What the root package builds and tests besides the folders its manifest names; its other top-level folders are not
+# part of it.
 ROOT_PACKAGE = ("Package.swift", "Package.resolved", "Sources/", "Tests/")
-# A repository path named in a Swift string literal, up to the first character that cannot be in one.
-SWIFT_PATH_LITERAL = re.compile(r'"((?:docs|Examples|tools|benchmark)/[A-Za-z0-9_./+-]*)')
+ROOT_MANIFEST = re.compile(r"Package@swift-[0-9.]+\.swift")
+# A string literal that may name a repository path, up to the first character that cannot be in one.
+SWIFT_PATH_LITERAL = re.compile(r'"([A-Za-z0-9_.+-][A-Za-z0-9_./+-]*)')
+# Every complete one-line string literal of a package manifest.
+MANIFEST_LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
+MANIFEST_PATH_ARGUMENT = re.compile(r'\bpath\s*:\s*"((?:[^"\\\n]|\\.)*)"')
+SYMLINK_MODE = "120000"
 
 
 def git(*args, cwd=None):
@@ -62,49 +75,251 @@ def check_files():
     print("PASS: manifest, JSON, source licenses and relative file links")
 
 
+def tree_entries(sha, root=None):
+    """The committed tree of `sha` as {path: (mode, object id)}; never the working tree."""
+    entries = {}
+    for record in git("ls-tree", "-r", "-z", "--full-tree", sha, cwd=root).decode("utf-8", "surrogateescape").split("\0"):
+        if record:
+            meta, _, path = record.partition("\t")
+            mode, _, oid = meta.split(" ")
+            entries[path] = (mode, oid)
+    return entries
+
+
 def tree(sha, root=None):
-    return [p for p in git("ls-tree", "-r", "-z", "--name-only", sha, cwd=root).decode().split("\0") if p]
+    return sorted(tree_entries(sha, root))
+
+
+def read_blobs(oids, root=None):
+    """The bytes of each Git object id, read from the object database in one `git cat-file --batch`."""
+    oids = sorted(set(oids))
+    if not oids:
+        return {}
+    data = subprocess.run(["git", "cat-file", "--batch"], input="".join(o + "\n" for o in oids).encode(),
+                          stdout=subprocess.PIPE, cwd=root or ROOT, check=True).stdout
+    blobs, position = {}, 0
+    for oid in oids:
+        end = data.index(b"\n", position)
+        header = data[position:end].split()
+        if len(header) != 3:
+            raise ValueError("Git object is missing: " + oid)
+        size = int(header[2])
+        blobs[oid] = data[end + 1:end + 1 + size]
+        position = end + 1 + size + 1
+    return blobs
+
+
+def folders_of(paths):
+    return {p.rsplit("/", n)[0] for p in paths for n in range(1, p.count("/") + 1)}
+
+
+def discovered(path):
+    """Whether package discovery looks at this path: never under a `.build` folder or a designated vendor root."""
+    return ".build" not in path.split("/") and not any(path == v or path.startswith(v + "/") for v in VENDOR_ROOTS)
 
 
 def native_packages(paths):
     """Every folder with a Package.swift ("." is the root package), plus each native tool that is present."""
-    packages = {p.rpartition("/")[0] or "." for p in paths if p.rpartition("/")[2] == "Package.swift"}
+    packages = {p.rpartition("/")[0] or "." for p in paths
+                if p.rpartition("/")[2] == "Package.swift" and discovered(p)}
     packages.update(t for t in NATIVE_TOOLS if any(p.startswith(t + "/") for p in paths))
     return sorted(packages)
 
 
-def native_inputs(paths, swift_sources, packages=()):
-    """Files outside the packages that native builds and tests read: every Examples/ folder without a
-    Package.swift, docs/fixtures, and each existing repository file or folder named in a Swift string literal."""
+def native_commands(package, paths):
+    """The documented command sequence (docs/VERIFY-ON-MAC.md) for one package of a tree with these paths."""
+    if package in NATIVE_TOOLS:
+        return [list(c) for c in NATIVE_TOOLS[package]]
+    if package == ".":
+        return [["swift", "build"], ["swift", "test"]]
+    verb = "test" if any(p.startswith(package + "/Tests/") for p in paths) else "build"
+    commands = [["swift", verb, "--jobs", "2", "--package-path", package]]
+    if package in RELEASE_BUILDS:
+        commands.append(["swift", "build", "-c", "release", "--jobs", "2", "--package-path", package])
+    return commands
+
+
+def literal_inputs(paths, swift_sources):
+    """Each existing repository file or folder that a Swift string literal names from the repository root.
+
+    A literal names a path when its first component is a top-level file or folder of the tree and it is a whole
+    top-level file name or has a slash. It is cut back to the deepest existing path, so a literal that ends in
+    interpolation names the folder it starts in."""
     paths = set(paths)
-    folders = {p.rsplit("/", n)[0] for p in paths for n in range(1, p.count("/") + 1)}
+    folders = folders_of(paths)
+    top = {p.partition("/")[0] for p in paths}
+    inputs = set()
+    for text in swift_sources:
+        for literal in SWIFT_PATH_LITERAL.findall(text):
+            candidate = literal[2:] if literal.startswith("./") else literal
+            candidate = candidate.rstrip("/")
+            if candidate.partition("/")[0] not in top or ("/" not in literal and candidate not in paths):
+                continue
+            while candidate not in paths and candidate not in folders and "/" in candidate:
+                candidate = candidate.rpartition("/")[0]
+            inputs.add(candidate)
+    return inputs
+
+
+def manifest_inputs(package, manifest, paths, packages):
+    """What a package manifest names outside the package's default layout: custom target paths, resources and local
+    dependencies. Returns (inputs, external), where `external` lists `path:` arguments that leave the repository."""
+    folders = folders_of(paths)
+    exists = set(paths) | folders
+    custom = MANIFEST_PATH_ARGUMENT.findall(manifest)
+    base = "" if package == "." else package
+    bases = [base] + sorted(f for f in folders if posixpath.dirname(f) in (
+        posixpath.join(base, "Sources"), posixpath.join(base, "Tests")))
+    bases += [posixpath.normpath(posixpath.join(base, c)) for c in custom]
+    inputs, external = set(), set()
+    for literal in MANIFEST_LITERAL.findall(manifest):
+        if not literal or "://" in literal:
+            continue
+        for start in bases:
+            if literal.startswith("/"):
+                resolved = literal
+            else:
+                resolved = posixpath.normpath(posixpath.join(start, literal))
+            if resolved.startswith("/") or resolved == ".." or resolved.startswith("../"):
+                if start == base and literal in custom:
+                    external.add(package + ": " + literal)
+                continue
+            if resolved in packages:
+                continue  # a local dependency on one of the packages, which is covered as a package
+            if resolved in exists:
+                inputs.add(resolved)
+    return inputs, external
+
+
+def resolve_link(path, entries, folders, blobs, limit=32):
+    """(target, reason, links): the repository path a committed symlink resolves to in its own tree, following
+    chained links, or None with the reason ("external" or "unresolved") when it leaves the repository or names
+    nothing in that tree; `links` are the other symlinks it passes through."""
+    stack, pending, hops, via = path.split("/")[:-1], [], 0, []
+    target = blobs[entries[path][1]].decode("utf-8", "surrogateescape")
+    while True:
+        if target.startswith("/"):
+            return None, "external", via
+        pending = target.split("/") + pending
+        while pending:
+            part = pending.pop(0)
+            if part in ("", "."):
+                continue
+            if part == "..":
+                if not stack:
+                    return None, "external", via
+                stack.pop()
+                continue
+            link = "/".join(stack + [part])
+            entry = entries.get(link)
+            if entry and entry[0] == SYMLINK_MODE:
+                break
+            stack.append(part)
+        else:
+            resolved = "/".join(stack) or "."
+            if resolved == "." or resolved in entries or resolved in folders:
+                return resolved, None, via
+            return None, "unresolved", via
+        hops += 1
+        via.append(link)
+        if hops > limit:
+            return None, "unresolved", via
+        target = blobs[entry[1]].decode("utf-8", "surrogateescape")
+
+
+def native_inputs(paths, swift_sources, packages=(), manifests=()):
+    """Files outside the packages that native builds and tests read: every Examples/ folder without a
+    Package.swift, docs/fixtures, each existing repository file or folder named in a Swift string literal, and what a
+    package manifest names outside its package. `manifests` is a sequence of (package, manifest text)."""
+    paths = set(paths)
+    folders = folders_of(paths)
     inputs = {"docs/fixtures"} & folders
     inputs.update(f for f in folders if f.count("/") == 1 and f.startswith("Examples/")
                   and f + "/Package.swift" not in paths)
-    for text in swift_sources:
-        for literal in SWIFT_PATH_LITERAL.findall(text):
-            candidate = literal.rstrip("/")
-            while candidate.count("/") >= 1 and candidate not in paths and candidate not in folders:
-                candidate = candidate.rpartition("/")[0]
-            if candidate.count("/") >= 1:
-                inputs.add(candidate)
-    # Leave out what a package or another input already covers, so the receipt lists each input once.
-    return sorted(i for i in inputs if i.endswith(".md") or not covers(i + "/x", packages, inputs - {i}))
+    inputs |= literal_inputs(paths, swift_sources)
+    for package, manifest in manifests:
+        inputs |= manifest_inputs(package, manifest, paths, packages)[0]
+    return dedupe(inputs, packages)
+
+
+def dedupe(inputs, packages=()):
+    """Leave out an input inside another input folder or inside a package's Sources/ or Tests/, each of which covers
+    all of it, so the receipt lists each input once."""
+    if "." in inputs:
+        return ["."]
+    whole = {posixpath.join("" if p == "." else p, f) for p in packages if p not in NATIVE_TOOLS for f in ("Sources", "Tests")}
+    return sorted(i for i in inputs if not any(i.startswith(o + "/") for o in inputs)
+                  and not any(i == w or i.startswith(w + "/") for w in whole))
 
 
 def covers(path, packages, inputs):
-    """Whether native evidence depends on these bytes. Markdown outside Sources/ and Tests/ is documentation,
-    unless a Swift literal names that exact file (a test reads it)."""
-    if path in inputs:
+    """Whether native evidence depends on these bytes. An input covers itself and, as a folder, everything in it.
+    Markdown in a package outside its Sources/ and Tests/ is documentation, unless an input covers it."""
+    if path in inputs or "." in inputs or any(path.startswith(i + "/") for i in inputs):
         return True
     for package in packages:
         if package == ".":
-            if path in ROOT_PACKAGE or path.startswith(ROOT_PACKAGE[2:]):
+            if path in ROOT_PACKAGE or ROOT_MANIFEST.fullmatch(path) or path.startswith(ROOT_PACKAGE[2:]):
                 return True
         elif path.startswith(package + "/"):
             if not path.endswith(".md") or path.startswith((package + "/Sources/", package + "/Tests/")):
                 return True
-    return any(path.startswith(folder + "/") and not path.endswith(".md") for folder in inputs)
+    return False
+
+
+def native_scope(trees, blobs):
+    """The packages, inputs and symlink problems of the union of these committed trees.
+
+    `trees` maps a label to {path: (mode, oid)}; `blobs` maps an object id to its bytes. Swift sources and package
+    manifests come from these trees only. A covered symlink adds its tracked target as an input (as many times as
+    needed to reach a fixed point); a covered symlink whose target leaves the repository or does not exist in its
+    tree is a problem."""
+    union = set().union(*(set(t) for t in trees.values()))
+    packages = native_packages(union)
+    swift, manifests, external = [], [], set()
+    for entries in trees.values():
+        for path, (mode, oid) in entries.items():
+            if mode == SYMLINK_MODE:
+                continue
+            if path.endswith(".swift"):
+                swift.append(blobs[oid].decode("utf-8", "replace"))
+            folder = path.rpartition("/")[0] or "."
+            if path.rpartition("/")[2] == "Package.swift" and folder in packages:
+                manifests.append((folder, blobs[oid].decode("utf-8", "replace")))
+    for package, manifest in manifests:
+        external |= manifest_inputs(package, manifest, union, packages)[1]
+    inputs = set(native_inputs(union, swift, packages, manifests))
+    problems, seen = set(), None
+    while seen != inputs:
+        seen = set(inputs)
+        for label, entries in trees.items():
+            folders = folders_of(entries)
+            for path, (mode, _) in entries.items():
+                if mode == SYMLINK_MODE and covers(path, packages, inputs):
+                    target, reason, via = resolve_link(path, entries, folders, blobs)
+                    if target is None:
+                        problems.add("%s -> %s (%s at %s)" % (
+                            path, blobs[entries[path][1]].decode("utf-8", "replace"), reason, label))
+                    inputs.update([p for p in via + [target] if p and not covers(p, packages, inputs)])
+        inputs = set(dedupe(inputs, packages))
+    problems |= {"%s (dependency outside the repository)" % e for e in external}
+    return {"packages": packages, "inputs": sorted(inputs), "problems": sorted(problems)}
+
+
+def scope_blobs(trees, root):
+    """Every blob native_scope reads: Swift sources, package manifests and symlink targets."""
+    wanted = []
+    for entries in trees.values():
+        wanted += [oid for path, (mode, oid) in entries.items()
+                   if mode == SYMLINK_MODE or path.endswith(".swift")]
+    return read_blobs(wanted, root)
+
+
+def head_scope(sha, root=None):
+    """The scope of one commit (what tools/write_native_receipt.py runs): its packages and their commands."""
+    entries = tree_entries(sha, root)
+    packages = native_packages(entries)
+    return {p: native_commands(p, entries) for p in packages}
 
 
 def read_native_receipt(path, source):
@@ -122,23 +337,30 @@ def read_native_receipt(path, source):
     return {e["path"]: e["exit"] for e in entries}
 
 
-def native_reuse(source, head, receipt, root=None):
-    """Whether a native receipt from `source` can vouch for `head`, whose checkout is `root`.
+def receipt_mismatch(expected, receipt):
+    """A receipt must name exactly the expected package paths, each with exit 0."""
+    return {"missing": sorted(set(expected) - set(receipt)),
+            "unexpected": sorted(set(receipt) - set(expected)),
+            "failed": sorted(p for p, code in receipt.items() if code != 0)}
 
-    It cannot when any native byte (package or input) differs between the two trees, including added and removed
-    files and packages, or when the receipt does not name every package present at `head` with exit 0."""
+
+def native_reuse(source, head, receipt, root=None):
+    """Whether a native receipt from `source` can vouch for `head`, both read from the Git objects of `root`.
+
+    It cannot when any native byte (package or input) differs between the two trees, including added, removed and
+    renamed files and packages; when a covered symlink leaves the repository or names nothing; or when the receipt
+    does not name exactly the packages present at `head`, each with exit 0."""
     root = root or ROOT
-    old, new = tree(source, root), tree(head, root)
-    union = set(old) | set(new)
-    packages = native_packages(union)
-    present = native_packages(new)
-    swift = [(root / p).read_text(encoding="utf-8") for p in new if p.endswith(".swift")]
-    inputs = native_inputs(union, swift, packages)
-    changed = [p for p in git("diff", "--name-only", "-z", "--no-renames", source, head, cwd=root).decode().split("\0")
-               if p and covers(p, packages, inputs)]
-    uncovered = [p for p in present if receipt.get(p) != 0]
-    return {"source": source, "packages": present, "inputs": inputs, "changed": changed, "uncovered": uncovered,
-            "status": "FAIL" if changed or uncovered else "PASS"}
+    trees = {"source": tree_entries(source, root), "head": tree_entries(head, root)}
+    scope = native_scope(trees, scope_blobs(trees, root))
+    packages, inputs = scope["packages"], scope["inputs"]
+    present = native_packages(trees["head"])
+    diff = git("diff-tree", "-r", "-z", "--name-only", "--no-renames", source, head, cwd=root)
+    changed = [p for p in diff.decode("utf-8", "surrogateescape").split("\0") if p and covers(p, packages, inputs)]
+    mismatch = receipt_mismatch(present, receipt)
+    failing = changed or scope["problems"] or any(mismatch.values())
+    return {"source": source, "packages": present, "inputs": inputs, "changed": changed, **mismatch,
+            "links": scope["problems"], "status": "FAIL" if failing else "PASS"}
 
 
 def main():
@@ -196,9 +418,24 @@ def main():
         json.dump(receipt, stream, indent=2)
         stream.write("\n")
     if native and native["status"] == "FAIL":
-        print("Native receipt cannot be reused. Changed:", native["changed"], "Not covered:", native["uncovered"])
+        print(refusal(native, args.head))
     print("Private receipt:", receipt_path)
     return 0 if receipt["status"] == "PASS" else 1
+
+
+def refusal(native, head):
+    """Why a native receipt cannot vouch for `head`, and how to get one that can."""
+    lines = ["Native receipt from %s cannot be reused for %s." % (native["source"], head)]
+    for key, label in (("changed", "Changed native paths"), ("links", "Symlinks or dependencies outside the tree"),
+                       ("missing", "Packages the receipt does not name"),
+                       ("unexpected", "Receipt entries that are not packages at HEAD"),
+                       ("failed", "Receipt entries with a non-zero exit")):
+        if native[key]:
+            lines.append("  %s: %s" % (label, ", ".join(native[key])))
+    lines.append("Run the native checks in docs/VERIFY-ON-MAC.md at %s (python3 tools/write_native_receipt.py "
+                 "/absolute/path/native-receipt.json), then rerun with --native-source %s and --native-receipt "
+                 "/absolute/path/native-receipt.json." % (head, head))
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":

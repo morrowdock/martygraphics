@@ -95,25 +95,47 @@ overall exit code:
  "packages": [{"path": ".", "exit": 0}, {"path": "Examples/Solid3D", "exit": 0}]}
 ```
 
-Keep the complete output beside it. `validate_local.py` takes the package set from
-the repository, not from a list: `.` (the root package), every other folder with a
-`Package.swift`, and `tools/render-blender`. A prior receipt can be reused only
+On the Mac, write it from a clean checkout of the tested commit with
+
+```sh
+python3 tools/write_native_receipt.py /absolute/path/native-receipt.json
+```
+
+which runs the [Mac package commands](VERIFY-ON-MAC.md) for every package and
+exits non-zero when any failed. Keep the complete output beside it.
+`validate_local.py` takes the package set from the repository, not from a list:
+`.` (the root package), every other folder with a `Package.swift`, and
+`tools/render-blender`, leaving out `.build` folders and the `vendor` and
+`third_party` vendor roots. Everything is read from the two pinned commits'
+Git objects, never from the working tree. A prior receipt can be reused only
 when, between `TESTED_NATIVE_SOURCE_SHA` and `HEAD_SHA`:
 
-- no native byte changed. Native bytes are the root `Package.swift`, `Sources/` and
-  `Tests/`; every file of the other packages and `tools/render-blender`; and the
-  inputs that native builds and tests read from outside them: every `Examples/`
-  folder without a `Package.swift` (such as `Examples/Explainers`), `docs/fixtures`,
-  and each existing file or folder named in a Swift string literal (for example
-  `docs/assets` and `docs/REASONS.md`). Additions and removals count, so a receipt
-  from before a package or file existed cannot vouch for it. Markdown outside
-  `Sources/` and `Tests/` is documentation, unless a Swift literal names that file;
-- the receipt names every package present at `HEAD_SHA`, with exit 0. Byte
-  equality alone cannot establish that a package's tests were run.
+- no native byte changed. Native bytes are the root `Package.swift`,
+  `Package.resolved`, `Sources/` and `Tests/`; every file of the other packages and
+  `tools/render-blender`; and the inputs that native builds and tests read from
+  outside them: every `Examples/` folder without a `Package.swift` (such as
+  `Examples/Explainers`), `docs/fixtures`, each existing file or folder that a
+  Swift string literal in either commit names from the repository root (for
+  example `docs/assets`, `docs/REASONS.md` and `CHANGELOG.md`), each folder or file
+  a package manifest names outside the package's default layout (custom target
+  paths, resources and local dependencies, vendored ones too), and the tracked
+  target of every covered symlink. An input folder covers **every** file in it,
+  Markdown too. Additions, removals and renames (case-only ones too) count, so a
+  receipt from before a package or file existed cannot vouch for it. Other
+  Markdown in a package outside its `Sources/` and `Tests/` is documentation;
+- no covered symlink points outside the repository or at a path missing from its
+  commit, and no manifest names a dependency outside the repository;
+- the receipt names **exactly** the packages present at `HEAD_SHA` (same spelling,
+  no extra entries), each with exit 0. Byte equality alone cannot establish that a
+  package's tests were run.
 
-The `nativeReuse` record lists the packages, the input paths, the changed native
-paths and the packages the receipt does not cover; either list being nonempty
-fails the run. Other changes (README and other documentation, CI, `tools/*.py`)
+The `nativeReuse` record lists the packages and the input paths, then the
+reasons reuse fails, each separately: `changed` native paths, `links` (symlinks or
+dependencies outside the tree), `missing` packages the receipt does not name,
+`unexpected` receipt entries that are not packages at `HEAD_SHA`, and `failed`
+entries with a non-zero exit. Any of them being nonempty fails the run, and the
+runner then says to run the Mac checks at `HEAD_SHA` and rerun with
+`--native-source HEAD_SHA --native-receipt` naming the new receipt. Other changes (README and other documentation, CI, `tools/*.py`)
 remain hygiene/review work. Preserve that original source SHA and asset digests;
 do not relabel an old execution as a new build. A documentation/CI change still
 needs its own local hygiene and independent scoped review.
