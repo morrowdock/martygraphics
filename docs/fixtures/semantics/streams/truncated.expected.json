@@ -1,0 +1,30 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "truncated.stream.json",
+  "entry": "MGStreamParser.feed(_:)/finish()",
+  "about": "A preview existed, but the stream never closed: finish() fails and the caller drops the preview.",
+  "expect": [
+    {
+      "check": "stream.previews",
+      "expect": [
+        {
+          "itemIds": [
+            "a"
+          ],
+          "steps": 0
+        }
+      ],
+      "python": "none",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "stream.finish",
+      "expect": {
+        "result": "reject",
+        "reason": "json"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

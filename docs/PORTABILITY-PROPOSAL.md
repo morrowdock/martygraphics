@@ -2,6 +2,8 @@
 
 Status: architecture proposal. **Portability implementation is planned-not-started.**
 No Windows, browser or Linux support is claimed. No blanket rewrite is selected.
+Step 1 (inventory and semantic fixtures, no file moves) is recorded in the
+[portability map](PORTABILITY-MAP.md); its Swift expectations still need a Mac run.
 
 ## Current dependency boundary
 

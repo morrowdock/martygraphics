@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-cell-magnitude.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Number cells must be below 1e6 in magnitude.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "array.val"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

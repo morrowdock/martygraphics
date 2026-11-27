@@ -1,0 +1,19 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": {
+    "utf8": "{\"v\":1,\"items\":[{\"id\":\"dot\",\"k\":\"body\",\"at\":[NaN,4]}]}"
+  },
+  "entry": "MGParser.scene(data:)",
+  "about": "NaN is not JSON.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "json"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

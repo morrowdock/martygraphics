@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-point-bounds.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Points stay within a quarter world outside each edge (x up to 15 in a 12-wide world).",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "body.at"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

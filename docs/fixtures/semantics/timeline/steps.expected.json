@@ -1,0 +1,105 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "steps.scene.json",
+  "entry": "MGTimeline",
+  "about": "Step state: cumulative edits, first-shown visibility and transitive hiding of highlights.",
+  "expect": [
+    {
+      "check": "preflight",
+      "expect": {
+        "result": "pass"
+      },
+      "python": "checked",
+      "swift": "not-applicable"
+    },
+    {
+      "check": "timeline.items",
+      "expect": [
+        {
+          "step": -3,
+          "visible": [
+            "cells"
+          ],
+          "items": {
+            "cells": {
+              "pointers": [
+                0
+              ],
+              "marked": []
+            }
+          }
+        },
+        {
+          "step": 0,
+          "visible": [
+            "cells"
+          ],
+          "items": {
+            "cells": {
+              "pointers": [
+                0
+              ],
+              "marked": []
+            }
+          }
+        },
+        {
+          "step": 1,
+          "visible": [
+            "cells",
+            "tag"
+          ],
+          "items": {
+            "cells": {
+              "pointers": [
+                1
+              ],
+              "marked": []
+            }
+          }
+        },
+        {
+          "step": 2,
+          "visible": [
+            "cells",
+            "tag",
+            "ring",
+            "halo"
+          ],
+          "items": {
+            "cells": {
+              "pointers": [
+                2
+              ],
+              "marked": [
+                2
+              ]
+            }
+          }
+        },
+        {
+          "step": 9,
+          "visible": [
+            "cells",
+            "tag",
+            "ring",
+            "halo"
+          ],
+          "items": {
+            "cells": {
+              "pointers": [
+                2
+              ],
+              "marked": [
+                2
+              ]
+            }
+          }
+        }
+      ],
+      "python": "none",
+      "swift": "pending-mac",
+      "note": "Steps clamp to 0...2. halo is never listed in show, so it is visible whenever its target ring is."
+    }
+  ]
+}

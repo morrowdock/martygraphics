@@ -1,0 +1,1 @@
+{"v":1,"title":"Patch rollback","items":[{"id":"dot","k":"body","at":[3,4]},{"id":"arrow","k":"vector","on":"dot","angle":0,"len":2,"label":"push"},{"id":"note","k":"text","at":[6,7],"text":"Synthetic note"}],"steps":[{"say":"Start here.","show":["dot"]},{"say":"Then the push.","show":["arrow"]}]}

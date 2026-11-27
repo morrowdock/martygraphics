@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-dim.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Only 2d and 3d.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "scene.dim"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

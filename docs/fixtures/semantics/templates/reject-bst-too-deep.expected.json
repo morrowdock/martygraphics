@@ -1,0 +1,27 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-bst-too-deep.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Eight increasing values make a 7-level tree; the template refuses to build it.",
+  "expect": [
+    {
+      "check": "preflight",
+      "expect": {
+        "result": "pass-deferred",
+        "template": "bst"
+      },
+      "python": "checked",
+      "swift": "not-applicable"
+    },
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "template.build"
+      },
+      "python": "none",
+      "swift": "pending-mac",
+      "note": "Only Swift runs the template; Python cannot see this refusal."
+    }
+  ]
+}

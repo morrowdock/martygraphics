@@ -1,0 +1,212 @@
+{
+  "patches": [
+    {
+      "v": 1,
+      "rev": 0,
+      "ops": [
+        {
+          "op": "title",
+          "title": "Patched once"
+        },
+        {
+          "op": "set",
+          "id": "dot",
+          "key": "at",
+          "value": [
+            4,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "rev": 1,
+      "ops": [
+        {
+          "op": "set",
+          "id": "dot",
+          "key": "size",
+          "value": 2
+        },
+        {
+          "op": "set",
+          "id": "dot",
+          "key": "at",
+          "value": [
+            99,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "rev": 0,
+      "ops": [
+        {
+          "op": "title",
+          "title": "Stale"
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "ops": [
+        {
+          "op": "remove",
+          "id": "dot"
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "ops": [
+        {
+          "op": "title",
+          "title": "Extra key"
+        }
+      ],
+      "why": "extra"
+    },
+    {
+      "v": 1,
+      "ops": [
+        {
+          "op": "move",
+          "id": "dot"
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "ops": [
+        {
+          "op": "set",
+          "id": "dot",
+          "key": "k",
+          "value": "node"
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "ops": [
+        {
+          "op": "step",
+          "index": 5
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "rev": 1,
+      "ops": [
+        {
+          "op": "set",
+          "id": "arrow",
+          "key": "from",
+          "value": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "rev": 2,
+      "ops": [
+        {
+          "op": "remove",
+          "id": "dot"
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "rev": 2,
+      "ops": [
+        {
+          "op": "remove",
+          "id": "dot"
+        },
+        {
+          "op": "steps",
+          "steps": [
+            {
+              "say": "Only the push.",
+              "show": [
+                "arrow"
+              ]
+            }
+          ]
+        },
+        {
+          "op": "step",
+          "index": 0
+        }
+      ]
+    },
+    {
+      "v": 1,
+      "ops": [
+        {
+          "op": "title",
+          "title": "T0"
+        },
+        {
+          "op": "title",
+          "title": "T1"
+        },
+        {
+          "op": "title",
+          "title": "T2"
+        },
+        {
+          "op": "title",
+          "title": "T3"
+        },
+        {
+          "op": "title",
+          "title": "T4"
+        },
+        {
+          "op": "title",
+          "title": "T5"
+        },
+        {
+          "op": "title",
+          "title": "T6"
+        },
+        {
+          "op": "title",
+          "title": "T7"
+        },
+        {
+          "op": "title",
+          "title": "T8"
+        },
+        {
+          "op": "title",
+          "title": "T9"
+        },
+        {
+          "op": "title",
+          "title": "T10"
+        },
+        {
+          "op": "title",
+          "title": "T11"
+        },
+        {
+          "op": "title",
+          "title": "T12"
+        }
+      ]
+    },
+    {
+      "utf8": "{\"v\":1,\"ops\":["
+    }
+  ]
+}

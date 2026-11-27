@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-camera-x.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Camera x stays within the world width.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "camera.x"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

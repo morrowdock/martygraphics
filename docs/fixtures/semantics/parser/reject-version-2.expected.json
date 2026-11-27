@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-version-2.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Only version 1.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "scene.version"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

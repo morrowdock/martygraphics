@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-unsorted.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "two_pointers needs sorted values.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "template.check"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

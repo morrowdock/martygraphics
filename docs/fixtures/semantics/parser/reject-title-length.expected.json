@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-title-length.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Titles are at most 60 scalars (61 here).",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "title"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

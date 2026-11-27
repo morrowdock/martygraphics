@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-highlight-cycle.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Highlights may not form a cycle.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "highlight.cycle"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

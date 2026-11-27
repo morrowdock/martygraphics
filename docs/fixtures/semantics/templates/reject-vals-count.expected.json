@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-vals-count.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "List parameter count (2 to 12).",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "template.vals"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

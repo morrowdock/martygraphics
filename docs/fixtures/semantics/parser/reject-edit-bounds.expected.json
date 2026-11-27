@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-edit-bounds.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Edited values are re-validated with the wire rules.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "body.at"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

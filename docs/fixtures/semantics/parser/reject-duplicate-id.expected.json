@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-duplicate-id.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Item ids are unique.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "id.duplicate.dot"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

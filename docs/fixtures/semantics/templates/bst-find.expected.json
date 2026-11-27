@@ -1,0 +1,227 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "bst-find.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "bst lays nodes out by rank and depth and adds one highlight per comparison.",
+  "expect": [
+    {
+      "check": "preflight",
+      "expect": {
+        "result": "pass-deferred",
+        "template": "bst"
+      },
+      "python": "checked",
+      "swift": "not-applicable"
+    },
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "template": "bst",
+        "title": "Binary search tree",
+        "items": [
+          {
+            "id": "e1",
+            "kind": "edge",
+            "color": "muted",
+            "ref": "n0",
+            "ref2": "n1"
+          },
+          {
+            "id": "e2",
+            "kind": "edge",
+            "color": "muted",
+            "ref": "n0",
+            "ref2": "n2"
+          },
+          {
+            "id": "e3",
+            "kind": "edge",
+            "color": "muted",
+            "ref": "n1",
+            "ref2": "n3"
+          },
+          {
+            "id": "e4",
+            "kind": "edge",
+            "color": "muted",
+            "ref": "n1",
+            "ref2": "n4"
+          },
+          {
+            "id": "n0",
+            "kind": "node",
+            "color": "blue",
+            "pts": [
+              [
+                8.600000000000001,
+                7.0
+              ]
+            ],
+            "text": "5",
+            "num": {
+              "r": 0.42
+            }
+          },
+          {
+            "id": "n1",
+            "kind": "node",
+            "color": "blue",
+            "pts": [
+              [
+                3.4000000000000004,
+                5.6
+              ]
+            ],
+            "text": "3",
+            "num": {
+              "r": 0.42
+            }
+          },
+          {
+            "id": "n2",
+            "kind": "node",
+            "color": "blue",
+            "pts": [
+              [
+                11.200000000000001,
+                5.6
+              ]
+            ],
+            "text": "8",
+            "num": {
+              "r": 0.42
+            }
+          },
+          {
+            "id": "n3",
+            "kind": "node",
+            "color": "blue",
+            "pts": [
+              [
+                0.8,
+                4.2
+              ]
+            ],
+            "text": "1",
+            "num": {
+              "r": 0.42
+            }
+          },
+          {
+            "id": "n4",
+            "kind": "node",
+            "color": "blue",
+            "pts": [
+              [
+                6.0,
+                4.2
+              ]
+            ],
+            "text": "4",
+            "num": {
+              "r": 0.42
+            }
+          },
+          {
+            "id": "h0",
+            "kind": "highlight",
+            "color": "yellow",
+            "ref": "n0"
+          },
+          {
+            "id": "h1",
+            "kind": "highlight",
+            "color": "yellow",
+            "ref": "n1"
+          },
+          {
+            "id": "h2",
+            "kind": "highlight",
+            "color": "yellow",
+            "ref": "n4"
+          }
+        ],
+        "steps": [
+          {
+            "say": "Insert in order. Smaller goes left, bigger or equal goes right. Height 2.",
+            "focus": "n0",
+            "show": []
+          },
+          {
+            "say": "4 is smaller than 5, so go left.",
+            "show": [
+              "h0"
+            ],
+            "focus": "n0"
+          },
+          {
+            "say": "4 is bigger than 3, so go right.",
+            "show": [
+              "h1"
+            ],
+            "focus": "n1"
+          },
+          {
+            "say": "4 = 4. Found it in 3 comparisons.",
+            "show": [
+              "h2"
+            ],
+            "focus": "n4"
+          }
+        ],
+        "values": {
+          "n": "5",
+          "height": "2"
+        }
+      },
+      "python": "none",
+      "swift": "pending-mac",
+      "note": "Item order (edges, nodes, highlights) depends on a stable sort in the template; coordinates use tolerance 1e-9."
+    },
+    {
+      "check": "timeline.items",
+      "expect": [
+        {
+          "step": 0,
+          "visible": [
+            "e1",
+            "e2",
+            "e3",
+            "e4",
+            "n0",
+            "n1",
+            "n2",
+            "n3",
+            "n4"
+          ]
+        },
+        {
+          "step": 2,
+          "visible": [
+            "e1",
+            "e2",
+            "e3",
+            "e4",
+            "n0",
+            "n1",
+            "n2",
+            "n3",
+            "n4",
+            "h0",
+            "h1"
+          ]
+        }
+      ],
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

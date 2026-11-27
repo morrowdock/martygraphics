@@ -1,0 +1,19 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": {
+    "hex": "7b2276223a312c227469746c65223a22ff222c226974656d73223a5b7b226964223a22646f74222c226b223a22626f6479222c226174223a5b332c345d7d5d7d"
+  },
+  "entry": "MGParser.scene(data:)",
+  "about": "Input must be UTF-8 (0xFF inside the title).",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "json"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

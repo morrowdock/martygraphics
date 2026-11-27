@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-url.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "No URLs in labels.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "item.label"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-step-focus.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Steps focus existing items only.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "step.focus"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

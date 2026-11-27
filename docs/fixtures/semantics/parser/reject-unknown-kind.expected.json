@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-unknown-kind.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Unknown item kind.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "item.kind"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "format.cases.json",
+  "entry": "MGPhysics.format(_:unit:)",
+  "about": "Label numbers: about 3 significant figures, fixed notation, no trailing zeros, no negative zero.",
+  "expect": [
+    {
+      "check": "format",
+      "expect": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0.01",
+        "1",
+        "2.67",
+        "9.99",
+        "10",
+        "12.2",
+        "12.3",
+        "100",
+        "100",
+        "1234",
+        "1236",
+        "-2.5",
+        "123457",
+        "1000000000000000000000",
+        "9.81 N",
+        "30°",
+        "0.33 m/s"
+      ],
+      "python": "model",
+      "swift": "pending-mac",
+      "note": "Python's '%.*f' rounds the binary value correctly, ties to even. Whether String(format:) matches on every case needs a Swift run."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-world.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "A template sets its own world.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "template.world"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

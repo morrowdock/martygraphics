@@ -1,0 +1,39 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "accept-highlight-chain.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "A highlight of a highlight ends at a body: a chain, not a cycle.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "items": [
+          {
+            "id": "dot",
+            "kind": "body"
+          },
+          {
+            "id": "ring",
+            "kind": "highlight",
+            "ref": "dot"
+          },
+          {
+            "id": "halo",
+            "kind": "highlight",
+            "ref": "ring"
+          }
+        ]
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

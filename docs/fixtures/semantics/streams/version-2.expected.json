@@ -1,0 +1,25 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "version-2.stream.json",
+  "entry": "MGStreamParser.feed(_:)/finish()",
+  "about": "No preview is ever made for another version.",
+  "expect": [
+    {
+      "check": "stream.previews",
+      "expect": [
+        null
+      ],
+      "python": "none",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "stream.finish",
+      "expect": {
+        "result": "reject",
+        "reason": "scene.version"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-unknown-root-key.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Closed root keys.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "scene.unknown.colour"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

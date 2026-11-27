@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "accept-version-float.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Version written as 1.0 compares equal to 1.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac",
+      "note": "Swift reads 1.0 through NSNumber; byte accounting may spell it differently."
+    }
+  ]
+}

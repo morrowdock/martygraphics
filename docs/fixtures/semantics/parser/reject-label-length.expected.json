@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-label-length.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Labels are at most 40 scalars (41 here).",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "item.label"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

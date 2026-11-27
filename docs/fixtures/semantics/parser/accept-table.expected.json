@@ -1,0 +1,47 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "accept-table.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Table with a header, a number cell stored as display text and an empty row.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "items": [
+          {
+            "id": "grid",
+            "kind": "table",
+            "list": [
+              "Name",
+              "Score",
+              "a",
+              "9.5",
+              "",
+              ""
+            ],
+            "num": {
+              "rows": 3,
+              "cols": 2,
+              "cw": 1.6,
+              "rh": 0.7
+            },
+            "flags": [
+              "header"
+            ],
+            "isEmptyTable": false
+          }
+        ]
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

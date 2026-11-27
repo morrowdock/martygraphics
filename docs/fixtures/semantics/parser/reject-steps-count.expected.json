@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-steps-count.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "At most 8 supplied steps (9 here).",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "steps"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

@@ -11,6 +11,16 @@
 
 ### Added
 - Add a draft JSON Schema and a dependency-free Python preflight for core v1 scenes. Swift remains the authority.
+- Portability step 1, inventory and tests only (no file moves, no API change, no support claim
+  for Windows, Linux or browsers): `docs/PORTABILITY-MAP.md` maps the imports of each source file,
+  the public types that name platform types, and the package edges that block the candidate core
+  files. It also suggests seams. `tools/portability_map.py` generates the tables and a tool test
+  checks that they are current. `docs/fixtures/semantics/` adds 71 original synthetic fixtures with
+  expected-result files. They cover parser acceptance and refusal, number formatting, template
+  items and steps, a patch sequence with a rolled-back update, stream finalization and timeline
+  samples. `tools/semantic_fixtures.py` checks what Python can reproduce. It uses the draft
+  preflight `tools/scene_v1_check.py` and its schema.
+  Every Swift-facing expectation stays `pending-mac`.
 - Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,
   seeded or greedy token generation, temperature sweeps, and simplified patch attention.
   Add a camera-right landscape composition and optional sequential highlights for the vision pipeline.

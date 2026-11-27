@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-edge-self.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "An edge joins two different nodes.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "edge.self"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

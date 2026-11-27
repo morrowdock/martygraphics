@@ -1,0 +1,54 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "accept-3d-direction.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "3D vector with a direction that is normalised to unit length.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "is3D": true,
+        "items": [
+          {
+            "id": "hub",
+            "kind": "body",
+            "pts": [
+              [
+                6,
+                4,
+                1
+              ]
+            ]
+          },
+          {
+            "id": "axis",
+            "kind": "vector",
+            "ref": "hub",
+            "dir": [
+              0.0,
+              0.7071067811865475,
+              0.7071067811865475
+            ],
+            "num": {
+              "len": 2
+            },
+            "flags": [
+              "dir3"
+            ]
+          }
+        ]
+      },
+      "python": "none",
+      "swift": "pending-mac",
+      "note": "dir is [0, 0.5, 0.5] scaled by 1/length; compare with tolerance 1e-12."
+    }
+  ]
+}

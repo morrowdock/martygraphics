@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-target-integer.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Integer parameter.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "template.target.integer"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

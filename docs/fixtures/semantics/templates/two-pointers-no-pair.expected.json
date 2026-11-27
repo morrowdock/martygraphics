@@ -1,0 +1,66 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "two-pointers-no-pair.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "When the pointers meet, the template adds a closing step without edits.",
+  "expect": [
+    {
+      "check": "preflight",
+      "expect": {
+        "result": "pass-deferred",
+        "template": "two_pointers"
+      },
+      "python": "checked",
+      "swift": "not-applicable"
+    },
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "steps": [
+          {
+            "say": "Find two numbers that add to 10. Start L at the smallest, R at the largest.",
+            "focus": "arr",
+            "edits": []
+          },
+          {
+            "say": "1 + 2 = 3 is too small, so move L right.",
+            "focus": "arr",
+            "edits": [
+              {
+                "id": "arr",
+                "key": "ptrs",
+                "value": [
+                  {
+                    "i": 1,
+                    "label": "L"
+                  },
+                  {
+                    "i": 1,
+                    "label": "R"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "say": "The pointers met: no pair adds to 10.",
+            "edits": []
+          }
+        ],
+        "values": {
+          "target": "10"
+        }
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

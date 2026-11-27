@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-items-count.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "At most 24 literal items.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "items.count"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

@@ -1,0 +1,257 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "rollback.scene.json",
+  "entry": "MGScene.applying(_:)",
+  "about": "Patches applied in order to the current scene; a failed patch leaves the previous scene and revision in place. Byte entries go through MGPatch.parse(data:), objects through MGPatch.parse(json:).",
+  "expect": [
+    {
+      "check": "preflight",
+      "expect": {
+        "result": "pass"
+      },
+      "python": "checked",
+      "swift": "not-applicable"
+    },
+    {
+      "check": "patches",
+      "expect": [
+        {
+          "patch": 0,
+          "result": "accept",
+          "revision": 1,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 1,
+          "result": "reject",
+          "reason": "body.at",
+          "revision": 1,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 2,
+          "result": "reject",
+          "reason": "patch.stale",
+          "revision": 1,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 3,
+          "result": "reject",
+          "reason": "vector.on",
+          "revision": 1,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 4,
+          "result": "reject",
+          "reason": "patch.unknown.why",
+          "revision": 1,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 5,
+          "result": "reject",
+          "reason": "patch.op.move",
+          "revision": 1,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 6,
+          "result": "reject",
+          "reason": "patch.set.key",
+          "revision": 1,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 7,
+          "result": "reject",
+          "reason": "patch.step.range",
+          "revision": 1,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 8,
+          "result": "accept",
+          "revision": 2,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 9,
+          "result": "reject",
+          "reason": "step.show",
+          "revision": 2,
+          "title": "Patched once",
+          "itemIds": [
+            "dot",
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 10,
+          "result": "accept",
+          "revision": 3,
+          "title": "Patched once",
+          "itemIds": [
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 11,
+          "result": "reject",
+          "reason": "patch.ops",
+          "revision": 3,
+          "title": "Patched once",
+          "itemIds": [
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        },
+        {
+          "patch": 12,
+          "result": "reject",
+          "reason": "patch.json",
+          "revision": 3,
+          "title": "Patched once",
+          "itemIds": [
+            "arrow",
+            "note"
+          ],
+          "startStep": 0
+        }
+      ],
+      "python": "model",
+      "swift": "pending-mac",
+      "note": "Python models MGPatch.parse and MGScene.applying for literal scenes and uses the draft preflight as the re-parse."
+    },
+    {
+      "check": "patches.resolved",
+      "expect": [
+        {
+          "after": 0,
+          "items": {
+            "dot": {
+              "pts": [
+                [
+                  4,
+                  4
+                ]
+              ],
+              "num": {
+                "size": 1,
+                "angle": 0
+              }
+            },
+            "arrow": {
+              "ref": "dot"
+            }
+          }
+        },
+        {
+          "after": 1,
+          "items": {
+            "dot": {
+              "pts": [
+                [
+                  4,
+                  4
+                ]
+              ],
+              "num": {
+                "size": 1,
+                "angle": 0
+              }
+            }
+          },
+          "note": "The valid first op (size 2) is rolled back with the invalid second op."
+        },
+        {
+          "after": 8,
+          "items": {
+            "arrow": {
+              "ref": null,
+              "pts": [
+                [
+                  1,
+                  1
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "after": 10,
+          "steps": [
+            {
+              "say": "Only the push.",
+              "show": [
+                "arrow"
+              ]
+            }
+          ]
+        }
+      ],
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

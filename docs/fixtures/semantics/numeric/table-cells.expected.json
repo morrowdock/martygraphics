@@ -1,0 +1,34 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "table-cells.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Table number cells use the same formatter with a 12-scalar limit.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "items": [
+          {
+            "id": "grid",
+            "kind": "table",
+            "list": [
+              "123457",
+              "-1000000"
+            ]
+          }
+        ]
+      },
+      "python": "none",
+      "swift": "pending-mac",
+      "note": "-999999.5 is an exact tie and rounds to even."
+    }
+  ]
+}

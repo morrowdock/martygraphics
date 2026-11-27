@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-placeholder-brace.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "A lone closing brace.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "text.text.brace"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

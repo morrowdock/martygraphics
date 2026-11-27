@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-edit-cycle.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "References are re-checked after each cumulative edit.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "highlight.cycle"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

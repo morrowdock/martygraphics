@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "5b00fb58c05c67f89ac301cfcde5c8560c77b2940c39e8527ade9b7cc02c6299"
+      "sha256": "571e713a73b19b3fb89571fcc3927cd45ea9503686494e62924b6747392d8015"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1983,7 +1983,7 @@
     },
     {
       "path": "docs/PORTABILITY-PROPOSAL.md",
-      "sha256": "4cd08d476c93e2af2e571f0967385e5d216fb150fbab77f80b3ceba893c80823"
+      "sha256": "9db929ea6794cc476d4be6730383966ec8be6a30906e3399cda88cf5007983c0"
     },
     {
       "path": "docs/PROTOCOL.md",
@@ -3436,6 +3436,582 @@
     {
       "path": "Tests/MartyGraphicsTests/SceneRobustnessTests.swift",
       "sha256": "eabf9182fa4aa4b9294d41c5e8788041d30e8f94fc1fed05a20826ab82fba0c7"
+    },
+    {
+      "path": "docs/PORTABILITY-MAP.md",
+      "sha256": "3dea830e50e2f6b59d2b86503254a765ffce2c01efe1f73b39f414e747d31a9c"
+    },
+    {
+      "path": "docs/fixtures/semantics/README.md",
+      "sha256": "c3b87cde5c5420d1cd41e2b6a02454e0b51fdbc87c3e53d0104bd0d39071b426"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/array-cells.expected.json",
+      "sha256": "4f6fa7843d38e483950f080c3008716182d5527fbbc69e993df2234bbb6e7394"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/array-cells.scene.json",
+      "sha256": "890d33743af1ae4e02c22f3aeaab9ab7e125e4187ddaa314dbbb67dc1cf43a50"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/format.cases.json",
+      "sha256": "246be21eb57eadfca0e346ae750594821ca191b9332ec229aba352bf5a285cb4"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/format.expected.json",
+      "sha256": "2dbaa115256ba6528bc214f8bc9004c89ef926257be7f1c6852249ee6725894f"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/reject-cell-length.expected.json",
+      "sha256": "eb63332fa72f75fc07e56e5058a11e4edf48aa77e6acc350f174490b0beb2f85"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/reject-cell-length.scene.json",
+      "sha256": "0763cb75b354a0f1c44a560107c56d09638e50ffdf3b2ab620c63ec3da8eb67e"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/reject-cell-magnitude.expected.json",
+      "sha256": "bdf24ab221f83f95e5b500a5f3f265795971fb0460906c78c07eb923108238d7"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/reject-cell-magnitude.scene.json",
+      "sha256": "fba05fb92f4828f7a273d824cd8f572959865126b684782f2de2ff754d39ffb6"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/table-cells.expected.json",
+      "sha256": "dadf352cc14b2abf31f6341d19ad4abdaa3d856387c1a1eda74ef50b55598b7a"
+    },
+    {
+      "path": "docs/fixtures/semantics/numeric/table-cells.scene.json",
+      "sha256": "146c33b38fbbeaf57e81a7c2a4c4bedc83a4d405f3143ebfaf08bf3f3a3829aa"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-3d-direction.expected.json",
+      "sha256": "79f0605abf7bbd07e08d35a7c6e5f05fd666fe31f3043196e567d5423143b3be"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-3d-direction.scene.json",
+      "sha256": "77c8c3fbd79a21b40b2f320ab8b1a14f6cdd5e24688a26d1087f7a68a25c5c91"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-code-text.expected.json",
+      "sha256": "0b0c8079d3e147cc2b15c9b1c13c94ad6c3c4502bbaf83a463a1e5105c076f2c"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-code-text.scene.json",
+      "sha256": "a87ecc8a64daf0a9dcacaba8a8a47de5e79f9b55b463a81e750c55323f4fdfaa"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-highlight-chain.expected.json",
+      "sha256": "946cd7df62708f50f5913def1863971de0baa789522e8ebfec1d06d1f0e7b810"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-highlight-chain.scene.json",
+      "sha256": "b4ee0ecd473dfd77e3c3eddddcd6821b63c44444e9239b54ad668fc30b2e9221"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-minimal.expected.json",
+      "sha256": "5b155cac728bf85c902ac82001d5e166d6e4e102794cb4a228fe079dfd9ea5ec"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-minimal.scene.json",
+      "sha256": "125a075de7803d38056b39ac3535f24d83a6efa80162dcb609f0deaf3063d66e"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-table.expected.json",
+      "sha256": "0e9ca2126aeb385c9333b9ed971dec9eece82c0ea8fc3bfb0f1954e1523051ca"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-table.scene.json",
+      "sha256": "9202e498b3444625472d2dfd80df7d267d696607cb050d5d7957306ffd841493"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-version-float.expected.json",
+      "sha256": "77a0fe96fe1fa800a00820dc60051b53dc4db5ce937f93c8023c6bfc570ec66e"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-version-float.scene.json",
+      "sha256": "58f50015edd0a6abc6d7731c28ce5b47f5c74eabdfbbb42cb98b8eada34119fd"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-world-camera.expected.json",
+      "sha256": "f3f80bfdeab993362860ff91636ccfab3a6f93a8fe2fdf25a962edafcd781849"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/accept-world-camera.scene.json",
+      "sha256": "1cb664a349229f1287929bd3f054fce38811b412b0b05bfd59d47f7928904d0d"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/open-byte-order-mark.expected.json",
+      "sha256": "d6bcfab5be90db24fd07b3797a7a17639772de1096f338aa288b59d6c767a345"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/open-duplicate-key.expected.json",
+      "sha256": "a8eef5333740106fca90e7197214bcbbedbe4f4de0d1c94dc34646e353a3106d"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/open-duplicate-key.scene.json",
+      "sha256": "4853ee090bda97a7385b1b6ac20addb3a49b37c152e041ddc67c7bce9d5cba26"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/open-line-separator.expected.json",
+      "sha256": "6d39078b41614d1cdba0d7768e63c7bb0c87ad85f16c776a84cc4d8a38c14900"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/open-line-separator.scene.json",
+      "sha256": "f7a1209dc3b253043949c80e9dcdf723308efd9f09c66c0ae51711b0c1af8b8b"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-camera-x.expected.json",
+      "sha256": "4957ae58fff15cc080bf634aa683d1e1391687fbf10816e7cd0a16d83f882eaa"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-camera-x.scene.json",
+      "sha256": "a855be721172a1a02a69572bd56884f6f99f17a088c289d1d7bbc60988619953"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-depth.expected.json",
+      "sha256": "33d2fa1d7db7dc4a04aa48cbb29c8f898a5aa2bd164573d1a4ff9b44053dc84a"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-depth.scene.json",
+      "sha256": "61f59c465d93034f579994ad6f65dcfd57778db114047f9f964b1901a005dbeb"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-dim.expected.json",
+      "sha256": "e1f7e63a5bf2d1628e99bff62ea7b9ce764875ad81b158edd5cf976de4a8f58c"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-dim.scene.json",
+      "sha256": "25989bdf5608a43463a8ea523cba78a61db698cbf11f5e923e468fb942e4e34d"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-duplicate-id.expected.json",
+      "sha256": "ef7acc2c7cf51f8b7d69a7943b6a935db9ac37957586ad7beb36aabcca7fea14"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-duplicate-id.scene.json",
+      "sha256": "771ac386fcc43fa70f27a52836f99404cebcb89e76ee1a9c70dd1899d7f1b02b"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edge-self.expected.json",
+      "sha256": "8eb57cf0901da2fe6164dd3f2c27b5a50b1323ed650d027dbe5bf9f3fcd5a81d"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edge-self.scene.json",
+      "sha256": "ac7194d8e3f7401be01ee1c742c2d389f703ffaf85cabe7672990541ea189f21"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edit-bounds.expected.json",
+      "sha256": "10d3da937907edc4676303ab7be08d65ab6de6edfb5750c2224e81e668cb57f3"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edit-bounds.scene.json",
+      "sha256": "29359455764cfa7682bd76c1f1bfe60b62298fdc21829e80c60c1953b23f1e69"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edit-cycle.expected.json",
+      "sha256": "360d5b87bd181cfcaef3ed65db5dc942a049d36b66108fa2da20c3a666d34f3d"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edit-cycle.scene.json",
+      "sha256": "5c85b144687f9212ca18df17a58f70e49a69ce35e7af7cf0bdb5568fbd70d1e6"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edit-key.expected.json",
+      "sha256": "501e3207a3c872e87e5fa23828f8540126f6c344e40cc7c6375a22287d2786c8"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edit-key.scene.json",
+      "sha256": "e3336fcbb18426d4479259f31a46dcf773088ea80838c4797b1bb5efe4c2e716"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edit-ref.expected.json",
+      "sha256": "25c629eb95d41c2de4e9e58f9a1b0ac216fdd049a5cb6761a1c67074e5afe4ef"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-edit-ref.scene.json",
+      "sha256": "f90b5c452f4984d32151af2472229dda4baeeabb73941025240792028df2bba7"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-highlight-cycle.expected.json",
+      "sha256": "ce62d016a0584f28406d15249497dd52c6cb0f06c990d2faad09c93a2f752a2b"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-highlight-cycle.scene.json",
+      "sha256": "5f45111853b5bee739d7a76771ebb15041abdeefc887064fc37b15685eb31ed2"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-input-too-large.expected.json",
+      "sha256": "dd09694a96395dd221eab8cbd9361dff81582be14a0a3220f29f107519115127"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-items-count.expected.json",
+      "sha256": "5b06857cc62c5f9ff361cb862140faf7e27f240e2729fe81e966f04ad1c29057"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-items-count.scene.json",
+      "sha256": "4ae8179d0b55ca4b28879a9638175d766a0163c41ccb2aa9658be2c7e65138c0"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-items-required.expected.json",
+      "sha256": "8936ec2bfb3c2a6adca62579f54b8bbb4345aff981c87eba02a09fa0e6ef5fd9"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-items-required.scene.json",
+      "sha256": "a3fcda14a874275064734387699b338bc1bf7617854202b6f04e737f37ed50b7"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-label-length.expected.json",
+      "sha256": "139af31a262704385c37b0177ab6ccfb3e4dc65f34f53218841fbd9d279863f7"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-label-length.scene.json",
+      "sha256": "3aacc151f4b972121980dc7222b7ae8888e2fcca9633c2d0fab010f4f529512c"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-markup.expected.json",
+      "sha256": "085e7242418ecd46da397b642133249a8f3559f8b4992bc9c845500cb5d69860"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-markup.scene.json",
+      "sha256": "e729e8890256d0f6f7198bf0773824c17b22dae496ca44e0fd65a83eac1898f7"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-nan.expected.json",
+      "sha256": "30365066750048b49b3ab0890d9d5db31ebd724730e6de2c230f9438b4b4262d"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-not-utf8.expected.json",
+      "sha256": "41350ff9a0e03ab04f3472656a7659abaefcc8fca636f7d4afffa53b4aaca5b2"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-params-without-template.expected.json",
+      "sha256": "675777095c438535b6c432845db65435d48d83f79abb97da6eb51e6fbfb3a854"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-params-without-template.scene.json",
+      "sha256": "6eda0443bb5448372f55b7b730d35f75938feff20ea27db73331705bef1f1ec7"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-placeholder-brace.expected.json",
+      "sha256": "8c3240277c029733f42f05527c6e7f6cd6180a05020c870f8d592c64bf65b106"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-placeholder-brace.scene.json",
+      "sha256": "da685fdc2cddaf856a0b22bae56ecd09ab999a5474a5819a9ee1d2f06c1207f3"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-placeholder-underscore.expected.json",
+      "sha256": "b15045204dfc0a8e31a808277edb06e689a8f1e171669fd6bc39da08eae9af25"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-placeholder-underscore.scene.json",
+      "sha256": "ba16aa87f18b28187339a7f9468099d64c79d908f2b8df87d9e3de23b875fcf8"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-placeholder-unknown.expected.json",
+      "sha256": "8b9b1c55ad67ff5fba4726b91a240dbd9077b64d098a9deee92778d1d51573ba"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-placeholder-unknown.scene.json",
+      "sha256": "f8c79fee96fa6b01e0de88f1b2252660e2c087283cd744d9e585a6e1e749a8d0"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-point-bounds.expected.json",
+      "sha256": "62197aec24c465725166616efa873164ee35abf235d32edb9c8f474f691df24d"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-point-bounds.scene.json",
+      "sha256": "4280b066207d2607d6225e26b7bfb41046604adc9d9dc726a533541fda4dba50"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-step-focus.expected.json",
+      "sha256": "d3524c2cbd7e8ec27449405a9a069278192f1ac375e05099216cb327580792ff"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-step-focus.scene.json",
+      "sha256": "6ba739f46c73d2148c58eb9b0d6397e8cf1f6943287b7b60a62cd04e56315b12"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-step-show.expected.json",
+      "sha256": "179c57463bbd43f1068872fd6cd43983a2d61755825ab4eb17edf4ba792c7e26"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-step-show.scene.json",
+      "sha256": "e5c1617acd5a09d54c02518029c9b920e57742ece76efdf063ea0cd452e14f69"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-steps-count.expected.json",
+      "sha256": "696e9a5f1e0464f25cd0c7a183f6bf9616b6aaec7775597dae213437bb217487"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-steps-count.scene.json",
+      "sha256": "6c692fd897b7c7ae3ebe507c2c7f5692ce2016ec067015493eb27420fef0fee5"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-title-length.expected.json",
+      "sha256": "a585f70b0d3bbabaedc5453fd1972ff8fe92050f5197656fc727ec467f45b3c1"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-title-length.scene.json",
+      "sha256": "1d26242378e391f0f99bb39549931fb79b57308fe20bb48e6bfcb29aaca433b3"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-truncated.expected.json",
+      "sha256": "bcd649b36bfbff4155746a4ee06d8196cd631c97eb069bf202fe8f41cb1b1d3a"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-unknown-item-key.expected.json",
+      "sha256": "79a760dac3c0df0d6829ab88a054db0eba2589cec805abafaae6d9d110d4b16d"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-unknown-item-key.scene.json",
+      "sha256": "174feb1b35bf2f71bbe2bdb6be7f2e2a4a88aa6c700935a820ce64e16f330976"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-unknown-kind.expected.json",
+      "sha256": "7929c1cc729ca58e829a26816202b09f2afe06dffe96afc1bbb2f60f1a4c6c83"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-unknown-kind.scene.json",
+      "sha256": "91e12e85215e8e4ce903f4b3b05de26d4b97720746dda072775d71249b50566e"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-unknown-root-key.expected.json",
+      "sha256": "1961d4df29cc0efb2f0bd0cc9d32f35a084f869753472ed44aa8795f9a4c2479"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-unknown-root-key.scene.json",
+      "sha256": "f09d0e6467a79a23da6269f299a413555bdc569560f2702dea371c3ce932f872"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-url.expected.json",
+      "sha256": "20c7fb01a11e3663daab2e779db0beb7b3ca4876ce45cb541963f8d1dff0d703"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-url.scene.json",
+      "sha256": "abcb8744807ae3afac817c769dc01a1422b24935286e70485e2c86f072abf351"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-vector-anchor.expected.json",
+      "sha256": "46657cc62503096a49fd4c85ff94a7461d5da34637c3b7edee1af6e64fd523cc"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-vector-anchor.scene.json",
+      "sha256": "b1fe7570e36c49e47604cc099b5edca2b2bb3581ffe159b952da7f96a2fed4e0"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-version-2.expected.json",
+      "sha256": "b449b568ac354e8622451068c753554295b6337ec3347261d3f602522d779d66"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-version-2.scene.json",
+      "sha256": "420229f81289495fa0996f1403c3f06f6355cef687d7c3b4025319dab6f94b84"
+    },
+    {
+      "path": "docs/fixtures/semantics/patches/rollback.expected.json",
+      "sha256": "686fc10098468347a56d1a07789aee10911cf2f769f3a771fdfd5a0a519ccc81"
+    },
+    {
+      "path": "docs/fixtures/semantics/patches/rollback.patches.json",
+      "sha256": "f5489d64e0b8fe6363b09d822b26920952efa75042b4526e2219494fd707b654"
+    },
+    {
+      "path": "docs/fixtures/semantics/patches/rollback.scene.json",
+      "sha256": "5da1467d1e9c16a82b8c885d27c7158265e29df141e138561e25d9ccabfdbe5b"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/grow.expected.json",
+      "sha256": "a222b27779e948d97110b6c4039e7407870956fe2fdedac9917026f13705c43d"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/grow.stream.json",
+      "sha256": "5092965b362ffcc0516523c46c7540ec0d728369c8c0c469c8a9bc14b77b8114"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/step-ref.expected.json",
+      "sha256": "78eb9496eeb919144c3673f8f73e4a77b48b00920165df0129f73e75b52729c5"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/step-ref.stream.json",
+      "sha256": "6cae2fe126e09e3126e3b6e2e034853b5756a989b729d05370d7b4c0b9ebb579"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/truncated.expected.json",
+      "sha256": "6cd902f16842f9d0079a5ae0df248ce361df7d41ace363547cd4b4484fcdfd17"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/truncated.stream.json",
+      "sha256": "48d7a0c8cb893ae6e06a9e068c690b710c48e5e3069a34851a487684228a9afe"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/unknown-key-tail.expected.json",
+      "sha256": "6df5911746d29ac1f7059bb9303ea143f3742fda5fd3db6a95e35f831c597580"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/unknown-key-tail.stream.json",
+      "sha256": "93056afc3c719c9e8fd99ec9f55d2eee81ed323836ada55c88f6d725dc3d3a77"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/version-2.expected.json",
+      "sha256": "58cf1538ed621515059dd05d0e68612e4eaf5b66267c8850920cc64804c5972b"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/version-2.stream.json",
+      "sha256": "7f11387dbaf71220e86912074a5ad9c844e1b81d4aacfac4807ec1ddf95cb8ec"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/bst-find.expected.json",
+      "sha256": "8f1a385df9704a16ef5a1665a7907a59b022c3d86d84c7e23d770b8d761b1868"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/bst-find.scene.json",
+      "sha256": "d8b808bc169a408b9562e71efb8bfdd46d4b8cad75aa7154ae0257ebb7680ffa"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/hide-over.expected.json",
+      "sha256": "5c8f0a4ef00cc14abdf0f5691a4faa7fb55a0d736b3cf014913d7add15489e87"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/hide-over.scene.json",
+      "sha256": "6455d83fa053d1795bfe8b2518f68e9895cebdc2c807a51d1d43ed86345941dc"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-bst-duplicate.expected.json",
+      "sha256": "288c06e16d37c09d86222afc281c54a672df050ce9f761cde186635b841fbeb6"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-bst-duplicate.scene.json",
+      "sha256": "e0415eff3f98f5b69a34fddc83893a00068e7cd68628b2572d780d00bf233d70"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-bst-too-deep.expected.json",
+      "sha256": "76898fe062cbba0e66145e5bfd7e0e0723c55d00049521aa6a3b194207a20a99"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-bst-too-deep.scene.json",
+      "sha256": "8fc3e5700830444af5e324d9cff90ebdf7a553bcd891549cfcb7b28a203c282a"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-over-ref.expected.json",
+      "sha256": "0eaf797f53cb2f4d81de4c1bfa9679ccdf9c7d8e5c89dda0ab16f4eaa2da03a1"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-over-ref.scene.json",
+      "sha256": "0998089b86342dbffee95f3eb61a7fd2d4b058e1d5b18873992626a5e6cd3b03"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-params-unknown.expected.json",
+      "sha256": "47b6e9ea51790828d991a9754f9c08f7d6ed7cd1e736e363bd84e81859aed145"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-params-unknown.scene.json",
+      "sha256": "5055d7f53e64326822fc63fd4a3b63375fdae9362484b2a2e1549d1c9d123233"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-target-integer.expected.json",
+      "sha256": "dea15b5673855436a1f9a9f3d3110b15b90987bf7b8575dced7d72af09d243e8"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-target-integer.scene.json",
+      "sha256": "bb41a6d674e14ac654fdc7e75b70bd76301e1b9821f6366c72f41b7a203bdc30"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-target-missing.expected.json",
+      "sha256": "8313d7ea7c0f92686577c575edbf65dd334e5511058fe5ad7c01703f63767008"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-target-missing.scene.json",
+      "sha256": "3fb96722a40cf8ce3afc2bf405fe688e8371e6b458ab2cc638f06ef61661e083"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-unknown.expected.json",
+      "sha256": "5c374f8a9699f7abd20a28bf6e04295351a8a4da5363952694cd35e9b8d20fff"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-unknown.scene.json",
+      "sha256": "ffce9d4197b447f78f6786ddbc130aabe6513217d292c137ec11caa653efb904"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-unsorted.expected.json",
+      "sha256": "a38895eca58d3586389d990d10ef9ab27ce2c6cf937066d8df2923b952e097df"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-unsorted.scene.json",
+      "sha256": "ded8bf0d2e48f62d2c3f216713f97a80987e2fbf71dfbbd2850055f4c2684601"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-vals-count.expected.json",
+      "sha256": "664710f03182c3618356bad22622f917be566da759ebc5d68b99e4a3ff9de264"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-vals-count.scene.json",
+      "sha256": "a4e86584107ce3226d03c43107e322087c5bc566436268bd5a09fb0424f14958"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-world.expected.json",
+      "sha256": "aa25647921aaf4eb36f1aa0c3d193c1d5bb24795979d0bd20d8a7752a4a0d179"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/reject-world.scene.json",
+      "sha256": "69cfe7f2836445a3107e685f279e3b73f4004c3a4801c991b27bc59f552ee0ab"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/two-pointers-no-pair.expected.json",
+      "sha256": "b4f1e5a5167df2148863298c4c348ca3f701b69569919f598b62c7b70a9fce39"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/two-pointers-no-pair.scene.json",
+      "sha256": "dbd517925821e75ca4f530d5e17485300bae3e38a4a8c8189e68ce9cbde2aa8e"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/two-pointers-pair.expected.json",
+      "sha256": "d48779b8745d7b9928a30d4a40dfa7a458a9ebc8d552b5962a2a7d03833dbf2e"
+    },
+    {
+      "path": "docs/fixtures/semantics/templates/two-pointers-pair.scene.json",
+      "sha256": "6d8b6b4b1d2748e31ea959078b573ddf833f3c796c07decd334a3c8af7a27a9c"
+    },
+    {
+      "path": "docs/fixtures/semantics/timeline/blend.expected.json",
+      "sha256": "31ebd651abd870376996b79659fc77bca22c59f06a959b11e4dac9b2aac4ca69"
+    },
+    {
+      "path": "docs/fixtures/semantics/timeline/blend.patches.json",
+      "sha256": "1ff4d275a1c05c92f17c3be766f84a607cd625dcf823bb2f58b3102fd2c648cc"
+    },
+    {
+      "path": "docs/fixtures/semantics/timeline/blend.scene.json",
+      "sha256": "187bca8063777b23c17ab3a8d8ff703e953f06ec477c128e10cc15fcddaac45c"
+    },
+    {
+      "path": "docs/fixtures/semantics/timeline/move.expected.json",
+      "sha256": "a76de066e6da6e1e4210adec5a617db534e44a0dc71eb9ea58487fd8ea2673ea"
+    },
+    {
+      "path": "docs/fixtures/semantics/timeline/move.scene.json",
+      "sha256": "0231ba8663ec9c385dbf87ecfa5a64f9c974c8e2db2b5f289026158c5fc017f3"
+    },
+    {
+      "path": "docs/fixtures/semantics/timeline/steps.expected.json",
+      "sha256": "e5ae2d346f0f248e442c206a44f19ac03ad7a6572ba93e08eb0da0df802ed2f3"
+    },
+    {
+      "path": "docs/fixtures/semantics/timeline/steps.scene.json",
+      "sha256": "9115a67e7eef562592541497c912f9efae8c99120f3a823fb7e5dec04355b61c"
+    },
+    {
+      "path": "tools/portability_map.py",
+      "sha256": "f90e21011b8a13d031caded61ade21802c9e5d2e05b88240220215d6585792c6"
+    },
+    {
+      "path": "tools/semantic_fixtures.py",
+      "sha256": "79c6eebd0242397a012f80b530aa4f6ca25b385ebc49f5a0ee25a0a536159e2d"
+    },
+    {
+      "path": "tools/tests/test_portability_tools.py",
+      "sha256": "c731cb6be9a83bf4010aece790741c06fda3a4302040f7e3a3d8926aad1ddfce"
     }
   ]
 }

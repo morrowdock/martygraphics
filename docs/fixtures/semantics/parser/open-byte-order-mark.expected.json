@@ -1,0 +1,21 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": {
+    "hex": "efbbbf7b2276223a312c226974656d73223a5b7b226964223a22646f74222c226b223a22626f6479222c226174223a5b332c345d7d5d7d"
+  },
+  "entry": "MGParser.scene(data:)",
+  "about": "UTF-8 byte-order mark before the scene: decoder policy undecided.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": "undetermined",
+      "python": "observed",
+      "swift": "pending-mac",
+      "note": "The Python preflight refuses a BOM. Swift's UTF-8 check passes it to JSONSerialization; result unmeasured.",
+      "observed": {
+        "result": "reject",
+        "reason": "json"
+      }
+    }
+  ]
+}

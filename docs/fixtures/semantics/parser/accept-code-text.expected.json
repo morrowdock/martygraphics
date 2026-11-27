@@ -1,0 +1,33 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "accept-code-text.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Code-style text keeps leading spaces and allows comparison signs.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "items": [
+          {
+            "id": "code",
+            "kind": "text",
+            "text": "  if i < n:\n    i += 1",
+            "flags": [
+              "code"
+            ]
+          }
+        ]
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

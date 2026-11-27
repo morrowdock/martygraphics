@@ -1,0 +1,26 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-over-ref.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "An override must name an item the template built.",
+  "expect": [
+    {
+      "check": "preflight",
+      "expect": {
+        "result": "pass-deferred",
+        "template": "two_pointers"
+      },
+      "python": "checked",
+      "swift": "not-applicable"
+    },
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "over.ref"
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

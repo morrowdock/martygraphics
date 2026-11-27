@@ -1,0 +1,31 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "step-ref.stream.json",
+  "entry": "MGStreamParser.feed(_:)/finish()",
+  "about": "Steps that do not resolve are left out of previews; finish() refuses them.",
+  "expect": [
+    {
+      "check": "stream.previews",
+      "expect": [
+        {
+          "itemIds": [
+            "a"
+          ],
+          "steps": 0
+        },
+        null
+      ],
+      "python": "none",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "stream.finish",
+      "expect": {
+        "result": "reject",
+        "reason": "step.show"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

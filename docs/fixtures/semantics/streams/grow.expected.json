@@ -1,0 +1,41 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "grow.stream.json",
+  "entry": "MGStreamParser.feed(_:)/finish()",
+  "about": "Items join the preview once their references resolve; finish() keeps source order.",
+  "expect": [
+    {
+      "check": "stream.previews",
+      "expect": [
+        null,
+        {
+          "itemIds": [
+            "a"
+          ],
+          "steps": 0
+        },
+        null,
+        {
+          "itemIds": [
+            "a",
+            "b",
+            "f"
+          ],
+          "steps": 0
+        },
+        null
+      ],
+      "python": "none",
+      "swift": "pending-mac",
+      "note": "Preview order is acceptance order (f waits for b); the final scene uses source order a, f, b."
+    },
+    {
+      "check": "stream.finish",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

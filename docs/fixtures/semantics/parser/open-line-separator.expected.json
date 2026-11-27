@@ -1,0 +1,19 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "open-line-separator.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "U+2028 LINE SEPARATOR inside a title: character classes may differ.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": "undetermined",
+      "python": "observed",
+      "swift": "pending-mac",
+      "note": "The Python preflight refuses Zl/Zp. MGParser.text refuses CharacterSet.controlCharacters (Cc and Cf), so a static reading suggests Swift accepts. Unconfirmed.",
+      "observed": {
+        "result": "reject",
+        "reason": "title"
+      }
+    }
+  ]
+}

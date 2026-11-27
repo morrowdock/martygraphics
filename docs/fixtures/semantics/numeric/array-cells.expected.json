@@ -1,0 +1,39 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "array-cells.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Number cells are stored as their displayed text, which obeys the 6-scalar cell limit.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "items": [
+          {
+            "id": "cells",
+            "kind": "array",
+            "list": [
+              "0",
+              "0",
+              "2.67",
+              "10",
+              "100",
+              "1234",
+              "12.2",
+              "100000"
+            ]
+          }
+        ]
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

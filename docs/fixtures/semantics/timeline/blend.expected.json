@@ -1,0 +1,122 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "blend.scene.json",
+  "entry": "MGTimeline",
+  "about": "Patch blending: the shortest way round for angles, linear for points, and the spring curve.",
+  "expect": [
+    {
+      "check": "preflight",
+      "expect": {
+        "result": "pass"
+      },
+      "python": "checked",
+      "swift": "not-applicable"
+    },
+    {
+      "check": "patches",
+      "expect": [
+        {
+          "patch": 0,
+          "result": "accept",
+          "revision": 1,
+          "title": "",
+          "itemIds": [
+            "hand",
+            "dot"
+          ],
+          "startStep": 0
+        }
+      ],
+      "python": "model",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "timeline.blend",
+      "expect": {
+        "from": "scene",
+        "to": "after patch 0",
+        "samples": [
+          {
+            "t": 0.25,
+            "items": {
+              "hand": {
+                "num": {
+                  "angle": 355,
+                  "len": 2
+                }
+              },
+              "dot": {
+                "pts": [
+                  [
+                    3.5,
+                    3.5
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "t": 0.5,
+            "items": {
+              "hand": {
+                "num": {
+                  "angle": 360,
+                  "len": 2
+                }
+              },
+              "dot": {
+                "pts": [
+                  [
+                    4,
+                    3
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "t": 1,
+            "items": {
+              "hand": {
+                "num": {
+                  "angle": 10,
+                  "len": 2
+                }
+              },
+              "dot": {
+                "pts": [
+                  [
+                    5,
+                    2
+                  ]
+                ]
+              }
+            }
+          }
+        ],
+        "spring": [
+          {
+            "elapsed": 0,
+            "value": 0
+          },
+          {
+            "elapsed": 0.5,
+            "value": 1.0172966890450486,
+            "tolerance": 1e-12
+          },
+          {
+            "elapsed": 1.2,
+            "value": 1
+          },
+          {
+            "elapsed": 3,
+            "value": 1
+          }
+        ]
+      },
+      "python": "none",
+      "swift": "pending-mac",
+      "note": "MGTimeline.blend(from:to:t:) and MGTimeline.spring(_:). 350 to 10 degrees travels +20, so t=0.5 gives 360, not 180."
+    }
+  ]
+}

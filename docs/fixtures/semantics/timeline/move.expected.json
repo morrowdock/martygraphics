@@ -1,0 +1,184 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "move.scene.json",
+  "entry": "MGTimeline",
+  "about": "A body with move glides with smoothstep easing there and back; a vector on it follows its centre.",
+  "expect": [
+    {
+      "check": "preflight",
+      "expect": {
+        "result": "pass"
+      },
+      "python": "checked",
+      "swift": "not-applicable"
+    },
+    {
+      "check": "timeline.frame",
+      "expect": [
+        {
+          "time": 0,
+          "items": {
+            "puck": {
+              "pts": [
+                [
+                  2.0,
+                  4
+                ]
+              ]
+            },
+            "push": {
+              "pts": [
+                [
+                  2.0,
+                  4
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "time": 0.5,
+          "items": {
+            "puck": {
+              "pts": [
+                [
+                  2.9375,
+                  4
+                ]
+              ]
+            },
+            "push": {
+              "pts": [
+                [
+                  2.9375,
+                  4
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "time": 1,
+          "items": {
+            "puck": {
+              "pts": [
+                [
+                  5.0,
+                  4
+                ]
+              ]
+            },
+            "push": {
+              "pts": [
+                [
+                  5.0,
+                  4
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "time": 2,
+          "items": {
+            "puck": {
+              "pts": [
+                [
+                  8.0,
+                  4
+                ]
+              ]
+            },
+            "push": {
+              "pts": [
+                [
+                  8.0,
+                  4
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "time": 3,
+          "items": {
+            "puck": {
+              "pts": [
+                [
+                  5.0,
+                  4
+                ]
+              ]
+            },
+            "push": {
+              "pts": [
+                [
+                  5.0,
+                  4
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "time": 4,
+          "items": {
+            "puck": {
+              "pts": [
+                [
+                  2.0,
+                  4
+                ]
+              ]
+            },
+            "push": {
+              "pts": [
+                [
+                  2.0,
+                  4
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "time": -1,
+          "items": {
+            "puck": {
+              "pts": [
+                [
+                  2.0,
+                  4
+                ]
+              ]
+            },
+            "push": {
+              "pts": [
+                [
+                  2.0,
+                  4
+                ]
+              ]
+            }
+          }
+        }
+      ],
+      "python": "none",
+      "swift": "pending-mac",
+      "note": "MGTimeline.frame(scene, items: MGTimeline.items(scene, step: 0), time:). The move target is not drawn."
+    },
+    {
+      "check": "timeline.cycle",
+      "expect": {
+        "cycle": 4,
+        "restTime": {
+          "loops": 3,
+          "time": 12
+        },
+        "animates": true
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

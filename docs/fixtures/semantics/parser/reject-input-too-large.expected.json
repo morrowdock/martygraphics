@@ -1,0 +1,20 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": {
+    "utf8": "{\"v\":1,\"items\":[{\"id\":\"dot\",\"k\":\"body\",\"at\":[3,4]}]}",
+    "padToBytes": 16385
+  },
+  "entry": "MGParser.scene(data:)",
+  "about": "Raw input over 16384 bytes, even when the scene is small.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "input.too-large"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

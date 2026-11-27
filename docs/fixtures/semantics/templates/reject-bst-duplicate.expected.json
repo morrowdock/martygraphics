@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-bst-duplicate.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "bst values are distinct.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "template.check"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "accept-world-camera.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Custom world; the camera centre may sit on the world's far edge.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "width": 20,
+        "height": 10,
+        "camera": {
+          "x": 20,
+          "y": 10,
+          "zoom": 2,
+          "yaw": 25,
+          "pitch": 20
+        }
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

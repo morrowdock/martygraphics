@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-edit-key.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "A step edit may only set keys of the item's kind.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "edit.key.size"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-edit-ref.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "A step edit names an existing item.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "edit.ref"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

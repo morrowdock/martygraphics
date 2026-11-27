@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-params-unknown.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Closed parameter keys.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "template.params.unknown"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

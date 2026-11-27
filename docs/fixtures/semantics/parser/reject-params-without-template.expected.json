@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-params-without-template.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "params needs a template.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "scene.params.without.template"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

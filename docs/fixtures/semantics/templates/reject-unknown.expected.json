@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-unknown.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Unregistered template.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "template.unknown"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

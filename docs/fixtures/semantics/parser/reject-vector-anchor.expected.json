@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-vector-anchor.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "A vector has exactly one of from and on.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "vector.anchor"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

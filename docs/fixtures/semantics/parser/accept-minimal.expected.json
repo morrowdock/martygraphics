@@ -1,0 +1,46 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "accept-minimal.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Smallest literal scene: one body with defaults filled in.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "accept"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "resolved",
+      "expect": {
+        "title": "",
+        "width": 12,
+        "height": 8,
+        "is3D": false,
+        "template": null,
+        "items": [
+          {
+            "id": "dot",
+            "kind": "body",
+            "color": "blue",
+            "pts": [
+              [
+                3,
+                4
+              ]
+            ],
+            "num": {
+              "size": 1,
+              "angle": 0
+            }
+          }
+        ],
+        "steps": []
+      },
+      "python": "none",
+      "swift": "pending-mac"
+    }
+  ]
+}

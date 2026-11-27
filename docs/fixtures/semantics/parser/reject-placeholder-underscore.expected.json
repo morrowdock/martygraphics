@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-placeholder-underscore.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Placeholder names are ASCII letters and digits.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "text.text.placeholder"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

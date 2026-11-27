@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-unknown-item-key.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Closed item keys, per kind.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "item.body.unknown.colour"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

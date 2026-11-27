@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-target-missing.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Required parameter.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "template.target.missing"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

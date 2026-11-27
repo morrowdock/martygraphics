@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-markup.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "No markup in plain text.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "text.text"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

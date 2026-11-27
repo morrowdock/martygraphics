@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-step-show.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "Steps show existing items only.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "step.show"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

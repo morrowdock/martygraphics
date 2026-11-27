@@ -1,0 +1,17 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-placeholder-unknown.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "A literal scene has no computed values to fill.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "text.text.placeholder.speed"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}
