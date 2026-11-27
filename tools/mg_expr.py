@@ -1578,6 +1578,9 @@ def check_sliders(scene, world=(12.0, 8.0), is3d=False, literal=True, values=Non
             raise Refusal("slider.unbound")
         if any(item.get("k") == "field" and param in item for item in items):
             raise Refusal("slider.field")
+        # A readout fills the texts once (`MGReadout`): a graph whose readouts the slider would change has none.
+        if any("readouts" in item for item in driven):
+            raise Refusal("slider.readouts")
         for item in driven:
             if float(item[param]) != initial:
                 raise Refusal("slider.default." + item["id"])

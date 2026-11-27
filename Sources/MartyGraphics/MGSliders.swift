@@ -162,7 +162,9 @@ extension MGParser {
     ///   stop is `0.3`; `1e-12` where the stop is `0`).
     /// - `slider.label.placeholder`: braces (a label is fixed text); `slider.label`: the plain-text rules, 40 scalars.
     /// - `slider.unbound`: no `func` sets the parameter; `slider.field`: a `field` sets it (sliders drive `func` items
-    ///   only, and a field that kept its own value would contradict the slider); `slider.default.<id>`: the `func`
+    ///   only, and a field that kept its own value would contradict the slider); `slider.readouts`: a driven `func`
+    ///   lists `readouts` (a readout fills the scene's texts once, at parse time, so a slider move would leave them
+    ///   showing the default's numbers beside the moved graph); `slider.default.<id>`: the `func`
     ///   `<id>` sets the parameter to another value; `sliders.bindings`: more than `MGLimits.sliderBindings` pairs of a
     ///   slider and a `func` it drives; `slider.edit`: a step edit sets the parameter of a `func` or `field`.
     /// - `slider.<param>.min.<reason>`, `slider.<param>.max.<reason>`: a driven `func` refuses that end of the range
@@ -203,6 +205,8 @@ extension MGParser {
             let driven = items.filter { $0.kind == .function && $0.num[param] != nil }
             guard !driven.isEmpty else { throw MGError("slider.unbound") }
             guard !items.contains(where: { $0.kind == .field && $0.num[param] != nil }) else { throw MGError("slider.field") }
+            // A readout is filled into text once (MGReadout): a graph whose readouts the slider would change has none.
+            guard !driven.contains(where: { !MGReadout.requested($0).isEmpty }) else { throw MGError("slider.readouts") }
             for f in driven where f.num[param] != initial { throw MGError("slider.default.\(f.id)") }
             bindings += driven.count
             guard bindings <= MGLimits.sliderBindings else { throw MGError("sliders.bindings") }

@@ -187,7 +187,9 @@
   a learner slider at a non-default value the board takes the slider's items (`MGSliderState.boardFrames`) and reads
   no cache, and the canvas (`MGBoardMotion.frame` takes the board's frames), VoiceOver and the audio graph show those
   same items. A blend into a new scene looks the step it leaves up with `MGTimelineCache.peek`, which never fills the
-  cache. A readout computation is bounded by its own operation counts (at most 258
+  cache. A slider may not drive a `func` that lists readouts (`slider.readouts`, with a repair hint): a readout fills
+  its texts once, so they would keep the default's numbers when the slider moves the graph. A readout computation is
+  bounded by its own operation counts (at most 258
   interval passes, 962 evaluations and 1 forward-mode pass, 3 per parse), not by the graph checks' evaluation bound.
   In interval arithmetic a whole exponent above 2⁵³ takes the bound of `pow` (`MGExpression.squaringLimit`), so an
   interval pass squares at most 54 times per power. `tools/mg_expr.py` and

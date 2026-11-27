@@ -902,6 +902,10 @@
    "hint": "min must be below max"
   },
   {
+   "reason": "slider.readouts",
+   "hint": "a func that a slider drives may not list readouts: their numbers fill the texts once, so the texts would keep the default's numbers when the slider moves; remove readouts from that func (and the placeholders that name them), or remove the slider"
+  },
+  {
    "reason": "slider.step",
    "hint": "step is a number above 0, at most max - min, that divides max - min into a whole number of steps, for example min 0, max 3, step 0.5"
   },

@@ -91,6 +91,7 @@ public enum MGRepairHint {
         ("slider.label", "label: 1-40 characters of plain text on one line: no < or > (write the symbols ≤ ≥ → or words), no URLs or code fences"),
         ("slider.unbound", "no func sets this parameter: set it on the func the slider should drive (for example \"a\": 1, equal to the default), or remove the slider"),
         ("slider.field", "sliders drive func graphs only, and a field that sets the same parameter would not follow it: remove the parameter from the field, or remove the slider"),
+        ("slider.readouts", "a func that a slider drives may not list readouts: their numbers fill the texts once, so the texts would keep the default's numbers when the slider moves; remove readouts from that func (and the placeholders that name them), or remove the slider"),
         ("slider.edit", "no step edit may set a slider's parameter on a func or field; remove that edit (the learner sets the value with the slider)"),
         ("slider.*.min.*", "at the slider's min a func it drives fails the check named at the end of the reason: raise min, or change that func's range or expression"),
         ("slider.*.max.*", "at the slider's max a func it drives fails the check named at the end of the reason: lower max, or change that func's range or expression"),

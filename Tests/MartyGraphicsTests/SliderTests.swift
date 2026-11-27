@@ -970,12 +970,44 @@ final class SliderTests: XCTestCase {
 
     // MARK: repair hints
 
+    /// A slider may not drive a `func` that lists readouts (`slider.readouts`). A readout fills the scene's texts once,
+    /// at parse time (`MGScene.values`), and a slider move re-parses the graph (`MGSliderState.apply`), which computes
+    /// its readouts again: a text would keep the default's number beside the moved graph. A graph the slider does not
+    /// drive may list readouts; they keep their numbers when the slider moves.
+    func testASliderNeverDrivesAGraphWithReadouts() throws {
+        let graph = #"{"id":"w","k":"func","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-4,4],"y":"a*sin(x)","a":1,"mark":1,"readouts":["slope"]}"#
+        let text = #"{"id":"t","k":"text","at":[8,7],"text":"Slope {w.slope}"}"#
+        let slider = #""sliders":[{"param":"a","min":0,"max":2,"step":0.5,"default":1,"label":"Height a"}]"#
+        XCTAssertEqual(reason(#"{"v":1,"items":["# + graph + "," + text + "]," + slider + "}"), "slider.readouts")
+        XCTAssertEqual(reason(#"{"v":1,"items":["# + graph + "]," + slider + "}"), "slider.readouts", "with or without a text")
+        // Why: without the slider the scene parses, the text holds the default's slope, and a slider's re-parse of the
+        // graph moves the slope while the text stays.
+        let s = try scene(#"{"v":1,"items":["# + graph + "," + text + "]}")
+        XCTAssertEqual(s.item("t")?.text, "Slope 0.54")
+        XCTAssertEqual(try XCTUnwrap(s.values["w.slope"]?.value), cos(1), accuracy: 1e-12)
+        // The graph at a = 1.5, re-parsed from its wire form as `MGSliderState.apply` re-parses a driven graph.
+        var wire = try XCTUnwrap(s.item("w")).wire()
+        wire["a"] = .number(1.5)
+        let ctx = MGContext(width: s.width, height: s.height, is3D: s.is3D, values: s.values)
+        XCTAssertEqual(try XCTUnwrap(MGParser.item(.object(wire), ctx).num[MGReadout.slope.key]), 1.5 * cos(1), accuracy: 1e-12)
+        XCTAssertEqual(s.item("t")?.text, "Slope 0.54", "the text keeps the default's number")
+        // Readouts of a graph the slider does not drive: accepted, and unchanged by a slider move.
+        let other = try scene(#"{"v":1,"items":[{"id":"g","k":"func","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-4,4],"y":"sin(x)","#
+            + #""mark":1,"readouts":["slope"]},{"id":"w","k":"func","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-4,4],"y":"a*x/3","a":1},"#
+            + #"{"id":"t","k":"text","at":[8,7],"text":"Slope {g.slope}"}],"# + slider + "}")
+        var state = MGSliderState(scene: other)
+        XCTAssertTrue(state.set("a", nearest: 1.5))
+        XCTAssertEqual(state.items.first { $0.id == "g" }?.num[MGReadout.slope.key], other.values["g.slope"]?.value)
+        XCTAssertEqual(state.items.first { $0.id == "t" }?.text, "Slope 0.54")
+    }
+
     func testRepairHintsFollowTheReasonPatterns() {
         func row(_ pattern: String) -> String? { MGRepairHint.table.first { $0.0 == pattern }?.1 }
         XCTAssertEqual(MGRepairHint.text(for: "slider.default.wave"), row("slider.default.*"))
         XCTAssertEqual(MGRepairHint.text(for: "slider.default"), row("slider.default"))
         XCTAssertEqual(MGRepairHint.text(for: "slider.label"), row("slider.label"))
         XCTAssertEqual(MGRepairHint.text(for: "slider.grid"), row("slider.grid"))
+        XCTAssertEqual(MGRepairHint.text(for: "slider.readouts"), row("slider.readouts"))
         XCTAssertTrue(MGRepairHint.text(for: "slider.b.max.func.detail")?.contains("lower max") ?? false)
         XCTAssertTrue(MGRepairHint.text(for: "slider.a.min.func.mark")?.contains("raise min") ?? false)
         XCTAssertTrue(MGRepairHint.text(for: "slider.step.count")?.contains("100 steps") ?? false)

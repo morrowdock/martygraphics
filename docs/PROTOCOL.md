@@ -370,8 +370,12 @@ parses and draws exactly as before.
   (`slider.default.<id>`), so a host that shows no sliders draws the board at
   the default. Sliders drive `func` items only: a `field` that sets the same
   parameter is refused (`slider.field`), and so is a step edit of it
-  (`slider.edit`); the slider is the one source of the value. At most 6 pairs
-  of a slider and a `func` it drives (`sliders.bindings`).
+  (`slider.edit`); the slider is the one source of the value. A driven `func`
+  may not list `readouts` (`slider.readouts`, "Readouts: slopes and areas"): a
+  readout fills the scene's texts once, so they would keep the default's
+  numbers while the graph moves with the slider. A graph the slider does not
+  drive may list them. At most 6 pairs of a slider and a `func` it drives
+  (`sliders.bindings`).
 - Both ends of each range are checked at parse time with every other parameter
   at its default, through the same item rules as a parse: a driven `func` that
   refuses an end gives `slider.<param>.min.<reason>` or
@@ -548,7 +552,9 @@ model never writes these numbers itself.
   the curve as drawn.
 - Step edits re-check the item as before, and an edit may change anything
   (colour, labels, even `a`) as long as every readout the scene names keeps its
-  number (`func.readouts.edit`), because the text is filled once. An edit of a
+  number (`func.readouts.edit`), because the text is filled once. For the same
+  reason a learner slider may not drive a graph that lists readouts
+  (`slider.readouts`, "Learner sliders"). An edit of a
   key the readouts do not read (`color`, `label`, `xl`, `yl`, `at`, `w`, `h`)
   keeps them without computing them again; any other key computes them again.
   A `set` patch parses the whole scene again, so the readouts and every text
@@ -878,7 +884,7 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `func.readouts`, `func.readouts.period` / `.mark` / `.shade` / `.slope` / `.area` / `.view` / `.edit`, `<text>.placeholder.readout` | A readout list is malformed, asked of a moving graph or without its `mark` or `shade`; a slope is not proven (a corner, cusp, vertical tangent, pole or domain edge at the mark or anywhere within a probe of it, even one the curve crosses back over before the probe); an area's analytic curve cannot be certified continuous and inside the y range within its budget (outward-rounded interval arithmetic, so a pole that cancellation hides in double precision counts), or the area cannot be computed to its shown digits, or a sample of it is outside the y range; a step edit changes a readout the text names; a text names a readout the scene does not compute | Move the `mark` more than a probe (1/1024 of a sampling interval) from every corner, pole and domain edge; shade an interval where the analytic curve is continuous and inside the y range (or widen `yr`), and write the expression without cancelling large terms (`x + 1`, not `((10^20 + x) - 10^20) + 1`); see [readouts](#readouts-slopes-and-areas). |
 | `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
 | `sliders`, `slider`, `slider.missing`, `slider.unknown.<keys>`, `slider.param`, `slider.duplicate.<p>`, `slider.min`, `slider.max`, `slider.range`, `slider.step`, `slider.step.count`, `slider.grid`, `slider.default`, `slider.label`, `slider.label.placeholder` | A slider list or slider is out of shape, or its range or step is out of bounds; a stop's label (an end's included) does not read back as exactly the value the engine would get, or its stops are too close to tell apart (`slider.grid`); its default is not exactly the value of a stop (`slider.default`); or its label is not fixed plain text | See [learner sliders](#learner-sliders); `MGRepairHint.text(for:)` gives a one-line fix. |
-| `slider.unbound`, `slider.field`, `slider.default.<id>`, `slider.edit`, `sliders.bindings`, `slider.<p>.min.<reason>`, `slider.<p>.max.<reason>` | No `func` sets the parameter, a `field` or a step edit sets it, a `func` sets another value, too many slider-graph pairs, or a driven graph fails a check at an end of the range | Set the parameter on the graphs to the default, remove the conflicting key, or narrow the range. |
+| `slider.unbound`, `slider.field`, `slider.readouts`, `slider.default.<id>`, `slider.edit`, `sliders.bindings`, `slider.<p>.min.<reason>`, `slider.<p>.max.<reason>` | No `func` sets the parameter, a `field` or a step edit sets it, a driven `func` lists `readouts`, a `func` sets another value, too many slider-graph pairs, or a driven graph fails a check at an end of the range | Set the parameter on the graphs to the default, remove the conflicting key, or narrow the range. |
 | `vector.on`, `edge.nodes`, `highlight.target` | Reference is absent, has the wrong kind, or highlights itself | Fix references before applying the scene. |
 | `highlight.cycle` | An indirect highlight chain loops | Make the chain terminate; [negative fixture](fixtures/v1/highlight-cycle.scene.json). |
 | `patch.stale`, `patch.rev` | Revision mismatches or is invalid | Rebase the intended change on the current scene revision; do not retry stale content blindly. |
