@@ -53,15 +53,9 @@ public final class MGMovieWriter {
     /// size is fitted into the preset's frame (centred, over black, or clear with alpha), and `alpha: .straight` divides
     /// the colours by alpha before encoding. Every source buffer is tagged with the space it was drawn in and, with
     /// alpha, how its alpha is stored (`MGExportPreset.sourceAttachments`). Throws `mp4: preset <problems>` for a preset
-    /// that cannot be written, `mp4: preset alphaMode` for a preset with alpha before macOS 15 and iOS 18 (Core Video
-    /// cannot state the alpha mode there, `MGExportPreset.problems(on:)`).
+    /// that cannot be written.
     public convenience init(url: URL, preset: MGExportPreset, maxBufferedFrames: Int? = nil) throws {
-        try self.init(url: url, preset: preset, maxBufferedFrames: maxBufferedFrames, system: .current)
-    }
-
-    /// `init(url:preset:maxBufferedFrames:)` on `system` (tests pass an older system to check its refusal).
-    convenience init(url: URL, preset: MGExportPreset, maxBufferedFrames: Int?, system: MGExportSystem) throws {
-        let problems = preset.problems(on: system)
+        let problems = preset.problems
         guard problems.isEmpty else { throw MGError("mp4: preset " + problems.joined(separator: ",")) }
         guard maxBufferedFrames.map({ (1...8).contains($0) }) ?? true else { throw MGError("mp4: buffer limit") }
         try self.init(url: url, fileType: preset.codec == .proRes4444 ? .mov : .mp4, settings: preset.outputSettings,

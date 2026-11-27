@@ -10,9 +10,8 @@ import XCTest
 /// Decoded checks of the export presets (docs/ENGINE.md, "Export presets"). A ProRes 4444 alpha master of a 2D video
 /// is decoded and checked for its codec, a fully clear region, a half-transparent shape and antialiased edges
 /// composited over light and dark. Colour patches written with the BT.709, sRGB and Display P3 presets are decoded and
-/// the track's colour tags read; one P3 patch lies outside sRGB. Before macOS 15 and iOS 18 an alpha preset is refused
-/// (Core Video cannot state the alpha mode there). Until these run on a Mac, the docs say "tags requested; decoded
-/// check pending".
+/// the track's colour tags read; one P3 patch lies outside sRGB. Until these run on a Mac, the docs say "tags
+/// requested; decoded check pending".
 final class ExportDecodeTests: XCTestCase {
     func temporaryFolder() throws -> URL {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("mg-decode-\(UUID().uuidString)")
@@ -25,8 +24,7 @@ final class ExportDecodeTests: XCTestCase {
     struct Frame {
         let width: Int, height: Int, bytesPerRow: Int
         let bytes: [UInt8]
-        /// The decoder says its colours are multiplied by alpha (`kCVImageBufferAlphaChannelModeKey`, macOS 15 and
-        /// iOS 18; false where the system cannot say).
+        /// The decoder says its colours are multiplied by alpha (`kCVImageBufferAlphaChannelModeKey`).
         let premultiplied: Bool
 
         /// The pixel at canvas point (x, y), y counted up from the bottom as the drawing was (buffer rows run down).
@@ -65,14 +63,11 @@ final class ExportDecodeTests: XCTestCase {
                 bytes = Array(UnsafeBufferPointer(start: base.assumingMemoryBound(to: UInt8.self), count: row * h))
             }
             CVPixelBufferUnlockBaseAddress(pb, .readOnly)
-            var premultiplied = false
-            if #available(macOS 15.0, iOS 18.0, *) {
-                let attachments = CVBufferCopyAttachments(pb, .shouldPropagate) as? [String: Any]
-                let mode = attachments?[kCVImageBufferAlphaChannelModeKey as String] as? String
-                premultiplied = mode == kCVImageBufferAlphaChannelMode_PremultipliedAlpha as String
-            }
+            let attachments = CVBufferCopyAttachments(pb, .shouldPropagate) as? [String: Any]
+            let mode = attachments?[kCVImageBufferAlphaChannelModeKey as String] as? String
             XCTAssertEqual(bytes.count, row * h, "frame \(frames.count) has no pixels")
-            frames.append(Frame(width: w, height: h, bytesPerRow: row, bytes: bytes, premultiplied: premultiplied))
+            frames.append(Frame(width: w, height: h, bytesPerRow: row, bytes: bytes,
+                                premultiplied: mode == kCVImageBufferAlphaChannelMode_PremultipliedAlpha as String))
         }
         XCTAssertEqual(reader.status, .completed)
         return (frames, description)
@@ -101,14 +96,6 @@ final class ExportDecodeTests: XCTestCase {
         let preset = smallAlpha
         let url = try temporaryFolder().appendingPathComponent("alpha.mov")
         let options = MGVideoExportOptions(burnCaptions: false, writeSRT: false, preset: preset)
-        guard MGExportSystem.current.tagsAlphaMode else {
-            // Before macOS 15 and iOS 18 there is no alpha master to decode: the export is refused with its reason.
-            do {
-                _ = try await MGProgrammaticVideo.export(plan, to: url, options: options, programmaticVideo: true)
-                XCTFail("an alpha preset is refused where Core Video cannot state the alpha mode")
-            } catch { XCTAssertEqual((error as? MGError)?.reason, "video2d.export.presetAlpha") }
-            return
-        }
         let receipt = try await MGProgrammaticVideo.export(plan, to: url, options: options, programmaticVideo: true)
         XCTAssertEqual(receipt.frameCount, 3)
         let (frames, description) = try await decode(url)
@@ -149,42 +136,6 @@ final class ExportDecodeTests: XCTestCase {
             }
         }
         XCTAssertGreaterThan(edges, 0, "the ellipse has antialiased edge pixels on its middle row")
-    }
-
-    /// Where Core Video cannot state the alpha mode (before macOS 15 and iOS 18), every alpha preset is refused, by the
-    /// writer before it creates a file and by the 2D video export before it creates its folder.
-    func testAlphaPresetsAreRefusedWhereTheAlphaModeCannotBeStated() async throws {
-        let older = MGExportSystem(tagsAlphaMode: false), newer = MGExportSystem(tagsAlphaMode: true)
-        if #available(macOS 15.0, iOS 18.0, *) {
-            XCTAssertEqual(MGExportSystem.current, newer)
-        } else {
-            XCTAssertEqual(MGExportSystem.current, older)
-        }
-        for p in MGExportPreset.all {
-            XCTAssertEqual(p.problems(on: newer), [], p.name)
-            XCTAssertEqual(p.problems(on: older), p.alpha == .none ? [] : ["alphaMode"], p.name)
-        }
-        var premultiplied = MGExportPreset.lessonAlpha
-        premultiplied.alpha = .premultiplied
-        XCTAssertEqual(premultiplied.problems(on: older), ["alphaMode"])
-
-        let folder = try temporaryFolder()
-        let url = folder.appendingPathComponent("refused.mov")
-        XCTAssertThrowsError(try MGMovieWriter(url: url, preset: smallAlpha, maxBufferedFrames: nil, system: older)) {
-            XCTAssertEqual(($0 as? MGError)?.reason, "mp4: preset alphaMode")
-        }
-        XCTAssertNoThrow(try MGMovieWriter(url: try temporaryFolder().appendingPathComponent("opaque.mp4"), preset: .lesson, maxBufferedFrames: nil,
-                                           system: older).cancel(), "an opaque preset is written on the older system")
-        let destination = folder.appendingPathComponent("refused-video.mov")
-        do {
-            _ = try await MGProgrammaticVideo.export(try alphaCheckPlan(), to: destination,
-                                                     options: MGVideoExportOptions(burnCaptions: false, writeSRT: false, preset: smallAlpha),
-                                                     programmaticVideo: true, system: older, progress: nil)
-            XCTFail("an alpha preset is refused where Core Video cannot state the alpha mode")
-        } catch { XCTAssertEqual((error as? MGError)?.reason, "video2d.export.presetAlpha") }
-        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path), "the writer made no file")
-        XCTAssertFalse(FileManager.default.fileExists(atPath: destination.path), "the export made no video")
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [], "no partial export folder is left")
     }
 
     func assertNear(_ p: (r: Int, g: Int, b: Int, a: Int), _ want: (Int, Int, Int), _ tolerance: Int, _ what: String,

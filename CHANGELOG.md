@@ -165,9 +165,8 @@
   Display P3 colour tags (tags requested; decoded check pending) and ProRes 4444 straight-alpha masters:
   `MGExportPreset`, `MGMovieWriter(url:preset:)` and `MGVideoExportOptions(preset:)`. Preset writers tag each source
   pixel buffer with the space it was drawn in and how its alpha is stored, and a 2D video exported with an alpha
-  preset is clear where nothing is drawn (decoded check pending). Before macOS 15 and iOS 18, where Core Video cannot
-  state the alpha mode, alpha presets are refused (`mp4: preset alphaMode`, `video2d.export.presetAlpha`). If the
-  decoded check finds sRGB samples under BT.709 tags, `rec709` frames will be drawn in BT.709 (`CGColorSpace.itur_709`).
+  preset is clear where nothing is drawn (decoded check pending). If the decoded check finds sRGB samples under BT.709
+  tags, `rec709` frames will be drawn in BT.709 (`CGColorSpace.itur_709`).
 - Leader lines for 2D board labels: `MGLabelLayout` places labels deterministically and connects a label that had
   to move away from its anchor back to it.
 - Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,
