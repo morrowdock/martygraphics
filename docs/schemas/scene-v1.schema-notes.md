@@ -26,7 +26,7 @@ The Swift CLI calls that parser after bounding the raw input. [Validator lines
 | Camera keys, nonnegative x/y bounded by world dimensions, zoom, yaw and pitch | [Parser lines 290–299](../../Sources/MartyGraphics/MGParser.swift#L290) |
 | Closed edits with ID, key and value; id and k are immutable; value is revalidated against the target kind | [Parser lines 302–318](../../Sources/MartyGraphics/MGParser.swift#L302) |
 | Every kind's allowed and required fields; common ID, color and optional per-kind label (40 scalars) | [Parser lines 323–368](../../Sources/MartyGraphics/MGParser.swift#L323), [parser lines 385–399](../../Sources/MartyGraphics/MGParser.swift#L385), [limits line 11](../../Sources/MartyGraphics/MGParser.swift#L11) |
-| Color enum, 19 kinds, nine 3D kinds, and 3D exclusion of code style | [Model lines 24–36](../../Sources/MartyGraphics/MGModel.swift#L24), [parser line 204](../../Sources/MartyGraphics/MGParser.swift#L204), [parser lines 461–475](../../Sources/MartyGraphics/MGParser.swift#L461) |
+| Color enum, 21 kinds, nine 3D kinds, and 3D exclusion of code style | [Model lines 24–36](../../Sources/MartyGraphics/MGModel.swift#L24), [parser line 204](../../Sources/MartyGraphics/MGParser.swift#L204), [parser lines 461–475](../../Sources/MartyGraphics/MGParser.swift#L461) |
 | Body shape, size, angle, closed move and duration; incline base and angle; line style | [Parser lines 401–423](../../Sources/MartyGraphics/MGParser.swift#L401) |
 | Vector anchor and direction choices, length and dashed flag; unit component bounds and nonzero threshold | [Parser lines 424–437](../../Sources/MartyGraphics/MGParser.swift#L424), [parser lines 601–605](../../Sources/MartyGraphics/MGParser.swift#L601) |
 | Axes and plot dimensions and axis labels; plot point counts and ordered data ranges | [Parser limits line 12](../../Sources/MartyGraphics/MGParser.swift#L12), [parser lines 438–447](../../Sources/MartyGraphics/MGParser.swift#L438), [parser lines 607–615](../../Sources/MartyGraphics/MGParser.swift#L607) |
@@ -34,6 +34,7 @@ The Swift CLI calls that parser after bounding the raw input. [Validator lines
 | Text style and length 120; highlight target ID; bars count, dimensions, closed bar entry, value, label and unit | [Parser limits lines 11–12](../../Sources/MartyGraphics/MGParser.swift#L11), [parser lines 461–489](../../Sources/MartyGraphics/MGParser.swift#L461) |
 | Array cell alternatives, indices and sizing; node text/radius; edge endpoints and boolean direction | [Parser limits line 12](../../Sources/MartyGraphics/MGParser.swift#L12), [parser lines 490–531](../../Sources/MartyGraphics/MGParser.swift#L490) |
 | Table row/column limits, nonempty rectangular rows, cell alternatives including empty strings, dimensions, header and marked row/column indices; region point count and dashed flag | [Parser limits lines 12 and 28–29](../../Sources/MartyGraphics/MGParser.swift#L12), [parser lines 532–572](../../Sources/MartyGraphics/MGParser.swift#L532) |
+| `func` and `field` keys, ranges, expression length 80, parameters within ±1000, period 0.5–20 seconds, shade, mark, grid size and style; at most six per scene; scene and step `alt` (200 scalars) | [Parser limits lines 33–52](../../Sources/MartyGraphics/MGParser.swift#L33), [parser lines 183–189](../../Sources/MartyGraphics/MGParser.swift#L183), [parser line 230](../../Sources/MartyGraphics/MGParser.swift#L230), [parser line 333](../../Sources/MartyGraphics/MGParser.swift#L333), [parser lines 635–689](../../Sources/MartyGraphics/MGParser.swift#L635) |
 | Closed keys, finite numbers, ASCII IDs of length 1–24, point arity and world-relative bounds | [Parser lines 579–599](../../Sources/MartyGraphics/MGParser.swift#L579) |
 | Plain text, code markup, scalar count and placeholders | [Parser lines 618–671](../../Sources/MartyGraphics/MGParser.swift#L618) |
 | UTF-8, depth 64, raw limit 16 KiB, canonical limit 8 KiB | [Parser limits lines 5–27](../../Sources/MartyGraphics/MGParser.swift#L5), [parser lines 81–86 and 121–125](../../Sources/MartyGraphics/MGParser.swift#L81), [model lines 250–293 and 343–347](../../Sources/MartyGraphics/MGModel.swift#L250) |
@@ -49,7 +50,10 @@ in the schema. The Python checker tightens them for literal scenes. It also
 checks resolved IDs, highlight cycles, cumulative literal edits, range
 ordering with a minimum plot span of `1e-6` on each axis, cell shape and indexing,
 displayed number length, and text rules. Line feeds are allowed in text items
-and step narration.
+and step narration. For literal scenes, `func` and `field` items are checked with
+[tools/mg_expr.py](../../tools/mg_expr.py), the offline mirror of the expression,
+sampling and drawing rules. In a template scene they get the schema check only,
+because the world is known only after Swift expands the template.
 
 The checker measures compact UTF-8 JSON against 8 KiB and measures raw input
 against 16 KiB. Whole-number decimal values use integer spelling for the
@@ -78,7 +82,7 @@ packs require the host that registered them.
 
 ## Fixture accounting and native follow-up
 
-The valid corpus is four standalone protocol fixtures and seven Showcase
+The valid corpus is six standalone protocol fixtures and seven Showcase
 scenes. The two `shortest_path` inputs require `--pack graphs`. Four inputs
 name templates and pass draft preflight with expansion deferred when their
 pack is enabled. The lesson, patches and NDJSON in the fixture directory use

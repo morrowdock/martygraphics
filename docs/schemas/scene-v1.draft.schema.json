@@ -19,7 +19,8 @@
     "steps": {"type":"array","items":{"$ref":"#/$defs/step"},"minItems":1,"maxItems":8},
     "camera": {"$ref":"#/$defs/camera"},
     "hide": {"type":"array","items":{"$ref":"#/$defs/id"},"minItems":0,"maxItems":16},
-    "over": {"type":"array","items":{"$ref":"#/$defs/edit"},"minItems":0,"maxItems":16}
+    "over": {"type":"array","items":{"$ref":"#/$defs/edit"},"minItems":0,"maxItems":16},
+    "alt": {"type":"string","minLength":1,"maxLength":200}
   },
   "required": ["v"],
   "additionalProperties": false,
@@ -148,7 +149,8 @@
         "show": {"type":"array","items":{"$ref":"#/$defs/id"},"minItems":0,"maxItems":16},
         "focus": {"$ref":"#/$defs/id"},
         "cam": {"$ref":"#/$defs/camera"},
-        "do": {"type":"array","items":{"$ref":"#/$defs/edit"},"minItems":1,"maxItems":6}
+        "do": {"type":"array","items":{"$ref":"#/$defs/edit"},"minItems":1,"maxItems":6},
+        "alt": {"type":"string","minLength":1,"maxLength":200}
       },
       "required": ["say"],
       "additionalProperties": false
@@ -173,7 +175,9 @@
         {"$ref":"#/$defs/node"},
         {"$ref":"#/$defs/edge"},
         {"$ref":"#/$defs/table"},
-        {"$ref":"#/$defs/region"}
+        {"$ref":"#/$defs/region"},
+        {"$ref":"#/$defs/func"},
+        {"$ref":"#/$defs/field"}
       ]
     },
     "body": {
@@ -553,6 +557,101 @@
         "label": {"$ref":"#/$defs/label"}
       },
       "required": ["id","k","pts"],
+      "additionalProperties": false
+    },
+    "func": {
+      "type": "object",
+      "properties": {
+        "id": {"$ref":"#/$defs/id"},
+        "k": {"const":"func"},
+        "color": {"$ref":"#/$defs/color"},
+        "at": {"$ref":"#/$defs/point"},
+        "w": {"type":"number","minimum":0.5,"maximum":125},
+        "h": {"type":"number","minimum":0.5,"maximum":125},
+        "xr": {
+          "type": "array",
+          "prefixItems": [
+            {"type":"number","minimum":-1000000,"maximum":1000000},
+            {"type":"number","minimum":-1000000,"maximum":1000000}
+          ],
+          "minItems": 2,
+          "items": false
+        },
+        "yr": {
+          "type": "array",
+          "prefixItems": [
+            {"type":"number","minimum":-1000000,"maximum":1000000},
+            {"type":"number","minimum":-1000000,"maximum":1000000}
+          ],
+          "minItems": 2,
+          "items": false
+        },
+        "y": {"type":"string","minLength":1,"maxLength":80},
+        "a": {"type":"number","minimum":-1000,"maximum":1000},
+        "b": {"type":"number","minimum":-1000,"maximum":1000},
+        "c": {"type":"number","minimum":-1000,"maximum":1000},
+        "period": {"type":"number","minimum":0.5,"maximum":20},
+        "shade": {
+          "type": "array",
+          "prefixItems": [
+            {"type":"number","minimum":-1000000,"maximum":1000000},
+            {"type":"number","minimum":-1000000,"maximum":1000000}
+          ],
+          "minItems": 2,
+          "items": false
+        },
+        "mark": {"type":"number","minimum":-1000000,"maximum":1000000},
+        "xl": {"$ref":"#/$defs/label"},
+        "yl": {"$ref":"#/$defs/label"},
+        "label": {"$ref":"#/$defs/label"}
+      },
+      "required": ["id","k","at","w","h","xr","yr","y"],
+      "additionalProperties": false
+    },
+    "field": {
+      "type": "object",
+      "properties": {
+        "id": {"$ref":"#/$defs/id"},
+        "k": {"const":"field"},
+        "color": {"$ref":"#/$defs/color"},
+        "at": {"$ref":"#/$defs/point"},
+        "w": {"type":"number","minimum":0.5,"maximum":125},
+        "h": {"type":"number","minimum":0.5,"maximum":125},
+        "xr": {
+          "type": "array",
+          "prefixItems": [
+            {"type":"number","minimum":-1000000,"maximum":1000000},
+            {"type":"number","minimum":-1000000,"maximum":1000000}
+          ],
+          "minItems": 2,
+          "items": false
+        },
+        "yr": {
+          "type": "array",
+          "prefixItems": [
+            {"type":"number","minimum":-1000000,"maximum":1000000},
+            {"type":"number","minimum":-1000000,"maximum":1000000}
+          ],
+          "minItems": 2,
+          "items": false
+        },
+        "dx": {"type":"string","minLength":1,"maxLength":80},
+        "dy": {"type":"string","minLength":1,"maxLength":80},
+        "a": {"type":"number","minimum":-1000,"maximum":1000},
+        "b": {"type":"number","minimum":-1000,"maximum":1000},
+        "c": {"type":"number","minimum":-1000,"maximum":1000},
+        "n": {
+          "type": "array",
+          "prefixItems": [{"type":"integer","minimum":2,"maximum":16},{"type":"integer","minimum":2,"maximum":12}],
+          "minItems": 2,
+          "items": false
+        },
+        "style": {"enum":["arrows","unit","slope"]},
+        "xl": {"$ref":"#/$defs/label"},
+        "yl": {"$ref":"#/$defs/label"},
+        "label": {"$ref":"#/$defs/label"}
+      },
+      "required": ["id","k","at","w","h","xr","yr","dx","dy"],
       "additionalProperties": false
     },
     "bstParams": {

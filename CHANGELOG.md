@@ -83,6 +83,8 @@
 - Add `graphs` and `wave` fixtures, golden expression and graph cases, and `tools/mg_expr.py`, an offline
   mirror of the new rules for preflight tools, tested in the `hygiene` job.
 - Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).
+- The draft scene v1 schema and `tools/scene_v1_check.py` accept `func`, `field` and the scene and step `alt`
+  keys. For literal scenes, the preflight runs the `tools/mg_expr.py` rules on each graph and field item.
 - Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,
   seeded or greedy token generation, temperature sweeps, and simplified patch attention.
   Add a camera-right landscape composition and optional sequential highlights for the vision pipeline.

@@ -10,6 +10,11 @@ import re
 import stat
 import unicodedata
 
+try:
+    from tools import mg_expr
+except ImportError:  # run as tools/scene_v1_check.py
+    import mg_expr
+
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "docs/schemas/scene-v1.draft.schema.json").read_text(encoding="utf-8"))
 ENVELOPE = {
@@ -314,10 +319,19 @@ def item_rules(item, dimensions, template):
             "node": {"r": span / 6},
             "array": {"cell": span / 4},
             "table": {"cw": span / 3, "rh": span / 6},
+            "func": {"w": 1.25 * span, "h": 1.25 * span},
+            "field": {"w": 1.25 * span, "h": 1.25 * span},
         }
         for key, limit in upper.get(kind, {}).items():
             if key in item and item[key] > limit:
                 raise Invalid(f"{kind}.{key}")
+        if kind in ("func", "field"):
+            # The sampling, expression and drawing rules mirrored in tools/mg_expr.py. A template scene's world
+            # is known only after Swift expands it, so these rules run for literal scenes only.
+            try:
+                mg_expr.check_graph_item(item, dimensions)
+            except mg_expr.Refusal as refusal:
+                raise Invalid(refusal.reason) from refusal
 
     if kind == "vector" and "dir" in item and math.hypot(*item["dir"]) <= .01:
         raise Invalid("vector.dir")
@@ -411,6 +425,8 @@ def scene_rules(scene):
     world = scene.get("world", {"w": 12, "h": 8})
     dimensions = None if template else (world["w"], world["h"])
     items = {}
+    if sum(item["k"] in ("func", "field") for item in scene.get("items", ())) > mg_expr.EXPR_ITEMS:
+        raise Invalid("items.expr")
     for item in scene.get("items", ()):
         item_rules(item, dimensions, template)
         if item["id"] in items:
@@ -418,10 +434,14 @@ def scene_rules(scene):
         items[item["id"]] = item
     if "title" in scene:
         text_rules(scene["title"], "title", template)
+    if "alt" in scene:
+        text_rules(scene["alt"], "alt", template)
     camera_rules(scene.get("camera", {}), dimensions)
     references(items, template)
     for step in scene.get("steps", ()):
         text_rules(step["say"], "step.say", template, multiline=True)
+        if "alt" in step:
+            text_rules(step["alt"], "step.alt", template)
         camera_rules(step.get("cam", {}), dimensions)
         for ref in step.get("show", ()):
             if ref not in items and not template:

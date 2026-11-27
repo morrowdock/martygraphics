@@ -113,7 +113,7 @@ The second count is every file importing the group at all.
 
 | Group | Sources (primary) | Sources (any import) | tools (primary) | tools (any import) |
 | --- | ---: | ---: | ---: | ---: |
-| Foundation-only | 68 | 81 | 0 | 5 |
+| Foundation-only | 71 | 84 | 0 | 5 |
 | CoreGraphics | 11 | 15 | 0 | 0 |
 | SwiftUI | 7 | 9 | 0 | 0 |
 | SceneKit | 1 | 3 | 0 | 0 |
@@ -122,7 +122,7 @@ The second count is every file importing the group at all.
 | Combine | 0 | 3 | 0 | 0 |
 | other | 5 | 12 | 6 | 6 |
 
-Swift files scanned: 98 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
+Swift files scanned: 101 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
 
 ### Core candidates
 
@@ -153,13 +153,13 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 
 | Module | Public declarations | Name platform types | Name `Any` |
 | --- | ---: | ---: | ---: |
-| MartyGraphics | 2380 | 52 | 8 |
+| MartyGraphics | 2414 | 52 | 8 |
 | MartyGraphicsMLKit | 30 | 2 | 0 |
 | MartyGraphicsPathTracer | 158 | 59 | 0 |
 
 #### MartyGraphics: public scopes with matching signatures
 
-317 scope/file pairs scanned, of which 22 match.
+323 scope/file pairs scanned, of which 22 match.
 
 | Type (scope) | File | Public decls | Platform tokens | Untyped |
 | --- | --- | ---: | --- | --- |
@@ -184,7 +184,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `MGViewport` | `MGLayout.swift` | 8 | `CGFloat`, `CGPoint`, `CGSize` | — |
 | `MartyGraphicsExplainerView` | `MartyGraphicsExplainerView.swift` | 4 | `View` | — |
 | `MartyGraphicsLessonView` | `MartyGraphicsLessonView.swift` | 4 | `View` | — |
-| `MartyGraphicsView` | `MartyGraphicsView.swift` | 14 | `CGSize`, `View` | — |
+| `MartyGraphicsView` | `MartyGraphicsView.swift` | 15 | `CGSize`, `View` | — |
 
 #### MartyGraphicsMLKit: public scopes with matching signatures
 
@@ -227,10 +227,13 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/MG3DInteraction.swift` | CoreGraphics | CoreGraphics, Foundation | — | CoreGraphics: `CGFloat`, `CGPoint` |
 | `Sources/MartyGraphics/MG3DView.swift` | AppKit/UIKit | AppKit, SceneKit, SwiftUI, UIKit, simd | UIKit | CoreGraphics: `CGFloat`, `CGPoint`; SceneKit: `SCNBillboardConstraint`, `SCNBox`, `SCNCamera` +18; simd: `simd_float3`, `simd_length`, `simd_normalize` +1; AppKit/UIKit: `NSBezierPath`, `NSColor`, `NSViewRepresentable` +3 |
 | `Sources/MartyGraphics/MGCanvasRenderer.swift` | SwiftUI | SwiftUI | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGRect` +2; SwiftUI: `Color`, `Gradient`, `GraphicsContext` +1 |
+| `Sources/MartyGraphics/MGDescribe.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGEngine.swift` | Foundation-only | Foundation | — | — |
+| `Sources/MartyGraphics/MGExpression.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGFixtures.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGGeometryPack.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGGrammar.swift` | Foundation-only | Foundation | — | — |
+| `Sources/MartyGraphics/MGGraph.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGGraphPack.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGLayout.swift` | CoreGraphics | CoreGraphics, Foundation | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGRect` +2 |
 | `Sources/MartyGraphics/MGLesson.swift` | Foundation-only | Foundation | — | — |
@@ -328,6 +331,7 @@ Python files under `tools/` are listed with their static Python imports.
 | File | Imports |
 | --- | --- |
 | `tools/check_dco.py` | re, subprocess, sys |
+| `tools/mg_expr.py` | math, unicodedata |
 | `tools/portability_map.py` | argparse, ast, collections, pathlib, re, sys |
 | `tools/render-blender/mgrender/__init__.py` | — |
 | `tools/render-blender/mgrender/busyguard.py` | os, re, subprocess, sys |
@@ -342,9 +346,10 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/render-blender/render.py` | bpy, hashlib, json, mathutils, mgrender, os, shutil, subprocess, sys, time, traceback |
 | `tools/render-blender/render_variants.py` | argparse, mgrender, os, pathlib, subprocess |
 | `tools/render-blender/selftest_scene.py` | bmesh, bpy, hashlib, json, math, os, sys |
-| `tools/scene_v1_check.py` | argparse, json, math, os, pathlib, re, stat, unicodedata |
+| `tools/scene_v1_check.py` | argparse, json, math, mg_expr, os, pathlib, re, stat, tools, unicodedata |
 | `tools/semantic_fixtures.py` | argparse, json, math, pathlib, scene_v1_check, sys |
 | `tools/tests/test_check_dco.py` | os, pathlib, subprocess, sys, tempfile, unittest |
+| `tools/tests/test_mg_expr.py` | json, math, mg_expr, pathlib, sys, unittest |
 | `tools/tests/test_portability_tools.py` | copy, importlib, json, pathlib, subprocess, sys, unittest |
 | `tools/tests/test_release_install.py` | argparse, contextlib, importlib, io, json, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_render_blender.py` | hashlib, json, math, mgrender, os, pathlib, re, render, render_variants, shutil, struct, subprocess, sys, tempfile, unittest |

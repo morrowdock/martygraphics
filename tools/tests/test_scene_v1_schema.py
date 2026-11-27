@@ -197,6 +197,32 @@ class SceneV1Tests(unittest.TestCase):
                 data = json.dumps({**base, **update}, separators=(",", ":")).encode("utf-8")
                 self.assert_invalid(data, reason)
 
+    def test_graph_kinds_and_text_alternatives(self):
+        graph = {"id": "g", "k": "func", "at": [1, 1], "w": 5, "h": 4, "xr": [-3, 3], "yr": [-2, 2], "y": "sin(x)"}
+        field = {"id": "v", "k": "field", "at": [6, 1], "w": 4, "h": 4, "xr": [-2, 2], "yr": [-2, 2],
+                 "dx": "-y", "dy": "x"}
+        self.assertIsNone(checker.check(json.dumps({"v": 1, "alt": "A curve and a field.", "items": [graph, field],
+                                                    "steps": [{"say": "Look.", "alt": "A sine curve."}]}).encode()))
+        variants = [
+            ({"items": [{**graph, "y": "sin(x"}]}, "func.y.syntax"),
+            ({"items": [{**graph, "y": "a*x"}]}, "func.y.var.a"),
+            ({"items": [{**graph, "period": 4}]}, "func.period"),
+            ({"items": [{**graph, "w": 20}]}, "func.w"),
+            ({"items": [{**graph, "id": f"g{i}"} for i in range(7)]}, "items.expr"),
+            ({"items": [{**field, "n": [1, 4]}]}, "field.n"),
+            ({"items": [{**field, "style": "wavy"}]}, "field.style"),
+            ({"items": [graph], "alt": "a <b>"}, "alt"),
+            ({"items": [graph], "alt": "Two\nlines"}, "alt"),
+            ({"items": [{**graph, "xl": "x\ny"}]}, "func.xl"),
+            ({"items": [graph], "steps": [{"say": "Look.", "alt": ""}]}, "step.alt"),
+            ({"items": [graph], "dim": "3d"}, "3d.kind.func"),
+            ({"items": [{**graph, "y": "a*sin(x)", "a": 1}],
+              "steps": [{"say": "Go.", "do": [{"id": "g", "key": "a", "value": 5000}]}]}, "func.a"),
+        ]
+        for update, reason in variants:
+            with self.subTest(reason=reason):
+                self.assert_invalid(json.dumps({"v": 1, **update}).encode("utf-8"), reason)
+
 
 if __name__ == "__main__":
     unittest.main()

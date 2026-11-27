@@ -588,8 +588,9 @@ def text_rules(value, limit, reason):
     trimmed = _trim(value)
     if not trimmed or len(value) > limit or "<" in value or ">" in value or "```" in value or "://" in value:
         raise Refusal(reason)
-    # Swift's `CharacterSet.controlCharacters` (general categories Cc and Cf); a line feed is allowed.
-    if any(unicodedata.category(ch) in ("Cc", "Cf") and ch != "\n" for ch in value):
+    # Swift's `CharacterSet.controlCharacters` (general categories Cc and Cf) and U+2028 / U+2029 (Zl, Zp). Labels and
+    # `alt` are single-line text, so a line feed is refused too; only text items and narration may break lines.
+    if any(unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp") for ch in value):
         raise Refusal(reason)
     name = None
     for ch in trimmed:
