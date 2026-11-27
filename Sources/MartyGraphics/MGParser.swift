@@ -217,18 +217,19 @@ public enum MGParser {
     /// The timeline uses the authored move duration bounds for active template motion as well.
     private static func validateMotion(_ motion: MGMotion) throws {
         let duration = MGLimits.bodyMoveTime
+        let holdDuration = 0...duration.upperBound
         let valid: Bool
         switch motion {
         case .none:
             return
         case .slide(let entries, let travel, let hold):
-            valid = duration.contains(travel) && hold.isFinite && hold >= 0 && entries.allSatisfy {
+            valid = duration.contains(travel) && holdDuration.contains(hold) && entries.allSatisfy {
                 [$0.dir.x, $0.dir.y, $0.dir.z, $0.accel].allSatisfy(\.isFinite)
             }
         case .orbit(_, let center, let period, _):
             valid = duration.contains(period) && [center.x, center.y, center.z].allSatisfy(\.isFinite)
         case .projectile(_, let vx, let vy, let gravity, let flight, let visual, let hold, _, _, let scale):
-            valid = duration.contains(visual) && hold.isFinite && hold >= 0 && flight > 0
+            valid = duration.contains(visual) && holdDuration.contains(hold) && flight > 0
                 && [vx, vy, gravity, flight, scale].allSatisfy(\.isFinite)
         case .oscillate(_, let amplitude, let period, let energy, _, _, let length):
             valid = duration.contains(period) && [amplitude, energy, length].allSatisfy(\.isFinite)

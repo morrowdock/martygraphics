@@ -117,7 +117,7 @@ final class LessonReviewRegressionTests: LessonTestCase {
             (#"{"op":"unbind","id":"Ωmega"}"#, "control.unknown._mega"),
             (#"{"op":"unbind","id":"a.b.c"}"#, "control.unknown.a_b_c"),
             (#"{"op":"unbind","id":"\#(String(repeating: "q", count: 80))"}"#, "control.unknown." + String(repeating: "q", count: 32)),
-            (#"{"op":"bad op\nx"}"#, "patch.op.bad_op_x"),
+            (#"{"op":"bad op\nx"}"#, "patch.op._"),
         ]
         for (command, reason) in cases {
             guard case .failure(let issue) = s.apply(F.json(command)) else { XCTFail(command); continue }

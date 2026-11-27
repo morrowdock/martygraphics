@@ -124,7 +124,9 @@ public struct MGValue: Equatable, Sendable {
     public var text: String { MGPhysics.format(value, unit: unit) }
 }
 
-/// Template-driven motion. Every case is evaluated by `MGTimeline.frame`, never by the model.
+/// Template-driven motion evaluated by `MGTimeline.frame`.
+/// Active motion uses finite numbers. `travel`, `visual` and `period` are 0.3–10 seconds, and `hold` is 0–10 seconds.
+/// A projectile's physical `flight` time must be positive.
 public enum MGMotion: Equatable, Sendable {
     public struct Slide: Equatable, Sendable {
         public let id: String; public let dir: MGPoint; public let accel: Double

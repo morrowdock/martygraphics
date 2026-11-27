@@ -32,7 +32,7 @@
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
 
 ### Fixed
-- Bound patch diagnostics, validate full video and ML identifiers, and check template text and motion before preview.
+- Bound patch diagnostics, validate video text and full video and ML identifiers, and check template text and motion before preview. Template travel, visual duration and period are limited to 0.3–10 seconds, with holds up to 10 seconds.
 - Keep scene diagnostics short and reserve line feeds for text items and narration.
 - Bound stream buffers and preview validation work, guarantee forward progress, and restore the
   committed scene when restarting a stream. Require a minimum plot range span.

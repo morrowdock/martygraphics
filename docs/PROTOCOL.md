@@ -463,6 +463,8 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `patch.stale`, `patch.rev` | Revision mismatches or is invalid | Rebase the intended change on the current scene revision; do not retry stale content blindly. |
 | `patch.op.<name>`, `patch.<op>.missing`, `patch.set.ref`, `patch.step.range` | Unsupported operation, missing operation key, missing set target or absent scene step | Correct the operation/target/index, then validate the entire patch again. |
 
+Unsupported operation names outside 1–24 ASCII letters, digits or underscores are reported as `patch.op.?`.
+
 The [protocol fixture test](../Tests/MartyGraphicsTests/ProtocolFixtureTests.swift)
 checks the linked JSON, exact selected error reasons, successful title edit and
 stale-patch rejection. It passed in the actual 24-test Mac run at

@@ -13,6 +13,8 @@ public struct MGTemplateBuild {
     public var items: [MGItem] = []
     public var steps: [MGStep] = []
     public var values: [String: MGValue] = [:]
+    /// Active motion must satisfy the `MGMotion` bounds when parsed into a scene.
+    /// `travel`, `visual` and `period` are 0.3–10 seconds, and `hold` is 0–10 seconds.
     public var motion: MGMotion = .none
     public var attachments: [String: String] = [:]
     public var camera: MGCamera?

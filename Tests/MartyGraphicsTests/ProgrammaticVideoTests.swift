@@ -68,6 +68,11 @@ final class ProgrammaticVideoTests: XCTestCase {
         XCTAssertTrue(checked.tracks.contains { $0.target == "three-label" })
     }
 
+    func testVideoTextAcceptsUnicodeAndCodeComparisons() throws {
+        try MGProgrammaticVideo.safeText("Cafe\u{301}", path: "title")
+        try MGProgrammaticVideo.safeText("if x < y && y > 0", path: "elements.code.text", code: true)
+    }
+
     func testDraftSchemaMatchesBundledResource() throws {
         let bundled = try XCTUnwrap(Bundle.module.url(forResource: "scene-2d-layer.draft.schema", withExtension: "json"))
         XCTAssertEqual(try Data(contentsOf: bundled), try Data(contentsOf: root.appendingPathComponent("docs/schemas/scene-2d-layer.draft.schema.json")))

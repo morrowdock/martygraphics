@@ -98,21 +98,23 @@ final class RoundtripFixTests: XCTestCase {
         }
     }
 
-    func testVersionOneAndVersionlessTemplatePreviewsStillWork() {
+    func testItemPreviewsAcceptBothVersionOneSpellings() {
         var parser = MGStreamParser()
         XCTAssertEqual(parser.feed(#"{"v":1,"items":[{"id":"dot","k":"body","at":[3,4]}"#)?.items.map(\.id), ["dot"])
         var decimal = MGStreamParser()
         XCTAssertNotNil(decimal.feed(#"{"v":1.0,"items":[{"id":"dot","k":"body","at":[3,4]}"#))
-        // `v` may stream after the template; the preview starts as soon as template and params close.
-        var templated = MGStreamParser()
-        XCTAssertNotNil(templated.feed(#"{"template":"two_pointers","params":{"vals":[1,2,4,7],"target":9}"#))
-        // A version that is still streaming in (no delimiter yet) does not block the template preview, but the same
-        // member once complete as anything other than 1 gives no preview.
-        let prefix = #"{"template":"two_pointers","params":{"vals":[1,2,4,7],"target":9},"v":2"#
+    }
+
+    func testTemplatePreviewRequiresACompleteVersionOne() {
+        let template = #""template":"two_pointers","params":{"vals":[1,2,4,7],"target":9}"#
+        var versionless = MGStreamParser()
+        XCTAssertNil(versionless.feed("{" + template))
+
         var partial = MGStreamParser()
-        XCTAssertNotNil(partial.feed(prefix))
-        var complete = MGStreamParser()
-        XCTAssertNil(complete.feed(prefix + ","))
+        XCTAssertNil(partial.feed("{" + template + #","v":2"#))
+
+        var versionOne = MGStreamParser()
+        XCTAssertEqual(versionOne.feed(#"{"v":1,"# + template)?.template, "two_pointers")
     }
 
     // MARK: numeric cells obey the displayed-text limit

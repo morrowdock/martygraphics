@@ -48,10 +48,10 @@ final class SceneRobustnessTests: XCTestCase {
         let time = 2.0
         let start = MGPoint(3, 4)
         let cases: [(MGMotion, Double)] = [
-            (.slide([.init(id: "dot", dir: MGPoint(1, 0), accel: 1)], travel: time, hold: 1), 3),
+            (.slide([.init(id: "dot", dir: MGPoint(1, 0), accel: 1)], travel: time, hold: 10), 12),
             (.orbit(id: "dot", center: MGPoint(2, 4), period: time, rotating: []), 2),
-            (.projectile(id: "dot", vx: 1, vy0: 2, g: 2, flight: time, visual: time, hold: 1,
-                         vxVector: nil, vyVector: nil, vectorScale: 1), 3),
+            (.projectile(id: "dot", vx: 1, vy0: 2, g: 2, flight: time, visual: time, hold: 0,
+                         vxVector: nil, vyVector: nil, vectorScale: 1), 2),
             (.oscillate(id: "dot", amplitude: 1, period: time, energy: 2, bars: nil, vector: nil, vectorLength: 1), 2)
         ]
         let data = Data(#"{"v":1,"template":"motion","params":{}}"#.utf8)

@@ -382,6 +382,7 @@ Input over 64 KiB is `lesson.bytes` without parsing.
 New reasons (closed list). Inner engine reasons (`patch.set.ref`, `id.duplicate.<id>`, `highlight.target`,
 `template.<param>`, `item.kind`, `patch.op.<name>`, …) pass through with their wording unchanged (token-normalised). The location is in separate fields:
 `MGLessonIssue.beat`, `.statement`, `.command`, `.origin`, `.detail`.
+Unsupported operation names outside 1–24 ASCII letters, digits or underscores appear as `?` in patch diagnostics and as `_` in lesson reasons.
 
 `lesson.json`, `lesson.object`, `lesson.version`, `lesson.kind`, `lesson.title`, `lesson.unknown.<keys>`, `lesson.scene`,
 `lesson.scene.steps`, `lesson.beats`, `lesson.beats.count`, `lesson.bytes`, `lesson.op.<name>`, `lesson.id.kind.<id>`,

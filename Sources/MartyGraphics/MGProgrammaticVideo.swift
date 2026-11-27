@@ -153,8 +153,9 @@ public enum MGProgrammaticVideo {
         let prohibited = CharacterSet.controlCharacters.union(CharacterSet(charactersIn: "\u{061c}\u{200e}\u{200f}\u{202a}\u{202b}\u{202c}\u{202d}\u{202e}\u{2066}\u{2067}\u{2068}\u{2069}"))
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               !text.unicodeScalars.contains(where: { prohibited.contains($0) }),
-              !text.contains("://"), !text.contains("```"),
-              code ? !MGParser.looksLikeMarkup(text) : (!text.contains("<") && !text.contains(">")) else { throw MGError("video2d.text.\(path)") }
+              text.range(of: "://", options: .literal) == nil, text.range(of: "```", options: .literal) == nil,
+              code ? !MGParser.looksLikeMarkup(text) : (text.range(of: "<", options: .literal) == nil &&
+                                                      text.range(of: ">", options: .literal) == nil) else { throw MGError("video2d.text.\(path)") }
     }
 
     public static func check(_ scene: MGScene, programmaticVideo: Bool = false) throws -> MGCheckedVideoPlan {
