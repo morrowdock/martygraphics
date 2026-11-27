@@ -165,10 +165,11 @@ final class ExportDecodeTests: XCTestCase {
     }
 
     static func srgbToLinear(_ v: Double) -> Double { v <= 0.04045 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
-    /// The BT.709 transfer function as Apple's colour management applies it when the writer converts sRGB-tagged
-    /// source buffers for a file tagged BT.709: a 1.961 power curve, not the BT.709 camera curve (1.099 L^0.45 − 0.099
-    /// with a linear toe). Mac run #23 decoded sRGB 0.3 as 68, 0.15 as 34 and 35, and 0.2 as 46 (1.961 power: 67, 34
-    /// and 45; camera curve: 61, 23 and 35).
+    /// The curve this test expects for a `rec709` file: a 1.961 power curve, not the BT.709 camera curve (1.099 L^0.45
+    /// − 0.099 with a linear toe). Apple documents the 1.961 exponent for macOS playback of BT.709-tagged video. That
+    /// the writer converts sRGB-tagged source buffers onto this curve is not documented: it is inferred from the Mac
+    /// run #23 samples, which decoded sRGB 0.3 as 68, 0.15 as 34 and 35, and 0.2 as 46 (1.961 power: 67, 34 and 45;
+    /// camera curve: 61, 23 and 35).
     static func apple709(_ l: Double) -> Double { pow(max(0, l), 1 / 1.961) }
 
     func testColourPatchesDecodeAsTheirTagsSay() async throws {

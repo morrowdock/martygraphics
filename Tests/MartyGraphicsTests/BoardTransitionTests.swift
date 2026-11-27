@@ -119,12 +119,16 @@ final class BoardTransitionTests: XCTestCase {
     var theme = MGTheme.board
     var markers: [String: Int] = [:]
     var selection: String?
+    /// The accessibility label of a plain SwiftUI `Text` hosted below the board, when set: an accessibility control
+    /// that shows whether the host exposes an accessibility tree at all.
+    let control: String?
 
-    init(_ scene: MGScene, style: MGTransitionStyle? = nil, reduceMotion: Bool? = false) {
+    init(_ scene: MGScene, style: MGTransitionStyle? = nil, reduceMotion: Bool? = false, control: String? = nil) {
         controller = MGSceneController(scene: scene)
         controller.presentationClock = clock
         self.style = style
         self.reduceMotion = reduceMotion
+        self.control = control
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 520), styleMask: [.titled], backing: .buffered, defer: false)
         host = NSHostingView(rootView: AnyView(EmptyView()))
         host.frame = window.contentLayoutRect
@@ -140,7 +144,12 @@ final class BoardTransitionTests: XCTestCase {
         if let style { board = board.transitionStyle(style) }
         // Hosted in this test process, the board did not read the `.active` scene phase (Mac run #23: it never ran its
         // frame loop, `MGRenderPolicy.continuous`), so the rig sets the phase a foreground app's scene gives it.
-        host.rootView = AnyView(board.environment(\.mgTheme, theme).environment(\.scenePhase, .active))
+        let hosted = board.environment(\.mgTheme, theme).environment(\.scenePhase, .active)
+        if let control {
+            host.rootView = AnyView(VStack(spacing: 0) { hosted; Text(control).accessibilityLabel(control) })
+        } else {
+            host.rootView = AnyView(hosted)
+        }
     }
 
     /// Lets SwiftUI apply updates and run the board's tasks and frame loop for `seconds` of real time.
@@ -417,24 +426,54 @@ final class BoardTransitionHostTests: XCTestCase {
 
     // MARK: Accessibility (properties only; no VoiceOver run)
 
-    /// The split board is one accessibility element over both canvases, and its value follows the step across the
-    /// split. This reads the accessibility properties SwiftUI vends under the host. Mac run #23 found no element under
-    /// the host at all, so a process that gets no accessibility tree skips, with that reason, rather than passing; the
-    /// split itself is checked by `testTheSplitBoardStaysExactAcrossTicksAndChanges`.
+    /// The accessibility label of the control `Text` the rig hosts below the board in the accessibility test.
+    static let control = "Accessibility control"
+
+    /// The split board is one accessibility element over both canvases, and its value follows the step and survives a
+    /// rebuild with new markers. This reads the accessibility properties SwiftUI vends under the host. Mac run #23 found
+    /// no element under the host at all, so the rig also hosts a plain SwiftUI `Text` with an accessibility label as a
+    /// control. Only a missing control skips the test (the host then exposes no accessibility tree at all); once the
+    /// control is found, the board's element count and value are asserted on their own, with no skip, at the first
+    /// step, after a step and after a rebuild with markers. The split itself is checked by
+    /// `testTheSplitBoardStaysExactAcrossTicksAndChanges`.
     @MainActor func testTheSplitBoardIsOneAccessibilityElement() throws {
-        let rig = BoardRig(try scene())
+        let rig = BoardRig(try scene(), control: Self.control)
         defer { rig.close() }
         rig.settle(2.4)
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "the board is split")
         let all = accessibilityElements(rig)
-        guard !all.isEmpty else { throw XCTSkip("SwiftUI vends no accessibility elements under the hosting view in this process") }
-        XCTAssertEqual(boardElements(rig, value: "First step.").count, 1, "VoiceOver: one board element over both canvases; found \(describe(all))")
+        guard all.contains(where: isControl) else {
+            throw XCTSkip("the host exposes no accessibility tree in this process: the control Text was not found (found \(describe(all)))")
+        }
+        assertBoardElement(rig, value: "First step.", "first step")
+
+        // The board's step handler (its Next button).
         try XCTUnwrap(rig.probe.go)(1)
         rig.settle(2.4)
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "the board is split again")
-        XCTAssertEqual(boardElements(rig, value: "Second step.").count, 1,
-                       "VoiceOver: the board's value follows the step across the split; found \(describe(accessibilityElements(rig)))")
+        assertBoardElement(rig, value: "Second step.", "after the step")
+
+        // A rebuild with numbered markers: the host gets a new root view.
+        rig.markers = ["zone": 1, "dot": 2]
+        rig.rebuild()
+        rig.settle(0.6)
+        assertBoardElement(rig, value: "Second step.", "after the marker rebuild")
     }
+
+    /// The control is under the host, the board (label: its title) is exactly one element there, and its value is `value`.
+    @MainActor func assertBoardElement(_ rig: BoardRig, value: String, _ what: String, file: StaticString = #filePath, line: UInt = #line) {
+        let all = accessibilityElements(rig)
+        XCTAssertEqual(all.filter(isControl).count, 1, "\(what): the control Text; found \(describe(all))",
+                       file: file, line: line)
+        let boards = all.filter { axLabel($0) == "Layer check" }
+        XCTAssertEqual(boards.count, 1, "\(what): VoiceOver: one board element over both canvases; found \(describe(all))",
+                       file: file, line: line)
+        XCTAssertEqual(boards.first.flatMap { axValue($0) }, value, "\(what): the board's value; found \(describe(all))",
+                       file: file, line: line)
+    }
+
+    /// The control `Text` (macOS may vend a static text's string as its value rather than its label).
+    @MainActor func isControl(_ o: NSObject) -> Bool { axLabel(o) == Self.control || axValue(o) == Self.control }
 
     /// Every accessibility element under the host (not the host itself).
     @MainActor func accessibilityElements(_ rig: BoardRig) -> [NSObject] {
@@ -445,11 +484,6 @@ final class BoardTransitionHostTests: XCTestCase {
             queue.append(contentsOf: axChildren(o))
         }
         return out
-    }
-
-    /// Accessibility elements under the host whose label is the board's title and whose value is `value`.
-    @MainActor func boardElements(_ rig: BoardRig, value: String) -> [NSObject] {
-        accessibilityElements(rig).filter { axLabel($0) == "Layer check" && axValue($0) == value }
     }
 
     /// The first elements' labels and values, for a failure message.
