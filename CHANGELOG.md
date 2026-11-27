@@ -41,20 +41,14 @@
   expression vocabulary (`expression`); `MGTimeline.cycle` and `MGScene.animates` include moving graphs.
 - Docs: the protocol, tutorial and ML explainer pages state the drawing and step conventions and link the
   authoring guide; `MGMLKit.report` takes an optional `hints:` flag whose default keeps the output unchanged.
-- Engine: step and patch transitions on the 2D board use bounded easing over 0.6 s (no value overshoots
-  either step), items that leave a step fade out, and with Reduce Motion the board dissolves instead of moving
-  (`MGStepTransition`). Body and node pops no longer overshoot their size.
-- Engine: while motion plays, the 2D board draws its board, grid and static items once and redraws only the
-  moving layer; the current step's items are kept instead of being rebuilt every frame; the solid renderer builds
-  its ground and contact shadow once per pose instead of once per frame.
-- Engine: arrowheads keep their proportions on short arrows and while an arrow draws on, dashed shafts end on a
-  whole dash, and 1-point lines, label borders and grid dots sit on the pixel grid.
 - Engine: the 2D board keeps its spring step and patch transitions by default (spring blends and camera moves,
   spring pops, leaving items vanish, Reduce Motion snaps with no frame loop).
 - Engine: while motion plays, the 2D board draws its board, grid and static prefix (static items ranked below every
   moving item) in a base canvas outside the frame loop and redraws only the live layer each tick; the current step's
   items are kept instead of being rebuilt every frame. Items still drawing on or fading stay in the live layer, and
-  each canvas draws for its own size. The live-board check of the split is pending Mac verification.
+  each canvas draws for its own size. The board draws one canvas until its blends and camera moves have ended on its
+  own clock (the lesson's presentation clock, when set), and splits once more when its last draw-on ends, so the
+  items drawn in full move into the base. The live-board check of the split is pending Mac verification.
 - Engine: the solid renderer builds its ground and contact shadow once per rest bounds instead of once per frame,
   and refits the key light's shadow frustum whenever the exploded extent or the light changes.
 - Engine, intentional default output changes (pure fixes, on by default; comparison stills and the list in

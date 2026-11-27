@@ -72,8 +72,9 @@ public enum MGCanvasLayers {
     /// Ids whose marks still change on the board's own time base outside the motion: an item still drawing on
     /// (`MGRenderInput.appear` below 1) or fading in or out (`MGRenderInput.opacity` below 1, a `.bounded`
     /// transition). The base canvas is not redrawn on ticks, so the board adds these ids to the live set and the base
-    /// caches only items drawn in full. The transition window usually outlasts both, but not always: a draw-on start
-    /// still pending when a lesson pauses moves later by the length of the pause.
+    /// caches only items drawn in full. Blends and camera moves are not covered here (a `.bounded` exit starts at
+    /// opacity 1): the board draws one canvas until they end on its own clock (`MGBoardTransition.phase`), and splits
+    /// once more when the last draw-on ends, so these items then move into the base.
     public static func settling(appear: [String: Double], opacity: [String: Double]) -> Set<String> {
         Set(appear.filter { $0.value < 1 }.keys).union(opacity.filter { $0.value < 1 }.keys)
     }

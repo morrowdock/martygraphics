@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f470646985556768921d54d03623e5ba1570cdbeb012a03ec7ac01c29c8ec0de"
+      "sha256": "f371c583af85874f8c06bec5eee7d976039903bc6860005d68f74a560b5a1ebf"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -235,11 +235,11 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "71645beb89d67f858df286124506bf5c50dcbd3f3c064b313486af168135a09b"
+      "sha256": "c8813b8b050b59ff6c1d09a8c2a7aba32b46633605de6fd0b28ef2ede2863cec"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift",
-      "sha256": "d4ea4b0a34be2716df8a8b28b81fac5a6bcf6d199a04d51c06f18ba340fc9751"
+      "sha256": "6bbf6a093a042f64d626a8ee7c9a015b3c6314750a0a64cac480f6ac40508c40"
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidCLITests/Fixtures/explainer-mixed.snapshot.json",
@@ -655,7 +655,7 @@
     },
     {
       "path": "Examples/Solid3D/Tests/MartySolidGLTFTests/MartySolidGLTFTests.swift",
-      "sha256": "1e5545649dd71258c6220c2df1dffa866be0cb6d230e645ef0b1a680490e7231"
+      "sha256": "420db9ff742248eda2abd6958a6be7480caf17963f25d98d8a45aae179ed4418"
     },
     {
       "path": "Examples/Turbofan/Package.swift",
@@ -759,7 +759,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
-      "sha256": "a5961dd18c6b8db4eb4b6ed9593595713f927e67db8ec444f228d5a9c3206208"
+      "sha256": "dd87a31750f470cc163aabc327eae4bcae4c263edf70fa5cfa4bcc71423882e0"
     },
     {
       "path": "Sources/MartyGraphics/MGEngine.swift",
@@ -819,7 +819,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGRenderPolicy.swift",
-      "sha256": "5ef4ebaff7b3c4c46761e4a576732729a206af04ec38837c1459a30b938183e2"
+      "sha256": "07ee34c009a58fffa69ccde692d6f165ce0857601b4d352899c249ae7e418a69"
     },
     {
       "path": "Sources/MartyGraphics/MGSceneDiff.swift",
@@ -855,7 +855,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "0e18f6f5b7672ad0e5b320933902e8d9e6abb45190ca573ca0be1d57ccb3692d"
+      "sha256": "cb0c1b15eff9906a91d398386cced638c0bc4579cfdd7828f549fad900b5597a"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -971,7 +971,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidRenderer.swift",
-      "sha256": "3918c15bf5294205100624bb18c053b8f4211ad03d3ec0cf59d6ef3b6e4c2d0c"
+      "sha256": "62117f4944d8b483758bcaf979ba0ef28e6b85996e79ab8449062b5acae86207"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidReport.swift",
@@ -1967,7 +1967,7 @@
     },
     {
       "path": "docs/GLTF-EXPORT.md",
-      "sha256": "eccf26facc3ae2d116cd1e5dc7f8d7b93f0ca02c468a928115136e824f4d6234"
+      "sha256": "370559ab3b16f6d83236af27782ac3722a150bf30f215d8da2547f59e57efb3e"
     },
     {
       "path": "docs/HISTORY.md",
@@ -2875,7 +2875,7 @@
     },
     {
       "path": "tools/render-blender/README.md",
-      "sha256": "1d94b151c70615b7e17c736aa42c16138cc695db49d1b193e78ffd5edd83ae7d"
+      "sha256": "59591483d5e1db325fe6d3b6ab16161670913eccbae626bdcdb9dc1aaf39105e"
     },
     {
       "path": "tools/render-blender/assets.lock.json",
@@ -2907,11 +2907,11 @@
     },
     {
       "path": "tools/render-blender/mgrender/lookdev.py",
-      "sha256": "18ae40a3c5ac941bcbf187d127ef8da76906b516d379ed21c128b3fd3fb2a82c"
+      "sha256": "f854eb6da4e4ccf7bf8d126eab5e53ef4e4b9cd2fff69ce02748f2e1ef7dfee8"
     },
     {
       "path": "tools/render-blender/mgrender/manifest.py",
-      "sha256": "f26784b3b40b548dc6e1bc6c988b3cfe363f1dd2ae17a57fa761a8771ce70090"
+      "sha256": "2e1728d436524f3576e7c347849c3f91b32b0781fef1e007ad20de4e8ca85b5e"
     },
     {
       "path": "tools/render-blender/mgrender/presets.py",
@@ -2919,7 +2919,7 @@
     },
     {
       "path": "tools/render-blender/render.py",
-      "sha256": "257c2d4d5a68e82948dddacdfd74139e32d696cfd874e7798f6c3fbd5dac24bb"
+      "sha256": "94b805066a36a649653da32a1a785d98632e23b3bb3ca9f002184663db17b914"
     },
     {
       "path": "tools/render-blender/selftest.sh",
@@ -3227,19 +3227,19 @@
     },
     {
       "path": "Sources/MartyGraphics/MGMovieWriter.swift",
-      "sha256": "0848265ed6d2d63c2e6b95ac21b6a0593caf0280fe376814f48d9066d3382537"
+      "sha256": "fb1a88c8a4e04a2556b6340f915c283f9e484064afd7c9d91ad3a75809fe30cc"
     },
     {
       "path": "Sources/MartyGraphics/MGProgrammaticVideo.swift",
-      "sha256": "9a4f87f29fe352aab6da4ea7e5505df400dec6f135879862d955ab0cad7ef580"
+      "sha256": "1e43d0ba8207b83826dc4a2849f1dfc0dbc2042a1561a9f075633ac344f00bfb"
     },
     {
       "path": "Sources/MartyGraphics/MGVideoDrawing.swift",
-      "sha256": "7db6d27238c1b0dd79472478dd64d500f3550ce4abcf7d905c7fada883d4003d"
+      "sha256": "9640bdecef19b94318dec09a4725ec9cae1f1a9cbfddb5fc37f0f386184983bd"
     },
     {
       "path": "Sources/MartyGraphics/MGVideoExport.swift",
-      "sha256": "3e0ceb24aa4e1efef358b190eac0e7d3b1a4358ced2456a275f4699e527395a3"
+      "sha256": "eca6b256dba37b99923e3e98a1dd56d32fa44dcdf3cac1d4c67203ff4ba66ff4"
     },
     {
       "path": "Sources/MartyGraphics/Resources/scene-2d-layer.draft.schema.json",
@@ -3439,7 +3439,7 @@
     },
     {
       "path": "docs/PORTABILITY-MAP.md",
-      "sha256": "5d12f5310b786e81e3de5d7d9ca107d0f80f728b0871df434f487a227f67b7ee"
+      "sha256": "40c777f8790a65288e7f85c88f58e9b7d1fe49540aa1ba62e07c8eae7a707623"
     },
     {
       "path": "docs/fixtures/semantics/README.md",
@@ -4912,6 +4912,70 @@
     {
       "path": "tools/tests/test_scene_lint.py",
       "sha256": "925110c72c20af6f0c2a6507ca422260fb225b5ed720b7925bf57c971c7e6d1e"
+    },
+    {
+      "path": "Examples/Solid3D/Tests/MartySolidGLTFTests/SeamlessLoopExportTests.swift",
+      "sha256": "8958cca21df8333015e4249074161065387d3aa3bc5aa1606f53ac5a6b201015"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGArrowGeometry.swift",
+      "sha256": "4e998a79bd037af5335288114b2e758bec07c08bc02456e4bd5688bfc7746595"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGCanvasLayers.swift",
+      "sha256": "f23c49e20e684f7985ef76024492c415ae213a1fe6a2fd7642794788a4a27691"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGEasing.swift",
+      "sha256": "65c483abb4bc53c5cb501c58c77e4d911a6234897cfa02083d1d0254e4ff9817"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGExportPreset.swift",
+      "sha256": "d953a5db36dd7a35abefbed6452bff83fc283ccc81a50f9e415e7f822f889c15"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGLabelLayout.swift",
+      "sha256": "a9f154574492c95f2df120a87b0a096758351e1239e34788a81e7fd7a87c86ab"
+    },
+    {
+      "path": "Sources/MartyGraphics/Solid/MGSolidLoop.swift",
+      "sha256": "68d9bb2a74299d4e7c0d193cd1f123d5a24e47d7843791308b72dace6d9e093c"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/BoardTransitionTests.swift",
+      "sha256": "7cc5141c65f181966ce3651ee689ad0b3c3074370f66f0b880cc54e9fd3b6c8e"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/EngineStillsTests.swift",
+      "sha256": "ae85e4fee7e0605966e4955cd31f5f27c0504795989eec76bb04dff619b16a9d"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/ExportDecodeTests.swift",
+      "sha256": "d2090129f63ad433bbd2efdf7a68f79f8f1933ee127a0797d7700397138ccf1c"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/RenderQualityTests.swift",
+      "sha256": "2d6cbd35760e761b828b561ade4db1329e34622050ac737950f765c2b99b6192"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/SolidGroundCacheTests.swift",
+      "sha256": "6e9a9437f52776886ecd1662fe7a175e1e5f295b84dd26306790d404e3238ae9"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/SolidLoopTests.swift",
+      "sha256": "0fe1155bb227448b84bea80dca845ddad0635bae0d82ff3256ce14a30c0a523c"
+    },
+    {
+      "path": "docs/ENGINE.md",
+      "sha256": "aef2417091616ac1bc6fe31be07373e3d9298e33524e5d3b9bb5e0674f14143e"
+    },
+    {
+      "path": "tools/render-blender/mgrender/loop.py",
+      "sha256": "f7eecf402b762eee41387b7bb23447584002a96377d4c449a2b30b026ba7608e"
+    },
+    {
+      "path": "tools/tests/test_render_loop.py",
+      "sha256": "e56541a4102e2060184af9c0b7773a1ec56d89c1b25b953f1ac9b116c5004e01"
     }
   ]
 }

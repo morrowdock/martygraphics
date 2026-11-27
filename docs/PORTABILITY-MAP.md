@@ -113,16 +113,16 @@ The second count is every file importing the group at all.
 
 | Group | Sources (primary) | Sources (any import) | tools (primary) | tools (any import) |
 | --- | ---: | ---: | ---: | ---: |
-| Foundation-only | 72 | 85 | 0 | 5 |
-| CoreGraphics | 11 | 15 | 0 | 0 |
+| Foundation-only | 75 | 91 | 0 | 5 |
+| CoreGraphics | 14 | 18 | 0 | 0 |
 | SwiftUI | 7 | 9 | 0 | 0 |
 | SceneKit | 1 | 3 | 0 | 0 |
 | AppKit/UIKit | 2 | 2 | 0 | 0 |
 | simd | 4 | 6 | 0 | 0 |
 | Combine | 0 | 3 | 0 | 0 |
-| other | 5 | 12 | 6 | 6 |
+| other | 5 | 13 | 6 | 6 |
 
-Swift files scanned: 102 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
+Swift files scanned: 108 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
 
 ### Core candidates
 
@@ -153,26 +153,32 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 
 | Module | Public declarations | Name platform types | Name `Any` |
 | --- | ---: | ---: | ---: |
-| MartyGraphics | 2417 | 52 | 8 |
+| MartyGraphics | 2575 | 78 | 10 |
 | MartyGraphicsMLKit | 31 | 2 | 0 |
 | MartyGraphicsPathTracer | 158 | 59 | 0 |
 
 #### MartyGraphics: public scopes with matching signatures
 
-324 scope/file pairs scanned, of which 22 match.
+350 scope/file pairs scanned, of which 28 match.
 
 | Type (scope) | File | Public decls | Platform tokens | Untyped |
 | --- | --- | ---: | --- | --- |
-| `MGCanvasRenderer` | `MGCanvasRenderer.swift` | 2 | `GraphicsContext` | — |
+| `MGArrowGeometry` | `MGArrowGeometry.swift` | 12 | `CGFloat`, `CGPoint` | — |
+| `MGCanvasRenderer` | `MGCanvasRenderer.swift` | 3 | `GraphicsContext` | — |
 | `MGExplainerBoard` | `MartyGraphicsExplainerView.swift` | 2 | `CGSize` | — |
 | `MGExplainerController` | `MartyGraphicsExplainerView.swift` | 34 | `CGSize`, `ObservableObject` | — |
 | `MGExplainerFrame` | `MGExplainerLayout.swift` | 22 | `CGSize` | — |
+| `MGExportPreset` | `MGExportPreset.swift` | 29 | `CGColorSpace`, `CGRect`, `CGSize` | `Any` |
 | `MGGrammar` | `MGGrammar.swift` | 5 | — | `Any` |
 | `MGJSON` | `MGModel.swift` | 9 | — | `Any` |
+| `MGLabelLayout` | `MGLabelLayout.swift` | 4 | `CGFloat`, `CGPoint`, `CGRect` | — |
+| `MGLabelLayout.Leader` | `MGLabelLayout.swift` | 4 | `CGFloat`, `CGPoint` | — |
+| `MGLabelLayout.Options` | `MGLabelLayout.swift` | 7 | `CGFloat` | — |
+| `MGLabelLayout.Placement` | `MGLabelLayout.swift` | 3 | `CGRect` | — |
 | `MGLayout` | `MGLayout.swift` | 6 | `CGFloat`, `CGPoint`, `CGRect`, `CGSize` | — |
 | `MGLayout.LabelRequest` | `MGLayout.swift` | 5 | `CGPoint`, `CGSize`, `CGVector` | — |
 | `MGLessonController` | `MartyGraphicsLessonView.swift` | 28 | `ObservableObject` | — |
-| `MGMovieWriter` | `MGMovieWriter.swift` | 8 | `CGImage` | — |
+| `MGMovieWriter` | `MGMovieWriter.swift` | 9 | `CGImage` | — |
 | `MGParser` | `MGParser.swift` | 10 | — | `Any` |
 | `MGPatch` | `MGPatch.swift` | 7 | — | `Any` |
 | `MGProgrammaticVideo` | `MGProgrammaticVideo.swift` | 3 | `CGImage` | — |
@@ -184,7 +190,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `MGViewport` | `MGLayout.swift` | 8 | `CGFloat`, `CGPoint`, `CGSize` | — |
 | `MartyGraphicsExplainerView` | `MartyGraphicsExplainerView.swift` | 4 | `View` | — |
 | `MartyGraphicsLessonView` | `MartyGraphicsLessonView.swift` | 4 | `View` | — |
-| `MartyGraphicsView` | `MartyGraphicsView.swift` | 15 | `CGSize`, `View` | — |
+| `MartyGraphicsView` | `MartyGraphicsView.swift` | 16 | `CGSize`, `View` | — |
 
 #### MartyGraphicsMLKit: public scopes with matching signatures
 
@@ -226,21 +232,26 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/Explainer/MGTranscript.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MG3DInteraction.swift` | CoreGraphics | CoreGraphics, Foundation | — | CoreGraphics: `CGFloat`, `CGPoint` |
 | `Sources/MartyGraphics/MG3DView.swift` | AppKit/UIKit | AppKit, SceneKit, SwiftUI, UIKit, simd | UIKit | CoreGraphics: `CGFloat`, `CGPoint`; SceneKit: `SCNBillboardConstraint`, `SCNBox`, `SCNCamera` +18; simd: `simd_float3`, `simd_length`, `simd_normalize` +1; AppKit/UIKit: `NSBezierPath`, `NSColor`, `NSViewRepresentable` +3 |
+| `Sources/MartyGraphics/MGArrowGeometry.swift` | CoreGraphics | CoreGraphics, Foundation | — | CoreGraphics: `CGFloat`, `CGPoint` |
+| `Sources/MartyGraphics/MGCanvasLayers.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGCanvasRenderer.swift` | SwiftUI | SwiftUI | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGRect` +2; SwiftUI: `Color`, `Gradient`, `GraphicsContext` +1 |
 | `Sources/MartyGraphics/MGDescribe.swift` | Foundation-only | Foundation | — | — |
+| `Sources/MartyGraphics/MGEasing.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGEngine.swift` | Foundation-only | Foundation | — | — |
+| `Sources/MartyGraphics/MGExportPreset.swift` | CoreGraphics | AVFoundation, CoreGraphics, CoreVideo, Foundation | — | CoreGraphics: `CGColorSpace`, `CGColorSpaceCreateDeviceRGB`, `CGRect` +1; AVFoundation/ImageIO/UTType: `AVFoundation`, `AVVideoAllowFrameReorderingKey`, `AVVideoAverageBitRateKey` +18 |
 | `Sources/MartyGraphics/MGExpression.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGFixtures.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGGeometryPack.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGGrammar.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGGraph.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGGraphPack.swift` | Foundation-only | Foundation | — | — |
+| `Sources/MartyGraphics/MGLabelLayout.swift` | CoreGraphics | CoreGraphics, Foundation | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGRect` |
 | `Sources/MartyGraphics/MGLayout.swift` | CoreGraphics | CoreGraphics, Foundation | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGRect` +2 |
 | `Sources/MartyGraphics/MGLesson.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGLessonSession.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGLessonSnapshot.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGModel.swift` | Foundation-only | Foundation | — | — |
-| `Sources/MartyGraphics/MGMovieWriter.swift` | other | AVFoundation, Foundation | — | CoreGraphics: `CGBitmapInfo`, `CGColorSpace`, `CGContext` +3; AVFoundation/ImageIO/UTType: `AVAssetWriter`, `AVAssetWriterInput`, `AVAssetWriterInputPixelBufferAdaptor` +17 |
+| `Sources/MartyGraphics/MGMovieWriter.swift` | other | AVFoundation, Foundation | — | CoreGraphics: `CGBitmapInfo`, `CGColor`, `CGColorSpace` +5; AVFoundation/ImageIO/UTType: `AVAssetWriter`, `AVAssetWriterInput`, `AVAssetWriterInputPixelBufferAdaptor` +18 |
 | `Sources/MartyGraphics/MGPack.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGParser.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGPatch.swift` | Foundation-only | Foundation | — | — |
@@ -258,7 +269,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/MGVideoExport.swift` | other | AVFoundation, Foundation, ImageIO, UniformTypeIdentifiers | — | CoreGraphics: `CGColorSpace`, `CGContext`, `CGImageAlphaInfo` +6; AVFoundation/ImageIO/UTType: `AVFoundation`, `CGImageDestination`, `CGImageDestinationAddImage` +4 |
 | `Sources/MartyGraphics/MartyGraphicsExplainerView.swift` | SceneKit | Combine, SceneKit, SwiftUI, os | — | CoreGraphics: `CGFloat`, `CGSize`; SwiftUI: `@Environment`, `@ObservedObject`, `Canvas` +3; SceneKit: `SCNScene`, `SCNSceneRenderer`, `SCNSceneRendererDelegate`; Combine: `@Published`, `ObservableObject`; Darwin/os: `OSSignposter` |
 | `Sources/MartyGraphics/MartyGraphicsLessonView.swift` | SwiftUI | Combine, SwiftUI, os | — | SwiftUI: `@Environment`, `@ObservedObject`, `Canvas` +2; Combine: `@Published`, `ObservableObject`; Darwin/os: `OSSignposter` |
-| `Sources/MartyGraphics/MartyGraphicsView.swift` | SwiftUI | Combine, SwiftUI | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGSize`; SwiftUI: `@Environment`, `@ObservedObject`, `@State` +6; Combine: `@Published`, `ObservableObject` |
+| `Sources/MartyGraphics/MartyGraphicsView.swift` | SwiftUI | Combine, SwiftUI | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGSize`; SwiftUI: `@Environment`, `@ObservedObject`, `@State` +7; Combine: `@Published`, `ObservableObject` |
 | `Sources/MartyGraphics/Solid/MGAnnotationLayout.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGAssembly.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGGear.swift` | Foundation-only | Foundation | — | — |
@@ -279,6 +290,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/Solid/MGSolidFrames.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGSolidFraming.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGSolidLook.swift` | Foundation-only | Foundation | — | — |
+| `Sources/MartyGraphics/Solid/MGSolidLoop.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGSolidMath.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGSolidModels.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGSolidNumericScalars.swift` | Foundation-only | Foundation | — | — |
@@ -287,7 +299,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/Solid/MGSolidPoses.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGSolidReasons.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift` | Foundation-only | Foundation | — | — |
-| `Sources/MartyGraphics/Solid/MGSolidRenderer.swift` | AppKit/UIKit | AppKit, CoreGraphics, Foundation, Metal, SceneKit, UIKit, simd | Metal, UIKit | CoreGraphics: `CGBitmapInfo`, `CGColor`, `CGColorSpace` +11; SceneKit: `SCNCamera`, `SCNGeometry`, `SCNGeometryElement` +10; simd: `simd_float3`, `simd_float4`, `simd_float4x4` +2; Metal: `MTLCreateSystemDefaultDevice` |
+| `Sources/MartyGraphics/Solid/MGSolidRenderer.swift` | AppKit/UIKit | AppKit, CoreGraphics, Foundation, Metal, SceneKit, UIKit, simd | Metal, UIKit | CoreGraphics: `CGBitmapInfo`, `CGColor`, `CGColorSpace` +11; SceneKit: `SCNCamera`, `SCNGeometry`, `SCNGeometryElement` +10; simd: `SIMD3`, `simd_float3`, `simd_float4` +3; Metal: `MTLCreateSystemDefaultDevice` |
 | `Sources/MartyGraphics/Solid/MGSolidReport.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGSolidSection.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/Solid/MGSolidShapes.swift` | Foundation-only | Foundation | — | — |
@@ -341,8 +353,9 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/render-blender/mgrender/ffmpeg.py` | subprocess |
 | `tools/render-blender/mgrender/frames.py` | json, os |
 | `tools/render-blender/mgrender/gpu_probe.py` | mgrender, os, sys |
-| `tools/render-blender/mgrender/lookdev.py` | .device, .presets, bmesh, bpy, bpy_extras, math, mathutils |
-| `tools/render-blender/mgrender/manifest.py` | .presets, hashlib, json, math, os, re, struct, sys |
+| `tools/render-blender/mgrender/lookdev.py` | .device, .loop, .presets, bmesh, bpy, bpy_extras, math, mathutils |
+| `tools/render-blender/mgrender/loop.py` | math |
+| `tools/render-blender/mgrender/manifest.py` | .loop, .presets, hashlib, json, math, os, re, struct, sys |
 | `tools/render-blender/mgrender/presets.py` | re |
 | `tools/render-blender/render.py` | bpy, hashlib, json, mathutils, mgrender, os, shutil, subprocess, sys, time, traceback |
 | `tools/render-blender/render_variants.py` | argparse, mgrender, os, pathlib, subprocess |
@@ -355,6 +368,7 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/tests/test_portability_tools.py` | copy, importlib, json, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_release_install.py` | argparse, contextlib, importlib, io, json, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_render_blender.py` | hashlib, json, math, mgrender, os, pathlib, re, render, render_variants, shutil, struct, subprocess, sys, tempfile, unittest |
+| `tools/tests/test_render_loop.py` | math, mgrender, pathlib, sys, tempfile, test_render_blender, unittest |
 | `tools/tests/test_repair_hints.py` | importlib, json, pathlib, re, sys, unittest |
 | `tools/tests/test_scene_lint.py` | json, pathlib, re, scene_lint, scene_v1_check, sys, unittest |
 | `tools/tests/test_scene_v1_schema.py` | json, os, subprocess, sys, tools, unittest |

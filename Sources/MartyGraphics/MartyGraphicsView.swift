@@ -294,6 +294,9 @@ struct MGSceneHost: View {
     @State private var visible = false
     @State private var transientUntil = Date.distantPast
     @State private var transientToken = 0
+    /// Bumped by the live canvas when a tick finds the board's transitions past the phase it was split for
+    /// (`MGBoardTransition.phase`), so the board is evaluated once more and splits for the new phase.
+    @State private var repartitions = 0
 
     private func renderState(_ scene: MGScene) -> MGRenderPolicy.State {
         .init(motionPlaying: playing && scene.animates && !teaching.holdsMotion, transientActive: controller.presentationDate() < transientUntil,
@@ -368,12 +371,19 @@ struct MGSceneHost: View {
     /// The 2D board: one Canvas in a TimelineView, or, while motion plays and no transition runs, a cached base Canvas
     /// under a live one (`MGRenderPolicy.layered`, `MGCanvasLayers`). The two layers composite to the frame one Canvas
     /// draws; the base (board, grid and the static items below every moving item) is drawn once, outside the timeline.
+    /// The split also follows the board's own clock (`MGBoardTransition.phase`): while a blend, a camera move or
+    /// keyframes still change the frame there is one canvas, and the base is chosen for the phase now. When a tick
+    /// finds that phase over (the blend or the last draw-on has ended), the board splits once more for the new one.
     private func board2D(_ scene: MGScene) -> some View {
         let state = renderState(scene)
         // Reduce Motion: a `.spring` board snaps (no loop); a `.bounded` board dissolves, so the loop runs for that
         // transition only (`MGBoardTransition.runsLoop`).
         let running = MGBoardTransition.runsLoop(teaching.transitionStyle, state)
-        let layered = MGRenderPolicy.layered(state) && scene.layer2d == nil
+        _ = repartitions   // read, so that a repartition asked for by the live canvas evaluates the board again
+        let now = controller.presentationDate()
+        let splits = MGRenderPolicy.layered(state) && scene.layer2d == nil
+        let phase = transitionPhase(at: now)
+        let layered = splits && phase != .moving
         if let probe = teaching.probe {
             probe.decided(MGBoardProbe.Decision(running: running, layered: layered))
             probe.frame = { now, size in input(scene, now: now, size: size) }
@@ -382,7 +392,11 @@ struct MGSceneHost: View {
         }
         return GeometryReader { geo in
             ZStack {
-                if layered { layeredCanvases(scene, size: geo.size, running: running) } else { liveCanvas(scene, running: running, layer: nil) }
+                if layered {
+                    layeredCanvases(scene, size: geo.size, running: running, now: now, phase: phase)
+                } else {
+                    liveCanvas(scene, running: running, layer: nil, watching: splits ? phase : nil)
+                }
             }
             .contentShape(Rectangle())
             .gesture(SpatialTapGesture().onEnded { value in select(scene, at: value.location, size: geo.size) },
@@ -390,8 +404,7 @@ struct MGSceneHost: View {
         }
     }
 
-    @ViewBuilder private func layeredCanvases(_ scene: MGScene, size: CGSize, running: Bool) -> some View {
-        let now = controller.presentationDate()
+    @ViewBuilder private func layeredCanvases(_ scene: MGScene, size: CGSize, running: Bool, now: Date, phase: MGBoardTransition.Phase) -> some View {
         let still = input(scene, now: now, size: size)
         // Items still drawing on or fading are live too: ticks never redraw the base (`MGCanvasLayers.settling`).
         let live = MGCanvasLayers.live(scene, items: still.items).union(MGCanvasLayers.settling(appear: still.appear, opacity: still.opacity))
@@ -403,15 +416,22 @@ struct MGSceneHost: View {
             MGCanvasRenderer.draw(frame, in: ctx, layer: .base(base))
             teaching.probe?.drew(frame, .base(base), size)
         }
-        liveCanvas(scene, running: running, layer: .live(base))
+        liveCanvas(scene, running: running, layer: .live(base), watching: phase)
     }
 
-    private func liveCanvas(_ scene: MGScene, running: Bool, layer: MGCanvasLayer?) -> some View {
+    /// `watching`: the phase of the board's transitions that the board was split for, or would have been but for a
+    /// blend or camera move (nil: the board cannot split now). When a tick finds another phase on the board's clock,
+    /// the canvas asks for one more evaluation of the board (`repartitions`), so it splits for the new phase: one base
+    /// redraw when the last draw-on ends, and the first split once a blend or camera move has ended.
+    private func liveCanvas(_ scene: MGScene, running: Bool, layer: MGCanvasLayer?, watching: MGBoardTransition.Phase?) -> some View {
         TimelineView(.animation(minimumInterval: MGRenderPolicy.frameInterval, paused: !running)) { tl in
             Canvas(rendersAsynchronously: false) { ctx, size in
                 let frame = input(scene, now: running && controller.presentationClock == nil ? tl.date : controller.presentationDate(), size: size)
                 MGCanvasRenderer.draw(frame, in: ctx, layer: layer ?? .all)
                 teaching.probe?.drew(frame, layer ?? .all, size)
+            }
+            .onChange(of: watching.map { _ in transitionPhase(at: controller.presentationDate()) }, initial: true) { _, current in
+                if let watching, let current, current != watching { repartitions &+= 1 }
             }
         }
     }
@@ -537,12 +557,25 @@ struct MGSceneHost: View {
         }
     }
 
+    /// True while engine keyframes play at `now` (a lesson pause holds their clock).
+    private func keyframesPlay(at now: Date) -> Bool {
+        !keyframes.isEmpty && keyframeClock.elapsed(at: now) < keyframeDuration && !reduceMotion
+    }
+
+    /// Where the board's step and patch transitions stand at `now` on its own clock (`MGBoardTransition.phase`), from
+    /// the same state `input` draws the blend, the camera move, the keyframes and the draw-on with.
+    private func transitionPhase(at now: Date) -> MGBoardTransition.Phase {
+        MGBoardTransition.phase(teaching.transitionStyle, blendElapsed: blendFrom == nil ? nil : now.timeIntervalSince(blendStart),
+                                cameraElapsed: now.timeIntervalSince(cameraStart), keyframes: keyframesPlay(at: now),
+                                drawingOn: !MGBoardTransition.appear(appearStart, at: now, reduceMotion: reduceMotion).isEmpty,
+                                reduceMotion: reduceMotion)
+    }
+
     private func input(_ scene: MGScene, now: Date, size: CGSize) -> MGRenderInput {
         let t = reduceMotion ? 0 : time(now)
         let keyT = keyframeClock.elapsed(at: now)
-        let playsKeyframes = !keyframes.isEmpty && keyT < keyframeDuration && !reduceMotion
-        var items = MGTimeline.frame(scene, items: playsKeyframes ? MGTween.sample(keyframes, at: keyT)
-                                                                  : controller.timelineItems(scene, step: step), time: t)
+        var items = MGTimeline.frame(scene, items: keyframesPlay(at: now) ? MGTween.sample(keyframes, at: keyT)
+                                                                          : controller.timelineItems(scene, step: step), time: t)
         if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
         // Step and patch transitions (`MGBoardTransition`): by default the board's spring within the 1.2 s window and
         // nothing with Reduce Motion, exactly as before; a `.bounded` board eases with no overshoot, fades leaving
@@ -559,8 +592,7 @@ struct MGSceneHost: View {
             let from = MGViewport(size: fit, width: scene.width, height: scene.height, camera: cameraFrom).resized(to: size)
             vp = from.lerp(vp, CGFloat(progress))
         }
-        var appear: [String: Double] = [:]
-        if !reduceMotion { for (id, start) in appearStart { let p = now.timeIntervalSince(start) / 0.55; if p < 1 { appear[id] = max(0, p) } } }
+        let appear = MGBoardTransition.appear(appearStart, at: now, reduceMotion: reduceMotion)
         let focus = scene.steps.indices.contains(step) ? scene.steps[step].focus : nil
         var out = MGRenderInput(scene: scene, items: items, viewport: vp, theme: theme, appear: appear, focus: focus, time: t)
         out.opacity = blend.opacity

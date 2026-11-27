@@ -41,6 +41,8 @@ public enum MGRenderPolicy {
 
     /// 2D: draw the board as a cached base layer under a live layer (`MGCanvasRenderer.draw(_:in:layer:)`) while motion
     /// plays and no transition is running: the base layer is redrawn only when the scene, step, size or theme changes.
+    /// The board also needs its blends and camera moves to have ended on its own clock (`MGBoardTransition.phase`; the
+    /// transition window ends on the wall clock), and splits once more when its last draw-on ends.
     public static func layered(_ s: State) -> Bool {
         continuous(s) && s.motionPlaying && !s.transientActive
     }

@@ -134,19 +134,38 @@ which is any change of the board's state (scene revision, step, size, theme, tea
 for its own size, so both layers share one viewport. The current step's items are kept per controller, scene
 revision and step (`MGStepItemsCache`).
 
-What is claimed until the Mac run: for one input the split composites to the one-canvas frame within rounding. What
-`testTheSplitBoardStaysExactAcrossTicksAndChanges` checks on a live board in a window, at 1x and 2x: base redraws are
-counted (none on ticks); while the first appearance draws on, the base holds no item; after ticks during and after
-the draw-on, a new revision (the base then holds the static prefix), a step, a resized viewport, a theme and new
-markers, the last base under the last live layer still matches the one-canvas frame; and taps on a base item and on
-a live item select through the board's own tap handler. When a split differs, the test prints where, on lines
+The split also follows the board's own clock, which a lesson or explainer host sets (`presentationClock`), while the
+transition window ends on a wall-clock wait. `MGBoardTransition.phase` says where the step and patch transitions stand
+at one time on that clock: **moving** while a blend, a camera move or keyframes still change the frame (a `.bounded`
+blend until its progress reaches 1, since a leaving item starts at opacity 1 and `MGCanvasLayers.settling` does not
+count it; a `.spring` blend for its whole 1.2 s window; a camera move for its whole 1.0 s window), **drawing on** while
+only draw-ons remain, and **settled** after that. The board draws one canvas while the phase is moving, and splits
+for the phase at the time it is evaluated. The live canvas computes the phase on each tick, and when the phase it was
+split for has passed (a blend or camera move has ended, or the last draw-on has), it asks for one more evaluation of
+the board: one base redraw, after which the items drawn in full are in the base.
+
+What is claimed until the Mac run: for one input the split composites to the one-canvas frame within rounding, and
+the phase and draw-on decisions (`testTheSplitWaitsForBlendsAndCameraMovesOnTheBoardsClock`,
+`testTheLastDrawOnEndsThePhaseOnce`) hold. What `testTheSplitBoardStaysExactAcrossTicksAndChanges` checks on a live
+board in a window, at 1x and 2x, with the board's clock moved explicitly: base redraws are counted (none on ticks,
+and exactly one when the first appearance's draw-on ends); while the first appearance draws on, the base holds no
+item, and after it the base holds the static prefix; after a revision and after a step the board draws one canvas
+until its clock has run the blend or the camera move, and then draws a base with the revised floor and the step's
+camera; after each change (ticks during and after the draw-on, the revision, the step, a resized viewport, a theme
+and new markers) the last base under the last live layer still matches the one-canvas frame, and every item the base
+cached is drawn as it now is, with the current viewport; and taps on a base item and on a live item select through
+the board's own tap handler. `testTheBoundedSplitBoardWaitsForAFadingExit` removes a base item on a `.bounded` board:
+one canvas while it fades from opacity 1, then a base without it. When a split differs, the test prints where, on lines
 starting `SPLIT-DIFF` (the first and the worst differing pixel, their RGBA in each image, the items covering them,
 both draws' viewports) and, with `MG_STILLS_DIR` set, writes the images. Mac run #25 was the first in which the
 hosted board split. Two things differed. A base drawn while the zone and the floor were drawing on kept them at that
 progress through the ticks (mean difference 3.1); `MGCanvasLayers.settling` now prevents that. And the first-frame,
 revision and step checks differed by 66 levels at 1x and 216 at 2x at the first window size (by the layout, a board
 532 points wide and 354.67 high), while every check after the resize to 672 by 448 passed. The base frame was the only input made for another size (the reader's,
-not the canvas's); each canvas now draws for its own size, and the next run shows whether that was the cause.
+not the canvas's); each canvas now draws for its own size, and the next run shows whether that was the cause. The
+run #25 revision and step checks also compared a base drawn while the blend and the camera move were still at their
+start on the board's clock (the rig moves that clock only with `advance`), so they could not show a base that missed
+the end of a transition; the phase rule above and the explicit clock moves in the test close that gap.
 `testTheSplitBoardIsOneAccessibilityElement` checks that the split board stays one
 accessibility element whose value follows a step and a rebuild with markers (accessibility properties only, no
 VoiceOver run). Mac run #23 found no element under the hosting view, so the test also hosts a plain `Text` with an

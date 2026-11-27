@@ -101,6 +101,49 @@ enum MGBoardTransition {
     static func runsLoop(_ style: MGTransitionStyle, _ s: MGRenderPolicy.State) -> Bool {
         MGRenderPolicy.continuous(s) || (style == .bounded && MGRenderPolicy.dissolving(s))
     }
+
+    /// Seconds an item takes to draw on: `MGRenderInput.appear` runs from 0 to 1 over this.
+    static let drawOnSeconds = 0.55
+
+    /// The draw-on progress at `now` of every item still drawing on, from the start of each draw-on in `starts` (a
+    /// start still to come counts as 0). Items drawn in full are left out; with Reduce Motion nothing draws on.
+    static func appear(_ starts: [String: Date], at now: Date, reduceMotion: Bool) -> [String: Double] {
+        guard !reduceMotion else { return [:] }
+        var appear: [String: Double] = [:]
+        for (id, start) in starts { let p = now.timeIntervalSince(start) / drawOnSeconds; if p < 1 { appear[id] = max(0, p) } }
+        return appear
+    }
+
+    /// Where a 2D board's own step and patch transitions stand at one time on the board's clock. The board's split
+    /// (`MGRenderPolicy.layered`, `MGCanvasLayers`) follows this, not the transition window, whose end is a wall-clock
+    /// wait: the base canvas is not redrawn on ticks, so it may only cache what no transition still changes.
+    enum Phase: Equatable, Sendable {
+        /// A blend, a camera move or keyframes still change the frame: the board draws one canvas.
+        case moving
+        /// Only draw-ons remain: the board may split, with the items still drawing on in the live layer
+        /// (`MGCanvasLayers.settling`), and splits once more when the last one ends.
+        case drawingOn
+        /// Nothing changes but the motion: the base caches every static item below the lowest live item.
+        case settled
+    }
+
+    /// The phase `blendElapsed` seconds after the last blend began (nil: no blend), `cameraElapsed` seconds after the
+    /// last camera move began, with keyframes playing or not and items drawing on or not. A blend moves for as long as
+    /// `items` can still give anything but the new items: for `.spring` its whole window (its blend gives the new items
+    /// whenever the spring is past 1, and leaves them again while the window lasts), none with Reduce Motion; for
+    /// `.bounded` until the progress of `MGStepTransition` reaches 1, whose leaving items start at opacity 1 (so
+    /// `MGCanvasLayers.settling` alone would cache them in full). A camera move moves while `cameraProgress` is non-nil.
+    static func phase(_ style: MGTransitionStyle, blendElapsed: Double?, cameraElapsed: Double, keyframes: Bool,
+                      drawingOn: Bool, reduceMotion: Bool) -> Phase {
+        if keyframes || cameraProgress(style, elapsed: cameraElapsed, reduceMotion: reduceMotion) != nil { return .moving }
+        if let e = blendElapsed, e < blendWindow {
+            switch style {
+            case .spring: if !reduceMotion { return .moving }
+            case .bounded: if MGStepTransition(reduceMotion: reduceMotion).progress(e) < 1 { return .moving }
+            }
+        }
+        return drawingOn ? .drawingOn : .settled
+    }
 }
 
 /// How a board that opts in (`MGTransitionStyle.bounded`) moves from one step's state to the next (docs/ENGINE.md,

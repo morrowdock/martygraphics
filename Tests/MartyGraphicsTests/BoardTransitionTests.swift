@@ -103,6 +103,102 @@ final class BoardTransitionTests: XCTestCase {
             }
         } } } } }
     }
+
+    // MARK: The split follows the board's own clock
+
+    /// `MGBoardTransition.phase`: a blend moves until `items` gives the new items with nothing fading for good (the
+    /// whole window for the spring, exactly that for `.bounded`), a camera move exactly while `cameraProgress` is
+    /// non-nil and keyframes while they play; draw-on is what is left once those are over. While the phase is `.moving`
+    /// the board draws one canvas: a base cached at the start of a blend or a camera move would stay there while the
+    /// live layer moved on.
+    func testTheSplitWaitsForBlendsAndCameraMovesOnTheBoardsClock() throws {
+        let (a, b) = vectors()
+        let leaving = MGMake.body("old", MGPoint(1, 1)), entering = MGMake.body("new", MGPoint(5, 5))
+        let from = [a, leaving], to = [b, entering]
+        let rest = MGStepTransition.Frame(items: to, opacity: [:])
+        func phase(_ style: MGTransitionStyle, blend: Double? = nil, camera: Double = .infinity, keyframes: Bool = false,
+                   drawingOn: Bool = false, reduce: Bool = false) -> MGBoardTransition.Phase {
+            MGBoardTransition.phase(style, blendElapsed: blend, cameraElapsed: camera, keyframes: keyframes, drawingOn: drawingOn,
+                                    reduceMotion: reduce)
+        }
+        for style in MGTransitionStyle.allCases {
+            for reduce in [false, true] {
+                let what = "\(style.rawValue), Reduce Motion \(reduce)"
+                for k in -10...150 {
+                    let t = Double(k) / 100
+                    let atRest = MGBoardTransition.items(style, from: from, to: to, elapsed: t, reduceMotion: reduce) == rest
+                    // Never split during a blend: once the phase is over, the frame is the new items with nothing fading.
+                    if phase(style, blend: t, reduce: reduce) != .moving { XCTAssertTrue(atRest, "\(what): split mid-blend at \(t) s") }
+                    let moving = style == .bounded ? !atRest : !reduce && t < MGBoardTransition.blendWindow
+                    XCTAssertEqual(phase(style, blend: t, reduce: reduce), moving ? .moving : .settled, "\(what): blend at \(t) s")
+                    XCTAssertEqual(phase(style, blend: t, drawingOn: true, reduce: reduce), moving ? .moving : .drawingOn,
+                                   "\(what): blend and draw-on at \(t) s")
+                    let still = MGBoardTransition.cameraProgress(style, elapsed: t, reduceMotion: reduce) == nil
+                    XCTAssertEqual(phase(style, camera: t, reduce: reduce), still ? .settled : .moving, "\(what): camera at \(t) s")
+                }
+                XCTAssertEqual(phase(style, reduce: reduce), .settled, "\(what): no transition")
+                XCTAssertEqual(phase(style, drawingOn: true, reduce: reduce), .drawingOn, what)
+                XCTAssertEqual(phase(style, keyframes: true, reduce: reduce), .moving, "\(what): keyframes")
+            }
+        }
+        // Why the spring's whole window: its blend gives the new items whenever the spring is past 1 (first at about
+        // 0.19 s) and leaves them again inside the window, so reaching them once does not end it.
+        let springAtRest = (0..<120).map { MGBoardTransition.items(.spring, from: from, to: to, elapsed: Double($0) / 100, reduceMotion: false) == rest }
+        let firstAtRest = try XCTUnwrap(springAtRest.firstIndex(of: true))
+        XCTAssertTrue(springAtRest[firstAtRest...].contains(false), "the spring's blend leaves the new items again")
+        // The default blend moves for its whole 1.2 s window, a `.bounded` one until 0.6 s; a camera move for the whole
+        // 1.0 s window, in which the viewport is a lerp.
+        XCTAssertEqual(phase(.spring, blend: 1.19), .moving)
+        XCTAssertEqual(phase(.spring, blend: 1.2), .settled)
+        XCTAssertEqual(phase(.bounded, blend: 0.59), .moving)
+        XCTAssertEqual(phase(.bounded, blend: 0.6), .settled)
+        XCTAssertEqual(phase(.bounded, camera: 0.99), .moving)
+        XCTAssertEqual(phase(.spring, blend: 0, reduce: true), .settled, "the default board snaps")
+        XCTAssertEqual(phase(.bounded, blend: 0, reduce: true), .moving, "a bounded board dissolves")
+        // What `MGCanvasLayers.settling` cannot see: a `.bounded` exit starts opaque, so only the phase keeps it out of
+        // the base.
+        let start = MGBoardTransition.items(.bounded, from: from, to: to, elapsed: 0, reduceMotion: false)
+        XCTAssertEqual(start.opacity["old"], 1)
+        XCTAssertTrue(start.items.contains { $0.id == "old" })
+        XCTAssertFalse(MGCanvasLayers.settling(appear: [:], opacity: start.opacity).contains("old"))
+        XCTAssertEqual(phase(.bounded, blend: 0), .moving)
+    }
+
+    /// The draw-on map the board draws with (`MGBoardTransition.appear`), and the cost of its end: over the first
+    /// appearance of `RenderQualityTests.layered`, ticked on the board's clock, the phase changes once, when the last
+    /// item (the text, 0.4 s late) is drawn in full. The board splits once for the phase it starts in and once more for
+    /// that change, so the base is drawn twice in all: first with no item, then with the static prefix.
+    func testTheLastDrawOnEndsThePhaseOnce() throws {
+        let t0 = Date(timeIntervalSinceReferenceDate: 1000)
+        let starts = ["a": t0, "b": t0.addingTimeInterval(0.4)]
+        XCTAssertEqual(MGBoardTransition.appear(starts, at: t0, reduceMotion: false), ["a": 0, "b": 0], "b has not started")
+        let mid = MGBoardTransition.appear(starts, at: t0.addingTimeInterval(0.6), reduceMotion: false)
+        XCTAssertNil(mid["a"], "a is drawn in full")
+        XCTAssertEqual(mid["b"] ?? -1, 0.2 / MGBoardTransition.drawOnSeconds, accuracy: 1e-9)
+        XCTAssertEqual(MGBoardTransition.appear(starts, at: t0.addingTimeInterval(0.96), reduceMotion: false), [:])
+        XCTAssertEqual(MGBoardTransition.appear(starts, at: t0.addingTimeInterval(0.3), reduceMotion: true), [:], "Reduce Motion")
+
+        let scene = try MGParser.scene(data: Data(RenderQualityTests.layered.utf8)).get()
+        let plan = MGAdoption.plan(previous: nil, next: scene.items, transition: .blend)
+        let appearStart = plan.appear.mapValues { t0.addingTimeInterval($0) }
+        let last = (plan.appear.values.max() ?? 0) + MGBoardTransition.drawOnSeconds
+        XCTAssertEqual(last, 0.95, accuracy: 1e-12)
+        var phases: [MGBoardTransition.Phase] = [], bases: [Set<String>] = []
+        for k in 0...96 {
+            let t = Double(k) / 64
+            let appear = MGBoardTransition.appear(appearStart, at: t0.addingTimeInterval(t), reduceMotion: false)
+            let phase = MGBoardTransition.phase(.spring, blendElapsed: nil, cameraElapsed: .infinity, keyframes: false,
+                                                drawingOn: !appear.isEmpty, reduceMotion: false)
+            XCTAssertEqual(phase, t < last ? .drawingOn : .settled, "at \(k)/64 s")
+            guard phases.last != phase else { continue }
+            phases.append(phase)
+            let items = MGTimeline.frame(scene, items: scene.items, time: t)
+            bases.append(MGCanvasLayers.base(items, live: MGCanvasLayers.live(scene, items: items)
+                .union(MGCanvasLayers.settling(appear: appear, opacity: [:]))))
+        }
+        XCTAssertEqual(phases, [.drawingOn, .settled], "one change of phase, so one repartition")
+        XCTAssertEqual(bases, [[], ["zone", "floor"]], "from no item cached to the static prefix")
+    }
 }
 
 #if canImport(AppKit)
@@ -459,14 +555,52 @@ final class BoardTransitionHostTests: XCTestCase {
         print("\(tag):   PNGs: \(dir)/\(stem)-{one,base,live,split}.png")
     }
 
-    /// After a change: wait for its transition (if any) to end, then the board is split again, its base was redrawn
-    /// (when the change touches the base) and base plus live is the one-canvas frame.
-    @MainActor func settleSplit(_ rig: BoardRig, _ what: String, baseDraws: inout Int, wait: Double = 2.4, redrawsBase: Bool = true,
-                                file: StaticString = #filePath, line: UInt = #line) throws {
+    /// The last base draw is the frame as it now is on the board's clock: every item it cached is drawn now exactly as
+    /// it was cached, and its viewport is the current one. A base drawn during a blend or a camera move fails here.
+    @MainActor func assertBaseIsCurrent(_ rig: BoardRig, _ what: String, file: StaticString = #filePath, line: UInt = #line) throws {
+        let (draw, ids) = try lastBaseDraw(rig)
+        let now = try rig.frame(draw.size)
+        for id in ids.sorted() {
+            XCTAssertEqual(draw.input.items.first { $0.id == id }, now.items.first { $0.id == id }, "\(what): the base cached \(id) as it was",
+                           file: file, line: line)
+        }
+        assertViewport(draw.input.viewport, now.viewport, "\(what): the base viewport", file: file, line: line)
+    }
+
+    /// The last base draw, with the items it cached.
+    @MainActor func lastBaseDraw(_ rig: BoardRig) throws -> (draw: MGBoardProbe.Draw, ids: Set<String>) {
+        let found = rig.probe.draws.reversed().lazy.compactMap { d -> (draw: MGBoardProbe.Draw, ids: Set<String>)? in
+            if case .base(let ids) = d.layer { return (d, ids) }
+            return nil
+        }.first
+        return try XCTUnwrap(found, "the board never drew a base")
+    }
+
+    /// Ticks the board's own clock on by `seconds`, 0.1 s at a time, letting the frame loop draw between steps.
+    @MainActor func tick(_ rig: BoardRig, _ seconds: Double) {
+        for _ in 0..<Int((seconds * 10).rounded()) { rig.advance(0.1); rig.settle(0.05) }
+    }
+
+    /// After a change whose transition the board's clock has not run yet: the wall-clock transition window ends (real
+    /// time only), and the board still draws one canvas, because on its own clock the blend or the camera move is at
+    /// its start (`MGBoardTransition.phase`).
+    @MainActor func assertOneCanvasUntilTheBoardsClockMoves(_ rig: BoardRig, _ what: String, file: StaticString = #filePath, line: UInt = #line) {
+        rig.settle(2.4)
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: false),
+                       "\(what): the board split before its transition ran on its own clock", file: file, line: line)
+    }
+
+    /// After a change: tick the board's own clock through its transitions (`advance` seconds), wait `wait` seconds of
+    /// real time, then the board is split again, its base was redrawn (when the change touches the base), base plus live
+    /// is the one-canvas frame, and the base is the current frame (`assertBaseIsCurrent`).
+    @MainActor func settleSplit(_ rig: BoardRig, _ what: String, baseDraws: inout Int, advance: Double = 0, wait: Double = 0.6,
+                                redrawsBase: Bool = true, file: StaticString = #filePath, line: UInt = #line) throws {
+        tick(rig, advance)
         rig.settle(wait)
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "\(what): split again", file: file, line: line)
         if redrawsBase { XCTAssertGreaterThan(rig.probe.baseDraws, baseDraws, "\(what): the base was not redrawn", file: file, line: line) }
         try assertSplit(rig, what, file: file, line: line)
+        try assertBaseIsCurrent(rig, what, file: file, line: line)
         baseDraws = rig.probe.baseDraws
     }
 
@@ -489,18 +623,41 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertEqual(rig.probe.baseDraws, base, "a tick redrew the base")
         XCTAssertGreaterThan(rig.probe.liveDraws, live + 3, "the live layer ticks")
         try assertSplit(rig, "after ticks")
-        // Ticks past the end of the first appearance's draw-on (the last item ends 0.95 s in).
+        // Ticks past the end of the first appearance's draw-on (the last item ends 0.95 s in). When it ends, the board
+        // splits once more: exactly one base redraw, after which the base caches the static prefix drawn in full. (Before,
+        // every item stayed in the live layer, redrawn on every tick, for the rest of the playback.)
         for _ in 0..<18 { rig.advance(1.0 / 30); rig.settle(0.05) }
-        XCTAssertEqual(rig.probe.baseDraws, base, "a tick redrew the base")
+        XCTAssertEqual(rig.probe.baseDraws, base + 1, "the end of the draw-on repartitions the board exactly once")
+        XCTAssertEqual(try XCTUnwrap(lastBase(rig)), ["zone", "floor"], "after the draw-on: the static prefix is in the base")
+        base = rig.probe.baseDraws
         try assertSplit(rig, "after the draw-on")
+        try assertBaseIsCurrent(rig, "after the draw-on")
+        // The cost after the repartition: ticks redraw only the live layer, which leaves the static prefix out.
+        let afterDrawOn = rig.probe.liveDraws
+        for _ in 0..<12 { rig.advance(1.0 / 30); rig.settle(0.05) }
+        XCTAssertEqual(rig.probe.baseDraws, base, "a tick after the repartition redrew the base")
+        XCTAssertGreaterThan(rig.probe.liveDraws, afterDrawOn + 3, "the live layer ticks")
+        XCTAssertEqual(rig.probe.draws.last?.layer, .live(["zone", "floor"]), "each tick draws the live layer without the static prefix")
+        try assertSplit(rig, "ticks after the draw-on")
 
-        // A new revision that moves a base item. The base is drawn again, now with the items drawn in full.
+        // A new revision that moves a base item. Until the board's clock runs the blend, the board draws one canvas;
+        // then the base is drawn again with the floor where the revision put it.
         try rig.patch(#"{"v":1,"ops":[{"op":"set","id":"floor","key":"to","value":[11,2]}]}"#)
-        try settleSplit(rig, "revision", baseDraws: &base)
-        XCTAssertEqual(try XCTUnwrap(lastBase(rig)), ["zone", "floor"], "revision: the static prefix is in the base")
-        // A step (the board's Next button), which zooms the camera.
+        assertOneCanvasUntilTheBoardsClockMoves(rig, "revision")
+        try settleSplit(rig, "revision", baseDraws: &base, advance: 1.5)
+        let revised = try lastBaseDraw(rig)
+        XCTAssertEqual(revised.ids, ["zone", "floor"], "revision: the static prefix is in the base")
+        XCTAssertEqual(try item("floor", revised.draw.input).pts.last, MGPoint(11, 2), "revision: the base has the revised floor")
+        // A step (the board's Next button), which zooms the camera: one canvas until the board's clock runs the move,
+        // then a base drawn with the step's camera.
         try XCTUnwrap(rig.probe.go)(1)
-        try settleSplit(rig, "step", baseDraws: &base)
+        assertOneCanvasUntilTheBoardsClockMoves(rig, "step")
+        try settleSplit(rig, "step", baseDraws: &base, advance: 1.5)
+        let stepped = try lastBaseDraw(rig)
+        let s = try XCTUnwrap(rig.controller.scene)
+        let size = stepped.draw.size
+        assertViewport(stepped.draw.input.viewport, MGViewport(size: size, width: s.width, height: s.height, camera: s.steps[1].camera).resized(to: size),
+                       "step: the base has the step's camera")
         // The viewport: a larger window.
         rig.resize(CGSize(width: 700, height: 640))
         try settleSplit(rig, "viewport", baseDraws: &base, wait: 0.6)
@@ -529,6 +686,34 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertEqual(rig.selection, "dot", "a live-layer item is selected through the split")
     }
 
+    /// A `.bounded` board: a leaving item fades out from opacity 1, which `MGCanvasLayers.settling` does not count, so
+    /// the board draws one canvas until the fade has ended on its own clock, then splits with the item gone.
+    @MainActor func testTheBoundedSplitBoardWaitsForAFadingExit() throws {
+        let rig = BoardRig(try scene(), style: .bounded)
+        defer { rig.close() }
+        rig.settle(2.4)
+        tick(rig, 1.2)                                        // past the first appearance's draw-on
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true))
+        XCTAssertEqual(try XCTUnwrap(lastBase(rig)), ["zone", "floor"], "drawn in full: the static prefix is in the base")
+        var base = rig.probe.baseDraws
+
+        // The zone leaves: on the board's clock its fade has not started, so it is still opaque.
+        try rig.patch(#"{"v":1,"ops":[{"op":"remove","id":"zone"}]}"#)
+        assertOneCanvasUntilTheBoardsClockMoves(rig, "fading exit")
+        XCTAssertEqual(try rig.frame(Self.size).opacity["zone"], 1, "the leaving zone starts opaque")
+        tick(rig, 0.3)
+        XCTAssertEqual(rig.probe.decisions.last?.layered, false, "halfway through the fade: one canvas")
+        let mid = try XCTUnwrap(rig.probe.draws.last)
+        XCTAssertEqual(mid.layer, .all, "halfway through the fade: one canvas")
+        XCTAssertTrue((0.01...0.99).contains(mid.input.opacity["zone"] ?? -1), "the zone is fading: \(mid.input.opacity)")
+
+        // The fade ends at 0.6 s: the board splits, and the base no longer holds the zone.
+        try settleSplit(rig, "after the fade", baseDraws: &base, advance: 0.5)
+        let after = try lastBaseDraw(rig)
+        XCTAssertEqual(after.ids, ["floor"], "after the fade: the zone is gone from the base")
+        XCTAssertNil(after.draw.input.items.first { $0.id == "zone" }, "after the fade: the zone is not drawn")
+    }
+
     // MARK: Accessibility (properties only; no VoiceOver run)
 
     /// The accessibility label of the control `Text` the rig hosts below the board in the accessibility test.
@@ -552,8 +737,9 @@ final class BoardTransitionHostTests: XCTestCase {
         }
         assertBoardElement(rig, value: "First step.", "first step")
 
-        // The board's step handler (its Next button).
+        // The board's step handler (its Next button). The board splits again once its own clock has run the camera move.
         try XCTUnwrap(rig.probe.go)(1)
+        tick(rig, 1.5)
         rig.settle(2.4)
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "the board is split again")
         assertBoardElement(rig, value: "Second step.", "after the step")
