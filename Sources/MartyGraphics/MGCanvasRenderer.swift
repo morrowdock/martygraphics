@@ -19,6 +19,9 @@ public struct MGRenderInput {
     /// explainer beat's `highlight` of `t.r2` or `t.r1c0`. Presentation only; empty by default.
     public var tableRows: [String: Set<Int>] = [:]
     public var tableCells: [String: Set<Int>] = [:]
+    /// Opacity per item id, 0...1 (a step transition fading items in or out, `MGStepTransition`); missing means
+    /// opaque. It multiplies the item's marks and its label.
+    public var opacity: [String: Double] = [:]
     /// Selection uses the same resolved positions and viewport that are handed to the renderer.
     func hit(_ point: CGPoint, among selectable: Set<String>? = nil) -> MGItem? {
         MGLayout.hit(point, items: items, viewport: viewport, among: selectable)
@@ -35,8 +38,25 @@ public enum MGCanvasRenderer {
                                        .pulley: 3, .edge: 3, .body: 4, .node: 4, .array: 4, .vector: 5, .highlight: 6, .text: 7, .table: 4, .region: 0,
                                        .function: 0, .field: 0]
 
-    public static func draw(_ input: MGRenderInput, in ctx: GraphicsContext) {
+    /// Draw order rank of an item (lower first).
+    static func rank(_ item: MGItem) -> Int { layer[item.kind] ?? 0 }
+
+    /// Items in draw order: by rank, then in the given order (an explicit stable order, so equal ranks never swap).
+    static func ordered(_ items: [MGItem]) -> [MGItem] {
+        items.enumerated().sorted { a, b in
+            let ra = rank(a.element), rb = rank(b.element)
+            return ra != rb ? ra < rb : a.offset < b.offset
+        }.map(\.element)
+    }
+
+    public static func draw(_ input: MGRenderInput, in ctx: GraphicsContext) { draw(input, in: ctx, layer: .all) }
+
+    /// Draws one frame, or one layer of it (`MGCanvasLayer`): `.base(ids)` under `.live(ids)` composites to the frame
+    /// that `.all` draws, so a host can keep the base (the board, the grid and the static items below every moving
+    /// item, `MGCanvasLayers`) and redraw only the live layer while motion plays.
+    public static func draw(_ input: MGRenderInput, in ctx: GraphicsContext, layer selection: MGCanvasLayer) {
         if let plan = input.scene.layer2d {
+            guard selection.drawsBoard else { return }
             let frame = input.time.isFinite ? min(plan.durationFrames - 1, max(0, Int((min(60, max(0, input.time)) * 30).rounded(.down)))) : 0
             if let image = try? MGProgrammaticVideo.frame(frame, in: plan) {
                 ctx.draw(Image(decorative: image, scale: 1), in: CGRect(origin: .zero, size: input.viewport.size))
@@ -46,9 +66,11 @@ public enum MGCanvasRenderer {
         let vp = input.viewport, theme = input.theme, size = vp.size
         // Board.
         let rect = CGRect(origin: .zero, size: size)
-        ctx.fill(Path(roundedRect: rect, cornerRadius: 0),
-                 with: .linearGradient(Gradient(colors: [theme.backgroundTop, theme.backgroundBottom]), startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))
-        if !input.scene.is3D { grid(ctx, vp, input.scene, theme) }
+        if selection.drawsBoard {
+            ctx.fill(Path(roundedRect: rect, cornerRadius: 0),
+                     with: .linearGradient(Gradient(colors: [theme.backgroundTop, theme.backgroundBottom]), startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))
+            if !input.scene.is3D { grid(ctx, vp, input.scene, theme) }
+        }
 
         let byID = Dictionary(input.items.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         var labels: [MGLayout.LabelRequest] = []
@@ -61,22 +83,33 @@ public enum MGCanvasRenderer {
         let groups = Dictionary(grouping: fanned) { "\($0.0.ref!)|\($0.1)" }.mapValues { $0.map(\.0) }
         for (_, g) in groups where g.count > 1 { for (k, v) in g.enumerated() { fan[v.id] = (CGFloat(k) - CGFloat(g.count - 1) / 2) * 11 } }
 
-        for item in input.items.sorted(by: { (layer[$0.kind] ?? 0) < (layer[$1.kind] ?? 0) }) {
+        for item in ordered(input.items) {
+            let fade = min(1, max(0, input.opacity[item.id] ?? 1))
+            guard fade > 0.001 else { continue }
+            let drawn = selection.draws(item.id)
+            // The base layer skips everything else; the live layer still lays out a base item's label and obstacle.
+            if !drawn && !selection.drawsOverlays { continue }
+            var ctx = ctx
+            if fade < 1 { ctx.opacity *= fade }
+            if !drawn { ctx.clip(to: Path()) }
             let p = ease(input.appear[item.id] ?? 1)
             let color = theme.color(item.color)
             // A selected/emphasised object's own label takes the emphasis colour (the object keeps its semantic colour),
             // so ring and words read as one.
             let labelColor = input.emphasis.contains(item.id) ? theme.color(.yellow) : color
             func label(_ text: String?, at anchor: CGPoint, dir: CGVector, alpha: Double = 1) {
-                guard let text, !text.isEmpty, alpha > 0.01 else { return }
+                guard let text, !text.isEmpty, alpha * fade > 0.01 else { return }
                 let s = ctx.resolve(Text(text).font(.system(size: 13, weight: .semibold))).measure(in: CGSize(width: 400, height: 60))
-                labels.append(.init(id: item.id + "#" + String(labels.count), anchor: anchor, direction: dir, size: CGSize(width: s.width + 14, height: s.height + 8)))
-                labelStyle[labels.last!.id] = (text, labelColor, alpha)
+                // Whole-point sizes: with the placer's whole-point origins every label edge sits on the pixel grid.
+                labels.append(.init(id: item.id + "#" + String(labels.count), anchor: anchor, direction: dir,
+                                    size: CGSize(width: (s.width + 14).rounded(.up), height: (s.height + 8).rounded(.up))))
+                labelStyle[labels.last!.id] = (text, labelColor, alpha * fade)
             }
             switch item.kind {
             case .body:
                 guard let c = item.pts.first.map(vp.point) else { continue }
-                let pop = CGFloat(MGTimeline.spring(p * 0.9) * (p >= 1 ? 1 : 1))
+                // Bounded pop (no overshoot) that lands exactly on the body's size.
+                let pop = CGFloat(MGEasing.Curve.settle.at(p))
                 let side = vp.length(item.n("size", 1)) * max(0.01, pop)
                 var body = ctx
                 body.translateBy(x: c.x, y: c.y); body.rotate(by: .degrees(-item.n("angle")))
@@ -191,7 +224,7 @@ public enum MGCanvasRenderer {
                     let t = ctx.resolve(Text(s).font(.system(size: 15, weight: .semibold)).foregroundColor(theme.ink))
                     let m = t.measure(in: CGSize(width: vp.size.width * 0.8, height: 200))
                     let box = CGRect(x: at.x - m.width / 2 - 12, y: at.y - m.height / 2 - 7, width: m.width + 24, height: m.height + 14)
-                    var c = ctx; c.opacity = opacity
+                    var c = ctx; c.opacity *= opacity
                     c.fill(Path(roundedRect: box, cornerRadius: 12), with: .color(theme.labelFill))
                     c.stroke(Path(roundedRect: box, cornerRadius: 12), with: .color(color.opacity(0.9)), lineWidth: 1.5)
                     c.fill(Path(CGRect(x: box.minX + 6, y: box.minY + 7, width: 3, height: box.height - 14)), with: .color(color))
@@ -200,12 +233,12 @@ public enum MGCanvasRenderer {
                 } else if item.has("code") {
                     // Monospaced and left-aligned at `at`, so indented lines stack into a readable listing.
                     let t = ctx.resolve(Text(s).font(.system(size: 14, weight: .medium, design: .monospaced)).foregroundColor(color))
-                    var c = ctx; c.opacity = opacity; c.draw(t, at: at, anchor: .leading)
+                    var c = ctx; c.opacity *= opacity; c.draw(t, at: at, anchor: .leading)
                     let m = t.measure(in: CGSize(width: 600, height: 100))
                     obstacles.append(CGRect(x: at.x, y: at.y - m.height / 2, width: m.width, height: m.height))
                 } else {
                     let t = ctx.resolve(Text(s).font(.system(size: item.has("title") ? 20 : 14, weight: item.has("title") ? .bold : .medium)).foregroundColor(color))
-                    var c = ctx; c.opacity = opacity; c.draw(t, at: at)
+                    var c = ctx; c.opacity *= opacity; c.draw(t, at: at)
                     let m = t.measure(in: CGSize(width: 600, height: 100))
                     obstacles.append(CGRect(x: at.x - m.width / 2, y: at.y - m.height / 2, width: m.width, height: m.height))
                 }
@@ -233,9 +266,9 @@ public enum MGCanvasRenderer {
             case .region:
                 guard item.pts.count >= 3 else { continue }
                 var shape = Path(); shape.addLines(item.pts.map(vp.point)); shape.closeSubpath()
-                var layer = ctx; layer.opacity = p
-                layer.fill(shape, with: .color(color.opacity(0.20)))
-                layer.stroke(shape, with: .color(color.opacity(0.85)), style: StrokeStyle(lineWidth: 1.8, dash: item.has("dashed") ? [6, 5] : []))
+                var zone = ctx; zone.opacity *= p
+                zone.fill(shape, with: .color(color.opacity(0.20)))
+                zone.stroke(shape, with: .color(color.opacity(0.85)), style: StrokeStyle(lineWidth: 1.8, dash: item.has("dashed") ? [6, 5] : []))
                 if let r = MGLayout.bounds(item, in: input.items, vp) { label(item.label, at: CGPoint(x: r.midX, y: r.minY), dir: CGVector(dx: 0, dy: -1)) }
             case .table:
                 // A table with no data row is not drawn (`MGItem.isEmptyTable`): no header-only grid before its first fill.
@@ -245,7 +278,7 @@ public enum MGCanvasRenderer {
                     obstacles.append(r)
                     if let l = item.label {
                         // The caption fades in with the grid instead of appearing before any row.
-                        var caption = ctx; caption.opacity = p
+                        var caption = ctx; caption.opacity *= p
                         caption.draw(Text(l).font(.system(size: 13, weight: .bold)).foregroundColor(theme.ink), at: CGPoint(x: r.minX + 2, y: r.minY - 12), anchor: .leading)
                     }
                 }
@@ -259,7 +292,7 @@ public enum MGCanvasRenderer {
                 obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
             case .node:
                 guard let c = item.pts.first.map(vp.point) else { continue }
-                let r = vp.length(item.n("r", 0.5)) * CGFloat(MGTimeline.spring(p * 0.9))
+                let r = vp.length(item.n("r", 0.5)) * CGFloat(MGEasing.Curve.settle.at(p))   // bounded pop
                 let disc = Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
                 ctx.drawLayer { l in
                     l.addFilter(.shadow(color: color.opacity(0.5), radius: 8))
@@ -281,6 +314,8 @@ public enum MGCanvasRenderer {
                 label(item.label, at: CGPoint(x: (s.x + e.x) / 2, y: (s.y + e.y) / 2), dir: CGVector(dx: -uy, dy: ux))
             }
         }
+        // The base layer ends with the items: rings, markers, the focus ring and labels belong to the live layer.
+        guard selection.drawsOverlays else { return }
 
         // Emphasis rings, then numbered markers (object list ↔ board), drawn under labels.
         for id in input.emphasis.sorted() {
@@ -308,12 +343,20 @@ public enum MGCanvasRenderer {
             ctx.stroke(Path(roundedRect: box, cornerRadius: 10), with: .color(theme.ink.opacity(pulse)), style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
         }
 
-        let placed = MGLayout.place(labels, obstacles: obstacles.filter { !$0.isNull }, bounds: rect.insetBy(dx: 4, dy: 4))
+        // Collision-free placement; a label pushed away from its anchor gets a leader back to it (`MGLabelLayout`).
+        let placed = MGLabelLayout.place(labels, obstacles: obstacles.filter { !$0.isNull }, bounds: rect.insetBy(dx: 4, dy: 4))
         for r in labels {
-            guard let box = placed[r.id], let (text, color, alpha) = labelStyle[r.id] else { continue }
+            guard let placement = placed[r.id], let (text, color, alpha) = labelStyle[r.id] else { continue }
             var c = ctx; c.opacity = alpha
+            if let l = placement.leader {
+                var line = Path(); line.move(to: l.from); line.addLine(to: l.to)
+                c.stroke(line, with: .color(color.opacity(0.75)), style: StrokeStyle(lineWidth: 1, lineCap: .round))
+                c.fill(Path(ellipseIn: CGRect(x: l.from.x - 2, y: l.from.y - 2, width: 4, height: 4)), with: .color(color.opacity(0.9)))
+            }
+            let box = placement.box
             c.fill(Path(roundedRect: box, cornerRadius: 7), with: .color(theme.labelFill))
-            c.stroke(Path(roundedRect: box, cornerRadius: 7), with: .color(color.opacity(0.55)), lineWidth: 1)
+            // A 1-point border inset by half a point: on whole-point boxes it covers whole pixels at 1x, 2x and 3x.
+            c.stroke(Path(roundedRect: box.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 6.5), with: .color(color.opacity(0.55)), lineWidth: 1)
             c.draw(Text(text).font(.system(size: 13, weight: .semibold)).foregroundColor(theme.ink), at: CGPoint(x: box.midX, y: box.midY))
         }
     }
@@ -337,7 +380,8 @@ public enum MGCanvasRenderer {
         return CGPoint(x: r.minX + 2, y: r.minY + 2)
     }
 
-    static func ease(_ p: Double) -> Double { let x = min(1, max(0, p)); return 1 - pow(1 - x, 3) }
+    /// Draw-on easing (cubic ease-out, bounded).
+    static func ease(_ p: Double) -> Double { MGEasing.Curve.easeOut.at(p) }
 
     static func grid(_ ctx: GraphicsContext, _ vp: MGViewport, _ scene: MGScene, _ theme: MGTheme) {
         var dots = Path()
@@ -345,26 +389,30 @@ public enum MGCanvasRenderer {
         var x = 0.0
         while x <= scene.width {
             var y = 0.0
-            while y <= scene.height { let p = vp.point(MGPoint(x, y)); dots.addEllipse(in: CGRect(x: p.x - 1, y: p.y - 1, width: 2, height: 2)); y += stepWorld }
+            // Dot centres on whole points, so every 2-point dot covers whole pixels at 1x, 2x and 3x.
+            while y <= scene.height {
+                let p = vp.point(MGPoint(x, y))
+                dots.addEllipse(in: CGRect(x: p.x.rounded() - 1, y: p.y.rounded() - 1, width: 2, height: 2)); y += stepWorld
+            }
             x += stepWorld
         }
         ctx.fill(dots, with: .color(theme.grid))
     }
 
+    /// An arrow with `MGArrowGeometry`: the head scales with the line and never outgrows a short arrow (draw-on starts
+    /// at length 0), the shaft ends under the head, and a dashed shaft ends on a whole dash.
     static func arrow(_ ctx: GraphicsContext, from a: CGPoint, to b: CGPoint, color: Color, dashed: Bool, width: CGFloat, glow: Bool = true) {
-        let d = hypot(b.x - a.x, b.y - a.y); guard d > 0.5 else { return }
-        let ux = (b.x - a.x) / d, uy = (b.y - a.y) / d
-        let head = min(14, max(7, d * 0.35)) * (width > 2.5 ? 1 : 0.8)
-        let base = CGPoint(x: b.x - ux * head, y: b.y - uy * head)
-        var shaft = Path(); shaft.move(to: a); shaft.addLine(to: base)
+        guard let g = MGArrowGeometry.make(from: a, to: b, width: width) else { return }
+        var shaft = Path(); shaft.move(to: g.tail); shaft.addLine(to: g.shaftEnd)
         var tip = Path()
-        tip.move(to: b)
-        tip.addLine(to: CGPoint(x: base.x - uy * head * 0.55, y: base.y + ux * head * 0.55))
-        tip.addLine(to: CGPoint(x: base.x + uy * head * 0.55, y: base.y - ux * head * 0.55))
+        tip.move(to: g.tip); tip.addLine(to: g.left); tip.addLine(to: g.right)
         tip.closeSubpath()
+        let phase = dashed ? MGArrowGeometry.dashPhase(length: g.shaftLength, dash: 7, gap: 5) : 0
         ctx.drawLayer { l in
             if glow { l.addFilter(.shadow(color: color.opacity(0.75), radius: 6)) }
-            l.stroke(shaft, with: .color(color), style: StrokeStyle(lineWidth: width, lineCap: .round, dash: dashed ? [7, 5] : []))
+            if g.drawsShaft {
+                l.stroke(shaft, with: .color(color), style: StrokeStyle(lineWidth: width, lineCap: .round, dash: dashed ? [7, 5] : [], dashPhase: phase))
+            }
             l.fill(tip, with: .color(color))
         }
     }
@@ -421,7 +469,9 @@ public enum MGCanvasRenderer {
         ctx.fill(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.labelFill.opacity(0.5)))
         var g = Path()
         for k in 1..<4 {
-            let fx = frame.minX + frame.width * CGFloat(k) / 4, fy = frame.minY + frame.height * CGFloat(k) / 4
+            // 1-point grid lines on the half-point grid: whole pixels at 1x, 2x and 3x.
+            let fx = (frame.minX + frame.width * CGFloat(k) / 4).rounded(.down) + 0.5
+            let fy = (frame.minY + frame.height * CGFloat(k) / 4).rounded(.down) + 0.5
             g.move(to: CGPoint(x: fx, y: frame.minY)); g.addLine(to: CGPoint(x: fx, y: frame.maxY))
             g.move(to: CGPoint(x: frame.minX, y: fy)); g.addLine(to: CGPoint(x: frame.maxX, y: fy))
         }
@@ -652,23 +702,27 @@ public enum MGCanvasRenderer {
         let cw = item.n("cw", 1.6), rh = item.n("rh", 0.7)
         let topLeft = vp.point(c + MGPoint(-cw * Double(cols) / 2, rh * Double(rows) / 2))
         let w = vp.length(cw), h = vp.length(rh), marked = Set(item.marked)
+        // Cell edges on whole points; the 1-point cell lines sit half a point off them, so they cover whole pixels at
+        // 1x, 2x and 3x and two neighbouring cells share one line.
+        func xEdge(_ k: Int) -> CGFloat { (topLeft.x + w * CGFloat(k)).rounded() }
+        func yEdge(_ r: Int) -> CGFloat { (topLeft.y + h * CGFloat(r)).rounded() }
         for r in 0..<rows {
             let appear = min(1, max(0, p * Double(rows) - Double(r) * 0.6)); guard appear > 0 else { continue }
-            var l = ctx; l.opacity = appear
+            var l = ctx; l.opacity *= appear
             let header = r == 0 && item.has("header")
             for k in 0..<cols {
                 let i = r * cols + k; guard i < item.list.count else { continue }
-                let cell = CGRect(x: topLeft.x + w * CGFloat(k), y: topLeft.y + h * CGFloat(r), width: w, height: h)
+                let cell = CGRect(x: xEdge(k), y: yEdge(r), width: xEdge(k + 1) - xEdge(k), height: yEdge(r + 1) - yEdge(r))
                 let fill = marked.contains(i) ? theme.color(.good).opacity(0.40) : header ? color.opacity(0.28) : color.opacity(0.07)
                 l.fill(Path(cell.insetBy(dx: 1, dy: 1)), with: .color(fill))
-                l.stroke(Path(cell), with: .color(theme.subtleInk.opacity(0.45)), lineWidth: 1)
+                l.stroke(Path(cell.offsetBy(dx: 0.5, dy: 0.5)), with: .color(theme.subtleInk.opacity(0.45)), lineWidth: 1)
                 let size = max(10, min(16, h * 0.42))
                 l.draw(Text(item.list[i]).font(.system(size: size, weight: header ? .bold : .medium, design: .rounded)).foregroundColor(theme.ink),
                        at: CGPoint(x: cell.midX, y: cell.midY))
             }
         }
         // One rounded border around the whole grid, faded with the draw-on progress.
-        ctx.stroke(Path(roundedRect: CGRect(x: topLeft.x, y: topLeft.y, width: w * CGFloat(cols), height: h * CGFloat(rows)), cornerRadius: 4),
+        ctx.stroke(Path(roundedRect: CGRect(x: xEdge(0), y: yEdge(0), width: xEdge(cols) - xEdge(0), height: yEdge(rows) - yEdge(0)), cornerRadius: 4),
                    with: .color(color.opacity(0.8 * p)), lineWidth: 1.5)
         // Emphasised rows and cells: a glowing ring in the emphasis colour (the same colour as item emphasis).
         let glow = theme.color(.yellow)
@@ -697,7 +751,7 @@ public enum MGCanvasRenderer {
             guard appear > 0 else { continue }
             let r = CGRect(x: left.x + side * CGFloat(k) + 2, y: left.y - side / 2 + 2, width: side - 4, height: side - 4)
             let fill = marked.contains(k) ? theme.color(.good) : color
-            var l = ctx; l.opacity = appear
+            var l = ctx; l.opacity *= appear
             l.fill(Path(roundedRect: r, cornerRadius: 8), with: .color(fill.opacity(marked.contains(k) ? 0.45 : 0.18)))
             l.stroke(Path(roundedRect: r, cornerRadius: 8), with: .color(fill.opacity(0.9)), lineWidth: 1.8)
             l.draw(Text(v).font(.system(size: max(11, min(20, side * 0.38)), weight: .bold, design: .rounded)).foregroundColor(theme.ink), at: CGPoint(x: r.midX, y: r.midY))

@@ -14,7 +14,9 @@ Options:
   --ffmpeg PATH               ffmpeg executable for NVENC or ProRes (default ffmpeg on PATH)
   --nvenc                     encode opaque MP4 with h264_nvenc
   --backdrop studio|shadow    studio cyclorama (default) or a shadow catcher over a plain background
-  --frames A-B                render only frames A..B (inclusive); the whole export is still verified
+  --frames A-B                render only frames A..B (inclusive); the whole export is still verified.
+                              Default: every frame, or the loop frames of a seamless export (its closing
+                              frame is frame 0 again and is not rendered)
   --no-motion-blur            frame-exact stills (motion blur is on by default)
   --no-burn-in                no burned-in provenance caption on the MP4 and poster
   --poster-frame N            poster frame (default: manifest posterFrame, else the middle frame)
@@ -49,6 +51,7 @@ import bpy  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 from mgrender import busyguard, device, faststart, frames, lookdev
+from mgrender import loop as loops  # noqa: E402
 from mgrender.ffmpeg import supports_encoder  # noqa: E402
 from mgrender import manifest as mf  # noqa: E402
 
@@ -406,6 +409,10 @@ def run(argv):
 
     scene = bpy.context.scene
     fps, count = checked["fps"], checked["frame_count"]
+    loop = checked.get("loop")
+    if loops.is_seamless(loop):
+        log(f"seamless loop: {loop['frames']} frames, {loop['input_turns']} input turns"
+            + (", closing frame keyed" if loop["closing"] else ""))
     scene.render.fps, scene.render.fps_base = fps, 1.0
     scene.frame_start, scene.frame_end = 0, count - 1
     before = set(bpy.data.objects)
@@ -443,7 +450,9 @@ def run(argv):
     cam_choice = args["camera"] or ("export" if not prefer_auto and checked["manifest"].get("cameras") else "auto")
     cams = {ob.name: ob for ob in imported if ob.type == "CAMERA"}
     if cam_choice == "auto":
-        cam, cam_info, view_dir = lookdev.auto_orbit_camera(scene, lo, hi, 0, count - 1, preset, args["turntable"])
+        # A seamless loop: the turntable completes its turn, or the camera sways out and back, over the loop frames.
+        cam, cam_info, view_dir = lookdev.auto_orbit_camera(scene, lo, hi, 0, loops.camera_end_frame(loop, count), preset,
+                                                            args["turntable"], sway_frames=loops.sway_frames(loop))
     else:
         name = (checked["manifest"].get("cameras") or [{}])[0].get("name") if cam_choice == "export" else cam_choice
         if name not in cams:
@@ -471,7 +480,8 @@ def run(argv):
         scene.cycles.film_transparent_glass = True   # glass over a transparent film must not darken
         encode_bg = SHADOW_BG
     lookdev.key_light(scene, (lo + hi) / 2, size, view_dir)
-    lookdev.configure_render(scene, preset, resolution, dev, args["motion_blur"], args["samples"])
+    lookdev.configure_render(scene, preset, resolution, dev, args["motion_blur"], args["samples"],
+                             blur_position=loops.blur_position(loop))
     lookdev.provenance_metadata(scene, label)
 
     # Proof 2: look-dev changed no imported transform, animation or vertex.
@@ -484,7 +494,7 @@ def run(argv):
     log("look-dev check: imported transforms and vertices unchanged")
 
     # Render the PNG master frames.
-    first, last = args["frames"] or (0, count - 1)
+    first, last = args["frames"] or loops.render_range(loop, count)
     if not (0 <= first <= last < count):
         raise Refused(2, f"--frames must be within 0-{count - 1}")
     # A resumed run keeps only frames of this exact export and these pixel settings (frames.py).
@@ -493,6 +503,7 @@ def run(argv):
                 "view_transform": scene.view_settings.view_transform, "look": scene.view_settings.look,
                 "motion_blur": args["motion_blur"], "backdrop": args["backdrop"], "camera": args["camera"],
                 "turntable": args["turntable"], "alpha": args["alpha"], "framing_version": 2,
+                "seamless_loop": loops.is_seamless(loop),
                 "blender": bpy.app.version_string, "lighting": frames.lighting_identity(hdri, sha)}
     reason = frames.prepare(frames_dir, frames.identity(checked, sha(checked["manifest_path"]), settings),
                             args["resume"])
@@ -589,7 +600,8 @@ def run(argv):
         "samples_max": scene.cycles.samples, "adaptive_threshold": scene.cycles.adaptive_threshold,
         "denoiser": scene.cycles.denoiser, "view_transform": scene.view_settings.view_transform,
         "look": scene.view_settings.look, "motion_blur": args["motion_blur"], "backdrop": args["backdrop"],
-        "alpha": args["alpha"], "turntable": args["turntable"],
+        "alpha": args["alpha"], "turntable": args["turntable"], "loop": loop,
+        "motion_blur_position": scene.render.motion_blur_position,
         "camera": cam_info, "materials": mat_report, "motion_check": motion,
         "timing_s": {"per_frame": {str(k): round(v, 3) for k, v in times.items()},
                      "first_frame": round(times[rendered[0]], 3) if rendered else None,

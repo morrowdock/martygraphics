@@ -15,6 +15,9 @@ the source document, not in the `.glb`.
 # Any assembly document: the loop of `marty-solid render` (12 s: one input turn, one orbit, explode and reassemble).
 swift run --package-path Examples/Solid3D marty-solid export-gltf FILE.json NEW_DIR --engine-commit SHA [--fps 10|30] [--size WxH]
 
+# The same, as a loop that repeats without a jump: the exact period of the motion, then a closing frame.
+swift run --package-path Examples/Solid3D marty-solid export-gltf FILE.json NEW_DIR --engine-commit SHA --seamless
+
 # The turbofan and its showcase loop (LP spool one turn, HP spool three turns, the slow orbit swing, 12 s).
 swift run --package-path Examples/Turbofan marty-turbofan --export-gltf NEW_DIR --engine-commit SHA [--fps 30]
 ```
@@ -74,6 +77,13 @@ frame, or more than 14 400), `gltf.cameras` (an animated camera without one came
 `gltf.sourceID` (not a short identifier: a letter or digit, then up to 63 letters, digits, `.`, `_` or `-`),
 `gltf.name`, `gltf.engineCommit` (not 40 lowercase hex digits), `gltf.nodeName` (a node name that is not unique or is
 longer than 63 bytes, Blender's object-name limit) and `gltf.transform` (a part transform that is not rigid).
+
+`--seamless` (`MGSolidGLTF.seamlessLoop`) plays the exact period of the motion instead of one input turn, so the loop
+has no jump at the wrap (the robot-joint gearbox needs 49/6 input turns, 490 frames at 30 fps), keys one closing frame
+after the loop (the same scene as frame 0, with the motion continued) and adds a `loop` object to the manifest
+(`seamless`, `frames`, `closingFrame`, `inputTurns`, `seconds`, `stepsPerFrame`, `joints`); `frameCount` counts the
+closing frame. It also refuses `gltf.loop.<reason>` (`ratio`, `slide`, `mixed`, `period`, `frames`, `check`,
+`options`; see [the engine page](ENGINE.md#seamless-loops)).
 
 ## Limits
 

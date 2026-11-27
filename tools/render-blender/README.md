@@ -262,6 +262,23 @@ numbered PNGs under `frames/` at the fps in `render-report.json`. When ffmpeg ex
 `prores_ks`, the renderer also delivers a ProRes 4444 MOV with alpha. The RGBA
 poster and sequence retain clean pixels, with provenance in the sidecar files.
 
+### Seamless loops
+
+An export from `marty-solid export-gltf --seamless` loops without a seam: its manifest carries a `loop` object
+(`"seamless": true`, `frames`, `closingFrame`) and its glTF holds one key more than the loop, the closing frame (frame
+`frames`: the same scene as frame 0, with the motion continued). `render.py` then (`mgrender/loop.py`):
+
+- renders frames 0 to `frames - 1` unless `--frames` says otherwise (rendering the closing frame would show frame 0
+  twice at the wrap);
+- opens the motion-blur shutter at the frame (`START` instead of `CENTER`), so the last loop frame blurs toward the
+  closing key exactly as frame 0 blurs toward frame 1;
+- completes a `--turntable` turn at frame `frames`, and sways the automatic camera out and back over the loop instead
+  of sweeping one way.
+
+The manifest check refuses a `loop` object that does not fit the frames (for example a closing frame without
+`frameCount = frames + 1`). An export without a `loop` object renders as before. `render-report.json` records the
+`loop` and the `motion_blur_position`.
+
 ### Example mechanisms
 
 The Solid3D models include a parallelogram four-bar with equal input and output

@@ -94,13 +94,30 @@ public enum MGSolidGLTF {
         public var aspect: Double
         /// One line on where the motion comes from (for the manifest).
         public var about: String
+        /// A seamless loop (`seamlessLoop`): nil for every other timeline.
+        public var loop: Loop?
 
         public init(fps: Int, poses: [MGPoseParameters], cameras: [MGSolidCamera] = [], cameraName: String = "loop",
-                    stills: [NamedCamera] = [], aspect: Double = 1.6, about: String) {
+                    stills: [NamedCamera] = [], aspect: Double = 1.6, about: String, loop: Loop? = nil) {
             self.fps = fps; self.poses = poses; self.cameras = cameras; self.cameraName = cameraName
-            self.stills = stills; self.aspect = aspect; self.about = about
+            self.stills = stills; self.aspect = aspect; self.about = about; self.loop = loop
         }
         public var seconds: Double { Double(poses.count) / Double(max(fps, 1)) }
+    }
+
+    /// The record of a seamless loop (`MGSolidLoop.plan`). Frames 0..<`frames` are the loop; the timeline holds one
+    /// more pose, the closing frame at k = `frames` (the same scene as frame 0, with the motion continued), so an
+    /// offline renderer's motion blur on the last loop frame samples real motion. The manifest's `loop` object.
+    public struct Loop: Equatable, Sendable {
+        public var frames: Int
+        /// Input turns of the loop, exact ("49/6").
+        public var inputTurns: String
+        public var joints: [MGSolidLoop.Joint]
+        /// Largest advance per frame of any part's own pattern, in symmetry steps.
+        public var stepsPerFrame: Double
+        public init(frames: Int, inputTurns: String, joints: [MGSolidLoop.Joint], stepsPerFrame: Double) {
+            self.frames = frames; self.inputTurns = inputTurns; self.joints = joints; self.stepsPerFrame = stepsPerFrame
+        }
     }
 
     /// The loop of `marty-solid render` (`MGSolidRenderPlan`, 12 s: one input turn, one orbit and an
@@ -118,6 +135,40 @@ public enum MGSolidGLTF {
         return Timeline(fps: fps, poses: plan.loop.map(\.params), cameras: cams.loop, cameraName: "loop", stills: stills,
                         aspect: Double(width) / Double(height),
                         about: "marty-solid render loop (MGSolidRenderPlan): \(MGSolidRenderPlan.loopSeconds) s, one input turn, one orbit, explode and reassemble")
+    }
+
+    /// A loop that repeats without a jump (`MGSolidLoop.plan`, docs/ENGINE.md "Seamless loops"): the exact period of
+    /// the motion (every part looks the same again; the robot-joint reducer needs 49/6 input turns), sampled with frame
+    /// k at k / n of it, then the closing frame. One orbit and the render loop's explode beat, the plan's loop camera
+    /// per frame (closing frame included) and the stills' cameras, framed for `width` × `height` pixels. Refusals:
+    /// `gltf.fps`, `gltf.size`, `gltf.frames`, and `gltf.loop.<reason>` with an `MGSolidLoop.Refusal.Reason` (for
+    /// example `gltf.loop.period` when the period is longer than `options.maxTurns`, or `gltf.loop.slide`).
+    public static func seamlessLoop(_ c: Checked, fps: Int = defaultFPS, width: Int = 1280, height: Int = 800,
+                                    options: MGSolidLoop.Options = MGSolidLoop.Options()) throws -> Timeline {
+        guard MGSolidRenderPlan.loopRates.contains(fps) else { throw Refusal("gltf.fps") }
+        guard width > 0, height > 0, width <= 16384, height <= 16384 else { throw Refusal("gltf.size") }
+        let doc = c.document
+        let plan: MGSolidLoop.Plan
+        switch MGSolidLoop.plan(doc, fps: fps, options: options) {
+        case .success(let p): plan = p
+        case .failure(let r): throw Refusal("gltf.loop." + r.reason.rawValue, part: r.part)
+        }
+        guard plan.frames + 1 <= maxFrames else { throw Refusal("gltf.frames") }
+        let shots = plan.shots + [plan.closing]
+        let aspect = Double(width) / Double(height)
+        // Cameras that repeat with the loop: framed at the start input, so the closing camera is the first camera.
+        let cameras = MGSolidLoop.cameras(doc, shots: shots, aspect: aspect).cameras
+        let still = MGSolidRenderPlan(doc, sourceName: "", source: c.source, loop: false, loopRate: fps)
+        let stillCameras = still.cameras(doc, width: Double(width), height: Double(height)).stills
+        let stills = zip(still.stills, stillCameras).map { shot, cam in
+            NamedCamera(name: shot.file.hasSuffix(".png") ? String(shot.file.dropLast(4)) : shot.file, camera: cam)
+        }
+        let record = Loop(frames: plan.frames, inputTurns: plan.period.turns.description, joints: plan.period.joints,
+                          stepsPerFrame: plan.stepsPerFrame)
+        return Timeline(fps: fps, poses: shots.map(\.params), cameras: cameras, cameraName: "loop", stills: stills, aspect: aspect,
+                        about: "seamless loop (MGSolidLoop): \(record.inputTurns) input turns over \(plan.frames) frames, one orbit, "
+                            + "explode and reassemble; the last pose is the closing frame (frame 0 again, the motion continued)",
+                        loop: record)
     }
 
     // MARK: Export
@@ -601,7 +652,7 @@ extension MGSolidGLTF {
             var e = engine?.objectValue ?? [:]
             e["name"] = .string(MGEngine.name)
             e["commit"] = .string(engineCommit)
-            let o: [String: MGJSON] = [
+            var o: [String: MGJSON] = [
                 "format": .string(MGSolidGLTF.manifestFormat),
                 "engine": .object(e),
                 "scene": .object(["id": .string(sourceID), "title": .string(doc.title)]),
@@ -626,6 +677,16 @@ extension MGSolidGLTF {
                                   .string("Motion is baked per frame (linear keys); there are no joints, drives or constraints in the file.")]),
                 "note": .string("A render of this file is cosmetic. The proof stays in MartyGraphics: the strict check report of the source."),
             ]
+            if let l = t.loop {
+                // A seamless loop: frames 0..<frames loop, the last key is the closing frame (tools/render-blender/README.md).
+                let joints = l.joints.map { j -> MGJSON in
+                    .object(["part": .string(j.part), "rate": j.rate.map { MGJSON.string($0.description) } ?? MGJSON.null,
+                             "symmetry": .number(Double(j.symmetry)), "meshSymmetry": .number(Double(j.meshSymmetry))])
+                }
+                o["loop"] = .object(["seamless": .bool(true), "frames": .number(Double(l.frames)), "closingFrame": .number(Double(l.frames)),
+                                     "inputTurns": .string(l.inputTurns), "seconds": .number(Double(l.frames) / Double(t.fps)),
+                                     "stepsPerFrame": .number(l.stepsPerFrame), "joints": .array(joints)])
+            }
             return .object(o)
         }
     }

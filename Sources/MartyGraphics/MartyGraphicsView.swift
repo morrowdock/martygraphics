@@ -231,6 +231,8 @@ struct MGSceneHost: View {
     @State private var cameraFrom: MGCamera?
     @State private var cameraStart = Date.distantPast
     @State private var shownScene: MGScene?
+    /// The current step's items, kept until the scene or step changes (not rebuilt from the step edits every frame).
+    @State private var stepItems = MGStepItemsCache()
     /// Engine keyframe segments being played, on a clock that a lesson pause can hold.
     @State private var keyframes: [MGAdoption.Segment] = []
     @State private var keyframeClock = MGTransitionClock(start: .distantPast)
@@ -301,17 +303,7 @@ struct MGSceneHost: View {
                         Label("Drag to turn", systemImage: "hand.draw").font(.caption2).foregroundStyle(theme.subtleInk).padding(8)
                     }
             } else {
-                let running = MGRenderPolicy.continuous(renderState(scene))
-                GeometryReader { geo in
-                    TimelineView(.animation(minimumInterval: MGRenderPolicy.frameInterval, paused: !running)) { tl in
-                        Canvas(rendersAsynchronously: false) { ctx, size in
-                            MGCanvasRenderer.draw(input(scene, now: running && controller.presentationClock == nil ? tl.date : controller.presentationDate(), size: size), in: ctx)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .gesture(SpatialTapGesture().onEnded { value in select(scene, at: value.location, size: geo.size) },
-                             including: teaching.selection != nil && !readOnly ? .all : .none)
-                }
+                board2D(scene)
             }
         }
         .aspectRatio(scene.width / scene.height, contentMode: .fit)
@@ -320,6 +312,40 @@ struct MGSceneHost: View {
         .accessibilityLabel(scene.title.isEmpty ? "Marty's sketch" : scene.title)
         .accessibilityValue(teaching.summary ?? MGDescribe.accessibilityValue(scene, step: step, describing: teaching.describes,
                                                                                hiding: teaching.concealed) { controller.timelineItems(scene, step: step) })
+    }
+
+    /// The 2D board: one Canvas in a TimelineView, or, while motion plays and no transition runs, a cached base Canvas
+    /// under a live one (`MGRenderPolicy.layered`, `MGCanvasLayers`). The two layers composite to the frame one Canvas
+    /// draws; the base (board, grid and the static items below every moving item) is drawn once, outside the timeline.
+    private func board2D(_ scene: MGScene) -> some View {
+        let state = renderState(scene)
+        // Reduce Motion: a step change dissolves (no motion), so the loop runs for that transition only.
+        let running = MGRenderPolicy.continuous(state) || MGRenderPolicy.dissolving(state)
+        let layered = MGRenderPolicy.layered(state) && scene.layer2d == nil
+        return GeometryReader { geo in
+            ZStack {
+                if layered { layeredCanvases(scene, size: geo.size, running: running) } else { liveCanvas(scene, running: running, layer: nil) }
+            }
+            .contentShape(Rectangle())
+            .gesture(SpatialTapGesture().onEnded { value in select(scene, at: value.location, size: geo.size) },
+                     including: teaching.selection != nil && !readOnly ? .all : .none)
+        }
+    }
+
+    @ViewBuilder private func layeredCanvases(_ scene: MGScene, size: CGSize, running: Bool) -> some View {
+        let still = input(scene, now: controller.presentationDate(), size: size)
+        let base = MGCanvasLayers.base(still.items, live: MGCanvasLayers.live(scene, items: still.items))
+        Canvas(rendersAsynchronously: false) { ctx, _ in MGCanvasRenderer.draw(still, in: ctx, layer: .base(base)) }
+        liveCanvas(scene, running: running, layer: .live(base))
+    }
+
+    private func liveCanvas(_ scene: MGScene, running: Bool, layer: MGCanvasLayer?) -> some View {
+        TimelineView(.animation(minimumInterval: MGRenderPolicy.frameInterval, paused: !running)) { tl in
+            Canvas(rendersAsynchronously: false) { ctx, size in
+                let frame = input(scene, now: running && controller.presentationClock == nil ? tl.date : controller.presentationDate(), size: size)
+                MGCanvasRenderer.draw(frame, in: ctx, layer: layer ?? .all)
+            }
+        }
     }
 
     // MARK: teaching hooks
@@ -450,20 +476,28 @@ struct MGSceneHost: View {
         var items = MGTimeline.frame(scene, items: playsKeyframes ? MGTween.sample(keyframes, at: keyT)
                                                                   : controller.timelineItems(scene, step: step), time: t)
         if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
+        // Step and patch transitions: bounded easing (no overshoot past either state), leaving items fade out, and
+        // with Reduce Motion a dissolve with no motion (`MGStepTransition`). Settled well inside the 1.2 s blend window.
         let blendT = now.timeIntervalSince(blendStart)
-        if let from = blendFrom, blendT < 1.2, !reduceMotion { items = MGTimeline.blend(from: from, to: items, t: MGTimeline.spring(blendT)) }
+        var opacity: [String: Double] = [:]
+        if let from = blendFrom, blendT < 1.2 {
+            let frame = MGStepTransition(reduceMotion: reduceMotion).frame(from: from, to: items, elapsed: blendT)
+            items = frame.items; opacity = frame.opacity
+            if !teaching.concealed.isEmpty { items.removeAll { teaching.concealed.contains($0.id) } }
+        }
         let camera = scene.steps.indices.contains(step) ? (scene.steps[step].camera ?? scene.camera) : scene.camera
         let fit = teaching.fitSize ?? size
         var vp = MGViewport(size: fit, width: scene.width, height: scene.height, camera: camera).resized(to: size)
         let camT = now.timeIntervalSince(cameraStart)
         if camT < 1.0, !reduceMotion {
             let from = MGViewport(size: fit, width: scene.width, height: scene.height, camera: cameraFrom).resized(to: size)
-            vp = from.lerp(vp, CGFloat(MGTimeline.spring(camT)))
+            vp = from.lerp(vp, CGFloat(MGStepTransition(duration: MGStepTransition.cameraSeconds).progress(camT)))
         }
         var appear: [String: Double] = [:]
         if !reduceMotion { for (id, start) in appearStart { let p = now.timeIntervalSince(start) / 0.55; if p < 1 { appear[id] = max(0, p) } } }
         let focus = scene.steps.indices.contains(step) ? scene.steps[step].focus : nil
         var out = MGRenderInput(scene: scene, items: items, viewport: vp, theme: theme, appear: appear, focus: focus, time: t)
+        out.opacity = opacity
         out.emphasis = teaching.emphasis.union(teaching.selection?.wrappedValue.map { [$0] } ?? [])
         out.markers = teaching.markers
         out.tableRows = teaching.tableRows

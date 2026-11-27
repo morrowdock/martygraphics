@@ -152,8 +152,11 @@ enum MGVideoDrawing {
                 if element.shape == "rect" { context.fill(bounds(element)) } else { context.fillEllipse(in: bounds(element)) }
             case "arrow":
                 let end = CGPoint(x: element.to![0], y: element.to![1])
-                segment(origin, end)
                 let angle = atan2(end.y - origin.y, end.x - origin.x)
+                // The shaft stops just inside the head's base (12 · cos 0.4 back from the tip), so its square end never
+                // shows past the head's flanks at the sharp tip.
+                let back = min(hypot(end.x - origin.x, end.y - origin.y), 12 * cos(0.4) - min(1, (element.strokeWidth ?? 2) / 2))
+                segment(origin, CGPoint(x: end.x - back * cos(angle), y: end.y - back * sin(angle)))
                 context.move(to: end)
                 context.addLine(to: CGPoint(x: end.x - 12 * cos(angle - 0.4), y: end.y - 12 * sin(angle - 0.4)))
                 context.addLine(to: CGPoint(x: end.x - 12 * cos(angle + 0.4), y: end.y - 12 * sin(angle + 0.4)))

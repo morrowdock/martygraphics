@@ -88,6 +88,8 @@ public final class MGSolidRenderer {
     static let machiningRings = 110.0
     private var keyLight: SCNNode?
     private var groundNodes: [SCNNode] = []
+    /// The default-pose bounds the ground was built for (`updateGround`): the ground does not follow the camera.
+    private var groundKey: [Double] = []
     private var renderer: SCNRenderer?
     public private(set) var camera: MGSolidCamera
     private var highlighted: Set<String> = []
@@ -822,10 +824,16 @@ public final class MGSolidRenderer {
     }
 
     private func updateGround() {
+        // The ground, the contact shadow and the key light's shadow frustum depend on the default pose's bounds and the
+        // ground option only, not on the camera: `setCamera` (every loop and story frame) rebuilds them only when those
+        // change, instead of making two planes, two materials and two alpha images per frame.
+        let b = worldBounds(MGPoseParameters())
+        let key = options.ground && !b.isEmpty ? [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z] : []
+        guard key != groundKey || (key.isEmpty != groundNodes.isEmpty) else { return }
+        groundKey = key
         groundNodes.forEach { $0.removeFromParentNode() }
         groundNodes = []
         guard options.ground else { return }
-        let b = worldBounds(MGPoseParameters())
         guard !b.isEmpty else { return }
         let r = max(b.size.x, b.size.z)
         let y = Float(b.min.y - 0.05)
@@ -852,8 +860,8 @@ public final class MGSolidRenderer {
         let blob = SCNPlane(width: CGFloat(b.size.x * 1.7), height: CGFloat(b.size.z * 1.7))
         let bm = SCNMaterial()
         bm.lightingModel = .constant
-        bm.diffuse.contents = MGSolidRenderer.radialAlpha(size: 256)
-        bm.transparent.contents = MGSolidRenderer.radialAlpha(size: 256)
+        bm.diffuse.contents = MGSolidRenderer.contactShadow
+        bm.transparent.contents = MGSolidRenderer.contactShadow
         bm.transparencyMode = .aOne
         bm.blendMode = .alpha
         bm.writesToDepthBuffer = false
@@ -902,6 +910,9 @@ public final class MGSolidRenderer {
             return ctx.makeImage()
         }
     }
+
+    /// The contact shadow's radial alpha, made once (an immutable image every renderer shares).
+    static let contactShadow: CGImage? = radialAlpha(size: 256)
 
     static func radialAlpha(size: Int) -> CGImage? {
         guard let ctx = CGContext(data: nil, width: size, height: size, bitsPerComponent: 8, bytesPerRow: size * 4,

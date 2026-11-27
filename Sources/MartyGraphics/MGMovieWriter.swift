@@ -3,6 +3,8 @@ import AVFoundation
 import Foundation
 
 /// H.264 MP4 writer (AVFoundation, no installs): frames at a fixed rate, presentation time = frame index / rate.
+/// `init(url:preset:)` writes with an export preset instead (`MGExportPreset`: H.264, HEVC or ProRes 4444, its bit
+/// rate, key frames, colour handling and alpha; frames of another size are fitted, centred, into its frame).
 /// Experimental SPI: import with `@_spi(Experimental) import MartyGraphics`. Use from one serial caller only.
 @_spi(Experimental)
 public final class MGMovieWriter {
@@ -11,22 +13,23 @@ public final class MGMovieWriter {
     private let adaptor: AVAssetWriterInputPixelBufferAdaptor
     public let width: Int, height: Int, fps: Int32
     private let maxBufferedFrames: Int?
+    /// The space frames are drawn in, how their alpha is stored, and whether another size is fitted (else stretched).
+    private let space: CGColorSpace
+    private let alpha: MGExportPreset.Alpha
+    private let fits: Bool
     public private(set) var frames: Int64 = 0
 
     /// H.264 4:2:0 needs even sizes: an odd width or height is written one pixel smaller (the frame is scaled).
     public static func evenSize(_ w: Int, _ h: Int) -> (width: Int, height: Int) { (w - w % 2, h - h % 2) }
 
-    public init(url: URL, width: Int, height: Int, fps: Int32, maxBufferedFrames: Int? = nil) throws {
+    public convenience init(url: URL, width: Int, height: Int, fps: Int32, maxBufferedFrames: Int? = nil) throws {
         guard (2...16384).contains(width), (2...16384).contains(height), (1...240).contains(fps) else { throw MGError("mp4: dimensions or fps") }
         guard maxBufferedFrames.map({ (1...8).contains($0) }) ?? true else { throw MGError("mp4: buffer limit") }
-        self.maxBufferedFrames = maxBufferedFrames
-        (self.width, self.height) = MGMovieWriter.evenSize(width, height)
-        self.fps = fps
-        writer = try AVAssetWriter(outputURL: url, fileType: .mp4)
+        let (w, h) = MGMovieWriter.evenSize(width, height)
         // About 0.2 bits per pixel per frame, at least 2 Mbit/s: sharp edges on dark studio backgrounds.
-        let bitrate = max(2_000_000, min(40_000_000, Int(Double(self.width * self.height) * Double(fps) * 0.2)))
-        input = AVAssetWriterInput(mediaType: .video, outputSettings: [
-            AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: self.width, AVVideoHeightKey: self.height,
+        let bitrate = max(2_000_000, min(40_000_000, Int(Double(w * h) * Double(fps) * 0.2)))
+        let settings: [String: Any] = [
+            AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: w, AVVideoHeightKey: h,
             // The frames are sRGB pixels: say so, with BT.709 primaries and matrix. An untagged file leaves a player to
             // guess the transfer function; one that assumes BT.709 and converts to the display shows the middle tones
             // several levels off the stills.
@@ -36,11 +39,36 @@ public final class MGMovieWriter {
             // No frame reordering (no B-frames): every sample's presentation time is its decode time, frame k at k / fps.
             AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: bitrate, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
                                               AVVideoMaxKeyFrameIntervalKey: Int(fps) * 2, AVVideoAllowFrameReorderingKey: false],
-        ])
+        ]
+        try self.init(url: url, fileType: .mp4, settings: settings, width: w, height: h, fps: fps, maxBufferedFrames: maxBufferedFrames,
+                      space: CGColorSpace(name: CGColorSpace.sRGB)!, alpha: .none, fits: false)
+    }
+
+    /// A writer for an export preset: its frame size, rate, codec, bit rate, key frames, colour tags and alpha
+    /// (`MGExportPreset.outputSettings`), in an MP4 (H.264, HEVC) or a QuickTime file (ProRes 4444). Frames are drawn
+    /// in the preset's colour space (an sRGB image is converted to Display P3 for `displayP3`), a frame of another
+    /// size is fitted into the preset's frame (centred, over black, or clear with alpha), and `alpha: .straight` divides
+    /// the colours by alpha before encoding. Throws `mp4: preset <problems>` for a preset that cannot be written.
+    public convenience init(url: URL, preset: MGExportPreset, maxBufferedFrames: Int? = nil) throws {
+        let problems = preset.problems
+        guard problems.isEmpty else { throw MGError("mp4: preset " + problems.joined(separator: ",")) }
+        guard maxBufferedFrames.map({ (1...8).contains($0) }) ?? true else { throw MGError("mp4: buffer limit") }
+        try self.init(url: url, fileType: preset.codec == .proRes4444 ? .mov : .mp4, settings: preset.outputSettings,
+                      width: preset.width, height: preset.height, fps: Int32(preset.fps), maxBufferedFrames: maxBufferedFrames,
+                      space: preset.drawingSpace, alpha: preset.alpha, fits: true)
+    }
+
+    private init(url: URL, fileType: AVFileType, settings: [String: Any], width: Int, height: Int, fps: Int32, maxBufferedFrames: Int?,
+                 space: CGColorSpace, alpha: MGExportPreset.Alpha, fits: Bool) throws {
+        self.maxBufferedFrames = maxBufferedFrames
+        self.width = width; self.height = height; self.fps = fps
+        self.space = space; self.alpha = alpha; self.fits = fits
+        writer = try AVAssetWriter(outputURL: url, fileType: fileType)
+        input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
         input.expectsMediaDataInRealTime = false
         adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: self.width,
-            kCVPixelBufferHeightKey as String: self.height,
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: width,
+            kCVPixelBufferHeightKey as String: height,
         ])
         guard writer.canAdd(input) else { throw MGError("mp4: unsupported settings") }
         writer.add(input)
@@ -101,15 +129,22 @@ public final class MGMovieWriter {
             throw abandon(MGError("mp4 pixel buffer"))
         }
         CVPixelBufferLockBaseAddress(pb, [])
-        let ctx = CGContext(data: CVPixelBufferGetBaseAddress(pb), width: width, height: height, bitsPerComponent: 8,
-                            bytesPerRow: CVPixelBufferGetBytesPerRow(pb), space: CGColorSpace(name: CGColorSpace.sRGB)!,
+        let base = CVPixelBufferGetBaseAddress(pb), bytesPerRow = CVPixelBufferGetBytesPerRow(pb)
+        let ctx = CGContext(data: base, width: width, height: height, bitsPerComponent: 8, bytesPerRow: bytesPerRow, space: space,
                             bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
-        guard ctx != nil else {
+        guard let ctx else {
             CVPixelBufferUnlockBaseAddress(pb, [])
             throw abandon(MGError("mp4 pixel context"))
         }
-        ctx?.interpolationQuality = .high
-        ctx?.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        // A pooled buffer still holds an earlier frame: clear it, so a frame with transparent pixels never shows it.
+        let full = CGRect(x: 0, y: 0, width: width, height: height)
+        ctx.clear(full)
+        if fits && alpha == .none { ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(full) }
+        ctx.interpolationQuality = .high
+        ctx.draw(image, in: fits ? MGExportPreset.fit(CGSize(width: image.width, height: image.height), into: full.size) : full)
+        if alpha == .straight, let base {
+            MGVideoPixels.unpremultiply(base.assumingMemoryBound(to: UInt8.self), width: width, height: height, bytesPerRow: bytesPerRow)
+        }
         CVPixelBufferUnlockBaseAddress(pb, [])
         guard adaptor.append(pb, withPresentationTime: CMTime(value: frames, timescale: fps)) else {
             throw abandon(MGError("mp4 frame \(frames): \(writer.error.map { "\($0)" } ?? "\(writer.status.rawValue)")"))

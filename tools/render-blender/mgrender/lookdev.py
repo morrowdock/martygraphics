@@ -22,6 +22,7 @@ RESOLUTIONS = {"720p": (1280, 720), "1080p": (1920, 1080), "1440p": (2560, 1440)
                "1:1": (1080, 1080), "9:16": (1080, 1920)}
 
 from .presets import MATERIAL_PRESETS, NAME_RULES, choose_preset, part_material  # noqa: F401 (re-exported)
+from . import loop as loops
 
 
 # ----------------------------------------------------------------- helpers
@@ -371,7 +372,10 @@ def fit_distance(lo, hi, hfov, vfov, elev, azimuths, fill=0.86):
     return b
 
 
-def auto_orbit_camera(scene, lo, hi, frame_start, frame_end, preset, turntable=False):
+def auto_orbit_camera(scene, lo, hi, frame_start, frame_end, preset, turntable=False, sway_frames=None):
+    """The automatic camera: a one-way orbit sweep from frame_start to frame_end, a 360-degree turntable that
+    completes one frame after frame_end, or, with `sway_frames` (a seamless loop, mgrender/loop.py), a sweep out and
+    back over that many frames, so the camera is where it started when the loop wraps."""
     center = (lo + hi) / 2
     radius = max((hi - lo).length / 2, 1e-4)
     res_x, res_y = scene.render.resolution_x, scene.render.resolution_y
@@ -399,10 +403,15 @@ def auto_orbit_camera(scene, lo, hi, frame_start, frame_end, preset, turntable=F
     track.target = pivot
     track.track_axis = "TRACK_NEGATIVE_Z"
     track.up_axis = "UP_Y"
-    pivot.rotation_euler = (0, 0, start_az)
-    pivot.keyframe_insert("rotation_euler", index=2, frame=frame_start)
-    pivot.rotation_euler = (0, 0, start_az + sweep)
-    pivot.keyframe_insert("rotation_euler", index=2, frame=max(frame_end + int(turntable), frame_start + 1))
+    if sway_frames and not turntable:
+        for f, az in loops.sway(start_az, sweep, sway_frames):
+            pivot.rotation_euler = (0, 0, az)
+            pivot.keyframe_insert("rotation_euler", index=2, frame=frame_start + f)
+    else:
+        pivot.rotation_euler = (0, 0, start_az)
+        pivot.keyframe_insert("rotation_euler", index=2, frame=frame_start)
+        pivot.rotation_euler = (0, 0, start_az + sweep)
+        pivot.keyframe_insert("rotation_euler", index=2, frame=max(frame_end + int(turntable), frame_start + 1))
     _linear(pivot)
     scene.camera = cam
     focus = _link(scene, bpy.data.objects.new("mg_focus", None))
@@ -446,7 +455,7 @@ def export_camera(scene, cam, lo, hi, lens_override=None):
 
 
 # ----------------------------------------------------------------- render settings
-def configure_render(scene, preset, resolution, device_info, motion_blur, samples=None):
+def configure_render(scene, preset, resolution, device_info, motion_blur, samples=None, blur_position="CENTER"):
     scene.render.engine = "CYCLES"
     from . import device
     device.apply_to_scene(scene, device_info)
@@ -474,7 +483,7 @@ def configure_render(scene, preset, resolution, device_info, motion_blur, sample
     scene.render.resolution_percentage = 100
     scene.render.use_motion_blur = motion_blur
     scene.render.motion_blur_shutter = preset["shutter"]
-    scene.render.motion_blur_position = "CENTER"
+    scene.render.motion_blur_position = blur_position   # START for a seamless loop (mgrender/loop.py)
     vs = scene.view_settings
     vs.view_transform = "AgX"
     vs.look = preset["look"]

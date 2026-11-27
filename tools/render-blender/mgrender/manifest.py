@@ -8,7 +8,9 @@ No Blender and no third-party modules, so CI and any host can run it:
 The check refuses (raises ExportError) when the .glb SHA-256, the fps or the
 frame count do not match the manifest, or when the baked animation is not on
 the frame grid. It also evaluates the glTF node world matrices at any frame, so
-render.py can prove that Blender shows the exported motion unchanged.
+render.py can prove that Blender shows the exported motion unchanged. An
+optional `loop` object (a seamless loop, `export-gltf --seamless`) is checked
+against the frame count (mgrender/loop.py).
 
 Every size the check reads is bounded before it is read (the limits below), and
 any other failure on a malformed export is a refusal (ExportError), never a
@@ -21,6 +23,8 @@ import os
 import re
 import struct
 import sys
+
+from . import loop as loops
 
 FORMAT = "martygraphics.render-export/1"
 GLB_MAGIC = 0x46546C67
@@ -461,11 +465,15 @@ def _verify(manifest_path):
     check_hierarchy(gltf)
     world_matrices(gltf, anim, times[0])
     world_matrices(gltf, anim, times[-1])
+    try:
+        loop = loops.loop_info(m, count)
+    except loops.LoopError as exc:
+        raise ExportError(str(exc)) from exc
 
     return {"manifest": m, "manifest_path": manifest_path, "glb_path": glb_path, "glb_sha256": actual,
             "gltf": gltf, "binary": binary, "animation": anim, "animation_index": anim_index,
             "fps": fps, "frame_count": count, "animated_nodes": animated, "poster_frame": poster,
-            "engine_commit": m["engine"]["commit"], "scene_id": m["scene"]["id"]}
+            "engine_commit": m["engine"]["commit"], "scene_id": m["scene"]["id"], "loop": loop}
 
 
 def provenance_label(checked):

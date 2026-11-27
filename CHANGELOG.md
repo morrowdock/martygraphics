@@ -41,6 +41,14 @@
   expression vocabulary (`expression`); `MGTimeline.cycle` and `MGScene.animates` include moving graphs.
 - Docs: the protocol, tutorial and ML explainer pages state the drawing and step conventions and link the
   authoring guide; `MGMLKit.report` takes an optional `hints:` flag whose default keeps the output unchanged.
+- Engine: step and patch transitions on the 2D board use bounded easing over 0.6 s (no value overshoots
+  either step), items that leave a step fade out, and with Reduce Motion the board dissolves instead of moving
+  (`MGStepTransition`). Body and node pops no longer overshoot their size.
+- Engine: while motion plays, the 2D board draws its board, grid and static items once and redraws only the
+  moving layer; the current step's items are kept instead of being rebuilt every frame; the solid renderer builds
+  its ground and contact shadow once per pose instead of once per frame.
+- Engine: arrowheads keep their proportions on short arrows and while an arrow draws on, dashed shafts end on a
+  whole dash, and 1-point lines, label borders and grid dots sit on the pixel grid.
 - Docs: clarify that a coding agent wrote the turbofan JSON directly in the documented
   format, consistently with the site, showcase and provenance receipt.
 - Docs: describe the opt-in ML explainer kit and the Blender video tool (16:9, 1:1 and 9:16,
@@ -128,6 +136,16 @@
   Python mirrors of the validators, baseline and improved runs by one author that also designed the specs, and
   checked-in inventories for the author-independent counts. It does not measure an accuracy change; an
   independent author run is pending.
+- Seamless loops for turntable and mechanism exports: `MGSolidLoop` finds the exact period of an assembly's
+  motion from exact joint rates and the rotational symmetry measured on its meshes, checks it on every moving part
+  and plans a loop with no jump at the wrap (the robot-joint gearbox: 49/6 input turns instead of one).
+  `marty-solid export-gltf --seamless` writes that loop with a closing frame and a manifest `loop` object, and the
+  Blender render path renders it with a forward shutter and a closing turntable or camera sway.
+- Export presets for YouTube Shorts (1080×1920), X (1920×1080) and lessons (1920×1200) with BT.709, sRGB or
+  Display P3 colour handling and ProRes 4444 straight-alpha masters: `MGExportPreset`,
+  `MGMovieWriter(url:preset:)` and `MGVideoExportOptions(preset:)`.
+- Leader lines for 2D board labels: `MGLabelLayout` places labels deterministically and connects a label that had
+  to move away from its anchor back to it.
 - Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,
   seeded or greedy token generation, temperature sweeps, and simplified patch attention.
   Add a camera-right landscape composition and optional sequential highlights for the vision pipeline.
@@ -156,6 +174,9 @@
 - Keep scene diagnostics short and reserve line feeds for text items and narration.
 - Bound stream buffers and preview validation work, guarantee forward progress, and restore the
   committed scene when restarting a stream. Require a minimum plot range span.
+- The movie writer clears each pooled pixel buffer before it draws a frame, so a frame with transparent pixels no
+  longer shows the frame before it.
+- The shaft of a 2D video arrow no longer shows past the arrowhead's tip.
 - Use map distance for hand-placed ML points and draw vector links only for positive cosine matches.
   Remove the chosen-token caption from temperature sweeps and refuse color metadata in pixel-value PNGs.
 - Reduce programmatic MP4 export stalls under encoder buffer pressure with an

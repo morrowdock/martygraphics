@@ -21,7 +21,8 @@ enum CLIError: Error, CustomStringConvertible {
             Usage: marty-solid check FILE.json [--strict] [--patch PATCH.json] [--component C.json ...]
                    marty-solid render FILE.json NEW_DIR [--size WxH] [--no-loop] [--loop-fps 10|30] [--no-story] [--story-fps 10|30]
                                       [--snapshots] [--look classic|studio|paper] [--component C.json ...]
-                   marty-solid export-gltf FILE.json NEW_DIR --engine-commit SHA [--fps 10|30] [--size WxH] [--component C.json ...]
+                   marty-solid export-gltf FILE.json NEW_DIR --engine-commit SHA [--fps 10|30] [--size WxH] [--seamless]
+                                           [--component C.json ...]
                    marty-solid snapshot check SNAPSHOT.json [--component C.json ...]
                    marty-solid transcript FILE.json [--strict] [--component C.json ...]
                    marty-solid components [--component C.json ...]
@@ -1210,7 +1211,7 @@ func componentFiles(_ args: [String]) throws -> (files: [String], rest: [String]
 /// document prints its strict report (exit 1) and creates no directory. Explainer and lesson documents are
 /// `kind.unsupported` (the exporter takes assemblies).
 func exportGLTF(_ path: String, _ outPath: String, fps: Int, width: Int, height: Int, engineCommit: String,
-                library lib: MGSolidLibrary) throws -> Int32 {
+                seamless: Bool = false, library lib: MGSolidLibrary) throws -> Int32 {
     let document = try loadDocument(path)
     if document.kind == "explainer" || document.kind == "lesson" { return unsupportedKind() }
     let src: Loaded
@@ -1226,7 +1227,10 @@ func exportGLTF(_ path: String, _ outPath: String, fps: Int, width: Int, height:
     let stem = file.hasSuffix(".json") ? String(file.dropLast(5)) : file
     let output: MGSolidGLTF.Output
     do {
-        let timeline = try MGSolidGLTF.renderLoop(checked, fps: fps, width: width, height: height)
+        // `--seamless`: the exact period of the motion instead of one input turn, so the loop has no jump at the wrap
+        // (docs/ENGINE.md, "Seamless loops").
+        let timeline = try seamless ? MGSolidGLTF.seamlessLoop(checked, fps: fps, width: width, height: height)
+                                    : MGSolidGLTF.renderLoop(checked, fps: fps, width: width, height: height)
         output = try MGSolidGLTF.export(checked, timeline: timeline, sourceID: stem, glbName: stem + ".glb", engineCommit: engineCommit,
                                         engine: engine)
     } catch let r as MGSolidGLTF.Refusal {
@@ -1326,9 +1330,11 @@ func exportGLTF(_ path: String, _ outPath: String, fps: Int, width: Int, height:
             case "export-gltf"? where a.count >= 3 && !a[1].hasPrefix("--") && !a[2].hasPrefix("--"):
                 var fps = MGSolidGLTF.defaultFPS, w = 1280, h = 800
                 var commit: String?
+                var seamless = false
                 var rest = Array(a.dropFirst(3))
                 while let flag = rest.first {
                     rest.removeFirst()
+                    if flag == "--seamless" { seamless = true; continue }
                     guard let v = rest.first else { throw CLIError.usage }
                     rest.removeFirst()
                     switch flag {
@@ -1345,7 +1351,7 @@ func exportGLTF(_ path: String, _ outPath: String, fps: Int, width: Int, height:
                 }
                 // The engine cannot know its own commit; the caller names the commit it built (40 hex digits).
                 guard let commit else { throw CLIError.usage }
-                exit(try exportGLTF(a[1], a[2], fps: fps, width: w, height: h, engineCommit: commit, library: lib))
+                exit(try exportGLTF(a[1], a[2], fps: fps, width: w, height: h, engineCommit: commit, seamless: seamless, library: lib))
             default: throw CLIError.usage
             }
         } catch {

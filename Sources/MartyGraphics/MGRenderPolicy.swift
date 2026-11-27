@@ -31,6 +31,18 @@ public enum MGRenderPolicy {
         s.visible && s.sceneActive && !s.reduceMotion && s.motionPlaying
     }
 
+    /// 2D with Reduce Motion: a step change dissolves instead of moving (`MGStepTransition`), so the frame loop runs for
+    /// the length of the transition and no longer; motion never plays. `continuous || dissolving` is the 2D loop.
+    public static func dissolving(_ s: State) -> Bool {
+        s.visible && s.sceneActive && s.reduceMotion && s.transientActive
+    }
+
+    /// 2D: draw the board as a cached base layer under a live layer (`MGCanvasRenderer.draw(_:in:layer:)`) while motion
+    /// plays and no transition is running: the base layer is redrawn only when the scene, step, size or theme changes.
+    public static func layered(_ s: State) -> Bool {
+        continuous(s) && s.motionPlaying && !s.transientActive
+    }
+
     /// How long a transition keeps the 2D loop alive: longest of patch blend (1.2 s), staggered draw-on (≈0.95 s)
     /// and camera move (1.0 s), plus a margin, so the final settled frame is what remains on screen.
     public static let transientSeconds: Double = 1.6

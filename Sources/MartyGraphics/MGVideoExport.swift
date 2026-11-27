@@ -9,8 +9,14 @@ public struct MGVideoExportOptions: Sendable {
     public var format: Format
     public var burnCaptions: Bool
     public var writeSRT: Bool
-    public init(format: Format = .mp4, burnCaptions: Bool = true, writeSRT: Bool = true) {
-        self.format = format; self.burnCaptions = burnCaptions; self.writeSRT = writeSRT
+    /// `mp4` only: write with a delivery preset (`MGExportPreset`: Shorts, X, lessons): its frame (the plan's frame is
+    /// fitted, centred), codec (a ProRes 4444 preset writes a QuickTime file), bit rate, key frames, colour handling and
+    /// alpha. nil keeps the plan's own frame and the engine's H.264 settings. Refusals: `video2d.export.preset` (the
+    /// preset cannot be written), `video2d.export.presetRate` (not 30 fps, the plan's rate), `video2d.export.presetDuration`
+    /// (longer than the preset's `maxSeconds`).
+    public var preset: MGExportPreset?
+    public init(format: Format = .mp4, burnCaptions: Bool = true, writeSRT: Bool = true, preset: MGExportPreset? = nil) {
+        self.format = format; self.burnCaptions = burnCaptions; self.writeSRT = writeSRT; self.preset = preset
     }
 }
 
@@ -48,7 +54,14 @@ extension MGProgrammaticVideo {
         let stride: Int, fps: Int
         switch options.format {
         case .mp4:
-            guard width % 2 == 0, height % 2 == 0 else { throw MGError("video2d.export.evenDimensions") }
+            if let preset = options.preset {
+                guard preset.problems.isEmpty else { throw MGError("video2d.export.preset") }
+                guard preset.fps == 30 else { throw MGError("video2d.export.presetRate") }
+                guard preset.maxSeconds.map({ Double(plan.durationFrames) / 30 <= $0 + 1e-9 }) ?? true else { throw MGError("video2d.export.presetDuration") }
+                width = preset.width; height = preset.height
+            } else {
+                guard width % 2 == 0, height % 2 == 0 else { throw MGError("video2d.export.evenDimensions") }
+            }
             stride = 1; fps = 30
         case .gif:
             guard plan.durationFrames <= 450, plan.durationFrames % 3 == 0 else { throw MGError("video2d.export.gifDuration") }
@@ -59,11 +72,14 @@ extension MGProgrammaticVideo {
         let folder = destination.deletingLastPathComponent().appendingPathComponent(".mg-video-\(UUID().uuidString)", isDirectory: true)
         try manager.createDirectory(at: folder, withIntermediateDirectories: false)
         defer { try? manager.removeItem(at: folder) }
-        let partial = folder.appendingPathComponent("video.\(options.format.rawValue)")
+        let partial = folder.appendingPathComponent("video." + (options.format == .mp4 ? options.preset?.fileExtension ?? "mp4" : options.format.rawValue))
         let count = plan.durationFrames / stride
         var movie: MGMovieWriter?
         var gif: CGImageDestination?
-        if options.format == .mp4 { movie = try MGMovieWriter(url: partial, width: width, height: height, fps: 30, maxBufferedFrames: 8) }
+        if options.format == .mp4 {
+            if let preset = options.preset { movie = try MGMovieWriter(url: partial, preset: preset, maxBufferedFrames: 8) }
+            else { movie = try MGMovieWriter(url: partial, width: width, height: height, fps: 30, maxBufferedFrames: 8) }
+        }
         else {
             gif = CGImageDestinationCreateWithURL(partial as CFURL, UTType.gif.identifier as CFString, count, nil)
             guard let gif else { throw MGError("video2d.export.gifWriter") }
