@@ -23,7 +23,8 @@ struct MGCurve: Equatable {
 }
 
 /// Sampling, drawing checks and drawing geometry of the `func` and `field` items (docs/PROTOCOL.md, "Function graphs,
-/// vector fields and text alternatives"). Pure functions of their inputs, so a parse, a frame and a test agree.
+/// vector fields and text alternatives"), and what the board draws of a `plot`, `func` or `bars` item (shared by
+/// `MGCanvasRenderer` and `MGAudioGraph`). Pure functions of their inputs, so a parse, a frame and a test agree.
 enum MGGraph {
     /// Bisection steps when two neighbouring samples lie outside the y range on opposite sides.
     static let bisections = 8
@@ -193,8 +194,13 @@ enum MGGraph {
 
     /// The drawn curve's value at `px`: the polyline of the piece that holds `px`, or nil in a gap.
     static func drawnValue(_ samples: [MGPoint], starts: [Int], at px: Double) -> Double? {
+        drawnPiece(samples, starts: starts, at: px)?.value
+    }
+
+    /// The first piece whose polyline holds `px`, with its value there; nil in a gap.
+    static func drawnPiece(_ samples: [MGPoint], starts: [Int], at px: Double) -> (piece: Range<Int>, value: Double)? {
         for r in pieces(samples.count, starts: starts) {
-            if let v = value(on: Array(samples[r]), at: px) { return v }
+            if let v = value(on: Array(samples[r]), at: px) { return (r, v) }
         }
         return nil
     }
@@ -213,6 +219,60 @@ enum MGGraph {
             out.append([MGPoint(a, base)] + top + [MGPoint(b, base)])
         }
         return out
+    }
+
+    // MARK: what the board draws
+
+    // `MGCanvasRenderer` and `MGAudioGraph` both use these checks, so VoiceOver charts what the board draws.
+
+    /// The frame of a `func` or `field` item: its anchor, size and ranges.
+    struct Frame: Equatable {
+        var origin: MGPoint
+        var w, h, x0, x1, y0, y1: Double
+    }
+
+    /// The item's frame, or nil (nothing drawn) when it has no anchor, a value is not finite, the size is not positive
+    /// or a range is not increasing. Only an item built in code, not parsed, can fail.
+    static func frame(_ item: MGItem) -> Frame? {
+        guard let o = item.pts.first else { return nil }
+        let w = item.n("w"), h = item.n("h"), x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
+        guard [o.x, o.y, w, h, x0, x1, y0, y1].allSatisfy(\.isFinite), w > 0, h > 0, x1 > x0, y1 > y0 else { return nil }
+        return Frame(origin: o, w: w, h: h, x0: x0, x1: x1, y0: y0, y1: y1)
+    }
+
+    /// The line of a `plot` item: each point's place in the frame as a fraction of its width and height (0...1 inside
+    /// the ranges). Nil, and the board draws the frame without the line, when the item has no anchor or its anchor,
+    /// size or any place is not finite (a point that is not finite, or an empty range).
+    static func plotTrace(_ item: MGItem) -> [MGPoint]? {
+        guard let o = item.pts.first, [o.x, o.y, item.n("w"), item.n("h")].allSatisfy(\.isFinite) else { return nil }
+        let x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
+        let trace = item.pts.dropFirst().map { q in MGPoint((q.x - x0) / (x1 - x0), (q.y - y0) / (y1 - y0)) }
+        return trace.allSatisfy { $0.x.isFinite && $0.y.isFinite } ? trace : nil
+    }
+
+    /// The anchor of a `bars` item the board draws (one with an anchor and at least one bar), else nil.
+    static func barsOrigin(_ item: MGItem) -> MGPoint? { item.bars.isEmpty ? nil : item.pts.first }
+
+    /// The marked point of a `func` item as the board shows it once the graph is complete.
+    struct Mark: Equatable {
+        /// The item's `mark`.
+        var x: Double
+        /// The engine's value of the function there (`num["my"]`): the printed value.
+        var value: Double
+        /// The drawn curve's value there: where the dot sits. It is interpolated between samples, so it can differ from `value`.
+        var drawn: Double
+        /// The sample range of the piece that holds the dot.
+        var piece: Range<Int>
+    }
+
+    /// The item's marked point, or nil (no dot) when the value is missing or outside the y range, or the drawn curve
+    /// has no value inside the y range at the mark.
+    static func mark(_ item: MGItem) -> Mark? {
+        let y0 = item.n("y0"), y1 = item.n("y1")
+        guard let mx = item.num["mark"], let my = item.num["my"], my.isFinite, my >= y0, my <= y1,
+              let d = drawnPiece(Array(item.pts.dropFirst()), starts: item.marked, at: mx), d.value >= y0, d.value <= y1
+        else { return nil }
+        return Mark(x: mx, value: my, drawn: d.value, piece: d.piece)
     }
 
     /// The parameter values of an item (`a`, `b`, `c`; 0 when not set) at loop time `t`.

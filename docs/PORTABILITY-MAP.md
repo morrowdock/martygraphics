@@ -113,16 +113,16 @@ The second count is every file importing the group at all.
 
 | Group | Sources (primary) | Sources (any import) | tools (primary) | tools (any import) |
 | --- | ---: | ---: | ---: | ---: |
-| Foundation-only | 75 | 91 | 0 | 5 |
+| Foundation-only | 76 | 92 | 0 | 5 |
 | CoreGraphics | 14 | 18 | 0 | 0 |
-| SwiftUI | 7 | 9 | 0 | 0 |
+| SwiftUI | 8 | 10 | 0 | 0 |
 | SceneKit | 1 | 3 | 0 | 0 |
 | AppKit/UIKit | 2 | 2 | 0 | 0 |
 | simd | 4 | 6 | 0 | 0 |
 | Combine | 0 | 3 | 0 | 0 |
-| other | 5 | 13 | 6 | 6 |
+| other | 5 | 14 | 6 | 6 |
 
-Swift files scanned: 108 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
+Swift files scanned: 110 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
 
 ### Core candidates
 
@@ -153,13 +153,13 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 
 | Module | Public declarations | Name platform types | Name `Any` |
 | --- | ---: | ---: | ---: |
-| MartyGraphics | 2575 | 78 | 10 |
+| MartyGraphics | 2605 | 78 | 10 |
 | MartyGraphicsMLKit | 31 | 2 | 0 |
 | MartyGraphicsPathTracer | 158 | 59 | 0 |
 
 #### MartyGraphics: public scopes with matching signatures
 
-350 scope/file pairs scanned, of which 28 match.
+355 scope/file pairs scanned, of which 28 match.
 
 | Type (scope) | File | Public decls | Platform tokens | Untyped |
 | --- | --- | ---: | --- | --- |
@@ -233,8 +233,10 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/MG3DInteraction.swift` | CoreGraphics | CoreGraphics, Foundation | — | CoreGraphics: `CGFloat`, `CGPoint` |
 | `Sources/MartyGraphics/MG3DView.swift` | AppKit/UIKit | AppKit, SceneKit, SwiftUI, UIKit, simd | UIKit | CoreGraphics: `CGFloat`, `CGPoint`; SceneKit: `SCNBillboardConstraint`, `SCNBox`, `SCNCamera` +18; simd: `simd_float3`, `simd_length`, `simd_normalize` +1; AppKit/UIKit: `NSBezierPath`, `NSColor`, `NSViewRepresentable` +3 |
 | `Sources/MartyGraphics/MGArrowGeometry.swift` | CoreGraphics | CoreGraphics, Foundation | — | CoreGraphics: `CGFloat`, `CGPoint` |
+| `Sources/MartyGraphics/MGAudioGraph.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGCanvasLayers.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGCanvasRenderer.swift` | SwiftUI | SwiftUI | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGRect` +2; SwiftUI: `Color`, `Gradient`, `GraphicsContext` +1 |
+| `Sources/MartyGraphics/MGChartDescriptor.swift` | SwiftUI | Accessibility, SwiftUI | — | SwiftUI: `View`, `ViewBuilder` |
 | `Sources/MartyGraphics/MGDescribe.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGEasing.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGEngine.swift` | Foundation-only | Foundation | — | — |

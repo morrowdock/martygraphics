@@ -259,6 +259,70 @@ checks them in the hosted `hygiene` job.
 Not checked: what an expression or an `alt` text means, whether a graph is the
 one a lesson needs, and accessibility on a device (VoiceOver has not been run).
 
+## Audio graphs
+
+Additive and unreleased, **pending Mac verification**: written offline; the
+Swift build and tests have not run, and VoiceOver has not been run on a device.
+There is no wire change: scene v1, every limit and every refusal reason stay as
+they are.
+
+While a `plot`, `func` or `bars` item is visible, `MartyGraphicsView` gives the
+board an audio graph through Apple's `AXChartDescriptor`
+(`accessibilityChartDescriptor`). VoiceOver offers it on the board (the Audio
+Graph rotor item). Play turns a series into a tone that rises and falls with the
+value. Chart details read the title, the summary, the axes and each series, and
+the learner can step from point to point and hear each x and y. A board without
+such an item gets no chart descriptor and reads exactly as before. A 3D board
+never gets one.
+
+`MGAudioGraph.chart(scene, step:hiding:)` builds the data. It is Foundation only,
+so tests check it without VoiceOver:
+
+| | `plot` | `func` | `bars` |
+| --- | --- | --- | --- |
+| x axis | `xl` (else "x"), `xr`, grid lines at the frame's quarters | as `plot` | the bar labels in order, titled "Bar" |
+| y axis | `yl` (else "y"), `yr`, grid lines at the quarters | as `plot` | "Value", or "Value (J)" with a `unit`; from the smaller of 0 and the lowest value to the larger of 0 and the highest (0 to 1 when every value is 0); values read with the unit |
+| Series | the points as written, as one line | one line per piece the board draws (two samples or more), from the engine's samples (the ones it drew and checked), named "…, piece 2 of 3" when there are several; the marked point, where the board shows its dot, is added inside its piece as "marked point" with the engine's value (the printed one) | the values in order, not a line |
+
+- Every number is one the engine holds: the `func` samples are never
+  recomputed, and values read as the board writes them (`MGPhysics.format`).
+- Series name: the item's `label`, else `y = …` for a `func`, else "plot" or
+  "bars" (numbered when names repeat), then ", piece 2 of 3" for a `func` drawn
+  in several pieces. Chart title: the first label, else the scene title, else
+  "Graph" or "Bar chart".
+- What is charted is what the board draws: `MGAudioGraph` and
+  `MGCanvasRenderer` share the checks (`MGGraph.frame`, `MGGraph.plotTrace`,
+  `MGGraph.barsOrigin`, `MGGraph.mark`). A `bars` item needs its `at` and a bar;
+  a `plot` is charted only when the board draws its line (every point finite,
+  finite and increasing ranges); a `func` needs a finite frame; the marked point
+  is charted only where the board shows its dot (its value and the drawn curve
+  inside the y range). Only items built in code, never parsed ones, fail these.
+- Summary: the `MGDescribe.item` text of the charted items (the text of
+  `describesBoard()`), then one sentence counting the charts left out.
+- One chart per board: the first visible chart item in item order, with every
+  later `plot` or `func` drawn in the same frame (same `at`, `w`, `h`, `xr` and
+  `yr`) as more series. Another frame or another bar chart is left out and
+  counted in the summary.
+- The chart follows the current step (its edits and `show`) and leaves out
+  concealed items, as `MGDescribe` does.
+- Motion and Reduce Motion: the chart is the motion's first frame (t = 0), so the
+  samples of a moving `func` as parsed and spring energy bars at their first
+  values. The board shows that frame when Reduce Motion is on. The chart never
+  moves and does not depend on Reduce Motion or playback.
+- At most 290 points per item over all its series (`MGAudioGraph.maxPoints`):
+  257 grid values + 32 (two for each of at most 16 breaks) = 289 samples of a
+  checked `func` (`maxSamples`), and 1 marked point. A gap at an interval
+  midpoint adds its two probes, a gap at a grid value replaces that value with at
+  most two probes, and a pole adds none. A `plot` holds at most 64 points and
+  `bars` at most 6, so no parsed scene is cut. An item built in code with more
+  points keeps 290 of them, evenly spaced over all its pieces with its first and
+  last, and the summary says "plays 290 of its N points". Bars whose value is not
+  finite are left out.
+
+Not checked: how VoiceOver plays and reads these charts on a device (needs a
+physical device; no device test has run) and whether the summary is enough for a
+given lesson.
+
 ## Explainer boards
 
 An [explainer document](EXPLAINER.md) embeds a v1 scene as its `board`. The wire format does not change: a board is

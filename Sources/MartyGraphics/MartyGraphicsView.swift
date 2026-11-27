@@ -366,6 +366,10 @@ struct MGSceneHost: View {
         .accessibilityLabel(scene.title.isEmpty ? "Marty's sketch" : scene.title)
         .accessibilityValue(teaching.summary ?? MGDescribe.accessibilityValue(scene, step: step, describing: teaching.describes,
                                                                                hiding: teaching.concealed) { controller.timelineItems(scene, step: step) })
+        // VoiceOver audio graph of the visible plot, func or bars items (none otherwise; concealed items never count).
+        // Built from the step items the board keeps between frames (`MGTimelineCache`), never computed again here.
+        .modifier(MGAudioGraphModifier(chart: MGAudioGraph.chart(scene, items: controller.timelineItems(scene, step: step),
+                                                                 hiding: teaching.concealed)))
     }
 
     /// The 2D board: one Canvas in a TimelineView, or, while motion plays and no transition runs, a cached base Canvas

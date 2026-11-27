@@ -131,6 +131,13 @@
 - Add text alternatives (pending Mac verification): `alt` on scenes and steps, read by VoiceOver after
   the narration in `MartyGraphicsView`; `MGDescribe` writes a structural description of the visible
   board, which `describesBoard()` reads when no `alt` is authored. Scenes without `alt` read as before.
+- Add audio graphs for `plot`, `func` and `bars` (pending Mac verification; VoiceOver not run on a device):
+  while such an item is visible, `MartyGraphicsView` gives the board an `AXChartDescriptor` built by
+  `MGAudioGraph` from the engine's values (axis titles and ranges from the scene, the `func` samples the
+  engine drew, one series per drawn piece, bar labels, values and unit) with an `MGDescribe` summary. It
+  charts only what the board draws: `MGCanvasRenderer` and `MGAudioGraph` share the checks (`MGGraph`). At
+  most 290 points per item (`MGAudioGraph.maxPoints`). The chart is the motion's first frame, which the board
+  shows with Reduce Motion on. Boards without these items read exactly as before. No wire change.
 - Add `graphs` and `wave` fixtures, golden expression and graph cases, and `tools/mg_expr.py`, an offline
   mirror of the new rules for preflight tools, tested in the `hygiene` job.
 - Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).

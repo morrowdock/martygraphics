@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "fd077ea39934b43847f2471b0deed215dca0380733928289b979437756afc412"
+      "sha256": "7fd21d575cb90f794430f92004df5256f9fb2153be1f230b1383fb0d937f1ad2"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -759,7 +759,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
-      "sha256": "dd87a31750f470cc163aabc327eae4bcae4c263edf70fa5cfa4bcc71423882e0"
+      "sha256": "7c3919bcfa3c1bdf91909abe5361b0bf09da7475c3502ecac3148e6a504a0d18"
     },
     {
       "path": "Sources/MartyGraphics/MGEngine.swift",
@@ -855,7 +855,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "7684c1dd878dbcca11b39f82d892ecd431f3f8ebcde4017c62de573ef0dcb791"
+      "sha256": "dd0f79763a04a76238125bf06d0ab1c41e24777a0f8f6bc18cf29c0c5dafc94e"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -1947,7 +1947,7 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "d637d023d77271ea0d1babc5ff09d36189db3a4a714b74809efc2a6055db3dfa"
+      "sha256": "de30c0adf10470659eb9e81a2502c1d3049d46f6981f6fd074252ade928a9301"
     },
     {
       "path": "docs/DISTRIBUTION.md",
@@ -1987,7 +1987,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "683a000718b81b377ae898aa0bf4c6d0d81ab84a27122e390dcac6bc9b761895"
+      "sha256": "cfce67e8526eb355f98544cba45a3343ba7eba7185f03c5553b86129dfe20ff9"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -3439,7 +3439,7 @@
     },
     {
       "path": "docs/PORTABILITY-MAP.md",
-      "sha256": "40c777f8790a65288e7f85c88f58e9b7d1fe49540aa1ba62e07c8eae7a707623"
+      "sha256": "b1cc7a2a5cfc0f8c7953fa01c9ac2765c4b92daeb9c4dfe21b6e68ea1099a197"
     },
     {
       "path": "docs/fixtures/semantics/README.md",
@@ -4091,7 +4091,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGGraph.swift",
-      "sha256": "f86c7ed8720810581f1526ad9528d7662d51c7b2d48f9b74d9fb81f6df899992"
+      "sha256": "22ebbd2e8bacc1b313ceb162f9dd2686b5dc1a23ea4d97145a18e429e63f07e2"
     },
     {
       "path": "Tests/MartyGraphicsTests/AltTextTests.swift",
@@ -4976,6 +4976,18 @@
     {
       "path": "tools/tests/test_render_loop.py",
       "sha256": "e56541a4102e2060184af9c0b7773a1ec56d89c1b25b953f1ac9b116c5004e01"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGAudioGraph.swift",
+      "sha256": "b1f51ed2770b788e2f8862e715d99fc8028371ab67376d383ec24268c742311c"
+    },
+    {
+      "path": "Sources/MartyGraphics/MGChartDescriptor.swift",
+      "sha256": "7d6afda8e3b6ef1e4fcf2bb15f3643cda59381f6f8c349ca04e525b97117a184"
+    },
+    {
+      "path": "Tests/MartyGraphicsTests/AudioGraphTests.swift",
+      "sha256": "8c20596765f5fbc91e4db1f81806206d1ac05c8d5d0fa72a0dbcbe45d4d3cd9f"
     }
   ]
 }

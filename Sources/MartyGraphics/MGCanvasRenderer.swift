@@ -481,15 +481,17 @@ public enum MGCanvasRenderer {
         ctx.stroke(g, with: .color(theme.grid.opacity(1.5)), lineWidth: 1)
         ctx.stroke(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.subtleInk.opacity(0.5)), lineWidth: 1)
         let x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
-        let mapped = item.pts.dropFirst().map { q in
-            CGPoint(x: frame.minX + frame.width * CGFloat((q.x - x0) / (x1 - x0)), y: frame.maxY - frame.height * CGFloat((q.y - y0) / (y1 - y0)))
-        }
-        if mapped.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) {
-            var line = Path(); line.addLines(mapped)
-            var clip = ctx; clip.clip(to: Path(frame.insetBy(dx: -2, dy: -2)))
-            clip.drawLayer { l in
-                l.addFilter(.shadow(color: color.opacity(0.7), radius: 5))
-                l.stroke(line.trimmedPath(from: 0, to: p), with: .color(color), style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
+        // The line only when every point has a finite place (MGGraph.plotTrace, shared with the audio graph); the
+        // screen check only guards against overflow.
+        if let trace = MGGraph.plotTrace(item) {
+            let mapped = trace.map { q in CGPoint(x: frame.minX + frame.width * CGFloat(q.x), y: frame.maxY - frame.height * CGFloat(q.y)) }
+            if mapped.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) {
+                var line = Path(); line.addLines(mapped)
+                var clip = ctx; clip.clip(to: Path(frame.insetBy(dx: -2, dy: -2)))
+                clip.drawLayer { l in
+                    l.addFilter(.shadow(color: color.opacity(0.7), radius: 5))
+                    l.stroke(line.trimmedPath(from: 0, to: p), with: .color(color), style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
+                }
             }
         }
         let f = { (v: Double) in MGPhysics.format(v, unit: "") }
@@ -507,9 +509,9 @@ public enum MGCanvasRenderer {
     /// when 0 lies inside a range, the range ends as tick labels and the axis labels. Nil (nothing drawn) when the
     /// item's geometry is not finite, which only an item built in code, not parsed, can be.
     static func graphFrame(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme) -> CGRect? {
-        guard let o = item.pts.first else { return nil }
-        let w = item.n("w"), h = item.n("h"), x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
-        guard [o.x, o.y, w, h, x0, x1, y0, y1].allSatisfy(\.isFinite), w > 0, h > 0, x1 > x0, y1 > y0 else { return nil }
+        guard let checked = MGGraph.frame(item) else { return nil }
+        let o = checked.origin, w = checked.w, h = checked.h
+        let x0 = checked.x0, x1 = checked.x1, y0 = checked.y0, y1 = checked.y1
         let frame = CGRect(origin: vp.point(o + MGPoint(0, h)), size: CGSize(width: vp.length(w), height: vp.length(h)))
         ctx.fill(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.labelFill.opacity(0.5)))
         var g = Path()
@@ -576,11 +578,11 @@ public enum MGCanvasRenderer {
             l.stroke(line, with: .color(color), style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
         }
         // The dot sits on the drawn curve (also during a blend); the text is the engine's value of the function there.
-        // Both must be valid: no dot when the current value is missing or outside the y range, or the drawn curve has
-        // no value there.
-        guard let mx = item.num["mark"], let my = item.num["my"], my.isFinite, my >= y0, my <= y1, reveal >= 1,
-              let drawn = MGGraph.drawnValue(samples, starts: item.marked, at: mx), drawn >= y0, drawn <= y1 else { return }
-        let c = toScreen(MGPoint(mx, drawn))
+        // Both must be valid (MGGraph.mark, shared with the audio graph): no dot when the current value is missing or
+        // outside the y range, or the drawn curve has no value there.
+        guard reveal >= 1, let mark = MGGraph.mark(item) else { return }
+        let mx = mark.x, my = mark.value
+        let c = toScreen(MGPoint(mx, mark.drawn))
         let dot = Path(ellipseIn: CGRect(x: c.x - 5, y: c.y - 5, width: 10, height: 10))
         ctx.fill(dot, with: .color(theme.ink))
         ctx.stroke(dot, with: .color(color), lineWidth: 2)
@@ -664,7 +666,7 @@ public enum MGCanvasRenderer {
     }
 
     static func bars(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ p: Double) {
-        guard let o = item.pts.first, !item.bars.isEmpty else { return }
+        guard let o = MGGraph.barsOrigin(item) else { return }
         let w = vp.length(item.n("w")), h = vp.length(item.n("h"))
         let origin = vp.point(o)  // bottom-left
         let frame = CGRect(x: origin.x, y: origin.y - h, width: w, height: h)
