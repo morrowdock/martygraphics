@@ -139,8 +139,12 @@ public struct MartyGraphicsView: View {
     public func markers(_ markers: [String: Int]) -> Self { var v = self; v.teaching.markers = markers; return v }
     /// Finite motion: play `loops` cycles, then rest on the last frame (Replay plays again). nil keeps looping.
     public func motionLoops(_ loops: Int?) -> Self { var v = self; v.teaching.loops = loops.map { max(1, $0) }; return v }
-    /// VoiceOver value for the board (e.g. a teaching summary); defaults to the current step's narration.
+    /// VoiceOver value for the board (e.g. a teaching summary); defaults to the current step's narration followed by
+    /// the step's (or else the scene's) `alt` text when the scene has one.
     public func boardAccessibility(_ summary: String?) -> Self { var v = self; v.teaching.summary = summary; return v }
+    /// VoiceOver: when neither the current step nor the scene has `alt` text, read the engine's description of the
+    /// visible board (`MGDescribe.board`) after the narration. Concealed items are never described. Off by default.
+    public func describesBoard(_ on: Bool = true) -> Self { var v = self; v.teaching.describes = on; return v }
     /// 2D: fit the board's viewport for `size` instead of the view's own size, keeping that scale and centre (the
     /// explainer's narrowed board pane uses its reference pane, `MGExplainerFrame.boardReferenceSize`). Nil: own size.
     public func viewportFit(_ size: CGSize?) -> Self { var v = self; v.teaching.fitSize = size; return v }
@@ -190,6 +194,8 @@ struct MGBoardTeaching {
     var markers: [String: Int] = [:]
     var loops: Int?
     var summary: String?
+    /// Read `MGDescribe.board` when no `alt` text is authored (`describesBoard`).
+    var describes = false
     var concealed: Set<String> = []
     /// 2D: the size the viewport is fitted for (nil: the view's own size); the view keeps that scale and centre.
     var fitSize: CGSize?
@@ -306,7 +312,8 @@ struct MGSceneHost: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement()
         .accessibilityLabel(scene.title.isEmpty ? "Marty's sketch" : scene.title)
-        .accessibilityValue(teaching.summary ?? (scene.steps.indices.contains(step) ? scene.steps[step].say : ""))
+        .accessibilityValue(teaching.summary ?? MGDescribe.accessibilityValue(scene, step: step, describing: teaching.describes,
+                                                                               hiding: teaching.concealed))
     }
 
     // MARK: teaching hooks

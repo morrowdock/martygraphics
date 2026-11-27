@@ -30,6 +30,26 @@ public enum MGLimits {
     public static let depth = 64
     /// `table` items: at most this many rows and columns, and this many characters per cell.
     public static let tableRows = 8, tableCols = 6, tableCellText = 12
+    /// `func` and `field` expressions (`MGExpression`): at most this many Unicode scalars, tokens and nested
+    /// parentheses, so one evaluation runs at most `exprTokens` operations. These bounds, like the others in this
+    /// group, apply to the new kinds only; no existing limit changes.
+    public static let exprLength = 80, exprTokens = 48, exprDepth = 8
+    /// At most this many `func` and `field` items in one resolved scene (`items.expr`). A `func` costs at most 7,169
+    /// evaluations per checked instant (257 samples, 512 gap probes, 768 × 8 bisection steps, 256 midpoints); a moving
+    /// one is checked at 4 instants plus 2 × 257 loop values (29,190). Six moving graphs are at most 175,140 evaluations
+    /// of at most 48 operations each; a typical smooth graph needs 513 per instant. A `field` costs 2 per arrow (≤ 384).
+    public static let exprItems = 6
+    /// A `func` is sampled on this many equal intervals (257 samples) and may break into at most `funcBreaks + 1` pieces.
+    public static let funcIntervals = 256, funcBreaks = 16
+    /// Farthest the drawn polyline may be from the function at an interval midpoint, as a fraction of the frame height
+    /// (`MGGraph.curve`). A 12 × 8 world fitted to 1280 × 720 is 85.5 px per unit, so on a 4-unit-high graph 1 % is
+    /// 3.4 px: about one stroke width (2.8 px).
+    public static let funcTolerance = 0.01
+    /// `a`, `b` and `c` parameters lie within ±`exprParameter`; a moving graph's `period` within `funcPeriod` seconds.
+    public static let exprParameter = 1000.0
+    public static let funcPeriod: ClosedRange<Double> = 0.5...20
+    /// `field` grids: 2…`fieldCols` columns and 2…`fieldRows` rows of arrows.
+    public static let fieldCols = 16, fieldRows = 12
 }
 
 public struct MGError: Error, Equatable, CustomStringConvertible {
@@ -78,7 +98,7 @@ public enum MGParser {
         catch { return .failure(MGError("video2d.schema")) }
     }
 
-    static let topKeys: Set<String> = ["v", "template", "params", "title", "dim", "world", "items", "steps", "camera", "hide", "over"]
+    static let topKeys: Set<String> = ["v", "template", "params", "title", "dim", "world", "items", "steps", "camera", "hide", "over", "alt"]
 
     public static func scene(data: Data) -> Result<MGScene, MGError> {
         guard data.count <= MGLimits.sceneBytes * 2 else { return .failure(.init("json")) }
@@ -160,12 +180,17 @@ public enum MGParser {
 
         // Template output goes through the same item validator as model-written items (fail safe on template bugs too).
         var items = try (build?.items ?? []).map { try item(.object($0.wire()), ctx) }
+        // Function graphs and vector fields evaluate expressions; count them before evaluating any wire item.
+        var graphs = items.filter { $0.kind == .function || $0.kind == .field }.count
         if let raw = o["items"] {
             guard case .array(let list) = raw else { throw MGError("items") }
             let limit = build == nil ? MGLimits.items : MGLimits.templateExtras
             guard (build == nil ? 1 : 0)...limit ~= list.count else { throw MGError("items.count") }
+            graphs += list.filter { $0["k"] == .string(MGKind.function.rawValue) || $0["k"] == .string(MGKind.field.rawValue) }.count
+            guard graphs <= MGLimits.exprItems else { throw MGError("items.expr") }
             for entry in list { items.append(try item(entry, ctx)) }
         }
+        guard graphs <= MGLimits.exprItems else { throw MGError("items.expr") }
         var ids = Set<String>()
         for i in items { guard ids.insert(i.id).inserted else { throw MGError("id.duplicate.\(i.id)") } }
 
@@ -190,6 +215,7 @@ public enum MGParser {
         // Template walkthroughs skip anything the model hid (e.g. "hide the components").
         var steps = try (build?.steps ?? []).map { st -> MGStep in
             var st = st; st.say = try text(.string(st.say), MGLimits.say, ctx, "template.say", multiline: true)
+            if let a = st.alt { st.alt = try text(.string(a), MGLimits.say, ctx, "template.alt") }
             if let c = st.camera { st.camera = try self.camera(c.wire(), ctx) }
             st.show = st.show.filter(ids.contains); if let f = st.focus, !ids.contains(f) { st.focus = nil }
             return st
@@ -200,6 +226,8 @@ public enum MGParser {
         }
         var title = try build.map { $0.title.isEmpty ? "" : try text(.string($0.title), MGLimits.title, ctx, "template.title") } ?? ""
         if let t = o["title"] { title = try text(t, MGLimits.title, ctx, "title") }
+        // A text alternative for the whole board (docs/PROTOCOL.md, "Function graphs, vector fields and text alternatives").
+        let alt = try o["alt"].map { try text($0, MGLimits.say, ctx, "alt") }
         let camera = try o["camera"].map { try self.camera($0, ctx) } ?? build?.camera.map { try self.camera($0.wire(), ctx) }
 
         guard items.count <= MGLimits.resolvedItems, !items.isEmpty else { throw MGError("items.total") }
@@ -213,6 +241,7 @@ public enum MGParser {
                             title: title, is3D: is3D, width: width, height: height, items: items, steps: steps, camera: camera,
                             values: ctx.values, motion: motion, attachments: attachments)
         scene.builtValues = (build?.builtValues ?? []).intersection(ctx.values.keys)
+        scene.alt = alt
         return scene
     }
 
@@ -299,8 +328,9 @@ public enum MGParser {
 
     static func step(_ json: MGJSON, _ ctx: MGContext) throws -> MGStep {
         guard let o = json.objectValue else { throw MGError("step") }
-        try closed(o, required: ["say"], optional: ["show", "focus", "cam", "do"], "step")
+        try closed(o, required: ["say"], optional: ["show", "focus", "cam", "do", "alt"], "step")
         var s = MGStep(say: try text(o["say"], MGLimits.say, ctx, "step.say", multiline: true))
+        if let a = o["alt"] { s.alt = try text(a, MGLimits.say, ctx, "step.alt") }
         if let raw = o["show"] {
             guard case .array(let list) = raw, list.count <= MGLimits.showPerStep else { throw MGError("step.show") }
             s.show = try list.map { try identifier($0, "step.show") }
@@ -370,6 +400,8 @@ public enum MGParser {
         case .edge: extra = ["a", "b", "dir", "label"]
         case .table: extra = ["at", "cells", "header", "cw", "rh", "marked", "label"]
         case .region: extra = ["pts", "dashed", "label"]
+        case .function: extra = ["at", "w", "h", "xr", "yr", "y", "a", "b", "c", "period", "shade", "mark", "xl", "yl", "label"]
+        case .field: extra = ["at", "w", "h", "xr", "yr", "dx", "dy", "a", "b", "c", "n", "style", "xl", "yl", "label"]
         }
         return common.union(extra)
     }
@@ -391,6 +423,8 @@ public enum MGParser {
         case .edge: return ["a", "b"]
         case .table: return ["at", "cells"]
         case .region: return ["pts"]
+        case .function: return ["at", "w", "h", "xr", "yr", "y"]
+        case .field: return ["at", "w", "h", "xr", "yr", "dx", "dy"]
         }
     }
     static func defaultColor(_ kind: MGKind) -> MGColorRole {
@@ -405,7 +439,8 @@ public enum MGParser {
         case .bars: return .energy
         case .incline: return .muted
         case .array, .node: return .blue
-        case .table, .region: return .accent
+        case .table, .region, .function: return .accent
+        case .field: return .teal
         }
     }
 
@@ -597,8 +632,87 @@ public enum MGParser {
             guard case .array(let points)? = o["pts"], (3...MGLimits.points).contains(points.count) else { throw MGError("region.pts") }
             it.pts = try points.map { try point($0, ctx, "region.pts") }
             if try flag("dashed") { it.flags.insert("dashed") }
+        case .function:
+            // A graph of y = f(x) that the engine samples and checks (MGGraph.checkFunction); the model writes no points.
+            it.pts = [try p("at")]
+            it.num["w"] = try n("w", 0.5...(span * 1.25)); it.num["h"] = try n("h", 0.5...(span * 1.25))
+            let xr = try graphRange(o["xr"], "func.xr"), yr = try graphRange(o["yr"], "func.yr")
+            it.num["x0"] = xr.0; it.num["x1"] = xr.1; it.num["y0"] = yr.0; it.num["y1"] = yr.1
+            var allowed = try graphParameters(&it, o, k)
+            if let period = try opt("period", MGLimits.funcPeriod) { it.num["period"] = period; allowed.insert(.t) }
+            let expr = try expression(o["y"], allowed, "func.y")
+            if it.num["period"] != nil, !expr.variables.contains(.t) { throw MGError("func.period") }
+            it.text = expr.text
+            if let raw = o["shade"] {
+                guard case .array(let s) = raw, s.count == 2 else { throw MGError("func.shade") }
+                let s0 = try num(s[0], xr.0...xr.1, "func.shade"), s1 = try num(s[1], xr.0...xr.1, "func.shade")
+                guard s0 < s1 else { throw MGError("func.shade") }
+                it.num["s0"] = s0; it.num["s1"] = s1
+            }
+            if let m = try opt("mark", xr.0...xr.1) { it.num["mark"] = m }
+            try MGGraph.checkFunction(&it, expr)
+            it.list = [try o["xl"].map { try text($0, MGLimits.label, ctx, "func.xl") } ?? "",
+                       try o["yl"].map { try text($0, MGLimits.label, ctx, "func.yl") } ?? ""]
+        case .field:
+            // Arrows of (dx, dy) at the centres of a grid of cells, evaluated by the engine.
+            it.pts = [try p("at")]
+            it.num["w"] = try n("w", 0.5...(span * 1.25)); it.num["h"] = try n("h", 0.5...(span * 1.25))
+            let xr = try graphRange(o["xr"], "field.xr"), yr = try graphRange(o["yr"], "field.yr")
+            it.num["x0"] = xr.0; it.num["x1"] = xr.1; it.num["y0"] = yr.0; it.num["y1"] = yr.1
+            let allowed = try graphParameters(&it, o, k).union([.y])
+            if let raw = o["n"] {
+                guard case .array(let grid) = raw, grid.count == 2 else { throw MGError("field.n") }
+                let cols = try num(grid[0], 2...Double(MGLimits.fieldCols), "field.n")
+                let rows = try num(grid[1], 2...Double(MGLimits.fieldRows), "field.n")
+                guard cols.rounded() == cols, rows.rounded() == rows else { throw MGError("field.n") }
+                it.num["cols"] = cols; it.num["rows"] = rows
+            } else {
+                // Twelve arrows along the longer side and the shorter side in proportion (at least three).
+                let w = it.n("w"), h = it.n("h")
+                it.num["cols"] = w >= h ? 12 : Swift.max(3, (12 * w / h).rounded())
+                it.num["rows"] = w >= h ? Swift.max(3, (12 * h / w).rounded()) : 12
+            }
+            switch o["style"] {
+            case nil, .string("arrows"): break
+            case .string("unit"): it.flags.insert("unit")
+            case .string("slope"): it.flags.insert("slope")
+            default: throw MGError("field.style")
+            }
+            let dx = try expression(o["dx"], allowed, "field.dx"), dy = try expression(o["dy"], allowed, "field.dy")
+            let xl = try o["xl"].map { try text($0, MGLimits.label, ctx, "field.xl") } ?? ""
+            let yl = try o["yl"].map { try text($0, MGLimits.label, ctx, "field.yl") } ?? ""
+            it.list = [xl, yl, dx.text, dy.text]
+            let sampled = MGGraph.fieldVectors(it, dx, dy)
+            guard sampled.vectors.contains(where: { $0.x != 0 || $0.y != 0 }) else { throw MGError("field.empty") }
+            it.pts += sampled.vectors
+            it.marked = sampled.missing
         }
         return it
+    }
+
+    /// A `func` or `field` range: like `range` (two numbers within ±10⁶, increasing) and at least 10⁻⁶ wide.
+    static func graphRange(_ v: MGJSON?, _ what: String) throws -> (Double, Double) {
+        let r = try range(v, what)
+        guard r.1 - r.0 >= 1e-6 else { throw MGError(what) }
+        return r
+    }
+
+    /// The optional `a`, `b` and `c` parameters of a `func` or `field` item (each within ±`MGLimits.exprParameter`,
+    /// reason `<kind>.<name>`) and the variables its expressions may read: `x` and each parameter that is set.
+    static func graphParameters(_ it: inout MGItem, _ o: [String: MGJSON], _ k: String) throws -> Set<MGExpression.Variable> {
+        var allowed: Set<MGExpression.Variable> = [.x]
+        for v in [MGExpression.Variable.a, .b, .c] {
+            guard let raw = o[v.rawValue] else { continue }
+            it.num[v.rawValue] = try num(raw, -MGLimits.exprParameter...MGLimits.exprParameter, "\(k).\(v.rawValue)")
+            allowed.insert(v)
+        }
+        return allowed
+    }
+
+    /// A `func` or `field` expression string, compiled with `MGExpression` (reasons `what`, `what.syntax`, …).
+    static func expression(_ v: MGJSON?, _ allowed: Set<MGExpression.Variable>, _ what: String) throws -> MGExpression {
+        guard case .string(let s)? = v else { throw MGError(what) }
+        return try MGExpression.compile(s, allowed: allowed, reason: what)
     }
 
     // MARK: primitives
@@ -785,6 +899,25 @@ extension MGItem {
             if has("header") { o["header"] = .bool(true) }
             if !marked.isEmpty { o["marked"] = .array(marked.map { .array([.number(Double($0 / cols)), .number(Double($0 % cols))]) }) }
         case .region: o["pts"] = .array(pts.map { pt($0) }); if has("dashed") { o["dashed"] = .bool(true) }
+        case .function:
+            // The samples are derived and never serialised: a re-parse samples and checks the expression again.
+            o["at"] = pt(at(0)); put("w"); put("h")
+            o["xr"] = .array([.number(n("x0")), .number(n("x1"))]); o["yr"] = .array([.number(n("y0")), .number(n("y1"))])
+            o["y"] = .string(text ?? "")
+            for key in ["a", "b", "c", "period", "mark"] { put(key) }
+            if let s0 = num["s0"], let s1 = num["s1"] { o["shade"] = .array([.number(s0), .number(s1)]) }
+            if list.count >= 2 { if !list[0].isEmpty { o["xl"] = .string(list[0]) }; if !list[1].isEmpty { o["yl"] = .string(list[1]) } }
+        case .field:
+            // `list` is [x label, y label, dx, dy]; the arrows are derived and never serialised.
+            o["at"] = pt(at(0)); put("w"); put("h")
+            o["xr"] = .array([.number(n("x0")), .number(n("x1"))]); o["yr"] = .array([.number(n("y0")), .number(n("y1"))])
+            for key in ["a", "b", "c"] { put(key) }
+            if let cols = num["cols"], let rows = num["rows"] { o["n"] = .array([.number(cols), .number(rows)]) }
+            if has("unit") { o["style"] = .string("unit") }; if has("slope") { o["style"] = .string("slope") }
+            if list.count == 4 {
+                if !list[0].isEmpty { o["xl"] = .string(list[0]) }; if !list[1].isEmpty { o["yl"] = .string(list[1]) }
+                o["dx"] = .string(list[2]); o["dy"] = .string(list[3])
+            }
         }
         return o
     }

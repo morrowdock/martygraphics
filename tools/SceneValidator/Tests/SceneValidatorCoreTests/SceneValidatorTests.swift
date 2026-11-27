@@ -120,6 +120,29 @@ final class SceneValidatorTests: XCTestCase {
         }
     }
 
+    /// The additive kinds `func` and `field` and the `alt` keys need no tool change either: the tool calls the parser.
+    func testFunctionGraphFieldAndAltScenesUseTheParserRules() throws {
+        let valid = #"{"v":1,"alt":"A parabola and a flow.","items":[{"id":"f","k":"func","at":[1,1],"w":5,"h":4,"xr":[-2,2],"yr":[-1,4],"y":"x^2","shade":[0,1]},"#
+            + #"{"id":"v","k":"field","at":[6.5,1],"w":5,"h":4,"xr":[-2,2],"yr":[-2,2],"dx":"-y","dy":"x"}],"steps":[{"say":"Look.","alt":"A parabola."}]}"#
+        try write("graphs.json", valid)
+        XCTAssertEqual(run("graphs.json").stdout, """
+            graphs.json: valid (2d, 2 items, 1 step)
+            Checked 1 file: 1 valid, 0 invalid, 0 unreadable.
+
+            """)
+        let cases = [
+            ("name.json", #"{"v":1,"items":[{"id":"f","k":"func","at":[1,1],"w":5,"h":4,"xr":[-2,2],"yr":[-2,2],"y":"sinc(x)"}]}"#, "func.y.name"),
+            ("aliased.json", #"{"v":1,"items":[{"id":"f","k":"func","at":[1,1],"w":5,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"sin(80*x)"}]}"#, "func.detail"),
+            ("field3d.json", #"{"v":1,"dim":"3d","items":[{"id":"v","k":"field","at":[1,1],"w":5,"h":4,"xr":[-2,2],"yr":[-2,2],"dx":"1","dy":"0"}]}"#, "3d.kind.field"),
+            ("alt.json", #"{"v":1,"alt":"<b>x</b>","items":[{"id":"n","k":"node","at":[2,2],"text":"a"}]}"#, "alt")
+        ]
+        for (name, text, expected) in cases {
+            try write(name, text)
+            guard case .invalid(let reason, _) = SceneValidator.check(path: name) else { return XCTFail("tool accepted \(name)") }
+            XCTAssertEqual(reason, expected, name)
+        }
+    }
+
     func testByteLimitMatchesParser() throws {
         let limit = SceneValidator.maximumInputBytes
         XCTAssertEqual(limit, MGLimits.sceneBytes * 2)

@@ -32,7 +32,8 @@ public struct MGRenderInput {
 /// collision-free labels, pulsing focus. No state; `MartyGraphicsView` owns time and steps.
 public enum MGCanvasRenderer {
     static let layer: [MGKind: Int] = [.axes: 0, .plot: 0, .bars: 0, .incline: 1, .line: 1, .orbit: 1, .path: 2, .rope: 2, .spring: 3,
-                                       .pulley: 3, .edge: 3, .body: 4, .node: 4, .array: 4, .vector: 5, .highlight: 6, .text: 7, .table: 4, .region: 0]
+                                       .pulley: 3, .edge: 3, .body: 4, .node: 4, .array: 4, .vector: 5, .highlight: 6, .text: 7, .table: 4, .region: 0,
+                                       .function: 0, .field: 0]
 
     public static func draw(_ input: MGRenderInput, in ctx: GraphicsContext) {
         if let plan = input.scene.layer2d {
@@ -248,6 +249,14 @@ public enum MGCanvasRenderer {
                         caption.draw(Text(l).font(.system(size: 13, weight: .bold)).foregroundColor(theme.ink), at: CGPoint(x: r.minX + 2, y: r.minY - 12), anchor: .leading)
                     }
                 }
+            case .function:
+                functionGraph(ctx, item, vp, theme, color, p)
+                if let o = item.pts.first { label(item.label, at: vp.point(o + MGPoint(item.n("w") / 2, item.n("h"))), dir: CGVector(dx: 0, dy: -1)) }
+                obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
+            case .field:
+                vectorField(ctx, item, vp, theme, color, p)
+                if let o = item.pts.first { label(item.label, at: vp.point(o + MGPoint(item.n("w") / 2, item.n("h"))), dir: CGVector(dx: 0, dy: -1)) }
+                obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
             case .node:
                 guard let c = item.pts.first.map(vp.point) else { continue }
                 let r = vp.length(item.n("r", 0.5)) * CGFloat(MGTimeline.spring(p * 0.9))
@@ -438,6 +447,164 @@ public enum MGCanvasRenderer {
         if item.list.count == 2 {
             small(ctx, item.list[0], at: CGPoint(x: frame.midX, y: frame.maxY + 22), color: theme.subtleInk)
             small(ctx, item.list[1], at: CGPoint(x: frame.minX + 6, y: frame.minY - 10), color: theme.subtleInk, anchor: .leading)
+        }
+    }
+
+    /// The frame of a `func` or `field` item in the `plot` look: a translucent panel, a 4 × 4 grid, the axes through 0
+    /// when 0 lies inside a range, the range ends as tick labels and the axis labels. Nil (nothing drawn) when the
+    /// item's geometry is not finite, which only an item built in code, not parsed, can be.
+    static func graphFrame(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme) -> CGRect? {
+        guard let o = item.pts.first else { return nil }
+        let w = item.n("w"), h = item.n("h"), x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
+        guard [o.x, o.y, w, h, x0, x1, y0, y1].allSatisfy(\.isFinite), w > 0, h > 0, x1 > x0, y1 > y0 else { return nil }
+        let frame = CGRect(origin: vp.point(o + MGPoint(0, h)), size: CGSize(width: vp.length(w), height: vp.length(h)))
+        ctx.fill(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.labelFill.opacity(0.5)))
+        var g = Path()
+        for k in 1..<4 {
+            let fx = frame.minX + frame.width * CGFloat(k) / 4, fy = frame.minY + frame.height * CGFloat(k) / 4
+            g.move(to: CGPoint(x: fx, y: frame.minY)); g.addLine(to: CGPoint(x: fx, y: frame.maxY))
+            g.move(to: CGPoint(x: frame.minX, y: fy)); g.addLine(to: CGPoint(x: frame.maxX, y: fy))
+        }
+        ctx.stroke(g, with: .color(theme.grid.opacity(1.5)), lineWidth: 1)
+        var axes = Path()
+        if x0 < 0, x1 > 0 {
+            let ax = frame.minX + frame.width * CGFloat(-x0 / (x1 - x0))
+            axes.move(to: CGPoint(x: ax, y: frame.minY)); axes.addLine(to: CGPoint(x: ax, y: frame.maxY))
+        }
+        if y0 < 0, y1 > 0 {
+            let ay = frame.maxY - frame.height * CGFloat(-y0 / (y1 - y0))
+            axes.move(to: CGPoint(x: frame.minX, y: ay)); axes.addLine(to: CGPoint(x: frame.maxX, y: ay))
+        }
+        ctx.stroke(axes, with: .color(theme.subtleInk.opacity(0.45)), lineWidth: 1)
+        ctx.stroke(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.subtleInk.opacity(0.5)), lineWidth: 1)
+        let f = { (v: Double) in MGPhysics.format(v, unit: "") }
+        small(ctx, f(x0), at: CGPoint(x: frame.minX, y: frame.maxY + 9), color: theme.subtleInk, anchor: .leading)
+        small(ctx, f(x1), at: CGPoint(x: frame.maxX, y: frame.maxY + 9), color: theme.subtleInk, anchor: .trailing)
+        small(ctx, f(y1), at: CGPoint(x: frame.minX - 4, y: frame.minY + 6), color: theme.subtleInk, anchor: .trailing)
+        small(ctx, f(y0), at: CGPoint(x: frame.minX - 4, y: frame.maxY - 6), color: theme.subtleInk, anchor: .trailing)
+        if item.list.count >= 2 {
+            small(ctx, item.list[0], at: CGPoint(x: frame.midX, y: frame.maxY + 22), color: theme.subtleInk)
+            small(ctx, item.list[1], at: CGPoint(x: frame.minX + 6, y: frame.minY - 10), color: theme.subtleInk, anchor: .leading)
+        }
+        return frame
+    }
+
+    /// Draws a `func` item: its frame, the shaded band, the curve piece by piece (clipped to the frame, never joined
+    /// across a gap or a pole) and the marked point with its engine-computed coordinates. Draw-on reveals the graph
+    /// from left to right; the marked point appears once the graph is complete.
+    static func functionGraph(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double) {
+        guard let frame = graphFrame(ctx, item, vp, theme) else { return }
+        let x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
+        func toScreen(_ q: MGPoint) -> CGPoint {
+            CGPoint(x: frame.minX + frame.width * CGFloat((q.x - x0) / (x1 - x0)),
+                    y: frame.maxY - frame.height * CGFloat((q.y - y0) / (y1 - y0)))
+        }
+        let samples = Array(item.pts.dropFirst())
+        let reveal = CGFloat(min(1, max(0, p)))
+        var clip = ctx
+        clip.clip(to: Path(CGRect(x: frame.minX - 2, y: frame.minY - 2, width: (frame.width + 4) * reveal, height: frame.height + 4)))
+        if let s0 = item.num["s0"], let s1 = item.num["s1"] {
+            var band = Path()
+            for polygon in MGGraph.shadeBands(samples, starts: item.marked, s0, s1, y0: y0, y1: y1) where polygon.count >= 3 {
+                band.addLines(polygon.map(toScreen))
+                band.closeSubpath()
+            }
+            clip.fill(band, with: .color(color.opacity(0.26)))
+        }
+        // Values more than 5 % of the span outside the range are flattened just outside the frame, so no coordinate is
+        // huge and the visible part of every segment is exactly the original segment.
+        let margin = 0.05 * (y1 - y0)
+        var line = Path()
+        for r in MGGraph.pieces(samples.count, starts: item.marked) where r.count >= 2 {
+            line.addLines(MGGraph.clamped(Array(samples[r]), lo: y0 - margin, hi: y1 + margin).map(toScreen))
+        }
+        clip.drawLayer { l in
+            l.addFilter(.shadow(color: color.opacity(0.7), radius: 5))
+            l.stroke(line, with: .color(color), style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
+        }
+        // The dot sits on the drawn curve (also during a blend); the text is the engine's value of the function there.
+        guard let mx = item.num["mark"], let my = item.num["my"], reveal >= 1,
+              let drawn = MGGraph.drawnValue(samples, starts: item.marked, at: mx), drawn >= y0, drawn <= y1 else { return }
+        let c = toScreen(MGPoint(mx, drawn))
+        let dot = Path(ellipseIn: CGRect(x: c.x - 5, y: c.y - 5, width: 10, height: 10))
+        ctx.fill(dot, with: .color(theme.ink))
+        ctx.stroke(dot, with: .color(color), lineWidth: 2)
+        let f = { (v: Double) in MGPhysics.format(v, unit: "") }
+        let text = ctx.resolve(Text(verbatim: "(\(f(mx)), \(f(my)))").font(.system(size: 12, weight: .semibold)).foregroundColor(theme.ink))
+        let size = text.measure(in: CGSize(width: 300, height: 40))
+        var box = CGRect(x: c.x + 9, y: c.y - 15 - size.height, width: size.width + 12, height: size.height + 6)
+        if box.maxX > frame.maxX - 2 { box.origin.x = c.x - 9 - box.width }
+        if box.minY < frame.minY + 2 { box.origin.y = c.y + 9 }
+        ctx.fill(Path(roundedRect: box, cornerRadius: 6), with: .color(theme.labelFill))
+        ctx.stroke(Path(roundedRect: box, cornerRadius: 6), with: .color(color.opacity(0.55)), lineWidth: 1)
+        ctx.draw(text, at: CGPoint(x: box.midX, y: box.midY))
+    }
+
+    /// Draws a `field` item: its frame and one arrow per cell, centred on the cell. `arrows` (default): length in
+    /// proportion to the vector in the plot's own coordinates, the longest 0.85 of a cell, and the largest magnitude
+    /// noted under the frame; `unit`: equal arrows whose opacity steps with the magnitude (four levels); `slope`: equal
+    /// segments without heads. A zero vector is a dot; a cell without a value stays empty. Draw-on grows the arrows.
+    static func vectorField(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double) {
+        guard let frame = graphFrame(ctx, item, vp, theme) else { return }
+        let rawCols = item.n("cols"), rawRows = item.n("rows")
+        guard (1...Double(MGLimits.fieldCols)).contains(rawCols), (1...Double(MGLimits.fieldRows)).contains(rawRows),
+              rawCols.rounded() == rawCols, rawRows.rounded() == rawRows else { return }
+        let cols = Int(rawCols), rows = Int(rawRows)
+        let vectors = Array(item.pts.dropFirst())
+        guard vectors.count == cols * rows else { return }
+        let x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
+        let sx = frame.width / CGFloat(x1 - x0), sy = frame.height / CGFloat(y1 - y0)
+        let cellW = frame.width / CGFloat(cols), cellH = frame.height / CGFloat(rows), cell = min(cellW, cellH)
+        let missing = Set(item.marked)
+        let screen: [CGVector?] = vectors.enumerated().map { k, v in
+            missing.contains(k) || !v.x.isFinite || !v.y.isFinite ? nil : CGVector(dx: CGFloat(v.x) * sx, dy: -CGFloat(v.y) * sy)
+        }
+        let longest = screen.compactMap { $0.map { hypot($0.dx, $0.dy) } }.max() ?? 0
+        let largest = vectors.enumerated().filter { !missing.contains($0.offset) }.map { $0.element.length }.max() ?? 0
+        guard longest.isFinite, longest > 0, largest.isFinite, largest > 0 else { return }
+        let style = item.has("slope") ? 2 : item.has("unit") ? 1 : 0
+        let grow = CGFloat(min(1, max(0, p)))
+        var shafts = [Path](repeating: Path(), count: 4), heads = [Path](repeating: Path(), count: 4)
+        var dots = Path()
+        for j in 0..<rows {
+            for i in 0..<cols {
+                let k = j * cols + i
+                guard let v = screen[k] else { continue }
+                let c = CGPoint(x: frame.minX + cellW * (CGFloat(i) + 0.5), y: frame.maxY - cellH * (CGFloat(j) + 0.5))
+                let m = hypot(v.dx, v.dy)
+                guard m > longest * 1e-6 else {
+                    dots.addEllipse(in: CGRect(x: c.x - 1.5, y: c.y - 1.5, width: 3, height: 3))
+                    continue
+                }
+                let len = (style == 0 ? 0.85 * cell * m / longest : 0.7 * cell) * grow
+                guard len > 0.5 else { continue }
+                // Opacity level 0…3: the magnitude in quarters of the largest (unit style); the other styles use level 3.
+                let level = style == 1 ? Swift.max(0, Swift.min(3, Int((vectors[k].length / largest * 4).rounded(.up)) - 1)) : 3
+                let ux = v.dx / m, uy = v.dy / m
+                let a = CGPoint(x: c.x - ux * len / 2, y: c.y - uy * len / 2), b = CGPoint(x: c.x + ux * len / 2, y: c.y + uy * len / 2)
+                if style == 2 {
+                    shafts[level].move(to: a); shafts[level].addLine(to: b)
+                    continue
+                }
+                let head = min(7, max(3, len * 0.32))
+                let base = CGPoint(x: b.x - ux * head, y: b.y - uy * head)
+                shafts[level].move(to: a); shafts[level].addLine(to: base)
+                heads[level].move(to: b)
+                heads[level].addLine(to: CGPoint(x: base.x - uy * head * 0.55, y: base.y + ux * head * 0.55))
+                heads[level].addLine(to: CGPoint(x: base.x + uy * head * 0.55, y: base.y - ux * head * 0.55))
+                heads[level].closeSubpath()
+            }
+        }
+        var clip = ctx
+        clip.clip(to: Path(frame.insetBy(dx: -1, dy: -1)))
+        for level in 0..<4 {
+            let alpha = 0.25 * Double(level + 1)
+            clip.stroke(shafts[level], with: .color(color.opacity(alpha)), style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+            clip.fill(heads[level], with: .color(color.opacity(alpha)))
+        }
+        clip.fill(dots, with: .color(color.opacity(0.8)))
+        if style == 0, frame.width >= 160 {
+            small(ctx, "|v| up to " + MGPhysics.format(largest, unit: ""), at: CGPoint(x: frame.midX, y: frame.maxY + 9), color: theme.subtleInk)
         }
     }
 

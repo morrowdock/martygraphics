@@ -126,6 +126,11 @@ public enum MGTimeline {
         for k in out.indices where out[k].kind == .vector {
             if let on = out[k].ref, let c = centers[on] { out[k].pts = [c] }
         }
+        // A moving function graph (`period`) is sampled again at its own loop time, so t runs 0…period and repeats.
+        for k in out.indices where out[k].kind == .function {
+            guard let period = out[k].num["period"], period.isFinite, period > 0 else { continue }
+            out[k] = MGGraph.animated(out[k], at: t.truncatingRemainder(dividingBy: period))
+        }
         return out
     }
 
@@ -153,8 +158,9 @@ public enum MGTimeline {
             var i = target
             if prev.pts.count == target.pts.count { i.pts = zip(prev.pts, target.pts).map { $0.lerp($1, t) } }
             for (k, v) in target.num {
-                // A table's row and column counts are structure, not geometry: never draw a fractional grid.
-                if target.kind == .table, k == "rows" || k == "cols" { continue }
+                // A table's or a vector field's row and column counts are structure, not geometry: never draw a
+                // fractional grid.
+                if target.kind == .table || target.kind == .field, k == "rows" || k == "cols" { continue }
                 guard let p = prev.num[k] else { continue }
                 if k == "angle" {
                     var d = (v - p).truncatingRemainder(dividingBy: 360); if d > 180 { d -= 360 }; if d < -180 { d += 360 }
@@ -186,8 +192,10 @@ extension MGTimeline {
         case .projectile(_, _, _, _, _, let visual, let hold, _, _, _): return visual + hold
         case .oscillate(_, _, let period, _, _, _, _): return period
         case .none:
-            let moves = scene.items.compactMap { $0.num["moveT"] }
-            return moves.isEmpty ? nil : 2 * (moves.max() ?? 1)
+            // Body moves go there and back (2 × t); a moving graph repeats every `period`. The longest one is the loop.
+            let loops = scene.items.compactMap { $0.num["moveT"].map { 2 * $0 } }
+                + scene.items.filter { $0.kind == .function }.compactMap { $0.num["period"] }
+            return loops.max()
         }
     }
 

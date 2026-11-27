@@ -18,6 +18,10 @@ public enum MGGrammar {
                  "requiredKeys": MGParser.required(kind).union(["id", "k"]).sorted()]
             },
             "colors": MGColorRole.allCases.map(\.rawValue),
+            // The closed `func` / `field` expression vocabulary (MGExpression); the parser checks everything else.
+            "expression": ["functions": MGExpression.Function.allCases.map(\.rawValue), "constants": ["e", "pi"],
+                           "variables": ["func": ["x", "t", "a", "b", "c"], "field": ["x", "y", "a", "b", "c"]],
+                           "maxLength": MGLimits.exprLength, "maxTokens": MGLimits.exprTokens, "maxDepth": MGLimits.exprDepth] as [String: Any],
             "templates": MGPacks.all.flatMap(\.templates).map { template -> [String: Any] in
                 var entry: [String: Any] = ["name": template.name, "parameters": template.params.map(\.name)]
                 // Only templates with record-list parameters gain this key, so the default document is unchanged.

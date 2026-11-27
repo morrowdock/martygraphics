@@ -27,16 +27,18 @@ come from the already-public `MGGrammar` protocol examples; all fixtures are
 synthetic, Apache-2.0, and contain no transport/provider configuration.
 
 A scene requires `v: 1` and either a registered `template` with `params`, or an
-`items` array. Optional fields include `title`, `dim` (`2d` / `3d`), `world`,
-`camera`, and `steps`. Template scenes also support `hide` and `over`.
+`items` array. Optional fields include `title`, `alt` (a text alternative for the
+whole board), `dim` (`2d` / `3d`), `world`, `camera`, and `steps`. Template scenes
+also support `hide` and `over`.
 World coordinates point right/up, with the origin at bottom-left; 3D adds z
 toward the viewer. The default world is 12 by 8.
 
 Kinds: body, incline, line, vector, axes, plot, spring, pulley, rope, orbit,
-text, highlight, bars, path, array, node, edge, table, region. The model types
-expose their geometry. In 3D the supported subset is body, incline, line,
-vector, axes, orbit, text, highlight, path. Text styles are `label` (default),
-`callout`, `title` and `code`. See [tables, regions and code text](#tables-regions-and-code-text)
+text, highlight, bars, path, array, node, edge, table, region, func, field. The
+model types expose their geometry. In 3D the supported subset is body, incline,
+line, vector, axes, orbit, text, highlight, path. Text styles are `label`
+(default), `callout`, `title` and `code`. See [tables, regions and code text](#tables-regions-and-code-text)
+and [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives)
 for the newest additions.
 
 The engine rejects unknown keys, broken references, invalid parameter ranges,
@@ -120,6 +122,125 @@ is unchanged.
 
 [Copy the scene JSON](fixtures/v1/table-region-code.scene.json); it equals the
 built-in `cells` fixture.
+
+## Function graphs, vector fields and text alternatives
+
+Additive, unreleased changes to the unversioned preview, **pending Mac
+verification** (written and checked offline; the Swift tests have not run yet).
+Wire `v: 1` is unchanged and every scene that parsed before parses to the same
+result. `func` and `field` are 2D only (`3d.kind.func`, `3d.kind.field`, also
+through a `dim` patch or a step edit); `alt` works in 2D and 3D.
+
+```json
+{"id":"wave","k":"func","at":[0.6,1.2],"w":5.4,"h":4.2,"xr":[-3.2,3.2],"yr":[-1.6,1.6],"y":"a*sin(x)","a":1,"shade":[0,3.14],"mark":1.5708,"label":"y = a sin x"}
+```
+
+- `func`: a graph of y = f(x) that the **engine** samples. The model writes the
+  expression, never the points, so no plotted value can be a model's arithmetic
+  slip. Required `at` (frame bottom-left), `w`, `h` (0.5 to 1.25 × world span,
+  as `plot`), `xr`, `yr` (increasing, within ±10⁶, at least 10⁻⁶ wide) and `y`
+  (an expression in `x`). Optional `a`, `b`, `c` (parameters within ±1,000; an
+  expression may read only the ones that are set), `period` (0.5–20 s: the graph
+  moves, and `y` must read `t`, seconds 0…period, repeating), `shade` (`[x0, x1]`
+  inside `xr`: fill between the curve and y = 0), `mark` (an x inside `xr`: the
+  engine draws the point and writes its coordinates, for example `(1.57, 1)`),
+  `xl`, `yl`, `label`, `color` (default `accent`).
+- Sampling: 257 values on 256 equal intervals from `xr[0]` to exactly `xr[1]`.
+  Where the function has no value (`sqrt(-1)`, `ln(0)`, `1/0`) the curve has a
+  gap; the piece before ends 1/1024 of an interval before it and the next starts
+  1/1024 after it, so `sin(x)/x` shows a hole one probe wide and `ln(x)` runs up
+  to its asymptote. Two neighbouring values outside the y range on opposite sides
+  are bisected 8 times: a value inside the range means the curve crosses the view
+  (it is joined); otherwise it is a pole and the curve breaks there, so `tan(x)`
+  is never drawn with vertical lines through its asymptotes.
+- Faithfulness checks, refused rather than drawn wrong: at every interval midpoint
+  the drawn chord must be within 1 % of the frame height of the function
+  (`MGLimits.funcTolerance`; the smaller of the vertical gap, both clipped to the
+  y range, and the distance from the true point to the chord, so a steep curve
+  such as `sqrt(x)` near 0 passes while aliasing such as `sin(80*x)` and a peak
+  between samples are refused, `func.detail`); at most 16 breaks (`func.breaks`);
+  something inside the y range (`func.empty`); the shaded interval inside one
+  unbroken piece (`func.shade`); the marked point has a value inside the y range
+  (`func.mark`). A moving graph is checked at t = 0, ¼, ½ and ¾ of its period,
+  and at t = period it must match t = 0 to the same tolerance with the same gaps
+  (`func.loop`), so every loop is seamless. Expressions are refused as
+  `func.y` (not text, empty, over 80 Unicode scalars, a character outside the
+  grammar), `func.y.syntax`, `.tokens` (over 48), `.depth` (over 8 nested
+  parentheses), `.name`, `.arity` and `.var.<v>` (`t` without `period`, a
+  parameter that is not set, `y` in a `func`). A `period` whose expression does
+  not read `t` is `func.period`. Other keys use `func.<key>`.
+
+```json
+{"id":"flow","k":"field","at":[6.6,1.2],"w":4.8,"h":4.2,"xr":[-2,2],"yr":[-2,2],"dx":"-y","dy":"x","n":[8,7],"style":"arrows"}
+```
+
+- `field`: one engine-evaluated arrow (`dx`, `dy`, expressions in `x`, `y` and
+  the set parameters; no `t`) at the centre of each cell of an `n` = `[columns,
+  rows]` grid (2–16 × 2–12; default 12 along the longer side of the frame and the
+  other side in proportion, at least 3). Same frame keys as `func`. `style`:
+  `arrows` (default; length in proportion to the vector in the plot's own
+  coordinates, the longest 0.85 of a cell, and the largest magnitude written
+  under the frame, `|v| up to 2.45` here), `unit` (equal arrows; opacity in four steps
+  of the magnitude) or `slope` (equal segments without heads: a direction field
+  for dy/dx = f(x, y) with `"dx":"1","dy":"f"`). A zero vector is a dot; a cell
+  without a value stays empty. Reasons: `field.n`, `field.style`, `field.dx…` /
+  `field.dy…` (the expression reasons above) and `field.empty` (no cell with a
+  nonzero value).
+- At most 6 `func` and `field` items per resolved scene (`items.expr`), counted
+  before any is evaluated. The parse cost is bounded by construction (see
+  `MGLimits.exprItems`: at most 7,169 evaluations of at most 48 operations per
+  checked instant); typical graphs need about 513. Measurements on a Mac are
+  pending.
+- Step edits and `set` patches change these items like any other (for example
+  `{"id":"wave","key":"a","value":1.5}`); the item is re-sampled and re-checked,
+  and a refused value refuses the whole scene. Two graphs with the same number of
+  samples blend point by point, so a step change morphs the curve.
+
+The expression grammar is closed and evaluated by a small stack machine, never by
+the host: no `NSExpression` (whose `FUNCTION` form can invoke arbitrary methods),
+no JavaScriptCore, key paths, selectors or format strings.
+
+```text
+expr    := term (("+" | "-") term)*       term  := unary (("*" | "/") unary)*
+unary   := ("+" | "-") unary | power      power := primary ("^" unary)?
+primary := number | name | name "(" expr ("," expr)* ")" | "(" expr ")"
+```
+
+`^` is right-associative and binds tighter than a leading minus (`-x^2` is
+-(x²)). Numbers are decimal without an exponent (`2`, `0.5`, `.5`, at most 12
+characters). Names: `pi`, `e`, the variables `x y t a b c` and the functions
+`sin cos tan asin acos atan sinh cosh tanh exp ln log sqrt abs` (`ln` is natural,
+`log` base 10) and `min max` (two arguments). Multiplication is always written
+(`2x` and `x(x+1)` are refused). Values follow IEEE 754.
+`MGGrammar.document()` lists the vocabulary under `expression`.
+
+Text alternatives:
+
+- `alt` on the scene and on a step: plain text, at most 200 Unicode scalars, the
+  rules and placeholders of `say` (reasons `alt`, `step.alt`, `template.alt`).
+  It describes what the board shows for a reader who cannot see it.
+  `MartyGraphicsView` reads it to VoiceOver after the step's narration; a step
+  without `alt` uses the scene's. Without any `alt` the VoiceOver value is the
+  narration alone, as before. Change a step's `alt` with the `steps` patch and the
+  scene's with a new scene; there is no new patch operation.
+- `MGDescribe.board(scene, step:hiding:)` is an engine-written fallback: one
+  sentence naming each visible item's kind, label and engine-held numbers, for
+  example "A graph of y = a*sin(x) labelled “y = a sin x” for x from -3.2 to 3.2
+  and y from -1.6 to 1.6 with a = 1, shaded from x = 0 to 3.14, marking the point
+  (1.57, 1); a vector field …". It describes structure, not meaning, and never
+  describes concealed items. `MartyGraphicsView.describesBoard()` opts in to
+  reading it when no `alt` is authored.
+
+[Copy the graphs scene](fixtures/v1/graphs.scene.json) (it equals the built-in
+`graphs` fixture) and [the moving wave](fixtures/v1/wave.scene.json) (`wave`).
+The [expression cases](fixtures/v1/expressions.cases.json) and the
+[graph cases](fixtures/v1/graphs.cases.json) hold the golden values, samples and
+reasons; XCTest checks them against the parser and
+[`tools/mg_expr.py`](../tools/mg_expr.py), an offline mirror for preflight tools,
+checks them in the hosted `hygiene` job.
+
+Not checked: what an expression or an `alt` text means, whether a graph is the
+one a lesson needs, and accessibility on a device (VoiceOver has not been run).
 
 ## Explainer boards
 
@@ -380,6 +501,9 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `scene.depth`, `patch.depth`, `template.params.depth` | JSON text or a value built in code nests deeper than `MGLimits.depth` (64 levels) | Send a flatter value; real scenes and patches nest 6 to 15 levels. |
 | `3d.text.code` | `code` text in a 3D scene | Use plain text in 3D, or keep the scene 2D. |
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
+| `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |
+| `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph items | Change the range, the expression or the keys named by the reason. |
+| `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
 | `vector.on`, `edge.nodes`, `highlight.target` | Reference is absent, has the wrong kind, or highlights itself | Fix references before applying the scene. |
 | `highlight.cycle` | An indirect highlight chain loops | Make the chain terminate; [negative fixture](fixtures/v1/highlight-cycle.scene.json). |
 | `patch.stale`, `patch.rev` | Revision mismatches or is invalid | Rebase the intended change on the current scene revision; do not retry stale content blindly. |
@@ -410,6 +534,7 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | Text lengths | Title 60, label 40, text 120, narration 200 |
 | Geometry | Plot/path points up to 64; rope points up to 6 |
 | Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text; table 8 rows × 6 columns / cells up to 12 characters; region 3–64 points |
+| Graphs (new kinds only) | 6 `func` / `field` items per scene; expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters |
 | Raw template params | 4 KiB canonical `params` object |
 | Nesting (arrays and objects on one path) | 64 levels (`MGLimits.depth`); lessons 59 per statement |
 

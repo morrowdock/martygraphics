@@ -480,6 +480,7 @@ enum MGLessonEngine {
                           motion: scene.motion, attachments: scene.attachments)
         out.revision = scene.revision
         out.builtValues = scene.builtValues
+        out.alt = scene.alt
         return out
     }
 

@@ -31,6 +31,9 @@ public enum MGKind: String, CaseIterable, Sendable {
     case array, node, edge
     /// Additive 2D kinds: a small grid of short text cells and a filled closed polygon. Both are 2D only.
     case table, region
+    /// Additive 2D kinds evaluated by the engine from a bounded expression (`MGExpression`): a function graph (wire
+    /// `func`) and a vector field. Both are 2D only.
+    case function = "func", field
     /// Kinds the 3D renderer draws. Others make a 3D scene invalid (fail safe instead of silently missing parts).
     public static let in3D: Set<MGKind> = [.body, .incline, .line, .vector, .axes, .orbit, .text, .highlight, .path]
 }
@@ -50,7 +53,8 @@ public struct MGPointer: Equatable, Sendable {
 public struct MGItem: Equatable, Identifiable, Sendable {
     public let id: String
     public var kind: MGKind
-    /// at | from,to | polyline points, depending on kind.
+    /// at | from,to | polyline points, depending on kind. `func`: `at`, then the engine's samples (data coordinates);
+    /// `field`: `at`, then one engine-evaluated vector per grid cell.
     public var pts: [MGPoint] = []
     /// Numeric properties: size, angle, len, r, w, h, base, coils, cell, moveT, xr0... (validated per kind).
     public var num: [String: Double] = [:]
@@ -62,10 +66,11 @@ public struct MGItem: Equatable, Identifiable, Sendable {
     public var ref2: String?
     /// ball, dashed, ground, callout, title, dir, dir3
     public var flags: Set<String> = []
-    /// array cell values or axis labels [x, y].
+    /// array cell values, axis labels [x, y] (plot, func), or [x label, y label, dx, dy] (field).
     public var list: [String] = []
     public var bars: [MGBar] = []
     public var pointers: [MGPointer] = []
+    /// Marked cells; `func`: sample indices where a new piece starts; `field`: cells without a finite vector.
     public var marked: [Int] = []
     /// 3D direction for vectors in 3D scenes.
     public var dir: MGPoint?
@@ -112,8 +117,11 @@ public struct MGStep: Equatable, Sendable {
     public var camera: MGCamera?
     /// Applied cumulatively when moving forward (code animations: move a pointer, mark a cell).
     public var edits: [MGEdit] = []
-    public init(say: String, show: [String] = [], focus: String? = nil, camera: MGCamera? = nil, edits: [MGEdit] = []) {
-        self.say = say; self.show = show; self.focus = focus; self.camera = camera; self.edits = edits
+    /// Text alternative for the board at this step (wire `alt`): what it shows, for a reader who cannot see it.
+    /// VoiceOver reads it after `say`. nil falls back to the scene's `alt`.
+    public var alt: String?
+    public init(say: String, show: [String] = [], focus: String? = nil, camera: MGCamera? = nil, edits: [MGEdit] = [], alt: String? = nil) {
+        self.say = say; self.show = show; self.focus = focus; self.camera = camera; self.edits = edits; self.alt = alt
     }
 }
 
@@ -166,9 +174,15 @@ public struct MGScene: Equatable, Sendable {
     /// Engine values the template marks as data the author gave (`MGTemplateBuild.builtValues`): tier Built ("Data as
     /// given") instead of Solved in an explainer legend. Empty for every built-in template.
     public internal(set) var builtValues: Set<String> = []
+    /// Text alternative for the whole board (wire `alt`), for a reader who cannot see it. nil when not authored;
+    /// `MGDescribe.board` gives an engine-written structural description instead.
+    public internal(set) var alt: String? = nil
 
     public func item(_ id: String) -> MGItem? { items.first { $0.id == id } }
-    public var animates: Bool { layer2d != nil || motion != .none || items.contains { $0.num["moveT"] != nil } }
+    public var animates: Bool {
+        layer2d != nil || motion != .none
+            || items.contains { $0.num["moveT"] != nil || ($0.kind == .function && $0.num["period"] != nil) }
+    }
 }
 
 /// Minimal immutable JSON value so scenes stay Equatable/Sendable and canonical-encodable.

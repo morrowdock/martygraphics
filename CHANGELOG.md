@@ -10,6 +10,8 @@
 - Docs: say that the quick start saves one frame, and state more exactly the patch revision rule, the standard and
   strict 3D checks, the outputs of `marty-solid render`, `export-gltf` and `transcript`, the section-cut caps, the
   linkage and cam limits, where the gallery images came from, and the required CI checks.
+- The default grammar document lists the `func` and `field` kinds, the `alt` scene key and the closed
+  expression vocabulary (`expression`); `MGTimeline.cycle` and `MGScene.animates` include moving graphs.
 - Docs: clarify that a coding agent wrote the turbofan JSON directly in the documented
   format, consistently with the site, showcase and provenance receipt.
 - Docs: describe the opt-in ML explainer kit and the Blender video tool (16:9, 1:1 and 9:16,
@@ -66,6 +68,20 @@
   samples. `tools/semantic_fixtures.py` checks what Python can reproduce. It uses the draft
   preflight `tools/scene_v1_check.py` and its schema.
   Every Swift-facing expectation stays `pending-mac`.
+- Add the 2D `func` kind (pending Mac verification): the engine samples y = f(x) from a closed,
+  bounded expression grammar (`MGExpression`; no `NSExpression` or other host evaluator), draws gaps
+  and poles without joining them, shades an interval, marks a point with engine-computed coordinates,
+  takes `a`, `b`, `c` parameters and moves seamlessly with `period` and `t`. Graphs that cannot be
+  drawn faithfully are refused (`func.detail`, `func.breaks`, `func.empty`, `func.loop`).
+- Add the 2D `field` kind (pending Mac verification): engine-evaluated arrows on a grid of up to
+  16 × 12 cells, with proportional, unit and slope (direction-field) styles and the largest magnitude
+  written under the frame. At most six `func` and `field` items per scene (`items.expr`).
+- Add text alternatives (pending Mac verification): `alt` on scenes and steps, read by VoiceOver after
+  the narration in `MartyGraphicsView`; `MGDescribe` writes a structural description of the visible
+  board, which `describesBoard()` reads when no `alt` is authored. Scenes without `alt` read as before.
+- Add `graphs` and `wave` fixtures, golden expression and graph cases, and `tools/mg_expr.py`, an offline
+  mirror of the new rules for preflight tools, tested in the `hygiene` job.
+- Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).
 - Add checked ML explainer boards for PCA and illustrative meaning maps, real PNG patch values,
   seeded or greedy token generation, temperature sweeps, and simplified patch attention.
   Add a camera-right landscape composition and optional sequential highlights for the vision pipeline.

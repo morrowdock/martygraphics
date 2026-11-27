@@ -1,0 +1,1 @@
+{"v":1,"title":"A travelling wave","alt":"A sine wave that moves to the right and repeats every 4 seconds.","items":[{"id":"wave","k":"func","at":[1,1.5],"w":10,"h":5,"xr":[0,12.566],"yr":[-1.5,1.5],"y":"a*sin(x - 2*pi*t/4)","a":1,"period":4,"xl":"x","yl":"y","label":"y = a sin(x - 2 pi t / 4)"}]}
