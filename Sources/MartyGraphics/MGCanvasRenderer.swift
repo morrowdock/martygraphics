@@ -523,7 +523,9 @@ public enum MGCanvasRenderer {
             l.stroke(line, with: .color(color), style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
         }
         // The dot sits on the drawn curve (also during a blend); the text is the engine's value of the function there.
-        guard let mx = item.num["mark"], let my = item.num["my"], reveal >= 1,
+        // Both must be valid: no dot when the current value is missing or outside the y range, or the drawn curve has
+        // no value there.
+        guard let mx = item.num["mark"], let my = item.num["my"], my.isFinite, my >= y0, my <= y1, reveal >= 1,
               let drawn = MGGraph.drawnValue(samples, starts: item.marked, at: mx), drawn >= y0, drawn <= y1 else { return }
         let c = toScreen(MGPoint(mx, drawn))
         let dot = Path(ellipseIn: CGRect(x: c.x - 5, y: c.y - 5, width: 10, height: 10))

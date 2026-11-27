@@ -149,7 +149,11 @@ through a `dim` patch or a step edit); `alt` works in 2D and 3D.
   Where the function has no value (`sqrt(-1)`, `ln(0)`, `1/0`) the curve has a
   gap; the piece before ends 1/1024 of an interval before it and the next starts
   1/1024 after it, so `sin(x)/x` shows a hole one probe wide and `ln(x)` runs up
-  to its asymptote. Two neighbouring values outside the y range on opposite sides
+  to its asymptote. The midpoint of every interval between two values is
+  evaluated too; where the function has no value there (`1/x` or `x/x` when 0
+  falls exactly between two samples) the piece splits there the same way, so no
+  line and no shade crosses the gap, at parse time and in every frame of a
+  moving graph. Two neighbouring values outside the y range on opposite sides
   are bisected 8 times: a value inside the range means the curve crosses the view
   (it is joined); otherwise it is a pole and the curve breaks there, so `tan(x)`
   is never drawn with vertical lines through its asymptotes.
@@ -163,7 +167,9 @@ through a `dim` patch or a step edit); `alt` works in 2D and 3D.
   unbroken piece (`func.shade`); the marked point has a value inside the y range
   (`func.mark`). A moving graph is checked at t = 0, ¼, ½ and ¾ of its period,
   and at t = period it must match t = 0 to the same tolerance with the same gaps
-  (`func.loop`), so every loop is seamless. Expressions are refused as
+  (`func.loop`), so every loop is seamless. Between the checked instants the
+  marked point is drawn, with its coordinates, only while the function has a
+  value there inside the y range. Expressions are refused as
   `func.y` (not text, empty, over 80 Unicode scalars, a character outside the
   grammar), `func.y.syntax`, `.tokens` (over 48), `.depth` (over 8 nested
   parentheses), `.name`, `.arity` and `.var.<v>` (`t` without `period`, a

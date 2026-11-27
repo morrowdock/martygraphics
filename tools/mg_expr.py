@@ -395,11 +395,14 @@ def _distance(p, a, b):
 
 
 def curve(f, x0, x1, y0, y1, measure, width=1.0, height=1.0, stop_after=None):
-    """Mirror of `MGGraph.curve`."""
+    """Mirror of `MGGraph.curve`, including the midpoint rule: a non-finite value at the midpoint of an interval
+    between two finite grid values splits the piece there (probes at midpoint +/- one probe), as at parse time and in
+    every animated frame."""
     n = FUNC_INTERVALS
     probe = (x1 - x0) / n / 1024
     c = Curve()
     values = [math.nan] * (n + 1)
+    mids = [math.nan] * n
     piece = [-1] * (n + 1)
     state = {"open": False, "last": (0.0, 0.0)}
 
@@ -441,6 +444,19 @@ def curve(f, x0, x1, y0, y1, measure, width=1.0, height=1.0, stop_after=None):
         yi = f(xi)
         values[i] = yi
         if math.isfinite(yi):
+            if i > 0 and math.isfinite(values[i - 1]):
+                xm = (grid_x(i - 1, x0, x1) + xi) / 2
+                ym = f(xm)
+                mids[i - 1] = ym
+                if not math.isfinite(ym):
+                    # A gap between two finite samples: split the piece there (pole checks run on each side).
+                    left = f(xm - probe)
+                    if math.isfinite(left):
+                        add((xm - probe, left))
+                    state["open"] = False
+                    right = f(xm + probe)
+                    if math.isfinite(right):
+                        add((xm + probe, right))
             add((xi, yi))
             piece[i] = len(c.starts)
         else:
@@ -463,9 +479,9 @@ def curve(f, x0, x1, y0, y1, measure, width=1.0, height=1.0, stop_after=None):
             continue
         xa, xb = grid_x(i, x0, x1), grid_x(i + 1, x0, x1)
         xm = (xa + xb) / 2
-        ym = f(xm)
+        ym = mids[i]
         if not math.isfinite(ym):
-            continue
+            continue  # never: a non-finite midpoint splits the piece above
         ya, yb, yt = _clamp_magnitude(values[i]), _clamp_magnitude(values[i + 1]), _clamp_magnitude(ym)
         if max(ya, yb, yt) < y0 or min(ya, yb, yt) > y1:
             continue
@@ -538,10 +554,14 @@ def field_vectors(dx, dy, x0, x1, y0, y1, cols, rows, params=None):
 
 
 def _number(value):
-    return type(value) in (int, float) and math.isfinite(value)
+    """A JSON number: a finite float, or an int. Python ints are unbounded, so an int is never passed to
+    math.isfinite (which raises OverflowError past the float range); `_num` range-checks it exactly instead."""
+    return type(value) is int or (type(value) is float and math.isfinite(value))
 
 
 def _num(value, lo, hi, reason):
+    # An int is compared with the bounds exactly before it is converted, so an out-of-range one (10**400) is this
+    # key's refusal, never an OverflowError.
     if not _number(value) or not lo <= value <= hi:
         raise Refusal(reason)
     return float(value)
@@ -598,17 +618,32 @@ def _range(value, reason):
     return lo, hi
 
 
-def _point(value, world, reason):
+def _point(value, world, reason, is3d=False):
+    """Mirror of `MGParser.point`: two coordinates, or three in a 3D scene (z within +/- the world span)."""
     width, height = world
-    if not isinstance(value, list) or len(value) != 2:
+    if not isinstance(value, list) or not (len(value) == 2 or (len(value) == 3 and is3d)):
         raise Refusal(reason)
-    return (_num(value[0], -0.25 * width, 1.25 * width, reason), _num(value[1], -0.25 * height, 1.25 * height, reason))
+    x = _num(value[0], -0.25 * width, 1.25 * width, reason)
+    y = _num(value[1], -0.25 * height, 1.25 * height, reason)
+    z = _num(value[2], -max(world), max(world), reason) if len(value) == 3 else 0.0
+    return x, y, z
 
 
 FUNC_KEYS = {"id", "k", "color", "at", "w", "h", "xr", "yr", "y", "a", "b", "c", "period", "shade", "mark", "xl", "yl", "label"}
 FUNC_REQUIRED = {"id", "k", "at", "w", "h", "xr", "yr", "y"}
 FIELD_KEYS = {"id", "k", "color", "at", "w", "h", "xr", "yr", "dx", "dy", "a", "b", "c", "n", "style", "xl", "yl", "label"}
 FIELD_REQUIRED = {"id", "k", "at", "w", "h", "xr", "yr", "dx", "dy"}
+COLORS = {"force", "normal", "friction", "gravity", "tension", "velocity", "accel", "energy", "kinetic", "potential",
+          "accent", "muted", "good", "warn", "blue", "red", "green", "orange", "purple", "yellow", "teal", "white"}
+WORLD = (2.0, 100.0)
+
+
+def _identifier(value, reason):
+    """Mirror of `MGParser.identifier`: 1 to 24 ASCII letters, digits or `_`, starting with a letter."""
+    if not isinstance(value, str) or not 1 <= len(value) <= 24 or not value.isascii() or not _letter(value[0]) or \
+            any(not (_letter(ch) or _digit(ch) or ch == "_") for ch in value):
+        raise Refusal(reason)
+    return value
 
 
 def _parameters(item, kind):
@@ -620,8 +655,10 @@ def _parameters(item, kind):
     return allowed, params
 
 
-def check_graph_item(item, world=(12, 8)):
-    """The `func` / `field` rules of `MGParser.item` after the closed-key, id and color checks, in Swift's order.
+def check_graph_item(item, world=(12, 8), is3d=False):
+    """The `func` / `field` rules of `MGParser.item` in Swift's order: closed keys, id, color, label, then the kind's
+    keys. `is3d`: the scene is 3D, so `at` may have three coordinates, as `MGParser.point` allows; the item is then
+    refused as `3d.kind.<kind>` by `check_scene` after every item has been checked, as in Swift.
 
     Returns a summary dict; raises Refusal with the Swift reason.
     """
@@ -632,10 +669,13 @@ def check_graph_item(item, world=(12, 8)):
     extra = set(item) - keys
     if extra:
         raise Refusal("item." + kind + ".unknown." + ",".join(sorted(extra)))
+    _identifier(item["id"], "item.id")
+    if "color" in item and (not isinstance(item["color"], str) or item["color"] not in COLORS):
+        raise Refusal("item.color")
     if "label" in item:
         text_rules(item["label"], LABEL, "item.label")
     span = max(world)
-    _point(item["at"], world, kind + ".at")
+    _point(item["at"], world, kind + ".at", is3d)
     w = _num(item["w"], 0.5, span * 1.25, kind + ".w")
     h = _num(item["h"], 0.5, span * 1.25, kind + ".h")
     x0, x1 = _range(item["xr"], kind + ".xr")
@@ -698,21 +738,33 @@ def check_scene(scene):
 
     Other kinds and keys are not checked here (Swift and tools/scene_v1_check.py check them). Raises Refusal.
     """
+    is3d = scene.get("dim") == "3d"
+    world = (12.0, 8.0)
+    if "world" in scene:
+        # The `world` rules of `MGParser.parseScene`, so a malformed world is a refusal, never a KeyError.
+        raw = scene["world"]
+        if not isinstance(raw, dict):
+            raise Refusal("world")
+        if not {"w", "h"} <= set(raw):
+            raise Refusal("world.missing")
+        if set(raw) - {"w", "h"}:
+            raise Refusal("world.unknown." + ",".join(sorted(set(raw) - {"w", "h"})))
+        world = (_num(raw["w"], WORLD[0], WORLD[1], "world.w"), _num(raw["h"], WORLD[0], WORLD[1], "world.h"))
     items = scene.get("items", [])
-    if sum(1 for item in items if isinstance(item, dict) and item.get("k") in ("func", "field")) > EXPR_ITEMS:
+    graphs = [item for item in items if isinstance(item, dict) and item.get("k") in ("func", "field")]
+    if len(graphs) > EXPR_ITEMS:
         raise Refusal("items.expr")
-    world = (scene["world"]["w"], scene["world"]["h"]) if "world" in scene else (12, 8)
     summaries = {}
-    for item in items:
-        if isinstance(item, dict) and item.get("k") in ("func", "field"):
-            summaries[item["id"]] = check_graph_item(item, world)
+    for item in graphs:
+        # check_graph_item refuses a missing id (`item.<kind>.missing`) or a malformed one (`item.id`) first, so the
+        # summary key is always a valid id.
+        summary = check_graph_item(item, world, is3d)
+        summaries[item["id"]] = summary
     for step in scene.get("steps", []):
-        if "alt" in step:
+        if isinstance(step, dict) and "alt" in step:
             text_rules(step["alt"], SAY, "step.alt")
     if "alt" in scene:
         text_rules(scene["alt"], SAY, "alt")
-    if scene.get("dim") == "3d":
-        for item in items:
-            if item.get("k") in ("func", "field"):
-                raise Refusal("3d.kind." + item["k"])
+    if is3d and graphs:
+        raise Refusal("3d.kind." + graphs[0]["k"])
     return summaries

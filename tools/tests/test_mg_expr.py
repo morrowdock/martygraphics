@@ -115,6 +115,88 @@ class GraphCases(unittest.TestCase):
         gap = curve.samples[start][0] - curve.samples[end - 1][0]
         self.assertAlmostEqual(gap, 2 * 20 / 256 / 1024)
 
+    def test_a_non_finite_midpoint_between_two_samples_splits_the_piece(self):
+        # 0 is exactly the midpoint of interval 127: both grid values beside it are finite (for 1/x also inside the
+        # y range, so no pole bisection runs); only the midpoint shows the gap. Mirror of GraphKindTests.
+        x0, x1 = -0.99609375, 1.00390625
+        self.assertEqual(mg_expr.grid_x(127, x0, x1) + mg_expr.grid_x(128, x0, x1), 0)
+        for text, (y0, y1) in [("1/x", (-300, 300)), ("x/x", (0, 2))]:
+            with self.subTest(text=text):
+                expr = mg_expr.compile_expression(text, {"x"}, "func.y")
+                curve = mg_expr.curve(lambda x: expr.value(x=x), x0, x1, y0, y1, measure=True, width=6, height=4)
+                self.assertEqual(curve.starts, [129])
+                self.assertEqual(len(curve.pieces()), 2)
+                for lo, hi in curve.pieces():
+                    xs = [p[0] for p in curve.samples[lo:hi]]
+                    self.assertTrue(all(x < 0 for x in xs) or all(x > 0 for x in xs), "a piece crosses x = 0")
+                self.assertFalse(curve.covers(-0.5, 0.5))
+                item = {"id": "f", "k": "func", "at": [1, 1], "w": 6, "h": 4, "xr": [x0, x1], "yr": [y0, y1], "y": text}
+                self.assertEqual(mg_expr.check_graph_item(item)["starts"], [129])
+                with self.assertRaises(mg_expr.Refusal) as raised:
+                    mg_expr.check_graph_item(dict(item, shade=[-0.5, 0.5]))
+                self.assertEqual(raised.exception.reason, "func.shade")
+        # The same rule at every checked instant of a moving graph.
+        item = {"id": "f", "k": "func", "at": [1, 1], "w": 6, "h": 4, "xr": [x0, x1], "yr": [-300, 300],
+                "y": "1/x + sin(pi*t/2)", "period": 4}
+        self.assertEqual(mg_expr.check_graph_item(item)["starts"], [129])
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_graph_item(dict(item, shade=[-0.5, 0.5]))
+        self.assertEqual(raised.exception.reason, "func.shade")
+
+
+class ItemRules(unittest.TestCase):
+    BASE = {"func": {"id": "f", "k": "func", "at": [1, 1], "w": 6, "h": 4, "xr": [-3, 3], "yr": [-2, 2], "y": "x"},
+            "field": {"id": "v", "k": "field", "at": [1, 1], "w": 6, "h": 4, "xr": [-2, 2], "yr": [-2, 2],
+                      "dx": "1", "dy": "x"}}
+
+    def reason(self, scene):
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_scene(scene)
+        return raised.exception.reason
+
+    def test_a_three_coordinate_at_matches_swift(self):
+        # MGParser.point takes three coordinates only in a 3D scene; the item is then refused as 3d.kind.<kind>.
+        for kind, item in self.BASE.items():
+            with self.subTest(kind=kind):
+                flat = dict(item, at=[1, 1, 0])
+                self.assertEqual(self.reason({"v": 1, "items": [flat]}), kind + ".at")
+                self.assertEqual(self.reason({"v": 1, "dim": "3d", "items": [flat]}), "3d.kind." + kind)
+                self.assertEqual(self.reason({"v": 1, "dim": "3d", "items": [item]}), "3d.kind." + kind)
+                self.assertTrue(mg_expr.check_graph_item(flat, is3d=True))
+                # z is still range-checked (within the world span), before the 3D refusal.
+                self.assertEqual(self.reason({"v": 1, "dim": "3d", "items": [dict(item, at=[1, 1, 13])]}), kind + ".at")
+
+    def test_a_missing_or_malformed_id_is_a_refusal(self):
+        for kind, item in self.BASE.items():
+            with self.subTest(kind=kind):
+                missing = {k: v for k, v in item.items() if k != "id"}
+                self.assertEqual(self.reason({"v": 1, "items": [missing]}), "item." + kind + ".missing")
+                for bad in [3, ["f"], "", "1f", "a-b"]:
+                    self.assertEqual(self.reason({"v": 1, "items": [dict(item, id=bad)]}), "item.id")
+                self.assertEqual(self.reason({"v": 1, "items": [dict(item, color="pink")]}), "item.color")
+
+    def test_out_of_range_integers_are_refused_with_the_key_reason(self):
+        big = 10 ** 400
+        func, field = self.BASE["func"], self.BASE["field"]
+        cases = [
+            (dict(func, w=big), "func.w"),
+            (dict(func, h=-big), "func.h"),
+            (dict(func, xr=[0, big]), "func.xr"),
+            (dict(func, at=[big, 1]), "func.at"),
+            (dict(func, a=big), "func.a"),
+            (dict(func, period=big), "func.period"),
+            (dict(func, mark=big), "func.mark"),
+            (dict(func, shade=[0, big]), "func.shade"),
+            (dict(field, n=[big, 3]), "field.n"),
+            (dict(field, yr=[-big, 2]), "field.yr"),
+        ]
+        for item, reason in cases:
+            with self.subTest(reason=reason):
+                self.assertEqual(self.reason({"v": 1, "items": [item]}), reason)
+        self.assertEqual(self.reason({"v": 1, "world": {"w": big, "h": 8}, "items": [func]}), "world.w")
+        # An in-range int is still accepted and converted.
+        self.assertTrue(mg_expr.check_scene({"v": 1, "world": {"w": 12, "h": 8}, "items": [dict(func, w=6, a=2)]}))
+
 
 if __name__ == "__main__":
     unittest.main()

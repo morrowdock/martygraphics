@@ -54,7 +54,7 @@ Limits: whether the closed-key limits change (new bounds for a new shape only ne
 | 1 | **`func` engine-sampled function graphs** (closed expression grammar, gaps and poles, shading, marked point, parameters, seamless moving graphs) — *implemented* | Very high: the core of school maths and physics; plotted values come from the engine, not the model | M | Medium: expression safety (closed grammar, no host evaluator), frame cost of re-sampling on step replay | Additive kind | New bounds only | Described by `MGDescribe` |
 | 2 | **Text alternatives**: `alt` on scenes and steps, engine-written board descriptions, VoiceOver wiring — *implemented* | High: blind and low-vision learners; WCAG 1.1.1; institutional adoption | S | Low | Additive root and step key | None new (reuses the narration limit) | Large |
 | 3 | **`field` vector and slope fields** (arrows, unit, slope styles; honest magnitude note) — *implemented* | High: electric and magnetic fields, flow, differential equations | M | Low | Additive kind | New bounds only | Described by `MGDescribe` |
-| 4 | Audio graphs: expose `func`, `plot` and `bars` as `AXChartDescriptor` series | High for blind learners (Desmos audio-trace parity, on Apple's own audio graphs) | M | Medium: needs device VoiceOver testing (not available in the simulator) | None | None | Very large |
+| 4 | Audio graphs for `func`, `plot` and `bars` (through Apple's `AXChartDescriptor`): a VoiceOver user could play a series as a tone that rises and falls with the value, step from point to point and hear each x and y read out, jump to the start, the end and the marked point, and hear a summary of the axes and ranges | High for blind learners: the shape of a curve and its values without seeing it | M | Medium: needs device VoiceOver testing (not available in the simulator) | None | None | Very large |
 | 5 | Learner sliders bound to `func`/`field` parameters `a`, `b`, `c` (extend lesson `bind`) | High: Desmos-style what-ifs; explorables | M | Medium: lesson protocol change | Additive lesson control target | One new bound (controls per board) | Needs an adjustable accessibility action |
 | 6 | Engine-computed calculus numbers: tangent line at the mark, area of the shaded band, derivative, as placeholders (`{wave.area}`) with an error bound | High: integrals and slopes with checked numbers in captions | M | Medium: numerical claims must carry a stated accuracy | Additive keys and placeholders | New bounds only | Numbers become speakable text |
 | 7 | Eased and timed step transitions (`ease`: spring, smooth, linear, none; `dur` 0.2–3 s) honouring Reduce Motion | Medium-high: pacing and morphs; WCAG 2.3.3 | S | Low | Additive step keys | One small enum and range | Positive (reduced motion) |
@@ -158,15 +158,16 @@ on this branch's base, so they are not changed here. To bring them in line:
 ```python
 import mg_expr  # tools/mg_expr.py, standard library only
 
-# item_rules(item, dimensions, template): after the shape checks
+# item_rules(item, dimensions, template, is3d): after the shape checks. is3d: the scene's dim is "3d"; a
+# three-coordinate `at` is then allowed, as in MGParser.point, and the scene is refused as 3d.kind.<kind> later.
 if kind in ("func", "field"):
     try:
-        mg_expr.check_graph_item(item, dimensions or (12, 8))
+        mg_expr.check_graph_item(item, dimensions or (12, 8), is3d=is3d)
     except mg_expr.Refusal as refusal:
         raise Invalid(refusal.reason) from refusal
 
 # scene_rules(scene): before the item loop
-graphs = sum(1 for item in scene.get("items", ()) if item["k"] in ("func", "field"))
+graphs = sum(1 for item in scene.get("items", ()) if isinstance(item, dict) and item.get("k") in ("func", "field"))
 if graphs > mg_expr.EXPR_ITEMS:
     raise Invalid("items.expr")
 # after title: text_rules(scene["alt"], "alt", template, multiline=True) when present
@@ -174,41 +175,55 @@ if graphs > mg_expr.EXPR_ITEMS:
 ```
 
    Replayed step edits that change a `func` or `field` key go through the same `check_graph_item`. Template scenes
-   keep deferring to Swift. Use `docs/fixtures/v1/graphs.cases.json` as the parity corpus.
+   keep deferring to Swift. `docs/fixtures/v1/graphs.cases.json` and `expressions.cases.json` hold the shared
+   sampling and refusal cases. So far they have passed in the Python mirror only (tools/tests/test_mg_expr.py);
+   the Swift run (GraphCaseTests, ExpressionTests) is part of the pending Mac verification below, so Python and
+   Swift are not yet shown to agree on any case.
 
 ## Mac verification
 
-Pending. Run on the mini from a checkout of `feat/vnext-kinds`, with Xcode 26.6 selected as in CI:
+Pending: no Swift test of this branch has run yet. Run on the mini from a clone of the `feat/vnext-kinds` bundle
+(`git clone -b feat/vnext-kinds <bundle> mg-vnext`; check `git log -1` against the receipt's commit), with Xcode 26.6
+selected as in CI. No simulator and no VoiceOver are needed for this run.
 
 ```sh
 swift --version && xcodebuild -version && sw_vers
 mkdir -p logs
 swift build --jobs 2 2>&1 | tee logs/vnext-build.log
-# New suites first.
+# 1. The new suites, including the fix-round assertions (GraphKindTests:
+#    testANonFiniteMidpointBetweenTwoSamplesSplitsThePiece, testAnAnimatedMarkerIsDroppedWhenItsCurrentValueIsInvalid;
+#    GraphCaseTests: the shared midpoint, three-coordinate `at` and missing-id cases in graphs.cases.json).
 swift test --jobs 2 --filter 'MartyGraphicsTests\.(ExpressionTests|GraphCaseTests|GraphKindTests|AltTextTests)' 2>&1 | tee logs/vnext-new.log
+grep -E "testANonFiniteMidpointBetweenTwoSamplesSplitsThePiece|testAnAnimatedMarkerIsDroppedWhenItsCurrentValueIsInvalid|GraphCaseTests" logs/vnext-new.log
 grep MGVNEXT logs/vnext-new.log
-# Suites whose expectations this branch changed or that walk every kind and fixture.
-swift test --jobs 2 --filter 'MartyGraphicsTests\.(LessonCoreTests|ParserRegressionTests|TemplateExtensionTests|MGPackTests|PublicEngineTests|ProtocolFixtureTests|StreamRegressionTests|TimelineRegressionTests|ControllerRollbackTests|ProgrammaticVideoTests|ExplainerCompatTests|TableRegionCodeTests|LessonControllerRestoreTests)' 2>&1 | tee logs/vnext-touched.log
-# The CI shards.
+# 2. Tests whose expectations this branch changed, and suites that walk every kind, stream or replay steps.
+swift test --jobs 2 --filter 'MartyGraphicsTests\.(LessonCoreTests/testU16DefaultGrammarDocumentIsUnchanged|TemplateExtensionTests/testCorePackPatchesApplyAndInvalidCasesFailWithExpectedReasons|ParserRegressionTests/testEveryKindRoundTripsThroughItsWireForm)$' 2>&1 | tee logs/vnext-changed.log
+swift test --jobs 2 --filter 'MartyGraphicsTests\.(StreamRegressionTests|TimelineRegressionTests|ControllerRollbackTests)' 2>&1 | tee logs/vnext-touched.log
+# 3. The scene validator tool on the new kinds.
+swift test --jobs 2 --package-path tools/SceneValidator --filter 'SceneValidatorCoreTests\.SceneValidatorTests/testFunctionGraphFieldAndAltScenesUseTheParserRules$' 2>&1 | tee logs/vnext-validator-graphs.log
+# 4. Review stills as PNGs (a person looks at them; anti-aliasing is not byte-exact across machines).
+MG_VNEXT_RENDER_DIR="$PWD/vnext-stills" swift test --filter 'MartyGraphicsTests\.GraphKindTests/testRenderReviewStills' 2>&1 | tee logs/vnext-stills.log
+grep 'MGVNEXT still' logs/vnext-stills.log
+shasum -a 256 vnext-stills/*.png
+open vnext-stills
+# 5. Full sweep, as the CI shards.
 swift test --jobs 2 --filter '^MartyGraphicsTests\.Solid' 2>&1 | tee logs/vnext-solid.log
 swift test --jobs 2 --skip '^MartyGraphicsTests\.Solid' 2>&1 | tee logs/vnext-rest.log
 swift test --jobs 2 --package-path tools/SceneValidator 2>&1 | tee logs/vnext-validator.log
 swift test --jobs 2 --package-path Examples/Solid3D 2>&1 | tee logs/vnext-solid3d.log
 for p in Examples/Turbofan Examples/KeySwitch3D; do swift test --jobs 2 --package-path "$p"; done
 for p in Examples/Showcase Examples/PathTrace; do swift build --jobs 2 --package-path "$p"; done
-# Review stills (a person looks at them; anti-aliasing is not byte-exact across machines).
-MG_VNEXT_RENDER_DIR="$PWD/vnext-stills" swift test --filter 'MartyGraphicsTests\.GraphKindTests/testRenderReviewStills' 2>&1 | tee logs/vnext-stills.log
-grep 'MGVNEXT still' logs/vnext-stills.log
-open vnext-stills
-# Offline checks (also in hosted CI).
+# 6. Offline checks (also in hosted CI).
 python3 -m unittest discover -s tools/tests -v
 python3 tools/validate_local.py --check-files
 ```
 
-What to record in the receipt: the commit, toolchain, each log's pass and fail counts, the `MGVNEXT` parse time, the
-still hashes, and a short note on each still (curve on the samples, no line through a pole, the hole in
-`sin(x)/x`, shading under the curve, the marked point, arrows centred in their cells). VoiceOver on a device
-(scene and step `alt`, `describesBoard()`) is a separate manual check.
+What to record in the receipt: the commit, toolchain, each log's pass and fail counts (and that the two fix-round
+test names passed), the `MGVNEXT` parse time, the still hashes, and a short note on each still (curve on the
+samples, no line through a pole, the hole in `sin(x)/x`, shading under the curve, the marked point, arrows centred in
+their cells). Only after GraphCaseTests and ExpressionTests pass can the shared cases be called verified in both
+runtimes. VoiceOver on a device (scene and step `alt`, `describesBoard()`) is a separate manual check, not part of
+this run.
 
 ## Open questions
 

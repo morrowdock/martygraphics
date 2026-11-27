@@ -74,6 +74,65 @@ final class GraphKindTests: XCTestCase {
         XCTAssertEqual(MGTimeline.frame(still, items: still.items, time: 3), still.items)
     }
 
+    /// `1/x` and `x/x` where 0 falls exactly on the midpoint of interval 127: both grid values beside it are finite (and,
+    /// for `1/x`, inside the y range, so no pole bisection runs), so only the midpoint shows the gap. The piece splits
+    /// there, at parse time and in every animated frame, and no shade can cover the gap (tools/mg_expr.py: the same).
+    func testANonFiniteMidpointBetweenTwoSamplesSplitsThePiece() throws {
+        for (y, yr) in [("1/x", "[-300,300]"), ("x/x", "[0,2]")] {
+            let json = #"{"v":1,"items":[{"id":"f","k":"func","at":[1,1],"w":6,"h":4,"xr":[-0.99609375,1.00390625],"yr":\#(yr),"y":"\#(y)"}]}"#
+            let f = try XCTUnwrap(try scene(json).items.first, y)
+            XCTAssertEqual(MGGraph.gridX(127, -0.99609375, 1.00390625) + MGGraph.gridX(128, -0.99609375, 1.00390625), 0, y)
+            XCTAssertEqual(f.marked, [129], y)
+            XCTAssertEqual(f.pts.count - 1, 259, y)
+            let samples = Array(f.pts.dropFirst())
+            let pieces = MGGraph.pieces(samples.count, starts: f.marked)
+            XCTAssertEqual(pieces.count, 2, y)
+            for r in pieces {
+                let xs = samples[r].map(\.x)
+                XCTAssertTrue(xs.allSatisfy { $0 < 0 } || xs.allSatisfy { $0 > 0 }, "\(y): a piece crosses x = 0")
+            }
+            XCTAssertNil(MGGraph.drawnValue(samples, starts: f.marked, at: 0), y)
+            // No shade across the gap: a shaded interval over it is refused, and no band spans it.
+            let shaded = #"{"v":1,"items":[{"id":"f","k":"func","at":[1,1],"w":6,"h":4,"xr":[-0.99609375,1.00390625],"yr":\#(yr),"y":"\#(y)","shade":[-0.5,0.5]}]}"#
+            XCTAssertEqual(reason(shaded), "func.shade", y)
+            let bands = MGGraph.shadeBands(samples, starts: f.marked, -0.5, 0.5, y0: f.n("y0"), y1: f.n("y1"))
+            XCTAssertEqual(bands.count, 2, y)
+            for band in bands {
+                let xs = band.map(\.x)
+                XCTAssertTrue(xs.allSatisfy { $0 <= 0 } || xs.allSatisfy { $0 >= 0 }, "\(y): a band crosses x = 0")
+            }
+        }
+        // The same rule in animated frames.
+        let moving = try scene(#"{"v":1,"items":[{"id":"f","k":"func","at":[1,1],"w":6,"h":4,"xr":[-0.99609375,1.00390625],"yr":[-300,300],"y":"1/x + sin(pi*t/2)","period":4}]}"#)
+        let g = try XCTUnwrap(moving.items.first)
+        XCTAssertEqual(g.marked, [129])
+        for tau in [0.5, 1.5, 2.5] {
+            let frame = MGGraph.animated(g, at: tau)
+            XCTAssertEqual(frame.marked, [129], "t = \(tau)")
+            XCTAssertNil(MGGraph.drawnValue(Array(frame.pts.dropFirst()), starts: frame.marked, at: 0), "t = \(tau)")
+        }
+        XCTAssertEqual(MGTimeline.frame(moving, items: moving.items, time: 5.5).first?.marked, [129])
+    }
+
+    /// An animated marker shows the value at the current instant or nothing: it never keeps the parsed (t = 0) value
+    /// where the current mark is undefined or outside the y range.
+    func testAnAnimatedMarkerIsDroppedWhenItsCurrentValueIsInvalid() throws {
+        // ln(x + sin(πt)) at x = 0.5: defined at the checked instants t = 0, 1, 2, 3; undefined at t = 1.5.
+        let undefined = try scene(#"{"v":1,"items":[{"id":"f","k":"func","at":[1,1],"w":6,"h":4,"xr":[0.1,2],"yr":[-3,1],"y":"ln(x + sin(pi*t))","period":4,"mark":0.5}]}"#)
+        let f = try XCTUnwrap(undefined.items.first)
+        XCTAssertEqual(try XCTUnwrap(f.num["my"]), Foundation.log(0.5), accuracy: 1e-12)
+        XCTAssertEqual(try XCTUnwrap(MGGraph.animated(f, at: 0.5).num["my"]), Foundation.log(1.5), accuracy: 1e-12)
+        XCTAssertNil(MGGraph.animated(f, at: 1.5).num["my"], "undefined at t = 1.5")
+        XCTAssertNil(MGTimeline.frame(undefined, items: undefined.items, time: 5.5).first?.num["my"], "t = 5.5 is t = 1.5")
+        // x + 3 sin(πt) at x = 0: inside the y range at the checked instants, above it at t = 0.5, below it at t = 1.5.
+        let outside = try scene(#"{"v":1,"items":[{"id":"f","k":"func","at":[1,1],"w":6,"h":4,"xr":[-0.5,0.5],"yr":[-1,1],"y":"x + 3*sin(pi*t)","period":4,"mark":0}]}"#)
+        let g = try XCTUnwrap(outside.items.first)
+        XCTAssertEqual(try XCTUnwrap(g.num["my"]), 0, accuracy: 1e-12)
+        XCTAssertNil(MGGraph.animated(g, at: 0.5).num["my"], "above the y range at t = 0.5")
+        XCTAssertNil(MGGraph.animated(g, at: 1.5).num["my"], "below the y range at t = 1.5")
+        XCTAssertEqual(try XCTUnwrap(MGGraph.animated(g, at: 1).num["my"]), 3 * sin(Double.pi), accuracy: 1e-12)
+    }
+
     func testPatchesAndStepEditsGetTheSameChecks() throws {
         let s = try fixture("graphs")
         let cosine = try MGPatch.parse(data: Data(#"{"v":1,"rev":0,"ops":[{"op":"set","id":"wave","key":"y","value":"a*cos(x)"}]}"#.utf8)).get()

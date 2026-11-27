@@ -44,22 +44,28 @@ enum MGGraph {
     /// - A grid value where `f` is not finite is a gap. The piece before it ends at x − Δ and the next starts at x + Δ
     ///   (Δ = interval / 1024) when `f` has a value there, so a hole is drawn as narrow as it is (`sin(x)/x` at 0) and a
     ///   curve runs up to an asymptote (`ln(x)` near 0).
+    /// - The midpoint of every interval between two finite grid values is evaluated. Where `f` is not finite there
+    ///   (`1/x` or `x/x` when 0 falls exactly between two grid values) it is a gap like a grid gap: the piece ends at
+    ///   midpoint − Δ and the next starts at midpoint + Δ, so no chord crosses it and no shade can cover it.
     /// - Two neighbouring samples outside the y range on opposite sides are bisected up to `bisections` times: a value
     ///   inside the range means the curve passes through the view (no break); otherwise it is a pole and the piece ends.
-    /// - `measure`: also evaluate every interval midpoint inside one piece and record how far the drawn chord is from
-    ///   the function there, in the frame's own units (`width` × `height`, world units) as a fraction of `height`: the
+    /// - `measure`: also record how far the drawn chord is from the function at every interval midpoint inside one
+    ///   piece, in the frame's own units (`width` × `height`, world units) as a fraction of `height`: the
     ///   smaller of the vertical gap (both values clipped to the y range) and the distance from the true point to the
     ///   chord. A steep chord beside a steep curve is close even where their heights differ; intervals wholly above
     ///   or below the range cannot be seen and are skipped.
     ///
-    /// At most 257 samples, 2 probes per gap sample, `bisections` evaluations per pair of samples and 256 midpoints.
-    /// `stopAfter`: return as soon as there are more piece starts than this.
+    /// At most 257 grid values, 256 midpoints, 2 probes per gap (grid value or midpoint) and `bisections` evaluations
+    /// per pair of samples; `measure` reuses the midpoint values. The same rule runs at parse time and in every animated
+    /// frame. `stopAfter`: return as soon as there are more piece starts than this.
     static func curve(_ f: @escaping (Double) -> Double, x0: Double, x1: Double, y0: Double, y1: Double,
                       measure: Bool, width: Double = 1, height: Double = 1, stopAfter maxStarts: Int = .max) -> MGCurve {
         let n = MGLimits.funcIntervals
         let probe = (x1 - x0) / Double(n) / 1024
         var c = MGCurve()
         var values = [Double](repeating: .nan, count: n + 1)
+        // f at the midpoint of interval i, evaluated only when both of its ends are finite.
+        var mids = [Double](repeating: .nan, count: n)
         var piece = [Int](repeating: -1, count: n + 1)
         var open = false
         var last = MGPoint.zero
@@ -89,6 +95,18 @@ enum MGGraph {
             let xi = gridX(i, x0, x1), yi = f(xi)
             values[i] = yi
             if yi.isFinite {
+                if i > 0, values[i - 1].isFinite {
+                    let xm = (gridX(i - 1, x0, x1) + xi) / 2, ym = f(xm)
+                    mids[i - 1] = ym
+                    if !ym.isFinite {
+                        // A gap between two finite samples: split the piece there (pole checks run on each side).
+                        let left = f(xm - probe)
+                        if left.isFinite { add(MGPoint(xm - probe, left)) }
+                        open = false
+                        let right = f(xm + probe)
+                        if right.isFinite { add(MGPoint(xm + probe, right)) }
+                    }
+                }
                 add(MGPoint(xi, yi))
                 piece[i] = c.starts.count
             } else {
@@ -107,8 +125,8 @@ enum MGGraph {
         guard measure else { return c }
         let sx = width / (x1 - x0), sy = height / (y1 - y0)
         for i in 0..<n where piece[i] >= 0 && piece[i] == piece[i + 1] {
-            let xa = gridX(i, x0, x1), xb = gridX(i + 1, x0, x1), xm = (xa + xb) / 2, ym = f(xm)
-            guard ym.isFinite else { continue }
+            let xa = gridX(i, x0, x1), xb = gridX(i + 1, x0, x1), xm = (xa + xb) / 2, ym = mids[i]
+            guard ym.isFinite else { continue }  // never: a non-finite midpoint splits the piece above
             let ya = clampMagnitude(values[i]), yb = clampMagnitude(values[i + 1]), yt = clampMagnitude(ym)
             guard Swift.max(ya, yb, yt) >= y0, Swift.min(ya, yb, yt) <= y1 else { continue }
             let vertical = abs(clip(yt, y0, y1) - clip((ya + yb) / 2, y0, y1)) * sy
@@ -250,7 +268,8 @@ enum MGGraph {
         if let marked { item.num["my"] = marked }
     }
 
-    /// A moving `func` item at loop time `tau` (seconds into its period): its samples, pieces and marked value then.
+    /// A moving `func` item at loop time `tau` (seconds into its period): its samples, pieces and marked value then
+    /// (`num["my"]` is removed when the marked point has no value or is outside the y range at `tau`).
     /// An item whose expression does not compile (one built in code, not parsed) is returned unchanged.
     static func animated(_ item: MGItem, at tau: Double) -> MGItem {
         guard let text = item.text,
@@ -262,9 +281,11 @@ enum MGGraph {
         var out = item
         out.pts = Array(item.pts.prefix(1)) + c.samples
         out.marked = c.starts
+        // The marked value is the one at this instant or none: never the parsed (t = 0) value of another instant.
+        out.num["my"] = nil
         if let m = item.num["mark"] {
             let v = expr.value(base.with(x: m))
-            if v.isFinite { out.num["my"] = v }
+            if v.isFinite, v >= y0, v <= y1 { out.num["my"] = v }
         }
         return out
     }

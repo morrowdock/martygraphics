@@ -72,7 +72,8 @@
   bounded expression grammar (`MGExpression`; no `NSExpression` or other host evaluator), draws gaps
   and poles without joining them, shades an interval, marks a point with engine-computed coordinates,
   takes `a`, `b`, `c` parameters and moves seamlessly with `period` and `t`. Graphs that cannot be
-  drawn faithfully are refused (`func.detail`, `func.breaks`, `func.empty`, `func.loop`).
+  drawn faithfully are refused (`func.detail`, `func.breaks`, `func.empty`, `func.loop`). A gap at an
+  interval midpoint between two finite samples splits the curve too, so no line or shade crosses it.
 - Add the 2D `field` kind (pending Mac verification): engine-evaluated arrows on a grid of up to
   16 × 12 cells, with proportional, unit and slope (direction-field) styles and the largest magnitude
   written under the frame. At most six `func` and `field` items per scene (`items.expr`).
