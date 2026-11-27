@@ -215,6 +215,16 @@ final class RenderQualityTests: XCTestCase {
         XCTAssertFalse(MGCanvasLayer.live(base).drawsBoard); XCTAssertFalse(MGCanvasLayer.base(base).drawsOverlays)
     }
 
+    func testAMovingFunctionGraphIsLive() throws {
+        let json = #"{"v":1,"items":[{"id":"zone","k":"region","pts":[[1,1],[5,1],[5,4],[1,4]]},{"id":"wave","k":"func","at":[1,1.5],"w":10,"h":5,"xr":[0,12.566],"yr":[-1.5,1.5],"y":"a*sin(x - 2*pi*t/4)","a":1,"period":4},{"id":"still","k":"func","at":[1,1.5],"w":10,"h":5,"xr":[0,12.566],"yr":[-1.5,1.5],"y":"sin(x)"}]}"#
+        let scene = try MGParser.scene(data: Data(json.utf8)).get()
+        XCTAssertTrue(scene.animates)
+        let items = MGTimeline.frame(scene, items: scene.items, time: 0.5)
+        let live = MGCanvasLayers.live(scene, items: items)
+        XCTAssertEqual(live, ["wave"], "the graph with a period is sampled again each tick; the plain graph is static")
+        XCTAssertFalse(MGCanvasLayers.base(items, live: live).contains("wave"))
+    }
+
     /// RGBA bytes of an image drawn into an sRGB context of its size, with `over` drawn first when given.
     func bytes(_ image: CGImage, over: CGImage? = nil) throws -> [UInt8] {
         let w = image.width, h = image.height

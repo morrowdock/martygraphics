@@ -31,7 +31,8 @@ public enum MGCanvasLayer: Equatable, Sendable {
 public enum MGCanvasLayers {
     /// Ids of the items that change while the scene's motion plays: what the motion moves (its body, its vectors and
     /// bars), bodies with `move`, items attached to a moving body, vectors on a moving body or node, edges of a moving
-    /// node, and every highlight (it pulses with time). The closure over vectors and edges repeats until it is stable.
+    /// node, every highlight (it pulses with time) and every moving function graph (a `func` with `period`, sampled
+    /// again at each tick by `MGTimeline.frame`). The closure over vectors and edges repeats until it is stable.
     public static func live(_ scene: MGScene, items: [MGItem]) -> Set<String> {
         var live = Set<String>()
         switch scene.motion {
@@ -48,6 +49,7 @@ public enum MGCanvasLayers {
             if let vector { live.insert(vector) }
         }
         for i in items where i.kind == .body && i.pts.count > 1 { live.insert(i.id) }
+        for i in items where i.kind == .function && i.num["period"] != nil { live.insert(i.id) }
         while true {
             let before = live.count
             for (item, body) in scene.attachments where live.contains(body) { live.insert(item) }
