@@ -135,9 +135,11 @@ controller, scene revision and step (`MGStepItemsCache`).
 What is claimed until the Mac run: for one input the split composites to the one-canvas frame within rounding. What
 `testTheSplitBoardStaysExactAcrossTicksAndChanges` checks on a live board in a window, at 1x and 2x: base redraws are
 counted (none on ticks); after a new revision, a step, a resized viewport, a theme and new markers, the last base under
-the last live layer still matches the one-canvas frame; taps on a base item and on a live item select through the
-board's own tap handler; and the board stays one accessibility element whose label and value follow the step
-(accessibility properties only, no VoiceOver run).
+the last live layer still matches the one-canvas frame; and taps on a base item and on a live item select through the
+board's own tap handler. `testTheSplitBoardIsOneAccessibilityElement` checks that the split board stays one
+accessibility element whose value follows the step (accessibility properties only, no VoiceOver run); it skips, saying
+so, in a process where SwiftUI vends no accessibility elements under the hosting view, as Mac run #23 found. The test
+rig sets the `.active` scene phase, which the hosted board did not read on its own in that run.
 
 The solid renderer keeps its shadow catcher and contact shadow until the default pose's bounds or the ground option
 change, so camera updates (every loop and story frame) reuse them. The key light's shadow frustum has inputs of its own
@@ -214,7 +216,8 @@ Whether the encoder converts `rec709` frames
 from the sRGB their buffers declare, and whether every file decodes to what its tags say, is what
 `testColourPatchesDecodeAsTheirTagsSay` checks against tag values written out in the test (not read from the preset);
 until it has run, the tags are requested, not proven. That test fails if a `rec709` file carries BT.709 tags over
-sRGB samples. **Planned resolution** if it does: draw `rec709` frames in `CGColorSpace.itur_709`, so the samples match
+sRGB samples. Mac run #23 found the samples converted, and the decoded values fit a 1.961 power curve (Apple's reading
+of the BT.709 transfer tag) within about one level, not the BT.709 camera curve, so the test expects that curve. **Planned resolution** if it does: draw `rec709` frames in `CGColorSpace.itur_709`, so the samples match
 the tags.
 
 Alpha: H.264 and HEVC carry none. ProRes 4444 stores straight alpha (`straight`, what most editors read) or the

@@ -59,7 +59,10 @@ final class RenderQualityTests: XCTestCase {
             let v = try XCTUnwrap(f.items.first { $0.id == "v" })
             XCTAssertTrue((2...6).contains(v.n("len")), "length \(v.n("len")) left 2...6 at \(elapsed) s")
             XCTAssertTrue((0...4).contains(v.pts[0].x) && (0...2).contains(v.pts[0].y), "position left the box at \(elapsed) s")
-            XCTAssertTrue((350...380).contains(v.n("angle")), "angle \(v.n("angle")) overshot or took the long way at \(elapsed) s")
+            // The short way round is 350° up through 360° to 20°: measured as a turn from 350°, it stays in 0...30. The
+            // last sample is the finished frame, `b` itself, whose 20° is that turn's 380°.
+            let turn = (v.n("angle") - 350).truncatingRemainder(dividingBy: 360)
+            XCTAssertTrue((0...30).contains(turn < 0 ? turn + 360 : turn), "angle \(v.n("angle")) overshot or took the long way at \(elapsed) s")
             XCTAssertEqual(f.opacity["old"] ?? 0, 1 - t.progress(elapsed), accuracy: 1e-12, "the leaving item fades out")
             XCTAssertNil(f.opacity["new"], "an entering item draws on instead")
         }
@@ -204,6 +207,9 @@ final class RenderQualityTests: XCTestCase {
         let items = MGTimeline.frame(scene, items: scene.items, time: 0.5)
         let live = MGCanvasLayers.live(scene, items: items)
         XCTAssertEqual(live, ["dot", "push"], "the moving body and the vector on it")
+        // A frame drops the body's move target (its second point) and keeps `moveT`; the scene's own items still have it.
+        XCTAssertEqual(items.first { $0.id == "dot" }?.pts.count, 1)
+        XCTAssertEqual(MGCanvasLayers.live(scene, items: scene.items), live, "the same split before and after framing")
         let base = MGCanvasLayers.base(items, live: live)
         XCTAssertEqual(base, ["zone", "floor"], "the text draws above the body, so it stays live")
         let order = MGCanvasRenderer.ordered(items).map(\.id)

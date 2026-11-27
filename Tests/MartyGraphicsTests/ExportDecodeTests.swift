@@ -165,7 +165,11 @@ final class ExportDecodeTests: XCTestCase {
     }
 
     static func srgbToLinear(_ v: Double) -> Double { v <= 0.04045 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
-    static func bt709(_ l: Double) -> Double { l < 0.018 ? 4.5 * l : 1.099 * pow(l, 0.45) - 0.099 }
+    /// The BT.709 transfer function as Apple's colour management applies it when the writer converts sRGB-tagged
+    /// source buffers for a file tagged BT.709: a 1.961 power curve, not the BT.709 camera curve (1.099 L^0.45 − 0.099
+    /// with a linear toe). Mac run #23 decoded sRGB 0.3 as 68, 0.15 as 34 and 35, and 0.2 as 46 (1.961 power: 67, 34
+    /// and 45; camera curve: 61, 23 and 35).
+    static func apple709(_ l: Double) -> Double { pow(max(0, l), 1 / 1.961) }
 
     func testColourPatchesDecodeAsTheirTagsSay() async throws {
         let p3 = try XCTUnwrap(CGColorSpace(name: CGColorSpace.displayP3))
@@ -200,15 +204,16 @@ final class ExportDecodeTests: XCTestCase {
             XCTAssertEqual(CMFormatDescriptionGetExtension(description, extensionKey: kCMFormatDescriptionExtension_YCbCrMatrix) as? String,
                            expected.matrix, "\(space.rawValue): YCbCr matrix")
             // The decoded patches are what those tags say: sRGB values for `srgb`, P3 values for `displayP3` (the sRGB
-            // colours converted, and the wide red kept), and BT.709-encoded values of the drawn sRGB colours for
-            // `rec709`. A `rec709` file whose samples are the sRGB values carries BT.709 tags over sRGB samples and
-            // fails here; the planned resolution is to draw `rec709` frames in `CGColorSpace.itur_709`.
+            // colours converted, and the wide red kept), and for `rec709` the drawn sRGB colours re-encoded with the
+            // BT.709 transfer function as Apple's colour management applies it (`apple709`). A `rec709` file whose
+            // samples are the sRGB values carries BT.709 tags over sRGB samples and fails here; the planned resolution
+            // is to draw `rec709` frames in `CGColorSpace.itur_709`.
             let f = try XCTUnwrap(frames.last)
             for (k, c) in Self.srgbPatches.enumerated() {
                 let want: [Double]
                 switch space {
                 case .srgb: want = c
-                case .rec709: want = c.map { Self.bt709(Self.srgbToLinear($0)) }
+                case .rec709: want = c.map { Self.apple709(Self.srgbToLinear($0)) }
                 case .displayP3:
                     if k == 3 { want = [1, 0, 0] } else {
                         let converted = try XCTUnwrap(CGColor(srgbRed: c[0], green: c[1], blue: c[2], alpha: 1)
@@ -221,11 +226,11 @@ final class ExportDecodeTests: XCTestCase {
                            space == .rec709 ? 6 : 5, "\(space.rawValue) patch \(k)")
             }
             if space == .rec709 {
-                // Mid grey tells the two apart: sRGB 128, BT.709-encoded 115. Samples within 6 of 128 are sRGB samples
+                // Mid grey tells the two apart: sRGB 128, BT.709-encoded 116. Samples within 6 of 128 are sRGB samples
                 // under BT.709 tags.
                 let grey = f.pixel(32, 64)
-                XCTAssertEqual(Int((Self.bt709(Self.srgbToLinear(0.5)) * 255).rounded()), 115)
-                XCTAssertGreaterThan(abs(grey.g - 128), 6, "rec709: BT.709 tags over sRGB samples (grey \(grey.g), sRGB 128, BT.709 115)")
+                XCTAssertEqual(Int((Self.apple709(Self.srgbToLinear(0.5)) * 255).rounded()), 116)
+                XCTAssertGreaterThan(abs(grey.g - 128), 6, "rec709: BT.709 tags over sRGB samples (grey \(grey.g), sRGB 128, BT.709 116)")
             }
         }
     }

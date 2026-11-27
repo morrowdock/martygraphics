@@ -138,7 +138,9 @@ final class BoardTransitionTests: XCTestCase {
         var board = MartyGraphicsView(controller: controller).boardProbe(probe).boardReduceMotion(reduceMotion).markers(markers)
             .selection(Binding(get: { [unowned self] in self.selection }, set: { [unowned self] in self.selection = $0 }))
         if let style { board = board.transitionStyle(style) }
-        host.rootView = AnyView(board.environment(\.mgTheme, theme))
+        // Hosted in this test process, the board did not read the `.active` scene phase (Mac run #23: it never ran its
+        // frame loop, `MGRenderPolicy.continuous`), so the rig sets the phase a foreground app's scene gives it.
+        host.rootView = AnyView(board.environment(\.mgTheme, theme).environment(\.scenePhase, .active))
     }
 
     /// Lets SwiftUI apply updates and run the board's tasks and frame loop for `seconds` of real time.
@@ -371,7 +373,6 @@ final class BoardTransitionHostTests: XCTestCase {
         var base = rig.probe.baseDraws
         XCTAssertGreaterThan(base, 0)
         try assertSplit(rig, "first frame")
-        XCTAssertEqual(boardElements(rig, value: "First step.").count, 1, "VoiceOver: one board element over both canvases")
 
         // Ticks: the live layer redraws with the motion, the base never does.
         let live = rig.probe.liveDraws
@@ -386,7 +387,6 @@ final class BoardTransitionHostTests: XCTestCase {
         // A step (the board's Next button), which zooms the camera.
         try XCTUnwrap(rig.probe.go)(1)
         try settleSplit(rig, "step", baseDraws: &base)
-        XCTAssertEqual(boardElements(rig, value: "Second step.").count, 1, "VoiceOver: the board's value follows the step across the split")
         // The viewport: a larger window.
         rig.resize(CGSize(width: 700, height: 640))
         try settleSplit(rig, "viewport", baseDraws: &base, wait: 0.6)
@@ -403,7 +403,6 @@ final class BoardTransitionHostTests: XCTestCase {
         rig.rebuild()
         try settleSplit(rig, "markers", baseDraws: &base, wait: 0.6, redrawsBase: false)
         XCTAssertEqual(rig.probe.draws.last(where: { if case .live = $0.layer { return true }; return false })?.input.markers, ["zone": 1, "dot": 2])
-        XCTAssertEqual(boardElements(rig, value: "Second step.").count, 1)
 
         // Taps across the split, through the board's own tap handler: a base item and a live item.
         let size = try XCTUnwrap(rig.probe.draws.last?.size)
@@ -418,15 +417,44 @@ final class BoardTransitionHostTests: XCTestCase {
 
     // MARK: Accessibility (properties only; no VoiceOver run)
 
-    /// Accessibility elements under the host whose label is the board's title and whose value is `value`.
-    @MainActor func boardElements(_ rig: BoardRig, value: String) -> [NSObject] {
-        var out: [NSObject] = [], queue: [Any] = [rig.host], seen = Set<ObjectIdentifier>()
+    /// The split board is one accessibility element over both canvases, and its value follows the step across the
+    /// split. This reads the accessibility properties SwiftUI vends under the host. Mac run #23 found no element under
+    /// the host at all, so a process that gets no accessibility tree skips, with that reason, rather than passing; the
+    /// split itself is checked by `testTheSplitBoardStaysExactAcrossTicksAndChanges`.
+    @MainActor func testTheSplitBoardIsOneAccessibilityElement() throws {
+        let rig = BoardRig(try scene())
+        defer { rig.close() }
+        rig.settle(2.4)
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "the board is split")
+        let all = accessibilityElements(rig)
+        guard !all.isEmpty else { throw XCTSkip("SwiftUI vends no accessibility elements under the hosting view in this process") }
+        XCTAssertEqual(boardElements(rig, value: "First step.").count, 1, "VoiceOver: one board element over both canvases; found \(describe(all))")
+        try XCTUnwrap(rig.probe.go)(1)
+        rig.settle(2.4)
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "the board is split again")
+        XCTAssertEqual(boardElements(rig, value: "Second step.").count, 1,
+                       "VoiceOver: the board's value follows the step across the split; found \(describe(accessibilityElements(rig)))")
+    }
+
+    /// Every accessibility element under the host (not the host itself).
+    @MainActor func accessibilityElements(_ rig: BoardRig) -> [NSObject] {
+        var out: [NSObject] = [], queue: [Any] = axChildren(rig.host), seen = Set<ObjectIdentifier>()
         while let next = queue.popLast(), seen.count < 20_000 {
             guard let o = next as? NSObject, seen.insert(ObjectIdentifier(o)).inserted else { continue }
-            if axLabel(o) == "Layer check", axValue(o) == value { out.append(o) }
+            out.append(o)
             queue.append(contentsOf: axChildren(o))
         }
         return out
+    }
+
+    /// Accessibility elements under the host whose label is the board's title and whose value is `value`.
+    @MainActor func boardElements(_ rig: BoardRig, value: String) -> [NSObject] {
+        accessibilityElements(rig).filter { axLabel($0) == "Layer check" && axValue($0) == value }
+    }
+
+    /// The first elements' labels and values, for a failure message.
+    @MainActor func describe(_ elements: [NSObject]) -> String {
+        "\(elements.count): " + elements.prefix(12).map { "\(axLabel($0) ?? "-") = \(axValue($0) ?? "-")" }.joined(separator: "; ")
     }
 
     @MainActor func axChildren(_ o: NSObject) -> [Any] {
