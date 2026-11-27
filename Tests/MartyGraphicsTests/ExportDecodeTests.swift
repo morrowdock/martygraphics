@@ -77,7 +77,7 @@ final class ExportDecodeTests: XCTestCase {
 
     /// A 320 × 180 plan (the preset's frame, so nothing is scaled): an opaque ellipse with antialiased edges and a
     /// rectangle at 50 % opacity; the rest of the canvas is empty.
-    static let alphaPlan = #"{"v":1,"dim":"2d","title":"Alpha check","items":[],"layer2d":{"status":"proposed","version":"0.1.0-draft","fps":30,"durationFrames":3,"canvas":{"width":320,"height":180},"elements":[{"id":"solid","kind":"shape","at":[90,130],"color":"#E03C28","shape":"ellipse","size":[61,41]},{"id":"glass","kind":"shape","at":[230,130],"color":"#2878F0","shape":"rect","size":[60,40],"opacity":0.5}],"tracks":[],"captions":[],"generatedMediaLabel":"Generated educational animation"}}"#
+    static let alphaPlan = ##"{"v":1,"dim":"2d","title":"Alpha check","items":[],"layer2d":{"status":"proposed","version":"0.1.0-draft","fps":30,"durationFrames":3,"canvas":{"width":320,"height":180},"elements":[{"id":"solid","kind":"shape","at":[90,130],"color":"#E03C28","shape":"ellipse","size":[61,41]},{"id":"glass","kind":"shape","at":[230,130],"color":"#2878F0","shape":"rect","size":[60,40],"opacity":0.5}],"tracks":[],"captions":[],"generatedMediaLabel":"Generated educational animation"}}"##
 
     func alphaCheckPlan() throws -> MGCheckedVideoPlan {
         let scene = try MGParser.scene(data: Data(Self.alphaPlan.utf8), programmaticVideo: true).get()
