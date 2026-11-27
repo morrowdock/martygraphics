@@ -27,8 +27,9 @@ naming the package. They are `PACKAGE_COMMANDS` in `tools/validate_local.py`,
 which the receipt writer runs; a test keeps the two identical. `NEW_EXPORT_DIR`
 is a new directory outside the checkout (export refuses an existing one). A
 package that is not listed yet runs `swift test --jobs 2 --package-path P` when
-`P/Tests` exists and `swift build --jobs 2 --package-path P` otherwise; add it
-here and to `PACKAGE_COMMANDS`.
+`P/Tests` exists and `swift build --jobs 2 --package-path P` otherwise, with `P`
+as one argument even when it contains a space (quote it in a shell); add it here
+and to `PACKAGE_COMMANDS`.
 
 ```sh
 # .
@@ -75,8 +76,10 @@ Blender executable, and 3 when `blender --version` does not report the pinned
 5.2.4, even when `BLENDER` or `BLENDER_VERSION` points elsewhere; either one is a
 failed package, never a skip. It refuses to write a
 receipt when the commands changed `HEAD` or `git status --porcelain`, and it
-exits non-zero when any package failed. Keep its complete output and exit code
-beside the receipt.
+exits non-zero when any package failed. The receipt is version 2: each package
+entry records the argv lists it ran as `commands` (with `NEW_EXPORT_DIR` kept as
+that token) next to `exit`, and `commands_sha256` covers all of them. Keep its
+complete output and exit code beside the receipt.
 
 A missing command or failed check cannot be replaced by an older receipt
 that did not cover that package. These builds and tests are not a visual or

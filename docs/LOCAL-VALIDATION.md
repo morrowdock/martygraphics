@@ -86,14 +86,21 @@ their metadata separately; retain that evidence beside the receipt.
 
 Run the [Mac commands](VERIFY-ON-MAC.md), which include showcase `--verify` and
 `--export` and `tools/render-blender/selftest.sh` (on a host with the pinned
-Blender), on an approved native execution lane. The native receipt is a private JSON file that names
-the exact source and **each package** it built and tested, with that package's
-overall exit code:
+Blender), on an approved native execution lane. The native receipt (version 2)
+is a private JSON file that names the exact source and **each package** it built
+and tested, with the argv lists it ran (`NEW_EXPORT_DIR` kept as that token) and
+that package's overall exit code:
 
 ```json
-{"source": "TESTED_NATIVE_SOURCE_SHA",
- "packages": [{"path": ".", "exit": 0}, {"path": "Examples/Solid3D", "exit": 0}]}
+{"version": 2, "source": "TESTED_NATIVE_SOURCE_SHA", "commands_sha256": "SHA256",
+ "packages": [{"path": ".", "exit": 0, "commands": [["swift", "build"], ["swift", "test"]]},
+              {"path": "Examples/Solid3D", "exit": 0,
+               "commands": [["swift", "test", "--jobs", "2", "--package-path", "Examples/Solid3D"]]}]}
 ```
+
+`commands_sha256` is the SHA-256 of the canonical JSON (sorted keys, no spaces,
+UTF-8) of `{package: commands}` for every package of the source.
+A version 1 receipt, without commands, is refused; run the writer again.
 
 On the Mac, write it from a clean checkout of the tested commit with
 
@@ -130,13 +137,18 @@ when, between `TESTED_NATIVE_SOURCE_SHA` and `HEAD_SHA`:
   is the whole checkout, so any submodule refuses reuse);
 - the receipt names **exactly** the packages present at `HEAD_SHA` (same spelling,
   no extra entries), each with exit 0. Byte equality alone cannot establish that a
-  package's tests were run.
+  package's tests were run;
+- each package's recorded commands are exactly what the current
+  `PACKAGE_COMMANDS` in `tools/validate_local.py` runs for it at `HEAD_SHA`, and
+  `commands_sha256` matches them, so a receipt from before a command was added
+  (such as the showcase `--verify` and `--export`) cannot vouch for it.
 
 The `nativeReuse` record lists the packages and the input paths, then the
 reasons reuse fails, each separately: `changed` native paths, `links` (symlinks or
 dependencies outside the tree), `missing` packages the receipt does not name,
-`unexpected` receipt entries that are not packages at `HEAD_SHA`, and `failed`
-entries with a non-zero exit. Any of them being nonempty fails the run, and the
+`unexpected` receipt entries that are not packages at `HEAD_SHA`, `failed`
+entries with a non-zero exit, and `commands` (packages whose recorded commands
+differ, and `commands_sha256` when it differs). Any of them being nonempty fails the run, and the
 runner then says to run the Mac checks at `HEAD_SHA` and rerun with
 `--native-source HEAD_SHA --native-receipt` naming the new receipt. Other changes (README and other documentation, CI, `tools/*.py`)
 remain hygiene/review work. Preserve that original source SHA and asset digests;

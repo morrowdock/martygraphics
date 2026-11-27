@@ -9,7 +9,6 @@ from pathlib import Path
 import platform
 import posixpath
 import re
-import shlex
 import socket
 import subprocess
 import sys
@@ -19,26 +18,33 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 # Natively verified tools without a Package.swift (docs/LOCAL-VALIDATION.md, "Native evidence").
 NATIVE_TOOLS = ("tools/render-blender",)
-# The native command sequence of each package, in order. docs/VERIFY-ON-MAC.md quotes this table verbatim and
+# The native command sequence of each package, in order, as argv lists. docs/VERIFY-ON-MAC.md quotes this table and
 # tools/write_native_receipt.py runs it. A package missing from it runs `swift test --jobs 2 --package-path P` when it
-# has a Tests/ folder and `swift build --jobs 2 --package-path P` otherwise. EXPORT_DIR stands for a new directory
-# outside the checkout.
+# has a Tests/ folder and `swift build --jobs 2 --package-path P` otherwise (default_command). EXPORT_DIR stands for a
+# new directory outside the checkout.
 EXPORT_DIR = "NEW_EXPORT_DIR"
+
+
+def _swift(verb, package, *extra):
+    return ["swift", verb, *extra, "--jobs", "2", "--package-path", package]
+
+
 PACKAGE_COMMANDS = {
-    ".": ["swift build", "swift test"],
-    "Examples/KeySwitch3D": ["swift test --jobs 2 --package-path Examples/KeySwitch3D"],
-    "Examples/LessonDemo": ["swift test --jobs 2 --package-path Examples/LessonDemo"],
-    "Examples/PathTrace": ["swift build --jobs 2 --package-path Examples/PathTrace"],
-    "Examples/Showcase": ["swift build --jobs 2 --package-path Examples/Showcase",
-                          "swift run --skip-build --package-path Examples/Showcase marty-showcase --verify",
-                          "swift run --skip-build --package-path Examples/Showcase marty-showcase --export "
-                          + EXPORT_DIR],
-    "Examples/Solid3D": ["swift test --jobs 2 --package-path Examples/Solid3D"],
-    "Examples/Turbofan": ["swift test --jobs 2 --package-path Examples/Turbofan"],
-    "tools/SceneValidator": ["swift test --jobs 2 --package-path tools/SceneValidator",
-                             "swift build -c release --jobs 2 --package-path tools/SceneValidator"],
-    "tools/render-blender": ["tools/render-blender/selftest.sh"],
+    ".": [["swift", "build"], ["swift", "test"]],
+    "Examples/KeySwitch3D": [_swift("test", "Examples/KeySwitch3D")],
+    "Examples/LessonDemo": [_swift("test", "Examples/LessonDemo")],
+    "Examples/PathTrace": [_swift("build", "Examples/PathTrace")],
+    "Examples/Showcase": [_swift("build", "Examples/Showcase"),
+                          ["swift", "run", "--skip-build", "--package-path", "Examples/Showcase", "marty-showcase",
+                           "--verify"],
+                          ["swift", "run", "--skip-build", "--package-path", "Examples/Showcase", "marty-showcase",
+                           "--export", EXPORT_DIR]],
+    "Examples/Solid3D": [_swift("test", "Examples/Solid3D")],
+    "Examples/Turbofan": [_swift("test", "Examples/Turbofan")],
+    "tools/SceneValidator": [_swift("test", "tools/SceneValidator"), _swift("build", "tools/SceneValidator", "-c", "release")],
+    "tools/render-blender": [["tools/render-blender/selftest.sh"]],
 }
+NATIVE_RECEIPT_VERSION = 2
 # Top-level folders of third-party code. A Package.swift there is not one of this repository's packages, and neither
 # is one under a `.build` folder. A package that depends on vendored code still covers it (see manifest_inputs).
 VENDOR_ROOTS = ("vendor", "third_party")
@@ -147,13 +153,19 @@ def native_packages(paths):
 
 
 def default_command(package, paths):
-    verb = "test" if any(p.startswith(package + "/Tests/") for p in paths) else "build"
-    return "swift %s --jobs 2 --package-path %s" % (verb, package)
+    """The argv for a package missing from PACKAGE_COMMANDS; the package path stays one argument."""
+    return _swift("test" if any(p.startswith(package + "/Tests/") for p in paths) else "build", package)
 
 
 def native_commands(package, paths):
     """The documented command sequence (PACKAGE_COMMANDS) for one package of a tree with these paths."""
-    return [shlex.split(c) for c in PACKAGE_COMMANDS.get(package, [default_command(package, paths)])]
+    return [list(c) for c in PACKAGE_COMMANDS.get(package, [default_command(package, paths)])]
+
+
+def commands_sha256(commands):
+    """SHA-256 of the canonical JSON of {package: [argv, ...]}: sorted keys, no spaces, UTF-8."""
+    text = json.dumps(commands, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def literal_inputs(paths, swift_sources):
@@ -368,26 +380,45 @@ def head_scope(sha, root=None):
     return {p: native_commands(p, entries) for p in packages}
 
 
+def is_argv_list(value):
+    return isinstance(value, list) and all(
+        isinstance(c, list) and c and all(isinstance(a, str) for a in c) for c in value)
+
+
 def read_native_receipt(path, source):
-    """A native receipt names each package it built and tested, with that package's overall exit code."""
+    """A v2 native receipt names each package it built and tested, with the argv lists it ran and the package's
+    overall exit code, plus commands_sha256 over those commands. Returns {"exits", "commands", "commands_sha256"}."""
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(data, dict) or str(data.get("source", "")).lower() != source:
         raise ValueError("Native receipt does not name the tested native source " + source)
+    if data.get("version") != NATIVE_RECEIPT_VERSION:
+        raise ValueError("Native receipt is not version %d (it records no commands); re-run "
+                         "tools/write_native_receipt.py at %s (docs/VERIFY-ON-MAC.md)" % (NATIVE_RECEIPT_VERSION, source))
     entries = data.get("packages")
     if not isinstance(entries, list) or not all(
-            isinstance(e, dict) and isinstance(e.get("path"), str) and type(e.get("exit")) is int for e in entries):
-        raise ValueError('Native receipt needs "packages": [{"path": ..., "exit": ...}, ...]')
+            isinstance(e, dict) and isinstance(e.get("path"), str) and type(e.get("exit")) is int
+            and is_argv_list(e.get("commands")) for e in entries):
+        raise ValueError('Native receipt needs "packages": [{"path": ..., "exit": ..., "commands": [[...], ...]}, ...]')
+    if not isinstance(data.get("commands_sha256"), str):
+        raise ValueError('Native receipt needs "commands_sha256"')
     names = [e["path"] for e in entries]
     if len(set(names)) != len(names):
         raise ValueError("Native receipt names a package twice")
-    return {e["path"]: e["exit"] for e in entries}
+    return {"exits": {e["path"]: e["exit"] for e in entries},
+            "commands": {e["path"]: e["commands"] for e in entries}, "commands_sha256": data["commands_sha256"]}
 
 
 def receipt_mismatch(expected, receipt):
-    """A receipt must name exactly the expected package paths, each with exit 0."""
-    return {"missing": sorted(set(expected) - set(receipt)),
-            "unexpected": sorted(set(receipt) - set(expected)),
-            "failed": sorted(p for p, code in receipt.items() if code != 0)}
+    """A receipt must name exactly the expected packages, each with exit 0, each with the commands the current code
+    runs for it, and the matching commands_sha256. `expected` is {package: [argv, ...]}."""
+    exits, commands = receipt["exits"], receipt["commands"]
+    different = sorted(p for p in set(expected) & set(commands) if commands[p] != expected[p])
+    if receipt["commands_sha256"] != commands_sha256(expected):
+        different.append("commands_sha256")
+    return {"missing": sorted(set(expected) - set(exits)),
+            "unexpected": sorted(set(exits) - set(expected)),
+            "failed": sorted(p for p, code in exits.items() if code != 0),
+            "commands": different}
 
 
 def native_reuse(source, head, receipt, root=None):
@@ -395,15 +426,17 @@ def native_reuse(source, head, receipt, root=None):
 
     It cannot when any native byte (package or input) differs between the two trees, including added, removed and
     renamed files and packages; when a covered symlink leaves the repository or names nothing; or when the receipt
-    does not name exactly the packages present at `head`, each with exit 0."""
+    does not name exactly the packages present at `head`, each with exit 0 and the commands the current
+    PACKAGE_COMMANDS gives it at `head`."""
     root = root or ROOT
     trees = {"source": tree_entries(source, root), "head": tree_entries(head, root)}
     scope = native_scope(trees, scope_blobs(trees, root))
     packages, inputs = scope["packages"], scope["inputs"]
-    present = native_packages(trees["head"])
+    expected = {p: native_commands(p, trees["head"]) for p in native_packages(trees["head"])}
+    present = sorted(expected)
     diff = git("diff-tree", "-r", "-z", "--name-only", "--no-renames", source, head, cwd=root)
     changed = [p for p in diff.decode("utf-8", "surrogateescape").split("\0") if p and covers(p, packages, inputs)]
-    mismatch = receipt_mismatch(present, receipt)
+    mismatch = receipt_mismatch(expected, receipt)
     failing = changed or scope["problems"] or any(mismatch.values())
     return {"source": source, "packages": present, "inputs": inputs, "changed": changed, **mismatch,
             "links": scope["problems"], "status": "FAIL" if failing else "PASS"}
@@ -475,7 +508,8 @@ def refusal(native, head):
     for key, label in (("changed", "Changed native paths"), ("links", "Symlinks or dependencies outside the tree"),
                        ("missing", "Packages the receipt does not name"),
                        ("unexpected", "Receipt entries that are not packages at HEAD"),
-                       ("failed", "Receipt entries with a non-zero exit")):
+                       ("failed", "Receipt entries with a non-zero exit"),
+                       ("commands", "Recorded commands that differ from the current ones")):
         if native[key]:
             lines.append("  %s: %s" % (label, ", ".join(native[key])))
     lines.append("Run the native checks in docs/VERIFY-ON-MAC.md at %s (python3 tools/write_native_receipt.py "

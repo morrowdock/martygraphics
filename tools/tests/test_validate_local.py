@@ -118,8 +118,16 @@ class FixtureRepo(unittest.TestCase):
             self.git("update-index", "--add", "--cacheinfo", "%s,%s,%s" % (mode, oid, new + path[len(old):]))
         return self.commit_index()
 
+    def v2(self, head, exits):
+        """A parsed v2 receipt with these exit codes and the commands the current code runs at `head`."""
+        scope = validate_local.head_scope(head, self.repo)
+        return {"exits": dict(exits), "commands": {p: scope.get(p, [["true"]]) for p in exits},
+                "commands_sha256": validate_local.commands_sha256(scope)}
+
     def reuse(self, head, receipt=None, source=None):
         receipt = {p: 0 for p in PACKAGES} if receipt is None else receipt
+        if "exits" not in receipt:
+            receipt = self.v2(head, receipt)
         return validate_local.native_reuse(source or self.source, head, receipt, root=self.repo)
 
 
@@ -238,13 +246,28 @@ class NativeReuseTests(FixtureRepo):
     def test_native_receipt_format(self):
         path = self.repo.parent / (self.repo.name + "-native.json")
         self.addCleanup(lambda: path.unlink(missing_ok=True))
-        good = {"source": self.source.upper(), "packages": [{"path": ".", "exit": 0}, {"path": "Examples/Solid3D", "exit": 1}]}
+        root, solid = [["swift", "build"], ["swift", "test"]], [["swift", "test", "--package-path", "Examples/Solid3D"]]
+        good = {"version": 2, "source": self.source.upper(), "commands_sha256": "0" * 64,
+                "packages": [{"path": ".", "exit": 0, "commands": root},
+                             {"path": "Examples/Solid3D", "exit": 1, "commands": solid}]}
         path.write_text(json.dumps(good))
-        self.assertEqual(validate_local.read_native_receipt(path, self.source), {".": 0, "Examples/Solid3D": 1})
-        for bad in [dict(good, source="0" * 40), dict(good, packages=["."]), {"source": self.source},
-                    dict(good, packages=[{"path": ".", "exit": 0}, {"path": ".", "exit": 0}]),
-                    dict(good, packages=[{"path": ".", "exit": "0"}]),
-                    dict(good, packages=[{"path": ".", "exit": True}])]:
+        self.assertEqual(validate_local.read_native_receipt(path, self.source),
+                         {"exits": {".": 0, "Examples/Solid3D": 1}, "commands": {".": root, "Examples/Solid3D": solid},
+                          "commands_sha256": "0" * 64})
+        v1 = {"source": self.source, "packages": [{"path": ".", "exit": 0}]}
+        path.write_text(json.dumps(v1))
+        with self.assertRaisesRegex(ValueError, "not version 2.*re-run tools/write_native_receipt.py"):
+            validate_local.read_native_receipt(path, self.source)
+        entry = {"path": ".", "exit": 0, "commands": root}
+        for bad in [dict(good, source="0" * 40), dict(good, packages=["."]), {"source": self.source, "version": 2},
+                    dict(good, version=1), dict(good, version="2"), v1,
+                    {k: v for k, v in good.items() if k != "commands_sha256"},
+                    dict(good, packages=[entry, entry]),
+                    dict(good, packages=[dict(entry, exit="0")]), dict(good, packages=[dict(entry, exit=True)]),
+                    dict(good, packages=[{"path": ".", "exit": 0}]),
+                    dict(good, packages=[dict(entry, commands="swift build")]),
+                    dict(good, packages=[dict(entry, commands=[[]])]),
+                    dict(good, packages=[dict(entry, commands=[["swift", 1]])])]:
             with self.subTest(bad=bad):
                 path.write_text(json.dumps(bad))
                 with self.assertRaises(ValueError):
@@ -405,9 +428,45 @@ class NativeReceiptWriterTests(FixtureRepo):
                                  ["swift", "build", "-c", "release", "--jobs", "2", "--package-path", "tools/SceneValidator"],
                                  ["tools/render-blender/selftest.sh"]])
         receipt = json.loads(path.read_text())
-        self.assertEqual(receipt, {"source": self.source, "packages": [{"path": p, "exit": 0} for p in PACKAGES]})
+        scope = validate_local.head_scope(self.source, self.repo)
+        self.assertEqual(receipt, {"version": 2, "source": self.source,
+                                   "commands_sha256": validate_local.commands_sha256(scope),
+                                   "packages": [{"path": p, "exit": 0, "commands": scope[p]} for p in PACKAGES]})
         reuse = self.reuse(self.source, validate_local.read_native_receipt(path, self.source))
-        self.assertEqual(reuse["status"], "PASS")
+        self.assertEqual((reuse["commands"], reuse["status"]), ([], "PASS"))
+
+    def test_a_command_only_change_refuses_reuse(self):
+        """Same files, but the receipt ran Showcase as a build only: the current --verify/--export are not covered."""
+        self.source = self.commit({"Examples/Showcase/Package.swift": "// showcase\n",
+                                   "Examples/Showcase/Sources/MartyShowcase/Showcase.swift": "let s = 1\n"})
+        old = {"Examples/Showcase": [["swift", "build", "--jobs", "2", "--package-path", "Examples/Showcase"]]}
+        path = self.receipt_path()
+        with mock.patch.dict(writer.validate_local.PACKAGE_COMMANDS, old):
+            self.assertEqual(self.write(path)[0], 0)
+        reuse = self.reuse(self.source, validate_local.read_native_receipt(path, self.source))
+        self.assertEqual((reuse["changed"], reuse["failed"], reuse["missing"]), ([], [], []))
+        self.assertEqual((reuse["commands"], reuse["status"]), (["Examples/Showcase", "commands_sha256"], "FAIL"))
+        data = json.loads(path.read_text())
+        current = validate_local.head_scope(self.source, self.repo)
+        for entry in data["packages"]:
+            entry["commands"] = current[entry["path"]]
+        tampered = path.with_name("tampered.json")
+        tampered.write_text(json.dumps(data))
+        reuse = self.reuse(self.source, validate_local.read_native_receipt(tampered, self.source))
+        self.assertEqual((reuse["commands"], reuse["status"]), (["commands_sha256"], "FAIL"))
+
+    def test_package_path_with_a_space_stays_one_argument(self):
+        self.source = self.commit({"Examples/New Kit/Package.swift": "// new kit\n",
+                                   "Examples/New Kit/Tests/KitTests/KitTests.swift": "let t = 1\n"})
+        path = self.receipt_path()
+        status, calls, _ = self.write(path)
+        self.assertEqual(status, 0)
+        self.assertIn(["swift", "test", "--jobs", "2", "--package-path", "Examples/New Kit"], calls)
+        receipt = validate_local.read_native_receipt(path, self.source)
+        self.assertEqual(receipt["commands"]["Examples/New Kit"],
+                         [["swift", "test", "--jobs", "2", "--package-path", "Examples/New Kit"]])
+        reuse = self.reuse(self.source, receipt)
+        self.assertEqual((reuse["commands"], reuse["status"]), ([], "PASS"))
 
     def test_showcase_verifies_and_exports_to_a_new_folder_beside_the_receipt(self):
         self.source = self.commit({"Examples/Showcase/Package.swift": "// showcase\n",
@@ -422,7 +481,9 @@ class NativeReceiptWriterTests(FixtureRepo):
             ["swift", "run", "--skip-build", "--package-path", "Examples/Showcase", "marty-showcase", "--verify"],
             ["swift", "run", "--skip-build", "--package-path", "Examples/Showcase", "marty-showcase", "--export",
              str(export)]])
-        self.assertIn({"path": "Examples/Showcase", "exit": 0}, json.loads(path.read_text())["packages"])
+        recorded = {"path": "Examples/Showcase", "exit": 0, "commands": validate_local.PACKAGE_COMMANDS["Examples/Showcase"]}
+        self.assertIn(recorded, json.loads(path.read_text())["packages"])
+        self.assertEqual(recorded["commands"][-1][-1], validate_local.EXPORT_DIR)  # recorded as the token
         again = path.with_name("again.json")
         again.with_name("again-showcase-export").mkdir()
         status, calls, err = self.write(again)
@@ -435,6 +496,8 @@ class NativeReceiptWriterTests(FixtureRepo):
                          [["swift", "test", "--jobs", "2", "--package-path", "Examples/NewKit"]])
         self.assertEqual(validate_local.native_commands("Examples/NewKit", with_tests[:1]),
                          [["swift", "build", "--jobs", "2", "--package-path", "Examples/NewKit"]])
+        self.assertEqual(validate_local.native_commands("Examples/New Kit", ["Examples/New Kit/Package.swift"]),
+                         [["swift", "build", "--jobs", "2", "--package-path", "Examples/New Kit"]])
 
     def test_first_failing_exit_is_recorded_and_fails_the_writer(self):
         path = self.receipt_path()
@@ -503,8 +566,10 @@ class LocalValidationRunTests(FixtureRepo):
         self.addCleanup(evidence.cleanup)
         receipt = Path(evidence.name) / "receipt.json"
         native_receipt = Path(evidence.name) / "native.json"
-        native_receipt.write_text(json.dumps({"source": self.source,
-                                              "packages": [{"path": p, "exit": 0} for p in packages]}))
+        scope = validate_local.head_scope(self.source, self.repo)
+        native_receipt.write_text(json.dumps({
+            "version": 2, "source": self.source, "commands_sha256": validate_local.commands_sha256(scope),
+            "packages": [{"path": p, "exit": 0, "commands": scope.get(p, [["true"]])} for p in packages]}))
         arguments = ["validate_local.py", "--base", self.source, "--head", head, "--gitleaks", "unused-test-scanner",
                      "--receipt", str(receipt)]
         if native:
@@ -608,18 +673,17 @@ class RepositoryCoverageTests(unittest.TestCase):
                 package = line[2:]
                 documented[package] = []
             else:
-                documented[package].append(line)
+                documented[package].append(shlex.split(line))
         self.assertEqual(documented, validate_local.PACKAGE_COMMANDS)
         entries = validate_local.tree_entries("HEAD")
         packages = validate_local.native_packages(entries)
         self.assertEqual(sorted(documented), packages)
         for package in packages:
             with self.subTest(package=package):
-                self.assertEqual(validate_local.native_commands(package, entries),
-                                 [shlex.split(c) for c in documented[package]])
+                self.assertEqual(validate_local.native_commands(package, entries), documented[package])
                 if package not in (".",) + validate_local.NATIVE_TOOLS:  # starts with `swift test` iff it has tests
                     self.assertEqual(documented[package][0], validate_local.default_command(package, entries))
-        self.assertEqual([c.split()[-2:] for c in documented["Examples/Showcase"][1:]],
+        self.assertEqual([c[-2:] for c in documented["Examples/Showcase"][1:]],
                          [["marty-showcase", "--verify"], ["--export", validate_local.EXPORT_DIR]])
 
 

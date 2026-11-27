@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Run the native checks of docs/VERIFY-ON-MAC.md for every package of a clean checkout and write the v1 native
-receipt {"source", "packages": [{"path", "exit"}]} to a new path outside the checkout. The showcase export goes to a
+"""Run the native checks of docs/VERIFY-ON-MAC.md for every package of a clean checkout and write the v2 native
+receipt {"version": 2, "source", "commands_sha256", "packages": [{"path", "exit", "commands"}]} to a new path outside
+the checkout; "commands" are the argv lists run, with NEW_EXPORT_DIR left as that token. The showcase export goes to a
 new directory beside the receipt, named after it with "-showcase-export".
 
 The packages come from validate_local.native_packages, the same discovery that checks receipt reuse. Each package
@@ -11,6 +12,7 @@ import argparse
 import importlib.util
 import json
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 
@@ -57,16 +59,16 @@ def main(argv=None, root=None, run=subprocess.run):
         parser.error("Checkout must be clean, including untracked files")
     commands = validate_local.head_scope(head, root)
     packages = []
-    for package, package_commands in commands.items():
-        package_commands = [[str(export_dir) if a == validate_local.EXPORT_DIR else a for a in c]
-                            for c in package_commands]
-        print("== %s: %s" % (package, " && ".join(" ".join(c) for c in package_commands)), flush=True)
-        packages.append({"path": package, "exit": run_package(package_commands, root, run)})
+    for package, recorded in commands.items():
+        package_commands = [[str(export_dir) if a == validate_local.EXPORT_DIR else a for a in c] for c in recorded]
+        print("== %s: %s" % (package, " && ".join(shlex.join(c) for c in package_commands)), flush=True)
+        packages.append({"path": package, "exit": run_package(package_commands, root, run), "commands": recorded})
     if checkout_state(root) != (head, b""):
         parser.error("The native checks changed the checkout (HEAD or `git status --porcelain`); no receipt written")
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
     with receipt_path.open("x", encoding="utf-8") as stream:
-        json.dump({"source": head, "packages": packages}, stream, indent=2)
+        json.dump({"version": validate_local.NATIVE_RECEIPT_VERSION, "source": head,
+                   "commands_sha256": validate_local.commands_sha256(commands), "packages": packages}, stream, indent=2)
         stream.write("\n")
     failed = [p["path"] for p in packages if p["exit"] != 0]
     print("Native receipt:", receipt_path)

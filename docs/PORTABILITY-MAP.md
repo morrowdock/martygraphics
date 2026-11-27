@@ -344,12 +344,14 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/render-blender/selftest_scene.py` | bmesh, bpy, hashlib, json, math, os, sys |
 | `tools/scene_v1_check.py` | argparse, json, math, os, pathlib, re, stat, unicodedata |
 | `tools/semantic_fixtures.py` | argparse, json, math, pathlib, scene_v1_check, sys |
-| `tools/tests/test_check_dco.py` | importlib, json, os, pathlib, subprocess, sys, tempfile, unittest |
+| `tools/tests/test_check_dco.py` | os, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_portability_tools.py` | copy, importlib, json, pathlib, subprocess, sys, unittest |
 | `tools/tests/test_release_install.py` | argparse, contextlib, importlib, io, json, pathlib, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_render_blender.py` | hashlib, json, math, mgrender, os, pathlib, re, render, render_variants, shutil, struct, subprocess, sys, tempfile, unittest |
 | `tools/tests/test_scene_v1_schema.py` | json, os, subprocess, sys, tools, unittest |
-| `tools/validate_local.py` | argparse, datetime, hashlib, json, pathlib, platform, re, socket, subprocess, sys, urllib |
+| `tools/tests/test_validate_local.py` | contextlib, importlib, io, json, os, pathlib, re, shlex, subprocess, sys, tempfile, unittest |
+| `tools/validate_local.py` | argparse, datetime, hashlib, json, pathlib, platform, posixpath, re, socket, subprocess, sys, urllib |
 | `tools/verify_release_install.py` | argparse, dataclasses, datetime, hashlib, json, os, pathlib, platform, re, socket, subprocess, sys |
+| `tools/write_native_receipt.py` | argparse, importlib, json, pathlib, shlex, subprocess, sys |
 
 <!-- END GENERATED: tools/portability_map.py -->

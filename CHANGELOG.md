@@ -225,6 +225,10 @@
   `tools/validate_local.py` that the receipt writer runs and docs/VERIFY-ON-MAC.md quotes, checked by a test. The
   Blender self-test accepts only a "Blender 5.2.4" or "Blender 5.2.4 LTS" release line and exits 3 when
   `blender --version` fails.
+- Native receipts are version 2: each package records the argv lists it ran next to its exit code, with a
+  `commands_sha256` over them, and reuse is refused (as `commands`) when they differ from the current
+  `PACKAGE_COMMANDS`, so an old build-only Showcase receipt no longer passes. Version 1 receipts are refused with a
+  prompt to re-run the writer. Commands are argv lists throughout, so a package path with a space stays one argument.
 - Changelog: there is one `[Unreleased]` section. The entries of a second, unbracketed `Unreleased` section moved
   into it under standard categories, with their text unchanged.
 - Changelog correction: the "Looks and quality levels" entry under Added says `classic` (the default). Since "`studio`
