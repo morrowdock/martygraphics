@@ -26,6 +26,10 @@ final class SliderTests: XCTestCase {
 
     static let line = #"{"id":"f","k":"func","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-4,4],"y":"a*x","a":1}"#
     static let slope = #"{"param":"a","min":0,"max":2,"step":0.5,"default":1,"label":"Slope a"}"#
+    /// A board for the split checks (`SliderBoardHostTests`): a floor, a graph `a*sin(x)` that one slider drives and a
+    /// moving body, so the board splits while the motion plays with the graph in the base; the second step narrows the
+    /// graph's y range and zooms the camera.
+    static let splitBoard = #"{"v":1,"title":"Slider split","world":{"w":12,"h":8},"items":[{"id":"floor","k":"line","from":[0,1],"to":[12,1]},{"id":"g","k":"func","at":[1,2],"w":6,"h":4,"xr":[-3,3],"yr":[-4,4],"y":"a*sin(x)","a":1},{"id":"dot","k":"body","at":[8.5,5.5],"shape":"ball","size":1,"move":{"to":[11,5.5],"t":2}}],"steps":[{"say":"First step."},{"say":"Second step.","do":[{"id":"g","key":"yr","value":[-2,2]}],"cam":{"zoom":1.5}}],"sliders":[{"param":"a","min":0,"max":2,"step":0.5,"default":1,"label":"Height a"}]}"#
 
     // MARK: parse
 
@@ -574,6 +578,129 @@ final class SliderTests: XCTestCase {
         XCTAssertEqual(chart(drawn(next)), MGAudioGraph.chart(s, step: 1))
     }
 
+    /// The board draws its frame and decides its split from one `MGBoardMotion` (`MGBoardTransition`): for both
+    /// transition styles, with and without Reduce Motion and with a concealed leaving item, the frame is the style's
+    /// blend of the live frame (`.spring`: a leaving item vanishes, and with Reduce Motion the board snaps; `.bounded`:
+    /// it fades, a concealed one stays hidden, and with Reduce Motion the board dissolves), the phase is
+    /// `MGBoardTransition.phase` of the same blend, and whenever that phase lets the board split, the frame is the live
+    /// frame with nothing fading, so a base cached then is exact.
+    func testTheBoardsFrameAndItsSplitComeFromOneMotionState() throws {
+        let s = try scene(Self.splitBoard)
+        let t0 = Date(timeIntervalSinceReferenceDate: 1_000)
+        let cache = MGTimelineCache()
+        let live = cache.items(s, step: 1)
+        let from = MGTimeline.frame(s, items: cache.items(s, step: 0), time: 0) + [MGMake.body("old", MGPoint(2, 6.5))]
+        XCTAssertNotEqual(live.first { $0.id == "g" }, from.first { $0.id == "g" }, "the step moves the graph")
+        for style in MGTransitionStyle.allCases {
+            for reduce in [false, true] {
+                for hiding: Set<String> in [[], ["old"]] {
+                    let what = "\(style.rawValue), Reduce Motion \(reduce), hiding \(hiding.sorted())"
+                    var motion = MGBoardMotion()
+                    motion.blend(from: from, at: t0)
+                    var rest = MGTimeline.frame(s, items: live, time: 0)
+                    rest.removeAll { hiding.contains($0.id) }
+                    for k in 0...130 {
+                        let t = Double(k) / 100, now = t0.addingTimeInterval(t), elapsed = now.timeIntervalSince(t0)
+                        let frame = motion.frame(s, live: live, style: style, now: now, time: 0, hiding: hiding, reduceMotion: reduce)
+                        var want = MGBoardTransition.items(style, from: from, to: rest, elapsed: elapsed, reduceMotion: reduce)
+                        if style == .bounded { want.items.removeAll { hiding.contains($0.id) } }
+                        XCTAssertEqual(frame, want, "\(what): the frame at \(t) s")
+                        let phase = motion.phase(style, at: now, cameraElapsed: .infinity, drawingOn: false, reduceMotion: reduce)
+                        XCTAssertEqual(phase, MGBoardTransition.phase(style, blendElapsed: elapsed, cameraElapsed: .infinity, keyframes: false,
+                                                                      drawingOn: false, reduceMotion: reduce), "\(what): the phase at \(t) s")
+                        if phase != .moving {
+                            XCTAssertEqual(frame, MGStepTransition.Frame(items: rest, opacity: [:]), "\(what): split mid-transition at \(t) s")
+                        }
+                    }
+                    let mid = motion.frame(s, live: live, style: style, now: t0.addingTimeInterval(0.3), time: 0, hiding: hiding, reduceMotion: reduce)
+                    switch (style, reduce) {
+                    case (.spring, false):
+                        XCTAssertNil(mid.items.first { $0.id == "old" }, "\(what): a leaving item vanishes")
+                        XCTAssertEqual(mid.opacity, [:], what)
+                    case (.spring, true):
+                        XCTAssertEqual(mid, MGStepTransition.Frame(items: rest, opacity: [:]), "\(what): the board snaps")
+                    case (.bounded, _):
+                        if hiding.isEmpty {
+                            XCTAssertTrue((0.01...0.99).contains(mid.opacity["old"] ?? -1), "\(what): the leaving item fades: \(mid.opacity)")
+                        } else {
+                            XCTAssertNil(mid.items.first { $0.id == "old" }, "\(what): a concealed leaving item stays hidden")
+                        }
+                    }
+                    // Settled, the frame is the live frame at once and only the camera can hold the split.
+                    motion.settle()
+                    XCTAssertEqual(motion.frame(s, live: live, style: style, now: t0.addingTimeInterval(0.3), time: 0, hiding: hiding, reduceMotion: reduce),
+                                   MGStepTransition.Frame(items: rest, opacity: [:]), "\(what): settled")
+                    XCTAssertEqual(motion.phase(style, at: t0.addingTimeInterval(0.3), cameraElapsed: .infinity, drawingOn: false, reduceMotion: reduce),
+                                   .settled, "\(what): settled")
+                }
+            }
+        }
+    }
+
+    /// A slider change mid-step settles the step's blend (`MGBoardMotion.settle`, as `changeSliders` does): the frame is
+    /// the slider items at once, and the board may split as soon as the step's camera move ends (1.0 s), before the
+    /// default spring blend's window would have (1.2 s). With no camera move left the board may split at once.
+    func testASliderChangeLetsTheBoardSplitAsSoonAsTheCameraAllows() throws {
+        let s = try scene(Self.splitBoard)
+        let t0 = Date(timeIntervalSinceReferenceDate: 1_000)
+        let cache = MGTimelineCache()
+        let before = MGTimeline.frame(s, items: cache.items(s, step: 0), time: 0)
+        for style in MGTransitionStyle.allCases {
+            for reduce in [false, true] {
+                let what = "\(style.rawValue), Reduce Motion \(reduce)"
+                func phase(_ m: MGBoardMotion, _ t: Double) -> MGBoardTransition.Phase {
+                    m.phase(style, at: t0.addingTimeInterval(t), cameraElapsed: t, drawingOn: false, reduceMotion: reduce)
+                }
+                // The step change, as `go` does: the blend and the camera move start together.
+                var state = MGSliderState(scene: s)
+                var motion = MGBoardMotion()
+                motion.blend(from: before, at: t0)
+                state.show(step: 1)
+                // The slider moves mid-step; the change of the board's items settles the blend.
+                XCTAssertTrue(state.set("a", nearest: 1.5))
+                let unsettled = motion
+                motion.settle()
+                let live = MGSliderState.boardItems(s, step: 1, sliders: state, cache: cache)
+                XCTAssertEqual(live, state.items)
+                for t in [0.3, 0.9] {
+                    XCTAssertEqual(motion.frame(s, live: live, style: style, now: t0.addingTimeInterval(t), time: 0, hiding: [], reduceMotion: reduce),
+                                   MGStepTransition.Frame(items: MGTimeline.frame(s, items: state.items, time: 0), opacity: [:]),
+                                   "\(what): at \(t) s the frame is the slider items")
+                    XCTAssertEqual(phase(motion, t), reduce ? .settled : .moving, "\(what): at \(t) s only the camera holds the split")
+                }
+                XCTAssertEqual(phase(motion, 1.05), .settled, "\(what): the camera move has ended, so the board splits")
+                if style == .spring, !reduce {
+                    XCTAssertEqual(phase(unsettled, 1.05), .moving, "unsettled, the spring blend would keep one canvas until 1.2 s")
+                }
+                // After the camera move, a slider change during a blend that still runs lets the board split at once.
+                var late = MGBoardMotion()
+                late.blend(from: before, at: t0)
+                if style == .spring, !reduce { XCTAssertEqual(phase(late, 1.1), .moving, what) }
+                late.settle()
+                XCTAssertEqual(phase(late, 1.1), .settled, "\(what): no camera move left, so the board splits at once")
+            }
+        }
+    }
+
+    /// The board the hosted slider tests use (`SliderBoardHostTests`): its body moves, so the board splits while the
+    /// motion plays, and the graph the slider drives is in the cached base below it at every step and slider value.
+    func testTheSplitBoardCachesTheDrivenGraphInTheBase() throws {
+        let s = try scene(Self.splitBoard)
+        XCTAssertTrue(s.animates)
+        XCTAssertNotNil(s.steps[1].camera, "the second step moves the camera")
+        for step in s.steps.indices {
+            var state = MGSliderState(scene: s, step: step)
+            for value in [1.0, 1.5, 0.5] {
+                if value != 1.0 { XCTAssertTrue(state.set("a", nearest: value), "step \(step), a = \(value)") }
+                let items = MGTimeline.frame(s, items: state.items, time: 0)
+                let live = MGCanvasLayers.live(s, items: items)
+                XCTAssertEqual(live, ["dot"], "step \(step), a = \(value)")
+                XCTAssertEqual(MGCanvasLayers.base(items, live: live), ["floor", "g"], "step \(step), a = \(value)")
+                XCTAssertNotNil(MGAudioGraph.chart(s, items: state.items), "step \(step), a = \(value)")
+            }
+        }
+    }
+
     // MARK: repair hints
 
     func testRepairHintsFollowTheReasonPatterns() {
@@ -614,3 +741,164 @@ final class SliderTests: XCTestCase {
         XCTAssertNil(reason(json), json)
     }
 }
+
+#if canImport(AppKit)
+/// Learner sliders on a real split board (`BoardRig`: `MartyGraphicsView(controller:)` in a window, on a manual clock,
+/// with a probe; `SliderTests.splitBoard`). A slider change while the board is split: the next frame draws the items
+/// the audio graph charts, the base is drawn once more against them and is the current frame, and no evaluation draws
+/// one canvas for it. During a step, the board splits as soon as the step's camera move ends. At the defaults a split
+/// board reads the step items only from the controller's cache (`MGTimelineCache`).
+final class SliderBoardHostTests: XCTestCase {
+    /// Room for the slider panel and the caption below the board, so the board's size never follows their text.
+    static let window = CGSize(width: 560, height: 900)
+
+    /// A split board past the draw-on of its first appearance: the base caches the floor and the graph.
+    @MainActor func splitRig(file: StaticString = #filePath, line: UInt = #line) throws -> BoardRig {
+        let rig = BoardRig(try MGParser.scene(data: Data(SliderTests.splitBoard.utf8)).get())
+        rig.resize(Self.window)
+        rig.settle(2.4)
+        tick(rig, 1.2)
+        rig.settle(0.6)
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "the board is split", file: file, line: line)
+        XCTAssertEqual(try lastBaseDraw(rig).ids, ["floor", "g"], "the base caches the floor and the graph", file: file, line: line)
+        XCTAssertNotNil(rig.probe.slide, "the board shows its sliders", file: file, line: line)
+        return rig
+    }
+
+    @MainActor func testASliderChangeWhileSplitDrawsTheChartedItemsAndRedrawsTheBaseOnce() throws {
+        let rig = try splitRig()
+        defer { rig.close() }
+        let scene = try XCTUnwrap(rig.controller.scene)
+        var want = MGSliderState(scene: scene)
+        XCTAssertTrue(want.set("a", nearest: 1.5))
+        let moved = want.items.first { $0.id == "g" }
+        let base = rig.probe.baseDraws, decided = rig.probe.decisions.count, drawn = rig.probe.draws.count
+        let computed = rig.controller.timeline.computed
+        try XCTUnwrap(rig.probe.slide)("a", 1.5)
+        rig.settle(0.3)
+        // Split right away: every evaluation since the change kept the split (no one-canvas frame for a slider change).
+        let since = Array(rig.probe.decisions[decided...])
+        XCTAssertFalse(since.isEmpty, "the slider change did not evaluate the board")
+        XCTAssertEqual(Set(since.map(\.layered)), [true], "the slider change unsplit the board: \(since)")
+        // The base is repartitioned once, against the new items, and is the current frame (no stale base).
+        XCTAssertEqual(rig.probe.baseDraws, base + 1, "the slider change redraws the base exactly once")
+        let last = try lastBaseDraw(rig)
+        XCTAssertEqual(last.ids, ["floor", "g"])
+        XCTAssertEqual(last.draw.input.items.first { $0.id == "g" }, moved, "the base has the moved graph")
+        try assertBaseIsCurrent(rig, "after the slider change")
+        // The next frame drawn is what the audio graph charts.
+        let chart = try XCTUnwrap(rig.probe.charts.last ?? nil, "the board has no audio graph")
+        XCTAssertEqual(chart, MGAudioGraph.chart(scene, items: want.items))
+        XCTAssertNotEqual(chart, MGAudioGraph.chart(scene, step: 0), "the chart follows the slider")
+        let next = try XCTUnwrap(rig.probe.draws[drawn...].first { if case .base = $0.layer { return false }; return true },
+                                 "no frame was drawn after the change")
+        XCTAssertEqual(MGAudioGraph.chart(scene, items: next.input.items), chart, "the next frame draws the charted graph")
+        XCTAssertEqual(next.input.items.first { $0.id == "g" }, moved)
+        // Ticks after the change redraw only the live layer; nothing computes the step's items again.
+        let after = rig.probe.baseDraws
+        tick(rig, 0.6)
+        XCTAssertEqual(rig.probe.baseDraws, after, "a tick redrew the base")
+        try assertBaseIsCurrent(rig, "ticks after the slider change")
+        XCTAssertEqual(rig.controller.timeline.computed, computed, "the slider change computed the step's items again")
+    }
+
+    @MainActor func testASliderChangeDuringAStepSplitsAsSoonAsTheCameraMoveEnds() throws {
+        let rig = try splitRig()
+        defer { rig.close() }
+        let scene = try XCTUnwrap(rig.controller.scene)
+        // The board's Next button: the step narrows the graph's y range and zooms the camera.
+        try XCTUnwrap(rig.probe.go)(1)
+        rig.settle(2.4)   // the wall-clock transition window ends; on the board's clock the blend and the camera move have not run
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: false), "the step: one canvas")
+        tick(rig, 0.3)    // mid-blend and mid camera move
+        var want = MGSliderState(scene: scene, step: 1)
+        XCTAssertTrue(want.set("a", nearest: 1.5))
+        let moved = want.items.first { $0.id == "g" }
+        let base = rig.probe.baseDraws
+        try XCTUnwrap(rig.probe.slide)("a", 1.5)
+        rig.settle(0.3)
+        // The camera still moves: one canvas, which draws the slider's graph already (the change settled the blend).
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: false), "split while the camera moves")
+        XCTAssertEqual(rig.probe.baseDraws, base, "a base was drawn while the camera moves")
+        let size = try XCTUnwrap(rig.probe.draws.last?.size)
+        XCTAssertEqual(try rig.frame(size).items.first { $0.id == "g" }, moved, "the canvas still blends toward replaced items")
+        XCTAssertEqual(rig.probe.charts.last ?? nil, MGAudioGraph.chart(scene, items: want.items))
+        // At 1.1 s on the board's clock the camera move has ended (1.0 s), and the default spring blend would still run
+        // (1.2 s): the board has split once, with the slider's graph and the step's camera in the base.
+        tick(rig, 0.8)
+        rig.settle(0.3)
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true), "the board splits once the camera move ends")
+        XCTAssertEqual(rig.probe.baseDraws, base + 1, "one base draw for the split")
+        let last = try lastBaseDraw(rig)
+        XCTAssertEqual(last.ids, ["floor", "g"])
+        XCTAssertEqual(last.draw.input.items.first { $0.id == "g" }, moved, "the base has the slider's graph")
+        try assertBaseIsCurrent(rig, "after the camera move")
+        let s = last.draw.size
+        assertViewport(last.draw.input.viewport, MGViewport(size: s, width: scene.width, height: scene.height, camera: scene.steps[1].camera).resized(to: s),
+                       "the base has the step's camera")
+    }
+
+    @MainActor func testAtTheDefaultsASplitBoardNeverComputesTheStepItemsAgain() throws {
+        let rig = try splitRig()
+        defer { rig.close() }
+        let scene = try XCTUnwrap(rig.controller.scene)
+        let computed = rig.controller.timeline.computed
+        XCTAssertGreaterThan(computed, 0)
+        XCTAssertEqual(rig.probe.charts.last ?? nil, MGAudioGraph.chart(scene, step: 0), "at the defaults the board charts the step's items")
+        // Ticks, then an evaluation of the whole board (new markers): the frames, the base, the audio graph, the VoiceOver
+        // value and the slider panel all read the step's items from the controller's cache.
+        tick(rig, 0.6)
+        rig.markers = ["g": 1]
+        rig.rebuild()
+        rig.settle(0.6)
+        tick(rig, 0.3)
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true))
+        XCTAssertEqual(rig.controller.timeline.computed, computed, "at the defaults a tick or an evaluation computed the step's items again")
+        // A move and a reset back to the defaults: the board reads the cached step items again, still in the cache.
+        let slide = try XCTUnwrap(rig.probe.slide), reset = try XCTUnwrap(rig.probe.resetSliders)
+        slide("a", 1.5)
+        rig.settle(0.3)
+        reset()
+        rig.settle(0.3)
+        tick(rig, 0.3)
+        XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true))
+        XCTAssertEqual(rig.probe.charts.last ?? nil, MGAudioGraph.chart(scene, step: 0), "after the reset the board charts the step's items")
+        try assertBaseIsCurrent(rig, "after the reset")
+        XCTAssertEqual(rig.controller.timeline.computed, computed, "a slider move or reset computed the step's items again")
+    }
+
+    // MARK: helpers (as in BoardTransitionHostTests)
+
+    /// Ticks the board's own clock on by `seconds`, 0.1 s at a time, letting the frame loop draw between steps.
+    @MainActor func tick(_ rig: BoardRig, _ seconds: Double) {
+        for _ in 0..<Int((seconds * 10).rounded()) { rig.advance(0.1); rig.settle(0.05) }
+    }
+
+    /// The last base draw, with the items it cached.
+    @MainActor func lastBaseDraw(_ rig: BoardRig) throws -> (draw: MGBoardProbe.Draw, ids: Set<String>) {
+        let found = rig.probe.draws.reversed().lazy.compactMap { d -> (draw: MGBoardProbe.Draw, ids: Set<String>)? in
+            if case .base(let ids) = d.layer { return (d, ids) }
+            return nil
+        }.first
+        return try XCTUnwrap(found, "the board never drew a base")
+    }
+
+    /// The last base draw is the frame as it now is on the board's clock: every item it cached is drawn now as it was
+    /// cached, and its viewport is the current one.
+    @MainActor func assertBaseIsCurrent(_ rig: BoardRig, _ what: String, file: StaticString = #filePath, line: UInt = #line) throws {
+        let (draw, ids) = try lastBaseDraw(rig)
+        let now = try rig.frame(draw.size)
+        for id in ids.sorted() {
+            XCTAssertEqual(draw.input.items.first { $0.id == id }, now.items.first { $0.id == id }, "\(what): the base cached \(id) as it is",
+                           file: file, line: line)
+        }
+        assertViewport(draw.input.viewport, now.viewport, "\(what): the base viewport", file: file, line: line)
+    }
+
+    func assertViewport(_ v: MGViewport, _ want: MGViewport, _ what: String, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertEqual(Double(v.scale), Double(want.scale), accuracy: 1e-9, "\(what): scale", file: file, line: line)
+        XCTAssertEqual(v.center.x, want.center.x, accuracy: 1e-9, "\(what): centre x", file: file, line: line)
+        XCTAssertEqual(v.center.y, want.center.y, accuracy: 1e-9, "\(what): centre y", file: file, line: line)
+    }
+}
+#endif

@@ -257,9 +257,16 @@ final class MGBoardProbe {
     var tap: ((CGPoint, CGSize) -> Void)?
     /// The board's step handler (what its Previous and Next buttons call).
     var go: ((Int) -> Void)?
+    /// The board's learner slider handlers: move a slider to the stop nearest a value (what the slider's binding calls)
+    /// and reset every slider (the Reset sliders button). They do nothing on a board that shows no sliders.
+    var slide: ((String, Double) -> Void)?
+    var resetSliders: (() -> Void)?
+    /// The audio graph of every evaluation of the board (`MGAudioGraph.chart` of the items it charts), in order.
+    private(set) var charts: [MGAudioGraph.Chart?] = []
 
     func drew(_ input: MGRenderInput, _ layer: MGCanvasLayer, _ size: CGSize) { draws.append(Draw(input: input, layer: layer, size: size)) }
     func decided(_ d: Decision) { decisions.append(d) }
+    func charted(_ chart: MGAudioGraph.Chart?) { charts.append(chart) }
     /// Draws of the cached base canvas.
     var baseDraws: Int { draws.filter { if case .base = $0.layer { return true }; return false }.count }
     /// Draws of the one canvas or of the live canvas (one per frame-loop tick while the loop runs).
@@ -353,7 +360,11 @@ struct MGSceneHost: View {
     }
 
     private func board(_ scene: MGScene) -> some View {
-        Group {
+        // VoiceOver audio graph of the visible plot, func or bars items (none otherwise; concealed items never count),
+        // built from the items the board draws now: with the learner's slider values when the scene shows sliders.
+        let chart = MGAudioGraph.chart(scene, items: boardItems(scene, step: step), hiding: teaching.concealed)
+        teaching.probe?.charted(chart)
+        return Group {
             if scene.is3D && teaching.concealed.isEmpty {
                 MG3DView(scene: scene, items: controller.timelineItems(scene, step: step), playing: MGRenderPolicy.sceneKitPlaying(renderState(scene)),
                          teaching: teaching, readOnly: readOnly)
@@ -373,9 +384,7 @@ struct MGSceneHost: View {
                             ?? sliders(scene).flatMap { $0.isAtDefaults ? nil : $0.accessibilityValue(describing: teaching.describes, hiding: teaching.concealed) }
                             ?? MGDescribe.accessibilityValue(scene, step: step, describing: teaching.describes,
                                                        hiding: teaching.concealed) { controller.timelineItems(scene, step: step) })
-        // VoiceOver audio graph of the visible plot, func or bars items (none otherwise; concealed items never count),
-        // built from the items the board draws now: with the learner's slider values when the scene shows sliders.
-        .modifier(MGAudioGraphModifier(chart: MGAudioGraph.chart(scene, items: boardItems(scene, step: step), hiding: teaching.concealed)))
+        .modifier(MGAudioGraphModifier(chart: chart))
     }
 
     /// The 2D board: one Canvas in a TimelineView, or, while motion plays and no transition runs, a cached base Canvas
@@ -399,6 +408,8 @@ struct MGSceneHost: View {
             probe.frame = { now, size in input(scene, now: now, size: size) }
             probe.tap = { point, size in select(scene, at: point, size: size) }
             probe.go = { next in go(scene, next) }
+            probe.slide = { param, value in changeSliders { $0.set(param, nearest: value) } }
+            probe.resetSliders = { changeSliders { $0.reset(); return true } }
         }
         return GeometryReader { geo in
             ZStack {
@@ -578,6 +589,10 @@ struct MGSceneHost: View {
     /// announced to VoiceOver with the note the board shows. A change of the board's items settles any in-flight step,
     /// scene or keyframe transition (`MGBoardMotion.settle`): from the next frame on the canvas draws the items the
     /// audio graph charts, instead of finishing a blend or keyframes toward items the sliders have replaced.
+    /// A slider change is not a transition, so while motion plays it opens no transition window: a split board stays
+    /// split (`MGRenderPolicy.layered`) and draws its base once against the new items, or, while a step's camera still
+    /// moves, splits as soon as that move ends (`MGBoardTransition.phase`). A board with no motion playing runs its
+    /// paused frame loop for one settled redraw, as before.
     private func changeSliders(_ change: (inout MGSliderState) -> Bool) {
         guard var state = sliderState else { return }
         let before = state.refusal
@@ -585,7 +600,7 @@ struct MGSceneHost: View {
         _ = change(&state)
         sliderState = state
         if state.items != shown { motion.settle() }
-        bumpTransient(0.1)
+        if !renderState(state.scene).motionPlaying { bumpTransient(0.1) }
         if let refusal = state.refusal, refusal != before { AccessibilityNotification.Announcement(refusal.text).post() }
     }
 

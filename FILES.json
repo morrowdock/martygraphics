@@ -855,7 +855,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "fecf1b3d0fc99e07c1f4d7c032c709b928f4a79cb59d6df05a8ca4d7080176f5"
+      "sha256": "292bfc562c2b6e810936cba9e14b0f6e46475b8066f982e0e9692f30f85f36bc"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGAnnotationLayout.swift",
@@ -4995,7 +4995,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/SliderTests.swift",
-      "sha256": "d2e3697757ed3bcb1fbfcee063c120dd6c22fb8a791edd53287b6f0b4806b14a"
+      "sha256": "4af336f94dc83047e34f2ca80bed6bfc26ed9b1dcb2d07d88ed7060014039d5b"
     },
     {
       "path": "docs/fixtures/v1/sliders.cases.json",
