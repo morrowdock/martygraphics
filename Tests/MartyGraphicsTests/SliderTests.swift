@@ -296,6 +296,18 @@ final class SliderTests: XCTestCase {
         XCTAssertTrue(value.contains("marking the point (1.57, 1.5)"), value)
         XCTAssertFalse(value.contains(s.alt ?? "-"), value)
         XCTAssertEqual(state.accessibilityValue(hiding: ["wave"]), s.steps[0].say + " The board is empty.")
+        // The board says it from the items its evaluation read (`MGBoardFrames`), the same items it draws and charts.
+        let cache = MGTimelineCache()
+        let board = MGSliderState.boardFrames(s, step: 0, sliders: state, cache: cache)
+        XCTAssertTrue(board.fromSliders)
+        XCTAssertEqual(board.accessibilityValue(), value)
+        XCTAssertEqual(board.accessibilityValue(hiding: ["wave"]), s.steps[0].say + " The board is empty.")
+        state.reset()
+        let back = MGSliderState.boardFrames(s, step: 0, sliders: state, cache: cache)
+        XCTAssertFalse(back.fromSliders)
+        XCTAssertEqual(back.accessibilityValue(), s.steps[0].say + " " + (s.alt ?? ""))
+        XCTAssertEqual(back.accessibilityValue(describing: true), MGDescribe.accessibilityValue(s, step: 0, describing: true))
+        XCTAssertEqual(cache.reads, 1, "only the evaluation at the defaults read the cache")
     }
 
     func testValuesAreWrittenWithTheSlidersOwnPrecision() throws {
@@ -493,39 +505,47 @@ final class SliderTests: XCTestCase {
         XCTAssertNil(MGAudioGraph.chart(s, items: state.items, hiding: ["wave"]))
     }
 
-    /// At the defaults (before the first move and after a reset) the board and its chart take the step items from the
-    /// controller's cache (`MGTimelineCache`), so frames never compute them again; an accepted non-default value gives
-    /// the slider items.
+    /// At the defaults (before the first move and after a reset) each evaluation of the board takes the step items from
+    /// the controller's cache (`MGTimelineCache`) with one read, and its frames and chart use them, so they are never
+    /// computed again; an accepted non-default value gives the slider items, with no read (`MGSliderState.boardFrames`).
     func testAtTheDefaultsTheBoardTakesTheCachedStepItems() throws {
         let s = try wave()
         var state = MGSliderState(scene: s)
         var cache = MGTimelineCache()
         let cachedChart = MGAudioGraph.chart(s, step: 0)
-        for frame in 0..<5 {
-            let items = MGSliderState.boardItems(s, step: 0, sliders: state, cache: cache)
-            XCTAssertEqual(cache.computed, 1, "frame \(frame): computed once, through the cache")
-            XCTAssertEqual(items, cache.items(s, step: 0))
-            XCTAssertEqual(MGAudioGraph.chart(s, items: items), cachedChart)
+        for evaluation in 0..<5 {
+            let board = MGSliderState.boardFrames(s, step: 0, sliders: state, cache: cache)
+            XCTAssertFalse(board.fromSliders)
+            XCTAssertEqual(cache.computed, 1, "evaluation \(evaluation): computed once, through the cache")
+            XCTAssertEqual(cache.reads, evaluation + 1, "evaluation \(evaluation): one read")
+            XCTAssertEqual(board.items, MGTimeline.items(s, step: 0))
+            XCTAssertEqual(board.chart(), cachedChart)
         }
         // A moved slider: the live items, and the cache is not asked.
         XCTAssertTrue(state.set("a", stop: 6))   // a = 1.5
-        let moved = MGSliderState.boardItems(s, step: 0, sliders: state, cache: cache)
-        XCTAssertEqual(moved, state.items)
-        XCTAssertNotEqual(MGAudioGraph.chart(s, items: moved), cachedChart)
+        let reads = cache.reads
+        let moved = MGSliderState.boardFrames(s, step: 0, sliders: state, cache: cache)
+        XCTAssertTrue(moved.fromSliders)
+        XCTAssertEqual(moved.items, state.items)
+        XCTAssertNotEqual(moved.chart(), cachedChart)
         XCTAssertEqual(cache.computed, 1)
+        XCTAssertEqual(cache.reads, reads, "the board with a moved slider read the cache")
         // After a reset the board is back on the cache (a fresh one shows it is asked, once).
         state.reset()
         XCTAssertTrue(state.isAtDefaults)
         cache = MGTimelineCache()
         for _ in 0..<5 {
-            XCTAssertEqual(MGAudioGraph.chart(s, items: MGSliderState.boardItems(s, step: 0, sliders: state, cache: cache)), cachedChart)
+            XCTAssertEqual(MGSliderState.boardFrames(s, step: 0, sliders: state, cache: cache).chart(), cachedChart)
         }
         XCTAssertEqual(cache.computed, 1)
         // A slider state for another revision or step never stands in for the shown board.
         XCTAssertTrue(state.set("a", stop: 6))
         var other = s
         other.revision = s.revision + 1
-        XCTAssertEqual(MGSliderState.boardItems(other, step: 0, sliders: state, cache: MGTimelineCache()), MGTimeline.items(other, step: 0))
+        let shown = MGSliderState.boardFrames(other, step: 0, sliders: state, cache: MGTimelineCache())
+        XCTAssertFalse(shown.fromSliders)
+        XCTAssertEqual(shown.items, MGTimeline.items(other, step: 0))
+        XCTAssertFalse(state.movesBoard(s, step: 1))
     }
 
     /// A slider change settles an in-flight transition (`MGBoardMotion.settle`, as `changeSliders` does when the items
@@ -540,8 +560,10 @@ final class SliderTests: XCTestCase {
         var state = MGSliderState(scene: s)
         var motion = MGBoardMotion()
         var step = 0
-        func live() -> [MGItem] { MGSliderState.boardItems(s, step: step, sliders: state, cache: cache) }
-        func drawn(_ now: Date) -> [MGItem] { motion.frame(s, live: live(), style: .spring, now: now, time: 0, hiding: [], reduceMotion: false).items }
+        // An evaluation of the board: the items it shows now (`MGSliderState.boardFrames`, as `MGSceneHost.board` reads them).
+        func board() -> MGBoardFrames { MGSliderState.boardFrames(s, step: step, sliders: state, cache: cache) }
+        func live() -> [MGItem] { board().items }
+        func drawn(_ now: Date) -> [MGItem] { motion.frame(board(), style: .spring, now: now, time: 0, hiding: [], reduceMotion: false).items }
         func phase(_ now: Date) -> MGBoardTransition.Phase { motion.phase(.spring, at: now, cameraElapsed: .infinity, drawingOn: false, reduceMotion: false) }
         func chart(_ items: [MGItem]) -> MGAudioGraph.Chart? { MGAudioGraph.chart(s, items: items) }
 
@@ -558,7 +580,7 @@ final class SliderTests: XCTestCase {
         motion.settle()
         XCTAssertEqual(phase(next), .settled)
         XCTAssertEqual(drawn(next), MGTimeline.frame(s, items: live(), time: 0))
-        XCTAssertEqual(chart(drawn(next)), chart(live()))
+        XCTAssertEqual(chart(drawn(next)), board().chart())
         XCTAssertEqual(chart(drawn(next)), chart(state.items))
 
         // Engine keyframes (a = 1 → 2, no sliders on the frames) in flight, then a reset back to the defaults.
@@ -589,6 +611,7 @@ final class SliderTests: XCTestCase {
         let t0 = Date(timeIntervalSinceReferenceDate: 1_000)
         let cache = MGTimelineCache()
         let live = cache.items(s, step: 1)
+        let board = MGBoardFrames(scene: s, step: 1, items: live)
         let from = MGTimeline.frame(s, items: cache.items(s, step: 0), time: 0) + [MGMake.body("old", MGPoint(2, 6.5))]
         XCTAssertNotEqual(live.first { $0.id == "g" }, from.first { $0.id == "g" }, "the step moves the graph")
         for style in MGTransitionStyle.allCases {
@@ -601,7 +624,7 @@ final class SliderTests: XCTestCase {
                     rest.removeAll { hiding.contains($0.id) }
                     for k in 0...130 {
                         let t = Double(k) / 100, now = t0.addingTimeInterval(t), elapsed = now.timeIntervalSince(t0)
-                        let frame = motion.frame(s, live: live, style: style, now: now, time: 0, hiding: hiding, reduceMotion: reduce)
+                        let frame = motion.frame(board, style: style, now: now, time: 0, hiding: hiding, reduceMotion: reduce)
                         var want = MGBoardTransition.items(style, from: from, to: rest, elapsed: elapsed, reduceMotion: reduce)
                         if style == .bounded { want.items.removeAll { hiding.contains($0.id) } }
                         XCTAssertEqual(frame, want, "\(what): the frame at \(t) s")
@@ -612,7 +635,7 @@ final class SliderTests: XCTestCase {
                             XCTAssertEqual(frame, MGStepTransition.Frame(items: rest, opacity: [:]), "\(what): split mid-transition at \(t) s")
                         }
                     }
-                    let mid = motion.frame(s, live: live, style: style, now: t0.addingTimeInterval(0.3), time: 0, hiding: hiding, reduceMotion: reduce)
+                    let mid = motion.frame(board, style: style, now: t0.addingTimeInterval(0.3), time: 0, hiding: hiding, reduceMotion: reduce)
                     switch (style, reduce) {
                     case (.spring, false):
                         XCTAssertNil(mid.items.first { $0.id == "old" }, "\(what): a leaving item vanishes")
@@ -628,7 +651,7 @@ final class SliderTests: XCTestCase {
                     }
                     // Settled, the frame is the live frame at once and only the camera can hold the split.
                     motion.settle()
-                    XCTAssertEqual(motion.frame(s, live: live, style: style, now: t0.addingTimeInterval(0.3), time: 0, hiding: hiding, reduceMotion: reduce),
+                    XCTAssertEqual(motion.frame(board, style: style, now: t0.addingTimeInterval(0.3), time: 0, hiding: hiding, reduceMotion: reduce),
                                    MGStepTransition.Frame(items: rest, opacity: [:]), "\(what): settled")
                     XCTAssertEqual(motion.phase(style, at: t0.addingTimeInterval(0.3), cameraElapsed: .infinity, drawingOn: false, reduceMotion: reduce),
                                    .settled, "\(what): settled")
@@ -660,10 +683,11 @@ final class SliderTests: XCTestCase {
                 XCTAssertTrue(state.set("a", nearest: 1.5))
                 let unsettled = motion
                 motion.settle()
-                let live = MGSliderState.boardItems(s, step: 1, sliders: state, cache: cache)
-                XCTAssertEqual(live, state.items)
+                let board = MGSliderState.boardFrames(s, step: 1, sliders: state, cache: cache)
+                XCTAssertTrue(board.fromSliders)
+                XCTAssertEqual(board.items, state.items)
                 for t in [0.3, 0.9] {
-                    XCTAssertEqual(motion.frame(s, live: live, style: style, now: t0.addingTimeInterval(t), time: 0, hiding: [], reduceMotion: reduce),
+                    XCTAssertEqual(motion.frame(board, style: style, now: t0.addingTimeInterval(t), time: 0, hiding: [], reduceMotion: reduce),
                                    MGStepTransition.Frame(items: MGTimeline.frame(s, items: state.items, time: 0), opacity: [:]),
                                    "\(what): at \(t) s the frame is the slider items")
                     XCTAssertEqual(phase(motion, t), reduce ? .settled : .moving, "\(what): at \(t) s only the camera holds the split")
@@ -786,59 +810,74 @@ final class SliderTests: XCTestCase {
         XCTAssertEqual(window.until, long)
     }
 
-    /// While engine keyframes supply the frame, `MGBoardMotion.frame` never reads the live items, so a keyframe frame
-    /// never asks the controller's cache for the step items; once the keyframes end or are settled, and with Reduce
-    /// Motion (no keyframes play), each frame reads them once.
-    func testAKeyframeFrameNeverReadsTheLiveItems() throws {
+    /// `MGBoardMotion.frame` draws from the items one evaluation of the board read (`MGBoardFrames`), never from the
+    /// controller's cache: while engine keyframes supply the frame (their sample), once they end or are settled and with
+    /// Reduce Motion (no keyframes play: the board's items), every frame leaves the cache's reads where the board's
+    /// evaluation left them. (Before the board's frames, the frame read the live items lazily, and a keyframe frame
+    /// never asked for them; now no frame does.)
+    func testNoFrameReadsTheCacheWithOrWithoutKeyframes() throws {
         let json = #"{"v":1,"items":[{"id":"w","k":"func","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-4,4],"y":"a*sin(x)","a":1}],"sliders":[{"param":"a","min":0,"max":2,"step":0.5,"default":1,"label":"Height a"}]}"#
         let s = try scene(json)
         let target = try scene(#"{"v":1,"items":[{"id":"w","k":"func","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-2,2],"y":"a*sin(x)","a":2}]}"#)
         let t0 = Date(timeIntervalSinceReferenceDate: 1_000)
         let plan = MGAdoption.plan(previous: s.items, next: s.items, transition: .keyframes([MGKeyframeSegment(frames: [s, target], duration: 1)]), step: 0)
         XCTAssertFalse(plan.segments.isEmpty)
-        var reads = 0
-        func live() -> [MGItem] { reads += 1; return s.items }
+        let cache = MGTimelineCache()
+        let board = MGSliderState.boardFrames(s, step: 0, sliders: MGSliderState(scene: s), cache: cache)
+        XCTAssertEqual(cache.reads, 1, "the evaluation reads the step once")
+        let rest = MGTimeline.frame(s, items: board.items, time: 0)
         func draw(_ m: MGBoardMotion, _ t: Double, reduceMotion: Bool = false) -> [MGItem] {
-            m.frame(s, live: live(), style: .spring, now: t0.addingTimeInterval(t), time: 0, hiding: [], reduceMotion: reduceMotion).items
+            m.frame(board, style: .spring, now: t0.addingTimeInterval(t), time: 0, hiding: [], reduceMotion: reduceMotion).items
         }
         var motion = MGBoardMotion()
         motion.play(plan.segments, duration: plan.duration, at: t0)
-        for k in 0..<10 { _ = draw(motion, Double(k) * 0.09) }
-        XCTAssertEqual(reads, 0, "a keyframe frame read the live items")
-        XCTAssertEqual(draw(motion, plan.duration + 0.1), MGTimeline.frame(s, items: s.items, time: 0), "after the keyframes, the live items")
-        XCTAssertEqual(reads, 1)
-        _ = draw(motion, 0.5, reduceMotion: true)
-        XCTAssertEqual(reads, 2, "with Reduce Motion no keyframes play")
+        for k in 0..<10 {
+            let now = t0.addingTimeInterval(Double(k) * 0.09)
+            let sample = MGTimeline.frame(s, items: MGTween.sample(plan.segments, at: MGTransitionClock(start: t0).elapsed(at: now)), time: 0)
+            XCTAssertEqual(draw(motion, Double(k) * 0.09), sample, "the keyframes at \(Double(k) * 0.09) s")
+        }
+        XCTAssertNotEqual(draw(motion, 0.5), rest, "mid-keyframes")
+        XCTAssertEqual(draw(motion, plan.duration + 0.1), rest, "after the keyframes, the board's items")
+        XCTAssertEqual(draw(motion, 0.5, reduceMotion: true), rest, "with Reduce Motion no keyframes play")
         motion.settle()
-        _ = draw(motion, 0.5)
-        XCTAssertEqual(reads, 3, "settled keyframes")
+        XCTAssertEqual(draw(motion, 0.5), rest, "settled keyframes")
+        XCTAssertEqual(cache.reads, 1, "a frame read the cache")
+        XCTAssertEqual(cache.computed, 1)
     }
 
-    /// The controller's cache through a blended change, read as the board reads it (`boardItems` for its frames and its
-    /// chart, `leavingItems` for what `adopt` blends from): the incoming step's items are computed at most once and are
-    /// never evicted. A step change (`go`) reads the outgoing step through the cache, which keeps both steps. A scene
-    /// change reads the outgoing revision without filling the cache, whether the board read the incoming revision
-    /// first or not; filling it with the outgoing revision (`boardItems`) would clear the incoming entries.
+    /// The controller's cache through a blended change, read as the board reads it (`MGSliderState.boardFrames` once per
+    /// evaluation, for its frames and its chart; `leavingItems` for what `adopt` blends from): the incoming step's items
+    /// are computed at most once and are never evicted, and frames and charts read nothing. A step change (`go`) reads
+    /// the outgoing step through the cache, which keeps both steps. A scene change reads the outgoing revision without
+    /// filling the cache (`MGTimelineCache.peek`), whether the board read the incoming revision first or not; filling it
+    /// with the outgoing revision would clear the incoming entries. With a slider at a non-default value the board shows
+    /// the learner's items: no evaluation reads the cache, and the blend from the scene it leaves reads it neither.
     func testABlendedChangeComputesTheIncomingStepAtMostOnce() throws {
         let s = try scene(Self.splitBoard)
         let t0 = Date(timeIntervalSinceReferenceDate: 1_000)
-        func frames(_ scene: MGScene, step: Int, _ motion: MGBoardMotion, _ cache: MGTimelineCache) {
-            for k in 0..<20 {   // through the 1.2 s blend window, with the chart each evaluation builds
-                _ = motion.frame(scene, live: MGSliderState.boardItems(scene, step: step, sliders: nil, cache: cache), style: .spring,
-                                 now: t0.addingTimeInterval(Double(k) * 0.07), time: 0, hiding: [], reduceMotion: false)
-                _ = MGAudioGraph.chart(scene, items: MGSliderState.boardItems(scene, step: step, sliders: nil, cache: cache))
+        // Five evaluations of the board through the 1.2 s blend window, each reading the board's items once, as
+        // `MGSceneHost.board` does, then drawing four frames and building the chart from them.
+        func evaluations(_ scene: MGScene, step: Int, _ motion: MGBoardMotion, _ cache: MGTimelineCache, sliders: MGSliderState? = nil) {
+            for e in 0..<5 {
+                let board = MGSliderState.boardFrames(scene, step: step, sliders: sliders, cache: cache)
+                for k in 0..<4 {
+                    _ = motion.frame(board, style: .spring, now: t0.addingTimeInterval(Double(e * 4 + k) * 0.07), time: 0, hiding: [],
+                                     reduceMotion: false)
+                }
+                _ = board.chart()
             }
         }
-        // A step change with a blend: from the outgoing step's items, then frames of step 1.
+        // A step change with a blend (`go`): from the outgoing step's items, then evaluations of step 1.
         do {
             let cache = MGTimelineCache()
-            for _ in 0..<3 { _ = MGSliderState.boardItems(s, step: 0, sliders: nil, cache: cache) }
+            for _ in 0..<3 { _ = MGSliderState.boardFrames(s, step: 0, sliders: nil, cache: cache) }
             XCTAssertEqual(cache.computed, 1)
             var motion = MGBoardMotion()
-            motion.blend(from: MGTimeline.frame(s, items: MGSliderState.boardItems(s, step: 0, sliders: nil, cache: cache), time: 0), at: t0)
-            frames(s, step: 1, motion, cache)
+            motion.blend(from: MGSliderState.boardFrames(s, step: 0, sliders: nil, cache: cache).frame(time: 0), at: t0)
+            evaluations(s, step: 1, motion, cache)
             XCTAssertEqual(cache.computed, 2, "the step change computed step 1 once and kept step 0")
             XCTAssertEqual(cache.kept, 2)
+            XCTAssertEqual(cache.reads, 3 + 1 + 5, "one read per evaluation and one for the blend; frames and charts read nothing")
         }
         // A scene change with a blend: the incoming scene has a new revision.
         var next = s
@@ -846,14 +885,16 @@ final class SliderTests: XCTestCase {
         for incomingFirst in [true, false] {
             let what = incomingFirst ? "the board read the incoming scene first" : "adopt read first"
             let cache = MGTimelineCache()
-            _ = MGSliderState.boardItems(s, step: 0, sliders: nil, cache: cache)   // the outgoing scene's frames
+            _ = MGSliderState.boardFrames(s, step: 0, sliders: nil, cache: cache)   // the outgoing scene's evaluation
             let filled = cache.computed
-            if incomingFirst { _ = MGAudioGraph.chart(next, items: MGSliderState.boardItems(next, step: 0, sliders: nil, cache: cache)) }
+            if incomingFirst { _ = MGSliderState.boardFrames(next, step: 0, sliders: nil, cache: cache).chart() }
+            let reads = cache.reads
             let leaving = MGSliderState.leavingItems(s, step: 0, sliders: nil, cache: cache)
             XCTAssertEqual(leaving, MGTimeline.items(s, step: 0), what)
+            XCTAssertEqual(cache.reads, reads, "\(what): the outgoing read is a peek")
             var motion = MGBoardMotion()
             motion.blend(from: MGTimeline.frame(s, items: leaving, time: 0), at: t0)
-            frames(next, step: 0, motion, cache)
+            evaluations(next, step: 0, motion, cache)
             XCTAssertEqual(cache.computed - filled, 1, "\(what): the incoming step was computed once")
             XCTAssertEqual(cache.kept, 1, what)
             XCTAssertEqual(cache.items(next, step: 0), MGTimeline.items(next, step: 0), what)
@@ -862,20 +903,50 @@ final class SliderTests: XCTestCase {
         // Filling the cache with the outgoing revision instead clears the incoming entries: computed again.
         do {
             let cache = MGTimelineCache()
-            _ = MGSliderState.boardItems(s, step: 0, sliders: nil, cache: cache)
+            _ = MGSliderState.boardFrames(s, step: 0, sliders: nil, cache: cache)
             let filled = cache.computed
-            _ = MGSliderState.boardItems(next, step: 0, sliders: nil, cache: cache)
-            _ = MGSliderState.boardItems(s, step: 0, sliders: nil, cache: cache)
-            _ = MGSliderState.boardItems(next, step: 0, sliders: nil, cache: cache)
+            _ = MGSliderState.boardFrames(next, step: 0, sliders: nil, cache: cache)
+            _ = MGSliderState.boardFrames(s, step: 0, sliders: nil, cache: cache)
+            _ = MGSliderState.boardFrames(next, step: 0, sliders: nil, cache: cache)
             XCTAssertEqual(cache.computed - filled, 3, "an outgoing read through the cache evicts the incoming entries")
         }
         // With a moved slider the board blends from the learner's items, and the cache is not asked.
         var state = MGSliderState(scene: s)
         XCTAssertTrue(state.set("a", nearest: 1.5))
-        let cache = MGTimelineCache()
-        XCTAssertEqual(MGSliderState.leavingItems(s, step: 0, sliders: state, cache: cache), state.items)
-        XCTAssertEqual(cache.computed, 0)
-        XCTAssertEqual(cache.kept, 0)
+        do {
+            let cache = MGTimelineCache()
+            XCTAssertEqual(MGSliderState.leavingItems(s, step: 0, sliders: state, cache: cache), state.items)
+            XCTAssertEqual(cache.computed, 0)
+            XCTAssertEqual(cache.kept, 0)
+        }
+        // A scene change (a patch: a new revision of the same scene) with the slider moved. `adopt` keeps the learner's
+        // value on the new revision, so its board shows the slider's items too. The board's evaluations and the blend
+        // read the cache only if the board evaluated the new revision before `adopt` gave the sliders that revision
+        // (once, so the incoming step is computed at most once), and never evict it. Back at the defaults, the board
+        // reads the incoming step through the cache, computed at most once in all.
+        for incomingFirst in [true, false] {
+            let what = incomingFirst ? "slider moved, the board read the incoming scene first" : "slider moved, adopt read first"
+            let cache = MGTimelineCache()
+            evaluations(s, step: 0, MGBoardMotion(), cache, sliders: state)   // the outgoing scene, slider moved
+            XCTAssertEqual(cache.reads, 0, "\(what): an evaluation with the slider moved read the cache")
+            // Before `adopt`, the slider state is still the outgoing revision's: the incoming board reads the cache.
+            if incomingFirst { _ = MGSliderState.boardFrames(next, step: 0, sliders: state, cache: cache).chart() }
+            let leaving = MGSliderState.leavingItems(s, step: 0, sliders: state, cache: cache)
+            XCTAssertEqual(leaving, state.items, what)
+            let kept = MGSliderState(scene: next, step: 0, keeping: state.values)   // `adopt`
+            XCTAssertTrue(kept.movesBoard(next, step: 0), what)
+            var motion = MGBoardMotion()
+            motion.blend(from: MGTimeline.frame(s, items: leaving, time: 0), at: t0)
+            evaluations(next, step: 0, motion, cache, sliders: kept)
+            XCTAssertEqual(cache.reads, incomingFirst ? 1 : 0, "\(what): reads")
+            XCTAssertEqual(cache.computed, incomingFirst ? 1 : 0, "\(what): computed")
+            XCTAssertEqual(MGSliderState.boardFrames(next, step: 0, sliders: kept, cache: cache).items, kept.items, what)
+            var reset = kept
+            reset.reset()
+            evaluations(next, step: 0, motion, cache, sliders: reset)
+            XCTAssertEqual(cache.computed, 1, "\(what): the incoming step is computed once in all")
+            XCTAssertEqual(cache.reads, (incomingFirst ? 1 : 0) + 5, "\(what): one read per evaluation at the defaults")
+        }
     }
 
     /// The board the hosted slider tests use (`SliderBoardHostTests`): its body moves, so the board splits while the
@@ -945,7 +1016,9 @@ final class SliderTests: XCTestCase {
 /// one canvas for it. During a step, the slider change ends the step's transition window with the camera move (the
 /// probe records each new deadline, `MGBoardProbe.windows`), and the board splits as soon as that move ends. Each chart
 /// is checked against what a draw renders. At the defaults a split board reads the step items only from the
-/// controller's cache (`MGTimelineCache`).
+/// controller's cache (`MGTimelineCache`). With a slider moved, the board's evaluations read no cache at all, and after
+/// its step is dropped from the cache its ticks, frame function and tap handler read nothing either and draw the
+/// slider's graph (the readouts' eviction check, `BoardTransitionHostTests`, with the learner's items).
 final class SliderBoardHostTests: XCTestCase {
     /// Room for the slider panel and the caption below the board, so the board's size never follows their text.
     static let window = CGSize(width: 560, height: 900)
@@ -1092,6 +1165,62 @@ final class SliderBoardHostTests: XCTestCase {
         XCTAssertEqual(rig.probe.charts.last ?? nil, MGAudioGraph.chart(scene, step: 0), "after the reset the board charts the step's items")
         try assertBaseIsCurrent(rig, "after the reset")
         XCTAssertEqual(rig.controller.timeline.computed, computed, "a slider move or reset computed the step's items again")
+    }
+
+    @MainActor func testAMovedSliderBoardReadsNoCacheAfterItsStepIsDropped() throws {
+        let rig = try splitRig()
+        defer { rig.close() }
+        let scene = try XCTUnwrap(rig.controller.scene)
+        var want = MGSliderState(scene: scene)
+        XCTAssertTrue(want.set("a", nearest: 1.5))
+        let moved = want.items.first { $0.id == "g" }
+        let slid = MGAudioGraph.chart(scene, items: want.items)
+        try XCTUnwrap(rig.probe.slide)("a", 1.5)
+        rig.settle(0.3)
+        // With the slider moved, the board's evaluations (ticks, then one of the whole board for new markers) show the
+        // learner's items and read nothing from the cache.
+        let reads = rig.controller.timeline.reads, evaluations = rig.probe.decisions.count
+        tick(rig, 0.3)
+        rig.markers = ["g": 1]
+        rig.rebuild()
+        rig.settle(0.3)
+        XCTAssertGreaterThan(rig.probe.decisions.count, evaluations, "the board was not evaluated")
+        XCTAssertEqual(rig.controller.timeline.reads, reads, "an evaluation with the slider moved read the cache")
+        XCTAssertEqual(rig.probe.charts.last ?? nil, slid, "the audio graph is the slider's")
+        // Another revision read through the controller's cache drops the board's step (the cache holds one revision).
+        var other = scene
+        other.revision = scene.revision + 1_000
+        _ = rig.controller.timeline.items(other, step: 0)
+        XCTAssertEqual(rig.controller.timeline.kept, 1)
+        let after = rig.controller.timeline.reads, computed = rig.controller.timeline.computed
+        let base = rig.probe.baseDraws, live = rig.probe.liveDraws, charts = rig.probe.charts.count
+        // Ticks, then the frame function and the tap handler of the last evaluation: they read nothing, and the frame is
+        // the slider's graph.
+        tick(rig, 0.6)
+        XCTAssertGreaterThan(rig.probe.liveDraws, live + 3, "the live layer ticks")
+        XCTAssertEqual(rig.probe.baseDraws, base, "a tick evaluated the board again")
+        let size = try XCTUnwrap(rig.probe.draws.last?.size, "nothing was drawn")
+        let f = try rig.frame(size)
+        XCTAssertEqual(f.items.first { $0.id == "g" }, moved, "the frame function draws the slider's graph")
+        let tap = try XCTUnwrap(rig.probe.tap, "the board has no tap handler")
+        tap(f.viewport.point(MGPoint(3, 2)), size)
+        // The board has not been evaluated since the tap, so it never saw a selection: clear it.
+        rig.selection = nil
+        XCTAssertEqual(rig.controller.timeline.reads, after, "a draw, the frame function or a tap read the cache")
+        XCTAssertEqual(rig.controller.timeline.computed, computed)
+        XCTAssertEqual(rig.probe.charts.count, charts, "the board built an audio graph during the ticks")
+        try assertBaseIsCurrent(rig, "after the step was dropped")
+        // Back at the defaults: each evaluation reads the step exactly once, and the dropped step is filled once.
+        let start = (reads: rig.controller.timeline.reads, evaluations: rig.probe.decisions.count)
+        try XCTUnwrap(rig.probe.resetSliders)()
+        rig.settle(0.3)
+        tick(rig, 0.3)
+        let n = rig.probe.decisions.count - start.evaluations
+        XCTAssertGreaterThan(n, 0, "the reset did not evaluate the board")
+        XCTAssertEqual(rig.controller.timeline.reads - start.reads, n, "at the defaults, one read per evaluation")
+        XCTAssertEqual(rig.controller.timeline.computed, computed + 1, "the dropped step is filled once")
+        XCTAssertEqual(rig.probe.charts.last ?? nil, MGAudioGraph.chart(scene, step: 0), "the audio graph is the step's again")
+        try assertBaseIsCurrent(rig, "after the reset")
     }
 
     // MARK: helpers (as in BoardTransitionHostTests)

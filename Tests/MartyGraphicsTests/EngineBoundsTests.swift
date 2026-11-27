@@ -310,6 +310,71 @@ final class EngineBoundsTests: XCTestCase {
         }
     }
 
+    /// `testDrawsAfterTheirStepIsEvictedComputeNoReadout` with a learner slider at a non-default value
+    /// (`MGSceneController.boardFrames(_:step:sliders:)`, as `MGSceneHost.board` reads it): the board's evaluation takes
+    /// the slider's items and reads no cache, so pushing its step out of the cache changes nothing it draws, charts or
+    /// says. Its frames, audio graph and description show the slider's graph `w` beside the readouts of `g`, which the
+    /// slider does not drive. Back at the defaults, one evaluation reads the step once, which fills it again because it
+    /// was pushed out, and its frames read nothing.
+    @MainActor
+    func testAMovedSliderBoardReadsNoCacheAfterItsStepIsEvicted() throws {
+        let json = #"{"v":1,"items":[{"id":"g","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"sin(x)","mark":1,"#
+            + #""shade":[0,1.5],"readouts":["value","slope","area"]},{"id":"w","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"#
+            + #""yr":[-2,2],"y":"a*x/3","a":1},{"id":"t","k":"text","at":[8,6],"text":"Slope {g.slope}"}],"steps":[{"say":"Start."},"#
+            + #"{"say":"Red.","do":[{"id":"g","key":"color","value":"red"}]},{"say":"Two."},{"say":"Three."},{"say":"Four."},"#
+            + #"{"say":"Five."}],"sliders":[{"param":"a","min":0,"max":2,"step":0.5,"default":1,"label":"Slope a"}]}"#
+        let probe = MGReadout.Probe()
+        try MGReadout.$probe.withValue(probe) {
+            let controller = MGSceneController(scene: try MGParser.scene(data: Data(json.utf8)).get())
+            let scene = try XCTUnwrap(controller.scene)
+            var state = MGSliderState(scene: scene, step: 1)
+            XCTAssertTrue(state.set("a", nearest: 1.5))
+            // The board shows step 1 with the slider moved: its evaluation reads nothing.
+            let board = controller.boardFrames(scene, step: 1, sliders: state)
+            XCTAssertTrue(board.fromSliders)
+            XCTAssertEqual(board.items, state.items)
+            XCTAssertEqual(controller.timeline.reads, 0, "the evaluation read the cache")
+            // Other views read steps 2–5: the cache keeps 4 steps, none of them the board's.
+            for step in 2...5 { _ = controller.timelineItems(scene, step: step) }
+            XCTAssertEqual(controller.timeline.kept, MGTimelineCache.capacity)
+            let reads = controller.timeline.reads, computed = controller.timeline.computed, count = probe.count
+            // 120 frames of that evaluation, then its audio graph and its description.
+            let motion = MGBoardMotion()
+            let moved = try XCTUnwrap(state.items.first { $0.id == "w" })
+            XCTAssertNotEqual(moved, scene.item("w"), "the slider moved the graph")
+            for frame in 0..<120 {
+                let t = Double(frame) / 60
+                let f = motion.frame(board, style: .spring, now: Date(timeIntervalSinceReferenceDate: t), time: t, hiding: [],
+                                     reduceMotion: false)
+                XCTAssertEqual(f.items.first { $0.id == "w" }, moved, "frame \(frame) draws the slider's graph")
+            }
+            let chart = try XCTUnwrap(board.chart(), "the graphs are charted")
+            let value = board.accessibilityValue(describing: true)
+            XCTAssertEqual(controller.timeline.reads, reads, "a frame, the chart or the description read the cache")
+            XCTAssertEqual(controller.timeline.computed, computed)
+            XCTAssertEqual(probe.count, count, "a frame, the chart or the description computed a readout")
+            XCTAssertEqual(chart, MGAudioGraph.chart(scene, items: state.items))
+            XCTAssertNotEqual(chart, MGAudioGraph.chart(scene, step: 1), "the chart follows the slider")
+            XCTAssertTrue(chart.summary.contains("a = 1.5") && chart.summary.contains("slope is 0.54"), chart.summary)
+            XCTAssertEqual(value, state.accessibilityValue(describing: true))
+            XCTAssertTrue(value.contains("a = 1.5") && value.contains("slope is 0.54"), value)
+            // Back at the defaults: one read, which fills the pushed-out step once; its frames read nothing.
+            state.reset()
+            let back = controller.boardFrames(scene, step: 1, sliders: state)
+            XCTAssertFalse(back.fromSliders)
+            XCTAssertEqual(controller.timeline.reads, reads + 1)
+            XCTAssertEqual(controller.timeline.computed, computed + 1, "the pushed-out step is filled once")
+            for frame in 0..<60 {
+                let t = Double(frame) / 60
+                _ = motion.frame(back, style: .spring, now: Date(timeIntervalSinceReferenceDate: t), time: t, hiding: [], reduceMotion: false)
+            }
+            XCTAssertEqual(controller.timeline.reads, reads + 1, "a frame read the cache")
+            XCTAssertEqual(back.items, MGTimeline.items(scene, step: 1))
+            XCTAssertEqual(back.chart(), MGAudioGraph.chart(scene, step: 1))
+            XCTAssertEqual(back.accessibilityValue(describing: true), MGDescribe.accessibilityValue(scene, step: 1, describing: true))
+        }
+    }
+
     func testAColourEditKeepsTheReadoutsWithoutComputingThem() throws {
         let probe = MGReadout.Probe()
         try MGReadout.$probe.withValue(probe) {

@@ -180,11 +180,14 @@
   `MGParser.exprWeight`, `MGParser.editWeight`), so a parse computes readouts at most three times. An edit that
   changes no readout input (colour, labels, position, size) weighs one, keeps the readouts without computing them,
   and a view computes a step's readouts once per fill of its controller's timeline cache: a revisit of one of the
-  last 4 steps read of the same revision computes none. A board reads its step's items once each time it is evaluated
-  and draws every frame from them (`MGSceneController.boardFrames`), and its description and audio graph come from the
-  same read (`MGBoardFrames.chart`), so neither a drawn frame nor an accessibility read reads the cache or computes a
-  readout, also after other views pushed the step out of it; a blend into a new scene computes the step it leaves
-  once more, outside the cache. A readout computation is bounded by its own operation counts (at most 258
+  last 4 steps read of the same revision computes none. A board reads its step's items at most once each time it is
+  evaluated and draws every frame from them (`MGSceneController.boardFrames`), and its description and audio graph
+  come from the same read (`MGBoardFrames.chart`, `MGBoardFrames.accessibilityValue`), so neither a drawn frame nor an
+  accessibility read reads the cache or computes a readout, also after other views pushed the step out of it. With
+  a learner slider at a non-default value the board takes the slider's items (`MGSliderState.boardFrames`) and reads
+  no cache, and the canvas (`MGBoardMotion.frame` takes the board's frames), VoiceOver and the audio graph show those
+  same items. A blend into a new scene looks the step it leaves up with `MGTimelineCache.peek`, which never fills the
+  cache. A readout computation is bounded by its own operation counts (at most 258
   interval passes, 962 evaluations and 1 forward-mode pass, 3 per parse), not by the graph checks' evaluation bound.
   In interval arithmetic a whole exponent above 2⁵³ takes the bound of `pow` (`MGExpression.squaringLimit`), so an
   interval pass squares at most 54 times per power. `tools/mg_expr.py` and

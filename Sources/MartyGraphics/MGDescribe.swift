@@ -35,7 +35,8 @@ public enum MGDescribe {
         accessibilityValue(scene, step: step, describing: describing, hiding: hiding) { MGTimeline.items(scene, step: step) }
     }
 
-    /// `accessibilityValue(_:step:describing:hiding:)` with the step's items from the caller (read only when needed).
+    /// `accessibilityValue(_:step:describing:hiding:)` with the step's items from the caller (read only when needed;
+    /// `MGBoardFrames.accessibilityValue` passes the items its board's evaluation read).
     static func accessibilityValue(_ scene: MGScene, step: Int, describing: Bool, hiding: Set<String>, stepItems: () -> [MGItem]) -> String {
         let current = scene.steps.indices.contains(step) ? scene.steps[step] : nil
         let alt = current?.alt ?? scene.alt
@@ -124,5 +125,19 @@ public enum MGDescribe {
     static func capitalized(_ s: String) -> String {
         guard let first = s.first else { return s }
         return first.uppercased() + s.dropFirst()
+    }
+}
+
+extension MGBoardFrames {
+    /// The board's VoiceOver value, from the items this evaluation of the board read, so it describes what the board
+    /// draws and reads no cache: `MGDescribe.accessibilityValue` (the narration, then the authored `alt`, or the
+    /// engine's description of these items when `describing`). Once a learner slider has moved (`fromSliders`), an
+    /// authored `alt` describes another board, so the engine's description of these items follows the narration.
+    func accessibilityValue(describing: Bool = false, hiding: Set<String> = []) -> String {
+        guard fromSliders else {
+            return MGDescribe.accessibilityValue(scene, step: step, describing: describing, hiding: hiding) { items }
+        }
+        let say = scene.steps.indices.contains(step) ? scene.steps[step].say : ""
+        return [say, MGDescribe.sentence(items.filter { !hiding.contains($0.id) })].filter { !$0.isEmpty }.joined(separator: " ")
     }
 }

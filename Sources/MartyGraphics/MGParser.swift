@@ -44,9 +44,11 @@ public enum MGLimits {
     /// typical smooth graph needs 513 per instant. A `field` costs 2 per arrow (≤ 384). A patch or a lesson command
     /// parses the whole scene again, with the same bound per parse. `MGTimeline.items` applies the step edits again, at
     /// most that bound. A controller keeps the items of the last 4 steps its views read (`MGTimelineCache`), and a 2D
-    /// board reads its step from there once each time it is evaluated and draws every frame from those items
-    /// (`MGSceneController.boardFrames`), so a drawn frame does not apply the edits again and computes no readout, also
-    /// after other views on the controller pushed the step out of the cache: readouts are computed once per cache fill.
+    /// board reads its step from there at most once each time it is evaluated and draws every frame from those items
+    /// (`MGSceneController.boardFrames`; with a learner slider moved it draws the slider's items and reads nothing), so
+    /// a drawn frame does not apply the edits again and computes no readout, also after other views on the controller
+    /// pushed the step out of the cache: readouts are computed once per cache fill. A slider move re-parses each `func`
+    /// it drives once (`MGSliderState`), never per frame.
     public static let exprItems = 6
     /// A `func` is sampled on this many equal intervals (257 samples) and may break into at most `funcBreaks + 1` pieces.
     public static let funcIntervals = 256, funcBreaks = 16

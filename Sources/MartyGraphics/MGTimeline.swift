@@ -224,9 +224,11 @@ extension MGTimeline {
 /// revision: a read of another revision (a new scene) drops them all. So a step's readouts are computed once per
 /// cache fill: a read of one of the last `capacity` steps read of the same revision hits the cache and computes none,
 /// and a step pushed out by newer steps is computed again when it is next read. No draw and no accessibility read
-/// reads the cache: a board reads its step once each time it is evaluated, and its draws, tap handler, description and
-/// audio graph use those items (`MGBoardFrames`), so a step pushed out while the board shows it is read again only by
-/// the board's next evaluation.
+/// reads the cache: a board reads its step at most once each time it is evaluated (not at all while a learner slider
+/// sits at a non-default value: then it shows the slider's items), and its draws, tap handler, description and audio
+/// graph use those items (`MGBoardFrames`), so a step pushed out while the board shows it is read again only by the
+/// board's next evaluation. A board blending from a scene it leaves looks the outgoing step up with `peek`, which
+/// never fills the cache, so the incoming revision's entries stay.
 final class MGTimelineCache {
     /// Most steps kept. A board reads only its shown step, once each time it is evaluated (a step change also reads the
     /// step it leaves, once), so two boards on one controller need 2; 4 leaves room for a third view, or for a board
@@ -240,7 +242,7 @@ final class MGTimelineCache {
     private var entries: [(step: Int, items: [MGItem])] = []
     /// How often `items` computed the items (tests).
     private(set) var computed = 0
-    /// How often `items` was called, hit or fill (tests).
+    /// How often `items` was called, hit or fill (tests). `peek` is not counted: it never fills or reorders the cache.
     private(set) var reads = 0
     /// Steps kept now (tests).
     var kept: Int { entries.count }
@@ -261,25 +263,31 @@ final class MGTimelineCache {
 
     /// The items of `scene` at `step` without filling the cache: the kept entry when this revision's step is kept
     /// (left where it is in the order), else `MGTimeline.items`, computed and not kept (`computed` does not count it).
-    /// For a scene a board is leaving (`MGSliderState.leavingItems`): the cache holds one revision, so `items` for the
-    /// outgoing revision would clear the entries of the incoming one that the board's frames read.
+    /// For a scene a board is leaving (`MGSliderState.leavingItems`, the blend of `MGSceneHost.adopt`): the cache holds
+    /// one revision, so `items` for the outgoing revision would clear the entries of the incoming one that the board's
+    /// evaluations read. While the cache still holds the outgoing revision, the kept step is reused, not computed.
     func peek(_ scene: MGScene, step: Int) -> [MGItem] {
         if revision == scene.revision, let kept = entries.last(where: { $0.step == step }) { return kept.items }
         return MGTimeline.items(scene, step: step)
     }
 }
 
-/// The step items one evaluation of a board uses (`MGSceneController.boardFrames`): read through the controller's
-/// cache once, when the board is evaluated, and held by value, so a 2D board's draws (every canvas, every frame-loop
-/// tick) and its tap handler, the board's description and its audio graph (`chart`, in MGAudioGraph.swift), and a 3D
-/// board's view only read these. Neither a draw nor an accessibility read fills the cache, also when other views on
-/// the controller have pushed the step out of it since; the board's next evaluation (a new revision, a step change,
-/// any other change of its state) reads it again.
+/// The items one evaluation of a board uses (`MGSceneController.boardFrames`, `MGSliderState.boardFrames`): the step's
+/// items, read through the controller's cache once when the board is evaluated, or the learner's slider items while a
+/// slider sits at a non-default value (no cache read), held by value. A 2D board's draws (every canvas, every
+/// frame-loop tick, `MGBoardMotion.frame`) and its tap handler, the board's description (`accessibilityValue`, in
+/// MGDescribe.swift) and its audio graph (`chart`, in MGAudioGraph.swift), and a 3D board's view only read these, so
+/// they all show one board. Neither a draw nor an accessibility read fills the cache, also when other views on the
+/// controller have pushed the step out of it since; the board's next evaluation (a new revision, a step change, a
+/// slider move, any other change of its state) reads it again.
 struct MGBoardFrames {
     let scene: MGScene
     let step: Int
-    /// `MGTimeline.items(scene, step: step)`, as the cache gave it when the board was evaluated.
+    /// `MGTimeline.items(scene, step: step)`, as the cache gave it when the board was evaluated, or the learner's items
+    /// (`MGSliderState.items`) when `fromSliders`.
     let items: [MGItem]
+    /// True when `items` are the learner's slider items, with a slider at a non-default value.
+    var fromSliders = false
 
     /// The items of a frame at `time`: the engine keyframes in flight (`MGTween.sample`), else the step's items, with
     /// motion applied (`MGTimeline.frame`).

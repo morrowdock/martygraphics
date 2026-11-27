@@ -365,22 +365,31 @@ public struct MGSliderState: Equatable, Sendable {
         return false
     }
 
-    /// The items a board shows at `step`: the learner's items once a slider sits at an accepted non-default position on
-    /// this scene revision and step, else the step's items through `cache`, so frames never compute them again. At the
-    /// defaults (before the first move and after a reset) the slider items equal the step items, so the cache gives
-    /// the same board.
-    static func boardItems(_ scene: MGScene, step: Int, sliders: MGSliderState?, cache: MGTimelineCache) -> [MGItem] {
-        if let s = sliders, !s.isAtDefaults, s.scene.revision == scene.revision, s.step == step { return s.items }
-        return cache.items(scene, step: step)
+    /// What one evaluation of a board shows at `step` (`MGBoardFrames`): the learner's items once a slider sits at an
+    /// accepted non-default position on this scene revision and step (`movesBoard`), with no cache read, else the
+    /// step's items read through `cache` once. At the defaults (before the first move and after a reset) the slider
+    /// items equal the step items, so the cache gives the same board. The board's frames, taps, description and audio
+    /// graph all use these items, so the canvas, VoiceOver and the chart show one board.
+    static func boardFrames(_ scene: MGScene, step: Int, sliders: MGSliderState?, cache: MGTimelineCache) -> MGBoardFrames {
+        if let s = sliders, s.movesBoard(scene, step: step) {
+            return MGBoardFrames(scene: scene, step: step, items: s.items, fromSliders: true)
+        }
+        return MGBoardFrames(scene: scene, step: step, items: cache.items(scene, step: step))
     }
 
     /// The items a board showed at `step` of a scene it is leaving (`MGSceneHost.adopt` blends from them): as
-    /// `boardItems`, but the step items are read without filling `cache` (`MGTimelineCache.peek`). The cache holds one
+    /// `boardFrames`, but the step items are read without filling `cache` (`MGTimelineCache.peek`). The cache holds one
     /// revision, and the board may already have read the incoming one, so filling it with the outgoing revision would
-    /// clear the entries the next frames read and make them compute the incoming step's items again.
+    /// clear the entries the board's evaluations read and make them compute the incoming step's items again.
     static func leavingItems(_ scene: MGScene, step: Int, sliders: MGSliderState?, cache: MGTimelineCache) -> [MGItem] {
-        if let s = sliders, !s.isAtDefaults, s.scene.revision == scene.revision, s.step == step { return s.items }
+        if let s = sliders, s.movesBoard(scene, step: step) { return s.items }
         return cache.peek(scene, step: step)
+    }
+
+    /// True when the learner's items stand in for the step's items on the board of `scene` at `step`: a slider sits at
+    /// a non-default position, and this state is for that scene revision and step.
+    func movesBoard(_ scene: MGScene, step: Int) -> Bool {
+        !isAtDefaults && self.scene.revision == scene.revision && self.step == step
     }
 
     /// Every slider back to its default.
@@ -425,11 +434,11 @@ public struct MGSliderState: Equatable, Sendable {
 
     /// The board's VoiceOver value. At the defaults it is `MGDescribe.accessibilityValue` (narration, then authored
     /// `alt` text). Once a slider has moved, an authored `alt` describes another board, so the engine's description of
-    /// the items now drawn follows the narration instead (`describing` is then implied).
+    /// the items now drawn follows the narration instead (`describing` is then implied). The board says the same from
+    /// the items its evaluation read (`MGBoardFrames.accessibilityValue`).
     public func accessibilityValue(describing: Bool = false, hiding: Set<String> = []) -> String {
-        guard !isAtDefaults else { return MGDescribe.accessibilityValue(scene, step: step, describing: describing, hiding: hiding) }
-        let say = scene.steps.indices.contains(step) ? scene.steps[step].say : ""
-        return [say, MGDescribe.sentence(items.filter { !hiding.contains($0.id) })].filter { !$0.isEmpty }.joined(separator: " ")
+        MGBoardFrames(scene: scene, step: step, items: items, fromSliders: !isAtDefaults)
+            .accessibilityValue(describing: describing, hiding: hiding)
     }
 
     /// The VoiceOver label, value, hint and identifier of the slider for `param`.

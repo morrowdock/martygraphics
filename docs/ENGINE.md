@@ -131,13 +131,16 @@ rank of any live item. A static item at or above that rank is drawn in the live 
 items' labels included), the emphasis rings, the markers and the focus ring. The base canvas sits outside the
 `TimelineView`, so frame-loop ticks never redraw it; SwiftUI redraws it whenever the board view is evaluated again,
 which is any change of the board's state (scene revision, step, size, theme, teaching modifiers). Each canvas draws
-for its own size, so both layers share one viewport. Both canvases draw the current step's items that the board
-read from the controller's cache when it was evaluated (`MGSceneController.boardFrames`, `MGTimelineCache`), so no
-tick, repartition or base redraw applies the step edits again, and no draw reads the cache. The board's description
-and audio graph come from the same read, so an accessibility read does not read the cache either. The cache keeps
-the last 4 steps read (least recently used out first; at most 4 × 40 item values, items a step left unedited sharing
-storage with the scene), so boards that share one controller and show different steps keep their own entries; a new
-scene revision drops every entry of the old one.
+for its own size, so both layers share one viewport. Both canvases draw the items the board took when it was
+evaluated (`MGSceneController.boardFrames`, `MGBoardFrames`): the current step's items from the controller's cache
+(`MGTimelineCache`), one read, or, while a learner slider sits at a non-default value, the slider's items
+(`MGSliderState`), with no read. So no tick, repartition or base redraw applies the step edits again, and no draw
+reads the cache. The board's description and audio graph come from the same items, so an accessibility read does not
+read the cache either, and VoiceOver and the canvas describe one board. The cache keeps the last 4 steps read (least
+recently used out first; at most 4 × 40 item values, items a step left unedited sharing storage with the scene), so
+boards that share one controller and show different steps keep their own entries; a new scene revision drops every
+entry of the old one. A blend from the scene a board leaves looks its step up without filling the cache
+(`MGTimelineCache.peek`, `MGSliderState.leavingItems`), so it never drops the new revision's entries.
 
 The split also follows the board's own clock, which a lesson or explainer host sets (`presentationClock`), while the
 transition window ends on a wall-clock wait. `MGBoardTransition.phase` says where the step and patch transitions stand

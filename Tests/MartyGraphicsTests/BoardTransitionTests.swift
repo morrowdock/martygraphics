@@ -726,8 +726,8 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertEqual(rig.probe.decisions.last, MGBoardProbe.Decision(running: true, layered: true))
         try assertOneReadPerEvaluation(rig, since: BoardCounts(), "first revision")
         try evictAndTick(rig, "first revision")
-        // A new revision that moves a base item: the board's evaluation for it fills its step once (the blend computes
-        // the step it leaves outside the cache).
+        // A new revision that moves a base item: the board's evaluation for it fills its step once (the blend looks the
+        // step it leaves up with `MGTimelineCache.peek`, which neither fills the cache nor counts as a read).
         let before = rig.controller.timeline.computed, counts = BoardCounts(rig)
         try rig.patch(#"{"v":1,"ops":[{"op":"set","id":"floor","key":"to","value":[11,2]}]}"#)
         rig.settle(2.4)

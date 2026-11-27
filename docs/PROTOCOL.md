@@ -407,8 +407,15 @@ parses and draws exactly as before.
   engine's description of what is drawn instead of the authored `alt`, which
   describes the default. The board's audio graph ("Audio graphs") is built from
   the same items, so it plays the graph at the slider values, not the authored
-  default. Lessons and explainer boards drop a scene's sliders, as
-  they drop its steps: their own controls drive them.
+  default. Each time the board is evaluated it takes its items once
+  (`MGSceneController.boardFrames` with the slider state): the learner's items
+  while a slider sits at a non-default value, with no read of the controller's
+  cache, else the step's items from the cache, one read. Every frame, tap,
+  VoiceOver value and audio graph of that evaluation uses those items
+  (`MGBoardFrames`), so the canvas, the description and the chart show one
+  board. A slider move re-parses its driven graphs once, never per frame. Lessons
+  and explainer boards drop a scene's sliders, as they drop its steps: their own
+  controls drive them.
 - `MGGrammar.document()` lists the key under `sceneKeys` and the slider shape
   under `sliders`. Refusal reasons have one-line fixes in `MGRepairHint`.
 
@@ -582,14 +589,19 @@ model never writes these numbers itself.
   revisit of one of the last 4 steps read of the same revision hits the cache
   and computes none. A step pushed out by 4 newer steps, or any step of a new
   revision, is computed again when it is next read. A board reads its step
-  once each time the board is evaluated (a new revision, a step change, any
-  other change of its state), draws every frame from those items and builds its
-  description and audio graph from them (`MGSceneController.boardFrames`), so
-  neither a drawn frame nor an accessibility read reads the cache or computes a
-  readout, also when other views on the controller pushed the step out of it. A
-  blend into a new scene computes the step it leaves once more, outside the
-  cache. A moving graph, the only kind sampled again per frame,
-  has no readouts.
+  at most once each time the board is evaluated (a new revision, a step change,
+  a slider move, any other change of its state), draws every frame from those
+  items and builds its description and audio graph from them
+  (`MGSceneController.boardFrames`, `MGBoardFrames`), so neither a drawn frame
+  nor an accessibility read reads the cache or computes a readout, also when
+  other views on the controller pushed the step out of it. While a learner
+  slider sits at a non-default value ("Learner sliders"), the board shows the
+  slider's items instead and reads no cache at all. A blend into a new scene
+  looks the step it leaves up without filling the cache
+  (`MGTimelineCache.peek`): the kept entry while the cache still holds the old
+  revision, else the items computed once more, outside the cache, so the new
+  revision's entries are never dropped. A moving graph, the only kind sampled
+  again per frame, has no readouts.
   `MGDescribe` speaks the numbers ("… shaded from x = 0 to 3.14 (signed area 2),
   marking the point (1, 0.84) where the slope is 0.54"), and
   `MGGrammar.document()` lists the names under `expression.readouts`.
