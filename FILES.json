@@ -4139,7 +4139,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineBoundsTests.swift",
-      "sha256": "c8cd99bcd0b7e2d23ce329ba553c20b0d41f4d9dd343b98abf6e3860bc2df0e0"
+      "sha256": "9fb0cbc5b317dd93d861fed0f32b3179e2249750b3de31ae8264efdcb3acfef0"
     },
     {
       "path": "Sources/MartyGraphics/MGRepairHint.swift",
@@ -4943,7 +4943,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/BoardTransitionTests.swift",
-      "sha256": "a27885b457214bcff6b4705d16073a0d816b169a0d65c3e9bf5e8288bbfc8af2"
+      "sha256": "da6bc1a0341df24a795ca1143628570088a0ef10f91aa0ffb0b186d765f3aa9c"
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineStillsTests.swift",

@@ -697,8 +697,9 @@ final class BoardTransitionHostTests: XCTestCase {
     }
 
     /// The board draws from the step items its evaluation read (`MGSceneController.boardFrames`), never from the
-    /// controller's cache: after other views on the controller push the board's step out of the cache, its ticks
-    /// compute nothing. A new revision fills the board's step exactly once, and the ticks after it compute nothing.
+    /// controller's cache: after other views on the controller push the board's step out of the cache, its ticks, its
+    /// frame function and its tap handler fill nothing, and the taps still hit what the board draws. A new revision
+    /// fills the board's step exactly once, and nothing after it fills the step again.
     @MainActor func testTheBoardsDrawsNeverFillTheCacheAfterItsStepIsEvicted() throws {
         // The rig's scene with four more steps, so other views can read 4 steps the board does not show.
         let json = Self.json.replacingOccurrences(of: #"{"say":"Second step.","cam":{"zoom":1.5}}]"#,
@@ -727,7 +728,8 @@ final class BoardTransitionHostTests: XCTestCase {
 
     /// Other views on the controller read steps 1–4 of the board's scene, which pushes the board's step 0 out of the
     /// cache, then the board ticks: the live layer draws, the board is not evaluated again (no base redraw), and no
-    /// draw fills the cache.
+    /// draw fills the cache. Then the board's own frame function and tap handler (what its tap gesture calls), from
+    /// the same evaluation: they fill nothing either, and a tap on a base item and on the moving body selects each.
     @MainActor func evictAndTick(_ rig: BoardRig, _ what: String, file: StaticString = #filePath, line: UInt = #line) throws {
         let scene = try XCTUnwrap(rig.controller.scene, file: file, line: line)
         for step in 1...4 { _ = rig.controller.timelineItems(scene, step: step) }
@@ -736,6 +738,21 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertGreaterThan(rig.probe.liveDraws, live + 3, "\(what): the live layer ticks", file: file, line: line)
         XCTAssertEqual(rig.probe.baseDraws, base, "\(what): a tick evaluated the board again", file: file, line: line)
         XCTAssertEqual(rig.controller.timeline.computed, computed, "\(what): a draw read the evicted step from the cache", file: file, line: line)
+        // The frame function and the tap handler, at the board's last drawn size and its current (manual) time.
+        let size = try XCTUnwrap(rig.probe.draws.last?.size, "\(what): nothing was drawn", file: file, line: line)
+        let f = try rig.frame(size)
+        XCTAssertEqual(rig.controller.timeline.computed, computed, "\(what): the frame function read the evicted step from the cache", file: file, line: line)
+        let tap = try XCTUnwrap(rig.probe.tap, "\(what): the board has no tap handler", file: file, line: line)
+        rig.selection = nil
+        tap(f.viewport.point(MGPoint(3, 2.5)), size)
+        XCTAssertEqual(rig.selection, "zone", "\(what): a tap on the zone (a base item) after the eviction", file: file, line: line)
+        let dot = try XCTUnwrap(try item("dot", f).pts.first, file: file, line: line)
+        tap(f.viewport.point(dot), size)
+        XCTAssertEqual(rig.selection, "dot", "\(what): a tap on the moving dot (a live item) after the eviction", file: file, line: line)
+        XCTAssertEqual(rig.controller.timeline.computed, computed, "\(what): a tap read the evicted step from the cache", file: file, line: line)
+        // The board has not been evaluated since the taps, so it never saw the selection: clear it, so the rest of the
+        // test runs with no selection change.
+        rig.selection = nil
     }
 
     /// A `.bounded` board: a leaving item fades out from opacity 1, which `MGCanvasLayers.settling` does not count, so

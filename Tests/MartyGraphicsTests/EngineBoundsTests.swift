@@ -238,11 +238,14 @@ final class EngineBoundsTests: XCTestCase {
         }
     }
 
-    /// The board's draw path (`MGSceneHost`): each evaluation of the board reads its step's items once
+    /// The board's frame path (`MGSceneHost`): each evaluation of the board reads its step's items once
     /// (`MGSceneController.boardFrames`, in `board2D`), and every canvas, frame-loop tick and tap of that evaluation
-    /// draws from them (`MGBoardFrames.frame`). Here other views on the controller push the board's step out of the
-    /// cache after the board was evaluated, also between its frames: no draw fills the cache or computes a readout. A
-    /// new revision fills the same step exactly once, at the board's next evaluation, and its draws compute nothing.
+    /// draws from them (`MGBoardFrames.frame`, which the board's frame function calls). Here other views on the
+    /// controller push the board's step out of the cache after the board was evaluated, also between its frames: no
+    /// frame fills the cache or computes a readout. A new revision fills the same step exactly once, at the board's
+    /// next evaluation, and its frames compute nothing. The view itself needs SwiftUI:
+    /// `BoardTransitionHostTests.testTheBoardsDrawsNeverFillTheCacheAfterItsStepIsEvicted` drives its ticks, frame
+    /// function and tap handler in a window.
     @MainActor
     func testDrawsAfterTheirStepIsEvictedComputeNoReadout() throws {
         let probe = MGReadout.Probe()
@@ -292,31 +295,6 @@ final class EngineBoundsTests: XCTestCase {
             XCTAssertEqual(board.items, MGTimeline.items(scene, step: 1))
             XCTAssertEqual(again.items, MGTimeline.items(next, step: 1))
         }
-    }
-
-    /// The draw path in the view's source (the view needs SwiftUI; `BoardTransitionHostTests` draws it in a window):
-    /// `board2D` reads the step's items once per evaluation of the board, and the frame function, both canvases (a
-    /// frame-loop tick runs `liveCanvas`'s `TimelineView` content and a draw runs a `Canvas` closure) and the tap
-    /// handler only take the `MGBoardFrames` it read, so none of them can read the controller's cache.
-    func testTheBoardsDrawPathTakesItsStepItemsFromTheBoardsEvaluation() throws {
-        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("Sources/MartyGraphics/MartyGraphicsView.swift")
-        let source = try String(contentsOf: url, encoding: .utf8)
-        // A member of `MGSceneHost`: from its declaration to its closing brace at member indentation.
-        func member(_ head: String) throws -> Substring {
-            let start = try XCTUnwrap(source.range(of: head), head)
-            let end = try XCTUnwrap(source.range(of: "\n    }\n", range: start.upperBound..<source.endIndex), head)
-            return source[start.lowerBound..<end.upperBound]
-        }
-        let reads = ["timelineItems(", "boardFrames(", ".timeline.", "MGTimeline.items("]
-        for head in ["private func input(_ frames: MGBoardFrames,", "private func layeredCanvases(_ frames: MGBoardFrames,",
-                     "private func liveCanvas(_ frames: MGBoardFrames,", "private func select(_ frames: MGBoardFrames,"] {
-            let body = try member(head)
-            for read in reads { XCTAssertFalse(body.contains(read), "\(head) reads the step's items: \(read)") }
-        }
-        let board = try member("private func board2D(")
-        XCTAssertEqual(board.components(separatedBy: "controller.boardFrames(scene, step: step)").count, 2, "one read per evaluation")
-        for read in ["timelineItems(", ".timeline.", "MGTimeline.items("] { XCTAssertFalse(board.contains(read), "board2D: \(read)") }
     }
 
     func testAColourEditKeepsTheReadoutsWithoutComputingThem() throws {
