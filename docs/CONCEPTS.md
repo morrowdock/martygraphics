@@ -61,7 +61,7 @@ An item is one thing on the board. Every item has:
 | `region` | A filled polygon of 3 to 64 points | `pts` |
 
 Angles are in degrees, counter-clockwise from the positive x axis, so `-90` points down. A `vector` drawn `on` a body
-starts at that body's centre and moves with it.
+follows that body and is drawn from its outline.
 
 Colour roles: `accent`, `muted`, `good`, `warn`, `blue`, `red`, `green`, `orange`, `purple`, `yellow`, `teal`, `white`,
 and the physics roles `force`, `normal`, `friction`, `gravity`, `tension`, `velocity`, `accel`, `energy`, `kinetic`,
@@ -118,14 +118,16 @@ A patch changes a scene that is already on screen:
 ```
 
 - Operations: `params`, `add`, `remove`, `set`, `steps`, `step`, `camera`, `title`, `dim`. A patch has 1 to 12
-  operations and at most 4 KiB.
+  operations. Its canonical JSON can be at most 4 KiB, and its raw input at most 8 KiB.
 - A patch is **atomic**. The whole resulting scene is checked again. If anything fails, nothing changes and the old
   scene stays.
-- `rev` is the scene revision the patch was built for. With `requireRevision: true`, a patch for an older revision is
-  refused (`patch.stale`). Read the current value from `controller.scene?.revision`, not from `controller.revision`.
+- `rev` is the scene revision the patch was built for. If a patch has a `rev`, it must equal the current revision; any
+  other value, also a future one, is refused with `patch.stale`. With `requireRevision: true`, a patch without a
+  `rev` is refused too. Read the current value from `controller.scene?.revision`, not from `controller.revision`.
 
-In Swift, `MGSceneController.apply(patch:requireRevision:)` applies a patch to the scene on screen and returns
-`false` if it was refused. The [tutorial](GETTING-STARTED.md#3-update-with-an-atomic-patch) has a complete host.
+In Swift, `MGSceneController.apply(patch:requireRevision:)` applies a patch to the scene on screen. It returns
+`false` if the patch was refused for any reason, and the scene does not change. The
+[tutorial](GETTING-STARTED.md#3-update-with-an-atomic-patch) has a complete host.
 
 ## Streams
 
@@ -148,7 +150,7 @@ Limits are part of the format. A document over a limit is refused, never trimmed
 | What | Limit |
 | --- | --- |
 | Scene size | 8 KiB of canonical JSON (the raw input may be up to 16 KiB before canonicalisation) |
-| Patch size | 4 KiB, 1 to 12 operations |
+| Patch size | 4 KiB of canonical JSON (the raw input may be up to 8 KiB), 1 to 12 operations |
 | Items | 24 in a scene; a template can add up to 10 extras, 40 in total |
 | Steps | 8 written steps; 48 built by a template; 6 edits and 16 shown ids per step |
 | World | Each side 2 to 100; default 12 × 8 |

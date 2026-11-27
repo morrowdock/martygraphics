@@ -3,9 +3,11 @@
 Ten short scenes you can copy. Each one teaches one idea of the [scene format](CONCEPTS.md). Each recipe is also a
 file in [`docs/cookbook`](cookbook), so you can check it or load it directly.
 
-**To try a recipe:** paste it into the `sceneJSON` string of the [quick start](../README.md#quick-start) program, or
-save it as a file and check it with [`marty-scene-validate`](../tools/SceneValidator/README.md). In a SwiftUI app,
-parse it with `MGParser.scene(data:)` and show it with `MartyGraphicsView(scene:)`.
+**To try a recipe:** save it as a file and check it with [`marty-scene-validate`](../tools/SceneValidator/README.md),
+or paste it into the `sceneJSON` string of the [quick start](../README.md#quick-start) program. The quick start saves
+one frame only: step 0 at time 0, with no narration, no step focus and no playback. To see reveals, step edits and
+timed motion, parse the recipe with `MGParser.scene(data:)` and show it in a SwiftUI app with
+`MartyGraphicsView(scene:)`; the [tutorial](GETTING-STARTED.md) has a complete host.
 
 **What "valid" means here.** The engine checks a recipe's shape, ranges, ids, references and text rules. It does not
 check that the narration is true or that the numbers in it are right. The recipes were written so that their words
@@ -143,7 +145,8 @@ The bars are drawn from `value`. The narration is not: if you change a value, ch
 
 ## 6. Forces on a ramp
 
-A block on a 30° ramp with three arrows. Each `vector` uses `on` to start at the block's centre. `angle` is in degrees
+A block on a 30° ramp with three arrows. Each `vector` uses `on`, so the arrow follows the block and is drawn from
+the block's outline. `angle` is in degrees
 counter-clockwise from the positive x axis, so `-90` points down and `120` points away from this ramp's surface.
 
 ```json

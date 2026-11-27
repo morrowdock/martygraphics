@@ -40,7 +40,7 @@ a water-cycle diagram, a distance-time plot, a class poll, forces on a ramp, a t
 | --- | --- |
 | The description is well formed and uses only known keys | That every sentence is true |
 | Every item has a unique name, and references point to real items | That typed numbers are right (a plot draws the points you give it; it does not compute them) |
-| Points are on the board; text, items and steps are within limits | That arrow lengths and positions mean what you intend |
+| Placement coordinates are within the allowed range (the board plus a margin of a quarter of its size); text, items and steps are within limits | That arrow lengths and positions mean what you intend |
 | Text has no links, markup or hidden characters | That the board is readable at the size your class will see it |
 | 3D gear meshes, gear ratios and joint motion (3D documents only) | Strength, friction, airflow and anything else the engine lists as not checked |
 
@@ -58,15 +58,15 @@ something wrong if its words are wrong.
 - **Say when data is invented.** The examples here label invented numbers as invented.
 - **Keep the words in sync.** If you change a value, change the sentence that quotes it. The engine will not.
 - **Give the words as text too.** Some learners cannot see the board. Provide the narration in your own materials.
-  For explainer documents, `marty-solid transcript` prints every caption and label as plain text
-  ([transcript](EXPLAINER.md#transcript)).
+  For 3D assemblies and explainer documents, `marty-solid transcript FILE.json` prints JSON with the captions, the
+  visible annotation text and the board table rows ([transcript](EXPLAINER.md#transcript)).
 
 ## AI-written boards
 
 MartyGraphics does not include an AI model. A separate app can ask a model to write the JSON, and the engine then
 checks it like any other description. This catches broken descriptions, not wrong ideas. In the project's own
-50-question development test, a model's answers were all accepted within three repairs, but only 29 of 40 in-scope
-answers were fully correct in their mechanics. An unedited AI-written jet-suit lesson, shown with its fact check,
+50-question development test, all 40 in-scope answers were accepted within three repairs. Of those, 29 were fully
+correct in their mechanics. An unedited AI-written jet-suit lesson, shown with its fact check,
 had 1 wrong sentence and 12 corrections ([gallery](GALLERY.md#from-a-prompt-ai-written)). Review every AI-written
 board before you use it.
 

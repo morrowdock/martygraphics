@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "571e713a73b19b3fb89571fcc3927cd45ea9503686494e62924b6747392d8015"
+      "sha256": "ef471b55b150799fadb32aed7013d9ad408384600a8bf9ee65e3795eaf49778d"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -155,7 +155,7 @@
     },
     {
       "path": "Examples/Showcase/README.md",
-      "sha256": "4fe19b4875c36c2157e9ec31118385f7a2dce77804ef78be5b8d353c81585deb"
+      "sha256": "d02d36c4a336e9c1fbbe928ab41e7f32bceb4ed8bacd1ccdc79ac154c156c8ad"
     },
     {
       "path": "Examples/Showcase/Sources/MartyShowcase/Scenes/counts.json",
@@ -711,7 +711,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "3a1bf2bc2d458008d27ac47c06c337e22fe7b284c1ed3ba461372c99a64fbad8"
+      "sha256": "ca16741dd07a625da358e26a5ce05262896487af5037e232db0e0313ba1eeb8a"
     },
     {
       "path": "SECURITY.md",
@@ -1947,11 +1947,11 @@
     },
     {
       "path": "docs/CAPABILITIES.md",
-      "sha256": "f2678f5bc4ad63f7ede5c828d4d10e9d01d50b50eb8487f2460926979cf8e0c8"
+      "sha256": "09fd44cd12ba1a8ff753a45906fa15fb837b4fe59563901d1ba002e75e603c15"
     },
     {
       "path": "docs/DISTRIBUTION.md",
-      "sha256": "caf6073091d6e0133479c6646b2557a4a2d2bf4efa26f13cb720fceb158f9a7e"
+      "sha256": "ecbd0df0171643c9159d78a84b32ddfbd01477f1fa7b4e8f0eaa1046f5f59225"
     },
     {
       "path": "docs/EXPLAINER.md",
@@ -1963,7 +1963,7 @@
     },
     {
       "path": "docs/GETTING-STARTED.md",
-      "sha256": "3df018e9a1c8cb61ed47048ba156f5bb8b985f1a5a79e20d17b0852e4755330a"
+      "sha256": "3ef00fa237e978f29dc6719e6b8afe66a1f889b222b6e24bef1888cc270a396c"
     },
     {
       "path": "docs/GLTF-EXPORT.md",
@@ -1987,7 +1987,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "01c40dac57b2b4218c89edd7f4b6920ad4e2321ed4e73cbaaba5b0541ec9320e"
+      "sha256": "547c65e72f8de245d325d204f45900fe6225dfba12defa7f1cb1f54f4e01c243"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -1995,7 +1995,7 @@
     },
     {
       "path": "docs/QUALITY.md",
-      "sha256": "1a19380302b881f17f5ee088bdba6079602800b374ede286eae43dc63f9fba3d"
+      "sha256": "01ec5bb3179d9c7c450b6f263663233d3e868293f4f802e38310ffe3cd61c8a7"
     },
     {
       "path": "docs/REASONS.md",
@@ -2003,7 +2003,7 @@
     },
     {
       "path": "docs/SHOWCASE.md",
-      "sha256": "c3f7ea783ee80d38865b593b8e0d844dda7961c584b42c02b6d619000e0213f3"
+      "sha256": "737e8a972f13d76172280aedda16eaebe611859ee329a9cfc995b00bdcd6abbb"
     },
     {
       "path": "docs/SOLID-3D.md",
@@ -4012,6 +4012,66 @@
     {
       "path": "tools/tests/test_portability_tools.py",
       "sha256": "c731cb6be9a83bf4010aece790741c06fda3a4302040f7e3a3d8926aad1ddfce"
+    },
+    {
+      "path": "docs/CONCEPTS.md",
+      "sha256": "da55af4a869fd1c4e43967923e5e6dee7136af144e7474d109b6b51104198628"
+    },
+    {
+      "path": "docs/COOKBOOK.md",
+      "sha256": "f935f88818470d0d16fb71620b8aba00682ba3c17c7bbbbccca5492700873387"
+    },
+    {
+      "path": "docs/FAQ.md",
+      "sha256": "41e01803e04e9770c43b710e5826a5b1f2ae0e04faf9b6694b07cda368de5371"
+    },
+    {
+      "path": "docs/FOR-TEACHERS.md",
+      "sha256": "97c2d4bd7e64d762cc0030fa4862647cd802e33c5bc88c536b08babc2668a810"
+    },
+    {
+      "path": "docs/GALLERY.md",
+      "sha256": "b834984ed127c9253db4447bae3acefcbc5bd05ad44a3e8356193e0103fbc95a"
+    },
+    {
+      "path": "docs/cookbook/01-first-board.scene.json",
+      "sha256": "dc7fbf6b8e852c135c34bba5b9645d1cc80305fb396d10ced2f96833862b5162"
+    },
+    {
+      "path": "docs/cookbook/02-reveal-in-steps.scene.json",
+      "sha256": "76e60820547e871ee5c493a8c7dd4ff872a4a3ae3cac7d2df05b7e3e95aac201"
+    },
+    {
+      "path": "docs/cookbook/03-moving-highlight.scene.json",
+      "sha256": "5e70f4e4ecdcfaaa006aa01dadf46dacbb4592c0f4aedffa06a273d07fd340bf"
+    },
+    {
+      "path": "docs/cookbook/04-plot-points.scene.json",
+      "sha256": "24664669843d4dd4cf00e1961d73f1f0b982e6eddb67b78cd92cf13d18431103"
+    },
+    {
+      "path": "docs/cookbook/05-compare-bars.scene.json",
+      "sha256": "6d8362bc567f0f2c36e8771cd9407988a8f68f71f6f88632490a2056b5b22dc5"
+    },
+    {
+      "path": "docs/cookbook/06-forces-on-a-ramp.scene.json",
+      "sha256": "7399c62a1b6a4f78284e8bbef37a7dcde7f6e252ad8fa09f6eb8f14050e5f9da"
+    },
+    {
+      "path": "docs/cookbook/07-timed-motion.scene.json",
+      "sha256": "e6d249b30f5d4d33b6888e3b94d314b6b3dff08ac61ffef75e462b1d8438c762"
+    },
+    {
+      "path": "docs/cookbook/08-array-and-code.scene.json",
+      "sha256": "938b9080a4aaf95d929b928d113d594d50aab0566508a08eb42e27efc6b5d347"
+    },
+    {
+      "path": "docs/cookbook/09-table-of-values.scene.json",
+      "sha256": "87a86ed640b5b46404fd3e7412ca2c78c2ae03b46f189b3720eef2fc15d31e53"
+    },
+    {
+      "path": "docs/cookbook/10-search-tree-template.scene.json",
+      "sha256": "78d7bf5be5e9387dbd1962fbc3baf882cddd96046dc11e6ad3909f9b6673c226"
     }
   ]
 }

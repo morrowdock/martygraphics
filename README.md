@@ -1,11 +1,12 @@
 # MartyGraphics
 
-MartyGraphics is a Swift package that draws teaching visuals from small JSON documents. It checks each document
-before it draws anything. A document that breaks a rule is refused with a short reason code, so a host app never
-shows half a picture.
+MartyGraphics is a Swift package that draws teaching visuals from small JSON documents. It checks each completed
+document before it draws it. A document that breaks a rule is refused with a short reason code. While a scene is
+still streaming in, a host can show provisional previews; the full check runs when the stream ends.
 
 - **2D scenes:** diagrams, plots, bar charts, arrays, tables, trees and graphs, with step-by-step narration (SwiftUI).
-- **3D mechanisms:** gear trains, linkages and cutaways. The engine solves their motion and checks the gear meshes.
+- **3D mechanisms:** gear trains, slider-cranks and cutaways. The engine solves their motion and checks the gear
+  meshes.
 - **It checks structure, motion and layout. It does not check facts.** The words in a document are the author's.
 
 **Status: early preview.** The first tag is `v0.1.0` (2026-11-11); `main` has changed since then. The package targets
@@ -69,8 +70,8 @@ let package = Package(
 )
 ```
 
-Save this as `Sources/FirstBoard/RenderFirstBoard.swift`. It parses a two-item scene and saves step 0 as a PNG, with
-the same calls as the [showcase exporter](Examples/Showcase/Sources/MartyShowcase/Showcase.swift):
+Save this as `Sources/FirstBoard/RenderFirstBoard.swift`. It parses a two-item scene and saves one frame as a PNG,
+with the same calls as the [showcase exporter](Examples/Showcase/Sources/MartyShowcase/Showcase.swift):
 
 ```swift
 import AppKit
@@ -126,9 +127,12 @@ swift run
 open first-board.png
 ```
 
-Change `"at": [4, 4]` to `[40, 4]` and run again: the point is outside the board, so the parser refuses the scene
-and prints its reason, `body.at`, instead of drawing it. To show a scene in a SwiftUI app instead of a PNG, use `MartyGraphicsView(scene: scene)`; the
+The PNG is one frame: step 0 at time 0. It has no narration, no step focus and no playback. To see reveals, step
+edits and timed motion, show the scene in a SwiftUI app with `MartyGraphicsView(scene: scene)`; the
 [tutorial](docs/GETTING-STARTED.md) shows a complete host with live updates.
+
+Change `"at": [4, 4]` to `[40, 4]` and run again: the point is outside the board, so the parser refuses the scene
+and prints its reason, `body.at`, instead of drawing it.
 
 **Using the tag instead of a checkout.** Replace the dependency with
 `.package(url: "https://github.com/morrowdock/martygraphics.git", exact: "0.1.0")` and the product with
@@ -163,10 +167,13 @@ Each file prints `valid` or `invalid:` with the reason code. It runs the same pa
 - **Checked (2D scenes):** document shape, value ranges, unique ids, references between items, text rules (no markup,
   no links) and size limits. See [Concepts](docs/CONCEPTS.md#limits).
 - **Checked (3D mechanisms):** gear meshing (tooth phase, centre distance and tooth interference in 2D at sampled
-  angles), gear ratios, joint motion, and that labels and arrows are visible in the steps that show them.
+  angles), gear ratios and joint motion. The standard check warns when a label or arrow is hidden or untested in a
+  step that shows it; `--strict` refuses the document. A force or flow arrow that a part hides can be left out of a
+  still, with a warning.
 - **Not checked:** whether the words are true; strength, load, wear, friction, efficiency, air or gas flow; forces
-  other than the gravity direction; collisions between parts. Linkages are limited to the slider-crank; there are no
-  helical or bevel gears, belts or cams ([full list](docs/SOLID-3D.md#limits)).
+  other than the gravity direction; collisions between parts. The engine can solve slider-crank motion. It has no
+  general linkage solver and no cam-contact solver, and there are no helical or bevel gears or belts
+  ([full list](docs/SOLID-3D.md#limits)).
 - **"Solved" is not "verified".** A "Solved" count in a 3D legend counts values the engine computed from the author's
   joints, gears and drives. It is not a measured fact about a real object.
 - **AI authoring is not reliable enough yet.** In a 50-question development test, Claude Haiku 5.5 got all 40 in-scope
@@ -201,7 +208,8 @@ the area has automated tests in this repository; they passed in the hosted `maco
 | AI model or hosted generation | — | Not included. | — |
 | Windows, Linux, web browser | [Portability proposal](docs/PORTABILITY-PROPOSAL.md) | Not supported. Planned, not started. | — |
 
-Every pull request must pass the hosted `CI` check `hygiene`; the hosted `macos` tests also run on every pull request
+Every pull request must pass the hosted `CI` check `hygiene` and the `maintainer/local-validation` status. The hosted
+`macos` tests run separately on every pull request and do not block a merge
 ([CI details](docs/VERIFY-ON-MAC.md#hosted-ci-required-merge-gate)). The [capability matrix](docs/CAPABILITIES.md)
 and the [quality plan](docs/QUALITY.md) list what is still pending.
 

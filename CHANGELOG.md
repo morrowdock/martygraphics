@@ -7,6 +7,9 @@
   scene to a PNG, and a capability table with honest status and what is in `v0.1.0`. Add Concepts, Cookbook
   (ten scenes in `docs/cookbook`), Gallery, FAQ and For teachers pages. Correct stale release and "unreleased"
   statements in the tutorial, protocol, distribution, capabilities and quality pages.
+- Docs: say that the quick start saves one frame, and state more exactly the patch revision rule, the standard and
+  strict 3D checks, the outputs of `marty-solid render`, `export-gltf` and `transcript`, the section-cut caps, the
+  linkage and cam limits, where the gallery images came from, and the required CI checks.
 - Docs: clarify that a coding agent wrote the turbofan JSON directly in the documented
   format, consistently with the site, showcase and provenance receipt.
 - Docs: describe the opt-in ML explainer kit and the Blender video tool (16:9, 1:1 and 9:16,
@@ -62,7 +65,7 @@
 - Hide mutable movie encoder internals behind append/finish/cancel operations;
   the shared low-level writer requires an explicit experimental SPI import.
 
-## Unreleased
+### Earlier entries (not sorted by type)
 
 - **Dry packing without blinded-key access (2026-11-13, A-19).** Use only the
   reviewed bicycle key with dedicated `DRY-BICYCLE` ID in dry mode, preserve
@@ -161,8 +164,8 @@
   classic|studio|paper` and `MGSolidRenderer(document:look:)` choose how a solid is presented: `studio` is a graphite
   studio sweep with a pool of light under the subject, `paper` a near-white one; both make shadows land on a floor,
   keep the outline of dark parts and the form of white parts, and use a dithered backdrop that does not band.
-  `classic` (the default) is the renderer as it was. `MGSolidQuality` (`interactive`, `balanced`, `still`) sets the
-  cost of a frame through `MGStudioOptions(quality:)`; `still` equals `MGStudioOptions()`. The explainer view takes
+  `classic` (the default when introduced) is the renderer as it was. `MGSolidQuality` (`interactive`, `balanced`,
+  `still`) sets the cost of a frame through `MGStudioOptions(quality:)`; `still` equals `MGStudioOptions()`. The explainer view takes
   both (`MGExplainerController.solidLook`, `solidQuality`, default `balanced`: 16 shadow samples instead of 24). No
   check report or snapshot changes for any look (tested). The render `manifest.json` gains one member, `look` (the
   look the images were drawn with), so the four render goldens gain the line `"look" : "classic"` and nothing else. Design:
@@ -214,7 +217,7 @@ iOS 17+, no external packages. Every change in full: [docs/HISTORY.md](docs/HIST
 - **2D scenes and lessons.** Validated v1 scenes for SwiftUI diagrams, plots, arrays and trees, with templates,
   patches and streaming; beat-by-beat lessons with saved state ([docs/LESSONS.md](docs/LESSONS.md)).
 - **Also:** `MartyGraphicsPathTracer` (Metal path tracing), 3D inspection hooks, `marty-scene-validate` and the
-  `Examples/`. Hosted CI (`hygiene`, `macos`) gates every merge.
+  `Examples/`. At release, both `hygiene` and `macos` were required.
 
 ### Shown with real output
 

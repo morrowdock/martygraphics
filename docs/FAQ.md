@@ -5,8 +5,9 @@ Short answers, with links to the page that has the details.
 ## What is MartyGraphics?
 
 A Swift package that draws teaching visuals from small JSON documents: 2D boards (diagrams, plots, charts, arrays,
-tables, trees, graphs) and 3D mechanisms (gears, linkages, cutaways). Every document is checked before it is drawn.
-See the [README](../README.md) and [Concepts](CONCEPTS.md).
+tables, trees, graphs) and 3D mechanisms (gears, linkages, cutaways). Every completed document is checked before it
+is drawn. While a scene is still streaming in, a host can show provisional previews; the full check runs when the
+stream ends. See the [README](../README.md) and [Concepts](CONCEPTS.md).
 
 ## What does it run on?
 
@@ -48,8 +49,10 @@ The reason names the rule and the place, not the file line. Common ones:
 | Reason | Usual cause |
 | --- | --- |
 | `json` | The text is not valid JSON, or not UTF-8. |
-| `scene.version` | `v` is missing or not `1`. |
-| `scene.unknown.<key>` | A key the format does not have, often a typo such as `colour`. |
+| `scene.missing` | The scene has no `v`. |
+| `scene.version` | `v` is present but not `1`. |
+| `scene.unknown.<key>` | A top-level key the format does not have, for example `scene.unknown.titel` for a misspelt `title`. |
+| `item.<kind>.unknown.<key>` | An item key the format does not have, for example `item.body.unknown.colour`. |
 | `<kind>.<key>` | A value is the wrong type or out of range, for example `body.at` for a point off the board. |
 | `item.kind` | `k` is not one of the [19 kinds](CONCEPTS.md#items). |
 | `id.duplicate.<id>` | Two items share an id. |
@@ -71,9 +74,14 @@ and measurements; see [bounds are part of the contract](CAPABILITIES.md#bounds-a
 
 - **2D scenes:** the library draws frames; your host saves them. The [quick start](../README.md#quick-start) saves a
   PNG, and the [showcase exporter](../Examples/Showcase/Sources/MartyShowcase/Showcase.swift) also writes GIFs.
-- **3D mechanisms and explainers:** `marty-solid render` writes stills, a loop and a story video
-  ([`marty-solid`](../Examples/Solid3D/README.md)). `marty-solid export-gltf` writes a glTF file for
-  [Blender rendering](../tools/render-blender/README.md).
+- **3D mechanisms and explainers:** `marty-solid render FILE.json NEW_DIR` writes stills. It also writes a loop when
+  the document has a solid and loops are on (`--no-loop` turns them off), and a story video when the document has
+  steps or beats and story output is on (`--no-story` turns it off) ([`marty-solid`](../Examples/Solid3D/README.md)).
+- **glTF for Blender:** `marty-solid export-gltf FILE.json NEW_DIR --engine-commit SHA` takes an assembly document and
+  writes a `.glb` file and a manifest for [Blender rendering](../tools/render-blender/README.md)
+  ([glTF export](GLTF-EXPORT.md)).
+- **Text:** `marty-solid transcript FILE.json` prints JSON with the captions, the visible annotation text and the
+  board table rows ([transcript](EXPLAINER.md#transcript)).
 - **ML explainer boards:** `marty-ml-render` writes MP4 or transparent PNG frames ([ML explainers](ML-EXPLAINER.md)).
 - **Programmatic 2D video** (`layer2d`): experimental and opt-in ([protocol](PROTOCOL.md)).
 

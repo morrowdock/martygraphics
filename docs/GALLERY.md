@@ -35,25 +35,31 @@ For short scenes to copy and change, see the [cookbook](COOKBOOK.md).
 
 ## 3D mechanisms (hand-built)
 
-Rendered by `marty-solid render` from JSON assemblies. These are schematic teaching models, not engineering designs.
+The idler gearbox and winch images were rendered by `marty-solid render` from their JSON assemblies. The others came
+from example programs: the turbofan images from `marty-turbofan --export`, the path-traced gearbox from
+`marty-pathtrace`, and the planetary and slider-crank images from `marty-solid3d --export` (the slider-crank from its
+Swift model builder, with the same crank radius and rod length as `slider-crank.json`). Each image folder's
+`provenance.json` has the receipt. These are schematic teaching models, not engineering designs.
 
 | Example | Teaches | Engine feature | Source |
 | --- | --- | --- | --- |
 | <a href="assets/turbofan/labelled.png"><img src="assets/turbofan/labelled.png" width="280" alt="Labelled cutaway of a schematic two-spool turbofan."></a> | The parts of a two-spool turbofan: fan, compressors, combustor, turbines, two shafts | Blade rows, capped partial-revolve cutaways, two authored input drives, a clearance check | [Turbofan](../Examples/Turbofan/README.md) · [loop](assets/turbofan/turbofan-loop.gif) · [exploded](assets/turbofan/exploded.png) |
-| <a href="assets/cutaway/cut.png"><img src="assets/cutaway/cut.png" width="280" alt="Gearbox casing cut open: a 16-tooth, a 23-tooth and a 28-tooth gear mesh in a row."></a> | An idler gear reverses direction but does not change the overall ratio (16/28) | Section cut with capped walls, a see-through casing, caption numbers filled from solved gear speeds | [idler-gearbox.json](../Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json) · [section](SHOWCASE.md#cutaways-and-honest-numbers) |
+| <a href="assets/cutaway/cut.png"><img src="assets/cutaway/cut.png" width="280" alt="Gearbox casing cut open: a 16-tooth, a 23-tooth and a 28-tooth gear mesh in a row."></a> | The 28-tooth output turns in the same direction as the 16-tooth input, at 16/28 of its speed. | Section cut with capped walls, a see-through casing, caption numbers filled from solved gear speeds | [idler-gearbox.json](../Examples/Solid3D/Sources/MartySolid3D/Models/idler-gearbox.json) · [section](SHOWCASE.md#cutaways-and-honest-numbers) |
 | <a href="assets/annotations/winch-dimension.png"><img src="assets/annotations/winch-dimension.png" width="280" alt="Hand winch, front view: labels Pinion 14 teeth and Drum gear 42 teeth, and a measured line Centres 56 mm."></a> | A hand winch: the 14-tooth pinion turns the 42-tooth drum at 1/3 of the crank speed, the other way | Labels, turn arrows whose direction the engine checks, a measured dimension | [annotated-winch.json](../Examples/Solid3D/Sources/MartySolid3D/Models/annotated-winch.json) · [section](SHOWCASE.md#labels-arrows-and-measured-dimensions) |
 | <a href="assets/solid/exploded-labelled.png"><img src="assets/solid/exploded-labelled.png" width="280" alt="Planetary gear set exploded along its shaft with part labels."></a> | A planetary gear set: sun 24, planets 18, ring 60, carrier output at 3.5 : 1 | Gear meshes solved from one input; an exploded view | [planetary.json](../Examples/Solid3D/Sources/MartySolid3D/Models/planetary.json) · [loop](assets/solid/planetary-loop.gif) |
-| <a href="assets/solid/slider-crank-section.png"><img src="assets/solid/slider-crank-section.png" width="280" alt="Slider-crank: a crank disc, an orange connecting rod and a piston in a cylinder shown as a section cut."></a> | How a slider-crank turns rotation into back-and-forth motion | The one supported linkage; a section plane | [slider-crank.json](../Examples/Solid3D/Sources/MartySolid3D/Models/slider-crank.json) |
+| <a href="assets/solid/slider-crank-section.png"><img src="assets/solid/slider-crank-section.png" width="280" alt="Slider-crank: a crank disc, an orange connecting rod and a piston in a cylinder shown as a section cut."></a> | How a slider-crank turns rotation into back-and-forth motion | Slider-crank motion solved by the engine; the uncapped compatibility section clip (`MGStudioOptions.section`) | [slider-crank.json](../Examples/Solid3D/Sources/MartySolid3D/Models/slider-crank.json) |
 | <a href="assets/pathtrace/hero.png"><img src="assets/pathtrace/hero.png" width="280" alt="Path-traced steel and brass gearbox on a dark studio floor."></a> | A two-stage gearbox: 2 : 1, then a 3.5 : 1 planetary stage, 7 : 1 overall | The separate `MartyGraphicsPathTracer` library (Metal); procedural geometry | [Path tracer](../Examples/PathTrace/README.md) |
 
 More models (compound spur reduction, ring-driven planetary, cam and follower, four-bar, plunger, quadcopter arm) are
-in [`Examples/Solid3D`](../Examples/Solid3D/README.md); they have check goldens but no published stills.
+in [`Examples/Solid3D`](../Examples/Solid3D/README.md); they have check goldens but no published stills. The four-bar
+uses authored rotation ratios, and the cam example drives its follower with a `crankSlider` drive; the engine has no
+general linkage solver and no cam-contact solver.
 
 ## Fact-checked explainers (hand-built)
 
 | Example | Teaches | Engine feature | Source |
 | --- | --- | --- | --- |
-| <a href="assets/drone-aviation/quadcopter/poster.jpg"><img src="assets/drone-aviation/quadcopter/poster.jpg" width="280" alt="A quadcopter with two blue and two orange propellers above a landing pad marking."></a> | How a quadcopter steers with propeller speed and reaction torque | Turn arrows with checked senses; a weight arrow | [Quadcopter](SHOWCASE.md#quadcopter-steering) |
+| <a href="assets/drone-aviation/quadcopter/poster.jpg"><img src="assets/drone-aviation/quadcopter/poster.jpg" width="280" alt="A quadcopter with two light-blue and two pale-yellow propellers above a landing pad marking."></a> | How a quadcopter steers with propeller speed and reaction torque | Turn arrows with checked senses; a weight arrow | [Quadcopter](SHOWCASE.md#quadcopter-steering) |
 | <a href="assets/drone-aviation/payload-cg/poster.jpg"><img src="assets/drone-aviation/payload-cg/poster.jpg" width="280" alt="A quadcopter with a red payload forward on a rail, with longer thrust arrows on the front motors."></a> | How payload position moves the centre of gravity | Poses, arrows, a weight arrow | [Payload and CG](SHOWCASE.md#payload-position-and-centre-of-gravity) |
 | <a href="assets/drone-aviation/brushless-motor/poster.jpg"><img src="assets/drone-aviation/brushless-motor/poster.jpg" width="280" alt="An outrunner motor with half of its bell cut away, showing magnets, stator teeth and coils."></a> | Inside a brushless outrunner motor | Cutaway, labels, spin | [Brushless motor](SHOWCASE.md#brushless-outrunner-motor) |
 | <a href="assets/drone-aviation/gimbal/poster.jpg"><img src="assets/drone-aviation/gimbal/poster.jpg" width="280" alt="A tilted drone with a level camera on a three-axis gimbal and two measured lines on the camera."></a> | How a three-axis gimbal keeps a camera level | Joint poses, measured dimensions | [Gimbal](SHOWCASE.md#three-axis-camera-gimbal) |
