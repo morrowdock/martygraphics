@@ -261,7 +261,8 @@ deep is refused with `template.build`. For a sorted-array pair search, use
 
 ## How these recipes were checked
 
-On 2026-11-26 each recipe file was checked with a draft Python preflight of the scene v1 rules (not part of this repository; `scene_v1_check.py`, SHA-256 `0d479ba05beb…`): **10 of 10 pass**.
+On 2026-11-26 each recipe file was checked with a draft Python preflight of the scene v1 rules
+(not part of this repository; `scene_v1_check.py`, SHA-256 `0d479ba05beb…`): **10 of 10 pass**.
 
 | Recipe file | Preflight |
 | --- | --- |

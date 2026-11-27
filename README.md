@@ -8,9 +8,9 @@ shows half a picture.
 - **3D mechanisms:** gear trains, linkages and cutaways. The engine solves their motion and checks the gear meshes.
 - **It checks structure, motion and layout. It does not check facts.** The words in a document are the author's.
 
-**Status: early preview.** The first tag is `v0.1.0` (2026-11-11); `main` has changed since then. The package is built
-and tested on macOS 14 or later. iOS 17 or later is declared in the package but not yet accepted on a device. Windows,
-Linux and web browsers are not supported. No external packages. [Apache-2.0](LICENSE).
+**Status: early preview.** The first tag is `v0.1.0` (2026-11-11); `main` has changed since then. The package targets
+macOS 14 or later, and its tests run on hosted macOS runners. iOS 17 or later is declared in the package but not yet
+accepted on a device. Windows, Linux and web browsers are not supported. No external packages. [Apache-2.0](LICENSE).
 
 [Quick start](#quick-start) · [Concepts](docs/CONCEPTS.md) · [Cookbook](docs/COOKBOOK.md) ·
 [Gallery](docs/GALLERY.md) · [FAQ](docs/FAQ.md) · [For teachers](docs/FOR-TEACHERS.md) · [Contribute](CONTRIBUTING.md)
