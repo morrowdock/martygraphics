@@ -78,8 +78,10 @@ the explicit contributor range. SHA values are passed as separate arguments;
 the hosted workflow pins them through quoted environment variables.
 
 The file check covers manifest hashes, JSON syntax, source SPDX and relative file
-links. It is not a privacy review, semantic renderer test or proof that a link's
-anchor exists. Review the full-history privacy categories, all binary assets and
+links. It also refuses a relative link with a line-number fragment (`#L123`) in
+`docs/`, because line numbers move with every edit; link the file and name the
+symbol in the link text instead. It is not a privacy review, semantic renderer test
+or proof that a link's anchor exists. Review the full-history privacy categories, all binary assets and
 their metadata separately; retain that evidence beside the receipt.
 
 ## Native evidence and publishing

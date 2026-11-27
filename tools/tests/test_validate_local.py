@@ -2,6 +2,7 @@
 """Check when an earlier native receipt may vouch for a candidate, on real Git fixture repositories."""
 
 from contextlib import redirect_stderr, redirect_stdout
+import hashlib
 import importlib.util
 import io
 import json
@@ -685,6 +686,72 @@ class RepositoryCoverageTests(unittest.TestCase):
                     self.assertEqual(documented[package][0], validate_local.default_command(package, entries))
         self.assertEqual([c[-2:] for c in documented["Examples/Showcase"][1:]],
                          [["marty-showcase", "--verify"], ["--export", validate_local.EXPORT_DIR]])
+
+
+class LineNumberLinkTests(unittest.TestCase):
+    """docs/ links to source files by name, never by line number (`#L123` drifts on every edit)."""
+
+    def test_line_number_fragments_into_files_are_found(self):
+        for link in ("../../Sources/MartyGraphics/MGParser.swift#L123", "../tools/mg_expr.py#L5-L9",
+                     "Sources/X.swift#L12C3", "../README.md#L4"):
+            with self.subTest(link=link):
+                self.assertTrue(validate_local.line_number_link(link))
+        for link in ("../../Sources/MartyGraphics/MGParser.swift", "PROTOCOL.md#limits", "#l1", "#L12",
+                     "x.md#layers", "guide.md#L12-setup", "guide.md#Lights",
+                     "https://github.com/morrowdock/martygraphics/blob/0123abc/x.swift#L12"):
+            with self.subTest(link=link):
+                self.assertFalse(validate_local.line_number_link(link))
+
+    def test_markdown_links_reads_both_link_forms(self):
+        text = '[a](one.swift#L3) [b](two.md "Title") <img src="three.png"> <a href="four.md#L9">x</a>'
+        self.assertEqual(validate_local.markdown_links(text), ["one.swift#L3", "two.md", "three.png", "four.md#L9"])
+
+    def test_markdown_links_reads_angle_and_reference_forms(self):
+        text = '[a](<one two.swift#L3>) [b][ref]\n\n[ref]: ../two.swift#L9 "Title"\n  [other]: <three.md>\n'
+        self.assertEqual(sorted(validate_local.markdown_links(text)), ["../two.swift#L9", "one two.swift#L3", "three.md"])
+
+    def test_check_files_refuses_angle_and_reference_line_links(self):
+        for doc in ("See [`parser`](<../Sources/Kit/Parser.swift#L2>).\n",
+                    "See [`parser`][p].\n\n[p]: ../Sources/Kit/Parser.swift#L2\n"):
+            with self.subTest(doc=doc):
+                files = dict(self.SOURCE, **{"docs/NOTES.md": doc})
+                with self.assertRaisesRegex(ValueError, r"Line-number link in docs/NOTES\.md"):
+                    self.check(files)
+
+    def check(self, files):
+        """Run check_files on a new repository holding `files` and a matching FILES.json."""
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        repo = Path(temp.name)
+        manifest = []
+        for name, text in files.items():
+            (repo / name).parent.mkdir(parents=True, exist_ok=True)
+            (repo / name).write_bytes(text.encode())
+            manifest.append({"path": name, "sha256": hashlib.sha256(text.encode()).hexdigest()})
+        (repo / "FILES.json").write_bytes(json.dumps({"files": manifest}).encode())
+        env = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+        subprocess.run(["git", "init", "-q"], cwd=repo, env=env, check=True)
+        subprocess.run(["git", "add", "-A"], cwd=repo, env=env, check=True)
+        with redirect_stdout(io.StringIO()):
+            validate_local.check_files(repo)
+
+    SOURCE = {"Sources/Kit/Parser.swift": "// SPDX-License-Identifier: Apache-2.0\nlet parser = 1\n"}
+
+    def test_check_files_refuses_a_line_number_link_in_docs(self):
+        files = dict(self.SOURCE, **{"docs/NOTES.md": "See [`parser`](../Sources/Kit/Parser.swift#L2).\n"})
+        with self.assertRaisesRegex(ValueError, r"Line-number link in docs/NOTES\.md: \.\./Sources/Kit/Parser\.swift#L2"):
+            self.check(files)
+
+    def test_check_files_accepts_a_file_link_naming_the_symbol(self):
+        self.check(dict(self.SOURCE, **{"docs/NOTES.md": "See [`parser` in Parser.swift](../Sources/Kit/Parser.swift).\n"}))
+
+    def test_the_repository_docs_have_no_line_number_links(self):
+        found = []
+        for path in sorted((validate_local.ROOT / "docs").rglob("*.md")):
+            found += ["%s: %s" % (path.relative_to(validate_local.ROOT).as_posix(), link)
+                      for link in validate_local.markdown_links(path.read_text(encoding="utf-8"))
+                      if validate_local.line_number_link(link)]
+        self.assertEqual(found, [])
 
 
 if __name__ == "__main__":

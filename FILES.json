@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f29df817adc5872c86fa1268bcbe9adb7fb08ee30a3ff2c678c8ced0e3b67d21"
+      "sha256": "52375529bf7434f8e5c2ef657c26cda4c76cb2c3d80af77cc74e7672b053e06d"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1979,7 +1979,7 @@
     },
     {
       "path": "docs/LOCAL-VALIDATION.md",
-      "sha256": "a31db17d0184957316dcafd6f66e96786439613766c568eb6ceb670cab455dbe"
+      "sha256": "7892a27fe80fd9eceb9c70bf3f22a49a0701fdddd205d936ca18ad0109890dd9"
     },
     {
       "path": "docs/PORTABILITY-PROPOSAL.md",
@@ -2951,7 +2951,7 @@
     },
     {
       "path": "tools/validate_local.py",
-      "sha256": "26f08bd6692108fe92e0dce22e56dfc567348a0c8cfe4ed1c4dd7929a119c59d"
+      "sha256": "944e2a098ab2b56a1104d1028cfb4b6398782fbbcb2dcf4afb8a0d70450e48b6"
     },
     {
       "path": "tools/verify_release_install.py",
@@ -3407,7 +3407,7 @@
     },
     {
       "path": "docs/schemas/evidence/scene-v1/SWIFT-PARITY.md",
-      "sha256": "98efa59f4f8c7bb93062fa7daea4826747a39cd7b88151d7c67b963b2fe82dc4"
+      "sha256": "dc29ba2a65575e31d0bf3ad3f3c024f7a6a1faf659dd805794529f475b63577d"
     },
     {
       "path": "docs/schemas/scene-v1.draft.schema.json",
@@ -3415,7 +3415,7 @@
     },
     {
       "path": "docs/schemas/scene-v1.schema-notes.md",
-      "sha256": "2830ee67bb106e3ad96893f9aa516671b10523bbe003077fd6753d76d545b003"
+      "sha256": "eda04300f6abca45a5cad4472831fde0631628ce73deb16e2bfcad717dc91564"
     },
     {
       "path": "docs/schemas/evidence/scene-v1/studio-draft.json",
@@ -3439,7 +3439,7 @@
     },
     {
       "path": "docs/PORTABILITY-MAP.md",
-      "sha256": "a5b42ceba658cb3a541c278564e889cd64ca1517107096cd88da11c5c21b778c"
+      "sha256": "cb739931808178453fd26f0dc5539bf3c22d6a8321c247d162d2a927d26575df"
     },
     {
       "path": "docs/fixtures/semantics/README.md",
@@ -4075,7 +4075,7 @@
     },
     {
       "path": "tools/tests/test_validate_local.py",
-      "sha256": "4c3f770dba77295c6ac5614d9337689e45882ef8ce76b307abd280d42356c143"
+      "sha256": "d31649ab0f1373a434c043fe018162de31e2f3e84e08f8d81285504ea7b24673"
     },
     {
       "path": "tools/write_native_receipt.py",

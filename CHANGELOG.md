@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Changed
+- Docs: the scene v1 schema notes and the Swift parity evidence link Swift sources by file and name the symbol
+  (for example `MGParser.step(_:_:)`) instead of linking line numbers, which had drifted 26 to 28 lines.
+  `validate_local.py --check-files` now refuses a relative `#L<digits>` link in `docs/`.
 - Docs: rewrite the README around a short description, one example image, a quick start that draws a first
   scene to a PNG, and a capability table with honest status and what is in `v0.1.0`. Add Concepts, Cookbook
   (ten scenes in `docs/cookbook`), Gallery, FAQ and For teachers pages. Correct stale release and "unreleased"

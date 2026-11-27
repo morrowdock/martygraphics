@@ -44,8 +44,8 @@ Those rows have no runtime evidence from this pass.
   `Examples/Showcase/Sources/MartyShowcase/Scenes/shortest-path.json`
   both received Swift `template.unknown` and Python draft acceptance with
   expansion deferred. The standalone CLI leaves the graph pack unregistered.
-  Showcase registers it in
-  [Showcase.swift](../../../../Examples/Showcase/Sources/MartyShowcase/Showcase.swift#L199).
+  Showcase registers it with `MGPacks.register(MGGraphPack.pack)` in
+  [`Showcase.main()`](../../../../Examples/Showcase/Sources/MartyShowcase/Showcase.swift).
   The current [draft checker](../../../../tools/scene_v1_check.py) returns
   `template.unknown` for both inputs by default and accepts them with
   `--pack graphs`, with expansion deferred to Swift.

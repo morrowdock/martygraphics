@@ -72,15 +72,36 @@ def full_sha(value):
     return value.lower()
 
 
-def check_files():
-    paths = [p for p in git("ls-files", "-z").decode().split("\0") if p]
-    expected = {p: hashlib.sha256((ROOT / p).read_bytes()).hexdigest()
+def markdown_links(text):
+    """The link targets in Markdown text: `[text](target)`, `[text](<target>)`, reference definitions
+    (`[ref]: target`) and HTML `src` and `href` attributes."""
+    links = re.findall(r'\]\(<([^<>\n]+)>(?:\s+"[^"]*")?\)', text)
+    links += re.findall(r'\]\(([^\s)<][^\s)]*)(?:\s+"[^"]*")?\)', text)
+    links += re.findall(r'(?m)^ {0,3}\[[^\]\n]+\]:[ \t]*<?([^\s>]+)>?', text)
+    return links + re.findall(r'(?:src|href)="([^"]+)"', text)
+
+
+def line_number_link(link):
+    """True for a relative link into a file with a `#L<digits>` fragment, such as `MGParser.swift#L123`.
+
+    Line numbers move whenever the target is edited. A page in docs/ links to the file instead and names the symbol
+    in the link text, for example "`MGParser.item(_:_:)` in MGParser.swift". Links with a scheme and in-page
+    fragments are not affected.
+    """
+    split = urlsplit(link)
+    return not split.scheme and bool(split.path) and re.fullmatch(r"L[0-9]+(?:C[0-9]+)?(?:-L[0-9]+(?:C[0-9]+)?)?", split.fragment) is not None
+
+
+def check_files(root=None):
+    root = root or ROOT
+    paths = [p for p in git("ls-files", "-z", cwd=root).decode().split("\0") if p]
+    expected = {p: hashlib.sha256((root / p).read_bytes()).hexdigest()
                 for p in paths if p != "FILES.json"}
-    actual = json.loads((ROOT / "FILES.json").read_text(encoding="utf-8"))
+    actual = json.loads((root / "FILES.json").read_text(encoding="utf-8"))
     if {f["path"]: f["sha256"] for f in actual["files"]} != expected:
         raise ValueError("FILES.json does not match the candidate")
     for name in paths:
-        path = ROOT / name
+        path = root / name
         if path.suffix == ".json":
             json.loads(path.read_text(encoding="utf-8"))
         if path.suffix in (".swift", ".py"):
@@ -88,17 +109,16 @@ def check_files():
                 raise ValueError("Missing source license: " + name)
         if path.suffix != ".md":
             continue
-        text = path.read_text(encoding="utf-8")
-        links = re.findall(r'\]\(([^\s)]+)(?:\s+"[^"]*")?\)', text)
-        links += re.findall(r'(?:src|href)="([^"]+)"', text)
-        for link in links:
+        for link in markdown_links(path.read_text(encoding="utf-8")):
+            if name.startswith("docs/") and line_number_link(link):
+                raise ValueError("Line-number link in %s: %s (link the file and name the symbol)" % (name, link))
             split = urlsplit(link)
             if split.scheme or link.startswith("#"):
                 continue
             target = (path.parent / unquote(split.path)).resolve()
-            if not target.is_relative_to(ROOT) or not target.exists():
+            if not target.is_relative_to(root) or not target.exists():
                 raise ValueError("Broken or escaping relative link in " + name)
-    print("PASS: manifest, JSON, source licenses and relative file links")
+    print("PASS: manifest, JSON, source licenses, relative file links and no line-number links in docs/")
 
 
 def tree_entries(sha, root=None):

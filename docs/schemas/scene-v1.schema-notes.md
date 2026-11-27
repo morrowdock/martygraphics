@@ -11,35 +11,35 @@ template scenes that still require Swift expansion.
 The draft describes a standalone scene object. Statement envelopes, patches,
 lessons, explainer documents and opt-in programmatic video have their own
 protocols. Swift's `MGParser.scene(data:)` is the authority for acceptance.
-The Swift CLI calls that parser after bounding the raw input. [Validator lines
-13–14 and 150–161](../../tools/SceneValidator/Sources/SceneValidatorCore/SceneValidator.swift#L150).
+The Swift CLI calls that parser after bounding the raw input: see
+[`SceneValidator.maximumInputBytes` and `SceneValidator.check(data:)`](../../tools/SceneValidator/Sources/SceneValidatorCore/SceneValidator.swift).
 
 ## Swift sources for the constraints
 
 | Schema or preflight constraint | Swift source |
 | --- | --- |
-| Version, closed root keys and 2D default / 3D option | [Grammar lines 6–20](../../Sources/MartyGraphics/MGGrammar.swift#L6), [parser line 79](../../Sources/MartyGraphics/MGParser.swift#L79), [parser lines 121–129](../../Sources/MartyGraphics/MGParser.swift#L121) |
-| Template scene requires params and excludes world. Literal scenes require items and exclude params, hide and over. | [Parser lines 131–155](../../Sources/MartyGraphics/MGParser.swift#L131) |
-| World keys and 2–100 dimensions. Default world is 12 by 8. | [Parser line 13](../../Sources/MartyGraphics/MGParser.swift#L13), [parser lines 151–157](../../Sources/MartyGraphics/MGParser.swift#L151) |
-| 1–24 literal items, up to 10 template extras, up to 16 hide entries or overrides each, up to 40 resolved items with at least one remaining, 1–8 supplied steps, up to 48 generated steps | [Parser limits lines 6–12](../../Sources/MartyGraphics/MGParser.swift#L6), [parser lines 146–185](../../Sources/MartyGraphics/MGParser.swift#L146), [parser lines 195–205](../../Sources/MartyGraphics/MGParser.swift#L195) |
-| Title length 60; step text length 200; closed steps with up to 16 show IDs and 1–6 edits; focus ID | [Parser limits lines 8–11](../../Sources/MartyGraphics/MGParser.swift#L8), [parser line 200](../../Sources/MartyGraphics/MGParser.swift#L200), [parser lines 273–286](../../Sources/MartyGraphics/MGParser.swift#L273) |
-| Camera keys, nonnegative x/y bounded by world dimensions, zoom, yaw and pitch | [Parser lines 290–299](../../Sources/MartyGraphics/MGParser.swift#L290) |
-| Closed edits with ID, key and value; id and k are immutable; value is revalidated against the target kind | [Parser lines 302–318](../../Sources/MartyGraphics/MGParser.swift#L302) |
-| Every kind's allowed and required fields; common ID, color and optional per-kind label (40 scalars) | [Parser lines 323–368](../../Sources/MartyGraphics/MGParser.swift#L323), [parser lines 385–399](../../Sources/MartyGraphics/MGParser.swift#L385), [limits line 11](../../Sources/MartyGraphics/MGParser.swift#L11) |
-| Color enum, 21 kinds, nine 3D kinds, and 3D exclusion of code style | [Model lines 24–36](../../Sources/MartyGraphics/MGModel.swift#L24), [parser line 204](../../Sources/MartyGraphics/MGParser.swift#L204), [parser lines 461–475](../../Sources/MartyGraphics/MGParser.swift#L461) |
-| Body shape, size, angle, closed move and duration; incline base and angle; line style | [Parser lines 401–423](../../Sources/MartyGraphics/MGParser.swift#L401) |
-| Vector anchor and direction choices, length and dashed flag; unit component bounds and nonzero threshold | [Parser lines 424–437](../../Sources/MartyGraphics/MGParser.swift#L424), [parser lines 601–605](../../Sources/MartyGraphics/MGParser.swift#L601) |
-| Axes and plot dimensions and axis labels; plot point counts and ordered data ranges | [Parser limits line 12](../../Sources/MartyGraphics/MGParser.swift#L12), [parser lines 438–447](../../Sources/MartyGraphics/MGParser.swift#L438), [parser lines 607–615](../../Sources/MartyGraphics/MGParser.swift#L607) |
-| Spring coil integer, pulley/orbit radii, rope/path point counts and path dashed flag | [Parser limits line 12](../../Sources/MartyGraphics/MGParser.swift#L12), [parser lines 448–460](../../Sources/MartyGraphics/MGParser.swift#L448) |
-| Text style and length 120; highlight target ID; bars count, dimensions, closed bar entry, value, label and unit | [Parser limits lines 11–12](../../Sources/MartyGraphics/MGParser.swift#L11), [parser lines 461–489](../../Sources/MartyGraphics/MGParser.swift#L461) |
-| Array cell alternatives, indices and sizing; node text/radius; edge endpoints and boolean direction | [Parser limits line 12](../../Sources/MartyGraphics/MGParser.swift#L12), [parser lines 490–531](../../Sources/MartyGraphics/MGParser.swift#L490) |
-| Table row/column limits, nonempty rectangular rows, cell alternatives including empty strings, dimensions, header and marked row/column indices; region point count and dashed flag | [Parser limits lines 12 and 28–29](../../Sources/MartyGraphics/MGParser.swift#L12), [parser lines 532–572](../../Sources/MartyGraphics/MGParser.swift#L532) |
-| `func` and `field` keys, ranges, expression length 80, parameters within ±1000, period 0.5–20 seconds, shade, mark, grid size and style; at most six per scene; scene and step `alt` (200 scalars) | [Parser limits lines 33–52](../../Sources/MartyGraphics/MGParser.swift#L33), [parser lines 183–189](../../Sources/MartyGraphics/MGParser.swift#L183), [parser line 230](../../Sources/MartyGraphics/MGParser.swift#L230), [parser line 333](../../Sources/MartyGraphics/MGParser.swift#L333), [parser lines 635–689](../../Sources/MartyGraphics/MGParser.swift#L635) |
-| Closed keys, finite numbers, ASCII IDs of length 1–24, point arity and world-relative bounds | [Parser lines 579–599](../../Sources/MartyGraphics/MGParser.swift#L579) |
-| Plain text, code markup, scalar count and placeholders | [Parser lines 618–671](../../Sources/MartyGraphics/MGParser.swift#L618) |
-| UTF-8, depth 64, raw limit 16 KiB, canonical limit 8 KiB | [Parser limits lines 5–27](../../Sources/MartyGraphics/MGParser.swift#L5), [parser lines 81–86 and 121–125](../../Sources/MartyGraphics/MGParser.swift#L81), [model lines 250–293 and 343–347](../../Sources/MartyGraphics/MGModel.swift#L250) |
-| Unique item IDs, focus and show resolution, valid vector/edge/highlight targets and acyclic highlight chains, including after cumulative step edits | [Parser line 168](../../Sources/MartyGraphics/MGParser.swift#L168), [parser lines 233–269](../../Sources/MartyGraphics/MGParser.swift#L233) |
-| Template parameter object keys, types, ranges and shape for the two built-ins and the opt-in graph example | [Template lines 218–264](../../Sources/MartyGraphics/MGTemplates.swift#L218), [BST lines 316–338](../../Sources/MartyGraphics/MGTemplates.swift#L316), [two pointers lines 373–378](../../Sources/MartyGraphics/MGTemplates.swift#L373), [graph pack lines 4–6, 28–57 and 89–128](../../Sources/MartyGraphics/MGGraphPack.swift#L28) |
+| Version, closed root keys and 2D default / 3D option | [`MGGrammar.version`](../../Sources/MartyGraphics/MGGrammar.swift), [`MGParser.topKeys` and the version and `dim` checks in `MGParser.parseScene`](../../Sources/MartyGraphics/MGParser.swift) |
+| Template scene requires params and excludes world. Literal scenes require items and exclude params, hide and over. | [The `template` branch of `MGParser.parseScene`](../../Sources/MartyGraphics/MGParser.swift) |
+| World keys and 2–100 dimensions. Default world is 12 by 8. | [`MGLimits.worldRange` and the `world` checks in `MGParser.parseScene`](../../Sources/MartyGraphics/MGParser.swift) |
+| 1–24 literal items, up to 10 template extras, up to 16 hide entries or overrides each, up to 40 resolved items with at least one remaining, 1–8 supplied steps, up to 48 generated steps | [`MGLimits` (`items`, `templateExtras`, `hide`, `overrides`, `resolvedItems`, `steps`, `templateSteps`) and the item, `hide`, `over` and `steps` checks in `MGParser.parseScene`](../../Sources/MartyGraphics/MGParser.swift) |
+| Title length 60; step text length 200; closed steps with up to 16 show IDs and 1–6 edits; focus ID | [`MGLimits` (`title`, `say`, `showPerStep`, `stepEdits`), the title check in `MGParser.parseScene` and `MGParser.step(_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Camera keys, nonnegative x/y bounded by world dimensions, zoom, yaw and pitch | [`MGParser.camera(_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Closed edits with ID, key and value; id and k are immutable; value is revalidated against the target kind | [`MGParser.edit(_:)` and `MGParser.apply(_:to:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Every kind's allowed and required fields; common ID, color and optional per-kind label (40 scalars) | [`MGParser.allowedKeys(_:)`, `MGParser.required(_:)`, the start of `MGParser.item(_:_:)` and `MGLimits.label`](../../Sources/MartyGraphics/MGParser.swift) |
+| Color enum, 21 kinds, nine 3D kinds, and 3D exclusion of code style | [`MGColorRole`, `MGKind` and `MGKind.in3D`](../../Sources/MartyGraphics/MGModel.swift), [the `3d.kind` check in `MGParser.parseScene` and the `text` case of `MGParser.item(_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Body shape, size, angle, closed move and duration; incline base and angle; line style | [The `body`, `incline` and `line` cases of `MGParser.item(_:_:)` and `MGLimits.bodyMoveTime`](../../Sources/MartyGraphics/MGParser.swift) |
+| Vector anchor and direction choices, length and dashed flag; unit component bounds and nonzero threshold | [The `vector` case of `MGParser.item(_:_:)` and `MGParser.vector3(_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Axes and plot dimensions and axis labels; plot point counts and ordered data ranges | [`MGLimits.points`, the `axes` and `plot` cases of `MGParser.item(_:_:)`, `MGParser.dataPoint(_:_:)` and `MGParser.range(_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Spring coil integer, pulley/orbit radii, rope/path point counts and path dashed flag | [`MGLimits` (`points`, `ropePoints`, `springCoils`) and the `spring`, `pulley`, `rope`/`path` and `orbit` cases of `MGParser.item(_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Text style and length 120; highlight target ID; bars count, dimensions, closed bar entry, value, label and unit | [`MGLimits` (`text`, `bars`, `barLabel`) and the `text`, `highlight` and `bars` cases of `MGParser.item(_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Array cell alternatives, indices and sizing; node text/radius; edge endpoints and boolean direction | [`MGLimits` (`cells`, `cellText`, `pointers`, `nodeText`) and the `array`, `node` and `edge` cases of `MGParser.item(_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Table row/column limits, nonempty rectangular rows, cell alternatives including empty strings, dimensions, header and marked row/column indices; region point count and dashed flag | [`MGLimits` (`tableRows`, `tableCols`, `tableCellText`, `points`) and the `table` and `region` cases of `MGParser.item(_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| `func` and `field` keys, ranges, expression length 80, parameters within ±1000, period 0.5–20 seconds, shade, mark, grid size and style; at most six per scene; scene and step `alt` (200 scalars) | [`MGLimits` (`exprLength` to `fieldRows`), the `items.expr` count and `alt` check in `MGParser.parseScene`, the `alt` check in `MGParser.step(_:_:)`, the `function` and `field` cases of `MGParser.item(_:_:)`, `MGParser.graphRange(_:_:)`, `MGParser.graphParameters(_:_:_:)` and `MGParser.expression(_:_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Closed keys, finite numbers, ASCII IDs of length 1–24, point arity and world-relative bounds | [`MGParser.closed(_:required:optional:_:)`, `MGParser.num(_:_:_:)`, `MGParser.identifier(_:_:)` and `MGParser.point(_:_:_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Plain text, code markup, scalar count and placeholders | [`MGParser.text(_:_:_:_:code:multiline:)`, `MGParser.looksLikeMarkup(_:)` and `MGParser.fill(_:_:_:env:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| UTF-8, depth 64, raw limit 16 KiB, canonical limit 8 KiB | [`MGLimits.sceneBytes` and `MGLimits.depth`, `MGParser.scene(data:)` and the entry check in `MGParser.parseScene`](../../Sources/MartyGraphics/MGParser.swift), [`MGJSON.dataRefusal`, `MGJSON.textNesting` and `MGJSON.checkEntry`](../../Sources/MartyGraphics/MGModel.swift) |
+| Unique item IDs, focus and show resolution, valid vector/edge/highlight targets and acyclic highlight chains, including after cumulative step edits | [The `id.duplicate` check in `MGParser.parseScene`, `MGParser.checkReferences(items:steps:_:)` and `MGParser.checkItemReferences(_:)`](../../Sources/MartyGraphics/MGParser.swift) |
+| Template parameter object keys, types, ranges and shape for the two built-ins and the opt-in graph example | [`MGTemplate.validate(_:)`, `MGTemplate.records`, `MGTemplates.bst` and `MGTemplates.twoPointers`](../../Sources/MartyGraphics/MGTemplates.swift), [`MGGraphPack.shortestPath` and `MGGraphPack.graph(_:)`](../../Sources/MartyGraphics/MGGraphPack.swift) |
 
 ## What the draft pass covers
 
@@ -94,17 +94,22 @@ precomposed operator. The decomposed companion remains pending under the
 defensive-only verification scope.
 
 The [ported case manifest](../fixtures/v1/invalid/swift-cases.json) contains
-16 distinct invalid core inputs from [SceneValidatorTests](../../tools/SceneValidator/Tests/SceneValidatorCoreTests/SceneValidatorTests.swift#L62).
-It covers malformed JSON (lines 62–71), reason codes (75–94), item rules
-(110–120), raw bytes (123–137), missing version (248–275), bad version
-(279–289), and executable bad JSON (322–331). Repeated inputs are counted
+16 distinct invalid core inputs from [SceneValidatorTests](../../tools/SceneValidator/Tests/SceneValidatorCoreTests/SceneValidatorTests.swift).
+It covers malformed JSON (`testMalformedJSONIsInvalid`), reason codes
+(`testParserReasonCodesAreReportedUnchanged`), item rules
+(`testTableRegionAndCodeScenesUseTheParserRules`), raw bytes
+(`testByteLimitMatchesParser`), missing version
+(`testMultipleFilesKeepOrderAndExitPrecedence` and
+`testPathsWithSpacesAndControlCharacters`), bad version
+(`testJSONReportIsStableAndParsable`), and executable bad JSON
+(`testExecutableExitStatuses`). Repeated inputs are counted
 once. Malformed and padding-heavy inputs are reconstructed byte-for-byte
 from JSON recipes to preserve repository JSON hygiene. The two protocol
 negatives also run, giving 18 negative checks including the repeated
 unknown-key input.
 
 All 16 core invalid inputs are portable as data. Five other invalid inputs
-exercise [the separate ML explainer protocol](../../tools/SceneValidator/Tests/SceneValidatorCoreTests/MLKitValidatorTests.swift#L29)
+exercise the separate ML explainer protocol ([`MLKitValidatorTests`](../../tools/SceneValidator/Tests/SceneValidatorCoreTests/MLKitValidatorTests.swift))
 and were excluded. Filesystem refusals, symlinks, permissions, command-line
 formatting and closed descriptors check the Swift CLI harness outside the
 scene corpus.
@@ -118,7 +123,7 @@ both platforms before relying on Python's size result as a gate.
 The Python checker requires UTF-8 without a leading BOM and unique object
 keys. Compare those acceptance rules with Swift before treating them as engine
 requirements. The Python textual nesting check follows
-[Swift's preflight](../../Sources/MartyGraphics/MGModel.swift#L250) before
+Swift's preflight ([`MGJSON.dataRefusal` and `MGJSON.textNesting`](../../Sources/MartyGraphics/MGModel.swift)) before
 decoding, including inputs deeper than 1,000 levels. A native comparison at
 that depth remains pending.
 
