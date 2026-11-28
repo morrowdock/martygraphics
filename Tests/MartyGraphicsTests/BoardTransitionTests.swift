@@ -326,6 +326,7 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertEqual(rig.selection, "zone")
         XCTAssertEqual(selected.focus, "arrow")
         XCTAssertEqual(selected.emphasis, ["zone"])
+        XCTAssertEqual(selected.appear["arrow"], 0, "the manual clock is still at the staggered draw-on start")
         let focusedPixels = try renderedBoard(focused)
         let selectedPixels = try renderedBoard(selected)
         XCTAssertTrue(focusedPixels != selectedPixels, "selection must change the rendered board")
@@ -333,6 +334,17 @@ final class BoardTransitionHostTests: XCTestCase {
         withoutFocus.focus = nil
         let selectionOnly = try renderedBoard(withoutFocus)
         XCTAssertTrue(selectedPixels != selectionOnly, "the step focus must remain visible alongside selection")
+        func hasAmber(_ pixels: [UInt8]) -> Bool {
+            stride(from: 0, to: pixels.count, by: 4).contains { index in
+                pixels[index] > 220 && (140...220).contains(pixels[index + 1]) && pixels[index + 2] < 100
+            }
+        }
+        XCTAssertTrue(hasAmber(selectedPixels), "the focused arrow starts with a visible amber cue")
+        XCTAssertFalse(hasAmber(selectionOnly), "selection alone uses ink")
+        rig.advance(1)
+        let settled = try rig.frame(Self.size)
+        XCTAssertNil(settled.appear["arrow"])
+        XCTAssertTrue(hasAmber(try renderedBoard(settled)), "the full arrow retains its amber focus")
     }
 
     @MainActor func testStudioDrawsEveryExplicitEmphasisWithoutStepFocus() throws {

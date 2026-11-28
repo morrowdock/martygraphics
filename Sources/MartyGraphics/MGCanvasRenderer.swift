@@ -264,10 +264,8 @@ public enum MGCanvasRenderer {
                 let center = vp.point(from)
                 var start = MGLayout.shaftStart(center: center, angle: angle, body: body, vp)
                 let full = vp.length(item.n("len"))
-                let len = full * CGFloat(p)
                 let dx = CGFloat(cos(angle * .pi / 180)), dy = -CGFloat(sin(angle * .pi / 180))
                 if let shift = fan[item.id] { start = CGPoint(x: start.x - dy * shift, y: start.y + dx * shift) }
-                let tip = CGPoint(x: start.x + dx * len, y: start.y + dy * len)
                 let dashed = item.has("dashed")
                 let focused = theme.v2 != nil && focusID == item.id
                 let width: CGFloat
@@ -276,6 +274,12 @@ public enum MGCanvasRenderer {
                 } else {
                     width = dashed ? 2 : 3.2
                 }
+                // Step focus is visible from the first frame, including during a staggered draw-on.
+                // Start with a short, heavy arrow and grow it to the authored length.
+                let revealedLength = full * CGFloat(p)
+                let cueLength = min(full, 2 * width)
+                let length = focused ? max(revealedLength, cueLength) : revealedLength
+                let tip = CGPoint(x: start.x + dx * length, y: start.y + dy * length)
                 let arrowColor = focused ? (theme.v2?.highlight ?? color) : color
                 var vectorContext = ctx
                 if vectorIsFocused, !focused, let style = theme.v2 { vectorContext.opacity *= style.dim }
