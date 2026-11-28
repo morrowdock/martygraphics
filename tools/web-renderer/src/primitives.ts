@@ -76,7 +76,7 @@ export function range(v: JSONValue | undefined, what: string): [number, number] 
   if (!Array.isArray(v) || v.length !== 2) fail(what);
   const lo = num(v[0], -1e6, 1e6, what);
   const hi = num(v[1], -1e6, 1e6, what);
-  if (!(lo < hi)) fail(what);
+  if (!(hi - lo >= 1e-6)) fail(what);
   return [lo, hi];
 }
 

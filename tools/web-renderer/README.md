@@ -107,9 +107,9 @@ the Swift sources.
 | --- | --- | --- |
 | Recorded Swift results: the 40-input `marty-scene-validate` run transcribed from `SWIFT-PARITY.md` and `swift-cases.json` on `feat/scene-v1-json-schema` (`8882d38`), not re-run here | 40 | 40 identical |
 | Expectations from Swift test sources (the title line-feed expectation was updated from main): reasons asserted by `ParserRegressionTests` (160) and `TemplateExtensionTests` (24), and the `MGFixtures` (6) and `RegressionFixtures` (9) scenes the Swift tests parse | 199 | 199 identical |
-| Swift source reading only (no recorded result, no test): four text-rule cases, non-finite literal, five unknown keys, and a plot span under 1e-6 | 7 | port follows the source for these cases |
-| Main's Python preflight (`tools/scene_v1_check.py`, `f614641`), verdicts captured in `test/expected/python-checker.json` | 249 | 228 identical, 21 differ |
-| The 21 differences: 17 map to `ParserRegressionTests` assertions, 1 to the `TemplateExtensionTests` reason table, 3 to source-reading cases | 21 | the port gives the Swift expectation in each |
+| Swift source reading only (no recorded result, no test): four text-rule cases, non-finite literal, five unknown keys, and refusal of a plot span under 1e-6 | 7 | port follows the source for these cases |
+| Main's Python preflight (`tools/scene_v1_check.py`, `f614641`), verdicts captured in `test/expected/python-checker.json` | 249 | 229 identical, 20 differ |
+| The 20 differences: Python defers 7 templates the port expands and refuses, and 13 cases agree on refusal but use different codes | 20 | zero Python refusals are accepted by the port in this corpus |
 | Historical fixture, Showcase, schema-branch and byte-boundary subset | 43 | 43 identical to Python |
 | Computed values pinned by Swift tests or printed in the Swift captures: Dijkstra narration, what-if patches and revisions, step playback, the caption and step count of all seven Showcase cards | `test/engine.unit.test.mjs` | all identical; final distances also match a Bellman-Ford oracle on 60 seeded random graphs |
 
@@ -259,7 +259,7 @@ Playwright's Chromium only.
 | File | Tests | What |
 | --- | ---: | --- |
 | `test/parser-swift.unit.test.mjs` | 248 | Every corpus input with a Swift expectation: 40 recorded results, 199 from the Swift test sources, 7 from reading the source |
-| `test/parser-python.unit.test.mjs` | 252 | Python preflight verdicts captured in `test/expected/python-checker.json`; each of the 21 documented differences must give the Swift expectation |
+| `test/parser-python.unit.test.mjs` | 252 | Python preflight verdicts captured in `test/expected/python-checker.json`; each of the 20 documented differences must give the Swift expectation |
 | `test/engine.unit.test.mjs` | 19 | Number format, JSON front door, step playback, template narration, patches, wire round trip, Dijkstra oracle, a refused render keeps the shadow calibration, explicit refusals for current scene features |
 | `test/render-snapshot.render.test.mjs` | 88 | 86 frames against `test/snapshots` thumbnails (4× reduced; ≤ 0.5% of pixels may change by more than 16) |
 | `test/cli.render.test.mjs` | 5 | Sizes, scale, all steps, packs, patches, fail-closed refusals, usage errors |

@@ -32,10 +32,9 @@ const DIVERGENCES = {
   "parser-tests/testTemplateEnvelopeParamsHideAndOverFailClosed#19": "python defers expansion; the override's text is checked on the built item (`text.text`)",
   "parser-tests/testTemplateEnvelopeParamsHideAndOverFailClosed#23": "python defers expansion; hiding the only item leaves none (`items.total`)",
   "parser-tests/testTemplateEnvelopeParamsHideAndOverFailClosed#24": "python defers expansion; 43 resolved items exceed 40 (`items.total`)",
-  // Source-reading probes (no Swift run): see the `probes` group in test/corpus.mjs.
+  // The two source-reading divergences concern non-finite literals and unknown-key lists.
   "probes/non-finite-number": "python reports `scene.number`; bytes with 1e400 never become an MGJSON value in Swift (`json`)",
   "probes/five-unknown-keys": "python names the first four unknown keys; Swift's closed-key reason lists all of them",
-  "probes/tiny-plot-range": "python requires a span of 1e-6; Swift requires lo < hi",
 };
 
 function tsVerdict(c) {
@@ -81,12 +80,12 @@ test("on every fixture, Showcase scene and schema-branch input the port and the 
   for (const c of scoped) assert.equal(label(tsVerdict(c)), label(captured.results[c.name]), c.name);
 });
 
-test("the documented divergences are 21: 17 ParserRegressionTests, 1 TemplateExtensionTests, 3 source-reading probes", () => {
+test("the documented divergences are 20: 17 ParserRegressionTests, 1 TemplateExtensionTests, 2 source-reading probes", () => {
   const names = Object.keys(DIVERGENCES);
   assert.equal(cases.length, 249);
-  assert.equal(names.length, 21);
+  assert.equal(names.length, 20);
   const source = (n) => cases.find((c) => c.name === n).swift.source;
   assert.equal(names.filter((n) => source(n).startsWith("ParserRegressionTests.")).length, 17);
   assert.equal(names.filter((n) => source(n).startsWith("TemplateExtensionTests.")).length, 1);
-  assert.equal(names.filter((n) => source(n).includes("(source reading; not run on Swift)")).length, 3);
+  assert.equal(names.filter((n) => source(n).includes("(source reading; not run on Swift)")).length, 2);
 });
