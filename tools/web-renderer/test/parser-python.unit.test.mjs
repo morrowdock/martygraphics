@@ -1,11 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Accept/reject and reason parity with the Python draft preflight (tools/scene_v1_check.py, branch
-// feat/scene-v1-json-schema), using the verdicts captured in test/expected/python-checker.json
-// (scripts/capture-python-results.mjs). The comparison uses the validator entry point, as the Python checker does
-// (`input.too-large` for raw inputs over 16 KiB). The corpus has 247 inputs: 223 match the captured Python verdicts and
-// 24 differ. Where the two differ, the Swift expectation decides and this port must give it: 18 of the 24 are
-// ParserRegressionTests assertions, 1 is the TemplateExtensionTests reason table, and 5 are source-reading probes
-// (no Swift run or Swift test backs those). The Swift side was not run for this comparison.
+// Compare the web validator with verdicts captured from main's Python scene preflight.
 
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
@@ -30,7 +24,6 @@ const DIVERGENCES = {
   "parser-tests/testStepsCamerasAndEditsAreValidatedCumulatively#10": "python reports `step.cam`; Swift reports `camera.zoom`",
   "parser-tests/testStepsCamerasAndEditsAreValidatedCumulatively#17": "python reports `step.do`; Swift reports `edit.unknown.x`",
   "parser-tests/testStepsCamerasAndEditsAreValidatedCumulatively#18": "python reports `step.do`; Swift reports `edit.missing`",
-  "parser-tests/testPlainTextSanitizerAndPlaceholders#10": "python refuses a line feed in a title; Swift accepts it (the Swift test asserts it)",
   "parser-tests/testTemplateEnvelopeParamsHideAndOverFailClosed#9": "python defers expansion; Swift's bst build refuses depth 7 (`template.build`)",
   "parser-tests/testTemplateEnvelopeParamsHideAndOverFailClosed#12": "python defers expansion; the expanded 3D two_pointers holds an array (`3d.kind.array`)",
   "parser-tests/testTemplateEnvelopeParamsHideAndOverFailClosed#13": "python defers expansion; `nope` is not a template item (`hide.ref`)",
@@ -42,8 +35,6 @@ const DIVERGENCES = {
   // Source-reading probes (no Swift run): see the `probes` group in test/corpus.mjs.
   "probes/non-finite-number": "python reports `scene.number`; bytes with 1e400 never become an MGJSON value in Swift (`json`)",
   "probes/five-unknown-keys": "python names the first four unknown keys; Swift's closed-key reason lists all of them",
-  "probes/line-separator-in-title": "python refuses U+2028 (Zl); Swift refuses only Cc and Cf",
-  "probes/line-feed-in-label": "python refuses a line feed outside text items and narration; Swift allows it in every text field",
   "probes/tiny-plot-range": "python requires a span of 1e-6; Swift requires lo < hi",
 };
 
@@ -90,12 +81,12 @@ test("on every fixture, Showcase scene and schema-branch input the port and the 
   for (const c of scoped) assert.equal(label(tsVerdict(c)), label(captured.results[c.name]), c.name);
 });
 
-test("the documented divergences are 24: 18 ParserRegressionTests, 1 TemplateExtensionTests, 5 source-reading probes", () => {
+test("the documented divergences are 21: 17 ParserRegressionTests, 1 TemplateExtensionTests, 3 source-reading probes", () => {
   const names = Object.keys(DIVERGENCES);
-  assert.equal(cases.length, 247);
-  assert.equal(names.length, 24);
+  assert.equal(cases.length, 249);
+  assert.equal(names.length, 21);
   const source = (n) => cases.find((c) => c.name === n).swift.source;
-  assert.equal(names.filter((n) => source(n).startsWith("ParserRegressionTests.")).length, 18);
+  assert.equal(names.filter((n) => source(n).startsWith("ParserRegressionTests.")).length, 17);
   assert.equal(names.filter((n) => source(n).startsWith("TemplateExtensionTests.")).length, 1);
-  assert.equal(names.filter((n) => source(n).includes("(source reading; not run on Swift)")).length, 5);
+  assert.equal(names.filter((n) => source(n).includes("(source reading; not run on Swift)")).length, 3);
 });

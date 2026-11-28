@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Run the draft scene v1 preflight (tools/scene_v1_check.py on feat/scene-v1-json-schema) over many inputs.
+"""Run the draft scene v1 preflight (tools/scene_v1_check.py) over many inputs.
 
 Usage: python -I python_checker_driver.py CHECKER_PY MANIFEST_JSON
 The manifest lists {"name", "file", "packs"} entries; one JSON object per input is printed to stdout.
@@ -7,11 +7,13 @@ The manifest lists {"name", "file", "packs"} entries; one JSON object per input 
 
 import importlib.util
 import json
+from pathlib import Path
 import sys
 
 
 def main():
     checker_path, manifest_path = sys.argv[1:3]
+    sys.path.insert(0, str(Path(checker_path).resolve().parent))
     spec = importlib.util.spec_from_file_location("scene_v1_check", checker_path)
     checker = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(checker)

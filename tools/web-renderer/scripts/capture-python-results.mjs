@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
-// Captures the Python draft preflight's verdict for every corpus input into test/expected/python-checker.json, so the
-// parity test runs without Python. The checker lives on the unmerged branch feat/scene-v1-json-schema; point
-// MG_SCENE_CHECKER at its tools/scene_v1_check.py (default: the local clone used for this prototype).
-//
-//   MG_SCENE_CHECKER=/path/to/tools/scene_v1_check.py node scripts/capture-python-results.mjs
+// Capture the repository's Python scene preflight verdicts for the parity corpus.
 
 import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { PACKAGE_ROOT, corpus } from "../test/corpus.mjs";
+import { PACKAGE_ROOT, REPO_ROOT, corpus } from "../test/corpus.mjs";
 
-const checker = process.env.MG_SCENE_CHECKER ?? "D:/work/mg-scene-schema-20261126/tools/scene_v1_check.py";
+const checker = process.env.MG_SCENE_CHECKER ?? path.join(REPO_ROOT, "tools", "scene_v1_check.py");
 const python = process.env.PYTHON ?? "python";
 if (!fs.existsSync(checker)) {
   console.error(`checker not found: ${checker} (set MG_SCENE_CHECKER)`);
@@ -35,10 +31,16 @@ try {
   let commit = "unknown";
   try {
     commit = execFileSync("git", ["-C", repo, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+    if (!process.env.MG_SCENE_CHECKER) {
+      const main = execFileSync("git", ["-C", repo, "rev-parse", "origin/main"], { encoding: "utf8" }).trim();
+      execFileSync("git", ["-C", repo, "diff", "--quiet", main, "--", "tools/scene_v1_check.py",
+        "tools/mg_expr.py", "tools/mg_math.py", "docs/schemas/scene-v1.draft.schema.json"]);
+      commit = main;
+    }
   } catch {}
   const out = {
     checker: {
-      path: "tools/scene_v1_check.py on branch feat/scene-v1-json-schema",
+      path: "tools/scene_v1_check.py",
       commit,
       sha256: sha256(fs.readFileSync(checker)),
       schemaSha256: sha256(fs.readFileSync(path.join(repo, "docs", "schemas", "scene-v1.draft.schema.json"))),

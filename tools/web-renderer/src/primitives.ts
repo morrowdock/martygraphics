@@ -8,7 +8,7 @@ import { type JSONObject, type JSONValue, isObject } from "./json.js";
 import type { MGPoint, MGValue } from "./model.js";
 import { P, length, mul } from "./model.js";
 import {
-  characterCount, characterIsASCII, characterIsLetter, characterIsWhitespace, graphemes, isControlScalar,
+  characterCount, characterIsASCII, characterIsWhitespace, graphemes, isControlScalar,
   isNewlineScalar, isWhitespaceOrNewlineScalar, scalarCount, swiftStringCompare, trimScalars,
 } from "./unicode.js";
 
@@ -82,21 +82,20 @@ export function range(v: JSONValue | undefined, what: string): [number, number] 
 
 /** True when `<` is directly followed by a letter, `/`, `!` or `?` and a `>` comes later (`looksLikeMarkup`). */
 export function looksLikeMarkup(s: string): boolean {
-  const c = graphemes(s);
-  for (let i = 0; i < c.length; i++) {
-    if (c[i] !== "<" || i + 1 >= c.length) continue;
-    const next = c[i + 1];
-    if ((characterIsLetter(next) || next === "/" || next === "!" || next === "?") && c.slice(i + 1).includes(">")) return true;
+  const c = Array.from(s);
+  const end = c.lastIndexOf(">");
+  for (let i = 0; i + 1 < end; i++) {
+    if (c[i] === "<" && /^[\p{L}/!?]$/u.test(c[i + 1])) return true;
   }
   return false;
 }
 
 /**
  * `MGParser.text`: short plain text with `{name}` placeholders filled from computed values. Rejects markup, code
- * fences, URLs, control characters (Cc, Cf; a line feed is allowed) and unknown placeholders. The scalar limit
+ * fences, URLs, control characters and Unicode line/paragraph separators, and unknown placeholders. The scalar limit
  * applies to the untrimmed text; the stored text is trimmed (code text keeps leading spaces).
  */
-export function text(v: JSONValue | undefined, max: number, ctx: Ctx, what: string, code = false): string {
+export function text(v: JSONValue | undefined, max: number, ctx: Ctx, what: string, code = false, multiline = false): string {
   if (typeof v !== "string") fail(what);
   const s = v;
   const t = trimScalars(s, code ? isNewlineScalar : isWhitespaceOrNewlineScalar);
@@ -107,9 +106,12 @@ export function text(v: JSONValue | undefined, max: number, ctx: Ctx, what: stri
     (code ? !looksLikeMarkup(s) : !s.includes("<") && !s.includes(">")) &&
     !s.includes("```") &&
     !s.includes("://") &&
-    !Array.from(s).some((ch) => isControlScalar(ch) && ch !== "\n");
+    !Array.from(s).some((ch) => ch === "\u2028" || ch === "\u2029" ||
+      (isControlScalar(ch) && !(multiline && ch === "\n")));
   if (!ok) fail(what);
-  return fill(t, ctx.values, what);
+  const filled = fill(t, ctx.values, what);
+  if (scalarCount(filled) > max) fail(what);
+  return filled;
 }
 
 /** `MGParser.fill`: replaces `{name}` (1–16 ASCII letters or digits) with the formatted value. */
@@ -118,7 +120,7 @@ export function fill(s: string, values: Record<string, MGValue>, what: string): 
   let out = "";
   let name = "";
   let inside = false;
-  for (const ch of graphemes(s)) {
+  for (const ch of s) {
     if (inside) {
       if (ch === "}") {
         if (characterCount(name) > 16 || name.includes("_")) fail(`${what}.placeholder`);

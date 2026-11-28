@@ -91,16 +91,55 @@ export function utf8Text(bytes: Uint8Array): string | null {
   }
 }
 
+/** Locate the first repeated key before syntax decoding, as MGKeyScanner does. */
+function duplicateKeyPath(text: string): string | undefined {
+  type Frame = { keys: Set<string>; key?: string; expectKey: boolean } | { index: number };
+  const frames: Frame[] = [];
+  const tokens = /("(?:[^"\\]|\\[\s\S])*")|"[\s\S]*$|[{}\[\],]/g;
+  const segment = (key: string) => Array.from(key).slice(0, 32).join("").replace(/[^A-Za-z0-9_]/gu, "_") || "_";
+  for (const [token, quoted] of text.matchAll(tokens)) {
+    const top = frames.at(-1);
+    if (token === "{") frames.push({ keys: new Set(), expectKey: true });
+    else if (token === "[") frames.push({ index: 0 });
+    else if (token === "}" || token === "]") frames.pop();
+    else if (token === "," && top) {
+      if ("keys" in top) top.expectKey = true;
+      else top.index++;
+    } else if (quoted && top && "keys" in top && top.expectKey) {
+      const raw = token.slice(1, -1);
+      let key = raw;
+      if (raw.includes("\\")) {
+        try {
+          const decoded: string = JSON.parse(token);
+          if (!/[\uD800-\uDFFF]/u.test(decoded)) key = decoded;
+        } catch { /* Keep the original spelling for an invalid escape. */ }
+      }
+      const normalized = key.normalize("NFC");
+      if (top.keys.has(normalized)) {
+        return frames.map((frame) => "keys" in frame
+          ? segment(frame === top ? key : frame.key ?? "") : String(frame.index)).join(".");
+      }
+      top.keys.add(normalized);
+      top.key = key;
+      top.expectKey = false;
+    }
+  }
+}
+
 /**
  * `MGJSON.dataRefusal` followed by the system parser and `MGJSON(any:)`. Returns the decoded value or the refusal
- * reason: `json` for bytes that are not UTF-8 JSON, `depthReason` for textual nesting over 64. A byte-order mark and
- * duplicate object keys also give `json`; that is this port's fail-closed choice, not a measured Swift result.
+ * reason: `jsonReason` for invalid UTF-8 or JSON, `depthReason` for excess textual nesting, and the scoped
+ * duplicate-key reason when supplied by the scene decoder.
  */
-export function decodeJSONBytes(bytes: Uint8Array, depthReason: string, jsonReason = "json"):
+export function decodeJSONBytes(bytes: Uint8Array, depthReason: string, jsonReason = "json", duplicatePrefix?: string):
   { ok: true; value: JSONValue } | { ok: false; reason: string } {
   const text = utf8Text(bytes);
   if (text === null) return { ok: false, reason: jsonReason };
   if (textNesting(text) > 64) return { ok: false, reason: depthReason };
+  if (duplicatePrefix !== undefined) {
+    const duplicate = duplicateKeyPath(text);
+    if (duplicate !== undefined) return { ok: false, reason: duplicatePrefix + duplicate };
+  }
   try {
     return { ok: true, value: parseJSONText(text) };
   } catch {

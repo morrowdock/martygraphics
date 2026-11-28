@@ -52,7 +52,8 @@ test("json: UTF-8 only, no NUL, nesting 64, strict grammar, unique keys, finite 
   const ok = `{"v":1,${body}}`;
   assert.equal(reason(() => scene(ok)), null);
   assert.equal(reason(() => MG.parseSceneBytes(Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), enc(ok)]))), "json"); // BOM
-  assert.equal(reason(() => scene(`{"v":1,"v":1,${body}}`)), "json"); // duplicate key
+  assert.equal(reason(() => scene(`{"v":1,"v":1,${body}}`)), "scene.key.duplicate.v"); // duplicate key
+  assert.equal(reason(() => scene('{"v":1,"items":[{"k":"body","\\u006b":"body"}]}')), "scene.key.duplicate.items.0.k");
   assert.equal(reason(() => scene(`{"v":1,${body},"title":"a\u0000"}`)), "json"); // NUL byte
   assert.equal(reason(() => scene(`{"v":1,${body},"title":"\\ud800"}`)), "json"); // lone surrogate escape
   assert.equal(reason(() => scene(`{"v":1e400,${body}}`)), "json"); // MGJSON(any:) refuses a non-finite number
@@ -309,4 +310,22 @@ test("current main scene features have explicit prototype refusals", () => {
   const [{ text }] = fixture("math.cases.json").spoken;
   const scene = { v: 1, items: [{ id: "label", k: "text", at: [2, 2], text, style: "math" }] };
   assert.throws(() => MG.parseScene(scene), (error) => error.reason === "web.unsupported.text.math");
+});
+
+test("text and narration allow line feeds and filled text retains its length bound", async () => {
+  const { text } = await import("../dist/primitives.js");
+  const ctx = { values: { total: { value: 12345678 } } };
+  assert.equal(text("First\nSecond", 40, ctx, "text.text", false, true), "First\nSecond");
+  assert.equal(text("First\nSecond", 40, ctx, "step.say", false, true), "First\nSecond");
+  assert.equal(reason(() => text("{total}", 7, ctx, "title")), "title");
+});
+
+test("browser bounds output pixels and scale before resizing the canvas", async () => {
+  const { render } = await import("../dist/browser.js");
+  const canvas = { width: 1, height: 1 };
+  assert.deepEqual(render(canvas, { scene: "{}", width: 1025, height: 100, scale: 8 }),
+    { ok: false, reason: "render.size" });
+  assert.deepEqual(render(canvas, { scene: "{}", width: 100, height: 100, scale: 9 }),
+    { ok: false, reason: "render.scale" });
+  assert.deepEqual(canvas, { width: 1, height: 1 });
 });

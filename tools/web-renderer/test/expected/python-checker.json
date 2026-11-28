@@ -1,9 +1,9 @@
 {
  "checker": {
-  "path": "tools/scene_v1_check.py on branch feat/scene-v1-json-schema",
-  "commit": "8882d387c3fe47c61434985aac020561784a18cb",
-  "sha256": "0d479ba05beb1c7d19763799c33214f8de03e878963e4a5e27e0f289cf7e7e48",
-  "schemaSha256": "e96efa7404cb760fd319173182cec2b00a15dad9fbdad38855ae39172dcf2728",
+  "path": "tools/scene_v1_check.py",
+  "commit": "f6146417153e3a801611dad5bda791d0d734ce62",
+  "sha256": "196bf8d147171a337ab508453bff2520bc343c4f48ca343206faa07a344c184d",
+  "schemaSha256": "4c110adf53388eb41344b422ff8d51dcf35a2ff92ca646f81d5218d14864615e",
   "python": "3.13.14",
   "platform": "win32 10.0.26300"
  },
@@ -1229,9 +1229,9 @@
    "reason": "scene.unknown.a,b,c,d",
    "status": "fail"
   },
-  "probes/line-separator-in-title": {
-   "sha256": "d5e085410a19cf1e72eb7bbb764a57a056de7730176d172dd351ccd4246b2a93",
-   "reason": "title",
+  "probes/line-separator-in-label": {
+   "sha256": "ea8eea9fcf7c0f9da4964aa8df35a6fb3c6d402ef0e7b2f207fd710697badfc7",
+   "reason": "item.label",
    "status": "fail"
   },
   "probes/line-feed-in-label": {
@@ -1242,6 +1242,16 @@
   "probes/tiny-plot-range": {
    "sha256": "ae9fcad7269fc03b864e73311331c6c0cfa7223f74e35301912d701def6d7a57",
    "reason": "plot.xr",
+   "status": "fail"
+  },
+  "probes/line-feed-in-title": {
+   "sha256": "e33165cc599e676fa0987863cfd5b4a3673795b22933585d751167632da6faff",
+   "reason": "title",
+   "status": "fail"
+  },
+  "probes/paragraph-separator-in-say": {
+   "sha256": "ffb9c11d52be21723d0b2534026f684bebb248f1004015a6052e124f110c6db7",
+   "reason": "step.say",
    "status": "fail"
   }
  }

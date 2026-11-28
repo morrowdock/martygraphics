@@ -3439,7 +3439,7 @@
     },
     {
       "path": "docs/PORTABILITY-MAP.md",
-      "sha256": "b13dec527f00d1a88d3a7a2f8c99a2a7096dd21d277dc2c567c90a48292a89b4"
+      "sha256": "e3b644936b2f5e741ac6fcab3b72e93a1eb67ae7290225cc5f57e6731ecc837f"
     },
     {
       "path": "docs/fixtures/semantics/README.md",
@@ -5123,7 +5123,7 @@
     },
     {
       "path": "tools/web-renderer/README.md",
-      "sha256": "b5e624459a03ff013838152a3365be557b2a4dba9eaebabc9b946bc293343cf8"
+      "sha256": "7c2c0b77c5a3c84da25b625943d666485b472d8fcafa4f571f2f8a85afc3fded"
     },
     {
       "path": "tools/web-renderer/package-lock.json",
@@ -5159,7 +5159,7 @@
     },
     {
       "path": "tools/web-renderer/scripts/capture-python-results.mjs",
-      "sha256": "89b6de5f88c6c7374228fc0fa6663a5461b202a5d533a48387e6ae29cd037e5f"
+      "sha256": "59aa8caa9246a9d896070aec0b83863e5761030e97a700d1fde96aaa0a32ba0a"
     },
     {
       "path": "tools/web-renderer/scripts/contact-sheet.mjs",
@@ -5175,7 +5175,7 @@
     },
     {
       "path": "tools/web-renderer/scripts/python_checker_driver.py",
-      "sha256": "df8fae400841f3cfe2d81f93b2c6c117881afbb1efd0d7e59ae31ba92c05b2eb"
+      "sha256": "fd3b9e8b68f6b5b38e7cacedc305ab57876a7dc43162c67cd36e17befff29632"
     },
     {
       "path": "tools/web-renderer/scripts/update-snapshots.mjs",
@@ -5183,7 +5183,7 @@
     },
     {
       "path": "tools/web-renderer/src/browser.ts",
-      "sha256": "4e051167719c50692c50a73921307077bb26da71cf7088b44a7d24be021bd1c3"
+      "sha256": "17b1e1ae4f382f9de8c69f87da407b3b2604b60e83cf649413a2db5ccd919321"
     },
     {
       "path": "tools/web-renderer/src/errors.ts",
@@ -5207,7 +5207,7 @@
     },
     {
       "path": "tools/web-renderer/src/json.ts",
-      "sha256": "3e528a4247a1fb6070c3e2e97d578909ae286b7f402ad01e982f0f3ee462a9e5"
+      "sha256": "033ae1b7227da9b76f0fd88d618b6b4ba911fad9d721a326cb720d68e6224647"
     },
     {
       "path": "tools/web-renderer/src/layout.ts",
@@ -5231,7 +5231,7 @@
     },
     {
       "path": "tools/web-renderer/src/parser.ts",
-      "sha256": "cbf892aaffe990a16f675feee0c78a82f23cbe46ed3e951a118a7f1bcb4c0f9a"
+      "sha256": "4dee015018d7dba2dad81206f42cb30468bb0c36f6d4d9a61f548b80469c5adb"
     },
     {
       "path": "tools/web-renderer/src/patch.ts",
@@ -5239,7 +5239,7 @@
     },
     {
       "path": "tools/web-renderer/src/primitives.ts",
-      "sha256": "2f8c1fc5a2407ba920cd16546380d27e62a13c0a4516fd77286a9fb0235e3a33"
+      "sha256": "739a8b8480ef2454e7a95e13fafceb9e7fccd86f6b25b55e7a602f35b03b407e"
     },
     {
       "path": "tools/web-renderer/src/renderer.ts",
@@ -5275,7 +5275,7 @@
     },
     {
       "path": "tools/web-renderer/test/corpus.mjs",
-      "sha256": "d1d65adecb520e6a5513a8ac074ee8b0ad1ac367d6880152ed6d78557772a23b"
+      "sha256": "fd6f863c620fde78aa57204b39e7e3dd1d0db6b5af87bec789090fa3d9f1cc12"
     },
     {
       "path": "tools/web-renderer/test/corpus/schema-branch/PROVENANCE.md",
@@ -5339,11 +5339,11 @@
     },
     {
       "path": "tools/web-renderer/test/engine.unit.test.mjs",
-      "sha256": "148277bdf1bc0250b503d66da3dd53c6b1719352848d92dd579e9267d189344f"
+      "sha256": "b6d2fbddaa6a20a728bbfbcde26136c468e4b50be5564fd601efb1a455d53e92"
     },
     {
       "path": "tools/web-renderer/test/expected/python-checker.json",
-      "sha256": "b25edd419e80df08f4a6b802abd4a5300632482312469ccfb360cc81638a0f25"
+      "sha256": "6d424b5399ade104e42b2870d60d817cb4b7561d10d47e9087f18e92e699e191"
     },
     {
       "path": "tools/web-renderer/test/expected/swift-recorded.json",
@@ -5359,7 +5359,7 @@
     },
     {
       "path": "tools/web-renderer/test/parser-python.unit.test.mjs",
-      "sha256": "2770ecafff107127352d2b0b15e86b722d6853ff27c4fc7cd9bee83e43e384e7"
+      "sha256": "b4fb3cd9c411e753cabfc8a74cc19fb31864299a8546f14d487901ce6350b2ba"
     },
     {
       "path": "tools/web-renderer/test/parser-swift.unit.test.mjs",
@@ -5719,7 +5719,7 @@
     },
     {
       "path": "tools/web-renderer/test/swift-parser-cases.mjs",
-      "sha256": "96b09b85b85593dc04331a992572c062edcee9b290113c4a2db00db8dc2b972a"
+      "sha256": "e474bd741c542474398964e9d097fa9698c88e77ea3962d44399924b74198088"
     },
     {
       "path": "tools/web-renderer/tsconfig.json",

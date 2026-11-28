@@ -9,7 +9,7 @@ claims no browser, Windows or Linux support for MartyGraphics. Swift's
 
 It is a TypeScript port of the 2D scene path:
 
-| Swift source (main, `5e4952e`) | Port | Scope |
+| Swift source (baseline `5e4952e`) | Port | Scope |
 | --- | --- | --- |
 | [MGParser.swift](../../Sources/MartyGraphics/MGParser.swift), [MGModel.swift](../../Sources/MartyGraphics/MGModel.swift) | `src/parser.ts`, `src/primitives.ts`, `src/json.ts`, `src/model.ts` | Closed keys, limits, ranges, text rules, placeholders, references, cumulative step edits, wire form, reason codes for the historical corpus |
 | [MGTemplates.swift](../../Sources/MartyGraphics/MGTemplates.swift), [MGGraphPack.swift](../../Sources/MartyGraphics/MGGraphPack.swift) | `src/templates*.ts`, `src/pack-graphs.ts` | Parameter validation; `bst` and `two_pointers` (core); `shortest_path` (opt-in `graphs` pack) |
@@ -62,8 +62,8 @@ show only some kinds. The geometry of the others is ported line by line from
 | Kind | Drawn | Checked against a Swift capture |
 | --- | --- | --- |
 | `node`, `edge` (plain, directed, labelled), `highlight` | yes | yes: tree, handoff, shortest-path, overview |
-| `array` (cells, marked, pointers, label) | yes | yes: two-pointers, shortest-path |
-| `text` label and callout | yes | yes: motion, two-pointers |
+| `array` (cells, marked, pointers, label) | yes | yes: shortest-path; two-pointers outside tolerance |
+| `text` label and callout | yes | yes: motion; two-pointers callout outside tolerance |
 | `plot` | yes | yes: function |
 | `bars` | yes | yes: counts |
 | `path` (dashed), `body` (ball, `move` motion) | yes | yes: motion and all 32 motion GIF frames |
@@ -87,47 +87,43 @@ the opt-in geometry pack (`rotate2d`) and host-registered packs.
 | Expression graphs and readouts | Refuses `func` with `web.unsupported.func`, including its readouts and the `func.empty` nonzero visible segment rule. The existing sampled `plot` remains supported. |
 | Vector fields and parametric or polar curves | Refuses `field` and `curve` with `web.unsupported.field` and `web.unsupported.curve`. |
 | Audio graph playback and caption export | Outside the settled, muted PNG renderer. |
+| Accessibility text (`alt`) | Refused at the scene and step level. |
+| Text validation and repeated object keys | Main's line-feed and separator rules, post-fill length limit, and `scene.key.duplicate.<path>` are enforced. Graph readout placeholders remain unsupported. |
+| Drawing | Draws as engine `5e4952e`. Label leaders, new arrowheads and dash phase, whole-point label sizes, and the new draw-on pop are not ported, so frames differ from main. |
 
-The evidence below is limited to the original 2D corpus and native captures.
-Audio playback, caption export and accessibility metadata (`alt`) are outside this scope.
 The historical tests require a Git checkout containing `5e4952e` to read the matching Swift
-fixture sources. Their results apply to that corpus only.
+fixture sources. Parser agreement is scoped to the cases below. Main also sanitizes unknown-key
+reason segments. The prototype retains its baseline reason formatting for those keys.
 
 ## Parity
 
 ### Accept, reject and reason codes
 
-The corpus (`test/corpus.mjs`) has 247 inputs. None of the comparisons below ran Swift
+The corpus (`test/corpus.mjs`) has 249 inputs. None of the comparisons below ran Swift
 for this change: the Swift side is either a recorded result or an expectation read from
 the Swift sources.
 
 | Comparison | Inputs | Result |
 | --- | --- | --- |
 | Recorded Swift results: the 40-input `marty-scene-validate` run transcribed from `SWIFT-PARITY.md` and `swift-cases.json` on `feat/scene-v1-json-schema` (`8882d38`), not re-run here | 40 | 40 identical |
-| Expectations derived from the Swift test sources: reasons asserted by `ParserRegressionTests` (160) and `TemplateExtensionTests` (24), and the `MGFixtures` (6) and `RegressionFixtures` (9) scenes the Swift tests parse | 199 | 199 identical |
-| Swift source reading only (no recorded result, no test): non-finite literal, five unknown keys, U+2028, line feed in a label, a plot span under 1e-6 | 5 | port follows the source |
-| Python draft preflight (`tools/scene_v1_check.py` on `feat/scene-v1-json-schema`, `8882d38`), verdicts captured in `test/expected/python-checker.json` | 247 | 223 identical, 24 differ |
-| The 24 differences: 18 map to `ParserRegressionTests` assertions, 1 to the `TemplateExtensionTests` reason table, 5 are the source-reading probes above | 24 | the port gives the Swift expectation in each |
-| Of the 247, every `docs/fixtures/v1` file, Showcase scene, schema-branch input and byte-boundary scene | 43 | 43 identical to Python |
+| Expectations from Swift test sources (the title line-feed expectation was updated from main): reasons asserted by `ParserRegressionTests` (160) and `TemplateExtensionTests` (24), and the `MGFixtures` (6) and `RegressionFixtures` (9) scenes the Swift tests parse | 199 | 199 identical |
+| Swift source reading only (no recorded result, no test): four text-rule cases, non-finite literal, five unknown keys, and a plot span under 1e-6 | 7 | port follows the source for these cases |
+| Main's Python preflight (`tools/scene_v1_check.py`, `f614641`), verdicts captured in `test/expected/python-checker.json` | 249 | 228 identical, 21 differ |
+| The 21 differences: 17 map to `ParserRegressionTests` assertions, 1 to the `TemplateExtensionTests` reason table, 3 to source-reading cases | 21 | the port gives the Swift expectation in each |
+| Historical fixture, Showcase, schema-branch and byte-boundary subset | 43 | 43 identical to Python |
 | Computed values pinned by Swift tests or printed in the Swift captures: Dijkstra narration, what-if patches and revisions, step playback, the caption and step count of all seven Showcase cards | `test/engine.unit.test.mjs` | all identical; final distances also match a Bellman-Ford oracle on 60 seeded random graphs |
 
-So 239 results are recorded or test-derived and 5 rest on reading the source. Swift
-tests and `marty-scene-validate` would need a Mac to re-run.
-
-The Python preflight is coarser than Swift in places (`steps` where Swift says
-`step.unknown.wait`), defers template expansion (`template.build`, `hide.ref`,
-`items.total`) and refuses a line feed in a title that Swift accepts. The list with
-reasons is in `test/parser-python.unit.test.mjs`. The corpus reads `MGFixtures.swift`,
-`RegressionFixtures.swift` and the asserted reasons straight from the Swift sources,
-so it follows them.
-
-Outside this claim: duplicate object keys and a UTF-8 byte-order mark. No Swift result
-or Swift test covers them; the port refuses both with `json`, as the Python preflight
-does (see "Validation corners" below).
+Python uses coarser reasons in some cases (`steps` where Swift says
+`step.unknown.wait`) and defers template expansion. The comparison cases and their expected
+differences are in `test/parser-python.unit.test.mjs`. Main and the prototype both refuse
+duplicate scene keys with `scene.key.duplicate.<path>`. The prototype reports a UTF-8
+byte-order mark as `json`.
 
 ### Pixels and layout against the Swift captures
 
-Swift references: the seven Showcase stills (760×440 boards, last step, t = 1 s), every
+The November 6 native captures were produced at engine commit
+`9b4ba89780af54d7de7f7e4fd209625a2db24f33` ([provenance](../../docs/assets/native/provenance.json)).
+The measured frames are the seven Showcase stills (760×440 boards, last step, t = 1 s), every
 frame of the three Showcase GIFs (two-pointers and shortest-path: one per step; motion:
 32 frames at t = n/8 s) and the seven 500×270 boards of `overview.png`. Each board is
 located from the background colour alone and compared with this renderer's frame of the
@@ -213,6 +209,7 @@ Playwright's Chromium only.
 
 ## Known gaps and uncertain geometry
 
+- **Two-pointers callout.** Its narrower browser text puts the still and four GIF frames outside the measured tolerance.
 - **Fonts.** Swift draws SF Pro, SF Pro Rounded and SF Mono. The browser uses its font
   stack: Segoe UI and Consolas on Windows; macOS Chromium should pick the SF faces
   (not verified). Widths come from the browser font, so labels and callouts can be a
@@ -232,21 +229,17 @@ Playwright's Chromium only.
   Tiles inside smooth fills carry no position information and are not judged.
 - **Not verified against Swift pixels:** the kinds marked "no" above, `--scale` other
   than 1, cameras and zoom, emphasis rings, markers and table emphasis.
-- **Validation corners decided without a Swift run** (outside the parity claim above):
-  duplicate object keys and a UTF-8 byte-order mark are refused with `json`, as the
-  Python preflight does. Swift's behaviour is unmeasured and no Swift fixture covers
-  them yet. A `<` followed by a combining mark counts as `<`, which fails closed;
-  Swift's behaviour there is pending, as the schema notes say. Canonical sizes spell
-  numbers as Python does; Swift may spell very small or very large numbers differently.
-  Grapheme counts come from ICU (`Intl.Segmenter`), not from Swift.
+- **Validation details.** Main and the prototype check literal `<` and `>` even when
+  a combining mark follows. Code text permits comparisons and rejects tag-like markup.
+  Canonical sizes spell numbers as Python does. Grapheme counts come from ICU
+  (`Intl.Segmenter`), so they can differ from Swift.
 - **Ordering.** Items of one layer keep scene order, which assumes Swift's sort is
   stable (true of its current implementation, not promised by the API). Rectangles
   that only touch do not count as overlapping during label placement.
 
 ## How Studio could use it
 
-- **Previews and stills without a Mac:** validate a lesson's scenes with the Swift
-  reason codes, then render every step to PNG (`--all-steps`) for storyboards,
+- **Previews and stills without a Mac:** validate supported scenes with the prototype, then render every step to PNG (`--all-steps`) for storyboards,
   thumbnails or review sheets. Use `--size 1080x1920 --scale 2` (or
   `1920x1080 --scale 2`) for video-sized frames.
 - **Motion:** `move` animations are pure functions of time. Render `--time` samples
@@ -261,21 +254,22 @@ Playwright's Chromium only.
 
 ## Tests
 
-`npm test` builds and runs all 613 tests:
+`npm test` builds and runs all 619 tests:
 
 | File | Tests | What |
 | --- | ---: | --- |
-| `test/parser-swift.unit.test.mjs` | 246 | Every corpus input with a Swift expectation: 40 recorded results, 199 from the Swift test sources, 5 from reading the source |
-| `test/parser-python.unit.test.mjs` | 250 | Python preflight verdicts captured in `test/expected/python-checker.json`; each of the 24 documented differences must give the Swift expectation |
-| `test/engine.unit.test.mjs` | 17 | Number format, JSON front door, step playback, template narration, patches, wire round trip, Dijkstra oracle, a refused render keeps the shadow calibration, explicit refusals for current scene features |
+| `test/parser-swift.unit.test.mjs` | 248 | Every corpus input with a Swift expectation: 40 recorded results, 199 from the Swift test sources, 7 from reading the source |
+| `test/parser-python.unit.test.mjs` | 252 | Python preflight verdicts captured in `test/expected/python-checker.json`; each of the 21 documented differences must give the Swift expectation |
+| `test/engine.unit.test.mjs` | 19 | Number format, JSON front door, step playback, template narration, patches, wire round trip, Dijkstra oracle, a refused render keeps the shadow calibration, explicit refusals for current scene features |
 | `test/render-snapshot.render.test.mjs` | 88 | 86 frames against `test/snapshots` thumbnails (4× reduced; ≤ 0.5% of pixels may change by more than 16) |
 | `test/cli.render.test.mjs` | 5 | Sizes, scale, all steps, packs, patches, fail-closed refusals, usage errors |
 | `test/parity-metric.render.test.mjs` | 7 | The shared parity metric: unchanged scenes pass, both negative controls fail, missing evidence fails, a shadow override lasts one render |
 
 `npm run test:unit` skips the browser. After a renderer change, `npm run update-snapshots`
 rewrites the thumbnails for review. `npm run python-results` recaptures the Python
-verdicts. It needs the checker from `feat/scene-v1-json-schema`; set `MG_SCENE_CHECKER`
-to its `tools/scene_v1_check.py`. The schema-branch inputs copied into the corpus are
+verdicts against the repository checker, recording the main commit when the checker inputs
+match `origin/main`. To compare a different checkout, set `MG_SCENE_CHECKER` to its
+`tools/scene_v1_check.py`. The schema-branch inputs copied into the corpus are
 listed in [test/corpus/schema-branch/PROVENANCE.md](test/corpus/schema-branch/PROVENANCE.md).
 
 Evidence in this directory was produced on Windows 11 with Node 24, Playwright 1.65.1

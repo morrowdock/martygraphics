@@ -386,7 +386,7 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/tests/test_validate_local.py` | contextlib, hashlib, importlib, io, json, os, pathlib, re, shlex, subprocess, sys, tempfile, unittest |
 | `tools/validate_local.py` | argparse, datetime, hashlib, json, pathlib, platform, posixpath, re, socket, subprocess, sys, urllib |
 | `tools/verify_release_install.py` | argparse, dataclasses, datetime, hashlib, json, os, pathlib, platform, re, socket, subprocess, sys |
-| `tools/web-renderer/scripts/python_checker_driver.py` | importlib, json, sys |
+| `tools/web-renderer/scripts/python_checker_driver.py` | importlib, json, pathlib, sys |
 | `tools/write_native_receipt.py` | argparse, importlib, json, pathlib, shlex, subprocess, sys |
 
 <!-- END GENERATED: tools/portability_map.py -->

@@ -32,7 +32,7 @@ export interface ParseOptions {
 /** `MGParser.scene(data:)`: bytes in, scene out. Over 16 KiB is `json` (the parser's own bound). */
 export function parseSceneBytes(bytes: Uint8Array, opts: ParseOptions = {}): MGScene {
   if (bytes.length > MGLimits.sceneBytes * 2) fail("json");
-  const d = decodeJSONBytes(bytes, "scene.depth");
+  const d = decodeJSONBytes(bytes, "scene.depth", "json", "scene.key.duplicate.");
   if (!d.ok) fail(d.reason);
   return parseScene(d.value, opts);
 }
@@ -127,7 +127,7 @@ export function parseScene(json: JSONValue, opts: ParseOptions = {}): MGScene {
   // Template walkthroughs skip anything the model hid.
   let steps: MGStep[] = (build?.steps ?? []).map((st) => {
     const s: MGStep = { ...st, show: st.show.filter((id) => ids.has(id)), edits: [...st.edits] };
-    s.say = text(st.say, MGLimits.say, ctx, "template.say");
+    s.say = text(st.say, MGLimits.say, ctx, "template.say", false, true);
     if (st.camera) s.camera = camera(cameraWire(st.camera), ctx);
     if (s.focus !== undefined && !ids.has(s.focus)) s.focus = undefined;
     return s;
@@ -209,7 +209,7 @@ export function step(json: JSONValue, ctx: Ctx): MGStep {
   const o = objectValue(json);
   if (!o) fail("step");
   closed(o, ["say"], ["show", "focus", "cam", "do"], "step");
-  const s: MGStep = { say: text(get(o, "say"), MGLimits.say, ctx, "step.say"), show: [], edits: [] };
+  const s: MGStep = { say: text(get(o, "say"), MGLimits.say, ctx, "step.say", false, true), show: [], edits: [] };
   if (has(o, "show")) {
     const raw = o["show"];
     if (!Array.isArray(raw) || raw.length > MGLimits.showPerStep) fail("step.show");
@@ -403,7 +403,7 @@ export function item(json: JSONValue, ctx: Ctx): MGItem {
       // Text is checked before style, as in Swift, so older invalid documents keep their reason.
       const style = get(o, "style");
       const isCode = style === "code";
-      it.text = text(get(o, "text"), MGLimits.text, ctx, "text.text", isCode);
+      it.text = text(get(o, "text"), MGLimits.text, ctx, "text.text", isCode, true);
       if (style === "callout") it.flags.add("callout");
       else if (style === "title") it.flags.add("title");
       else if (style === "code") {

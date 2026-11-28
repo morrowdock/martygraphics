@@ -2,7 +2,7 @@
 // Browser entry point: validates scene bytes with the Swift rules and draws one settled frame into a canvas.
 // The CLI (render.mjs) loads web/render.html, which calls `MGWeb.render` through Playwright.
 
-import { MGError } from "./errors.js";
+import { MGError, fail } from "./errors.js";
 import { type FrameOptions, loadScene, prepareFrame } from "./frame.js";
 import { SHADOW_BLUR_PER_RADIUS, setShadowBlurPerRadius } from "./gfx.js";
 import { draw } from "./renderer.js";
@@ -33,11 +33,15 @@ export function render(canvas: HTMLCanvasElement, req: RenderRequest): RenderRes
   const calibration = SHADOW_BLUR_PER_RADIUS;
   try {
     if (req.shadowBlurPerRadius !== undefined) setShadowBlurPerRadius(req.shadowBlurPerRadius);
+    const scale = req.scale ?? 1;
+    if (!(scale > 0 && scale <= 8)) fail("render.scale");
+    const width = req.width * scale;
+    const height = req.height * scale;
+    if (!(width >= 16 && width <= 8192 && height >= 16 && height <= 8192)) fail("render.size");
     const scene = loadScene(encoder.encode(req.scene), (req.patches ?? []).map((p) => encoder.encode(p)), { packs: req.packs ?? [] });
     const prepared = prepareFrame(scene, req);
-    const scale = req.scale ?? 1;
-    canvas.width = Math.round(req.width * scale);
-    canvas.height = Math.round(req.height * scale);
+    canvas.width = Math.round(width);
+    canvas.height = Math.round(height);
     const ctx = canvas.getContext("2d")!;
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     draw(prepared.input, ctx, scale);

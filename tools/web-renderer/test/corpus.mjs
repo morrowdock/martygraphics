@@ -147,9 +147,11 @@ export function corpus() {
   const probe = (name, json, expect, source) => add(`probes/${name}`, Buffer.from(json, "utf8"), { swift: { expect, source: `${source} (source reading; not run on Swift)` } });
   probe("non-finite-number", `{"v":1e400,"items":[${dotItem}]}`, "json", "MGModel.swift MGJSON(any:) returns nil for a non-finite number; MGParser.scene(object:) reports json");
   probe("five-unknown-keys", `{"v":1,"items":[${dotItem}],"a":1,"b":2,"c":3,"d":4,"e":5}`, "scene.unknown.a,b,c,d,e", "MGParser.closed joins every unknown key, sorted");
-  probe("line-separator-in-title", `{"v":1,"title":"one two","items":[${dotItem}]}`, "accept", "MGParser.text refuses CharacterSet.controlCharacters (Cc, Cf) only; U+2028 is Zl");
-  probe("line-feed-in-label", `{"v":1,"items":[{"id":"dot","k":"body","at":[3,4],"label":"one\\ntwo"}]}`, "accept", "MGParser.text allows a line feed in every text field");
+  probe("line-separator-in-label", `{"v":1,"items":[{"id":"dot","k":"body","at":[3,4],"label":"First\\u2028Second"}]}`, "item.label", "MGParser.text rejects Unicode line separators");
+  probe("line-feed-in-label", `{"v":1,"items":[{"id":"dot","k":"body","at":[3,4],"label":"one\\ntwo"}]}`, "item.label", "MGParser.text reserves line feeds for text items and narration");
   probe("tiny-plot-range", '{"v":1,"items":[{"id":"p","k":"plot","at":[1,1],"w":4,"h":3,"xr":[0,1e-9],"yr":[0,1],"pts":[[0,0],[1e-9,1]]}]}', "accept", "MGParser.range requires lo < hi only");
+  probe("line-feed-in-title", `{"v":1,"title":"First\\nSecond","items":[${dotItem}]}`, "title", "MGParser.text uses single-line title validation");
+  probe("paragraph-separator-in-say", `{"v":1,"items":[${dotItem}],"steps":[{"say":"First\\u2029Second"}]}`, "step.say", "MGParser.text rejects Unicode paragraph separators");
   return cases;
 }
 

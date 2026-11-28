@@ -165,7 +165,7 @@ export function parserRegressionCases(allKinds3D) {
   check(title('"   "'), "title");
   check(title(String.raw`"a\u0007b"`), "title");
   check(title(String.raw`"a\tb"`), "title");
-  check(title(String.raw`"line\nbreak"`), null);
+  check(title(String.raw`"line\nbreak"`), "title");
   check(title('"{x}"'), "title.placeholder.x");
   check(title('"a}"'), "title.brace");
   check(title('"{a"'), "title.brace");
