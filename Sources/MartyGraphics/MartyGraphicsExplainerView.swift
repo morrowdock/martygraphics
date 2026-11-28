@@ -34,7 +34,7 @@ public struct MGExplainerRunTiming: Equatable, Sendable {
 public enum MGExplainerBoard {
     /// `fit`: the size the viewport is fitted for (the reference board pane, `MGExplainerFrame.boardReferenceSize`);
     /// the board then keeps that scale and centre in a pane of `size`. Nil fits `size` itself.
-    public static func input(_ scene: MGScene, view: MGExplainerBeatView, size: CGSize, fit: CGSize? = nil, theme: MGTheme = .board) -> MGRenderInput {
+    public static func input(_ scene: MGScene, view: MGExplainerBeatView, size: CGSize, fit: CGSize? = nil, theme: MGTheme = .studio) -> MGRenderInput {
         let vp = MGViewport(size: fit ?? size, width: scene.width, height: scene.height, camera: scene.camera).resized(to: size)
         var input = MGRenderInput(scene: scene, items: scene.items, viewport: vp, theme: theme)
         input.emphasis = view.boardEmphasis

@@ -121,7 +121,7 @@ The second count is every file importing the group at all.
 | AppKit/UIKit | 2 | 2 | 0 | 0 |
 | simd | 4 | 6 | 0 | 0 |
 | Combine | 0 | 3 | 0 | 0 |
-| other | 5 | 14 | 6 | 6 |
+| other | 5 | 15 | 6 | 6 |
 
 Swift files scanned: 116 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
 
@@ -154,7 +154,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 
 | Module | Public declarations | Name platform types | Name `Any` |
 | --- | ---: | ---: | ---: |
-| MartyGraphics | 2760 | 78 | 10 |
+| MartyGraphics | 2764 | 78 | 10 |
 | MartyGraphicsMLKit | 31 | 2 | 0 |
 | MartyGraphicsPathTracer | 158 | 59 | 0 |
 
@@ -187,7 +187,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `MGSolidOverlay` | `MGSolidOverlayView.swift` | 6 | `CGContext` | — |
 | `MGSolidOverlayView` | `MGSolidOverlayView.swift` | 7 | `View` | — |
 | `MGSolidRenderer` | `MGSolidRenderer.swift` | 35 | `CGImage`, `CGPoint`, `CGRect`, `CGSize`, `SCNGeometry` +1 | — |
-| `MGTheme` | `MGTheme.swift` | 10 | `Color` | — |
+| `MGTheme` | `MGTheme.swift` | 13 | `Color` | — |
 | `MGViewport` | `MGLayout.swift` | 8 | `CGFloat`, `CGPoint`, `CGSize` | — |
 | `MartyGraphicsExplainerView` | `MartyGraphicsExplainerView.swift` | 4 | `View` | — |
 | `MartyGraphicsLessonView` | `MartyGraphicsLessonView.swift` | 4 | `View` | — |
@@ -236,7 +236,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/MGArrowGeometry.swift` | CoreGraphics | CoreGraphics, Foundation | — | CoreGraphics: `CGFloat`, `CGPoint` |
 | `Sources/MartyGraphics/MGAudioGraph.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGCanvasLayers.swift` | Foundation-only | Foundation | — | — |
-| `Sources/MartyGraphics/MGCanvasRenderer.swift` | SwiftUI | SwiftUI | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGRect` +2; SwiftUI: `Color`, `Gradient`, `GraphicsContext` +1 |
+| `Sources/MartyGraphics/MGCanvasRenderer.swift` | SwiftUI | CoreText, SwiftUI | — | CoreGraphics: `CGFloat`, `CGPoint`, `CGRect` +2; SwiftUI: `Color`, `Font`, `Gradient` +2; CoreText: `CTFontCopyPostScriptName`, `CTFontCreateWithFontDescriptor`, `CTFontDescriptor` +2 |
 | `Sources/MartyGraphics/MGCaptionExport.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGChartDescriptor.swift` | SwiftUI | Accessibility, SwiftUI | — | SwiftUI: `View`, `ViewBuilder` |
 | `Sources/MartyGraphics/MGDescribe.swift` | Foundation-only | Foundation | — | — |
@@ -271,7 +271,7 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 | `Sources/MartyGraphics/MGStoryShots.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGStream.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGTemplates.swift` | Foundation-only | Foundation | — | — |
-| `Sources/MartyGraphics/MGTheme.swift` | SwiftUI | SwiftUI | — | SwiftUI: `Color` |
+| `Sources/MartyGraphics/MGTheme.swift` | SwiftUI | SwiftUI | — | CoreGraphics: `CGFloat`; SwiftUI: `Color` |
 | `Sources/MartyGraphics/MGTimeline.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGTween.swift` | Foundation-only | Foundation | — | — |
 | `Sources/MartyGraphics/MGVideoDrawing.swift` | CoreGraphics | CoreGraphics, CoreText, Foundation | — | CoreGraphics: `CGColor`, `CGColorSpace`, `CGContext` +7; CoreText: `CTFont`, `CTFontCreateWithName`, `CTFrameDraw` +11 |
@@ -374,6 +374,7 @@ Python files under `tools/` are listed with their static Python imports.
 | `tools/scene_v1_check.py` | argparse, json, math, mg_expr, mg_math, os, pathlib, re, stat, tools, unicodedata |
 | `tools/semantic_fixtures.py` | argparse, json, math, pathlib, scene_v1_check, sys |
 | `tools/tests/test_check_dco.py` | os, pathlib, subprocess, sys, tempfile, unittest |
+| `tools/tests/test_design_palette.py` | itertools, math, pathlib, re, unittest |
 | `tools/tests/test_mg_expr.py` | fractions, json, math, mg_expr, pathlib, sys, unittest |
 | `tools/tests/test_mg_math.py` | json, mg_math, pathlib, scene_v1_check, sys, unittest |
 | `tools/tests/test_portability_tools.py` | copy, importlib, json, pathlib, subprocess, sys, tempfile, unittest |

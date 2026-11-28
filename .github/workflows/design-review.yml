@@ -1,0 +1,31 @@
+name: Design v2 review stills
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/design-review.yml'
+      - 'Sources/MartyGraphics/**'
+      - 'Examples/Showcase/**'
+      - 'docs/cookbook/06-forces-on-a-ramp.scene.json'
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Render eight frames in each theme
+        run: |
+          swift run --jobs 2 -c release --package-path Examples/Showcase marty-showcase \
+            --design-review docs/cookbook/06-forces-on-a-ramp.scene.json design-review
+          test "$(find design-review -name '*.png' | wc -l | tr -d ' ')" -eq 16
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: design-v2-stills
+          path: design-review/
+          if-no-files-found: error

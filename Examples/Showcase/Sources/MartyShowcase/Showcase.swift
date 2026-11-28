@@ -48,14 +48,18 @@ private struct Board: View {
     let width: CGFloat
     let height: CGFloat
 
+    var theme: MGTheme = .studio
+    var scope: String? = nil
+
     var body: some View {
         let scene = example.scene
         let size = CGSize(width: width, height: height)
         let items = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: time)
         let focus = scene.steps.indices.contains(step) ? scene.steps[step].focus : nil
-        let input = MGRenderInput(scene: scene, items: items,
+        var input = MGRenderInput(scene: scene, items: items,
                                   viewport: MGViewport(size: size, width: scene.width, height: scene.height, camera: scene.camera),
-                                  focus: focus, time: time)
+                                  theme: theme, focus: focus, time: time)
+        input.scope = scope
         Canvas { context, _ in MGCanvasRenderer.draw(input, in: context) }
             .frame(width: width, height: height)
             .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -189,11 +193,47 @@ private func writePNG(_ image: CGImage, to url: URL) throws {
     guard CGImageDestinationFinalize(destination) else { throw ShowcaseError.invalid("Cannot finalize GIF") }
 }
 
+@MainActor private func designReview(_ examples: [Example], rampPath: String, output: URL) throws {
+    let rampURL = URL(fileURLWithPath: rampPath)
+    let rampScene = try MGParser.scene(data: Data(contentsOf: rampURL)).get()
+    let ramp = Example(id: "incline", category: "", title: rampScene.title, detail: "", scene: rampScene)
+    guard let tree = examples.first(where: { $0.id == "tree" }),
+          let plot = examples.first(where: { $0.id == "function" }),
+          !FileManager.default.fileExists(atPath: output.path) else {
+        throw ShowcaseError.invalid("Design review requires the tree and plot fixtures and a new output directory")
+    }
+    try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+    _ = NSApplication.shared
+    let frames: [(Example, Int, Bool, String?)] = [
+        (ramp, 0, false, "Built · authored force lengths"),
+        (ramp, 1, false, "Built · authored force lengths"),
+        (ramp, 2, true, "Built · authored force lengths"),
+        (tree, 0, false, "Simplified · five values"),
+        (tree, max(0, tree.scene.steps.count - 1), false, "Simplified · five values"),
+        (tree, max(0, tree.scene.steps.count - 1), true, "Simplified · five values"),
+        (plot, 0, false, nil),
+        (plot, 0, true, nil),
+    ]
+    let themes: [(String, MGTheme)] = [("studio", .studio), ("paper", .paper)]
+    for (name, theme) in themes {
+        for (index, frame) in frames.enumerated() {
+            let (example, step, portrait, scope) = frame
+            let width: CGFloat = portrait ? 1080 : 1920
+            let height: CGFloat = portrait ? 1920 : 1080
+            let board = Board(example: example, step: step, time: 1, width: width, height: height,
+                              theme: theme, scope: scope)
+            let target = output.appendingPathComponent("\(name)-\(index + 1)-\(example.id).png")
+            try writePNG(image(board), to: target)
+        }
+    }
+}
+
 @main struct Showcase {
     @MainActor static func main() throws {
         let arguments = Array(CommandLine.arguments.dropFirst())
-        guard arguments == ["--verify"] || arguments == ["--preview"] || (arguments.count == 2 && arguments[0] == "--export") else {
-            throw ShowcaseError.invalid("Usage: marty-showcase --verify | --preview | --export NEW_OUTPUT_DIRECTORY")
+        let review = arguments.count == 3 && arguments.first == "--design-review"
+        guard review || arguments == ["--verify"] || arguments == ["--preview"] || (arguments.count == 2 && arguments[0] == "--export") else {
+            throw ShowcaseError.invalid("Usage: marty-showcase --verify | --preview | --export NEW_OUTPUT_DIRECTORY | --design-review RAMP_SCENE NEW_OUTPUT_DIRECTORY")
         }
         // The graph pack is opt-in: a host registers it once before parsing scenes that use `shortest_path`.
         try MGPacks.register(MGGraphPack.pack)
@@ -202,6 +242,11 @@ private func writePNG(_ image: CGImage, to url: URL) throws {
             throw ShowcaseError.invalid("Example or core pack validation failed")
         }
         print("Validated \(examples.count) original synthetic examples against MartyGraphics.")
+        if review {
+            let output = URL(fileURLWithPath: arguments[2], isDirectory: true)
+            try designReview(examples, rampPath: arguments[1], output: output)
+            return
+        }
         if arguments == ["--verify"] { return }
         if arguments == ["--preview"] {
             let application = NSApplication.shared

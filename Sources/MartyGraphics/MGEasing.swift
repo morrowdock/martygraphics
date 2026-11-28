@@ -40,9 +40,9 @@ public enum MGEasing {
 }
 
 /// How a 2D board moves between steps and patches (`MartyGraphicsView.transitionStyle(_:)`, docs/ENGINE.md,
-/// "Transitions"). `.spring` is the default and keeps the board exactly as it was; `.bounded` is opt-in.
+/// "Transitions"). `.bounded` is the default. Select `.spring` for the original board motion.
 public enum MGTransitionStyle: String, CaseIterable, Sendable {
-    /// The default, unchanged: step and patch blends and camera moves follow `MGTimeline.spring` (it overshoots by
+    /// Original motion: step and patch blends and camera moves follow `MGTimeline.spring` (it overshoots by
     /// about 12 % and settles at 1.2 s), body and node pops use the same spring, items that leave a step vanish at
     /// once, and with Reduce Motion the board snaps to the new state with no transition and no frame loop.
     case spring
@@ -237,7 +237,7 @@ struct MGBoardMotion: Equatable, Sendable {
     /// The frame drawn at `now` from `board`, the items one evaluation of the board read (`MGBoardFrames`: the step's
     /// items or the learner's slider items): the keyframes while they play, else those items, with motion at `time`
     /// (`MGBoardFrames.frame`), without `hiding`, then the step or patch blend of `style` (`MGBoardTransition.items`):
-    /// by default the board's spring within the 1.2 s window and nothing with Reduce Motion; a `.bounded` board eases
+    /// with the original spring within the 1.2 s window and nothing with Reduce Motion; a `.bounded` board eases
     /// with no overshoot, fades leaving items out and dissolves with Reduce Motion (`MGStepTransition`). `opacity`
     /// holds the items that are not opaque. `board` holds its items by value, so no frame asks the controller's cache
     /// for them (`MGTimelineCache`), with or without keyframes.
@@ -260,8 +260,8 @@ struct MGBoardMotion: Equatable, Sendable {
     }
 }
 
-/// How a board that opts in (`MGTransitionStyle.bounded`) moves from one step's state to the next (docs/ENGINE.md,
-/// "Transitions"): bounded, deterministic, and with a reduced-motion path. The default board keeps its spring.
+/// How a board using `MGTransitionStyle.bounded` moves from one step's state to the next (docs/ENGINE.md,
+/// "Transitions"): bounded, deterministic, and with a reduced-motion path.
 ///
 /// Shared items (same id and kind) move with `MGTimeline.blend` at the eased progress, so every coordinate stays
 /// between its two step values and an angle takes the short way round. Items only in the new step enter; items only in

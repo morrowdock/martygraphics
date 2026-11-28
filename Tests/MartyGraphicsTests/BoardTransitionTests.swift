@@ -9,9 +9,9 @@ import SwiftUI
 import XCTest
 @testable import MartyGraphics
 
-/// `MGTransitionStyle` on the 2D board (docs/ENGINE.md, "Transitions"): the default `.spring` board is the board as it
+/// `MGTransitionStyle` on the 2D board (docs/ENGINE.md, "Transitions"): the explicit `.spring` board is the board as it
 /// was at 5e4952e (spring blends and camera moves, spring pops, leaving items vanish, Reduce Motion snaps with no frame
-/// loop), and `.bounded` is opt-in. These are the pure decisions `MGSceneHost` and `MGCanvasRenderer` call; the hosted
+/// loop). Bounded motion is the default. These are the pure decisions `MGSceneHost` and `MGCanvasRenderer` call; the hosted
 /// tests (`BoardTransitionHostTests`) drive a real board in a window through its entry points.
 final class BoardTransitionTests: XCTestCase {
     func vectors() -> (MGItem, MGItem) {
@@ -22,16 +22,16 @@ final class BoardTransitionTests: XCTestCase {
         return (a, b)
     }
 
-    @MainActor func testTheSpringIsTheDefaultAndBoundedIsOptIn() throws {
+    @MainActor func testBoundedIsTheDefaultAndSpringIsAvailable() throws {
         let scene = try MGParser.scene(data: Data(RenderQualityTests.layered.utf8)).get()
-        XCTAssertEqual(MGBoardTeaching().transitionStyle, .spring)
-        XCTAssertEqual(MartyGraphicsView(scene: scene).teaching.transitionStyle, .spring)
-        XCTAssertEqual(MartyGraphicsView(controller: MGSceneController(scene: scene)).teaching.transitionStyle, .spring)
+        XCTAssertEqual(MGBoardTeaching().transitionStyle, .bounded)
+        XCTAssertEqual(MartyGraphicsView(scene: scene).teaching.transitionStyle, .bounded)
+        XCTAssertEqual(MartyGraphicsView(controller: MGSceneController(scene: scene)).teaching.transitionStyle, .bounded)
         XCTAssertEqual(MartyGraphicsView(scene: scene).transitionStyle(.bounded).teaching.transitionStyle, .bounded)
         XCTAssertEqual(MartyGraphicsView(scene: scene).transitionStyle(.bounded).transitionStyle(.spring).teaching.transitionStyle, .spring)
         let input = MGRenderInput(scene: scene, items: scene.items,
                                   viewport: MGViewport(size: CGSize(width: 480, height: 320), width: scene.width, height: scene.height, camera: nil))
-        XCTAssertEqual(input.transitionStyle, .spring, "every other host of the renderer keeps the spring pops")
+        XCTAssertEqual(input.transitionStyle, .bounded)
         XCTAssertTrue(input.opacity.isEmpty)
     }
 
@@ -50,7 +50,7 @@ final class BoardTransitionTests: XCTestCase {
             let snap = MGBoardTransition.items(.spring, from: [a, leaving], to: [b, entering], elapsed: t, reduceMotion: true)
             XCTAssertEqual(snap, MGStepTransition.Frame(items: [b, entering], opacity: [:]), "at \(t) s")
         }
-        XCTAssertGreaterThan(MGTimeline.spring(0.3), 1, "the default board keeps the spring's overshoot")
+        XCTAssertGreaterThan(MGTimeline.spring(0.3), 1, "the spring retains its overshoot")
         XCTAssertEqual(MGBoardTransition.items(.spring, from: nil, to: [b], elapsed: 0.1, reduceMotion: false).items, [b], "no blend")
     }
 
@@ -153,7 +153,7 @@ final class BoardTransitionTests: XCTestCase {
         XCTAssertEqual(phase(.bounded, blend: 0.59), .moving)
         XCTAssertEqual(phase(.bounded, blend: 0.6), .settled)
         XCTAssertEqual(phase(.bounded, camera: 0.99), .moving)
-        XCTAssertEqual(phase(.spring, blend: 0, reduce: true), .settled, "the default board snaps")
+        XCTAssertEqual(phase(.spring, blend: 0, reduce: true), .settled, "the spring board snaps")
         XCTAssertEqual(phase(.bounded, blend: 0, reduce: true), .moving, "a bounded board dissolves")
         // What `MGCanvasLayers.settling` cannot see: a `.bounded` exit starts opaque, so only the phase keeps it out of
         // the base.
@@ -307,10 +307,10 @@ final class BoardTransitionHostTests: XCTestCase {
 
     static let grow = #"{"v":1,"ops":[{"op":"set","id":"arrow","key":"len","value":6},{"op":"remove","id":"note"}]}"#
 
-    // MARK: Item 1: the default board keeps its spring, `.bounded` opts in
+    // MARK: Item 1: the explicit spring and default bounded motion
 
-    @MainActor func testTheDefaultBoardKeepsTheSpringThroughItsEntryPoints() throws {
-        let rig = BoardRig(try scene())                      // no transitionStyle modifier
+    @MainActor func testExplicitSpringThroughBoardEntryPoints() throws {
+        let rig = BoardRig(try scene(), style: .spring)
         defer { rig.close() }
         rig.settle()
         XCTAssertEqual(try rig.frame(Self.size).transitionStyle, .spring)
@@ -341,7 +341,7 @@ final class BoardTransitionHostTests: XCTestCase {
     }
 
     @MainActor func testTheBoundedBoardOptsInThroughItsEntryPoints() throws {
-        let rig = BoardRig(try scene(), style: .bounded)
+        let rig = BoardRig(try scene())
         defer { rig.close() }
         rig.settle()
         XCTAssertEqual(try rig.frame(Self.size).transitionStyle, .bounded)
@@ -369,9 +369,9 @@ final class BoardTransitionHostTests: XCTestCase {
         assertViewport(f.viewport, viewport(s, from: 0, to: 1, progress: progress), "bounded camera")
     }
 
-    /// Reduce Motion on the default board: the new state at once, no dissolve, and the frame loop never runs.
-    @MainActor func testWithReduceMotionTheDefaultBoardSnapsAndNeverTicks() throws {
-        let rig = BoardRig(try scene(), reduceMotion: true)
+    /// Reduce Motion on an explicit spring board: the new state at once, no dissolve, and the frame loop never runs.
+    @MainActor func testWithReduceMotionSpringSnapsAndNeverTicks() throws {
+        let rig = BoardRig(try scene(), style: .spring, reduceMotion: true)
         defer { rig.close() }
         rig.settle()
         let draws = rig.probe.liveDraws
@@ -396,7 +396,7 @@ final class BoardTransitionHostTests: XCTestCase {
 
     /// Reduce Motion on a `.bounded` board: a dissolve with no motion, and ticks only while it runs.
     @MainActor func testWithReduceMotionTheBoundedBoardTicksOnlyDuringTheDissolve() throws {
-        let rig = BoardRig(try scene(), style: .bounded, reduceMotion: true)
+        let rig = BoardRig(try scene(), reduceMotion: true)
         defer { rig.close() }
         rig.settle(2.4)                                       // the first appearance's transition ends
         XCTAssertEqual(rig.probe.decisions.last?.running, false, "no loop for motion under Reduce Motion")

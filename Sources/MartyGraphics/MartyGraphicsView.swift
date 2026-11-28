@@ -178,9 +178,9 @@ public struct MartyGraphicsView: View {
     /// 3D only, opt-in: let the existing `selection`, `markers` and `emphasis` modifiers act on a 3D board.
     /// Without this modifier a 3D board ignores them exactly as before. See `MG3DInspection` for each option.
     public func inspects3D(_ options: MG3DInspection) -> Self { var v = self; v.teaching.inspection3D = options; return v }
-    /// 2D: how the board moves between steps and patches. `.spring` (the default, the board as it always was): blends
+    /// 2D: how the board moves between steps and patches. `.spring` (original motion): blends
     /// and camera moves follow the board's spring, leaving items vanish, and with Reduce Motion the board snaps with
-    /// no transition. `.bounded` (opt-in): bounded easing with no overshoot, fading exits, pops that land on their size,
+    /// no transition. `.bounded` (default): bounded easing with no overshoot, fading exits, pops that land on their size,
     /// and with Reduce Motion a dissolve with no motion (`MGTransitionStyle`, `MGStepTransition`).
     public func transitionStyle(_ style: MGTransitionStyle) -> Self { var v = self; v.teaching.transitionStyle = style; return v }
     /// Test seam (internal): record what the 2D board decides and draws, and expose its own handlers (`MGBoardProbe`).
@@ -232,7 +232,7 @@ struct MGBoardTeaching {
     /// Opt-in 3D hooks (`inspects3D`); empty keeps the original 3D behaviour.
     var inspection3D: MG3DInspection = []
     /// 2D step and patch transitions (`transitionStyle`); `.spring` keeps the board as it was.
-    var transitionStyle: MGTransitionStyle = .spring
+    var transitionStyle: MGTransitionStyle = .bounded
     /// Test seams (internal, never set by a host): a probe of the 2D board, and a Reduce Motion override.
     var probe: MGBoardProbe?
     var reduceMotion: Bool?
@@ -723,7 +723,7 @@ struct MGSceneHost: View {
     private func input(_ frames: MGBoardFrames, now: Date, size: CGSize) -> MGRenderInput {
         let scene = frames.scene, step = frames.step
         let t = reduceMotion ? 0 : time(now)
-        // Step and patch transitions (`MGBoardMotion.frame`, `MGBoardTransition`): by default the board's spring within
+        // Step and patch transitions (`MGBoardMotion.frame`, `MGBoardTransition`): with the original spring within
         // the 1.2 s window and nothing with Reduce Motion, exactly as before; a `.bounded` board eases with no overshoot,
         // fades leaving items out and dissolves with Reduce Motion (`MGStepTransition`). The items are the ones this
         // evaluation of the board read (`MGBoardFrames`): the learner's once a slider sits at a non-default value, else

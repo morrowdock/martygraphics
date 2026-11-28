@@ -3,6 +3,10 @@
 ## [Unreleased]
 
 ### Changed
+- 2D boards default to the warm-neutral Studio palette and bounded transitions. Paper is available as a light
+  palette and Classic retains the original board styling. Board labels use bundled OFL fonts in the v2 palettes.
+- Added a hosted macOS workflow that exports 16 design review stills across Studio and Paper.
+
 - **Breaking:** `func.empty` now uses the rule of `curve.empty`: at t = 0 some piece of the graph must draw a
   segment of nonzero length inside `xr` and `yr`. A graph whose only part in the window is a one-point piece with no
   other visible segment, or a graph that only touches the window at a single point, draws nothing and is now refused
