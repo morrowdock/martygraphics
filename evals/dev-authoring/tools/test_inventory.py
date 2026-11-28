@@ -35,9 +35,9 @@ class AuthorIndependentCounts(unittest.TestCase):
         self.assertIn("| 1 / 17 | 17 / 17 |", self.results)
 
     def test_reasons(self):
-        self.assertEqual(self.summary["sceneReasons"], {"tokens": 239, "baselineDetails": 3, "hinted": 239})
+        self.assertEqual(self.summary["sceneReasons"], {"tokens": 241, "baselineDetails": 3, "hinted": 241})
         self.assertEqual(self.summary["mlReasons"], {"total": 58, "baseline": 0, "hinted": 58})
-        self.assertIn("[239 sample tokens]", self.results)
+        self.assertIn("[241 sample tokens]", self.results)
         self.assertIn("| 0 / 58 | 58 / 58 |", self.results)
         self.assertNotRegex(self.results, r"\| 148 \|")
 

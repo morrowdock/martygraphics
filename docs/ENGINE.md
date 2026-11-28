@@ -125,7 +125,7 @@ default board, so they keep the spring too.
 While motion plays and no transition runs (`MGRenderPolicy.layered`), a 2D board without a `layer2d` plan draws two
 canvases. The **base** holds the board gradient, the dot grid and the static prefix: the items that are not live
 (`MGCanvasLayers.live`: what the motion moves, bodies with `move`, what is attached to them, vectors and edges on them,
-every highlight, every moving function graph), that are drawn in full (`MGCanvasLayers.settling`: an item still
+every highlight, every moving function graph or curve), that are drawn in full (`MGCanvasLayers.settling`: an item still
 drawing on or fading is live until it ends) and whose layer rank (`MGCanvasRenderer.layer`) is lower than the lowest
 rank of any live item. A static item at or above that rank is drawn in the live layer, and so are every label (base
 items' labels included), the emphasis rings, the markers and the focus ring. The base canvas sits outside the

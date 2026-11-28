@@ -1580,6 +1580,9 @@ def check_graph_item(item, world=(12, 8), is3d=False, values=None, texts=True):
     kind = item["k"]
     keys, required = {"func": (FUNC_KEYS, FUNC_REQUIRED), "curve": (CURVE_KEYS, CURVE_REQUIRED)}.get(
         kind, (FIELD_KEYS, FIELD_REQUIRED))
+    if kind == "curve" and "readouts" in item:
+        # Readouts are `func` numbers: Swift refuses them on a curve before the closed-key check.
+        raise Refusal("curve.readouts")
     if not required <= set(item):
         raise Refusal("item." + kind + ".missing")
     extra = set(item) - keys
@@ -1883,7 +1886,7 @@ def check_sliders(scene, world=(12.0, 8.0), is3d=False, literal=True, values=Non
         raise Refusal("sliders")
     listed = scene.get("items")
     items = [item for item in listed if isinstance(item, dict)] if isinstance(listed, list) else []
-    graphs = {item.get("id") for item in items if item.get("k") in ("func", "field")}
+    graphs = {item.get("id") for item in items if item.get("k") in GRAPH_KINDS}
     seen, out, bindings = [], [], 0
     for entry in raw:
         param, lo, hi, _, initial, steps, default_stop = check_slider(entry, seen)
@@ -1892,6 +1895,9 @@ def check_sliders(scene, world=(12.0, 8.0), is3d=False, literal=True, values=Non
         out.append(summary)
         if not literal:
             continue
+        # Sliders drive `func` items only: a curve that sets the parameter would keep its own value.
+        if any(item.get("k") == "curve" and param in item for item in items):
+            raise Refusal("slider.curve")
         driven = [item for item in items if item.get("k") == "func" and param in item]
         if not driven:
             raise Refusal("slider.unbound")
@@ -2108,6 +2114,8 @@ def check_graph_edits(scene, world, is3d, values):
             key = edit.get("key")
             if not isinstance(key, str) or key in ("id", "k"):
                 continue  # `edit.key`, refused when Swift parses the step
+            if item["k"] == "curve" and key == "readouts":
+                raise Refusal("curve.readouts")
             if key not in {"func": FUNC_KEYS, "field": FIELD_KEYS, "curve": CURVE_KEYS}[item["k"]]:
                 raise Refusal("edit.key." + _reason_key(key))
             updated = dict(item)

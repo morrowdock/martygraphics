@@ -68,7 +68,8 @@ public enum MGLimits {
     /// one value of `r` and a native cosine and sine). It counts `curveWeight` times toward `exprItems`, and so does
     /// each step or `over` edit of it, which checks the whole curve again (`MGParser.exprWeight`, `editWeight`), so one
     /// parse of a scene, its edits included, stays within 6 × 29,190 = 175,140 evaluations (three moving parametric
-    /// curves at most). These bounds, like the other graph bounds, apply to the new kind only.
+    /// curves at most). These bounds, like the other graph bounds, apply to the new kind only. A curve computes no
+    /// readouts (`curve.readouts`) and no slider drives it (`slider.curve`), so neither adds work to a curve.
     public static let curveIntervals = 256, curveBreaks = 16, curveWeight = 2
     /// Each end of a `theta` range lies within ±`curveEnd` (the parameter bound) and its span within `curveSpan`. The
     /// upper span is what 256 steps can draw: on a circle that fills the frame the chord at a step of Δ is
@@ -582,6 +583,7 @@ public enum MGParser {
     static func apply(_ e: MGEdit, to items: [MGItem], _ ctx: MGContext) throws -> [MGItem] {
         guard let index = items.firstIndex(where: { $0.id == e.id }) else { throw MGError("edit.ref") }
         var wire = items[index].wire()
+        if items[index].kind == .curve, e.key == "readouts" { throw MGError("curve.readouts") }
         guard allowedKeys(items[index].kind).contains(e.key) else { throw MGError("edit.key.\(reasonKeys([e.key]))") }
         wire[e.key] = e.value
         // Changing one end of an either/or pair removes the other.
@@ -669,6 +671,8 @@ public enum MGParser {
 
     static func item(_ json: MGJSON, _ ctx: MGContext) throws -> MGItem {
         guard let o = json.objectValue, case .string(let k)? = o["k"], let kind = MGKind(rawValue: k) else { throw MGError("item.kind") }
+        // Readouts are `func` numbers (MGReadout): a curve has no value, slope or area readout to fill a text with.
+        if kind == .curve, o["readouts"] != nil { throw MGError("curve.readouts") }
         try closed(o, required: required(kind).union(["id", "k"]), optional: allowedKeys(kind), "item.\(k)")
         let id = try identifier(o["id"]!, "item.id")
         var color = defaultColor(kind)

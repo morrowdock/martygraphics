@@ -322,6 +322,16 @@ class SceneV1Tests(unittest.TestCase):
             ({"items": [curve], "dim": "3d"}, "3d.kind.curve"),
             ({"items": [circle], "steps": [{"say": "Go.", "do": [{"id": "o", "key": "mark", "value": 7}]}]}, "curve.mark"),
             ({"items": [circle], "steps": [{"say": "Go.", "do": [{"id": "o", "key": "a", "value": 5}]}]}, "curve.empty"),
+            # Readouts are func numbers (Swift `curve.readouts`, before the closed-key check), on the wire and in an edit.
+            ({"items": [{**circle, "readouts": ["value"]}]}, "curve.readouts"),
+            ({"items": [{**circle, "readouts": ["value"], "shade": [0, 1]}]}, "curve.readouts"),
+            ({"items": [circle], "steps": [{"say": "Go.", "do": [{"id": "o", "key": "readouts", "value": ["value"]}]}]},
+             "curve.readouts"),
+            # Each step edit of a curve weighs two graph checks: the curve (2) and three edits (6) are over the six.
+            ({"items": [circle], "steps": [{"say": "Go.", "do": [{"id": "o", "key": "a", "value": 1}] * 3}]}, "items.expr"),
+            # Sliders drive func items only.
+            ({"items": [circle], "sliders": [{"param": "a", "min": 0, "max": 1, "step": 0.5, "default": 1, "label": "a"}]},
+             "slider.curve"),
         ]
         for update, reason in variants:
             with self.subTest(reason=reason):

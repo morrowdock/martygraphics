@@ -11,10 +11,15 @@ import Foundation
 ///
 /// - Gate: a board gets an audio graph only while a `plot`, `func` or `bars` item is visible and not concealed;
 ///   `chart` is nil otherwise and the board's accessibility is exactly as before.
+/// - Curves: a `curve` is never charted. An audio graph plays y as x rises, and a parametric or polar curve is not a
+///   function of x: it can turn back and pass one x several times (a circle passes most x twice). A board with only
+///   curves has no audio graph (its description names each curve); a chart's summary says how many curves the board
+///   draws that the audio graph leaves out.
 /// - Motion: it describes the motion's first frame (t = 0), which is the frame the board shows when Reduce Motion is
 ///   on and the instant the parser checked. It never moves and does not depend on Reduce Motion or playback.
 /// - One chart per board: the first visible chart item in item order, together with every later `plot` or `func`
-///   drawn in the same frame (same `at`, `w`, `h` and ranges). The summary counts the charts left out.
+///   drawn in the same frame (same `at`, `w`, `h` and ranges). The summary counts the charts left out, and the
+///   curves.
 /// - Series: one per `plot` or `bars` item and one per drawn piece of a `func` (the board never joins two pieces),
 ///   with the item's name, numbered "piece 2 of 3" when it has several.
 /// - What is charted is what the board draws: the same checks as `MGCanvasRenderer` (`MGGraph.frame`,
@@ -156,6 +161,10 @@ public enum MGAudioGraph {
         let others = charted.count - members.count
         if others == 1 { summary += " One more chart on the board is not in this audio graph." }
         if others > 1 { summary += " \(others) more charts on the board are not in this audio graph." }
+        // Curves the board draws (a frame the renderer draws, `MGGraph.frame`), which no audio graph charts.
+        let curves = visible.filter { $0.kind == .curve && MGGraph.frame($0) != nil }.count
+        if curves == 1 { summary += " One curve on the board is not in this audio graph." }
+        if curves > 1 { summary += " \(curves) curves on the board are not in this audio graph." }
 
         let fallback = first.kind == .bars ? "Bar chart" : "Graph"
         let title = members.lazy.compactMap(\.label).first ?? (scene.title.isEmpty ? fallback : scene.title)

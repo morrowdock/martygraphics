@@ -218,6 +218,10 @@
    "hint": "the expression is malformed: write every multiplication (2*x, not 2x), close each parenthesis, put a comma between the two arguments of min and max, and write numbers like 2, 0.5 or .5 (no exponent, at most 12 characters)"
   },
   {
+   "reason": "curve.readouts",
+   "hint": "readouts are func numbers: a curve has no value, slope or area readout to fill a text with; remove readouts from the curve (and the placeholders that name it), or draw the graph as a func of x"
+  },
+  {
    "reason": "curve.theta",
    "hint": "theta is [t0, t1]: two numbers from -1000 to 1000 with t1 - t0 from 0.001 to 100; omit it for 0 to 2 pi"
   },
@@ -970,6 +974,10 @@
    "hint": "at the slider's min a func it drives fails the check named at the end of the reason: raise min, or change that func's range or expression"
   },
   {
+   "reason": "slider.curve",
+   "hint": "sliders drive func graphs only, and a curve that sets the same parameter would not follow it: remove the parameter from the curve, or remove the slider"
+  },
+  {
    "reason": "slider.default",
    "hint": "default is a number from min to max that is exactly one of the slider's stops: min plus a whole number of steps, written as the slider shows it (0.3, not 0.30000000000000004; 0, not 1e-12)"
   },
@@ -987,7 +995,7 @@
   },
   {
    "reason": "slider.edit",
-   "hint": "no step edit may set a slider's parameter on a func or field; remove that edit (the learner sets the value with the slider)"
+   "hint": "no step edit may set a slider's parameter on a func, field or curve; remove that edit (the learner sets the value with the slider)"
   },
   {
    "reason": "slider.field",

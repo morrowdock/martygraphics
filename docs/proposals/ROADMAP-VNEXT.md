@@ -243,11 +243,12 @@ refuses it with `item.kind`. The parameter is `theta`, not `t`, so `t` means tim
 | | `curve` |
 | --- | --- |
 | Model | `MGKind.curve`; samples in θ order in `pts` after `at`, piece starts in `marked`, the drawn window in `x0`…`y1`, the given ranges in `rx0`…`ry1`, `th0`/`th1`, the marked point in `mx`/`my`, flag `polar`, `list` = [xl, yl, r] or [xl, yl, x, y] |
-| Parser | `MGParser.item` (order: frame, ranges, `a` `b` `c`, `theta`, `period`, form and expressions, `curve.period`, `mark`, drawing checks, labels); `MGParser.exprWeight` |
+| Parser | `MGParser.item` (order: `curve.readouts`, frame, ranges, `a` `b` `c`, `theta`, `period`, form and expressions, `curve.period`, `mark`, drawing checks, labels); `MGParser.exprWeight`, `editWeight`, `curveGraphs` (a curve and each edit of it weigh 2) |
 | Sampler | `MGGraph.planar`, `checkCurve`, `animatedCurve`, `curveWindow`, `clipped`, `isClosed` in [MGPlanarCurve.swift](../../Sources/MartyGraphics/MGPlanarCurve.swift) |
 | Renderer | `MGCanvasRenderer.planarCurve` with the shared `graphFrame` |
 | Motion | `period` + `t`: `MGTimeline.frame` re-samples, `cycle`, `animates` |
 | Describe | `MGDescribe.item`: form, closed, θ range, drawn ranges, parameters, period, pieces, marked point |
+| Main's board | layered board: a moving curve is live (`MGCanvasLayers.live`); audio graphs: never charted, counted in a chart's summary (`MGAudioGraph.chart`); sliders: refused (`slider.curve`, `slider.edit`); readouts: refused (`curve.readouts`) |
 | New bounds | `curveIntervals` 256, `curveBreaks` 16, `curveWeight` 2, `curveEnd` ±1,000, `curveSpan` 0.001–100, `curveTolerance` 1 % of the shorter side |
 
 Derivations (also in `MGLimits`): a point needs two coordinates, so a curve costs at most 2 × 7,169 evaluations per
@@ -256,12 +257,16 @@ toward the six graph checks keeps a scene at 175,140. On a circle that fills the
 up to Δ = 0.4 rad, so 256 steps draw at most 102.4 rad: the span limit is 100. The smallest span keeps a gap probe
 (span / 262,144) above 10⁴ ulps of an end at 1,000.
 
-Checked off the Mac (2026-11-27): the sampling, parser, motion, wire, budget and description tests (`CurveKindTests`,
-`CurveCaseTests`) and the touched suites (`ExpressionTests`, `GraphCaseTests`, `AltTextTests`, `ParserRegressionTests`,
-`TemplateExtensionTests`, `TimelineRegressionTests`, `StreamRegressionTests`, `SceneV1SchemaDriftTests`,
-`ProtocolFixtureTests`, `PatchAtomicityTests`, `LessonCoreTests`) built and passed with Linux Swift 6.4.3 against the
-Foundation-level sources; the mirror and preflight tests passed in Python on Windows and Linux. Not run: the renderer
-(`planarCurve`), the render tests and stills in `GraphKindTests`, the SceneValidator package and any Apple-only suite.
+Checked off the Mac (2026-11-27, on `feat/calc-readouts` 7abbefb and main 74337e2): the sampling, parser, motion,
+wire, budget, description and board-feature tests (`CurveKindTests`, `CurveCaseTests`) and the touched suites
+(`ExpressionTests`, `GraphCaseTests`, `AltTextTests`, `ParserRegressionTests`, `TemplateExtensionTests`,
+`TimelineRegressionTests`, `StreamRegressionTests`, `SceneV1SchemaDriftTests`, `ProtocolFixtureTests`,
+`PatchAtomicityTests`, `LessonCoreTests`, `ReadoutCaseTests`, `EngineBoundsTests`, `SliderTests`, the Linux-buildable
+`AudioGraphTests`, `MGRepairHintTests`, `RepairHintCorpusTests` and the pure members of `RenderQualityTests` and
+`BoardTransitionTests`) built and passed with Linux Swift 6.4.3 against the Foundation-level sources, except main's old
+`RoundtripFixTests` `node.r` failure; the mirror and preflight tests passed in Python on Linux. Not run: the renderer
+(`planarCurve`), the render tests and stills in `GraphKindTests`, the hosted board tests, the SceneValidator package
+and any Apple-only suite.
 
 Mac commands (from a clone of the branch, Xcode as in CI):
 
@@ -272,6 +277,8 @@ swift build --jobs 2 2>&1 | tee logs/curve-build.log
 # 1. The new suites and the suites this branch changed.
 swift test --jobs 2 --filter 'MartyGraphicsTests\.(CurveKindTests|CurveCaseTests|ExpressionTests|GraphCaseTests|AltTextTests|SceneV1SchemaDriftTests|ParserRegressionTests|TemplateExtensionTests|TimelineRegressionTests|StreamRegressionTests|ControllerRollbackTests|PublicEngineTests|ProgrammaticVideoTests)' 2>&1 | tee logs/curve-new.log
 grep MGCURVE logs/curve-new.log
+# 1a. Main's board features the curve meets: readouts, work bounds, audio graphs, sliders, render quality, the hints.
+swift test --jobs 2 --filter 'MartyGraphicsTests\.(ReadoutCaseTests|EngineBoundsTests|AudioGraphTests|SliderTests|RenderQualityTests|BoardTransitionTests|MGRepairHintTests|RepairHintCorpusTests)' 2>&1 | tee logs/curve-main.log
 # 1b. The grammar hash: print the canonical default grammar document's FNV-1a 64 hash and byte count as macOS
 #     Foundation writes it (the `grammar digest` line), then check the assertion. See "Grammar hash" below.
 swift test --jobs 2 --filter 'MartyGraphicsTests\.LessonCoreTests/testU16DefaultGrammarDocumentIsUnchanged$' 2>&1 | tee logs/curve-grammar.log

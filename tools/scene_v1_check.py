@@ -212,6 +212,9 @@ def shape_reason(scene, error):
                     return f"{prefix}.{path[4]}"
                 return f"item.{key}" if key in ("id", "color", "label") else f"{kind}.{key}"
             if len(path) == 2 and error.keyword in ("required", "additionalProperties"):
+                # Swift refuses readouts on a curve before its closed-key check (`curve.readouts`).
+                if kind == "curve" and "readouts" in item:
+                    return "curve.readouts"
                 return closed_reason(f"item.{kind}", error)
         return "item.kind"
     if field == "items" and error.keyword == "length":
@@ -491,6 +494,8 @@ def scene_rules(scene):
                     continue
                 raise Invalid("edit.ref")
             current = items[identifier]
+            if current["k"] == "curve" and key == "readouts":
+                raise Invalid("curve.readouts")
             if key not in SCHEMA["$defs"][current["k"]]["properties"]:
                 raise Invalid("edit.key." + reason_keys((key,)))
             updated = {**current, key: edit["value"]}

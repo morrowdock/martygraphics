@@ -306,7 +306,15 @@ so tests check it without VoiceOver:
   is charted only where the board shows its dot (its value and the drawn curve
   inside the y range). Only items built in code, never parsed ones, fail these.
 - Summary: the `MGDescribe.item` text of the charted items (the text of
-  `describesBoard()`), then one sentence counting the charts left out.
+  `describesBoard()`), then one sentence counting the charts left out and one
+  counting the curves the board draws.
+- Curves are never charted. An audio graph plays y as x rises, and a `curve` is
+  not a function of x: it can turn back and pass one x several times (a circle
+  passes most x twice). A board with curves alone gets no chart descriptor and
+  reads as before (its description names each curve). A chart beside curves
+  ends its summary with "One curve on the board is not in this audio graph." or
+  "2 curves on the board are not in this audio graph." (visible curves only;
+  a concealed one is not counted).
 - One chart per board: the first visible chart item in item order, with every
   later `plot` or `func` drawn in the same frame (same `at`, `w`, `h`, `xr` and
   `yr`) as more series. Another frame or another bar chart is left out and
@@ -373,7 +381,10 @@ parses and draws exactly as before.
   (`slider.unbound`), and each must set it to the slider's `default`
   (`slider.default.<id>`), so a host that shows no sliders draws the board at
   the default. Sliders drive `func` items only: a `field` that sets the same
-  parameter is refused (`slider.field`), and so is a step edit of it
+  parameter is refused (`slider.field`), and so is a `curve` that sets it
+  (`slider.curve`, also when no `func` sets it: the curve would keep its own
+  value beside the moved graph, and its samples, gaps and loop are checked at
+  that value only), and a step edit of it on a `func`, `field` or `curve`
   (`slider.edit`); the slider is the one source of the value. A driven `func`
   may not list `readouts` (`slider.readouts`, "Readouts: slopes and areas"): a
   readout fills the scene's texts once, so they would keep the default's
@@ -469,6 +480,11 @@ model never writes these numbers itself.
   `<text reason>.placeholder.readout` (for example `text.text.placeholder.readout`);
   any other dotted name keeps its old reason (`text.text.placeholder`; in an
   explainer it is a 3D fact, as before).
+- Readouts are `func` numbers. A `curve` has none: one that lists `readouts`,
+  or a step edit that gives it them, is refused (`curve.readouts`, before the
+  curve's closed-key check), and a placeholder that names a curve's readout is
+  `<text reason>.placeholder.readout`. A curve's own texts (its label and axis
+  labels) can name a `func`'s readouts like any text.
 - `slope` is proven, never estimated. Forward-mode differentiation applies the
   closed-form rule of each operation of the expression (d sin u = cos u du,
   d uᵛ = v uᵛ⁻¹ du when the exponent v does not read x, d uᵛ = uᵛ (v′ ln u +
@@ -691,6 +707,16 @@ through a `dim` patch or a step edit).
   (`{"id":"circle","key":"a","value":0.6}`); two curves with the same number of
   samples blend point by point. The form is fixed: setting `x` on a polar curve
   is `curve.form` (replace the item to change form).
+- On the 2D board a moving curve is live, like a moving `func`: it is sampled
+  again at each tick, so the layered board never caches it in the base
+  (`MGCanvasLayers.live`; docs/ENGINE.md, "Layers and caches"). Its label is
+  placed with the other board labels (`MGLabelLayout`), and it draws in the
+  graphs' layer (`MGCanvasRenderer.layer`).
+- A curve has no audio graph: it is not a function of x, so VoiceOver gets its
+  description, and a chart beside it counts it in the summary (see "Audio
+  graphs"). No slider drives a curve (`slider.curve`, see "Learner sliders"),
+  and a curve has no readouts (`curve.readouts`, see "Readouts: slopes and
+  areas").
 - `MGDescribe` writes, for example, "a closed parametric curve x = a*cos(theta),
   y = a*sin(theta) … for theta from 0 to 6.28, x from -1.25 to 1.25 and y from
   -1.25 to 1.25 with a = 1, marking the point (0.5, 0.87) at theta = 1.05".
@@ -1013,10 +1039,11 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `curve.empty` | At t = 0 no piece of the curve draws a segment of nonzero length inside the drawn window (a single point, an edge touch or a curve that stays at one point draws nothing) | Set `xr` and `yr` to where the curve is. |
 | `curve.mark` | `mark` is outside the `theta` range, or the point there has no value or leaves the window at a checked instant | Pick a θ inside the range whose point stays in view. |
 | `curve.loop` | At t = period a grid point of θ has a value where it had none at t = 0 (or the reverse), or lies more than 1 % of the window's shorter range from its t = 0 point (both clamped into the window) | Make one period a whole cycle, for example `theta + 2*pi*t/4` with `period` 4. |
+| `curve.readouts` | A `curve` lists `readouts`, or a step edit gives it them: readouts are `func` numbers | Remove `readouts` from the curve (and the placeholders that name it); for a value, slope or area, draw the graph as a `func` of x. |
 | `curve.at`, `curve.w`, `curve.h`, `curve.xr`, `curve.yr`, `curve.a` / `.b` / `.c`, `curve.xl`, `curve.yl` | A frame key, range, parameter or axis label is out of range or not plain text | As for `func`: see [parametric and polar curves](#parametric-and-polar-curves). |
 | `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
 | `sliders`, `slider`, `slider.missing`, `slider.unknown.<keys>`, `slider.param`, `slider.duplicate.<p>`, `slider.min`, `slider.max`, `slider.range`, `slider.step`, `slider.step.count`, `slider.grid`, `slider.default`, `slider.label`, `slider.label.placeholder` | A slider list or slider is out of shape, or its range or step is out of bounds; a stop's label (an end's included) does not read back as exactly the value the engine would get, or its stops are too close to tell apart (`slider.grid`); its default is not exactly the value of a stop (`slider.default`); or its label is not fixed plain text | See [learner sliders](#learner-sliders); `MGRepairHint.text(for:)` gives a one-line fix. |
-| `slider.unbound`, `slider.field`, `slider.readouts`, `slider.default.<id>`, `slider.edit`, `sliders.bindings`, `slider.<p>.min.<reason>`, `slider.<p>.max.<reason>` | No `func` sets the parameter, a `field` or a step edit sets it, a driven `func` lists `readouts`, a `func` sets another value, too many slider-graph pairs, or a driven graph fails a check at an end of the range | Set the parameter on the graphs to the default, remove the conflicting key, or narrow the range. |
+| `slider.unbound`, `slider.field`, `slider.curve`, `slider.readouts`, `slider.default.<id>`, `slider.edit`, `sliders.bindings`, `slider.<p>.min.<reason>`, `slider.<p>.max.<reason>` | No `func` sets the parameter, a `field`, a `curve` or a step edit sets it, a driven `func` lists `readouts`, a `func` sets another value, too many slider-graph pairs, or a driven graph fails a check at an end of the range | Set the parameter on the graphs to the default, remove the conflicting key, or narrow the range. |
 | `vector.on`, `edge.nodes`, `highlight.target` | Reference is absent, has the wrong kind, or highlights itself | Fix references before applying the scene. |
 | `highlight.cycle` | An indirect highlight chain loops | Make the chain terminate; [negative fixture](fixtures/v1/highlight-cycle.scene.json). |
 | `patch.stale`, `patch.rev` | Revision mismatches or is invalid | Rebase the intended change on the current scene revision; do not retry stale content blindly. |

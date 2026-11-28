@@ -436,4 +436,117 @@ final class CurveKindTests: XCTestCase {
         XCTAssertEqual(MGGraph.animatedCurve(odd, at: 1), odd)
         XCTAssertEqual(MGGraph.curvePoint([], .init()).x.isNaN, true)
     }
+
+    // MARK: main's board: the layered board, audio graphs, sliders and readouts
+
+    /// G's layered board (`MGCanvasLayers`): a moving curve is sampled again at every tick, like a moving `func`, so it
+    /// stays in the live layer and is never cached in the base.
+    func testAMovingCurveIsLiveOnTheLayeredBoard() throws {
+        let zone = #"{"id":"zone","k":"region","pts":[[1,1],[5,1],[5,4],[1,4]]}"#
+        let spin = #"{"id":"spin","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-1.5,1.5],"yr":[-1.5,1.5],"x":"cos(theta + 2*pi*t/4)","y":"sin(theta + 2*pi*t/4)","period":4}"#
+        let still = #"{"id":"still","k":"curve","at":[6,1],"w":4,"h":4,"xr":[-1.5,1.5],"yr":[-1.5,1.5],"r":"1"}"#
+        let s = try scene(#"{"v":1,"items":[\#(zone),\#(spin),\#(still)]}"#)
+        XCTAssertTrue(s.animates)
+        let items = MGTimeline.frame(s, items: s.items, time: 0.5)
+        let live = MGCanvasLayers.live(s, items: items)
+        XCTAssertEqual(live, ["spin"], "the curve with a period is sampled again each tick; the still curve is static")
+        let base = MGCanvasLayers.base(items, live: live)
+        XCTAssertFalse(base.contains("spin"))
+        let curveRank = MGCanvasRenderer.layer[.curve]
+        let funcRank = MGCanvasRenderer.layer[.function]
+        XCTAssertEqual(curveRank, funcRank, "a curve draws in the graphs' layer")
+        // A still curve on a board without motion: nothing is live.
+        let calm = try scene(#"{"v":1,"items":[\#(zone),\#(still)]}"#)
+        XCTAssertFalse(calm.animates)
+        XCTAssertEqual(MGCanvasLayers.live(calm, items: calm.items), [])
+    }
+
+    /// Audio graphs play y as x rises, so a curve (not a function of x) is never charted: a board with curves alone has
+    /// no audio graph, and a chart's summary says how many curves the board draws beside it.
+    func testACurveIsNeverChartedAndTheAudioGraphSummarySaysSo() throws {
+        let wave = #"{"id":"f","k":"func","at":[1,1],"w":5,"h":4,"xr":[-3,3],"yr":[-1.5,1.5],"y":"sin(x)"}"#
+        let circle = #"{"id":"c","k":"curve","at":[7,1],"w":4,"h":4,"xr":[-1.5,1.5],"yr":[-1.5,1.5],"r":"1"}"#
+        let rose = #"{"id":"r","k":"curve","at":[7,5],"w":2,"h":2,"xr":[-1.2,1.2],"yr":[-1.2,1.2],"r":"cos(3*theta)"}"#
+        let one = try scene(#"{"v":1,"items":[\#(wave),\#(circle)]}"#)
+        let chart = try XCTUnwrap(MGAudioGraph.chart(one))
+        let ids: [String] = chart.series.map(\.id)
+        XCTAssertEqual(ids, ["f"], "only the func is charted")
+        let items = MGTimeline.items(one, step: 0)
+        let f = try XCTUnwrap(items.first { $0.id == "f" })
+        let phrase = MGDescribe.item(f, in: items)
+        let described = MGDescribe.capitalized(phrase) + "."
+        XCTAssertEqual(chart.summary, "\(described) One curve on the board is not in this audio graph.")
+        let two = try scene(#"{"v":1,"items":[\#(wave),\#(circle),\#(rose)]}"#)
+        let both = try XCTUnwrap(MGAudioGraph.chart(two)).summary
+        XCTAssertEqual(both, "\(described) 2 curves on the board are not in this audio graph.")
+        // Concealed curves are not on the board.
+        let concealed = try XCTUnwrap(MGAudioGraph.chart(two, hiding: ["c", "r"])).summary
+        XCTAssertEqual(concealed, described)
+        // Curves alone: no audio graph; the board's description names each curve.
+        let curves = try scene(#"{"v":1,"items":[\#(circle),\#(rose)]}"#)
+        XCTAssertNil(MGAudioGraph.chart(curves))
+        XCTAssertNil(MGAudioGraph.chart(try fixture("curves")))
+        let board = MGDescribe.board(stepItems: MGTimeline.items(curves, step: 0), hiding: [])
+        XCTAssertTrue(board.contains("polar curve r = 1"), board)
+        XCTAssertTrue(board.contains("polar curve r = cos(3*theta)"), board)
+        // A curve first shown at step 1 is counted from step 1.
+        let later = try scene(#"{"v":1,"items":[\#(wave),\#(circle)],"steps":[{"say":"A wave.","show":["f"]},{"say":"A circle.","show":["c"]}]}"#)
+        let first = try XCTUnwrap(MGAudioGraph.chart(later, step: 0)).summary
+        let second = try XCTUnwrap(MGAudioGraph.chart(later, step: 1)).summary
+        XCTAssertEqual(first, described)
+        XCTAssertEqual(second, "\(described) One curve on the board is not in this audio graph.")
+    }
+
+    /// Sliders drive `func` items only. A curve that sets the slider's parameter, or a step edit that sets it on a
+    /// curve, is refused; a curve that does not read it stays as parsed while the slider moves.
+    func testASliderNeverDrivesACurve() throws {
+        let slider = #"{"param":"a","min":0,"max":2,"step":0.5,"default":1,"label":"Slope a"}"#
+        let line = #"{"id":"f","k":"func","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-4,4],"y":"a*x","a":1}"#
+        let circle = #"{"id":"c","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-2,2],"yr":[-2,2],"r":"a","a":1}"#
+        let still = #"{"id":"c","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-2,2],"yr":[-2,2],"r":"1"}"#
+        XCTAssertEqual(reason(#"{"v":1,"items":[\#(line),\#(circle)],"sliders":[\#(slider)]}"#), "slider.curve")
+        XCTAssertEqual(reason(#"{"v":1,"items":[\#(circle)],"sliders":[\#(slider)]}"#), "slider.curve", "not slider.unbound")
+        let steps = #"[{"say":"One."},{"say":"Two.","do":[{"id":"c","key":"a","value":1}]}]"#
+        XCTAssertEqual(reason(#"{"v":1,"items":[\#(line),\#(still)],"steps":\#(steps),"sliders":[\#(slider)]}"#), "slider.edit")
+        let s = try scene(#"{"v":1,"items":[\#(line),\#(still)],"sliders":[\#(slider)]}"#)
+        let driven: [String] = s.sliders.flatMap(\.items)
+        XCTAssertEqual(driven, ["f"])
+        var state = MGSliderState(scene: s)
+        XCTAssertTrue(state.set("a", nearest: 2))
+        let before = try XCTUnwrap(s.items.first { $0.id == "c" })
+        let after = try XCTUnwrap(state.items.first { $0.id == "c" })
+        XCTAssertEqual(after, before, "the curve is not driven")
+        let moved = try XCTUnwrap(state.items.first { $0.id == "f" })
+        XCTAssertEqual(moved.num["a"], 2)
+        let hint = try XCTUnwrap(MGRepairHint.text(for: "slider.curve"))
+        XCTAssertTrue(hint.hasPrefix("sliders drive func graphs only"), hint)
+    }
+
+    /// Readouts are `func` numbers: a curve that lists them, or a step edit that gives it them, is refused
+    /// (`curve.readouts`), and a text cannot name a curve's readout. A curve's own texts can name a `func`'s readouts,
+    /// and a `func` with readouts beside curves weighs as readouts say.
+    func testACurveHasNoReadoutsButItsTextsCanNameAFuncs() throws {
+        let still = #""id":"c","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-2,2],"yr":[-2,2],"r":"1","mark":1"#
+        XCTAssertEqual(reason(#"{"v":1,"items":[{\#(still),"readouts":["value"]}]}"#), "curve.readouts")
+        XCTAssertEqual(reason(#"{"v":1,"items":[{\#(still),"readouts":["value"],"shade":[0,1]}]}"#), "curve.readouts",
+                       "before the closed-key check")
+        let steps = #"[{"say":"One."},{"say":"Two.","do":[{"id":"c","key":"readouts","value":["value"]}]}]"#
+        XCTAssertEqual(reason(#"{"v":1,"items":[{\#(still)}],"steps":\#(steps)}"#), "curve.readouts")
+        let named = #"{"id":"t","k":"text","at":[8,6],"text":"r = {c.value}"}"#
+        XCTAssertEqual(reason(#"{"v":1,"items":[{\#(still)},\#(named)]}"#), "text.text.placeholder.readout")
+        let hint = try XCTUnwrap(MGRepairHint.text(for: "curve.readouts"))
+        XCTAssertTrue(hint.hasPrefix("readouts are func numbers"), hint)
+        // A curve's label names a func's readout, filled from the engine's value.
+        let sine = #"{"id":"f","k":"func","at":[6,1],"w":5,"h":4,"xr":[-3,3],"yr":[-1.5,1.5],"y":"sin(x)","mark":1,"readouts":["value"]}"#
+        let labelled = #"{\#(still),"label":"sin 1 = {f.value}"}"#
+        let s = try scene(#"{"v":1,"items":[\#(sine),\#(labelled)]}"#)
+        let c = try XCTUnwrap(s.item("c"))
+        XCTAssertEqual(c.label, "sin 1 = 0.84")
+        // A func with readouts (2) and two curves (2 each) fill the six graph checks; one more func is refused.
+        let more = #"{"id":"c2","k":"curve","at":[1,4],"w":3,"h":3,"xr":[-2,2],"yr":[-2,2],"r":"1"}"#
+        let full = #"{"v":1,"items":[\#(sine),\#(labelled),\#(more)]}"#
+        XCTAssertEqual(try scene(full).items.count, 3)
+        let plain = #"{"id":"g","k":"func","at":[6,5],"w":3,"h":2,"xr":[-1,1],"yr":[-1,1],"y":"x"}"#
+        XCTAssertEqual(reason(#"{"v":1,"items":[\#(sine),\#(labelled),\#(more),\#(plain)]}"#), "items.expr")
+    }
 }

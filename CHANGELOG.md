@@ -212,6 +212,14 @@
   closed, the ranges and the marked point. Adds the `curves` fixture and `curves_limacon` patch,
   `docs/fixtures/v1/curves.scene.json` and golden curve cases shared by XCTest and `tools/mg_expr.py`; the draft
   schema and `tools/scene_v1_check.py` accept `curve`.
+- Curves on the 2D board's newer features (pending Mac verification): a moving curve is live on the layered board,
+  like a moving `func` (`MGCanvasLayers.live`), so the base never caches it. A curve is never in an audio graph (it
+  is not a function of x): a board with curves alone has none, and a chart beside curves says how many it leaves
+  out ("One curve on the board is not in this audio graph."). Sliders drive `func` items only: a curve that sets a
+  slider's parameter is refused (`slider.curve`), and so is a step edit of it on a curve (`slider.edit`). Readouts
+  are `func` numbers: a curve that lists `readouts`, or an edit that gives it them, is refused (`curve.readouts`);
+  a curve's texts can name a `func`'s readouts. Both new reasons have repair hints and shared fixture cases, and
+  `tools/mg_expr.py` and `tools/scene_v1_check.py` give the same reasons.
 - Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).
 - The draft scene v1 schema and `tools/scene_v1_check.py` accept `func`, `field` and the scene and step `alt`
   keys. For literal scenes, the preflight runs the `tools/mg_expr.py` rules on each graph and field item.

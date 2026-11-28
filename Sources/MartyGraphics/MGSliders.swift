@@ -161,18 +161,21 @@ extension MGParser {
     /// - `slider.default`: outside `min…max`, or not exactly the value of a stop (`0.30000000000000004` where the
     ///   stop is `0.3`; `1e-12` where the stop is `0`).
     /// - `slider.label.placeholder`: braces (a label is fixed text); `slider.label`: the plain-text rules, 40 scalars.
-    /// - `slider.unbound`: no `func` sets the parameter; `slider.field`: a `field` sets it (sliders drive `func` items
+    /// - `slider.curve`: a `curve` sets the parameter (sliders drive `func` items only: a curve would keep its own
+    ///   value beside a moved graph, and its samples, gaps and loop are checked only at its own value);
+    ///   `slider.unbound`: no `func` sets the parameter; `slider.field`: a `field` sets it (sliders drive `func` items
     ///   only, and a field that kept its own value would contradict the slider); `slider.readouts`: a driven `func`
     ///   lists `readouts` (a readout fills the scene's texts once, at parse time, so a slider move would leave them
     ///   showing the default's numbers beside the moved graph); `slider.default.<id>`: the `func`
     ///   `<id>` sets the parameter to another value; `sliders.bindings`: more than `MGLimits.sliderBindings` pairs of a
-    ///   slider and a `func` it drives; `slider.edit`: a step edit sets the parameter of a `func` or `field`.
+    ///   slider and a `func` it drives; `slider.edit`: a step edit sets the parameter of a `func`, `field` or
+    ///   `curve`.
     /// - `slider.<param>.min.<reason>`, `slider.<param>.max.<reason>`: a driven `func` refuses that end of the range
     ///   with `<reason>` (for example `slider.b.max.func.detail`), checked exactly as a parse, with every other
     ///   parameter at its default.
     static func sliders(_ json: MGJSON, items: [MGItem], steps: [MGStep], _ ctx: MGContext) throws -> [MGSlider] {
         guard case .array(let list) = json, (1...MGLimits.sliders).contains(list.count) else { throw MGError("sliders") }
-        let graphs = Set(items.filter { $0.kind == .function || $0.kind == .field }.map(\.id))
+        let graphs = Set(items.filter { graphKinds.contains($0.kind) }.map(\.id))
         var out: [MGSlider] = []
         var bindings = 0
         for entry in list {
@@ -202,6 +205,8 @@ extension MGParser {
             if case .string(let raw)? = o["label"], raw.contains("{") || raw.contains("}") { throw MGError("slider.label.placeholder") }
             let label = try text(o["label"], MGLimits.label, ctx, "slider.label")
 
+            let curves = items.contains { $0.kind == .curve && $0.num[param] != nil }
+            guard !curves else { throw MGError("slider.curve") }
             let driven = items.filter { $0.kind == .function && $0.num[param] != nil }
             guard !driven.isEmpty else { throw MGError("slider.unbound") }
             guard !items.contains(where: { $0.kind == .field && $0.num[param] != nil }) else { throw MGError("slider.field") }
