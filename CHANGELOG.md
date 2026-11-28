@@ -149,7 +149,7 @@
   `text.math`, `text.math.syntax`, `.tokens`, `.depth`, `.name`, `.unit` and `3d.text.math` (math text is 2D
   only), each with a repair hint. A scene checks math text for 3D first, then for a brace or a line break anywhere
   in the raw text (`text.math`, before placeholders and trimming), then the plain-text rules, then the untrimmed
-  markup. The grammar document gains a `math` inventory (new hash `4752519927b685c0`).
+  markup. WebVTT, SubRip and plain-text story exports include the same spoken form. The grammar document gains a `math` inventory (new hash `562c1edca6aa489c`).
   `tools/mg_math.py` mirrors the parser and spoken form for `tools/scene_v1_check.py`; both implementations check
   the shared cases in `docs/fixtures/v1/math.cases.json` (86 spoken forms, 50 refusals, 9 fit cases). Scenes that parsed before
   parse to the same result.

@@ -114,7 +114,7 @@ The second count is every file importing the group at all.
 
 | Group | Sources (primary) | Sources (any import) | tools (primary) | tools (any import) |
 | --- | ---: | ---: | ---: | ---: |
-| Foundation-only | 81 | 97 | 0 | 5 |
+| Foundation-only | 82 | 98 | 0 | 5 |
 | CoreGraphics | 14 | 18 | 0 | 0 |
 | SwiftUI | 8 | 10 | 0 | 0 |
 | SceneKit | 1 | 3 | 0 | 0 |
@@ -123,7 +123,7 @@ The second count is every file importing the group at all.
 | Combine | 0 | 3 | 0 | 0 |
 | other | 5 | 14 | 6 | 6 |
 
-Swift files scanned: 115 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
+Swift files scanned: 116 under `Sources/`, 6 under `tools/`. Foundation-only files that still use a hard platform symbol: 1 (Darwin Foundation re-exports CoreGraphics geometry types).
 
 ### Core candidates
 
@@ -154,13 +154,13 @@ platform names and `Any` in the signature text. This is a partial API inventory.
 
 | Module | Public declarations | Name platform types | Name `Any` |
 | --- | ---: | ---: | ---: |
-| MartyGraphics | 2727 | 78 | 10 |
+| MartyGraphics | 2760 | 78 | 10 |
 | MartyGraphicsMLKit | 31 | 2 | 0 |
 | MartyGraphicsPathTracer | 158 | 59 | 0 |
 
 #### MartyGraphics: public scopes with matching signatures
 
-369 scope/file pairs scanned, of which 28 match.
+374 scope/file pairs scanned, of which 28 match.
 
 | Type (scope) | File | Public decls | Platform tokens | Untyped |
 | --- | --- | ---: | --- | --- |
@@ -354,7 +354,7 @@ Python files under `tools/` are listed with their static Python imports.
 | --- | --- |
 | `tools/check_dco.py` | re, subprocess, sys |
 | `tools/mg_expr.py` | fractions, math, unicodedata |
-| `tools/mg_math.py` | mg_expr, sys, tools |
+| `tools/mg_math.py` | math, mg_expr, sys, tools |
 | `tools/portability_map.py` | argparse, ast, collections, pathlib, re, sys |
 | `tools/render-blender/mgrender/__init__.py` | — |
 | `tools/render-blender/mgrender/busyguard.py` | os, re, subprocess, sys |

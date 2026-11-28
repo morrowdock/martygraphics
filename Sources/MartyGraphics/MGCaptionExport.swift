@@ -45,6 +45,7 @@ public struct MGCaptionExport: Equatable, Sendable {
         public var narration: String
         public var alt: String?
         public var description: String?
+        var formulas: String?
         public init(narration: String, alt: String? = nil, description: String? = nil) {
             self.narration = narration; self.alt = alt; self.description = description
         }
@@ -76,7 +77,9 @@ public struct MGCaptionExport: Equatable, Sendable {
             let cuts = plan.cuts
             for k in beats.indices {
                 let b = plan.beats[k]
-                cues += Self.cues(beat: k, text: beats[k].narration, start: plan.holdStartFrame(k, cuts: cuts),
+                let beat = beats[k]
+                let text = [beat.narration, beat.formulas ?? ""].filter { !$0.isEmpty }.joined(separator: " ")
+                cues += Self.cues(beat: k, text: text, start: plan.holdStartFrame(k, cuts: cuts),
                                   end: b.startFrame + b.frames, fps: plan.fps)
             }
         }
@@ -263,6 +266,7 @@ public struct MGCaptionExport: Equatable, Sendable {
             let time = plan.map { p in Self.timestamp(frame: p.holdStartFrame(k, cuts: p.cuts), fps: p.fps) } ?? Self.timestamp(frame: 0, fps: 1)
             var block = "[\(time)] \(k + 1). \(b.narration)"
             if let alt = b.alt { block += "\nText alternative: \(alt)" } else if let d = b.description { block += "\nBoard (engine description): \(d)" }
+            if b.alt != nil, let formulas = b.formulas { block += "\n" + formulas }
             blocks.append(block)
         }
         return blocks.isEmpty ? "" : blocks.joined(separator: "\n\n") + "\n"
@@ -291,7 +295,10 @@ extension MGCaptionExport {
         guard let e = try MGExplainerStory(doc, library: library, width: width, height: height, fps: fps) else { return nil }
         let beats = e.beats.map { b -> Beat in
             guard doc.board != nil, let scene = b.scene else { return Beat(narration: b.caption) }
-            return Beat(narration: b.caption, alt: scene.alt, description: scene.alt == nil ? MGDescribe.board(scene) : nil)
+            var beat = Beat(narration: b.caption, alt: scene.alt, description: scene.alt == nil ? MGDescribe.board(scene) : nil)
+            let formulas = MGTimeline.items(scene, step: 0).filter { $0.kind == .text && $0.has("math") }
+            if !formulas.isEmpty { beat.formulas = MGDescribe.sentence(formulas) }
+            return beat
         }
         try self.init(plan: e.story?.plan, beats: beats, title: e.title)
     }

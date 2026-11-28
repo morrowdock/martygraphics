@@ -37,7 +37,7 @@ Kinds: body, incline, line, vector, axes, plot, spring, pulley, rope, orbit,
 text, highlight, bars, path, array, node, edge, table, region, func, field, curve. The
 model types expose their geometry. In 3D the supported subset is body, incline,
 line, vector, axes, orbit, text, highlight, path. Text styles are `label`
-(default), `callout`, `title` `code` and `math`. See [tables, regions and code text](#tables-regions-and-code-text),
+(default), `callout`, `title`, `code` and `math`. See [tables, regions and code text](#tables-regions-and-code-text),
 [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives),
 [learner sliders](#learner-sliders) and [parametric and polar curves](#parametric-and-polar-curves) for the newest
 additions, including [math text](#math-text).

@@ -57,6 +57,24 @@ final class CaptionExportTests: XCTestCase {
         }
     }
 
+    func testVisibleMathUsesAccessibilitySpeechInEveryFormat() throws {
+        let input = Data("""
+        {"v":1,"kind":"explainer","title":"Formula",
+         "board":{"v":1,"items":[{"id":"f","k":"text","at":[6,4],"style":"math","text":"sqrt(x)"}]},
+         "beats":[{"say":"Read the formula."}]}
+        """.utf8)
+        let markup = "sqrt(x)"
+        let spoken = try MGMathText.parse(markup).spoken
+        XCTAssertEqual(spoken, "the square root of x")
+        for format in MGCaptionExport.Format.allCases {
+            let result = MGCaptionExport.make(data: input, format: format, engine: nil)
+            XCTAssertTrue(result.ok, result.text)
+            let words = result.text.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+            XCTAssertTrue(words.contains(spoken), result.text)
+            XCTAssertFalse(words.contains(markup), result.text)
+        }
+    }
+
     // MARK: Escaping and encoding
 
     func testWebVTTEscapesAndSubRipKeepsTheWords() throws {

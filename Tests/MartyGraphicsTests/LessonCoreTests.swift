@@ -460,15 +460,7 @@ final class LessonCoreTests: LessonTestCase {
         // FNV-1a 64 of the canonical default grammar document. Its inputs (MGGrammar, MGParser key tables, MGKind,
         // MGColorRole, core templates, MGLimits) match origin/main 6211345 except for the additive `table` and `region`
         // kinds (two more `kinds` entries) and the additive `func` and `field` kinds, `alt` scene key and `expression`
-        // inventory (docs/PROTOCOL.md, "Function graphs, vector fields and text alternatives"), the additive `sliders`
-        // scene key and `sliders` inventory (docs/PROTOCOL.md, "Learner sliders"), the additive `func` `readouts` key
-        // and `expression.readouts` names ("Readouts: slopes and areas"), and the additive `curve` kind with its
-        // `expression.variables.curve` entry ("Parametric and polar curves"); lessons add nothing to the default
-        // document. The value with all of them was printed by this test in a Linux build (corelibs JSONSerialization),
-        // and rebuilding the document in Python gives the same value; that rebuild also reproduces every earlier pin
-        // exactly (main 675bf2bec0e2e9a3, 3,343 bytes, and af91f9b7e06389ad, 3,505 bytes, with the sliders; the curves
-        // alone 9e03a7f5a9064722, 3,565 bytes; the sliders and readouts 90c90ae261b9fb9c, 3,552 bytes); pending Mac
-        // verification. The printed line is what docs/VERIFY-ON-MAC.md records from a Mac run, pass or fail.
+        // inventory, sliders, readouts, curves and math text. This pin was recorded on Swift 6.4.3 for Linux.
         var hash: UInt64 = 0xcbf29ce484222325
         for b in data { hash = (hash ^ UInt64(b)) &* 0x100000001b3 }
         print("grammar digest \(String(hash, radix: 16)) byte count \(data.count)")
@@ -476,6 +468,6 @@ final class LessonCoreTests: LessonTestCase {
         XCTAssertEqual(data.count, Self.grammarBytes)
         XCTAssertFalse(MGTemplates.library.keys.contains("rotate2d"), "the geometry pack is opt-in")
     }
-    static let grammarHash = "be1604307560a7ab"
-    static let grammarBytes = 3774
+    static let grammarHash = "562c1edca6aa489c"
+    static let grammarBytes = 4416
 }

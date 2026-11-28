@@ -304,7 +304,7 @@ ellipse on equally scaled axes, twice as wide as it is tall in its widened frame
 petals; the line r = 1/cos θ with no chord across the view; the lemniscate's gaps; the cycloid's cusps). VoiceOver
 reading the description is a separate device check.
 
-Grammar hash. The pinned value (be1604307560a7ab, 3,774 bytes: main's sliders, the readouts and the curves) was
+Grammar hash. The pinned value (562c1edca6aa489c, 4,416 bytes with sliders, readouts, curves and math text) was
 computed off the Mac, by Linux Foundation's JSONSerialization and by an offline rebuild in Python that reproduces every
 earlier pin. The macOS value printed by step 1b is the canonical one: if it differs, step 1c pins it and the receipt
 records both values.
