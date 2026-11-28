@@ -4091,7 +4091,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/GraphKindTests.swift",
-      "sha256": "cf03a69bab9b8bad908b02d5cafe987d6fcc19eb6c2da6e3ccb7f69763468355"
+      "sha256": "4f42cbcb6e7195c6627415c570c4672fbe9789926ed7543f2b1dab45ba031032"
     },
     {
       "path": "docs/fixtures/v1/expressions.cases.json",
@@ -4987,11 +4987,11 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/CurveCaseTests.swift",
-      "sha256": "967101e1c765d6e2a44fe5b7fba4d1d2ee3ce65eec2e25143f90318920d1b264"
+      "sha256": "54fd9df07a1bbfc570ad3d18d1e4146c0c8e1a2e238041cf7f0340b7d7ce35fd"
     },
     {
       "path": "Tests/MartyGraphicsTests/CurveKindTests.swift",
-      "sha256": "3caa68716a2188693816dc9248b10e964198192716bb59f90ff1ddcf6ef5aeb3"
+      "sha256": "855be091b44b25ce28277ed73d0468f3715ff29ecf95a5e56225739799ff5d3f"
     },
     {
       "path": "Tests/MartyGraphicsTests/KeyAndSeparatorConsistencyTests.swift",

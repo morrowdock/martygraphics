@@ -253,10 +253,10 @@ final class GraphKindTests: XCTestCase {
             ("field-arrows", #"{"v":1,"items":[{"id":"v","k":"field","# + frame + #","xr":[-2,2],"yr":[-2,2],"dx":"-y","dy":"x","label":"(-y, x)"}]}"#),
             ("field-unit", #"{"v":1,"items":[{"id":"v","k":"field","# + frame + #","xr":[-1.5,1.5],"yr":[-1.5,1.5],"dx":"x/(x^2+y^2)","dy":"y/(x^2+y^2)","style":"unit","n":[9,9]}]}"#),
             ("field-slope", #"{"v":1,"items":[{"id":"v","k":"field","# + frame + #","xr":[-3,3],"yr":[-2,2],"dx":"1","dy":"x - y","style":"slope","label":"dy/dx = x - y"}]}"#),
-            ("curve-ellipse-widened", #"{"v":1,"items":[{"id":"c","k":"curve","# + frame + #","xr":[-2.2,2.2],"yr":[-1.2,1.2],"x":"2*cos(theta)","y":"sin(theta)","mark":0.7,"label":"(2 cos t, sin t)"}]}"#),
-            ("curve-rose", #"{"v":1,"items":[{"id":"c","k":"curve","# + frame + #","xr":[-1.1,1.1],"yr":[-1.1,1.1],"r":"cos(3*theta)","theta":[0,3.141592653589793],"label":"r = cos 3t"}]}"#),
-            ("curve-line-poles", #"{"v":1,"items":[{"id":"c","k":"curve","# + frame + #","xr":[-3,3],"yr":[-3,3],"r":"1/cos(theta)","label":"r = 1/cos t"}]}"#),
-            ("curve-lemniscate-gaps", #"{"v":1,"items":[{"id":"c","k":"curve","# + frame + #","xr":[-1.2,1.2],"yr":[-0.8,0.8],"r":"sqrt(cos(2*theta))"}]}"#),
+            ("curve-ellipse-widened", #"{"v":1,"items":[{"id":"c","k":"curve",\#(frame),"xr":[-2.2,2.2],"yr":[-1.2,1.2],"x":"2*cos(theta)","y":"sin(theta)","mark":0.7,"label":"(2 cos t, sin t)"}]}"#),
+            ("curve-rose", #"{"v":1,"items":[{"id":"c","k":"curve",\#(frame),"xr":[-1.1,1.1],"yr":[-1.1,1.1],"r":"cos(3*theta)","theta":[0,3.141592653589793],"label":"r = cos 3t"}]}"#),
+            ("curve-line-poles", #"{"v":1,"items":[{"id":"c","k":"curve",\#(frame),"xr":[-3,3],"yr":[-3,3],"r":"1/cos(theta)","label":"r = 1/cos t"}]}"#),
+            ("curve-lemniscate-gaps", #"{"v":1,"items":[{"id":"c","k":"curve",\#(frame),"xr":[-1.2,1.2],"yr":[-0.8,0.8],"r":"sqrt(cos(2*theta))"}]}"#),
             ("curve-cycloid", #"{"v":1,"items":[{"id":"c","k":"curve","at":[0.5,2],"w":11,"h":2.4,"xr":[0,12.6],"yr":[0,2.2],"x":"theta - sin(theta)","y":"1 - cos(theta)","theta":[0,12.566370614359172]}]}"#)
         ]
         for (name, json) in cases { let s = try scene(json); boards.append((name, s, s.items)) }
@@ -355,21 +355,44 @@ final class GraphKindTests: XCTestCase {
         let c = try XCTUnwrap(s.items.first)
         // The 10 × 6 frame widens x, so one data unit is as long across as up on the screen too.
         let (image, vp) = try render(s)
-        let centre = Self.screen(c, vp, x: 0, y: 0), right = Self.screen(c, vp, x: 1, y: 0), top = Self.screen(c, vp, x: 0, y: 1)
-        XCTAssertEqual(right.x - centre.x, centre.y - top.y, accuracy: 0.5, "a circle is round")
-        for angle in stride(from: 0.3, to: 6.2, by: 0.7) {
-            XCTAssertGreaterThan(Self.brightest(image, near: Self.screen(c, vp, x: cos(angle), y: sin(angle))), 190, "on the circle at \(angle)")
+        let centre: CGPoint = Self.screen(c, vp, x: 0, y: 0)
+        let right: CGPoint = Self.screen(c, vp, x: 1, y: 0)
+        let top: CGPoint = Self.screen(c, vp, x: 0, y: 1)
+        let across: CGFloat = right.x - centre.x
+        let up: CGFloat = centre.y - top.y
+        XCTAssertEqual(across, up, accuracy: 0.5, "a circle is round")
+        let angles: StrideTo<Double> = stride(from: 0.3, to: 6.2, by: 0.7)
+        for angle in angles {
+            let x: Double = cos(angle)
+            let y: Double = sin(angle)
+            let point: CGPoint = Self.screen(c, vp, x: x, y: y)
+            let lit: Int = Self.brightest(image, near: point)
+            XCTAssertGreaterThan(lit, 190, "on the circle at \(angle)")
         }
-        XCTAssertLessThan(Self.brightness(image, Self.screen(c, vp, x: 0.4, y: -0.3)), 140, "inside the circle")
-        XCTAssertGreaterThan(Self.brightness(image, Self.screen(c, vp, x: cos(2.5), y: sin(2.5))), 220, "the marked point")
+        let inside: CGPoint = Self.screen(c, vp, x: 0.4, y: -0.3)
+        let insideLit: Int = Self.brightness(image, inside)
+        XCTAssertLessThan(insideLit, 140, "inside the circle")
+        let markX: Double = cos(2.5)
+        let markY: Double = sin(2.5)
+        let mark: CGPoint = Self.screen(c, vp, x: markX, y: markY)
+        let markLit: Int = Self.brightness(image, mark)
+        XCTAssertGreaterThan(markLit, 220, "the marked point")
         let (hidden, _) = try render(s, appear: ["c": 0])
-        XCTAssertLessThan(Self.brightest(hidden, near: Self.screen(c, vp, x: cos(3.5), y: sin(3.5))), 140, "not yet traced")
+        let laterX: Double = cos(3.5)
+        let laterY: Double = sin(3.5)
+        let later: CGPoint = Self.screen(c, vp, x: laterX, y: laterY)
+        let laterLit: Int = Self.brightest(hidden, near: later)
+        XCTAssertLessThan(laterLit, 140, "not yet traced")
         // The line r = 1/cos θ is drawn at x = 1 only: no chord through the view at its poles.
         let line = try scene(#"{"v":1,"items":[{"id":"l","k":"curve","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-3,3],"r":"1/cos(theta)"}]}"#)
         let l = try XCTUnwrap(line.items.first)
         let (lineImage, lvp) = try render(line)
-        XCTAssertGreaterThan(Self.brightest(lineImage, near: Self.screen(l, lvp, x: 1, y: 2)), 190)
-        XCTAssertLessThan(Self.brightness(lineImage, Self.screen(l, lvp, x: -1.5, y: 0.5)), 140, "no chord across the view")
+        let onLine: CGPoint = Self.screen(l, lvp, x: 1, y: 2)
+        let lineLit: Int = Self.brightest(lineImage, near: onLine)
+        XCTAssertGreaterThan(lineLit, 190)
+        let offLine: CGPoint = Self.screen(l, lvp, x: -1.5, y: 0.5)
+        let chordLit: Int = Self.brightness(lineImage, offLine)
+        XCTAssertLessThan(chordLit, 140, "no chord across the view")
     }
 
     @MainActor func testUncheckedItemsDrawNothingInsteadOfTrapping() throws {

@@ -18,8 +18,14 @@ final class CurveCaseTests: XCTestCase {
 
     /// Equal to 1e-12 relative: some JSON parsers read a 17-digit number such as 1.4000000000000001 one ulp off.
     static func close(_ actual: [Double], _ expected: [Double]?, _ name: String, file: StaticString = #filePath, line: UInt = #line) {
-        guard let expected, expected.count == actual.count else { return XCTFail("\(name): \(actual) vs \(String(describing: expected))", file: file, line: line) }
-        for (a, e) in zip(actual, expected) { XCTAssertEqual(a, e, accuracy: 1e-12 * Swift.max(1, abs(e)), name, file: file, line: line) }
+        guard let expected, expected.count == actual.count else {
+            let message: String = "\(name): \(actual) vs \(String(describing: expected))"
+            return XCTFail(message, file: file, line: line)
+        }
+        for (a, e) in zip(actual, expected) {
+            let tolerance: Double = 1e-12 * Swift.max(1, abs(e))
+            XCTAssertEqual(a, e, accuracy: tolerance, name, file: file, line: line)
+        }
     }
 
     func testAcceptedCurvesMatchTheGoldenSampling() throws {
@@ -31,10 +37,15 @@ final class CurveCaseTests: XCTestCase {
             let scene = try MGParser.scene(object: ["v": 1, "items": [object]] as [String: Any]).get()
             let item = try XCTUnwrap(scene.items.first, name)
             XCTAssertEqual(item.kind, .curve, name)
-            XCTAssertEqual(item.pts.count - 1, c["samples"] as? Int, name)
-            XCTAssertEqual(item.marked, c["starts"] as? [Int], name)
-            Self.close([item.n("x0"), item.n("x1"), item.n("y0"), item.n("y1")], Self.numbers(c["window"]), name)
-            Self.close([item.n("th0"), item.n("th1")], Self.numbers(c["theta"]), name)
+            let samples: Int = item.pts.count - 1
+            let golden: Int? = c["samples"] as? Int
+            XCTAssertEqual(samples, golden, name)
+            let starts: [Int]? = c["starts"] as? [Int]
+            XCTAssertEqual(item.marked, starts, name)
+            let window: [Double] = [item.n("x0"), item.n("x1"), item.n("y0"), item.n("y1")]
+            Self.close(window, Self.numbers(c["window"]), name)
+            let theta: [Double] = [item.n("th0"), item.n("th1")]
+            Self.close(theta, Self.numbers(c["theta"]), name)
             XCTAssertEqual(MGGraph.isClosed(item), c["closed"] as? Bool, name)
             if let mark = Self.numbers(c["mark"]) {
                 XCTAssertEqual(try XCTUnwrap(item.num["mx"], name), mark[0], accuracy: 1e-12, name)
@@ -44,7 +55,8 @@ final class CurveCaseTests: XCTestCase {
             }
             let points = try XCTUnwrap(c["points"] as? [String: Any], name)
             for (key, value) in points {
-                let index = try XCTUnwrap(Int(key), name), expected = try XCTUnwrap(Self.numbers(value), name)
+                let index: Int = try XCTUnwrap(Int(key), name)
+                let expected: [Double] = try XCTUnwrap(Self.numbers(value), name)
                 let p = item.pts[1 + index]
                 XCTAssertEqual(p.x, expected[0], accuracy: 1e-9, "\(name) sample \(index)")
                 XCTAssertEqual(p.y, expected[1], accuracy: 1e-9, "\(name) sample \(index)")
@@ -53,7 +65,14 @@ final class CurveCaseTests: XCTestCase {
             let ctx = MGContext(width: scene.width, height: scene.height, is3D: false, values: [:])
             XCTAssertEqual(try MGParser.item(.object(item.wire()), ctx), item, name)
             XCTAssertNil(item.wire()["pts"], name)
-            XCTAssertEqual(item.wire()["xr"], (object["xr"] as? [NSNumber]).map { .array($0.map { .number($0.doubleValue) }) }, name)
+            let given: [NSNumber]? = object["xr"] as? [NSNumber]
+            var givenXR: MGJSON?
+            if let given {
+                var values: [MGJSON] = []
+                for n in given { values.append(MGJSON.number(n.doubleValue)) }
+                givenXR = MGJSON.array(values)
+            }
+            XCTAssertEqual(item.wire()["xr"], givenXR, name)
         }
     }
 
@@ -70,6 +89,8 @@ final class CurveCaseTests: XCTestCase {
 
     func testTheDocumentationSceneEqualsTheBuiltInFixture() throws {
         let data = try Data(contentsOf: Self.root.appendingPathComponent("docs/fixtures/v1/curves.scene.json"))
-        XCTAssertEqual(try MGParser.scene(data: data).get(), MGFixtures.all.first { $0.id == "curves" }?.scene)
+        let parsed: MGScene = try MGParser.scene(data: data).get()
+        let demo: MGFixtures.Demo? = MGFixtures.all.first(where: { (d: MGFixtures.Demo) -> Bool in d.id == "curves" })
+        XCTAssertEqual(parsed, demo?.scene)
     }
 }
