@@ -19,11 +19,11 @@ to it in order.
 
 | Folder | Fixtures | Covers |
 | --- | ---: | --- |
-| `parser/` | 43 | 7 accept, 33 reject and 3 open cases: closed keys, kinds, version and dim, counts and lengths, world bounds, text, markup and placeholder rules, references and cycles (also after cumulative step edits), camera, nesting depth, non-JSON, non-UTF-8 and oversize input |
+| `parser/` | 43 | 7 accept, 35 reject and 1 open case: closed keys, kinds, version and dim, counts and lengths, world bounds, text, markup, line-separator and placeholder rules, references and cycles (also after cumulative step edits), camera, nesting depth, repeated keys, non-JSON, non-UTF-8 and oversize input |
 | `numeric/` | 5 | `MGPhysics.format` cases, number cells stored as display text, and the cell length and magnitude limits |
 | `templates/` | 14 | Items and steps that `two_pointers` and `bst` resolve to, `hide`/`over`, and template parameter refusals. Two of these refusals are visible only to Swift |
 | `patches/` | 1 | A 13-patch transaction sequence: accepted patches, a failed update that rolls back a valid first op, a stale revision, references, closed envelopes, unknown ops, immutable keys, step range, op count and bad JSON |
-| `streams/` | 5 | Preview growth and strict `finish()`, including a stream that previewed and then failed |
+| `streams/` | 6 | Preview growth and strict `finish()`, including streams that previewed and then failed (one on a repeated key) |
 | `timeline/` | 3 | `move` easing and vector following, step visibility with cumulative edits, patch blending of angles and points, and the spring curve |
 
 ## Expectation format
@@ -72,12 +72,13 @@ needs fixtures that exist only there. Swift's `MGParser` remains the acceptance 
 Every Swift-facing expectation stays `pending-mac` until a Swift run records it. Python cannot
 reach these at all (`python: none`): resolved items and steps, template expansion (including the
 `template.build` and `over.ref` refusals), stream previews, and all `MGTimeline` samples.
-The open cases need a decision before any second decoder or text classifier exists:
+The open case needs a decision before any second decoder exists: a UTF-8 byte-order mark.
 
-- duplicate object keys (the Python preflight refuses them; a browser `JSON.parse` keeps the last value);
-- a UTF-8 byte-order mark;
-- U+2028 in plain text. The Python preflight refuses Zl/Zp. `MGParser` refuses only
-  `CharacterSet.controlCharacters`, so a static reading suggests Swift accepts it.
+Two former open cases are decided. A repeated object key is refused before any decoder reads
+the text (`scene.key.duplicate.<path>`, `reject-duplicate-key`, and the `duplicate-key`
+stream), so the choice a decoder makes (Foundation, a browser `JSON.parse` keeps the last
+value) never matters. U+2028 and U+2029 are refused in plain text like control characters
+(`reject-line-separator`): `MGParser.text`, Solid text and the Python preflight use the same set.
 
 A suggested Mac pass: parse every `.scene.json` and inline input with `MGParser.scene(data:)`,
 apply each `.patches.json` with `MGPatch.parse` and `MGScene.applying`, feed each stream's

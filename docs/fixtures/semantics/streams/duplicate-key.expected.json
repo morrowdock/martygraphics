@@ -1,0 +1,31 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "duplicate-key.stream.json",
+  "entry": "MGStreamParser.feed(_:)/finish()",
+  "about": "A repeated top-level key stops new previews (no preview shows the second title) and fails finish().",
+  "expect": [
+    {
+      "check": "stream.previews",
+      "expect": [
+        {
+          "itemIds": [
+            "a"
+          ],
+          "steps": 0
+        },
+        null
+      ],
+      "python": "none",
+      "swift": "pending-mac"
+    },
+    {
+      "check": "stream.finish",
+      "expect": {
+        "result": "reject",
+        "reason": "scene.key.duplicate.title"
+      },
+      "python": "checked",
+      "swift": "pending-mac"
+    }
+  ]
+}

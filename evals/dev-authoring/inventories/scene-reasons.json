@@ -160,6 +160,7 @@
   "rope.pts",
   "scene.dim",
   "scene.items.required",
+  "scene.key.duplicate.title",
   "scene.missing",
   "scene.object",
   "scene.unknown.zz",

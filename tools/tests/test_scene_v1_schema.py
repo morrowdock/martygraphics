@@ -172,6 +172,31 @@ class SceneV1Tests(unittest.TestCase):
         self.assertEqual(checker.scene_float("3.25"), 3.25)
         self.assertEqual(checker.unique_object([("v", 1), ("title", "Plot")]), {"v": 1, "title": "Plot"})
 
+    def test_repeated_keys_are_refused_with_their_path(self):
+        # Mirrors MGJSON.duplicateKeyPath: the same reason as Swift, before the decoder keeps either value.
+        body = '{"id":"a","k":"body","at":[2,2]}'
+        cases = {
+            '{"v":1,"title":"First","title":"Second","items":[' + body + ']}': "scene.key.duplicate.title",
+            '{"v":1,"items":[' + body + ',{"id":"b","k":"body","at":[3,3],"at":[4,4]}]}': "scene.key.duplicate.items.1.at",
+            '{"v":1,"world":{"w":12,"h":8,"w":10},"items":[' + body + ']}': "scene.key.duplicate.world.w",
+            '{"v":1,"title":"First","\\u0074itle":"Second","items":[' + body + ']}': "scene.key.duplicate.title",
+        }
+        for text, reason in cases.items():
+            with self.subTest(reason=reason):
+                self.assert_invalid(text.encode("utf-8"), reason)
+        siblings = '{"v":1,"items":[' + body + ',{"id":"b","k":"body","at":[5,5]}]}'
+        self.assertIsNone(checker.check(siblings.encode("utf-8")))
+        self.assertEqual(checker.duplicate_key_path('{"x.y":1,"x.y":2}'), "x_y")
+        self.assertIsNone(checker.duplicate_key_path('{"a":{"a":1},"b":[{"a":1},{"a":2}]}'))
+
+    def test_line_and_paragraph_separators_are_refused_in_plain_text(self):
+        body = {"id": "a", "k": "body", "at": [2, 2]}
+        for value in (0x2028, 0x2029, 0x7F, 0x200E):
+            title = "A" + chr(value) + "B"
+            data = json.dumps({"v": 1, "title": title, "items": [body]}, ensure_ascii=False).encode("utf-8")
+            with self.subTest(value=hex(value)):
+                self.assert_invalid(data, "title")
+
     def test_cli_checks_open_file_descriptor(self):
         with patch.object(sys, "argv", ["scene_v1_check.py", str(FIXTURES / "scene.json")]), \
                 patch.object(os, "fstat", wraps=os.fstat) as fstat, patch("builtins.print"):

@@ -68,15 +68,16 @@ and fail-closed behavior, and each still needs its own proposal, consumer list, 
 and rollback path.
 
 1. **JSON decode.** `MGJSON` from UTF-8 bytes. Keep the UTF-8-only check, the depth-64
-   pre-scan, the raw-byte bound, bool/number separation and the 2^53 exactness rule. Decide the
-   duplicate-key and BOM policy first (see the open fixtures). Today the policy is whatever
-   `JSONSerialization` does.
+   pre-scan, the raw-byte bound, bool/number separation and the 2^53 exactness rule. Keep the
+   repeated-key scan (`MGJSON.duplicateKeyPath`, `scene.key.duplicate.<path>`) before the decoder,
+   so no decoder's choice of value is seen. Decide the BOM policy first (see the open fixture).
+   Today that policy is whatever `JSONSerialization` does.
 2. **Canonical encode.** `canonicalData` and `canonicalByteCount` (sorted keys, unescaped
    slashes, number spelling). The 8 KiB scene and 4 KiB patch limits are measured on this output,
    so a second encoder must give the same bytes or a documented, reviewed bound.
 3. **Text classification.** `CharacterSet.controlCharacters`, `whitespacesAndNewlines`,
-   `letters` and `alphanumerics`. Use explicit tables with fixtures. The U+2028 open fixture
-   shows one place where two implementations may already disagree.
+   `letters` and `alphanumerics`. Use explicit tables with fixtures. Plain text also refuses
+   U+2028 and U+2029 (`reject-line-separator`), which `controlCharacters` does not hold.
 4. **Number formatting.** `MGPhysics.format`, plus `%.4g` with `en_US_POSIX` in
    `MGVideoDrawing`. Use one formatter with the fixture cases (ties, negative zero, ≥ 1e21).
 5. **Programmatic video split.** Move the wire and plan value types (`MGVideoElement`,
@@ -133,7 +134,7 @@ most of them, with behavior that has not been compared here.
 
 | File | Role | Direct hard symbols | Foundation / CF / lock seams | Reaches platform code via |
 | --- | --- | --- | --- | --- |
-| `MGModel.swift` | model, limits-adjacent JSON value | none | CoreFoundation bridge: `CFBooleanGetTypeID`, `CFGetTypeID`, `CFNumberIsFloatType`; Foundation bridge: `JSONSerialization`, `NSNull`, `NSNumber` | `MGProgrammaticVideo.swift` (`MGCheckedVideoPlan`; MGModel → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGModel → MGParser → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
+| `MGModel.swift` | model, limits-adjacent JSON value | none | CoreFoundation bridge: `CFBooleanGetTypeID`, `CFGetTypeID`, `CFNumberIsFloatType`; Foundation bridge: `JSONSerialization`, `NSNull`, `NSNumber` | `MGProgrammaticVideo.swift` (`MGCheckedVideoPlan`; MGModel → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGModel → MGLesson → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
 | `MGParser.swift` | parser, limits, validation | none | Foundation bridge: `CharacterSet`, `JSONSerialization` | `MGProgrammaticVideo.swift` (`MGProgrammaticVideo`; MGParser → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGParser → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
 | `MGGrammar.swift` | grammar document | none | none | `MGProgrammaticVideo.swift` (`MGCheckedVideoPlan`; MGGrammar → MGModel → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGGrammar → MGParser → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
 | `MGPatch.swift` | patch transactions | none | Foundation bridge: `JSONSerialization` | `MGProgrammaticVideo.swift` (`MGCheckedVideoPlan`; MGPatch → MGModel → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGPatch → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
@@ -142,7 +143,7 @@ most of them, with behavior that has not been compared here.
 | `MGTemplates.swift` | templates, parameter validation | none | Foundation bridge: `CharacterSet` | `MGProgrammaticVideo.swift` (`MGCheckedVideoPlan`; MGTemplates → MGModel → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGTemplates → MGParser → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
 | `MGPack.swift` | pack registry and pack validation | none | locks/global state: `NSLock`, `nonisolated(unsafe)` | `MGProgrammaticVideo.swift` (`MGProgrammaticVideo`; MGPack → MGParser → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGPack → MGParser → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
 | `MGGraphPack.swift` | opt-in graph pack | none | none | `MGProgrammaticVideo.swift` (`MGCheckedVideoPlan`; MGGraphPack → MGModel → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGGraphPack → MGParser → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
-| `MGGeometryPack.swift` | opt-in geometry pack | none | none | `MGProgrammaticVideo.swift` (`MGCheckedVideoPlan`; MGGeometryPack → MGModel → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGGeometryPack → MGModel → MGParser → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
+| `MGGeometryPack.swift` | opt-in geometry pack | none | none | `MGProgrammaticVideo.swift` (`MGCheckedVideoPlan`; MGGeometryPack → MGModel → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGGeometryPack → MGModel → MGLesson → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
 | `MGFixtures.swift` | built-in synthetic fixtures | none | none | `MGProgrammaticVideo.swift` (`MGCheckedVideoPlan`; MGFixtures → MGModel → MGProgrammaticVideo)<br>`MGExplainerLayout.swift` (`MGExplainerFrame`; MGFixtures → MGParser → MGExplainerHonesty → MGExplainer → MGExplainerState → MGExplainerLayout) |
 | `MGPhysics.swift` | closed-form values, number formatting | none | Foundation bridge: `String(format:` | none found |
 

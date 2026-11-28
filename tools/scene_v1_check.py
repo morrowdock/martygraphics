@@ -541,6 +541,100 @@ def check_depth(source):
             depth -= 1
 
 
+def segment(text):
+    """`MGLessonIssue.segment`: an author key as one reason segment (ASCII letters, digits and _, at most 32)."""
+    out = "".join(ch if ch.isascii() and (ch.isalnum() or ch == "_") else "_" for ch in text[:32])
+    return out or "_"
+
+
+_SIMPLE_ESCAPES = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t"}
+
+
+def _hex4(text, at):
+    digits = text[at:at + 4]
+    if len(digits) != 4 or any(ch not in "0123456789abcdefABCDEF" for ch in digits):
+        return None
+    return int(digits, 16)
+
+
+def decoded_key(written):
+    """A key's text with its JSON escapes decoded; as written when an escape does not decode (a lone surrogate)."""
+    if "\\" not in written:
+        return written
+    out, i = [], 0
+    while i < len(written):
+        if written[i] != "\\":
+            out.append(written[i])
+            i += 1
+            continue
+        if i + 1 >= len(written):
+            return written
+        if written[i + 1] in _SIMPLE_ESCAPES:
+            out.append(_SIMPLE_ESCAPES[written[i + 1]])
+            i += 2
+            continue
+        unit = _hex4(written, i + 2) if written[i + 1] == "u" else None
+        if unit is None:
+            return written
+        value, width = unit, 6
+        if 0xD800 <= unit <= 0xDBFF:
+            low = _hex4(written, i + 8) if written[i + 6:i + 8] == "\\u" else None
+            if low is None or not 0xDC00 <= low <= 0xDFFF:
+                return written
+            value, width = 0x10000 + ((unit - 0xD800) << 10) + (low - 0xDC00), 12
+        elif 0xDC00 <= unit <= 0xDFFF:
+            return written
+        out.append(chr(value))
+        i += width
+    return "".join(out)
+
+
+def duplicate_key_path(source):
+    """Mirror `MGJSON.duplicateKeyPath`: the path of the first repeated object key in document order, or None.
+
+    Keys compare after their escapes are decoded, in NFC (Swift compares strings by canonical equivalence).
+    """
+    frames = []  # ["object", keys, current, expect_key] or ["array", index]
+    in_string = escaped = False
+    raw = []
+    for char in source:
+        if in_string:
+            if escaped:
+                escaped = False
+                raw.append(char)
+            elif char == "\\":
+                escaped = True
+                raw.append(char)
+            elif char != '"':
+                raw.append(char)
+            else:
+                in_string = False
+                if not frames or frames[-1][0] != "object" or not frames[-1][3]:
+                    continue
+                key = decoded_key("".join(raw))
+                folded = unicodedata.normalize("NFC", key)
+                if folded in frames[-1][1]:
+                    path = [segment(f[2] or "") if f[0] == "object" else str(f[1]) for f in frames[:-1]]
+                    return ".".join(path + [segment(key)])
+                frames[-1][1].add(folded)
+                frames[-1][2], frames[-1][3] = key, False
+        elif char == '"':
+            in_string, raw = True, []
+        elif char == "{":
+            frames.append(["object", set(), None, True])
+        elif char == "[":
+            frames.append(["array", 0])
+        elif char in "}]":
+            if frames:
+                frames.pop()
+        elif char == "," and frames:
+            if frames[-1][0] == "object":
+                frames[-1][3] = True
+            else:
+                frames[-1][1] += 1
+    return None
+
+
 def unique_object(pairs):
     obj = dict(pairs)
     if len(obj) != len(pairs):
@@ -566,6 +660,9 @@ def check(data, *, packs=()):
     except UnicodeError as error:
         raise Invalid("json") from error
     check_depth(source)
+    duplicate = duplicate_key_path(source)
+    if duplicate is not None:
+        raise Invalid("scene.key.duplicate." + duplicate)
     try:
         scene = json.loads(source, parse_constant=refuse_constant,
                            object_pairs_hook=unique_object, parse_float=scene_float)

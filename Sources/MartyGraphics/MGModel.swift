@@ -188,6 +188,10 @@ public struct MGScene: Equatable, Sendable {
     }
 }
 
+/// One open object or array of `MGJSON.duplicateKeyPath`: an object's keys so far, its current key and whether a key
+/// comes next; an array's current index.
+private enum MGKeyScanFrame { case object(keys: Set<String>, current: String?, expectKey: Bool), array(index: Int) }
+
 /// Minimal immutable JSON value so scenes stay Equatable/Sendable and canonical-encodable.
 ///
 /// Nesting: every public entry point that takes a value built in code (`MGParser.scene(json:)`, `MGPatch.parse(json:)`,
@@ -296,6 +300,112 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
         }
         return deepest
     }
+
+    /// The path of the first repeated object key in UTF-8 JSON text, in document order, or nil when no object repeats a
+    /// key. The system parser keeps one of the values of a repeated key, and a streamed preview must not keep a
+    /// different one, so scene entry points refuse such text before either reads it (`scene.key.duplicate.<path>`).
+    /// One pass without recursion; the text may be a prefix (a key counts once its closing quote arrives).
+    /// Keys compare after their JSON escapes are decoded, as Swift strings (canonically equivalent keys are one key, as
+    /// they are in `MGJSON.object`); an escape that does not decode (a lone surrogate) leaves that key as written.
+    /// The path joins the keys and array indices from the root to the repeated key with `.`; each key is a reason
+    /// segment (`MGLessonIssue.segment`). Malformed text gives some path or nil; the system parser refuses it later.
+    /// `tools/scene_v1_check.py` (`duplicate_key_path`) mirrors this scan.
+    static func duplicateKeyPath<S: Sequence>(_ bytes: S) -> String? where S.Element == UInt8 {
+        var frames: [MGKeyScanFrame] = []
+        var inString = false, escape = false, raw: [UInt8] = []
+        for b in bytes {
+            if inString {
+                if escape { escape = false; raw.append(b); continue }
+                if b == UInt8(ascii: "\\") { escape = true; raw.append(b); continue }
+                guard b == UInt8(ascii: "\"") else { raw.append(b); continue }
+                inString = false
+                guard case .object(var keys, _, true)? = frames.last else { continue }
+                let key = decodedKey(raw)
+                guard keys.insert(key).inserted else {
+                    var path: [String] = []
+                    for frame in frames.dropLast() {
+                        switch frame {
+                        case .object(_, let current, _): path.append(MGLessonIssue.segment(current ?? ""))
+                        case .array(let index): path.append(String(index))
+                        }
+                    }
+                    path.append(MGLessonIssue.segment(key))
+                    return path.joined(separator: ".")
+                }
+                frames[frames.count - 1] = .object(keys: keys, current: key, expectKey: false)
+                continue
+            }
+            switch b {
+            case UInt8(ascii: "\""): inString = true; raw.removeAll(keepingCapacity: true)
+            case UInt8(ascii: "{"): frames.append(.object(keys: [], current: nil, expectKey: true))
+            case UInt8(ascii: "["): frames.append(.array(index: 0))
+            case UInt8(ascii: "}"), UInt8(ascii: "]"): if !frames.isEmpty { frames.removeLast() }
+            case UInt8(ascii: ","):
+                switch frames.last {
+                case .object(let keys, let current, _)?: frames[frames.count - 1] = .object(keys: keys, current: current, expectKey: true)
+                case .array(let index)?: frames[frames.count - 1] = .array(index: index + 1)
+                case nil: break
+                }
+            default: break
+            }
+        }
+        return nil
+    }
+
+    /// A key's text between its quotes with the JSON escapes decoded; as written when an escape does not decode.
+    private static func decodedKey(_ raw: [UInt8]) -> String {
+        let written = String(decoding: raw, as: UTF8.self)
+        guard raw.contains(UInt8(ascii: "\\")) else { return written }
+        let s = Array(written.unicodeScalars)
+        var out = String.UnicodeScalarView(), i = 0
+        while i < s.count {
+            guard s[i] == "\\" else { out.append(s[i]); i += 1; continue }
+            guard i + 1 < s.count else { return written }
+            if let simple = simpleEscape(s[i + 1]) { out.append(simple); i += 2; continue }
+            guard s[i + 1] == "u", let unit = hex4(s, i + 2) else { return written }
+            var value = unit, width = 6
+            if (0xD800...0xDBFF).contains(unit) {
+                guard i + 7 < s.count, s[i + 6] == "\\", s[i + 7] == "u", let low = hex4(s, i + 8),
+                      (0xDC00...0xDFFF).contains(low) else { return written }
+                let high = (unit - 0xD800) << 10
+                value = 0x10000 + high + (low - 0xDC00)
+                width = 12
+            }
+            guard let scalar = Unicode.Scalar(value) else { return written }   // a lone low surrogate
+            out.append(scalar); i += width
+        }
+        return String(out)
+    }
+
+    private static func simpleEscape(_ c: Unicode.Scalar) -> Unicode.Scalar? {
+        switch c {
+        case "\"", "\\", "/": return c
+        case "b": return "\u{8}"
+        case "f": return "\u{C}"
+        case "n": return "\n"
+        case "r": return "\r"
+        case "t": return "\t"
+        default: return nil
+        }
+    }
+
+    /// Four hex digits at `at` (ASCII only), or nil.
+    private static func hex4(_ s: [Unicode.Scalar], _ at: Int) -> UInt32? {
+        guard at + 4 <= s.count else { return nil }
+        var v: UInt32 = 0
+        for c in s[at..<(at + 4)] {
+            let d: UInt32
+            switch c {
+            case "0"..."9": d = c.value - 48
+            case "a"..."f": d = c.value - 87
+            case "A"..."F": d = c.value - 55
+            default: return nil
+            }
+            v = v * 16 + d
+        }
+        return v
+    }
+
     /// Sorted-key JSON: stable cache keys and byte limits. Empty when the value is not encodable (a non-finite number,
     /// or nesting deeper than `MGLimits.depth`); use `canonicalByteCount` for limits, so such a value never counts as small.
     public var canonicalData: Data { encoded ?? Data() }

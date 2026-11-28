@@ -40,6 +40,8 @@ SCENE_REASONS = EVAL / "inventories" / "scene-reasons.json"
 BASELINE_DETAILS = ["input.too-large", "json", "template.unknown"]
 DYNAMIC_SAMPLES = ["title.placeholder.n", "step.say.brace", "item.label.placeholder", "edit.key.zz", "id.duplicate.a",
                    "scene.unknown.zz", "world.unknown.zz", "step.unknown.zz", "camera.unknown.zz", "3d.kind.table"]
+# A repeated object key (MGParser.duplicateKeyRefusal), built from the key's path: one sample.
+DYNAMIC_SAMPLES += ["scene.key.duplicate.title"]
 # Slider reasons that are not `MGError` literals in MGSliders.swift: the closed-key, number and text helpers'
 # reasons, and the forms built from a parameter, a func id or a func reason (one sample each).
 SLIDER_SAMPLES = ["slider.missing", "slider.unknown.zz", "slider.duplicate.a", "slider.min", "slider.max", "slider.label",

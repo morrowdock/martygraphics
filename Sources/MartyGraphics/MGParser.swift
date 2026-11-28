@@ -117,6 +117,7 @@ public enum MGParser {
         guard programmaticVideo else { return scene(data: data) }
         guard data.count <= 65536 else { return .failure(MGError("video2d.budget.bytes")) }
         if let reason = MGJSON.dataRefusal(data, json: "json", depth: "scene.depth") { return .failure(MGError(reason)) }
+        if let refusal = duplicateKeyRefusal(data) { return .failure(refusal) }
         guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(MGError("json")) }
         if (object as? [String: Any])?["layer2d"] == nil { return scene(data: data) }
         return scene(object: object, programmaticVideo: true)
@@ -135,12 +136,21 @@ public enum MGParser {
         catch { return .failure(MGError("video2d.schema")) }
     }
 
+    /// `scene.key.duplicate.<path>` when an object in the scene text repeats a key (`MGJSON.duplicateKeyPath`), else
+    /// nil. Scene `Data` entry points check it after the UTF-8 and depth checks and before the system parser; the
+    /// stream parser checks its text with the same scan, so a preview never keeps a value the final parse refuses.
+    static func duplicateKeyRefusal<S: Sequence>(_ bytes: S) -> MGError? where S.Element == UInt8 {
+        guard let path = MGJSON.duplicateKeyPath(bytes) else { return nil }
+        return MGError("scene.key.duplicate.\(path)")
+    }
+
     static let topKeys: Set<String> = ["v", "template", "params", "title", "dim", "world", "items", "steps", "camera", "hide", "over", "alt", "sliders"]
 
     public static func scene(data: Data) -> Result<MGScene, MGError> {
         guard data.count <= MGLimits.sceneBytes * 2 else { return .failure(.init("json")) }
         // UTF-8 only, and the nesting counted before the recursive system parser.
         if let r = MGJSON.dataRefusal(data, json: "json", depth: "scene.depth") { return .failure(.init(r)) }
+        if let refusal = duplicateKeyRefusal(data) { return .failure(refusal) }
         guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(.init("json")) }
         return scene(object: object)
     }
@@ -158,6 +168,7 @@ public enum MGParser {
         guard data.count <= MGLimits.sceneBytes * 2 else { return .failure(.init("json")) }
         // UTF-8 only, and the nesting counted before the recursive system parser.
         if let r = MGJSON.dataRefusal(data, json: "json", depth: "scene.depth") { return .failure(.init(r)) }
+        if let refusal = duplicateKeyRefusal(data) { return .failure(refusal) }
         guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(.init("json")) }
         return scene(object: object, extraTemplates: extraTemplates)
     }

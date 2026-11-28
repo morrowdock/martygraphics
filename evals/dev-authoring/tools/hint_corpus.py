@@ -36,6 +36,8 @@ PRECEDENCE = [
     "hide.ref", "over.ref", "text.text.placeholder.readout", "slider.label.placeholder", "slider.a.min.func.at",
     "slider.b.max.func.w", "slider.c.min.func.y.var.t", "slider.default.min", "slider.step.count", "sliders.bindings",
 ]
+# A repeated-key path that ends like a field reason (*.at): the scene.key.duplicate row wins.
+PRECEDENCE += ["scene.key.duplicate.items.0.at"]
 # Reasons built by helpers (MGModel bounds, identifier and text checks, templates, camera) rather than MGError literals.
 HELPER_REASONS = ["scene.number", "scene.depth", "scene.bytes", "template.check", "item.id", "item.label", "title",
                   "bars.label", "bars.value", "array.ptr.label", "step.say", "camera.x", "camera.y", "alt", "step.alt"]

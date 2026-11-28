@@ -794,6 +794,14 @@
    "hint": "a scene without a template needs \"items\": a list of 1 to 24 items"
   },
   {
+   "reason": "scene.key.duplicate.items.0.at",
+   "hint": "each key may appear once per object; remove the repeated key at the path in the reason (items.1.at is the key at of the second item) and keep the value you mean"
+  },
+  {
+   "reason": "scene.key.duplicate.title",
+   "hint": "each key may appear once per object; remove the repeated key at the path in the reason (items.1.at is the key at of the second item) and keep the value you mean"
+  },
+  {
    "reason": "scene.missing",
    "hint": "add \"v\": 1 at the top level"
   },

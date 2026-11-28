@@ -1631,7 +1631,9 @@ public enum MGSolidParser {
         return t
     }
     /// Plain text of 1...`max` Unicode scalars. A text that is empty after trimming or longer than `max` is refused with
-    /// a limit detail at `field` (characters; minimum 1); any other fault without one.
+    /// a limit detail at `field` (characters; minimum 1); any other fault without one. As on the 2D board
+    /// (`MGParser.text`), control characters (Cc, Cf) and the line and paragraph separators U+2028 and U+2029 are
+    /// refused with the field's own reason.
     static func text(_ v: MGJSON, _ max: Int, _ what: String, field: String? = nil, part: String? = nil) throws -> String {
         guard case .string(let s) = v else { throw MGSolidIssue(what, part: part) }
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1640,8 +1642,14 @@ public enum MGSolidParser {
                                                                            limit: max, unit: "characters", minimum: 1))
         }
         guard !s.contains("<"), !s.contains(">"), !s.contains("://"),
-              !s.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { throw MGSolidIssue(what, part: part) }
+              !s.unicodeScalars.contains(where: isRefusedScalar) else { throw MGSolidIssue(what, part: part) }
         return t
+    }
+
+    /// A scalar that plain text never holds: a control character (Cc, Cf) or U+2028 / U+2029 (Zl, Zp).
+    static func isRefusedScalar(_ u: Unicode.Scalar) -> Bool {
+        if CharacterSet.controlCharacters.contains(u) { return true }
+        return u.value == 0x2028 || u.value == 0x2029
     }
 
     /// The limit detail of a count `n` against `range` (nil inside it).

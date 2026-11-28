@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "89bacca527151c0da7a3c7bb77e3dc028139a474ec43eae3a4c50346be271dd0"
+      "sha256": "3311c6dd1d211c6564bf32b1b83de42133b79983d1540e372d4ed3c2f16ff3f7"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -799,7 +799,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGModel.swift",
-      "sha256": "6b9c026990a4631294c7da4a5ac4c44af596669a173970486cfff5eaeea0b56c"
+      "sha256": "4eccc3d9e37ab454b4f704d5cc29686ef5c4e29e0128b6d32c040ebc8732b728"
     },
     {
       "path": "Sources/MartyGraphics/MGPack.swift",
@@ -807,7 +807,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "576b5e3857331f044bb7f8c4a5260351bba600d6d2ce56a111c3e3c26acf71cc"
+      "sha256": "a80da9d2797ea0cb18c2f2175a6b433d5555ddc3a6cd44fe5214d1d7a8cf7ab2"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -827,7 +827,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGStream.swift",
-      "sha256": "32964ad01c1748164bbb35a4fc638a6b0916fb1115d75e1d651fc50fe5d83aea"
+      "sha256": "7ab6ba2ab919ebe5aa5d26fe2c7a00fc70ab4d9673c54163c353d5eea1a470dd"
     },
     {
       "path": "Sources/MartyGraphics/MGTemplates.swift",
@@ -955,7 +955,7 @@
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidParser.swift",
-      "sha256": "d468e284a63b61ccb66c060dab85ddcaed06a627d2263ed5a8fdbd16406643e3"
+      "sha256": "2e6337d2a355864c7e895fee2c3d2902f206e0396c66dcffa8ca68e8ddb8ef8f"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidPoses.swift",
@@ -1987,7 +1987,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "1b36e6e67e614f5a24cc5f24d38e90807221f54e1f2ac244ef32ac3c01ff237a"
+      "sha256": "1beec5b1b34be66f4138151ce92b937a2c0dc3f1e5d53aa875bda49e760821c9"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -2007,7 +2007,7 @@
     },
     {
       "path": "docs/SOLID-3D.md",
-      "sha256": "3cff6c6ab0ffbc149a9cd1c793e8cbee1c87e4a0e6a3cd2ddad69f48a82f9f9f"
+      "sha256": "6feae205bd59eb272f47b50a56350189a8510cb22797a7fb77c43e414a735fe0"
     },
     {
       "path": "docs/THIRD-PARTY.md",
@@ -3423,11 +3423,11 @@
     },
     {
       "path": "tools/scene_v1_check.py",
-      "sha256": "5bb3c7511d1e3b01458917dab4ec8e60ddcbf3eb5dd606e800abc8a54ca4edd5"
+      "sha256": "c6405678bffbc5c18f0a187be05fc3b74184cdd41d1111826bd655dea38308ab"
     },
     {
       "path": "tools/tests/test_scene_v1_schema.py",
-      "sha256": "5d323708e4f9d22466a7561827474d2c3caf9b352ac75ec35a0a7df78dccede6"
+      "sha256": "195a0a5a96af7bf54c8b2d8c53a63380999e10a571fd69f50b6de1b9871bd038"
     },
     {
       "path": "docs/fixtures/v1/math-label.scene.json",
@@ -3439,11 +3439,11 @@
     },
     {
       "path": "docs/PORTABILITY-MAP.md",
-      "sha256": "e1e0c3f14f1c38c27596961668fed7804f5a3cf34f19bb96d911a55c1b0b2a77"
+      "sha256": "efc64ebb1dd82dff6b25a0bc03a4d7e27c3a6148f0953a2bead45c2e4a0f8ef1"
     },
     {
       "path": "docs/fixtures/semantics/README.md",
-      "sha256": "c3b87cde5c5420d1cd41e2b6a02454e0b51fdbc87c3e53d0104bd0d39071b426"
+      "sha256": "72f6d2ad35637e112e563c577f8f5041ca487aef5fa07bf886bc55c533546ab0"
     },
     {
       "path": "docs/fixtures/semantics/numeric/array-cells.expected.json",
@@ -3544,22 +3544,6 @@
     {
       "path": "docs/fixtures/semantics/parser/open-byte-order-mark.expected.json",
       "sha256": "d6bcfab5be90db24fd07b3797a7a17639772de1096f338aa288b59d6c767a345"
-    },
-    {
-      "path": "docs/fixtures/semantics/parser/open-duplicate-key.expected.json",
-      "sha256": "a8eef5333740106fca90e7197214bcbbedbe4f4de0d1c94dc34646e353a3106d"
-    },
-    {
-      "path": "docs/fixtures/semantics/parser/open-duplicate-key.scene.json",
-      "sha256": "4853ee090bda97a7385b1b6ac20addb3a49b37c152e041ddc67c7bce9d5cba26"
-    },
-    {
-      "path": "docs/fixtures/semantics/parser/open-line-separator.expected.json",
-      "sha256": "6d39078b41614d1cdba0d7768e63c7bb0c87ad85f16c776a84cc4d8a38c14900"
-    },
-    {
-      "path": "docs/fixtures/semantics/parser/open-line-separator.scene.json",
-      "sha256": "f7a1209dc3b253043949c80e9dcdf723308efd9f09c66c0ae51711b0c1af8b8b"
     },
     {
       "path": "docs/fixtures/semantics/parser/reject-camera-x.expected.json",
@@ -4143,7 +4127,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGRepairHint.swift",
-      "sha256": "9067d15002d129909175a1eb40ec7f2b76b986245d388e3f8482fe6916579360"
+      "sha256": "34534fb921ee63099207261560e440748d338249cc90ec8474c88372dff454d0"
     },
     {
       "path": "Tests/MartyGraphicsMLKitTests/MLRepairHintCorpusTests.swift",
@@ -4151,7 +4135,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/MGRepairHintTests.swift",
-      "sha256": "d43016169a8416bd5c978594a5e72f206f41488aa9154b2986bc75e12ffa281d"
+      "sha256": "431c578d70ed6bc8c09537abae813e64afcc5147ef942d5c8c0e62473256e715"
     },
     {
       "path": "docs/AUTHORING.md",
@@ -4159,7 +4143,7 @@
     },
     {
       "path": "docs/fixtures/repair-hints/corpus.json",
-      "sha256": "67796c740ca7b22c42486449fdf746b22b4797af9e62613e7eef584e06ad79ae"
+      "sha256": "58a6a343ce3cf9b7ae485f5171ad4264dc7a2510279779136a1b0284eaabbbc7"
     },
     {
       "path": "evals/dev-authoring/FREEZE.json",
@@ -4171,7 +4155,7 @@
     },
     {
       "path": "evals/dev-authoring/RESULTS.md",
-      "sha256": "2b7fb1887ad97598c6b3d21b2dc45b2ce07767240f5e81df629e34aa1bf2a6e2"
+      "sha256": "7e9a152d9ae3c7c49a250eb035540f639293493f146b4327867eeaa5f9c40064"
     },
     {
       "path": "evals/dev-authoring/SPEC-CONTRACT.md",
@@ -4195,7 +4179,7 @@
     },
     {
       "path": "evals/dev-authoring/inventories/scene-reasons.json",
-      "sha256": "14f45b79d3db55257020d70374d97d96bfc83c1ceb0975c1fb61dd807a27f75a"
+      "sha256": "64dc23663887c19cad715b1eb9ce7becc47c884fc47c5828375cd298fb84efb8"
     },
     {
       "path": "evals/dev-authoring/requests.json",
@@ -4871,15 +4855,15 @@
     },
     {
       "path": "evals/dev-authoring/tools/hint_corpus.py",
-      "sha256": "840d9bf733a7ba243259e9dc10c13da6596f93532e1e5414d03e3534f9559014"
+      "sha256": "bcf11b6cec076b37e8950f2cd086ddc2556b9009fd1a65b32b4b32a2c596d587"
     },
     {
       "path": "evals/dev-authoring/tools/hints.py",
-      "sha256": "8c6c38e0bbaf28e742b10ae35a30af6a3bdb50b707fae9ea69902fa1e742ba8b"
+      "sha256": "dc5d6f1714dd2974f9ba1a9faab060b3e0e34f71b34e40331a34e950e7847434"
     },
     {
       "path": "evals/dev-authoring/tools/inventory.py",
-      "sha256": "83ef2d25aad95dcc816e2a2539cb4a71ce5b56d69e132cb250ddc672e49a5b06"
+      "sha256": "3b52d71f0dc0268ae2afbb723f4f23d1147ad4cad80394a3215cf0a39bcd7461"
     },
     {
       "path": "evals/dev-authoring/tools/ml_check.py",
@@ -4891,7 +4875,7 @@
     },
     {
       "path": "evals/dev-authoring/tools/test_inventory.py",
-      "sha256": "4918707abb8d297285b55e34ee81e5b85e04890579078f2609321ad312b1608f"
+      "sha256": "4f3a018f06337dcb4d7e1a836c92e6850e7a28a213f79b1116287a5567779314"
     },
     {
       "path": "evals/dev-authoring/vendor/docs/schemas/scene-v1.draft.schema.json",
@@ -4907,7 +4891,7 @@
     },
     {
       "path": "tools/tests/test_repair_hints.py",
-      "sha256": "a384fa741b3a5eae5a9093420a014282325e021e69dbfc7756178ab9065785ea"
+      "sha256": "3f36c4d608146ff39b0ff10e202a28a11af6a67bf61403f9e11eaec98f792946"
     },
     {
       "path": "tools/tests/test_scene_lint.py",
@@ -4998,12 +4982,40 @@
       "sha256": "6531a746523f0f21ef4b00479f5b9aa7686d7b6800343d996dbd597ee4c0bdf3"
     },
     {
+      "path": "Tests/MartyGraphicsTests/KeyAndSeparatorConsistencyTests.swift",
+      "sha256": "b33c14da33662131ff50255c4ee27bcf30cb95858f933f4b1b7d10932fdaef79"
+    },
+    {
       "path": "Tests/MartyGraphicsTests/ReadoutCaseTests.swift",
       "sha256": "0bcb14e32c330c8866acd37792974bc2b2776601e092047d9210ffe53b5e4d3b"
     },
     {
       "path": "Tests/MartyGraphicsTests/SliderTests.swift",
       "sha256": "73ae11dd0f1a5de6313307c06fb134ba489098b0c660faaeb0cca9f8e2507f1a"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-duplicate-key.expected.json",
+      "sha256": "20a57c0c7d60bb2cbdaf6a498bb888a09d8e6660cd2cb6f7e22bff973e91c0f1"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-duplicate-key.scene.json",
+      "sha256": "4853ee090bda97a7385b1b6ac20addb3a49b37c152e041ddc67c7bce9d5cba26"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-line-separator.expected.json",
+      "sha256": "c15bf07bb736b6b527d3c4c93bf1c30adc7098fed36b579b3542a600ab6aab25"
+    },
+    {
+      "path": "docs/fixtures/semantics/parser/reject-line-separator.scene.json",
+      "sha256": "f7a1209dc3b253043949c80e9dcdf723308efd9f09c66c0ae51711b0c1af8b8b"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/duplicate-key.expected.json",
+      "sha256": "ce9b136928bf4f61268366bf4181b297c63c3ff525990fcaafc0c00cf45ea358"
+    },
+    {
+      "path": "docs/fixtures/semantics/streams/duplicate-key.stream.json",
+      "sha256": "60b27e92c885a6d6a4edfe2a2dfca1c11b9774543f9d7ab0f22bb4b88fa8e8aa"
     },
     {
       "path": "docs/fixtures/v1/calculus.scene.json",

@@ -1,0 +1,18 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-duplicate-key.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "A repeated object key is refused before the system parser, with the key's path.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "scene.key.duplicate.title"
+      },
+      "python": "checked",
+      "swift": "pending-mac",
+      "note": "MGJSON.duplicateKeyPath and scene_v1_check.duplicate_key_path scan the text the same way, so no decoder's choice of value is ever seen."
+    }
+  ]
+}

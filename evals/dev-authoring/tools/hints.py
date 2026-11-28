@@ -36,6 +36,7 @@ SCENE_HINTS = [
     ("scene.object", "the top level must be one object such as {\"v\":1,\"items\":[...]}, not an array or a transport wrapper"),
     ("scene.number", "every number must be finite"),
     ("scene.depth", "nest at most 64 levels; real scenes nest 6 to 15"),
+    ("scene.key.duplicate.*", "each key may appear once per object; remove the repeated key at the path in the reason (items.1.at is the key at of the second item) and keep the value you mean"),
     ("scene.bytes", "compact JSON must fit 8192 bytes: shorten text, round numbers or remove items"),
     ("video2d.*", "opt-in layer2d video follows its own draft schema (docs/schemas/scene-2d-layer.draft.schema.json); fix the part the reason names"),
     ("scene.missing", "add \"v\": 1 at the top level"),

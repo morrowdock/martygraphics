@@ -111,7 +111,7 @@ final class RepairHintCorpusTests: XCTestCase {
         let url = XFix.root.appendingPathComponent("docs/fixtures/repair-hints/corpus.json")
         let corpus = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
         let scene = try XCTUnwrap(corpus["scene"] as? [[String: Any]])
-        XCTAssertEqual(scene.count, 294)
+        XCTAssertEqual(scene.count, 296)
         for entry in scene {
             let reason = try XCTUnwrap(entry["reason"] as? String)
             XCTAssertEqual(MGRepairHint.text(for: reason), entry["hint"] as? String, reason)

@@ -123,7 +123,8 @@ is unchanged.
   read as a listing. Leading spaces are kept (only surrounding newlines are
   trimmed) and `<` / `>` are allowed unless the text looks like a markup tag
   (`<` followed by a letter, `/`, `!` or `?` with a later `>`). Code fences,
-  URLs, control characters and whitespace-only text are refused (`text.text`).
+  URLs, control characters, U+2028 and U+2029, and whitespace-only text are
+  refused (`text.text`).
   Braces are still placeholders, as in all text. Other styles keep the strict
   rule: no `<` or `>` at all.
 
@@ -750,6 +751,27 @@ order: `.number`, `.depth`, then the byte bound. `canonicalData` and
 refuses it. Lessons and [Solid 3D](SOLID-3D.md) use the same cap (see
 [lessons](LESSONS.md)).
 
+An object may not repeat a key. Decoders disagree on which value of a repeated
+key they keep (the system parser keeps one, a browser `JSON.parse` keeps the
+last), so the scene `Data` entry points (`scene(data:)` in every form, and
+`MGStreamParser.finish()`) refuse such text with `scene.key.duplicate.<path>`
+after the UTF-8 and depth checks and before the system parser runs. `<path>`
+joins the keys and 0-based array indices from the root to the repeated key with
+`.`, each key as one reason segment (ASCII letters, digits and `_`; anything
+else becomes `_`, at most 32): `{"v":1,"title":"A","title":"B",…}` is
+`scene.key.duplicate.title`, and a second `at` in the second item is
+`scene.key.duplicate.items.1.at`. Keys compare after JSON escapes are decoded
+(`"\u0074itle"` is `title`) and as Swift strings (canonically equivalent keys
+are one key). The stream parser runs the same scan over the text it has so far:
+once a key repeats it shows no new preview, so no preview ever shows the second
+value. The Python preflight (`tools/scene_v1_check.py`) gives the same reason.
+
+Plain text (titles, labels, text items, narration, `alt`, slider labels) refuses
+control characters (Unicode Cc and Cf) and the line and paragraph separators
+U+2028 and U+2029, with the field's own reason (`title`, `text.text`, …). Only
+text items and narration may hold line feeds. [Solid 3D](SOLID-3D.md) text uses
+the same set.
+
 The `params` patch operation merges **shallowly**, one top-level key at a time:
 
 - A key that is not sent keeps its previous value.
@@ -877,6 +899,7 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `template.params.bytes`, `template.build` | A raw template's params object is over 4 KiB, or a template returned nil, threw a non-`MGError` error or threw a reason outside `template.<suffix>` | Send a smaller object; check the template's own documentation. |
 | `scene.number`, `patch.number`, `template.params.number` | A value built in code holds NaN or an infinity | Send finite numbers. |
 | `scene.depth`, `patch.depth`, `template.params.depth` | JSON text or a value built in code nests deeper than `MGLimits.depth` (64 levels) | Send a flatter value; real scenes and patches nest 6 to 15 levels. |
+| `scene.key.duplicate.<path>` | An object in the scene text repeats a key; `<path>` names it from the root (`items.1.at`) | Keep one value for each key; `MGRepairHint.text(for:)` gives a one-line fix. |
 | `3d.text.code` | `code` text in a 3D scene | Use plain text in 3D, or keep the scene 2D. |
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |

@@ -1,0 +1,18 @@
+{
+  "format": "mg-semantics-expected/1",
+  "input": "reject-line-separator.scene.json",
+  "entry": "MGParser.scene(data:)",
+  "about": "U+2028 LINE SEPARATOR is refused in plain text, like a control character.",
+  "expect": [
+    {
+      "check": "outcome",
+      "expect": {
+        "result": "reject",
+        "reason": "title"
+      },
+      "python": "checked",
+      "swift": "pending-mac",
+      "note": "MGParser.text refuses Cc, Cf, U+2028 and U+2029; the Python preflight refuses Cc, Cf, Zl and Zp (the same set). Solid text follows the same rule."
+    }
+  ]
+}

@@ -249,6 +249,13 @@
   Legacy scene parsing remains unchanged unless `programmaticVideo: true` is supplied.
 
 ### Fixed
+- A scene whose JSON repeats an object key is refused with `scene.key.duplicate.<path>` (for example
+  `scene.key.duplicate.items.1.at`). The strict parser kept one value and the stream preview the other, so the same
+  text could preview one way and parse another. Every scene `Data` entry point and `MGStreamParser.finish()` now give
+  this reason, the stream preview stops at the repeated key, and `tools/scene_v1_check.py` gives the same reason
+  (it said `json`). `MGRepairHint` has a hint for it. Pending Mac verification.
+- Solid 3D text refuses U+2028 and U+2029 (line and paragraph separators), as 2D board text already did, with the
+  field's own reason (`assembly.title`, `part.name`, `step.say`, …). Pending Mac verification.
 - Test expressions (the seamless-loop vertex transform and the audio-graph worst-case sampler's gap set) are split into typed steps. On the hosted macOS runners (Xcode 26.6), the compiler timed out type-checking them, so the hosted macOS jobs had failed since #105.
 - For items built in code, the renderer keeps its rounding and truncation and skips only a conversion whose result cannot be represented as an `Int`. For a vector angle this affects the fan-out grouping only. Spring coils are drawn only in the parser's 3–24 range, and a plot is labelled only when it has an origin point.
 - Item blends and the transition spring treat a negative elapsed time as the start of the transition, so a blend never extrapolates past its starting frame.

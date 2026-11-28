@@ -117,6 +117,12 @@ A `parent` that contains a dot but names no part reports `ref.unknown.<id>` (for
 example `ref.unknown.a.b`), also in documents without components; before components it
 reported `part.parent`.
 
+Text follows the 2D board's plain-text rule ([protocol](PROTOCOL.md#host-access-and-unregistered-templates)):
+no `<`, `>` or `://`, and no control characters (Unicode Cc and Cf) or line and paragraph
+separators (U+2028, U+2029). A text that breaks it is refused with the field's own reason
+(`assembly.title`, `part.name`, `step.say`, `label.text.<id>`, …). Where the reason tables say
+"control characters", they include the two separators.
+
 ```json
 {"v": 1, "kind": "assembly", "title": "…", "units": "mm",
  "params": {"input": 0, "explode": 0},
