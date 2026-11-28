@@ -376,6 +376,42 @@ final class BoardTransitionHostTests: XCTestCase {
         let referenceInk = try inkHeight(size: fit, fit: fit)
         XCTAssertGreaterThan(referenceInk, narrowInk)
         XCTAssertEqual(try inkHeight(size: narrow, fit: fit), referenceInk, "cropping the pane must preserve its lettering")
+
+        let vectorJSON = #"{"v":1,"title":"Pane stroke","items":[{"id":"arrow","k":"vector","from":[3,4],"angle":0,"len":6,"color":"blue"}]}"#
+        let vectorScene = try MGParser.scene(data: Data(vectorJSON.utf8)).get()
+        let vector = MGExplainerBoard.input(vectorScene, view: MGExplainerBeatView(), size: narrow, theme: .studio)
+        let strokePixels = try renderedBoard(vector)
+        let width = Int(narrow.width)
+        let height = Int(narrow.height)
+        // Sample the middle of the horizontal shaft, away from the arrowhead.
+        let shaftRows = (0..<height).filter { y in
+            let alpha = (y * width + width / 2) * 4
+            return strokePixels[alpha + 2] > 128 && strokePixels[alpha + 2] > strokePixels[alpha]
+        }
+        XCTAssertGreaterThanOrEqual(shaftRows.count, 2, "the regular stroke has at least two visible pixels")
+
+        var chip = MGExplainerBoard.input(scene, view: MGExplainerBeatView(), size: narrow, theme: .studio)
+        chip.items = []
+        chip.scope = "Demo scope"
+        let chipPixels = try renderedBoard(chip)
+        var pillBounds = CGRect.null
+        var inkBounds = CGRect.null
+        for y in 0..<height {
+            for x in 0..<width {
+                let index = (y * width + x) * 4
+                let red = chipPixels[index]
+                let pixel = CGRect(x: x, y: y, width: 1, height: 1)
+                if red > 190 {
+                    inkBounds = inkBounds.union(pixel)
+                } else if (18...120).contains(red) {
+                    // Studio's surface and rule are both brighter than the stage and darker than the text.
+                    pillBounds = pillBounds.union(pixel)
+                }
+            }
+        }
+        XCTAssertFalse(pillBounds.isNull)
+        XCTAssertFalse(inkBounds.isNull)
+        XCTAssertTrue(pillBounds.insetBy(dx: 2, dy: 2).contains(inkBounds), "scope text stays inside the pill with padding")
     }
 
     @MainActor private func renderedBoard(_ input: MGRenderInput) throws -> [UInt8] {

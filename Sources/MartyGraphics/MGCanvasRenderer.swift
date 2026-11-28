@@ -113,11 +113,9 @@ public enum MGCanvasRenderer {
         let vp = input.viewport
         let size = vp.size
         var theme = input.theme
-        let unit = min(size.width, size.height) / 1080
-        if theme.v2 != nil {
-            let textFit = input.textFitSize ?? size
-            theme.textScale = max(1, min(textFit.width, textFit.height) / 540)
-        }
+        let fit = input.textFitSize ?? size
+        let unit = max(0.5, min(fit.width, fit.height) / 1080)
+        if theme.v2 != nil { theme.textScale = 2 * unit }
         // Board.
         let rect = CGRect(origin: .zero, size: size)
         if selection.drawsBoard, theme.v2 != nil {
@@ -146,7 +144,7 @@ public enum MGCanvasRenderer {
             let pill = Path(roundedRect: chip, cornerRadius: height / 2)
             ctx.fill(pill, with: .color(style.surface))
             ctx.stroke(pill, with: .color(style.rule), lineWidth: 2 * unit)
-            ctx.draw(text, at: CGPoint(x: chip.midX, y: chip.midY))
+            ctx.draw(text, in: chip.insetBy(dx: 8 * unit, dy: 6 * unit))
             obstacles.append(chip)
         }
         let orderedItems = ordered(input.items)
@@ -294,7 +292,7 @@ public enum MGCanvasRenderer {
                 }
             case .plot:
                 let series = theme.v2 != nil && item.id == firstPlotID ? theme.color(.blue) : color
-                plot(ctx, item, vp, theme, series, p, focused: item.id == focusID)
+                plot(ctx, item, vp, theme, series, p, unit: unit, focused: item.id == focusID)
                 if let o = item.pts.first { label(item.label, at: vp.point(o + MGPoint(item.n("w") / 2, item.n("h"))), dir: CGVector(dx: 0, dy: -1)) }
                 obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
             case .spring:
@@ -647,10 +645,9 @@ public enum MGCanvasRenderer {
     }
 
     static func plot(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color,
-                     _ p: Double, focused: Bool = false) {
+                     _ p: Double, unit: CGFloat, focused: Bool) {
         guard let o = item.pts.first else { return }
         let w = item.n("w"), h = item.n("h")
-        let unit = min(vp.size.width, vp.size.height) / 1080
         let lineWidth: CGFloat = theme.v2 != nil ? 2.8 * unit : 2.8
         let frame = CGRect(origin: vp.point(o + MGPoint(0, h)), size: CGSize(width: vp.length(w), height: vp.length(h)))
         if theme.v2 == nil {

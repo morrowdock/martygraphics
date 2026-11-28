@@ -21,8 +21,8 @@ comes from the render host. The schema carries no theme selector. The full scale
 
 In Phase 1, `marty-solid` explainer exports pin the 2D board pane to Classic to preserve the established
 appearance of stills and slide transitions. The 3D look is selected independently.
-Studio and Paper now floor text at the unscaled point size in narrow panes. Explainers size text against
-the reference pane so cropping during a slide keeps the lettering at the same size.
+Studio and Paper floor text and geometry in narrow panes, including the scope chip padding and strokes.
+Explainers size them against the reference pane so cropping during a slide preserves their scale.
 
 The hosted **Design v2 review stills** workflow produces eight views of incline, tree search and a supplied-point
 plot in each palette. See [the phase plan](../PHASE-PLAN.md) for the remaining design work.
