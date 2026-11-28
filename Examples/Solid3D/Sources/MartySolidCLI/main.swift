@@ -790,12 +790,15 @@ func sha(_ url: URL) throws -> String { SHA256.hash(data: try Data(contentsOf: u
 
 // MARK: explainer render
 
-/// The board pane at `size` pixels: the presented 2D state with the beat's emphasis and table rows (the same input the
-/// SwiftUI explainer view draws). `fit`: the reference pane the viewport is fitted for (a narrowed pane keeps its scale).
+/// The presented 2D state with the beat's emphasis and table rows. Solid3D CLI exports retain Classic board
+/// styling in design v2 Phase 1. The reference `fit` keeps the board's scale as the pane narrows.
 @MainActor func boardImage(_ scene: MGScene, _ view: MGExplainerBeatView, width: Int, height: Int, fit: CGSize? = nil) -> CGImage? {
     let size = CGSize(width: width, height: height)
-    let r = ImageRenderer(content: Canvas { ctx, sz in MGCanvasRenderer.draw(MGExplainerBoard.input(scene, view: view, size: sz, fit: fit), in: ctx) }
-        .frame(width: size.width, height: size.height))
+    let board = Canvas { ctx, sz in
+        let input = MGExplainerBoard.input(scene, view: view, size: sz, fit: fit, theme: .classic)
+        MGCanvasRenderer.draw(input, in: ctx)
+    }
+    let r = ImageRenderer(content: board.frame(width: size.width, height: size.height))
     r.scale = 1
     return r.cgImage
 }

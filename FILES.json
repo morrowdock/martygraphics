@@ -51,7 +51,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "1d0b6724fcf3466a9958a065dff5467e17fca3c0237a7721110a1a7c1dae4c4b"
+      "sha256": "6f00fffd1da66ef95955dfe50fabc510f178060472c49a7e5eb8852692838ec9"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -339,7 +339,7 @@
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidCLI/main.swift",
-      "sha256": "802719988ddda1539cfb779c338d8cc9e35e6a2e7c258bde0dfe3206cc858c0b"
+      "sha256": "7d9ca2d10e4dc24c954675b41224f2aae40f72b66191851d7b688558eed538a2"
     },
     {
       "path": "Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift",
@@ -2595,7 +2595,7 @@
     },
     {
       "path": "docs/VISUAL-STYLE.md",
-      "sha256": "ee43072ab62d2f5527f7b4ac919660e546883b87f4a63800017105bf7d3563c3"
+      "sha256": "1ec66f0d923ae3eab7e53a56ce2c79530cabf566a5cd2d6f122186bfdf49d6f4"
     },
     {
       "path": "docs/assets/STUDIO-RERENDER.md",
