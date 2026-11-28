@@ -35,12 +35,19 @@ public struct MGTheme: Sendable {
     public static let board = classic
 
     struct V2: Sendable {
-        let focus: Color
-        let focusRing: Color
-        let focusWash: Color
+        let surface: Color
+        let rule: Color
+        let objectFill: Color
+        let dim: Double
+        static let regular: CGFloat = 4
+        static let heavy: CGFloat = 8
+        let highlight: Color
+        let highlightRing: Color
+        let highlightWash: Color
     }
 
-    static func modern(stage: UInt32, surface: UInt32, line: UInt32, ink: UInt32,
+    static func modern(stage: UInt32, surface: UInt32, surface2: UInt32, line: UInt32, rule: UInt32,
+                       objectFill: UInt32, dim: Double, ink: UInt32,
                        secondary: UInt32, muted: UInt32, focus: UInt32, ring: UInt32, wash: UInt32,
                        hues: [UInt32]) -> MGTheme {
         let roles: [[MGColorRole]] = [
@@ -54,18 +61,21 @@ public struct MGTheme: Sendable {
         }
         let background = hex(stage)
         return MGTheme(backgroundTop: background, backgroundBottom: background, grid: hex(line),
-                       ink: hex(ink), subtleInk: hex(secondary), labelFill: hex(surface), palette: palette,
-                       v2: V2(focus: hex(focus), focusRing: hex(ring), focusWash: hex(wash)))
+                       ink: hex(ink), subtleInk: hex(secondary), labelFill: hex(surface2), palette: palette,
+                       v2: V2(surface: hex(surface), rule: hex(rule), objectFill: hex(objectFill), dim: dim,
+                              highlight: hex(focus), highlightRing: hex(ring), highlightWash: hex(wash)))
     }
 
     public static let studio = modern(
-        stage: 0x0B0C10, surface: 0x1E2128, line: 0x2B2F38,
+        stage: 0x0B0C10, surface: 0x15171C, surface2: 0x1E2128, line: 0x2B2F38, rule: 0x6B7180,
+        objectFill: 0x24354E, dim: 0.34,
         ink: 0xF4EFEA, secondary: 0xB9B2AC, muted: 0x5B606C,
         focus: 0xFFBE2E, ring: 0xFFBE2E, wash: 0x483C20,
         hues: [0x5A9FFF, 0xEA8402, 0x12D6D6, 0xE25BB0, 0x5FE87C, 0x9665E7, 0xE24947])
 
     public static let paper = modern(
-        stage: 0xF5F1EC, surface: 0xECE6DF, line: 0xDCD4CB,
+        stage: 0xF5F1EC, surface: 0xFFFDFA, surface2: 0xECE6DF, line: 0xDCD4CB, rule: 0x857B73,
+        objectFill: 0xDEE9F6, dim: 0.38,
         ink: 0x1B1716, secondary: 0x544B47, muted: 0xA39A92,
         focus: 0xF5B400, ring: 0x1B1716, wash: 0xFBDE91,
         hues: [0x1170E0, 0xCC7200, 0x009494, 0x9A0A70, 0x006E29, 0x632BAB, 0xC2272D])

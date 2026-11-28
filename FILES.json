@@ -51,7 +51,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "6f00fffd1da66ef95955dfe50fabc510f178060472c49a7e5eb8852692838ec9"
+      "sha256": "dae3f01de8b54f22c9e62cb43ef4efecc27ed385c6506e7b2615e00fa82d1064"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -259,7 +259,7 @@
     },
     {
       "path": "Examples/Showcase/Sources/MartyShowcase/Showcase.swift",
-      "sha256": "1153ceba159224006534960f1ade073407ba952162895aef2e9a6c2dff2e0c64"
+      "sha256": "8465b382de343fa4e0ed8068f3f2d11edaf272da30fb88825ec67d6e87725f1c"
     },
     {
       "path": "Examples/Solid3D/Package.swift",
@@ -971,7 +971,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
-      "sha256": "4abfbfeba945228fb57dd655ac81817343c58007ba0817cc789081aab465d36f"
+      "sha256": "a89a9f8b0e558afb8cd265d8c14f6f9964d494a00592030f40006566da0ea9c0"
     },
     {
       "path": "Sources/MartyGraphics/MGCaptionExport.swift",
@@ -1111,7 +1111,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGTheme.swift",
-      "sha256": "3b582344ace644b1c74af202e530fb748aece613e8963cdfb2d86b7152081ab7"
+      "sha256": "6702816bd64b17841ba0053ddb980336fdc4c18f612cf6114e62e4868956ce91"
     },
     {
       "path": "Sources/MartyGraphics/MGTimeline.swift",
@@ -1139,7 +1139,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "281b6669cb6a1fdfcb707e76af53c6a34af57e17f3512171099fe1437b5d836b"
+      "sha256": "8ef9e6931fe0723c2c5e0f7b5f2258dae2f6b47d82eca8f98657bcc32d9dc1f1"
     },
     {
       "path": "Sources/MartyGraphics/Resources/BricolageGrotesque-OFL.txt",

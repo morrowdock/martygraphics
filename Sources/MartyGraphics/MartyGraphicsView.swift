@@ -458,10 +458,24 @@ struct MGSceneHost: View {
         }
     }
 
+    private func liveItems(for still: MGRenderInput) -> Set<String> {
+        var live = MGCanvasLayers.live(still.scene, items: still.items).union(MGCanvasLayers.settling(appear: still.appear, opacity: still.opacity))
+        if still.theme.v2 != nil {
+            // Renders of other vectors depend on the focus, including animated highlight items.
+            let vectors = Set(still.items.filter { $0.kind == .vector }.map(\.id))
+            if still.focus.map(vectors.contains) == true || still.items.contains(where: {
+                $0.kind == .highlight && $0.ref.map(vectors.contains) == true
+            }) {
+                live.formUnion(vectors)
+            }
+        }
+        return live
+    }
+
     @ViewBuilder private func layeredCanvases(_ frames: MGBoardFrames, size: CGSize, running: Bool, now: Date, phase: MGBoardTransition.Phase) -> some View {
         let still = input(frames, now: now, size: size)
         // Items still drawing on or fading are live too: ticks never redraw the base (`MGCanvasLayers.settling`).
-        let live = MGCanvasLayers.live(frames.scene, items: still.items).union(MGCanvasLayers.settling(appear: still.appear, opacity: still.opacity))
+        let live = liveItems(for: still)
         let base = MGCanvasLayers.base(still.items, live: live)
         Canvas(rendersAsynchronously: false) { ctx, size in
             // The base frame at this evaluation's time for the canvas's own size, as the live canvas draws for its own

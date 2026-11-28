@@ -56,8 +56,11 @@ private struct Board: View {
         let size = CGSize(width: width, height: height)
         let items = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: time)
         let focus = scene.steps.indices.contains(step) ? scene.steps[step].focus : nil
+        let portraitTree = scene.template == "bst" && height > width
+        let padding: CGFloat = portraitTree ? width * 64 / 1080 : 18
+        let viewport = MGViewport(size: size, width: scene.width, height: scene.height, camera: scene.camera, padding: padding)
         var input = MGRenderInput(scene: scene, items: items,
-                                  viewport: MGViewport(size: size, width: scene.width, height: scene.height, camera: scene.camera),
+                                  viewport: viewport,
                                   theme: theme, focus: focus, time: time)
         input.scope = scope
         return input

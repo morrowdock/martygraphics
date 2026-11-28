@@ -9,6 +9,7 @@
   plots, and replace glowing emphasis rings with ink outlines for selection and emphasis. The legacy
   `.yellow` role draws as ink in v2 so amber serves only as the focus signal. The Solid3D CLI explainer
   export keeps Classic styling for its 2D board pane in Phase 1.
+- Refined v2 focus treatments, blue series styling and safe-area spacing in the design review stills.
 - Added a hosted macOS workflow that exports 16 design review stills across Studio and Paper.
 
 - **Breaking:** `func.empty` now uses the rule of `curve.empty`: at t = 0 some piece of the graph must draw a

@@ -111,7 +111,8 @@ public enum MGCanvasRenderer {
         let vp = input.viewport
         let size = vp.size
         var theme = input.theme
-        if theme.v2 != nil { theme.textScale = min(size.width, size.height) / 540 }
+        let unit = min(size.width, size.height) / 1080
+        if theme.v2 != nil { theme.textScale = 2 * unit }
         // Board.
         let rect = CGRect(origin: .zero, size: size)
         if selection.drawsBoard, theme.v2 != nil {
@@ -126,14 +127,20 @@ public enum MGCanvasRenderer {
         var labels: [MGLayout.LabelRequest] = []
         var labelStyle: [String: (String, Color, Double)] = [:]
         var obstacles: [CGRect] = []
-        if selection.drawsOverlays, theme.v2 != nil, let scope = input.scope ?? scopeText(input.scene) {
-            let font = boardFont(theme, size: 12, mono: true)
+        if selection.drawsOverlays, let style = theme.v2, let scope = input.scope ?? scopeText(input.scene) {
+            let portrait = size.height > size.width
+            let left = (portrait || size.width == size.height ? 64 : 96) * unit
+            let top = (portrait ? 220 : 64) * unit
+            let font = boardFont(theme, size: 15, mono: true)
             let text = ctx.resolve(Text(verbatim: scope).font(font).foregroundColor(theme.ink))
-            let measured = text.measure(in: CGSize(width: max(1, size.width - 32), height: 60))
-            let width = (measured.width + 16).rounded(.up)
-            let height = (measured.height + 8).rounded(.up)
-            let chip = CGRect(x: max(8, (size.width - width - 8).rounded(.down)), y: 8, width: width, height: height)
-            ctx.fill(Path(roundedRect: chip, cornerRadius: 7), with: .color(theme.labelFill))
+            let measured = text.measure(in: CGSize(width: max(1, size.width - 2 * left - 16 * unit), height: 60 * unit))
+            let width = (measured.width + 16 * unit).rounded(.up)
+            let height = (measured.height + 12 * unit).rounded(.up)
+            let x = portrait ? left : max(left, size.width - left - width)
+            let chip = CGRect(x: x.rounded(), y: top.rounded(), width: width, height: height)
+            let pill = Path(roundedRect: chip, cornerRadius: height / 2)
+            ctx.fill(pill, with: .color(style.surface))
+            ctx.stroke(pill, with: .color(style.rule), lineWidth: 2 * unit)
             ctx.draw(text, at: CGPoint(x: chip.midX, y: chip.midY))
             obstacles.append(chip)
         }
@@ -143,6 +150,8 @@ public enum MGCanvasRenderer {
                 && (input.opacity[$0.id] ?? 1) > 0.001
         }
         let focusID = highlight?.ref ?? input.focus
+        let vectorIsFocused = focusID.flatMap { byID[$0] }?.kind == .vector
+        let firstPlotID = orderedItems.first(where: { $0.kind == .plot })?.id
 
         // Parallel arrows on one body fan out sideways so they never hide each other.
         var fan: [String: CGFloat] = [:]
@@ -198,8 +207,9 @@ public enum MGCanvasRenderer {
                     }
                     l.fill(shape, with: shading)
                 }
-                let outline = theme.v2 != nil ? theme.grid : Color.white.opacity(0.35)
-                body.stroke(shape, with: .color(outline), lineWidth: 1.5)
+                let outline = theme.v2 != nil ? theme.color(.blue) : Color.white.opacity(0.35)
+                let outlineWidth = theme.v2 != nil ? MGTheme.V2.regular * unit : 1.5
+                body.stroke(shape, with: .color(outline), lineWidth: outlineWidth)
                 let box = CGRect(x: c.x - side / 2, y: c.y - side / 2, width: side, height: side)
                 obstacles.append(box)
                 if let text = item.label {
@@ -255,7 +265,13 @@ public enum MGCanvasRenderer {
                 let dx = CGFloat(cos(angle * .pi / 180)), dy = -CGFloat(sin(angle * .pi / 180))
                 if let shift = fan[item.id] { start = CGPoint(x: start.x - dy * shift, y: start.y + dx * shift) }
                 let tip = CGPoint(x: start.x + dx * len, y: start.y + dy * len)
-                arrow(ctx, from: start, to: tip, color: color, dashed: item.has("dashed"), width: item.has("dashed") ? 2 : 3.2, glow: theme.v2 == nil)
+                let dashed = item.has("dashed")
+                let focused = theme.v2 != nil && focusID == item.id
+                let width: CGFloat = focused ? MGTheme.V2.heavy * unit : (dashed ? 2 : 3.2)
+                let arrowColor = focused ? (theme.v2?.highlight ?? color) : color
+                var vectorContext = ctx
+                if vectorIsFocused, !focused, let style = theme.v2 { vectorContext.opacity *= style.dim }
+                arrow(vectorContext, from: start, to: tip, color: arrowColor, dashed: dashed, width: width, glow: theme.v2 == nil)
                 label(item.label, at: tip, dir: CGVector(dx: dx, dy: dy), alpha: p > 0.6 ? (p - 0.6) / 0.4 : 0)
             case .axes:
                 guard let o = item.pts.first else { continue }
@@ -267,7 +283,8 @@ public enum MGCanvasRenderer {
                     small(ctx, theme, item.list[1], at: CGPoint(x: yEnd.x + 10, y: yEnd.y + 4), color: theme.subtleInk, anchor: .leading)
                 }
             case .plot:
-                plot(ctx, item, vp, theme, color, p)
+                let series = theme.v2 != nil && item.id == firstPlotID ? theme.color(.blue) : color
+                plot(ctx, item, vp, theme, series, p, focused: item.id == focusID)
                 if let o = item.pts.first { label(item.label, at: vp.point(o + MGPoint(item.n("w") / 2, item.n("h"))), dir: CGVector(dx: 0, dy: -1)) }
                 obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
             case .spring:
@@ -400,8 +417,8 @@ public enum MGCanvasRenderer {
                 ctx.drawLayer { l in
                     if theme.v2 == nil { l.addFilter(.shadow(color: color.opacity(0.5), radius: 8)) }
                     let shading: GraphicsContext.Shading
-                    if theme.v2 != nil {
-                        shading = .color(color.opacity(0.22))
+                    if let style = theme.v2 {
+                        shading = .color(style.objectFill)
                     } else {
                         let gradient = Gradient(colors: [color.opacity(0.55), color.opacity(0.22)])
                         shading = .radialGradient(gradient, center: c, startRadius: 0, endRadius: r)
@@ -456,13 +473,12 @@ public enum MGCanvasRenderer {
         }
         // Focus ring (step focus), drawn under labels so text stays readable.
         if let style = theme.v2, let id = focusID, let target = byID[id],
+           target.kind != .vector, target.kind != .plot,
            let r = MGLayout.bounds(target, in: input.items, vp) {
-            let box = r.insetBy(dx: -10, dy: -10)
+            let box = r.insetBy(dx: -10 * unit, dy: -10 * unit)
             let shape = target.kind == .node || target.has("ball")
                 ? Path(ellipseIn: box) : Path(roundedRect: box, cornerRadius: 10)
-            ctx.stroke(shape, with: .color(style.focusWash), lineWidth: 8)
-            ctx.stroke(shape, with: .color(style.focusRing), lineWidth: 4)
-            ctx.stroke(shape, with: .color(style.focus), lineWidth: 1.5)
+            drawFocusRing(ctx, shape, theme, style, unit: unit)
         } else if theme.v2 == nil, let f = input.focus, let target = byID[f], target.kind != .highlight, let r = MGLayout.bounds(target, in: input.items, vp) {
             let pulse = 0.35 + 0.35 * (0.5 + 0.5 * sin(input.time * 3.2))
             let box = r.insetBy(dx: -8, dy: -8)
@@ -613,11 +629,20 @@ public enum MGCanvasRenderer {
         }
     }
 
-    static func plot(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double) {
+    private static func drawFocusRing(_ ctx: GraphicsContext, _ path: Path, _ theme: MGTheme,
+                                      _ style: MGTheme.V2, unit: CGFloat) {
+        ctx.stroke(path, with: .color(theme.backgroundTop), lineWidth: (MGTheme.V2.heavy + 6) * unit)
+        ctx.stroke(path, with: .color(style.highlightRing), lineWidth: MGTheme.V2.heavy * unit)
+    }
+
+    static func plot(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color,
+                     _ p: Double, focused: Bool = false) {
         guard let o = item.pts.first else { return }
         let w = item.n("w"), h = item.n("h")
         let frame = CGRect(origin: vp.point(o + MGPoint(0, h)), size: CGSize(width: vp.length(w), height: vp.length(h)))
-        ctx.fill(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.labelFill.opacity(0.5)))
+        if theme.v2 == nil {
+            ctx.fill(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.labelFill.opacity(0.5)))
+        }
         var g = Path()
         for k in 1..<4 {
             // 1-point grid lines on the half-point grid: whole pixels at 1x, 2x and 3x.
@@ -627,7 +652,9 @@ public enum MGCanvasRenderer {
             g.move(to: CGPoint(x: frame.minX, y: fy)); g.addLine(to: CGPoint(x: frame.maxX, y: fy))
         }
         ctx.stroke(g, with: .color(theme.grid.opacity(1.5)), lineWidth: 1)
-        ctx.stroke(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.subtleInk.opacity(0.5)), lineWidth: 1)
+        if theme.v2 == nil {
+            ctx.stroke(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.subtleInk.opacity(0.5)), lineWidth: 1)
+        }
         let x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
         // The line only when every point has a finite place (MGGraph.plotTrace, shared with the audio graph); the
         // screen check only guards against overflow.
@@ -639,6 +666,16 @@ public enum MGCanvasRenderer {
                 clip.drawLayer { l in
                     if theme.v2 == nil { l.addFilter(.shadow(color: color.opacity(0.7), radius: 5)) }
                     l.stroke(line.trimmedPath(from: 0, to: p), with: .color(color), style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
+                }
+                if focused, let style = theme.v2, p >= 1, !mapped.isEmpty {
+                    // Pick a supplied sample near three quarters of the trace.
+                    let index = Int((Double(mapped.count - 1) * 0.75).rounded())
+                    let point = mapped[index]
+                    let unit = min(vp.size.width, vp.size.height) / 1080
+                    let radius = 10 * unit
+                    let ring = Path(ellipseIn: CGRect(x: point.x - radius, y: point.y - radius,
+                                                      width: 2 * radius, height: 2 * radius))
+                    drawFocusRing(ctx, ring, theme, style, unit: unit)
                 }
             }
         }
