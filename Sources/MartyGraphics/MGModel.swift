@@ -188,9 +188,77 @@ public struct MGScene: Equatable, Sendable {
     }
 }
 
-/// One open object or array of `MGJSON.duplicateKeyPath`: an object's keys so far, its current key and whether a key
-/// comes next; an array's current index.
-private enum MGKeyScanFrame { case object(keys: Set<String>, current: String?, expectKey: Bool), array(index: Int) }
+/// The repeated-key scan of `MGJSON.duplicateKeyPath`, kept as state so text can arrive in chunks: `consume` reads each
+/// byte once and carries an open string, escape or object over to the next call, so any split of the text gives the
+/// same `path`, in the same total number of steps, as one call over all of it. The first repeated key ends the scan:
+/// `path` is set once its closing quote is read, and later bytes are not read. The strict parse runs it over the whole
+/// text (`MGParser.duplicateKeyRefusal`); `MGStreamParser` feeds it each chunk as it arrives.
+struct MGKeyScanner {
+    /// One open object or array: an object's keys so far, its current key and whether a key comes next; an array's
+    /// current index.
+    private struct Frame {
+        let isObject: Bool
+        var keys: Set<String> = []
+        var current: String?
+        var expectKey = true
+        var index = 0
+    }
+
+    private var frames: [Frame] = []
+    private var inString = false, escape = false
+    private var raw: [UInt8] = []
+    /// The path of the first repeated key, once its closing quote has been read; nil until then.
+    private(set) var path: String?
+
+    /// Reads `bytes` after everything read so far, and returns the steps taken: one per byte read, so none once `path`
+    /// is set (operation-count tests add them up).
+    @discardableResult
+    mutating func consume<S: Sequence>(_ bytes: S) -> Int where S.Element == UInt8 {
+        guard path == nil else { return 0 }
+        var steps = 0
+        for b in bytes {
+            steps += 1
+            if inString {
+                if escape { escape = false; raw.append(b); continue }
+                if b == UInt8(ascii: "\\") { escape = true; raw.append(b); continue }
+                guard b == UInt8(ascii: "\"") else { raw.append(b); continue }
+                inString = false
+                closeString()
+                if path != nil { return steps }
+                continue
+            }
+            switch b {
+            case UInt8(ascii: "\""): inString = true; raw.removeAll(keepingCapacity: true)
+            case UInt8(ascii: "{"): frames.append(Frame(isObject: true))
+            case UInt8(ascii: "["): frames.append(Frame(isObject: false))
+            case UInt8(ascii: "}"), UInt8(ascii: "]"): if !frames.isEmpty { frames.removeLast() }
+            case UInt8(ascii: ","):
+                guard let top = frames.indices.last else { break }
+                if frames[top].isObject { frames[top].expectKey = true } else { frames[top].index += 1 }
+            default: break
+            }
+        }
+        return steps
+    }
+
+    /// A string just closed. When it is a key, record it in its object, or set `path` when the object already has it.
+    private mutating func closeString() {
+        guard let top = frames.indices.last, frames[top].isObject, frames[top].expectKey else { return }
+        let key = MGJSON.decodedKey(raw)
+        // In place through the index: the frame is the set's only owner, so an insert never copies the set.
+        guard frames[top].keys.insert(key).inserted else {
+            var parts: [String] = []
+            for frame in frames.dropLast() {
+                parts.append(frame.isObject ? MGLessonIssue.segment(frame.current ?? "") : String(frame.index))
+            }
+            parts.append(MGLessonIssue.segment(key))
+            path = parts.joined(separator: ".")
+            return
+        }
+        frames[top].current = key
+        frames[top].expectKey = false
+    }
+}
 
 /// Minimal immutable JSON value so scenes stay Equatable/Sendable and canonical-encodable.
 ///
@@ -309,51 +377,15 @@ public indirect enum MGJSON: Equatable, Hashable, Sendable {
     /// they are in `MGJSON.object`); an escape that does not decode (a lone surrogate) leaves that key as written.
     /// The path joins the keys and array indices from the root to the repeated key with `.`; each key is a reason
     /// segment (`MGLessonIssue.segment`). Malformed text gives some path or nil; the system parser refuses it later.
-    /// `tools/scene_v1_check.py` (`duplicate_key_path`) mirrors this scan.
+    /// One call of `MGKeyScanner` over all the text. `tools/scene_v1_check.py` (`KeyScanner`) mirrors the scan.
     static func duplicateKeyPath<S: Sequence>(_ bytes: S) -> String? where S.Element == UInt8 {
-        var frames: [MGKeyScanFrame] = []
-        var inString = false, escape = false, raw: [UInt8] = []
-        for b in bytes {
-            if inString {
-                if escape { escape = false; raw.append(b); continue }
-                if b == UInt8(ascii: "\\") { escape = true; raw.append(b); continue }
-                guard b == UInt8(ascii: "\"") else { raw.append(b); continue }
-                inString = false
-                guard case .object(var keys, _, true)? = frames.last else { continue }
-                let key = decodedKey(raw)
-                guard keys.insert(key).inserted else {
-                    var path: [String] = []
-                    for frame in frames.dropLast() {
-                        switch frame {
-                        case .object(_, let current, _): path.append(MGLessonIssue.segment(current ?? ""))
-                        case .array(let index): path.append(String(index))
-                        }
-                    }
-                    path.append(MGLessonIssue.segment(key))
-                    return path.joined(separator: ".")
-                }
-                frames[frames.count - 1] = .object(keys: keys, current: key, expectKey: false)
-                continue
-            }
-            switch b {
-            case UInt8(ascii: "\""): inString = true; raw.removeAll(keepingCapacity: true)
-            case UInt8(ascii: "{"): frames.append(.object(keys: [], current: nil, expectKey: true))
-            case UInt8(ascii: "["): frames.append(.array(index: 0))
-            case UInt8(ascii: "}"), UInt8(ascii: "]"): if !frames.isEmpty { frames.removeLast() }
-            case UInt8(ascii: ","):
-                switch frames.last {
-                case .object(let keys, let current, _)?: frames[frames.count - 1] = .object(keys: keys, current: current, expectKey: true)
-                case .array(let index)?: frames[frames.count - 1] = .array(index: index + 1)
-                case nil: break
-                }
-            default: break
-            }
-        }
-        return nil
+        var scanner = MGKeyScanner()
+        scanner.consume(bytes)
+        return scanner.path
     }
 
     /// A key's text between its quotes with the JSON escapes decoded; as written when an escape does not decode.
-    private static func decodedKey(_ raw: [UInt8]) -> String {
+    fileprivate static func decodedKey(_ raw: [UInt8]) -> String {
         let written = String(decoding: raw, as: UTF8.self)
         guard raw.contains(UInt8(ascii: "\\")) else { return written }
         let s = Array(written.unicodeScalars)

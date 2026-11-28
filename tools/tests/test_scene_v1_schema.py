@@ -189,6 +189,37 @@ class SceneV1Tests(unittest.TestCase):
         self.assertEqual(checker.duplicate_key_path('{"x.y":1,"x.y":2}'), "x_y")
         self.assertIsNone(checker.duplicate_key_path('{"a":{"a":1},"b":[{"a":1},{"a":2}]}'))
 
+    def test_repeated_key_scan_is_the_same_however_the_text_is_split(self):
+        # Mirrors MGKeyScanner: state kept across pieces, one step per character, the first repeated key ends the scan.
+        body = '{"id":"a","k":"body","at":[2,2]}'
+        plain = '{"v":1,"title":"Two bodies","items":[' + body + ']}'
+        repeated = '{"v":1,"items":[' + body + ',{"id":"b","k":"body","at":[3,3],"at":[4,4]}]}'
+        escaped = '{"v":1,"title":"First","' + chr(92) + 'u0074itle":"Second"}'
+        for text in (plain, repeated, escaped):
+            whole = checker.KeyScanner()
+            whole_steps = whole.consume(text)
+            for size in range(1, 9):
+                pieces = checker.KeyScanner()
+                steps = sum(pieces.consume(text[start:start + size]) for start in range(0, len(text), size))
+                with self.subTest(text=text, size=size):
+                    self.assertEqual((pieces.path, steps), (whole.path, whole_steps))
+        once = checker.KeyScanner()
+        self.assertEqual(once.consume(plain), len(plain))
+        self.assertIsNone(once.path)
+        stops = checker.KeyScanner()
+        self.assertEqual(stops.consume(repeated), repeated.index('"at":[4,4]') + len('"at"'))
+        self.assertEqual(stops.path, "items.1.at")
+        self.assertEqual(stops.consume(plain), 0)
+
+    def test_refusals_follow_the_swift_order(self):
+        # UTF-8, depth, repeated key, then the decoder, as in MGParser.scene(data:) and MGStreamParser.finish().
+        repeated = '{"v":1,"title":"First","title":"Second","items":[{"id":"a","k":"body","at":[2,2]}]'
+        deep = "[" * 65 + "]" * 65
+        self.assert_invalid((repeated + "}").encode("utf-8"), "scene.key.duplicate.title")
+        self.assert_invalid((repeated + ',"camera":' + deep + "}").encode("utf-8"), "scene.depth")
+        self.assert_invalid(repeated.encode("utf-8"), "scene.key.duplicate.title")
+        self.assert_invalid(b'{"v":1,"title":"' + bytes([0xFF]) + b'","title":"B"}', "json")
+
     def test_line_and_paragraph_separators_are_refused_in_plain_text(self):
         body = {"id": "a", "k": "body", "at": [2, 2]}
         for value in (0x2028, 0x2029, 0x7F, 0x200E):

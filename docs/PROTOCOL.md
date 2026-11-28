@@ -762,9 +762,14 @@ else becomes `_`, at most 32): `{"v":1,"title":"A","title":"B",…}` is
 `scene.key.duplicate.title`, and a second `at` in the second item is
 `scene.key.duplicate.items.1.at`. Keys compare after JSON escapes are decoded
 (`"\u0074itle"` is `title`) and as Swift strings (canonically equivalent keys
-are one key). The stream parser runs the same scan over the text it has so far:
-once a key repeats it shows no new preview, so no preview ever shows the second
-value. The Python preflight (`tools/scene_v1_check.py`) gives the same reason.
+are one key). The stream parser feeds the same scan each chunk once, as it
+arrives. The scan keeps its state, so a key split across chunks counts when its
+closing quote arrives. From the chunk that closes a repeated key, even before
+the key's value arrives, `feed` returns no new preview, so no preview ever shows
+the second value. `finish()` is the strict parse, so its reason follows the
+order above: a text that also nests deeper than 64 levels gives `scene.depth`.
+The Python preflight (`tools/scene_v1_check.py`) gives the same reasons in the
+same order.
 
 Plain text (titles, labels, text items, narration, `alt`, slider labels) refuses
 control characters (Unicode Cc and Cf) and the line and paragraph separators

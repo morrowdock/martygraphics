@@ -137,8 +137,10 @@ public enum MGParser {
     }
 
     /// `scene.key.duplicate.<path>` when an object in the scene text repeats a key (`MGJSON.duplicateKeyPath`), else
-    /// nil. Scene `Data` entry points check it after the UTF-8 and depth checks and before the system parser; the
-    /// stream parser checks its text with the same scan, so a preview never keeps a value the final parse refuses.
+    /// nil. Scene `Data` entry points check it after the UTF-8 and depth checks and before the system parser. The
+    /// stream parser feeds the same scanner (`MGKeyScanner`) each chunk as it arrives and stops its previews at the
+    /// first repeated key, so a preview never keeps a value the final parse refuses. `finish()` runs `scene(data:)`, so
+    /// its reason follows the same order.
     static func duplicateKeyRefusal<S: Sequence>(_ bytes: S) -> MGError? where S.Element == UInt8 {
         guard let path = MGJSON.duplicateKeyPath(bytes) else { return nil }
         return MGError("scene.key.duplicate.\(path)")
@@ -148,7 +150,8 @@ public enum MGParser {
 
     public static func scene(data: Data) -> Result<MGScene, MGError> {
         guard data.count <= MGLimits.sceneBytes * 2 else { return .failure(.init("json")) }
-        // UTF-8 only, and the nesting counted before the recursive system parser.
+        // UTF-8 only, and the nesting counted before the recursive system parser. Then a repeated key, then the system
+        // parser: `MGStreamParser.finish()` and `tools/scene_v1_check.py` give their reasons in this order too.
         if let r = MGJSON.dataRefusal(data, json: "json", depth: "scene.depth") { return .failure(.init(r)) }
         if let refusal = duplicateKeyRefusal(data) { return .failure(refusal) }
         guard let object = try? JSONSerialization.jsonObject(with: data) else { return .failure(.init("json")) }

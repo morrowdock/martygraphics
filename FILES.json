@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "3311c6dd1d211c6564bf32b1b83de42133b79983d1540e372d4ed3c2f16ff3f7"
+      "sha256": "265ec4e940f61c7612c3bda7adbfe72cf9d49137f8a5a7fba9bcc22dd90b8038"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -799,7 +799,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGModel.swift",
-      "sha256": "4eccc3d9e37ab454b4f704d5cc29686ef5c4e29e0128b6d32c040ebc8732b728"
+      "sha256": "c848096d89feca6de7a4ed061f27c880ba90e448882092c0fa3c51dfc83ea876"
     },
     {
       "path": "Sources/MartyGraphics/MGPack.swift",
@@ -807,7 +807,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGParser.swift",
-      "sha256": "a80da9d2797ea0cb18c2f2175a6b433d5555ddc3a6cd44fe5214d1d7a8cf7ab2"
+      "sha256": "7b6d1d64549949d673b9a100e76ab1ae36ded016c099dff623c46959f96b3f01"
     },
     {
       "path": "Sources/MartyGraphics/MGPatch.swift",
@@ -827,7 +827,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGStream.swift",
-      "sha256": "7ab6ba2ab919ebe5aa5d26fe2c7a00fc70ab4d9673c54163c353d5eea1a470dd"
+      "sha256": "960eed802c65f1a5c3c50bf5dfe7111ca419cda1556b2e44e91cd7522da74a5b"
     },
     {
       "path": "Sources/MartyGraphics/MGTemplates.swift",
@@ -1987,7 +1987,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "1beec5b1b34be66f4138151ce92b937a2c0dc3f1e5d53aa875bda49e760821c9"
+      "sha256": "8e47841e3ceab72efbbcdbde859028ab36c07cca81c23a54cd5abeb4875c32b1"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -3423,11 +3423,11 @@
     },
     {
       "path": "tools/scene_v1_check.py",
-      "sha256": "c6405678bffbc5c18f0a187be05fc3b74184cdd41d1111826bd655dea38308ab"
+      "sha256": "91adad82d0ff33ced3772e198cdc53387625b1cb83740293e7ec0491217e3627"
     },
     {
       "path": "tools/tests/test_scene_v1_schema.py",
-      "sha256": "195a0a5a96af7bf54c8b2d8c53a63380999e10a571fd69f50b6de1b9871bd038"
+      "sha256": "70d9f81b4e745c5155abfa10ef3a171961b44d714cf5b0c378f95f518ccb106f"
     },
     {
       "path": "docs/fixtures/v1/math-label.scene.json",
@@ -4983,7 +4983,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/KeyAndSeparatorConsistencyTests.swift",
-      "sha256": "b33c14da33662131ff50255c4ee27bcf30cb95858f933f4b1b7d10932fdaef79"
+      "sha256": "9a0e17bd852926533b8061175d7e132435fe0205daae373421a7b8100e458568"
     },
     {
       "path": "Tests/MartyGraphicsTests/ReadoutCaseTests.swift",

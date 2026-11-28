@@ -589,50 +589,97 @@ def decoded_key(written):
     return "".join(out)
 
 
+class _KeyFrame:
+    """One open object or array of `KeyScanner`: an object's keys so far, its current key and whether a key comes
+    next; an array's current index."""
+
+    __slots__ = ("is_object", "keys", "current", "expect_key", "index")
+
+    def __init__(self, is_object):
+        self.is_object = is_object
+        self.keys = set()
+        self.current = None
+        self.expect_key = True
+        self.index = 0
+
+
+class KeyScanner:
+    """Mirror `MGKeyScanner`: the repeated-key scan, kept as state so text can arrive in pieces.
+
+    `consume` reads each character once and carries an open string, escape or object over to the next call, so any
+    split of the text gives the same `path`, in the same total number of steps, as one call over all of it. The first
+    repeated key ends the scan: `path` is set once its closing quote is read, and later characters are not read.
+    Swift counts a step per UTF-8 byte where this counts one per character; every character the scan acts on is ASCII.
+    Keys compare after their escapes are decoded, in NFC (Swift compares strings by canonical equivalence).
+    """
+
+    def __init__(self):
+        self.frames = []
+        self.in_string = self.escaped = False
+        self.raw = []
+        self.path = None
+
+    def consume(self, text):
+        """Read `text` after everything read so far; return the steps taken, one per character read."""
+        if self.path is not None:
+            return 0
+        steps = 0
+        for char in text:
+            steps += 1
+            if self.in_string:
+                if self.escaped:
+                    self.escaped = False
+                    self.raw.append(char)
+                elif char == "\\":
+                    self.escaped = True
+                    self.raw.append(char)
+                elif char != '"':
+                    self.raw.append(char)
+                else:
+                    self.in_string = False
+                    self._close_string()
+                    if self.path is not None:
+                        return steps
+            elif char == '"':
+                self.in_string, self.raw = True, []
+            elif char == "{":
+                self.frames.append(_KeyFrame(True))
+            elif char == "[":
+                self.frames.append(_KeyFrame(False))
+            elif char in "}]":
+                if self.frames:
+                    self.frames.pop()
+            elif char == "," and self.frames:
+                top = self.frames[-1]
+                if top.is_object:
+                    top.expect_key = True
+                else:
+                    top.index += 1
+        return steps
+
+    def _close_string(self):
+        """A string just closed. When it is a key, record it in its object, or set `path` when the object has it."""
+        if not self.frames or not self.frames[-1].is_object or not self.frames[-1].expect_key:
+            return
+        top = self.frames[-1]
+        key = decoded_key("".join(self.raw))
+        folded = unicodedata.normalize("NFC", key)
+        if folded in top.keys:
+            parts = [segment(f.current or "") if f.is_object else str(f.index) for f in self.frames[:-1]]
+            self.path = ".".join(parts + [segment(key)])
+            return
+        top.keys.add(folded)
+        top.current, top.expect_key = key, False
+
+
 def duplicate_key_path(source):
     """Mirror `MGJSON.duplicateKeyPath`: the path of the first repeated object key in document order, or None.
 
-    Keys compare after their escapes are decoded, in NFC (Swift compares strings by canonical equivalence).
+    One `KeyScanner` call over all the text.
     """
-    frames = []  # ["object", keys, current, expect_key] or ["array", index]
-    in_string = escaped = False
-    raw = []
-    for char in source:
-        if in_string:
-            if escaped:
-                escaped = False
-                raw.append(char)
-            elif char == "\\":
-                escaped = True
-                raw.append(char)
-            elif char != '"':
-                raw.append(char)
-            else:
-                in_string = False
-                if not frames or frames[-1][0] != "object" or not frames[-1][3]:
-                    continue
-                key = decoded_key("".join(raw))
-                folded = unicodedata.normalize("NFC", key)
-                if folded in frames[-1][1]:
-                    path = [segment(f[2] or "") if f[0] == "object" else str(f[1]) for f in frames[:-1]]
-                    return ".".join(path + [segment(key)])
-                frames[-1][1].add(folded)
-                frames[-1][2], frames[-1][3] = key, False
-        elif char == '"':
-            in_string, raw = True, []
-        elif char == "{":
-            frames.append(["object", set(), None, True])
-        elif char == "[":
-            frames.append(["array", 0])
-        elif char in "}]":
-            if frames:
-                frames.pop()
-        elif char == "," and frames:
-            if frames[-1][0] == "object":
-                frames[-1][3] = True
-            else:
-                frames[-1][1] += 1
-    return None
+    scanner = KeyScanner()
+    scanner.consume(source)
+    return scanner.path
 
 
 def unique_object(pairs):

@@ -10,8 +10,11 @@ import Foundation
 /// If the final parse fails, callers must drop the preview (fail safe).
 /// The stream accepts up to 16 KiB of UTF-8, matching the strict parser's input limit. After an overflow,
 /// `finish()` refuses the stream and a new parser is needed. Preview candidates are limited to `MGLimits.items`.
-/// A repeated object key anywhere in the text ends the previews, as the final parse refuses it
-/// (`scene.key.duplicate.<path>`, `MGParser.duplicateKeyRefusal`): no preview shows the second value of a key.
+/// Each chunk also goes once through the strict parse's repeated-key scan (`MGKeyScanner`, which keeps its state, so a
+/// key split across chunks counts when its closing quote arrives). From the chunk that closes a repeated key, even
+/// before the key's value arrives, `feed` returns no preview: no preview shows a second value of a key. `finish()` is
+/// the strict parse, so its reason follows the parse's order (UTF-8, depth, repeated key, then the system parser): a
+/// text that also nests too deeply gives `scene.depth`.
 ///
 /// Recommended field order for early previews: v, template, params | dim, world, title, items, steps.
 public struct MGStreamParser {
@@ -19,8 +22,14 @@ public struct MGStreamParser {
     public private(set) var text = ""
     private var overflowed = false
     private var previewItemLimitExceeded = false
-    /// Set once the text repeats an object key: the reason `finish()` gives, and no preview follows.
-    private(set) var previewRefusal: MGError?
+    /// The strict parse's repeated-key scan, fed each chunk once as it arrives.
+    private var keyScan = MGKeyScanner()
+    /// The path of the first repeated object key in the text so far, set by the chunk that closes that key. From then
+    /// on `feed` returns no preview; `finish()` still gives the strict parse's reason.
+    var repeatedKeyPath: String? { keyScan.path }
+    /// The repeated-key scan's steps over every `feed`: one per byte of the text up to a repeated key, as one feed of
+    /// the whole text takes (operation-count tests).
+    private(set) var keyScanSteps = 0
     private var accepted: [MGJSON] = []
     private var pending: [MGJSON] = []
     private var seenItems = 0
@@ -52,22 +61,18 @@ public struct MGStreamParser {
             return nil
         }
         text += chunk
-        guard !previewItemLimitExceeded, previewRefusal == nil else { return nil }
-        let bytes = Array(text.utf8)
-        let members = Self.members(bytes)
+        // Before the shape check: the chunk that closes a repeated key may complete nothing else (its value has not
+        // arrived), and the previews stop from that chunk on.
+        keyScanSteps += keyScan.consume(chunk.utf8)
+        guard keyScan.path == nil else { pending.removeAll(); return nil }
+        guard !previewItemLimitExceeded else { return nil }
+        let members = Self.members(Array(text.utf8))
         // Nothing new completed since the last call: the preview is what that call computed (shown, or refused).
         let itemsMember = members.last { $0.key == "items" }
         let shape = Shape(members: members.filter { $0.complete && $0.key != "items" },
                           items: itemsMember.map { Self.elements($0.raw, limit: MGLimits.items + 1).count } ?? -1)
         if shape == lastShape { return nil }
         lastShape = shape
-        // The same scan as the strict parse, over the text so far: once a key repeats, the final parse refuses the
-        // scene, so the preview stops instead of showing either value (the top-level merge below keeps the last).
-        if let refusal = MGParser.duplicateKeyRefusal(bytes) {
-            previewRefusal = refusal
-            pending.removeAll()
-            return nil
-        }
         var root: [String: MGJSON] = [:]
         var itemsRaw: [UInt8]?
         for m in members {
@@ -141,7 +146,7 @@ public struct MGStreamParser {
         return scene
     }
 
-    /// Strict final parse of everything received.
+    /// Strict final parse of everything received (`MGParser.scene(data:)`, with its order of refusals).
     public func finish() -> Result<MGScene, MGError> {
         guard !overflowed else { return .failure(.init("json")) }
         return MGParser.scene(data: Data(text.utf8))

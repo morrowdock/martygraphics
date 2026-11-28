@@ -3,13 +3,22 @@ import Foundation
 import XCTest
 @testable import MartyGraphics
 
-/// A repeated object key is refused with one reason on every scene path: the strict parse, the stream's `finish()`
-/// and the stream preview, which stops instead of showing either value (`scene.key.duplicate.<path>`).
+/// A repeated object key is refused with one reason on every scene `Data` path, the stream's `finish()` included. The
+/// stream preview stops from the chunk that closes the repeated key, so it never shows either value
+/// (`scene.key.duplicate.<path>`). The scan keeps its state across chunks and reads each byte once.
 final class RepeatedKeyTests: XCTestCase {
     private static let body = #"{"id":"a","k":"body","at":[2,2]}"#
+    /// A scene up to the point where a second `title` key may follow; it previews with the title "First".
+    private static let head: String = #"{"v":1,"title":"First","items":["# + RepeatedKeyTests.body + "],"
 
     private func reason(_ text: String) -> String? {
         let result: Result<MGScene, MGError> = MGParser.scene(data: Data(text.utf8))
+        guard case .failure(let error) = result else { return nil }
+        return error.reason
+    }
+
+    private func finishReason(_ parser: MGStreamParser) -> String? {
+        let result: Result<MGScene, MGError> = parser.finish()
         guard case .failure(let error) = result else { return nil }
         return error.reason
     }
@@ -66,15 +75,48 @@ final class RepeatedKeyTests: XCTestCase {
 
     func testTheStreamStopsPreviewingAtARepeatedKey() {
         var parser = MGStreamParser()
-        let first: String = #"{"v":1,"title":"First","items":["# + Self.body + "],"
-        let preview: MGScene? = parser.feed(first)
+        let preview: MGScene? = parser.feed(Self.head)
         XCTAssertEqual(preview?.title, "First")
         let after: MGScene? = parser.feed(#""title":"Second"}"#)
         XCTAssertNil(after, "no preview shows the second title")
-        XCTAssertEqual(parser.previewRefusal?.reason, "scene.key.duplicate.title")
-        let finish: Result<MGScene, MGError> = parser.finish()
-        guard case .failure(let error) = finish else { return XCTFail("finish accepted a repeated key") }
-        XCTAssertEqual(error.reason, parser.previewRefusal?.reason)
+        XCTAssertEqual(parser.repeatedKeyPath, "title")
+        XCTAssertEqual(finishReason(parser), "scene.key.duplicate.title")
+    }
+
+    func testTheChunkThatClosesARepeatedKeyStopsThePreviewsBeforeItsValueArrives() {
+        var parser = MGStreamParser()
+        let preview: MGScene? = parser.feed(Self.head)
+        XCTAssertEqual(preview?.title, "First")
+        // The key alone completes no member, so the preview's shape does not change; the scan still reads the key.
+        let key: MGScene? = parser.feed(#""title""#)
+        XCTAssertNil(key)
+        XCTAssertEqual(parser.repeatedKeyPath, "title", "the key's closing quote stops the previews")
+        let value: MGScene? = parser.feed(#":"Second"}"#)
+        XCTAssertNil(value, "no preview shows the second title")
+        XCTAssertEqual(finishReason(parser), "scene.key.duplicate.title")
+    }
+
+    func testAKeySplitAcrossChunksCountsWhenItsClosingQuoteArrives() {
+        // The second key as written, and spelled with an escape ("\u0074itle" is "title"): every cut, the escape's
+        // backslash and its hex digits included, leaves the key open until the chunk with its closing quote.
+        let spellings: [String] = [#""title""#, #""\u0074itle""#]
+        for spelling in spellings {
+            let characters: [Character] = Array(spelling)
+            for cut in 1..<characters.count {
+                let left = String(characters[..<cut])
+                let right = String(characters[cut...])
+                var parser = MGStreamParser()
+                _ = parser.feed(Self.head)
+                let open: MGScene? = parser.feed(left)
+                XCTAssertNil(open, left)
+                XCTAssertNil(parser.repeatedKeyPath, left + " is not a closed key yet")
+                let closed: MGScene? = parser.feed(right)
+                XCTAssertNil(closed, right)
+                XCTAssertEqual(parser.repeatedKeyPath, "title", left + " | " + right)
+                _ = parser.feed(#":"Second"}"#)
+                XCTAssertEqual(finishReason(parser), "scene.key.duplicate.title", left + " | " + right)
+            }
+        }
     }
 
     func testNoChunkingPreviewsASecondValue() {
@@ -90,9 +132,7 @@ final class RepeatedKeyTests: XCTestCase {
         }
         XCTAssertFalse(titles.isEmpty)
         XCTAssertFalse(titles.contains("Second"))
-        let finish: Result<MGScene, MGError> = parser.finish()
-        guard case .failure(let error) = finish else { return XCTFail("finish accepted a repeated key") }
-        XCTAssertEqual(error.reason, "scene.key.duplicate.title")
+        XCTAssertEqual(finishReason(parser), "scene.key.duplicate.title")
     }
 
     func testARepeatedKeyInsideAnItemNeverPreviewsTheItem() {
@@ -100,13 +140,106 @@ final class RepeatedKeyTests: XCTestCase {
         var previews = 0
         var parser = MGStreamParser()
         for character in text {
-            if parser.feed(String(character)) != nil { previews += 1 }
+            var chunk = ""
+            chunk.append(character)
+            if parser.feed(chunk) != nil { previews += 1 }
         }
         XCTAssertEqual(previews, 0)
-        XCTAssertEqual(parser.previewRefusal?.reason, "scene.key.duplicate.items.0.at")
-        let finish: Result<MGScene, MGError> = parser.finish()
-        guard case .failure(let error) = finish else { return XCTFail("finish accepted a repeated key") }
-        XCTAssertEqual(error.reason, "scene.key.duplicate.items.0.at")
+        XCTAssertEqual(parser.repeatedKeyPath, "items.0.at")
+        XCTAssertEqual(finishReason(parser), "scene.key.duplicate.items.0.at")
+    }
+
+    func testFinishGivesTheStrictReasonInTheParseOrder() {
+        // UTF-8, depth, repeated key, then the system parser, whatever stopped the previews.
+        let repeated: String = #"{"v":1,"title":"First","title":"Second","items":["# + Self.body + "]"
+        let levels: Int = MGLimits.depth + 1
+        let deep: String = String(repeating: "[", count: levels) + String(repeating: "]", count: levels)
+        let cases: [(rest: String, want: String)] = [
+            ("}", "scene.key.duplicate.title"),
+            // Too deep as well: the depth check comes first.
+            (#","camera":"# + deep + "}", "scene.depth"),
+            // Never closed, so not JSON as well: the repeated key comes before the system parser.
+            ("", "scene.key.duplicate.title"),
+        ]
+        for (rest, want) in cases {
+            var parser = MGStreamParser()
+            let first: MGScene? = parser.feed(repeated)
+            XCTAssertNil(first, want)
+            XCTAssertEqual(parser.repeatedKeyPath, "title", want)
+            if !rest.isEmpty {
+                let second: MGScene? = parser.feed(rest)
+                XCTAssertNil(second, want)
+            }
+            let text: String = repeated + rest
+            XCTAssertEqual(finishReason(parser), want)
+            XCTAssertEqual(reason(text), want)
+        }
+        // Bytes that are not UTF-8 give `json` first, even with a repeated key (a stream's text is always UTF-8).
+        let open: [UInt8] = Array(#"{"v":1,"title":""#.utf8)
+        let close: [UInt8] = Array(#"","title":"B"}"#.utf8)
+        let bytes: [UInt8] = open + [0xFF] + close
+        let notUTF8: Result<MGScene, MGError> = MGParser.scene(data: Data(bytes))
+        guard case .failure(let error) = notUTF8 else { return XCTFail("accepted bytes that are not UTF-8") }
+        XCTAssertEqual(error.reason, "json")
+    }
+
+    func testTheScanReadsEachByteOnceHoweverTheTextIsSplit() {
+        let second: String = #"{"id":"b","k":"body","at":[3,3],"at":[4,4]}"#
+        let plain: String = #"{"v":1,"title":"Two bodies","items":["# + Self.body + "]}"
+        let repeated: String = #"{"v":1,"items":["# + Self.body + "," + second + "]}"
+        let escaped: String = #"{"v":1,"title":"First","\u0074itle":"Second"}"#
+        for text in [plain, repeated, escaped] {
+            let bytes: [UInt8] = Array(text.utf8)
+            var whole = MGKeyScanner()
+            let wholeSteps: Int = whole.consume(bytes)
+            for size in 1...8 {
+                var pieces = MGKeyScanner()
+                var steps = 0
+                var start = 0
+                while start < bytes.count {
+                    let end: Int = min(start + size, bytes.count)
+                    steps += pieces.consume(bytes[start..<end])
+                    start = end
+                }
+                XCTAssertEqual(pieces.path, whole.path, text)
+                XCTAssertEqual(steps, wholeSteps, text)
+            }
+        }
+        // One step per byte: all of the text when no key repeats, up to the repeated key's closing quote otherwise.
+        var once = MGKeyScanner()
+        let plainSteps: Int = once.consume(Array(plain.utf8))
+        XCTAssertNil(once.path)
+        XCTAssertEqual(plainSteps, plain.utf8.count)
+        let upToKey: String = #"{"v":1,"items":["# + Self.body + #",{"id":"b","k":"body","at":[3,3],"at""#
+        var stops = MGKeyScanner()
+        let repeatedSteps: Int = stops.consume(Array(repeated.utf8))
+        XCTAssertEqual(stops.path, "items.1.at")
+        XCTAssertEqual(repeatedSteps, upToKey.utf8.count)
+        // Nothing is read after the repeated key.
+        let after: Int = stops.consume(Array(plain.utf8))
+        XCTAssertEqual(after, 0)
+    }
+
+    func testTheStreamScansEachByteOnce() {
+        // However a scene is chunked, the scan reads each byte once: as many steps as one feed of the whole text.
+        for fixture in MGFixtures.all {
+            let total: Int = fixture.json.utf8.count
+            var whole = MGStreamParser()
+            _ = whole.feed(fixture.json)
+            XCTAssertEqual(whole.keyScanSteps, total, fixture.id)
+            let characters: [Character] = Array(fixture.json)
+            for size in [7, 64] {
+                var parser = MGStreamParser()
+                var start = 0
+                while start < characters.count {
+                    let end: Int = min(start + size, characters.count)
+                    _ = parser.feed(String(characters[start..<end]))
+                    start = end
+                }
+                XCTAssertEqual(parser.keyScanSteps, total, fixture.id)
+                XCTAssertNil(parser.repeatedKeyPath, fixture.id)
+            }
+        }
     }
 
     func testEveryBuiltInFixtureStillStreamsAndParses() throws {
@@ -114,7 +247,7 @@ final class RepeatedKeyTests: XCTestCase {
             let strict: MGScene = try MGParser.scene(data: Data(fixture.json.utf8)).get()
             var parser = MGStreamParser()
             _ = parser.feed(fixture.json)
-            XCTAssertNil(parser.previewRefusal, fixture.id)
+            XCTAssertNil(parser.repeatedKeyPath, fixture.id)
             let streamed: MGScene = try parser.finish().get()
             XCTAssertEqual(streamed, strict, fixture.id)
         }
