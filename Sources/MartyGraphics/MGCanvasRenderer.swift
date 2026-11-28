@@ -7,6 +7,8 @@ public struct MGRenderInput {
     public var scene: MGScene
     public var items: [MGItem]
     public var viewport: MGViewport
+    /// Reference pane size for typography when the viewport is cropped during a slide.
+    var textFitSize: CGSize? = nil
     public var theme: MGTheme = .studio
     /// Draw-on progress per item id, 0...1. Missing means fully drawn.
     public var appear: [String: Double] = [:]
@@ -112,7 +114,10 @@ public enum MGCanvasRenderer {
         let size = vp.size
         var theme = input.theme
         let unit = min(size.width, size.height) / 1080
-        if theme.v2 != nil { theme.textScale = 2 * unit }
+        if theme.v2 != nil {
+            let textFit = input.textFitSize ?? size
+            theme.textScale = max(1, min(textFit.width, textFit.height) / 540)
+        }
         // Board.
         let rect = CGRect(origin: .zero, size: size)
         if selection.drawsBoard, theme.v2 != nil {
@@ -267,7 +272,12 @@ public enum MGCanvasRenderer {
                 let tip = CGPoint(x: start.x + dx * len, y: start.y + dy * len)
                 let dashed = item.has("dashed")
                 let focused = theme.v2 != nil && focusID == item.id
-                let width: CGFloat = focused ? MGTheme.V2.heavy * unit : (dashed ? 2 : 3.2)
+                let width: CGFloat
+                if theme.v2 != nil {
+                    width = (focused ? MGTheme.V2.heavy : MGTheme.V2.regular) * unit
+                } else {
+                    width = dashed ? 2 : 3.2
+                }
                 let arrowColor = focused ? (theme.v2?.highlight ?? color) : color
                 var vectorContext = ctx
                 if vectorIsFocused, !focused, let style = theme.v2 { vectorContext.opacity *= style.dim }
@@ -359,7 +369,8 @@ public enum MGCanvasRenderer {
             case .highlight:
                 guard let target = item.ref.flatMap({ byID[$0] }), let r = MGLayout.bounds(target, in: input.items, vp) else { continue }
                 let pulse = 0.55 + 0.45 * sin(input.time * 4)
-                let box = r.insetBy(dx: -10, dy: -10)
+                let padding = theme.v2 != nil ? 10 * unit : 10
+                let box = r.insetBy(dx: -padding, dy: -padding)
                 let shape = target.kind == .node || target.has("ball") ? Path(ellipseIn: box) : Path(roundedRect: box, cornerRadius: 12)
                 if theme.v2 == nil {
                     ctx.drawLayer { l in
@@ -477,7 +488,7 @@ public enum MGCanvasRenderer {
            let r = MGLayout.bounds(target, in: input.items, vp) {
             let box = r.insetBy(dx: -10 * unit, dy: -10 * unit)
             let shape = target.kind == .node || target.has("ball")
-                ? Path(ellipseIn: box) : Path(roundedRect: box, cornerRadius: 10)
+                ? Path(ellipseIn: box) : Path(roundedRect: box, cornerRadius: 10 * unit)
             drawFocusRing(ctx, shape, theme, style, unit: unit)
         } else if theme.v2 == nil, let f = input.focus, let target = byID[f], target.kind != .highlight, let r = MGLayout.bounds(target, in: input.items, vp) {
             let pulse = 0.35 + 0.35 * (0.5 + 0.5 * sin(input.time * 3.2))
@@ -639,6 +650,8 @@ public enum MGCanvasRenderer {
                      _ p: Double, focused: Bool = false) {
         guard let o = item.pts.first else { return }
         let w = item.n("w"), h = item.n("h")
+        let unit = min(vp.size.width, vp.size.height) / 1080
+        let lineWidth: CGFloat = theme.v2 != nil ? 2.8 * unit : 2.8
         let frame = CGRect(origin: vp.point(o + MGPoint(0, h)), size: CGSize(width: vp.length(w), height: vp.length(h)))
         if theme.v2 == nil {
             ctx.fill(Path(roundedRect: frame, cornerRadius: 6), with: .color(theme.labelFill.opacity(0.5)))
@@ -665,13 +678,12 @@ public enum MGCanvasRenderer {
                 var clip = ctx; clip.clip(to: Path(frame.insetBy(dx: -2, dy: -2)))
                 clip.drawLayer { l in
                     if theme.v2 == nil { l.addFilter(.shadow(color: color.opacity(0.7), radius: 5)) }
-                    l.stroke(line.trimmedPath(from: 0, to: p), with: .color(color), style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
+                    l.stroke(line.trimmedPath(from: 0, to: p), with: .color(color), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round))
                 }
                 if focused, let style = theme.v2, p >= 1, !mapped.isEmpty {
-                    // Pick a supplied sample near three quarters of the trace.
+                    // Pick a plotted point near three quarters of the trace.
                     let index = Int((Double(mapped.count - 1) * 0.75).rounded())
                     let point = mapped[index]
-                    let unit = min(vp.size.width, vp.size.height) / 1080
                     let radius = 10 * unit
                     let ring = Path(ellipseIn: CGRect(x: point.x - radius, y: point.y - radius,
                                                       width: 2 * radius, height: 2 * radius))

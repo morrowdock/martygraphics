@@ -757,6 +757,7 @@ struct MGSceneHost: View {
         var out = MGRenderInput(scene: scene, items: items, viewport: vp, theme: theme, appear: appear, focus: focus, time: t)
         out.opacity = blend.opacity
         out.transitionStyle = style
+        out.textFitSize = teaching.fitSize
         out.emphasis = teaching.emphasis.union(teaching.selection?.wrappedValue.map { [$0] } ?? [])
         out.markers = teaching.markers
         out.tableRows = teaching.tableRows

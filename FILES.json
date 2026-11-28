@@ -259,7 +259,7 @@
     },
     {
       "path": "Examples/Showcase/Sources/MartyShowcase/Showcase.swift",
-      "sha256": "8465b382de343fa4e0ed8068f3f2d11edaf272da30fb88825ec67d6e87725f1c"
+      "sha256": "c00465993b897c80de7055712c9b0acde17eb180dd69870620b9734600afe9fe"
     },
     {
       "path": "Examples/Solid3D/Package.swift",
@@ -971,7 +971,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
-      "sha256": "a89a9f8b0e558afb8cd265d8c14f6f9964d494a00592030f40006566da0ea9c0"
+      "sha256": "f727f6e484af8e97ceb75ec64cf893a99522b32f73d2b7571af1876acdc73995"
     },
     {
       "path": "Sources/MartyGraphics/MGCaptionExport.swift",
@@ -1131,7 +1131,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsExplainerView.swift",
-      "sha256": "8267c36d888e26093a9f39b1c5bd77c2a617343bebb0f39a51e596772a200f0a"
+      "sha256": "5ea69f10dcec152b8411cdabbc28a87ce28595a8c398b79f3e3fc642dbb117e9"
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsLessonView.swift",
@@ -1139,7 +1139,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MartyGraphicsView.swift",
-      "sha256": "8ef9e6931fe0723c2c5e0f7b5f2258dae2f6b47d82eca8f98657bcc32d9dc1f1"
+      "sha256": "30df87c1e7ce7025781b7e3c5ef3e3c0a6adfaab33e299458f6b09f67ed9c266"
     },
     {
       "path": "Sources/MartyGraphics/Resources/BricolageGrotesque-OFL.txt",
@@ -1455,7 +1455,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/BoardTransitionTests.swift",
-      "sha256": "1f11ec76b1db245ae38340976b7bf26eb2fc904ed525d56732fe5a0ec267c50e"
+      "sha256": "d80aabe5ddac31cac9ebe2b52b9345c3a4ba7892f4a7577992d3922307174c60"
     },
     {
       "path": "Tests/MartyGraphicsTests/CaptionExportTests.swift",
@@ -2595,7 +2595,7 @@
     },
     {
       "path": "docs/VISUAL-STYLE.md",
-      "sha256": "1ec66f0d923ae3eab7e53a56ce2c79530cabf566a5cd2d6f122186bfdf49d6f4"
+      "sha256": "18d730300f8f555df263dede378c1243a637433bfeaa37043fe3360aac5769b5"
     },
     {
       "path": "docs/assets/STUDIO-RERENDER.md",

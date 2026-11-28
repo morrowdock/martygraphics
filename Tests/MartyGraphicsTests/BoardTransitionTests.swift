@@ -354,6 +354,30 @@ final class BoardTransitionHostTests: XCTestCase {
         }
     }
 
+    @MainActor func testStudioTextKeepsItsSizeInNarrowAndSlidingPanes() throws {
+        let json = #"{"v":1,"title":"Pane text","items":[{"id":"caption","k":"text","at":[6,4],"text":"TABLE"}]}"#
+        let scene = try MGParser.scene(data: Data(json.utf8)).get()
+        let narrow = CGSize(width: 170, height: 278)
+        let wide = CGSize(width: 480, height: 480)
+        func inkHeight(size: CGSize, fit: CGSize? = nil) throws -> Int {
+            let input = MGExplainerBoard.input(scene, view: MGExplainerBeatView(), size: size, fit: fit, theme: .studio)
+            let pixels = try renderedBoard(input)
+            let width = Int(size.width)
+            let height = Int(size.height)
+            XCTAssertEqual(pixels.count, width * height * 4)
+            return (0..<height).filter { y in
+                (0..<width).contains { x in pixels[(y * width + x) * 4] > 128 }
+            }.count
+        }
+        let narrowInk = try inkHeight(size: narrow)
+        XCTAssertGreaterThanOrEqual(narrowInk, 8, "14-point capitals must remain legible in a narrow pane")
+        XCTAssertEqual(narrowInk, try inkHeight(size: wide))
+        let fit = CGSize(width: 810, height: 810)
+        let referenceInk = try inkHeight(size: fit, fit: fit)
+        XCTAssertGreaterThan(referenceInk, narrowInk)
+        XCTAssertEqual(try inkHeight(size: narrow, fit: fit), referenceInk, "cropping the pane must preserve its lettering")
+    }
+
     @MainActor private func renderedBoard(_ input: MGRenderInput) throws -> [UInt8] {
         let size = input.viewport.size
         let board = Canvas { context, _ in MGCanvasRenderer.draw(input, in: context) }

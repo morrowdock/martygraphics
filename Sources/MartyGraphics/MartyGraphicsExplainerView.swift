@@ -37,6 +37,7 @@ public enum MGExplainerBoard {
     public static func input(_ scene: MGScene, view: MGExplainerBeatView, size: CGSize, fit: CGSize? = nil, theme: MGTheme = .studio) -> MGRenderInput {
         let vp = MGViewport(size: fit ?? size, width: scene.width, height: scene.height, camera: scene.camera).resized(to: size)
         var input = MGRenderInput(scene: scene, items: scene.items, viewport: vp, theme: theme)
+        input.textFitSize = fit
         input.emphasis = view.boardEmphasis
         input.tableRows = view.tableRows
         input.tableCells = view.tableCells

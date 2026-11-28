@@ -57,6 +57,7 @@ private struct Board: View {
         let items = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: time)
         let focus = scene.steps.indices.contains(step) ? scene.steps[step].focus : nil
         let portraitTree = scene.template == "bst" && height > width
+        // Use MGViewport's default 18-point padding outside the portrait tree safe area.
         let padding: CGFloat = portraitTree ? width * 64 / 1080 : 18
         let viewport = MGViewport(size: size, width: scene.width, height: scene.height, camera: scene.camera, padding: padding)
         var input = MGRenderInput(scene: scene, items: items,

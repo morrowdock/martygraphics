@@ -19,8 +19,10 @@ Bricolage Grotesque and DM Mono ship with their OFL texts. Board scope can be su
 `MGRenderInput.scope`. The renderer adds automatic scope chips for BST and supplied-point plots. Incline scope
 comes from the render host. The schema carries no theme selector. The full scaled typography rules are Phase 5.
 
-In Phase 1, `marty-solid` explainer stills and clips retain Classic styling in the 2D board pane, including
-while the pane slides. The 3D look is selected independently.
+In Phase 1, `marty-solid` explainer exports pin the 2D board pane to Classic to preserve the established
+appearance of stills and slide transitions. The 3D look is selected independently.
+Studio and Paper now floor text at the unscaled point size in narrow panes. Explainers size text against
+the reference pane so cropping during a slide keeps the lettering at the same size.
 
 The hosted **Design v2 review stills** workflow produces eight views of incline, tree search and a supplied-point
 plot in each palette. See [the phase plan](../PHASE-PLAN.md) for the remaining design work.
