@@ -249,6 +249,7 @@ final class TemplateExtensionTests: XCTestCase {
             "ragged_table": "table.cells", "region_two_points": "region.pts", "focus_on_missing_item": "step.focus",
             "func_unknown_function": "func.y.name", "func_implicit_product": "func.y.syntax", "func_too_detailed": "func.detail",
             "func_period_without_time": "func.period", "func_in_3d": "3d.kind.func", "field_without_values": "field.empty",
+            "curve_two_forms": "curve.form", "curve_too_detailed": "curve.detail", "curve_in_3d": "3d.kind.curve",
             "alt_with_markup": "alt", "step_alt_with_link": "step.alt",
             "wire_items_over_limit": "items.count"]
         XCTAssertEqual(Set(MGFixtures.invalid.map(\.0)), Set(expected.keys))

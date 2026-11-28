@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-"""The offline mirror of the func / field / alt rules agrees with the shared golden cases.
+"""The offline mirror of the func / field / curve / alt rules agrees with the shared golden cases.
 
-The same files are checked against Swift (the authority) by Tests/MartyGraphicsTests/ExpressionTests.swift and
-GraphCaseTests.swift; together the two runs show the mirror and the engine give the same values and reasons.
+The same files are checked against Swift (the authority) by Tests/MartyGraphicsTests/ExpressionTests.swift,
+GraphCaseTests.swift and CurveCaseTests.swift; together the runs show the mirror and the engine give the same values and
+reasons.
 """
 
 import json
@@ -61,6 +62,9 @@ class ExpressionCases(unittest.TestCase):
         self.assertEqual((mg_expr.EXPR_LENGTH, mg_expr.EXPR_TOKENS, mg_expr.EXPR_DEPTH), (80, 48, 8))
         self.assertEqual((mg_expr.FUNC_INTERVALS, mg_expr.FUNC_BREAKS, mg_expr.FUNC_TOLERANCE), (256, 16, 0.01))
         self.assertEqual((mg_expr.EXPR_ITEMS, mg_expr.FIELD_COLS, mg_expr.FIELD_ROWS), (6, 16, 12))
+        self.assertEqual((mg_expr.CURVE_INTERVALS, mg_expr.CURVE_BREAKS, mg_expr.CURVE_WEIGHT), (256, 16, 2))
+        self.assertEqual((mg_expr.CURVE_END, mg_expr.CURVE_SPAN, mg_expr.CURVE_TOLERANCE), (1000.0, (0.001, 100.0), 0.01))
+        self.assertEqual(mg_expr.VARIABLES[-1], "theta")
 
     def test_the_grammar_never_evaluates_python(self):
         # Names outside the closed vocabulary are refused before anything is evaluated.
@@ -240,10 +244,122 @@ class GraphCases(unittest.TestCase):
         self.assertEqual(raised.exception.reason, "func.shade")
 
 
+def close(actual, expected, tolerance):
+    return len(actual) == len(expected) and all(abs(a - e) <= tolerance * max(1.0, abs(e)) for a, e in zip(actual, expected))
+
+
+class CurveCases(unittest.TestCase):
+    def test_accepted_curves(self):
+        cases = load("curves.cases.json")["accepted"]
+        self.assertGreater(len(cases), 15)
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                summary = mg_expr.check_graph_item(case["item"])
+                self.assertEqual(summary["samples"], case["samples"])
+                self.assertEqual(summary["starts"], case["starts"])
+                self.assertTrue(close(summary["window"], case["window"], 1e-12), summary["window"])
+                self.assertTrue(close(summary["theta"], case["theta"], 1e-12))
+                self.assertEqual(summary["closed"], case["closed"])
+                if "mark" in case:
+                    self.assertTrue(close(summary["mark"], case["mark"], 1e-12), summary["mark"])
+                else:
+                    self.assertIsNone(summary["mark"])
+                for index, point in case["points"].items():
+                    self.assertTrue(close(summary["points"][int(index)], point, 1e-9), (index, point))
+
+    def test_refused_scenes(self):
+        cases = load("curves.cases.json")["refused"]
+        self.assertGreater(len(cases), 35)
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                with self.assertRaises(mg_expr.Refusal) as raised:
+                    mg_expr.check_scene(case["scene"])
+                self.assertEqual(raised.exception.reason, case["reason"])
+
+    def test_every_curve_reason_has_a_repair_hint(self):
+        # The reason table in docs/PROTOCOL.md names each curve refusal and what to change.
+        protocol = (ROOT / "docs" / "PROTOCOL.md").read_text(encoding="utf-8")
+        table = [line for line in protocol.splitlines() if line.startswith("| `curve.")]
+        self.assertTrue(table)
+        tick = chr(96)
+        for case in load("curves.cases.json")["refused"]:
+            reason = case["reason"]
+            if not reason.startswith("curve."):
+                continue
+            family = ".".join(reason.split(".")[:2])
+            with self.subTest(reason=reason):
+                self.assertTrue(any(tick + family + tick in line or tick + reason + tick in line for line in table), reason)
+
+    def test_documentation_scene_passes(self):
+        summaries = mg_expr.check_scene(load("curves.scene.json"))
+        self.assertEqual(set(summaries), {"circle", "heart"})
+        self.assertTrue(all(summary["closed"] for summary in summaries.values()))
+
+    def test_closed_forms(self):
+        # A circle of radius 2 and the cardioid r = 1 + cos(theta), sample by sample.
+        circle = mg_expr.check_graph_item({"id": "c", "k": "curve", "at": [1, 1], "w": 4, "h": 4, "xr": [-2.5, 2.5],
+                                           "yr": [-2.5, 2.5], "x": "2*cos(theta)", "y": "2*sin(theta)"})
+        for x, y in circle["points"]:
+            self.assertAlmostEqual(math.hypot(x, y), 2, places=12)
+        heart = mg_expr.check_graph_item({"id": "c", "k": "curve", "at": [1, 1], "w": 4, "h": 4, "xr": [-0.6, 2.2],
+                                          "yr": [-1.4, 1.4], "r": "1 + cos(theta)"})
+        for i, (x, y) in enumerate(heart["points"]):
+            theta = mg_expr.grid_t(i, 0, 2 * math.pi)
+            self.assertAlmostEqual(x, math.cos(theta) + math.cos(theta) ** 2, places=12)
+            rr = x * x + y * y
+            self.assertAlmostEqual((rr - x) ** 2, rr, places=12)
+
+    def test_the_window_is_aspect_correct_and_never_narrowed(self):
+        for xr, yr, w, h in [((-2.2, 2.2), (-1.2, 1.2), 4, 4), ((0, 1), (-1, 1), 4, 2), ((-1, 1), (-1, 1), 2, 4),
+                             ((-3, 7), (2, 3), 5, 1)]:
+            with self.subTest(xr=xr, yr=yr, w=w, h=h):
+                v = mg_expr.curve_window(xr, yr, w, h)
+                self.assertAlmostEqual(w / (v.x1 - v.x0), h / (v.y1 - v.y0), places=12)
+                self.assertTrue(v.x0 <= xr[0] and v.x1 >= xr[1] and v.y0 <= yr[0] and v.y1 >= yr[1])
+
+    def test_clipping_and_crossing(self):
+        v = mg_expr.Window(0, 1, 0, 1)
+        runs = mg_expr.clipped([(-1, 0.5), (0.5, 0.5), (0.5, 2), (0.75, 0.25)], v)
+        self.assertEqual(runs, [[(0, 0.5), (0.5, 0.5), (0.5, 1)], [(0.5 + 0.25 / 1.75, 1), (0.75, 0.25)]])
+        self.assertTrue(v.crosses((-1, 0), (1, 2)))
+        self.assertFalse(v.crosses((-1, 1.5), (1, 3.5)))
+        self.assertEqual(mg_expr.clamp_point((4e15, -1e15)), (1e12, -0.25e12))
+
+    def test_a_curve_counts_twice_toward_the_expression_budget(self):
+        curve = {"id": "c", "k": "curve", "at": [1, 1], "w": 2, "h": 2, "xr": [-2, 2], "yr": [-2, 2], "r": "1"}
+        func = {"id": "f", "k": "func", "at": [1, 1], "w": 2, "h": 2, "xr": [-1, 1], "yr": [-1, 1], "y": "x"}
+        three = [dict(curve, id="c%d" % k) for k in range(3)]
+        self.assertEqual(len(mg_expr.check_scene({"v": 1, "items": three})), 3)
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_scene({"v": 1, "items": three + [func]})
+        self.assertEqual(raised.exception.reason, "items.expr")
+        # Each step edit of a curve checks the whole curve again and weighs CURVE_WEIGHT too (Swift
+        # MGParser.editWeight; CurveKindTests has the same scenes).
+        still = {"id": "c", "k": "curve", "at": [1, 1], "w": 4, "h": 4, "xr": [-5, 5], "yr": [-5, 5], "r": "a", "a": 1}
+
+        def edited(count, kind="curve"):
+            item = dict(still) if kind == "curve" else {**{k: v for k, v in still.items() if k != "r"}, "k": "func",
+                                                        "y": "a*x/5"}
+            edits = [{"id": "c", "key": "a", "value": k + 2} for k in range(count)]
+            return {"v": 1, "items": [item], "steps": [{"say": "one"}, {"say": "two", "do": edits}]}
+
+        self.assertEqual(mg_expr.expr_weight(still), mg_expr.CURVE_WEIGHT)
+        self.assertEqual(mg_expr.edit_weight("c", "color", set(), {"c"}), mg_expr.CURVE_WEIGHT)
+        self.assertEqual(mg_expr.edit_weight("f", "a", set(), {"c"}), 1)
+        self.assertEqual(mg_expr.graph_checks(edited(2)), 6)
+        self.assertEqual(len(mg_expr.check_scene(edited(2))), 1)
+        with self.assertRaises(mg_expr.Refusal) as raised:
+            mg_expr.check_scene(edited(3))
+        self.assertEqual(raised.exception.reason, "items.expr")
+        self.assertEqual(mg_expr.graph_checks(edited(3, kind="func")), 4)
+        self.assertEqual(len(mg_expr.check_scene(edited(3, kind="func"))), 1)
+
+
 class ItemRules(unittest.TestCase):
     BASE = {"func": {"id": "f", "k": "func", "at": [1, 1], "w": 6, "h": 4, "xr": [-3, 3], "yr": [-2, 2], "y": "x"},
             "field": {"id": "v", "k": "field", "at": [1, 1], "w": 6, "h": 4, "xr": [-2, 2], "yr": [-2, 2],
-                      "dx": "1", "dy": "x"}}
+                      "dx": "1", "dy": "x"},
+            "curve": {"id": "c", "k": "curve", "at": [1, 1], "w": 4, "h": 4, "xr": [-2, 2], "yr": [-2, 2], "r": "1"}}
 
     def reason(self, scene):
         with self.assertRaises(mg_expr.Refusal) as raised:
@@ -285,6 +401,8 @@ class ItemRules(unittest.TestCase):
             (dict(func, shade=[0, big]), "func.shade"),
             (dict(field, n=[big, 3]), "field.n"),
             (dict(field, yr=[-big, 2]), "field.yr"),
+            (dict(self.BASE["curve"], theta=[0, big]), "curve.theta"),
+            (dict(self.BASE["curve"], mark=-big), "curve.mark"),
         ]
         for item, reason in cases:
             with self.subTest(reason=reason):

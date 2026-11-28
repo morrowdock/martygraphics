@@ -191,7 +191,8 @@
         {"$ref":"#/$defs/table"},
         {"$ref":"#/$defs/region"},
         {"$ref":"#/$defs/func"},
-        {"$ref":"#/$defs/field"}
+        {"$ref":"#/$defs/field"},
+        {"$ref":"#/$defs/curve"}
       ]
     },
     "body": {
@@ -667,6 +668,57 @@
         "label": {"$ref":"#/$defs/label"}
       },
       "required": ["id","k","at","w","h","xr","yr","dx","dy"],
+      "additionalProperties": false
+    },
+    "curve": {
+      "type": "object",
+      "properties": {
+        "id": {"$ref":"#/$defs/id"},
+        "k": {"const":"curve"},
+        "color": {"$ref":"#/$defs/color"},
+        "at": {"$ref":"#/$defs/point"},
+        "w": {"type":"number","minimum":0.5,"maximum":125},
+        "h": {"type":"number","minimum":0.5,"maximum":125},
+        "xr": {
+          "type": "array",
+          "prefixItems": [
+            {"type":"number","minimum":-1000000,"maximum":1000000},
+            {"type":"number","minimum":-1000000,"maximum":1000000}
+          ],
+          "minItems": 2,
+          "items": false
+        },
+        "yr": {
+          "type": "array",
+          "prefixItems": [
+            {"type":"number","minimum":-1000000,"maximum":1000000},
+            {"type":"number","minimum":-1000000,"maximum":1000000}
+          ],
+          "minItems": 2,
+          "items": false
+        },
+        "x": {"type":"string","minLength":1,"maxLength":80},
+        "y": {"type":"string","minLength":1,"maxLength":80},
+        "r": {"type":"string","minLength":1,"maxLength":80},
+        "theta": {
+          "type": "array",
+          "prefixItems": [
+            {"type":"number","minimum":-1000,"maximum":1000},
+            {"type":"number","minimum":-1000,"maximum":1000}
+          ],
+          "minItems": 2,
+          "items": false
+        },
+        "a": {"type":"number","minimum":-1000,"maximum":1000},
+        "b": {"type":"number","minimum":-1000,"maximum":1000},
+        "c": {"type":"number","minimum":-1000,"maximum":1000},
+        "period": {"type":"number","minimum":0.5,"maximum":20},
+        "mark": {"type":"number","minimum":-1000,"maximum":1000},
+        "xl": {"$ref":"#/$defs/label"},
+        "yl": {"$ref":"#/$defs/label"},
+        "label": {"$ref":"#/$defs/label"}
+      },
+      "required": ["id","k","at","w","h","xr","yr"],
       "additionalProperties": false
     },
     "bstParams": {

@@ -47,7 +47,9 @@
     {"text": "asin(2)", "value": "nan"},
     {"text": "min(0/0, 1)", "value": "nan"},
     {"text": "max(1, 0/0)", "value": "nan"},
-    {"text": "1/0 - 1/0", "value": "nan"}
+    {"text": "1/0 - 1/0", "value": "nan"},
+    {"text": "2*theta - x", "theta": 1.5, "x": 1, "value": 2},
+    {"text": "cos(theta)^2 + sin(theta)^2", "theta": 0.9, "value": 1}
   ],
   "refusals": [
     {"text": "", "reason": "func.y"},
@@ -87,6 +89,9 @@
     {"text": "c + a", "allowed": "xa", "reason": "func.y.var.c"},
     {"text": "c + a", "allowed": "xac", "reason": null},
     {"text": "foo(y)", "reason": "func.y.name"},
-    {"text": "2x + y", "reason": "func.y.syntax"}
+    {"text": "2x + y", "reason": "func.y.syntax"},
+    {"text": "sin(theta)", "reason": "func.y.var.theta"},
+    {"text": "theta * t", "reason": "func.y.var.t"},
+    {"text": "thetas", "reason": "func.y.name"}
   ]
 }

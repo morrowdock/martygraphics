@@ -252,9 +252,16 @@ final class GraphKindTests: XCTestCase {
             ("root-start", #"{"v":1,"items":[{"id":"f","k":"func","# + frame + #","xr":[0,4],"yr":[0,2.2],"y":"sqrt(x)","shade":[1,4]}]}"#),
             ("field-arrows", #"{"v":1,"items":[{"id":"v","k":"field","# + frame + #","xr":[-2,2],"yr":[-2,2],"dx":"-y","dy":"x","label":"(-y, x)"}]}"#),
             ("field-unit", #"{"v":1,"items":[{"id":"v","k":"field","# + frame + #","xr":[-1.5,1.5],"yr":[-1.5,1.5],"dx":"x/(x^2+y^2)","dy":"y/(x^2+y^2)","style":"unit","n":[9,9]}]}"#),
-            ("field-slope", #"{"v":1,"items":[{"id":"v","k":"field","# + frame + #","xr":[-3,3],"yr":[-2,2],"dx":"1","dy":"x - y","style":"slope","label":"dy/dx = x - y"}]}"#)
+            ("field-slope", #"{"v":1,"items":[{"id":"v","k":"field","# + frame + #","xr":[-3,3],"yr":[-2,2],"dx":"1","dy":"x - y","style":"slope","label":"dy/dx = x - y"}]}"#),
+            ("curve-ellipse-widened", #"{"v":1,"items":[{"id":"c","k":"curve","# + frame + #","xr":[-2.2,2.2],"yr":[-1.2,1.2],"x":"2*cos(theta)","y":"sin(theta)","mark":0.7,"label":"(2 cos t, sin t)"}]}"#),
+            ("curve-rose", #"{"v":1,"items":[{"id":"c","k":"curve","# + frame + #","xr":[-1.1,1.1],"yr":[-1.1,1.1],"r":"cos(3*theta)","theta":[0,3.141592653589793],"label":"r = cos 3t"}]}"#),
+            ("curve-line-poles", #"{"v":1,"items":[{"id":"c","k":"curve","# + frame + #","xr":[-3,3],"yr":[-3,3],"r":"1/cos(theta)","label":"r = 1/cos t"}]}"#),
+            ("curve-lemniscate-gaps", #"{"v":1,"items":[{"id":"c","k":"curve","# + frame + #","xr":[-1.2,1.2],"yr":[-0.8,0.8],"r":"sqrt(cos(2*theta))"}]}"#),
+            ("curve-cycloid", #"{"v":1,"items":[{"id":"c","k":"curve","at":[0.5,2],"w":11,"h":2.4,"xr":[0,12.6],"yr":[0,2.2],"x":"theta - sin(theta)","y":"1 - cos(theta)","theta":[0,12.566370614359172]}]}"#)
         ]
         for (name, json) in cases { let s = try scene(json); boards.append((name, s, s.items)) }
+        let curves = try fixture("curves")
+        for step in curves.steps.indices { boards.append(("curves-step\(step + 1)", curves, MGTimeline.items(curves, step: step))) }
         for board in boards {
             let (image, _) = try render(board.scene, items: board.items, size: CGSize(width: 960, height: 640))
             let url = out.appendingPathComponent(board.name + ".png")
@@ -341,6 +348,30 @@ final class GraphKindTests: XCTestCase {
         XCTAssertGreaterThan(Self.brightest(hole, near: Self.screen(g, gvp, x: 1, y: 2), radius: 2), 150, "the arrow beside it")
     }
 
+    /// A circle is drawn round where the engine sampled it (the frame is aspect-correct), with nothing at its centre,
+    /// and its marked point is drawn at the engine's coordinates; draw-on traces it from θ = 0.
+    @MainActor func testACurveIsDrawnWhereTheEngineSampledIt() throws {
+        let s = try scene(#"{"v":1,"items":[{"id":"c","k":"curve","at":[1,1],"w":10,"h":6,"xr":[-1.25,1.25],"yr":[-1.25,1.25],"x":"cos(theta)","y":"sin(theta)","mark":2.5}]}"#)
+        let c = try XCTUnwrap(s.items.first)
+        // The 10 × 6 frame widens x, so one data unit is as long across as up on the screen too.
+        let (image, vp) = try render(s)
+        let centre = Self.screen(c, vp, x: 0, y: 0), right = Self.screen(c, vp, x: 1, y: 0), top = Self.screen(c, vp, x: 0, y: 1)
+        XCTAssertEqual(right.x - centre.x, centre.y - top.y, accuracy: 0.5, "a circle is round")
+        for angle in stride(from: 0.3, to: 6.2, by: 0.7) {
+            XCTAssertGreaterThan(Self.brightest(image, near: Self.screen(c, vp, x: cos(angle), y: sin(angle))), 190, "on the circle at \(angle)")
+        }
+        XCTAssertLessThan(Self.brightness(image, Self.screen(c, vp, x: 0.4, y: -0.3)), 140, "inside the circle")
+        XCTAssertGreaterThan(Self.brightness(image, Self.screen(c, vp, x: cos(2.5), y: sin(2.5))), 220, "the marked point")
+        let (hidden, _) = try render(s, appear: ["c": 0])
+        XCTAssertLessThan(Self.brightest(hidden, near: Self.screen(c, vp, x: cos(3.5), y: sin(3.5))), 140, "not yet traced")
+        // The line r = 1/cos θ is drawn at x = 1 only: no chord through the view at its poles.
+        let line = try scene(#"{"v":1,"items":[{"id":"l","k":"curve","at":[1,1],"w":10,"h":6,"xr":[-3,3],"yr":[-3,3],"r":"1/cos(theta)"}]}"#)
+        let l = try XCTUnwrap(line.items.first)
+        let (lineImage, lvp) = try render(line)
+        XCTAssertGreaterThan(Self.brightest(lineImage, near: Self.screen(l, lvp, x: 1, y: 2)), 190)
+        XCTAssertLessThan(Self.brightness(lineImage, Self.screen(l, lvp, x: -1.5, y: 0.5)), 140, "no chord across the view")
+    }
+
     @MainActor func testUncheckedItemsDrawNothingInsteadOfTrapping() throws {
         let s = try scene(Self.sine)
         var f = try XCTUnwrap(s.items.first)
@@ -349,7 +380,11 @@ final class GraphKindTests: XCTestCase {
         var v = MGItem(id: "v", kind: .field, color: .teal)
         v.pts = [MGPoint(1, 1)]
         v.num = ["w": 4, "h": 4, "x0": 0, "x1": 1, "y0": 0, "y1": 1, "cols": 3.5, "rows": 2]
-        let (image, _) = try render(s, items: [f, v])
+        var c = MGItem(id: "c", kind: .curve, color: .accent)
+        c.pts = [MGPoint(1, 1), MGPoint(.nan, 2), MGPoint(1e300, -1e300), MGPoint(0.5, 0.5)]
+        c.num = ["w": 4, "h": 4, "x0": 0, "x1": 1, "y0": 0, "y1": 1, "mx": .infinity, "my": 0]
+        c.marked = [7, -1]
+        let (image, _) = try render(s, items: [f, v, c])
         XCTAssertEqual(image.width, Int(Self.size.width))
     }
 }

@@ -165,6 +165,25 @@ final class SceneValidatorTests: XCTestCase {
         }
     }
 
+    /// The additive `curve` kind needs no tool change either.
+    func testCurveScenesUseTheParserRules() throws {
+        try write("curve.json", #"{"v":1,"items":[{"id":"c","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-0.6,2.2],"yr":[-1.4,1.4],"r":"1 + cos(theta)"}]}"#)
+        XCTAssertEqual(run("curve.json").stdout, """
+            curve.json: valid (2d, 1 item, 0 steps)
+            Checked 1 file: 1 valid, 0 invalid, 0 unreadable.
+
+            """)
+        let cases = [
+            ("form.json", #"{"v":1,"items":[{"id":"c","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-2,2],"yr":[-2,2],"x":"cos(theta)"}]}"#, "curve.form"),
+            ("curve3d.json", #"{"v":1,"dim":"3d","items":[{"id":"c","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-2,2],"yr":[-2,2],"r":"1"}]}"#, "3d.kind.curve")
+        ]
+        for (name, text, expected) in cases {
+            try write(name, text)
+            guard case .invalid(let reason, _) = SceneValidator.check(path: name) else { return XCTFail("tool accepted \(name)") }
+            XCTAssertEqual(reason, expected, name)
+        }
+    }
+
     func testByteLimitMatchesParser() throws {
         let limit = SceneValidator.maximumInputBytes
         XCTAssertEqual(limit, MGLimits.sceneBytes * 2)

@@ -41,13 +41,15 @@ PRECEDENCE += ["scene.key.duplicate.items.0.at"]
 # Reasons built by helpers (MGModel bounds, identifier and text checks, templates, camera) rather than MGError literals.
 HELPER_REASONS = ["scene.number", "scene.depth", "scene.bytes", "template.check", "item.id", "item.label", "title",
                   "bars.label", "bars.value", "array.ptr.label", "step.say", "camera.x", "camera.y", "alt", "step.alt"]
-# Graph reasons outside MGParser.swift: the drawing checks (MGGraph.checkFunction), the readouts (MGReadout) and the
-# expression compiler's suffixes (MGExpression.compile), one sample per pattern for each of the func and field keys.
+# Graph reasons outside MGParser.swift: the drawing checks (MGGraph.checkFunction, MGGraph.checkCurve), the readouts
+# (MGReadout) and the expression compiler's suffixes (MGExpression.compile), one sample per pattern for each of the
+# func, field and curve keys.
 GRAPH_REASONS = ["func.detail", "func.breaks", "func.empty", "func.loop", "func.y.var.t", "field.dx.var.t",
                  "func.y.syntax", "field.dy.syntax", "func.y.tokens", "field.dx.tokens", "func.y.depth", "field.dy.depth",
                  "func.y.name", "field.dx.name", "func.y.arity", "field.dy.arity", "func.readouts.period",
                  "func.readouts.mark", "func.readouts.shade", "func.readouts.slope", "func.readouts.area",
-                 "func.readouts.view", "func.readouts.edit"]
+                 "func.readouts.view", "func.readouts.edit", "curve.detail", "curve.breaks", "curve.empty", "curve.loop",
+                 "curve.x.var.t", "curve.r.syntax", "curve.y.tokens", "curve.x.depth", "curve.r.name", "curve.y.arity"]
 # Reasons without a hint: neither a computed hint nor any pattern applies.
 UNKNOWN = ["not.a.reason", "", "body.atx", "item.nokind.missing", "item.body", "lesson.op.add", "mp4: writer failed",
            "patch.stale", "items.count.extra", "sliders.count", "slider.a.mid.func.detail"]

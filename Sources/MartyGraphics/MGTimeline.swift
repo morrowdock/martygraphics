@@ -127,10 +127,12 @@ public enum MGTimeline {
         for k in out.indices where out[k].kind == .vector {
             if let on = out[k].ref, let c = centers[on] { out[k].pts = [c] }
         }
-        // A moving function graph (`period`) is sampled again at its own loop time, so t runs 0…period and repeats.
-        for k in out.indices where out[k].kind == .function {
+        // A moving function graph or curve (`period`) is sampled again at its own loop time, so t runs 0…period and
+        // repeats.
+        for k in out.indices where out[k].kind == .function || out[k].kind == .curve {
             guard let period = out[k].num["period"], period.isFinite, period > 0 else { continue }
-            out[k] = MGGraph.animated(out[k], at: t.truncatingRemainder(dividingBy: period))
+            let tau = t.truncatingRemainder(dividingBy: period)
+            out[k] = out[k].kind == .curve ? MGGraph.animatedCurve(out[k], at: tau) : MGGraph.animated(out[k], at: tau)
         }
         return out
     }
@@ -193,9 +195,10 @@ extension MGTimeline {
         case .projectile(_, _, _, _, _, let visual, let hold, _, _, _): return visual + hold
         case .oscillate(_, _, let period, _, _, _, _): return period
         case .none:
-            // Body moves go there and back (2 × t); a moving graph repeats every `period`. The longest one is the loop.
+            // Body moves go there and back (2 × t); a moving graph or curve repeats every `period`. The longest one is
+            // the loop.
             let loops = scene.items.compactMap { $0.num["moveT"].map { 2 * $0 } }
-                + scene.items.filter { $0.kind == .function }.compactMap { $0.num["period"] }
+                + scene.items.filter { $0.kind == .function || $0.kind == .curve }.compactMap { $0.num["period"] }
             return loops.max()
         }
     }

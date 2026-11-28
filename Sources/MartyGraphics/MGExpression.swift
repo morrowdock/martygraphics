@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import Foundation
 
-/// A small, closed arithmetic grammar for the `func` and `field` items (docs/PROTOCOL.md, "Function graphs, vector
-/// fields and text alternatives"):
+/// A small, closed arithmetic grammar for the `func`, `field` and `curve` items (docs/PROTOCOL.md, "Function graphs,
+/// vector fields and text alternatives" and "Parametric and polar curves"):
 ///
 ///     expr    := term (("+" | "-") term)*
 ///     term    := unary (("*" | "/") unary)*
@@ -12,9 +12,9 @@ import Foundation
 ///
 /// `^` is right-associative and binds tighter than a leading minus: `2^3^2` is 2^9 and `-x^2` is -(x^2). Numbers are
 /// decimal (`2`, `0.5`, `.5`; no exponent; at most 12 characters). Names are the constants `pi` and `e`, the variables
-/// `x y t a b c` (each item kind allows its own subset) and the functions `sin cos tan asin acos atan sinh cosh tanh exp
-/// ln log sqrt abs` (one argument; `ln` is natural, `log` is base 10) and `min max` (two arguments). Multiplication is
-/// always written: `2x` and `x(x+1)` are refused.
+/// `x y t a b c theta` (each item kind allows its own subset; `theta` is the parameter of a `curve`) and the functions
+/// `sin cos tan asin acos atan sinh cosh tanh exp ln log sqrt abs` (one argument; `ln` is natural, `log` is base 10) and
+/// `min max` (two arguments). Multiplication is always written: `2x` and `x(x+1)` are refused.
 ///
 /// Compiling turns the text into a flat postfix program that a stack machine with a fixed set of operations evaluates.
 /// Nothing reaches the host: no `NSExpression` (whose `FUNCTION` form can invoke arbitrary methods), no JavaScriptCore,
@@ -23,7 +23,9 @@ import Foundation
 /// one evaluation runs at most 48 operations. Values follow IEEE 754: outside a function's domain (`sqrt(-1)`, `ln(0)`,
 /// `1/0`) a value is not finite, and the items draw a gap there, never a number.
 public struct MGExpression: Equatable, Sendable {
-    public enum Variable: String, CaseIterable, Sendable { case x, y, t, a, b, c }
+    /// `theta` is last, so the order in which `compile` reports a variable that is not allowed is unchanged for the
+    /// others.
+    public enum Variable: String, CaseIterable, Sendable { case x, y, t, a, b, c, theta }
 
     public enum Function: String, CaseIterable, Sendable {
         case sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, exp, ln, log, sqrt, abs, min, max
@@ -33,9 +35,9 @@ public struct MGExpression: Equatable, Sendable {
 
     /// The variable values of one evaluation. A variable the expression does not read is ignored.
     public struct Inputs: Equatable, Sendable {
-        public var x: Double, y: Double, t: Double, a: Double, b: Double, c: Double
-        public init(x: Double = 0, y: Double = 0, t: Double = 0, a: Double = 0, b: Double = 0, c: Double = 0) {
-            self.x = x; self.y = y; self.t = t; self.a = a; self.b = b; self.c = c
+        public var x: Double, y: Double, t: Double, a: Double, b: Double, c: Double, theta: Double
+        public init(x: Double = 0, y: Double = 0, t: Double = 0, a: Double = 0, b: Double = 0, c: Double = 0, theta: Double = 0) {
+            self.x = x; self.y = y; self.t = t; self.a = a; self.b = b; self.c = c; self.theta = theta
         }
         public subscript(_ v: Variable) -> Double {
             switch v {
@@ -45,10 +47,12 @@ public struct MGExpression: Equatable, Sendable {
             case .a: return a
             case .b: return b
             case .c: return c
+            case .theta: return theta
             }
         }
         func with(x: Double) -> Inputs { var copy = self; copy.x = x; return copy }
         func with(x: Double, y: Double) -> Inputs { var copy = self; copy.x = x; copy.y = y; return copy }
+        func with(theta: Double) -> Inputs { var copy = self; copy.theta = theta; return copy }
     }
 
     enum Op: Equatable, Sendable {

@@ -30,15 +30,15 @@ enum MGRegression {
     static func scene(_ json: String) throws -> MGScene { try MGParser.scene(data: Data(json.utf8)).get() }
     static func patch(_ json: String) throws -> MGPatch { try MGPatch.parse(data: Data(json.utf8)).get() }
 
-    /// All 21 item kinds, each valid in the default 12 x 8 world, with optional keys exercised (plus a `code` text line).
-    /// 24 items: exactly the wire item limit.
+    /// All 22 item kinds, each valid in the default 12 x 8 world, with optional keys exercised (plus a `code` text line).
+    /// 24 items: exactly the wire item limit (the `curve` took the place of a second, free vector; free vectors round-trip
+    /// in ParserRegressionTests).
     static let allKinds = #"""
     {"v":1,"title":"Every kind","items":[
      {"id":"b","k":"body","at":[2,2],"shape":"ball","size":1.5,"angle":30,"label":"Body","move":{"to":[4,2],"t":1.5}},
      {"id":"inc","k":"incline","at":[1,1],"base":4,"angle":25,"label":"Ramp"},
      {"id":"ln","k":"line","from":[0,0.5],"to":[12,0.5],"style":"ground"},
      {"id":"vec","k":"vector","on":"b","angle":45,"len":2,"label":"F","dashed":true},
-     {"id":"vfree","k":"vector","from":[6,6],"angle":-90,"len":1.5},
      {"id":"ax","k":"axes","at":[7,1],"w":4,"h":3,"xl":"t","yl":"x"},
      {"id":"pl","k":"plot","at":[7,1],"w":4,"h":3,"xr":[0,2],"yr":[-1,1],"pts":[[0,0],[1,1],[2,-1]],"xl":"t","yl":"y","label":"Curve"},
      {"id":"sp","k":"spring","from":[1,6],"to":[3,6],"coils":10,"label":"k"},
@@ -57,7 +57,8 @@ enum MGRegression {
      {"id":"rg","k":"region","pts":[[0.5,0.5],[2,0.5],[1.2,1.5]],"dashed":true,"label":"Zone"},
      {"id":"cd","k":"text","at":[0.5,6.5],"text":"  i < n","style":"code"},
      {"id":"fn","k":"func","at":[0.5,3],"w":3,"h":2,"xr":[-3,3],"yr":[-1.5,1.5],"y":"a*sin(x)","a":1,"shade":[0,3],"mark":1,"xl":"x","yl":"y","label":"Wave"},
-     {"id":"fd","k":"field","at":[8,0.5],"w":3,"h":2,"xr":[-2,2],"yr":[-1,1],"dx":"-y","dy":"x","n":[6,4],"style":"unit","label":"Flow"}
+     {"id":"fd","k":"field","at":[8,0.5],"w":3,"h":2,"xr":[-2,2],"yr":[-1,1],"dx":"-y","dy":"x","n":[6,4],"style":"unit","label":"Flow"},
+     {"id":"cv","k":"curve","at":[4.5,0.3],"w":2,"h":2,"xr":[-0.6,2.2],"yr":[-1.4,1.4],"r":"a*(1 + cos(theta))","a":1,"mark":1,"xl":"x","yl":"y","label":"Heart"}
     ]}
     """#
 

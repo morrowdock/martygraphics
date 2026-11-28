@@ -39,7 +39,7 @@ public struct MGRenderInput {
 public enum MGCanvasRenderer {
     static let layer: [MGKind: Int] = [.axes: 0, .plot: 0, .bars: 0, .incline: 1, .line: 1, .orbit: 1, .path: 2, .rope: 2, .spring: 3,
                                        .pulley: 3, .edge: 3, .body: 4, .node: 4, .array: 4, .vector: 5, .highlight: 6, .text: 7, .table: 4, .region: 0,
-                                       .function: 0, .field: 0]
+                                       .function: 0, .field: 0, .curve: 0]
 
     /// Draw order rank of an item (lower first).
     static func rank(_ item: MGItem) -> Int { layer[item.kind] ?? 0 }
@@ -291,6 +291,10 @@ public enum MGCanvasRenderer {
                 obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
             case .field:
                 vectorField(ctx, item, vp, theme, color, p)
+                if let o = item.pts.first { label(item.label, at: vp.point(o + MGPoint(item.n("w") / 2, item.n("h"))), dir: CGVector(dx: 0, dy: -1)) }
+                obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
+            case .curve:
+                planarCurve(ctx, item, vp, theme, color, p)
                 if let o = item.pts.first { label(item.label, at: vp.point(o + MGPoint(item.n("w") / 2, item.n("h"))), dir: CGVector(dx: 0, dy: -1)) }
                 obstacles.append(MGLayout.bounds(item, in: input.items, vp) ?? .null)
             case .node:
@@ -583,6 +587,50 @@ public enum MGCanvasRenderer {
         guard reveal >= 1, let mark = MGGraph.mark(item) else { return }
         let mx = mark.x, my = mark.value
         let c = toScreen(MGPoint(mx, mark.drawn))
+        let dot = Path(ellipseIn: CGRect(x: c.x - 5, y: c.y - 5, width: 10, height: 10))
+        ctx.fill(dot, with: .color(theme.ink))
+        ctx.stroke(dot, with: .color(color), lineWidth: 2)
+        let f = { (v: Double) in MGPhysics.format(v, unit: "") }
+        let text = ctx.resolve(Text(verbatim: "(\(f(mx)), \(f(my)))").font(.system(size: 12, weight: .semibold)).foregroundColor(theme.ink))
+        let size = text.measure(in: CGSize(width: 300, height: 40))
+        var box = CGRect(x: c.x + 9, y: c.y - 15 - size.height, width: size.width + 12, height: size.height + 6)
+        if box.maxX > frame.maxX - 2 { box.origin.x = c.x - 9 - box.width }
+        if box.minY < frame.minY + 2 { box.origin.y = c.y + 9 }
+        ctx.fill(Path(roundedRect: box, cornerRadius: 6), with: .color(theme.labelFill))
+        ctx.stroke(Path(roundedRect: box, cornerRadius: 6), with: .color(color.opacity(0.55)), lineWidth: 1)
+        ctx.draw(text, at: CGPoint(x: box.midX, y: box.midY))
+    }
+
+    /// Draws a `curve` item: its frame (the aspect-correct window, so a circle is round), the curve piece by piece in
+    /// `theta` order (each piece cut to the window grown by 5 %, never joined across a gap or a pole) and the marked
+    /// point with its engine-computed coordinates. Draw-on traces the curve from its first point; the marked point
+    /// appears once the curve is complete.
+    static func planarCurve(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double) {
+        guard let frame = graphFrame(ctx, item, vp, theme) else { return }
+        let x0 = item.n("x0"), x1 = item.n("x1"), y0 = item.n("y0"), y1 = item.n("y1")
+        func toScreen(_ q: MGPoint) -> CGPoint {
+            CGPoint(x: frame.minX + frame.width * CGFloat((q.x - x0) / (x1 - x0)),
+                    y: frame.maxY - frame.height * CGFloat((q.y - y0) / (y1 - y0)))
+        }
+        let samples = Array(item.pts.dropFirst())
+        let margin = 0.05 * max(x1 - x0, y1 - y0)
+        let grown = MGGraph.Window(x0: x0 - margin, x1: x1 + margin, y0: y0 - margin, y1: y1 + margin)
+        var line = Path()
+        for r in MGGraph.pieces(samples.count, starts: item.marked) where r.count >= 2 {
+            for run in MGGraph.clipped(Array(samples[r]), to: grown) { line.addLines(run.map(toScreen)) }
+        }
+        let reveal = CGFloat(min(1, max(0, p)))
+        var clip = ctx
+        clip.clip(to: Path(frame.insetBy(dx: -2, dy: -2)))
+        clip.drawLayer { l in
+            l.addFilter(.shadow(color: color.opacity(0.7), radius: 5))
+            l.stroke(reveal < 1 ? line.trimmedPath(from: 0, to: reveal) : line, with: .color(color),
+                     style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
+        }
+        // The dot and its text are the engine's point of the curve at `mark` (at this instant for a moving curve).
+        guard reveal >= 1, let mx = item.num["mx"], let my = item.num["my"], mx.isFinite, my.isFinite,
+              MGGraph.Window(item).contains(MGPoint(mx, my)) else { return }
+        let c = toScreen(MGPoint(mx, my))
         let dot = Path(ellipseIn: CGRect(x: c.x - 5, y: c.y - 5, width: 10, height: 10))
         ctx.fill(dot, with: .color(theme.ink))
         ctx.stroke(dot, with: .color(color), lineWidth: 2)

@@ -34,6 +34,9 @@ public enum MGKind: String, CaseIterable, Sendable {
     /// Additive 2D kinds evaluated by the engine from a bounded expression (`MGExpression`): a function graph (wire
     /// `func`) and a vector field. Both are 2D only.
     case function = "func", field
+    /// Additive 2D kind sampled by the engine from the same grammar: a parametric (x(θ), y(θ)) or polar (r(θ)) curve
+    /// in an aspect-correct frame. 2D only.
+    case curve
     /// Kinds the 3D renderer draws. Others make a 3D scene invalid (fail safe instead of silently missing parts).
     public static let in3D: Set<MGKind> = [.body, .incline, .line, .vector, .axes, .orbit, .text, .highlight, .path]
 }
@@ -54,7 +57,8 @@ public struct MGItem: Equatable, Identifiable, Sendable {
     public let id: String
     public var kind: MGKind
     /// at | from,to | polyline points, depending on kind. `func`: `at`, then the engine's samples (data coordinates);
-    /// `field`: `at`, then one engine-evaluated vector per grid cell.
+    /// `field`: `at`, then one engine-evaluated vector per grid cell; `curve`: `at`, then the engine's samples in
+    /// `theta` order (data coordinates).
     public var pts: [MGPoint] = []
     /// Numeric properties: size, angle, len, r, w, h, base, coils, cell, moveT, xr0... (validated per kind).
     public var num: [String: Double] = [:]
@@ -66,11 +70,12 @@ public struct MGItem: Equatable, Identifiable, Sendable {
     public var ref2: String?
     /// ball, dashed, ground, callout, title, dir, dir3
     public var flags: Set<String> = []
-    /// array cell values, axis labels [x, y] (plot, func), or [x label, y label, dx, dy] (field).
+    /// array cell values, axis labels [x, y] (plot, func), [x label, y label, dx, dy] (field), or [x label, y label,
+    /// r] / [x label, y label, x, y] (polar / parametric curve).
     public var list: [String] = []
     public var bars: [MGBar] = []
     public var pointers: [MGPointer] = []
-    /// Marked cells; `func`: sample indices where a new piece starts; `field`: cells without a finite vector.
+    /// Marked cells; `func`, `curve`: sample indices where a new piece starts; `field`: cells without a finite vector.
     public var marked: [Int] = []
     /// 3D direction for vectors in 3D scenes.
     public var dir: MGPoint?
@@ -184,7 +189,7 @@ public struct MGScene: Equatable, Sendable {
     public func item(_ id: String) -> MGItem? { items.first { $0.id == id } }
     public var animates: Bool {
         layer2d != nil || motion != .none
-            || items.contains { $0.num["moveT"] != nil || ($0.kind == .function && $0.num["period"] != nil) }
+            || items.contains { $0.num["moveT"] != nil || (($0.kind == .function || $0.kind == .curve) && $0.num["period"] != nil) }
     }
 }
 

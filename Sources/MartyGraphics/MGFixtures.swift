@@ -33,7 +33,8 @@ public enum MGFixtures {
         .init(id: "dot_3d", title: "Synthetic 3D dot", json: #"{"v":1,"dim":"3d","items":[{"id":"dot","k":"body","at":[4,4,1],"shape":"ball","size":1}]}"#),
         .init(id: "cells", title: "Synthetic table, region and code", json: #"{"v":1,"title":"Cells, region and code","items":[{"id":"zone","k":"region","pts":[[1,1],[5,1],[5,4],[1,4]],"dashed":true,"label":"Zone","color":"teal"},{"id":"grid","k":"table","at":[8.5,5.5],"cells":[["key","value"],["a",1],["b",2]],"header":true,"marked":[[2,1]],"cw":1.4,"rh":0.6,"label":"Lookup"},{"id":"line1","k":"text","at":[1.2,6.8],"text":"while i < n:","style":"code"},{"id":"line2","k":"text","at":[1.2,6.2],"text":"    i += 1","style":"code"}],"steps":[{"say":"A region shades an area.","focus":"zone"},{"say":"A table holds short cells; one cell is marked.","focus":"grid"}]}"#),
         .init(id: "graphs", title: "Synthetic function graph, vector field and text alternatives", json: #"{"v":1,"title":"Graphs and a field","alt":"A sine curve with the area from 0 to 3.14 shaded, beside a vector field that turns counterclockwise.","items":[{"id":"wave","k":"func","at":[0.6,1.2],"w":5.4,"h":4.2,"xr":[-3.2,3.2],"yr":[-1.6,1.6],"y":"a*sin(x)","a":1,"shade":[0,3.14],"mark":1.5708,"xl":"x","yl":"y","label":"y = a sin x"},{"id":"flow","k":"field","at":[6.6,1.2],"w":4.8,"h":4.2,"xr":[-2,2],"yr":[-2,2],"dx":"-y","dy":"x","n":[8,7],"label":"v = (-y, x)"}],"steps":[{"say":"The engine samples y = a sin x and shades the area from 0 to 3.14.","focus":"wave","alt":"A sine curve of height 1 with the hump from 0 to 3.14 shaded and the point (1.57, 1) marked."},{"say":"Setting a to 1.5 stretches every height by 1.5.","do":[{"id":"wave","key":"a","value":1.5}],"alt":"The same curve, now of height 1.5; the marked point is (1.57, 1.5)."},{"say":"Each arrow is (-y, x) at its cell, so the field turns counterclockwise.","focus":"flow"}]}"#),
-        .init(id: "wave", title: "Synthetic travelling wave", json: #"{"v":1,"title":"A travelling wave","alt":"A sine wave that moves to the right and repeats every 4 seconds.","items":[{"id":"wave","k":"func","at":[1,1.5],"w":10,"h":5,"xr":[0,12.566],"yr":[-1.5,1.5],"y":"a*sin(x - 2*pi*t/4)","a":1,"period":4,"xl":"x","yl":"y","label":"y = a sin(x - 2 pi t / 4)"}]}"#)
+        .init(id: "wave", title: "Synthetic travelling wave", json: #"{"v":1,"title":"A travelling wave","alt":"A sine wave that moves to the right and repeats every 4 seconds.","items":[{"id":"wave","k":"func","at":[1,1.5],"w":10,"h":5,"xr":[0,12.566],"yr":[-1.5,1.5],"y":"a*sin(x - 2*pi*t/4)","a":1,"period":4,"xl":"x","yl":"y","label":"y = a sin(x - 2 pi t / 4)"}]}"#),
+        .init(id: "curves", title: "Synthetic parametric and polar curves", json: #"{"v":1,"title":"Curves","alt":"A circle of radius 1 with the point at theta = 1.05 marked, beside a cardioid.","items":[{"id":"circle","k":"curve","at":[0.8,1.5],"w":4.6,"h":4.6,"xr":[-1.25,1.25],"yr":[-1.25,1.25],"x":"a*cos(theta)","y":"a*sin(theta)","a":1,"mark":1.0472,"xl":"x","yl":"y","label":"x = a cos(theta), y = a sin(theta)"},{"id":"heart","k":"curve","at":[6.4,1.5],"w":5,"h":5,"xr":[-0.6,2.2],"yr":[-1.4,1.4],"r":"1 + cos(theta)","label":"r = 1 + cos(theta)"}],"steps":[{"say":"The engine samples x = a cos(theta), y = a sin(theta) and marks theta = 1.05.","focus":"circle","alt":"A circle of radius 1 with the point (0.5, 0.87) marked."},{"say":"Setting a to 0.6 shrinks the circle.","do":[{"id":"circle","key":"a","value":0.6}],"alt":"The same circle, now of radius 0.6; the marked point is (0.3, 0.52)."},{"say":"A polar curve: r = 1 + cos(theta) is a cardioid.","focus":"heart"}]}"#)
     ]
 
     /// Synthetic follow-up patches on the fixtures above. Each one applies to its named fixture.
@@ -53,7 +54,9 @@ public enum MGFixtures {
         .init(id: "graphs_cosine", scene: "graphs", ask: "Show a cosine instead.",
               json: #"{"v":1,"rev":0,"ops":[{"op":"set","id":"wave","key":"y","value":"a*cos(x)"}]}"#),
         .init(id: "wave_smaller", scene: "wave", ask: "Make the wave smaller.",
-              json: #"{"v":1,"rev":0,"ops":[{"op":"set","id":"wave","key":"a","value":0.6}]}"#)
+              json: #"{"v":1,"rev":0,"ops":[{"op":"set","id":"wave","key":"a","value":0.6}]}"#),
+        .init(id: "curves_limacon", scene: "curves", ask: "Show a limacon with an inner loop instead.",
+              json: #"{"v":1,"rev":0,"ops":[{"op":"set","id":"heart","key":"r","value":"0.5 + cos(theta)"}]}"#)
     ]
 
     /// Fail-safe cases (name, wire scene), written for this package. Every one must be refused; the comment after
@@ -88,6 +91,9 @@ public enum MGFixtures {
         ("func_period_without_time", #"{"v":1,"items":[{"id":"f","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"sin(x)","period":2}]}"#), // func.period
         ("func_in_3d", #"{"v":1,"dim":"3d","items":[{"id":"f","k":"func","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"y":"x"}]}"#), // 3d.kind.func
         ("field_without_values", #"{"v":1,"items":[{"id":"v","k":"field","at":[1,1],"w":6,"h":4,"xr":[-3,3],"yr":[-2,2],"dx":"1/0","dy":"1/0"}]}"#), // field.empty
+        ("curve_two_forms", #"{"v":1,"items":[{"id":"c","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-2,2],"yr":[-2,2],"x":"cos(theta)","y":"sin(theta)","r":"1"}]}"#), // curve.form
+        ("curve_too_detailed", #"{"v":1,"items":[{"id":"c","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-2,2],"yr":[-2,2],"r":"cos(90*theta)"}]}"#), // curve.detail
+        ("curve_in_3d", #"{"v":1,"dim":"3d","items":[{"id":"c","k":"curve","at":[1,1],"w":4,"h":4,"xr":[-2,2],"yr":[-2,2],"r":"1"}]}"#), // 3d.kind.curve
         ("alt_with_markup", #"{"v":1,"alt":"<b>A dot</b>","items":[{"id":"n1","k":"node","at":[2,2],"text":"a"}]}"#), // alt
         ("step_alt_with_link", #"{"v":1,"items":[{"id":"n1","k":"node","at":[2,2],"text":"a"}],"steps":[{"say":"Look.","alt":"see https://example.org"}]}"#), // step.alt
         ("wire_items_over_limit", #"{"v":1,"items":["# + (1...25).map { #"{"id":"n\#($0)","k":"node","at":[\#(1 + $0 % 10),\#(1 + $0 % 6)],"text":"\#($0)"}"# }.joined(separator: ",") + "]}") // items.count

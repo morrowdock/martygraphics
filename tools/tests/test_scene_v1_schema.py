@@ -303,6 +303,30 @@ class SceneV1Tests(unittest.TestCase):
             with self.subTest(reason=reason):
                 self.assert_invalid(json.dumps({"v": 1, **update}).encode("utf-8"), reason)
 
+    def test_curves(self):
+        curve = {"id": "c", "k": "curve", "at": [1, 1], "w": 4, "h": 4, "xr": [-0.6, 2.2], "yr": [-1.4, 1.4],
+                 "r": "1 + cos(theta)"}
+        circle = {"id": "o", "k": "curve", "at": [6, 1], "w": 4, "h": 4, "xr": [-1.5, 1.5], "yr": [-1.5, 1.5],
+                  "x": "a*cos(theta)", "y": "a*sin(theta)", "a": 1, "mark": 1}
+        self.assertIsNone(checker.check(json.dumps({"v": 1, "items": [curve, circle]}).encode()))
+        variants = [
+            ({"items": [{**curve, "x": "cos(theta)"}]}, "curve.form"),
+            ({"items": [{**curve, "r": "cos(theta"}]}, "curve.r.syntax"),
+            ({"items": [{**curve, "r": 3}]}, "curve.r"),
+            ({"items": [{**curve, "theta": [0, 2000]}]}, "curve.theta"),
+            ({"items": [{**curve, "theta": [0, 200]}]}, "curve.theta"),
+            ({"items": [{**curve, "w": 20}]}, "curve.w"),
+            ({"items": [{**curve, "shade": [0, 1]}]}, "item.curve.unknown.shade"),
+            ({"items": [{**curve, "r": "cos(90*theta)"}]}, "curve.detail"),
+            ({"items": [{**curve, "id": f"c{i}"} for i in range(4)]}, "items.expr"),
+            ({"items": [curve], "dim": "3d"}, "3d.kind.curve"),
+            ({"items": [circle], "steps": [{"say": "Go.", "do": [{"id": "o", "key": "mark", "value": 7}]}]}, "curve.mark"),
+            ({"items": [circle], "steps": [{"say": "Go.", "do": [{"id": "o", "key": "a", "value": 5}]}]}, "curve.empty"),
+        ]
+        for update, reason in variants:
+            with self.subTest(reason=reason):
+                self.assert_invalid(json.dumps({"v": 1, **update}).encode("utf-8"), reason)
+
 
 if __name__ == "__main__":
     unittest.main()

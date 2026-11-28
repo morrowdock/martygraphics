@@ -340,11 +340,12 @@ def item_rules(item, dimensions, template, readouts=None):
             "table": {"cw": span / 3, "rh": span / 6},
             "func": {"w": 1.25 * span, "h": 1.25 * span},
             "field": {"w": 1.25 * span, "h": 1.25 * span},
+            "curve": {"w": 1.25 * span, "h": 1.25 * span},
         }
         for key, limit in upper.get(kind, {}).items():
             if key in item and item[key] > limit:
                 raise Invalid(f"{kind}.{key}")
-        if kind in ("func", "field"):
+        if kind in mg_expr.GRAPH_KINDS:
             # The sampling, expression and drawing rules mirrored in tools/mg_expr.py. A template scene's world
             # is known only after Swift expands it, so these rules run for literal scenes only.
             try:
@@ -445,8 +446,9 @@ def scene_rules(scene):
     world = scene.get("world", {"w": 12, "h": 8})
     dimensions = None if template else (world["w"], world["h"])
     items = {}
-    # Each graph item counts once and each step edit of one once more, a `func` with readouts (and each edit of it that
-    # can change one) READOUT_WEIGHT (Swift `MGLimits.exprItems`, `MGParser.exprWeight`, `MGParser.editWeight`).
+    # Each graph item counts once and each step edit of one once more, a `curve` (and each edit of it) CURVE_WEIGHT and
+    # a `func` with readouts (and each edit of it that can change one) READOUT_WEIGHT (Swift `MGLimits.exprItems`,
+    # `MGParser.exprWeight`, `MGParser.editWeight`).
     if mg_expr.graph_checks(scene) > mg_expr.EXPR_ITEMS:
         raise Invalid("items.expr")
     # Readouts: Swift computes each `func` item's readouts before any text is filled (MGParser.parseScene), so every

@@ -136,6 +136,9 @@ class RepairHintMirror(unittest.TestCase):
         self.assertIn("each step or over edit of one 1 more", hint("items.expr"))
         self.assertIn("a func with readouts counts 2, and so does each edit of its y, a, b, c, period, xr, yr, mark, shade "
                       "or readouts", hint("items.expr"))
+        # A curve weighs MGLimits.curveWeight, and so does each edit of it (MGParser.exprWeight, editWeight).
+        self.assertIn("a curve counts 2, and so does each edit of it", hint("items.expr"))
+        self.assertIn("func, field, curve", hint("item.kind"))
 
     def test_motion_hint_states_the_parser_motion_bounds(self):
         # MGParser.validateMotion: travel, period and visual in MGLimits.bodyMoveTime (0.3...10), hold in 0...10,
@@ -154,7 +157,7 @@ class RepairHintMirror(unittest.TestCase):
         sample = self.inventory.scene_reason_sample()
         checked_in = json.loads((ROOT / "evals/dev-authoring/inventories/scene-reasons.json").read_text(encoding="utf-8"))
         self.assertEqual(checked_in["tokens"], sample, "run inventory.py --write")
-        self.assertEqual(len(sample), 220)
+        self.assertEqual(len(sample), 239)
         self.assertEqual([r for r in sample if not self.hints.scene_hint(r)], [])
 
     def test_slider_reasons_get_the_slider_rows(self):

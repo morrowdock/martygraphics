@@ -3,7 +3,7 @@ import Foundation
 import XCTest
 @testable import MartyGraphics
 
-/// The closed `func` / `field` expression grammar (`MGExpression`): the golden values and refusals shared with the
+/// The closed `func` / `field` / `curve` expression grammar (`MGExpression`): the golden values and refusals shared with the
 /// offline mirror (docs/fixtures/v1/expressions.cases.json, tools/tests/test_mg_expr.py), precedence, the bounds and
 /// purity.
 final class ExpressionTests: XCTestCase {
@@ -40,7 +40,7 @@ final class ExpressionTests: XCTestCase {
             let expression = try MGExpression.compile(text, allowed: Set(MGExpression.Variable.allCases), reason: "func.y")
             func input(_ key: String) -> Double { (c[key] as? NSNumber)?.doubleValue ?? 0 }
             let value = expression.value(MGExpression.Inputs(x: input("x"), y: input("y"), t: input("t"),
-                                                            a: input("a"), b: input("b"), c: input("c")))
+                                                            a: input("a"), b: input("b"), c: input("c"), theta: input("theta")))
             XCTAssertTrue(Self.matches(value, c["value"]), "\(text) gave \(value)")
         }
     }

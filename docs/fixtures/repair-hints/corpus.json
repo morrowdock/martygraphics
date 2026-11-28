@@ -158,6 +158,114 @@
    "hint": "zoom is 0.5 to 4"
   },
   {
+   "reason": "curve.a",
+   "hint": "a, b and c are parameters from -1000 to 1000"
+  },
+  {
+   "reason": "curve.at",
+   "hint": "a point is [x, y] ([x, y, z] in 3D) with x from -0.25·w to 1.25·w and y from -0.25·h to 1.25·h of the world"
+  },
+  {
+   "reason": "curve.b",
+   "hint": "a, b and c are parameters from -1000 to 1000"
+  },
+  {
+   "reason": "curve.breaks",
+   "hint": "the curve breaks (gaps or poles) more than 16 times over the theta range; shorten the theta range or change the window"
+  },
+  {
+   "reason": "curve.c",
+   "hint": "a, b and c are parameters from -1000 to 1000"
+  },
+  {
+   "reason": "curve.detail",
+   "hint": "the curve turns too fast to draw within 1% of the frame's shorter side from 256 steps of theta; shorten the theta range, lower the frequency, or move the window off a pole"
+  },
+  {
+   "reason": "curve.empty",
+   "hint": "no point of the curve lies inside the drawn window; set xr and yr to where the curve is"
+  },
+  {
+   "reason": "curve.form",
+   "hint": "a curve has x and y (parametric) or r alone (polar), never both and never only one of x and y; to change form, replace the item"
+  },
+  {
+   "reason": "curve.h",
+   "hint": "h is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "curve.loop",
+   "hint": "at t = 0 and t = period, each grid point across the theta range must have a value at both or at neither, and the two points, clamped into the window, must be within 1% of the window's shorter side; make the curve repeat in t with that period"
+  },
+  {
+   "reason": "curve.mark",
+   "hint": "mark is a theta inside the theta range where the curve has a point inside the drawn window"
+  },
+  {
+   "reason": "curve.period",
+   "hint": "period is 0.5 to 20 seconds, and a curve with a period must read t in x, y or r"
+  },
+  {
+   "reason": "curve.r",
+   "hint": "r is an expression in theta: text of 1-80 characters made only of ASCII letters, digits, spaces and . + - * / ^ ( ) ,"
+  },
+  {
+   "reason": "curve.r.name",
+   "hint": "a name is theta, t, a, b, c, pi, e or one of the functions sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, exp, ln, log, sqrt, abs, min, max"
+  },
+  {
+   "reason": "curve.r.syntax",
+   "hint": "the expression is malformed: write every multiplication (2*x, not 2x), close each parenthesis, put a comma between the two arguments of min and max, and write numbers like 2, 0.5 or .5 (no exponent, at most 12 characters)"
+  },
+  {
+   "reason": "curve.theta",
+   "hint": "theta is [t0, t1]: two numbers from -1000 to 1000 with t1 - t0 from 0.001 to 100; omit it for 0 to 2 pi"
+  },
+  {
+   "reason": "curve.w",
+   "hint": "w is 0.5 to 1.25 times the world's larger side"
+  },
+  {
+   "reason": "curve.x",
+   "hint": "x and y are expressions in theta: text of 1-80 characters made only of ASCII letters, digits, spaces and . + - * / ^ ( ) ,"
+  },
+  {
+   "reason": "curve.x.depth",
+   "hint": "an expression nests at most 8 parentheses"
+  },
+  {
+   "reason": "curve.x.var.t",
+   "hint": "x, y and r may read theta, the parameters a, b and c that the item sets, and t only when the item has a period"
+  },
+  {
+   "reason": "curve.xl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "curve.xr",
+   "hint": "xr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart; the frame is equally scaled, so the narrower range widens about its centre"
+  },
+  {
+   "reason": "curve.y",
+   "hint": "x and y are expressions in theta: text of 1-80 characters made only of ASCII letters, digits, spaces and . + - * / ^ ( ) ,"
+  },
+  {
+   "reason": "curve.y.arity",
+   "hint": "min and max take two arguments; every other function takes one"
+  },
+  {
+   "reason": "curve.y.tokens",
+   "hint": "an expression has at most 48 tokens (numbers, names and symbols); simplify it"
+  },
+  {
+   "reason": "curve.yl",
+   "hint": "an axis label is 1-40 characters of plain text"
+  },
+  {
+   "reason": "curve.yr",
+   "hint": "yr is [lo, hi] with lo < hi, both from -1e6 to 1e6 and at least 1e-6 apart; the frame is equally scaled, so the narrower range widens about its centre"
+  },
+  {
    "reason": "edge.a",
    "hint": "a is the id of the edge's first node"
   },
@@ -494,6 +602,14 @@
    "hint": "color is one of force, normal, friction, gravity, tension, velocity, accel, energy, kinetic, potential, accent, muted, good, warn, blue, red, green, orange, purple, yellow, teal, white"
   },
   {
+   "reason": "item.curve.missing",
+   "hint": "a curve needs at, h, id, k, w, xr, yr"
+  },
+  {
+   "reason": "item.curve.unknown.zz",
+   "hint": "remove unknown keys; a curve allows a, at, b, c, color, h, id, k, label, mark, period, r, theta, w, x, xl, xr, y, yl, yr"
+  },
+  {
    "reason": "item.edge.missing",
    "hint": "a edge needs a, b, id, k"
   },
@@ -543,7 +659,7 @@
   },
   {
    "reason": "item.kind",
-   "hint": "each item needs \"k\": one of body, incline, line, vector, axes, plot, spring, pulley, rope, orbit, text, highlight, bars, path, array, node, edge, table, region, func, field"
+   "hint": "each item needs \"k\": one of body, incline, line, vector, axes, plot, spring, pulley, rope, orbit, text, highlight, bars, path, array, node, edge, table, region, func, field, curve"
   },
   {
    "reason": "item.label",
@@ -663,7 +779,7 @@
   },
   {
    "reason": "items.expr",
-   "hint": "a scene has at most 6 graph checks: each func and field item counts 1, and each step or over edit of one 1 more; a func with readouts counts 2, and so does each edit of its y, a, b, c, period, xr, yr, mark, shade or readouts; use fewer graphs, edits or readouts"
+   "hint": "a scene has at most 6 graph checks: each func and field item counts 1, and each step or over edit of one 1 more; a curve counts 2, and so does each edit of it; a func with readouts counts 2, and so does each edit of its y, a, b, c, period, xr, yr, mark, shade or readouts; use fewer graphs, edits or readouts"
   },
   {
    "reason": "items.total",

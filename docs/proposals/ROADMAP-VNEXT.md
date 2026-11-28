@@ -59,7 +59,7 @@ Limits: whether the closed-key limits change (new bounds for a new shape only ne
 | 6 | Engine-computed calculus numbers: tangent line at the mark, area of the shaded band, derivative, as placeholders (`{wave.area}`) with an error bound — *implemented as `readouts` (numbers only, no tangent line drawn; pending Mac verification, see [PROTOCOL](../PROTOCOL.md#readouts-slopes-and-areas))* | High: integrals and slopes with checked numbers in captions | M | Medium: numerical claims must carry a stated accuracy | Additive keys and placeholders | New bounds only | Numbers become speakable text |
 | 7 | Eased and timed step transitions (`ease`: spring, smooth, linear, none; `dur` 0.2–3 s) honouring Reduce Motion | Medium-high: pacing and morphs; WCAG 2.3.3 | S | Low | Additive step keys | One small enum and range | Positive (reduced motion) |
 | 8 | Math typography: a bounded `math` text style (superscripts, fractions, Greek, roots) with a spoken form | High: labels such as y = a sin x read as maths | L | Medium: text measurement and layout | Additive text style | New bounds only | Needs speech text for each formula |
-| 9 | Parametric and polar curves (`curve`: x(t), y(t); r(θ)) reusing the grammar and sampler | Medium-high: circles, cycloids, orbits, Lissajous figures | M | Low | Additive kind | New bounds only | Described |
+| 9 | **Parametric and polar curves** (`curve`: x(θ), y(θ); r(θ)) reusing the grammar and sampler — *implemented on `feat/param-polar`, pending Mac verification* | Medium-high: circles, cycloids, orbits, Lissajous figures | M | Low | Additive kind | New bounds only | Described |
 | 10 | Captions and transcript export for walkthroughs (WebVTT/SRT with the `alt` track) | Medium-high: WCAG 1.2.2 captions and 1.2.5 audio description for exported video | S–M | Low | None | None | Large |
 | 11 | VoiceOver navigation between items (a rotor of `MGDescribe.item` phrases, highlight on focus) | High for screen-reader users of dense boards | M | Medium: device testing | None | None | Large |
 | 12 | Simulation kinds with checked integration (pendulum, mass-spring, projectile with drag; RK4 with an energy-drift check) | Medium-high: PhET-style labs | L | Medium: numerical honesty | Additive kinds | New bounds only | Described |
@@ -224,6 +224,71 @@ samples, no line through a pole, the hole in `sin(x)/x`, shading under the curve
 their cells). Only after GraphCaseTests and ExpressionTests pass can the shared cases be called verified in both
 runtimes. VoiceOver on a device (scene and step `alt`, `describesBoard()`) is a separate manual check, not part of
 this run.
+
+## Item 9: parametric and polar curves (`feat/param-polar`)
+
+The wire, sampling and checks are in [PROTOCOL.md](../PROTOCOL.md#parametric-and-polar-curves). In short: a new kind
+`curve` takes `x` and `y`, or `r`, in the variable `theta` over `theta` = `[θ0, θ1]` (default 0 to 2π), with the frame
+keys, parameters, `period` and `mark` of `func`; the engine samples 257 values of θ, splits at gaps and poles, draws in an
+aspect-correct window and refuses what it cannot draw faithfully.
+
+Design note, a sibling kind rather than more `func` keys: `func`'s keys are x-monotone (`shade` to y = 0 over an x
+interval, `mark` an x, poles judged against the y range) and its `t` is loop time. A curve needs a parameter range, one
+or two expressions, a two-dimensional pole rule and an aspect-correct frame. Folding them into `func` would make most
+keys conditional on others, which the closed per-kind key sets (`MGParser.allowedKeys`, the schema's `oneOf`) cannot
+express; a sibling kind leaves every `func` scene, fixture, golden case and grammar entry as it was, and an older engine
+refuses it with `item.kind`. The parameter is `theta`, not `t`, so `t` means time in every kind; `theta` is the last
+`MGExpression.Variable`, and in `func` or `field` it is refused as `<key>.var.theta` (it was `<key>.name`).
+
+| | `curve` |
+| --- | --- |
+| Model | `MGKind.curve`; samples in θ order in `pts` after `at`, piece starts in `marked`, the drawn window in `x0`…`y1`, the given ranges in `rx0`…`ry1`, `th0`/`th1`, the marked point in `mx`/`my`, flag `polar`, `list` = [xl, yl, r] or [xl, yl, x, y] |
+| Parser | `MGParser.item` (order: frame, ranges, `a` `b` `c`, `theta`, `period`, form and expressions, `curve.period`, `mark`, drawing checks, labels); `MGParser.exprWeight` |
+| Sampler | `MGGraph.planar`, `checkCurve`, `animatedCurve`, `curveWindow`, `clipped`, `isClosed` in [MGPlanarCurve.swift](../../Sources/MartyGraphics/MGPlanarCurve.swift) |
+| Renderer | `MGCanvasRenderer.planarCurve` with the shared `graphFrame` |
+| Motion | `period` + `t`: `MGTimeline.frame` re-samples, `cycle`, `animates` |
+| Describe | `MGDescribe.item`: form, closed, θ range, drawn ranges, parameters, period, pieces, marked point |
+| New bounds | `curveIntervals` 256, `curveBreaks` 16, `curveWeight` 2, `curveEnd` ±1,000, `curveSpan` 0.001–100, `curveTolerance` 1 % of the shorter side |
+
+Derivations (also in `MGLimits`): a point needs two coordinates, so a curve costs at most 2 × 7,169 evaluations per
+checked instant and a moving one 2 × 29,190 = 58,380; counting a curve, and each step or `over` edit of it, twice
+toward the six graph checks keeps a scene at 175,140. On a circle that fills the frame the chord at a step Δ is (1 − cos(Δ/2)) of the radius, within 1 % of the frame
+up to Δ = 0.4 rad, so 256 steps draw at most 102.4 rad: the span limit is 100. The smallest span keeps a gap probe
+(span / 262,144) above 10⁴ ulps of an end at 1,000.
+
+Checked off the Mac (2026-11-27): the sampling, parser, motion, wire, budget and description tests (`CurveKindTests`,
+`CurveCaseTests`) and the touched suites (`ExpressionTests`, `GraphCaseTests`, `AltTextTests`, `ParserRegressionTests`,
+`TemplateExtensionTests`, `TimelineRegressionTests`, `StreamRegressionTests`, `SceneV1SchemaDriftTests`,
+`ProtocolFixtureTests`, `PatchAtomicityTests`, `LessonCoreTests`) built and passed with Linux Swift 6.4.3 against the
+Foundation-level sources; the mirror and preflight tests passed in Python on Windows and Linux. Not run: the renderer
+(`planarCurve`), the render tests and stills in `GraphKindTests`, the SceneValidator package and any Apple-only suite.
+
+Mac commands (from a clone of the branch, Xcode as in CI):
+
+```sh
+swift --version && xcodebuild -version && sw_vers
+mkdir -p logs
+swift build --jobs 2 2>&1 | tee logs/curve-build.log
+# 1. The new suites and the suites this branch changed.
+swift test --jobs 2 --filter 'MartyGraphicsTests\.(CurveKindTests|CurveCaseTests|ExpressionTests|GraphCaseTests|AltTextTests|SceneV1SchemaDriftTests|ParserRegressionTests|TemplateExtensionTests|TimelineRegressionTests|StreamRegressionTests|ControllerRollbackTests|PublicEngineTests|ProgrammaticVideoTests)' 2>&1 | tee logs/curve-new.log
+swift test --jobs 2 --filter 'MartyGraphicsTests\.LessonCoreTests/testU16DefaultGrammarDocumentIsUnchanged$' 2>&1 | tee logs/curve-grammar.log
+grep MGCURVE logs/curve-new.log
+# 2. Rendering: pixels at the engine's points, then review stills (a person looks at the curve-* and curves-* PNGs).
+swift test --jobs 2 --filter 'MartyGraphicsTests\.GraphKindTests' 2>&1 | tee logs/curve-render.log
+MG_VNEXT_RENDER_DIR="$PWD/curve-stills" swift test --filter 'MartyGraphicsTests\.GraphKindTests/testRenderReviewStills' 2>&1 | tee logs/curve-stills.log
+grep 'MGVNEXT still' logs/curve-stills.log && shasum -a 256 curve-stills/*.png
+# 3. The scene validator tool and the full sweep, as the CI shards.
+swift test --jobs 2 --package-path tools/SceneValidator 2>&1 | tee logs/curve-validator.log
+swift test --jobs 2 --filter '^MartyGraphicsTests\.Solid' 2>&1 | tee logs/curve-solid.log
+swift test --jobs 2 --skip '^MartyGraphicsTests\.Solid' 2>&1 | tee logs/curve-rest.log
+python3 -m unittest discover -s tools/tests -v
+python3 tools/validate_local.py --check-files
+```
+
+What to record: the commit, toolchain, pass and fail counts per log, the `MGCURVE` parse time, the still hashes, and a
+note on each curve still (the ellipse round in its widened frame with the marked point, three rose petals, the line
+r = 1/cos θ with no chord across the view, the lemniscate's gaps, the cycloid's cusps). VoiceOver reading the
+description is a separate device check.
 
 ## Open questions
 

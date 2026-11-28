@@ -34,12 +34,13 @@ World coordinates point right/up, with the origin at bottom-left; 3D adds z
 toward the viewer. The default world is 12 by 8.
 
 Kinds: body, incline, line, vector, axes, plot, spring, pulley, rope, orbit,
-text, highlight, bars, path, array, node, edge, table, region, func, field. The
+text, highlight, bars, path, array, node, edge, table, region, func, field, curve. The
 model types expose their geometry. In 3D the supported subset is body, incline,
 line, vector, axes, orbit, text, highlight, path. Text styles are `label`
 (default), `callout`, `title` and `code`. See [tables, regions and code text](#tables-regions-and-code-text),
-[function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives)
-and [learner sliders](#learner-sliders) for the newest additions.
+[function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives),
+[learner sliders](#learner-sliders) and [parametric and polar curves](#parametric-and-polar-curves) for the newest
+additions.
 
 Drawing conventions of the 2D renderer that the keys alone do not show: a vector `angle` is degrees
 counter-clockwise from +x (0 right, 90 up); an incline's `at` is its bottom-left vertex and the slope rises to
@@ -205,7 +206,8 @@ through a `dim` patch or a step edit); `alt` works in 2D and 3D.
   once more, because an edit checks the whole item again. So one graph can take
   up to five step edits. A `func` item that computes readouts counts twice, and
   so does each edit of it that can change a readout
-  ([readouts](#readouts-slopes-and-areas)). All are counted before any item is
+  ([readouts](#readouts-slopes-and-areas)); a `curve` counts twice, and so does
+  each edit of it ([curves](#parametric-and-polar-curves)). All are counted before any item is
   evaluated. The parse
   cost is bounded by construction (see `MGLimits.exprItems`: at most 7,169
   evaluations of at most 48 operations per checked instant, and at most 175,140
@@ -230,7 +232,8 @@ primary := number | name | name "(" expr ("," expr)* ")" | "(" expr ")"
 
 `^` is right-associative and binds tighter than a leading minus (`-x^2` is
 -(x²)). Numbers are decimal without an exponent (`2`, `0.5`, `.5`, at most 12
-characters). Names: `pi`, `e`, the variables `x y t a b c` and the functions
+characters). Names: `pi`, `e`, the variables `x y t a b c theta` (`theta` only in a
+[`curve`](#parametric-and-polar-curves); elsewhere it is `<key>.var.theta`) and the functions
 `sin cos tan asin acos atan sinh cosh tanh exp ln log sqrt abs` (`ln` is natural,
 `log` base 10) and `min max` (two arguments). Multiplication is always written
 (`2x` and `x(x+1)` are refused). Values follow IEEE 754.
@@ -621,6 +624,91 @@ parser and `tools/tests/test_mg_expr.py` against the offline mirror.
 Not checked: whether a readout is the number a lesson needs, or the words around
 it. No tangent line is drawn: the numbers go into text only.
 
+## Parametric and polar curves
+
+Additive, unreleased, **pending Mac verification** (the sampling, parsing and
+text-alternative tests ran on Linux Swift 6.4.3 and in the Python mirror; the
+renderer has not run). Wire `v: 1` is unchanged and every scene that parsed
+before parses to the same result. `curve` is 2D only (`3d.kind.curve`, also
+through a `dim` patch or a step edit).
+
+```json
+{"id":"circle","k":"curve","at":[0.8,1.5],"w":4.6,"h":4.6,"xr":[-1.25,1.25],"yr":[-1.25,1.25],"x":"a*cos(theta)","y":"a*sin(theta)","a":1,"mark":1.0472}
+{"id":"heart","k":"curve","at":[6.4,1.5],"w":5,"h":5,"xr":[-0.6,2.2],"yr":[-1.4,1.4],"r":"1 + cos(theta)"}
+```
+
+- `curve`: a parametric curve (x(θ), y(θ)) or a polar curve r(θ) that the
+  **engine** samples from the same closed grammar as `func`; the model writes
+  expressions, never points. θ is written `theta`. Required `at`, `w`, `h`, `xr`,
+  `yr` (as `func`) and exactly one form: `x` and `y` together, or `r` alone
+  (`curve.form` otherwise). Optional `theta` (`[θ0, θ1]`, each end within ±1,000,
+  a span of 0.001 to 100; default `[0, 2π]` exactly, so a closed curve closes),
+  `a`, `b`, `c`, `period` (0.5–20 s, as `func`: the expressions may read `t`, and
+  at least one must, else `curve.period`), `mark` (a θ inside the range: the
+  engine draws the point and writes its coordinates), `xl`, `yl`, `label`,
+  `color` (default `accent`). Expressions read `theta`, `t` (with `period`) and
+  the parameters that are set; `x` and `y` are not variables here.
+- Aspect-correct frame: one data unit is as long across as up, so a circle is
+  round. The range with fewer data units per world unit is widened about its
+  centre to match the other (`MGGraph.curveWindow`); neither is narrowed. The
+  drawn window is what the frame labels, `MGDescribe` and every check use; the
+  wire keeps the given `xr` and `yr`.
+- Sampling: 257 values of θ on 256 equal steps, in θ order. Where the curve has
+  no point (`sqrt(cos(2*theta))` where cos 2θ < 0, `1/theta` at 0) it has a gap,
+  one probe (1/1024 of a step) wide, at a grid value or at a step midpoint, as
+  for `func`. A pole: two neighbouring points both outside the window whose chord
+  crosses it are bisected 8 times; a point inside means the curve passes through
+  the view (joined), otherwise the piece ends, so `r = 1/cos(theta)` (the line
+  x = 1) is never drawn with a chord across the view. Points are kept within
+  ±10¹² along their own direction; the renderer cuts each piece to the window
+  grown by 5 %.
+- Faithfulness checks, refused rather than drawn wrong: at every step midpoint
+  the drawn chord must be within 1 % of the frame's shorter side of the curve
+  (`MGLimits.curveTolerance`; the smaller of the distance to the chord and the
+  same distance with all three points clamped into the window), `curve.detail`;
+  at most 16 breaks (`curve.breaks`); a point inside the window
+  (`curve.empty`); the marked point has a value inside the window (`curve.mark`).
+  A moving curve is checked at t = 0, ¼, ½ and ¾ of its period and must match
+  t = 0 at t = period within the tolerance, with the same gaps (`curve.loop`).
+  Between the checked instants the marked point is drawn only while it has a
+  value inside the window. As for `func`, a pole beside a point inside the
+  window is not bisected; its chord fails `curve.detail` instead of being drawn.
+- At most 6 graph checks per scene (`items.expr`): a `func` or `field` counts once
+  and a `curve` twice (`MGLimits.curveWeight`), since it evaluates two coordinates
+  per point; each step or `over` edit of a curve counts twice too, because it
+  checks the whole curve again (`MGParser.exprWeight`, `MGParser.editWeight`).
+  A moving parametric curve costs at most 2 × 29,190 = 58,380
+  evaluations of at most 48 operations, so three of them stay within the 175,140
+  of six moving graphs. Parse and frame times are **not measured on a Mac**; the
+  budget test prints `MGCURVE three moving parametric curves parsed in …`.
+- Step edits and `set` patches re-sample and re-check the curve like any item
+  (`{"id":"circle","key":"a","value":0.6}`); two curves with the same number of
+  samples blend point by point. The form is fixed: setting `x` on a polar curve
+  is `curve.form` (replace the item to change form).
+- `MGDescribe` writes, for example, "a closed parametric curve x = a*cos(theta),
+  y = a*sin(theta) … for theta from 0 to 6.28, x from -1.25 to 1.25 and y from
+  -1.25 to 1.25 with a = 1, marking the point (0.5, 0.87) at theta = 1.05".
+  "closed" means one piece whose ends meet within the tolerance; "in N pieces"
+  counts the breaks.
+
+Why a sibling kind and not more `func` keys: `func` is y = f(x). Its keys mean
+x-monotone things (`shade` is the area to y = 0 over an x interval, `mark` is an
+x, the pole rule is about the y range), and its variable `t` is loop time. A curve
+needs a parameter range, two expressions or a polar one, a two-dimensional pole
+rule and an aspect-correct frame. Folding these into `func` would make most keys
+conditional on one another, which the closed per-kind key sets (`MGParser`, the
+draft schema's `oneOf`) cannot say; a separate kind keeps every `func` scene,
+fixture and golden case unchanged and refuses cleanly on an older engine
+(`item.kind`). The parameter is `theta`, not `t`, so that `t` keeps one meaning
+(time) in every kind.
+
+[Copy the curves scene](fixtures/v1/curves.scene.json) (it equals the built-in
+`curves` fixture). The [curve cases](fixtures/v1/curves.cases.json) hold the
+golden sample counts, piece starts, windows, marked points and points from
+closed forms (circle, ellipse, cardioid, roses, Lissajous, cycloid, spiral) and
+the refusals; `CurveCaseTests` checks them against the parser and
+`tools/tests/test_mg_expr.py` against the mirror.
+
 ## Explainer boards
 
 An [explainer document](EXPLAINER.md) embeds a v1 scene as its `board`. The wire format does not change: a board is
@@ -908,8 +996,18 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `3d.text.code` | `code` text in a 3D scene | Use plain text in 3D, or keep the scene 2D. |
 | `table.cells`, `table.cell`, `table.marked`, `region.pts` | A table shape, cell or mark, or a region's points, is out of bounds | See [tables, regions and code text](#tables-regions-and-code-text). |
 | `func.y`, `func.y.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>`, `field.dx…`, `field.dy…` | An expression is not text, too long, outside the grammar or its bounds, names an unknown function, or reads a variable the item does not provide | See [function graphs, vector fields and text alternatives](#function-graphs-vector-fields-and-text-alternatives). |
-| `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them; a `func` with readouts, and each edit of it that can change one, count 2) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs, fewer edits of them or fewer readouts. |
+| `func.detail`, `func.breaks`, `func.empty`, `func.shade`, `func.mark`, `func.loop`, `func.period`, `field.n`, `field.style`, `field.empty`, `items.expr` | The graph cannot be drawn faithfully (aliasing, too many breaks, nothing visible), a shaded interval or marked point does not fit, a loop is not seamless, a grid or style is out of range, or a scene has more than 6 graph checks (graph items, plus step and `over` edits of them; a `curve`, and each edit of it, counts 2, and so do a `func` with readouts and each edit of it that can change one) | Change the range, the expression or the keys named by the reason; for `items.expr`, use fewer graphs, fewer edits of them or fewer readouts, or split the board. |
 | `func.readouts`, `func.readouts.period` / `.mark` / `.shade` / `.slope` / `.area` / `.view` / `.edit`, `<text>.placeholder.readout` | A readout list is malformed, asked of a moving graph or without its `mark` or `shade`; a slope is not proven (a corner, cusp, vertical tangent, pole or domain edge at the mark or anywhere within a probe of it, even one the curve crosses back over before the probe); an area's analytic curve cannot be certified continuous and inside the y range within its budget (outward-rounded interval arithmetic, so a pole that cancellation hides in double precision counts), or the area cannot be computed to its shown digits, or a sample of it is outside the y range; a step edit changes a readout the text names; a text names a readout the scene does not compute | Move the `mark` more than a probe (1/1024 of a sampling interval) from every corner, pole and domain edge; shade an interval where the analytic curve is continuous and inside the y range (or widen `yr`), and write the expression without cancelling large terms (`x + 1`, not `((10^20 + x) - 10^20) + 1`); see [readouts](#readouts-slopes-and-areas). |
+| `curve.form` | A `curve` has neither form, both forms, or only one of `x` and `y` | Give `x` and `y` together (parametric) or `r` alone (polar); to change form, replace the item. |
+| `curve.x`, `curve.y`, `curve.r` and their `.syntax` / `.tokens` / `.depth` / `.name` / `.arity` / `.var.<v>` | An expression is not text, is outside the grammar or its bounds, or reads a variable the curve does not provide (`x`, `y`, `t` without `period`, a parameter that is not set) | Write the curve in `theta` (`cos(theta)`, not `cos(θ)` or `cos(t)`); set the parameter, or add `period` to read `t`. |
+| `curve.theta` | The range is not two numbers within ±1,000 whose span is 0.001 to 100 | Omit it for 0 to 2π, or give an increasing pair; split a longer spiral into two curves. |
+| `curve.period` | `period` is outside 0.5–20 s, or no expression reads `t` | Read `t` in an expression, or drop `period`. |
+| `curve.detail` | The drawn chord is more than 1 % of the frame's shorter side from the curve at some step midpoint: too many turns or oscillations for 256 steps, or a pole beside a point in view | Shorten the `theta` range, lower the frequency, or move the window off the pole. |
+| `curve.breaks` | More than 16 breaks (poles or gaps) | Shorten the `theta` range or change the window. |
+| `curve.empty` | No point of the curve lies inside the drawn window | Set `xr` and `yr` to where the curve is. |
+| `curve.mark` | `mark` is outside the `theta` range, or the point there has no value or leaves the window at a checked instant | Pick a θ inside the range whose point stays in view. |
+| `curve.loop` | At t = period the curve does not match t = 0 | Make one period a whole cycle, for example `theta + 2*pi*t/4` with `period` 4. |
+| `curve.at`, `curve.w`, `curve.h`, `curve.xr`, `curve.yr`, `curve.a` / `.b` / `.c`, `curve.xl`, `curve.yl` | A frame key, range, parameter or axis label is out of range or not plain text | As for `func`: see [parametric and polar curves](#parametric-and-polar-curves). |
 | `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
 | `sliders`, `slider`, `slider.missing`, `slider.unknown.<keys>`, `slider.param`, `slider.duplicate.<p>`, `slider.min`, `slider.max`, `slider.range`, `slider.step`, `slider.step.count`, `slider.grid`, `slider.default`, `slider.label`, `slider.label.placeholder` | A slider list or slider is out of shape, or its range or step is out of bounds; a stop's label (an end's included) does not read back as exactly the value the engine would get, or its stops are too close to tell apart (`slider.grid`); its default is not exactly the value of a stop (`slider.default`); or its label is not fixed plain text | See [learner sliders](#learner-sliders); `MGRepairHint.text(for:)` gives a one-line fix. |
 | `slider.unbound`, `slider.field`, `slider.readouts`, `slider.default.<id>`, `slider.edit`, `sliders.bindings`, `slider.<p>.min.<reason>`, `slider.<p>.max.<reason>` | No `func` sets the parameter, a `field` or a step edit sets it, a driven `func` lists `readouts`, a `func` sets another value, too many slider-graph pairs, or a driven graph fails a check at an end of the range | Set the parameter on the graphs to the default, remove the conflicting key, or narrow the range. |
@@ -943,7 +1041,7 @@ Byte limits apply to canonical JSON; raw decoder headroom is twice the byte boun
 | Text lengths | Title 60, label 40, text 120, narration 200 |
 | Geometry | Plot/path points up to 64; rope points up to 6 |
 | Collections | Array 16 cells / 4 pointers / cells up to 6 characters (a number counts its displayed text, so `-123456` is refused); 6 bars / 16-character bar labels; 8-character node text; table 8 rows × 6 columns / cells up to 12 characters; region 3–64 points |
-| Graphs (new kinds only) | 6 graph checks per scene (each `func` / `field` item, and each step or `over` edit of one; 2 for a `func` with readouts and each edit of it that can change one); expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters; `func` readouts 3, an area on 128 panels (962 evaluations), at most 3 readout computations per parse |
+| Graphs (new kinds only) | 6 graph checks per scene (each `func` / `field` / `curve` item, and each step or `over` edit of one; 2 for a `curve` and each edit of it, and for a `func` with readouts and each edit of it that can change one); expressions 80 scalars / 48 tokens / 8 nested parentheses; `func` 257 samples, 16 breaks, 1 % of the frame height; `curve` 257 samples of `theta`, a span of 0.001–100 within ±1,000, 16 breaks, 1 % of the frame's shorter side; `field` 2–16 × 2–12 arrows; parameters ±1,000; `period` 0.5–20 s; `alt` 200 characters; `func` readouts 3, an area on 128 panels (962 evaluations), at most 3 readout computations per parse |
 | Sliders (new key only) | 3 per scene; range within ±1,000; at most 100 steps; 6 slider-graph pairs; labels 40 characters |
 | Raw template params | 4 KiB canonical `params` object |
 | Nesting (arrays and objects on one path) | 64 levels (`MGLimits.depth`); lessons 59 per statement |

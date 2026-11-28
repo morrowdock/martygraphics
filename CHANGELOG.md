@@ -39,6 +39,10 @@
   linkage and cam limits, where the gallery images came from, and the required CI checks.
 - The default grammar document lists the `func` and `field` kinds, the `alt` scene key and the closed
   expression vocabulary (`expression`); `MGTimeline.cycle` and `MGScene.animates` include moving graphs.
+- The default grammar document also lists the `curve` kind and its variables (`expression.variables.curve`).
+  `MGExpression.Variable` gains a last case `theta` and `MGExpression.Inputs` a `theta` value (default 0); a public
+  switch over `Variable` or `MGKind` (new case `curve`) must handle the new case. In a `func` or `field` expression
+  `theta` is now refused as `<key>.var.theta` instead of `<key>.name`.
 - Docs: the protocol, tutorial and ML explainer pages state the drawing and step conventions and link the
   authoring guide; `MGMLKit.report` takes an optional `hints:` flag whose default keeps the output unchanged.
 - Engine: the 2D board keeps its spring step and patch transitions by default (spring blends and camera moves,
@@ -194,6 +198,18 @@
   In interval arithmetic a whole exponent above 2⁵³ takes the bound of `pow` (`MGExpression.squaringLimit`), so an
   interval pass squares at most 54 times per power. `tools/mg_expr.py` and
   `tools/scene_v1_check.py` count the same way, and the `items.expr` repair hint states the weight.
+- Add the 2D `curve` kind (pending Mac verification): parametric (`x`, `y`) and polar (`r`) curves in the new
+  expression variable `theta`, sampled by the engine (257 values over `theta`, default 0 to 2π) from the same closed
+  grammar, never from model-written points. Gaps and poles break the curve without a chord across the view; the frame
+  is aspect-correct (the narrower range widens, so a circle is round); `a`, `b`, `c`, `period` and `mark` work as for
+  `func`. Curves that cannot be drawn faithfully are refused (`curve.detail`, `curve.breaks`, `curve.empty`,
+  `curve.loop`; also `curve.form`, `curve.theta`, `curve.mark`, `curve.period`). New bounds `MGLimits.curveIntervals`,
+  `curveBreaks`, `curveWeight`, `curveEnd`, `curveSpan` and `curveTolerance`; a curve weighs two of the six graph
+  checks of `items.expr`, and so does each step or `over` edit of it (`MGParser.exprWeight`, `MGParser.editWeight`;
+  `tools/mg_expr.py` and `tools/scene_v1_check.py` count the same way). `MGDescribe` names the form, whether it is
+  closed, the ranges and the marked point. Adds the `curves` fixture and `curves_limacon` patch,
+  `docs/fixtures/v1/curves.scene.json` and golden curve cases shared by XCTest and `tools/mg_expr.py`; the draft
+  schema and `tools/scene_v1_check.py` accept `curve`.
 - Docs: a researched, ranked vNext roadmap (docs/proposals/ROADMAP-VNEXT.md).
 - The draft scene v1 schema and `tools/scene_v1_check.py` accept `func`, `field` and the scene and step `alt`
   keys. For literal scenes, the preflight runs the `tools/mg_expr.py` rules on each graph and field item.

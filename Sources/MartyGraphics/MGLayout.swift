@@ -57,7 +57,7 @@ public enum MGLayout {
         case .vector:
             guard let from = item.pts.first else { return nil }
             return box([from, from + MGPoint.polar(item.n("angle"), item.n("len"))])?.insetBy(dx: -6, dy: -6)
-        case .axes, .plot, .bars, .function, .field:
+        case .axes, .plot, .bars, .function, .field, .curve:
             guard let o = item.pts.first else { return nil }
             return box([o, o + MGPoint(item.n("w"), item.n("h"))])
         case .array:

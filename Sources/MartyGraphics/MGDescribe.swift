@@ -114,6 +114,20 @@ public enum MGDescribe {
             let style = i.has("slope") ? "direction segments" : i.has("unit") ? "equal arrows" : "arrows"
             return named("a vector field (\(dx), \(dy))") + " of \(whole(i.n("cols"))) by \(whole(i.n("rows"))) \(style) for "
                 + ranges(i) + parameters(i)
+        case .curve:
+            // The drawn (aspect-correct) window, the theta range and facts the engine measured on its samples.
+            let polar = i.has("polar")
+            let form = polar ? "polar curve r = \(i.list.count == 3 ? i.list[2] : "")"
+                : "parametric curve x = \(i.list.count == 4 ? i.list[2] : ""), y = \(i.list.count == 4 ? i.list[3] : "")"
+            var s = named((MGGraph.isClosed(i) ? "a closed " : "a ") + form)
+                + " for theta from \(f(i.n("th0"))) to \(f(i.n("th1"))), " + ranges(i) + parameters(i)
+            if let p = i.num["period"] { s += ", moving and repeating every \(f(p)) s" }
+            let pieces = MGGraph.pieces(Swift.max(0, i.pts.count - 1), starts: i.marked).count
+            if pieces > 1 { s += ", in \(pieces) pieces" }
+            if let m = i.num["mark"], let x = i.num["mx"], let y = i.num["my"] {
+                s += ", marking the point (\(f(x)), \(f(y))) at theta = \(f(m))"
+            }
+            return s
         }
     }
 

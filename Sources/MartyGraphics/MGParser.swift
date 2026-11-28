@@ -36,8 +36,9 @@ public enum MGLimits {
     public static let exprLength = 80, exprTokens = 48, exprDepth = 8
     /// At most this many graph checks in one resolved scene (`items.expr`). Each `func` and `field` item counts once, and
     /// each step or `over` edit that targets one counts once more, because an edit checks the whole item again
-    /// (`MGParser.apply`); a `func` item that computes readouts, and each such edit of it that can change one, counts
-    /// `readoutWeight` (`MGParser.exprWeight`, `editWeight`). All are counted before any wire item is evaluated. A `func` check costs at most 7,169
+    /// (`MGParser.apply`); a `curve` item, and each edit of it, counts `curveWeight`; a `func` item that computes
+    /// readouts, and each such edit of it that can change one, counts `readoutWeight` (`MGParser.exprWeight`,
+    /// `editWeight`). All are counted before any wire item is evaluated. A `func` check costs at most 7,169
     /// evaluations per checked instant (257 samples, 512 gap probes, 768 × 8 bisection steps, 256 midpoints); a moving
     /// one is checked at 4 instants plus 2 × 257 loop values (29,190). So one parse of a scene, its edits included, is at
     /// most 175,140 evaluations of at most 48 operations each, plus at most 3 readout computations (`readouts`); a
@@ -61,6 +62,23 @@ public enum MGLimits {
     public static let funcPeriod: ClosedRange<Double> = 0.5...20
     /// `field` grids: 2…`fieldCols` columns and 2…`fieldRows` rows of arrows.
     public static let fieldCols = 16, fieldRows = 12
+    /// A `curve` (parametric x(θ), y(θ) or polar r(θ)) is sampled on this many equal steps of `theta` (257 points) and
+    /// may break into at most `curveBreaks + 1` pieces. Each point needs two coordinates, so a curve costs at most
+    /// 2 × 7,169 evaluations per checked instant and a moving one at most 2 × 29,190 = 58,380 (a polar curve needs half:
+    /// one value of `r` and a native cosine and sine). It counts `curveWeight` times toward `exprItems`, and so does
+    /// each step or `over` edit of it, which checks the whole curve again (`MGParser.exprWeight`, `editWeight`), so one
+    /// parse of a scene, its edits included, stays within 6 × 29,190 = 175,140 evaluations (three moving parametric
+    /// curves at most). These bounds, like the other graph bounds, apply to the new kind only.
+    public static let curveIntervals = 256, curveBreaks = 16, curveWeight = 2
+    /// Each end of a `theta` range lies within ±`curveEnd` (the parameter bound) and its span within `curveSpan`. The
+    /// upper span is what 256 steps can draw: on a circle that fills the frame the chord at a step of Δ is
+    /// (1 − cos(Δ/2)) × radius, which is within 1 % of the frame for Δ ≤ 0.4 rad, so 256 steps cover at most 102.4 rad;
+    /// 100 rad is about 15.9 turns. The lower span keeps a gap probe (span / 262,144) above 10⁴ ulps of an end at 1,000.
+    public static let curveEnd = 1000.0
+    public static let curveSpan: ClosedRange<Double> = 0.001...100
+    /// Farthest the drawn polyline may be from the curve at a step midpoint, as a fraction of the frame's shorter side
+    /// (`MGGraph.planar`): 3.4 px on a 4-unit square frame of a 12 × 8 world fitted to 1280 × 720, as for `func`.
+    public static let curveTolerance = 0.01
     /// Scene `sliders` (`MGSlider`): at most `sliders` sliders; each runs from `min` to `max` (both within
     /// ±`exprParameter`) in at most `sliderSteps` equal steps; and a scene has at most `sliderBindings` pairs of a slider
     /// and a `func` it drives. The parser checks each pair at the slider's `min` and `max` as well as its default, so a
@@ -231,13 +249,15 @@ public enum MGParser {
 
         // Template output goes through the same item validator as model-written items (fail safe on template bugs too).
         var items = try (build?.items ?? []).map { try item(.object($0.wire()), ctx) }
-        // Function graphs and vector fields evaluate expressions; count them, and the edits that check one again, before
-        // evaluating any wire item (`MGLimits.exprItems`). A graph that computes readouts weighs more (`exprWeight`).
-        let templateGraphs = items.filter { $0.kind == .function || $0.kind == .field }
+        // Function graphs, vector fields and curves evaluate expressions; count them, and the edits that check one
+        // again, before evaluating any wire item (`MGLimits.exprItems`). A curve, and a graph that computes readouts,
+        // weigh more (`exprWeight`, `editWeight`).
+        let templateGraphs = items.filter { graphKinds.contains($0.kind) }
         let readoutIDs = readoutGraphs(o, templateItems: templateGraphs, templateSteps: build?.steps ?? [])
-        var graphs = templateGraphs.reduce(0) { $0 + (readoutIDs.contains($1.id) ? MGLimits.readoutWeight : 1) }
+        let curveIDs = curveGraphs(o, templateItems: templateGraphs)
+        var graphs = templateGraphs.reduce(0) { $0 + exprWeight($1, readouts: readoutIDs) }
         let edits = graphEdits(o, templateGraphs: Set(templateGraphs.map(\.id)), templateSteps: build?.steps ?? []) {
-            editWeight($0, key: $1, readouts: readoutIDs)
+            editWeight($0, key: $1, readouts: readoutIDs, curves: curveIDs)
         }
         if let raw = o["items"] {
             guard case .array(let list) = raw else { throw MGError("items") }
@@ -321,27 +341,46 @@ public enum MGParser {
         return scene
     }
 
-    /// A wire item entry of kind `func` or `field` (read before the entry is validated).
+    /// The kinds that evaluate expressions: graph checks that `MGLimits.exprItems` bounds.
+    static let graphKinds: Set<MGKind> = [.function, .field, .curve]
+
+    /// A wire item entry of kind `func`, `field` or `curve` (read before the entry is validated).
     static func isGraphEntry(_ entry: MGJSON) -> Bool {
-        entry["k"] == .string(MGKind.function.rawValue) || entry["k"] == .string(MGKind.field.rawValue)
+        guard case .string(let k)? = entry["k"], let kind = MGKind(rawValue: k) else { return false }
+        return graphKinds.contains(kind)
     }
 
     /// The graph checks a wire item entry weighs (`MGLimits.exprItems`): 0 unless it is a graph entry,
-    /// `MGLimits.readoutWeight` for a `func` entry that computes readouts (it lists `readouts`, or an edit gives it them:
-    /// `readoutGraphs`), else 1.
+    /// `MGLimits.curveWeight` for a `curve` entry (two coordinates per point), `MGLimits.readoutWeight` for a `func`
+    /// entry that computes readouts (it lists `readouts`, or an edit gives it them: `readoutGraphs`), else 1.
     static func exprWeight(_ entry: MGJSON, readouts: Set<String>) -> Int {
         guard isGraphEntry(entry) else { return 0 }
+        if entry["k"] == .string(MGKind.curve.rawValue) { return MGLimits.curveWeight }
         guard entry["k"] == .string(MGKind.function.rawValue) else { return 1 }
         if entry["readouts"] != nil { return MGLimits.readoutWeight }
         if case .string(let id)? = entry["id"], readouts.contains(id) { return MGLimits.readoutWeight }
         return 1
     }
 
-    /// The graph checks one edit of graph item `id` weighs (`MGLimits.exprItems`): `MGLimits.readoutWeight` when the
-    /// graph computes readouts (`readouts`, from `readoutGraphs`) and the edit can change one (its key is in
-    /// `MGReadout.inputKeys`, or is not a string), else 1: an edit of any other key keeps the readouts (`MGReadout.kept`)
-    /// and checks only the graph.
-    static func editWeight(_ id: String, key: String?, readouts: Set<String>) -> Int {
+    /// The graph checks a template item weighs (`MGLimits.exprItems`), as `exprWeight(_:readouts:)` weighs a wire
+    /// entry: `MGLimits.curveWeight` for a `curve`, `MGLimits.readoutWeight` for a `func` that computes readouts
+    /// (`readouts`), 1 for any other `func` or `field`, else 0.
+    static func exprWeight(_ item: MGItem, readouts: Set<String>) -> Int {
+        switch item.kind {
+        case .curve: return MGLimits.curveWeight
+        case .function: return readouts.contains(item.id) ? MGLimits.readoutWeight : 1
+        case .field: return 1
+        default: return 0
+        }
+    }
+
+    /// The graph checks one edit of graph item `id` weighs (`MGLimits.exprItems`): `MGLimits.curveWeight` for a `curve`
+    /// (`curves`, from `curveGraphs`; the edit checks the whole curve again); `MGLimits.readoutWeight` when the graph
+    /// computes readouts (`readouts`, from `readoutGraphs`) and the edit can change one (its key is in
+    /// `MGReadout.inputKeys`, or is not a string); else 1: an edit of any other key keeps the readouts
+    /// (`MGReadout.kept`) and checks only the graph.
+    static func editWeight(_ id: String, key: String?, readouts: Set<String>, curves: Set<String> = []) -> Int {
+        if curves.contains(id) { return MGLimits.curveWeight }
         guard readouts.contains(id) else { return 1 }
         return key.map { MGReadout.inputKeys.contains($0) } ?? true ? MGLimits.readoutWeight : 1
     }
@@ -376,11 +415,23 @@ public enum MGParser {
         return out
     }
 
-    /// Edits that check a `func` or `field` item again: wire step edits (or, without wire steps, the template's own
-    /// step edits) that name a graph item, and `over` edits that name a template graph item (`over` may only name
-    /// template items), each counted with its `weight` (the graph it names and its key, if a string; 1 unless the parse
-    /// passes `editWeight`). Read from the raw object before any wire item is evaluated; a malformed entry is not
-    /// counted here, the strict parse refuses it later. The scene is at most `MGLimits.sceneBytes`, so this walk is
+    /// The ids of the `curve` items: template `curve` items and wire `curve` entries, read from the raw object before
+    /// any wire item is evaluated, like `readoutGraphs`. An edit never changes an item's kind (`edit.key`).
+    static func curveGraphs(_ o: [String: MGJSON], templateItems: [MGItem]) -> Set<String> {
+        var out = Set(templateItems.filter { $0.kind == .curve }.map(\.id))
+        if case .array(let list)? = o["items"] {
+            for entry in list where entry["k"] == .string(MGKind.curve.rawValue) {
+                if case .string(let id)? = entry["id"] { out.insert(id) }
+            }
+        }
+        return out
+    }
+
+    /// Edits that check a `func`, `field` or `curve` item again: wire step edits (or, without wire steps, the
+    /// template's own step edits) that name a graph item, and `over` edits that name a template graph item (`over` may
+    /// only name template items), each counted with its `weight` (the graph it names and its key, if a string; 1 unless
+    /// the parse passes `editWeight`). Read from the raw object before any wire item is evaluated; a malformed entry is
+    /// not counted here, the strict parse refuses it later. The scene is at most `MGLimits.sceneBytes`, so this walk is
     /// bounded.
     static func graphEdits(_ o: [String: MGJSON], templateGraphs: Set<String>, templateSteps: [MGStep],
                            weight: (_ id: String, _ key: String?) -> Int = { _, _ in 1 }) -> Int {
@@ -572,6 +623,7 @@ public enum MGParser {
         case .region: extra = ["pts", "dashed", "label"]
         case .function: extra = ["at", "w", "h", "xr", "yr", "y", "a", "b", "c", "period", "shade", "mark", "readouts", "xl", "yl", "label"]
         case .field: extra = ["at", "w", "h", "xr", "yr", "dx", "dy", "a", "b", "c", "n", "style", "xl", "yl", "label"]
+        case .curve: extra = ["at", "w", "h", "xr", "yr", "x", "y", "r", "theta", "a", "b", "c", "period", "mark", "xl", "yl", "label"]
         }
         return common.union(extra)
     }
@@ -595,6 +647,7 @@ public enum MGParser {
         case .region: return ["pts"]
         case .function: return ["at", "w", "h", "xr", "yr", "y"]
         case .field: return ["at", "w", "h", "xr", "yr", "dx", "dy"]
+        case .curve: return ["at", "w", "h", "xr", "yr"]
         }
     }
     static func defaultColor(_ kind: MGKind) -> MGColorRole {
@@ -609,7 +662,7 @@ public enum MGParser {
         case .bars: return .energy
         case .incline: return .muted
         case .array, .node: return .blue
-        case .table, .region, .function: return .accent
+        case .table, .region, .function, .curve: return .accent
         case .field: return .teal
         }
     }
@@ -861,6 +914,42 @@ public enum MGParser {
             guard sampled.vectors.contains(where: { $0.x != 0 || $0.y != 0 }) else { throw MGError("field.empty") }
             it.pts += sampled.vectors
             it.marked = sampled.missing
+        case .curve:
+            // A parametric (`x`, `y`) or polar (`r`) curve in `theta` that the engine samples and checks
+            // (MGGraph.checkCurve); the model writes no points. The frame is aspect-correct (MGGraph.curveWindow).
+            it.pts = [try p("at")]
+            let w = try n("w", 0.5...(span * 1.25)), h = try n("h", 0.5...(span * 1.25))
+            it.num["w"] = w; it.num["h"] = h
+            let xr = try graphRange(o["xr"], "curve.xr"), yr = try graphRange(o["yr"], "curve.yr")
+            it.num["rx0"] = xr.0; it.num["rx1"] = xr.1; it.num["ry0"] = yr.0; it.num["ry1"] = yr.1
+            let window = MGGraph.curveWindow(xr, yr, w: w, h: h)
+            it.num["x0"] = window.x0; it.num["x1"] = window.x1; it.num["y0"] = window.y0; it.num["y1"] = window.y1
+            var allowed = try graphParameters(&it, o, k)
+            allowed.remove(.x); allowed.insert(.theta)
+            var theta = (0.0, 2 * Double.pi)
+            if let raw = o["theta"] {
+                guard case .array(let ends) = raw, ends.count == 2 else { throw MGError("curve.theta") }
+                let bound = -MGLimits.curveEnd...MGLimits.curveEnd
+                theta = (try num(ends[0], bound, "curve.theta"), try num(ends[1], bound, "curve.theta"))
+                guard MGLimits.curveSpan.contains(theta.1 - theta.0) else { throw MGError("curve.theta") }
+            }
+            it.num["th0"] = theta.0; it.num["th1"] = theta.1
+            if let period = try opt("period", MGLimits.funcPeriod) { it.num["period"] = period; allowed.insert(.t) }
+            // Exactly one form: `x` and `y` together, or `r` alone.
+            let expressions: [MGExpression]
+            switch (o["x"], o["y"], o["r"]) {
+            case (let x?, let y?, nil):
+                expressions = [try expression(x, allowed, "curve.x"), try expression(y, allowed, "curve.y")]
+            case (nil, nil, let r?):
+                expressions = [try expression(r, allowed, "curve.r")]
+                it.flags.insert("polar")
+            default: throw MGError("curve.form")
+            }
+            if it.num["period"] != nil, !expressions.contains(where: { $0.variables.contains(.t) }) { throw MGError("curve.period") }
+            if let m = try opt("mark", theta.0...theta.1) { it.num["mark"] = m }
+            try MGGraph.checkCurve(&it, expressions)
+            it.list = [try o["xl"].map { try text($0, MGLimits.label, ctx, "curve.xl") } ?? "",
+                       try o["yl"].map { try text($0, MGLimits.label, ctx, "curve.yl") } ?? ""] + expressions.map(\.text)
         }
         return it
     }
@@ -880,14 +969,14 @@ public enum MGParser {
         return it
     }
 
-    /// A `func` or `field` range: like `range` (two numbers within ±10⁶, increasing) and at least 10⁻⁶ wide.
+    /// A `func`, `field` or `curve` range: like `range` (two numbers within ±10⁶, increasing) and at least 10⁻⁶ wide.
     static func graphRange(_ v: MGJSON?, _ what: String) throws -> (Double, Double) {
         let r = try range(v, what)
         guard r.1 - r.0 >= 1e-6 else { throw MGError(what) }
         return r
     }
 
-    /// The optional `a`, `b` and `c` parameters of a `func` or `field` item (each within ±`MGLimits.exprParameter`,
+    /// The optional `a`, `b` and `c` parameters of a `func`, `field` or `curve` item (each within ±`MGLimits.exprParameter`,
     /// reason `<kind>.<name>`) and the variables its expressions may read: `x` and each parameter that is set.
     static func graphParameters(_ it: inout MGItem, _ o: [String: MGJSON], _ k: String) throws -> Set<MGExpression.Variable> {
         var allowed: Set<MGExpression.Variable> = [.x]
@@ -899,7 +988,7 @@ public enum MGParser {
         return allowed
     }
 
-    /// A `func` or `field` expression string, compiled with `MGExpression` (reasons `what`, `what.syntax`, …).
+    /// A `func`, `field` or `curve` expression string, compiled with `MGExpression` (reasons `what`, `what.syntax`, …).
     static func expression(_ v: MGJSON?, _ allowed: Set<MGExpression.Variable>, _ what: String) throws -> MGExpression {
         guard case .string(let s)? = v else { throw MGError(what) }
         return try MGExpression.compile(s, allowed: allowed, reason: what)
@@ -1119,6 +1208,17 @@ extension MGItem {
                 if !list[0].isEmpty { o["xl"] = .string(list[0]) }; if !list[1].isEmpty { o["yl"] = .string(list[1]) }
                 o["dx"] = .string(list[2]); o["dy"] = .string(list[3])
             }
+        case .curve:
+            // `list` is [x label, y label, r] (polar) or [x label, y label, x, y]; the given ranges are written back (the
+            // drawn window is derived from them), and the samples are derived and never serialised.
+            o["at"] = pt(at(0)); put("w"); put("h")
+            o["xr"] = .array([.number(num["rx0"] ?? n("x0")), .number(num["rx1"] ?? n("x1"))])
+            o["yr"] = .array([.number(num["ry0"] ?? n("y0")), .number(num["ry1"] ?? n("y1"))])
+            if let t0 = num["th0"], let t1 = num["th1"] { o["theta"] = .array([.number(t0), .number(t1)]) }
+            for key in ["a", "b", "c", "period", "mark"] { put(key) }
+            if list.count >= 2 { if !list[0].isEmpty { o["xl"] = .string(list[0]) }; if !list[1].isEmpty { o["yl"] = .string(list[1]) } }
+            if has("polar"), list.count == 3 { o["r"] = .string(list[2]) }
+            if !has("polar"), list.count == 4 { o["x"] = .string(list[2]); o["y"] = .string(list[3]) }
         }
         return o
     }

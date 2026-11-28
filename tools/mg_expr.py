@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Offline reference for the scene v1 `func` and `field` kinds, the `func` readouts, the `alt` text keys and the
-`sliders` key.
+"""Offline reference for the scene v1 `func`, `field` and `curve` kinds, the `func` readouts, the `alt` text keys and
+the `sliders` key.
 
 Swift is authoritative: `MGExpression`, `MGGraph`, `MGReadout`, `MGParser` and `MGParser.sliders` (MGSliders.swift) in
-Sources/MartyGraphics. This module mirrors their rules operation for operation, so an offline preflight (for example
-tools/scene_v1_check.py) can give the same reasons, and so the shared golden cases in
-docs/fixtures/v1/expressions.cases.json, docs/fixtures/v1/graphs.cases.json, docs/fixtures/v1/readouts.cases.json and
-docs/fixtures/v1/sliders.cases.json run in Python as well as in XCTest. Standard library only; never imports or
+Sources/MartyGraphics. This module mirrors their rules operation for operation (`curve`: the `MGGraph` extension in
+MGPlanarCurve.swift), so an offline preflight (for example tools/scene_v1_check.py) can give the same reasons, and so
+the shared golden cases in docs/fixtures/v1/expressions.cases.json, docs/fixtures/v1/graphs.cases.json,
+docs/fixtures/v1/readouts.cases.json, docs/fixtures/v1/sliders.cases.json and docs/fixtures/v1/curves.cases.json run in
+Python as well as in XCTest. Standard library only; never imports or
 evaluates scene text as Python.
 
 Floating-point note: Python's math functions raise where C returns a value (log(0), sqrt(-1), overflow). The wrappers
@@ -29,6 +30,12 @@ FUNC_TOLERANCE = 0.01
 FUNC_PERIOD = (0.5, 20.0)
 FIELD_COLS = 16
 FIELD_ROWS = 12
+CURVE_INTERVALS = 256
+CURVE_BREAKS = 16
+CURVE_WEIGHT = 2
+CURVE_END = 1000.0
+CURVE_SPAN = (0.001, 100.0)
+CURVE_TOLERANCE = 0.01
 BISECTIONS = 8
 MAGNITUDE = 1e12
 SAY = 200
@@ -52,7 +59,7 @@ GAUSS_WEIGHTS = (0.23692688505618908, 0.47862867049936647, 0.5688888888888889, 0
                  0.23692688505618908)
 LN10 = 2.302585092994046
 
-VARIABLES = ("x", "y", "t", "a", "b", "c")
+VARIABLES = ("x", "y", "t", "a", "b", "c", "theta")
 FUNCTIONS = ("sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh",
              "exp", "ln", "log", "sqrt", "abs", "min", "max")
 SYMBOLS = frozenset(" .+-*/^(),")
@@ -664,8 +671,8 @@ class Expression:
         self.variables = frozenset(variables)
         self.program = program
 
-    def value(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
-        inputs = {"x": x, "y": y, "t": t, "a": a, "b": b, "c": c}
+    def value(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0, theta=0.0):
+        inputs = {"x": x, "y": y, "t": t, "a": a, "b": b, "c": c, "theta": theta}
         stack = []
         for kind, value in self.program:
             if kind == "number":
@@ -687,11 +694,11 @@ class Expression:
                 stack[-1] = _combine(value, stack[-1], right)
         return stack[0] if len(stack) == 1 else math.nan
 
-    def local(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
+    def local(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0, theta=0.0):
         """Mirror of `MGExpression.local`: (value, slope from the left, slope from the right, sides), by forward mode
         along +x and along -x. `sides` lists the side of each operation's kink, pole or domain edge (-1, 0 or 1), or is
         None when some operation has no finite value; the slopes are then not numbers."""
-        inputs = {"x": x, "y": y, "t": t, "a": a, "b": b, "c": c}
+        inputs = {"x": x, "y": y, "t": t, "a": a, "b": b, "c": c, "theta": theta}
         broken = (math.nan, math.nan, math.nan, None)
         stack = []  # (value, derivative along +x, derivative along -x, reads x)
         sides, finite = [], True
@@ -732,24 +739,24 @@ class Expression:
             return v, math.nan, math.nan, None
         return v, -q, p, sides
 
-    def value_and_slope(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
+    def value_and_slope(self, x=0.0, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0, theta=0.0):
         """Mirror of `MGExpression.valueAndSlope`: the value, and the derivative where both one-sided ones agree."""
-        v, left, right, _ = self.local(x, y, t, a, b, c)
+        v, left, right, _ = self.local(x, y, t, a, b, c, theta)
         return v, (right if left == right else math.nan)
 
-    def enclosure(self, lo, hi, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
+    def enclosure(self, lo, hi, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0, theta=0.0):
         """Mirror of `MGExpression.enclosure`: (low, high) bounds of the analytic value over x in [lo, hi], or None
         where interval arithmetic cannot show the expression continuous there."""
-        result = self.intervals(lo, hi, y, t, a, b, c)
+        result = self.intervals(lo, hi, y, t, a, b, c, theta)
         return None if result is None else result[0]
 
-    def intervals(self, lo, hi, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0):
+    def intervals(self, lo, hi, y=0.0, t=0.0, a=0.0, b=0.0, c=0.0, theta=0.0):
         """Mirror of `MGExpression.intervals`: one interval pass over x in [lo, hi], rounded outward. Returns the
         enclosure and, per operation in program order, the enclosure of what its kink, pole or domain edge is measured
         by (None for an operation that has none); None when some operation has no enclosure."""
         if not lo <= hi:
             return None
-        inputs = {"y": y, "t": t, "a": a, "b": b, "c": c}
+        inputs = {"y": y, "t": t, "a": a, "b": b, "c": c, "theta": theta}
         stack = []  # (low, high, reads x)
         edges = []
         for kind, value in self.program:
@@ -1162,6 +1169,259 @@ def field_vectors(dx, dy, x0, x1, y0, y1, cols, rows, params=None):
     return vectors, missing
 
 
+# MARK: curves (MGPlanarCurve.swift)
+
+
+class Window:
+    """Mirror of `MGGraph.Window`: the drawn data window of a curve, edges included."""
+
+    def __init__(self, x0, x1, y0, y1):
+        self.x0, self.x1, self.y0, self.y1 = x0, x1, y0, y1
+
+    def contains(self, p):
+        return self.x0 <= p[0] <= self.x1 and self.y0 <= p[1] <= self.y1
+
+    def clamp(self, p):
+        return (_clip(p[0], self.x0, self.x1), _clip(p[1], self.y0, self.y1))
+
+    def segment(self, a, b):
+        """Mirror of `Window.segment` (Liang-Barsky): (lo, hi) fractions of the way from a, or None."""
+        if not (_finite(a) and _finite(b)):
+            return None
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        bounds = [0.0, 1.0]
+
+        def edge(p, q):
+            if p == 0:
+                return q >= 0
+            r = q / p
+            if p < 0:
+                bounds[0] = max(bounds[0], r)
+            else:
+                bounds[1] = min(bounds[1], r)
+            return True
+
+        if not (edge(-dx, a[0] - self.x0) and edge(dx, self.x1 - a[0]) and edge(-dy, a[1] - self.y0)
+                and edge(dy, self.y1 - a[1])):
+            return None
+        return (bounds[0], bounds[1]) if bounds[0] <= bounds[1] else None
+
+    def crosses(self, a, b):
+        return self.segment(a, b) is not None
+
+
+def curve_window(xr, yr, w, h):
+    """Mirror of `MGGraph.curveWindow`: widen the range with fewer data units per world unit about its centre."""
+    kx, ky = (xr[1] - xr[0]) / w, (yr[1] - yr[0]) / h
+    if kx > ky:
+        cy, half = (yr[0] + yr[1]) / 2, kx * h / 2
+        return Window(xr[0], xr[1], cy - half, cy + half)
+    if ky > kx:
+        cx, half = (xr[0] + xr[1]) / 2, ky * w / 2
+        return Window(cx - half, cx + half, yr[0], yr[1])
+    return Window(xr[0], xr[1], yr[0], yr[1])
+
+
+def clamp_point(p):
+    """Mirror of `MGGraph.clampPoint`: scale a finite point toward the origin to within +/-1e12."""
+    m = max(abs(p[0]), abs(p[1]))
+    if not m > MAGNITUDE:
+        return p
+    return (p[0] / m * MAGNITUDE, p[1] / m * MAGNITUDE)
+
+
+def grid_t(i, t0, t1):
+    n = CURVE_INTERVALS
+    return t1 if i == n else t0 + (t1 - t0) * i / n
+
+
+def _finite(p):
+    return math.isfinite(p[0]) and math.isfinite(p[1])
+
+
+def curve_point(expressions, theta, t=0.0, **params):
+    """Mirror of `MGGraph.curvePoint`: (x, y) from two expressions or (r cos theta, r sin theta) from one."""
+    if len(expressions) == 1:
+        r = expressions[0].value(theta=theta, t=t, **params)
+        if not math.isfinite(r):
+            return (math.nan, math.nan)
+        return (r * math.cos(theta), r * math.sin(theta))
+    return (expressions[0].value(theta=theta, t=t, **params), expressions[1].value(theta=theta, t=t, **params))
+
+
+def _length(dx, dy):
+    return math.sqrt(dx * dx + dy * dy)
+
+
+def planar(raw, t0, t1, v, measure, scale=1.0, side=1.0, stop_after=None):
+    """Mirror of `MGGraph.planar`: samples in theta order, gaps, jumps (poles), the midpoint rule and the measure."""
+    n = CURVE_INTERVALS
+    probe = (t1 - t0) / n / 1024
+    c = Curve()
+    values = [None] * (n + 1)
+    mids = [None] * n
+    piece = [-1] * (n + 1)
+    state = {"open": False, "last": (0.0, (0.0, 0.0))}
+
+    def f(t):
+        p = raw(t)
+        return clamp_point(p) if _finite(p) else None
+
+    def jump(a, b):
+        if v.contains(a[1]) or v.contains(b[1]) or not v.crosses(a[1], b[1]):
+            return False
+        lo, hi = a, b
+        for _ in range(BISECTIONS):
+            tm = (lo[0] + hi[0]) / 2
+            pm = f(tm)
+            if pm is None:
+                return True
+            if v.contains(pm):
+                c.visible = True
+                return False
+            if v.crosses(lo[1], pm):
+                hi = (tm, pm)
+            elif v.crosses(pm, hi[1]):
+                lo = (tm, pm)
+            else:
+                return True
+        return True
+
+    def add(t, p):
+        if state["open"] and jump(state["last"], (t, p)):
+            state["open"] = False
+        if not state["open"]:
+            if c.samples:
+                c.starts.append(len(c.samples))
+            state["open"] = True
+        if v.contains(p):
+            c.visible = True
+        c.samples.append(p)
+        state["last"] = (t, p)
+
+    for i in range(n + 1):
+        ti = grid_t(i, t0, t1)
+        pi = f(ti)
+        values[i] = pi
+        if pi is not None:
+            if i > 0 and values[i - 1] is not None:
+                tm = (grid_t(i - 1, t0, t1) + ti) / 2
+                pm = f(tm)
+                mids[i - 1] = pm
+                if pm is None:
+                    left = f(tm - probe)
+                    if left is not None:
+                        add(tm - probe, left)
+                    state["open"] = False
+                    right = f(tm + probe)
+                    if right is not None:
+                        add(tm + probe, right)
+            add(ti, pi)
+            piece[i] = len(c.starts)
+        else:
+            if i > 0 and state["open"]:
+                left = f(ti - probe)
+                if left is not None:
+                    add(ti - probe, left)
+            state["open"] = False
+            if i < n:
+                right = f(ti + probe)
+                if right is not None:
+                    add(ti + probe, right)
+        if stop_after is not None and len(c.starts) > stop_after:
+            return c
+    if not measure:
+        return c
+    for i in range(n):
+        if piece[i] < 0 or piece[i] != piece[i + 1]:
+            continue
+        a, b, m = values[i], values[i + 1], mids[i]
+        if a is None or b is None or m is None:
+            continue
+        if max(a[0], b[0], m[0]) < v.x0 or min(a[0], b[0], m[0]) > v.x1 or \
+                max(a[1], b[1], m[1]) < v.y0 or min(a[1], b[1], m[1]) > v.y1:
+            continue
+        d = min(_distance(m, a, b), _distance(v.clamp(m), v.clamp(a), v.clamp(b)))
+        c.deviation = max(c.deviation, d * scale / side)
+    return c
+
+
+def check_curve(expressions, v, t0, t1, w, h, params=None, period=None, mark=None):
+    """Mirror of `MGGraph.checkCurve`. Returns (curve at t = 0, marked point or None); raises Refusal."""
+    params = params or {}
+    scale = min(w / (v.x1 - v.x0), h / (v.y1 - v.y0))
+    side = min(w, h)
+    instants = [0, period / 4, period / 2, 3 * period / 4] if period is not None else [0]
+    first, marked = None, None
+    for k, tau in enumerate(instants):
+        def raw(theta, tau=tau):
+            return curve_point(expressions, theta, t=tau, **params)
+        c = planar(raw, t0, t1, v, measure=True, scale=scale, side=side, stop_after=CURVE_BREAKS)
+        if len(c.starts) > CURVE_BREAKS:
+            raise Refusal("curve.breaks")
+        if k == 0 and not c.visible:
+            raise Refusal("curve.empty")
+        if c.deviation > CURVE_TOLERANCE:
+            raise Refusal("curve.detail")
+        if mark is not None:
+            p = curve_point(expressions, mark, t=tau, **params)
+            if not (_finite(p) and v.contains(p)):
+                raise Refusal("curve.mark")
+            if k == 0:
+                marked = p
+        if k == 0:
+            first = c
+    if period is not None:
+        tolerance = CURVE_TOLERANCE * min(v.x1 - v.x0, v.y1 - v.y0)
+        for i in range(CURVE_INTERVALS + 1):
+            theta = grid_t(i, t0, t1)
+            u = curve_point(expressions, theta, t=0, **params)
+            q = curve_point(expressions, theta, t=period, **params)
+            if _finite(u) != _finite(q):
+                raise Refusal("curve.loop")
+            if not _finite(u):
+                continue
+            a, b = v.clamp(clamp_point(u)), v.clamp(clamp_point(q))
+            if _length(a[0] - b[0], a[1] - b[1]) > tolerance:
+                raise Refusal("curve.loop")
+    return first, marked
+
+
+def clipped(points, v):
+    """Mirror of `MGGraph.clipped`: the visible runs of a polyline inside the window."""
+    runs, current = [], []
+
+    def lerp(a, b, t):
+        return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+
+    for a, b in zip(points, points[1:]):
+        s = v.segment(a, b)
+        if s is None or not s[0] < s[1]:
+            if len(current) >= 2:
+                runs.append(current)
+            current = []
+            continue
+        if not current or s[0] > 0:
+            if len(current) >= 2:
+                runs.append(current)
+            current = [lerp(a, b, s[0]) if s[0] > 0 else a]
+        current.append(lerp(a, b, s[1]) if s[1] < 1 else b)
+        if s[1] < 1:
+            runs.append(current)
+            current = []
+    if len(current) >= 2:
+        runs.append(current)
+    return runs
+
+
+def is_closed(samples, starts, v):
+    """Mirror of `MGGraph.isClosed`: one piece whose ends coincide within the tolerance of the window's shorter side."""
+    if len(samples) < 3 or len(pieces(len(samples), starts)) != 1:
+        return False
+    (x0, y0), (x1, y1) = samples[0], samples[-1]
+    return _length(x0 - x1, y0 - y1) <= CURVE_TOLERANCE * min(v.x1 - v.x0, v.y1 - v.y0)
+
+
 # MARK: item and scene rules (the new keys only)
 
 
@@ -1267,6 +1527,10 @@ TEXT_KEYS = ("label", "xl", "yl")
 FUNC_REQUIRED = {"id", "k", "at", "w", "h", "xr", "yr", "y"}
 FIELD_KEYS = {"id", "k", "color", "at", "w", "h", "xr", "yr", "dx", "dy", "a", "b", "c", "n", "style", "xl", "yl", "label"}
 FIELD_REQUIRED = {"id", "k", "at", "w", "h", "xr", "yr", "dx", "dy"}
+CURVE_KEYS = {"id", "k", "color", "at", "w", "h", "xr", "yr", "x", "y", "r", "theta", "a", "b", "c", "period", "mark",
+              "xl", "yl", "label"}
+CURVE_REQUIRED = {"id", "k", "at", "w", "h", "xr", "yr"}
+GRAPH_KINDS = ("func", "field", "curve")
 COLORS = {"force", "normal", "friction", "gravity", "tension", "velocity", "accel", "energy", "kinetic", "potential",
           "accent", "muted", "good", "warn", "blue", "red", "green", "orange", "purple", "yellow", "teal", "white"}
 WORLD = (2.0, 100.0)
@@ -1290,15 +1554,16 @@ def _parameters(item, kind):
 
 
 def check_graph_item(item, world=(12, 8), is3d=False, values=None, texts=True):
-    """The `func` / `field` rules of `MGParser.item` in Swift's order: closed keys, id, color, label, then the kind's
-    keys. `is3d`: the scene is 3D, so `at` may have three coordinates, as `MGParser.point` allows; the item is then
+    """The `func` / `field` / `curve` rules of `MGParser.item` in Swift's order: closed keys, id, color, label, then the
+    kind's keys. `is3d`: the scene is 3D, so `at` may have three coordinates, as `MGParser.point` allows; the item is then
     refused as `3d.kind.<kind>` by `check_scene` after every item has been checked, as in Swift. `values`: the scene's
     readout values for the texts. `texts=False` skips `label`, `xl` and `yl`, as Swift's readout pass does.
 
     Returns a summary dict (a `func` also lists its `readouts` by name); raises Refusal with the Swift reason.
     """
     kind = item["k"]
-    keys, required = (FUNC_KEYS, FUNC_REQUIRED) if kind == "func" else (FIELD_KEYS, FIELD_REQUIRED)
+    keys, required = {"func": (FUNC_KEYS, FUNC_REQUIRED), "curve": (CURVE_KEYS, CURVE_REQUIRED)}.get(
+        kind, (FIELD_KEYS, FIELD_REQUIRED))
     if not required <= set(item):
         raise Refusal("item." + kind + ".missing")
     extra = set(item) - keys
@@ -1316,6 +1581,8 @@ def check_graph_item(item, world=(12, 8), is3d=False, values=None, texts=True):
     x0, x1 = _range(item["xr"], kind + ".xr")
     y0, y1 = _range(item["yr"], kind + ".yr")
     allowed, params = _parameters(item, kind)
+    if kind == "curve":
+        return _check_curve_item(item, w, h, (x0, x1), (y0, y1), allowed, params, values, texts)
     if kind == "func":
         period = None
         if "period" in item:
@@ -1381,6 +1648,42 @@ def check_graph_item(item, world=(12, 8), is3d=False, values=None, texts=True):
     if not any(u != 0 or v != 0 for u, v in vectors):
         raise Refusal("field.empty")
     return {"cols": int(cols), "rows": int(rows), "missing": missing, "vectors": vectors}
+
+
+def _check_curve_item(item, w, h, xr, yr, allowed, params, values=None, texts=True):
+    """The `curve` keys of `MGParser.item` after the frame and the parameters, in Swift's order."""
+    v = curve_window(xr, yr, w, h)
+    allowed = (set(allowed) - {"x"}) | {"theta"}
+    t0, t1 = 0.0, 2 * math.pi
+    if "theta" in item:
+        ends = item["theta"]
+        if not isinstance(ends, list) or len(ends) != 2:
+            raise Refusal("curve.theta")
+        t0 = _num(ends[0], -CURVE_END, CURVE_END, "curve.theta")
+        t1 = _num(ends[1], -CURVE_END, CURVE_END, "curve.theta")
+        if not CURVE_SPAN[0] <= t1 - t0 <= CURVE_SPAN[1]:
+            raise Refusal("curve.theta")
+    period = None
+    if "period" in item:
+        period = _num(item["period"], FUNC_PERIOD[0], FUNC_PERIOD[1], "curve.period")
+        allowed.add("t")
+    if "x" in item and "y" in item and "r" not in item:
+        polar = False
+        expressions = [compile_expression(item["x"], allowed, "curve.x"), compile_expression(item["y"], allowed, "curve.y")]
+    elif "r" in item and "x" not in item and "y" not in item:
+        polar = True
+        expressions = [compile_expression(item["r"], allowed, "curve.r")]
+    else:
+        raise Refusal("curve.form")
+    if period is not None and not any("t" in e.variables for e in expressions):
+        raise Refusal("curve.period")
+    mark = _num(item["mark"], t0, t1, "curve.mark") if "mark" in item else None
+    first, marked = check_curve(expressions, v, t0, t1, w, h, params, period, mark)
+    if texts:
+        graph_texts(item, values)
+    return {"samples": len(first.samples), "starts": list(first.starts), "mark": marked, "polar": polar,
+            "window": [v.x0, v.x1, v.y0, v.y1], "theta": [t0, t1], "closed": is_closed(first.samples, first.starts, v),
+            "points": first.samples}
 
 
 def _reason_keys(keys):
@@ -1636,25 +1939,27 @@ def _step_edits(scene):
                 yield edit
 
 
-def edit_weight(graph_id, key, readout_ids):
-    """Mirror of `MGParser.editWeight`: READOUT_WEIGHT for an edit of a graph that computes readouts whose key can change
-    one (in READOUT_INPUT_KEYS, or not a string), else 1."""
+def edit_weight(graph_id, key, readout_ids, curve_ids=frozenset()):
+    """Mirror of `MGParser.editWeight`: CURVE_WEIGHT for an edit of a `curve`; READOUT_WEIGHT for an edit of a graph
+    that computes readouts whose key can change one (in READOUT_INPUT_KEYS, or not a string); else 1."""
+    if graph_id in curve_ids:
+        return CURVE_WEIGHT
     if graph_id not in readout_ids:
         return 1
     return READOUT_WEIGHT if not isinstance(key, str) or key in READOUT_INPUT_KEYS else 1
 
 
-def graph_edits(scene, graph_ids, readout_ids=frozenset()):
+def graph_edits(scene, graph_ids, readout_ids=frozenset(), curve_ids=frozenset()):
     """Step edits that check a graph item again (Swift `MGParser.graphEdits`; malformed entries are not counted), each
     counted with its `edit_weight`.
 
     A template's own items and steps, and `over` (which may only name template items), stay with Swift: no Python
-    template builds a `func` or `field` item.
+    template builds a `func`, `field` or `curve` item.
     """
     count = 0
     for edit in _step_edits(scene):
         if isinstance(edit.get("id"), str) and edit["id"] in graph_ids:
-            count += edit_weight(edit["id"], edit.get("key"), readout_ids)
+            count += edit_weight(edit["id"], edit.get("key"), readout_ids, curve_ids)
     return count
 
 
@@ -1674,30 +1979,35 @@ def readout_graphs(scene):
     return out
 
 
-def expr_weight(item, readout_ids):
-    """Mirror of `MGParser.exprWeight`: the graph checks a wire item weighs; 0 unless it is a `func` or `field` item,
-    READOUT_WEIGHT for a `func` item that computes readouts, else 1."""
-    if not (isinstance(item, dict) and item.get("k") in ("func", "field")):
+def expr_weight(item, readout_ids=frozenset()):
+    """Mirror of `MGParser.exprWeight`: the graph checks a wire item weighs; 0 unless it is a `func`, `field` or `curve`
+    item, CURVE_WEIGHT for a `curve` (two coordinates per point), READOUT_WEIGHT for a `func` item that computes
+    readouts, else 1."""
+    if not (isinstance(item, dict) and item.get("k") in GRAPH_KINDS):
         return 0
+    if item["k"] == "curve":
+        return CURVE_WEIGHT
     if item["k"] == "func" and ("readouts" in item or (isinstance(item.get("id"), str) and item["id"] in readout_ids)):
         return READOUT_WEIGHT
     return 1
 
 
 def graph_checks(scene):
-    """The graph checks of a literal scene that `MGLimits.exprItems` bounds (`items.expr`): each `func` and `field`
-    item and each step edit of one, a `func` that computes readouts (and each edit of it that can change one) weighing
-    READOUT_WEIGHT."""
+    """The graph checks of a literal scene that `MGLimits.exprItems` bounds (`items.expr`): each `func`, `field` and
+    `curve` item and each step edit of one, a `curve` (and each edit of it) weighing CURVE_WEIGHT and a `func` that
+    computes readouts (and each edit of it that can change one) READOUT_WEIGHT."""
     items = scene.get("items")
     items = items if isinstance(items, list) else []
     readout_ids = readout_graphs(scene)
     graph_ids = {item["id"] for item in items if expr_weight(item, readout_ids) and isinstance(item.get("id"), str)}
-    return sum(expr_weight(item, readout_ids) for item in items) + graph_edits(scene, graph_ids, readout_ids)
+    curve_ids = {item["id"] for item in items
+                 if isinstance(item, dict) and item.get("k") == "curve" and isinstance(item.get("id"), str)}
+    return sum(expr_weight(item, readout_ids) for item in items) + graph_edits(scene, graph_ids, readout_ids, curve_ids)
 
 
 def check_scene(scene):
-    """The new rules on a scene object: the `alt` keys, the `items.expr` count, every `func` / `field` item and the
-    `sliders` key.
+    """The new rules on a scene object: the `alt` keys, the `items.expr` count, every `func` / `field` / `curve` item
+    and the `sliders` key.
 
     Other kinds and keys are not checked here (Swift and tools/scene_v1_check.py check them). Raises Refusal.
     """
@@ -1714,9 +2024,10 @@ def check_scene(scene):
             raise Refusal("world.unknown." + ",".join(sorted(set(raw) - {"w", "h"})))
         world = (_num(raw["w"], WORLD[0], WORLD[1], "world.w"), _num(raw["h"], WORLD[0], WORLD[1], "world.h"))
     items = scene.get("items", [])
-    graphs = [item for item in items if isinstance(item, dict) and item.get("k") in ("func", "field")]
-    # Each graph item counts once and each step edit of one once more: an edit checks the whole item again. A `func`
-    # that computes readouts, and each edit of it that can change one, counts READOUT_WEIGHT.
+    graphs = [item for item in items if isinstance(item, dict) and item.get("k") in GRAPH_KINDS]
+    # Each graph item counts once and each step edit of one once more: an edit checks the whole item again. A `curve`,
+    # and each edit of it, counts CURVE_WEIGHT; a `func` that computes readouts, and each edit of it that can change
+    # one, counts READOUT_WEIGHT.
     if graph_checks(scene) > EXPR_ITEMS:
         raise Refusal("items.expr")
     # Readouts first, as `MGParser.parseScene` computes them: each `func` that lists them is checked without its
@@ -1728,7 +2039,7 @@ def check_scene(scene):
     values = readout_values(items, early)
     summaries = {}
     for index, item in enumerate(items):
-        if not (isinstance(item, dict) and item.get("k") in ("func", "field")):
+        if not (isinstance(item, dict) and item.get("k") in GRAPH_KINDS):
             continue
         if index in early:
             # `MGParser.functionTexts`: the label, then the axis labels.
@@ -1765,9 +2076,9 @@ def readout_values(items, summaries):
 
 
 def check_graph_edits(scene, world, is3d, values):
-    """The step edits of graph items, cumulatively, as `MGParser.checkReferences` applies them: the key must be one
-    the kind allows (`edit.key.<key>`), the edited item must pass, and an edit may not change a readout the scene's
-    text names (`func.readouts.edit`). Edits of other kinds are left to Swift."""
+    """The step edits of graph items (`func`, `field`, `curve`), cumulatively, as `MGParser.checkReferences` applies
+    them: the key must be one the kind allows (`edit.key.<key>`), the edited item must pass, and an edit may not change
+    a readout the scene's text names (`func.readouts.edit`). Edits of other kinds are left to Swift."""
     current = {item["id"]: item for item in scene.get("items", []) if isinstance(item, dict) and "id" in item}
     for step in scene.get("steps", []):
         if not isinstance(step, dict):
@@ -1776,12 +2087,12 @@ def check_graph_edits(scene, world, is3d, values):
             if not isinstance(edit, dict):
                 continue
             item = current.get(edit.get("id"))
-            if not isinstance(item, dict) or item.get("k") not in ("func", "field"):
+            if not isinstance(item, dict) or item.get("k") not in GRAPH_KINDS:
                 continue
             key = edit.get("key")
             if not isinstance(key, str) or key in ("id", "k"):
                 continue  # `edit.key`, refused when Swift parses the step
-            if key not in (FUNC_KEYS if item["k"] == "func" else FIELD_KEYS):
+            if key not in {"func": FUNC_KEYS, "field": FIELD_KEYS, "curve": CURVE_KEYS}[item["k"]]:
                 raise Refusal("edit.key." + _reason_key(key))
             updated = dict(item)
             updated[key] = edit.get("value")
