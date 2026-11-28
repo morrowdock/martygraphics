@@ -878,7 +878,8 @@ def _distance(p, a, b):
 def curve(f, x0, x1, y0, y1, measure, width=1.0, height=1.0, stop_after=None):
     """Mirror of `MGGraph.curve`, including the midpoint rule: a non-finite value at the midpoint of an interval
     between two finite grid values splits the piece there (probes at midpoint +/- one probe), as at parse time and in
-    every animated frame."""
+    every animated frame. `visible`: some piece draws a segment of nonzero length inside the x and y ranges
+    (`draws_segment`, the rule of `curve.empty`)."""
     n = FUNC_INTERVALS
     probe = (x1 - x0) / n / 1024
     c = Curve()
@@ -900,7 +901,6 @@ def curve(f, x0, x1, y0, y1, measure, width=1.0, height=1.0, stop_after=None):
             if not math.isfinite(ym):
                 return True
             if inside(ym):
-                c.visible = True
                 return False
             if (ym > y1) == (lo[1] > y1):
                 lo = (xm, ym)
@@ -915,8 +915,6 @@ def curve(f, x0, x1, y0, y1, measure, width=1.0, height=1.0, stop_after=None):
             if c.samples:
                 c.starts.append(len(c.samples))
             state["open"] = True
-        if inside(p[1]):
-            c.visible = True
         c.samples.append((p[0], _clamp_magnitude(p[1])))
         state["last"] = p
 
@@ -952,6 +950,7 @@ def curve(f, x0, x1, y0, y1, measure, width=1.0, height=1.0, stop_after=None):
                     add((xi + probe, right))
         if stop_after is not None and len(c.starts) > stop_after:
             return c
+    c.visible = draws_segment(c.samples, c.starts, Window(x0, x1, y0, y1))
     if not measure:
         return c
     sx, sy = width / (x1 - x0), height / (y1 - y0)

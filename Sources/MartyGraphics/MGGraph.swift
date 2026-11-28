@@ -7,8 +7,8 @@ struct MGCurve: Equatable {
     /// Indices into `samples` where a new piece starts (never 0): after a gap where the function has no value, or at a
     /// pole between two samples.
     var starts: [Int] = []
-    /// `func` (`MGGraph.curve`): a sample, or a crossing found between two samples, lies inside the y range. `curve`
-    /// (`MGGraph.planar`): some piece draws a segment of nonzero length inside the window (`MGGraph.drawsSegment`).
+    /// Some piece draws a segment of nonzero length inside the drawn window (`MGGraph.drawsSegment`), for `func`
+    /// (`MGGraph.curve`: the x and y ranges) and `curve` (`MGGraph.planar`). A one-point piece draws nothing.
     var visible = false
     /// Largest distance at an interval midpoint between the drawn polyline and the function, as a fraction of the frame
     /// height (`MGGraph.curve`; 0 when not measured).
@@ -57,9 +57,13 @@ enum MGGraph {
     ///   chord. A steep chord beside a steep curve is close even where their heights differ; intervals wholly above
     ///   or below the range cannot be seen and are skipped.
     ///
+    /// - `visible`: some piece draws a segment of nonzero length inside the x and y ranges (`drawsSegment`, the rule of
+    ///   `curve.empty`). A sample inside the range is not enough: a one-point piece, or a graph that only touches an
+    ///   edge of the range, is not drawn.
+    ///
     /// At most 257 grid values, 256 midpoints, 2 probes per gap (grid value or midpoint) and `bisections` evaluations
     /// per pair of samples; `measure` reuses the midpoint values. The same rule runs at parse time and in every animated
-    /// frame. `stopAfter`: return as soon as there are more piece starts than this.
+    /// frame. `stopAfter`: return as soon as there are more piece starts than this (`visible` is then false).
     static func curve(_ f: @escaping (Double) -> Double, x0: Double, x1: Double, y0: Double, y1: Double,
                       measure: Bool, width: Double = 1, height: Double = 1, stopAfter maxStarts: Int = .max) -> MGCurve {
         let n = MGLimits.funcIntervals
@@ -78,7 +82,7 @@ enum MGGraph {
             for _ in 0..<bisections {
                 let xm = (lo.x + hi.x) / 2, ym = f(xm)
                 guard ym.isFinite else { return true }
-                if inside(ym) { c.visible = true; return false }
+                if inside(ym) { return false }
                 if (ym > y1) == (lo.y > y1) { lo = MGPoint(xm, ym) } else { hi = MGPoint(xm, ym) }
             }
             return true
@@ -89,7 +93,6 @@ enum MGGraph {
                 if !c.samples.isEmpty { c.starts.append(c.samples.count) }
                 open = true
             }
-            if inside(p.y) { c.visible = true }
             c.samples.append(MGPoint(p.x, clampMagnitude(p.y)))
             last = p
         }
@@ -124,6 +127,7 @@ enum MGGraph {
             }
             if c.starts.count > maxStarts { return c }
         }
+        c.visible = drawsSegment(c.samples, starts: c.starts, in: Window(x0: x0, x1: x1, y0: y0, y1: y1))
         guard measure else { return c }
         let sx = width / (x1 - x0), sy = height / (y1 - y0)
         for i in 0..<n where piece[i] >= 0 && piece[i] == piece[i + 1] {
@@ -286,7 +290,8 @@ enum MGGraph {
 
     /// Samples a parsed `func` item at t = 0 and, for a moving graph, also at a quarter, a half and three quarters of
     /// its period, and applies the drawing checks. At each instant, in this order: `func.breaks` (more than
-    /// `MGLimits.funcBreaks` breaks), `func.empty` (first instant only: nothing inside the y range), `func.detail` (the
+    /// `MGLimits.funcBreaks` breaks), `func.empty` (first instant only: no piece draws a segment of nonzero length
+    /// inside the x and y ranges, so the renderer, which skips one-point pieces, would draw nothing), `func.detail` (the
     /// drawn chord is farther than `MGLimits.funcTolerance` of the frame height from the function at some interval
     /// midpoint; see `curve`), `func.shade` (the shaded interval is not inside one
     /// piece) and `func.mark` (the marked point has no value or leaves the y range). Then `func.loop`: at t = period

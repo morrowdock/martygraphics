@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "6dc2c0a8672c0e53a4e25d7cfc3211051eecee6237748101a3c5464186d21c6d"
+      "sha256": "f64fcfb265af324d4c809e96db3a5aea09693dc76266d5862c34b1f53585639b"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1987,7 +1987,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "0c5347bb9943ef121ac19121598d064e40a42ebf2e1e33614d78cad33e1c4057"
+      "sha256": "86b4693a3ac646f038ea54c2115df7bfe6f60bcd23a7a1b5b1d524512a952e53"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -4075,7 +4075,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGGraph.swift",
-      "sha256": "7b3b54688b9c1bb909405e91af8340a89ac64ccb0b1e9c09cd2be9ec1a28a37d"
+      "sha256": "d2bf8efe57280a036045e444a93528977242956776dbbd09051a1a404feebf41"
     },
     {
       "path": "Tests/MartyGraphicsTests/AltTextTests.swift",
@@ -4087,7 +4087,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/GraphCaseTests.swift",
-      "sha256": "7ce9f9547af98798c8d5142a1c136aa74d724b0f292970bd81cc62eb89d7ee08"
+      "sha256": "8052593510a3af406e599336bab95dde4d43c3e9128309e18e3ec5c9ca211095"
     },
     {
       "path": "Tests/MartyGraphicsTests/GraphKindTests.swift",
@@ -4099,7 +4099,7 @@
     },
     {
       "path": "docs/fixtures/v1/graphs.cases.json",
-      "sha256": "df2d702d6ab197b264d62f2106ad4812918217d4ffb0cf0d81336c936dd3729c"
+      "sha256": "3c660d887080d402c91e14e56a4c7e7ed4f29aac75a51bce9b86d3bba2a07025"
     },
     {
       "path": "docs/fixtures/v1/graphs.scene.json",
@@ -4115,11 +4115,11 @@
     },
     {
       "path": "tools/mg_expr.py",
-      "sha256": "c8e81f3129bee46817153e753830793b9e51ad7d3c4d19d706aea104ea0b5a46"
+      "sha256": "e83da21b1dbbdb5f9f46b2f51c9752feda06a04a1295a0434c8bc934f818c107"
     },
     {
       "path": "tools/tests/test_mg_expr.py",
-      "sha256": "d606ea7888cd12662ae20fc60bd21dbbdd6d9052c67dfbf4fb9a085e0e0a1e55"
+      "sha256": "43cc75cae754bba0a0f8e9f37fe704eaf72a17f8b026951eb798260fe15631ef"
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineBoundsTests.swift",
@@ -4127,7 +4127,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGRepairHint.swift",
-      "sha256": "058ba1531fd61bfdfb456cb1c788728d77b6c8200a92ab5cc5d2746e565d186e"
+      "sha256": "5d778d5984b4bf01a7082adf66f9b2a0187aad75fe6eb12b5985b7bcc69da0b4"
     },
     {
       "path": "Tests/MartyGraphicsMLKitTests/MLRepairHintCorpusTests.swift",
@@ -4143,7 +4143,7 @@
     },
     {
       "path": "docs/fixtures/repair-hints/corpus.json",
-      "sha256": "860f7f76d5db0f196f002e0d0fdb5704fe7e6c492e6e62bd12ddf832807421d1"
+      "sha256": "eaa0b93069b7dde69c0c0c33db884352ef2286e9d7a0bc40fc1c0992a0241312"
     },
     {
       "path": "evals/dev-authoring/FREEZE.json",
@@ -4859,7 +4859,7 @@
     },
     {
       "path": "evals/dev-authoring/tools/hints.py",
-      "sha256": "023fbf81699b564aba0f38bb8afec6b393a9761a98edb2f0a9467e889c0192c3"
+      "sha256": "a9ef423ee0b2c96e39735f0a084d355029339f9b106ec4f6aa6c078fec97b9cc"
     },
     {
       "path": "evals/dev-authoring/tools/inventory.py",

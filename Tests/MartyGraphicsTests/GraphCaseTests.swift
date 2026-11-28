@@ -57,6 +57,32 @@ final class GraphCaseTests: XCTestCase {
         }
     }
 
+    private static func reason(_ json: String) -> String? {
+        if case .failure(let e) = MGParser.scene(data: Data(json.utf8)) { return e.reason }
+        return nil
+    }
+
+    /// `func.empty` uses the rule of `curve.empty`: some piece draws a segment of nonzero length inside the ranges. A
+    /// single sample inside the range, or a graph that only touches an edge, draws nothing (tools/mg_expr.py: the same).
+    func testAFuncIsVisibleOnlyWhenAPieceDrawsASegment() throws {
+        let one = try MGExpression.compile("sqrt(-(x^2))", allowed: [.x], reason: "func.y")
+        let oneValue: (Double) -> Double = { one.value(MGExpression.Inputs().with(x: $0)) }
+        let single = MGGraph.curve(oneValue, x0: -1, x1: 1, y0: -1, y1: 1, measure: false)
+        XCTAssertEqual(single.samples.count, 1)
+        XCTAssertFalse(single.visible)
+        let touch = try MGExpression.compile("-(x^2)", allowed: [.x], reason: "func.y")
+        let touchValue: (Double) -> Double = { touch.value(MGExpression.Inputs().with(x: $0)) }
+        XCTAssertFalse(MGGraph.curve(touchValue, x0: -1, x1: 1, y0: 0, y1: 1, measure: false).visible)
+        let line = try MGExpression.compile("x", allowed: [.x], reason: "func.y")
+        let lineValue: (Double) -> Double = { line.value(MGExpression.Inputs().with(x: $0)) }
+        XCTAssertTrue(MGGraph.curve(lineValue, x0: -1, x1: 1, y0: -1, y1: 1, measure: false).visible)
+        let item = #"{"id":"f","k":"func","at":[1,1],"w":6,"h":4,"xr":[-1,1],"yr":[-1,1],"y":"Y"}"#
+        let singleScene = #"{"v":1,"items":["# + item.replacingOccurrences(of: "Y", with: "sqrt(-(x^2))") + "]}"
+        XCTAssertEqual(Self.reason(singleScene), "func.empty")
+        let edgeScene = #"{"v":1,"items":["# + item.replacingOccurrences(of: "Y", with: "1") + "]}"
+        XCTAssertNil(Self.reason(edgeScene))
+    }
+
     func testDocumentationScenesEqualTheBuiltInFixtures() throws {
         for (file, id) in [("graphs.scene.json", "graphs"), ("wave.scene.json", "wave")] {
             let data = try Data(contentsOf: Self.root.appendingPathComponent("docs/fixtures/v1/" + file))

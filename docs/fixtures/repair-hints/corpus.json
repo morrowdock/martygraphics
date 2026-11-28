@@ -423,7 +423,7 @@
   },
   {
    "reason": "func.empty",
-   "hint": "no part of the curve lies inside yr; change yr, xr or the expression"
+   "hint": "no piece of the graph draws a segment inside xr and yr (a single point, or a graph that only touches an edge, draws nothing); change yr, xr or the expression"
   },
   {
    "reason": "func.h",

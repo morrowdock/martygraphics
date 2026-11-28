@@ -3,6 +3,11 @@
 ## [Unreleased]
 
 ### Changed
+- **Breaking:** `func.empty` now uses the rule of `curve.empty`: at t = 0 some piece of the graph must draw a
+  segment of nonzero length inside `xr` and `yr`. A graph with a value inside the range at one sample only, or one
+  that only touches an edge of the range at a point, draws nothing and is now refused (`func.empty`); before, one
+  sample inside the range was enough. The repair hint says so. `tools/mg_expr.py` and `tools/scene_v1_check.py`
+  apply the same rule.
 - Docs: the scene v1 schema notes and the Swift parity evidence link Swift sources by file and name the symbol
   (for example `MGParser.step(_:_:)`) instead of linking line numbers, which had drifted 26 to 28 lines.
   `validate_local.py --check-files` now refuses a relative `#L<digits>` link in `docs/`.

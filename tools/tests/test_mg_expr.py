@@ -100,6 +100,17 @@ class GraphCases(unittest.TestCase):
                     mg_expr.check_scene(case["scene"])
                 self.assertEqual(raised.exception.reason, case["reason"])
 
+    def test_a_func_is_visible_only_when_a_piece_draws_a_segment(self):
+        # Swift GraphCaseTests.testAFuncIsVisibleOnlyWhenAPieceDrawsASegment: the rule of curve.empty.
+        one = mg_expr.compile_expression("sqrt(-(x^2))", {"x"}, "func.y")
+        single = mg_expr.curve(lambda x: one.value(x=x), -1, 1, -1, 1, measure=False)
+        self.assertEqual(len(single.samples), 1)
+        self.assertFalse(single.visible)
+        touch = mg_expr.compile_expression("-(x^2)", {"x"}, "func.y")
+        self.assertFalse(mg_expr.curve(lambda x: touch.value(x=x), -1, 1, 0, 1, measure=False).visible)
+        line = mg_expr.compile_expression("x", {"x"}, "func.y")
+        self.assertTrue(mg_expr.curve(lambda x: line.value(x=x), -1, 1, -1, 1, measure=False).visible)
+
     def test_graph_edits_count_against_the_graph_budget(self):
         # Each graph item counts once and each step edit of one once more (Swift MGLimits.exprItems).
         graph = {"id": "f", "k": "func", "at": [1, 1], "w": 6, "h": 4, "xr": [-3, 3], "yr": [-2, 2], "y": "a*x/10", "a": 1}
