@@ -971,7 +971,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
-      "sha256": "b7cc37076aeaf24e805d516875684b88ef63de3385206cfa8829adbaa102623d"
+      "sha256": "571dbb74f6202f76f4f773e7946a5929a0a381c4da08b4ac480097b7ccdf2636"
     },
     {
       "path": "Sources/MartyGraphics/MGCaptionExport.swift",
@@ -1455,7 +1455,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/BoardTransitionTests.swift",
-      "sha256": "271d8cf259dbcd724b8ab65cd168403fbf6d1fb0f7872b796e64927d5d5e9cda"
+      "sha256": "e997aaf014c7fc0387ddd1a3609d3729f9bd208f76564313552c783e792fcc57"
     },
     {
       "path": "Tests/MartyGraphicsTests/CaptionExportTests.swift",

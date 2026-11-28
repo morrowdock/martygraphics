@@ -308,25 +308,29 @@ final class BoardTransitionHostTests: XCTestCase {
     }
 
     @MainActor func testStudioSelectionDrawsAlongsideStepFocus() throws {
-        let json = Self.json.replacingOccurrences(of: #"{"say":"First step."}"#,
-                                                   with: #"{"say":"First step.","focus":"arrow"}"#)
+        let json = Self.json
+            .replacingOccurrences(of: #","move":{"to":[7,5.5],"t":2}"#, with: "")
+            .replacingOccurrences(of: #"{"say":"First step."}"#, with: #"{"say":"First step.","focus":"arrow"}"#)
         let scene = try MGParser.scene(data: Data(json.utf8)).get()
         let rig = BoardRig(scene)
         defer { rig.close() }
         rig.theme = .studio
         rig.rebuild()
         rig.settle()
+        rig.advance(1)
         let focused = try rig.frame(Self.size)
         XCTAssertEqual(focused.focus, "arrow")
         XCTAssertTrue(focused.emphasis.isEmpty)
+        XCTAssertNil(focused.appear["arrow"])
         let tap = try XCTUnwrap(rig.probe.tap)
         let point = focused.viewport.point(MGPoint(3, 2.5))
         tap(point, Self.size)
+        rig.advance(1)
         let selected = try rig.frame(Self.size)
         XCTAssertEqual(rig.selection, "zone")
         XCTAssertEqual(selected.focus, "arrow")
         XCTAssertEqual(selected.emphasis, ["zone"])
-        XCTAssertEqual(selected.appear["arrow"], 0, "the manual clock is still at the staggered draw-on start")
+        XCTAssertNil(selected.appear["arrow"])
         let focusedPixels = try renderedBoard(focused)
         let selectedPixels = try renderedBoard(selected)
         XCTAssertTrue(focusedPixels != selectedPixels, "selection must change the rendered board")
@@ -339,12 +343,11 @@ final class BoardTransitionHostTests: XCTestCase {
                 pixels[index] > 220 && (140...220).contains(pixels[index + 1]) && pixels[index + 2] < 100
             }
         }
-        XCTAssertTrue(hasAmber(selectedPixels), "the focused arrow starts with a visible amber cue")
+        XCTAssertTrue(hasAmber(selectedPixels), "the settled focused arrow is amber")
         XCTAssertFalse(hasAmber(selectionOnly), "selection alone uses ink")
-        rig.advance(1)
-        let settled = try rig.frame(Self.size)
-        XCTAssertNil(settled.appear["arrow"])
-        XCTAssertTrue(hasAmber(try renderedBoard(settled)), "the full arrow retains its amber focus")
+        var beforeReveal = selected
+        beforeReveal.appear["arrow"] = 0
+        XCTAssertFalse(hasAmber(try renderedBoard(beforeReveal)), "the focus stroke follows the arrow's draw-on")
     }
 
     @MainActor func testStudioDrawsEveryExplicitEmphasisWithoutStepFocus() throws {
