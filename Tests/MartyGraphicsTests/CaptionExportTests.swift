@@ -182,8 +182,10 @@ final class CaptionExportTests: XCTestCase {
                 guard text.unicodeScalars.count <= 200 else { break }
                 let e = try one(text, fps: fps)
                 let plan = try XCTUnwrap(e.plan)
-                XCTAssertEqual(e.cues.flatMap(\.lines).joined(separator: " ").split(separator: " ").map(String.init),
-                               text.split(separator: " ").map(String.init), "words unchanged")
+                let cueLines: [String] = e.cues.flatMap(\.lines)
+                let exportedWords: [Substring] = cueLines.joined(separator: " ").split(separator: " ")
+                let originalWords: [Substring] = text.split(separator: " ")
+                XCTAssertEqual(exportedWords, originalWords, "words unchanged")
                 var at = plan.holdStartFrame(0)
                 for c in e.cues {
                     XCTAssertTrue((1...MGCaptionExport.maxLines).contains(c.lines.count))
