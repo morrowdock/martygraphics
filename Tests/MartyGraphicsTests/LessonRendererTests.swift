@@ -141,7 +141,7 @@ final class LessonRendererTests: LessonTestCase {
             let scene = s.state!.scene
             for size in [CGSize(width: 1024, height: 768), CGSize(width: 1366, height: 1024)] {
                 let vp = MGViewport(size: size, width: scene.width, height: scene.height, camera: nil)
-                let input = MGRenderInput(scene: scene, items: MGTimeline.items(scene, step: 0), viewport: vp)
+                let input = MGRenderInput(scene: scene, items: MGTimeline.items(scene, step: 0), viewport: vp, theme: .classic)
                 let renderer = ImageRenderer(content: Canvas { ctx, _ in MGCanvasRenderer.draw(input, in: ctx) }.frame(width: size.width, height: size.height))
                 let image = try XCTUnwrap(renderer.cgImage, "beat \(k) \(size)")
                 XCTAssertEqual(image.width, Int(size.width))

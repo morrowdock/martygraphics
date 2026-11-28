@@ -222,7 +222,7 @@ final class GraphKindTests: XCTestCase {
     @MainActor private func render(_ scene: MGScene, items: [MGItem]? = nil, appear: [String: Double] = [:],
                                    size: CGSize = GraphKindTests.size) throws -> (CGImage, MGViewport) {
         let vp = MGViewport(size: size, width: scene.width, height: scene.height, camera: nil)
-        let input = MGRenderInput(scene: scene, items: items ?? scene.items, viewport: vp, appear: appear, focus: nil, time: 0)
+        let input = MGRenderInput(scene: scene, items: items ?? scene.items, viewport: vp, theme: .classic, appear: appear, focus: nil, time: 0)
         let renderer = ImageRenderer(content: Canvas { context, _ in MGCanvasRenderer.draw(input, in: context) }
             .frame(width: size.width, height: size.height))
         renderer.scale = 1

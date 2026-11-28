@@ -20,8 +20,8 @@ vectors (the robot joint's seamless manifest) for a later Python parity test.
   scene JSON ─ MGParser ─► MGScene ─ MGTimeline.items(step) ─ MGTimelineCache (once per scene revision and step)
       ─ MGTimeline.frame(time)  motion: slide, orbit, projectile, oscillate, move
       ─ MGTween.sample          engine keyframes (true rotations, ≤ 5° apart)
-      ─ MGBoardTransition       step and patch changes by MGTransitionStyle: .spring (the default, unchanged)
-                                or .bounded (opt-in: MGStepTransition, fade out, Reduce Motion dissolve)
+      ─ MGBoardTransition       step and patch changes by MGTransitionStyle: .spring (original motion)
+                                or .bounded (default: MGStepTransition, fade out, Reduce Motion dissolve)
       ─► MGRenderInput (items, viewport, appear, opacity, emphasis, markers)
       ─ MGCanvasRenderer.draw(_:in:layer:)
             board + dot grid ─ items in rank order (stable) ─ rings, markers, focus ─ labels
@@ -58,17 +58,15 @@ solid tests in `Tests/MartyGraphicsTests/SolidLoopTests.swift`, export tests in
 `Examples/Solid3D/Tests/MartySolidGLTFTests/SeamlessLoopExportTests.swift`, Blender tests in
 `tools/tests/test_render_loop.py`.
 
-- **Transitions: the spring by default, bounded on request.** A board without `transitionStyle(_:)` moves exactly as
-  at `5e4952e` (see [Transitions](#transitions)). On a board with `transitionStyle(.bounded)`, every easing curve maps
+- **Transitions.** With the default bounded motion (see [Transitions](#transitions)), every easing curve maps
   0 to 0 and 1 to 1, stays in 0...1 and never turns back, so a step or patch blend keeps every coordinate between its
   two step values: a vector never grows past its new length, an angle never swings past its target and takes the
   short way round, and leaving items fade out from where they were. (`BoardTransitionTests`,
   `BoardTransitionHostTests`, `testEveryCurveIsBoundedMonotoneAndExactAtTheEnds`,
   `testStepTransitionsStayBetweenTheTwoStates`)
-- **Reduced motion.** By default the board snaps: with Reduce Motion a step or patch shows the new state at once, with
-  no blend, no dissolve and no frame loop. A `.bounded` board dissolves instead: nothing moves, entering and leaving
-  items cross-fade over 0.6 s, and the frame loop runs for that dissolve only and never for motion.
-  (`testWithReduceMotionTheDefaultBoardSnapsAndNeverTicks`, `testWithReduceMotionTheBoundedBoardTicksOnlyDuringTheDissolve`,
+- **Reduced motion.** With Reduce Motion the default board dissolves: nothing moves, entering and leaving
+  items cross-fade over 0.6 s, and the frame loop runs for that dissolve only. Explicit spring motion snaps to the new state.
+  (`testWithReduceMotionSpringSnapsAndNeverTicks`, `testWithReduceMotionTheBoundedBoardTicksOnlyDuringTheDissolve`,
   `testOnlyABoundedBoardRunsTheLoopForAReduceMotionDissolve`, `testReduceMotionDissolvesWithoutMoving`,
   `testDissolveAndLayerPolicyTruthTable`)
 - **Labels.** In the order given, every label is placed (never dropped), at least 2 points clear of the labels placed
@@ -99,7 +97,7 @@ solid tests in `Tests/MartyGraphicsTests/SolidLoopTests.swift`, export tests in
   (`testPresetsAreWritableAndTaggedForTheirDestination`, `testAPresetWriterWritesItsFrameRateAndTags`,
   `testStraightAlphaUndoesPremultiplication`, `testA2DVideoExportsWithAPreset`)
 - **Outputs.** The 2D board's transitions, the default render loop, `marty-solid render`, the default `export-gltf`
-  output and the engine's own MP4 encoder settings are unchanged; the new paths are opt-in (`transitionStyle(.bounded)`,
+  output and the engine's own MP4 encoder settings are unchanged; the export paths are opt-in (
   `--seamless`, `MGExportPreset`). Four pure fixes change default pixels on purpose; they are listed in
   [Default output changes](#default-output-changes), with stills to compare.
 
@@ -108,7 +106,7 @@ solid tests in `Tests/MartyGraphicsTests/SolidLoopTests.swift`, export tests in
 `MartyGraphicsView.transitionStyle(_:)` picks how a 2D board moves between steps and patches (`MGTransitionStyle`).
 The pure decisions are `MGBoardTransition`; the board host and the renderer call them on every frame.
 
-| | `.spring` (default) | `.bounded` (opt-in) |
+| | `.spring` | `.bounded` (default) |
 | --- | --- | --- |
 | Step and patch blend | `MGTimeline.blend` at `MGTimeline.spring(t)` for 1.2 s (the spring overshoots by about 12 %) | `MGStepTransition`: quintic smootherstep over 0.6 s, no value past either step |
 | Camera move on a step | `MGTimeline.spring(t)` for 1.0 s | 0.8 s on the same curve as the blend |
@@ -116,9 +114,8 @@ The pure decisions are `MGBoardTransition`; the board host and the renderer call
 | Items that leave | vanish at once | fade out from where they were |
 | Reduce Motion | snaps: the new state at once, no frame loop | dissolves: nothing moves, items cross-fade over 0.6 s, the loop runs for the dissolve only |
 
-`MGRenderInput.transitionStyle` (default `.spring`) carries the pop choice to the renderer, so every other host of
-`MGCanvasRenderer` (lesson snapshots, explainer panes) keeps the spring pops. The lesson and explainer views embed the
-default board, so they keep the spring too.
+`MGRenderInput.transitionStyle` defaults to `.bounded` and carries the pop choice to `MGCanvasRenderer`.
+Hosts can select `.spring` on the input or through the view's `transitionStyle(_:)` modifier.
 
 ## Layers and caches
 
@@ -299,7 +296,7 @@ Findings at `5e4952e` (`file:line` there), with what this branch did.
 | --- | --- | --- | --- | --- |
 | 1 | 3D loop | The loop is one input turn; parts with a fractional ratio jump at the wrap (robot joint: 0.082° a frame, then 29.306° back). The glTF export bakes the same loop. | `Sources/MartyGraphics/Solid/MGSolidRenderPlan.swift:80`, `:84`; `Examples/Solid3D/Sources/MartySolidGLTF/MGSolidGLTF.swift:113` | Fixed: `MGSolidLoop`, `export-gltf --seamless` |
 | 2 | Video path | Blender's centred shutter samples before key 0 and after the last key, so the first and last frames blur half; the automatic camera sweeps one way and jumps back when the video loops. | `tools/render-blender/mgrender/lookdev.py:477`, `:405` | Fixed for seamless exports (closing key, START shutter, sway) |
-| 3 | Timing | Step blends, camera moves and draw-on pops use a spring that overshoots by about 12 % (a vector longer than its new length, an angle past its target) and ends on a step at 1.2 s. | `Sources/MartyGraphics/MartyGraphicsView.swift:429`, `:436`; `Sources/MartyGraphics/MGCanvasRenderer.swift:77`, `:250`; `Sources/MartyGraphics/MGTimeline.swift:135` | Opt-in: `transitionStyle(.bounded)` (`MGEasing`, `MGStepTransition`); the default board keeps the spring (owner decision) |
+| 3 | Timing | Step blends, camera moves and draw-on pops use a spring that overshoots by about 12 % (a vector longer than its new length, an angle past its target) and ends on a step at 1.2 s. | `Sources/MartyGraphics/MartyGraphicsView.swift:429`, `:436`; `Sources/MartyGraphics/MGCanvasRenderer.swift:77`, `:250`; `Sources/MartyGraphics/MGTimeline.swift:135` | Default: `transitionStyle(.bounded)` (`MGEasing`, `MGStepTransition`) |
 | 4 | Timing | Items that leave a step vanish at once; with Reduce Motion there is no transition at all and the frame loop never runs. | `Sources/MartyGraphics/MartyGraphicsView.swift:429`; `Sources/MartyGraphics/MGRenderPolicy.swift:26` | Opt-in: fade out and the Reduce Motion dissolve (`MGRenderPolicy.dissolving`) on a `.bounded` board; the default board still snaps |
 | 5 | Text | Greedy placement with a least-overlap fallback and no leader lines: a pushed-away label loses its anchor; boxes sit on fractional points. | `Sources/MartyGraphics/MGLayout.swift:122`; `Sources/MartyGraphics/MGCanvasRenderer.swift:299` | Fixed: `MGLabelLayout` |
 | 6 | Arrows | The head (7...14 points) is longer than a short arrow, so while an arrow draws on its head reaches behind the tail and the shaft is stroked backwards; a dashed shaft can end in a gap; 2D-video shafts are stroked to the tip, so the line end shows past the sharp head. | `Sources/MartyGraphics/MGCanvasRenderer.swift:345`, `:347`, `:355`; `Sources/MartyGraphics/MGVideoDrawing.swift:155` | Fixed: `MGArrowGeometry`, a shorter video shaft (default output change) |
@@ -327,9 +324,8 @@ Findings at `5e4952e` (`file:line` there), with what this branch did.
   turns, 490 frames at 30 fps) with a wrap step equal to every other step, a repeating camera and a closing frame.
 - Blender video of a seamless export: half-blurred first and last frames and a one-way camera → motion blur that
   continues across the wrap and a turntable or sway that closes.
-- Step changes: an overshooting spring, instant exits, nothing under Reduce Motion → unchanged by default; with
-  `transitionStyle(.bounded)`, bounded quintic easing in 0.6 s, fading exits and a dissolve under Reduce Motion.
-- Body and node pops: 12 % overshoot, never exactly full size → unchanged by default; with `.bounded`, a critically
+- Step changes: an overshooting spring, instant exits, nothing under Reduce Motion → the default uses quintic easing in 0.6 s, fading exits and a dissolve under Reduce Motion.
+- Body and node pops: 12 % overshoot, never exactly full size → the default uses a critically
   damped approach that lands on the size.
 - Labels: 36 positions and overlap as a fallback → 72 positions, leader lines, no label over a leader, whole points.
 - Arrowheads: reversed shafts and oversized heads on short arrows, floating dashed heads → proportional heads, a shaft

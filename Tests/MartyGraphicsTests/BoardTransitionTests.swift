@@ -9,9 +9,9 @@ import SwiftUI
 import XCTest
 @testable import MartyGraphics
 
-/// `MGTransitionStyle` on the 2D board (docs/ENGINE.md, "Transitions"): the default `.spring` board is the board as it
+/// `MGTransitionStyle` on the 2D board (docs/ENGINE.md, "Transitions"): the explicit `.spring` board is the board as it
 /// was at 5e4952e (spring blends and camera moves, spring pops, leaving items vanish, Reduce Motion snaps with no frame
-/// loop), and `.bounded` is opt-in. These are the pure decisions `MGSceneHost` and `MGCanvasRenderer` call; the hosted
+/// loop). Bounded motion is the default. These are the pure decisions `MGSceneHost` and `MGCanvasRenderer` call; the hosted
 /// tests (`BoardTransitionHostTests`) drive a real board in a window through its entry points.
 final class BoardTransitionTests: XCTestCase {
     func vectors() -> (MGItem, MGItem) {
@@ -22,16 +22,16 @@ final class BoardTransitionTests: XCTestCase {
         return (a, b)
     }
 
-    @MainActor func testTheSpringIsTheDefaultAndBoundedIsOptIn() throws {
+    @MainActor func testBoundedIsTheDefaultAndSpringIsAvailable() throws {
         let scene = try MGParser.scene(data: Data(RenderQualityTests.layered.utf8)).get()
-        XCTAssertEqual(MGBoardTeaching().transitionStyle, .spring)
-        XCTAssertEqual(MartyGraphicsView(scene: scene).teaching.transitionStyle, .spring)
-        XCTAssertEqual(MartyGraphicsView(controller: MGSceneController(scene: scene)).teaching.transitionStyle, .spring)
+        XCTAssertEqual(MGBoardTeaching().transitionStyle, .bounded)
+        XCTAssertEqual(MartyGraphicsView(scene: scene).teaching.transitionStyle, .bounded)
+        XCTAssertEqual(MartyGraphicsView(controller: MGSceneController(scene: scene)).teaching.transitionStyle, .bounded)
         XCTAssertEqual(MartyGraphicsView(scene: scene).transitionStyle(.bounded).teaching.transitionStyle, .bounded)
         XCTAssertEqual(MartyGraphicsView(scene: scene).transitionStyle(.bounded).transitionStyle(.spring).teaching.transitionStyle, .spring)
         let input = MGRenderInput(scene: scene, items: scene.items,
                                   viewport: MGViewport(size: CGSize(width: 480, height: 320), width: scene.width, height: scene.height, camera: nil))
-        XCTAssertEqual(input.transitionStyle, .spring, "every other host of the renderer keeps the spring pops")
+        XCTAssertEqual(input.transitionStyle, .bounded)
         XCTAssertTrue(input.opacity.isEmpty)
     }
 
@@ -50,7 +50,7 @@ final class BoardTransitionTests: XCTestCase {
             let snap = MGBoardTransition.items(.spring, from: [a, leaving], to: [b, entering], elapsed: t, reduceMotion: true)
             XCTAssertEqual(snap, MGStepTransition.Frame(items: [b, entering], opacity: [:]), "at \(t) s")
         }
-        XCTAssertGreaterThan(MGTimeline.spring(0.3), 1, "the default board keeps the spring's overshoot")
+        XCTAssertGreaterThan(MGTimeline.spring(0.3), 1, "the spring retains its overshoot")
         XCTAssertEqual(MGBoardTransition.items(.spring, from: nil, to: [b], elapsed: 0.1, reduceMotion: false).items, [b], "no blend")
     }
 
@@ -153,7 +153,7 @@ final class BoardTransitionTests: XCTestCase {
         XCTAssertEqual(phase(.bounded, blend: 0.59), .moving)
         XCTAssertEqual(phase(.bounded, blend: 0.6), .settled)
         XCTAssertEqual(phase(.bounded, camera: 0.99), .moving)
-        XCTAssertEqual(phase(.spring, blend: 0, reduce: true), .settled, "the default board snaps")
+        XCTAssertEqual(phase(.spring, blend: 0, reduce: true), .settled, "the spring board snaps")
         XCTAssertEqual(phase(.bounded, blend: 0, reduce: true), .moving, "a bounded board dissolves")
         // What `MGCanvasLayers.settling` cannot see: a `.bounded` exit starts opaque, so only the phase keeps it out of
         // the base.
@@ -213,7 +213,8 @@ final class BoardTransitionTests: XCTestCase {
     let host: NSHostingView<AnyView>
     var style: MGTransitionStyle?
     var reduceMotion: Bool?
-    var theme = MGTheme.board
+    var theme = MGTheme.classic
+    var emphasis: Set<String> = []
     var markers: [String: Int] = [:]
     var selection: String?
     /// The accessibility label of a plain SwiftUI `Text` hosted below the board, when set: an accessibility control
@@ -237,6 +238,7 @@ final class BoardTransitionTests: XCTestCase {
     /// The board with the rig's current modifiers and environment (what a host changing them does).
     func rebuild() {
         var board = MartyGraphicsView(controller: controller).boardProbe(probe).boardReduceMotion(reduceMotion).markers(markers)
+            .emphasis(emphasis)
             .selection(Binding(get: { [unowned self] in self.selection }, set: { [unowned self] in self.selection = $0 }))
         if let style { board = board.transitionStyle(style) }
         // Hosted in this test process, the board did not read the `.active` scene phase (Mac run #23: it never ran its
@@ -305,12 +307,141 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertEqual(v.center.y, want.center.y, accuracy: 1e-9, "\(what): centre y", file: file, line: line)
     }
 
+    @MainActor func testStudioSelectionDrawsAlongsideStepFocus() throws {
+        let json = Self.json
+            .replacingOccurrences(of: #","move":{"to":[7,5.5],"t":2}"#, with: "")
+            .replacingOccurrences(of: #"{"say":"First step."}"#, with: #"{"say":"First step.","focus":"arrow"}"#)
+        let scene = try MGParser.scene(data: Data(json.utf8)).get()
+        let rig = BoardRig(scene)
+        defer { rig.close() }
+        rig.theme = .studio
+        rig.rebuild()
+        rig.settle()
+        rig.advance(1)
+        let focused = try rig.frame(Self.size)
+        XCTAssertEqual(focused.focus, "arrow")
+        XCTAssertTrue(focused.emphasis.isEmpty)
+        XCTAssertNil(focused.appear["arrow"])
+        let tap = try XCTUnwrap(rig.probe.tap)
+        let point = focused.viewport.point(MGPoint(3, 2.5))
+        tap(point, Self.size)
+        rig.advance(1)
+        let selected = try rig.frame(Self.size)
+        XCTAssertEqual(rig.selection, "zone")
+        XCTAssertEqual(selected.focus, "arrow")
+        XCTAssertEqual(selected.emphasis, ["zone"])
+        XCTAssertNil(selected.appear["arrow"])
+        let focusedPixels = try renderedBoard(focused)
+        let selectedPixels = try renderedBoard(selected)
+        XCTAssertTrue(focusedPixels != selectedPixels, "selection must change the rendered board")
+        var withoutFocus = selected
+        withoutFocus.focus = nil
+        let selectionOnly = try renderedBoard(withoutFocus)
+        XCTAssertTrue(selectedPixels != selectionOnly, "the step focus must remain visible alongside selection")
+        func hasAmber(_ pixels: [UInt8]) -> Bool {
+            stride(from: 0, to: pixels.count, by: 4).contains { index in
+                pixels[index] > 220 && (140...220).contains(pixels[index + 1]) && pixels[index + 2] < 100
+            }
+        }
+        XCTAssertTrue(hasAmber(selectedPixels), "the settled focused arrow is amber")
+        XCTAssertFalse(hasAmber(selectionOnly), "selection alone uses ink")
+        var beforeReveal = selected
+        beforeReveal.appear["arrow"] = 0
+        XCTAssertFalse(hasAmber(try renderedBoard(beforeReveal)), "the focus stroke follows the arrow's draw-on")
+    }
+
+    @MainActor func testStudioDrawsEveryExplicitEmphasisWithoutStepFocus() throws {
+        let rig = BoardRig(try scene())
+        defer { rig.close() }
+        rig.theme = .studio
+        rig.emphasis = ["zone", "dot"]
+        rig.rebuild()
+        rig.settle()
+        let both = try rig.frame(Self.size)
+        XCTAssertNil(both.focus)
+        XCTAssertEqual(both.emphasis, ["zone", "dot"])
+        let bothPixels = try renderedBoard(both)
+        for id in both.emphasis {
+            var one = both
+            one.emphasis.remove(id)
+            let onePixels = try renderedBoard(one)
+            XCTAssertTrue(bothPixels != onePixels, "emphasis on \(id) must change the rendered board")
+        }
+    }
+
+    @MainActor func testStudioTextKeepsItsSizeInNarrowAndSlidingPanes() throws {
+        let json = #"{"v":1,"title":"Pane text","items":[{"id":"caption","k":"text","at":[6,4],"text":"TABLE"}]}"#
+        let scene = try MGParser.scene(data: Data(json.utf8)).get()
+        let narrow = CGSize(width: 170, height: 278)
+        let wide = CGSize(width: 480, height: 480)
+        func inkHeight(size: CGSize, fit: CGSize? = nil) throws -> Int {
+            let input = MGExplainerBoard.input(scene, view: MGExplainerBeatView(), size: size, fit: fit, theme: .studio)
+            let pixels = try renderedBoard(input)
+            let width = Int(size.width)
+            let height = Int(size.height)
+            XCTAssertEqual(pixels.count, width * height * 4)
+            return (0..<height).filter { y in
+                (0..<width).contains { x in pixels[(y * width + x) * 4] > 128 }
+            }.count
+        }
+        let narrowInk = try inkHeight(size: narrow)
+        XCTAssertGreaterThanOrEqual(narrowInk, 8, "14-point capitals must remain legible in a narrow pane")
+        XCTAssertEqual(narrowInk, try inkHeight(size: wide))
+        let fit = CGSize(width: 810, height: 810)
+        let referenceInk = try inkHeight(size: fit, fit: fit)
+        XCTAssertGreaterThan(referenceInk, narrowInk)
+        XCTAssertEqual(try inkHeight(size: narrow, fit: fit), referenceInk, "cropping the pane must preserve its lettering")
+
+        let vectorJSON = #"{"v":1,"title":"Pane stroke","items":[{"id":"arrow","k":"vector","from":[3,4],"angle":0,"len":6,"color":"blue"}]}"#
+        let vectorScene = try MGParser.scene(data: Data(vectorJSON.utf8)).get()
+        let vector = MGExplainerBoard.input(vectorScene, view: MGExplainerBeatView(), size: narrow, theme: .studio)
+        let strokePixels = try renderedBoard(vector)
+        let width = Int(narrow.width)
+        let height = Int(narrow.height)
+        // Sample the middle of the horizontal shaft, away from the arrowhead.
+        let shaftRows = (0..<height).filter { y in
+            let alpha = (y * width + width / 2) * 4
+            return strokePixels[alpha + 2] > 128 && strokePixels[alpha + 2] > strokePixels[alpha]
+        }
+        XCTAssertGreaterThanOrEqual(shaftRows.count, 2, "the regular stroke has at least two visible pixels")
+
+        var chip = MGExplainerBoard.input(scene, view: MGExplainerBeatView(), size: narrow, theme: .studio)
+        chip.items = []
+        chip.scope = "Demo scope"
+        let chipPixels = try renderedBoard(chip)
+        var pillBounds = CGRect.null
+        var inkBounds = CGRect.null
+        for y in 0..<height {
+            for x in 0..<width {
+                let index = (y * width + x) * 4
+                let red = chipPixels[index]
+                let pixel = CGRect(x: x, y: y, width: 1, height: 1)
+                if red > 190 {
+                    inkBounds = inkBounds.union(pixel)
+                } else if (18...120).contains(red) {
+                    // Studio's surface and rule are both brighter than the stage and darker than the text.
+                    pillBounds = pillBounds.union(pixel)
+                }
+            }
+        }
+        XCTAssertFalse(pillBounds.isNull)
+        XCTAssertFalse(inkBounds.isNull)
+        XCTAssertTrue(pillBounds.insetBy(dx: 2, dy: 2).contains(inkBounds), "scope text stays inside the pill with padding")
+    }
+
+    @MainActor private func renderedBoard(_ input: MGRenderInput) throws -> [UInt8] {
+        let size = input.viewport.size
+        let board = Canvas { context, _ in MGCanvasRenderer.draw(input, in: context) }
+        let renderer = ImageRenderer(content: board.frame(width: size.width, height: size.height))
+        return try Self.rgba(XCTUnwrap(renderer.cgImage))
+    }
+
     static let grow = #"{"v":1,"ops":[{"op":"set","id":"arrow","key":"len","value":6},{"op":"remove","id":"note"}]}"#
 
-    // MARK: Item 1: the default board keeps its spring, `.bounded` opts in
+    // MARK: Item 1: the explicit spring and default bounded motion
 
-    @MainActor func testTheDefaultBoardKeepsTheSpringThroughItsEntryPoints() throws {
-        let rig = BoardRig(try scene())                      // no transitionStyle modifier
+    @MainActor func testExplicitSpringThroughBoardEntryPoints() throws {
+        let rig = BoardRig(try scene(), style: .spring)
         defer { rig.close() }
         rig.settle()
         XCTAssertEqual(try rig.frame(Self.size).transitionStyle, .spring)
@@ -341,7 +472,7 @@ final class BoardTransitionHostTests: XCTestCase {
     }
 
     @MainActor func testTheBoundedBoardOptsInThroughItsEntryPoints() throws {
-        let rig = BoardRig(try scene(), style: .bounded)
+        let rig = BoardRig(try scene())
         defer { rig.close() }
         rig.settle()
         XCTAssertEqual(try rig.frame(Self.size).transitionStyle, .bounded)
@@ -369,9 +500,9 @@ final class BoardTransitionHostTests: XCTestCase {
         assertViewport(f.viewport, viewport(s, from: 0, to: 1, progress: progress), "bounded camera")
     }
 
-    /// Reduce Motion on the default board: the new state at once, no dissolve, and the frame loop never runs.
-    @MainActor func testWithReduceMotionTheDefaultBoardSnapsAndNeverTicks() throws {
-        let rig = BoardRig(try scene(), reduceMotion: true)
+    /// Reduce Motion on an explicit spring board: the new state at once, no dissolve, and the frame loop never runs.
+    @MainActor func testWithReduceMotionSpringSnapsAndNeverTicks() throws {
+        let rig = BoardRig(try scene(), style: .spring, reduceMotion: true)
         defer { rig.close() }
         rig.settle()
         let draws = rig.probe.liveDraws
@@ -396,7 +527,7 @@ final class BoardTransitionHostTests: XCTestCase {
 
     /// Reduce Motion on a `.bounded` board: a dissolve with no motion, and ticks only while it runs.
     @MainActor func testWithReduceMotionTheBoundedBoardTicksOnlyDuringTheDissolve() throws {
-        let rig = BoardRig(try scene(), style: .bounded, reduceMotion: true)
+        let rig = BoardRig(try scene(), reduceMotion: true)
         defer { rig.close() }
         rig.settle(2.4)                                       // the first appearance's transition ends
         XCTAssertEqual(rig.probe.decisions.last?.running, false, "no loop for motion under Reduce Motion")

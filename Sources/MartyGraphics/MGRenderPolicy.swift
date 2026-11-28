@@ -31,7 +31,7 @@ public enum MGRenderPolicy {
         s.visible && s.sceneActive && !s.reduceMotion && s.motionPlaying
     }
 
-    /// 2D with Reduce Motion, on a board that opts in to `MGTransitionStyle.bounded`: a step change dissolves instead
+    /// 2D with Reduce Motion, on a board using `MGTransitionStyle.bounded`: a step change dissolves instead
     /// of moving (`MGStepTransition`), so the frame loop runs for the length of the transition and no longer; motion
     /// never plays. Such a board's loop is `continuous || dissolving`; the default board's loop is `continuous` only
     /// (with Reduce Motion it snaps and never runs the loop). `MGBoardTransition.runsLoop` picks between them.

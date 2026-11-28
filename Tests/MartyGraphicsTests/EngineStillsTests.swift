@@ -42,7 +42,7 @@ final class EngineStillsTests: XCTestCase {
         let scene = try MGParser.scene(data: Data(json.utf8)).get()
         let items = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: 0), time: 0)
         let input = MGRenderInput(scene: scene, items: items, viewport: MGViewport(size: size, width: scene.width, height: scene.height, camera: nil),
-                                  appear: appear)
+                                  theme: .classic, appear: appear)
         let r = ImageRenderer(content: Canvas { ctx, _ in MGCanvasRenderer.draw(input, in: ctx) }.frame(width: size.width, height: size.height))
         r.scale = scale
         return try XCTUnwrap(r.cgImage)

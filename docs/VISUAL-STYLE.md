@@ -1,5 +1,33 @@
 # Visual style of the built-in renderer
 
+## 2D boards
+
+Studio visibly changes the default appearance of existing 2D boards. Paper applies the same semantic roles to a warm light background.
+Select a palette with `MGRenderInput(theme:)` or set `.environment(\.mgTheme, .paper)` on a host view.
+For the previous palette and motion, apply `.environment(\.mgTheme, .classic)` and
+`.transitionStyle(.spring)`. The palette alias `.board` also selects Classic. Bounded motion is the default.
+
+Blue identifies objects and normal force, orange friction, violet gravity, teal tension, green velocity,
+red applied force, and magenta acceleration and energy. Amber is reserved for the single focus treatment.
+The legacy `.yellow` role deliberately resolves to ink in v2, departing from the design proposal's amber
+mapping for that role. Ink outlines replace glowing emphasis rings and keep selection and other emphasis
+visible alongside the amber focus.
+Direct labels carry the distinction between blue normal and violet gravity. Paper red and green status
+marks need a word and glyph whenever a board uses them to communicate status.
+
+Bricolage Grotesque and DM Mono ship with their OFL texts. Board scope can be supplied using
+`MGRenderInput.scope`. The renderer adds automatic scope chips for BST and supplied-point plots. Incline scope
+comes from the render host. The schema carries no theme selector. The full scaled typography rules are Phase 5.
+
+In Phase 1, `marty-solid` explainer exports pin the 2D board pane to Classic to preserve the established
+appearance of stills and slide transitions. The 3D look is selected independently.
+Studio and Paper floor text and geometry in narrow panes, including the scope chip padding and strokes.
+Explainers size them against the reference pane so cropping during a slide preserves their scale.
+
+The hosted **Design v2 review stills** workflow produces eight views of incline, tree search and a supplied-point
+plot in each palette. See [the phase plan](../PHASE-PLAN.md) for the remaining design work.
+
+
 Status: design, 2026-11-11. The defects it answers are in [VISUAL-AUDIT.md](VISUAL-AUDIT.md). Each part lands in its
 own pull request with before and after images; the knobs named here are documented where they land
 ([SOLID-3D.md](SOLID-3D.md), [EXPLAINER.md](EXPLAINER.md)) and each has a default.

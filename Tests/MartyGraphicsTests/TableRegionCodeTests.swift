@@ -163,13 +163,13 @@ final class TableRegionCodeTests: XCTestCase {
         XCTAssertNotNil(MGLayout.bounds(zone, in: scene.items, vp))
         let codeBox = try XCTUnwrap(MGLayout.bounds(code, in: scene.items, vp))
         XCTAssertEqual(codeBox.minX, vp.point(MGPoint(1.2, 6.8)).x, accuracy: 0.01)                  // left-aligned at `at`
-        let input = MGRenderInput(scene: scene, items: MGTimeline.items(scene, step: 1), viewport: vp, focus: "grid", time: 1)
+        let input = MGRenderInput(scene: scene, items: MGTimeline.items(scene, step: 1), viewport: vp, theme: .classic, focus: "grid", time: 1)
         let renderer = ImageRenderer(content: Canvas { context, _ in MGCanvasRenderer.draw(input, in: context) }.frame(width: size.width, height: size.height))
         renderer.scale = 1
         XCTAssertEqual(try XCTUnwrap(renderer.cgImage).width, 480)
         // A directly built table with an unchecked count draws nothing instead of trapping.
         var odd = grid; odd.num["rows"] = .nan
-        let oddInput = MGRenderInput(scene: scene, items: [odd], viewport: vp, focus: nil, time: 0)
+        let oddInput = MGRenderInput(scene: scene, items: [odd], viewport: vp, theme: .classic, focus: nil, time: 0)
         let oddRenderer = ImageRenderer(content: Canvas { context, _ in MGCanvasRenderer.draw(oddInput, in: context) }.frame(width: size.width, height: size.height))
         XCTAssertNotNil(oddRenderer.cgImage)
     }
