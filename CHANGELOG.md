@@ -41,8 +41,10 @@
   expression vocabulary (`expression`); `MGTimeline.cycle` and `MGScene.animates` include moving graphs.
 - The default grammar document also lists the `curve` kind and its variables (`expression.variables.curve`).
   `MGExpression.Variable` gains a last case `theta` and `MGExpression.Inputs` a `theta` value (default 0); a public
-  switch over `Variable` or `MGKind` (new case `curve`) must handle the new case. In a `func` or `field` expression
-  `theta` is now refused as `<key>.var.theta` instead of `<key>.name`.
+  switch over `Variable` or `MGKind` (new case `curve`) must handle the new case.
+- **Breaking** for callers that match refusal reason codes: in a `func` or `field` expression `theta` is now refused
+  as `<key>.var.theta` (for example `func.y.var.theta`) instead of `<key>.name` (`func.y.name`). The same scenes are
+  refused as before; only the reason code changes.
 - Docs: the protocol, tutorial and ML explainer pages state the drawing and step conventions and link the
   authoring guide; `MGMLKit.report` takes an optional `hints:` flag whose default keeps the output unchanged.
 - Engine: the 2D board keeps its spring step and patch transitions by default (spring blends and camera moves,

@@ -105,9 +105,13 @@ extension MGGraph {
     ///   from the true point to the chord and the same distance with all three points clamped into the window. Steps
     ///   whose three points all lie beyond one edge of the window cannot be seen and are skipped.
     ///
+    /// - `visible`: some piece draws a segment of nonzero length inside the window (`drawsSegment`). A point inside
+    ///   the window is not enough: a one-point piece, a curve that only touches an edge or a corner, or a curve that
+    ///   stays at one point is not drawn.
+    ///
     /// At most 257 grid points, 256 midpoints, 2 probes per gap and `bisections` points per pair of samples (7,169
     /// points, as `MGGraph.curve`). The same rule runs at parse time and in every animated frame. `stopAfter`: return as
-    /// soon as there are more piece starts than this.
+    /// soon as there are more piece starts than this (`visible` is then false).
     static func planar(_ raw: @escaping (Double) -> MGPoint, t0: Double, t1: Double, window v: Window, measure: Bool,
                        scale: Double = 1, side: Double = 1, stopAfter maxStarts: Int = .max) -> MGCurve {
         let n = MGLimits.curveIntervals
@@ -128,7 +132,7 @@ extension MGGraph {
             for _ in 0..<bisections {
                 let tm = (lo.t + hi.t) / 2
                 guard let pm = f(tm) else { return true }
-                if v.contains(pm) { c.visible = true; return false }
+                if v.contains(pm) { return false }
                 if v.crosses(lo.p, pm) { hi = (tm, pm) } else if v.crosses(pm, hi.p) { lo = (tm, pm) } else { return true }
             }
             return true
@@ -139,7 +143,6 @@ extension MGGraph {
                 if !c.samples.isEmpty { c.starts.append(c.samples.count) }
                 open = true
             }
-            if v.contains(p) { c.visible = true }
             c.samples.append(p)
             last = (t, p)
         }
@@ -166,6 +169,7 @@ extension MGGraph {
             }
             if c.starts.count > maxStarts { return c }
         }
+        c.visible = drawsSegment(c.samples, starts: c.starts, in: v)
         guard measure else { return c }
         for i in 0..<n where piece[i] >= 0 && piece[i] == piece[i + 1] {
             guard let a = values[i], let b = values[i + 1], let m = mids[i] else { continue }
@@ -179,11 +183,13 @@ extension MGGraph {
 
     /// Samples a parsed `curve` item at t = 0 and, for a moving curve, also at a quarter, a half and three quarters of
     /// its period, and applies the drawing checks. At each instant, in this order: `curve.breaks` (more than
-    /// `MGLimits.curveBreaks` breaks), `curve.empty` (first instant only: no point inside the window), `curve.detail`
+    /// `MGLimits.curveBreaks` breaks), `curve.empty` (first instant only: no piece draws a segment of nonzero length
+    /// inside the window, so the renderer, which skips one-point pieces, would draw nothing), `curve.detail`
     /// (the drawn chord is farther than `MGLimits.curveTolerance` of the frame's shorter side from the curve at some
     /// step midpoint; see `planar`) and `curve.mark` (the marked point has no value or leaves the window). Then
-    /// `curve.loop`: at t = period every grid point must match t = 0 (same gaps; points within the tolerance, both
-    /// clamped into the window). Stores the t = 0 samples (`pts` after `at`), the piece starts (`marked`) and the
+    /// `curve.loop`: at t = period every grid point must match t = 0 (a value at both instants or at neither; points
+    /// within the tolerance of the window's shorter range, both clamped into the window). Gaps at step midpoints, pole
+    /// breaks and the marked point are not compared, as for `func.loop`. Stores the t = 0 samples (`pts` after `at`), the piece starts (`marked`) and the
     /// marked point (`num["mx"]`, `num["my"]`).
     static func checkCurve(_ item: inout MGItem, _ expressions: [MGExpression]) throws {
         let v = Window(item)
@@ -254,6 +260,21 @@ extension MGGraph {
             if p.x.isFinite, p.y.isFinite, v.contains(p) { out.num["mx"] = p.x; out.num["my"] = p.y }
         }
         return out
+    }
+
+    /// True when a piece of the polyline `samples` (pieces start at `starts`, as `pieces`) has a segment whose part
+    /// inside `window` has two different ends: a stroke of nonzero length that `clipped` keeps. One-point pieces are
+    /// never drawn, and a segment that only touches an edge or a corner, or whose ends coincide, draws nothing.
+    static func drawsSegment(_ samples: [MGPoint], starts: [Int], in window: Window) -> Bool {
+        for r in pieces(samples.count, starts: starts) where r.count >= 2 {
+            for i in r.lowerBound..<(r.upperBound - 1) {
+                let a = samples[i], b = samples[i + 1]
+                guard let s = window.segment(a, b), s.lo < s.hi else { continue }
+                let p = a.lerp(b, s.lo), q = a.lerp(b, s.hi)
+                if p.x != q.x || p.y != q.y { return true }
+            }
+        }
+        return false
     }
 
     /// The visible runs of a polyline inside `window`: each segment cut to the window, consecutive cut segments joined.

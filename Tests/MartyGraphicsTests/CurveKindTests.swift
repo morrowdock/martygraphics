@@ -169,6 +169,24 @@ final class CurveKindTests: XCTestCase {
         XCTAssertFalse(window.crosses(MGPoint(-1, 1.5), MGPoint(1, 3.5)))
     }
 
+    func testOnlyASegmentOfNonzeroLengthInsideTheWindowIsVisible() {
+        let window = MGGraph.Window(x0: 0, x1: 1, y0: 0, y1: 1)
+        func draws(_ pts: [MGPoint], _ starts: [Int] = []) -> Bool { MGGraph.drawsSegment(pts, starts: starts, in: window) }
+        XCTAssertTrue(draws([MGPoint(0.2, 0.2), MGPoint(0.4, 0.4)]))
+        XCTAssertTrue(draws([MGPoint(-1, 0.5), MGPoint(2, 0.5)]), "a chord across the window, both ends outside")
+        XCTAssertFalse(draws([MGPoint(0.5, 0.5)]), "one point")
+        XCTAssertFalse(draws([MGPoint(0.5, 0.5), MGPoint(2, 2), MGPoint(0.3, 0.3)], [1, 2]), "one-point pieces")
+        XCTAssertFalse(draws([MGPoint(0.5, 0.5), MGPoint(0.5, 0.5), MGPoint(0.5, 0.5)]), "a curve that stays at one point")
+        XCTAssertFalse(draws([MGPoint(2, 0.5), MGPoint(1, 0.5), MGPoint(2, 0.6)]), "touching an edge")
+        XCTAssertFalse(draws([MGPoint(-1, 0), MGPoint(1, 2)]), "touching a corner")
+        XCTAssertTrue(draws([MGPoint(1, 0.2), MGPoint(1, 0.4)]), "along an edge")
+        // At parse time: each of these has a point inside the window but draws nothing there.
+        for keys in [#""r":"0""#, #""x":"0.5","y":"0.5""#, #""x":"sqrt(-abs(theta - 32))","y":"0","theta":[0,64]"#,
+                     #""x":"2 + cos(theta)","y":"sin(theta)""#] {
+            XCTAssertEqual(reason(item: #""xr":[-1,1],"yr":[-1,1],"# + keys), "curve.empty", keys)
+        }
+    }
+
     // MARK: refusals and limits
 
     func testTheBoundsAreTheDocumentedOnes() {

@@ -1277,7 +1277,6 @@ def planar(raw, t0, t1, v, measure, scale=1.0, side=1.0, stop_after=None):
             if pm is None:
                 return True
             if v.contains(pm):
-                c.visible = True
                 return False
             if v.crosses(lo[1], pm):
                 hi = (tm, pm)
@@ -1294,8 +1293,6 @@ def planar(raw, t0, t1, v, measure, scale=1.0, side=1.0, stop_after=None):
             if c.samples:
                 c.starts.append(len(c.samples))
             state["open"] = True
-        if v.contains(p):
-            c.visible = True
         c.samples.append(p)
         state["last"] = (t, p)
 
@@ -1330,6 +1327,7 @@ def planar(raw, t0, t1, v, measure, scale=1.0, side=1.0, stop_after=None):
                     add(ti + probe, right)
         if stop_after is not None and len(c.starts) > stop_after:
             return c
+    c.visible = draws_segment(c.samples, c.starts, v)
     if not measure:
         return c
     for i in range(n):
@@ -1387,12 +1385,30 @@ def check_curve(expressions, v, t0, t1, w, h, params=None, period=None, mark=Non
     return first, marked
 
 
+def _lerp(a, b, t):
+    """Mirror of `MGPoint.lerp`."""
+    return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+
+
+def draws_segment(samples, starts, v):
+    """Mirror of `MGGraph.drawsSegment`: some piece has a segment whose part inside the window has two different
+    ends. One-point pieces, segments that only touch an edge or a corner and segments whose ends coincide draw
+    nothing."""
+    for lo, hi in pieces(len(samples), starts):
+        for i in range(lo, hi - 1):
+            a, b = samples[i], samples[i + 1]
+            s = v.segment(a, b)
+            if s is None or not s[0] < s[1]:
+                continue
+            if _lerp(a, b, s[0]) != _lerp(a, b, s[1]):
+                return True
+    return False
+
+
 def clipped(points, v):
     """Mirror of `MGGraph.clipped`: the visible runs of a polyline inside the window."""
     runs, current = [], []
-
-    def lerp(a, b, t):
-        return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+    lerp = _lerp
 
     for a, b in zip(points, points[1:]):
         s = v.segment(a, b)

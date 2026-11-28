@@ -220,7 +220,7 @@ public enum MGRepairHint {
         ("curve.mark", "mark is a theta inside the theta range where the curve has a point inside the drawn window"),
         ("curve.detail", "the curve turns too fast to draw within 1% of the frame's shorter side from 256 steps of theta; shorten the theta range, lower the frequency, or move the window off a pole"),
         ("curve.breaks", "the curve breaks (gaps or poles) more than 16 times over the theta range; shorten the theta range or change the window"),
-        ("curve.empty", "no point of the curve lies inside the drawn window; set xr and yr to where the curve is"),
+        ("curve.empty", "no piece of the curve draws a segment inside the drawn window (a single point, or a curve that only touches an edge, draws nothing); set xr and yr to where the curve is"),
         ("curve.loop", "at t = 0 and t = period, each grid point across the theta range must have a value at both or at neither, and the two points, clamped into the window, must be within 1% of the window's shorter side; make the curve repeat in t with that period"),
         ("alt", "alt: 1-200 characters of \(plainText)"),
         ("steps", "a scene has 1 to 8 steps"),

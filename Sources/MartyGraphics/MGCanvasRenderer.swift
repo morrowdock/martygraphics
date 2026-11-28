@@ -602,7 +602,8 @@ public enum MGCanvasRenderer {
     }
 
     /// Draws a `curve` item: its frame (the aspect-correct window, so a circle is round), the curve piece by piece in
-    /// `theta` order (each piece cut to the window grown by 5 %, never joined across a gap or a pole) and the marked
+    /// `theta` order (each piece cut to the window grown by 5 %, never joined across a gap or a pole; a one-point piece
+    /// draws nothing, and `curve.empty` refuses a curve with no segment of nonzero length inside the window) and the marked
     /// point with its engine-computed coordinates. Draw-on traces the curve from its first point; the marked point
     /// appears once the curve is complete.
     static func planarCurve(_ ctx: GraphicsContext, _ item: MGItem, _ vp: MGViewport, _ theme: MGTheme, _ color: Color, _ p: Double) {

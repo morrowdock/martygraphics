@@ -666,11 +666,17 @@ through a `dim` patch or a step edit).
   the drawn chord must be within 1 % of the frame's shorter side of the curve
   (`MGLimits.curveTolerance`; the smaller of the distance to the chord and the
   same distance with all three points clamped into the window), `curve.detail`;
-  at most 16 breaks (`curve.breaks`); a point inside the window
-  (`curve.empty`); the marked point has a value inside the window (`curve.mark`).
-  A moving curve is checked at t = 0, ¼, ½ and ¾ of its period and must match
-  t = 0 at t = period within the tolerance, with the same gaps (`curve.loop`).
-  Between the checked instants the marked point is drawn only while it has a
+  at most 16 breaks (`curve.breaks`); at t = 0, at least one piece draws a
+  segment of nonzero length inside the window (`curve.empty`: a point inside is
+  not enough, since a one-point piece, a curve that only touches an edge or a
+  corner, and a curve that stays at one point draw nothing); the marked point has
+  a value inside the window (`curve.mark`). A moving curve is checked at t = 0,
+  ¼, ½ and ¾ of its period. `curve.loop` then compares t = period with t = 0 at
+  the 257 grid values of θ only: each grid point must have a value at both
+  instants or at neither, and the two points, each clamped into the window, must
+  be within 1 % of the window's shorter range of each other. Gaps found at step
+  midpoints, pole breaks and the marked point are outside this check, the same
+  as for `func.loop`, so a loop can still differ there. Between the checked instants the marked point is drawn only while it has a
   value inside the window. As for `func`, a pole beside a point inside the
   window is not bisected; its chord fails `curve.detail` instead of being drawn.
 - At most 6 graph checks per scene (`items.expr`): a `func` or `field` counts once
@@ -1004,9 +1010,9 @@ has tested, and handle an unknown reason by keeping the previous valid scene.
 | `curve.period` | `period` is outside 0.5–20 s, or no expression reads `t` | Read `t` in an expression, or drop `period`. |
 | `curve.detail` | The drawn chord is more than 1 % of the frame's shorter side from the curve at some step midpoint: too many turns or oscillations for 256 steps, or a pole beside a point in view | Shorten the `theta` range, lower the frequency, or move the window off the pole. |
 | `curve.breaks` | More than 16 breaks (poles or gaps) | Shorten the `theta` range or change the window. |
-| `curve.empty` | No point of the curve lies inside the drawn window | Set `xr` and `yr` to where the curve is. |
+| `curve.empty` | At t = 0 no piece of the curve draws a segment of nonzero length inside the drawn window (a single point, an edge touch or a curve that stays at one point draws nothing) | Set `xr` and `yr` to where the curve is. |
 | `curve.mark` | `mark` is outside the `theta` range, or the point there has no value or leaves the window at a checked instant | Pick a θ inside the range whose point stays in view. |
-| `curve.loop` | At t = period the curve does not match t = 0 | Make one period a whole cycle, for example `theta + 2*pi*t/4` with `period` 4. |
+| `curve.loop` | At t = period a grid point of θ has a value where it had none at t = 0 (or the reverse), or lies more than 1 % of the window's shorter range from its t = 0 point (both clamped into the window) | Make one period a whole cycle, for example `theta + 2*pi*t/4` with `period` 4. |
 | `curve.at`, `curve.w`, `curve.h`, `curve.xr`, `curve.yr`, `curve.a` / `.b` / `.c`, `curve.xl`, `curve.yl` | A frame key, range, parameter or axis label is out of range or not plain text | As for `func`: see [parametric and polar curves](#parametric-and-polar-curves). |
 | `alt`, `step.alt`, `template.alt` | A text alternative breaks the plain-text rules | Use plain text of at most 200 characters. |
 | `sliders`, `slider`, `slider.missing`, `slider.unknown.<keys>`, `slider.param`, `slider.duplicate.<p>`, `slider.min`, `slider.max`, `slider.range`, `slider.step`, `slider.step.count`, `slider.grid`, `slider.default`, `slider.label`, `slider.label.placeholder` | A slider list or slider is out of shape, or its range or step is out of bounds; a stop's label (an end's included) does not read back as exactly the value the engine would get, or its stops are too close to tell apart (`slider.grid`); its default is not exactly the value of a stop (`slider.default`); or its label is not fixed plain text | See [learner sliders](#learner-sliders); `MGRepairHint.text(for:)` gives a one-line fix. |

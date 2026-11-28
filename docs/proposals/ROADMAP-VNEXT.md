@@ -271,8 +271,14 @@ mkdir -p logs
 swift build --jobs 2 2>&1 | tee logs/curve-build.log
 # 1. The new suites and the suites this branch changed.
 swift test --jobs 2 --filter 'MartyGraphicsTests\.(CurveKindTests|CurveCaseTests|ExpressionTests|GraphCaseTests|AltTextTests|SceneV1SchemaDriftTests|ParserRegressionTests|TemplateExtensionTests|TimelineRegressionTests|StreamRegressionTests|ControllerRollbackTests|PublicEngineTests|ProgrammaticVideoTests)' 2>&1 | tee logs/curve-new.log
-swift test --jobs 2 --filter 'MartyGraphicsTests\.LessonCoreTests/testU16DefaultGrammarDocumentIsUnchanged$' 2>&1 | tee logs/curve-grammar.log
 grep MGCURVE logs/curve-new.log
+# 1b. The grammar hash: print the canonical default grammar document's FNV-1a 64 hash and byte count as macOS
+#     Foundation writes it (the `grammar digest` line), then check the assertion. See "Grammar hash" below.
+swift test --jobs 2 --filter 'MartyGraphicsTests\.LessonCoreTests/testU16DefaultGrammarDocumentIsUnchanged$' 2>&1 | tee logs/curve-grammar.log
+grep 'grammar digest' logs/curve-grammar.log
+# 1c. Only when the printed values differ from LessonCoreTests.grammarHash / grammarBytes: set both constants
+#     (Tests/MartyGraphicsTests/LessonCoreTests.swift) to the printed values, then re-run the assertion.
+swift test --jobs 2 --filter 'MartyGraphicsTests\.LessonCoreTests/testU16DefaultGrammarDocumentIsUnchanged$' 2>&1 | tee logs/curve-grammar-rerun.log
 # 2. Rendering: pixels at the engine's points, then review stills (a person looks at the curve-* and curves-* PNGs).
 swift test --jobs 2 --filter 'MartyGraphicsTests\.GraphKindTests' 2>&1 | tee logs/curve-render.log
 MG_VNEXT_RENDER_DIR="$PWD/curve-stills" swift test --filter 'MartyGraphicsTests\.GraphKindTests/testRenderReviewStills' 2>&1 | tee logs/curve-stills.log
@@ -285,10 +291,28 @@ python3 -m unittest discover -s tools/tests -v
 python3 tools/validate_local.py --check-files
 ```
 
-What to record: the commit, toolchain, pass and fail counts per log, the `MGCURVE` parse time, the still hashes, and a
-note on each curve still (the ellipse round in its widened frame with the marked point, three rose petals, the line
-r = 1/cos θ with no chord across the view, the lemniscate's gaps, the cycloid's cusps). VoiceOver reading the
-description is a separate device check.
+What to record: the commit, toolchain, pass and fail counts per log, the `MGCURVE` parse time, the `grammar digest`
+hash and byte count (and the re-run, if the constants changed), the still hashes, and a note on each curve still (a 2:1
+ellipse on equally scaled axes, twice as wide as it is tall in its widened frame, with the marked point; three rose
+petals; the line r = 1/cos θ with no chord across the view; the lemniscate's gaps; the cycloid's cusps). VoiceOver
+reading the description is a separate device check.
+
+Grammar hash. The pinned value (be1604307560a7ab, 3,774 bytes: main's sliders, the readouts and the curves) was
+computed off the Mac, by Linux Foundation's JSONSerialization and by an offline rebuild in Python that reproduces every
+earlier pin. The macOS value printed by step 1b is the canonical one: if it differs, step 1c pins it and the receipt
+records both values.
+
+Overlapping snapshots and landing order. The landing order is hardening (`fix/engine-bounds-20261127`) → audio graphs
+→ sliders → readouts → curves → caption export; hardening, audio graphs and sliders are on main (74337e2), and this
+branch is stacked on `feat/calc-readouts`, so its pin covers the sliders, the readouts and the curves together (the
+curves alone pinned 9e03a7f5a9064722, 3,565 bytes, on the old main). If the readouts land changed, the branch is
+rebased onto the new main and its hash and byte count are recomputed (steps 1b and 1c on the Mac) and pinned again
+before it merges.
+
+Windows Python result. On Windows the tool suite (`python -m unittest discover -s tools/tests`) has two known
+failures that are not from this branch and also occur on main: `test_render_blender` (`os.major` does not exist on
+Windows) and `test_symlinked_manifest_is_read_in_the_links_package` (Windows git checks symlinks out as plain files).
+CI runs Ubuntu, where the whole suite passes.
 
 ## Open questions
 

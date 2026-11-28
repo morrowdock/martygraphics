@@ -183,7 +183,7 @@
   },
   {
    "reason": "curve.empty",
-   "hint": "no point of the curve lies inside the drawn window; set xr and yr to where the curve is"
+   "hint": "no piece of the curve draws a segment inside the drawn window (a single point, or a curve that only touches an edge, draws nothing); set xr and yr to where the curve is"
   },
   {
    "reason": "curve.form",

@@ -325,6 +325,17 @@ class CurveCases(unittest.TestCase):
         self.assertFalse(v.crosses((-1, 1.5), (1, 3.5)))
         self.assertEqual(mg_expr.clamp_point((4e15, -1e15)), (1e12, -0.25e12))
 
+    def test_only_a_segment_of_nonzero_length_inside_the_window_is_visible(self):
+        v = mg_expr.Window(0, 1, 0, 1)
+        self.assertTrue(mg_expr.draws_segment([(0.2, 0.2), (0.4, 0.4)], [], v))
+        self.assertTrue(mg_expr.draws_segment([(-1, 0.5), (2, 0.5)], [], v))
+        self.assertFalse(mg_expr.draws_segment([(0.5, 0.5)], [], v))
+        self.assertFalse(mg_expr.draws_segment([(0.5, 0.5), (2, 2), (0.3, 0.3)], [1, 2], v))
+        self.assertFalse(mg_expr.draws_segment([(0.5, 0.5)] * 3, [], v))
+        self.assertFalse(mg_expr.draws_segment([(2, 0.5), (1, 0.5), (2, 0.6)], [], v))
+        self.assertFalse(mg_expr.draws_segment([(-1, 0), (1, 2)], [], v))
+        self.assertTrue(mg_expr.draws_segment([(1, 0.2), (1, 0.4)], [], v))
+
     def test_a_curve_counts_twice_toward_the_expression_budget(self):
         curve = {"id": "c", "k": "curve", "at": [1, 1], "w": 2, "h": 2, "xr": [-2, 2], "yr": [-2, 2], "r": "1"}
         func = {"id": "f", "k": "func", "at": [1, 1], "w": 2, "h": 2, "xr": [-1, 1], "yr": [-1, 1], "y": "x"}

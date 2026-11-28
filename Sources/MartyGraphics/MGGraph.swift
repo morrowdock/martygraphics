@@ -7,7 +7,8 @@ struct MGCurve: Equatable {
     /// Indices into `samples` where a new piece starts (never 0): after a gap where the function has no value, or at a
     /// pole between two samples.
     var starts: [Int] = []
-    /// A sample, or a crossing found between two samples, lies inside the y range.
+    /// `func` (`MGGraph.curve`): a sample, or a crossing found between two samples, lies inside the y range. `curve`
+    /// (`MGGraph.planar`): some piece draws a segment of nonzero length inside the window (`MGGraph.drawsSegment`).
     var visible = false
     /// Largest distance at an interval midpoint between the drawn polyline and the function, as a fraction of the frame
     /// height (`MGGraph.curve`; 0 when not measured).
