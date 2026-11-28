@@ -269,7 +269,7 @@ final class RenderQualityTests: XCTestCase {
         let size = CGSize(width: 480, height: 320)
         let items = MGTimeline.frame(scene, items: scene.items, time: 0.5)
         let input = MGRenderInput(scene: scene, items: items, viewport: MGViewport(size: size, width: scene.width, height: scene.height, camera: nil),
-                                  time: 0.5)
+                                  theme: .classic, time: 0.5)
         let base = MGCanvasLayers.base(items, live: MGCanvasLayers.live(scene, items: items))
         func render(_ layer: MGCanvasLayer) throws -> CGImage {
             let r = ImageRenderer(content: Canvas { ctx, _ in MGCanvasRenderer.draw(input, in: ctx, layer: layer) }.frame(width: size.width, height: size.height))

@@ -2,19 +2,22 @@
 
 ## 2D boards
 
-Studio is the default 2D palette. Paper applies the same semantic roles to a warm light background.
+Studio visibly changes the default appearance of existing 2D boards. Paper applies the same semantic roles to a warm light background.
 Select a palette with `MGRenderInput(theme:)` or set `.environment(\.mgTheme, .paper)` on a host view.
-`.classic` and its existing alias `.board` select the original dark board palette. Select
-`.transitionStyle(.spring)` for the original stepping motion. Bounded motion is the default.
+For the previous palette and motion, apply `.environment(\.mgTheme, .classic)` and
+`.transitionStyle(.spring)`. The palette alias `.board` also selects Classic. Bounded motion is the default.
 
 Blue identifies objects and normal force, orange friction, violet gravity, teal tension, green velocity,
 red applied force, and magenta acceleration and energy. Amber is reserved for the single focus treatment.
+The legacy `.yellow` role deliberately resolves to ink in v2, departing from the design proposal's amber
+mapping for that role. Ink outlines replace glowing emphasis rings and keep selection and other emphasis
+visible alongside the amber focus.
 Direct labels carry the distinction between blue normal and violet gravity. Paper red and green status
 marks need a word and glyph whenever a board uses them to communicate status.
 
 Bricolage Grotesque and DM Mono ship with their OFL texts. Board scope can be supplied using
-`MGRenderInput.scope`. The renderer also describes the incline template and supplied-point plots
-using information already available in the checked scene. The schema carries no theme selector.
+`MGRenderInput.scope`. The renderer adds automatic scope chips for BST and supplied-point plots. Incline scope
+comes from the render host. The schema carries no theme selector. The full scaled typography rules are Phase 5.
 
 The hosted **Design v2 review stills** workflow produces eight views of incline, tree search and a supplied-point
 plot in each palette. See [the phase plan](../PHASE-PLAN.md) for the remaining design work.

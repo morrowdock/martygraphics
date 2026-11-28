@@ -101,7 +101,7 @@ final class PublicEngineTests: XCTestCase {
         let input = MGRenderInput(scene: scene,
                                   items: MGTimeline.frame(scene, items: scene.items, time: 1),
                                   viewport: MGViewport(size: size, width: scene.width, height: scene.height, camera: nil),
-                                  focus: nil, time: 1)
+                                  theme: .classic, focus: nil, time: 1)
         let renderer = ImageRenderer(content: Canvas { context, _ in
             MGCanvasRenderer.draw(input, in: context)
         }.frame(width: size.width, height: size.height))

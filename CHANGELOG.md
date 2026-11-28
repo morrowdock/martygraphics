@@ -3,8 +3,11 @@
 ## [Unreleased]
 
 ### Changed
-- 2D boards default to the warm-neutral Studio palette and bounded transitions. Paper is available as a light
-  palette and Classic retains the original board styling. Board labels use bundled OFL fonts in the v2 palettes.
+- **Visible default change:** Existing 2D boards now use Studio and bounded transitions. For the previous look
+  and motion, apply `.environment(\.mgTheme, .classic)` and `.transitionStyle(.spring)`. Paper is available as a
+  light palette. Studio and Paper use bundled OFL fonts, add automatic scope chips for BST and supplied-point
+  plots, and replace glowing emphasis rings with ink outlines for selection and emphasis. The legacy
+  `.yellow` role draws as ink in v2 so amber serves only as the focus signal.
 - Added a hosted macOS workflow that exports 16 design review stills across Studio and Paper.
 
 - **Breaking:** `func.empty` now uses the rule of `curve.empty`: at t = 0 some piece of the graph must draw a

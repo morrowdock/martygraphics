@@ -38,6 +38,26 @@ def simulated_lab(rgb, matrix):
 
 
 class DesignPaletteTests(unittest.TestCase):
+    def test_roles_map_to_the_intended_hue_families(self):
+        source = Path(__file__).resolve().parents[2] / "Sources/MartyGraphics/MGTheme.swift"
+        swift = source.read_text(encoding="utf-8")
+        groups = re.search(r"let roles: \[\[MGColorRole\]\] = \[(.*?)\n        \]", swift, re.S)
+        self.assertIsNotNone(groups)
+        keys = ("blue", "orange", "teal", "magenta", "green", "violet", "red")
+        expected = {
+            "blue": {"accent", "normal", "potential", "blue"},
+            "orange": {"friction", "warn", "orange"},
+            "teal": {"tension", "teal"},
+            "magenta": {"accel", "energy"},
+            "green": {"velocity", "kinetic", "good", "green"},
+            "violet": {"gravity", "purple"},
+            "red": {"force", "red"},
+        }
+        actual = re.findall(r"\[([^]]+)\]", groups[1])
+        self.assertEqual(len(actual), len(keys))
+        self.assertEqual(dict(zip(keys, (set(re.findall(r"\.(\w+)", group)) for group in actual))), expected)
+        self.assertIn(".yellow: hex(ink)", swift)
+
     def test_role_hue_families_stay_distinct_in_both_simulations(self):
         source = Path(__file__).resolve().parents[2] / "Sources/MartyGraphics/MGTheme.swift"
         declarations = re.findall(

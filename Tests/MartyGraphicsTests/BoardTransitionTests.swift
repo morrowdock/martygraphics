@@ -213,7 +213,8 @@ final class BoardTransitionTests: XCTestCase {
     let host: NSHostingView<AnyView>
     var style: MGTransitionStyle?
     var reduceMotion: Bool?
-    var theme = MGTheme.board
+    var theme = MGTheme.classic
+    var emphasis: Set<String> = []
     var markers: [String: Int] = [:]
     var selection: String?
     /// The accessibility label of a plain SwiftUI `Text` hosted below the board, when set: an accessibility control
@@ -237,6 +238,7 @@ final class BoardTransitionTests: XCTestCase {
     /// The board with the rig's current modifiers and environment (what a host changing them does).
     func rebuild() {
         var board = MartyGraphicsView(controller: controller).boardProbe(probe).boardReduceMotion(reduceMotion).markers(markers)
+            .emphasis(emphasis)
             .selection(Binding(get: { [unowned self] in self.selection }, set: { [unowned self] in self.selection = $0 }))
         if let style { board = board.transitionStyle(style) }
         // Hosted in this test process, the board did not read the `.active` scene phase (Mac run #23: it never ran its
@@ -303,6 +305,60 @@ final class BoardTransitionHostTests: XCTestCase {
         XCTAssertEqual(Double(v.scale), Double(want.scale), accuracy: 1e-9, "\(what): scale", file: file, line: line)
         XCTAssertEqual(v.center.x, want.center.x, accuracy: 1e-9, "\(what): centre x", file: file, line: line)
         XCTAssertEqual(v.center.y, want.center.y, accuracy: 1e-9, "\(what): centre y", file: file, line: line)
+    }
+
+    @MainActor func testStudioSelectionDrawsAlongsideStepFocus() throws {
+        let json = Self.json.replacingOccurrences(of: #"{"say":"First step."}"#,
+                                                   with: #"{"say":"First step.","focus":"arrow"}"#)
+        let scene = try MGParser.scene(data: Data(json.utf8)).get()
+        let rig = BoardRig(scene)
+        defer { rig.close() }
+        rig.theme = .studio
+        rig.rebuild()
+        rig.settle()
+        let focused = try rig.frame(Self.size)
+        XCTAssertEqual(focused.focus, "arrow")
+        XCTAssertTrue(focused.emphasis.isEmpty)
+        let tap = try XCTUnwrap(rig.probe.tap)
+        let point = focused.viewport.point(MGPoint(3, 2.5))
+        tap(point, Self.size)
+        let selected = try rig.frame(Self.size)
+        XCTAssertEqual(rig.selection, "zone")
+        XCTAssertEqual(selected.focus, "arrow")
+        XCTAssertEqual(selected.emphasis, ["zone"])
+        let focusedPixels = try renderedBoard(focused)
+        let selectedPixels = try renderedBoard(selected)
+        XCTAssertTrue(focusedPixels != selectedPixels, "selection must change the rendered board")
+        var withoutFocus = selected
+        withoutFocus.focus = nil
+        let selectionOnly = try renderedBoard(withoutFocus)
+        XCTAssertTrue(selectedPixels != selectionOnly, "the step focus must remain visible alongside selection")
+    }
+
+    @MainActor func testStudioDrawsEveryExplicitEmphasisWithoutStepFocus() throws {
+        let rig = BoardRig(try scene())
+        defer { rig.close() }
+        rig.theme = .studio
+        rig.emphasis = ["zone", "dot"]
+        rig.rebuild()
+        rig.settle()
+        let both = try rig.frame(Self.size)
+        XCTAssertNil(both.focus)
+        XCTAssertEqual(both.emphasis, ["zone", "dot"])
+        let bothPixels = try renderedBoard(both)
+        for id in both.emphasis {
+            var one = both
+            one.emphasis.remove(id)
+            let onePixels = try renderedBoard(one)
+            XCTAssertTrue(bothPixels != onePixels, "emphasis on \(id) must change the rendered board")
+        }
+    }
+
+    @MainActor private func renderedBoard(_ input: MGRenderInput) throws -> [UInt8] {
+        let size = input.viewport.size
+        let board = Canvas { context, _ in MGCanvasRenderer.draw(input, in: context) }
+        let renderer = ImageRenderer(content: board.frame(width: size.width, height: size.height))
+        return try Self.rgba(XCTUnwrap(renderer.cgImage))
     }
 
     static let grow = #"{"v":1,"ops":[{"op":"set","id":"arrow","key":"len","value":6},{"op":"remove","id":"note"}]}"#

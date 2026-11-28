@@ -142,7 +142,7 @@ public enum MGCanvasRenderer {
             $0.kind == .highlight && ($0.ref.flatMap { byID[$0] } != nil)
                 && (input.opacity[$0.id] ?? 1) > 0.001
         }
-        let focusID = highlight?.ref ?? input.focus ?? input.emphasis.sorted().first
+        let focusID = highlight?.ref ?? input.focus
 
         // Parallel arrows on one body fan out sideways so they never hide each other.
         var fan: [String: CGFloat] = [:]
@@ -198,7 +198,8 @@ public enum MGCanvasRenderer {
                     }
                     l.fill(shape, with: shading)
                 }
-                body.stroke(shape, with: .color(.white.opacity(0.35)), lineWidth: 1.5)
+                let outline = theme.v2 != nil ? theme.grid : Color.white.opacity(0.35)
+                body.stroke(shape, with: .color(outline), lineWidth: 1.5)
                 let box = CGRect(x: c.x - side / 2, y: c.y - side / 2, width: side, height: side)
                 obstacles.append(box)
                 if let text = item.label {
@@ -210,7 +211,14 @@ public enum MGCanvasRenderer {
                 guard let o = item.pts.first else { continue }
                 let b = item.n("base"), h = b * tan(item.n("angle") * .pi / 180)
                 var tri = Path(); tri.move(to: vp.point(o)); tri.addLine(to: vp.point(o + MGPoint(b, 0))); tri.addLine(to: vp.point(o + MGPoint(b, h))); tri.closeSubpath()
-                ctx.fill(tri, with: theme.v2 != nil ? .color(color.opacity(0.22)) : .linearGradient(Gradient(colors: [color.opacity(0.32), color.opacity(0.12)]), startPoint: vp.point(o + MGPoint(b, h)), endPoint: vp.point(o)))
+                let shading: GraphicsContext.Shading
+                if theme.v2 != nil {
+                    shading = .color(color.opacity(0.22))
+                } else {
+                    let gradient = Gradient(colors: [color.opacity(0.32), color.opacity(0.12)])
+                    shading = .linearGradient(gradient, startPoint: vp.point(o + MGPoint(b, h)), endPoint: vp.point(o))
+                }
+                ctx.fill(tri, with: shading)
                 ctx.stroke(tri, with: .color(color.opacity(0.85)), lineWidth: 2)
                 if item.n("angle") > 1 {
                     var arc = Path(); let c = vp.point(o)
@@ -274,7 +282,14 @@ public enum MGCanvasRenderer {
                 guard let c = item.pts.first.map(vp.point) else { continue }
                 let r = vp.length(item.n("r"))
                 let disc = Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
-                ctx.fill(disc, with: theme.v2 != nil ? .color(color.opacity(0.22)) : .radialGradient(Gradient(colors: [color.opacity(0.5), color.opacity(0.15)]), center: c, startRadius: 0, endRadius: r))
+                let shading: GraphicsContext.Shading
+                if theme.v2 != nil {
+                    shading = .color(color.opacity(0.22))
+                } else {
+                    let gradient = Gradient(colors: [color.opacity(0.5), color.opacity(0.15)])
+                    shading = .radialGradient(gradient, center: c, startRadius: 0, endRadius: r)
+                }
+                ctx.fill(disc, with: shading)
                 ctx.stroke(disc, with: .color(color), lineWidth: 2.5)
                 ctx.fill(Path(ellipseIn: CGRect(x: c.x - 4, y: c.y - 4, width: 8, height: 8)), with: .color(theme.ink))
             case .rope:
@@ -384,7 +399,14 @@ public enum MGCanvasRenderer {
                 let disc = Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
                 ctx.drawLayer { l in
                     if theme.v2 == nil { l.addFilter(.shadow(color: color.opacity(0.5), radius: 8)) }
-                    l.fill(disc, with: theme.v2 != nil ? .color(color.opacity(0.22)) : .radialGradient(Gradient(colors: [color.opacity(0.55), color.opacity(0.22)]), center: c, startRadius: 0, endRadius: r))
+                    let shading: GraphicsContext.Shading
+                    if theme.v2 != nil {
+                        shading = .color(color.opacity(0.22))
+                    } else {
+                        let gradient = Gradient(colors: [color.opacity(0.55), color.opacity(0.22)])
+                        shading = .radialGradient(gradient, center: c, startRadius: 0, endRadius: r)
+                    }
+                    l.fill(disc, with: shading)
                 }
                 ctx.stroke(disc, with: .color(color), lineWidth: 2)
                 if let s = item.text { ctx.draw(Text(s).font(boardFont(theme, size: max(10, min(18, r * 0.8)), weight: .bold, design: .rounded)).foregroundColor(theme.ink), at: c) }
@@ -406,12 +428,20 @@ public enum MGCanvasRenderer {
         guard selection.drawsOverlays else { return }
 
         // Emphasis rings, then numbered markers (object list ↔ board), drawn under labels.
-        for id in input.emphasis.sorted() where theme.v2 == nil {
+        for id in input.emphasis.sorted() {
             guard let target = byID[id], let r = MGLayout.bounds(target, in: input.items, vp) else { continue }
-            let box = r.insetBy(dx: -9, dy: -9), glow = theme.color(.yellow)
+            let box = r.insetBy(dx: -9, dy: -9)
+            let outline = Path(roundedRect: box, cornerRadius: 10)
+            if theme.v2 != nil {
+                guard id != focusID else { continue }
+                ctx.stroke(outline, with: .color(theme.backgroundTop), lineWidth: 5)
+                ctx.stroke(outline, with: .color(theme.ink), lineWidth: 2)
+                continue
+            }
+            let glow = theme.color(.yellow)
             ctx.drawLayer { l in
                 l.addFilter(.shadow(color: glow.opacity(0.9), radius: 10))
-                l.stroke(Path(roundedRect: box, cornerRadius: 10), with: .color(glow.opacity(0.9)), lineWidth: 2.5)
+                l.stroke(outline, with: .color(glow.opacity(0.9)), lineWidth: 2.5)
             }
         }
         for (id, n) in input.markers.sorted(by: { $0.value < $1.value }) {
@@ -478,7 +508,6 @@ public enum MGCanvasRenderer {
 
     private static func scopeText(_ scene: MGScene) -> String? {
         if scene.template == "bst" { return "Simplified · binary search tree" }
-        if scene.template == "incline" { return "Simplified · rigid block · no air drag" }
         if scene.items.contains(where: { $0.kind == .plot }) { return "Sampled · supplied points" }
         return nil
     }
@@ -849,7 +878,14 @@ public enum MGCanvasRenderer {
             let r = CGRect(x: x, y: baseline - bh, width: bw, height: bh)
             ctx.drawLayer { l in
                 if theme.v2 == nil { l.addFilter(.shadow(color: c.opacity(0.55), radius: 6)) }
-                l.fill(Path(roundedRect: r, cornerRadius: min(6, bw / 3)), with: theme.v2 != nil ? .color(c) : .linearGradient(Gradient(colors: [c, c.opacity(0.55)]), startPoint: CGPoint(x: 0, y: r.minY), endPoint: CGPoint(x: 0, y: r.maxY)))
+                let shading: GraphicsContext.Shading
+                if theme.v2 != nil {
+                    shading = .color(c)
+                } else {
+                    let gradient = Gradient(colors: [c, c.opacity(0.55)])
+                    shading = .linearGradient(gradient, startPoint: CGPoint(x: 0, y: r.minY), endPoint: CGPoint(x: 0, y: r.maxY))
+                }
+                l.fill(Path(roundedRect: r, cornerRadius: min(6, bw / 3)), with: shading)
             }
             small(ctx, theme, b.label, at: CGPoint(x: x + bw / 2, y: baseline + 10), color: theme.subtleInk)
             small(ctx, theme, MGPhysics.format(b.value, unit: item.text ?? ""), at: CGPoint(x: x + bw / 2, y: baseline - bh - 9), color: theme.ink)

@@ -51,7 +51,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "a0df11f89c47ac01d0b6777e78eab7effcbdd6d9ec7bd98e2e61421af50da235"
+      "sha256": "1d0b6724fcf3466a9958a065dff5467e17fca3c0237a7721110a1a7c1dae4c4b"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -259,7 +259,7 @@
     },
     {
       "path": "Examples/Showcase/Sources/MartyShowcase/Showcase.swift",
-      "sha256": "6ea8a3cd41bafe64738ecb64035e32c69a3ba8aa723000c0ea2a251ee1738066"
+      "sha256": "1153ceba159224006534960f1ade073407ba952162895aef2e9a6c2dff2e0c64"
     },
     {
       "path": "Examples/Solid3D/Package.swift",
@@ -971,7 +971,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCanvasRenderer.swift",
-      "sha256": "7976407cbb7f3ec05952cdddb239c13e3bfc7718e665fb5a3b925a8dae365685"
+      "sha256": "4abfbfeba945228fb57dd655ac81817343c58007ba0817cc789081aab465d36f"
     },
     {
       "path": "Sources/MartyGraphics/MGCaptionExport.swift",
@@ -1455,7 +1455,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/BoardTransitionTests.swift",
-      "sha256": "f57c7395c2e65b3f5c864b6d0875fd2b323ea918aefb8dc28f462e38da33d73d"
+      "sha256": "1f11ec76b1db245ae38340976b7bf26eb2fc904ed525d56732fe5a0ec267c50e"
     },
     {
       "path": "Tests/MartyGraphicsTests/CaptionExportTests.swift",
@@ -1495,7 +1495,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/EngineStillsTests.swift",
-      "sha256": "ae85e4fee7e0605966e4955cd31f5f27c0504795989eec76bb04dff619b16a9d"
+      "sha256": "2da568175a57d8ca116e3e1e81cbfc4cac5f3c7518704931769fa4edbf608bcf"
     },
     {
       "path": "Tests/MartyGraphicsTests/ExplainerAnnotationLegendTests.swift",
@@ -1579,7 +1579,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/GraphKindTests.swift",
-      "sha256": "4f42cbcb6e7195c6627415c570c4672fbe9789926ed7543f2b1dab45ba031032"
+      "sha256": "efb5e4cdc7a649ad47867cc8a7ddf6ec642eb34be9aaa057d5b96deb0d0f4b0c"
     },
     {
       "path": "Tests/MartyGraphicsTests/HighlightReferenceTests.swift",
@@ -1603,7 +1603,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonRendererTests.swift",
-      "sha256": "a3c2dae650d234efa6c3dfbc12237b9d7fb1e12f44e1e59750b62a4e02b05b49"
+      "sha256": "bf5121162ff23ffca93b3de96a768edfac0e16eb2c7b6ac014f11683b6a7caa6"
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonReviewRecheckTests.swift",
@@ -1667,7 +1667,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/PublicEngineTests.swift",
-      "sha256": "b8d877801e6e60dc7b9446ff07058c756ff4b2cda4e44f72608bedfa05212411"
+      "sha256": "1be3f75022531b5f167ce3f20fb79fdd6cb82a1a0e2d8914117993866940724d"
     },
     {
       "path": "Tests/MartyGraphicsTests/PublicTemplateAccessTests.swift",
@@ -1695,7 +1695,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/RenderQualityTests.swift",
-      "sha256": "b480307d77db79b7cc862be2b8c3843b9559df8230df26b067f5fa9f4e448d37"
+      "sha256": "4b2b1e69b35c93c75a470d93cfd343ecd10252cbef887bd6e27926a4c45f2ade"
     },
     {
       "path": "Tests/MartyGraphicsTests/RoundtripFixTests.swift",
@@ -1823,7 +1823,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/TableRegionCodeTests.swift",
-      "sha256": "c0f1c2856b75b5868131875430ef55a280ef6e9b0646b556271a7aeff66e0255"
+      "sha256": "c1f134643525f5219546f1bdc7bc290621ea9ad9bf44810f74de700430ed6750"
     },
     {
       "path": "Tests/MartyGraphicsTests/TemplateExtensionTests.swift",
@@ -2595,7 +2595,7 @@
     },
     {
       "path": "docs/VISUAL-STYLE.md",
-      "sha256": "ccb42f38f2e72e422f132ef64495684ad7ff83a745bc10f55219058855ef5cbc"
+      "sha256": "ee43072ab62d2f5527f7b4ac919660e546883b87f4a63800017105bf7d3563c3"
     },
     {
       "path": "docs/assets/STUDIO-RERENDER.md",
@@ -5091,7 +5091,7 @@
     },
     {
       "path": "tools/tests/test_design_palette.py",
-      "sha256": "753c3168e6c601dd8a95443b78b374c5648d950f3c06e1110e6939fbface23bd"
+      "sha256": "b576678595204ad1e9778da1d60a8016147c297c491e78196a78408f07d806d6"
     },
     {
       "path": "tools/tests/test_mg_expr.py",

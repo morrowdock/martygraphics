@@ -51,7 +51,7 @@ private struct Board: View {
     var theme: MGTheme = .studio
     var scope: String? = nil
 
-    var body: some View {
+    private func renderInput() -> MGRenderInput {
         let scene = example.scene
         let size = CGSize(width: width, height: height)
         let items = MGTimeline.frame(scene, items: MGTimeline.items(scene, step: step), time: time)
@@ -60,6 +60,11 @@ private struct Board: View {
                                   viewport: MGViewport(size: size, width: scene.width, height: scene.height, camera: scene.camera),
                                   theme: theme, focus: focus, time: time)
         input.scope = scope
+        return input
+    }
+
+    var body: some View {
+        let input = renderInput()
         Canvas { context, _ in MGCanvasRenderer.draw(input, in: context) }
             .frame(width: width, height: height)
             .clipShape(RoundedRectangle(cornerRadius: 14))
