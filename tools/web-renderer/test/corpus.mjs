@@ -13,6 +13,7 @@
 // `entry` is "validator" (SceneValidator.check: the 16 KiB raw bound is `input.too-large`, as the Python preflight
 // does) or "parser" (MGParser.scene(data:) itself, as the Swift unit tests call it).
 
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,13 +25,22 @@ const rel = (...p) => path.join(REPO_ROOT, ...p);
 
 const recorded = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "test", "expected", "swift-recorded.json"), "utf8")).results;
 
+// The captured expectations and snapshots refer to these historical fixture bytes.
+const baseline = "5e4952ef0edb3dbcb83941620d366547d496e3b1";
+export function baselineSource(file) {
+  return execFileSync("git", ["show", `${baseline}:${file}`], { cwd: REPO_ROOT, encoding: "utf8" });
+}
+
+const v1Files = execFileSync("git", ["ls-tree", "--name-only", `${baseline}:docs/fixtures/v1`],
+  { cwd: REPO_ROOT, encoding: "utf8" }).trim().split(/\r?\n/);
+
 /** Swift multi-line raw string: drop the closing delimiter's indentation from every line. */
 function swiftMultiline(body, indent) {
   return body.split("\n").map((l) => (l.startsWith(indent) ? l.slice(indent.length) : l.trimStart())).join("\n");
 }
 
 function mgFixtures() {
-  const src = fs.readFileSync(rel("Sources", "MartyGraphics", "MGFixtures.swift"), "utf8");
+  const src = baselineSource("Sources/MartyGraphics/MGFixtures.swift");
   const demos = [...src.matchAll(/\.init\(id: "([a-z_0-9]+)", title: "[^"]*", json: #"(.*?)"#\)/g)].map((m) => ({ id: m[1], json: m[2] }));
   const invalidBlock = src.slice(src.indexOf("public static let invalid"));
   const invalid = [...invalidBlock.matchAll(/\("([a-z_0-9]+)", #"(.*?)"#\)/g)].map((m) => ({ id: m[1], json: m[2] }));
@@ -39,14 +49,14 @@ function mgFixtures() {
     const list = Array.from({ length: 25 }, (_, k) => k + 1).map((i) => `{"id":"n${i}","k":"node","at":[${1 + (i % 10)},${1 + (i % 6)}],"text":"${i}"}`);
     invalid.push({ id: "wire_items_over_limit", json: '{"v":1,"items":[' + list.join(",") + "]}" });
   }
-  const tests = fs.readFileSync(rel("Tests", "MartyGraphicsTests", "TemplateExtensionTests.swift"), "utf8");
+  const tests = baselineSource("Tests/MartyGraphicsTests/TemplateExtensionTests.swift");
   const block = tests.slice(tests.indexOf("let expected: [String: String] = ["), tests.indexOf("XCTAssertEqual(Set(MGFixtures.invalid"));
   const expected = Object.fromEntries([...block.matchAll(/"([a-z_0-9]+)": "([^"]+)"/g)].map((m) => [m[1], m[2]]));
   return { demos, invalid, expected };
 }
 
 export function regressionFixtures() {
-  const src = fs.readFileSync(rel("Tests", "MartyGraphicsTests", "RegressionFixtures.swift"), "utf8");
+  const src = baselineSource("Tests/MartyGraphicsTests/RegressionFixtures.swift");
   const out = {};
   for (const m of src.matchAll(/static let (\w+) = #"""\n([\s\S]*?)\n( *)"""#/g)) out[m[1]] = swiftMultiline(m[2], m[3]);
   for (const m of src.matchAll(/static let (\w+) = #"(\{.*?)"#\n/g)) out[m[1]] = m[2];
@@ -86,7 +96,7 @@ export function corpus() {
     cases.push({ name, group: name.split("/")[0], bytes, entry: "validator", ...extra, swift });
   };
 
-  for (const f of fs.readdirSync(rel("docs", "fixtures", "v1")).sort()) {
+  for (const f of v1Files) {
     const file = rel("docs", "fixtures", "v1", f);
     if (fs.statSync(file).isFile()) add(`fixtures/${f}`, fs.readFileSync(file));
   }

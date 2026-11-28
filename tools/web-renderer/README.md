@@ -11,12 +11,12 @@ It is a TypeScript port of the 2D scene path:
 
 | Swift source (main, `5e4952e`) | Port | Scope |
 | --- | --- | --- |
-| [MGParser.swift](../../Sources/MartyGraphics/MGParser.swift), [MGModel.swift](../../Sources/MartyGraphics/MGModel.swift) | `src/parser.ts`, `src/primitives.ts`, `src/json.ts`, `src/model.ts` | Closed keys, limits, ranges, text rules, placeholders, references, cumulative step edits, wire form, every reason code |
+| [MGParser.swift](../../Sources/MartyGraphics/MGParser.swift), [MGModel.swift](../../Sources/MartyGraphics/MGModel.swift) | `src/parser.ts`, `src/primitives.ts`, `src/json.ts`, `src/model.ts` | Closed keys, limits, ranges, text rules, placeholders, references, cumulative step edits, wire form, reason codes for the historical corpus |
 | [MGTemplates.swift](../../Sources/MartyGraphics/MGTemplates.swift), [MGGraphPack.swift](../../Sources/MartyGraphics/MGGraphPack.swift) | `src/templates*.ts`, `src/pack-graphs.ts` | Parameter validation; `bst` and `two_pointers` (core); `shortest_path` (opt-in `graphs` pack) |
 | [MGPatch.swift](../../Sources/MartyGraphics/MGPatch.swift) | `src/patch.ts` | Patch parsing, revisions, whole-scene revalidation |
 | [MGTimeline.swift](../../Sources/MartyGraphics/MGTimeline.swift) | `src/timeline.ts`, `src/frame.ts` | Step visibility and edits, `move` motion, settled frame of a step |
 | [MGLayout.swift](../../Sources/MartyGraphics/MGLayout.swift), [MGTheme.swift](../../Sources/MartyGraphics/MGTheme.swift), [MGPhysics.swift](../../Sources/MartyGraphics/MGPhysics.swift) | `src/layout.ts`, `src/theme.ts`, `src/format.ts` | Viewport, footprints, label placement, board theme, number format |
-| [MGCanvasRenderer.swift](../../Sources/MartyGraphics/MGCanvasRenderer.swift) | `src/renderer.ts`, `src/gfx.ts` | Every 2D kind, focus ring, labels; emphasis rings, markers and table emphasis as API inputs |
+| [MGCanvasRenderer.swift](../../Sources/MartyGraphics/MGCanvasRenderer.swift) | `src/renderer.ts`, `src/gfx.ts` | The original 19 2D kinds, focus ring, labels; emphasis rings, markers and table emphasis as API inputs |
 | [SceneValidator.swift](../SceneValidator/Sources/SceneValidatorCore/SceneValidator.swift) | `src/validator.ts` | The 16 KiB raw bound (`input.too-large`) before the parser |
 
 No runtime dependencies. TypeScript and Playwright are dev dependencies; PNG output
@@ -33,8 +33,7 @@ node render.mjs ../../docs/fixtures/v1/shortest-path.scene.json --pack graphs --
 node render.mjs ../../docs/fixtures/v1/highlight-cycle.scene.json --check   # {"status":"invalid","reason":"highlight.cycle"}, exit 1
 ```
 
-`node render.mjs SCENE.json [options]` validates the scene in Node with the Swift
-rules first. A refused scene prints `{"status":"invalid","reason":…}`, exits 1 and
+`node render.mjs SCENE.json [options]` checks the scene against the prototype grammar in Node first. A refused scene prints `{"status":"invalid","reason":…}`, exits 1 and
 writes nothing. Options:
 
 | Option | Meaning |
@@ -55,7 +54,7 @@ focus ring, and no draw-on in progress.
 
 ## Item kinds
 
-All 19 kinds are drawn in 2D, plus the 3D-only checks (`dir` vectors, 3D kinds) in the
+The original 19 kinds are drawn in 2D, plus the 3D-only checks (`dir` vectors, 3D kinds) in the
 validator. The Swift captures in [docs/assets/native](../../docs/assets/native/provenance.json)
 show only some kinds. The geometry of the others is ported line by line from
 `MGCanvasRenderer.swift` but has no pixel evidence:
@@ -78,6 +77,21 @@ Not ported: drawing 3D scenes (`dim: 3d` validates, then the CLI refuses with
 between steps (`MGTimeline.blend`, camera interpolation; draw-on progress exists as
 the `appear` input), lessons, statement streams and explainers (separate protocols),
 the opt-in geometry pack (`rotate2d`) and host-registered packs.
+
+## Scope on main at `f614641`
+
+| Feature | Prototype behavior |
+| --- | --- |
+| `text` with `style: "math"` | Refuses with `web.unsupported.text.math`, including when a step or patch changes the style. |
+| Learner sliders | Refuses the `sliders` scene key with `web.unsupported.sliders`. |
+| Expression graphs and readouts | Refuses `func` with `web.unsupported.func`, including its readouts and the `func.empty` nonzero visible segment rule. The existing sampled `plot` remains supported. |
+| Vector fields and parametric or polar curves | Refuses `field` and `curve` with `web.unsupported.field` and `web.unsupported.curve`. |
+| Audio graph playback and caption export | Outside the settled, muted PNG renderer. |
+
+The evidence below is limited to the original 2D corpus and native captures.
+Audio playback, caption export and accessibility metadata (`alt`) are outside this scope.
+The historical tests require a Git checkout containing `5e4952e` to read the matching Swift
+fixture sources. Their results apply to that corpus only.
 
 ## Parity
 
@@ -247,13 +261,13 @@ Playwright's Chromium only.
 
 ## Tests
 
-`npm test` builds and runs all 612 tests in about 10 seconds:
+`npm test` builds and runs all 613 tests:
 
 | File | Tests | What |
 | --- | ---: | --- |
 | `test/parser-swift.unit.test.mjs` | 246 | Every corpus input with a Swift expectation: 40 recorded results, 199 from the Swift test sources, 5 from reading the source |
 | `test/parser-python.unit.test.mjs` | 250 | Python preflight verdicts captured in `test/expected/python-checker.json`; each of the 24 documented differences must give the Swift expectation |
-| `test/engine.unit.test.mjs` | 16 | Number format, JSON front door, step playback, template narration, patches, wire round trip, Dijkstra oracle, a refused render keeps the shadow calibration |
+| `test/engine.unit.test.mjs` | 17 | Number format, JSON front door, step playback, template narration, patches, wire round trip, Dijkstra oracle, a refused render keeps the shadow calibration, explicit refusals for current scene features |
 | `test/render-snapshot.render.test.mjs` | 88 | 86 frames against `test/snapshots` thumbnails (4× reduced; ≤ 0.5% of pixels may change by more than 16) |
 | `test/cli.render.test.mjs` | 5 | Sizes, scale, all steps, packs, patches, fail-closed refusals, usage errors |
 | `test/parity-metric.render.test.mjs` | 7 | The shared parity metric: unchanged scenes pass, both negative controls fail, missing evidence fails, a shadow override lasts one render |

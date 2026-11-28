@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Port of `MGParser` (Sources/MartyGraphics/MGParser.swift): strict, fail-safe decoder for the scene DSL v1. Every
 // object has a closed key set; numbers must be finite and in range; text must be short plain text; ids must be
-// unique and every reference must resolve. Any violation rejects the whole scene with the same reason code as Swift.
+// unique and every reference must resolve. The prototype rejects unsupported scene features before rendering.
 
 import { MGError, fail } from "./errors.js";
 import { format } from "./format.js";
@@ -44,6 +44,7 @@ export function parseScene(json: JSONValue, opts: ParseOptions = {}): MGScene {
   if (!o) fail("scene.object");
   const entry = checkEntry(json, MGLimits.depth, MGLimits.sceneBytes, { number: "scene.number", depth: "scene.depth", bytes: "scene.bytes" });
   if (entry) fail(entry);
+  if (has(o, "sliders")) fail("web.unsupported.sliders");
   closed(o, ["v"], TOP_KEYS, "scene");
   if (get(o, "v") !== 1) fail("scene.version");
   let is3D: boolean;
@@ -275,6 +276,7 @@ export function apply(e: MGEdit, items: MGItem[], ctx: Ctx): MGItem[] {
 export function item(json: JSONValue, ctx: Ctx): MGItem {
   const o = objectValue(json);
   const k = o ? get(o, "k") : undefined;
+  if (k === "func" || k === "field" || k === "curve") fail(`web.unsupported.${k}`);
   if (!o || typeof k !== "string" || !isKind(k)) fail("item.kind");
   const kind = k;
   closed(o, [...requiredKeys(kind), "id", "k"], allowedKeys(kind), `item.${k}`);
@@ -396,6 +398,7 @@ export function item(json: JSONValue, ctx: Ctx): MGItem {
       it.num["r"] = req("r", 0.1, sp / 2);
       break;
     case "text": {
+      if (get(o, "style") === "math") fail("web.unsupported.text.math");
       it.pts = [p("at")];
       // Text is checked before style, as in Swift, so older invalid documents keep their reason.
       const style = get(o, "style");

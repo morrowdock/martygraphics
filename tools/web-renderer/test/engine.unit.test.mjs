@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { REPO_ROOT, regressionFixtures } from "./corpus.mjs";
+import { REPO_ROOT, baselineSource, regressionFixtures } from "./corpus.mjs";
 import { MG } from "./helpers.mjs";
 
 const enc = (s) => Buffer.from(s, "utf8");
@@ -130,7 +130,7 @@ test("timeline: spring settles exactly", () => {
 });
 
 function mgDemos() {
-  const src = fs.readFileSync(path.join(REPO_ROOT, "Sources", "MartyGraphics", "MGFixtures.swift"), "utf8");
+  const src = baselineSource("Sources/MartyGraphics/MGFixtures.swift");
   return [...src.matchAll(/\.init\(id: "([a-z_0-9]+)", title: "[^"]*", json: #"(.*?)"#\)/g)].map((m) => ({ id: m[1], json: m[2] }));
 }
 
@@ -251,7 +251,7 @@ test("patches: the title fixture advances the revision once and is stale after",
 });
 
 test("patches: every MGFixtures.patches entry applies to its fixture", () => {
-  const src = fs.readFileSync(path.join(REPO_ROOT, "Sources", "MartyGraphics", "MGFixtures.swift"), "utf8");
+  const src = baselineSource("Sources/MartyGraphics/MGFixtures.swift");
   const patches = [...src.matchAll(/\.init\(id: "([a-z_0-9]+)", scene: "([a-z_0-9]+)", ask: "[^"]*",\s*json: #"(.*?)"#\)/g)];
   assert.equal(patches.length, 6);
   const demos = Object.fromEntries(mgDemos().map((d) => [d.id, d.json]));
@@ -293,4 +293,20 @@ test("a refused render request does not change the shadow calibration of later r
   const refused = browser.render({}, { scene: fixture("unknown-key.scene.json").toString("utf8"), width: 760, height: 440, shadowBlurPerRadius: 0.25 });
   assert.equal(refused.ok, false);
   assert.equal(gfx.SHADOW_BLUR_PER_RADIUS, before);
+});
+
+test("current main scene features have explicit prototype refusals", () => {
+  const fixture = (name) => JSON.parse(fs.readFileSync(
+    path.join(REPO_ROOT, "docs", "fixtures", "v1", name), "utf8"));
+  assert.throws(() => MG.parseScene(fixture("sliders.scene.json")),
+    (error) => error.reason === "web.unsupported.sliders");
+  for (const [name, kind] of [["calculus", "func"], ["curves", "curve"], ["graphs", "field"]]) {
+    const item = fixture(`${name}.scene.json`).items.find(({ k }) => k === kind);
+    assert.ok(item, `${name} contains ${kind}`);
+    assert.throws(() => MG.parseScene({ v: 1, items: [item] }),
+      (error) => error.reason === `web.unsupported.${kind}`);
+  }
+  const [{ text }] = fixture("math.cases.json").spoken;
+  const scene = { v: 1, items: [{ id: "label", k: "text", at: [2, 2], text, style: "math" }] };
+  assert.throws(() => MG.parseScene(scene), (error) => error.reason === "web.unsupported.text.math");
 });
