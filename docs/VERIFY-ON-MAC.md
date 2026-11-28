@@ -31,8 +31,8 @@ swift test --filter 'MartyGraphicsTests.LessonCoreTests/testU16DefaultGrammarDoc
   | tee "${TMPDIR:-/tmp}/mg-grammar.log" | grep -E 'grammar digest|byte count|Executed'
 ```
 
-Expected with the learner sliders (main) and the `func` readouts: the line
-`grammar digest 90c90ae261b9fb9c byte count 3552`, and the test passes.
+Expected with sliders, readouts, curves, and math text: the line
+`grammar digest 562c1edca6aa489c byte count 4416`, and the test passes.
 Record the commit, that line and the result. A different digest or byte count
 fails the test, and its message repeats them. Then update `grammarHash` and
 `grammarBytes` to the Darwin values in a reviewed commit that names the old and

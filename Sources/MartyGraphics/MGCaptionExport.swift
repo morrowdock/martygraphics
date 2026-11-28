@@ -21,9 +21,9 @@ import Foundation
 /// full-length line), and its words are spread over those cues in balanced lines. The cues share the hold by their
 /// length, each lasting at least `minCueSeconds`.
 ///
-/// Words. The cue lines hold the narration's words in order, unchanged: only the whitespace between two words becomes
-/// one space or a line break. A no-break space (U+00A0, U+2007, U+202F) never breaks a line. The transcript keeps
-/// the narration exactly as written.
+/// Words. Cue lines hold the narration in order, followed by the spoken descriptions of visible formulas.
+/// Whitespace between words becomes one space or a line break. A no-break space (U+00A0, U+2007, U+202F) never
+/// breaks a line. The transcript keeps the narration exactly as written.
 ///
 /// Text rules, applied when each format is written: a timed cue payload (WebVTT and SubRip) never holds a line
 /// terminator (`payloadLine`); WebVTT escapes `&`, `<` and `>` one Unicode scalar at a time (`escapeVTT`); SubRip has
@@ -244,8 +244,7 @@ public struct MGCaptionExport: Equatable, Sendable {
     }
 
     /// Per cue its number, `start --> end` (comma before the milliseconds) and its payload (`subRipPayload`), blocks
-    /// separated by a blank line. SubRip has no escapes: the lines are the narration's words as they are, and a cue
-    /// SubRip cannot hold is refused (`captions.text`).
+    /// separated by a blank line. SubRip has no escapes and refuses cues it cannot hold (`captions.text`).
     public var subRip: String {
         get throws {
             let fps = plan?.fps ?? 1
@@ -258,7 +257,8 @@ public struct MGCaptionExport: Equatable, Sendable {
 
     /// The plain-text transcript: the title, then per beat `[time] n. narration` (the time its caption appears; the
     /// narration exactly as written) and, when the beat has a board, `Text alternative: …` (the author's `alt`) or
-    /// `Board (engine description): …`. Blocks are separated by a blank line.
+    /// `Board (engine description): …`. Visible formulas are described on a new line after `Text alternative:`
+    /// when the board has `alt` text. Blocks are separated by a blank line.
     public var transcript: String {
         var blocks: [String] = []
         if let title, !title.isEmpty { blocks.append(title) }

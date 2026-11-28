@@ -460,7 +460,7 @@ final class LessonCoreTests: LessonTestCase {
         // FNV-1a 64 of the canonical default grammar document. Its inputs (MGGrammar, MGParser key tables, MGKind,
         // MGColorRole, core templates, MGLimits) match origin/main 6211345 except for the additive `table` and `region`
         // kinds (two more `kinds` entries) and the additive `func` and `field` kinds, `alt` scene key and `expression`
-        // inventory, sliders, readouts, curves and math text. This pin was recorded on Swift 6.4.3 for Linux.
+        // inventory, sliders, readouts, curves and math text. This pin was recorded on Swift 6.4.3 for Linux (pending Mac verification).
         var hash: UInt64 = 0xcbf29ce484222325
         for b in data { hash = (hash ^ UInt64(b)) &* 0x100000001b3 }
         print("grammar digest \(String(hash, radix: 16)) byte count \(data.count)")

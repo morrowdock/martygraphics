@@ -382,7 +382,11 @@ final class MathTextTests: XCTestCase {
                     XCTAssertTrue(fit.scale <= 1 && fit.scale >= lowest - 1e-12, label)
                     XCTAssertGreaterThanOrEqual(fit.left, MGMathText.fitMargin - 1e-9, label)
                     XCTAssertLessThanOrEqual(fit.width, room + 1e-9, label)
-                    if room > 0 { XCTAssertLessThanOrEqual(fit.left + fit.width, canvas - MGMathText.fitMargin + 1e-9, label) }
+                    if room > 0 {
+                        let right: Double = fit.left + fit.width
+                        let limit: Double = canvas - MGMathText.fitMargin + 1e-9
+                        XCTAssertLessThanOrEqual(right, limit, label)
+                    }
                     if fit.clipped {
                         XCTAssertEqual(fit.scale, lowest, accuracy: 1e-12, label)
                         XCTAssertEqual(fit.width, room, accuracy: 1e-9, label)
@@ -406,12 +410,16 @@ final class MathTextTests: XCTestCase {
                 let box = try XCTUnwrap(MGLayout.bounds(item, in: parsed.items, vp))
                 let label = "\(text) at x \(x) on \(canvas)"
                 // The box is the drawn box with 4 points of padding at each side.
-                XCTAssertGreaterThanOrEqual(Double(box.minX), MGMathText.fitMargin - 4 - 1e-6, label)
-                XCTAssertLessThanOrEqual(Double(box.maxX), canvas - MGMathText.fitMargin + 4 + 1e-6, label)
+                let leftLimit: Double = MGMathText.fitMargin - 4 - 1e-6
+                let rightLimit: Double = canvas - MGMathText.fitMargin + 4 + 1e-6
+                XCTAssertGreaterThanOrEqual(Double(box.minX), leftLimit, label)
+                XCTAssertLessThanOrEqual(Double(box.maxX), rightLimit, label)
                 let m = try MGMathText.parse(text).layout(size: MGMathText.boardSize, measure: MGMathText.roughWidth)
                 let fit = MGMathText.fit(width: m.width, centre: Double(vp.point(item.pts[0]).x), canvas: canvas)
                 XCTAssertEqual(Double(box.width), fit.width + 8, accuracy: 1e-6, label)
-                XCTAssertEqual(Double(box.height), (m.ascent + m.descent) * fit.scale + 6, accuracy: 1e-6, label)
+                let formulaHeight: Double = m.ascent + m.descent
+                let boxHeight: Double = formulaHeight * fit.scale + 6
+                XCTAssertEqual(Double(box.height), boxHeight, accuracy: 1e-6, label)
                 if m.width <= canvas - 2 * MGMathText.fitMargin { XCTAssertEqual(fit.scale, 1, label) }
             }
         }

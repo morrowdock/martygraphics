@@ -58,20 +58,39 @@ final class CaptionExportTests: XCTestCase {
     }
 
     func testVisibleMathUsesAccessibilitySpeechInEveryFormat() throws {
-        let input = Data("""
-        {"v":1,"kind":"explainer","title":"Formula",
-         "board":{"v":1,"items":[{"id":"f","k":"text","at":[6,4],"style":"math","text":"sqrt(x)"}]},
-         "beats":[{"say":"Read the formula."}]}
-        """.utf8)
-        let markup = "sqrt(x)"
-        let spoken = try MGMathText.parse(markup).spoken
-        XCTAssertEqual(spoken, "the square root of x")
-        for format in MGCaptionExport.Format.allCases {
-            let result = MGCaptionExport.make(data: input, format: format, engine: nil)
+        let narration = "Read the formula."
+        for alt in [nil, "A formula is on the board."] as [String?] {
+            let alternative = alt.map { ",\"alt\":\"\($0)\"" } ?? ""
+            let board = """
+            {"v":1,"items":[{"id":"f","k":"text","at":[6,4],"style":"math","text":"sqrt(x)"}]\(alternative)}
+            """
+            let input = Data("""
+            {"v":1,"kind":"explainer","title":"Formula","board":\(board),"beats":[{"say":"\(narration)"}]}
+            """.utf8)
+            let scene = try MGParser.scene(data: Data(board.utf8)).get()
+            let math = scene.items.filter { $0.kind == .text && $0.has("math") }
+            let formula = MGDescribe.sentence(math)
+            XCTAssertEqual(formula, "The formula “the square root of x”.")
+            let expectedCue = narration + " " + formula
+            for format in [MGCaptionExport.Format.vtt, .srt] {
+                let result = MGCaptionExport.make(data: input, format: format, engine: nil)
+                XCTAssertTrue(result.ok, result.text)
+                let lines = result.text.split(separator: "\n")
+                let metadataLines = format == .vtt ? 3 : 2
+                let payload = lines.dropFirst(metadataLines).joined(separator: " ")
+                XCTAssertEqual(payload, expectedCue)
+            }
+
+            let result = MGCaptionExport.make(data: input, format: .txt, engine: nil)
             XCTAssertTrue(result.ok, result.text)
-            let words = result.text.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
-            XCTAssertTrue(words.contains(spoken), result.text)
-            XCTAssertFalse(words.contains(markup), result.text)
+            let boardText: String
+            if let alt {
+                boardText = "Text alternative: \(alt)\n\(formula)"
+            } else {
+                boardText = "Board (engine description): " + MGDescribe.board(scene)
+            }
+            let expectedTranscript = "Formula\n\n[00:00:00.000] 1. \(narration)\n\(boardText)\n"
+            XCTAssertEqual(result.text, expectedTranscript)
         }
     }
 

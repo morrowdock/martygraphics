@@ -927,8 +927,13 @@ extension MGMathText {
             let rule = 0.06 * size, top = -(r.ascent + 0.12 * size), bottom = Swift.max(r.descent, 0.1 * size)
             var out = Box(width: 0, ascent: -top + rule, descent: bottom)
             out.place(r, 0.6 * size, 0)
-            out.stroke([MGPoint(0, -0.3 * size), MGPoint(0.12 * size, -0.36 * size), MGPoint(0.32 * size, bottom),
-                        MGPoint(0.55 * size, top), MGPoint(0.6 * size + r.width + 0.08 * size, top)], rule)
+            let barEnd: Double = 0.6 * size + r.width + 0.08 * size
+            let tick: MGPoint = MGPoint(0, -0.3 * size)
+            let notch: MGPoint = MGPoint(0.12 * size, -0.36 * size)
+            let base: MGPoint = MGPoint(0.32 * size, bottom)
+            let shoulder: MGPoint = MGPoint(0.55 * size, top)
+            let end: MGPoint = MGPoint(barEnd, top)
+            out.stroke([tick, notch, base, shoulder, end], rule)
             out.width = 0.6 * size + r.width + 0.12 * size
             return out
         }

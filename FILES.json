@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "0da3325ec221ffa5de82ad5458d6ecf9c4301b6d7a7ddc63df5819bf25ffe092"
+      "sha256": "d72105f68e2154d64a6e79c81eff481b89249eb1a9b1255f481ad1df02acc495"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1163,7 +1163,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonCoreTests.swift",
-      "sha256": "f5cbc10000409a2e5d0d9137973babeb1e2425f435c34e757bcd96a7d1e8c676"
+      "sha256": "22268357dcc5b3aca014e94ae833e4d7231f4986e33f47a90fb34338f69ccdb4"
     },
     {
       "path": "Tests/MartyGraphicsTests/LessonNumericTests.swift",
@@ -1955,7 +1955,7 @@
     },
     {
       "path": "docs/EXPLAINER.md",
-      "sha256": "ad8f9e49565da98e5b11a08e3e903cb69036911f427bf5e7b2a7725a5339ea9c"
+      "sha256": "90b273879411429de0039a177bd0d0098e91fc31814107a71ab76aad877c289d"
     },
     {
       "path": "docs/EXPORT.json",
@@ -2019,7 +2019,7 @@
     },
     {
       "path": "docs/VERIFY-ON-MAC.md",
-      "sha256": "a1007edfc09d33777a04224b81685f8d0eaa70391e1a116adbe9f5a77709d09a"
+      "sha256": "c25b2aa8c02bc5bc5a290de7e64ade927cd2508f7cc4798ef8d2fc3f55d62033"
     },
     {
       "path": "docs/VISUAL-AUDIT.md",
@@ -4111,7 +4111,7 @@
     },
     {
       "path": "docs/proposals/ROADMAP-VNEXT.md",
-      "sha256": "2b7013fca77314b68ac7dc8f802772d75fbee26260c47c27d4f6a591102f03b8"
+      "sha256": "ab95a72500a18af55a8545bc3075592b61e1741161bb04334b22bd1bcc06ce82"
     },
     {
       "path": "tools/mg_expr.py",
@@ -4923,7 +4923,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGMathText.swift",
-      "sha256": "e8b11b578188dcd7a8fb92905a4538216cca277f45043189c497b91af75b4303"
+      "sha256": "dcac8c89c4bf1eb338915eda8c13021622569708dad2ea2dddfd8343f39e020a"
     },
     {
       "path": "Sources/MartyGraphics/Solid/MGSolidLoop.swift",
@@ -4943,7 +4943,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/MathTextTests.swift",
-      "sha256": "e640cef10bfde325cd0f62a7f80a8c7bcecd1bf5c39b20c5abe46d8cc02754bb"
+      "sha256": "6099e0cd82fab094e2e6ff809d86e68fe740b0e1c560d3cfa0395022965c0e57"
     },
     {
       "path": "Tests/MartyGraphicsTests/RenderQualityTests.swift",
@@ -4999,7 +4999,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGCaptionExport.swift",
-      "sha256": "bf52d497a625fe8b1af984cec6d8bf2f6ea45abc9f998978a9ef602961fab158"
+      "sha256": "bb94fa7e0c07e36ce7b3a838a3c35a6d674e8621f540284144114031a917b82e"
     },
     {
       "path": "Sources/MartyGraphics/MGPlanarCurve.swift",
@@ -5019,7 +5019,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/CaptionExportTests.swift",
-      "sha256": "09508386c9c959d0ad9397653afd3f746b91b5185594ebac7cca1c6929627487"
+      "sha256": "804f16fa3f9c302b75a878207b0285a8c8161d442999873b81955a9bafb4bc47"
     },
     {
       "path": "Tests/MartyGraphicsTests/CurveCaseTests.swift",
