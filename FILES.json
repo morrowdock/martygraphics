@@ -39,7 +39,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "f64fcfb265af324d4c809e96db3a5aea09693dc76266d5862c34b1f53585639b"
+      "sha256": "a7e4b603c99657a3b9225a07196cb3bfc4e49448c81114fae486bd76caee07d9"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1987,7 +1987,7 @@
     },
     {
       "path": "docs/PROTOCOL.md",
-      "sha256": "86b4693a3ac646f038ea54c2115df7bfe6f60bcd23a7a1b5b1d524512a952e53"
+      "sha256": "a9e163fb0cbfa175f36e6caf72a63d8444f9da7b065a4f9134f62438978f3e18"
     },
     {
       "path": "docs/PUBLIC-SYNC.md",
@@ -4075,7 +4075,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGGraph.swift",
-      "sha256": "d2bf8efe57280a036045e444a93528977242956776dbbd09051a1a404feebf41"
+      "sha256": "bc9336778c8550e91bb48367efa26b1325bb633b8b836103886e84a6d91acf42"
     },
     {
       "path": "Tests/MartyGraphicsTests/AltTextTests.swift",
@@ -4087,7 +4087,7 @@
     },
     {
       "path": "Tests/MartyGraphicsTests/GraphCaseTests.swift",
-      "sha256": "8052593510a3af406e599336bab95dde4d43c3e9128309e18e3ec5c9ca211095"
+      "sha256": "02dbbff62b1de140dee18257377ec79484eac807303ea748e264d0c676924683"
     },
     {
       "path": "Tests/MartyGraphicsTests/GraphKindTests.swift",
@@ -4127,7 +4127,7 @@
     },
     {
       "path": "Sources/MartyGraphics/MGRepairHint.swift",
-      "sha256": "5d778d5984b4bf01a7082adf66f9b2a0187aad75fe6eb12b5985b7bcc69da0b4"
+      "sha256": "f6120c4569ab613d06aaa7f68553e353c37f0f0c532be1299a809b53643dc6d2"
     },
     {
       "path": "Tests/MartyGraphicsMLKitTests/MLRepairHintCorpusTests.swift",
@@ -4143,7 +4143,7 @@
     },
     {
       "path": "docs/fixtures/repair-hints/corpus.json",
-      "sha256": "eaa0b93069b7dde69c0c0c33db884352ef2286e9d7a0bc40fc1c0992a0241312"
+      "sha256": "d55e452303b79479cf166d7eed10cb07e070cd4383675251806ab9bbc3a149ed"
     },
     {
       "path": "evals/dev-authoring/FREEZE.json",
@@ -4859,7 +4859,7 @@
     },
     {
       "path": "evals/dev-authoring/tools/hints.py",
-      "sha256": "a9ef423ee0b2c96e39735f0a084d355029339f9b106ec4f6aa6c078fec97b9cc"
+      "sha256": "99e5e6c27d6f186f5e97100a385f55d35c26014775a97b80c35f6db69d108622"
     },
     {
       "path": "evals/dev-authoring/tools/inventory.py",

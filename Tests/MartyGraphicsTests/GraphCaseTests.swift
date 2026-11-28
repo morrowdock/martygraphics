@@ -63,7 +63,8 @@ final class GraphCaseTests: XCTestCase {
     }
 
     /// `func.empty` uses the rule of `curve.empty`: some piece draws a segment of nonzero length inside the ranges. A
-    /// single sample inside the range, or a graph that only touches an edge, draws nothing (tools/mg_expr.py: the same).
+    /// one-point piece, or a graph that only touches the window at a single point, draws nothing; a line along an edge
+    /// is drawn (tools/mg_expr.py: the same).
     func testAFuncIsVisibleOnlyWhenAPieceDrawsASegment() throws {
         let one = try MGExpression.compile("sqrt(-(x^2))", allowed: [.x], reason: "func.y")
         let oneValue: (Double) -> Double = { one.value(MGExpression.Inputs().with(x: $0)) }

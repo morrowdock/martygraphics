@@ -58,8 +58,8 @@ enum MGGraph {
     ///   or below the range cannot be seen and are skipped.
     ///
     /// - `visible`: some piece draws a segment of nonzero length inside the x and y ranges (`drawsSegment`, the rule of
-    ///   `curve.empty`). A sample inside the range is not enough: a one-point piece, or a graph that only touches an
-    ///   edge of the range, is not drawn.
+    ///   `curve.empty`). A sample inside the range is not enough: a one-point piece, or a graph that only touches the
+    ///   window at a single point, is not drawn. A segment along an edge has positive length and is drawn.
     ///
     /// At most 257 grid values, 256 midpoints, 2 probes per gap (grid value or midpoint) and `bisections` evaluations
     /// per pair of samples; `measure` reuses the midpoint values. The same rule runs at parse time and in every animated

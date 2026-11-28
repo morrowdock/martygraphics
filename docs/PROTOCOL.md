@@ -174,7 +174,8 @@ through a `dim` patch or a step edit); `alt` works in 2D and 3D.
   between samples are refused, `func.detail`); at most 16 breaks (`func.breaks`);
   at least one piece draws a segment of nonzero length inside the x and y ranges
   (`func.empty`: a sample inside is not enough, since a one-point piece and a
-  graph that only touches an edge of the range draw nothing, as `curve.empty`);
+  graph that only touches the window at a single point draw nothing, as
+  `curve.empty`);
   the shaded interval inside one
   unbroken piece (`func.shade`); the marked point has a value inside the y range
   (`func.mark`). A moving graph is checked at t = 0, ¼, ½ and ¾ of its period,
